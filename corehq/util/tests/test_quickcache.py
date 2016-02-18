@@ -13,6 +13,7 @@ class CacheMock(LocMemCache):
     def __init__(self, name, params):
         self.name = name
         super(CacheMock, self).__init__(name, params)
+        self.default_timeout = params["timeout"] # allow sub-second timeout
 
     def get(self, key, default=None, version=None):
         result = super(CacheMock, self).get(key, default, version)
@@ -29,7 +30,7 @@ class CacheMockWithSet(CacheMock):
         BUFFER.append('{} set'.format(self.name))
 
 
-SHORT_TIME_UNIT = 1
+SHORT_TIME_UNIT = 0.01
 
 _local_cache = CacheMock('local', {'timeout': SHORT_TIME_UNIT})
 _shared_cache = CacheMock('shared', {'timeout': 2 * SHORT_TIME_UNIT})
@@ -44,11 +45,7 @@ class QuickcacheTest(SimpleTestCase):
 
     def consume_buffer(self):
         result = list(BUFFER)
-        while True:
-            try:
-                BUFFER.pop()
-            except IndexError:
-                break
+        del BUFFER[:]
         return result
 
     def test_tiered_cache(self):
@@ -160,9 +157,8 @@ class QuickcacheTest(SimpleTestCase):
             pass
 
         # doesn't fail
-        lots_of_args('\xff', '\xff', '\xff', '\xff', '\xff', '\xff')
-        key = lots_of_args.get_cache_key(
-            '\xff', '\xff', '\xff', '\xff', '\xff', '\xff')
+        lots_of_args(u"x", u"x", u"x", u"x", u"x", u"x")
+        key = lots_of_args.get_cache_key(u"x", u"x", u"x", u"x", u"x", u"x")
         self.assertLess(len(key), 250)
         # assert it's actually been hashed
         self.assertEqual(
@@ -200,7 +196,6 @@ class QuickcacheTest(SimpleTestCase):
 
         name_unicode = u'namé'
         name_utf8 = name_unicode.encode('utf-8')
-        name_latin1 = name_unicode.encode('latin-1')
 
         self.assertEqual(by_name(name_unicode), 'VALUE')
         self.assertEqual(self.consume_buffer(), ['local miss', 'shared miss', 'called'])
@@ -209,10 +204,6 @@ class QuickcacheTest(SimpleTestCase):
 
         self.assertEqual(by_name(name_utf8), 'VALUE')
         self.assertEqual(self.consume_buffer(), ['local hit'])
-
-        # values with encodings other than utf-8 still produce different keys
-        self.assertEqual(by_name(name_latin1), 'VALUE')
-        self.assertEqual(self.consume_buffer(), ['local miss', 'shared miss', 'called'])
 
     def test_skippable(self):
         @skippable_quickcache(['name'], cache=_cache_with_set, skip_arg='force')

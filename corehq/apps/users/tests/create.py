@@ -8,6 +8,7 @@ from django.contrib.auth.models import User
 from casexml.apps.phone.xml import USER_REGISTRATION_XMLNS,\
     USER_REGISTRATION_XMLNS_DEPRECATED
 from corehq.apps.domain.models import Domain
+from corehq.apps.domain.shortcuts import create_domain
 
 
 class CreateTestCase(TestCase):
@@ -35,15 +36,19 @@ class CreateTestCase(TestCase):
         email = "joe@domain.com"
         password = "password"
         domain = "test"
-        couch_user = WebUser.create(domain, username, password, email)
+        domain_obj = create_domain(domain)
+        try:
+            couch_user = WebUser.create(domain, username, password, email)
 
-        self.assertEqual(couch_user.domains, [domain])
-        self.assertEqual(couch_user.email, email)
-        self.assertEqual(couch_user.username, username)
+            self.assertEqual(couch_user.domains, [domain])
+            self.assertEqual(couch_user.email, email)
+            self.assertEqual(couch_user.username, username)
 
-        django_user = couch_user.get_django_user()
-        self.assertEqual(django_user.email, email)
-        self.assertEqual(django_user.username, username)
+            django_user = couch_user.get_django_user()
+            self.assertEqual(django_user.email, email)
+            self.assertEqual(django_user.username, username)
+        finally:
+            domain_obj.delete()
 
     def testCreateCompleteWebUser(self):
         """
@@ -53,15 +58,21 @@ class CreateTestCase(TestCase):
         email = "joe@domain.com"
         password = "password"
         # create django user
-        couch_user = WebUser.create(None, username, password, email)
-        self.assertEqual(couch_user.username, username)
-        self.assertEqual(couch_user.email, email)
-        couch_user.add_domain_membership('domain1')
-        self.assertEqual(couch_user.domain_memberships[0].domain, 'domain1')
-        couch_user.add_domain_membership('domain2')
-        self.assertEqual(couch_user.domain_memberships[1].domain, 'domain2')
-        django_user = couch_user.get_django_user()
-        self.assertEqual(couch_user.user_id, CouchUser.from_django_user(django_user).user_id)
+        domain1 = create_domain('domain1')
+        domain2 = create_domain('domain2')
+        try:
+            couch_user = WebUser.create(None, username, password, email)
+            self.assertEqual(couch_user.username, username)
+            self.assertEqual(couch_user.email, email)
+            couch_user.add_domain_membership('domain1')
+            self.assertEqual(couch_user.domain_memberships[0].domain, 'domain1')
+            couch_user.add_domain_membership('domain2')
+            self.assertEqual(couch_user.domain_memberships[1].domain, 'domain2')
+            django_user = couch_user.get_django_user()
+            self.assertEqual(couch_user.user_id, CouchUser.from_django_user(django_user).user_id)
+        finally:
+            domain1.delete()
+            domain2.delete()
 
     def _runCreateUserFromRegistrationTest(self):
         """
@@ -173,6 +184,8 @@ class TestDomainMemberships(TestCase):
         cls.webuser.delete()
         cls.webuser2.delete()
         cls.project.delete()
+        cls.domain_obj.delete()
+        cls.nodomain_obj.delete()
 
     @classmethod
     def setUpClass(cls):
@@ -182,6 +195,8 @@ class TestDomainMemberships(TestCase):
         w2_email = "ben@domain.com"
         cc_username = "mobby"
         password = "password"
+        cls.domain_obj = create_domain(cls.domain)
+        cls.nodomain_obj = create_domain('nodomain')
         cls.project = Domain(name=cls.domain)
         cls.project.save()
 

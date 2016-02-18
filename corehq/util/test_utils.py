@@ -60,6 +60,27 @@ def trap_extra_setup(*exceptions, **kw):
         raise
 
 
+def softer_assert(func=None):
+    """A decorator/context manager to disable hardened soft_assert for tests"""
+    @contextmanager
+    def softer_assert():
+        patch = mock.patch("corehq.util.soft_assert.core.is_hard_mode",
+                           new=lambda:False)
+        patch.start()
+        try:
+            yield
+        finally:
+            patch.stop()
+
+    if func is not None:
+        @functools.wraps(func)
+        def wrapper(*args, **kw):
+            with softer_assert():
+                return func(*args, **kw)
+        return wrapper
+    return softer_assert()
+
+
 class TestFileMixin(object):
 
     file_path = ''

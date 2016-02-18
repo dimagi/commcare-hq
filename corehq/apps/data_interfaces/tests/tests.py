@@ -7,6 +7,7 @@ from corehq.util.spreadsheets.excel import WorkbookJSONReader
 
 from couchforms.models import XFormInstance
 from django_prbac.models import UserRole, Role, Grant
+from corehq.apps.domain.models import Domain
 from corehq.apps.users.models import WebUser
 from corehq.apps.data_interfaces.utils import archive_forms_old
 from corehq import privileges, toggles
@@ -28,6 +29,7 @@ class BulkArchiveForms(TestCase):
         username = "ben"
         email = "ben@domain.com"
 
+        self.domain = Domain.get_or_create_with_name(self.domain_name, is_active=True)
         self.client = Client()
         self.user = WebUser.create(self.domain_name, username, self.password, email, is_admin=True)
         self.url = '/a/{}/data/edit/archive_forms/'.format(self.domain_name)
@@ -58,6 +60,7 @@ class BulkArchiveForms(TestCase):
 
     def tearDown(self):
         self.user.delete()
+        self.domain.delete()
 
     def test_bulk_archive_get_form(self):
 
