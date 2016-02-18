@@ -565,6 +565,8 @@ XFORMS_PLAYER_URL = "http://localhost:4444/"  # touchform's setting
 FORMPLAYER_URL = 'http://localhost:8080'
 OFFLINE_TOUCHFORMS_PORT = 4444
 
+USE_FORMPLAYER = True
+
 ####### Couchlog config #######
 
 COUCHLOG_BLUEPRINT_HOME = "%s%s" % (
