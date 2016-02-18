@@ -697,8 +697,8 @@ class CaseAttachmentSQL(AbstractAttachment, CaseAttachmentMixin):
                     "Case attachment content not deleted. bucket=%s, blob_id=%s",
                     self._blobdb_bucket(), self.blob_id
                 )
-        content = attachment.read_content()
-        self.write_content(StringIO(content))
+        content = attachment.read_content(stream=True)
+        self.write_content(content)
 
     @classmethod
     def from_case_update(cls, attachment):
