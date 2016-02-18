@@ -22,7 +22,7 @@ from couchforms.dbaccessors import (
     get_forms_by_type,
     get_deleted_form_ids_for_user,
     get_form_ids_for_user,
-)
+    get_forms_by_id)
 from couchforms.models import XFormInstance, doc_types
 from dimagi.utils.couch.database import iter_docs
 
@@ -43,6 +43,10 @@ class FormAccessorCouch(AbstractFormAccessor):
     @staticmethod
     def get_form(form_id):
         return XFormInstance.get(form_id)
+
+    @staticmethod
+    def get_forms(form_ids):
+        return get_forms_by_id(form_ids)
 
     @staticmethod
     def get_forms_by_type(domain, type_, limit, recent_first=False):

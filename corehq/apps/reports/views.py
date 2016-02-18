@@ -1059,18 +1059,19 @@ def case_forms(request, domain, case_id):
 
     def form_to_json(form):
         return {
-            'id': form._id,
+            'id': form.form_id,
             'received_on': json_format_datetime(form.received_on),
             'user': {
-                "id": form.metadata.userID if form.metadata else '',
+                "id": form.user_id or '',
                 "username": form.metadata.username if form.metadata else '',
             },
-            'readable_name': form.form.get('@name') or _('unknown'),
+            'readable_name': form.form_data.get('@name') or _('unknown'),
         }
 
     slice = list(reversed(case.xform_ids))[start_range:end_range]
+    forms = FormAccessors(domain).get_forms(slice)
     return json_response([
-        form_to_json(XFormInstance.get(form_id)) for form_id in slice
+        form_to_json(form) for form in forms
     ])
 
 
