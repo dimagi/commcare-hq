@@ -28,6 +28,7 @@ from .views import (
     FormDataView,
     CaseDetailsView,
     CaseAttachmentsView,
+    MySavedReportsView,
 )
 
 
@@ -49,7 +50,7 @@ urlpatterns = patterns('corehq.apps.reports.views',
     url(r'^builder/edit/(?P<report_id>[\w\-]+)/$', EditReportInBuilder.as_view(), name='edit_report_in_builder'),
 
     url(r'^$', "default", name="reports_home"),
-    url(r'^saved/', "saved_reports", name="saved_reports"),
+    url(r'^saved/', MySavedReportsView.as_view(), name=MySavedReportsView.urlname),
     url(r'^saved_reports', 'old_saved_reports'),
 
     url(r'^case_data/(?P<case_id>[\w\-]+)/$', CaseDetailsView.as_view(), name=CaseDetailsView.urlname),
