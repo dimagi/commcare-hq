@@ -4,6 +4,7 @@ from StringIO import StringIO
 from django.test import SimpleTestCase
 from openpyxl import load_workbook
 
+from corehq.apps.export.const import MAIN_TABLE
 from corehq.apps.export.export import (
     _get_tables,
     _get_writer,
@@ -306,7 +307,7 @@ class ExportTest(SimpleTestCase):
                     case_type=DEFAULT_CASE_TYPE,
                     tables=[TableConfiguration(
                         name="My table",
-                        path=[],
+                        path=MAIN_TABLE,
                         columns=[
                             ExportColumn(
                                 label="Foo column",
@@ -324,7 +325,7 @@ class ExportTest(SimpleTestCase):
                     case_type=DEFAULT_CASE_TYPE,
                     tables=[TableConfiguration(
                         name="My table",
-                        path=[],
+                        path=MAIN_TABLE,
                         columns=[
                             ExportColumn(
                                 label="Bar column",
