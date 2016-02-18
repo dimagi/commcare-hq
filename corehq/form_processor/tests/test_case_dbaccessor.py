@@ -154,7 +154,9 @@ class CaseAccessorTestsSQL(TestCase):
             attachment_id=uuid.uuid4().hex,
             name='pic.jpg',
             content_type='image/jpeg',
-            blob_id='122'
+            blob_id='122',
+            md5='123',
+            identifier='pic.jpg',
         ))
         CaseAccessorSQL.save_case(case1)
 
@@ -176,7 +178,8 @@ class CaseAccessorTestsSQL(TestCase):
             name='pic.jpg',
             content_type='image/jpeg',
             blob_id='123',
-            identifier='pic1'
+            identifier='pic1',
+            md5='123'
         ))
         case.track_create(CaseAttachmentSQL(
             case=case,
@@ -185,6 +188,7 @@ class CaseAccessorTestsSQL(TestCase):
             content_type='text/xml',
             blob_id='124',
             identifier='doc1',
+            md5='123'
         ))
         CaseAccessorSQL.save_case(case)
 
@@ -208,6 +212,7 @@ class CaseAccessorTestsSQL(TestCase):
             content_type='image/jpeg',
             blob_id='125',
             identifier='pic1',
+            md5='123',
         ))
         case.track_create(CaseAttachmentSQL(
             case=case,
@@ -215,7 +220,8 @@ class CaseAccessorTestsSQL(TestCase):
             name='doc',
             content_type='text/xml',
             blob_id='126',
-            identifier='doc1'
+            identifier='doc1',
+            md5='123',
         ))
         CaseAccessorSQL.save_case(case)
 
@@ -330,7 +336,9 @@ class CaseAccessorTestsSQL(TestCase):
             attachment_id=uuid.uuid4().hex,
             name='doc',
             content_type='text/xml',
-            blob_id='127'
+            blob_id='127',
+            md5='123',
+            identifier='doc',
         ))
         CaseAccessorSQL.save_case(case)
 
@@ -348,6 +356,8 @@ class CaseAccessorTestsSQL(TestCase):
             name='doc',
             content_type='text/xml',
             blob_id='128',
+            md5='123',
+            identifier='doc'
         ))
         CaseAccessorSQL.save_case(case)
 
