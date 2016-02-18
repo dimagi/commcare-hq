@@ -11,4 +11,3 @@ class ImportCases(DataInterface):
     asynchronous = False
 
     is_bootstrap3 = True
-
