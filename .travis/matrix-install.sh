@@ -13,7 +13,7 @@ if [ "${MATRIX_TYPE}" = "python" ] || [ "${MATRIX_TYPE}" = "python-sharded" ]; t
 
     sleep 10  # kafka is slow to start up
     setup_kafka
-    travis_runner web_test .travis/misc-setup.sh
+    docker_run web_test .travis/misc-setup.sh
 
 elif [ "${MATRIX_TYPE}" = "javascript" ]; then
     echo 'Done'
@@ -23,9 +23,9 @@ else
 fi
 
 if [ "${BOWER:-no}" = "yes" ]; then
-    travis_runner web_test bower install
+    docker_run web_test bower install
 fi
 
 if [ "${NODE:-no}" = "yes" ]; then
-    travis_runner web_test npm install
+    docker_run web_test npm install
 fi
