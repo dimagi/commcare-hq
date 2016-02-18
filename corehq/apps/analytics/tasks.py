@@ -44,14 +44,13 @@ ANALYTICS_SLEEP = 5
 def _persistent_analytics_post(func, retries=ANALYTICS_RETRIES, sleep=ANALYTICS_SLEEP):
     for i in range(retries):
         try:
-            func()
+            return func()
         except requests.exceptions.HTTPError:
             if i < retries - 1:
                 time.sleep(sleep)
             else:
                 raise
-        else:
-            break
+
 
 def _track_on_hubspot(webuser, properties):
     """
