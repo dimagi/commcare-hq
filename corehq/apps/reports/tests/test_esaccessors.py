@@ -34,6 +34,7 @@ from corehq.apps.reports.analytics.esaccessors import (
     get_case_counts_opened_by_user,
     get_user_stubs,
     get_group_stubs,
+    get_forms,
     get_form_counts_by_user_xmlns)
 from corehq.util.test_utils import make_es_ready_form, trap_extra_setup
 from pillowtop.feed.interface import Change
@@ -78,6 +79,83 @@ class TestFormESAccessors(BaseESAccessorsTest):
 
     def _pillow_process_form(self, form_pair):
         self.pillow.change_transport(form_pair.json_form)
+
+    def test_get_forms(self):
+        start = datetime(2013, 7, 1)
+        end = datetime(2013, 7, 30)
+        xmlns = 'http://a.b.org'
+        app_id = '1234'
+        user_id = 'abc'
+
+        self._send_form_to_es(
+            app_id=app_id,
+            xmlns=xmlns,
+            received_on=datetime(2013, 7, 2),
+            user_id=user_id,
+        )
+
+        forms = get_forms(
+            self.domain,
+            start,
+            end,
+            user_ids=[user_id],
+            app_ids=app_id,
+            xmlnss=xmlns,
+        )
+        self.assertEqual(len(forms), 1)
+        self.assertEqual(forms[0]['xmlns'], xmlns)
+        self.assertEqual(forms[0]['form']['meta']['userID'], user_id)
+        self.assertEqual(forms[0]['received_on'], '2013-07-02T00:00:00.000000Z')
+
+    def test_get_forms_multiple_apps_xmlnss(self):
+        start = datetime(2013, 7, 1)
+        end = datetime(2013, 7, 30)
+        xmlns1, xmlns2 = 'http://a.b.org', 'http://b.c.org'
+        app_id1, app_id2 = '1234', '4567'
+        user_id = 'abc'
+
+        self._send_form_to_es(
+            app_id=app_id1,
+            xmlns=xmlns1,
+            received_on=datetime(2013, 7, 2),
+            user_id=user_id,
+        )
+        self._send_form_to_es(
+            app_id=app_id2,
+            xmlns=xmlns2,
+            received_on=datetime(2013, 7, 2),
+            user_id=user_id,
+        )
+
+        forms = get_forms(
+            self.domain,
+            start,
+            end,
+            user_ids=[user_id],
+            app_ids=[app_id1, app_id2],
+            xmlnss=[xmlns1, xmlns2],
+        )
+        self.assertEqual(len(forms), 2)
+
+        forms = get_forms(
+            self.domain,
+            start,
+            end,
+            user_ids=[user_id],
+            app_ids=[app_id1, app_id2],
+            xmlnss=[xmlns1],
+        )
+        self.assertEqual(len(forms), 1)
+
+        forms = get_forms(
+            self.domain,
+            start,
+            end,
+            user_ids=[user_id],
+            app_ids=[app_id1],
+            xmlnss=[xmlns2],
+        )
+        self.assertEqual(len(forms), 0)
 
     def test_basic_completed_by_user(self):
         start = datetime(2013, 7, 1)

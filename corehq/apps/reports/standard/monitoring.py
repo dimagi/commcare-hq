@@ -22,6 +22,7 @@ from corehq.apps.reports.analytics.esaccessors import (
     get_case_counts_opened_by_user,
     get_active_case_counts_by_owner,
     get_total_case_counts_by_owner,
+    get_forms,
 )
 from corehq.apps.reports.exceptions import TooMuchDataError
 from corehq.apps.reports.filters.users import ExpandedMobileWorkerFilter as EMWF
@@ -42,7 +43,7 @@ from corehq.util.view_utils import absolute_reverse
 from couchforms.models import XFormInstance
 from dimagi.utils.dates import DateSpan, today_or_tomorrow
 from dimagi.utils.decorators.memoized import memoized
-from dimagi.utils.parsing import json_format_date
+from dimagi.utils.parsing import json_format_date, string_to_utc_datetime
 from django.utils.translation import ugettext as _
 from django.utils.translation import ugettext_noop
 
@@ -886,40 +887,43 @@ class FormCompletionVsSubmissionTrendsReport(WorkerMonitoringFormReportTableBase
                 mobile_user_and_group_slugs,
             )
 
-            placeholders = []
-            params = []
             user_map = {user.user_id: user
                         for user in users_data.combined_users if user.user_id}
-            form_map = {}
-            for form in self.all_relevant_forms.values():
-                placeholders.append('(%s,%s)')
-                params.extend([form['app_id'], form['xmlns']])
-                form_map[form['xmlns']] = form
+            user_ids = [user.user_id for user in users_data.combined_users if user.user_id]
 
-            where = '(app_id, xmlns) in (%s)' % (','.join(placeholders))
-            results = FormData.objects \
-                .filter(received_on__range=(self.datespan.startdate_utc, self.datespan.enddate_utc)) \
-                .filter(user_id__in=user_map.keys()) \
-                .values('instance_id', 'user_id', 'time_end', 'received_on', 'xmlns')\
-                .extra(
-                    where=[where], params=params
-                )
-            if results.count() > 5000:
-                raise TooMuchDataError(_(TOO_MUCH_DATA))
+            xmlnss = []
+            app_ids = []
+            form_map = {}
+
+            for form in self.all_relevant_forms.values():
+                xmlnss.append(form['xmlns'])
+                app_ids.append(form['app_id'])
+                form_map[form['xmlns']] = form['name']
+
+            results = get_forms(
+                self.domain,
+                self.datespan.startdate_utc.date(),
+                self.datespan.enddate_utc.date(),
+                user_ids=user_ids,
+                app_ids=app_ids,
+                xmlnss=xmlnss,
+            )
             for row in results:
-                completion_time = (PhoneTime(row['time_end'], self.timezone)
-                                   .server_time().done())
-                submission_time = row['received_on']
+                completion_time = (PhoneTime(
+                    string_to_utc_datetime(row['form']['meta']['timeEnd']),
+                    self.timezone,
+                ).server_time().done())
+                submission_time = string_to_utc_datetime(row['received_on'])
                 td = submission_time - completion_time
                 td_total = (td.seconds + td.days * 24 * 3600)
                 rows.append([
-                            self.get_user_link(user_map.get(row['user_id'])),
-                            self._format_date(completion_time),
-                            self._format_date(submission_time),
-                            form_map[row['xmlns']]['name'],
-                            self._view_form_link(row['instance_id']),
-                            self.table_cell(td_total, self._format_td_status(td))
-                        ])
+                    self.get_user_link(user_map.get(row['form']['meta']['userID'])),
+                    self._format_date(completion_time),
+                    self._format_date(submission_time),
+                    form_map[row['xmlns']],
+                    self._view_form_link(row['_id']),
+                    self.table_cell(td_total, self._format_td_status(td))
+                ])
 
                 if td_total >= 0:
                     total_seconds += td_total
