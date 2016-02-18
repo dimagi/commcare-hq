@@ -8,6 +8,7 @@ from corehq.apps.userreports.expressions.specs import PropertyNameGetterSpec, Pr
     ConditionalExpressionSpec, ConstantGetterSpec, RootDocExpressionSpec, RelatedDocExpressionSpec, \
     IdentityExpressionSpec, IteratorExpressionSpec, SwitchExpressionSpec, ArrayIndexExpressionSpec, \
     NestedExpressionSpec, DictExpressionSpec, NamedExpressionSpec, AddDaysExpressionSpec
+from corehq.apps.userreports.expressions.date_specs import AddMonthsExpressionSpec
 from dimagi.utils.parsing import json_format_datetime, json_format_date
 from dimagi.utils.web import json_handler
 
@@ -115,6 +116,15 @@ def _add_days_expression(spec, context):
     return wrapped
 
 
+def _add_months_expression(spec, context):
+    wrapped = AddMonthsExpressionSpec.wrap(spec)
+    wrapped.configure(
+        date_expression=ExpressionFactory.from_spec(wrapped.date_expression),
+        months_expression=ExpressionFactory.from_spec(wrapped.months_expression),
+    )
+    return wrapped
+
+
 class ExpressionFactory(object):
     spec_map = {
         'identity': _identity_expression,
@@ -131,6 +141,7 @@ class ExpressionFactory(object):
         'nested': _nested_expression,
         'dict': _dict_expression,
         'add_days': _add_days_expression,
+        'add_months': _add_months_expression,
     }
     # Additional items are added to the spec_map by use of the `register` method.
 

@@ -87,7 +87,7 @@ root_doc        | A way to reference the root document explicitly (only needed w
 nested          | A way to chain any two expressions together | `f1(f2(doc))`
 dict            | A way to emit a dictionary of key/value pairs | `{"name": "test", "value": f(doc)}`
 add_days        | A way to add days to a date | `my_date + timedelta(days=15)`
-
+add_months      | A way to add months to a date | `my_date + relativedelta(months=15)`
 
 ### JSON snippets for expressions
 
@@ -319,6 +319,24 @@ The date_expression and count_expression can be any valid expressions, or simply
         "property_name": "dob",
     },
     "count_expression": 28
+}
+```
+
+#### "Add Months" expressions
+
+`add_months` offsets given date by given number of calendar months.
+If offset results in an invalid day (for e.g. Feb 30, April 31), the day of resulting date will be adjusted to last day of the resulting calendar month.
+
+The date_expression and months_expression can be any valid expressions, or simply constants, including nagative numbers.
+
+```json
+{
+    "type": "add_months",
+    "date_expression": {
+        "type": "property_name",
+        "property_name": "dob",
+    },
+    "months_expression": 28
 }
 ```
 
