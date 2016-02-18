@@ -5,6 +5,7 @@ from django.template.loader import render_to_string
 from django.core.urlresolvers import reverse
 from django import template
 import pytz
+from django.utils.datastructures import SortedDict
 from django.utils.html import escape
 from django.utils.translation import ugettext as _
 from couchdbkit.exceptions import ResourceNotFound
@@ -137,7 +138,7 @@ def render_form(form, domain, options):
         })
 
     # Form Metadata tab
-    meta = form.top_level_tags().get('meta', None) or {}
+    meta = _top_level_tags(form).get('meta', None) or {}
     if support_enabled:
         meta['last_sync_token'] = form.last_sync_token
 
@@ -226,3 +227,24 @@ def render_form(form, domain, options):
         "show_edit_submission": show_edit_submission,
         "show_resave": show_resave,
     }, RequestContext(request))
+
+
+def _top_level_tags(form):
+        """
+        Returns a SortedDict of the top level tags found in the xml, in the
+        order they are found.
+
+        """
+        to_return = SortedDict()
+
+        element = form.get_xml_element()
+        if not element:
+            return SortedDict(sorted(form.form_data.items()))
+
+        for child in element:
+            # fix {namespace}tag format forced by ElementTree in certain cases (eg, <reg> instead of <n0:reg>)
+            key = child.tag.split('}')[1] if child.tag.startswith("{") else child.tag
+            if key == "Meta":
+                key = "meta"
+            to_return[key] = form.get_data('form/' + key)
+        return to_return
