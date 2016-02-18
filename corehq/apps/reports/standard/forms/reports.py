@@ -78,7 +78,6 @@ class SubmissionErrorReport(DeploymentsReport):
         EMPTY_USER = _("No User")
         EMPTY_FORM = _("Unknown Form")
 
-
         def _to_row(xform_dict):
             def _fmt_url(doc_id):
                 view_name = 'render_form_data' \
