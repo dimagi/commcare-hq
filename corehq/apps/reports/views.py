@@ -268,6 +268,84 @@ def saved_reports(request, domain, template="reports/reports_home.html"):
     return render(request, template, context)
 
 
+class BaseProjectReportSectionView(BaseDomainView):
+    section_name = ugettext_lazy("Project Reports")
+
+    @use_bootstrap3
+    def dispatch(self, request, *args, **kwargs):
+        request.project = Domain.get_by_name(kwargs['domain'])
+        if not user_can_view_reports(request.project, request.couch_user):
+            raise Http404()
+        return super(BaseProjectReportSectionView, self).dispatch(request, *args, **kwargs)
+
+    @property
+    def section_url(self):
+        return reverse('reports_home', args=(self.domain, ))
+
+
+class MySavedReportsView(BaseProjectReportSectionView):
+    urlname = 'saved_reports'
+    page_title = _("My Saved Reports")
+    template_name = 'reports/reports_home.html'
+
+    @property
+    def language(self):
+        return self.request.couch_user.language or ucr_default_language()
+
+    @property
+    def good_configs(self):
+        all_configs = ReportConfig.by_domain_and_owner(self.domain, self.request.couch_user._id)
+        good_configs = []
+        for config in all_configs:
+            if config.is_configurable_report and not config.configurable_report:
+                continue
+
+            good_configs.append(config.to_complete_json(lang=self.language))
+        return good_configs
+
+    @property
+    def scheduled_reports(self):
+
+        def _is_valid(rn):
+            # the _id check is for weird bugs we've seen in the wild that look like
+            # oddities in couch.
+            return (
+                hasattr(rn, "_id") and rn._id
+                and (not hasattr(rn, 'report_slug')
+                     or rn.report_slug != 'admin_domains')
+            )
+
+        scheduled_reports = [
+            rn for rn in ReportNotification.by_domain_and_owner(
+                self.domain, self.request.couch_user._id)
+            if _is_valid(rn)
+        ]
+        scheduled_reports = sorted(scheduled_reports,
+                                   key=lambda rn: rn.configs[0].name)
+        for report in scheduled_reports:
+            time_difference = get_timezone_difference(self.domain)
+            (report.hour, day_change) = recalculate_hour(report.hour, int(time_difference[:3]), int(time_difference[3:]))
+            report.minute = 0
+            if day_change:
+                report.day = calculate_day(report.interval, report.day, day_change)
+        return scheduled_reports
+
+    @property
+    def page_context(self):
+        return {
+            'couch_user': self.request.couch_user,
+            'configs': self.good_configs,
+            'scheduled_reports': self.scheduled_reports,
+            'report': {
+                'title': self.page_title,
+                'show': True,
+                'slug': None,
+                'is_async': True,
+                'section_name': self.section_name,
+            }
+        }
+
+
 @requires_privilege_json_response(privileges.API_ACCESS)
 @login_or_digest
 @require_form_export_permission
