@@ -32,6 +32,7 @@ from corehq.apps.reports.analytics.esaccessors import (
     get_total_case_counts_by_owner,
     get_case_counts_closed_by_user,
     get_case_counts_opened_by_user,
+    get_paged_forms_by_type,
     get_user_stubs,
     get_group_stubs,
     get_form_counts_by_user_xmlns)
@@ -154,6 +155,14 @@ class TestFormESAccessors(BaseESAccessorsTest):
             pytz.utc
         )
         self.assertEquals(results['2013-07-15'], 1)
+
+    def test_get_paged_forms_by_type(self):
+        self._send_form_to_es()
+        self._send_form_to_es()
+
+        paged_result = get_paged_forms_by_type(self.domain, ['xforminstance'], size=1)
+        self.assertEqual(len(paged_result.hits), 1)
+        self.assertEqual(paged_result.total, 2)
 
     def test_timezone_differences(self):
         """

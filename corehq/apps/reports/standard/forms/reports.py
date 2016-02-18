@@ -2,15 +2,17 @@ from django.core.urlresolvers import reverse, NoReverseMatch
 from corehq.apps.reports.standard.deployments import DeploymentsReport
 from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn
 from corehq.apps.reports.standard.forms.filters import SubmissionTypeFilter, SubmissionErrorType
+from corehq.apps.reports.analytics.esaccessors import get_paged_forms_by_type
 from corehq.const import SERVER_DATETIME_FORMAT
 from corehq.util.timezones.conversions import ServerTime
 from couchforms.analytics import get_number_of_forms_of_all_types, get_number_of_forms_by_type
 from couchforms.dbaccessors import get_forms_by_type
 
 from dimagi.utils.couch.pagination import FilteredPaginator, CouchFilter
+from dimagi.utils.decorators.memoized import memoized
+from dimagi.utils.parsing import string_to_utc_datetime
 from corehq.apps.reports.display import xmlns_to_name
-from django.utils.translation import ugettext_noop
-from django.utils.translation import ugettext as _
+from django.utils.translation import ugettext_noop, ugettext as _
 
 
 def _compare_submissions(x, y):
@@ -64,13 +66,19 @@ class SubmissionErrorReport(DeploymentsReport):
             self._submitfilter = SubmissionTypeFilter.get_filter_toggle(self.request)
         return self._submitfilter
 
-    _paginator_results = None
     @property
-    def paginator_results(self):
-        if self._paginator_results is None:
-            filters = [SubmitFilter(self.domain, toggle.doc_type) for toggle in self.submitfilter if toggle.show]
-            self._paginator_results = FilteredPaginator(filters, _compare_submissions)
-        return self._paginator_results
+    @memoized
+    def paged_result(self):
+        doc_types = map(
+            lambda filter_: filter_.doc_type,
+            filter(lambda filter_: filter_.show, self.submitfilter)
+        )
+        return get_paged_forms_by_type(
+            self.domain,
+            doc_types,
+            start=self.pagination.start,
+            size=self.pagination.count,
+        )
 
     @property
     def shared_pagination_GET_params(self):
@@ -83,11 +91,7 @@ class SubmissionErrorReport(DeploymentsReport):
 
     @property
     def total_records(self):
-        return get_number_of_forms_of_all_types(self.domain)
-
-    @property
-    def total_filtered_records(self):
-        return self.paginator_results.total
+        return self.paged_result.total
 
     @property
     def rows(self):
@@ -95,12 +99,11 @@ class SubmissionErrorReport(DeploymentsReport):
         EMPTY_USER = _("No User")
         EMPTY_FORM = _("Unknown Form")
 
-        items = self.paginator_results.get(self.pagination.start, self.pagination.count)
-        
-        def _to_row(error_doc):
+
+        def _to_row(xform_dict):
             def _fmt_url(doc_id):
                 view_name = 'render_form_data' \
-                    if error_doc.doc_type in ["XFormInstance", "XFormArchived", "XFormError"] \
+                    if xform_dict['doc_type'] in ["XFormInstance", "XFormArchived", "XFormError"] \
                     else 'download_form'
                 try:
                     return "<a class='ajax_dialog' href='%(url)s'>%(text)s</a>" % {
@@ -109,16 +112,26 @@ class SubmissionErrorReport(DeploymentsReport):
                     }
                 except NoReverseMatch:
                     return 'unable to view form'
-            
+
             def _fmt_date(somedate):
                 time = ServerTime(somedate).user_time(self.timezone).done()
                 return time.strftime(SERVER_DATETIME_FORMAT)
-            
-            return [_fmt_url(error_doc.get_id),
-                    error_doc.metadata.username if error_doc.metadata else EMPTY_USER,
-                    _fmt_date(error_doc.received_on),
-                    xmlns_to_name(self.domain, error_doc.xmlns, app_id=getattr(error_doc, 'app_id', None)) if error_doc.metadata else EMPTY_FORM,
-                    SubmissionErrorType.display_name_by_doc_type(error_doc.doc_type),
-                    getattr(error_doc, 'problem', None) or EMPTY_ERROR]
 
-        return [_to_row(error_doc) for error_doc in items]
+            if xform_dict['form'].get('meta'):
+                form_name = xmlns_to_name(
+                    self.domain,
+                    xform_dict.get('xmlns'),
+                    app_id=xform_dict.get('app_id'),
+                )
+            else:
+                form_name = EMPTY_FORM
+            return [
+                _fmt_url(xform_dict['_id']),
+                xform_dict['form']['meta']['username'] if xform_dict['form'].get('meta') else EMPTY_USER,
+                _fmt_date(string_to_utc_datetime(xform_dict['received_on'])),
+                form_name,
+                SubmissionErrorType.display_name_by_doc_type(xform_dict['doc_type']),
+                xform_dict.get('problem', EMPTY_ERROR),
+            ]
+
+        return [_to_row(xform_dict) for xform_dict in self.paged_result.hits]

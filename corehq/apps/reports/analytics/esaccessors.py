@@ -1,4 +1,4 @@
-from collections import defaultdict
+from collections import defaultdict, namedtuple
 from datetime import datetime
 
 from corehq.apps.es import FormES, UserES, GroupES, CaseES, filters
@@ -6,6 +6,8 @@ from corehq.apps.es.aggregations import TermsAggregation
 from corehq.apps.es.forms import submitted as submitted_filter, completed as completed_filter
 from corehq.apps.es.cases import closed_range
 from dimagi.utils.parsing import string_to_datetime
+
+PagedResult = namedtuple('PagedResult', 'total hits')
 
 
 def get_last_submission_time_for_user(domain, user_id, datespan):
@@ -79,6 +81,20 @@ def _get_case_counts_by_user(domain, datespan, case_types=None, is_opened=True):
         case_query = case_query.filter({"terms": {"type.exact": case_types}})
 
     return case_query.run().aggregations.by_user.counts_by_bucket()
+
+
+def get_paged_forms_by_type(domain, doc_types, start=0, size=10):
+    query = (
+        FormES()
+        .domain(domain)
+        .remove_default_filter('is_xform_instance')
+        .remove_default_filter('has_user')
+        .doc_types(doc_types)
+        .sort("received_on", desc=True)
+        .start(start)
+        .size(size)
+    )
+    return PagedResult(total=query.run().total, hits=query.run().hits)
 
 
 def get_submission_counts_by_user(domain, datespan):
