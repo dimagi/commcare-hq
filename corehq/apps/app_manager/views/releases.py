@@ -88,6 +88,7 @@ def release_manager(request, domain, app_id, template='app_manager/releases.html
         multimedia_state = app.check_media_state()
         context.update({
             'multimedia_state': multimedia_state,
+            'multimedia_totals': app.get_reference_totals(),
         })
     response = render(request, template, context)
     response.set_cookie('lang', encode_if_unicode(context['lang']))
