@@ -827,13 +827,13 @@ class ChatMessageHistory(View, DomainViewMixin):
         else:
             return self.contact.first_name or self.contact.raw_username
 
-    @quickcache(['request.couch_user.get_id', 'sms.chat_user_id'], timeout=60 * 60, memoize_timeout=5 * 60)
-    def get_chat_user_name(self, request, sms):
-        if not sms.chat_user_id:
+    @quickcache(['user_id'], timeout=60 * 60, memoize_timeout=5 * 60)
+    def get_chat_user_name(self, user_id):
+        if not user_id:
             return _("System")
 
         try:
-            user = CouchUser.get_by_user_id(sms.chat_user_id)
+            user = CouchUser.get_by_user_id(user_id)
             return user.first_name or user.raw_username
         except:
             return _("Unknown")
@@ -878,7 +878,7 @@ class ChatMessageHistory(View, DomainViewMixin):
                 xforms_session_couch_id__isnull=False
             )
 
-    def get_response_data(self, request):
+    def get_response_data(self, requesting_user_id):
         timezone = get_timezone_for_user(None, self.domain)
         result = []
         last_sms = None
@@ -887,7 +887,7 @@ class ChatMessageHistory(View, DomainViewMixin):
             if sms.direction == INCOMING:
                 sender = self.contact_name
             else:
-                sender = self.get_chat_user_name(request, sms)
+                sender = self.get_chat_user_name(sms.chat_user_id)
             result.append({
                 'sender': sender,
                 'text': sms.text,
@@ -896,27 +896,26 @@ class ChatMessageHistory(View, DomainViewMixin):
                     .ui_string("%I:%M%p %m/%d/%y").lower()
                 ),
                 'utc_timestamp': json_format_datetime(sms.date),
-                'sent_by_requester': (sms.chat_user_id == request.couch_user.get_id),
+                'sent_by_requester': (sms.chat_user_id == requesting_user_id),
             })
         return result, last_sms
 
-    def update_last_read_message(self, request, sms):
+    def update_last_read_message(self, requesting_user_id, sms):
         domain = self.domain
-        user_id = request.couch_user.get_id
         contact_id = self.contact_id
 
-        key = 'update-last-read-message-%s-%s-%s' % (domain, user_id, contact_id)
+        key = 'update-last-read-message-%s-%s-%s' % (domain, requesting_user_id, contact_id)
         with CriticalSection([key]):
             try:
                 entry = SQLLastReadMessage.objects.get(
                     domain=domain,
-                    read_by=user_id,
+                    read_by=requesting_user_id,
                     contact_id=contact_id
                 )
             except SQLLastReadMessage.DoesNotExist:
                 entry = SQLLastReadMessage(
                     domain=domain,
-                    read_by=user_id,
+                    read_by=requesting_user_id,
                     contact_id=contact_id
                 )
             if not entry.message_timestamp or entry.message_timestamp < sms.date:
@@ -928,10 +927,10 @@ class ChatMessageHistory(View, DomainViewMixin):
         if not self.contact:
             return HttpResponse('[]')
 
-        data, last_sms = self.get_response_data(request)
+        data, last_sms = self.get_response_data(request.couch_user.get_id)
         if last_sms:
             try:
-                self.update_last_read_message(request, last_sms)
+                self.update_last_read_message(request.couch_user.get_id, last_sms)
             except:
                 notify_exception(request, "Error updating last read message for %s" % last_sms.pk)
 
