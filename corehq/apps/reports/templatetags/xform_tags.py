@@ -18,6 +18,7 @@ from corehq.apps.hqwebapp.doc_info import get_doc_info_by_id, DocInfo
 from corehq.apps.locations.permissions import can_edit_form_location
 from corehq.apps.reports.formdetails.readable import get_readable_data_for_submission
 from corehq import toggles
+from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 from corehq.util.timezones.conversions import ServerTime
 from corehq.util.timezones.utils import get_timezone_for_request
 from corehq.util.xml_utils import indent_xml
@@ -113,14 +114,14 @@ def render_form(form, domain, options):
     for b in case_blocks:
         this_case_id = b.get(const.CASE_ATTR_ID)
         try:
-            this_case = CommCareCase.get(this_case_id) if this_case_id else None
+            this_case = CaseAccessors(domain).get_case(this_case_id) if this_case_id else None
             valid_case = True
         except ResourceNotFound:
             this_case = None
             valid_case = False
 
-        if this_case and this_case._id:
-            url = reverse('case_details', args=[domain, this_case._id])
+        if this_case and this_case.case_id:
+            url = reverse('case_details', args=[domain, this_case.case_id])
         else:
             url = "#"
 
