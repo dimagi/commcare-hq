@@ -169,10 +169,10 @@ class FormAccessorTestsSQL(TestCase):
     def test_form_with_id_exists(self):
         form = create_form_for_test(DOMAIN)
 
-        self.assertFalse(FormAccessorSQL.form_with_id_exists('not a form'))
-        self.assertFalse(FormAccessorSQL.form_with_id_exists(form.form_id, 'wrong domain'))
-        self.assertTrue(FormAccessorSQL.form_with_id_exists(form.form_id))
-        self.assertTrue(FormAccessorSQL.form_with_id_exists(form.form_id, DOMAIN))
+        self.assertFalse(FormAccessorSQL.form_exists('not a form'))
+        self.assertFalse(FormAccessorSQL.form_exists(form.form_id, 'wrong domain'))
+        self.assertTrue(FormAccessorSQL.form_exists(form.form_id))
+        self.assertTrue(FormAccessorSQL.form_exists(form.form_id, DOMAIN))
 
     def test_hard_delete_forms(self):
         forms = [create_form_for_test(DOMAIN) for i in range(3)]

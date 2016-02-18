@@ -84,7 +84,7 @@ class ExportColumn(DocumentSchema):
     # A list of constants that map to functions to transform the column value
     transforms = ListProperty(validators=is_valid_transform)
 
-    def get_value(self, doc, base_path, transform_dates=False):
+    def get_value(self, doc, base_path):
         """
         Get the value of self.item of the given doc.
         When base_path is [], doc is a form submission or case,
@@ -97,17 +97,13 @@ class ExportColumn(DocumentSchema):
         assert base_path == self.item.path[:len(base_path)]
         # Get the path from the doc root to the desired ExportItem
         path = self.item.path[len(base_path):]
-        return self._transform(NestedDictGetter(path)(doc), transform_dates)
+        return self._transform(NestedDictGetter(path)(doc))
 
-    def _transform(self, value, transform_dates):
+    def _transform(self, value):
         """
         Transform the given value with the transforms specified in self.transforms.
-        Also transform dates if the transform_dates flag is true.
         """
         # TODO: The functions in self.transforms might expect docs, not values, in which case this needs to move.
-
-        if transform_dates:
-            value = couch_to_excel_datetime(value, None)
         for transform in self.transforms:
             value = TRANSFORM_FUNCTIONS[transform](value)
         return value
@@ -249,6 +245,9 @@ class ExportInstance(Document):
     # Whether to split multiselects into multiple columns
     split_multiselects = BooleanProperty(default=False)
 
+    # Whether to automatically convert dates to excel dates
+    transform_dates = BooleanProperty(default=False)
+
     # Whether to include duplicates and other error'd forms in export
     include_errors = BooleanProperty(default=False)
 
@@ -338,6 +337,9 @@ class CaseExportInstance(ExportInstance):
 class FormExportInstance(ExportInstance):
     xmlns = StringProperty()
     app_id = StringProperty()
+
+    # Whether to include duplicates and other error'd forms in export
+    include_errors = BooleanProperty(default=False)
 
     @property
     def formname(self):
@@ -861,7 +863,7 @@ class SplitExportColumn(ExportColumn):
     output = [1, '', 'c d']
     """
     item = SchemaProperty(MultipleChoiceItem)
-    ignore_extras = BooleanProperty()
+    ignore_unspecified_options = BooleanProperty()
 
     def get_value(self, doc, base_path):
         """
@@ -872,13 +874,13 @@ class SplitExportColumn(ExportColumn):
         """
         value = super(SplitExportColumn, self).get_value(doc, base_path)
         if not isinstance(value, basestring):
-            return [None] * len(self.item.options) + [] if self.ignore_extras else [value]
+            return [None] * len(self.item.options) + [] if self.ignore_unspecified_options else [value]
 
         selected = OrderedDict((x, 1) for x in value.split(" "))
         row = []
         for option in self.item.options:
             row.append(selected.pop(option.value, None))
-        if not self.ignore_extras:
+        if not self.ignore_unspecified_options:
             row.append(" ".join(selected.keys()))
         return row
 
@@ -892,7 +894,7 @@ class SplitExportColumn(ExportColumn):
                     option=option.value
                 )
             )
-        if not self.ignore_extras:
+        if not self.ignore_unspecified_options:
             headers.append(
                 header_template.format(
                     name=self.label,

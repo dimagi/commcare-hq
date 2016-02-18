@@ -10,8 +10,14 @@ from corehq.apps.hqcase.dbaccessors import get_cases_in_domain_by_external_id
 from corehq.apps.importer.const import LookupErrors, ImportErrors
 from casexml.apps.case.models import CommCareCase
 from corehq.apps.groups.models import Group
-from corehq.apps.importer.exceptions import ImporterExcelFileEncrypted, \
-    ImporterExcelError, ImporterFileNotFound, ImporterRefError
+from corehq.apps.importer.exceptions import (
+    ImporterExcelFileEncrypted,
+    ImporterExcelError,
+    ImporterFileNotFound,
+    ImporterRefError,
+    InvalidDateException,
+    InvalidIntegerException
+)
 from corehq.apps.users.cases import get_wrapped_owner
 from corehq.apps.users.models import CouchUser
 from corehq.apps.users.util import format_username
@@ -224,11 +230,6 @@ def convert_custom_fields_to_struct(config):
 
     return field_map
 
-
-class InvalidDateException(Exception):
-    pass
-
-
 class ImportErrorDetail(object):
 
     ERROR_MSG = {
@@ -242,7 +243,7 @@ class ImportErrorDetail(object):
             "uploading because of these values."
         ),
         ImportErrors.InvalidDate: _(
-            "Date fields were specified that caused an error during"
+            "Date fields were specified that caused an error during "
             "conversion. This is likely caused by a value from excel having "
             "the wrong type or not being formatted properly."
         ),
@@ -262,23 +263,28 @@ class ImportErrorDetail(object):
             "uploading because of these values. There are multiple locations "
             "with this same name, try using site-code instead."
         ),
+        ImportErrors.InvalidInteger: _(
+            "Integer values were specified, but the values in excel were not "
+            "all integers"
+        ),
     }
 
     def __init__(self, *args, **kwargs):
         self.errors = defaultdict(dict)
 
-    def add(self, error, row_number):
-        self.errors[error]['error'] = _(error)
+    def add(self, error, row_number, column_name=None):
+        self.errors[error].setdefault(column_name, {})
+        self.errors[error][column_name]['error'] = _(error)
 
         try:
-            self.errors[error]['description'] = self.ERROR_MSG[error]
+            self.errors[error][column_name]['description'] = self.ERROR_MSG[error]
         except KeyError:
-            self.errors[error]['description'] = self.ERROR_MSG[ImportErrors.CaseGeneration]
+            self.errors[error][column_name]['description'] = self.ERROR_MSG[ImportErrors.CaseGeneration]
 
-        if 'rows' not in self.errors[error]:
-            self.errors[error]['rows'] = []
+        if 'rows' not in self.errors[error][column_name]:
+            self.errors[error][column_name]['rows'] = []
 
-        self.errors[error]['rows'].append(row_number)
+        self.errors[error][column_name]['rows'].append(row_number)
 
     def as_dict(self):
         return dict(self.errors)
@@ -287,10 +293,7 @@ class ImportErrorDetail(object):
 def parse_excel_date(date_val, datemode):
     """ Convert field value from excel to a date value """
     if date_val:
-        try:
-            parsed_date = str(date(*xlrd.xldate_as_tuple(date_val, datemode)[:3]))
-        except Exception:
-            raise InvalidDateException
+        parsed_date = str(date(*xlrd.xldate_as_tuple(date_val, datemode)[:3]))
     else:
         parsed_date = ''
 
@@ -404,12 +407,15 @@ def populate_updated_fields(config, columns, row, datemode):
 
         if update_value is not None:
             if field_map[key]['type_field'] == 'date':
-                update_value = parse_excel_date(update_value, datemode)
-            elif field_map[key]['type_field'] == 'integer':
+                try:
+                    update_value = parse_excel_date(update_value, datemode)
+                except Exception:
+                    raise InvalidDateException(key)
+            elif field_map[key]['type_field'] == 'integer' and str(update_value).strip() != '':
                 try:
                     update_value = str(int(update_value))
                 except ValueError:
-                    update_value = ''
+                    raise InvalidIntegerException(key)
             else:
                 update_value = convert_field_value(update_value)
 

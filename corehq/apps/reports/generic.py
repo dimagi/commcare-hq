@@ -279,7 +279,7 @@ class GenericReportView(object):
     @property
     @memoized
     def template_report(self):
-        original_template = self.report_template_path or "reports/async/basic.html"
+        original_template = self.report_template_path or "reports/async/bootstrap2/basic.html"
         if self.is_rendered_as_email:
             self.context.update(original_template=original_template)
             return self._select_bootstrap_template(self.override_template)
@@ -1047,7 +1047,7 @@ def summary_context(report):
     return {"summary_values": report.summary_values}
 
 class SummaryTablularReport(GenericTabularReport):
-    report_template_path = "reports/async/summary_tabular.html"
+    report_template_path = "reports/async/bootstrap2/summary_tabular.html"
     extra_context_providers = [summary_context]
 
     @property

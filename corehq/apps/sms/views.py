@@ -15,7 +15,7 @@ from django.http import HttpResponse, HttpResponseRedirect, HttpResponseBadReque
 from django.shortcuts import render
 from django.utils.decorators import method_decorator
 from casexml.apps.case.models import CommCareCase
-from corehq import privileges
+from corehq import privileges, toggles
 from corehq.apps.hqadmin.views import BaseAdminSectionView
 from corehq.apps.hqwebapp.doc_info import get_doc_info_by_id
 from corehq.apps.hqwebapp.utils import get_bulk_upload_form, sign
@@ -1063,6 +1063,12 @@ class DomainSmsGatewayListView(CRUDPaginatedViewMixin, BaseMessagingSectionView)
     def post(self, request, *args, **kwargs):
         if self.action == 'new_backend':
             hq_api_id = request.POST['hq_api_id']
+            if (
+                toggles.TELERIVET_SETUP_WALKTHROUGH.enabled(self.domain) and
+                hq_api_id == SQLTelerivetBackend.get_api_id()
+            ):
+                from corehq.messaging.smsbackends.telerivet.views import TelerivetSetupView
+                return HttpResponseRedirect(reverse(TelerivetSetupView.urlname, args=[self.domain]))
             return HttpResponseRedirect(reverse(AddDomainGatewayView.urlname, args=[self.domain, hq_api_id]))
         return self.paginate_crud_response
 

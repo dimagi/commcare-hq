@@ -1,0 +1,43 @@
+{% load i18n %}
+{% load hq_shared_tags %}
+{% load djangular_tags %}
+{% load crispy_forms_tags %}
+
+<script type="text/ng-template" id="step1.tpl">
+    <h2>{% trans "Step 1. Download Telerivet App" %}</h2>
+    <div ng-controller="TelerivetSetupController" ng-cloak>
+        <ol>
+            <li>
+                <p>
+                    {% blocktrans %}
+                    If you have not already done so, create an account at <a target="_blank" href="https://www.telerivet.com">www.telerivet.com</a>.
+                    Be sure to give your Telerivet project a name:
+                    {% endblocktrans %}
+                </p>
+                <p>
+                    <img src="{% new_static 'telerivet/img/update_project_name.png' %}" />
+                </p>
+            </li>
+            <li>
+                <p>
+                    {% blocktrans %}
+                    On your Android phone, go to <a target="_blank" href="https://telerivet.com/app">telerivet.com/app</a> and download the Telerivet App.</li>
+                    {% endblocktrans %}
+                </p>
+            </li>
+            <li>
+                <p>
+                    {% blocktrans %}
+                    Open the Telerivet App on your Android phone. Log in and follow the instructions to connect the App to your Telerivet project.
+                    {% endblocktrans %}
+                </p>
+            </li>
+        </ol>
+    </div>
+    <div class="row">
+        <a class="btn btn-primary col-sm-2" href="#/step2">
+            {% trans "Continue" %}
+            <span class="glyphicon glyphicon-chevron-right" />
+        </a>
+    </div>
+</script>

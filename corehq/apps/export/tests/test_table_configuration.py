@@ -117,7 +117,7 @@ class SplitColumnTest(SimpleTestCase):
                 path=['form', 'q1'],
                 options=[Option(value='a'), Option(value='c')]
             ),
-            ignore_extras=False
+            ignore_unspecified_options=False
         )
         doc = {"q1": "a b d"}
         self.assertEqual(column.get_value(doc, ['form']), [1, None, "b d"])
@@ -128,7 +128,7 @@ class SplitColumnTest(SimpleTestCase):
                 path=['form', 'q1'],
                 options=[Option(value='a'), Option(value='c')]
             ),
-            ignore_extras=True
+            ignore_unspecified_options=True
         )
         doc = {"q1": "a b d"}
         self.assertEqual(column.get_value(doc, ["form"]), [1, None])
@@ -139,7 +139,7 @@ class SplitColumnTest(SimpleTestCase):
             item=MultipleChoiceItem(
                 options=[Option(value='Apple'), Option(value='Banana')]
             ),
-            ignore_extras=True
+            ignore_unspecified_options=True
         )
         self.assertEqual(column.get_headers(), ["Fruit | Apple", "Fruit | Banana"])
 
@@ -149,7 +149,7 @@ class SplitColumnTest(SimpleTestCase):
             item=MultipleChoiceItem(
                 options=[Option(value='Apple'), Option(value='Banana')]
             ),
-            ignore_extras=True
+            ignore_unspecified_options=True
         )
         self.assertEqual(column.get_headers(), ["Fruit - Apple", "Fruit - Banana"])
 
@@ -159,7 +159,7 @@ class SplitColumnTest(SimpleTestCase):
             item=MultipleChoiceItem(
                 options=[Option(value='Apple'), Option(value='Banana')]
             ),
-            ignore_extras=False
+            ignore_unspecified_options=False
         )
         self.assertEqual(column.get_headers(), ["Fruit - Apple", "Fruit - Banana", "Fruit - extra"])
 

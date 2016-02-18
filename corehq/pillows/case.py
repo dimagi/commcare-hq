@@ -89,7 +89,7 @@ def get_sql_case_to_elasticsearch_pillow():
         name='SqlCaseToElasticsearchPillow',
         document_store=None,
         checkpoint=checkpoint,
-        change_feed=KafkaChangeFeed(topic=topics.CASE_SQL, group_id='sql-cases-to-es'),
+        change_feed=KafkaChangeFeed(topics=[topics.CASE_SQL], group_id='sql-cases-to-es'),
         processor=case_processor,
         change_processed_event_handler=PillowCheckpointEventHandler(
             checkpoint=checkpoint, checkpoint_frequency=100,

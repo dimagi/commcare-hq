@@ -87,24 +87,6 @@ def _add_to_list(list, obj, default):
 def _get_default(list):
     return list[0] if list else None
 
-class OldPermissions(object):
-    EDIT_WEB_USERS = 'edit-users'
-    EDIT_COMMCARE_USERS = 'edit-commcare-users'
-    EDIT_DATA = 'edit-data'
-    EDIT_APPS = 'edit-apps'
-
-    VIEW_REPORTS = 'view-reports'
-    VIEW_REPORT = 'view-report'
-
-    AVAILABLE_PERMISSIONS = [EDIT_DATA, EDIT_WEB_USERS, EDIT_COMMCARE_USERS, EDIT_APPS, VIEW_REPORTS, VIEW_REPORT]
-    perms = 'EDIT_DATA, EDIT_WEB_USERS, EDIT_COMMCARE_USERS, EDIT_APPS, VIEW_REPORTS, VIEW_REPORT'.split(', ')
-    old_to_new = dict([(locals()[attr], attr.lower()) for attr in perms])
-
-    @classmethod
-    def to_new(cls, old_permission):
-        return cls.old_to_new[old_permission]
-
-
 
 class Permissions(DocumentSchema):
     edit_web_users = BooleanProperty(default=False)
@@ -399,38 +381,7 @@ class DomainMembership(Membership):
         if data.get('subject'):
             data['domain'] = data['subject']
             del data['subject']
-        # Do a just-in-time conversion of old permissions
-        old_permissions = data.get('permissions')
-        if old_permissions is not None:
-            del data['permissions']
-            if data.has_key('permissions_data'):
-                permissions_data = data['permissions_data']
-                del data['permissions_data']
-            else:
-                permissions_data = {}
-            if not data['is_admin']:
-                view_report_list = permissions_data.get('view-report')
-                custom_permissions = {}
-                for old_permission in old_permissions:
-                    if old_permission == 'view-report':
-                        continue
-                    # If this hasn't fired by March 2016 we can delete this code
-                    # and the OldPermissions model
-                    _assert = soft_assert(to='@'.join(['czue', 'dimagi.com']), fail_if_debug=True)
-                    _assert(False, 'Old Permissions found in the wild!')
-                    new_permission = OldPermissions.to_new(old_permission)
-                    custom_permissions[new_permission] = True
-                if not view_report_list:
-                    # Anyone whose report permissions haven't been explicitly taken away/reduced
-                    # should be able to see reports by default
-                    custom_permissions['view_reports'] = True
-                else:
-                    custom_permissions['view_report_list'] = view_report_list
 
-
-                self = super(DomainMembership, cls).wrap(data)
-                self.role_id = UserRole.get_or_create_with_permissions(self.domain, custom_permissions).get_id
-                return self
         return super(DomainMembership, cls).wrap(data)
 
     @property
@@ -668,9 +619,9 @@ class _AuthorizableMixin(IsMemberOfMixin):
         try:
             return self.get_role(domain, checking_global_admin=False).name
         except TypeError:
-            return "Unknown User"
+            return _("Unknown User")
         except DomainMembershipError:
-            return "Dimagi User" if self.is_global_admin() else "Unauthorized User"
+            return _("Dimagi User") if self.is_global_admin() else _("Unauthorized User")
         except Exception:
             return None
 

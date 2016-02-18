@@ -1,3 +1,7 @@
+"""
+Note that the adapters must return the fields in the same order as they appear
+in the table DSL
+"""
 import json
 from collections import namedtuple
 
@@ -63,6 +67,9 @@ def form_attachment_adapter(attachment):
         adapt(attachment.content_type).getquoted(),
         adapt(attachment.md5).getquoted(),
         adapt(attachment.form_id).getquoted(),
+        adapt(attachment.blob_id).getquoted(),
+        adapt(attachment.content_length).getquoted(),
+        adapt(json.dumps(attachment.properties, cls=JSONEncoder)).getquoted(),
     ]
     return _adapt_fields(fields, XFormAttachmentSQL_DB_TABLE)
 
@@ -99,6 +106,12 @@ def case_attachment_adapter(attachment):
         adapt(attachment.content_type).getquoted(),
         adapt(attachment.md5).getquoted(),
         adapt(attachment.case_id).getquoted(),
+        adapt(attachment.blob_id).getquoted(),
+        adapt(attachment.content_length).getquoted(),
+        adapt(attachment.attachment_from).getquoted(),
+        adapt(json.dumps(attachment.properties, cls=JSONEncoder)).getquoted(),
+        adapt(attachment.attachment_src).getquoted(),
+        adapt(attachment.identifier).getquoted(),
     ]
     return _adapt_fields(fields, CaseAttachmentSQL_DB_TABLE)
 

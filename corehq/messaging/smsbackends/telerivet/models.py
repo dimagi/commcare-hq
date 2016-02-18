@@ -98,4 +98,17 @@ class IncomingRequest(models.Model):
     phone_id = models.CharField(max_length=255, null=True)
     service_id = models.CharField(max_length=255, null=True)
     project_id = models.CharField(max_length=255, null=True)
-    secret = models.CharField(max_length=255, null=True)
+    secret = models.CharField(max_length=255, null=True, db_index=True)
+
+    @classmethod
+    def get_last_sms_by_webhook_secret(cls, webhook_secret):
+        from corehq.messaging.smsbackends.telerivet.tasks import MESSAGE_TYPE_SMS
+        result = cls.objects.filter(
+            secret=webhook_secret,
+            message_type=MESSAGE_TYPE_SMS
+        ).order_by('-time_created')[:1]
+
+        if len(result) == 1:
+            return result[0]
+
+        return None

@@ -88,7 +88,8 @@ function HQReportDataTables(options) {
                 iDisplayLength: self.defaultRows,
                 bAutoWidth: self.autoWidth,
                 sScrollX: "100%",
-                bSort: self.defaultSort
+                bSort: self.defaultSort,
+                bFilter: false
             };
             if (self.aaSorting !== null || self.customSort !== null) {
                 params.aaSorting = self.aaSorting || self.customSort;
@@ -199,6 +200,13 @@ function HQReportDataTables(options) {
                 $('.dataTables_paginate a').on('click', function () {
                     datatable.fnAdjustColumnSizing();
                 });
+                // This fixes a bug in some browsers where if the first column
+                // contains a large amount of data, it will overlap with the
+                // second column. This makes sure after load, the columns are
+                // re-adjusted.
+                setTimeout( function () {
+                    datatable.fnAdjustColumnSizing();
+                }, 10);
             }
 
             var $dataTablesFilter = $(".dataTables_filter");

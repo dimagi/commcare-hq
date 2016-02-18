@@ -1,4 +1,4 @@
-{% extends "reports/async/bootstrap2/tabular.html" %}
+{% extends "reports/async/bootstrap3/tabular.html" %}
 {% load hq_shared_tags %}
 {% load report_tags %}
 {% load i18n %}
@@ -8,7 +8,7 @@
         $(function() {
             $('#check_all').click( function() {
                 var oTable = $('#report_table_{{ report.slug }}').dataTable();
-                $('input', oTable.fnGetNodes()).attr('checked',this.checked);
+                $('input', oTable.fnGetNodes()).prop('checked', this.checked);
             });
         });
     </script>
@@ -17,18 +17,19 @@
 
 {% block reporttable %}
 {% if not report.needs_filters %}
-    <form class="form-inline" action="{% url "pillow_errors" %}" method="post">
+    <form action="{% url "pillow_errors" %}" method="post">
     {% csrf_token %}
-    <div style="text-align:right;">
-        <select name="action">
+    <div class="pull-right form form-inline" style="padding: 5px 10px;">
+        <select class="form-control" name="action">
             <option value="">{% trans "Select Action..." %}</option>
             <option value="delete">{% trans "Delete" %}</option>
             <option value="reset">{% trans "Reset Attempts" %}</option>
         </select>
         <label class="checkbox">
-            <input id="check_all" type="checkbox" name="check_all">{% trans "Select All" %}
+            <input id="check_all" type="checkbox" name="check_all">
+            {% trans "Select All" %}
         </label>
-        <button type="submit">{% trans "Go" %}</button>
+        <button type="submit" class="btn btn-default">{% trans "Go" %}</button>
     </div>
 {% endif %}
 {{ block.super }}
