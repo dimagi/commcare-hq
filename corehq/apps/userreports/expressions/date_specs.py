@@ -8,6 +8,23 @@ from corehq.apps.userreports.expressions.getters import transform_date, transfor
 from corehq.apps.userreports.specs import TypeProperty
 
 
+class AddDaysExpressionSpec(JsonObject):
+    type = TypeProperty('add_days')
+    date_expression = DefaultProperty(required=True)
+    count_expression = DefaultProperty(required=True)
+
+    def configure(self, date_expression, count_expression):
+        self._date_expression = date_expression
+        self._count_expression = count_expression
+
+    def __call__(self, item, context=None):
+        date_val = transform_date(self._date_expression(item, context))
+        int_val = transform_int(self._count_expression(item, context))
+        if date_val is not None and int_val is not None:
+            return date_val + datetime.timedelta(days=int_val)
+        return None
+
+
 class AddMonthsExpressionSpec(JsonObject):
     type = TypeProperty('add_months')
     date_expression = DefaultProperty(required=True)
