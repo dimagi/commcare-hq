@@ -90,6 +90,7 @@ add_days        | A way to add days to a date | `my_date + timedelta(days=15)`
 add_months      | A way to add months to a date | `my_date + relativedelta(months=15)`
 month_start_date| First day in the month of a date | `2015-01-20` -> `2015-01-01`
 month_end_date  | Last day in the month of a date | `2015-01-20` -> `2015-01-31`
+diff_days       | A way to get duration in days between two dates | `(to_date - from-date).days`
 
 
 ### JSON snippets for expressions
@@ -342,6 +343,24 @@ The date_expression and months_expression can be any valid expressions, or simpl
     "months_expression": 28
 }
 ```
+
+
+#### "Diff Days" expressions
+
+`diff_days` returns number of days between dates specified by `from_date_expression` and `to_date_expression`.
+The from_date_expression and to_date_expression can be any valid expressions, or simply constants.
+
+```json
+{
+    "type": "diff_days",
+    "from_date_expression": {
+        "type": "property_name",
+        "property_name": "dob",
+    },
+    "to_date_expression": "2016-02-01"
+}
+```
+
 
 #### "Month Start Date" and "Month End Date" expressions
 

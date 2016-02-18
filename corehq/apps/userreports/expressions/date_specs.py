@@ -52,3 +52,20 @@ class MonthEndDateExpressionSpec(JsonObject):
             first_week_day, last_day = calendar.monthrange(date_val.year, date_val.month)
             return datetime.date(date_val.year, date_val.month, last_day)
         return None
+
+
+class DiffDaysExpressionSpec(JsonObject):
+    type = TypeProperty('diff_days')
+    from_date_expression = DefaultProperty(required=True)
+    to_date_expression = DefaultProperty(required=True)
+
+    def configure(self, from_date_expression, to_date_expression):
+        self._from_date_expression = from_date_expression
+        self._to_date_expression = to_date_expression
+
+    def __call__(self, item, context=None):
+        from_date_val = transform_date(self._from_date_expression(item, context))
+        to_date_val = transform_date(self._to_date_expression(item, context))
+        if from_date_val is not None and to_date_val is not None:
+            return (to_date_val - from_date_val).days
+        return None

@@ -61,3 +61,25 @@ def test_month_end_date_expression(self, source_doc, expected_value):
         },
     })
     self.assertEqual(expected_value, expression(source_doc))
+
+
+@generate_cases([
+    ({'dob': '2015-01-20'}, '2015-02-20', 31),
+    ({'dob': '2015-01-20'}, '2015-04-20', 90),
+    ({'dob': '2015-02-20'}, '2015-01-20', -31),
+    (
+        {'dob': date(2015, 1, 31), 'to_date': '2015-02-28'},
+        {'type': 'property_name', 'property_name': 'to_date'},
+        28
+    ),
+])
+def test_diff_days_expression(self, source_doc, to_date_expression, expected_value):
+    expression = ExpressionFactory.from_spec({
+        'type': 'diff_days',
+        'from_date_expression': {
+            'type': 'property_name',
+            'property_name': 'dob',
+        },
+        'to_date_expression': to_date_expression
+    })
+    self.assertEqual(expected_value, expression(source_doc))

@@ -9,7 +9,7 @@ from corehq.apps.userreports.expressions.specs import PropertyNameGetterSpec, Pr
     IdentityExpressionSpec, IteratorExpressionSpec, SwitchExpressionSpec, ArrayIndexExpressionSpec, \
     NestedExpressionSpec, DictExpressionSpec, NamedExpressionSpec, AddDaysExpressionSpec
 from corehq.apps.userreports.expressions.date_specs import AddMonthsExpressionSpec, \
-    MonthStartDateExpressionSpec, MonthEndDateExpressionSpec
+    MonthStartDateExpressionSpec, MonthEndDateExpressionSpec, DiffDaysExpressionSpec
 from dimagi.utils.parsing import json_format_datetime, json_format_date
 from dimagi.utils.web import json_handler
 
@@ -142,6 +142,15 @@ def _month_end_date_expression(spec, context):
     return wrapped
 
 
+def _diff_days_expression(spec, context):
+    wrapped = DiffDaysExpressionSpec.wrap(spec)
+    wrapped.configure(
+        from_date_expression=ExpressionFactory.from_spec(wrapped.from_date_expression),
+        to_date_expression=ExpressionFactory.from_spec(wrapped.to_date_expression),
+    )
+    return wrapped
+
+
 class ExpressionFactory(object):
     spec_map = {
         'identity': _identity_expression,
@@ -161,6 +170,7 @@ class ExpressionFactory(object):
         'add_months': _add_months_expression,
         'month_start_date': _month_start_date_expression,
         'month_end_date': _month_end_date_expression,
+        'diff_days': _diff_days_expression,
     }
     # Additional items are added to the spec_map by use of the `register` method.
 
