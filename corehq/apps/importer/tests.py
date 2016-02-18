@@ -70,17 +70,18 @@ class ImporterTest(TestCase):
         self.couch_user.delete()
 
     def _config(self, col_names=None, search_column=None, case_type=None,
-                search_field='case_id', named_columns=False, create_new_cases=True):
+                search_field='case_id', named_columns=False, create_new_cases=True, type_fields=None):
         col_names = col_names or self.default_headers
         case_type = case_type or self.default_case_type
         search_column = search_column or col_names[0]
+        type_fields = type_fields if type_fields is not None else ['plain'] * len(col_names)
         return ImporterConfig(
             couch_user_id=self.couch_user._id,
             case_type=case_type,
             excel_fields=col_names,
             case_fields=[''] * len(col_names),
             custom_fields=col_names,
-            type_fields=['plain'] * len(col_names),
+            type_fields=type_fields,
             search_column=search_column,
             search_field=search_field,
             named_columns=named_columns,
@@ -285,8 +286,9 @@ class ImporterTest(TestCase):
 
         # Should be unable to find parent case on `rows` cases
         res = do_import(file_missing, config, self.domain)
+        error_column_name = 'parent_id'
         self.assertEqual(rows,
-                         len(res['errors'][ImportErrors.InvalidParentId]['rows']),
+                         len(res['errors'][ImportErrors.InvalidParentId][error_column_name]['rows']),
                          "All cases should have missing parent")
 
     def import_mock_file(self, rows):
@@ -329,12 +331,27 @@ class ImporterTest(TestCase):
         self.assertEqual(cases['location-owner-name'].owner_id, location.group_id)
 
         error_message = ImportErrors.DuplicateLocationName
+        error_column_name = None
         self.assertIn(error_message, res['errors'])
-        self.assertEqual(res['errors'][error_message]['rows'], [4])
+        self.assertEqual(res['errors'][error_message][error_column_name]['rows'], [4])
 
         error_message = ImportErrors.InvalidOwnerId
         self.assertIn(error_message, res['errors'])
-        self.assertEqual(res['errors'][error_message]['rows'], [5])
+        error_column_name = 'owner_id'
+        self.assertEqual(res['errors'][error_message][error_column_name]['rows'], [5])
+
+    def _typeTest(self, type_fields, error_message):
+        config = self._config(self.default_headers, type_fields=type_fields)
+        file = MockExcelFile(header_columns=self.default_headers, num_rows=3)
+        res = do_import(file, config, self.domain)
+        self.assertIn(self.default_headers[1], res['errors'][error_message])
+        self.assertEqual(res['errors'][error_message][self.default_headers[1]]['rows'], [1, 2, 3])
+
+    def testDateError(self):
+        self._typeTest(['plain', 'date', 'plain', 'plain'], ImportErrors.InvalidDate)
+
+    def testIntegerError(self):
+        self._typeTest(['plain', 'integer', 'plain', 'plain'], ImportErrors.InvalidInteger)
 
 
 class ImporterUtilsTest(SimpleTestCase):

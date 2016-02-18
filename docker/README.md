@@ -3,8 +3,12 @@ CommCare HQ docker
 
 Initial setup
 -------------
-* Install [Docker](http://docs.docker.com/installation)
-* Install [Docker Compose](https://docs.docker.com/compose/install/)
+* Linux
+   * Install [Docker](http://docs.docker.com/installation)
+   * Install [Docker Compose](https://docs.docker.com/compose/install/)
+* OS X
+   * Install [Docker Toolbox](https://docs.docker.com/mac/step_one/). Go through the full tutorial, which will create a default machine.
+   * If not using the Quick Start terminal, run `eval $(docker-machine env default)` to set up Docker's environment variables.
 * Bootstrap the setup:
 
     ```
@@ -24,6 +28,8 @@ Initial setup
 
     If all goes according to plan you should be able to log into CommCare: http://localhost:8000 using
     the login details above.
+    
+    On Mac, run `docker-machine ip` to get the VM's IP address, which replaces `localhost` in the URL.
 
 ### Configure your localsettings
 

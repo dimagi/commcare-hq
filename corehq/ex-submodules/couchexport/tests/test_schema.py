@@ -1,6 +1,6 @@
 from couchdbkit.ext.django.loading import get_db
 from django.test import TestCase, SimpleTestCase
-from couchexport.export import SCALAR_NEVER_WAS
+from couchexport.export import SCALAR_NEVER_WAS, get_formatted_rows, scalar_never_was
 from couchexport.models import ExportSchema, SavedExportSchema, SplitColumn
 from datetime import datetime, timedelta
 from couchexport.util import SerializableFunction
@@ -158,6 +158,31 @@ class SavedSchemaTest(TestCase):
         self.assertEqual(
             col.get_data(1),
             [None, None, 1]
+        )
+
+
+class GetFormattedRowsTests(SimpleTestCase):
+    def test(self):
+        doc = {
+            'gender': 'boy'
+        }
+        schema = {
+            'gender': {
+                '': 'string',
+                'gender': 'string'
+            }
+        }
+        formatted_rows = get_formatted_rows(doc, schema, '.')
+        headers = formatted_rows[0][1][0].get_data()
+        values = formatted_rows[0][1][1].get_data()
+        row_dict = dict(zip(list(headers), list(values)))
+        self.assertEqual(
+            row_dict,
+            {
+                'id': '0',
+                'gender.gender': scalar_never_was,
+                'gender': 'boy'
+            }
         )
 
 
