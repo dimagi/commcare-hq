@@ -1,4 +1,4 @@
-from django.conf.urls import patterns, url
+from django.conf.urls import patterns, url, include
 from corehq.apps.sms.views import (
     DomainSmsGatewayListView,
     SubscribeSMSView,
@@ -14,6 +14,8 @@ from corehq.apps.sms.views import (
     ComposeMessageView,
     SMSLanguagesView)
 from corehq.apps.smsbillables.dispatcher import SMSAdminInterfaceDispatcher
+from corehq.messaging.smsbackends.telerivet.urls import domain_specific as telerivet_urls
+
 
 urlpatterns = patterns('corehq.apps.sms.views',
     url(r'^$', 'default', name='sms_default'),
@@ -50,6 +52,7 @@ urlpatterns = patterns('corehq.apps.sms.views',
         name=ManageRegistrationInvitationsView.urlname),
     url(r'^app_info/(?P<token>[\w-]+)/$', InvitationAppInfoView.as_view(),
         name=InvitationAppInfoView.urlname),
+    url(r'^telerivet/', include(telerivet_urls)),
 )
 
 sms_admin_interface_urls = patterns('corehq.apps.sms.views',

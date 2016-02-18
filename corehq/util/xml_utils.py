@@ -22,7 +22,7 @@ def serialize(value):
 
 def indent_xml(xml_string):
     """
-    Takes an xml string and returns an indented and properly tabbled version of the string
+    Takes an xml string and returns an indented and properly tabbed version of the string
     """
     if isinstance(xml_string, unicode):
         xml_string = xml_string.encode('utf-8')

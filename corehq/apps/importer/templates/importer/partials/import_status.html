@@ -40,19 +40,21 @@
         </div>
         {% if result.errors %}
         <div class="alert alert-warning">
-            {% for error, value in result.errors.iteritems %}
-                {% if value.rows %}
-                <p>
-                    <strong>{{ value.error }}</strong>
-                </p>
-                <p>
-                    {{ value.description }}
-                </p>
-                <p>
-                    <span>{% trans "Affected rows:" %}</span> {{ value.rows|join:", " }}
-                </p>
-                {% endif %}
-                <hr />
+            {% for error, columns in result.errors.iteritems %}
+                {% for column, value in columns.iteritems %}
+                    {% if value.rows %}
+                        <p>
+                            <strong>{{ value.error }}</strong> {% if column != None %} {% trans 'in column' %} <strong>{{ column }}</strong>{% endif %}
+                        </p>
+                        <p>
+                            {{ value.description }}
+                        </p>
+                        <p>
+                            <span>{% trans "Affected rows:" %}</span> {{ value.rows|join:", " }}
+                        </p>
+                    {% endif %}
+                    <hr />
+                {% endfor %}
             {% endfor %}
         </div>
         {% endif %}
