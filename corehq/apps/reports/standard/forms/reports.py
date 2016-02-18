@@ -8,7 +8,6 @@ from corehq.util.timezones.conversions import ServerTime
 from couchforms.analytics import get_number_of_forms_of_all_types, get_number_of_forms_by_type
 from couchforms.dbaccessors import get_forms_by_type
 
-from dimagi.utils.couch.pagination import FilteredPaginator, CouchFilter
 from dimagi.utils.decorators.memoized import memoized
 from dimagi.utils.parsing import string_to_utc_datetime
 from corehq.apps.reports.display import xmlns_to_name
@@ -18,26 +17,6 @@ from django.utils.translation import ugettext_noop, ugettext as _
 def _compare_submissions(x, y):
     # these are backwards because we want most recent to come first
     return cmp(y.received_on, x.received_on)
-
-
-class SubmitFilter(CouchFilter):
-
-    def __init__(self, domain, doc_type):
-        self.domain = domain
-        self.doc_type = doc_type
-
-    def get_total(self):
-        return get_number_of_forms_by_type(self.domain, self.doc_type)
-
-    def get(self, count):
-        # this is a hack, but override the doc type because there is an
-        # equivalent doc type in the view
-        def _update_doc_type(form):
-            form.doc_type = self.doc_type
-            return form
-        forms = get_forms_by_type(self.domain, self.doc_type,
-                                  recent_first=True, limit=count)
-        return [_update_doc_type(form) for form in forms]
 
 
 class SubmissionErrorReport(DeploymentsReport):
