@@ -1,7 +1,7 @@
 from collections import namedtuple
 import datetime
 from django.utils.translation import ugettext_lazy as _
-from corehq.apps.accounting.utils import get_previous_month_date_range
+from corehq.apps.accounting.utils import get_previous_month_date_range, get_current_month_date_range
 from corehq.apps.reports.exceptions import InvalidDaterangeException
 
 
@@ -48,6 +48,8 @@ def get_daterange_start_end_dates(date_range, start_date=None, end_date=None, da
     elif date_range == 'range':
         start_date = start_date
         end_date = end_date
+    elif date_range == 'thismonth':
+        start_date, end_date = get_current_month_date_range()
     elif date_range == 'lastmonth':
         start_date, end_date = get_previous_month_date_range()
     elif date_range == 'lastyear':

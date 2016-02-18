@@ -3359,6 +3359,7 @@ class StaticDatespanFilter(ReportAppFilter):
         choices=[
             'last7',
             'last30',
+            'thismonth',
             'lastmonth',
             'lastyear',
         ],
