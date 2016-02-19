@@ -11,6 +11,7 @@ from corehq.apps.es.aggregations import (
     AggregationRange,
     StatsAggregation,
     ExtendedStatsAggregation,
+    TopHitsAggregation,
 )
 from corehq.apps.es.es_query import HQESQuery, ESQuerySet
 from corehq.apps.es.tests.utils import ElasticTestMixin
@@ -247,6 +248,37 @@ class TestAggregations(ElasticTestMixin, SimpleTestCase):
         }
         query = HQESQuery('cases').aggregation(
             ExtendedStatsAggregation('name_stats', 'name', script='MY weird script')
+        )
+        self.checkQuery(query, json_output)
+
+    def test_top_hits_aggregation(self):
+        json_output = {
+            "query": {
+                "filtered": {
+                    "filter": {
+                        "and": [
+                            {"match_all": {}}
+                        ]
+                    },
+                    "query": {"match_all": {}}
+                }
+            },
+            "aggs": {
+                "name_top_hits": {
+                    "top_hits": {
+                        "sort": [{
+                            "my_awesome_field": {
+                                "order": "desc"
+                            }
+                        }],
+                        "size": 2
+                    },
+                },
+            },
+            "size": SIZE_LIMIT
+        }
+        query = HQESQuery('cases').aggregation(
+            TopHitsAggregation('name_top_hits', 'my_awesome_field', is_ascending=False, size=2)
         )
         self.checkQuery(query, json_output)
 

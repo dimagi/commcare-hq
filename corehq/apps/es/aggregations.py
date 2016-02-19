@@ -208,6 +208,31 @@ class ExtendedStatsAggregation(StatsAggregation):
     result_class = ExtendedStatsResult
 
 
+class TopHitsAggregation(Aggregation):
+    """
+    Stats aggregation that computes a stats aggregation by field
+
+    :param name: aggregation name
+    :param field: name of the field to collect stats on
+    :param script: an optional field to allow you to script the computed field
+    """
+    type = "top_hits"
+    result_class = StatsResult
+
+    def __init__(self, name, field, is_ascending=True, size=1):
+        assert re.match(r'\w+$', name), \
+            "Names must be valid python variable names, was {}".format(name)
+        self.name = name
+        self.body = {
+            "sort": [{
+                field: {
+                    "order": 'asc' if is_ascending else 'desc'
+                },
+            }],
+            'size': size,
+        }
+
+
 class FilterResult(AggregationResult):
     @property
     def doc_count(self):
