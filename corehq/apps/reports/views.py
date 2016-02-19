@@ -55,7 +55,7 @@ from casexml.apps.case.xml import V2
 from casexml.apps.stock.models import StockTransaction
 from couchdbkit.exceptions import ResourceNotFound
 import couchexport
-from corehq.form_processor.exceptions import XFormNotFound, CaseNotFound
+from corehq.form_processor.exceptions import XFormNotFound, CaseNotFound, AttachmentNotFound
 from corehq.form_processor.interfaces.dbaccessors import FormAccessors, CaseAccessors
 from corehq.form_processor.models import UserRequestedRebuild
 from corehq.form_processor.utils import should_use_sql_backend
@@ -1547,14 +1547,12 @@ def download_attachment(request, domain, instance_id):
     instance = _get_form_or_404(domain, instance_id)
     assert(domain == instance.domain)
 
-    instance = XFormInstance.get(instance_id)
     try:
-        attach = instance._attachments[attachment]
-    except KeyError:
+        attach = FormAccessors(domain).get_attachment_content(instance_id, attachment)
+    except AttachmentNotFound:
         raise Http404()
-    response = HttpResponse(content_type=attach["content_type"])
-    response.write(instance.fetch_attachment(attachment))
-    return response
+
+    return StreamingHttpResponse(streaming_content=attach.content_stream, content_type=attach.content_type)
 
 
 @require_form_view_permission
