@@ -112,6 +112,30 @@ class AutoCloseExtensionsTest(SyncBaseTest):
         self.assertEqual(set(), no_cases)
 
     @flag_enabled('EXTENSION_CASES_SYNC_ENABLED')
+    def test_get_extension_to_close_child_host(self):
+        """should still return extension chain if outgoing index is a child index"""
+        created_cases = self._create_host_is_subcase_chain()
+        # host open, should be empty
+        no_cases = get_extensions_to_close(created_cases[-1], self.domain)
+        self.assertEqual(set(), no_cases)
+
+        # close parent, shouldn't get extensions
+        created_cases[-1] = self.factory.create_or_update_case(CaseStructure(
+            case_id='parent',
+            attrs={'close': True}
+        ))[0]
+        no_cases = get_extensions_to_close(created_cases[-1], self.domain)
+        self.assertEqual(set(), no_cases)
+
+        # close host that is also a child
+        created_cases[-2] = self.factory.create_or_update_case(CaseStructure(
+            case_id=self.host_id,
+            attrs={'close': True}
+        ))[0]
+        full_chain = get_extensions_to_close(created_cases[-2], self.domain)
+        self.assertEqual(set(self.extension_ids[0:2]), full_chain)
+
+    @flag_enabled('EXTENSION_CASES_SYNC_ENABLED')
     def test_close_cases_host(self):
         """Closing a host should close all the extensions"""
         self._create_extension_chain()
