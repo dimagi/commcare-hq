@@ -61,7 +61,7 @@ def upload_bulk_ui_translations(request, domain, app_id):
         if warnings:
             message = _html_message(_("Upload succeeded, but we found following issues for some properties"),
                                     warnings)
-            messages.warning(request, message)
+            messages.warning(request, message, extra_tags='html')
 
     except Exception:
         notify_exception(request, 'Bulk Upload Translations Error')
