@@ -27,20 +27,30 @@ from dimagi.utils.web import get_site_domain
 
 from corehq.apps.accounting.emails import send_subscription_change_alert
 from corehq.apps.accounting.exceptions import (
-    CreditLineError, AccountingError, SubscriptionAdjustmentError,
-    SubscriptionChangeError, NewSubscriptionError, InvoiceEmailThrottledError,
-    SubscriptionReminderError, SubscriptionRenewalError, ProductPlanNotFoundError,
+    AccountingError,
+    CreditLineError,
+    InvoiceEmailThrottledError,
+    NewSubscriptionError,
+    ProductPlanNotFoundError,
+    SubscriptionAdjustmentError,
+    SubscriptionChangeError,
+    SubscriptionReminderError,
+    SubscriptionRenewalError,
 )
 from corehq.apps.accounting.invoice_pdf import InvoiceTemplate
 from corehq.apps.accounting.signals import subscription_upgrade_or_downgrade
 from corehq.apps.accounting.subscription_changes import (
-    DomainDowngradeActionHandler, DomainUpgradeActionHandler,
+    DomainDowngradeActionHandler,
+    DomainUpgradeActionHandler,
 )
 from corehq.apps.accounting.utils import (
-    get_privileges, get_first_last_days,
-    get_address_from_invoice, get_dimagi_from_email_by_product,
-    fmt_dollar_amount, EXCHANGE_RATE_DECIMAL_PLACES,
-    ensure_domain_instance, get_change_status,
+    ensure_domain_instance,
+    EXCHANGE_RATE_DECIMAL_PLACES,
+    fmt_dollar_amount,
+    get_address_from_invoice,
+    get_change_status,
+    get_dimagi_from_email_by_product,
+    get_privileges,
     is_active_subscription,
     log_accounting_error,
     log_accounting_info,
