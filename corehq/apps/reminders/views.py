@@ -25,7 +25,6 @@ from corehq import toggles
 from dimagi.utils.logging import notify_exception
 
 from corehq.apps.reminders.forms import (
-    OneTimeReminderForm,
     BroadcastForm,
     SimpleScheduleCaseReminderForm,
     CaseReminderEventForm,
