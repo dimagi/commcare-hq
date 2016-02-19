@@ -48,6 +48,31 @@ class AutoCloseExtensionsTest(SyncBaseTest):
         )
         return self.factory.create_or_update_cases([extension_3])
 
+    def _create_host_is_subcase_chain(self):
+        parent = CaseStructure(case_id='parent')
+        host = CaseStructure(
+            case_id=self.host_id,
+            indices=[CaseIndex(
+                related_structure=parent,
+                relationship="child",
+            )],
+        )
+        extension = CaseStructure(
+            case_id=self.extension_ids[0],
+            indices=[CaseIndex(
+                related_structure=host,
+                relationship="extension",
+            )],
+        )
+        extension_2 = CaseStructure(
+            case_id=self.extension_ids[1],
+            indices=[CaseIndex(
+                related_structure=extension,
+                relationship="extension",
+            )],
+        )
+        return self.factory.create_or_update_cases([extension_2])
+
     def test_get_extension_chain_simple(self):
         host = CaseStructure(case_id=self.host_id)
         extension = CaseStructure(
@@ -111,3 +136,22 @@ class AutoCloseExtensionsTest(SyncBaseTest):
         self.assertTrue(CommCareCase.get(self.extension_ids[0]).closed)
         self.assertTrue(CommCareCase.get(self.extension_ids[1]).closed)
         self.assertTrue(CommCareCase.get(self.extension_ids[2]).closed)
+
+    @flag_enabled('EXTENSION_CASES_SYNC_ENABLED')
+    def test_close_cases_child(self):
+        """Closing a host that is also a child should close all the extensions"""
+        self._create_host_is_subcase_chain()
+
+        self.assertFalse(CommCareCase.get(self.host_id).closed)
+        self.assertFalse(CommCareCase.get(self.extension_ids[0]).closed)
+        self.assertFalse(CommCareCase.get(self.extension_ids[1]).closed)
+
+        self.factory.create_or_update_case(CaseStructure(
+            case_id=self.host_id,
+            attrs={'close': True}
+        ))
+
+        self.assertFalse(CommCareCase.get('parent').closed)
+        self.assertTrue(CommCareCase.get(self.host_id).closed)
+        self.assertTrue(CommCareCase.get(self.extension_ids[0]).closed)
+        self.assertTrue(CommCareCase.get(self.extension_ids[1]).closed)
