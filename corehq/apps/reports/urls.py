@@ -29,6 +29,7 @@ from .views import (
     CaseDetailsView,
     CaseAttachmentsView,
     MySavedReportsView,
+    ScheduledReportsView,
 )
 
 
@@ -109,7 +110,7 @@ urlpatterns = patterns('corehq.apps.reports.views',
 
     # Scheduled reports
     url(r'^scheduled_reports/(?P<scheduled_report_id>[\w-]+)?$',
-        'edit_scheduled_report', name="edit_scheduled_report"),
+        ScheduledReportsView.as_view(), name=ScheduledReportsView.urlname),
     url(r'^scheduled_report/(?P<scheduled_report_id>[\w-]+)/delete$',
         'delete_scheduled_report', name='delete_scheduled_report'),
     url(r'^send_test_scheduled_report/(?P<scheduled_report_id>[\w-]+)/$',
