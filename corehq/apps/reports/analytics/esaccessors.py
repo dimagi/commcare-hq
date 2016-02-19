@@ -94,7 +94,8 @@ def get_paged_forms_by_type(domain, doc_types, start=0, size=10):
         .start(start)
         .size(size)
     )
-    return PagedResult(total=query.run().total, hits=query.run().hits)
+    result = query.run()
+    return PagedResult(total=result.total, hits=result.hits)
 
 
 def get_submission_counts_by_user(domain, datespan):
