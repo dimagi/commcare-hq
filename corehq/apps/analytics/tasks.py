@@ -45,7 +45,7 @@ def _persistent_analytics_post(func, retries=ANALYTICS_RETRIES, sleep=ANALYTICS_
     for i in range(retries):
         try:
             return func()
-        except requests.exceptions.HTTPError:
+        except (requests.exceptions.HTTPError, requests.exceptions.BaseHTTPError):
             if i < retries - 1:
                 time.sleep(sleep)
             else:
@@ -434,10 +434,11 @@ def _track_periodic_data_on_kiss(submit_json):
 
 
 def _log_response(target, data, response):
+    status_code = response.status_code if isinstance(response, requests.models.Response) else response.status
     try:
         response_text = json.dumps(response.json(), indent=2, sort_keys=True)
     except Exception:
-        response_text = response.status_code
+        response_text = status_code
 
     message = 'Sent this data to {target}: {data} \nreceived: {response}'.format(
         target=target,
@@ -445,7 +446,7 @@ def _log_response(target, data, response):
         response=response_text
     )
 
-    if response.status_code != 200:
+    if status_code != 200:
         logger.error(message)
     else:
         logger.debug(message)
