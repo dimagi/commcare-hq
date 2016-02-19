@@ -52,9 +52,11 @@ class ProjectReportsTab(UITab):
     @property
     def sidebar_items(self):
 
+        from corehq.apps.reports.views import MySavedReportsView
+
         tools = [(_("Tools"), [
-            {'title': _('My Saved Reports'),
-             'url': reverse('saved_reports', args=[self.domain]),
+            {'title': MySavedReportsView.page_title,
+             'url': reverse(MySavedReportsView.urlname, args=[self.domain]),
              'icon': 'icon-tasks fa fa-tasks',
              'show_in_dropdown': True}
         ])]
