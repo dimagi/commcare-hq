@@ -74,7 +74,7 @@ class CaseAttachmentAPI(View):
                         r.write('Resolution: %d x %d<br>' % (meta['width'], meta['height']))
                         r.write('Filesize: %d<br>' % meta['content_length'])
 
-                        url_params = urllib.parse.urlencode({
+                        url_params = urllib.urlencode({
                             "img": '1',
                             "size": fsize,
                             "max_size": max_filesize,

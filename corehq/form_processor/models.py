@@ -21,7 +21,7 @@ from lxml import etree
 from uuidfield import UUIDField
 
 from corehq.blobs import get_blob_db
-from corehq.blobs.exceptions import NotFound
+from corehq.blobs.exceptions import NotFound, BadName
 from corehq.form_processor.exceptions import InvalidAttachment
 from corehq.form_processor.track_related import TrackRelatedChanges
 from corehq.sql_db.routers import db_for_read_write
@@ -354,7 +354,7 @@ class AbstractAttachment(DisabledDbMixin, models.Model, SaveStateMixin):
         db = get_blob_db()
         try:
             blob = db.get(self.blob_id, self._blobdb_bucket())
-        except (KeyError, NotFound):
+        except (KeyError, NotFound, BadName):
             raise AttachmentNotFound(self.name)
 
         if stream:
@@ -504,6 +504,7 @@ class CommCareCaseSQL(DisabledDbMixin, models.Model, RedisLockableMixIn,
         return dt
 
     @property
+    @memoized
     def xform_ids(self):
         from corehq.form_processor.backends.sql.dbaccessors import CaseAccessorSQL
         return CaseAccessorSQL.get_case_xform_ids(self.case_id)
@@ -566,8 +567,12 @@ class CommCareCaseSQL(DisabledDbMixin, models.Model, RedisLockableMixIn,
 
         return indices
 
+    @property
+    def has_indices(self):
+        return self.indices or self.reverse_indices
+
     def has_index(self, index_id):
-            return index_id in (i.identifier for i in self.indices)
+        return index_id in (i.identifier for i in self.indices)
 
     def get_index(self, index_id):
         found = filter(lambda i: i.identifier == index_id, self.indices)
@@ -755,6 +760,19 @@ class CommCareCaseIndexSQL(DisabledDbMixin, models.Model, SaveStateMixin):
     referenced_id = models.CharField(max_length=255, default=None)
     referenced_type = models.CharField(max_length=255, default=None)
     relationship_id = models.PositiveSmallIntegerField(choices=RELATIONSHIP_CHOICES)
+
+    @property
+    @memoized
+    def referenced_case(self):
+        """
+        For a 'forward' index this is the case that the the index points to.
+        For a 'reverse' index this is the case that owns the index.
+        See ``CaseAccessorSQL.get_reverse_indices``
+
+        :return: referenced case
+        """
+        from corehq.form_processor.backends.sql.dbaccessors import CaseAccessorSQL
+        return CaseAccessorSQL.get_case(self.referenced_id)
 
     @property
     def relationship(self):
