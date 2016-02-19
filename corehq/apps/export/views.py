@@ -8,7 +8,7 @@ from django.core.urlresolvers import reverse
 from django.http import HttpResponseRedirect, HttpResponseBadRequest, Http404
 from django.template.defaultfilters import filesizeformat
 
-from corehq.apps.export.export import get_download_task
+from corehq.apps.export.export import get_export_download
 from django_prbac.utils import has_privilege
 from django.utils.decorators import method_decorator
 import json
@@ -1443,7 +1443,7 @@ class DownloadNewFormExportView(DownloadFormExportView):
         export_instance = FormExportInstance.get(self.export_id)
         self._check_deid_permissions(export_instance)
 
-        return get_download_task(
+        return get_export_download(
             export_instances=[export_instance],
             filters=[],  # TODO: Do something with export_filters
             filename=u"{}{}".format(

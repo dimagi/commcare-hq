@@ -7,19 +7,19 @@ from soil.util import expose_cached_download
 
 
 @task
-def get_export_download(export_instances, filters, download_id, filename=None, expiry=10 * 60 * 60):
+def populate_export_download_task(export_instances, filters, download_id, filename=None, expiry=10 * 60 * 60):
     export_file = get_export_file(export_instances, filters)
 
-    format = Format.from_format(export_file.format)
+    file_format = Format.from_format(export_file.format)
     filename = filename or export_instances[0].name
-    escaped_filename = escape_quotes('%s.%s' % (filename, format.extension))
+    escaped_filename = escape_quotes('%s.%s' % (filename, file_format.extension))
 
     payload = export_file.file.payload
     expose_cached_download(
         payload,
         expiry,
-        ".{}".format(format.extension),
-        mimetype=format.mimetype,
+        ".{}".format(file_format.extension),
+        mimetype=file_format.mimetype,
         content_disposition='attachment; filename="%s"' % escaped_filename,
         download_id=download_id,
     )

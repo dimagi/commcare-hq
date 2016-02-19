@@ -106,11 +106,11 @@ def _get_tables(export_instances):
     return tables
 
 
-def get_download_task(export_instances, filters, filename=None):
-    from corehq.apps.export.tasks import get_export_download
+def get_export_download(export_instances, filters, filename=None):
+    from corehq.apps.export.tasks import populate_export_download_task
 
     download = DownloadBase()
-    download.set_task(get_export_download.delay(
+    download.set_task(populate_export_download_task.delay(
         export_instances,
         filters,
         download.download_id,
