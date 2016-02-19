@@ -134,7 +134,12 @@ def generate_domain_subscription_from_date(date_start, billing_account, domain,
     date_end_last_day = calendar.monthrange(date_end_year, date_end_month)[1]
 
     # make sure that the last month is never a full month (for testing)
-    date_end = datetime.date(date_end_year, date_end_month, min(date_end_last_day - 1, date_start.day + 1))
+    if subscription_length > 0:
+        last_day = min(date_end_last_day - 1, date_start.day + 1)
+    else:
+        last_day = date_end_last_day
+
+    date_end = datetime.date(date_end_year, date_end_month, last_day)
 
     subscriber, _ = Subscriber.objects.get_or_create(domain=domain)
     subscription = Subscription(
