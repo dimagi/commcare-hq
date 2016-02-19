@@ -287,6 +287,10 @@ class MySavedReportsView(BaseProjectReportSectionView):
     page_title = _("My Saved Reports")
     template_name = 'reports/reports_home.html'
 
+    @use_jquery_ui
+    def dispatch(self, request, *args, **kwargs):
+        return super(MySavedReportsView, self).dispatch(request, *args, **kwargs)
+
     @property
     def language(self):
         return self.request.couch_user.language or ucr_default_language()
