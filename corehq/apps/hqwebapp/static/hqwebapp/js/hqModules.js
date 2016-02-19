@@ -10,6 +10,9 @@ function hqDefine(path, moduleAccessor) {
         }
         object = object[parts[i]];
     }
+    if (typeof object[parts[i]] !== 'undefined') {
+        throw new Error("The module '" + path + "' has already been defined elsewhere.");
+    }
     object[parts[i]] = moduleAccessor();
 }
 
