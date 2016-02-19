@@ -5,6 +5,7 @@ from corehq.apps.change_feed import topics
 from corehq.apps.change_feed.consumer.feed import KafkaChangeFeed
 from corehq.elastic import get_es_new
 from corehq.form_processor.backends.sql.dbaccessors import doc_type_to_state
+from corehq.form_processor.change_providers import SqlFormChangeProvider
 from corehq.pillows.mappings.xform_mapping import XFORM_MAPPING, XFORM_INDEX
 from .base import HQPillow
 from couchforms.const import RESERVED_WORDS
@@ -15,6 +16,8 @@ from pillowtop.checkpoints.manager import PillowCheckpoint, get_django_checkpoin
 from pillowtop.es_utils import ElasticsearchIndexMeta
 from pillowtop.pillow.interface import ConstructedPillow
 from pillowtop.processors.elastic import ElasticProcessor
+from pillowtop.reindexer.change_providers.couch import CouchViewChangeProvider
+from pillowtop.reindexer.reindexer import PillowReindexer
 
 
 UNKNOWN_VERSION = 'XXX'
@@ -70,7 +73,7 @@ def transform_xform_for_elasticsearch(doc_dict, include_props=True):
     Given an XFormInstance, return a copy that is ready to be sent to elasticsearch,
     or None, if the form should not be saved to elasticsearch
     """
-    if doc_dict.get('domain', None) is None:
+    if doc_dict.get('domain', None) is None or doc_dict['form'] is None:
         # if there is no domain don't bother processing it
         return None
     else:
@@ -109,8 +112,9 @@ def transform_xform_for_elasticsearch(doc_dict, include_props=True):
 
 def prepare_sql_form_json_for_elasticsearch(sql_form_json):
     prepped_form = transform_xform_for_elasticsearch(sql_form_json)
-    prepped_form['doc_type'] = _get_doc_type_from_state(sql_form_json['state'])
-    prepped_form['_id'] = prepped_form['form_id']
+    if prepped_form:
+        prepped_form['doc_type'] = _get_doc_type_from_state(sql_form_json['state'])
+        prepped_form['_id'] = prepped_form['form_id']
 
     return prepped_form
 
@@ -133,9 +137,24 @@ def get_sql_xform_to_elasticsearch_pillow():
         name='SqlXFormToElasticsearchPillow',
         document_store=None,
         checkpoint=checkpoint,
-        change_feed=KafkaChangeFeed(topic=topics.FORM_SQL, group_id='sql-forms-to-es'),
+        change_feed=KafkaChangeFeed(topics=[topics.FORM_SQL], group_id='sql-forms-to-es'),
         processor=form_processor,
         change_processed_event_handler=PillowCheckpointEventHandler(
             checkpoint=checkpoint, checkpoint_frequency=100,
         ),
     )
+
+
+def get_couch_form_reindexer():
+    return PillowReindexer(XFormPillow(), CouchViewChangeProvider(
+        document_class=XFormInstance,
+        view_name='all_docs/by_doc_type',
+        view_kwargs={
+            'startkey': ['XFormInstance'],
+            'endkey': ['XFormInstance', {}],
+        }
+    ))
+
+
+def get_sql_form_reindexer():
+    return PillowReindexer(get_sql_xform_to_elasticsearch_pillow(), SqlFormChangeProvider())

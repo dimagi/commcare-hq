@@ -149,7 +149,7 @@ class BaseHNBCReport(CustomProjectReport, CaseListReport):
             DataTablesColumn(_("CHW Name"), prop_name="owner_display", sortable=False),
             DataTablesColumn(_("Date of Delivery"),  prop_name="date_birth.#value"),
             DataTablesColumn(_("PNC Visit Completion"), sortable=False),
-            DataTablesColumn(_("Delivery"), prop_name="place_birth"),
+            DataTablesColumn(_("Delivery"), prop_name="place_birth.#value"),
         )
         return headers
 

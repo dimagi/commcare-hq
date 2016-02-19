@@ -26,8 +26,9 @@
                 }
             }
             $('.new_property').change(updatePropertyInput);
-            function removeRow() {
+            function removeRow(e) {
                 $(this).closest('tr').remove();
+                e.preventDefault();
             }
 
             var allowedCaseProperties = {{ case_fields|JSON }};

@@ -46,7 +46,7 @@ class StockTransactionReport(CustomProjectReport, GenericTabularReport,
             DataTablesColumn('Transaction Type')
         )
 
-        if self.split_by_product:
+        if not self.split_by_product:
             headers.add_column(DataTablesColumn("Product"))
             headers.add_column(DataTablesColumn("Stock On Hand"))
             headers.add_column(DataTablesColumn("Consumption"))
@@ -76,7 +76,7 @@ class StockTransactionReport(CustomProjectReport, GenericTabularReport,
                                  self.datespan.end_of_end_day]
         ).order_by('case_id', '-report__date', '-pk')
 
-        if self.split_by_product:
+        if not self.split_by_product:
             for transaction in transactions:
                 location = self.get_location_by_case_id(transaction.case_id)
                 yield [

@@ -1,3 +1,5 @@
+from couchdbkit.exceptions import ResourceNotFound
+
 from casexml.apps.case.dbaccessors import get_extension_case_ids, \
     get_indexed_case_ids, get_all_reverse_indices_info
 from casexml.apps.case.models import CommCareCase
@@ -12,20 +14,39 @@ from corehq.dbaccessors.couchapps.cases_by_server_date.by_owner_server_modified_
     get_case_ids_modified_with_owner_since
 from corehq.dbaccessors.couchapps.cases_by_server_date.by_server_modified_on import \
     get_last_modified_dates
-from corehq.form_processor.interfaces.dbaccessors import AbstractCaseAccessor, AbstractFormAccessor
+from corehq.form_processor.exceptions import AttachmentNotFound
+from corehq.form_processor.interfaces.dbaccessors import (
+    AbstractCaseAccessor, AbstractFormAccessor, AttachmentContent
+)
 from couchforms.dbaccessors import (
     get_forms_by_type,
     get_deleted_form_ids_for_user,
     get_form_ids_for_user,
-)
+    get_forms_by_id)
 from couchforms.models import XFormInstance, doc_types
 from dimagi.utils.couch.database import iter_docs
 
 
 class FormAccessorCouch(AbstractFormAccessor):
     @staticmethod
+    def form_exists(self, form_id, domain=None):
+        if not domain:
+            return XFormInstance.get_db().doc_exist(form_id)
+        else:
+            try:
+                xform = XFormInstance.get(form_id)
+            except ResourceNotFound:
+                return False
+
+            return xform.domain == domain
+
+    @staticmethod
     def get_form(form_id):
         return XFormInstance.get(form_id)
+
+    @staticmethod
+    def get_forms(form_ids):
+        return get_forms_by_id(form_ids)
 
     @staticmethod
     def get_forms_by_type(domain, type_, limit, recent_first=False):
@@ -35,6 +56,10 @@ class FormAccessorCouch(AbstractFormAccessor):
     def get_with_attachments(form_id):
         doc = XFormInstance.get_db().get(form_id, attachments=True)
         return doc_types()[doc['doc_type']].wrap(doc)
+
+    @staticmethod
+    def get_attachment_content(form_id, attachment_id):
+        return _get_attachment_content(XFormInstance, form_id, attachment_id)
 
     @staticmethod
     def save_new_form(form):
@@ -113,3 +138,18 @@ class CaseAccessorCouch(AbstractCaseAccessor):
     @staticmethod
     def get_all_reverse_indices_info(domain, case_ids):
         return get_all_reverse_indices_info(domain, case_ids)
+
+    @staticmethod
+    def get_attachment_content(case_id, attachment_id):
+        return _get_attachment_content(CommCareCase, case_id, attachment_id)
+
+
+def _get_attachment_content(doc_class, doc_id, attachment_id):
+    try:
+        resp = doc_class.get_db().fetch_attachment(doc_id, attachment_id, stream=True)
+    except ResourceNotFound:
+        raise AttachmentNotFound(attachment_id)
+
+    headers = resp.resp.headers
+    content_type = headers.get('Content-Type', None)
+    return AttachmentContent(content_type, resp)

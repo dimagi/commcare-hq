@@ -1,0 +1,27 @@
+{% load i18n %}
+{% load hq_shared_tags %}
+{% load djangular_tags %}
+{% load crispy_forms_tags %}
+
+<script type="text/ng-template" id="finish.tpl">
+    <h2>{% trans "Finish Setup" %}</h2>
+    <div ng-controller="TelerivetSetupController" ng-cloak>
+        <div ng-hide="setupComplete">
+            <p class="help-block">
+                <i class="fa fa-info-circle" />
+                {% blocktrans %}
+                Choose a name for this gateway below and click Finish.
+                {% endblocktrans %}
+            </p>
+        </div>
+        <div ng-hide="setupComplete">
+            {% crispy finalize_gateway_form %}
+        </div>
+        <div ng-show="setupComplete">
+            <a href="{% url 'list_domain_backends' domain %}" class="btn btn-success">
+                {% trans "Success! Return to gateway list" %}
+                <span class="glyphicon glyphicon-chevron-right" />
+            </a>
+        </div>
+    </div>
+</script>

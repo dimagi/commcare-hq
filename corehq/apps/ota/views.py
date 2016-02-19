@@ -9,7 +9,7 @@ from corehq.apps.domain.decorators import domain_admin_required, login_or_digest
 from corehq.apps.domain.models import Domain
 from corehq.apps.domain.views import DomainViewMixin, EditMyProjectSettingsView
 from corehq.apps.hqwebapp.models import ProjectSettingsTab
-from corehq.apps.ota.forms import PrimeRestoreCacheForm
+from corehq.apps.ota.forms import PrimeRestoreCacheForm, AdvancedPrimeRestoreCacheForm
 from corehq.apps.ota.tasks import prime_restore
 from corehq.apps.style.views import BaseB3SectionPageView
 from corehq.apps.users.models import CouchUser, CommCareUser
@@ -81,7 +81,7 @@ def get_restore_response(domain, couch_user, app_id=None, since=None, version='1
 
 
 class PrimeRestoreCacheView(BaseB3SectionPageView, DomainViewMixin):
-    page_title = ugettext_noop("Prime Restore Cache")
+    page_title = ugettext_noop("Speed up 'Sync with Server'")
     section_name = ugettext_noop("Project Settings")
     urlname = 'prime_restore_cache'
     template_name = "ota/prime_restore_cache.html"
@@ -137,6 +137,32 @@ class PrimeRestoreCacheView(BaseB3SectionPageView, DomainViewMixin):
         if self.form.is_valid():
             return self.form_valid()
         return self.get(request, *args, **kwargs)
+
+    def form_valid(self):
+        download = DownloadBase()
+        res = prime_restore.delay(
+            self.domain,
+            CommCareUser.ids_by_domain(self.domain),
+            version=V2,
+            cache_timeout_hours=24,
+            overwrite_cache=True,
+            check_cache_only=False
+        )
+        download.set_task(res)
+
+        return redirect('hq_soil_download', self.domain, download.download_id)
+
+
+class AdvancedPrimeRestoreCacheView(PrimeRestoreCacheView):
+    template_name = "ota/advanced_prime_restore_cache.html"
+    urlname = 'advanced_prime_restore_cache'
+
+    @property
+    @memoized
+    def form(self):
+        if self.request.method == 'POST':
+            return AdvancedPrimeRestoreCacheForm(self.request.POST)
+        return AdvancedPrimeRestoreCacheForm()
 
     def form_valid(self):
         if self.form.cleaned_data['all_users']:

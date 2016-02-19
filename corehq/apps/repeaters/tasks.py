@@ -1,15 +1,20 @@
-from datetime import datetime, timedelta
+from datetime import datetime
 import json
+
+from django.conf import settings
 from celery.task import periodic_task
 from celery.utils.log import get_task_logger
-from django.conf import settings
 
 from corehq.apps.repeaters.models import RepeatRecord
+from corehq.apps.repeaters.const import CHECK_REPEATERS_INTERVAL
 
 logging = get_task_logger(__name__)
 
-CHECK_REPEATERS_INTERVAL = timedelta(minutes=5)
-@periodic_task(run_every=CHECK_REPEATERS_INTERVAL, queue=getattr(settings, 'CELERY_PERIODIC_QUEUE','celery'))
+
+@periodic_task(
+    run_every=CHECK_REPEATERS_INTERVAL,
+    queue=settings.CELERY_PERIODIC_QUEUE,
+)
 def check_repeaters():
     start = datetime.utcnow()
     LIMIT = 100

@@ -355,7 +355,7 @@ def add_odk_profile_after_build(app_build):
     app_build.odk_profile_created_after_build = True
 
 
-def create_temp_sort_column(field, index):
+def create_temp_sort_column(field):
     """
     Used to create a column for the sort only properties to
     add the field to the list of properties and app strings but

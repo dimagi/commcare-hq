@@ -1187,5 +1187,5 @@
     
   },
   "admin_password_charset": "n",
-  "case_sharing": false,
+  "case_sharing": false
 }

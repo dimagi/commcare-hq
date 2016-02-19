@@ -60,6 +60,15 @@ K={{ color.cmyk.k }}</pre>
                     its Cyan, Magenta, Yellow, and blacK counterparts.
                 </p>
                 {% endif %}
+
+                <h4>
+                    HQ Usage
+                    <a target='_blank'
+                       href='https://github.com/dimagi/commcare-hq/blob/master/corehq/apps/style/static/style/less/bootstrap3/includes/variables.less'>
+                        <i class="fa fa-external-link"></i>
+                    </a>
+                </h4>
+                <pre>@cc-{{ color_slug }}{% if color_type != "c" %}-{{ color_type }}{% endif %}</pre>
             </div>
             <div class="modal-footer">
                 <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>

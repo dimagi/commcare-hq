@@ -132,7 +132,7 @@ def get_app_sources(domain):
             "case": [{"text": t, "value": t} for t in app.get_case_types()],
             "form": [
                 {
-                    "text": form.default_name(),
+                    "text": u'{} / {}'.format(form.get_module().default_name(), form.default_name()),
                     "value": form.get_unique_id()
                 } for form in app.get_forms()
             ]

@@ -4,6 +4,7 @@ from .test_static_data_sources import *
 from .test_static_reports import *
 from .test_export import *
 from .test_expressions import *
+from .test_date_expressions import *
 from .test_filters import *
 from .test_getters import *
 from .test_data_source_config import *

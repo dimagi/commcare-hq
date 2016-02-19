@@ -10,8 +10,5 @@
 {% block filter_js %}
 <script type="text/javascript">
     $('#{{ css_id }}').select2({tags:{{ tags|JSON }}, allowClear: true});
-
-    //hack to fix issues with placeholder not showing up fully
-    $('.select2-search-field').width('100%').find('.select2-input').width('100%')
 </script>
 {% endblock %}
