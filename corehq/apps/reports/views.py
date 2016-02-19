@@ -199,7 +199,7 @@ def default(request, domain):
     module = Domain.get_module_by_name(domain)
     if hasattr(module, 'DEFAULT_REPORT_CLASS'):
         return HttpResponseRedirect(getattr(module, 'DEFAULT_REPORT_CLASS').get_url(domain))
-    return HttpResponseRedirect(reverse(saved_reports, args=[domain]))
+    return HttpResponseRedirect(reverse(MySavedReportsView.urlname, args=[domain]))
 
 
 @login_and_domain_required
@@ -213,67 +213,6 @@ class BaseProjectReportSectionView(BaseDomainView):
     @use_bootstrap3
     def dispatch(self, request, *args, **kwargs):
         request.project = Domain.get_by_name(self.domain)
-        if not user_can_view_reports(request.project, request.couch_user):
-            raise Http404()
-        return super(BaseProjectReportSectionView, self).dispatch(request, *args, **kwargs)
-
-    @property
-    def section_url(self):
-        return reverse('reports_home', args=(self.domain, ))
-
-
-@login_and_domain_required
-def saved_reports(request, domain, template="reports/reports_home.html"):
-    user = request.couch_user
-    if not user_can_view_reports(request.project, user):
-        raise Http404
-
-    lang = request.couch_user.language or ucr_default_language()
-
-    all_configs = ReportConfig.by_domain_and_owner(domain, user._id)
-    good_configs = []
-    for config in all_configs:
-        if config.is_configurable_report and not config.configurable_report:
-            continue
-
-        good_configs.append(config.to_complete_json(lang=lang))
-
-    def _is_valid(rn):
-        # the _id check is for weird bugs we've seen in the wild that look like
-        # oddities in couch.
-        return hasattr(rn, "_id") and rn._id and (not hasattr(rn, 'report_slug') or rn.report_slug != 'admin_domains')
-
-    scheduled_reports = [rn for rn in ReportNotification.by_domain_and_owner(domain, user._id) if _is_valid(rn)]
-    scheduled_reports = sorted(scheduled_reports, key=lambda rn: rn.configs[0].name)
-    for report in scheduled_reports:
-        time_difference = get_timezone_difference(domain)
-        (report.hour, day_change) = recalculate_hour(report.hour, int(time_difference[:3]), int(time_difference[3:]))
-        report.minute = 0
-        if day_change:
-            report.day = calculate_day(report.interval, report.day, day_change)
-
-    context = dict(
-        couch_user=request.couch_user,
-        domain=domain,
-        configs=good_configs,
-        scheduled_reports=scheduled_reports,
-        report=dict(
-            title=_("My Saved Reports"),
-            show=True,
-            slug=None,
-            is_async=True,
-            section_name=ProjectReport.section_name,
-        ),
-    )
-    return render(request, template, context)
-
-
-class BaseProjectReportSectionView(BaseDomainView):
-    section_name = ugettext_lazy("Project Reports")
-
-    @use_bootstrap3
-    def dispatch(self, request, *args, **kwargs):
-        request.project = Domain.get_by_name(kwargs['domain'])
         if not user_can_view_reports(request.project, request.couch_user):
             raise Http404()
         return super(BaseProjectReportSectionView, self).dispatch(request, *args, **kwargs)
