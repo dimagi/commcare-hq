@@ -1445,7 +1445,7 @@ class DownloadNewFormExportView(DownloadFormExportView):
 
         return get_download_task(
             export_instances=[export_instance],
-            filters=[], # TODO: Do something with export_filters
+            filters=[],  # TODO: Do something with export_filters
             filename=u"{}{}".format(
                 export_instance.name,
                 date.today().isoformat()

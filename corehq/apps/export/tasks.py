@@ -7,7 +7,7 @@ from soil.util import expose_cached_download
 
 
 @task
-def get_export_download(export_instances, filters, download_id, filename=None, expiry=10*60*60):
+def get_export_download(export_instances, filters, download_id, filename=None, expiry=10 * 60 * 60):
     export_file = get_export_file(export_instances, filters)
 
     format = Format.from_format(export_file.format)
