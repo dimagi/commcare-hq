@@ -21,7 +21,7 @@ from lxml import etree
 from uuidfield import UUIDField
 
 from corehq.blobs import get_blob_db
-from corehq.blobs.exceptions import NotFound
+from corehq.blobs.exceptions import NotFound, BadName
 from corehq.form_processor.exceptions import InvalidAttachment
 from corehq.form_processor.track_related import TrackRelatedChanges
 from corehq.sql_db.routers import db_for_read_write
@@ -354,7 +354,7 @@ class AbstractAttachment(DisabledDbMixin, models.Model, SaveStateMixin):
         db = get_blob_db()
         try:
             blob = db.get(self.blob_id, self._blobdb_bucket())
-        except (KeyError, NotFound):
+        except (KeyError, NotFound, BadName):
             raise AttachmentNotFound(self.name)
 
         if stream:
