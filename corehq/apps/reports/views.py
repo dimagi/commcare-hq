@@ -141,7 +141,10 @@ from .models import (
 )
 
 from .standard import inspect, export, ProjectReport
-from corehq.apps.style.decorators import use_bootstrap3
+from corehq.apps.style.decorators import (
+    use_bootstrap3,
+    use_jquery_ui,
+)
 from .standard.cases.basic import CaseListReport
 from .tasks import (
     build_form_multimedia_zip,
@@ -287,6 +290,10 @@ class MySavedReportsView(BaseProjectReportSectionView):
     urlname = 'saved_reports'
     page_title = _("My Saved Reports")
     template_name = 'reports/reports_home.html'
+
+    @use_jquery_ui
+    def dispatch(self, request, *args, **kwargs):
+        return super(MySavedReportsView, self).dispatch(request, *args, **kwargs)
 
     @property
     def language(self):
