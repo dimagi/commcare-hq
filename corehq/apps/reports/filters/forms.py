@@ -3,7 +3,6 @@ from django.conf import settings
 from django.utils.safestring import mark_safe
 from corehq.apps.app_manager.models import Application
 from corehq.apps.reports.analytics.couchaccessors import (
-    guess_form_name_from_submissions_using_xmlns,
     get_all_form_definitions_grouped_by_app_and_xmlns,
     get_all_form_details,
     get_form_details_for_xmlns,
@@ -436,15 +435,10 @@ class FormsByApplicationFilter(BaseDrilldownOptionFilter):
     @staticmethod
     def get_filtered_data_for_parsed_params(domain, parsed_params):
         # this code path has multiple forks:
-        # 0. if status isn't set (which cory doesn't think is possible) it defaults to filtering by
-        #    status "active". otherwise it will set status to be "active" or "deleted" depending
-        #    on what's passed in.
         # 1. if status is set, but nothing else is, it will return all forms in apps of that status
         # 2. if status and app_id are set, but nothing else, it will return all forms in that app
         # 3. if status and app_id and module_id are set, it will return all forms in that module if
         #    the module is valid, otherwise it falls back to the app
-        # 4. if status, app_id, module_id, and xmlns are set (which cory doesn't think is possible)
-        #    it returns that form.
         deleted = parsed_params.status == PARAM_VALUE_STATUS_DELETED
         if parsed_params.most_granular_filter == 'module':
             return get_form_details_for_app_and_module(
