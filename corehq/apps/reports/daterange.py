@@ -1,8 +1,8 @@
 from collections import namedtuple
 import datetime
 from django.utils.translation import ugettext_lazy as _
-from corehq.apps.accounting.utils import get_previous_month_date_range, get_current_month_date_range
 from corehq.apps.reports.exceptions import InvalidDaterangeException
+from corehq.util.dates import get_current_month_date_range, get_previous_month_date_range
 
 
 DateRangeChoice = namedtuple('DateRangeChoice', ['slug', 'description', 'simple'])

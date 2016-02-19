@@ -50,6 +50,7 @@ from corehq.apps.domain.models import Domain
 from corehq.apps.hqwebapp.tasks import send_html_email_async
 from corehq.apps.users.models import WebUser
 from corehq.const import USER_DATE_FORMAT
+from corehq.util.dates import get_first_last_days
 from corehq.util.quickcache import quickcache
 from corehq.util.view_utils import absolute_reverse
 
