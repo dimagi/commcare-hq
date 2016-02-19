@@ -238,6 +238,7 @@ var ReportModule = (function () {
             'case_sharing_group',
             'location_id',
             'parent_location_id',
+            'ancestor_location_type_id',
             'username',
             'user_id'
         ];
