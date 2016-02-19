@@ -32,6 +32,7 @@ from corehq.apps.reports.analytics.esaccessors import (
     get_total_case_counts_by_owner,
     get_case_counts_closed_by_user,
     get_case_counts_opened_by_user,
+    get_last_form_submission_for_user_for_app,
     get_user_stubs,
     get_group_stubs,
     get_form_counts_by_user_xmlns)
@@ -155,6 +156,7 @@ class TestFormESAccessors(BaseESAccessorsTest):
         )
         self.assertEquals(results['2013-07-15'], 1)
 
+
     def test_timezone_differences(self):
         """
         Our received_on dates are always in UTC, so if we submit a form right at midnight UTC, then the report
@@ -174,6 +176,27 @@ class TestFormESAccessors(BaseESAccessorsTest):
             timezone
         )
         self.assertEquals(results['2013-07-14'], 1)
+
+    def test_get_last_form_submission_for_user_for_app(self):
+        kwargs = {
+            'user_id': 'u1',
+            'app_id': '1234',
+            'domain': self.domain,
+        }
+
+        first = datetime(2013, 7, 15, 0, 0, 0)
+        second = datetime(2013, 7, 16, 0, 0, 0)
+        third = datetime(2013, 7, 17, 0, 0, 0)
+
+        self._send_form_to_es(received_on=second, xmlns='second', **kwargs)
+        self._send_form_to_es(received_on=third, xmlns='third', **kwargs)
+        self._send_form_to_es(received_on=first, xmlns='first', **kwargs)
+
+        form = get_last_form_submission_for_user_for_app(self.domain, 'u1', '1234')
+        self.assertEqual(form['xmlns'], 'third')
+
+        form = get_last_form_submission_for_user_for_app(self.domain, 'u1', 'nothing')
+        self.assertEqual(form, None)
 
     def test_get_form_counts_by_user_xmlns(self):
         user1, user2 = 'u1', 'u2'

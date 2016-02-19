@@ -58,12 +58,15 @@ class BulkUiTranslation(SimpleTestCase):
                 u'en': {
                     u'date.tomorrow': u'wobble',
                     u'entity.sort.title': u'wabble',
-                    u'home.start.demo': u'Ding'
+                    u'home.start.demo': u'Ding',
+                    u'unknown_string': u'Ding',
                 },
                 u'fra': {
                     u'activity.locationcapture.Longitude': u'wibble',
                     u'entity.sort.title': u'wubble',
-                    u'home.start.demo': u'Dong'}
+                    u'home.start.demo': u'Dong',
+                    u'unknown_string': u'Dong',
+                }
             }
 
         )

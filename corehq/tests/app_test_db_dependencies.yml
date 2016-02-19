@@ -305,6 +305,7 @@ corehq.apps.accounting:
   - django_prbac
   - corehq.apps.tzmigration
   - corehq.apps.domain
+  - corehq.apps.userhack
   - corehq.apps.users
   - corehq.couchapps
   - corehq.apps.sms

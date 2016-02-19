@@ -81,6 +81,24 @@ def _get_case_counts_by_user(domain, datespan, case_types=None, is_opened=True):
     return case_query.run().aggregations.by_user.counts_by_bucket()
 
 
+def get_last_form_submission_for_user_for_app(domain, user_id, app_id=None):
+
+    query = (
+        FormES()
+        .domain(domain)
+        .user_id([user_id])
+        .sort('received_on', desc=True)
+        .size(1)
+    )
+
+    if app_id:
+        query = query.app(app_id)
+
+    if query.run().hits:
+        return query.run().hits[0]
+    return None
+
+
 def get_submission_counts_by_user(domain, datespan):
     return _get_form_counts_by_user(domain, datespan, True)
 

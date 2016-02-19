@@ -345,63 +345,6 @@ class SupplyPointCase(CommCareCase):
         from corehq.apps.commtrack.helpers import update_supply_point_from_location
         return update_supply_point_from_location(self, location)
 
-    def to_full_dict(self):
-        data = super(SupplyPointCase, self).to_full_dict()
-        data.update({
-            'location_type': None,
-            'location_site_code': None,
-            'location_parent_name': None,
-        })
-        try:
-            location = self.sql_location
-        except SQLLocation.DoesNotExist:
-            pass
-        else:
-            data['location_type'] = location.location_type_name
-            data['location_site_code'] = location.site_code
-            if location.parent:
-                data['location_parent_name'] = location.parent.name
-
-        return data
-
-    @classmethod
-    def get_display_config(cls):
-        return [
-            {
-                "layout": [
-                    [
-                        {
-                            "expr": "name",
-                            "name": _("Name"),
-                        },
-                        {
-                            "expr": "location_type",
-                            "name": _("Type"),
-                        },
-                        {
-                            "expr": "location_site_code",
-                            "name": _("Code"),
-                        },
-                        #{
-                            #"expr": "last_reported",
-                            #"name": _("Last Reported"),
-                        #},
-                    ],
-                    [
-                        {
-                            "expr": "location_parent_name",
-                            "name": _("Parent Location"),
-                        },
-                        {
-                            "expr": "owner_id",
-                            "name": _("Location"),
-                            "process": "doc_info",
-                        },
-                    ],
-                ],
-            }
-        ]
-
 
 UNDERSTOCK_THRESHOLD = 0.5  # months
 OVERSTOCK_THRESHOLD = 2.  # months

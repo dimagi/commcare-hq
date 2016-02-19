@@ -73,7 +73,7 @@ def transform_xform_for_elasticsearch(doc_dict, include_props=True):
     Given an XFormInstance, return a copy that is ready to be sent to elasticsearch,
     or None, if the form should not be saved to elasticsearch
     """
-    if doc_dict.get('domain', None) is None:
+    if doc_dict.get('domain', None) is None or doc_dict['form'] is None:
         # if there is no domain don't bother processing it
         return None
     else:
@@ -112,8 +112,9 @@ def transform_xform_for_elasticsearch(doc_dict, include_props=True):
 
 def prepare_sql_form_json_for_elasticsearch(sql_form_json):
     prepped_form = transform_xform_for_elasticsearch(sql_form_json)
-    prepped_form['doc_type'] = _get_doc_type_from_state(sql_form_json['state'])
-    prepped_form['_id'] = prepped_form['form_id']
+    if prepped_form:
+        prepped_form['doc_type'] = _get_doc_type_from_state(sql_form_json['state'])
+        prepped_form['_id'] = prepped_form['form_id']
 
     return prepped_form
 
