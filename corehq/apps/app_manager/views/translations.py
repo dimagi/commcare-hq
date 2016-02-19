@@ -49,7 +49,7 @@ def upload_bulk_ui_translations(request, domain, app_id):
             app, request.file
         )
         if error_properties:
-            message = _html_message(_("Upload failed. We found problem with following translations:"),
+            message = _html_message(_("Upload failed. We found problems with the following translations:"),
                                     error_properties)
             messages.error(request, message, extra_tags='html')
         else:
