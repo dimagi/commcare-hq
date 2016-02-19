@@ -440,17 +440,7 @@ class FormsByApplicationFilter(BaseDrilldownOptionFilter):
         # 4. if status, app_id, module_id, and xmlns are set (which cory doesn't think is possible)
         #    it returns that form.
         deleted = parsed_params.status == PARAM_VALUE_STATUS_DELETED
-        _assert = soft_assert(to='@'.join(['czue', 'dimagi.com']))
-        if parsed_params.module is not None and parsed_params.get_module_int() is None:
-            # todo: remove anytime in 2016
-            _assert(False, "module set but not a valid number!")
-            return get_form_details_for_app(domain, parsed_params.app_id, deleted=deleted)
-        elif parsed_params.most_granular_filter == 'xmlns':
-            # todo: remove anytime in 2016
-            _assert(False, "got to form ID even though this shouldn't be possible")
-            return get_form_details_for_app_and_xmlns(
-                domain, parsed_params.app_id, parsed_params.xmlns, deleted=deleted)
-        elif parsed_params.most_granular_filter == 'module':
+        if parsed_params.most_granular_filter == 'module':
             return get_form_details_for_app_and_module(
                 domain, parsed_params.app_id, parsed_params.get_module_int(), deleted=deleted
             )
@@ -458,11 +448,6 @@ class FormsByApplicationFilter(BaseDrilldownOptionFilter):
             return get_form_details_for_app(domain, parsed_params.app_id, deleted=deleted)
         elif parsed_params.most_granular_filter == 'status':
             return get_all_form_details(domain, deleted=deleted)
-        else:
-            # todo: remove anytime in 2016
-            _assert(False, 'most granular filter was a surprising value ({}).'.format(
-                parsed_params.most_granular_filter))
-            return get_all_form_details(domain)
 
     def _get_selected_forms(self, filter_results):
         """
