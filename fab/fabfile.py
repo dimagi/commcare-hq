@@ -670,7 +670,7 @@ def _deploy_without_asking():
         if do_migrate:
 
             if all(execute(_migrations_exist).values()):
-                _execute_with_timing(stop_pillows)
+                _execute_with_timing(_stop_pillows)
                 execute(set_in_progress_flag)
                 _execute_with_timing(stop_celery_tasks)
             _execute_with_timing(_migrate)
@@ -1301,10 +1301,24 @@ def _supervisor_command(command):
     sudo('supervisorctl %s' % (command), shell=False, user='root')
 
 
-@roles(ROLES_PILLOWTOP)
+@task
 def stop_pillows():
+    execute(_stop_pillows, True)
+
+
+@task
+@roles(ROLES_PILLOWTOP)
+def start_pillows():
     _require_target()
-    with cd(env.code_root):
+    with cd(env.code_current):
+        sudo('scripts/supervisor-group-ctl start pillowtop')
+
+
+@roles(ROLES_PILLOWTOP)
+def _stop_pillows(current=False):
+    code_root = env.code_current if current else env.code_root
+    _require_target()
+    with cd(code_root):
         sudo('scripts/supervisor-group-ctl stop pillowtop')
 
 

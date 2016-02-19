@@ -45,6 +45,7 @@
 trunk: master
 name: autostaging
 branches:
+  - devicereportentry  # Danny 2/18
   - rm-js+jquery-migrate # Jenny 2/16
   - rm-js  # Danny 2/8
   - jquery-migrate  # Danny 2/3
@@ -60,8 +61,8 @@ branches:
   - show-form-case-refs-in-summary # j$ 1/29
   - legacy-be-gone # Noah 2/12
   - revamp-multimedia # Jenny 2/16
-  - remove-link-disabled # Nick P 2/17
-  - find-offending-code # Nick P 2/17
+  - ascii-jar # Nick P 2/18
+  - analytics-retry # Cal 2/18
 submodules:
   submodules/touchforms-src:
     # let's leave this here even when empty
