@@ -42,7 +42,6 @@ def upload_bulk_ui_translations(request, domain, app_id):
             message += "<li>%s</li>" % prop
         return message
 
-    messages.error(request, _("Welcome to CommCare."))
     success = False
     try:
         app = get_app(domain, app_id)
