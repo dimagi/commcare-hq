@@ -762,6 +762,19 @@ class CommCareCaseIndexSQL(DisabledDbMixin, models.Model, SaveStateMixin):
     relationship_id = models.PositiveSmallIntegerField(choices=RELATIONSHIP_CHOICES)
 
     @property
+    @memoized
+    def referenced_case(self):
+        """
+        For a 'forward' index this is the case that the the index points to.
+        For a 'reverse' index this is the case that owns the index.
+        See ``CaseAccessorSQL.get_reverse_indices``
+
+        :return: referenced case
+        """
+        from corehq.form_processor.backends.sql.dbaccessors import CaseAccessorSQL
+        return CaseAccessorSQL.get_case(self.referenced_id)
+
+    @property
     def relationship(self):
         return self.RELATIONSHIP_INVERSE_MAP[self.relationship_id]
 

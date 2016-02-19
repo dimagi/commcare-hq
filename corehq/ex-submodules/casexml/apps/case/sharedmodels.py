@@ -25,11 +25,18 @@ class CommCareCaseIndex(LooselyEqualDocumentSchema, UnicodeMixIn):
 
     @property
     def referenced_case(self):
+        """
+        For a 'forward' index this is the case that the the index points to.
+        For a 'reverse' index this is the case that owns the index.
+        See ``corehq/couchapps/case_indices/views/related/map.js``
+
+        :return: referenced case
+        """
         if not hasattr(self, "_case"):
             from casexml.apps.case.models import CommCareCase
             self._case = CommCareCase.get(self.referenced_id)
         return self._case
-    
+
     @classmethod
     def from_case_index_update(cls, index):
         return cls(identifier=index.identifier,
