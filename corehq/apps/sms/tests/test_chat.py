@@ -181,7 +181,7 @@ class ChatHistoryTestCase(TestCase):
     @property
     def new_view(self):
         view = ChatMessageHistory()
-        view.args = []
+        view.args = [self.domain]
         view.kwargs = {}
         return view
 
@@ -192,9 +192,6 @@ class ChatHistoryTestCase(TestCase):
         cls.contact3.delete()
         cls.chat_user.delete()
         cls.domain_obj.delete()
-
-    def patch_domain(self, domain):
-        return patch('corehq.apps.sms.views.ChatMessageHistory.domain', domain)
 
     def patch_contact_id(self, contact_id):
         return patch('corehq.apps.sms.views.ChatMessageHistory.contact_id', contact_id)
@@ -215,28 +212,25 @@ class ChatHistoryTestCase(TestCase):
         cls.domain_obj.save()
 
     def test_contact(self):
-        with self.patch_domain(self.domain):
-            with self.patch_contact_id(self.contact1.get_id):
-                self.assertEqual(self.new_view.contact.get_id, self.contact1.get_id)
+        with self.patch_contact_id(self.contact1.get_id):
+            self.assertEqual(self.new_view.contact.get_id, self.contact1.get_id)
 
-            with self.patch_contact_id(self.contact2.get_id):
-                self.assertIsNone(self.new_view.contact)
+        with self.patch_contact_id(self.contact2.get_id):
+            self.assertIsNone(self.new_view.contact)
 
     def test_contact_name(self):
-        with self.patch_domain(self.domain):
+        self.set_custom_case_username(None)
+        with self.patch_contact_id(self.contact1.get_id):
+            self.assertEqual(self.new_view.contact_name, 'test-case')
 
-            self.set_custom_case_username(None)
-            with self.patch_contact_id(self.contact1.get_id):
-                self.assertEqual(self.new_view.contact_name, 'test-case')
+        self.set_custom_case_username('custom_name')
+        with self.patch_contact_id(self.contact1.get_id):
+            self.assertEqual(self.new_view.contact_name, 'custom-name')
 
-            self.set_custom_case_username('custom_name')
-            with self.patch_contact_id(self.contact1.get_id):
-                self.assertEqual(self.new_view.contact_name, 'custom-name')
+        with self.patch_contact_id(self.contact3.get_id):
+            self.assertEqual(self.new_view.contact_name, 'user1')
 
-            with self.patch_contact_id(self.contact3.get_id):
-                self.assertEqual(self.new_view.contact_name, 'user1')
-
-            self.set_custom_case_username(None)
+        self.set_custom_case_username(None)
 
     def test_get_chat_user_name(self):
         self.assertEqual(
@@ -309,7 +303,7 @@ class ChatHistoryTestCase(TestCase):
         self.assertEqual(lrm.message_timestamp, sms.date)
 
     def test_get_response_data(self):
-        with self.patch_domain(self.domain), self.patch_contact_id(self.contact1.get_id):
+        with self.patch_contact_id(self.contact1.get_id):
 
             with self.patch_start_date(None):
                 self.set_survey_filter_option(False, False)
@@ -356,7 +350,7 @@ class ChatHistoryTestCase(TestCase):
     def test_update_last_read_message(self):
         self.assertEqual(self.get_last_read_message_count(), 0)
 
-        with self.patch_domain(self.domain), self.patch_contact_id(self.contact1.get_id):
+        with self.patch_contact_id(self.contact1.get_id):
             self.new_view.update_last_read_message(self.chat_user.get_id, self.outgoing_from_system)
             self.assertEqual(self.get_last_read_message_count(), 1)
             self.assertLastReadMessage(self.outgoing_from_system)
