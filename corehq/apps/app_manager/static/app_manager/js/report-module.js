@@ -155,7 +155,9 @@ var ReportModule = (function () {
                     'select_value',
                     'operator',
                     'date_number',
-                    'date_number2'
+                    'date_number2',
+                    'start_of_month',
+                    'period'
                 ];
                 for(var filterFieldsIndex = 0; filterFieldsIndex < filterFields.length; filterFieldsIndex++) {
                     filter.selectedValue[filterFields[filterFieldsIndex]] = ko.observable(filter.selectedValue[filterFields[filterFieldsIndex]] || '');
@@ -190,7 +192,8 @@ var ReportModule = (function () {
                         CustomDataAutoFilter: ['custom_data_property'],
                         StaticChoiceFilter: ['select_value'],
                         StaticDatespanFilter: ['date_range'],
-                        CustomDatespanFilter: ['operator', 'date_number', 'date_number2']
+                        CustomDatespanFilter: ['operator', 'date_number', 'date_number2'],
+                        CustomMonthFilter: ['start_of_month', 'period']
                     };
                     _.each(docTypeToField, function(field, docType) {
                         if(filter.selectedValue.doc_type() === docType) {
@@ -220,7 +223,17 @@ var ReportModule = (function () {
         };
 
         // TODO - add user-friendly text
-        this.filterDocTypes = [null, 'AutoFilter', 'StaticDatespanFilter', 'CustomDatespanFilter', 'CustomDataAutoFilter', 'StaticChoiceListFilter', 'StaticChoiceFilter', 'MobileSelectFilter'];
+        this.filterDocTypes = [
+            null,
+            'AutoFilter',
+            'StaticDatespanFilter',
+            'CustomDatespanFilter',
+            'CustomMonthFilter',
+            'CustomDataAutoFilter',
+            'StaticChoiceListFilter',
+            'StaticChoiceFilter',
+            'MobileSelectFilter'
+        ];
         this.autoFilterTypes = ['case_sharing_group', 'location_id', 'username', 'user_id'];
         this.date_range_options = ['last7', 'last30', 'thismonth', 'lastmonth', 'lastyear'];
         this.date_operators = ['=', '<', '<=', '>', '>=', 'between'];

@@ -3279,6 +3279,7 @@ class ReportAppFilter(DocumentSchema):
                 'StaticChoiceListFilter': StaticChoiceListFilter,
                 'StaticDatespanFilter': StaticDatespanFilter,
                 'CustomDatespanFilter': CustomDatespanFilter,
+                'CustomMonthFilter': CustomMonthFilter,
                 'MobileSelectFilter': MobileSelectFilter,
             }
             try:
