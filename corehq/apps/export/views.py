@@ -33,9 +33,9 @@ from corehq.apps.export.exceptions import (
 from corehq.apps.export.forms import (
     CreateFormExportTagForm,
     CreateCaseExportTagForm,
-    FilterFormExportDownloadForm,
-    FilterCaseExportDownloadForm,
-)
+    FilterFormCouchExportDownloadForm,
+    FilterCaseCouchExportDownloadForm,
+    FilterFormESExportDownloadForm)
 from corehq.apps.export.models import (
     FormExportDataSchema,
     CaseExportDataSchema,
@@ -427,6 +427,7 @@ class BaseDownloadExportView(ExportsPermissionsMixin, JSONResponseMixin, BasePro
     show_sync_to_dropbox = False  # remove when DBox issue is resolved.
     show_date_range = False
     check_for_multimedia = False
+    filter_form_class = None
 
     @use_daterangepicker
     @use_bootstrap3
@@ -714,6 +715,14 @@ class BaseDownloadExportView(ExportsPermissionsMixin, JSONResponseMixin, BasePro
             'download_id': download.download_id,
         })
 
+    def _get_filter_form(self, filter_form_data):
+        filter_form = self.filter_form_class(
+            self.domain_object, self.timezone, filter_form_data
+        )
+        if not filter_form.is_valid():
+            raise ExportFormValidationException()
+        return filter_form
+
 
 class DownloadFormExportView(BaseDownloadExportView):
     """View to download a SINGLE Form Export with filters.
@@ -723,6 +732,7 @@ class DownloadFormExportView(BaseDownloadExportView):
     page_title = ugettext_noop("Download Form Export")
     check_for_multimedia = True
     form_or_case = 'form'
+    filter_form_class = FilterFormCouchExportDownloadForm
 
     @staticmethod
     def get_export_schema(domain, export_id):
@@ -738,7 +748,7 @@ class DownloadFormExportView(BaseDownloadExportView):
     @property
     @memoized
     def download_export_form(self):
-        return FilterFormExportDownloadForm(
+        return self.filter_form_class(
             self.domain_object,
             self.timezone,
             initial={
@@ -759,10 +769,7 @@ class DownloadFormExportView(BaseDownloadExportView):
         }]
 
     def get_filters(self, filter_form_data):
-        filter_form = FilterFormExportDownloadForm(
-            self.domain_object, self.timezone, filter_form_data)
-        if not filter_form.is_valid():
-            raise ExportFormValidationException()
+        filter_form = self._get_filter_form(filter_form_data)
         form_filter = filter_form.get_form_filter()
         export_filter = SerializableFunction(default_form_filter,
                                              filter=form_filter)
@@ -792,7 +799,7 @@ class DownloadFormExportView(BaseDownloadExportView):
         """
         try:
             filter_form_data, export_specs = self._get_form_data_and_specs(in_data)
-            filter_form = FilterFormExportDownloadForm(
+            filter_form = FilterFormCouchExportDownloadForm(
                 self.domain_object, self.timezone, filter_form_data
             )
             if not filter_form.is_valid():
@@ -831,6 +838,7 @@ class DownloadCaseExportView(BaseDownloadExportView):
     urlname = 'export_download_cases'
     page_title = ugettext_noop("Download Case Export")
     form_or_case = 'case'
+    filter_form_class = FilterCaseCouchExportDownloadForm
 
     @staticmethod
     def get_export_schema(domain, export_id):
@@ -846,7 +854,7 @@ class DownloadCaseExportView(BaseDownloadExportView):
     @property
     @memoized
     def download_export_form(self):
-        return FilterCaseExportDownloadForm(
+        return self.filter_form_class(
             self.domain_object,
             initial={
                 'type_or_group': 'type',
@@ -861,11 +869,7 @@ class DownloadCaseExportView(BaseDownloadExportView):
         }]
 
     def get_filters(self, filter_form_data):
-        filter_form = FilterCaseExportDownloadForm(
-            self.domain_object, filter_form_data
-        )
-        if not filter_form.is_valid():
-            raise ExportFormValidationException()
+        filter_form = self._get_filter_form(filter_form_data)
         return filter_form.get_case_filter()
 
 
@@ -1437,18 +1441,19 @@ class DeleteNewCustomExportView(BaseModifyNewCustomView):
 
 class DownloadNewFormExportView(DownloadFormExportView):
     urlname = 'new_export_download_forms'
+    filter_form_class = FilterFormESExportDownloadForm
 
     def _get_export(self, domain, export_id):
         return FormExportInstance.get(self.export_id)
 
     def _get_download_task(self, in_data):
-        export_filter, export_specs = self._process_filters_and_specs(in_data)
+        export_filters, export_specs = self._process_filters_and_specs(in_data)
         export_instances = [self._get_export(self.domain, spec['export_id']) for spec in export_specs]
         self._check_deid_permissions(export_instances)
 
         return get_export_download(
             export_instances=export_instances,
-            filters=[],  # TODO: Do something with export_filters
+            filters=export_filters,
             filename=u"{}{}".format(
                 export_instances[0].name,  # TODO: This will give the wrong file name for bulk exports
                 date.today().isoformat()
@@ -1465,3 +1470,8 @@ class DownloadNewFormExportView(DownloadFormExportView):
                         _("You do not have permission to export this "
                         "De-Identified export.")
                     )
+
+    def get_filters(self, filter_form_data):
+        filter_form = self._get_filter_form(filter_form_data)
+        form_filters = filter_form.get_form_filter()
+        return form_filters
