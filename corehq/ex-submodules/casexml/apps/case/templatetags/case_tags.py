@@ -441,7 +441,6 @@ def get_flat_descendant_case_list(case, get_case_url, type_info=None):
 
 @register.simple_tag
 def render_case_hierarchy(case, options):
-    # todo: what are these doing here?
     from corehq.apps.hqwebapp.templatetags.proptable_tags import get_display_data
 
     wrapped_case = get_wrapped_case(case)
