@@ -169,6 +169,10 @@ class XFormInstance(SafeSaveDocument, UnicodeMixIn, ComputedDocumentMixin,
         return self.form.get(const.TAG_UIVERSION, "")
 
     @property
+    def user_id(self):
+        return getattr(self.metadata, 'userID', None)
+
+    @property
     def is_error(self):
         return self.doc_type != 'XFormInstance'
 
