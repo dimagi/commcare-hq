@@ -333,12 +333,12 @@ def get_session_data(case, current_case, type_info):
     if type_info and case.type in type_info:
         attr = type_info[case.type]['case_id_attr']
         return {
-            attr: case._id,
-            'case_id': current_case._id
+            attr: case.case_id,
+            'case_id': current_case.case_id
         }
     else:
         return {
-            'case_id': case._id
+            'case_id': case.case_id
         }
 
 
@@ -397,7 +397,7 @@ def get_case_hierarchy(case, type_info):
         if referenced_type and referenced_type in ignore_types:
             return None
 
-        seen.add(case._id)
+        seen.add(case.case_id)
         children = [
             get_children(i.referenced_case, i.referenced_type, seen) for i in case.reverse_indices
             if i.referenced_id not in seen
@@ -484,7 +484,7 @@ def render_case_hierarchy(case, options):
         if not c:
             continue
         c.columns = []
-        case_dict = c.to_full_dict()
+        case_dict = get_wrapped_case(c).to_full_dict()
         for column in columns:
             c.columns.append(get_display_data(
                 case_dict, column, timezone=timezone))
