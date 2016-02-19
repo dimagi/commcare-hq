@@ -3,9 +3,8 @@
  * only a module *referencer*: "importing" a module doesn't automatically load it as
  * a script to the page; it must already have been loaded with an explict script tag.
  *
- * Modules MUST have a name, and SHOULD be given then name
- * of the javascript file in which they reside, and
- * SHOULD be themselves simple javascript objects.
+ * Modules MUST have a name, and SHOULD be given the name of the javascript file in
+ * which they reside, and SHOULD be themselves simple javascript objects.
  *
  * Modules are defined with hqDefine, and "imported" (referenced) with hqImport. Example:
  *
@@ -24,15 +23,15 @@
  *   <script src="myapp/js/utils.js"></script>
  *   ...
  *
- * Reference the module in other code
- * (either directly in the template or in another file/module):
+ * Reference the module in other code (either directly in the template or in another
+ * file/module):
  *
  *   var utils = hqImport('myapp/js/utils.js');
  *   ... utils.util1() ...
  *   ... utils.util2() ...
  *
- * You can also use the following idiom to effectively import
- * only one property or function:
+ * You can also use the following idiom to effectively import only one property or
+ * function:
  *
  *   var util1 = hqImport('myapp/js/utils.js').util1;
  */
