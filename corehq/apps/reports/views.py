@@ -1186,7 +1186,7 @@ def undo_close_case_view(request, domain, case_id):
     else:
         closing_form_id = request.POST['closing_form']
         assert closing_form_id in case.xform_ids
-        form = XFormInstance.get(closing_form_id)
+        form = FormAccessors(domain).get_form(closing_form_id)
         form.archive(user_id=request.couch_user._id)
         messages.success(request, u'Case {} has been reopened.'.format(case.name))
     return HttpResponseRedirect(reverse('case_details', args=[domain, case_id]))
