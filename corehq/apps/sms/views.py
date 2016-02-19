@@ -840,13 +840,17 @@ class ChatMessageHistory(View, DomainViewMixin):
 
     @property
     @memoized
+    def start_date_str(self):
+        return self.request.GET.get('start_date')
+
+    @property
+    @memoized
     def start_date(self):
-        start_date = self.request.GET.get('start_date')
-        if not start_date:
+        if not self.start_date_str:
             return None
 
         try:
-            return iso_string_to_datetime(start_date)
+            return iso_string_to_datetime(self.start_date_str)
         except:
             return None
 
