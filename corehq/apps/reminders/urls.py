@@ -15,7 +15,6 @@ from corehq.apps.reminders.views import (
     EditBroadcastView,
     CopyBroadcastView,
     ScheduledRemindersCalendarView,
-    RemindersInErrorView,
 )
 
 urlpatterns = patterns('corehq.apps.reminders.views',
@@ -43,7 +42,5 @@ urlpatterns = patterns('corehq.apps.reminders.views',
         name=EditStructuredKeywordView.urlname),
     url(r'^keywords/normal/edit/(?P<keyword_id>[\w-]+)/$',
         EditNormalKeywordView.as_view(), name=EditNormalKeywordView.urlname),
-    url(r'^reminders_in_error/$',
-        RemindersInErrorView.as_view(), name=RemindersInErrorView.urlname),
     url(r'^rule_progress/$', 'rule_progress', name='reminder_rule_progress'),
 )

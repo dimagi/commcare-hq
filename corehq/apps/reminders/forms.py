@@ -1987,6 +1987,7 @@ class RecordListWidget(Widget):
             'name': name,
         })
 
+
 class RecordListField(Field):
     required = None
     label = None
@@ -2003,19 +2004,6 @@ class RecordListField(Field):
 
     def clean(self, value):
         return value
-
-
-class ListField(Field):
-    
-    def __init__(self, *args, **kwargs):
-        kwargs["widget"] = CheckboxSelectMultiple
-        super(ListField, self).__init__(*args, **kwargs)
-    
-    def clean(self, value):
-        return value
-
-class RemindersInErrorForm(Form):
-    selected_reminders = ListField(required=False)
 
 
 class KeywordForm(Form):
