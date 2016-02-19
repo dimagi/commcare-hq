@@ -957,10 +957,10 @@ class ChatLastReadMessage(View, DomainViewMixin):
     def get(self, request, *args, **kwargs):
         lrm_timestamp = None
         if self.contact_id:
-            if self.domain_obj.count_messages_as_read_by_anyone:
-                lrm = SQLLastReadMessage.by_anyone(domain, contact_id)
+            if self.domain_object.count_messages_as_read_by_anyone:
+                lrm = SQLLastReadMessage.by_anyone(self.domain, self.contact_id)
             else:
-                lrm = SQLLastReadMessage.by_user(domain, request.couch_user.get_id, self.contact_id)
+                lrm = SQLLastReadMessage.by_user(self.domain, request.couch_user.get_id, self.contact_id)
 
             if lrm:
                 lrm_timestamp = json_format_datetime(lrm.message_timestamp)
