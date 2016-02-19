@@ -40,9 +40,9 @@
 var COMMCAREHQ_MODULES = {};
 
 function hqDefine(path, moduleAccessor) {
-    var parts = ['COMMCAREHQ_MODULES'].concat(path.split('/'));
+    var parts = path.split('/');
     var i;
-    var object = window;
+    var object = COMMCAREHQ_MODULES;
     for (i = 0; i < parts.length - 1; i += 1) {
         if (typeof object[parts[i]] === 'undefined') {
             object[parts[i]] = {};
@@ -56,9 +56,9 @@ function hqDefine(path, moduleAccessor) {
 }
 
 function hqImport(path) {
-    var parts = ['COMMCAREHQ_MODULES'].concat(path.split('/'));
+    var parts = path.split('/');
     var i;
-    var object = window;
+    var object = COMMCAREHQ_MODULES;
     for (i = 0; i < parts.length; i += 1) {
         object = object[parts[i]];
     }
