@@ -1,6 +1,6 @@
 var COMMCAREHQ_MODULES = {};
 
-function hqDefine(path, moduleObject) {
+function hqDefine(path, moduleAccessor) {
     var parts = ['COMMCAREHQ_MODULES'].concat(path.split('/'));
     var i;
     var object = window;
@@ -10,7 +10,7 @@ function hqDefine(path, moduleObject) {
         }
         object = object[parts[i]];
     }
-    object[parts[i]] = moduleObject;
+    object[parts[i]] = moduleAccessor();
 }
 
 function hqImport(path) {

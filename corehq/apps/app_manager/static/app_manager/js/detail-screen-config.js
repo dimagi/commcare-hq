@@ -1250,9 +1250,11 @@ ko.bindingHandlers.DetailScreenConfig_notifyShortScreenOnChange = {
 };
 
 
-hqDefine('app_manager/js/detail-screen-config.js', {
-    /* for sharing variables between essentially separate parts of the ui */
-    state: {
-        requires_case_details: ko.observable()
-    }
+hqDefine('app_manager/js/detail-screen-config.js', function () {
+    return {
+        /* for sharing variables between essentially separate parts of the ui */
+        state: {
+            requires_case_details: ko.observable()
+        }
+    };
 });

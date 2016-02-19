@@ -1,5 +1,5 @@
 /*globals hqDefine */
-hqDefine('app_manager/js/app_manager.js', (function () {
+hqDefine('app_manager/js/app_manager.js', function () {
     'use strict';
     var module = eventize({});
 
@@ -275,4 +275,4 @@ hqDefine('app_manager/js/app_manager.js', (function () {
         }
     };
     return module;
-}()));
+});
