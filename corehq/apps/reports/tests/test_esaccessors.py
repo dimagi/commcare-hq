@@ -32,7 +32,6 @@ from corehq.apps.reports.analytics.esaccessors import (
     get_total_case_counts_by_owner,
     get_case_counts_closed_by_user,
     get_case_counts_opened_by_user,
-    get_last_form_submission_for_user_for_app,
     get_last_form_submissions_by_user,
     get_user_stubs,
     get_group_stubs,
