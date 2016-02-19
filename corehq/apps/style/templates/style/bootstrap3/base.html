@@ -18,6 +18,28 @@
               href="{% url 'osdd' %}"
               title="CommCare HQ" />
 
+        {% if less_debug %}
+            <link type="text/less"
+                  rel="stylesheet"
+                  media="all"
+                  href="{% new_static 'style/less/bootstrap.debug.less' %}" />
+            <link type="text/less"
+                  rel="stylesheet"
+                  media="all"
+                  href="{% new_static 'font-awesome/less/font-awesome.less' %}" />
+            <link type="text/less"
+                  rel="stylesheet"
+                  media="all"
+                  href="{% new_static 'style/less/font-commcare.less' %}" />
+            <link type="text/less"
+                  rel="stylesheet"
+                  media="all"
+                  href="{% new_static 'style/less/style.debug.less' %}" />
+            <link type="text/less"
+                  rel="stylesheet"
+                  media="all"
+                  href="{% new_static 'style/less/b3-migration.debug.less' %}" />
+        {% else %}
         {% compress css %}
             <link type="text/less"
                   rel="stylesheet"
@@ -35,14 +57,12 @@
                   rel="stylesheet"
                   media="all"
                   href="{% new_static 'style/less/style.less' %}" />
-        {% endcompress %}
-
-        {% compress css %}
             <link type="text/less"
                   rel="stylesheet"
                   media="all"
                   href="{% new_static 'style/less/b3-migration.less' %}" />
         {% endcompress %}
+        {% endif %}
 
         {% block stylesheets %}{% endblock stylesheets %}
 
@@ -76,7 +96,6 @@
                   href="{% new_static "hqwebapp/js/lib/jquery-ui/multiselect/ui.multiselect.css" %}" />
         {% endcompress %}
         {% endif %}
-
 
         {% if request.use_nvd3 %}
         {% compress css %}
