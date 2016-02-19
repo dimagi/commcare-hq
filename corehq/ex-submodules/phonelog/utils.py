@@ -1,6 +1,6 @@
 from corehq.apps.users.util import format_username
 from corehq.apps.users.dbaccessors import get_user_id_by_username
-from phonelog.models import UserEntry, DeviceReportEntry
+from .models import UserEntry, DeviceReportEntry, UserErrorEntry
 
 
 def device_users_by_xform(xform_id):
@@ -24,6 +24,7 @@ def _get_logs(form, report_name, report_slug):
 def process_device_log(domain, xform):
     _process_user_subreport(xform)
     _process_log_subreport(domain, xform)
+    _process_user_error_subreport(domain, xform)
 
 
 def _process_user_subreport(xform):
@@ -77,3 +78,25 @@ def _process_log_subreport(domain, xform):
             user_id=logged_in_user_id,
         ))
     DeviceReportEntry.objects.bulk_create(to_save)
+
+
+def _process_user_error_subreport(domain, xform):
+    errors = _get_logs(xform.form_data, 'user_error_subreport', 'user_error')
+    to_save = []
+    for i, error in enumerate(errors):
+        entry = UserErrorEntry(
+            domain=domain,
+            xform_id=xform.form_id,
+            i=i,
+            app_id=error['app_id'],
+            version_number=int(error['version']),
+            date=error["@date"],
+            server_date=xform.received_on,
+            user_id=error['user_id'],
+            expr=error['expr'],
+            msg=error['msg'],
+            session=error['session'],
+            type=error['type'],
+        )
+        to_save.append(entry)
+    UserErrorEntry.objects.bulk_create(to_save)
