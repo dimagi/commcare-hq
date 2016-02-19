@@ -20,7 +20,6 @@ from corehq.apps.reminders.views import (
 
 urlpatterns = patterns('corehq.apps.reminders.views',
     url(r'^list/$', RemindersListView.as_view(), name=RemindersListView.urlname),
-    url(r'^delete/(?P<handler_id>[\w-]+)/$', 'delete_reminder', name='delete_reminder'),
     url(r'^broadcasts/$', BroadcastListView.as_view(), name=BroadcastListView.urlname),
     url(r'^broadcasts/add/$', CreateBroadcastView.as_view(), name=CreateBroadcastView.urlname),
     url(r'^broadcasts/edit/(?P<broadcast_id>[\w-]+)/$', EditBroadcastView.as_view(),
@@ -46,9 +45,5 @@ urlpatterns = patterns('corehq.apps.reminders.views',
         EditNormalKeywordView.as_view(), name=EditNormalKeywordView.urlname),
     url(r'^reminders_in_error/$',
         RemindersInErrorView.as_view(), name=RemindersInErrorView.urlname),
-    url(r'^one_time_reminders/$', 'list_reminders', name='one_time_reminders', kwargs={"reminder_type" : REMINDER_TYPE_ONE_TIME}),
-    url(r'^one_time_reminders/add/$', 'add_one_time_reminder', name='add_one_time_reminder'),
-    url(r'^one_time_reminders/edit/(?P<handler_id>[\w-]+)/$', 'add_one_time_reminder', name='edit_one_time_reminder'),
-    url(r'^one_time_reminders/copy/(?P<handler_id>[\w-]+)/$', 'copy_one_time_reminder', name='copy_one_time_reminder'),
     url(r'^rule_progress/$', 'rule_progress', name='reminder_rule_progress'),
 )
