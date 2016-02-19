@@ -385,8 +385,8 @@ class CaseAccessorSQL(AbstractCaseAccessor):
 
     @staticmethod
     def get_attachment_content(case_id, attachment_id):
-        meta = CaseAccessorSQL.get_attachment_by_name(case_id, attachment_id)
-        return AttachmentContent(meta.content_type, meta.read_content(steam=True))
+        meta = CaseAccessorSQL.get_attachment_by_identifier(case_id, attachment_id)
+        return AttachmentContent(meta.content_type, meta.read_content(stream=True))
 
     @staticmethod
     def get_attachments(case_id):
