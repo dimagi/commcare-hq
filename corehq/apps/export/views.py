@@ -620,13 +620,24 @@ class BaseDownloadExportView(ExportsPermissionsMixin, JSONResponseMixin, BasePro
         context['is_poll_successful'] = True
         return context
 
+    def _get_download_task(self, in_data):
+        export_filter, export_specs = self._process_filters_and_specs(in_data)
+        if len(export_specs) > 1:
+            download = self._get_bulk_download_task(export_specs, export_filter)
+        else:
+            max_column_size = int(in_data.get('max_column_size', 2000))
+            download = self._get_single_export_download_task(
+                export_specs[0], export_filter, max_column_size
+            )
+        return download
+
     def _get_bulk_download_task(self, export_specs, export_filter):
         export_helper = CustomBulkExportHelper(domain=self.domain)
         return export_helper.get_download_task(export_specs, export_filter)
 
-    def _get_download_task(self, export_specs, export_filter, max_column_size=2000):
+    def _get_single_export_download_task(self, export_spec, export_filter, max_column_size=2000):
         try:
-            export_data = export_specs[0]
+            export_data = export_spec
             export_object = self.get_export_schema(self.domain, export_data['export_id'])
         except (KeyError, IndexError):
             raise ExportAsyncException(
@@ -690,14 +701,7 @@ class BaseDownloadExportView(ExportsPermissionsMixin, JSONResponseMixin, BasePro
         }
         """
         try:
-            export_filter, export_specs = self._process_filters_and_specs(in_data)
-            if len(export_specs) > 1:
-                download = self._get_bulk_download_task(export_specs, export_filter)
-            else:
-                max_column_size = int(in_data.get('max_column_size', 2000))
-                download = self._get_download_task(
-                    export_specs, export_filter, max_column_size
-                )
+            download = self._get_download_task(in_data)
         except ExportAsyncException as e:
             return format_angular_error(e.message)
         except Exception as e:
@@ -1437,26 +1441,27 @@ class DownloadNewFormExportView(DownloadFormExportView):
     def _get_export(self, domain, export_id):
         return FormExportInstance.get(self.export_id)
 
-    def _get_download_task(self, export_specs, export_filter, max_column_size):
-        # TODO: Actually do something with the arguments...
-        # TODO: Don't assume form!
-        export_instance = FormExportInstance.get(self.export_id)
-        self._check_deid_permissions(export_instance)
+    def _get_download_task(self, in_data):
+        export_filter, export_specs = self._process_filters_and_specs(in_data)
+        export_instances = [self._get_export(self.domain, spec['export_id']) for spec in export_specs]
+        self._check_deid_permissions(export_instances)
 
         return get_export_download(
-            export_instances=[export_instance],
+            export_instances=export_instances,
             filters=[],  # TODO: Do something with export_filters
             filename=u"{}{}".format(
-                export_instance.name,
+                export_instances[0].name,  # TODO: This will give the wrong file name for bulk exports
                 date.today().isoformat()
             ),
         )
 
-    def _check_deid_permissions(self, export_instance):
-        # if the export is de-identified, check that
+    def _check_deid_permissions(self, export_instances):
+        # if any export is de-identified, check that
         # the requesting domain has access to the deid feature.
-        if export_instance.is_deidentified and not self.has_deid_view_permissions:
-            raise ExportAsyncException(
-                _("You do not have permission to export this "
-                  "De-Identified export.")
-            )
+        if not self.has_deid_view_permissions:
+            for instance in export_instances:
+                if instance.is_deidentified:
+                    raise ExportAsyncException(
+                        _("You do not have permission to export this "
+                        "De-Identified export.")
+                    )
