@@ -94,7 +94,7 @@ class TestFormESAccessors(BaseESAccessorsTest):
             user_id=user_id,
         )
 
-        forms = get_forms(
+        paged_result = get_forms(
             self.domain,
             start,
             end,
@@ -102,10 +102,10 @@ class TestFormESAccessors(BaseESAccessorsTest):
             app_ids=app_id,
             xmlnss=xmlns,
         )
-        self.assertEqual(len(forms), 1)
-        self.assertEqual(forms[0]['xmlns'], xmlns)
-        self.assertEqual(forms[0]['form']['meta']['userID'], user_id)
-        self.assertEqual(forms[0]['received_on'], '2013-07-02T00:00:00.000000Z')
+        self.assertEqual(paged_result.total, 1)
+        self.assertEqual(paged_result.hits[0]['xmlns'], xmlns)
+        self.assertEqual(paged_result.hits[0]['form']['meta']['userID'], user_id)
+        self.assertEqual(paged_result.hits[0]['received_on'], '2013-07-02T00:00:00.000000Z')
 
     def test_get_forms_multiple_apps_xmlnss(self):
         start = datetime(2013, 7, 1)
@@ -137,7 +137,7 @@ class TestFormESAccessors(BaseESAccessorsTest):
         )
         self.assertEqual(len(forms), 2)
 
-        forms = get_forms(
+        paged_result = get_forms(
             self.domain,
             start,
             end,
@@ -145,9 +145,9 @@ class TestFormESAccessors(BaseESAccessorsTest):
             app_ids=[app_id1, app_id2],
             xmlnss=[xmlns1],
         )
-        self.assertEqual(len(forms), 1)
+        self.assertEqual(paged_result.total, 1)
 
-        forms = get_forms(
+        paged_result = get_forms(
             self.domain,
             start,
             end,
@@ -155,7 +155,7 @@ class TestFormESAccessors(BaseESAccessorsTest):
             app_ids=[app_id1],
             xmlnss=[xmlns2],
         )
-        self.assertEqual(len(forms), 0)
+        self.assertEqual(paged_result.total, 0)
 
     def test_basic_completed_by_user(self):
         start = datetime(2013, 7, 1)

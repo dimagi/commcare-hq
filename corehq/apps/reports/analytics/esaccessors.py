@@ -1,4 +1,4 @@
-from collections import defaultdict
+from collections import defaultdict, namedtuple
 from datetime import datetime
 
 from corehq.apps.es import FormES, UserES, GroupES, CaseES, filters
@@ -6,6 +6,8 @@ from corehq.apps.es.aggregations import TermsAggregation
 from corehq.apps.es.forms import submitted as submitted_filter, completed as completed_filter
 from corehq.apps.es.cases import closed_range
 from dimagi.utils.parsing import string_to_datetime
+
+PagedResult = namedtuple('PagedResult', 'total hits')
 
 
 def get_last_submission_time_for_user(domain, user_id, datespan):
@@ -158,19 +160,21 @@ def get_user_stubs(user_ids):
         .values('_id', 'username', 'first_name', 'last_name', 'doc_type', 'is_active'))
 
 
-def get_forms(domain, startdate, enddate, user_ids=None, app_ids=None, xmlnss=None):
+def get_forms(domain, startdate, enddate, user_ids=None, app_ids=None, xmlnss=None, by_submission_time=True):
 
+    date_filter_fn = submitted_filter if by_submission_time else completed_filter
     query = (
         FormES()
         .domain(domain)
-        .submitted(gte=startdate, lte=enddate)
+        .filter(date_filter_fn(gte=startdate, lte=enddate))
         .app(app_ids)
         .xmlns(xmlnss)
         .user_id(user_ids)
         .size(5000)
     )
 
-    return query.values('_id', 'form.meta.userID', 'form.meta.timeEnd', 'received_on', 'xmlns')
+    result = query.run()
+    return PagedResult(total=result.total, hits=result.hits)
 
 
 def get_form_counts_by_user_xmlns(domain, startdate, enddate, user_ids=None,
