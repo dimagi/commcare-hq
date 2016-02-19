@@ -2,7 +2,6 @@ from collections import namedtuple
 from jsonobject import DefaultProperty
 from corehq.apps.app_manager.models import Application
 from corehq.util.couch import stale_ok
-from couchforms.models import XFormInstance
 from dimagi.ext import jsonobject
 
 
@@ -30,7 +29,6 @@ class FormDetails(jsonobject.JsonObject):
 
 
 def update_reports_analytics_indexes():
-    XFormInstance.get_db().view('all_forms/view', limit=1).all()
     Application.get_db().view('forms_by_app_info/view', limit=1).all()
 
 
