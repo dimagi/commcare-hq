@@ -1,4 +1,5 @@
 # coding=utf-8
+import calendar
 from distutils.version import LooseVersion
 from itertools import chain
 import tempfile
@@ -3415,6 +3416,70 @@ class CustomDatespanFilter(ReportAppFilter):
         elif self.operator == '>':
             start_date = None
             end_date = today - datetime.timedelta(days=days + 1)
+        return DateSpan(startdate=start_date, enddate=end_date)
+
+
+def is_lte(integer):
+    def validate(x):
+        if not x <= integer:
+            raise BadValueError('Value must be less than or equal to {}'.format(integer))
+    return validate
+
+
+def is_gte(integer):
+    def validate(x):
+        if not x >= integer:
+            raise BadValueError('Value must be greater than or equal to {}'.format(integer))
+    return validate
+
+
+class CustomMonthFilter(ReportAppFilter):
+    """
+    Filter by months that start on a day number other than 1
+
+    See [FB 215656](http://manage.dimagi.com/default.asp?215656)
+    """
+    # Values for start_of_month < 1 specify the number of days from the end of the month. Values capped at
+    # len(February).
+    start_of_month = IntegerProperty(
+        required=True,
+        validators=(is_gte(-27), is_lte(28))
+    )
+    # DateSpan to return i.t.o. number of months to go back
+    period = IntegerProperty(
+        default=0,
+        validators=(is_gte(0),)
+    )
+
+    @classmethod
+    def wrap(cls, doc):
+        doc['start_of_month'] = int(doc['start_of_month'])
+        if 'period' in doc:
+            doc['period'] = int(doc['period'])
+        return super(CustomMonthFilter, cls).wrap(doc)
+
+    def get_filter_value(self, user, ui_filter):
+        def get_last_month(this_month):
+            return datetime.date(this_month.year, this_month.month, 1) - datetime.timedelta(days=1)
+
+        def get_last_day(date):
+            _, last_day = calendar.monthrange(date.year, date.month)
+            return last_day
+
+        # Find the start and end dates of period 0
+        start_of_month = int(self.start_of_month)
+        end_date = datetime.date.today()
+        start_day = start_of_month if start_of_month > 0 else get_last_day(end_date) + start_of_month
+        end_of_month = end_date if end_date.day >= start_day else get_last_month(end_date)
+        start_date = datetime.date(end_of_month.year, end_of_month.month, start_day)
+
+        # Loop over months backwards for period > 0
+        for i in range(int(self.period)):
+            end_of_month = get_last_month(end_of_month)
+            end_date = start_date - datetime.timedelta(days=1)
+            start_day = start_of_month if start_of_month > 0 else get_last_day(end_of_month) + start_of_month
+            start_date = datetime.date(end_of_month.year, end_of_month.month, start_day)
+
         return DateSpan(startdate=start_date, enddate=end_date)
 
 
