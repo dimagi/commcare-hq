@@ -111,6 +111,28 @@ class BucketResult(AggregationResult):
         return {b['key']: b['doc_count'] for b in self.normalized_buckets}
 
 
+class TopHitsResult(AggregationResult):
+
+    @property
+    def raw_hits(self):
+        return self.result['hits']['hits']
+
+    @property
+    def doc_ids(self):
+        """Return just the docs ids from the response."""
+        return [r['_id'] for r in self.raw_hits]
+
+    @property
+    def hits(self):
+        """Return the docs from the response."""
+        return [r['_source'] for r in self.raw_hits]
+
+    @property
+    def total(self):
+        """Return the total number of docs matching the query."""
+        return self.result['hits']['total']
+
+
 class StatsResult(AggregationResult):
 
     @property
@@ -217,7 +239,7 @@ class TopHitsAggregation(Aggregation):
     :param script: an optional field to allow you to script the computed field
     """
     type = "top_hits"
-    result_class = StatsResult
+    result_class = TopHitsResult
 
     def __init__(self, name, field, is_ascending=True, size=1):
         assert re.match(r'\w+$', name), \

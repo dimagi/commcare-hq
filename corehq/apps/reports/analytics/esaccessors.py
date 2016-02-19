@@ -2,7 +2,7 @@ from collections import defaultdict
 from datetime import datetime
 
 from corehq.apps.es import FormES, UserES, GroupES, CaseES, filters
-from corehq.apps.es.aggregations import TermsAggregation, ExtendedStatsAggregation
+from corehq.apps.es.aggregations import TermsAggregation, ExtendedStatsAggregation, TopHitsAggregation
 from corehq.apps.es.forms import submitted as submitted_filter, completed as completed_filter
 from corehq.apps.es.cases import closed_range
 from dimagi.utils.parsing import string_to_datetime
@@ -97,6 +97,35 @@ def get_last_form_submission_for_user_for_app(domain, user_id, app_id=None):
     if query.run().hits:
         return query.run().hits[0]
     return None
+
+
+def get_last_form_submissions_by_user(domain, user_ids, app_id=None):
+
+    query = (
+        FormES()
+        .domain(domain)
+        .user_id(user_ids)
+        .aggregation(
+            TermsAggregation('user_id', 'form.meta.userID').aggregation(
+                TopHitsAggregation(
+                    'top_hits_last_form_submissions',
+                    'received_on',
+                    is_ascending=False,
+                )
+            )
+        )
+        .size(0)
+    )
+
+    if app_id:
+        query = query.app(app_id)
+
+    buckets_dict = query.run().aggregations.user_id.buckets_dict
+    result = {}
+    for user_id, bucket in buckets_dict.iteritems():
+        result[user_id] = bucket.top_hits_last_form_submissions.hits
+
+    return result
 
 
 def get_submission_counts_by_user(domain, datespan):
