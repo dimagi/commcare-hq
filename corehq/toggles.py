@@ -308,6 +308,13 @@ REPORT_BUILDER_BETA_GROUP = StaticToggle(
     [NAMESPACE_DOMAIN],
 )
 
+REPORT_BUILDER_MAP_REPORTS = StaticToggle(
+    'report_builder_map_reports',
+    'Report Builder map reports',
+    TAG_PRODUCT_PATH,
+    [NAMESPACE_DOMAIN]
+)
+
 STOCK_TRANSACTION_EXPORT = StaticToggle(
     'ledger_export',
     'Show "export transactions" link on case details page',
@@ -462,6 +469,13 @@ VELLUM_PRINTING = StaticToggle(
 VELLUM_RICH_TEXT = StaticToggle(
     'rich_text',
     "Enables rich text for the form builder",
+    TAG_EXPERIMENTAL,
+    [NAMESPACE_DOMAIN]
+)
+
+VELLUM_DATA_IN_SETVALUE = StaticToggle(
+    'allow_data_reference_in_setvalue',
+    "Allow data references in a setvalue",
     TAG_EXPERIMENTAL,
     [NAMESPACE_DOMAIN]
 )
@@ -637,6 +651,13 @@ HSPH_HACK = StaticToggle(
     [NAMESPACE_DOMAIN],
 )
 
+USE_FORMPLAYER = StaticToggle(
+    'use_formplayer',
+    'Use the new formplayer server',
+    TAG_ONE_OFF,
+    [NAMESPACE_DOMAIN],
+)
+
 FIXTURE_CASE_SELECTION = StaticToggle(
     'fixture_case',
     'Allow a configurable case list that is filtered based on a fixture type and fixture selection (Due List)',
@@ -662,6 +683,13 @@ BROADCAST_TO_LOCATIONS = StaticToggle(
 MOBILE_WORKER_SELF_REGISTRATION = StaticToggle(
     'mobile_worker_self_registration',
     'Allow mobile workers to self register',
+    TAG_PRODUCT_PATH,
+    [NAMESPACE_DOMAIN],
+)
+
+TELERIVET_SETUP_WALKTHROUGH = StaticToggle(
+    'telerivet_setup_walkthrough',
+    'Use the new Telerivet setup walkthrough for creating Telerivet backends.',
     TAG_PRODUCT_PATH,
     [NAMESPACE_DOMAIN],
 )
@@ -764,4 +792,12 @@ NOTIFICATIONS = StaticToggle(
     'Shows notification icon when announcements need to be made',
     TAG_PRODUCT_PATH,
     [NAMESPACE_USER]
+)
+
+
+PROJECT_HEALTH_DASHBOARD = StaticToggle(
+    'project_health_dashboard',
+    'Shows the project health dashboard in the reports navigation',
+    TAG_PRODUCT_PATH,
+    [NAMESPACE_DOMAIN]
 )

@@ -229,7 +229,7 @@ class TestReverseIndexedCases(TestCase):
         }]
         self.assertEqual(
             expected_returned_json,
-            get_reverse_indices_json(self.domain, self.indexed_case_id, relationship=CASE_INDEX_EXTENSION))
+            get_reverse_indices_json(self.domain, self.indexed_case_id))
 
         self._delete_relationship()
         # it should now be a child relationship

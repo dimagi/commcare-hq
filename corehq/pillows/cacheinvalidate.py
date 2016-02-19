@@ -61,9 +61,9 @@ class CacheInvalidatePillow(BasicPillow):
 
         generation_change = generations_prior.symmetric_difference(generations_after)
         if len(generation_change) > 0:
-            pillow_logging.info("[CacheInvalidate]: Change %s (%s), generation change: %s" % (doc_id, doc.get('doc_type', 'unknown'), ', '.join(generation_change)))
+            pillow_logging.debug("[CacheInvalidate]: Change %s (%s), generation change: %s" % (doc_id, doc.get('doc_type', 'unknown'), ', '.join(generation_change)))
         else:
-            pillow_logging.info("[CacheInvalidate]: Change %s (%s), no generation change" % (doc_id, doc.get('doc_type', 'unknown')))
+            pillow_logging.debug("[CacheInvalidate]: Change %s (%s), no generation change" % (doc_id, doc.get('doc_type', 'unknown')))
 
     def change_transport(self, doc_dict):
         """

@@ -61,33 +61,16 @@
 
 
         var checkFilterAccordionToggleState = function () {
-            var _setShowFilterCookie = function (show) {
-                var showStr = show ? 'in' : '';
-                $.cookie(standardHQReport.toggleFiltersCookie, showStr, {path: standardHQReport.urlRoot, expires: 1});
-            };
-
-            if (!$.cookie(standardHQReport.toggleFiltersCookie) && $.cookie(standardHQReport.toggleFiltersCookie) !== '') {
-                // default to showing filters
-                // (When filters should be hidden, $.cookie(self.toggleFiltersCookie) === '')
-                _setShowFilterCookie(true);
-            }
-            $(standardHQReport.filterAccordion).addClass($.cookie(standardHQReport.toggleFiltersCookie));
-
-            if ($.cookie(standardHQReport.toggleFiltersCookie) == 'in') {
-                $(standardHQReport.toggleFiltersButton).button('close');
-            } else {
-                $(standardHQReport.toggleFiltersButton).button('open');
-            }
+            $(standardHQReport.filterAccordion).addClass('in');
+            $(standardHQReport.toggleFiltersButton).button('close');
 
             $(standardHQReport.filterAccordion).on('hidden', function (data) {
                 if (!(data.target && $(data.target).hasClass('modal'))) {
-                    _setShowFilterCookie(false);
                     $(standardHQReport.toggleFiltersButton).button('open');
                 }
             });
 
             $(standardHQReport.filterAccordion).on('show', function () {
-                _setShowFilterCookie(true);
                 $(standardHQReport.toggleFiltersButton).button('close');
             });
 

@@ -2,18 +2,18 @@
 
 <div class="hq-graphic-report">
 {% block style %}
-<link rel="stylesheet" href="{% static 'reports/css/leaflet/leaflet.css' %}" />
+<link rel="stylesheet" href="{% static 'leaflet/dist/leaflet.css' %}" />
 <link rel="stylesheet" href="{% static 'reports/css/maps.css' %}" />
 {% endblock style %}
 {% block js-libs %}
-<script src="{% static 'reports/javascripts/leaflet.js' %}"></script>
+<script src="{% static 'leaflet/dist/leaflet.js' %}"></script>
 <script src="{% static 'reports/javascripts/jquery.color.js' %}"></script>
 {% endblock js-libs %}
 {% block js-script %}
 <script>
 
 CONTEXT = {{ context|JSON }};
-ICON_PATH = '{% static 'reports/css/leaflet/images' %}';
+ICON_PATH = '{% static 'leaflet/dist/images' %}';
 MIN_HEIGHT = 300; //px
 
 $(document).ready(function() {

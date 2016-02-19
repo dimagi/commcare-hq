@@ -5,7 +5,8 @@ from .models import MALTRow
 
 class MALTRowAdmin(admin.ModelAdmin):
     model = MALTRow
-    list_display = ['domain_name', 'month']
+    list_display = ['month', 'domain_name', 'username', 'num_of_forms', 'wam']
+    list_filter = ['month', 'domain_name', 'num_of_forms', 'wam']
     actions = [export_as_csv_action("Export selected rows as CSV", exclude=["id"])]
 
 

@@ -16,7 +16,7 @@ from dimagi.utils.dates import get_business_day_of_month, add_months, months_bet
 from casexml.apps.stock.models import StockReport, StockTransaction
 from custom.ilsgateway.models import SupplyPointStatus, SupplyPointStatusTypes, DeliveryGroups, \
     OrganizationSummary, GroupSummary, SupplyPointStatusValues, Alert, ProductAvailabilityData, \
-    SupplyPointWarehouseRecord, HistoricalLocationGroup, ILSGatewayConfig
+    HistoricalLocationGroup, ILSGatewayConfig
 
 
 """
@@ -254,11 +254,9 @@ def populate_report_data(start_date, end_date, domain, runner, locations=None, s
             for org in chunk
         )()
         res.get()
+
     runner.location = None
     runner.save()
-    # finally go back through the history and initialize empty data for any
-    # newly created facilities
-    update_historical_data(domain)
 
 
 @task(queue='logistics_background_queue')
@@ -332,6 +330,8 @@ def process_facility_warehouse_data(facility, start_date, end_date, runner=None)
         with transaction.atomic():
             populate_no_primary_alerts(facility, window_date)
             populate_facility_stockout_alerts(facility, window_date)
+
+    update_historical_data_for_location(facility)
 
 
 @transaction.atomic
@@ -531,6 +531,8 @@ def process_non_facility_warehouse_data(location, start_date, end_date, runner=N
             sub_alerts = Alert.objects.filter(location_id__in=fac_ids, date=window_date, type=alert_type)
             aggregate_response_alerts(location.location_id, window_date, sub_alerts, alert_type)
 
+    update_historical_data_for_location(location)
+
 
 def aggregate_response_alerts(location_id, date, alerts, alert_type):
     total = sum([s.number for s in alerts])
@@ -538,35 +540,28 @@ def aggregate_response_alerts(location_id, date, alerts, alert_type):
         create_alert(location_id, date, alert_type, {'number': total})
 
 
-def update_historical_data(domain, locations=None):
+def update_historical_data_for_location(loc):
     """
-    If we don't have a record of this supply point being updated, run
-    through all historical data and just fill in with zeros.
+        Fill with zeros data for all months between default start date and date of earliest location's summary.
+        E.g. Location is created at 2016-02-10 and earliest summary is from 2016-03-01 whereas
+        default start date is equal to 2012-01-01, so we need to generate data for all months
+        between 2012-01-01 and 2016-03-01.
+        This function is important for all locations created after initial run of report runner.
     """
-    org_summaries = OrganizationSummary.objects.order_by('date')
-    if org_summaries.count() == 0:
+    start_date = default_start_date()
+    try:
+        earliest_org_summary = OrganizationSummary.objects.filter(location_id=loc.location_id).earliest('date')
+        earliest_org_summary_date = earliest_org_summary.date
+    except OrganizationSummary.DoesNotExist:
+        earliest_org_summary_date = loc.sql_location.created_at
+
+    if start_date >= earliest_org_summary_date:
         return
 
-    start_date = org_summaries[0].date
-
-    if locations is None:
-        if not ILSGatewayConfig.for_domain(domain).all_stock_data:
-            locations = _get_test_locations(domain)
-        else:
-            locations = Location.by_domain(domain)
-
-    for loc in locations:
-        try:
-            SupplyPointWarehouseRecord.objects.get(supply_point=loc.location_id)
-        except SupplyPointWarehouseRecord.DoesNotExist:
-            # we didn't have a record so go through and historically update
-            # anything we maybe haven't touched
-            for year, month in months_between(start_date, loc.sql_location.created_at):
-                window_date = datetime(year, month, 1)
-                for cls in [OrganizationSummary, ProductAvailabilityData, GroupSummary]:
-                    _init_warehouse_model(cls, loc, window_date)
-            SupplyPointWarehouseRecord.objects.create(supply_point=loc.location_id,
-                                                      create_date=datetime.utcnow())
+    for year, month in months_between(start_date, earliest_org_summary_date):
+        window_date = datetime(year, month, 1)
+        for cls in [OrganizationSummary, ProductAvailabilityData, GroupSummary]:
+            _init_warehouse_model(cls, loc, window_date)
 
 
 def _init_warehouse_model(cls, location, date):

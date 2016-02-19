@@ -341,34 +341,34 @@ def get_detail_column_infos(detail, include_sort):
                        key=lambda (field, (sort_element, order)): order)
 
     for field, (sort_element, order) in sort_only:
-        column = create_temp_sort_column(field, len(columns))
+        column = create_temp_sort_column(field)
         columns.append(DetailColumnInfo(column, sort_element, order))
     return columns
 
 
 def get_instances_for_module(app, module, additional_xpaths=None):
-        """
-        This method is used by CloudCare when filtering cases.
-        """
-        modules = list(app.get_modules())
-        helper = DetailsHelper(app, modules)
-        details = DetailContributor(None, app, modules).get_section_elements()
-        detail_mapping = {detail.id: detail for detail in details}
-        details_by_id = detail_mapping
-        detail_ids = [helper.get_detail_id_safe(module, detail_type)
-                      for detail_type, detail, enabled in module.get_details()
-                      if enabled]
-        detail_ids = filter(None, detail_ids)
-        xpaths = set()
+    """
+    This method is used by CloudCare when filtering cases.
+    """
+    modules = list(app.get_modules())
+    helper = DetailsHelper(app, modules)
+    details = DetailContributor(None, app, modules).get_section_elements()
+    detail_mapping = {detail.id: detail for detail in details}
+    details_by_id = detail_mapping
+    detail_ids = [helper.get_detail_id_safe(module, detail_type)
+                  for detail_type, detail, enabled in module.get_details()
+                  if enabled]
+    detail_ids = filter(None, detail_ids)
+    xpaths = set()
 
-        if additional_xpaths:
-            xpaths.update(additional_xpaths)
+    if additional_xpaths:
+        xpaths.update(additional_xpaths)
 
-        for detail_id in detail_ids:
-            xpaths.update(details_by_id[detail_id].get_all_xpaths())
+    for detail_id in detail_ids:
+        xpaths.update(details_by_id[detail_id].get_all_xpaths())
 
-        instances, _ = EntryInstances.get_required_instances(xpaths)
-        return instances
+    instances, _ = EntryInstances.get_required_instances(xpaths)
+    return instances
 
 
 class CaseTileHelper(object):

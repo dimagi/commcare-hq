@@ -265,7 +265,7 @@ def get_active_domain_stats_data(domains, datespan, interval,
             sms_query = (get_sms_query(f, t, 'domains', 'domain', domains)
                 .incoming_messages())
             active_domains |= set(
-                sms_query.run().aggregations.domain.keys
+                sms_query.run().aggregations.domains.keys
             )
         c = len(active_domains)
         if c > 0:

@@ -338,5 +338,3 @@ class BaseTagsFilter(BaseReportFilter):
             'selected': self.selected,
             'placeholder': self.placeholder,
         }
-
-

@@ -19,11 +19,12 @@ from corehq.apps.reports.util import format_datatables_data
 from corehq.apps.users.models import CommCareUser
 from corehq.const import USER_DATE_FORMAT
 from corehq.util.couch import get_document_or_404
-from couchforms.analytics import get_last_form_submission_for_user_for_app
+from corehq.apps.reports.analytics.esaccessors import get_last_form_submission_for_user_for_app
 from django.utils.translation import ugettext_noop
 from django.utils.translation import ugettext as _
 from dimagi.utils.couch.database import iter_docs
 from dimagi.utils.dates import safe_strftime
+from dimagi.utils.parsing import string_to_utc_datetime
 
 
 class DeploymentsReport(GenericTabularReport, ProjectReport, ProjectReportParametersMixin):
@@ -97,23 +98,28 @@ class ApplicationStatusReport(DeploymentsReport):
         for user in self.users:
             last_seen = last_sync = app_name = None
 
-            xform = get_last_form_submission_for_user_for_app(
+            xform_dict = get_last_form_submission_for_user_for_app(
                 self.domain, user.user_id, selected_app)
 
-            if xform:
-                last_seen = xform.received_on
+            if xform_dict:
+                last_seen = string_to_utc_datetime(xform_dict.get('received_on'))
 
-                if xform.app_id:
+                if xform_dict.get('app_id'):
                     try:
-                        app = get_app(self.domain, xform.app_id)
+                        app = get_app(self.domain, xform_dict.get('app_id'))
                     except ResourceNotFound:
                         pass
                     else:
                         app_name = app.name
                 else:
-                    app_name = get_meta_appversion_text(xform)
+                    app_name = get_meta_appversion_text(xform_dict['form']['meta'])
 
-                app_version_info = get_app_version_info(xform)
+                app_version_info = get_app_version_info(
+                    self.domain,
+                    xform_dict.get('build_id'),
+                    xform_dict.get('version'),
+                    xform_dict['form']['meta'],
+                )
                 build_html = _build_html(app_version_info)
                 commcare_version = (
                     'CommCare {}'.format(app_version_info.commcare_version)

@@ -347,3 +347,14 @@ class CaptureasNode(template.Node):
         output = self.nodelist.render(context)
         context[self.varname] = output
         return ''
+
+
+@register.simple_tag
+def chevron(value):
+    """
+    Displays a green up chevron if value > 0, and a red down chevron if value < 0
+    """
+    if value > 0:
+        return '<span class="glyphicon glyphicon-chevron-up" style="color: #006400;"></span>'
+    elif value < 0:
+        return '<span class="glyphicon glyphicon-chevron-down" style="color: #8b0000;"> </span>'

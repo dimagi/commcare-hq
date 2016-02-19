@@ -31,8 +31,13 @@ from custom.dhis2.models import Dhis2Settings
 from corehq.apps.accounting.async_handlers import Select2BillingInfoHandler
 from corehq.apps.accounting.invoicing import DomainWireInvoiceFactory
 from corehq.apps.hqwebapp.tasks import send_mail_async
-from corehq.apps.style.decorators import use_bootstrap3, use_jquery_ui, \
-    use_jquery_ui_multiselect, use_select2
+from corehq.apps.hqwebapp.models import ProjectSettingsTab
+from corehq.apps.style.decorators import (
+    use_bootstrap3,
+    use_jquery_ui,
+    use_jquery_ui_multiselect,
+    use_select2,
+)
 from corehq.apps.accounting.exceptions import (
     NewSubscriptionError,
     PaymentRequestError,
@@ -96,6 +101,18 @@ from corehq.apps.users.decorators import require_can_edit_web_users
 from corehq.apps.repeaters.forms import GenericRepeaterForm, FormRepeaterForm
 from corehq.apps.repeaters.models import FormRepeater, CaseRepeater, ShortFormRepeater, AppStructureRepeater, \
     RepeatRecord, repeater_types, RegisterGenerator
+from corehq.apps.repeaters.dbaccessors import (
+    get_paged_repeat_records,
+    get_repeat_record_count,
+)
+from corehq.apps.repeaters.const import (
+    RECORD_FAILURE_STATE,
+    RECORD_PENDING_STATE,
+    RECORD_SUCCESS_STATE,
+)
+from corehq.apps.reports.generic import GenericTabularReport
+from corehq.apps.reports.dispatcher import DomainReportDispatcher
+from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn
 from dimagi.utils.post import simple_post
 from toggle.models import Toggle
 from corehq.apps.hqwebapp.tasks import send_html_email_async
@@ -2067,6 +2084,119 @@ class RepeaterMixin(object):
             'ShortFormRepeater': _("Form Stubs"),
             'AppStructureRepeater': _("App Schema Changes"),
         }
+
+
+class DomainForwardingRepeatRecords(GenericTabularReport):
+    name = 'Repeat Records'
+    base_template = 'domain/repeat_record_report.html'
+    section_name = 'Project Settings'
+    slug = 'repeat_record_report'
+    dispatcher = DomainReportDispatcher
+    ajax_pagination = True
+    asynchronous = False
+    is_bootstrap3 = True
+
+    fields = [
+        'corehq.apps.reports.filters.select.RepeaterFilter',
+        'corehq.apps.reports.filters.select.RepeatRecordStateFilter',
+    ]
+
+    def _make_view_payload_button(self, record_id):
+        return '''
+        <a
+            class="btn btn-default"
+            role="button"
+            data-record-id={}
+            data-toggle="modal"
+            data-target="#view-record-payload-modal">
+            View Payload
+        </a>
+        '''.format(record_id)
+
+    def _make_resend_payload_button(self, record_id):
+        return '''
+        <button
+            class="btn btn-default resend-record-payload"
+            data-record-id={}>
+            Resend Payload
+        </button>
+        '''.format(record_id)
+
+    def _make_state_label(self, record):
+        label_cls = ''
+        label_text = ''
+
+        if record.state == RECORD_SUCCESS_STATE:
+            label_cls = 'success'
+            label_text = _('Success')
+        elif record.state == RECORD_PENDING_STATE:
+            label_cls = 'warning'
+            label_text = _('Pending')
+        elif record.state == RECORD_FAILURE_STATE:
+            label_cls = 'danger'
+            label_text = _('Failed')
+
+        return '''
+        <span class="label label-{}">
+            {}
+        </span>
+        '''.format(label_cls, label_text)
+
+    @property
+    def report_context(self):
+        context = super(DomainForwardingRepeatRecords, self).report_context
+        context.update({
+            'active_tab': ProjectSettingsTab(
+                self.request,
+                self.slug,
+                domain=self.domain,
+                couch_user=self.request.couch_user,
+            )
+        })
+        return context
+
+    @property
+    def total_records(self):
+        return get_repeat_record_count(self.domain, self.repeater_id, self.state)
+
+    @property
+    def shared_pagination_GET_params(self):
+        return [
+            {'name': 'repeater', 'value': self.request.GET.get('repeater')},
+            {'name': 'record_state', 'value': self.request.GET.get('record_state')},
+        ]
+
+    @property
+    def rows(self):
+        self.repeater_id = self.request.GET.get('repeater', None)
+        self.state = self.request.GET.get('record_state', None)
+        records = get_paged_repeat_records(
+            self.domain,
+            self.pagination.start,
+            self.pagination.count,
+            repeater_id=self.repeater_id,
+            state=self.state
+        )
+        return map(
+            lambda record: [
+                self._make_state_label(record),
+                record.url,
+                record.next_check.strftime('%b %m, %Y %H:%M') if record.next_check else None,
+                self._make_view_payload_button(record.get_id),
+                self._make_resend_payload_button(record.get_id),
+            ],
+            records
+        )
+
+    @property
+    def headers(self):
+        return DataTablesHeader(
+            DataTablesColumn('Status'),
+            DataTablesColumn('URL'),
+            DataTablesColumn('Retry Date'),
+            DataTablesColumn('View payload'),
+            DataTablesColumn('Resend'),
+        )
 
 
 class DomainForwardingOptionsView(BaseAdminProjectSettingsView, RepeaterMixin):

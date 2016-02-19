@@ -9,6 +9,18 @@ select[size^=""] {
     width: 100%;
 }
 
+// hack to fix issues with placeholder not showing up fully
+// !important is necessary because this is overriding an inline style set by select2 javascript
+.select2-container {
+    .select2-search-field {
+        width: 100% !important;
+    }
+    
+    .select2-input {
+        width: 100% !important;
+    }
+}
+
 .autocompletetextarea {
     width: 100%;
     height: @inputHeight*2;

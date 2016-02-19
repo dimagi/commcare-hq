@@ -180,7 +180,7 @@ TEMPLATE_CONTEXT_PROCESSORS = [
     'corehq.util.context_processors.domain',
     # sticks the base template inside all responses
     "corehq.util.context_processors.base_template",
-    "corehq.util.context_processors.analytics_js",
+    "corehq.util.context_processors.js_api_keys",
     'corehq.util.context_processors.websockets_override',
     'django.core.context_processors.i18n',
 ]
@@ -440,7 +440,7 @@ SOIL_HEARTBEAT_CACHE_KEY = "django-soil-heartbeat"
 
 # restyle some templates
 BASE_TEMPLATE = "style/bootstrap2/base.html"  # should eventually be bootstrap3
-BASE_ASYNC_TEMPLATE = "reports/async/basic.html"
+BASE_ASYNC_TEMPLATE = "reports/async/bootstrap2/basic.html"
 LOGIN_TEMPLATE = "login_and_password/login.html"
 LOGGEDOUT_TEMPLATE = LOGIN_TEMPLATE
 
@@ -562,6 +562,7 @@ TEST_RUNNER = 'testrunner.TwoStageTestRunner'
 HQ_ACCOUNT_ROOT = "commcarehq.org"
 
 XFORMS_PLAYER_URL = "http://localhost:4444/"  # touchform's setting
+FORMPLAYER_URL = 'http://localhost:8080'
 OFFLINE_TOUCHFORMS_PORT = 4444
 
 ####### Couchlog config #######
@@ -706,6 +707,8 @@ ANALYTICS_IDS = {
 ANALYTICS_CONFIG = {
     "HQ_INSTANCE": '',  # e.g. "www" or "staging"
 }
+
+MAPBOX_ACCESS_TOKEN = 'pk.eyJ1IjoiY3p1ZSIsImEiOiJjaWgwa3U5OXIwMGk3a3JrcjF4cjYwdGd2In0.8Tys94ISZlY-h5Y4W160RA'
 
 OPEN_EXCHANGE_RATES_API_ID = ''
 

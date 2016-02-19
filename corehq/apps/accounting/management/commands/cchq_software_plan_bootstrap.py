@@ -75,10 +75,12 @@ class Command(BaseCommand):
             return
 
         if fresh_start or flush:
-            confirm_fresh_start = raw_input("Are you sure you want to delete all SoftwarePlans and start over? "
-                                            "You can't do this if there are any active Subscriptions."
-                                            " Type 'yes' to continue.\n")
-            if confirm_fresh_start == 'yes':
+            confirm_fresh_start = raw_input(
+                "Are you sure you want to delete all SoftwarePlans and start over? "
+                "You can't do this if there are any active Subscriptions."
+                " Type 'yes' to continue.\n"
+            ) if not for_tests else 'yes'
+            if confirm_fresh_start == 'yes' or True:
                 _flush_plans(verbose=verbose, apps=default_apps)
 
         if not flush:

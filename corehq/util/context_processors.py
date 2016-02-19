@@ -84,10 +84,11 @@ def current_url_name(request):
     }
 
 
-def analytics_js(request):
+def js_api_keys(request):
     d = {}
     d.update(settings.ANALYTICS_IDS)
     d.update({"ANALYTICS_CONFIG": settings.ANALYTICS_CONFIG})
+    d['MAPBOX_ACCESS_TOKEN'] = settings.MAPBOX_ACCESS_TOKEN
     return d
 
 
