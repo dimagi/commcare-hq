@@ -380,21 +380,6 @@ class CommCareCase(SafeSaveDocument, IndexHoldingMixIn, ComputedDocumentMixin,
     def get_attachment(self, attachment_name):
         return self.fetch_attachment(attachment_name)
 
-    def get_attachment_server_url(self, attachment_key):
-        """
-        A server specific URL for remote clients to access case attachment resources async.
-        """
-        if attachment_key in self.case_attachments:
-            return "%s%s" % (web.get_url_base(),
-                             reverse("api_case_attachment", kwargs={
-                                 "domain": self.domain,
-                                 "case_id": self._id,
-                                 "attachment_id": attachment_key,
-                             })
-            )
-        else:
-            return None
-
     def dynamic_case_properties(self):
         """(key, value) tuples sorted by key"""
         json = self.to_json()
@@ -414,17 +399,6 @@ class CommCareCase(SafeSaveDocument, IndexHoldingMixIn, ComputedDocumentMixin,
         super(CommCareCase, self).save(**params)
         case_post_save.send(CommCareCase, case=self)
 
-    def to_xml(self, version, include_case_on_closed=False):
-        from xml.etree import ElementTree
-        if self.closed:
-            if include_case_on_closed:
-                elem = get_case_element(self, ('create', 'update', 'close'), version)
-            else:
-                elem = get_case_element(self, ('close'), version)
-        else:
-            elem = get_case_element(self, ('create', 'update'), version)
-        return ElementTree.tostring(elem)
-    
     # The following methods involving display configuration should probably go
     # in their own layer, but for now it seems fine.
     @classmethod

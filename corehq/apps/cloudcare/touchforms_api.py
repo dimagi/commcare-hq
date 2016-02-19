@@ -82,7 +82,7 @@ class SessionDataHelper(object):
         response = post_data(
             json.dumps(data),
             url=url,
-            content_type="text/json", auth=auth
+            content_type="application/json", auth=auth
         )
 
         return json.loads(response)
