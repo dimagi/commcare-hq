@@ -11,7 +11,7 @@ CELERY_SEND_TASK_ERROR_EMAILS = True
 
 CELERY_PERIODIC_QUEUE = 'celery' # change this to something else if you want a different queue for periodic tasks
 
-CELERY_RESULT_BACKEND = 'db+postgresql://commcarehq:commcarehq@postgres:5432'
+CELERY_RESULT_BACKEND = 'djcelery.backends.database:DatabaseBackend'
 
 CELERY_FLOWER_URL = 'http://celery:5555'
 BROKER_URL = 'amqp://guest:guest@rabbit:5672/commcarehq'

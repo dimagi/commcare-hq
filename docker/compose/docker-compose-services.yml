@@ -35,33 +35,21 @@ elasticsearch:
   volumes:
     - ${DOCKER_DATA_HOME}/elasticsearch:/usr/share/elasticsearch/data
 
-#zookeeper:
-#  extends:
-#    file: docker-compose-base.yml
-#    service: zookeeper
-#  ports:
-#    - "2181:2181"
-
-#kafka:
-#  extends:
-#    file: docker-compose-base.yml
-#    service: kafka
-#  environment:
-#    KAFKA_ADVERTISED_HOST_NAME: 'localhost' # docker machine ip. i.e. export DOCKER_HOST_IP=`docker-machine ip $(docker-machine active)`
-#    KAFKA_CREATE_TOPICS: "case:1:1,form:1:1,case-sql:1:1,form-sql:1:1,meta:1:1"
-#  links: 
-#    - zookeeper:zk
-#  ports:
-#    - "9092:9092"
-#  volumes:
-#    - /var/run/docker.sock:/var/run/docker.sock
+#The ADVERTISE_HOST for kafka variable is not set, as this seems to cause connection problems. 
+kafka:
+  extends:
+    file: docker-compose-base.yml
+    service: kafka
+  ports:
+    - "2181:2181"
+    - "9092:9092"
 
 rabbit:
   extends:
     file: docker-compose-base.yml
     service: rabbit
   ports:
-    - "5671:5672"
+    - "5672:5672"
     - "15672:15672"  
   volumes:
     - ${DOCKER_DATA_HOME}/rabbitmq:/var/lib/rabbitmq/mnesia

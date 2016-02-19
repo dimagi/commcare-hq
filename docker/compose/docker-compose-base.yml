@@ -43,6 +43,16 @@ elasticsearch:
 #  expose:
 #    - "9092"
 
+kafka:
+  image: spotify/kafka
+  environment:
+    ADVERTISED_PORT: 9092
+  expose:
+    - "2181"
+    - "9092"
+  labels:
+    commcare.name: "kafka"
+
 web:
   build: ../../
   dockerfile: ./docker/dockerfiles/Dockerfile_commcarehq
@@ -58,8 +68,6 @@ web:
     commcare.name: "web"
 
 rabbit:
-# build: ../../
-# dockerfile: ./docker/dockerfiles/Dockerfile_rabbit
   image: rabbitmq:3-management
   environment:
     RABBITMQ_DEFAULT_VHOST: "commcarehq"  

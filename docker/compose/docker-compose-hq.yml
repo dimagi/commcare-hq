@@ -5,7 +5,7 @@ web:
   volumes:
     - ${DOCKER_DATA_HOME}/sharedfiles:/sharedfiles
   environment:
-    DEPENDENT_SERVICES: "COUCH POSTGRES REDIS ELASTICSEARCH"
+    DEPENDENT_SERVICES: "COUCH POSTGRES REDIS ELASTICSEARCH KAFKA"
   ports:
     - "8000:8000"
   external_links:
@@ -13,6 +13,6 @@ web:
     - hqservice_couch_1:couch
     - hqservice_redis_1:redis
     - hqservice_elasticsearch_1:elasticsearch
-#    - hqservice_kafka_1:kafka
+    - hqservice_kafka_1:kafka
     - hqservice_rabbit_1:rabbit
     - hqservice_celery_1:celery

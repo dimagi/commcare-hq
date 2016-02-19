@@ -40,8 +40,6 @@ while [[ $# > 0 ]]; do
         stop | down)
             shift
             runner $key $@
-            docker rm hqservice_zookeeper_1
-            docker rm hqservice_kafka_1
             exit
             ;;
         logs)
