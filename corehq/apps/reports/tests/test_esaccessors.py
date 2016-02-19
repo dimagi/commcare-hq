@@ -12,6 +12,7 @@ from corehq.pillows.mappings.group_mapping import GROUP_INDEX
 from corehq.pillows.mappings.user_mapping import USER_INDEX
 from corehq.pillows.mappings.xform_mapping import XFORM_INDEX
 from dimagi.utils.dates import DateSpan
+from dimagi.utils.parsing import string_to_utc_datetime
 from elasticsearch.exceptions import ConnectionError
 
 from corehq.util.elastic import ensure_index_deleted
@@ -38,6 +39,8 @@ from corehq.apps.reports.analytics.esaccessors import (
     get_form_counts_by_user_xmlns,
     get_form_duration_stats_by_user,
     get_form_duration_stats_for_users,
+    get_last_form_submission_for_xmlns,
+    guess_form_name_from_submissions_using_xmlns,
 )
 from corehq.util.test_utils import make_es_ready_form, trap_extra_setup
 from pillowtop.feed.interface import Change
@@ -121,6 +124,40 @@ class TestFormESAccessors(BaseESAccessorsTest):
 
         results = get_submission_counts_by_user(self.domain, DateSpan(start, end))
         self.assertEquals(results['cruella_deville'], 1)
+
+    def test_get_last_form_submission_by_xmlns(self):
+        xmlns = 'http://a.b.org'
+        kwargs = {
+            'user_id': 'u1',
+            'app_id': '1234',
+            'domain': self.domain,
+        }
+
+        first = datetime(2013, 7, 15, 0, 0, 0)
+        second = datetime(2013, 7, 16, 0, 0, 0)
+        third = datetime(2013, 7, 17, 0, 0, 0)
+
+        self._send_form_to_es(received_on=second, xmlns=xmlns, **kwargs)
+        self._send_form_to_es(received_on=third, xmlns=xmlns, **kwargs)
+        self._send_form_to_es(received_on=first, xmlns=xmlns, **kwargs)
+
+        form = get_last_form_submission_for_xmlns(self.domain, xmlns)
+        self.assertEqual(string_to_utc_datetime(form['received_on']), third)
+
+        form = get_last_form_submission_for_xmlns(self.domain, 'missing')
+        self.assertIsNone(form)
+
+    def test_guess_form_name_from_xmlns_not_found(self):
+        self.assertEqual(None, guess_form_name_from_submissions_using_xmlns('missing', 'missing'))
+
+    def test_guess_form_name_from_xmlns(self):
+        form_name = 'my cool form'
+        xmlns = 'http://a.b.org'
+        self._send_form_to_es(
+            xmlns=xmlns,
+            form_name=form_name,
+        )
+        self.assertEqual(form_name, guess_form_name_from_submissions_using_xmlns(self.domain, xmlns))
 
     def test_submission_out_of_range_by_user(self):
         start = datetime(2013, 7, 1)

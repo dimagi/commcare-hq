@@ -10,6 +10,9 @@ from corehq.apps.reports.analytics.couchaccessors import (
     get_form_details_for_app_and_module,
     get_form_details_for_app,
 )
+from corehq.apps.reports.analytics.esaccessors import (
+    guess_form_name_from_submissions_using_xmlns,
+)
 from corehq.apps.reports.filters.base import BaseDrilldownOptionFilter, BaseSingleOptionFilter, BaseTagsFilter
 from corehq.util.soft_assert import soft_assert
 from couchforms.analytics import get_all_xmlns_app_id_pairs_submitted_to_in_domain
