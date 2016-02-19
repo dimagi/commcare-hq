@@ -111,6 +111,25 @@ class FundamentalCaseTests(TestCase):
         self.assertTrue(case.server_modified_on > modified_on)
 
     @run_with_all_backends
+    def test_empty_update(self):
+        case_id = uuid.uuid4().hex
+        opened_on = datetime.utcnow()
+        _submit_case_block(
+            True, case_id, user_id='user1', owner_id='owner1', case_type='demo',
+            case_name='create_case', date_modified=opened_on, update={
+                'dynamic': '123'
+            }
+        )
+
+        modified_on = datetime.utcnow()
+        _submit_case_block(
+            False, case_id, user_id='user2', date_modified=modified_on, update={}
+        )
+
+        case = self.casedb.get_case(case_id)
+        self.assertEqual(case.dynamic_case_properties(), {'dynamic': '123'})
+
+    @run_with_all_backends
     def test_case_with_index(self):
         # same as update, indexes
         mother_case_id = uuid.uuid4().hex

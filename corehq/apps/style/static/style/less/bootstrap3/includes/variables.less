@@ -1,7 +1,7 @@
-@import "../../../lib/bootstrap-3.2.0/less/variables.less";
+@import "@{b3-import-variables}";
 
 @font-size-base:  12px;
-@icon-font-path:  "../lib/bootstrap-3.2.0/fonts/";
+@icon-font-path:  "../../bootstrap/fonts/";
 
 // Main Colors
 @cc-bg:     #f2f2f1;
@@ -73,9 +73,13 @@
 // Z-index master list
 // -------------------------
 // Also see Bootstrap 3's own master list:
-// corehq/apps/style/static/style/lib/bootstrap-3.2.0/less/variables.less
+// bootstrap/less/variables.less
 @zindexDashboardSpinner:              500;
 @zindexAccountingPricingTableHeader:  800;
 
 // Other Zindecies
 @zindex-report-loading:               100;
+
+
+@input-border-radius-large:       5px;
+@cursor-disabled:                 'not-allowed';

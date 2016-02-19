@@ -10,7 +10,7 @@
         "airstanzania"
     ],
     "report_id": "supervisory_report",
-    "data_source_table": "supervisory-003",
+    "data_source_table": "supervisory-004",
     "config": {
         "doc_type": "ReportConfiguration",
         "domain": "airs",

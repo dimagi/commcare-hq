@@ -14,7 +14,7 @@ PROPERTY_TAG_DELETED = 'deleted'
 PROPERTY_TAG_ROW = 'row'
 
 MAIN_TABLE_PROPERTIES = [
-    SystemProperty(PROPERTY_TAG_ROW, 'row')
+    SystemProperty(PROPERTY_TAG_ROW, 'number')
 ]
 
 CASE_HISTORY_PROPERTIES = [

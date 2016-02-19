@@ -72,6 +72,7 @@ from django_prbac.exceptions import PermissionDenied
 from django_prbac.utils import has_privilege
 from soil.exceptions import TaskFailedError
 from soil.util import get_download_context, expose_cached_download
+from zipfile import BadZipfile
 from .custom_data_fields import UserFieldsView
 
 BULK_MOBILE_HELP_SITE = ("https://confluence.dimagi.com/display/commcarepublic"
@@ -728,7 +729,7 @@ class UploadCommCareUsers(BaseManageCommCareUserView):
         upload = request.FILES.get('bulk_upload_file')
         try:
             self.workbook = WorkbookJSONReader(upload)
-        except InvalidFileException:
+        except (InvalidFileException, BadZipfile):
             try:
                 csv.DictReader(io.StringIO(upload.read().decode('ascii'),
                                            newline=None))

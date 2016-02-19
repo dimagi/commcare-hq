@@ -55,7 +55,10 @@ from casexml.apps.case.xml import V2
 from casexml.apps.stock.models import StockTransaction
 from couchdbkit.exceptions import ResourceNotFound
 import couchexport
+from corehq.form_processor.exceptions import CaseNotFound, XFormNotFound
+from corehq.form_processor.interfaces.dbaccessors import CaseAccessors, FormAccessors
 from corehq.form_processor.models import UserRequestedRebuild
+from corehq.form_processor.utils.general import should_use_sql_backend
 from couchexport.exceptions import (
     CouchExportException,
     SchemaMismatchException
@@ -1348,22 +1351,15 @@ def _get_form_context(request, domain, instance):
     return context
 
 
-def _get_form_or_404(id):
-    # maybe this should be a more general utility a-la-django's get_object_or_404
+def _get_form_or_404(domain, id):
     try:
-        xform_json = XFormInstance.get_db().get(id)
-    except ResourceNotFound:
+        return FormAccessors(domain).get_form(id)
+    except XFormNotFound:
         raise Http404()
-
-    doc_type = doc_types().get(xform_json.get('doc_type'))
-    if not doc_type:
-        raise Http404()
-
-    return doc_type.wrap(xform_json)
 
 
 def _get_form_to_edit(domain, user, instance_id):
-    form = _get_form_or_404(instance_id)
+    form = _get_form_or_404(domain, instance_id)
     if not can_edit_form_location(domain, user, form):
         raise PermissionDenied()
     return form
@@ -1373,10 +1369,10 @@ def _get_form_to_edit(domain, user, instance_id):
 @login_and_domain_required
 @require_GET
 def form_data(request, domain, instance_id):
-    instance = _get_form_or_404(instance_id)
+    instance = _get_form_or_404(domain, instance_id)
     context = _get_form_context(request, domain, instance)
     try:
-        form_name = instance.form["@name"]
+        form_name = instance.form_data["@name"]
     except KeyError:
         form_name = "Untitled Form"
 
@@ -1393,7 +1389,7 @@ def form_data(request, domain, instance_id):
 @login_and_domain_required
 @require_GET
 def case_form_data(request, domain, case_id, xform_id):
-    instance = _get_form_or_404(xform_id)
+    instance = _get_form_or_404(domain, xform_id)
     context = _get_form_context(request, domain, instance)
     context['case_id'] = case_id
     context['side_pane'] = True
@@ -1404,7 +1400,7 @@ def case_form_data(request, domain, case_id, xform_id):
 @login_and_domain_required
 @require_GET
 def download_form(request, domain, instance_id):
-    instance = _get_form_or_404(instance_id)
+    instance = _get_form_or_404(domain, instance_id)
     assert(domain == instance.domain)
 
     instance = XFormInstance.get(instance_id)
@@ -1531,7 +1527,7 @@ def download_attachment(request, domain, instance_id):
     attachment = request.GET.get('attachment', False)
     if not attachment:
         return HttpResponseBadRequest("Invalid attachment.")
-    instance = _get_form_or_404(instance_id)
+    instance = _get_form_or_404(domain, instance_id)
     assert(domain == instance.domain)
 
     instance = XFormInstance.get(instance_id)
@@ -1550,10 +1546,10 @@ def download_attachment(request, domain, instance_id):
 def archive_form(request, domain, instance_id):
     instance = _get_form_to_edit(domain, request.couch_user, instance_id)
     assert instance.domain == domain
-    if instance.doc_type == "XFormInstance":
+    if instance.is_normal:
         instance.archive(user_id=request.couch_user._id)
         notif_msg = _("Form was successfully archived.")
-    elif instance.doc_type == "XFormArchived":
+    elif instance.is_archived:
         notif_msg = _("Form was already archived.")
     else:
         notif_msg = _("Can't archive documents of type %s. How did you get here??") % instance.doc_type
@@ -1568,7 +1564,7 @@ def archive_form(request, domain, instance_id):
 
     msg_template = u"""{notif} <a href="javascript:document.getElementById('{id}').submit();">{undo}</a>
         <form id="{id}" action="{url}" method="POST">{csrf_inline}</form>""" \
-        if instance.doc_type == "XFormArchived" else u'{notif}'
+        if instance.is_archived else u'{notif}'
     msg = msg_template.format(**params)
     messages.success(request, mark_safe(msg), extra_tags='html')
 
@@ -1583,10 +1579,10 @@ def archive_form(request, domain, instance_id):
     case_id = re.findall(template, redirect)
     if case_id:
         try:
-            case = CommCareCase.get(case_id[0])
-            if case._doc['doc_type'] == 'CommCareCase-Deleted':
-                raise ResourceNotFound
-        except ResourceNotFound:
+            case = CaseAccessors(domain).get_case(case_id[0])
+            if case.is_deleted:
+                raise CaseNotFound
+        except CaseNotFound:
             redirect = reverse('project_report_dispatcher', args=[domain, 'case_list'])
 
     return HttpResponseRedirect(redirect)
@@ -1597,10 +1593,10 @@ def archive_form(request, domain, instance_id):
 def unarchive_form(request, domain, instance_id):
     instance = _get_form_to_edit(domain, request.couch_user, instance_id)
     assert instance.domain == domain
-    if instance.doc_type == "XFormArchived":
+    if instance.is_archived:
         instance.unarchive(user_id=request.couch_user._id)
     else:
-        assert instance.doc_type == "XFormInstance"
+        assert instance.is_normal
     messages.success(request, _("Form was successfully restored."))
 
     redirect = request.META.get('HTTP_REFERER')
@@ -1615,9 +1611,13 @@ def unarchive_form(request, domain, instance_id):
 def resave_form(request, domain, instance_id):
     """Re-save the form to have it re-processed by pillows
     """
+    from corehq.form_processor.change_publishers import publish_form_saved
     instance = _get_form_to_edit(domain, request.couch_user, instance_id)
     assert instance.domain == domain
-    XFormInstance.get_db().save_doc(instance.to_json())
+    if should_use_sql_backend(domain):
+        publish_form_saved(instance)
+    else:
+        XFormInstance.get_db().save_doc(instance.to_json())
     messages.success(request, _("Form was successfully resaved. It should reappear in reports shortly."))
     return HttpResponseRedirect(reverse('render_form_data', args=[domain, instance_id]))
 

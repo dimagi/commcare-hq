@@ -273,6 +273,11 @@ class BasicReportDispatcher(ReportDispatcher):
     map_name = 'BASIC_REPORTS'
 
 
+class DomainReportDispatcher(ReportDispatcher):
+    prefix = 'domain_report'
+    map_name = 'DOMAIN_REPORTS'
+
+
 class AdminReportDispatcher(ReportDispatcher):
     prefix = 'admin_report'
     map_name = 'ADMIN_REPORTS'

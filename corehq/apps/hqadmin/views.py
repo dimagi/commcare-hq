@@ -31,7 +31,8 @@ from couchdbkit import ResourceNotFound
 from casexml.apps.case.models import CommCareCase
 from corehq.apps.callcenter.indicator_sets import CallCenterIndicators
 from corehq.apps.hqcase.utils import get_case_by_domain_hq_user_id
-from corehq.apps.style.decorators import use_datatables, use_jquery_ui
+from corehq.apps.style.decorators import use_datatables, use_jquery_ui, \
+    use_bootstrap3
 from corehq.apps.style.views import BaseB3SectionPageView
 from corehq.toggles import any_toggle_enabled, SUPPORT
 from corehq.util.couchdb_management import couch_config
@@ -114,26 +115,22 @@ class BaseAdminSectionView(BaseB3SectionPageView):
         return reverse(self.urlname)
 
 
-class AuthenticateAs(BasePageView):
+class AuthenticateAs(BaseAdminSectionView):
     urlname = 'authenticate_as'
-    page_title = _("Login as other user")
+    page_title = _("Login as Other User")
     template_name = 'hqadmin/authenticate_as.html'
 
     @method_decorator(require_superuser)
+    @use_bootstrap3
     def dispatch(self, *args, **kwargs):
         return super(AuthenticateAs, self).dispatch(*args, **kwargs)
 
-    def page_url(self):
-        return reverse(self.urlname)
-
-    def get_context_data(self, **kwargs):
-        context = super(AuthenticateAs, self).get_context_data(**kwargs)
-        context.update({
+    @property
+    def page_context(self):
+        return {
             'hide_filters': True,
-            'page_url': self.page_url(),
-            'form': AuthenticateAsForm(initial=kwargs)
-        })
-        return context
+            'form': AuthenticateAsForm(initial=self.kwargs)
+        }
 
     def post(self, request, *args, **kwargs):
         form = AuthenticateAsForm(self.request.POST)
@@ -682,20 +679,29 @@ def callcenter_test(request):
     return render(request, "hqadmin/callcenter_test.html", context)
 
 
-@require_superuser
-def malt_as_csv(request):
-    from django.core.exceptions import ValidationError
+class DownloadMALTView(BaseAdminSectionView):
+    urlname = 'download_malt'
+    page_title = ugettext_lazy("Download MALT")
+    template_name = "hqadmin/malt_downloader.html"
 
-    if 'year_month' in request.GET:
-        try:
-            year, month = request.GET['year_month'].split('-')
-            year, month = int(year), int(month)
-            return _malt_csv_response(month, year)
-        except (ValueError, ValidationError):
-            messages.error(request, "Enter a valid year-month. e.g. 2015-09 (for December 2015)")
-            return render(request, "hqadmin/malt_downloader.html")
-    else:
-        return render(request, "hqadmin/malt_downloader.html")
+    @method_decorator(require_superuser)
+    @use_bootstrap3
+    def dispatch(self, request, *args, **kwargs):
+        return super(DownloadMALTView, self).dispatch(request, *args, **kwargs)
+
+    def get(self, request, *args, **kwargs):
+        from django.core.exceptions import ValidationError
+        if 'year_month' in request.GET:
+            try:
+                year, month = request.GET['year_month'].split('-')
+                year, month = int(year), int(month)
+                return _malt_csv_response(month, year)
+            except (ValueError, ValidationError):
+                messages.error(
+                    request,
+                    _("Enter a valid year-month. e.g. 2015-09 (for December 2015)")
+                )
+        return super(DownloadMALTView, self).get(request, *args, **kwargs)
 
 
 def _malt_csv_response(month, year):
