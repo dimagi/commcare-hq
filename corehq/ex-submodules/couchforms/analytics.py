@@ -142,23 +142,6 @@ def get_last_form_submission_by_xmlns(domain, xmlns):
     ).first()
 
 
-def get_last_form_submission_for_user_for_app(domain, user_id, app_id=None):
-    if app_id:
-        key = ['submission app user', domain, app_id, user_id]
-    else:
-        key = ['submission user', domain, user_id]
-    xform = XFormInstance.view(
-        "all_forms/view",
-        startkey=key + [{}],
-        endkey=key,
-        include_docs=True,
-        descending=True,
-        reduce=False,
-        limit=1,
-    ).first()
-    return xform
-
-
 def app_has_been_submitted_to_in_last_30_days(domain, app_id):
     now = datetime.datetime.utcnow()
     _30_days = datetime.timedelta(days=30)

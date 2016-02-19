@@ -1,3 +1,4 @@
+import sys
 from collections import defaultdict
 from itertools import islice
 from logging import Filter
@@ -232,3 +233,25 @@ class SlowRequestFilter(Filter):
             return record.duration > self.duration_cutoff
         except (TypeError, AttributeError):
             return False
+
+
+def with_progress_bar(iterable, length=None):
+    """Turns 'iterable' into a generator which prints a progress bar"""
+    if hasattr(iterable, "__len__"):
+        length = len(iterable)
+    elif length is None:
+        raise AttributeError(
+            "'{}' object has no len(), you must pass in the 'length' parameter"
+            .format(type(iterable))
+        )
+    granularity = 40
+    checkpoints = {length*i/granularity for i in range(length)}
+    print 'Processing [' + ' '*granularity + ']',
+    print '\b' * (granularity + 2),
+    sys.stdout.flush()
+    for i, x in enumerate(iterable):
+        yield x
+        if i in checkpoints:
+            print '\b.',
+            sys.stdout.flush()
+    print '\b] Done!'
