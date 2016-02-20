@@ -48,7 +48,6 @@ from corehq.apps.reminders.views import (
     EditNormalKeywordView,
     EditScheduledReminderView
 )
-from corehq.form_processor.interfaces.dbaccessors import FormAccessors
 
 
 class MessagesReport(ProjectReport, ProjectReportParametersMixin, GenericTabularReport, DatespanMixin):
