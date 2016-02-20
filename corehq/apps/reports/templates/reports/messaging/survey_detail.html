@@ -36,8 +36,8 @@
         <tr>
             <th>{% trans 'Form Submission' %}</th>
             <td>
-                {% if xform_instance %}
-                    <a target="_blank" href="{% url 'render_form_data' domain xform_instance.form_id %}">{% trans 'View' %}</a>
+                {% if xfrom_session.submission_id %}
+                    <a target="_blank" href="{% url 'render_form_data' domain xforms_session.submission_id %}">{% trans 'View' %}</a>
                 {% else %}
                     {% trans 'n/a' %}
                 {% endif %}
