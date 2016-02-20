@@ -16,7 +16,8 @@ import sys
 from dimagi.utils.decorators.memoized import memoized
 from dimagi.utils.couch import LockManager
 from pillow_retry.models import PillowError
-from pillowtop.checkpoints.manager import PillowCheckpoint, get_default_django_checkpoint_for_legacy_pillow_class
+from pillowtop.checkpoints.manager import PillowCheckpoint, get_default_django_checkpoint_for_legacy_pillow_class, \
+    get_django_checkpoint_store
 from pillowtop.checkpoints.util import get_machine_id, construct_checkpoint_doc_id_from_name
 from pillowtop.const import CHECKPOINT_FREQUENCY
 from pillowtop.couchdb import CachedCouchDB
@@ -123,7 +124,7 @@ class BasicPillow(PillowBase):
 
     def _get_default_checkpoint(self):
         return PillowCheckpoint(
-            self.document_store,
+            get_django_checkpoint_store(),
             construct_checkpoint_doc_id_from_name(self.get_name()),
         )
 
