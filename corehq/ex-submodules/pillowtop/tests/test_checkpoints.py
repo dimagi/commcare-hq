@@ -1,4 +1,4 @@
-from abc import ABCMeta, abstractproperty
+from abc import ABCMeta, abstractproperty, abstractmethod
 from django.test import SimpleTestCase, override_settings, TestCase
 import time
 from dimagi.utils.decorators.memoized import memoized
@@ -25,22 +25,18 @@ class PillowCheckpointTest(SimpleTestCase):
         self.assertEqual(checkpoint_id, PillowCheckpoint(MockDocumentStore(), checkpoint_id).checkpoint_id)
 
 
-class PillowCheckpointDaoTestMixin(object):
+class PillowCheckpointDbTestMixin(object):
     __metaclass__ = ABCMeta
 
     _checkpoint_id = 'test-checkpoint-id'
 
     @abstractproperty
-    def dao(self):
+    def checkpoint(self):
         pass
 
-    @property
-    @memoized
-    def checkpoint(self):
-        return PillowCheckpoint(self.dao, self._checkpoint_id)
-
+    @abstractmethod
     def save_checkpoint(self, checkpoint_id, sequence_id):
-        self.dao.save_document(checkpoint_id, {'seq': sequence_id})
+        pass
 
     def test_get_or_create_empty(self):
         checkpoint_manager = PillowCheckpointManager(MockDocumentStore())
@@ -99,6 +95,22 @@ class PillowCheckpointDaoTestMixin(object):
         self.checkpoint.touch(min_interval=0)
         timestamp_back = self.checkpoint.get_or_create().document['timestamp']
         self.assertNotEqual(timestamp_back, timestamp)
+
+
+class PillowCheckpointDaoTestMixin(PillowCheckpointDbTestMixin):
+    __metaclass__ = ABCMeta
+
+    @abstractproperty
+    def dao(self):
+        pass
+
+    @property
+    @memoized
+    def checkpoint(self):
+        return PillowCheckpoint(self.dao, self._checkpoint_id)
+
+    def save_checkpoint(self, checkpoint_id, sequence_id):
+        self.dao.save_document(checkpoint_id, {'seq': sequence_id})
 
 
 class SimplePillowCheckpointDaoTest(SimpleTestCase, PillowCheckpointDaoTestMixin):
