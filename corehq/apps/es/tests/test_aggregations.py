@@ -271,6 +271,11 @@ class TestAggregations(ElasticTestMixin, SimpleTestCase):
                                 "order": "desc"
                             }
                         }],
+                        "_source": {
+                            "include": [
+                                "title"
+                            ]
+                        },
                         "size": 2
                     },
                 },
@@ -278,7 +283,12 @@ class TestAggregations(ElasticTestMixin, SimpleTestCase):
             "size": SIZE_LIMIT
         }
         query = HQESQuery('cases').aggregation(
-            TopHitsAggregation('name_top_hits', 'my_awesome_field', is_ascending=False, size=2)
+            TopHitsAggregation(
+                'name_top_hits',
+                field='my_awesome_field',
+                is_ascending=False,
+                size=2,
+                include=['title'])
         )
         self.checkQuery(query, json_output)
 

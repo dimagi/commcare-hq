@@ -232,27 +232,35 @@ class ExtendedStatsAggregation(StatsAggregation):
 
 class TopHitsAggregation(Aggregation):
     """
-    Stats aggregation that computes a stats aggregation by field
+    A top_hits metric aggregator keeps track of the most relevant document being aggregated
+    This aggregator is intended to be used as a sub aggregator, so that the top matching
+    documents can be aggregated per bucket.
 
-    :param name: aggregation name
-    :param field: name of the field to collect stats on
-    :param script: an optional field to allow you to script the computed field
+    :param name: Aggregation name
+    :param field: This is the field to sort the top hits by. If None, defaults to sorting
+        by score.
+    :param is_ascending: Whether to sort the hits in ascending or descending order.
+    :param size: The number of hits to include. Defaults to 1.
+    :param include: An array of fields to include in the hit. Defaults to returning the whole document.
     """
     type = "top_hits"
     result_class = TopHitsResult
 
-    def __init__(self, name, field, is_ascending=True, size=1):
+    def __init__(self, name, field=None, is_ascending=True, size=1, include=None):
         assert re.match(r'\w+$', name), \
             "Names must be valid python variable names, was {}".format(name)
         self.name = name
         self.body = {
-            "sort": [{
+            'size': size,
+        }
+        if field:
+            self.body["sort"] = [{
                 field: {
                     "order": 'asc' if is_ascending else 'desc'
                 },
-            }],
-            'size': size,
-        }
+            }]
+        if include:
+            self.body["_source"] = {"include": include}
 
 
 class FilterResult(AggregationResult):
