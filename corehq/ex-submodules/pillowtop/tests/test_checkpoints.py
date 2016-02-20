@@ -39,6 +39,9 @@ class PillowCheckpointDaoTestMixin(object):
     def checkpoint(self):
         return PillowCheckpoint(self.dao, self._checkpoint_id)
 
+    def save_checkpoint(self, checkpoint_id, sequence_id):
+        self.dao.save_document(checkpoint_id, {'seq': sequence_id})
+
     def test_get_or_create_empty(self):
         checkpoint_manager = PillowCheckpointManager(MockDocumentStore())
         checkpoint, created = checkpoint_manager.get_or_create_checkpoint('some-id')
@@ -53,7 +56,7 @@ class PillowCheckpointDaoTestMixin(object):
 
     def test_db_changes_returned(self):
         self.checkpoint.get_or_create()
-        self.dao.save_document(self._checkpoint_id, {'seq': '1'})
+        self.save_checkpoint(self._checkpoint_id, '1')
         checkpoint = self.checkpoint.get_or_create().document
         self.assertEqual('1', checkpoint['seq'])
 
@@ -64,7 +67,7 @@ class PillowCheckpointDaoTestMixin(object):
 
     def test_verify_unchanged_fail(self):
         self.checkpoint.get_or_create()
-        self.dao.save_document(self._checkpoint_id, {'seq': '1'})
+        self.save_checkpoint(self._checkpoint_id, '1')
         with self.assertRaises(PillowtopCheckpointReset):
             self.checkpoint.get_or_create(verify_unchanged=True)
 
@@ -76,7 +79,7 @@ class PillowCheckpointDaoTestMixin(object):
 
     def test_update_verify_unchanged_fail(self):
         self.checkpoint.get_or_create()
-        self.dao.save_document(self._checkpoint_id, {'seq': '1'})
+        self.save_checkpoint(self._checkpoint_id, '1')
         with self.assertRaises(PillowtopCheckpointReset):
             self.checkpoint.update_to('2')
 
