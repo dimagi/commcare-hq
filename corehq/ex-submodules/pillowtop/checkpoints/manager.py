@@ -102,11 +102,5 @@ class PillowCheckpointEventHandler(ChangeEventHandler):
             self.checkpoint.update_to(change['seq'])
 
 
-def get_django_checkpoint_store():
-    return DjangoDocumentStore(
-        DjangoPillowCheckpoint, DjangoPillowCheckpoint.to_dict, DjangoPillowCheckpoint.from_dict,
-    )
-
-
 def get_default_django_checkpoint_for_legacy_pillow_class(pillow_class):
     return PillowCheckpoint(pillow_class.get_legacy_name())
