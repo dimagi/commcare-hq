@@ -111,6 +111,28 @@ class BucketResult(AggregationResult):
         return {b['key']: b['doc_count'] for b in self.normalized_buckets}
 
 
+class TopHitsResult(AggregationResult):
+
+    @property
+    def raw_hits(self):
+        return self.result['hits']['hits']
+
+    @property
+    def doc_ids(self):
+        """Return just the docs ids from the response."""
+        return [r['_id'] for r in self.raw_hits]
+
+    @property
+    def hits(self):
+        """Return the docs from the response."""
+        return [r['_source'] for r in self.raw_hits]
+
+    @property
+    def total(self):
+        """Return the total number of docs matching the query."""
+        return self.result['hits']['total']
+
+
 class StatsResult(AggregationResult):
 
     @property
@@ -206,6 +228,39 @@ class ExtendedStatsAggregation(StatsAggregation):
     """
     type = "extended_stats"
     result_class = ExtendedStatsResult
+
+
+class TopHitsAggregation(Aggregation):
+    """
+    A top_hits metric aggregator keeps track of the most relevant document being aggregated
+    This aggregator is intended to be used as a sub aggregator, so that the top matching
+    documents can be aggregated per bucket.
+
+    :param name: Aggregation name
+    :param field: This is the field to sort the top hits by. If None, defaults to sorting
+        by score.
+    :param is_ascending: Whether to sort the hits in ascending or descending order.
+    :param size: The number of hits to include. Defaults to 1.
+    :param include: An array of fields to include in the hit. Defaults to returning the whole document.
+    """
+    type = "top_hits"
+    result_class = TopHitsResult
+
+    def __init__(self, name, field=None, is_ascending=True, size=1, include=None):
+        assert re.match(r'\w+$', name), \
+            "Names must be valid python variable names, was {}".format(name)
+        self.name = name
+        self.body = {
+            'size': size,
+        }
+        if field:
+            self.body["sort"] = [{
+                field: {
+                    "order": 'asc' if is_ascending else 'desc'
+                },
+            }]
+        if include:
+            self.body["_source"] = {"include": include}
 
 
 class FilterResult(AggregationResult):

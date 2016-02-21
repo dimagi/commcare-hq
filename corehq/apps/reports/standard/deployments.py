@@ -19,7 +19,7 @@ from corehq.apps.reports.util import format_datatables_data
 from corehq.apps.users.models import CommCareUser
 from corehq.const import USER_DATE_FORMAT
 from corehq.util.couch import get_document_or_404
-from corehq.apps.reports.analytics.esaccessors import get_last_form_submission_for_user_for_app
+from corehq.apps.reports.analytics.esaccessors import get_last_form_submissions_by_user
 from django.utils.translation import ugettext_noop
 from django.utils.translation import ugettext as _
 from dimagi.utils.couch.database import iter_docs
@@ -95,11 +95,14 @@ class ApplicationStatusReport(DeploymentsReport):
         rows = []
         selected_app = self.request_params.get(SelectApplicationFilter.slug, None)
 
-        for user in self.users:
-            last_seen = last_sync = app_name = None
+        user_ids = map(lambda user: user.user_id, self.users)
+        user_xform_dicts_map = get_last_form_submissions_by_user(self.domain, user_ids, selected_app)
 
-            xform_dict = get_last_form_submission_for_user_for_app(
-                self.domain, user.user_id, selected_app)
+        for user in self.users:
+            xform_dict = last_seen = last_sync = app_name = None
+
+            if user_xform_dicts_map.get(user.user_id):
+                xform_dict = user_xform_dicts_map[user.user_id][0]
 
             if xform_dict:
                 last_seen = string_to_utc_datetime(xform_dict.get('received_on'))

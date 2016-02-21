@@ -32,7 +32,7 @@ from corehq.apps.reports.analytics.esaccessors import (
     get_total_case_counts_by_owner,
     get_case_counts_closed_by_user,
     get_case_counts_opened_by_user,
-    get_last_form_submission_for_user_for_app,
+    get_last_form_submissions_by_user,
     get_user_stubs,
     get_group_stubs,
     get_form_counts_by_user_xmlns,
@@ -181,8 +181,13 @@ class TestFormESAccessors(BaseESAccessorsTest):
         self.assertEquals(results['2013-07-14'], 1)
 
     def test_get_last_form_submission_for_user_for_app(self):
-        kwargs = {
+        kwargs_u1 = {
             'user_id': 'u1',
+            'app_id': '1234',
+            'domain': self.domain,
+        }
+        kwargs_u2 = {
+            'user_id': 'u2',
             'app_id': '1234',
             'domain': self.domain,
         }
@@ -191,15 +196,20 @@ class TestFormESAccessors(BaseESAccessorsTest):
         second = datetime(2013, 7, 16, 0, 0, 0)
         third = datetime(2013, 7, 17, 0, 0, 0)
 
-        self._send_form_to_es(received_on=second, xmlns='second', **kwargs)
-        self._send_form_to_es(received_on=third, xmlns='third', **kwargs)
-        self._send_form_to_es(received_on=first, xmlns='first', **kwargs)
+        self._send_form_to_es(received_on=second, xmlns='second', **kwargs_u1)
+        self._send_form_to_es(received_on=third, xmlns='third', **kwargs_u1)
+        self._send_form_to_es(received_on=first, xmlns='first', **kwargs_u1)
 
-        form = get_last_form_submission_for_user_for_app(self.domain, 'u1', '1234')
-        self.assertEqual(form['xmlns'], 'third')
+        self._send_form_to_es(received_on=second, xmlns='second', **kwargs_u2)
+        self._send_form_to_es(received_on=third, xmlns='third', **kwargs_u2)
+        self._send_form_to_es(received_on=first, xmlns='first', **kwargs_u2)
 
-        form = get_last_form_submission_for_user_for_app(self.domain, 'u1', 'nothing')
-        self.assertEqual(form, None)
+        result = get_last_form_submissions_by_user(self.domain, ['u1', 'u2', 'missing'])
+        self.assertEqual(result['u1'][0]['xmlns'], 'third')
+        self.assertEqual(result['u2'][0]['xmlns'], 'third')
+
+        result = get_last_form_submissions_by_user(self.domain, ['u1'], '1234')
+        self.assertEqual(result['u1'][0]['xmlns'], 'third')
 
     def test_get_form_counts_by_user_xmlns(self):
         user1, user2 = 'u1', 'u2'
