@@ -1,4 +1,3 @@
-from abc import ABCMeta, abstractproperty, abstractmethod
 from django.test import SimpleTestCase, override_settings, TestCase
 import time
 from dimagi.utils.decorators.memoized import memoized
@@ -23,18 +22,19 @@ class PillowCheckpointTest(SimpleTestCase):
         self.assertEqual(checkpoint_id, PillowCheckpoint(checkpoint_id).checkpoint_id)
 
 
-class PillowCheckpointDbTestMixin(object):
-    __metaclass__ = ABCMeta
+class PillowCheckpointDbTest(TestCase):
 
     _checkpoint_id = 'test-checkpoint-id'
 
-    @abstractproperty
+    @property
+    @memoized
     def checkpoint(self):
-        pass
+        return PillowCheckpoint(self._checkpoint_id)
 
-    @abstractmethod
     def save_checkpoint(self, checkpoint_id, sequence_id):
-        pass
+        checkpoint = DjangoPillowCheckpoint.objects.get_or_create(checkpoint_id=checkpoint_id)[0]
+        checkpoint.sequence = sequence_id
+        checkpoint.save()
 
     def test_get_or_create_empty(self):
         checkpoint, created = get_or_create_checkpoint('some-id')
@@ -93,15 +93,3 @@ class PillowCheckpointDbTestMixin(object):
         timestamp_back = self.checkpoint.get_or_create().document['timestamp']
         self.assertNotEqual(timestamp_back, timestamp)
 
-
-class DjangoPillowCheckpointTest(TestCase, PillowCheckpointDbTestMixin):
-
-    @property
-    @memoized
-    def checkpoint(self):
-        return PillowCheckpoint(self._checkpoint_id)
-
-    def save_checkpoint(self, checkpoint_id, sequence_id):
-        checkpoint = DjangoPillowCheckpoint.objects.get_or_create(checkpoint_id=checkpoint_id)[0]
-        checkpoint.sequence = sequence_id
-        checkpoint.save()
