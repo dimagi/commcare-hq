@@ -14,32 +14,6 @@ from pillowtop.pillow.interface import ChangeEventHandler
 DocGetOrCreateResult = namedtuple('DocGetOrCreateResult', ['document', 'created'])
 
 
-class PillowCheckpointManager(object):
-
-    def __init__(self, dao):
-        self._dao = dao
-
-    def get_or_create_checkpoint(self, checkpoint_id):
-        created = False
-        try:
-            checkpoint_doc = self._dao.get_document(checkpoint_id)
-        except DocumentNotFoundError:
-            checkpoint_doc = {'seq': '0', 'timestamp': get_formatted_current_timestamp()}
-            self._dao.save_document(checkpoint_id, checkpoint_doc)
-            created = True
-        return DocGetOrCreateResult(checkpoint_doc, created)
-
-    def reset_checkpoint(self, checkpoint_id):
-        checkpoint_doc = self.get_or_create_checkpoint(checkpoint_id).document
-        checkpoint_doc['old_seq'] = checkpoint_doc['seq']
-        checkpoint_doc['seq'] = '0'
-        checkpoint_doc['timestamp'] = get_formatted_current_timestamp()
-        self._dao.save_document(checkpoint_id, checkpoint_doc)
-
-    def update_checkpoint(self, checkpoint_id, checkpoint_doc):
-        self._dao.save_document(checkpoint_id, checkpoint_doc)
-
-
 def get_or_create_checkpoint(checkpoint_id):
     created = False
     try:
