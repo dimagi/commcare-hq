@@ -124,7 +124,6 @@ class BasicPillow(PillowBase):
 
     def _get_default_checkpoint(self):
         return PillowCheckpoint(
-            get_django_checkpoint_store(),
             construct_checkpoint_doc_id_from_name(self.get_name()),
         )
 

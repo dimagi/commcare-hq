@@ -40,58 +40,6 @@ class PillowCheckpointManager(object):
         self._dao.save_document(checkpoint_id, checkpoint_doc)
 
 
-class PillowCheckpoint(object):
-
-    def __init__(self, dao, checkpoint_id):
-        self._manager = PillowCheckpointManager(dao=dao)
-        self.checkpoint_id = checkpoint_id
-        self._last_checkpoint = None
-
-    def get_or_create(self, verify_unchanged=False):
-        result = self._manager.get_or_create_checkpoint(self.checkpoint_id)
-        checkpoint, created = result
-        if (verify_unchanged and self._last_checkpoint and
-                    str(checkpoint['seq']) != str(self._last_checkpoint['seq'])):
-            raise PillowtopCheckpointReset(u'Checkpoint {} expected seq {} but found {} in database.'.format(
-                self.checkpoint_id, self._last_checkpoint['seq'], checkpoint['seq'],
-            ))
-
-        self._last_checkpoint = checkpoint
-        return result
-
-    def get_current_sequence_id(self):
-        return self.get_or_create().document['seq']
-
-    def update_to(self, seq):
-        pillow_logging.info(
-            "(%s) setting checkpoint: %s" % (self.checkpoint_id, seq)
-        )
-        checkpoint = self.get_or_create(verify_unchanged=True).document
-        checkpoint['seq'] = seq
-        checkpoint['timestamp'] = get_formatted_current_timestamp()
-        self._manager.update_checkpoint(self.checkpoint_id, checkpoint)
-        self._last_checkpoint = checkpoint
-
-    def reset(self):
-        self._manager.reset_checkpoint(self.checkpoint_id)
-
-    def touch(self, min_interval):
-        """
-        Update the checkpoint timestamp without altering the sequence.
-        :param min_interval: minimum interval between timestamp updates
-        """
-        checkpoint = self.get_or_create(verify_unchanged=True).document
-        now = datetime.now(tz=pytz.UTC)
-        previous = self._last_checkpoint.get('timestamp')
-        do_update = True
-        if previous:
-            diff = now - parser.parse(previous).replace(tzinfo=pytz.UTC)
-            do_update = diff.total_seconds() >= min_interval
-        if do_update:
-            checkpoint['timestamp'] = now.isoformat()
-            self._manager.update_checkpoint(self.checkpoint_id, checkpoint)
-
-
 def get_or_create_checkpoint(checkpoint_id):
     created = False
     try:
@@ -114,7 +62,7 @@ def reset_checkpoint(checkpoint_id):
     checkpoint.save()
 
 
-class DaoFreePillowCheckpoint(object):
+class PillowCheckpoint(object):
 
     def __init__(self, checkpoint_id):
         self.checkpoint_id = checkpoint_id
@@ -187,4 +135,4 @@ def get_django_checkpoint_store():
 
 
 def get_default_django_checkpoint_for_legacy_pillow_class(pillow_class):
-    return PillowCheckpoint(get_django_checkpoint_store(), pillow_class.get_legacy_name())
+    return PillowCheckpoint(pillow_class.get_legacy_name())

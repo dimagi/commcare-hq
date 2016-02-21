@@ -48,7 +48,7 @@ def make_fake_constructed_pillow():
     pillow = FakeConstructedPillow(
         name='FakeConstructedPillowName',
         document_store=fake_dao,
-        checkpoint=PillowCheckpoint(fake_dao, 'fake-constructed-pillow'),
+        checkpoint=PillowCheckpoint('fake-constructed-pillow'),
         change_feed=RandomChangeFeed(10),
         processor=LoggingProcessor(),
     )
