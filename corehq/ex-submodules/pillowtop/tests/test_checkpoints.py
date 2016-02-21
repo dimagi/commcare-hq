@@ -2,7 +2,7 @@ from abc import ABCMeta, abstractproperty, abstractmethod
 from django.test import SimpleTestCase, override_settings, TestCase
 import time
 from dimagi.utils.decorators.memoized import memoized
-from pillowtop.checkpoints.manager import PillowCheckpointManager, PillowCheckpoint
+from pillowtop.checkpoints.manager import PillowCheckpointManager, PillowCheckpoint, DaoFreePillowCheckpoint
 from pillowtop.checkpoints.util import get_machine_id
 from pillowtop.dao.django import DjangoDocumentStore
 from pillowtop.dao.mock import MockDocumentStore
@@ -129,3 +129,16 @@ class SQLPillowCheckpointDaoTest(TestCase, PillowCheckpointDaoTestMixin):
         return DjangoDocumentStore(
             DjangoPillowCheckpoint, DjangoPillowCheckpoint.to_dict, DjangoPillowCheckpoint.from_dict,
         )
+
+
+class DjangoPillowCheckpointTest(TestCase, PillowCheckpointDbTestMixin):
+
+    @property
+    @memoized
+    def checkpoint(self):
+        return DaoFreePillowCheckpoint(self._checkpoint_id)
+
+    def save_checkpoint(self, checkpoint_id, sequence_id):
+        checkpoint = DjangoPillowCheckpoint.objects.get_or_create(checkpoint_id=checkpoint_id)[0]
+        checkpoint.sequence = sequence_id
+        checkpoint.save()

@@ -73,7 +73,7 @@ class PillowCheckpoint(object):
         self._last_checkpoint = checkpoint
 
     def reset(self):
-        return self._manager.reset_checkpoint(self.checkpoint_id)
+        self._manager.reset_checkpoint(self.checkpoint_id)
 
     def touch(self, min_interval):
         """
@@ -90,6 +90,83 @@ class PillowCheckpoint(object):
         if do_update:
             checkpoint['timestamp'] = now.isoformat()
             self._manager.update_checkpoint(self.checkpoint_id, checkpoint)
+
+
+def get_or_create_checkpoint(checkpoint_id):
+    created = False
+    try:
+        checkpoint = DjangoPillowCheckpoint.objects.get(checkpoint_id=checkpoint_id)
+    except DjangoPillowCheckpoint.DoesNotExist:
+        checkpoint = DjangoPillowCheckpoint.objects.create(
+            checkpoint_id=checkpoint_id,
+            sequence='0',
+            timestamp=datetime.utcnow(),
+        )
+        created = True
+    return DocGetOrCreateResult(checkpoint, created)
+
+
+def reset_checkpoint(checkpoint_id):
+    checkpoint = get_or_create_checkpoint(checkpoint_id).document
+    checkpoint.old_sequence = checkpoint.sequence
+    checkpoint.sequence = '0'
+    checkpoint.timestamp = datetime.utcnow()
+    checkpoint.save()
+
+
+class DaoFreePillowCheckpoint(object):
+
+    def __init__(self, checkpoint_id):
+        self.checkpoint_id = checkpoint_id
+        self._last_checkpoint = None
+
+    def get_or_create(self, verify_unchanged=False):
+        result = self._get_or_create(verify_unchanged)
+        return DocGetOrCreateResult(DjangoPillowCheckpoint.to_dict(result.document), result.created)
+
+    def _get_or_create(self, verify_unchanged=False):
+        result = get_or_create_checkpoint(self.checkpoint_id)
+        checkpoint, created = result
+        if (verify_unchanged and self._last_checkpoint and
+                str(checkpoint.sequence) != str(self._last_checkpoint.sequence)):
+            raise PillowtopCheckpointReset(u'Checkpoint {} expected seq {} but found {} in database.'.format(
+                self.checkpoint_id, self._last_checkpoint.sequence, checkpoint.sequence,
+            ))
+
+        self._last_checkpoint = checkpoint
+        return result
+
+    def get_current_sequence_id(self):
+        return get_or_create_checkpoint(self.checkpoint_id).sequence
+
+    def update_to(self, seq):
+        pillow_logging.info(
+            "(%s) setting checkpoint: %s" % (self.checkpoint_id, seq)
+        )
+        checkpoint = self._get_or_create(verify_unchanged=True).document
+        checkpoint.sequence = seq
+        checkpoint.timestamp = datetime.utcnow()
+        checkpoint.save()
+        self._last_checkpoint = checkpoint
+
+    def reset(self):
+        reset_checkpoint(self.checkpoint_id)
+
+    def touch(self, min_interval):
+        """
+        Update the checkpoint timestamp without altering the sequence.
+        :param min_interval: minimum interval between timestamp updates
+        """
+        checkpoint = self._get_or_create(verify_unchanged=True).document
+        now = datetime.utcnow()
+        previous = self._last_checkpoint.timestamp if self._last_checkpoint else None
+        do_update = True
+        if previous:
+            diff = now - previous
+            do_update = diff.total_seconds() >= min_interval
+        if do_update:
+            checkpoint.timestamp = now
+            checkpoint.save()
 
 
 class PillowCheckpointEventHandler(ChangeEventHandler):
