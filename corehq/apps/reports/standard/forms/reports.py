@@ -106,11 +106,13 @@ class SubmissionErrorReport(DeploymentsReport):
                     xform_dict.get('xmlns'),
                     app_id=xform_dict.get('app_id'),
                 )
+                form_username = xform_dict['form']['meta']['username']
             else:
                 form_name = EMPTY_FORM
+                form_username = EMPTY_USER
             return [
                 _fmt_url(xform_dict['_id']),
-                xform_dict['form']['meta']['username'] if xform_dict['form'].get('meta') else EMPTY_USER,
+                form_username,
                 _fmt_date(string_to_utc_datetime(xform_dict['received_on'])),
                 form_name,
                 SubmissionErrorType.display_name_by_doc_type(xform_dict['doc_type']),
