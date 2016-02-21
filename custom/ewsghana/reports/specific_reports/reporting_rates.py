@@ -60,12 +60,12 @@ class ReportingRates(ReportingRatesData):
 
             chart_data = sorted([
                 dict(value=non_reported_percent,
-                     label=_('Non-Reporting %s%%' % non_reported_formatted),
+                     label=_('Non-Reporting %s%%') % non_reported_formatted,
                      description=_("%s%% (%d) Non-Reported (%s)" %
                                    (non_reported_formatted, data['non_reported'], self.datetext())),
                      color='red'),
                 dict(value=reported_percent,
-                     label=_('Reporting %s%%' % reported_formatted),
+                     label=_('Reporting %s%%') % reported_formatted,
                      description=_("%s%% (%d) Reported (%s)" % (reported_formatted, data['reported'],
                                                                 self.datetext())),
                      color='green'),
