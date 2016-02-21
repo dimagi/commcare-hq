@@ -89,7 +89,7 @@ def get_paged_forms_by_type(domain, doc_types, start=0, size=10):
         .domain(domain)
         .remove_default_filter('is_xform_instance')
         .remove_default_filter('has_user')
-        .doc_types(doc_types)
+        .doc_type(map(lambda doc_type: doc_type.lower(), doc_types))
         .sort("received_on", desc=True)
         .start(start)
         .size(size)

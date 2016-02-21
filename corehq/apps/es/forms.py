@@ -21,7 +21,6 @@ class FormES(HQESQuery):
             submitted,
             completed,
             user_id,
-            doc_types,
         ] + super(FormES, self).builtin_filters
 
     def user_aggregation(self):
@@ -55,7 +54,3 @@ def completed(gt=None, gte=None, lt=None, lte=None):
 
 def user_id(user_ids):
     return filters.term('form.meta.userID', list(user_ids))
-
-
-def doc_types(doc_types):
-    return filters.term('doc_type', map(lambda doc_type: doc_type.lower(), list(doc_types)))
