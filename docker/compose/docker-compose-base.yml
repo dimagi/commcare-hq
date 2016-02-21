@@ -26,6 +26,8 @@ redis:
 elasticsearch:
   build: ../dockerfiles
   dockerfile: Dockerfile_es
+  environment:
+    ES_JAVA_OPTS: "-Des.script.engine.groovy.inline.aggs=true -Des.script.engine.groovy.inline.search=true"
   labels:
     commcare.name: "elastic"
   expose:

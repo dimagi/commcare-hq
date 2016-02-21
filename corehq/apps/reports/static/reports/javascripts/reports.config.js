@@ -24,7 +24,6 @@ var HQReport = function (options) {
     self.subReportSlug = options.subReportSlug;
     self.type = options.type;
 
-    self.toggleFiltersCookie = self.domain+'.hqreport.toggleFilterState';
     self.datespanCookie = self.domain+".hqreport.filterSetting.test.datespan";
 
     self.initialLoad = true;
@@ -113,27 +112,11 @@ var HQReport = function (options) {
     };
 
     var checkFilterAccordionToggleState = function () {
-        var _setShowFilterCookie = function (show) {
-            var showStr = show ? 'in' : '';
-            $.cookie(self.toggleFiltersCookie, showStr, {path: self.urlRoot, expires: 1});
-        };
-        
-        if (!$.cookie(self.toggleFiltersCookie) && $.cookie(self.toggleFiltersCookie) !== '') {
-            // default to showing filters
-            // (When filters should be hidden, $.cookie(self.toggleFiltersCookie) === '')
-            _setShowFilterCookie(true);
-        }
-        $(self.filterAccordion).addClass($.cookie(self.toggleFiltersCookie));
-
-        if ($.cookie(self.toggleFiltersCookie) == 'in') {
-            $(self.toggleFiltersButton).button('close');
-        } else {
-            $(self.toggleFiltersButton).button('open');
-        }
+        $(self.filterAccordion).addClass('in');
+        $(self.toggleFiltersButton).button('close');
 
         var hiddenFilterButtonStatus = function (data) {
             if (!(data.target && $(data.target).hasClass('modal'))) {
-                _setShowFilterCookie(false);
                 $(self.toggleFiltersButton).button('open');
             }
         };
@@ -142,7 +125,6 @@ var HQReport = function (options) {
         $(self.filterAccordion).on('hidden.bs.collapse', hiddenFilterButtonStatus);  // B3 event
 
         var showFilterButtonStatus = function () {
-            _setShowFilterCookie(true);
             $(self.toggleFiltersButton).button('close');
         };
 

@@ -4190,6 +4190,10 @@ class ApplicationBase(VersionedDoc, SnapshotMixin,
                     filename[len('files/'):]: self.lazy_fetch_attachment(filename)
                     for filename in self._attachments if filename.startswith('files/')
                 }
+                all_files = {
+                    name: (contents if isinstance(contents, str) else contents.encode('utf-8'))
+                    for name, contents in all_files.items()
+                }
                 jad_settings = {
                     'Released-on': self.built_with.datetime.strftime("%Y-%b-%d %H:%M"),
                 }

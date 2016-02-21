@@ -80,9 +80,14 @@ class SubmissionErrorReport(DeploymentsReport):
 
         def _to_row(xform_dict):
             def _fmt_url(doc_id):
-                view_name = 'render_form_data' \
-                    if xform_dict['doc_type'] in ["XFormInstance", "XFormArchived", "XFormError"] \
-                    else 'download_form'
+                if xform_dict['doc_type'] in [
+                        "XFormInstance",
+                        "XFormArchived",
+                        "XFormError",
+                        "XFormDeprecated"]:
+                    view_name = 'render_form_data'
+                else:
+                    view_name = 'download_form'
                 try:
                     return "<a class='ajax_dialog' href='%(url)s'>%(text)s</a>" % {
                         "url": reverse(view_name, args=[self.domain, doc_id]),

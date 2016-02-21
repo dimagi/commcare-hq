@@ -46,7 +46,7 @@ class StockTransactionReport(CustomProjectReport, GenericTabularReport,
             DataTablesColumn('Transaction Type')
         )
 
-        if self.split_by_product:
+        if not self.split_by_product:
             headers.add_column(DataTablesColumn("Product"))
             headers.add_column(DataTablesColumn("Stock On Hand"))
             headers.add_column(DataTablesColumn("Consumption"))
