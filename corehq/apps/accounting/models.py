@@ -1959,7 +1959,7 @@ class BillingRecordBase(models.Model):
     last_modified = models.DateTimeField(auto_now=True)
 
     INVOICE_HTML_TEMPLATE = 'accounting/email/invoice_email.html'
-    INVOICE_TEXT_TEMPLATE = 'accounting/email/invoice_email_plaintext.html'
+    INVOICE_TEXT_TEMPLATE = 'accounting/email/invoice_email.txt'
 
     class Meta:
         abstract = True
