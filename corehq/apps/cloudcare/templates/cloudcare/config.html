@@ -38,15 +38,6 @@
             self.app_groups = ko.observableArray();
             self._lock = ko.observable(false);
             self.save = function () {
-                return $.ajax({
-                    url: "",
-                    type: 'put',
-                    dataType: 'json',
-                    data: ko.mapping.toJSON(self),
-                    success: function (data) {
-                        self._rev = data._rev;
-                    }
-                });
             };
         };
         ApplicationAccess.wrap = function(o) {
@@ -86,8 +77,16 @@
             self.appDB = options.appDB;
             self.applicationAccess = ApplicationAccess.wrap(options.access);
             self.saveButton = COMMCAREHQ.SaveButton.init({
-                saveRequest: function () {
-                    return self.applicationAccess.save();
+                save: function () {
+                    self.saveButton.ajax({
+                        url: '{% url "cloudcare_app_settings" domain %}',
+                        type: 'put',
+                        dataType: 'json',
+                        data: ko.mapping.toJSON(self.applicationAccess),
+                        success: function (data) {
+                            self.applicationAccess._rev = data._rev;
+                        }
+                    });
                 }
             });
             self.appsByGroup = ko.computed(function () {
