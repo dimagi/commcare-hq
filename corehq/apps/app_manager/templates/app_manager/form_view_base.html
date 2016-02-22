@@ -7,23 +7,6 @@
 
 {% block stylesheets %}{{ block.super }}
     <link rel="stylesheet" href="{% new_static 'syntaxhighlighter/styles/shCoreDefault.css' %}"/>
-    <style>
-        .casexml ul {
-            margin-left: 15px;
-        }
-        input[type="radio"]{
-            margin: 3px 5px 5px 0px;
-        }
-        .bigdrop {
-            width: 600px !important;
-        }
-        .nested-fieldset {
-            margin-left: 50px;
-        }
-        .nested-fieldset .form-inline {
-            margin-left: 50px;
-        }
-    </style>
 {% endblock %}
 
 {% block js %}{{ block.super }}
