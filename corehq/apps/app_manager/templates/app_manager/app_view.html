@@ -209,30 +209,6 @@
     {% endif %}
 {% endblock %}
 
-{% block stylesheets %}{{ block.super }}
-    <style>
-        #custom-keys-help {
-            width: 400px;
-            font-size: .9em;
-        }
-        #custom-keys-help p {
-            color: #888;
-            vertical-align: bottom;
-        }
-        #custom-keys-example {
-            margin-top: 1em;
-        }
-        #custom-keys-help ul {
-            margin-left: 2em;
-        }
-        #custom-keys-help li span {
-            display: inline-block;
-            border: 1px solid #CCC;
-            padding: 2px;
-            margin: 1px;
-        }
-    </style>
-{% endblock %}
 {% block form-view %}
     <div class="tab-content">
         <div class="tab-pane{% if not copy_app_form.is_bound %} active{% endif %}" id="app-settings">
