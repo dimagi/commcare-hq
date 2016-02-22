@@ -201,7 +201,7 @@ class WriterTest(SimpleTestCase):
 
         ]
 
-        writer = _Writer(get_writer(Format.JSON), Format.JSON)
+        writer = _Writer(get_writer(Format.JSON))
         with writer.open(_get_tables(export_instances)):
             _write_export_instance(writer, export_instances[0], self.docs)
             _write_export_instance(writer, export_instances[1], self.docs)

@@ -35,10 +35,10 @@ class _Writer(object):
     """
     An object that provides a friendlier interface to couchexport.ExportWriters.
     """
-    def __init__(self, writer, format):
+    def __init__(self, writer):
         # An instance of a couchexport.ExportWriter
         self.writer = writer
-        self.format = format
+        self.format = writer.format
         self._path = None
 
     @contextlib.contextmanager
@@ -90,7 +90,7 @@ def _get_writer(export_instances):
         format = export_instances[0].export_format
 
     legacy_writer = get_writer(format)
-    writer = _Writer(legacy_writer, format)
+    writer = _Writer(legacy_writer)
     return writer
 
 
