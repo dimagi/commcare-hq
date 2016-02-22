@@ -563,6 +563,23 @@ class CaseAccessorSQL(AbstractCaseAccessor):
             results = fetchall_as_namedtuple(cursor)
             return dict((result.case_id, result.server_modified_on) for result in results)
 
+    @staticmethod
+    def get_case_by_external_id(domain, external_id, case_type=None):
+        try:
+            return CommCareCaseSQL.objects.raw(
+                'SELECT * FROM get_case_by_external_id(%s, %s, %s)',
+                [domain, external_id, case_type]
+            )[0]
+        except IndexError:
+            raise CaseNotFound
+
+    @staticmethod
+    def get_case_by_domain_hq_user_id(domain, user_id, case_type):
+        try:
+            return CaseAccessorSQL.get_case_by_external_id(domain, user_id, case_type)
+        except CaseNotFound:
+            return None
+
 
 def _order_list(id_list, object_list, id_property):
     # SQL won't return the rows in any particular order so we need to order them ourselves
