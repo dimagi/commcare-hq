@@ -70,6 +70,6 @@ class SOHAlerts(object):
 
         if super_message:
             stripped_message = super_message.strip().strip(';')
-            super_message = _('Dear %s, %s is experiencing the following problems: ') + stripped_message
+            super_message = _('Dear %(name)s, %(location)s is experiencing the following problems: ') + stripped_message
 
         return message.rstrip(), super_message
