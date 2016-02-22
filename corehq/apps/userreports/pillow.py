@@ -74,7 +74,11 @@ class ConfigurableIndicatorPillow(PythonPillow):
             for table_name in tables_to_rebuild:
                 sql_adapter = table_map[table_name]
                 try:
-                    rev_before_rebuild = sql_adapter.config.get_db().get_rev(sql_adapter.config._id)
+                    rev_before_rebuild = (
+                        sql_adapter.config.get_db().get_rev(sql_adapter.config._id)
+                        if not sql_adapter.config._id.startswith(StaticDataSourceConfiguration._datasource_id_prefix)
+                        else 'static data source has no rev'
+                    )
                     self.rebuild_table(sql_adapter)
                 except TableRebuildError, e:
                     _notify_cory(unicode(e), sql_adapter.config.to_json())
@@ -82,7 +86,11 @@ class ConfigurableIndicatorPillow(PythonPillow):
                     # note: this fancy logging can be removed as soon as we get to the
                     # bottom of http://manage.dimagi.com/default.asp?211297
                     # if no signs of it popping back up by april 2016, should remove this
-                    rev_after_rebuild = sql_adapter.config.get_db().get_rev(sql_adapter.config._id)
+                    rev_after_rebuild = (
+                        sql_adapter.config.get_db().get_rev(sql_adapter.config._id)
+                        if not sql_adapter.config._id.startswith(StaticDataSourceConfiguration._datasource_id_prefix)
+                        else 'static data source has no rev'
+                    )
                     _notify_cory(
                         u'rebuilt table {} ({}) because {}. rev before: {}, rev after: {}'.format(
                             table_name,
