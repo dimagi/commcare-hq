@@ -1,9 +1,13 @@
 /*globals $, _, uiElement, eventize, lcsMerge, COMMCAREHQ */
 
-var CC_DETAIL_SCREEN = {
+hqDefine('app_manager/js/detail-screen-config.js', function () {
+
+var module = {};
+
+module.CC_DETAIL_SCREEN = {
     getFieldHtml: function (field) {
         var text = field;
-        if (CC_DETAIL_SCREEN.isAttachmentProperty(text)) {
+        if (module.CC_DETAIL_SCREEN.isAttachmentProperty(text)) {
             text = text.substring(text.indexOf(":") + 1);
         }
         var parts = text.split('/');
@@ -14,7 +18,7 @@ var CC_DETAIL_SCREEN = {
         }
         if (parts[j][0] == '#') {
             parts[j] = ('<span class="label label-info">'
-                        + CC_DETAIL_SCREEN.toTitleCase(parts[j]) + '</span>');
+                        + module.CC_DETAIL_SCREEN.toTitleCase(parts[j]) + '</span>');
         } else {
             parts[j] = ('<code style="display: inline-block;">'
                         + parts[j] + '</code>');
@@ -43,7 +47,7 @@ var CC_DETAIL_SCREEN = {
             source: function (request, response) {
                 var availableTags = _.map(options, function(value) {
                     var label = value;
-                    if (CC_DETAIL_SCREEN.isAttachmentProperty(value)) {
+                    if (module.CC_DETAIL_SCREEN.isAttachmentProperty(value)) {
                         label = (
                             '<i class="fa fa-paperclip"></i> ' +
                             label.substring(label.indexOf(":") + 1)
@@ -80,7 +84,7 @@ var SortRow = function(params){
     params = params || {};
 
     self.textField = uiElement.input().val(typeof params.field !== 'undefined' ? params.field : "");
-    CC_DETAIL_SCREEN.setUpAutocomplete(this.textField, params.properties);
+    module.CC_DETAIL_SCREEN.setUpAutocomplete(this.textField, params.properties);
 
     self.showWarning = ko.observable(false);
     self.hasValidPropertyName = function(){
@@ -173,7 +177,7 @@ var SortRows = function (properties, saveButton) {
     });
 };
 
-var filterViewModel = function(filterText, saveButton){
+var filterViewModel = function(filterText, saveButton) {
     var self = this;
     self.filterText = ko.observable(typeof filterText == "string" && filterText.length > 0 ? filterText : "");
     self.showing = ko.observable(self.filterText() !== "");
@@ -193,7 +197,7 @@ var filterViewModel = function(filterText, saveButton){
     };
 };
 
-var caseListLookupViewModel = function($el, state, saveButton){
+var caseListLookupViewModel = function($el, state, saveButton) {
     'use strict';
     var self = this,
         detail_type = $el.data('detail-type');
@@ -379,38 +383,7 @@ var caseListLookupViewModel = function($el, state, saveButton){
     self.initSaveButtonListeners(self.$el);
 };
 
-ko.bindingHandlers.addSaveButtonListener = {
-    init: function(element, valueAccessor, allBindings, viewModel, bindingContext){
-        bindingContext.$parent.initSaveButtonListeners($(element).parent());
-    }
-};
-
-// http://www.knockmeout.net/2011/05/dragging-dropping-and-sorting-with.html
-// connect items with observableArrays
-ko.bindingHandlers.sortableList = {
-    init: function(element, valueAccessor) {
-        var list = valueAccessor();
-        $(element).sortable({
-            handle: '.grip',
-            cursor: 'move',
-            update: function(event, ui) {
-                //retrieve our actual data item
-                var item = ko.dataFor(ui.item.get(0));
-                //figure out its new position
-                var position = ko.utils.arrayIndexOf(ui.item.parent().children(), ui.item[0]);
-                //remove the item and add it back in the right spot
-                if (position >= 0) {
-                    list.remove(item);
-                    list.splice(position, 0, item);
-                }
-                ui.item.remove();
-                item.notifyButton();
-            }
-        });
-    }
-};
-
-function ParentSelect(init) {
+module.ParentSelect = function (init) {
     var self = this;
     var defaultModule = _(init.parentModules).findWhere({is_parent: true});
     self.moduleId = ko.observable(init.moduleId || (defaultModule ? defaultModule.unique_id : null));
@@ -434,9 +407,9 @@ function ParentSelect(init) {
             };
         });
     });
-}
+};
 
-function FixtureSelect(init) {
+var FixtureSelect = function (init) {
     var self = this;
     self.active = ko.observable(init.active);
     self.fixtureType = ko.observable(init.fixtureType);
@@ -444,16 +417,16 @@ function FixtureSelect(init) {
     self.localize = ko.observable(init.localize);
     self.variableColumn = ko.observable(init.variableColumn);
     self.xpath = ko.observable(init.xpath);
-}
+};
 
-var DetailScreenConfig = (function () {
+module.DetailScreenConfig = (function () {
     "use strict";
 
     function getPropertyTitle(property) {
         // Strip "<prefix>:" before converting to title case.
         // This is aimed at prefixes like ledger: and attachment:
         var i = property.indexOf(":");
-        return CC_DETAIL_SCREEN.toTitleCase(property.substring(i + 1));
+        return module.CC_DETAIL_SCREEN.toTitleCase(property.substring(i + 1));
     }
 
     var DetailScreenConfig, Screen, Column, sortRows;
@@ -507,7 +480,7 @@ var DetailScreenConfig = (function () {
                 {label: "Case", value: "case"}
             ]).val(this.original.model);
 
-            var icon = (CC_DETAIL_SCREEN.isAttachmentProperty(this.original.field)
+            var icon = (module.CC_DETAIL_SCREEN.isAttachmentProperty(this.original.field)
                ? COMMCAREHQ.icons.PAPERCLIP : null);
             this.field = uiElement.input().val(this.original.field).setIcon(icon);
 
@@ -804,7 +777,7 @@ var DetailScreenConfig = (function () {
                     column.header.fire("change");
                 });
                 if (column.original.hasAutocomplete) {
-                    CC_DETAIL_SCREEN.setUpAutocomplete(column.field, that.properties);
+                    module.CC_DETAIL_SCREEN.setUpAutocomplete(column.field, that.properties);
                 }
                 return column;
             };
@@ -1051,7 +1024,7 @@ var DetailScreenConfig = (function () {
             this.lang = spec.lang;
             this.langs = spec.langs || [];
             if (spec.hasOwnProperty('parentSelect') && spec.parentSelect) {
-                this.parentSelect = new ParentSelect({
+                this.parentSelect = new module.ParentSelect({
                     active: spec.parentSelect.active,
                     moduleId: spec.parentSelect.module_id,
                     parentModules: spec.parentModules,
@@ -1237,6 +1210,13 @@ var DetailScreenConfig = (function () {
     return DetailScreenConfig;
 }());
 
+/* for sharing variables between essentially separate parts of the ui */
+module.state = {
+    requires_case_details: ko.observable()
+};
+return module;
+
+});
 
 ko.bindingHandlers.DetailScreenConfig_notifyShortScreenOnChange = {
     init: function (element, valueAccessor) {
@@ -1249,12 +1229,33 @@ ko.bindingHandlers.DetailScreenConfig_notifyShortScreenOnChange = {
     }
 };
 
+ko.bindingHandlers.addSaveButtonListener = {
+    init: function(element, valueAccessor, allBindings, viewModel, bindingContext){
+        bindingContext.$parent.initSaveButtonListeners($(element).parent());
+    }
+};
 
-hqDefine('app_manager/js/detail-screen-config.js', function () {
-    return {
-        /* for sharing variables between essentially separate parts of the ui */
-        state: {
-            requires_case_details: ko.observable()
-        }
-    };
-});
+// http://www.knockmeout.net/2011/05/dragging-dropping-and-sorting-with.html
+// connect items with observableArrays
+ko.bindingHandlers.sortableList = {
+    init: function(element, valueAccessor) {
+        var list = valueAccessor();
+        $(element).sortable({
+            handle: '.grip',
+            cursor: 'move',
+            update: function(event, ui) {
+                //retrieve our actual data item
+                var item = ko.dataFor(ui.item.get(0));
+                //figure out its new position
+                var position = ko.utils.arrayIndexOf(ui.item.parent().children(), ui.item[0]);
+                //remove the item and add it back in the right spot
+                if (position >= 0) {
+                    list.remove(item);
+                    list.splice(position, 0, item);
+                }
+                ui.item.remove();
+                item.notifyButton();
+            }
+        });
+    }
+};
