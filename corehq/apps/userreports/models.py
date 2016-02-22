@@ -196,7 +196,6 @@ class DataSourceConfiguration(UnicodeMixIn, CachedCouchDocumentMixin, Document):
     @property
     @memoized
     def indicators(self):
-
         return CompoundIndicator(
             self.display_name,
             self.default_indicators + [

@@ -5,7 +5,7 @@ from casexml.apps.case.models import CommCareCase
 from corehq.apps.userreports.exceptions import TableRebuildError, StaleRebuildError
 from corehq.apps.userreports.models import DataSourceConfiguration, StaticDataSourceConfiguration
 from corehq.apps.userreports.sql import IndicatorSqlAdapter, metadata
-from corehq.apps.userreports.tasks import rebuild_indicators
+from corehq.apps.userreports.tasks import rebuild_indicators, _is_static
 from corehq.sql_db.connections import connection_manager
 from corehq.util.soft_assert import soft_assert
 from fluff.signals import get_migration_context, get_tables_to_rebuild
@@ -76,7 +76,7 @@ class ConfigurableIndicatorPillow(PythonPillow):
                 try:
                     rev_before_rebuild = (
                         sql_adapter.config.get_db().get_rev(sql_adapter.config._id)
-                        if not sql_adapter.config._id.startswith(StaticDataSourceConfiguration._datasource_id_prefix)
+                        if not _is_static(sql_adapter.config._id)
                         else 'static data source has no rev'
                     )
                     self.rebuild_table(sql_adapter)
@@ -88,7 +88,7 @@ class ConfigurableIndicatorPillow(PythonPillow):
                     # if no signs of it popping back up by april 2016, should remove this
                     rev_after_rebuild = (
                         sql_adapter.config.get_db().get_rev(sql_adapter.config._id)
-                        if not sql_adapter.config._id.startswith(StaticDataSourceConfiguration._datasource_id_prefix)
+                        if not _is_static(sql_adapter.config._id)
                         else 'static data source has no rev'
                     )
                     _notify_cory(
@@ -104,9 +104,10 @@ class ConfigurableIndicatorPillow(PythonPillow):
 
     def rebuild_table(self, sql_adapter):
         config = sql_adapter.config
-        latest_rev = config.get_db().get_rev(config._id)
-        if config._rev != latest_rev:
-            raise StaleRebuildError('Tried to rebuild a stale table ({})! Ignoring...'.format(config))
+        if not _is_static(config._id):
+            latest_rev = config.get_db().get_rev(config._id)
+            if config._rev != latest_rev:
+                raise StaleRebuildError('Tried to rebuild a stale table ({})! Ignoring...'.format(config))
         sql_adapter.rebuild_table()
 
     def change_trigger(self, changes_dict):
