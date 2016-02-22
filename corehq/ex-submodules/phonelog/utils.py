@@ -1,3 +1,4 @@
+from django.db import transaction
 from corehq.apps.users.util import format_username
 from corehq.apps.users.dbaccessors import get_user_id_by_username
 from .models import UserEntry, DeviceReportEntry, UserErrorEntry
@@ -21,6 +22,7 @@ def _get_logs(form, report_name, report_slug):
     return report.get(report_slug, [])
 
 
+@transaction.atomic
 def process_device_log(domain, xform):
     _process_user_subreport(xform)
     _process_log_subreport(domain, xform)
