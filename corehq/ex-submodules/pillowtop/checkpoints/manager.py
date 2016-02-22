@@ -37,10 +37,6 @@ class PillowCheckpoint(object):
         self.checkpoint_id = checkpoint_id
         self._last_checkpoint = None
 
-    def get_or_create(self, verify_unchanged=False):
-        result = self.get_or_create_wrapped(verify_unchanged)
-        return DocGetOrCreateResult(DjangoPillowCheckpoint.to_dict(result.document), result.created)
-
     def get_or_create_wrapped(self, verify_unchanged=False):
         result = get_or_create_checkpoint(self.checkpoint_id)
         checkpoint, created = result
