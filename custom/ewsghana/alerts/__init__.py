@@ -3,8 +3,8 @@ from django.utils.translation import ugettext as _
 ONGOING_NON_REPORTING = _('SMS report MISSING from these facilities over the past 3 weeks! Please follow up:\n%s')
 ONGOING_STOCKOUT_AT_SDP = _('Ongoing STOCKOUTS at these facilities over the past 3 weeks! Please follow up:\n%s')
 ONGOING_STOCKOUT_AT_RMS = _('Ongoing STOCKOUTS at these RMS over the past 3 weeks! Please follow up:\n%s ')
-URGENT_STOCKOUT = _('URGENT STOCKOUT: More than half of the facilities reporting to EWS in %s '
-                    'are experiencing stockouts of one or more of: %s.')
+URGENT_STOCKOUT = _('URGENT STOCKOUT: More than half of the facilities reporting to EWS in %(location)s '
+                    'are experiencing stockouts of one or more of: %(products)s.')
 URGENT_NON_REPORTING = _('URGENT NON-REPORTING: More than half of the facilities registered to EWS in %s '
                          'have not reported for the past month. Please log in to http://ewsghana.com for details.')
 WEB_REMINDER = _('Dear %s, you have not visited ewsghana.com in a long time. '
