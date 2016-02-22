@@ -759,6 +759,15 @@ def export_data_source(request, domain, config_id):
 
     try:
         params = process_url_params(request.GET, table.columns)
+        allowed_formats = [
+            Format.CSV,
+            Format.HTML,
+            Format.XLS,
+            Format.XLS_2007,
+        ]
+        if params.format not in allowed_formats:
+            msg = ugettext_lazy('format must be one of the following: {}').format(', '.join(allowed_formats))
+            return HttpResponse(msg, status=400)
     except UserQueryError as e:
         return HttpResponse(e.message, status=400)
 
