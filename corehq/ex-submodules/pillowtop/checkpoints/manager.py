@@ -1,10 +1,5 @@
 from collections import namedtuple
 from datetime import datetime
-from dateutil import parser
-import pytz
-from pillowtop.checkpoints.util import get_formatted_current_timestamp
-from pillowtop.dao.django import DjangoDocumentStore
-from pillowtop.dao.exceptions import DocumentNotFoundError
 from pillowtop.exceptions import PillowtopCheckpointReset
 from pillowtop.logger import pillow_logging
 from pillowtop.models import DjangoPillowCheckpoint
