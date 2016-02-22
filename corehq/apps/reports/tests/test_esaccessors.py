@@ -131,7 +131,7 @@ class TestFormESAccessors(BaseESAccessorsTest):
             user_id=user_id,
         )
 
-        forms = get_forms(
+        paged_result = get_forms(
             self.domain,
             start,
             end,
@@ -139,7 +139,7 @@ class TestFormESAccessors(BaseESAccessorsTest):
             app_ids=[app_id1, app_id2],
             xmlnss=[xmlns1, xmlns2],
         )
-        self.assertEqual(len(forms), 2)
+        self.assertEqual(paged_result.total, 2)
 
         paged_result = get_forms(
             self.domain,
