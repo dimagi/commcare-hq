@@ -1,6 +1,7 @@
 import json
 import os.path
 import uuid
+from nose.tools import nottest
 
 import re
 from casexml.apps.case.mock import CaseIndex, CaseStructure
@@ -11,6 +12,7 @@ from casexml.apps.phone.tests.test_sync_mode import SyncBaseTest
 from corehq.form_processor.tests import run_with_all_backends
 
 
+@nottest
 def get_test_file_json(filename):
     base = os.path.dirname(__file__)
     file_path = 'data'
@@ -21,6 +23,7 @@ def get_test_file_json(filename):
     return json.loads(file_contents)
 
 
+@nottest
 def test_generator(test_name, skip=False):
     def test(self):
         if skip:
