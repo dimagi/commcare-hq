@@ -1004,10 +1004,14 @@ class ConfigureListReportForm(ConfigureNewReportBase):
 
     @property
     def _report_columns(self):
+        aggregation_map = {'None': 'simple',
+                           'Sum': 'sum',
+                           'Average': 'avg',
+                           'Count': 'count'}
         def _make_column(conf, index):
             return {
                 "format": "default",
-                "aggregation": "simple",
+                "aggregation": aggregation_map[conf['calculation']],
                 "field": self.data_source_properties[conf['property']].column_id,
                 "column_id": "column_{}".format(index),
                 "type": "field",
@@ -1017,6 +1021,9 @@ class ConfigureListReportForm(ConfigureNewReportBase):
 
     @property
     def _report_aggregation_cols(self):
+        for col in self._report_columns:
+            if col['aggregation'] != 'simple':
+                return []
         return ['doc_id']
 
 
@@ -1064,7 +1071,7 @@ class ConfigureTableReportForm(ConfigureListReportForm, ConfigureBarChartReportF
 
         # Expand all columns except for the column being used for aggregation.
         for c in columns:
-            if c['field'] != agg_field_id:
+            if c['field'] != agg_field_id and c['aggregation'] == 'simple':
                 c['aggregation'] = "expand"
         return columns
 

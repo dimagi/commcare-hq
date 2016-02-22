@@ -29,6 +29,7 @@
             this.displayText = ko.observable("");
             this.userModifiedDisplayText = false;
             this.format = ko.observable("");
+            this.calculation = ko.observable("None");
             this.dataSourceField = ko.observable("");
 
             /**
@@ -39,7 +40,8 @@
                 return {
                     property: this.property(),
                     display_text: this.displayText(),
-                    format: this.format()
+                    format: this.format(),
+                    calculation: this.calculation()
                 };
             };
 
@@ -83,7 +85,9 @@
             this.analyticsLabel = options.analyticsLabel !== undefined ? options.analyticsLabel : '{{ report_type }}';
 
             this.hasFormatCol = ko.observable(options.hasFormatCol !== undefined ? options.hasFormatCol : true);
+            this.hasCalculationCol = ko.observable(options.hasCalculationCol !== undefined ? options.hasCalculationCol : false);
             this.formatOptions = ko.observableArray(["Choice", "Date"]);
+            this.calculationOptions = ko.observableArray(["None", "Sum", "Average", "Count"]);
             this.propertyOptions = ko.observableArray({{ property_options|JSON }});
             var rawOptions = {{ property_options|JSON }};
             this.optionsContainQuestions = _.any(rawOptions, function (o) {
@@ -139,6 +143,7 @@
             // TODO: Pass help texts from template so that they can be translated.
             this.filtersList = new propertyList({
                 hasFormatCol: {% if form.source_type == "case" %}true{% else %}false{% endif %},
+                hasCalculationCol: false,
                 initialCols: initialFilters,
                 buttonText: 'Add Filter',
                 analyticsAction: 'Add Filter',
@@ -148,6 +153,7 @@
             });
             this.columnsList = new propertyList({
                 hasFormatCol: false,
+                hasCalculationCol: true,
                 initialCols: initialColumns,
                 buttonText: 'Add Column',
                 analyticsAction: 'Add Column'
