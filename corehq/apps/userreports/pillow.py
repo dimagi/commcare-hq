@@ -9,7 +9,7 @@ from corehq.apps.userreports.tasks import rebuild_indicators
 from corehq.sql_db.connections import connection_manager
 from corehq.util.soft_assert import soft_assert
 from fluff.signals import get_migration_context, get_tables_to_rebuild
-from pillowtop.checkpoints.manager import PillowCheckpoint, get_django_checkpoint_store
+from pillowtop.checkpoints.manager import PillowCheckpoint
 from pillowtop.couchdb import CachedCouchDB
 from pillowtop.listener import PythonPillow
 
@@ -24,7 +24,7 @@ class ConfigurableIndicatorPillow(PythonPillow):
     def __init__(self, pillow_checkpoint_id=UCR_CHECKPOINT_ID):
         # todo: this will need to not be hard-coded if we ever split out forms and cases into their own domains
         couch_db = CachedCouchDB(CommCareCase.get_db().uri, readonly=False)
-        checkpoint = PillowCheckpoint(get_django_checkpoint_store(), pillow_checkpoint_id)
+        checkpoint = PillowCheckpoint(pillow_checkpoint_id)
         super(ConfigurableIndicatorPillow, self).__init__(couch_db=couch_db, checkpoint=checkpoint)
         self.bootstrapped = False
         self.last_bootstrapped = datetime.utcnow()
