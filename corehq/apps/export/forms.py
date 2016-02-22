@@ -383,10 +383,6 @@ class FilterFormESExportDownloadForm(GenericFilterFormExportDownloadForm):
         datespan = self._get_datespan()
         if datespan.is_valid():
             datespan.set_timezone(self.timezone)
-            # sooo... timezones... see corehq/apps/reports/util.py:247 for previous behavior
-            # I think datespan componenets are in UTC
-            # I think the string in ES is in UTC
-            # So no problem!
             return ReceivedOnRangeFilter(gte=datespan.startdate, lt=datespan.enddate + timedelta(days=1))
 
     def _get_group_filter(self):
