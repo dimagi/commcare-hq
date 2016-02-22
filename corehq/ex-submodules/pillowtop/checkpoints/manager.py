@@ -54,7 +54,7 @@ class PillowCheckpoint(object):
         return result
 
     def get_current_sequence_id(self):
-        return get_or_create_checkpoint(self.checkpoint_id).sequence
+        return get_or_create_checkpoint(self.checkpoint_id).document.sequence
 
     def update_to(self, seq):
         pillow_logging.info(
