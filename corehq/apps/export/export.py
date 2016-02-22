@@ -2,11 +2,15 @@ import contextlib
 import os
 import tempfile
 
+from couchexport.exceptions import SchemaMismatchException, ExportRebuildError
+from couchexport.groupexports import get_saved_export_and_delete_copies, \
+    _should_rebuild_export, _save_export_payload
 from soil import DownloadBase
 
 from couchexport.export import FormattedRow, get_writer
 from couchexport.files import Temp
 from couchexport.models import Format
+from couchexport.tasks import rebuild_schemas
 from corehq.apps.export.esaccessors import (
     get_form_export_base_query,
     get_case_export_base_query,
@@ -182,3 +186,52 @@ def _get_base_query(export_instance):
         raise Exception(
             "Unknown base query for export instance type {}".format(type(export_instance))
         )
+
+
+def rebuild_export(config, schema, last_access_cutoff=None, filter=None):
+    saved_export = get_saved_export_and_delete_copies(config.index)
+    if not _should_rebuild_export(saved_export, last_access_cutoff):
+        return
+
+    try:
+        files = schema.get_export_files(format=config.format, filter=filter)
+    except SchemaMismatchException:
+        # fire off a delayed force update to prevent this from happening again
+        rebuild_schemas.delay(config.index)
+        raise ExportRebuildError(u'Schema mismatch for {}. Rebuilding tables...'.format(config.filename))
+
+    with files:
+        _save_export_payload(files, saved_export, config)
+
+
+def _save_export_payload(files, saved_export, config):
+    payload = files.file.payload
+    if not saved_export:
+        saved = SavedBasicExport(configuration=config)
+    else:
+        saved_export.configuration = config
+
+    if saved_export.last_accessed is None:
+        saved_export.last_accessed = datetime.utcnow()
+    saved_export.last_updated = datetime.utcnow()
+    try:
+        saved_export.save()
+    except ResourceConflict:
+        # task was executed concurrently, so let first to finish win and abort the rest
+        pass
+    else:
+        saved_export.set_payload(payload)
+
+
+def get_saved_export_and_delete_copies(index):
+    matching = SavedBasicExport.by_index(index)
+    if not matching:
+        return None
+    if len(matching) == 1:
+        return matching[0]
+    else:
+        # delete all matches besides the last updated match
+        matching = sorted(matching, key=lambda x: x.last_updated)
+        for match in matching[:-1]:
+            match.delete()
+        return matching[-1]
