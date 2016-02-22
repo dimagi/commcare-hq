@@ -428,7 +428,6 @@ class FilterCaseESExportDownloadForm(GenericFilterCaseExportDownloadForm):
     def get_case_filter(self):
         group = self._get_group()
         if group:
-            # Looks like this might be user id and group_id
             user_ids = set(group.get_static_user_ids())
             case_filter = OR(
                 OwnerFilter(group._id),
