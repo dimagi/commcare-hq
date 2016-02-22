@@ -2064,15 +2064,12 @@ class BillingRecordBase(models.Model):
             self.handle_throttled_email(contact_emails)
 
         for email in contact_emails:
-            greeting = _("Hello,")
-            can_view_statement = False
             web_user = WebUser.get_by_username(email)
-            if web_user is not None:
-                if web_user.first_name:
-                    greeting = _("Dear %s,") % web_user.first_name
-                can_view_statement = web_user.is_domain_admin(domain)
-            context['greeting'] = greeting
-            context['can_view_statement'] = can_view_statement
+            if web_user and web_user.first_name:
+                context['greeting'] = _("Dear %s,") % web_user.first_name
+            else:
+                context['greeting'] = _("Hello,")
+            context['can_view_statement'] = web_user.is_domain_admin(domain) if web_user else False
             email_html = render_to_string(self.html_template, context)
             email_plaintext = render_to_string(self.text_template, context)
             send_html_email_async.delay(
