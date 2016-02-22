@@ -50,6 +50,7 @@ class TestFilterFormESExportDownloadForm(SimpleTestCase):
             'group': '',
             'date_range': '2015-06-25 to 2016-02-19',
         }
+
         def mock_users_matching_filter(domain, user_filters):
             return [None, "some_user_id", "some_other_user_id"]
 
@@ -59,4 +60,3 @@ class TestFilterFormESExportDownloadForm(SimpleTestCase):
         with patch("corehq.apps.export.forms.users_matching_filter", mock_users_matching_filter):
             user_filter = form._get_user_filter()
         self.assertEqual(user_filter.submitted_by, [None, "some_user_id", "some_other_user_id"])
-
