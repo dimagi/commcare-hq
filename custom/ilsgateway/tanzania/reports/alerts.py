@@ -1,3 +1,4 @@
+from django.db.models.query_utils import Q
 from django.shortcuts import get_object_or_404
 
 from corehq.apps.locations.models import SQLLocation
@@ -21,10 +22,11 @@ class AlertReport(GenericTabularReport, CustomProjectReport, ProjectReportParame
 
     @property
     def sql_location(self):
+        from custom.ilsgateway import ROOT_LOCATION_TYPE
         location_id = self.request.GET.get('location_id')
         if location_id:
             return get_object_or_404(SQLLocation, location_id=location_id, domain=self.domain)
-        return get_object_or_404(SQLLocation, location_type__name='MOHSW', domain=self.domain)
+        return get_object_or_404(SQLLocation, location_type__name=ROOT_LOCATION_TYPE, domain=self.domain)
 
     @property
     def headers(self):
@@ -36,8 +38,8 @@ class AlertReport(GenericTabularReport, CustomProjectReport, ProjectReportParame
         sql_location = self.sql_location
         alerts = Alert.objects.filter(
             location_id__in=sql_location.get_descendants(include_self=True).filter(
-                location_type__administrative=False,
-                is_archived=False
+                (Q(location_type__administrative=False) | Q(location_id=sql_location.location_id)) &
+                Q(is_archived=False),
             ).values_list('location_id'),
             date__lte=end_date,
             expires__lte=end_date
