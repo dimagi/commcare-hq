@@ -14,6 +14,7 @@ from corehq.apps.es import filters
 from corehq.apps.hqcase.utils import submit_case_blocks, get_case_by_domain_hq_user_id
 from corehq.apps.locations.models import SQLLocation
 from corehq.feature_previews import CALLCENTER
+from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 from corehq.util.quickcache import quickcache
 from corehq.util.timezones.conversions import UserTime, ServerTime
 from dimagi.utils.couch import CriticalSection
@@ -75,7 +76,7 @@ class _UserCaseHelper(object):
     def update_user_case(self, case, case_type, fields):
         caseblock = CaseBlock(
             create=False,
-            case_id=case._id,
+            case_id=case.case_id,
             owner_id=self.owner_id,
             case_type=case_type,
             close=False,
@@ -86,7 +87,7 @@ class _UserCaseHelper(object):
     def close_user_case(self, case, case_type):
         caseblock = CaseBlock(
             create=False,
-            case_id=case._id,
+            case_id=case.case_id,
             owner_id=self.owner_id,
             case_type=case_type,
             close=True,
@@ -107,7 +108,7 @@ def sync_user_case(commcare_user, case_type, owner_id, case=None):
     with CriticalSection(['user_case_%s_for_%s' % (case_type, commcare_user._id)]):
         domain = commcare_user.project
         fields = _get_user_case_fields(commcare_user)
-        case = case or get_case_by_domain_hq_user_id(domain.name, commcare_user._id, case_type)
+        case = case or CaseAccessors(domain.name).get_case_by_domain_hq_user_id(commcare_user._id, case_type)
         close = commcare_user.to_be_deleted() or not commcare_user.is_active
         user_case_helper = _UserCaseHelper(domain, owner_id)
 
