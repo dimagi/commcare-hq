@@ -167,7 +167,9 @@ todo fix
 
 
 <div class="tab-pane" id="commcare-settings">
-    <div id="app_short_comment" class="app-comment">{{ app.short_comment }}</div>
+    {% if app.short_comment %}
+        <div id="app_short_comment" class="well">{{ app.short_comment }}</div>
+    {% endif %}
     <form class="form-horizontal">
         <div class="clearfix">
             <div class="pull-right">
