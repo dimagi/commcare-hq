@@ -14,7 +14,9 @@ from corehq.apps.sms.views import (
     ComposeMessageView,
     SMSLanguagesView,
     ChatMessageHistory,
-    ChatLastReadMessage)
+    ChatLastReadMessage,
+    ChatOverSMSView
+)
 from corehq.apps.smsbillables.dispatcher import SMSAdminInterfaceDispatcher
 from corehq.messaging.smsbackends.telerivet.urls import domain_specific as telerivet_urls
 
@@ -38,7 +40,7 @@ urlpatterns = patterns('corehq.apps.sms.views',
         EditDomainGatewayView.as_view(), name=EditDomainGatewayView.urlname
     ),
     url(r'^gateways/$', DomainSmsGatewayListView.as_view(), name=DomainSmsGatewayListView.urlname),
-    url(r'^chat_contacts/$', 'chat_contacts', name='chat_contacts'),
+    url(r'^chat_contacts/$', ChatOverSMSView.as_view(), name=ChatOverSMSView.urlname),
     url(r'^chat_contact_list/$', 'chat_contact_list', name='chat_contact_list'),
     url(r'^chat/(?P<contact_id>[\w-]+)/(?P<vn_id>[\w-]+)/$', 'chat', name='sms_chat'),
     url(r'^chat/(?P<contact_id>[\w-]+)/?$', 'chat', name='sms_chat'),
