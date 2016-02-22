@@ -13,7 +13,7 @@ from django.http import HttpResponseRedirect, HttpResponse
 from django.http.response import Http404
 from django.shortcuts import render
 from django.utils.http import urlencode
-from django.utils.translation import ugettext as _, ugettext_noop, ugettext_lazy
+from django.utils.translation import ugettext as _, ugettext_lazy
 from django.views.decorators.http import require_POST
 from django.views.generic import View
 from corehq.apps.analytics.tasks import track_workflow
@@ -351,7 +351,7 @@ class ConfigureChartReport(ReportBuilderView):
     page_title = ugettext_lazy("Configure Report")
     template_name = "userreports/partials/report_builder_configure_report.html"
     url_args = ['report_name', 'application', 'source_type', 'source']
-    report_title = ugettext_noop("Chart Report: {}")
+    report_title = ugettext_lazy("Chart Report: {}")
     report_type = 'chart'
     existing_report = None
 
@@ -426,7 +426,7 @@ class ConfigureChartReport(ReportBuilderView):
 
 
 class ConfigureListReport(ConfigureChartReport):
-    report_title = ugettext_noop("List Report: {}")
+    report_title = ugettext_lazy("List Report: {}")
     report_type = 'list'
 
     @property
@@ -436,7 +436,7 @@ class ConfigureListReport(ConfigureChartReport):
 
 
 class ConfigureTableReport(ConfigureChartReport):
-    report_title = ugettext_noop("Table Report: {}")
+    report_title = ugettext_lazy("Table Report: {}")
     report_type = 'table'
 
     @property
@@ -446,7 +446,7 @@ class ConfigureTableReport(ConfigureChartReport):
 
 
 class ConfigureWorkerReport(ConfigureChartReport):
-    report_title = ugettext_noop("Worker Report: {}")
+    report_title = ugettext_lazy("Worker Report: {}")
     report_type = 'worker'
 
     @property
@@ -456,7 +456,7 @@ class ConfigureWorkerReport(ConfigureChartReport):
 
 
 class ConfigureMapReport(ConfigureChartReport):
-    report_title = ugettext_noop("Map Report: {}")
+    report_title = ugettext_lazy("Map Report: {}")
     report_type = 'map'
 
     @property
