@@ -2062,7 +2062,7 @@ class BillingRecordBase(models.Model):
             can_view_statement = False
             try:
                 web_user = WebUser.get_by_username(email)
-                if web_user is not None:
+                if web_user is not None and web_user.first_name:
                     greeting = _("Dear %s,") % web_user.first_name
                     can_view_statement = web_user.is_domain_admin(domain)
             except ResourceNotFound:
