@@ -851,7 +851,7 @@ class ChatMessageHistory(View, DomainViewMixin):
 
         try:
             return iso_string_to_datetime(self.start_date_str)
-        except:
+        except (TypeError, ValueError):
             return None
 
     def get_raw_data(self):
