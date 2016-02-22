@@ -37,6 +37,22 @@ nav.app-manager-content {
             padding: 0;
         }
     }
+
+    // Pencil icons for editing forms
+    .edit-form-pencil {
+        position: absolute;
+        right: 0;
+        top: 3px;
+        opacity: 0.5;
+    }
+
+    .edit-form-li {
+        position: relative;
+
+        &.active .edit-form-pencil .fa {
+            color: white;
+        }
+    }
 }
 
 // Used to indicate sortable table rows (i.e., case list rows)
