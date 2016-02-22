@@ -103,11 +103,12 @@ class SqlCaseUpdateStrategy(UpdateStrategy):
             if key == 'location_id':
                 # special treatment of location_id
                 self.case.location_id = value
-            elif key == 'hq_user_id':
-                # special treatment of hq_user_id
-                self.case.external_id = value
             elif key not in const.CASE_TAGS:
                 self.case.case_json[key] = value
+
+            if key == 'hq_user_id':
+                # also save hq_user_id to external_id
+                self.case.external_id = value
 
     def _apply_index_action(self, action):
         if not action.indices:
