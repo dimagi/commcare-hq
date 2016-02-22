@@ -1,0 +1,18 @@
+{% load i18n %}
+
+{% block header %}
+    <p>{{ greeting }}</p>
+{% endblock %}
+
+{% block content %}
+{% endblock %}
+
+{% block footer %}
+    <p>
+        {% blocktrans %}
+        Best Regards,<br />
+        The CommCare HQ Team<br />
+        www.commcarehq.org
+        {% endblocktrans %}
+    </p>
+{% endblock %}
