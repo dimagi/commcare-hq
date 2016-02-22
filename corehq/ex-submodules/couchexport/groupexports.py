@@ -30,8 +30,8 @@ def export_for_group(export_id_or_group, output_dir, last_access_cutoff=None):
 
 def rebuild_export(config, schema, last_access_cutoff=None, filter=None):
 
-    saved = get_saved_export_and_delete_copies(config.index)
-    if not _should_rebuild_export(saved, last_access_cutoff):
+    saved_export = get_saved_export_and_delete_copies(config.index)
+    if not _should_rebuild_export(saved_export, last_access_cutoff):
         return
 
     try:
@@ -42,26 +42,26 @@ def rebuild_export(config, schema, last_access_cutoff=None, filter=None):
         raise ExportRebuildError(u'Schema mismatch for {}. Rebuilding tables...'.format(config.filename))
 
     with files:
-        _save_export_payload(files, saved, config)
+        _save_export_payload(files, saved_export, config)
 
 
-def _save_export_payload(files, saved, config):
+def _save_export_payload(files, saved_export, config):
     payload = files.file.payload
-    if not saved:
+    if not saved_export:
         saved = SavedBasicExport(configuration=config)
     else:
-        saved.configuration = config
+        saved_export.configuration = config
 
-    if saved.last_accessed is None:
-        saved.last_accessed = datetime.utcnow()
-    saved.last_updated = datetime.utcnow()
+    if saved_export.last_accessed is None:
+        saved_export.last_accessed = datetime.utcnow()
+    saved_export.last_updated = datetime.utcnow()
     try:
-        saved.save()
+        saved_export.save()
     except ResourceConflict:
         # task was executed concurrently, so let first to finish win and abort the rest
         pass
     else:
-        saved.set_payload(payload)
+        saved_export.set_payload(payload)
 
 
 def _should_rebuild_export(saved, last_access_cutoff):
