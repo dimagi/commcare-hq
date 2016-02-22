@@ -4,8 +4,8 @@ import functools
 import json
 import os
 import tempfile
-from django.conf import settings
 
+from django.conf import settings
 from django.contrib import messages
 from django.core.exceptions import ValidationError
 from django.core.urlresolvers import reverse
@@ -16,20 +16,27 @@ from django.utils.http import urlencode
 from django.utils.translation import ugettext as _, ugettext_lazy
 from django.views.decorators.http import require_POST
 from django.views.generic import View
-from corehq.apps.analytics.tasks import track_workflow
+
+
 from djangular.views.mixins import JSONResponseMixin, allow_remote_invocation
-
-from corehq.apps.app_manager.dbaccessors import domain_has_apps
-from corehq.apps.app_manager.models import Application, Form
-
 from sqlalchemy import types, exc
 from sqlalchemy.exc import ProgrammingError
 
+from couchexport.export import export_from_tables
+from couchexport.files import Temp
+from couchexport.models import Format
+from couchexport.shortcuts import export_response
+from dimagi.utils.decorators.memoized import memoized
+from dimagi.utils.web import json_response
+
+from corehq import toggles
+from corehq.apps.analytics.tasks import track_workflow
+from corehq.apps.app_manager.dbaccessors import domain_has_apps
+from corehq.apps.app_manager.models import Application, Form
 from corehq.apps.dashboard.models import IconContext, TileConfiguration, Tile
+from corehq.apps.domain.decorators import login_and_domain_required, login_or_basic
 from corehq.apps.domain.views import BaseDomainView
 from corehq.apps.reports.dispatcher import cls_to_view_login_and_domain
-from corehq import toggles
-from corehq.apps.domain.decorators import login_and_domain_required, login_or_basic
 from corehq.apps.style.decorators import (
     use_bootstrap3,
     use_select2,
@@ -45,14 +52,6 @@ from corehq.apps.userreports.exceptions import (
     ReportConfigurationNotFoundError,
     UserQueryError,
 )
-from corehq.apps.userreports.reports.builder.forms import (
-    ConfigurePieChartReportForm,
-    ConfigureTableReportForm,
-    DataSourceForm,
-    ConfigureBarChartReportForm,
-    ConfigureListReportForm,
-    ConfigureWorkerReportForm,
-    ConfigureMapReportForm)
 from corehq.apps.userreports.models import (
     ReportConfiguration,
     DataSourceConfiguration,
@@ -61,6 +60,14 @@ from corehq.apps.userreports.models import (
     get_datasource_config,
     get_report_config,
 )
+from corehq.apps.userreports.reports.builder.forms import (
+    ConfigurePieChartReportForm,
+    ConfigureTableReportForm,
+    DataSourceForm,
+    ConfigureBarChartReportForm,
+    ConfigureListReportForm,
+    ConfigureWorkerReportForm,
+    ConfigureMapReportForm)
 from corehq.apps.userreports.reports.filters.choice_providers import ChoiceQueryContext
 from corehq.apps.userreports.reports.view import ConfigurableReport
 from corehq.apps.userreports.sql import IndicatorSqlAdapter
@@ -75,14 +82,6 @@ from corehq.apps.users.decorators import require_permission
 from corehq.apps.users.models import Permissions
 from corehq.toggles import REPORT_BUILDER_MAP_REPORTS
 from corehq.util.couch import get_document_or_404
-
-from couchexport.export import export_from_tables
-from couchexport.files import Temp
-from couchexport.models import Format
-from couchexport.shortcuts import export_response
-
-from dimagi.utils.web import json_response
-from dimagi.utils.decorators.memoized import memoized
 
 
 def get_datasource_config_or_404(config_id, domain):
