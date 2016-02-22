@@ -22,6 +22,8 @@ from corehq.apps.reports.analytics.esaccessors import (
     get_case_counts_opened_by_user,
     get_active_case_counts_by_owner,
     get_total_case_counts_by_owner,
+    get_form_duration_stats_by_user,
+    get_form_duration_stats_for_users,
 )
 from corehq.apps.reports.exceptions import TooMuchDataError
 from corehq.apps.reports.filters.users import ExpandedMobileWorkerFilter as EMWF
@@ -757,7 +759,7 @@ class FormCompletionTimeReport(WorkerMonitoringFormReportTableBase, DatespanMixi
 
         def to_duration(val_in_s):
             assert val_in_s is not None
-            return datetime.timedelta(seconds=val_in_s)
+            return datetime.timedelta(milliseconds=val_in_s)
 
         def to_minutes(val_in_s):
             if val_in_s is None:
@@ -779,42 +781,8 @@ class FormCompletionTimeReport(WorkerMonitoringFormReportTableBase, DatespanMixi
                 s=seconds,
             )
 
-        def _fmt(pretty_fn, val):
-            return format_datatables_data(pretty_fn(val), val)
-
         def _fmt_ts(timestamp):
             return format_datatables_data(to_minutes(timestamp), timestamp, to_minutes_raw(timestamp))
-
-        def get_data(users, group_by_user=True):
-            query = FormData.objects.filter(xmlns=self.selected_form_data['xmlns'])
-
-            date_field = 'received_on' if self.by_submission_time else 'time_end'
-            date_filter = {
-                '{}__range'.format(date_field): (self.datespan.startdate_utc, self.datespan.enddate_utc)
-            }
-            query = query.filter(**date_filter)
-
-            if users:
-                query = query.filter(user_id__in=users)
-
-            if self.selected_form_data['app_id'] is not None:
-                query = query.filter(app_id=self.selected_form_data['app_id'])
-
-            if group_by_user:
-                query = query.values('user_id')
-                return query.annotate(Max('duration')) \
-                    .annotate(Min('duration')) \
-                    .annotate(Avg('duration')) \
-                    .annotate(StdDev('duration')) \
-                    .annotate(Count('duration'))
-            else:
-                return query.aggregate(
-                    Max('duration'),
-                    Min('duration'),
-                    Avg('duration'),
-                    StdDev('duration'),
-                    Count('duration')
-                )
 
         mobile_user_and_group_slugs = self.request.GET.getlist(EMWF.slug)
         users_data = EMWF.pull_users_and_groups(
@@ -822,26 +790,45 @@ class FormCompletionTimeReport(WorkerMonitoringFormReportTableBase, DatespanMixi
             mobile_user_and_group_slugs,
         )
         user_ids = [user.user_id for user in users_data.combined_users]
+        app_id = self.selected_form_data['app_id']
+        xmlns = self.selected_form_data['xmlns']
 
-        data_map = dict([(row['user_id'], row) for row in get_data(user_ids)])
+        data_map = get_form_duration_stats_by_user(
+            self.domain,
+            app_id,
+            xmlns,
+            user_ids,
+            self.datespan.startdate_utc,
+            self.datespan.enddate_utc,
+            by_submission_time=self.by_submission_time,
+        )
 
         for user in users_data.combined_users:
             stats = data_map.get(user.user_id, {})
-            rows.append([self.get_user_link(user),
-                         _fmt_ts(stats.get('duration__avg')),
-                         _fmt_ts(stats.get('duration__stddev')),
-                         _fmt_ts(stats.get("duration__min")),
-                         _fmt_ts(stats.get("duration__max")),
-                         _fmt(lambda x: x, stats.get("duration__count", 0)),
+            rows.append([
+                self.get_user_link(user),
+                _fmt_ts(stats.get('avg')),
+                _fmt_ts(stats.get('std_deviation')),
+                _fmt_ts(stats.get('min')),
+                _fmt_ts(stats.get('max')),
+                stats.get('count', 0),
             ])
 
-        total_data = get_data(user_ids, group_by_user=False)
+        total_data = get_form_duration_stats_for_users(
+            self.domain,
+            app_id,
+            xmlns,
+            user_ids,
+            self.datespan.startdate_utc,
+            self.datespan.enddate_utc,
+            by_submission_time=self.by_submission_time,
+        )
         self.total_row = ["All Users",
-                          _fmt_ts(total_data.get('duration__avg')),
-                          _fmt_ts(total_data.get('duration__stddev')),
-                          _fmt_ts(total_data.get('duration__min')),
-                          _fmt_ts(total_data.get('duration__max')),
-                          total_data.get('duration__count', 0)]
+                          _fmt_ts(total_data.get('avg')),
+                          _fmt_ts(total_data.get('std_deviation')),
+                          _fmt_ts(total_data.get('min')),
+                          _fmt_ts(total_data.get('max')),
+                          total_data.get('count', 0)]
         return rows
 
 

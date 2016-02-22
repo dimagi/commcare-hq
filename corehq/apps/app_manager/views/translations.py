@@ -42,7 +42,6 @@ def upload_bulk_ui_translations(request, domain, app_id):
             message += "<li>%s</li>" % prop
         return message
 
-    messages.error(request, _("Welcome to CommCare."))
     success = False
     try:
         app = get_app(domain, app_id)
@@ -50,7 +49,7 @@ def upload_bulk_ui_translations(request, domain, app_id):
             app, request.file
         )
         if error_properties:
-            message = _html_message(_("Upload failed. We found problem with following translations:"),
+            message = _html_message(_("Upload failed. We found problems with the following translations:"),
                                     error_properties)
             messages.error(request, message, extra_tags='html')
         else:
@@ -62,7 +61,7 @@ def upload_bulk_ui_translations(request, domain, app_id):
         if warnings:
             message = _html_message(_("Upload succeeded, but we found following issues for some properties"),
                                     warnings)
-            messages.warning(request, message)
+            messages.warning(request, message, extra_tags='html')
 
     except Exception:
         notify_exception(request, 'Bulk Upload Translations Error')
@@ -125,9 +124,8 @@ def process_ui_translation_upload(app, trans_file):
     warnings = []
     for row in translations:
         if row["property"] not in commcare_ui_strings:
-            # dont add/update translations for unknown strings
-            warnings.append(row["property"] + " is not a known CommCare UI string")
-            continue
+            # Add a warning for  unknown properties, but still add them to the translation dict
+            warnings.append(row["property"] + " is not a known CommCare UI string, but we added it anyway")
         for lang in app.langs:
             if row.get(lang):
                 all_parameters = re.findall("\$.*?}", row[lang])

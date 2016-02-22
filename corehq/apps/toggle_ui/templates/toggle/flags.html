@@ -29,7 +29,8 @@
         $('#table-filters').koApplyBindings(viewModel);
         var table = new HQReportDataTables({
             dataTableElem: dataTableElem,
-            showAllRowsOption: true
+            showAllRowsOption: true,
+            includeFilter: true
         });
         table.render();
 
