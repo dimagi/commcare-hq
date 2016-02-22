@@ -38,10 +38,10 @@ class PillowCheckpoint(object):
         self._last_checkpoint = None
 
     def get_or_create(self, verify_unchanged=False):
-        result = self._get_or_create(verify_unchanged)
+        result = self.get_or_create_wrapped(verify_unchanged)
         return DocGetOrCreateResult(DjangoPillowCheckpoint.to_dict(result.document), result.created)
 
-    def _get_or_create(self, verify_unchanged=False):
+    def get_or_create_wrapped(self, verify_unchanged=False):
         result = get_or_create_checkpoint(self.checkpoint_id)
         checkpoint, created = result
         if (verify_unchanged and self._last_checkpoint and
@@ -60,7 +60,7 @@ class PillowCheckpoint(object):
         pillow_logging.info(
             "(%s) setting checkpoint: %s" % (self.checkpoint_id, seq)
         )
-        checkpoint = self._get_or_create(verify_unchanged=True).document
+        checkpoint = self.get_or_create_wrapped(verify_unchanged=True).document
         checkpoint.sequence = seq
         checkpoint.timestamp = datetime.utcnow()
         checkpoint.save()
@@ -74,7 +74,7 @@ class PillowCheckpoint(object):
         Update the checkpoint timestamp without altering the sequence.
         :param min_interval: minimum interval between timestamp updates
         """
-        checkpoint = self._get_or_create(verify_unchanged=True).document
+        checkpoint = self.get_or_create_wrapped(verify_unchanged=True).document
         now = datetime.utcnow()
         previous = self._last_checkpoint.timestamp if self._last_checkpoint else None
         do_update = True
