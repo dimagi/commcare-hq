@@ -2,7 +2,7 @@
 from __future__ import unicode_literals
 
 from django.db import models, migrations
-from corehq.util.django_migrations import AlterIndexTogetherConcurrently
+from corehq.util.django_migrations import AlterIndexIfNotExists
 
 
 class Migration(migrations.Migration):
@@ -36,7 +36,7 @@ class Migration(migrations.Migration):
             field=models.CharField(max_length=100, null=True),
             preserve_default=True,
         ),
-        AlterIndexTogetherConcurrently(
+        AlterIndexIfNotExists(
             name='devicereportentry',
             index_together=set([('domain', 'device_id'), ('domain', 'date'), ('domain', 'username')]),
         ),
