@@ -1,4 +1,4 @@
-from django.test import override_settings, SimpleTestCase
+from django.test import override_settings, SimpleTestCase, TestCase
 from pillowtop import get_all_pillow_instances, get_all_pillow_classes, get_pillow_by_name
 from pillowtop.checkpoints.manager import PillowCheckpoint
 from pillowtop.dao.mock import MockDocumentStore
@@ -95,7 +95,7 @@ class PillowFactoryFunctionTestCase(SimpleTestCase):
 
 
 @override_settings(PILLOWTOPS=PILLOWTOPS_OVERRIDE)
-class PillowTestCase(SimpleTestCase):
+class PillowTestCase(TestCase):
 
     def test_pillow_reset_checkpoint(self):
         pillow = make_fake_constructed_pillow()
