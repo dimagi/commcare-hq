@@ -1958,8 +1958,8 @@ class BillingRecordBase(models.Model):
     pdf_data_id = models.CharField(max_length=48)
     last_modified = models.DateTimeField(auto_now=True)
 
-    INVOICE_HTML_TEMPLATE = 'accounting/invoice_email.html'
-    INVOICE_TEXT_TEMPLATE = 'accounting/invoice_email_plaintext.html'
+    INVOICE_HTML_TEMPLATE = 'accounting/email/invoice_email.html'
+    INVOICE_TEXT_TEMPLATE = 'accounting/email/invoice_email_plaintext.html'
 
     class Meta:
         abstract = True
