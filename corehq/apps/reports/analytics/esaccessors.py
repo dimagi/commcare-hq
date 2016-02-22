@@ -2,7 +2,7 @@ from collections import defaultdict, namedtuple
 from datetime import datetime
 
 from corehq.apps.es import FormES, UserES, GroupES, CaseES, filters
-from corehq.apps.es.aggregations import TermsAggregation, ExtendedStatsAggregation
+from corehq.apps.es.aggregations import TermsAggregation, ExtendedStatsAggregation, TopHitsAggregation
 from corehq.apps.es.forms import submitted as submitted_filter, completed as completed_filter
 from corehq.apps.es.cases import closed_range
 from dimagi.utils.parsing import string_to_datetime
@@ -98,22 +98,33 @@ def get_paged_forms_by_type(domain, doc_types, start=0, size=10):
     return PagedResult(total=result.total, hits=result.hits)
 
 
-def get_last_form_submission_for_user_for_app(domain, user_id, app_id=None):
+def get_last_form_submissions_by_user(domain, user_ids, app_id=None):
 
     query = (
         FormES()
         .domain(domain)
-        .user_id([user_id])
-        .sort('received_on', desc=True)
-        .size(1)
+        .user_id(user_ids)
+        .aggregation(
+            TermsAggregation('user_id', 'form.meta.userID').aggregation(
+                TopHitsAggregation(
+                    'top_hits_last_form_submissions',
+                    'received_on',
+                    is_ascending=False,
+                )
+            )
+        )
+        .size(0)
     )
 
     if app_id:
         query = query.app(app_id)
 
-    if query.run().hits:
-        return query.run().hits[0]
-    return None
+    buckets_dict = query.run().aggregations.user_id.buckets_dict
+    result = {}
+    for user_id, bucket in buckets_dict.iteritems():
+        result[user_id] = bucket.top_hits_last_form_submissions.hits
+
+    return result
 
 
 def get_submission_counts_by_user(domain, datespan):
@@ -191,6 +202,23 @@ def get_user_stubs(user_ids):
         .user_ids(user_ids)
         .show_inactive()
         .values('_id', 'username', 'first_name', 'last_name', 'doc_type', 'is_active'))
+
+
+def get_forms(domain, startdate, enddate, user_ids=None, app_ids=None, xmlnss=None, by_submission_time=True):
+
+    date_filter_fn = submitted_filter if by_submission_time else completed_filter
+    query = (
+        FormES()
+        .domain(domain)
+        .filter(date_filter_fn(gte=startdate, lte=enddate))
+        .app(app_ids)
+        .xmlns(xmlnss)
+        .user_id(user_ids)
+        .size(5000)
+    )
+
+    result = query.run()
+    return PagedResult(total=result.total, hits=result.hits)
 
 
 def get_form_counts_by_user_xmlns(domain, startdate, enddate, user_ids=None,

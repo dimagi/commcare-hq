@@ -1,8 +1,6 @@
 #!/bin/bash
 set -ev
 
-source .travis/utils.sh
-
 if [ "${MATRIX_TYPE}" = "python" ] || [ "${MATRIX_TYPE}" = "python-sharded" ]; then
 
     ./dockerhq.sh travis build

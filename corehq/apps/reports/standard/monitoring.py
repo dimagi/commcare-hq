@@ -22,6 +22,7 @@ from corehq.apps.reports.analytics.esaccessors import (
     get_case_counts_opened_by_user,
     get_active_case_counts_by_owner,
     get_total_case_counts_by_owner,
+    get_forms,
     get_form_duration_stats_by_user,
     get_form_duration_stats_for_users,
 )
@@ -44,7 +45,7 @@ from corehq.util.view_utils import absolute_reverse
 from couchforms.models import XFormInstance
 from dimagi.utils.dates import DateSpan, today_or_tomorrow
 from dimagi.utils.decorators.memoized import memoized
-from dimagi.utils.parsing import json_format_date
+from dimagi.utils.parsing import json_format_date, string_to_utc_datetime
 from django.utils.translation import ugettext as _
 from django.utils.translation import ugettext_noop
 
@@ -873,40 +874,43 @@ class FormCompletionVsSubmissionTrendsReport(WorkerMonitoringFormReportTableBase
                 mobile_user_and_group_slugs,
             )
 
-            placeholders = []
-            params = []
             user_map = {user.user_id: user
                         for user in users_data.combined_users if user.user_id}
-            form_map = {}
-            for form in self.all_relevant_forms.values():
-                placeholders.append('(%s,%s)')
-                params.extend([form['app_id'], form['xmlns']])
-                form_map[form['xmlns']] = form
+            user_ids = [user.user_id for user in users_data.combined_users if user.user_id]
 
-            where = '(app_id, xmlns) in (%s)' % (','.join(placeholders))
-            results = FormData.objects \
-                .filter(received_on__range=(self.datespan.startdate_utc, self.datespan.enddate_utc)) \
-                .filter(user_id__in=user_map.keys()) \
-                .values('instance_id', 'user_id', 'time_end', 'received_on', 'xmlns')\
-                .extra(
-                    where=[where], params=params
-                )
-            if results.count() > 5000:
-                raise TooMuchDataError(_(TOO_MUCH_DATA))
+            xmlnss = []
+            app_ids = []
+            form_map = {}
+
+            for form in self.all_relevant_forms.values():
+                xmlnss.append(form['xmlns'])
+                app_ids.append(form['app_id'])
+                form_map[form['xmlns']] = form['name']
+
+            results = get_forms(
+                self.domain,
+                self.datespan.startdate_utc.date(),
+                self.datespan.enddate_utc.date(),
+                user_ids=user_ids,
+                app_ids=app_ids,
+                xmlnss=xmlnss,
+            )
             for row in results:
-                completion_time = (PhoneTime(row['time_end'], self.timezone)
-                                   .server_time().done())
-                submission_time = row['received_on']
+                completion_time = (PhoneTime(
+                    string_to_utc_datetime(row['form']['meta']['timeEnd']),
+                    self.timezone,
+                ).server_time().done())
+                submission_time = string_to_utc_datetime(row['received_on'])
                 td = submission_time - completion_time
                 td_total = (td.seconds + td.days * 24 * 3600)
                 rows.append([
-                            self.get_user_link(user_map.get(row['user_id'])),
-                            self._format_date(completion_time),
-                            self._format_date(submission_time),
-                            form_map[row['xmlns']]['name'],
-                            self._view_form_link(row['instance_id']),
-                            self.table_cell(td_total, self._format_td_status(td))
-                        ])
+                    self.get_user_link(user_map.get(row['form']['meta']['userID'])),
+                    self._format_date(completion_time),
+                    self._format_date(submission_time),
+                    form_map[row['xmlns']],
+                    self._view_form_link(row['_id']),
+                    self.table_cell(td_total, self._format_td_status(td))
+                ])
 
                 if td_total >= 0:
                     total_seconds += td_total
@@ -996,30 +1000,37 @@ class WorkerActivityTimes(WorkerMonitoringChartBase,
             self.domain,
             mobile_user_and_group_slugs,
         )
-        for user in users_data.combined_users:
-            for form, info in self.all_relevant_forms.items():
-                key = make_form_couch_key(
-                    self.domain,
-                    user_id=user.user_id,
-                    xmlns=info['xmlns'],
-                    app_id=info['app_id'],
-                    by_submission_time=self.by_submission_time,
+        user_ids = map(lambda user: user.user_id, users_data.combined_users)
+        xmlnss = map(lambda form: form['xmlns'], self.all_relevant_forms.values())
+        app_ids = map(lambda form: form['app_id'], self.all_relevant_forms.values())
+
+        paged_result = get_forms(
+            self.domain,
+            self.datespan.startdate_utc,
+            self.datespan.enddate_utc,
+            user_ids=user_ids,
+            app_ids=app_ids,
+            xmlnss=xmlnss,
+            by_submission_time=self.by_submission_time,
+        )
+        if paged_result.total > 5000:
+            raise TooMuchDataError()
+
+        all_times = []
+
+        for form in paged_result.hits:
+            if self.by_submission_time:
+                all_times.append(
+                    ServerTime(string_to_utc_datetime(form['received_on'])).user_time(self.timezone).done()
                 )
-                data = XFormInstance.get_db().view("all_forms/view",
-                    reduce=False,
-                    startkey=key+[self.datespan.startdate_param_utc],
-                    endkey=key+[self.datespan.enddate_param_utc],
-                ).all()
-                all_times.extend([iso_string_to_datetime(d['key'][-1])
-                                  for d in data])
-                if len(all_times) > 5000:
-                    raise TooMuchDataError()
-        if self.by_submission_time:
-            all_times = [ServerTime(t).user_time(self.timezone).done()
-                         for t in all_times]
-        else:
-            all_times = [PhoneTime(t, self.timezone).user_time(self.timezone).done()
-                         for t in all_times]
+            else:
+                all_times.append(
+                    PhoneTime(
+                        (string_to_utc_datetime(form['received_on'], self.timezone)
+                            .user_time(self.timezone)
+                            .done())
+                    )
+                )
 
         aggregated_times = defaultdict(int)
         for t in all_times:

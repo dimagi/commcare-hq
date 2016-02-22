@@ -33,9 +33,10 @@ from corehq.apps.reports.analytics.esaccessors import (
     get_case_counts_closed_by_user,
     get_case_counts_opened_by_user,
     get_paged_forms_by_type,
-    get_last_form_submission_for_user_for_app,
+    get_last_form_submissions_by_user,
     get_user_stubs,
     get_group_stubs,
+    get_forms,
     get_form_counts_by_user_xmlns,
     get_form_duration_stats_by_user,
     get_form_duration_stats_for_users,
@@ -83,6 +84,83 @@ class TestFormESAccessors(BaseESAccessorsTest):
 
     def _pillow_process_form(self, form_pair):
         self.pillow.change_transport(form_pair.json_form)
+
+    def test_get_forms(self):
+        start = datetime(2013, 7, 1)
+        end = datetime(2013, 7, 30)
+        xmlns = 'http://a.b.org'
+        app_id = '1234'
+        user_id = 'abc'
+
+        self._send_form_to_es(
+            app_id=app_id,
+            xmlns=xmlns,
+            received_on=datetime(2013, 7, 2),
+            user_id=user_id,
+        )
+
+        paged_result = get_forms(
+            self.domain,
+            start,
+            end,
+            user_ids=[user_id],
+            app_ids=app_id,
+            xmlnss=xmlns,
+        )
+        self.assertEqual(paged_result.total, 1)
+        self.assertEqual(paged_result.hits[0]['xmlns'], xmlns)
+        self.assertEqual(paged_result.hits[0]['form']['meta']['userID'], user_id)
+        self.assertEqual(paged_result.hits[0]['received_on'], '2013-07-02T00:00:00.000000Z')
+
+    def test_get_forms_multiple_apps_xmlnss(self):
+        start = datetime(2013, 7, 1)
+        end = datetime(2013, 7, 30)
+        xmlns1, xmlns2 = 'http://a.b.org', 'http://b.c.org'
+        app_id1, app_id2 = '1234', '4567'
+        user_id = 'abc'
+
+        self._send_form_to_es(
+            app_id=app_id1,
+            xmlns=xmlns1,
+            received_on=datetime(2013, 7, 2),
+            user_id=user_id,
+        )
+        self._send_form_to_es(
+            app_id=app_id2,
+            xmlns=xmlns2,
+            received_on=datetime(2013, 7, 2),
+            user_id=user_id,
+        )
+
+        paged_result = get_forms(
+            self.domain,
+            start,
+            end,
+            user_ids=[user_id],
+            app_ids=[app_id1, app_id2],
+            xmlnss=[xmlns1, xmlns2],
+        )
+        self.assertEqual(paged_result.total, 2)
+
+        paged_result = get_forms(
+            self.domain,
+            start,
+            end,
+            user_ids=[user_id],
+            app_ids=[app_id1, app_id2],
+            xmlnss=[xmlns1],
+        )
+        self.assertEqual(paged_result.total, 1)
+
+        paged_result = get_forms(
+            self.domain,
+            start,
+            end,
+            user_ids=[user_id],
+            app_ids=[app_id1],
+            xmlnss=[xmlns2],
+        )
+        self.assertEqual(paged_result.total, 0)
 
     def test_basic_completed_by_user(self):
         start = datetime(2013, 7, 1)
@@ -189,8 +267,13 @@ class TestFormESAccessors(BaseESAccessorsTest):
         self.assertEquals(results['2013-07-14'], 1)
 
     def test_get_last_form_submission_for_user_for_app(self):
-        kwargs = {
+        kwargs_u1 = {
             'user_id': 'u1',
+            'app_id': '1234',
+            'domain': self.domain,
+        }
+        kwargs_u2 = {
+            'user_id': 'u2',
             'app_id': '1234',
             'domain': self.domain,
         }
@@ -199,15 +282,20 @@ class TestFormESAccessors(BaseESAccessorsTest):
         second = datetime(2013, 7, 16, 0, 0, 0)
         third = datetime(2013, 7, 17, 0, 0, 0)
 
-        self._send_form_to_es(received_on=second, xmlns='second', **kwargs)
-        self._send_form_to_es(received_on=third, xmlns='third', **kwargs)
-        self._send_form_to_es(received_on=first, xmlns='first', **kwargs)
+        self._send_form_to_es(received_on=second, xmlns='second', **kwargs_u1)
+        self._send_form_to_es(received_on=third, xmlns='third', **kwargs_u1)
+        self._send_form_to_es(received_on=first, xmlns='first', **kwargs_u1)
 
-        form = get_last_form_submission_for_user_for_app(self.domain, 'u1', '1234')
-        self.assertEqual(form['xmlns'], 'third')
+        self._send_form_to_es(received_on=second, xmlns='second', **kwargs_u2)
+        self._send_form_to_es(received_on=third, xmlns='third', **kwargs_u2)
+        self._send_form_to_es(received_on=first, xmlns='first', **kwargs_u2)
 
-        form = get_last_form_submission_for_user_for_app(self.domain, 'u1', 'nothing')
-        self.assertEqual(form, None)
+        result = get_last_form_submissions_by_user(self.domain, ['u1', 'u2', 'missing'])
+        self.assertEqual(result['u1'][0]['xmlns'], 'third')
+        self.assertEqual(result['u2'][0]['xmlns'], 'third')
+
+        result = get_last_form_submissions_by_user(self.domain, ['u1'], '1234')
+        self.assertEqual(result['u1'][0]['xmlns'], 'third')
 
     def test_get_form_counts_by_user_xmlns(self):
         user1, user2 = 'u1', 'u2'

@@ -128,6 +128,8 @@ corehq.apps.app_manager:
   - custom.ewsghana
   - corehq.apps.smsforms
   - corehq.apps.commtrack
+corehq.apps.change_feed:
+  - pillowtop
 corehq.apps.commtrack:
   - auditcare
   - couchforms

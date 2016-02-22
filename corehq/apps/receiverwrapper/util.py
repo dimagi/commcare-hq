@@ -146,9 +146,7 @@ def get_app_version_info(domain, build_id, xform_version, xform_metadata):
     if build_version:
         return AppVersionInfo(build_version, commcare_version, BuildVersionSource.BUILD_ID)
 
-    build_version = get_version_from_appversion_text(
-        get_meta_appversion_text(xform_metadata)
-    )
+    build_version = get_version_from_appversion_text(appversion_text)
     if build_version:
         return AppVersionInfo(build_version, commcare_version, BuildVersionSource.APPVERSION_TEXT)
 
