@@ -37,8 +37,6 @@
             self.restrict = addJsonAccess(ko.observable());
             self.app_groups = ko.observableArray();
             self._lock = ko.observable(false);
-            self.save = function () {
-            };
         };
         ApplicationAccess.wrap = function(o) {
             var self = new ApplicationAccess();
