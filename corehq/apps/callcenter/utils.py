@@ -69,6 +69,7 @@ class _UserCaseHelper(object):
             owner_id=self.owner_id,
             user_id=self.owner_id,
             case_type=case_type,
+            case_name=fields.pop('name', None),
             update=fields
         )
         self._submit_case_block(caseblock)
@@ -79,6 +80,7 @@ class _UserCaseHelper(object):
             case_id=case.case_id,
             owner_id=self.owner_id,
             case_type=case_type,
+            case_name=fields.pop('name', None),
             close=False,
             update=fields
         )
