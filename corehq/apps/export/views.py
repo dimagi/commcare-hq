@@ -1036,8 +1036,17 @@ class BaseExportListView(ExportsPermissionsMixin, JSONResponseMixin, BaseProject
         ExportConfiguration list"""
         raise NotImplementedError("must implement get_emailed_indexes")
 
+    def update_emailed_es_export_data(self, in_data):
+        from corehq.apps.export.tasks import rebuild_export_task
+        export_instance_id = in_data['export']['id']
+        rebuild_export_task.delay(export_instance_id)
+        return format_angular_success({})
+
     @allow_remote_invocation
     def update_emailed_export_data(self, in_data):
+        if not in_data['export']['isLegacy']:
+            return self.update_emailed_es_export_data(in_data)
+
         group_id = in_data['component']['groupId']
         relevant_group = filter(lambda g: g.get_id, self.emailed_export_groups)[0]
         indexes = map(lambda x: x[0].index, relevant_group.all_exports)
@@ -1119,6 +1128,7 @@ class FormExportListView(BaseExportListView):
 
         return {
             'id': export.get_id,
+            'isLegacy': isinstance(export, FormExportSchema),
             'isDeid': export.is_safe,
             'name': export.name,
             'formname': export.formname,
