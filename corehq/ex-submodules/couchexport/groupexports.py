@@ -31,9 +31,7 @@ def export_for_group(export_id_or_group, output_dir, last_access_cutoff=None):
 def rebuild_export(config, schema, last_access_cutoff=None, filter=None):
 
     saved = get_saved_export_and_delete_copies(config.index)
-    if last_access_cutoff and saved and saved.last_accessed and \
-            saved.last_accessed < last_access_cutoff:
-        # ignore exports that haven't been accessed since last_access_cutoff
+    if not _should_rebuild_export(saved, last_access_cutoff):
         return
 
     try:
@@ -44,22 +42,36 @@ def rebuild_export(config, schema, last_access_cutoff=None, filter=None):
         raise ExportRebuildError(u'Schema mismatch for {}. Rebuilding tables...'.format(config.filename))
 
     with files:
-        payload = files.file.payload
-        if not saved:
-            saved = SavedBasicExport(configuration=config)
-        else:
-            saved.configuration = config
+        _save_export_payload(files, saved, config)
 
-        if saved.last_accessed is None:
-            saved.last_accessed = datetime.utcnow()
-        saved.last_updated = datetime.utcnow()
-        try:
-            saved.save()
-        except ResourceConflict:
-            # task was executed concurrently, so let first to finish win and abort the rest
-            pass
-        else:
-            saved.set_payload(payload)
+
+def _save_export_payload(files, saved, config):
+    payload = files.file.payload
+    if not saved:
+        saved = SavedBasicExport(configuration=config)
+    else:
+        saved.configuration = config
+
+    if saved.last_accessed is None:
+        saved.last_accessed = datetime.utcnow()
+    saved.last_updated = datetime.utcnow()
+    try:
+        saved.save()
+    except ResourceConflict:
+        # task was executed concurrently, so let first to finish win and abort the rest
+        pass
+    else:
+        saved.set_payload(payload)
+
+
+def _should_rebuild_export(saved, last_access_cutoff):
+    # Don't rebuild exports that haven't been accessed since last_access_cutoff
+    return (
+        last_access_cutoff
+        and saved
+        and saved.last_accessed
+        and saved.last_accessed < last_access_cutoff
+    )
 
 
 def get_saved_export_and_delete_copies(index):
