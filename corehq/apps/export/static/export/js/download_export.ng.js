@@ -195,7 +195,9 @@
             $scope.dropboxUrl = null;
             $scope.downloadUrl = null;
             $scope.progress = {};
-            $scope.showCeleryError = false;
+            $scope.showError = false;
+            $scope.celeryError = false;
+            $scope.downloadError = false;
             $scope.isMultimediaDownload = false;
             if (formElement.progress()) {
                 formElement.progress().css('width', '0%');
@@ -242,9 +244,17 @@
         });
 
         $scope.$watch(function () {
-            return exportDownloadService.showCeleryError;
+            return exportDownloadService.celeryError;
         }, function (status) {
-            $scope.showCeleryError = status;
+            $scope.celeryError = status;
+            $scope.showError = status;
+        });
+
+        $scope.$watch(function () {
+            return exportDownloadService.downloadError;
+        }, function (status) {
+            $scope.downloadError = status;
+            $scope.showError = status;
         });
 
         $scope.$watch(function () {
@@ -272,7 +282,8 @@
             self.downloadStatusData = null;
             self.showDownloadStatus = false;
             self.downloadError = null;
-            self.showCeleryError = false;
+            self.celeryError = false;
+            self.downloadError = false;
             self.isMultimediaDownload = false;
             self.exportType = null;
         };
@@ -319,7 +330,7 @@
             // started, so we have to try a few times.
             if (self._numCeleryRetries > 10) {
                 $interval.cancel(self._promise);
-                self.showCeleryError = true;
+                self.celeryError = true;
             }
             self._numCeleryRetries ++;
         };

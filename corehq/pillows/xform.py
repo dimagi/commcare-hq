@@ -11,8 +11,7 @@ from .base import HQPillow
 from couchforms.const import RESERVED_WORDS
 from couchforms.models import XFormInstance
 from dateutil import parser
-from pillowtop.checkpoints.manager import PillowCheckpoint, get_django_checkpoint_store, \
-    PillowCheckpointEventHandler
+from pillowtop.checkpoints.manager import PillowCheckpoint, PillowCheckpointEventHandler
 from pillowtop.es_utils import ElasticsearchIndexMeta
 from pillowtop.pillow.interface import ConstructedPillow
 from pillowtop.processors.elastic import ElasticProcessor
@@ -125,7 +124,6 @@ def _get_doc_type_from_state(state):
 
 def get_sql_xform_to_elasticsearch_pillow():
     checkpoint = PillowCheckpoint(
-        get_django_checkpoint_store(),
         'sql-xforms-to-elasticsearch',
     )
     form_processor = ElasticProcessor(

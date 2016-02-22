@@ -514,6 +514,9 @@ class ILSMigrationStats(models.Model):
     domain = models.CharField(max_length=128, db_index=True)
     last_modified = models.DateTimeField(auto_now=True)
 
+    class Meta:
+        app_label = 'ilsgateway'
+
 
 class ILSMigrationProblem(models.Model):
     domain = models.CharField(max_length=128, db_index=True)
@@ -541,11 +544,17 @@ class ILSMigrationProblem(models.Model):
         elif self.object_type == 'location':
             return reverse(EditLocationView.urlname, kwargs={'domain': self.domain, 'loc_id': self.object_id})
 
+    class Meta:
+        app_label = 'ilsgateway'
+
 
 class ILSGatewayWebUser(models.Model):
     # To remove after switchover
     external_id = models.IntegerField(db_index=True)
     email = models.CharField(max_length=128)
+
+    class Meta:
+        app_label = 'ilsgateway'
 
 
 class PendingReportingDataRecalculation(models.Model):
@@ -553,6 +562,9 @@ class PendingReportingDataRecalculation(models.Model):
     sql_location = models.ForeignKey(SQLLocation)
     type = models.CharField(max_length=128)
     data = json_field.JSONField()
+
+    class Meta:
+        app_label = 'ilsgateway'
 
 
 @receiver(commcare_domain_pre_delete)
