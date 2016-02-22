@@ -1,6 +1,7 @@
+{% extends 'accounting/email/base_client_email.html' %}
 {% load i18n %}
 
-<p>{{ greeting }}</p>
+{% block content %}
 
 <p>
     {% blocktrans %}
@@ -251,13 +252,9 @@
     {% endblocktrans %}
 </p>
 
-<p>
-    {% blocktrans %}
-    Best Regards,<br />
-    The CommCare HQ Team<br />
-    www.commcarehq.org
-    {% endblocktrans %}
-</p>
+{% endblock %}
+
+{% block footer %} {% block.super %}
 
 <p>
     {% blocktrans %}
@@ -266,3 +263,5 @@
     585 Massachusetts Ave, Ste 4, Cambridge, MA 02139 USA
     {% endblocktrans %}
 </p>
+
+{% endblock %}
