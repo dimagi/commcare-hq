@@ -144,10 +144,10 @@ function LocationModel(data, root, depth, func, withAllOption) {
   // helpers to account for the 'all' meta-entry
   this.num_children = ko.computed(function() {
       var length = this.children().length;
-      if (withAllOption) {
+      if (withAllOption && length !== 0) {
           length -= 1;
       }
-      return (length === 0 ? 0 : length);
+      return length;
     }, this);
   this.get_child = function(i) {
     return this.children()[i + 1];
