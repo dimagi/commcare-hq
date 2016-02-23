@@ -392,6 +392,15 @@ class FormExportInstance(ExportInstance):
         )
 
 
+def get_properly_wrapped_export_instance(doc_id):
+    doc = ExportInstance.get_db().get(doc_id)
+    class_ = {
+        "FormExportInstance": FormExportInstance,
+        "CaseExportInstance": CaseExportInstance,
+    }.get(doc['doc_type'], ExportInstance)
+    return class_.wrap(doc)
+
+
 class ExportInstanceDefaults(object):
     """
     This class is responsible for generating defaults for various aspects of the export instance
