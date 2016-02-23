@@ -1127,15 +1127,21 @@ def case_forms(request, domain, case_id):
     ])
 
 
-@login_and_domain_required
-@require_GET
-def case_attachments(request, domain, case_id):
-    if not can_view_attachments(request):
-        return HttpResponseForbidden(_("You don't have permission to access this page."))
+class CaseAttachmentsView(CaseDetailsView):
+    urlname = 'single_case_attachments'
+    template_name = "reports/reportdata/case_attachments.html"
+    page_title = ugettext_lazy("Case Attachments")
+    http_method_names = ['get']
 
-    case = _get_case_or_404(domain, case_id)
-    return render(request, 'reports/reportdata/case_attachments.html',
-                  {'domain': domain, 'case': case})
+    def dispatch(self, request, *args, **kwargs):
+        if not can_view_attachments(request):
+            return HttpResponseForbidden(_("You don't have permission to access this page."))
+        return super(CaseAttachmentsView, self).dispatch(request, *args, **kwargs)
+
+    @property
+    def page_name(self):
+        return "{} '{}'".format(_("Attachments for case"),
+                                  super(CaseAttachmentsView, self).page_name)
 
 
 @require_case_view_permission
