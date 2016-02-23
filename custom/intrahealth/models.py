@@ -24,7 +24,10 @@ def _get_all_forms():
 
 class CouvertureFluff(fluff.IndicatorDocument):
     document_class = XFormInstance
-    document_filter = FormPropertyFilter(xmlns=OPERATEUR_XMLNSES[0])
+    document_filter = ORFilter([
+        FormPropertyFilter(xmlns=OPERATEUR_XMLNSES[0]),
+        FormPropertyFilter(xmlns=OPERATEUR_XMLNSES[1]),
+    ])
 
     domains = INTRAHEALTH_DOMAINS
     group_by = ('domain', fluff.AttributeGetter('location_id', get_location_id))
