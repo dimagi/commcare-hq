@@ -45,6 +45,7 @@
         </div>
     </div>
     <!-- ko if:  actionType !== 'load' || !auto_select || auto_select.mode() !== 'usercase' -->
+    <div class="spacer"></div>
     <div class="panel panel-default">
         <div class="panel-body">
             <div class="form-horizontal">
@@ -163,9 +164,10 @@
 <script type="text/html" id="case-config:case-action">
     <div class="panel-heading">
         <!-- TODO: increase click target size -->
-        <a data-toggle="collapse" href="#TODO-{{ forloop.counter0 }}" data-bind="html: header"></a>
+        <a data-toggle="collapse" data-parent="#case-config-ko"
+           data-bind="html: header, attr: {href: '#action-' + $index()}"></a>
     </div>
-    <div class="panel-collapse collapse" id="TODO-{{ forloop.counter0 }}">
+    <div class="panel-collapse collapse" data-bind="attr: {id: 'action-' + $index()}">
         <div class="panel-body">
             <button class="pull-right btn btn-danger"
                     data-bind="openModal: 'remove-action-modal-template', visible: true">
@@ -247,9 +249,10 @@
 
 <script type="text/html" id="case-config:case-action-auto-select">
     <div class="panel-heading">
-        <a data-toggle="collapse" href="#TODO-{{ forloop.counter0 }}" data-bind="html: header"></a>
+        <a data-toggle="collapse" data-parent="#case-config-ko"
+           data-bind="html: header, attr: {href: '#action-' + $index()}"></a>
     </div>
-    <div class="panel-collapse collapse" id="TODO-{{ forloop.counter0 }}">
+    <div class="panel-collapse collapse" data-bind="attr: {id: 'action-' + $index()}">
         <div class="panel-body">
             <button class="pull-right btn btn-danger"
                     data-bind="openModal: 'remove-action-modal-template', visible: true">
