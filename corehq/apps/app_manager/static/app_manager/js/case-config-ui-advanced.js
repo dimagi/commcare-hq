@@ -43,7 +43,8 @@ var AdvancedCase = (function () {
                     },
                     dataType: 'json',
                     success: function (data) {
-                        COMMCAREHQ.app_manager.updateDOM(data.update);
+                        var app_manager = hqImport('app_manager/js/app_manager.js');
+                        app_manager.updateDOM(data.update);
                         self.caseConfigViewModel.ensureBlankProperties();
                         self.setPropertiesMap(data.propertiesMap);
                         self.requires(self.caseConfigViewModel.load_update_cases().length > 0 ? 'case' : 'none');

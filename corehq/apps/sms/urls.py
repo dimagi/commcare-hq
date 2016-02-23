@@ -12,9 +12,12 @@ from corehq.apps.sms.views import (
     EditGlobalGatewayView,
     GlobalBackendMap,
     ComposeMessageView,
-    SMSLanguagesView)
+    SMSLanguagesView,
+    ChatMessageHistory,
+    ChatLastReadMessage)
 from corehq.apps.smsbillables.dispatcher import SMSAdminInterfaceDispatcher
 from corehq.messaging.smsbackends.telerivet.urls import domain_specific as telerivet_urls
+
 
 
 urlpatterns = patterns('corehq.apps.sms.views',
@@ -40,8 +43,8 @@ urlpatterns = patterns('corehq.apps.sms.views',
     url(r'^chat_contact_list/$', 'chat_contact_list', name='chat_contact_list'),
     url(r'^chat/(?P<contact_id>[\w-]+)/(?P<vn_id>[\w-]+)/$', 'chat', name='sms_chat'),
     url(r'^chat/(?P<contact_id>[\w-]+)/?$', 'chat', name='sms_chat'),
-    url(r'^api/history/$', 'api_history', name='api_history'),
-    url(r'^api/last_read_message/$', 'api_last_read_message', name='api_last_read_message'),
+    url(r'^api/history/$', ChatMessageHistory.as_view(), name=ChatMessageHistory.urlname),
+    url(r'^api/last_read_message/$', ChatLastReadMessage.as_view(), name=ChatLastReadMessage.urlname),
     url(r'^settings/$', SMSSettingsView.as_view(), name=SMSSettingsView.urlname),
     url(r'^subscribe_sms/$', SubscribeSMSView.as_view(), name=SubscribeSMSView.urlname),
     url(r'^languages/$', SMSLanguagesView.as_view(), name=SMSLanguagesView.urlname),
@@ -54,6 +57,7 @@ urlpatterns = patterns('corehq.apps.sms.views',
         name=InvitationAppInfoView.urlname),
     url(r'^telerivet/', include(telerivet_urls)),
 )
+
 
 sms_admin_interface_urls = patterns('corehq.apps.sms.views',
     url(r'^$', GlobalSmsGatewayListView.as_view(), name='default_sms_admin_interface'),

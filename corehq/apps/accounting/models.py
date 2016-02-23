@@ -1518,7 +1518,7 @@ class Subscription(models.Model):
         context = {
             'domain': domain,
             'end_date': end_date,
-            'contacts': self.account.billingcontactinfo.email_list,
+            'contacts': ', '.join(self.account.billingcontactinfo.email_list),
             'dimagi_contact': email,
         }
         email_html = render_to_string(template, context)

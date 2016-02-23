@@ -98,6 +98,9 @@ class Call(SyncSQLToCouchMixin, Log):
     # The form unique id of the form that plays the survey for the call
     form_unique_id = models.CharField(max_length=126, null=True)
 
+    class Meta:
+        app_label = 'ivr'
+
     @classmethod
     def _migration_get_fields(cls):
         return [

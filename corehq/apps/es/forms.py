@@ -36,12 +36,12 @@ class FormES(HQESQuery):
         return self.terms_aggregation('domain', 'domain')
 
 
-def xmlns(xmlns):
-    return filters.term('xmlns.exact', xmlns)
+def xmlns(xmlnss):
+    return filters.term('xmlns.exact', xmlnss)
 
 
-def app(app_id):
-    return filters.term('app_id', app_id)
+def app(app_ids):
+    return filters.term('app_id', app_ids)
 
 
 def submitted(gt=None, gte=None, lt=None, lte=None):

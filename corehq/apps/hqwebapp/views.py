@@ -7,6 +7,7 @@ import re
 import sys
 import traceback
 import uuid
+from django.utils.decorators import method_decorator
 import httpagentparser
 
 from django.conf import settings
@@ -44,6 +45,7 @@ from corehq.apps.dropbox.exceptions import DropboxUploadAlreadyInProgress
 from corehq.apps.hqwebapp.encoders import LazyEncoder
 from corehq.apps.hqwebapp.forms import EmailAuthenticationForm, CloudCareAuthenticationForm
 from corehq.apps.reports.util import is_mobile_worker_with_report_access
+from corehq.apps.style.decorators import use_bootstrap3
 from corehq.apps.users.models import CouchUser
 from corehq.apps.users.util import format_username
 from corehq.apps.hqwebapp.doc_info import get_doc_info
@@ -1039,6 +1041,32 @@ def maintenance_alerts(request, template='style/bootstrap2/maintenance_alerts.ht
             'id': alert.id,
         } for alert in MaintenanceAlert.objects.order_by('-created')[:5]]
     })
+
+class MaintenanceAlertsView(BasePageView):
+    urlname = 'alerts'
+    page_title = ugettext_noop("Maintenance Alerts")
+    template_name = 'style/maintenance_alerts.html'
+
+    @method_decorator(require_superuser)
+    @use_bootstrap3
+    def dispatch(self, request, *args, **kwargs):
+        return super(MaintenanceAlertsView, self).dispatch(request, *args, **kwargs)
+
+    @property
+    def page_context(self):
+        from corehq.apps.hqwebapp.models import MaintenanceAlert
+        return {
+            'alerts': [{
+            'created': unicode(alert.created),
+            'active': alert.active,
+            'html': alert.html,
+            'id': alert.id,
+            } for alert in MaintenanceAlert.objects.order_by('-created')[:5]]
+        }
+
+    @property
+    def page_url(self):
+        return reverse(self.urlname)
 
 
 @require_POST
