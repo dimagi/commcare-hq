@@ -49,6 +49,19 @@ function SavedApp(app_data, releasesMain) {
         return false;
     });
 
+    self.get_app_code = ko.computed(function() {
+        var short_odk_url = self.get_short_odk_url();
+        if (short_odk_url) {
+            // Matches "foo" in "http://bit.ly/foo" and "https://is.gd/X/foo/" ("*" is not greedy)
+            var re = /^http.*\/(\w+)\/?/;
+            var match = short_odk_url.match(re);
+            if (match) {
+                return match[1];
+            }
+        }
+        return false;
+    });
+
     self.get_short_odk_url_phonetic = ko.computed(function () {
         return app_manager_utils.bitly_nato_phonetic(self.get_short_odk_url());
     });
