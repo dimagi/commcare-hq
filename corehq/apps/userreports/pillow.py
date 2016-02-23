@@ -5,7 +5,7 @@ from casexml.apps.case.models import CommCareCase
 from corehq.apps.userreports.exceptions import TableRebuildError, StaleRebuildError
 from corehq.apps.userreports.models import DataSourceConfiguration, StaticDataSourceConfiguration
 from corehq.apps.userreports.sql import IndicatorSqlAdapter, metadata
-from corehq.apps.userreports.tasks import rebuild_indicators
+from corehq.apps.userreports.tasks import is_static, rebuild_indicators
 from corehq.sql_db.connections import connection_manager
 from corehq.util.soft_assert import soft_assert
 from fluff.signals import get_migration_context, get_tables_to_rebuild
@@ -73,32 +73,36 @@ class ConfigurableIndicatorPillow(PythonPillow):
             tables_to_rebuild = get_tables_to_rebuild(diffs, table_map.keys())
             for table_name in tables_to_rebuild:
                 sql_adapter = table_map[table_name]
-                try:
-                    rev_before_rebuild = sql_adapter.config.get_db().get_rev(sql_adapter.config._id)
-                    self.rebuild_table(sql_adapter)
-                except TableRebuildError, e:
-                    _notify_cory(unicode(e), sql_adapter.config.to_json())
+                if not is_static(sql_adapter.config._id):
+                    try:
+                        rev_before_rebuild = sql_adapter.config.get_db().get_rev(sql_adapter.config._id)
+                        self.rebuild_table(sql_adapter)
+                    except TableRebuildError, e:
+                        _notify_cory(unicode(e), sql_adapter.config.to_json())
+                    else:
+                        # note: this fancy logging can be removed as soon as we get to the
+                        # bottom of http://manage.dimagi.com/default.asp?211297
+                        # if no signs of it popping back up by april 2016, should remove this
+                        rev_after_rebuild = sql_adapter.config.get_db().get_rev(sql_adapter.config._id)
+                        _notify_cory(
+                            u'rebuilt table {} ({}) because {}. rev before: {}, rev after: {}'.format(
+                                table_name,
+                                u'{} [{}]'.format(sql_adapter.config.display_name, sql_adapter.config._id),
+                                diffs,
+                                rev_before_rebuild,
+                                rev_after_rebuild,
+                            ),
+                            sql_adapter.config.to_json(),
+                        )
                 else:
-                    # note: this fancy logging can be removed as soon as we get to the
-                    # bottom of http://manage.dimagi.com/default.asp?211297
-                    # if no signs of it popping back up by april 2016, should remove this
-                    rev_after_rebuild = sql_adapter.config.get_db().get_rev(sql_adapter.config._id)
-                    _notify_cory(
-                        u'rebuilt table {} ({}) because {}. rev before: {}, rev after: {}'.format(
-                            table_name,
-                            u'{} [{}]'.format(sql_adapter.config.display_name, sql_adapter.config._id),
-                            diffs,
-                            rev_before_rebuild,
-                            rev_after_rebuild,
-                        ),
-                        sql_adapter.config.to_json(),
-                    )
+                    self.rebuild_table(sql_adapter)
 
     def rebuild_table(self, sql_adapter):
         config = sql_adapter.config
-        latest_rev = config.get_db().get_rev(config._id)
-        if config._rev != latest_rev:
-            raise StaleRebuildError('Tried to rebuild a stale table ({})! Ignoring...'.format(config))
+        if not is_static(config._id):
+            latest_rev = config.get_db().get_rev(config._id)
+            if config._rev != latest_rev:
+                raise StaleRebuildError('Tried to rebuild a stale table ({})! Ignoring...'.format(config))
         sql_adapter.rebuild_table()
 
     def change_trigger(self, changes_dict):
