@@ -27,6 +27,7 @@ from .views import (
     AddSavedReportConfigView,
     FormDataView,
     CaseDetailsView,
+    CaseAttachmentsView,
 )
 
 
@@ -53,7 +54,8 @@ urlpatterns = patterns('corehq.apps.reports.views',
 
     url(r'^case_data/(?P<case_id>[\w\-]+)/$', CaseDetailsView.as_view(), name=CaseDetailsView.urlname),
     url(r'^case_data/(?P<case_id>[\w\-]+)/forms/$', 'case_forms', name="single_case_forms"),
-    url(r'^case_data/(?P<case_id>[\w\-]+)/attachments/$', 'case_attachments', name="single_case_attachments"),
+    url(r'^case_data/(?P<case_id>[\w\-]+)/attachments/$',
+        CaseAttachmentsView.as_view(), name=CaseAttachmentsView.urlname),
     url(r'^case_data/(?P<case_id>[\w\-]+)/view/xml/$', 'case_xml', name="single_case_xml"),
     url(r'^case_data/(?P<case_id>[\w\-]+)/rebuild/$', 'rebuild_case_view', name="rebuild_case"),
     url(r'^case_data/(?P<case_id>[\w\-]+)/resave/$', 'resave_case', name="resave_case"),
