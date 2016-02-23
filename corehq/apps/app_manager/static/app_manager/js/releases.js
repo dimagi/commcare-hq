@@ -118,6 +118,18 @@ function SavedApp(app_data, releasesMain) {
         $.post(releasesMain.options.urls.hubspot_click_deploy);
     };
 
+    self.clickScan = function() {
+        ga_track_event('App Manager', 'Show Bar Code', '-');
+
+        // Hide the main deploy modal, then re-open
+        // it when the scan barcode modal is closed
+        var $deployModal = $('.modal.fade.in');
+        $deployModal.modal('hide');
+        $('body').one("hide.bs.modal", function() {
+            $deployModal.modal({ show: true });
+        });
+    };
+
     return self;
 }
 

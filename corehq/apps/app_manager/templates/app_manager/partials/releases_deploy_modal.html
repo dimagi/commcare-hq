@@ -82,7 +82,7 @@
                                                 {% trans "Or" %}
                                                 <a href="#" data-bind="
                                                     openRemoteModal: get_odk_install_url,
-                                                    click: function() { ga_track_event('App Manager', 'Show Bar Code', '-'); }
+                                                    click: clickScan
                                                 ">{% trans "scan the bar code" %}</a>
                                                 {% trans "using the Barcode Scanner option within CommCare" %}
                                             </p>
