@@ -5,6 +5,7 @@ from corehq.apps.es import FormES, UserES, GroupES, CaseES, filters
 from corehq.apps.es.aggregations import TermsAggregation, ExtendedStatsAggregation, TopHitsAggregation
 from corehq.apps.es.forms import submitted as submitted_filter, completed as completed_filter
 from corehq.apps.es.cases import closed_range
+from corehq.util.quickcache import quickcache
 from dimagi.utils.parsing import string_to_datetime
 
 PagedResult = namedtuple('PagedResult', 'total hits')
@@ -96,6 +97,26 @@ def get_paged_forms_by_type(domain, doc_types, start=0, size=10):
     )
     result = query.run()
     return PagedResult(total=result.total, hits=result.hits)
+
+
+@quickcache(['domain', 'xmlns'], timeout=5 * 60)
+def guess_form_name_from_submissions_using_xmlns(domain, xmlns):
+    last_form = get_last_form_submission_for_xmlns(domain, xmlns)
+    return last_form['form'].get('@name') if last_form else None
+
+
+def get_last_form_submission_for_xmlns(domain, xmlns):
+    query = (
+        FormES()
+        .domain(domain)
+        .xmlns(xmlns)
+        .sort('received_on', desc=True)
+        .size(1)
+    )
+
+    if query.run().hits:
+        return query.run().hits[0]
+    return None
 
 
 def get_last_form_submissions_by_user(domain, user_ids, app_id=None):

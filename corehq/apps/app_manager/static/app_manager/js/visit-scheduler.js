@@ -2,6 +2,7 @@
 
 var VisitScheduler = (function () {
     'use strict';
+    var app_manager = hqImport('app_manager/js/app_manager.js');
 
     var ModuleScheduler = function(params){
         // Edits the schedule phases on the module setting page
@@ -39,7 +40,7 @@ var VisitScheduler = (function () {
                     },
                     dataType: 'json',
                     success: function (data) {
-                        COMMCAREHQ.app_manager.updateDOM(data.update);
+                        app_manager.updateDOM(data.update);
                     }
                 });
             }
@@ -116,7 +117,7 @@ var VisitScheduler = (function () {
                         },
                         dataType: 'json',
                         success: function (data) {
-                            COMMCAREHQ.app_manager.updateDOM(data.update);
+                            app_manager.updateDOM(data.update);
                         }
                     });
                 }

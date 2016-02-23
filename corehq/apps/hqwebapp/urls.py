@@ -1,5 +1,6 @@
 from django.conf.urls import *
 from corehq.apps.domain.views import PublicSMSRatesView
+from corehq.apps.hqwebapp.views import MaintenanceAlertsView
 
 urlpatterns = patterns(
     'corehq.apps.hqwebapp.views',
@@ -20,7 +21,7 @@ urlpatterns = patterns(
     url(r'^search/$', 'quick_find', name="global_quick_find"),
     url(r'^searchDescription.xml$', 'osdd', name="osdd"),
     url(r'^messaging-pricing', PublicSMSRatesView.as_view(), name=PublicSMSRatesView.urlname),
-    url(r'^alerts/$', 'maintenance_alerts', name='alerts'),
+    url(r'^alerts/$', MaintenanceAlertsView.as_view(), name=MaintenanceAlertsView.urlname),
     url(r'^create_alert/$', 'create_alert', name='create_alert'),
     url(r'^activate_alert/$', 'activate_alert', name='activate_alert'),
     url(r'^deactivate_alert/$', 'deactivate_alert', name='deactivate_alert'),

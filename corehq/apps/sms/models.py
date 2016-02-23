@@ -492,6 +492,42 @@ class SQLLastReadMessage(SyncSQLToCouchMixin, models.Model):
     message_timestamp = models.DateTimeField(null=True)
 
     @classmethod
+    def by_anyone(cls, domain, contact_id):
+        """
+        Returns the SQLLastReadMessage representing the last chat message
+        that was read by anyone in the given domain for the given contact_id.
+        """
+        result = cls.objects.filter(
+            domain=domain,
+            contact_id=contact_id
+        ).order_by('-message_timestamp')
+        result = result[:1]
+
+        if len(result) > 0:
+            return result[0]
+
+        return None
+
+    @classmethod
+    def by_user(cls, domain, user_id, contact_id):
+        """
+        Returns the SQLLastReadMessage representing the last chat message
+        that was read in the given domain by the given user_id for the given
+        contact_id.
+        """
+        try:
+            # It's not expected that this can raise MultipleObjectsReturned
+            # since we lock out creation of these records with a CriticalSection.
+            # So if that happens, let the exception raise.
+            return cls.objects.get(
+                domain=domain,
+                read_by=user_id,
+                contact_id=contact_id
+            )
+        except cls.DoesNotExist:
+            return None
+
+    @classmethod
     def _migration_get_fields(cls):
         return [
             'domain',

@@ -217,7 +217,7 @@ COMMCAREHQ.makeSaveButton = function(messageStrings, cssClass) {
                     options.error = function (data) {
                         that.nextState = null;
                         that.setState('retry');
-                        alert(SaveButton.message.ERROR_SAVING);
+                        alert_user(data.responseText || SaveButton.message.ERROR_SAVING, 'danger');
                         error.apply(this, arguments);
                     };
                     var jqXHR = $.ajax(options);
