@@ -9,7 +9,7 @@ from corehq.form_processor.interfaces.dbaccessors import AbstractCaseAccessor, A
 from corehq.form_processor.models import (
     XFormInstanceSQL, CommCareCaseIndexSQL, CaseAttachmentSQL, CaseTransaction,
     CommCareCaseSQL, XFormAttachmentSQL, XFormOperationSQL,
-    CommCareCaseIndexSQL_DB_TABLE, CaseAttachmentSQL_DB_TABLE)
+    CommCareCaseIndexSQL_DB_TABLE, CaseAttachmentSQL_DB_TABLE, LedgerValue)
 from corehq.form_processor.utils.sql import fetchone_as_namedtuple, fetchall_as_namedtuple, case_adapter, \
     case_transaction_adapter, case_index_adapter, case_attachment_adapter
 from corehq.sql_db.routers import db_for_read_write
@@ -579,6 +579,18 @@ class CaseAccessorSQL(AbstractCaseAccessor):
             return CaseAccessorSQL.get_case_by_external_id(domain, user_id, case_type)
         except CaseNotFound:
             return None
+
+
+class LedgerAccessorSQL(object):
+    @staticmethod
+    def get_ledgers_for_case(case_id):
+        return LedgerValue.objects.filter(case_id=case_id)
+
+    @staticmethod
+    def get_ledger_value(case_id, section_id, entry_id):
+        return LedgerValue.objects.get(
+            case_id=case_id, section_id=section_id, entry_id=entry_id
+        )
 
 
 def _order_list(id_list, object_list, id_property):

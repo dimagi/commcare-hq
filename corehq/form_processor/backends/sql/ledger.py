@@ -1,4 +1,5 @@
 from corehq.apps.commtrack.processing import compute_ledger_values
+from corehq.form_processor.backends.sql.dbaccessors import LedgerAccessorSQL
 from corehq.form_processor.interfaces.ledger_processor import LedgerProcessorInterface, StockModelUpdateResult
 from corehq.form_processor.models import LedgerValue
 
@@ -27,9 +28,7 @@ class LedgerProcessorSQL(LedgerProcessorInterface):
         to_save = []
         for touched_ledger_reference, quantity in latest_values.items():
             try:
-                ledger_value = LedgerValue.objects.get(
-                    **touched_ledger_reference._asdict()
-                )
+                ledger_value = LedgerAccessorSQL.get_ledger_value(**touched_ledger_reference._asdict())
             except LedgerValue.DoesNotExist:
                 ledger_value = LedgerValue(**touched_ledger_reference._asdict())
             ledger_value.balance = quantity
@@ -37,10 +36,10 @@ class LedgerProcessorSQL(LedgerProcessorInterface):
         return StockModelUpdateResult(to_save=to_save)
 
     def get_ledgers_for_case(self, case_id):
-        return LedgerValue.objects.filter(case_id=case_id)
+        return LedgerAccessorSQL.get_ledgers_for_case(case_id)
 
     def get_current_ledger_value(self, unique_ledger_reference):
         try:
-            return LedgerValue.objects.get(**unique_ledger_reference._asdict()).balance
+            return LedgerAccessorSQL.get_ledger_value(**unique_ledger_reference._asdict()).balance
         except LedgerValue.DoesNotExist:
             return 0
