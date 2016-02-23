@@ -161,15 +161,18 @@
 </script>
 
 <script type="text/html" id="case-config:case-action">
-    <h3>
-        <a href="#" data-bind="html: header" class="header"></a>
-    </h3>
-    <div>
-                <button class="pull-right btn btn-danger"
-                        data-bind="openModal: 'remove-action-modal-template', visible: true">
-                    <i class="fa fa-trash"></i>
-                    {% trans "Remove action" %}
-                </button>
+<div class="panel panel-default">
+    <div class="panel-heading">
+        <!-- TODO: increase click target size -->
+        <a data-toggle="collapse" href="#TODO-{{ forloop.counter0 }}" data-bind="html: header"></a>
+    </div>
+    <div class="panel-collapse collapse" id="TODO-{{ forloop.counter0 }}">
+    <div class="panel-body">
+        <button class="pull-right btn btn-danger"
+                data-bind="openModal: 'remove-action-modal-template', visible: true">
+            <i class="fa fa-trash"></i>
+            {% trans "Remove action" %}
+        </button>
         <div class="form-inline" data-bind="css: {'has-warning': validate()}">
             <div class="form-group">
                 <label>{% trans "Case Type" %}</label>
@@ -204,6 +207,8 @@
             <!-- ko template: {name: 'case-config:case-action:body'} --><!-- /ko -->
         </div>
     </div>
+    </div>
+</div>
 </script>
 
 <script type="text/html" id="auto-select:undefined">
@@ -243,10 +248,12 @@
 </script>
 
 <script type="text/html" id="case-config:case-action-auto-select">
-    <h3>
-        <a href="#" data-bind="html: header" class="header"></a>
-    </h3>
-    <div>
+<div class="panel panel-default">
+    <div class="panel-heading">
+        <a data-toggle="collapse" href="#TODO-{{ forloop.counter0 }}" data-bind="html: header"></a>
+    </div>
+    <div class="panel-collapse collapse" id="TODO-{{ forloop.counter0 }}">
+    <div class="panel-body">
         <button class="pull-right btn btn-danger"
                 data-bind="openModal: 'remove-action-modal-template', visible: true">
             <i class="fa fa-trash"></i>
@@ -279,6 +286,8 @@
             <!-- ko template: {name: 'case-config:case-action:body'} --><!-- /ko -->
         </div>
     </div>
+    </div>
+</div>
 </script>
 
 <div id="case-config-ko">
@@ -308,7 +317,7 @@
                 <legend data-bind="visible: load_update_cases().length">
                     {% trans "Load / Update / Close Cases" %}
                 </legend>
-                <div id="case-load-accordion" data-bind="foreach: load_update_cases, accordion: {header: '> div > h3', heightStyle: 'content', collapsible: true, autoFill: true}">
+                <div id="case-load-accordion" data-bind="foreach: load_update_cases">
                     <!-- ko if: auto_select -->
                     <div class="group" data-bind="template: {name: 'case-config:case-action-auto-select'}"></div>
                     <!-- /ko -->
@@ -322,8 +331,8 @@
                 <legend data-bind="visible: open_cases().length">
                     {% trans "Open New Cases" %}
                 </legend>
-                <div id="case-open-accordion" data-bind="foreach: open_cases, accordion: {header: '> div > h3', heightStyle: 'content', collapsible: true, autoFill: true}">
-                    <div class="group" data-bind="template: {name: 'case-config:case-action'}"></div>
+                <div id="case-open-accordion" class="panel-group" data-bind="foreach: open_cases">
+                    <div class="panel-group" data-bind="template: {name: 'case-config:case-action'}"></div>
                 </div>
             </div>
         </div>
