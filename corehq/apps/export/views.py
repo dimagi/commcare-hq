@@ -1305,6 +1305,7 @@ class CreateNewCustomFormExportView(BaseModifyNewCustomView):
             self.domain,
             app_id,
             xmlns,
+            force_rebuild=True,
         )
         self.export_instance = self.export_instance_cls.generate_instance_from_schema(schema)
 
@@ -1322,6 +1323,7 @@ class CreateNewCustomCaseExportView(BaseModifyNewCustomView):
         schema = CaseExportDataSchema.generate_schema_from_builds(
             self.domain,
             case_type,
+            force_rebuild=True,
         )
         self.export_instance = self.export_instance_cls.generate_instance_from_schema(schema)
 
