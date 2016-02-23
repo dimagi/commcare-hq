@@ -2,6 +2,7 @@ from copy import copy
 from datetime import datetime, timedelta, date
 import itertools
 import json
+from corehq.apps.domain.views import BaseDomainView
 from corehq.apps.hqwebapp.view_permissions import user_can_view_reports
 from corehq.apps.users.permissions import FORM_EXPORT_PERMISSION, CASE_EXPORT_PERMISSION, \
     DEID_EXPORT_PERMISSION
@@ -35,7 +36,7 @@ from django.http.response import (
 from django.shortcuts import render
 from django.utils.decorators import method_decorator
 from django.utils.safestring import mark_safe
-from django.utils.translation import ugettext as _
+from django.utils.translation import ugettext as _, ugettext_lazy
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import (
     require_GET,
@@ -158,6 +159,12 @@ from .util import (
     group_filter,
     users_matching_filter,
 )
+from corehq.apps.style.decorators import (
+    use_bootstrap3,
+    use_jquery_ui,
+    use_jquery_ui_multiselect,
+    use_select2,
+)
 
 
 datespan_default = datespan_in_request(
@@ -199,6 +206,21 @@ def default(request, domain):
 @login_and_domain_required
 def old_saved_reports(request, domain):
     return default(request, domain)
+
+
+class BaseProjectReportSectionView(BaseDomainView):
+    section_name = ugettext_lazy("Project Reports")
+
+    @use_bootstrap3
+    def dispatch(self, request, *args, **kwargs):
+        request.project = Domain.get_by_name(kwargs['domain'])
+        if not user_can_view_reports(request.project, request.couch_user):
+            raise Http404()
+        return super(BaseProjectReportSectionView, self).dispatch(request, *args, **kwargs)
+
+    @property
+    def section_url(self):
+        return reverse('reports_home', args=(self.domain, ))
 
 
 @login_and_domain_required
