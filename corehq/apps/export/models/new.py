@@ -13,6 +13,7 @@ from corehq.apps.app_manager.dbaccessors import (
 from corehq.apps.app_manager.models import Application
 from corehq.apps.app_manager.util import get_case_properties
 from corehq.apps.reports.display import xmlns_to_name
+from corehq.blobs.mixin import BlobMixin
 from couchexport.transforms import couch_to_excel_datetime
 from dimagi.utils.couch.database import iter_docs
 from dimagi.ext.couchdbkit import (
@@ -39,7 +40,7 @@ from corehq.apps.export.const import (
 from corehq.apps.export.dbaccessors import (
     get_latest_case_export_schema,
     get_latest_form_export_schema,
-)
+    get_cached_export_by_export_instance_id)
 
 
 class ExportItem(DocumentSchema):
@@ -958,40 +959,35 @@ class SplitExportColumn(ExportColumn):
         return headers
 
 
-class SavedBasicExport(BlobMixin, Document):
+_ATTACHEMENT_NAME = "payload"
+class CachedExport(BlobMixin, Document):
     """
     A cache of an export that lives in couch.
     Doesn't do anything smart, just works off an index
     """
-    configuration = SchemaProperty(ExportConfiguration)
+    export_instance_id = StringProperty()
     last_updated = DateTimeProperty()
     last_accessed = DateTimeProperty()
+
+    class Meta:
+        app_label = 'export'
 
     @property
     def size(self):
         try:
-            return self.blobs[self.get_attachment_name()].content_length
+            return self.blobs[_ATTACHEMENT_NAME].content_length
         except KeyError:
             return 0
 
     def has_file(self):
-        return self.get_attachment_name() in self.blobs
-
-    def get_attachment_name(self):
-        # obfuscate this because couch doesn't like attachments that start with underscores
-        return hashlib.md5(unicode(self.configuration.filename).encode('utf-8')).hexdigest()
+        return _ATTACHEMENT_NAME in self.blobs
 
     def set_payload(self, payload):
-        self.put_attachment(payload, self.get_attachment_name())
+        self.put_attachment(payload, _ATTACHEMENT_NAME)
 
     def get_payload(self, stream=False):
-        return self.fetch_attachment(self.get_attachment_name(), stream=stream)
+        return self.fetch_attachment(_ATTACHEMENT_NAME, stream=stream)
 
     @classmethod
-    def by_index(cls, index):
-        return SavedBasicExport.view(
-            "couchexport/saved_exports",
-            key=json.dumps(index),
-            include_docs=True,
-            reduce=False,
-        ).all()
+    def by_export_instance_id(cls, export_instance_id):
+        return get_cached_export_by_export_instance_id(export_instance_id)
