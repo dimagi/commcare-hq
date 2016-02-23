@@ -22,7 +22,7 @@ from corehq.apps.userreports.views import (
     ReportBuilderTypeSelect,
 )
 from .filters import urls as filter_urls
-from .views import EditFormInstance, AddSavedReportConfigView
+from .views import EditFormInstance, AddSavedReportConfigView, FormDataView
 
 
 custom_report_urls = patterns('',
@@ -59,7 +59,7 @@ urlpatterns = patterns('corehq.apps.reports.views',
     url(r'^case_data/(?P<case_id>[\w\-]+)/(?P<xform_id>[\w\-:]+)/$', 'case_form_data', name="case_form_data"),
 
     # Download and view form data
-    url(r'^form_data/(?P<instance_id>[\w\-:]+)/$', 'form_data', name='render_form_data'),
+    url(r'^form_data/(?P<instance_id>[\w\-:]+)/$', FormDataView.as_view(), name=FormDataView.urlname),
     url(r'^form_data/(?P<instance_id>[\w\-:]+)/download/$', 'download_form', name='download_form'),
     url(r'^form_data/(?P<instance_id>[\w\-:]+)/edit/$', EditFormInstance.as_view(), name='edit_form_instance'),
     url(r'^form_data/(?P<instance_id>[\w\-:]+)/restore_version/$', 'restore_edit', name='restore_edit'),

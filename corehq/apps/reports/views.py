@@ -1382,24 +1382,73 @@ def _get_form_to_edit(domain, user, instance_id):
     return form
 
 
-@require_form_view_permission
-@login_and_domain_required
-@require_GET
-def form_data(request, domain, instance_id):
-    instance = _get_form_or_404(domain, instance_id)
-    context = _get_form_context(request, domain, instance)
-    try:
-        form_name = instance.form_data["@name"]
-    except KeyError:
-        form_name = "Untitled Form"
+class FormDataView(BaseProjectReportSectionView):
+    urlname = 'render_form_data'
+    page_title = ugettext_lazy("Untitled Form")
+    template_name = "reports/reportdata/form_data.html"
+    http_method_names = ['get']
 
-    context.update({
-        "slug": inspect.SubmitHistory.slug,
-        "form_name": form_name,
-        "form_received_on": instance.received_on
-    })
+    @method_decorator(require_form_view_permission)
+    def dispatch(self, request, *args, **kwargs):
+        if self.xform_instance is None:
+            raise Http404()
+        try:
+            assert self.domain == self.xform_instance.domain
+        except AssertionError:
+            raise Http404()
+        return super(FormDataView, self).dispatch(request, *args, **kwargs)
 
-    return render(request, "reports/reportdata/form_data.html", context)
+    @property
+    def instance_id(self):
+        return self.kwargs['instance_id']
+
+    @property
+    def page_url(self):
+        return reverse(self.urlname, args=(self.domain, self.instance_id,))
+
+    @property
+    @memoized
+    def xform_instance(self):
+        try:
+            return FormAccessors(self.domain).get_form(self.instance_id)
+        except XFormNotFound:
+            return None
+
+    @property
+    @memoized
+    def form_name(self):
+        try:
+            form_name = self.xform_instance.form_data["@name"]
+        except KeyError:
+            form_name = _("Untitled Form")
+        return form_name
+
+    @property
+    def page_name(self):
+        return self.form_name
+
+    @property
+    def page_context(self):
+        timezone = get_timezone_for_user(self.request.couch_user, self.domain)
+        display = self.request.project.get_form_display(self.xform_instance)
+        page_context = {
+            "display": display,
+            "timezone": timezone,
+            "instance": self.xform_instance,
+            "user": self.request.couch_user,
+        }
+        form_render_options = {
+            'domain': self.domain,
+            'request': self.request,
+        }
+        form_render_options.update(page_context)
+        page_context.update({
+            "slug": inspect.SubmitHistory.slug,
+            "form_name": self.form_name,
+            "form_received_on": self.xform_instance.received_on,
+            'form_render_options': form_render_options,
+        })
+        return page_context
 
 
 @require_form_view_permission
