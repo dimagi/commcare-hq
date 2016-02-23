@@ -801,8 +801,10 @@ def export_data_source(request, domain, config_id):
             tables = [[config.table_id, get_table(q)]]
             export_from_tables(tables, tmpfile, params.format)
         except exc.DataError:
-            msg = _("There was a problem executing your query, please make "
-                    "sure your parameters are valid.")
+            msg = ugettext_lazy(
+                "There was a problem executing your query, "
+                "please make sure your parameters are valid."
+            )
             return HttpResponse(msg, status=400)
         return export_response(Temp(path), params.format, config.display_name)
 
