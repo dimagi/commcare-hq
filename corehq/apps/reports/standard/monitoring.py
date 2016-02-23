@@ -1026,10 +1026,11 @@ class WorkerActivityTimes(WorkerMonitoringChartBase,
             else:
                 all_times.append(
                     PhoneTime(
-                        (string_to_utc_datetime(form['received_on'], self.timezone)
-                            .user_time(self.timezone)
-                            .done())
+                        string_to_utc_datetime(form['received_on']),
+                        self.timezone,
                     )
+                    .user_time(self.timezone)
+                    .done()
                 )
 
         aggregated_times = defaultdict(int)
