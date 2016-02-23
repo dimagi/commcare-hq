@@ -158,6 +158,20 @@ def generate_domain_subscription_from_date(date_start, billing_account, domain,
     return subscription, subscription_length
 
 
+def generate_domain_subscription(account, domain, date_start, date_end):
+    subscriber, _ = Subscriber.objects.get_or_create(domain=domain.name)
+    subscription = Subscription(
+        account=account,
+        plan_version=subscribable_plan(),
+        subscriber=subscriber,
+        date_start=date_start,
+        date_end=date_end,
+        service_type=SubscriptionType.NOT_SET,
+    )
+    subscription.save()
+    return subscription
+
+
 def delete_all_subscriptions():
     SubscriptionAdjustment.objects.all().delete()
     Subscription.objects.all().delete()
