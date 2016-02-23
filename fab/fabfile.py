@@ -36,7 +36,7 @@ from distutils.util import strtobool
 
 from fabric import utils
 from fabric.api import run, roles, execute, task, sudo, env, parallel
-from fabric.colors import blue, red
+from fabric.colors import blue, red, yellow
 from fabric.context_managers import settings, cd
 from fabric.contrib import files, console
 from fabric.operations import require
@@ -114,16 +114,37 @@ class DeployMetadata(object):
 
     def _tag_commit(self):
         sh.git.fetch("origin", "--tags")
+        deploy_commit = sh.git("rev-parse", self.env.code_branch).strip()
+        self._check_deploy_commit(deploy_commit, self.env.code_branch)
         pattern = "*{}*".format(self.env.environment)
         self.last_tag = sh.tail(sh.git.tag("-l", pattern), "-1").strip()
 
         tag_name = "{}-{}-deploy".format(self.timestamp, self.env.environment)
         # turn whatever `code_branch` is into a commit
-        deploy_commit = sh.git("rev-parse", self.env.code_branch).strip()
         msg = "{} deploy at {}".format(self.env.environment, self.timestamp)
         sh.git.tag(tag_name, "-m", msg, deploy_commit)
         sh.git.push("origin", tag_name)
         self._deploy_ref = tag_name
+
+    def _check_deploy_commit(self, deploy_commit, code_branch):
+        try:
+            origin_commit = sh.git("rev-parse", "origin/{}".format(code_branch)).strip()
+        except sh.ErrorReturnCode:
+            print yellow("Branch '{}' was not found on origin".format(code_branch))
+            if not console.confirm("Do you want to deploy it anyways?", default=False):
+                utils.abort('Aborting.')
+        else:
+            if deploy_commit != origin_commit:
+                print yellow("\n*********\n*WARNING*\n*********")
+                print ("Your local copy of '{}' differs from the version on "
+                       "'origin'.\n".format(code_branch))
+                print "Here's the latest local commit:",
+                print sh.git.show(deploy_commit, "--quiet")
+                print "Here's the latest commit on 'origin':",
+                print sh.git.show(origin_commit, "--quiet")
+                if not console.confirm("Are you sure you want to deploy the "
+                                       "local commit?", default=False):
+                    utils.abort('Check yourself before you wreck yourself.')
 
     @property
     def diff_url(self):
@@ -649,7 +670,7 @@ def _deploy_without_asking():
         if do_migrate:
 
             if all(execute(_migrations_exist).values()):
-                _execute_with_timing(stop_pillows)
+                _execute_with_timing(_stop_pillows)
                 execute(set_in_progress_flag)
                 _execute_with_timing(stop_celery_tasks)
             _execute_with_timing(_migrate)
@@ -1028,7 +1049,7 @@ def services_restart():
     _supervisor_command('update')
     _supervisor_command('reload')
     time.sleep(5)
-    _supervisor_command('start  all')
+    _supervisor_command('start all')
 
 
 @roles(ROLES_DB_ONLY)
@@ -1280,10 +1301,24 @@ def _supervisor_command(command):
     sudo('supervisorctl %s' % (command), shell=False, user='root')
 
 
-@roles(ROLES_PILLOWTOP)
+@task
 def stop_pillows():
+    execute(_stop_pillows, True)
+
+
+@task
+@roles(ROLES_PILLOWTOP)
+def start_pillows():
     _require_target()
-    with cd(env.code_root):
+    with cd(env.code_current):
+        sudo('scripts/supervisor-group-ctl start pillowtop')
+
+
+@roles(ROLES_PILLOWTOP)
+def _stop_pillows(current=False):
+    code_root = env.code_current if current else env.code_root
+    _require_target()
+    with cd(code_root):
         sudo('scripts/supervisor-group-ctl stop pillowtop')
 
 

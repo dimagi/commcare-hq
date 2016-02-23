@@ -31,6 +31,7 @@ function HQReportDataTables(options) {
     // a list of functions to call back to after ajax.
     // see user configurable charts for an example usage
     self.extraCallbacks = options.extraCallbacks;
+    self.includeFilter = options.includeFilter || false;
     self.datatable = null;
     self.rendered = false;
 
@@ -88,7 +89,8 @@ function HQReportDataTables(options) {
                 iDisplayLength: self.defaultRows,
                 bAutoWidth: self.autoWidth,
                 sScrollX: "100%",
-                bSort: self.defaultSort
+                bSort: self.defaultSort,
+                bFilter: self.includeFilter
             };
             if (self.aaSorting !== null || self.customSort !== null) {
                 params.aaSorting = self.aaSorting || self.customSort;

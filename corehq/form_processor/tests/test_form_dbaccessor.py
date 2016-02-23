@@ -115,7 +115,9 @@ class FormAccessorTestsSQL(TestCase):
         form_with_pic = create_form_for_test(DOMAIN, attachments=attachments)
         plain_form = create_form_for_test(DOMAIN)
 
-        forms = FormAccessorSQL.get_forms_with_attachments_meta([form_with_pic.form_id, plain_form.form_id])
+        forms = FormAccessorSQL.get_forms_with_attachments_meta(
+            [form_with_pic.form_id, plain_form.form_id], ordered=True
+        )
         self.assertEqual(2, len(forms))
         self.assertEqual(form_with_pic.form_id, forms[0].form_id)
         with self.assertNumQueries(0, using=db_for_read_write(XFormAttachmentSQL)):
@@ -169,10 +171,10 @@ class FormAccessorTestsSQL(TestCase):
     def test_form_with_id_exists(self):
         form = create_form_for_test(DOMAIN)
 
-        self.assertFalse(FormAccessorSQL.form_with_id_exists('not a form'))
-        self.assertFalse(FormAccessorSQL.form_with_id_exists(form.form_id, 'wrong domain'))
-        self.assertTrue(FormAccessorSQL.form_with_id_exists(form.form_id))
-        self.assertTrue(FormAccessorSQL.form_with_id_exists(form.form_id, DOMAIN))
+        self.assertFalse(FormAccessorSQL.form_exists('not a form'))
+        self.assertFalse(FormAccessorSQL.form_exists(form.form_id, 'wrong domain'))
+        self.assertTrue(FormAccessorSQL.form_exists(form.form_id))
+        self.assertTrue(FormAccessorSQL.form_exists(form.form_id, DOMAIN))
 
     def test_hard_delete_forms(self):
         forms = [create_form_for_test(DOMAIN) for i in range(3)]

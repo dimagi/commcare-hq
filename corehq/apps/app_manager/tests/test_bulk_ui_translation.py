@@ -34,7 +34,7 @@ class BulkUiTranslation(SimpleTestCase):
         headers = (('translations', ('property', 'en')),)
         f = self._build_translation_download_file(headers)
 
-        translations, error_properties = process_ui_translation_upload(self.app, f)
+        translations, error_properties, warnings = process_ui_translation_upload(self.app, f)
         self.assertEqual(
             dict(translations), dict()
         )
@@ -45,23 +45,38 @@ class BulkUiTranslation(SimpleTestCase):
         data = (('date.tomorrow', 'wobble', ''),
                 ('entity.sort.title', 'wabble', ''),
                 ('activity.locationcapture.Longitude', '', 'wibble'),
-                ('entity.sort.title', '', 'wubble'))
+                ('entity.sort.title', '', 'wubble'),
+                ('home.start.demo', 'Ding', 'Dong'),
+                ('unknown_string', 'Ding', 'Dong'))
 
         f = self._build_translation_download_file(headers, data)
-
-        translations, error_properties = process_ui_translation_upload(self.app, f)
+        translations, error_properties, warnings = process_ui_translation_upload(self.app, f)
 
         self.assertEqual(
             dict(translations),
             {
                 u'en': {
                     u'date.tomorrow': u'wobble',
-                    u'entity.sort.title': u'wabble'
+                    u'entity.sort.title': u'wabble',
+                    u'home.start.demo': u'Ding',
+                    u'unknown_string': u'Ding',
                 },
                 u'fra': {
                     u'activity.locationcapture.Longitude': u'wibble',
-                    u'entity.sort.title': u'wubble'}
+                    u'entity.sort.title': u'wubble',
+                    u'home.start.demo': u'Dong',
+                    u'unknown_string': u'Dong',
+                }
             }
 
         )
-        self.assertTrue(len(error_properties) == 0)
+        self.assertEqual(len(error_properties), 0)
+        # There should be a warning that 'unknown_string' is not a CommCare string
+        self.assertEqual(len(warnings), 1)
+
+        # test existing translations get updated correctly
+        data = (('home.start.demo', 'change_1', 'change_2'))
+        f = self._build_translation_download_file(headers, data)
+        translations, error_properties, warnings = process_ui_translation_upload(self.app, f)
+        self.assertEqual(translations[u"fra"][u"home.start.demo"], u"change_2")
+        self.assertEqual(translations[u"en"][u"home.start.demo"], u"change_1")

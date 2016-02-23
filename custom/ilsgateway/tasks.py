@@ -24,8 +24,7 @@ from custom.ilsgateway.temporary import fix_stock_data
 from custom.ilsgateway.utils import send_for_day, send_for_all_domains
 from custom.logistics.commtrack import bootstrap_domain as ils_bootstrap_domain, save_stock_data_checkpoint
 from custom.ilsgateway.models import ILSGatewayConfig, SupplyPointStatus, DeliveryGroupReport, ReportRun, \
-    GroupSummary, OrganizationSummary, ProductAvailabilityData, Alert, SupplyPointWarehouseRecord, \
-    PendingReportingDataRecalculation
+    GroupSummary, OrganizationSummary, ProductAvailabilityData, Alert, PendingReportingDataRecalculation
 from custom.logistics.models import StockDataCheckpoint
 from custom.logistics.tasks import stock_data_task
 from dimagi.utils.dates import get_business_day_of_month
@@ -186,7 +185,6 @@ def clear_report_data(domain):
     OrganizationSummary.objects.filter(location_id__in=locations_ids).delete()
     ProductAvailabilityData.objects.filter(location_id__in=locations_ids).delete()
     Alert.objects.filter(location_id__in=locations_ids).delete()
-    SupplyPointWarehouseRecord.objects.filter(supply_point__in=locations_ids).delete()
     ReportRun.objects.filter(domain=domain).delete()
 
 

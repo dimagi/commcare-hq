@@ -1,24 +1,25 @@
 import calendar
 from collections import namedtuple
 import datetime
-from decimal import Decimal
 import logging
 
 from django.conf import settings
 from django.template.loader import render_to_string
-from corehq.util.view_utils import absolute_reverse
 from django.utils.translation import ugettext_lazy as _
-from corehq import privileges
 
-from corehq.apps.domain.models import Domain
-from corehq.util.quickcache import quickcache
+from django_prbac.models import Role, UserRole
+from dimagi.utils.couch.database import iter_docs
+from dimagi.utils.dates import add_months
+
+from corehq import privileges
 from corehq.apps.accounting.exceptions import (
     AccountingError,
     ProductPlanNotFoundError,
 )
-from dimagi.utils.couch.database import iter_docs
-from dimagi.utils.dates import add_months
-from django_prbac.models import Role, UserRole
+from corehq.apps.domain.models import Domain
+from corehq.util.quickcache import quickcache
+from corehq.util.view_utils import absolute_reverse
+
 
 logger = logging.getLogger('accounting')
 

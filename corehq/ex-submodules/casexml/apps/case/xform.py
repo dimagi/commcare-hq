@@ -271,8 +271,9 @@ def _is_change_of_ownership(previous_owner_id, next_owner_id):
 
 
 def get_extensions_to_close(case, domain):
-    outgoing_indices = case.indices
-    if not outgoing_indices and case.closed and EXTENSION_CASES_SYNC_ENABLED.enabled(domain):
+    outgoing_extension_indices = [index.relationship for index in case.indices
+                                  if index.relationship == CASE_INDEX_EXTENSION]
+    if not outgoing_extension_indices and case.closed and EXTENSION_CASES_SYNC_ENABLED.enabled(domain):
         return get_extension_chain([case.case_id], domain)
     else:
         return set()

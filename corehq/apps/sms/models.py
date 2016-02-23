@@ -274,6 +274,7 @@ class SMSLog(SyncCouchToSQLMixin, MessageLog):
 class Log(models.Model):
     class Meta:
         abstract = True
+        app_label = "sms"
 
     domain = models.CharField(max_length=126, null=True, db_index=True)
     date = models.DateTimeField(null=True, db_index=True)
@@ -468,6 +469,7 @@ class LastReadMessage(SyncCouchToSQLMixin, Document, CouchDocLockableMixIn):
 class SQLLastReadMessage(SyncSQLToCouchMixin, models.Model):
     class Meta:
         db_table = 'sms_lastreadmessage'
+        app_label = 'sms'
         index_together = [
             ['domain', 'read_by', 'contact_id'],
             ['domain', 'contact_id'],
@@ -488,6 +490,42 @@ class SQLLastReadMessage(SyncSQLToCouchMixin, models.Model):
 
     # date of the SMS entry, stored here redundantly to prevent a lookup
     message_timestamp = models.DateTimeField(null=True)
+
+    @classmethod
+    def by_anyone(cls, domain, contact_id):
+        """
+        Returns the SQLLastReadMessage representing the last chat message
+        that was read by anyone in the given domain for the given contact_id.
+        """
+        result = cls.objects.filter(
+            domain=domain,
+            contact_id=contact_id
+        ).order_by('-message_timestamp')
+        result = result[:1]
+
+        if len(result) > 0:
+            return result[0]
+
+        return None
+
+    @classmethod
+    def by_user(cls, domain, user_id, contact_id):
+        """
+        Returns the SQLLastReadMessage representing the last chat message
+        that was read in the given domain by the given user_id for the given
+        contact_id.
+        """
+        try:
+            # It's not expected that this can raise MultipleObjectsReturned
+            # since we lock out creation of these records with a CriticalSection.
+            # So if that happens, let the exception raise.
+            return cls.objects.get(
+                domain=domain,
+                read_by=user_id,
+                contact_id=contact_id
+            )
+        except cls.DoesNotExist:
+            return None
 
     @classmethod
     def _migration_get_fields(cls):
@@ -607,6 +645,7 @@ class ExpectedCallbackEventLog(SyncCouchToSQLMixin, EventLog):
 
 class ExpectedCallback(SyncSQLToCouchMixin, models.Model):
     class Meta:
+        app_label = 'sms'
         index_together = [
             ['domain', 'date'],
         ]
@@ -1354,6 +1393,9 @@ class SelfRegistrationInvitation(models.Model):
     phone_type = models.CharField(max_length=20, null=True, choices=PHONE_TYPE_CHOICES)
     registered_date = models.DateTimeField(null=True)
 
+    class Meta:
+        app_label = 'sms'
+
     @property
     def already_registered(self):
         return self.registered_date is not None
@@ -1623,6 +1665,7 @@ class SQLMobileBackend(models.Model):
 
     class Meta:
         db_table = 'messaging_mobilebackend'
+        app_label = 'sms'
 
     def __init__(self, *args, **kwargs):
         super(SQLMobileBackend, self).__init__(*args, **kwargs)
@@ -2051,6 +2094,7 @@ class SQLMobileBackend(models.Model):
 class SQLSMSBackend(SQLMobileBackend):
     class Meta:
         proxy = True
+        app_label = 'sms'
 
     def get_sms_rate_limit(self):
         """
@@ -2152,6 +2196,7 @@ class SQLMobileBackendMapping(models.Model):
     """
     class Meta:
         db_table = 'messaging_mobilebackendmapping'
+        app_label = 'sms'
         unique_together = ('domain', 'backend_type', 'prefix')
 
     couch_id = models.CharField(max_length=126, null=True, db_index=True)
@@ -2247,6 +2292,7 @@ class SQLMobileBackendMapping(models.Model):
 class MobileBackendInvitation(models.Model):
     class Meta:
         db_table = 'messaging_mobilebackendinvitation'
+        app_label = 'sms'
         unique_together = ('backend', 'domain')
 
     # The domain that is being invited to share another domain's backend
@@ -2270,6 +2316,7 @@ class MigrationStatus(models.Model):
 
     class Meta:
         db_table = 'messaging_migrationstatus'
+        app_label = "sms"
 
     # The name of the migration (one of the MIGRATION_* constants above)
     name = models.CharField(max_length=126)

@@ -1661,6 +1661,7 @@ class EmailUsage(models.Model):
 
     class Meta:
         unique_together = ('domain', 'year', 'month')
+        app_label = "reminders"
 
     @classmethod
     def get_or_create_usage_record(cls, domain):

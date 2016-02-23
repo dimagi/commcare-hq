@@ -1379,7 +1379,11 @@ class ProjectSettingsTab(UITab):
                          'title': forward_name,
                          'urlname': 'add_form_repeater',
                      },
-                ]}
+                ]},
+                {
+                    'title': _('Data Forwarding Records'),
+                    'url': reverse('domain_report_dispatcher', args=[self.domain, 'repeat_record_report'])
+                }
             ])
 
             administration.append({

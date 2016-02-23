@@ -11,8 +11,7 @@ from .base import HQPillow
 from couchforms.const import RESERVED_WORDS
 from couchforms.models import XFormInstance
 from dateutil import parser
-from pillowtop.checkpoints.manager import PillowCheckpoint, get_django_checkpoint_store, \
-    PillowCheckpointEventHandler
+from pillowtop.checkpoints.manager import PillowCheckpoint, PillowCheckpointEventHandler
 from pillowtop.es_utils import ElasticsearchIndexMeta
 from pillowtop.pillow.interface import ConstructedPillow
 from pillowtop.processors.elastic import ElasticProcessor
@@ -73,7 +72,7 @@ def transform_xform_for_elasticsearch(doc_dict, include_props=True):
     Given an XFormInstance, return a copy that is ready to be sent to elasticsearch,
     or None, if the form should not be saved to elasticsearch
     """
-    if doc_dict.get('domain', None) is None:
+    if doc_dict.get('domain', None) is None or doc_dict['form'] is None:
         # if there is no domain don't bother processing it
         return None
     else:
@@ -112,8 +111,9 @@ def transform_xform_for_elasticsearch(doc_dict, include_props=True):
 
 def prepare_sql_form_json_for_elasticsearch(sql_form_json):
     prepped_form = transform_xform_for_elasticsearch(sql_form_json)
-    prepped_form['doc_type'] = _get_doc_type_from_state(sql_form_json['state'])
-    prepped_form['_id'] = prepped_form['form_id']
+    if prepped_form:
+        prepped_form['doc_type'] = _get_doc_type_from_state(sql_form_json['state'])
+        prepped_form['_id'] = prepped_form['form_id']
 
     return prepped_form
 
@@ -124,7 +124,6 @@ def _get_doc_type_from_state(state):
 
 def get_sql_xform_to_elasticsearch_pillow():
     checkpoint = PillowCheckpoint(
-        get_django_checkpoint_store(),
         'sql-xforms-to-elasticsearch',
     )
     form_processor = ElasticProcessor(
@@ -136,7 +135,7 @@ def get_sql_xform_to_elasticsearch_pillow():
         name='SqlXFormToElasticsearchPillow',
         document_store=None,
         checkpoint=checkpoint,
-        change_feed=KafkaChangeFeed(topic=topics.FORM_SQL, group_id='sql-forms-to-es'),
+        change_feed=KafkaChangeFeed(topics=[topics.FORM_SQL], group_id='sql-forms-to-es'),
         processor=form_processor,
         change_processed_event_handler=PillowCheckpointEventHandler(
             checkpoint=checkpoint, checkpoint_frequency=100,

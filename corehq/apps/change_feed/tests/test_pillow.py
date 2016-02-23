@@ -16,17 +16,17 @@ from pillowtop.feed.interface import Change
 class ChangeFeedPillowTest(SimpleTestCase):
     # note: these tests require a valid kafka setup running
 
-    def setUp(cls):
-        cls._fake_couch = FakeCouchDb()
-        cls._fake_couch.dbname = 'test-couchdb'
+    def setUp(self):
+        self._fake_couch = FakeCouchDb()
+        self._fake_couch.dbname = 'test-couchdb'
         with trap_extra_setup(KafkaUnavailableError):
-            cls.consumer = KafkaConsumer(
+            self.consumer = KafkaConsumer(
                 topics.CASE,
                 group_id='test-consumer',
                 bootstrap_servers=[settings.KAFKA_URL],
                 consumer_timeout_ms=100,
             )
-        cls.pillow = ChangeFeedPillow(cls._fake_couch, kafka=get_kafka_client(), checkpoint=None)
+        self.pillow = ChangeFeedPillow(self._fake_couch, kafka=get_kafka_client(), checkpoint=None)
 
     def test_process_change(self):
         document = {

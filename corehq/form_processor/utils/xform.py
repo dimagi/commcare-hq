@@ -18,7 +18,7 @@ SIMPLE_FORM = """<?xml version='1.0' ?>
     <dalmation_count>yes</dalmation_count>
     <n1:meta xmlns:n1="http://openrosa.org/jr/xforms">
         <n1:deviceID>DEV IL</n1:deviceID>
-        <n1:timeStart>2013-04-19T16:52:41.000-04</n1:timeStart>
+        <n1:timeStart>{time_start}</n1:timeStart>
         <n1:timeEnd>{time_end}</n1:timeEnd>
         <n1:username>eve</n1:username>
         <n1:userID>{user_id}</n1:userID>
@@ -35,7 +35,8 @@ class TestFormMetadata(jsonobject.JsonObject):
     app_id = jsonobject.StringProperty(default='123')
     form_name = jsonobject.StringProperty(default='New Form')
     user_id = jsonobject.StringProperty(default='cruella_deville')
-    time_end = jsonobject.DateTimeProperty(default=datetime(2013, 4, 19, 16, 53, 2))
+    time_end = jsonobject.DateTimeProperty(default=datetime(2013, 4, 19, 16, 52, 2))
+    time_start = jsonobject.DateTimeProperty(default=datetime(2013, 4, 19, 16, 53, 2))
     # Set this property to fake the submission time
     received_on = jsonobject.DateTimeProperty(default=datetime.utcnow)
 
