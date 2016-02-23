@@ -167,8 +167,15 @@ class TestBillingRecord(BaseAccountingTest):
         self.invoice_start, self.invoice_end = get_previous_month_date_range()
         self.currency = generator.init_default_currency()
         self.account = generator.billing_account(self.dimagi_user, self.billing_contact)
-        self.subscription, self.subscription_length = generator.generate_domain_subscription_from_date(
-            datetime.date.today(), self.account, self.domain.name
+
+        self.subscription_length = 4  # months
+        subscription_start_date = datetime.date(2016, 2, 23)
+        subscription_end_date = add_months_to_date(subscription_start_date, self.subscription_length)
+        self.subscription = generator.generate_domain_subscription(
+            self.account,
+            self.domain,
+            date_start=subscription_start_date,
+            date_end=subscription_end_date,
         )
         self.invoice = Invoice(
             subscription=self.subscription,
