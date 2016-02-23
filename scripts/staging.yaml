@@ -67,7 +67,8 @@ branches:
   - j2me # j$ 2/23
   - abs-rev-active-tab # Ben 2/23
   # B3 Changes round 2
-  - b3-reports-data
+  - b3-reports-data  # BB 2/23
+  - b3-data-import-cases  # BB 2/23
 submodules:
   submodules/touchforms-src:
     # let's leave this here even when empty
