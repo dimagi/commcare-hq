@@ -65,6 +65,7 @@ branches:
   - abs-rev-active-tab # Ben 2/22
   - fix-app_label # Nick P 2/22
   - upgrade-django-tastypie # Nick P 2/22
+  - upgrade-django-json-field # Nick P 2/22
 submodules:
   submodules/touchforms-src:
     # let's leave this here even when empty
