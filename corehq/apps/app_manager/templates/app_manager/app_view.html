@@ -71,15 +71,16 @@
         });
 
         $(function () {
-            var loaded = false,
+            var state = "",
                 $main = $("#releases"),
                 $loading = $main.find(".hq-loading").remove(),
                 $loadingError = $main.find(".hq-loading-error").remove();
 
             $('#demand-releases').on('show.bs.tab', function () {
-                if (loaded) {
+                if (state === "loading" || state === "loaded") {
                     return;
                 }
+                state = "loading";
 
                 // If the content takes a noticeable amount of time to load, show a spinner
                 var showSpinner = true;
@@ -93,9 +94,11 @@
                 $.ajax({
                     url: "{% url 'release_manager_ajax' domain app.get_id %}",
                 }).success(function(content) {
+                    state = "loaded";
                     showSpinner = false;
                     $main.html(content);
                 }).error(function() {
+                    state = "error";
                     showSpinner = false;
                     $main.html($loadingError.html());
                 });
