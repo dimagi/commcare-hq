@@ -161,7 +161,7 @@ class BaseReport(CustomProjectReport, ElasticProjectInspectionReport, ProjectRep
         def _get_case_name_html(self, case, add_link):
             case_name = get_property(case, "full_name", EMPTY_FIELD)
             return self._make_link(
-                reverse('corehq.apps.reports.views.case_details', args=[self.domain, case._id]), case_name
+                reverse('case_details', args=[self.domain, case._id]), case_name
             ) if add_link else case_name
 
         def _get_service_type_html(self, form, service_type, add_link):

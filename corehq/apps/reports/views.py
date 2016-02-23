@@ -141,7 +141,7 @@ from .models import (
 )
 
 from .standard import inspect, export, ProjectReport
-from corehq.apps.style.decorators import use_bootstrap3
+from corehq.apps.style.decorators import use_bootstrap3, use_datatables
 from .standard.cases.basic import CaseListReport
 from .tasks import (
     build_form_multimedia_zip,
@@ -1030,45 +1030,72 @@ def view_scheduled_report(request, domain, scheduled_report_id):
     )[0]
 
 
-@require_case_view_permission
-@login_and_domain_required
-@require_GET
-def case_details(request, domain, case_id):
-    try:
-        case = _get_case_or_404(domain, case_id)
-    except Http404:
-        messages.info(request, "Sorry, we couldn't find that case. If you think this is a mistake please report an issue.")
-        return HttpResponseRedirect(CaseListReport.get_url(domain=domain))
+class CaseDetailsView(BaseProjectReportSectionView):
+    urlname = 'case_details'
+    template_name = "reports/reportdata/case_details.html"
+    page_title = ugettext_lazy("Case Details")
+    http_method_names = ['get']
 
-    if not should_use_sql_backend(domain):
-        # TODO: make this work for SQL
-        create_actions = filter(lambda a: a.action_type == CASE_ACTION_CREATE, case.actions)
-        if not create_actions:
-            messages.error(request, _(
-                "The case creation form could not be found. "
-                "Usually this happens if the form that created the case is archived "
-                "but there are other forms that updated the case. "
-                "To fix this you can archive the other forms listed here."
-            ))
+    @method_decorator(require_case_view_permission)
+    @use_datatables
+    def dispatch(self, request, *args, **kwargs):
+        if not self.case_instance:
+            messages.info(request,
+                          "Sorry, we couldn't find that case. If you think this "
+                          "is a mistake please report an issue.")
+            return HttpResponseRedirect(CaseListReport.get_url(domain=self.domain))
+        return super(CaseDetailsView, self).dispatch(request, *args, **kwargs)
 
-    return render(request, "reports/reportdata/case_details.html", {
-        "domain": domain,
-        "case_id": case_id,
-        "case": case,
-        "report": dict(
-            name=case_inline_display(case),
-            slug=CaseListReport.slug,
-            is_async=False,
-        ),
-        "case_display_options": {
-            "display": request.project.get_case_display(case),
-            "timezone": get_timezone_for_user(request.couch_user, domain),
-            "get_case_url": lambda case_id: absolute_reverse(case_details, args=[domain, case_id]),
-            "show_transaction_export": toggles.STOCK_TRANSACTION_EXPORT.enabled(request.user.username),
-        },
-        "show_case_rebuild": toggles.SUPPORT.enabled(request.user.username),
-        'is_usercase': case.type == USERCASE_TYPE,
-    })
+    @property
+    def case_id(self):
+        return self.kwargs['case_id']
+
+    @property
+    @memoized
+    def case_instance(self):
+        try:
+            case = CaseAccessors(self.domain).get_case(self.case_id)
+            if case.domain != self.domain:
+                return None
+            return case
+        except CaseNotFound:
+            return None
+
+    @property
+    def page_name(self):
+        return case_inline_display(self.case_instance)
+
+    @property
+    def page_url(self):
+        return reverse(self.urlname, args=(self.domain, self.case_id,))
+
+    @property
+    def page_context(self):
+        if not should_use_sql_backend(self.domain):
+            # TODO: make this work for SQL
+            create_actions = filter(lambda a: a.action_type == CASE_ACTION_CREATE,
+                                    self.case_instance.actions)
+            if not create_actions:
+                messages.error(self.request, _(
+                    "The case creation form could not be found. "
+                    "Usually this happens if the form that created the case is archived "
+                    "but there are other forms that updated the case. "
+                    "To fix this you can archive the other forms listed here."
+                ))
+        return {
+            "case_id": self.case_id,
+            "case": self.case_instance,
+            "case_display_options": {
+                "display": self.request.project.get_case_display(self.case_instance),
+                "timezone": get_timezone_for_user(self.request.couch_user, self.domain),
+                "get_case_url": lambda case_id: absolute_reverse(
+                    self.urlname, args=[self.domain, self.case_id]),
+                "show_transaction_export": toggles.STOCK_TRANSACTION_EXPORT.enabled(
+                    self.request.user.username),
+            },
+            "show_case_rebuild": toggles.SUPPORT.enabled(self.request.user.username),
+            'is_usercase': self.case_instance.type == USERCASE_TYPE,
+        }
 
 
 @require_case_view_permission
