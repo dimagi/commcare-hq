@@ -392,10 +392,10 @@
                 var alert_obj = {
                     "message": message,
                     "alert_class": "alert fade in alert-block alert-full page-level-alert"
-                }
+                };
                 if (tags) {
                     alert_obj.alert_class += " " + tags;
-                };
+                }
                 return alert_obj;
             }
             var message_alerts = ko.observableArray();
@@ -407,7 +407,7 @@
             var message_element = $("#message-alerts").get(0);
             ko.cleanNode(message_element);
             $(message_element).koApplyBindings({
-                alerts: message_alerts,
+                alerts: message_alerts
             });
 
         </script>
