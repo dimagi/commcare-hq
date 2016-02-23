@@ -126,6 +126,7 @@ function ReleasesMain(o) {
     var self = this;
     self.options = o;
     self.recipients = self.options.recipient_contacts;
+    self.showStarredOnly = ko.observable(false);
     self.savedApps = ko.observableArray();
     self.doneFetching = ko.observable(false);
     self.buildState = ko.observable('');
