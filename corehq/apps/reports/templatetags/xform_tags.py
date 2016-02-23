@@ -22,7 +22,6 @@ from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 from corehq.util.timezones.conversions import ServerTime
 from corehq.util.timezones.utils import get_timezone_for_request
 from corehq.util.xml_utils import indent_xml
-from couchforms.models import XFormInstance
 from casexml.apps.case.xform import extract_case_blocks
 from casexml.apps.case import const
 from casexml.apps.case.models import CommCareCase
@@ -43,20 +42,6 @@ def render_form_xml(form):
     formatted_xml = indent_xml(xml) if xml else ''
     return '<pre class="fancy-code prettyprint linenums"><code class="language-xml">%s</code></pre>' \
            % escape(formatted_xml)
-
-
-
-@register.simple_tag
-def form_inline_display(form_id, timezone=pytz.utc):
-    if form_id:
-        try:
-            form = XFormInstance.get(form_id)
-            if form:
-                return "%s: %s" % (ServerTime(form.received_on).user_time(timezone).done().date(), form.xmlns)
-        except ResourceNotFound:
-            pass
-        return "%s: %s" % (_("missing form"), form_id)
-    return _("empty form id found")
 
 
 def sorted_case_update_keys(keys):
