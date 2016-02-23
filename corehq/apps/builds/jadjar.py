@@ -8,6 +8,8 @@ from tempfile import NamedTemporaryFile
 import os
 from dimagi.utils.subprocess_manager import subprocess_context
 
+from settings import BASE_ADDRESS, J2ME_ADDRESS
+
 
 class JadDict(dict):
 
@@ -135,7 +137,7 @@ class JadJar(object):
         buffer = StringIO(self.jar)
         with ZipFile(buffer, 'a', ZIP_DEFLATED) as zipper:
             for path in files:
-                zipper.writestr(path, files[path])
+                zipper.writestr(path, files[path].replace(BASE_ADDRESS, J2ME_ADDRESS))
         buffer.flush()
         jar = buffer.getvalue()
         buffer.close()
