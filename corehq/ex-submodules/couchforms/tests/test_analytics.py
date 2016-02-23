@@ -8,7 +8,7 @@ from couchforms.analytics import domain_has_submission_in_last_30_days, \
     app_has_been_submitted_to_in_last_30_days, update_analytics_indexes, \
     get_username_in_last_form_user_id_submitted, get_all_user_ids_submitted, \
     get_all_xmlns_app_id_pairs_submitted_to_in_domain, \
-    get_last_form_submission_for_user_for_app, get_number_of_submissions, get_form_analytics_metadata, \
+    get_number_of_submissions, get_form_analytics_metadata, \
     get_number_of_forms_of_all_types, get_number_of_forms_by_type, get_exports_by_form
 from couchforms.models import XFormInstance, XFormError
 
@@ -86,11 +86,6 @@ class CouchformsAnalyticsTest(TestCase, DocTestMixin):
         self.assertEqual(
             get_all_xmlns_app_id_pairs_submitted_to_in_domain(self.domain),
             {(self.xmlns, self.app_id)})
-
-    def test_get_last_form_submission_for_user_for_app(self):
-        self.assert_docs_equal(
-            get_last_form_submission_for_user_for_app(self.domain, self.user_id, self.app_id),
-            self.forms[0])
 
     def test_get_number_of_submissions(self):
         self.assertEqual(

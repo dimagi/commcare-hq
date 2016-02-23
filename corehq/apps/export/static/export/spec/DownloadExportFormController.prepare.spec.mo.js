@@ -121,8 +121,8 @@ describe('DownloadExportFormController - Prepare Download', function() {
                 // no error functions happened
                 assert.equal(DnldExpData.exportDownloadService._numErrors, 0);
                 assert.equal(DnldExpData.exportDownloadService._numCeleryRetries, 0);
-                assert.isNull(DnldExpData.exportDownloadService.downloadError);
-                assert.isFalse(DnldExpData.exportDownloadService.showCeleryError);
+                assert.isFalse(DnldExpData.exportDownloadService.downloadError);
+                assert.isFalse(DnldExpData.exportDownloadService.celeryError);
                 assert.isFalse(DnldExpData.exportDownloadService.isMultimediaDownload);
 
                 DnldExpData.exportDownloadService.resetDownload();
@@ -136,8 +136,8 @@ describe('DownloadExportFormController - Prepare Download', function() {
                 // this remains the same
                 assert.equal(DnldExpData.exportDownloadService._numErrors, 0);
                 assert.equal(DnldExpData.exportDownloadService._numCeleryRetries, 0);
-                assert.isNull(DnldExpData.exportDownloadService.downloadError);
-                assert.isFalse(DnldExpData.exportDownloadService.showCeleryError);
+                assert.isFalse(DnldExpData.exportDownloadService.downloadError);
+                assert.isFalse(DnldExpData.exportDownloadService.celeryError);
                 assert.isFalse(DnldExpData.exportDownloadService.isMultimediaDownload);
             });
         });

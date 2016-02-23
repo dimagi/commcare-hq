@@ -117,7 +117,7 @@ def can_edit_form_location(domain, web_user, form):
         return True
 
     if domain_obj.supports_multiple_locations_per_user:
-        user_id = getattr(form.metadata, 'userID', None)
+        user_id = form.user_id
         if not user_id:
             return False
 

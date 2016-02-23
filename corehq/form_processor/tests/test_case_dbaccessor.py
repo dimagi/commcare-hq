@@ -605,6 +605,23 @@ class CaseAccessorTestsSQL(TestCase):
         self.assertEqual(0, len(list(CaseAccessorSQL.get_all_cases_modified_since(end))))
         self.assertEqual(1, len(CaseAccessorSQL.get_cases_modified_since(limit=1)))
 
+    def test_get_case_by_external_id(self):
+        case1 = _create_case(domain=DOMAIN)
+        case1.external_id = '123'
+        CaseAccessorSQL.save_case(case1)
+        case2 = _create_case(domain='d2', case_type='t1')
+        case2.external_id = '123'
+        CaseAccessorSQL.save_case(case2)
+
+        case = CaseAccessorSQL.get_case_by_external_id(DOMAIN, '123')
+        self.assertEqual(case.case_id, case1.case_id)
+
+        case = CaseAccessorSQL.get_case_by_external_id('d2', '123')
+        self.assertEqual(case.case_id, case2.case_id)
+
+        with self.assertRaises(CaseNotFound):
+            CaseAccessorSQL.get_case_by_external_id('d2', '123', case_type='t2')
+
 
 def _create_case(domain=None, form_id=None, case_type=None, user_id=None):
     """
