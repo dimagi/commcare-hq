@@ -7,23 +7,6 @@
 
 {% block stylesheets %}{{ block.super }}
     <link rel="stylesheet" href="{% new_static 'syntaxhighlighter/styles/shCoreDefault.css' %}"/>
-    <style>
-        .casexml ul {
-            margin-left: 15px;
-        }
-        input[type="radio"]{
-            margin: 3px 5px 5px 0px;
-        }
-        .bigdrop {
-            width: 600px !important;
-        }
-        .nested-fieldset {
-            margin-left: 50px;
-        }
-        .nested-fieldset .form-inline {
-            margin-left: 50px;
-        }
-    </style>
 {% endblock %}
 
 {% block js %}{{ block.super }}
@@ -202,8 +185,10 @@
 
 {% block form-view %}
     <div id="build_errors"></div>
-    <div id="form_short_comment" class="app-comment">{{ form.short_comment }}</div>
-    <div class="delete-me">
+    {% if form.short_comment %}
+        <div id="form_short_comment" class="well">{{ form.short_comment }}</div>
+    {% endif %}
+    <div class="pull-right">
         <form action="{% url "delete_form" domain app.id module.unique_id form.unique_id %}" method="post">
             {% csrf_token %}
             <button type="submit" class="disable-on-submit btn btn-danger">
