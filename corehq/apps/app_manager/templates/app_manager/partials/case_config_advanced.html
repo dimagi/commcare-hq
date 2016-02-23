@@ -161,7 +161,6 @@
 </script>
 
 <script type="text/html" id="case-config:case-action">
-<div class="panel panel-default">
     <div class="panel-heading">
         <!-- TODO: increase click target size -->
         <a data-toggle="collapse" href="#TODO-{{ forloop.counter0 }}" data-bind="html: header"></a>
@@ -208,7 +207,6 @@
         </div>
     </div>
     </div>
-</div>
 </script>
 
 <script type="text/html" id="auto-select:undefined">
@@ -248,7 +246,6 @@
 </script>
 
 <script type="text/html" id="case-config:case-action-auto-select">
-<div class="panel panel-default">
     <div class="panel-heading">
         <a data-toggle="collapse" href="#TODO-{{ forloop.counter0 }}" data-bind="html: header"></a>
     </div>
@@ -287,7 +284,6 @@
         </div>
     </div>
     </div>
-</div>
 </script>
 
 <div id="case-config-ko">
@@ -317,12 +313,12 @@
                 <legend data-bind="visible: load_update_cases().length">
                     {% trans "Load / Update / Close Cases" %}
                 </legend>
-                <div id="case-load-accordion" data-bind="foreach: load_update_cases">
+                <div id="case-load-accordion" class="panel-group" data-bind="foreach: load_update_cases">
                     <!-- ko if: auto_select -->
-                    <div class="group" data-bind="template: {name: 'case-config:case-action-auto-select'}"></div>
+                    <div class="panel panel-default" data-bind="template: {name: 'case-config:case-action-auto-select'}"></div>
                     <!-- /ko -->
                     <!-- ko ifnot: auto_select -->
-                    <div class="group" data-bind="template: {name: 'case-config:case-action'}"></div>
+                    <div class="panel panel-default" data-bind="template: {name: 'case-config:case-action'}"></div>
                     <!-- /ko -->
                 </div>
             </div>
@@ -332,7 +328,7 @@
                     {% trans "Open New Cases" %}
                 </legend>
                 <div id="case-open-accordion" class="panel-group" data-bind="foreach: open_cases">
-                    <div class="panel-group" data-bind="template: {name: 'case-config:case-action'}"></div>
+                    <div class="panel panel-default" data-bind="template: {name: 'case-config:case-action'}"></div>
                 </div>
             </div>
         </div>
