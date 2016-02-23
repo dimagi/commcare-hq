@@ -2821,6 +2821,11 @@ class PublicSMSRatesView(BasePageView, AsyncHandlerMixin):
     template_name = 'domain/admin/global_sms_rates.html'
     async_handlers = [PublicSMSRatesAsyncHandler]
 
+    @use_bootstrap3
+    @use_select2
+    def dispatch(self, request, *args, **kwargs):
+        return super(PublicSMSRatesView, self).dispatch(request, *args, **kwargs)
+
     @property
     def page_url(self):
         return reverse(self.urlname)

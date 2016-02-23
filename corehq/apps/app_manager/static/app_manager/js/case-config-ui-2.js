@@ -64,7 +64,8 @@ var CaseConfig = (function () {
                     },
                     dataType: 'json',
                     success: function (data) {
-                        COMMCAREHQ.app_manager.updateDOM(data.update);
+                        var app_manager = hqImport('app_manager/js/app_manager.js');
+                        app_manager.updateDOM(data.update);
                         self.requires(requires);
                         self.setPropertiesMap(data.propertiesMap);
                     }
@@ -86,7 +87,8 @@ var CaseConfig = (function () {
                     },
                     dataType: 'json',
                     success: function (data) {
-                        COMMCAREHQ.app_manager.updateDOM(data.update);
+                        var app_manager = hqImport('app_manager/js/app_manager.js');
+                        app_manager.updateDOM(data.update);
                         self.setUsercasePropertiesMap(data.setUsercasePropertiesMap);
                     }
                 });

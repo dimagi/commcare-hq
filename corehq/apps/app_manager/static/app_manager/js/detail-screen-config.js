@@ -919,7 +919,8 @@ var DetailScreenConfig = (function () {
                         data: this.serialize(),
                         dataType: 'json',
                         success: function (data) {
-                            COMMCAREHQ.app_manager.updateDOM(data.update);
+                            var app_manager = hqImport('app_manager/js/app_manager.js');
+                            app_manager.updateDOM(data.update);
                         }
                     });
                 }
@@ -1247,3 +1248,13 @@ ko.bindingHandlers.DetailScreenConfig_notifyShortScreenOnChange = {
         }, 0);
     }
 };
+
+
+hqDefine('app_manager/js/detail-screen-config.js', function () {
+    return {
+        /* for sharing variables between essentially separate parts of the ui */
+        state: {
+            requires_case_details: ko.observable()
+        }
+    };
+});

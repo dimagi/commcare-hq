@@ -1049,7 +1049,7 @@ def services_restart():
     _supervisor_command('update')
     _supervisor_command('reload')
     time.sleep(5)
-    _supervisor_command('start  all')
+    _supervisor_command('start all')
 
 
 @roles(ROLES_DB_ONLY)

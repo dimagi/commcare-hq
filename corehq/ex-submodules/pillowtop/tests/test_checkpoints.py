@@ -1,11 +1,8 @@
-from abc import ABCMeta, abstractproperty
 from django.test import SimpleTestCase, override_settings, TestCase
 import time
 from dimagi.utils.decorators.memoized import memoized
-from pillowtop.checkpoints.manager import PillowCheckpointManager, PillowCheckpoint
+from pillowtop.checkpoints.manager import PillowCheckpoint, get_or_create_checkpoint
 from pillowtop.checkpoints.util import get_machine_id
-from pillowtop.dao.django import DjangoDocumentStore
-from pillowtop.dao.mock import MockDocumentStore
 from pillowtop.exceptions import PillowtopCheckpointReset
 from pillowtop.models import DjangoPillowCheckpoint
 
@@ -22,28 +19,27 @@ class PillowCheckpointTest(SimpleTestCase):
 
     def test_checkpoint_id(self):
         checkpoint_id = 'test-checkpoint-id'
-        self.assertEqual(checkpoint_id, PillowCheckpoint(MockDocumentStore(), checkpoint_id).checkpoint_id)
+        self.assertEqual(checkpoint_id, PillowCheckpoint(checkpoint_id).checkpoint_id)
 
 
-class PillowCheckpointDaoTestMixin(object):
-    __metaclass__ = ABCMeta
+class PillowCheckpointDbTest(TestCase):
 
     _checkpoint_id = 'test-checkpoint-id'
-
-    @abstractproperty
-    def dao(self):
-        pass
 
     @property
     @memoized
     def checkpoint(self):
-        return PillowCheckpoint(self.dao, self._checkpoint_id)
+        return PillowCheckpoint(self._checkpoint_id)
+
+    def save_checkpoint(self, checkpoint_id, sequence_id):
+        checkpoint = DjangoPillowCheckpoint.objects.get_or_create(checkpoint_id=checkpoint_id)[0]
+        checkpoint.sequence = sequence_id
+        checkpoint.save()
 
     def test_get_or_create_empty(self):
-        checkpoint_manager = PillowCheckpointManager(MockDocumentStore())
-        checkpoint, created = checkpoint_manager.get_or_create_checkpoint('some-id')
-        self.assertEqual('0', checkpoint['seq'])
-        self.assertTrue(bool(checkpoint['timestamp']))
+        checkpoint, created = get_or_create_checkpoint('some-id')
+        self.assertEqual('0', checkpoint.sequence)
+        self.assertTrue(bool(checkpoint.timestamp))
         self.assertTrue(bool(created))
 
     def test_create_initial_checkpoint(self):
@@ -53,7 +49,7 @@ class PillowCheckpointDaoTestMixin(object):
 
     def test_db_changes_returned(self):
         self.checkpoint.get_or_create()
-        self.dao.save_document(self._checkpoint_id, {'seq': '1'})
+        self.save_checkpoint(self._checkpoint_id, '1')
         checkpoint = self.checkpoint.get_or_create().document
         self.assertEqual('1', checkpoint['seq'])
 
@@ -64,7 +60,7 @@ class PillowCheckpointDaoTestMixin(object):
 
     def test_verify_unchanged_fail(self):
         self.checkpoint.get_or_create()
-        self.dao.save_document(self._checkpoint_id, {'seq': '1'})
+        self.save_checkpoint(self._checkpoint_id, '1')
         with self.assertRaises(PillowtopCheckpointReset):
             self.checkpoint.get_or_create(verify_unchanged=True)
 
@@ -76,7 +72,7 @@ class PillowCheckpointDaoTestMixin(object):
 
     def test_update_verify_unchanged_fail(self):
         self.checkpoint.get_or_create()
-        self.dao.save_document(self._checkpoint_id, {'seq': '1'})
+        self.save_checkpoint(self._checkpoint_id, '1')
         with self.assertRaises(PillowtopCheckpointReset):
             self.checkpoint.update_to('2')
 
@@ -97,20 +93,3 @@ class PillowCheckpointDaoTestMixin(object):
         timestamp_back = self.checkpoint.get_or_create().document['timestamp']
         self.assertNotEqual(timestamp_back, timestamp)
 
-
-class SimplePillowCheckpointDaoTest(SimpleTestCase, PillowCheckpointDaoTestMixin):
-
-    @property
-    @memoized
-    def dao(self):
-        return MockDocumentStore()
-
-
-class SQLPillowCheckpointDaoTest(TestCase, PillowCheckpointDaoTestMixin):
-
-    @property
-    @memoized
-    def dao(self):
-        return DjangoDocumentStore(
-            DjangoPillowCheckpoint, DjangoPillowCheckpoint.to_dict, DjangoPillowCheckpoint.from_dict,
-        )
