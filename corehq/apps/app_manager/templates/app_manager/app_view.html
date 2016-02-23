@@ -38,6 +38,7 @@
         $(function () {
             COMMCAREHQ.appView.settings = new CommcareSettings(COMMCAREHQ.appView.settings);
             $('#commcare-settings').koApplyBindings(COMMCAREHQ.appView.settings);
+
             var multimedia_tab = (function () {
                 var self = {};
                 self.load_state = ko.observable(null);
@@ -59,10 +60,14 @@
                 return self;
             }());
             $("#multimedia").koApplyBindings(multimedia_tab);
-            $('#multimedia-shower').on('show.bs.tab', function () {
+            $('#demand-multimedia').on('show.bs.tab', function () {
                 if (multimedia_tab.load_state() === null) {
                     multimedia_tab.load_if_necessary();
                 }
+            });
+
+            $('#demand-releases').on('show.bs.tab', function () {
+                alert("show the releases tab");
             });
         });
 
@@ -248,6 +253,9 @@
 {% endblock %}
 {% block form-view %}
     <div class="tab-content">
+        <div class="tab-pane" id="releases">
+            <!-- will be populated asynchronously -->
+        </div>
         <div class="tab-pane{% if not copy_app_form.is_bound %} active{% endif %}" id="app-settings">
             {% include "app_manager/partials/app-settings.html" %}
         </div>
