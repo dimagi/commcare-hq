@@ -1,6 +1,7 @@
 {% extends "app_manager/managed_app.html" %}
 {% load xforms_extras %}
 {% load hq_shared_tags %}
+{% load compress %}
 {% load i18n %}
 
 {% block title %}{{ form.name|clean_trans:langs }}{% endblock %}
@@ -10,8 +11,11 @@
 {% endblock %}
 
 {% block js %}{{ block.super }}
+    {% compress js %}
+    <script src="{% new_static 'syntaxhighlighter/scripts/XRegExp.js' %}"></script>
     <script src="{% new_static 'syntaxhighlighter/scripts/shCore.js' %}"></script>
     <script src="{% new_static 'syntaxhighlighter/scripts/shBrushXml.js' %}"></script>
+    {% endcompress %}
     <script src="{% new_static 'style/ko/knockout_subscribables.ko.js' %}"></script>
     <script src="{% new_static 'jquery.caret/dist/jquery.caret-1.5.2.min.js' %}"></script>
 {% endblock %}
