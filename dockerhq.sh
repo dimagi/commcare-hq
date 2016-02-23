@@ -80,7 +80,7 @@ case $key in
         web_runner run --rm web python manage.py migrate $@
         ;;
     runserver)
-        web_runner run --service-ports -e CUSTOMSETTINGS="docker.localsettings_docker" web $@
+        web_runner run --service-ports web $@
         ;;
     shell)
         web_runner run --rm web python manage.py shell
