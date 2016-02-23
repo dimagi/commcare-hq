@@ -51,6 +51,7 @@ from corehq.apps.hqwebapp.tasks import send_html_email_async
 from corehq.apps.users.models import WebUser
 from corehq.const import USER_DATE_FORMAT
 from corehq.util.quickcache import quickcache
+from corehq.util.soft_assert import soft_assert
 from corehq.util.view_utils import absolute_reverse
 
 integer_field_validators = [MaxValueValidator(2147483647), MinValueValidator(-2147483648)]
@@ -59,6 +60,8 @@ MAX_INVOICE_COMMUNICATIONS = 5
 SMALL_INVOICE_THRESHOLD = 100
 
 UNLIMITED_FEATURE_USAGE = -1
+
+_soft_assert_email_list = soft_assert('{}@{}'.format('npellegrino', 'dimagi.com'))
 
 
 class BillingAccountType(object):
@@ -540,6 +543,7 @@ class BillingContactInfo(models.Model):
     def __init__(self, *args, **kwargs):
         super(BillingContactInfo, self).__init__(*args, **kwargs)
         if self.email_list == '[]':
+            _soft_assert_email_list(False, "email_list was '[]' and corrected.")
             self.email_list = []
 
     @property
