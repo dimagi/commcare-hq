@@ -24,7 +24,7 @@ from corehq.apps.smsbillables.models import (
     SmsBillable,
 )
 from corehq.apps.accounting.tests.base_tests import BaseAccountingTest
-from corehq.apps.accounting.utils import get_previous_month_date_range
+from corehq.util.dates import get_previous_month_date_range
 
 
 class TestBillingAccount(BaseAccountingTest):
