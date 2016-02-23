@@ -16,7 +16,7 @@ from django.utils.html import strip_tags
 from django.utils.translation import ugettext_lazy as _
 from django_prbac.models import Role
 
-import json_field
+import jsonfield
 import stripe
 
 from couchdbkit import ResourceNotFound
@@ -498,7 +498,7 @@ class BillingContactInfo(models.Model):
         max_length=50, null=True, blank=True, verbose_name=_("Last Name")
     )
     # TODO - replace with models.ArrayField once django >= 1.9
-    email_list = json_field.JSONField(
+    email_list = jsonfield.JSONField(
         default=[],
         verbose_name=_("Contact Emails"),
         help_text=_("We will email communications regarding your account "
@@ -1518,7 +1518,7 @@ class Subscription(models.Model):
         context = {
             'domain': domain,
             'end_date': end_date,
-            'contacts': self.account.billingcontactinfo.email_list,
+            'contacts': ', '.join(self.account.billingcontactinfo.email_list),
             'dimagi_contact': email,
         }
         email_html = render_to_string(template, context)

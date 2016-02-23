@@ -160,6 +160,10 @@ class AbstractCaseAccessor(six.with_metaclass(ABCMeta)):
         """
         raise NotImplementedError
 
+    @abstractmethod
+    def get_case_by_domain_hq_user_id(domain, user_id, case_type):
+        raise NotImplementedError
+
 
 class CaseAccessors(object):
     """
@@ -216,6 +220,9 @@ class CaseAccessors(object):
 
     def get_attachment_content(self, case_id, attachment_id):
         return self.db_accessor.get_attachment_content(case_id, attachment_id)
+
+    def get_case_by_domain_hq_user_id(self, user_id, case_type):
+        return self.db_accessor.get_case_by_domain_hq_user_id(self.domain, user_id, case_type)
 
 
 CaseIndexInfo = namedtuple(

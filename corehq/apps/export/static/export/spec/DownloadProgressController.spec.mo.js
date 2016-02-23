@@ -33,23 +33,23 @@ describe('DownloadProgressController', function() {
             });
         });
 
-        describe('showCeleryError', function () {
+        describe('celeryError', function () {
             beforeEach(function () {
-                assert.isFalse(DnldExpData.exportDownloadService.showCeleryError);
-                DnldExpData.exportDownloadService.showCeleryError = true;
+                assert.isFalse(DnldExpData.exportDownloadService.celeryError);
+                DnldExpData.exportDownloadService.celeryError = true;
                 DnldExpData.currentScope.$apply();
             });
 
             it('update ok', function () {
-                assert.isTrue(DnldExpData.exportDownloadService.showCeleryError);
-                assert.isTrue(DnldExpData.currentScope.showCeleryError);
+                assert.isTrue(DnldExpData.exportDownloadService.celeryError);
+                assert.isTrue(DnldExpData.currentScope.celeryError);
             });
 
             it('reset ok', function () {
                 DnldExpData.currentScope.resetDownload();
                 DnldExpData.currentScope.$apply();
-                assert.isFalse(DnldExpData.exportDownloadService.showCeleryError);
-                assert.isFalse(DnldExpData.currentScope.showCeleryError);
+                assert.isFalse(DnldExpData.exportDownloadService.celeryError);
+                assert.isFalse(DnldExpData.currentScope.celeryError);
             });
         });
 

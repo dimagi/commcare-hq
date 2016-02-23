@@ -4011,12 +4011,6 @@ class ApplicationBase(VersionedDoc, SnapshotMixin,
         """This is mostly just for views"""
         return '%d.%d' % self.build_spec.minor_release()
 
-    def get_build_label(self):
-        for item in CommCareBuildConfig.fetch().menu:
-            if item['build'].to_string() == self.build_spec.to_string():
-                return item['label']
-        return self.build_spec.get_label()
-
     @property
     def short_name(self):
         return self.name if len(self.name) <= 12 else '%s..' % self.name[:10]
@@ -4392,7 +4386,6 @@ class SavedAppBuild(ApplicationBase):
             'id': self.id,
             'built_on_date': built_on_user_time.ui_string(USER_DATE_FORMAT),
             'built_on_time': built_on_user_time.ui_string(USER_TIME_FORMAT),
-            'build_label': self.built_with.get_label(),
             'menu_item_label': self.built_with.get_menu_item_label(),
             'jar_path': self.get_jar_path(),
             'short_name': self.short_name,

@@ -493,7 +493,7 @@ def sync_db_api(request, domain):
     auth_cookie = request.COOKIES.get('sessionid')
     username = request.GET.get('username')
     try:
-        sync_db(username, DjangoAuth(auth_cookie))
+        sync_db(username, domain, DjangoAuth(auth_cookie))
         return json_response({
             'status': 'OK'
         })
@@ -509,7 +509,7 @@ def render_form(request, domain):
     session = get_object_or_404(EntrySession, session_id=session_id)
 
     try:
-        raw_instance = get_raw_instance(session_id)
+        raw_instance = get_raw_instance(session_id, domain)
     except Exception, e:
         return HttpResponse(e, status=500, content_type="text/plain")
 

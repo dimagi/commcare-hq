@@ -1,8 +1,11 @@
+import datetime
 import random
 import mock
 
 from stripe import Charge
 from django.core import mail
+
+from dimagi.utils.dates import add_months_to_date
 
 from corehq.apps.accounting.tests.test_invoicing import BaseInvoiceTestCase
 from corehq.apps.accounting import generator, utils, tasks
@@ -31,9 +34,14 @@ class TestBillingAutoPay(BaseInvoiceTestCase):
         self.account_2 = generator.billing_account(self.dimagi_user, self.web_user)
         self.domain_2 = generator.arbitrary_domain()
 
-        self.subscription_2, self.subscription_length_2 = generator.generate_domain_subscription_from_date(
-            generator.get_start_date(), self.account_2, self.domain_2.name,
-            min_num_months=self.min_subscription_length,
+        self.subscription_length_2 = self.min_subscription_length  # months
+        subscription_start_date = datetime.date(2016, 2, 23)
+        subscription_end_date = add_months_to_date(subscription_start_date, self.subscription_length_2)
+        self.subscription_2 = generator.generate_domain_subscription(
+            self.account,
+            self.domain,
+            date_start=subscription_start_date,
+            date_end=subscription_end_date,
         )
 
         tasks.generate_invoices(self.invoice_date)
