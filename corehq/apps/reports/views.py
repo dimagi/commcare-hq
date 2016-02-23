@@ -213,7 +213,7 @@ class BaseProjectReportSectionView(BaseDomainView):
 
     @use_bootstrap3
     def dispatch(self, request, *args, **kwargs):
-        request.project = Domain.get_by_name(kwargs['domain'])
+        request.project = Domain.get_by_name(self.domain)
         if not user_can_view_reports(request.project, request.couch_user):
             raise Http404()
         return super(BaseProjectReportSectionView, self).dispatch(request, *args, **kwargs)
