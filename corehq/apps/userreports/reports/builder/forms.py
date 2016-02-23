@@ -353,6 +353,7 @@ class DataSourceBuilder(object):
                 self.app._id,
                 self.app.version
             ],
+            include_docs=True,
             reduce=False
         ).one()
 
@@ -635,14 +636,25 @@ class ConfigureNewReportBase(forms.Form):
 
         matching_data_source = self.ds_builder.get_existing_match()
         if matching_data_source:
-            if matching_data_source['id'] != self.existing_report.config_id:
+            if matching_data_source._id != self.existing_report.config_id:
 
                 # If no one else is using the current data source, delete it.
                 data_source = DataSourceConfiguration.get(self.existing_report.config_id)
                 if data_source.get_report_count() <= 1:
                     data_source.deactivate()
 
-                self.existing_report.config_id = matching_data_source['id']
+                self.existing_report.config_id = matching_data_source._id
+            elif matching_data_source.is_deactivated:
+                existing_sources = DataSourceConfiguration.by_domain(self.domain)
+                if len(existing_sources) >= 5:
+                    raise forms.ValidationError(_(
+                        "Editing this report would require a new data source. The limit is 5. "
+                        "To continue, first delete all of the reports using a particular "
+                        "data source (or the data source itself) and try again. "
+                    ))
+                matching_data_source.is_deactivated = False
+                matching_data_source.save()
+                tasks.rebuild_indicators.delay(matching_data_source._id)
 
         else:
             # We need to create a new data source
@@ -678,7 +690,11 @@ class ConfigureNewReportBase(forms.Form):
         """
         matching_data_source = self.ds_builder.get_existing_match()
         if matching_data_source:
-            data_source_config_id = matching_data_source['id']
+            data_source_config_id = matching_data_source._id
+            if matching_data_source.is_deactivated:
+                matching_data_source.is_deactivated = False
+                matching_data_source.save()
+                tasks.rebuild_indicators.delay(data_source_config_id)
         else:
             data_source_config_id = self._build_data_source()
 
