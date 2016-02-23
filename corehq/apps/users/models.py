@@ -2195,6 +2195,9 @@ class DomainRequest(models.Model):
     is_approved = models.BooleanField(default=False)
     domain = models.CharField(max_length=255, db_index=True)
 
+    class Meta:
+        app_label = "users"
+
     @classmethod
     def by_domain(cls, domain, is_approved=False):
         return DomainRequest.objects.filter(domain=domain, is_approved=is_approved)

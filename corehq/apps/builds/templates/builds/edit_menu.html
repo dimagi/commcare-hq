@@ -1,117 +1,8 @@
-<!DOCTYPE html>
+{% extends 'style/bootstrap3/base_page.html' %}
 {% load hq_shared_tags %}
 {% load compress %}
 
-<html>
-<head>
-    {% if less_debug %}
-        <link type="text/less" rel="stylesheet" media="all" href="{% static 'style/less/hqstyle-core-debug.less' %}"/>
-        <script src="{% static 'style/lib/lessjs/less-1.3.1.min.js' %}"></script>
-        {% if less_watch %}<script>less.watch();</script>{% endif %}
-    {% else %}
-    {% compress css %}
-    <link type="text/less" rel="stylesheet" media="all" href="{% static 'style/less/hqstyle-core.less' %}"/>
-    {% endcompress %}
-    {% endif %}
-    <title>Edit Builds Menu</title>
-</head>
-
-<body>
-    <div class="container">
-    {% if success %}
-        <div class="alert alert-success">Your changes have been saved</div>
-    {% endif %}
-    <h4>Editing {{ doc.ID }}</h4>
-    <form id="menu-form" action="." method="POST">{% csrf_token %}
-        <table id="menu-table" class="table table-striped">
-            <h3>Menu Options</h3>
-            <thead>
-                <tr>
-                    <th></th>
-                    <th>Version</th>
-                    <th>Label</th>
-                    <th>Superuser Only</th>
-                    <th/>
-                </tr>
-            </thead>
-            <tbody data-bind="sortable: versions">
-                <tr>
-                    <td class="sortable-handle">
-                        <i class="icon-resize-vertical"></i>
-                    </td>
-                    <td>
-                        <select data-bind="
-                            options: $root.available_versions,
-                            value: version
-                        ">
-                        </select>
-                    </td>
-                    <td>
-                        <input type="text" data-bind="value: label">
-                    </td>
-                    <td>
-                        <input type="checkbox" value="superuser-only" data-bind="checked: superuser_only" />
-                    </td>
-                    <td>
-                        <button type="button" class="close" data-bind="click: $root.removeVersion">&times;</button>
-                    </td>
-                </tr>
-            </tbody>
-            <tr>
-                <td colspan="5">
-                    <button data-bind="click: addVersion" class="btn">Add a Version</button>
-                </td>
-            </tr>
-        </table>
-
-        <h4>Defaults</h4>
-        <p>Select default 1.x and default 2.x</p>
-        <select data-bind="
-            options: available_ones,
-            value: default_one
-        "></select>
-        <select data-bind="
-            options: available_twos,
-            value: default_two
-        "></select>
-        <p><input id="submit-menu-form" class="btn btn-primary" type="Submit" value="Submit"></p>
-    </form>
-    </div>
-    <div class="container">
-        <h3>Import a new build from the build server</h3>
-        <ol>
-            <li><a href="http://jenkins.dimagi.com/view/CommCare%20Mobile/" target="_blank">Browse builds</a></li>
-            <li>Click on a CommCare version (example: "commcare-mobile-2.13", <strong>NOT</strong> "commcare-odk-2.13")</li>
-            <li>Click on the most recent successful build in the table at left</li>
-            <li>Click "Build Artifacts" -> "application" -> "posttmp"</li>
-            <li>Right-click on "artifacts.zip" and select "Copy Link Address"</li>
-            <li>Paste the address into the box below</li>
-            <li>Click Submit</li>
-            <li>Wait until the page loads. If successful click back and refresh to see your new build.</li>
-        </ol>
-        <form action="{% url 'corehq.apps.builds.views.import_build' %}" method="post">{% csrf_token %}
-            <label for="import_build_name">Source for artifacts.zip</label>
-            <input id="import_build_name" type="text" name="source"/>
-            <br/>
-            <label for="import_build_version">Version</label>
-            <input id="import_build_version" type="text" name="version"/>
-            <br/>
-            <label for="import_build_build_number">Build Number</label>
-            <input id="import_build_build_number" type="text" name="build_number"/>
-            <br/>
-            <button type="submit" class="btn btn-primary">Import Build</button>
-        </form>
-    </div>
-    <div style="height:150px;"></div>
-
-    <script src="{% static 'jquery/dist/jquery.min.js' %}"></script>
-    <script src="{% static 'hqstyle/js/jquery/jquery-migrate-1.2.1.min.js' %}"></script>
-    {% include 'style/bootstrap2/partials/bootstrap2_js.html' %}
-    <script type="text/javascript" src="{% static 'jquery-ui-1.8.23-legacy/jquery-ui.min.js' %}"></script>
-    <script type="text/javascript" src="{% static 'knockout-2.3.0-legacy/knockout.js' %}"></script>
-    <script type="text/javascript" src="{% static 'underscore-legacy/underscore-min.js' %}"></script>
-    <script type="text/javascript" src="{% static 'style/ko/knockout_bindings.ko.js' %}"></script>
-    <script type="text/javascript" src="{% static 'style/js/hq.helpers.js' %}"></script>
+{% block js-inline %}{{ block.super }}
     <script>
         var doc = {{ doc|JSON }};
         var pretty_doc = JSON.stringify(doc, undefined, 2)
@@ -135,8 +26,8 @@
 
             self.addVersion = function() {
                 self.versions.push(new Version('', '', false));
-            }
-            self.removeVersion = function(version) { self.versions.remove(version) }
+            };
+            self.removeVersion = function(version) { self.versions.remove(version) };
 
             _.each(doc.menu, function(version) {
                 self.versions.push(new Version(
@@ -161,7 +52,7 @@
         }
 
         function outputJSON(menu) {
-            doc.menu = []
+            doc.menu = [];
             _.each(menu.versions(), function(version) {
                 doc.menu.push({
                     'superuser_only': version.superuser_only(),
@@ -212,5 +103,164 @@
             );
         });
     </script>
-</body>
-</html>
+{% endblock %}
+
+{% block stylesheets %}
+    <style type="text/css">
+        .container.ui-widget {
+            border: none;
+        }
+        #menu-table td {
+            line-height: 30px;
+        }
+    </style>
+{% endblock %}
+
+{% block page_title %}
+Editing CommCare Builds
+{% endblock %}
+
+{% block page_content %}
+    {% if success %}
+        <div class="alert alert-success">Your changes have been saved</div>
+    {% endif %}
+    <div class="alert alert-info"><strong>Editing {{ doc.ID }}</strong></div>
+
+
+    <div class="panel panel-default">
+        <div class="panel-heading">
+            <h3 class="panel-title">Menu Options</h3>
+        </div>
+        <div class="panel-body">
+            <form id="menu-form" class="form-horizontal" action="." method="POST">{% csrf_token %}
+                <table id="menu-table" class="table table-striped">
+                    <thead>
+                        <tr>
+                            <th></th>
+                            <th>Version</th>
+                            <th>Label</th>
+                            <th>Superuser Only</th>
+                            <th></th>
+                        </tr>
+                    </thead>
+                    <tbody data-bind="sortable: versions">
+                        <tr>
+                            <td class="sortable-handle">
+                                <i class="fa fa-arrows-v"></i>
+                            </td>
+                            <td>
+                                <select class="form-control" data-bind="
+                                    options: $root.available_versions,
+                                    value: version
+                                ">
+                                </select>
+                            </td>
+                            <td>
+                                <input class="form-control" type="text" data-bind="value: label">
+                            </td>
+                            <td>
+                                <input type="checkbox" value="superuser-only" data-bind="checked: superuser_only" />
+                            </td>
+                            <td>
+                                <button type="button" class="btn btn-danger" data-bind="click: $root.removeVersion">
+                                    <i class="fa fa-remove"></i>
+                                </button>
+                            </td>
+                        </tr>
+                    </tbody>
+                    <tr>
+                        <td colspan="5">
+                            <button data-bind="click: addVersion" class="btn btn-default">
+                                <i class="fa fa-plus"></i>
+                                Add a Version
+                            </button>
+                        </td>
+                    </tr>
+                </table>
+
+                <hr />
+
+                <fieldset>
+                    <legend>Defaults</legend>
+                    <div class="form-group">
+                        <label class="control-label col-sm-3" for="select-default-1">
+                            Default 1.x Build
+                        </label>
+                        <div class="col-sm-8">
+                            <select class="form-control" id="select-default-1" data-bind="
+                                options: available_ones,
+                                value: default_one"></select>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label class="control-label col-sm-3" for="select-default-2">
+                            Default 2.x Build
+                        </label>
+                        <div class="col-sm-8">
+                            <select class="form-control" id="select-default-2" data-bind="
+                                    options: available_twos,
+                                    value: default_two"></select>
+                        </div>
+                    </div>
+                    <div class="form-actions">
+                        <div class="col-sm-offset-3">
+                            <button id="submit-menu-form" class="btn btn-primary" type="submit">Update Menu Options</button>
+                        </div>
+                    </div>
+                </fieldset>
+            </form>
+        </div>
+    </div>
+    <div class="panel panel-default">
+        <div class="panel-heading">
+            <h3 class="panel-title">
+                Import a new build from the build server
+            </h3>
+        </div>
+        <div class="panel-body">
+            <ol>
+                <li><a href="http://jenkins.dimagi.com/view/CommCare%20Mobile/" target="_blank">Browse builds</a></li>
+                <li>Click on a CommCare version (example: "commcare-mobile-2.13", <strong>NOT</strong> "commcare-odk-2.13")</li>
+                <li>Click on the most recent successful build in the table at left</li>
+                <li>Click "Build Artifacts" -> "application" -> "posttmp"</li>
+                <li>Right-click on "artifacts.zip" and select "Copy Link Address"</li>
+                <li>Paste the address into the box below</li>
+                <li>Click Submit</li>
+                <li>Wait until the page loads. If successful click back and refresh to see your new build.</li>
+            </ol>
+            <form class="form-horizontal" action="{% url 'corehq.apps.builds.views.import_build' %}" method="post">
+                {% csrf_token %}
+                <div class="form-group">
+                    <label class="control-label col-sm-3" for="import_build_name">
+                        Source for artifacts.zip
+                    </label>
+                    <div class="col-sm-8">
+                        <input id="import_build_name" type="text" name="source" class="form-control" />
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label class="control-label col-sm-3" for="import_build_version">
+                        Version
+                    </label>
+                    <div class="col-sm-8">
+                        <input id="import_build_version" type="text" name="version" class="form-control" />
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label class="control-label col-sm-3" for="import_build_build_number">
+                        Build Number
+                    </label>
+                    <div class="col-sm-8">
+                        <input id="import_build_build_number" type="text" name="build_number" class="form-control" />
+                    </div>
+                </div>
+                <div class="form-actions">
+                    <div class="col-sm-offset-3">
+                        <button type="submit" class="btn btn-primary">Import Build</button>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+
+{% endblock %}

@@ -48,7 +48,6 @@ from corehq.apps.reminders.views import (
     EditNormalKeywordView,
     EditScheduledReminderView
 )
-from couchforms.models import XFormInstance
 
 
 class MessagesReport(ProjectReport, ProjectReportParametersMixin, GenericTabularReport, DatespanMixin):
@@ -951,8 +950,6 @@ class SurveyDetailReport(BaseMessagingEventReport):
     def template_context(self):
         return {
             'xforms_session': self.xforms_session,
-            'xform_instance': (XFormInstance.get(self.xforms_session.submission_id)
-                               if self.xforms_session.submission_id else None),
             'contact': get_doc_info_by_id(self.domain, self.xforms_session.connection_id),
             'start_time': (ServerTime(self.xforms_session.start_time)
                            .user_time(self.timezone).done().strftime(SERVER_DATETIME_FORMAT)),

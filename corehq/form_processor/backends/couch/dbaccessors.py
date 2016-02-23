@@ -10,6 +10,7 @@ from corehq.apps.hqcase.dbaccessors import (
     get_closed_case_ids,
     get_case_ids_in_domain_by_owner
 )
+from corehq.apps.hqcase.utils import get_case_by_domain_hq_user_id
 from corehq.dbaccessors.couchapps.cases_by_server_date.by_owner_server_modified_on import \
     get_case_ids_modified_with_owner_since
 from corehq.dbaccessors.couchapps.cases_by_server_date.by_server_modified_on import \
@@ -22,7 +23,7 @@ from couchforms.dbaccessors import (
     get_forms_by_type,
     get_deleted_form_ids_for_user,
     get_form_ids_for_user,
-)
+    get_forms_by_id)
 from couchforms.models import XFormInstance, doc_types
 from dimagi.utils.couch.database import iter_docs
 
@@ -43,6 +44,10 @@ class FormAccessorCouch(AbstractFormAccessor):
     @staticmethod
     def get_form(form_id):
         return XFormInstance.get(form_id)
+
+    @staticmethod
+    def get_forms(form_ids):
+        return get_forms_by_id(form_ids)
 
     @staticmethod
     def get_forms_by_type(domain, type_, limit, recent_first=False):
@@ -139,6 +144,9 @@ class CaseAccessorCouch(AbstractCaseAccessor):
     def get_attachment_content(case_id, attachment_id):
         return _get_attachment_content(CommCareCase, case_id, attachment_id)
 
+    @staticmethod
+    def get_case_by_domain_hq_user_id(domain, user_id, case_type):
+        return get_case_by_domain_hq_user_id(domain, user_id, case_type)
 
 def _get_attachment_content(doc_class, doc_id, attachment_id):
     try:

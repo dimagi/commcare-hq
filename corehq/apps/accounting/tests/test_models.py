@@ -80,7 +80,7 @@ class TestSubscription(BaseAccountingTest):
         self.currency = generator.init_default_currency()
         self.account = generator.billing_account(self.dimagi_user, self.billing_contact)
         self.subscription, self.subscription_length = generator.generate_domain_subscription_from_date(
-            datetime.date.today(), self.account, self.domain.name
+            datetime.date.today(), self.account, self.domain.name, subscription_length=15,
         )
 
     def test_creation(self):

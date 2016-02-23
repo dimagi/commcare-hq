@@ -440,7 +440,7 @@ SOIL_HEARTBEAT_CACHE_KEY = "django-soil-heartbeat"
 
 # restyle some templates
 BASE_TEMPLATE = "style/bootstrap2/base.html"  # should eventually be bootstrap3
-BASE_ASYNC_TEMPLATE = "reports/async/basic.html"
+BASE_ASYNC_TEMPLATE = "reports/async/bootstrap2/basic.html"
 LOGIN_TEMPLATE = "login_and_password/login.html"
 LOGGEDOUT_TEMPLATE = LOGIN_TEMPLATE
 
@@ -1559,6 +1559,7 @@ DOMAIN_MODULE_MAP = {
     'wvindia2': 'custom.world_vision',
     'pathways-india-mis': 'custom.care_pathways',
     'pathways-tanzania': 'custom.care_pathways',
+    'care-macf-malawi': 'custom.care_pathways',
     'kemri': 'custom.openclinica',
     'novartis': 'custom.openclinica',
 }

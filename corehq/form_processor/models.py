@@ -1,6 +1,9 @@
 import hashlib
 import json
+import logging
+import mimetypes
 import os
+import uuid
 from collections import (
     namedtuple,
     OrderedDict
@@ -18,7 +21,7 @@ from lxml import etree
 from uuidfield import UUIDField
 
 from corehq.blobs import get_blob_db
-from corehq.blobs.exceptions import NotFound
+from corehq.blobs.exceptions import NotFound, BadName
 from corehq.form_processor.exceptions import InvalidAttachment
 from corehq.form_processor.track_related import TrackRelatedChanges
 from corehq.sql_db.routers import db_for_read_write
@@ -30,7 +33,7 @@ from dimagi.utils.couch import RedisLockableMixIn
 from dimagi.utils.couch.safe_index import safe_index
 from dimagi.utils.couch.undo import DELETED_SUFFIX
 from dimagi.utils.decorators.memoized import memoized
-from .abstract_models import AbstractXFormInstance, AbstractCommCareCase
+from .abstract_models import AbstractXFormInstance, AbstractCommCareCase, CaseAttachmentMixin, IsImageMixin
 from .exceptions import AttachmentNotFound, AccessRestricted
 
 XFormInstanceSQL_DB_TABLE = 'form_processor_xforminstancesql'
@@ -79,6 +82,7 @@ class AttachmentMixin(SaveStateMixin):
 
         if self.is_saved():
             return self._get_attachments_from_db()
+        return []
 
     def get_attachment(self, attachment_name):
         attachment = self.get_attachment_meta(attachment_name)
@@ -155,9 +159,9 @@ class XFormInstanceSQL(DisabledDbMixin, models.Model, RedisLockableMixIn, Attach
         (DELETED, 'deleted'),
     )
 
-    form_id = models.CharField(max_length=255, unique=True, db_index=True)
+    form_id = models.CharField(max_length=255, unique=True, db_index=True, default=None)
 
-    domain = models.CharField(max_length=255)
+    domain = models.CharField(max_length=255, default=None)
     app_id = models.CharField(max_length=255, null=True)
     xmlns = models.CharField(max_length=255)
     user_id = models.CharField(max_length=255, null=True)
@@ -228,6 +232,12 @@ class XFormInstanceSQL(DisabledDbMixin, models.Model, RedisLockableMixIn, Attach
 
     @property
     @memoized
+    def attachments(self):
+        from couchforms.const import ATTACHMENT_NAME
+        return {att.name: att for att in self.get_attachments() if att.name != ATTACHMENT_NAME}
+
+    @property
+    @memoized
     def form_data(self):
         from .utils import convert_xform_to_json, adjust_datetimes
         xml = self.get_xml()
@@ -272,11 +282,10 @@ class XFormInstanceSQL(DisabledDbMixin, models.Model, RedisLockableMixIn, Attach
         if not xml:
             return None
 
-        def _to_xml_element(payload):
-            if isinstance(payload, unicode):
-                payload = payload.encode('utf-8', errors='replace')
-            return etree.fromstring(payload)
-        return _to_xml_element(xml)
+        if isinstance(xml, unicode):
+            xml = xml.encode('utf-8', errors='replace')
+
+        return etree.fromstring(xml)
 
     def get_data(self, path):
         """
@@ -316,17 +325,20 @@ class XFormInstanceSQL(DisabledDbMixin, models.Model, RedisLockableMixIn, Attach
 
     class Meta:
         db_table = XFormInstanceSQL_DB_TABLE
+        app_label = "form_processor"
 
 
-class AbstractAttachment(DisabledDbMixin, models.Model):
+class AbstractAttachment(DisabledDbMixin, models.Model, SaveStateMixin):
     attachment_id = UUIDField(unique=True, db_index=True)
-    name = models.CharField(max_length=255, db_index=True)
-    content_type = models.CharField(max_length=255)
+    name = models.CharField(max_length=255, db_index=True, default=None)
+    content_type = models.CharField(max_length=255, null=True)
     content_length = models.IntegerField(null=True)
-    blob_id = models.CharField(max_length=255)
+    blob_id = models.CharField(max_length=255, default=None)
 
     # RFC-1864-compliant Content-MD5 header value
-    md5 = models.CharField(max_length=255)
+    md5 = models.CharField(max_length=255, default=None)
+
+    properties = JSONField(lazy=True, default=dict)
 
     def write_content(self, content):
         if not self.name:
@@ -343,7 +355,7 @@ class AbstractAttachment(DisabledDbMixin, models.Model):
         db = get_blob_db()
         try:
             blob = db.get(self.blob_id, self._blobdb_bucket())
-        except (KeyError, NotFound):
+        except (KeyError, NotFound, BadName):
             raise AttachmentNotFound(self.name)
 
         if stream:
@@ -355,7 +367,11 @@ class AbstractAttachment(DisabledDbMixin, models.Model):
     def delete_content(self):
         db = get_blob_db()
         bucket = self._blobdb_bucket()
-        return db.delete(self.blob_id, bucket)
+        deleted = db.delete(self.blob_id, bucket)
+        if deleted:
+            self.blob_id = None
+
+        return deleted
 
     def _blobdb_bucket(self):
         if self.attachment_id is None:
@@ -364,9 +380,10 @@ class AbstractAttachment(DisabledDbMixin, models.Model):
 
     class Meta:
         abstract = True
+        app_label = "form_processor"
 
 
-class XFormAttachmentSQL(AbstractAttachment):
+class XFormAttachmentSQL(AbstractAttachment, IsImageMixin):
     objects = RestrictedManager()
     _attachment_prefix = 'form'
 
@@ -377,6 +394,7 @@ class XFormAttachmentSQL(AbstractAttachment):
 
     class Meta:
         db_table = XFormAttachmentSQL_DB_TABLE
+        app_label = "form_processor"
 
 
 class XFormOperationSQL(DisabledDbMixin, models.Model):
@@ -387,7 +405,7 @@ class XFormOperationSQL(DisabledDbMixin, models.Model):
 
     form = models.ForeignKey(XFormInstanceSQL, to_field='form_id')
     user_id = models.CharField(max_length=255, null=True)
-    operation = models.CharField(max_length=255)
+    operation = models.CharField(max_length=255, default=None)
     date = models.DateTimeField(auto_now_add=True)
 
     @property
@@ -395,6 +413,7 @@ class XFormOperationSQL(DisabledDbMixin, models.Model):
         return self.user_id
 
     class Meta:
+        app_label = "form_processor"
         db_table = XFormOperationSQL_DB_TABLE
 
 
@@ -457,7 +476,7 @@ class CommCareCaseSQL(DisabledDbMixin, models.Model, RedisLockableMixIn,
     objects = RestrictedManager()
 
     case_id = models.CharField(max_length=255, unique=True, db_index=True)
-    domain = models.CharField(max_length=255)
+    domain = models.CharField(max_length=255, default=None)
     type = models.CharField(max_length=255)
     name = models.CharField(max_length=255, null=True)
 
@@ -489,6 +508,7 @@ class CommCareCaseSQL(DisabledDbMixin, models.Model, RedisLockableMixIn,
         return dt
 
     @property
+    @memoized
     def xform_ids(self):
         from corehq.form_processor.backends.sql.dbaccessors import CaseAccessorSQL
         return CaseAccessorSQL.get_case_xform_ids(self.case_id)
@@ -551,8 +571,12 @@ class CommCareCaseSQL(DisabledDbMixin, models.Model, RedisLockableMixIn,
 
         return indices
 
+    @property
+    def has_indices(self):
+        return self.indices or self.reverse_indices
+
     def has_index(self, index_id):
-            return index_id in (i.identifier for i in self.indices)
+        return index_id in (i.identifier for i in self.indices)
 
     def get_index(self, index_id):
         found = filter(lambda i: i.identifier == index_id, self.indices)
@@ -561,9 +585,9 @@ class CommCareCaseSQL(DisabledDbMixin, models.Model, RedisLockableMixIn,
             return found[0]
         return None
 
-    def _get_attachment_from_db(self, attachment_name):
+    def _get_attachment_from_db(self, identifier):
         from corehq.form_processor.backends.sql.dbaccessors import CaseAccessorSQL
-        return CaseAccessorSQL.get_attachment_by_name(self.case_id, attachment_name)
+        return CaseAccessorSQL.get_attachment_by_identifier(self.case_id, identifier)
 
     def _get_attachments_from_db(self):
         from corehq.form_processor.backends.sql.dbaccessors import CaseAccessorSQL
@@ -584,7 +608,7 @@ class CommCareCaseSQL(DisabledDbMixin, models.Model, RedisLockableMixIn,
     @property
     @memoized
     def case_attachments(self):
-        return {attachment.name: attachment for attachment in self.get_attachments()}
+        return {attachment.identifier: attachment for attachment in self.get_attachments()}
 
     def modified_since_sync(self, sync_log):
         if self.server_modified_on >= sync_log.date:
@@ -636,10 +660,11 @@ class CommCareCaseSQL(DisabledDbMixin, models.Model, RedisLockableMixIn,
             ["domain", "owner_id"],
             ["domain", "closed", "server_modified_on"],
         ]
+        app_label = "form_processor"
         db_table = CommCareCaseSQL_DB_TABLE
 
 
-class CaseAttachmentSQL(AbstractAttachment):
+class CaseAttachmentSQL(AbstractAttachment, CaseAttachmentMixin):
     objects = RestrictedManager()
     _attachment_prefix = 'case'
 
@@ -647,8 +672,75 @@ class CaseAttachmentSQL(AbstractAttachment):
         'CommCareCaseSQL', to_field='case_id', db_index=True,
         related_name=AttachmentMixin.ATTACHMENTS_RELATED_NAME, related_query_name="attachment"
     )
+    identifier = models.CharField(max_length=255, default=None)
+    attachment_src = models.TextField(null=True)
+    attachment_from = models.TextField(null=True)
+
+    def update_from_attachment(self, attachment):
+        """
+        Update fields in this attachment with fields from anaother attachment
+
+        :param attachment: XFormAttachmentSQL or CaseAttachmentSQL object
+        """
+        self.content_length = attachment.content_length
+        self.blob_id = attachment.blob_id
+        self.md5 = attachment.md5
+        self.content_type = attachment.content_type
+        self.properties = attachment.properties
+
+        if not self.content_type and self.attachment_src:
+            guessed = mimetypes.guess_type(self.attachment_src)
+            if len(guessed) > 0 and guessed[0] is not None:
+                self.content_type = guessed[0]
+
+        if isinstance(attachment, CaseAttachmentSQL):
+            assert self.identifier == attachment.identifier
+            self.attachment_src = attachment.attachment_src
+            self.attachment_from = attachment.attachment_from
+
+    def copy_content(self, attachment):
+        if self.is_saved():
+            deleted = self.delete_content()
+            if not deleted:
+                logging.warn(
+                    "Case attachment content not deleted. bucket=%s, blob_id=%s",
+                    self._blobdb_bucket(), self.blob_id
+                )
+        content = attachment.read_content(stream=True)
+        self.write_content(content)
+
+    @classmethod
+    def from_case_update(cls, attachment):
+        if attachment.attachment_src:
+            ret = cls(
+                attachment_id=uuid.uuid4(),
+                name=attachment.attachment_name or attachment.identifier,
+                identifier=attachment.identifier,
+                attachment_src=attachment.attachment_src,
+                attachment_from=attachment.attachment_from
+            )
+        else:
+            ret = cls(name=attachment.identifier, identifier=attachment.identifier)
+        return ret
+
+    def __unicode__(self):
+        return unicode(
+            "CaseAttachmentSQL("
+            "attachment_id='{a.attachment_id}', "
+            "case_id='{a.case_id}', "
+            "name='{a.name}', "
+            "content_type='{a.content_type}', "
+            "content_length='{a.content_length}', "
+            "md5='{a.md5}', "
+            "blob_id='{a.blob_id}', "
+            "properties='{a.properties}', "
+            "identifier='{a.identifier}', "
+            "attachment_src='{a.attachment_src}', "
+            "attachment_from='{a.attachment_from}')"
+        ).format(a=self)
 
     class Meta:
+        app_label = "form_processor"
         db_table = CaseAttachmentSQL_DB_TABLE
 
 
@@ -669,11 +761,24 @@ class CommCareCaseIndexSQL(DisabledDbMixin, models.Model, SaveStateMixin):
         'CommCareCaseSQL', to_field='case_id', db_index=True,
         related_name="index_set", related_query_name="index"
     )
-    domain = models.CharField(max_length=255)
-    identifier = models.CharField(max_length=255, null=False)
-    referenced_id = models.CharField(max_length=255, null=False)
-    referenced_type = models.CharField(max_length=255, null=False)
+    domain = models.CharField(max_length=255, default=None)
+    identifier = models.CharField(max_length=255, default=None)
+    referenced_id = models.CharField(max_length=255, default=None)
+    referenced_type = models.CharField(max_length=255, default=None)
     relationship_id = models.PositiveSmallIntegerField(choices=RELATIONSHIP_CHOICES)
+
+    @property
+    @memoized
+    def referenced_case(self):
+        """
+        For a 'forward' index this is the case that the the index points to.
+        For a 'reverse' index this is the case that owns the index.
+        See ``CaseAccessorSQL.get_reverse_indices``
+
+        :return: referenced case
+        """
+        from corehq.form_processor.backends.sql.dbaccessors import CaseAccessorSQL
+        return CaseAccessorSQL.get_case(self.referenced_id)
 
     @property
     def relationship(self):
@@ -708,6 +813,7 @@ class CommCareCaseIndexSQL(DisabledDbMixin, models.Model, SaveStateMixin):
             ["domain", "referenced_id"],
         ]
         db_table = CommCareCaseIndexSQL_DB_TABLE
+        app_label = "form_processor"
 
 
 class CaseTransaction(DisabledDbMixin, models.Model):
@@ -818,6 +924,7 @@ class CaseTransaction(DisabledDbMixin, models.Model):
         unique_together = ("case", "form_id")
         ordering = ['server_date']
         db_table = CaseTransaction_DB_TABLE
+        app_label = "form_processor"
 
 
 class CaseTransactionDetail(JsonObject):
@@ -865,12 +972,15 @@ class LedgerValue(models.Model):
     Represents the current state of a ledger. Supercedes StockState
     """
     # domain not included and assumed to be accessed through the foreign key to the case table. legit?
-    case_id = models.CharField(max_length=255, db_index=True)  # remove foreign key until we're sharding this
+    case_id = models.CharField(max_length=255, db_index=True, default=None)  # remove foreign key until we're sharding this
     # can't be a foreign key to products because of sharding.
     # also still unclear whether we plan to support ledgers to non-products
-    entry_id = models.CharField(max_length=100, db_index=True)
-    section_id = models.CharField(max_length=100, db_index=True)
+    entry_id = models.CharField(max_length=100, db_index=True, default=None)
+    section_id = models.CharField(max_length=100, db_index=True, default=None)
     balance = models.IntegerField(default=0)  # todo: confirm we aren't ever intending to support decimals
     last_modified = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        app_label = "form_processor"
 
 CaseAction = namedtuple("CaseAction", ["action_type", "updated_known_properties", "indices"])

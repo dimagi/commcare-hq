@@ -100,7 +100,7 @@ class SubmissionErrorReport(DeploymentsReport):
         def _to_row(error_doc):
             def _fmt_url(doc_id):
                 view_name = 'render_form_data' \
-                    if error_doc.doc_type in ["XFormInstance", "XFormArchived", "XFormError"] \
+                    if error_doc.doc_type in ["XFormInstance", "XFormArchived", "XFormError", "XFormDeprecated"] \
                     else 'download_form'
                 try:
                     return "<a class='ajax_dialog' href='%(url)s'>%(text)s</a>" % {

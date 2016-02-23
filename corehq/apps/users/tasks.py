@@ -96,6 +96,7 @@ def _remove_indices_from_deleted_cases_task(domain, case_ids):
         remove_indices_from_deleted_cases(domain, case_ids)
     except BulkSaveError as e:
         notify_exception(
+            None,
             "_remove_indices_from_deleted_cases_task "
             "experienced a BulkSaveError. errors: {!r}".format(e.errors)
         )
