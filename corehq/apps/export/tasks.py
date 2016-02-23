@@ -24,3 +24,10 @@ def populate_export_download_task(export_instances, filters, download_id, filena
         download_id=download_id,
     )
     export_file.file.delete()
+
+
+@task(queue='background_queue', ignore_result=True)
+def rebuild_export_task(groupexport_id, index, last_access_cutoff=None, filter=None):
+    group_config = HQGroupExportConfiguration.get(groupexport_id)
+    config, schema = group_config.all_exports[index]
+    rebuild_export(config, schema, last_access_cutoff, filter=filter)
