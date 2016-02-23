@@ -39,27 +39,12 @@
 var COMMCAREHQ_MODULES = {};
 
 function hqDefine(path, moduleAccessor) {
-    var parts = path.split('/');
-    var i;
-    var object = COMMCAREHQ_MODULES;
-    for (i = 0; i < parts.length - 1; i += 1) {
-        if (typeof object[parts[i]] === 'undefined') {
-            object[parts[i]] = {};
-        }
-        object = object[parts[i]];
-    }
-    if (typeof object[parts[i]] !== 'undefined') {
+    if (typeof COMMCAREHQ_MODULES[path] !== 'undefined') {
         throw new Error("The module '" + path + "' has already been defined elsewhere.");
     }
-    object[parts[i]] = moduleAccessor();
+    COMMCAREHQ_MODULES[path] = moduleAccessor();
 }
 
 function hqImport(path) {
-    var parts = path.split('/');
-    var i;
-    var object = COMMCAREHQ_MODULES;
-    for (i = 0; i < parts.length; i += 1) {
-        object = object[parts[i]];
-    }
-    return object;
+    return COMMCAREHQ_MODULES[path];
 }
