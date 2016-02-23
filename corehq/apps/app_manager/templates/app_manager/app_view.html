@@ -35,10 +35,13 @@
                 warning: '{% trans "This is not an allowed value for this field" %}'
             }
         };
+
         $(function () {
             COMMCAREHQ.appView.settings = new CommcareSettings(COMMCAREHQ.appView.settings);
             $('#commcare-settings').koApplyBindings(COMMCAREHQ.appView.settings);
+        });
 
+        $(function () {
             var multimedia_tab = (function () {
                 var self = {};
                 self.load_state = ko.observable(null);
@@ -65,9 +68,37 @@
                     multimedia_tab.load_if_necessary();
                 }
             });
+        });
+
+        $(function () {
+            var loaded = false,
+                $main = $("#releases"),
+                $loading = $main.find(".hq-loading").remove(),
+                $loadingError = $main.find(".hq-loading-error").remove();
 
             $('#demand-releases').on('show.bs.tab', function () {
-                alert("show the releases tab");
+                if (loaded) {
+                    return;
+                }
+
+                // If the content takes a noticeable amount of time to load, show a spinner
+                var showSpinner = true;
+                _.delay(function() {
+                    if (showSpinner) {
+                        $main.html($loading.html());
+                    }
+                }, 100);
+
+                // Load the content
+                $.ajax({
+                    url: "{% url 'release_manager_ajax' domain app.get_id %}",
+                }).success(function(content) {
+                    showSpinner = false;
+                    $main.html(content);
+                }).error(function() {
+                    showSpinner = false;
+                    $main.html($loadingError.html());
+                });
             });
         });
 
@@ -254,7 +285,19 @@
 {% block form-view %}
     <div class="tab-content">
         <div class="tab-pane" id="releases">
-            <!-- will be populated asynchronously -->
+            <!-- templates only; will be populated asynchronously -->
+            <script type="text/html" class="hq-loading">
+                <img src="{% new_static 'hqwebapp/img/ajax-loader.gif' %}" alt="loading indicator" />
+                {% trans "Loading..." %}
+            </script>
+            <script type="text/html" class="hq-loading-error">
+                <div class="alert alert-danger">
+                    {% trans "Oops, there was a problem loading this section. Please try again." %}
+                </div>
+                <button class="btn btn-primary reload">
+                    {% trans "Try again" %}
+                </button>
+            </script>
         </div>
         <div class="tab-pane{% if not copy_app_form.is_bound %} active{% endif %}" id="app-settings">
             {% include "app_manager/partials/app-settings.html" %}
