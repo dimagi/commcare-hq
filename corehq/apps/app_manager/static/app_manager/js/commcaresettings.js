@@ -436,7 +436,7 @@ $(function () {
     ko.bindingHandlers.passwordSetter = {
         init: function (element, valueAccessor) {
             var observableValue = valueAccessor();
-            $(element).password_setter();
+            $(element).password_setter({ link_text: {% trans "Reset" %} });
             $(element).on('textchange change', function () {
                 observableValue($(element).val());
             });
