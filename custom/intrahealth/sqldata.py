@@ -196,10 +196,14 @@ class DispDesProducts(BaseSqlData):
             for product in products
         }
 
-        rows = super(DispDesProducts, self).rows
+        rows = self.get_data()
         for row in rows:
-            product_id = row[0]
-            values[product_id] = [row[1], row[2], "%d%%" % (100 * row[2]['html'] / (row[1]['html'] or 1))]
+            product_id = row['product_id']
+            values[product_id] = [
+                row['commandes_total'],
+                row['recus_total'],
+                "%d%%" % (100 * row['recus_total']['html'] / (row['commandes_total']['html'] or 1))
+            ]
 
         commandes = ['Commandes']
         raux = ['Raux']
