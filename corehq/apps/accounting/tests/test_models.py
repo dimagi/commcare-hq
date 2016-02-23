@@ -132,13 +132,13 @@ class TestSubscription(BaseAccountingTest):
 
     def test_next_subscription(self):
         this_subscription_date_end = self.subscription.date_end
-        already_canceled_future_subscription= generator.generate_domain_subscription(
+        already_canceled_future_subscription = generator.generate_domain_subscription(  # noqa
             self.account,
             self.domain,
             date_start=this_subscription_date_end,
             date_end=this_subscription_date_end
         )
-        next_future_subscription= generator.generate_domain_subscription(
+        next_future_subscription = generator.generate_domain_subscription(
             self.account,
             self.domain,
             date_start=this_subscription_date_end,
