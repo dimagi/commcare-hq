@@ -1,3 +1,4 @@
+import logging
 from django import template
 from django.conf import settings
 from django.core.urlresolvers import reverse
@@ -106,6 +107,9 @@ def format_sidebar(context):
         # and see if the nav needs a subnav for the current contextual item
         for section_title, navs in sections:
             for nav in navs:
+                logging.info('NAV URL: {}'.format(nav['url']))
+                logging.info('get_full_path: {}'.format(request.get_full_path()))
+                logging.info('build_absolute_uri: {}'.format(request.build_absolute_uri()))
                 if (request.get_full_path().startswith(nav['url']) or
                    request.build_absolute_uri().startswith(nav['url'])):
                     nav['is_active'] = True
