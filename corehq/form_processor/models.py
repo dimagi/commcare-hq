@@ -13,7 +13,7 @@ from datetime import datetime
 from StringIO import StringIO
 from django.conf import settings
 from django.db import models
-from json_field.fields import JSONField
+import json_field
 from jsonobject import JsonObject
 from jsonobject import StringProperty
 from jsonobject.properties import BooleanProperty
@@ -180,8 +180,8 @@ class XFormInstanceSQL(DisabledDbMixin, models.Model, RedisLockableMixIn, Attach
 
     # Used to tag forms that were forcefully submitted
     # without a touchforms session completing normally
-    auth_context = JSONField(lazy=True, default=dict)
-    openrosa_headers = JSONField(lazy=True, default=dict)
+    auth_context = json_field.JSONField(lazy=True, default=dict)
+    openrosa_headers = json_field.JSONField(lazy=True, default=dict)
     partial_submission = models.BooleanField(default=False)
     submit_ip = models.CharField(max_length=255, null=True)
     last_sync_token = models.CharField(max_length=255, null=True)
@@ -338,7 +338,7 @@ class AbstractAttachment(DisabledDbMixin, models.Model, SaveStateMixin):
     # RFC-1864-compliant Content-MD5 header value
     md5 = models.CharField(max_length=255, default=None)
 
-    properties = JSONField(lazy=True, default=dict)
+    properties = json_field.JSONField(lazy=True, default=dict)
 
     def write_content(self, content):
         if not self.name:
@@ -498,7 +498,7 @@ class CommCareCaseSQL(DisabledDbMixin, models.Model, RedisLockableMixIn,
     external_id = models.CharField(max_length=255)
     location_id = models.CharField(max_length=255, null=True)
 
-    case_json = JSONField(lazy=True, default=dict)
+    case_json = json_field.JSONField(lazy=True, default=dict)
 
     @property
     def doc_type(self):
@@ -848,7 +848,7 @@ class CaseTransaction(DisabledDbMixin, models.Model):
     server_date = models.DateTimeField(null=False)
     type = models.PositiveSmallIntegerField(choices=TYPE_CHOICES)
     revoked = models.BooleanField(default=False, null=False)
-    details = JSONField(lazy=True, default=dict)
+    details = json_field.JSONField(lazy=True, default=dict)
 
     @property
     def is_relevant(self):

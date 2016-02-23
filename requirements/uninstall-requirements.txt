@@ -14,3 +14,4 @@ gitdb
 django-kombu
 rawes
 pyzxcvbn
+#django-json-field

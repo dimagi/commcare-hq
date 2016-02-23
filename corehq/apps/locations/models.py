@@ -8,7 +8,7 @@ from dimagi.utils.couch.database import iter_docs
 from dimagi.utils.decorators.memoized import memoized
 from datetime import datetime
 from django.db import models, transaction
-import json_field
+import jsonfield
 from casexml.apps.case.cleanup import close_case
 from corehq.apps.commtrack.const import COMMTRACK_USERNAME
 from corehq.apps.domain.models import Domain
@@ -219,7 +219,7 @@ class SQLLocation(MPTTModel):
     location_type = models.ForeignKey(LocationType)
     site_code = models.CharField(max_length=255)
     external_id = models.CharField(max_length=255, null=True)
-    metadata = json_field.JSONField(default={})
+    metadata = jsonfield.JSONField(default={})
     created_at = models.DateTimeField(auto_now_add=True)
     last_modified = models.DateTimeField(auto_now=True)
     is_archived = models.BooleanField(default=False)
