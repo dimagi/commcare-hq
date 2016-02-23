@@ -78,3 +78,48 @@ nav.app-manager-content {
         width: 95%;
     }
 }
+
+// Deploy page
+#releases-table {
+    .build {
+        &:hover {
+            color: black !important;
+
+            .edit-comment-pencil {
+                display: inline;
+            }
+        }
+
+        &.build-unreleased {
+            color: #888;
+        }
+
+        &.build-latest-release {
+            background-color: #EFEFFF;
+
+            .build.build-latest-release .build-is-released:after{
+                content: "Latest";
+            }
+        }
+
+        .edit-comment-pencil {
+            display: none;
+            margin-left: 5px;
+            position: absolute;
+        }
+    }
+
+    .pending {
+        width: 20px;
+        height: 20px;
+        background-repeat: no-repeat;
+        background-image: url("{% new_static 'hqwebapp/img/ajax-loader.gif' %}");
+        background-size: 80%;
+        background-position: center;
+    }
+
+    .released {
+        color: #ffff00;
+        text-shadow: 1px 0px #ffa500, -1px 0px #ffa500, 0px 1px #ffa500, 0px -1px #ffa500;
+    }
+}
