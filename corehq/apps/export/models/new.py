@@ -956,3 +956,42 @@ class SplitExportColumn(ExportColumn):
                 )
             )
         return headers
+
+
+class SavedBasicExport(BlobMixin, Document):
+    """
+    A cache of an export that lives in couch.
+    Doesn't do anything smart, just works off an index
+    """
+    configuration = SchemaProperty(ExportConfiguration)
+    last_updated = DateTimeProperty()
+    last_accessed = DateTimeProperty()
+
+    @property
+    def size(self):
+        try:
+            return self.blobs[self.get_attachment_name()].content_length
+        except KeyError:
+            return 0
+
+    def has_file(self):
+        return self.get_attachment_name() in self.blobs
+
+    def get_attachment_name(self):
+        # obfuscate this because couch doesn't like attachments that start with underscores
+        return hashlib.md5(unicode(self.configuration.filename).encode('utf-8')).hexdigest()
+
+    def set_payload(self, payload):
+        self.put_attachment(payload, self.get_attachment_name())
+
+    def get_payload(self, stream=False):
+        return self.fetch_attachment(self.get_attachment_name(), stream=stream)
+
+    @classmethod
+    def by_index(cls, index):
+        return SavedBasicExport.view(
+            "couchexport/saved_exports",
+            key=json.dumps(index),
+            include_docs=True,
+            reduce=False,
+        ).all()
