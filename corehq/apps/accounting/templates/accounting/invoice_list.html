@@ -2,7 +2,7 @@
 {% load hq_shared_tags %}
 
 {% block js %}{{ block.super }}
-    <script src="{% static 'accounting/js/adjust-balance-modal.js' %}"></script>
+    <script src="{% new_static 'accounting/js/adjust-balance-modal.js' %}"></script>
 {% endblock %}
 
 {% block js-inline %}{{ block.super }}
@@ -13,9 +13,9 @@
     {% endfor %}
 {% endblock %}
 
-{% block main_column %}
+{% block page_content %}
     {% for adjust_balance_form in adjust_balance_forms %}
-        {% include 'accounting/bootstrap2/adjust_balance.html' %}
+        {% include 'accounting/bootstrap3/adjust_balance.html' %}
     {% endfor %}
     {{ block.super }}
 {% endblock %}
