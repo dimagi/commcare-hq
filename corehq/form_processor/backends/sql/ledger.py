@@ -36,7 +36,7 @@ class LedgerProcessorSQL(LedgerProcessorInterface):
         return StockModelUpdateResult(to_save=to_save)
 
     def get_ledgers_for_case(self, case_id):
-        return LedgerAccessorSQL.get_ledgers_for_case(case_id)
+        return LedgerAccessorSQL.get_ledger_values_for_case(case_id)
 
     def get_current_ledger_value(self, unique_ledger_reference):
         try:

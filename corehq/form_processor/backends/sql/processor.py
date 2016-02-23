@@ -5,7 +5,7 @@ import uuid
 from PIL import Image
 from django.db import transaction
 from casexml.apps.case.xform import get_case_updates
-from corehq.form_processor.backends.sql.dbaccessors import FormAccessorSQL, CaseAccessorSQL
+from corehq.form_processor.backends.sql.dbaccessors import FormAccessorSQL, CaseAccessorSQL, LedgerAccessorSQL
 from corehq.form_processor.backends.sql.update_strategy import SqlCaseUpdateStrategy
 from corehq.form_processor.change_publishers import publish_form_saved, publish_case_saved
 from corehq.form_processor.exceptions import CaseNotFound, XFormNotFound
@@ -71,8 +71,12 @@ class FormProcessorSQL(object):
             if cases:
                 for case in cases:
                     CaseAccessorSQL.save_case(case)
+
+            ledgers_to_save = []
             for stock_update in stock_updates or []:
-                stock_update.commit()
+                ledgers_to_save.extend(stock_update.to_save)
+
+            LedgerAccessorSQL.save_ledger_values(ledgers_to_save)
 
         cls._publish_changes(processed_forms, cases)
 
