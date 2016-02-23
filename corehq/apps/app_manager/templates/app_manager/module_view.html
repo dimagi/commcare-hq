@@ -94,6 +94,14 @@
             }
         });
         $(function () {
+            var showCaseTypeError = function(message) {
+                var $caseTypeError = $('#case_type_error')
+                $caseTypeError.css('display', 'block');
+                $caseTypeError.text(message);
+            }
+            var hideCaseTypeError = function() {
+                $('#case_type_error').css('display', 'none');
+            }
             $('#case_type').on('textchange', function () {
                 var value = $(this).val();
                 var valueNoSpaces = value.replace(/ /g, '_');
@@ -102,10 +110,18 @@
                 }
                 if (!valueNoSpaces.match(/^[\w-]+$/g)) {
                     $(this).closest('.form-group').addClass('has-error');
-                    $('#case_type_error').css('display', 'block');
+                    showCaseTypeError(
+                        gettext("Case types can only include the characters a-z, 0-9, '-' and '_'")
+                    );
+                } else if (valueNoSpaces === 'commcare-user') {
+                    $(this).closest('.form-group').addClass('has-error');
+                    showCaseTypeError(
+                        gettext("'commcare-user' is a reserved case type. Please change the case type")
+                    );
+
                 } else {
                     $(this).closest('.form-group').removeClass('has-error');
-                    $('#case_type_error').css('display', 'none');
+                    hideCaseTypeError();
                 }
             });
 
@@ -293,7 +309,8 @@
                         {% trans "Case Type" %}
                         <span class="hq-help-template"
                               data-title="{% trans "Case Type" %}"
-                              data-content="{% trans "e.g. &quot;pregnancy&quot;. The name for the type of case you are tracking. All cases you register in this module will have this case type, and only cases of this type will show in the case list. Modules with the same case type will have the same cases in their case lists." %}"
+
+                              data-content="{% trans "The name for the type of case you are tracking (e.g. &quot;pregnancy&quot;, &quot;farm&quot;, &quot;household&quot;, etc.). All cases you register in this module will be this type of case, and only cases of this type will show in the case list. Other modules with the same case type will use the same set of cases." %}"
                                 ></span>
                     </label>
                     <div class="col-sm-4">

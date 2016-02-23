@@ -178,13 +178,15 @@ def make_form_meta_block_indicator(spec, column_id=None):
     form meta field and data type.
     """
     field_name = spec[0]
+    if isinstance(field_name, basestring):
+        field_name = [field_name]
     data_type = spec[1]
-    column_id = column_id or field_name
+    column_id = column_id or field_name[0]
     ret = {
         "type": "raw",
         "column_id": column_id,
-        "property_path": ['form', 'meta'] + [field_name],
-        "display_name": field_name,
+        "property_path": ['form', 'meta'] + field_name,
+        "display_name": field_name[0],
         "datatype": get_form_indicator_data_type(data_type),
     }
     return ret

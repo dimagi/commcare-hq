@@ -15,7 +15,7 @@ class DummyPillow(BasicPillow):
 
 @override_settings(PILLOWTOPS={'test': ['corehq.apps.hqadmin.tests.test_utils.DummyPillow']})
 class TestPillowCheckpointSeqStore(TestCase):
-    dependent_apps = []
+    dependent_apps = ['pillowtop']
 
     def setUp(self):
         self.pillow = DummyPillow()

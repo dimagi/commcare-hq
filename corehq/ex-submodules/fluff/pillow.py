@@ -26,7 +26,7 @@ class FluffPillow(PythonPillow):
         # fluff pillows should default to SQL checkpoints
         checkpoint = checkpoint or get_default_django_checkpoint_for_legacy_pillow_class(self.__class__)
         if change_feed is None and self.kafka_topic:
-            change_feed = KafkaChangeFeed(topic=self.kafka_topic, group_id=self.__class__.__name__)
+            change_feed = KafkaChangeFeed(topics=[self.kafka_topic], group_id=self.__class__.__name__)
             preload_docs = False  # it's never necessary preload_docs for kafka pillows
         super(FluffPillow, self).__init__(
             chunk_size=chunk_size,

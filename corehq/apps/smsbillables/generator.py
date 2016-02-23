@@ -1,6 +1,7 @@
 import random
 import datetime
 import string
+from collections import namedtuple
 from decimal import Decimal
 
 from dimagi.utils.data import generator as data_gen
@@ -26,10 +27,12 @@ SMS_MESSAGE_CONTENT = [
 TEST_DOMAIN = "test"
 TEST_NUMBER = "16175005454"
 
-TEST_COUNTRY_CODES = [1, 20, 30, 220, 501]
-OTHER_COUNTRY_CODES = [31, 40, 245, 502]
+TEST_COUNTRY_CODES = (1, 20, 30, 220, 501)
+OTHER_COUNTRY_CODES = (31, 40, 245, 502)
 
 DIRECTIONS = [INCOMING, OUTGOING]
+
+CountryPrefixPair = namedtuple('CountryPrefixPair', ['country_code', 'prefix'])
 
 
 def arbitrary_message():
@@ -40,20 +43,29 @@ def arbitrary_fee():
     return Decimal(str(round(random.uniform(0.0, 1.0), 4)))
 
 
-def arbitrary_country_code_and_prefixes(country_codes=TEST_COUNTRY_CODES):
-    country_codes_and_prefixes = []
-    for country_code in country_codes:
-        prefixes = [""]
-        for _ in range(8):
-            for i in range(4):
-                while True:
-                    prefix = prefixes[-1 - i] + str(random.randint(0 if country_code != 1 else 2, 9))
-                    if prefix not in prefixes:
-                        prefixes.append(prefix)
-                        break
-        for prefix in prefixes:
-            country_codes_and_prefixes.append((str(country_code), prefix))
-    return country_codes_and_prefixes
+def _generate_prefixes(country_code, max_prefix_length, num_prefixes_per_size):
+    def _generate_prefix(cc, existing_prefixes, i):
+        while True:
+            prefix = existing_prefixes[-1 - i] + str(random.randint(0 if cc != 1 else 2, 9))
+            if prefix not in existing_prefixes:
+                return prefix
+
+    prefixes = [""]
+    for _ in range(max_prefix_length):
+        for i in range(num_prefixes_per_size):
+            prefixes.append(_generate_prefix(country_code, prefixes, i))
+    return prefixes
+
+
+def arbitrary_country_code_and_prefixes(
+    max_prefix_length, num_prefixes_per_size,
+    country_codes=TEST_COUNTRY_CODES
+):
+    return [
+        CountryPrefixPair(str(country_code), prefix)
+        for country_code in country_codes
+        for prefix in _generate_prefixes(country_code, max_prefix_length, num_prefixes_per_size)
+    ]
 
 
 def arbitrary_fees_by_prefix(backend_ids, country_codes_and_prefixes):

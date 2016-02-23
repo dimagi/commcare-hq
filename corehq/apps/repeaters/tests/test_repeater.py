@@ -113,7 +113,7 @@ class RepeaterTest(BaseRepeaterTest):
     def make_post_fn(self, status_codes):
         status_codes = iter(status_codes)
 
-        def post_fn(data, url, headers=None):
+        def post_fn(data, url, headers=None, force_send=False):
             status_code = status_codes.next()
             self.log.append((url, status_code, data, headers))
 
@@ -446,10 +446,15 @@ class TestRepeaterFormat(BaseRepeaterTest):
         post_fn = MagicMock()
         repeat_record.fire(post_fn=post_fn)
         headers = self.repeater.get_headers(repeat_record)
-        post_fn.assert_called_with(payload, self.repeater.url, headers=headers)
+        post_fn.assert_called_with(payload, self.repeater.url, headers=headers, force_send=False)
 
 
 class RepeaterLockTest(TestCase):
+
+    def tearDown(self):
+        repeat_records = RepeatRecord.all()
+        for repeat_record in repeat_records:
+            repeat_record.delete()
 
     def testLocks(self):
         r = RepeatRecord(domain='test')

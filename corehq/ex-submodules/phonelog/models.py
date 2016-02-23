@@ -1,4 +1,3 @@
-from dimagi.ext.couchdbkit import Document
 from django.db import models
 
 COUCH_UUID_MAX_LEN = 50
@@ -36,7 +35,3 @@ class UserEntry(models.Model):
     class Meta:
         app_label = 'phonelog'
         unique_together = [('xform_id', 'i')]
-
-
-class _(Document):
-    pass

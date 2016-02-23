@@ -50,7 +50,7 @@
 
         {% include 'style/includes/analytics_all.html' %}
         {% if less_debug %}
-            <script src="{% static 'style/lib/lessjs/less-1.3.1.min.js' %}"></script>
+            <script src="{% static 'less/dist/less-1.3.1.min.js' %}"></script>
             {% if less_watch %}<script>less.watch();</script>{% endif %}
         {% endif %}
     </head>
@@ -148,8 +148,9 @@
                     <a href="http://www.dimagi.com/">Dimagi, Inc.</a>
                     {% if user.is_authenticated %}
                         &nbsp;|&nbsp;
-                        <a href="{% trans 'http://www.commcarehq.org/home' %}">{% trans 'Learn more about CommCare HQ' %}</a>.
+                        <a href="{% trans 'http://www.commcarehq.org/home' %}">{% trans 'Learn more about CommCare HQ' %}</a>
                     {% endif %}
+                    &nbsp;|&nbsp;
                     <a href="{% url "eula" %}">{% trans "Read CommCare HQ's End User License Agreement" %}</a>
                     &nbsp;|&nbsp;
                     <a href="{% trans 'http://www.dimagi.com/policy' %}">{% trans 'Privacy' %}</a>

@@ -15,6 +15,7 @@ from corehq.apps.hqpillow_retry.views import PillowErrorsReport
 from corehq.apps.reports.standard import (monitoring, inspect, export,
     deployments, sms, ivr)
 from corehq.apps.reports.standard.forms import reports as receiverwrapper
+from corehq.apps.reports.standard.project_health import ProjectHealthDashboard
 from corehq.apps.userreports.exceptions import BadSpecError
 from corehq.apps.userreports.models import (
     StaticReportConfiguration,
@@ -49,6 +50,7 @@ from corehq.apps.smsbillables.interface import (
     SMSBillablesInterface,
     SMSGatewayFeeCriteriaInterface,
 )
+from corehq.apps.domain.views import DomainForwardingRepeatRecords
 
 
 def REPORTS(project):
@@ -69,6 +71,7 @@ def REPORTS(project):
             monitoring.CaseActivityReport,
             monitoring.FormCompletionVsSubmissionTrendsReport,
             monitoring.WorkerActivityTimes,
+            ProjectHealthDashboard,
         )),
         (ugettext_lazy("Inspect Data"), (
             inspect.SubmitHistory, CaseListReport,
@@ -302,5 +305,11 @@ ADMIN_REPORTS = (
         RealProjectSpacesReport,
         CommConnectProjectSpacesReport,
         CommTrackProjectSpacesReport,
+    )),
+)
+
+DOMAIN_REPORTS = (
+    (_('Project Settings'), (
+        DomainForwardingRepeatRecords,
     )),
 )

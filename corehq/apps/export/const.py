@@ -1,5 +1,8 @@
+"""
+Some of these constants correspond to constants set in corehq/apps/export/static/export/js/const.js
+so if changing a value, ensure that both places reflect the change
+"""
 from collections import namedtuple
-from couchexport.transforms import couch_to_excel_datetime
 
 SystemProperty = namedtuple('SystemProperty', ['tag', 'name'])
 
@@ -11,7 +14,7 @@ PROPERTY_TAG_DELETED = 'deleted'
 PROPERTY_TAG_ROW = 'row'
 
 MAIN_TABLE_PROPERTIES = [
-    SystemProperty(PROPERTY_TAG_ROW, 'row')
+    SystemProperty(PROPERTY_TAG_ROW, 'number')
 ]
 
 CASE_HISTORY_PROPERTIES = [
@@ -28,11 +31,12 @@ CASE_HISTORY_PROPERTIES = [
 FORM_EXPORT = 'form'
 CASE_EXPORT = 'case'
 
-MAIN_TABLE = None
+MAIN_TABLE = []
 CASE_HISTORY_TABLE = ['case_history']
 
-TRANSFORM_FUNCTIONS = {
+DEID_TRANSFORM_FUNCTIONS = {
     'deid_id': lambda x: x,  # TODO: map these to actual deid functions
     'deid_date': lambda x: x,
-    'transform_date': couch_to_excel_datetime
 }
+TRANSFORM_FUNCTIONS = {}
+TRANSFORM_FUNCTIONS.update(DEID_TRANSFORM_FUNCTIONS)

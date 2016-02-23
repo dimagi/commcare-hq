@@ -32,6 +32,5 @@ create_topics() {
 create_kafka_topics() {
     kafka_topics=$(docker_run kafka find /opt -name kafka-topics.sh | tr -d '\n' | tr -d '\r')
     zookeeper_ip=$(get_container_ip "commcare.name" "kafka")
-    echo $zookeeper_ip
     create_topics $kafka_topics $zookeeper_ip "case form meta case-sql form-sql"
 }

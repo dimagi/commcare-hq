@@ -449,7 +449,7 @@ var GraphSeries = function (original, childCaseTypes, fixtures){
         if (source.type == "custom"){
              return "instance('name')/root/path-to-point/point";
         } else if (source.type == 'case') {
-            return "instance('casedb')/casedb/case[@case_type='"+source.name+"'][index/parent=current()/@case_id][@status='open']";
+            return "instance('casedb')/casedb/case[@case_type='"+source.name+"'][@status='open'][index/parent=current()/@case_id]";
         } else if (source.type == 'fixture') {
             return "instance('" + self.getFixtureInstanceId(source.name) + "')/" + source.name + "_list/" + source.name;
         }
