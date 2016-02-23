@@ -127,21 +127,6 @@ def get_last_form_submission_received(domain):
     return submission_time
 
 
-def get_last_form_submission_by_xmlns(domain, xmlns):
-    from corehq.apps.reports.util import make_form_couch_key
-    key = make_form_couch_key(domain, xmlns=xmlns)
-    return XFormInstance.view(
-        "all_forms/view",
-        reduce=False,
-        endkey=key,
-        startkey=key + [{}],
-        descending=True,
-        limit=1,
-        include_docs=True,
-        stale=stale_ok(),
-    ).first()
-
-
 def app_has_been_submitted_to_in_last_30_days(domain, app_id):
     now = datetime.datetime.utcnow()
     _30_days = datetime.timedelta(days=30)
