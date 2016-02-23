@@ -2,15 +2,18 @@ import contextlib
 import os
 import tempfile
 
-from couchexport.exceptions import SchemaMismatchException, ExportRebuildError
-from couchexport.groupexports import get_saved_export_and_delete_copies, \
-    _should_rebuild_export, _save_export_payload
+import datetime
+
+from couchdbkit import ResourceConflict
+
+from couchexport.groupexports import (
+    _should_rebuild_export,
+)
 from soil import DownloadBase
 
 from couchexport.export import FormattedRow, get_writer
 from couchexport.files import Temp
 from couchexport.models import Format
-from couchexport.tasks import rebuild_schemas
 from corehq.apps.export.esaccessors import (
     get_form_export_base_query,
     get_case_export_base_query,
@@ -18,6 +21,7 @@ from corehq.apps.export.esaccessors import (
 from corehq.apps.export.models.new import (
     CaseExportInstance,
     FormExportInstance,
+    CachedExport,
 )
 
 
@@ -188,32 +192,33 @@ def _get_base_query(export_instance):
         )
 
 
-def rebuild_export(config, schema, last_access_cutoff=None, filter=None):
-    saved_export = get_saved_export_and_delete_copies(config.index)
+def rebuild_export(export_instance, last_access_cutoff=None, filters=None):
+    """
+    Rebuild the given daily saved ExportInstance
+    """
+    saved_export = _get_cached_export_and_delete_copies(export_instance._id)
     if not _should_rebuild_export(saved_export, last_access_cutoff):
         return
 
-    try:
-        files = schema.get_export_files(format=config.format, filter=filter)
-    except SchemaMismatchException:
-        # fire off a delayed force update to prevent this from happening again
-        rebuild_schemas.delay(config.index)
-        raise ExportRebuildError(u'Schema mismatch for {}. Rebuilding tables...'.format(config.filename))
-
-    with files:
-        _save_export_payload(files, saved_export, config)
+    file = get_export_file([export_instance], filters or [])
+    with file:
+        _save_export_payload(export_instance._id, file, saved_export)
 
 
-def _save_export_payload(files, saved_export, config):
-    payload = files.file.payload
+def _save_export_payload(export_instance_id, file, saved_export):
+    """
+    Save the contents of an export file to disk as part of the given saved export
+    for later retrieval.
+    """
+    payload = file.file.payload
+
     if not saved_export:
-        saved = SavedBasicExport(configuration=config)
-    else:
-        saved_export.configuration = config
+        saved_export = CachedExport(export_instance_id=export_instance_id)
 
     if saved_export.last_accessed is None:
-        saved_export.last_accessed = datetime.utcnow()
-    saved_export.last_updated = datetime.utcnow()
+        saved_export.last_accessed = datetime.datetime.utcnow()
+    saved_export.last_updated = datetime.datetime.utcnow()
+
     try:
         saved_export.save()
     except ResourceConflict:
@@ -222,9 +227,9 @@ def _save_export_payload(files, saved_export, config):
     else:
         saved_export.set_payload(payload)
 
+def _get_cached_export_and_delete_copies(export_instance_id):
 
-def get_saved_export_and_delete_copies(index):
-    matching = SavedBasicExport.by_index(index)
+    matching = CachedExport.by_export_instance_id(export_instance_id)
     if not matching:
         return None
     if len(matching) == 1:
