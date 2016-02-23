@@ -2,7 +2,7 @@
 <p>
 <% if (num > 0) { %>
     <span class="label label-success">
-        <i class="icon-ok"></i>
+        <i class="fa fa-check"></i>
         <% if (num == 1) { %>
             {% trans '1 Match Found' %}
         <% } else { %>
@@ -10,6 +10,6 @@
         <% } %>
     </span>
 <% } else { %>
-    <span class="label label-important">{% trans 'No Matches Found' %}</span>
+    <span class="label label-danger">{% trans 'No Matches Found' %}</span>
 <% } %>
 </p>
