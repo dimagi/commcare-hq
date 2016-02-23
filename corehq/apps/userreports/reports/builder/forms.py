@@ -610,7 +610,7 @@ class ConfigureNewReportBase(forms.Form):
             crispy.Hidden('filters', None, data_bind="value: filtersList.serializedProperties")
         )
 
-    def _build_data_source(self):
+    def _build_data_source(self, indicators=None):
         data_source_config = DataSourceConfiguration(
             domain=self.domain,
             display_name=self.ds_builder.data_source_name,
@@ -618,7 +618,7 @@ class ConfigureNewReportBase(forms.Form):
             # The uuid gets truncated, so it's not really universally unique.
             table_id=_clean_table_name(self.domain, str(uuid.uuid4().hex)),
             configured_filter=self.ds_builder.filter,
-            configured_indicators=self.ds_builder.indicators,
+            configured_indicators=indicators if indicators else self.ds_builder.indicators,
             meta=DataSourceMeta(build=DataSourceBuildInformation(
                 source_id=self.report_source_id,
                 app_id=self.app._id,
@@ -677,10 +677,23 @@ class ConfigureNewReportBase(forms.Form):
         Creates data source and report config.
         """
         matching_data_source = self.ds_builder.get_existing_match()
+        number_columns = [col["field"] for col in self._report_columns if col["aggregation"] in ["avg", "sum"]]
         if matching_data_source:
             data_source_config_id = matching_data_source['id']
+            if number_columns:
+                config = DataSourceConfiguration.get(data_source_config_id)
+                for indicator in config.configured_indicators:
+                    if indicator["column_id"] in number_columns:
+                        indicator["datatype"] = "decimal"
+                config.save()
+                tasks.rebuild_indicators.delay(data_source_config_id)
         else:
-            data_source_config_id = self._build_data_source()
+            indicators = self.ds_builder.indicators
+            if number_columns:
+                for indicator in indicators:
+                    if indicator["column_id"] in number_columns:
+                        indicator["datatype"] = "decimal"
+            data_source_config_id = self._build_data_source(indicators=indicators)
 
         report = ReportConfiguration(
             domain=self.domain,
