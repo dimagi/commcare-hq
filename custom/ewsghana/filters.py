@@ -12,7 +12,7 @@ from corehq.apps.locations.util import location_hierarchy_config, load_locs_json
 from corehq.apps.products.models import SQLProduct
 from corehq.apps.programs.models import Program
 from corehq.apps.reports.filters.base import BaseDrilldownOptionFilter, BaseSingleOptionFilter, \
-    BaseMultipleOptionFilter, BaseReportFilter
+    BaseMultipleOptionFilter, BaseReportFilter, CheckboxFilter
 from corehq.apps.reports.filters.fixtures import AsyncLocationFilter
 from corehq.util import reverse
 from custom.common import ALL_OPTION
@@ -272,3 +272,8 @@ class LocationTypeFilter(BaseMultipleOptionFilter):
                 domain=self.domain, administrative=False
             )
         ]
+
+
+class TransactionCheckboxFilter(CheckboxFilter):
+    label = 'Split by product'
+    slug = 'split_by_product'

@@ -6,23 +6,6 @@
 
 {% block title %}{{ module.name|clean_trans:langs }}{% endblock %}
 
-{% block stylesheets %}{{ block.super }}
-<style>
-    .edit-form-pencil {
-        position: absolute;
-        right: 0;
-        top: 3px;
-        opacity: 0.5;
-    }
-    .edit-form-li {
-        position: relative;
-    }
-    .edit-form-li.active .edit-form-pencil .fa {
-        color: white;
-    }
-</style>
-{% endblock %}
-
 {% block js %}
     {{ block.super }}
     <script src="{% new_static 'app_manager/js/app_manager.js' %}"></script>
@@ -34,7 +17,8 @@
     {{ block.super }}
     <script>
         $(function () {
-            COMMCAREHQ.app_manager.init({
+            var init = hqImport('app_manager/js/app_manager.js').init;
+            init({
                 appVersion: {% if app.version %}{{ app.version }}{% else %}-1{% endif %},
                 commcareVersion: {{ app.commcare_minor_release|JSON }},
                 latestCommcareVersion: {% if latest_commcare_version %}{{ latest_commcare_version|JSON }}{% else %}null{% endif %}
@@ -60,12 +44,6 @@
     </script>
     {% if app.get_doc_type == "Application" %}
     <script>
-        $(function () {
-            var show_user_registration = {{ app.show_user_registration|JSON }};
-            if (!show_user_registration) {
-                $('#user-registration-nav-link').hide();
-            }
-        });
         $(function () {
             $('.edit-form-pencil').hide().tooltip({
                 title: "{% trans "Edit in form builder" %}",
@@ -199,17 +177,6 @@
                       action="{% url "corehq.apps.app_manager.views.rearrange" domain app.id 'modules' %}">
                       {% csrf_token %}
                 </form>
-            </li>
-            <li class="sort-disabled edit-form-li {% if is_user_registration %} active{% endif %}" id="user-registration-nav-link">
-                <a href="{% url "view_user_registration" domain app.id %}">
-                    <i class="fa fa-file-o"></i>
-                    {% trans "User Registration" %}
-                </a>
-                <div class="edit-form-pencil">
-                    <a href="{% url "user_registration_source" domain app.id %}">
-                        <i class="fa fa-pencil"></i>
-                    </a>
-                </div>
             </li>
             {% with module as selected_module %}
                 {% for module in app.get_modules %}

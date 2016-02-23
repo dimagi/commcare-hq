@@ -1,37 +1,31 @@
-from StringIO import StringIO
 import datetime
-from tempfile import NamedTemporaryFile
 from decimal import Decimal
 import itertools
+from StringIO import StringIO
+from tempfile import NamedTemporaryFile
 
-import json_field
-from couchdbkit import ResourceNotFound
-from django.db.models.manager import Manager
-
-from corehq.util.quickcache import quickcache
-from corehq.util.global_request import get_request
-from dimagi.ext.couchdbkit import DateTimeProperty, StringProperty, SafeSaveDocument, BooleanProperty
-import stripe
 
 from django.conf import settings
 from django.core.exceptions import ObjectDoesNotExist, ValidationError
 from django.core.validators import MaxValueValidator, MinValueValidator
 from django.db import models, transaction
+from django.db.models import F
+from django.db.models.manager import Manager
 from django.template.loader import render_to_string
-from django.utils.translation import ugettext_lazy as _
-from corehq.const import USER_DATE_FORMAT
-from corehq.util.view_utils import absolute_reverse
-from dimagi.utils.web import get_site_domain
 from django.utils.html import strip_tags
-
+from django.utils.translation import ugettext_lazy as _
 from django_prbac.models import Role
 
+import json_field
+import stripe
+
+from couchdbkit import ResourceNotFound
+from dimagi.ext.couchdbkit import DateTimeProperty, StringProperty, SafeSaveDocument, BooleanProperty
 from dimagi.utils.decorators.memoized import memoized
 from dimagi.utils.django.cached_object import CachedObject
+from dimagi.utils.web import get_site_domain
 
-from corehq.apps.hqwebapp.tasks import send_html_email_async
-from corehq.apps.users.models import WebUser
-
+from corehq.apps.accounting.emails import send_subscription_change_alert
 from corehq.apps.accounting.exceptions import (
     CreditLineError, AccountingError, SubscriptionAdjustmentError,
     SubscriptionChangeError, NewSubscriptionError, InvoiceEmailThrottledError,
@@ -39,6 +33,9 @@ from corehq.apps.accounting.exceptions import (
 )
 from corehq.apps.accounting.invoice_pdf import InvoiceTemplate
 from corehq.apps.accounting.signals import subscription_upgrade_or_downgrade
+from corehq.apps.accounting.subscription_changes import (
+    DomainDowngradeActionHandler, DomainUpgradeActionHandler,
+)
 from corehq.apps.accounting.utils import (
     get_privileges, get_first_last_days,
     get_address_from_invoice, get_dimagi_from_email_by_product,
@@ -49,11 +46,12 @@ from corehq.apps.accounting.utils import (
     log_accounting_info,
     quantize_accounting_decimal,
 )
-from corehq.apps.accounting.subscription_changes import (
-    DomainDowngradeActionHandler, DomainUpgradeActionHandler,
-)
-from corehq.apps.accounting.emails import send_subscription_change_alert
 from corehq.apps.domain.models import Domain
+from corehq.apps.hqwebapp.tasks import send_html_email_async
+from corehq.apps.users.models import WebUser
+from corehq.const import USER_DATE_FORMAT
+from corehq.util.quickcache import quickcache
+from corehq.util.view_utils import absolute_reverse
 
 integer_field_validators = [MaxValueValidator(2147483647), MinValueValidator(-2147483648)]
 
@@ -882,27 +880,25 @@ class Subscriber(models.Model):
     def __unicode__(self):
         return u"DOMAIN %s" % self.domain
 
-    def create_subscription(self, new_plan_version, web_user, new_subscription, is_internal_change):
+    def create_subscription(self, new_plan_version, new_subscription, is_internal_change):
         assert new_plan_version
         assert new_subscription
         return self._apply_upgrades_and_downgrades(
             new_plan_version=new_plan_version,
-            web_user=web_user,
             new_subscription=new_subscription,
             internal_change=is_internal_change,
         )
 
-    def cancel_subscription(self, web_user, old_subscription):
+    def cancel_subscription(self, old_subscription):
         assert old_subscription
-        return self._apply_upgrades_and_downgrades(web_user=web_user, old_subscription=old_subscription)
+        return self._apply_upgrades_and_downgrades(old_subscription=old_subscription)
 
     def change_subscription(self, downgraded_privileges, upgraded_privileges, new_plan_version,
-                            web_user, old_subscription, new_subscription, internal_change):
+                            old_subscription, new_subscription, internal_change):
         return self._apply_upgrades_and_downgrades(
             downgraded_privileges=downgraded_privileges,
             upgraded_privileges=upgraded_privileges,
             new_plan_version=new_plan_version,
-            web_user=web_user,
             old_subscription=old_subscription,
             new_subscription=new_subscription,
             internal_change=internal_change,
@@ -923,10 +919,9 @@ class Subscriber(models.Model):
             new_subscription=new_subscription,
         )
 
-    def reactivate_subscription(self, new_plan_version, web_user, subscription):
+    def reactivate_subscription(self, new_plan_version, subscription):
         return self._apply_upgrades_and_downgrades(
             new_plan_version=new_plan_version,
-            web_user=web_user,
             old_subscription=subscription,
             new_subscription=subscription,
         )
@@ -934,7 +929,6 @@ class Subscriber(models.Model):
     def _apply_upgrades_and_downgrades(self, new_plan_version=None,
                                        downgraded_privileges=None,
                                        upgraded_privileges=None,
-                                       web_user=None,
                                        old_subscription=None,
                                        new_subscription=None,
                                        internal_change=False):
@@ -951,10 +945,10 @@ class Subscriber(models.Model):
             upgraded_privileges = upgraded_privileges or change_status_result.upgraded_privs
 
         if downgraded_privileges:
-            Subscriber._process_downgrade(self.domain, downgraded_privileges, new_plan_version, web_user)
+            Subscriber._process_downgrade(self.domain, downgraded_privileges, new_plan_version)
 
         if upgraded_privileges:
-            Subscriber._process_upgrade(self.domain, upgraded_privileges, new_plan_version, web_user)
+            Subscriber._process_upgrade(self.domain, upgraded_privileges, new_plan_version)
 
         if Subscriber.should_send_subscription_notification(old_subscription, new_subscription):
             send_subscription_change_alert(self.domain, new_subscription, old_subscription, internal_change)
@@ -968,19 +962,17 @@ class Subscriber(models.Model):
         return not is_new_trial and not expired_trial
 
     @staticmethod
-    def _process_downgrade(domain, downgraded_privileges, new_plan_version, web_user):
+    def _process_downgrade(domain, downgraded_privileges, new_plan_version):
         downgrade_handler = DomainDowngradeActionHandler(
             domain, new_plan_version, downgraded_privileges,
-            web_user=web_user,
         )
         if not downgrade_handler.get_response():
             raise SubscriptionChangeError("The downgrade was not successful.")
 
     @staticmethod
-    def _process_upgrade(domain, upgraded_privileges, new_plan_version, web_user):
+    def _process_upgrade(domain, upgraded_privileges, new_plan_version):
         upgrade_handler = DomainUpgradeActionHandler(
             domain, new_plan_version, upgraded_privileges,
-            web_user=web_user,
         )
         if not upgrade_handler.get_response():
             raise SubscriptionChangeError("The upgrade was not successful.")
@@ -1092,7 +1084,11 @@ class Subscription(models.Model):
         try:
             return Subscription.objects.filter(
                 subscriber=self.subscriber, date_start__gt=self.date_start
-            ).exclude(pk=self.pk).order_by('date_start')[0]
+            ).exclude(
+                pk=self.pk
+            ).exclude(
+                date_start=F('date_end')
+            ).order_by('date_start')[0]
         except (Subscription.DoesNotExist, IndexError):
             return None
 
@@ -1109,7 +1105,7 @@ class Subscription(models.Model):
         self.is_active = False
         self.save()
 
-        self.subscriber.cancel_subscription(web_user=web_user, old_subscription=self)
+        self.subscriber.cancel_subscription(old_subscription=self)
 
         # transfer existing credit lines to the account
         self.transfer_credits()
@@ -1173,6 +1169,30 @@ class Subscription(models.Model):
                             service_type=None, pro_bono_status=None, funding_source=None):
         adjustment_method = adjustment_method or SubscriptionAdjustmentMethod.INTERNAL
 
+        self._update_dates(date_start, date_end)
+
+        if self.date_delay_invoicing is None or self.date_delay_invoicing > datetime.date.today():
+            self.date_delay_invoicing = date_delay_invoicing
+
+        self._update_properties(
+            do_not_invoice=do_not_invoice,
+            no_invoice_reason=no_invoice_reason,
+            do_not_email=do_not_email,
+            auto_generate_credits=auto_generate_credits,
+            salesforce_contract_id=salesforce_contract_id,
+            service_type=service_type,
+            pro_bono_status=pro_bono_status,
+            funding_source=funding_source,
+        )
+
+        self.save()
+
+        SubscriptionAdjustment.record_adjustment(
+            self, method=adjustment_method, note=note, web_user=web_user,
+            reason=SubscriptionAdjustmentReason.MODIFY
+        )
+
+    def _update_dates(self, date_start, date_end):
         if not date_start:
             raise SubscriptionAdjustmentError('Start date must be provided')
         if date_end is not None and date_start > date_end:
@@ -1193,26 +1213,23 @@ class Subscription(models.Model):
                     'Cannot deactivate a subscription here. Cancel subscription instead.'
                 )
 
-        if self.date_delay_invoicing is None or self.date_delay_invoicing > datetime.date.today():
-            self.date_delay_invoicing = date_delay_invoicing
+    def _update_properties(self, **kwargs):
+        property_names = {
+            'do_not_invoice',
+            'no_invoice_reason',
+            'do_not_email',
+            'auto_generate_credits',
+            'salesforce_contract_id',
+            'service_type',
+            'pro_bono_status',
+            'funding_source',
+        }
 
-        self.do_not_invoice = do_not_invoice
-        self.no_invoice_reason = no_invoice_reason
-        self.do_not_email = do_not_email
-        self.auto_generate_credits = auto_generate_credits
-        self.salesforce_contract_id = salesforce_contract_id
-        if service_type is not None:
-            self.service_type = service_type
-        if pro_bono_status is not None:
-            self.pro_bono_status = pro_bono_status
-        if funding_source is not None:
-            self.funding_source = funding_source
-        self.save()
+        assert property_names >= set(kwargs.keys())
 
-        SubscriptionAdjustment.record_adjustment(
-            self, method=adjustment_method, note=note, web_user=web_user,
-            reason=SubscriptionAdjustmentReason.MODIFY
-        )
+        for property_name, property_value in kwargs.items():
+            if property_value is not None:
+                setattr(self, property_name, property_value)
 
     @transaction.atomic
     def change_plan(self, new_plan_version, date_end=None,
@@ -1266,7 +1283,6 @@ class Subscription(models.Model):
             downgraded_privileges=change_status_result.downgraded_privs,
             upgraded_privileges=change_status_result.upgraded_privs,
             new_plan_version=new_plan_version,
-            web_user=web_user,
             old_subscription=self,
             new_subscription=new_subscription,
             internal_change=internal_change,
@@ -1300,7 +1316,6 @@ class Subscription(models.Model):
         self.save()
         self.subscriber.reactivate_subscription(
             new_plan_version=self.plan_version,
-            web_user=web_user,
             subscription=self,
         )
         SubscriptionAdjustment.record_adjustment(
@@ -1503,7 +1518,7 @@ class Subscription(models.Model):
         context = {
             'domain': domain,
             'end_date': end_date,
-            'contacts': self.account.billingcontactinfo.email_list,
+            'contacts': ', '.join(self.account.billingcontactinfo.email_list),
             'dimagi_contact': email,
         }
         email_html = render_to_string(template, context)
@@ -1630,7 +1645,6 @@ class Subscription(models.Model):
         if subscription.is_active:
             subscriber.create_subscription(
                 new_plan_version=plan_version,
-                web_user=web_user,
                 new_subscription=subscription,
                 is_internal_change=internal_change,
             )

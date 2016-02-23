@@ -15,12 +15,12 @@ from dimagi.utils.web import get_url_base
 
 
 def _domains_over_x_forms(num_forms=200, domains=None):
-    form_domains = FormES().domain_facet().size(0)
+    form_domains = FormES().domain_aggregation().size(0)
     if domains:
         form_domains = form_domains.domain(domains)
-    form_domains = form_domains.run().facet('domain', 'terms')
+    form_domains = form_domains.run().aggregations.domain.buckets_list
 
-    return {x['term'] for x in form_domains if x['count'] > num_forms}
+    return {x.key for x in form_domains if x.doc_count > num_forms}
 
 
 def _real_incomplete_domains():

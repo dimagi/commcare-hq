@@ -148,16 +148,19 @@ class FormattedDetailColumn(object):
 
         if self.sort_element:
             if not sort:
-                # these have to be distinguished for the UI to be able to give
-                # user friendly choices
-                if self.sort_element.type in ('date', 'plain'):
-                    sort_type = 'string'
-                else:
-                    sort_type = self.sort_element.type
+                sort_type = {
+                    'date': 'string',
+                    'plain': 'string',
+                    'distance': 'double'
+                }.get(self.sort_element.type, self.sort_element.type)
+
                 sort = sx.Sort(
                     text=sx.Text(xpath_function=self.xpath_function),
                     type=sort_type,
                 )
+
+            if self.sort_element.type == 'distance':
+                sort.text.xpath_function = self.evaluate_template(Distance.SORT_XPATH_FUNCTION)
 
             sort.order = self.order
             sort.direction = self.sort_element.direction

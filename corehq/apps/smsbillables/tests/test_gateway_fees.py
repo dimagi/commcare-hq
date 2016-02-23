@@ -1,10 +1,17 @@
-from django.conf import settings
-from django.test import TestCase
-from corehq.apps.accounting.generator import init_default_currency
+from random import choice
 
+from django.test import TestCase
+
+from corehq.apps.accounting.generator import init_default_currency
 from corehq.apps.sms.models import SMSLog, SQLMobileBackend
-from corehq.apps.smsbillables.models import *
 from corehq.apps.smsbillables import generator
+from corehq.apps.smsbillables.models import (
+    SmsBillable,
+    SmsGatewayFee,
+    SmsGatewayFeeCriteria,
+    SmsUsageFee,
+    SmsUsageFeeCriteria
+)
 
 
 class TestGatewayFee(TestCase):
@@ -21,7 +28,7 @@ class TestGatewayFee(TestCase):
         self.country_code_fees = generator.arbitrary_fees_by_country()
         self.instance_fees = generator.arbitrary_fees_by_backend_instance(self.backend_ids)
         self.most_specific_fees = generator.arbitrary_fees_by_all(self.backend_ids)
-        self.country_code_and_prefixes = generator.arbitrary_country_code_and_prefixes()
+        self.country_code_and_prefixes = generator.arbitrary_country_code_and_prefixes(3, 3)
         self.prefix_fees = generator.arbitrary_fees_by_prefix(self.backend_ids, self.country_code_and_prefixes)
 
         self.other_currency = generator.arbitrary_currency()
@@ -154,10 +161,13 @@ class TestGatewayFee(TestCase):
         self.create_prefix_gateway_fees()
 
         for phone_number, prefix in generator.arbitrary_phone_numbers_and_prefixes(
-                self.country_code_and_prefixes
+            self.country_code_and_prefixes
         ):
             messages = generator.arbitrary_messages_by_backend_and_direction(
-                self.backend_ids,
+                {
+                    random_key: self.backend_ids[random_key]
+                    for random_key in [choice(self.backend_ids.keys())]
+                },
                 phone_number=phone_number,
             )
 

@@ -45,13 +45,12 @@
 trunk: master
 name: autostaging
 branches:
-  - turn-off-incomplete-and-saved-forms  # Danny 2/3
-  - jquery-migrate  # Danny 2/3
-  - kill-x_over_time  # Danny 12/11
+  - devicereportentry  # Danny 2/18
+#  - rm-js+jquery-migrate # Jenny 2/16
+  - rm-js  # Danny 2/8
+#  - jquery-migrate  # Danny 2/3
   - vellum-staging # J$ 11/13
   - requests #Simon 11/3
-  - new-footer-nav # Biyeun 1/4
-  - formplayer-toggle # Ben/Will 1/21/16
   - java-tf-deploy # Ben/Will 1/21/16
   # B3 Report Migration branches
   - b3-reports-worker-monitoring  # Biyeun 1/21
@@ -59,11 +58,14 @@ branches:
   - b3-reports-manage-deployments  # Biyeun 1/21
   - b3-reports-messaging  # Biyeun 1/21
   - finish-two-factor # Cal 1/21
-  - lazy-jar # Nick P 1/25
   - show-form-case-refs-in-summary # j$ 1/29
-  - app_code # Norman 2/4
-  - fb/215956/forms_30_d # Norman 2/4
-  - staging-test # Jenny 2/4
+  - legacy-be-gone # Noah 2/12
+  - revamp-multimedia # Jenny 2/16
+  - analytics-retry # Cal 2/18
+  - abs-rev-active-tab # Ben 2/22
+  - fix-app_label # Nick P 2/22
+  - upgrade-django-tastypie # Nick P 2/22
+  - upgrade-django-json-field # Nick P 2/22
 submodules:
   submodules/touchforms-src:
     # let's leave this here even when empty
@@ -81,3 +83,6 @@ submodules:
     branches: []
   submodules/django-prbac-src:
     branches: []
+  corehq/apps/prelogin:
+    branches:
+      - rm-js  # Danny 2/8

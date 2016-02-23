@@ -328,6 +328,7 @@ def filter_cases(request, domain, app_id, module_id, parent_id=None):
     xpath = EntriesHelper.get_filter_xpath(module)
     instances = get_instances_for_module(app, module, additional_xpaths=[xpath])
     extra_instances = [{'id': inst.id, 'src': inst.src} for inst in instances]
+    use_formplayer = toggles.USE_FORMPLAYER.enabled(domain)
 
     # touchforms doesn't like this to be escaped
     xpath = HTMLParser.HTMLParser().unescape(xpath)
@@ -342,7 +343,7 @@ def filter_cases(request, domain, app_id, module_id, parent_id=None):
 
         helper = SessionDataHelper(domain, request.couch_user)
         result = helper.filter_cases(xpath, additional_filters, DjangoAuth(auth_cookie),
-                                     extra_instances=extra_instances)
+                                     extra_instances=extra_instances, use_formplayer=use_formplayer)
         if result.get('status', None) == 'error':
             code = result.get('code', 500)
             message = result.get('message', _("Something went wrong filtering your cases."))
@@ -492,7 +493,7 @@ def sync_db_api(request, domain):
     auth_cookie = request.COOKIES.get('sessionid')
     username = request.GET.get('username')
     try:
-        sync_db(username, DjangoAuth(auth_cookie))
+        sync_db(username, domain, DjangoAuth(auth_cookie))
         return json_response({
             'status': 'OK'
         })
@@ -508,7 +509,7 @@ def render_form(request, domain):
     session = get_object_or_404(EntrySession, session_id=session_id)
 
     try:
-        raw_instance = get_raw_instance(session_id)
+        raw_instance = get_raw_instance(session_id, domain)
     except Exception, e:
         return HttpResponse(e, status=500, content_type="text/plain")
 

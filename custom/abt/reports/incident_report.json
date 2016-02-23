@@ -9,7 +9,7 @@
       "airszimbabwe",
       "airstanzania"
     ],
-   "data_source_table":"supervisory-003",
+   "data_source_table":"supervisory-005",
    "report_id":"incident-report",
    "custom_configurable_report":"custom.abt.reports.views.FormattedSupervisoryReport",
    "config":{

@@ -15,8 +15,6 @@ from .utils import get_doc_count, get_index_mapping
 
 
 class TestElasticPillow(AliasedElasticPillow):
-    es_host = settings.ELASTICSEARCH_HOST
-    es_port = settings.ELASTICSEARCH_PORT
     es_alias = 'pillowtop_tests'
     es_type = 'test_doc'
     es_index = 'test_pillowtop_index'

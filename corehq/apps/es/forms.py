@@ -23,8 +23,8 @@ class FormES(HQESQuery):
             user_id,
         ] + super(FormES, self).builtin_filters
 
-    def user_facet(self, size=None):
-        return self.terms_facet('form.meta.userID', 'user', size=size)
+    def user_aggregation(self):
+        return self.terms_aggregation('form.meta.userID', 'user')
 
     def completed_histogram(self, timezone=None):
         return self.date_histogram('date_histogram', 'form.meta.timeEnd', 'day', timezone=timezone)
@@ -32,16 +32,16 @@ class FormES(HQESQuery):
     def submitted_histogram(self, timezone=None):
         return self.date_histogram('date_histogram', 'received_on', 'day', timezone=timezone)
 
-    def domain_facet(self):
-        return self.terms_facet('domain', 'domain', 1000000)
+    def domain_aggregation(self):
+        return self.terms_aggregation('domain', 'domain')
 
 
-def xmlns(xmlns):
-    return filters.term('xmlns.exact', xmlns)
+def xmlns(xmlnss):
+    return filters.term('xmlns.exact', xmlnss)
 
 
-def app(app_id):
-    return filters.term('app_id', app_id)
+def app(app_ids):
+    return filters.term('app_id', app_ids)
 
 
 def submitted(gt=None, gte=None, lt=None, lte=None):
