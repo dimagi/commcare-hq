@@ -80,6 +80,7 @@ case $key in
         web_runner run --rm web python manage.py migrate $@
         ;;
     runserver)
+        ./docker/create-kafka-topics.sh
 	web_runner run --rm --service-ports web /mnt/docker/runserver.sh
         ;;
     shell)
