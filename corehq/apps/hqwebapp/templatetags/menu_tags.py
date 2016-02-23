@@ -102,6 +102,9 @@ def format_sidebar(context):
     else:
         sections = active_tab.sidebar_items if active_tab else None
 
+    def _strip_scheme(uri):
+        return uri.lstrip('https')
+
     if sections:
         # set is_active on active sidebar item by modifying nav by reference
         # and see if the nav needs a subnav for the current contextual item
@@ -110,8 +113,10 @@ def format_sidebar(context):
                 logging.info('NAV URL: {}'.format(nav['url']))
                 logging.info('get_full_path: {}'.format(request.get_full_path()))
                 logging.info('build_absolute_uri: {}'.format(request.build_absolute_uri()))
-                if (request.get_full_path().startswith(nav['url']) or
-                   request.build_absolute_uri().startswith(nav['url'])):
+                full_path = request.get_full_path()  # The path of the URL after the domain
+                absolute_uri = request.build_absolute_uri()  # The full uri {scheme}{host}{path}
+                if (full_path.startswith(nav['url']) or
+                   _strip_scheme(absolute_uri).startswith(_strip_scheme(nav['url']))):
                     nav['is_active'] = True
                 else:
                     nav['is_active'] = False
