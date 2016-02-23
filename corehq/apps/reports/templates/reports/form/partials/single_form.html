@@ -290,11 +290,11 @@ requires imports/proptable.html to be included in the main template
                         </a>
 
                         {% if case_data.valid_case %}
-                        <span class="pull-right" style="margin-top: -6px;">
+                        <span class="pull-right">
                             {% if case_data.is_current_case %}
                             <strong class="muted">{% trans "(this case)" %}</strong>
                             {% else %}
-                            <a class="btn btn-sm btn-primary" href="{{ case_data.url }}">
+                            <a class="btn btn-sm btn-primary" href="{{ case_data.url }}" style="margin-top: -6px;">
                                 {% trans "View" %}
                             </a>
                             {% endif %}
