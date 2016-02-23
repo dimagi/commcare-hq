@@ -50,7 +50,6 @@ branches:
   - rm-js  # Danny 2/8
 #  - jquery-migrate  # Danny 2/3
   - vellum-staging # J$ 11/13
-  - requests #Simon 11/3
   - java-tf-deploy # Ben/Will 1/21/16
   # B3 Report Migration branches
   - b3-reports-worker-monitoring  # Biyeun 1/21
@@ -59,7 +58,6 @@ branches:
   - b3-reports-messaging  # Biyeun 1/21
   - finish-two-factor # Cal 1/21
   - show-form-case-refs-in-summary # j$ 1/29
-  - legacy-be-gone # Noah 2/12
   - revamp-multimedia # Jenny 2/16
   - analytics-retry # Cal 2/18
   - upgrade-django-tastypie # Nick P 2/22
@@ -85,5 +83,4 @@ submodules:
   submodules/django-prbac-src:
     branches: []
   corehq/apps/prelogin:
-    branches:
-      - rm-js  # Danny 2/8
+    branches: []
