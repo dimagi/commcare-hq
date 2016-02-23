@@ -462,7 +462,8 @@ class DataSourceForm(forms.Form):
             existing_sources = DataSourceConfiguration.by_domain(self.domain)
             active_source = filter(lambda config: not config.is_deactivated, existing_sources)
             if len(active_source) >= 5:
-                if not ds_builder.get_existing_match():
+                match = ds_builder.get_existing_match()
+                if not match or match.is_deactivated:
                     raise forms.ValidationError(_(
                         "Too many data sources!\n"
                         "Creating this report would cause you to go over the maximum "
