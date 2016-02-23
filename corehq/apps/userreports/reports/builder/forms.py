@@ -451,7 +451,7 @@ class DataSourceForm(forms.Form):
         """
         cleaned_data = super(DataSourceForm, self).clean()
         source_type = cleaned_data.get('source_type')
-        report_source = cleaned_data.get('report_source')
+        report_source = cleaned_data.get('source')
         app_id = cleaned_data.get('application')
 
         if report_source and source_type and app_id:
@@ -460,7 +460,8 @@ class DataSourceForm(forms.Form):
             ds_builder = DataSourceBuilder(self.domain, app, source_type, report_source)
 
             existing_sources = DataSourceConfiguration.by_domain(self.domain)
-            if len(existing_sources) >= 5:
+            active_source = filter(lambda config: not config.is_deactivated, existing_sources)
+            if len(active_source) >= 5:
                 if not ds_builder.get_existing_match():
                     raise forms.ValidationError(_(
                         "Too many data sources!\n"
@@ -646,7 +647,8 @@ class ConfigureNewReportBase(forms.Form):
                 self.existing_report.config_id = matching_data_source._id
             elif matching_data_source.is_deactivated:
                 existing_sources = DataSourceConfiguration.by_domain(self.domain)
-                if len(existing_sources) >= 5:
+                active_sources = filter(lambda config: not config.is_deactivated, existing_sources)
+                if len(active_sources) >= 5:
                     raise forms.ValidationError(_(
                         "Editing this report would require a new data source. The limit is 5. "
                         "To continue, first delete all of the reports using a particular "
@@ -659,6 +661,7 @@ class ConfigureNewReportBase(forms.Form):
         else:
             # We need to create a new data source
             existing_sources = DataSourceConfiguration.by_domain(self.domain)
+            active_sources = filter(lambda config: not config.is_deactivated, existing_sources)
 
             # Delete the old one if no other reports use it
             old_data_source = DataSourceConfiguration.get(self.existing_report.config_id)
@@ -666,7 +669,7 @@ class ConfigureNewReportBase(forms.Form):
                 old_data_source.deactivate()
 
             # Make sure the user can create more data sources
-            elif len(existing_sources) >= 5:
+            elif len(active_sources) >= 5:
                 raise forms.ValidationError(_(
                     "Editing this report would require a new data source. The limit is 5. "
                     "To continue, first delete all of the reports using a particular "
