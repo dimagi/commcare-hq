@@ -152,7 +152,7 @@ def update_subscriptions():
 
 
 @periodic_task(run_every=crontab(hour=13, minute=0, day_of_month='1'))
-def generate_invoices(based_on_date=None, check_existing=False, is_test=False):
+def generate_invoices(based_on_date=None, is_test=False):
     """
     Generates all invoices for the past month.
     """
@@ -165,12 +165,7 @@ def generate_invoices(based_on_date=None, check_existing=False, is_test=False):
     all_domain_ids = [d['id'] for d in Domain.get_all(include_docs=False)]
     for domain_doc in iter_docs(Domain.get_db(), all_domain_ids):
         domain = Domain.wrap(domain_doc)
-        if (check_existing and
-            Invoice.objects.filter(
-                subscription__subscriber__domain=domain,
-                date_created__gte=today).count() != 0):
-            pass
-        elif is_test:
+        if is_test:
             log_accounting_info("Ready to create invoice for domain %s" % domain.name)
         else:
             try:
