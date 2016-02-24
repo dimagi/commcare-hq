@@ -48,11 +48,8 @@ class TestBillingAutoPay(BaseInvoiceTestCase):
 
     @mock.patch.object(StripePaymentMethod, 'customer')
     def test_get_autopayable_invoices(self, fake_customer):
-        fake_customer.__get__ = mock.Mock(return_value=self.fake_stripe_customer)
-        self.payment_method = StripePaymentMethod(web_user=self.web_user.username,
-                                                  customer_id=self.fake_stripe_customer.id)
-        self.payment_method.set_autopay(self.fake_card, self.account, self.domain)
-        self.payment_method.save()
+        self._create_autopay_method(fake_customer)
+
         autopayable_invoice = Invoice.objects.filter(subscription=self.subscription)
         date_due = autopayable_invoice.first().date_due
 
@@ -63,11 +60,8 @@ class TestBillingAutoPay(BaseInvoiceTestCase):
     @mock.patch.object(StripePaymentMethod, 'customer')
     @mock.patch.object(Charge, 'create')
     def test_pay_autopayable_invoices(self, fake_charge, fake_customer):
-        fake_customer.__get__ = mock.Mock(return_value=self.fake_stripe_customer)
-        self.payment_method = StripePaymentMethod(web_user=self.web_user.username,
-                                                  customer_id=self.fake_stripe_customer.id)
-        self.payment_method.set_autopay(self.fake_card, self.account, self.domain)
-        self.payment_method.save()
+        self._create_autopay_method(fake_customer)
+
         original_outbox_length = len(mail.outbox)
 
         autopayable_invoice = Invoice.objects.filter(subscription=self.subscription)
@@ -77,3 +71,10 @@ class TestBillingAutoPay(BaseInvoiceTestCase):
         self.assertAlmostEqual(autopayable_invoice.first().get_total(), 0)
         self.assertEqual(len(PaymentRecord.objects.all()), 1)
         self.assertEqual(len(mail.outbox), original_outbox_length + 1)
+
+    def _create_autopay_method(self, fake_customer):
+        fake_customer.__get__ = mock.Mock(return_value=self.fake_stripe_customer)
+        self.payment_method = StripePaymentMethod(web_user=self.web_user.username,
+                                                  customer_id=self.fake_stripe_customer.id)
+        self.payment_method.set_autopay(self.fake_card, self.account, self.domain)
+        self.payment_method.save()
