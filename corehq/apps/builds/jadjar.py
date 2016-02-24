@@ -117,7 +117,8 @@ def _convertXMLToJ2ME(files, path):
     def transform(string):
         return string.replace(settings.BASE_ADDRESS, settings.J2ME_ADDRESS, 1)
 
-    if path == 'profile.xml' or path == 'media_profile.xml':
+    converted_paths = set(['profile.xml', 'media_profile.xml', 'media_profile.ccpr', 'profile.ccpr'])
+    if path in converted_paths:
         tree = etree.fromstring(files[path])
 
         tree.set('update', transform(tree.attrib['update']))
