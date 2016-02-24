@@ -739,7 +739,7 @@ class InvoiceSummaryViewBase(AccountingSectionView):
                     'invoice': billing_record.invoice,
                     'pdf_data_id': billing_record.pdf_data_id,
                 }
-                for billing_record in self.billing_records
+                for billing_record in self.billing_records if not billing_record.skipped_email
             ],
             'can_send_email': self.can_send_email,
             'invoice_info_form': self.invoice_info_form,
