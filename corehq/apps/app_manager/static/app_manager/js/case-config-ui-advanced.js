@@ -153,8 +153,17 @@ var AdvancedCase = (function () {
 
         // TODO: if index is supplied, open that panel
         self.applyAccordion = function (type, index) {
-            if (index) {
-                //options.active = index;
+            if (!type || type === 'open') {
+                $('#case-open-accordion .panel-collapse.in').collapse('hide')
+                if (index !== undefined) {
+                    $('#case-open-accordion > .panel:nth-child(' + (index + 1) + ') .panel-collapse').collapse('show');
+                }
+            }
+            if (!type || type === 'load') {
+                $('#case-load-accordion .panel-collapse.in').collapse('hide')
+                if (index !== undefined) {
+                    $('#case-load-accordion > .panel:nth-child(' + (index + 1) + ') .panel-collapse').collapse('show');
+                }
             }
         };
 
@@ -173,7 +182,8 @@ var AdvancedCase = (function () {
 
                 self.ensureBlankProperties();
                 $('#case-configuration-tab').on('click', function () {
-                    self.applyAccordion();
+                    self.applyAccordion('open', 0);
+                    self.applyAccordion('load', 0);
                 });
             });
         };
@@ -343,8 +353,9 @@ var AdvancedCase = (function () {
 
         self.addFormAction = function (action) {
             if (action.value === 'load' || action.value === 'auto_select') {
-                // TODO: collapse any open panels
-                //$('#case-open-accordion').accordion({active: false});
+                // Collapse any open panels
+                //$('#case-open-accordion .collapse').collapse('hide')
+
                 var index = self.load_update_cases().length;
                 var tag_prefix = action.value === 'auto_select'? 'auto' : '';
                 var action_data = {
@@ -374,8 +385,9 @@ var AdvancedCase = (function () {
                 self.load_update_cases.push(LoadUpdateAction.wrap(action_data, self.config));
                 self.config.applyAccordion('load', index);
             } else if (action.value === 'open') {
-                // TODO: collapse any open panels
-                //$('#case-load-accordion').accordion({active: false});
+                // Collapse any open panels
+                //$('#case-load-accordion .collapse').collapse('hide')
+
                 var index = self.open_cases().length;
                 self.open_cases.push(OpenCaseAction.wrap({
                     case_type: config.caseType,
@@ -593,18 +605,18 @@ var AdvancedCase = (function () {
             self.case_type.subscribe(function (value) {
                 // TODO: delete?
                 // fix for resizing of accordion when content changes
-                if (!value) {
+                /*if (!value) {
                     var index = self.config.caseConfigViewModel.load_update_cases.indexOf(self);
                     self.config.applyAccordion('load', index);
-                }
+                }*/
             }, null, 'beforeChange');
 
             if (self.auto_select) {
                 self.auto_select.mode.subscribe(function (value) {
                     // TODO: delete?
                     // fix for resizing of accordion when content changes
-                    var index = self.config.caseConfigViewModel.load_update_cases.indexOf(self);
-                    self.config.applyAccordion('load', index);
+                    /*var index = self.config.caseConfigViewModel.load_update_cases.indexOf(self);
+                    self.config.applyAccordion('load', index);*/
                 }, null, 'beforeChange');
                 self.auto_select.mode.subscribe(function (value) {
                     // suggestedProperties need to be those of case type "commcare-user"
@@ -840,12 +852,13 @@ var AdvancedCase = (function () {
                 }
             };
 
-            self.case_type.subscribe(function (value) {
+            // TODO: delete?
+            /*self.case_type.subscribe(function (value) {
                 if (!value) {
                     var index = self.config.caseConfigViewModel.open_cases.indexOf(self);
                     self.config.applyAccordion('open', index);
                 }
-            }, null, 'beforeChange');
+            }, null, 'beforeChange');*/
 
             self.disable_tag = ko.computed(function () {
                 return false;
