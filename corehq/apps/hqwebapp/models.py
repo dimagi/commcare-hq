@@ -288,10 +288,10 @@ class ProjectReportsTab(UITab):
             'request': self._request,
             'domain': self.domain,
         }
-
+        from corehq.apps.reports.views import MySavedReportsView
         tools = [(_("Tools"), [
-            {'title': _('My Saved Reports'),
-             'url': reverse('saved_reports', args=[self.domain]),
+            {'title': MySavedReportsView.page_title,
+             'url': reverse(MySavedReportsView.urlname, args=[self.domain]),
              'icon': 'icon-tasks fa fa-tasks',
              'show_in_dropdown': True}
         ])]
@@ -387,7 +387,8 @@ class ReportsTab(UITab):
         module = Domain.get_module_by_name(domain)
         if hasattr(module, 'DEFAULT_REPORT_CLASS'):
             return "corehq.apps.reports.views.default"
-        return "corehq.apps.reports.views.saved_reports"
+        from corehq.apps.reports.views import MySavedReportsView
+        return MySavedReportsView.as_view()
 
     @property
     def dropdown_items(self):
