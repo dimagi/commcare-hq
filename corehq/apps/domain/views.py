@@ -2181,7 +2181,7 @@ class DomainForwardingRepeatRecords(GenericTabularReport):
         return map(
             lambda record: [
                 self._make_state_label(record),
-                record.url,
+                record.url if record.url else _(u'Unable to generate url for record'),
                 record.next_check.strftime('%b %d, %Y %H:%M') if record.next_check else None,
                 record.failure_reason if not record.succeeded else None,
                 self._make_view_payload_button(record.get_id),
