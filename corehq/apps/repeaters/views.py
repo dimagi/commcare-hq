@@ -1,6 +1,5 @@
 from django.core.urlresolvers import reverse
 from django.views.generic import View
-from django.http import Http404
 
 from dimagi.utils.web import json_response
 
