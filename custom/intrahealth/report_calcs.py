@@ -130,7 +130,7 @@ class TauxCalculator(fluff.Calculator):
                 yield {
                     'date': received_month_inner,
                     'value': amount_ordered,
-                    'group_by': [product_name, get_product_id(product_name, get_domain(form))]
+                    'group_by': [product_name, product.get('product_id')]
                 }
 
     @fluff.date_emitter
