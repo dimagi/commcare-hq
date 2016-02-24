@@ -38,8 +38,8 @@ class TestBillingAutoPay(BaseInvoiceTestCase):
         subscription_start_date = datetime.date(2016, 2, 23)
         subscription_end_date = add_months_to_date(subscription_start_date, self.subscription_length_2)
         self.subscription_2 = generator.generate_domain_subscription(
-            self.account,
-            self.domain,
+            self.account_2,
+            self.domain_2,
             date_start=subscription_start_date,
             date_end=subscription_end_date,
         )
