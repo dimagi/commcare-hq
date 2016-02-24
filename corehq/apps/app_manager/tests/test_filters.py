@@ -243,8 +243,8 @@ class AutoFilterTests(TestCase):
             domain=DOMAIN,
             username='sheel',
             location_id='somerville',
-            last_login=datetime.now(),
-            date_joined=datetime.now(),
+            last_login=datetime.datetime.now(),
+            date_joined=datetime.datetime.now(),
         )
         cls.sheel.save()
 
