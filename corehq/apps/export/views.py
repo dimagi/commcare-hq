@@ -937,39 +937,68 @@ class BaseExportListView(ExportsPermissionsMixin, JSONResponseMixin, BaseProject
         """
         raise NotImplementedError("must implement fmt_export_data")
 
-    def fmt_emailed_export_data(self, component):
-        file_data = {}
-        has_file = component.saved_version is not None and component.saved_version.has_file()
-        if has_file:
-            file_data = {
-                'fileId': component.saved_version.get_id,
-                'size': filesizeformat(component.saved_version.size),
-                'lastUpdated': naturaltime(component.saved_version.last_updated),
-                'showExpiredWarning': (
-                    component.saved_version.last_accessed and
-                    component.saved_version.last_accessed <
-                    (datetime.utcnow() - timedelta(days=settings.SAVED_EXPORT_ACCESS_CUTOFF))
-                ),
-                'downloadUrl': '{}?group_export_id={}'.format(
-                    reverse('hq_download_saved_export', args=[
-                        self.domain, component.saved_version.get_id
-                    ]),
-                    component.group_id
-                ),
-            }
+    def fmt_emailed_export_data(self, group_id=None, index=None,
+                                       has_file=False, file_id=None, size=0,
+                                       last_updated=None, last_accessed=None,
+                                       download_url=None):
+        """
+        Return a dictionary containing details about an emailed export.
+        This will eventually be passed to an Angular controller.
+        """
+        file_data = self._fmt_emailed_export_fileData(
+            has_file, file_id, size, last_updated, last_accessed, download_url
+        )
         return {
-            'groupId': component.group_id,
+            'groupId': group_id,  # This can be removed when we're off legacy exports
             'hasFile': has_file,
-            'index': component.config.index,
+            'index': index,  # This can be removed when we're off legacy exports
             'fileData': file_data,
         }
+
+    def _fmt_emailed_export_fileData(self, has_file, fileId, size, last_updated,
+                                     last_accessed, download_url):
+        """
+        Return a dictionary containing details about an emailed export file.
+        This will eventually be passed to an Angular controller.
+        """
+        if has_file:
+            return {
+                'fileId': fileId,
+                'size': filesizeformat(size),
+                'lastUpdated': naturaltime(last_updated),
+                'showExpiredWarning': (
+                    last_accessed and
+                    last_accessed <
+                    (datetime.utcnow() - timedelta(days=settings.SAVED_EXPORT_ACCESS_CUTOFF))
+                ),
+                'downloadUrl': download_url,
+            }
+        return {}
 
     def get_formatted_emailed_exports(self, export):
         emailed_exports = filter(
             lambda x: x.config.index[-1] == export.get_id,
             self.daily_emailed_exports
         )
-        return map(lambda x: self.fmt_emailed_export_data(x), emailed_exports)
+
+        def format_emailed_export(export):
+            return self.fmt_legacy_emailed_export_data(
+                group_id=export.group_id,
+                index=export.config.index,
+                has_file=export.saved_version is not None and export.saved_version.has_file(),
+                file_id=export.saved_version.get_id,
+                size=export.saved_version.size,
+                last_updated=export.saved_version.last_updated,
+                last_accessed=export.saved_version.last_accessed,
+                download_url='{}?group_export_id={}'.format(
+                    reverse('hq_download_saved_export', args=[
+                        self.domain, export.saved_version.get_id
+                    ]),
+                    export.group_id
+                )
+            )
+
+        return map(format_emailed_export, emailed_exports)
 
     @allow_remote_invocation
     def get_exports_list(self, in_data):
