@@ -1155,7 +1155,8 @@ class FormExportListView(BaseExportListView):
         else:
             # New export
             if export.is_daily_saved_export:
-                emailed_exports = [self._get_daily_saved_export_metadata(export)]  # Have to wrap as array for legacy reasons
+                 # Have to wrap as array for legacy reasons
+                emailed_exports = [self._get_daily_saved_export_metadata(export)]
             else:
                 emailed_exports = []
         return {
