@@ -186,7 +186,7 @@ class DispDesProducts(BaseSqlData):
     @property
     @memoized
     def products(self):
-        return list(SQLProduct.objects.filter(domain=self.config['domain'], is_archived=False))
+        return list(SQLProduct.objects.filter(domain=self.config['domain'], is_archived=False).order_by('name'))
 
     @property
     def rows(self):

@@ -53,8 +53,8 @@ class TestReports(IntraHealthTestCase):
         self.assertListEqual(
             rows,
             [
-                ['Commandes', {'sort_key': 26L, 'html': 26L}, {'sort_key': 25L, 'html': 25L}],
-                ['Raux', {'sort_key': 23L, 'html': 23L}, {'sort_key': 25L, 'html': 25L}],
-                ['Taux', '88%', '100%']
+                ['Commandes', {'sort_key': 25L, 'html': 25L}, {'sort_key': 26L, 'html': 26L}],
+                ['Raux', {'sort_key': 25L, 'html': 25L}, {'sort_key': 23L, 'html': 23L}],
+                ['Taux', '100%', '88%']
             ]
         )
