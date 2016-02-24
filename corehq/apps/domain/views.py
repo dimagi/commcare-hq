@@ -2181,7 +2181,7 @@ class DomainForwardingRepeatRecords(GenericTabularReport):
             lambda record: [
                 self._make_state_label(record),
                 record.url,
-                record.next_check.strftime('%b %m, %Y %H:%M') if record.next_check else None,
+                record.next_check.strftime('%b %d, %Y %H:%M') if record.next_check else None,
                 self._make_view_payload_button(record.get_id),
                 self._make_resend_payload_button(record.get_id),
             ],
