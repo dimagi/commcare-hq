@@ -154,7 +154,7 @@ var AdvancedCase = (function () {
         // TODO: if index is supplied, open that panel
         self.applyAccordion = function (type, index) {
             if (index) {
-                options.active = index;
+                //options.active = index;
             }
         };
 
