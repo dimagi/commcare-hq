@@ -179,14 +179,12 @@ def generate_invoices(based_on_date=None):
             log_accounting_error("BillingContactInfoError: %s" % e)
         except InvoiceError as e:
             log_accounting_error(
-                "Could not create invoice for domain %s: %s" % (
-                domain.name, e
-            ))
+                "Could not create invoice for domain %s: %s" % (domain.name, e)
+            )
         except InvoiceAlreadyCreatedError as e:
             log_accounting_error(
-                "Invoice already existed for domain %s: %s" % (
-                domain.name, e
-            ))
+                "Invoice already existed for domain %s: %s" % (domain.name, e)
+            )
         except Exception as e:
             log_accounting_error(
                 "Error occurred while creating invoice for "
