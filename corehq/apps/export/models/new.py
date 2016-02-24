@@ -256,7 +256,6 @@ class ExportInstance(Document):
     domain = StringProperty()
     tables = ListProperty(TableConfiguration)
     export_format = StringProperty(default='csv')
-    last_built = DateTimeProperty()
 
     # Whether to split multiselects into multiple columns
     split_multiselects = BooleanProperty(default=False)
@@ -283,18 +282,6 @@ class ExportInstance(Document):
         return self.is_deidentified
 
     @property
-    def file_id(self):
-        return 'placeholder'
-
-    @property
-    def export_size(self):
-        return 'placeholder'
-
-    @property
-    def download_url(self):
-        return 'placeholder'
-
-    @property
     def defaults(self):
         return FormExportInstanceDefaults if self.type == FORM_EXPORT else CaseExportInstanceDefaults
 
@@ -303,15 +290,6 @@ class ExportInstance(Document):
             if table.path == path:
                 return table
         return None
-
-    def daily_saved_export_metadata(self):
-        return {
-            'fileId': self.file_id,
-            'size': self.export_size,
-            'lastUpdated': self.last_built,
-            'showExpiredWarning': False,
-            'downloadUrl': self.download_url,
-        }
 
     @classmethod
     def _new_from_schema(cls, schema):
