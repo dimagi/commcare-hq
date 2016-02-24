@@ -28,13 +28,11 @@ def export_for_group(export_id_or_group, output_dir, last_access_cutoff=None):
             ))
 
 
-def rebuild_export(config, schema, output_dir, last_access_cutoff=None, filter=None):
-    if output_dir == "couch":
-        saved = get_saved_export_and_delete_copies(config.index)
-        if last_access_cutoff and saved and saved.last_accessed and \
-                saved.last_accessed < last_access_cutoff:
-            # ignore exports that haven't been accessed since last_access_cutoff
-            return
+def rebuild_export(config, schema, last_access_cutoff=None, filter=None):
+
+    saved_export = get_saved_export_and_delete_copies(config.index)
+    if not _should_rebuild_export(saved_export, last_access_cutoff):
+        return
 
     try:
         files = schema.get_export_files(format=config.format, filter=filter)
@@ -44,26 +42,36 @@ def rebuild_export(config, schema, output_dir, last_access_cutoff=None, filter=N
         raise ExportRebuildError(u'Schema mismatch for {}. Rebuilding tables...'.format(config.filename))
 
     with files:
-        payload = files.file.payload
-        if output_dir == "couch":
-            if not saved:
-                saved = SavedBasicExport(configuration=config)
-            else:
-                saved.configuration = config
+        _save_export_payload(files, saved_export, config)
 
-            if saved.last_accessed is None:
-                saved.last_accessed = datetime.utcnow()
-            saved.last_updated = datetime.utcnow()
-            try:
-                saved.save()
-            except ResourceConflict:
-                # task was executed concurrently, so let first to finish win and abort the rest
-                pass
-            else:
-                saved.set_payload(payload)
-        else:
-            with open(os.path.join(output_dir, config.filename), "wb") as f:
-                f.write(payload)
+
+def _save_export_payload(files, saved_export, config):
+    payload = files.file.payload
+    if not saved_export:
+        saved = SavedBasicExport(configuration=config)
+    else:
+        saved_export.configuration = config
+
+    if saved_export.last_accessed is None:
+        saved_export.last_accessed = datetime.utcnow()
+    saved_export.last_updated = datetime.utcnow()
+    try:
+        saved_export.save()
+    except ResourceConflict:
+        # task was executed concurrently, so let first to finish win and abort the rest
+        pass
+    else:
+        saved_export.set_payload(payload)
+
+
+def _should_rebuild_export(saved, last_access_cutoff):
+    # Don't rebuild exports that haven't been accessed since last_access_cutoff
+    return (
+        last_access_cutoff
+        and saved
+        and saved.last_accessed
+        and saved.last_accessed < last_access_cutoff
+    )
 
 
 def get_saved_export_and_delete_copies(index):

@@ -2,6 +2,13 @@ import contextlib
 import os
 import tempfile
 
+import datetime
+
+from couchdbkit import ResourceConflict
+
+from couchexport.groupexports import (
+    _should_rebuild_export,
+)
 from soil import DownloadBase
 
 from couchexport.export import FormattedRow, get_writer
@@ -14,6 +21,7 @@ from corehq.apps.export.esaccessors import (
 from corehq.apps.export.models.new import (
     CaseExportInstance,
     FormExportInstance,
+    CachedExport,
 )
 
 
@@ -182,3 +190,53 @@ def _get_base_query(export_instance):
         raise Exception(
             "Unknown base query for export instance type {}".format(type(export_instance))
         )
+
+
+def rebuild_export(export_instance, last_access_cutoff=None, filters=None):
+    """
+    Rebuild the given daily saved ExportInstance
+    """
+    saved_export = _get_cached_export_and_delete_copies(export_instance._id)
+    if not _should_rebuild_export(saved_export, last_access_cutoff):
+        return
+
+    file = get_export_file([export_instance], filters or [])
+    with file:
+        _save_export_payload(export_instance._id, file, saved_export)
+
+
+def _save_export_payload(export_instance_id, file, saved_export):
+    """
+    Save the contents of an export file to disk as part of the given saved export
+    for later retrieval.
+    """
+    payload = file.file.payload
+
+    if not saved_export:
+        saved_export = CachedExport(export_instance_id=export_instance_id)
+
+    if saved_export.last_accessed is None:
+        saved_export.last_accessed = datetime.datetime.utcnow()
+    saved_export.last_updated = datetime.datetime.utcnow()
+
+    try:
+        saved_export.save()
+    except ResourceConflict:
+        # task was executed concurrently, so let first to finish win and abort the rest
+        pass
+    else:
+        saved_export.set_payload(payload)
+
+def _get_cached_export_and_delete_copies(export_instance_id):
+
+    matching = CachedExport.by_export_instance_id(export_instance_id)
+    if not matching:
+        return None
+    if len(matching) == 1:
+        return matching[0]
+    else:
+        # delete all matches besides the last updated match
+        matching = sorted(matching, key=lambda x: x.last_updated)
+        for match in matching[:-1]:
+            match.delete()
+        return matching[-1]
