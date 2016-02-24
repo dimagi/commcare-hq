@@ -162,15 +162,12 @@
 </script>
 
 <script type="text/html" id="case-config:case-action">
-    <div class="panel-heading">
-        <!-- TODO: increase click target size -->
-        <a data-toggle="collapse"
-           data-bind="html: header,
-                      attr: {
-                          href: '#' + actionType + $index(),
-                          'data-parent': actionType == 'open' ?  '#case-open-accordion' : '#case-load-accordion'
-                      }"></a>
-    </div>
+    <div class="panel-heading clickable" data-toggle="collapse"
+         data-bind="html: header,
+                    attr: {
+                        href: '#' + actionType + $index(),
+                        'data-parent': actionType == 'open' ?  '#case-open-accordion' : '#case-load-accordion'
+                    }"></div>
     <div class="panel-collapse collapse" data-bind="attr: {id: actionType + $index()}">
         <div class="panel-body">
             <button class="pull-right btn btn-danger"
@@ -252,15 +249,12 @@
 </script>
 
 <script type="text/html" id="case-config:case-action-auto-select">
-    <div class="panel-heading">
-        <!-- TODO: increase click target size -->
-        <a data-toggle="collapse"
-           data-bind="html: header,
-                      attr: {
-                          href: '#' + actionType + $index(),
-                          'data-parent': actionType == 'open' ?  '#case-open-accordion' : '#case-load-accordion'
-                      }"></a>
-    </div>
+    <div class="panel-heading clickable" data-toggle="collapse"
+         data-bind="html: header,
+                    attr: {
+                        href: '#' + actionType + $index(),
+                        'data-parent': actionType == 'open' ?  '#case-open-accordion' : '#case-load-accordion'
+                    }"></div>
     <div class="panel-collapse collapse" data-bind="attr: {id: actionType + $index()}">
         <div class="panel-body">
             <button class="pull-right btn btn-danger"
