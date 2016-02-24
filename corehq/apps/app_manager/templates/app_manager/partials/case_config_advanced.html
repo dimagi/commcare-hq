@@ -169,9 +169,9 @@
                     }">
         <h3 class="panel-title" data-bind="html: header"></h3>
     </div>
-    <div class="panel-collapse"
+    <div class="panel-collapse collapse"
          data-bind="attr: {id: actionType + $index()},
-                    css: {collapse: !!$index(), in: !$index()}">
+                    css: {in: !$index()}"><!-- open first panel -->
         <div class="panel-body">
             <button class="pull-right btn btn-danger"
                     data-bind="openModal: 'remove-action-modal-template', visible: true">
@@ -259,9 +259,9 @@
                     }">
         <h3 class="panel-title" data-bind="html: header"></h3>
     </div>
-    <div class="panel-collapse"
+    <div class="panel-collapse collapse"
          data-bind="attr: {id: actionType + $index()},
-                    css: {collapse: !!$index(), in: !$index()}">
+                    css: {in: !$index()}"><!-- open first panel -->
         <div class="panel-body">
             <button class="pull-right btn btn-danger"
                     data-bind="openModal: 'remove-action-modal-template', visible: true">
