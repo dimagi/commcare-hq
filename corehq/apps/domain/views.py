@@ -2182,6 +2182,7 @@ class DomainForwardingRepeatRecords(GenericTabularReport):
                 self._make_state_label(record),
                 record.url,
                 record.next_check.strftime('%b %d, %Y %H:%M') if record.next_check else None,
+                record.failure_reason if not record.succeeded else None,
                 self._make_view_payload_button(record.get_id),
                 self._make_resend_payload_button(record.get_id),
             ],
@@ -2194,6 +2195,7 @@ class DomainForwardingRepeatRecords(GenericTabularReport):
             DataTablesColumn('Status'),
             DataTablesColumn('URL'),
             DataTablesColumn('Retry Date'),
+            DataTablesColumn('Failure Reason'),
             DataTablesColumn('View payload'),
             DataTablesColumn('Resend'),
         )
