@@ -163,11 +163,12 @@
 
 <script type="text/html" id="case-config:case-action">
     <div class="panel-heading clickable" data-toggle="collapse"
-         data-bind="html: header,
-                    attr: {
+         data-bind="attr: {
                         href: '#' + actionType + $index(),
                         'data-parent': actionType == 'open' ?  '#case-open-accordion' : '#case-load-accordion'
-                    }"></div>
+                    }">
+        <h3 class="panel-title" data-bind="html: header"></h3>
+    </div>
     <div class="panel-collapse"
          data-bind="attr: {id: actionType + $index()},
                     css: {collapse: !!$index(), in: !$index()}">
@@ -252,11 +253,12 @@
 
 <script type="text/html" id="case-config:case-action-auto-select">
     <div class="panel-heading clickable" data-toggle="collapse"
-         data-bind="html: header,
-                    attr: {
+         data-bind="attr: {
                         href: '#' + actionType + $index(),
                         'data-parent': actionType == 'open' ?  '#case-open-accordion' : '#case-load-accordion'
-                    }"></div>
+                    }">
+        <h3 class="panel-title" data-bind="html: header"></h3>
+    </div>
     <div class="panel-collapse"
          data-bind="attr: {id: actionType + $index()},
                     css: {collapse: !!$index(), in: !$index()}">
