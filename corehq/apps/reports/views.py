@@ -512,7 +512,6 @@ def hq_download_saved_export(req, domain, export_id):
 
     export.last_accessed = datetime.utcnow()
     export.save()
-    export = SavedBasicExport.get(export_id)
     content_type = Format.from_format(export.configuration.format).mimetype
     payload = export.get_payload(stream=True)
     response = StreamingHttpResponse(FileWrapper(payload), content_type=content_type)
