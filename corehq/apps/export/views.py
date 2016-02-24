@@ -939,9 +939,9 @@ class BaseExportListView(ExportsPermissionsMixin, JSONResponseMixin, BaseProject
         raise NotImplementedError("must implement fmt_export_data")
 
     def fmt_emailed_export_data(self, group_id=None, index=None,
-                                       has_file=False, file_id=None, size=0,
-                                       last_updated=None, last_accessed=None,
-                                       download_url=None):
+                                has_file=False, file_id=None, size=0,
+                                last_updated=None, last_accessed=None,
+                                download_url=None):
         """
         Return a dictionary containing details about an emailed export.
         This will eventually be passed to an Angular controller.
