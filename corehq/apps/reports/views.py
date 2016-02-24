@@ -258,15 +258,19 @@ class MySavedReportsView(BaseProjectReportSectionView):
             )
 
         scheduled_reports = [
-            rn for rn in ReportNotification.by_domain_and_owner(
+            r for r in ReportNotification.by_domain_and_owner(
                 self.domain, self.request.couch_user._id)
-            if _is_valid(rn)
+            if _is_valid(r)
         ]
         scheduled_reports = sorted(scheduled_reports,
-                                   key=lambda rn: rn.configs[0].name)
+                                   key=lambda s: s.configs[0].name)
         for report in scheduled_reports:
             time_difference = get_timezone_difference(self.domain)
-            (report.hour, day_change) = recalculate_hour(report.hour, int(time_difference[:3]), int(time_difference[3:]))
+            (report.hour, day_change) = recalculate_hour(
+                report.hour,
+                int(time_difference[:3]),
+                int(time_difference[3:])
+            )
             report.minute = 0
             if day_change:
                 report.day = calculate_day(report.interval, report.day, day_change)
@@ -847,7 +851,11 @@ class ScheduledReportsView(BaseProjectReportSectionView):
         if self.scheduled_report_id:
             instance = ReportNotification.get(self.scheduled_report_id)
             time_difference = get_timezone_difference(self.domain)
-            (instance.hour, day_change) = recalculate_hour(instance.hour, int(time_difference[:3]), int(time_difference[3:]))
+            (instance.hour, day_change) = recalculate_hour(
+                instance.hour,
+                int(time_difference[:3]),
+                int(time_difference[3:])
+            )
             instance.minute = 0
             if day_change:
                 instance.day = calculate_day(instance.interval, instance.day, day_change)
@@ -856,7 +864,7 @@ class ScheduledReportsView(BaseProjectReportSectionView):
                 return HttpResponseBadRequest()
         else:
             instance = ReportNotification(
-                owner_id=self.request.couch_user._id ,
+                owner_id=self.request.couch_user._id,
                 domain=self.domain,
                 config_ids=[],
                 hour=8,
@@ -890,12 +898,14 @@ class ScheduledReportsView(BaseProjectReportSectionView):
     @property
     def config_choices(self):
         config_choices = [(c._id, c.full_name) for c in self.configs]
+
         def _sort_key(config_choice):
             config_choice_id = config_choice[0]
             if config_choice_id in self.report_notification.config_ids:
                 return self.report_notification.config_ids.index(config_choice_id)
             else:
                 return len(self.report_notification.config_ids)
+
         return sorted(config_choices, key=_sort_key)
 
     @property
@@ -914,7 +924,7 @@ class ScheduledReportsView(BaseProjectReportSectionView):
         form.fields['config_ids'].choices = self.config_choices
         form.fields['recipient_emails'].choices = web_user_emails
 
-        form.fields['hour'].help_text = "This scheduled report's timezone is %s (%s GMT)"  % \
+        form.fields['hour'].help_text = "This scheduled report's timezone is %s (%s GMT)" % \
                                         (Domain.get_by_name(self.domain)['default_timezone'],
                                         get_timezone_difference(self.domain)[:3] + ':'
                                         + get_timezone_difference(self.domain)[3:])
