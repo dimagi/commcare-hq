@@ -10,7 +10,7 @@ from .dbaccessors import *
 CUSTOM_DATA_FIELD_PREFIX = "data-field"
 # This list is used to grandfather in existing data, any new fields should use
 # the system prefix defined below
-SYSTEM_FIELDS = ["commtrack-supply-point"]
+SYSTEM_FIELDS = ["name", "type", "owner_id", "external_id", "hq_user_id", "commtrack-supply-point"]
 SYSTEM_PREFIX = "commcare"
 
 
