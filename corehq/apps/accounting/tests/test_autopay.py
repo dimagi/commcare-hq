@@ -74,6 +74,11 @@ class TestBillingAutoPay(BaseInvoiceTestCase):
         date_due = autopayable_invoice.first().date_due
 
         AutoPayInvoicePaymentHandler().pay_autopayable_invoices(date_due)
-        self.assertAlmostEqual(autopayable_invoice.first().get_total(), 0)
-        self.assertEqual(len(PaymentRecord.objects.all()), 1)
-        self.assertEqual(len(mail.outbox), original_outbox_length + 1)
+
+        autopayable_invoices = Invoice.autopayable_invoices(date_due)
+        for invoice in autopayable_invoices:
+            self.assertAlmostEqual(invoice.get_total(), 0)
+
+        num_autopaid_invoices = autopayable_invoices.count()
+        self.assertEqual(len(PaymentRecord.objects.all()), num_autopaid_invoices)
+        self.assertEqual(len(mail.outbox), original_outbox_length + num_autopaid_invoices)
