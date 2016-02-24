@@ -373,17 +373,6 @@ ko.bindingHandlers.starred = {
     }
 };
 
-ko.bindingHandlers.bootstrapCollapse = {
-    init: function (element) {
-        $(element).on('click', 'a.accordion-toggle', function () {
-            var $a = $(this);
-            if (!$a.attr('href')) {
-                $a.parent().parent().find('.collapse').collapse('toggle');
-            }
-        });
-    }
-};
-
 ko.bindingHandlers.bootstrapTabs = {
     init: function (element) {
         var tabLinkSelector = 'ul.nav > li > a';

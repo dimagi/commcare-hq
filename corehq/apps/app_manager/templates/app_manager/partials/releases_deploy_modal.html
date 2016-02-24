@@ -19,7 +19,7 @@
                 <a href="{% url "mobile_workers" domain %}">{% trans "create your first mobile worker" %}</a>.
             </div>
         {% else %}
-            <div class="panel-group" data-bind="bootstrapCollapse: true" id="deploy-accordion">
+            <div class="panel-group" id="deploy-accordion">
                 <div class="panel panel-default">
                     <div class="panel-heading">
                         <a data-toggle="collapse" data-parent="#deploy-accordion" href="#panel-android" aria-expanded="true" aria-controls="panel-android">
@@ -73,7 +73,7 @@
                                                 <p>
                                                     <a href="#" data-bind="
                                                         openRemoteModal: get_odk_install_url,
-                                                        click: function() { ga_track_event('App Manager', 'Show Bar Code', '-'); }
+                                                        click: clickScan
                                                     ">
                                                         {% trans "Scan Application Barcode" %}
                                                     </a>

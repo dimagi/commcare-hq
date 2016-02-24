@@ -1,4 +1,3 @@
-import calendar
 from collections import namedtuple
 import datetime
 import logging
@@ -32,20 +31,6 @@ def log_accounting_error(message):
 
 def log_accounting_info(message):
     logger.info("[BILLING] %s" % message)
-
-
-def get_first_last_days(year, month):
-    last_day = calendar.monthrange(year, month)[1]
-    date_start = datetime.date(year, month, 1)
-    date_end = datetime.date(year, month, last_day)
-    return date_start, date_end
-
-
-def get_previous_month_date_range(reference_date=None):
-    reference_date = reference_date or datetime.date.today()
-
-    last_month_year, last_month = add_months(reference_date.year, reference_date.month, -1)
-    return get_first_last_days(last_month_year, last_month)
 
 
 def months_from_date(reference_date, months_from_date):

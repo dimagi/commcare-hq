@@ -31,10 +31,11 @@ MOCK_BULK_USER_ES = None
 def user_es_call(domain, q, fields, size, start_at):
     query = (UserES()
              .domain(domain)
-             .set_query({"query_string": {"query": q}})
              .fields(fields)
              .size(size)
              .start(start_at))
+    if q is not None:
+        query.set_query({"query_string": {"query": q}})
     return query.run().hits
 
 
