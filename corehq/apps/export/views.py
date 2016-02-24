@@ -9,6 +9,7 @@ from django.http import HttpResponseRedirect, HttpResponseBadRequest, Http404
 from django.template.defaultfilters import filesizeformat
 
 from corehq.apps.export.export import get_export_download
+from corehq.apps.export.models.new import CachedExport
 from django_prbac.utils import has_privilege
 from django.utils.decorators import method_decorator
 import json
@@ -1154,7 +1155,7 @@ class FormExportListView(BaseExportListView):
         else:
             # New export
             if export.is_daily_saved_export:
-                emailed_exports = [export.daily_saved_export_metadata()]  # Have to wrap as array for legacy reasons
+                emailed_exports = [self._get_daily_saved_export_metadata(export)]  # Have to wrap as array for legacy reasons
             else:
                 emailed_exports = []
         return {
@@ -1170,6 +1171,20 @@ class FormExportListView(BaseExportListView):
                                args=(self.domain, export.get_id)),
             'downloadUrl': self._get_download_url(export.get_id),
         }
+
+    def _get_daily_saved_export_metadata(self, export_instance):
+        saved_exports = CachedExport.by_export_instance_id(export_instance._id)
+        assert len(saved_exports) == 1
+        saved_export = saved_exports[0]
+
+        return self.fmt_emailed_export_data(
+            has_file=saved_export.has_file(),
+            file_id=saved_export._id,
+            size=saved_export.size,
+            last_updated=saved_export.last_updated,
+            last_accessed=saved_export.last_accessed,
+            download_url="#"  # TODO: Write a view for downloading CachedExports
+        )
 
     def _get_download_url(self, export_id):
         # TODO: Assumes all exports have been converted to the new type. Don't make that assumption.
