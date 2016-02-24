@@ -9,9 +9,9 @@ from corehq.apps.app_manager.models import CustomMonthFilter
 Date = namedtuple('Date', ('year', 'month', 'day'))
 
 
-MAY_15 = Date(2015, 05, 15)
-MAY_20 = Date(2015, 05, 20)
-MAY_21 = Date(2015, 05, 21)
+MAY_15 = Date(2015, 5, 15)
+MAY_20 = Date(2015, 5, 20)
+MAY_21 = Date(2015, 5, 21)
 
 
 @contextmanager
