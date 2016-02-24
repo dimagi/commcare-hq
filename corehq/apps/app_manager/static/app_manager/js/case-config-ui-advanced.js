@@ -151,20 +151,15 @@ var AdvancedCase = (function () {
 
         self.caseConfigViewModel = new CaseConfigViewModel(self, params);
 
-        // TODO: if index is supplied, open that panel
         self.applyAccordion = function (type, index) {
-            if (!type || type === 'open') {
-                $('#case-open-accordion .panel-collapse.in').collapse('hide')
+            _.each(_.map(type ? [type] : ['open', 'load'], function(t) {
+                return $("#case-" + t + "-accordion");
+            }), function($accordion) {
+                $accordion.find('.panel-collapse.in').collapse('hide')
                 if (index !== undefined) {
-                    $('#case-open-accordion > .panel:nth-child(' + (index + 1) + ') .panel-collapse').collapse('show');
+                    $accordion.find(' > .panel:nth-child(' + (index + 1) + ') .panel-collapse').collapse('show');
                 }
-            }
-            if (!type || type === 'load') {
-                $('#case-load-accordion .panel-collapse.in').collapse('hide')
-                if (index !== undefined) {
-                    $('#case-load-accordion > .panel:nth-child(' + (index + 1) + ') .panel-collapse').collapse('show');
-                }
-            }
+            });
         };
 
         self.init = function () {
@@ -602,22 +597,7 @@ var AdvancedCase = (function () {
                 return config.getModulesForCaseType(self.case_type(), self.show_product_stock());
             });
 
-            self.case_type.subscribe(function (value) {
-                // TODO: delete?
-                // fix for resizing of accordion when content changes
-                /*if (!value) {
-                    var index = self.config.caseConfigViewModel.load_update_cases.indexOf(self);
-                    self.config.applyAccordion('load', index);
-                }*/
-            }, null, 'beforeChange');
-
             if (self.auto_select) {
-                self.auto_select.mode.subscribe(function (value) {
-                    // TODO: delete?
-                    // fix for resizing of accordion when content changes
-                    /*var index = self.config.caseConfigViewModel.load_update_cases.indexOf(self);
-                    self.config.applyAccordion('load', index);*/
-                }, null, 'beforeChange');
                 self.auto_select.mode.subscribe(function (value) {
                     // suggestedProperties need to be those of case type "commcare-user"
                     if (value === 'usercase') {
@@ -851,14 +831,6 @@ var AdvancedCase = (function () {
                     return true;
                 }
             };
-
-            // TODO: delete?
-            /*self.case_type.subscribe(function (value) {
-                if (!value) {
-                    var index = self.config.caseConfigViewModel.open_cases.indexOf(self);
-                    self.config.applyAccordion('open', index);
-                }
-            }, null, 'beforeChange');*/
 
             self.disable_tag = ko.computed(function () {
                 return false;
