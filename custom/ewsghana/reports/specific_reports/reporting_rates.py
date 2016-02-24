@@ -60,14 +60,24 @@ class ReportingRates(ReportingRatesData):
 
             chart_data = sorted([
                 dict(value=non_reported_percent,
-                     label=_('Non-Reporting %s%%' % non_reported_formatted),
-                     description=_("%s%% (%d) Non-Reported (%s)" %
-                                   (non_reported_formatted, data['non_reported'], self.datetext())),
+                     label=_('Non-Reporting %s%%') % non_reported_formatted,
+                     description=_(
+                         "%(formatted_percent)s%% (%(raw_number)d) Non-Reported (%(date_range)s)"
+                     ) % {
+                         'formatted_percent': non_reported_formatted,
+                         'raw_number': data['non_reported'],
+                         'date_range': self.datetext(),
+                     },
                      color='red'),
                 dict(value=reported_percent,
-                     label=_('Reporting %s%%' % reported_formatted),
-                     description=_("%s%% (%d) Reported (%s)" % (reported_formatted, data['reported'],
-                                                                self.datetext())),
+                     label=_('Reporting %s%%') % reported_formatted,
+                     description=_(
+                         "%(formatted_percent)s%% (%(raw_number)d) Reported (%(date_range)s)"
+                     ) % {
+                         'formatted_percent': reported_formatted,
+                         'raw_number': data['reported'],
+                         'date_range': self.datetext(),
+                     },
                      color='green'),
             ], key=lambda x: x['value'], reverse=True)
         pie_chart = EWSPieChart('', '', chart_data, [chart_data[0]['color'], chart_data[1]['color']])
@@ -111,13 +121,23 @@ class ReportingDetails(ReportingRatesData):
             chart_data = [
                 dict(value=complete_formatted,
                      label=_('Complete %s%%') % complete_formatted,
-                     description=_("%s%% (%d) Complete Reports in %s") %
-                                  (complete_formatted, data['complete'], self.datetext()),
+                     description=_(
+                         "%(formatted_percent)s%% (%(raw_number)d) Complete Reports in %(date_range)s"
+                     ) % {
+                         'formatted_percent': complete_formatted,
+                         'raw_number': data['complete'],
+                         'date_range': self.datetext()
+                     },
                      color='green'),
                 dict(value=incomplete_formatted,
                      label=_('Incomplete %s%%') % incomplete_formatted,
-                     description=_("%s%% (%d) Incomplete Reports in %s") %
-                                  (incomplete_formatted, data['incomplete'], self.datetext()),
+                     description=_(
+                         "%(formatted_percent)s%% (%(raw_number)d) Incomplete Reports in %(date_range)s"
+                     ) % {
+                         'formatted_percent': incomplete_formatted,
+                         'raw_number': data['incomplete'],
+                         'date_range': self.datetext(),
+                     },
                      color='purple'),
             ]
         pie_chart = EWSPieChart('', '', chart_data, ['green', 'purple'])
