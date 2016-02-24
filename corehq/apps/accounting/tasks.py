@@ -152,7 +152,7 @@ def update_subscriptions():
 
 
 @periodic_task(run_every=crontab(hour=13, minute=0, day_of_month='1'))
-def generate_invoices(based_on_date=None, is_test=False):
+def generate_invoices(based_on_date=None):
     """
     Generates all invoices for the past month.
     """
@@ -165,36 +165,33 @@ def generate_invoices(based_on_date=None, is_test=False):
     all_domain_ids = [d['id'] for d in Domain.get_all(include_docs=False)]
     for domain_doc in iter_docs(Domain.get_db(), all_domain_ids):
         domain = Domain.wrap(domain_doc)
-        if is_test:
-            log_accounting_info("Ready to create invoice for domain %s" % domain.name)
-        else:
-            try:
-                invoice_factory = DomainInvoiceFactory(
-                    invoice_start, invoice_end, domain)
-                invoice_factory.create_invoices()
-                log_accounting_info("Sent invoices for domain %s" % domain.name)
-            except CreditLineError as e:
-                log_accounting_error(
-                    "There was an error utilizing credits for "
-                    "domain %s: %s" % (domain.name, e)
-                )
-            except BillingContactInfoError as e:
-                log_accounting_error("BillingContactInfoError: %s" % e)
-            except InvoiceError as e:
-                log_accounting_error(
-                    "Could not create invoice for domain %s: %s" % (
-                    domain.name, e
-                ))
-            except InvoiceAlreadyCreatedError as e:
-                log_accounting_error(
-                    "Invoice already existed for domain %s: %s" % (
-                    domain.name, e
-                ))
-            except Exception as e:
-                log_accounting_error(
-                    "Error occurred while creating invoice for "
-                    "domain %s: %s" % (domain.name, e)
-                )
+        try:
+            invoice_factory = DomainInvoiceFactory(
+                invoice_start, invoice_end, domain)
+            invoice_factory.create_invoices()
+            log_accounting_info("Sent invoices for domain %s" % domain.name)
+        except CreditLineError as e:
+            log_accounting_error(
+                "There was an error utilizing credits for "
+                "domain %s: %s" % (domain.name, e)
+            )
+        except BillingContactInfoError as e:
+            log_accounting_error("BillingContactInfoError: %s" % e)
+        except InvoiceError as e:
+            log_accounting_error(
+                "Could not create invoice for domain %s: %s" % (
+                domain.name, e
+            ))
+        except InvoiceAlreadyCreatedError as e:
+            log_accounting_error(
+                "Invoice already existed for domain %s: %s" % (
+                domain.name, e
+            ))
+        except Exception as e:
+            log_accounting_error(
+                "Error occurred while creating invoice for "
+                "domain %s: %s" % (domain.name, e)
+            )
 
 
 def send_bookkeeper_email(month=None, year=None, emails=None):
