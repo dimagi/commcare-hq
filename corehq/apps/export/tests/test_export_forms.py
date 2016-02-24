@@ -5,7 +5,6 @@ import pytz
 from django.test import SimpleTestCase
 from mock import patch
 
-from corehq.apps.domain.models import Domain
 from corehq.apps.export.filters import FormSubmittedByFilter
 from corehq.apps.export.forms import FilterFormESExportDownloadForm
 
@@ -15,7 +14,7 @@ class TestFilterFormESExportDownloadForm(SimpleTestCase):
 
     def setUp(self):
         DomainObject = namedtuple('DomainObject', ['uses_locations', 'name'])
-        self.project =  DomainObject(False, "foo")
+        self.project = DomainObject(False, "foo")
 
     def test_get_datespan_filter(self):
         form_data = {'date_range': '2015-06-25 to 2016-02-19'}
