@@ -477,7 +477,7 @@ class DataSourceForm(forms.Form):
 
 _shared_properties = ['exists_in_current_version', 'display_text', 'property', 'data_source_field']
 FilterViewModel = namedtuple("FilterViewModel", _shared_properties + ['format'])
-ColumnViewModel = namedtuple("ColumnViewModel", _shared_properties)
+ColumnViewModel = namedtuple("ColumnViewModel", _shared_properties + ['calculation'])
 
 
 class ConfigureNewReportBase(forms.Form):
@@ -638,7 +638,7 @@ class ConfigureNewReportBase(forms.Form):
         changed = False
         if number_cols:
             for indicator in indicators:
-                if indicator["column_id"] in number_cols and indicator["datatype"] != "decimal":
+                if indicator["column_id"] in number_cols and indicator["datatype"] not in ["integer", "decimal"]:
                     indicator["datatype"] = "decimal"
                     changed = True
         return changed
@@ -709,6 +709,7 @@ class ConfigureNewReportBase(forms.Form):
         """
         matching_data_source = self.ds_builder.get_existing_match()
         if matching_data_source:
+            data_source_config_id = matching_data_source._id
             reactivated = False
             if matching_data_source.is_deactivated:
                 matching_data_source.is_deactivated = False
@@ -1028,6 +1029,12 @@ class ConfigureListReportForm(ConfigureNewReportBase):
     @memoized
     def initial_columns(self):
         if self.existing_report:
+            reverse_agg_map = {
+                'avg': 'Average',
+                'sum': 'Sum',
+                'count': 'Count',
+                'simple': 'None'
+            }
             cols = []
             for c in self.existing_report.columns:
                 exists = self._column_exists(c['field'])
@@ -1037,6 +1044,7 @@ class ConfigureListReportForm(ConfigureNewReportBase):
                         exists_in_current_version=exists,
                         property=self._get_property_from_column(c['field']) if exists else None,
                         data_source_field=c['field'] if not exists else None,
+                        calculation=reverse_agg_map.get(c.get('aggregation'), 'None')
                     )
                 )
             return cols
@@ -1044,14 +1052,10 @@ class ConfigureListReportForm(ConfigureNewReportBase):
 
     @property
     def _report_columns(self):
-        aggregation_map = {'None': 'simple',
-                           'Sum': 'sum',
-                           'Average': 'avg',
-                           'Count': 'count'}
         def _make_column(conf, index):
             return {
                 "format": "default",
-                "aggregation": aggregation_map[conf['calculation']],
+                "aggregation": "simple",
                 "field": self.data_source_properties[conf['property']].column_id,
                 "column_id": "column_{}".format(index),
                 "type": "field",
@@ -1061,9 +1065,6 @@ class ConfigureListReportForm(ConfigureNewReportBase):
 
     @property
     def _report_aggregation_cols(self):
-        for col in self._report_columns:
-            if col['aggregation'] != 'simple':
-                return []
         return ['doc_id']
 
 
@@ -1096,7 +1097,21 @@ class ConfigureTableReportForm(ConfigureListReportForm, ConfigureBarChartReportF
         agg_field_id = self.data_source_properties[self.aggregation_field].column_id
         agg_field_text = self.data_source_properties[self.aggregation_field].text
 
-        columns = super(ConfigureTableReportForm, self)._report_columns
+        def _make_column(conf, index):
+            aggregation_map = {'None': 'simple',
+                                'Sum': 'sum',
+                                'Average': 'avg',
+                                'Count': 'count'}
+            return {
+                "format": "default",
+                "aggregation": aggregation_map[conf['calculation']],
+                "field": self.data_source_properties[conf['property']].column_id,
+                "column_id": "column_{}".format(index),
+                "type": "field",
+                "display": conf['display_text']
+            }
+
+        columns = [_make_column(conf, i) for i, conf in enumerate(self.cleaned_data['columns'])]
 
         # Add the aggregation indicator to the columns if it's not already present.
         displaying_agg_column = bool([c for c in columns if c['field'] == agg_field_id])

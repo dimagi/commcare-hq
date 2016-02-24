@@ -66,6 +66,7 @@
             i.dataSourceField(o.data_source_field !== undefined ? o.data_source_field : null);
             i.displayText(o.display_text);
             i.userModifiedDisplayText = true;
+            i.calculation(o.calculation);
             i.format(o.format);
             return i;
         };
@@ -153,7 +154,7 @@
             });
             this.columnsList = new propertyList({
                 hasFormatCol: false,
-                hasCalculationCol: true,
+                hasCalculationCol: {% if report_type == "table" or report_type == "worker" %}true{% else %}false{% endif %},
                 initialCols: initialColumns,
                 buttonText: 'Add Column',
                 analyticsAction: 'Add Column'
