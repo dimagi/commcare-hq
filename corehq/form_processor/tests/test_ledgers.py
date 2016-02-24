@@ -1,10 +1,14 @@
 from collections import namedtuple
 
+from django.conf import settings
 from django.test import TestCase
-from casexml.apps.case.mock import CaseFactory
+from casexml.apps.case.mock import CaseFactory, CaseBlock
 from corehq.apps.commtrack.helpers import make_product
 from corehq.apps.hqcase.utils import submit_case_blocks
+from corehq.form_processor.backends.sql.dbaccessors import CaseAccessorSQL
+from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 from corehq.form_processor.interfaces.processor import FormProcessorInterface
+from corehq.form_processor.models import CaseTransaction
 from corehq.form_processor.parsers.ledgers.helpers import UniqueLedgerReference
 from corehq.form_processor.tests import FormProcessorTestUtils, run_with_all_backends
 
@@ -104,6 +108,29 @@ class LedgerTests(TestCase):
         self._set_balance(100)
         self._submit_ledgers([TestLedger(TRANSFER_BLOCK, 100, None)])
         self._assert_ledger_state(200)
+
+    @run_with_all_backends
+    def test_ledger_update_with_case_update(self):
+        submit_case_blocks([
+            CaseBlock(case_id=self.case.case_id, update={'a': "1"}).as_string(),
+            BALANCE_BLOCK.format(
+                case_id=self.case.case_id,
+                product_id=self.product_a._id,
+                quantity=100
+            )],
+            DOMAIN
+        )
+
+        self._assert_ledger_state(100)
+        case = CaseAccessors(DOMAIN).get_case(self.case.case_id)
+        self.assertEqual("1", case.dynamic_case_properties()['a'])
+        if settings.TESTS_SHOULD_USE_SQL_BACKEND:
+            transactions = CaseAccessorSQL.get_transactions(self.case.case_id)
+            self.assertEqual(3, len(transactions))
+            self.assertEqual(
+                [CaseTransaction.TYPE_FORM, CaseTransaction.TYPE_FORM, CaseTransaction.TYPE_LEDGER],
+                [t.type for t in transactions]
+            )
 
     def _assert_ledger_state(self, expected_balance):
         ledgers = self.interface.ledger_processor.get_ledgers_for_case(self.case.case_id)

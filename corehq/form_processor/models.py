@@ -922,7 +922,7 @@ class CaseTransaction(DisabledDbMixin, models.Model):
         ).format(self=self)
 
     class Meta:
-        unique_together = ("case", "form_id")
+        unique_together = ("case", "form_id", "type")
         ordering = ['server_date']
         db_table = CaseTransaction_DB_TABLE
         app_label = "form_processor"
