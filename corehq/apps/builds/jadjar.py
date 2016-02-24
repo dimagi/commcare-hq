@@ -10,6 +10,8 @@ from dimagi.utils.subprocess_manager import subprocess_context
 
 from settings import BASE_ADDRESS, J2ME_ADDRESS
 
+from lxml import etree
+
 
 class JadDict(dict):
 
@@ -112,6 +114,34 @@ def sign_jar(jad, jar):
     return jad.render()
 
 
+def _convertXMLToJ2ME(files, path):
+    def transform(string):
+        return string.replace(BASE_ADDRESS, J2ME_ADDRESS, 1)
+
+    if path == 'profile.xml' or path == path == 'media_profile.xml':
+        tree = etree.fromstring(files[path])
+
+        tree.set('update', transform(tree.attrib['update']))
+        properties = [
+            'ota-restore-url',
+            'ota-restore-url-testing',
+            'PostURL',
+            'PostTestURL',
+            'key_server',
+        ]
+        for prop in properties:
+            prop_elem = tree.find("property[@key='" + prop + "']")
+            prop_elem.set('value', transform(prop_elem.get('value')))
+
+
+        for remote in tree.findall("suite/resource/location[@authority='remote']"):
+            remote.text = transform(remote.text)
+
+        return etree.tostring(tree)
+    return files[path]
+
+
+
 class JadJar(object):
 
     def __init__(self, jad, jar, version=None, build_number=None, signed=False):
@@ -137,7 +167,7 @@ class JadJar(object):
         buffer = StringIO(self.jar)
         with ZipFile(buffer, 'a', ZIP_DEFLATED) as zipper:
             for path in files:
-                zipper.writestr(path, files[path].replace(BASE_ADDRESS, J2ME_ADDRESS))
+                zipper.writestr(path, _convertXMLToJ2ME(files, path))
         buffer.flush()
         jar = buffer.getvalue()
         buffer.close()
