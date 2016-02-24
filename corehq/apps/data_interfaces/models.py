@@ -160,10 +160,10 @@ class AutomaticUpdateRuleCriteria(models.Model):
         return date_to_check <= (now - timedelta(days=days))
 
     def check_equal(self, case, now):
-        return case.get_case_property(self.property_name) == self.property_value
+        return case.to_json().get(self.property_name) == self.property_value
 
     def check_not_equal(self, case, now):
-        return case.get_case_property(self.property_name) != self.property_value
+        return case.to_json().get(self.property_name) != self.property_value
 
     def check_has_value(self, case, now):
         value = case.get_case_property(self.property_name)

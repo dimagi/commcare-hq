@@ -195,6 +195,67 @@ class AutomaticCaseUpdateTest(TestCase):
         case.set_case_property('property2', 'x')
         self.assertTrue(self.rule2.rule_matches_case(case, datetime(2016, 1, 1)))
 
+    def test_date_case_properties_for_equality(self):
+        """
+        Date case properties are automatically converted from string to date
+        when fetching from the db, so here we want to make sure this doesn't
+        interfere with our ability to compare dates for equality.
+        """
+        case = CommCareCase(
+            domain=self.domain,
+            type='test-case-type-2',
+        )
+
+        self.rule2.automaticupdaterulecriteria_set = [
+            AutomaticUpdateRuleCriteria(
+                property_name='property1',
+                property_value='2016-02-24',
+                match_type=AutomaticUpdateRuleCriteria.MATCH_EQUAL,
+            ),
+        ]
+
+        case.set_case_property('property1', '2016-02-24')
+        case.save()
+        case = CommCareCase.get(case.get_id)
+        case.server_modified_on = datetime(2015, 1, 1)
+        self.assertTrue(self.rule2.rule_matches_case(case, datetime(2016, 1, 1)))
+
+        case.set_case_property('property1', '2016-02-25')
+        case.save()
+        case = CommCareCase.get(case.get_id)
+        case.server_modified_on = datetime(2015, 1, 1)
+        self.assertFalse(self.rule2.rule_matches_case(case, datetime(2016, 1, 1)))
+
+        case.delete()
+
+    def test_date_case_properties_for_inequality(self):
+        case = CommCareCase(
+            domain=self.domain,
+            type='test-case-type-2',
+        )
+
+        self.rule2.automaticupdaterulecriteria_set = [
+            AutomaticUpdateRuleCriteria(
+                property_name='property1',
+                property_value='2016-02-24',
+                match_type=AutomaticUpdateRuleCriteria.MATCH_NOT_EQUAL,
+            ),
+        ]
+
+        case.set_case_property('property1', '2016-02-24')
+        case.save()
+        case = CommCareCase.get(case.get_id)
+        case.server_modified_on = datetime(2015, 1, 1)
+        self.assertFalse(self.rule2.rule_matches_case(case, datetime(2016, 1, 1)))
+
+        case.set_case_property('property1', '2016-02-25')
+        case.save()
+        case = CommCareCase.get(case.get_id)
+        case.server_modified_on = datetime(2015, 1, 1)
+        self.assertTrue(self.rule2.rule_matches_case(case, datetime(2016, 1, 1)))
+
+        case.delete()
+
     def test_match_has_value(self):
         case = CommCareCase(
             domain=self.domain,
