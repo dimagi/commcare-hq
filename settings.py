@@ -1498,7 +1498,7 @@ CUSTOM_UCR_EXPRESSIONS = [
 
 CUSTOM_UCR_EXPRESSION_LISTS = [
     ('mvp.ucr.reports.expressions.CUSTOM_UCR_EXPRESSIONS'),
-    ('icds.ucr.expressions.CUSTOM_UCR_EXPRESSIONS'),
+    ('custom.icds.ucr.expressions.CUSTOM_UCR_EXPRESSIONS'),
 ]
 
 CUSTOM_MODULES = [
