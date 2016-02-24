@@ -152,11 +152,18 @@ var AdvancedCase = (function () {
         self.caseConfigViewModel = new CaseConfigViewModel(self, params);
 
         self.applyAccordion = function (type, index) {
-            _.each(_.map(type ? [type] : ['open', 'load'], function(t) {
-                return $("#case-" + t + "-accordion");
-            }), function($accordion) {
-                $accordion.find('.panel-collapse.in').collapse('hide')
-                $accordion.find(' > .panel:nth-child(' + (index + 1) + ') .panel-collapse').collapse('show');
+            _.each(type ? [type] : ['open', 'load'], function(t) {
+                var selector = "#case-" + t + "-accordion";
+
+                // Make sure all parents are set correctly so panels behave like an accordion
+                $(selector + ' > .panel > .panel-collapse').collapse({
+                    parent: selector,
+                    toggle: false,
+                });
+
+                // Hide all panels, then show the requested one
+                $(selector + ' .panel-collapse.in').collapse('hide')
+                $(selector + ' > .panel:nth-child(' + (index + 1) + ') .panel-collapse').collapse('show');
             });
         };
 
