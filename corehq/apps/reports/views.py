@@ -141,7 +141,6 @@ from .models import (
 )
 
 from .standard import inspect, export, ProjectReport
-from corehq.apps.style.decorators import use_bootstrap3, use_datatables
 from .standard.cases.basic import CaseListReport
 from .tasks import (
     build_form_multimedia_zip,
@@ -160,6 +159,7 @@ from .util import (
 )
 from corehq.apps.style.decorators import (
     use_bootstrap3,
+    use_datatables,
     use_jquery_ui,
     use_jquery_ui_multiselect,
     use_select2,
@@ -1140,8 +1140,9 @@ class CaseAttachmentsView(CaseDetailsView):
 
     @property
     def page_name(self):
-        return "{} '{}'".format(_("Attachments for case"),
-                                  super(CaseAttachmentsView, self).page_name)
+        return "{} '{}'".format(
+            _("Attachments for case"), super(CaseAttachmentsView, self).page_name
+        )
 
 
 @require_case_view_permission
