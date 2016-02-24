@@ -494,8 +494,7 @@ def hq_download_saved_export(req, domain, export_id):
     # quasi-security hack: the first key of the index is always assumed
     # to be the domain
     assert domain == export.configuration.index[0]
-    cutoff = datetime.utcnow() - timedelta(days=settings.SAVED_EXPORT_ACCESS_CUTOFF)
-    if not export.last_accessed or export.last_accessed < cutoff:
+    if _should_update_export(export.last_accessed):
         group_id = req.GET.get('group_export_id')
         if group_id:
             try:
@@ -512,16 +511,26 @@ def hq_download_saved_export(req, domain, export_id):
 
     export.last_accessed = datetime.utcnow()
     export.save()
-    content_type = Format.from_format(export.configuration.format).mimetype
+
     payload = export.get_payload(stream=True)
+    return _build_download_saved_export_response(payload, export.configuration.format)
+
+
+def _build_download_saved_export_response(payload, format):
+    content_type = Format.from_format(format).mimetype
     response = StreamingHttpResponse(FileWrapper(payload), content_type=content_type)
-    if export.configuration.format != 'html':
+    if format != 'html':
         # ht: http://stackoverflow.com/questions/1207457/convert-unicode-to-string-in-python-containing-extra-symbols
         normalized_filename = unicodedata.normalize(
             'NFKD', unicode(export.configuration.filename),
         ).encode('ascii', 'ignore')
         response['Content-Disposition'] = 'attachment; filename="%s"' % normalized_filename
     return response
+
+
+def _should_update_export(last_accessed):
+    cutoff = datetime.utcnow() - timedelta(days=settings.SAVED_EXPORT_ACCESS_CUTOFF)
+    return not last_accessed or last_accessed < cutoff
 
 
 @login_or_digest
