@@ -3318,7 +3318,7 @@ def _filter_by_user_id(user, ui_filter):
 
 
 def _filter_by_parent_location_id(user, ui_filter):
-    location = user.sql_location or user.location
+    location = user.sql_location
     location_parent = location.parent.location_id if location and location.parent else None
     return ui_filter.value(**{ui_filter.name: location_parent})
 
