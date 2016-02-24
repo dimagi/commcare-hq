@@ -48,7 +48,7 @@ def rebuild_export(config, schema, last_access_cutoff=None, filter=None):
 def _save_export_payload(files, saved_export, config):
     payload = files.file.payload
     if not saved_export:
-        saved = SavedBasicExport(configuration=config)
+        saved_export = SavedBasicExport(configuration=config)
     else:
         saved_export.configuration = config
 
