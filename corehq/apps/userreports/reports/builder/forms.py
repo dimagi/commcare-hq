@@ -633,6 +633,17 @@ class ConfigureNewReportBase(forms.Form):
         tasks.rebuild_indicators.delay(data_source_config._id)
         return data_source_config._id
 
+    def _change_indicators(self, indicators):
+        number_cols = [col["field"] for col in self._report_columns if col["aggregation"] in ["avg", "sum"]]
+        changed = False
+        if number_cols:
+            for indicator in indicators:
+                if indicator["column_id"] in number_cols and indicator["datatype"] != "decimal":
+                    indicator["datatype"] = "decimal"
+                    changed = True
+        return changed
+
+
     def update_report(self):
         from corehq.apps.userreports.views import delete_data_source_shared
 
@@ -658,7 +669,10 @@ class ConfigureNewReportBase(forms.Form):
                 matching_data_source.is_deactivated = False
                 matching_data_source.save()
                 tasks.rebuild_indicators.delay(matching_data_source._id)
-
+            changed = self._change_indicators(matching_data_source.configured_indicators)
+            if changed:
+                matching_data_source.save()
+                tasks.rebuild_indicators.delay(matching_data_source._id)
         else:
             # We need to create a new data source
             existing_sources = DataSourceConfiguration.by_domain(self.domain)
@@ -676,8 +690,9 @@ class ConfigureNewReportBase(forms.Form):
                     "To continue, first delete all of the reports using a particular "
                     "data source (or the data source itself) and try again. "
                 ))
-
-            data_source_config_id = self._build_data_source()
+            indicators = self.ds_builder.indicators
+            self._change_indicators(indicators)
+            data_source_config_id = self._build_data_source(indicators)
             self.existing_report.config_id = data_source_config_id
 
         self.existing_report.aggregation_columns = self._report_aggregation_cols
@@ -693,23 +708,18 @@ class ConfigureNewReportBase(forms.Form):
         Creates data source and report config.
         """
         matching_data_source = self.ds_builder.get_existing_match()
-        number_columns = [col["field"] for col in self._report_columns if col["aggregation"] in ["avg", "sum"]]
         if matching_data_source:
-            if number_columns or matching_data_source.is_deactivated:
-                if number_columns:
-                    for indicator in matching_data_source.configured_indicators:
-                        if indicator["column_id"] in number_columns:
-                            indicator["datatype"] = "decimal"
-                if matching_data_source.is_deactivated:
-                    matching_data_source.is_deactivated = False
+            reactivated = False
+            if matching_data_source.is_deactivated:
+                matching_data_source.is_deactivated = False
+                reactivated = True
+            changed = self._change_indicators(matching_data_source.configured_indicators)
+            if changed or reactivated:
                 matching_data_source.save()
                 tasks.rebuild_indicators.delay(matching_data_source._id)
         else:
             indicators = self.ds_builder.indicators
-            if number_columns:
-                for indicator in indicators:
-                    if indicator["column_id"] in number_columns:
-                        indicator["datatype"] = "decimal"
+            self._change_indicators(indicators)
             data_source_config_id = self._build_data_source(indicators=indicators)
 
         report = ReportConfiguration(
