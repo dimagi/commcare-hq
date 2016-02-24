@@ -156,9 +156,7 @@ var AdvancedCase = (function () {
                 return $("#case-" + t + "-accordion");
             }), function($accordion) {
                 $accordion.find('.panel-collapse.in').collapse('hide')
-                if (index !== undefined) {
-                    $accordion.find(' > .panel:nth-child(' + (index + 1) + ') .panel-collapse').collapse('show');
-                }
+                $accordion.find(' > .panel:nth-child(' + (index + 1) + ') .panel-collapse').collapse('show');
             });
         };
 
