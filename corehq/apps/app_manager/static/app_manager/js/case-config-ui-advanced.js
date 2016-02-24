@@ -182,8 +182,14 @@ var AdvancedCase = (function () {
 
                 self.ensureBlankProperties();
                 $('#case-configuration-tab').on('click', function () {
-                    self.applyAccordion('open', 0);
-                    self.applyAccordion('load', 0);
+                    // Leave all the actions, collapsed, unless there's just
+                    // one in the section, and then open it
+                    if ($('#case-load-accordion > .panel').length === 1) {
+                        self.applyAccordion('load', 0);
+                    }
+                    if ($('#case-open-accordion > .panel').length === 1) {
+                        self.applyAccordion('open', 0);
+                    }
                 });
             });
         };
