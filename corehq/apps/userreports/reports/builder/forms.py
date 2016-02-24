@@ -1033,7 +1033,7 @@ class ConfigureListReportForm(ConfigureNewReportBase):
                 'avg': 'Average',
                 'sum': 'Sum',
                 'count': 'Count',
-                'simple': 'None'
+                'simple': 'No Aggregation'
             }
             cols = []
             for c in self.existing_report.columns:
@@ -1098,7 +1098,7 @@ class ConfigureTableReportForm(ConfigureListReportForm, ConfigureBarChartReportF
         agg_field_text = self.data_source_properties[self.aggregation_field].text
 
         def _make_column(conf, index):
-            aggregation_map = {'None': 'simple',
+            aggregation_map = {'No Aggregation': 'simple',
                                 'Sum': 'sum',
                                 'Average': 'avg',
                                 'Count': 'count'}

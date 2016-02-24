@@ -82,13 +82,14 @@
             this.propertyHelpText = options.propertyHelpText !== undefined ? options.propertyHelpText : null;
             this.displayHelpText = options.displayHelpText !== undefined ? options.displayHelpText : null;
             this.formatHelpText = options.formatHelpText !== undefined ? options.formatHelpText : null;
+            this.calcHelpText = options.calcHelpText !== undefined ? options.calcHelpText : null;
             this.analyticsAction = options.analyticsAction !== undefined ? options.analyticsAction : null;
             this.analyticsLabel = options.analyticsLabel !== undefined ? options.analyticsLabel : '{{ report_type }}';
 
             this.hasFormatCol = ko.observable(options.hasFormatCol !== undefined ? options.hasFormatCol : true);
             this.hasCalculationCol = ko.observable(options.hasCalculationCol !== undefined ? options.hasCalculationCol : false);
             this.formatOptions = ko.observableArray(["Choice", "Date"]);
-            this.calculationOptions = ko.observableArray(["None", "Sum", "Average", "Count"]);
+            this.calculationOptions = ko.observableArray(["No Aggregation", "Sum", "Average", "Count"]);
             this.propertyOptions = ko.observableArray({{ property_options|JSON }});
             var rawOptions = {{ property_options|JSON }};
             this.optionsContainQuestions = _.any(rawOptions, function (o) {
@@ -157,7 +158,8 @@
                 hasCalculationCol: {% if report_type == "table" or report_type == "worker" %}true{% else %}false{% endif %},
                 initialCols: initialColumns,
                 buttonText: 'Add Column',
-                analyticsAction: 'Add Column'
+                analyticsAction: 'Add Column',
+                calcHelpText: '{{ calculation_help_text|escapejs }}'
             });
             this.submitHandler = function(formElement){
                 var isValid = true;
