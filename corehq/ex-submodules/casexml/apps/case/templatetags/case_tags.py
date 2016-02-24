@@ -146,7 +146,7 @@ class SupplyPointDisplayWrapper(CaseDisplayWrapper):
         })
         try:
             location = SQLLocation.objects.get(location_id=self.case.location_id)
-        except SQLLocation.DoesNotExist:
+        except (SQLLocation.DoesNotExist, AttributeError):
             pass
         else:
             data['location_type'] = location.location_type_name
