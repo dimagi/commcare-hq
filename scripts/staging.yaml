@@ -64,7 +64,6 @@ branches:
   - raw-forms-es # Ben 2/23
   - email_list-soft_assert # Nick P 2/23
   - j2me # j$ 2/23
-  - abs-rev-active-tab # Ben 2/23
   # B3 Changes round 2
   - b3-reports-data  # BB 2/23
   - b3-data-import-cases  # BB 2/23
