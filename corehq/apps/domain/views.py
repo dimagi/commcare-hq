@@ -2095,6 +2095,7 @@ class DomainForwardingRepeatRecords(GenericTabularReport):
     ajax_pagination = True
     asynchronous = False
     is_bootstrap3 = True
+    sortable = False
 
     fields = [
         'corehq.apps.reports.filters.select.RepeaterFilter',
