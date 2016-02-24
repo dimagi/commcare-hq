@@ -116,10 +116,11 @@ def _convertXMLToJ2ME(files, path):
     def transform(string):
         return string.replace(settings.BASE_ADDRESS, settings.J2ME_ADDRESS, 1)
 
-    if path == 'profile.xml' or path == path == 'media_profile.xml':
+    if path == 'profile.xml' or path == 'media_profile.xml':
         tree = etree.fromstring(files[path])
 
         tree.set('update', transform(tree.attrib['update']))
+
         properties = [
             'ota-restore-url',
             'ota-restore-url-testing',
@@ -130,7 +131,6 @@ def _convertXMLToJ2ME(files, path):
         for prop in properties:
             prop_elem = tree.find("property[@key='" + prop + "']")
             prop_elem.set('value', transform(prop_elem.get('value')))
-
 
         for remote in tree.findall("suite/resource/location[@authority='remote']"):
             remote.text = transform(remote.text)
