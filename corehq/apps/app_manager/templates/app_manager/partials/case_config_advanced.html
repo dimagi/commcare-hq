@@ -168,7 +168,9 @@
                         href: '#' + actionType + $index(),
                         'data-parent': actionType == 'open' ?  '#case-open-accordion' : '#case-load-accordion'
                     }"></div>
-    <div class="panel-collapse collapse" data-bind="attr: {id: actionType + $index()}">
+    <div class="panel-collapse"
+         data-bind="attr: {id: actionType + $index()},
+                    css: {collapse: !!$index(), in: !$index()}">
         <div class="panel-body">
             <button class="pull-right btn btn-danger"
                     data-bind="openModal: 'remove-action-modal-template', visible: true">
@@ -255,7 +257,9 @@
                         href: '#' + actionType + $index(),
                         'data-parent': actionType == 'open' ?  '#case-open-accordion' : '#case-load-accordion'
                     }"></div>
-    <div class="panel-collapse collapse" data-bind="attr: {id: actionType + $index()}">
+    <div class="panel-collapse"
+         data-bind="attr: {id: actionType + $index()},
+                    css: {collapse: !!$index(), in: !$index()}">
         <div class="panel-body">
             <button class="pull-right btn btn-danger"
                     data-bind="openModal: 'remove-action-modal-template', visible: true">
