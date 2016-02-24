@@ -610,7 +610,7 @@ class LedgerAccessorSQL(object):
         for ledger in ledger_values:
             ledger.last_modified = datetime.utcnow()
 
-        with get_cursor(CommCareCaseSQL) as cursor:
+        with get_cursor(LedgerValue) as cursor:
             try:
                 cursor.execute(
                     "SELECT save_ledger_values(%s, %s::{}[])".format(LedgerValue_DB_TABLE),
