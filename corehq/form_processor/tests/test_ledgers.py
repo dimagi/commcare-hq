@@ -127,9 +127,11 @@ class LedgerTests(TestCase):
         if settings.TESTS_SHOULD_USE_SQL_BACKEND:
             transactions = CaseAccessorSQL.get_transactions(self.case.case_id)
             self.assertEqual(3, len(transactions))
+            self.assertEqual(CaseTransaction.TYPE_FORM, transactions[0].type)
+            # ordering not guaranteed since they have the same date
             self.assertEqual(
-                [CaseTransaction.TYPE_FORM, CaseTransaction.TYPE_FORM, CaseTransaction.TYPE_LEDGER],
-                [t.type for t in transactions]
+                {CaseTransaction.TYPE_FORM, CaseTransaction.TYPE_LEDGER},
+                {t.type for t in transactions[1:]}
             )
 
     def _assert_ledger_state(self, expected_balance):
