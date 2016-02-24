@@ -353,9 +353,6 @@ var AdvancedCase = (function () {
 
         self.addFormAction = function (action) {
             if (action.value === 'load' || action.value === 'auto_select') {
-                // Collapse any open panels
-                //$('#case-open-accordion .collapse').collapse('hide')
-
                 var index = self.load_update_cases().length;
                 var tag_prefix = action.value === 'auto_select'? 'auto' : '';
                 var action_data = {
@@ -385,9 +382,6 @@ var AdvancedCase = (function () {
                 self.load_update_cases.push(LoadUpdateAction.wrap(action_data, self.config));
                 self.config.applyAccordion('load', index);
             } else if (action.value === 'open') {
-                // Collapse any open panels
-                //$('#case-load-accordion .collapse').collapse('hide')
-
                 var index = self.open_cases().length;
                 self.open_cases.push(OpenCaseAction.wrap({
                     case_type: config.caseType,
