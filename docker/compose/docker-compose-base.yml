@@ -72,8 +72,7 @@ web:
 rabbit:
   image: rabbitmq:3-management
   environment:
-    RABBITMQ_DEFAULT_VHOST: "commcarehq"  
-
+    RABBITMQ_DEFAULT_VHOST: "commcarehq"
   expose: 
     - "15672"
     - "5672"
@@ -91,7 +90,15 @@ celery:
     - ../../:/mnt
   environment:
     PYTHONUSERBASE: /vendor
-    C_FORCE_ROOT: true
+    C_FORCE_ROOT: 'true'
   labels:
     commcare.name: "celery"
+
+nginx: 
+  image: nginx
+  expose:
+    - "80"
+  labels:
+    commcare.name: "nginx"
+  
 

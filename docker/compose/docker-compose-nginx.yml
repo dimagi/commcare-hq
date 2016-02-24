@@ -1,0 +1,13 @@
+nginx: 
+  extends: 
+    file: docker-compose-base.yml
+    service: nginx
+  ports: 
+    - "80:80"
+  volumes: 
+    - "../nginxconf:/etc/nginx:ro"
+    - "../../staticfiles:/static:ro"
+  external_links: 
+    - web:web
+  volumes_from:
+    - web

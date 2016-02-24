@@ -9,10 +9,13 @@ RUN requirements/uninstall-requirements.sh
 COPY requirements/requirements.txt /vendor/requirements.txt
 COPY requirements/dev-requirements.txt /vendor/dev-requirements.txt
 COPY requirements/test-requirements.txt /vendor/test-requirements.txt
+COPY requirements/prod-requirements.txt /vendor/prod-requirements.txt
+
 
 RUN pip install \
     -r /vendor/requirements.txt \
     -r /vendor/dev-requirements.txt \
+    -r /vendor/prod-requirements.txt \
     --user --upgrade \
     && rm -rf /root/.cache/pip
 

@@ -59,6 +59,9 @@ function travis_js_runner() {
     sudo docker-compose -f $DOCKER_DIR/compose/docker-compose-travis-js.yml -p travis $@
 }
 
+function nginx_runner() {
+    sudo docker-compose -f $DOCKER_DIR/compose/docker-compose-nginx.yml -p commcarehq $@
+}
 
 key="$1"
 shift
@@ -79,9 +82,16 @@ case $key in
     migrate)
         web_runner run --rm web python manage.py migrate $@
         ;;
-    runserver)
+    runserver-dev)
         ./docker/create-kafka-topics.sh
-	web_runner run --rm --service-ports web /mnt/docker/runserver.sh
+	web_runner run --name web --rm --service-ports web /mnt/docker/runserver_dev.sh
+        ;;
+    runserver-prod)
+        ./docker/create-kafka-topics.sh
+	web_runner run --name web --rm --service-ports web /mnt/docker/runserver_prod.sh
+        ;;
+    proxy)
+        nginx_runner $@
         ;;
     shell)
         web_runner run --rm web python manage.py shell

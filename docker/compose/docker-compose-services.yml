@@ -70,3 +70,4 @@ celery:
     - couch
     - redis
     - elasticsearch
+
