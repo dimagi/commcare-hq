@@ -732,7 +732,15 @@ class InvoiceSummaryViewBase(AccountingSectionView):
     @property
     def page_context(self):
         return {
-            'billing_records': self.billing_records,
+            'billing_records': [
+                {
+                    'date_created': billing_record.date_created,
+                    'email_recipients': ', '.join(billing_record.recipients),
+                    'invoice': billing_record.invoice,
+                    'pdf_data_id': billing_record.pdf_data_id,
+                }
+                for billing_record in self.billing_records
+            ],
             'can_send_email': self.can_send_email,
             'invoice_info_form': self.invoice_info_form,
             'resend_email_form': self.resend_email_form,
