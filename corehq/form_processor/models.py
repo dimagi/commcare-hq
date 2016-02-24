@@ -44,6 +44,7 @@ CommCareCaseSQL_DB_TABLE = 'form_processor_commcarecasesql'
 CommCareCaseIndexSQL_DB_TABLE = 'form_processor_commcarecaseindexsql'
 CaseAttachmentSQL_DB_TABLE = 'form_processor_caseattachmentsql'
 CaseTransaction_DB_TABLE = 'form_processor_casetransaction'
+LedgerValue_DB_TABLE = 'form_processor_ledgervalue'
 
 
 class Attachment(namedtuple('Attachment', 'name raw_content content_type')):
@@ -967,10 +968,12 @@ class FormEditRebuild(CaseTransactionDetail):
     deprecated_form_id = StringProperty()
 
 
-class LedgerValue(models.Model):
+class LedgerValue(DisabledDbMixin, models.Model):
     """
     Represents the current state of a ledger. Supercedes StockState
     """
+    objects = RestrictedManager()
+
     # domain not included and assumed to be accessed through the foreign key to the case table. legit?
     case_id = models.CharField(max_length=255, db_index=True, default=None)  # remove foreign key until we're sharding this
     # can't be a foreign key to products because of sharding.
@@ -982,5 +985,6 @@ class LedgerValue(models.Model):
 
     class Meta:
         app_label = "form_processor"
+        db_table = LedgerValue_DB_TABLE
 
 CaseAction = namedtuple("CaseAction", ["action_type", "updated_known_properties", "indices"])
