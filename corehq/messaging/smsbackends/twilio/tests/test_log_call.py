@@ -1,11 +1,11 @@
-from corehq.apps.ivr.tests.util import LogCallTestCase
+import corehq.apps.ivr.tests.util as util
 from corehq.apps.sms.models import CallLog
 from corehq.messaging.smsbackends.twilio.models import SQLTwilioBackend
 from corehq.messaging.smsbackends.twilio.views import IVR_RESPONSE
 from django.test import Client
 
 
-class TwilioLogCallTestCase(LogCallTestCase):
+class TwilioLogCallTestCase(util.LogCallTestCase):
     def setUp(self):
         super(TwilioLogCallTestCase, self).setUp()
         self.backend = SQLTwilioBackend.objects.create(
