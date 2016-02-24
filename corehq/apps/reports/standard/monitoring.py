@@ -887,7 +887,7 @@ class FormCompletionVsSubmissionTrendsReport(WorkerMonitoringFormReportTableBase
                 app_ids.append(form['app_id'])
                 form_map[form['xmlns']] = form['name']
 
-            results = get_forms(
+            paged_result = get_forms(
                 self.domain,
                 self.datespan.startdate_utc.date(),
                 self.datespan.enddate_utc.date(),
@@ -895,7 +895,7 @@ class FormCompletionVsSubmissionTrendsReport(WorkerMonitoringFormReportTableBase
                 app_ids=app_ids,
                 xmlnss=xmlnss,
             )
-            for row in results:
+            for row in paged_result.hits:
                 completion_time = (PhoneTime(
                     string_to_utc_datetime(row['form']['meta']['timeEnd']),
                     self.timezone,
