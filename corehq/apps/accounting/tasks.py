@@ -53,6 +53,7 @@ from corehq.apps.domain.models import Domain
 from corehq.apps.users.models import FakeUser, WebUser
 from corehq.const import USER_DATE_FORMAT, USER_MONTH_FORMAT
 from corehq.util.view_utils import absolute_reverse
+from corehq.util.dates import get_previous_month_date_range
 
 
 @transaction.atomic()
@@ -156,7 +157,7 @@ def generate_invoices(based_on_date=None, check_existing=False, is_test=False):
     Generates all invoices for the past month.
     """
     today = based_on_date or datetime.date.today()
-    invoice_start, invoice_end = utils.get_previous_month_date_range(today)
+    invoice_start, invoice_end = get_previous_month_date_range(today)
     log_accounting_info("Starting up invoices for %(start)s - %(end)s" % {
         'start': invoice_start.strftime(USER_DATE_FORMAT),
         'end': invoice_end.strftime(USER_DATE_FORMAT),
@@ -206,7 +207,7 @@ def send_bookkeeper_email(month=None, year=None, emails=None):
 
     # now, make sure that we send out LAST month's invoices if we did
     # not specify a month or year.
-    today = utils.get_previous_month_date_range(today)[0]
+    today = get_previous_month_date_range(today)[0]
 
     month = month or today.month
     year = year or today.year

@@ -3,7 +3,7 @@ from __future__ import unicode_literals
 
 from django.db import migrations
 
-import json_field.fields
+import jsonfield.fields
 
 
 class Migration(migrations.Migration):
@@ -16,7 +16,7 @@ class Migration(migrations.Migration):
         migrations.AddField(
             model_name='billingcontactinfo',
             name='email_list',
-            field=json_field.fields.JSONField(default=[], help_text='We will email communications regarding your account to the emails specified here.', verbose_name='Contact Emails'),
+            field=jsonfield.fields.JSONField(default=[], help_text='We will email communications regarding your account to the emails specified here.', verbose_name='Contact Emails'),
             preserve_default=True,
         ),
     ]
