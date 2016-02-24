@@ -1,16 +1,15 @@
-from StringIO import StringIO
 import itertools
-from zipfile import ZipFile, ZIP_DEFLATED
-from django.conf import settings
-import shlex
+import os
+from StringIO import StringIO
 from subprocess import PIPE
 from tempfile import NamedTemporaryFile
-import os
-from dimagi.utils.subprocess_manager import subprocess_context
+from zipfile import ZipFile, ZIP_DEFLATED
 
-from settings import BASE_ADDRESS, J2ME_ADDRESS
-
+from django.conf import settings
 from lxml import etree
+import shlex
+
+from dimagi.utils.subprocess_manager import subprocess_context
 
 
 class JadDict(dict):
@@ -115,7 +114,7 @@ def sign_jar(jad, jar):
 
 def _convertXMLToJ2ME(files, path):
     def transform(string):
-        return string.replace(BASE_ADDRESS, J2ME_ADDRESS, 1)
+        return string.replace(settings.BASE_ADDRESS, settings.J2ME_ADDRESS, 1)
 
     if path == 'profile.xml' or path == path == 'media_profile.xml':
         tree = etree.fromstring(files[path])
