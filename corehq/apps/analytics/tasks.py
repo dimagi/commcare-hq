@@ -52,8 +52,9 @@ def _persistent_analytics_post(func, retries=ANALYTICS_RETRIES, sleep=ANALYTICS_
             return func()
         except requests.exceptions.HTTPError as e:
             # if its a bad request, raise the exception because it is our fault
-            status_code = e.response.status_code if isinstance(e.response, requests.models.Response) else e.response.status
-            if 400:
+            res = e.response
+            status_code = res.status_code if isinstance(res, requests.models.Response) else res.status
+            if status_code == 400:
                 raise
             if i < retries - 1:
                 time.sleep(sleep)
