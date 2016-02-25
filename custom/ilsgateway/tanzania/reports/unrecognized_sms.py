@@ -9,7 +9,7 @@ from corehq.apps.reports.filters.fixtures import AsyncLocationFilter
 from corehq.apps.reports.generic import GenericTabularReport
 from corehq.apps.reports.standard import CustomProjectReport, ProjectReportParametersMixin, DatespanMixin
 from corehq.apps.reports.util import format_datatables_data
-from corehq.apps.sms.models import WORKFLOW_DEFAULT, SMSLog, INCOMING, OUTGOING
+from corehq.apps.sms.models import WORKFLOW_DEFAULT, SMS, INCOMING, OUTGOING
 from corehq.apps.users.models import CouchUser
 from corehq.const import SERVER_DATETIME_FORMAT
 from corehq.util.timezones.conversions import ServerTime
@@ -121,9 +121,16 @@ class UnrecognizedSMSReport(CustomProjectReport, ProjectReportParametersMixin,
 
     @property
     def rows(self):
-        startdate = json_format_datetime(self.datespan.startdate_utc)
-        enddate = json_format_datetime(self.datespan.enddate_utc)
-        data = SMSLog.by_domain_date(self.domain, startdate, enddate)
+        data = SMS.by_domain(
+            self.domain,
+            start_date=self.datespan.startdate_utc,
+            end_date=self.datespan.enddate_utc
+        ).filter(
+            workflow__iexact=WORKFLOW_DEFAULT
+        ).exclude(
+            direction=OUTGOING,
+            processed=False,
+        ).order_by('date')
         result = []
 
         direction_map = {
@@ -131,28 +138,14 @@ class UnrecognizedSMSReport(CustomProjectReport, ProjectReportParametersMixin,
             OUTGOING: _("Outgoing"),
         }
         reporting_locations_id = self.get_location_filter()
-        # Retrieve message log options
-        message_log_options = getattr(settings, "MESSAGE_LOG_OPTIONS", {})
-        abbreviated_phone_number_domains = message_log_options.get("abbreviated_phone_number_domains", [])
-        abbreviate_phone_number = (self.domain in abbreviated_phone_number_domains)
 
         contact_cache = {}
         for message in data:
-            if message.direction == OUTGOING and not message.processed:
-                continue
-
-            if message.workflow is None or message.workflow.lower != WORKFLOW_DEFAULT:
-                continue
-
             if reporting_locations_id and message.location_id not in reporting_locations_id:
                 continue
 
             doc_info = self.get_recipient_info(message, contact_cache)
-
             phone_number = message.phone_number
-            if abbreviate_phone_number and phone_number is not None:
-                phone_number = phone_number[0:7] if phone_number[0:1] == "+" else phone_number[0:6]
-
             timestamp = ServerTime(message.date).user_time(self.timezone).done()
             result.append([
                 self._fmt_timestamp(timestamp),

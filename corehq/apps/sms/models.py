@@ -304,6 +304,48 @@ class Log(models.Model):
     # The MessagingSubEvent that this log is tied to
     messaging_subevent = models.ForeignKey('MessagingSubEvent', null=True, on_delete=models.PROTECT)
 
+    @classmethod
+    def by_domain(cls, domain, start_date=None, end_date=None):
+        qs = cls.objects.filter(domain=domain)
+
+        if start_date:
+            qs = cls.objects.filter(date__gte=start_date)
+
+        if end_date:
+            qs = cls.objects.filter(date__lte=end_date)
+
+        return qs
+
+    @classmethod
+    def by_recipient(cls, contact_doc_type, contact_id):
+        return cls.objects.filter(
+            couch_recipient_doc_type=contact_doc_type,
+            couch_recipient=contact_id,
+        )
+
+    @classmethod
+    def get_last_log_for_recipient(cls, contact_doc_type, contact_id, direction=None):
+        qs = SMS.by_recipient(contact_doc_type, contact_id)
+
+        if direction:
+            qs = qs.filter(direction=direction)
+
+        qs = qs.order_by('-date')[:1]
+
+        if qs:
+            return qs[0]
+
+        return None
+
+    @classmethod
+    def count_by_domain(cls, domain, direction=None):
+        qs = cls.objects.filter(domain=domain)
+
+        if direction:
+            qs = qs.filter(direction=direction)
+
+        return qs.count()
+
 
 class SMS(SyncSQLToCouchMixin, Log):
     ERROR_TOO_MANY_UNSUCCESSFUL_ATTEMPTS = 'TOO_MANY_UNSUCCESSFUL_ATTEMPTS'
