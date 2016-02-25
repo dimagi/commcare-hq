@@ -69,7 +69,9 @@ from corehq.apps.app_manager.models import (
     IncompatibleFormTypeException,
     ModuleNotFoundException,
     load_case_reserved_words,
-    FormDatum)
+    FormDatum,
+    PreloadAction,
+)
 from corehq.apps.app_manager.decorators import no_conflict_require_POST, \
     require_can_edit_apps, require_deploy_apps
 from corehq.apps.tour import tours
@@ -162,7 +164,9 @@ def edit_advanced_form_actions(request, domain, app_id, module_id, form_id):
 def edit_form_actions(request, domain, app_id, module_id, form_id):
     app = get_app(domain, app_id)
     form = app.get_module(module_id).get_form(form_id)
+    old_form_case_load = form.form_case_load
     form.actions = FormActions.wrap(json.loads(request.POST['actions']))
+    form.actions.form_case_load = old_form_case_load
     for condition in (form.actions.open_case.condition, form.actions.close_case.condition):
         if isinstance(condition.answer, basestring):
             condition.answer = condition.answer.strip('"\'')
@@ -340,8 +344,7 @@ def patch_xform(request, domain, app_id, unique_form_id):
     xform, _ = dmp.patch_apply(dmp.patch_fromText(patch), current_xml)
     save_xform(app, form, xform)
 
-    if case_references:
-        form.case_references = case_references
+    form.actions.load_from_form = PreloadAction.wrap(case_references)
 
     response_json = {
         'status': 'ok',

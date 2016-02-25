@@ -351,6 +351,7 @@ class FormActions(DocumentSchema):
 
     case_preload = SchemaProperty(PreloadAction)
     referral_preload = SchemaProperty(PreloadAction)
+    load_from_form = SchemaProperty(PreloadAction)
 
     usercase_update = SchemaProperty(UpdateCaseAction)
     usercase_preload = SchemaProperty(PreloadAction)
@@ -750,7 +751,6 @@ class FormBase(DocumentSchema):
     no_vellum = BooleanProperty(default=False)
     form_links = SchemaListProperty(FormLink)
     schedule_form_id = StringProperty()
-    case_references = ListProperty()
 
     @classmethod
     def wrap(cls, data):
@@ -1296,7 +1296,7 @@ class Form(IndexedFormBase, NavMenuItemMediaMixin):
             elif self.requires == 'case':
                 action_types = (
                     'update_case', 'close_case', 'case_preload', 'subcases',
-                    'usercase_update', 'usercase_preload',
+                    'usercase_update', 'usercase_preload', 'load_from_form',
                 )
             else:
                 # this is left around for legacy migrated apps
@@ -1481,7 +1481,7 @@ class Form(IndexedFormBase, NavMenuItemMediaMixin):
                         questions,
                         question_path
                     )
-            if type_ == 'case_preload':
+            if type_ == 'case_preload' or type_ == 'load_from_form':
                 for name, question_path in FormAction.get_action_properties(action):
                     self.add_property_load(
                         app_case_meta,
@@ -1505,15 +1505,6 @@ class Form(IndexedFormBase, NavMenuItemMediaMixin):
                                 questions,
                                 question_path
                             )
-
-        for reference in self.case_references:
-            self.add_property_load(
-                app_case_meta,
-                reference['caseType'],
-                reference['caseProperty'],
-                questions,
-                reference['question']
-            )
 
 
 class MappingItem(DocumentSchema):
