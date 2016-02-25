@@ -946,9 +946,41 @@ class BaseExportListView(ExportsPermissionsMixin, JSONResponseMixin, BaseProject
         Return a dictionary containing details about an emailed export.
         This will eventually be passed to an Angular controller.
         """
-        file_data = self._fmt_emailed_export_fileData(
-            has_file, file_id, size, last_updated, last_accessed, download_url
-        )
+        file_data = {}
+        if has_file:
+            file_data = self._fmt_emailed_export_fileData(
+                has_file, file_id, size, last_updated, last_accessed, download_url
+            )
+
+        return {
+            'groupId': group_id,  # This can be removed when we're off legacy exports
+            'hasFile': has_file,
+            'index': index,  # This can be removed when we're off legacy exports
+            'fileData': file_data,
+        }
+
+    def fmt_legacy_emailed_export_data(self, group_id=None, index=None,
+                                has_file=False, saved_basic_export=None):
+        """
+        Return a dictionary containing details about an emailed export.
+        This will eventually be passed to an Angular controller.
+        """
+        file_data = {}
+        if has_file:
+            file_data = self._fmt_emailed_export_fileData(
+                has_file,
+                saved_basic_export.get_id,
+                saved_basic_export.size,
+                saved_basic_export.last_updated,
+                saved_basic_export.last_accessed,
+                '{}?group_export_id={}'.format(
+                    reverse('hq_download_saved_export', args=[
+                        self.domain, saved_basic_export.get_id
+                    ]),
+                    group_id
+                )
+            )
+
         return {
             'groupId': group_id,  # This can be removed when we're off legacy exports
             'hasFile': has_file,
@@ -976,30 +1008,42 @@ class BaseExportListView(ExportsPermissionsMixin, JSONResponseMixin, BaseProject
             }
         return {}
 
-    def get_formatted_emailed_exports(self, export):
+    def get_formatted_emailed_export(self, export):
+
         emailed_exports = filter(
             lambda x: x.config.index[-1] == export.get_id,
             self.daily_emailed_exports
         )
 
-        def format_emailed_export(export):
-            return self.fmt_legacy_emailed_export_data(
-                group_id=export.group_id,
-                index=export.config.index,
-                has_file=export.saved_version is not None and export.saved_version.has_file(),
-                file_id=export.saved_version.get_id,
-                size=export.saved_version.size,
-                last_updated=export.saved_version.last_updated,
-                last_accessed=export.saved_version.last_accessed,
-                download_url='{}?group_export_id={}'.format(
-                    reverse('hq_download_saved_export', args=[
-                        self.domain, export.saved_version.get_id
-                    ]),
-                    export.group_id
-                )
-            )
+        if not emailed_exports:
+            return None
+        assert len(emailed_exports) == 1
+        emailed_export = emailed_exports[0]
 
-        return map(format_emailed_export, emailed_exports)
+        return self.fmt_legacy_emailed_export_data(
+            group_id=emailed_export.group_id,
+            index=emailed_export.config.index,
+            has_file=emailed_export.saved_version is not None and emailed_export.saved_version.has_file(),
+            saved_basic_export=emailed_export.saved_version
+        )
+
+    def _get_daily_saved_export_metadata(self, export_instance):
+        saved_exports = CachedExport.by_export_instance_id(export_instance._id)
+        if not saved_exports:
+            return None
+        assert len(saved_exports) == 1
+        saved_export = saved_exports[0]
+
+        return self.fmt_emailed_export_data(
+            has_file=saved_export.has_file(),
+            file_id=saved_export._id,
+            size=saved_export.size,
+            last_updated=saved_export.last_updated,
+            last_accessed=saved_export.last_accessed,
+            download_url=reverse(
+                'hq_download_new_saved_export', args=[self.domain, saved_export._id]
+            ),
+        )
 
     @allow_remote_invocation
     def get_exports_list(self, in_data):
@@ -1151,14 +1195,12 @@ class FormExportListView(BaseExportListView):
             edit_view = EditCustomFormExportView
 
         if isinstance(export, FormExportSchema):
-            emailed_exports = self.get_formatted_emailed_exports(export)
+            emailed_export = self.get_formatted_emailed_export(export)
         else:
             # New export
+            emailed_export = None
             if export.is_daily_saved_export:
-                 # Have to wrap as array for legacy reasons
-                emailed_exports = [self._get_daily_saved_export_metadata(export)]
-            else:
-                emailed_exports = []
+                emailed_export = self._get_daily_saved_export_metadata(export)
         return {
             'id': export.get_id,
             'isLegacy': isinstance(export, FormExportSchema),
@@ -1167,25 +1209,11 @@ class FormExportListView(BaseExportListView):
             'formname': export.formname,
             'addedToBulk': False,
             'exportType': export.type,
-            'emailedExports': emailed_exports,
+            'emailedExport': emailed_export,
             'editUrl': reverse(edit_view.urlname,
                                args=(self.domain, export.get_id)),
             'downloadUrl': self._get_download_url(export.get_id),
         }
-
-    def _get_daily_saved_export_metadata(self, export_instance):
-        saved_exports = CachedExport.by_export_instance_id(export_instance._id)
-        assert len(saved_exports) == 1
-        saved_export = saved_exports[0]
-
-        return self.fmt_emailed_export_data(
-            has_file=saved_export.has_file(),
-            file_id=saved_export._id,
-            size=saved_export.size,
-            last_updated=saved_export.last_updated,
-            last_accessed=saved_export.last_accessed,
-            download_url="#"  # TODO: Write a view for downloading CachedExports
-        )
 
     def _get_download_url(self, export_id):
         # TODO: Assumes all exports have been converted to the new type. Don't make that assumption.
@@ -1276,24 +1304,26 @@ class CaseExportListView(BaseExportListView):
         return _("Select a Case Type to Export")
 
     def fmt_export_data(self, export):
-        emailed_exports = self.get_formatted_emailed_exports(export)
         if toggles.NEW_EXPORTS.enabled(self.domain):
             edit_view = EditNewCustomCaseExportView
         else:
             edit_view = EditCustomCaseExportView
 
         if isinstance(export, CaseExportSchema):
-            emailed_exports = self.get_formatted_emailed_exports(export)
+            emailed_export = self.get_formatted_emailed_export(export)
         else:
             # New export
-            emailed_exports = [export.daily_saved_export_metadata()]  # Have to wrap as array for legacy reasons
+            emailed_export = None
+            if export.is_daily_saved_export:
+                emailed_export = self._get_daily_saved_export_metadata(export)
+
         return {
             'id': export.get_id,
             'isDeid': export.is_safe,
             'name': export.name,
             'addedToBulk': False,
             'exportType': export.type,
-            'emailedExports': emailed_exports,
+            'emailedExport': emailed_export,
             'editUrl': reverse(edit_view.urlname,
                                args=(self.domain, export.get_id)),
             'downloadUrl': reverse(DownloadCaseExportView.urlname,
