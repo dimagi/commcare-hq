@@ -70,14 +70,8 @@ class SubmissionTypeFilter(BaseReportFilter):
 
     @classmethod
     def get_filter_toggle(cls, request):
-        filter = None
-        try:
-            if request.GET.get(cls.slug, ''):
-                filter = request.GET.getlist(cls.slug)
-        except KeyError:
-            pass
-        
-        if filter:
-            return SubmissionErrorType.use_filter(filter)
+        filter_ = request.GET.getlist(cls.slug, None)
+        if filter_:
+            return SubmissionErrorType.use_filter(filter_)
         else:
             return SubmissionErrorType.use_error_defaults()
