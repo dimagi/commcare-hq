@@ -49,7 +49,6 @@ from corehq.apps.userreports.exceptions import BadBuilderConfigError
 from corehq.apps.userreports.sql import get_column_name
 from corehq.apps.userreports.ui.fields import JsonField
 from dimagi.utils.decorators.memoized import memoized
-from corehq.util.quickcache import quickcache
 
 
 class FilterField(JsonField):
@@ -662,7 +661,6 @@ class ConfigureNewReportBase(forms.Form):
                 matching_data_source.is_deactivated = False
                 reactivated = True
             changed = False
-            import ipdb; ipdb.set_trace()
             indicators = self.ds_builder.indicators(self._number_columns)
             if matching_data_source.configured_indicators != indicators:
                 matching_data_source.configured_indicators = indicators
@@ -687,7 +685,6 @@ class ConfigureNewReportBase(forms.Form):
                     "To continue, first delete all of the reports using a particular "
                     "data source (or the data source itself) and try again. "
                 ))
-            indicators = self.ds_builder.indicators(self._number_columns)
             data_source_config_id = self._build_data_source()
             self.existing_report.config_id = data_source_config_id
 
@@ -715,7 +712,6 @@ class ConfigureNewReportBase(forms.Form):
                 matching_data_source.save()
                 tasks.rebuild_indicators.delay(matching_data_source._id)
         else:
-            indicators = self.ds_builder.indicators(self._number_columns)
             data_source_config_id = self._build_data_source()
 
         report = ReportConfiguration(
