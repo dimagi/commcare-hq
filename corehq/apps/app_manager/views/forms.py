@@ -331,7 +331,7 @@ def new_form(request, domain, app_id, module_id):
 def patch_xform(request, domain, app_id, unique_form_id):
     patch = request.POST['patch']
     sha1_checksum = request.POST['sha1']
-    case_references = json.loads(request.POST['references'])
+    case_references = json.loads(request.POST.get('references', "{}"))
 
     app = get_app(domain, app_id)
     form = app.get_form(unique_form_id)
