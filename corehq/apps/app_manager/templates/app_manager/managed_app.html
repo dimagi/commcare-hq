@@ -128,7 +128,7 @@
         <li {% if not module and not form and not release_manager %}class="app-name-div
                 {% if not copy_app_form or not copy_app_form.is_bound %}active{% endif %}"
             {% endif %}>
-            <a href="{% url "view_app" domain app.id %}#app-settings" data-toggle="tab">
+            <a href="{% url "view_app" domain app.id %}#app-settings" data-toggle="tab" data-default="1">
                 <i class="fa fa-cog"></i>
                 {% trans "Settings" %}
             </a>
