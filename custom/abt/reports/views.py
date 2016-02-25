@@ -37,7 +37,7 @@ class FormattedSupervisoryReport(CustomConfigurableReport):
         inverted_location_columns = inverted_table[2:]
         sorted_inverted_location_columns = sorted(
             inverted_location_columns,
-            key=lambda inverted_location_column: inverted_location_column[0]
+            key=lambda inverted_location_column: inverted_location_column[0].lower()
         )
         data[0][1] = _invert_table(
             inverted_incident_and_total_columns + sorted_inverted_location_columns
