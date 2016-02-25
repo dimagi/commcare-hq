@@ -152,7 +152,7 @@ class ReportsTab(UITab):
         if hasattr(module, 'DEFAULT_REPORT_CLASS'):
             return "corehq.apps.reports.views.default"
         from corehq.apps.reports.views import MySavedReportsView
-        return MySavedReportsView.as_view()
+        return MySavedReportsView.urlname
 
     @property
     def dropdown_items(self):
