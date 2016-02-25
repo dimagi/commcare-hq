@@ -4,8 +4,8 @@
 {% load i18n %}
 
 {% block js %}{{ block.super }}
-    <script src="{% static 'accounting/js/adjust-balance-modal.js' %}"></script>
-    <script src="{% static 'accounting/js/stay-on-tab.js' %}"></script>
+    <script src="{% new_static 'accounting/js/adjust-balance-modal.js' %}"></script>
+    <script src="{% new_static 'accounting/js/stay-on-tab.js' %}"></script>
 {% endblock %}
 
 {% block js-inline %}{{ block.super }}
@@ -21,16 +21,25 @@
     {% include 'accounting/adjust_balance.html' %}
     {% endif %}
 
-    <div class="modal hide fade" id="resendEmailModal">
-        <div class="modal-header">
-            <a class="close" data-dismiss="modal">&times;</a>
-            <h3>
-                {% blocktrans with invoice_number=invoice_info_form.invoice.invoice_number %}
-                    Resend Invoice #{{ invoice_number }} Email?
-                {% endblocktrans %}
-            </h3>
+    <div class="modal fade" id="resendEmailModal">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <button type="button"
+                            class="close"
+                            data-dismiss="modal"
+                            aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                    <h4 class="modal-title">
+                        {% blocktrans with invoice_number=invoice_info_form.invoice.invoice_number %}
+                            Resend Invoice #{{ invoice_number }} Email?
+                        {% endblocktrans %}
+                    </h4>
+                </div>
+                {% crispy resend_email_form %}
+            </div>
         </div>
-        {% crispy resend_email_form %}
     </div>
 
     <ul class="nav nav-tabs" id="user-settings-tabs">
