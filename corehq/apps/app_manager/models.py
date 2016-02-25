@@ -808,6 +808,8 @@ class FormBase(DocumentSchema):
     def validate_form(self):
         vc = self.validation_cache
         if vc is None:
+            # formtranslate requires all attributes to be valid xpaths, but
+            # vellum namespaced attributes aren't
             form = self.wrapped_xform()
             form.strip_vellum_ns_attributes()
             try:
