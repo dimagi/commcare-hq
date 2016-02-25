@@ -28,8 +28,12 @@
 
     <div class="tab-content tab-padded">
         <div class="tab-pane" id="account">
-            {{ block.super }}
-            {% crispy contact_form %}
+            <div style="margin: 20px 0;">
+                {{ block.super }}
+            </div>
+            <div style="margin: 20px 0;">
+                {% crispy contact_form %}
+            </div>
         </div>
 
         <div class="tab-pane" id="subscriptions">
