@@ -5,14 +5,14 @@
     <table class="table table-condensed">
         <thead data-bind="visible: columns().length > 0">
             <tr tabindex="999" data-bind="paste: function (data) { pasteCallback(data, 0); }">
-                <th></th>
-                <th data-bind="text: DetailScreenConfig.message.FIELD"></th>
-                <th data-bind="text: DetailScreenConfig.message.HEADER"></th>
-                <th data-bind="text: DetailScreenConfig.message.FORMAT"></th>
+                <th class="col-sm-1"></th>
+                <th class="col-sm-3" data-bind="text: DetailScreenConfig.message.FIELD"></th>
+                <th class="col-sm-2" data-bind="text: DetailScreenConfig.message.HEADER"></th>
+                <th class="col-sm-3" data-bind="text: DetailScreenConfig.message.FORMAT"></th>
                 <!-- ko if: useCaseTiles() == "yes" && {{request|toggle_enabled:'CASE_LIST_TILE'|BOOL }}-->
-                <th>{% trans "Case Tile Mapping" %}</th>
+                <th class="col-sm-2">{% trans "Case Tile Mapping" %}</th>
                 <!-- /ko -->
-                <th></th>
+                <th class="col-sm-1"></th>
             </tr>
         </thead>
         <tbody data-bind="sortable: {
@@ -28,7 +28,7 @@
                 copy: function () { return copyCallback(); },
                 paste: function (data) { $parent.pasteCallback(data, $index() + 1); }
             ">
-                <td>
+                <td class="text-center">
                     <span class="sort-disabled" data-bind="ifnot: grip"></span>
                     <i class="grip sortable-handle" data-bind="
                         if: grip,
@@ -76,7 +76,7 @@
                     </select>
                 </td>
                 <!-- /ko -->
-                <td>
+                <td class="text-center">
                     <i style="cursor: pointer;"
                        data-bind="
                         visible: ($parent.columns().length > 1 || $parent.allowsEmptyColumns),
