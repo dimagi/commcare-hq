@@ -353,7 +353,7 @@ class EntriesHelper(object):
                     datums_meta,
                 )[0]['module']
             else:
-                filter_module = module
+                filter_module = datum['module']
             filter_xpath = EntriesHelper.get_filter_xpath(filter_module) if use_filter else ''
 
             datums.append(FormDatumMeta(
