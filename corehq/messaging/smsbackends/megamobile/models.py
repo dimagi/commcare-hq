@@ -2,7 +2,7 @@ import logging
 from urllib import urlencode, quote
 from urllib2 import urlopen
 from corehq.apps.sms.util import strip_plus
-from corehq.apps.sms.models import SMSLog, SQLSMSBackend
+from corehq.apps.sms.models import SQLSMSBackend
 from dimagi.ext.couchdbkit import *
 from corehq.messaging.smsbackends.megamobile.forms import MegamobileBackendForm
 from django.conf import settings
@@ -41,17 +41,10 @@ class SQLMegamobileBackend(SQLSMSBackend):
         phone_number = strip_plus(msg.phone_number)
         if not phone_number.startswith('63'):
             raise MegamobileException("Only Filipino phone numbers are supported")
+
         phone_number = phone_number[2:]
-
         text = msg.text.encode('utf-8')
-
-        pid = None
-        if msg.in_reply_to:
-            original_msg = SMSLog.get(msg.in_reply_to)
-            pid = getattr(original_msg, 'megamobile_pid', None)
-        pid = pid or DEFAULT_PID
-        setattr(msg, "megamobile_pid", pid)
-        msg.save()
+        pid = DEFAULT_PID
 
         config = self.config
         params = urlencode({

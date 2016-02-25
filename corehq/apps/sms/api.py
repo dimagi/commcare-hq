@@ -445,9 +445,6 @@ def incoming(phone_number, text, backend_api, timestamp=None,
         backend_message_id=backend_message_id,
         raw_text=raw_text,
     )
-    if backend_attributes:
-        for k, v in backend_attributes.items():
-            setattr(msg, k, v)
     if settings.SMS_QUEUE_ENABLED:
         msg.processed = False
         msg.datetime_to_process = datetime.utcnow()
