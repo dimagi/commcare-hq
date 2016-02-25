@@ -27,4 +27,5 @@ def get_supply_point_by_location_id(domain, location_id):
         key=[domain, location_id],
         include_docs=True,
         classes={'CommCareCase': SupplyPointCase},
+        limit=1,
     ).one()
