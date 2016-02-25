@@ -5,7 +5,6 @@ CouchAppsPreindexPlugin.register('couchapps', __file__, {
     'form_question_schema': 'meta',
     'schemas_by_xmlns_or_case_type': 'meta',
     'export_instances_by_domain': 'meta',
-    'cached_export_by_export_instance_id': 'meta',
     'receiverwrapper': 'receiverwrapper',
     'users_extra': (settings.USERS_GROUPS_DB, settings.NEW_USERS_GROUPS_DB),
     'all_docs': (

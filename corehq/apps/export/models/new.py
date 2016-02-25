@@ -14,6 +14,7 @@ from corehq.apps.app_manager.models import Application
 from corehq.apps.app_manager.util import get_case_properties
 from corehq.apps.reports.display import xmlns_to_name
 from corehq.blobs.mixin import BlobMixin
+from couchexport.models import Format
 from couchexport.transforms import couch_to_excel_datetime
 from dimagi.utils.couch.database import iter_docs
 from dimagi.ext.couchdbkit import (
@@ -40,7 +41,10 @@ from corehq.apps.export.const import (
 from corehq.apps.export.dbaccessors import (
     get_latest_case_export_schema,
     get_latest_form_export_schema,
-    get_cached_export_by_export_instance_id)
+)
+
+
+DAILY_SAVED_EXPORT_ATTACHMENT_NAME = "payload"
 
 
 class ExportItem(DocumentSchema):
@@ -250,7 +254,7 @@ class TableConfiguration(DocumentSchema):
         return self._get_sub_documents(path[1:], new_docs)
 
 
-class ExportInstance(Document):
+class ExportInstance(BlobMixin, Document):
     name = StringProperty()
     type = StringProperty()
     domain = StringProperty()
@@ -268,10 +272,15 @@ class ExportInstance(Document):
 
     # Whether the export is de-identified
     is_deidentified = BooleanProperty(default=False)
-    is_daily_saved_export = BooleanProperty(default=False)
 
     # Keep reference to old schema id if we have converted it from the legacy infrastructure
     legacy_saved_export_schema_id = StringProperty()
+
+    is_daily_saved_export = BooleanProperty(default=False)
+    # daily saved export fields:
+    # TODO: Does this need filename?
+    last_updated = DateTimeProperty()
+    last_accessed = DateTimeProperty()
 
     class Meta:
         app_label = 'export'
@@ -335,6 +344,42 @@ class ExportInstance(Document):
                 instance.tables.append(table)
 
         return instance
+
+    @property
+    def file_size(self):
+        """
+        Return the size of the pre-computed export.
+        Only daily saved exports could have a pre-computed export.
+        """
+        try:
+            return self.blobs[DAILY_SAVED_EXPORT_ATTACHMENT_NAME].content_length
+        except KeyError:
+            return 0
+
+    @property
+    def filename(self):
+        return "%s.%s" % (self.name, Format.from_format(self.export_format).extension)
+
+    def has_file(self):
+        """
+        Return True if there is a pre-computed export saved for this instance.
+        Only daily saved exports could have a pre-computed export.
+        """
+        return DAILY_SAVED_EXPORT_ATTACHMENT_NAME in self.blobs
+
+    def set_payload(self, payload):
+        """
+        Set the pre-computed export for this instance.
+        Only daily saved exports could have a pre-computed export.
+        """
+        self.put_attachment(payload, DAILY_SAVED_EXPORT_ATTACHMENT_NAME)
+
+    def get_payload(self, stream=False):
+        """
+        Get the pre-computed export for this instance.
+        Only daily saved exports could have a pre-computed export.
+        """
+        return self.fetch_attachment(DAILY_SAVED_EXPORT_ATTACHMENT_NAME, stream=stream)
 
 
 class CaseExportInstance(ExportInstance):
@@ -944,39 +989,3 @@ class SplitExportColumn(ExportColumn):
                 )
             )
         return headers
-
-
-_ATTACHEMENT_NAME = "payload"
-
-
-class CachedExport(BlobMixin, Document):
-    """
-    A cache of an export that lives in couch.
-    Doesn't do anything smart, just works off an index
-    """
-    export_instance_id = StringProperty()
-    last_updated = DateTimeProperty()
-    last_accessed = DateTimeProperty()
-
-    class Meta:
-        app_label = 'export'
-
-    @property
-    def size(self):
-        try:
-            return self.blobs[_ATTACHEMENT_NAME].content_length
-        except KeyError:
-            return 0
-
-    def has_file(self):
-        return _ATTACHEMENT_NAME in self.blobs
-
-    def set_payload(self, payload):
-        self.put_attachment(payload, _ATTACHEMENT_NAME)
-
-    def get_payload(self, stream=False):
-        return self.fetch_attachment(_ATTACHEMENT_NAME, stream=stream)
-
-    @classmethod
-    def by_export_instance_id(cls, export_instance_id):
-        return get_cached_export_by_export_instance_id(export_instance_id)

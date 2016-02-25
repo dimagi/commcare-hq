@@ -4,56 +4,29 @@ import uuid
 
 from django.test import TestCase
 
-from corehq.apps.export.export import _get_cached_export_and_delete_copies
-from corehq.apps.export.models.new import CachedExport, _ATTACHEMENT_NAME
+from corehq.apps.export.models import ExportInstance
+from corehq.apps.export.models.new import DAILY_SAVED_EXPORT_ATTACHMENT_NAME
 from couchexport.groupexports import get_saved_export_and_delete_copies
 from couchexport.models import SavedBasicExport, ExportConfiguration
 
 
-class CachedExportTest(TestCase):
+class DailySavedExportSavingTest(TestCase):
 
     def test_file_save_and_load(self):
         payload = 'something small and simple'
-        saved = CachedExport()
-        saved.save()
-        saved.set_payload(payload)
-        self.assertEqual(payload, saved.get_payload())
-
-    def test_get_cached_export_and_delete_copies_missing(self):
-        self.assertEqual(None, _get_cached_export_and_delete_copies(uuid.uuid4().hex))
-
-    def test_get_saved_and_delete_copies_single(self):
-        export_instance_id = uuid.uuid4().hex
-        saved_export = CachedExport(export_instance_id=export_instance_id)
-        saved_export.save()
-        self.assertEqual(saved_export._id, _get_cached_export_and_delete_copies(export_instance_id)._id)
-
-    def test_get_saved_and_delete_copies_multiple(self):
-        export_instance_id = uuid.uuid4().hex
-        # make three exports with the last one being the most recently updated
-        timestamp = datetime.datetime.utcnow()
-        for i in range(3):
-            saved_export = CachedExport(export_instance_id=export_instance_id,
-                                        last_updated=timestamp + datetime.timedelta(days=i))
-            saved_export.save()
-
-        self.assertEqual(3, len(CachedExport.by_export_instance_id(export_instance_id)))
-        chosen_one = _get_cached_export_and_delete_copies(export_instance_id)
-        # this relies on the variable being set last in the loop which is a bit unintuitive
-        self.assertEqual(saved_export._id, chosen_one._id)
-        saved_after_deletion = CachedExport.by_export_instance_id(export_instance_id)
-        self.assertEqual(1, len(saved_after_deletion))
-        self.assertEqual(chosen_one._id, saved_after_deletion[0]._id)
+        export = ExportInstance(daily_saved_export=True)
+        export.save()
+        export.set_payload(payload)
+        self.assertEqual(payload, export.get_payload())
 
     def test_save_basic_export_to_blobdb(self):
-        export_instance_id = uuid.uuid4().hex
-        saved_export = CachedExport(export_instance_id=export_instance_id)
-        saved_export.save()
-        saved_export.set_payload("content")
-        self.assertTrue(saved_export.has_file())
-        self.assertIn(_ATTACHEMENT_NAME, saved_export.external_blobs)
-        self.assertEqual(saved_export.size, 7)
-        with saved_export.get_payload(stream=True) as fh:
+        export = ExportInstance(daily_saved_export=True)
+        export.save()
+        export.set_payload("content")
+        self.assertTrue(export.has_file())
+        self.assertIn(DAILY_SAVED_EXPORT_ATTACHMENT_NAME, export.external_blobs)
+        self.assertEqual(export.size, 7)
+        with export.get_payload(stream=True) as fh:
             self.assertEqual(fh.read(), "content")
 
 

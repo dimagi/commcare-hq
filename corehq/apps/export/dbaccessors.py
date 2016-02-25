@@ -50,14 +50,3 @@ def _get_export_instance(cls, key):
         reduce=False,
     ).all()
     return [cls.wrap(result['doc']) for result in results]
-
-
-def get_cached_export_by_export_instance_id(export_instance_id):
-    from .models.new import CachedExport
-    results = CachedExport.view(
-        'cached_export_by_export_instance_id/view',
-        key=export_instance_id,
-        include_docs=True,
-        reduce=False,
-    ).all()
-    return results

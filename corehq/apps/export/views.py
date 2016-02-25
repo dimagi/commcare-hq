@@ -9,7 +9,6 @@ from django.http import HttpResponseRedirect, HttpResponseBadRequest, Http404
 from django.template.defaultfilters import filesizeformat
 
 from corehq.apps.export.export import get_export_download
-from corehq.apps.export.models.new import CachedExport
 from django_prbac.utils import has_privilege
 from django.utils.decorators import method_decorator
 import json
@@ -1027,21 +1026,16 @@ class BaseExportListView(ExportsPermissionsMixin, JSONResponseMixin, BaseProject
             saved_basic_export=emailed_export.saved_version
         )
 
-    def _get_daily_saved_export_metadata(self, export_instance):
-        saved_exports = CachedExport.by_export_instance_id(export_instance._id)
-        if not saved_exports:
-            return None
-        assert len(saved_exports) == 1
-        saved_export = saved_exports[0]
+    def _get_daily_saved_export_metadata(self, export):
 
         return self.fmt_emailed_export_data(
-            has_file=saved_export.has_file(),
-            file_id=saved_export._id,
-            size=saved_export.size,
-            last_updated=saved_export.last_updated,
-            last_accessed=saved_export.last_accessed,
+            has_file=export.has_file(),
+            file_id=export._id,
+            size=export.file_size,
+            last_updated=export.last_updated,
+            last_accessed=export.last_accessed,
             download_url=reverse(
-                'hq_download_new_saved_export', args=[self.domain, saved_export._id]
+                'hq_download_new_saved_export', args=[self.domain, export._id]
             ),
         )
 

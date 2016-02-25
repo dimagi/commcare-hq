@@ -28,6 +28,7 @@ def populate_export_download_task(export_instances, filters, download_id, filena
 
 
 @task(queue='background_queue', ignore_result=True, last_access_cutoff=None, filter=None)
-def rebuild_export_task(export_instance_id):
-    export_instance = get_properly_wrapped_export_instance(export_instance_id)
+def rebuild_export_task(export_instance):
+    if isinstance(export_instance, basestring):
+        export_instance = get_properly_wrapped_export_instance(export_instance)
     rebuild_export(export_instance)
