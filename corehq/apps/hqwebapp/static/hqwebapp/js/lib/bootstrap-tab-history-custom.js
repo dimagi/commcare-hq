@@ -35,6 +35,12 @@ $(function () {
             // where State.data.tab won't be available
             link = $('a[data-toggle="tab"][href^="' + window.location.pathname + '"]');
             if (link.length !== 0) {
+                if (link.length > 1) {
+                    var defaultLink = link.filter("[data-default='1']");
+                    if (defaultLink.length) {
+                        link = defaultLink;
+                    }
+                }
                 link = link.first();
                 History.replaceState({
                     tab: link.attr('href').split('#')[1]

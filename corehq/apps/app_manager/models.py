@@ -1,4 +1,5 @@
 # coding=utf-8
+import calendar
 from distutils.version import LooseVersion
 from itertools import chain
 import tempfile
@@ -3278,6 +3279,7 @@ class ReportAppFilter(DocumentSchema):
                 'StaticChoiceListFilter': StaticChoiceListFilter,
                 'StaticDatespanFilter': StaticDatespanFilter,
                 'CustomDatespanFilter': CustomDatespanFilter,
+                'CustomMonthFilter': CustomMonthFilter,
                 'MobileSelectFilter': MobileSelectFilter,
             }
             try:
@@ -3315,9 +3317,26 @@ def _filter_by_user_id(user, ui_filter):
     return Choice(value=user._id, display=None)
 
 
+def _filter_by_parent_location_id(user, ui_filter):
+    location = user.sql_location
+    location_parent = location.parent.location_id if location and location.parent else None
+    return ui_filter.value(**{ui_filter.name: location_parent})
+
+
+def _filter_by_ancestor_location_type_id(user, ui_filter):
+    from corehq.apps.reports_core.filters import Choice
+    location = user.sql_location
+    return [
+        Choice(value=loc.location_type.id, display=loc.location_type.name)
+        for loc in location.get_ancestors()
+    ] if location else []
+
+
 _filter_type_to_func = {
     'case_sharing_group': _filter_by_case_sharing_group_id,
     'location_id': _filter_by_location_id,
+    'parent_location_id': _filter_by_parent_location_id,
+    'ancestor_location_type_id': _filter_by_ancestor_location_type_id,
     'username': _filter_by_username,
     'user_id': _filter_by_user_id,
 }
@@ -3359,6 +3378,7 @@ class StaticDatespanFilter(ReportAppFilter):
         choices=[
             'last7',
             'last30',
+            'thismonth',
             'lastmonth',
             'lastyear',
         ],
@@ -3414,6 +3434,70 @@ class CustomDatespanFilter(ReportAppFilter):
         elif self.operator == '>':
             start_date = None
             end_date = today - datetime.timedelta(days=days + 1)
+        return DateSpan(startdate=start_date, enddate=end_date)
+
+
+def is_lte(integer):
+    def validate(x):
+        if not x <= integer:
+            raise BadValueError('Value must be less than or equal to {}'.format(integer))
+    return validate
+
+
+def is_gte(integer):
+    def validate(x):
+        if not x >= integer:
+            raise BadValueError('Value must be greater than or equal to {}'.format(integer))
+    return validate
+
+
+class CustomMonthFilter(ReportAppFilter):
+    """
+    Filter by months that start on a day number other than 1
+
+    See [FB 215656](http://manage.dimagi.com/default.asp?215656)
+    """
+    # Values for start_of_month < 1 specify the number of days from the end of the month. Values capped at
+    # len(February).
+    start_of_month = IntegerProperty(
+        required=True,
+        validators=(is_gte(-27), is_lte(28))
+    )
+    # DateSpan to return i.t.o. number of months to go back
+    period = IntegerProperty(
+        default=0,
+        validators=(is_gte(0),)
+    )
+
+    @classmethod
+    def wrap(cls, doc):
+        doc['start_of_month'] = int(doc['start_of_month'])
+        if 'period' in doc:
+            doc['period'] = int(doc['period'])
+        return super(CustomMonthFilter, cls).wrap(doc)
+
+    def get_filter_value(self, user, ui_filter):
+        def get_last_month(this_month):
+            return datetime.date(this_month.year, this_month.month, 1) - datetime.timedelta(days=1)
+
+        def get_last_day(date):
+            _, last_day = calendar.monthrange(date.year, date.month)
+            return last_day
+
+        # Find the start and end dates of period 0
+        start_of_month = int(self.start_of_month)
+        end_date = datetime.date.today()
+        start_day = start_of_month if start_of_month > 0 else get_last_day(end_date) + start_of_month
+        end_of_month = end_date if end_date.day >= start_day else get_last_month(end_date)
+        start_date = datetime.date(end_of_month.year, end_of_month.month, start_day)
+
+        # Loop over months backwards for period > 0
+        for i in range(int(self.period)):
+            end_of_month = get_last_month(end_of_month)
+            end_date = start_date - datetime.timedelta(days=1)
+            start_day = start_of_month if start_of_month > 0 else get_last_day(end_of_month) + start_of_month
+            start_date = datetime.date(end_of_month.year, end_of_month.month, start_day)
+
         return DateSpan(startdate=start_date, enddate=end_date)
 
 
@@ -4011,12 +4095,6 @@ class ApplicationBase(VersionedDoc, SnapshotMixin,
         """This is mostly just for views"""
         return '%d.%d' % self.build_spec.minor_release()
 
-    def get_build_label(self):
-        for item in CommCareBuildConfig.fetch().menu:
-            if item['build'].to_string() == self.build_spec.to_string():
-                return item['label']
-        return self.build_spec.get_label()
-
     @property
     def short_name(self):
         return self.name if len(self.name) <= 12 else '%s..' % self.name[:10]
@@ -4392,7 +4470,6 @@ class SavedAppBuild(ApplicationBase):
             'id': self.id,
             'built_on_date': built_on_user_time.ui_string(USER_DATE_FORMAT),
             'built_on_time': built_on_user_time.ui_string(USER_TIME_FORMAT),
-            'build_label': self.built_with.get_label(),
             'menu_item_label': self.built_with.get_menu_item_label(),
             'jar_path': self.get_jar_path(),
             'short_name': self.short_name,

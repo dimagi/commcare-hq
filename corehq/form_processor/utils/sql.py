@@ -11,8 +11,8 @@ from psycopg2.extensions import adapt, AsIs
 from corehq.form_processor.models import (
     CommCareCaseSQL_DB_TABLE, CaseAttachmentSQL_DB_TABLE,
     CommCareCaseIndexSQL_DB_TABLE, CaseTransaction_DB_TABLE,
-    XFormAttachmentSQL_DB_TABLE, XFormInstanceSQL_DB_TABLE
-)
+    XFormAttachmentSQL_DB_TABLE, XFormInstanceSQL_DB_TABLE,
+    LedgerValue_DB_TABLE)
 
 
 def fetchall_as_namedtuple(cursor):
@@ -141,6 +141,18 @@ def case_transaction_adapter(transaction):
         adapt(transaction.sync_log_id).getquoted(),
     ]
     return _adapt_fields(fields, CaseTransaction_DB_TABLE)
+
+
+def ledger_value_adapter(ledger_value):
+    fields = [
+        adapt(ledger_value.id).getquoted(),
+        adapt(ledger_value.entry_id).getquoted(),
+        adapt(ledger_value.section_id).getquoted(),
+        adapt(ledger_value.balance).getquoted(),
+        adapt(ledger_value.last_modified).getquoted(),
+        adapt(ledger_value.case_id).getquoted(),
+    ]
+    return _adapt_fields(fields, LedgerValue_DB_TABLE)
 
 
 def _adapt_fields(fields, table_name):

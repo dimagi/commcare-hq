@@ -327,3 +327,22 @@ corehq.apps.export:
   - corehq.apps.export
   - corehq.couchapps
   - corehq.apps.app_manager
+corehq.apps.callcenter:
+  - auditcare
+  - casexml.apps.case
+  - casexml.apps.phone
+  - casexml.apps.stock
+  - corehq.apps.commtrack
+  - corehq.apps.domain
+  - corehq.apps.hqcase
+  - corehq.apps.locations
+  - corehq.apps.products
+  - corehq.apps.reminders
+  - corehq.apps.tzmigration
+  - corehq.apps.users
+  - corehq.couchapps
+  - corehq.form_processor
+  - corehq.sql_accessors
+  - corehq.sql_proxy_accessors
+  - couchforms
+  - django_digest

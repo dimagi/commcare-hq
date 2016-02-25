@@ -8,7 +8,7 @@ from corehq.apps.reports.generic import GenericTabularReport
 from custom.ewsghana.filters import EWSRestrictionLocationFilter, TransactionCheckboxFilter
 from corehq.apps.reports.standard import CustomProjectReport, ProjectReportParametersMixin, DatespanMixin
 from custom.ewsghana.filters import MultiProductFilter
-from custom.ewsghana.utils import ews_date_format
+from custom.ewsghana.utils import ews_date_format, get_country_id
 from dimagi.utils.decorators.memoized import memoized
 
 
@@ -23,7 +23,9 @@ class StockTransactionReport(CustomProjectReport, GenericTabularReport,
 
     @property
     def location(self):
-        return SQLLocation.objects.get(location_id=self.request.GET.get('location_id'))
+        return SQLLocation.objects.get(
+            location_id=(self.request.GET.get('location_id') or get_country_id(self.domain))
+        )
 
     @property
     def split_by_product(self):

@@ -37,11 +37,6 @@ class FormProcessorTestUtils(object):
             **view_kwargs
         )
 
-        def _sql_delete(query, domain_filter):
-            if domain is not None:
-                query.filter(domain_filter)
-            query.all().delete()
-
         FormProcessorTestUtils.delete_all_sql_cases(domain)
 
     @staticmethod

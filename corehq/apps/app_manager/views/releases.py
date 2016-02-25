@@ -69,7 +69,7 @@ def paginate_releases(request, domain, app_id):
 
 
 @require_deploy_apps
-def release_manager(request, domain, app_id, template='app_manager/releases.html'):
+def releases_ajax(request, domain, app_id, template='app_manager/partials/releases.html'):
     app = get_app(domain, app_id)
     context = get_apps_base_context(request, domain, app)
     can_send_sms = domain_has_privilege(domain, privileges.OUTBOUND_SMS)
