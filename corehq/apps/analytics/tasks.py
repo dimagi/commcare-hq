@@ -43,13 +43,17 @@ ANALYTICS_SLEEP = 5
 
 
 def _persistent_analytics_post(func, retries=ANALYTICS_RETRIES, sleep=ANALYTICS_SLEEP):
+    '''
+    this function can block for up to 15 seconds. please only call it from a async task so as not to block
+    page loads for that long.
+    '''
     for i in range(retries):
         try:
             return func()
         except requests.exceptions.HTTPError as e:
             # if its a bad request, raise the exception because it is our fault
             status_code = e.response.status_code if isinstance(e.response, requests.models.Response) else e.response.status
-            if 400 <= status_code < 500:
+            if 400:
                 raise
             if i < retries - 1:
                 time.sleep(sleep)
