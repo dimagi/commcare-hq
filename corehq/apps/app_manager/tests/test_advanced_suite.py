@@ -178,4 +178,8 @@ class AdvancedSuiteTest(SimpleTestCase, TestXmlMixin, SuiteMixin):
         child_form.xmlns = 'http://id_m1-f0'
         child_form.requires = 'case'
 
-        self.assertXmlPartialEqual(self.get_xml('advanced_module_parent_filters'), app.create_suite(), "./entry[1]")
+        self.assertXmlPartialEqual(
+            self.get_xml('advanced_module_parent_filters'),
+            app.create_suite(),
+            "./entry[1]"
+        )
