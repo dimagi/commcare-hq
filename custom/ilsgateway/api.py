@@ -69,7 +69,7 @@ class SMSUser(JsonObject):
     id = IntegerProperty()
     name = StringProperty()
     role = StringProperty()
-    is_active = StringProperty()
+    is_active = BooleanProperty()
     supply_point = DecimalProperty()
     email = StringProperty()
     phone_numbers = ListProperty(item_type=Connection)
@@ -88,6 +88,7 @@ class Location(JsonObject):
     code = StringProperty()
     groups = ListProperty()
     historical_groups = DictProperty()
+    is_active = BooleanProperty()
 
 
 class ProductStock(JsonObject):
@@ -263,8 +264,7 @@ class ILSGatewayAPI(APISynchronization):
                 self.location_sync,
                 'date_updated',
                 filters={
-                    'type': 'facility',
-                    'is_active': True
+                    'type': 'facility'
                 }
             ),
             ApiSyncObject(
@@ -472,6 +472,9 @@ class ILSGatewayAPI(APISynchronization):
         if not sms_user:
             return None
 
+        if not sms_user.is_active:
+            return sms_user
+
         sms_user.save()
         if ilsgateway_smsuser.supply_point:
             try:
@@ -559,6 +562,14 @@ class ILSGatewayAPI(APISynchronization):
                     if not sql_location.supply_point_id:
                         location.save()
         else:
+            if not location.is_archived and not ilsgateway_location.is_active:
+                location.archive()
+                return location
+            elif location.is_archived and ilsgateway_location.is_active:
+                location.unarchive()
+                return location
+
+
             location_dict = {
                 'name': ilsgateway_location.name,
                 'latitude': float(ilsgateway_location.latitude) if ilsgateway_location.latitude else None,
