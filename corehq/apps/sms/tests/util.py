@@ -1,5 +1,7 @@
 import os
 import json
+from unittest import SkipTest
+
 from django.test import LiveServerTestCase
 from django.conf import settings
 from nose.tools import nottest
@@ -295,6 +297,11 @@ class TouchformsTestCase(LiveServerTestCase, DomainSubscriptionMixin):
             self.assertEqual(sms.xforms_session_couch_id, xforms_session_couch_id)
         if workflow:
             self.assertEqual(sms.workflow, workflow)
+
+    @classmethod
+    def setUpClass(cls):
+        if getattr(settings, "SKIP_TOUCHFORMS_TESTS", False):
+            raise SkipTest("because settings.SKIP_TOUCHFORMS_TESTS")
 
     def setUp(self):
         self.users = []
