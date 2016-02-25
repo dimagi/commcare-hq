@@ -1977,7 +1977,9 @@ class InvoiceInfoForm(forms.Form):
                         'Adjust Balance',
                         data_toggle='modal',
                         data_target='#adjustBalanceModal-%d' % invoice.id,
-                        css_class=('btn-default disabled' if invoice.is_wire else 'btn-default') + ' disable-on-submit',
+                        css_class=('btn-default disabled'
+                                   if invoice.is_wire
+                                   else 'btn-default') + ' disable-on-submit',
                     ),
                 ),
             ),
