@@ -42,6 +42,7 @@ def iterate_doc_ids_in_domain_by_type(domain, doc_type, chunk_size=10000, databa
     view_kwargs = {
         'reduce': False,
         'startkey': [domain, doc_type],
+        'endkey': [domain, doc_type, {}],
         'include_docs': False
     }
     for doc in paginate_view(
