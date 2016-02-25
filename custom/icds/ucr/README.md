@@ -11,16 +11,16 @@ Each case-type has a custom UCR expression type, these expression take three arg
 This can be used for custom indicators of `child_health` case-type. The list of supported indicators are listed [here](https://docs.google.com/spreadsheets/d/10sL0Iwdh6CGiSh49KfWoeG9F7t5qiixFmBAjEaLgKPo/edit#gid=0)
 
 ```json
-'expression': {
-    'type': 'child_health_indicator',
-    'indicator_name': 'age_in_months',
-    'start_date': {
-        'type': 'named',
-        'name': 'iteration_start_date'
+"expression": {
+    "type": "child_health_indicator",
+    "indicator_name": "age_in_months",
+    "start_date": {
+        "type": "named",
+        "name": "iteration_start_date"
     },
-    'end_date': {
-        'type': 'named',
-        'name': 'iteration_end_date'
+    "end_date": {
+        "type": "named",
+        "name": "iteration_end_date"
     }
 }
 ```
