@@ -526,7 +526,7 @@ def sync_supply_point(location):
         return None
     else:
         updated_supply_point = _reopen_or_create_supply_point(location)
-        return updated_supply_point._id
+        return updated_supply_point.case_id
 
 
 @receiver(post_save, sender=StockState)

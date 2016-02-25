@@ -1,6 +1,9 @@
 import logging
 
+from dimagi.utils.couch.database import iter_docs
+
 from corehq.apps.commtrack.helpers import make_supply_point
+from corehq.apps.commtrack.models import SupplyPointCase
 from corehq.form_processor.abstract_models import AbstractSupplyInterface
 
 
@@ -26,3 +29,14 @@ class SupplyPointCouch(AbstractSupplyInterface):
     @classmethod
     def get_by_location(cls, location):
         return location.linked_supply_point()
+
+    @staticmethod
+    def get_supply_point(supply_point_id):
+        return SupplyPointCase.get(supply_point_id)
+
+    @staticmethod
+    def get_supply_points(supply_point_ids):
+        supply_points = []
+        for doc in iter_docs(SupplyPointCase.get_db(), supply_point_ids):
+            supply_points.append(SupplyPointCase.wrap(doc))
+        return supply_points
