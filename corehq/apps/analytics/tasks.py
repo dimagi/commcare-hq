@@ -41,15 +41,29 @@ HUBSPOT_COOKIE = 'hubspotutk'
 ANALYTICS_RETRIES = 3
 ANALYTICS_SLEEP = 5
 
+
 def _persistent_analytics_post(func, retries=ANALYTICS_RETRIES, sleep=ANALYTICS_SLEEP):
     for i in range(retries):
         try:
             return func()
-        except (requests.exceptions.HTTPError, requests.exceptions.BaseHTTPError):
+        except requests.exceptions.HTTPError as e:
+            # if its a bad request, raise the exception because it is our fault
+            status_code = e.response.status_code if isinstance(e.response, requests.models.Response) else e.response.status
+            if 400 <= status_code < 500:
+                raise
             if i < retries - 1:
                 time.sleep(sleep)
             else:
                 raise
+
+
+def _raise_for_urllib3_response(response):
+    '''
+    this mimics the behavior of requests.response.raise_for_status so we can
+    treat kissmetrics requests and hubspot requests interchangeably in our retry code
+    '''
+    if 400 <= response.status < 600:
+        raise requests.exceptions.HTTPError(response=response)
 
 
 def _track_on_hubspot(webuser, properties):
@@ -276,6 +290,7 @@ def _track_workflow_task(email, event, properties=None, timestamp=0):
             res = km.record(email, event, properties if properties else {}, timestamp)
             _log_response("KM", {'email': email, 'event': event, 'properties': properties, 'timestamp': timestamp}, res)
             # TODO: Consider adding some better error handling for bad/failed requests.
+            _raise_for_urllib3_response(res)
         _persistent_analytics_post(_post_func)
 
 
@@ -294,6 +309,7 @@ def identify(email, properties):
             res = km.set(email, properties)
             _log_response("KM", {'email': email, 'properties': properties}, res)
             # TODO: Consider adding some better error handling for bad/failed requests.
+            _raise_for_urllib3_response(res)
         _persistent_analytics_post(_post_func)
 
 
