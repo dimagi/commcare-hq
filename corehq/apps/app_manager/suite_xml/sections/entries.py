@@ -345,7 +345,17 @@ class EntriesHelper(object):
                     filter_xpath_template.replace('$fixture_value', fixture_value)
                 )
 
-            filter_xpath = EntriesHelper.get_filter_xpath(module) if use_filter else ''
+            # If the module has a parent_select, and we are building the xpath for the parent, then we'll need
+            # to use the parent's xpath expression, not the child's.
+            if module.parent_select.active and not parent_id:
+                filter_module = filter(
+                    lambda d: d['module'].unique_id == module.parent_select.module_id,
+                    datums_meta,
+                )[0]['module']
+            else:
+                filter_module = module
+            filter_xpath = EntriesHelper.get_filter_xpath(filter_module) if use_filter else ''
+
             datums.append(FormDatumMeta(
                 datum=SessionDatum(
                     id=datum['session_var'],
