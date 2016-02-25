@@ -186,12 +186,13 @@ def get_study_metadata_string(domain):
     """
     Return the study metadata for the given domain as an XML string
     """
-    # For this first OpenClinica integration project, for the sake of simplicity, we are just fetching
-    # metadata from custom/openclinica/study_metadata.xml. In future, we can fetch it from the web service
-    # (See branch openclinica_ws)
-    metadata_filename = os.path.join(settings.BASE_DIR, 'custom', 'openclinica', 'study_metadata.xml')
-    with open(metadata_filename) as metadata_file:
-        return metadata_file.read()
+    from custom.openclinica.models import OpenClinicaSettings
+
+    oc_settings = OpenClinicaSettings.for_domain(domain)
+    if oc_settings.study.is_ws_enabled:
+        raise NotImplementedError('Fetching study metadata using web services is not yet available')
+    else:
+        return oc_settings.study.metadata
 
 
 def get_study_metadata(domain):
