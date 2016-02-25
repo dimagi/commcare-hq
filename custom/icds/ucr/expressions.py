@@ -8,12 +8,12 @@ from custom.icds.models import ChildHealthCaseRow
 
 
 CUSTOM_UCR_EXPRESSIONS = [
-    ("child_health_property", "custom.icds.ucr.expressions.child_health_expression")
+    ("child_health_indicator", "custom.icds.ucr.expressions.child_health_expression")
 ]
 
 
 class ChildHealthIndicatorExpressionSpec(JsonObject):
-    type = TypeProperty('child_health_property')
+    type = TypeProperty('child_health_indicator')
     indicator_name = DefaultProperty(required=True)
     start_date = DefaultProperty(required=True)
     end_date = DefaultProperty(required=True)

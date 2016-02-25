@@ -10,7 +10,7 @@ from corehq.apps.userreports.models import DataSourceConfiguration
 class ChildHealthExpressionTest(TestCase):
     """
     Integration tests for data-source configs that use the custom-expression
-    'custom.icds.ucr.expressions.child_health_property'
+    'custom.icds.ucr.expressions.child_health_indicator'
     """
     def setUp(self):
         self.config = DataSourceConfiguration(
@@ -37,7 +37,7 @@ class ChildHealthExpressionTest(TestCase):
                     "column_id": "age_in_months",
                     "datatype": "integer",
                     "expression": {
-                        'type': 'child_health_property',
+                        'type': 'child_health_indicator',
                         'indicator_name': 'age_in_months',
                         'start_date': {
                             'type': 'named',
@@ -138,6 +138,7 @@ class ChildHealthExpressionTest(TestCase):
         self.assertEqual(len(rows), 7)
 
         expected_rows = [
+            # (age_in_months, snapshot_start, snapshot_end)
             (1, datetime.date(2015, 12, 1), datetime.date(2015, 12, 31)),
             (0, datetime.date(2016, 1, 1), datetime.date(2016, 1, 31)),
             (0, datetime.date(2016, 2, 1), datetime.date(2016, 2, 29)),
