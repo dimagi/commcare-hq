@@ -192,14 +192,14 @@ def rebuild_export(export_instance, last_access_cutoff=None, filters=None):
     """
     Rebuild the given daily saved ExportInstance
     """
-    if not _should_rebuild_export(export_instance, last_access_cutoff):
+    if _should_not_rebuild_export(export_instance, last_access_cutoff):
         return
 
     file = get_export_file([export_instance], filters or [])
     with file as payload:
         _save_export_payload(export_instance, payload)
 
-def _should_rebuild_export(export, last_access_cutoff):
+def _should_not_rebuild_export(export, last_access_cutoff):
     # Don't rebuild exports that haven't been accessed since last_access_cutoff
     return (
         last_access_cutoff

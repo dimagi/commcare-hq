@@ -31,7 +31,7 @@ def export_for_group(export_id_or_group, output_dir, last_access_cutoff=None):
 def rebuild_export(config, schema, last_access_cutoff=None, filter=None):
 
     saved_export = get_saved_export_and_delete_copies(config.index)
-    if not _should_rebuild_export(saved_export, last_access_cutoff):
+    if _should_not_rebuild_export(saved_export, last_access_cutoff):
         return
 
     try:
@@ -64,7 +64,7 @@ def _save_export_payload(files, saved_export, config):
         saved_export.set_payload(payload)
 
 
-def _should_rebuild_export(saved, last_access_cutoff):
+def _should_not_rebuild_export(saved, last_access_cutoff):
     # Don't rebuild exports that haven't been accessed since last_access_cutoff
     return (
         last_access_cutoff
