@@ -7,10 +7,10 @@ from casexml.apps.case.tests.util import delete_all_cases
 from corehq.apps.userreports.models import DataSourceConfiguration
 
 
-class ChildHealthExpressionTest(TestCase):
+class ICDSExpressionTest(TestCase):
     """
     Integration tests for data-source configs that use the custom-expression
-    'custom.icds.ucr.expressions.child_health_indicator'
+    'custom.icds.ucr.expressions.icds_indicator_expression'
     """
     def setUp(self):
         self.config = DataSourceConfiguration(
@@ -37,7 +37,8 @@ class ChildHealthExpressionTest(TestCase):
                     "column_id": "age_in_months",
                     "datatype": "integer",
                     "expression": {
-                        'type': 'child_health_indicator',
+                        'type': 'icds_indicator_expression',
+                        'case_type': 'child_health',
                         'indicator_name': 'age_in_months',
                         'start_date': {
                             'type': 'named',

@@ -8,12 +8,17 @@ from custom.icds.models import ChildHealthCaseRow
 
 
 CUSTOM_UCR_EXPRESSIONS = [
-    ("child_health_indicator", "custom.icds.ucr.expressions.child_health_expression")
+    ("icds_indicator_expression", "custom.icds.ucr.expressions.icds_indicator_expression")
 ]
 
+CASE_TYPE_TO_MODEL_MAPPING = {
+    'child_health': ChildHealthCaseRow,
+}
 
-class ChildHealthIndicatorExpressionSpec(JsonObject):
-    type = TypeProperty('child_health_indicator')
+
+class ICDSIndicatorExpressionSpec(JsonObject):
+    type = TypeProperty('icds_indicator_expression')
+    case_type = DefaultProperty(required=True)
     indicator_name = DefaultProperty(required=True)
     start_date = DefaultProperty(required=True)
     end_date = DefaultProperty(required=True)
@@ -23,18 +28,18 @@ class ChildHealthIndicatorExpressionSpec(JsonObject):
         self._end_date = end_date
 
     def __call__(self, item, context=None):
-        case_doc = context.root_doc
-
         start_date = self._start_date(item, context)
         end_date = self._end_date(item, context)
 
-        child_health_case = ChildHealthCaseRow(case_doc, transform_date(start_date), transform_date(end_date))
+        case_model = CASE_TYPE_TO_MODEL_MAPPING.get(self.case_type, None)
+        case_doc = context.root_doc
+        child_health_case = case_model(case_doc, transform_date(start_date), transform_date(end_date))
 
         return getattr(child_health_case, self.indicator_name, None)
 
 
-def child_health_expression(spec, context):
-    wrapped = ChildHealthIndicatorExpressionSpec.wrap(spec)
+def icds_indicator_expression(spec, context):
+    wrapped = ICDSIndicatorExpressionSpec.wrap(spec)
     wrapped.configure(
         start_date=ExpressionFactory.from_spec(wrapped.start_date, context),
         end_date=ExpressionFactory.from_spec(wrapped.end_date, context)
