@@ -1,24 +1,20 @@
 {% load i18n %}
-<div class="accordion-group" data-bind="visible: {{ show_refs }}">
-    <div class="accordion-heading">
-        <h3>
-            <a class="accordion-toggle"
-                 data-toggle="collapse"
-                 data-bind="attr: { href: '#' + id + '-{{ this_accordion }}'}">
-                <i class="icon-double-angle-down"></i> {{ title }}
-            </a>
+<div class="panel panel-default" data-bind="visible: {{ show_refs }}">
+    <div class="panel-heading">
+        <h3 data-toggle="collapse" data-bind="attr: { href: '#' + id + '-{{ this_accordion }}'}">
+            <i class="fa fa-angle-double-down"></i> {{ title }}
         </h3>
     </div>
-    <div class="accordion-body collapse in"
+    <div class="panel-collapse collapse in"
             data-bind="attr: { id: id + '-{{ this_accordion }}' }">
         <table class="table table-striped table-condensed table-multimedia">
             <thead>
                 <tr>
-                    <th class="span1">{% trans 'Type' %}</th>
-                    <th class="span1">{% trans 'Status' %}</th>
-                    <th class="span2">{% trans 'Action' %}</th>
-                    <th class="span2">{% trans 'Preview' %}</th>
-                    <th class="span6">{% trans 'Path in Application'  %}</th>
+                    <th class="col-sm-1">{% trans 'Type' %}</th>
+                    <th class="col-sm-1">{% trans 'Status' %}</th>
+                    <th class="col-sm-2">{% trans 'Action' %}</th>
+                    <th class="col-sm-2">{% trans 'Preview' %}</th>
+                    <th class="col-sm-6">{% trans 'Path'  %}</th>
                 </tr>
             </thead>
             <tbody data-bind="foreach: {{ ref_type }}">
@@ -28,7 +24,8 @@
                     <td><a data-toggle="modal"
                             data-bind="text: upload_button_text,
                                        attr: { class: upload_button_class, href: upload_controller.container },
-                                       click: triggerUpload"></a></td>
+                                       click: triggerUpload">
+                        </a></td>
                     <td><div data-bind="visible: is_matched, template: preview_template"></div></td>
                     <td><code data-bind="text: path"></code></td>
                 </tr>
