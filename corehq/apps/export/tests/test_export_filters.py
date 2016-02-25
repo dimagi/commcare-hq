@@ -10,7 +10,7 @@ from corehq.apps.export.filters import (
     GroupOwnerFilter,
     IsClosedFilter,
     OwnerFilter,
-)
+    OR)
 from corehq.apps.export.models.new import (
     CaseExportInstance,
 )
@@ -24,6 +24,20 @@ from pillowtop.es_utils import completely_initialize_pillow_index
 
 
 class ExportFilterTest(SimpleTestCase):
+
+    def test_or_filter(self):
+        self.assertEqual(
+            OR(OwnerFilter("foo"), OwnerFilter("bar")).to_es_filter(),
+            {
+                'or': (
+                    {'term': {'owner_id': 'foo'}},
+                    {'term': {'owner_id': 'bar'}}
+                )
+            }
+        )
+
+
+class ExportFilterResultTest(SimpleTestCase):
 
     @classmethod
     def setUpClass(cls):

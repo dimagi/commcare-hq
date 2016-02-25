@@ -5,6 +5,7 @@ import logging
 import urllib
 import urlparse
 from corehq.apps.cachehq.mixins import QuickCachedDocumentMixin
+from corehq.form_processor.exceptions import XFormNotFound
 from corehq.util.datadog.metrics import REPEATER_ERROR_COUNT
 from corehq.util.datadog.utils import log_counter
 from corehq.util.quickcache import quickcache
@@ -449,7 +450,10 @@ class RepeatRecord(Document, LockableMixIn):
 
     @property
     def url(self):
-        return self.repeater.get_url(self)
+        try:
+            return self.repeater.get_url(self)
+        except XFormNotFound:
+            return None
 
     @property
     def state(self):
