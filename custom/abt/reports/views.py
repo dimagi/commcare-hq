@@ -31,6 +31,10 @@ class FormattedSupervisoryReport(CustomConfigurableReport):
                 if table[row][column] == 0:
                     table[row][column] = ''
 
+        # remove hyphen prefixes from location column headers
+        for column_index in range(2, len(table[0])):
+            table[0][column_index] = table[0][column_index][1:]
+
         # sort columns by location
         inverted_table = _invert_table(table)
         inverted_incident_and_total_columns = inverted_table[:2]
