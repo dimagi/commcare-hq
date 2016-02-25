@@ -1,5 +1,6 @@
 import itertools
 import os
+import shlex
 from StringIO import StringIO
 from subprocess import PIPE
 from tempfile import NamedTemporaryFile
@@ -7,7 +8,6 @@ from zipfile import ZipFile, ZIP_DEFLATED
 
 from django.conf import settings
 from lxml import etree
-import shlex
 
 from dimagi.utils.subprocess_manager import subprocess_context
 
