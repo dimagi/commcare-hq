@@ -190,9 +190,8 @@ class DataSourceBuilder(object):
         if self.source_type == "form":
             return make_form_data_source_filter(self.source_xform.data_node.tag_xmlns)
 
-    @property
     @memoized
-    def indicators(self):
+    def indicators(self, number_columns=None):
         """
         Return all the dict data source indicator configurations that could be
         used by a report that uses the same case type/form as this DataSourceConfiguration.
@@ -212,9 +211,13 @@ class DataSourceBuilder(object):
             elif prop.type == 'case_property' and prop.source == 'computed/user_name':
                 ret.append(make_user_name_indicator(prop.column_id))
             elif prop.type == 'case_property':
-                ret.append(make_case_property_indicator(
+                indicator = make_case_property_indicator(
                     prop.source, prop.column_id
-                ))
+                )
+                if number_columns:
+                    if indicator['column_id'] in number_columns:
+                        indicator['datatype'] = 'decimal'
+                ret.append(indicator)
         ret.append({
             "display_name": "Count",
             "type": "count",
@@ -621,7 +624,7 @@ class ConfigureNewReportBase(forms.Form):
             # The uuid gets truncated, so it's not really universally unique.
             table_id=_clean_table_name(self.domain, str(uuid.uuid4().hex)),
             configured_filter=self.ds_builder.filter,
-            configured_indicators=indicators if indicators else self.ds_builder.indicators,
+            configured_indicators=indicators if indicators else self.ds_builder.indicators(),
             meta=DataSourceMeta(build=DataSourceBuildInformation(
                 source_id=self.report_source_id,
                 app_id=self.app._id,
@@ -633,22 +636,12 @@ class ConfigureNewReportBase(forms.Form):
         tasks.rebuild_indicators.delay(data_source_config._id)
         return data_source_config._id
 
-    def _change_indicators(self, indicators):
-        number_cols = [col["field"] for col in self._report_columns if col["aggregation"] in ["avg", "sum"]]
-        changed = False
-        if number_cols:
-            for indicator in indicators:
-                if indicator["column_id"] in number_cols and indicator["datatype"] not in ["integer", "decimal"]:
-                    indicator["datatype"] = "decimal"
-                    changed = True
-        return changed
-
-
     def update_report(self):
         from corehq.apps.userreports.views import delete_data_source_shared
 
         matching_data_source = self.ds_builder.get_existing_match()
         if matching_data_source:
+            reactivated = False
             if matching_data_source._id != self.existing_report.config_id:
 
                 # If no one else is using the current data source, delete it.
@@ -667,10 +660,13 @@ class ConfigureNewReportBase(forms.Form):
                         "data source (or the data source itself) and try again. "
                     ))
                 matching_data_source.is_deactivated = False
-                matching_data_source.save()
-                tasks.rebuild_indicators.delay(matching_data_source._id)
-            changed = self._change_indicators(matching_data_source.configured_indicators)
-            if changed:
+                reactivated = True
+            changed = False
+            indicators = self.ds_builder.indicators(self._number_columns)
+            if matching_data_source.configured_indicators != indicators:
+                matching_data_source.configured_indicators = indicators
+                changed = True
+            if changed or reactivated:
                 matching_data_source.save()
                 tasks.rebuild_indicators.delay(matching_data_source._id)
         else:
@@ -690,8 +686,7 @@ class ConfigureNewReportBase(forms.Form):
                     "To continue, first delete all of the reports using a particular "
                     "data source (or the data source itself) and try again. "
                 ))
-            indicators = self.ds_builder.indicators
-            self._change_indicators(indicators)
+            indicators = self.ds_builder.indicators(self._number_columns)
             data_source_config_id = self._build_data_source(indicators)
             self.existing_report.config_id = data_source_config_id
 
@@ -719,8 +714,7 @@ class ConfigureNewReportBase(forms.Form):
                 matching_data_source.save()
                 tasks.rebuild_indicators.delay(matching_data_source._id)
         else:
-            indicators = self.ds_builder.indicators
-            self._change_indicators(indicators)
+            indicators = self.ds_builder.indicators(self._number_columns)
             data_source_config_id = self._build_data_source(indicators=indicators)
 
         report = ReportConfiguration(
@@ -828,6 +822,11 @@ class ConfigureNewReportBase(forms.Form):
     @property
     def _report_columns(self):
         return []
+
+    @property
+    @memoized
+    def _number_columns(self):
+        return [col["field"] for col in self._report_columns if col["aggregation"] in ["avg", "sum"]]
 
     @property
     def _report_filters(self):
@@ -1108,7 +1107,8 @@ class ConfigureTableReportForm(ConfigureListReportForm, ConfigureBarChartReportF
                 "field": self.data_source_properties[conf['property']].column_id,
                 "column_id": "column_{}".format(index),
                 "type": "field",
-                "display": conf['display_text']
+                "display": conf['display_text'],
+                "transform": {'type': 'custom', 'custom_type': 'short_decimal_display'}
             }
 
         columns = [_make_column(conf, i) for i, conf in enumerate(self.cleaned_data['columns'])]
