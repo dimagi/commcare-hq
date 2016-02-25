@@ -1,4 +1,4 @@
-{% extends 'style/bootstrap2/base_section.html' %}
+{% extends 'style/bootstrap3/base_section.html' %}
 {% load crispy_forms_tags %}
 {% load hq_shared_tags %}
 {% load i18n %}
@@ -16,7 +16,7 @@
     {% endif %}
 {% endblock %}
 
-{% block main_column %}
+{% block page_content %}
     {% if adjust_balance_form %}
     {% include 'accounting/adjust_balance.html' %}
     {% endif %}
@@ -41,7 +41,7 @@
         <li><a href="#suppress" data-toggle="tab">{% trans "Suppress" %}</a></li>
     </ul>
 
-    <div class="tab-content">
+    <div class="tab-content tab-padded">
         <div class="tab-pane" id="invoice">
             {% crispy invoice_info_form %}
 
@@ -70,7 +70,7 @@
             </table>
             {% if can_send_email %}
             <button name="open-resend-modal"
-                    class="btn"
+                    class="btn btn-default"
                     data-target="#resendEmailModal"
                     data-toggle="modal"
             >
