@@ -49,6 +49,7 @@ from corehq.apps.userreports.exceptions import BadBuilderConfigError
 from corehq.apps.userreports.sql import get_column_name
 from corehq.apps.userreports.ui.fields import JsonField
 from dimagi.utils.decorators.memoized import memoized
+from corehq.util.quickcache import quickcache
 
 
 class FilterField(JsonField):
@@ -190,7 +191,6 @@ class DataSourceBuilder(object):
         if self.source_type == "form":
             return make_form_data_source_filter(self.source_xform.data_node.tag_xmlns)
 
-    @memoized
     def indicators(self, number_columns=None):
         """
         Return all the dict data source indicator configurations that could be
@@ -616,7 +616,7 @@ class ConfigureNewReportBase(forms.Form):
             crispy.Hidden('filters', None, data_bind="value: filtersList.serializedProperties")
         )
 
-    def _build_data_source(self, indicators=None):
+    def _build_data_source(self):
         data_source_config = DataSourceConfiguration(
             domain=self.domain,
             display_name=self.ds_builder.data_source_name,
@@ -624,7 +624,7 @@ class ConfigureNewReportBase(forms.Form):
             # The uuid gets truncated, so it's not really universally unique.
             table_id=_clean_table_name(self.domain, str(uuid.uuid4().hex)),
             configured_filter=self.ds_builder.filter,
-            configured_indicators=indicators if indicators else self.ds_builder.indicators(),
+            configured_indicators=self.ds_builder.indicators(self._number_columns),
             meta=DataSourceMeta(build=DataSourceBuildInformation(
                 source_id=self.report_source_id,
                 app_id=self.app._id,
@@ -662,6 +662,7 @@ class ConfigureNewReportBase(forms.Form):
                 matching_data_source.is_deactivated = False
                 reactivated = True
             changed = False
+            import ipdb; ipdb.set_trace()
             indicators = self.ds_builder.indicators(self._number_columns)
             if matching_data_source.configured_indicators != indicators:
                 matching_data_source.configured_indicators = indicators
@@ -687,7 +688,7 @@ class ConfigureNewReportBase(forms.Form):
                     "data source (or the data source itself) and try again. "
                 ))
             indicators = self.ds_builder.indicators(self._number_columns)
-            data_source_config_id = self._build_data_source(indicators)
+            data_source_config_id = self._build_data_source()
             self.existing_report.config_id = data_source_config_id
 
         self.existing_report.aggregation_columns = self._report_aggregation_cols
@@ -715,7 +716,7 @@ class ConfigureNewReportBase(forms.Form):
                 tasks.rebuild_indicators.delay(matching_data_source._id)
         else:
             indicators = self.ds_builder.indicators(self._number_columns)
-            data_source_config_id = self._build_data_source(indicators=indicators)
+            data_source_config_id = self._build_data_source()
 
         report = ReportConfiguration(
             domain=self.domain,
