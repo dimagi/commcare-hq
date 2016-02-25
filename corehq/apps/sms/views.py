@@ -126,20 +126,6 @@ class BaseAdvancedMessagingSectionView(BaseMessagingSectionView):
         return super(BaseAdvancedMessagingSectionView, self).dispatch(*args, **kwargs)
 
 
-@login_and_domain_required
-@requires_privilege_with_fallback(privileges.OUTBOUND_SMS)
-def messaging(request, domain, template="sms/default.html"):
-    context = get_sms_autocomplete_context(request, domain)
-    context['domain'] = domain
-    context['messagelog'] = SMSLog.by_domain_dsc(domain)
-    context['now'] = datetime.utcnow()
-    tz = get_timezone_for_user(request.couch_user, domain)
-    context['timezone'] = tz
-    context['timezone_now'] = datetime.now(tz=tz)
-    context['layout_flush_content'] = True
-    return render(request, template, context)
-
-
 class ComposeMessageView(BaseMessagingSectionView):
     template_name = 'sms/compose.html'
     urlname = 'sms_compose_message'
