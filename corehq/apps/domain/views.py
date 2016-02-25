@@ -72,6 +72,8 @@ from corehq.apps.smsbillables.forms import SMSRateCalculatorForm
 from corehq.apps.users.models import Invitation, CouchUser
 from corehq.apps.fixtures.models import FixtureDataType
 from corehq.toggles import NAMESPACE_DOMAIN, all_toggles, CAN_EDIT_EULA, TRANSFER_DOMAIN
+from custom.openclinica.forms import OpenClinicaSettingsForm
+from custom.openclinica.models import OpenClinicaSettings
 from dimagi.utils.couch.resource_conflict import retry_resource
 from corehq import privileges, feature_previews
 from django_prbac.utils import has_privilege
@@ -531,6 +533,33 @@ class EditDhis2SettingsView(BaseProjectSettingsView):
                 messages.success(request, _('DHIS2 API settings successfully updated'))
             else:
                 messages.error(request, _('There seems to have been an error. Please try again.'))
+        return self.get(request, *args, **kwargs)
+
+
+class EditOpenClinicaSettingsView(BaseProjectSettingsView):
+    template_name = 'domain/admin/openclinica_settings.html'
+    urlname = 'oc_settings'
+    page_title = ugettext_lazy('OpenClinica settings')
+
+    @property
+    @memoized
+    def openclinica_settings_form(self):
+        oc_settings = OpenClinicaSettings.for_domain(self.domain_object.name)
+        initial = dict(oc_settings.study) if oc_settings else {}
+        if self.request.method == 'POST':
+            return OpenClinicaSettingsForm(self.request.POST, initial=initial)
+        return OpenClinicaSettingsForm(initial=initial)
+
+    @property
+    def page_context(self):
+        return {'openclinica_settings_form': self.openclinica_settings_form}
+
+    def post(self, request, *args, **kwargs):
+        if self.openclinica_settings_form.is_valid():
+            if self.openclinica_settings_form.save(self.domain_object):
+                messages.success(request, _('OpenClinica settings successfully updated'))
+            else:
+                messages.error(request, _('An error occurred. Please try again.'))
         return self.get(request, *args, **kwargs)
 
 

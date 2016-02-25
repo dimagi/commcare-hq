@@ -1,0 +1,23 @@
+{% extends 'settings/bootstrap2/base_template.html' %}
+{% load hq_shared_tags %}
+{% load hqstyle_tags %}
+{% load i18n %}
+
+{% block main_column %}
+    <form id="openclinica-settings-form"
+          class="form form-horizontal"
+          name="openclinica_settings_form"
+          method="post">
+        {% csrf_token %}
+        {% bootstrap_form_errors openclinica_settings_form %}
+        {% bootstrap_fieldset openclinica_settings_form "OpenClinica web service settings" %}
+        <div class="form-actions">
+            <button type="submit"
+                    id="update-openclinica-settings"
+                    data-bind="hqbSubmitReady: form_is_ready"
+                    class="btn disabled">
+                {% trans 'Update OpenClinica web service settings' %}
+            </button>
+        </div>
+    </form>
+{% endblock %}
