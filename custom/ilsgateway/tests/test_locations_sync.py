@@ -6,7 +6,6 @@ from corehq.apps.commtrack.models import CommtrackConfig
 from corehq.apps.commtrack.tests.util import bootstrap_domain as initial_bootstrap
 from corehq.apps.locations.models import Location, SQLLocation
 from custom.ilsgateway.api import Location as Loc, ILSGatewayAPI
-from custom.ilsgateway.models import PendingReportingDataRecalculation
 from custom.ilsgateway.tests.mock_endpoint import MockEndpoint
 from custom.logistics.api import ApiSyncObject
 from custom.logistics.commtrack import synchronization
@@ -114,3 +113,24 @@ class LocationSyncTest(TestCase):
         self.assertEqual(
             SQLLocation.objects.filter(domain=TEST_DOMAIN, site_code=locations[2].code).count(), 0
         )
+
+    def test_deactivating_location(self):
+        with open(os.path.join(self.datapath, 'sample_locations.json')) as f:
+            location = Loc(**json.loads(f.read())[0])
+
+        self.api_object.location_sync(location)
+        self.assertEqual(SQLLocation.active_objects.filter(
+            location_type__administrative=False, domain=TEST_DOMAIN
+        ).count(), 1)
+
+        location.is_active = False
+        self.api_object.location_sync(location)
+        self.assertEqual(SQLLocation.active_objects.filter(
+            location_type__administrative=False, domain=TEST_DOMAIN
+        ).count(), 0)
+
+        location.is_active = True
+        self.api_object.location_sync(location)
+        self.assertEqual(SQLLocation.active_objects.filter(
+            location_type__administrative=False, domain=TEST_DOMAIN
+        ).count(), 1)

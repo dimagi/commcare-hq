@@ -270,7 +270,6 @@ class APISynchronization(UserMigrationMixin):
         elif phone_number:
             user.phone_numbers = []
             user.delete_verified_number(phone_number)
-        user.save()
 
     def add_phone_numbers(self, ilsgateway_smsuser, user):
         if ilsgateway_smsuser.phone_numbers:
@@ -287,6 +286,7 @@ class APISynchronization(UserMigrationMixin):
         # sanity check
         assert len(username) <= 128
         user = CouchUser.get_by_username(username)
+
         splitted_value = ilsgateway_smsuser.name.split(' ', 1)
         if not first_name:
             first_name = splitted_value[0][:30] if splitted_value else ''
@@ -299,7 +299,7 @@ class APISynchronization(UserMigrationMixin):
         user_dict = {
             'first_name': first_name,
             'last_name': last_name,
-            'is_active': bool(ilsgateway_smsuser.is_active),
+            'is_active': ilsgateway_smsuser.is_active,
             'email': ilsgateway_smsuser.email,
             'user_data': {}
         }
@@ -322,7 +322,14 @@ class APISynchronization(UserMigrationMixin):
             except Exception as e:
                 logging.error(e)
         else:
+            if user.is_active and not ilsgateway_smsuser.is_active:
+                user.is_active = False
+                user.save()
+                return user
+            if not user.is_active and ilsgateway_smsuser.is_active:
+                user.is_active = True
             self.edit_phone_numbers(ilsgateway_smsuser, user)
+            user.save()
         return user
 
     def save_verified_number(self, user, phone_number):
