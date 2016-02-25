@@ -6,6 +6,7 @@
         defaultRows: {{ report_table.default_rows|default:10 }},
         startAtRowNum: {{ report_table.start_at_row|default:0 }},
         showAllRowsOption: {{ report_table.show_all_rows|JSON }},
+        includeFilter: true,
 
         {% if report_table.headers.render_aoColumns %}aoColumns: {{ report_table.headers.render_aoColumns|JSON }},{% endif %}
         autoWidth: {{ report_table.headers.auto_width|JSON }},
