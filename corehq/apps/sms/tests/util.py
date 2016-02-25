@@ -13,8 +13,8 @@ from corehq.apps.hqcase.dbaccessors import \
 from corehq.apps.ivr.models import Call
 from corehq.messaging.smsbackends.test.models import SQLTestSMSBackend
 from corehq.apps.sms.mixin import VerifiedNumber
-from corehq.apps.sms.models import (SMSLog, CallLog, SMS,
-    SQLMobileBackend, SQLMobileBackendMapping)
+from corehq.apps.sms.models import (SMS, SQLMobileBackend,
+    SQLMobileBackendMapping)
 from corehq.apps.smsforms.models import SQLXFormsSession
 from corehq.apps.groups.models import Group
 from corehq.apps.reminders.models import (SurveyKeyword, SurveyKeywordAction,
