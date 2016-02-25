@@ -7,7 +7,7 @@
                 href="#multimedia-zip-modal" data-toggle="modal" onclick="download_application_zip()"
             }
             {% else %}
-                {# This happens when the template gets included in app_manager/releases.html #}
+                {# This happens when the template gets included in app_manager/partials/releases.html #}
                 {# See app_manager/js/releases.js #}
                 data-bind="click: function () {
                     download_application_zip(true);

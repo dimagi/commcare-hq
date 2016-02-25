@@ -12,8 +12,8 @@
     {% compress css %}
     {# Explicitly include these because app manager doesn't really do class-based views, can't use the decorators #}
     <link type="text/css" rel="stylesheet" media="screen" href="{% new_static 'jquery-ui/themes/redmond/jquery-ui.min.css' %}"/>
-    <link type="text/css" rel="stylesheet" media="all" href="{% new_static 'style/lib/select2/select2.css' %}" />
-    <link type="text/css" rel="stylesheet" media="all" href="{% new_static 'style/lib/select2/select2-bootstrap.css' %}" />
+    <link type="text/css" rel="stylesheet" media="all" href="{% new_static 'select2-3.5.2-legacy/select2.css' %}" />
+    <link type="text/css" rel="stylesheet" media="all" href="{% new_static 'select2-3.5.2-legacy/select2-bootstrap.css' %}" />
     <link type="text/less" rel="stylesheet" media="all" href="{% new_static 'style/less/legacy/app_manager.less' %}"/>
     {% endcompress %}
 {% endblock %}
@@ -35,14 +35,13 @@
     <script src="{% new_static 'jquery-ui/ui/minified/widget.min.js' %}"></script>
     <script src="{% new_static 'jquery-ui/ui/minified/mouse.min.js' %}"></script>
     <script src="{% new_static 'jquery-ui/ui/minified/position.min.js' %}"></script>
-    <script src="{% new_static 'jquery-ui/ui/minified/accordion.min.js' %}"></script>
     <script src="{% new_static 'jquery-ui/ui/minified/autocomplete.min.js' %}"></script>
     <script src="{% new_static 'jquery-ui/ui/minified/draggable.min.js' %}"></script>
     <script src="{% new_static 'jquery-ui/ui/minified/droppable.min.js' %}"></script>
     <script src="{% new_static 'jquery-ui/ui/minified/menu.min.js' %}"></script>
     <script src="{% new_static 'jquery-ui/ui/minified/sortable.min.js' %}"></script>
 
-    <script src="{% new_static 'style/lib/select2/select2.js' %}"></script>
+    <script src="{% new_static 'select2-3.5.2-legacy/select2.js' %}"></script>
     <script src="{% new_static 'bootstrap3-typeahead/bootstrap3-typeahead.min.js' %}"></script>
     <script src="{% new_static 'style/js/bootstrap-multi-typeahead.js' %}"></script>
 

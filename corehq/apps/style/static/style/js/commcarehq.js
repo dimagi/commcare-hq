@@ -91,22 +91,6 @@ COMMCAREHQ.initBlock = function ($elem) {
     $("input[type='text'], input[type='password'], textarea", $elem);
     $('.container', $elem).addClass('ui-widget ui-widget-content');
     $('.config', $elem).wrap('<div />').parent().addClass('container block ui-corner-all');
-
-    $('.confirm-submit', $elem).click(function () {
-        var $form = $(this).closest('form'),
-            message = $form.data('message') || function () {
-                $(this).append($form.find('.dialog-message').html());
-            },
-            title = $form.data('title');
-        COMMCAREHQ.confirm({
-            title: title,
-            message: message,
-            ok: function () {
-                $form.submit();
-            }
-        });
-        return false;
-    });
 };
 
 COMMCAREHQ.updateDOM = function (update) {
@@ -117,40 +101,6 @@ COMMCAREHQ.updateDOM = function (update) {
             $(key).text(update[key]).val(update[key]);
         }
     }
-};
-
-COMMCAREHQ.confirm = function (options) {
-    var title = options.title,
-        message = options.message || "",
-        onOpen = options.open || function () {},
-        onOk = options.ok,
-        $dialog = $('<div/>');
-
-    if (typeof message === "function") {
-        message.apply($dialog);
-    } else if (message) {
-        $dialog.text(message);
-    }
-    $dialog.dialog({
-        title: title,
-        modal: true,
-        resizable: false,
-        open: function () {
-            onOpen.apply($dialog);
-        },
-        buttons: [{
-            text: "Cancel",
-            click: function () {
-                $(this).dialog('close');
-            }
-        }, {
-            text: "OK",
-            click: function () {
-                $(this).dialog('close');
-                onOk.apply($dialog);
-            }
-        }]
-    });
 };
 
 COMMCAREHQ.makeSaveButton = function(messageStrings, cssClass) {
@@ -217,7 +167,7 @@ COMMCAREHQ.makeSaveButton = function(messageStrings, cssClass) {
                     options.error = function (data) {
                         that.nextState = null;
                         that.setState('retry');
-                        alert(SaveButton.message.ERROR_SAVING);
+                        alert_user(data.responseText || SaveButton.message.ERROR_SAVING, 'danger');
                         error.apply(this, arguments);
                     };
                     var jqXHR = $.ajax(options);

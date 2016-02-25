@@ -27,5 +27,5 @@ Exports.Constants.ANALYTICS_EVENT_CATEGORIES = {
 Exports.Constants.FORM_EXPORT = 'form';
 Exports.Constants.CASE_EXPORT = 'case';
 
-Exports.Constants.MAIN_TABLE = null;
+Exports.Constants.MAIN_TABLE = [];
 Exports.Constants.CASE_HISTORY = ['case_history'];

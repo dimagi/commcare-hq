@@ -2,10 +2,23 @@ from abc import ABCMeta, abstractmethod
 from collections import namedtuple
 
 import six
+from StringIO import StringIO
 
 from dimagi.utils.decorators.memoized import memoized
 
 from ..utils import should_use_sql_backend
+
+
+CaseIndexInfo = namedtuple(
+    'CaseIndexInfo', ['case_id', 'identifier', 'referenced_id', 'referenced_type', 'relationship']
+)
+
+
+class AttachmentContent(namedtuple('AttachmentContent', ['content_type', 'content_stream'])):
+    @property
+    def content_body(self):
+        with self.content_stream as stream:
+            return stream.read()
 
 
 class AbstractFormAccessor(six.with_metaclass(ABCMeta)):
@@ -14,7 +27,15 @@ class AbstractFormAccessor(six.with_metaclass(ABCMeta)):
     should be static or classmethods.
     """
     @abstractmethod
+    def form_exists(self, form_id, domain=None):
+        raise NotImplementedError
+
+    @abstractmethod
     def get_form(form_id):
+        raise NotImplementedError
+
+    @abstractmethod
+    def get_forms(form_ids):
         raise NotImplementedError
 
     @abstractmethod
@@ -23,6 +44,14 @@ class AbstractFormAccessor(six.with_metaclass(ABCMeta)):
 
     @abstractmethod
     def get_with_attachments(form_id):
+        raise NotImplementedError
+
+    @abstractmethod
+    def get_attachment_content(form_id, attachment_name):
+        """
+        :param attachment_id:
+        :return: AttachmentContent object
+        """
         raise NotImplementedError
 
     @abstractmethod
@@ -54,6 +83,12 @@ class FormAccessors(object):
     def get_form(self, form_id):
         return self.db_accessor.get_form(form_id)
 
+    def get_forms(self, form_ids):
+        return self.db_accessor.get_forms(form_ids)
+
+    def form_exists(self, form_id):
+        return self.db_accessor.form_exists(form_id)
+
     def get_forms_by_type(self, type_, limit, recent_first=False):
         return self.db_accessor.get_forms_by_type(self.domain, type_, limit, recent_first)
 
@@ -71,6 +106,9 @@ class FormAccessors(object):
 
     def get_forms_for_user(self, domain, user_id, ids_only=False):
         return self.db_accessor.get_forms_for_user(domain, user_id, ids_only)
+
+    def get_attachment_content(self, form_id, attachment_name):
+        return self.db_accessor.get_attachment_content(form_id, attachment_name)
 
 
 class AbstractCaseAccessor(six.with_metaclass(ABCMeta)):
@@ -124,6 +162,18 @@ class AbstractCaseAccessor(six.with_metaclass(ABCMeta)):
 
     @abstractmethod
     def get_all_reverse_indices_info(domain, case_ids):
+        raise NotImplementedError
+
+    @abstractmethod
+    def get_attachment_content(case_id, attachment_id):
+        """
+        :param attachment_id:
+        :return: AttachmentContent object
+        """
+        raise NotImplementedError
+
+    @abstractmethod
+    def get_case_by_domain_hq_user_id(domain, user_id, case_type):
         raise NotImplementedError
 
 
@@ -180,6 +230,25 @@ class CaseAccessors(object):
     def get_all_reverse_indices_info(self, case_ids):
         return self.db_accessor.get_all_reverse_indices_info(self.domain, case_ids)
 
-CaseIndexInfo = namedtuple(
-    'CaseIndexInfo', ['case_id', 'identifier', 'referenced_id', 'referenced_type', 'relationship']
-)
+    def get_attachment_content(self, case_id, attachment_id):
+        return self.db_accessor.get_attachment_content(case_id, attachment_id)
+
+    def get_case_by_domain_hq_user_id(self, user_id, case_type):
+        return self.db_accessor.get_case_by_domain_hq_user_id(self.domain, user_id, case_type)
+
+
+def get_cached_case_attachment(domain, case_id, attachment_id, is_image=False):
+    attachment_cache_key = "%(case_id)s_%(attachment)s" % {
+        "case_id": case_id,
+        "attachment": attachment_id
+    }
+
+    from dimagi.utils.django.cached_object import CachedObject, CachedImage
+    cobject = CachedImage(attachment_cache_key) if is_image else CachedObject(attachment_cache_key)
+    if not cobject.is_cached():
+        content = CaseAccessors(domain).get_attachment_content(case_id, attachment_id)
+        stream = StringIO(content.content_body)
+        metadata = {'content_type': content.content_type}
+        cobject.cache_put(stream, metadata)
+
+    return cobject

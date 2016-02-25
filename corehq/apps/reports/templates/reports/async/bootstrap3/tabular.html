@@ -130,7 +130,9 @@
                 startAtRowNum: {{ report_table.start_at_row|default:0 }},
                 showAllRowsOption: {{ report_table.show_all_rows|JSON }},
                 loadingTemplateSelector: '#js-template-loading-report',
-
+                {% if not report_table.sortable %}
+                defaultSort: false,
+                {% endif %}
                 {% if report_table.headers.render_aoColumns %}aoColumns: {{ report_table.headers.render_aoColumns|JSON }},{% endif %}
                 autoWidth: {{ report_table.headers.auto_width|JSON }},
                 {% if report_table.headers.custom_sort %}customSort: {{ report_table.headers.custom_sort|JSON }},{% endif %}

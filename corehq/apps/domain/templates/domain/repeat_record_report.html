@@ -45,7 +45,10 @@
 
                 })
                 .fail(function(data) {
-                    $modal.find('.modal-body').html('fail')
+                    var defaultText = gettext('Failed to fetch payload'),
+                        errorMessage = data.responseJSON ? data.responseJSON.error : null;
+
+                    $modal.find('.modal-body').text(errorMessage || defaultText)
                 });
         })
 

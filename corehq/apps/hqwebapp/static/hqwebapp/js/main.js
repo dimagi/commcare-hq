@@ -30,7 +30,7 @@ var eventize = function (that) {
 };
 
 
-var SaveButton = {
+var _SaveButton = {
     /*
         options: {
             save: "Function to call when the user clicks Save",
@@ -40,14 +40,14 @@ var SaveButton = {
     init: function (options) {
         var button = {
             disabled: false,
-            $save: $('<span/>').text(SaveButton.message.SAVE).click(function () {
+            $save: $('<span/>').text(_SaveButton.message.SAVE).click(function () {
                 button.fire('save');
             }).addClass('btn btn-success'),
-            $retry: $('<span/>').text(SaveButton.message.RETRY).click(function () {
+            $retry: $('<span/>').text(_SaveButton.message.RETRY).click(function () {
                 button.fire('save');
             }).addClass('btn btn-success'),
-            $saving: $('<span/>').text(SaveButton.message.SAVING).prepend('<i class="icon-refresh icon-spin"></i> ').addClass('btn btn-default disabled'),
-            $saved: $('<span/>').text(SaveButton.message.SAVED).addClass('btn btn-default disabled'),
+            $saving: $('<span/>').text(_SaveButton.message.SAVING).prepend('<i class="icon-refresh icon-spin"></i> ').addClass('btn btn-default disabled'),
+            $saved: $('<span/>').text(_SaveButton.message.SAVED).addClass('btn btn-default disabled'),
             ui: $('<div/>').addClass('pull-right'),
             setStateWhenReady: function (state) {
                 if (this.state === 'saving') {
@@ -96,7 +96,7 @@ var SaveButton = {
                     that.nextState = null;
                     that.setState('retry');
                     responseText = data.responseText || '';
-                    alert(SaveButton.message.ERROR_SAVING + '\n' +  data.responseText);
+                    alert(_SaveButton.message.ERROR_SAVING + '\n' +  data.responseText);
                     error.apply(this, arguments);
                 };
                 return options;
@@ -153,7 +153,7 @@ var SaveButton = {
     },
     initForm: function ($form, options) {
         var url = $form.attr('action'),
-            button = SaveButton.init({
+            button = _SaveButton.init({
                 unsavedMessage: options.unsavedMessage,
                 save: function () {
                     button.ajax({
@@ -259,22 +259,6 @@ var COMMCAREHQ = (function () {
             $("input[type='text'], input[type='password'], textarea", $elem);
             $('.container', $elem).addClass('ui-widget ui-widget-content');
             $('.config', $elem).wrap('<div />').parent().addClass('container block ui-corner-all');
-
-            $('.confirm-submit', $elem).click(function () {
-                var $form = $(this).closest('form'),
-                    message = $form.data('message') || function () {
-                        $(this).append($form.find('.dialog-message').html());
-                    },
-                    title = $form.data('title');
-                COMMCAREHQ.confirm({
-                    title: title,
-                    message: message,
-                    ok: function () {
-                        $form.submit();
-                    }
-                });
-                return false;
-            });
         },
         updateDOM: function (update) {
             var key;
@@ -284,40 +268,7 @@ var COMMCAREHQ = (function () {
                 }
             }
         },
-        confirm: function (options) {
-            var title = options.title,
-                message = options.message || "",
-                onOpen = options.open || function () {},
-                onOk = options.ok,
-                $dialog = $('<div/>');
-
-            if (typeof message === "function") {
-                message.apply($dialog);
-            } else if (message) {
-                $dialog.text(message);
-            }
-            $dialog.dialog({
-                title: title,
-                modal: true,
-                resizable: false,
-                open: function () {
-                    onOpen.apply($dialog);
-                },
-                buttons: [{
-                    text: "Cancel",
-                    click: function () {
-                        $(this).dialog('close');
-                    }
-                }, {
-                    text: "OK",
-                    click: function () {
-                        $(this).dialog('close');
-                        onOk.apply($dialog);
-                    }
-                }]
-            });
-        },
-        SaveButton: SaveButton,
+        SaveButton: _SaveButton,
         beforeUnload: [],
         bindBeforeUnload: function (callback) {
             COMMCAREHQ.beforeUnload.push(callback);
@@ -336,8 +287,6 @@ var COMMCAREHQ = (function () {
 $(function () {
     'use strict';
     $('.delete_link').iconify('fa fa-remove icon-remove');
-    $(".delete_link").addClass("dialog_opener");
-    $(".delete_dialog").addClass("dialog");
     $('.new_link').iconify('fa fa-plus icon-plus');
     $('.edit_link').iconify('fa fa-pencil icon-pencil');
 

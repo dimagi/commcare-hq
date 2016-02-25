@@ -44,13 +44,11 @@
 
             $(standardHQReport.filterAccordion).on('hidden', function (data) {
                 if (!(data.target && $(data.target).hasClass('modal'))) {
-                    _setShowFilterCookie(true);
                     $(standardHQReport.toggleFiltersButton).button('open');
                 }
             });
 
             $(standardHQReport.filterAccordion).on('show', function () {
-                _setShowFilterCookie(true);
                 $(standardHQReport.toggleFiltersButton).button('close');
             });
         };

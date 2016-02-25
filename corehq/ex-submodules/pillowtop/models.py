@@ -8,6 +8,9 @@ class DjangoPillowCheckpoint(models.Model):
     timestamp = models.DateTimeField(auto_now=True)
     old_sequence = models.TextField(null=True, blank=True)
 
+    class Meta:
+        app_label = "pillowtop"
+
     @staticmethod
     def to_dict(instance):
         """

@@ -35,7 +35,7 @@ from corehq.apps.export.const import (
     CASE_EXPORT,
     MAIN_TABLE,
     TRANSFORM_FUNCTIONS,
-)
+    DEID_TRANSFORM_FUNCTIONS)
 from corehq.apps.export.dbaccessors import (
     get_latest_case_export_schema,
     get_latest_form_export_schema,
@@ -61,7 +61,7 @@ class ExportItem(DocumentSchema):
     @classmethod
     def create_from_question(cls, question, app_id, app_version):
         return cls(
-            path=_string_path_to_list(question['value']),
+            path=_question_path_to_doc_path(question['value']),
             label=question['label'],
             last_occurrences={app_id: app_version},
         )
@@ -84,7 +84,7 @@ class ExportColumn(DocumentSchema):
     # A list of constants that map to functions to transform the column value
     transforms = ListProperty(validators=is_valid_transform)
 
-    def get_value(self, doc, base_path):
+    def get_value(self, doc, base_path, transform_dates=False):
         """
         Get the value of self.item of the given doc.
         When base_path is [], doc is a form submission or case,
@@ -97,13 +97,17 @@ class ExportColumn(DocumentSchema):
         assert base_path == self.item.path[:len(base_path)]
         # Get the path from the doc root to the desired ExportItem
         path = self.item.path[len(base_path):]
-        return self._transform(NestedDictGetter(path)(doc))
+        return self._transform(NestedDictGetter(path)(doc), transform_dates)
 
-    def _transform(self, value):
+    def _transform(self, value, transform_dates):
         """
         Transform the given value with the transforms specified in self.transforms.
+        Also transform dates if the transform_dates flag is true.
         """
         # TODO: The functions in self.transforms might expect docs, not values, in which case this needs to move.
+
+        if transform_dates:
+            value = couch_to_excel_datetime(value, None)
         for transform in self.transforms:
             value = TRANSFORM_FUNCTIONS[transform](value)
         return value
@@ -153,8 +157,18 @@ class ExportColumn(DocumentSchema):
         self.is_advanced = is_deleted
         self.tags = tags
 
+    @property
+    def is_deidentifed(self):
+        # TODO: Might be better if we set an is_deidentified flag on the model instead?
+        return bool(set(self.transforms) & set(DEID_TRANSFORM_FUNCTIONS))
+
     def get_headers(self):
-        return [self.label]
+        # TODO: id columns need special treatment
+        # see couchexport.models.ExportTable#get_headers_row
+        if self.is_deidentifed:
+            return [u"{} {}".format(self.label, "[sensitive]")]
+        else:
+            return [self.label]
 
 
 class TableConfiguration(DocumentSchema):
@@ -241,6 +255,7 @@ class ExportInstance(Document):
     domain = StringProperty()
     tables = ListProperty(TableConfiguration)
     export_format = StringProperty(default='csv')
+    last_built = DateTimeProperty()
 
     # Whether to split multiselects into multiple columns
     split_multiselects = BooleanProperty(default=False)
@@ -267,6 +282,18 @@ class ExportInstance(Document):
         return self.is_deidentified
 
     @property
+    def file_id(self):
+        return 'placeholder'
+
+    @property
+    def export_size(self):
+        return 'placeholder'
+
+    @property
+    def download_url(self):
+        return 'placeholder'
+
+    @property
     def defaults(self):
         return FormExportInstanceDefaults if self.type == FORM_EXPORT else CaseExportInstanceDefaults
 
@@ -275,6 +302,15 @@ class ExportInstance(Document):
             if table.path == path:
                 return table
         return None
+
+    def daily_saved_export_metadata(self):
+        return {
+            'fileId': self.file_id,
+            'size': self.export_size,
+            'lastUpdated': self.last_built,
+            'showExpiredWarning': False,
+            'downloadUrl': self.download_url,
+        }
 
     @classmethod
     def _new_from_schema(cls, schema):
@@ -555,7 +591,7 @@ class FormExportDataSchema(ExportDataSchema):
         return FORM_EXPORT
 
     @staticmethod
-    def generate_schema_from_builds(domain, app_id, form_xmlns):
+    def generate_schema_from_builds(domain, app_id, form_xmlns, force_rebuild=False):
         """Builds a schema from Application builds for a given identifier
 
         :param domain: The domain that the export belongs to
@@ -565,7 +601,7 @@ class FormExportDataSchema(ExportDataSchema):
         """
         original_id, original_rev = None, None
         current_xform_schema = get_latest_form_export_schema(domain, app_id, form_xmlns)
-        if current_xform_schema:
+        if current_xform_schema and not force_rebuild:
             original_id, original_rev = current_xform_schema._id, current_xform_schema._rev
         else:
             current_xform_schema = FormExportDataSchema()
@@ -610,10 +646,10 @@ class FormExportDataSchema(ExportDataSchema):
             # If group_path is None, that means the questions are part of the form and not a repeat group
             # inside of the form
             group_schema = ExportGroupSchema(
-                path=_string_path_to_list(group_path),
+                path=_question_path_to_doc_path(group_path),
                 last_occurrences={app_id: app_version},
             )
-            if group_path == MAIN_TABLE:
+            if group_path is None:
                 for system_prop in MAIN_TABLE_PROPERTIES:
                     group_schema.items.append(ScalarItem(
                         path=[system_prop.name],
@@ -657,7 +693,7 @@ class CaseExportDataSchema(ExportDataSchema):
         return map(lambda app_build_version: app_build_version.build_id, app_build_verions)
 
     @staticmethod
-    def generate_schema_from_builds(domain, case_type):
+    def generate_schema_from_builds(domain, case_type, force_rebuild=False):
         """Builds a schema from Application builds for a given identifier
 
         :param domain: The domain that the export belongs to
@@ -668,7 +704,7 @@ class CaseExportDataSchema(ExportDataSchema):
         original_id, original_rev = None, None
         current_case_schema = get_latest_case_export_schema(domain, case_type)
 
-        if current_case_schema:
+        if current_case_schema and not force_rebuild:
             # Save the original id an rev so we can later save the document under the same _id
             original_id, original_rev = current_case_schema._id, current_case_schema._rev
         else:
@@ -769,6 +805,24 @@ class CaseExportDataSchema(ExportDataSchema):
 
 def _string_path_to_list(path):
     return path if path is None else path[1:].split('/')
+
+
+def _question_path_to_doc_path(string_path):
+    """
+    Convert a question path into the format expected by the export code,
+    specifically the logic in ExportColumn.get_value().
+    The export code will use this path to traverse the JSON representation of
+    the form that is stored in ElasticSearch.
+
+    E.g. "/data/question1/" is converted to ["form", "question1"]
+    """
+    path = _string_path_to_list(string_path)
+    if path is None:
+        path = []
+    else:
+        assert path[0] == "data"
+        path[0] = "form"
+    return path
 
 
 def _list_path_to_string(path, separator='.'):

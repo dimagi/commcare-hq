@@ -106,7 +106,7 @@ from corehq.apps.app_manager.views.releases import (
     odk_qr_code,
     paginate_releases,
     release_build,
-    release_manager,
+    releases_ajax,
     revert_to_copy,
     save_copy,
     short_odk_url,

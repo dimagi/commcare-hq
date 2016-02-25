@@ -11,8 +11,8 @@ from psycopg2.extensions import adapt, AsIs
 from corehq.form_processor.models import (
     CommCareCaseSQL_DB_TABLE, CaseAttachmentSQL_DB_TABLE,
     CommCareCaseIndexSQL_DB_TABLE, CaseTransaction_DB_TABLE,
-    XFormAttachmentSQL_DB_TABLE, XFormInstanceSQL_DB_TABLE
-)
+    XFormAttachmentSQL_DB_TABLE, XFormInstanceSQL_DB_TABLE,
+    LedgerValue_DB_TABLE)
 
 
 def fetchall_as_namedtuple(cursor):
@@ -69,6 +69,7 @@ def form_attachment_adapter(attachment):
         adapt(attachment.form_id).getquoted(),
         adapt(attachment.blob_id).getquoted(),
         adapt(attachment.content_length).getquoted(),
+        adapt(json.dumps(attachment.properties, cls=JSONEncoder)).getquoted(),
     ]
     return _adapt_fields(fields, XFormAttachmentSQL_DB_TABLE)
 
@@ -107,6 +108,10 @@ def case_attachment_adapter(attachment):
         adapt(attachment.case_id).getquoted(),
         adapt(attachment.blob_id).getquoted(),
         adapt(attachment.content_length).getquoted(),
+        adapt(attachment.attachment_from).getquoted(),
+        adapt(json.dumps(attachment.properties, cls=JSONEncoder)).getquoted(),
+        adapt(attachment.attachment_src).getquoted(),
+        adapt(attachment.identifier).getquoted(),
     ]
     return _adapt_fields(fields, CaseAttachmentSQL_DB_TABLE)
 
@@ -136,6 +141,18 @@ def case_transaction_adapter(transaction):
         adapt(transaction.sync_log_id).getquoted(),
     ]
     return _adapt_fields(fields, CaseTransaction_DB_TABLE)
+
+
+def ledger_value_adapter(ledger_value):
+    fields = [
+        adapt(ledger_value.id).getquoted(),
+        adapt(ledger_value.entry_id).getquoted(),
+        adapt(ledger_value.section_id).getquoted(),
+        adapt(ledger_value.balance).getquoted(),
+        adapt(ledger_value.last_modified).getquoted(),
+        adapt(ledger_value.case_id).getquoted(),
+    ]
+    return _adapt_fields(fields, LedgerValue_DB_TABLE)
 
 
 def _adapt_fields(fields, table_name):

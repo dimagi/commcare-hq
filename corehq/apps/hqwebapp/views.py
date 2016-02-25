@@ -7,6 +7,7 @@ import re
 import sys
 import traceback
 import uuid
+from django.utils.decorators import method_decorator
 import httpagentparser
 
 from django.conf import settings
@@ -33,6 +34,7 @@ from django.template import loader
 from django.template.context import RequestContext
 from restkit import Resource
 
+from corehq import toggles, feature_previews
 from corehq.apps.accounting.models import Subscription
 from corehq.apps.app_manager.models import Application
 from corehq.apps.domain.decorators import require_superuser, login_and_domain_required
@@ -44,6 +46,7 @@ from corehq.apps.dropbox.exceptions import DropboxUploadAlreadyInProgress
 from corehq.apps.hqwebapp.encoders import LazyEncoder
 from corehq.apps.hqwebapp.forms import EmailAuthenticationForm, CloudCareAuthenticationForm
 from corehq.apps.reports.util import is_mobile_worker_with_report_access
+from corehq.apps.style.decorators import use_bootstrap3
 from corehq.apps.users.models import CouchUser
 from corehq.apps.users.util import format_username
 from corehq.apps.hqwebapp.doc_info import get_doc_info
@@ -519,6 +522,9 @@ def bug_report(req):
 
     report['user_agent'] = req.META['HTTP_USER_AGENT']
     report['datetime'] = datetime.utcnow()
+    report['feature_flags'] = toggles.toggles_dict(username=report['username'],
+                                                   domain=report['domain']).keys()
+    report['feature_previews'] = feature_previews.previews_dict(report['domain']).keys()
 
     try:
         couch_user = CouchUser.get_by_username(report['username'])
@@ -552,6 +558,8 @@ def bug_report(req):
         u"url: {url}\n"
         u"datetime: {datetime}\n"
         u"User Agent: {user_agent}\n"
+        u"Feature Flags: {feature_flags}\n"
+        u"Feature Previews: {feature_previews}\n"
         u"Message:\n\n"
         u"{message}\n"
         ).format(**report)
@@ -1039,6 +1047,32 @@ def maintenance_alerts(request, template='style/bootstrap2/maintenance_alerts.ht
             'id': alert.id,
         } for alert in MaintenanceAlert.objects.order_by('-created')[:5]]
     })
+
+class MaintenanceAlertsView(BasePageView):
+    urlname = 'alerts'
+    page_title = ugettext_noop("Maintenance Alerts")
+    template_name = 'style/maintenance_alerts.html'
+
+    @method_decorator(require_superuser)
+    @use_bootstrap3
+    def dispatch(self, request, *args, **kwargs):
+        return super(MaintenanceAlertsView, self).dispatch(request, *args, **kwargs)
+
+    @property
+    def page_context(self):
+        from corehq.apps.hqwebapp.models import MaintenanceAlert
+        return {
+            'alerts': [{
+            'created': unicode(alert.created),
+            'active': alert.active,
+            'html': alert.html,
+            'id': alert.id,
+            } for alert in MaintenanceAlert.objects.order_by('-created')[:5]]
+        }
+
+    @property
+    def page_url(self):
+        return reverse(self.urlname)
 
 
 @require_POST

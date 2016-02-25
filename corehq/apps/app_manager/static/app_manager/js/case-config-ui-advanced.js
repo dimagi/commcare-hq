@@ -43,7 +43,8 @@ var AdvancedCase = (function () {
                     },
                     dataType: 'json',
                     success: function (data) {
-                        COMMCAREHQ.app_manager.updateDOM(data.update);
+                        var app_manager = hqImport('app_manager/js/app_manager.js');
+                        app_manager.updateDOM(data.update);
                         self.caseConfigViewModel.ensureBlankProperties();
                         self.setPropertiesMap(data.propertiesMap);
                         self.requires(self.caseConfigViewModel.load_update_cases().length > 0 ? 'case' : 'none');
@@ -152,16 +153,19 @@ var AdvancedCase = (function () {
         self.caseConfigViewModel = new CaseConfigViewModel(self, params);
 
         self.applyAccordion = function (type, index) {
-            var options = {header: '> div > h3', heightStyle: 'content', collapsible: true, autoFill: true};
-            if (index) {
-                options.active = index;
-            }
-            if (!type || type === 'open') {
-                $('#case-open-accordion').accordion("destroy").accordion(options);
-            }
-            if (!type || type === 'load') {
-                $('#case-load-accordion').accordion("destroy").accordion(options);
-            }
+            _.each(type ? [type] : ['open', 'load'], function(t) {
+                var selector = "#case-" + t + "-accordion";
+
+                // Make sure all parents are set correctly so panels behave like an accordion
+                $(selector + ' > .panel > .panel-collapse').collapse({
+                    parent: selector,
+                    toggle: false,
+                });
+
+                // Hide all panels, then show the requested one
+                $(selector + ' .panel-collapse.in').collapse('hide')
+                $(selector + ' > .panel:nth-child(' + (index + 1) + ') .panel-collapse').collapse('show');
+            });
         };
 
         self.init = function () {
@@ -179,8 +183,14 @@ var AdvancedCase = (function () {
 
                 self.ensureBlankProperties();
                 $('#case-configuration-tab').on('click', function () {
-                    // re-apply accordion settings
-                    self.applyAccordion();
+                    // Leave all the actions, collapsed, unless there's just
+                    // one in the section, and then open it
+                    if ($('#case-load-accordion > .panel').length === 1) {
+                        self.applyAccordion('load', 0);
+                    }
+                    if ($('#case-open-accordion > .panel').length === 1) {
+                        self.applyAccordion('open', 0);
+                    }
                 });
             });
         };
@@ -350,7 +360,6 @@ var AdvancedCase = (function () {
 
         self.addFormAction = function (action) {
             if (action.value === 'load' || action.value === 'auto_select') {
-                $('#case-open-accordion').accordion({active: false});
                 var index = self.load_update_cases().length;
                 var tag_prefix = action.value === 'auto_select'? 'auto' : '';
                 var action_data = {
@@ -380,7 +389,6 @@ var AdvancedCase = (function () {
                 self.load_update_cases.push(LoadUpdateAction.wrap(action_data, self.config));
                 self.config.applyAccordion('load', index);
             } else if (action.value === 'open') {
-                $('#case-load-accordion').accordion({active: false});
                 var index = self.open_cases().length;
                 self.open_cases.push(OpenCaseAction.wrap({
                     case_type: config.caseType,
@@ -595,20 +603,7 @@ var AdvancedCase = (function () {
                 return config.getModulesForCaseType(self.case_type(), self.show_product_stock());
             });
 
-            self.case_type.subscribe(function (value) {
-                // fix for resizing of accordion when content changes
-                if (!value) {
-                    var index = self.config.caseConfigViewModel.load_update_cases.indexOf(self);
-                    self.config.applyAccordion('load', index);
-                }
-            }, null, 'beforeChange');
-
             if (self.auto_select) {
-                self.auto_select.mode.subscribe(function (value) {
-                    // fix for resizing of accordion when content changes
-                    var index = self.config.caseConfigViewModel.load_update_cases.indexOf(self);
-                    self.config.applyAccordion('load', index);
-                }, null, 'beforeChange');
                 self.auto_select.mode.subscribe(function (value) {
                     // suggestedProperties need to be those of case type "commcare-user"
                     if (value === 'usercase') {
@@ -842,13 +837,6 @@ var AdvancedCase = (function () {
                     return true;
                 }
             };
-
-            self.case_type.subscribe(function (value) {
-                if (!value) {
-                    var index = self.config.caseConfigViewModel.open_cases.indexOf(self);
-                    self.config.applyAccordion('open', index);
-                }
-            }, null, 'beforeChange');
 
             self.disable_tag = ko.computed(function () {
                 return false;

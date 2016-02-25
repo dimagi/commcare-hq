@@ -1,4 +1,4 @@
-{% extends "settings/bootstrap3/base_template.html" %}
+{% extends "style/bootstrap3/base_section.html" %}
 {% load hqstyle_tags %}
 {% load hq_shared_tags %}
 {% load i18n %}
@@ -121,9 +121,13 @@
                                     <span class="hq-help-template"
                                           data-title="{% trans "Owns Cases" %}"
                                           data-content="{% blocktrans %}
-                                              This allows locations at this level to own and
-                                              manage cases. A case sharing group will be
-                                              created for each location.
+                                              <p>Determines if locations at this level should own cases;
+                                              this will allow sharing of cases among any users assigned to a
+                                              location at this level.</p>
+                                              <p>In order for this to work, you need to make sure you have enabled
+                                              Case Sharing in your App settings.
+                                              Please see the <a href='https://confluence.dimagi.com/display/commcarepublic/Case+Sharing' target='_blank'>help site</a>
+                                              for more details.</p>
                                           {% endblocktrans %}">
                                     </span>
                                 </th>
@@ -132,9 +136,11 @@
                                     <span class="hq-help-template"
                                           data-title="{% trans "View Child Data" %}"
                                           data-content="{% blocktrans %}
-                                              Mobile workers assigned to locations at this
-                                              level will be able to view any cases owned by
-                                              their child locations.
+                                              <p>Indicates if users assigned to this level should be able to see and update cases owned by levels below them.</p>
+                                              <p>In order for this to work, you need to make sure you have enabled
+                                              Case Sharing in your App settings.
+                                              Please see the <a href='https://confluence.dimagi.com/display/commcarepublic/Case+Sharing' target='_blank'>help site</a>
+                                              for more details.</p>
                                           {% endblocktrans %}">
                                     </span>
                                 </th>
