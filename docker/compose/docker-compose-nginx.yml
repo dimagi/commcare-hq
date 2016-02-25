@@ -8,6 +8,6 @@ nginx:
     - "../nginxconf:/etc/nginx:ro"
     - "../../staticfiles:/static:ro"
   external_links: 
-    - web:web
-  volumes_from:
-    - web
+    - commcarehq_web_1:web
+  labels:
+    commcare.name: "nginx"

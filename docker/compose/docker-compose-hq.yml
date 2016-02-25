@@ -17,3 +17,6 @@ web:
     - hqservice_kafka_1:kafka
     - hqservice_rabbit_1:rabbit
     - hqservice_celery_1:celery
+  labels:
+    commcare.name: "web"
+

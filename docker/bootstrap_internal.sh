@@ -7,4 +7,4 @@ env CCHQ_IS_FRESH_INSTALL=1 ./manage.py migrate --noinput
 ./manage.py compilejsi18n
 bower install --config.interactive=false
 
-./manage.py bootstrap bandim commcare-admin@bandim.org password
+./manage.py bootstrap $1 $2 $3

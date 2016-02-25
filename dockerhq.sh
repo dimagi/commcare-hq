@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
 
 . $(dirname "$0")/docker/_include.sh
+. $(dirname "$0")/docker/utils.sh
 
 function usage() {
     case $1 in
@@ -63,6 +64,14 @@ function nginx_runner() {
     sudo docker-compose -f $DOCKER_DIR/compose/docker-compose-nginx.yml -p commcarehq $@
 }
 
+function setup_production() {
+    clear
+    echo "Welcome to the CommCareHQ Docker production setup"
+    ./create-kafka-topics.sh
+    ./bootstrap.sh
+    echo "CommcareHQ is ready to run in docker. "
+}
+
 key="$1"
 shift
 
@@ -84,11 +93,22 @@ case $key in
         ;;
     runserver-dev)
         ./docker/create-kafka-topics.sh
-	web_runner run --name web --rm --service-ports web /mnt/docker/runserver_dev.sh
+	web_runner run --name commcarehq_web_1 --rm --service-ports web /mnt/docker/runserver_dev.sh
         ;;
     runserver-prod)
-        ./docker/create-kafka-topics.sh
-	web_runner run --name web --rm --service-ports web /mnt/docker/runserver_prod.sh
+        $DOCKER_DIR/docker-services.sh start
+	web_runner run -d --name commcarehq_web_1 --rm --service-ports web /mnt/docker/runserver_prod.sh
+        nginx_runner rm -f
+        #wait for gunicorn web server in the web container to be up
+        web_ip=$(get_container_ip "commcare.name" "web")
+        while ! nc -z $web_ip 8000; do echo "Waiting for web container at $web_ip... "; sleep 3; done
+        nginx_runner up -d
+        ;;
+    stopserver-prod)
+        nginx_runner stop
+        web_runner stop web
+        docker rm -f commcarehq_web_1 #a bit of a hack due to a problem with docker-compose: https://github.com/docker/compose/issues/2593
+        $DOCKER_DIR/docker-services.sh stop
         ;;
     proxy)
         nginx_runner $@
@@ -102,9 +122,14 @@ case $key in
     rebuild)
         rebuild
         ;;
+    setup-prod)
+        ./docker/setup-prod.sh
+        ;;
     bootstrap)
         $DOCKER_DIR/bootstrap.sh
-        web_runner up
+        if [ "$?" -eq "0" ]; then
+          web_runner up
+        fi
         ;;
     ps)
         web_runner ps
