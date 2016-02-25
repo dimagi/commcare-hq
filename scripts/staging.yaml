@@ -71,6 +71,7 @@ branches:
   - b3-reports-case-form+b3-reports-home  # BB 2/24
   - b3-reports-home  # BB 2/23
   - b3-reports-case-form  # BB 2/24
+  - b3-billing-views
 submodules:
   submodules/touchforms-src:
     # let's leave this here even when empty
