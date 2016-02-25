@@ -29,6 +29,10 @@ class SupplyPointSQL(AbstractSupplyInterface):
         return CaseAccessorSQL.get_case_by_location(location.domain, location.location_id)
 
     @staticmethod
+    def get_by_location_id_and_domain(domain, location_id):
+        return CaseAccessorSQL.get_case_by_location(domain, location_id)
+
+    @staticmethod
     def get_supply_point(supply_point_id):
         return CaseAccessorSQL.get_case(supply_point_id)
 
