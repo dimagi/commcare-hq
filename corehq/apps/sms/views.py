@@ -380,11 +380,6 @@ def message_test(request, domain, phone_number):
 
     context = get_sms_autocomplete_context(request, domain)
     context['domain'] = domain
-    context['messagelog'] = SMSLog.by_domain_dsc(domain)
-    context['now'] = datetime.utcnow()
-    tz = get_timezone_for_user(request.couch_user, domain)
-    context['timezone'] = tz
-    context['timezone_now'] = datetime.now(tz=tz)
     context['layout_flush_content'] = True
     context['phone_number'] = phone_number
     return render(request, "sms/message_tester.html", context)
