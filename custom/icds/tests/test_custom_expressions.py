@@ -132,7 +132,6 @@ class ChildHealthExpressionTest(TestCase):
                 ],
             )
         ]
-
         [child_case, person_case] = factory.create_or_update_cases(structures)
         rows = self.config.get_all_values(child_case.to_json())
 

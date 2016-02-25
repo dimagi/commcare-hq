@@ -1,45 +1,48 @@
-from dateutil.relativedelta import relativedelta
 
 from casexml.apps.case.models import CommCareCase
 from corehq.apps.userreports.expressions.getters import transform_date
-from corehq.apps.userreports.specs import TypeProperty
-from dimagi.ext.jsonobject import JsonObject
-from dimagi.utils.dates import months_between
-
-from ..constants import *
 
 
-class ChildHealthCase(object):
-    def __init__(self, case, snapshot_month):
+from .constants import *
+
+
+class ChildHealthCaseRow(object):
+    def __init__(self, case, snapshot_start_date, snapshot_end_date, forms_provider=[]):
+        """
+        Snapshot of the case in the duration specified by snapshot_start_date and snapshot_end_date
+
+        args:
+            case: case of type 'child_health'
+            snapshot_start_date: Start date of duration to snapshot the case on
+            snapshot_end_date: End date of duration to snapshot the case on.
+
+        dates can be date/datetime objects or a valid strings
+        """
         if not isinstance(case, CommCareCase):
             case = CommCareCase.wrap(case)
         self.case = case
-        self.month = snapshot_month
-
-    def month_start(self):
-        return datetime.date(self.month.year, self.month.month, 1)
-
-    def month_end(self):
-        return datetime.date(self.month.year, self.month.month, 1) + relativedelta(months=1, days=-1)
+        self.snapshot_start_date = transform_date(snapshot_start_date)
+        self.snapshot_end_date = transform_date(snapshot_end_date)
+        self.forms_provider = forms_provider
 
     # needs caching
     def forms(self):
         for action in self.case.actions:
             yield XFormInstance.get(action.xform_id)
 
-    def case_property(self, property, default=None):
-        prop = getattr(self.case, property, default)
+    def case_property(self, case, property, default=None):
+        prop = getattr(case, property, default)
         if isinstance(prop, basestring) and prop.strip() == "":
             return default
         return prop
 
     def filtered_forms(self, xmlns):
         for form in self.forms:
-            if form.xmlns == xmlns and are_in_same_month(form.received_on, self.month_start):
+            if form.xmlns == xmlns and are_in_same_month(form.received_on, self.snapshot_start_date):
                 yield form
 
     def is_open(self):
-        return are_in_same_month(self.case.opened_on, self.month_start)
+        return are_in_same_month(self.case.opened_on, self.snapshot_start_date)
 
     def nutrition_status(self):
         statuses = [
@@ -49,18 +52,23 @@ class ChildHealthCase(object):
         ]
         return statuses[0] if any(statuses) else 'unweighed'
 
+    @property
     def dob(self):
-        return transform_date(self.mother_case.case_property("dob"))
+        return transform_date(self.case_property(self.mother_case, "dob"))
 
-    def self.age_in_days(self):
-        (self.dob - self.month_end).days
+    @property
+    def age_in_days(self):
+        return (self.dob - self.snapshot_end_date).days
 
+    @property
     def age_in_months(self):
         return self.age_in_days / 30.4
 
+    @property
     def age_in_years(self):
         return self.age_in_days / 365.25
 
+    @property
     def age_group(self):
         if self.age_in_days <= 28:
             return '0-28days'
@@ -79,6 +87,7 @@ class ChildHealthCase(object):
         elif 60 < self.age_in_months <= 72:
             '5-6yr'
 
+    @property
     def mother_case(self):
         return self.case.parent
 
@@ -113,7 +122,7 @@ class ChildHealthCase(object):
         pse_forms = self.filtered_forms(PSE_XMLNS)
         pse_updates = self.case.actions
         for update in pse_updates:
-            if are_in_same_month(update.server_date, self.month_start):
+            if are_in_same_month(update.server_date, self.snapshot_start_date):
                 # todo
                 return True
 
@@ -122,7 +131,7 @@ class ChildHealthCase(object):
 
     @property
     def low_birth_weight(self):
-        return self.case_property("low_birth_weight")
+        return self.case_property(self.case, "low_birth_weight")
 
     @property
     def low_birth_weight_in_current_month(self):
