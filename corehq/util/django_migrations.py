@@ -3,7 +3,25 @@ from django.db.backends.postgresql_psycopg2.schema import DatabaseSchemaEditor
 
 
 def add_if_not_exists(string):
-    return string.replace('CREATE INDEX', 'CREATE INDEX IF NOT EXISTS')
+    """
+    turn a 'CREATE INDEX' template into a 'CREATE INDEX IF NOT EXISTS' template
+
+    in PostgreSQL 9.5 it would be
+         return string.replace('CREATE INDEX', 'CREATE INDEX IF NOT EXISTS')
+    but the current implementation does the same thing for 9.4+
+
+    """
+    # this workaround was adapted and expanded from
+    # http://dba.stackexchange.com/questions/35616/create-index-if-it-does-not-exist/35626#35626
+    # The following basically means "if not exists":
+    #     IF (SELECT to_regclass('%(name)s') is NULL)
+    # and the 'DO $do$ BEGIN ... END $do' stuff
+    # is just to make postgres allow the IF statement
+    return ''.join([
+        "DO $do$ BEGIN IF (SELECT to_regclass('%(name)s') is NULL) THEN ",
+        string,
+        "; END IF; END $do$"
+    ])
 
 
 class DatabaseSchemaEditorIfNotExists(DatabaseSchemaEditor):
