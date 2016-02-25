@@ -3,10 +3,11 @@ from casexml.apps.case.sharedmodels import CommCareCaseIndex
 from corehq.apps.accounting.models import SoftwarePlanEdition
 from corehq.apps.accounting.tests.base_tests import BaseAccountingTest
 from corehq.apps.accounting.tests.utils import DomainSubscriptionMixin
+from corehq.apps.ivr.models import Call
 from corehq.apps.reminders.models import *
 from corehq.apps.reminders.event_handlers import get_message_template_params
 from corehq.apps.users.models import CommCareUser
-from corehq.apps.sms.models import CallLog, ExpectedCallbackEventLog, CALLBACK_RECEIVED, CALLBACK_PENDING, CALLBACK_MISSED
+from corehq.apps.sms.models import ExpectedCallbackEventLog, CALLBACK_RECEIVED, CALLBACK_PENDING, CALLBACK_MISSED
 from corehq.apps.sms.tests.util import setup_default_sms_test_backend, delete_domain_phone_numbers
 from dimagi.utils.parsing import json_format_datetime
 from dimagi.utils.couch import LOCK_EXPIRATION
@@ -411,14 +412,13 @@ class ReminderCallbackTestCase(BaseReminderTestCase):
         self.assertEqual(event.status, CALLBACK_PENDING)
         
         # Create a callback
-        c = CallLog(
-            couch_recipient_doc_type    = "CommCareUser",
-            couch_recipient             = self.user_id,
-            phone_number                = "14445551234",
-            direction                   = "I",
-            date                        = datetime(year=2012, month=1, day=1, hour=8, minute=5)
+        Call.objects.create(
+            couch_recipient_doc_type='CommCareUser',
+            couch_recipient=self.user_id,
+            phone_number='14445551234',
+            direction='I',
+            date=datetime(year=2012, month=1, day=1, hour=8, minute=5)
         )
-        c.save()
 
         # Day1, 11:15 timeout (should move on to next event)
         CaseReminderHandler.now = datetime(year=2012, month=1, day=1, hour=8, minute=15)
@@ -549,14 +549,13 @@ class ReminderCallbackTestCase(BaseReminderTestCase):
         self.assertEqual(event.status, CALLBACK_PENDING)
         
         # Create a callback (with phone_number missing country code)
-        c = CallLog(
-            couch_recipient_doc_type    = "CommCareUser",
-            couch_recipient             = self.user_id,
-            phone_number                = "4445551234",
-            direction                   = "I",
-            date                        = datetime(year=2012, month=1, day=3, hour=8, minute=22)
+        Call.objects.create(
+            couch_recipient_doc_type='CommCareUser',
+            couch_recipient=self.user_id,
+            phone_number='4445551234',
+            direction='I',
+            date=datetime(year=2012, month=1, day=3, hour=8, minute=22)
         )
-        c.save()
         
         # Day3, 11:45 timeout (should deactivate the reminder)
         CaseReminderHandler.now = datetime(year=2012, month=1, day=3, hour=8, minute=45)

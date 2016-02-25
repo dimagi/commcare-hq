@@ -346,6 +346,30 @@ class Log(models.Model):
 
         return qs.count()
 
+    @property
+    def recipient(self):
+        if self.couch_recipient_doc_type == 'CommCareCase':
+            return CommConnectCase.get(self.couch_recipient)
+        else:
+            return CouchUser.get_by_user_id(self.couch_recipient)
+
+    @classmethod
+    def inbound_entry_exists(cls, contact_doc_type, contact_id, from_timestamp, to_timestamp=None):
+        qs = cls.by_recipient(
+            contact_doc_type,
+            contact_id
+        ).filter(
+            direction=INCOMING,
+            date__gte=from_timestamp
+        )
+
+        if to_timestamp:
+            qs = qs.filter(
+                date__lte=to_timestamp
+            )
+
+        return len(qs[:1]) > 0
+
 
 class SMS(SyncSQLToCouchMixin, Log):
     ERROR_TOO_MANY_UNSUCCESSFUL_ATTEMPTS = 'TOO_MANY_UNSUCCESSFUL_ATTEMPTS'
