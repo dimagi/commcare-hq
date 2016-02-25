@@ -27,8 +27,11 @@ class ChildHealthCaseRow(object):
 
     # needs caching
     def forms(self):
+        if self.forms_provider:
+            return self.forms_provider
+        forms = []
         for action in self.case.actions:
-            yield XFormInstance.get(action.xform_id)
+            forms.append(XFormInstance.get(action.xform_id))
 
     def case_property(self, case, property, default=None):
         prop = getattr(case, property, default)
@@ -109,22 +112,11 @@ class ChildHealthCaseRow(object):
     def nutrition_status_weighed(self):
         return one_or_zero(self.nutrition_status != 'unweighed')
 
-    def num_rations(self):
-        gmp_forms = self.filtered_forms(GMP_XMLNS)
-
     def thr_eligible(self):
         return one_or_zero(6 <= self.age_in_months <= 36)
 
     def pse_eligible(self):
         return one_or_zero(self.age_in_months > 36)
-
-    def pse_days_attended(self):
-        pse_forms = self.filtered_forms(PSE_XMLNS)
-        pse_updates = self.case.actions
-        for update in pse_updates:
-            if are_in_same_month(update.server_date, self.snapshot_start_date):
-                # todo
-                return True
 
     def pse_attended_16_days(self):
         return one_or_zero(pse_days_attended == 16)
@@ -144,91 +136,6 @@ class ChildHealthCaseRow(object):
     @property
     def ebf_eligible(self):
         return one_or_zero(self.age_in_months <= 6)
-
-    def _latest_ebf_property(self, property):
-        if self.ebf_eligible:
-            return [
-                form.get_data(property)
-                for form in self.filtered_forms(EBF_XMLNS)
-            ][-1]
-        else:
-            return None
-
-    @property
-    def ebf_in_month(self):
-        is_ebf = self._latest_ebf_property("child/is_ebf")
-        return one_or_zero(is_ebf == 'yes')
-
-    @property
-    def no_ebf_in_month(self):
-        is_ebf = self._latest_ebf_property("child/is_ebf")
-        return one_or_zero(is_ebf == 'no')
-
-    @property
-    def ebf_unknown(self):
-        return one_or_zero(self._latest_ebf_property is None)
-
-    @property
-    def _no_ebf_reason(self):
-        return self._latest_ebf_property("child/not_breastfeading")
-
-    @property
-    def no_ebf_reason_no_milk(self):
-        return one_or_zero(self._no_ebf_reason == "not_enough_milk")
-
-    @property
-    def no_ebf_reason_pregnant_again(self):
-        return one_or_zero(self._no_ebf_reason == "pregnant_again")
-
-    @property
-    def no_ebf_reason_child_too_old(self):
-        return one_or_zero(self._no_ebf_reason == "child_too_old")
-
-    @property
-    def no_ebf_reason_child_mother_sick(self):
-        return one_or_zero(self._no_ebf_reason == "child_mother_sick")
-
-    @property
-    def no_ebf_reason_water_or_animal_milk(self):
-        return one_or_zero(self.latest_ebf_property('child/water_or_milk') == 'yes')
-
-    @property
-    def no_ebf_reason_tea(self):
-        return one_or_zero(self.latest_ebf_property('child/tea_other') == 'yes')
-
-    @property
-    def no_ebf_reason_eating_food(self):
-        return one_or_zero(self.latest_ebf_property('child/eating') == 'yes')
-
-    @property
-    def cf_eligible(self):
-        return one_or_zero(6 <= self.age_in_months <= 24)
-
-    @property
-    def _comp_feeding_property(self):
-        if self.ebf_eligible:
-            return [
-                form.get_data('child/comp_feeding')
-                for form in self.filtered_forms(CF_XMLNS)
-            ][-1]
-        else:
-            return None
-
-    @property
-    def cf_in_month(self):
-        return one_or_zero(self._comp_feeding_property() == 'yes')
-
-    @property
-    def no_cf_in_month(self):
-        return one_or_zero(self._comp_feeding_property() == 'no')
-
-    @property
-    def cf_unknown(self):
-        return one_or_zero(self._comp_feeding_property() is None)
-
-    @property
-    def fully_immunized_eligible(self):
-        return one_or_zero(self.age_in_months >= 12)
 
 
 def one_or_zero(bool_val):
