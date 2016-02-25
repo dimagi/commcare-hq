@@ -112,7 +112,7 @@ ADMIN_API_LIST = (
     v0_5.AdminWebUserResource,
     DomainMetadataResource,
     FeatureResource,
-    FutureRateResource,
+    FeatureRateResource,
     RoleResource,
     AccountingCurrencyResource,
     SoftwareProductResource,
