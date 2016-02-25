@@ -16,6 +16,8 @@ class FormattedSupervisoryReport(CustomConfigurableReport):
     @property
     def export_table(self):
         data = super(FormattedSupervisoryReport, self).export_table
+
+        # remove zeroes
         table = data[0][1]
         for row in range(1, len(table) - 1):
             for column in range(2, len(table[row])):
