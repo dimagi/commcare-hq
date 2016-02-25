@@ -7,10 +7,14 @@
             <tr tabindex="999" data-bind="paste: function (data) { pasteCallback(data, 0); }">
                 <th class="col-sm-1"></th>
                 <th class="col-sm-3" data-bind="text: DetailScreenConfig.message.FIELD"></th>
+                <!-- ko if: useCaseTiles() == "yes" && {{request|toggle_enabled:'CASE_LIST_TILE'|BOOL }}-->
                 <th class="col-sm-2" data-bind="text: DetailScreenConfig.message.HEADER"></th>
                 <th class="col-sm-3" data-bind="text: DetailScreenConfig.message.FORMAT"></th>
-                <!-- ko if: useCaseTiles() == "yes" && {{request|toggle_enabled:'CASE_LIST_TILE'|BOOL }}-->
                 <th class="col-sm-2">{% trans "Case Tile Mapping" %}</th>
+                <!--/ko-->
+                <!-- ko ifnot: useCaseTiles() == "yes" && {{request|toggle_enabled:'CASE_LIST_TILE'|BOOL }}-->
+                <th class="col-sm-3" data-bind="text: DetailScreenConfig.message.HEADER"></th>
+                <th class="col-sm-4" data-bind="text: DetailScreenConfig.message.FORMAT"></th>
                 <!-- /ko -->
                 <th class="col-sm-1"></th>
             </tr>
