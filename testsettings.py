@@ -28,8 +28,6 @@ for key, value in {
     'NOSE_IGNORE_FILES': '^localsettings',
 
     'NOSE_EXCLUDE_TESTS': ';'.join([
-        'corehq.apps.sms.tests.inbound_handlers',
-        'corehq.messaging.ivrbackends.kookoo.tests.outbound',
         'corehq.apps.ota.tests.digest_restore.DigestOtaRestoreTest'
 
         # revisit these (seems like they should be passing)
