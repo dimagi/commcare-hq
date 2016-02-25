@@ -51,7 +51,7 @@ class UserErrorEntry(models.Model):
         app_label = 'phonelog'
         unique_together = [('xform_id', 'i')]
         index_together = [
-            ("app_id", "version_number"),
+            ("domain", "app_id", "version_number"),
         ]
 
     def __repr__(self):
