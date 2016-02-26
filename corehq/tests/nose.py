@@ -150,33 +150,6 @@ class OmitDjangoInitModuleTestsPlugin(Plugin):
         return None  # defer to default selector
 
 
-class DjangoMigrationsPlugin(Plugin):
-    """Run tests with Django migrations.
-
-    Migrations are disabled by default. Use the option to enable this
-    plugin (`--with-migrations`) to run tests with migrations.
-    """
-    # Inspired by https://gist.github.com/NotSqrt/5f3c76cd15e40ef62d09
-    # See also https://github.com/henriquebastos/django-test-without-migrations
-
-    name = 'migrations'
-
-    def configure(self, options, conf):
-        super(DjangoMigrationsPlugin, self).configure(options, conf)
-        if not self.enabled:
-            from django.conf import settings
-            settings.MIGRATION_MODULES = DisableMigrations()
-
-
-class DisableMigrations(object):
-
-    def __contains__(self, item):
-        return True
-
-    def __getitem__(self, item):
-        return "notmigrations"
-
-
 class ErrorOnDbAccessContext(object):
     """Ensure that touching a database raises an error."""
 
