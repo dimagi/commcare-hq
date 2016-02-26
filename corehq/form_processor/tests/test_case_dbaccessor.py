@@ -68,7 +68,7 @@ class CaseAccessorTestsSQL(TestCase):
 
         form_ids = _create_case_transactions(case)
 
-        self.assertEqual([form_id1, form_ids[0]], CaseAccessorSQL.get_case_xform_ids(case.case_id))
+        self.assertEqual([form_id1, form_ids[1], form_ids[2]], CaseAccessorSQL.get_case_xform_ids(case.case_id))
 
     def test_get_indices(self):
         case = _create_case()
@@ -245,7 +245,7 @@ class CaseAccessorTestsSQL(TestCase):
         form_ids = _create_case_transactions(case)
 
         transactions = CaseAccessorSQL.get_transactions(case.case_id)
-        self.assertEqual(4, len(transactions))
+        self.assertEqual(6, len(transactions))
         self.assertEqual([form_id] + form_ids, [t.form_id for t in transactions])
 
     def test_get_transactions_for_case_rebuild(self):
@@ -663,11 +663,27 @@ def _create_case(domain=None, form_id=None, case_type=None, user_id=None):
 
 
 def _create_case_transactions(case):
+    form_uuid_1 = uuid.uuid4().hex
+    case.track_create(CaseTransaction(
+        case=case,
+        form_id=form_uuid_1,
+        server_date=datetime.utcnow(),
+        type=CaseTransaction.TYPE_FORM,
+        revoked=False
+    ))
+    # Same form but ledger transaction
+    case.track_create(CaseTransaction(
+        case=case,
+        form_id=form_uuid_1,
+        server_date=datetime.utcnow(),
+        type=CaseTransaction.TYPE_LEDGER,
+        revoked=False
+    ))
     case.track_create(CaseTransaction(
         case=case,
         form_id=uuid.uuid4().hex,
         server_date=datetime.utcnow(),
-        type=CaseTransaction.TYPE_FORM,
+        type=CaseTransaction.TYPE_LEDGER,
         revoked=False
     ))
     # exclude revoked

@@ -24,6 +24,10 @@ class CaseSaveError(Exception):
     pass
 
 
+class LedgerSaveError(Exception):
+    pass
+
+
 class AccessRestricted(Exception):
     pass
 

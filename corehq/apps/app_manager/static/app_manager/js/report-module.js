@@ -234,7 +234,14 @@ var ReportModule = (function () {
             'StaticChoiceFilter',
             'MobileSelectFilter'
         ];
-        this.autoFilterTypes = ['case_sharing_group', 'location_id', 'username', 'user_id'];
+        this.autoFilterTypes = [
+            'case_sharing_group',
+            'location_id',
+            'parent_location_id',
+            'ancestor_location_type_id',
+            'username',
+            'user_id'
+        ];
         this.date_range_options = ['last7', 'last30', 'thismonth', 'lastmonth', 'lastyear'];
         this.date_operators = ['=', '<', '<=', '>', '>=', 'between'];
     }

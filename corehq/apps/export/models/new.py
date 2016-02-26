@@ -591,7 +591,7 @@ class FormExportDataSchema(ExportDataSchema):
         return FORM_EXPORT
 
     @staticmethod
-    def generate_schema_from_builds(domain, app_id, form_xmlns):
+    def generate_schema_from_builds(domain, app_id, form_xmlns, force_rebuild=False):
         """Builds a schema from Application builds for a given identifier
 
         :param domain: The domain that the export belongs to
@@ -601,7 +601,7 @@ class FormExportDataSchema(ExportDataSchema):
         """
         original_id, original_rev = None, None
         current_xform_schema = get_latest_form_export_schema(domain, app_id, form_xmlns)
-        if current_xform_schema:
+        if current_xform_schema and not force_rebuild:
             original_id, original_rev = current_xform_schema._id, current_xform_schema._rev
         else:
             current_xform_schema = FormExportDataSchema()
@@ -693,7 +693,7 @@ class CaseExportDataSchema(ExportDataSchema):
         return map(lambda app_build_version: app_build_version.build_id, app_build_verions)
 
     @staticmethod
-    def generate_schema_from_builds(domain, case_type):
+    def generate_schema_from_builds(domain, case_type, force_rebuild=False):
         """Builds a schema from Application builds for a given identifier
 
         :param domain: The domain that the export belongs to
@@ -704,7 +704,7 @@ class CaseExportDataSchema(ExportDataSchema):
         original_id, original_rev = None, None
         current_case_schema = get_latest_case_export_schema(domain, case_type)
 
-        if current_case_schema:
+        if current_case_schema and not force_rebuild:
             # Save the original id an rev so we can later save the document under the same _id
             original_id, original_rev = current_case_schema._id, current_case_schema._rev
         else:

@@ -1,17 +1,30 @@
 import datetime
 from collections import namedtuple
 from contextlib import contextmanager
-from django.test import SimpleTestCase
-from mock import patch
-from corehq.apps.app_manager.models import CustomMonthFilter
+from django.test import SimpleTestCase, TestCase
+from mock import Mock, patch
+from corehq.apps.app_manager.models import (
+    CustomMonthFilter,
+    _filter_by_case_sharing_group_id,
+    _filter_by_location_id,
+    _filter_by_parent_location_id,
+    _filter_by_ancestor_location_type_id,
+    _filter_by_username,
+    _filter_by_user_id,
+)
+from corehq.apps.domain.models import Domain
+from corehq.apps.locations.models import SQLLocation, LocationType
+from corehq.apps.reports_core.filters import Choice
+from corehq.apps.users.models import CommCareUser
 
 
 Date = namedtuple('Date', ('year', 'month', 'day'))
 
 
-MAY_15 = Date(2015, 05, 15)
-MAY_20 = Date(2015, 05, 20)
-MAY_21 = Date(2015, 05, 21)
+DOMAIN = 'test_domain'
+MAY_15 = Date(2015, 5, 15)
+MAY_20 = Date(2015, 5, 20)
+MAY_21 = Date(2015, 5, 21)
 
 
 @contextmanager
@@ -131,3 +144,151 @@ class CustomMonthFilterTests(SimpleTestCase):
             date_span = filter_.get_filter_value(user=None, ui_filter=None)
             self.assertEqual(date_span.startdate, self.date_class(year=2015, month=2, day=18))
             self.assertEqual(date_span.enddate, self.date_class(year=2015, month=3, day=20))
+
+
+class AutoFilterTests(TestCase):
+
+    @classmethod
+    def setUpClass(cls):
+        cls.domain = Domain(name=DOMAIN)
+        cls.domain.save()
+
+        cls.country = LocationType(domain=DOMAIN, name='country')
+        cls.country.save()
+        cls.state = LocationType(
+            domain=DOMAIN,
+            name='state',
+            parent_type=cls.country,
+        )
+        cls.state.save()
+        cls.city = LocationType(
+            domain=DOMAIN,
+            name='city',
+            parent_type=cls.state,
+            shares_cases=True,
+        )
+        cls.city.save()
+
+        cls.usa = SQLLocation(
+            domain=DOMAIN,
+            name='The United States of America',
+            location_id='usa',
+            site_code='usa',
+            location_type=cls.country,
+        )
+        cls.usa.save()
+        cls.massachusetts = SQLLocation(
+            domain=DOMAIN,
+            name='Massachusetts',
+            location_id='massachusetts',
+            site_code='massachusetts',
+            location_type=cls.state,
+            parent=cls.usa,
+        )
+        cls.massachusetts.save()
+        cls.new_york = SQLLocation(
+            domain=DOMAIN,
+            name='New York',
+            location_id='new_york',
+            site_code='new_york',
+            location_type=cls.state,
+            parent=cls.usa,
+        )
+        cls.new_york.save()
+
+        cls.cambridge = SQLLocation(
+            domain=DOMAIN,
+            name='Cambridge',
+            location_id='cambridge',
+            site_code='cambridge',
+            location_type=cls.city,
+            parent=cls.massachusetts,
+        )
+        cls.cambridge.save()
+        cls.somerville = SQLLocation(
+            domain=DOMAIN,
+            name='Somerville',
+            location_id='somerville',
+            site_code='somerville',
+            location_type=cls.city,
+            parent=cls.massachusetts,
+        )
+        cls.somerville.save()
+        cls.nyc = SQLLocation(
+            domain=DOMAIN,
+            name='New York City',
+            location_id='nyc',
+            site_code='nyc',
+            location_type=cls.city,
+            parent=cls.new_york,
+        )
+        cls.nyc.save()
+
+        cls.drew = CommCareUser(
+            domain=DOMAIN,
+            username='drew',
+            location_id='nyc',
+        )
+        cls.jon = CommCareUser(
+            domain=DOMAIN,
+            username='jon',
+            location_id='cambridge',
+        )
+        cls.nate = CommCareUser(
+            domain=DOMAIN,
+            username='nate',
+            location_id='somerville',
+        )
+        cls.sheel = CommCareUser(
+            domain=DOMAIN,
+            username='sheel',
+            location_id='somerville',
+            last_login=datetime.datetime.now(),
+            date_joined=datetime.datetime.now(),
+        )
+        cls.sheel.save()
+
+    def setUp(self):
+        self.ui_filter = Mock()
+        self.ui_filter.name = 'test_filter'
+        self.ui_filter.value.return_value = 'result'
+
+    @classmethod
+    def tearDownClass(cls):
+        cls.sheel.delete()
+        cls.nyc.delete()
+        cls.somerville.delete()
+        cls.cambridge.delete()
+        cls.new_york.delete()
+        cls.massachusetts.delete()
+        cls.usa.delete()
+
+    def test_filter_by_case_sharing_group_id(self):
+        result = _filter_by_case_sharing_group_id(self.sheel, None)
+        self.assertEqual(result, [Choice(value='somerville', display=None)])
+
+    def test_filter_by_location_id(self):
+        result = _filter_by_location_id(self.drew, self.ui_filter)
+        self.ui_filter.value.assert_called_with(test_filter='nyc')
+        self.assertEqual(result, 'result')
+
+    def test_filter_by_parent_location_id(self):
+        result = _filter_by_parent_location_id(self.jon, self.ui_filter)
+        self.ui_filter.value.assert_called_with(test_filter='massachusetts')
+        self.assertEqual(result, 'result')
+
+    def test_filter_by_ancestor_location_type_id(self):
+        result = _filter_by_ancestor_location_type_id(self.nate, None)
+        self.assertEqual(result, [
+            Choice(value=self.country.id, display='country'),
+            Choice(value=self.state.id, display='state'),
+            # Note: These are ancestors, so the user's own location type is excluded
+        ])
+
+    def test_filter_by_username(self):
+        result = _filter_by_username(self.sheel, None)
+        self.assertEqual(result, Choice(value='sheel', display=None))
+
+    def test_filter_by_user_id(self):
+        result = _filter_by_user_id(self.sheel, None)
+        self.assertEqual(result, Choice(value=self.sheel._id, display=None))

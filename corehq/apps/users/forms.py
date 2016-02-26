@@ -519,11 +519,20 @@ class MultipleSelectionForm(forms.Form):
     )
 
     def __init__(self, *args, **kwargs):
+        submit_label = kwargs.pop('submit_label', "Update")
+
+        super(MultipleSelectionForm, self).__init__(*args, **kwargs)
         self.helper = FormHelper()
         self.helper.form_tag = False
-        submit_label = kwargs.pop('submit_label', "Update")
-        self.helper.add_input(Submit('submit', submit_label))
-        super(MultipleSelectionForm, self).__init__(*args, **kwargs)
+
+        self.helper.layout = crispy.Layout(
+            'selected_ids',
+            hqcrispy.FormActions(
+                crispy.ButtonHolder(
+                    Submit('submit', submit_label)
+                )
+            )
+        )
 
 
 class SupplyPointSelectWidget(forms.Widget):

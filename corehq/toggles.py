@@ -176,13 +176,6 @@ APP_AWARE_SYNC = StaticToggle(
     [NAMESPACE_DOMAIN]
 )
 
-BOOTSTRAP3_PREVIEW = StaticToggle(
-    'bootstrap3_preview',
-    'Bootstrap 3 Preview',
-    TAG_PRODUCT_PATH,
-    [NAMESPACE_USER]
-)
-
 CASE_LIST_CUSTOM_XML = StaticToggle(
     'case_list_custom_xml',
     'Show text area for entering custom case list xml',

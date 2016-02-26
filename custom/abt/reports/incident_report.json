@@ -77,7 +77,7 @@
             }
          },
          {  
-            "max_expansion":50,
+            "max_expansion":350,
             "description":null,
             "format":"default",
             "aggregation":"sum",
