@@ -1,17 +1,20 @@
 from django.test import SimpleTestCase
 from kafka import KeyedProducer
+from kafka.common import KafkaUnavailableError
 from corehq.apps.change_feed import topics
 from corehq.apps.change_feed.connection import get_kafka_client_or_none
 from corehq.apps.change_feed.consumer.feed import KafkaChangeFeed
 from corehq.apps.change_feed.producer import send_to_kafka
+from corehq.util.test_utils import trap_extra_setup
 from pillowtop.feed.interface import ChangeMeta
 
 
 class KafkaChangeFeedTest(SimpleTestCase):
 
     def test_multiple_topics(self):
-        feed = KafkaChangeFeed(topics=[topics.FORM, topics.CASE], group_id='test-kafka-feed')
-        self.assertEqual(0, len(list(feed.iter_changes(since=None, forever=False))))
+        with trap_extra_setup(KafkaUnavailableError):
+            feed = KafkaChangeFeed(topics=[topics.FORM, topics.CASE], group_id='test-kafka-feed')
+            self.assertEqual(0, len(list(feed.iter_changes(since=None, forever=False))))
         producer = KeyedProducer(get_kafka_client_or_none())
         offsets = feed.get_current_offsets()
         send_to_kafka(producer, topics.FORM,
