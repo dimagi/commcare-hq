@@ -2,6 +2,7 @@
 from casexml.apps.case.models import CommCareCase
 from corehq.apps.userreports.expressions.getters import transform_date
 
+from dimagi.utils.decorators.memoized import memoized
 
 from .constants import *
 
@@ -25,16 +26,18 @@ class ChildHealthCaseRow(object):
         self.snapshot_end_date = transform_date(snapshot_end_date)
         self.forms_provider = forms_provider
 
-    # needs caching
+    # needs caching across UCR build cycle
+    @property
+    @memoized
     def forms(self):
         if self.forms_provider:
             return self.forms_provider
         forms = []
-        for action in self.case.actions:
-            forms.append(XFormInstance.get(action.xform_id))
+        for form_id in self.case.xform_ids:
+            forms.append(FormAccessors(domain).get_form(form_id))
 
     def case_property(self, case, property, default=None):
-        prop = getattr(case, property, default)
+        prop = case.dynamic_case_properties().get(property, default)
         if isinstance(prop, basestring) and prop.strip() == "":
             return default
         return prop
@@ -44,9 +47,13 @@ class ChildHealthCaseRow(object):
             if form.xmlns == xmlns and are_in_same_month(form.received_on, self.snapshot_start_date):
                 yield form
 
+    @property
+    @memoized
     def is_open(self):
         return are_in_same_month(self.case.opened_on, self.snapshot_start_date)
 
+    @property
+    @memoized
     def nutrition_status(self):
         statuses = [
             form.get_data("form/z_score_wfa_ql/nutrition_status")
@@ -56,22 +63,27 @@ class ChildHealthCaseRow(object):
         return statuses[0] if any(statuses) else 'unweighed'
 
     @property
+    @memoized
     def dob(self):
         return transform_date(self.case_property(self.mother_case, "dob"))
 
     @property
+    @memoized
     def age_in_days(self):
         return (self.dob - self.snapshot_end_date).days
 
     @property
+    @memoized
     def age_in_months(self):
         return self.age_in_days / 30.4
 
     @property
+    @memoized
     def age_in_years(self):
         return self.age_in_days / 365.25
 
     @property
+    @memoized
     def age_group(self):
         if self.age_in_days <= 28:
             return '0-28days'
@@ -91,9 +103,12 @@ class ChildHealthCaseRow(object):
             '5-6yr'
 
     @property
+    @memoized
     def mother_case(self):
         return self.case.parent
 
+    @property
+    @memoized
     def household_case(self):
             return self.mother_case.parent if self.mother_case else None
 
