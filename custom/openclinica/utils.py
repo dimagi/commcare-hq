@@ -1,4 +1,3 @@
-from __future__ import absolute_import
 from base64 import b64decode
 from collections import defaultdict, namedtuple
 from datetime import datetime, date, time
@@ -7,11 +6,9 @@ import re
 import bz2
 from lxml import etree
 import os
-from django.conf import settings
 from corehq.apps.app_manager.util import all_apps_by_domain
 from corehq.util.quickcache import quickcache
 from couchforms.models import XFormDeprecated
-from custom.openclinica.const import MODULE_EVENTS, FORM_QUESTION_ITEM, FORM_EVENTS, STUDY_APPS
 
 
 class OpenClinicaIntegrationError(Exception):
@@ -57,13 +54,9 @@ def get_question_items(domain):
 
     def get_item_prefix(form_oid, ig_oid):
         """
-        OpenClinica item OIDs are prefixed with "I_<prefix>_" where <prefix> is derived from the item's form
-        OID. Dropping "I_<prefix>_" will give us the CommCare question name in upper case for human-built apps
-        (i.e. the KEMRI app)
+        OpenClinica item OIDs are prefixed with "I_<prefix>_" where <prefix> is derived from the item's form OID
 
-        >>> get_item_prefix('F_AE_AND_CONCO_7472_VERSION1', 'IG_AE_AN_AELOG_8290')
-        'AE_AN'
-
+        (Dropping "I_<prefix>_" will give us the CommCare question name in upper case)
         """
         form_name = form_oid[2:]  # Drop "F_"
         ig_name = ig_oid[3:]  # Drop "IG_"
@@ -72,60 +65,12 @@ def get_question_items(domain):
             prefix = prefix[:-1]
         return prefix
 
-    def filter_items(items, module, form, question):
+    def read_question_item_map(odm):
         """
-        Filter a CommCare question's list of possible matching OpenClinica items, based on its module and form
-
-        :param items: Candidate OpenClinica items
-        :param module: The name of the CommCare question's module
-        :param form: The XMLNS of the CommCare question's form
-        :param question: The name of the question
-        :return: an Item tuple
-        :raise OpenClinicaIntegrationError: Unable to filter items
+        Return a dictionary of {question: (study_event_oid, form_oid, item_group_oid, item_oid)}
         """
-        if not items:
-            return None  # This is a CommCare-only question
-        if len(items) == 1:
-            return items[0]
-        # Match module to event
-        events = MODULE_EVENTS[module]
-        if events is None:
-            # CommCare-only module (e.g. subject registration)
-            return None
-        matches = [i for i in items if Item(*i).study_event_oid in events]
-        if len(matches) == 1:
-            return matches[0]
-        # Match form to event
-        events = FORM_EVENTS[form]
-        matches = [i for i in items if Item(*i).study_event_oid in events]
-        if len(matches) == 1:
-            return matches[0]
-        # Match form and question to an item
-        try:
-            return FORM_QUESTION_ITEM[(form, question)]
-        except KeyError:
-            raise OpenClinicaIntegrationError(
-                'Unable to match CommCare question "{} > {} > {}" to an OpenClinica item. '
-                'I got {}.'.format(module, form, question, [Item(*i).item_oid for i in items])
-            )
-
-    def read_question_item_map(odm, imported=True):
-        """
-        Return a dictionary of {question: [(study_event_oid, form_oid, item_group_oid, item_oid)]}
-
-        Map CommCare questions to OpenClinica items, and append possible candidates to a list. That list will then
-        be filtered based on the question's module and form in filter_items()
-
-        :param odm: An ElementTree of the CISC ODM study metadata document
-        :param imported: Whether the CommCare app was originally imported from the ODM doc. (Question names of
-                         imported apps will match OpenClinica item OIDs exactly.)
-        """
-        # TODO: Post-KEMRI, remove `imported` parameter and code for when `imported` is False.
-        # A dictionary of {question: [(study_event_oid, form_oid, item_group_oid, item_oid)]}
-        question_item_map = defaultdict(list)
-
+        question_item_map = {}  # A dictionary of question: (study_event_oid, form_oid, item_group_oid, item_oid)
         meta_e = odm.xpath('./odm:Study/odm:MetaDataVersion', namespaces=odm_nsmap)[0]
-
         for se_ref in meta_e.xpath('./odm:Protocol/odm:StudyEventRef', namespaces=odm_nsmap):
             se_oid = se_ref.get('StudyEventOID')
             for form_ref in meta_e.xpath('./odm:StudyEventDef[@OID="{}"]/odm:FormRef'.format(se_oid),
@@ -134,52 +79,36 @@ def get_question_items(domain):
                 for ig_ref in meta_e.xpath('./odm:FormDef[@OID="{}"]/odm:ItemGroupRef'.format(form_oid),
                                            namespaces=odm_nsmap):
                     ig_oid = ig_ref.get('ItemGroupOID')
-                    if not imported:
-                        prefix = get_item_prefix(form_oid, ig_oid)
-                        prefix_len = len(prefix) + 3  # len of "I_<prefix>_"
+                    prefix = get_item_prefix(form_oid, ig_oid)
+                    prefix_len = len(prefix) + 3  # len of "I_<prefix>_"
                     for item_ref in meta_e.xpath('./odm:ItemGroupDef[@OID="{}"]/odm:ItemRef'.format(ig_oid),
                                                  namespaces=odm_nsmap):
                         item_oid = item_ref.get('ItemOID')
-                        if imported:
-                            question = item_oid.lower()
-                        else:
-                            question = item_oid[prefix_len:].lower()  # Drop prefix
-                            question = re.sub(r'^(.*?)_\d+$', r'\1', question)  # Drop OpenClinica-added ID
-                        question_item_map[question].append((se_oid, form_oid, ig_oid, item_oid))
+                        question = item_oid[prefix_len:].lower()
+                        question_item_map[question] = Item(se_oid, form_oid, ig_oid, item_oid)
         return question_item_map
 
-    def read_forms(question_item_map):
+    def read_forms(domain_, question_item_map):
         """
         Return a dictionary that allows us to look up an OpenClinica item given a form XMLNS and question name
         """
         data = defaultdict(dict)
-        openclinica_domains = (d for d, m in settings.DOMAIN_MODULE_MAP.iteritems() if m == 'custom.openclinica')
-        for domain_ in openclinica_domains:
-            for app in all_apps_by_domain(domain_):
-                if app.name not in STUDY_APPS:
-                    continue
-                for ccmodule in app.get_modules():
-                    for ccform in ccmodule.get_forms():
-                        form = data[ccform.xmlns]
-                        form['app'] = app.name
-                        form['module'] = ccmodule.name['en']
-                        form['name'] = ccform.name['en']
-                        form['questions'] = {}
-                        for question in ccform.get_questions(['en']):
-                            name = question['value'].split('/')[-1]
-                            # `question_item_map.get(name)` will return a list containing a single item in the
-                            # case of imported apps, or list of possible items in the case of the KEMRI app.
-                            # Determine which item this question maps to by filtering on module. A CommCare module
-                            # maps (kinda) one-to-one to an OpenClinica event, and should narrow possible item
-                            # matches to 1.
-                            item = filter_items(question_item_map.get(name), form['module'], ccform.xmlns, name)
-                            form['questions'][name] = item
+        app = next(all_apps_by_domain(domain_))  # TODO: Identify app from domain's OpenClinica settings
+        for ccmodule in app.get_modules():
+            for ccform in ccmodule.get_forms():
+                form = data[ccform.xmlns]
+                form['app'] = app.name
+                form['module'] = ccmodule.name['en']
+                form['name'] = ccform.name['en']
+                form['questions'] = {}
+                for question in ccform.get_questions(['en']):
+                    name = question['value'].split('/')[-1]
+                    form['questions'][name] = question_item_map.get(name)
         return data
 
     metadata_xml = get_study_metadata(domain)
-    # The KEMRI app was not imported. Future apps will be.
-    map_ = read_question_item_map(metadata_xml, imported=False)
-    question_items = read_forms(map_)
+    map_ = read_question_item_map(metadata_xml)
+    question_items = read_forms(domain, map_)
     return question_items
 
 
