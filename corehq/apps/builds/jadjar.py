@@ -40,6 +40,7 @@ class JadDict(dict):
                         'MIDlet-Certificate-1-4']
         unordered = [key for key in self.keys() if key not in ordered_start and key not in ordered_end]
         props = itertools.chain(ordered_start, sorted(unordered), ordered_end)
+        self["MIDlet-Jar-URL"] = self["MIDlet-Jar-URL"].replace(settings.BASE_ADDRESS, settings.J2ME_ADDRESS, 1)
         lines = ['%s: %s%s' % (key, self[key], self.line_ending) for key in props if self.get(key) is not None]
         return "".join(lines)
 
