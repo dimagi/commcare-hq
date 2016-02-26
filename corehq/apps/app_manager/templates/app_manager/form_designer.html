@@ -226,7 +226,7 @@
         KeyboardShortcuts.shortcuts = KeyboardShortcuts.shortcuts.concat([
             {
                 shortcut: nav_key + "+s",
-                handler: KS.gen_click_fn("#settings-save-btn .btn, .fd-save-button .btn"),
+                handler: KeyboardShortcuts.gen_click_fn("#settings-save-btn .btn, .fd-save-button .btn"),
                 desc: "Save Form"
             },
             {
@@ -251,7 +251,7 @@
             },
             {
                 shortcut: nav_key + "+c",
-                handler: KS.gen_click_fn(".fd-button-copy"),
+                handler: KeyboardShortcuts.gen_click_fn(".fd-button-copy"),
                 desc: "Make Copy of Selected Node"
             }
         ]);

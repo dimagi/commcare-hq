@@ -77,17 +77,16 @@
 {% endif %}
 
 <script>
-var KS = {
-    gen_click_fn: function(selector) {
+
+hqDefine('style/includes/keyboard_shortcuts.html', function () {
+    var module = {};
+
+    module.gen_click_fn = function(selector) {
         return function() {
             $(selector).click();
             return false;
         };
-    }
-};
-
-hqDefine('style/includes/keyboard_shortcuts.html', function () {
-    var module = {};
+    };
 
     module.shortcuts = [
         {
