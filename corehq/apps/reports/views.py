@@ -110,7 +110,6 @@ from corehq.apps.hqwebapp.utils import csrf_inline
 from corehq.apps.locations.permissions import can_edit_form_location
 from corehq.apps.products.models import SQLProduct
 from corehq.apps.receiverwrapper import submit_form_locally
-from corehq.apps.sofabed.models import CaseData
 from corehq.apps.userreports.util import default_language as ucr_default_language
 from corehq.apps.users.decorators import require_permission
 from corehq.apps.users.export import export_users
@@ -1576,9 +1575,8 @@ class EditFormInstance(View):
 
         # add usercase to session
         if self._form_uses_usercase(self._get_form_from_instance(instance)):
-            try:
-                usercase_id = CaseData.objects.get(user_id=user._id, type=USERCASE_TYPE).case_id
-            except CaseData.DoesNotExist:
+            usercase_id = user.get_usercase_id()
+            if not usercase_id:
                 return _error(_('Could not find the user-case for this form'))
             edit_session_data[USERCASE_ID] = usercase_id
 

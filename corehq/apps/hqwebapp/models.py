@@ -933,13 +933,6 @@ class MessagingTab(UITab):
                 ],
             })
 
-        if self.can_access_reminders:
-            reminders_urls.append({
-                'title': _("Reminders in Error"),
-                'url': reverse('reminders_in_error', args=[self.domain]),
-                'show_in_dropdown': True,
-            })
-
         return reminders_urls
 
     @property

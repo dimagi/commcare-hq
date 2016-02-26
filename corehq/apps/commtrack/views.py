@@ -11,7 +11,8 @@ from corehq.apps.commtrack.const import SUPPLY_POINT_CASE_TYPE
 from corehq.apps.commtrack.processing import plan_rebuild_stock_state, \
     rebuild_stock_state
 from corehq.apps.hqwebapp.doc_info import get_doc_info_by_id
-from corehq.apps.sofabed.models import FormData
+from corehq.form_processor.interfaces.dbaccessors import FormAccessors
+from corehq.form_processor.exceptions import XFormNotFound
 from corehq.apps.style.decorators import use_bootstrap3, use_jquery_ui
 from corehq.util.timezones.conversions import ServerTime
 
@@ -324,13 +325,12 @@ class RebuildStockStateView(BaseCommTrackManageView):
 
     @memoized
     def get_server_date_by_form_id(self, form_id):
-        server_dates = (FormData.objects.filter(instance_id=form_id)
-                        .values_list('received_on'))
-        if server_dates:
-            (server_date,), = server_dates
-            return ServerTime(server_date).ui_string()
-        else:
+        try:
+            server_date = FormAccessors(self.domain).get_form(form_id).received_on
+        except XFormNotFound:
             return None
+        else:
+            return ServerTime(server_date).ui_string()
 
     @property
     def page_context(self, **kwargs):

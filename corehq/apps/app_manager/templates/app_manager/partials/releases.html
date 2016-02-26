@@ -144,9 +144,9 @@
                     ">
                         <i class="fa fa-remove"></i>
                     </a>
-                    <div class="pending" data-bind="
-                        visible: _deleteState() == 'pending'
-                    "></div>
+                    <div class="pending" data-bind="visible: _deleteState() == 'pending'">
+                        <img src="{% new_static 'hqwebapp/img/ajax-loader.gif' %}" alt="loading indicator" />
+                    </div>
 
                     <i class="fa fa-exclamation-circle" data-bind="
                         visible: _deleteState() == 'error'

@@ -339,7 +339,7 @@
         <script type="text/javascript" src="{% new_static 'style/js/layout.js' %}"></script>
         <script type="text/javascript" src="{% new_static 'style/js/form_tools.js' %}"></script>
         <script type="text/javascript" src="{% new_static 'style/js/hq.helpers.js' %}"></script>
-        <script type="text/javascript" src="{% new_static 'style/js/commcarehq.js' %}"></script>
+        <script type="text/javascript" src="{% new_static 'style/js/bootstrap3/main.js' %}"></script>
         <script type="text/javascript" src="{% new_static 'hqwebapp/js/hqModules.js' %}"></script>
         {% endcompress %}
 
@@ -485,7 +485,7 @@
         </script>
         <![endif]-->
         
-        {# todo keyboard shortcuts #}
+        {% include 'style/includes/keyboard_shortcuts.html' %}
 
         {% block js-inline %}{% endblock js-inline %}
 
