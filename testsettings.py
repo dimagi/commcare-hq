@@ -18,6 +18,10 @@ NOSE_PLUGINS = [
     # The following are not enabled by default
     'corehq.tests.noseplugins.timing.TimingPlugin',
     'corehq.tests.noseplugins.uniformresult.UniformTestResultPlugin',
+
+    # Uncomment to debug tests. Plugins have nice hooks for inspecting state
+    # before/after each test or context setup/teardown, etc.
+    #'corehq.tests.noseplugins.debug.DebugPlugin',
 ]
 
 # these settings can be overridden with environment variables
