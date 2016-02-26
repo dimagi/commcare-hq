@@ -52,6 +52,18 @@ def _get_export_instance(cls, key):
     return [cls.wrap(result['doc']) for result in results]
 
 
+def get_all_daily_saved_export_instances():
+    from .models import ExportInstance
+    results = ExportInstance.get_db().view(
+        "export_instances_by_is_daily_saved/view",
+        startkey=[True],
+        endkey=[True, {}],
+        include_docs=True,
+        reduce=False,
+    ).all()
+    return [_properly_wrap_export_instance(result['doc']) for result in results]
+
+
 def get_properly_wrapped_export_instance(doc_id):
     from .models import ExportInstance
     doc = ExportInstance.get_db().get(doc_id)
