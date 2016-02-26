@@ -8,7 +8,6 @@ TEST_RUNNER = 'django_nose.NoseTestSuiteRunner'
 NOSE_ARGS = [
     #'--no-migrations' # trim ~120s from test run with db tests
     #'--with-fixture-bundling',
-    '--logging-clear-handlers',
 ]
 NOSE_PLUGINS = [
     'corehq.tests.nose.HqTestFinderPlugin',
@@ -69,13 +68,23 @@ PHONE_TIMEZONES_SHOULD_BE_PROCESSED = True
 
 ENABLE_PRELOGIN_SITE = True
 
+# override dev_settings
+CACHE_REPORTS = True
 
-def _clean_up_logging_output():
-    # make all loggers propagate to prevent
-    # "No handlers could be found for logger ..."
-    # (a side effect of nose option --logging-clear-handlers)
-    for item in LOGGING["loggers"].values():
-        if not item.get("propagate", True):
-            item["propagate"] = True
+def _set_logging_levels(levels):
+    import logging
+    for path, level in levels.items():
+        logging.getLogger(path).setLevel(level)
+_set_logging_levels({
+    # Quiet down a few really noisy ones.
+    # (removing these can be handy to debug couchdb access for failing tests)
+    'couchdbkit.request': 'INFO',
+    'restkit.client': 'INFO',
+})
 
-_clean_up_logging_output()
+# use empty LOGGING dict with --debug=nose,nose.plugins to debug test discovery
+# TODO empty logging config (and fix revealed deprecation warnings)
+LOGGING = {
+    'version': 1,
+    'loggers': {},
+}
