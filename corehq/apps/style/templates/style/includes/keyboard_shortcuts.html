@@ -86,14 +86,12 @@ var KS = {
     }
 };
 
-function configure_keyboard_shortcuts() {
-    $('#keyboard-shortcuts-config').modal('toggle');
-}
-
 var KEYBOARD_SHORTCUTS = [
     {
         shortcut: "option+space, ctrl+space, command+space",
-        handler: configure_keyboard_shortcuts,
+        handler: function() {
+            $('#keyboard-shortcuts-config').modal('toggle');
+        },
         desc: "Open Keyboard Configuration"
     }
 ];
@@ -119,9 +117,6 @@ $(function() {
 <script>
 var nav_key = {{ request.couch_user.keyboard_shortcuts.main_key|JSON }};
 
-function gen_apps_menu_elements() {
-    return $("#mainmenu-ApplicationsTab li a[data-id]");
-}
 var apps_menu_navigator = new KeyboardNavigator();
 apps_menu_navigator.init({
     name: 'apps menu',
@@ -130,7 +125,9 @@ apps_menu_navigator.init({
     action_key: 'enter',
     forward_keys: ['j', 'down'],
     back_keys: ['k', 'up'],
-    element_list_generator: gen_apps_menu_elements,
+    element_list_generator: function() {
+        return $("#mainmenu-ApplicationsTab li a[data-id]");
+    },
     focus_in_fn: function($ele) {
         $("#mainmenu-ApplicationsTab").addClass('open');
         keyboard_navigator_utils.focus_in_fn($ele);
@@ -140,9 +137,6 @@ apps_menu_navigator.init({
     regen_list_on_leave: true
 });
 
-function gen_admin_menu_elements() {
-    return $("#mainmenu-AdminTab li a");
-}
 var admin_menu_navigator = new KeyboardNavigator();
 admin_menu_navigator.init({
     name: 'admin menu',
@@ -151,7 +145,9 @@ admin_menu_navigator.init({
     action_key: 'enter',
     forward_keys: ['j', 'down'],
     back_keys: ['k', 'up'],
-    element_list_generator: gen_admin_menu_elements,
+    element_list_generator: function() {
+        return $("#mainmenu-AdminTab li a");
+    },
     focus_in_fn: function($ele) {
         $("#mainmenu-AdminTab").addClass('open');
         keyboard_navigator_utils.focus_in_fn($ele);
@@ -161,9 +157,6 @@ admin_menu_navigator.init({
     regen_list_on_leave: true
 });
 
-function gen_projects_menu_elements() {
-    return $("#nav-projects-menu li a");
-}
 var projects_menu_navigator = new KeyboardNavigator();
 projects_menu_navigator.init({
     name: 'projects menu',
@@ -172,16 +165,15 @@ projects_menu_navigator.init({
     action_key: 'enter',
     forward_keys: ['j', 'down'],
     back_keys: ['k', 'up'],
-    element_list_generator: gen_projects_menu_elements,
+    element_list_generator: function() {
+        return $("#nav-projects-menu li a");
+    },
     start_fn: function() { $('#nav-projects-menu').addClass('open') },
     stop_fn: function() { $('#nav-projects-menu').removeClass('open') },
     reset_index: true,
     regen_list_on_leave: true
 });
 
-function gen_user_menu_elements() {
-    return $("#nav-user-menu li a");
-}
 var user_menu_navigator = new KeyboardNavigator();
 user_menu_navigator.init({
     name: 'user menu',
@@ -190,7 +182,9 @@ user_menu_navigator.init({
     action_key: 'enter',
     forward_keys: ['j', 'down'],
     back_keys: ['k', 'up'],
-    element_list_generator: gen_user_menu_elements,
+    element_list_generator: function() {
+        return $("#nav-user-menu li a");
+    },
     start_fn: function() { $('#nav-user-menu').addClass('open') },
     stop_fn: function() { $('#nav-user-menu').removeClass('open') },
     reset_index: true,
