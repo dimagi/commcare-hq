@@ -26,6 +26,7 @@ WRONG_FILETYPE = 'wrong_file.xyz'
 def setup():
     create_domain(DOMAIN_NAME)
 
+
 def teardown():
     Domain.get_by_name(DOMAIN_NAME, strict=True).delete()
 

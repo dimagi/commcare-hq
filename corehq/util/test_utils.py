@@ -65,7 +65,7 @@ def softer_assert(func=None):
     @contextmanager
     def softer_assert():
         patch = mock.patch("corehq.util.soft_assert.core.is_hard_mode",
-                           new=lambda:False)
+                           new=lambda: False)
         patch.start()
         try:
             yield

@@ -463,7 +463,6 @@ class testReportCaseProcessing(TestCase):
         self.assertIsNone(changed['form']['case'].get('@date_modified'))
         self.assertIsNotNone(xform['form']['case']['@date_modified'])
 
-
     @softer_assert
     def testXFormPillowListCaseProcess(self):
         """

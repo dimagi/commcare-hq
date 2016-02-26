@@ -13,7 +13,7 @@ class CacheMock(LocMemCache):
     def __init__(self, name, params):
         self.name = name
         super(CacheMock, self).__init__(name, params)
-        self.default_timeout = params["timeout"] # allow sub-second timeout
+        self.default_timeout = params["timeout"]  # allow sub-second timeout
 
     def get(self, key, default=None, version=None):
         result = super(CacheMock, self).get(key, default, version)

@@ -118,7 +118,6 @@ class ErrorOnDbAccessContext(object):
         for app, value in loading.couchdbkit_handler.app_schema.items():
             for cls in value.values():
                 db_classes.append(cls)
-                db = cls.get_db()
                 cls.set_db(mock_couch)
 
     def teardown(self):
