@@ -63,7 +63,7 @@ class TestLocationTypeOwnership(TestCase):
     def setUp(self):
         self.user = CommCareUser.create(
             self.domain,
-            uuid.uuid4().hex,
+            'username',
             'password',
             first_name='Location types',
             last_name='Tester',
