@@ -16,9 +16,14 @@ CELERY_RESULT_BACKEND = 'djcelery.backends.database:DatabaseBackend'
 CELERY_FLOWER_URL = 'http://celery:5555'
 BROKER_URL = 'amqp://guest:guest@rabbit:5672/commcarehq'
 
-LESS_DEBUG = True
+LESS_DEBUG = False
 LESS_WATCH = False
-COMPRESS_OFFLINE = False
+
+COMPRESS_ENABLED = True
+COMPRESS_OFFLINE = True
+
+DEBUG = False
+TEMPLATE_DEBUG = DEBUG
 
 BITLY_LOGIN = None
 
@@ -40,7 +45,7 @@ TESTS_SHOULD_TRACK_CLEANLINESS = True
 RESTORE_PAYLOAD_DIR_NAME = 'restore'
 SHARED_TEMP_DIR_NAME = 'temp'
 
-ENABLE_PRELOGIN_SITE = False
+ENABLE_PRELOGIN_SITE = True
 
 KAFKA_URL = 'kafka:9092'
 SHARED_DRIVE_ROOT = '/mnt/sharedfiles'

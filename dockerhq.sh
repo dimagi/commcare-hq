@@ -5,17 +5,34 @@
 
 function usage() {
     case $1 in
-        runserver)
+        runserver-dev)
             echo "Run the Django dev server"
             echo ""
-            echo "runserver [OPTIONS]"
+            echo "runserver-dev [OPTIONS]"
             echo "  -d  Run in background"
+            ;;
+        runserver-prod)
+            echo "Run the whole setup in production mode. Forwards to port 80."
+            echo "Make sure to run ./dockerhq.sh setup-prod first time before this command. "
+            ;;
+        stopserver-prod)
+            echo "Stops the production setup."
+            echo ""
+            ;;
+        setup-prod)
+            echo "Sets up static files, kafka topics etc. for the first production run."
+            echo ""
             ;;
         migrate)
             echo "Run the 'migrate' management command"
             echo ""
             echo "migrate [OPTIONS]"
             echo "  see Django migrate docs for options"
+            ;;
+        proxy)
+            echo "Start the Nginx proxy. "
+            echo "-d to run in background"
+            echo "./dockerhq.sh proxy [-d] up|stop"
             ;;
         shell)
             echo "Run the Django shell"
@@ -39,7 +56,12 @@ function usage() {
             echo ""
             echo "./dockerhq.sh [OPTIONS] COMMAND"
             echo "      -h --help"
-            echo "      runserver|migrate|shell|bash|rebuild|bootstrap|services"
+            echo "      runserver-dev|runserver-prod|stopserver-prod|setup-prod|proxy|migrate|shell|bash|rebuild|bootstrap|services"
+            echo ""
+            echo "Requires docker-compose v. >1.7.0 and netcat installed. "
+            echo ""
+            echo "To get up and running run first time: "
+            echo "./dockerhq.sh bootstrap"
             echo ""
             echo "./dockerhq.sh help COMMAND"
             ;;
@@ -64,13 +86,6 @@ function nginx_runner() {
     sudo docker-compose -f $DOCKER_DIR/compose/docker-compose-nginx.yml -p commcarehq $@
 }
 
-function setup_production() {
-    clear
-    echo "Welcome to the CommCareHQ Docker production setup"
-    ./create-kafka-topics.sh
-    ./bootstrap.sh
-    echo "CommcareHQ is ready to run in docker. "
-}
 
 key="$1"
 shift
@@ -92,12 +107,11 @@ case $key in
         web_runner run --rm web python manage.py migrate $@
         ;;
     runserver-dev)
-        ./docker/create-kafka-topics.sh
 	web_runner run --name commcarehq_web_1 --rm --service-ports web /mnt/docker/runserver_dev.sh
         ;;
     runserver-prod)
         $DOCKER_DIR/docker-services.sh start
-	web_runner run -d --name commcarehq_web_1 --rm --service-ports web /mnt/docker/runserver_prod.sh
+	web_runner run --name commcarehq_web_1 -d --rm --service-ports web /mnt/docker/runserver_prod.sh
         nginx_runner rm -f
         #wait for gunicorn web server in the web container to be up
         web_ip=$(get_container_ip "commcare.name" "web")
@@ -110,6 +124,11 @@ case $key in
         docker rm -f commcarehq_web_1 #a bit of a hack due to a problem with docker-compose: https://github.com/docker/compose/issues/2593
         $DOCKER_DIR/docker-services.sh stop
         ;;
+    setup-prod)
+        $DOCKER_DIR/docker-services.sh start
+        ./docker/create-kafka-topics.sh
+        web_runner run --name commcarehq_web_1 --rm --service-ports web /mnt/docker/setup-prod.sh
+        ;;
     proxy)
         nginx_runner $@
         ;;
@@ -121,9 +140,6 @@ case $key in
         ;;
     rebuild)
         rebuild
-        ;;
-    setup-prod)
-        ./docker/setup-prod.sh
         ;;
     bootstrap)
         $DOCKER_DIR/bootstrap.sh

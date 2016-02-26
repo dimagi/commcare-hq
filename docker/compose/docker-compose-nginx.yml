@@ -5,7 +5,7 @@ nginx:
   ports: 
     - "80:80"
   volumes: 
-    - "../nginxconf:/etc/nginx:ro"
+    - "../nginxconf/nginx.conf:/etc/nginx/nginx.conf:ro"
     - "../../staticfiles:/static:ro"
   external_links: 
     - commcarehq_web_1:web
