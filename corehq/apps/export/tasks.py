@@ -1,7 +1,6 @@
 from celery.task import task
 
 from corehq.apps.export.export import get_export_file, rebuild_export
-from corehq.apps.export.models.new import get_properly_wrapped_export_instance
 from couchexport.models import Format
 from couchexport.tasks import escape_quotes
 from soil.util import expose_cached_download
