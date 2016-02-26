@@ -541,6 +541,11 @@ class EditOpenClinicaSettingsView(BaseProjectSettingsView):
     urlname = 'oc_settings'
     page_title = ugettext_lazy('OpenClinica settings')
 
+    @method_decorator(domain_admin_required)
+    @use_bootstrap3
+    def dispatch(self, request, *args, **kwargs):
+        return super(BaseProjectSettingsView, self).dispatch(request, *args, **kwargs)
+
     @property
     @memoized
     def openclinica_settings_form(self):

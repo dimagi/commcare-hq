@@ -1,4 +1,9 @@
 import logging
+from corehq.apps.style import crispy as hqcrispy
+from crispy_forms import bootstrap as twbscrispy
+from crispy_forms import layout as crispy
+from crispy_forms.bootstrap import StrictButton
+from crispy_forms.helper import FormHelper
 from custom.openclinica.models import OpenClinicaSettings
 from django import forms
 from django.utils.translation import ugettext_lazy as _
@@ -13,6 +18,33 @@ class OpenClinicaSettingsForm(forms.Form):
     protocol_id = forms.CharField(label=_('Study Protocol ID'), required=False, help_text=_('e.g. "BE 2014/03"'))
     metadata = forms.CharField(label=_('Study Metadata (CDISC ODM)'), widget=forms.Textarea, required=False,
                                help_text=_('Not required if web service is enabled'))
+
+    def __init__(self, *args, **kwargs):
+        super(OpenClinicaSettingsForm, self).__init__(*args, **kwargs)
+        self.helper = FormHelper()
+        self.helper.form_class = 'form-horizontal'
+        self.helper.label_class = 'col-sm-3 col-md-2'
+        self.helper.field_class = 'col-sm-9 col-md-8 col-lg-6'
+        self.helper.layout = crispy.Layout(
+            crispy.Fieldset(
+                _('Edit OpenClinica settings'),
+                twbscrispy.PrependedText('is_ws_enabled', ''),
+
+                crispy.Field('url'),
+                crispy.Field('username'),
+                crispy.Field('password'),
+                crispy.Field('protocol_id'),
+
+                crispy.Field('metadata'),
+            ),
+            hqcrispy.FormActions(
+                StrictButton(
+                    _("Update OpenClinica settings"),
+                    type="submit",
+                    css_class='btn-primary',
+                )
+            ),
+        )
 
     def clean(self):
 
