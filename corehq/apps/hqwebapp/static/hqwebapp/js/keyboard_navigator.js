@@ -103,14 +103,9 @@ hqDefine('hqwebapp/js/keyboard_navigator.js', function () {
                 if (self.reset_index) {
                     self.set_index(0);
                 }
-    
-                console.log('Entering navigation: ' + self.name);
-                console.log('Index set to: ' + self.index);
             };
     
             self.leave_nav = function() {
-                console.log('Leaving navigation');
-    
                 self.handle_focus_out();
                 KEY.setScope(self.ready_scope);
                 self.navigating = false;
@@ -139,8 +134,6 @@ hqDefine('hqwebapp/js/keyboard_navigator.js', function () {
             };
     
             self.handle_focus_in = function() {
-                console.log('hovering over...');
-                console.log(self.$active_element.get(0));
                 self.focus_in_fn(self.$active_element);
                 return false;
             };
@@ -151,8 +144,6 @@ hqDefine('hqwebapp/js/keyboard_navigator.js', function () {
             };
     
             self.action_fn = function($ele) {
-                console.log(self);
-                console.log($ele);
                 $ele.click();
                 // .click() only triggers a click event, below handles clicks for elements that have an href
                 if ($ele.attr('href') && $ele.attr('href') != '#') {
@@ -163,7 +154,6 @@ hqDefine('hqwebapp/js/keyboard_navigator.js', function () {
             self.handle_action = function() {
                 // last_mover is a pseudo-global variable stored in a closure that keeps track of which kn moved last
                 // only want to handle the action of this navigator if it was the last mover.
-                console.log('action button pressed');
                 if (last_mover === self.name) {
                     self.action_fn(self.$active_element);
                     self.leave_nav();
