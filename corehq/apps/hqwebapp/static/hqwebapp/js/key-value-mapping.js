@@ -9,7 +9,7 @@
 * @param mappingContext: an object which has context of current UI language and whether
 *                 `value` of MapItem is a file-path to an icon or a simple string
 */
-var MapItem = function(item, mappingContext){
+var MapItem = function(item, index, mappingContext){
     var self = this;
     this.key = ko.observable(item.key);
 
@@ -25,14 +25,15 @@ var MapItem = function(item, mappingContext){
             },
             objectMap: mappingContext.multimedia,
             uploadController: iconUploader,
-            defaultPath: 'jr://file/commcare/image/default.png',
+            defaultPath: 'jr://file/commcare/image/kv-icon' + index + '.png'
         });
     }
 
     this.value = ko.computed(function() {
         // ko.observable for item.value
         var new_value = [];
-        _.each(mappingContext.langs, function(lang){
+        var langs = _.union(_(item.value).keys(), [mappingContext.lang]) ;
+        _.each(langs, function(lang){
             // return ko reference to path in `iconManager` for current UI language value
             if (mappingContext.values_are_icons && lang == mappingContext.lang){
                 new_value.push([lang, self.iconManager.customPath]);
@@ -73,8 +74,8 @@ function MapList(o) {
     self.multimedia = o.multimedia;
 
     self.setItems = function (items) {
-        self.items(_(items).map(function (item) {
-            return new MapItem(item, self);
+        self.items(_(items).map(function (item, i) {
+            return new MapItem(item, i, self);
         }));
     };
     self.setItems(o.items);
@@ -99,7 +100,7 @@ function MapList(o) {
         var raw_item = {key: '', value: {}};
         raw_item.value[self.lang] = '';
 
-        var item = new MapItem(raw_item, self);
+        var item = new MapItem(raw_item, self.items.length, self);
         self.items.push(item);
         if(self.duplicatedItems.indexOf('') === -1 && self._isItemDuplicated('')) {
             self.duplicatedItems.push('');
