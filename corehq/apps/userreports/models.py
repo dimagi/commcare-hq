@@ -25,6 +25,7 @@ from corehq.apps.userreports.exceptions import (
     BadSpecError,
     DataSourceConfigurationNotFoundError,
     ReportConfigurationNotFoundError,
+    StaticDataSourceConfigurationNotFoundError,
 )
 from corehq.apps.userreports.expressions.factory import ExpressionFactory
 from corehq.apps.userreports.filters.factory import FilterFactory
@@ -475,8 +476,9 @@ class StaticDataSourceConfiguration(JsonObject):
         for ds in cls.all():
             if ds.get_id == config_id:
                 return ds
-        raise BadSpecError(_('The data source referenced by this report could '
-                             'not be found.'))
+        raise StaticDataSourceConfigurationNotFoundError(_(
+            'The data source referenced by this report could not be found.'
+        ))
 
 
 class StaticReportConfiguration(JsonObject):
