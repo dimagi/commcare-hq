@@ -1,6 +1,7 @@
-/* requires keymaster.js to be included and key() to be aliased as KEY() in the global namespace */
+/* requires keymaster.js to be included */
 hqDefine('hqwebapp/js/keyboard_navigator.js', function () {
     var module = {};
+    var key = hqImport("style/includes/keyboard_shortcuts.html#key");
 
     module.focus_in_fn = function($ele) {
         $ele.addClass('hovered');
@@ -17,7 +18,7 @@ hqDefine('hqwebapp/js/keyboard_navigator.js', function () {
     };
     
     module.model = function() {
-        KEY.setScope('ready');
+        key.setScope('ready');
         var last_mover = '';
         var KeyboardNavigator = function() {
             var self = this;
@@ -54,22 +55,22 @@ hqDefine('hqwebapp/js/keyboard_navigator.js', function () {
     
                 $(function() {
                     $(document).keyup(function(event) {
-                        if (KEY.getScope() === self.ready_scope) {
+                        if (key.getScope() === self.ready_scope) {
                             if ( event.which === self.macchrome_keycodes[self.nav_key] ) {
                                 self.leave_nav();
                             }
                         }
                     });
     
-                    KEY(self.nav_key, self.ready_scope, self.enter_nav);
+                    key(self.nav_key, self.ready_scope, self.enter_nav);
     
-                    var set_up_nav_key_handlers = function(key) {
-                        KEY(self.nav_key + '+' + key, self.ready_scope, self.gen_handle_nav(key));
+                    var set_up_nav_key_handlers = function(character) {
+                        key(self.nav_key + '+' + character, self.ready_scope, self.gen_handle_nav(character));
                     };
                     _.each(self.forward_keys, set_up_nav_key_handlers);
                     _.each(self.back_keys, set_up_nav_key_handlers);
-                    KEY(self.nav_key + '+' + self.action_key, self.ready_scope, self.handle_action);
-                    KEY(self.nav_key + '+' + 'space', self.ready_scope, self.handle_action);
+                    key(self.nav_key + '+' + self.action_key, self.ready_scope, self.handle_action);
+                    key(self.nav_key + '+' + 'space', self.ready_scope, self.handle_action);
                 });
             };
     
@@ -107,7 +108,7 @@ hqDefine('hqwebapp/js/keyboard_navigator.js', function () {
     
             self.leave_nav = function() {
                 self.handle_focus_out();
-                KEY.setScope(self.ready_scope);
+                key.setScope(self.ready_scope);
                 self.navigating = false;
     
                 if (self.stop_fn) {
@@ -115,19 +116,19 @@ hqDefine('hqwebapp/js/keyboard_navigator.js', function () {
                 }
     
                 if (self.prior_scope) {
-                    KEY.setScope(self.prior_scope);
+                    key.setScope(self.prior_scope);
                     self.prior_scope = false;
                 }
             };
     
-            self.gen_handle_nav = function(key) {
+            self.gen_handle_nav = function(character) {
                 return function() {
                     if (!self.navigating) {
                         self.enter_nav();
                     }
                     self.navigating = true;
                     self.handle_focus_out();
-                    self.set_index(self.index + (self.forward_keys.indexOf(key) > -1 ? 1 : -1));
+                    self.set_index(self.index + (self.forward_keys.indexOf(character) > -1 ? 1 : -1));
                     self.handle_focus_in();
                     return false;
                 }
@@ -162,8 +163,8 @@ hqDefine('hqwebapp/js/keyboard_navigator.js', function () {
             };
     
             self.activate = function() {
-                self.prior_scope = KEY.getScope();
-                KEY.setScope(self.ready_scope);
+                self.prior_scope = key.getScope();
+                key.setScope(self.ready_scope);
                 self.enter_nav();
                 self.handle_focus_in();
                 return false;

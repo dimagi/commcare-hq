@@ -66,8 +66,10 @@
 <script src="{% new_static 'keymaster/keymaster.js' %}"></script>
 {% endcompress %}
 <script>
-    var KEY = key.noConflict();  // Make global key function capital to adhere to globals convention
-                                 // and to avoid conflicts in other places where "key" is used as variable name
+// Encapsulate keymaster's global key function in an HQ module
+hqDefine('style/includes/keyboard_shortcuts.html#key', function () {
+    return key.noConflict();
+});
 </script>
 
 {% if request.couch_user.keyboard_shortcuts.enabled %}
@@ -100,9 +102,10 @@ hqDefine('style/includes/keyboard_shortcuts.html', function () {
 
     // When page finishes laoding, set up the shortcuts and add documentation to the modal
     $(function() {
-        var $lookup = $('#keyboard-shortcuts-lookup');
+        var key = hqImport("style/includes/keyboard_shortcuts.html#key"),
+            $lookup = $('#keyboard-shortcuts-lookup');
         _(module.shortcuts).each(function(s) {
-            KEY(s.shortcut, s.handler);
+            key(s.shortcut, s.handler);
             var $shortcut = $('<li>').append($('<span>').text(s.desc), ': ', $('<code>').text(s.shortcut));
             $lookup.append($shortcut);
         });
