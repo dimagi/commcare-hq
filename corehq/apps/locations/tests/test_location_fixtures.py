@@ -32,7 +32,6 @@ class LocationFixturesTest(TestCase):
     def test_metadata(self):
         location = SQLLocation(
             id="854208",
-            location_id="unique-id",
             domain="test-domain",
             name="Braavos",
             location_type=self.location_type,
@@ -56,7 +55,6 @@ class LocationFixturesTest(TestCase):
         self.location_type = LocationType.objects.last()
 
         location = SQLLocation(
-            location_id="unique-id",
             domain=self.domain,
             name="Meereen",
             location_type=self.location_type,

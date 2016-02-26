@@ -21,13 +21,12 @@ class TestLocationTypeExpression(TestCase):
         cls.location_type.save()
 
         cls.location = SQLLocation(
-            id="235566",
-            location_id="unique-id",
             domain="test-domain",
             name="Braavos",
             location_type=cls.location_type
         )
         cls.location.save()
+        cls.unique_id = cls.location.location_id
 
         cls.spec = {
             "type": "location_type_name",
@@ -54,11 +53,11 @@ class TestLocationTypeExpression(TestCase):
         )
 
     def test_location_type_expression(self):
-        doc = {"_id": "unique-id"}
+        doc = {"_id": self.unique_id}
         self._check_expression(doc, "state")
 
     def test_bad_domain(self):
-        doc = {"_id": "unique-id"}
+        doc = {"_id": self.unique_id}
         self._check_expression(doc, None, domain="wrong-domain")
 
     def test_bad_doc(self):
