@@ -6,15 +6,14 @@ INSTALLED_APPS += (
 
 TEST_RUNNER = 'django_nose.NoseTestSuiteRunner'
 NOSE_ARGS = [
-    #'--with-migrations' # adds ~30s to test run; TODO travis should use it
-    '--with-fixture-bundling',
+    #'--no-migrations' # trim ~120s from test run with db tests
+    #'--with-fixture-bundling',
     '--logging-clear-handlers',
 ]
 NOSE_PLUGINS = [
-    # Disable migrations by default. Use --with-migrations to enable them.
-    'corehq.tests.nose.DjangoMigrationsPlugin',
-    'corehq.tests.nose.OmitDjangoInitModuleTestsPlugin',
     'corehq.tests.nose.HqTestFinderPlugin',
+    'corehq.tests.nose.OmitDjangoInitModuleTestsPlugin',
+    'corehq.tests.noseplugins.djangomigrations.DjangoMigrationsPlugin',
 
     # use with --collect-only when comparing to django runner COLLECT_ONLY output
     #'testrunner.UniformTestResultPlugin',
