@@ -12,9 +12,49 @@ from custom.openclinica.utils import (
     get_study_event_name,
     oc_format_date,
 )
+from dimagi.ext.couchdbkit import (
+    Document,
+    DocumentSchema,
+    StringProperty,
+    SchemaProperty,
+    BooleanProperty,
+)
+from dimagi.utils.couch.cache import cache_core
 
 
 _reserved_keys = ('@uiVersion', '@xmlns', '@name', '#type', 'case', 'meta', '@version')
+
+
+class StudySettings(DocumentSchema):
+    is_ws_enabled = BooleanProperty()
+    url = StringProperty()
+    username = StringProperty()
+    password = StringProperty()
+    protocol_id = StringProperty()
+    metadata = StringProperty()  # Required when web service is not enabled
+
+    def get(self, key, default=None):
+        # Allow Django use this as a dictionary
+        try:
+            return getattr(self, key, default)
+        except AttributeError as err:
+            raise KeyError(err)
+
+
+class OpenClinicaSettings(Document):
+    domain = StringProperty()
+    study = SchemaProperty(StudySettings)  # One study per domain prevents cases from getting mixed up
+
+    @classmethod
+    def for_domain(cls, domain):
+        res = cache_core.cached_view(
+            cls.get_db(),
+            "by_domain_doc_type_date/view",
+            key=[domain, 'OpenClinicaSettings', None],
+            reduce=False,
+            include_docs=True,
+            wrapper=cls.wrap)
+        return res[0] if len(res) > 0 else None
 
 
 class ItemGroup(object):
