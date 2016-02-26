@@ -593,6 +593,13 @@ APPLICATION_ERROR_REPORT = StaticToggle(
     namespaces=[NAMESPACE_USER],
 )
 
+OPENCLINICA = StaticToggle(
+    'openclinica',
+    'Offer OpenClinica settings and CDISC ODM export',
+    TAG_ONE_OFF,
+    namespaces=[NAMESPACE_DOMAIN],
+)
+
 OPENLMIS = StaticToggle(
     'openlmis',
     'Offer OpenLMIS settings',
