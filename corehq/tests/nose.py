@@ -11,6 +11,7 @@ from __future__ import absolute_import
 import logging
 import os
 import sys
+import threading
 from unittest.case import TestCase
 
 from couchdbkit import ResourceNotFound
@@ -89,7 +90,7 @@ class DisableMigrations(object):
 
 
 class ErrorOnDbAccessContext(object):
-    """Ensure that touching a database raises and error."""
+    """Ensure that touching a database raises an error."""
 
     def __init__(self, tests, runner):
         pass
@@ -193,3 +194,31 @@ class HqdbContext(DatabaseContext):
         connection_manager.dispose_all()
 
         super(HqdbContext, self).teardown()
+
+
+def print_imports_until_thread_change():
+    """Print imports until the current thread changes
+
+    This is useful for troubleshooting premature test runner exit
+    (often caused by an import when running tests --with-doctest).
+    """
+    main = threading.current_thread()
+    sys.__stdout__.write("setting up import hook on %s\n" % main)
+
+    class InfoImporter(object):
+
+        def find_module(self, name, path=None):
+            thread = threading.current_thread()
+            # add code here to check for other things happening on import
+            #if name == 'gevent':
+            #    sys.exit()
+            sys.__stdout__.write("%s %s\n" % (thread, name))
+            if thread is not main:
+                sys.exit()
+            return None
+
+    # Register the import hook. See https://www.python.org/dev/peps/pep-0302/
+    sys.meta_path.append(InfoImporter())
+
+if os.environ.get("HQ_TESTS_PRINT_IMPORTS"):
+    print_imports_until_thread_change()
