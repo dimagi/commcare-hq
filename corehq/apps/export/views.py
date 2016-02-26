@@ -1109,7 +1109,7 @@ class BaseExportListView(ExportsPermissionsMixin, JSONResponseMixin, BaseProject
         from corehq.apps.export.tasks import rebuild_export_task
         export_instance_id = in_data['export']['id']
         export_instance = get_properly_wrapped_export_instance(export_instance_id)
-        rebuild_export_task.delay(export_instance_id)
+        rebuild_export_task.delay(export_instance)
         return format_angular_success({})
 
     @allow_remote_invocation
