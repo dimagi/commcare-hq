@@ -3,7 +3,7 @@ from datetime import datetime, timedelta, date
 import itertools
 import json
 from corehq.apps.domain.views import BaseDomainView
-from corehq.apps.export.models.new import (
+from corehq.apps.export.dbaccessors import (
     get_properly_wrapped_export_instance
 )
 from corehq.apps.hqwebapp.view_permissions import user_can_view_reports

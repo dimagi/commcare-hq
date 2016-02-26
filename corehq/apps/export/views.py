@@ -10,7 +10,7 @@ from django.template.defaultfilters import filesizeformat
 
 from corehq.apps.export.export import get_export_download
 from corehq.form_processor.interfaces.dbaccessors import FormAccessors
-from corehq.apps.export.models.new import get_properly_wrapped_export_instance
+from corehq.apps.export.dbaccessors import get_properly_wrapped_export_instance
 from django_prbac.utils import has_privilege
 from django.utils.decorators import method_decorator
 import json
