@@ -18,7 +18,6 @@ from corehq.apps.accounting.exceptions import (
     LineItemError,
     InvoiceError,
     InvoiceEmailThrottledError,
-    BillingContactInfoError,
     InvoiceAlreadyCreatedError,
 )
 from corehq.apps.accounting.models import (
