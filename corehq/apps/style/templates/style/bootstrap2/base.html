@@ -462,11 +462,12 @@
         {% if request.couch_user.keyboard_shortcuts.enabled %}
         <script>
             var nav_key = {{ request.couch_user.keyboard_shortcuts.main_key|JSON }};
+            var keyboardNavigator = hqImport('hqwebapp/js/keyboard_navigator.js');
 
             function gen_apps_menu_elements() {
                 return $("#mainmenu-ApplicationsTab li a[data-id]");
             }
-            var apps_menu_navigator = new KeyboardNavigator();
+            var apps_menu_navigator = new keyboardNavigator.KeyboardNavigator();
             apps_menu_navigator.init({
                 name: 'apps menu',
                 ready_scope: 'am-ready',
@@ -477,7 +478,7 @@
                 element_list_generator: gen_apps_menu_elements,
                 focus_in_fn: function($ele) {
                     $("#mainmenu-ApplicationsTab").addClass('open');
-                    keyboard_navigator_utils.focus_in_fn($ele);
+                    keyboardNavigator.keyboard_navigator_utils.focus_in_fn($ele);
                 },
                 stop_fn: function() { $("#mainmenu-ApplicationsTab").removeClass('open') },
                 reset_index: true,
@@ -487,7 +488,7 @@
             function gen_admin_menu_elements() {
                 return $("#mainmenu-AdminTab li a");
             }
-            var admin_menu_navigator = new KeyboardNavigator();
+            var admin_menu_navigator = new keyboardNavigator.KeyboardNavigator();
             admin_menu_navigator.init({
                 name: 'admin menu',
                 ready_scope: 'adm-ready',
@@ -498,7 +499,7 @@
                 element_list_generator: gen_admin_menu_elements,
                 focus_in_fn: function($ele) {
                     $("#mainmenu-AdminTab").addClass('open');
-                    keyboard_navigator_utils.focus_in_fn($ele);
+                    keyboardNavigator.keyboard_navigator_utils.focus_in_fn($ele);
                 },
                 stop_fn: function() { $("#mainmenu-AdminTab").removeClass('open') },
                 reset_index: true,
@@ -508,7 +509,7 @@
             function gen_projects_menu_elements() {
                 return $("#nav-projects-menu li a");
             }
-            var projects_menu_navigator = new KeyboardNavigator();
+            var projects_menu_navigator = new keyboardNavigator.KeyboardNavigator();
             projects_menu_navigator.init({
                 name: 'projects menu',
                 ready_scope: 'pm-ready',
@@ -526,7 +527,7 @@
             function gen_user_menu_elements() {
                 return $("#nav-user-menu li a");
             }
-            var user_menu_navigator = new KeyboardNavigator();
+            var user_menu_navigator = new keyboardNavigator.KeyboardNavigator();
             user_menu_navigator.init({
                 name: 'user menu',
                 ready_scope: 'um-ready',

@@ -115,9 +115,10 @@ $(function() {
 
 {% if request.couch_user.keyboard_shortcuts.enabled %}
 <script>
+var keyboardNavigator = hqImport('hqwebapp/js/keyboard_navigator.js');
 var nav_key = {{ request.couch_user.keyboard_shortcuts.main_key|JSON }};
 
-var apps_menu_navigator = new KeyboardNavigator();
+var apps_menu_navigator = new keyboardNavigator.KeyboardNavigator();
 apps_menu_navigator.init({
     name: 'apps menu',
     ready_scope: 'am-ready',
@@ -130,14 +131,14 @@ apps_menu_navigator.init({
     },
     focus_in_fn: function($ele) {
         $("#mainmenu-ApplicationsTab").addClass('open');
-        keyboard_navigator_utils.focus_in_fn($ele);
+        keyboardNavigator.keyboard_navigator_utils.focus_in_fn($ele);
     },
     stop_fn: function() { $("#mainmenu-ApplicationsTab").removeClass('open') },
     reset_index: true,
     regen_list_on_leave: true
 });
 
-var admin_menu_navigator = new KeyboardNavigator();
+var admin_menu_navigator = new keyboardNavigator.KeyboardNavigator();
 admin_menu_navigator.init({
     name: 'admin menu',
     ready_scope: 'adm-ready',
@@ -150,14 +151,14 @@ admin_menu_navigator.init({
     },
     focus_in_fn: function($ele) {
         $("#mainmenu-AdminTab").addClass('open');
-        keyboard_navigator_utils.focus_in_fn($ele);
+        keyboardNavigator.keyboard_navigator_utils.focus_in_fn($ele);
     },
     stop_fn: function() { $("#mainmenu-AdminTab").removeClass('open') },
     reset_index: true,
     regen_list_on_leave: true
 });
 
-var projects_menu_navigator = new KeyboardNavigator();
+var projects_menu_navigator = new keyboardNavigator.KeyboardNavigator();
 projects_menu_navigator.init({
     name: 'projects menu',
     ready_scope: 'pm-ready',
@@ -174,7 +175,7 @@ projects_menu_navigator.init({
     regen_list_on_leave: true
 });
 
-var user_menu_navigator = new KeyboardNavigator();
+var user_menu_navigator = new keyboardNavigator.KeyboardNavigator();
 user_menu_navigator.init({
     name: 'user menu',
     ready_scope: 'um-ready',
