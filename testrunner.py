@@ -40,37 +40,21 @@ def set_db_enabled(is_enabled):
 
 
 # make django test runner "collect only" (skip every test)
-COLLECT_ONLY = int(os.environ.get("COLLECT_ONLY", 0))
+COLLECT_ONLY = int(os.environ.get("COLLECT_ONLY", False))
 if COLLECT_ONLY:
+    from corehq.tests.noseplugins.uniformresult import uniform_description
+
     TestCase.__unittest_skip__ = property(
         fget=lambda self: True,
         fset=lambda self, value: None,
     )
 
-def uniform_description(test):
-    if type(test).__name__ == "DocTestCase":
-        return test._dt_test.name
-    name = "%s:%s.%s" % (
-        test.__module__,
-        type(test).__name__,
-        test._testMethodName
-    )
-    return name
-    #return sys.modules[test.__module__].__file__
+    class UniformTestResult(TextTestResult):
+        def getDescription(self, test):
+            return uniform_description(test)
 
-class UniformTestResultPlugin(Plugin):
-    def configure(self, *args, **kw):
-        self.enabled = True
-    def describeTest(self, test):
-        return uniform_description(test.test)
-
-class UniformTestResult(TextTestResult):
-    def getDescription(self, test):
-        return uniform_description(test)
-
-class UniformResultTestRunner(TextTestRunner):
-    resultclass = UniformTestResult
-
+    class UniformResultTestRunner(TextTestRunner):
+        resultclass = UniformTestResult
 
 
 class HqTestSuiteRunner(CouchDbKitTestSuiteRunner):
@@ -103,11 +87,11 @@ class HqTestSuiteRunner(CouchDbKitTestSuiteRunner):
         super(HqTestSuiteRunner, self).setup_test_environment(**kwargs)
 
     def setup_databases(self, **kwargs):
-        from corehq.blobs.tests.util import TemporaryFilesystemBlobDB
-        self.blob_db = TemporaryFilesystemBlobDB()
         self._assert_is_a_test_db(settings.COUCH_DATABASE_NAME)
         if COLLECT_ONLY:
             return None
+        from corehq.blobs.tests.util import TemporaryFilesystemBlobDB
+        self.blob_db = TemporaryFilesystemBlobDB()
         return super(HqTestSuiteRunner, self).setup_databases(**kwargs)
 
     def teardown_databases(self, old_config, **kwargs):

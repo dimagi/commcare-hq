@@ -15,8 +15,8 @@ NOSE_PLUGINS = [
     'corehq.tests.nose.OmitDjangoInitModuleTestsPlugin',
     'corehq.tests.noseplugins.djangomigrations.DjangoMigrationsPlugin',
 
-    # use with --collect-only when comparing to django runner COLLECT_ONLY output
-    #'testrunner.UniformTestResultPlugin',
+    # The following are not enabled by default
+    'corehq.tests.noseplugins.uniformresult.UniformTestResultPlugin',
 ]
 
 # these settings can be overridden with environment variables
