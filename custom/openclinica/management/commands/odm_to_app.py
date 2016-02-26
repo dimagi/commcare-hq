@@ -7,6 +7,7 @@ from corehq.apps.app_manager.const import APP_V2
 from corehq.apps.app_manager.models import Application, Module, OpenCaseAction, UpdateCaseAction, PreloadAction
 from corehq.apps.app_manager.xform_builder import XFormBuilder
 from custom.openclinica.utils import odm_nsmap
+from dimagi.utils import make_uuid
 
 
 # Map ODM data types to ODK XForm data types
@@ -88,7 +89,7 @@ class Study(StudyObject):
         module.case_type = 'subject'
 
         reg_form = module.new_form('Register Subject', None)
-        reg_form.unique_id = 'register_subject'
+        reg_form.unique_id = make_uuid()
         reg_form.source = self.get_subject_form_source('Register Subject')
         reg_form.actions.open_case = OpenCaseAction(name_path='/data/name', external_id=None)
         reg_form.actions.open_case.condition.type = 'always'
@@ -101,7 +102,7 @@ class Study(StudyObject):
         reg_form.actions.update_case.condition.type = 'always'
 
         edit_form = module.new_form('Edit Subject', None)
-        edit_form.unique_id = 'edit_subject'
+        edit_form.unique_id = make_uuid()
         edit_form.source = self.get_subject_form_source('Edit Subject')
         edit_form.requires = 'case'
         edit_form.actions.case_preload = PreloadAction(preload={
@@ -169,7 +170,6 @@ class StudyForm(StudyObject):
         self.oid = defn.get('OID')
         self.name = defn.get('Name')
         self.is_repeating = defn.get('Repeating') == 'Yes'
-        self.unique_id = self.oid.lower()
 
     def iter_item_groups(self):
         for ig_ref in self.defn.xpath('./odm:ItemGroupRef', namespaces=odm_nsmap):
@@ -182,7 +182,7 @@ class StudyForm(StudyObject):
         Add a CommCare form based in this form's item groups and items to a given CommCare module
         """
         form = module.new_form(self.name, None)
-        form.unique_id = self.unique_id
+        form.unique_id = make_uuid()
         form.source = self.build_xform()
         # Must require case for case list to work
         form.requires = 'case'
