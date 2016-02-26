@@ -14,6 +14,13 @@ from corehq.apps.app_manager.models import (
     FormActionCondition,
 )
 from corehq.apps.app_manager.xform_builder import XFormBuilder
+from custom.openclinica.const import (
+    CC_SUBJECT_KEY,
+    CC_STUDY_SUBJECT_ID,
+    CC_DOB,
+    CC_SEX,
+    CC_ENROLLMENT_DATE,
+)
 from custom.openclinica.utils import odm_nsmap
 from dimagi.utils import make_uuid
 
@@ -84,11 +91,11 @@ class Study(StudyObject):
         Return a registration form that mimics OpenClinica subject registration
         """
         xform = XFormBuilder(name)
-        xform.new_question('name', 'Person ID')  # Subject's unique ID. aka "Screening Number", "Subject Key"
-        xform.new_question('subject_study_id', 'Subject Study ID')  # Subject number for this study
-        xform.new_question('dob', 'Date of Birth', data_type='date')
-        xform.new_question('sex', 'Sex', data_type='select1', choices={1: 'Male', 2: 'Female'})
-        xform.new_question('enrollment_date', 'Enrollment Date', data_type='date')
+        xform.new_question(CC_SUBJECT_KEY, 'Person ID')  # Subject's unique ID. aka "Screening Number", "Subject Key"
+        xform.new_question(CC_STUDY_SUBJECT_ID, 'Subject Study ID')  # Subject number for this study
+        xform.new_question(CC_DOB, 'Date of Birth', data_type='date')
+        xform.new_question(CC_SEX, 'Sex', data_type='select1', choices={1: 'Male', 2: 'Female'})
+        xform.new_question(CC_ENROLLMENT_DATE, 'Enrollment Date', data_type='date')
         return xform.tostring(pretty_print=True)
 
     def new_subject_module(self, app):
