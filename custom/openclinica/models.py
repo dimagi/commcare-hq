@@ -33,13 +33,6 @@ class StudySettings(DocumentSchema):
     protocol_id = StringProperty()
     metadata = StringProperty()  # Required when web service is not enabled
 
-    def get(self, key, default=None):
-        # Allow Django use this as a dictionary
-        try:
-            return getattr(self, key, default)
-        except AttributeError as err:
-            raise KeyError(err)
-
 
 class OpenClinicaSettings(Document):
     domain = StringProperty()
