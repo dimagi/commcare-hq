@@ -1,11 +1,12 @@
 from collections import defaultdict
+import hashlib
+import re
+from lxml import etree
 from corehq.apps.users.models import CouchUser
 from corehq.util.quickcache import quickcache
 from custom.openclinica.const import AUDIT_LOGS
 from custom.openclinica.utils import (
     OpenClinicaIntegrationError,
-    is_item_group_repeating,
-    is_study_event_repeating,
     get_item_measurement_unit,
     get_question_item,
     get_oc_user,
@@ -20,9 +21,196 @@ from dimagi.ext.couchdbkit import (
     BooleanProperty,
 )
 from dimagi.utils.couch.cache import cache_core
+from suds.client import Client
+from suds.plugin import MessagePlugin
+from suds.wsse import Security, UsernameToken
 
 
 _reserved_keys = ('@uiVersion', '@xmlns', '@name', '#type', 'case', 'meta', '@version')
+
+
+class OpenClinicaAPI(object):
+    """
+    We use OpenClinica's SOAP API. because their REST API is limited.
+
+    CommCare subject cases are iterated, and data built up from form
+    submissions. Subjects and their data are then compared with OpenClinica.
+    Missing subjects are created using `StudySubject.create` and missing
+    events are scheduled with `Event.schedule`. Data is then ready to import
+    using `Data.import`.
+
+    This automates a process that would otherwise need to be done manually.
+
+    One manual aspect still remains. The OpenClinica administrator still needs
+    to create users on OpenClinica for all CommCare mobile workers for the
+    study, in order for AuditLog data exported from CommCare to match
+    OpenClinica users.
+
+    +============+==============================+====================+==========================================+
+    | Web        | Method                       | Description        | WSDL Location (Input Value)              |
+    | Service    |                              |                    |                                          |
+    +============+==============================+====================+==========================================+
+    | Create     | StudySubject.create          | Creates a new      | http://${your instance}/OpenClinica-ws/  |
+    | Study      |                              | Study Subject      | ws/studySubject/v1/studySubjectWsdl.wsdl |
+    | Subject    |                              |                    |                                          |
+    +------------+------------------------------+--------------------+------------------------------------------+
+    | List all   | StudySubject                 | Lists the Subjects | http://${your instance}/OpenClinica-ws/  |
+    | Study      | .listAllByStudy              | in a study         | ws/studySubject/v1/studySubjectWsdl.wsdl |
+    | Subjects   |                              |                    |                                          |
+    +------------+------------------------------+--------------------+------------------------------------------+
+    | Find if    | StudySubject.isStudySubject  | Find if Study      | http://${your instance}/OpenClinica-ws/  |
+    | Study      |                              | Subject exists     | ws/studySubject/v1/studySubjectWsdl.wsdl |
+    | Subject    |                              |                    |                                          |
+    | exists     |                              |                    |                                          |
+    +------------+------------------------------+--------------------+------------------------------------------+
+    | Schedule   | Event.schedule               | Schedules an       | http://${your instance}/OpenClinica-ws/  |
+    | Event      |                              | Event for an       | ws/event/v1/eventWsdl.wsdl               |
+    |            |                              | enrolled Study     |                                          |
+    |            |                              | Subject            |                                          |
+    +------------+------------------------------+--------------------+------------------------------------------+
+    | Import     | Data.import                  | Imports Data onto  | http://${your instance}/OpenClinica-ws/  |
+    | Data       |                              | an OpenClincia     | ws/data/v1/dataWsdl.wsdl                 |
+    |            |                              | CRF for an already |                                          |
+    |            |                              | scheduled study    |                                          |
+    |            |                              | event              |                                          |
+    +------------+------------------------------+--------------------+------------------------------------------+
+    | Get Study  | Study.getMetadata            | Returns study      | http://${your instance}/OpenClinica-ws/  |
+    | Metadata   |                              | definition         | ws/study/v1/studyWsdl.wsdl               |
+    |            |                              | metadata in        |                                          |
+    |            |                              | CDISC ODM XML      |                                          |
+    |            |                              | format (with       |                                          |
+    |            |                              | OpenClinica        |                                          |
+    |            |                              | extensions)        |                                          |
+    +------------+------------------------------+--------------------+------------------------------------------+
+    | List Study | Study.listAll                | Returns a lists of | http://${your instance}/OpenClinica-ws/  |
+    |            |                              | studies and sites  | ws/study/v1/studyWsdl.wsdl               |
+    +------------+------------------------------+--------------------+------------------------------------------+
+    | Study      | StudyEventDefinition.listAll | Lists study event  | http://${your instance}/OpenClinica-ws/  |
+    | Event      |                              | definitions in     | ws/studyEventDefinition/v1/              |
+    | Definition |                              | study              | studyEventDefinitionWsdl.wsdl            |
+    +------------+------------------------------+--------------------+------------------------------------------+
+
+    """
+
+    def __init__(self, base_url, username, password, study_id, prefetch=False):
+        """
+        Initialise OpenClinicaAPI
+
+        :param base_url: Protocol, address (and port) of the server, e.g. "https://openclinica.example.com:8080/"
+        :param username: Username enabled for API authentication
+        :param password: Password
+        :param study_id: Study identifier
+        :param prefetch: Fetch WSDLs on init?
+        """
+        self._base_url = base_url if base_url[-1] == '/' else base_url + '/'
+        self._username = username
+        self._password = password
+        self._study_id = study_id
+        self._clients = {
+            'data': None,
+            'event': None,
+            'study': None,
+            'studyEventDefinition': None,
+            'studySubject': None
+        }
+        if prefetch:
+            for endpoint in self._clients:
+                self.get_client(endpoint)
+
+    def get_client(self, endpoint):
+
+        class FixMimeMultipart(MessagePlugin):
+            """
+            StudySubject.listAllByStudy replies with what looks like part of a multipart MIME message(!?) Fix this.
+            """
+            def received(self, context):
+                reply = context.reply
+                if reply.startswith('------='):
+                    matches = re.search(r'(<SOAP-ENV:Envelope.*</SOAP-ENV:Envelope>)', reply)
+                    context.reply = matches.group(1)
+
+        if endpoint not in self._clients:
+            raise ValueError('Unknown OpenClinica API endpoint')
+        if self._clients[endpoint] is None:
+            client = Client(
+                '{url}OpenClinica-ws/ws/{endpoint}/v1/{endpoint}Wsdl.wsdl'.format(
+                    url=self._base_url,
+                    endpoint=endpoint
+                ),
+                plugins=[FixMimeMultipart()]
+            )
+            security = Security()
+            password = hashlib.sha1(self._password).hexdigest()  # SHA1, not AES as documentation says
+            token = UsernameToken(self._username, password)
+            security.tokens.append(token)
+            client.set_options(wsse=security)
+            self._clients[endpoint] = client
+        return self._clients[endpoint]
+
+    def get_study_metadata_string(self):
+        """
+        Returns study metadata as an XML string
+        """
+        study_client = self.get_client('study')
+        study_client.set_options(retxml=True)  # Don't parse the study metadata; just give us the raw XML
+        resp = study_client.service.getMetadata({'identifier': self._study_id})
+        soap_env = etree.fromstring(resp)
+        nsmap = {
+            'SOAP-ENV': "http://schemas.xmlsoap.org/soap/envelope/",
+            'OC': "http://openclinica.org/ws/study/v1"
+        }
+        odm = soap_env.xpath('./SOAP-ENV:Body/OC:createResponse/OC:odm', namespaces=nsmap)[0]
+        return odm.text
+
+    def get_subject_keys(self):
+        subject_client = self.get_client('studySubject')
+        resp = subject_client.service.listAllByStudy({'identifier': self._study_id})
+        return [s.subject.uniqueIdentifier for s in resp.studySubjects.studySubject] if resp.studySubjects else []
+
+    def create_subject(self, subject):
+        subject_client = self.get_client('studySubject')
+        subject_data = {
+            'label': subject['study_subject_id'],
+            'enrollmentDate': str(subject['enrollment_date']),
+            'subject': {
+                'uniqueIdentifier': subject['subject_key'][3:],  # Drop the initial 'SS_'
+                'gender': {'1': 'm', '2': 'f'}[subject['sex']],
+                'dateOfBirth': str(subject['dob']),
+            },
+            'studyRef': {
+                'identifier': self._study_id,
+            },
+        }
+        resp = subject_client.service.create(subject_data)
+        if resp.result != 'Success':
+            raise OpenClinicaIntegrationError(
+                'Unable to register subject "{}" via OpenClinica webservice'.format(subject['subject_key'])
+            )
+
+    def schedule_event(self, subject, event):
+        event_client = self.get_client('event')
+        event_data = {
+            'studySubjectRef': {
+                'label': subject['study_subject_id'],
+            },
+            'studyRef': {
+                'identifier': self._study_id,
+            },
+            'eventDefinitionOID': event['study_event_oid'],
+            'startDate': event['start_long'].split()[0],  # e.g. 1999-12-31
+            'startTime': event['start_short'].split()[1],  # e.g. 23:59
+            'endDate': event['end_long'].split()[0],
+            'endTime': event['end_short'].split()[1],
+        }
+        resp = event_client.service.schedule(event_data)
+        if resp.result != 'Success':
+            raise OpenClinicaIntegrationError(
+                'Unable to schedule event "{}"  via OpenClinica webservice'.format(event['study_event_oid'])
+            )
+
+    def export_data(self, subject, event):
+        data_client = self.get_client('data')
+        raise NotImplemented
 
 
 class StudySettings(DocumentSchema):
@@ -331,7 +519,9 @@ class Subject(object):
                     eventslist.append({
                         'study_event_oid': oid,
                         'repeat_key': i + 1,
+                        'start_short': study_event.start_short,
                         'start_long': study_event.start_long,
+                        'end_short': study_event.end_short,
                         'end_long': study_event.end_long,
                         'forms': mkformslist(study_event.forms)
                     })

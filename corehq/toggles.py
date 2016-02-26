@@ -587,13 +587,6 @@ OPENCLINICA = StaticToggle(
     namespaces=[NAMESPACE_DOMAIN],
 )
 
-OPENCLINICA = StaticToggle(
-    'openclinica',
-    'Offer OpenClinica settings and CDISC ODM export',
-    TAG_UNKNOWN,
-    namespaces=[NAMESPACE_DOMAIN],
-)
-
 OPENLMIS = StaticToggle(
     'openlmis',
     'Offer OpenLMIS settings',
