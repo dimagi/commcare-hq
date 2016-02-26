@@ -26,6 +26,6 @@ def populate_export_download_task(export_instances, filters, download_id, filena
     export_file.file.delete()
 
 
-@task(queue='background_queue', ignore_result=True, last_access_cutoff=None, filter=None)
-def rebuild_export_task(export_instance):
-    rebuild_export(export_instance)
+@task(queue='background_queue', ignore_result=True)
+def rebuild_export_task(export_instance, last_access_cutoff=None, filter=None):
+    rebuild_export(export_instance, last_access_cutoff, filter)
