@@ -1,3 +1,4 @@
+from couchdbkit import ResourceNotFound
 from django.test import TestCase
 from corehq.apps.domain.shortcuts import create_domain
 from ..models import SQLLocation, Location
@@ -63,10 +64,13 @@ class TestLocationSync(TestCase):
         with self.assertRaises(SQLLocation.location_type.RelatedObjectDoesNotExist):
             Location(site_code="no-type", name="no-type", domain=DOMAIN).save()
 
-    #  def test_sync_sql_to_couch(self):
-        #  mass = sql_loc("Massachusetts", self.state)
-        #  suffolk = sql_loc("Suffolk", self.state, mass)
-        #  boston = sql_loc("Boston", self.state, suffolk)
+    def test_sync_sql_to_couch(self):
+        mass = sql_loc("Massachusetts", self.state)
+        suffolk = sql_loc("Suffolk", self.state, mass)
+        boston = sql_loc("Boston", self.state, suffolk)
 
-        #  for loc in [mass, suffolk, boston]:
-            #  self.assertLocationsEqual(loc, loc.couch_location)
+        for loc in [boston, suffolk, mass]:
+            self.assertLocationsEqual(loc, loc.couch_location)
+            loc.delete()
+            with self.assertRaises(ResourceNotFound):
+                Location.get(loc.location_id)

@@ -215,11 +215,11 @@ class OnlyUnarchivedLocationManager(LocationManager):
                 .filter(is_archived=False))
 
 
-class SQLLocation(MPTTModel):
+class SQLLocation(SyncSQLToCouchMixin, MPTTModel):
     domain = models.CharField(max_length=255, db_index=True)
     name = models.CharField(max_length=100, null=True)
     location_id = models.CharField(max_length=100, db_index=True, unique=True)
-    couch_id_name = "location_id"
+    couch_id_name = "location_id"  # Used for SyncSQLToCouchMixin
     location_type = models.ForeignKey(LocationType)
     site_code = models.CharField(max_length=255)
     external_id = models.CharField(max_length=255, null=True)
@@ -244,15 +244,33 @@ class SQLLocation(MPTTModel):
     # This should really be the default location manager
     active_objects = OnlyUnarchivedLocationManager()
 
+    @classmethod
+    def _migration_get_fields(cls):
+        return ["domain", "name", "lineage", "site_code", "external_id",
+                "metadata", "is_archived", "latitude", "longitude"]
+
+    @classmethod
+    def _migration_get_couch_model_class(cls):
+        return Location
+
+    def _migration_do_sync(self):
+        couch_obj = self._migration_get_or_create_couch_object()
+        couch_obj._sql_location_type = self.location_type
+        self._migration_sync_to_couch(couch_obj)
+
     def save(self, *args, **kwargs):
-        sync_to_couch = kwargs.pop('sync_to_couch', True)
         from corehq.apps.commtrack.models import sync_supply_point
         self.supply_point_id = sync_supply_point(self)
-        return super(SQLLocation, self).save(*args, **kwargs)
 
-    def delete(self, *args, **kwargs):
         sync_to_couch = kwargs.pop('sync_to_couch', True)
-        return super(SQLLocation, self).delete(*args, **kwargs)
+        kwargs['sync_to_couch'] = False  # call it here
+        super(SQLLocation, self).save(*args, **kwargs)
+        if sync_to_couch:
+            self._migration_do_sync()
+
+    @property
+    def lineage(self):
+        return list(self.get_ancestors(ascending=True).location_ids())
 
     @property
     def get_id(self):
@@ -396,9 +414,7 @@ class SQLLocation(MPTTModel):
 
     @property
     def path(self):
-        # This exists for backwards compatability with couch locations
-        return list(self.get_ancestors(include_self=True)
-                    .values_list('location_id', flat=True))
+        return reversed(self.lineage)
 
     @classmethod
     def by_location_id(cls, location_id):
