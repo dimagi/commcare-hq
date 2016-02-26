@@ -780,6 +780,9 @@ class GenericTabularReport(GenericReportView):
     charts_per_row = 1
     bad_request_error_text = None
 
+    # Sets bSort in the datatables instance to true/false (config.dataTables.bootstrap.js)
+    sortable = True
+
     # override old class properties
     report_template_path = "reports/async/bootstrap2/tabular.html"
     flush_layout = True
@@ -1024,7 +1027,8 @@ class GenericTabularReport(GenericReportView):
                 pagination=pagination_spec,
                 left_col=left_col,
                 datatables=self.use_datatables,
-                bad_request_error_text=self.bad_request_error_text
+                bad_request_error_text=self.bad_request_error_text,
+                sortable=self.sortable,
             ),
             charts=charts,
             chart_span=CHART_SPAN_MAP[self.charts_per_row]

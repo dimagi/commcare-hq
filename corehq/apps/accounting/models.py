@@ -27,20 +27,30 @@ from dimagi.utils.web import get_site_domain
 
 from corehq.apps.accounting.emails import send_subscription_change_alert
 from corehq.apps.accounting.exceptions import (
-    CreditLineError, AccountingError, SubscriptionAdjustmentError,
-    SubscriptionChangeError, NewSubscriptionError, InvoiceEmailThrottledError,
-    SubscriptionReminderError, SubscriptionRenewalError, ProductPlanNotFoundError,
+    AccountingError,
+    CreditLineError,
+    InvoiceEmailThrottledError,
+    NewSubscriptionError,
+    ProductPlanNotFoundError,
+    SubscriptionAdjustmentError,
+    SubscriptionChangeError,
+    SubscriptionReminderError,
+    SubscriptionRenewalError,
 )
 from corehq.apps.accounting.invoice_pdf import InvoiceTemplate
 from corehq.apps.accounting.signals import subscription_upgrade_or_downgrade
 from corehq.apps.accounting.subscription_changes import (
-    DomainDowngradeActionHandler, DomainUpgradeActionHandler,
+    DomainDowngradeActionHandler,
+    DomainUpgradeActionHandler,
 )
 from corehq.apps.accounting.utils import (
-    get_privileges, get_first_last_days,
-    get_address_from_invoice, get_dimagi_from_email_by_product,
-    fmt_dollar_amount, EXCHANGE_RATE_DECIMAL_PLACES,
-    ensure_domain_instance, get_change_status,
+    ensure_domain_instance,
+    EXCHANGE_RATE_DECIMAL_PLACES,
+    fmt_dollar_amount,
+    get_address_from_invoice,
+    get_change_status,
+    get_dimagi_from_email_by_product,
+    get_privileges,
     is_active_subscription,
     log_accounting_error,
     log_accounting_info,
@@ -50,6 +60,7 @@ from corehq.apps.domain.models import Domain
 from corehq.apps.hqwebapp.tasks import send_html_email_async
 from corehq.apps.users.models import WebUser
 from corehq.const import USER_DATE_FORMAT
+from corehq.util.dates import get_first_last_days
 from corehq.util.quickcache import quickcache
 from corehq.util.view_utils import absolute_reverse
 
@@ -1759,7 +1770,7 @@ class WireInvoice(InvoiceBase):
     def email_recipients(self):
         try:
             original_record = WireBillingRecord.objects.filter(invoice=self).order_by('-date_created')[0]
-            return original_record.emailed_to.split(',') if original_record.emailed_to else []
+            return original_record.recipients
         except IndexError:
             log_accounting_error(
                 "Strange that WireInvoice %d has no associated WireBillingRecord. "
@@ -1964,6 +1975,14 @@ class BillingRecordBase(models.Model):
     _pdf = None
 
     @property
+    def recipients(self):
+        return self.emailed_to.split(',') if self.emailed_to else []
+
+    @recipients.setter
+    def recipients(self, emails):
+        self.emailed_to = ','.join(emails)
+
+    @property
     def pdf(self):
         if self._pdf is None:
             return InvoicePdf.get(self.pdf_data_id)
@@ -2077,7 +2096,7 @@ class BillingRecordBase(models.Model):
                 email_from=email_from,
                 file_attachments=[pdf_attachment]
             )
-        self.emailed_to = ",".join(contact_emails)
+        self.recipients = contact_emails
         self.save()
         log_accounting_info(
             "Sent billing statements for domain %(domain)s to %(emails)s." % {

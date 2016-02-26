@@ -68,7 +68,7 @@ class WriterTest(SimpleTestCase):
             export_format=Format.JSON,
             tables=[
                 TableConfiguration(
-                    name="My table",
+                    label="My table",
                     columns=[
                         ExportColumn(
                             label="Q3",
@@ -93,7 +93,7 @@ class WriterTest(SimpleTestCase):
         with writer.open(export_instance.tables):
             _write_export_instance(writer, export_instance, self.docs)
 
-        with ExportFile(writer.path) as export:
+        with ExportFile(writer.path, writer.format) as export:
             self.assertEqual(
                 json.loads(export),
                 {
@@ -110,7 +110,7 @@ class WriterTest(SimpleTestCase):
             export_format=Format.JSON,
             tables=[
                 TableConfiguration(
-                    name="My table",
+                    label="My table",
                     path=[],
                     columns=[
                         ExportColumn(
@@ -123,7 +123,7 @@ class WriterTest(SimpleTestCase):
                     ]
                 ),
                 TableConfiguration(
-                    name="My other table",
+                    label="My other table",
                     path=['form', 'q2'],
                     columns=[
                         ExportColumn(
@@ -140,7 +140,7 @@ class WriterTest(SimpleTestCase):
         writer = _get_writer([export_instance])
         with writer.open(export_instance.tables):
             _write_export_instance(writer, export_instance, self.docs)
-        with ExportFile(writer.path) as export:
+        with ExportFile(writer.path, writer.format) as export:
             self.assertEqual(
                 json.loads(export),
                 {
@@ -166,7 +166,7 @@ class WriterTest(SimpleTestCase):
                 # export_format=Format.JSON,
                 tables=[
                     TableConfiguration(
-                        name="My table",
+                        label="My table",
                         path=[],
                         columns=[
                             ExportColumn(
@@ -184,7 +184,7 @@ class WriterTest(SimpleTestCase):
                 # export_format=Format.JSON,
                 tables=[
                     TableConfiguration(
-                        name="My other table",
+                        label="My other table",
                         path=['form', 'q2'],
                         columns=[
                             ExportColumn(
@@ -206,7 +206,7 @@ class WriterTest(SimpleTestCase):
             _write_export_instance(writer, export_instances[0], self.docs)
             _write_export_instance(writer, export_instances[1], self.docs)
 
-        with ExportFile(writer.path) as export:
+        with ExportFile(writer.path, writer.format) as export:
             self.assertEqual(
                 json.loads(export),
                 {
@@ -257,7 +257,7 @@ class ExportTest(SimpleTestCase):
                     domain=DOMAIN,
                     case_type=DEFAULT_CASE_TYPE,
                     tables=[TableConfiguration(
-                        name="My table",
+                        label="My table",
                         path=[],
                         columns=[
                             ExportColumn(
@@ -306,7 +306,7 @@ class ExportTest(SimpleTestCase):
                     domain=DOMAIN,
                     case_type=DEFAULT_CASE_TYPE,
                     tables=[TableConfiguration(
-                        name="My table",
+                        label="My table",
                         path=MAIN_TABLE,
                         columns=[
                             ExportColumn(
@@ -324,7 +324,7 @@ class ExportTest(SimpleTestCase):
                     domain=DOMAIN,
                     case_type=DEFAULT_CASE_TYPE,
                     tables=[TableConfiguration(
-                        name="My table",
+                        label="My table",
                         path=MAIN_TABLE,
                         columns=[
                             ExportColumn(

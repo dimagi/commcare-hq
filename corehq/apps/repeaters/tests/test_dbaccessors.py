@@ -79,6 +79,10 @@ class TestRepeatRecordDBAccessors(TestCase):
         records = get_paged_repeat_records(self.domain, 0, 10, state=RECORD_PENDING_STATE)
         self.assertEqual(len(records), 2)
 
+    def test_get_paged_repeat_records_wrong_domain(self):
+        records = get_paged_repeat_records('wrong-domain', 0, 2)
+        self.assertEqual(len(records), 0)
+
 
 class TestRepeatersDBAccessors(TestCase):
     dependent_apps = ['corehq.apps.repeaters', 'corehq.couchapps']

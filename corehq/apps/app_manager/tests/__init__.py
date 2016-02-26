@@ -21,6 +21,7 @@ try:
     from corehq.apps.app_manager.tests.test_days_ago_migration import *
     from corehq.apps.app_manager.tests.test_dbaccessors import *
     from corehq.apps.app_manager.tests.test_extension_case import *
+    from corehq.apps.app_manager.tests.test_filters import *
     from corehq.apps.app_manager.tests.test_form_preparation_v2 import *
     from corehq.apps.app_manager.tests.test_form_versioning import *
     from corehq.apps.app_manager.tests.test_form_workflow import *

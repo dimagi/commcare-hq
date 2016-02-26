@@ -18,7 +18,7 @@
 
 {% block main_column %}
     {% if adjust_balance_form %}
-    {% include 'accounting/adjust_balance.html' %}
+    {% include 'accounting/bootstrap2/adjust_balance.html' %}
     {% endif %}
 
     <div class="modal hide fade" id="resendEmailModal">
@@ -58,7 +58,7 @@
                     {% for billing_record in billing_records %}
                         <tr>
                             <td>{{ billing_record.date_created }}</td>
-                            <td>{{ billing_record.emailed_to }}</td>
+                            <td>{{ billing_record.email_recipients }}</td>
                             <td>
                                 <a href="{% url 'domain_billing_statement_download' billing_record.invoice.get_domain billing_record.pdf_data_id %}">
                                     View PDF

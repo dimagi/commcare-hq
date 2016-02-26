@@ -98,22 +98,6 @@ ko.bindingHandlers.casePropertyTypeahead = {
     }
 };
 
-ko.bindingHandlers.accordion = {
-    init: function(element, valueAccessor) {
-        var options = valueAccessor() || {};
-        $(element).accordion(options);
-
-        //handle disposal (if KO removes by the template binding)
-        ko.utils.domNodeDisposal.addDisposeCallback(element, function(){
-            $(element).accordion("destroy");
-        });
-    },
-    update: function(element, valueAccessor) {
-        var options = valueAccessor() || {};
-        $(element).accordion("destroy").accordion(options);
-    }
-};
-
 // Originally from http://stackoverflow.com/a/17998880
 ko.extenders.withPrevious = function (target) {
     // Define new properties for previous value and whether it's changed

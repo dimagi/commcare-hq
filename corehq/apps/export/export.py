@@ -2,7 +2,11 @@ import contextlib
 import os
 import tempfile
 
+from soil import DownloadBase
+
 from couchexport.export import FormattedRow, get_writer
+from couchexport.files import Temp
+from couchexport.models import Format
 from corehq.apps.export.esaccessors import (
     get_form_export_base_query,
     get_case_export_base_query,
@@ -11,14 +15,14 @@ from corehq.apps.export.models.new import (
     CaseExportInstance,
     FormExportInstance,
 )
-from couchexport.files import Temp
-from couchexport.models import Format
 
 
 class ExportFile(object):
+    # This is essentially coppied from couchexport.files.ExportFiles
 
-    def __init__(self, path):
+    def __init__(self, path, format):
         self.file = Temp(path)
+        self.format = format
 
     def __enter__(self):
         return self.file.payload
@@ -34,6 +38,7 @@ class _Writer(object):
     def __init__(self, writer):
         # An instance of a couchexport.ExportWriter
         self.writer = writer
+        self.format = writer.format
         self._path = None
 
     @contextlib.contextmanager
@@ -51,7 +56,7 @@ class _Writer(object):
 
             # open the ExportWriter
             headers = [(t, (t.get_headers(),)) for t in tables]
-            table_titles = {t: t.name for t in tables}
+            table_titles = {t: t.label for t in tables}
             self.writer.open(headers, file, table_titles=table_titles)
             yield
             self.writer.close()
@@ -101,6 +106,19 @@ def _get_tables(export_instances):
     return tables
 
 
+def get_export_download(export_instances, filters, filename=None):
+    from corehq.apps.export.tasks import populate_export_download_task
+
+    download = DownloadBase()
+    download.set_task(populate_export_download_task.delay(
+        export_instances,
+        filters,
+        download.download_id,
+        filename=filename
+    ))
+    return download
+
+
 def get_export_file(export_instances, filters):
     """
     Return an export file for the given ExportInstance and list of filters
@@ -114,7 +132,7 @@ def get_export_file(export_instances, filters):
             docs = _get_export_documents(export_instance, filters)
             _write_export_instance(writer, export_instance, docs)
 
-    return ExportFile(writer.path)
+    return ExportFile(writer.path, writer.format)
 
 
 def _get_export_documents(export_instance, filters):
