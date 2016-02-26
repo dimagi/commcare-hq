@@ -9,6 +9,7 @@ from django.http import HttpResponseRedirect, HttpResponseBadRequest, Http404
 from django.template.defaultfilters import filesizeformat
 
 from corehq.apps.export.export import get_export_download
+from corehq.apps.export.models.new import get_properly_wrapped_export_instance
 from django_prbac.utils import has_privilege
 from django.utils.decorators import method_decorator
 import json
@@ -1107,6 +1108,7 @@ class BaseExportListView(ExportsPermissionsMixin, JSONResponseMixin, BaseProject
     def update_emailed_es_export_data(self, in_data):
         from corehq.apps.export.tasks import rebuild_export_task
         export_instance_id = in_data['export']['id']
+        export_instance = get_properly_wrapped_export_instance(export_instance_id)
         rebuild_export_task.delay(export_instance_id)
         return format_angular_success({})
 
