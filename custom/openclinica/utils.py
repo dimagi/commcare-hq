@@ -1,12 +1,8 @@
 from __future__ import absolute_import
-from collections import defaultdict, namedtuple
+from collections import namedtuple
 from datetime import datetime, date, time
-import logging
 import re
 from lxml import etree
-import os
-from django.conf import settings
-from corehq.apps.app_manager.util import all_apps_by_domain
 from corehq.util.quickcache import quickcache
 from couchforms.models import XFormDeprecated
 
@@ -70,20 +66,28 @@ def get_question_item(domain, event_id, question):
 @quickcache(['domain'])
 def get_study_metadata_string(domain):
     """
-    Return the study metadata for the given domain as an XML string
+    Return the study metadata for the given domain as a string
+
+    Metadata is fetched from the OpenClinica web service
     """
-    from custom.openclinica.models import OpenClinicaSettings
+    from custom.openclinica.models import OpenClinicaAPI, OpenClinicaSettings
 
     oc_settings = OpenClinicaSettings.for_domain(domain)
     if oc_settings.study.is_ws_enabled:
-        raise NotImplementedError('Fetching study metadata using web services is not yet available')
+        api = OpenClinicaAPI(
+            oc_settings.study.url,
+            oc_settings.study.username,
+            oc_settings.study.password,
+            oc_settings.study.protocol_id
+        )
+        return api.get_study_metadata_string(oc_settings['STUDY'])
     else:
         return oc_settings.study.metadata
 
 
 def get_study_metadata(domain):
     """
-    Return the study metadata for the given domain as an ElementTree
+    Return the study metadata for the given domain as an XML element
     """
     # We can't cache an ElementTree instance. Split this function from get_study_metadata_string() to cache the
     # return value of get_study_metadata_string() when fetching via web service.
