@@ -551,7 +551,7 @@ def get_datasource_config(config_id, domain):
     is_static = config_id.startswith(StaticDataSourceConfiguration._datasource_id_prefix)
     if is_static:
         config = StaticDataSourceConfiguration.by_id(config_id)
-        if not config or config.domain != domain:
+        if config.domain != domain:
             _raise_not_found()
     else:
         try:
