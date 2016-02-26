@@ -1064,6 +1064,8 @@ INDICATOR_CONFIG = {
     "mvp-potou": ['mvp_indicators'],
 }
 
+COMPRESS_URL = STATIC_CDN + STATIC_URL
+
 ####### Couch Forms & Couch DB Kit Settings #######
 COUCH_DATABASE_NAME = helper.get_db_name(COUCH_DATABASE_NAME, UNIT_TESTING)
 _dynamic_db_settings = helper.get_dynamic_db_settings(
