@@ -546,7 +546,7 @@ class EditOpenClinicaSettingsView(BaseProjectSettingsView):
     @memoized
     def openclinica_settings_form(self):
         oc_settings = OpenClinicaSettings.for_domain(self.domain_object.name)
-        initial = oc_settings.study if oc_settings else {}
+        initial = dict(oc_settings.study) if oc_settings else {}
         if self.request.method == 'POST':
             return OpenClinicaSettingsForm(self.request.POST, initial=initial)
         return OpenClinicaSettingsForm(initial=initial)
