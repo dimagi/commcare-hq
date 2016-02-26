@@ -18,6 +18,7 @@ from celery.utils.log import get_task_logger
 
 from casexml.apps.case.xform import extract_case_blocks
 from casexml.apps.case.models import CommCareCase
+from corehq.apps.export.dbaccessors import get_all_daily_saved_export_instances
 from couchexport.files import Temp
 from couchexport.groupexports import export_for_group, rebuild_export
 from couchexport.tasks import cache_file_to_be_served
@@ -184,6 +185,11 @@ def monthly_reports():
 def saved_exports():
     for group_config in get_all_hq_group_export_configs():
         export_for_group_async.delay(group_config, 'couch')
+
+    for daily_saved_export in get_all_daily_saved_export_instances():
+        from corehq.apps.export.tasks import rebuild_export_task
+        last_access_cutoff = datetime.utcnow() - timedelta(days=settings.SAVED_EXPORT_ACCESS_CUTOFF)
+        rebuild_export_task.delay(daily_saved_export, last_access_cutoff)
 
 
 @task(queue='background_queue', ignore_result=True)
