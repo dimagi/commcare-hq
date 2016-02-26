@@ -2,22 +2,21 @@
 hqDefine('hqwebapp/js/keyboard_navigator.js', function () {
     var module = {};
 
-    module.keyboard_navigator_utils = {
-        focus_in_fn: function($ele) {
-            $ele.addClass('hovered');
-            $ele.trigger('mouseenter');
-            $ele.focus();
-        },
-        focus_out_fn: function($ele) {
-            if ($ele) {
-                $ele.removeClass('hovered');
-                $ele.trigger('mouseleave');
-                $ele.blur();
-            }
+    module.focus_in_fn = function($ele) {
+        $ele.addClass('hovered');
+        $ele.trigger('mouseenter');
+        $ele.focus();
+    };
+
+    module.focus_out_fn = function($ele) {
+        if ($ele) {
+            $ele.removeClass('hovered');
+            $ele.trigger('mouseleave');
+            $ele.blur();
         }
     };
     
-    module.KeyboardNavigator = function() {
+    module.model = function() {
         KEY.setScope('ready');
         var last_mover = '';
         var KeyboardNavigator = function() {
@@ -28,8 +27,8 @@ hqDefine('hqwebapp/js/keyboard_navigator.js', function () {
     
     
             self.init = function(options) {
-                self.focus_in_fn = options.focus_in_fn || module.keyboard_navigator_utils.focus_in_fn;
-                self.focus_out_fn = options.focus_out_fn || module.keyboard_navigator_utils.focus_out_fn;
+                self.focus_in_fn = options.focus_in_fn || module.focus_in_fn;
+                self.focus_out_fn = options.focus_out_fn || module.focus_out_fn;
                 self.action_fn = options.action_fn || self.action_fn;
                 self.start_fn = options.start_fn;
                 self.stop_fn = options.stop_fn;

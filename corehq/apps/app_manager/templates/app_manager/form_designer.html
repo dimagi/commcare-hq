@@ -142,7 +142,7 @@
 {% block keyboard_shortcuts %}
     <script>
         var nav_key = {{ request.couch_user.keyboard_shortcuts.main_key|JSON }};
-        var keyboardNavigator = hqImport('hqwebapp/js/keyboard_navigator.js');
+        var KeyboardNavigator = hqImport('hqwebapp/js/keyboard_navigator.js');
 
         // overrides default behavior and allows for shortcuts in inputs
         KEY.filter = function(event) {
@@ -152,7 +152,7 @@
         function gen_sidebar_elements() {
             return $('.sidebar .nav-hq-sidebar a:not(a:has(.fa-pencil))');
         }
-        var sidebar_navigator = new keyboardNavigator.KeyboardNavigator();
+        var sidebar_navigator = new KeyboardNavigator.model();
         sidebar_navigator.init({
             name: 'sidebar',
             nav_key: nav_key,
@@ -166,7 +166,7 @@
         function gen_question_tree_elements() {
             return $('.jstree-leaf:visible a, .jstree-open a, .jstree-closed a:first');
         }
-        var question_tree_navigator = new keyboardNavigator.KeyboardNavigator();
+        var question_tree_navigator = new KeyboardNavigator.model();
         question_tree_navigator.init({
             name: 'question tree',
             ready_scope: 'qt-ready',
@@ -184,7 +184,7 @@
         function gen_change_question_elements() {
             return $('.change-question');
         }
-        var change_question_navigator = new keyboardNavigator.KeyboardNavigator();
+        var change_question_navigator = new KeyboardNavigator.model();
         change_question_navigator.init({
             name: 'change question',
             ready_scope: 'cq-ready',
@@ -202,7 +202,7 @@
         function gen_tools_elements() {
             return $('.fd-form-actions li a');
         }
-        var tools_navigator = new keyboardNavigator.KeyboardNavigator();
+        var tools_navigator = new KeyboardNavigator.model();
         tools_navigator.init({
             name: 'tools',
             ready_scope: 'tools-ready',

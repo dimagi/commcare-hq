@@ -13,11 +13,11 @@
 {% block keyboard_shortcuts %}{{ block.super }}
     <script>
         var nav_key = {{ request.couch_user.keyboard_shortcuts.main_key|JSON }};
-        var keyboardNavigator = hqImport('hqwebapp/js/keyboard_navigator.js');
+        var KeyboardNavigator = hqImport('hqwebapp/js/keyboard_navigator.js');
         function gen_sidebar_elements() {
             return $('.sidebar .nav-list a');
         }
-        var sidebar_navigator = new keyboardNavigator.KeyboardNavigator();
+        var sidebar_navigator = new KeyboardNavigator.model();
         sidebar_navigator.init({
             name: 'sidebar',
             nav_key: nav_key,
@@ -31,7 +31,7 @@
         function gen_tab_elements() {
             return $("[data-toggle='tab']");
         }
-        var tab_navigator = new keyboardNavigator.KeyboardNavigator();
+        var tab_navigator = new KeyboardNavigator.model();
         tab_navigator.init({
             name: 'tabs',
             nav_key: nav_key,
