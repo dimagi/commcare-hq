@@ -99,6 +99,19 @@ hqDefine('style/includes/keyboard_shortcuts.html', function () {
         }
     ];
 
+    // When page finishes laoding, set up the shortcuts and add documentation to the modal
+    $(function() {
+        var $lookup = $('#keyboard-shortcuts-lookup');
+        _(module.shortcuts).each(function(s) {
+            KEY(s.shortcut, s.handler);
+            var $shortcut = $('<li>').append($('<span>').text(s.desc), ': ', $('<code>').text(s.shortcut));
+            $lookup.append($shortcut);
+        });
+        var element = $('#keyboard-shortcuts-config-form').get(0);
+        ko.cleanNode(element);
+        $(element).koApplyBindings(new KBConfigFormModel());
+    });
+
     {% if request.couch_user.keyboard_shortcuts.enabled %}
         var KeyboardNavigator = hqImport('hqwebapp/js/keyboard_navigator.js');
         var nav_key = {{ request.couch_user.keyboard_shortcuts.main_key|JSON }};
@@ -208,16 +221,6 @@ hqDefine('style/includes/keyboard_shortcuts.html', function () {
     function KBConfigFormModel() {
         this.enabled = ko.observable({{ request.couch_user.keyboard_shortcuts.enabled|JSON }});
     }
-
-    var $lookup = $('#keyboard-shortcuts-lookup');
-    _(module.shortcuts).each(function(s) {
-        KEY(s.shortcut, s.handler);
-        var $shortcut = $('<li>').append($('<span>').text(s.desc), ': ', $('<code>').text(s.shortcut));
-        $lookup.append($shortcut);
-    });
-    var element = $('#keyboard-shortcuts-config-form').get(0);
-    ko.cleanNode(element);
-    $(element).koApplyBindings(new KBConfigFormModel());
 
     return module;
 });
