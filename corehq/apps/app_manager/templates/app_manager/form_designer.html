@@ -222,7 +222,8 @@
             return false;
         }
 
-        KEYBOARD_SHORTCUTS = KEYBOARD_SHORTCUTS.concat([
+        var KeyboardShortcuts = hqImport('style/includes/keyboard_shortcuts.html');
+        KeyboardShortcuts.shortcuts = KeyboardShortcuts.shortcuts.concat([
             {
                 shortcut: nav_key + "+s",
                 handler: KS.gen_click_fn("#settings-save-btn .btn, .fd-save-button .btn"),

@@ -76,7 +76,8 @@
             return true;
         };
 
-        KEYBOARD_SHORTCUTS.push({
+        var KeyboardShortcuts = hqImport('style/includes/keyboard_shortcuts.html');
+        KeyboardShortcuts.shortcuts.push({
             shortcut: nav_key + "+s",
             handler: KS.gen_click_fn("#settings-save-btn .btn, #fd-save-button .btn"),
             desc: "Save application"
