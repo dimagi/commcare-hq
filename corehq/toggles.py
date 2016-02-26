@@ -6,12 +6,12 @@ import math
 from toggle.shortcuts import toggle_enabled, set_toggle
 
 Tag = namedtuple('Tag', 'name css_class')
-TAG_ONE_OFF = Tag(name='One-Off', css_class='important')
+TAG_ONE_OFF = Tag(name='One-Off', css_class='danger')
 TAG_EXPERIMENTAL = Tag(name='Experimental', css_class='warning')
 TAG_PRODUCT_PATH = Tag(name='Product Path', css_class='info')
 TAG_PRODUCT_CORE = Tag(name='Core Product', css_class='success')
 TAG_PREVIEW = Tag(name='Preview', css_class='default')
-TAG_UNKNOWN = Tag(name='Unknown', css_class='inverse')
+TAG_UNKNOWN = Tag(name='Unknown', css_class='default')
 ALL_TAGS = [TAG_ONE_OFF, TAG_EXPERIMENTAL, TAG_PRODUCT_PATH, TAG_PRODUCT_CORE, TAG_PREVIEW, TAG_UNKNOWN]
 
 
@@ -174,13 +174,6 @@ APP_AWARE_SYNC = StaticToggle(
     'App-aware Sync',
     TAG_PRODUCT_PATH,
     [NAMESPACE_DOMAIN]
-)
-
-BOOTSTRAP3_PREVIEW = StaticToggle(
-    'bootstrap3_preview',
-    'Bootstrap 3 Preview',
-    TAG_PRODUCT_PATH,
-    [NAMESPACE_USER]
 )
 
 CASE_LIST_CUSTOM_XML = StaticToggle(

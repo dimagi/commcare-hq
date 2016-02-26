@@ -2095,6 +2095,7 @@ class DomainForwardingRepeatRecords(GenericTabularReport):
     ajax_pagination = True
     asynchronous = False
     is_bootstrap3 = True
+    sortable = False
 
     fields = [
         'corehq.apps.reports.filters.select.RepeaterFilter',
@@ -2180,8 +2181,9 @@ class DomainForwardingRepeatRecords(GenericTabularReport):
         return map(
             lambda record: [
                 self._make_state_label(record),
-                record.url,
-                record.next_check.strftime('%b %m, %Y %H:%M') if record.next_check else None,
+                record.url if record.url else _(u'Unable to generate url for record'),
+                record.next_check.strftime('%b %d, %Y %H:%M') if record.next_check else None,
+                record.failure_reason if not record.succeeded else None,
                 self._make_view_payload_button(record.get_id),
                 self._make_resend_payload_button(record.get_id),
             ],
@@ -2194,6 +2196,7 @@ class DomainForwardingRepeatRecords(GenericTabularReport):
             DataTablesColumn('Status'),
             DataTablesColumn('URL'),
             DataTablesColumn('Retry Date'),
+            DataTablesColumn('Failure Reason'),
             DataTablesColumn('View payload'),
             DataTablesColumn('Resend'),
         )
@@ -2820,6 +2823,11 @@ class PublicSMSRatesView(BasePageView, AsyncHandlerMixin):
     page_title = ugettext_lazy("SMS Rate Calculator")
     template_name = 'domain/admin/global_sms_rates.html'
     async_handlers = [PublicSMSRatesAsyncHandler]
+
+    @use_bootstrap3
+    @use_select2
+    def dispatch(self, request, *args, **kwargs):
+        return super(PublicSMSRatesView, self).dispatch(request, *args, **kwargs)
 
     @property
     def page_url(self):

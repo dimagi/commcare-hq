@@ -160,6 +160,7 @@ class TestCaseHierarchy(TestCase):
     def setUp(self):
         delete_all_cases()
 
+    @run_with_all_backends
     def test_normal_index(self):
         factory = CaseFactory()
         [cp] = factory.create_or_update_case(
@@ -177,6 +178,7 @@ class TestCaseHierarchy(TestCase):
         self.assertEqual(2, len(hierarchy['case_list']))
         self.assertEqual(1, len(hierarchy['child_cases']))
 
+    @run_with_all_backends
     def test_extension_index(self):
         factory = CaseFactory()
         [case] = factory.create_or_update_case(
@@ -202,6 +204,7 @@ class TestCaseHierarchy(TestCase):
         self.assertEqual(2, len(hierarchy['case_list']))
         self.assertEqual(1, len(hierarchy['child_cases']))
 
+    @run_with_all_backends
     def test_recursive_indexes(self):
         factory = CaseFactory()
         [case] = factory.create_or_update_case(CaseStructure(
@@ -215,6 +218,7 @@ class TestCaseHierarchy(TestCase):
         hierarchy = get_case_hierarchy(case, {})
         self.assertEqual(1, len(hierarchy['case_list']))
 
+    @run_with_all_backends
     def test_complex_index(self):
         factory = CaseFactory()
         cp = factory.create_or_update_case(CaseStructure(case_id='parent', attrs={'case_type': 'parent'}))[0]

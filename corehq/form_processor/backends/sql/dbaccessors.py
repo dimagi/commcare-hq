@@ -3,13 +3,14 @@ from itertools import groupby
 from datetime import datetime
 
 from django.db import connections, InternalError, transaction
-from corehq.form_processor.exceptions import XFormNotFound, CaseNotFound, AttachmentNotFound, CaseSaveError
+from corehq.form_processor.exceptions import XFormNotFound, CaseNotFound, AttachmentNotFound, CaseSaveError, \
+    LedgerSaveError
 from corehq.form_processor.interfaces.dbaccessors import AbstractCaseAccessor, AbstractFormAccessor, \
     CaseIndexInfo, AttachmentContent
 from corehq.form_processor.models import (
     XFormInstanceSQL, CommCareCaseIndexSQL, CaseAttachmentSQL, CaseTransaction,
     CommCareCaseSQL, XFormAttachmentSQL, XFormOperationSQL,
-    CommCareCaseIndexSQL_DB_TABLE, CaseAttachmentSQL_DB_TABLE)
+    CommCareCaseIndexSQL_DB_TABLE, CaseAttachmentSQL_DB_TABLE, LedgerValue, LedgerValue_DB_TABLE)
 from corehq.form_processor.utils.sql import fetchone_as_namedtuple, fetchall_as_namedtuple, case_adapter, \
     case_transaction_adapter, case_index_adapter, case_attachment_adapter
 from corehq.sql_db.routers import db_for_read_write
@@ -315,7 +316,14 @@ class CaseAccessorSQL(AbstractCaseAccessor):
 
     @staticmethod
     def get_reverse_indices(case_id):
-        return list(CommCareCaseIndexSQL.objects.raw('SELECT * FROM get_case_indices_reverse(%s)', [case_id]))
+        indices = list(CommCareCaseIndexSQL.objects.raw('SELECT * FROM get_case_indices_reverse(%s)', [case_id]))
+
+        def _set_referenced_id(index):
+            # see corehq/couchapps/case_indices/views/related/map.js
+            index.referenced_id = index.case_id
+            return index
+
+        return [_set_referenced_id(index) for index in indices]
 
     @staticmethod
     def get_all_reverse_indices_info(domain, case_ids):
@@ -378,8 +386,8 @@ class CaseAccessorSQL(AbstractCaseAccessor):
 
     @staticmethod
     def get_attachment_content(case_id, attachment_id):
-        meta = CaseAccessorSQL.get_attachment_by_name(case_id, attachment_id)
-        return AttachmentContent(meta.content_type, meta.read_content(steam=True))
+        meta = CaseAccessorSQL.get_attachment_by_identifier(case_id, attachment_id)
+        return AttachmentContent(meta.content_type, meta.read_content(stream=True))
 
     @staticmethod
     def get_attachments(case_id):
@@ -555,6 +563,61 @@ class CaseAccessorSQL(AbstractCaseAccessor):
             )
             results = fetchall_as_namedtuple(cursor)
             return dict((result.case_id, result.server_modified_on) for result in results)
+
+    @staticmethod
+    def get_case_by_external_id(domain, external_id, case_type=None):
+        try:
+            return CommCareCaseSQL.objects.raw(
+                'SELECT * FROM get_case_by_external_id(%s, %s, %s)',
+                [domain, external_id, case_type]
+            )[0]
+        except IndexError:
+            raise CaseNotFound
+
+    @staticmethod
+    def get_case_by_domain_hq_user_id(domain, user_id, case_type):
+        try:
+            return CaseAccessorSQL.get_case_by_external_id(domain, user_id, case_type)
+        except CaseNotFound:
+            return None
+
+
+class LedgerAccessorSQL(object):
+    @staticmethod
+    def get_ledger_values_for_case(case_id):
+        return list(LedgerValue.objects.raw(
+            'SELECT * FROM get_ledger_values_for_case(%s)',
+            [case_id]
+        ))
+
+    @staticmethod
+    def get_ledger_value(case_id, section_id, entry_id):
+        try:
+            return LedgerValue.objects.raw(
+                'SELECT * FROM get_ledger_value(%s, %s, %s)',
+                [case_id, section_id, entry_id]
+            )[0]
+        except IndexError:
+            raise LedgerValue.DoesNotExist
+
+    @staticmethod
+    def save_ledger_values(ledger_values):
+        if not ledger_values:
+            return
+
+        case_ids = [lv.case_id for lv in ledger_values]
+
+        for ledger in ledger_values:
+            ledger.last_modified = datetime.utcnow()
+
+        with get_cursor(LedgerValue) as cursor:
+            try:
+                cursor.execute(
+                    "SELECT save_ledger_values(%s, %s::{}[])".format(LedgerValue_DB_TABLE),
+                    [case_ids, ledger_values]
+                )
+            except InternalError as e:
+                raise LedgerSaveError(e)
 
 
 def _order_list(id_list, object_list, id_property):

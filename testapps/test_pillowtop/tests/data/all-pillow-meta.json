@@ -183,7 +183,7 @@
         "document_class": "CommCareCase",
         "extra_args": {
             "doc_type": "CommCareCase",
-            "domains": "pathways-india-mis pathways-tanzania"
+            "domains": "pathways-india-mis pathways-tanzania care-macf-malawi"
         },
         "full_class_name": "custom.care_pathways.models.FarmerRecordFluffPillow",
         "include_docs": false,
@@ -212,7 +212,7 @@
         "document_class": "CommCareCase",
         "extra_args": {
             "doc_type": "CommCareCase",
-            "domains": "pathways-india-mis pathways-tanzania"
+            "domains": "pathways-india-mis pathways-tanzania care-macf-malawi"
         },
         "full_class_name": "custom.care_pathways.models.GeographyFluffPillow",
         "include_docs": false,

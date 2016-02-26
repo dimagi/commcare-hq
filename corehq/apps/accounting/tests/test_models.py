@@ -5,6 +5,8 @@ import mock
 from django.core import mail
 from corehq.apps.domain.models import Domain
 
+from dimagi.utils.dates import add_months_to_date
+
 from corehq.apps.accounting import generator, tasks
 from corehq.apps.accounting.generator import FakeStripeCard, FakeStripeCustomer
 from corehq.apps.accounting.models import (
@@ -22,7 +24,7 @@ from corehq.apps.smsbillables.models import (
     SmsBillable,
 )
 from corehq.apps.accounting.tests.base_tests import BaseAccountingTest
-from corehq.apps.accounting.utils import get_previous_month_date_range
+from corehq.util.dates import get_previous_month_date_range
 
 
 class TestBillingAccount(BaseAccountingTest):
@@ -79,8 +81,15 @@ class TestSubscription(BaseAccountingTest):
         self.domain.save()
         self.currency = generator.init_default_currency()
         self.account = generator.billing_account(self.dimagi_user, self.billing_contact)
-        self.subscription, self.subscription_length = generator.generate_domain_subscription_from_date(
-            datetime.date.today(), self.account, self.domain.name
+
+        self.subscription_length = 15  # months
+        subscription_start_date = datetime.date(2016, 2, 23)
+        subscription_end_date = add_months_to_date(subscription_start_date, self.subscription_length)
+        self.subscription = generator.generate_domain_subscription(
+            self.account,
+            self.domain,
+            date_start=subscription_start_date,
+            date_end=subscription_end_date,
         )
 
     def test_creation(self):
@@ -123,13 +132,17 @@ class TestSubscription(BaseAccountingTest):
 
     def test_next_subscription(self):
         this_subscription_date_end = self.subscription.date_end
-        already_canceled_future_subscription, _ = generator.generate_domain_subscription_from_date(
-            this_subscription_date_end, self.account, self.domain.name,
-            subscription_length=0
+        already_canceled_future_subscription = generator.generate_domain_subscription(  # noqa
+            self.account,
+            self.domain,
+            date_start=this_subscription_date_end,
+            date_end=this_subscription_date_end
         )
-        next_future_subscription, _ = generator.generate_domain_subscription_from_date(
-            this_subscription_date_end, self.account, self.domain.name,
-            subscription_length=1
+        next_future_subscription = generator.generate_domain_subscription(
+            self.account,
+            self.domain,
+            date_start=this_subscription_date_end,
+            date_end=add_months_to_date(this_subscription_date_end, 1),
         )
         self.assertEqual(self.subscription.next_subscription, next_future_subscription)
 
@@ -154,8 +167,15 @@ class TestBillingRecord(BaseAccountingTest):
         self.invoice_start, self.invoice_end = get_previous_month_date_range()
         self.currency = generator.init_default_currency()
         self.account = generator.billing_account(self.dimagi_user, self.billing_contact)
-        self.subscription, self.subscription_length = generator.generate_domain_subscription_from_date(
-            datetime.date.today(), self.account, self.domain.name
+
+        self.subscription_length = 4  # months
+        subscription_start_date = datetime.date(2016, 2, 23)
+        subscription_end_date = add_months_to_date(subscription_start_date, self.subscription_length)
+        self.subscription = generator.generate_domain_subscription(
+            self.account,
+            self.domain,
+            date_start=subscription_start_date,
+            date_end=subscription_end_date,
         )
         self.invoice = Invoice(
             subscription=self.subscription,

@@ -13,7 +13,7 @@ In order to continue, switch into your code root (and virtual environment if
 you have one), and do the following:
 
 git fetch origin
-git checkout -b {{ tag_name }}-tmp {{ tag_name }}
+git checkout {{ tag_name }}
 git submodule update --init --recursive
 find . -name "*.pyc" -delete # (linux command to delete .pyc files - adjust appropriately for your platform)
 {% for command in commands %}python manage.py {{ command }}
@@ -79,5 +79,15 @@ def assert_domain_default_backend_migration_complete(apps, schema_editor):
             [MigrationStatus.MIGRATION_DOMAIN_DEFAULT_BACKEND],
             'domain-default-backend-messaging-migration',
             ['migrate_domain_default_backend']
+        )
+    )
+
+
+def assert_log_migration_complete(apps, schema_editor):
+    assert_messaging_migration_complete(
+        MigrationInfo(
+            [MigrationStatus.MIGRATION_LOGS],
+            'logs-messaging-migration',
+            ['migrate_logs_to_sql']
         )
     )

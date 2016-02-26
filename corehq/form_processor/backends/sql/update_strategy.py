@@ -106,6 +106,10 @@ class SqlCaseUpdateStrategy(UpdateStrategy):
             elif key not in const.CASE_TAGS:
                 self.case.case_json[key] = value
 
+            if key == 'hq_user_id':
+                # also save hq_user_id to external_id
+                self.case.external_id = value
+
     def _apply_index_action(self, action):
         if not action.indices:
             return
@@ -164,6 +168,9 @@ class SqlCaseUpdateStrategy(UpdateStrategy):
     def _reset_case_state(self):
         """
         Clear known case properties, and all dynamic properties
+        Note: does not alter case indices or attachments. For indices this isn't an issue
+        since we only allow creating indices at case creation (via the app builder) and also
+        don't support optionally creating indices.
         """
         self.case.case_json = {}
         self.case.deleted = False
@@ -179,7 +186,6 @@ class SqlCaseUpdateStrategy(UpdateStrategy):
         self.case.opened_by = None
 
     def rebuild_from_transactions(self, transactions, rebuild_transaction):
-        # TODO: handle case indices
         self._reset_case_state()
 
         real_transactions = []

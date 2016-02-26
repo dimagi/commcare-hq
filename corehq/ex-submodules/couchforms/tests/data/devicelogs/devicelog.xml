@@ -40,4 +40,26 @@
       <msg>login|ricatla|428d454aa9abc74e1964e16d3565d6b6</msg>
     </log>
   </log_subreport>
+  <user_error_subreport version="1">
+    <user_error date="2016-01-06T17:32:51.232-05">
+      <type>error-config</type>
+      <user_id>428d454aa9abc74e1964e16d3565d6b6</user_id>
+      <msg>XPath evaluation: /data/fake</msg>
+      <session></session>
+      <version>102</version>
+      <app_id>36c0bdd028d14a52cbff95bb1bfd0962</app_id>
+      <expr></expr>
+    </user_error>
+    <user_error date="2016-01-06T17:47:10.193-05">
+      <type>error-config</type>
+      <user_id>428d454aa9abc74e1964e16d3565d6b6</user_id>
+      <msg>The problem was located in /data/fake
+          XPath evaluation: you messed up some types or something
+      </msg>
+      <session>frame: (COMMAND_ID m2) \ (COMMAND_ID m2-f1)</session>
+      <version>604</version>
+      <app_id>36c0bdd028d14a52cbff95bb1bfd0962</app_id>
+      <expr>/data/fake</expr>
+    </user_error>
+  </user_error_subreport>
 </device_report>

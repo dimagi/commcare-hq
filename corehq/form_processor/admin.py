@@ -10,4 +10,9 @@ class XFormInstanceSQLAdmin(admin.ModelAdmin):
     list_filter = ('domain',)
     ordering = ('received_on',)
 
-admin.site.register(CommCareCaseSQL)
+@admin.register(CommCareCaseSQL)
+class CommCareCaseSQLAdmin(admin.ModelAdmin):
+    date_hierarchy = 'server_modified_on'
+    list_display = ('case_id', 'domain', 'type', 'name', 'server_modified_on')
+    list_filter = ('domain', 'closed', 'type')
+    ordering = ('server_modified_on',)

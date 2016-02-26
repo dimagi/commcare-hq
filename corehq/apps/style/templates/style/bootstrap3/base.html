@@ -18,6 +18,28 @@
               href="{% url 'osdd' %}"
               title="CommCare HQ" />
 
+        {% if less_debug %}
+            <link type="text/less"
+                  rel="stylesheet"
+                  media="all"
+                  href="{% new_static 'style/less/bootstrap.debug.less' %}" />
+            <link type="text/less"
+                  rel="stylesheet"
+                  media="all"
+                  href="{% new_static 'font-awesome/less/font-awesome.less' %}" />
+            <link type="text/less"
+                  rel="stylesheet"
+                  media="all"
+                  href="{% new_static 'style/less/font-commcare.less' %}" />
+            <link type="text/less"
+                  rel="stylesheet"
+                  media="all"
+                  href="{% new_static 'style/less/style.debug.less' %}" />
+            <link type="text/less"
+                  rel="stylesheet"
+                  media="all"
+                  href="{% new_static 'style/less/b3-migration.debug.less' %}" />
+        {% else %}
         {% compress css %}
             <link type="text/less"
                   rel="stylesheet"
@@ -35,14 +57,12 @@
                   rel="stylesheet"
                   media="all"
                   href="{% new_static 'style/less/style.less' %}" />
-        {% endcompress %}
-
-        {% compress css %}
             <link type="text/less"
                   rel="stylesheet"
                   media="all"
                   href="{% new_static 'style/less/b3-migration.less' %}" />
         {% endcompress %}
+        {% endif %}
 
         {% block stylesheets %}{% endblock stylesheets %}
 
@@ -76,7 +96,6 @@
                   href="{% new_static "hqwebapp/js/lib/jquery-ui/multiselect/ui.multiselect.css" %}" />
         {% endcompress %}
         {% endif %}
-
 
         {% if request.use_nvd3 %}
         {% compress css %}
@@ -144,14 +163,12 @@
             <script src="{% new_static 'jquery-ui/ui/position.js' %}"></script>
 
             <!-- Individual widgets and interactions -->
-            <script src="{% new_static 'jquery-ui/ui/accordion.js' %}"></script><!-- TODO: kill & replace with bootstrap -->
             <script src="{% new_static 'jquery-ui/ui/menu.js' %}"></script>
             <script src="{% new_static 'jquery-ui/ui/autocomplete.js' %}"></script>
             <script src="{% new_static 'jquery-ui/ui/button.js' %}"></script>
             <script src="{% new_static 'jquery-ui/ui/datepicker.js' %}"></script>
             <script src="{% new_static 'jquery-ui/ui/draggable.js' %}"></script>
             <script src="{% new_static 'jquery-ui/ui/resizable.js' %}"></script>
-            <script src="{% new_static 'jquery-ui/ui/dialog.js' %}"></script><!-- TODO: kill & replace with bootstrap -->
             <script src="{% new_static 'jquery-ui/ui/droppable.js' %}"></script>
             <script src="{% new_static 'jquery-ui/ui/sortable.js' %}"></script>
         {% endcompress %}
@@ -322,7 +339,8 @@
         <script type="text/javascript" src="{% new_static 'style/js/layout.js' %}"></script>
         <script type="text/javascript" src="{% new_static 'style/js/form_tools.js' %}"></script>
         <script type="text/javascript" src="{% new_static 'style/js/hq.helpers.js' %}"></script>
-        <script type="text/javascript" src="{% new_static 'style/js/commcarehq.js' %}"></script>
+        <script type="text/javascript" src="{% new_static 'style/js/bootstrap3/main.js' %}"></script>
+        <script type="text/javascript" src="{% new_static 'hqwebapp/js/hqModules.js' %}"></script>
         {% endcompress %}
 
         <script type="text/javascript">
@@ -357,9 +375,7 @@
         </script>
         {% endif %}
 
-        {% compress js %}
         {% include "style/includes/bootstrap3/ko.html" %}
-        {% endcompress %}
 
         <script type="text/javascript">
             /*
@@ -375,10 +391,10 @@
                 var alert_obj = {
                     "message": message,
                     "alert_class": "alert fade in alert-block alert-full page-level-alert"
-                }
+                };
                 if (tags) {
                     alert_obj.alert_class += " " + tags;
-                };
+                }
                 return alert_obj;
             }
             var message_alerts = ko.observableArray();
@@ -390,7 +406,7 @@
             var message_element = $("#message-alerts").get(0);
             ko.cleanNode(message_element);
             $(message_element).koApplyBindings({
-                alerts: message_alerts,
+                alerts: message_alerts
             });
 
         </script>
@@ -469,7 +485,7 @@
         </script>
         <![endif]-->
         
-        {# todo keyboard shortcuts #}
+        {% include 'style/includes/keyboard_shortcuts.html' %}
 
         {% block js-inline %}{% endblock js-inline %}
 

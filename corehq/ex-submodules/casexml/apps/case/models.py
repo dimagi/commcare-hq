@@ -223,17 +223,6 @@ class CommCareCase(SafeSaveDocument, IndexHoldingMixIn, ComputedDocumentMixin,
         self.doc_type += DELETED_SUFFIX
         self.save()
 
-    def to_full_dict(self):
-        """
-        Include calculated properties that need to be available to the case
-        details display by overriding this method.
-
-        """
-        json = self.to_json()
-        json['status'] = _('Closed') if self.closed else _('Open')
-
-        return json
-
     def get_json(self, lite=False):
         ret = {
             # actions excluded here
@@ -374,8 +363,8 @@ class CommCareCase(SafeSaveDocument, IndexHoldingMixIn, ComputedDocumentMixin,
         Gets the form docs associated with a case. If it can't find a form
         it won't be included.
         """
-        forms = iter_docs(self.get_db(), self.xform_ids)
-        return [XFormInstance(form) for form in forms]
+        from couchforms.dbaccessors import get_forms_by_id
+        return get_forms_by_id(self.xform_ids)
 
     def get_attachment(self, attachment_name):
         return self.fetch_attachment(attachment_name)
@@ -398,91 +387,6 @@ class CommCareCase(SafeSaveDocument, IndexHoldingMixIn, ComputedDocumentMixin,
         self.server_modified_on = datetime.utcnow()
         super(CommCareCase, self).save(**params)
         case_post_save.send(CommCareCase, case=self)
-
-    # The following methods involving display configuration should probably go
-    # in their own layer, but for now it seems fine.
-    @classmethod
-    def get_display_config(cls):
-        return [
-            {
-                "layout": [
-                    [
-                        {
-                            "expr": "name",
-                            "name": _("Name"),
-                        },
-                        {
-                            "expr": "opened_on",
-                            "name": _("Opened On"),
-                            "parse_date": True,
-                            'is_phone_time': True,
-                        },
-                        {
-                            "expr": "modified_on",
-                            "name": _("Modified On"),
-                            "parse_date": True,
-                            "is_phone_time": True,
-                        },
-                        {
-                            "expr": "closed_on",
-                            "name": _("Closed On"),
-                            "parse_date": True,
-                            "is_phone_time": True,
-                        },
-                    ],
-                    [
-                        {
-                            "expr": "type",
-                            "name": _("Case Type"),
-                            "format": '<code>{0}</code>',
-                        },
-                        {
-                            "expr": "user_id",
-                            "name": _("Last Submitter"),
-                            "process": 'doc_info',
-                        },
-                        {
-                            "expr": "owner_id",
-                            "name": _("Owner"),
-                            "process": 'doc_info',
-                        },
-                        {
-                            "expr": "_id",
-                            "name": _("Case ID"),
-                        },
-                    ],
-                ],
-            }
-        ]
-
-    @property
-    def related_cases_columns(self):
-        return [
-            {
-                'name': _('Status'),
-                'expr': "status"
-            },
-            {
-                'name': _('Case Type'),
-                'expr': "type",
-            },
-            {
-                'name': _('Date Opened'),
-                'expr': "opened_on",
-                'parse_date': True,
-                "is_phone_time": True,
-            },
-            {
-                'name': _('Date Modified'),
-                'expr': "modified_on",
-                'parse_date': True,
-                "is_phone_time": True,
-            }
-        ]
-
-    @property
-    def related_type_info(self):
-        return None
 
 
 # import signals

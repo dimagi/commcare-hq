@@ -12,6 +12,8 @@ class AbstractXFormInstance(object):
     # def form_id(self):
     #     raise NotImplementedError()
 
+    user_id = None
+
     @property
     def attachments(self):
         """

@@ -98,7 +98,7 @@ class KafkaChangeFeed(ChangeFeed):
 
     def get_latest_change_id(self):
         topic = self._get_single_topic_or_fail()
-        return self.get_current_offsets()[topic]
+        return self.get_current_offsets().get(topic)
 
     def _get_consumer(self, timeout, auto_offset_reset='smallest'):
         config = {

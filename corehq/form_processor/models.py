@@ -21,7 +21,7 @@ from lxml import etree
 from uuidfield import UUIDField
 
 from corehq.blobs import get_blob_db
-from corehq.blobs.exceptions import NotFound
+from corehq.blobs.exceptions import NotFound, BadName
 from corehq.form_processor.exceptions import InvalidAttachment
 from corehq.form_processor.track_related import TrackRelatedChanges
 from corehq.sql_db.routers import db_for_read_write
@@ -44,6 +44,7 @@ CommCareCaseSQL_DB_TABLE = 'form_processor_commcarecasesql'
 CommCareCaseIndexSQL_DB_TABLE = 'form_processor_commcarecaseindexsql'
 CaseAttachmentSQL_DB_TABLE = 'form_processor_caseattachmentsql'
 CaseTransaction_DB_TABLE = 'form_processor_casetransaction'
+LedgerValue_DB_TABLE = 'form_processor_ledgervalue'
 
 
 class Attachment(namedtuple('Attachment', 'name raw_content content_type')):
@@ -142,13 +143,13 @@ class XFormInstanceSQL(DisabledDbMixin, models.Model, RedisLockableMixIn, Attach
     objects = RestrictedManager()
 
     # states should be powers of 2
-    NORMAL = 0
-    ARCHIVED = 1
-    DEPRECATED = 2
-    DUPLICATE = 4
-    ERROR = 8
-    SUBMISSION_ERROR_LOG = 16
-    DELETED = 32
+    NORMAL = 1
+    ARCHIVED = 2
+    DEPRECATED = 4
+    DUPLICATE = 8
+    ERROR = 16
+    SUBMISSION_ERROR_LOG = 32
+    DELETED = 64
     STATES = (
         (NORMAL, 'normal'),
         (ARCHIVED, 'archived'),
@@ -325,6 +326,7 @@ class XFormInstanceSQL(DisabledDbMixin, models.Model, RedisLockableMixIn, Attach
 
     class Meta:
         db_table = XFormInstanceSQL_DB_TABLE
+        app_label = "form_processor"
 
 
 class AbstractAttachment(DisabledDbMixin, models.Model, SaveStateMixin):
@@ -354,7 +356,7 @@ class AbstractAttachment(DisabledDbMixin, models.Model, SaveStateMixin):
         db = get_blob_db()
         try:
             blob = db.get(self.blob_id, self._blobdb_bucket())
-        except (KeyError, NotFound):
+        except (KeyError, NotFound, BadName):
             raise AttachmentNotFound(self.name)
 
         if stream:
@@ -379,6 +381,7 @@ class AbstractAttachment(DisabledDbMixin, models.Model, SaveStateMixin):
 
     class Meta:
         abstract = True
+        app_label = "form_processor"
 
 
 class XFormAttachmentSQL(AbstractAttachment, IsImageMixin):
@@ -392,6 +395,7 @@ class XFormAttachmentSQL(AbstractAttachment, IsImageMixin):
 
     class Meta:
         db_table = XFormAttachmentSQL_DB_TABLE
+        app_label = "form_processor"
 
 
 class XFormOperationSQL(DisabledDbMixin, models.Model):
@@ -410,6 +414,7 @@ class XFormOperationSQL(DisabledDbMixin, models.Model):
         return self.user_id
 
     class Meta:
+        app_label = "form_processor"
         db_table = XFormOperationSQL_DB_TABLE
 
 
@@ -504,6 +509,7 @@ class CommCareCaseSQL(DisabledDbMixin, models.Model, RedisLockableMixIn,
         return dt
 
     @property
+    @memoized
     def xform_ids(self):
         from corehq.form_processor.backends.sql.dbaccessors import CaseAccessorSQL
         return CaseAccessorSQL.get_case_xform_ids(self.case_id)
@@ -566,8 +572,12 @@ class CommCareCaseSQL(DisabledDbMixin, models.Model, RedisLockableMixIn,
 
         return indices
 
+    @property
+    def has_indices(self):
+        return self.indices or self.reverse_indices
+
     def has_index(self, index_id):
-            return index_id in (i.identifier for i in self.indices)
+        return index_id in (i.identifier for i in self.indices)
 
     def get_index(self, index_id):
         found = filter(lambda i: i.identifier == index_id, self.indices)
@@ -651,6 +661,7 @@ class CommCareCaseSQL(DisabledDbMixin, models.Model, RedisLockableMixIn,
             ["domain", "owner_id"],
             ["domain", "closed", "server_modified_on"],
         ]
+        app_label = "form_processor"
         db_table = CommCareCaseSQL_DB_TABLE
 
 
@@ -730,6 +741,7 @@ class CaseAttachmentSQL(AbstractAttachment, CaseAttachmentMixin):
         ).format(a=self)
 
     class Meta:
+        app_label = "form_processor"
         db_table = CaseAttachmentSQL_DB_TABLE
 
 
@@ -737,8 +749,8 @@ class CommCareCaseIndexSQL(DisabledDbMixin, models.Model, SaveStateMixin):
     objects = RestrictedManager()
 
     # relationship_ids should be powers of 2
-    CHILD = 0
-    EXTENSION = 1
+    CHILD = 1
+    EXTENSION = 2
     RELATIONSHIP_CHOICES = (
         (CHILD, 'child'),
         (EXTENSION, 'extension'),
@@ -755,6 +767,19 @@ class CommCareCaseIndexSQL(DisabledDbMixin, models.Model, SaveStateMixin):
     referenced_id = models.CharField(max_length=255, default=None)
     referenced_type = models.CharField(max_length=255, default=None)
     relationship_id = models.PositiveSmallIntegerField(choices=RELATIONSHIP_CHOICES)
+
+    @property
+    @memoized
+    def referenced_case(self):
+        """
+        For a 'forward' index this is the case that the the index points to.
+        For a 'reverse' index this is the case that owns the index.
+        See ``CaseAccessorSQL.get_reverse_indices``
+
+        :return: referenced case
+        """
+        from corehq.form_processor.backends.sql.dbaccessors import CaseAccessorSQL
+        return CaseAccessorSQL.get_case(self.referenced_id)
 
     @property
     def relationship(self):
@@ -789,19 +814,20 @@ class CommCareCaseIndexSQL(DisabledDbMixin, models.Model, SaveStateMixin):
             ["domain", "referenced_id"],
         ]
         db_table = CommCareCaseIndexSQL_DB_TABLE
+        app_label = "form_processor"
 
 
 class CaseTransaction(DisabledDbMixin, models.Model):
     objects = RestrictedManager()
 
     # types should be powers of 2
-    TYPE_FORM = 0
-    TYPE_REBUILD_WITH_REASON = 1
-    TYPE_REBUILD_USER_REQUESTED = 2
-    TYPE_REBUILD_USER_ARCHIVED = 4
-    TYPE_REBUILD_FORM_ARCHIVED = 8
-    TYPE_REBUILD_FORM_EDIT = 16
-    TYPE_LEDGER = 32
+    TYPE_FORM = 1
+    TYPE_REBUILD_WITH_REASON = 2
+    TYPE_REBUILD_USER_REQUESTED = 4
+    TYPE_REBUILD_USER_ARCHIVED = 8
+    TYPE_REBUILD_FORM_ARCHIVED = 16
+    TYPE_REBUILD_FORM_EDIT = 32
+    TYPE_LEDGER = 64
     TYPE_CHOICES = (
         (TYPE_FORM, 'form'),
         (TYPE_REBUILD_WITH_REASON, 'rebuild_with_reason'),
@@ -896,9 +922,10 @@ class CaseTransaction(DisabledDbMixin, models.Model):
         ).format(self=self)
 
     class Meta:
-        unique_together = ("case", "form_id")
+        unique_together = ("case", "form_id", "type")
         ordering = ['server_date']
         db_table = CaseTransaction_DB_TABLE
+        app_label = "form_processor"
 
 
 class CaseTransactionDetail(JsonObject):
@@ -941,10 +968,12 @@ class FormEditRebuild(CaseTransactionDetail):
     deprecated_form_id = StringProperty()
 
 
-class LedgerValue(models.Model):
+class LedgerValue(DisabledDbMixin, models.Model):
     """
     Represents the current state of a ledger. Supercedes StockState
     """
+    objects = RestrictedManager()
+
     # domain not included and assumed to be accessed through the foreign key to the case table. legit?
     case_id = models.CharField(max_length=255, db_index=True, default=None)  # remove foreign key until we're sharding this
     # can't be a foreign key to products because of sharding.
@@ -953,5 +982,9 @@ class LedgerValue(models.Model):
     section_id = models.CharField(max_length=100, db_index=True, default=None)
     balance = models.IntegerField(default=0)  # todo: confirm we aren't ever intending to support decimals
     last_modified = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        app_label = "form_processor"
+        db_table = LedgerValue_DB_TABLE
 
 CaseAction = namedtuple("CaseAction", ["action_type", "updated_known_properties", "indices"])

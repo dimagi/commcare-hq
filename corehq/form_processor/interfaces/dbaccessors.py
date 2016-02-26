@@ -9,6 +9,18 @@ from dimagi.utils.decorators.memoized import memoized
 from ..utils import should_use_sql_backend
 
 
+CaseIndexInfo = namedtuple(
+    'CaseIndexInfo', ['case_id', 'identifier', 'referenced_id', 'referenced_type', 'relationship']
+)
+
+
+class AttachmentContent(namedtuple('AttachmentContent', ['content_type', 'content_stream'])):
+    @property
+    def content_body(self):
+        with self.content_stream as stream:
+            return stream.read()
+
+
 class AbstractFormAccessor(six.with_metaclass(ABCMeta)):
     """
     Contract for common methods expected on FormAccessor(SQL/Couch). All methods
@@ -20,6 +32,10 @@ class AbstractFormAccessor(six.with_metaclass(ABCMeta)):
 
     @abstractmethod
     def get_form(form_id):
+        raise NotImplementedError
+
+    @abstractmethod
+    def get_forms(form_ids):
         raise NotImplementedError
 
     @abstractmethod
@@ -66,6 +82,9 @@ class FormAccessors(object):
 
     def get_form(self, form_id):
         return self.db_accessor.get_form(form_id)
+
+    def get_forms(self, form_ids):
+        return self.db_accessor.get_forms(form_ids)
 
     def form_exists(self, form_id):
         return self.db_accessor.form_exists(form_id)
@@ -153,6 +172,10 @@ class AbstractCaseAccessor(six.with_metaclass(ABCMeta)):
         """
         raise NotImplementedError
 
+    @abstractmethod
+    def get_case_by_domain_hq_user_id(domain, user_id, case_type):
+        raise NotImplementedError
+
 
 class CaseAccessors(object):
     """
@@ -210,17 +233,8 @@ class CaseAccessors(object):
     def get_attachment_content(self, case_id, attachment_id):
         return self.db_accessor.get_attachment_content(case_id, attachment_id)
 
-
-CaseIndexInfo = namedtuple(
-    'CaseIndexInfo', ['case_id', 'identifier', 'referenced_id', 'referenced_type', 'relationship']
-)
-
-
-class AttachmentContent(namedtuple('AttachmentContent', ['content_type', 'content_stream'])):
-    @property
-    def content_body(self):
-        with self.content_stream as stream:
-            return stream.read()
+    def get_case_by_domain_hq_user_id(self, user_id, case_type):
+        return self.db_accessor.get_case_by_domain_hq_user_id(self.domain, user_id, case_type)
 
 
 def get_cached_case_attachment(domain, case_id, attachment_id, is_image=False):
