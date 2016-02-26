@@ -29,7 +29,7 @@ class SupplyPointSQL(AbstractSupplyInterface):
         return location.linked_supply_point()
 
     @staticmethod
-    def get_by_location_id_and_domain(domain, location_id):
+    def get_closed_and_open_by_location_id_and_domain(domain, location_id):
         return CaseAccessorSQL.get_case_by_location(domain, location_id)
 
     @staticmethod

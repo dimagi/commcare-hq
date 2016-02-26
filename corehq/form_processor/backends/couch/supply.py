@@ -31,7 +31,7 @@ class SupplyPointCouch(AbstractSupplyInterface):
         return location.linked_supply_point()
 
     @staticmethod
-    def get_by_location_id_and_domain(domain, location_id):
+    def get_closed_and_open_by_location_id_and_domain(domain, location_id):
         return SupplyPointCase.view(
             'supply_point_by_loc/view',
             key=[domain, location_id],

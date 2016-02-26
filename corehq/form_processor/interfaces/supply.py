@@ -28,12 +28,12 @@ class SupplyInterface(object):
     def get_by_location(self, location):
         return self.supply_point.get_by_location(location)
 
-    def get_by_location_id_and_domain(self, domain, location_id):
+    def get_closed_and_open_by_location_id_and_domain(self, domain, location_id):
         """
         This also returns closed supply points.
         Please use location.linked_supply_point() instead.
         """
-        return self.supply_point.get_by_location_id_and_domain(domain, location_id)
+        return self.supply_point.get_closed_and_open_by_location_id_and_domain(domain, location_id)
 
     def get_supply_point(self, supply_point_id):
         return self.supply_point.get_supply_point(supply_point_id)
