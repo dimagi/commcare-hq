@@ -345,7 +345,8 @@ class EntriesHelper(object):
                     filter_xpath_template.replace('$fixture_value', fixture_value)
                 )
 
-            filter_xpath = EntriesHelper.get_filter_xpath(module) if use_filter else ''
+            filter_xpath = EntriesHelper.get_filter_xpath(datum['module']) if use_filter else ''
+
             datums.append(FormDatumMeta(
                 datum=SessionDatum(
                     id=datum['session_var'],

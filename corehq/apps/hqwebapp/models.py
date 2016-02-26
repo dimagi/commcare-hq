@@ -6,6 +6,7 @@ from corehq.toggles import OPENLMIS
 
 from django.utils.safestring import mark_safe, mark_for_escaping
 from django.core.urlresolvers import reverse
+from corehq.util.view_utils import absolute_reverse
 from django.http import Http404
 from django.utils.translation import ugettext as _, get_language
 from django.utils.translation import ugettext_noop, ugettext_lazy
@@ -158,14 +159,14 @@ class UITab(object):
     def url(self):
         try:
             if self.domain:
-                return reverse(self.view, args=[self.domain])
+                return absolute_reverse(self.view, args=[self.domain])
             if self.org:
-                return reverse(self.view, args=[self.org.name])
+                return absolute_reverse(self.view, args=[self.org.name])
         except Exception:
             pass
 
         try:
-            return reverse(self.view)
+            return absolute_reverse(self.view)
         except Exception:
             return None
 
@@ -929,13 +930,6 @@ class MessagingTab(UITab):
                         'urlname': EditStructuredKeywordView.urlname,
                     },
                 ],
-            })
-
-        if self.can_access_reminders:
-            reminders_urls.append({
-                'title': _("Reminders in Error"),
-                'url': reverse('reminders_in_error', args=[self.domain]),
-                'show_in_dropdown': True,
             })
 
         return reminders_urls
