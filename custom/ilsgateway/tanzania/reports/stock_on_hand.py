@@ -96,7 +96,12 @@ class SohPercentageTableData(ILSData):
             month = 'month'
 
         for p in products:
-            headers.add_column(DataTablesColumn(_('%s stock outs this %s') % (p.code, month)))
+            headers.add_column(DataTablesColumn(
+                _('%(code)s stock outs this %(month)s') % {
+                    'code': p.code,
+                    'month': month,
+                }
+            ))
 
         return headers
 

@@ -34,6 +34,7 @@ from django.template import loader
 from django.template.context import RequestContext
 from restkit import Resource
 
+from corehq import toggles, feature_previews
 from corehq.apps.accounting.models import Subscription
 from corehq.apps.app_manager.models import Application
 from corehq.apps.domain.decorators import require_superuser, login_and_domain_required
@@ -521,6 +522,9 @@ def bug_report(req):
 
     report['user_agent'] = req.META['HTTP_USER_AGENT']
     report['datetime'] = datetime.utcnow()
+    report['feature_flags'] = toggles.toggles_dict(username=report['username'],
+                                                   domain=report['domain']).keys()
+    report['feature_previews'] = feature_previews.previews_dict(report['domain']).keys()
 
     try:
         couch_user = CouchUser.get_by_username(report['username'])
@@ -554,6 +558,8 @@ def bug_report(req):
         u"url: {url}\n"
         u"datetime: {datetime}\n"
         u"User Agent: {user_agent}\n"
+        u"Feature Flags: {feature_flags}\n"
+        u"Feature Previews: {feature_previews}\n"
         u"Message:\n\n"
         u"{message}\n"
         ).format(**report)
