@@ -29,7 +29,7 @@
             this.displayText = ko.observable("");
             this.userModifiedDisplayText = false;
             this.format = ko.observable("");
-            this.calculation = ko.observable("None");
+            this.calculation = ko.observable("Count per Choice");
             this.dataSourceField = ko.observable("");
 
             /**
@@ -89,7 +89,7 @@
             this.hasFormatCol = ko.observable(options.hasFormatCol !== undefined ? options.hasFormatCol : true);
             this.hasCalculationCol = ko.observable(options.hasCalculationCol !== undefined ? options.hasCalculationCol : false);
             this.formatOptions = ko.observableArray(["Choice", "Date"]);
-            this.calculationOptions = ko.observableArray(["No Aggregation", "Sum", "Average", "Count"]);
+            this.calculationOptions = ko.observableArray(["Count per Choice", "Sum", "Average"]);
             this.propertyOptions = ko.observableArray({{ property_options|JSON }});
             var rawOptions = {{ property_options|JSON }};
             this.optionsContainQuestions = _.any(rawOptions, function (o) {

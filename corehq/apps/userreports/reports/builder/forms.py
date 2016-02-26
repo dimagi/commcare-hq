@@ -1028,8 +1028,7 @@ class ConfigureListReportForm(ConfigureNewReportBase):
             reverse_agg_map = {
                 'avg': 'Average',
                 'sum': 'Sum',
-                'count': 'Count',
-                'simple': 'No Aggregation'
+                'simple': 'Count per Choice'
             }
             cols = []
             for c in self.existing_report.columns:
@@ -1094,10 +1093,9 @@ class ConfigureTableReportForm(ConfigureListReportForm, ConfigureBarChartReportF
         agg_field_text = self.data_source_properties[self.aggregation_field].text
 
         def _make_column(conf, index):
-            aggregation_map = {'No Aggregation': 'simple',
+            aggregation_map = {'Count per Choice': 'simple',
                                 'Sum': 'sum',
-                                'Average': 'avg',
-                                'Count': 'count'}
+                                'Average': 'avg'}
             return {
                 "format": "default",
                 "aggregation": aggregation_map[conf['calculation']],
