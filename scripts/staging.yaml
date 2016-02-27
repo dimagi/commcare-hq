@@ -45,6 +45,7 @@
 trunk: master
 name: autostaging
 branches:
+  - fix-staging-releases  # Danny 2/26
   - use-hqImport  # Danny 2/26
   - devicereportentry  # Danny 2/18
   - vellum-staging # J$ 11/13
