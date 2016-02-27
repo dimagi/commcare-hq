@@ -1,9 +1,9 @@
-/*globals $, COMMCAREHQ, _, ko, CC_UTILS, console*/
+/*globals $, COMMCAREHQ, _, ko, console*/
 
 var VisitScheduler = (function () {
     'use strict';
     var app_manager = hqImport('app_manager/js/app_manager.js');
-
+    var caseConfigUtils = hqImport('app_manager/js/case-config-utils.js');
     var ModuleScheduler = function(params){
         // Edits the schedule phases on the module setting page
         var self = this;
@@ -126,10 +126,10 @@ var VisitScheduler = (function () {
         });
 
         self.getQuestions = function (filter, excludeHidden, includeRepeat) {
-            return CC_UTILS.getQuestions(self.questions, filter, excludeHidden, includeRepeat);
+            return caseConfigUtils.getQuestions(self.questions, filter, excludeHidden, includeRepeat);
         };
         self.getAnswers = function (condition) {
-            return CC_UTILS.getAnswers(self.questions, condition);
+            return caseConfigUtils.getAnswers(self.questions, condition);
         };
 
         self.change = function () {
