@@ -5,13 +5,6 @@
 {% load timezone_tags %}
 {% load i18n %}
 
-{% block js %}
-    <script src="{% new_static 'app_manager/js/app_manager_utils.js' %}"></script>
-    <script src="{% new_static 'app_manager/js/download_async_modal.js' %}"></script>
-    <script src="{% new_static 'app_manager/js/releases.js' %}"></script>
-{% endblock %}
-
-{% block js-inline %}
 <script>
     $(function () {
        $('.hq-help-template').each(function () {
@@ -65,7 +58,6 @@
         gaTrackLink('a.view-source-files-link', 'App Manager', 'Deploy Type', 'View Source Files');
     });
 </script>
-{% endblock %}
 
 <div id="releases-table">
     <div class="alert alert-danger" data-bind="visible: brokenBuilds">

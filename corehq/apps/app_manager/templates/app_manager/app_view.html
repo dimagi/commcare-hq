@@ -9,6 +9,11 @@
     <script src="{% new_static 'app_manager/js/supported-languages.js' %}"></script>
     <script src="{% new_static 'app_manager/js/password_setter.jquery.js' %}"></script>
     <script type="text/javascript" src="{% new_static 'hqmedia/js/hqmedia.reference_controller.js' %}"></script>
+
+    {# these scripts are for releases.html, but including them there causes hard-to-reproduce problems #}
+    <script src="{% new_static 'app_manager/js/app_manager_utils.js' %}"></script>
+    <script src="{% new_static 'app_manager/js/download_async_modal.js' %}"></script>
+    <script src="{% new_static 'app_manager/js/releases.js' %}"></script>
 {% endblock %}
 {% block js-inline %}
     {{ block.super }}
