@@ -63,6 +63,7 @@ function SavedApp(app_data, releasesMain) {
     });
 
     self.get_short_odk_url_phonetic = ko.computed(function () {
+        var app_manager_utils = hqImport('app_manager/js/app_manager_utils');
         return app_manager_utils.bitly_nato_phonetic(self.get_short_odk_url());
     });
 
