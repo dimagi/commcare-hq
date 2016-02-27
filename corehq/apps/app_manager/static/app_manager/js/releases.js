@@ -149,6 +149,7 @@ function SavedApp(app_data, releasesMain) {
 
 function ReleasesMain(o) {
     /* {fetchUrl, deleteUrl} */
+    var AsyncDownloader = hqImport('app_manager/js/download_async_modal.js').AsyncDownloader;
     var self = this;
     self.options = o;
     self.recipients = self.options.recipient_contacts;
