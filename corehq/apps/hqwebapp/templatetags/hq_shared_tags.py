@@ -94,7 +94,7 @@ except (ImportError, SyntaxError):
 def static(url):
     resource_url = url
     version = resource_versions.get(resource_url)
-    url = settings.STATIC_URL + url
+    url = settings.STATIC_CDN + settings.STATIC_URL + url
     is_less = url.endswith('.less')
     if version and not is_less:
         url += "?version=%s" % version
@@ -120,7 +120,7 @@ def new_static(url, **kwargs):
     use_versions = not can_be_compressed or use_cache
 
     resource_url = url
-    url = settings.STATIC_URL + url
+    url = settings.STATIC_CDN + settings.STATIC_URL + url
     if use_versions:
         version = resource_versions.get(resource_url)
         if version:
