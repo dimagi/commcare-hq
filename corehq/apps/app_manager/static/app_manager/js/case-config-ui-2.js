@@ -1,12 +1,11 @@
 /*globals $, COMMCAREHQ, ko, _, CC_UTILS */
 
-var action_names = ["open_case", "update_case", "close_case", "case_preload",
-    // Usercase actions are managed in the User Case Management tab.
-    "usercase_update", "usercase_preload"];
-
-var CaseConfig = (function () {
+hqDefine('app_manager/js/case-config-ui-2.js', function () {
     "use strict";
 
+    var action_names = ["open_case", "update_case", "close_case", "case_preload",
+        // Usercase actions are managed in the User Case Management tab.
+        "usercase_update", "usercase_preload"];
 
     var CaseConfig = function (params) {
         var self = this;
@@ -943,4 +942,4 @@ var CaseConfig = (function () {
     return {
         CaseConfig: CaseConfig
     };
-}());
+});
