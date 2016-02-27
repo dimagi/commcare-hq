@@ -3,8 +3,12 @@ CommCare HQ docker
 
 Initial setup
 -------------
-* Install [Docker](http://docs.docker.com/installation)
-* Install [Docker Compose](https://docs.docker.com/compose/install/)
+* Linux
+   * Install [Docker](http://docs.docker.com/installation)
+   * Install [Docker Compose](https://docs.docker.com/compose/install/)
+* OS X
+   * Install [Docker Toolbox](https://docs.docker.com/mac/step_one/). Go through the full tutorial, which will create a default machine.
+   * If not using the Quick Start terminal, run `eval $(docker-machine env default)` to set up Docker's environment variables.
 * Bootstrap the setup:
 
     ```
@@ -24,23 +28,28 @@ Initial setup
 
     If all goes according to plan you should be able to log into CommCare: http://localhost:8000 using
     the login details above.
-
-* Configure your localsettings
     
-    **NOTE** this is only necessary if you want to run CommCare HQ inside the docker container. If you just want
-    to use the services skip this step.
+    On Mac, run `docker-machine ip` to get the VM's IP address, which replaces `localhost` in the URL.
+
+### Configure your localsettings
+
+There are two different localsettings configurations, depending on whether HQ is running inside a docker container or on your local machine.
+
+  * Running HQ inside a docker container
 
     Make your `localsettings.py` extend `dockersettings.py` and comment out / delete your current
     settings for PostgreSQL, Redis, CouchDB, Elasticsearch
-    
     ```python
     from docker.dockersettings import *
     # DATABASES ..
     ```
-    
     See `docker/localsettings_docker.py` for an example.
 
-    
+  * Running docker services only
+    * Copy the appropriate postgres/couch/elasticsearch/redis configurations from `dockersettings.py` to `localsettings.py`
+    * Replace the `HOST` values in the configurations (e.g. `postgres`) with `localhost`
+
+
 General usage
 -------------
 

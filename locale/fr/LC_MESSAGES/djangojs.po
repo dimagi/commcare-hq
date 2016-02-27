@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2016-02-02 21:13+0000\n"
+"POT-Creation-Date: 2016-02-17 22:24+0000\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -34,6 +34,59 @@ msgstr ""
 
 #: corehq/apps/app_manager/static/app_manager/js/commcaresettings.js:164
 msgid "Auto-set by "
+msgstr ""
+
+#: corehq/apps/export/static/export/js/models.js:16
+#: corehq/apps/export/static/export/js/models.js:22
+msgid "Web Page (Excel Dashboards)"
+msgstr ""
+
+#: corehq/apps/export/static/export/js/models.js:18
+msgid "CSV (Zip file)"
+msgstr ""
+
+#: corehq/apps/export/static/export/js/models.js:20
+msgid "Excel 2007"
+msgstr ""
+
+#: corehq/apps/export/static/export/js/models.js:31
+msgid "Create"
+msgstr ""
+
+#: corehq/apps/export/static/export/js/models.js:31
+msgid "Save"
+msgstr ""
+
+#: corehq/apps/export/static/export/js/models.js:170
+msgid "Sensitive ID"
+msgstr ""
+
+#: corehq/apps/export/static/export/js/models.js:172
+msgid "Sensitive Date"
+msgstr ""
+
+#: corehq/apps/export/static/export/js/models.js:174
+msgid "None"
+msgstr ""
+
+#: corehq/apps/export/static/export/js/utils.js:28
+msgid "Forms"
+msgstr ""
+
+#: corehq/apps/export/static/export/js/utils.js:30
+msgid "Repeat: "
+msgstr ""
+
+#: corehq/apps/export/static/export/js/utils.js:34
+msgid "Cases"
+msgstr ""
+
+#: corehq/apps/export/static/export/js/utils.js:36
+msgid "Case History"
+msgstr ""
+
+#: corehq/apps/export/static/export/js/utils.js:39
+msgid "Unknown"
 msgstr ""
 
 #: corehq/apps/registration/static/registration/js/password.js:22

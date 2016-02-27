@@ -6,6 +6,7 @@
     {{ block.super }}
     <script src="{% static 'style/lib/knockout_plugins/knockout_mapping.ko.min.js' %}"></script>
     <script src="{% static 'style/ko/knockout_bindings.ko.js' %}"></script>
+    <script src="{% static 'jquery-ui-1.8.23-legacy/jquery-ui.min.js' %}"></script>
     <script src="{% static 'export/js/exports.js' %}"></script>
     <script src="{% static 'export/js/const.js' %}"></script>
     <script src="{% static 'export/js/models.js' %}"></script>
@@ -15,15 +16,12 @@
 {% block js-inline %}{{ block.super }}
     <script>
         $(function () {
-            var translations = {
-                forms: "{% trans 'Forms'|escapejs %}",
-                repeat: "{% trans 'Repeat: '|escapejs %}",
-                cases: "{% trans 'Cases'|escapejs %}",
-                case_history: "{% trans 'Case History'|escapejs %}",
-                history_to_parents: "{% trans 'Case History > Parent Cases'|escapejs %}",
-                parent_cases: "{% trans 'Parent Cases'|escapejs %}",
-            };
-            var customExportView = new Exports.ViewModels.ExportInstance({{ export_instance|JSON }});
+            var customExportView = new Exports.ViewModels.ExportInstance(
+                {{ export_instance|JSON }},
+                {
+                    saveUrl: {{ request.get_full_path|safe|JSON }}
+                }
+            );
 
             $('#customize-export').koApplyBindings(customExportView);
         });
@@ -129,7 +127,8 @@
         <div class="form-actions">
             <button type="submit" class="btn btn-large btn-primary" data-bind="
                 click: save,
-                disable: saveState() === Exports.Constants.SAVE_STATES.SAVING
+                disable: (saveState() === Exports.Constants.SAVE_STATES.SAVING ||
+                          saveState() === Exports.Constants.SAVE_STATES.SUCCESS)
             ">
                 <span data-bind="
                     visible: saveState() === Exports.Constants.SAVE_STATES.READY,
@@ -141,6 +140,9 @@
                 </span>
                 <span data-bind="visible: saveState() === Exports.Constants.SAVE_STATES.ERROR">
                     {% trans "Try Again" %}
+                </span>
+                <span data-bind="visible: saveState() === Exports.Constants.SAVE_STATES.SUCCESS">
+                    {% trans "Saved!" %}
                 </span>
             </button>
             <a class="btn btn-large" href="{{ export_home_url }}">{% trans "Cancel" %}</a>

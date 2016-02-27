@@ -6,7 +6,8 @@ from dimagi.utils.couch.database import safe_delete
 from corehq.apps.app_manager.tests.util import TestXmlMixin
 from corehq.apps.app_manager.models import XForm, Application
 from corehq.apps.export.models import FormExportDataSchema, CaseExportDataSchema, ExportDataSchema
-from corehq.apps.export.const import CASE_HISTORY_PROPERTIES, PROPERTY_TAG_UPDATE, MAIN_TABLE_PROPERTIES
+from corehq.apps.export.const import CASE_HISTORY_PROPERTIES, PROPERTY_TAG_UPDATE, MAIN_TABLE_PROPERTIES, \
+    MAIN_TABLE
 
 
 class TestFormExportDataSchema(SimpleTestCase, TestXmlMixin):
@@ -31,8 +32,8 @@ class TestFormExportDataSchema(SimpleTestCase, TestXmlMixin):
         self.assertEqual(len(group_schema.items), 2 + len(MAIN_TABLE_PROPERTIES))
 
         form_items = filter(lambda item: item.tag is None, group_schema.items)
-        self.assertEqual(form_items[0].path, ['data', 'question1'])
-        self.assertEqual(form_items[1].path, ['data', 'question2'])
+        self.assertEqual(form_items[0].path, ['form', 'question1'])
+        self.assertEqual(form_items[1].path, ['form', 'question2'])
 
     def test_xform_parsing_with_repeat_group(self):
         form_xml = self.get_xml('repeat_group_form')
@@ -48,15 +49,15 @@ class TestFormExportDataSchema(SimpleTestCase, TestXmlMixin):
 
         group_schema = schema.group_schemas[0]
         self.assertEqual(len(group_schema.items), 1 + len(MAIN_TABLE_PROPERTIES))
-        self.assertEqual(group_schema.path, None)
+        self.assertEqual(group_schema.path, MAIN_TABLE)
 
         form_items = filter(lambda item: item.tag is None, group_schema.items)
-        self.assertEqual(form_items[0].path, ['data', 'question1'])
+        self.assertEqual(form_items[0].path, ['form', 'question1'])
 
         group_schema = schema.group_schemas[1]
         self.assertEqual(len(group_schema.items), 1)
-        self.assertEqual(group_schema.path, ['data', 'question3'])
-        self.assertEqual(group_schema.items[0].path, ['data', 'question3', 'question4'])
+        self.assertEqual(group_schema.path, ['form', 'question3'])
+        self.assertEqual(group_schema.items[0].path, ['form', 'question3', 'question4'])
 
     def test_xform_parsing_with_multiple_choice(self):
         form_xml = self.get_xml('multiple_choice_form')
@@ -72,9 +73,9 @@ class TestFormExportDataSchema(SimpleTestCase, TestXmlMixin):
 
         self.assertEqual(len(group_schema.items), 2 + len(MAIN_TABLE_PROPERTIES))
         form_items = filter(lambda item: item.tag is None, group_schema.items)
-        self.assertEqual(form_items[0].path, ['data', 'question1'])
+        self.assertEqual(form_items[0].path, ['form', 'question1'])
 
-        self.assertEqual(form_items[1].path, ['data', 'question2'])
+        self.assertEqual(form_items[1].path, ['form', 'question2'])
         self.assertEqual(form_items[1].options[0].value, 'choice1')
         self.assertEqual(form_items[1].options[1].value, 'choice2')
 
@@ -209,7 +210,7 @@ class TestMergingFormExportDataSchema(SimpleTestCase, TestXmlMixin):
             2 + len(MAIN_TABLE_PROPERTIES),
         )
 
-        multichoice = filter(lambda item: item.path == ['data', 'question2'], group_schema.items)[0]
+        multichoice = filter(lambda item: item.path == ['form', 'question2'], group_schema.items)[0]
         self.assertEqual(len(multichoice.options), 3)
         self.assertEqual(
             len(filter(lambda o: o.last_occurrences[self.app_id] == 2, multichoice.options)),

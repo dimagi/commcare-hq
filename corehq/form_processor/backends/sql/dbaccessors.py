@@ -1,10 +1,11 @@
 import logging
 from itertools import groupby
+from datetime import datetime
 
 from django.db import connections, InternalError, transaction
 from corehq.form_processor.exceptions import XFormNotFound, CaseNotFound, AttachmentNotFound, CaseSaveError
 from corehq.form_processor.interfaces.dbaccessors import AbstractCaseAccessor, AbstractFormAccessor, \
-    CaseIndexInfo
+    CaseIndexInfo, AttachmentContent
 from corehq.form_processor.models import (
     XFormInstanceSQL, CommCareCaseIndexSQL, CaseAttachmentSQL, CaseTransaction,
     CommCareCaseSQL, XFormAttachmentSQL, XFormOperationSQL,
@@ -74,6 +75,11 @@ class FormAccessorSQL(AbstractFormAccessor):
             raise AttachmentNotFound(attachment_name)
 
     @staticmethod
+    def get_attachment_content(form_id, attachment_name, stream=False):
+        meta = FormAccessorSQL.get_attachment_by_name(form_id, attachment_name)
+        return AttachmentContent(meta.content_type, meta.read_content(stream=True))
+
+    @staticmethod
     def get_form_operations(form_id):
         return list(XFormOperationSQL.objects.raw('SELECT * from get_form_operations(%s)', [form_id]))
 
@@ -110,7 +116,7 @@ class FormAccessorSQL(AbstractFormAccessor):
         return forms[:limit]
 
     @staticmethod
-    def form_with_id_exists(form_id, domain=None):
+    def form_exists(form_id, domain=None):
         with get_cursor(XFormInstanceSQL) as cursor:
             cursor.execute('SELECT * FROM check_form_exists(%s, %s)', [form_id, domain])
             result = fetchone_as_namedtuple(cursor)
@@ -163,7 +169,7 @@ class FormAccessorSQL(AbstractFormAccessor):
         if unsaved_attachments:
             del form.unsaved_attachments
             for unsaved_attachment in unsaved_attachments:
-                    unsaved_attachment.form = form
+                unsaved_attachment.form = form
 
         operations = form.get_tracked_models_to_create(XFormOperationSQL)
         for operation in operations:
@@ -248,6 +254,24 @@ class FormAccessorSQL(AbstractFormAccessor):
             return [form.form_id for form in forms]
         return forms
 
+    @staticmethod
+    def get_all_forms_received_since(received_on_since=None, chunk_size=500):
+        return _batch_iterate(
+            batch_fn=FormAccessorSQL.get_forms_received_since,
+            next_start_from_fn=lambda form: form.received_on,
+            start_from=received_on_since,
+            chunk_size=chunk_size
+        )
+
+    @staticmethod
+    def get_forms_received_since(received_on_since=None, limit=500):
+        received_on_since = received_on_since or datetime.min
+        results = list(XFormInstanceSQL.objects.raw('SELECT * FROM get_all_forms_received_since(%s, %s)',
+                                                    [received_on_since, limit]))
+        # sort and add additional limit in memory in case the sharded setup returns more than
+        # the requested number of cases
+        return sorted(results, key=lambda form: form.received_on)[:limit]
+
 
 class CaseAccessorSQL(AbstractCaseAccessor):
 
@@ -291,7 +315,14 @@ class CaseAccessorSQL(AbstractCaseAccessor):
 
     @staticmethod
     def get_reverse_indices(case_id):
-        return list(CommCareCaseIndexSQL.objects.raw('SELECT * FROM get_case_indices_reverse(%s)', [case_id]))
+        indices = list(CommCareCaseIndexSQL.objects.raw('SELECT * FROM get_case_indices_reverse(%s)', [case_id]))
+
+        def _set_referenced_id(index):
+            # see corehq/couchapps/case_indices/views/related/map.js
+            index.referenced_id = index.case_id
+            return index
+
+        return [_set_referenced_id(index) for index in indices]
 
     @staticmethod
     def get_all_reverse_indices_info(domain, case_ids):
@@ -343,14 +374,19 @@ class CaseAccessorSQL(AbstractCaseAccessor):
             return sum([result.deleted_count for result in results])
 
     @staticmethod
-    def get_attachment_by_name(case_id, attachment_name):
+    def get_attachment_by_identifier(case_id, identifier):
         try:
-            return CommCareCaseSQL.objects.raw(
-                'select * from get_case_attachment_by_name(%s, %s)',
-                [case_id, attachment_name]
+            return CaseAttachmentSQL.objects.raw(
+                'select * from get_case_attachment_by_identifier(%s, %s)',
+                [case_id, identifier]
             )[0]
         except IndexError:
-            raise AttachmentNotFound(attachment_name)
+            raise AttachmentNotFound(identifier)
+
+    @staticmethod
+    def get_attachment_content(case_id, attachment_id):
+        meta = CaseAccessorSQL.get_attachment_by_identifier(case_id, attachment_id)
+        return AttachmentContent(meta.content_type, meta.read_content(stream=True))
 
     @staticmethod
     def get_attachments(case_id):
@@ -407,6 +443,29 @@ class CaseAccessorSQL(AbstractCaseAccessor):
             cursor.execute('SELECT delete_all_cases(%s)', [domain])
 
     @staticmethod
+    def get_all_cases_modified_since(server_modified_on_since=None, chunk_size=500):
+        return _batch_iterate(
+            CaseAccessorSQL.get_cases_modified_since,
+            next_start_from_fn=lambda case: case.server_modified_on,
+            start_from=server_modified_on_since,
+            chunk_size=chunk_size
+        )
+
+    @staticmethod
+    def get_cases_modified_since(server_modified_on_since=None, limit=500):
+        """
+        Iterate through all cases in the entire database, optionally modified since
+        a specific date
+        """
+        if server_modified_on_since is None:
+            server_modified_on_since = datetime.min
+        results = list(CommCareCaseSQL.objects.raw('SELECT * FROM get_all_cases_modified_since(%s, %s)',
+                                                [server_modified_on_since, limit]))
+        # sort and add additional limit in memory in case the sharded setup returns more than
+        # the requested number of cases
+        return sorted(results, key=lambda case: case.server_modified_on)[:limit]
+
+    @staticmethod
     @transaction.atomic
     def save_case(case):
         transactions_to_save = case.get_tracked_models_to_create(CaseTransaction)
@@ -417,6 +476,9 @@ class CaseAccessorSQL(AbstractCaseAccessor):
 
         attachments_to_save = case.get_tracked_models_to_create(CaseAttachmentSQL)
         attachment_ids_to_delete = [att.id for att in case.get_tracked_models_to_delete(CaseAttachmentSQL)]
+
+        for index in indices_to_save_or_update:
+            index.domain = case.domain  # ensure domain is set on indices
 
         # cast arrays that can be empty to appropriate type
         query = """SELECT case_pk FROM save_case_and_related_models(
@@ -449,6 +511,9 @@ class CaseAccessorSQL(AbstractCaseAccessor):
                     )
                     logging.debug(msg)
                 raise CaseSaveError(e)
+            else:
+                for attachment in case.get_tracked_models_to_delete(CaseAttachmentSQL):
+                    attachment.delete_content()
 
     @staticmethod
     def get_open_case_ids(domain, owner_id):
@@ -498,6 +563,23 @@ class CaseAccessorSQL(AbstractCaseAccessor):
             results = fetchall_as_namedtuple(cursor)
             return dict((result.case_id, result.server_modified_on) for result in results)
 
+    @staticmethod
+    def get_case_by_external_id(domain, external_id, case_type=None):
+        try:
+            return CommCareCaseSQL.objects.raw(
+                'SELECT * FROM get_case_by_external_id(%s, %s, %s)',
+                [domain, external_id, case_type]
+            )[0]
+        except IndexError:
+            raise CaseNotFound
+
+    @staticmethod
+    def get_case_by_domain_hq_user_id(domain, user_id, case_type):
+        try:
+            return CaseAccessorSQL.get_case_by_external_id(domain, user_id, case_type)
+        except CaseNotFound:
+            return None
+
 
 def _order_list(id_list, object_list, id_property):
     # SQL won't return the rows in any particular order so we need to order them ourselves
@@ -514,3 +596,27 @@ def _attach_prefetch_models(objects_by_id, prefetched_models, link_field_name, c
     for obj_id, group in prefetched_groups:
         obj = objects_by_id[obj_id]
         setattr(obj, cached_attrib_name, list(group))
+
+
+def _batch_iterate(batch_fn, next_start_from_fn, start_from=None, chunk_size=500):
+    """
+    Iterate through a function in batches. Assumes the following signatures:
+
+    batch_fn(start_from, limit) - a function that returns sorted data in batches
+    next_start_from_fn(item) - a function that returns a "start_from" for a item for the next batch
+    """
+    start_from = start_from or datetime.min
+    # todo: this will greedily query the same data multiple times in a sharded setup. We should make it smarter
+    batch = batch_fn(start_from, limit=chunk_size)
+    while batch:
+        for item in batch:
+            yield item
+            next_start_from = next_start_from_fn(item)
+
+        if len(batch) == chunk_size:
+            # we got a full chunk so keep checking for more
+            assert next_start_from > start_from  # make sure we are making progress
+            start_from = next_start_from
+            batch = batch_fn(start_from, limit=chunk_size)
+        else:
+            batch = []  # equivalent to return

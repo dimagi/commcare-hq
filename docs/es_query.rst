@@ -10,9 +10,6 @@ ESQuery
 .. automodule:: corehq.apps.es.queries
    :members:
 
-.. automodule:: corehq.apps.es.facets
-   :members:
-
 .. automodule:: corehq.apps.es.aggregations
    :members:
 

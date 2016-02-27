@@ -1,24 +1,29 @@
 from datetime import datetime
-from django.test.testcases import TestCase
+
 from casexml.apps.stock.models import StockReport
+
 from corehq.apps.commtrack.models import StockState
 from corehq.apps.products.models import Product
 from corehq.apps.sms.mixin import VerifiedNumber
 from corehq.apps.sms.models import SMS
 from corehq.apps.sms.tests.util import setup_default_sms_test_backend
-from custom.ewsghana.alerts import ONGOING_NON_REPORTING, ONGOING_STOCKOUT_AT_SDP, ONGOING_STOCKOUT_AT_RMS
-from custom.ewsghana.alerts.ongoing_non_reporting import OnGoingNonReporting
-from custom.ewsghana.alerts.ongoing_stockouts import OnGoingStockouts, OnGoingStockoutsRMS
-from custom.ewsghana.tasks import on_going_non_reporting, on_going_stockout
-from custom.ewsghana.tests.test_reminders import create_stock_report
-from custom.ewsghana.utils import prepare_domain, bootstrap_web_user, make_loc, assign_products_to_location, \
-    set_sms_notifications
 
+from custom.ewsghana.alerts import ONGOING_NON_REPORTING, ONGOING_STOCKOUT_AT_SDP, ONGOING_STOCKOUT_AT_RMS
+from custom.ewsghana.tasks import on_going_non_reporting, on_going_stockout
+from custom.ewsghana.tests.handlers.utils import EWSTestCase
+from custom.ewsghana.tests.test_reminders import create_stock_report
+from custom.ewsghana.utils import (
+    assign_products_to_location,
+    bootstrap_web_user,
+    make_loc,
+    prepare_domain,
+    set_sms_notifications,
+)
 
 TEST_DOMAIN = 'ewsghana-alerts-test'
 
 
-class TestAlerts(TestCase):
+class TestAlerts(EWSTestCase):
 
     @classmethod
     def setUpClass(cls):
@@ -83,10 +88,9 @@ class TestAlerts(TestCase):
         cls.user1.delete()
         cls.national_user.delete()
         cls.regional_user.delete()
-        cls.sms_backend_mapping.delete()
-        cls.backend.delete()
         for vn in VerifiedNumber.by_domain(TEST_DOMAIN):
             vn.delete()
+        super(TestAlerts, cls).tearDownClass()
 
     def tearDown(self):
         SMS.objects.all().delete()

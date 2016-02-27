@@ -17,7 +17,6 @@ from dimagi.utils.couch.migration import (SyncCouchToSQLMixin,
     SyncSQLToCouchMixin)
 from dimagi.utils.mixins import UnicodeMixIn
 from dimagi.utils.parsing import json_format_datetime
-from casexml.apps.case.signals import case_post_save
 from corehq.apps.sms.mixin import (CommCareMobileContactMixin,
     PhoneNumberInUseException, InvalidFormatException, VerifiedNumber,
     apply_leniency, BadSMSConfigException)
@@ -32,8 +31,17 @@ from dimagi.utils.couch import CouchDocLockableMixIn
 from dimagi.utils.load_balance import load_balance
 from django.utils.translation import ugettext_noop, ugettext_lazy
 
+
 INCOMING = "I"
 OUTGOING = "O"
+
+CALLBACK_PENDING = "PENDING"
+CALLBACK_RECEIVED = "RECEIVED"
+CALLBACK_MISSED = "MISSED"
+
+FORWARD_ALL = "ALL"
+FORWARD_BY_KEYWORD = "KEYWORD"
+FORWARDING_CHOICES = [FORWARD_ALL, FORWARD_BY_KEYWORD]
 
 WORKFLOW_CALLBACK = "CALLBACK"
 WORKFLOW_REMINDER = "REMINDER"
@@ -263,7 +271,41 @@ class SMSLog(SyncCouchToSQLMixin, MessageLog):
         return True
 
 
-class SMS(SyncSQLToCouchMixin, models.Model):
+class Log(models.Model):
+    class Meta:
+        abstract = True
+        app_label = "sms"
+
+    domain = models.CharField(max_length=126, null=True, db_index=True)
+    date = models.DateTimeField(null=True, db_index=True)
+    couch_recipient_doc_type = models.CharField(max_length=126, null=True, db_index=True)
+    couch_recipient = models.CharField(max_length=126, null=True, db_index=True)
+    phone_number = models.CharField(max_length=126, null=True, db_index=True)
+    direction = models.CharField(max_length=1, null=True)
+    error = models.NullBooleanField(default=False)
+    system_error_message = models.TextField(null=True)
+    system_phone_number = models.CharField(max_length=126, null=True)
+    backend_api = models.CharField(max_length=126, null=True)
+    backend_id = models.CharField(max_length=126, null=True)
+    billed = models.NullBooleanField(default=False)
+
+    # Describes what kind of workflow this log was a part of
+    workflow = models.CharField(max_length=126, null=True)
+
+    # If this log is related to a survey, this points to the couch_id
+    # of an instance of SQLXFormsSession that this log is tied to
+    xforms_session_couch_id = models.CharField(max_length=126, null=True, db_index=True)
+
+    # If this log is related to a reminder, this points to the _id of a
+    # CaseReminder instance that it is tied to
+    reminder_id = models.CharField(max_length=126, null=True)
+    location_id = models.CharField(max_length=126, null=True)
+
+    # The MessagingSubEvent that this log is tied to
+    messaging_subevent = models.ForeignKey('MessagingSubEvent', null=True, on_delete=models.PROTECT)
+
+
+class SMS(SyncSQLToCouchMixin, Log):
     ERROR_TOO_MANY_UNSUCCESSFUL_ATTEMPTS = 'TOO_MANY_UNSUCCESSFUL_ATTEMPTS'
     ERROR_MESSAGE_IS_STALE = 'MESSAGE_IS_STALE'
     ERROR_INVALID_DIRECTION = 'INVALID_DIRECTION'
@@ -287,27 +329,16 @@ class SMS(SyncSQLToCouchMixin, models.Model):
     }
 
     couch_id = models.CharField(max_length=126, null=True, db_index=True)
-    domain = models.CharField(max_length=126, null=True, db_index=True)
-    date = models.DateTimeField(null=True, db_index=True)
-    couch_recipient_doc_type = models.CharField(max_length=126, null=True, db_index=True)
-    couch_recipient = models.CharField(max_length=126, null=True, db_index=True)
-    phone_number = models.CharField(max_length=126, null=True, db_index=True)
-    direction = models.CharField(max_length=1, null=True)
     text = models.TextField(null=True)
 
     # In cases where decoding must occur, this is the raw text received
     # from the gateway
     raw_text = models.TextField(null=True)
-
-    """Properties related to processing and billing"""
     datetime_to_process = models.DateTimeField(null=True, db_index=True)
     processed = models.NullBooleanField(default=True, db_index=True)
     num_processing_attempts = models.IntegerField(default=0, null=True)
     queued_timestamp = models.DateTimeField(null=True)
     processed_timestamp = models.DateTimeField(null=True)
-    error = models.NullBooleanField(default=False)
-    system_error_message = models.TextField(null=True)
-    billed = models.NullBooleanField(default=False)
 
     # If the message was simulated from a domain, this is the domain
     domain_scope = models.CharField(max_length=126, null=True)
@@ -317,38 +348,17 @@ class SMS(SyncSQLToCouchMixin, models.Model):
     # replies or other info-related queries while opted-out.
     ignore_opt_out = models.NullBooleanField(default=False)
 
-    """Metadata properties"""
-    backend_api = models.CharField(max_length=126, null=True)
-    backend_id = models.CharField(max_length=126, null=True)
-    system_phone_number = models.CharField(max_length=126, null=True)
-
     # This is the unique message id that the gateway uses to track this
     # message, if applicable.
     backend_message_id = models.CharField(max_length=126, null=True)
-
-    # Describes what kind of workflow this sms was a part of
-    workflow = models.CharField(max_length=126, null=True)
 
     # For outgoing sms only: if this sms was sent from a chat window,
     # the _id of the CouchUser who sent this sms; otherwise None
     chat_user_id = models.CharField(max_length=126, null=True)
 
-    # If this sms is related to a survey, this points to the couch_id
-    # of an instance of SQLXFormsSession that this sms is tied to
-    xforms_session_couch_id = models.CharField(max_length=126, null=True, db_index=True)
-
     # True if this was an inbound message that was an
     # invalid response to a survey question
     invalid_survey_response = models.NullBooleanField(default=False)
-
-    # If this sms is related to a reminder, this points to the _id of a
-    # CaseReminder instance that it is tied to
-    reminder_id = models.CharField(max_length=126, null=True)
-    location_id = models.CharField(max_length=126, null=True)
-
-    # The MessagingSubEvent that this SMS is tied to. Only applies to
-    # SMS that are not part of a survey (i.e., xforms_session_couch_id is None)
-    messaging_subevent = models.ForeignKey('MessagingSubEvent', null=True, on_delete=models.PROTECT)
 
     """ Custom properties. For the initial migration, it makes it easier
     to put these here. Eventually they should be moved to a separate table. """
@@ -403,7 +413,7 @@ class SMS(SyncSQLToCouchMixin, models.Model):
         return SMSLog
 
 
-class LastReadMessage(Document, CouchDocLockableMixIn):
+class LastReadMessage(SyncCouchToSQLMixin, Document, CouchDocLockableMixIn):
     domain = StringProperty()
     # _id of CouchUser who read it
     read_by = StringProperty()
@@ -447,7 +457,92 @@ class LastReadMessage(Document, CouchDocLockableMixIn):
             include_docs=True
         ).first()
 
-class CallLog(MessageLog):
+    @classmethod
+    def _migration_get_fields(cls):
+        return SQLLastReadMessage._migration_get_fields()
+
+    @classmethod
+    def _migration_get_sql_model_class(cls):
+        return SQLLastReadMessage
+
+
+class SQLLastReadMessage(SyncSQLToCouchMixin, models.Model):
+    class Meta:
+        db_table = 'sms_lastreadmessage'
+        app_label = 'sms'
+        index_together = [
+            ['domain', 'read_by', 'contact_id'],
+            ['domain', 'contact_id'],
+        ]
+
+    couch_id = models.CharField(max_length=126, null=True, db_index=True)
+    domain = models.CharField(max_length=126, null=True)
+
+    # _id of CouchUser who read it
+    read_by = models.CharField(max_length=126, null=True)
+
+    # _id of the CouchUser or CommCareCase who the message was sent to
+    # or from
+    contact_id = models.CharField(max_length=126, null=True)
+
+    # couch_id of the SMS
+    message_id = models.CharField(max_length=126, null=True)
+
+    # date of the SMS entry, stored here redundantly to prevent a lookup
+    message_timestamp = models.DateTimeField(null=True)
+
+    @classmethod
+    def by_anyone(cls, domain, contact_id):
+        """
+        Returns the SQLLastReadMessage representing the last chat message
+        that was read by anyone in the given domain for the given contact_id.
+        """
+        result = cls.objects.filter(
+            domain=domain,
+            contact_id=contact_id
+        ).order_by('-message_timestamp')
+        result = result[:1]
+
+        if len(result) > 0:
+            return result[0]
+
+        return None
+
+    @classmethod
+    def by_user(cls, domain, user_id, contact_id):
+        """
+        Returns the SQLLastReadMessage representing the last chat message
+        that was read in the given domain by the given user_id for the given
+        contact_id.
+        """
+        try:
+            # It's not expected that this can raise MultipleObjectsReturned
+            # since we lock out creation of these records with a CriticalSection.
+            # So if that happens, let the exception raise.
+            return cls.objects.get(
+                domain=domain,
+                read_by=user_id,
+                contact_id=contact_id
+            )
+        except cls.DoesNotExist:
+            return None
+
+    @classmethod
+    def _migration_get_fields(cls):
+        return [
+            'domain',
+            'read_by',
+            'contact_id',
+            'message_id',
+            'message_timestamp',
+        ]
+
+    @classmethod
+    def _migration_get_couch_model_class(cls):
+        return LastReadMessage
+
+
+class CallLog(SyncCouchToSQLMixin, MessageLog):
     form_unique_id = StringProperty()
     answered = BooleanProperty(default=False)
     duration = IntegerProperty() # Length of the call in seconds
@@ -507,6 +602,16 @@ class CallLog(MessageLog):
             include_docs=True,
             limit=1).one()
 
+    @classmethod
+    def _migration_get_fields(cls):
+        from corehq.apps.ivr.models import Call
+        return Call._migration_get_fields()
+
+    @classmethod
+    def _migration_get_sql_model_class(cls):
+        from corehq.apps.ivr.models import Call
+        return Call
+
 
 class EventLog(SafeSaveDocument):
     base_doc                    = "EventLog"
@@ -515,11 +620,8 @@ class EventLog(SafeSaveDocument):
     couch_recipient_doc_type    = StringProperty()
     couch_recipient             = StringProperty()
 
-CALLBACK_PENDING = "PENDING"
-CALLBACK_RECEIVED = "RECEIVED"
-CALLBACK_MISSED = "MISSED"
 
-class ExpectedCallbackEventLog(EventLog):
+class ExpectedCallbackEventLog(SyncCouchToSQLMixin, EventLog):
     status = StringProperty(choices=[CALLBACK_PENDING,CALLBACK_RECEIVED,CALLBACK_MISSED])
     
     @classmethod
@@ -532,9 +634,49 @@ class ExpectedCallbackEventLog(EventLog):
                         endkey=[domain, end_date],
                         include_docs=True).all()
 
-FORWARD_ALL = "ALL"
-FORWARD_BY_KEYWORD = "KEYWORD"
-FORWARDING_CHOICES = [FORWARD_ALL, FORWARD_BY_KEYWORD]
+    @classmethod
+    def _migration_get_fields(cls):
+        return ExpectedCallback._migration_get_fields()
+
+    @classmethod
+    def _migration_get_sql_model_class(cls):
+        return ExpectedCallback
+
+
+class ExpectedCallback(SyncSQLToCouchMixin, models.Model):
+    class Meta:
+        app_label = 'sms'
+        index_together = [
+            ['domain', 'date'],
+        ]
+
+    STATUS_CHOICES = (
+        (CALLBACK_PENDING, ugettext_lazy("Pending")),
+        (CALLBACK_RECEIVED, ugettext_lazy("Received")),
+        (CALLBACK_MISSED, ugettext_lazy("Missed")),
+    )
+
+    couch_id = models.CharField(max_length=126, null=True, db_index=True)
+    domain = models.CharField(max_length=126, null=True, db_index=True)
+    date = models.DateTimeField(null=True)
+    couch_recipient_doc_type = models.CharField(max_length=126, null=True)
+    couch_recipient = models.CharField(max_length=126, null=True, db_index=True)
+    status = models.CharField(max_length=126, null=True)
+
+    @classmethod
+    def _migration_get_fields(cls):
+        return [
+            'domain',
+            'date',
+            'couch_recipient_doc_type',
+            'couch_recipient',
+            'status',
+        ]
+
+    @classmethod
+    def _migration_get_couch_model_class(cls):
+        return ExpectedCallbackEventLog
+
 
 class ForwardingRule(Document):
     domain = StringProperty()
@@ -549,31 +691,36 @@ class ForwardingRule(Document):
 
 class CommConnectCase(CommCareCase, CommCareMobileContactMixin):
 
-    def case_changed(self):
-        """
-        Syncs verified numbers with this case.
-        """
-        contact_phone_number = self.get_case_property("contact_phone_number")
-        contact_phone_number_is_verified = self.get_case_property("contact_phone_number_is_verified")
-        contact_backend_id = self.get_case_property("contact_backend_id")
-        contact_ivr_backend_id = self.get_case_property("contact_ivr_backend_id")
-        if ((contact_phone_number is None) or (contact_phone_number == "") or
-            (str(contact_phone_number) == "0") or self.closed or
-            self.doc_type.endswith(DELETED_SUFFIX)):
-            try:
-                self.delete_verified_number()
-            except Exception:
-                logging.exception("Could not delete verified number for owner %s" % self._id)
-        elif contact_phone_number_is_verified:
-            try:
-                self.save_verified_number(self.domain, contact_phone_number, True, contact_backend_id, ivr_backend_id=contact_ivr_backend_id, only_one_number_allowed=True)
-            except (PhoneNumberInUseException, InvalidFormatException):
-                try:
-                    self.delete_verified_number()
-                except:
-                    logging.exception("Could not delete verified number for owner %s" % self._id)
-            except Exception:
-                logging.exception("Could not save verified number for owner %s" % self._id)
+    def get_phone_info(self):
+        PhoneInfo = namedtuple(
+            'PhoneInfo',
+            [
+                'requires_entry',
+                'phone_number',
+                'sms_backend_id',
+                'ivr_backend_id',
+            ]
+        )
+        contact_phone_number = self.get_case_property('contact_phone_number')
+        contact_phone_number = apply_leniency(contact_phone_number)
+        contact_phone_number_is_verified = self.get_case_property('contact_phone_number_is_verified')
+        contact_backend_id = self.get_case_property('contact_backend_id')
+        contact_ivr_backend_id = self.get_case_property('contact_ivr_backend_id')
+
+        requires_entry = (
+            contact_phone_number and
+            contact_phone_number != '0' and
+            not self.closed and
+            not self.doc_type.endswith(DELETED_SUFFIX) and
+            # For legacy reasons, any truthy value here suffices
+            contact_phone_number_is_verified
+        )
+        return PhoneInfo(
+            requires_entry,
+            contact_phone_number,
+            contact_backend_id,
+            contact_ivr_backend_id
+        )
 
     def get_time_zone(self):
         return self.get_case_property("time_zone")
@@ -598,17 +745,6 @@ class CommConnectCase(CommCareCase, CommCareMobileContactMixin):
     class Meta:
         # This is necessary otherwise couchdbkit will confuse the sms app with casexml
         app_label = "sms"
-
-
-def case_changed_receiver(sender, case, **kwargs):
-    # the primary purpose of this function is to add/remove verified
-    # phone numbers from the case. if the case doesn't have any verified
-    # numbers associated with it this is basically a no-op
-    contact = CommConnectCase.wrap_as_commconnect_case(case)
-    contact.case_changed()
-
-
-case_post_save.connect(case_changed_receiver, CommCareCase)
 
 
 class PhoneNumber(models.Model):
@@ -1257,6 +1393,9 @@ class SelfRegistrationInvitation(models.Model):
     phone_type = models.CharField(max_length=20, null=True, choices=PHONE_TYPE_CHOICES)
     registered_date = models.DateTimeField(null=True)
 
+    class Meta:
+        app_label = 'sms'
+
     @property
     def already_registered(self):
         return self.registered_date is not None
@@ -1526,6 +1665,7 @@ class SQLMobileBackend(models.Model):
 
     class Meta:
         db_table = 'messaging_mobilebackend'
+        app_label = 'sms'
 
     def __init__(self, *args, **kwargs):
         super(SQLMobileBackend, self).__init__(*args, **kwargs)
@@ -1954,6 +2094,7 @@ class SQLMobileBackend(models.Model):
 class SQLSMSBackend(SQLMobileBackend):
     class Meta:
         proxy = True
+        app_label = 'sms'
 
     def get_sms_rate_limit(self):
         """
@@ -2055,6 +2196,7 @@ class SQLMobileBackendMapping(models.Model):
     """
     class Meta:
         db_table = 'messaging_mobilebackendmapping'
+        app_label = 'sms'
         unique_together = ('domain', 'backend_type', 'prefix')
 
     couch_id = models.CharField(max_length=126, null=True, db_index=True)
@@ -2150,6 +2292,7 @@ class SQLMobileBackendMapping(models.Model):
 class MobileBackendInvitation(models.Model):
     class Meta:
         db_table = 'messaging_mobilebackendinvitation'
+        app_label = 'sms'
         unique_together = ('backend', 'domain')
 
     # The domain that is being invited to share another domain's backend
@@ -2169,9 +2312,11 @@ class MigrationStatus(models.Model):
     MIGRATION_BACKEND = 'backend'
     MIGRATION_BACKEND_MAP = 'backend_map'
     MIGRATION_DOMAIN_DEFAULT_BACKEND = 'domain_default_backend'
+    MIGRATION_LOGS = 'logs'
 
     class Meta:
         db_table = 'messaging_migrationstatus'
+        app_label = "sms"
 
     # The name of the migration (one of the MIGRATION_* constants above)
     name = models.CharField(max_length=126)
@@ -2192,3 +2337,6 @@ class MigrationStatus(models.Model):
             return True
         except cls.DoesNotExist:
             return False
+
+
+from corehq.apps.sms import signals

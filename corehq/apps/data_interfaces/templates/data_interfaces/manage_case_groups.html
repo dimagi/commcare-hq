@@ -1,4 +1,4 @@
-{% extends 'style/bootstrap2/base_paginated_crud.html' %}
+{% extends 'style/bootstrap3/base_paginated_crud.html' %}
 {% load i18n %}
 {% load hq_shared_tags %}
 {% load crispy_forms_tags %}
@@ -62,14 +62,14 @@
 {% endblock %}
 
 {% block js %}{{ block.super }}
-    <script src="{% static 'hqwebapp/ko/bulk_upload_file.js' %}"></script>
+    <script src="{% new_static 'hqwebapp/ko/bulk_upload_file.js' %}"></script>
 {% endblock %}
 
 {% block pagination_header %}
     <h3>
         {% blocktrans %}
             Cases in Group
-            <a href="#" id="toggle-group-name">{{ group_name }} <small><i class="icon-edit"> Edit</i></small></a>
+            <a href="#" id="toggle-group-name">{{ group_name }} <small><i class="fa fa-edit"> Edit</i></small></a>
         {% endblocktrans %}
     </h3>
     <div id="edit-group-name" class="hide">
@@ -89,7 +89,7 @@
         <% } %>
 
         <% if (errors.length > 0) { %>
-        <div class="alert">
+        <div class="alert alert-warning">
             <h4>{% trans 'Issues encountered during bulk upload:' %}</h4>
             <ul>
             <% _.each(errors, function (error) { %>
@@ -100,7 +100,7 @@
         <% } %>
     </script>
     <div id="upload-notice">
-        <img src="{% static 'hqwebapp/img/ajax-loader.gif' %}" alt="loading" />
+        <img src="{% new_static 'hqwebapp/img/ajax-loader.gif' %}" alt="loading" />
         {% trans 'Processing file...' %}
         <hr />
     </div>
@@ -109,16 +109,16 @@
 
 {% block pagination_templates %}
     <script type="text/html" id="existing-case-template">
-        <td class="span5">
+        <td class="col-sm-5">
             <a data-bind="attr: { href: detailsUrl }, text: name" target="_blank"></a>
         </td>
-        <td class="span2" data-bind="text: phoneNumber"></td>
-        <td class="span3" data-bind="text: externalId"></td>
-        <td class="span2">
+        <td class="col-sm-2" data-bind="text: phoneNumber"></td>
+        <td class="col-sm-3" data-bind="text: externalId"></td>
+        <td class="col-sm-2">
             <button type="button"
                     class="btn btn-danger delete-item-confirm"
                     data-loading-text="{% trans 'Removing...' %}">
-                <i class="icon-remove"></i> {% trans 'Remove' %}
+                <i class="fa fa-remove"></i> {% trans 'Remove' %}
             </button>
         </td>
     </script>
@@ -134,7 +134,7 @@
 
     <script type="text/html" id="case-message-template">
         <td>
-            ID: <span class="label label-inverse"
+            ID: <span class="label label-info"
                   data-bind="text: identifier"></span>
         </td>
         <td colspan="{{ pagination.num_columns|add:'-1' }}"
@@ -155,7 +155,6 @@
 {% endblock %}
 
 {% block pagination_footer %}
-
     <div class="accordion-group" style="margin-top:5px;">
         <div class="accordion-heading">
             <a class="accordion-toggle" data-toggle="collapse" href="#bulk-upload-accordion">
@@ -164,7 +163,7 @@
         </div>
         <div id="bulk-upload-accordion" class="accordion-body collapse">
             <div class="accordion-inner">
-                {% include "style/bootstrap2/partials/bulk_upload.html" %}
+                {% include "style/bootstrap3/partials/bulk_upload.html" %}
             </div>
         </div>
     </div>

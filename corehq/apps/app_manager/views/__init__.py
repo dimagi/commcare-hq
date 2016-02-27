@@ -18,7 +18,6 @@ from corehq.apps.app_manager.views.download import (
     download_raw_jar,
     download_suite,
     download_test_jar,
-    download_user_registration,
     download_xform,
     DownloadCCZ,
 )
@@ -64,7 +63,6 @@ from corehq.apps.app_manager.views.download import (
     download_raw_jar,
     download_suite,
     download_test_jar,
-    download_user_registration,
     download_xform,
     DownloadCCZ,
     validate_form_for_build,
@@ -78,13 +76,11 @@ from corehq.apps.app_manager.views.forms import (
     edit_form_attr,
     form_casexml,
     get_form_datums,
-    get_user_registration_source,
     get_xform_source,
     new_form,
     patch_xform,
     undo_delete_form,
     view_form,
-    view_user_registration,
     xform_display,
 )
 from corehq.apps.app_manager.views.modules import (
@@ -135,5 +131,4 @@ from corehq.apps.app_manager.views.translations import (
 from corehq.apps.app_manager.views.formdesigner import (
     form_designer,
     get_data_schema,
-    user_registration_source,
 )

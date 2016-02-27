@@ -267,9 +267,12 @@ def get_all_built_app_ids_and_versions(domain):
 
 
 def get_case_types_from_apps(domain):
-    """Get the case types of modules in applications in the domain."""
+    """
+    Get the case types of modules in applications in the domain.
+    :returns: A set of case_types
+    """
     q = (AppES()
          .domain(domain)
          .size(0)
-         .terms_facet('modules.case_type.exact', 'case_types'))
-    return q.run().facets.case_types.terms
+         .terms_aggregation('modules.case_type.exact', 'case_types'))
+    return set(q.run().aggregations.case_types.keys)

@@ -6,12 +6,12 @@ import math
 from toggle.shortcuts import toggle_enabled, set_toggle
 
 Tag = namedtuple('Tag', 'name css_class')
-TAG_ONE_OFF = Tag(name='One-Off', css_class='important')
+TAG_ONE_OFF = Tag(name='One-Off', css_class='danger')
 TAG_EXPERIMENTAL = Tag(name='Experimental', css_class='warning')
 TAG_PRODUCT_PATH = Tag(name='Product Path', css_class='info')
 TAG_PRODUCT_CORE = Tag(name='Core Product', css_class='success')
 TAG_PREVIEW = Tag(name='Preview', css_class='default')
-TAG_UNKNOWN = Tag(name='Unknown', css_class='inverse')
+TAG_UNKNOWN = Tag(name='Unknown', css_class='default')
 ALL_TAGS = [TAG_ONE_OFF, TAG_EXPERIMENTAL, TAG_PRODUCT_PATH, TAG_PRODUCT_CORE, TAG_PREVIEW, TAG_UNKNOWN]
 
 
@@ -308,6 +308,13 @@ REPORT_BUILDER_BETA_GROUP = StaticToggle(
     [NAMESPACE_DOMAIN],
 )
 
+REPORT_BUILDER_MAP_REPORTS = StaticToggle(
+    'report_builder_map_reports',
+    'Report Builder map reports',
+    TAG_PRODUCT_PATH,
+    [NAMESPACE_DOMAIN]
+)
+
 STOCK_TRANSACTION_EXPORT = StaticToggle(
     'ledger_export',
     'Show "export transactions" link on case details page',
@@ -462,6 +469,13 @@ VELLUM_PRINTING = StaticToggle(
 VELLUM_RICH_TEXT = StaticToggle(
     'rich_text',
     "Enables rich text for the form builder",
+    TAG_EXPERIMENTAL,
+    [NAMESPACE_DOMAIN]
+)
+
+VELLUM_DATA_IN_SETVALUE = StaticToggle(
+    'allow_data_reference_in_setvalue',
+    "Allow data references in a setvalue",
     TAG_EXPERIMENTAL,
     [NAMESPACE_DOMAIN]
 )
@@ -637,6 +651,13 @@ HSPH_HACK = StaticToggle(
     [NAMESPACE_DOMAIN],
 )
 
+USE_FORMPLAYER = StaticToggle(
+    'use_formplayer',
+    'Use the new formplayer server',
+    TAG_ONE_OFF,
+    [NAMESPACE_DOMAIN],
+)
+
 FIXTURE_CASE_SELECTION = StaticToggle(
     'fixture_case',
     'Allow a configurable case list that is filtered based on a fixture type and fixture selection (Due List)',
@@ -662,6 +683,13 @@ BROADCAST_TO_LOCATIONS = StaticToggle(
 MOBILE_WORKER_SELF_REGISTRATION = StaticToggle(
     'mobile_worker_self_registration',
     'Allow mobile workers to self register',
+    TAG_PRODUCT_PATH,
+    [NAMESPACE_DOMAIN],
+)
+
+TELERIVET_SETUP_WALKTHROUGH = StaticToggle(
+    'telerivet_setup_walkthrough',
+    'Use the new Telerivet setup walkthrough for creating Telerivet backends.',
     TAG_PRODUCT_PATH,
     [NAMESPACE_DOMAIN],
 )
@@ -750,17 +778,26 @@ CUSTOM_APP_BASE_URL = StaticToggle(
     [NAMESPACE_DOMAIN]
 )
 
-TF_USES_SQLITE_BACKEND = StaticToggle(
-    'tf_sql_backend',
-    'Use a SQLite backend for Touchforms',
+
+CASE_LIST_DISTANCE_SORT = StaticToggle(
+    'case_list_distance_sort',
+    'Allow sorting by distance from current location in the case list',
     TAG_PRODUCT_PATH,
     [NAMESPACE_DOMAIN]
 )
 
 
-CASE_LIST_DISTANCE_SORT = StaticToggle(
-    'case_list_distance_sort',
-    'Allow sorting by distance from current location in the case list',
+NOTIFICATIONS = StaticToggle(
+    'hq_notifications',
+    'Shows notification icon when announcements need to be made',
+    TAG_PRODUCT_PATH,
+    [NAMESPACE_USER]
+)
+
+
+PROJECT_HEALTH_DASHBOARD = StaticToggle(
+    'project_health_dashboard',
+    'Shows the project health dashboard in the reports navigation',
     TAG_PRODUCT_PATH,
     [NAMESPACE_DOMAIN]
 )

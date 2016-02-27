@@ -105,7 +105,6 @@ describe('ExportInstance model', function() {
             assert.equal(instance.saveState(), Exports.Constants.SAVE_STATES.SAVING);
             server.respond();
 
-            assert.equal(instance.saveState(), Exports.Constants.SAVE_STATES.SUCCESS);
             assert.isTrue(recordSaveAnalyticsSpy.called);
         });
 

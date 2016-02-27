@@ -1,7 +1,11 @@
 import datetime
 import uuid
+from contextlib import contextmanager
+
 from couchdbkit import ResourceNotFound
 from django.test import SimpleTestCase, TestCase
+from mock import patch
+
 from casexml.apps.case.mock import CaseBlock
 from casexml.apps.case.models import CommCareCase
 from casexml.apps.case.sharedmodels import CommCareCaseAttachment
@@ -67,27 +71,24 @@ TESTS = (
 )
 
 
-class mock_fetch_case_attachment(object):
-    def __init__(self, case_id, attachments):
-        _case_id = case_id
+@contextmanager
+def mock_fetch_case_attachment(case_id, attachments):
 
-        self.old_db = CommCareCase.get_db()
+    class MockCachedObject(object):
+        def __init__(self, attachment_file):
+            self.attachment_file = attachment_file
 
-        @classmethod
-        def fetch_case_attachment(cls, case_id, attachment_key, fixed_size=None, **kwargs):
-            if case_id == _case_id and attachment_key in attachments:
-                return None, open(attachments[attachment_key])
-            else:
-                raise ResourceNotFound()
+        def get(self, **kwargs):
+            return None, open(self.attachment_file)
 
-        self.old_fetch_case_attachment = CommCareCase.fetch_case_attachment
-        self.fetch_case_attachment = fetch_case_attachment
+    def get_cached_case_attachment(domain, _case_id, attachment_id):
+        if case_id == _case_id and attachment_id in attachments:
+            return MockCachedObject(attachments[attachment_id])
+        else:
+            raise ResourceNotFound()
 
-    def __enter__(self):
-        CommCareCase.fetch_case_attachment = self.fetch_case_attachment
-
-    def __exit__(self, exc_type, exc_val, exc_tb):
-        CommCareCase.fetch_case_attachment = self.old_fetch_case_attachment
+    with patch('corehq.apps.hqcase.utils.get_cached_case_attachment', get_cached_case_attachment):
+        yield
 
 
 class ExplodeCasesTest(SimpleTestCase, TestXmlMixin):
@@ -97,7 +98,7 @@ class ExplodeCasesTest(SimpleTestCase, TestXmlMixin):
         for input, files, output in TESTS:
             with mock_fetch_case_attachment(input.case_id, files):
                 case_block, attachments = make_creating_casexml(
-                    input, 'new-case-abc123')
+                    'mock-domain', input, 'new-case-abc123')
                 self.assertXmlEqual(case_block, output)
                 self.assertDictEqual(
                     {key: value.read() for key, value in attachments.items()},

@@ -80,7 +80,7 @@ class TestSubscription(BaseAccountingTest):
         self.currency = generator.init_default_currency()
         self.account = generator.billing_account(self.dimagi_user, self.billing_contact)
         self.subscription, self.subscription_length = generator.generate_domain_subscription_from_date(
-            datetime.date.today(), self.account, self.domain.name
+            datetime.date.today(), self.account, self.domain.name, subscription_length=15,
         )
 
     def test_creation(self):
@@ -120,6 +120,18 @@ class TestSubscription(BaseAccountingTest):
         self.subscription.is_hidden_to_ops = False
         self.subscription.save()
         self.assertEqual(1, len(Subscription.objects.filter(id=self.subscription.id)))
+
+    def test_next_subscription(self):
+        this_subscription_date_end = self.subscription.date_end
+        already_canceled_future_subscription, _ = generator.generate_domain_subscription_from_date(
+            this_subscription_date_end, self.account, self.domain.name,
+            subscription_length=0
+        )
+        next_future_subscription, _ = generator.generate_domain_subscription_from_date(
+            this_subscription_date_end, self.account, self.domain.name,
+            subscription_length=1
+        )
+        self.assertEqual(self.subscription.next_subscription, next_future_subscription)
 
     def tearDown(self):
         self.billing_contact.delete()
