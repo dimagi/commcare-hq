@@ -1,5 +1,4 @@
-
-var CareplanConfig = (function () {
+hqDefine('app_manager/js/careplan-config-ui.js', function () {
     'use strict';
     var PropertyBase = {
         mapping: {
@@ -417,4 +416,4 @@ var CareplanConfig = (function () {
     return {
         Careplan: Careplan
     };
-}());
+});
