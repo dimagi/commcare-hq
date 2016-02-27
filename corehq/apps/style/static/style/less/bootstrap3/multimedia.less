@@ -1,0 +1,92 @@
+/* Styling for bulk uploader */
+
+.hqm-empty {
+    display: none;
+
+    &:only-child {
+        display: table-row;
+    }
+}
+
+.hqm-uploaded-files:empty {
+    display: none;
+}
+
+.hqm-list-notice {
+    &:only-child {
+        display: none;
+    }
+
+    th {
+        background-color: white !important;
+        text-align: center;
+    }
+}
+
+.hqm-path {
+    display: block;
+    overflow-x: hidden;
+}
+
+
+/* Styling for reference checker */
+
+.accordion-multimedia {
+    .panel-heading {
+        cursor: pointer;
+
+        &:hover {
+            background-color: @cc-bg;
+        }
+
+        a:hover {
+            text-decoration: none;
+        }
+
+        h1, h3 {
+            margin: 0;
+            color: @cc-brand-low;
+        }
+
+        h1 {
+            font-size: @font-size-base * 1.75;
+        }
+
+        h3 {
+            font-size: @font-size-base * 1.25;
+        }
+    }
+
+    .table-multimedia {
+        th, td {
+            text-align: center;
+            &:last-child {
+                text-align: left;
+            }
+        }
+
+        td {
+            vertical-align: middle;
+        }
+
+        .media-type-icon,
+        .media-status-icon {
+            font-size: 2em;
+        }
+
+        .media-type-icon {
+            color: @cc-brand-low;
+        }
+
+        .media-status-icon {
+            .fa-check {
+                color: @cc-att-pos-mid;
+            }
+
+            .fa-exclamation-triangle {
+                color: @cc-dark-warm-accent-mid;
+            }
+        }
+    }
+}
+
