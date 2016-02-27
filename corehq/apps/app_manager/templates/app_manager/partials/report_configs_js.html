@@ -5,6 +5,8 @@
 <script>
     $(function () {
         var initNavMenuMedia = hqImport('app_manager/js/app_manager_media.js').initNavMenuMedia;
+        var select2Separator = hqImport('app_manager/js/report-module.js').select2Separator;
+        var ReportModule = hqImport('app_manager/js/report-module.js').ReportModule;
         var navMenuMedia = initNavMenuMedia(
                 "",
                 {{ multimedia.menu.menu_refs.image|JSON }},
@@ -46,6 +48,7 @@
         var select2s = $('.choice_filter');
         for(var i = 0; i < select2s.length; i++) {
             var element = select2s.eq(i);
+
             var separator = select2Separator;
             var initialValues = element.val() !== "" ? element.val().split(separator) : [];
             element.select2({
