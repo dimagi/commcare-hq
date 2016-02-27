@@ -51,10 +51,8 @@
 
     <script>
         $(function () {
-            COMMCAREHQ.app_manager.module_view = {
-                /* for sharing variables between essentially separate parts of the ui */
-                requires_case_details: ko.observable({{ module.requires_case_details|BOOL }})
-            };
+            var state = hqImport('app_manager/js/detail-screen-config.js').state;
+            state.requires_case_details({{ module.requires_case_details|BOOL }});
 
             var details = {{ details|JSON }};
             var lang = {{ lang|JSON }};
@@ -82,7 +80,7 @@
                     fixtures: fixtures,
                     parentSelect: detail.parent_select,
                     fixtureSelect: detail.fixture_select,
-                    contextVariables: COMMCAREHQ.app_manager.module_view,
+                    contextVariables: state,
                     multimedia: {{multimedia.object_map|JSON}}
                 });
                 var $list_home = $("#" + detail.type + "-detail-screen-config-tab");
@@ -195,8 +193,8 @@
             }
         });
         $(function () {
-            COMMCAREHQ.app_manager.setupValidation(
-                '{% url "validate_module_for_build" domain app.id module.id %}');
+            var setupValidation = hqImport('app_manager/js/app_manager.js').setupValidation;
+            setupValidation('{% url "validate_module_for_build" domain app.id module.id %}');
         });
     </script>
 {% endblock %}

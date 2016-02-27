@@ -64,7 +64,6 @@ from corehq.apps.accounting.models import (
 )
 from corehq.apps.accounting.tasks import send_subscription_reminder_emails
 from corehq.apps.accounting.utils import (
-    get_first_last_days,
     get_money_str,
     has_subscription_already_ended,
     make_anchor_tag,
@@ -73,6 +72,7 @@ from corehq.apps.domain.models import Domain
 from corehq.apps.hqwebapp.crispy import BootstrapMultiField, TextField
 from corehq.apps.hqwebapp.tasks import send_html_email_async
 from corehq.apps.users.models import WebUser
+from corehq.util.dates import get_first_last_days
 
 
 class BillingAccountBasicForm(forms.Form):
@@ -1795,6 +1795,8 @@ class AdjustBalanceForm(forms.Form):
         self.fields['invoice_id'].initial = invoice.id
         self.helper = FormHelper()
         self.helper.form_class = "form-horizontal"
+        self.helper.label_class = 'col-sm-4 col-md-3'
+        self.helper.field_class = 'col-sm-8 col-md-9'
         self.helper.form_action = reverse('invoice_summary', args=[self.invoice.id])
         self.helper.layout = crispy.Layout(
             crispy.Div(
@@ -1803,13 +1805,13 @@ class AdjustBalanceForm(forms.Form):
                     data_bind="checked: adjustmentType",
                 ),
                 crispy.HTML('''
-                    <div id="div_id_custom_amount" class="control-group"
+                    <div id="div_id_custom_amount" class="control-group form-group"
                      data-bind="visible: showCustomAmount">
-                        <label for="id_custom_amount" class="control-label">
+                        <label for="id_custom_amount" class="control-label col-sm-4 col-md-3">
                             Custom amount
                         </label>
-                        <div class="controls">
-                            <input class="textinput textInput"
+                        <div class="controls col-sm-8 col-md-9">
+                            <input class="textinput textInput form-control"
                              id="id_custom_amount" name="custom_amount"
                              type="number" step="any">
                         </div>
@@ -1833,7 +1835,7 @@ class AdjustBalanceForm(forms.Form):
                     crispy.Button(
                         'close',
                         'Close',
-                        css_class='disable-on-submit',
+                        css_class='disable-on-submit btn-default',
                         data_dismiss='modal',
                     ),
                 ),

@@ -44,6 +44,7 @@ CommCareCaseSQL_DB_TABLE = 'form_processor_commcarecasesql'
 CommCareCaseIndexSQL_DB_TABLE = 'form_processor_commcarecaseindexsql'
 CaseAttachmentSQL_DB_TABLE = 'form_processor_caseattachmentsql'
 CaseTransaction_DB_TABLE = 'form_processor_casetransaction'
+LedgerValue_DB_TABLE = 'form_processor_ledgervalue'
 
 
 class Attachment(namedtuple('Attachment', 'name raw_content content_type')):
@@ -142,13 +143,13 @@ class XFormInstanceSQL(DisabledDbMixin, models.Model, RedisLockableMixIn, Attach
     objects = RestrictedManager()
 
     # states should be powers of 2
-    NORMAL = 0
-    ARCHIVED = 1
-    DEPRECATED = 2
-    DUPLICATE = 4
-    ERROR = 8
-    SUBMISSION_ERROR_LOG = 16
-    DELETED = 32
+    NORMAL = 1
+    ARCHIVED = 2
+    DEPRECATED = 4
+    DUPLICATE = 8
+    ERROR = 16
+    SUBMISSION_ERROR_LOG = 32
+    DELETED = 64
     STATES = (
         (NORMAL, 'normal'),
         (ARCHIVED, 'archived'),
@@ -748,8 +749,8 @@ class CommCareCaseIndexSQL(DisabledDbMixin, models.Model, SaveStateMixin):
     objects = RestrictedManager()
 
     # relationship_ids should be powers of 2
-    CHILD = 0
-    EXTENSION = 1
+    CHILD = 1
+    EXTENSION = 2
     RELATIONSHIP_CHOICES = (
         (CHILD, 'child'),
         (EXTENSION, 'extension'),
@@ -820,13 +821,13 @@ class CaseTransaction(DisabledDbMixin, models.Model):
     objects = RestrictedManager()
 
     # types should be powers of 2
-    TYPE_FORM = 0
-    TYPE_REBUILD_WITH_REASON = 1
-    TYPE_REBUILD_USER_REQUESTED = 2
-    TYPE_REBUILD_USER_ARCHIVED = 4
-    TYPE_REBUILD_FORM_ARCHIVED = 8
-    TYPE_REBUILD_FORM_EDIT = 16
-    TYPE_LEDGER = 32
+    TYPE_FORM = 1
+    TYPE_REBUILD_WITH_REASON = 2
+    TYPE_REBUILD_USER_REQUESTED = 4
+    TYPE_REBUILD_USER_ARCHIVED = 8
+    TYPE_REBUILD_FORM_ARCHIVED = 16
+    TYPE_REBUILD_FORM_EDIT = 32
+    TYPE_LEDGER = 64
     TYPE_CHOICES = (
         (TYPE_FORM, 'form'),
         (TYPE_REBUILD_WITH_REASON, 'rebuild_with_reason'),
@@ -921,7 +922,7 @@ class CaseTransaction(DisabledDbMixin, models.Model):
         ).format(self=self)
 
     class Meta:
-        unique_together = ("case", "form_id")
+        unique_together = ("case", "form_id", "type")
         ordering = ['server_date']
         db_table = CaseTransaction_DB_TABLE
         app_label = "form_processor"
@@ -967,10 +968,12 @@ class FormEditRebuild(CaseTransactionDetail):
     deprecated_form_id = StringProperty()
 
 
-class LedgerValue(models.Model):
+class LedgerValue(DisabledDbMixin, models.Model):
     """
     Represents the current state of a ledger. Supercedes StockState
     """
+    objects = RestrictedManager()
+
     # domain not included and assumed to be accessed through the foreign key to the case table. legit?
     case_id = models.CharField(max_length=255, db_index=True, default=None)  # remove foreign key until we're sharding this
     # can't be a foreign key to products because of sharding.
@@ -982,5 +985,6 @@ class LedgerValue(models.Model):
 
     class Meta:
         app_label = "form_processor"
+        db_table = LedgerValue_DB_TABLE
 
 CaseAction = namedtuple("CaseAction", ["action_type", "updated_known_properties", "indices"])
