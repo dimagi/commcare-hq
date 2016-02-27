@@ -1,6 +1,5 @@
 /*globals $, COMMCAREHQ, _, ko, console*/
-
-var VisitScheduler = (function () {
+hqDefine('app_manager/js/visit-scheduler.js', function () {
     'use strict';
     var app_manager = hqImport('app_manager/js/app_manager.js');
     var caseConfigUtils = hqImport('app_manager/js/case-config-utils.js');
@@ -395,7 +394,7 @@ var VisitScheduler = (function () {
         Scheduler: Scheduler,
         ModuleScheduler: ModuleScheduler
     };
-}());
+});
 
 // Verbatim from http://www.knockmeout.net/2011/05/dragging-dropping-and-sorting-with.html
 //connect items with observableArrays

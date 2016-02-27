@@ -29,6 +29,7 @@
 
 
     {% if module.has_schedule  %}
+    var VisitScheduler = hqImport('app_manager/js/visit-scheduler.js');
     var visitScheduler = new VisitScheduler.Scheduler({
         home: $('#visit-scheduler'),
         questions: {{ xform_questions|JSON }},
