@@ -552,8 +552,8 @@ hqDefine('app_manager/js/detail-screen-config.js', function () {
                     };
                     that.enum_extra = uiElement.key_value_mapping(o);
                 }());
-
-                this.graph_extra = new uiElement.GraphConfiguration({
+                var GraphConfigurationUiElement = hqImport('app_manager/js/graph-config.js').GraphConfigurationUiElement;
+                this.graph_extra = new GraphConfigurationUiElement({
                     childCaseTypes: this.screen.childCaseTypes,
                     fixtures: this.screen.fixtures,
                     lang: this.lang,
