@@ -150,5 +150,41 @@ hqDefine('app_manager/js/app_manager_media.js', function () {
         self.form = ref.form;
     };
 
-    return {AppMenuMediaManager: AppMenuMediaManager};
+    function initNavMenuMedia(qualifier, imageRef, audioRef, objectMap, defaultFileName) {
+        var uploaders = hqImport('#app_manager/partials/nav_menu_media_js_common.html');
+        var $mediaImage = $('#' + qualifier + 'media_image'),
+            $mediaAudio = $('#' + qualifier + 'media_audio');
+
+        var menuImage = new AppMenuMediaManager({
+            ref: imageRef,
+            objectMap: objectMap,
+            uploadController: uploaders.iconUploader,
+            defaultPath: 'jr://file/commcare/image/' + defaultFileName + '.png',
+            inputElement: $mediaImage
+        });
+
+        var menuAudio = new AppMenuMediaManager({
+            ref: audioRef,
+            objectMap: objectMap,
+            uploadController: uploaders.audioUploader,
+            defaultPath: 'jr://file/commcare/audio/' + defaultFileName + '.mp3',
+            inputElement: $mediaAudio
+        });
+
+        if ($mediaImage.length) {
+            $mediaImage.koApplyBindings(menuImage);
+        }
+        if ($mediaAudio.length) {
+          $mediaAudio.koApplyBindings(menuAudio);
+        }
+        return {
+            menuImage: menuImage,
+            menuAudio: menuAudio
+        };
+    }
+
+    return {
+        initNavMenuMedia: initNavMenuMedia,
+        AppMenuMediaManager: AppMenuMediaManager
+    };
 });
