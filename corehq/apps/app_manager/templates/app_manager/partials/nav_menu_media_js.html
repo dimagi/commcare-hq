@@ -2,6 +2,7 @@
 <script>
     var menuImage, menuAudio;
     $(function () {
+        var AppMenuMediaManager = hqImport('app_manager/js/app_manager_media.js').AppMenuMediaManager;
         var $mediaImage = $('#{{ qualifier|default_if_none:"" }}media_image'),
             $mediaAudio = $('#{{ qualifier|default_if_none:"" }}media_audio');
 
