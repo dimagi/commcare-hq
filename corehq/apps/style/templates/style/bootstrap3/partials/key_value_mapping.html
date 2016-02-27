@@ -97,7 +97,7 @@
     </div>
 </div>
 
-<<!-- Read-only version of keys and values, displayed alongside button to pop up modal -->
+<!-- Read-only version of keys and values, displayed alongside button to pop up modal -->
 <div id="key_value_mapping_template" class="hide">
     <div data-bind="template: 'key_value_mapping_display_template'"></div>
     <button class="btn btn-default" data-bind="click: openModal, visible: $data.edit">
@@ -106,7 +106,7 @@
     </button>
 </div>
 
-<div id="value_icon_uploader" class="hide">
+<div id="value_icon_uploader" class="hide" id="$parent.cssId()">
     <div class="col-sm-3">
         <input type="text" class="col-md-2 form-control" data-bind="value: customPath,
                           valueUpdate: 'textchange',
@@ -118,7 +118,7 @@
                                 mediaUploadComplete: uploadComplete,
                                 click: passToUploadController
                            }">
-            <i class="icon icon-cloud-upload"></i>
+            <i class="fa fa-cloud-upload"></i>
             <span data-bind="visible: isMediaMatched">{% trans 'Replace' %}</span>
             <span data-bind="visible: isMediaUnmatched">{% trans 'Upload' %}</span>
         </button>

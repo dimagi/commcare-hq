@@ -25,9 +25,14 @@ var MapItem = function(item, index, mappingContext){
             },
             objectMap: mappingContext.multimedia,
             uploadController: iconUploader,
-            defaultPath: 'jr://file/commcare/image/kv-icon' + index + '.png'
+            defaultPath: 'jr://file/commcare/image/kv-icon' + index + '.png',
+            inputElement: $("#" + makeSafeForCSS(this.key())),
         });
     }
+
+    this.cssId = ko.computed(function(){
+        return makeSafeForCSS(this.key());
+    }, this);
 
     this.value = ko.computed(function() {
         // ko.observable for item.value
@@ -197,3 +202,18 @@ $(document).on('show.bs.modal', '.modal', function () {
         $('.modal-backdrop').not('.modal-stack').css('z-index', zIndex - 1).addClass('modal-stack');
     }, 0);
 });
+
+
+// To autogenerate cssid from random string
+// copied from http://stackoverflow.com/questions/7627000/javascript-convert-string-to-safe-class-name-for-css
+function makeSafeForCSS(name) {
+    if (!name) {
+        return "";
+    }
+    return name.replace(/[^a-z0-9]/g, function(s) {
+        var c = s.charCodeAt(0);
+        if (c == 32) return '-';
+        if (c >= 65 && c <= 90) return '_' + s.toLowerCase();
+        return '__' + ('000' + c.toString(16)).slice(-4);
+    });
+}
