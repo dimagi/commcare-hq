@@ -1,5 +1,5 @@
 /*globals $, COMMCAREHQ, _, ko, CC_UTILS, console*/
-var AdvancedCase = (function () {
+hqDefine('app_manager/js/case-config-ui-advanced.js', function () {
     'use strict';
 
     var DEFAULT_CONDITION = function (type) {
@@ -1129,4 +1129,4 @@ var AdvancedCase = (function () {
     return {
         CaseConfig: CaseConfig
     };
-}());
+});
