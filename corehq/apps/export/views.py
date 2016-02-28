@@ -715,14 +715,6 @@ class BaseDownloadExportView(ExportsPermissionsMixin, JSONResponseMixin, BasePro
             'download_id': download.download_id,
         })
 
-    def _get_filter_form(self, filter_form_data):
-        filter_form = self.filter_form_class(
-            self.domain_object, self.timezone, filter_form_data
-        )
-        if not filter_form.is_valid():
-            raise ExportFormValidationException()
-        return filter_form
-
 
 class DownloadFormExportView(BaseDownloadExportView):
     """View to download a SINGLE Form Export with filters.
@@ -819,6 +811,14 @@ class DownloadFormExportView(BaseDownloadExportView):
             'download_id': download.download_id,
         })
 
+    def _get_filter_form(self, filter_form_data):
+        filter_form = self.filter_form_class(
+            self.domain_object, self.timezone, filter_form_data
+        )
+        if not filter_form.is_valid():
+            raise ExportFormValidationException()
+        return filter_form
+
 
 class BulkDownloadFormExportView(DownloadFormExportView):
     """View to download a Bulk Form Export with filters.
@@ -871,6 +871,14 @@ class DownloadCaseExportView(BaseDownloadExportView):
     def get_filters(self, filter_form_data):
         filter_form = self._get_filter_form(filter_form_data)
         return filter_form.get_case_filter()
+
+    def _get_filter_form(self, filter_form_data):
+        filter_form = self.filter_form_class(
+            self.domain_object, filter_form_data
+        )
+        if not filter_form.is_valid():
+            raise ExportFormValidationException()
+        return filter_form
 
 
 class BaseExportListView(ExportsPermissionsMixin, JSONResponseMixin, BaseProjectDataView):
@@ -1325,6 +1333,7 @@ class CreateNewCustomFormExportView(BaseModifyNewCustomView):
             self.domain,
             app_id,
             xmlns,
+            force_rebuild=True,
         )
         self.export_instance = self.export_instance_cls.generate_instance_from_schema(schema)
 
@@ -1342,6 +1351,7 @@ class CreateNewCustomCaseExportView(BaseModifyNewCustomView):
         schema = CaseExportDataSchema.generate_schema_from_builds(
             self.domain,
             case_type,
+            force_rebuild=True,
         )
         self.export_instance = self.export_instance_cls.generate_instance_from_schema(schema)
 

@@ -339,7 +339,7 @@
         <script type="text/javascript" src="{% new_static 'style/js/layout.js' %}"></script>
         <script type="text/javascript" src="{% new_static 'style/js/form_tools.js' %}"></script>
         <script type="text/javascript" src="{% new_static 'style/js/hq.helpers.js' %}"></script>
-        <script type="text/javascript" src="{% new_static 'style/js/commcarehq.js' %}"></script>
+        <script type="text/javascript" src="{% new_static 'style/js/bootstrap3/main.js' %}"></script>
         <script type="text/javascript" src="{% new_static 'hqwebapp/js/hqModules.js' %}"></script>
         {% endcompress %}
 
@@ -391,10 +391,10 @@
                 var alert_obj = {
                     "message": message,
                     "alert_class": "alert fade in alert-block alert-full page-level-alert"
-                }
+                };
                 if (tags) {
                     alert_obj.alert_class += " " + tags;
-                };
+                }
                 return alert_obj;
             }
             var message_alerts = ko.observableArray();
@@ -406,7 +406,7 @@
             var message_element = $("#message-alerts").get(0);
             ko.cleanNode(message_element);
             $(message_element).koApplyBindings({
-                alerts: message_alerts,
+                alerts: message_alerts
             });
 
         </script>
@@ -485,7 +485,7 @@
         </script>
         <![endif]-->
         
-        {# todo keyboard shortcuts #}
+        {% include 'style/includes/keyboard_shortcuts.html' %}
 
         {% block js-inline %}{% endblock js-inline %}
 

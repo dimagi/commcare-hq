@@ -1,4 +1,5 @@
 import uuid
+from mock import patch
 
 from django.test import TestCase
 
@@ -134,38 +135,59 @@ class ConfigurableReportViewTest(ConfigurableReportTestMixin, TestCase):
         report_config.save()
         return report_config
 
-
     @classmethod
-    def tearDownClass(cls):
+    def tearDown(cls):
         cls._delete_everything()
         # todo: understand why this is necessary. the view call uses the session and the
         # signal doesn't fire to kill it.
         Session.remove()
 
     @classmethod
-    def setUpClass(cls):
+    def setUp(cls):
         cls._delete_everything()
-        cls.report = cls._build_report()
 
     def test_export_table(self):
         """
         Test the output of ConfigurableReport.export_table()
         """
+        report = self._build_report()
         # Create a configurable report
         view = ConfigurableReport()
         view._domain = self.domain
         view._lang = "en"
-        view._report_config_id = self.report._id
+        view._report_config_id = report._id
 
-        self.assertEqual(
-            view.export_table,
+        expected = [
             [
+                u'foo',
                 [
-                    u'foo',
-                    [
-                        [u'report_column_display_fruit', u'report_column_display_percent'],
-                        [u'apple', '150%']
-                    ]
+                    [u'report_column_display_fruit', u'report_column_display_percent'],
+                    [u'apple', '150%']
                 ]
             ]
-        )
+        ]
+        self.assertEqual(view.export_table, expected)
+
+    def test_paginated_build_table(self):
+        """
+        Simulate building a report where chunking occurs
+        """
+
+        with patch('corehq.apps.userreports.tasks.CHUNK_SIZE', 1):
+            report = self._build_report()
+
+        view = ConfigurableReport()
+        view._domain = self.domain
+        view._lang = "en"
+        view._report_config_id = report._id
+
+        expected = [
+            [
+                u'foo',
+                [
+                    [u'report_column_display_fruit', u'report_column_display_percent'],
+                    [u'apple', '150%']
+                ]
+            ]
+        ]
+        self.assertEqual(view.export_table, expected)
