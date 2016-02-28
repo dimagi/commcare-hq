@@ -9,13 +9,13 @@ from corehq.const import SERVER_DATETIME_FORMAT
 from corehq.util.timezones.conversions import ServerTime
 from corehq.util.view_utils import absolute_reverse
 from dimagi.utils.parsing import json_format_datetime
+from corehq.apps.ivr.models import Call
 from corehq.apps.sms.models import (
     CALLBACK_MISSED,
     CALLBACK_PENDING,
     CALLBACK_RECEIVED,
     INCOMING,
     OUTGOING,
-    CallLog,
     ExpectedCallbackEventLog,
 )
 from corehq.apps.smsforms.models import SQLXFormsSession
@@ -28,7 +28,8 @@ from corehq.apps.reminders.util import get_form_name
 import pytz
 from math import ceil
 
-class CallLogReport(BaseCommConnectLogReport):
+
+class CallReport(BaseCommConnectLogReport):
     """
     Displays all calls for the given domain and date range.
     """
@@ -63,9 +64,11 @@ class CallLogReport(BaseCommConnectLogReport):
 
     @property
     def rows(self):
-        startdate = json_format_datetime(self.datespan.startdate_utc)
-        enddate = json_format_datetime(self.datespan.enddate_utc)
-        data = CallLog.by_domain_date(self.domain, startdate, enddate)
+        data = Call.by_domain(
+            self.domain,
+            self.datespan.startdate_utc,
+            self.datespan.enddate_utc
+        )
         result = []
         
         # Store the results of lookups for faster loading
@@ -158,6 +161,7 @@ class CallLogReport(BaseCommConnectLogReport):
         ret['raw'] = submission_id
         return ret
 
+
 class ExpectedCallbackReport(ProjectReport, ProjectReportParametersMixin, GenericTabularReport, DatespanMixin):
     """
     Displays all expected callbacks for the given time period.
@@ -234,4 +238,3 @@ class ExpectedCallbackReport(ProjectReport, ProjectReportParametersMixin, Generi
             timestamp,
             timestamp.strftime(SERVER_DATETIME_FORMAT),
         )
-
