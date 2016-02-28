@@ -7,7 +7,7 @@ from django.http import HttpResponse, HttpResponseBadRequest
 from django.views.decorators.csrf import csrf_exempt
 from corehq.apps.ivr.models import Call
 from corehq.apps.sms.mixin import VerifiedNumber
-from corehq.apps.sms.models import INCOMING, OUTGOING
+from corehq.apps.sms.models import INCOMING
 from datetime import datetime
 from corehq.apps.sms.util import strip_plus
 

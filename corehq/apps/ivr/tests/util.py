@@ -21,7 +21,7 @@ class LogCallTestCase(TestCase):
         return '99900000000'
 
     def delete_call_logs(self, domain):
-        calls = Call.by_domain(domain).delete()
+        Call.by_domain(domain).delete()
 
     def setUp(self):
         self.domain = 'test-log-call-domain'

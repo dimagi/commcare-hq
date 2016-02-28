@@ -13,7 +13,7 @@ from corehq.apps.hqcase.dbaccessors import \
 from corehq.apps.ivr.models import Call
 from corehq.messaging.smsbackends.test.models import SQLTestSMSBackend
 from corehq.apps.sms.mixin import VerifiedNumber
-from corehq.apps.sms.models import (SMS, SQLMobileBackend,
+from corehq.apps.sms.models import (SMS, SQLMobileBackend, OUTGOING,
     SQLMobileBackendMapping)
 from corehq.apps.smsforms.models import SQLXFormsSession
 from corehq.apps.groups.models import Group
