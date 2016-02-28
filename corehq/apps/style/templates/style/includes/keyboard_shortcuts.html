@@ -68,7 +68,7 @@
 <script>
 // Encapsulate keymaster's global key function in an HQ module
 hqDefine('style/includes/keyboard_shortcuts.html#key', function () {
-    return key.noConflict();
+    return { key: key.noConflict() };
 });
 </script>
 
@@ -102,7 +102,7 @@ hqDefine('style/includes/keyboard_shortcuts.html#shortcuts', function () {
 
     // When page finishes laoding, set up the shortcuts and add documentation to the modal
     $(function() {
-        var key = hqImport("style/includes/keyboard_shortcuts.html#key"),
+        var key = hqImport("style/includes/keyboard_shortcuts.html#key").key,
             $lookup = $('#keyboard-shortcuts-lookup');
         _(module.shortcuts).each(function(s) {
             key(s.shortcut, s.handler);

@@ -72,7 +72,7 @@
         var nav_key = {{ request.couch_user.keyboard_shortcuts.main_key|JSON }};
 
         // overrides default behavior and allows for shortcuts in inputs
-        hqImport("style/includes/keyboard_shortcuts.html#key").filter = function(event) {
+        hqImport("style/includes/keyboard_shortcuts.html#key").key.filter = function(event) {
             return true;
         };
 

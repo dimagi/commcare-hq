@@ -388,7 +388,7 @@
         <script>
             // Module name is what it is to match the B3 version of this code
             hqDefine('style/includes/keyboard_shortcuts.html#key', function () {
-                return key.noConflict();
+                return { key: key.noConflict() };
             });
         </script>
         {% if request.couch_user.keyboard_shortcuts.enabled %}
@@ -450,7 +450,7 @@
             }
 
             $(function() {
-                var key = hqImport("style/includes/keyboard_shortcuts.html#key"),
+                var key = hqImport("style/includes/keyboard_shortcuts.html#key").key,
                     $lookup = $('#keyboard-shortcuts-lookup');
                 _(KEYBOARD_SHORTCUTS).each(function(s) {
                     key(s.shortcut, s.handler);

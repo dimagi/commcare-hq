@@ -145,7 +145,7 @@
         var KeyboardNavigator = hqImport('hqwebapp/js/keyboard_navigator.js');
 
         // overrides default behavior and allows for shortcuts in inputs
-        hqImport("style/includes/keyboard_shortcuts.html#key").filter = function(event) {
+        hqImport("style/includes/keyboard_shortcuts.html#key").key.filter = function(event) {
             return true;
         };
 

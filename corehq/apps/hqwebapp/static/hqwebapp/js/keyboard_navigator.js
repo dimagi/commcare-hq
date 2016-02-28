@@ -1,7 +1,7 @@
 /* requires keymaster.js to be included */
 hqDefine('hqwebapp/js/keyboard_navigator.js', function () {
     var module = {};
-    var key = hqImport("style/includes/keyboard_shortcuts.html#key");
+    var key = hqImport("style/includes/keyboard_shortcuts.html#key").key;
 
     module.focus_in_fn = function($ele) {
         $ele.addClass('hovered');
