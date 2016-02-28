@@ -730,6 +730,29 @@ class ExpectedCallback(SyncSQLToCouchMixin, models.Model):
     status = models.CharField(max_length=126, null=True)
 
     @classmethod
+    def by_domain(cls, domain, start_date=None, end_date=None):
+        qs = cls.objects.filter(domain=domain)
+
+        if start_date:
+            qs = cls.objects.filter(date__gte=start_date)
+
+        if end_date:
+            qs = cls.objects.filter(date__lte=end_date)
+
+        return qs
+
+    @classmethod
+    def by_domain_recipient_date(cls, domain, recipient_id, date):
+        try:
+            return cls.objects.get(
+                domain=domain,
+                couch_recipient=recipient_id,
+                date=date
+            )
+        except cls.DoesNotExist:
+            return None
+
+    @classmethod
     def _migration_get_fields(cls):
         return [
             'domain',

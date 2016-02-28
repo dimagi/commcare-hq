@@ -16,7 +16,7 @@ from corehq.apps.sms.models import (
     CALLBACK_RECEIVED,
     INCOMING,
     OUTGOING,
-    ExpectedCallbackEventLog,
+    ExpectedCallback,
 )
 from corehq.apps.smsforms.models import SQLXFormsSession
 from corehq.apps.reports.util import format_datatables_data
@@ -66,9 +66,9 @@ class CallReport(BaseCommConnectLogReport):
     def rows(self):
         data = Call.by_domain(
             self.domain,
-            self.datespan.startdate_utc,
-            self.datespan.enddate_utc
-        )
+            start_date=self.datespan.startdate_utc,
+            end_date=self.datespan.enddate_utc
+        ).order_by('date')
         result = []
         
         # Store the results of lookups for faster loading
@@ -183,9 +183,11 @@ class ExpectedCallbackReport(ProjectReport, ProjectReportParametersMixin, Generi
     
     @property
     def rows(self):
-        startdate = json_format_datetime(self.datespan.startdate_utc)
-        enddate = json_format_datetime(self.datespan.enddate_utc)
-        data = ExpectedCallbackEventLog.by_domain(self.domain, startdate, enddate)
+        data = ExpectedCallback.by_domain(
+            self.domain,
+            start_date=self.datespan.startdate_utc,
+            end_date=self.datespan.enddate_utc
+        ).order_by('date')
         result = []
         
         status_descriptions = {

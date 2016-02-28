@@ -18,7 +18,7 @@ from corehq.apps.sms.util import format_message_list, touchforms_error_is_config
 from corehq.apps.users.models import CouchUser
 from corehq.apps.domain.models import Domain
 from corehq.apps.sms.models import (
-    ExpectedCallbackEventLog, CALLBACK_PENDING, CALLBACK_RECEIVED,
+    ExpectedCallback, CALLBACK_PENDING, CALLBACK_RECEIVED,
     CALLBACK_MISSED, WORKFLOW_REMINDER, WORKFLOW_KEYWORD, WORKFLOW_BROADCAST,
     WORKFLOW_CALLBACK, MessagingEvent,
 )
@@ -190,12 +190,11 @@ def fire_sms_callback_event(reminder, handler, recipients, verified_numbers, log
         send_message = False
         if reminder.callback_try_count > 0:
             if reminder.event_initiation_timestamp:
-                event = ExpectedCallbackEventLog.view("sms/expected_callback_event",
-                    key=[reminder.domain,
-                         json_format_datetime(reminder.event_initiation_timestamp),
-                         recipient.get_id],
-                    include_docs=True,
-                    limit=1).one()
+                event = ExpectedCallback.by_domain_recipient_date(
+                    reminder.domain,
+                    recipient.get_id,
+                    reminder.event_initiation_timestamp
+                )
                 if not event:
                     continue
                 if event.status == CALLBACK_RECEIVED:
@@ -224,14 +223,13 @@ def fire_sms_callback_event(reminder, handler, recipients, verified_numbers, log
             # It's the first time sending the sms, so create an expected
             # callback event
             send_message = True
-            event = ExpectedCallbackEventLog(
+            event = ExpectedCallback.objects.create(
                 domain=reminder.domain,
                 date=reminder.event_initiation_timestamp,
                 couch_recipient_doc_type=recipient.doc_type,
                 couch_recipient=recipient.get_id,
                 status=CALLBACK_PENDING,
             )
-            event.save()
 
         if send_message:
             fire_sms_event(reminder, handler, [recipient], verified_numbers,
