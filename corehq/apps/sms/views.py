@@ -42,7 +42,7 @@ from corehq.apps.users import models as user_models
 from corehq.apps.users.views.mobile.users import EditCommCareUserView
 from corehq.apps.sms.models import (
     SMS, INCOMING, OUTGOING, ForwardingRule,
-    LastReadMessage, MessagingEvent, SelfRegistrationInvitation,
+    MessagingEvent, SelfRegistrationInvitation,
     SQLMobileBackend, SQLMobileBackendMapping, PhoneLoadBalancingMixin,
     SQLLastReadMessage
 )
