@@ -404,8 +404,10 @@ class ILSGatewayAPI(APISynchronization):
         return user
 
     def _reassign_number(self, user, connection):
+        from custom.ilsgateway import SLAB_DOMAIN
+
         v = VerifiedNumber.by_phone(apply_leniency(connection.phone_number), include_pending=True)
-        if v.domain in self._get_logistics_domains():
+        if v.domain in self._get_logistics_domains() or v.domain == SLAB_DOMAIN:
             v.domain = self.domain
             v.owner_doc_type = user.doc_type
             v.owner_id = user.get_id
