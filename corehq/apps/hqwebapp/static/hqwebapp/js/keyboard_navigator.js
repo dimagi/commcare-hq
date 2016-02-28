@@ -75,7 +75,7 @@ hqDefine('hqwebapp/js/keyboard_navigator.js', function () {
             };
     
             self.leave_context = function(side) {
-                self.set_index(side === 'end' ? 0 : self.$elements.length - 1)
+                self.set_index(side === 'end' ? 0 : self.$elements.length - 1);
             };
     
             self.set_index = function(num) {
@@ -131,7 +131,7 @@ hqDefine('hqwebapp/js/keyboard_navigator.js', function () {
                     self.set_index(self.index + (self.forward_keys.indexOf(character) > -1 ? 1 : -1));
                     self.handle_focus_in();
                     return false;
-                }
+                };
             };
     
             self.handle_focus_in = function() {
@@ -159,7 +159,7 @@ hqDefine('hqwebapp/js/keyboard_navigator.js', function () {
                     self.action_fn(self.$active_element);
                     self.leave_nav();
                 }
-                return false
+                return false;
             };
     
             self.activate = function() {
