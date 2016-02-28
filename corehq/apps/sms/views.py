@@ -41,7 +41,7 @@ from corehq.apps.users.models import CouchUser, Permissions, CommCareUser
 from corehq.apps.users import models as user_models
 from corehq.apps.users.views.mobile.users import EditCommCareUserView
 from corehq.apps.sms.models import (
-    SMSLog, SMS, INCOMING, OUTGOING, ForwardingRule,
+    SMS, INCOMING, OUTGOING, ForwardingRule,
     LastReadMessage, MessagingEvent, SelfRegistrationInvitation,
     SQLMobileBackend, SQLMobileBackendMapping, PhoneLoadBalancingMixin,
     SQLLastReadMessage
@@ -71,6 +71,7 @@ from corehq.util.timezones.conversions import ServerTime, UserTime
 from corehq.util.quickcache import quickcache
 from django.contrib import messages
 from django.db.models import Q
+from corehq.util.soft_assert import soft_assert
 from corehq.util.timezones.utils import get_timezone_for_user
 from django.views.decorators.csrf import csrf_exempt
 from django.views.generic import View
@@ -153,33 +154,12 @@ class ComposeMessageView(BaseMessagingSectionView):
 
 
 def post(request, domain):
-    # TODO: Figure out if this is being used anywhere and remove it if not
     """
-    We assume sms sent to HQ will come in the form
-    http://hqurl.com?username=%(username)s&password=%(password)s&id=%(phone_number)s&text=%(message)s
+    I don't know of anywhere this is being invoked from. If the soft asserts
+    don't produce any results then I'll remove it.
     """
-    text = request.REQUEST.get('text', '')
-    to = request.REQUEST.get('id', '')
-    username = request.REQUEST.get('username', '')
-    # ah, plaintext passwords....  
-    # this seems to be the most common API that a lot of SMS gateways expose
-    password = request.REQUEST.get('password', '')
-    if not text or not to or not username or not password:
-        error_msg = 'ERROR missing parameters. Received: %(1)s, %(2)s, %(3)s, %(4)s' % \
-                     ( text, to, username, password )
-        logging.error(error_msg)
-        return HttpResponseBadRequest(error_msg)
-    user = authenticate(username=username, password=password)
-    if user is None or not user.is_active:
-        return HttpResponseBadRequest("Authentication fail")
-    msg = SMSLog(domain=domain,
-                 # TODO: how to map phone numbers to recipients, when phone numbers are shared?
-                 #couch_recipient=id, 
-                 phone_number=to,
-                 direction=INCOMING,
-                 date = datetime.utcnow(),
-                 text = text)
-    msg.save()
+    _assert = soft_assert('@'.join(['gcapalbo', 'dimagi.com']), exponential_backoff=False)
+    _assert(False, "sms post invoked")
     return HttpResponse('OK')
 
 
