@@ -14,7 +14,6 @@ from corehq.pillows.mappings.case_mapping import CASE_INDEX
 from corehq.pillows.mappings.domain_mapping import DOMAIN_INDEX
 from corehq.pillows.mappings.group_mapping import GROUP_INDEX
 from corehq.pillows.mappings.reportcase_mapping import REPORT_CASE_INDEX
-from corehq.pillows.mappings.sms_mapping import SMS_INDEX
 from corehq.pillows.mappings.user_mapping import USER_INDEX
 from corehq.pillows.mappings.xform_mapping import XFORM_INDEX
 
@@ -75,7 +74,6 @@ ES_META = {
     "domains": EsMeta(DOMAIN_INDEX, 'hqdomain'),
     "apps": EsMeta(APP_INDEX, 'app'),
     "groups": EsMeta(GROUP_INDEX, 'group'),
-    "sms": EsMeta(SMS_INDEX, 'sms'),
     "report_cases": EsMeta(REPORT_CASE_INDEX, 'report_case'),
     "report_xforms": EsMeta(REPORT_XFORM_INDEX, 'report_xform'),
 }
@@ -115,7 +113,6 @@ DATE_FIELDS = {
     "active_cases": "modified_on",
     "users": "created_on",
     "users_all": "created_on",
-    "sms": 'date',
 }
 
 ES_MAX_CLAUSE_COUNT = 1024  #  this is what ES's maxClauseCount is currently set to,

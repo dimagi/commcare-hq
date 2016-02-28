@@ -12,7 +12,6 @@ def migrate_es_pillows(apps, schema_editor):
         'CasePillow',
         'DomainPillow',
         'GroupPillow',
-        'SMSPillow',
         'UserPillow',
         'XFormPillow',
     ]
