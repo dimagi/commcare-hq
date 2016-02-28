@@ -325,7 +325,7 @@ class Log(models.Model):
 
     @classmethod
     def get_last_log_for_recipient(cls, contact_doc_type, contact_id, direction=None):
-        qs = SMS.by_recipient(contact_doc_type, contact_id)
+        qs = cls.by_recipient(contact_doc_type, contact_id)
 
         if direction:
             qs = qs.filter(direction=direction)
