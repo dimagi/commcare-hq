@@ -1,4 +1,3 @@
-from couchdbkit.resource import ResourceNotFound
 from dimagi.utils.logging import notify_exception
 
 
@@ -14,6 +13,7 @@ class SyncCouchToSQLMixin(object):
     couch_id, for the _id of the Couch doc. Make sure you index couch_id
     and allow it to be null since it can be initially null. Do not include
     this field in _migration_get_fields().
+    You can override 'couch_id_name' if you need to use a different name.
 
     2. Make the Couch model inherit from SyncCouchToSQLMixin.
 
@@ -64,20 +64,20 @@ class SyncCouchToSQLMixin(object):
     def _migration_get_sql_object(self):
         cls = self._migration_get_sql_model_class()
         try:
-            return cls.objects.get(couch_id=self._id)
+            return cls.objects.get(**{cls.couch_id_name: self._id})
         except cls.DoesNotExist:
             return None
         except cls.MultipleObjectsReturned:
             if not self._migration_automatically_handle_dups():
                 raise
-            cls.objects.filter(couch_id=self._id).delete()
+            cls.objects.filter(**{cls.couch_id_name: self._id}).delete()
             return None
 
     def _migration_get_or_create_sql_object(self):
         cls = self._migration_get_sql_model_class()
         obj = self._migration_get_sql_object()
         if obj is None:
-            obj = cls(couch_id=self._id)
+            obj = cls(**{cls.couch_id_name: self._id})
         return obj
 
     def _migration_sync_to_sql(self, sql_object):
@@ -118,6 +118,7 @@ class SyncSQLToCouchMixin(object):
 
     If you have a custom sync process, just override _migration_sync_to_couch.
     """
+    couch_id_name = "couch_id"
 
     @classmethod
     def _migration_get_fields(cls):
@@ -135,10 +136,10 @@ class SyncSQLToCouchMixin(object):
         raise NotImplementedError()
 
     def _migration_get_couch_object(self):
-        if not self.couch_id:
+        if not getattr(self, self.couch_id_name, None):
             return None
         cls = self._migration_get_couch_model_class()
-        return cls.get(self.couch_id)
+        return cls.get(getattr(self, self.couch_id_name, None))
 
     def _migration_get_or_create_couch_object(self):
         cls = self._migration_get_couch_model_class()
@@ -146,7 +147,7 @@ class SyncSQLToCouchMixin(object):
         if obj is None:
             obj = cls()
             obj.save(sync_to_sql=False)
-            self.couch_id = obj._id
+            setattr(self, self.couch_id_name, obj._id)
             self.save(sync_to_couch=False)
         return obj
 
