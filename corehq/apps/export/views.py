@@ -533,8 +533,7 @@ class BaseDownloadExportView(ExportsPermissionsMixin, JSONResponseMixin, BasePro
             and not self.request.is_ajax()
         ):
             raw_export_list = json.loads(self.request.POST['export_list'])
-            exports = map(lambda e: self.get_export_schema(self.domain, e['id']),
-                          raw_export_list)
+            exports = [self._get_export(self.domain, e['id']) for e in raw_export_list]
         elif self.export_id:
             exports = [self._get_export(self.domain, self.export_id)]
 
@@ -555,7 +554,7 @@ class BaseDownloadExportView(ExportsPermissionsMixin, JSONResponseMixin, BasePro
         return exports
 
     def _get_export(self, domain, export_id):
-        return self.get_export_schema(self.domain, self.export_id)
+        return self.get_export_schema(self.domain, export_id)
 
     @property
     def max_column_size(self):
@@ -903,11 +902,20 @@ class BaseExportListView(ExportsPermissionsMixin, JSONResponseMixin, BaseProject
         return {
             'create_export_form': self.create_export_form if not self.is_deid else None,
             'create_export_form_title': self.create_export_form_title if not self.is_deid else None,
+            'legacy_bulk_download_url': self.legacy_bulk_download_url if not self.is_deid else None,
             'bulk_download_url': self.bulk_download_url if not self.is_deid else None,
             'allow_bulk_export': self.allow_bulk_export if not self.is_deid else False,
             'has_edit_permissions': self.has_edit_permissions,
             'is_deid': self.is_deid,
         }
+
+    @property
+    def legacy_bulk_download_url(self):
+        """Returns url for legacy bulk download
+        """
+        if not self.allow_bulk_export:
+            return None
+        raise NotImplementedError('must implement legacy_bulk_download_url')
 
     @property
     def bulk_download_url(self):
@@ -1164,8 +1172,12 @@ class FormExportListView(BaseExportListView):
     form_or_case = 'form'
 
     @property
-    def bulk_download_url(self):
+    def legacy_bulk_download_url(self):
         return reverse(BulkDownloadFormExportView.urlname, args=(self.domain,))
+
+    @property
+    def bulk_download_url(self):
+        return reverse(BulkDownloadNewFormExportView.urlname, args=(self.domain,))
 
     @memoized
     def get_saved_exports(self):
@@ -1539,7 +1551,7 @@ class DownloadNewFormExportView(DownloadFormExportView):
     filter_form_class = FilterFormESExportDownloadForm
 
     def _get_export(self, domain, export_id):
-        return FormExportInstance.get(self.export_id)
+        return FormExportInstance.get(export_id)
 
     def _get_download_task(self, in_data):
         export_filters, export_specs = self._process_filters_and_specs(in_data)
@@ -1570,3 +1582,7 @@ class DownloadNewFormExportView(DownloadFormExportView):
         filter_form = self._get_filter_form(filter_form_data)
         form_filters = filter_form.get_form_filter()
         return form_filters
+
+class BulkDownloadNewFormExportView(DownloadNewFormExportView):
+    urlname = 'new_bulk_download_forms'
+    page_title = ugettext_noop("Download Form Exports")

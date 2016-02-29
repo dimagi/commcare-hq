@@ -19,7 +19,7 @@
 
     var exportsControllers = {};
     exportsControllers.ListExportsController = function (
-        $scope, djangoRMI
+        $scope, djangoRMI, bulk_download_url, legacy_bulk_download_url
     ) {
         /**
          * This controller fetches a list of saved exports from
@@ -27,12 +27,13 @@
          *
          * It also generates a list of exports selected for bulk exports.
          */
-
         var self = {};
         $scope._ = _;  // allow use of underscore.js within the template
         $scope.hasLoaded = false;
         $scope.exports = [];
         $scope.exportsListError = null;
+        $scope.bulk_download_url = bulk_download_url;
+        $scope.legacy_bulk_download_url = legacy_bulk_download_url;
 
         self._numTries = 0;
         self._getExportsList = function () {
@@ -70,7 +71,14 @@
             });
             $scope.showBulkExportDownload = !_.isEmpty(selectedExports);
             $scope.bulkExportList = JSON.stringify(selectedExports);
-            $('input[name="export_list"]').val(JSON.stringify(selectedExports));
+            var input = $('input[name="export_list"]');
+            input.val(JSON.stringify(selectedExports));
+
+            var useLegacyBulkExportUrl = _.every(selectedExports, function (e) {
+                return e.isLegacy;
+            });
+            var currentUrl = useLegacyBulkExportUrl ? $scope.legacy_bulk_download_url : $scope.bulk_download_url;
+            input.closest("form").attr("action", currentUrl);
         };
         $scope.selectAll = function () {
             _.each($scope.exports, function (exp) {

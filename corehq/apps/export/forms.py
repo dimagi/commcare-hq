@@ -313,11 +313,6 @@ class GenericFilterFormExportDownloadForm(BaseFilterExportDownloadForm):
     def get_form_filter(self):
         raise NotImplementedError
 
-    def get_edit_url(self, export):
-        from corehq.apps.export.views import EditCustomFormExportView
-        return reverse(EditCustomFormExportView.urlname,
-                       args=(self.domain_object.name, export.get_id))
-
     def get_multimedia_task_kwargs(self, export, download_id):
         """These are the kwargs for the Multimedia Download task,
         specific only to forms.
@@ -345,6 +340,11 @@ class GenericFilterFormExportDownloadForm(BaseFilterExportDownloadForm):
 class FilterFormCouchExportDownloadForm(GenericFilterFormExportDownloadForm):
     # This class will be removed when the switch over to ES exports is complete
 
+    def get_edit_url(self, export):
+        from corehq.apps.export.views import EditCustomFormExportView
+        return reverse(EditCustomFormExportView.urlname,
+                       args=(self.domain_object.name, export.get_id))
+
     def get_form_filter(self):
         form_filter = SerializableFunction(app_export_filter, app_id=None)
         datespan_filter = self._get_datespan_filter()
@@ -371,6 +371,11 @@ class FilterFormCouchExportDownloadForm(GenericFilterFormExportDownloadForm):
 
 
 class FilterFormESExportDownloadForm(GenericFilterFormExportDownloadForm):
+
+    def get_edit_url(self, export):
+        from corehq.apps.export.views import EditNewCustomFormExportView
+        return reverse(EditNewCustomFormExportView.urlname,
+                       args=(self.domain_object.name, export._id))
 
     def get_form_filter(self):
         return filter(None, [
