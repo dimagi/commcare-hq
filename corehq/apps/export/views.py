@@ -9,6 +9,7 @@ from django.http import HttpResponseRedirect, HttpResponseBadRequest, Http404
 from django.template.defaultfilters import filesizeformat
 
 from corehq.apps.export.export import get_export_download
+from corehq.form_processor.interfaces.dbaccessors import FormAccessors
 from django_prbac.utils import has_privilege
 from django.utils.decorators import method_decorator
 import json
@@ -774,8 +775,7 @@ class DownloadFormExportView(BaseDownloadExportView):
         """
         try:
             export_object = self.get_export_schema(self.domain, self.export_id)
-            has_multimedia = forms_have_multimedia(
-                self.domain,
+            has_multimedia = FormAccessors(self.domain).forms_have_multimedia(
                 export_object.app_id,
                 getattr(export_object, 'xmlns', '')
             )

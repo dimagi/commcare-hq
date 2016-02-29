@@ -273,6 +273,10 @@ class FormAccessorSQL(AbstractFormAccessor):
         # the requested number of cases
         return sorted(results, key=lambda form: form.received_on)[:limit]
 
+    @staticmethod
+    def forms_have_multimedia(domain, app_id, xmlns):
+        raise NotImplementedError
+
 
 class CaseAccessorSQL(AbstractCaseAccessor):
 
