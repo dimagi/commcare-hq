@@ -69,7 +69,7 @@ class SMSUser(JsonObject):
     id = IntegerProperty()
     name = StringProperty()
     role = StringProperty()
-    is_active = StringProperty()
+    is_active = BooleanProperty()
     supply_point = DecimalProperty()
     email = StringProperty()
     phone_numbers = ListProperty(item_type=Connection)
@@ -88,6 +88,7 @@ class Location(JsonObject):
     code = StringProperty()
     groups = ListProperty()
     historical_groups = DictProperty()
+    is_active = BooleanProperty()
 
 
 class ProductStock(JsonObject):
@@ -264,7 +265,7 @@ class ILSGatewayAPI(APISynchronization):
                 'date_updated',
                 filters={
                     'type': 'facility',
-                    'is_active': True
+                    'supplypoint__active': True
                 }
             ),
             ApiSyncObject(
@@ -473,6 +474,9 @@ class ILSGatewayAPI(APISynchronization):
         sms_user = super(ILSGatewayAPI, self).sms_user_sync(ilsgateway_smsuser, **kwargs)
         if not sms_user:
             return None
+
+        if not sms_user.is_active:
+            return sms_user
 
         sms_user.save()
         if ilsgateway_smsuser.supply_point:

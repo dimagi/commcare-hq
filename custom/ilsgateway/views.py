@@ -384,7 +384,9 @@ class BalanceMigrationView(BaseDomainView):
         return {
             'stats': get_object_or_404(ILSMigrationStats, domain=self.domain),
             'products_count': SQLProduct.objects.filter(domain=self.domain).count(),
-            'locations_count': SQLLocation.objects.filter(domain=self.domain).exclude(is_archived=True).count(),
+            'locations_count': SQLLocation.objects.filter(
+                domain=self.domain
+            ).exclude(is_archived=True).exclude(location_type__name='MSDZONE').count(),
             'web_users_count': WebUser.by_domain(self.domain, reduce=True)[0]['value'],
             'sms_users_count': CommCareUser.by_domain(self.domain, reduce=True)[0]['value'],
             'supply_points_count': SQLLocation.active_objects.filter(
