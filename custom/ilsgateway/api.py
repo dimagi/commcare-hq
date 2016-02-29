@@ -9,6 +9,7 @@ from corehq.form_processor.interfaces.supply import SupplyInterface
 from dimagi.ext.jsonobject import JsonObject, StringProperty, BooleanProperty, DecimalProperty, ListProperty, IntegerProperty,\
     FloatProperty, DictProperty
 from corehq.apps.commtrack.models import CommtrackConfig, CommtrackActionConfig
+from corehq.apps.commtrack.helpers import update_supply_point_from_location
 from corehq.apps.locations.models import SQLLocation, LocationType
 from corehq.apps.programs.models import Program
 from corehq.apps.users.models import UserRole, WebUser
@@ -576,7 +577,7 @@ class ILSGatewayAPI(APISynchronization):
             if apply_updates(location, location_dict):
                 location.save()
                 if case:
-                    case.update_from_location(location)
+                    update_supply_point_from_location(case, location)
                 else:
                     SupplyInterface.create_from_location(self.domain, location)
             location_parent = location.parent

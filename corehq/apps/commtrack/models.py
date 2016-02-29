@@ -341,10 +341,6 @@ class SupplyPointCase(CommCareCase):
     def sql_location(self):
         return SQLLocation.objects.get(location_id=self.location_id)
 
-    def update_from_location(self, location):
-        from corehq.apps.commtrack.helpers import update_supply_point_from_location
-        return update_supply_point_from_location(self, location)
-
 
 UNDERSTOCK_THRESHOLD = 0.5  # months
 OVERSTOCK_THRESHOLD = 2.  # months
@@ -502,6 +498,7 @@ def _make_location_admininstrative(location):
 
 
 def _reopen_or_create_supply_point(location):
+    from .helpers import update_supply_point_from_location
     from .dbaccessors import get_supply_point_by_location_id
     supply_point = get_supply_point_by_location_id(location.domain, location.location_id)
     if supply_point:
@@ -509,7 +506,7 @@ def _reopen_or_create_supply_point(location):
             for action in supply_point.actions:
                 if action.action_type == 'close':
                     action.xform.archive(user_id=const.COMMTRACK_USERNAME)
-        supply_point.update_from_location(location)
+        update_supply_point_from_location(supply_point, location)
         return supply_point
     else:
         return SupplyInterface.create_from_location(location.domain, location)
