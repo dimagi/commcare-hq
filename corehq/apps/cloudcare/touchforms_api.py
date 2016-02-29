@@ -72,6 +72,7 @@ class SessionDataHelper(object):
             "action": "touchcare-filter-cases",
             "filter_expr": xpath,
             "session_data": session_data,
+            "domain": self.domain
         }
 
         response = post_data(
