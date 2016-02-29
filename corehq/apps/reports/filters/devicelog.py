@@ -1,6 +1,6 @@
 from django.utils.translation import ugettext_noop
 from corehq.apps.reports.filters.base import BaseReportFilter
-from corehq.util.queries import fast_distinct
+from corehq.util.queries import fast_distinct, fast_distinct_in_domain
 from phonelog.models import DeviceReportEntry
 
 
@@ -39,9 +39,7 @@ class BaseDeviceLogFilter(BaseReportFilter):
 
     def get_filters(self, selected):
         show_all = bool(not selected)
-        values = (DeviceReportEntry.objects.filter(domain=self.domain)
-                  .values(self.field).distinct()
-                  .values_list(self.field, flat=True))
+        values = fast_distinct_in_domain(DeviceReportEntry, self.field, self.domain)
         return [{
             'name': self.value_to_param(value),
             'show': bool(show_all or value in selected)

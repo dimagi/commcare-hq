@@ -19,7 +19,6 @@ from django.utils.translation import ugettext as _
 from corehq.apps.app_manager.const import USERCASE_TYPE
 from corehq.apps.domain.dbaccessors import get_docs_in_domain_by_class
 from corehq.apps.hqcase.dbaccessors import get_case_ids_in_domain_by_owner
-from corehq.apps.sofabed.models import CaseData
 from corehq.form_processor.interfaces.supply import SupplyInterface
 from corehq.form_processor.interfaces.dbaccessors import FormAccessors
 from corehq.util.soft_assert import soft_assert
@@ -1551,15 +1550,6 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
         case_ids = get_case_ids_in_domain_by_owner(
             self.domain, owner_id=self.user_id)
         return iter_docs(CommCareCase.get_db(), case_ids)
-
-    @property
-    def analytics_only_case_count(self):
-        """
-        Get an approximate count of cases which were last submitted to by this user.
-
-        This number is not guaranteed to be 100% accurate since it depends on a secondary index (sofabed)
-        """
-        return CaseData.objects.filter(user_id=self._id).count()
 
     def get_owner_ids(self):
         owner_ids = [self.user_id]
