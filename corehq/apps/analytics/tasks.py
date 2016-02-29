@@ -336,7 +336,7 @@ def track_periodic_data():
                     'value': project_spaces_created,
                 },
                 {
-                    'property': 'over_300_forms',
+                    'property': 'over_300_form_submissions',
                     'value': forms_300
                 }
             ]
