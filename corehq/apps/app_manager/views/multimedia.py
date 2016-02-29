@@ -35,7 +35,8 @@ def multimedia_list_download(request, domain, app_id):
 
 
 @require_deploy_apps
-def multimedia_ajax(request, domain, app_id, template='app_manager/partials/multimedia_ajax.html'):
+def multimedia_ajax(request, domain, app_id, template='app_manager/partials/multimedia_ajax.html',
+                    extra_context=None):
     app = get_app(domain, app_id)
     if app.get_doc_type() == 'Application':
         try:
@@ -55,7 +56,16 @@ def multimedia_ajax(request, domain, app_id, template='app_manager/partials/mult
             'multimedia_state': multimedia_state,
             'domain': domain,
             'app': app,
+            'multimedia_totals': app.get_reference_totals(),
         }
+        if extra_context:
+            context.update(extra_context)
         return render(request, template, context)
     else:
         raise Http404()
+
+
+@require_deploy_apps
+def multimedia_ajax_download(request, domain, app_id):
+    template = 'hqmedia/partials/multimedia_zip_notice.html'
+    return multimedia_ajax(request, domain, app_id, template, {'include_modal': True})
