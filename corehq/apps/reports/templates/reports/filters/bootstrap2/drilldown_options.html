@@ -38,13 +38,15 @@
 {% if not is_empty %}
 <script type="text/javascript">
     $(function () {
-       $('#{{ css_id }}').drilldownOptionFilter({
-           drilldown_map: {{ option_map|JSON }},
-           controls: {{ controls|JSON }},
-           selected: {{ selected|JSON }},
-           notifications: {{ notifications|JSON }},
-       });
-    });
+        setTimeout(function () {
+            $('#{{ css_id }}').drilldownOptionFilter({
+                   drilldown_map: {{ option_map|JSON }},
+                   controls: {{ controls|JSON }},
+                   selected: {{ selected|JSON }},
+                   notifications: {{ notifications|JSON }}
+               });
+            });
+        }, 100);
 </script>
 {%  endif %}
 {% endblock %}
