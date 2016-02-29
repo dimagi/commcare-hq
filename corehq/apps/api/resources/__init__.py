@@ -3,6 +3,7 @@ import json
 from django.core.urlresolvers import NoReverseMatch
 from django.http import HttpResponse
 from tastypie import http
+from tastypie.bundle import Bundle
 from tastypie.resources import Resource
 from tastypie.exceptions import InvalidSortError, ImmediateHttpResponse
 
@@ -191,3 +192,15 @@ class DomainSpecificResourceMixin(object):
             return self._build_reverse_url("api_dispatch_list", kwargs=kwargs)
         except NoReverseMatch:
             return None
+
+
+class CouchResourceMixin(object):
+    def detail_uri_kwargs(self, bundle_or_obj):
+        kwargs = {}
+
+        if isinstance(bundle_or_obj, Bundle):
+            kwargs['pk'] = bundle_or_obj.obj._id
+        else:
+            kwargs['pk'] = bundle_or_obj._id
+
+        return kwargs
