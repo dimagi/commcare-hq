@@ -827,7 +827,7 @@ class ConfigureNewReportBase(forms.Form):
     @property
     @memoized
     def _number_columns(self):
-        return [col["field"] for col in self._report_columns if col["aggregation"] in ["avg", "sum"]]
+        return [col["field"] for col in self._report_columns if col.get("aggregation", None) in ["avg", "sum"]]
 
     @property
     def _report_filters(self):
