@@ -156,7 +156,7 @@ describe('ListExportsController Unit Tests', function() {
                 $httpBackend.flush();
                 $httpBackend.expectPOST(mockBackendUrls.UPDATE_EMAILED_EXPORT_DATA);
                 exportToUpdate = currentScope.exports[0];
-                component = exportToUpdate.emailedExport;
+                component = exportToUpdate.emailedExports[0];
                 currentScope.updateEmailedExportData(component, exportToUpdate);
             });
 
