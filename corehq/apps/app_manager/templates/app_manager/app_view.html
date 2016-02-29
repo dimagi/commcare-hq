@@ -48,35 +48,6 @@
         });
 
         $(function () {
-            var multimedia_tab = (function () {
-                var self = {};
-                self.load_state = ko.observable(null);
-                self.multimedia_page_html = ko.observable('');
-                self.load_if_necessary = function () {
-                    if (!self.load_state() || self.load_state() === 'error') {
-                        self.load_state('loading');
-                        $.ajax({
-                            url: '{% url 'app_multimedia_ajax' domain app.get_id %}'
-                        }).success(function (content) {
-                            self.load_state('loaded');
-                            self.multimedia_page_html(content);
-                        }).error(function () {
-                            alert('Oops, there was a problem loading this section. Please try again.');
-                            self.load_state('error');
-                        });
-                    }
-                };
-                return self;
-            }());
-            $("#multimedia").koApplyBindings(multimedia_tab);
-            $('#demand-multimedia').on('show.bs.tab', function () {
-                if (multimedia_tab.load_state() === null) {
-                    multimedia_tab.load_if_necessary();
-                }
-            });
-        });
-
-        $(function () {
             var state = "",
                 $main = $("#releases"),
                 $loading = $main.find(".hq-loading").remove(),
