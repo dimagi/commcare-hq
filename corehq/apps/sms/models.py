@@ -304,6 +304,72 @@ class Log(models.Model):
     # The MessagingSubEvent that this log is tied to
     messaging_subevent = models.ForeignKey('MessagingSubEvent', null=True, on_delete=models.PROTECT)
 
+    @classmethod
+    def by_domain(cls, domain, start_date=None, end_date=None):
+        qs = cls.objects.filter(domain=domain)
+
+        if start_date:
+            qs = qs.filter(date__gte=start_date)
+
+        if end_date:
+            qs = qs.filter(date__lte=end_date)
+
+        return qs
+
+    @classmethod
+    def by_recipient(cls, contact_doc_type, contact_id):
+        return cls.objects.filter(
+            couch_recipient_doc_type=contact_doc_type,
+            couch_recipient=contact_id,
+        )
+
+    @classmethod
+    def get_last_log_for_recipient(cls, contact_doc_type, contact_id, direction=None):
+        qs = cls.by_recipient(contact_doc_type, contact_id)
+
+        if direction:
+            qs = qs.filter(direction=direction)
+
+        qs = qs.order_by('-date')[:1]
+
+        if qs:
+            return qs[0]
+
+        return None
+
+    @classmethod
+    def count_by_domain(cls, domain, direction=None):
+        qs = cls.objects.filter(domain=domain)
+
+        if direction:
+            qs = qs.filter(direction=direction)
+
+        return qs.count()
+
+    @property
+    def recipient(self):
+        if self.couch_recipient_doc_type == 'CommCareCase':
+            return CommConnectCase.get(self.couch_recipient)
+        else:
+            return CouchUser.get_by_user_id(self.couch_recipient)
+
+    @classmethod
+    def inbound_entry_exists(cls, contact_doc_type, contact_id, from_timestamp, to_timestamp=None):
+        qs = cls.by_recipient(
+            contact_doc_type,
+            contact_id
+        ).filter(
+            direction=INCOMING,
+            date__gte=from_timestamp
+        )
+
+        if to_timestamp:
+            qs = qs.filter(
+                date__lte=to_timestamp
+            )
+
+        return len(qs[:1]) > 0
+
 
 class SMS(SyncSQLToCouchMixin, Log):
     ERROR_TOO_MANY_UNSUCCESSFUL_ATTEMPTS = 'TOO_MANY_UNSUCCESSFUL_ATTEMPTS'
@@ -662,6 +728,29 @@ class ExpectedCallback(SyncSQLToCouchMixin, models.Model):
     couch_recipient_doc_type = models.CharField(max_length=126, null=True)
     couch_recipient = models.CharField(max_length=126, null=True, db_index=True)
     status = models.CharField(max_length=126, null=True)
+
+    @classmethod
+    def by_domain(cls, domain, start_date=None, end_date=None):
+        qs = cls.objects.filter(domain=domain)
+
+        if start_date:
+            qs = qs.filter(date__gte=start_date)
+
+        if end_date:
+            qs = qs.filter(date__lte=end_date)
+
+        return qs
+
+    @classmethod
+    def by_domain_recipient_date(cls, domain, recipient_id, date):
+        try:
+            return cls.objects.get(
+                domain=domain,
+                couch_recipient=recipient_id,
+                date=date
+            )
+        except cls.DoesNotExist:
+            return None
 
     @classmethod
     def _migration_get_fields(cls):

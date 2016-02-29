@@ -341,16 +341,14 @@ class PythonPillow(BasicPillow):
                 self.process_chunk()
         elif self.python_filter(change) or (change.get('deleted', None) and self.process_deletions):
             self.process_change(change)
+
+    def fire_change_processed_event(self, change, context):
         if context.changes_seen % self.checkpoint_frequency == 0 and context.do_set_checkpoint:
             # if using chunking make sure we never allow the checkpoint to get in
             # front of the chunks
             if self.use_chunking:
                 self.process_chunk()
             self.set_checkpoint(change)
-
-    def fire_change_processed_event(self, change, context):
-        # todo: should fix this so that the checkpointing happens here.
-        pass
 
     def run(self):
         self.change_queue = []

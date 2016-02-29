@@ -1,5 +1,6 @@
 from datetime import datetime
-from corehq.apps.sms.models import (CallLog, INCOMING, OUTGOING,
+from corehq.apps.ivr.models import Call
+from corehq.apps.sms.models import (INCOMING, OUTGOING,
     MessagingSubEvent, MessagingEvent, SQLMobileBackend)
 from corehq.apps.sms.mixin import VerifiedNumber
 from corehq.apps.sms.util import strip_plus
@@ -286,7 +287,7 @@ def log_call(phone_number, gateway_session_id, backend=None):
     cleaned_number = strip_plus(phone_number)
     v = VerifiedNumber.by_extensive_search(cleaned_number)
 
-    call = CallLog(
+    call = Call(
         phone_number=cleaned_number,
         direction=INCOMING,
         date=datetime.utcnow(),
@@ -306,7 +307,7 @@ def incoming(phone_number, gateway_session_id, ivr_event, backend=None, input_da
     """
     The main entry point for all incoming IVR requests.
     """
-    call = CallLog.get_call_by_gateway_session_id(gateway_session_id)
+    call = Call.by_gateway_session_id(gateway_session_id)
     logged_subevent = None
     if call and call.messaging_subevent_id:
         logged_subevent = MessagingSubEvent.objects.get(
@@ -436,7 +437,7 @@ def initiate_outbound_call(recipient, form_unique_id, submit_partial_form,
     phone_number = (verified_number.phone_number if verified_number
         else unverified_number)
 
-    call = CallLog(
+    call = Call(
         couch_recipient_doc_type=recipient.doc_type,
         couch_recipient=recipient.get_id,
         phone_number='+%s' % str(phone_number),

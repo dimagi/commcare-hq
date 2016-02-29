@@ -1,5 +1,6 @@
 import corehq.apps.ivr.tests.util as util
-from corehq.apps.sms.models import CallLog
+from corehq.apps.ivr.tests.util import LogCallTestCase
+from corehq.apps.ivr.models import Call
 from corehq.messaging.smsbackends.twilio.models import SQLTwilioBackend
 from corehq.messaging.smsbackends.twilio.views import IVR_RESPONSE
 from django.test import Client
@@ -19,7 +20,7 @@ class TwilioLogCallTestCase(util.LogCallTestCase):
         super(TwilioLogCallTestCase, self).tearDown()
 
     def test_401_response(self):
-        start_count = CallLog.count_by_domain(self.domain)
+        start_count = Call.by_domain(self.domain).count()
 
         response = Client().post('/twilio/ivr/xxxxx', {
             'From': self.phone_number,
@@ -27,7 +28,7 @@ class TwilioLogCallTestCase(util.LogCallTestCase):
         })
         self.assertEqual(response.status_code, 401)
 
-        end_count = CallLog.count_by_domain(self.domain)
+        end_count = Call.by_domain(self.domain).count()
         self.assertEqual(start_count, end_count)
 
     def simulate_inbound_call(self, phone_number):

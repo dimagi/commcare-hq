@@ -11,10 +11,11 @@ from corehq.apps.accounting.tests import BaseAccountingTest
 from corehq.apps.domain.models import Domain
 from corehq.apps.hqcase.dbaccessors import \
     get_one_case_in_domain_by_external_id
+from corehq.apps.ivr.models import Call
 from corehq.messaging.smsbackends.test.models import SQLTestSMSBackend
 from corehq.apps.sms.mixin import VerifiedNumber
-from corehq.apps.sms.models import (SMSLog, CallLog,
-    SQLMobileBackend, SQLMobileBackendMapping)
+from corehq.apps.sms.models import (SMS, SQLMobileBackend, OUTGOING,
+    SQLMobileBackendMapping)
 from corehq.apps.smsforms.models import SQLXFormsSession
 from corehq.apps.groups.models import Group
 from corehq.apps.reminders.models import (SurveyKeyword, SurveyKeywordAction,
@@ -266,30 +267,18 @@ class TouchformsTestCase(LiveServerTestCase, DomainSubscriptionMixin):
         self.assertEquals(form_value, value)
 
     def get_last_outbound_sms(self, contact):
-        # Not clear why this should be necessary, but without it the latest
-        # sms may not be returned
-        sleep(0.25)
-        sms = SMSLog.view("sms/by_recipient",
-            startkey=[contact.doc_type, contact._id, "SMSLog", "O", {}],
-            endkey=[contact.doc_type, contact._id, "SMSLog", "O"],
-            descending=True,
-            include_docs=True,
-            reduce=False,
-        ).first()
-        return sms
+        return SMS.get_last_log_for_recipient(
+            contact.doc_type,
+            contact.get_id,
+            direction=OUTGOING
+        )
 
     def get_last_outbound_call(self, contact):
-        # Not clear why this should be necessary, but without it the latest
-        # call may not be returned
-        sleep(0.25)
-        call = CallLog.view("sms/by_recipient",
-            startkey=[contact.doc_type, contact._id, "CallLog", "O", {}],
-            endkey=[contact.doc_type, contact._id, "CallLog", "O"],
-            descending=True,
-            include_docs=True,
-            reduce=False,
-        ).first()
-        return call
+        return Call.get_last_log_for_recipient(
+            contact.doc_type,
+            contact.get_id,
+            direction=OUTGOING
+        )
 
     def get_open_session(self, contact):
         return SQLXFormsSession.get_open_sms_session(self.domain, contact._id)

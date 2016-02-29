@@ -4,6 +4,7 @@ from decimal import Decimal
 import logging
 import json
 import cStringIO
+import pytz
 
 from couchdbkit import ResourceNotFound
 import dateutil
@@ -2167,6 +2168,10 @@ class DomainForwardingRepeatRecords(GenericTabularReport):
             {'name': 'record_state', 'value': self.request.GET.get('record_state')},
         ]
 
+    def _format_date(self, date):
+        tz_utc_aware_date = pytz.utc.localize(date)
+        return tz_utc_aware_date.astimezone(self.timezone).strftime('%b %d, %Y %H:%M %Z')
+
     @property
     def rows(self):
         self.repeater_id = self.request.GET.get('repeater', None)
@@ -2182,7 +2187,7 @@ class DomainForwardingRepeatRecords(GenericTabularReport):
             lambda record: [
                 self._make_state_label(record),
                 record.url if record.url else _(u'Unable to generate url for record'),
-                record.next_check.strftime('%b %d, %Y %H:%M') if record.next_check else None,
+                self._format_date(record.next_check) if record.next_check else None,
                 record.failure_reason if not record.succeeded else None,
                 self._make_view_payload_button(record.get_id),
                 self._make_resend_payload_button(record.get_id),
