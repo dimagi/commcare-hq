@@ -13,7 +13,7 @@ from pact.enums import PACT_DOTS_DATA_PROPERTY, PACT_DOMAIN, XMLNS_DOTS_FORM, XM
     PACT_TIMEZONE
 from pact.models import PactPatientCase
 from pact.regimen import regimen_dict_from_choice
-from pact.tests import get_all_forms_in_all_domains
+from pact.tests.utils import get_all_forms_in_all_domains
 from pact.utils import submit_xform
 
 NO_PILLBOX_ID = "83bfe01c-9f96-4e25-a1ad-f8164defa5d1"
