@@ -136,16 +136,6 @@ def _get_case_ids(domain, owner_id, is_closed):
     )]
 
 
-def get_number_of_cases_in_domain_by_owner(domain, owner_id):
-    res = CommCareCase.get_db().view(
-        'cases_by_owner/view',
-        startkey=[domain, owner_id],
-        endkey=[domain, owner_id, {}],
-        reduce=True,
-    ).one()
-    return res['value'] if res else 0
-
-
 def iter_lite_cases_json(case_ids, chunksize=100):
     for case_id_chunk in chunked(case_ids, chunksize):
         rows = CommCareCase.get_db().view(
