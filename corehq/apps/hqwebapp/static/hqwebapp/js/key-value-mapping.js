@@ -198,7 +198,7 @@ uiElement.key_value_mapping = function (o) {
 $(document).on('show.bs.modal', '#hqimage', function () {
     var $km = $(".modal.in");
     $km.addClass("stacked-modal");
-    $km.hide()
+    $km.hide();
 });
 // Pop out hidden stack onto top
 $(document).on('hide.bs.modal', '#hqimage', function () {
