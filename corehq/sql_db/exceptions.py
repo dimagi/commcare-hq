@@ -2,10 +2,6 @@ class PartitionValidationError(Exception):
     pass
 
 
-class PartitionedDatabaseRequiredError(PartitionValidationError):
-    pass
-
-
 class NotPowerOf2Error(PartitionValidationError):
     pass
 
