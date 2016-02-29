@@ -633,7 +633,7 @@ class KeywordTestCase(TouchformsTestCase):
         sms1 = self.assertLastOutboundSMSEquals(self.user1, "Enter Participant ID")
         incoming("999123", "#CURRENT", "TEST")
         sms2 = self.assertLastOutboundSMSEquals(self.user1, "Enter Participant ID")
-        self.assertNotEqual(sms1._id, sms2._id)
+        self.assertNotEqual(sms1.pk, sms2.pk)
 
         # STOP keyword
         session = self.get_open_session(self.user1)

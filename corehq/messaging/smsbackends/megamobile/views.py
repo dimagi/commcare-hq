@@ -10,17 +10,10 @@ def sms_in(request):
     cel = request.GET.get("cel", None)
     tcs = request.GET.get("tcs", None)
 
-    megamobile_attrs = {
-        "megamobile_pid" : pid,
-        "megamobile_tcs" : tcs,
-    }
-
     phone_number = "%s%s" % ("63", cel)
     incoming_sms(
         phone_number,
         msg,
-        SQLMegamobileBackend.get_api_id(),
-        backend_attributes=megamobile_attrs
+        SQLMegamobileBackend.get_api_id()
     )
     return HttpResponse("")
-
