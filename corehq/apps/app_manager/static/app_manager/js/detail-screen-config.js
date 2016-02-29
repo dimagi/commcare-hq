@@ -577,7 +577,6 @@ var DetailScreenConfig = (function () {
                     langs: that.screen.langs,
                     items: that.original['enum'],
                     modalTitle: 'Editing mapping for ' + that.original.field,
-                    values_are_icons: that.original.format == 'enum-image',
                     multimedia: that.screen.config.multimedia
                 };
                 that.enum_extra = uiElement.key_value_mapping(o);
@@ -649,6 +648,7 @@ var DetailScreenConfig = (function () {
                     that.time_ago_extra.ui.detach();
 
                     if (this.val() === "enum" || this.val() === "enum-image") {
+                        that.enum_extra.values_are_icons = this.val() == 'enum-image';
                         that.format.ui.parent().append(that.enum_extra.ui);
                     } else if (this.val() === "graph") {
                         // Replace format select with edit button
