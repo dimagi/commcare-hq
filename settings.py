@@ -1493,15 +1493,15 @@ ES_XFORM_FULL_INDEX_DOMAINS = [
 
 CUSTOM_UCR_EXPRESSIONS = [
     ('abt_supervisor', 'custom.abt.reports.expressions.abt_supervisor_expression'),
-    ('mvp_medical_cause', 'mvp.ucr.reports.expressions.medical_cause_expression'),
-    ('mvp_no_treatment_reason', 'mvp.ucr.reports.expressions.no_treatment_reason_expression'),
-    ('mvp_treatment_provider_name', 'mvp.ucr.reports.expressions.treatment_provider_name_expression'),
-    ('mvp_treatment_place_name', 'mvp.ucr.reports.expressions.treatment_place_name_expression'),
-    ('mvp_death_place', 'mvp.ucr.reports.expressions.death_place_expression'),
     ('succeed_referenced_id', 'custom.succeed.expressions.succeed_referenced_id'),
     ('location_type_name', 'corehq.apps.locations.ucr_expressions.location_type_name'),
     ('location_parent_id', 'corehq.apps.locations.ucr_expressions.location_parent_id'),
     ('cvsu_expression', 'custom.apps.cvsu.expressions.cvsu_expression')
+]
+
+CUSTOM_UCR_EXPRESSION_LISTS = [
+    ('mvp.ucr.reports.expressions.CUSTOM_UCR_EXPRESSIONS'),
+    ('custom.icds.ucr.expressions.CUSTOM_UCR_EXPRESSIONS'),
 ]
 
 CUSTOM_MODULES = [
