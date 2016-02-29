@@ -1,7 +1,6 @@
-$(function(){
-    "use strict";
-
-    window.AsyncDownloader = function($el){
+hqDefine('app_manager/js/download_async_modal.js', function () {
+    var AsyncDownloader = function($el){
+        "use strict";
         var self = this;
         self.POLL_FREQUENCY = 1500; //ms
         self.ERROR_MESSAGE = "Sorry, something went wrong with the download. " +
@@ -92,4 +91,5 @@ $(function(){
 
         self.init();
     };
-}());
+    return {AsyncDownloader: AsyncDownloader};
+});
