@@ -2,6 +2,10 @@ import contextlib
 import os
 import tempfile
 
+import datetime
+
+from couchdbkit import ResourceConflict
+
 from soil import DownloadBase
 
 from couchexport.export import FormattedRow, get_writer
@@ -182,3 +186,41 @@ def _get_base_query(export_instance):
         raise Exception(
             "Unknown base query for export instance type {}".format(type(export_instance))
         )
+
+
+def rebuild_export(export_instance, last_access_cutoff=None, filters=None):
+    """
+    Rebuild the given daily saved ExportInstance
+    """
+    if _should_not_rebuild_export(export_instance, last_access_cutoff):
+        return
+
+    file = get_export_file([export_instance], filters or [])
+    with file as payload:
+        _save_export_payload(export_instance, payload)
+
+
+def _should_not_rebuild_export(export, last_access_cutoff):
+    # Don't rebuild exports that haven't been accessed since last_access_cutoff
+    return (
+        last_access_cutoff
+        and export.last_accessed
+        and export.last_accessed < last_access_cutoff
+    )
+
+
+def _save_export_payload(export, payload):
+    """
+    Save the contents of an export file to disk for later retrieval.
+    """
+    if export.last_accessed is None:
+        export.last_accessed = datetime.datetime.utcnow()
+    export.last_updated = datetime.datetime.utcnow()
+
+    try:
+        export.save()
+    except ResourceConflict:
+        # task was executed concurrently, so let first to finish win and abort the rest
+        pass
+    else:
+        export.set_payload(payload)
