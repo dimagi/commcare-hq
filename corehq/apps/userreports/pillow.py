@@ -19,22 +19,16 @@ UCR_CHECKPOINT_ID = 'pillow-checkpoint-ucr-main'
 UCR_STATIC_CHECKPOINT_ID = 'pillow-checkpoint-ucr-static'
 
 
-class ConfigurableIndicatorPillow(PythonPillow):
+class ConfigurableReportTableManagerMixin(object):
 
-    def __init__(self, pillow_checkpoint_id=UCR_CHECKPOINT_ID):
-        # todo: this will need to not be hard-coded if we ever split out forms and cases into their own domains
-        couch_db = CachedCouchDB(CommCareCase.get_db().uri, readonly=False)
-        checkpoint = PillowCheckpoint(pillow_checkpoint_id)
-        super(ConfigurableIndicatorPillow, self).__init__(couch_db=couch_db, checkpoint=checkpoint)
+    def init(self):
+        # not a true `__init__` method since this is primarily used as a mixin
+        # must be called manually
         self.bootstrapped = False
         self.last_bootstrapped = datetime.utcnow()
 
     def get_all_configs(self):
         return filter(lambda config: not config.is_deactivated, DataSourceConfiguration.all())
-
-    def run(self):
-        self.bootstrap()
-        super(ConfigurableIndicatorPillow, self).run()
 
     def needs_bootstrap(self):
         return (
@@ -104,6 +98,20 @@ class ConfigurableIndicatorPillow(PythonPillow):
             if config._rev != latest_rev:
                 raise StaleRebuildError('Tried to rebuild a stale table ({})! Ignoring...'.format(config))
         sql_adapter.rebuild_table()
+
+
+class ConfigurableIndicatorPillow(ConfigurableReportTableManagerMixin, PythonPillow):
+
+    def __init__(self, pillow_checkpoint_id=UCR_CHECKPOINT_ID):
+        # todo: this will need to not be hard-coded if we ever split out forms and cases into their own domains
+        couch_db = CachedCouchDB(CommCareCase.get_db().uri, readonly=False)
+        checkpoint = PillowCheckpoint(pillow_checkpoint_id)
+        super(ConfigurableIndicatorPillow, self).__init__(couch_db=couch_db, checkpoint=checkpoint)
+        self.init()  # table manager init
+
+    def run(self):
+        self.bootstrap()
+        super(ConfigurableIndicatorPillow, self).run()
 
     def change_trigger(self, changes_dict):
         self.bootstrap_if_needed()
