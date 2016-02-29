@@ -339,21 +339,6 @@ class TestFormESAccessors(BaseESAccessorsTest):
         self.assertEqual(result['u1'][0]['xmlns'], 'third')
         self.assertEqual(result[None][0]['xmlns'], 'third')
 
-    def test_get_last_form_submission_for_missing_user(self):
-        kwargs_u1 = {
-            'user_id': None,
-            'app_id': '1234',
-            'domain': self.domain,
-        }
-        first = datetime(2013, 7, 15, 0, 0, 0)
-        second = datetime(2013, 7, 16, 0, 0, 0)
-        third = datetime(2013, 7, 17, 0, 0, 0)
-
-        self._send_form_to_es(received_on=second, xmlns='second', **kwargs_u1)
-        self._send_form_to_es(received_on=third, xmlns='third', **kwargs_u1)
-        self._send_form_to_es(received_on=first, xmlns='first', **kwargs_u1)
-
-
     def test_get_form_counts_by_user_xmlns(self):
         user1, user2 = 'u1', 'u2'
         app1, app2 = '123', '567'
