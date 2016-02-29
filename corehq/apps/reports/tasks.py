@@ -187,10 +187,10 @@ def saved_exports():
 
 
 @task(queue='background_queue', ignore_result=True)
-def rebuild_export_task(groupexport_id, index, last_access_cutoff=None, filter=None):
+def rebuild_export_task(groupexport_id, index, output_dir='couch', last_access_cutoff=None, filter=None):
     group_config = HQGroupExportConfiguration.get(groupexport_id)
     config, schema = group_config.all_exports[index]
-    rebuild_export(config, schema, last_access_cutoff, filter=filter)
+    rebuild_export(config, schema, output_dir, last_access_cutoff, filter=filter)
 
 
 @task(queue='saved_exports_queue', ignore_result=True)
