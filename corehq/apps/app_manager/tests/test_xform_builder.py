@@ -116,3 +116,15 @@ class XFormBuilderTests(SimpleTestCase, TestXmlMixin):
             self.replace_xmlns(self.get_xml('xform_title'), self.xform.xmlns),
             self.xform.tostring(pretty_print=True, encoding='utf-8', xml_declaration=True)
         )
+
+    def test_question_params(self):
+        self.xform = XFormBuilder('Built by XFormBuilder')
+        params = {
+            'constraint': ". != 'Ford Prefect'",
+            'jr:constraintMsg': 'That name is not as inconspicuous as you think.'
+        }
+        self.xform.new_question('name', 'What is your name?', **params)
+        self.assertXmlEqual(
+            self.replace_xmlns(self.get_xml('question_params'), self.xform.xmlns),
+            self.xform.tostring(pretty_print=True, encoding='utf-8', xml_declaration=True)
+        )

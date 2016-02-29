@@ -19,6 +19,7 @@ seem to be a good fit.
 
 
 """
+import re
 import uuid
 from lxml import etree
 from lxml.builder import E
@@ -56,6 +57,10 @@ XSD_TYPES = ('string', 'int', 'boolean', 'decimal', 'date', 'time', 'dateTime')
 ODK_TYPES = XSD_TYPES + ('select', 'select1', 'geopoint', 'geotrace', 'geoshape', 'binary', 'barcode')
 # CommCare question group types
 GROUP_TYPES = ('group', 'repeatGroup')  # TODO: Support 'questionList'
+
+
+# Supported question parameters
+QUESTION_PARAMS = ('calculate', 'constraint', 'jr:constraintMsg')
 
 
 class XFormBuilder(object):
@@ -120,7 +125,7 @@ class XFormBuilder(object):
         :param group: The name of the question's group, or an iterable of names if nesting is deeper than one
         :param choices: A dictionary of {name: label} pairs
         :param label_safe: Does the label contain (safe) XML?
-        :param params: Supported question parameters: repeat_count, calculate
+        :param params: Supported question parameters: repeat_count, QUESTION_PARAMS
         :return: A Question instance, or QuestionGroup instance if `data_type` is a group type.
         """
         if data_type is not None and data_type not in ODK_TYPES + GROUP_TYPES:
@@ -195,6 +200,23 @@ class XFormBuilder(object):
             return '/data/' + name
         return '/data/{}/{}'.format('/'.join(groups), name)
 
+    def get_namespaced(self, name):
+        """
+        Return a namespaced parameter/tag name
+
+        >>> xform = XFormBuilder()
+        >>> xform.get_namespaced('jr:constraintMsg')
+        '{http://openrosa.org/javarosa}constraintMsg'
+        >>> xform.get_namespaced('constraint')
+        'constraint'
+
+        """
+        has_namespace = re.compile(r'(\w+):(\w+)')
+        if has_namespace.match(name):
+            template = has_namespace.sub(r'{{{\1}}}\2', name)
+            return template.format(**self.ns)
+        return name
+
     def _append_to_data(self, name, groups=None):
         if groups:
             node = self._data.xpath('./' + '/'.join(groups))[0]
@@ -225,8 +247,10 @@ class XFormBuilder(object):
             attrs = {'nodeset': self.get_data_ref(name, group)}
             if data_type in XSD_TYPES:
                 attrs['type'] = 'xsd:' + data_type
-            if 'calculate' in params:
-                attrs['calculate'] = params['calculate']
+            for param, value in params.items():
+                if param in QUESTION_PARAMS:
+                    ns_param = self.get_namespaced(param)
+                    attrs[ns_param] = value
             self._model.append(E.bind(attrs))
             if 'value' in params:
                 self._model.append(E.setvalue({
