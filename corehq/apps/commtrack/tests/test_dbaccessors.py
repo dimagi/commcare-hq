@@ -2,8 +2,10 @@ from django.test import TestCase
 
 from corehq.form_processor.tests.utils import run_with_all_backends
 from casexml.apps.case.tests.util import delete_all_cases
-from corehq.apps.commtrack.dbaccessors import \
-    get_supply_point_ids_in_domain_by_location, get_supply_point_by_location_id
+from corehq.apps.commtrack.dbaccessors import (
+    get_supply_point_ids_in_domain_by_location,
+    get_supply_point_by_location_id,
+)
 from corehq.apps.commtrack.tests.util import make_loc, bootstrap_domain
 
 
