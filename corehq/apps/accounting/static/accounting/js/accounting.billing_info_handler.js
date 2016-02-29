@@ -44,7 +44,7 @@ var AsyncSelect2Handler = function (field, multiple) {
                                 handler: 'select2_billing',
                                 action: self.fieldName,
                                 searchString: term,
-                                existing: $('.hq-content [name="' + self.fieldName + '"]').val().split(','),
+                                existing: $('form [name="' + self.fieldName + '"]').val().split(','),
                                 additionalData: self.getAdditionalData()
                             };
                         },
