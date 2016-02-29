@@ -707,7 +707,11 @@ class ConfigureNewReportBase(forms.Form):
             if matching_data_source.is_deactivated:
                 matching_data_source.is_deactivated = False
                 reactivated = True
-            changed = self._change_indicators(matching_data_source.configured_indicators)
+            changed = False
+            indicators = self.ds_builder.indicators(self._number_columns)
+            if matching_data_source.configured_indicators != indicators:
+                matching_data_source.configured_indicators = indicators
+                changed = True
             if changed or reactivated:
                 matching_data_source.save()
                 tasks.rebuild_indicators.delay(matching_data_source._id)
