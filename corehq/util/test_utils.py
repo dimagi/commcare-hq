@@ -48,7 +48,7 @@ class trap_extra_setup(ContextDecorator):
 
     def __init__(self, *exceptions, **kw):
         assert exceptions, "at least one argument is required"
-        assert all(isinstance(e, Exception) for e in exceptions)
+        assert all(issubclass(e, Exception) for e in exceptions), exceptions
         self.exceptions = exceptions
         self.msg = kw.pop("msg", "")
         assert not kw, "unknown keyword args: {}".format(kw)
