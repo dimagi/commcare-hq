@@ -244,7 +244,8 @@ class ILSGatewayAPI(APISynchronization):
                 self.location_sync,
                 'date_updated',
                 filters={
-                    'type': 'region'
+                    'type': 'region',
+                    'is_active': True
                 }
             ),
             ApiSyncObject(
@@ -253,7 +254,8 @@ class ILSGatewayAPI(APISynchronization):
                 self.location_sync,
                 'date_updated',
                 filters={
-                    'type': 'district'
+                    'type': 'district',
+                    'is_active': True
                 }
             ),
             ApiSyncObject(
@@ -262,7 +264,8 @@ class ILSGatewayAPI(APISynchronization):
                 self.location_sync,
                 'date_updated',
                 filters={
-                    'type': 'facility'
+                    'type': 'facility',
+                    'supplypoint__active': True
                 }
             ),
             ApiSyncObject(
@@ -514,9 +517,6 @@ class ILSGatewayAPI(APISynchronization):
             return
 
         if not location:
-            if not ilsgateway_location.is_active:
-                return
-
             if ilsgateway_location.id in EXCLUDED_REGIONS:
                 return
 
@@ -563,13 +563,6 @@ class ILSGatewayAPI(APISynchronization):
                     if not sql_location.supply_point_id:
                         location.save()
         else:
-            if not location.is_archived and not ilsgateway_location.is_active:
-                location.archive()
-                return location
-            elif location.is_archived and ilsgateway_location.is_active:
-                location.unarchive()
-                return location
-
             location_dict = {
                 'name': ilsgateway_location.name,
                 'latitude': float(ilsgateway_location.latitude) if ilsgateway_location.latitude else None,

@@ -117,17 +117,5 @@
         "parent_id": 13,
         "type": "DISTRICT",
         "is_active": true
-    },
-    {
-        "code": "DM520043",
-        "date_updated": "2014-11-10T08:31:53.020929",
-        "groups": ["B"],
-        "id": 3000,
-        "latitude": "-5.8333330000",
-        "longitude": "35.7666670000",
-        "name": "Inactive facility",
-        "parent_id": 2625,
-        "type": "FACILITY",
-        "is_active": false
     }
 ]
