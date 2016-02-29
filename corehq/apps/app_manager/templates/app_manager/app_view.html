@@ -43,6 +43,7 @@
         };
 
         $(function () {
+            var CommcareSettings = hqImport('app_manager/js/commcaresettings.js').CommcareSettings;
             COMMCAREHQ.appView.settings = new CommcareSettings(COMMCAREHQ.appView.settings);
             $('#commcare-settings').koApplyBindings(COMMCAREHQ.appView.settings);
         });
@@ -161,6 +162,7 @@
             var buildLangs = {{ app.build_langs|JSON }};
             var saveURL = "{% url "edit_app_langs" domain app.id %}";
             var validate = !{{ app.is_remote_app|BOOL }};
+            var SupportedLanguages = hqImport('app_manager/js/supported-languages.js').SupportedLanguages;
             $("#supported-languages").koApplyBindings(new SupportedLanguages({
                 langs: langs,
                 buildLangs: buildLangs,
