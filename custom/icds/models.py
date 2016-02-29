@@ -1,10 +1,10 @@
 
 from casexml.apps.case.models import CommCareCase
 from corehq.apps.userreports.expressions.getters import transform_date
-
+from corehq.form_processor.interfaces.dbaccessors import FormAccessors
 from dimagi.utils.decorators.memoized import memoized
 
-from .constants import *
+from . import constants
 
 
 class ChildHealthCaseRow(object):
@@ -34,7 +34,7 @@ class ChildHealthCaseRow(object):
             return self.forms_provider
         forms = []
         for form_id in self.case.xform_ids:
-            forms.append(FormAccessors(domain).get_form(form_id))
+            forms.append(FormAccessors(self.case.domain).get_form(form_id))
 
     def case_property(self, case, property, default=None):
         prop = case.dynamic_case_properties().get(property, default)
@@ -57,7 +57,7 @@ class ChildHealthCaseRow(object):
     def nutrition_status(self):
         statuses = [
             form.get_data("form/z_score_wfa_ql/nutrition_status")
-            for form in self.filtered_forms(GMP_XMLNS)
+            for form in self.filtered_forms(constants.GMP_XMLNS)
             if form.get_data("form/z_score_wfa_ql/nutrition_status")
         ]
         return statuses[0] if any(statuses) else 'unweighed'
@@ -134,7 +134,7 @@ class ChildHealthCaseRow(object):
         return one_or_zero(self.age_in_months > 36)
 
     def pse_attended_16_days(self):
-        return one_or_zero(pse_days_attended == 16)
+        return one_or_zero(self.pse_days_attended == 16)
 
     @property
     def low_birth_weight(self):
