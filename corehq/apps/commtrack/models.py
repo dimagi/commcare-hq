@@ -10,6 +10,7 @@ from dimagi.utils.decorators.memoized import memoized
 
 from casexml.apps.case.cleanup import close_case
 from casexml.apps.case.models import CommCareCase
+from casexml.apps.case.xform import get_case_updates
 from casexml.apps.stock.consumption import (ConsumptionConfiguration, compute_default_monthly_consumption)
 from casexml.apps.stock.models import StockReport, DocDomainMapping
 from casexml.apps.stock.utils import months_of_stock_remaining, state_stock_category
@@ -23,6 +24,7 @@ from corehq.apps.domain.signals import commcare_domain_pre_delete
 from corehq.apps.locations.models import Location, SQLLocation
 from corehq.apps.products.models import Product, SQLProduct
 from corehq.form_processor.interfaces.supply import SupplyInterface
+from corehq.form_processor.interfaces.dbaccessors import CaseAccessors, FormAccessors
 from corehq.util.quickcache import quickcache
 from . import const
 from .const import StockActions, RequisitionActions, DAYS_IN_MONTH
@@ -503,9 +505,16 @@ def _reopen_or_create_supply_point(location):
     supply_point = get_supply_point_by_location_id(location.domain, location.location_id)
     if supply_point:
         if supply_point and supply_point.closed:
-            for action in supply_point.actions:
-                if action.action_type == 'close':
-                    action.xform.archive(user_id=const.COMMTRACK_USERNAME)
+            form_ids = CaseAccessors(supply_point.domain).get_case_xform_ids(supply_point.case_id)
+            form_accessor = FormAccessors(supply_point.domain)
+            for form_id in form_ids:
+                form = form_accessor.get_form(form_id)
+                closes_case = any(map(
+                    lambda case_update: case_update.closes_case(),
+                    get_case_updates(form),
+                ))
+                if closes_case:
+                    form.archive(user_id=const.COMMTRACK_USERNAME)
         update_supply_point_from_location(supply_point, location)
         return supply_point
     else:
