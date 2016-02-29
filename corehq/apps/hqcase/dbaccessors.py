@@ -136,18 +136,6 @@ def _get_case_ids(domain, owner_id, is_closed):
     )]
 
 
-def get_total_case_count():
-    """
-    Total count of all cases in the database.
-    """
-    from casexml.apps.case.models import CommCareCase
-    results = CommCareCase.get_db().view(
-        'cases_by_owner/view',
-        reduce=True,
-    ).one()
-    return results['value'] if results else 0
-
-
 def get_number_of_cases_in_domain_by_owner(domain, owner_id):
     res = CommCareCase.get_db().view(
         'cases_by_owner/view',
