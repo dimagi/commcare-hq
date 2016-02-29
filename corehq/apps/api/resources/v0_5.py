@@ -39,7 +39,7 @@ def user_es_call(domain, q, fields, size, start_at):
     return query.run().hits
 
 
-def _false():
+def _false(*args, **kwargs):
     return False
 
 
