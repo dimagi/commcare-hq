@@ -192,15 +192,19 @@ uiElement.key_value_mapping = function (o) {
 
 }());
 
-// To stack icon-upload modal over key-value modal
-// copied from http://stackoverflow.com/questions/19305821/multiple-modals-overlay
-$(document).on('show.bs.modal', '.modal', function () {
-    // 1040 is default boostrap modal z-index
-    var zIndex = 1040 + (10 * $('.modal:visible').length);
-    $(this).css('z-index', zIndex);
-    setTimeout(function() {
-        $('.modal-backdrop').not('.modal-stack').css('z-index', zIndex - 1).addClass('modal-stack');
-    }, 0);
+
+// To stack icon-uploader modal on top of key-value-mapping modal
+// Hide modal into the stack
+$(document).on('show.bs.modal', '#hqimage', function () {
+    var $km = $(".modal.in");
+    $km.addClass("stacked-modal");
+    $km.hide()
+});
+// Pop out hidden stack onto top
+$(document).on('hide.bs.modal', '#hqimage', function () {
+    var $km = $(".stacked-modal");
+    $km.removeClass("stacked-modal");
+    $km.show();
 });
 
 
