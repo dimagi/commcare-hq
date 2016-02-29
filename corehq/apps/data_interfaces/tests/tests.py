@@ -24,10 +24,12 @@ WRONG_FILETYPE = 'wrong_file.xyz'
 
 
 def setup():
+    # http://nose.readthedocs.org/en/latest/writing_tests.html#test-modules
     create_domain(DOMAIN_NAME)
 
 
 def teardown():
+    # http://nose.readthedocs.org/en/latest/writing_tests.html#test-modules
     Domain.get_by_name(DOMAIN_NAME, strict=True).delete()
 
 
