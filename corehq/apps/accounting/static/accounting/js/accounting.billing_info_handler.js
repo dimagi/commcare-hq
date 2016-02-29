@@ -29,7 +29,7 @@ var AsyncSelect2Handler = function (field, multiple) {
 
     self.init = function () {
         $(function () {
-            var $field = $('.hq-content [name="' + self.fieldName + '"]');
+            var $field = $('form [name="' + self.fieldName + '"]');
             if ($field.attr('type') !== 'hidden') {
                 $field.select2({
                     minimumInputLength: 0,
@@ -44,7 +44,7 @@ var AsyncSelect2Handler = function (field, multiple) {
                                 handler: 'select2_billing',
                                 action: self.fieldName,
                                 searchString: term,
-                                existing: $('.hq-content [name="' + self.fieldName + '"]').val().split(','),
+                                existing: $('form [name="' + self.fieldName + '"]').val().split(','),
                                 additionalData: self.getAdditionalData()
                             };
                         },
@@ -74,13 +74,12 @@ var AsyncSelect2Handler = function (field, multiple) {
 var EmailSelect2Handler = function (field, valid_email_text) {
     'use strict';
     var self = this;
-
     self.fieldName = field;
     self.validEmailText = valid_email_text;
 
     self.init = function () {
         $(function () {
-            $('.hq-content [name="' + self.fieldName + '"]').select2({
+            $('form [name="' + self.fieldName + '"]').select2({
                 createSearchChoice: function (term, data) {
                     var matchedData = $(data).filter(function() {
                         return this.text.localeCompare(term) === 0;
