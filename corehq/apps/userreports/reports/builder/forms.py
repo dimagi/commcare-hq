@@ -266,13 +266,19 @@ class DataSourceBuilder(object):
 
     @classmethod
     def _get_data_source_properties_from_case(cls, case_properties):
+        property_map = {
+            'closed': 'Case Closed',
+            'user_id': 'User ID Last Updating Case',
+            'owner_name': 'Case Owner',
+            'mobile worker': 'Mobile Worker Last Updating Case',
+        }
         properties = OrderedDict()
         for property in case_properties:
             properties[property] = DataSourceProperty(
                 type='case_property',
                 id=property,
                 column_id=get_column_name(property),
-                text=property.replace('_', ' '),
+                text=property_map.get(property, property.replace('_', ' ')),
                 source=property
             )
         properties['computed/owner_name'] = cls._get_owner_name_pseudo_property()
@@ -307,8 +313,22 @@ class DataSourceBuilder(object):
 
     @staticmethod
     def _get_data_source_properties_from_form(form, form_xml):
+        property_map = {
+            'username': 'User Name',
+            'userID': 'User ID',
+            'timeStart': 'Date Form Started',
+            'timeEnd': 'Date Form Completed',
+        }
         properties = OrderedDict()
         questions = form_xml.get_questions([])
+        for prop in FORM_METADATA_PROPERTIES:
+            properties[prop[0]] = DataSourceProperty(
+                type="meta",
+                id=prop[0],
+                column_id=get_column_name(prop[0].strip("/")),
+                text=property_map.get(prop[0], prop[0]),
+                source=prop,
+            )
         for question in questions:
             properties[question['value']] = DataSourceProperty(
                 type="question",
@@ -316,14 +336,6 @@ class DataSourceBuilder(object):
                 column_id=get_column_name(question['value'].strip("/")),
                 text=question['label'],
                 source=question,
-            )
-        for prop in FORM_METADATA_PROPERTIES:
-            properties[prop[0]] = DataSourceProperty(
-                type="meta",
-                id=prop[0],
-                column_id=get_column_name(prop[0].strip("/")),
-                text=prop[0],
-                source=prop,
             )
         if form.get_app().auto_gps_capture:
             properties['location'] = DataSourceProperty(
@@ -382,6 +394,9 @@ class DataSourceForm(forms.Form):
         self.report_type = report_type
 
         self.app_source_helper = ApplicationDataSourceUIHelper()
+        self.app_source_helper.source_type_field.label = _('Forms or Cases')
+        self.app_source_helper.source_type_field.choices = [("case", _("Cases")), ("form", _("Forms"))]
+        self.app_source_helper.source_field.label = _('<span data-bind="text: labelMap[sourceType()]"></span>')
         self.app_source_helper.bootstrap(self.domain)
         report_source_fields = self.app_source_helper.get_fields()
         report_source_help_texts = {
@@ -1152,13 +1167,12 @@ class ConfigureWorkerReportForm(ConfigureTableReportForm):
 
     @property
     def container_fieldset(self):
-        import ipdb; ipdb.set_trace()
         return crispy.Fieldset(
             '',
             crispy.Fieldset(
                 _legend(
                     _("Rows"),
-                    _('This report will show one row for *each mobile worker*'),
+                    _('This report will show one row for each mobile worker'),
                 )
             ),
             self.column_fieldset,
