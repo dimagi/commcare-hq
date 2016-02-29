@@ -18,6 +18,7 @@ echo "Preparing apps with branches $branch0 and $branch1"
 function build_apps {
     branch=$1
     git checkout $branch
+    git submodule update --init --recursive
     echo "./manage.py build_apps app_builder_live_test/ $branch"
     ./manage.py build_apps app_builder_live_test/ $branch
 }

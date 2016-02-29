@@ -198,7 +198,6 @@ def login_or_api_key_ex(allow_cc_users=False):
 
 login_or_api_key = login_or_api_key_ex()
 
-
 def two_factor_check(api_key):
     def _outer(fn):
         @wraps(fn)
@@ -212,16 +211,6 @@ def two_factor_check(api_key):
             return fn(request, domain, *args, **kwargs)
         return _inner
     return _outer
-
-# For views that are inside a class
-# todo where is this being used? can be replaced with decorator below
-def cls_login_and_domain_required(func):
-    def __outer__(cls, request, domain, *args, **kwargs):
-        @login_and_domain_required
-        def __inner__(request, domain, *args, **kwargs):
-            return func(cls, request, domain, *args, **kwargs)
-        return __inner__(request, domain, *args, **kwargs)
-    return __outer__
 
 def cls_to_view(additional_decorator=None):
     def decorator(func):

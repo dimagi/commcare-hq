@@ -72,16 +72,11 @@ class SessionDataHelper(object):
             "action": "touchcare-filter-cases",
             "filter_expr": xpath,
             "session_data": session_data,
+            "domain": self.domain
         }
-
-        if use_formplayer:
-            url = settings.FORMPLAYER_URL + "/filter_cases"
-        else:
-            url = settings.XFORMS_PLAYER_URL
 
         response = post_data(
             json.dumps(data),
-            url=url,
             content_type="application/json", auth=auth
         )
 

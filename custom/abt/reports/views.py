@@ -11,16 +11,42 @@ from openpyxl.utils import get_column_letter
 from corehq.apps.userreports.reports.view import CustomConfigurableReport
 
 
+def _invert_table(table):
+    return [
+        [row[column_index] for row in table]
+        for column_index in range(len(table[0]))
+    ]
+
+
 class FormattedSupervisoryReport(CustomConfigurableReport):
 
     @property
     def export_table(self):
         data = super(FormattedSupervisoryReport, self).export_table
+
+        # remove zeroes
         table = data[0][1]
         for row in range(1, len(table) - 1):
             for column in range(2, len(table[row])):
                 if table[row][column] == 0:
                     table[row][column] = ''
+
+        # remove hyphen prefixes from location column headers
+        for column_index in range(2, len(table[0])):
+            table[0][column_index] = table[0][column_index][1:]
+
+        # sort columns by location
+        inverted_table = _invert_table(table)
+        inverted_incident_and_total_columns = inverted_table[:2]
+        inverted_location_columns = inverted_table[2:]
+        sorted_inverted_location_columns = sorted(
+            inverted_location_columns,
+            key=lambda inverted_location_column: inverted_location_column[0].lower()
+        )
+        data[0][1] = _invert_table(
+            inverted_incident_and_total_columns + sorted_inverted_location_columns
+        )
+
         return data
 
     @property

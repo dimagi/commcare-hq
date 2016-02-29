@@ -143,7 +143,7 @@ class SOHHandler(KeywordHandler):
             if not phone_number:
                 continue
             send_sms(self.sql_location.domain, in_charge_user, phone_number,
-                     message % (in_charge_user.full_name, self.sql_location.name))
+                     message % {'name': in_charge_user.full_name, 'location': self.sql_location.name})
 
     @property
     def parser(self):

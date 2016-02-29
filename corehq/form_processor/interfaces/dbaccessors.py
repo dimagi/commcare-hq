@@ -9,6 +9,18 @@ from dimagi.utils.decorators.memoized import memoized
 from ..utils import should_use_sql_backend
 
 
+CaseIndexInfo = namedtuple(
+    'CaseIndexInfo', ['case_id', 'identifier', 'referenced_id', 'referenced_type', 'relationship']
+)
+
+
+class AttachmentContent(namedtuple('AttachmentContent', ['content_type', 'content_stream'])):
+    @property
+    def content_body(self):
+        with self.content_stream as stream:
+            return stream.read()
+
+
 class AbstractFormAccessor(six.with_metaclass(ABCMeta)):
     """
     Contract for common methods expected on FormAccessor(SQL/Couch). All methods
@@ -223,18 +235,6 @@ class CaseAccessors(object):
 
     def get_case_by_domain_hq_user_id(self, user_id, case_type):
         return self.db_accessor.get_case_by_domain_hq_user_id(self.domain, user_id, case_type)
-
-
-CaseIndexInfo = namedtuple(
-    'CaseIndexInfo', ['case_id', 'identifier', 'referenced_id', 'referenced_type', 'relationship']
-)
-
-
-class AttachmentContent(namedtuple('AttachmentContent', ['content_type', 'content_stream'])):
-    @property
-    def content_body(self):
-        with self.content_stream as stream:
-            return stream.read()
 
 
 def get_cached_case_attachment(domain, case_id, attachment_id, is_image=False):

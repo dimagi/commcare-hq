@@ -56,6 +56,9 @@ def get_paged_repeat_records(domain, skip, limit, repeater_id=None, state=None):
         kwargs['endkey'] = [domain, repeater_id, state]
     elif not repeater_id and state:
         kwargs['key'] = [domain, None, state]
+    elif not repeater_id and not state:
+        kwargs['startkey'] = [domain]
+        kwargs['endkey'] = [domain, {}]
 
     results = RepeatRecord.get_db().view('receiverwrapper/repeat_records',
         **kwargs
