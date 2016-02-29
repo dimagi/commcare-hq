@@ -39,6 +39,10 @@ def user_es_call(domain, q, fields, size, start_at):
     return query.run().hits
 
 
+def _false():
+    return False
+
+
 class BulkUserResource(HqBaseResource, DomainSpecificResourceMixin):
     """
     A read-only user data resource based on elasticsearch.
@@ -46,7 +50,7 @@ class BulkUserResource(HqBaseResource, DomainSpecificResourceMixin):
     """
     type = "bulk-user"
     id = fields.CharField(attribute='id', readonly=True, unique=True)
-    pk = fields.CharField(attribute='pk', readonly=True, unique=True)
+    pk = fields.CharField(attribute='pk', readonly=True, unique=True, use_in=_false)
     email = fields.CharField(attribute='email')
     username = fields.CharField(attribute='username', unique=True)
     first_name = fields.CharField(attribute='first_name', null=True)
