@@ -73,6 +73,7 @@ USE_I18N = True
 # Examples: "http://media.lawrence.com", "http://example.com/media/"
 MEDIA_URL = '/media/'
 STATIC_URL = '/static/'
+STATIC_CDN = ''
 
 FILEPATH = os.path.abspath(os.path.dirname(__file__))
 # media for user uploaded media.  in general this won't be used at all.
@@ -1077,6 +1078,8 @@ INDICATOR_CONFIG = {
     "mvp-sauri": ['mvp_indicators'],
     "mvp-potou": ['mvp_indicators'],
 }
+
+COMPRESS_URL = STATIC_CDN + STATIC_URL
 
 ####### Couch Forms & Couch DB Kit Settings #######
 COUCH_DATABASE_NAME = helper.get_db_name(COUCH_DATABASE_NAME, UNIT_TESTING)
