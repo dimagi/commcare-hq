@@ -96,11 +96,11 @@ class BulkUserResource(HqBaseResource, DomainSpecificResourceMixin):
         fields.append('_id')
         fn = MOCK_BULK_USER_ES or user_es_call
         users = fn(
-                domain=kwargs['domain'],
-                q=param('q'),
-                fields=fields,
-                size=param('limit'),
-                start_at=param('offset'),
+            domain=kwargs['domain'],
+            q=param('q'),
+            fields=fields,
+            size=param('limit'),
+            start_at=param('offset'),
         )
         return map(self.to_obj, users)
 
