@@ -27,6 +27,17 @@
     ],
     "filters": [
       {
+        "compare_as_string": false,
+        "datatype": "string",
+        "required": false,
+        "slug": "date_of_data_collection",
+        "field": "date_of_data_collection",
+        "type": "date",
+        "display": {
+          "en": "Date of data collection"
+        }
+      },
+      {
         "display": "Form Name",
         "field": "form_name",
         "type": "dynamic_choice_list",
