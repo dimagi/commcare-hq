@@ -58,9 +58,9 @@ class BulkUserResource(HqBaseResource, DomainSpecificResourceMixin):
     phone_numbers = fields.ListField(attribute='phone_numbers', null=True)
 
     def to_obj(self, user):
-        '''
+        """
         Takes a flat dict and returns an object
-        '''
+        """
         if '_id' in user:
             user['pk'] = user['id'] = user.pop('_id')
         return namedtuple('user', user.keys())(**user)
