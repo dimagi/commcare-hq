@@ -3,9 +3,11 @@ import logging
 import itertools
 from celery.canvas import chain
 from celery.task import task
-from django.db import transaction
+from django.db import transaction, connection
 from django.db.models import Q
 from django.db.models.aggregates import Avg, Sum
+
+from corehq.apps.locations.dbaccessors import get_users_by_location_id
 from corehq.apps.products.models import SQLProduct
 from corehq.apps.locations.models import Location, SQLLocation
 from custom.ilsgateway.tanzania.warehouse import const
@@ -18,7 +20,6 @@ from casexml.apps.stock.models import StockReport, StockTransaction
 from custom.ilsgateway.models import SupplyPointStatus, SupplyPointStatusTypes, DeliveryGroups, \
     OrganizationSummary, GroupSummary, SupplyPointStatusValues, Alert, ProductAvailabilityData, \
     HistoricalLocationGroup, ILSGatewayConfig
-
 
 """
 These functions and variables are ported from:
@@ -154,30 +155,55 @@ def not_responding_facility(org_summary):
 
 
 @transaction.atomic
-def update_product_availability_facility_data(org_summary):
+def update_product_availability_facility_data(facility, products, start_date, end_date):
     # product availability
 
-    facility = Location.get(org_summary.location_id)
-    assert facility.location_type == "FACILITY"
-    prods = SQLProduct.objects.filter(domain=facility.domain, is_archived=False)
-    for p in prods:
-        product_data, created = ProductAvailabilityData.objects.get_or_create(
-            product=p.product_id,
-            location_id=facility._id,
-            date=org_summary.date
-        )
+    existing_data = ProductAvailabilityData.objects.filter(
+        date__range=(
+            datetime(start_date.year, start_date.month, 1),
+            datetime(end_date.year, end_date.month, 1)
+        ),
+        location_id=facility.get_id
+    )
 
-        if created:
+    product_data_dict = {
+        (pa.date, pa.location_id, pa.product): pa for pa in existing_data
+    }
+
+    product_data_list = []
+    previous_month = {}
+    for year, month in months_between(start_date, end_date):
+        window_date = datetime(year, month, 1)
+        for p in products:
+            now = datetime.utcnow()
+            if (window_date, facility.get_id, p.product_id) in product_data_dict:
+                previous_month[p.product_id] = product_data_dict[window_date, facility.get_id, p.product_id]
+                continue
+            else:
+                product_data = ProductAvailabilityData(
+                    date=window_date,
+                    location_id=facility.get_id,
+                    product=p.product_id,
+                    create_date=now,
+                    update_date=now
+                )
+
             # set defaults
             product_data.total = 1
-            previous_reports = ProductAvailabilityData.objects.filter(
-                product=p.product_id,
-                location_id=facility._id,
-                date__lt=org_summary.date,
-                total=1
-            )
-            if previous_reports.count():
-                prev = previous_reports.latest('date')
+            prev = None
+            if p.product_id in previous_month:
+                prev = previous_month[p.product_id]
+            if not prev:
+                previous_reports = ProductAvailabilityData.objects.filter(
+                    product=p.product_id,
+                    location_id=facility._id,
+                    date__lt=window_date,
+                    total=1
+                )
+                if previous_reports.count():
+                    prev = previous_reports.latest('date')
+
+            if prev:
                 product_data.with_stock = prev.with_stock
                 product_data.without_stock = prev.without_stock
                 product_data.without_data = prev.without_data
@@ -186,9 +212,14 @@ def update_product_availability_facility_data(org_summary):
                 product_data.with_stock = 0
                 product_data.without_stock = 0
                 product_data.without_data = 1
-            product_data.save()
-        assert (product_data.with_stock + product_data.without_stock + product_data.without_data) == 1, \
-            "bad product data config for %s" % product_data
+            if product_data.pk is not None:
+                product_data.save()
+            else:
+                product_data_list.append(product_data)
+            assert (product_data.with_stock + product_data.without_stock + product_data.without_data) == 1, \
+                "bad product data config for %s" % product_data
+            previous_month[p.product_id] = product_data
+    ProductAvailabilityData.objects.bulk_create(product_data_list)
 
 
 def default_start_date():
@@ -267,8 +298,9 @@ def process_facility_warehouse_data(facility, start_date, end_date, runner=None)
     """
     logging.info("processing facility %s (%s)" % (facility.name, str(facility._id)))
 
+    sql_location = facility.sql_location
     if runner:
-        runner.location = facility.sql_location
+        runner.location = sql_location
         runner.save()
 
     for alert_type in [const.SOH_NOT_RESPONDING, const.RR_NOT_RESPONDED, const.DELIVERY_NOT_RESPONDING]:
@@ -276,7 +308,7 @@ def process_facility_warehouse_data(facility, start_date, end_date, runner=None)
                                      type=alert_type)
         alert.delete()
 
-    supply_point_id = facility.linked_supply_point()._id
+    supply_point_id = sql_location.supply_point_id
     location_id = facility._id
     new_statuses = SupplyPointStatus.objects.filter(
         location_id=facility._id,
@@ -290,18 +322,17 @@ def process_facility_warehouse_data(facility, start_date, end_date, runner=None)
         date__gte=start_date,
         date__lt=end_date,
         stocktransaction__type='stockonhand'
-    ).order_by('date').iterator()
+    ).distinct().order_by('date').iterator()
     process_facility_product_reports(location_id, new_reports)
 
-    new_trans = StockTransaction.objects.filter(
-        case_id=supply_point_id,
-        report__date__gte=start_date,
-        report__date__lt=end_date,
-    ).exclude(type='consumption').order_by('report__date').iterator()
-    process_facility_transactions(location_id, new_trans)
+    new_trans = get_latest_transaction_from_each_month(supply_point_id, start_date, end_date)
+    process_facility_transactions(location_id, new_trans, start_date, end_date)
+
+    products = SQLProduct.objects.filter(domain=facility.domain, is_archived=False)
+    users = get_users_by_location_id(facility.domain, facility.get_id)
 
     # go through all the possible values in the date ranges
-    # and make sure there are warehouse tables there
+    # # and make sure there are warehouse tables there
     for year, month in months_between(start_date, end_date):
         window_date = datetime(year, month, 1)
         # create org_summary for every fac/date combo
@@ -323,15 +354,12 @@ def process_facility_warehouse_data(facility, start_date, end_date, runner=None)
                                                title=title)
         # update all the non-response data
         not_responding_facility(org_summary)
-
-        # update product availability data
-        update_product_availability_facility_data(org_summary)
-
         # alerts
         with transaction.atomic():
-            populate_no_primary_alerts(facility, window_date)
+            populate_no_primary_alerts(facility, window_date, users)
             populate_facility_stockout_alerts(facility, window_date)
 
+    update_product_availability_facility_data(facility, products, start_date, end_date)
     update_historical_data_for_location(facility)
 
 
@@ -421,25 +449,52 @@ def process_facility_product_reports(facility_id, reports):
         months_updated[warehouse_date] = None  # update the cache of stuff we've dealt with
 
 
+def get_latest_transaction_from_each_month(case_id, start_date, end_date):
+    query = '''
+        SELECT DISTINCT ON (year, month, st.product_id) date_part('year', sr.date) as year,
+         date_part('month', sr.date) as month, st.product_id, st.stock_on_hand
+        FROM stock_stocktransaction st JOIN stock_stockreport sr ON st.report_id=sr.id
+         WHERE case_id=%s AND sr.date BETWEEN %s AND %s ORDER BY year DESC,
+          month DESC, st.product_id, sr.date DESC;
+
+    '''
+    cursor = connection.cursor()
+    cursor.execute(query, [case_id, start_date, end_date])
+    return cursor.fetchall()
+
+
 @transaction.atomic
-def process_facility_transactions(facility_id, transactions):
+def process_facility_transactions(facility_id, transactions, start_date, end_date):
     """
     For a given facility and list of transactions, update the appropriate
     data warehouse tables. This should only be called on supply points
     that are facilities.
 
     """
-    for trans in transactions:
-        date = trans.report.date
-        product_data = ProductAvailabilityData.objects.get_or_create(
-            product=trans.product_id,
-            location_id=facility_id,
-            date=datetime(date.year, date.month, 1)
-        )[0]
+    existing_data = ProductAvailabilityData.objects.filter(
+        date__range=(
+            datetime(start_date.year, start_date.month, 1),
+            datetime(end_date.year, end_date.month, 1)
+        ),
+        location_id=facility_id
+    )
 
+    product_data_dict = {
+        (pa.date, pa.location_id, pa.product): pa for pa in existing_data
+    }
+    for year, month, product_id, stock_on_hand in transactions:
+        date = datetime(int(year), int(month), 1)
+        if (date, facility_id, product_id) in product_data_dict:
+            product_data = product_data_dict[(date, facility_id, product_id)]
+        else:
+            product_data = ProductAvailabilityData(
+                product=product_id,
+                location_id=facility_id,
+                date=date
+            )
         product_data.total = 1
         product_data.without_data = 0
-        if trans.stock_on_hand <= 0:
+        if stock_on_hand <= 0:
             product_data.without_stock = 1
             product_data.with_stock = 0
         else:
