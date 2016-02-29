@@ -4,17 +4,11 @@
 {% load i18n %}
 
 {% block js %}{{ block.super }}
-    <script src="{% static 'accounting/js/stay-on-tab.js' %}"></script>
-    <script src="{% static 'select2-3.4.5-legacy/select2.min.js' %}"></script>
-    <script src="{% static 'hqwebapp/js/lib/jquery-ui/jquery-ui-1.9.2.multiselect-deps.custom.min.js' %}"></script>
-    <script src="{% static 'hqwebapp/js/lib/jquery-ui/multiselect/ui.multiselect.js' %}"></script>
-    <script src="{% static 'accounting/ko/accounting.software_plan_version_handler.js' %}"></script>
+    <script src="{% new_static 'accounting/js/stay-on-tab.js' %}"></script>
+    <script src="{% new_static 'accounting/ko/accounting.software_plan_version_handler.js' %}"></script>
 {% endblock %}
 
-{% block head %}{{ block.super }}
-    <link href="{% static 'select2-3.4.5-legacy/select2.css' %}" rel="stylesheet" />
-    <link rel="stylesheet" href="{% static 'hqwebapp/js/lib/jquery-ui-datepicker/datepicker-theme/jquery-ui-1.8.17.custom.css' %}" />
-    <link rel="stylesheet" href="{% static 'hqwebapp/js/lib/jquery-ui/multiselect/ui.multiselect.css' %}" />
+{% block stylesheets %}{{ block.super }}
     <style type="text/css">
         .ui-multiselect li a.action {
             width: 40px;
@@ -36,14 +30,14 @@
     </script>
 {% endblock %}
 
-{% block main_column %}
+{% block page_content %}
     <ul class="nav nav-tabs" id="user-settings-tabs">
         <li><a href="#plan_info" data-toggle="tab">{% trans "Plan Information" %}</a></li>
         <li><a href="#roles" data-toggle="tab">{% trans "Roles and Features" %}</a></li>
         <li><a href="#versions" data-toggle="tab">{% trans "Version Summary" %}</a></li>
     </ul>
 
-    <div class="tab-content">
+    <div class="tab-content tab-padded">
         <div class="tab-pane" id="plan_info">
             {{ block.super }}
         </div>
@@ -61,7 +55,7 @@
         <div class="well">
             <div class="pull-right">
                 <button type="button" class="btn btn-danger" data-bind="event: {click: $parent.featureRates.removeRate}">
-                    <i class="icon-remove"></i>
+                    <i class="fa fa-remove"></i>
                 </button>
             </div>
             {% crispy feature_rate_form %}
@@ -72,7 +66,7 @@
         <div class="well">
             <div class="pull-right">
                 <button type="button" class="btn btn-danger" data-bind="event: {click: $parent.productRates.removeRate}">
-                    <i class="icon-remove"></i>
+                    <i class="fa fa-remove"></i>
                 </button>
             </div>
             {% crispy product_rate_form %}
