@@ -57,7 +57,8 @@ class BulkUserResource(HqBaseResource, DomainSpecificResourceMixin):
     last_name = fields.CharField(attribute='last_name', null=True)
     phone_numbers = fields.ListField(attribute='phone_numbers', null=True)
 
-    def to_obj(self, user):
+    @staticmethod
+    def to_obj(user):
         """
         Takes a flat dict and returns an object
         """
