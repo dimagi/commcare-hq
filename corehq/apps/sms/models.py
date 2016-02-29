@@ -309,10 +309,10 @@ class Log(models.Model):
         qs = cls.objects.filter(domain=domain)
 
         if start_date:
-            qs = cls.objects.filter(date__gte=start_date)
+            qs = qs.filter(date__gte=start_date)
 
         if end_date:
-            qs = cls.objects.filter(date__lte=end_date)
+            qs = qs.filter(date__lte=end_date)
 
         return qs
 
@@ -734,10 +734,10 @@ class ExpectedCallback(SyncSQLToCouchMixin, models.Model):
         qs = cls.objects.filter(domain=domain)
 
         if start_date:
-            qs = cls.objects.filter(date__gte=start_date)
+            qs = qs.filter(date__gte=start_date)
 
         if end_date:
-            qs = cls.objects.filter(date__lte=end_date)
+            qs = qs.filter(date__lte=end_date)
 
         return qs
 

@@ -7,7 +7,7 @@ from corehq.apps.reports.generic import GenericTabularReport
 from corehq.apps.reports.datatables import DataTablesColumn, DataTablesHeader
 from casexml.apps.case.models import CommCareCase
 from corehq.apps.sms.models import ExpectedCallback, CALLBACK_PENDING, CALLBACK_RECEIVED, CALLBACK_MISSED
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, time
 from corehq.util.timezones.conversions import ServerTime
 from dimagi.utils.parsing import json_format_date
 
@@ -65,8 +65,8 @@ class MissedCallbackReport(CustomProjectReport, GenericTabularReport):
 
         expected_callback_events = ExpectedCallback.by_domain(
             self.domain,
-            start_date=start_date,
-            end_date=end_date
+            start_date=datetime.combine(start_date, time(0, 0)),
+            end_date=datetime.combine(end_date, time(0, 0))
         ).order_by('date')
 
         for event in expected_callback_events:
