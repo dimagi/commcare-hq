@@ -10,10 +10,10 @@ from corehq.form_processor.utils.xform import (
     get_simple_wrapped_form,
 )
 from corehq.form_processor.tests.utils import run_with_all_backends
-from couchforms.models import XFormInstance
+from casexml.apps.case.tests.util import delete_all_xforms
 
 from ..permissions import can_edit_form_location
-from .util import LocationHierarchyTestCase
+from .util import LocationHierarchyTestCase, delete_all_locations
 
 
 class TestPermissions(LocationHierarchyTestCase):
@@ -118,6 +118,9 @@ class TestPermissions(LocationHierarchyTestCase):
         cls.massachusetts_web_user.delete()
         cls.locationless_web_user.delete()
         cls.project_admin.delete()
+        cls.domain_obj.delete()
+        delete_all_locations()
+        delete_all_xforms()
 
     def assertCanEdit(self, user, form):
         msg = "This user CANNOT edit this form!"
