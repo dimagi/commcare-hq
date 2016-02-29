@@ -5,6 +5,7 @@ from celery.canvas import chain
 from celery.task import task
 from django.db import transaction
 from django.db.models import Q
+from django.db.models.aggregates import Avg, Sum
 from corehq.apps.products.models import SQLProduct
 from corehq.apps.locations.models import Location, SQLLocation
 from custom.ilsgateway.tanzania.warehouse import const
@@ -457,6 +458,9 @@ def get_non_archived_facilities_below(location):
 
 @task(queue='logistics_background_queue')
 def process_non_facility_warehouse_data(location, start_date, end_date, runner=None, strict=True):
+    start_date = datetime(start_date.year, start_date.month, 1)
+    end_date = datetime(end_date.year, end_date.month, 1)
+
     if runner:
         runner.location = location.sql_location
         runner.save()
@@ -464,56 +468,88 @@ def process_non_facility_warehouse_data(location, start_date, end_date, runner=N
     fac_ids = [f._id for f in facs]
     logging.info("processing non-facility %s (%s), %s children"
                  % (location.name, str(location.location_id), len(facs)))
+    prods = SQLProduct.objects.filter(domain=location.domain, is_archived=False)
+
+    sub_summaries = OrganizationSummary.objects.filter(
+        location_id__in=fac_ids, date__range=(start_date, end_date), average_lead_time_in_days__gt=0
+    ).values('date').annotate(average_time=Avg('average_lead_time_in_days'))
+
+    sub_summaries = {
+        (subsummary['date'].year, subsummary['date'].month): subsummary
+        for subsummary in sub_summaries
+    }
+
+    sub_prods = ProductAvailabilityData.objects.filter(
+        location_id__in=fac_ids, date__range=(start_date, end_date)
+    ).values('product', 'date').annotate(
+        total_sum=Sum('total'),
+        with_stock_sum=Sum('with_stock'),
+        without_stock_sum=Sum('without_stock'),
+    )
+
+    sub_prods = {
+        ((sub_prod['date'].year, sub_prod['date'].month), sub_prod['product']): sub_prod for sub_prod in sub_prods
+    }
+
+    sub_group_summaries = GroupSummary.objects.filter(
+        org_summary__location_id__in=fac_ids,
+        org_summary__date__range=(start_date, end_date)
+    ).values('title', 'org_summary__date').annotate(
+        total_sum=Sum('total'),
+        responded_sum=Sum('responded'),
+        on_time_sum=Sum('on_time'),
+        complete_sum=Sum('complete')
+    )
+
+    sub_group_summaries = {
+        ((sub_group_summary['org_summary__date'].year, sub_group_summary['org_summary__date'].month), sub_group_summary['title']): sub_group_summary
+        for sub_group_summary in sub_group_summaries
+    }
+
+    total_orgs = len(facs)
     for year, month in months_between(start_date, end_date):
         window_date = datetime(year, month, 1)
         org_summary = OrganizationSummary.objects.get_or_create(
             location_id=location.location_id, date=window_date
         )[0]
 
-        org_summary.total_orgs = len(facs)
-        sub_summaries = OrganizationSummary.objects.filter(date=window_date, location_id__in=fac_ids)
+        org_summary.total_orgs = total_orgs
 
-        subs_with_lead_time = [s for s in sub_summaries if s.average_lead_time_in_days]
         # lead times
-        if subs_with_lead_time:
-            days_sum = sum([s.average_lead_time_in_days for s in subs_with_lead_time])
-            org_summary.average_lead_time_in_days = days_sum / len(subs_with_lead_time)
+        if (year, month) in sub_summaries:
+            sub_summary = sub_summaries[year, month]
+            org_summary.average_lead_time_in_days = sub_summary['average_time']
         else:
             org_summary.average_lead_time_in_days = 0
 
         org_summary.save()
         # product availability
-        prods = SQLProduct.objects.filter(domain=location.domain, is_archived=False)
         for p in prods:
             product_data = ProductAvailabilityData.objects.get_or_create(product=p.product_id,
                                                                          location_id=location.location_id,
                                                                          date=window_date)[0]
 
-            sub_prods = ProductAvailabilityData.objects.filter(product=p.product_id,
-                                                               location_id__in=fac_ids,
-                                                               date=window_date)
+            sub_prod = sub_prods.get(((year, month), p.product_id), {})
 
-            product_data.total = sum([p.total for p in sub_prods])
+            product_data.total = sub_prod.get('total_sum', 0)
             if strict:
-                assert product_data.total == len(facs), \
+                assert product_data.total == total_orgs, \
                     "total should match number of sub facilities"
-            product_data.with_stock = sum([p.with_stock for p in sub_prods])
-            product_data.without_stock = sum([p.without_stock for p in sub_prods])
+            product_data.with_stock = sub_prod.get('with_stock_sum', 0)
+            product_data.without_stock = sub_prod.get('without_stock_sum', 0)
             product_data.without_data = product_data.total - product_data.with_stock - product_data.without_stock
             product_data.save()
 
         dg = DeliveryGroups(month=month, facs=facs)
         for status_type in const.NEEDED_STATUS_TYPES:
             gsum = GroupSummary.objects.get_or_create(org_summary=org_summary, title=status_type)[0]
-            sub_sums = GroupSummary.objects.filter(title=status_type, org_summary__in=sub_summaries).all()
 
-            # TODO: see if moving the aggregation to the db makes it
-            # faster, if this is slow
-            gsum.total = sum([s.total for s in sub_sums])
-            gsum.responded = sum([s.responded for s in sub_sums])
-            gsum.on_time = sum([s.on_time for s in sub_sums])
-            gsum.complete = sum([s.complete for s in sub_sums])
-            # gsum.missed_response = sum([s.missed_response for s in sub_sums])
+            sub_sum = sub_group_summaries.get(((year, month), status_type), {})
+
+            gsum.total = sub_sum.get('total_sum', 0)
+            gsum.responded = sub_sum.get('responded_sum', 0)
+            gsum.on_time = sub_sum.get('on_time_sum', 0)
+            gsum.complete = sub_sum.get('complete_sum', 0)
             gsum.save()
 
             if status_type == SupplyPointStatusTypes.DELIVERY_FACILITY:
