@@ -30,6 +30,23 @@ odm_nsmap = {
 }
 
 
+def quote_nan(value):
+    """
+    Returns value in single quotes if value is not a number
+
+    >>> quote_nan('foo')
+    "'foo'"
+    >>> quote_nan('1')
+    '1'
+
+    """
+    try:
+        float(value)
+        return value
+    except ValueError:
+        return "'{}'".format(value)
+
+
 @quickcache(['domain'])
 def get_question_items(domain):
     """

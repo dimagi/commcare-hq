@@ -21,7 +21,7 @@ from custom.openclinica.const import (
     CC_SEX,
     CC_ENROLLMENT_DATE,
 )
-from custom.openclinica.utils import odm_nsmap
+from custom.openclinica.utils import odm_nsmap, quote_nan
 from dimagi.utils import make_uuid
 
 
@@ -100,7 +100,7 @@ class Study(StudyObject):
         Return a registration form that mimics OpenClinica subject registration
         """
         xform = XFormBuilder(name)
-        xform.new_question(CC_SUBJECT_KEY, 'Person ID')  # Subject's unique ID. aka "Screening Number", "Subject Key"
+        xform.new_question(CC_SUBJECT_KEY, 'Person ID')  # Unique ID. aka "Screening Number", "Subject Key"
         xform.new_question(CC_STUDY_SUBJECT_ID, 'Subject Study ID')  # Subject number for this study
         xform.new_question(CC_DOB, 'Date of Birth', data_type='date')
         xform.new_question(CC_SEX, 'Sex', data_type='select1', choices={1: 'Male', 2: 'Female'})
@@ -333,8 +333,13 @@ class StudyForm(StudyObject):
             data_type = 'repeatGroup' if self.is_repeating else 'group'
             group = xform.new_group(ig.question_name, ig.question_label, data_type)
             for item in ig.iter_items():
+                params = {}
+                if item.validation:
+                    params['constraint'] = item.validation
+                if item.validation_msg:
+                    params['jr:constraintMsg'] = item.validation_msg
                 group.new_question(item.question_name, item.question_label, ODK_DATA_TYPES[item.data_type],
-                                   choices=item.choices)
+                                   choices=item.choices, **params)
 
     def build_xform(self):
         xform = XFormBuilder(self.name)
@@ -389,6 +394,15 @@ class Item(StudyObject):
         text = defn.xpath('./odm:Question/odm:TranslatedText', namespaces=odm_nsmap)
         self.question_label = text[0].text.strip() if text else self.name
 
+        # OpenClinica only includes RangeCheck in metadata. Regular expressions are supported in CRFs, but not in
+        # CDISC ODM. cf. http://www.cdisc.org/system/files/all/generic/text/html/odm1_1_0.html#ItemDef
+        # 3rd-party support: http://www.opencdisc.org/projects/validator/opencdisc-validation-framework#regex-rule
+        range_checks = defn.xpath('./odm:RangeCheck', namespaces=odm_nsmap)
+        if range_checks:
+            self.validation, self.validation_msg = self.get_range_check_validation(range_checks)
+        else:
+            self.validation, self.validation_msg = None, None
+
     def get_choices(self, cl_oid):
         choices = {}
         cl_def = self.meta.xpath('./odm:CodeList[@OID="{}"]'.format(cl_oid), namespaces=odm_nsmap)[0]
@@ -397,6 +411,54 @@ class Item(StudyObject):
             label = cl_item.xpath('./odm:Decode/odm:TranslatedText', namespaces=odm_nsmap)[0].text
             choices[value] = label
         return choices
+
+    @staticmethod
+    def get_condition(comparator, values):
+        """
+        Returns a CommCare validation condition given a CDISC ODM comparator and a list of values
+        """
+
+        def value_in(values_):
+            return '(' + ' or '.join(('. = ' + v for v in values_)) + ')'
+
+        scalar_comparators = {
+            'LT': '. < ',
+            'LE': '. <= ',
+            'GT': '. > ',
+            'GE': '. >= ',
+            'EQ': '. = ',
+            'NE': '. != ',
+        }
+        vector_comparators = {
+            'IN': lambda vv: value_in(vv),
+            'NOTIN': lambda vv: 'not ' + value_in(vv)
+        }
+
+        if not values:
+            raise ValueError('A validation condition needs at least one comparable value')
+        quoted_values = [quote_nan(v) for v in values]
+        if comparator in scalar_comparators:
+            return scalar_comparators[comparator] + quoted_values[0]
+        elif comparator == vector_comparators:
+            return vector_comparators[comparator](quoted_values)
+        else:
+            raise ValueError('Unknown comparison operator "{}"'.format(comparator))
+
+    def get_range_check_validation(self, range_checks):
+        error_msg = ''
+        conditions = []
+        for check in range_checks:
+            if check.get('SoftHard') and check.get('SoftHard').lower() != 'hard':
+                # A soft constraint doesn't reject a value, it just produces a warning. We only support hard
+                # constraints
+                continue
+            comparator = check.get('Comparator')
+            values = [val.text for val in check.xpath('./odm:CheckValue', namespaces=odm_nsmap)]
+            conditions.append(self.get_condition(comparator, values))
+            text = check.xpath('./odm:ErrorMessage/odm:TranslatedText', namespaces=odm_nsmap)
+            if text and not error_msg:
+                error_msg = text[0].text.strip()
+        return ' and '.join(conditions), error_msg
 
 
 class Command(BaseCommand):
