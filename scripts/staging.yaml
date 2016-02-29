@@ -71,7 +71,6 @@ branches:
   - b3-reports-case-form  # BB 2/24
   - b3-billing-views
   - cdn # Ben 2/26
-  - check-login_and_domain # NP
 submodules:
   submodules/touchforms-src:
     # let's leave this here even when empty
