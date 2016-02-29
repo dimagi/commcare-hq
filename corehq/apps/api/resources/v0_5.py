@@ -46,6 +46,7 @@ class BulkUserResource(HqBaseResource, DomainSpecificResourceMixin):
     """
     type = "bulk-user"
     id = fields.CharField(attribute='id', readonly=True, unique=True)
+    pk = fields.CharField(attribute='pk', readonly=True, unique=True)
     email = fields.CharField(attribute='email')
     username = fields.CharField(attribute='username', unique=True)
     first_name = fields.CharField(attribute='first_name', null=True)
@@ -57,7 +58,7 @@ class BulkUserResource(HqBaseResource, DomainSpecificResourceMixin):
         Takes a flat dict and returns an object
         '''
         if '_id' in user:
-            user['id'] = user.pop('_id')
+            user['pk'] = user['id'] = user.pop('_id')
         return namedtuple('user', user.keys())(**user)
 
     class Meta(v0_1.CustomResourceMeta):
