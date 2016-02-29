@@ -198,6 +198,7 @@ def login_or_api_key_ex(allow_cc_users=False):
 
 login_or_api_key = login_or_api_key_ex()
 
+
 def two_factor_check(api_key):
     def _outer(fn):
         @wraps(fn)
