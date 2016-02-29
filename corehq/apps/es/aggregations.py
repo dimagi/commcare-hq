@@ -41,6 +41,8 @@ import datetime
 
 from corehq.elastic import SIZE_LIMIT
 
+MISSING_KEY = None
+
 
 class AggregationResult(object):
     def __init__(self, raw, aggregation):
@@ -173,7 +175,7 @@ class Bucket(object):
 
     @property
     def key(self):
-        return self.result.get('key', None)
+        return self.result.get('key', MISSING_KEY)
 
     @property
     def doc_count(self):

@@ -7,6 +7,7 @@ from corehq.apps.es.aggregations import (
     ExtendedStatsAggregation,
     TopHitsAggregation,
     MissingAggregation,
+    MISSING_KEY,
 )
 from corehq.apps.es.forms import (
     submitted as submitted_filter,
@@ -162,7 +163,7 @@ def get_last_form_submissions_by_user(domain, user_ids, app_id=None):
     aggregations = query.run().aggregations
 
     if missing_users:
-        result[None] = aggregations.missing_user_id.bucket.top_hits_last_form_submissions.hits
+        result[MISSING_KEY] = aggregations.missing_user_id.bucket.top_hits_last_form_submissions.hits
 
     buckets_dict = aggregations.user_id.buckets_dict
     for user_id, bucket in buckets_dict.iteritems():
