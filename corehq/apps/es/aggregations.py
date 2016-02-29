@@ -217,7 +217,6 @@ class MissingAggregation(Aggregation):
 
     :param name: aggregation name
     :param field: name of the field to bucket on
-    :param size:
     """
     type = "missing"
     result_class = MissingResult
