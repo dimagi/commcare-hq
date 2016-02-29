@@ -168,4 +168,4 @@ class Call(SyncSQLToCouchMixin, Log):
                 date__lte=to_timestamp
             )
 
-        return len(qs[:1]) > 0
+        return qs.count() > 0
