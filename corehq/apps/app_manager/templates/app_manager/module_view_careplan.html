@@ -6,6 +6,7 @@
 {% block js-inline %}{{ block.super }}
     <script>
         $(function () {
+            var ParentSelect = hqImport('app_manager/js/detail-screen-config.js').ParentSelect;
             var parent_select_model = {{ module.parent_select|JSON }};
             var parentSelect = new ParentSelect({
                 active: parent_select_model.active,
