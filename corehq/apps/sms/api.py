@@ -13,9 +13,9 @@ from corehq import privileges
 from corehq.apps.accounting.utils import domain_has_privilege, log_accounting_error
 from corehq.apps.sms.util import (clean_phone_number, clean_text,
     get_backend_classes)
-from corehq.apps.sms.models import (SMSLog, OUTGOING, INCOMING,
+from corehq.apps.sms.models import (OUTGOING, INCOMING,
     PhoneNumber, SMS, SelfRegistrationInvitation, MessagingEvent,
-    SQLMobileBackend, SQLSMSBackend)
+    SQLMobileBackend, SQLSMSBackend, QueuedSMS)
 from corehq.apps.sms.messages import (get_message, MSG_OPTED_IN,
     MSG_OPTED_OUT, MSG_DUPLICATE_USERNAME, MSG_USERNAME_TOO_LONG,
     MSG_REGISTRATION_WELCOME_CASE, MSG_REGISTRATION_WELCOME_MOBILE_WORKER)
@@ -69,7 +69,7 @@ def log_sms_exception(msg):
     notify_exception(None, message=message, details={
         'domain': msg.domain,
         'date': msg.date,
-        'message_id': msg._id,
+        'message_id': msg.couch_id,
     })
 
 
@@ -86,6 +86,10 @@ def get_location_id_by_verified_number(v):
     return get_location_id_by_contact(v.domain, v.owner)
 
 
+def get_sms_class():
+    return QueuedSMS if settings.SMS_QUEUE_ENABLED else SMS
+
+
 def send_sms(domain, contact, phone_number, text, metadata=None):
     """
     Sends an outbound SMS. Returns false if it fails.
@@ -96,7 +100,7 @@ def send_sms(domain, contact, phone_number, text, metadata=None):
         phone_number = str(phone_number)
     phone_number = clean_phone_number(phone_number)
 
-    msg = SMSLog(
+    msg = get_sms_class()(
         domain=domain,
         phone_number=phone_number,
         direction=OUTGOING,
@@ -132,7 +136,7 @@ def send_sms_to_verified_number(verified_number, text, metadata=None,
             return False
         raise
 
-    msg = SMSLog(
+    msg = get_sms_class()(
         couch_recipient_doc_type = verified_number.owner_doc_type,
         couch_recipient = verified_number.owner_id,
         phone_number = "+" + str(verified_number.phone_number),
@@ -150,7 +154,7 @@ def send_sms_to_verified_number(verified_number, text, metadata=None,
 
 def send_sms_with_backend(domain, phone_number, text, backend_id, metadata=None):
     phone_number = clean_phone_number(phone_number)
-    msg = SMSLog(
+    msg = get_sms_class()(
         domain=domain,
         phone_number=phone_number,
         direction=OUTGOING,
@@ -166,7 +170,7 @@ def send_sms_with_backend(domain, phone_number, text, backend_id, metadata=None)
 def send_sms_with_backend_name(domain, phone_number, text, backend_name, metadata=None):
     phone_number = clean_phone_number(phone_number)
     backend = SQLMobileBackend.load_by_name(SQLMobileBackend.SMS, domain, backend_name)
-    msg = SMSLog(
+    msg = get_sms_class()(
         domain=domain,
         phone_number=phone_number,
         direction=OUTGOING,

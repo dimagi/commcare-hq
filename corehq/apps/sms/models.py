@@ -371,7 +371,7 @@ class Log(models.Model):
         return len(qs[:1]) > 0
 
 
-class SMS(SyncSQLToCouchMixin, Log):
+class SMSBase(SyncSQLToCouchMixin, Log):
     ERROR_TOO_MANY_UNSUCCESSFUL_ATTEMPTS = 'TOO_MANY_UNSUCCESSFUL_ATTEMPTS'
     ERROR_MESSAGE_IS_STALE = 'MESSAGE_IS_STALE'
     ERROR_INVALID_DIRECTION = 'INVALID_DIRECTION'
@@ -434,6 +434,7 @@ class SMS(SyncSQLToCouchMixin, Log):
     fri_risk_profile = models.CharField(max_length=1, null=True)
 
     class Meta:
+        abstract = True
         app_label = 'sms'
 
     @classmethod
@@ -477,6 +478,32 @@ class SMS(SyncSQLToCouchMixin, Log):
     @classmethod
     def _migration_get_couch_model_class(cls):
         return SMSLog
+
+    @property
+    def outbound_backend(self):
+        if self.backend_id:
+            return SQLMobileBackend.load(self.backend_id, is_couch_id=True)
+
+        return SQLMobileBackend.load_default_by_phone_and_domain(
+            SQLMobileBackend.SMS,
+            smsutil.clean_phone_number(self.phone_number),
+            domain=self.domain
+        )
+
+
+class SMS(SMSBase):
+    pass
+
+
+class QueuedSMS(SMSBase):
+    class Meta:
+        db_table = 'sms_queued'
+
+    @classmethod
+    def get_queued_sms(cls):
+        return cls.objects.filter(
+            datetime_to_process__lte=datetime.utcnow(),
+        )
 
 
 class LastReadMessage(SyncCouchToSQLMixin, Document, CouchDocLockableMixIn):
