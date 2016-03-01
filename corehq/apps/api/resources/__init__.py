@@ -196,11 +196,11 @@ class DomainSpecificResourceMixin(object):
 
 class CouchResourceMixin(object):
     def detail_uri_kwargs(self, bundle_or_obj):
-        kwargs = {}
-
         if isinstance(bundle_or_obj, Bundle):
-            kwargs['pk'] = bundle_or_obj.obj._id
+            obj = bundle_or_obj.obj
         else:
-            kwargs['pk'] = bundle_or_obj._id
+            obj = bundle_or_obj
 
-        return kwargs
+        return {
+            'pk': obj._id
+        }
