@@ -20,7 +20,7 @@ from corehq.apps.groups.models import Group
 from corehq.apps.sms.util import strip_plus
 from corehq.apps.users.models import CommCareUser, WebUser, Permissions
 
-from . import v0_1, v0_4, CouchResourceMixin
+from . import v0_1, v0_4
 from . import HqBaseResource, DomainSpecificResourceMixin
 from phonelog.models import DeviceReportEntry
 
@@ -39,7 +39,7 @@ def user_es_call(domain, q, fields, size, start_at):
     return query.run().hits
 
 
-class BulkUserResource(CouchResourceMixin, HqBaseResource, DomainSpecificResourceMixin):
+class BulkUserResource(HqBaseResource, DomainSpecificResourceMixin):
     """
     A read-only user data resource based on elasticsearch.
     Supported Params: limit offset q fields
@@ -58,7 +58,7 @@ class BulkUserResource(CouchResourceMixin, HqBaseResource, DomainSpecificResourc
         Takes a flat dict and returns an object
         """
         if '_id' in user:
-            user['id'] = user['_id']
+            user['id'] = user.pop('_id')
         return namedtuple('user', user.keys())(**user)
 
     class Meta(v0_1.CustomResourceMeta):
@@ -98,6 +98,16 @@ class BulkUserResource(CouchResourceMixin, HqBaseResource, DomainSpecificResourc
             start_at=param('offset'),
         )
         return map(self.to_obj, users)
+
+    def detail_uri_kwargs(self, bundle_or_obj):
+        if isinstance(bundle_or_obj, Bundle):
+            obj = bundle_or_obj.obj
+        else:
+            obj = bundle_or_obj
+
+        return {
+            'pk': obj.id
+        }
 
 
 class CommCareUserResource(v0_1.CommCareUserResource):
