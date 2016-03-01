@@ -20,7 +20,6 @@ class ConfigurableReportTableManagerTest(SimpleTestCase):
 
     def test_needs_bootstrap_on_initialization(self):
         table_manager = ConfigurableReportTableManagerMixin()
-        table_manager.init()
         self.assertTrue(table_manager.needs_bootstrap())
 
     def test_bootstrap_sets_time(self):
