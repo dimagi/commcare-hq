@@ -67,6 +67,7 @@
     </script>
 {% endblock %}
 {% block keyboard_shortcuts %}
+    {% if request.couch_user.keyboard_shortcuts.enabled %}
     <script>
         var KeyboardNavigator = hqImport('hqwebapp/js/keyboard_navigator.js');
         var nav_key = {{ request.couch_user.keyboard_shortcuts.main_key|JSON }};
@@ -108,6 +109,7 @@
             reset_index: false
         });
     </script>
+    {% endif %}
 {% endblock %}
 
 {% block page_breadcrumbs %}
