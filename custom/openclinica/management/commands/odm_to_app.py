@@ -259,7 +259,7 @@ class StudyEvent(StudyObject):
 
         form_name = 'Schedule ' + self.name
         form = subject_module.new_form(form_name, None)
-        form.unique_id = self.unique_id + '_form'
+        form.unique_id = make_uuid()
         form.source = get_form_source(form_name)
         form.requires = 'case'
         form.actions.case_preload = get_preload_action()
