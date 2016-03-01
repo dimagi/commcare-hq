@@ -16,8 +16,8 @@
     var REQUIRED = {{ required }}
 
     $.when(
-        "{% static 'locations/ko/location_drilldown.async.js' %}",
-        "{% static 'intrahealth/js/intrahealth_loc_drilldown.async.js' %}",
+        $.getScript("{% static 'locations/ko/location_drilldown.async.js' %}"),
+        $.getScript("{% static 'intrahealth/js/intrahealth_loc_drilldown.async.js' %}")
     ).done(function () {
         var locs = {{ locations|safe }};
         var selected = '{{ loc_id }}';
