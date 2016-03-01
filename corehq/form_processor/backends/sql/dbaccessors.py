@@ -566,10 +566,10 @@ class CaseAccessorSQL(AbstractCaseAccessor):
 
     @staticmethod
     def get_cases_by_external_id(domain, external_id, case_type=None):
-        return CommCareCaseSQL.objects.raw(
+        return list(CommCareCaseSQL.objects.raw(
             'SELECT * FROM get_case_by_external_id(%s, %s, %s)',
             [domain, external_id, case_type]
-        )
+        ))
 
     @staticmethod
     def get_case_by_domain_hq_user_id(domain, user_id, case_type):
