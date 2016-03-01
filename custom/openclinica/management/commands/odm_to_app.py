@@ -22,7 +22,6 @@ from custom.openclinica.const import (
     CC_ENROLLMENT_DATE,
 )
 from custom.openclinica.utils import odm_nsmap, quote_nan
-from dimagi.utils import make_uuid
 
 
 # Map ODM data types to ODK XForm data types
@@ -111,7 +110,7 @@ class Study(StudyObject):
 
         def add_reg_form_to_module(module_):
             reg_form = module_.new_form('Register Subject', None)
-            reg_form.unique_id = make_uuid()
+            reg_form.get_unique_id()
             reg_form.source = self.get_subject_form_source('Register Subject')
             reg_form.actions.open_case = OpenCaseAction(
                 name_path='/data/name',
@@ -130,27 +129,22 @@ class Study(StudyObject):
 
         def add_edit_form_to_module(module_):
             edit_form = module_.new_form('Edit Subject', None)
-            edit_form.unique_id = make_uuid()
+            edit_form.get_unique_id()
             edit_form.source = self.get_subject_form_source('Edit Subject')
             edit_form.requires = 'case'
+            preload = {
+                '/data/name': 'name',
+                '/data/subject_study_id': 'subject_study_id',
+                '/data/dob': 'dob',
+                '/data/sex': 'sex',
+                '/data/enrollment_date': 'enrollment_date',
+            }
             edit_form.actions.case_preload = PreloadAction(
-                preload={
-                    '/data/name': 'name',
-                    '/data/subject_study_id': 'subject_study_id',
-                    '/data/dob': 'dob',
-                    '/data/sex': 'sex',
-                    '/data/enrollment_date': 'enrollment_date',
-                },
+                preload=preload,
                 condition=FormActionCondition(type='always')
             )
             edit_form.actions.update_case = UpdateCaseAction(
-                update={
-                    'name': '/data/name',
-                    'subject_study_id': '/data/subject_study_id',
-                    'dob': '/data/dob',
-                    'sex': '/data/sex',
-                    'enrollment_date': '/data/enrollment_date',
-                },
+                update={v: k for k, v in preload.items()},
                 condition=FormActionCondition(type='always')
             )
 
@@ -259,7 +253,7 @@ class StudyEvent(StudyObject):
 
         form_name = 'Schedule ' + self.name
         form = subject_module.new_form(form_name, None)
-        form.unique_id = make_uuid()
+        form.get_unique_id()
         form.source = get_form_source(form_name)
         form.requires = 'case'
         form.actions.case_preload = get_preload_action()
@@ -321,7 +315,7 @@ class StudyForm(StudyObject):
             )
 
         form = module.new_form(self.name, None)
-        form.unique_id = make_uuid()
+        form.get_unique_id()
         form.source = self.build_xform()
         # Must require case for case list to work
         form.requires = 'case'
@@ -416,6 +410,10 @@ class Item(StudyObject):
     def get_condition(comparator, values):
         """
         Returns a CommCare validation condition given a CDISC ODM comparator and a list of values
+
+        >>> Item.get_condition('LT', ['5'])
+        '. < 5'
+
         """
 
         def value_in(values_):
@@ -439,7 +437,7 @@ class Item(StudyObject):
         quoted_values = [quote_nan(v) for v in values]
         if comparator in scalar_comparators:
             return scalar_comparators[comparator] + quoted_values[0]
-        elif comparator == vector_comparators:
+        elif comparator in vector_comparators:
             return vector_comparators[comparator](quoted_values)
         else:
             raise ValueError('Unknown comparison operator "{}"'.format(comparator))
