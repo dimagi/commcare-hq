@@ -22,6 +22,8 @@ from corehq.apps.users.cases import get_wrapped_owner
 from corehq.apps.users.models import CouchUser
 from corehq.apps.users.util import format_username
 from corehq.apps.locations.models import SQLLocation, Location
+from corehq.form_processor.exceptions import CaseNotFound
+from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 from corehq.util.soft_assert import soft_assert
 
 
@@ -355,11 +357,10 @@ def lookup_case(search_field, search_id, domain, case_type):
     found = False
     if search_field == 'case_id':
         try:
-            case = CommCareCase.get(search_id)
-
+            case = CaseAccessors(domain).get_case(search_id)
             if case.domain == domain and case.type == case_type:
                 found = True
-        except Exception:
+        except CaseNotFound:
             pass
     elif search_field == 'external_id':
         results = get_cases_in_domain_by_external_id(domain, search_id)
