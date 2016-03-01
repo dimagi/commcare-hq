@@ -9,15 +9,13 @@ def _sizeof_fmt(num):
         num /= 1024.0
 
 
-@quickcache(['domain'], timeout=30)
-def get_attachment_size_by_domain(domain):
+@quickcache(['domain', 'app_id', 'xmlns'], timeout=30)
+def forms_have_multimedia(domain, app_id, xmlns):
     """
-    :return: dict {
-        (app_id, xmlns): size_of_attachments,
-    }
+    :return: True if there is multimedia for forms with the given app_id and xmlns.
     """
-    startkey = [domain]
-    view = XFormInstance.get_db().view(
+    startkey = [domain, app_id, xmlns]
+    rows = XFormInstance.get_db().view(
         'attachments/attachments',
         startkey=startkey,
         endkey=startkey + [{}],
@@ -25,6 +23,5 @@ def get_attachment_size_by_domain(domain):
         reduce=True,
         group=True
     )
-    # grouped key = [domain, app_id, xmlns]
-    available_attachments = {(a['key'][1], a['key'][2]): _sizeof_fmt(a['value']) for a in view}
-    return available_attachments
+
+    return rows.count() > 0

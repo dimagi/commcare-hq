@@ -11,6 +11,7 @@ from corehq.apps.hqcase.dbaccessors import (
     get_case_ids_in_domain_by_owner,
     get_case_types_for_domain)
 from corehq.apps.hqcase.utils import get_case_by_domain_hq_user_id
+from corehq.couchapps.dbaccessors import forms_have_multimedia
 from corehq.dbaccessors.couchapps.cases_by_server_date.by_owner_server_modified_on import \
     get_case_ids_modified_with_owner_since
 from corehq.dbaccessors.couchapps.cases_by_server_date.by_server_modified_on import \
@@ -83,6 +84,10 @@ class FormAccessorCouch(AbstractFormAccessor):
         if ids_only:
             return doc_ids
         return [XFormInstance.wrap(doc) for doc in iter_docs(XFormInstance.get_db(), doc_ids)]
+
+    @staticmethod
+    def forms_have_multimedia(domain, app_id, xmlns):
+        return forms_have_multimedia(domain, app_id, xmlns)
 
 
 class CaseAccessorCouch(AbstractCaseAccessor):

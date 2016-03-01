@@ -367,3 +367,11 @@ corehq.apps.hqcase:
   - django_prbac
   - tastypie
   - touchforms.formplayer
+corehq.couchapps:
+  - casexml.apps.case
+  - casexml.apps.phone
+  - corehq.apps.tzmigration
+  - corehq.apps.domain
+  - corehq.form_processor
+  - corehq.sql_accessors
+  - couchforms

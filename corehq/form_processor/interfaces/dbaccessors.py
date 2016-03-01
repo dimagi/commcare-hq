@@ -63,6 +63,10 @@ class AbstractFormAccessor(six.with_metaclass(ABCMeta)):
     def update_form_problem_and_state(form):
         raise NotImplementedError
 
+    @abstractmethod
+    def forms_have_multimedia(domain, app_id, xmlns):
+        raise NotImplementedError
+
 
 class FormAccessors(object):
     """
@@ -111,6 +115,8 @@ class FormAccessors(object):
     def get_attachment_content(self, form_id, attachment_name):
         return self.db_accessor.get_attachment_content(form_id, attachment_name)
 
+    def forms_have_multimedia(self, app_id, xmlns):
+        return self.db_accessor.forms_have_multimedia(self.domain, app_id, xmlns)
 
 class AbstractCaseAccessor(six.with_metaclass(ABCMeta)):
     """

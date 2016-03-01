@@ -9,6 +9,7 @@ from django.http import HttpResponseRedirect, HttpResponseBadRequest, Http404
 from django.template.defaultfilters import filesizeformat
 
 from corehq.apps.export.export import get_export_download
+from corehq.form_processor.interfaces.dbaccessors import FormAccessors
 from django_prbac.utils import has_privilege
 from django.utils.decorators import method_decorator
 import json
@@ -71,7 +72,6 @@ from corehq.apps.users.decorators import get_permission_name
 from corehq.apps.users.models import Permissions
 from corehq.apps.users.permissions import FORM_EXPORT_PERMISSION, CASE_EXPORT_PERMISSION, \
     DEID_EXPORT_PERMISSION
-from corehq.couchapps.dbaccessors import get_attachment_size_by_domain
 from corehq.util.couch import get_document_or_404_lite
 from corehq.util.timezones.utils import get_timezone_for_user
 from couchexport.models import SavedExportSchema, ExportSchema
@@ -773,11 +773,11 @@ class DownloadFormExportView(BaseDownloadExportView):
         """Checks to see if this form export has multimedia available to export
         """
         try:
-            size_hash = get_attachment_size_by_domain(self.domain)
             export_object = self.get_export_schema(self.domain, self.export_id)
-            hash_key = (export_object.app_id, export_object.xmlns
-                        if hasattr(export_object, 'xmlns') else '')
-            has_multimedia = hash_key in size_hash
+            has_multimedia = FormAccessors(self.domain).forms_have_multimedia(
+                export_object.app_id,
+                getattr(export_object, 'xmlns', '')
+            )
         except Exception as e:
             return format_angular_error(e.message)
         return format_angular_success({
