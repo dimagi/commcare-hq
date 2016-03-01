@@ -233,7 +233,7 @@ def do_import(spreadsheet_or_error, config, domain, task=None, chunksize=CASEBLO
             try:
                 caseblock = CaseBlock(
                     create=False,
-                    case_id=case._id,
+                    case_id=case.case_id,
                     update=fields_to_update,
                     **extras
                 )
