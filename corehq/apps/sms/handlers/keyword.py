@@ -1,10 +1,10 @@
-from corehq.apps.hqcase.dbaccessors import get_cases_in_domain_by_external_id
 from corehq.apps.locations.models import Location
 from corehq.apps.sms.api import (
     MessageMetadata,
     add_msg_tags,
     send_sms_to_verified_number,
 )
+from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 from dimagi.utils.logging import notify_exception
 from corehq.apps.smsforms.app import _get_responses, start_session
 from corehq.apps.sms.models import WORKFLOW_KEYWORD, MessagingEvent
@@ -532,7 +532,7 @@ def keyword_uses_form_that_requires_case(survey_keyword):
 
 
 def get_case_by_external_id(domain, external_id, user):
-    cases = get_cases_in_domain_by_external_id(domain, external_id)
+    cases = CaseAccessors(domain).get_cases_by_external_id(external_id)
 
     def filter_fcn(case):
         return not case.closed and user_can_access_case(user, case)

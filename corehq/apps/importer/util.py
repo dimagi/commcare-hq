@@ -5,7 +5,6 @@ from datetime import date
 import xlrd
 from django.utils.translation import ugettext_lazy as _
 from couchdbkit import NoResultFound
-from corehq.apps.hqcase.dbaccessors import get_cases_in_domain_by_external_id
 
 from corehq.apps.importer.const import LookupErrors, ImportErrors
 from casexml.apps.case.models import CommCareCase
@@ -364,18 +363,14 @@ def lookup_case(search_field, search_id, domain, case_type):
         except CaseNotFound:
             pass
     elif search_field == 'external_id':
-        results = case_accessors.get_cases_by_external_id(search_id)
-        if results:
-            cases_by_type = [case for case in results
-                             if case.type == case_type]
-
-            if not cases_by_type:
-                return (None, LookupErrors.NotFound)
-            elif len(cases_by_type) > 1:
-                return (None, LookupErrors.MultipleResults)
-            else:
-                case = cases_by_type[0]
-                found = True
+        cases_by_type = case_accessors.get_cases_by_external_id(search_id, case_type=case_type)
+        if not cases_by_type:
+            return (None, LookupErrors.NotFound)
+        elif len(cases_by_type) > 1:
+            return (None, LookupErrors.MultipleResults)
+        else:
+            case = cases_by_type[0]
+            found = True
 
     if found:
         return (case, None)
