@@ -64,7 +64,6 @@ branches:
   - b3-reports-home  # BB 2/23
   - b3-reports-case-form  # BB 2/24
   - b3-billing-views
-  - cdn # Ben 2/26
   # B3 Report Migration branches
   - b3-reports-worker-monitoring  # Biyeun 1/21
   - b3-reports-inspect-data  # Biyeun 1/21
@@ -72,7 +71,6 @@ branches:
   - b3-reports-messaging  # Biyeun 1/21
   - drilldown-async # Biyeun 2/29
   - import_build-anchor-tag # Nick P 2/29
->>>>>>> master
 submodules:
   submodules/touchforms-src:
     # let's leave this here even when empty
