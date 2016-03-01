@@ -438,7 +438,7 @@ def incoming(phone_number, text, backend_api, timestamp=None,
     if text is None:
         text = ""
     phone_number = clean_phone_number(phone_number)
-    msg = SMSLog(
+    msg = get_sms_class()(
         phone_number=phone_number,
         direction=INCOMING,
         date=timestamp or datetime.utcnow(),
