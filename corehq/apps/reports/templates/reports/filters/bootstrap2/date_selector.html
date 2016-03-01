@@ -6,9 +6,6 @@
 {% endblock %}
 {% block filter_js %}
 {% ifequal slug 'date'  %}
-    <link rel="stylesheet" type="text/css" href="{% static "reports/css/daterangepicker-bs2.css" %}">
-    <script type="text/javascript" src="{% static 'reports/javascripts/bootstrap-daterangepicker/moment.min.js' %}"></script>
-    <script type="text/javascript" src="{% static 'reports/javascripts/bootstrap-daterangepicker/daterangepicker.min.js' %}"></script>
     <script type="text/javascript">
         $(function () {
             $('#filter_date_selector').daterangepicker(
