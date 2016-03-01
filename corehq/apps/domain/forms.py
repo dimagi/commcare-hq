@@ -1260,16 +1260,14 @@ class ConfirmNewSubscriptionForm(EditBillingAccountInfoForm):
                              data_countryname=COUNTRIES.get(self.current_country, ''))
             ),
             hqcrispy.FormActions(
-                hqcrispy.LinkButton(
-                    _("Cancel"),
-                    reverse(DomainSubscriptionView.urlname, args=[self.domain]),
-                    css_class="btn btn-default"
-                ),
-                StrictButton(
-                    _("Subscribe to Plan"),
-                    type="submit",
-                    css_class='btn btn-success disable-on-submit-no-spinner add-spinner-on-click',
-                ),
+                hqcrispy.LinkButton(_("Cancel"),
+                                    reverse(DomainSubscriptionView.urlname,
+                                            args=[self.domain]),
+                                    css_class="btn btn-default"),
+                StrictButton(_("Subscribe to Plan"),
+                             type="submit",
+                             css_class='btn btn-success disable-on-submit-no-spinner '
+                                       'add-spinner-on-click'),
             ),
         )
 
@@ -1836,13 +1834,13 @@ class ContractedPartnerForm(InternalSubscriptionManagementForm):
                 crispy.Field('user_credits'),
                 crispy.Div(
                     crispy.Div(
-                        crispy.HTML(_(
-                            '<p><i class="fa fa-info-circle"></i> Clicking "Update" will set '
-                            'up the subscription in CommCareHQ to one of our standard '
-                            'contracted plans.<br/> If you need to set up a non-standard plan, '
-                            'please email %(accounts_email)s.</p>') % {
-                                'accounts_email': settings.ACCOUNTS_EMAIL,
-                            }
+                        crispy.HTML(
+                            _('<p><i class="fa fa-info-circle"></i> '
+                              'Clicking "Update" will set up the '
+                              'subscription in CommCareHQ to one of our '
+                              'standard contracted plans.<br/> If you '
+                              'need to set up a non-standard plan, '
+                              'please email {}.</p>').format(settings.ACCOUNTS_EMAIL)
                         ),
                         css_class='col-sm-offset-3 col-md-offset-2'
                     ),
