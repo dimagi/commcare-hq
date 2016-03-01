@@ -631,9 +631,11 @@ def edit_report_module(request, domain, app_id, module_id):
     module = app.get_module(module_id)
     assert isinstance(module, ReportModule)
     module.name = params['name']
+
     try:
         module.report_configs = [ReportAppConfig.wrap(spec) for spec in params['reports']]
-    except Exception:
+    except Exception as e:
+        logger.error("Something went wrong while editing report modules: {}".format(e))
         return HttpResponseBadRequest(_("There was a problem processing your request."))
 
     if (feature_previews.MODULE_FILTER.enabled(domain) and
@@ -644,7 +646,8 @@ def edit_report_module(request, domain, app_id, module_id):
 
     try:
         app.save()
-    except Exception:
+    except Exception as e:
+        logger.error("Something went wrong while saving app {} while editing report modules:{}".format(app._id, e))
         return HttpResponseBadRequest(_("There was a problem processing your request."))
 
     return json_response('success')
