@@ -4,6 +4,7 @@ import json
 import os
 from corehq.apps.userreports.models import DataSourceConfiguration, ReportConfiguration
 from corehq.util.dates import iso_string_to_date
+from dimagi.utils.parsing import json_format_datetime
 
 
 def get_sample_report_config():
@@ -25,10 +26,10 @@ def get_sample_data_source():
 def get_sample_doc_and_indicators(fake_time_now=None):
     if fake_time_now is None:
         fake_time_now = datetime.utcnow()
-    date_opened = "2014-06-21"
+    date_opened = datetime(2014, 6, 21)
     sample_doc = dict(
         _id='some-doc-id',
-        opened_on=date_opened,
+        opened_on=json_format_datetime(date_opened),
         owner_id='some-user-id',
         doc_type="CommCareCase",
         domain='user-reports',
@@ -42,7 +43,7 @@ def get_sample_doc_and_indicators(fake_time_now=None):
     expected_indicators = {
         'doc_id': 'some-doc-id',
         'repeat_iteration': 0,
-        'date': iso_string_to_date(date_opened),
+        'date': date_opened,
         'owner': 'some-user-id',
         'count': 1,
         'category_bug': 1, 'category_feature': 0, 'category_app': 0, 'category_schedule': 0,
