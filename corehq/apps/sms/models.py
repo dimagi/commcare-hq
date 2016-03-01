@@ -304,6 +304,11 @@ class Log(models.Model):
     # The MessagingSubEvent that this log is tied to
     messaging_subevent = models.ForeignKey('MessagingSubEvent', null=True, on_delete=models.PROTECT)
 
+    def set_system_error(self, message=None):
+        self.error = True
+        self.system_error_message = message
+        self.save()
+
     @classmethod
     def by_domain(cls, domain, start_date=None, end_date=None):
         qs = cls.objects.filter(domain=domain)
