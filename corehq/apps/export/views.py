@@ -1229,13 +1229,13 @@ class FormExportListView(BaseExportListView):
             'emailedExport': emailed_export,
             'editUrl': reverse(edit_view.urlname,
                                args=(self.domain, export.get_id)),
-            'downloadUrl': self._get_download_url(export.get_id),
+            'downloadUrl': self._get_download_url(export.get_id, isinstance(export, FormExportSchema)),
         }
 
-    def _get_download_url(self, export_id):
-        # TODO: Assumes all exports have been converted to the new type. Don't make that assumption.
-        view_cls = DownloadFormExportView
-        if toggles.NEW_EXPORTS.enabled(self.domain):
+    def _get_download_url(self, export_id, is_legacy):
+        if is_legacy:
+            view_cls = DownloadFormExportView
+        else:
             view_cls = DownloadNewFormExportView
         return reverse(view_cls.urlname, args=(self.domain, export_id))
 
@@ -1342,11 +1342,16 @@ class CaseExportListView(BaseExportListView):
             'addedToBulk': False,
             'exportType': export.type,
             'emailedExport': emailed_export,
-            'editUrl': reverse(edit_view.urlname,
-                               args=(self.domain, export.get_id)),
-            'downloadUrl': reverse(DownloadCaseExportView.urlname,
-                                   args=(self.domain, export.get_id)),
+            'editUrl': reverse(edit_view.urlname, args=(self.domain, export.get_id)),
+            'downloadUrl': self._get_download_url(export._id, isinstance(export, CaseExportSchema)),
         }
+
+    def _get_download_url(self, export_id, is_legacy):
+        if is_legacy:
+            view_cls = DownloadCaseExportView
+        else:
+            view_cls = DownloadNewCaseExportView
+        return reverse(view_cls.urlname, args=(self.domain, export_id))
 
     @allow_remote_invocation
     def get_app_data_drilldown_values(self, in_data):
