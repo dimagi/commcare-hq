@@ -3495,7 +3495,7 @@ class CustomMonthFilter(ReportAppFilter):
     )
     # DateSpan to return i.t.o. number of months to go back
     period = IntegerProperty(
-        default=0,
+        default=DEFAULT_MONTH_FILTER_PERIOD_LENGTH,
         validators=(is_gte(0),)
     )
 
@@ -3503,7 +3503,7 @@ class CustomMonthFilter(ReportAppFilter):
     def wrap(cls, doc):
         doc['start_of_month'] = int(doc['start_of_month'])
         if 'period' in doc:
-            doc['period'] = int(doc['period'])
+            doc['period'] = int(doc['period'] or DEFAULT_MONTH_FILTER_PERIOD_LENGTH)
         return super(CustomMonthFilter, cls).wrap(doc)
 
     def get_filter_value(self, user, ui_filter):

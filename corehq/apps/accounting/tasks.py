@@ -22,7 +22,6 @@ from dimagi.utils.django.email import send_HTML_email
 
 from corehq.apps.accounting import utils
 from corehq.apps.accounting.exceptions import (
-    BillingContactInfoError,
     CreditLineError,
     InvoiceAlreadyCreatedError,
     InvoiceError,
@@ -175,8 +174,6 @@ def generate_invoices(based_on_date=None):
                 "There was an error utilizing credits for "
                 "domain %s: %s" % (domain.name, e)
             )
-        except BillingContactInfoError as e:
-            log_accounting_error("BillingContactInfoError: %s" % e)
         except InvoiceError as e:
             log_accounting_error(
                 "Could not create invoice for domain %s: %s" % (domain.name, e)

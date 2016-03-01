@@ -16,7 +16,7 @@ from corehq.apps.products.models import SQLProduct
 from corehq.apps.domain.views import BaseDomainView, DomainViewMixin
 from corehq.apps.locations.models import SQLLocation
 from corehq.apps.sms.mixin import VerifiedNumber
-from corehq.apps.sms.models import SMSLog
+from corehq.apps.sms.models import SMS, INCOMING, OUTGOING
 from corehq.apps.sms.util import clean_phone_number
 from corehq.apps.users.models import CommCareUser, WebUser, UserRole
 from django.http import HttpResponse
@@ -96,8 +96,8 @@ class GlobalStats(BaseDomainView):
             'products': SQLProduct.objects.filter(domain=self.domain, is_archived=False).count(),
             'product_stocks': StockState.objects.filter(sql_product__domain=self.domain).count(),
             'stock_transactions': StockTransaction.objects.filter(report__domain=self.domain).count(),
-            'inbound_messages': SMSLog.count_incoming_by_domain(self.domain),
-            'outbound_messages': SMSLog.count_outgoing_by_domain(self.domain)
+            'inbound_messages': SMS.count_by_domain(self.domain, direction=INCOMING),
+            'outbound_messages': SMS.count_by_domain(self.domain, direction=OUTGOING),
         }
 
         if self.show_supply_point_types:
@@ -384,7 +384,9 @@ class BalanceMigrationView(BaseDomainView):
         return {
             'stats': get_object_or_404(ILSMigrationStats, domain=self.domain),
             'products_count': SQLProduct.objects.filter(domain=self.domain).count(),
-            'locations_count': SQLLocation.objects.filter(domain=self.domain).exclude(is_archived=True).count(),
+            'locations_count': SQLLocation.objects.filter(
+                domain=self.domain
+            ).exclude(is_archived=True).exclude(location_type__name='MSDZONE').count(),
             'web_users_count': WebUser.by_domain(self.domain, reduce=True)[0]['value'],
             'sms_users_count': CommCareUser.by_domain(self.domain, reduce=True)[0]['value'],
             'supply_points_count': SQLLocation.active_objects.filter(

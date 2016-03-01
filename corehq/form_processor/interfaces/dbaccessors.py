@@ -4,6 +4,7 @@ from collections import namedtuple
 import six
 from StringIO import StringIO
 
+from corehq.util.quickcache import quickcache
 from dimagi.utils.decorators.memoized import memoized
 
 from ..utils import should_use_sql_backend
@@ -27,7 +28,7 @@ class AbstractFormAccessor(six.with_metaclass(ABCMeta)):
     should be static or classmethods.
     """
     @abstractmethod
-    def form_exists(self, form_id, domain=None):
+    def form_exists(form_id, domain=None):
         raise NotImplementedError
 
     @abstractmethod
@@ -60,6 +61,10 @@ class AbstractFormAccessor(six.with_metaclass(ABCMeta)):
 
     @abstractmethod
     def update_form_problem_and_state(form):
+        raise NotImplementedError
+
+    @abstractmethod
+    def forms_have_multimedia(domain, app_id, xmlns):
         raise NotImplementedError
 
 
@@ -110,6 +115,8 @@ class FormAccessors(object):
     def get_attachment_content(self, form_id, attachment_name):
         return self.db_accessor.get_attachment_content(form_id, attachment_name)
 
+    def forms_have_multimedia(self, app_id, xmlns):
+        return self.db_accessor.forms_have_multimedia(self.domain, app_id, xmlns)
 
 class AbstractCaseAccessor(six.with_metaclass(ABCMeta)):
     """
@@ -176,6 +183,10 @@ class AbstractCaseAccessor(six.with_metaclass(ABCMeta)):
     def get_case_by_domain_hq_user_id(domain, user_id, case_type):
         raise NotImplementedError
 
+    @abstractmethod
+    def get_case_types_for_domain(domain):
+        raise NotImplementedError
+
 
 class CaseAccessors(object):
     """
@@ -235,6 +246,10 @@ class CaseAccessors(object):
 
     def get_case_by_domain_hq_user_id(self, user_id, case_type):
         return self.db_accessor.get_case_by_domain_hq_user_id(self.domain, user_id, case_type)
+
+    @quickcache(['self.domain'], timeout=30 * 60)
+    def get_case_types(self):
+        return self.db_accessor.get_case_types_for_domain(self.domain)
 
 
 def get_cached_case_attachment(domain, case_id, attachment_id, is_image=False):

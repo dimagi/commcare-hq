@@ -273,6 +273,10 @@ class FormAccessorSQL(AbstractFormAccessor):
         # the requested number of cases
         return sorted(results, key=lambda form: form.received_on)[:limit]
 
+    @staticmethod
+    def forms_have_multimedia(domain, app_id, xmlns):
+        raise NotImplementedError
+
 
 class CaseAccessorSQL(AbstractCaseAccessor):
 
@@ -580,6 +584,16 @@ class CaseAccessorSQL(AbstractCaseAccessor):
             return CaseAccessorSQL.get_case_by_external_id(domain, user_id, case_type)
         except CaseNotFound:
             return None
+
+    @staticmethod
+    def get_case_types_for_domain(domain):
+        with get_cursor(CommCareCaseSQL) as cursor:
+            cursor.execute(
+                'SELECT case_type FROM get_case_types_for_domain(%s)',
+                [domain]
+            )
+            results = fetchall_as_namedtuple(cursor)
+            return {result.case_type for result in results}
 
 
 class LedgerAccessorSQL(object):
