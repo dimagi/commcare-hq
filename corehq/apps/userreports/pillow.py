@@ -29,6 +29,7 @@ class ConfigurableReportTableManagerMixin(object):
     def __init__(self, *args, **kwargs):
         self.bootstrapped = False
         self.last_bootstrapped = datetime.utcnow()
+        super(ConfigurableReportTableManagerMixin, self).__init__(*args, **kwargs)
 
     def get_all_configs(self):
         return filter(lambda config: not config.is_deactivated, DataSourceConfiguration.all())
