@@ -41,20 +41,39 @@ class ConfigurableReportTableManagerTest(SimpleTestCase):
         self.assertTrue(table_manager.needs_bootstrap())
 
 
-class IndicatorPillowTest(TestCase):
+class IndicatorPillowTestBase(TestCase):
 
     @softer_assert
     def setUp(self):
         self.config = get_sample_data_source()
         self.config.save()
-        self.pillow = ConfigurableIndicatorPillow()
-        self.pillow.bootstrap(configs=[self.config])
         self.adapter = IndicatorSqlAdapter(self.config)
         self.fake_time_now = datetime(2015, 4, 24, 12, 30, 8, 24886)
 
     def tearDown(self):
         self.config.delete()
         self.adapter.drop_table()
+
+    @patch('corehq.apps.userreports.specs.datetime')
+    def _check_sample_doc_state(self, datetime_mock):
+        datetime_mock.utcnow.return_value = self.fake_time_now
+        _, expected_indicators = get_sample_doc_and_indicators(self.fake_time_now)
+        self.assertEqual(1, self.adapter.get_query_object().count())
+        row = self.adapter.get_query_object()[0]
+        for k in row.keys():
+            v = getattr(row, k)
+            if isinstance(expected_indicators[k], decimal.Decimal):
+                self.assertAlmostEqual(expected_indicators[k], v)
+            else:
+                self.assertEqual(expected_indicators[k], v)
+
+
+class IndicatorPillowTest(IndicatorPillowTestBase):
+
+    def setUp(self):
+        super(IndicatorPillowTest, self).setUp()
+        self.pillow = ConfigurableIndicatorPillow()
+        self.pillow.bootstrap(configs=[self.config])
 
     def test_stale_rebuild(self):
         later_config = copy(self.config)
@@ -92,19 +111,6 @@ class IndicatorPillowTest(TestCase):
             })
         # make sure we saved rows to the table for everything
         self.assertEqual(len(bad_ints), self.adapter.get_query_object().count())
-
-    @patch('corehq.apps.userreports.specs.datetime')
-    def _check_sample_doc_state(self, datetime_mock):
-        datetime_mock.utcnow.return_value = self.fake_time_now
-        _, expected_indicators = get_sample_doc_and_indicators(self.fake_time_now)
-        self.assertEqual(1, self.adapter.get_query_object().count())
-        row = self.adapter.get_query_object()[0]
-        for k in row.keys():
-            v = getattr(row, k)
-            if isinstance(expected_indicators[k], decimal.Decimal):
-                self.assertAlmostEqual(expected_indicators[k], v)
-            else:
-                self.assertEqual(expected_indicators[k], v)
 
 
 class IndicatorConfigFilterTest(SimpleTestCase):
