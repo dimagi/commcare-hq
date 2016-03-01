@@ -40,6 +40,3 @@ Extracting data from the db:
     forms = []
     for c in cases:
         forms += c.get_forms() # python
-
-    # alternatively, this will pull ALL forms from a domain:
-    forms = get_forms_of_all_types('opm')

@@ -1,7 +1,7 @@
 from django.core.files.uploadedfile import UploadedFile
 
 from corehq.apps.receiverwrapper import submit_form_locally
-from corehq.couchapps.dbaccessors import get_attachment_size_by_domain, get_attachment_size_by_domain_app_id_xmlns
+from corehq.couchapps.dbaccessors import get_attachment_size_by_domain
 from corehq.form_processor.tests.utils import FormProcessorTestUtils
 from django.test import TestCase
 from dimagi.utils.make_uuid import random_hex
@@ -62,17 +62,3 @@ class AttachmentsTest(TestCase):
         self.assertIn((APP_ID_2, XMLNS_2), atts)
         self.assertNotIn((APP_ID_1, XMLNS_2), atts)
         self.assertNotIn((APP_ID_2, XMLNS_1), atts)
-
-    def test_get_attachment_size_by_domain_app_id_xmlns_app_id(self):
-        atts = get_attachment_size_by_domain_app_id_xmlns(DOMAIN, APP_ID_1)
-        self.assertEqual(len(atts), 1)
-        self.assertIn((APP_ID_1, XMLNS_1), atts)
-
-    def test_get_attachment_size_by_domain_app_id_xmlns_xmlns_1(self):
-        atts = get_attachment_size_by_domain_app_id_xmlns(DOMAIN, APP_ID_1, xmlns=XMLNS_1)
-        self.assertEqual(len(atts), 1)
-        self.assertIn((APP_ID_1, XMLNS_1), atts)
-
-    def test_get_attachment_size_by_domain_app_id_xmlns_xmlns_2(self):
-        atts = get_attachment_size_by_domain_app_id_xmlns(DOMAIN, APP_ID_1, xmlns=XMLNS_2)
-        self.assertEqual(atts, {})
