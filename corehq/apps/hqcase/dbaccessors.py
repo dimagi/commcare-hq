@@ -60,6 +60,9 @@ def get_cases_in_domain(domain, type=None):
 
 
 def get_case_types_for_domain(domain):
+    """
+    :return: set of case types
+    """
     key = [domain]
     rows = CommCareCase.get_db().view(
         'case_types_by_domain/view',
@@ -67,11 +70,11 @@ def get_case_types_for_domain(domain):
         endkey=key + [{}],
         group_level=2,
     ).all()
-    case_types = []
+    case_types = set()
     for row in rows:
         _, case_type = row['key']
         if case_type:
-            case_types.append(case_type)
+            case_types.add(case_type)
     return case_types
 
 

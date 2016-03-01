@@ -2,8 +2,7 @@ import os.path
 from django.http import HttpResponseRedirect
 from django.utils.datastructures import MultiValueDictKeyError
 from corehq.apps.app_manager.dbaccessors import get_case_types_from_apps
-from corehq.apps.hqcase.dbaccessors import get_case_properties, \
-    get_case_types_for_domain
+from corehq.apps.hqcase.dbaccessors import get_case_properties
 from corehq.apps.importer import base
 from corehq.apps.importer import util as importer_util
 from corehq.apps.importer.exceptions import ImporterExcelFileEncrypted, \
@@ -12,6 +11,7 @@ from corehq.apps.importer.tasks import bulk_import_async
 from django.views.decorators.http import require_POST
 from corehq.apps.users.decorators import require_permission
 from corehq.apps.users.models import Permissions
+from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 from corehq.util.files import file_extention_from_filename
 from soil.exceptions import TaskFailedError
 from soil.util import expose_cached_download, get_download_context
@@ -89,7 +89,7 @@ def excel_config(request, domain):
                             'Please try again with a different spreadsheet.')
 
     case_types_from_apps = get_case_types_from_apps(domain)
-    unrecognized_case_types = [t for t in get_case_types_for_domain(domain)
+    unrecognized_case_types = [t for t in CaseAccessors(domain).get_case_types()
                                if t not in case_types_from_apps]
 
     if len(case_types_from_apps) == 0 and len(unrecognized_case_types) == 0:

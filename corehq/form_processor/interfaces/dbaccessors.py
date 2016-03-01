@@ -4,6 +4,7 @@ from collections import namedtuple
 import six
 from StringIO import StringIO
 
+from corehq.util.quickcache import quickcache
 from dimagi.utils.decorators.memoized import memoized
 
 from ..utils import should_use_sql_backend
@@ -176,6 +177,10 @@ class AbstractCaseAccessor(six.with_metaclass(ABCMeta)):
     def get_case_by_domain_hq_user_id(domain, user_id, case_type):
         raise NotImplementedError
 
+    @abstractmethod
+    def get_case_types_for_domain(domain):
+        raise NotImplementedError
+
 
 class CaseAccessors(object):
     """
@@ -235,6 +240,10 @@ class CaseAccessors(object):
 
     def get_case_by_domain_hq_user_id(self, user_id, case_type):
         return self.db_accessor.get_case_by_domain_hq_user_id(self.domain, user_id, case_type)
+
+    @quickcache(['self.domain'], timeout=30 * 60)
+    def get_case_types(self):
+        return self.db_accessor.get_case_types_for_domain(self.domain)
 
 
 def get_cached_case_attachment(domain, case_id, attachment_id, is_image=False):
