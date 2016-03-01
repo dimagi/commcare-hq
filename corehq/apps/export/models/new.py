@@ -164,7 +164,6 @@ class ExportColumn(DocumentSchema):
 
     @property
     def is_deidentifed(self):
-        # TODO: Might be better if we set an is_deidentified flag on the model instead?
         return bool(set(self.transforms) & set(DEID_TRANSFORM_FUNCTIONS))
 
     def get_headers(self):
@@ -278,7 +277,6 @@ class ExportInstance(BlobMixin, Document):
 
     is_daily_saved_export = BooleanProperty(default=False)
     # daily saved export fields:
-    # TODO: Does this need filename?
     last_updated = DateTimeProperty()
     last_accessed = DateTimeProperty()
 
