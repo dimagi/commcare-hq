@@ -636,11 +636,11 @@ def edit_report_module(request, domain, app_id, module_id):
 
     try:
         module.report_configs = [ReportAppConfig.wrap(spec) for spec in params['reports']]
-    except Exception as e:
+    except Exception:
         notify_exception(
             request,
             message="Something went wrong while editing report modules",
-            details={'domain': domain, 'app_id': app_id,}
+            details={'domain': domain, 'app_id': app_id, }
         )
         return HttpResponseBadRequest(_("There was a problem processing your request."))
 
@@ -652,11 +652,11 @@ def edit_report_module(request, domain, app_id, module_id):
 
     try:
         app.save()
-    except Exception as e:
+    except Exception:
         notify_exception(
             request,
             message="Something went wrong while saving app {} while editing report modules".format(app_id),
-            details={'domain': domain, 'app_id': app_id,}
+            details={'domain': domain, 'app_id': app_id, }
         )
         return HttpResponseBadRequest(_("There was a problem processing your request."))
 
