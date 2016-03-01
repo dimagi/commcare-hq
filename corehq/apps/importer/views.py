@@ -2,13 +2,14 @@ import os.path
 from django.http import HttpResponseRedirect
 from django.utils.datastructures import MultiValueDictKeyError
 from corehq.apps.app_manager.dbaccessors import get_case_types_from_apps
-from corehq.apps.hqcase.dbaccessors import get_case_properties
 from corehq.apps.importer import base
 from corehq.apps.importer import util as importer_util
 from corehq.apps.importer.exceptions import ImporterExcelFileEncrypted, \
     ImporterFileNotFound, ImporterExcelError, ImporterError, ImporterRefError
 from corehq.apps.importer.tasks import bulk_import_async
 from django.views.decorators.http import require_POST
+
+from corehq.apps.importer.util import get_case_properties_for_case_type
 from corehq.apps.users.decorators import require_permission
 from corehq.apps.users.models import Permissions
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
@@ -200,7 +201,7 @@ def excel_fields(request, domain):
     else:
         excel_fields = columns
 
-    case_fields = get_case_properties(domain, case_type)
+    case_fields = get_case_properties_for_case_type(domain, case_type)
 
     # hide search column and matching case fields from the update list
     try:

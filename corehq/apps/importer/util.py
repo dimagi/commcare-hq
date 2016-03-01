@@ -22,6 +22,7 @@ from corehq.apps.users.util import format_username
 from corehq.apps.locations.models import SQLLocation, Location
 from corehq.form_processor.exceptions import CaseNotFound
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
+from corehq.form_processor.utils.general import should_use_sql_backend
 from corehq.util.soft_assert import soft_assert
 
 
@@ -484,3 +485,19 @@ def get_id_from_name(name, domain, cache):
     id = get_from_user(name) or get_from_group(name) or get_from_location(name)
     cache[name] = id
     return id
+
+
+def get_case_properties_for_case_type(domain, case_type):
+    if should_use_sql_backend(domain):
+        from corehq.apps.export.models import CaseExportDataSchema
+        from corehq.apps.export.const import MAIN_TABLE
+        schema = CaseExportDataSchema.generate_schema_from_builds(
+            domain,
+            case_type,
+        )
+        group_schemas = [gs for gs in schema.group_schemas if gs.path == MAIN_TABLE]
+        if group_schemas:
+            return sorted(set([item.path[0] for item in group_schemas[0].items]))
+    else:
+        from corehq.apps.hqcase.dbaccessors import get_case_properties
+        return get_case_properties(domain, case_type)
