@@ -107,7 +107,7 @@ class ConfigurableReportTableManagerMixin(object):
 class ConfigurableIndicatorPillow(ConfigurableReportTableManagerMixin, PythonPillow):
 
     def __init__(self, pillow_checkpoint_id=UCR_CHECKPOINT_ID):
-        # todo: this will need to not be hard-coded if we ever split out forms and cases into their own domains
+        # todo: this will need to not be hard-coded if we ever split out forms and cases into their own databases
         couch_db = CachedCouchDB(CommCareCase.get_db().uri, readonly=False)
         checkpoint = PillowCheckpoint(pillow_checkpoint_id)
         super(ConfigurableIndicatorPillow, self).__init__(couch_db=couch_db, checkpoint=checkpoint)
