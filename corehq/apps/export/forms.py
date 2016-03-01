@@ -430,17 +430,17 @@ class FilterCaseESExportDownloadForm(GenericFilterCaseExportDownloadForm):
         group = self._get_group()
         if group:
             user_ids = set(group.get_static_user_ids())
-            case_filter = OR(
+            case_filter = [OR(
                 OwnerFilter(group._id),
                 OwnerFilter(user_ids),
                 LastModifiedByFilter(user_ids)
-            )
+            )]
         else:
             case_sharing_groups = [g.get_id for g in
                                    Group.get_case_sharing_groups(self.domain_object.name)]
-            case_filter = OR(
+            case_filter = [OR(
                 OwnerFilter(self._get_filtered_users()),
                 OwnerFilter(case_sharing_groups),
                 LastModifiedByFilter(case_sharing_groups)
-            )
+            )]
         return case_filter
