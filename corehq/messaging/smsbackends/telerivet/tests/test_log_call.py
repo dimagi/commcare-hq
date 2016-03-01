@@ -1,10 +1,10 @@
-from corehq.apps.ivr.tests.util import LogCallTestCase
+import corehq.apps.ivr.tests.util as util
 from corehq.messaging.smsbackends.telerivet.models import SQLTelerivetBackend
 from corehq.messaging.smsbackends.telerivet.tasks import EVENT_INCOMING, MESSAGE_TYPE_CALL
 from django.test import Client
 
 
-class TelerivetLogCallTestCase(LogCallTestCase):
+class TelerivetLogCallTestCase(util.LogCallTestCase):
     def setUp(self):
         super(TelerivetLogCallTestCase, self).setUp()
         self.backend = SQLTelerivetBackend(

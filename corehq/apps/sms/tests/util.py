@@ -2,6 +2,7 @@ import os
 import json
 from django.test import LiveServerTestCase
 from django.conf import settings
+from nose.tools import nottest
 
 from casexml.apps.case.util import post_case_blocks
 from corehq.apps.accounting.models import SoftwarePlanEdition
@@ -38,6 +39,7 @@ def delete_domain_phone_numbers(domain):
         v.delete()
 
 
+@nottest
 def setup_default_sms_test_backend():
     backend = SQLTestSMSBackend.objects.create(
         name='MOBILE_BACKEND_TEST',

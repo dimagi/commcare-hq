@@ -51,6 +51,7 @@ class CallCenterLocationOwnerTest(TestCase):
 
     @classmethod
     def tearDownClass(cls):
+        cls.user.delete()
         cls.domain.delete()
 
     def tearDown(self):

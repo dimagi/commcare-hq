@@ -1,9 +1,9 @@
-from corehq.apps.ivr.tests.util import LogCallTestCase
+import corehq.apps.ivr.tests.util as util
 from corehq.messaging.ivrbackends.kookoo.models import SQLKooKooBackend
 from django.test import Client
 
 
-class KooKooLogCallTestCase(LogCallTestCase):
+class KooKooLogCallTestCase(util.LogCallTestCase):
     @property
     def phone_number(self):
         return '9100000000'

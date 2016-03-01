@@ -2,7 +2,7 @@ from uuid import uuid4
 
 from django.conf import settings
 from django.test import TestCase
-from unittest import skipUnless
+from unittest import skipUnless, SkipTest
 
 from corehq.form_processor.models import XFormInstanceSQL, CommCareCaseSQL
 from corehq.form_processor.tests import create_form_for_test, FormProcessorTestUtils
@@ -19,6 +19,9 @@ class ShardingTests(TestCase):
 
     @classmethod
     def setUpClass(cls):
+        if not settings.USE_PARTITIONED_DATABASE:
+            # https://github.com/nose-devs/nose/issues/946
+            raise SkipTest('Only applicable if sharding is setup')
         cls.partion_config = PartitionConfig()
         assert len(cls.partion_config.get_form_processing_dbs()) > 1
 

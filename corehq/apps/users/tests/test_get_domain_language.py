@@ -1,10 +1,12 @@
 from django.test import TestCase
+from elasticsearch.exceptions import ConnectionError
 from pillowtop.es_utils import completely_initialize_pillow_index
 
 from corehq.apps.app_manager.const import APP_V2
 from corehq.apps.app_manager.models import Application
 from corehq.pillows.application import AppPillow
 from corehq.util.elastic import delete_es_index
+from corehq.util.test_utils import trap_extra_setup
 
 from corehq.apps.users.views import get_domain_languages
 
@@ -15,7 +17,8 @@ class TestDomainLanguages(TestCase):
         cls.domain = 'test-languages'
 
         cls.pillow = AppPillow(online=False)
-        completely_initialize_pillow_index(cls.pillow)
+        with trap_extra_setup(ConnectionError):
+            completely_initialize_pillow_index(cls.pillow)
 
         cls.app1 = Application.new_app(cls.domain, 'My Application 1', APP_V2)
         cls.app1.langs = ['en', 'es']
