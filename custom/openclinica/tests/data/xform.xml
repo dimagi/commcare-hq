@@ -5,15 +5,25 @@
     <model>
       <instance>
         <data xmlns:jrm="http://dev.commcarehq.org/jr/xforms" xmlns="http://openrosa.org/formdesigner/a699308a-1965-464c-b7ee-19efa51981a9" uiVersion="1" version="3" name="Visit 1A V4 - Version_4">
+          <start_date/>
+          <start_time/>
           <ig_visit_ungrouped_3229>
             <i_visit_pt_init_7/>
             <i_visit_pt_no_1784/>
             <i_visit_assd1_664/>
           </ig_visit_ungrouped_3229>
+          <end_date/>
+          <end_time/>
         </data>
       </instance>
       <itext>
         <translation lang="en" default="">
+          <text id="start_date-label">
+            <value>Start Date</value>
+          </text>
+          <text id="start_time-label">
+            <value>Start Time</value>
+          </text>
           <text id="ig_visit_ungrouped_3229-label">
             <value>IG_VISIT_UNGROUPED_3229</value>
           </text>
@@ -26,14 +36,32 @@
           <text id="ig_visit_ungrouped_3229/i_visit_assd1_664-label">
             <value>Date of Assessment</value>
           </text>
+          <text id="end_date-label">
+            <value>End Date</value>
+          </text>
+          <text id="end_time-label">
+            <value>End Time</value>
+          </text>
         </translation>
       </itext>
+      <bind nodeset="/data/start_date" type="xsd:date"/>
+      <bind nodeset="/data/start_time" type="xsd:time"/>
       <bind nodeset="/data/ig_visit_ungrouped_3229/i_visit_pt_init_7" type="xsd:string"/>
-      <bind nodeset="/data/ig_visit_ungrouped_3229/i_visit_pt_no_1784" type="xsd:string"/>
+      <bind nodeset="/data/ig_visit_ungrouped_3229/i_visit_pt_no_1784" type="xsd:string"
+            constraint=". &gt;= 1 and . &lt;= 10"
+            jr:constraintMsg="Must be from 1 to 10"/>
       <bind nodeset="/data/ig_visit_ungrouped_3229/i_visit_assd1_664" type="xsd:date"/>
+      <bind nodeset="/data/end_date" type="xsd:date"/>
+      <bind nodeset="/data/end_time" type="xsd:time"/>
     </model>
   </h:head>
   <h:body>
+    <input ref="/data/start_date">
+      <label ref="jr:itext('start_date-label')"/>
+    </input>
+    <input ref="/data/start_time">
+      <label ref="jr:itext('start_time-label')"/>
+    </input>
     <group ref="/data/ig_visit_ungrouped_3229">
       <label ref="jr:itext('ig_visit_ungrouped_3229-label')"/>
       <input ref="/data/ig_visit_ungrouped_3229/i_visit_pt_init_7">
@@ -46,5 +74,11 @@
         <label ref="jr:itext('ig_visit_ungrouped_3229/i_visit_assd1_664-label')"/>
       </input>
     </group>
+    <input ref="/data/end_date">
+      <label ref="jr:itext('end_date-label')"/>
+    </input>
+    <input ref="/data/end_time">
+      <label ref="jr:itext('end_time-label')"/>
+    </input>
   </h:body>
 </h:html>

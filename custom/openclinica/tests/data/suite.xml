@@ -1,19 +1,25 @@
 <?xml version='1.0' encoding='UTF-8'?>
 <suite version="1" descriptor="Suite File">
   <xform>
-    <resource id="register_subject" version="1">
+    <resource id="3f6810efbb4e4598bd5123226fe641ca" version="1">
       <location authority="local">./modules-0/forms-0.xml</location>
       <location authority="remote">./modules-0/forms-0.xml</location>
     </resource>
   </xform>
   <xform>
-    <resource id="edit_subject" version="1">
+    <resource id="2abd6838605c421b8988cf2c2e6afb37" version="1">
       <location authority="local">./modules-0/forms-1.xml</location>
       <location authority="remote">./modules-0/forms-1.xml</location>
     </resource>
   </xform>
   <xform>
-    <resource id="f_visit1av4_version_4" version="1">
+    <resource id="371a5920892141918472125ec7da013e" version="1">
+      <location authority="local">./modules-0/forms-2.xml</location>
+      <location authority="remote">./modules-0/forms-2.xml</location>
+     </resource>
+   </xform>
+  <xform>
+    <resource id="7cdfea2f81764659b7f6c390021948d3" version="1">
       <location authority="local">./modules-1/forms-0.xml</location>
       <location authority="remote">./modules-1/forms-0.xml</location>
     </resource>
@@ -126,16 +132,51 @@
     </command>
     <instance id="casedb" src="jr://instance/casedb"/>
     <session>
-      <datum id="case_id" nodeset="instance('casedb')/casedb/case[@case_type='subject'][@status='open']" value="./@case_id" detail-select="m0_case_short" detail-confirm="m0_case_long"/>
+      <datum id="case_id"
+             nodeset="instance('casedb')/casedb/case[@case_type='subject'][@status='open']"
+             value="./@case_id"
+             detail-select="m0_case_short"
+             detail-confirm="m0_case_long"/>
     </session>
   </entry>
   <entry>
     <form>http://openrosa.org/formdesigner/9633cdf5-0d60-45ef-9314-df0b45c85bb4</form>
+    <command id="m0-f2">
+      <text>
+        <locale id="forms.m0f2"/>
+      </text>
+    </command>
+    <instance id="casedb" src="jr://instance/casedb"/>
+    <session>
+      <datum detail-confirm="m0_case_long"
+             detail-select="m0_case_short"
+             id="case_id"
+             nodeset="instance('casedb')/casedb/case[@case_type='subject'][@status='open']"
+             value="./@case_id"/>
+      <datum function="uuid()" id="case_id_new_event_0"/>
+    </session>
+  </entry>
+  <entry>
+    <form>http://openrosa.org/formdesigner/42d84fab-3774-4e08-9df1-b04a32b8918c</form>
     <command id="m1-f0">
       <text>
         <locale id="forms.m1f0"/>
       </text>
     </command>
+    <instance id="casedb" src="jr://instance/casedb"/>
+    <instance id="commcaresession" src="jr://instance/session"/>
+    <session>
+      <datum function="uuid()" id="case_id_new_subject_0"/>
+      <datum detail-select="m0_case_short"
+             id="parent_id"
+             nodeset="instance('casedb')/casedb/case[@case_type='subject'][@status='open']"
+             value="./@case_id"/>
+      <datum detail-confirm="m1_case_long"
+             detail-select="m1_case_short"
+             id="case_id"
+             nodeset="instance('casedb')/casedb/case[@case_type='event'][@status='open'][index/parent=instance('commcaresession')/session/data/parent_id]"
+             value="./@case_id"/>
+    </session>
   </entry>
   <menu id="m0">
     <text>
@@ -143,6 +184,7 @@
     </text>
     <command id="m0-f0"/>
     <command id="m0-f1"/>
+    <command id="m0-f2"/>
   </menu>
   <menu root="m0" id="m1">
     <text>

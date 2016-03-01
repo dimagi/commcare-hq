@@ -7,17 +7,20 @@ from corehq.apps.domain.models import Domain
 from custom.openclinica.management.commands.odm_to_app import Command
 
 
+def replace_uuids(string):
+    fake_uuid = 'baseba11-babe-d0es-c0de-affab1ec0b01'
+    return re.sub(r'(resource id="|http://openrosa\.org/formdesigner/)(?:[a-f0-9-]{36}|[a-f0-9]{32})',
+                  r'\1' + fake_uuid, string)
+
+
 class OdmToAppTest(TestCase, TestXmlMixin):
     root = os.path.join(settings.BASE_DIR, 'custom', 'openclinica', 'tests')
     file_path = ('data', )
 
     def assertXmlEqual(self, expected, actual, normalize=True):
-        def fake_xform_xmlns(xml):
-            fake_xmlns = 'http://openrosa.org/formdesigner/deadbeef-cafe-c0de-fade-baseba11babe'
-            return re.sub(r'http://openrosa\.org/formdesigner/[\w-]{36}', fake_xmlns, xml)
         super(OdmToAppTest, self).assertXmlEqual(
-            fake_xform_xmlns(expected),
-            fake_xform_xmlns(actual),
+            replace_uuids(expected),
+            replace_uuids(actual),
             normalize
         )
 
