@@ -5,13 +5,15 @@ from django.test import TestCase, SimpleTestCase
 from mock import patch
 from datetime import datetime, timedelta
 from casexml.apps.case.models import CommCareCase
+from corehq.apps.change_feed import data_sources
 from corehq.apps.userreports.exceptions import StaleRebuildError
 from corehq.apps.userreports.pillow import ConfigurableIndicatorPillow, REBUILD_CHECK_INTERVAL, \
-    ConfigurableReportTableManagerMixin
+    ConfigurableReportTableManagerMixin, get_kafka_ucr_pillow
 from corehq.apps.userreports.sql import IndicatorSqlAdapter
 from corehq.apps.userreports.tasks import rebuild_indicators
 from corehq.apps.userreports.tests.utils import get_sample_data_source, get_sample_doc_and_indicators
 from corehq.util.test_utils import softer_assert
+from pillowtop.feed.interface import Change, ChangeMeta
 
 
 class ConfigurableReportTableManagerTest(SimpleTestCase):
@@ -113,6 +115,22 @@ class IndicatorPillowTest(IndicatorPillowTestBase):
         self.assertEqual(len(bad_ints), self.adapter.get_query_object().count())
 
 
+class KafkaIndicatorPillowTest(IndicatorPillowTestBase):
+    dependent_apps = ['pillowtop']
+
+    def setUp(self):
+        super(KafkaIndicatorPillowTest, self).setUp()
+        self.pillow = get_kafka_ucr_pillow()
+        self.pillow.bootstrap(configs=[self.config])
+
+    @patch('corehq.apps.userreports.specs.datetime')
+    def test_basic_doc_processing(self, datetime_mock):
+        datetime_mock.utcnow.return_value = self.fake_time_now
+        sample_doc, _ = get_sample_doc_and_indicators(self.fake_time_now)
+        self.pillow.processor(_doc_to_change(sample_doc))
+        self._check_sample_doc_state()
+
+
 class IndicatorConfigFilterTest(SimpleTestCase):
 
     def setUp(self):
@@ -146,3 +164,20 @@ class IndicatorConfigFilterTest(SimpleTestCase):
         ]
         for document in matching:
             self.assertTrue(self.config.deleted_filter(document), 'Failing dog: %s' % document)
+
+
+def _doc_to_change(doc):
+    return Change(
+        id=doc['_id'],
+        sequence_id='0',
+        document=doc,
+        metadata=ChangeMeta(
+            document_id=doc['_id'],
+            data_source_type=data_sources.COUCH,
+            data_source_name='tbd',
+            document_type=doc['doc_type'],
+            document_subtype=doc['type'],
+            domain=doc['domain'],
+            is_deletion=False,
+        )
+    )

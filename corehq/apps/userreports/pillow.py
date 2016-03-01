@@ -2,6 +2,8 @@ from collections import defaultdict
 from alembic.autogenerate.api import compare_metadata
 from datetime import datetime, timedelta
 from casexml.apps.case.models import CommCareCase
+from corehq.apps.change_feed import topics
+from corehq.apps.change_feed.consumer.feed import KafkaChangeFeed, MultiTopicCheckpointEventHandler
 from corehq.apps.userreports.exceptions import TableRebuildError, StaleRebuildError
 from corehq.apps.userreports.models import DataSourceConfiguration, StaticDataSourceConfiguration
 from corehq.apps.userreports.sql import IndicatorSqlAdapter, metadata
@@ -12,6 +14,8 @@ from fluff.signals import get_migration_context, get_tables_to_rebuild
 from pillowtop.checkpoints.manager import PillowCheckpoint
 from pillowtop.couchdb import CachedCouchDB
 from pillowtop.listener import PythonPillow
+from pillowtop.pillow.interface import ConstructedPillow
+from pillowtop.processors import PillowProcessor
 
 
 REBUILD_CHECK_INTERVAL = 10 * 60  # in seconds
@@ -138,3 +142,56 @@ class StaticDataSourcePillow(ConfigurableIndicatorPillow):
     def rebuild_table(self, sql_adapter):
         super(StaticDataSourcePillow, self).rebuild_table(sql_adapter)
         rebuild_indicators.delay(sql_adapter.config.get_id)
+
+
+class ConfigurableReportPillowProcessor(ConfigurableReportTableManagerMixin, PillowProcessor):
+
+    def process_change(self, pillow_instance, change, do_set_checkpoint):
+        self.bootstrap_if_needed()
+        if change.deleted:
+            # we don't currently support hard-deletions at all.
+            # we may want to change this at some later date but seem ok for now.
+            # see https://github.com/dimagi/commcare-hq/pull/6944 for rationale
+            return
+
+        domain = change.metadata.domain
+        if not domain:
+            # if no domain we won't save to any UCR table
+            return
+
+        for table in self.table_adapters:
+            if table.config.domain == domain:
+                # only bother getting the document if we have a domain match from the metadata
+                doc = change.get_document()
+                if table.config.filter(doc):
+                    table.save(doc)
+                elif table.config.deleted_filter(doc):
+                    table.delete(doc)
+
+
+class ConfigurableReportKafkaPillow(ConstructedPillow):
+
+    def __init__(self, pillow_name):
+        change_feed = KafkaChangeFeed(topics.ALL, group_id=pillow_name)
+        checkpoint = PillowCheckpoint(pillow_name)
+        event_handler = MultiTopicCheckpointEventHandler(
+            checkpoint=checkpoint, checkpoint_frequency=1000, change_feed=change_feed
+        )
+        super(ConfigurableReportKafkaPillow, self).__init__(
+            name=pillow_name,
+            document_store=None,
+            change_feed=change_feed,
+            processor=ConfigurableReportPillowProcessor(),
+            checkpoint=checkpoint,
+            change_processed_event_handler=event_handler
+        )
+        # set by the superclass constructor
+        assert self._processor is not None
+        assert self._processor.bootstrapped is not None
+
+    def bootstrap(self, configs=None):
+        self._processor.bootstrap(configs)
+
+
+def get_kafka_ucr_pillow():
+    return ConfigurableReportKafkaPillow(pillow_name='kafka-ucr-main')
