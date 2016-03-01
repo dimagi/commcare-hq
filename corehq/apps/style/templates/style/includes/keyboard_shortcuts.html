@@ -66,8 +66,10 @@
 <script src="{% new_static 'keymaster/keymaster.js' %}"></script>
 {% endcompress %}
 <script>
-    var KEY = key.noConflict();  // Make global key function capital to adhere to globals convention
-                                 // and to avoid conflicts in other places where "key" is used as variable name
+// Encapsulate keymaster's global key function in an HQ module
+hqDefine('style/includes/keyboard_shortcuts.html#key', function () {
+    return { key: key.noConflict() };
+});
 </script>
 
 {% if request.couch_user.keyboard_shortcuts.enabled %}
@@ -77,149 +79,151 @@
 {% endif %}
 
 <script>
-var KS = {
-    gen_click_fn: function(selector) {
+
+hqDefine('style/includes/keyboard_shortcuts.html#shortcuts', function () {
+    var module = {};
+
+    module.gen_click_fn = function(selector) {
         return function() {
             $(selector).click();
             return false;
         };
-    }
-};
+    };
 
-function configure_keyboard_shortcuts() {
-    $('#keyboard-shortcuts-config').modal('toggle');
-}
+    module.shortcuts = [
+        {
+            shortcut: "option+space, ctrl+space, command+space",
+            handler: function() {
+                $('#keyboard-shortcuts-config').modal('toggle');
+            },
+            desc: "Open Keyboard Configuration"
+        }
+    ];
 
-var KEYBOARD_SHORTCUTS = [
-    {
-        shortcut: "option+space, ctrl+space, command+space",
-        handler: configure_keyboard_shortcuts,
-        desc: "Open Keyboard Configuration"
-    }
-];
-
-function KBConfigFormModel() {
-    this.enabled = ko.observable({{ request.couch_user.keyboard_shortcuts.enabled|JSON }});
-}
-
-$(function() {
-    var $lookup = $('#keyboard-shortcuts-lookup');
-    _(KEYBOARD_SHORTCUTS).each(function(s) {
-        KEY(s.shortcut, s.handler);
-        var $shortcut = $('<li>').append($('<span>').text(s.desc), ': ', $('<code>').text(s.shortcut));
-        $lookup.append($shortcut);
+    // When page finishes laoding, set up the shortcuts and add documentation to the modal
+    $(function() {
+        var key = hqImport("style/includes/keyboard_shortcuts.html#key").key,
+            $lookup = $('#keyboard-shortcuts-lookup');
+        _(module.shortcuts).each(function(s) {
+            key(s.shortcut, s.handler);
+            var $shortcut = $('<li>').append($('<span>').text(s.desc), ': ', $('<code>').text(s.shortcut));
+            $lookup.append($shortcut);
+        });
+        var element = $('#keyboard-shortcuts-config-form').get(0);
+        ko.cleanNode(element);
+        $(element).koApplyBindings(new KBConfigFormModel());
     });
-    var element = $('#keyboard-shortcuts-config-form').get(0);
-    ko.cleanNode(element);
-    $(element).koApplyBindings(new KBConfigFormModel());
+
+    {% if request.couch_user.keyboard_shortcuts.enabled %}
+        var KeyboardNavigator = hqImport('hqwebapp/js/keyboard_navigator.js');
+        var nav_key = {{ request.couch_user.keyboard_shortcuts.main_key|JSON }};
+    
+        var apps_menu_navigator = new KeyboardNavigator.model();
+        apps_menu_navigator.init({
+            name: 'apps menu',
+            ready_scope: 'am-ready',
+            nav_key: nav_key,
+            action_key: 'enter',
+            forward_keys: ['j', 'down'],
+            back_keys: ['k', 'up'],
+            element_list_generator: function() {
+                return $("#mainmenu-ApplicationsTab li a[data-id]");
+            },
+            focus_in_fn: function($ele) {
+                $("#mainmenu-ApplicationsTab").addClass('open');
+                KeyboardNavigator.focus_in_fn($ele);
+            },
+            stop_fn: function() { $("#mainmenu-ApplicationsTab").removeClass('open') },
+            reset_index: true,
+            regen_list_on_leave: true
+        });
+        
+        var admin_menu_navigator = new KeyboardNavigator.model();
+        admin_menu_navigator.init({
+            name: 'admin menu',
+            ready_scope: 'adm-ready',
+            nav_key: nav_key,
+            action_key: 'enter',
+            forward_keys: ['j', 'down'],
+            back_keys: ['k', 'up'],
+            element_list_generator: function() {
+                return $("#mainmenu-AdminTab li a");
+            },
+            focus_in_fn: function($ele) {
+                $("#mainmenu-AdminTab").addClass('open');
+                KeyboardNavigator.focus_in_fn($ele);
+            },
+            stop_fn: function() { $("#mainmenu-AdminTab").removeClass('open') },
+            reset_index: true,
+            regen_list_on_leave: true
+        });
+    
+        var projects_menu_navigator = new KeyboardNavigator.model();
+        projects_menu_navigator.init({
+            name: 'projects menu',
+            ready_scope: 'pm-ready',
+            nav_key: nav_key,
+            action_key: 'enter',
+            forward_keys: ['j', 'down'],
+            back_keys: ['k', 'up'],
+            element_list_generator: function() {
+                return $("#nav-projects-menu li a");
+            },
+            start_fn: function() { $('#nav-projects-menu').addClass('open') },
+            stop_fn: function() { $('#nav-projects-menu').removeClass('open') },
+            reset_index: true,
+            regen_list_on_leave: true
+        });
+        
+        var user_menu_navigator = new KeyboardNavigator.model();
+        user_menu_navigator.init({
+            name: 'user menu',
+            ready_scope: 'um-ready',
+            nav_key: nav_key,
+            action_key: 'enter',
+            forward_keys: ['j', 'down'],
+            back_keys: ['k', 'up'],
+            element_list_generator: function() {
+                return $("#nav-user-menu li a");
+            },
+            start_fn: function() { $('#nav-user-menu').addClass('open') },
+            stop_fn: function() { $('#nav-user-menu').removeClass('open') },
+            reset_index: true,
+            regen_list_on_leave: true
+        });
+    
+        module.shortcuts = module.shortcuts.concat([
+            {
+                shortcut: nav_key + "+a",
+                handler: apps_menu_navigator.activate,
+                desc: "Access Applications Menu"
+            },
+            {
+                shortcut: nav_key + "+p",
+                handler: projects_menu_navigator.activate,
+                desc: "Access Projects Menu"
+            },
+            {
+                shortcut: nav_key + "+u",
+                handler: user_menu_navigator.activate,
+                desc: "Access Web User Settings Menu"
+            }
+        ]);
+    
+        {% if request.couch_user.is_superuser %}
+            module.shortcuts.push({
+                shortcut: nav_key + "+o",
+                handler: admin_menu_navigator.activate,
+                desc: "Access Admin Menu"
+            });
+        {% endif %}
+
+    {% endif %}
+
+    function KBConfigFormModel() {
+        this.enabled = ko.observable({{ request.couch_user.keyboard_shortcuts.enabled|JSON }});
+    }
+
+    return module;
 });
 </script>
-
-{% if request.couch_user.keyboard_shortcuts.enabled %}
-<script>
-var nav_key = {{ request.couch_user.keyboard_shortcuts.main_key|JSON }};
-
-function gen_apps_menu_elements() {
-    return $("#mainmenu-ApplicationsTab li a[data-id]");
-}
-var apps_menu_navigator = new KeyboardNavigator();
-apps_menu_navigator.init({
-    name: 'apps menu',
-    ready_scope: 'am-ready',
-    nav_key: nav_key,
-    action_key: 'enter',
-    forward_keys: ['j', 'down'],
-    back_keys: ['k', 'up'],
-    element_list_generator: gen_apps_menu_elements,
-    focus_in_fn: function($ele) {
-        $("#mainmenu-ApplicationsTab").addClass('open');
-        keyboard_navigator_utils.focus_in_fn($ele);
-    },
-    stop_fn: function() { $("#mainmenu-ApplicationsTab").removeClass('open') },
-    reset_index: true,
-    regen_list_on_leave: true
-});
-
-function gen_admin_menu_elements() {
-    return $("#mainmenu-AdminTab li a");
-}
-var admin_menu_navigator = new KeyboardNavigator();
-admin_menu_navigator.init({
-    name: 'admin menu',
-    ready_scope: 'adm-ready',
-    nav_key: nav_key,
-    action_key: 'enter',
-    forward_keys: ['j', 'down'],
-    back_keys: ['k', 'up'],
-    element_list_generator: gen_admin_menu_elements,
-    focus_in_fn: function($ele) {
-        $("#mainmenu-AdminTab").addClass('open');
-        keyboard_navigator_utils.focus_in_fn($ele);
-    },
-    stop_fn: function() { $("#mainmenu-AdminTab").removeClass('open') },
-    reset_index: true,
-    regen_list_on_leave: true
-});
-
-function gen_projects_menu_elements() {
-    return $("#nav-projects-menu li a");
-}
-var projects_menu_navigator = new KeyboardNavigator();
-projects_menu_navigator.init({
-    name: 'projects menu',
-    ready_scope: 'pm-ready',
-    nav_key: nav_key,
-    action_key: 'enter',
-    forward_keys: ['j', 'down'],
-    back_keys: ['k', 'up'],
-    element_list_generator: gen_projects_menu_elements,
-    start_fn: function() { $('#nav-projects-menu').addClass('open') },
-    stop_fn: function() { $('#nav-projects-menu').removeClass('open') },
-    reset_index: true,
-    regen_list_on_leave: true
-});
-
-function gen_user_menu_elements() {
-    return $("#nav-user-menu li a");
-}
-var user_menu_navigator = new KeyboardNavigator();
-user_menu_navigator.init({
-    name: 'user menu',
-    ready_scope: 'um-ready',
-    nav_key: nav_key,
-    action_key: 'enter',
-    forward_keys: ['j', 'down'],
-    back_keys: ['k', 'up'],
-    element_list_generator: gen_user_menu_elements,
-    start_fn: function() { $('#nav-user-menu').addClass('open') },
-    stop_fn: function() { $('#nav-user-menu').removeClass('open') },
-    reset_index: true,
-    regen_list_on_leave: true
-});
-
-KEYBOARD_SHORTCUTS = KEYBOARD_SHORTCUTS.concat([
-    {
-        shortcut: nav_key + "+a",
-        handler: apps_menu_navigator.activate,
-        desc: "Access Applications Menu"
-    },
-    {
-        shortcut: nav_key + "+p",
-        handler: projects_menu_navigator.activate,
-        desc: "Access Projects Menu"
-    },
-    {
-        shortcut: nav_key + "+u",
-        handler: user_menu_navigator.activate,
-        desc: "Access Web User Settings Menu"
-    }
-]);
-{% if request.couch_user.is_superuser %}
-    KEYBOARD_SHORTCUTS.push({
-        shortcut: nav_key + "+o",
-        handler: admin_menu_navigator.activate,
-        desc: "Access Admin Menu"
-    });
-{% endif %}
-</script>
-{% endif %}
