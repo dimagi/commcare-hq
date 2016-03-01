@@ -10,7 +10,6 @@ from django.template.defaultfilters import filesizeformat
 
 from corehq.apps.export.export import get_export_download
 from corehq.form_processor.interfaces.dbaccessors import FormAccessors
-from corehq.apps.export.dbaccessors import get_properly_wrapped_export_instance
 from django_prbac.utils import has_privilege
 from django.utils.decorators import method_decorator
 import json
@@ -37,7 +36,9 @@ from corehq.apps.export.forms import (
     CreateCaseExportTagForm,
     FilterFormCouchExportDownloadForm,
     FilterCaseCouchExportDownloadForm,
-    FilterFormESExportDownloadForm)
+    FilterFormESExportDownloadForm,
+    FilterCaseESExportDownloadForm,
+)
 from corehq.apps.export.models import (
     FormExportDataSchema,
     CaseExportDataSchema,
@@ -51,6 +52,7 @@ from corehq.apps.export.const import (
 from corehq.apps.export.dbaccessors import (
     get_form_export_instances,
     get_case_export_instances,
+    get_properly_wrapped_export_instance,
 )
 from corehq.apps.groups.models import Group
 from corehq.apps.reports.dbaccessors import touch_exports
@@ -1551,12 +1553,11 @@ class DeleteNewCustomExportView(BaseModifyNewCustomView):
         return export._id
 
 
-class DownloadNewFormExportView(DownloadFormExportView):
-    urlname = 'new_export_download_forms'
-    filter_form_class = FilterFormESExportDownloadForm
 
-    def _get_export(self, domain, export_id):
-        return FormExportInstance.get(export_id)
+class GenericDownloadNewExportMixin(object):
+    """
+    Supporting class for new style export download views
+    """
 
     def _get_download_task(self, in_data):
         export_filters, export_specs = self._process_filters_and_specs(in_data)
@@ -1583,11 +1584,33 @@ class DownloadNewFormExportView(DownloadFormExportView):
                         "De-Identified export.")
                     )
 
+
+class DownloadNewFormExportView(GenericDownloadNewExportMixin, DownloadFormExportView):
+    urlname = 'new_export_download_forms'
+    filter_form_class = FilterFormESExportDownloadForm
+
+    def _get_export(self, domain, export_id):
+        return FormExportInstance.get(export_id)
+
     def get_filters(self, filter_form_data):
         filter_form = self._get_filter_form(filter_form_data)
         form_filters = filter_form.get_form_filter()
         return form_filters
 
+
 class BulkDownloadNewFormExportView(DownloadNewFormExportView):
     urlname = 'new_bulk_download_forms'
     page_title = ugettext_noop("Download Form Exports")
+
+
+class DownloadNewCaseExportView(GenericDownloadNewExportMixin, DownloadCaseExportView):
+    urlname = 'new_export_download_cases'
+    filter_form_class = FilterCaseESExportDownloadForm
+
+    def _get_export(self, domain, export_id):
+        return CaseExportInstance.get(export_id)
+
+    def get_filters(self, filter_form_data):
+        filter_form = self._get_filter_form(filter_form_data)
+        form_filters = filter_form.get_case_filter()
+        return form_filters
