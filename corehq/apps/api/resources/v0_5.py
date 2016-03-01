@@ -86,8 +86,8 @@ class BulkUserResource(HqBaseResource, DomainSpecificResourceMixin):
 
         params = bundle.request.GET
         param = lambda p: params.get(p, None)
-        fields_to_remove = ['id', 'pk']
-        fields = filter(lambda field: field not in fields_to_remove, self.fields.keys())
+        fields = self.fields.keys()
+        fields.remove('id')
         fields.append('_id')
         fn = MOCK_BULK_USER_ES or user_es_call
         users = fn(
