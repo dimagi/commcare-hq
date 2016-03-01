@@ -140,6 +140,7 @@
 {% endblock %}
 
 {% block keyboard_shortcuts %}
+    {% if request.couch_user.keyboard_shortcuts.enabled %}
     <script>
         var nav_key = {{ request.couch_user.keyboard_shortcuts.main_key|JSON }};
 
@@ -254,6 +255,7 @@
             }
         ]);
     </script>
+    {% endif %}
 {% endblock %}
 
 {% block title %}{{ form.name|clean_trans:langs }}{% endblock %}
