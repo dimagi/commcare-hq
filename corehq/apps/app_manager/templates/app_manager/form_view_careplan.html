@@ -8,7 +8,8 @@
 {% endblock %}
 
 {% block case_management_js %}
-    var careplan = new CareplanConfig.Careplan({
+    var Careplan = hqImport('app_manager/js/careplan-config-ui.js').Careplan;
+    var careplan = new Careplan({
         home: $('#case-config-ko'),
         mode: "{{ mode }}",
         caseType: {{ form.get_case_type|JSON }},
