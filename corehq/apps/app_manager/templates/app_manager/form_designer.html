@@ -143,16 +143,17 @@
     {% if request.couch_user.keyboard_shortcuts.enabled %}
     <script>
         var nav_key = {{ request.couch_user.keyboard_shortcuts.main_key|JSON }};
+        var KeyboardNavigator = hqImport('hqwebapp/js/keyboard_navigator.js');
 
         // overrides default behavior and allows for shortcuts in inputs
-        KEY.filter = function(event) {
+        hqImport("style/includes/keyboard_shortcuts.html#key").key.filter = function(event) {
             return true;
         };
 
         function gen_sidebar_elements() {
             return $('.sidebar .nav-hq-sidebar a:not(a:has(.fa-pencil))');
         }
-        var sidebar_navigator = new KeyboardNavigator();
+        var sidebar_navigator = new KeyboardNavigator.model();
         sidebar_navigator.init({
             name: 'sidebar',
             nav_key: nav_key,
@@ -166,7 +167,7 @@
         function gen_question_tree_elements() {
             return $('.jstree-leaf:visible a, .jstree-open a, .jstree-closed a:first');
         }
-        var question_tree_navigator = new KeyboardNavigator();
+        var question_tree_navigator = new KeyboardNavigator.model();
         question_tree_navigator.init({
             name: 'question tree',
             ready_scope: 'qt-ready',
@@ -184,7 +185,7 @@
         function gen_change_question_elements() {
             return $('.change-question');
         }
-        var change_question_navigator = new KeyboardNavigator();
+        var change_question_navigator = new KeyboardNavigator.model();
         change_question_navigator.init({
             name: 'change question',
             ready_scope: 'cq-ready',
@@ -202,7 +203,7 @@
         function gen_tools_elements() {
             return $('.fd-form-actions li a');
         }
-        var tools_navigator = new KeyboardNavigator();
+        var tools_navigator = new KeyboardNavigator.model();
         tools_navigator.init({
             name: 'tools',
             ready_scope: 'tools-ready',
@@ -222,10 +223,11 @@
             return false;
         }
 
-        KEYBOARD_SHORTCUTS = KEYBOARD_SHORTCUTS.concat([
+        var KeyboardShortcuts = hqImport('style/includes/keyboard_shortcuts.html#shortcuts');
+        KeyboardShortcuts.shortcuts = KeyboardShortcuts.shortcuts.concat([
             {
                 shortcut: nav_key + "+s",
-                handler: KS.gen_click_fn("#settings-save-btn .btn, .fd-save-button .btn"),
+                handler: KeyboardShortcuts.gen_click_fn("#settings-save-btn .btn, .fd-save-button .btn"),
                 desc: "Save Form"
             },
             {
@@ -250,7 +252,7 @@
             },
             {
                 shortcut: nav_key + "+c",
-                handler: KS.gen_click_fn(".fd-button-copy"),
+                handler: KeyboardShortcuts.gen_click_fn(".fd-button-copy"),
                 desc: "Make Copy of Selected Node"
             }
         ]);
