@@ -39,6 +39,10 @@ def user_es_call(domain, q, fields, size, start_at):
     return query.run().hits
 
 
+def _false(*args, **kwargs):
+    return False
+
+
 class BulkUserResource(HqBaseResource, DomainSpecificResourceMixin):
     """
     A read-only user data resource based on elasticsearch.
@@ -46,18 +50,20 @@ class BulkUserResource(HqBaseResource, DomainSpecificResourceMixin):
     """
     type = "bulk-user"
     id = fields.CharField(attribute='id', readonly=True, unique=True)
+    pk = fields.CharField(attribute='pk', readonly=True, unique=True, use_in=_false)
     email = fields.CharField(attribute='email')
     username = fields.CharField(attribute='username', unique=True)
     first_name = fields.CharField(attribute='first_name', null=True)
     last_name = fields.CharField(attribute='last_name', null=True)
     phone_numbers = fields.ListField(attribute='phone_numbers', null=True)
 
-    def to_obj(self, user):
-        '''
+    @staticmethod
+    def to_obj(user):
+        """
         Takes a flat dict and returns an object
-        '''
+        """
         if '_id' in user:
-            user['id'] = user.pop('_id')
+            user['pk'] = user['id'] = user.pop('_id')
         return namedtuple('user', user.keys())(**user)
 
     class Meta(v0_1.CustomResourceMeta):
@@ -85,16 +91,16 @@ class BulkUserResource(HqBaseResource, DomainSpecificResourceMixin):
 
         params = bundle.request.GET
         param = lambda p: params.get(p, None)
-        fields = self.fields.keys()
-        fields.remove('id')
+        fields_to_remove = ['id', 'pk']
+        fields = filter(lambda field: field not in fields_to_remove, self.fields.keys())
         fields.append('_id')
         fn = MOCK_BULK_USER_ES or user_es_call
         users = fn(
-                domain=kwargs['domain'],
-                q=param('q'),
-                fields=fields,
-                size=param('limit'),
-                start_at=param('offset'),
+            domain=kwargs['domain'],
+            q=param('q'),
+            fields=fields,
+            size=param('limit'),
+            start_at=param('offset'),
         )
         return map(self.to_obj, users)
 
