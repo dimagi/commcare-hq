@@ -20,7 +20,7 @@ from corehq.apps.groups.models import Group
 from corehq.apps.sms.util import strip_plus
 from corehq.apps.users.models import CommCareUser, WebUser, Permissions
 
-from . import v0_1, v0_4
+from . import v0_1, v0_4, CouchResourceMixin
 from . import HqBaseResource, DomainSpecificResourceMixin
 from phonelog.models import DeviceReportEntry
 
@@ -39,18 +39,13 @@ def user_es_call(domain, q, fields, size, start_at):
     return query.run().hits
 
 
-def _false(*args, **kwargs):
-    return False
-
-
-class BulkUserResource(HqBaseResource, DomainSpecificResourceMixin):
+class BulkUserResource(CouchResourceMixin, HqBaseResource, DomainSpecificResourceMixin):
     """
     A read-only user data resource based on elasticsearch.
     Supported Params: limit offset q fields
     """
     type = "bulk-user"
     id = fields.CharField(attribute='id', readonly=True, unique=True)
-    pk = fields.CharField(attribute='pk', readonly=True, unique=True, use_in=_false)
     email = fields.CharField(attribute='email')
     username = fields.CharField(attribute='username', unique=True)
     first_name = fields.CharField(attribute='first_name', null=True)
@@ -63,7 +58,7 @@ class BulkUserResource(HqBaseResource, DomainSpecificResourceMixin):
         Takes a flat dict and returns an object
         """
         if '_id' in user:
-            user['pk'] = user['id'] = user.pop('_id')
+            user['id'] = user['_id']
         return namedtuple('user', user.keys())(**user)
 
     class Meta(v0_1.CustomResourceMeta):
