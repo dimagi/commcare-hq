@@ -355,15 +355,16 @@ def lookup_case(search_field, search_id, domain, case_type):
     error code (if there was an error in lookup).
     """
     found = False
+    case_accessors = CaseAccessors(domain)
     if search_field == 'case_id':
         try:
-            case = CaseAccessors(domain).get_case(search_id)
+            case = case_accessors.get_case(search_id)
             if case.domain == domain and case.type == case_type:
                 found = True
         except CaseNotFound:
             pass
     elif search_field == 'external_id':
-        results = get_cases_in_domain_by_external_id(domain, search_id)
+        results = case_accessors.get_cases_by_external_id(search_id)
         if results:
             cases_by_type = [case for case in results
                              if case.type == case_type]

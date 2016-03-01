@@ -591,6 +591,10 @@ class CaseAccessorSQL(AbstractCaseAccessor):
             results = fetchall_as_namedtuple(cursor)
             return {result.case_type for result in results}
 
+    @staticmethod
+    def get_cases_by_external_id(domain, external_id):
+        raise NotImplementedError
+
 
 class LedgerAccessorSQL(object):
     @staticmethod

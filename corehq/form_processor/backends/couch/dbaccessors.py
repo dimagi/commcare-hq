@@ -9,7 +9,7 @@ from corehq.apps.hqcase.dbaccessors import (
     get_open_case_ids,
     get_closed_case_ids,
     get_case_ids_in_domain_by_owner,
-    get_case_types_for_domain)
+    get_case_types_for_domain, get_cases_in_domain_by_external_id)
 from corehq.apps.hqcase.utils import get_case_by_domain_hq_user_id
 from corehq.dbaccessors.couchapps.cases_by_server_date.by_owner_server_modified_on import \
     get_case_ids_modified_with_owner_since
@@ -151,6 +151,10 @@ class CaseAccessorCouch(AbstractCaseAccessor):
     @staticmethod
     def get_case_types_for_domain(domain):
         return get_case_types_for_domain(domain)
+
+    @staticmethod
+    def get_cases_by_external_id(domain, external_id):
+        return get_cases_in_domain_by_external_id(domain, external_id)
 
 
 def _get_attachment_content(doc_class, doc_id, attachment_id):
