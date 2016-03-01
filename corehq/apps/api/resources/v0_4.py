@@ -24,8 +24,14 @@ from corehq.apps.cloudcare.api import ElasticCaseQuery
 from corehq.apps.users.util import format_username
 from corehq.apps.users.models import CouchUser, Permissions
 
-from corehq.apps.api.resources import v0_1, v0_3, HqBaseResource, DomainSpecificResourceMixin, \
-    SimpleSortableResourceMixin
+from corehq.apps.api.resources import (
+    CouchResourceMixin,
+    DomainSpecificResourceMixin,
+    HqBaseResource,
+    SimpleSortableResourceMixin,
+    v0_1,
+    v0_3,
+)
 from corehq.apps.api.es import XFormES, CaseES, ElasticAPIQuerySet, es_search
 from corehq.apps.api.fields import ToManyDocumentsField, UseIfRequested, ToManyDictField, ToManyListDictField
 from corehq.apps.api.serializers import CommCareCaseSerializer
@@ -330,7 +336,7 @@ class SingleSignOnResource(HqBaseResource, DomainSpecificResourceMixin):
         list_allowed_methods = ['post']
 
 
-class ApplicationResource(HqBaseResource, DomainSpecificResourceMixin):
+class ApplicationResource(CouchResourceMixin, HqBaseResource, DomainSpecificResourceMixin):
 
     id = fields.CharField(attribute='_id')
     name = fields.CharField(attribute='name')
