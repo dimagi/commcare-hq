@@ -569,20 +569,17 @@ class CaseAccessorSQL(AbstractCaseAccessor):
             return dict((result.case_id, result.server_modified_on) for result in results)
 
     @staticmethod
-    def get_case_by_external_id(domain, external_id, case_type=None):
-        try:
-            return CommCareCaseSQL.objects.raw(
-                'SELECT * FROM get_case_by_external_id(%s, %s, %s)',
-                [domain, external_id, case_type]
-            )[0]
-        except IndexError:
-            raise CaseNotFound
+    def get_cases_by_external_id(domain, external_id, case_type=None):
+        return list(CommCareCaseSQL.objects.raw(
+            'SELECT * FROM get_case_by_external_id(%s, %s, %s)',
+            [domain, external_id, case_type]
+        ))
 
     @staticmethod
     def get_case_by_domain_hq_user_id(domain, user_id, case_type):
         try:
-            return CaseAccessorSQL.get_case_by_external_id(domain, user_id, case_type)
-        except CaseNotFound:
+            return CaseAccessorSQL.get_cases_by_external_id(domain, user_id, case_type)[0]
+        except IndexError:
             return None
 
     @staticmethod

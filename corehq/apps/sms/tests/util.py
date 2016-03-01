@@ -9,8 +9,8 @@ from corehq.apps.accounting.models import SoftwarePlanEdition
 from corehq.apps.accounting.tests.utils import DomainSubscriptionMixin
 from corehq.apps.accounting.tests import BaseAccountingTest
 from corehq.apps.domain.models import Domain
-from corehq.apps.hqcase.dbaccessors import get_cases_in_domain_by_external_id
 from corehq.apps.ivr.models import Call
+from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 from corehq.messaging.smsbackends.test.models import SQLTestSMSBackend
 from corehq.apps.sms.mixin import VerifiedNumber
 from corehq.apps.sms.models import (SMS, SQLMobileBackend, OUTGOING,
@@ -244,7 +244,7 @@ class TouchformsTestCase(LiveServerTestCase, DomainSubscriptionMixin):
         return site
 
     def get_case(self, external_id):
-        [case] = get_cases_in_domain_by_external_id(self.domain, external_id)
+        [case] = CaseAccessors(self.domain).get_cases_by_external_id(external_id)
         return case
 
     def assertCasePropertyEquals(self, case, prop, value):
