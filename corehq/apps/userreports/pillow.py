@@ -21,9 +21,7 @@ UCR_STATIC_CHECKPOINT_ID = 'pillow-checkpoint-ucr-static'
 
 class ConfigurableReportTableManagerMixin(object):
 
-    def init(self):
-        # not a true `__init__` method since this is primarily used as a mixin
-        # must be called manually
+    def __init__(self, *args, **kwargs):
         self.bootstrapped = False
         self.last_bootstrapped = datetime.utcnow()
 
@@ -107,7 +105,6 @@ class ConfigurableIndicatorPillow(ConfigurableReportTableManagerMixin, PythonPil
         couch_db = CachedCouchDB(CommCareCase.get_db().uri, readonly=False)
         checkpoint = PillowCheckpoint(pillow_checkpoint_id)
         super(ConfigurableIndicatorPillow, self).__init__(couch_db=couch_db, checkpoint=checkpoint)
-        self.init()  # table manager init
 
     def run(self):
         self.bootstrap()
