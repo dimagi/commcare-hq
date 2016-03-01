@@ -342,6 +342,7 @@ var ReportModule = (function () {
                 for (var i = 0; i < reports.length; i++) {
                     if (!reports[i].reportId() || !reports[i].display()) {
                         alert('Reports must have all properties set!');
+                        break;
                     }
                 }
                 self.moduleName[self.lang] = self.currentModuleName();

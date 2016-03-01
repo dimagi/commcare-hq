@@ -71,8 +71,7 @@ from corehq.apps.users.decorators import get_permission_name
 from corehq.apps.users.models import Permissions
 from corehq.apps.users.permissions import FORM_EXPORT_PERMISSION, CASE_EXPORT_PERMISSION, \
     DEID_EXPORT_PERMISSION
-from corehq.couchapps.dbaccessors import \
-    get_attachment_size_by_domain_app_id_xmlns
+from corehq.couchapps.dbaccessors import get_attachment_size_by_domain
 from corehq.util.couch import get_document_or_404_lite
 from corehq.util.timezones.utils import get_timezone_for_user
 from couchexport.models import SavedExportSchema, ExportSchema
@@ -632,19 +631,21 @@ class BaseDownloadExportView(ExportsPermissionsMixin, JSONResponseMixin, BasePro
             )
         return download
 
+    def _get_and_rebuild_export_schema(self, export_id):
+        export_object = self.get_export_schema(self.domain, export_id)
+        export_object.update_schema()
+        return export_object
+
     def _get_bulk_download_task(self, export_specs, export_filter):
+        for export_spec in export_specs:
+            export_id = export_spec['export_id']
+            self._get_and_rebuild_export_schema(export_id)
         export_helper = CustomBulkExportHelper(domain=self.domain)
         return export_helper.get_download_task(export_specs, export_filter)
 
     def _get_single_export_download_task(self, export_spec, export_filter, max_column_size=2000):
-        try:
-            export_data = export_spec
-            export_object = self.get_export_schema(self.domain, export_data['export_id'])
-        except (KeyError, IndexError):
-            raise ExportAsyncException(
-                _("You need to pass a list of at least one export schema.")
-            )
-        export_object.update_schema()
+        export_id = export_spec['export_id']
+        export_object = self._get_and_rebuild_export_schema(export_id)
 
         # if the export is de-identified (is_safe), check that
         # the requesting domain has access to the deid feature.
@@ -772,7 +773,7 @@ class DownloadFormExportView(BaseDownloadExportView):
         """Checks to see if this form export has multimedia available to export
         """
         try:
-            size_hash = get_attachment_size_by_domain_app_id_xmlns(self.domain)
+            size_hash = get_attachment_size_by_domain(self.domain)
             export_object = self.get_export_schema(self.domain, self.export_id)
             hash_key = (export_object.app_id, export_object.xmlns
                         if hasattr(export_object, 'xmlns') else '')

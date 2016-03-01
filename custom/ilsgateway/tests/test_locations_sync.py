@@ -6,7 +6,6 @@ from corehq.apps.commtrack.models import CommtrackConfig
 from corehq.apps.commtrack.tests.util import bootstrap_domain as initial_bootstrap
 from corehq.apps.locations.models import Location, SQLLocation
 from custom.ilsgateway.api import Location as Loc, ILSGatewayAPI
-from custom.ilsgateway.models import PendingReportingDataRecalculation
 from custom.ilsgateway.tests.mock_endpoint import MockEndpoint
 from custom.logistics.api import ApiSyncObject
 from custom.logistics.commtrack import synchronization
@@ -90,27 +89,3 @@ class LocationSyncTest(TestCase):
         sql_location2 = SQLLocation.objects.get(domain=TEST_DOMAIN, site_code='region-dodoma')
         self.assertEqual('REGION', sql_location2.location_type.name)
         self.assertIsNone(sql_location2.supply_point_id)
-
-    def test_create_excluded_location(self):
-        with open(os.path.join(self.datapath, 'sample_locations.json')) as f:
-            locations = [Loc(loc) for loc in json.loads(f.read())[4:]]
-        ilsgateway_location = self.api_object.location_sync(locations[0])
-        self.assertIsNone(ilsgateway_location)
-
-        self.assertEqual(
-            SQLLocation.objects.filter(domain=TEST_DOMAIN, site_code=locations[0].code).count(), 0
-        )
-
-        ilsgateway_location = self.api_object.location_sync(locations[1])
-        self.assertIsNone(ilsgateway_location)
-
-        self.assertEqual(
-            SQLLocation.objects.filter(domain=TEST_DOMAIN, site_code=locations[1].code).count(), 0
-        )
-
-        ilsgateway_location = self.api_object.location_sync(locations[2])
-        self.assertIsNone(ilsgateway_location)
-
-        self.assertEqual(
-            SQLLocation.objects.filter(domain=TEST_DOMAIN, site_code=locations[2].code).count(), 0
-        )

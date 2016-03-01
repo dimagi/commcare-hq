@@ -303,7 +303,7 @@ def track_periodic_data():
     # max number of mobile workers
     submit = []
     for user in users_to_domains:
-        email = user.get('username')
+        email = user.get('email')
         if not email:
             continue
         max_forms = 0

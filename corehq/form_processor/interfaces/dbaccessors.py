@@ -27,7 +27,7 @@ class AbstractFormAccessor(six.with_metaclass(ABCMeta)):
     should be static or classmethods.
     """
     @abstractmethod
-    def form_exists(self, form_id, domain=None):
+    def form_exists(form_id, domain=None):
         raise NotImplementedError
 
     @abstractmethod

@@ -35,7 +35,7 @@ COMMCAREHQ.makeHqHelp = function (opts, wrap) {
     wrap = wrap === undefined ? true : wrap;
     var el = $(
         '<div class="hq-help">' + 
-            '<a href="#">' +
+            '<a href="#" tabindex="-1">' +
                 '<i class="fa fa-question-circle icon-question-sign"></i></a></div>'
     );
     _.each(['content', 'title', 'html'], function(attr) {

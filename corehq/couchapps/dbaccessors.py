@@ -9,23 +9,14 @@ def _sizeof_fmt(num):
         num /= 1024.0
 
 
+@quickcache(['domain'], timeout=30)
 def get_attachment_size_by_domain(domain):
-    return get_attachment_size_by_domain_app_id_xmlns(domain)
-
-
-@quickcache(['domain', 'app_id', 'xmlns'], timeout=30)
-def get_attachment_size_by_domain_app_id_xmlns(domain, app_id=None, xmlns=None):
     """
     :return: dict {
         (app_id, xmlns): size_of_attachments,
     }
     """
     startkey = [domain]
-    if app_id:
-        startkey += [app_id]
-    if xmlns:
-        startkey += [xmlns]
-
     view = XFormInstance.get_db().view(
         'attachments/attachments',
         startkey=startkey,

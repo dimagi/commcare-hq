@@ -4,7 +4,7 @@ import time
 
 from corehq.util.soft_assert import soft_assert
 from kafka import KeyedProducer
-from kafka.common import LeaderNotAvailableError, FailedPayloadsError
+from kafka.common import LeaderNotAvailableError, FailedPayloadsError, KafkaUnavailableError
 from corehq.apps.change_feed.connection import get_kafka_client_or_none
 import logging
 
@@ -18,12 +18,17 @@ def send_to_kafka(producer, topic, change_meta):
         )
 
     try:
-        try:
-            _send_to_kafka()
-        except FailedPayloadsError:
-            # this typically an inactivity timeout - which can happen if the feed is low volume
-            # just do a simple retry
-            _send_to_kafka()
+        tries = 3
+        for i in range(tries):
+            # try a few times because the python kafka libraries can trigger timeouts
+            # if they are idle for a while.
+            try:
+                _send_to_kafka()
+                break
+            except (FailedPayloadsError, KafkaUnavailableError):
+                if i == (tries - 1):
+                    # if it's the last try, fail hard
+                    raise
     except LeaderNotAvailableError:
         # kafka seems to be down. sleep a bit to avoid crazy amounts of error spam
         time.sleep(15)
