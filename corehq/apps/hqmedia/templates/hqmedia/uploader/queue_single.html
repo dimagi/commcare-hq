@@ -4,9 +4,8 @@
         <i class="icon-ok fa fa-check"></i> <%= file_name %> <strong>[<%= file_size %> MB]</strong>
     </div>
     <div class="hqm-progress">
-        <div class="progress progress-striped active" style="margin-bottom: 5px;">
-            <!-- .bar include for Bootstrap 2 compatibility -->
-            <div class="bar progress-bar" style="width: 0%;"></div>
+        <div class="progress active" style="margin-bottom: 5px;">
+            <div class="progress-bar progress-bar-striped" style="width: 0%;"></div>
         </div>
         <p class="text-success hqm-begin">
             {% blocktrans %}Ready to upload. Click <strong>Begin Upload</strong> below to start.{% endblocktrans %}
