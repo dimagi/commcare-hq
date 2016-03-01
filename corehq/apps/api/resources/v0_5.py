@@ -20,7 +20,7 @@ from corehq.apps.groups.models import Group
 from corehq.apps.sms.util import strip_plus
 from corehq.apps.users.models import CommCareUser, WebUser, Permissions
 
-from . import v0_1, v0_4
+from . import v0_1, v0_4, CouchResourceMixin
 from . import HqBaseResource, DomainSpecificResourceMixin
 from phonelog.models import DeviceReportEntry
 
@@ -39,7 +39,7 @@ def user_es_call(domain, q, fields, size, start_at):
     return query.run().hits
 
 
-class BulkUserResource(HqBaseResource, DomainSpecificResourceMixin):
+class BulkUserResource(CouchResourceMixin, HqBaseResource, DomainSpecificResourceMixin):
     """
     A read-only user data resource based on elasticsearch.
     Supported Params: limit offset q fields
@@ -52,12 +52,13 @@ class BulkUserResource(HqBaseResource, DomainSpecificResourceMixin):
     last_name = fields.CharField(attribute='last_name', null=True)
     phone_numbers = fields.ListField(attribute='phone_numbers', null=True)
 
-    def to_obj(self, user):
-        '''
+    @staticmethod
+    def to_obj(user):
+        """
         Takes a flat dict and returns an object
-        '''
+        """
         if '_id' in user:
-            user['id'] = user.pop('_id')
+            user['id'] = user['_id']
         return namedtuple('user', user.keys())(**user)
 
     class Meta(v0_1.CustomResourceMeta):
@@ -85,16 +86,16 @@ class BulkUserResource(HqBaseResource, DomainSpecificResourceMixin):
 
         params = bundle.request.GET
         param = lambda p: params.get(p, None)
-        fields = self.fields.keys()
-        fields.remove('id')
+        fields_to_remove = ['id', 'pk']
+        fields = filter(lambda field: field not in fields_to_remove, self.fields.keys())
         fields.append('_id')
         fn = MOCK_BULK_USER_ES or user_es_call
         users = fn(
-                domain=kwargs['domain'],
-                q=param('q'),
-                fields=fields,
-                size=param('limit'),
-                start_at=param('offset'),
+            domain=kwargs['domain'],
+            q=param('q'),
+            fields=fields,
+            size=param('limit'),
+            start_at=param('offset'),
         )
         return map(self.to_obj, users)
 
