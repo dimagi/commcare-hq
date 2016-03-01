@@ -39,9 +39,8 @@
 
 {% block filter_js %}
 
-<script type="text/javascript" src="{% static 'care_pathways/ko/report_filter.drilldown_options.js' %}"></script>
 <script type="text/javascript">
-    $(function () {
+    $.getScript("{% static 'care_pathways/ko/report_filter.drilldown_options.js' %}", function () {
        $('#{{ css_id }}').drilldownOptionFilter({
            selected: {{ selected|JSON }},
            drilldown_map: {{ option_map|JSON }},
