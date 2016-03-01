@@ -14,6 +14,10 @@
     <script src="{% new_static 'app_manager/js/app_manager_utils.js' %}"></script>
     <script src="{% new_static 'app_manager/js/download_async_modal.js' %}"></script>
     <script src="{% new_static 'app_manager/js/releases.js' %}"></script>
+
+    {# for references.html #}
+    <script type="text/javascript" src="{% static 'hqmedia/js/jquery.jplayer.min.js' %}"></script>
+    <script type="text/javascript" src="{% static 'hqmedia/js/hqmedia.reference_controller.js' %}"></script>
 {% endblock %}
 {% block js-inline %}
     {{ block.super }}
