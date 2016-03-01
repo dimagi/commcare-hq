@@ -1567,11 +1567,20 @@ class GenericDownloadNewExportMixin(object):
         return get_export_download(
             export_instances=export_instances,
             filters=export_filters,
-            filename=u"{}{}".format(
-                export_instances[0].name,  # TODO: This will give the wrong file name for bulk exports
-                date.today().isoformat()
-            ),
+            filename=self._get_filename(export_instances)
         )
+
+    def _get_filename(self, export_instances):
+        if len(export_instances) > 1:
+            return u"{}_custom_bulk_export_{}".format(
+                self.domain,
+                date.today().isoformat()
+            )
+        else:
+            return u"{} {}".format(
+                export_instances[0].name,
+                date.today().isoformat()
+            )
 
     def _check_deid_permissions(self, export_instances):
         # if any export is de-identified, check that
