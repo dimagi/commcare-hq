@@ -1538,7 +1538,7 @@ class MappingItem(DocumentSchema):
     def key_as_condition(self, property):
         if self.treat_as_expression:
             condition = dot_interpolate(self.key, property)
-            return condition
+            return u"{condition}".format(condition=condition)
         else:
             return u"{property} = '{key}'".format(
                 property=property,
