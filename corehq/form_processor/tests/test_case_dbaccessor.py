@@ -619,8 +619,7 @@ class CaseAccessorTestsSQL(TestCase):
         [case] = CaseAccessorSQL.get_cases_by_external_id('d2', '123')
         self.assertEqual(case.case_id, case2.case_id)
 
-        with self.assertRaises(CaseNotFound):
-            CaseAccessorSQL.get_cases_by_external_id('d2', '123', case_type='t2')
+        self.assertEqual([], CaseAccessorSQL.get_cases_by_external_id('d2', '123', case_type='t2'))
 
     def test_get_case_types_for_domain(self):
         case_types = {'c1', 'c2', 'c3'}
