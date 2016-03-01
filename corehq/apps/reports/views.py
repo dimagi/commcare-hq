@@ -507,7 +507,7 @@ def hq_download_saved_export(req, domain, export_id):
                 schema = next(itertools.islice(group_config.all_export_schemas,
                                                list_index,
                                                list_index+1))
-                rebuild_export_async.delay(export.configuration, schema, 'couch')
+                rebuild_export_async.delay(export.configuration, schema)
             except Exception:
                 notify_exception(req, 'Failed to rebuild export during download')
 

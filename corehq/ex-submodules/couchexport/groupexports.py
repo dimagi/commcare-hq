@@ -8,7 +8,7 @@ from couchexport.tasks import rebuild_schemas
 from dimagi.utils.logging import notify_exception
 
 
-def export_for_group(export_id_or_group, output_dir, last_access_cutoff=None):
+def export_for_group(export_id_or_group, last_access_cutoff=None):
     if isinstance(export_id_or_group, basestring):
         try:
             config = GroupExportConfiguration.get(export_id_or_group)
@@ -19,7 +19,7 @@ def export_for_group(export_id_or_group, output_dir, last_access_cutoff=None):
 
     for subconfig, schema in config.all_exports:
         try:
-            rebuild_export(subconfig, schema, output_dir, last_access_cutoff=last_access_cutoff)
+            rebuild_export(subconfig, schema, last_access_cutoff=last_access_cutoff)
         except ExportRebuildError:
             continue
         except Exception, e:
