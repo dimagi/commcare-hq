@@ -153,8 +153,11 @@ class CaseAccessorCouch(AbstractCaseAccessor):
         return get_case_types_for_domain(domain)
 
     @staticmethod
-    def get_cases_by_external_id(domain, external_id):
-        return get_cases_in_domain_by_external_id(domain, external_id)
+    def get_cases_by_external_id(domain, external_id, case_type=None):
+        cases = get_cases_in_domain_by_external_id(domain, external_id)
+        if case_type:
+            return [case for case in cases if case.type == case_type]
+        return cases
 
 
 def _get_attachment_content(doc_class, doc_id, attachment_id):

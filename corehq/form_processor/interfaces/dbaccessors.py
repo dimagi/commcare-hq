@@ -182,7 +182,7 @@ class AbstractCaseAccessor(six.with_metaclass(ABCMeta)):
         raise NotImplementedError
 
     @abstractmethod
-    def get_cases_by_external_id(domain, external_id):
+    def get_cases_by_external_id(domain, external_id, case_type=None):
         raise NotImplementedError
 
 
@@ -245,8 +245,8 @@ class CaseAccessors(object):
     def get_case_by_domain_hq_user_id(self, user_id, case_type):
         return self.db_accessor.get_case_by_domain_hq_user_id(self.domain, user_id, case_type)
 
-    def get_cases_by_external_id(self, external_id):
-        return self.db_accessor.get_cases_by_external_id(self.domain, external_id)
+    def get_cases_by_external_id(self, external_id, case_type=None):
+        return self.db_accessor.get_cases_by_external_id(self.domain, external_id, case_type)
 
     @quickcache(['self.domain'], timeout=30 * 60)
     def get_case_types(self):
