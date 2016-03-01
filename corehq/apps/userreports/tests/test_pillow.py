@@ -5,7 +5,10 @@ from django.test import TestCase, SimpleTestCase
 from mock import patch
 from datetime import datetime, timedelta
 from casexml.apps.case.models import CommCareCase
+from casexml.apps.case.signals import case_post_save
 from corehq.apps.change_feed import data_sources
+from corehq.apps.change_feed import topics
+from corehq.apps.change_feed.producer import producer
 from corehq.apps.userreports.exceptions import StaleRebuildError
 from corehq.apps.userreports.pillow import ConfigurableIndicatorPillow, REBUILD_CHECK_INTERVAL, \
     ConfigurableReportTableManagerMixin, get_kafka_ucr_pillow
@@ -13,7 +16,10 @@ from corehq.apps.userreports.sql import IndicatorSqlAdapter
 from corehq.apps.userreports.tasks import rebuild_indicators
 from corehq.apps.userreports.tests.utils import get_sample_data_source, get_sample_doc_and_indicators
 from corehq.util.test_utils import softer_assert
+from corehq.toggles import KAFKA_UCRS
+from corehq.util.context_managers import drop_connected_signals
 from pillowtop.feed.interface import Change, ChangeMeta
+from testapps.test_pillowtop.utils import get_test_kafka_consumer, get_current_kafka_seq
 
 
 class ConfigurableReportTableManagerTest(SimpleTestCase):
@@ -121,6 +127,7 @@ class KafkaIndicatorPillowTest(IndicatorPillowTestBase):
         super(KafkaIndicatorPillowTest, self).setUp()
         self.pillow = get_kafka_ucr_pillow()
         self.pillow.bootstrap(configs=[self.config])
+        KAFKA_UCRS.set('user-reports', True, namespace='domain')
 
     @patch('corehq.apps.userreports.specs.datetime')
     def test_basic_doc_processing(self, datetime_mock):
@@ -129,6 +136,24 @@ class KafkaIndicatorPillowTest(IndicatorPillowTestBase):
         self.pillow.processor(_doc_to_change(sample_doc))
         self._check_sample_doc_state()
 
+    @patch('corehq.apps.userreports.specs.datetime', )
+    def test_process_doc_from_couch(self, datetime_mock):
+        datetime_mock.utcnow.return_value = self.fake_time_now
+        sample_doc, _ = get_sample_doc_and_indicators(self.fake_time_now)
+
+        # make sure case is in DB
+        case = CommCareCase.wrap(sample_doc)
+        with drop_connected_signals(case_post_save):
+            case.save()
+
+        # send to kafka
+        since = get_current_kafka_seq(topics.CASE)
+        producer.send_change(topics.CASE, _doc_to_change(sample_doc).metadata)
+
+        # run pillow and check changes
+        self.pillow.process_changes(since={topics.CASE: since}, forever=False)
+        self._check_sample_doc_state()
+        case.delete()
 
 class IndicatorConfigFilterTest(SimpleTestCase):
 
@@ -173,7 +198,7 @@ def _doc_to_change(doc):
         metadata=ChangeMeta(
             document_id=doc['_id'],
             data_source_type=data_sources.COUCH,
-            data_source_name='tbd',
+            data_source_name=CommCareCase.get_db().dbname,
             document_type=doc['doc_type'],
             document_subtype=doc['type'],
             domain=doc['domain'],
