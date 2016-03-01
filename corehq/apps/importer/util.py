@@ -7,7 +7,6 @@ from django.utils.translation import ugettext_lazy as _
 from couchdbkit import NoResultFound
 
 from corehq.apps.importer.const import LookupErrors, ImportErrors
-from casexml.apps.case.models import CommCareCase
 from corehq.apps.groups.models import Group
 from corehq.apps.importer.exceptions import (
     ImporterExcelFileEncrypted,
