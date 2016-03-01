@@ -9,6 +9,7 @@ from corehq.apps.userreports.models import DataSourceConfiguration, StaticDataSo
 from corehq.apps.userreports.sql import IndicatorSqlAdapter, metadata
 from corehq.apps.userreports.tasks import is_static, rebuild_indicators
 from corehq.sql_db.connections import connection_manager
+from corehq.toggles import KAFKA_UCRS
 from corehq.util.soft_assert import soft_assert
 from fluff.signals import get_migration_context, get_tables_to_rebuild
 from pillowtop.checkpoints.manager import PillowCheckpoint
@@ -124,6 +125,11 @@ class ConfigurableIndicatorPillow(ConfigurableReportTableManagerMixin, PythonPil
         return super(ConfigurableIndicatorPillow, self).change_trigger(changes_dict)
 
     def change_transport(self, doc):
+        domain = doc.get('domain', None)
+        # domains with kafka ucrs enabled should be processed by the other pillow
+        if KAFKA_UCRS.enabled(domain):
+            return
+
         for table in self.table_adapters:
             if table.config.filter(doc):
                 table.save(doc)
@@ -160,7 +166,7 @@ class ConfigurableReportPillowProcessor(ConfigurableReportTableManagerMixin, Pil
             return
 
         for table in self.table_adapters:
-            if table.config.domain == domain:
+            if table.config.domain == domain and KAFKA_UCRS.enabled(domain):
                 # only bother getting the document if we have a domain match from the metadata
                 doc = change.get_document()
                 if table.config.filter(doc):
