@@ -32,7 +32,7 @@ class SMSEnqueuingOperation(GenericEnqueuingOperation):
 
     def enqueue_directly(self, sms):
         """
-        This method is used to try to send an SMSLog entry directly to the
+        This method is used to try to send a QueuedSMS entry directly to the
         celery queue, without waiting for it to be enqueued by the handle()
         thread.
         """

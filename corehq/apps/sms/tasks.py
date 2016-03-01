@@ -4,7 +4,7 @@ from celery.task import task
 from time import sleep
 from corehq.apps.sms.mixin import (VerifiedNumber, InvalidFormatException,
     PhoneNumberInUseException)
-from corehq.apps.sms.models import (SMSLog, OUTGOING, INCOMING, SMS,
+from corehq.apps.sms.models import (OUTGOING, INCOMING, SMS,
     PhoneLoadBalancingMixin, CommConnectCase, QueuedSMS)
 from corehq.apps.sms.api import (send_message_via_backend, process_incoming,
     log_sms_exception)
@@ -91,10 +91,12 @@ def handle_domain_specific_delays(msg, domain_object, utcnow):
         if time_within_windows(domain_now, domain_object.sms_conversation_times):
             sms_conversation_length = domain_object.sms_conversation_length
             conversation_start_timestamp = utcnow - timedelta(minutes=sms_conversation_length)
-            if SMSLog.inbound_entry_exists(msg.couch_recipient_doc_type,
-                                           msg.couch_recipient,
-                                           conversation_start_timestamp,
-                                           utcnow):
+            if SMS.inbound_entry_exists(
+                msg.couch_recipient_doc_type,
+                msg.couch_recipient,
+                conversation_start_timestamp,
+                to_timestamp=utcnow
+            ):
                 delay_processing(msg, 1)
                 return True
 
