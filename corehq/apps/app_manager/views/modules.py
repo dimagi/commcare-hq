@@ -11,6 +11,8 @@ from django.contrib import messages
 from corehq.apps.app_manager.views.media_utils import process_media_attribute, \
     handle_media_edits
 
+from dimagi.utils.logging import notify_exception
+
 from corehq.apps.app_manager.views.utils import back_to_main, bail, get_langs
 from corehq import toggles, feature_previews
 from corehq.apps.app_manager.templatetags.xforms_extras import trans
@@ -635,7 +637,11 @@ def edit_report_module(request, domain, app_id, module_id):
     try:
         module.report_configs = [ReportAppConfig.wrap(spec) for spec in params['reports']]
     except Exception as e:
-        logger.error("Something went wrong while editing report modules: {}".format(e))
+        notify_exception(
+            request,
+            message="Something went wrong while editing report modules",
+            details={'domain': domain, 'app_id': app_id,}
+        )
         return HttpResponseBadRequest(_("There was a problem processing your request."))
 
     if (feature_previews.MODULE_FILTER.enabled(domain) and
@@ -647,7 +653,11 @@ def edit_report_module(request, domain, app_id, module_id):
     try:
         app.save()
     except Exception as e:
-        logger.error("Something went wrong while saving app {} while editing report modules:{}".format(app._id, e))
+        notify_exception(
+            request,
+            message="Something went wrong while saving app {} while editing report modules".format(app_id),
+            details={'domain': domain, 'app_id': app_id,}
+        )
         return HttpResponseBadRequest(_("There was a problem processing your request."))
 
     return json_response('success')
