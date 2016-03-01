@@ -595,6 +595,7 @@ def logo(request, domain):
 class DomainAccountingSettings(BaseAdminProjectSettingsView):
 
     @method_decorator(login_and_domain_required)
+    @use_bootstrap3
     def dispatch(self, request, *args, **kwargs):
         return super(DomainAccountingSettings, self).dispatch(request, *args, **kwargs)
 
@@ -673,7 +674,7 @@ class DomainSubscriptionView(DomainAccountingSettings):
                     self.account
                 ) if self.account else None
             )),
-            'css_class': "label-plan %s" % plan_version.plan.edition.lower(),
+            'css_class': "label-plan label-plan-%s" % plan_version.plan.edition.lower(),
             'do_not_invoice': subscription.do_not_invoice if subscription is not None else False,
             'is_trial': subscription.is_trial if subscription is not None else False,
             'date_start': (subscription.date_start.strftime(USER_DATE_FORMAT)
@@ -790,6 +791,7 @@ class EditExistingBillingAccountView(DomainAccountingSettings, AsyncHandlerMixin
             )
         return EditBillingAccountInfoForm(self.account, self.domain, self.request.couch_user.username)
 
+    @use_select2
     def dispatch(self, request, *args, **kwargs):
         if self.account is None:
             raise Http404()
@@ -940,10 +942,10 @@ class DomainBillingStatementsView(DomainAccountingSettings, CRUDPaginatedViewMix
                 if invoice.is_paid:
                     payment_status = (_("Paid on %s.")
                                       % invoice.date_paid.strftime(USER_DATE_FORMAT))
-                    payment_class = "label label-inverse"
+                    payment_class = "label label-default"
                 else:
                     payment_status = _("Not Paid")
-                    payment_class = "label label-important"
+                    payment_class = "label label-danger"
                 date_due = (
                     (invoice.date_due.strftime(USER_DATE_FORMAT)
                      if not invoice.is_paid else _("Already Paid"))
@@ -1225,6 +1227,9 @@ class InternalSubscriptionManagementView(BaseAdminProjectSettingsView):
     form_classes = INTERNAL_SUBSCRIPTION_MANAGEMENT_FORMS
 
     @method_decorator(require_superuser)
+    @use_bootstrap3
+    @use_jquery_ui
+    @use_select2
     def get(self, request, *args, **kwargs):
         return super(InternalSubscriptionManagementView, self).get(request, *args, **kwargs)
 
@@ -1512,6 +1517,10 @@ class ConfirmBillingAccountInfoView(ConfirmSelectedPlanView, AsyncHandlerMixin):
     async_handlers = [
         Select2BillingInfoHandler,
     ]
+
+    @use_select2
+    def dispatch(self, request, *args, **kwargs):
+        return super(ConfirmBillingAccountInfoView, self).dispatch(request, *args, **kwargs)
 
     @property
     def steps(self):
