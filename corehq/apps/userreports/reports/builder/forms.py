@@ -802,7 +802,9 @@ class ConfigureNewReportBase(forms.Form):
         )
 
     def _get_property_from_column(self, col):
-        return self._properties_by_column[col].id
+        column = self._properties_by_column.get(col)
+        if column:
+            return column.id
 
     def _column_exists(self, column_id):
         """
