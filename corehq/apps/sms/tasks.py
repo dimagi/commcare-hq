@@ -229,7 +229,7 @@ def process_sms(queued_sms_pk):
 
 @task(ignore_result=True)
 def store_billable(msg):
-    if msg._id and not SmsBillable.objects.filter(log_id=msg._id).exists():
+    if msg.couch_id and not SmsBillable.objects.filter(log_id=msg.couch_id).exists():
         try:
             msg.text.encode('iso-8859-1')
             msg_length = 160
