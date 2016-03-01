@@ -19,7 +19,7 @@ from corehq.util.test_utils import softer_assert
 from corehq.toggles import KAFKA_UCRS
 from corehq.util.context_managers import drop_connected_signals
 from pillowtop.feed.interface import Change, ChangeMeta
-from testapps.test_pillowtop.utils import get_test_kafka_consumer, get_current_kafka_seq
+from testapps.test_pillowtop.utils import get_current_kafka_seq
 
 
 class ConfigurableReportTableManagerTest(SimpleTestCase):
