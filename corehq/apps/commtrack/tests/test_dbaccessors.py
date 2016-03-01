@@ -1,11 +1,9 @@
 from django.test import TestCase
 
 from corehq.form_processor.tests.utils import run_with_all_backends
+from corehq.form_processor.interfaces.supply import SupplyInterface
 from casexml.apps.case.tests.util import delete_all_cases
-from corehq.apps.commtrack.dbaccessors import (
-    get_supply_point_ids_in_domain_by_location,
-    get_supply_point_by_location_id,
-)
+from corehq.apps.commtrack.dbaccessors import get_supply_point_ids_in_domain_by_location
 from corehq.apps.commtrack.tests.util import make_loc, bootstrap_domain
 
 
@@ -14,6 +12,7 @@ class SupplyPointDBAccessorsTest(TestCase):
     def setUp(self):
         self.domain = 'supply-point-dbaccessors'
         self.project = bootstrap_domain(self.domain)
+        self.interface = SupplyInterface(self.domain)
 
         self.locations = [
             make_loc('1234', name='ben', domain=self.domain),
@@ -37,7 +36,10 @@ class SupplyPointDBAccessorsTest(TestCase):
 
     @run_with_all_backends
     def test_get_supply_point_by_location_id(self):
-        actual = get_supply_point_by_location_id(self.domain, self.locations[0]._id)
+        actual = self.interface.get_closed_and_open_by_location_id_and_domain(
+            self.domain,
+            self.locations[0]._id
+        )
         expected = self.locations[0].linked_supply_point()
         self.assertEqual(type(actual), type(expected))
         self.assertEqual(actual.to_json(), expected.to_json())

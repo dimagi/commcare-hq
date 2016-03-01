@@ -501,8 +501,10 @@ def _make_location_admininstrative(location):
 
 def _reopen_or_create_supply_point(location):
     from .helpers import update_supply_point_from_location
-    from .dbaccessors import get_supply_point_by_location_id
-    supply_point = get_supply_point_by_location_id(location.domain, location.location_id)
+    supply_point = SupplyInterface(location.domain).get_closed_and_open_by_location_id_and_domain(
+        location.domain,
+        location.location_id
+    )
     if supply_point:
         if supply_point and supply_point.closed:
             form_ids = CaseAccessors(supply_point.domain).get_case_xform_ids(supply_point.case_id)
