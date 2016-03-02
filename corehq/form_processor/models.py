@@ -537,7 +537,11 @@ class CommCareCaseSQL(DisabledDbMixin, models.Model, RedisLockableMixIn,
     def to_json(self):
         from .serializers import CommCareCaseSQLSerializer
         serializer = CommCareCaseSQLSerializer(self)
-        return serializer.data
+        ret = serializer.data
+        for key in self.case_json:
+            if key not in ret:
+                ret[key] = self.case_json[key]
+        return ret
 
     def dumps(self, pretty=False):
         indent = 4 if pretty else None
