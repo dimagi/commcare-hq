@@ -560,8 +560,8 @@ def create_billable_for_sms(msg, delay=True):
     try:
         from corehq.apps.sms.tasks import store_billable
         if delay:
-            store_billable.delay(msg.couch_id)
+            store_billable.delay(msg)
         else:
-            store_billable(msg.couch_id)
+            store_billable(msg)
     except Exception as e:
         log_accounting_error("Errors Creating SMS Billable: %s" % e)

@@ -239,9 +239,11 @@ def process_sms(queued_sms_pk):
 
 
 @task(ignore_result=True)
-def store_billable(msg_id):
-    if msg_id and not SmsBillable.objects.filter(log_id=msg_id).exists():
-        msg = SMS.objects.get(couch_id=msg_id)
+def store_billable(msg):
+    if not isinstance(msg, SMS):
+        raise Exception("Expected msg to be an SMS")
+
+    if msg.couch_id and not SmsBillable.objects.filter(log_id=msg.couch_id).exists():
         try:
             msg.text.encode('iso-8859-1')
             msg_length = 160
