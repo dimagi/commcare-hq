@@ -14,7 +14,6 @@
 ├─┬ jstree#3.2.1
 │ └── jquery#1.11.3 (3.0.0-beta1 available)
 ├── langcodes#dd833883b5
-├── lodash#2.4.2 extraneous (latest is 4.6.0)
 ├── markdown-it#6.0.0
 ├── require-css#0.1.8
 ├── require-less#0.1.5
