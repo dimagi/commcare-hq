@@ -140,6 +140,12 @@ class AbstractCommCareCase(object):
     def get_subcases(self):
         raise NotImplementedError
 
+    def get_case_property(self, property):
+        raise NotImplementedError
+
+    def set_case_property(self, property, value):
+        raise NotImplementedError
+
     def to_xml(self, version, include_case_on_closed=False):
         from xml.etree import ElementTree
         from casexml.apps.phone.xml import get_case_element
