@@ -47,3 +47,4 @@ class CommCareCaseSQLSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = CommCareCaseSQL
+        exclude = ('case_json',)
