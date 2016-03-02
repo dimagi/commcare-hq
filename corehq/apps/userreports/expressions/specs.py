@@ -12,6 +12,7 @@ from corehq.apps.userreports.expressions.getters import (
     transform_from_datatype, transform_date, transform_int)
 from corehq.apps.userreports.indicators.specs import DataTypeProperty
 from corehq.apps.userreports.specs import TypeProperty, EvaluationContext
+from .utils import eval_math_equation
 from corehq.util.quickcache import quickcache
 
 
@@ -239,3 +240,17 @@ class DictExpressionSpec(JsonObject):
         for property_name, expression in self._compiled_properties.items():
             ret[property_name] = expression(item, context)
         return ret
+
+
+class MathExpressionSpec(JsonObject):
+    type = TypeProperty('math')
+    equation_expression = StringProperty(required=True)
+    variables_expression = DefaultProperty(required=True)
+
+    def configure(self, equation_expression, variables_expression):
+        self._equation_expression = equation_expression
+        self._variables_expression = variables_expression
+
+    def __call__(self, item, context=None):
+        var_dict = self._variables_expression(item, context)
+        return eval_math_equation(self._equation_expression, var_dict)

@@ -713,3 +713,22 @@ def test_add_days_to_date_expression(self, source_doc, count_expression, expecte
         'count_expression': count_expression
     })
     self.assertEqual(expected_value, expression(source_doc))
+
+
+class TestMathExpression(SimpleTestCase):
+    def test_math(self):
+        expression = ExpressionFactory.from_spec({
+            "type": "math",
+            "equation_expression": "a + b",
+            "variables_expression": {
+                "type": "dict",
+                "properties": {
+                    "a": {
+                        "type": "property_name",
+                        "property_name": "age"
+                    },
+                    "b": 2
+                }
+            }
+        })
+        expression({"age": 23})
