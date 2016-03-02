@@ -5,6 +5,7 @@ import six
 from StringIO import StringIO
 
 from corehq.util.quickcache import quickcache
+from dimagi.utils.chunked import chunked
 from dimagi.utils.decorators.memoized import memoized
 
 from ..utils import should_use_sql_backend
@@ -214,6 +215,11 @@ class CaseAccessors(object):
 
     def get_cases(self, case_ids, ordered=False):
         return self.db_accessor.get_cases(case_ids, ordered=ordered)
+
+    def iter_cases(self, case_ids):
+        for chunk in chunked(case_ids, 100):
+            for case in self.get_cases(chunk):
+                yield case
 
     def get_case_xform_ids(self, case_ids):
         return self.db_accessor.get_case_xform_ids(case_ids)
