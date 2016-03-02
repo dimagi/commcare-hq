@@ -131,7 +131,7 @@ class XFormInstanceResource(SimpleSortableResourceMixin, v0_3.XFormInstanceResou
         list_allowed_methods = ['get']
 
 
-class RepeaterResource(HqBaseResource, DomainSpecificResourceMixin):
+class RepeaterResource(CouchResourceMixin, HqBaseResource, DomainSpecificResourceMixin):
 
     id = fields.CharField(attribute='_id', readonly=True, unique=True)
     type = fields.CharField(attribute='doc_type')
@@ -256,7 +256,7 @@ class CommCareCaseResource(SimpleSortableResourceMixin, v0_3.CommCareCaseResourc
         ordering = ['server_date_modified', 'date_modified']
 
 
-class GroupResource(HqBaseResource, DomainSpecificResourceMixin):
+class GroupResource(CouchResourceMixin, HqBaseResource, DomainSpecificResourceMixin):
     id = fields.CharField(attribute='get_id', unique=True, readonly=True)
     domain = fields.CharField(attribute='domain')
     name = fields.CharField(attribute='name')
