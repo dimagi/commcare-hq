@@ -2,6 +2,7 @@
 FormES
 --------
 """
+from corehq.apps.es.filters import NULL_VALUE
 from .es_query import HQESQuery
 from . import filters
 
@@ -53,4 +54,7 @@ def completed(gt=None, gte=None, lt=None, lte=None):
 
 
 def user_id(user_ids):
-    return filters.term('form.meta.userID', list(user_ids))
+    return filters.term(
+        'form.meta.userID',
+        [x if x is not None else NULL_VALUE for x in list(user_ids)]
+    )
