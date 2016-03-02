@@ -48,9 +48,10 @@ class KafkaChangeFeed(ChangeFeed):
         # in milliseconds, -1 means wait forever for changes
         timeout = -1 if forever else MIN_TIMEOUT
 
-        reset = 'smallest' if since is not None else 'largest'
+        start_from_latest = since is None
+        reset = 'smallest' if not start_from_latest else 'largest'
         consumer = self._get_consumer(timeout, auto_offset_reset=reset)
-        if since is not None:
+        if not start_from_latest:
             if isinstance(since, dict):
                 # multiple topics
                 offsets = [(topic, self._partition, offset) for topic, offset in since.items()]
