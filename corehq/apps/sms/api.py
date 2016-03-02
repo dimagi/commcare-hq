@@ -541,13 +541,22 @@ def process_incoming(msg):
             import verify
             verify.process_verification(v, msg)
 
-    if msg.domain and domain_has_privilege(msg.domain, privileges.INBOUND_SMS):
+    # If the sms queue is enabled, then the billable gets created in remove_from_queue()
+    if (
+        not settings.SMS_QUEUE_ENABLED and
+        msg.domain and
+        domain_has_privilege(msg.domain, privileges.INBOUND_SMS)
+    ):
         create_billable_for_sms(msg)
 
 
 def create_billable_for_sms(msg, delay=True):
+    if not isinstance(msg, SMS):
+        raise Exception("Expected msg to be an SMS")
+
     if not msg.domain:
         return
+
     try:
         from corehq.apps.sms.tasks import store_billable
         if delay:

@@ -10,6 +10,8 @@ from corehq.apps.sms.api import (send_message_via_backend, process_incoming,
     log_sms_exception, create_billable_for_sms)
 from django.db import transaction
 from django.conf import settings
+from corehq import privileges
+from corehq.apps.accounting.utils import domain_has_privilege
 from corehq.apps.domain.models import Domain
 from corehq.apps.smsbillables.models import SmsBillable
 from corehq.util.timezones.conversions import ServerTime
@@ -27,8 +29,13 @@ def remove_from_queue(queued_sms):
         for field in sms._meta.fields:
             if field.name != 'id':
                 setattr(sms, field.name, getattr(queued_sms, field.name))
-        sms.save()
         queued_sms.delete()
+        sms.save()
+
+    if sms.direction == OUTGOING and sms.processed and not sms.error:
+        create_billable_for_sms(sms)
+    elif sms.direction == INCOMING and sms.domain and domain_has_privilege(sms.domain, privileges.INBOUND_SMS):
+        create_billable_for_sms(sms)
 
 
 def handle_unsuccessful_processing_attempt(msg):
@@ -48,7 +55,6 @@ def handle_successful_processing_attempt(msg):
     if msg.direction == OUTGOING:
         msg.date = utcnow
     remove_from_queue(msg)
-    create_billable_for_sms(msg)
 
 
 def delay_processing(msg, minutes):
@@ -191,12 +197,13 @@ def process_sms(queued_sms_pk):
 
         if message_is_stale(msg, utcnow):
             msg.set_system_error(SMS.ERROR_MESSAGE_IS_STALE)
+            remove_from_queue(msg)
             release_lock(message_lock, True)
             return
 
         if msg.direction == OUTGOING:
             if msg.domain:
-                domain_object = Domain.get_by_name(msg.domain, strict=True)
+                domain_object = Domain.get_by_name(msg.domain)
             else:
                 domain_object = None
             if domain_object and handle_domain_specific_delays(msg, domain_object, utcnow):
@@ -221,6 +228,7 @@ def process_sms(queued_sms_pk):
                 handle_incoming(msg)
             else:
                 msg.set_system_error(SMS.ERROR_INVALID_DIRECTION)
+                remove_from_queue(msg)
 
             if recipient_block:
                 release_lock(recipient_lock, True)
