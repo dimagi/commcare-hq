@@ -830,8 +830,7 @@ class CaseTransaction(DisabledDbMixin, models.Model):
     TYPE_LEDGER = 64
     TYPE_CASE_CREATE = 128
     TYPE_CASE_CLOSE = 256
-    TYPE_CASE_UPDATE = 512
-    TYPE_CASE_INDEX = 1024
+    TYPE_CASE_INDEX = 512
     TYPE_CHOICES = (
         (TYPE_FORM, 'form'),
         (TYPE_REBUILD_WITH_REASON, 'rebuild_with_reason'),
@@ -889,10 +888,6 @@ class CaseTransaction(DisabledDbMixin, models.Model):
     def is_case_index(self):
         return bool(self.is_form_transaction and self.TYPE_CASE_INDEX & self.type)
 
-    @property
-    def is_case_update(self):
-        return bool(self.is_form_transaction and self.TYPE_CASE_UPDATE & self.type)
-
     def __eq__(self, other):
         if not isinstance(other, CaseTransaction):
             return False
@@ -931,16 +926,11 @@ class CaseTransaction(DisabledDbMixin, models.Model):
     @classmethod
     def _type_from_action_type(cls, action_type_slug):
         from casexml.apps.case import const
-        _type = None
-        if action_type_slug == const.CASE_ACTION_CREATE:
-            _type = cls.TYPE_CASE_CREATE
-        elif action_type_slug == const.CASE_ACTION_UPDATE:
-            _type = cls.TYPE_CASE_UPDATE
-        elif action_type_slug == const.CASE_ACTION_CLOSE:
-            _type = cls.TYPE_CASE_CLOSE
-        elif action_type_slug == const.CASE_ACTION_INDEX:
-            _type = cls.TYPE_CASE_INDEX
-        return _type
+        return {
+            const.CASE_ACTION_CLOSE: cls.TYPE_CASE_CLOSE,
+            const.CASE_ACTION_CREATE: cls.TYPE_CASE_CREATE,
+            const.CASE_ACTION_INDEX: cls.TYPE_CASE_INDEX,
+        }.get(action_type_slug, 0)
 
     @classmethod
     def rebuild_transaction(cls, case, detail):
