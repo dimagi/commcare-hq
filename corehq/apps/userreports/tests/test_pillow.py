@@ -1,11 +1,13 @@
 from copy import copy
 import decimal
 import uuid
-from django.test import TestCase, SimpleTestCase
+from django.test import TestCase, SimpleTestCase, override_settings
 from mock import patch
 from datetime import datetime, timedelta
+from casexml.apps.case.mock import CaseBlock
 from casexml.apps.case.models import CommCareCase
 from casexml.apps.case.signals import case_post_save
+from casexml.apps.case.util import post_case_blocks
 from corehq.apps.change_feed import data_sources
 from corehq.apps.change_feed import topics
 from corehq.apps.change_feed.producer import producer
@@ -15,6 +17,7 @@ from corehq.apps.userreports.pillow import ConfigurableIndicatorPillow, REBUILD_
 from corehq.apps.userreports.sql import IndicatorSqlAdapter
 from corehq.apps.userreports.tasks import rebuild_indicators
 from corehq.apps.userreports.tests.utils import get_sample_data_source, get_sample_doc_and_indicators
+from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 from corehq.util.test_utils import softer_assert
 from corehq.toggles import KAFKA_UCRS
 from corehq.util.context_managers import drop_connected_signals
@@ -121,8 +124,13 @@ class IndicatorPillowTest(IndicatorPillowTestBase):
 
 
 class KafkaIndicatorPillowTest(IndicatorPillowTestBase):
-    dependent_apps = ['pillowtop']
+    dependent_apps = [
+        'couchforms', 'pillowtop', 'corehq.couchapps', 'corehq.apps.tzmigration',
+        'corehq.form_processor', 'corehq.sql_accessors', 'corehq.sql_proxy_accessors',
+        'casexml.apps.case', 'casexml.apps.phone'
+    ]
 
+    @softer_assert
     def setUp(self):
         super(KafkaIndicatorPillowTest, self).setUp()
         self.pillow = get_kafka_ucr_pillow()
@@ -136,7 +144,7 @@ class KafkaIndicatorPillowTest(IndicatorPillowTestBase):
         self.pillow.processor(_doc_to_change(sample_doc))
         self._check_sample_doc_state()
 
-    @patch('corehq.apps.userreports.specs.datetime', )
+    @patch('corehq.apps.userreports.specs.datetime')
     def test_process_doc_from_couch(self, datetime_mock):
         datetime_mock.utcnow.return_value = self.fake_time_now
         sample_doc, _ = get_sample_doc_and_indicators(self.fake_time_now)
@@ -154,6 +162,24 @@ class KafkaIndicatorPillowTest(IndicatorPillowTestBase):
         self.pillow.process_changes(since={topics.CASE: since}, forever=False)
         self._check_sample_doc_state()
         case.delete()
+
+    @patch('corehq.apps.userreports.specs.datetime')
+    @override_settings(TESTS_SHOULD_USE_SQL_BACKEND=True)
+    def test_process_doc_from_sql(self, datetime_mock):
+        datetime_mock.utcnow.return_value = self.fake_time_now
+        sample_doc, _ = get_sample_doc_and_indicators(self.fake_time_now)
+
+        since = get_current_kafka_seq(topics.CASE_SQL)
+
+        # save case to DB - should also publish to kafka
+        case = _save_sql_case(sample_doc)
+
+        # run pillow and check changes
+        self.pillow.process_changes(since={topics.CASE_SQL: since}, forever=False)
+        self._check_sample_doc_state()
+
+        CaseAccessors(domain=case.domain).db_accessor.hard_delete_cases(case.domain, [case.case_id])
+
 
 class IndicatorConfigFilterTest(SimpleTestCase):
 
@@ -205,3 +231,22 @@ def _doc_to_change(doc):
             is_deletion=False,
         )
     )
+
+
+def _save_sql_case(doc):
+    system_props = ['_id', '_rev', 'opened_on', 'owner_id', 'doc_type', 'domain', 'type']
+    with drop_connected_signals(case_post_save):
+        form, cases = post_case_blocks(
+            [
+                CaseBlock(
+                    create=True,
+                    case_id=doc['_id'],
+                    case_name=doc['name'],
+                    case_type=doc['type'],
+                    owner_id=doc['owner_id'],
+                    date_opened=doc['opened_on'],
+                    update={k: v for k, v in doc.items() if k not in system_props}
+                ).as_xml()
+            ], domain=doc['domain']
+        )
+    return cases[0]
