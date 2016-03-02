@@ -177,6 +177,10 @@ class ConfigurableReportPillowProcessor(ConfigurableReportTableManagerMixin, Pil
 
 
 class ConfigurableReportKafkaPillow(ConstructedPillow):
+    # the only reason this is a class is to avoid exposing _processor
+    # for tests to be able to call bootstrap on it.
+    # we could easily remove the class and push all the stuff in __init__ to
+    # get_kafka_ucr_pillow below if we wanted.
 
     def __init__(self, pillow_name):
         change_feed = KafkaChangeFeed(topics.ALL, group_id=pillow_name)
