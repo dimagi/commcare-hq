@@ -828,6 +828,10 @@ class CaseTransaction(DisabledDbMixin, models.Model):
     TYPE_REBUILD_FORM_ARCHIVED = 16
     TYPE_REBUILD_FORM_EDIT = 32
     TYPE_LEDGER = 64
+    TYPE_CASE_CREATE = 128
+    TYPE_CASE_CLOSE = 256
+    TYPE_CASE_UPDATE = 512
+    TYPE_CASE_INDEX = 1024
     TYPE_CHOICES = (
         (TYPE_FORM, 'form'),
         (TYPE_REBUILD_WITH_REASON, 'rebuild_with_reason'),
@@ -869,6 +873,26 @@ class CaseTransaction(DisabledDbMixin, models.Model):
             self.cached_form = FormAccessorSQL.get_form(self.form_id)
         return self.cached_form
 
+    @property
+    def is_form_transaction(self):
+        return bool(self.TYPE_FORM & self.type)
+
+    @property
+    def is_case_create(self):
+        return bool(self.is_form_transaction and self.TYPE_CASE_CREATE & self.type)
+
+    @property
+    def is_case_close(self):
+        return bool(self.is_form_transaction and self.TYPE_CASE_CLOSE & self.type)
+
+    @property
+    def is_case_index(self):
+        return bool(self.is_form_transaction and self.TYPE_CASE_INDEX & self.type)
+
+    @property
+    def is_case_update(self):
+        return bool(self.is_form_transaction and self.TYPE_CASE_UPDATE & self.type)
+
     def __eq__(self, other):
         if not isinstance(other, CaseTransaction):
             return False
@@ -883,8 +907,11 @@ class CaseTransaction(DisabledDbMixin, models.Model):
         return not self.__eq__(other)
 
     @classmethod
-    def form_transaction(cls, case, xform):
-        return cls._from_form(case, xform, transaction_type=CaseTransaction.TYPE_FORM)
+    def form_transaction(cls, case, xform, actions):
+        type_ = cls.TYPE_FORM
+        for action in actions:
+            type_ |= cls._type_from_action_type(action.action_type_slug)
+        return cls._from_form(case, xform, transaction_type=type_)
 
     @classmethod
     def ledger_transaction(cls, case, xform):
@@ -900,6 +927,20 @@ class CaseTransaction(DisabledDbMixin, models.Model):
             type=transaction_type,
             revoked=not xform.is_normal
         )
+
+    @classmethod
+    def _type_from_action_type(cls, action_type_slug):
+        from casexml.apps.case import const
+        _type = None
+        if action_type_slug == const.CASE_ACTION_CREATE:
+            _type = cls.TYPE_CASE_CREATE
+        elif action_type_slug == const.CASE_ACTION_UPDATE:
+            _type = cls.TYPE_CASE_UPDATE
+        elif action_type_slug == const.CASE_ACTION_CLOSE:
+            _type = cls.TYPE_CASE_CLOSE
+        elif action_type_slug == const.CASE_ACTION_INDEX:
+            _type = cls.TYPE_CASE_INDEX
+        return _type
 
     @classmethod
     def rebuild_transaction(cls, case, detail):

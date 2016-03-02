@@ -35,7 +35,7 @@ class SqlCaseUpdateStrategy(UpdateStrategy):
     def update_from_case_update(self, case_update, xformdoc, other_forms=None):
         self._apply_case_update(case_update, xformdoc)
 
-        transaction = CaseTransaction.form_transaction(self.case, xformdoc)
+        transaction = CaseTransaction.form_transaction(self.case, xformdoc, case_update.actions)
         if transaction not in self.case.get_tracked_models_to_create(CaseTransaction):
             # don't add multiple transactions for the same form
             self.case.track_create(transaction)
