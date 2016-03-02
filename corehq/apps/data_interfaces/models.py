@@ -58,7 +58,7 @@ class AutomaticUpdateRule(models.Model):
                  .case_type(case_type)
                  .server_modified_range(lte=boundary_date)
                  .is_closed(closed=False)
-                 .fields([]))
+                 .exclude_source())
         results = query.run()
         return results.doc_ids
 
