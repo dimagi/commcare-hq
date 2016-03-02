@@ -2,6 +2,7 @@ from datetime import datetime
 from decimal import Decimal
 import json
 import os
+import uuid
 from corehq.apps.userreports.models import DataSourceConfiguration, ReportConfiguration
 from corehq.util.dates import iso_string_to_date
 from dimagi.utils.parsing import json_format_datetime
@@ -28,7 +29,7 @@ def get_sample_doc_and_indicators(fake_time_now=None):
         fake_time_now = datetime.utcnow()
     date_opened = datetime(2014, 6, 21)
     sample_doc = dict(
-        _id='some-doc-id',
+        _id=uuid.uuid4().hex,
         opened_on=json_format_datetime(date_opened),
         owner_id='some-user-id',
         doc_type="CommCareCase",
@@ -42,7 +43,7 @@ def get_sample_doc_and_indicators(fake_time_now=None):
         priority=4,
     )
     expected_indicators = {
-        'doc_id': 'some-doc-id',
+        'doc_id': sample_doc['_id'],
         'repeat_iteration': 0,
         'date': date_opened,
         'owner': 'some-user-id',
