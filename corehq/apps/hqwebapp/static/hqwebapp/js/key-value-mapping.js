@@ -15,6 +15,8 @@ var MapItem = function(item, index, mappingContext){
 
     // attach a media-manager if item.value is a file-path to icon
     if (mappingContext.values_are_icons) {
+        var AppMenuMediaManager = hqImport('app_manager/js/app_manager_media.js').AppMenuMediaManager;
+        var uploaders = hqImport('#app_manager/partials/nav_menu_media_js_common.html');
         this.iconManager = new AppMenuMediaManager({
             ref: {
                 "path": item.value[mappingContext.lang],
@@ -24,7 +26,7 @@ var MapItem = function(item, index, mappingContext){
                 "icon_class": "icon-picture"
             },
             objectMap: mappingContext.multimedia,
-            uploadController: iconUploader,
+            uploadController: uploaders.iconUploader,
             defaultPath: 'jr://file/commcare/image/kv-icon' + index + '.png',
             inputElement: $("#" + makeSafeForCSS(this.key())),
         });
