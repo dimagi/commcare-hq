@@ -7,7 +7,7 @@ from kafka.common import ConsumerTimeout, KafkaConfigurationError, KafkaUnavaila
 from corehq.apps.change_feed.data_sources import get_document_store
 from corehq.apps.change_feed.exceptions import UnknownDocumentStore
 import logging
-from pillowtop.checkpoints.manager import PillowCheckpointEventHandler
+from pillowtop.checkpoints.manager import PillowCheckpointEventHandler, DEFAULT_EMPTY_CHECKPOINT_SEQUENCE
 from pillowtop.feed.interface import ChangeFeed, Change, ChangeMeta
 
 
@@ -139,6 +139,9 @@ class MultiTopicCheckpointEventHandler(PillowCheckpointEventHandler):
         checkpoint_doc = self.checkpoint.get_or_create_wrapped().document
         if checkpoint_doc.sequence_format != 'json':
             checkpoint_doc.sequence_format = 'json'
+            # convert initial default to json default
+            if checkpoint_doc.sequence == DEFAULT_EMPTY_CHECKPOINT_SEQUENCE:
+                checkpoint_doc.sequence = '{}'
             checkpoint_doc.save()
 
     def fire_change_processed(self, change, context):
