@@ -56,7 +56,7 @@ class KafkaChangeFeed(ChangeFeed):
                 self._processed_topic_offsets = copy(since)
             else:
                 # single topic
-                topic = self._get_single_topic_or_fail()
+                single_topic = self._get_single_topic_or_fail()
                 try:
                     offset = int(since)  # coerce sequence IDs to ints
                 except ValueError:
@@ -66,7 +66,7 @@ class KafkaChangeFeed(ChangeFeed):
                     # since kafka only keeps 7 days of data this isn't a big deal. Hopefully we will only see
                     # these once when each pillow moves over.
                     offset = 0
-                self._processed_topic_offsets = {topic: offset}
+                self._processed_topic_offsets = {single_topic: offset}
 
             offsets = [(topic, self._partition, self._processed_topic_offsets.get(topic, 0))
                        for topic in self._topics]
