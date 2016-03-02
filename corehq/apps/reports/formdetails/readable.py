@@ -280,7 +280,7 @@ def get_questions_for_submission(xform):
 def get_readable_data_for_submission(xform):
     questions, questions_error = get_questions_for_submission(xform)
     return get_readable_form_data(
-        xform.form,
+        xform.form_data,
         questions,
         process_label=_html_interpolate_output_refs
     ), questions_error

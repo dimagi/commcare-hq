@@ -239,20 +239,3 @@ class DictExpressionSpec(JsonObject):
         for property_name, expression in self._compiled_properties.items():
             ret[property_name] = expression(item, context)
         return ret
-
-
-class AddDaysExpressionSpec(JsonObject):
-    type = TypeProperty('add_days')
-    date_expression = DefaultProperty(required=True)
-    count_expression = DefaultProperty(required=True)
-
-    def configure(self, date_expression, count_expression):
-        self._date_expression = date_expression
-        self._count_expression = count_expression
-
-    def __call__(self, item, context=None):
-        date_val = transform_date(self._date_expression(item, context))
-        int_val = transform_int(self._count_expression(item, context))
-        if date_val is not None and int_val is not None:
-            return date_val + timedelta(days=int_val)
-        return None

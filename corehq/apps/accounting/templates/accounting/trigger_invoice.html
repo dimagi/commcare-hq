@@ -1,15 +1,9 @@
-{% extends 'style/bootstrap2/base_section.html' %}
+{% extends 'style/bootstrap3/base_section.html' %}
 {% load crispy_forms_tags %}
 {% load hq_shared_tags %}
 
-{% block head %} {{ block.super }}
-    <link rel="stylesheet" href="{% static 'hqwebapp/js/lib/jquery-ui-datepicker/datepicker-theme/jquery-ui-1.8.17.custom.css' %}" />
-    <link href="{% static 'hqwebapp/js/lib/select2/select2.css' %}" rel="stylesheet"/>
-{% endblock %}
-
 {% block js %}{{ block.super }}
-    <script src="{% static 'select2-3.4.5-legacy/select2.min.js' %}"></script>
-    <script src="{% static 'accounting/js/accounting.billing_info_handler.js' %}"></script>
+    <script src="{% new_static 'accounting/js/accounting.billing_info_handler.js' %}"></script>
 {% endblock %}
 
 {% block js-inline %}{{ block.super }}
@@ -19,6 +13,6 @@
     </script>
 {% endblock %}
 
-{% block main_column %}
+{% block page_content %}
     {% crispy trigger_form %}
 {% endblock %}

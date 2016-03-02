@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2016-02-10 19:22+0000\n"
+"POT-Creation-Date: 2016-03-01 20:12+0000\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -22,50 +22,54 @@ msgstr ""
 msgid "You have unsaved changes"
 msgstr ""
 
-#: corehq/apps/app_manager/static/app_manager/js/commcaresettings.js:151
+#: corehq/apps/app_manager/static/app_manager/js/commcaresettings.js:152
 #, c-format
 msgid "Upgrade to CommCare %s for this option!"
 msgstr ""
 
-#: corehq/apps/app_manager/static/app_manager/js/commcaresettings.js:153
+#: corehq/apps/app_manager/static/app_manager/js/commcaresettings.js:154
 #, c-format
 msgid "Upgrade to CommCare %s!"
 msgstr ""
 
-#: corehq/apps/app_manager/static/app_manager/js/commcaresettings.js:164
+#: corehq/apps/app_manager/static/app_manager/js/commcaresettings.js:165
 msgid "Auto-set by "
 msgstr ""
 
-#: corehq/apps/export/static/export/js/models.js:28
-#: corehq/apps/export/static/export/js/models.js:34
+#: corehq/apps/app_manager/static/app_manager/js/password_setter.jquery.js:8
+msgid "Reset"
+msgstr ""
+
+#: corehq/apps/export/static/export/js/models.js:16
+#: corehq/apps/export/static/export/js/models.js:22
 msgid "Web Page (Excel Dashboards)"
 msgstr ""
 
-#: corehq/apps/export/static/export/js/models.js:30
+#: corehq/apps/export/static/export/js/models.js:18
 msgid "CSV (Zip file)"
 msgstr ""
 
-#: corehq/apps/export/static/export/js/models.js:32
+#: corehq/apps/export/static/export/js/models.js:20
 msgid "Excel 2007"
 msgstr ""
 
-#: corehq/apps/export/static/export/js/models.js:43
+#: corehq/apps/export/static/export/js/models.js:31
 msgid "Create"
 msgstr ""
 
-#: corehq/apps/export/static/export/js/models.js:43
+#: corehq/apps/export/static/export/js/models.js:31
 msgid "Save"
 msgstr ""
 
-#: corehq/apps/export/static/export/js/models.js:184
+#: corehq/apps/export/static/export/js/models.js:170
 msgid "Sensitive ID"
 msgstr ""
 
-#: corehq/apps/export/static/export/js/models.js:186
+#: corehq/apps/export/static/export/js/models.js:172
 msgid "Sensitive Date"
 msgstr ""
 
-#: corehq/apps/export/static/export/js/models.js:188
+#: corehq/apps/export/static/export/js/models.js:174
 msgid "None"
 msgstr ""
 

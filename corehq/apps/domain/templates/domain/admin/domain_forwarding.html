@@ -1,4 +1,4 @@
-{% extends "settings/bootstrap3/base_template.html" %}
+{% extends "style/bootstrap3/base_section.html" %}
 {% load i18n %}
 
 {% block page_content %}
@@ -15,10 +15,19 @@
             {% if form_repeaters %}
             <thead>
                 <tr>
-                    <th class="col-sm-6">
+                    <th class="col-sm-4">
                         {% trans 'Url' %}
                     </th>
-                    <th class="col-sm-6">
+                    <th class="col-sm-1">
+                        {% trans 'Pending' %}
+                    </th>
+                    <th class="col-sm-1">
+                        {% trans 'Failure' %}
+                    </th>
+                    <th class="col-sm-1">
+                        {% trans 'Success' %}
+                    </th>
+                    <th class="col-sm-4">
                         {% trans 'Action' %}
                     </th>
                 </tr>

@@ -18,7 +18,6 @@ from corehq.apps.accounting.exceptions import (
     LineItemError,
     InvoiceError,
     InvoiceEmailThrottledError,
-    BillingContactInfoError,
     InvoiceAlreadyCreatedError,
 )
 from corehq.apps.accounting.models import (
@@ -120,14 +119,6 @@ class DomainInvoiceFactory(object):
                 "was null for domain %s" % self.domain.name
             )
             do_not_invoice = True
-        if not BillingContactInfo.objects.filter(account=account).exists():
-            # No contact information exists for this account.
-            # This shouldn't happen, but if it does, we can't continue
-            # with the invoice generation.
-            raise BillingContactInfoError(
-                "Project %s has incurred charges, but does not have their "
-                "Billing Contact Info filled out." % self.domain.name
-            )
         # First check to make sure none of the existing subscriptions is set
         # to do not invoice. Let's be on the safe side and not send a
         # community invoice out, if that's the case.

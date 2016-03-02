@@ -25,6 +25,9 @@ class AutomaticUpdateRule(models.Model):
     # before we run the rule against it.
     server_modified_boundary = models.IntegerField()
 
+    class Meta:
+        app_label = "data_interfaces"
+
     @classmethod
     def by_domain(cls, domain, active_only=True):
         filters = {'domain': domain}
@@ -135,6 +138,9 @@ class AutomaticUpdateRuleCriteria(models.Model):
     property_value = models.CharField(max_length=126, null=True)
     match_type = models.CharField(max_length=10, choices=MATCH_TYPE_CHOICES)
 
+    class Meta:
+        app_label = "data_interfaces"
+
     def check_days_since(self, case, now):
         date_to_check = case.get_case_property(self.property_name)
         if (
@@ -154,10 +160,10 @@ class AutomaticUpdateRuleCriteria(models.Model):
         return date_to_check <= (now - timedelta(days=days))
 
     def check_equal(self, case, now):
-        return case.get_case_property(self.property_name) == self.property_value
+        return case.to_json().get(self.property_name) == self.property_value
 
     def check_not_equal(self, case, now):
-        return case.get_case_property(self.property_name) != self.property_value
+        return case.to_json().get(self.property_name) != self.property_value
 
     def check_has_value(self, case, now):
         value = case.get_case_property(self.property_name)
@@ -191,3 +197,6 @@ class AutomaticUpdateAction(models.Model):
     # property_name and property_value are ignored unless action is UPDATE
     property_name = models.CharField(max_length=126, null=True)
     property_value = models.CharField(max_length=126, null=True)
+
+    class Meta:
+        app_label = "data_interfaces"

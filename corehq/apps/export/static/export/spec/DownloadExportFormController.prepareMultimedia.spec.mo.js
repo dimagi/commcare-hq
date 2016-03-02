@@ -93,8 +93,8 @@ describe('DownloadExportFormController - Prepare Multimedia Download', function(
                 // no error functions happened
                 assert.equal(DnldExpData.exportDownloadService._numErrors, 0);
                 assert.equal(DnldExpData.exportDownloadService._numCeleryRetries, 0);
-                assert.isNull(DnldExpData.exportDownloadService.downloadError);
-                assert.isFalse(DnldExpData.exportDownloadService.showCeleryError);
+                assert.isFalse(DnldExpData.exportDownloadService.downloadError);
+                assert.isFalse(DnldExpData.exportDownloadService.celeryError);
 
                 DnldExpData.exportDownloadService.resetDownload();
                 DnldExpData.currentScope.$apply();  // triggers $watch
@@ -107,8 +107,8 @@ describe('DownloadExportFormController - Prepare Multimedia Download', function(
                 // this remains the same
                 assert.equal(DnldExpData.exportDownloadService._numErrors, 0);
                 assert.equal(DnldExpData.exportDownloadService._numCeleryRetries, 0);
-                assert.isNull(DnldExpData.exportDownloadService.downloadError);
-                assert.isFalse(DnldExpData.exportDownloadService.showCeleryError);
+                assert.isFalse(DnldExpData.exportDownloadService.downloadError);
+                assert.isFalse(DnldExpData.exportDownloadService.celeryError);
                 assert.isFalse(DnldExpData.exportDownloadService.isMultimediaDownload);
             });
         });

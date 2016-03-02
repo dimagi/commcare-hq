@@ -50,7 +50,7 @@
 
         {% include 'style/includes/analytics_all.html' %}
         {% if less_debug %}
-            <script src="{% static 'style/lib/lessjs/less-1.3.1.min.js' %}"></script>
+            <script src="{% static 'less/dist/less-1.3.1.min.js' %}"></script>
             {% if less_watch %}<script>less.watch();</script>{% endif %}
         {% endif %}
     </head>
@@ -384,9 +384,12 @@
         <script src="{% static 'jquery-timeago/jquery.timeago.js' %}"></script>
 
         <script src="{% static 'hqwebapp/js/lib/keymaster.min.js' %}"></script>
+        <script src="{% static 'hqwebapp/js/hqModules.js' %}"></script>
         <script>
-            var KEY = key.noConflict();  // Make global key function capital to adhere to globals convention
-                                         // and to avoid conflicts in other places where "key" is used as variable name
+            // Module name is what it is to match the B3 version of this code
+            hqDefine('style/includes/keyboard_shortcuts.html#key', function () {
+                return { key: key.noConflict() };
+            });
         </script>
         {% if request.couch_user.keyboard_shortcuts.enabled %}
             <script src="{% static 'hqwebapp/js/keyboard_navigator.js' %}"></script>
@@ -447,9 +450,10 @@
             }
 
             $(function() {
-                var $lookup = $('#keyboard-shortcuts-lookup');
+                var key = hqImport("style/includes/keyboard_shortcuts.html#key").key,
+                    $lookup = $('#keyboard-shortcuts-lookup');
                 _(KEYBOARD_SHORTCUTS).each(function(s) {
-                    KEY(s.shortcut, s.handler);
+                    key(s.shortcut, s.handler);
                     var $shortcut = $('<li>').append($('<span>').text(s.desc), ': ', $('<code>').text(s.shortcut));
                     $lookup.append($shortcut);
                 });
@@ -462,11 +466,12 @@
         {% if request.couch_user.keyboard_shortcuts.enabled %}
         <script>
             var nav_key = {{ request.couch_user.keyboard_shortcuts.main_key|JSON }};
+            var KeyboardNavigator = hqImport('hqwebapp/js/keyboard_navigator.js');
 
             function gen_apps_menu_elements() {
                 return $("#mainmenu-ApplicationsTab li a[data-id]");
             }
-            var apps_menu_navigator = new KeyboardNavigator();
+            var apps_menu_navigator = new KeyboardNavigator.model();
             apps_menu_navigator.init({
                 name: 'apps menu',
                 ready_scope: 'am-ready',
@@ -477,7 +482,7 @@
                 element_list_generator: gen_apps_menu_elements,
                 focus_in_fn: function($ele) {
                     $("#mainmenu-ApplicationsTab").addClass('open');
-                    keyboard_navigator_utils.focus_in_fn($ele);
+                    KeyboardNavigator.focus_in_fn($ele);
                 },
                 stop_fn: function() { $("#mainmenu-ApplicationsTab").removeClass('open') },
                 reset_index: true,
@@ -487,7 +492,7 @@
             function gen_admin_menu_elements() {
                 return $("#mainmenu-AdminTab li a");
             }
-            var admin_menu_navigator = new KeyboardNavigator();
+            var admin_menu_navigator = new KeyboardNavigator.model();
             admin_menu_navigator.init({
                 name: 'admin menu',
                 ready_scope: 'adm-ready',
@@ -498,7 +503,7 @@
                 element_list_generator: gen_admin_menu_elements,
                 focus_in_fn: function($ele) {
                     $("#mainmenu-AdminTab").addClass('open');
-                    keyboard_navigator_utils.focus_in_fn($ele);
+                    KeyboardNavigator.focus_in_fn($ele);
                 },
                 stop_fn: function() { $("#mainmenu-AdminTab").removeClass('open') },
                 reset_index: true,
@@ -508,7 +513,7 @@
             function gen_projects_menu_elements() {
                 return $("#nav-projects-menu li a");
             }
-            var projects_menu_navigator = new KeyboardNavigator();
+            var projects_menu_navigator = new KeyboardNavigator.model();
             projects_menu_navigator.init({
                 name: 'projects menu',
                 ready_scope: 'pm-ready',
@@ -526,7 +531,7 @@
             function gen_user_menu_elements() {
                 return $("#nav-user-menu li a");
             }
-            var user_menu_navigator = new KeyboardNavigator();
+            var user_menu_navigator = new KeyboardNavigator.model();
             user_menu_navigator.init({
                 name: 'user menu',
                 ready_scope: 'um-ready',

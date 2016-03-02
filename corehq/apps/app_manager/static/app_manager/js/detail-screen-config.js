@@ -117,7 +117,7 @@ var SortRow = function(params){
             return 'Increasing (May 1st, May 2nd)';
         } else if (type === 'int') {
             return 'Increasing (1, 2, 3)';
-        } else if (type === 'double') {
+        } else if (type === 'double' || type === 'distance') {
             return 'Increasing (1.1, 1.2, 1.3)';
         }
     });
@@ -130,7 +130,7 @@ var SortRow = function(params){
             return 'Decreasing (May 2nd, May 1st)'
         } else if (type === 'int') {
             return 'Decreasing (3, 2, 1)';
-        } else if (type === 'double') {
+        } else if (type === 'double' || type === 'distance') {
             return 'Decreasing (1.3, 1.2, 1.1)';
         }
     });
@@ -919,7 +919,8 @@ var DetailScreenConfig = (function () {
                         data: this.serialize(),
                         dataType: 'json',
                         success: function (data) {
-                            COMMCAREHQ.app_manager.updateDOM(data.update);
+                            var app_manager = hqImport('app_manager/js/app_manager.js');
+                            app_manager.updateDOM(data.update);
                         }
                     });
                 }
@@ -1247,3 +1248,13 @@ ko.bindingHandlers.DetailScreenConfig_notifyShortScreenOnChange = {
         }, 0);
     }
 };
+
+
+hqDefine('app_manager/js/detail-screen-config.js', function () {
+    return {
+        /* for sharing variables between essentially separate parts of the ui */
+        state: {
+            requires_case_details: ko.observable()
+        }
+    };
+});

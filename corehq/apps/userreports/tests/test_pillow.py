@@ -10,6 +10,7 @@ from corehq.apps.userreports.pillow import ConfigurableIndicatorPillow, REBUILD_
 from corehq.apps.userreports.sql import IndicatorSqlAdapter
 from corehq.apps.userreports.tasks import rebuild_indicators
 from corehq.apps.userreports.tests.utils import get_sample_data_source, get_sample_doc_and_indicators
+from corehq.util.test_utils import softer_assert
 
 
 class PillowBootstrapTest(TestCase):
@@ -40,6 +41,7 @@ class PillowBootstrapTest(TestCase):
 
 class IndicatorPillowTest(TestCase):
 
+    @softer_assert
     def setUp(self):
         self.config = get_sample_data_source()
         self.config.save()

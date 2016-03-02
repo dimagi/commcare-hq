@@ -1,0 +1,30 @@
+# -*- coding: utf-8 -*-
+from __future__ import unicode_literals
+
+from django.db import models, migrations
+
+from corehq.form_processor.models import CaseTransaction, XFormInstanceSQL, CommCareCaseIndexSQL, XFormOperationSQL
+from corehq.sql_db.operations import RawSQLMigration, HqRunSQL
+
+migrator = RawSQLMigration(('corehq', 'sql_accessors', 'sql_templates'), {
+    'FORM_STATE_ARCHIVED': XFormInstanceSQL.ARCHIVED,
+    'FORM_STATE_NORMAL': XFormInstanceSQL.NORMAL,
+    'FORM_OPERATION_ARCHIVE': XFormOperationSQL.ARCHIVE,
+    'FORM_OPERATION_UNARCHIVE': XFormOperationSQL.UNARCHIVE,
+    'TRANSACTION_TYPE_LEDGER': CaseTransaction.TYPE_LEDGER,
+    'TRANSACTION_TYPE_FORM': CaseTransaction.TYPE_FORM,
+    'RELATIONSHIP_TYPE_EXTENSION': CommCareCaseIndexSQL.EXTENSION,
+})
+
+
+class Migration(migrations.Migration):
+
+    dependencies = [
+        ('sql_accessors', '0009_ledger_accessors'),
+    ]
+
+    operations = [
+        migrator.get_migration('archive_unarchive_form.sql'),
+        migrator.get_migration('get_case_form_ids.sql'),
+        migrator.get_migration('get_extension_case_ids.sql'),
+    ]

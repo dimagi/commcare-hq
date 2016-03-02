@@ -60,7 +60,7 @@ class SessionDataHelper(object):
 
         return session_data
 
-    def filter_cases(self, xpath, additional_filters=None, auth=None, extra_instances=None):
+    def filter_cases(self, xpath, additional_filters=None, auth=None, extra_instances=None, use_formplayer=False):
         """
         Filter a list of cases by an xpath expression + additional filters
         """
@@ -72,12 +72,12 @@ class SessionDataHelper(object):
             "action": "touchcare-filter-cases",
             "filter_expr": xpath,
             "session_data": session_data,
+            "domain": self.domain
         }
 
         response = post_data(
             json.dumps(data),
-            url=settings.XFORMS_PLAYER_URL,
-            content_type="text/json", auth=auth
+            content_type="application/json", auth=auth
         )
 
         return json.loads(response)

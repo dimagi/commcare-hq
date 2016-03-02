@@ -73,6 +73,7 @@ USE_I18N = True
 # Examples: "http://media.lawrence.com", "http://example.com/media/"
 MEDIA_URL = '/media/'
 STATIC_URL = '/static/'
+STATIC_CDN = ''
 
 FILEPATH = os.path.abspath(os.path.dirname(__file__))
 # media for user uploaded media.  in general this won't be used at all.
@@ -440,7 +441,7 @@ SOIL_HEARTBEAT_CACHE_KEY = "django-soil-heartbeat"
 
 # restyle some templates
 BASE_TEMPLATE = "style/bootstrap2/base.html"  # should eventually be bootstrap3
-BASE_ASYNC_TEMPLATE = "reports/async/basic.html"
+BASE_ASYNC_TEMPLATE = "reports/async/bootstrap2/basic.html"
 LOGIN_TEMPLATE = "login_and_password/login.html"
 LOGGEDOUT_TEMPLATE = LOGIN_TEMPLATE
 
@@ -562,6 +563,7 @@ TEST_RUNNER = 'testrunner.TwoStageTestRunner'
 HQ_ACCOUNT_ROOT = "commcarehq.org"
 
 XFORMS_PLAYER_URL = "http://localhost:4444/"  # touchform's setting
+FORMPLAYER_URL = 'http://localhost:8080'
 OFFLINE_TOUCHFORMS_PORT = 4444
 
 ####### Couchlog config #######
@@ -1062,6 +1064,8 @@ INDICATOR_CONFIG = {
     "mvp-potou": ['mvp_indicators'],
 }
 
+COMPRESS_URL = STATIC_CDN + STATIC_URL
+
 ####### Couch Forms & Couch DB Kit Settings #######
 COUCH_DATABASE_NAME = helper.get_db_name(COUCH_DATABASE_NAME, UNIT_TESTING)
 _dynamic_db_settings = helper.get_dynamic_db_settings(
@@ -1489,15 +1493,14 @@ ES_XFORM_FULL_INDEX_DOMAINS = [
 
 CUSTOM_UCR_EXPRESSIONS = [
     ('abt_supervisor', 'custom.abt.reports.expressions.abt_supervisor_expression'),
-    ('mvp_medical_cause', 'mvp.ucr.reports.expressions.medical_cause_expression'),
-    ('mvp_no_treatment_reason', 'mvp.ucr.reports.expressions.no_treatment_reason_expression'),
-    ('mvp_treatment_provider_name', 'mvp.ucr.reports.expressions.treatment_provider_name_expression'),
-    ('mvp_treatment_place_name', 'mvp.ucr.reports.expressions.treatment_place_name_expression'),
-    ('mvp_death_place', 'mvp.ucr.reports.expressions.death_place_expression'),
     ('succeed_referenced_id', 'custom.succeed.expressions.succeed_referenced_id'),
     ('location_type_name', 'corehq.apps.locations.ucr_expressions.location_type_name'),
     ('location_parent_id', 'corehq.apps.locations.ucr_expressions.location_parent_id'),
     ('cvsu_expression', 'custom.apps.cvsu.expressions.cvsu_expression')
+]
+
+CUSTOM_UCR_EXPRESSION_LISTS = [
+    ('mvp.ucr.reports.expressions.CUSTOM_UCR_EXPRESSIONS'),
 ]
 
 CUSTOM_MODULES = [
@@ -1558,6 +1561,7 @@ DOMAIN_MODULE_MAP = {
     'wvindia2': 'custom.world_vision',
     'pathways-india-mis': 'custom.care_pathways',
     'pathways-tanzania': 'custom.care_pathways',
+    'care-macf-malawi': 'custom.care_pathways',
     'kemri': 'custom.openclinica',
     'novartis': 'custom.openclinica',
 }

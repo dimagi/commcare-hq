@@ -50,6 +50,7 @@ from corehq.apps.smsbillables.interface import (
     SMSBillablesInterface,
     SMSGatewayFeeCriteriaInterface,
 )
+from corehq.apps.domain.views import DomainForwardingRepeatRecords
 
 
 def REPORTS(project):
@@ -119,7 +120,7 @@ def REPORTS(project):
         sms.MessageEventDetailReport,
         sms.SurveyDetailReport,
         sms.MessageLogReport,
-        ivr.CallLogReport,
+        ivr.CallReport,
         ivr.ExpectedCallbackReport,
     ])
 
@@ -304,5 +305,11 @@ ADMIN_REPORTS = (
         RealProjectSpacesReport,
         CommConnectProjectSpacesReport,
         CommTrackProjectSpacesReport,
+    )),
+)
+
+DOMAIN_REPORTS = (
+    (_('Project Settings'), (
+        DomainForwardingRepeatRecords,
     )),
 )

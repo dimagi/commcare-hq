@@ -6,8 +6,8 @@ from corehq.apps.reports.standard import CustomProjectReport
 from corehq.apps.reports.generic import GenericTabularReport
 from corehq.apps.reports.datatables import DataTablesColumn, DataTablesHeader
 from casexml.apps.case.models import CommCareCase
-from corehq.apps.sms.models import ExpectedCallbackEventLog, CALLBACK_PENDING, CALLBACK_RECEIVED, CALLBACK_MISSED
-from datetime import datetime, timedelta
+from corehq.apps.sms.models import ExpectedCallback, CALLBACK_PENDING, CALLBACK_RECEIVED, CALLBACK_MISSED
+from datetime import datetime, timedelta, time
 from corehq.util.timezones.conversions import ServerTime
 from dimagi.utils.parsing import json_format_date
 
@@ -63,13 +63,11 @@ class MissedCallbackReport(CustomProjectReport, GenericTabularReport):
         start_date = dates[0] - timedelta(days=1)
         end_date = dates[-1] + timedelta(days=2)
 
-        start_utc_timestamp = json_format_date(start_date)
-        end_utc_timestamp = json_format_date(end_date)
-
-        expected_callback_events = ExpectedCallbackEventLog.view("sms/expected_callback_event",
-                                                                 startkey=[self.domain, start_utc_timestamp],
-                                                                 endkey=[self.domain, end_utc_timestamp],
-                                                                 include_docs=True).all()
+        expected_callback_events = ExpectedCallback.by_domain(
+            self.domain,
+            start_date=datetime.combine(start_date, time(0, 0)),
+            end_date=datetime.combine(end_date, time(0, 0))
+        ).order_by('date')
 
         for event in expected_callback_events:
             if event.couch_recipient in data:
@@ -123,5 +121,3 @@ class MissedCallbackReport(CustomProjectReport, GenericTabularReport):
     
     def _fmt_highlight(self, value):
         return self.table_cell(value, '<div style="background-color:#f33; font-weight:bold; text-align:center">%s</div>' % value)
-
-

@@ -7,7 +7,6 @@
     {% block reports-js %}
     {% compress js %}
     <script src="{% new_static 'reports/javascripts/config.dataTables.bootstrap.js' %}"></script>
-    <script src="{% new_static 'hqwebapp/js-custom/hq.legacy.js' %}"></script>
     <script src="{% new_static 'hqwebapp/js/lib/jquery.history.js' %}"></script>
     <script src="{% new_static 'reports/javascripts/datepicker.js' %}"></script>
     <script src="{% new_static 'reports/javascripts/reports.config.js' %}"></script>
@@ -31,7 +30,6 @@
             isExportAll: {{ report.is_export_all|JSON }},
             isEmailable: {{ report.is_emailable|JSON }},
             emailDefaultSubject: {{ report.title|JSON }},
-            filterSubmitSelector: '#apply-filters',
             emailSuccessMessage: "{% trans 'Report successfully emailed' %}",
             emailErrorMessage: "{% trans 'An error occurred emailing your report. Please try again.' %}",
 

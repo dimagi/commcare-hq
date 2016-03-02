@@ -21,6 +21,7 @@ from corehq.apps.repeaters.models import (
     RegisterGenerator)
 from corehq.apps.repeaters.repeater_generators import BasePayloadGenerator
 from couchforms.models import XFormInstance
+from couchforms.const import DEVICE_LOG_XMLNS
 
 case_id = "ABC123CASEID"
 instance_id = "XKVB636DFYL38FNX3D38WV5EH"
@@ -51,7 +52,7 @@ update_block = """
 
 
 xform_xml_template = """<?xml version='1.0' ?>
-<data xmlns:jrm="http://dev.commcarehq.org/jr/xforms" xmlns="https://www.commcarehq.org/test/repeater/">
+<data xmlns:jrm="http://dev.commcarehq.org/jr/xforms" xmlns="{}">
     <woman_name>Alpha</woman_name>
     <husband_name>Beta</husband_name>
     <meta>
@@ -60,13 +61,21 @@ xform_xml_template = """<?xml version='1.0' ?>
         <timeEnd>2011-10-01T15:26:29.551-04</timeEnd>
         <username>admin</username>
         <userID>O2XLT0WZW97W1A91E2W1Y0NJG</userID>
-        <instanceID>%s</instanceID>
+        <instanceID>{}</instanceID>
     </meta>
-%s
+{}
 </data>
 """
-xform_xml = xform_xml_template % (instance_id, case_block)
-update_xform_xml = xform_xml_template % (update_instance_id, update_block)
+xform_xml = xform_xml_template.format(
+    "https://www.commcarehq.org/test/repeater/",
+    instance_id,
+    case_block,
+)
+update_xform_xml = xform_xml_template.format(
+    "https://www.commcarehq.org/test/repeater/",
+    update_instance_id,
+    update_block,
+)
 
 
 class BaseRepeaterTest(TestCase):
@@ -113,7 +122,7 @@ class RepeaterTest(BaseRepeaterTest):
     def make_post_fn(self, status_codes):
         status_codes = iter(status_codes)
 
-        def post_fn(data, url, headers=None):
+        def post_fn(data, url, headers=None, force_send=False):
             status_code = status_codes.next()
             self.log.append((url, status_code, data, headers))
 
@@ -130,6 +139,13 @@ class RepeaterTest(BaseRepeaterTest):
         repeat_records = RepeatRecord.all()
         for repeat_record in repeat_records:
             repeat_record.delete()
+
+    def test_skip_device_logs(self):
+        devicelog_xml = xform_xml_template.format(DEVICE_LOG_XMLNS, '1234', '')
+        self.post_xml(devicelog_xml, self.domain)
+        repeat_records = RepeatRecord.all(domain=self.domain)
+        for repeat_record in repeat_records:
+            self.assertNotEqual(repeat_record.payload_id, '1234')
 
     def test_repeater(self):
         #  this test should probably be divided into more units
@@ -446,10 +462,15 @@ class TestRepeaterFormat(BaseRepeaterTest):
         post_fn = MagicMock()
         repeat_record.fire(post_fn=post_fn)
         headers = self.repeater.get_headers(repeat_record)
-        post_fn.assert_called_with(payload, self.repeater.url, headers=headers)
+        post_fn.assert_called_with(payload, self.repeater.url, headers=headers, force_send=False)
 
 
 class RepeaterLockTest(TestCase):
+
+    def tearDown(self):
+        repeat_records = RepeatRecord.all()
+        for repeat_record in repeat_records:
+            repeat_record.delete()
 
     def testLocks(self):
         r = RepeatRecord(domain='test')

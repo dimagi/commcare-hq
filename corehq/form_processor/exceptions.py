@@ -12,7 +12,7 @@ class XFormNotFound(ResourceNotFound, ObjectDoesNotExist):
     pass
 
 
-class AttachmentNotFound(ResourceNotFound, ObjectDoesNotExist, UnicodeMixIn):
+class AttachmentNotFound(UnicodeMixIn, ResourceNotFound, ObjectDoesNotExist):
     def __init__(self, attachment_name):
         self.attachment_name = attachment_name
 
@@ -21,6 +21,10 @@ class AttachmentNotFound(ResourceNotFound, ObjectDoesNotExist, UnicodeMixIn):
 
 
 class CaseSaveError(Exception):
+    pass
+
+
+class LedgerSaveError(Exception):
     pass
 
 

@@ -1,3 +1,4 @@
+from corehq.blobs import Error as BlobError
 from corehq.form_processor.exceptions import CaseNotFound, XFormNotFound
 from corehq.form_processor.interfaces.dbaccessors import FormAccessors, CaseAccessors
 from pillowtop.dao.exceptions import DocumentNotFoundError
@@ -13,7 +14,7 @@ class ReadonlyFormDocumentStore(ReadOnlyDocumentStore):
     def get_document(self, doc_id):
         try:
             return self.form_accessors.get_form(doc_id).to_json()
-        except XFormNotFound as e:
+        except (XFormNotFound, BlobError) as e:
             raise DocumentNotFoundError(e)
 
 

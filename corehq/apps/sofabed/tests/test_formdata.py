@@ -3,7 +3,8 @@ import os
 import pytz
 import uuid
 from django.test import TestCase
-from corehq.apps.hqadmin.dbaccessors import get_all_forms_in_all_domains
+
+from casexml.apps.case.tests.util import delete_all_xforms
 from corehq.apps.receiverwrapper.util import submit_form_locally
 from couchforms.models import XFormInstance
 from corehq.apps.sofabed.models import FormData
@@ -12,10 +13,7 @@ from corehq.apps.sofabed.models import FormData
 class FormDataTestCase(TestCase):
 
     def setUp(self):
-
-        for item in get_all_forms_in_all_domains():
-            item.delete()
-
+        delete_all_xforms()
         for item in FormData.objects.all():
             item.delete()
 

@@ -417,8 +417,8 @@ def process_sms_registration(msg):
 
 
 def incoming(phone_number, text, backend_api, timestamp=None,
-             domain_scope=None, backend_message_id=None, delay=True,
-             backend_attributes=None, raw_text=None, backend_id=None):
+             domain_scope=None, backend_message_id=None,
+             raw_text=None, backend_id=None):
     """
     entry point for incoming sms
 
@@ -445,9 +445,6 @@ def incoming(phone_number, text, backend_api, timestamp=None,
         backend_message_id=backend_message_id,
         raw_text=raw_text,
     )
-    if backend_attributes:
-        for k, v in backend_attributes.items():
-            setattr(msg, k, v)
     if settings.SMS_QUEUE_ENABLED:
         msg.processed = False
         msg.datetime_to_process = datetime.utcnow()
@@ -457,7 +454,7 @@ def incoming(phone_number, text, backend_api, timestamp=None,
     else:
         msg.processed = True
         msg.save()
-        process_incoming(msg, delay=delay)
+        process_incoming(msg)
     return msg
 
 
@@ -477,7 +474,7 @@ def get_opt_keywords(msg):
     )
 
 
-def process_incoming(msg, delay=True):
+def process_incoming(msg):
     v = VerifiedNumber.by_phone(msg.phone_number, include_pending=True)
 
     if v is not None and v.verified:

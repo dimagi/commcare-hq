@@ -197,7 +197,7 @@ def submit_mapping_case_block(user, index):
     if mapping:
         caseblock = CaseBlock(
             create=False,
-            case_id=mapping._id,
+            case_id=mapping.case_id,
             index=index
         )
     else:

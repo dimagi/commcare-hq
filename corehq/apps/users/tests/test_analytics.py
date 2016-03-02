@@ -1,4 +1,5 @@
 from django.test import TestCase
+from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.users.analytics import update_analytics_indexes, get_count_of_active_commcare_users_in_domain, \
     get_count_of_inactive_commcare_users_in_domain, get_active_commcare_users_in_domain, \
     get_inactive_commcare_users_in_domain
@@ -11,6 +12,7 @@ class UserAnalyticsTest(TestCase):
     @classmethod
     def setUpClass(cls):
         delete_all_users()
+        cls.domain = create_domain('test')
         cls.active_user = CommCareUser.create(
             domain='test',
             username='active',
@@ -35,6 +37,11 @@ class UserAnalyticsTest(TestCase):
             password='secret',
         )
         update_analytics_indexes()
+
+    @classmethod
+    def tearDownClass(cls):
+        delete_all_users()
+        cls.domain.delete()
 
     def test_get_count_of_active_commcare_users_in_domain(self):
         self.assertEqual(2, get_count_of_active_commcare_users_in_domain('test'))
