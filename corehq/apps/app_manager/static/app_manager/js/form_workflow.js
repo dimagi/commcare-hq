@@ -1,9 +1,9 @@
 /* global ko, _, $ */
 
-(function() {
+hqDefine('app_manager/js/form_workflow.js', function() {
     'use strict';
 
-    window.FormWorkflow = function(options) {
+    var FormWorkflow = function (options) {
         var self = this;
 
         self.formDatumsUrl = options.formDatumsUrl;
@@ -170,4 +170,5 @@
             return errors;
         });
     };
-})();
+    return {FormWorkflow: FormWorkflow};
+});
