@@ -26,6 +26,8 @@ def copy_docs(source_db, target_db, doc_ids):
         return
     with IterDB(target_db, new_edits=False) as iter_db:
         for doc in iter_docs(source_db, doc_ids, attachments=True):
+            # see comment bulk_migrate on bulk migrate
+            # explaining discrepancy between CouchDB and Cloudant that necessitates this
             doc = _insert_attachments(source_db, doc)
             iter_db.save(doc)
     if iter_db.errors_by_type:
