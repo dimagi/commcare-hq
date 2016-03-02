@@ -1,7 +1,7 @@
-/*globals $, COMMCAREHQ, _, ko, CC_UTILS, console*/
-var AdvancedCase = (function () {
+/*globals $, COMMCAREHQ, _, ko, console*/
+hqDefine('app_manager/js/case-config-ui-advanced.js', function () {
     'use strict';
-
+    var caseConfigUtils = hqImport('app_manager/js/case-config-utils.js');
     var DEFAULT_CONDITION = function (type) {
         return {
             type: type,
@@ -139,10 +139,10 @@ var AdvancedCase = (function () {
         };
 
         self.getQuestions = function (filter, excludeHidden, includeRepeat) {
-            return CC_UTILS.getQuestions(self.questions, filter, excludeHidden, includeRepeat);
+            return caseConfigUtils.getQuestions(self.questions, filter, excludeHidden, includeRepeat);
         };
         self.getAnswers = function (condition) {
-            return CC_UTILS.getAnswers(self.questions, condition);
+            return caseConfigUtils.getAnswers(self.questions, condition);
         };
 
         self.change = function () {
@@ -250,8 +250,8 @@ var AdvancedCase = (function () {
         };
 
         self.load_update_cases = ko.observableArray(_(params.actions.load_update_cases).map(function (a) {
-            var preload = CC_UTILS.propertyDictToArray([], a.preload, config, true);
-            var case_properties = CC_UTILS.propertyDictToArray([], a.case_properties, config);
+            var preload = caseConfigUtils.propertyDictToArray([], a.preload, config, true);
+            var case_properties = caseConfigUtils.propertyDictToArray([], a.case_properties, config);
             a.preload = [];
             a.case_properties = [];
             var action = LoadUpdateAction.wrap(a, config);
@@ -272,7 +272,7 @@ var AdvancedCase = (function () {
                 path: a.name_path,
                 required: true
             }];
-            var case_properties = CC_UTILS.propertyDictToArray(required_properties, a.case_properties, config);
+            var case_properties = caseConfigUtils.propertyDictToArray(required_properties, a.case_properties, config);
             a.case_properties = [];
             var action = OpenCaseAction.wrap(a, config);
             // add these after to avoid errors caused by 'action.suggestedProperties' being accessed
@@ -795,8 +795,8 @@ var AdvancedCase = (function () {
             self.show_product_stock(self.disable_tag());
             var action = ko.mapping.toJS(self, LoadUpdateAction.mapping(self));
 
-            action.preload = CC_UTILS.preloadArrayToDict(action.preload);
-            action.case_properties = CC_UTILS.propertyArrayToDict([], action.case_properties)[0];
+            action.preload = caseConfigUtils.preloadArrayToDict(action.preload);
+            action.case_properties = caseConfigUtils.propertyArrayToDict([], action.case_properties)[0];
             return action;
         }
     };
@@ -843,7 +843,7 @@ var AdvancedCase = (function () {
             });
 
             self.suggestedProperties = ko.computed(function () {
-                return CC_UTILS.filteredSuggestedProperties(
+                return caseConfigUtils.filteredSuggestedProperties(
                     ActionBase.suggestedProperties(self, false),
                     self.case_properties()
                 );
@@ -989,7 +989,7 @@ var AdvancedCase = (function () {
             ActionBase.clean_condition(self.open_condition);
             ActionBase.clean_condition(self.close_condition);
             var action = ko.mapping.toJS(self, OpenCaseAction.mapping(self));
-            var x = CC_UTILS.propertyArrayToDict(['name'], action.case_properties);
+            var x = caseConfigUtils.propertyArrayToDict(['name'], action.case_properties);
             action.case_properties = x[0];
             action.name_path = x[1].name;
             action.repeat_context = self.repeat_context();
@@ -1045,7 +1045,7 @@ var AdvancedCase = (function () {
                 },
                 // template: case-config:case-transaction:case-properties
                 suggestedSaveProperties: ko.computed(function () {
-                    return CC_UTILS.filteredSuggestedProperties(
+                    return caseConfigUtils.filteredSuggestedProperties(
                         self.action.suggestedProperties(),
                         self.action.case_properties()
                     );
@@ -1094,7 +1094,7 @@ var AdvancedCase = (function () {
                 },
                 // template: case-config:case-transaction:case-preload
                 suggestedPreloadProperties: ko.computed(function () {
-                    return CC_UTILS.filteredSuggestedProperties(
+                    return caseConfigUtils.filteredSuggestedProperties(
                         self.action.suggestedProperties(),
                         self.action.preload()
                     );
@@ -1129,4 +1129,4 @@ var AdvancedCase = (function () {
     return {
         CaseConfig: CaseConfig
     };
-}());
+});
