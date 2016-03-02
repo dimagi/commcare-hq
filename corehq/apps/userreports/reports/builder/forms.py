@@ -1075,7 +1075,7 @@ class ConfigureListReportForm(ConfigureNewReportBase):
                         exists_in_current_version=exists,
                         property=self._get_property_from_column(c['field']) if exists else None,
                         data_source_field=c['field'] if not exists else None,
-                        calculation=reverse_agg_map.get(c.get('aggregation'), 'None')
+                        calculation=reverse_agg_map.get(c.get('aggregation'), 'Count per Choice')
                     )
                 )
             return cols
@@ -1084,6 +1084,7 @@ class ConfigureListReportForm(ConfigureNewReportBase):
                         exists_in_current_version=True,
                         property=None,
                         data_source_field=None,
+                        calculation='Count per Choice'
                     )]
 
     @property
