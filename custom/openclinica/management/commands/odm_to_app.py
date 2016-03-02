@@ -108,22 +108,24 @@ class Study(StudyObject):
 
     def new_subject_module(self, app):
 
+        case_update = {
+            CC_STUDY_SUBJECT_ID: '/data/' + CC_STUDY_SUBJECT_ID,
+            CC_DOB: '/data/' + CC_DOB,
+            CC_SEX: '/data/' + CC_SEX,
+            CC_ENROLLMENT_DATE: '/data/' + CC_ENROLLMENT_DATE,
+        }
+
         def add_reg_form_to_module(module_):
             reg_form = module_.new_form('Register Subject', None)
             reg_form.get_unique_id()
             reg_form.source = self.get_subject_form_source('Register Subject')
             reg_form.actions.open_case = OpenCaseAction(
-                name_path='/data/name',
+                name_path='/data/' + CC_SUBJECT_KEY,
                 external_id=None,
                 condition=FormActionCondition(type='always')
             )
             reg_form.actions.update_case = UpdateCaseAction(
-                update={
-                    'subject_study_id': '/data/subject_study_id',
-                    'dob': '/data/dob',
-                    'sex': '/data/sex',
-                    'enrollment_date': '/data/enrollment_date',
-                },
+                update=case_update,
                 condition=FormActionCondition(type='always')
             )
 
@@ -132,19 +134,14 @@ class Study(StudyObject):
             edit_form.get_unique_id()
             edit_form.source = self.get_subject_form_source('Edit Subject')
             edit_form.requires = 'case'
-            preload = {
-                '/data/name': 'name',
-                '/data/subject_study_id': 'subject_study_id',
-                '/data/dob': 'dob',
-                '/data/sex': 'sex',
-                '/data/enrollment_date': 'enrollment_date',
-            }
+            update = dict(case_update, name='/data/' + CC_SUBJECT_KEY)
+            preload = {v: k for k, v in update.items()}
             edit_form.actions.case_preload = PreloadAction(
                 preload=preload,
                 condition=FormActionCondition(type='always')
             )
             edit_form.actions.update_case = UpdateCaseAction(
-                update={v: k for k, v in preload.items()},
+                update=update,
                 condition=FormActionCondition(type='always')
             )
 
