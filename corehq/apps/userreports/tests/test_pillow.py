@@ -74,7 +74,12 @@ class IndicatorPillowTestBase(TestCase):
             if isinstance(expected_indicators[k], decimal.Decimal):
                 self.assertAlmostEqual(expected_indicators[k], v)
             else:
-                self.assertEqual(expected_indicators[k], v, 'mismatched property: {}'.format(k))
+                self.assertEqual(
+                    expected_indicators[k], v,
+                    'mismatched property: {} (expected {}, was {})'.format(
+                        k, expected_indicators[k], v
+                    )
+                )
 
 
 class IndicatorPillowTest(IndicatorPillowTestBase):
