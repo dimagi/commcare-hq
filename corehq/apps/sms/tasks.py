@@ -7,7 +7,7 @@ from corehq.apps.sms.mixin import (VerifiedNumber, InvalidFormatException,
 from corehq.apps.sms.models import (OUTGOING, INCOMING, SMS,
     PhoneLoadBalancingMixin, CommConnectCase, QueuedSMS)
 from corehq.apps.sms.api import (send_message_via_backend, process_incoming,
-    log_sms_exception)
+    log_sms_exception, create_billable_for_sms)
 from django.db import transaction
 from django.conf import settings
 from corehq.apps.domain.models import Domain
@@ -48,6 +48,7 @@ def handle_successful_processing_attempt(msg):
     if msg.direction == OUTGOING:
         msg.date = utcnow
     remove_from_queue(msg)
+    create_billable_for_sms(msg)
 
 
 def delay_processing(msg, minutes):
@@ -230,8 +231,9 @@ def process_sms(queued_sms_pk):
 
 
 @task(ignore_result=True)
-def store_billable(msg):
-    if msg.couch_id and not SmsBillable.objects.filter(log_id=msg.couch_id).exists():
+def store_billable(msg_id):
+    if msg_id and not SmsBillable.objects.filter(log_id=msg_id).exists():
+        msg = SMS.objects.get(couch_id=msg_id)
         try:
             msg.text.encode('iso-8859-1')
             msg_length = 160

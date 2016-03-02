@@ -209,6 +209,8 @@ def queue_outgoing_sms(msg):
     else:
         msg.processed = True
         msg_sent = send_message_via_backend(msg)
+        if msg_sent:
+            create_billable_for_sms(msg)
         return msg_sent
 
 
@@ -257,7 +259,6 @@ def send_message_via_backend(msg, backend=None, orig_phone_number=None):
         msg.backend_api = backend.hq_api_id
         msg.backend_id = backend.couch_id
         msg.save()
-        create_billable_for_sms(msg)
         return True
     except Exception:
         log_sms_exception(msg)
@@ -550,8 +551,8 @@ def create_billable_for_sms(msg, delay=True):
     try:
         from corehq.apps.sms.tasks import store_billable
         if delay:
-            store_billable.delay(msg)
+            store_billable.delay(msg.couch_id)
         else:
-            store_billable(msg)
+            store_billable(msg.couch_id)
     except Exception as e:
         log_accounting_error("Errors Creating SMS Billable: %s" % e)
