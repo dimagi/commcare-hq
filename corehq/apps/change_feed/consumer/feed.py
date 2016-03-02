@@ -53,8 +53,6 @@ class KafkaChangeFeed(ChangeFeed):
         consumer = self._get_consumer(timeout, auto_offset_reset=reset)
         if not start_from_latest:
             if isinstance(since, dict):
-                # multiple topics
-                offsets = [(topic, self._partition, offset) for topic, offset in since.items()]
                 self._processed_topic_offsets = copy(since)
             else:
                 # single topic
@@ -68,8 +66,10 @@ class KafkaChangeFeed(ChangeFeed):
                     # since kafka only keeps 7 days of data this isn't a big deal. Hopefully we will only see
                     # these once when each pillow moves over.
                     offset = 0
-                offsets = [(topic, self._partition, offset)]
+                self._processed_topic_offsets = {topic: offset}
 
+            offsets = [(topic, self._partition, self._processed_topic_offsets.get(topic, 0))
+                       for topic in self._topics]
             # this is how you tell the consumer to start from a certain point in the sequence
             consumer.set_topic_partitions(*offsets)
         try:
