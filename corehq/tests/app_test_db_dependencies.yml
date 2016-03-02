@@ -292,6 +292,7 @@ corehq.apps.repeaters:
   - corehq.apps.users
   - corehq.couchapps
   - couchforms
+  - phonelog
   - django_prbac
   # unfortunately domain.delete() needs all of these - otherwise they could be removed
   - custom.logistics
