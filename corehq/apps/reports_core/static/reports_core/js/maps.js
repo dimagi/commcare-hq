@@ -45,10 +45,10 @@ var maps = (function() {
         fn.init_map(config, mapContainer[0]);
         fn.initPopupTempate(config);
 
-
+        var bad_re = /[a-zA-Z()]+/;
         var points = _.compact(_.map(data, function (row) {
             var val = row[config.location_column_id];
-            if (val !== null) {
+            if (val !== null && !bad_re.test(val)) {
                 var latlon = val.split(" ").slice(0, 2);
                 return L.marker(latlon).bindPopup(fn.template(row));
             }
