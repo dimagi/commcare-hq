@@ -50,7 +50,6 @@ class ConfigurableReportTableManagerTest(SimpleTestCase):
 
 class IndicatorPillowTestBase(TestCase):
 
-    @softer_assert
     def setUp(self):
         self.config = get_sample_data_source()
         self.config.save()
@@ -77,6 +76,7 @@ class IndicatorPillowTestBase(TestCase):
 
 class IndicatorPillowTest(IndicatorPillowTestBase):
 
+    @softer_assert
     def setUp(self):
         super(IndicatorPillowTest, self).setUp()
         self.pillow = ConfigurableIndicatorPillow()
