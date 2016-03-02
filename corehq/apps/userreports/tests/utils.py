@@ -33,6 +33,7 @@ def get_sample_doc_and_indicators(fake_time_now=None):
         owner_id='some-user-id',
         doc_type="CommCareCase",
         domain='user-reports',
+        name='sample name',
         type='ticket',
         category='bug',
         tags='easy-win public',
