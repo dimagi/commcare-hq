@@ -64,9 +64,8 @@ class IndicatorPillowTestBase(TestCase):
         self.adapter.drop_table()
 
     @patch('corehq.apps.userreports.specs.datetime')
-    def _check_sample_doc_state(self, datetime_mock):
+    def _check_sample_doc_state(self, expected_indicators, datetime_mock):
         datetime_mock.utcnow.return_value = self.fake_time_now
-        _, expected_indicators = get_sample_doc_and_indicators(self.fake_time_now)
         self.assertEqual(1, self.adapter.get_query_object().count())
         row = self.adapter.get_query_object()[0]
         for k in row.keys():
@@ -100,18 +99,18 @@ class IndicatorPillowTest(IndicatorPillowTestBase):
     @patch('corehq.apps.userreports.specs.datetime')
     def test_change_transport(self, datetime_mock):
         datetime_mock.utcnow.return_value = self.fake_time_now
-        sample_doc, _ = get_sample_doc_and_indicators(self.fake_time_now)
+        sample_doc, expected_indicators = get_sample_doc_and_indicators(self.fake_time_now)
         self.pillow.change_transport(sample_doc)
-        self._check_sample_doc_state()
+        self._check_sample_doc_state(expected_indicators)
 
     @patch('corehq.apps.userreports.specs.datetime')
     def test_rebuild_indicators(self, datetime_mock):
         datetime_mock.utcnow.return_value = self.fake_time_now
         self.config.save()
-        sample_doc, _ = get_sample_doc_and_indicators(self.fake_time_now)
+        sample_doc, expected_indicators = get_sample_doc_and_indicators(self.fake_time_now)
         CommCareCase.get_db().save_doc(sample_doc)
         rebuild_indicators(self.config._id)
-        self._check_sample_doc_state()
+        self._check_sample_doc_state(expected_indicators)
 
     def test_bad_integer_datatype(self):
         self.config.save()
@@ -145,14 +144,14 @@ class KafkaIndicatorPillowTest(IndicatorPillowTestBase):
     @patch('corehq.apps.userreports.specs.datetime')
     def test_basic_doc_processing(self, datetime_mock):
         datetime_mock.utcnow.return_value = self.fake_time_now
-        sample_doc, _ = get_sample_doc_and_indicators(self.fake_time_now)
+        sample_doc, expected_indicators = get_sample_doc_and_indicators(self.fake_time_now)
         self.pillow.processor(_doc_to_change(sample_doc))
-        self._check_sample_doc_state()
+        self._check_sample_doc_state(expected_indicators)
 
     @patch('corehq.apps.userreports.specs.datetime')
     def test_process_doc_from_couch(self, datetime_mock):
         datetime_mock.utcnow.return_value = self.fake_time_now
-        sample_doc, _ = get_sample_doc_and_indicators(self.fake_time_now)
+        sample_doc, expected_indicators = get_sample_doc_and_indicators(self.fake_time_now)
 
         # make sure case is in DB
         case = CommCareCase.wrap(sample_doc)
@@ -165,14 +164,14 @@ class KafkaIndicatorPillowTest(IndicatorPillowTestBase):
 
         # run pillow and check changes
         self.pillow.process_changes(since={topics.CASE: since}, forever=False)
-        self._check_sample_doc_state()
+        self._check_sample_doc_state(expected_indicators)
         case.delete()
 
     @patch('corehq.apps.userreports.specs.datetime')
     @override_settings(TESTS_SHOULD_USE_SQL_BACKEND=True)
     def test_process_doc_from_sql(self, datetime_mock):
         datetime_mock.utcnow.return_value = self.fake_time_now
-        sample_doc, _ = get_sample_doc_and_indicators(self.fake_time_now)
+        sample_doc, expected_indicators = get_sample_doc_and_indicators(self.fake_time_now)
 
         since = get_current_kafka_seq(topics.CASE_SQL)
 
@@ -181,7 +180,7 @@ class KafkaIndicatorPillowTest(IndicatorPillowTestBase):
 
         # run pillow and check changes
         self.pillow.process_changes(since={topics.CASE_SQL: since}, forever=False)
-        self._check_sample_doc_state()
+        self._check_sample_doc_state(expected_indicators)
 
         CaseAccessors(domain=case.domain).db_accessor.hard_delete_cases(case.domain, [case.case_id])
 
@@ -250,7 +249,7 @@ def _save_sql_case(doc):
                     case_type=doc['type'],
                     owner_id=doc['owner_id'],
                     date_opened=doc['opened_on'],
-                    update={k: v for k, v in doc.items() if k not in system_props}
+                    update={k: str(v) for k, v in doc.items() if k not in system_props}
                 ).as_xml()
             ], domain=doc['domain']
         )
