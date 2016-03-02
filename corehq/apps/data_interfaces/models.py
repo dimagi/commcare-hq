@@ -83,7 +83,7 @@ class AutomaticUpdateRule(models.Model):
             elif action.action == AutomaticUpdateAction.ACTION_CLOSE:
                 close = True
 
-        update_case(case.domain, case.get_id, case_properties=properties, close=close,
+        update_case(case.domain, case.case_id, case_properties=properties, close=close,
             xmlns=AUTO_UPDATE_XMLNS)
         return close
 
@@ -100,7 +100,7 @@ class AutomaticUpdateRule(models.Model):
         if not isinstance(case, CommCareCase) or case.domain != self.domain:
             raise Exception("Invalid case given")
 
-        if case.doc_type != 'CommCareCase':
+        if not case.is_deleted:
             # Exclude deleted cases
             return False
 
