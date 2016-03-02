@@ -173,13 +173,13 @@ class KafkaIndicatorPillowTest(IndicatorPillowTestBase):
         datetime_mock.utcnow.return_value = self.fake_time_now
         sample_doc, expected_indicators = get_sample_doc_and_indicators(self.fake_time_now)
 
-        since = get_current_kafka_seq(topics.CASE_SQL)
+        since = self.pillow.get_change_feed().get_current_offsets()
 
         # save case to DB - should also publish to kafka
         case = _save_sql_case(sample_doc)
 
         # run pillow and check changes
-        self.pillow.process_changes(since={topics.CASE_SQL: since}, forever=False)
+        self.pillow.process_changes(since=since, forever=False)
         self._check_sample_doc_state(expected_indicators)
 
         CaseAccessors(domain=case.domain).db_accessor.hard_delete_cases(case.domain, [case.case_id])
