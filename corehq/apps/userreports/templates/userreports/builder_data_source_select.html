@@ -15,7 +15,7 @@
                 application: ko.observable(""),
                 sourceType: ko.observable(""),
                 sourcesMap: {{ sources_map|JSON }},
-                labelMap: {'case': 'Case', 'form': 'Form'}
+                labelMap: {'case': gettext('Case'), 'form': gettext('Form')}
             });
         });
     </script>

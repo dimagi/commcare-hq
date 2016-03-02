@@ -267,10 +267,10 @@ class DataSourceBuilder(object):
     @classmethod
     def _get_data_source_properties_from_case(cls, case_properties):
         property_map = {
-            'closed': 'Case Closed',
-            'user_id': 'User ID Last Updating Case',
-            'owner_name': 'Case Owner',
-            'mobile worker': 'Mobile Worker Last Updating Case',
+            'closed': _('Case Closed'),
+            'user_id': _('User ID Last Updating Case'),
+            'owner_name': _('Case Owner'),
+            'mobile worker': _('Mobile Worker Last Updating Case'),
         }
         properties = OrderedDict()
         for property in case_properties:
@@ -294,7 +294,7 @@ class DataSourceBuilder(object):
             type='case_property',
             id='computed/owner_name',
             column_id=get_column_name('computed/owner_name'),
-            text='Case Owner',
+            text=_('Case Owner'),
             source='computed/owner_name'
         )
 
@@ -307,17 +307,17 @@ class DataSourceBuilder(object):
             type='case_property',
             id='computed/user_name',
             column_id=get_column_name('computed/user_name'),
-            text='Mobile Worker Last Updating Case',
+            text=_('Mobile Worker Last Updating Case'),
             source='computed/user_name',
         )
 
     @staticmethod
     def _get_data_source_properties_from_form(form, form_xml):
         property_map = {
-            'username': 'User Name',
-            'userID': 'User ID',
-            'timeStart': 'Date Form Started',
-            'timeEnd': 'Date Form Completed',
+            'username': _('User Name'),
+            'userID': _('User ID'),
+            'timeStart': _('Date Form Started'),
+            'timeEnd': _('Date Form Completed'),
         }
         properties = OrderedDict()
         questions = form_xml.get_questions([])
@@ -733,14 +733,14 @@ class ConfigureNewReportBase(forms.Form):
                 exists_in_current_version=True,
                 property='closed',
                 data_source_field=None,
-                display_text='Closed',
+                display_text=_('Closed'),
                 format='Choice',
             ),
             FilterViewModel(
                 exists_in_current_version=True,
                 property='computed/owner_name',
                 data_source_field=None,
-                display_text='Case Owner',
+                display_text=_('Case Owner'),
                 format='Choice',
             ),
         ]
@@ -867,7 +867,7 @@ class ConfigureNewReportBase(forms.Form):
 
 
 class ConfigureBarChartReportForm(ConfigureNewReportBase):
-    group_by = forms.ChoiceField(label="Bar Chart Categories")
+    group_by = forms.ChoiceField(label=_("Bar Chart Categories"))
     report_type = 'chart'
 
     def __init__(self, report_name, app_id, source_type, report_source_id, existing_report=None, *args, **kwargs):
@@ -948,7 +948,7 @@ class ConfigureBarChartReportForm(ConfigureNewReportBase):
 
 
 class ConfigurePieChartReportForm(ConfigureBarChartReportForm):
-    group_by = forms.ChoiceField(label="Pie Chart Segments")
+    group_by = forms.ChoiceField(label=_("Pie Chart Segments"))
 
     @property
     def container_fieldset(self):
@@ -1058,7 +1058,7 @@ class ConfigureListReportForm(ConfigureNewReportBase):
 class ConfigureTableReportForm(ConfigureListReportForm, ConfigureBarChartReportForm):
     report_type = 'table'
     column_legend_fine_print = ugettext_noop('Add columns for this report to aggregate. Each property you add will create a column for every value of that property.  For example, if you add a column for a yes or no question, the report will show a column for "yes" and a column for "no."')
-    group_by = forms.ChoiceField(label="Show one row for each")
+    group_by = forms.ChoiceField(label=_("Show one row for each"))
 
     @property
     def container_fieldset(self):
