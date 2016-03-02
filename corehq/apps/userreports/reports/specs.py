@@ -151,7 +151,7 @@ class LocationColumn(ReportColumn):
                     g=GeoPointProperty().wrap(row[column_name])
                 )
             except BadValueError:
-                row[column_name] = None
+                row[column_name] = '{} ({})'.format(row[column_name], _('Invalid Location'))
 
     def get_sql_column_config(self, data_source_config, lang):
         return SqlColumnConfig(columns=[

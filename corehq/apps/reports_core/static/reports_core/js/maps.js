@@ -3,7 +3,9 @@ var maps = (function() {
 
     fn.init_map = function (config, mapContainer) {
         if (!fn.hasOwnProperty('map')) {
-            fn.map = L.map(mapContainer, {trackResize: false}).setView([0, 0], 3);
+            mapContainer.show();
+            mapContainer.empty();
+            fn.map = L.map(mapContainer[0], {trackResize: false}).setView([0, 0], 3);
             var mapId = 'mapbox.streets';
             L.tileLayer('https://api.tiles.mapbox.com/v4/{id}/{z}/{x}/{y}.png?access_token={accessToken}', {
                 maxZoom: 18,
@@ -40,15 +42,13 @@ var maps = (function() {
     };
 
     fn.render = function (config, data, mapContainer) {
-        mapContainer.show();
-        mapContainer.empty();
-        fn.init_map(config, mapContainer[0]);
+        fn.init_map(config, mapContainer);
         fn.initPopupTempate(config);
 
-
+        var bad_re = /[a-zA-Z()]+/;
         var points = _.compact(_.map(data, function (row) {
             var val = row[config.location_column_id];
-            if (val !== null) {
+            if (val !== null && !bad_re.test(val)) {
                 var latlon = val.split(" ").slice(0, 2);
                 return L.marker(latlon).bindPopup(fn.template(row));
             }

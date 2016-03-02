@@ -11,7 +11,7 @@ def _insert_attachments(db, doc_json):
 
 def bulk_migrate(source_db, target_db, doc_types):
 
-    with IterDB(target_db, new_edits=False) as iter_db:
+    with IterDB(target_db, new_edits=False, chunksize=25) as iter_db:
         for doc in get_all_docs_with_doc_types(source_db, doc_types):
             # It turns out that Cloudant does not support attachments=true
             # on views or on _all_docs, only on single doc gets, so we have
