@@ -635,6 +635,11 @@ class CommCareCaseSQL(DisabledDbMixin, models.Model, RedisLockableMixIn,
         ]
         return normalized_actions
 
+    def get_case_property(self, property):
+        return self.case_json.get(property, None)
+
+    def set_case_property(self, property, value):
+        self.case_json[property] = value
 
     def on_tracked_models_cleared(self, model_class=None):
         self._saved_indices.reset_cache(self)
