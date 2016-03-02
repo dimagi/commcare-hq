@@ -64,9 +64,12 @@ class UrgentStockoutAlert(UrgentAlert):
         if not sql_products:
             return
 
-        return URGENT_STOCKOUT % (location_name, ', '.join(
-            sorted([sql_product.name for sql_product in sql_products])
-        ))
+        return URGENT_STOCKOUT % {
+            'location': location_name,
+            'products': ', '.join(
+                sorted([sql_product.name for sql_product in sql_products])
+            ),
+        }
 
     def get_notifications(self):
         for sql_location in self.get_sql_locations():

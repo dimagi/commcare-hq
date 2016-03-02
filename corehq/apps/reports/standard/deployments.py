@@ -19,11 +19,12 @@ from corehq.apps.reports.util import format_datatables_data
 from corehq.apps.users.models import CommCareUser
 from corehq.const import USER_DATE_FORMAT
 from corehq.util.couch import get_document_or_404
-from couchforms.analytics import get_last_form_submission_for_user_for_app
+from corehq.apps.reports.analytics.esaccessors import get_last_form_submissions_by_user
 from django.utils.translation import ugettext_noop
 from django.utils.translation import ugettext as _
 from dimagi.utils.couch.database import iter_docs
 from dimagi.utils.dates import safe_strftime
+from dimagi.utils.parsing import string_to_utc_datetime
 
 
 class DeploymentsReport(GenericTabularReport, ProjectReport, ProjectReportParametersMixin):
@@ -94,26 +95,34 @@ class ApplicationStatusReport(DeploymentsReport):
         rows = []
         selected_app = self.request_params.get(SelectApplicationFilter.slug, None)
 
+        user_ids = map(lambda user: user.user_id, self.users)
+        user_xform_dicts_map = get_last_form_submissions_by_user(self.domain, user_ids, selected_app)
+
         for user in self.users:
-            last_seen = last_sync = app_name = None
+            xform_dict = last_seen = last_sync = app_name = None
 
-            xform = get_last_form_submission_for_user_for_app(
-                self.domain, user.user_id, selected_app)
+            if user_xform_dicts_map.get(user.user_id):
+                xform_dict = user_xform_dicts_map[user.user_id][0]
 
-            if xform:
-                last_seen = xform.received_on
+            if xform_dict:
+                last_seen = string_to_utc_datetime(xform_dict.get('received_on'))
 
-                if xform.app_id:
+                if xform_dict.get('app_id'):
                     try:
-                        app = get_app(self.domain, xform.app_id)
+                        app = get_app(self.domain, xform_dict.get('app_id'))
                     except ResourceNotFound:
                         pass
                     else:
                         app_name = app.name
                 else:
-                    app_name = get_meta_appversion_text(xform)
+                    app_name = get_meta_appversion_text(xform_dict['form']['meta'])
 
-                app_version_info = get_app_version_info(xform)
+                app_version_info = get_app_version_info(
+                    self.domain,
+                    xform_dict.get('build_id'),
+                    xform_dict.get('version'),
+                    xform_dict['form']['meta'],
+                )
                 build_html = _build_html(app_version_info)
                 commcare_version = (
                     'CommCare {}'.format(app_version_info.commcare_version)
@@ -194,7 +203,7 @@ class SyncHistoryReport(DeploymentsReport):
 
     @property
     def rows(self):
-        base_link_url = '{}?q={{id}}'.format(reverse('global_quick_find'))
+        base_link_url = '{}?id={{id}}'.format(reverse('raw_couch'))
 
         user_id = self.request.GET.get('individual')
         if not user_id:

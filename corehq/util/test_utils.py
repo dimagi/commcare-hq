@@ -5,14 +5,13 @@ import json
 import logging
 import mock
 import os
+import sys
 from unittest import TestCase, SkipTest
 from collections import namedtuple
 from contextlib import contextmanager
 
-from fakecouch import FakeCouchDb
 from functools import wraps
 from django.conf import settings
-import sys
 from corehq.util.decorators import ContextDecorator
 
 
@@ -34,31 +33,57 @@ def unit_testing_only(fn):
 unit_testing_only.__test__ = False
 
 
-@contextmanager
-def trap_extra_setup(*exceptions, **kw):
+class trap_extra_setup(ContextDecorator):
     """Conditionally skip test on error
 
-    Use this context manager to skip tests that would otherwise fail in
-    environments where some or all external dependencies have not been
-    configured. It raises `unittest.case.SkipTest` if one of the given
-    exceptions is raised and `settings.SKIP_TESTS_REQUIRING_EXTRA_SETUP`
-    is true (see dev_settings.py). Hard failures should be preserved in
-    environments where external dependencies are expected to be setup
-    (travis), so `settings.SKIP_TESTS_REQUIRING_EXTRA_SETUP` should be
-    false there.
+    Use this decorator/context manager to skip tests that would
+    otherwise fail in environments where some or all external
+    dependencies have not been configured. It raises
+    `unittest.case.SkipTest` if one of the given exceptions is raised
+    and `settings.SKIP_TESTS_REQUIRING_EXTRA_SETUP` is true (see
+    dev_settings.py). Hard failures should be preserved in environments
+    where external dependencies are expected to be setup (travis), so
+    `settings.SKIP_TESTS_REQUIRING_EXTRA_SETUP` should be false there.
     """
-    assert exceptions, "at least one argument is required"
-    msg = kw.pop("msg", "")
-    assert not kw, "unknown keyword args: {}".format(kw)
-    skip = getattr(settings, "SKIP_TESTS_REQUIRING_EXTRA_SETUP", False)
-    try:
-        yield
-    except exceptions as err:
-        if skip:
+
+    def __init__(self, *exceptions, **kw):
+        assert exceptions, "at least one argument is required"
+        assert all(issubclass(e, Exception) for e in exceptions), exceptions
+        self.exceptions = exceptions
+        self.msg = kw.pop("msg", "")
+        assert not kw, "unknown keyword args: {}".format(kw)
+        self.skip = getattr(settings, "SKIP_TESTS_REQUIRING_EXTRA_SETUP", False)
+
+    def __enter__(self):
+        return self
+
+    def __exit__(self, exc_type, err, tb):
+        if isinstance(err, self.exceptions) and self.skip:
+            msg = self.msg
             if msg:
                 msg += ": "
             raise SkipTest("{}{}: {}".format(msg, type(err).__name__, err))
-        raise
+
+
+def softer_assert(func=None):
+    """A decorator/context manager to disable hardened soft_assert for tests"""
+    @contextmanager
+    def softer_assert():
+        patch = mock.patch("corehq.util.soft_assert.core.is_hard_mode",
+                           new=lambda: False)
+        patch.start()
+        try:
+            yield
+        finally:
+            patch.stop()
+
+    if func is not None:
+        @functools.wraps(func)
+        def wrapper(*args, **kw):
+            with softer_assert():
+                return func(*args, **kw)
+        return wrapper
+    return softer_assert()
 
 
 class TestFileMixin(object):
@@ -137,6 +162,7 @@ def mock_out_couch(views=None, docs=None):
     You can optionally pass default return values for specific views and doc
     gets.  See the FakeCouchDb docstring for more specifics.
     """
+    from fakecouch import FakeCouchDb
     db = FakeCouchDb(views=views, docs=docs)
     def _get_db(*args):
         return db
@@ -287,6 +313,7 @@ def get_form_ready_to_save(metadata, is_db_test=False):
     from corehq.form_processor.parsers.form import process_xform_xml
     from corehq.form_processor.utils import get_simple_form_xml, convert_xform_to_json
     from corehq.form_processor.interfaces.processor import FormProcessorInterface
+    from corehq.form_processor.models import Attachment
 
     assert metadata is not None
     metadata.domain = metadata.domain or uuid.uuid4().hex
@@ -296,10 +323,15 @@ def get_form_ready_to_save(metadata, is_db_test=False):
     if is_db_test:
         wrapped_form = process_xform_xml(metadata.domain, form_xml).submitted_form
     else:
+        interface = FormProcessorInterface(domain=metadata.domain)
         form_json = convert_xform_to_json(form_xml)
-        wrapped_form = FormProcessorInterface(domain=metadata.domain).new_xform(form_json)
+        wrapped_form = interface.new_xform(form_json)
         wrapped_form.domain = metadata.domain
+        interface.store_attachments(wrapped_form, [
+            Attachment(name='form.xml', raw_content=form_xml, content_type='text/xml')
+        ])
     wrapped_form.received_on = metadata.received_on
+    wrapped_form.app_id = metadata.app_id
     return wrapped_form
 
 

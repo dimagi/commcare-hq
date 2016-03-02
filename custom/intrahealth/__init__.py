@@ -74,26 +74,37 @@ PRODUCT_MAPPING = {
 
 def get_products(form, property):
     products = []
-    if 'products' in form.form:
-        for product in form.form['products']:
-            if property in product:
-                products.append(product[property])
+    if 'products' not in form.form:
+        return
+
+    if not isinstance(form.form['products'], list):
+        return
+
+    for product in form.form['products']:
+        if property in product:
+            products.append(product[property])
     return products
 
 
 def get_products_id(form, property):
     products = []
-    if 'products' in form.form:
-        for product in form.form['products']:
-            if property in product:
-                k = PRODUCT_NAMES.get(product[property].lower())
-                if k is not None:
-                    try:
-                        code = SQLProduct.objects.get(name__iexact=k,
-                                                      domain=get_domain(form)).product_id
-                        products.append(code)
-                    except SQLProduct.DoesNotExist:
-                        pass
+    if 'products' not in form.form:
+        return
+
+    if not isinstance(form.form['products'], list):
+        return
+
+    for product in form.form['products']:
+        if property not in product:
+            continue
+        k = PRODUCT_NAMES.get(product[property].lower())
+        if k is not None:
+            try:
+                code = SQLProduct.objects.get(name__iexact=k,
+                                              domain=get_domain(form)).product_id
+                products.append(code)
+            except SQLProduct.DoesNotExist:
+                pass
     return products
 
 
@@ -122,8 +133,8 @@ def get_rupture_products_ids(form):
 
 def _get_location(form):
     loc = None
-    if form.form.get('location_id'):
-        loc_id = form.form['location_id']
+    loc_id = form.form.get('location_id')
+    if loc_id:
         try:
             loc = Location.get(loc_id)
         except ResourceNotFound:
@@ -178,7 +189,6 @@ def get_location_by_type(form, type):
         loc = loc[0].couch_location
         if type == 'district':
             return loc
-
     for loc_id in loc.lineage:
         loc = Location.get(loc_id)
         if unicode(loc.location_type).lower().replace(" ", "") == type:

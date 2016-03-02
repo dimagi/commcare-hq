@@ -3,7 +3,7 @@ from django.db import DatabaseError
 from django.test import TestCase
 from django.test.client import Client
 from corehq.apps.domain.models import Domain
-from corehq.apps.sms.models import SMSLog, INCOMING
+from corehq.apps.sms.models import SMS, INCOMING
 from corehq.apps.users.models import CouchUser, WebUser
 from corehq.messaging.smsbackends.unicel.models import InboundParams
 import json
@@ -15,9 +15,7 @@ class IncomingPostTest(TestCase):
     def setUp(self):
         self.domain = Domain(name='mockdomain')
         self.domain.save()
-        all_logs = SMSLog.by_domain_asc(self.domain.name).all()
-        for log in all_logs:
-            log.delete()
+        SMS.by_domain(self.domain.name).delete()
         self.user = 'username-unicel'
         self.password = 'password'
         self.number = 5555551234
@@ -59,4 +57,4 @@ def post(data):
     client = Client()
     response = client.post('/unicel/in/', data)
     message_id = json.loads(response.content)['message_id']
-    return response, SMSLog.get(message_id)
+    return response, SMS.objects.get(couch_id=message_id)

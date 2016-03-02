@@ -5,13 +5,13 @@ from casexml.apps.case.dbaccessors.related import get_reverse_indexed_cases
 from casexml.apps.case.exceptions import IllegalCaseId
 from casexml.apps.case.models import CommCareCase
 from casexml.apps.case.util import iter_cases
-from corehq.form_processor.backends.couch.update_strategy import ActionsUpdateStrategy
+from corehq.form_processor.backends.couch.update_strategy import CouchCaseUpdateStrategy
 from corehq.form_processor.casedb_base import AbstractCaseDbCache
 
 
 class CaseDbCacheCouch(AbstractCaseDbCache):
     case_model_classes = (dict, CommCareCase)
-    case_update_strategy = ActionsUpdateStrategy
+    case_update_strategy = CouchCaseUpdateStrategy
 
     def _validate_case(self, doc):
         if self.domain and doc['domain'] != self.domain:

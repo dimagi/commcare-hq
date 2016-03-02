@@ -2,6 +2,7 @@
 
 var VisitScheduler = (function () {
     'use strict';
+    var app_manager = hqImport('app_manager/js/app_manager.js');
 
     var ModuleScheduler = function(params){
         // Edits the schedule phases on the module setting page
@@ -39,7 +40,7 @@ var VisitScheduler = (function () {
                     },
                     dataType: 'json',
                     success: function (data) {
-                        COMMCAREHQ.app_manager.updateDOM(data.update);
+                        app_manager.updateDOM(data.update);
                     }
                 });
             }
@@ -116,7 +117,7 @@ var VisitScheduler = (function () {
                         },
                         dataType: 'json',
                         success: function (data) {
-                            COMMCAREHQ.app_manager.updateDOM(data.update);
+                            app_manager.updateDOM(data.update);
                         }
                     });
                 }
@@ -139,11 +140,11 @@ var VisitScheduler = (function () {
             var $add_visit_button = self.home.find("#add-visit");
 
             if (self.formSchedule.visits().length === 0){
-                $add_visit_button.closest(".control-group").addClass("error");
+                $add_visit_button.closest(".form-group").addClass("has-error");
                 $add_visit_button.siblings(".error-text").show();
                 errors += 1;
             } else {
-                $add_visit_button.closest(".control-group").removeClass("error");
+                $add_visit_button.closest(".form-group").removeClass("has-error");
                 $add_visit_button.siblings(".error-text").hide();
             }
 
@@ -151,12 +152,12 @@ var VisitScheduler = (function () {
             required.each(function(i, req){
                 var $req = $(req);
                 if ($req.val().trim().length === 0){
-                    $req.closest(".control-group").addClass("error");
+                    $req.closest(".form-group").addClass("has-error");
                     $req.siblings(".error-text").show();
                     errors += 1;
                 }
                 else{
-                    $req.closest(".control-group").removeClass("error");
+                    $req.closest(".form-group").removeClass("has-error");
                     $req.siblings(".error-text").hide();
                 }
             });

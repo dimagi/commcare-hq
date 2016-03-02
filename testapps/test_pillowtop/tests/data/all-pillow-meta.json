@@ -32,21 +32,21 @@
         "name": "AncHmisCaseFluffPillow"
     },
     "AppPillow": {
-        "advertised_name": "corehq.pillows.application.AppPillow.test_hqapps_2016-01-29_0013.testhq",
+        "advertised_name": "corehq.pillows.application.AppPillow.test_hqapps_2016-03-01_2128.testhq",
         "change_feed_type": "CouchChangeFeed",
-        "checkpoint_id": "corehq.pillows.application.AppPillow.test_hqapps_2016-01-29_0013.testhq",
+        "checkpoint_id": "corehq.pillows.application.AppPillow.test_hqapps_2016-03-01_2128.testhq",
         "couch_filter": "app_manager/all_apps",
         "couchdb_type": "Database",
         "couchdb_uri": "http://{COUCH_SERVER_ROOT}/test_commcarehq__apps",
         "document_class": "ApplicationBase",
         "es_alias": "hqapps",
-        "es_index": "test_hqapps_2016-01-29_0013",
+        "es_index": "test_hqapps_2016-03-01_2128",
         "es_type": "app",
         "extra_args": {},
         "full_class_name": "corehq.pillows.application.AppPillow",
         "include_docs": true,
         "name": "AppPillow",
-        "unique_id": "test_hqapps_2016-01-29_0013"
+        "unique_id": "test_hqapps_2016-03-01_2128"
     },
     "BlobDeletionPillow": {
         "advertised_name": "BlobDeletionPillow",
@@ -183,7 +183,7 @@
         "document_class": "CommCareCase",
         "extra_args": {
             "doc_type": "CommCareCase",
-            "domains": "pathways-india-mis pathways-tanzania"
+            "domains": "pathways-india-mis pathways-tanzania care-macf-malawi"
         },
         "full_class_name": "custom.care_pathways.models.FarmerRecordFluffPillow",
         "include_docs": false,
@@ -212,7 +212,7 @@
         "document_class": "CommCareCase",
         "extra_args": {
             "doc_type": "CommCareCase",
-            "domains": "pathways-india-mis pathways-tanzania"
+            "domains": "pathways-india-mis pathways-tanzania care-macf-malawi"
         },
         "full_class_name": "custom.care_pathways.models.GeographyFluffPillow",
         "include_docs": false,
@@ -579,6 +579,19 @@
         "include_docs": false,
         "name": "UnknownUsersPillow"
     },
+    "UserCacheInvalidatePillow": {
+        "advertised_name": "corehq.pillows.cacheinvalidate.CacheInvalidatePillow.testhq",
+        "change_feed_type": "CouchChangeFeed",
+        "checkpoint_id": "pillowtop_corehq.pillows.cacheinvalidate.CacheInvalidatePillow.testhq",
+        "couch_filter": null,
+        "couchdb_type": "Database",
+        "couchdb_uri": "http://{COUCH_SERVER_ROOT}/test_commcarehq__users",
+        "document_class": null,
+        "extra_args": {},
+        "full_class_name": "corehq.pillows.cacheinvalidate.CacheInvalidatePillow",
+        "include_docs": true,
+        "name": "UserCacheInvalidatePillow"
+    },
     "UserGroupsDbKafkaPillow": {
         "advertised_name": "UserGroupsDbKafkaPillow",
         "change_feed_type": "CouchChangeFeed",
@@ -587,21 +600,21 @@
         "name": "UserGroupsDbKafkaPillow"
     },
     "UserPillow": {
-        "advertised_name": "corehq.pillows.user.UserPillow.test_hqusers_2016-01-20_1610.testhq",
+        "advertised_name": "corehq.pillows.user.UserPillow.test_hqusers_2016-02-16_1402.testhq",
         "change_feed_type": "CouchChangeFeed",
-        "checkpoint_id": "corehq.pillows.user.UserPillow.test_hqusers_2016-01-20_1610.testhq",
+        "checkpoint_id": "corehq.pillows.user.UserPillow.test_hqusers_2016-02-16_1402.testhq",
         "couch_filter": "users/all_users",
         "couchdb_type": "Database",
         "couchdb_uri": "http://{COUCH_SERVER_ROOT}/test_commcarehq__users",
         "document_class": "CommCareUser",
         "es_alias": "hqusers",
-        "es_index": "test_hqusers_2016-01-20_1610",
+        "es_index": "test_hqusers_2016-02-16_1402",
         "es_type": "user",
         "extra_args": {},
         "full_class_name": "corehq.pillows.user.UserPillow",
         "include_docs": true,
         "name": "UserPillow",
-        "unique_id": "test_hqusers_2016-01-20_1610"
+        "unique_id": "test_hqusers_2016-02-16_1402"
     },
     "WorldVisionChildFluffPillow": {
         "advertised_name": "fluff.WorldVisionChildFluffPillow.testhq",

@@ -1,51 +1,61 @@
 {% load xforms_extras %}
 {% load hq_shared_tags %}
 {% load i18n %}
-<div class="control-group">
-    <label class="control-label">
+<div class="form-group">
+    <label class="col-sm-2 control-label">
         {% trans LABEL %}
         <span class="hq-help-template"
               data-title="{% trans LABEL %}"
               data-content="{% trans DESC %}"
         ></span>
     </label>
-    <div class="controls">
-        <select type="text" name="{{ SLUG }}-show" data-value="{% if case_list.show %}true{% else %}false{% endif %}">
+    <div class="col-sm-4">
+        <select class="form-control" type="text" name="{{ SLUG }}-show"
+                data-value="{% if case_list.show %}true{% else %}false{% endif %}">
             <option value="false">Don't Show</option>
             <option value="true">Show</option>
         </select>
-        <span id="{{ SLUG }}-label">
-            with label: {% input_trans case_list.label langs %}
-        </span>
-        <span class="help-inline" id="case_list_label_error" style="display: none;">
-            {% trans "Case list requires a label" %}
-        </span>
-        <script>
-            $(function () {
-                function updateCaseListLabelError() {
-                    var label_text = $('#{{ SLUG }}-label input').val();
-                    var show = $('[name="{{ SLUG }}-show"]').val();
-                    if (!label_text.length && show === 'true') {
-                        $(this).closest('.control-group').addClass('error');
-                        $('#case_list_label_error').css('display', 'inline');
-                    } else {
-                        $(this).closest('.control-group').removeClass('error');
-                        $('#case_list_label_error').css('display', 'none');
-                    }
-                }
-                function updateCaseListLabel() {
-                    $(this).next()[$(this).val() === 'true' ? 'show' : 'hide']();
-                    $('#{{ SLUG }}-media')[$(this).val() === 'true' ? 'show' : 'hide']();
-                    updateCaseListLabelError.call(this);
-                }
-                $('#{{ SLUG }}-label input').attr('name', '{{ SLUG }}-label').removeClass('wide');
-                $('[name="{{ SLUG }}-show"]').change(updateCaseListLabel).each(updateCaseListLabel);
-
-                $('#{{ SLUG }}-label input').on('textchange', updateCaseListLabelError);
-            });
-        </script>
     </div>
 </div>
+<div class="form-group" id="{{ SLUG }}-label">
+    <label class="col-sm-2 control-label">
+        Label for Case List Menu Item
+    </label>
+    <div class="col-sm-4">
+        {% input_trans case_list.label langs cssClass='form-control' %}
+    </div>
+    <div class="col-sm-2">
+        <span class="label label-danger" id="case_list_label_error" style="display: none;">
+            {% trans "Case list menu item requires a label" %}
+        </span>
+    </div>
+</div>
+
+<script>
+    $(function () {
+        function updateCaseListLabelError() {
+            var label_text = $('#{{ SLUG }}-label input').val();
+            var show = $('[name="{{ SLUG }}-show"]').val();
+            if (!label_text.length && show === 'true') {
+                $("#{{ SLUG }}-label").closest('.form-group').addClass('has-error');
+                $('#case_list_label_error').css('display', 'inline');
+            } else {
+                $("#{{ SLUG }}-label").closest('.form-group').removeClass('has-error');
+                $('#case_list_label_error').css('display', 'none');
+            }
+        }
+        function updateCaseListLabel() {
+            $('#{{ SLUG }}-label')[$(this).val() === 'true' ? 'show' : 'hide']();
+            $('#{{ SLUG }}-media')[$(this).val() === 'true' ? 'show' : 'hide']();
+            updateCaseListLabelError.call(this);
+        }
+        $('#{{ SLUG }}-label input').attr('name', '{{ SLUG }}-label');
+        $('[name="{{ SLUG }}-show"]').change(updateCaseListLabel).each(updateCaseListLabel);
+
+        $('#{{ SLUG }}-label input').on('textchange', updateCaseListLabelError);
+    });
+</script>
+
 <div id="{{ SLUG }}-media">
-    {% include "app_manager/partials/nav_menu_media.html" with ICON_LABEL="Icon" AUDIO_LABEL="Audio" qualifier="case_list-menu_item_" %}
+    {% include "app_manager/partials/nav_menu_media.html" with ICON_LABEL="Icon for Case List Menu Item" AUDIO_LABEL="Audio for Case List Menu Item" qualifier="case_list-menu_item_" %}
 </div>

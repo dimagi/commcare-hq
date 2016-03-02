@@ -318,7 +318,7 @@
                   "default": 0,
                   "cases": {
                     "Kirehe": 82946,
-                    "Nyagatare": 61471
+                    "Nyagatare": 77027
                   },
                   "type": "switch",
                   "switch_on": {
@@ -371,7 +371,7 @@
                   "switch_on": {
                     "value_expression": {
                       "type": "property_name",
-                      "property_name": "level_1_data"
+                      "property_name": "level_1_name"
                     },
                     "type": "related_doc",
                     "related_doc_type": "CommCareCase",
@@ -432,6 +432,8 @@
                   "cases": {
                     "Gahara": 9697,
                     "Gatore": 6062,
+                    "Karama": 7226,
+                    "Katabagemu": 8330,
                     "Kigina": 6454,
                     "Kirehe": 5476,
                     "Kigarama": 7581,

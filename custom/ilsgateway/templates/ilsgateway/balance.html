@@ -19,6 +19,9 @@
                 <th>
                     SMS Users
                 </th>
+                <th>
+                    Facilities with filled supply_point_id / All facilities
+                </th>
             </tr>
         </thead>
         <tr>
@@ -27,6 +30,7 @@
             <td>{{ locations_count }} / {{ stats.locations_count }}</td>
             <td>{{ web_users_count }} / {{ stats.web_users_count }}</td>
             <td>{{ sms_users_count }} / {{ stats.sms_users_count }}</td>
+            <td>{{ supply_points_count }} / {{ facilites_count }}</td>
         </tr>
     </table>
     <table id="problems-table" class="table table-bordered">

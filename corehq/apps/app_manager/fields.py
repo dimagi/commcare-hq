@@ -8,7 +8,7 @@ from django.utils.translation import ugettext as _
 from corehq.apps.app_manager.analytics import get_exports_by_application
 from corehq.apps.app_manager.dbaccessors import get_apps_in_domain, get_app
 from corehq.apps.app_manager.models import Application
-from corehq.apps.hqcase.dbaccessors import get_case_types_for_domain
+from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 from couchforms.analytics import get_exports_by_form
 from couchforms.models import XFormInstance
 from dimagi.utils.decorators.memoized import memoized
@@ -132,7 +132,7 @@ def get_app_sources(domain):
             "case": [{"text": t, "value": t} for t in app.get_case_types()],
             "form": [
                 {
-                    "text": form.default_name(),
+                    "text": u'{} / {}'.format(form.get_module().default_name(), form.default_name()),
                     "value": form.get_unique_id()
                 } for form in app.get_forms()
             ]
@@ -476,7 +476,7 @@ class ApplicationDataRMIHelper(object):
                     case_types_by_app[app_choice.id] = case_types
 
         if apps_by_type[self.APP_TYPE_NONE]:
-            all_case_types = set(get_case_types_for_domain(self.domain))
+            all_case_types = CaseAccessors(self.domain).get_case_types()
             unknown_case_types = all_case_types.difference(used_case_types)
             unknown_case_types = map(lambda c: RMIDataChoice(
                 id=c,

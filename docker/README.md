@@ -3,8 +3,12 @@ CommCare HQ docker
 
 Initial setup
 -------------
-* Install [Docker](http://docs.docker.com/installation)
-* Install [Docker Compose](https://docs.docker.com/compose/install/)
+* Linux
+   * Install [Docker](http://docs.docker.com/installation)
+   * Install [Docker Compose](https://docs.docker.com/compose/install/)
+* OS X
+   * Install [Docker Toolbox](https://docs.docker.com/mac/step_one/). Go through the full tutorial, which will create a default machine.
+   * If not using the Quick Start terminal, run `eval $(docker-machine env default)` to set up Docker's environment variables.
 * Bootstrap the setup:
 
     ```
@@ -24,36 +28,54 @@ Initial setup
 
     If all goes according to plan you should be able to log into CommCare: http://localhost:8000 using
     the login details above.
+    
+    On Mac, run `docker-machine ip` to get the VM's IP address, which replaces `localhost` in the URL.
 
-* Configure your localsettings
+### Configure your localsettings
+
+There are two different localsettings configurations, depending on whether HQ is running inside a docker container or on your local machine.
+
+  * Running HQ inside a docker container
 
     Make your `localsettings.py` extend `dockersettings.py` and comment out / delete your current
     settings for PostgreSQL, Redis, CouchDB, Elasticsearch
-    
     ```python
     from docker.dockersettings import *
     # DATABASES ..
     ```
-    
     See `docker/localsettings_docker.py` for an example.
 
-    
+  * Running docker services only
+    * Copy the appropriate postgres/couch/elasticsearch/redis configurations from `dockersettings.py` to `localsettings.py`
+    * Replace the `HOST` values in the configurations (e.g. `postgres`) with `localhost`
+
+
 General usage
 -------------
-The following commands assumes that you have updated your localsettings as described above.
-
-**Print the help**
 
 ```
   $ ./dockerhq.sh --help
 ```
 
-**Start/stop the services (couch, postgres, elastic, redis)**
+**The services (couch, postgres, elastic, redis, zookeeper, kafka)**
 ```
   $ ./dockerhq.sh services start
+  $ ./dockerhq.sh services stop
+  $ ./dockerhq.sh services logs postgres
 ```
+The following services are included. Their ports are mapped to the local host so you can connect to them
+directly.
+
+* Easticsearch (9200 & 9300)
+* PostgreSQL (5432)
+* CouchDB (5984)
+* Redis (6397)
+* Zookeeper (2181)
+* Kafka (9092)
 
 **Run the django server**
+
+Assumes that you have updated your localsettings as described above.
 
 ```
   $ ./dockerhq.sh runserver
@@ -87,10 +109,10 @@ script:
   $ .travis/simulate.sh javascript
   runs the javascript build matrix
   
-  $ .travis/simulate.sh python-catchall --test-override app_manager.SuiteTest
+  $ .travis/simulate.sh python-catchall --override-test app_manager.SuiteTest
   runs only the app_manager.SuiteTest using the python-catchall matrix setup
   
-  $ .travis/simulate.sh python-catchall --command-override bash
+  $ .travis/simulate.sh python-catchall --override-command bash
   drops you into a bash shell in the python-catchall matrix setup from where you can
   run any other commands
   

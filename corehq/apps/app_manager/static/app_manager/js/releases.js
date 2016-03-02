@@ -49,6 +49,19 @@ function SavedApp(app_data, releasesMain) {
         return false;
     });
 
+    self.get_app_code = ko.computed(function() {
+        var short_odk_url = self.get_short_odk_url();
+        if (short_odk_url) {
+            // Matches "foo" in "http://bit.ly/foo" and "https://is.gd/X/foo/" ("*" is not greedy)
+            var re = /^http.*\/(\w+)\/?/;
+            var match = short_odk_url.match(re);
+            if (match) {
+                return match[1];
+            }
+        }
+        return false;
+    });
+
     self.get_short_odk_url_phonetic = ko.computed(function () {
         return app_manager_utils.bitly_nato_phonetic(self.get_short_odk_url());
     });
@@ -116,6 +129,18 @@ function SavedApp(app_data, releasesMain) {
         ga_track_event('App Manager', 'Deploy Button', self.id());
         analytics.workflow('Clicked Deploy');
         $.post(releasesMain.options.urls.hubspot_click_deploy);
+    };
+
+    self.clickScan = function() {
+        ga_track_event('App Manager', 'Show Bar Code', '-');
+
+        // Hide the main deploy modal, then re-open
+        // it when the scan barcode modal is closed
+        var $deployModal = $('.modal.fade.in');
+        $deployModal.modal('hide');
+        $('body').one("hide.bs.modal", function() {
+            $deployModal.modal({ show: true });
+        });
     };
 
     return self;
@@ -241,7 +266,9 @@ function ReleasesMain(o) {
                 data: {ajax: true, is_released: !is_released},
                 beforeSend: function (jqXHR, settings) {
                     savedApp.is_released('pending');
-                    $.ajaxSettings.beforeSend(jqXHR, settings);
+                    if ($.ajaxSettings.beforeSend) {
+                        $.ajaxSettings.beforeSend(jqXHR, settings);
+                    }
                 },
                 success: function (data) {
                     savedApp.is_released(data.is_released);

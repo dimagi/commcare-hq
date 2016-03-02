@@ -13,6 +13,9 @@ from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.hqcase.utils import get_case_by_domain_hq_user_id
 from corehq.apps.users.models import CommCareUser
 from django.test import TestCase, SimpleTestCase
+
+from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
+from corehq.form_processor.tests.utils import run_with_all_backends
 from dimagi.utils.couch.undo import DELETED_SUFFIX
 
 TEST_DOMAIN = 'cc_util_test'
@@ -33,6 +36,7 @@ class CallCenterUtilsTests(TestCase):
 
     @classmethod
     def tearDownClass(cls):
+        CommCareUser.get(cls.user_id).delete()
         cls.domain.delete()
 
     def setUp(self):
@@ -170,6 +174,7 @@ class CallCenterUtilsUserCaseTests(TestCase):
         delete_all_cases()
         self.domain.delete()
 
+    @run_with_all_backends
     def test_sync_usercase_custom_user_data_on_create(self):
         """
         Custom user data should be synced when the user is created
@@ -178,10 +183,11 @@ class CallCenterUtilsUserCaseTests(TestCase):
             'completed_training': 'yes',
         }
         self.user.save()
-        case = get_case_by_domain_hq_user_id(TEST_DOMAIN, self.user._id, USERCASE_TYPE)
+        case = CaseAccessors(TEST_DOMAIN).get_case_by_domain_hq_user_id(self.user._id, USERCASE_TYPE)
         self.assertIsNotNone(case)
-        self.assertEquals(case.completed_training, 'yes')
+        self.assertEquals(case.dynamic_case_properties()['completed_training'], 'yes')
 
+    @run_with_all_backends
     def test_sync_usercase_custom_user_data_on_update(self):
         """
         Custom user data should be synced when the user is updated
@@ -194,44 +200,47 @@ class CallCenterUtilsUserCaseTests(TestCase):
             'completed_training': 'yes',
         }
         sync_usercase(self.user)
-        case = get_case_by_domain_hq_user_id(TEST_DOMAIN, self.user._id, USERCASE_TYPE)
-        self.assertEquals(case.completed_training, 'yes')
+        case = CaseAccessors(TEST_DOMAIN).get_case_by_domain_hq_user_id(self.user._id, USERCASE_TYPE)
+        self.assertEquals(case.dynamic_case_properties()['completed_training'], 'yes')
 
+    # @run_with_all_backends
     def test_reactivate_user(self):
         """Confirm that reactivating a user re-opens its user case."""
         self.user.save()
-        user_case = get_case_by_domain_hq_user_id(TEST_DOMAIN, self.user._id, USERCASE_TYPE)
+        user_case = CaseAccessors(TEST_DOMAIN).get_case_by_domain_hq_user_id(self.user._id, USERCASE_TYPE)
         self.assertIsNotNone(user_case)
 
         self.user.is_active = False
         self.user.save()
-        user_case = get_case_by_domain_hq_user_id(TEST_DOMAIN, self.user._id, USERCASE_TYPE)
+        user_case = CaseAccessors(TEST_DOMAIN).get_case_by_domain_hq_user_id(self.user._id, USERCASE_TYPE)
         self.assertTrue(user_case.closed)
 
         self.user.is_active = True
         self.user.save()
-        user_case = get_case_by_domain_hq_user_id(TEST_DOMAIN, self.user._id, USERCASE_TYPE)
+        user_case = CaseAccessors(TEST_DOMAIN).get_case_by_domain_hq_user_id(self.user._id, USERCASE_TYPE)
         self.assertFalse(user_case.closed)
 
+    @run_with_all_backends
     def test_update_deactivated_user(self):
         """
         Confirm that updating a deactivated user also updates the user case.
         """
         self.user.save()
-        user_case = get_case_by_domain_hq_user_id(TEST_DOMAIN, self.user._id, USERCASE_TYPE)
+        user_case = CaseAccessors(TEST_DOMAIN).get_case_by_domain_hq_user_id(self.user._id, USERCASE_TYPE)
         self.assertIsNotNone(user_case)
 
         self.user.is_active = False
         self.user.save()
-        user_case = get_case_by_domain_hq_user_id(TEST_DOMAIN, self.user._id, USERCASE_TYPE)
+        user_case = CaseAccessors(TEST_DOMAIN).get_case_by_domain_hq_user_id(self.user._id, USERCASE_TYPE)
         self.assertTrue(user_case.closed)
 
         self.user.user_data = {'foo': 'bar'}
         self.user.save()
-        user_case = get_case_by_domain_hq_user_id(TEST_DOMAIN, self.user._id, USERCASE_TYPE)
+        user_case = CaseAccessors(TEST_DOMAIN).get_case_by_domain_hq_user_id(self.user._id, USERCASE_TYPE)
         self.assertTrue(user_case.closed)
-        self.assertEquals(user_case.foo, 'bar')
+        self.assertEquals(user_case.dynamic_case_properties()['foo'], 'bar')
 
+    # @run_with_all_backends
     def test_update_and_reactivate_in_one_save(self):
         """
         Confirm that a usercase can be updated and reactived in a single save of the user model
@@ -240,20 +249,20 @@ class CallCenterUtilsUserCaseTests(TestCase):
         Confirm that updating a deactivated user also updates the user case.
         """
         self.user.save()
-        user_case = get_case_by_domain_hq_user_id(TEST_DOMAIN, self.user._id, USERCASE_TYPE)
+        user_case = CaseAccessors(TEST_DOMAIN).get_case_by_domain_hq_user_id(self.user._id, USERCASE_TYPE)
         self.assertIsNotNone(user_case)
 
         self.user.is_active = False
         self.user.save()
-        user_case = get_case_by_domain_hq_user_id(TEST_DOMAIN, self.user._id, USERCASE_TYPE)
+        user_case = CaseAccessors(TEST_DOMAIN).get_case_by_domain_hq_user_id(self.user._id, USERCASE_TYPE)
         self.assertTrue(user_case.closed)
 
         self.user.user_data = {'foo': 'bar'}
         self.user.is_active = True
         self.user.save()
-        user_case = get_case_by_domain_hq_user_id(TEST_DOMAIN, self.user._id, USERCASE_TYPE)
+        user_case = CaseAccessors(TEST_DOMAIN).get_case_by_domain_hq_user_id(self.user._id, USERCASE_TYPE)
         self.assertFalse(user_case.closed)
-        self.assertEquals(user_case.foo, 'bar')
+        self.assertEquals(user_case.dynamic_case_properties()['foo'], 'bar')
 
 class DomainTimezoneTests(SimpleTestCase):
     def _test_midnights(self, utcnow, test_cases):

@@ -129,10 +129,11 @@ ko.bindingHandlers.langcode = {
             b.valueUpdate.push('autocompleteclose');
             return b;
         });
-        $('input', element).addClass('short code').langcodes();
+        $('input', element).addClass('short code form-control').langcodes();
     },
     update: ko.bindingHandlers.editableString.update
 };
+
 ko.bindingHandlers.sortable = {
     updateSortableList: function (itemList) {
         _(itemList()).each(function (item, index) {
@@ -225,19 +226,13 @@ ko.bindingHandlers.saveButton2 = {
             state = valueAccessor(),
             saveButton;
 
+        saveButton = COMMCAREHQ.SaveButton.init({
+            save: function () {
+                saveButton.ajax(saveOptions());
+            }
+        });
         if (USE_BOOTSTRAP_3) {
-            saveButton = COMMCAREHQ.SaveButton.init({
-                save: function () {
-                    saveButton.ajax(saveOptions());
-                }
-            });
             $(element).css('vertical-align', 'top').css('display', 'inline-block');
-        } else {
-            saveButton = SaveButton.init({
-                save: function () {
-                    saveButton.ajax(saveOptions());
-                }
-            });
         }
 
         saveButton.ui.appendTo(element);
@@ -258,19 +253,13 @@ ko.bindingHandlers.deleteButton = {
             state = valueAccessor(),
             deleteButton;
 
+        deleteButton = COMMCAREHQ.DeleteButton.init({
+            save: function () {
+                deleteButton.ajax(saveOptions());
+            }
+        });
         if (USE_BOOTSTRAP_3) {
-            deleteButton = COMMCAREHQ.DeleteButton.init({
-                save: function () {
-                    deleteButton.ajax(saveOptions());
-                }
-            });
             $(element).css('vertical-align', 'top').css('display', 'inline-block');
-        } else {
-            deleteButton = DeleteButton.init({
-                save: function () {
-                    deleteButton.ajax(saveOptions());
-                }
-            });
         }
         deleteButton.ui.appendTo(element);
         element.deleteButton = deleteButton;
@@ -326,7 +315,7 @@ ko.bindingHandlers.openModal = {
 
 ko.bindingHandlers.openRemoteModal = {
     init: function (element, valueAccessor, allBindingsAccessor, viewModel, bindingContext) {
-        var modal = $('<div></div>').addClass('modal fade').css("width", "860px").css("margin-left", "-430px").appendTo('body'),
+        var modal = $('<div></div>').addClass('modal fade').appendTo('body'),
             newValueAccessor = function () {
                 var clickAction = function () {
                     modal.load($(element).data('ajaxSource'));
@@ -362,8 +351,8 @@ ko.bindingHandlers.starred = {
         value = value + '';
         $element.addClass('icon pointer');
 
-        var unselected = 'icon-star-empty';
-        var selected = 'icon-star icon-large released';
+        var unselected = 'icon-star-empty fa-star-o';
+        var selected = 'icon-star icon-large fa-star released';
         var pending = 'icon-refresh icon-spin fa-spin fa-spinner';
         var error = 'icon-ban-circle';
 
@@ -381,17 +370,6 @@ ko.bindingHandlers.starred = {
         $element.removeClass(pending);
         $element.removeClass(error);
         $element.addClass(suffix);
-    }
-};
-
-ko.bindingHandlers.bootstrapCollapse = {
-    init: function (element) {
-        $(element).on('click', 'a.accordion-toggle', function () {
-            var $a = $(this);
-            if (!$a.attr('href')) {
-                $a.parent().parent().find('.collapse').collapse('toggle');
-            }
-        });
     }
 };
 

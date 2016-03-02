@@ -25,6 +25,7 @@ from corehq.apps.userreports.exceptions import (
     BadSpecError,
     DataSourceConfigurationNotFoundError,
     ReportConfigurationNotFoundError,
+    StaticDataSourceConfigurationNotFoundError,
 )
 from corehq.apps.userreports.expressions.factory import ExpressionFactory
 from corehq.apps.userreports.filters.factory import FilterFactory
@@ -291,7 +292,7 @@ class DataSourceConfiguration(UnicodeMixIn, CachedCouchDocumentMixin, Document):
 class ReportMeta(DocumentSchema):
     # `True` if this report was initially constructed by the report builder.
     created_by_builder = BooleanProperty(default=False)
-    builder_report_type = StringProperty(choices=['chart', 'list', 'table', 'worker'])
+    builder_report_type = StringProperty(choices=['chart', 'list', 'table', 'worker', 'map'])
 
 
 class ReportConfiguration(UnicodeMixIn, QuickCachedDocumentMixin, Document):
@@ -332,6 +333,32 @@ class ReportConfiguration(UnicodeMixIn, QuickCachedDocumentMixin, Document):
     @memoized
     def charts(self):
         return [ChartFactory.from_spec(g._obj) for g in self.configured_charts]
+
+    @property
+    @memoized
+    def location_column_id(self):
+        cols = [col for col in self.report_columns if col.type == 'location']
+        if cols:
+            return cols[0].column_id
+
+    @property
+    def map_config(self):
+        def map_col(column):
+            if column['column_id'] != self.location_column_id:
+                return {
+                    'column_id': column['column_id'],
+                    'label': column['display']
+                }
+
+        if self.location_column_id:
+            return {
+                'location_column_id': self.location_column_id,
+                'layer_name': {
+                    'XFormInstance': _('Forms'),
+                    'CommCareCase': _('Cases')
+                }.get(self.config.referenced_doc_type, "Layer"),
+                'columns': filter(None, [map_col(col) for col in self.columns])
+            }
 
     @property
     @memoized
@@ -404,6 +431,12 @@ class ReportConfiguration(UnicodeMixIn, QuickCachedDocumentMixin, Document):
         self.by_domain.clear(self.__class__, self.domain)
         self.count_by_data_source.clear(self.__class__, self.domain, self.config_id)
 
+    @property
+    def is_static(self):
+        return any(
+            self._id.startswith(prefix)
+            for prefix in [STATIC_PREFIX, CUSTOM_REPORT_PREFIX]
+        )
 
 STATIC_PREFIX = 'static-'
 CUSTOM_REPORT_PREFIX = 'custom-'
@@ -449,8 +482,9 @@ class StaticDataSourceConfiguration(JsonObject):
         for ds in cls.all():
             if ds.get_id == config_id:
                 return ds
-        raise BadSpecError(_('The data source referenced by this report could '
-                             'not be found.'))
+        raise StaticDataSourceConfigurationNotFoundError(_(
+            'The data source referenced by this report could not be found.'
+        ))
 
 
 class StaticReportConfiguration(JsonObject):
@@ -523,7 +557,7 @@ def get_datasource_config(config_id, domain):
     is_static = config_id.startswith(StaticDataSourceConfiguration._datasource_id_prefix)
     if is_static:
         config = StaticDataSourceConfiguration.by_id(config_id)
-        if not config or config.domain != domain:
+        if config.domain != domain:
             _raise_not_found()
     else:
         try:

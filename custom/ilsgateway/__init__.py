@@ -45,3 +45,7 @@ LOGISTICS_PRODUCT_ALIASES = {
     'coc': 'cc',
     'pop': 'pp'
 }
+
+ROOT_LOCATION_TYPE = 'MOHSW'
+
+SLAB_DOMAIN = 'slab-tanzania'

@@ -169,7 +169,7 @@ def _handle_duplicate(new_doc, instance):
     existing_doc = FormAccessors(new_doc.domain).get_with_attachments(conflict_id)
 
     existing_md5 = existing_doc.xml_md5()
-    new_md5 = hashlib.md5(instance).hexdigest()
+    new_md5 = new_doc.xml_md5()
 
     if existing_md5 != new_md5:
         # if the form contents are not the same:

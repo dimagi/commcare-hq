@@ -2,6 +2,13 @@ from casexml.apps.stock.const import COMMTRACK_REPORT_XMLNS
 from corehq.util.test_utils import unit_testing_only
 from couchforms.const import DEVICE_LOG_XMLNS
 from couchforms.models import XFormInstance, doc_types
+from dimagi.utils.couch.database import iter_docs
+
+
+def get_forms_by_id(form_ids):
+    forms = iter_docs(XFormInstance.get_db(), form_ids)
+    doctypes = doc_types()
+    return [doctypes[form['doc_type']].wrap(form) for form in forms if form.get('doc_type') in doctypes]
 
 
 def get_form_ids_by_type(domain, type_, start=None, end=None):
@@ -40,20 +47,6 @@ def get_forms_by_type(domain, type_, recent_first=False,
         descending=recent_first,
         include_docs=True,
         limit=limit,
-        classes=doc_types(),
-    ).all()
-
-
-@unit_testing_only
-def get_forms_of_all_types(domain):
-    startkey = [domain]
-    endkey = startkey + [{}]
-    return XFormInstance.view(
-        "couchforms/all_submissions_by_domain",
-        startkey=startkey,
-        endkey=endkey,
-        reduce=False,
-        include_docs=True,
         classes=doc_types(),
     ).all()
 

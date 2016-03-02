@@ -1,8 +1,9 @@
 import json
 from corehq.apps.data_interfaces.models import AutomaticUpdateRuleCriteria
-from corehq.apps.hqcase.dbaccessors import get_case_types_for_domain
 from corehq.apps.style import crispy as hqcrispy
 from couchdbkit import ResourceNotFound
+
+from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 from crispy_forms.bootstrap import StrictButton, InlineField, FormActions, FieldWithButtons
 from django import forms
 from crispy_forms.helper import FormHelper
@@ -91,11 +92,10 @@ class AddCaseToGroupForm(forms.Form):
         self.helper.form_show_labels = False
         self.helper.layout = Layout(
             InlineField(
-                'case_identifier',
-                css_class='input-xlarge'
+                'case_identifier'
             ),
             StrictButton(
-                mark_safe('<i class="icon-plus"></i> %s' % _("Add Case")),
+                mark_safe('<i class="fa fa-plus"></i> %s' % _("Add Case")),
                 css_class='btn-success',
                 type="submit"
             )
@@ -156,7 +156,7 @@ class AddAutomaticCaseUpdateRuleForm(forms.Form):
         return values
 
     def set_case_type_choices(self, initial):
-        case_types = [''] + get_case_types_for_domain(self.domain)
+        case_types = [''] + list(CaseAccessors(self.domain).get_case_types())
         if initial and initial not in case_types:
             # Include the deleted case type in the list of choices so that
             # we always allow proper display and edit of rules

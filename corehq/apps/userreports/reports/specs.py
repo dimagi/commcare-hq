@@ -1,7 +1,10 @@
 import json
 from django.utils.translation import ugettext as _
+from jsonobject.exceptions import BadValueError
+
 from corehq.apps.userreports.reports.sorting import ASCENDING, DESCENDING
 from corehq.apps.userreports.sql.columns import DEFAULT_MAXIMUM_EXPANSION
+from couchforms.jsonobject_extensions import GeoPointProperty
 from dimagi.ext.jsonobject import (
     BooleanProperty,
     DictProperty,
@@ -133,6 +136,34 @@ class FieldColumn(ReportColumn):
 
     def get_group_by_columns(self):
         return [self.column_id]
+
+
+class LocationColumn(ReportColumn):
+    type = TypeProperty('location')
+    field = StringProperty(required=True)
+    sortable = BooleanProperty(default=False)
+
+    def format_data(self, data):
+        column_name = self.column_id
+        for row in data:
+            try:
+                row[column_name] = '{g.latitude} {g.longitude} {g.altitude} {g.accuracy}'.format(
+                    g=GeoPointProperty().wrap(row[column_name])
+                )
+            except BadValueError:
+                row[column_name] = None
+
+    def get_sql_column_config(self, data_source_config, lang):
+        return SqlColumnConfig(columns=[
+            DatabaseColumn(
+                header=self.get_header(lang),
+                agg_column=SimpleColumn(self.field, alias=self.column_id),
+                sortable=self.sortable,
+                data_slug=self.column_id,
+                format_fn=self.get_format_fn(),
+                help_text=self.description
+            )
+        ])
 
 
 class ExpandedColumn(ReportColumn):

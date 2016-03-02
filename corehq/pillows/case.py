@@ -3,17 +3,19 @@ from casexml.apps.case.models import CommCareCase
 from corehq.apps.change_feed import topics
 from corehq.apps.change_feed.consumer.feed import KafkaChangeFeed
 from corehq.elastic import get_es_new
+from corehq.form_processor.change_providers import SqlCaseChangeProvider
 from corehq.pillows.mappings.case_mapping import CASE_MAPPING, CASE_INDEX
 from dimagi.utils.couch import LockManager
 from dimagi.utils.decorators.memoized import memoized
 from .base import HQPillow
 import logging
-from pillowtop.checkpoints.manager import PillowCheckpoint, get_django_checkpoint_store, \
-    PillowCheckpointEventHandler
+from pillowtop.checkpoints.manager import PillowCheckpoint, PillowCheckpointEventHandler
 from pillowtop.es_utils import doc_exists, ElasticsearchIndexMeta
 from pillowtop.listener import lock_manager
 from pillowtop.pillow.interface import ConstructedPillow
 from pillowtop.processors.elastic import ElasticProcessor
+from pillowtop.reindexer.change_providers.couch import CouchViewChangeProvider
+from pillowtop.reindexer.reindexer import PillowReindexer
 
 
 UNKNOWN_DOMAIN = "__nodomain__"
@@ -72,31 +74,33 @@ def transform_case_for_elasticsearch(doc_dict):
     return doc_ret
 
 
-def prepare_sql_case_json_for_elasticsearch(sql_case_json):
-    prepped_case = transform_case_for_elasticsearch(sql_case_json)
-    # todo: these are required for consistency with couch representation, figure out how best to deal with it
-    prepped_case['doc_type'] = 'CommCareCase'
-    prepped_case['_id'] = prepped_case['case_id']
-    return prepped_case
-
-
 def get_sql_case_to_elasticsearch_pillow():
     checkpoint = PillowCheckpoint(
-        get_django_checkpoint_store(),
         'sql-cases-to-elasticsearch',
     )
     case_processor = ElasticProcessor(
         elasticseach=get_es_new(),
         index_meta=ElasticsearchIndexMeta(index=CASE_INDEX, type=CASE_ES_TYPE),
-        doc_prep_fn=prepare_sql_case_json_for_elasticsearch
+        doc_prep_fn=transform_case_for_elasticsearch
     )
     return ConstructedPillow(
         name='SqlCaseToElasticsearchPillow',
         document_store=None,
         checkpoint=checkpoint,
-        change_feed=KafkaChangeFeed(topic=topics.CASE_SQL, group_id='sql-cases-to-es'),
+        change_feed=KafkaChangeFeed(topics=[topics.CASE_SQL], group_id='sql-cases-to-es'),
         processor=case_processor,
         change_processed_event_handler=PillowCheckpointEventHandler(
             checkpoint=checkpoint, checkpoint_frequency=100,
         ),
     )
+
+
+def get_couch_case_reindexer():
+    return PillowReindexer(CasePillow(), CouchViewChangeProvider(
+        document_class=CommCareCase,
+        view_name='cases_by_owner/view'
+    ))
+
+
+def get_sql_case_reindexer():
+    return PillowReindexer(get_sql_case_to_elasticsearch_pillow(), SqlCaseChangeProvider())

@@ -94,7 +94,7 @@ except (ImportError, SyntaxError):
 def static(url):
     resource_url = url
     version = resource_versions.get(resource_url)
-    url = settings.STATIC_URL + url
+    url = settings.STATIC_CDN + settings.STATIC_URL + url
     is_less = url.endswith('.less')
     if version and not is_less:
         url += "?version=%s" % version
@@ -120,7 +120,7 @@ def new_static(url, **kwargs):
     use_versions = not can_be_compressed or use_cache
 
     resource_url = url
-    url = settings.STATIC_URL + url
+    url = settings.STATIC_CDN + settings.STATIC_URL + url
     if use_versions:
         version = resource_versions.get(resource_url)
         if version:
@@ -150,13 +150,15 @@ def domains_for_user(context, request, selected_domain=None):
     ctxt = {
         'domain_list': domain_list,
         'current_domain': selected_domain,
-        'DOMAIN_TYPE': context['DOMAIN_TYPE']
+        'DOMAIN_TYPE': context['DOMAIN_TYPE'],
+        'can_publish_to_exchange': (
+            selected_domain is not None and selected_domain != 'public'
+            and request.couch_user and request.couch_user.can_edit_apps() and
+                (request.couch_user.is_member_of(selected_domain)
+                 or request.couch_user.is_superuser)
+        ),
     }
-    template = {
-        style_utils.BOOTSTRAP_2: 'style/bootstrap2/partials/domain_list_dropdown.html',
-        style_utils.BOOTSTRAP_3: 'style/bootstrap3/partials/domain_list_dropdown.html',
-    }[style_utils.get_bootstrap_version()]
-    return mark_safe(render_to_string(template, ctxt))
+    return mark_safe(render_to_string('style/includes/domain_list_dropdown.html', ctxt))
 
 
 @register.simple_tag
@@ -345,3 +347,14 @@ class CaptureasNode(template.Node):
         output = self.nodelist.render(context)
         context[self.varname] = output
         return ''
+
+
+@register.simple_tag
+def chevron(value):
+    """
+    Displays a green up chevron if value > 0, and a red down chevron if value < 0
+    """
+    if value > 0:
+        return '<span class="glyphicon glyphicon-chevron-up" style="color: #006400;"></span>'
+    elif value < 0:
+        return '<span class="glyphicon glyphicon-chevron-down" style="color: #8b0000;"> </span>'

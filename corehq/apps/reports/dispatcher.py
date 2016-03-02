@@ -138,9 +138,10 @@ class ReportDispatcher(View):
             report = cls(request, domain=domain, **report_kwargs)
             report.rendered_as = render_as
             try:
-                report.set_bootstrap3_status(
-                    request, domain=domain, report_slug=report_slug, *args, **kwargs
-                )
+                if report.is_bootstrap3:
+                    report.bootstrap3_dispatcher(
+                        request, domain=domain, report_slug=report_slug, *args, **kwargs
+                    )
                 return getattr(report, '%s_response' % render_as)
             except BadRequestError, e:
                 return HttpResponseBadRequest(e)
@@ -270,6 +271,15 @@ class CustomProjectReportDispatcher(ProjectReportDispatcher):
 class BasicReportDispatcher(ReportDispatcher):
     prefix = 'basic_report'
     map_name = 'BASIC_REPORTS'
+
+
+class DomainReportDispatcher(ReportDispatcher):
+    prefix = 'domain_report'
+    map_name = 'DOMAIN_REPORTS'
+
+    @cls_to_view_login_and_domain
+    def dispatch(self, request, *args, **kwargs):
+        return super(DomainReportDispatcher, self).dispatch(request, *args, **kwargs)
 
 
 class AdminReportDispatcher(ReportDispatcher):

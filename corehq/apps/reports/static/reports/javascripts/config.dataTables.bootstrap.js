@@ -31,6 +31,7 @@ function HQReportDataTables(options) {
     // a list of functions to call back to after ajax.
     // see user configurable charts for an example usage
     self.extraCallbacks = options.extraCallbacks;
+    self.includeFilter = options.includeFilter || false;
     self.datatable = null;
     self.rendered = false;
 
@@ -88,7 +89,8 @@ function HQReportDataTables(options) {
                 iDisplayLength: self.defaultRows,
                 bAutoWidth: self.autoWidth,
                 sScrollX: "100%",
-                bSort: self.defaultSort
+                bSort: self.defaultSort,
+                bFilter: self.includeFilter
             };
             if (self.aaSorting !== null || self.customSort !== null) {
                 params.aaSorting = self.aaSorting || self.customSort;
@@ -99,46 +101,29 @@ function HQReportDataTables(options) {
                 params.bProcessing = true;
                 params.sAjaxSource = self.ajaxSource;
                 params.bFilter = $(this).data('filter') || false;
-                if (!self.useBootstrap3) {
-                    params.fnServerParams = function (aoData) {
-                        var ajaxParams = $.isFunction(self.ajaxParams) ? self.ajaxParams() : self.ajaxParams;
-                        for (var p in ajaxParams) {
-                            if (ajaxParams.hasOwnProperty(p)) {
-                                var currentParam = ajaxParams[p];
-                                if(_.isObject(currentParam.value)) {
-                                    for (var j=0; j < currentParam.value.length; j++) {
-                                        aoData.push({
-                                            name: currentParam.name,
-                                            value: currentParam.value[j]
-                                        });
-                                    }
-                                } else {
-                                    aoData.push(currentParam);
+                self.fmtParams = function (defParams) {
+                    var ajaxParams = $.isFunction(self.ajaxParams) ? self.ajaxParams() : self.ajaxParams;
+                    for (var p in ajaxParams) {
+                        if (ajaxParams.hasOwnProperty(p)) {
+                            var currentParam = ajaxParams[p];
+                            if(_.isObject(currentParam.value)) {
+                                for (var j=0; j < currentParam.value.length; j++) {
+                                    defParams.push({
+                                        name: currentParam.name,
+                                        value: currentParam.value[j]
+                                    });
                                 }
+                            } else {
+                                defParams.push(currentParam);
                             }
                         }
-                    };
+                    }
+                    return defParams;
+                };
+                if (!self.useBootstrap3) {
+                    params.fnServerParams = self.fmtParams;
                 }
                 params.fnServerData = function ( sSource, aoData, fnCallback, oSettings ) {
-                    var format_params = function (defParams) {
-                        var ajaxParams = $.isFunction(self.ajaxParams) ? self.ajaxParams() : self.ajaxParams;
-                        for (var p in ajaxParams) {
-                            if (ajaxParams.hasOwnProperty(p)) {
-                                var currentParam = ajaxParams[p];
-                                if(_.isObject(currentParam.value)) {
-                                    for (var j=0; j < currentParam.value.length; j++) {
-                                        defParams.push({
-                                            name: currentParam.name,
-                                            value: currentParam.value[j]
-                                        });
-                                    }
-                                } else {
-                                    defParams.push(currentParam);
-                                }
-                            }
-                        }
-                        return defParams;
-                    };
                     var custom_callback = function(data) {
                         var result = fnCallback(data); // this must be called first because datatables clears the tfoot of the table
                         var i;
@@ -164,7 +149,7 @@ function HQReportDataTables(options) {
 
                     oSettings.jqXHR = $.ajax( {
                         "url": sSource,
-                        "data": (self.useBootstrap3) ? format_params(aoData) : aoData,
+                        "data": (self.useBootstrap3) ? self.fmtParams(aoData) : aoData,
                         "success": custom_callback,
                         "error": function(data) {
                             $(".dataTables_processing").hide();
@@ -216,6 +201,13 @@ function HQReportDataTables(options) {
                 $('.dataTables_paginate a').on('click', function () {
                     datatable.fnAdjustColumnSizing();
                 });
+                // This fixes a bug in some browsers where if the first column
+                // contains a large amount of data, it will overlap with the
+                // second column. This makes sure after load, the columns are
+                // re-adjusted.
+                setTimeout( function () {
+                    datatable.fnAdjustColumnSizing();
+                }, 10);
             }
 
             var $dataTablesFilter = $(".dataTables_filter");

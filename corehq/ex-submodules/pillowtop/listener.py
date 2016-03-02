@@ -123,7 +123,6 @@ class BasicPillow(PillowBase):
 
     def _get_default_checkpoint(self):
         return PillowCheckpoint(
-            self.document_store,
             construct_checkpoint_doc_id_from_name(self.get_name()),
         )
 
@@ -342,16 +341,14 @@ class PythonPillow(BasicPillow):
                 self.process_chunk()
         elif self.python_filter(change) or (change.get('deleted', None) and self.process_deletions):
             self.process_change(change)
+
+    def fire_change_processed_event(self, change, context):
         if context.changes_seen % self.checkpoint_frequency == 0 and context.do_set_checkpoint:
             # if using chunking make sure we never allow the checkpoint to get in
             # front of the chunks
             if self.use_chunking:
                 self.process_chunk()
             self.set_checkpoint(change)
-
-    def fire_change_processed_event(self, change, context):
-        # todo: should fix this so that the checkpointing happens here.
-        pass
 
     def run(self):
         self.change_queue = []
@@ -423,8 +420,6 @@ class AliasedElasticPillow(BasicPillow):
     pillow will create a new Index with a new md5sum as its suffix. Once it's finished indexing,
     you will need to flip the alias over to it.
     """
-    es_host = ""
-    es_port = ""
     es_index = ""
     es_type = ""
     es_alias = ''
@@ -453,13 +448,8 @@ class AliasedElasticPillow(BasicPillow):
 
     @memoized
     def get_es_new(self):
-        return Elasticsearch(
-            [{
-                'host': self.es_host,
-                'port': self.es_port,
-            }],
-            timeout=self.es_timeout,
-        )
+        from corehq.elastic import get_es_new
+        return get_es_new(timeout=self.es_timeout)
 
     def change_trigger(self, changes_dict):
         id = changes_dict['id']

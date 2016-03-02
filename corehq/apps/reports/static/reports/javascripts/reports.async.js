@@ -132,6 +132,10 @@ var HQAsyncReport = function (o) {
                 self.loadingIssueModal.modal('hide');
                 self.hqLoading = $('.hq-loading');
                 self.reportContent.html(data.report);
+                // clear lingering popovers
+                _.each($('body > .popover'), function (popover) {
+                    $(popover).remove();
+                });
                 self.reportContent.append(self.hqLoading);
                 self.hqLoading.removeClass('hide');
 
@@ -142,10 +146,16 @@ var HQAsyncReport = function (o) {
 
                 if (!initial_load || !self.standardReport.needsFilters) {
                     self.standardReport.filterSubmitButton
-                        .removeClass('btn-primary')
-                        .button('standard')
-                        .addClass('disabled')
-                        .prop('disabled', true);
+                        .button('reset');
+                    setTimeout(function () {
+                        // Bootstrap 3 clears all btn styles except btn on reset
+                        // This gets around it by waiting 10ms.
+                        self.standardReport.filterSubmitButton
+                            .removeClass('btn-primary')
+                            .addClass('disabled')
+                            .prop('disabled', true);
+
+                    }, 10);
                 } else {
                     self.standardReport.filterSubmitButton
                         .button('reset')
@@ -187,16 +197,13 @@ var HQAsyncReport = function (o) {
         self.updateReport(true, window.location.search.substr(1));
     });
 
-    var hideLoadingIssueModal = function () {
+    self.loadingIssueModal.on('hide hide.bs.modal', function () {
         if (self.issueAttempts > 0) {
             self.hqLoading = $('.hq-loading');
             self.hqLoading.find('.js-loading-spinner').addClass('hide');
             self.hqLoading.find('h4').text('We were unsuccessful loading the report:').attr('style', 'margin-bottom: 10px;');
         }
-    };
-
-    self.loadingIssueModal.on('hide', hideLoadingIssueModal);  // B2 event
-    self.loadingIssueModal.on('hide.bs.modal', hideLoadingIssueModal);  // B2 event
+    });
 
 
 };

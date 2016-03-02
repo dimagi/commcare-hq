@@ -73,6 +73,7 @@ USE_I18N = True
 # Examples: "http://media.lawrence.com", "http://example.com/media/"
 MEDIA_URL = '/media/'
 STATIC_URL = '/static/'
+STATIC_CDN = ''
 
 FILEPATH = os.path.abspath(os.path.dirname(__file__))
 # media for user uploaded media.  in general this won't be used at all.
@@ -180,7 +181,7 @@ TEMPLATE_CONTEXT_PROCESSORS = [
     'corehq.util.context_processors.domain',
     # sticks the base template inside all responses
     "corehq.util.context_processors.base_template",
-    "corehq.util.context_processors.analytics_js",
+    "corehq.util.context_processors.js_api_keys",
     'corehq.util.context_processors.websockets_override',
     'django.core.context_processors.i18n',
 ]
@@ -303,6 +304,7 @@ HQ_APPS = (
     'corehq.apps.builds',
     'corehq.apps.api',
     'corehq.apps.indicators',
+    'corehq.apps.notifications',
     'corehq.apps.cachehq',
     'corehq.apps.toggle_ui',
     'corehq.apps.sofabed',
@@ -391,7 +393,6 @@ APPS_TO_EXCLUDE_FROM_TESTS = (
     'djtables',
     'gunicorn',
     'langcodes',
-    'luna',
     'custom.apps.crs_reports',
     'custom.m4change',
 
@@ -440,7 +441,7 @@ SOIL_HEARTBEAT_CACHE_KEY = "django-soil-heartbeat"
 
 # restyle some templates
 BASE_TEMPLATE = "style/bootstrap2/base.html"  # should eventually be bootstrap3
-BASE_ASYNC_TEMPLATE = "reports/async/basic.html"
+BASE_ASYNC_TEMPLATE = "reports/async/bootstrap2/basic.html"
 LOGIN_TEMPLATE = "login_and_password/login.html"
 LOGGEDOUT_TEMPLATE = LOGIN_TEMPLATE
 
@@ -562,6 +563,7 @@ TEST_RUNNER = 'testrunner.TwoStageTestRunner'
 HQ_ACCOUNT_ROOT = "commcarehq.org"
 
 XFORMS_PLAYER_URL = "http://localhost:4444/"  # touchform's setting
+FORMPLAYER_URL = 'http://localhost:8080'
 OFFLINE_TOUCHFORMS_PORT = 4444
 
 ####### Couchlog config #######
@@ -706,6 +708,8 @@ ANALYTICS_IDS = {
 ANALYTICS_CONFIG = {
     "HQ_INSTANCE": '',  # e.g. "www" or "staging"
 }
+
+MAPBOX_ACCESS_TOKEN = 'pk.eyJ1IjoiY3p1ZSIsImEiOiJjaWgwa3U5OXIwMGk3a3JrcjF4cjYwdGd2In0.8Tys94ISZlY-h5Y4W160RA'
 
 OPEN_EXCHANGE_RATES_API_ID = ''
 
@@ -1016,18 +1020,7 @@ fix_logger_obfuscation_ = globals().get("FIX_LOGGER_ERROR_OBFUSCATION")
 helper.fix_logger_obfuscation(fix_logger_obfuscation_, LOGGING)
 
 if DEBUG:
-    try:
-        import luna
-        del luna
-    except ImportError:
-        pass
-    else:
-        INSTALLED_APPS = INSTALLED_APPS + (
-            'luna',
-        )
-
     INSTALLED_APPS = INSTALLED_APPS + ('corehq.apps.mocha',)
-
     import warnings
     warnings.simplefilter('default')
     os.environ['PYTHONWARNINGS'] = 'd'  # Show DeprecationWarning
@@ -1070,6 +1063,8 @@ INDICATOR_CONFIG = {
     "mvp-sauri": ['mvp_indicators'],
     "mvp-potou": ['mvp_indicators'],
 }
+
+COMPRESS_URL = STATIC_CDN + STATIC_URL
 
 ####### Couch Forms & Couch DB Kit Settings #######
 COUCH_DATABASE_NAME = helper.get_db_name(COUCH_DATABASE_NAME, UNIT_TESTING)
@@ -1355,7 +1350,16 @@ PILLOWTOPS = {
         'corehq.apps.userreports.pillow.StaticDataSourcePillow',
     ],
     'cache': [
-        'corehq.pillows.cacheinvalidate.CacheInvalidatePillow',
+        {
+            'name': 'CacheInvalidatePillow',
+            'class': 'corehq.pillows.cacheinvalidate.CacheInvalidatePillow',
+            'instance': 'corehq.pillows.cacheinvalidate.get_main_cache_invalidation_pillow',
+        },
+        {
+            'name': 'UserCacheInvalidatePillow',
+            'class': 'corehq.pillows.cacheinvalidate.CacheInvalidatePillow',
+            'instance': 'corehq.pillows.cacheinvalidate.get_user_groups_cache_invalidation_pillow',
+        },
     ],
     'fluff': [
         'custom.bihar.models.CareBiharFluffPillow',
@@ -1489,15 +1493,14 @@ ES_XFORM_FULL_INDEX_DOMAINS = [
 
 CUSTOM_UCR_EXPRESSIONS = [
     ('abt_supervisor', 'custom.abt.reports.expressions.abt_supervisor_expression'),
-    ('mvp_medical_cause', 'mvp.ucr.reports.expressions.medical_cause_expression'),
-    ('mvp_no_treatment_reason', 'mvp.ucr.reports.expressions.no_treatment_reason_expression'),
-    ('mvp_treatment_provider_name', 'mvp.ucr.reports.expressions.treatment_provider_name_expression'),
-    ('mvp_treatment_place_name', 'mvp.ucr.reports.expressions.treatment_place_name_expression'),
-    ('mvp_death_place', 'mvp.ucr.reports.expressions.death_place_expression'),
     ('succeed_referenced_id', 'custom.succeed.expressions.succeed_referenced_id'),
     ('location_type_name', 'corehq.apps.locations.ucr_expressions.location_type_name'),
     ('location_parent_id', 'corehq.apps.locations.ucr_expressions.location_parent_id'),
     ('cvsu_expression', 'custom.apps.cvsu.expressions.cvsu_expression')
+]
+
+CUSTOM_UCR_EXPRESSION_LISTS = [
+    ('mvp.ucr.reports.expressions.CUSTOM_UCR_EXPRESSIONS'),
 ]
 
 CUSTOM_MODULES = [
@@ -1558,6 +1561,7 @@ DOMAIN_MODULE_MAP = {
     'wvindia2': 'custom.world_vision',
     'pathways-india-mis': 'custom.care_pathways',
     'pathways-tanzania': 'custom.care_pathways',
+    'care-macf-malawi': 'custom.care_pathways',
     'kemri': 'custom.openclinica',
     'novartis': 'custom.openclinica',
 }
@@ -1612,3 +1616,7 @@ except ImportError:
     pass
 else:
     initialize(DATADOG_API_KEY, DATADOG_APP_KEY)
+
+REST_FRAMEWORK = {
+    'DATETIME_FORMAT': '%Y-%m-%dT%H:%M:%S.%fZ'
+}

@@ -17,6 +17,13 @@ from corehq.apps.reports.datatables import DataTablesHeader
 from corehq.apps.reports.filters.dates import DatespanFilter
 from corehq.apps.reports.util import \
     DEFAULT_CSS_FORM_ACTIONS_CLASS_REPORT_FILTER
+from corehq.apps.style.decorators import (
+    use_bootstrap3,
+    use_jquery_ui,
+    use_datatables,
+    use_select2,
+    use_daterangepicker,
+)
 from corehq.apps.users.models import CouchUser
 from corehq.util.timezones.utils import get_timezone_for_user
 from corehq.util.view_utils import absolute_reverse
@@ -272,7 +279,7 @@ class GenericReportView(object):
     @property
     @memoized
     def template_report(self):
-        original_template = self.report_template_path or "reports/async/basic.html"
+        original_template = self.report_template_path or "reports/async/bootstrap2/basic.html"
         if self.is_rendered_as_email:
             self.context.update(original_template=original_template)
             return self._select_bootstrap_template(self.override_template)
@@ -693,12 +700,26 @@ class GenericReportView(object):
         """
         return []
 
-    def set_bootstrap3_status(self, request, *args, **kwargs):
+    @use_bootstrap3
+    @use_jquery_ui
+    @use_select2
+    @use_datatables
+    @use_daterangepicker
+    def bootstrap3_dispatcher(self, request, *args, **kwargs):
         """
-        Use this function to apply the bootstrap 3 decorators found in
-        style/decorators.py to a report. We're using this in the interim until
-        we overhaul the reports framework, but still want to migrate some
-        reports to bootstrap 3.
+        Decorate this method in your report subclass and call super to make sure
+        appropriate decorators are used to render the page and its javascript
+        libraries.
+
+        example:
+
+        class MyNewReport(GenericReport):
+            ...
+
+            @use_nvd3
+            def bootstrap3_dispatcher(self, request, *args, **kwargs):
+                super(MyNewReport, self).bootstrap3_dispatcher(request, *args, **kwargs)
+
         """
         pass
 
@@ -758,6 +779,9 @@ class GenericTabularReport(GenericReportView):
     use_datatables = True
     charts_per_row = 1
     bad_request_error_text = None
+
+    # Sets bSort in the datatables instance to true/false (config.dataTables.bootstrap.js)
+    sortable = True
 
     # override old class properties
     report_template_path = "reports/async/bootstrap2/tabular.html"
@@ -1003,7 +1027,8 @@ class GenericTabularReport(GenericReportView):
                 pagination=pagination_spec,
                 left_col=left_col,
                 datatables=self.use_datatables,
-                bad_request_error_text=self.bad_request_error_text
+                bad_request_error_text=self.bad_request_error_text,
+                sortable=self.sortable,
             ),
             charts=charts,
             chart_span=CHART_SPAN_MAP[self.charts_per_row]
@@ -1026,7 +1051,7 @@ def summary_context(report):
     return {"summary_values": report.summary_values}
 
 class SummaryTablularReport(GenericTabularReport):
-    report_template_path = "reports/async/summary_tabular.html"
+    report_template_path = "reports/async/bootstrap2/summary_tabular.html"
     extra_context_providers = [summary_context]
 
     @property

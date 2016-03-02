@@ -1,17 +1,12 @@
-{% extends "style/bootstrap2/two_column.html" %}
+{% extends "style/bootstrap3/two_column.html" %}
 {% load hqstyle_tags %}
 {% load hq_shared_tags %}
 {% load crispy_forms_tags %}
 {% load i18n %}
 
 {% block js %}{{ block.super }}
-    <script src="{% static 'select2-3.4.5-legacy/select2.min.js' %}"></script>
-    <script src="{% static 'hqwebapp/ko/select2_handler.js' %}"></script>
-    <script src="{% static 'smsbillables/ko/smsbillables.rate_calc.js' %}"></script>
-{% endblock %}
-
-{% block head %}{{ block.super }}
-    <link href="{% static 'hqwebapp/js/lib/select2/select2.css' %}" rel="stylesheet" />
+    <script src="{% new_static 'hqwebapp/ko/select2_handler.js' %}"></script>
+    <script src="{% new_static 'smsbillables/ko/smsbillables.rate_calc.js' %}"></script>
 {% endblock %}
 
 {% block js-inline %}{{ block.super }}
@@ -29,34 +24,30 @@
 
 {% block title %}{% trans "SMS Pricing" %}{% endblock %}
 
-{% block page-title %}
-    <ul class="breadcrumb">
+{% block page_title %}{% trans "SMS Pricing" %}{% endblock page_title %}
+
+{% block page_breadcrumbs %}
+    <ol id="hq-breadcrumbs" class="breadcrumb breadcrumb-hq-section">
         <li>
-            <a href="/pricing/"><strong>{% trans "Pricing" %}</strong></a> <span class="divider">&gt;</span>
+            <a href="/pricing/"><strong>{% trans "Pricing" %}</strong></a>
         </li>
         <li class="active">
-            <p>{% trans "SMS Pricing" %}</p>
+            {% trans "SMS Pricing" %}
         </li>
-    </ul>
+    </ol>
 {% endblock %}
 
-{% block main_column %}
-    <header>
-        <div class="row-fluid">
-            <div class="span8">
-                <h2>
-                    {% blocktrans %}
-                            SMS Pricing
-                    {% endblocktrans %}
-                </h2>
-                <p>
-                    {% blocktrans %}
-                        View SMS prices for using Dimagi's connections in each country.   You can choose a connection for your project under Messaging -> SMS Connectivity
-                    {% endblocktrans %}
-                </p>
-            </div>
-        </div>
-    </header>
+{% block page_content %}
+    <p class="lead">
+        {% blocktrans %}
+            View SMS prices for using Dimagi's connections in each country.
+        {% endblocktrans %}
+    </p>
+    <p>
+        {% blocktrans %}
+            You can choose a connection for your project under Messaging -> SMS Connectivity
+        {% endblocktrans %}
+    </p>
     <hr />
     <div id="sms-rate-calculator">
         {% crispy rate_calc_form %}
@@ -110,8 +101,12 @@
                     </tr>
             </tbody>
         </table>
-        </br>
+        <br />
         <div class="alert alert-info"
-             data-bind="visible: noError">Pricing is per message sent or received. Fees are subject to change based on provider rates and exchange rates and are computed at the time the SMS is sent or received</div>
+             data-bind="visible: noError">
+            {% blocktrans %}
+            Pricing is per message sent or received. Fees are subject to change based on provider rates and exchange rates and are computed at the time the SMS is sent or received.
+            {% endblocktrans %}
+        </div>
     </div>
 {% endblock %}

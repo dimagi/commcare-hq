@@ -1,4 +1,5 @@
 # coding=utf-8
+import calendar
 from distutils.version import LooseVersion
 from itertools import chain
 import tempfile
@@ -38,6 +39,7 @@ from corehq.const import USER_DATE_FORMAT, USER_TIME_FORMAT
 from corehq.apps.app_manager.feature_support import CommCareFeatureSupportMixin
 from corehq.util.quickcache import quickcache
 from corehq.util.timezones.conversions import ServerTime
+from dimagi.utils.couch import CriticalSection
 from dimagi.utils.couch.bulk import get_docs
 from django_prbac.exceptions import PermissionDenied
 from corehq.apps.accounting.utils import domain_has_privilege
@@ -1499,18 +1501,6 @@ class Form(IndexedFormBase, NavMenuItemMediaMixin):
                                 questions,
                                 question_path
                             )
-
-
-class UserRegistrationForm(FormBase):
-    form_type = 'user_registration'
-
-    username_path = StringProperty(default='username')
-    password_path = StringProperty(default='password')
-    data_paths = DictProperty()
-
-    def add_stuff_to_xform(self, xform):
-        super(UserRegistrationForm, self).add_stuff_to_xform(xform)
-        xform.add_user_registration(self.username_path, self.password_path, self.data_paths)
 
 
 class MappingItem(DocumentSchema):
@@ -3289,6 +3279,7 @@ class ReportAppFilter(DocumentSchema):
                 'StaticChoiceListFilter': StaticChoiceListFilter,
                 'StaticDatespanFilter': StaticDatespanFilter,
                 'CustomDatespanFilter': CustomDatespanFilter,
+                'CustomMonthFilter': CustomMonthFilter,
                 'MobileSelectFilter': MobileSelectFilter,
             }
             try:
@@ -3326,9 +3317,26 @@ def _filter_by_user_id(user, ui_filter):
     return Choice(value=user._id, display=None)
 
 
+def _filter_by_parent_location_id(user, ui_filter):
+    location = user.sql_location
+    location_parent = location.parent.location_id if location and location.parent else None
+    return ui_filter.value(**{ui_filter.name: location_parent})
+
+
+def _filter_by_ancestor_location_type_id(user, ui_filter):
+    from corehq.apps.reports_core.filters import Choice
+    location = user.sql_location
+    return [
+        Choice(value=loc.location_type.id, display=loc.location_type.name)
+        for loc in location.get_ancestors()
+    ] if location else []
+
+
 _filter_type_to_func = {
     'case_sharing_group': _filter_by_case_sharing_group_id,
     'location_id': _filter_by_location_id,
+    'parent_location_id': _filter_by_parent_location_id,
+    'ancestor_location_type_id': _filter_by_ancestor_location_type_id,
     'username': _filter_by_username,
     'user_id': _filter_by_user_id,
 }
@@ -3370,6 +3378,7 @@ class StaticDatespanFilter(ReportAppFilter):
         choices=[
             'last7',
             'last30',
+            'thismonth',
             'lastmonth',
             'lastyear',
         ],
@@ -3425,6 +3434,70 @@ class CustomDatespanFilter(ReportAppFilter):
         elif self.operator == '>':
             start_date = None
             end_date = today - datetime.timedelta(days=days + 1)
+        return DateSpan(startdate=start_date, enddate=end_date)
+
+
+def is_lte(integer):
+    def validate(x):
+        if not x <= integer:
+            raise BadValueError('Value must be less than or equal to {}'.format(integer))
+    return validate
+
+
+def is_gte(integer):
+    def validate(x):
+        if not x >= integer:
+            raise BadValueError('Value must be greater than or equal to {}'.format(integer))
+    return validate
+
+
+class CustomMonthFilter(ReportAppFilter):
+    """
+    Filter by months that start on a day number other than 1
+
+    See [FB 215656](http://manage.dimagi.com/default.asp?215656)
+    """
+    # Values for start_of_month < 1 specify the number of days from the end of the month. Values capped at
+    # len(February).
+    start_of_month = IntegerProperty(
+        required=True,
+        validators=(is_gte(-27), is_lte(28))
+    )
+    # DateSpan to return i.t.o. number of months to go back
+    period = IntegerProperty(
+        default=DEFAULT_MONTH_FILTER_PERIOD_LENGTH,
+        validators=(is_gte(0),)
+    )
+
+    @classmethod
+    def wrap(cls, doc):
+        doc['start_of_month'] = int(doc['start_of_month'])
+        if 'period' in doc:
+            doc['period'] = int(doc['period'] or DEFAULT_MONTH_FILTER_PERIOD_LENGTH)
+        return super(CustomMonthFilter, cls).wrap(doc)
+
+    def get_filter_value(self, user, ui_filter):
+        def get_last_month(this_month):
+            return datetime.date(this_month.year, this_month.month, 1) - datetime.timedelta(days=1)
+
+        def get_last_day(date):
+            _, last_day = calendar.monthrange(date.year, date.month)
+            return last_day
+
+        # Find the start and end dates of period 0
+        start_of_month = int(self.start_of_month)
+        end_date = datetime.date.today()
+        start_day = start_of_month if start_of_month > 0 else get_last_day(end_date) + start_of_month
+        end_of_month = end_date if end_date.day >= start_day else get_last_month(end_date)
+        start_date = datetime.date(end_of_month.year, end_of_month.month, start_day)
+
+        # Loop over months backwards for period > 0
+        for i in range(int(self.period)):
+            end_of_month = get_last_month(end_of_month)
+            end_date = start_date - datetime.timedelta(days=1)
+            start_day = start_of_month if start_of_month > 0 else get_last_day(end_of_month) + start_of_month
+            start_date = datetime.date(end_of_month.year, end_of_month.month, start_day)
+
         return DateSpan(startdate=start_date, enddate=end_date)
 
 
@@ -4022,12 +4095,6 @@ class ApplicationBase(VersionedDoc, SnapshotMixin,
         """This is mostly just for views"""
         return '%d.%d' % self.build_spec.minor_release()
 
-    def get_build_label(self):
-        for item in CommCareBuildConfig.fetch().menu:
-            if item['build'].to_string() == self.build_spec.to_string():
-                return item['label']
-        return self.build_spec.get_label()
-
     @property
     def short_name(self):
         return self.name if len(self.name) <= 12 else '%s..' % self.name[:10]
@@ -4174,37 +4241,49 @@ class ApplicationBase(VersionedDoc, SnapshotMixin,
             settings['Build-Number'] = self.version
         return settings
 
-    def create_jadjar(self, save=False):
-        try:
-            return (
-                self.lazy_fetch_attachment('CommCare.jad'),
-                self.lazy_fetch_attachment('CommCare.jar'),
+    def create_build_files(self, save=False):
+        built_on = datetime.datetime.utcnow()
+        all_files = self.create_all_files()
+        if save:
+            self.built_on = built_on
+            self.built_with = BuildRecord(
+                version=self.build_spec.version,
+                build_number=self.version,
+                datetime=built_on,
             )
-        except (ResourceError, KeyError):
-            built_on = datetime.datetime.utcnow()
-            all_files = self.create_all_files()
-            jad_settings = {
-                'Released-on': built_on.strftime("%Y-%b-%d %H:%M"),
-            }
-            jad_settings.update(self.jad_settings)
-            jadjar = self.get_jadjar().pack(all_files, jad_settings)
-            if save:
-                self.built_on = built_on
-                self.built_with = BuildRecord(
-                    version=jadjar.version,
-                    build_number=jadjar.build_number,
-                    signed=jadjar.signed,
-                    datetime=built_on,
+
+            for filepath in all_files:
+                self.lazy_put_attachment(all_files[filepath],
+                                         'files/%s' % filepath)
+
+    def create_jadjar_from_build_files(self, save=False):
+        with CriticalSection(['create_jadjar_' + self._id]):
+            try:
+                return (
+                    self.lazy_fetch_attachment('CommCare.jad'),
+                    self.lazy_fetch_attachment('CommCare.jar'),
                 )
+            except (ResourceError, KeyError):
+                all_files = {
+                    filename[len('files/'):]: self.lazy_fetch_attachment(filename)
+                    for filename in self._attachments if filename.startswith('files/')
+                }
+                all_files = {
+                    name: (contents if isinstance(contents, str) else contents.encode('utf-8'))
+                    for name, contents in all_files.items()
+                }
+                jad_settings = {
+                    'Released-on': self.built_with.datetime.strftime("%Y-%b-%d %H:%M"),
+                }
+                jad_settings.update(self.jad_settings)
+                jadjar = self.get_jadjar().pack(all_files, jad_settings)
 
-                self.lazy_put_attachment(jadjar.jad, 'CommCare.jad')
-                self.lazy_put_attachment(jadjar.jar, 'CommCare.jar')
+                if save:
+                    self.lazy_put_attachment(jadjar.jad, 'CommCare.jad')
+                    self.lazy_put_attachment(jadjar.jar, 'CommCare.jar')
+                    self.built_with.signed = jadjar.signed
 
-                for filepath in all_files:
-                    self.lazy_put_attachment(all_files[filepath],
-                                             'files/%s' % filepath)
-
-            return jadjar.jad, jadjar.jar
+                return jadjar.jad, jadjar.jar
 
     def validate_app(self):
         errors = []
@@ -4310,7 +4389,7 @@ class ApplicationBase(VersionedDoc, SnapshotMixin,
 
         copy.set_form_versions(previous_version)
         copy.set_media_versions(previous_version)
-        copy.create_jadjar(save=True)
+        copy.create_build_files(save=True)
 
         try:
             # since this hard to put in a test
@@ -4391,7 +4470,6 @@ class SavedAppBuild(ApplicationBase):
             'id': self.id,
             'built_on_date': built_on_user_time.ui_string(USER_DATE_FORMAT),
             'built_on_time': built_on_user_time.ui_string(USER_TIME_FORMAT),
-            'build_label': self.built_with.get_label(),
             'menu_item_label': self.built_with.get_menu_item_label(),
             'jar_path': self.get_jar_path(),
             'short_name': self.short_name,
@@ -4414,8 +4492,6 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
     An Application that can be created entirely through the online interface
 
     """
-    user_registration = SchemaProperty(UserRegistrationForm)
-    show_user_registration = BooleanProperty(default=False, required=True)
     modules = SchemaListProperty(ModuleBase)
     name = StringProperty()
     # profile's schema is {'features': {}, 'properties': {}, 'custom_properties': {}}
@@ -4691,10 +4767,7 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
 
     @classmethod
     def get_form_filename(cls, type=None, form=None, module=None):
-        if type == 'user_registration':
-            return 'user_registration.xml'
-        else:
-            return 'modules-%s/forms-%s.xml' % (module.id, form.id)
+        return 'modules-%s/forms-%s.xml' % (module.id, form.id)
 
     def create_all_files(self):
         files = {
@@ -4726,13 +4799,6 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
         except IndexError:
             raise ModuleNotFoundException()
 
-    def get_user_registration(self):
-        form = self.user_registration
-        form._app = self
-        if not (self._id and self._attachments and form.source):
-            form.source = load_form_template('register_user.xhtml')
-        return form
-
     def get_module_by_unique_id(self, unique_id):
         def matches(module):
             return module.get_or_create_unique_id() == unique_id
@@ -4744,11 +4810,6 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
              % (self.id, unique_id)))
 
     def get_forms(self, bare=True):
-        if self.show_user_registration:
-            yield self.get_user_registration() if bare else {
-                'type': 'user_registration',
-                'form': self.get_user_registration(),
-            }
         for module in self.get_modules():
             for form in module.get_forms():
                 yield form if bare else {

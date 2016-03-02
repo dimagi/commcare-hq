@@ -6,12 +6,12 @@
 #   MATRIX:         test matrix to run
 #                   One of javascript, python-catchall, python-group-0, python-sharded
 #   OPTIONS:
-#       --test-override       [List of Django test labels to run instead of matrix default]
-#       --command-override    [Override test command completely]
+#       --override-test       [List of Django test labels to run instead of matrix default]
+#       --override-command    [Override test command completely]
 #
 # e.g.
-#   simulate.sh python-catchall --test-override app_manager.SuiteTest
-#   simulate.sh python-catchall --command-override bash
+#   simulate.sh python-catchall --override-test app_manager.SuiteTest
+#   simulate.sh python-catchall --override-command bash
 
 set -e
 
@@ -68,11 +68,11 @@ while [[ $# > 1 ]]
     opt="$1"
 
     case $opt in
-        --test-override)
+        --override-test)
             export TEST_OVERRIDE="$2"
             shift
             ;;
-        --command-override)
+        --override-command)
             export COMMAND_OVERRIDE="$2"
             shift
             ;;

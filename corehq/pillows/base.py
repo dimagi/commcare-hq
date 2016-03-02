@@ -58,8 +58,6 @@ def restore_property_dict(report_dict_item):
 
 
 class HQPillow(AliasedElasticPillow):
-    es_host = settings.ELASTICSEARCH_HOST
-    es_port = settings.ELASTICSEARCH_PORT
     es_timeout = 60
     es_meta = {
         "settings": {

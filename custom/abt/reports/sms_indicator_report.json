@@ -6,7 +6,8 @@
         "airsmadagascar",
         "airsrwanda",
         "airszambia",
-        "airszimbabwe"
+        "airszimbabwe",
+        "airstanzania"
     ],
     "data_source_table":"static-sms-indicators-001",
     "report_id":"static-sms-indicator-report",

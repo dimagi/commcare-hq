@@ -14,9 +14,15 @@ class MockEndpoint(ILSGatewayEndpoint):
             return {}, []
 
         if 'locations' in url:
-            return self._from_json('sample_locations.json', **kwargs)
+            meta, objects = self._from_json('sample_locations.json', **kwargs)
+            if 'supplypoint__active' in filters:
+                objects = [obj for obj in objects if obj['is_active'] == filters['supplypoint__active']]
+            return meta, objects
         elif 'smsusers' in url:
-            return self._from_json('sample_smsusers.json', **kwargs)
+            meta, objects = self._from_json('sample_smsusers.json', **kwargs)
+            if 'is_active' in filters:
+                objects = [obj for obj in objects if obj['is_active'] == filters['is_active']]
+            return meta, objects
         elif 'webusers' in url:
             return self._from_json('sample_webusers.json', **kwargs)
         elif 'product' in url:
@@ -66,3 +72,5 @@ class MockEndpoint(ILSGatewayEndpoint):
                 return objects[5]
             elif id == 51:
                 return objects[6]
+            elif id == 2626:
+                return objects[7]

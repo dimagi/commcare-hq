@@ -2,8 +2,10 @@ import uuid
 
 import functools
 from django.test import SimpleTestCase
+from elasticsearch.exceptions import ConnectionError
 
 from corehq.util.elastic import ensure_index_deleted
+from corehq.util.test_utils import trap_extra_setup
 from pillowtop.es_utils import INDEX_REINDEX_SETTINGS, INDEX_STANDARD_SETTINGS, update_settings, \
     set_index_reindex_settings, set_index_normal_settings, create_index_for_pillow, assume_alias_for_pillow, \
     pillow_index_exists, pillow_mapping_exists, completely_initialize_pillow_index
@@ -15,8 +17,6 @@ from .utils import get_doc_count, get_index_mapping
 
 
 class TestElasticPillow(AliasedElasticPillow):
-    es_host = settings.ELASTICSEARCH_HOST
-    es_port = settings.ELASTICSEARCH_PORT
     es_alias = 'pillowtop_tests'
     es_type = 'test_doc'
     es_index = 'test_pillowtop_index'
@@ -59,7 +59,8 @@ class ElasticPillowTest(SimpleTestCase):
         pillow = TestElasticPillow(online=False)
         self.index = pillow.es_index
         self.es = pillow.get_es_new()
-        ensure_index_deleted(self.index)
+        with trap_extra_setup(ConnectionError):
+            ensure_index_deleted(self.index)
 
     def tearDown(self):
         ensure_index_deleted(self.index)
@@ -234,9 +235,9 @@ class TestSendToElasticsearch(SimpleTestCase):
         self.es = self.pillow.get_es_new()
         self.index = self.pillow.es_index
 
-        ensure_index_deleted(self.index)
-
-        completely_initialize_pillow_index(self.pillow)
+        with trap_extra_setup(ConnectionError):
+            ensure_index_deleted(self.index)
+            completely_initialize_pillow_index(self.pillow)
 
     def tearDown(self):
         ensure_index_deleted(self.index)

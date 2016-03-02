@@ -128,6 +128,8 @@ corehq.apps.app_manager:
   - custom.ewsghana
   - corehq.apps.smsforms
   - corehq.apps.commtrack
+corehq.apps.change_feed:
+  - pillowtop
 corehq.apps.commtrack:
   - auditcare
   - couchforms
@@ -255,6 +257,7 @@ corehq.apps.receiverwrapper:
   - django_prbac
   - phonelog
   - tastypie
+  - corehq.apps.userhack
   # required by user.delete()
   - touchforms.formplayer
   - corehq.apps.tour
@@ -297,12 +300,14 @@ corehq.apps.repeaters:
   - django_prbac
   - corehq.apps.accounting
   - corehq.apps.smsforms
+  - casexml.apps.phone
 corehq.sql_db: []
 corehq.apps.accounting:
   - corehq.apps.accounting
   - django_prbac
   - corehq.apps.tzmigration
   - corehq.apps.domain
+  - corehq.apps.userhack
   - corehq.apps.users
   - corehq.couchapps
   - corehq.apps.sms
@@ -318,3 +323,55 @@ corehq.apps.accounting:
   - corehq.apps.app_manager
   - corehq.apps.reminders
   - corehq.apps.data_interfaces
+corehq.apps.export:
+  - corehq.apps.export
+  - corehq.couchapps
+  - corehq.apps.app_manager
+corehq.apps.callcenter:
+  - auditcare
+  - casexml.apps.case
+  - casexml.apps.phone
+  - casexml.apps.stock
+  - corehq.apps.commtrack
+  - corehq.apps.domain
+  - corehq.apps.hqcase
+  - corehq.apps.locations
+  - corehq.apps.products
+  - corehq.apps.reminders
+  - corehq.apps.tzmigration
+  - corehq.apps.users
+  - corehq.couchapps
+  - corehq.form_processor
+  - corehq.sql_accessors
+  - corehq.sql_proxy_accessors
+  - couchforms
+  - django_digest
+corehq.apps.hqcase:
+  - auditcare
+  - casexml.apps.case
+  - casexml.apps.phone
+  - corehq.apps.tzmigration
+  - corehq.apps.domain
+  - corehq.apps.dropbox
+  - corehq.apps.groups
+  - corehq.apps.reminders
+  - corehq.apps.tour
+  - corehq.apps.userhack
+  - corehq.apps.users
+  - corehq.couchapps
+  - corehq.form_processor
+  - corehq.sql_accessors
+  - couchforms
+  - django.contrib.admin
+  - django_digest
+  - django_prbac
+  - tastypie
+  - touchforms.formplayer
+corehq.couchapps:
+  - casexml.apps.case
+  - casexml.apps.phone
+  - corehq.apps.tzmigration
+  - corehq.apps.domain
+  - corehq.form_processor
+  - corehq.sql_accessors
+  - couchforms

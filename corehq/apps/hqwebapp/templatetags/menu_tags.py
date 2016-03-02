@@ -1,5 +1,7 @@
+import logging
 from django import template
 from django.conf import settings
+from django.core.urlresolvers import reverse
 from django.template.loader import render_to_string
 from django.templatetags.i18n import language_name
 from django.utils.html import format_html
@@ -100,13 +102,18 @@ def format_sidebar(context):
     else:
         sections = active_tab.sidebar_items if active_tab else None
 
+    def _strip_scheme(uri):
+        return uri.lstrip('https')
+
     if sections:
         # set is_active on active sidebar item by modifying nav by reference
         # and see if the nav needs a subnav for the current contextual item
         for section_title, navs in sections:
             for nav in navs:
-                if (request.get_full_path().startswith(nav['url']) or
-                   request.build_absolute_uri().startswith(nav['url'])):
+                full_path = request.get_full_path()  # The path of the URL after the domain
+                absolute_uri = request.build_absolute_uri()  # The full uri {scheme}{host}{path}
+                if (full_path.startswith(nav['url']) or
+                   _strip_scheme(absolute_uri).startswith(_strip_scheme(nav['url']))):
                     nav['is_active'] = True
                 else:
                     nav['is_active'] = False
@@ -159,3 +166,14 @@ def aliased_language_name(lang_code):
             if code == lang_code:
                 return name
         raise KeyError('Unknown language code %s' % lang_code)
+
+
+@register.simple_tag(takes_context=True)
+def prelogin_url(context, urlname):
+    """
+    A prefix aware url tag replacement for prelogin URLs
+    """
+    if context.get('url_uses_prefix', False) and context.get('LANGUAGE_CODE', False):
+        return reverse(urlname, args=[context['LANGUAGE_CODE']])
+    else:
+        return reverse(urlname)

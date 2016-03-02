@@ -1,25 +1,26 @@
 {% load i18n %}
 
 <script type="text/html" id="usercase-config:case-transaction">
-    <div class="row-fluid top-spacer">
-        <div class="well span6">
-            <div data-bind="template: 'case-config:case-transaction:case-preload'"></div>
+    <div class="row top-spacer">
+        <div class="col-sm-6">
+            <div class="panel panel-default"
+                 data-bind="template: 'case-config:case-transaction:case-preload'"></div>
         </div>
-        <div class="well span6">
-            <div data-bind="template: 'case-config:case-transaction:case-properties'"></div>
+        <div class="col-sm-6">
+            <div class="panel panel-default"
+                 data-bind="template: 'case-config:case-transaction:case-properties'"></div>
         </div>
     </div>
 </script>
 
 <div id="usercase-config-ko">
-    <div class="row-fluid">
-        <div class="span12">
+    <div class="clearfix">
             {% if allow_usercase %}
             <div data-bind="saveButton: saveUsercaseButton"></div>
             {% endif %}
-        </div>
     </div>
-    <div data-bind="with: caseConfigViewModel">
+    <div class="spacer"></div>
+    <div data-bind="with: caseConfigViewModel" class="container-fluid">
         <div data-bind="template: {name: 'usercase-config:case-transaction', data: usercase_transaction }"></div>
     </div>
 </div>

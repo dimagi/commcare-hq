@@ -35,6 +35,16 @@ $(function () {
             // where State.data.tab won't be available
             link = $('a[data-toggle="tab"][href^="' + window.location.pathname + '"]');
             if (link.length !== 0) {
+                // If multiple links match the current path - likely because this is the inital page load,
+                // so the pathname, foo/bar/, will match all links (since they're of the form foo/bar/#baz,
+                // foo/bar/#zap, etc.) - look for any link that has been marked as the default landing page.
+                // If there's no default set, ultimately we'll fall back to whatever the first link is.
+                if (link.length > 1) {
+                    var defaultLink = link.filter("[data-default='1']");
+                    if (defaultLink.length) {
+                        link = defaultLink;
+                    }
+                }
                 link = link.first();
                 History.replaceState({
                     tab: link.attr('href').split('#')[1]
@@ -53,7 +63,7 @@ $(function () {
         }
     });
 
-    $('a[data-toggle="tab"]').on('show', function (event) {
+    $('a[data-toggle="tab"]').on('show show.bs.tab', function (event) {
 
         // Set the selected tab to be the current state. But don't update the URL.
         var url = event.target.href.split("#")[0];

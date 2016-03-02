@@ -20,18 +20,19 @@
 {% endblock %}
 
 {% block settings_fields %}
-    <div id="detail-screen-parent" class="control-group">
-        <label class="control-label">{% trans "Attached to" %}</label>
-        <div class="controls">
-            <select name="parent_module" data-bind="optstr: moduleOptions, value: moduleId"></select>
+    <div id="detail-screen-parent" class="form-group">
+        <label class="control-label col-sm-2">{% trans "Attached to" %}</label>
+        <div class="col-sm-4">
+            <select name="parent_module" data-bind="optstr: moduleOptions, value: moduleId" class="form-control"></select>
         </div>
     </div>
-    <div class="control-group">
-        <label class="control-label">
+    <div class="form-group">
+        <label class="control-label col-sm-2">
             {% trans "Menu Mode" %}
         </label>
-        <div class="controls">
-            <select type="text" name="display_separately" data-value="{% if module.display_separately %}true{% else %}false{% endif %}">
+        <div class="col-sm-4">
+            <select type="text" name="display_separately" class="form-control"
+                    data-value="{% if module.display_separately %}true{% else %}false{% endif %}">
                 <option value="false">{% trans "Display careplan inside attached module" %}</option>
                 <option value="true">{% trans "Display careplan separately" %}</option>
             </select>

@@ -355,7 +355,7 @@ def add_odk_profile_after_build(app_build):
     app_build.odk_profile_created_after_build = True
 
 
-def create_temp_sort_column(field, index):
+def create_temp_sort_column(field):
     """
     Used to create a column for the sort only properties to
     add the field to the list of properties and app strings but
@@ -565,7 +565,11 @@ def update_unique_ids(app_source):
             app_source['_attachments']["%s.xml" % new_unique_id] = app_source['_attachments'].pop("%s.xml" % unique_id)
         return new_unique_id
 
-    change_form_unique_id(app_source['user_registration'])
+    # once Application.wrap includes deleting user_registration
+    # we can remove this
+    if 'user_registration' in app_source:
+        del app_source['user_registration']
+
     id_changes = {}
     for m, module in enumerate(app_source['modules']):
         for f, form in enumerate(module['forms']):

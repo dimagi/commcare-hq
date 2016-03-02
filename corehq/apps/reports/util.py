@@ -66,7 +66,6 @@ def make_form_couch_key(domain, by_submission_time=True,
 
 
 def user_list(domain):
-    #todo cleanup
     #referenced in filters.users.SelectMobileWorkerFilter
     users = list(CommCareUser.by_domain(domain))
     users.extend(CommCareUser.by_domain(domain, is_active=False))
@@ -327,7 +326,6 @@ def create_export_filter(request, domain, export_type='form'):
             datespan.set_timezone(get_timezone_for_user(request.couch_user, domain))
             filter &= SerializableFunction(datespan_export_filter, datespan=datespan)
         if use_user_filters:
-            groups = [g.get_id for g in Group.get_case_sharing_groups(domain)]
             filtered_users = users_matching_filter(domain, user_filters)
             filter &= SerializableFunction(users_filter,
                                            users=filtered_users)

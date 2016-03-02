@@ -19,7 +19,6 @@ from django.utils.translation import ugettext as _
 from corehq.apps.app_manager.const import USERCASE_TYPE
 from corehq.apps.domain.dbaccessors import get_docs_in_domain_by_class
 from corehq.apps.hqcase.dbaccessors import get_case_ids_in_domain_by_owner
-from corehq.apps.sofabed.models import CaseData
 from corehq.form_processor.interfaces.supply import SupplyInterface
 from corehq.form_processor.interfaces.dbaccessors import FormAccessors
 from corehq.util.soft_assert import soft_assert
@@ -38,6 +37,8 @@ from dimagi.utils.modules import to_function
 from corehq.util.quickcache import skippable_quickcache
 from casexml.apps.case.mock import CaseBlock
 from casexml.apps.case.models import CommCareCase
+from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
+from corehq.form_processor.exceptions import CaseNotFound
 from corehq.apps.commtrack.const import USER_LOCATION_OWNER_MAP_TYPE
 from casexml.apps.phone.models import User as CaseXMLUser
 from corehq.apps.cachehq.mixins import QuickCachedDocumentMixin
@@ -86,24 +87,6 @@ def _add_to_list(list, obj, default):
 
 def _get_default(list):
     return list[0] if list else None
-
-class OldPermissions(object):
-    EDIT_WEB_USERS = 'edit-users'
-    EDIT_COMMCARE_USERS = 'edit-commcare-users'
-    EDIT_DATA = 'edit-data'
-    EDIT_APPS = 'edit-apps'
-
-    VIEW_REPORTS = 'view-reports'
-    VIEW_REPORT = 'view-report'
-
-    AVAILABLE_PERMISSIONS = [EDIT_DATA, EDIT_WEB_USERS, EDIT_COMMCARE_USERS, EDIT_APPS, VIEW_REPORTS, VIEW_REPORT]
-    perms = 'EDIT_DATA, EDIT_WEB_USERS, EDIT_COMMCARE_USERS, EDIT_APPS, VIEW_REPORTS, VIEW_REPORT'.split(', ')
-    old_to_new = dict([(locals()[attr], attr.lower()) for attr in perms])
-
-    @classmethod
-    def to_new(cls, old_permission):
-        return cls.old_to_new[old_permission]
-
 
 
 class Permissions(DocumentSchema):
@@ -399,38 +382,7 @@ class DomainMembership(Membership):
         if data.get('subject'):
             data['domain'] = data['subject']
             del data['subject']
-        # Do a just-in-time conversion of old permissions
-        old_permissions = data.get('permissions')
-        if old_permissions is not None:
-            del data['permissions']
-            if data.has_key('permissions_data'):
-                permissions_data = data['permissions_data']
-                del data['permissions_data']
-            else:
-                permissions_data = {}
-            if not data['is_admin']:
-                view_report_list = permissions_data.get('view-report')
-                custom_permissions = {}
-                for old_permission in old_permissions:
-                    if old_permission == 'view-report':
-                        continue
-                    # If this hasn't fired by March 2016 we can delete this code
-                    # and the OldPermissions model
-                    _assert = soft_assert(to='@'.join(['czue', 'dimagi.com']), fail_if_debug=True)
-                    _assert(False, 'Old Permissions found in the wild!')
-                    new_permission = OldPermissions.to_new(old_permission)
-                    custom_permissions[new_permission] = True
-                if not view_report_list:
-                    # Anyone whose report permissions haven't been explicitly taken away/reduced
-                    # should be able to see reports by default
-                    custom_permissions['view_reports'] = True
-                else:
-                    custom_permissions['view_report_list'] = view_report_list
 
-
-                self = super(DomainMembership, cls).wrap(data)
-                self.role_id = UserRole.get_or_create_with_permissions(self.domain, custom_permissions).get_id
-                return self
         return super(DomainMembership, cls).wrap(data)
 
     @property
@@ -668,9 +620,9 @@ class _AuthorizableMixin(IsMemberOfMixin):
         try:
             return self.get_role(domain, checking_global_admin=False).name
         except TypeError:
-            return "Unknown User"
+            return _("Unknown User")
         except DomainMembershipError:
-            return "Unauthorized User"
+            return _("Dimagi User") if self.is_global_admin() else _("Unauthorized User")
         except Exception:
             return None
 
@@ -1601,15 +1553,6 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
             self.domain, owner_id=self.user_id)
         return iter_docs(CommCareCase.get_db(), case_ids)
 
-    @property
-    def analytics_only_case_count(self):
-        """
-        Get an approximate count of cases which were last submitted to by this user.
-
-        This number is not guaranteed to be 100% accurate since it depends on a secondary index (sofabed)
-        """
-        return CaseData.objects.filter(user_id=self._id).count()
-
     def get_owner_ids(self):
         owner_ids = [self.user_id]
         owner_ids.extend([g._id for g in self.get_case_sharing_groups()])
@@ -1811,7 +1754,6 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
             )
 
         from corehq.apps.locations.models import Location
-        from corehq.apps.commtrack.models import SupplyPointCase
 
         def _get_linked_supply_point_ids():
             mapping = self.get_location_map_case()
@@ -1820,11 +1762,7 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
             return []
 
         def _get_linked_supply_points():
-            for doc in iter_docs(
-                CommCareCase.get_db(),
-                _get_linked_supply_point_ids()
-            ):
-                yield SupplyPointCase.wrap(doc)
+            return SupplyInterface(self.domain).get_supply_points(_get_linked_supply_point_ids())
 
         def _gen():
             location_ids = [sp.location_id for sp in _get_linked_supply_points()]
@@ -1950,17 +1888,17 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
         """
         try:
             from corehq.apps.commtrack.util import location_map_case_id
-            return CommCareCase.get(location_map_case_id(self))
-        except ResourceNotFound:
+            return CaseAccessors(self.domain).get_case(location_map_case_id(self))
+        except CaseNotFound:
             return None
 
     @property
-    @skippable_quickcache(['self._id'], lambda _: settings.UNIT_TESTING)
     def fixture_statuses(self):
         """Returns all of the last modified times for each fixture type"""
-        return self.get_fixture_statuses()
+        return self._get_fixture_statuses()
 
-    def get_fixture_statuses(self):
+    @skippable_quickcache(['self._id'], lambda _: settings.UNIT_TESTING)
+    def _get_fixture_statuses(self):
         from corehq.apps.fixtures.models import UserFixtureType, UserFixtureStatus
         last_modifieds = {choice[0]: UserFixtureStatus.DEFAULT_LAST_MODIFIED
                           for choice in UserFixtureType.CHOICES}
@@ -1986,6 +1924,7 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
         if not new:
             user_fixture_sync.last_modified = now
             user_fixture_sync.save()
+        self._get_fixture_statuses.clear(self)
 
     def __repr__(self):
         return ("{class_name}(username={self.username!r})".format(
@@ -2242,6 +2181,9 @@ class DomainRequest(models.Model):
     full_name = models.CharField(max_length=100, db_index=True)
     is_approved = models.BooleanField(default=False)
     domain = models.CharField(max_length=255, db_index=True)
+
+    class Meta:
+        app_label = "users"
 
     @classmethod
     def by_domain(cls, domain, is_approved=False):

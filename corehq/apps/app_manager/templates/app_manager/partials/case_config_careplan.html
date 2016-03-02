@@ -3,12 +3,14 @@
 {% include 'app_manager/partials/case_config_shared.html' %}
 
 <script type="text/html" id="case-config:case-transaction">
-    <div class="row-fluid">
-        <div class="well span6">
-            <div data-bind="template: 'case-config:case-transaction:case-preload'"></div>
+    <div class="row">
+        <div class="col-sm-6">
+            <div class="panel panel-default"
+                 data-bind="template: 'case-config:case-transaction:case-preload'"></div>
         </div>
-        <div class="well span6">
-            <div data-bind="template: 'case-config:case-transaction:case-properties'"></div>
+        <div class="col-sm-6">
+            <div class="panel panel-default"
+                 data-bind="template: 'case-config:case-transaction:case-properties'"></div>
         </div>
     </div>
 </script>
@@ -25,20 +27,20 @@
             </thead>
 
             <tbody data-bind="foreach: fixedQuestions">
-                <tr class="control-group" data-bind="css: {error: validate}">
+                <tr class="form-group" data-bind="css: {'has-error': validate}">
                     <td>
                         <div><span data-bind="text: label"></span></div>
-                        <p class="help-inline" data-bind="html: validateProperty, visible: validateProperty"></p>
+                        <p class="help-block" data-bind="html: validateProperty, visible: validateProperty"></p>
                     </td>
                     <td>
                         <div>
-                            <input class="input-xxlarge" type="hidden" data-bind="
+                            <input class="input-xxlarge form-control" type="hidden" data-bind="
                                 questionsSelect: $root.questions,
                                 value: path,
                                 optionsCaption: ' '
                             "/>
                         </div>
-                        <p class="help-inline" data-bind="html: validateQuestion, visible: validateQuestion"></p>
+                        <p class="help-block" data-bind="html: validateQuestion, visible: validateQuestion"></p>
                     </td>
                 </tr>
             </tbody>

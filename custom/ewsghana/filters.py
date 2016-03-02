@@ -12,12 +12,12 @@ from corehq.apps.locations.util import location_hierarchy_config, load_locs_json
 from corehq.apps.products.models import SQLProduct
 from corehq.apps.programs.models import Program
 from corehq.apps.reports.filters.base import BaseDrilldownOptionFilter, BaseSingleOptionFilter, \
-    BaseMultipleOptionFilter, BaseReportFilter
+    BaseMultipleOptionFilter, BaseReportFilter, CheckboxFilter
 from corehq.apps.reports.filters.fixtures import AsyncLocationFilter
 from corehq.util import reverse
 from custom.common import ALL_OPTION
 from corehq.apps.domain.models import Domain
-from custom.ewsghana.utils import ews_date_format
+from custom.ewsghana.utils import ews_date_format, calculate_last_period
 
 
 class ProductByProgramFilter(BaseDrilldownOptionFilter):
@@ -240,9 +240,7 @@ class EWSDateFilter(BaseReportFilter):
 
     @staticmethod
     def last_reporting_period():
-        now = datetime.utcnow()
-        date = now - relativedelta(days=(7 - (4 - now.weekday())) % 7)
-        return date - relativedelta(days=7), date
+        return calculate_last_period()
 
     @property
     def default_week(self):
@@ -272,3 +270,8 @@ class LocationTypeFilter(BaseMultipleOptionFilter):
                 domain=self.domain, administrative=False
             )
         ]
+
+
+class TransactionCheckboxFilter(CheckboxFilter):
+    label = 'Split by product'
+    slug = 'split_by_product'

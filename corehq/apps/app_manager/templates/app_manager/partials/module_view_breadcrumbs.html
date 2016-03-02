@@ -1,7 +1,6 @@
 {% load xforms_extras %}
 {% if module %}
 <li>
-    <span class="divider">&gt;</span>
     <a href="{% url "view_module" domain app.id module.id %}">
         <span class="app-manager-title variable-module_name">{{ module.name|html_trans:langs|safe }}</span>
     </a>

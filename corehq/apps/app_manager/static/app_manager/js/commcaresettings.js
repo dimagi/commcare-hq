@@ -1,4 +1,5 @@
 function CommcareSettings(options) {
+    var app_manager = hqImport('app_manager/js/app_manager.js');
     var self = this;
     var initialValues = options.values;
     self.sections = options.sections;
@@ -133,10 +134,10 @@ function CommcareSettings(options) {
             return self.parseCondition(setting.requires);
         });
         setting.versionOK = ko.computed(function () {
-            return COMMCAREHQ.app_manager.checkCommcareVersion(setting.requiredVersion().setting);
+            return app_manager.checkCommcareVersion(setting.requiredVersion().setting);
         });
         setting.optionOK = ko.computed(function () {
-            return COMMCAREHQ.app_manager.checkCommcareVersion(setting.requiredVersion().option);
+            return app_manager.checkCommcareVersion(setting.requiredVersion().option);
         });
         setting.enabled = ko.computed(function () {
             var condition = setting.parsedCondition();
@@ -239,9 +240,10 @@ function CommcareSettings(options) {
             });
         });
         section.reallyCollapse = ko.computed(function () {
-            return section.collapse && !_(section.settings).some(function (setting) {
-                return setting.hasError();
-            });
+            var el = document.getElementById(section.id);
+            return section.collapse &&
+                (!el || !el.classList.contains("in")) &&
+                !_(section.settings).some(function (setting) { return setting.hasError(); });
         });
     });
 
@@ -280,10 +282,9 @@ function CommcareSettings(options) {
         return blob;
     });
 
-    self.state = ko.observable('saved');
     setTimeout(function () {
         self.serialize.subscribe(function () {
-            self.state('save');
+            self.saveButton.fire('change');
         });
     }, 0);
     self.saveOptions = ko.computed(function () {
@@ -293,10 +294,18 @@ function CommcareSettings(options) {
             type: 'post',
             dataType: 'json',
             success: function (data) {
-                COMMCAREHQ.app_manager.updateDOM(data.update);
+                app_manager.updateDOM(data.update);
             }
         };
     });
+
+    self.saveButton = COMMCAREHQ.SaveButton.init({
+        unsavedMessage: "You have unsaved settings.",
+        save: function () {
+            self.saveButton.ajax(self.saveOptions());
+        }
+    });
+    self.saveButton.ui.appendTo($("#settings-save-btn"));
 
     self.onAddCustomProperty = function() {
         self.customProperties.push({ key: ko.observable(), value: ko.observable() });
@@ -382,6 +391,7 @@ CommcareSettings.widgets.bool = function (self) {
 };
 
 CommcareSettings.widgets.build_spec = function (self, settingsIndex) {
+    var app_manager = hqImport('app_manager/js/app_manager.js');
     function update(appVersion) {
         var major = appVersion.split('/')[0].split('.')[0];
         var opts = self.options_map[major];
@@ -394,7 +404,7 @@ CommcareSettings.widgets.build_spec = function (self, settingsIndex) {
     self.widget_template = 'CommcareSettings.widgets.select';
     self.visibleValue.subscribe(function () {
         var majorVersion = self.visibleValue().split('/')[0].split('.').slice(0,2).join('.');
-        COMMCAREHQ.app_manager.setCommcareVersion(majorVersion);
+        app_manager.setCommcareVersion(majorVersion);
     });
     settingsIndex["hq"]["application_version"].value.subscribe(function (appVersion) {
         update(appVersion);

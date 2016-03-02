@@ -7,6 +7,7 @@ import re
 import sys
 import traceback
 import uuid
+from django.utils.decorators import method_decorator
 import httpagentparser
 
 from django.conf import settings
@@ -33,6 +34,7 @@ from django.template import loader
 from django.template.context import RequestContext
 from restkit import Resource
 
+from corehq import toggles, feature_previews
 from corehq.apps.accounting.models import Subscription
 from corehq.apps.app_manager.models import Application
 from corehq.apps.domain.decorators import require_superuser, login_and_domain_required
@@ -44,6 +46,7 @@ from corehq.apps.dropbox.exceptions import DropboxUploadAlreadyInProgress
 from corehq.apps.hqwebapp.encoders import LazyEncoder
 from corehq.apps.hqwebapp.forms import EmailAuthenticationForm, CloudCareAuthenticationForm
 from corehq.apps.reports.util import is_mobile_worker_with_report_access
+from corehq.apps.style.decorators import use_bootstrap3
 from corehq.apps.users.models import CouchUser
 from corehq.apps.users.util import format_username
 from corehq.apps.hqwebapp.doc_info import get_doc_info
@@ -311,6 +314,7 @@ def server_up(req):
     else:
         return HttpResponse("success")
 
+
 def no_permissions(request, redirect_to=None, template_name="403.html"):
     """
     403 error handler.
@@ -396,6 +400,7 @@ def is_mobile_url(url):
     # Minor hack
     return ('reports/custom/mobile' in url)
 
+
 def logout(req):
     referer = req.META.get('HTTP_REFERER')
     domain = get_domain_from_url(urlparse(referer).path) if referer else None
@@ -413,9 +418,10 @@ def logout(req):
     else:
         return HttpResponseRedirect(reverse('login'))
 
+
 @login_and_domain_required
 def retrieve_download(req, domain, download_id, template="style/includes/file_download.html"):
-    return soil_views.retrieve_download(req, download_id, template)
+    return soil_views.retrieve_download(req, download_id, template, extra_context={'domain': domain})
 
 
 def dropbox_next_url(request, download_id):
@@ -516,6 +522,9 @@ def bug_report(req):
 
     report['user_agent'] = req.META['HTTP_USER_AGENT']
     report['datetime'] = datetime.utcnow()
+    report['feature_flags'] = toggles.toggles_dict(username=report['username'],
+                                                   domain=report['domain']).keys()
+    report['feature_previews'] = feature_previews.previews_dict(report['domain']).keys()
 
     try:
         couch_user = CouchUser.get_by_username(report['username'])
@@ -549,6 +558,8 @@ def bug_report(req):
         u"url: {url}\n"
         u"datetime: {datetime}\n"
         u"User Agent: {user_agent}\n"
+        u"Feature Flags: {feature_flags}\n"
+        u"Feature Previews: {feature_previews}\n"
         u"Message:\n\n"
         u"{message}\n"
         ).format(**report)
@@ -613,11 +624,14 @@ def render_static(request, template):
 def eula(request):
     return render_static(request, "eula.html")
 
+
 def cda(request):
     return render_static(request, "cda.html")
 
+
 def apache_license(request):
     return render_static(request, "apache_license.html")
+
 
 def bsd_license(request):
     return render_static(request, "bsd_license.html")
@@ -982,6 +996,7 @@ class CRUDPaginatedViewMixin(object):
         """
         raise NotImplementedError("You must implement get_deleted_item_data")
 
+
 @login_required
 def quick_find(request):
     query = request.GET.get('q')
@@ -1019,6 +1034,7 @@ def osdd(request, template='osdd.xml'):
     response['Content-Type'] = 'application/xml'
     return response
 
+
 @require_superuser
 def maintenance_alerts(request, template='style/bootstrap2/maintenance_alerts.html'):
     from corehq.apps.hqwebapp.models import MaintenanceAlert
@@ -1031,6 +1047,32 @@ def maintenance_alerts(request, template='style/bootstrap2/maintenance_alerts.ht
             'id': alert.id,
         } for alert in MaintenanceAlert.objects.order_by('-created')[:5]]
     })
+
+class MaintenanceAlertsView(BasePageView):
+    urlname = 'alerts'
+    page_title = ugettext_noop("Maintenance Alerts")
+    template_name = 'style/maintenance_alerts.html'
+
+    @method_decorator(require_superuser)
+    @use_bootstrap3
+    def dispatch(self, request, *args, **kwargs):
+        return super(MaintenanceAlertsView, self).dispatch(request, *args, **kwargs)
+
+    @property
+    def page_context(self):
+        from corehq.apps.hqwebapp.models import MaintenanceAlert
+        return {
+            'alerts': [{
+            'created': unicode(alert.created),
+            'active': alert.active,
+            'html': alert.html,
+            'id': alert.id,
+            } for alert in MaintenanceAlert.objects.order_by('-created')[:5]]
+        }
+
+    @property
+    def page_url(self):
+        return reverse(self.urlname)
 
 
 @require_POST
