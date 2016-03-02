@@ -378,3 +378,13 @@ corehq.couchapps:
   - corehq.form_processor
   - corehq.sql_accessors
   - couchforms
+corehq.apps.data_interfaces:
+  - casexml.apps.case
+  - casexml.apps.phone
+  - corehq.apps.tzmigration
+  - corehq.apps.domain
+  - corehq.apps.hqcase
+  - corehq.couchapps
+  - corehq.form_processor
+  - corehq.sql_accessors
+  - couchforms
