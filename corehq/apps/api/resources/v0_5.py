@@ -52,10 +52,11 @@ class BulkUserResource(HqBaseResource, DomainSpecificResourceMixin):
     last_name = fields.CharField(attribute='last_name', null=True)
     phone_numbers = fields.ListField(attribute='phone_numbers', null=True)
 
-    def to_obj(self, user):
-        '''
+    @staticmethod
+    def to_obj(user):
+        """
         Takes a flat dict and returns an object
-        '''
+        """
         if '_id' in user:
             user['id'] = user.pop('_id')
         return namedtuple('user', user.keys())(**user)
@@ -90,13 +91,23 @@ class BulkUserResource(HqBaseResource, DomainSpecificResourceMixin):
         fields.append('_id')
         fn = MOCK_BULK_USER_ES or user_es_call
         users = fn(
-                domain=kwargs['domain'],
-                q=param('q'),
-                fields=fields,
-                size=param('limit'),
-                start_at=param('offset'),
+            domain=kwargs['domain'],
+            q=param('q'),
+            fields=fields,
+            size=param('limit'),
+            start_at=param('offset'),
         )
         return map(self.to_obj, users)
+
+    def detail_uri_kwargs(self, bundle_or_obj):
+        if isinstance(bundle_or_obj, Bundle):
+            obj = bundle_or_obj.obj
+        else:
+            obj = bundle_or_obj
+
+        return {
+            'pk': obj.id
+        }
 
 
 class CommCareUserResource(v0_1.CommCareUserResource):
