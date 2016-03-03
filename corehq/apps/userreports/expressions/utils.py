@@ -12,7 +12,7 @@ SAFE_OPERATORS = copy.copy(DEFAULT_OPERATORS)
 SAFE_OPERATORS[ast.Pow] = safe_pow_fn  # don't allow power operations
 
 
-def eval_math_equation(statement, variable_context):
+def eval_statements(statement, variable_context):
     """
 
     """

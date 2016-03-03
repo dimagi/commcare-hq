@@ -10,7 +10,7 @@ from corehq.apps.userreports.expressions.specs import (
     PropertyNameGetterSpec,
     PropertyPathGetterSpec,
 )
-from corehq.apps.userreports.expressions.specs import eval_math_equation
+from corehq.apps.userreports.expressions.specs import eval_statements
 from corehq.apps.userreports.specs import EvaluationContext
 from corehq.util.test_utils import generate_cases
 
@@ -716,11 +716,11 @@ def test_add_days_to_date_expression(self, source_doc, count_expression, expecte
     self.assertEqual(expected_value, expression(source_doc))
 
 
-class TestMathExpression(SimpleTestCase):
+class TestEvalExpression(SimpleTestCase):
     def _get_expression_spec(self, statement, context_variables):
         return ExpressionFactory.from_spec({
-            "type": "math",
-            "equation_expression": statement,
+            "type": "evaluator",
+            "equation_statement": statement,
             "variables_expression": {
                 "type": "dict",
                 "properties": context_variables
@@ -754,8 +754,8 @@ class TestMathExpression(SimpleTestCase):
                 "age + b",
                 {
                     "age": {
-                        "type": "math",
-                        "equation_expression": "a",
+                        "type": "evaluator",
+                        "equation_statement": "a",
                         "variables_expression": {
                             "type": "dict",
                             "properties": {
@@ -795,7 +795,7 @@ class TestEvaluator(SimpleTestCase):
         ]
 
         for (eq, context, expected_value) in supported:
-            self.assertEqual(eval_math_equation(eq, context), expected_value)
+            self.assertEqual(eval_statements(eq, context), expected_value)
 
     def test_unsupported_operations(self):
         unsupported = [
@@ -806,4 +806,4 @@ class TestEvaluator(SimpleTestCase):
 
         for (eq, context) in unsupported:
             with self.assertRaises(BadSpecError):
-                eval_math_equation(eq, context)
+                eval_statements(eq, context)
