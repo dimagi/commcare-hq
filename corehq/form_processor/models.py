@@ -611,6 +611,20 @@ class CommCareCaseSQL(DisabledDbMixin, models.Model, RedisLockableMixIn,
     def case_attachments(self):
         return {attachment.identifier: attachment for attachment in self.get_attachments()}
 
+    @property
+    @memoized
+    def closed_transactions(self):
+        return self._transactions_by_type(CaseTransaction.TYPE_FORM | CaseTransaction.TYPE_CASE_CLOSE)
+
+    def _transactions_by_type(self, transaction_type):
+        from corehq.form_processor.backends.sql.dbaccessors import CaseAccessorSQL
+        if self.is_saved():
+            transactions = CaseAccessorSQL.get_transactions_by_type(self.case_id, transaction_type)
+        else:
+            transactions = []
+        transactions += self.get_tracked_models_to_create(CaseTransaction)
+        return transactions
+
     def modified_since_sync(self, sync_log):
         if self.server_modified_on >= sync_log.date:
             # check all of the transactions since last sync for one that had a different sync token
@@ -902,8 +916,10 @@ class CaseTransaction(DisabledDbMixin, models.Model):
         return not self.__eq__(other)
 
     @classmethod
-    def form_transaction(cls, case, xform, actions):
+    def form_transaction(cls, case, xform, actions=None):
+        actions = actions or []
         type_ = cls.TYPE_FORM
+
         for action in actions:
             type_ |= cls._type_from_action_type(action.action_type_slug)
         return cls._from_form(case, xform, transaction_type=type_)

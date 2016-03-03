@@ -402,6 +402,13 @@ class CaseAccessorSQL(AbstractCaseAccessor):
         return list(CaseTransaction.objects.raw('SELECT * from get_case_transactions(%s)', [case_id]))
 
     @staticmethod
+    def get_transactions_by_type(case_id, transaction_type):
+        return list(CaseTransaction.objects.raw(
+            'SELECT * from get_case_transactions_by_type(%s, %s)',
+            [case_id, transaction_type])
+        )
+
+    @staticmethod
     def get_transactions_for_case_rebuild(case_id):
         return list(CaseTransaction.objects.raw(
             'SELECT * from get_case_transactions_for_rebuild(%s)',
