@@ -116,10 +116,7 @@ class BulkArchiveFormsUnit(TestCase):
     }
 
     def setUp(self):
-        self.password = "password"
-        username = "ben"
-        email = "ben@domain.com"
-        self.user = WebUser.create(DOMAIN_NAME, username, self.password, email)
+        self.username = "ben"
         self.xforms = {}
 
         for key, _id, in self.XFORMS.iteritems():
@@ -134,14 +131,13 @@ class BulkArchiveFormsUnit(TestCase):
             self.xforms[_id].save()
 
     def tearDown(self):
-        self.user.delete()
         for key, xform, in self.xforms.iteritems():
             xform.delete()
 
     def test_archive_forms_basic(self):
         uploaded_file = WorkbookJSONReader(join(BASE_PATH, BASIC_XLSX))
 
-        response = archive_forms_old(DOMAIN_NAME, self.user, list(uploaded_file.get_worksheet()))
+        response = archive_forms_old(DOMAIN_NAME, self.username, list(uploaded_file.get_worksheet()))
 
         # Need to re-get instance from DB to get updated attributes
         for key, _id in self.XFORMS.iteritems():
@@ -152,7 +148,7 @@ class BulkArchiveFormsUnit(TestCase):
     def test_archive_forms_missing(self):
         uploaded_file = WorkbookJSONReader(join(BASE_PATH, MISSING_XLSX))
 
-        response = archive_forms_old(DOMAIN_NAME, self.user, list(uploaded_file.get_worksheet()))
+        response = archive_forms_old(DOMAIN_NAME, self.username, list(uploaded_file.get_worksheet()))
 
         for key, _id in self.XFORMS.iteritems():
             self.assertEqual(XFormInstance.get(_id).doc_type, 'XFormArchived')
@@ -164,6 +160,6 @@ class BulkArchiveFormsUnit(TestCase):
     def test_archive_forms_wrong_domain(self):
         uploaded_file = WorkbookJSONReader(join(BASE_PATH, BASIC_XLSX))
 
-        response = archive_forms_old('wrong_domain', self.user, list(uploaded_file.get_worksheet()))
+        response = archive_forms_old('wrong_domain', self.username, list(uploaded_file.get_worksheet()))
 
         self.assertEqual(len(response['errors']), len(self.xforms), "Error when wrong domain")
