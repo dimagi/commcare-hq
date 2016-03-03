@@ -184,7 +184,12 @@ def process_sms(queued_sms_pk):
     message_lock = get_lock(client, "sms-queue-processing-%s" % queued_sms_pk)
 
     if message_lock.acquire(blocking=False):
-        msg = QueuedSMS.objects.get(pk=queued_sms_pk)
+        try:
+            msg = QueuedSMS.objects.get(pk=queued_sms_pk)
+        except QueuedSMS.DoesNotExist:
+            # The message was already processed and removed from the queue
+            release_lock(message_lock, True)
+            return
 
         if message_is_stale(msg, utcnow):
             msg.set_system_error(SMS.ERROR_MESSAGE_IS_STALE)
