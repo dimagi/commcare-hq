@@ -18,6 +18,7 @@ from corehq.apps.userreports.sql import IndicatorSqlAdapter
 from corehq.apps.userreports.tasks import rebuild_indicators
 from corehq.apps.userreports.tests.utils import get_sample_data_source, get_sample_doc_and_indicators
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
+from corehq.util.decorators import temporarily_enable_toggle
 from corehq.util.test_utils import softer_assert
 from corehq.toggles import KAFKA_UCRS
 from corehq.util.context_managers import drop_connected_signals
@@ -127,6 +128,7 @@ class IndicatorPillowTest(IndicatorPillowTestBase):
         self.assertEqual(len(bad_ints), self.adapter.get_query_object().count())
 
 
+@temporarily_enable_toggle(KAFKA_UCRS, 'user-reports')
 class KafkaIndicatorPillowTest(IndicatorPillowTestBase):
     dependent_apps = [
         'couchforms', 'pillowtop', 'corehq.couchapps', 'corehq.apps.tzmigration',
@@ -139,7 +141,6 @@ class KafkaIndicatorPillowTest(IndicatorPillowTestBase):
         super(KafkaIndicatorPillowTest, self).setUp()
         self.pillow = get_kafka_ucr_pillow()
         self.pillow.bootstrap(configs=[self.config])
-        KAFKA_UCRS.set('user-reports', True, namespace='domain')
 
     @patch('corehq.apps.userreports.specs.datetime')
     def test_basic_doc_processing(self, datetime_mock):
