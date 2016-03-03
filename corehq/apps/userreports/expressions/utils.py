@@ -13,8 +13,11 @@ SAFE_OPERATORS[ast.Pow] = safe_pow_fn  # don't allow power operations
 
 
 def eval_statements(statement, variable_context):
-    """
+    """Evaluates math statements and returns the value
 
+    args
+        statement: a simple python-like math statement
+        variable_context: a dict with variable names as key and assigned values as dict values
     """
     evaluator = SimpleEval(operators=SAFE_OPERATORS, names=variable_context)
     try:
