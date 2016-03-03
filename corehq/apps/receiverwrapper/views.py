@@ -39,7 +39,7 @@ def _process_form(request, domain, app_id, user_id, authenticated,
         except:
             meta = {}
 
-        notify_exception(request, "Received a submission with POST.keys()", {
+        notify_exception(None, "Received a submission with POST.keys()", {
             "domain": domain,
             "app_id": app_id,
             "user_id": user_id,
