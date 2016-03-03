@@ -216,6 +216,45 @@ class CommCareExchangeHomeView(BaseCommCareExchangeSectionView):
         }
 
 
+class ProjectInformationView(BaseCommCareExchangeSectionView):
+    urlname = 'project_info'
+    template_name = 'appstore/project_info.html'
+    page_title = _("Project Information")
+
+    @property
+    def snapshot(self):
+        return self.kwargs['snapshot']
+
+    @property
+    @memoized
+    def project(self):
+        return Domain.get(self.snapshot)
+
+    def dispatch(self, request, *args, **kwargs):
+        if not can_view_app(request, self.project):
+            raise Http404()
+        return super(ProjectInformationView, self).dispatch(request, *args, **kwargs)
+
+    @property
+    def page_url(self):
+        return reverse(self.urlname, args=(self.snapshot,))
+
+    @property
+    def page_context(self):
+        return {
+            'project': self.project,
+            'applications': self.project.full_applications(include_builds=False),
+            'fixtures': FixtureDataType.by_domain(self.project.name),
+            'copies': self.project.copies_of_parent(),
+            'images': set(),
+            'audio': set(),
+            'url_base': reverse(CommCareExchangeHomeView.urlname),
+            'display_import': getattr(
+                self.request, 'couch_user', ''
+            ) and self.request.couch_user.get_domains(),
+        }
+
+
 def appstore_api(request):
     params, facets = parse_args_for_es(request)
     results = es_snapshot_query(params, facets)
