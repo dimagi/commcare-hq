@@ -17,7 +17,7 @@ from corehq.apps.userreports.pillow import ConfigurableIndicatorPillow, REBUILD_
 from corehq.apps.userreports.sql import IndicatorSqlAdapter
 from corehq.apps.userreports.tasks import rebuild_indicators
 from corehq.apps.userreports.tests.utils import get_sample_data_source, get_sample_doc_and_indicators
-from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
+from corehq.form_processor.backends.sql.dbaccessors import CaseAccessorSQL
 from corehq.util.decorators import temporarily_enable_toggle
 from corehq.util.test_utils import softer_assert
 from corehq.toggles import KAFKA_UCRS
@@ -128,7 +128,6 @@ class IndicatorPillowTest(IndicatorPillowTestBase):
         self.assertEqual(len(bad_ints), self.adapter.get_query_object().count())
 
 
-@temporarily_enable_toggle(KAFKA_UCRS, 'user-reports')
 class KafkaIndicatorPillowTest(IndicatorPillowTestBase):
     dependent_apps = [
         'couchforms', 'pillowtop', 'corehq.couchapps', 'corehq.apps.tzmigration',
@@ -143,6 +142,7 @@ class KafkaIndicatorPillowTest(IndicatorPillowTestBase):
         self.pillow.bootstrap(configs=[self.config])
 
     @patch('corehq.apps.userreports.specs.datetime')
+    @temporarily_enable_toggle(KAFKA_UCRS, 'user-reports')
     def test_basic_doc_processing(self, datetime_mock):
         datetime_mock.utcnow.return_value = self.fake_time_now
         sample_doc, expected_indicators = get_sample_doc_and_indicators(self.fake_time_now)
@@ -150,6 +150,7 @@ class KafkaIndicatorPillowTest(IndicatorPillowTestBase):
         self._check_sample_doc_state(expected_indicators)
 
     @patch('corehq.apps.userreports.specs.datetime')
+    @temporarily_enable_toggle(KAFKA_UCRS, 'user-reports')
     def test_process_doc_from_couch(self, datetime_mock):
         datetime_mock.utcnow.return_value = self.fake_time_now
         sample_doc, expected_indicators = get_sample_doc_and_indicators(self.fake_time_now)
@@ -170,6 +171,7 @@ class KafkaIndicatorPillowTest(IndicatorPillowTestBase):
 
     @patch('corehq.apps.userreports.specs.datetime')
     @override_settings(TESTS_SHOULD_USE_SQL_BACKEND=True)
+    @temporarily_enable_toggle(KAFKA_UCRS, 'user-reports')
     def test_process_doc_from_sql(self, datetime_mock):
         datetime_mock.utcnow.return_value = self.fake_time_now
         sample_doc, expected_indicators = get_sample_doc_and_indicators(self.fake_time_now)
@@ -183,7 +185,7 @@ class KafkaIndicatorPillowTest(IndicatorPillowTestBase):
         self.pillow.process_changes(since=since, forever=False)
         self._check_sample_doc_state(expected_indicators)
 
-        CaseAccessors(domain=case.domain).db_accessor.hard_delete_cases(case.domain, [case.case_id])
+        CaseAccessorSQL.hard_delete_cases(case.domain, [case.case_id])
 
 
 class IndicatorConfigFilterTest(SimpleTestCase):
