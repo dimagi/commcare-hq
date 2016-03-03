@@ -1128,3 +1128,11 @@ class DataTablesAJAXPaginationMixin(object):
             'iTotalRecords': total_records,
             'iTotalDisplayRecords': filtered_records or total_records,
         }))
+
+
+@login_and_domain_required
+def toggles_js(request, domain, template='hqwebapp/js/toggles_template.js'):
+    return render(request, template, {
+        'toggles_dict': toggles.toggle_values_by_name(username=request.user.username, domain=domain),
+        'previews_dict': feature_previews.preview_values_by_name(domain=domain)
+    })

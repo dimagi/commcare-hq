@@ -48,8 +48,9 @@ def previews_dict(domain):
     return {t.slug: True for t in all_previews() if t.enabled(domain)}
 
 
-def full_previews_dict(domain):
-    return {t.slug: t.enabled(domain) for t in all_previews()}
+def preview_values_by_name(domain):
+    return {toggle_name: toggle.enabled(domain)
+            for toggle_name, toggle in all_previews_by_name().items()}
 
 
 SUBMIT_HISTORY_FILTERS = FeaturePreview(

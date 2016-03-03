@@ -155,13 +155,14 @@ def toggles_dict(username=None, domain=None):
                                                     t.enabled(domain))}
 
 
-def full_toggles_dict(username=None, domain=None):
+def toggle_values_by_name(username=None, domain=None):
     """
     Loads all toggles into a dictionary for use in JS
 
     all toggles (including those not enabled) are included
     """
-    return {t.slug: (t.enabled(username) or t.enabled(domain)) for t in all_toggles()}
+    return {toggle_name: (toggle.enabled(username) or toggle.enabled(domain))
+            for toggle_name, toggle in all_toggles_by_name().items()}
 
 
 APP_BUILDER_CUSTOM_PARENT_REF = StaticToggle(

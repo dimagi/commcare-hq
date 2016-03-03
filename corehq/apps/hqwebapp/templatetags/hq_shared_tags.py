@@ -14,8 +14,6 @@ from corehq.util.quickcache import quickcache
 from corehq.util.soft_assert import soft_assert
 from dimagi.utils.web import json_handler
 
-import corehq.apps.style.utils as style_utils
-
 
 register = template.Library()
 
@@ -226,6 +224,14 @@ def _toggle_enabled(module, request, toggle_or_toggle_name):
 def toggle_enabled(request, toggle_or_toggle_name):
     import corehq.toggles
     return _toggle_enabled(corehq.toggles, request, toggle_or_toggle_name)
+
+
+@register.simple_tag
+def toggle_js_url(domain, username):
+    return '{url}?username={username}&version={version}'.format(
+        url=reverse('toggles_js', args=[domain]),
+        username=username,
+        version='')
 
 
 @register.filter
