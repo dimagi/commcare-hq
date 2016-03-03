@@ -430,29 +430,49 @@ def deployment_info(request, snapshot, template="appstore/deployment_info.html")
     })
 
 
-@login_required
-def deployments(request, template="appstore/deployments.html"):
-    params, _ = parse_args_for_es(request)
-    params = dict([(DEPLOYMENT_MAPPING.get(p, p), params[p]) for p in params])
-    page = int(params.pop('page', 1))
-    results = es_deployments_query(params, DEPLOYMENT_FACETS)
-    d_results = [Domain.wrap(res['_source']) for res in results['hits']['hits']]
+class DeploymentsView(BaseCommCareExchangeSectionView):
+    urlname = 'deployments'
+    template_name = 'appstore/deployments.html'
 
-    more_pages = False if len(d_results) <= page * 10 else True
+    @property
+    @memoized
+    def params(self):
+        params, _ = parse_args_for_es(self.request)
+        params = dict([(DEPLOYMENT_MAPPING.get(p, p), params[p]) for p in params])
+        return params
 
-    facet_map = fill_mapping_with_facets(DEPLOYMENT_MAPPING, results, params)
-    include_unapproved = True if request.GET.get('is_approved', "") == "false" else False
-    vals = {'deployments': d_results[(page - 1) * 10:page * 10],
-            'page': page,
-            'prev_page': page - 1,
-            'next_page': (page + 1),
+    @property
+    def page(self):
+        return int(self.params.pop('page', 1))
+
+    @property
+    @memoized
+    def results(self):
+        return es_deployments_query(self.params, DEPLOYMENT_FACETS)
+
+    @property
+    @memoized
+    def d_results(self):
+        d_results = [Domain.wrap(res['_source']) for res in self.results['hits']['hits']]
+        return d_results
+
+    @property
+    def page_context(self):
+        more_pages = False if len(self.d_results) <= self.page * 10 else True
+        facet_map = fill_mapping_with_facets(DEPLOYMENT_MAPPING, self.results, self.params)
+        include_unapproved = True if self.request.GET.get('is_approved', "") == "false" else False
+        return {
+            'deployments': self.d_results[(self.page - 1) * 10:self.page * 10],
+            'page': self.page,
+            'prev_page': self.page - 1,
+            'next_page': (self.page + 1),
             'more_pages': more_pages,
             'include_unapproved': include_unapproved,
             'facet_map': facet_map,
-            'query_str': request.META['QUERY_STRING'],
-            'search_url': reverse('deployments'),
-            'search_query': params.get('search', [""])[0]}
-    return render(request, template, vals)
+            'query_str': self.request.META['QUERY_STRING'],
+            'search_url': reverse(self.urlname),
+            'search_query': self.params.get('search', [""])[0]\
+        }
 
 
 def deployments_api(request):

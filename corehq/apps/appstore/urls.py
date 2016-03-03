@@ -2,6 +2,7 @@ from django.conf.urls import url, patterns
 from corehq.apps.appstore.views import (
     CommCareExchangeHomeView,
     ProjectInformationView,
+    DeploymentsView,
 )
 
 urlpatterns = patterns('corehq.apps.appstore.views',
@@ -11,7 +12,7 @@ urlpatterns = patterns('corehq.apps.appstore.views',
     url(r'^(?P<snapshot>[\w\.-]+)/info/$', ProjectInformationView.as_view(),
         name=ProjectInformationView.urlname),
 
-    url(r'^deployments/$', 'deployments', name='deployments'),
+    url(r'^deployments/$', DeploymentsView.as_view(), name=DeploymentsView.urlname),
     url(r'^deployments/api/$', 'deployments_api', name='deployments_api'),
     url(r'^deployments/(?P<snapshot>[\w\.-]+)/info/$', 'deployment_info', name='deployment_info'),
 
