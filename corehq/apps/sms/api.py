@@ -41,6 +41,10 @@ class BackendAuthorizationException(Exception):
     pass
 
 
+def get_utcnow():
+    return datetime.utcnow()
+
+
 class MessageMetadata(object):
     def __init__(self, *args, **kwargs):
         self.workflow = kwargs.get("workflow", None)
@@ -104,7 +108,7 @@ def send_sms(domain, contact, phone_number, text, metadata=None):
         domain=domain,
         phone_number=phone_number,
         direction=OUTGOING,
-        date = datetime.utcnow(),
+        date=get_utcnow(),
         backend_id=None,
         location_id=get_location_id_by_contact(domain, contact),
         text = text
@@ -141,7 +145,7 @@ def send_sms_to_verified_number(verified_number, text, metadata=None,
         couch_recipient = verified_number.owner_id,
         phone_number = "+" + str(verified_number.phone_number),
         direction = OUTGOING,
-        date = datetime.utcnow(),
+        date=get_utcnow(),
         domain = verified_number.domain,
         backend_id=backend.couch_id,
         location_id=get_location_id_by_verified_number(verified_number),
@@ -158,7 +162,7 @@ def send_sms_with_backend(domain, phone_number, text, backend_id, metadata=None)
         domain=domain,
         phone_number=phone_number,
         direction=OUTGOING,
-        date=datetime.utcnow(),
+        date=get_utcnow(),
         backend_id=backend_id,
         text=text
     )
@@ -174,7 +178,7 @@ def send_sms_with_backend_name(domain, phone_number, text, backend_name, metadat
         domain=domain,
         phone_number=phone_number,
         direction=OUTGOING,
-        date=datetime.utcnow(),
+        date=get_utcnow(),
         backend_id=backend.couch_id,
         text=text
     )
@@ -198,7 +202,7 @@ def queue_outgoing_sms(msg):
         try:
             msg.processed = False
             msg.datetime_to_process = msg.date
-            msg.queued_timestamp = datetime.utcnow()
+            msg.queued_timestamp = get_utcnow()
             msg.save()
         except:
             log_sms_exception(msg)
@@ -442,7 +446,7 @@ def incoming(phone_number, text, backend_api, timestamp=None,
     msg = get_sms_class()(
         phone_number=phone_number,
         direction=INCOMING,
-        date=timestamp or datetime.utcnow(),
+        date=timestamp or get_utcnow(),
         text=text,
         domain_scope=domain_scope,
         backend_api=backend_api,
@@ -452,7 +456,7 @@ def incoming(phone_number, text, backend_api, timestamp=None,
     )
     if settings.SMS_QUEUE_ENABLED:
         msg.processed = False
-        msg.datetime_to_process = datetime.utcnow()
+        msg.datetime_to_process = get_utcnow()
         msg.queued_timestamp = msg.datetime_to_process
         msg.save()
         enqueue_directly(msg)

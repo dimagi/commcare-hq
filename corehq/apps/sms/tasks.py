@@ -7,7 +7,7 @@ from corehq.apps.sms.mixin import (VerifiedNumber, InvalidFormatException,
 from corehq.apps.sms.models import (OUTGOING, INCOMING, SMS,
     PhoneLoadBalancingMixin, CommConnectCase, QueuedSMS)
 from corehq.apps.sms.api import (send_message_via_backend, process_incoming,
-    log_sms_exception, create_billable_for_sms)
+    log_sms_exception, create_billable_for_sms, get_utcnow)
 from django.db import transaction
 from django.conf import settings
 from corehq import privileges
@@ -48,7 +48,7 @@ def handle_unsuccessful_processing_attempt(msg):
 
 
 def handle_successful_processing_attempt(msg):
-    utcnow = datetime.utcnow()
+    utcnow = get_utcnow()
     msg.num_processing_attempts += 1
     msg.processed = True
     msg.processed_timestamp = utcnow
@@ -120,18 +120,6 @@ def message_is_stale(msg, utcnow):
         return True
 
 
-def _wait_and_release_lock(lock, timeout, start_timestamp):
-    while (datetime.utcnow() - start_timestamp) < timedelta(seconds=timeout):
-        sleep(0.1)
-    release_lock(lock, True)
-
-
-def wait_and_release_lock(lock, timeout):
-    timestamp = datetime.utcnow()
-    t = Thread(target=_wait_and_release_lock, args=(lock, timeout, timestamp))
-    t.start()
-
-
 def handle_outgoing(msg):
     """
     Should return a requeue flag, so if it returns True, the message will be
@@ -163,7 +151,9 @@ def handle_outgoing(msg):
         orig_phone_number=orig_phone_number
     )
 
-    if not msg.error:
+    if msg.error:
+        remove_from_queue(msg)
+    else:
         # Only do the following if an unrecoverable error did not happen
         if result:
             handle_successful_processing_attempt(msg)
@@ -188,7 +178,7 @@ def process_sms(queued_sms_pk):
     queued_sms_pk - pk of a QueuedSMS entry
     """
     client = get_redis_client()
-    utcnow = datetime.utcnow()
+    utcnow = get_utcnow()
     # Prevent more than one task from processing this SMS, just in case
     # the message got enqueued twice.
     message_lock = get_lock(client, "sms-queue-processing-%s" % queued_sms_pk)

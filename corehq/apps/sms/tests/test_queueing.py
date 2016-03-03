@@ -5,10 +5,30 @@ from corehq.apps.sms.tasks import process_sms
 from corehq.apps.sms.tests.util import BaseSMSTest, setup_default_sms_test_backend
 from corehq.apps.smsbillables.models import SmsBillable
 from corehq.messaging.smsbackends.test.models import SQLTestSMSBackend
-from datetime import datetime
+from datetime import datetime, timedelta
 from dimagi.utils.couch.cache.cache_core import get_redis_client
+from django.conf import settings
 from django.test.utils import override_settings
-from mock import patch
+from mock import Mock, patch
+
+
+def patch_datetime_api(timestamp):
+    return patch('corehq.apps.sms.api.get_utcnow', new=Mock(return_value=timestamp))
+
+
+def patch_datetime_tasks(timestamp):
+    return patch('corehq.apps.sms.tasks.get_utcnow', new=Mock(return_value=timestamp))
+
+
+def patch_successful_send():
+    return patch('corehq.messaging.smsbackends.test.models.SQLTestSMSBackend.send')
+
+
+def patch_failed_send():
+    return patch(
+        'corehq.messaging.smsbackends.test.models.SQLTestSMSBackend.send',
+        new=Mock(side_effect=Exception)
+    )
 
 
 @patch('corehq.apps.sms.management.commands.run_sms_queue.SMSEnqueuingOperation.enqueue_directly', autospec=True)
@@ -74,7 +94,10 @@ class QueueingTestCase(BaseSMSTest):
         couch_id = queued_sms.couch_id
         self.assertIsNotNone(couch_id)
 
-        process_sms(queued_sms.pk)
+        with patch_successful_send() as send_mock:
+            process_sms(queued_sms.pk)
+
+        self.assertEqual(send_mock.call_count, 1)
         self.assertEqual(self.queued_sms_count, 0)
         self.assertEqual(self.reporting_sms_count, 1)
 
@@ -90,3 +113,47 @@ class QueueingTestCase(BaseSMSTest):
 
         self.assertEqual(process_sms_delay_mock.call_count, 0)
         self.assertBillableExists(couch_id)
+
+    def test_outgoing_failure(self, process_sms_delay_mock, enqueue_directly_mock):
+        timestamp = datetime(2016, 1, 1, 12, 0)
+
+        with patch_datetime_api(timestamp):
+            send_sms(self.domain, None, '+999123', 'test outgoing')
+
+        self.assertEqual(enqueue_directly_mock.call_count, 1)
+        self.assertEqual(self.queued_sms_count, 1)
+        self.assertEqual(self.reporting_sms_count, 0)
+
+        for i in range(settings.SMS_QUEUE_MAX_PROCESSING_ATTEMPTS):
+            queued_sms = self.get_queued_sms()
+            self.assertEqual(queued_sms.domain, self.domain)
+            self.assertEqual(queued_sms.phone_number, '+999123')
+            self.assertEqual(queued_sms.text, 'test outgoing')
+            self.assertEqual(queued_sms.datetime_to_process, timestamp)
+            self.assertEqual(queued_sms.processed, False)
+            self.assertEqual(queued_sms.error, False)
+            self.assertEqual(queued_sms.num_processing_attempts, i)
+
+            with patch_failed_send() as send_mock, patch_datetime_tasks(timestamp + timedelta(seconds=1)):
+                process_sms(queued_sms.pk)
+
+            self.assertEqual(process_sms_delay_mock.call_count, 0)
+            self.assertBillableDoesNotExist(queued_sms.couch_id)
+
+            self.assertEqual(send_mock.call_count, 1)
+            if i < (settings.SMS_QUEUE_MAX_PROCESSING_ATTEMPTS - 1):
+                self.assertEqual(self.queued_sms_count, 1)
+                self.assertEqual(self.reporting_sms_count, 0)
+                timestamp += timedelta(minutes=settings.SMS_QUEUE_REPROCESS_INTERVAL)
+            else:
+                self.assertEqual(self.queued_sms_count, 0)
+                self.assertEqual(self.reporting_sms_count, 1)
+
+        reporting_sms = self.get_reporting_sms()
+        self.assertEqual(reporting_sms.domain, self.domain)
+        self.assertEqual(reporting_sms.phone_number, '+999123')
+        self.assertEqual(reporting_sms.text, 'test outgoing')
+        self.assertEqual(reporting_sms.processed, False)
+        self.assertEqual(reporting_sms.error, True)
+        self.assertEqual(reporting_sms.num_processing_attempts, settings.SMS_QUEUE_MAX_PROCESSING_ATTEMPTS)
+        self.assertBillableDoesNotExist(reporting_sms.couch_id)
