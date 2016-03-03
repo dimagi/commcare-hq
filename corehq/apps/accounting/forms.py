@@ -1568,21 +1568,24 @@ class EnterprisePlanContactForm(forms.Form):
         super(EnterprisePlanContactForm, self).__init__(data, *args, **kwargs)
         from corehq.apps.domain.views import SelectPlanView
         self.helper = FormHelper()
-        self.helper.form_class = "form form-horizontal"
+        self.helper.label_class = 'col-sm-3 col-md-2'
+        self.helper.field_class = 'col-sm-9 col-md-8 col-lg-6'
+        self.helper.form_class = "form-horizontal"
         self.helper.layout = crispy.Layout(
             'name',
             'company_name',
             'message',
-            FormActions(
+            hqcrispy.FormActions(
                 StrictButton(
                     _("Request Quote"),
                     type="submit",
                     css_class="btn-primary",
                 ),
-                crispy.HTML('<a href="%(url)s" class="btn btn-default">%(title)s</a>' % {
-                            'url': reverse(SelectPlanView.urlname, args=[self.domain]),
-                            'title': _("Select different plan"),
-                }),
+                hqcrispy.LinkButton(
+                    _("Select different plan"),
+                    reverse(SelectPlanView.urlname, args=[self.domain]),
+                    css_class="btn btn-default"
+                ),
             )
         )
 
