@@ -391,22 +391,36 @@ def project_documentation_file(request, snapshot):
         raise Http404()
 
 
-@login_required
-def deployment_info(request, snapshot, template="appstore/deployment_info.html"):
-    dom = Domain.get_by_name(snapshot)
-    if not dom or not dom.deployment.public:
-        raise Http404()
+class DeploymentInfoView(BaseCommCareExchangeSectionView):
+    urlname = 'deployment_info'
+    template_name = 'appstore/deployment_info.html'
 
-    # get facets
-    results = es_deployments_query({}, DEPLOYMENT_FACETS)
-    facet_map = fill_mapping_with_facets(DEPLOYMENT_MAPPING, results, {})
+    @property
+    def snapshot(self):
+        return self.kwargs['snapshot']
 
-    return render(request, template, {
-        'domain': dom,
-        'search_url': reverse('deployments'),
-        'url_base': reverse('deployments'),
-        'facet_map': facet_map,
-    })
+    @property
+    def page_url(self):
+        return reverse(self.urlname, args=(self.snapshot))
+
+    @property
+    def project(self):
+        return Domain.get_by_name(self.snapshot)
+
+    def dispatch(self, request, *args, **kwargs):
+        if not self.project or not self.project.deployment.public:
+            raise Http404()
+        return super(DeploymentInfoView, self).dispatch(request, *args, **kwargs)
+
+    def page_context(self):
+        results = es_deployments_query({}, DEPLOYMENT_FACETS)
+        facet_map = fill_mapping_with_facets(DEPLOYMENT_MAPPING, results, {})
+        return {
+            'domain': self.project,
+            'search_url': reverse(DeploymentsView.urlname),
+            'url_base': reverse(DeploymentsView.urlname),
+            'facet_map': facet_map,
+        }
 
 
 class DeploymentsView(BaseCommCareExchangeSectionView):

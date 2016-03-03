@@ -3,6 +3,7 @@ from corehq.apps.appstore.views import (
     CommCareExchangeHomeView,
     ProjectInformationView,
     DeploymentsView,
+    DeploymentInfoView,
 )
 
 urlpatterns = patterns('corehq.apps.appstore.views',
@@ -14,7 +15,8 @@ urlpatterns = patterns('corehq.apps.appstore.views',
 
     url(r'^deployments/$', DeploymentsView.as_view(), name=DeploymentsView.urlname),
     url(r'^deployments/api/$', 'deployments_api', name='deployments_api'),
-    url(r'^deployments/(?P<snapshot>[\w\.-]+)/info/$', 'deployment_info', name='deployment_info'),
+    url(r'^deployments/(?P<snapshot>[\w\.-]+)/info/$',
+        DeploymentInfoView.as_view(), name=DeploymentInfoView.urlname),
 
     url(r'^(?P<snapshot>[\w\.-]+)/approve/$', 'approve_app', name='approve_appstore_app'),
     url(r'^(?P<snapshot>[\w\.-]+)/copy/$', 'copy_snapshot', name='domain_copy_snapshot'),
