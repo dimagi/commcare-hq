@@ -53,13 +53,11 @@ def _build_indicators(indicator_config_id, relevant_ids):
     if not is_static(indicator_config_id):
         redis_client.delete(redis_key)
 
+
 @task(queue='ucr_queue', ignore_result=True, acks_late=True)
 def rebuild_indicators(indicator_config_id):
     config = _get_config_by_id(indicator_config_id)
     adapter = IndicatorSqlAdapter(config)
-    couchdb = _get_db(config.referenced_doc_type)
-    redis_client = get_redis_client().client.get_client()
-    redis_key = _get_redis_key_for_config(config)
 
     if not is_static(indicator_config_id):
         # Save the start time now in case anything goes wrong. This way we'll be
@@ -67,35 +65,9 @@ def rebuild_indicators(indicator_config_id):
         config.meta.build.initiated = datetime.datetime.utcnow()
         config.meta.build.finished = False
         config.save()
-        redis_key = _get_redis_key_for_config(config)
 
     adapter.rebuild_table()
-    relevant_ids_chunk = []
-    for relevant_id in iterate_doc_ids_in_domain_by_type(
-            config.domain,
-            config.referenced_doc_type,
-            chunk_size=CHUNK_SIZE,
-            database=couchdb):
-        relevant_ids_chunk.append(relevant_id)
-        if len(relevant_ids_chunk) >= CHUNK_SIZE:
-            redis_client.sadd(redis_key, *relevant_ids_chunk)
-            _build_indicators(indicator_config_id, relevant_ids_chunk)
-            relevant_ids_chunk = []
-
-    if relevant_ids_chunk:
-        redis_client.sadd(redis_key, *relevant_ids_chunk)
-        _build_indicators(indicator_config_id, relevant_ids_chunk)
-
-    if not is_static(indicator_config_id):
-        config.meta.build.finished = True
-        try:
-            config.save()
-        except ResourceConflict:
-            current_config = DataSourceConfiguration.get(config._id)
-            # check that a new build has not yet started
-            if config.meta.build.initiated == current_config.meta.build.initiated:
-                current_config.meta.build.finished = True
-                current_config.save()
+    _iteratively_build_table(config)
 
 
 @task(queue='ucr_queue', ignore_result=True, acks_late=True)
@@ -107,6 +79,46 @@ def resume_building_indicators(indicator_config_id):
     if len(redis_client.smembers(redis_key)) > 0:
         relevant_ids = redis_client.smembers(redis_key)
         _build_indicators(indicator_config_id, relevant_ids)
+        last_id = relevant_ids[-1]
+
+        _iteratively_build_table(config, last_id)
+
+
+def _iteratively_build_table(config, last_id=None):
+    couchdb = _get_db(config.referenced_doc_type)
+    redis_client = get_redis_client().client.get_client()
+    redis_key = _get_redis_key_for_config(config)
+    indicator_config_id = config._id
+
+    relevant_ids = []
+    skip_num = 1 if last_id else 0
+    for relevant_id in iterate_doc_ids_in_domain_by_type(
+            config.domain,
+            config.referenced_doc_type,
+            chunk_size=CHUNK_SIZE,
+            database=couchdb,
+            startkey_docid=last_id,
+            skip=skip_num):
+        relevant_ids.append(relevant_id)
+        if len(relevant_ids) >= CHUNK_SIZE:
+            redis_client.sadd(redis_key, *relevant_ids)
+            _build_indicators(indicator_config_id, relevant_ids)
+            relevant_ids = []
+
+    if relevant_ids:
+        redis_client.sadd(redis_key, *relevant_ids)
+        _build_indicators(indicator_config_id, relevant_ids)
+
+    if not is_static(indicator_config_id):
+        config.meta.build.finished = True
+        try:
+            config.save()
+        except ResourceConflict:
+            current_config = DataSourceConfiguration.get(config._id)
+            # check that a new build has not yet started
+            if config.meta.build.initiated == current_config.meta.build.initiated:
+                current_config.meta.build.finished = True
+                current_config.save()
 
 
 def _get_db(doc_type):
