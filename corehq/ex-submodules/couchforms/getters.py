@@ -38,9 +38,7 @@ def get_instance_and_attachment(request):
         # $ curl --form 'xml_submission_file=@form.xml' $URL
 
         if request.POST.keys():
-            notify_error("Received a submission with POST.keys()")
             raise MultimediaBug("Received a submission with POST.keys()")
-
 
         try:
             instance = request.FILES[MAGIC_PROPERTY].read()
