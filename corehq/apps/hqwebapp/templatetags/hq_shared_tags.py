@@ -1,5 +1,6 @@
 from datetime import datetime, timedelta
 import json
+from dimagi.utils.make_uuid import random_hex
 from django import template
 from django.conf import settings
 from django.core.urlresolvers import reverse
@@ -228,10 +229,25 @@ def toggle_enabled(request, toggle_or_toggle_name):
 
 @register.simple_tag
 def toggle_js_url(domain, username):
-    return '{url}?username={username}&version={version}'.format(
+    return '{url}?username={username}&cachebuster={domain_cb}-{user_cb}'.format(
         url=reverse('toggles_js', args=[domain]),
         username=username,
-        version='')
+        domain_cb=toggle_js_domain_cachebuster(domain),
+        user_cb=toggle_js_user_cachebuster(username),
+    )
+
+
+@quickcache(['domain'])
+def toggle_js_domain_cachebuster(domain):
+    # to get fresh cachebusters on the next deploy
+    # change the date below (output from *nix `date` command)
+    #   Thu Mar  3 16:21:30 EST 2016
+    return random_hex()[:3]
+
+
+@quickcache(['username'])
+def toggle_js_user_cachebuster(username):
+    return random_hex()[:3]
 
 
 @register.filter
