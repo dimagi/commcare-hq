@@ -13,7 +13,7 @@ class SyncCouchToSQLMixin(object):
     couch_id, for the _id of the Couch doc. Make sure you index couch_id
     and allow it to be null since it can be initially null. Do not include
     this field in _migration_get_fields().
-    You can override 'couch_id_name' if you need to use a different name.
+    You can override '_migration_couch_id_name' if `couch_id` won't work.
 
     2. Make the Couch model inherit from SyncCouchToSQLMixin.
 
@@ -64,20 +64,20 @@ class SyncCouchToSQLMixin(object):
     def _migration_get_sql_object(self):
         cls = self._migration_get_sql_model_class()
         try:
-            return cls.objects.get(**{cls.couch_id_name: self._id})
+            return cls.objects.get(**{cls._migration_couch_id_name: self._id})
         except cls.DoesNotExist:
             return None
         except cls.MultipleObjectsReturned:
             if not self._migration_automatically_handle_dups():
                 raise
-            cls.objects.filter(**{cls.couch_id_name: self._id}).delete()
+            cls.objects.filter(**{cls._migration_couch_id_name: self._id}).delete()
             return None
 
     def _migration_get_or_create_sql_object(self):
         cls = self._migration_get_sql_model_class()
         obj = self._migration_get_sql_object()
         if obj is None:
-            obj = cls(**{cls.couch_id_name: self._id})
+            obj = cls(**{cls._migration_couch_id_name: self._id})
         return obj
 
     def _migration_sync_to_sql(self, sql_object):
@@ -118,7 +118,15 @@ class SyncSQLToCouchMixin(object):
 
     If you have a custom sync process, just override _migration_sync_to_couch.
     """
-    couch_id_name = "couch_id"
+    _migration_couch_id_name = "couch_id"
+
+    @property
+    def _migration_couch_id(self):
+        return getattr(self, self._migration_couch_id_name)
+
+    @_migration_couch_id.setter
+    def _migration_couch_id(self, value):
+        setattr(self, self._migration_couch_id_name, value)
 
     @classmethod
     def _migration_get_fields(cls):
@@ -136,10 +144,10 @@ class SyncSQLToCouchMixin(object):
         raise NotImplementedError()
 
     def _migration_get_couch_object(self):
-        if not getattr(self, self.couch_id_name, None):
+        if not self._migration_couch_id:
             return None
         cls = self._migration_get_couch_model_class()
-        return cls.get(getattr(self, self.couch_id_name, None))
+        return cls.get(self._migration_couch_id)
 
     def _migration_get_or_create_couch_object(self):
         cls = self._migration_get_couch_model_class()
@@ -147,7 +155,7 @@ class SyncSQLToCouchMixin(object):
         if obj is None:
             obj = cls()
             obj.save(sync_to_sql=False)
-            setattr(self, self.couch_id_name, obj._id)
+            self._migration_couch_id = obj._id
             self.save(sync_to_couch=False)
         return obj
 
