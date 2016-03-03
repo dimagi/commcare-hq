@@ -9,6 +9,10 @@ META = 'meta'
 CASE_SQL = 'case-sql'
 FORM_SQL = 'form-sql'
 
+ALL = (
+    CASE, FORM, META, CASE_SQL, FORM_SQL
+)
+
 
 def get_topic(document_type):
     if document_type in ('CommCareCase', 'CommCareCase-Deleted'):
