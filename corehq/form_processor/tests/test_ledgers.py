@@ -127,7 +127,7 @@ class LedgerTests(TestCase):
         if settings.TESTS_SHOULD_USE_SQL_BACKEND:
             transactions = CaseAccessorSQL.get_transactions(self.case.case_id)
             self.assertEqual(3, len(transactions))
-            self.assertEqual(CaseTransaction.TYPE_FORM, transactions[0].type)
+            self.assertTrue(transactions[0].is_form_transaction)
             # ordering not guaranteed since they have the same date
             self.assertEqual(
                 {CaseTransaction.TYPE_FORM, CaseTransaction.TYPE_LEDGER},
