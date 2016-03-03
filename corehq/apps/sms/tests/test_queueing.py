@@ -157,3 +157,50 @@ class QueueingTestCase(BaseSMSTest):
         self.assertEqual(reporting_sms.error, True)
         self.assertEqual(reporting_sms.num_processing_attempts, settings.SMS_QUEUE_MAX_PROCESSING_ATTEMPTS)
         self.assertBillableDoesNotExist(reporting_sms.couch_id)
+
+    def test_outgoing_failure_recovery(self, process_sms_delay_mock, enqueue_directly_mock):
+        timestamp = datetime(2016, 1, 1, 12, 0)
+
+        with patch_datetime_api(timestamp):
+            send_sms(self.domain, None, '+999123', 'test outgoing')
+
+        self.assertEqual(enqueue_directly_mock.call_count, 1)
+        self.assertEqual(self.queued_sms_count, 1)
+        self.assertEqual(self.reporting_sms_count, 0)
+
+        queued_sms = self.get_queued_sms()
+        self.assertEqual(queued_sms.datetime_to_process, timestamp)
+        self.assertEqual(queued_sms.processed, False)
+        self.assertEqual(queued_sms.error, False)
+        self.assertEqual(queued_sms.num_processing_attempts, 0)
+
+        with patch_failed_send() as send_mock, patch_datetime_tasks(timestamp + timedelta(seconds=1)):
+            process_sms(queued_sms.pk)
+
+        self.assertEqual(process_sms_delay_mock.call_count, 0)
+        self.assertBillableDoesNotExist(queued_sms.couch_id)
+        self.assertEqual(send_mock.call_count, 1)
+        self.assertEqual(self.queued_sms_count, 1)
+        self.assertEqual(self.reporting_sms_count, 0)
+        timestamp += timedelta(minutes=settings.SMS_QUEUE_REPROCESS_INTERVAL)
+
+        queued_sms = self.get_queued_sms()
+        self.assertEqual(queued_sms.datetime_to_process, timestamp)
+        self.assertEqual(queued_sms.processed, False)
+        self.assertEqual(queued_sms.error, False)
+        self.assertEqual(queued_sms.num_processing_attempts, 1)
+
+        with patch_successful_send() as send_mock, patch_datetime_tasks(timestamp + timedelta(seconds=1)):
+            process_sms(queued_sms.pk)
+
+        self.assertEqual(send_mock.call_count, 1)
+        self.assertEqual(self.queued_sms_count, 0)
+        self.assertEqual(self.reporting_sms_count, 1)
+
+        reporting_sms = self.get_reporting_sms()
+        self.assertEqual(reporting_sms.processed, True)
+        self.assertEqual(reporting_sms.error, False)
+        self.assertEqual(reporting_sms.num_processing_attempts, 2)
+
+        self.assertEqual(process_sms_delay_mock.call_count, 0)
+        self.assertBillableExists(reporting_sms.couch_id)
