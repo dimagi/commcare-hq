@@ -734,7 +734,7 @@ class TestEvalExpression(SimpleTestCase):
             ({}, "a + (a*b)", {"a": 2, "b": 3}, 2 + (2 * 3)),
             ({}, "a-b", {"a": 5, "b": 2}, 5 - 2),
             ({}, "a*b", {"a": 5, "b": 2}, 5 * 2),
-            ({}, "a+b+c", {"a": 5, "b": 2, "c": 8}, 5 + 2 + 8),
+            ({}, "a+b+c+9", {"a": 5, "b": 2, "c": 8}, 5 + 2 + 8 + 9),
             # context can contain expressions
             (
                 {"age": 1},
