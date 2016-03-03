@@ -3,8 +3,6 @@ from couchdbkit import ResourceNotFound
 from corehq.apps.casegroups.models import CommCareCaseGroup
 from corehq.apps.hqcase.utils import get_case_by_identifier
 from corehq.form_processor.interfaces.dbaccessors import FormAccessors
-from couchforms.models import XFormInstance
-from dimagi.utils.couch.database import iter_docs
 
 from soil import DownloadBase
 
