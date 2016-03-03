@@ -133,20 +133,10 @@ def get_last_form_submissions_by_user(domain, user_ids, app_id=None):
 
     missing_users = None in user_ids
 
-    user_ids = filter(None, user_ids)
-
-    if not missing_users:
-        user_filter = user_id_filter(user_ids)
-    else:
-        user_filter = filters.OR(
-            user_id_filter(user_ids),
-            filters.missing('form.meta.userID'),
-        )
-
     query = (
         FormES()
         .domain(domain)
-        .filter(user_filter)
+        .user_ids_handle_unknown(user_ids)
         .remove_default_filter('has_user')
         .aggregation(
             TermsAggregation('user_id', 'form.meta.userID').aggregation(
@@ -273,9 +263,13 @@ def get_forms(domain, startdate, enddate, user_ids=None, app_ids=None, xmlnss=No
         .filter(date_filter_fn(gte=startdate, lte=enddate))
         .app(app_ids)
         .xmlns(xmlnss)
-        .user_id(user_ids)
         .size(5000)
     )
+
+    if user_ids:
+        query = (query
+            .user_ids_handle_unknown(user_ids)
+            .remove_default_filter('has_user'))
 
     result = query.run()
     return PagedResult(total=result.total, hits=result.hits)
@@ -283,6 +277,8 @@ def get_forms(domain, startdate, enddate, user_ids=None, app_ids=None, xmlnss=No
 
 def get_form_counts_by_user_xmlns(domain, startdate, enddate, user_ids=None,
                                   xmlnss=None, by_submission_time=True):
+
+    missing_users = False
 
     date_filter_fn = submitted_filter if by_submission_time else completed_filter
     query = (
@@ -300,13 +296,28 @@ def get_form_counts_by_user_xmlns(domain, startdate, enddate, user_ids=None,
     )
 
     if user_ids:
-        query = query.user_id(user_ids)
+        query = (query
+            .user_ids_handle_unknown(user_ids)
+            .remove_default_filter('has_user'))
+        missing_users = None in user_ids
+        if missing_users:
+            query = query.aggregation(
+                MissingAggregation('missing_user_id', 'form.meta.userID').aggregation(
+                    TermsAggregation('app_id', 'app_id').aggregation(
+                        TermsAggregation('xmlns', 'xmlns')
+                    )
+                )
+            )
 
     if xmlnss:
         query = query.xmlns(xmlnss)
 
     counts = defaultdict(lambda: 0)
-    user_buckets = query.run().aggregations.user_id.buckets_list
+    aggregations = query.run().aggregations
+    user_buckets = aggregations.user_id.buckets_list
+    if missing_users:
+        user_buckets.add(aggregations.missing_user_id.bucket)
+
     for user_bucket in user_buckets:
         app_buckets = user_bucket.app_id.buckets_list
         for app_bucket in app_buckets:
@@ -329,11 +340,14 @@ def get_form_duration_stats_by_user(
     """Gets stats on the duration of a selected form grouped by users"""
     date_filter_fn = submitted_filter if by_submission_time else completed_filter
 
+    missing_users = None in user_ids
+
     query = (
         FormES()
         .domain(domain)
         .app(app_id)
-        .user_id(user_ids)
+        .user_ids_handle_unknown(user_ids)
+        .remove_default_filter('has_user')
         .xmlns(xmlns)
         .filter(date_filter_fn(gte=startdate, lt=enddate))
         .aggregation(
@@ -347,8 +361,25 @@ def get_form_duration_stats_by_user(
         )
         .size(0)
     )
+
+    if missing_users:
+        query = query.aggregation(
+            MissingAggregation('missing_user_id', 'form.meta.userID').aggregation(
+                ExtendedStatsAggregation(
+                    'duration_stats',
+                    'form.meta.timeStart',
+                    script="doc['form.meta.timeEnd'].value - doc['form.meta.timeStart'].value",
+                )
+            )
+        )
+
     result = {}
-    buckets_dict = query.run().aggregations.user_id.buckets_dict
+    aggregations = query.run().aggregations
+
+    if missing_users:
+        result[MISSING_KEY] = aggregations.missing_user_id.bucket.duration_stats.result
+
+    buckets_dict = aggregations.user_id.buckets_dict
     for user_id, bucket in buckets_dict.iteritems():
         result[user_id] = bucket.duration_stats.result
     return result
@@ -369,7 +400,8 @@ def get_form_duration_stats_for_users(
         FormES()
         .domain(domain)
         .app(app_id)
-        .user_id(user_ids)
+        .user_ids_handle_unknown(user_ids)
+        .remove_default_filter('has_user')
         .xmlns(xmlns)
         .filter(date_filter_fn(gte=startdate, lt=enddate))
         .aggregation(
