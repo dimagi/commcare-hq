@@ -16,7 +16,7 @@ class Command(LabelCommand):
     args = "<sql_function_name.. sql_function_name>"
 
     def handle_label(self, sql_function_name, **options):
-        sql_function_name = os.path.splitext(sql_function_name)[0]  # strip any extention
+        sql_function_name = os.path.splitext(sql_function_name)[0]  # strip any extension
 
         self._create_accessor_function(sql_function_name, SQL_ACCESSOR_DIR)
         self._create_accessor_function(sql_function_name, SQL_PROXY_ACCESSOR_DIR)
