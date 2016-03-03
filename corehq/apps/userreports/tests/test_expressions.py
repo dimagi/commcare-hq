@@ -731,10 +731,6 @@ class TestEvalExpression(SimpleTestCase):
         test_cases = [
             # (source_doc, eq, context, expected_value)
             ({}, "a + b", {"a": 2, "b": 3}, 2 + 3),
-            ({}, "a + (a*b)", {"a": 2, "b": 3}, 2 + (2 * 3)),
-            ({}, "a-b", {"a": 5, "b": 2}, 5 - 2),
-            ({}, "a*b", {"a": 5, "b": 2}, 5 * 2),
-            ({}, "a+b+c+9", {"a": 5, "b": 2, "c": 8}, 5 + 2 + 8 + 9),
             # supports string manupulation
             ({}, "str(a)+'text'", {"a": 3}, "3text"),
             # context can contain expressions
@@ -779,8 +775,11 @@ class TestEvalExpression(SimpleTestCase):
     def test_bad_spec(self):
         bad_spec = [
             # (source_doc, eq, context)
+            # variables cant be strings
             ({}, "a + b", {"a": 2, "b": 'text'}),
+            # missing context
             ({}, "a + (a*b)", {"a": 2}),
+            # statement must be string
             ({}, 2 + 3, {"a": 2, "b": 3}),
         ]
 
@@ -792,6 +791,9 @@ class TestEvalExpression(SimpleTestCase):
 class TestEvaluator(SimpleTestCase):
     def test_supported_operations(self):
         supported = [
+            ("a + (a*b)", {"a": 2, "b": 3}, 2 + (2 * 3)),
+            ("a-b", {"a": 5, "b": 2}, 5 - 2),
+            ("a+b+c+9", {"a": 5, "b": 2, "c": 8}, 5 + 2 + 8 + 9),
             ("a*b", {"a": 2, "b": 23}, 2 * 23),
             ("a*b if a > b else b -a", {"a": 2, "b": 23}, 23 - 2),
             ("'text1' if a < 5 else `text2`", {"a": 4}, 'text1')
