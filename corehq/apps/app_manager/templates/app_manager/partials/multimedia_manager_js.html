@@ -1,0 +1,59 @@
+{% load i18n %}
+
+<!-- Handle app manager's multimedia management page -->
+<script>
+    $(function () {
+        var urls = {
+            main: '{% url 'app_multimedia_ajax' domain app.get_id %}',
+            download: '{% url 'app_multimedia_ajax_download' domain app.get_id %}',
+            upload: '{% url 'app_multimedia_ajax_upload' domain app.get_id %}',
+            references: '{% url 'app_multimedia_ajax_references' domain app.get_id %}',
+        };
+        var $main = $("#multimedia"),
+            $loading = $main.find(".hq-loading").remove(),
+            $error = $main.find(".hq-loading-error").remove();
+
+        // Event to handle main page load, which includes Download tab
+        $('#demand-multimedia').on('show.bs.tab', function () {
+            load('main', $main);
+        });
+
+        // Events for loading tabs
+        $main.on("show.bs.tab", ".nav a[data-slug]", function() {
+            var slug = $(this).data("slug");
+            load(slug, $main.find(".tab-pane[data-slug='" + slug + "'] .container-fluid"));
+        });
+
+        // Error button
+        $main.on("click", "button.reload", function() {
+            var $content = $(this).closest("[data-slug]");
+            load($content.data("slug"), $content.find(".container-fluid"));
+        });
+
+        /*
+         *  Load a given section, which could be the main multimedia page or a single tab.
+         *    slug: a key from the urls hash
+         *    $content: container for fetched content
+         */
+        function load(slug, $content) {
+            // If the content takes a noticeable amount of time to load, show a spinner
+            var showSpinner = true;
+            _.delay(function() {
+                if (showSpinner) {
+                    $content.html($loading.html());
+                }
+            }, 100);
+
+            // Load the content
+            $.ajax({
+                url: urls[slug],
+            }).success(function(content) {
+                showSpinner = false;
+                $content.html(content);
+            }).error(function() {
+                showSpinner = false;
+                $content.html($error.html());
+            });
+        }
+    });
+</script>
