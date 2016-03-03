@@ -192,7 +192,7 @@ class SqlCaseUpdateStrategy(UpdateStrategy):
         for transaction in transactions:
             if not transaction.is_relevant:
                 continue
-            elif transaction.type == CaseTransaction.TYPE_FORM:
+            elif transaction.is_form_transaction:
                 self._apply_form_transaction(transaction)
                 real_transactions.append(transaction)
 

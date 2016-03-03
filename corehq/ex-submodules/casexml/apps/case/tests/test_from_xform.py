@@ -51,7 +51,6 @@ class CaseFromXFormTest(TestCase):
         if settings.TESTS_SHOULD_USE_SQL_BACKEND:
             self._check_transactions(case, [xform1, xform2])
             self.assertTrue(case.transactions[0].is_case_create)
-            self.assertTrue(case.transactions[1].is_case_update)
         else:
             self.assertEqual(3, len(case.actions))
             new_update_action = case.actions[2]
