@@ -22,5 +22,5 @@ def eval_statements(statement, variable_context):
     evaluator = SimpleEval(operators=SAFE_OPERATORS, names=variable_context)
     try:
         return evaluator.eval(statement)
-    except InvalidExpression, e:
+    except (InvalidExpression, SyntaxError), e:
         raise BadSpecError(e)
