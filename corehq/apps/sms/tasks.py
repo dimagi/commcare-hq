@@ -29,7 +29,7 @@ def remove_from_queue(queued_sms):
         for field in sms._meta.fields:
             if field.name != 'id':
                 setattr(sms, field.name, getattr(queued_sms, field.name))
-        queued_sms.delete(sync_to_couch=False) # Remove sync_to_couch when SMSLog is removed
+        queued_sms.delete(sync_to_couch=False)  # Remove sync_to_couch when SMSLog is removed
         sms.save()
 
     if sms.direction == OUTGOING and sms.processed and not sms.error:
