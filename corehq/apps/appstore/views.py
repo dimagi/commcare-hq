@@ -1,6 +1,9 @@
 import json
 from urllib import urlencode
+from django.utils.decorators import method_decorator
 from corehq.apps.appstore.exceptions import CopiedFromDeletedException
+from corehq.apps.hqwebapp.views import BaseSectionPageView
+from corehq.apps.style.decorators import use_bootstrap3
 from dimagi.utils.couch import CriticalSection
 from dimagi.utils.couch.resource_conflict import retry_resource
 
@@ -10,6 +13,7 @@ from django.http import Http404, HttpResponseRedirect, HttpResponse
 from django.template.loader import render_to_string
 from django.shortcuts import render
 from django.contrib import messages
+from dimagi.utils.decorators.memoized import memoized
 from dimagi.utils.logging import notify_exception
 from dimagi.utils.name_to_url import name_to_url
 from django.utils.translation import ugettext as _, ugettext_lazy
@@ -99,68 +103,117 @@ def deduplicate(hits):
     return unique_hits
 
 
-def appstore(request, template="appstore/appstore_base.html"):
-    page_length = 10
-    include_unapproved = True if request.GET.get('is_approved', "") == "false" else False
-    if include_unapproved and not request.user.is_superuser:
-        raise Http404()
-    params, _ = parse_args_for_es(request)
-    page = params.pop('page', 1)
-    page = int(page[0] if isinstance(page, list) else page)
-    results = es_snapshot_query(params, SNAPSHOT_FACETS)
-    hits = results.get('hits', {}).get('hits', [])
-    hits = deduplicate(hits)
-    d_results = []
-    for res in hits:
-        try:
-            domain = Domain.wrap(res['_source'])
-            if domain.copied_from is not None:
-                # this avoids putting in snapshots in the list where the
-                # copied_from domain has been deleted.
-                d_results.append(domain)
-        except CopiedFromDeletedException as e:
-            notify_exception(
-                request,
-                message=(
-                    "Fetched Exchange Snapshot Error: {}. "
-                    "The problem snapshot id: {}".format(
-                    e.message, res['_source']['_id'])
+class BaseCommCareExchangeSectionView(BaseSectionPageView):
+    section_name = ugettext_lazy("CommCare Exchange")
+    template_name = 'appstore/appstore_base.html'
+
+    @use_bootstrap3
+    @method_decorator(login_required)
+    def dispatch(self, request, *args, **kwargs):
+        if self.include_unapproved and not self.request.user.is_superuser:
+            raise Http404()
+        return super(BaseCommCareExchangeSectionView, self).dispatch(request, *args, **kwargs)
+
+    @property
+    def include_unapproved(self):
+        return self.request.GET.get('is_approved', "") == "false"
+
+    @property
+    def section_url(self):
+        return reverse(CommCareExchangeHomeView.urlname)
+
+    @property
+    def page_url(self):
+        return reverse(self.urlname)
+
+
+class CommCareExchangeHomeView(BaseCommCareExchangeSectionView):
+    urlname = 'appstore'
+    template_name = 'appstore/appstore_base.html'
+
+    @property
+    def page_length(self):
+        return 10
+
+    @property
+    @memoized
+    def params(self):
+        params, _ = parse_args_for_es(self.request)
+        return params
+
+    @property
+    def page(self):
+        page = self.params.pop('page', 1)
+        return int(page[0] if isinstance(page, list) else page)
+
+    @property
+    def sort_by(self):
+        return self.request.GET.get('sort_by', None)
+
+    @property
+    def starter_apps(self):
+        return self.request.GET.get('is_starter_app', None)
+
+    @property
+    def persistent_params(self):
+        persistent_params = {}
+        if self.sort_by:
+            persistent_params["sort_by"] = self.sort_by
+        if self.include_unapproved:
+            persistent_params["is_approved"] = "false"
+        persistent_params = urlencode(persistent_params)
+        return persistent_params
+
+    @property
+    @memoized
+    def results(self):
+        return es_snapshot_query(self.params, SNAPSHOT_FACETS)
+
+    @property
+    @memoized
+    def d_results(self):
+        hits = self.results.get('hits', {}).get('hits', [])
+        hits = deduplicate(hits)
+        d_results = []
+        for res in hits:
+            try:
+                domain = Domain.wrap(res['_source'])
+                if domain.copied_from is not None:
+                    # this avoids putting in snapshots in the list where the
+                    # copied_from domain has been deleted.
+                    d_results.append(domain)
+            except CopiedFromDeletedException as e:
+                notify_exception(
+                    self.request,
+                    message=(
+                        "Fetched Exchange Snapshot Error: {}. "
+                        "The problem snapshot id: {}".format(
+                        e.message, res['_source']['_id'])
+                    )
                 )
-            )
+        if self.sort_by == 'newest':
+            pass
+        else:
+            d_results = Domain.hit_sort(d_results)
+        return d_results
 
-    starter_apps = request.GET.get('is_starter_app', None)
-    sort_by = request.GET.get('sort_by', None)
-    if sort_by == 'newest':
-        pass
-    else:
-        d_results = Domain.hit_sort(d_results)
-
-    persistent_params = {}
-    if sort_by:
-        persistent_params["sort_by"] = sort_by
-    if include_unapproved:
-        persistent_params["is_approved"] = "false"
-    persistent_params = urlencode(persistent_params)  # json.dumps(persistent_params)
-
-    more_pages = False if len(d_results) <= page * page_length else True
-
-    facet_map = fill_mapping_with_facets(SNAPSHOT_MAPPING, results, params)
-    vals = dict(
-        apps=d_results[(page - 1) * page_length:page * page_length],
-        page=page,
-        prev_page=(page - 1),
-        next_page=(page + 1),
-        more_pages=more_pages,
-        sort_by=sort_by,
-        show_starter_apps=starter_apps,
-        include_unapproved=include_unapproved,
-        facet_map=facet_map,
-        facets=results.get("facets", []),
-        query_str=request.META['QUERY_STRING'],
-        search_query=params.get('search', [""])[0],
-        persistent_params=persistent_params,
-    )
-    return render(request, template, vals)
+    @property
+    def page_context(self):
+        return {
+            'apps': self.d_results[(self.page - 1) * self.page_length:self.page * self.page_length],
+            'page': self.page,
+            'prev_page': (self.page - 1),
+            'next_page': (self.page + 1),
+            'more_pages': False if len(self.d_results) <= self.page * self.page_length else True,
+            'sort_by': self.sort_by,
+            'show_starter_apps': self.starter_apps,
+            'include_unapproved': self.include_unapproved,
+            'facet_map': fill_mapping_with_facets(SNAPSHOT_MAPPING, self.results, self.params),
+            'facets': self.results.get("facets", []),
+            'query_str': self.request.META['QUERY_STRING'],
+            'search_query': self.params.get('search', [""])[0],
+            'persistent_params': self.persistent_params,
+        }
 
 
 def appstore_api(request):
