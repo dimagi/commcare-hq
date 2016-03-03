@@ -31,7 +31,7 @@ def add_cases_to_case_group(domain, case_group_id, uploaded_data):
         elif case._id in case_group.cases:
             response['errors'].append(_("A case with identifier %s already exists in this group." % identifier))
         else:
-            case_group.cases.append(case._id)
+            case_group.cases.append(case.case_id)
             response['success'].append(_("Case with identifier '%s' has been added to this group." % identifier))
 
     if response['success']:
