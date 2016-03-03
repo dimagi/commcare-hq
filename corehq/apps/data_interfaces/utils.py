@@ -2,6 +2,7 @@ from django.utils.translation import ugettext as _
 from couchdbkit import ResourceNotFound
 from corehq.apps.casegroups.models import CommCareCaseGroup
 from corehq.apps.hqcase.utils import get_case_by_identifier
+from corehq.form_processor.interfaces.dbaccessors import FormAccessors
 from couchforms.models import XFormInstance
 from dimagi.utils.couch.database import iter_docs
 
@@ -60,18 +61,17 @@ def archive_or_restore_forms(domain, username, form_ids, archive_or_restore, tas
     if task:
         DownloadBase.set_progress(task, 0, len(form_ids))
 
-    for xform_doc in iter_docs(XFormInstance.get_db(), form_ids):
-        xform = XFormInstance.wrap(xform_doc)
-        missing_forms.discard(xform['_id'])
+    for xform in FormAccessors(domain).iter_forms(form_ids):
+        missing_forms.discard(xform.form_id)
 
-        if xform['domain'] != domain:
+        if xform.domain != domain:
             response['errors'].append(_(u"XFORM {form_id} does not belong to domain {domain}").format(
-                form_id=xform['_id'], domain=xform['domain']))
+                form_id=xform.form_id, domain=domain))
             continue
 
         xform_string = _(u"XFORM {form_id} for domain {domain} by user '{username}'").format(
-            form_id=xform['_id'],
-            domain=xform['domain'],
+            form_id=xform.form_id,
+            domain=xform.domain,
             username=username)
 
         try:

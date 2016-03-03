@@ -1,14 +1,15 @@
 from os.path import abspath, dirname, join
-from datetime import datetime
 
 from django.test import TestCase
 from django.test import Client
 
+from corehq.form_processor.interfaces.dbaccessors import FormAccessors
 from corehq.form_processor.tests.utils import FormProcessorTestUtils, run_with_all_backends
 from corehq.form_processor.utils.xform import TestFormMetadata, get_simple_wrapped_form
+from corehq.util.context_managers import drop_connected_signals
 from corehq.util.spreadsheets.excel import WorkbookJSONReader
+from couchforms.signals import xform_archived
 
-from couchforms.models import XFormInstance
 from django_prbac.models import UserRole, Role, Grant
 from corehq.apps.domain.models import Domain
 from corehq.apps.domain.shortcuts import create_domain
@@ -133,11 +134,13 @@ class BulkArchiveFormsUnit(TestCase):
     def test_archive_forms_basic(self):
         uploaded_file = WorkbookJSONReader(join(BASE_PATH, BASIC_XLSX))
 
-        response = archive_forms_old(DOMAIN_NAME, self.username, list(uploaded_file.get_worksheet()))
+        with drop_connected_signals(xform_archived):
+            response = archive_forms_old(DOMAIN_NAME, self.username, list(uploaded_file.get_worksheet()))
+            print response
 
         # Need to re-get instance from DB to get updated attributes
         for key, _id in self.XFORMS.iteritems():
-            self.assertEqual(XFormInstance.get(_id).doc_type, 'XFormArchived')
+            self.assertTrue(FormAccessors(DOMAIN_NAME).get_form(_id).is_archived)
 
         self.assertEqual(len(response['success']), len(self.xforms))
 
@@ -145,10 +148,11 @@ class BulkArchiveFormsUnit(TestCase):
     def test_archive_forms_missing(self):
         uploaded_file = WorkbookJSONReader(join(BASE_PATH, MISSING_XLSX))
 
-        response = archive_forms_old(DOMAIN_NAME, self.username, list(uploaded_file.get_worksheet()))
+        with drop_connected_signals(xform_archived):
+            response = archive_forms_old(DOMAIN_NAME, self.username, list(uploaded_file.get_worksheet()))
 
         for key, _id in self.XFORMS.iteritems():
-            self.assertEqual(XFormInstance.get(_id).doc_type, 'XFormArchived')
+            self.assertTrue(FormAccessors(DOMAIN_NAME).get_form(_id).is_archived)
 
         self.assertEqual(len(response['success']), len(self.xforms))
         self.assertEqual(len(response['errors']), 1,
