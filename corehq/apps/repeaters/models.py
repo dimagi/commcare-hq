@@ -21,6 +21,7 @@ from casexml.apps.case.xml import V2, LEGAL_VERSIONS
 from corehq.apps.receiverwrapper.exceptions import DuplicateFormatException, IgnoreDocument
 
 from couchforms.models import XFormInstance
+from couchforms.const import DEVICE_LOG_XMLNS
 from dimagi.utils.decorators.memoized import memoized
 from dimagi.utils.parsing import json_format_datetime
 from dimagi.utils.mixins import UnicodeMixIn
@@ -337,6 +338,9 @@ class FormRepeater(Repeater):
     def payload_doc(self, repeat_record):
         return XFormInstance.get(repeat_record.payload_id)
 
+    def allowed_to_forward(self, payload):
+        return payload.xmlns != DEVICE_LOG_XMLNS
+
     def get_url(self, repeat_record):
         url = super(FormRepeater, self).get_url(repeat_record)
         if not self.include_app_id_param:
@@ -408,6 +412,9 @@ class ShortFormRepeater(Repeater):
     @memoized
     def payload_doc(self, repeat_record):
         return XFormInstance.get(repeat_record.payload_id)
+
+    def allowed_to_forward(self, payload):
+        return payload.xmlns != DEVICE_LOG_XMLNS
 
     def get_headers(self, repeat_record):
         headers = super(ShortFormRepeater, self).get_headers(repeat_record)

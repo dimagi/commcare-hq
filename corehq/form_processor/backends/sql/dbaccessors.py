@@ -273,6 +273,10 @@ class FormAccessorSQL(AbstractFormAccessor):
         # the requested number of cases
         return sorted(results, key=lambda form: form.received_on)[:limit]
 
+    @staticmethod
+    def forms_have_multimedia(domain, app_id, xmlns):
+        raise NotImplementedError
+
 
 class CaseAccessorSQL(AbstractCaseAccessor):
 
@@ -565,21 +569,28 @@ class CaseAccessorSQL(AbstractCaseAccessor):
             return dict((result.case_id, result.server_modified_on) for result in results)
 
     @staticmethod
-    def get_case_by_external_id(domain, external_id, case_type=None):
-        try:
-            return CommCareCaseSQL.objects.raw(
-                'SELECT * FROM get_case_by_external_id(%s, %s, %s)',
-                [domain, external_id, case_type]
-            )[0]
-        except IndexError:
-            raise CaseNotFound
+    def get_cases_by_external_id(domain, external_id, case_type=None):
+        return list(CommCareCaseSQL.objects.raw(
+            'SELECT * FROM get_case_by_external_id(%s, %s, %s)',
+            [domain, external_id, case_type]
+        ))
 
     @staticmethod
     def get_case_by_domain_hq_user_id(domain, user_id, case_type):
         try:
-            return CaseAccessorSQL.get_case_by_external_id(domain, user_id, case_type)
-        except CaseNotFound:
+            return CaseAccessorSQL.get_cases_by_external_id(domain, user_id, case_type)[0]
+        except IndexError:
             return None
+
+    @staticmethod
+    def get_case_types_for_domain(domain):
+        with get_cursor(CommCareCaseSQL) as cursor:
+            cursor.execute(
+                'SELECT case_type FROM get_case_types_for_domain(%s)',
+                [domain]
+            )
+            results = fetchall_as_namedtuple(cursor)
+            return {result.case_type for result in results}
 
 
 class LedgerAccessorSQL(object):

@@ -4,6 +4,7 @@ from dimagi.utils.couch.cache import cache_core
 from dimagi.utils.couch.cache.cache_core import GenerationCache
 from couchforms.models import XFormInstance
 from pillowtop.listener import BasicPillow
+from pillowtop.models import DjangoPillowCheckpoint
 
 
 pillow_logging = logging.getLogger("pillowtop")
@@ -30,13 +31,10 @@ class CacheInvalidatePillow(BasicPillow):
         pass
 
     def get_checkpoint(self, verify_unchanged=False):
-        doc_name = self.checkpoint.checkpoint_id
-        current_db_seq = self.get_couch_db().info()['update_seq']
-        checkpoint_doc = {
-            "_id": doc_name,
-            "seq": current_db_seq
-        }
-        return checkpoint_doc
+        return DjangoPillowCheckpoint(
+            checkpoint_id=self.checkpoint.checkpoint_id,
+            sequence=self.get_couch_db().info()['update_seq'],
+        )
 
     def get_generations(self):
         return ["%s :: %s" % (gc.generation_key, gc._get_generation()) for gc in self.gen_caches]

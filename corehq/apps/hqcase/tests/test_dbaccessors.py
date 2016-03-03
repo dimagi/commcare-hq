@@ -5,7 +5,7 @@ from casexml.apps.case.models import CommCareCase
 from casexml.apps.case.util import create_real_cases_from_dummy_cases
 from corehq.apps.hqcase.dbaccessors import get_number_of_cases_in_domain, \
     get_case_ids_in_domain, get_case_types_for_domain, get_cases_in_domain, \
-    get_case_ids_in_domain_by_owner, get_number_of_cases_in_domain_by_owner, \
+    get_case_ids_in_domain_by_owner, \
     get_all_case_owner_ids, get_case_properties
 from couchforms.models import XFormInstance
 
@@ -154,13 +154,6 @@ class DBAccessorsTest(TestCase):
             {case.get_id for case in self.cases
              if case.domain == self.domain and case.user_id == 'XXX'
                 and case.closed is True}
-        )
-
-    def test_get_number_of_cases_in_domain_by_owner(self):
-        self.assertEqual(
-            get_number_of_cases_in_domain_by_owner(self.domain, owner_id='XXX'),
-            len([case for case in self.cases
-                 if case.domain == self.domain and case.user_id == 'XXX'])
         )
 
     def test_get_all_case_owner_ids(self):

@@ -10,13 +10,6 @@
 {% block page_title %}{% trans "Configure Report Settings" %}{% endblock page_title %}
 
 {% block js-inline %}{{ block.super }}
-    <script>
-        $(function () {
-            $('.hq-help-template').each(function () {
-                COMMCAREHQ.transformHelpTemplate($(this), true);
-            });
-        });
-    </script>
     <script type="text/javascript">
         /**
          * Knockout view model representing a row in the filter property list

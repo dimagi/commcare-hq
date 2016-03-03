@@ -6,9 +6,11 @@ from casexml.apps.case.signals import case_post_save
 from casexml.apps.case.util import post_case_blocks
 from corehq.util.context_managers import drop_connected_signals
 from corehq.util.test_utils import trap_extra_setup
+from nose.tools import nottest
 import settings
 
 
+@nottest
 def get_test_kafka_consumer(topic):
     """
     Gets a KafkaConsumer object for the topic, or conditionally raises

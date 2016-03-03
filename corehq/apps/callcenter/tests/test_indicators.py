@@ -151,7 +151,10 @@ class CallCenterTests(BaseCCTests):
 
     @classmethod
     def tearDownClass(cls):
+        cls.cc_user.delete()
+        cls.cc_user_no_data.delete()
         cls.cc_domain.delete()
+        cls.aarohi_user.delete()
         cls.aarohi_domain.delete()
         clear_data()
 

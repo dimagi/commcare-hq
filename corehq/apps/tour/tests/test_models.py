@@ -1,5 +1,6 @@
 from django.contrib.auth.models import User
 from django.test import TestCase
+from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.tour.models import GuidedTour
 from corehq.apps.tour.tours import StaticGuidedTour
 from corehq.apps.users.models import WebUser
@@ -9,8 +10,18 @@ TEST_TOUR = StaticGuidedTour('test_tour', 'path/to/fake_tour.html')
 
 class GuidedTourTest(TestCase):
 
+    domain = 'test-tour-domain'
+
+    @classmethod
+    def setUpClass(cls):
+        cls.domain_obj = create_domain(cls.domain)
+
+    @classmethod
+    def tearDownClass(cls):
+        cls.domain_obj.delete()
+
     def setUp(self):
-        self.web_user = WebUser.create('test-tour-domain', 'tourtester@mail.com', 'test123')
+        self.web_user = WebUser.create(self.domain, 'tourtester@mail.com', 'test123')
         self.test_user = User.objects.get_by_natural_key(self.web_user.username)
 
     def test_new_tour(self):

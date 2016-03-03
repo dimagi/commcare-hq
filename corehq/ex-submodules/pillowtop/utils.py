@@ -118,9 +118,9 @@ def get_pillow_json(pillow_config):
               else pillow_config.get_instance())
 
     checkpoint = pillow.get_checkpoint()
-    timestamp = checkpoint.get('timestamp')
+    timestamp = checkpoint.timestamp
     if timestamp:
-        time_since_last = datetime.utcnow() - string_to_utc_datetime(timestamp)
+        time_since_last = datetime.utcnow() - timestamp
         hours_since_last = time_since_last.total_seconds() // 3600
 
         try:
@@ -134,8 +134,8 @@ def get_pillow_json(pillow_config):
         hours_since_last = None
     return {
         'name': pillow_config.name,
-        'seq': force_seq_int(checkpoint.get('seq')),
-        'old_seq': force_seq_int(checkpoint.get('old_seq')) or 0,
+        'seq': force_seq_int(checkpoint.sequence),
+        'old_seq': force_seq_int(checkpoint.old_sequence) or 0,
         'db_seq': force_seq_int(pillow.get_change_feed().get_latest_change_id()),
         'time_since_last': time_since_last,
         'hours_since_last': hours_since_last
