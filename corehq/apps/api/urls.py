@@ -73,9 +73,9 @@ API_LIST = (
         v0_5.StockTransactionResource,
         InternalFixtureResource,
         FixtureResource,
-        ReportResource,
+        ReportResource,#
         v0_5.DeviceReportResource,
-        DomainMetadataResource,
+        DomainMetadataResource, #
         locations.v0_5.LocationResource,
         locations.v0_5.LocationTypeResource,
     )),
