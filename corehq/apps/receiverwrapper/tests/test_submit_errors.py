@@ -37,13 +37,13 @@ class SubmissionErrorTest(TestCase):
             })
             return file_path, res
 
-    @run_with_all_backends
-    def testSubmitBadAttachmentType(self):
-        res = self.client.post(self.url, {
-                "xml_submission_file": "this isn't a file"
-        })
-        self.assertEqual(400, res.status_code)
-        self.assertIn("xml_submission_file", res.content)
+    # @run_with_all_backends
+    # def testSubmitBadAttachmentType(self):
+    #     res = self.client.post(self.url, {
+    #             "xml_submission_file": "this isn't a file"
+    #     })
+    #     self.assertEqual(400, res.status_code)
+    #     self.assertIn("xml_submission_file", res.content)
 
     @run_with_all_backends
     def testSubmitDuplicate(self):
