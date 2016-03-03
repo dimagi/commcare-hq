@@ -1,6 +1,6 @@
 from celery.task import task
 
-from corehq.apps.export.export import get_export_file, rebuild_export
+from corehq.apps.export.export import get_export_file
 from couchexport.models import Format
 from couchexport.tasks import escape_quotes
 from soil.util import expose_cached_download
@@ -24,8 +24,3 @@ def populate_export_download_task(export_instances, filters, download_id, filena
         download_id=download_id,
     )
     export_file.file.delete()
-
-
-@task(queue='background_queue', ignore_result=True, last_access_cutoff=None, filter=None)
-def rebuild_export_task(export_instance):
-    rebuild_export(export_instance)

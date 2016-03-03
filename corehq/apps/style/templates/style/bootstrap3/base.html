@@ -359,9 +359,10 @@
                 ERROR_SAVING: '{% trans "There was an error deleting"|escapejs %}'
             }, 'btn btn-danger');
 
-            $('.hq-help-template').each(function () {
-                COMMCAREHQ.makeHqHelp($(this).data()).insertAfter(this);
-                $(this).remove();
+            $(function(){
+                $('.hq-help-template').each(function () {
+                    COMMCAREHQ.transformHelpTemplate($(this), true);
+                });
             });
         </script>
         {# JavaScript Display Logic Libaries #}
@@ -485,9 +486,6 @@
         </script>
         <![endif]-->
         
-        {% include 'style/includes/keyboard_shortcuts.html' %}
-        {% block keyboard_shortcuts %}{% endblock keyboard_shortcuts %}
-
         {% block js-inline %}{% endblock js-inline %}
 
     </body>

@@ -24,7 +24,8 @@
             "2014-03-01": ["A"],
             "2014-04-01": ["A", "B"],
             "2014-05-01": ["B"]
-        }
+        },
+        "is_active": true
     },
     {
 
@@ -36,8 +37,8 @@
         "longitude": "39.1621900200",
         "code": "MOHSW-MOHSW",
         "groups": ["A"],
-        "historical_groups":
-        {}
+        "historical_groups": {},
+        "is_active": true
     },
     {
         "code": "DISTRICT-Bahi",
@@ -49,7 +50,8 @@
         "longitude": "",
         "name": "Bahi",
         "parent_id": 13,
-        "type": "DISTRICT"
+        "type": "DISTRICT",
+        "is_active": true
     },
 
     {
@@ -61,7 +63,8 @@
         "longitude": "",
         "name": "DODOMA",
         "parent_id": 1,
-        "type": "REGION"
+        "type": "REGION",
+        "is_active": true
     },
 
     {
@@ -73,7 +76,8 @@
         "longitude": "",
         "name": "EXCLUDED-REGION",
         "parent_id": 1,
-        "type": "REGION"
+        "type": "REGION",
+        "is_active": true
     },
 
     {
@@ -85,7 +89,8 @@
         "longitude": "",
         "name": "EXCLUDED-DISTRICT",
         "parent_id": 25,
-        "type": "DISTRICT"
+        "type": "DISTRICT",
+        "is_active": true
     },
 
     {
@@ -97,7 +102,8 @@
         "longitude": "",
         "name": "EXCLUDED-FACILITY",
         "parent_id": 50,
-        "type": "FACILITY"
+        "type": "FACILITY",
+        "is_active": true
     },
     {
         "code": "Test district2",
@@ -109,6 +115,7 @@
         "longitude": "",
         "name": "Bahi",
         "parent_id": 13,
-        "type": "DISTRICT"
+        "type": "DISTRICT",
+        "is_active": true
     }
 ]

@@ -137,6 +137,9 @@ class AbstractCommCareCase(object):
     def modified_since_sync(self, sync_log):
         raise NotImplementedError
 
+    def get_subcases(self):
+        raise NotImplementedError
+
     def to_xml(self, version, include_case_on_closed=False):
         from xml.etree import ElementTree
         from casexml.apps.phone.xml import get_case_element

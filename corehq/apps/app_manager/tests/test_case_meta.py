@@ -1,8 +1,10 @@
 from django.test.testcases import SimpleTestCase
+from mock import patch
+from nose.tools import nottest
+
 from corehq.apps.app_manager.const import APP_V2
 from corehq.apps.app_manager.models import Application, Module, OpenCaseAction, ParentSelect, OpenSubCaseAction, \
     AdvancedModule, LoadUpdateAction, AdvancedOpenCaseAction, CaseIndex
-from mock import patch
 
 
 class CaseMetaTest(SimpleTestCase):
@@ -26,6 +28,7 @@ class CaseMetaTest(SimpleTestCase):
         meta = app.get_case_metadata()
         self.assertDictEqual(meta.type_hierarchy, expected_hierarchy)
 
+    @nottest
     def get_test_app(self):
         app = Application.new_app('domain', 'New App', APP_V2)
         app.version = 1

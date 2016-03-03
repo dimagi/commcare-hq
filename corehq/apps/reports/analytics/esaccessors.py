@@ -94,6 +94,21 @@ def _get_case_counts_by_user(domain, datespan, case_types=None, is_opened=True):
     return case_query.run().aggregations.by_user.counts_by_bucket()
 
 
+def get_paged_forms_by_type(domain, doc_types, start=0, size=10):
+    query = (
+        FormES()
+        .domain(domain)
+        .remove_default_filter('is_xform_instance')
+        .remove_default_filter('has_user')
+        .doc_type(map(lambda doc_type: doc_type.lower(), doc_types))
+        .sort("received_on", desc=True)
+        .start(start)
+        .size(size)
+    )
+    result = query.run()
+    return PagedResult(total=result.total, hits=result.hits)
+
+
 @quickcache(['domain', 'xmlns'], timeout=5 * 60)
 def guess_form_name_from_submissions_using_xmlns(domain, xmlns):
     last_form = get_last_form_submission_for_xmlns(domain, xmlns)

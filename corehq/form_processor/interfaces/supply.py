@@ -22,21 +22,21 @@ class SupplyInterface(object):
         else:
             return SupplyPointCouch
 
-    @property
-    @memoized
-    def supply_model(self):
-        from corehq.apps.commtrack.models import SupplyPointCase
-        from corehq.form_processor.models import CommCareCaseSQL
-        if should_use_sql_backend(self.domain):
-            return CommCareCaseSQL
-        else:
-            return SupplyPointCase
-
     def get_or_create_by_location(self, location):
         return self.supply_point.get_or_create_by_location(location)
 
     def get_by_location(self, location):
         return self.supply_point.get_by_location(location)
 
+    def get_closed_and_open_by_location_id_and_domain(self, domain, location_id):
+        """
+        This also returns closed supply points.
+        Please use location.linked_supply_point() instead.
+        """
+        return self.supply_point.get_closed_and_open_by_location_id_and_domain(domain, location_id)
+
     def get_supply_point(self, supply_point_id):
-        return self.supply_model.get(supply_point_id)
+        return self.supply_point.get_supply_point(supply_point_id)
+
+    def get_supply_points(self, supply_point_ids):
+        return self.supply_point.get_supply_points(supply_point_ids)

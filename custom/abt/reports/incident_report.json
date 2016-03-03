@@ -30,11 +30,12 @@
         "compare_as_string": false,
         "datatype": "string",
         "required": false,
-        "slug": "date_of_data_collection",
-        "field": "date_of_data_collection",
+        "slug": "timeEnd",
+        "field": "timeEnd",
         "type": "date",
         "display": {
-          "en": "Date of data collection"
+          "fra": "Date soumis",
+          "en": "Date submitted"
         }
       },
       {

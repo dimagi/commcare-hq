@@ -292,15 +292,6 @@ class BaseProjectDataView(BaseDomainView):
 
 
 @require_POST
-@retry_resource(3)
-def keyboard_config(request):
-    request.couch_user.keyboard_shortcuts["enabled"] = bool(request.POST.get('enable'))
-    request.couch_user.keyboard_shortcuts["main_key"] = request.POST.get('main-key', 'option')
-    request.couch_user.save()
-    return HttpResponseRedirect(request.GET.get('next'))
-
-
-@require_POST
 @login_required
 def new_api_key(request):
     api_key = ApiKey.objects.get(user=request.user)

@@ -1,10 +1,12 @@
 import uuid
 from django.test import SimpleTestCase, TestCase
 from kafka import KeyedProducer
+from kafka.common import KafkaUnavailableError
 from corehq.apps.change_feed import topics
 from corehq.apps.change_feed.connection import get_kafka_client_or_none
 from corehq.apps.change_feed.consumer.feed import KafkaChangeFeed, MultiTopicCheckpointEventHandler
 from corehq.apps.change_feed.producer import send_to_kafka
+from corehq.util.test_utils import trap_extra_setup
 from dimagi.utils.decorators.memoized import memoized
 from pillowtop.checkpoints.manager import PillowCheckpoint
 from pillowtop.feed.interface import ChangeMeta
@@ -14,6 +16,7 @@ from pillowtop.processors.sample import CountingProcessor
 
 class KafkaChangeFeedTest(SimpleTestCase):
 
+    @trap_extra_setup(KafkaUnavailableError)
     def test_multiple_topics(self):
         feed = KafkaChangeFeed(topics=[topics.FORM, topics.CASE], group_id='test-kafka-feed')
         self.assertEqual(0, len(list(feed.iter_changes(since=None, forever=False))))
@@ -30,6 +33,7 @@ class KafkaChangeFeedTest(SimpleTestCase):
 
 class KafkaCheckpointTest(TestCase):
 
+    @trap_extra_setup(KafkaUnavailableError)
     def test_checkpoint_with_multiple_topics(self):
         feed = KafkaChangeFeed(topics=[topics.FORM, topics.CASE], group_id='test-kafka-feed')
         pillow_name = 'test-multi-topic-checkpoints'

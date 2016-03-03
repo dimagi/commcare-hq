@@ -1,7 +1,6 @@
 import datetime
 from django.test import TestCase
 
-from corehq.apps.hqadmin.dbaccessors import get_number_of_forms_in_all_domains
 from corehq.form_processor.tests.utils import FormProcessorTestUtils
 from corehq.form_processor.utils import get_simple_wrapped_form, TestFormMetadata
 from couchforms.dbaccessors import (
@@ -75,12 +74,6 @@ class TestDBAccessors(TestCase):
     def test_get_form_ids_by_type(self):
         form_ids = get_form_ids_by_type(self.domain, 'XFormError')
         self.assertEqual(form_ids, [form._id for form in self.xform_errors])
-
-    def test_get_number_of_forms_in_all_domains(self):
-        self.assertEqual(
-            get_number_of_forms_in_all_domains(),
-            len(self.xforms)
-        )
 
     def test_get_deleted_form_ids_for_user(self):
         ids = get_deleted_form_ids_for_user(self.user_id2)

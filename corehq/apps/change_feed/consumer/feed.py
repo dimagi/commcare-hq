@@ -7,7 +7,7 @@ from kafka.common import ConsumerTimeout, KafkaConfigurationError, KafkaUnavaila
 from corehq.apps.change_feed.data_sources import get_document_store
 from corehq.apps.change_feed.exceptions import UnknownDocumentStore
 import logging
-from pillowtop.checkpoints.manager import PillowCheckpointEventHandler
+from pillowtop.checkpoints.manager import PillowCheckpointEventHandler, DEFAULT_EMPTY_CHECKPOINT_SEQUENCE
 from pillowtop.feed.interface import ChangeFeed, Change, ChangeMeta
 
 
@@ -48,16 +48,15 @@ class KafkaChangeFeed(ChangeFeed):
         # in milliseconds, -1 means wait forever for changes
         timeout = -1 if forever else MIN_TIMEOUT
 
-        reset = 'smallest' if since is not None else 'largest'
+        start_from_latest = since is None
+        reset = 'smallest' if not start_from_latest else 'largest'
         consumer = self._get_consumer(timeout, auto_offset_reset=reset)
-        if since is not None:
+        if not start_from_latest:
             if isinstance(since, dict):
-                # multiple topics
-                offsets = [(topic, self._partition, offset) for topic, offset in since.items()]
                 self._processed_topic_offsets = copy(since)
             else:
                 # single topic
-                topic = self._get_single_topic_or_fail()
+                single_topic = self._get_single_topic_or_fail()
                 try:
                     offset = int(since)  # coerce sequence IDs to ints
                 except ValueError:
@@ -67,8 +66,10 @@ class KafkaChangeFeed(ChangeFeed):
                     # since kafka only keeps 7 days of data this isn't a big deal. Hopefully we will only see
                     # these once when each pillow moves over.
                     offset = 0
-                offsets = [(topic, self._partition, offset)]
+                self._processed_topic_offsets = {single_topic: offset}
 
+            offsets = [(topic, self._partition, self._processed_topic_offsets.get(topic, 0))
+                       for topic in self._topics]
             # this is how you tell the consumer to start from a certain point in the sequence
             consumer.set_topic_partitions(*offsets)
         try:
@@ -139,6 +140,9 @@ class MultiTopicCheckpointEventHandler(PillowCheckpointEventHandler):
         checkpoint_doc = self.checkpoint.get_or_create_wrapped().document
         if checkpoint_doc.sequence_format != 'json':
             checkpoint_doc.sequence_format = 'json'
+            # convert initial default to json default
+            if checkpoint_doc.sequence == DEFAULT_EMPTY_CHECKPOINT_SEQUENCE:
+                checkpoint_doc.sequence = '{}'
             checkpoint_doc.save()
 
     def fire_change_processed(self, change, context):

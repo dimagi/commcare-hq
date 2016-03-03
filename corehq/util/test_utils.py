@@ -5,13 +5,13 @@ import json
 import logging
 import mock
 import os
+import sys
 from unittest import TestCase, SkipTest
 from collections import namedtuple
 from contextlib import contextmanager
 
 from functools import wraps
 from django.conf import settings
-import sys
 from corehq.util.decorators import ContextDecorator
 
 
@@ -33,31 +33,57 @@ def unit_testing_only(fn):
 unit_testing_only.__test__ = False
 
 
-@contextmanager
-def trap_extra_setup(*exceptions, **kw):
+class trap_extra_setup(ContextDecorator):
     """Conditionally skip test on error
 
-    Use this context manager to skip tests that would otherwise fail in
-    environments where some or all external dependencies have not been
-    configured. It raises `unittest.case.SkipTest` if one of the given
-    exceptions is raised and `settings.SKIP_TESTS_REQUIRING_EXTRA_SETUP`
-    is true (see dev_settings.py). Hard failures should be preserved in
-    environments where external dependencies are expected to be setup
-    (travis), so `settings.SKIP_TESTS_REQUIRING_EXTRA_SETUP` should be
-    false there.
+    Use this decorator/context manager to skip tests that would
+    otherwise fail in environments where some or all external
+    dependencies have not been configured. It raises
+    `unittest.case.SkipTest` if one of the given exceptions is raised
+    and `settings.SKIP_TESTS_REQUIRING_EXTRA_SETUP` is true (see
+    dev_settings.py). Hard failures should be preserved in environments
+    where external dependencies are expected to be setup (travis), so
+    `settings.SKIP_TESTS_REQUIRING_EXTRA_SETUP` should be false there.
     """
-    assert exceptions, "at least one argument is required"
-    msg = kw.pop("msg", "")
-    assert not kw, "unknown keyword args: {}".format(kw)
-    skip = getattr(settings, "SKIP_TESTS_REQUIRING_EXTRA_SETUP", False)
-    try:
-        yield
-    except exceptions as err:
-        if skip:
+
+    def __init__(self, *exceptions, **kw):
+        assert exceptions, "at least one argument is required"
+        assert all(issubclass(e, Exception) for e in exceptions), exceptions
+        self.exceptions = exceptions
+        self.msg = kw.pop("msg", "")
+        assert not kw, "unknown keyword args: {}".format(kw)
+        self.skip = getattr(settings, "SKIP_TESTS_REQUIRING_EXTRA_SETUP", False)
+
+    def __enter__(self):
+        return self
+
+    def __exit__(self, exc_type, err, tb):
+        if isinstance(err, self.exceptions) and self.skip:
+            msg = self.msg
             if msg:
                 msg += ": "
             raise SkipTest("{}{}: {}".format(msg, type(err).__name__, err))
-        raise
+
+
+def softer_assert(func=None):
+    """A decorator/context manager to disable hardened soft_assert for tests"""
+    @contextmanager
+    def softer_assert():
+        patch = mock.patch("corehq.util.soft_assert.core.is_hard_mode",
+                           new=lambda: False)
+        patch.start()
+        try:
+            yield
+        finally:
+            patch.stop()
+
+    if func is not None:
+        @functools.wraps(func)
+        def wrapper(*args, **kw):
+            with softer_assert():
+                return func(*args, **kw)
+        return wrapper
+    return softer_assert()
 
 
 class TestFileMixin(object):
