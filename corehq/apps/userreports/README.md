@@ -363,7 +363,7 @@ The from_date_expression and to_date_expression can be any valid expressions, or
 ```
 
 #### "Evaluator" expression
-`evaluator` expression can be used to evaluate math statements (and simple python like statements). It evaluates the statement specified by `equation_statement` which can contain variables, which can be defined in `variables_expression`.
+`evaluator` expression can be used to evaluate statements that contain arithmetic (and simple python like statements). It evaluates the statement specified by `equation_statement` which can contain variables as defined in `variables_expression`.
 
 ```json
 {
@@ -383,7 +383,7 @@ This returns 25 (1 + 20 - 2 + 6).
 
 `equation_statement` can be any statement that returns a valid number. All python math [operators](https://en.wikibooks.org/wiki/Python_Programming/Basic_Math#Mathematical_Operators) except power opertor are available for use.
 
-`variables_expression` is a [Dict Expression](https://github.com/dimagi/commcare-hq/blob/master/corehq/apps/userreports/README.md#dict-expressions) where keys are names of variables used in the `equation_statement` and values are values of those variables. Varaables can be any valid numbers or also expressions that return numbers. Python datatypes `int`, `float`, and `long` are considered valid numbers.
+`variables_expression` is a [Dict Expression](https://github.com/dimagi/commcare-hq/blob/master/corehq/apps/userreports/README.md#dict-expressions) where keys are names of variables used in the `equation_statement` and values are values of those variables. Variables can be any valid numbers (Python datatypes `int`, `float`, and `long` are considered valid numbers.) or also expressions that return numbers.
 
 
 #### "Month Start Date" and "Month End Date" expressions
