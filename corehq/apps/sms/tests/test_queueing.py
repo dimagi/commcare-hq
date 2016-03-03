@@ -30,6 +30,15 @@ def patch_failed_send():
     )
 
 
+def patch_error_send():
+    def set_error(msg, *args, **kwargs):
+        msg.set_system_error('Error')
+    return patch(
+        'corehq.messaging.smsbackends.test.models.SQLTestSMSBackend.send',
+        new=Mock(side_effect=set_error)
+    )
+
+
 @patch('corehq.apps.sms.management.commands.run_sms_queue.SMSEnqueuingOperation.enqueue_directly', autospec=True)
 @patch('corehq.apps.sms.tasks.process_sms.delay', autospec=True)
 @override_settings(SMS_QUEUE_ENABLED=True)
@@ -210,6 +219,36 @@ class QueueingTestCase(BaseSMSTest):
 
         self.assertEqual(process_sms_delay_mock.call_count, 0)
         self.assertBillableExists(reporting_sms.couch_id)
+
+    def test_outgoing_with_error(self, process_sms_delay_mock, enqueue_directly_mock):
+        send_sms(self.domain, None, '+999123', 'test outgoing')
+
+        self.assertEqual(enqueue_directly_mock.call_count, 1)
+        self.assertEqual(self.queued_sms_count, 1)
+        self.assertEqual(self.reporting_sms_count, 0)
+
+        queued_sms = self.get_queued_sms()
+        self.assertEqual(queued_sms.processed, False)
+        self.assertEqual(queued_sms.error, False)
+        couch_id = queued_sms.couch_id
+        self.assertIsNotNone(couch_id)
+
+        with patch_error_send() as send_mock:
+            process_sms(queued_sms.pk)
+
+        self.assertEqual(send_mock.call_count, 1)
+        self.assertEqual(self.queued_sms_count, 0)
+        self.assertEqual(self.reporting_sms_count, 1)
+
+        reporting_sms = self.get_reporting_sms()
+        self.assertEqual(reporting_sms.processed, False)
+        self.assertEqual(reporting_sms.error, True)
+        self.assertEqual(reporting_sms.couch_id, couch_id)
+        self.assertEqual(reporting_sms.backend_api, self.backend.get_api_id())
+        self.assertEqual(reporting_sms.backend_id, self.backend.couch_id)
+
+        self.assertEqual(process_sms_delay_mock.call_count, 0)
+        self.assertBillableDoesNotExist(couch_id)
 
     def test_incoming(self, process_sms_delay_mock, enqueue_directly_mock):
         incoming('999123', 'inbound test', self.backend.get_api_id())
