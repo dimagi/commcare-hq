@@ -91,14 +91,12 @@ def _iteratively_build_table(config, last_id=None):
     indicator_config_id = config._id
 
     relevant_ids = []
-    skip_num = 1 if last_id else 0
     for relevant_id in iterate_doc_ids_in_domain_by_type(
             config.domain,
             config.referenced_doc_type,
             chunk_size=CHUNK_SIZE,
             database=couchdb,
-            startkey_docid=last_id,
-            skip=skip_num):
+            startkey_docid=last_id):
         relevant_ids.append(relevant_id)
         if len(relevant_ids) >= CHUNK_SIZE:
             redis_client.sadd(redis_key, *relevant_ids)
