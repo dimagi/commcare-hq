@@ -10,7 +10,7 @@ from datetime import datetime, date
 
 from corehq.form_processor.backends.sql.dbaccessors import CaseAccessorSQL
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
-from corehq.form_processor.tests.utils import run_with_all_backends, FormProcessorTestUtils
+from corehq.form_processor.tests.utils import run_with_all_backends, FormProcessorTestUtils, set_case_property_directly
 from corehq.form_processor.utils.general import should_use_sql_backend
 from django.test import TestCase
 from mock import patch
@@ -152,16 +152,16 @@ class AutomaticCaseUpdateTest(TestCase):
             ]
             self.assertFalse(self.rule2.rule_matches_case(case, datetime(2016, 1, 1)))
 
-            case.set_case_property('last_visit_date', '2015-12-30')
+            set_case_property_directly(case, 'last_visit_date', '2015-12-30')
             self.assertFalse(self.rule2.rule_matches_case(case, datetime(2016, 1, 1)))
 
-            case.set_case_property('last_visit_date', '2015-12-03')
+            set_case_property_directly(case, 'last_visit_date', '2015-12-03')
             self.assertFalse(self.rule2.rule_matches_case(case, datetime(2016, 1, 1)))
 
-            case.set_case_property('last_visit_date', '2015-12-02')
+            set_case_property_directly(case, 'last_visit_date', '2015-12-02')
             self.assertTrue(self.rule2.rule_matches_case(case, datetime(2016, 1, 1)))
 
-            case.set_case_property('last_visit_date', '2015-11-01')
+            set_case_property_directly(case, 'last_visit_date', '2015-11-01')
             self.assertTrue(self.rule2.rule_matches_case(case, datetime(2016, 1, 1)))
 
     @run_with_all_backends
@@ -176,10 +176,10 @@ class AutomaticCaseUpdateTest(TestCase):
             ]
             self.assertFalse(self.rule2.rule_matches_case(case, datetime(2016, 1, 1)))
 
-            case.set_case_property('property1', 'x')
+            set_case_property_directly(case, 'property1', 'x')
             self.assertFalse(self.rule2.rule_matches_case(case, datetime(2016, 1, 1)))
 
-            case.set_case_property('property1', 'value1')
+            set_case_property_directly(case, 'property1', 'value1')
             self.assertTrue(self.rule2.rule_matches_case(case, datetime(2016, 1, 1)))
 
     @run_with_all_backends
@@ -194,10 +194,10 @@ class AutomaticCaseUpdateTest(TestCase):
             ]
             self.assertTrue(self.rule2.rule_matches_case(case, datetime(2016, 1, 1)))
 
-            case.set_case_property('property2', 'value2')
+            set_case_property_directly(case, 'property2', 'value2')
             self.assertFalse(self.rule2.rule_matches_case(case, datetime(2016, 1, 1)))
 
-            case.set_case_property('property2', 'x')
+            set_case_property_directly(case, 'property2', 'x')
             self.assertTrue(self.rule2.rule_matches_case(case, datetime(2016, 1, 1)))
 
     @run_with_all_backends
@@ -216,10 +216,10 @@ class AutomaticCaseUpdateTest(TestCase):
                 ),
             ]
 
-            case.set_case_property('property1', '2016-02-24')
+            set_case_property_directly(case, 'property1', '2016-02-24')
             self.assertTrue(self.rule2.rule_matches_case(case, datetime(2016, 1, 1)))
 
-            case.set_case_property('property1', '2016-02-25')
+            set_case_property_directly(case, 'property1', '2016-02-25')
             self.assertFalse(self.rule2.rule_matches_case(case, datetime(2016, 1, 1)))
 
     @run_with_all_backends
@@ -233,10 +233,10 @@ class AutomaticCaseUpdateTest(TestCase):
                 ),
             ]
 
-            case.set_case_property('property1', '2016-02-24')
+            set_case_property_directly(case, 'property1', '2016-02-24')
             self.assertFalse(self.rule2.rule_matches_case(case, datetime(2016, 1, 1)))
 
-            case.set_case_property('property1', '2016-02-25')
+            set_case_property_directly(case, 'property1', '2016-02-25')
             self.assertTrue(self.rule2.rule_matches_case(case, datetime(2016, 1, 1)))
 
     @run_with_all_backends
@@ -250,10 +250,10 @@ class AutomaticCaseUpdateTest(TestCase):
             ]
             self.assertFalse(self.rule2.rule_matches_case(case, datetime(2016, 1, 1)))
 
-            case.set_case_property('property3', 'x')
+            set_case_property_directly(case, 'property3', 'x')
             self.assertTrue(self.rule2.rule_matches_case(case, datetime(2016, 1, 1)))
 
-            case.set_case_property('property3', '')
+            set_case_property_directly(case, 'property3', '')
             self.assertFalse(self.rule2.rule_matches_case(case, datetime(2016, 1, 1)))
 
     @run_with_all_backends
@@ -282,28 +282,28 @@ class AutomaticCaseUpdateTest(TestCase):
                 ),
             ]
 
-            case.set_case_property('last_visit_date', '2015-11-01')
-            case.set_case_property('property1', 'value1')
-            case.set_case_property('property2', 'x')
-            case.set_case_property('property3', 'x')
+            set_case_property_directly(case, 'last_visit_date', '2015-11-01')
+            set_case_property_directly(case, 'property1', 'value1')
+            set_case_property_directly(case, 'property2', 'x')
+            set_case_property_directly(case, 'property3', 'x')
             self.assertTrue(self.rule2.rule_matches_case(case, datetime(2016, 1, 1)))
 
-            case.set_case_property('last_visit_date', '2015-12-30')
+            set_case_property_directly(case, 'last_visit_date', '2015-12-30')
             self.assertFalse(self.rule2.rule_matches_case(case, datetime(2016, 1, 1)))
 
-            case.set_case_property('last_visit_date', '2015-11-01')
-            case.set_case_property('property1', 'x')
+            set_case_property_directly(case, 'last_visit_date', '2015-11-01')
+            set_case_property_directly(case, 'property1', 'x')
             self.assertFalse(self.rule2.rule_matches_case(case, datetime(2016, 1, 1)))
 
-            case.set_case_property('property1', 'value1')
-            case.set_case_property('property2', 'value2')
+            set_case_property_directly(case, 'property1', 'value1')
+            set_case_property_directly(case, 'property2', 'value2')
             self.assertFalse(self.rule2.rule_matches_case(case, datetime(2016, 1, 1)))
 
-            case.set_case_property('property2', 'x')
-            case.set_case_property('property3', '')
+            set_case_property_directly(case, 'property2', 'x')
+            set_case_property_directly(case, 'property3', '')
             self.assertFalse(self.rule2.rule_matches_case(case, datetime(2016, 1, 1)))
 
-            case.set_case_property('property3', 'x')
+            set_case_property_directly(case, 'property3', 'x')
             self.assertTrue(self.rule2.rule_matches_case(case, datetime(2016, 1, 1)))
 
     def test_get_rules_from_domain(self):
@@ -357,7 +357,7 @@ def _update_case(domain, case_id, server_modified_on, last_visit_date=None):
     case = accessors.get_case(case_id)
     case.server_modified_on = server_modified_on
     if last_visit_date:
-        case.set_case_property('last_visit_date', last_visit_date.strftime('%Y-%m-%d'))
+        set_case_property_directly(case, 'last_visit_date', last_visit_date.strftime('%Y-%m-%d'))
     if should_use_sql_backend(domain):
         CaseAccessorSQL.save_case(case)
     else:

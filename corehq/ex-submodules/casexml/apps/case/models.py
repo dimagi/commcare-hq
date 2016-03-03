@@ -331,9 +331,6 @@ class CommCareCase(SafeSaveDocument, IndexHoldingMixIn, ComputedDocumentMixin,
         except Exception:
             return None
 
-    def set_case_property(self, property, value):
-        setattr(self, property, value)
-
     def case_properties(self):
         return self.to_json()
 
