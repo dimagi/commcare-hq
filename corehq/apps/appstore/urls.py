@@ -4,6 +4,7 @@ from corehq.apps.appstore.views import (
     ProjectInformationView,
     DeploymentsView,
     DeploymentInfoView,
+    MediaFilesView,
 )
 
 urlpatterns = patterns('corehq.apps.appstore.views',
@@ -24,6 +25,7 @@ urlpatterns = patterns('corehq.apps.appstore.views',
     url(r'^(?P<snapshot>[\w\.-]+)/image/$', 'project_image', name='appstore_project_image'),
     url(r'^(?P<snapshot>[\w\.-]+)/documentation_file/$', 'project_documentation_file',
         name='appstore_project_documentation_file'),
-    url(r'^(?P<snapshot>[\w\.-]+)/multimedia/$', 'media_files', name='media_files'),
+    url(r'^(?P<snapshot>[\w\.-]+)/multimedia/$',
+        MediaFilesView.as_view(), name=MediaFilesView.urlname),
 )
 
