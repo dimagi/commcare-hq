@@ -157,9 +157,9 @@ def _write_export_instance(writer, export_instance, documents):
     :return: None
     """
 
-    for doc in documents:
+    for row_number, doc in enumerate(documents):
         for table in export_instance.tables:
-            rows = table.get_rows(doc)
+            rows = table.get_rows(doc, row_number)
             for row in rows:
                 # It might be bad to write one row at a time when you can do more (from a performance perspective)
                 # Regardless, we should handle the batching of rows in the _Writer class, not here.

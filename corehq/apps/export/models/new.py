@@ -1,6 +1,8 @@
 from datetime import datetime
 from itertools import groupby
-from collections import defaultdict, OrderedDict
+from collections import defaultdict, OrderedDict, namedtuple
+
+from couchdbkit.ext.django.schema import IntegerProperty
 from django.utils.translation import ugettext as _
 from couchdbkit import SchemaListProperty, SchemaProperty, BooleanProperty, DictProperty
 
@@ -89,7 +91,7 @@ class ExportColumn(DocumentSchema):
     # A list of constants that map to functions to transform the column value
     transforms = ListProperty(validators=is_valid_transform)
 
-    def get_value(self, doc, base_path, transform_dates=False):
+    def get_value(self, doc, base_path, transform_dates=False, row_index=None):
         """
         Get the value of self.item of the given doc.
         When base_path is [], doc is a form submission or case,
@@ -175,6 +177,18 @@ class ExportColumn(DocumentSchema):
             return [self.label]
 
 
+class DocRow(namedtuple("DocRow", ["doc", "row"])):
+    """
+    DocRow represents a document and its row index.
+    doc - doc is a dictionary representing a form or a subset of a form (like
+          a particular iteration of a repeat group)
+    row - row is a tuple representing the relationship between this doc and the
+          rows in other sheets. For example, if this doc represents the 3rd
+          iteration of a repeat group in the 1st form of the export, then this
+          DocRow would have a row of (0, 2).
+    """
+
+
 class TableConfiguration(DocumentSchema):
     # label saves the user's decision for the table name
     label = StringProperty()
@@ -199,20 +213,21 @@ class TableConfiguration(DocumentSchema):
             headers.extend(column.get_headers())
         return headers
 
-    def get_rows(self, document):
+    def get_rows(self, document, row_number):
         """
         Return a list of ExportRows generated for the given document.
         :param document: dictionary representation of a form submission or case
+        :param row_number: number indicating this documents index in the sequence of all documents in the export
         :return: List of ExportRows
         """
-        # Note that sub_documents will be [document] if self.path is []
-        sub_documents = self._get_sub_documents(self.path, [document])
+        sub_documents = self._get_sub_documents(document, row_number)
         rows = []
-        for doc in sub_documents:
+        for doc_row in sub_documents:
+            doc, row_index = doc_row.doc, doc_row.row
 
             row_data = []
             for col in self.selected_columns:
-                val = col.get_value(doc, self.path)
+                val = col.get_value(doc, self.path, row_index=row_index)
                 if isinstance(val, list):
                     row_data.extend(val)
                 else:
@@ -226,14 +241,18 @@ class TableConfiguration(DocumentSchema):
                 return column
         return None
 
-    def _get_sub_documents(self, path, docs):
+    def _get_sub_documents(self, document, row_number):
+        return self._get_sub_documents_helper(self.path, [DocRow(row=(row_number,), doc=document)])
+
+    @staticmethod
+    def _get_sub_documents_helper(path, row_docs):
         """
         Return each instance of a repeat group at the path from the given docs.
         If path is [], just return the docs
 
-        >>> TableConfiguration()._get_sub_documents(['foo'], [{'foo': {'bar': 'a'}}, {'foo': {'bar': 'b'}}])
+        >>> TableConfiguration._get_sub_documents_helper(['foo'], [{'foo': {'bar': 'a'}}, {'foo': {'bar': 'b'}}])
         [{'bar': 'a'}, {'bar': 'b'}]
-        >>> TableConfiguration()._get_sub_documents(['foo', 'bar'], [{'foo': [{'bar': {'baz': 'a'}}, {'bar': {'baz': 'b'}},]}]
+        >>> TableConfiguration._get_sub_documents_helper(['foo', 'bar'], [{'foo': [{'bar': {'baz': 'a'}}, {'bar': {'baz': 'b'}},]}]
         [{'baz': 'a'}, {'baz': 'b'}]
 
         :param path: A list of a strings
@@ -241,16 +260,22 @@ class TableConfiguration(DocumentSchema):
         :return:
         """
         if len(path) == 0:
-            return docs
+            return row_docs
 
         new_docs = []
-        for doc in docs:
+        for row_doc in row_docs:
+            doc = row_doc.doc
+            row_index = row_doc.row
+
             next_doc = doc.get(path[0], {})
             if type(next_doc) == list:
-                new_docs.extend(next_doc)
+                new_docs.extend([
+                    DocRow(row=row_index + (new_doc_index,), doc=new_doc)
+                    for new_doc_index, new_doc in enumerate(next_doc)
+                ])
             else:
-                new_docs.append(next_doc)
-        return self._get_sub_documents(path[1:], new_docs)
+                new_docs.append(DocRow(row=row_index, doc=next_doc))
+        return TableConfiguration._get_sub_documents_helper(path[1:], new_docs)
 
 
 class ExportInstance(BlobMixin, Document):
@@ -941,7 +966,7 @@ class SplitExportColumn(ExportColumn):
     item = SchemaProperty(MultipleChoiceItem)
     ignore_unspecified_options = BooleanProperty()
 
-    def get_value(self, doc, base_path):
+    def get_value(self, doc, base_path, row_index=None):
         """
         Get the value of self.item of the given doc.
         When base_path is [], doc is a form submission or case,
@@ -978,3 +1003,16 @@ class SplitExportColumn(ExportColumn):
                 )
             )
         return headers
+
+
+class RowNumberColumn(ExportColumn):
+    nesting_level = IntegerProperty()
+
+    def get_headers(self):
+        headers = [self.label]
+        if self.nesting_level > 1:
+            headers += ["{}__{}".format(self.label, i) for i in range(self.nesting_level)]
+        return headers
+
+    def get_value(self, doc, base_path, transform_dates=False, row_index=None):
+        return [".".join([unicode(i) for i in row_index])] + list(row_index)
