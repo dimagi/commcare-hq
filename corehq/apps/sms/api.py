@@ -42,6 +42,9 @@ class BackendAuthorizationException(Exception):
 
 
 def get_utcnow():
+    """
+    Used to make it easier to mock utcnow() in the tests.
+    """
     return datetime.utcnow()
 
 
