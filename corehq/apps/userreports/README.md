@@ -362,8 +362,8 @@ The from_date_expression and to_date_expression can be any valid expressions, or
 }
 ```
 
-#### "evaluator" expression
-`evaluator` expression can be used to evaluate simple math statements (and simple python like expressions). It evaluates the statement specified by `equation_statement` which can contain variables, which can be defined in `variables_expression`.
+#### "Evaluator" expression
+`evaluator` expression can be used to evaluate math statements (and simple python like statements). It evaluates the statement specified by `equation_statement` which can contain variables, which can be defined in `variables_expression`.
 
 ```json
 {
