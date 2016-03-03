@@ -3,10 +3,15 @@ import copy
 from casexml.apps.case.xform import extract_case_blocks, get_case_ids_from_form
 from corehq.apps.change_feed import topics
 from corehq.apps.change_feed.consumer.feed import KafkaChangeFeed
+from corehq.apps.commtrack.const import COMMTRACK_USERNAME
+from corehq.apps.reports.models import HQUserType
+from corehq.apps.users.models import CouchUser
+from corehq.apps.users.util import SYSTEM_USER_ID, DEMO_USER_ID
 from corehq.elastic import get_es_new
 from corehq.form_processor.backends.sql.dbaccessors import doc_type_to_state
 from corehq.form_processor.change_providers import SqlFormChangeProvider
 from corehq.pillows.mappings.xform_mapping import XFORM_MAPPING, XFORM_INDEX
+from corehq.util.quickcache import quickcache
 from .base import HQPillow
 from couchforms.const import RESERVED_WORDS
 from couchforms.models import XFormInstance
@@ -22,6 +27,14 @@ from pillowtop.reindexer.reindexer import PillowReindexer
 UNKNOWN_VERSION = 'XXX'
 UNKNOWN_UIVERSION = 'XXX'
 XFORM_ES_TYPE = 'xform'
+
+SYSTEM_USER_TYPE = "system"
+ADMIN_USER_TYPE = "admin"
+DEMO_USER_TYPE = "demo"
+COMMTRACK_USER_TYPE = "commtrack"
+WEB_USER_TYPE = "web"
+MOBILE_USER_TYPE = "mobile"
+UNKNOWN_USER_TYPE = "unknown"
 
 
 def is_valid_date(txt):
@@ -87,6 +100,16 @@ def transform_xform_for_elasticsearch(doc_dict, include_props=True):
             # Some docs have their @xmlns and #text here
             if isinstance(doc_ret['form']['meta'].get('appVersion'), dict):
                 doc_ret['form']['meta']['appVersion'] = doc_ret['form']['meta']['appVersion'].get('#text')
+
+        try:
+            username = doc_ret['form']['meta']['username']
+        except KeyError:
+            username = None
+        try:
+            user_id = doc_ret['form']['meta']['userID']
+        except KeyError:
+            user_id = None
+        doc_ret['user_type'] = _get_user_type(user_id, username)
 
         case_blocks = extract_case_blocks(doc_ret)
         for case_dict in case_blocks:
@@ -156,3 +179,29 @@ def get_couch_form_reindexer():
 
 def get_sql_form_reindexer():
     return PillowReindexer(get_sql_xform_to_elasticsearch_pillow(), SqlFormChangeProvider())
+
+
+def _get_user_type(user_id, username):
+    if user_id == SYSTEM_USER_ID:
+        return SYSTEM_USER_TYPE
+    elif user_id == DEMO_USER_ID:
+        return DEMO_USER_TYPE
+    elif user_id == COMMTRACK_USERNAME:
+        return COMMTRACK_USER_TYPE
+    elif username == HQUserType.human_readable[HQUserType.ADMIN]:
+        return ADMIN_USER_TYPE
+    else:
+        try:
+            user = _get_user(user_id)
+            if user.is_web_user():
+                return WEB_USER_TYPE
+            elif user.is_commcare_user():
+                return MOBILE_USER_TYPE
+        except:
+            pass
+    return UNKNOWN_USER_TYPE
+
+
+@quickcache(['user_id'], timeout=1 * 60)
+def _get_user(user_id):
+    return CouchUser.get(user_id)

@@ -2,7 +2,7 @@
 FormES
 --------
 """
-from corehq.apps.es.filters import NULL_VALUE
+from corehq.pillows.mappings.xform_mapping import NULL_VALUE
 from .es_query import HQESQuery
 from . import filters
 

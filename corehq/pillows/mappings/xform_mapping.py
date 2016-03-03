@@ -1,10 +1,10 @@
-from corehq.apps.es.filters import NULL_VALUE
 from corehq.pillows.core import DATE_FORMATS_STRING, DATE_FORMATS_ARR
 from corehq.util.elastic import es_index
 
 
-XFORM_INDEX = es_index("xforms_2016-03-02")
 
+XFORM_INDEX = es_index("xforms_2016-03-02")
+NULL_VALUE = "__NULL__"
 
 XFORM_MAPPING = {
     "date_detection": False,
@@ -15,6 +15,7 @@ XFORM_MAPPING = {
     },
     "properties": {
         'doc_type': {'type': 'string'},
+        'user_type': {'type': 'string', "index": "not_analyzed", "null_value": NULL_VALUE},
         "domain": {
             "type": "multi_field",
             "fields": {
