@@ -3,6 +3,9 @@ from datetime import datetime
 
 from django.test import TestCase
 from django.test import Client
+
+from corehq.form_processor.tests.utils import FormProcessorTestUtils
+from corehq.form_processor.utils.xform import TestFormMetadata, get_simple_wrapped_form
 from corehq.util.spreadsheets.excel import WorkbookJSONReader
 
 from couchforms.models import XFormInstance
@@ -120,19 +123,11 @@ class BulkArchiveFormsUnit(TestCase):
         self.xforms = {}
 
         for key, _id, in self.XFORMS.iteritems():
-            self.xforms[_id] = XFormInstance(xmlns='fake-xmlns',
-                domain=DOMAIN_NAME,
-                received_on=datetime.utcnow(),
-                form={
-                    '#type': 'fake-type',
-                    '@xmlns': 'fake-xmlns'
-                })
-            self.xforms[_id]['_id'] = _id
-            self.xforms[_id].save()
+            meta = TestFormMetadata(domain=DOMAIN_NAME)
+            self.xforms[_id] = get_simple_wrapped_form(_id, metadata=meta)
 
     def tearDown(self):
-        for key, xform, in self.xforms.iteritems():
-            xform.delete()
+        FormProcessorTestUtils.delete_all_xforms(DOMAIN_NAME)
 
     def test_archive_forms_basic(self):
         uploaded_file = WorkbookJSONReader(join(BASE_PATH, BASIC_XLSX))
