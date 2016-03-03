@@ -38,19 +38,19 @@ class RandrHandler(KeywordHandler):
                 DeliveryGroupReport.objects.create(
                     location_id=location.get_id,
                     quantity=quantities[0],
-                    message=self.msg._id,
+                    message=self.msg.couch_id,
                     delivery_group="A"
                 )
                 DeliveryGroupReport.objects.create(
                     location_id=location.get_id,
                     quantity=quantities[1],
-                    message=self.msg._id,
+                    message=self.msg.couch_id,
                     delivery_group="B"
                 )
                 DeliveryGroupReport.objects.create(
                     location_id=location.get_id,
                     quantity=quantities[2],
-                    message=self.msg._id,
+                    message=self.msg.couch_id,
                     delivery_group="C"
                 )
                 self.respond(SUBMITTED_CONFIRM % {
