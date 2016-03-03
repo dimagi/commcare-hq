@@ -218,7 +218,7 @@ class CaseAccessors(object):
 
     def iter_cases(self, case_ids):
         for chunk in chunked(case_ids, 100):
-            chunk = filter(None, chunk)
+            chunk = list(filter(None, chunk))
             for case in self.get_cases(chunk):
                 yield case
 
