@@ -10,6 +10,14 @@
 
 {% block js %}{{ block.super }}
     {% block reports-js %}
+    <script type="text/javascript" src="{% static 'locations/ko/location_drilldown.async.js' %}"></script>
+    <script type="text/javascript" src="{% static 'reports/ko/report_filter.advanced_forms_options.js' %}"></script>
+    <script type="text/javascript" src="{% static 'reports/javascripts/field.filter_buttons.js' %}"></script>
+    <script type="text/javascript" src="{% static 'reports/ko/report_filter.drilldown_options.js' %}"></script>
+    <script type="text/javascript" src="{% static 'reports/javascripts/bootstrap-daterangepicker/moment.min.js' %}"></script>
+    <script type="text/javascript" src="{% static 'reports/javascripts/bootstrap-daterangepicker/daterangepicker.min.js' %}"></script>
+    <script type="text/javascript" src="{% static 'reports/javascripts/daterangepicker.js' %}"></script>
+    <script src="{% static 'select2-3.4.5-legacy/select2.min.js' %}"></script>
     {% include "imports/datatables.html" %}
     <script src="{% static 'reports/javascripts/config.dataTables.bootstrap.js' %}"></script>
     <script src="{% static 'jquery-ui-1.8.23-legacy/jquery-ui.min.js' %}"></script>
@@ -83,6 +91,8 @@
 {% block head %}
     {{ block.super }}
     {% block reports-css %}
+    <link rel="stylesheet" type="text/css" href="{% static "reports/css/daterangepicker-bs2.css" %}">
+    <link href="{% static 'select2-3.4.5-legacy/select2.css' %}" rel="stylesheet"/>
     <link rel="stylesheet" href="{% static 'hqwebapp/js/lib/jquery-ui-datepicker/datepicker-theme/jquery-ui-1.8.17.custom.css' %}" />
     {% endblock %}
 {% endblock %}
