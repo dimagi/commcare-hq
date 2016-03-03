@@ -53,6 +53,12 @@
     {% include 'app_manager/partials/download_async_modal.html' with element_id="download_ccz" %}
 {% endblock %}
 
+{% block js %}{{ block.super }}
+    {% compress js %}
+        <script src="{% new_static 'app_manager/js/download_async_modal.js' %}"></script>
+    {% endcompress %}
+{% endblock %}
+
 {% block js-inline %}
     {{ block.super }}
     {% url "download_ccz" app.domain app.id as ccz_url %}
