@@ -23,6 +23,10 @@ def get_path(request):
     return request.path
 
 
+class MultimediaBug(Exception):
+    pass
+
+
 def get_instance_and_attachment(request):
     try:
         return request._instance_and_attachment
@@ -35,7 +39,8 @@ def get_instance_and_attachment(request):
 
         if request.POST.keys():
             notify_error("Received a submission with POST.keys()")
-            raise Exception("Received a submission with POST.keys()")
+            raise MultimediaBug("Received a submission with POST.keys()")
+
 
         try:
             instance = request.FILES[MAGIC_PROPERTY].read()
