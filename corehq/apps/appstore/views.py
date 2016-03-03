@@ -73,26 +73,6 @@ def can_view_app(req, dom):
     return True
 
 
-def project_info(request, snapshot, template="appstore/project_info.html"):
-    dom = Domain.get(snapshot)
-    if not can_view_app(request, dom):
-        raise Http404()
-    copies = dom.copies_of_parent()
-    images = set()
-    audio = set()
-    return render(request, template, {
-        "project": dom,
-        "applications": dom.full_applications(include_builds=False),
-        "fixtures": FixtureDataType.by_domain(dom.name),
-        "copies": copies,
-        "images": images,
-        "audio": audio,
-        "url_base": reverse('appstore'),
-        'display_import': True if getattr(request, "couch_user",
-                                          "") and request.couch_user.get_domains() else False
-    })
-
-
 def deduplicate(hits):
     unique_names = set()
     unique_hits = []
@@ -129,7 +109,6 @@ class BaseCommCareExchangeSectionView(BaseSectionPageView):
 
 class CommCareExchangeHomeView(BaseCommCareExchangeSectionView):
     urlname = 'appstore'
-    template_name = 'appstore/appstore_base.html'
 
     @property
     def page_length(self):
@@ -306,19 +285,19 @@ def import_app(request, snapshot):
     user = request.couch_user
     if not user.is_eula_signed():
         messages.error(request, 'You must agree to our eula to download an app')
-        return project_info(request, snapshot)
+        return HttpResponseRedirect(reverse(ProjectInformationView.urlname, args=[snapshot]))
 
     from_project = Domain.get(snapshot)
 
     if request.method == 'POST' and from_project.is_snapshot:
         if not from_project.published:
             messages.error(request, "This project is not published and can't be downloaded")
-            return project_info(request, snapshot)
+            return HttpResponseRedirect(reverse(ProjectInformationView.urlname, args=[snapshot]))
 
         to_project_name = request.POST['project']
         if not user.is_member_of(to_project_name):
             messages.error(request, _("You don't belong to that project"))
-            return project_info(request, snapshot)
+            return HttpResponseRedirect(reverse(ProjectInformationView.urlname, args=[snapshot]))
 
         full_apps = from_project.full_applications(include_builds=False)
         assert full_apps, 'Bad attempt to copy apps from a project without any!'
@@ -333,7 +312,7 @@ def import_app(request, snapshot):
                          extra_tags="html")
         return HttpResponseRedirect(reverse('view_app', args=[to_project_name, new_doc.id]))
     else:
-        return HttpResponseRedirect(reverse('project_info', args=[snapshot]))
+        return HttpResponseRedirect(reverse(ProjectInformationView.urlname, args=[snapshot]))
 
 
 @login_required
@@ -341,7 +320,7 @@ def copy_snapshot(request, snapshot):
     user = request.couch_user
     if not user.is_eula_signed():
         messages.error(request, 'You must agree to our eula to download an app')
-        return project_info(request, snapshot)
+        return HttpResponseRedirect(reverse(ProjectInformationView.urlname, args=[snapshot]))
 
     dom = Domain.get(snapshot)
     if request.method == "POST" and dom.is_snapshot:
@@ -359,11 +338,11 @@ def copy_snapshot(request, snapshot):
         if request.POST.get('new_project_name', ""):
             if not dom.published:
                 messages.error(request, _("This project is not published and can't be downloaded"))
-                return project_info(request, snapshot)
+                return HttpResponseRedirect(reverse(ProjectInformationView.urlname, args=[snapshot]))
 
             if not form.is_valid():
                 messages.error(request, form.errors)
-                return project_info(request, snapshot)
+                return HttpResponseRedirect(reverse(ProjectInformationView.urlname, args=[snapshot]))
 
             new_domain_name = name_to_url(form.cleaned_data['hr_name'], "project")
             with CriticalSection(['copy_domain_snapshot_{}_to_{}'.format(dom.name, new_domain_name)]):
@@ -376,7 +355,7 @@ def copy_snapshot(request, snapshot):
 
                 except NameUnavailableException:
                     messages.error(request, _("A project by that name already exists"))
-                    return project_info(request, snapshot)
+                    return HttpResponseRedirect(reverse(ProjectInformationView.urlname, args=[snapshot]))
 
             def inc_downloads(d):
                 d.downloads += 1
@@ -389,9 +368,9 @@ def copy_snapshot(request, snapshot):
                                                 args=[new_domain.name, new_domain.full_applications()[0].get_id]))
         else:
             messages.error(request, _("You must specify a name for the new project"))
-            return project_info(request, snapshot)
+            return HttpResponseRedirect(reverse(ProjectInformationView.urlname, args=[snapshot]))
     else:
-        return HttpResponseRedirect(reverse('project_info', args=[snapshot]))
+        return  HttpResponseRedirect(reverse(ProjectInformationView.urlname, args=[snapshot]))
 
 
 def project_image(request, snapshot):
