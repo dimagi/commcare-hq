@@ -21,11 +21,17 @@ import couchforms
 from django.views.decorators.http import require_POST
 from django.views.decorators.csrf import csrf_exempt
 
+from couchforms.getters import MultimediaBug
+
 
 @count_by_response_code('commcare.xform_submissions')
 def _process_form(request, domain, app_id, user_id, authenticated,
                   auth_cls=AuthContext):
-    instance, attachments = couchforms.get_instance_and_attachment(request)
+    try:
+        instance, attachments = couchforms.get_instance_and_attachment(request)
+    except MultimediaBug as e:
+        return HttpResponseBadRequest(e.message)
+
     app_id, build_id = get_app_and_build_ids(domain, app_id)
     response = SubmissionPost(
         instance=instance,
