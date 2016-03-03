@@ -1,7 +1,10 @@
 from django.conf.urls import url, patterns
+from corehq.apps.appstore.views import (
+    CommCareExchangeHomeView,
+)
 
 urlpatterns = patterns('corehq.apps.appstore.views',
-    url(r'^$', 'appstore', name='appstore'),
+    url(r'^$', CommCareExchangeHomeView.as_view(), name=CommCareExchangeHomeView.urlname),
     url(r'^api/', 'appstore_api', name='appstore_api'),
 
     url(r'^(?P<snapshot>[\w\.-]+)/info/$', 'project_info', name='project_info'),
