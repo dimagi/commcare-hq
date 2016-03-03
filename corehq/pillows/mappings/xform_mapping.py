@@ -1,10 +1,9 @@
 from corehq.pillows.core import DATE_FORMATS_STRING, DATE_FORMATS_ARR
 from corehq.util.elastic import es_index
 
-
-
-XFORM_INDEX = es_index("xforms_2016-03-02")
 NULL_VALUE = "__NULL__"
+XFORM_INDEX = es_index("xforms_2016-03-02")
+
 
 XFORM_MAPPING = {
     "date_detection": False,

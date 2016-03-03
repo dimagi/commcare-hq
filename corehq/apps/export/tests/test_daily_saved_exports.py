@@ -4,6 +4,7 @@ from mock import patch, MagicMock
 from corehq.apps.export.models import FormExportInstance, CaseExportInstance
 from corehq.apps.reports.tasks import saved_exports
 
+
 class TestDailySavedExports(TestCase):
 
     @classmethod
@@ -26,6 +27,7 @@ class TestDailySavedExports(TestCase):
         class MockExportFile(object):
             def __enter__(self):
                 return ""
+
             def __exit__(self, exc_type, exc_val, exc_tb):
                 pass
 

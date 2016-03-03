@@ -1553,7 +1553,6 @@ class DeleteNewCustomExportView(BaseModifyNewCustomView):
         return export._id
 
 
-
 class GenericDownloadNewExportMixin(object):
     """
     Supporting class for new style export download views
