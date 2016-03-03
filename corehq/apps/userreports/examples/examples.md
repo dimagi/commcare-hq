@@ -442,6 +442,67 @@ Note that the test must also change in this scenario.
 }
 ```
 
+## Evaluator Examples
+
+### Age in years to age in months (simple case)
+
+```json
+{
+    "type": "evaluator",
+    "equation_statement": "30.4 * age_in_years",
+    "variables_expression": {
+        "type": "dict",
+        "properties": {
+            "age_in_years": 5,
+        },
+    }
+}
+```
+returns 30.4 * 5 (152)
+
+### Age in years to age in months (nested expression)
+
+In the above example, `age_in_years` can be replaces with another expression to get the property from the doc
+```json
+{
+    "type": "evaluator",
+    "equation_statement": "30.4 * age_in_years",
+    "variables_expression": {
+        "type": "dict",
+        "properties": {
+            "age_in_years": {
+                "type": "property_name",
+                "property_name": "age"
+            },
+        },
+    }
+}
+```
+This will lookup the property `age` and substituite its value in the `equation_statement`
+
+### weight_gain example
+
+```json
+{
+    "type": "evaluator",
+    "equation_statement": "weight_2 - weight_1",
+    "variables_expression": {
+        "type": "dict",
+        "properties": {
+            "weight_1": {
+                "type": "property_name",
+                "property_name": "weight_at_birth"
+            },
+            "weight_2": {
+                "type": "property_name",
+                "property_name": "weight_at_1_year"
+            },
+        },
+    }
+}
+```
+This will return value of `weight_at_1_year - weight_at_birth`
+
 # Report examples
 
 ## Report filters
