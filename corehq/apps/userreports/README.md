@@ -385,7 +385,7 @@ This returns 25 (1 + 20 - 2 + 6).
 
 `context_variables` is a [Dict Expression](corehq/apps/userreports/README.md#dict-expressions) where keys are names of variables used in the `equation_statement` and values are values of those variables. Variables can be any valid numbers (Python datatypes `int`, `float`, and `long` are considered valid numbers.) or also expressions that return numbers.
 
-More examples can be found on practical [examples page]((corehq/apps/userreports/examples/examples.md#evaluator-examples).
+More examples can be found on practical [examples page](corehq/apps/userreports/examples/examples.md#evaluator-examples).
 
 #### "Month Start Date" and "Month End Date" expressions
 
