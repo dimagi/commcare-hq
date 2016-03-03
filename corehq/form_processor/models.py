@@ -22,7 +22,7 @@ from uuidfield import UUIDField
 
 from corehq.blobs import get_blob_db
 from corehq.blobs.exceptions import NotFound, BadName
-from corehq.form_processor.exceptions import InvalidAttachment
+from corehq.form_processor.exceptions import InvalidAttachment, UnknownActionType
 from corehq.form_processor.track_related import TrackRelatedChanges
 from corehq.sql_db.routers import db_for_read_write
 from couchforms import const
@@ -916,13 +916,26 @@ class CaseTransaction(DisabledDbMixin, models.Model):
         return not self.__eq__(other)
 
     @classmethod
-    def form_transaction(cls, case, xform, actions=None):
-        actions = actions or []
+    def form_transaction(cls, case, xform, action_types=None):
+        action_types = action_types or []
+
+        if any(map(lambda action_type: not cls._valid_action_type(action_type), action_types)):
+            raise UnknownActionType('Unknown action type found')
+
         type_ = cls.TYPE_FORM
 
-        for action in actions:
-            type_ |= cls._type_from_action_type(action.action_type_slug)
+        for action_type in action_types:
+            type_ |= action_type
         return cls._from_form(case, xform, transaction_type=type_)
+
+    @classmethod
+    def _valid_action_type(cls, action_type):
+        return action_type in [
+            cls.TYPE_CASE_CLOSE,
+            cls.TYPE_CASE_INDEX,
+            cls.TYPE_CASE_CREATE,
+            0,
+        ]
 
     @classmethod
     def ledger_transaction(cls, case, xform):
@@ -940,7 +953,7 @@ class CaseTransaction(DisabledDbMixin, models.Model):
         )
 
     @classmethod
-    def _type_from_action_type(cls, action_type_slug):
+    def type_from_action_type_slug(cls, action_type_slug):
         from casexml.apps.case import const
         return {
             const.CASE_ACTION_CLOSE: cls.TYPE_CASE_CLOSE,
