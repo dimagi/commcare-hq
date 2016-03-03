@@ -11,7 +11,8 @@ from django.template.loader import render_to_string
 from casexml.apps.phone.xml import get_case_xml
 from casexml.apps.case.mock import CaseBlock
 from casexml.apps.case.models import CommCareCase
-from corehq.form_processor.interfaces.dbaccessors import get_cached_case_attachment
+from corehq.form_processor.exceptions import CaseNotFound
+from corehq.form_processor.interfaces.dbaccessors import get_cached_case_attachment, CaseAccessors
 from dimagi.utils.parsing import json_format_datetime
 from casexml.apps.case.xml import V2
 from casexml.apps.phone.caselogic import get_related_cases
@@ -102,6 +103,7 @@ def get_case_by_identifier(domain, identifier):
     # circular import
     from corehq.apps.api.es import CaseES
     case_es = CaseES(domain)
+    case_accessors = CaseAccessors(domain)
 
     def _query_by_type(i_type):
         q = case_es.base_query(
@@ -114,7 +116,7 @@ def get_case_by_identifier(domain, identifier):
         response = case_es.run_query(q)
         raw_docs = response['hits']['hits']
         if raw_docs:
-            return CommCareCase.get(raw_docs[0]['_id'])
+            return case_accessors.get_case(raw_docs[0]['_id'])
 
     # Try by any of the allowed identifiers
     for identifier_type in ALLOWED_CASE_IDENTIFIER_TYPES:
@@ -124,10 +126,10 @@ def get_case_by_identifier(domain, identifier):
 
     # Try by case id
     try:
-        case_by_id = CommCareCase.get(identifier)
+        case_by_id = case_accessors.get_case(identifier)
         if case_by_id.domain == domain:
             return case_by_id
-    except (ResourceNotFound, KeyError):
+    except (CaseNotFound, KeyError):
         pass
 
     return None
