@@ -135,7 +135,7 @@ class BulkArchiveFormsUnit(TestCase):
         uploaded_file = WorkbookJSONReader(join(BASE_PATH, BASIC_XLSX))
 
         with drop_connected_signals(xform_archived):
-            response = archive_forms_old(DOMAIN_NAME, self.username, list(uploaded_file.get_worksheet()))
+            response = archive_forms_old(DOMAIN_NAME, 'user1', self.username, list(uploaded_file.get_worksheet()))
             print response
 
         # Need to re-get instance from DB to get updated attributes
@@ -149,7 +149,7 @@ class BulkArchiveFormsUnit(TestCase):
         uploaded_file = WorkbookJSONReader(join(BASE_PATH, MISSING_XLSX))
 
         with drop_connected_signals(xform_archived):
-            response = archive_forms_old(DOMAIN_NAME, self.username, list(uploaded_file.get_worksheet()))
+            response = archive_forms_old(DOMAIN_NAME, 'user1', self.username, list(uploaded_file.get_worksheet()))
 
         for key, _id in self.XFORMS.iteritems():
             self.assertTrue(FormAccessors(DOMAIN_NAME).get_form(_id).is_archived)
@@ -162,6 +162,6 @@ class BulkArchiveFormsUnit(TestCase):
     def test_archive_forms_wrong_domain(self):
         uploaded_file = WorkbookJSONReader(join(BASE_PATH, BASIC_XLSX))
 
-        response = archive_forms_old('wrong_domain', self.username, list(uploaded_file.get_worksheet()))
+        response = archive_forms_old('wrong_domain', 'user1', self.username, list(uploaded_file.get_worksheet()))
 
         self.assertEqual(len(response['errors']), len(self.xforms), "Error when wrong domain")
