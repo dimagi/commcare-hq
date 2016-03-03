@@ -1,7 +1,7 @@
 from couchdbkit import ResourceNotFound
 from tastypie import fields as tp_f
 from tastypie.resources import Resource
-from corehq.apps.api.resources import HqBaseResource
+from corehq.apps.api.resources import HqBaseResource, CouchResourceMixin
 from corehq.apps.api.resources.v0_1 import (
     CustomResourceMeta,
     RequirePermissionAuthentication,
@@ -20,7 +20,7 @@ def convert_fdt(fdi):
         return fdi
 
 
-class FixtureResource(HqBaseResource):
+class FixtureResource(CouchResourceMixin, HqBaseResource):
     type = "fixture"
     fields = tp_f.DictField(attribute='try_fields_without_attributes',
                             readonly=True, unique=True)
