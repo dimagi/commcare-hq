@@ -1,5 +1,6 @@
-var maps = (function() {
-    var fn = {};
+/*globals hqDefine */
+hqDefine('reports_core/js/maps.js', function () {
+    var module = {};
 
     var getTileLayer = function (layerId, accessToken) {
         return L.tileLayer('https://api.mapbox.com/v4/{id}/{z}/{x}/{y}.png?access_token={accessToken}', {
@@ -9,40 +10,40 @@ var maps = (function() {
         });
     };
 
-    fn.init_map = function (config, mapContainer) {
-        if (!fn.hasOwnProperty('map')) {
+    module.init_map = function (config, mapContainer) {
+        if (!module.hasOwnProperty('map')) {
             mapContainer.show();
             mapContainer.empty();
             var streets = getTileLayer('mapbox.streets', config.mapboxAccessToken),
                 satellite = getTileLayer('mapbox.satellite', config.mapboxAccessToken);
 
-            fn.map = L.map(mapContainer[0], {
+            module.map = L.map(mapContainer[0], {
                 trackResize: false,
                 layers: [streets]
             }).setView([0, 0], 3);
 
-            L.control.scale().addTo(fn.map);
+            L.control.scale().addTo(module.map);
 
             var baseMaps = {};
             baseMaps[gettext("Streets")] = streets;
             baseMaps[gettext("Satellite")] = satellite;
 
-            fn.layerControl = L.control.layers(baseMaps);
-            fn.layerControl.addTo(fn.map);
+            module.layerControl = L.control.layers(baseMaps);
+            module.layerControl.addTo(module.map);
 
-            new ZoomToFitControl().addTo(fn.map);
+            new ZoomToFitControl().addTo(module.map);
             $('#zoomtofit').css('display', 'block');
         } else {
-            if (fn.map.activeOverlay) {
-                fn.map.removeLayer(fn.map.activeOverlay);
-                fn.layerControl.removeLayer(fn.map.activeOverlay);
-                fn.map.activeOverlay = null;
+            if (module.map.activeOverlay) {
+                module.map.removeLayer(module.map.activeOverlay);
+                module.layerControl.removeLayer(module.map.activeOverlay);
+                module.map.activeOverlay = null;
             }
         }
     };
 
-    fn.initPopupTempate = function (config) {
-        if (!fn.template) {
+    module.initPopupTempate = function (config) {
+        if (!module.template) {
             var rows = _.map(config.columns, function (col) {
                 var tr = _.template("<tr><td><%= label %></td>")(col);
                 tr += "<td><%= " + col.column_id + "%></td></tr>";
@@ -50,30 +51,30 @@ var maps = (function() {
             });
             var table = '<table class="table table-bordered"><%= rows %></table>';
             var template = _.template(table)({rows: rows.join('')});
-            fn.template = _.template(template);
+            module.template = _.template(template);
         }
     };
 
-    fn.render = function (config, data, mapContainer) {
-        fn.init_map(config, mapContainer);
-        fn.initPopupTempate(config);
+    module.render = function (config, data, mapContainer) {
+        module.init_map(config, mapContainer);
+        module.initPopupTempate(config);
 
         var bad_re = /[a-zA-Z()]+/;
         var points = _.compact(_.map(data, function (row) {
             var val = row[config.location_column_id];
             if (val !== null && !bad_re.test(val)) {
                 var latlon = val.split(" ").slice(0, 2);
-                return L.marker(latlon).bindPopup(fn.template(row));
+                return L.marker(latlon).bindPopup(module.template(row));
             }
         }));
         if (points.length > 0) {
             var overlay = L.featureGroup(points);
-            fn.layerControl.addOverlay(overlay, config.layer_name);
-            overlay.addTo(fn.map);
-            fn.map.activeOverlay = overlay;
-            zoomToAll(fn.map);
+            module.layerControl.addOverlay(overlay, config.layer_name);
+            overlay.addTo(module.map);
+            module.map.activeOverlay = overlay;
+            zoomToAll(module.map);
         }
     };
 
-    return fn;
-})();
+    return module;
+});
