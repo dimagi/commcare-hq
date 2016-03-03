@@ -40,15 +40,15 @@ def add_cases_to_case_group(domain, case_group_id, uploaded_data):
     return response
 
 
-def archive_forms_old(domain, user, uploaded_data):
+def archive_forms_old(domain, username, uploaded_data):
     # used by excel archive forms
     form_ids = [row.get('form_id') for row in uploaded_data]
     from .interfaces import FormManagementMode
     mode = FormManagementMode(FormManagementMode.ARCHIVE_MODE)
-    return archive_or_restore_forms(domain, user, form_ids, mode, from_excel=True)
+    return archive_or_restore_forms(domain, username, form_ids, mode, from_excel=True)
 
 
-def archive_or_restore_forms(domain, user, form_ids, archive_or_restore, task=None, from_excel=False):
+def archive_or_restore_forms(domain, username, form_ids, archive_or_restore, task=None, from_excel=False):
     response = {
         'errors': [],
         'success': [],
@@ -72,14 +72,14 @@ def archive_or_restore_forms(domain, user, form_ids, archive_or_restore, task=No
         xform_string = _(u"XFORM {form_id} for domain {domain} by user '{username}'").format(
             form_id=xform['_id'],
             domain=xform['domain'],
-            username=user.username)
+            username=username)
 
         try:
             if archive_or_restore.is_archive_mode():
-                xform.archive(user_id=user.username)
+                xform.archive(user_id=username)
                 message = _(u"Successfully archived {form}").format(form=xform_string)
             else:
-                xform.unarchive(user_id=user.username)
+                xform.unarchive(user_id=username)
                 message = _(u"Successfully unarchived {form}").format(form=xform_string)
             response['success'].append(message)
             success_count = success_count + 1
