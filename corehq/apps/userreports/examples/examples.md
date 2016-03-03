@@ -450,7 +450,7 @@ Note that the test must also change in this scenario.
 {
     "type": "evaluator",
     "equation_statement": "30.4 * age_in_years",
-    "variables_expression": {
+    "context_variables": {
         "type": "dict",
         "properties": {
             "age_in_years": 5,
@@ -467,7 +467,7 @@ In the above example, `age_in_years` can be replaces with another expression to 
 {
     "type": "evaluator",
     "equation_statement": "30.4 * age_in_years",
-    "variables_expression": {
+    "context_variables": {
         "type": "dict",
         "properties": {
             "age_in_years": {
@@ -486,7 +486,7 @@ This will lookup the property `age` and substituite its value in the `equation_s
 {
     "type": "evaluator",
     "equation_statement": "weight_2 - weight_1",
-    "variables_expression": {
+    "context_variables": {
         "type": "dict",
         "properties": {
             "weight_1": {

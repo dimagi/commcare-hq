@@ -154,7 +154,7 @@ def _diff_days_expression(spec, context):
 def _evaluator_expression(spec, context):
     wrapped = EvalExpressionSpec.wrap(spec)
     wrapped.configure(
-        variables_expression=ExpressionFactory.from_spec(wrapped.variables_expression)
+        context_variables=ExpressionFactory.from_spec(wrapped.context_variables)
     )
     return wrapped
 

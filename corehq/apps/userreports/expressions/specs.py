@@ -245,17 +245,17 @@ class DictExpressionSpec(JsonObject):
 class EvalExpressionSpec(JsonObject):
     type = TypeProperty('evaluator')
     equation_statement = StringProperty(required=True)
-    variables_expression = DictProperty(required=True)
+    context_variables = DictProperty(required=True)
 
-    def configure(self, variables_expression):
-        self._variables_expression = variables_expression
+    def configure(self, context_variables):
+        self._context_variables = context_variables
 
     def __call__(self, item, context=None):
         var_dict = self.get_variables(item, context)
         return eval_statements(self.equation_statement, var_dict)
 
     def get_variables(self, item, context):
-        var_dict = self._variables_expression(item, context)
+        var_dict = self._context_variables(item, context)
         var_types = set(type(value) for value in var_dict.values())
         if not var_types.issubset(set([int, float, long])):
             raise BadSpecError

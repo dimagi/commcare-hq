@@ -721,7 +721,7 @@ class TestEvalExpression(SimpleTestCase):
         return ExpressionFactory.from_spec({
             "type": "evaluator",
             "equation_statement": statement,
-            "variables_expression": {
+            "context_variables": {
                 "type": "dict",
                 "properties": context_variables
             }
@@ -754,7 +754,7 @@ class TestEvalExpression(SimpleTestCase):
                     "age": {
                         "type": "evaluator",
                         "equation_statement": "a",
-                        "variables_expression": {
+                        "context_variables": {
                             "type": "dict",
                             "properties": {
                                 "a": 2
