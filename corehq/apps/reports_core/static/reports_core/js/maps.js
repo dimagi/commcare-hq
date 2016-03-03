@@ -1,20 +1,33 @@
 var maps = (function() {
     var fn = {};
 
+    var getTileLayer = function (layerId, accessToken) {
+        return L.tileLayer('https://api.mapbox.com/v4/{id}/{z}/{x}/{y}.png?access_token={accessToken}', {
+            id: layerId,
+            accessToken: accessToken,
+            maxZoom: 17
+        });
+    };
+
     fn.init_map = function (config, mapContainer) {
         if (!fn.hasOwnProperty('map')) {
             mapContainer.show();
             mapContainer.empty();
-            fn.map = L.map(mapContainer[0], {trackResize: false}).setView([0, 0], 3);
-            var mapId = 'mapbox.streets';
-            L.tileLayer('https://api.tiles.mapbox.com/v4/{id}/{z}/{x}/{y}.png?access_token={accessToken}', {
-                maxZoom: 18,
-                id: mapId,
-                accessToken: config.mapboxAccessToken
-            }).addTo(fn.map);
+            var streets = getTileLayer('mapbox.streets', config.mapboxAccessToken),
+                satellite = getTileLayer('mapbox.satellite', config.mapboxAccessToken);
+
+            fn.map = L.map(mapContainer[0], {
+                trackResize: false,
+                layers: [streets]
+            }).setView([0, 0], 3);
+
             L.control.scale().addTo(fn.map);
 
-            fn.layerControl = L.control.layers();
+            var baseMaps = {};
+            baseMaps[gettext("Streets")] = streets;
+            baseMaps[gettext("Satellite")] = satellite;
+
+            fn.layerControl = L.control.layers(baseMaps);
             fn.layerControl.addTo(fn.map);
 
             new ZoomToFitControl().addTo(fn.map);
