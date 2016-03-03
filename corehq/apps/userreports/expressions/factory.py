@@ -154,7 +154,6 @@ def _diff_days_expression(spec, context):
 def _math_expression(spec, context):
     wrapped = MathExpressionSpec.wrap(spec)
     wrapped.configure(
-        equation_expression=ExpressionFactory.from_spec(wrapped.equation_expression),
         variables_expression=ExpressionFactory.from_spec(wrapped.variables_expression)
     )
     return wrapped

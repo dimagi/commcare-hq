@@ -10,6 +10,7 @@ from corehq.apps.userreports.expressions.specs import (
     PropertyNameGetterSpec,
     PropertyPathGetterSpec,
 )
+from corehq.apps.userreports.expressions.specs import eval_math_equation
 from corehq.apps.userreports.specs import EvaluationContext
 from corehq.util.test_utils import generate_cases
 
@@ -716,19 +717,93 @@ def test_add_days_to_date_expression(self, source_doc, count_expression, expecte
 
 
 class TestMathExpression(SimpleTestCase):
-    def test_math(self):
-        expression = ExpressionFactory.from_spec({
+    def _get_expression_spec(self, statement, context_variables):
+        return ExpressionFactory.from_spec({
             "type": "math",
-            "equation_expression": "a + b",
+            "equation_expression": statement,
             "variables_expression": {
                 "type": "dict",
-                "properties": {
+                "properties": context_variables
+            }
+        })
+
+    def test_correct_values(self):
+        test_cases = [
+            # (source_doc, eq, context, expected_value)
+            ({}, "a + b", {"a": 2, "b": 3}, 2 + 3),
+            ({}, "a + (a*b)", {"a": 2, "b": 3}, 2 + (2 * 3)),
+            ({}, "a-b", {"a": 5, "b": 2}, 5 - 2),
+            ({}, "a*b", {"a": 5, "b": 2}, 5 * 2),
+            ({}, "a+b+c", {"a": 5, "b": 2, "c": 8}, 5 + 2 + 8),
+            # context can contain expressions
+            (
+                {"age": 1},
+                "a + b",
+                {
                     "a": {
                         "type": "property_name",
                         "property_name": "age"
                     },
-                    "b": 2
-                }
-            }
-        })
-        expression({"age": 23})
+                    "b": 5
+                },
+                1 + 5
+            ),
+            # context variable can itself be evaluation expression
+            (
+                {},
+                "age + b",
+                {
+                    "age": {
+                        "type": "math",
+                        "equation_expression": "a",
+                        "variables_expression": {
+                            "type": "dict",
+                            "properties": {
+                                "a": 2
+                            }
+                        }
+                    },
+                    "b": 5
+                },
+                5 + 2
+            )
+        ]
+        for (source_doc, eq, context, expected_value) in test_cases:
+            self.assertEqual(
+                self._get_expression_spec(eq, context)(source_doc),
+                expected_value
+            )
+
+    def test_bad_spec(self):
+        bad_spec = [
+            # (source_doc, eq, context)
+            ({}, "a + b", {"a": 2, "b": 'text'}),
+            ({}, "a + (a*b)", {"a": 2}),
+            ({}, 2 + 3, {"a": 2, "b": 3}),
+        ]
+
+        for (source_doc, eq, context) in bad_spec:
+            with self.assertRaises(BadSpecError):
+                self._get_expression_spec(eq, context)(source_doc)
+
+
+class TestEvaluator(SimpleTestCase):
+    def test_supported_operations(self):
+        supported = [
+            ("a*b", {"a": 2, "b": 23}, 2 * 23),
+            ("a*b if a > b else b -a", {"a": 2, "b": 23}, 23 - 2),
+        ]
+
+        for (eq, context, expected_value) in supported:
+            self.assertEqual(eval_math_equation(eq, context), expected_value)
+
+    def test_unsupported_operations(self):
+        unsupported = [
+            ("a**b", {"a": 2, "b": 23}),
+            ("lambda x: x*x", {"a": 2}),
+            ("int(10 in range(1,20))", {})
+        ]
+
+        for (eq, context) in unsupported:
+            with self.assertRaises(BadSpecError):
+                eval_math_equation(eq, context)

@@ -247,10 +247,17 @@ class MathExpressionSpec(JsonObject):
     equation_expression = StringProperty(required=True)
     variables_expression = DefaultProperty(required=True)
 
-    def configure(self, equation_expression, variables_expression):
-        self._equation_expression = equation_expression
+    def configure(self, variables_expression):
         self._variables_expression = variables_expression
 
     def __call__(self, item, context=None):
+        var_dict = self.get_variables(item, context)
+        return eval_math_equation(self.equation_expression, var_dict)
+
+    def get_variables(self, item, context):
         var_dict = self._variables_expression(item, context)
-        return eval_math_equation(self._equation_expression, var_dict)
+        var_types = set(type(value) for value in var_dict.values())
+        if not var_types.issubset(set([int, float, long])):
+            raise BadSpecError
+        else:
+            return var_dict
