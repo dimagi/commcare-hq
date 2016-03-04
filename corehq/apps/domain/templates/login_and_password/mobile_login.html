@@ -1,8 +1,9 @@
 {% extends "style/base_mobile.html" %}
+{% load hq_shared_tags %}
+{% load i18n %}
 {% block title %}Login to CommCareHQ{% endblock %}
-{% block content %}
-    {% load i18n %}
-    <div class="page-header">
+{% block header %}
+    <div class="page-header container-fluid">
         <h1>{% trans "Welcome back to " %}{% if hr_name %}{{ hr_name }}{% elif domain %}{{ domain }}{% else %}{{ SITE_NAME }}{% endif %}!</h1>
         <p class="lead">
             {% if next %}
@@ -18,6 +19,9 @@
         </p>
         {% endif %}
     </div>
+{% endblock %}
+{% block content %}
+    {% load i18n %}
     <form class="form-horizontal form-login" name="form" method="post" >
         {% csrf_token %}
         {% for global_error in form.non_field_errors %}
@@ -67,3 +71,4 @@
         });
     </script>
 {% endblock %}
+{% block mobile-logout %}{% endblock %}
