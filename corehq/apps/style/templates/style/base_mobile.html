@@ -53,22 +53,39 @@
     {% include "style/includes/bootstrap3/core_libraries.html" %}
     {% endcompress %}
 
-    <link rel="shortcut icon" href="{% new_static 'hqwebapp/img/favicon2.png' %}" />
-{% block head %}{% endblock %}
+    <link rel="shortcut icon" href="{% new_static 'style/img/favicon.png' %}" />
+    {% block head %}{% endblock %}
 </head>
 <body>
+{% block header %}
+<nav class="navbar navbar-default navbar-mobile navbar-hq-main-menu">
+    <div class="container-fluid">
+        <div class="navbar-header">
+            <div class="navbar-brand">
+                <img src="{% new_static 'hqstyle/img/commcare-logo-mobile.png' %}" alt="CommCare HQ Mobile" />
+            </div>
+            <div class="pull-right mobile-nav">
+                {% block mobile-nav %}
+                {% endblock %}
+            </div>
+        </div>
+    </div>
+</nav>
+{% endblock %}
 <div class="container-fluid">
+    {% block breadcrumbs %}{% endblock %}
     {% block content %}{% endblock %}
-    {% block mobile-footer %}
-    <footer>
-        <small>{% trans "CommCare HQ Mobile is Copyright" %} &copy; {% now "Y" %} <a href="http://www.dimagi.com/">Dimagi, Inc.</a></small>
-        {% block mobile-logout %}
-        <br>
-        <small><a href="{% url "logout" %}">{% trans "Logout" %}</a></small>
-        {% endblock %}
-    </footer>
-    {% endblock %}
 </div>
+<footer class="footer-mobile">
+    <div class="container-fluid">
+        {% block mobile-footer %}
+        <p>{% trans "CommCare HQ Mobile is Copyright" %} &copy; {% now "Y" %} <a href="http://www.dimagi.com/">Dimagi, Inc.</a></p>
+        {% block mobile-logout %}
+        <p><a href="{% url "logout" %}">{% trans "Logout" %}</a></p>
+        {% endblock %}
+        {% endblock %}
+    </div>
+</footer>
 {% block js %}{% endblock %}
 </body>
 </html>
