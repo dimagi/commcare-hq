@@ -628,6 +628,16 @@ class CaseAccessorSQL(AbstractCaseAccessor):
             results = fetchall_as_namedtuple(cursor)
             return sum([result.affected_count for result in results])
 
+    @staticmethod
+    def get_deleted_case_ids_by_owner(domain, owner_id):
+        with get_cursor(CommCareCaseSQL) as cursor:
+            cursor.execute(
+                'SELECT case_id FROM get_deleted_case_ids_by_owner(%s, %s)',
+                [domain, owner_id]
+            )
+            results = fetchall_as_namedtuple(cursor)
+            return [result.case_id for result in results]
+
 
 class LedgerAccessorSQL(object):
     @staticmethod

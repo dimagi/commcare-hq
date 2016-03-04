@@ -10,7 +10,7 @@ from corehq.apps.hqcase.dbaccessors import (
     get_open_case_ids,
     get_closed_case_ids,
     get_case_ids_in_domain_by_owner,
-    get_case_types_for_domain, get_cases_in_domain_by_external_id)
+    get_case_types_for_domain, get_cases_in_domain_by_external_id, get_deleted_case_ids_by_owner)
 from corehq.apps.hqcase.utils import get_case_by_domain_hq_user_id
 from corehq.couchapps.dbaccessors import forms_have_multimedia
 from corehq.dbaccessors.couchapps.cases_by_server_date.by_owner_server_modified_on import \
@@ -175,6 +175,10 @@ class CaseAccessorCouch(AbstractCaseAccessor):
     @staticmethod
     def soft_undelete_cases(domain, case_ids):
         return _soft_undelete(CommCareCase.get_db(), case_ids)
+
+    @staticmethod
+    def get_deleted_case_ids_by_owner(domain, owner_id):
+        return get_deleted_case_ids_by_owner(owner_id)
 
 
 def _get_attachment_content(doc_class, doc_id, attachment_id):

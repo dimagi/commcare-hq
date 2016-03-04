@@ -229,6 +229,10 @@ class AbstractCaseAccessor(six.with_metaclass(ABCMeta)):
     def soft_undelete_cases(domain, case_ids):
         raise NotImplementedError
 
+    @abstractmethod
+    def get_deleted_case_ids_by_owner(domain, owner_id):
+        raise NotImplementedError
+
 
 class CaseAccessors(object):
     """
@@ -307,6 +311,9 @@ class CaseAccessors(object):
     @quickcache(['self.domain'], timeout=30 * 60)
     def get_case_types(self):
         return self.db_accessor.get_case_types_for_domain(self.domain)
+
+    def get_deleted_case_ids_by_owner(self, owner_id):
+        self.db_accessor.get_deleted_case_ids_by_owner(self.domain, owner_id)
 
 
 def get_cached_case_attachment(domain, case_id, attachment_id, is_image=False):

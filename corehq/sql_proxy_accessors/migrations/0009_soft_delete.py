@@ -23,6 +23,7 @@ class Migration(migrations.Migration):
         migrator.get_migration('soft_delete_forms.sql'),
         migrator.get_migration('soft_undelete_forms.sql'),
         migrator.get_migration('get_form_ids_for_user.sql'),
+        migrator.get_migration('get_deleted_case_ids_by_owner.sql'),
         HqRunSQL(
             "DROP FUNCTION IF EXISTS update_form_state(TEXT, INTEGER)",
             "SELECT 1"

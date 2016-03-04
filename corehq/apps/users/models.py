@@ -1523,15 +1523,8 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
         else:
             return 0
 
-    def _get_deleted_cases(self):
-        case_ids = [r["id"] for r in CommCareCase.get_db().view(
-            'deleted_data/deleted_cases_by_user',
-            startkey=[self.user_id],
-            endkey=[self.user_id, {}],
-            reduce=False,
-        )]
-        for doc in iter_docs(CommCareCase.get_db(), case_ids):
-            yield CommCareCase.wrap(doc)
+    def _get_deleted_case_ids(self):
+        return CaseAccessors(self.domain).get_deleted_case_ids_by_owner(self.user_id)
 
     def _get_case_ids(self):
         return CaseAccessors(self.domain).get_case_ids_by_owners([self.user_id])
@@ -1573,18 +1566,14 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
         self.save()
 
     def unretire(self):
-        def chop_suffix(string, suffix=DELETED_SUFFIX):
-            if string.endswith(suffix):
-                return string[:-len(suffix)]
-            else:
-                return string
-        self.base_doc = chop_suffix(self.base_doc)
-        for form in self.get_forms(deleted=True):
-            form.doc_type = chop_suffix(form.doc_type)
-            form.save()
-        for case in self._get_deleted_cases():
-            case.doc_type = chop_suffix(case.doc_type)
-            case.save()
+        if self.base_doc.endswith(DELETED_SUFFIX):
+            self.base_doc = self.base_doc[:-len(DELETED_SUFFIX)]
+
+        deleted_form_ids = self._get_deleted_form_ids()
+        FormAccessors(self.domain).soft_undelete_forms(deleted_form_ids)
+
+        deleted_case_ids = self._get_deleted_case_ids()
+        CaseAccessors(self.domain).soft_undelete_cases(deleted_case_ids)
         self.save()
 
     def get_case_sharing_groups(self):
