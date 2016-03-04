@@ -242,3 +242,6 @@ $(function () {
     COMMCAREHQ.initBlock($("body"));
     $(window).bind('beforeunload', COMMCAREHQ.beforeUnloadCallback);
 });
+
+COMMCAREHQ.toggleEnabled = hqImport('hqwebapp/js/toggles.js').toggleEnabled;
+COMMCAREHQ.previewEnabled = hqImport('hqwebapp/js/toggles.js').previewEnabled;

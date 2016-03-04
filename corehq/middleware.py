@@ -1,3 +1,4 @@
+import functools
 import logging
 import os
 import datetime
@@ -138,10 +139,26 @@ class TimeoutMiddleware(object):
             request.session['last_request'] = json_format_datetime(now)
 
 
+def always_allow_browser_caching(fn):
+    @functools.wraps(fn)
+    def inner(*args, **kwargs):
+        response = fn(*args, **kwargs)
+        response._always_allow_browser_caching = True
+        return response
+    return inner
+
+
 class NoCacheMiddleware(object):
 
     def process_response(self, request, response):
-        response['Cache-Control'] = "no-cache, no-store, must-revalidate"
-        response['Expires'] = "-1"
-        response['Pragma'] = "no-cache"
+        if not self._explicitly_marked_safe(response):
+            response['Cache-Control'] = "no-cache, no-store, must-revalidate"
+            response['Expires'] = "-1"
+            response['Pragma'] = "no-cache"
+        else:
+            response['Cache-Control'] = "max-age=31536000"
         return response
+
+    @staticmethod
+    def _explicitly_marked_safe(response):
+        return getattr(response, '_always_allow_browser_caching', False)
