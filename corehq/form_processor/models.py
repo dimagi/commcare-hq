@@ -194,6 +194,9 @@ class XFormInstanceSQL(DisabledDbMixin, models.Model, RedisLockableMixIn, Attach
     state = models.PositiveSmallIntegerField(choices=STATES, default=NORMAL)
     initial_processing_complete = models.BooleanField(default=False)
 
+    deleted_on = models.DateTimeField(null=True)
+    deletion_id = models.CharField(max_length=255, null=True)
+
     @classmethod
     def get_obj_id(cls, obj):
         return obj.form_id
@@ -495,6 +498,8 @@ class CommCareCaseSQL(DisabledDbMixin, models.Model, RedisLockableMixIn,
     closed_by = models.CharField(max_length=255, null=True)
 
     deleted = models.BooleanField(default=False, null=False)
+    deleted_on = models.DateTimeField(null=True)
+    deletion_id = models.CharField(max_length=255, null=True)
 
     external_id = models.CharField(max_length=255)
     location_id = models.CharField(max_length=255, null=True)
