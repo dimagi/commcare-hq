@@ -5,6 +5,9 @@
 <html>
 <head>
     <title>{% block title %}CommCareHQ Mobile{% endblock %}</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta http-equiv="content-language" content="{{ LANGUAGE_CODE }}">
+    <meta charset="utf-8">
 
     {% if less_debug %}
         <link type="text/less"
@@ -45,6 +48,10 @@
     {% endif %}
     {% block stylesheets %}
     {% endblock %}
+
+    {% compress js %}
+    {% include "style/includes/bootstrap3/core_libraries.html" %}
+    {% endcompress %}
 
     <link rel="shortcut icon" href="{% new_static 'hqwebapp/img/favicon2.png' %}" />
 {% block head %}{% endblock %}
