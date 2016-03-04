@@ -92,6 +92,12 @@ class FormAccessors(object):
     def get_forms(self, form_ids):
         return self.db_accessor.get_forms(form_ids)
 
+    def iter_forms(self, form_ids):
+        for chunk in chunked(form_ids, 100):
+            chunk = list(filter(None, chunk))
+            for form in self.get_forms(chunk):
+                yield form
+
     def form_exists(self, form_id):
         return self.db_accessor.form_exists(form_id)
 

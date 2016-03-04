@@ -5,7 +5,7 @@ from corehq.apps.domain.models import Domain
 from corehq.apps.sms.api import (send_sms, send_sms_to_verified_number,
     send_sms_with_backend, send_sms_with_backend_name)
 from corehq.apps.sms.mixin import BadSMSConfigException
-from corehq.apps.sms.models import (SMS, SMSLog, CommConnectCase,
+from corehq.apps.sms.models import (SMS, QueuedSMS, CommConnectCase,
     SQLMobileBackendMapping, SQLMobileBackend, MobileBackendInvitation,
     PhoneLoadBalancingMixin, BackendMap)
 from corehq.apps.sms.tasks import handle_outgoing
@@ -1126,11 +1126,12 @@ class LoadBalancingAndRateLimitingTestCase(BaseSMSTest):
         self.domain_obj = Domain.get(self.domain_obj.get_id)
 
     def tearDown(self):
+        QueuedSMS.objects.all().delete()
         self.domain_obj.delete()
         super(LoadBalancingAndRateLimitingTestCase, self).tearDown()
 
     def create_outgoing_sms(self, backend):
-        sms = SMSLog(
+        sms = QueuedSMS(
             domain=self.domain,
             date=datetime.utcnow(),
             direction='O',

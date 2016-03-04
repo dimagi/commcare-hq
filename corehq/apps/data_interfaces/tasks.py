@@ -30,7 +30,7 @@ def bulk_upload_cases_to_group(download_id, domain, case_group_id, cases):
 @task(ignore_result=True)
 def bulk_archive_forms(domain, user, uploaded_data):
     # archive using Excel-data
-    response = archive_forms_old(domain, user, uploaded_data)
+    response = archive_forms_old(domain, user.user_id, user.username, uploaded_data)
 
     for msg in response['success']:
         logger.info("[Data interfaces] %s", msg)
@@ -74,7 +74,7 @@ def bulk_form_management_async(archive_or_restore, domain, couch_user, form_ids_
     if not xform_ids:
         return {'messages': {'errors': [_('No Forms are supplied')]}}
 
-    response = archive_or_restore_forms(domain, couch_user, xform_ids, mode, task)
+    response = archive_or_restore_forms(domain, couch_user.user_id, couch_user.username, xform_ids, mode, task)
     return response
 
 
