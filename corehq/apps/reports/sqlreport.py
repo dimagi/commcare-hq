@@ -1,16 +1,22 @@
 # coding=utf-8
+from collections import OrderedDict
+
 from django.template.defaultfilters import slugify
+
+from dimagi.utils.decorators.memoized import memoized
+import sqlagg
 from sqlagg.columns import SimpleColumn
 from sqlagg.filters import RawFilter, SqlFilter
-import sqlagg
-from corehq.apps.reports.api import ReportDataSource
 
+from corehq.apps.reports.api import ReportDataSource
 from corehq.apps.reports.basic import GenericTabularReport
-from corehq.apps.reports.datatables import DataTablesHeader, \
-    DataTablesColumn, DTSortType
-from corehq.sql_db.connections import DEFAULT_ENGINE_ID, connection_manager
-from dimagi.utils.decorators.memoized import memoized
+from corehq.apps.reports.datatables import (
+    DataTablesColumn,
+    DataTablesHeader,
+    DTSortType,
+)
 from corehq.apps.reports.util import format_datatables_data
+from corehq.sql_db.connections import DEFAULT_ENGINE_ID, connection_manager
 
 
 class SqlReportException(Exception):
@@ -178,6 +184,13 @@ class SqlData(ReportDataSource):
         raise NotImplementedError()
 
     @property
+    def order_by(self):
+        """
+        Returns a list of OrderBy objects.
+        """
+        return []
+
+    @property
     def filters(self):
         """
         Returns a list of filter statements. Filters are instances of sqlagg.filters.SqlFilter.
@@ -231,7 +244,7 @@ class SqlData(ReportDataSource):
 
     @property
     def query_context(self):
-        return sqlagg.QueryContext(self.table_name, self.wrapped_filters, self.group_by)
+        return sqlagg.QueryContext(self.table_name, self.wrapped_filters, self.group_by, self.order_by)
 
     def get_data(self):
         data = self._get_data()
@@ -365,7 +378,7 @@ class DictDataFormat(BaseDataFormat):
         return dict([(c.slug, self._or_no_value(c.get_value(row))) for c in self.columns])
 
     def format_output(self, row_generator):
-        ret = dict()
+        ret = OrderedDict()
         for key, row in row_generator:
             if key is None:
                 return row
