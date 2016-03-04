@@ -449,12 +449,9 @@ Note that the test must also change in this scenario.
 ```json
 {
     "type": "evaluator",
-    "equation_statement": "30.4 * age_in_years",
+    "statement": "30.4 * age_in_years",
     "context_variables": {
-        "type": "dict",
-        "properties": {
-            "age_in_years": 5,
-        },
+        "age_in_years": 5,
     }
 }
 ```
@@ -466,38 +463,32 @@ In the above example, `age_in_years` can be replaces with another expression to 
 ```json
 {
     "type": "evaluator",
-    "equation_statement": "30.4 * age_in_years",
+    "statement": "30.4 * age_in_years",
     "context_variables": {
-        "type": "dict",
-        "properties": {
-            "age_in_years": {
-                "type": "property_name",
-                "property_name": "age"
-            },
-        },
+        "age_in_years": {
+            "type": "property_name",
+            "property_name": "age"
+        }
     }
 }
 ```
-This will lookup the property `age` and substituite its value in the `equation_statement`
+This will lookup the property `age` and substituite its value in the `statement`
 
 ### weight_gain example
 
 ```json
 {
     "type": "evaluator",
-    "equation_statement": "weight_2 - weight_1",
+    "statement": "weight_2 - weight_1",
     "context_variables": {
-        "type": "dict",
-        "properties": {
-            "weight_1": {
-                "type": "property_name",
-                "property_name": "weight_at_birth"
-            },
-            "weight_2": {
-                "type": "property_name",
-                "property_name": "weight_at_1_year"
-            },
+        "weight_1": {
+            "type": "property_name",
+            "property_name": "weight_at_birth"
         },
+        "weight_2": {
+            "type": "property_name",
+            "property_name": "weight_at_1_year"
+        }
     }
 }
 ```

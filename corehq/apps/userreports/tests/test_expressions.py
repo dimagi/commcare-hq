@@ -740,12 +740,9 @@ def test_add_days_to_date_expression(self, source_doc, count_expression, expecte
         {
             "age": {
                 "type": "evaluator",
-                "equation_statement": "a",
+                "statement": "a",
                 "context_variables": {
-                    "type": "dict",
-                    "properties": {
-                        "a": 2
-                    }
+                    "a": 2
                 }
             },
             "b": 5
@@ -756,11 +753,8 @@ def test_add_days_to_date_expression(self, source_doc, count_expression, expecte
 def test_valid_eval_expression(self, source_doc, statement, context, expected_value):
     expression = ExpressionFactory.from_spec({
         "type": "evaluator",
-        "equation_statement": statement,
-        "context_variables": {
-            "type": "dict",
-            "properties": context
-        }
+        "statement": statement,
+        "context_variables": context
     })
     self.assertEqual(expression(source_doc), expected_value)
 
@@ -779,7 +773,7 @@ def test_invalid_eval_expression(self, source_doc, statement, context):
     with self.assertRaises(BadSpecError):
         ExpressionFactory.from_spec({
             "type": "evaluator",
-            "equation_statement": statement,
+            "statement": statement,
             "context_variables": {
                 "type": "dict",
                 "properties": context
