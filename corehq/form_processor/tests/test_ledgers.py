@@ -130,7 +130,7 @@ class LedgerTests(TestCase):
             self.assertTrue(transactions[0].is_form_transaction)
             # ordering not guaranteed since they have the same date
             self.assertEqual(
-                {CaseTransaction.TYPE_FORM, CaseTransaction.TYPE_LEDGER},
+                {CaseTransaction.TYPE_FORM, CaseTransaction.TYPE_LEDGER | CaseTransaction.TYPE_FORM},
                 {t.type for t in transactions[1:]}
             )
 
