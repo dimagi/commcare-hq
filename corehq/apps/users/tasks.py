@@ -47,7 +47,7 @@ def bulk_upload_async(domain, user_specs, group_specs, location_specs):
 def tag_cases_as_deleted_and_remove_indices(domain, case_ids, deletion_id, deletion_date):
     from corehq.apps.sms.tasks import delete_phone_numbers_for_owners
     from corehq.apps.reminders.tasks import delete_reminders_for_cases
-    CaseAccessors(domain).soft_delete_cases(case_ids, deletion_date, deletion_id)
+    CaseAccessors(domain).soft_delete_cases(list(case_ids), deletion_date, deletion_id)
     _remove_indices_from_deleted_cases_task.delay(domain, case_ids)
     delete_phone_numbers_for_owners.delay(case_ids)
     delete_reminders_for_cases.delay(domain, case_ids)
@@ -64,13 +64,15 @@ def tag_forms_as_deleted_rebuild_associated_cases(user_id, domain, form_id_list,
     deleted_cases = deleted_cases or set()
     cases_to_rebuild = set()
 
-    FormAccessors(domain).soft_delete_forms(form_id_list, deletion_date, deletion_id)
     for form in FormAccessors(domain).iter_forms(form_id_list):
         if form.domain != domain:
             continue
 
         # rebuild all cases anyways since we don't know if this has run or not if the task was killed
         cases_to_rebuild.update(get_case_ids_from_form(form))
+
+    # do this after getting case_id's since iter_forms won't return deleted forms
+    FormAccessors(domain).soft_delete_forms(list(form_id_list), deletion_date, deletion_id)
 
     detail = UserArchivedRebuild(user_id=user_id)
     for case_id in cases_to_rebuild - deleted_cases:
@@ -95,7 +97,7 @@ def _remove_indices_from_deleted_cases_task(domain, case_ids):
 def remove_indices_from_deleted_cases(domain, case_ids):
     from corehq.apps.hqcase.utils import submit_case_blocks
     deleted_ids = set(case_ids)
-    indexes_referencing_deleted_cases = get_all_reverse_indices_info(domain, case_ids)
+    indexes_referencing_deleted_cases = CaseAccessors(domain).get_all_reverse_indices_info(case_ids)
     case_updates = [
         CaseBlock(
             case_id=index_info.case_id,
