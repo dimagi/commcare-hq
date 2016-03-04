@@ -1510,19 +1510,6 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
     def _get_deleted_form_ids(self):
         return FormAccessors(self.domain).get_deleted_form_ids_for_user(self.domain, self.user_id)
 
-    @property
-    def form_count(self):
-        key = ["submission user", self.domain, self.user_id]
-        result = XFormInstance.view('all_forms/view',
-            startkey=key,
-            endkey=key + [{}],
-            reduce=True
-        ).one()
-        if result:
-            return result['value']
-        else:
-            return 0
-
     def _get_deleted_case_ids(self):
         return CaseAccessors(self.domain).get_deleted_case_ids_by_owner(self.user_id)
 
