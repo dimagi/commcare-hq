@@ -9306,7 +9306,7 @@ msgstr "Plus d'Informations "
 #: corehq/apps/prelogin/templates/prelogin/_sections/software_services/pricing.html:78
 #: corehq/apps/prelogin/templates/prelogin/base.html:127
 msgid "Pricing"
-msgstr "Prix"
+msgstr "Tarifs"
 
 #: corehq/apps/domain/templates/domain/admin/global_sms_rates.html:42
 msgid ""
