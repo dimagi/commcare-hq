@@ -779,6 +779,8 @@ class TestEvalExpression(SimpleTestCase):
             ({}, "a + b", {"a": 2, "b": 'text'}),
             # missing context
             ({}, "a + (a*b)", {"a": 2}),
+            # context must be dict
+            ({}, "2 + 3", "text context"),
             # statement must be string
             ({}, 2 + 3, {"a": 2, "b": 3}),
         ]
