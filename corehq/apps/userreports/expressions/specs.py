@@ -255,7 +255,10 @@ class EvalExpressionSpec(JsonObject):
         return eval_statements(self.equation_statement, var_dict)
 
     def get_variables(self, item, context):
-        var_dict = self._context_variables(item, context)
+        var_dict = {
+            slug: variable_expression(item, context)
+            for slug, variable_expression in self._context_variables.items()
+        }
         var_types = set(type(value) for value in var_dict.values())
         if not var_types.issubset(set([int, float, long])):
             raise BadSpecError
