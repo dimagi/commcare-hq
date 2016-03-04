@@ -716,103 +716,96 @@ def test_add_days_to_date_expression(self, source_doc, count_expression, expecte
     self.assertEqual(expected_value, expression(source_doc))
 
 
-class TestEvalExpression(SimpleTestCase):
-    def _get_expression_spec(self, statement, context_variables):
-        return ExpressionFactory.from_spec({
+@generate_cases([
+    ({}, "a + b", {"a": 2, "b": 3}, 2 + 3),
+    # supports string manupulation
+    ({}, "str(a)+'text'", {"a": 3}, "3text"),
+    # context can contain expressions
+    (
+        {"age": 1},
+        "a + b",
+        {
+            "a": {
+                "type": "property_name",
+                "property_name": "age"
+            },
+            "b": 5
+        },
+        1 + 5
+    ),
+    # context variable can itself be evaluation expression
+    (
+        {},
+        "age + b",
+        {
+            "age": {
+                "type": "evaluator",
+                "equation_statement": "a",
+                "context_variables": {
+                    "type": "dict",
+                    "properties": {
+                        "a": 2
+                    }
+                }
+            },
+            "b": 5
+        },
+        5 + 2
+    )
+])
+def test_valid_eval_expression(self, source_doc, statement, context, expected_value):
+    expression = ExpressionFactory.from_spec({
+        "type": "evaluator",
+        "equation_statement": statement,
+        "context_variables": {
+            "type": "dict",
+            "properties": context
+        }
+    })
+    self.assertEqual(expression(source_doc), expected_value)
+
+
+@generate_cases([
+    # variables cant be strings
+    ({}, "a + b", {"a": 2, "b": 'text'}),
+    # missing context
+    ({}, "a + (a*b)", {"a": 2}),
+    # context must be dict
+    ({}, "2 + 3", "text context"),
+    # statement must be string
+    ({}, 2 + 3, {"a": 2, "b": 3})
+])
+def test_invalid_eval_expression(self, source_doc, statement, context):
+    with self.assertRaises(BadSpecError):
+        ExpressionFactory.from_spec({
             "type": "evaluator",
             "equation_statement": statement,
             "context_variables": {
                 "type": "dict",
-                "properties": context_variables
+                "properties": context
             }
-        })
-
-    def test_correct_values(self):
-        test_cases = [
-            # (source_doc, eq, context, expected_value)
-            ({}, "a + b", {"a": 2, "b": 3}, 2 + 3),
-            # supports string manupulation
-            ({}, "str(a)+'text'", {"a": 3}, "3text"),
-            # context can contain expressions
-            (
-                {"age": 1},
-                "a + b",
-                {
-                    "a": {
-                        "type": "property_name",
-                        "property_name": "age"
-                    },
-                    "b": 5
-                },
-                1 + 5
-            ),
-            # context variable can itself be evaluation expression
-            (
-                {},
-                "age + b",
-                {
-                    "age": {
-                        "type": "evaluator",
-                        "equation_statement": "a",
-                        "context_variables": {
-                            "type": "dict",
-                            "properties": {
-                                "a": 2
-                            }
-                        }
-                    },
-                    "b": 5
-                },
-                5 + 2
-            )
-        ]
-        for (source_doc, eq, context, expected_value) in test_cases:
-            self.assertEqual(
-                self._get_expression_spec(eq, context)(source_doc),
-                expected_value
-            )
-
-    def test_bad_spec(self):
-        bad_spec = [
-            # (source_doc, eq, context)
-            # variables cant be strings
-            ({}, "a + b", {"a": 2, "b": 'text'}),
-            # missing context
-            ({}, "a + (a*b)", {"a": 2}),
-            # context must be dict
-            ({}, "2 + 3", "text context"),
-            # statement must be string
-            ({}, 2 + 3, {"a": 2, "b": 3}),
-        ]
-
-        for (source_doc, eq, context) in bad_spec:
-            with self.assertRaises(BadSpecError):
-                self._get_expression_spec(eq, context)(source_doc)
+        })(source_doc)
 
 
-class TestEvaluator(SimpleTestCase):
-    def test_supported_operations(self):
-        supported = [
-            ("a + (a*b)", {"a": 2, "b": 3}, 2 + (2 * 3)),
-            ("a-b", {"a": 5, "b": 2}, 5 - 2),
-            ("a+b+c+9", {"a": 5, "b": 2, "c": 8}, 5 + 2 + 8 + 9),
-            ("a*b", {"a": 2, "b": 23}, 2 * 23),
-            ("a*b if a > b else b -a", {"a": 2, "b": 23}, 23 - 2),
-            ("'text1' if a < 5 else `text2`", {"a": 4}, 'text1')
-        ]
+@generate_cases([
+    ("a + (a*b)", {"a": 2, "b": 3}, 2 + (2 * 3)),
+    ("a-b", {"a": 5, "b": 2}, 5 - 2),
+    ("a+b+c+9", {"a": 5, "b": 2, "c": 8}, 5 + 2 + 8 + 9),
+    ("a*b", {"a": 2, "b": 23}, 2 * 23),
+    ("a*b if a > b else b -a", {"a": 2, "b": 23}, 23 - 2),
+    ("'text1' if a < 5 else `text2`", {"a": 4}, 'text1')
+])
+def test_supported_evluator_statements(self, eq, context, expected_value):
+    self.assertEqual(eval_statements(eq, context), expected_value)
 
-        for (eq, context, expected_value) in supported:
-            self.assertEqual(eval_statements(eq, context), expected_value)
 
-    def test_unsupported_operations(self):
-        unsupported = [
-            ("a**b", {"a": 2, "b": 23}),
-            ("lambda x: x*x", {"a": 2}),
-            ("int(10 in range(1,20))", {}),
-            ("max(a, b)", {"a": 3, "b": 5}),
-            ("23 'a'", {}),
-        ]
-
-        for (eq, context) in unsupported:
-            with self.assertRaises(BadSpecError):
-                eval_statements(eq, context)
+@generate_cases([
+    ("a**b", {"a": 2, "b": 23}),
+    ("lambda x: x*x", {"a": 2}),
+    ("int(10 in range(1,20))", {}),
+    ("max(a, b)", {"a": 3, "b": 5}),
+    ("23 'a'", {}),
+])
+def test_unsupported_evluator_statements(self, eq, context):
+    with self.assertRaises(BadSpecError):
+        eval_statements(eq, context)
