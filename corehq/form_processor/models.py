@@ -869,9 +869,16 @@ class CaseTransaction(DisabledDbMixin, models.Model):
     revoked = models.BooleanField(default=False, null=False)
     details = JSONField(lazy=True, default=dict)
 
+    @staticmethod
+    def _should_process(transaction_type):
+        return any(map(
+            lambda type_: transaction_type & type_ == type_,
+            CaseTransaction.TYPES_TO_PROCESS,
+        ))
+
     @property
     def is_relevant(self):
-        relevant = not self.revoked and self.type in CaseTransaction.TYPES_TO_PROCESS
+        relevant = not self.revoked and CaseTransaction._should_process(self.type)
         if relevant and self.form:
             relevant = self.form.is_normal
 
