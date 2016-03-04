@@ -363,27 +363,25 @@ The from_date_expression and to_date_expression can be any valid expressions, or
 ```
 
 #### "Evaluator" expression
-`evaluator` expression can be used to evaluate statements that contain arithmetic (and simple python like statements). It evaluates the statement specified by `equation_statement` which can contain variables as defined in `context_variables`.
+`evaluator` expression can be used to evaluate statements that contain arithmetic (and simple python like statements). It evaluates the statement specified by `statement` which can contain variables as defined in `context_variables`.
 
 ```json
 {
     "type": "evaluator",
-    "equation_statement": "a + b - c + 6",
+    "statement": "a + b - c + 6",
     "context_variables": {
-        "type": "dict",
-        "properties": {
-            "a": 1,
-            "b": 20,
-            "c": 2
-        },
+        "a": 1,
+        "b": 20,
+        "c": 2
     }
 }
 ```
 This returns 25 (1 + 20 - 2 + 6).
 
-`equation_statement` can be any statement that returns a valid number. All python math [operators](https://en.wikibooks.org/wiki/Python_Programming/Basic_Math#Mathematical_Operators) except power opertor are available for use.
+`statement` can be any statement that returns a valid number. All python math [operators](https://en.wikibooks.org/wiki/Python_Programming/Basic_Math#Mathematical_Operators) except power opertor are available for use.
 
-`context_variables` is a [Dict Expression](corehq/apps/userreports/README.md#dict-expressions) where keys are names of variables used in the `equation_statement` and values are values of those variables. Variables can be any valid numbers (Python datatypes `int`, `float`, and `long` are considered valid numbers.) or also expressions that return numbers.
+`context_variables` is a dictionary of Expressions where keys are names of variables used in the `statement` and values are expressions to generate those variables.
+Variables can be any valid numbers (Python datatypes `int`, `float`, and `long` are considered valid numbers.) or also expressions that return numbers.
 
 More examples can be found on practical [examples page](corehq/apps/userreports/examples/examples.md#evaluator-examples).
 
