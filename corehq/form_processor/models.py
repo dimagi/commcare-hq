@@ -945,7 +945,11 @@ class CaseTransaction(DisabledDbMixin, models.Model):
 
     @classmethod
     def ledger_transaction(cls, case, xform):
-        return cls._from_form(case, xform, transaction_type=CaseTransaction.TYPE_LEDGER)
+        return cls._from_form(
+            case,
+            xform,
+            transaction_type=CaseTransaction.TYPE_LEDGER | CaseTransaction.TYPE_FORM
+        )
 
     @classmethod
     def _from_form(cls, case, xform, transaction_type):
