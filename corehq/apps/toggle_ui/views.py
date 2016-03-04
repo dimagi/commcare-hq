@@ -167,7 +167,7 @@ class ToggleEditView(ToggleBaseView):
                 toggle_js_domain_cachebuster.clear(domain)
             else:
                 # these are sent down with no namespace
-                assert ':' not in entry
+                assert ':' not in entry, entry
                 username = entry
                 toggle_js_user_cachebuster.clear(username)
 
