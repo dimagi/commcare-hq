@@ -11,7 +11,7 @@ from django.template.loader import render_to_string
 
 def _get_offsets(context):
     label_class = context.get('label_class', '')
-    return re.sub(r'(sm|md|lg)-', '\g<1>-offset-', label_class)
+    return re.sub(r'(xs|sm|md|lg)-', '\g<1>-offset-', label_class)
 
 
 class FormActions(OriginalFormActions):
