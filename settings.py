@@ -1567,6 +1567,7 @@ DOMAIN_MODULE_MAP = {
     'pathways-india-mis': 'custom.care_pathways',
     'pathways-tanzania': 'custom.care_pathways',
     'care-macf-malawi': 'custom.care_pathways',
+    'care-macf-bangladesh': 'custom.care_pathways',
     'kemri': 'custom.openclinica',
     'novartis': 'custom.openclinica',
 }
