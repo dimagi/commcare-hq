@@ -410,10 +410,7 @@ class CaseAccessorSQL(AbstractCaseAccessor):
 
     @staticmethod
     def get_transactions_for_case_rebuild(case_id):
-        return list(CaseTransaction.objects.raw(
-            'SELECT * from get_case_transactions_for_rebuild(%s)',
-            [case_id])
-        )
+        return CaseAccessorSQL.get_transactions_by_type(case_id, CaseTransaction.TYPE_FORM)
 
     @staticmethod
     def case_has_transactions_since_sync(case_id, sync_log_id, sync_log_date):
