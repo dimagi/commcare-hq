@@ -141,14 +141,6 @@ class FormAccessorSQL(AbstractFormAccessor):
         FormAccessorSQL._archive_unarchive_form(form, user_id, False)
 
     @staticmethod
-    def update_state(form_id, state):
-        with get_cursor(XFormInstanceSQL) as cursor:
-            cursor.execute(
-                'SELECT update_form_state(%s, %s)',
-                [form_id, state]
-            )
-
-    @staticmethod
     def soft_delete_forms(domain, form_ids, deletion_date=None, deletion_id=None):
         assert isinstance(form_ids, list)
         deletion_date = deletion_date or datetime.utcnow()

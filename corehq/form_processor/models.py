@@ -267,7 +267,7 @@ class XFormInstanceSQL(DisabledDbMixin, models.Model, RedisLockableMixIn, Attach
 
     def soft_delete(self):
         from corehq.form_processor.backends.sql.dbaccessors import FormAccessorSQL
-        return FormAccessorSQL.update_state(self.form_id, XFormInstanceSQL.DELETED)
+        return FormAccessorSQL.soft_delete_forms(self.domain, [self.form_id])
 
     def to_json(self):
         from .serializers import XFormInstanceSQLSerializer
@@ -530,8 +530,7 @@ class CommCareCaseSQL(DisabledDbMixin, models.Model, RedisLockableMixIn,
 
     def soft_delete(self):
         from corehq.form_processor.backends.sql.dbaccessors import CaseAccessorSQL
-        self.deleted = True
-        CaseAccessorSQL.save_case(self)
+        CaseAccessorSQL.soft_delete_cases(self.domain, [self.case_id])
 
     @property
     def is_deleted(self):

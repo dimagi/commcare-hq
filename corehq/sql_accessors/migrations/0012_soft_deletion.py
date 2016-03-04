@@ -4,7 +4,7 @@ from __future__ import unicode_literals
 from django.db import migrations
 
 from corehq.form_processor.models import XFormInstanceSQL
-from corehq.sql_db.operations import RawSQLMigration
+from corehq.sql_db.operations import RawSQLMigration, HqRunSQL
 
 migrator = RawSQLMigration(('corehq', 'sql_accessors', 'sql_templates'), {
     'FORM_STATE_DELETED': XFormInstanceSQL.DELETED
@@ -22,4 +22,8 @@ class Migration(migrations.Migration):
         migrator.get_migration('soft_undelete_cases.sql'),
         migrator.get_migration('soft_delete_forms.sql'),
         migrator.get_migration('soft_undelete_forms.sql'),
+        HqRunSQL(
+            "DROP FUNCTION IF EXISTS update_form_state(TEXT, INTEGER)",
+            "SELECT 1"
+        )
     ]

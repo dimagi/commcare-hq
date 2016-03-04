@@ -1541,10 +1541,8 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
         for doc in iter_docs(CommCareCase.get_db(), case_ids):
             yield CommCareCase.wrap(doc)
 
-    def _get_case_docs(self):
-        case_ids = get_case_ids_in_domain_by_owner(
-            self.domain, owner_id=self.user_id)
-        return iter_docs(CommCareCase.get_db(), case_ids)
+    def _get_case_ids(self):
+        return CaseAccessors(self.domain).get_case_ids_by_owners([self.user_id])
 
     def get_owner_ids(self):
         owner_ids = [self.user_id]
@@ -1554,7 +1552,7 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
     def retire(self):
         suffix = DELETED_SUFFIX
         deletion_id = random_hex()
-        deletion_date = json_format_datetime(datetime.utcnow())
+        deletion_date = datetime.utcnow()
         deleted_cases = set()
         # doc_type remains the same, since the views use base_doc instead
         if not self.base_doc.endswith(suffix):
@@ -1562,10 +1560,9 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
             self['-deletion_id'] = deletion_id
             self['-deletion_date'] = deletion_date
 
-        for caselist in chunked(self._get_case_docs(), 50):
-            tag_cases_as_deleted_and_remove_indices.delay(self.domain, caselist, deletion_id, deletion_date)
-            for case in caselist:
-                deleted_cases.add(case['_id'])
+        for case_id_list in chunked(self._get_case_ids(), 50):
+            tag_cases_as_deleted_and_remove_indices.delay(self.domain, case_id_list, deletion_id, deletion_date)
+            deleted_cases.add(case_id_list)
 
         for form_id_list in chunked(self.get_forms(wrap=False), 50):
             tag_forms_as_deleted_rebuild_associated_cases.delay(
