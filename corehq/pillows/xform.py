@@ -31,7 +31,7 @@ XFORM_ES_TYPE = 'xform'
 SYSTEM_USER_TYPE = "system"
 ADMIN_USER_TYPE = "admin"
 DEMO_USER_TYPE = "demo"
-COMMTRACK_USER_TYPE = "commtrack"
+COMMCARE_SUPPLY_USER_TYPE = "supply"
 WEB_USER_TYPE = "web"
 MOBILE_USER_TYPE = "mobile"
 UNKNOWN_USER_TYPE = "unknown"
@@ -181,18 +181,22 @@ def get_sql_form_reindexer():
     return PillowReindexer(get_sql_xform_to_elasticsearch_pillow(), SqlFormChangeProvider())
 
 
+ONE_DAY = 60 * 60 * 24
+
+
+@quickcache(['user_id', 'username'], timeout=ONE_DAY)
 def _get_user_type(user_id, username):
     if user_id == SYSTEM_USER_ID:
         return SYSTEM_USER_TYPE
     elif user_id == DEMO_USER_ID:
         return DEMO_USER_TYPE
     elif user_id == COMMTRACK_USERNAME:
-        return COMMTRACK_USER_TYPE
+        return COMMCARE_SUPPLY_USER_TYPE
     elif username == HQUserType.human_readable[HQUserType.ADMIN]:
         return ADMIN_USER_TYPE
     else:
         try:
-            user = _get_user(user_id)
+            user = CouchUser.get(user_id)
             if user.is_web_user():
                 return WEB_USER_TYPE
             elif user.is_commcare_user():
@@ -200,8 +204,3 @@ def _get_user_type(user_id, username):
         except:
             pass
     return UNKNOWN_USER_TYPE
-
-
-@quickcache(['user_id'], timeout=1 * 60)
-def _get_user(user_id):
-    return CouchUser.get(user_id)
