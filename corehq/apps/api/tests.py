@@ -10,6 +10,8 @@ from django_prbac.models import Role
 from tastypie.models import ApiKey
 from tastypie.resources import Resource
 from tastypie import fields
+
+from corehq.apps.api.util import get_obj
 from corehq.apps.groups.models import Group
 from corehq.pillows.reportxform import ReportXFormPillow
 
@@ -835,6 +837,11 @@ class ToManySourceResource(Resource):
     def obj_get_list(self):
         return self.objs
 
+    def detail_uri_kwargs(self, bundle_or_obj):
+        return {
+            'pk': get_obj(bundle_or_obj).other_model_ids
+        }
+
     class Meta:
         model_class = ToManySourceModel
 
@@ -843,6 +850,11 @@ class ToManyDestResource(Resource):
 
     class Meta:
         model_class = ToManyDestModel
+
+    def detail_uri_kwargs(self, bundle_or_obj):
+        return {
+            'pk': get_obj(bundle_or_obj).id
+        }
 
 class TestToManyDocumentsField(TestCase):
     '''
@@ -899,11 +911,21 @@ class ToManyDictSourceResource(Resource):
     def obj_get_list(self):
         return self.objs
 
+    def detail_uri_kwargs(self, bundle_or_obj):
+        return {
+            'pk': get_obj(bundle_or_obj).other_model_ids
+        }
+
     class Meta:
         model_class = ToManyDictSourceModel
 
 class ToManyDictDestResource(Resource):
     id = fields.CharField(attribute='id')
+
+    def detail_uri_kwargs(self, bundle_or_obj):
+        return {
+            'pk': get_obj(bundle_or_obj).id
+        }
 
     class Meta:
         model_class = ToManyDictDestModel
@@ -966,11 +988,21 @@ class ToOneSourceResource(Resource):
     def obj_get_list(self):
         return self.objs
 
+    def detail_uri_kwargs(self, bundle_or_obj):
+        return {
+            'pk': get_obj(bundle_or_obj).other_model_id
+        }
+
     class Meta:
         model_class = ToOneSourceModel
 
 class ToOneDestResource(Resource):
     id = fields.CharField(attribute='id')
+
+    def detail_uri_kwargs(self, bundle_or_obj):
+        return {
+            'pk': get_obj(bundle_or_obj).id
+        }
 
     class Meta:
         model_class = ToOneDestModel
@@ -1018,6 +1050,11 @@ class UseIfRequestedTestResource(Resource):
 
     def obj_get_list(self):
         return self.objs
+
+    def detail_uri_kwargs(self, bundle_or_obj):
+        return {
+            'pk': get_obj(bundle_or_obj).id
+        }
 
     class Meta:
         model_class = UseIfRequestedModel
