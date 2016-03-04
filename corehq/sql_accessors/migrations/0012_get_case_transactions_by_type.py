@@ -16,4 +16,5 @@ class Migration(migrations.Migration):
 
     operations = [
         migrator.get_migration('get_case_transactions_by_type.sql'),
+        migrator.get_migration('get_case_transactions_for_rebuild.sql'),  # Drops function
     ]
