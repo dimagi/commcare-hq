@@ -39,6 +39,8 @@ class TestDjangoCompressOffline(SimpleTestCase):
             self.assertNotRegexpMatches(tag[0], line.strip(), tag[1])
         if 'src' not in line and 'href' not in line:
             return
+        if not 'static' in line:
+            return
         self.assertIn(
             'new_static', line, msg='new_static not found in %s in file %s' % (safe_repr(line), filename)
         )
