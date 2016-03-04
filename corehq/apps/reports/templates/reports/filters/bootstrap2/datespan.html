@@ -24,7 +24,6 @@
 {% endblock %}
 {% block filter_js %}
 {% ifequal slug 'datespan'  %}
-    <link rel="stylesheet" type="text/css" href="{% static "reports/css/daterangepicker-bs2.css" %}">
     <script type="text/javascript">
         $(function () {
             var separator = '{{ separator }}';
