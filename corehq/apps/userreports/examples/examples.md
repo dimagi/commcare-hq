@@ -451,10 +451,7 @@ Note that the test must also change in this scenario.
     "type": "evaluator",
     "statement": "30.4 * age_in_years",
     "context_variables": {
-        "type": "dict",
-        "properties": {
-            "age_in_years": 5,
-        },
+        "age_in_years": 5,
     }
 }
 ```
@@ -468,13 +465,10 @@ In the above example, `age_in_years` can be replaces with another expression to 
     "type": "evaluator",
     "statement": "30.4 * age_in_years",
     "context_variables": {
-        "type": "dict",
-        "properties": {
-            "age_in_years": {
-                "type": "property_name",
-                "property_name": "age"
-            },
-        },
+        "age_in_years": {
+            "type": "property_name",
+            "property_name": "age"
+        }
     }
 }
 ```
@@ -487,17 +481,14 @@ This will lookup the property `age` and substituite its value in the `statement`
     "type": "evaluator",
     "statement": "weight_2 - weight_1",
     "context_variables": {
-        "type": "dict",
-        "properties": {
-            "weight_1": {
-                "type": "property_name",
-                "property_name": "weight_at_birth"
-            },
-            "weight_2": {
-                "type": "property_name",
-                "property_name": "weight_at_1_year"
-            },
+        "weight_1": {
+            "type": "property_name",
+            "property_name": "weight_at_birth"
         },
+        "weight_2": {
+            "type": "property_name",
+            "property_name": "weight_at_1_year"
+        }
     }
 }
 ```
