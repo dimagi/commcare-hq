@@ -1,0 +1,89 @@
+{% load hq_shared_tags %}
+{% load i18n %}
+
+{% block js-inline %}
+    {% include 'hqmedia/partials/multimedia_init.html' %}
+    <script type="text/javascript">
+        var reference_controller = new MultimediaReferenceController(
+            {{ references|JSON }},
+            {{ object_map|JSON }}
+        );
+        reference_controller.render();
+        $("#multimedia-reference-checker").koApplyBindings(reference_controller);
+
+        $('.preview-media').tooltip();
+    </script>
+    {% url "download_multimedia_zip" domain app.get_id as media_url%}
+    {% include 'app_manager/partials/download_async_modal.html' with element_id='multimedia-zip-modal' %}
+    {% include 'app_manager/partials/download_async_modal_inline.html' with element_id='multimedia-zip-modal' download_url=media_url%}
+{% endblock %}
+
+<div id="multimedia-reference-checker">
+    <div class="clearfix">
+        <button class="pull-right btn btn-default" data-bind="click: toggleMissingRefs, text: toggleRefsText"></button>
+        <p>{% trans "You can manage multimedia by uploading files individually below." %}<p>
+    </div>
+    <br />
+    <article class="panel-group accordion-multimedia" id="mm-reference-list">
+    <!-- ko foreach: modules -->
+        <section class="panel panel-default">
+            <hgroup class="panel-heading">
+                <h1 data-toggle="collapse"
+                    data-parent="#mm-reference-list"
+                    data-bind="attr: { href: '#' + id }">
+                    <i class="fa fa-angle-double-down"></i>
+                    <span data-bind="text: name"></span>
+                </h1>
+            </hgroup>
+            <div class="panel-collapse collapse in"
+                 data-bind="attr: { id: id }">
+                <div class="panel-body">
+                    <p>{% trans "Showing all media in module" %} '<span data-bind="text: name"></span>'.</p>
+                    <div class="panel-group" data-bind="attr: { id: id + '-ModuleRefs' }">
+                        {% include "hqmedia/partials/reference_table.html" with ref_type="active_menu_references" show_refs="showMenuRefs" parent_accordion="ModuleRefs" this_accordion="ModuleMenuRefs" title="Menu References" %}
+                    </div>
+                    <!-- ko foreach: forms -->
+                        <div data-bind="visible: showForm">
+                            <h3 data-bind="text: name"></h3>
+                            <div class="panel-group" data-bind="attr: { id: id + '-FormRefs' }">
+                                {% include "hqmedia/partials/reference_table.html" with ref_type="active_menu_references" show_refs="showMenuRefs" parent_accordion="FormRefs" this_accordion="FormMenuRefs" title="Menu References" %}
+                                {% include "hqmedia/partials/reference_table.html" with ref_type="active_images" show_refs="showImageRefs" parent_accordion="FormRefs" this_accordion="FormImageRefs" title="Image References" %}
+                                {% include "hqmedia/partials/reference_table.html" with ref_type="active_audio" show_refs="showAudioRefs" parent_accordion="FormRefs" this_accordion="FormAudioRefs" title="Audio References" %}
+                                {% include "hqmedia/partials/reference_table.html" with ref_type="active_video" show_refs="showVideoRefs" parent_accordion="FormRefs" this_accordion="FormVideoRefs" title="Video References" %}
+                            </div>
+                        </div>
+                    <!-- /ko -->
+                </div>
+            </div>
+        </section>
+    <!-- /ko -->
+    </article>
+
+    <script type="text/html" id="image-preview-template">
+        <img data-bind="attr: { src: thumb_url }" />
+        <a target="_blank"
+           class="btn btn-default preview-media"
+           data-bind="attr: { href: url }"
+           data-toggle="tooltip" data-title="{% trans "Opens image in new tab." %}">{% trans 'View Larger' %}</a>
+    </script>
+
+    <script type="text/html" id="audio-preview-template">
+        <a target="_blank"
+           class="btn btn-default preview-media"
+           data-bind="attr: { href: url }"
+           data-toggle="tooltip" data-title="{% trans "Opens file in new tab." %}">{% trans 'Hear Audio' %}</a>
+    </script>
+
+    <script type="text/html" id="video-preview-template">
+        <a target="_blank"
+           class="btn btn-default preview-media"
+           data-bind="attr: { href: url }"
+           data-toggle="tooltip" data-title="{% trans "Opens file in new tab." %}">{% trans 'View Video' %}</a>
+    </script>
+
+    {% for uploader in uploaders %}
+        {% include 'hqmedia/partials/multimedia_uploader.html' %}
+    {% endfor %}
+
+    <div id="jquery_jplayer"></div>
+</div>
