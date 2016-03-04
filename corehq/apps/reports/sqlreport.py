@@ -280,6 +280,9 @@ class SqlData(ReportDataSource):
     def data(self):
         return self._get_data()
 
+    def get_total_records(self):
+        return len(self.get_data())
+
 
 class SqlTabularReport(GenericTabularReport, SqlData):
     no_value = '--'
