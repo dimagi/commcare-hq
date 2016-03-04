@@ -55,6 +55,29 @@ ODK_DATA_TYPES = {
 }
 
 
+class StudyMetadataError(Exception):
+    pass
+
+
+def get_odm_child(node, child_node):
+    """
+    Return a child node in ODM namespace. Assumes only one child node with that name, and that it will be there.
+
+    >>> from lxml import etree
+    >>> foo_node = etree.fromstring('''<?xml version="1.0" encoding="UTF-8"?>
+    ... <foo xmlns="http://www.cdisc.org/ns/odm/v1.3">
+    ...   <bar>baz</bar>
+    ... </foo>''')
+    >>> get_odm_child(foo_node, 'bar').text
+    'baz'
+
+    """
+    try:
+        return node.xpath('./odm:' + child_node, namespaces=odm_nsmap)[0]
+    except IndexError:
+        raise StudyMetadataError('"{}" tag is missing a "{}" child node'.format(node.tag, child_node))
+
+
 class StudyObject(object):
     """
     Base class of objects defined from ODM metadata
@@ -76,16 +99,17 @@ class Study(StudyObject):
     def __init__(self, defn, meta):
         super(Study, self).__init__(defn, meta)
         self.oid = defn.get('OID')
-        self.name = defn.xpath('./odm:GlobalVariables/odm:StudyName', namespaces=odm_nsmap)[0].text
+        global_vars = get_odm_child(defn, 'GlobalVariables')
+        self.name = get_odm_child(global_vars, 'StudyName').text
         # e.g.
         #     <StudyName>An open-label, non-randomized study on Captopril</StudyName>
         #     <StudyDescription>
         #         Researcher KEMRI/ CREATES Director
         #     </StudyDescription>
         #     <ProtocolName>BE 01/2014</ProtocolName>
-        self.description = defn.xpath('./odm:GlobalVariables/odm:StudyDescription', namespaces=odm_nsmap)[0].text
+        self.description = get_odm_child(global_vars, 'StudyDescription').text
         # identifier is "Unique Protocol ID" in UI, "ProtocolName" in ODM, and "identifier" in OpenClinica API
-        self.identifier = defn.xpath('./odm:GlobalVariables/odm:ProtocolName', namespaces=odm_nsmap)[0].text
+        self.identifier = get_odm_child(global_vars, 'ProtocolName').text
 
     def iter_events(self):
         for se_ref in self.meta.xpath('./odm:Protocol/odm:StudyEventRef', namespaces=odm_nsmap):
