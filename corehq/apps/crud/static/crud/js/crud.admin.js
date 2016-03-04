@@ -105,7 +105,6 @@ var CRUDAdminControl = function(options) {
     };
 
     self.update_item = function(button) {
-        console.log('update item');
         self.currentItemID = $(button).data('item_id');
         self.currentItemFormType = $(button).data('form_class');
         $.ajax({
