@@ -285,11 +285,8 @@ class ConfigurableReport(JSONResponseMixin, BaseDomainView):
                 'warning': msg
             })
 
-        # todo: this is ghetto pagination - still doing a lot of work in the database
         datatables_params = DatatablesParams.from_request_dict(request.GET)
-        end = min(datatables_params.start + datatables_params.count, total_records)
-        data = list(data_source.get_data())
-        page = data[datatables_params.start:end]
+        page = list(data_source.get_data(start=datatables_params.start, limit=datatables_params.count))
 
         json_response = {
             'aaData': page,

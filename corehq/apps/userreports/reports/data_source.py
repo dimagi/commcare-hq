@@ -136,9 +136,9 @@ class ConfigurableReportDataSource(SqlData):
         return [w for sql_conf in self.sql_column_configs for w in sql_conf.warnings]
 
     @memoized
-    def get_data(self):
+    def get_data(self, start=None, limit=None):
         try:
-            ret = super(ConfigurableReportDataSource, self).get_data()
+            ret = super(ConfigurableReportDataSource, self).get_data(start=start, limit=limit)
         except (
             ColumnNotFoundException,
             ProgrammingError,
