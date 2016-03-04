@@ -244,7 +244,7 @@ class DictExpressionSpec(JsonObject):
 
 class EvalExpressionSpec(JsonObject):
     type = TypeProperty('evaluator')
-    equation_statement = StringProperty(required=True)
+    statement = StringProperty(required=True)
     context_variables = DictProperty(required=True)
 
     def configure(self, context_variables):
@@ -252,7 +252,7 @@ class EvalExpressionSpec(JsonObject):
 
     def __call__(self, item, context=None):
         var_dict = self.get_variables(item, context)
-        return eval_statements(self.equation_statement, var_dict)
+        return eval_statements(self.statement, var_dict)
 
     def get_variables(self, item, context):
         var_dict = {
