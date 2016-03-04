@@ -12,7 +12,7 @@ from datetime import datetime
 from StringIO import StringIO
 from django.conf import settings
 from django.db import models
-from json_field.fields import JSONField
+from jsonfield.fields import JSONField
 from jsonobject import JsonObject
 from jsonobject import StringProperty
 from jsonobject.properties import BooleanProperty

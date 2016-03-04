@@ -2,7 +2,7 @@
 from __future__ import unicode_literals
 
 from django.db import models, migrations
-import json_field.fields
+import jsonfield.fields
 
 
 class Migration(migrations.Migration):
@@ -15,13 +15,13 @@ class Migration(migrations.Migration):
         migrations.AddField(
             model_name='xforminstancesql',
             name='auth_context',
-            field=json_field.fields.JSONField(default='null', help_text='Enter a valid JSON object'),
+            field=jsonfield.fields.JSONField(default='null', help_text='Enter a valid JSON object'),
             preserve_default=True,
         ),
         migrations.AddField(
             model_name='xforminstancesql',
             name='openrosa_headers',
-            field=json_field.fields.JSONField(default='null', help_text='Enter a valid JSON object'),
+            field=jsonfield.fields.JSONField(default='null', help_text='Enter a valid JSON object'),
             preserve_default=True,
         ),
     ]
