@@ -1,4 +1,3 @@
-import hashlib
 import json
 import logging
 import mimetypes
@@ -232,7 +231,9 @@ class XFormInstanceSQL(DisabledDbMixin, models.Model, RedisLockableMixIn, Attach
 
     @property
     def is_deleted(self):
-        return self.state == self.DELETED
+        # deleting a form adds the deleted state to the current state
+        # in order to support restoring the pre-deleted state.
+        return self.state & self.DELETED == self.DELETED
 
     @property
     @memoized

@@ -149,6 +149,29 @@ class FormAccessorSQL(AbstractFormAccessor):
             )
 
     @staticmethod
+    def soft_delete_forms(domain, form_ids, deletion_date=None, deletion_id=None):
+        assert isinstance(form_ids, list)
+        deletion_date = deletion_date or datetime.utcnow()
+        with get_cursor(CommCareCaseSQL) as cursor:
+            cursor.execute(
+                'SELECT soft_delete_forms(%s, %s, %s, %s) as affected_count',
+                [domain, form_ids, deletion_date, deletion_id]
+            )
+            results = fetchall_as_namedtuple(cursor)
+            return sum([result.affected_count for result in results])
+
+    @staticmethod
+    def soft_undelete_forms(domain, form_ids):
+        assert isinstance(form_ids, list)
+        with get_cursor(CommCareCaseSQL) as cursor:
+            cursor.execute(
+                'SELECT soft_undelete_forms(%s, %s) as affected_count',
+                [domain, form_ids]
+            )
+            results = fetchall_as_namedtuple(cursor)
+            return sum([result.affected_count for result in results])
+
+    @staticmethod
     @transaction.atomic
     def _archive_unarchive_form(form, user_id, archive):
         from casexml.apps.case.xform import get_case_ids_from_form
@@ -591,6 +614,29 @@ class CaseAccessorSQL(AbstractCaseAccessor):
             )
             results = fetchall_as_namedtuple(cursor)
             return {result.case_type for result in results}
+
+    @staticmethod
+    def soft_delete_cases(domain, case_ids, deletion_date=None, deletion_id=None):
+        assert isinstance(case_ids, list)
+        deletion_date = deletion_date or datetime.utcnow()
+        with get_cursor(CommCareCaseSQL) as cursor:
+            cursor.execute(
+                'SELECT soft_delete_cases(%s, %s, %s, %s) as affected_count',
+                [domain, case_ids, deletion_date, deletion_id]
+            )
+            results = fetchall_as_namedtuple(cursor)
+            return sum([result.affected_count for result in results])
+
+    @staticmethod
+    def soft_undelete_cases(domain, case_ids):
+        assert isinstance(case_ids, list)
+        with get_cursor(CommCareCaseSQL) as cursor:
+            cursor.execute(
+                'SELECT soft_undelete_cases(%s, %s) as affected_count',
+                [domain, case_ids]
+            )
+            results = fetchall_as_namedtuple(cursor)
+            return sum([result.affected_count for result in results])
 
 
 class LedgerAccessorSQL(object):

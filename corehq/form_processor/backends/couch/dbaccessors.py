@@ -1,4 +1,5 @@
 from couchdbkit.exceptions import ResourceNotFound
+from datetime import datetime
 
 from casexml.apps.case.dbaccessors import get_extension_case_ids, \
     get_indexed_case_ids, get_all_reverse_indices_info
@@ -27,6 +28,7 @@ from couchforms.dbaccessors import (
     get_forms_by_id)
 from couchforms.models import XFormInstance, doc_types
 from dimagi.utils.couch.database import iter_docs
+from dimagi.utils.parsing import json_format_datetime
 
 
 class FormAccessorCouch(AbstractFormAccessor):
@@ -88,6 +90,14 @@ class FormAccessorCouch(AbstractFormAccessor):
     @staticmethod
     def forms_have_multimedia(domain, app_id, xmlns):
         return forms_have_multimedia(domain, app_id, xmlns)
+
+    @staticmethod
+    def soft_delete_forms(domain, form_ids, deletion_date=None, deletion_id=None):
+        return _soft_delete(XFormInstance.get_db(), form_ids, deletion_date, deletion_id)
+
+    @staticmethod
+    def soft_undelete_forms(domain, form_ids):
+        return _soft_undelete(XFormInstance.get_db(), form_ids)
 
 
 class CaseAccessorCouch(AbstractCaseAccessor):
@@ -164,6 +174,14 @@ class CaseAccessorCouch(AbstractCaseAccessor):
             return [case for case in cases if case.type == case_type]
         return cases
 
+    @staticmethod
+    def soft_delete_cases(domain, case_ids, deletion_date=None, deletion_id=None):
+        return _soft_delete(CommCareCase.get_db(), case_ids, deletion_date, deletion_id)
+
+    @staticmethod
+    def soft_undelete_cases(domain, case_ids):
+        return _soft_undelete(CommCareCase.get_db(), case_ids)
+
 
 def _get_attachment_content(doc_class, doc_id, attachment_id):
     try:
@@ -174,3 +192,47 @@ def _get_attachment_content(doc_class, doc_id, attachment_id):
     headers = resp.resp.headers
     content_type = headers.get('Content-Type', None)
     return AttachmentContent(content_type, resp)
+
+
+def _soft_delete(db, doc_ids, deletion_date=None, deletion_id=None):
+    from dimagi.utils.couch.undo import DELETED_SUFFIX
+    deletion_date = json_format_datetime(deletion_date or datetime.utcnow())
+
+    def delete(doc):
+        doc['doc_type'] += DELETED_SUFFIX
+        doc['-deletion_id'] = deletion_id
+        doc['-deletion_date'] = deletion_date
+        return doc
+
+    return _operate_on_docs(db, doc_ids, delete)
+
+
+def _soft_undelete(db, doc_ids):
+    from dimagi.utils.couch.undo import DELETED_SUFFIX
+
+    def undelete(doc):
+        doc_type = doc['doc_type']
+        if doc_type.endswith(DELETED_SUFFIX):
+            doc['doc_type'] = doc_type[:-len(DELETED_SUFFIX)]
+
+        del doc['-deletion_id']
+        del doc['-deletion_date']
+        return doc
+
+    return _operate_on_docs(db, doc_ids, undelete)
+
+
+def _operate_on_docs(db, doc_ids, operation_fn):
+    docs_to_save = []
+    for doc in iter_docs(db, doc_ids):
+        doc = operation_fn(doc)
+        docs_to_save.append(doc)
+
+        if len(docs_to_save) % 1000 == 0:
+            db.bulk_save(docs_to_save)
+            docs_to_save = []
+
+    if docs_to_save:
+        db.bulk_save(docs_to_save)
+
+    return len(doc_ids)
