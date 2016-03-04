@@ -1562,7 +1562,7 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
 
         for case_id_list in chunked(self._get_case_ids(), 50):
             tag_cases_as_deleted_and_remove_indices.delay(self.domain, case_id_list, deletion_id, deletion_date)
-            deleted_cases.add(case_id_list)
+            deleted_cases.update(case_id_list)
 
         for form_id_list in chunked(self.get_forms(wrap=False), 50):
             tag_forms_as_deleted_rebuild_associated_cases.delay(
