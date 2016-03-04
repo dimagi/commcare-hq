@@ -254,8 +254,12 @@ class CaseAccessorTestsSQL(TestCase):
         form_ids = _create_case_transactions(case)
 
         transactions = CaseAccessorSQL.get_transactions_for_case_rebuild(case.case_id)
-        self.assertEqual(3, len(transactions))
-        self.assertEqual([form_id, form_ids[0], form_ids[0]], [t.form_id for t in transactions])
+        self.assertEqual(5, len(transactions))
+        form_ledger_id = form_ids[2]
+        self.assertEqual(
+            [form_id, form_ids[0], form_ids[0], form_ledger_id, form_ids[0]],
+            [t.form_id for t in transactions],
+        )
 
     def test_get_case_by_location(self):
         case = _create_case(case_type=SupplyPointCaseMixin.CASE_TYPE)
@@ -637,6 +641,27 @@ class CaseAccessorTestsSQL(TestCase):
         self.assertEqual(len(case.closed_transactions), 1)
         self.assertTrue(case.closed_transactions[0].is_case_close)
 
+    def test_closed_transactions_with_tracked(self):
+        case = _create_case()
+        _create_case_transactions(case)
+
+        case.track_create(CaseTransaction(
+            case=case,
+            form_id=uuid.uuid4().hex,
+            server_date=datetime.utcnow(),
+            type=CaseTransaction.TYPE_FORM | CaseTransaction.TYPE_CASE_CLOSE,
+            revoked=True
+        ))
+        # exclude based on type
+        case.track_create(CaseTransaction(
+            case=case,
+            form_id=uuid.uuid4().hex,
+            server_date=datetime.utcnow(),
+            type=CaseTransaction.TYPE_FORM | CaseTransaction.TYPE_CASE_ATTACHMENT,
+            revoked=False
+        ))
+        self.assertEqual(len(case.closed_transactions), 2)
+
 
 def _create_case(domain=None, form_id=None, case_type=None, user_id=None):
     """
@@ -691,14 +716,14 @@ def _create_case_transactions(case):
         case=case,
         form_id=form_uuid_1,
         server_date=datetime.utcnow(),
-        type=CaseTransaction.TYPE_LEDGER,
+        type=CaseTransaction.TYPE_FORM | CaseTransaction.TYPE_LEDGER,
         revoked=False
     ))
     case.track_create(CaseTransaction(
         case=case,
         form_id=uuid.uuid4().hex,
         server_date=datetime.utcnow(),
-        type=CaseTransaction.TYPE_LEDGER,
+        type=CaseTransaction.TYPE_FORM | CaseTransaction.TYPE_LEDGER,
         revoked=False
     ))
     case.track_create(CaseTransaction(
