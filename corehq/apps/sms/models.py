@@ -510,6 +510,10 @@ class QueuedSMS(SMSBase):
             datetime_to_process__lte=datetime.utcnow(),
         )
 
+    def _migration_do_sync(self):
+        if not self.couch_id:
+            super(QueuedSMS, self)._migration_do_sync()
+
 
 class LastReadMessage(SyncCouchToSQLMixin, Document, CouchDocLockableMixIn):
     domain = StringProperty()
