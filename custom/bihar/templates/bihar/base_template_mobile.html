@@ -2,11 +2,9 @@
 {% load hq_shared_tags %}
 {% load i18n %}
 {% block mobile-nav %}
-    <ul class="nav pull-right">
-        <li><a href="{{ home }}">{% trans 'Main Menu' %}</a></li>
-    </ul>
+    <a href="{{ home }}" class="btn btn-default">{% trans 'Main Menu' %}</a>
 {% endblock %}
 {% block mobile-footer %}
-    <img src="{% static 'bihar/img/logo.png' %}" style="width: 239px;"/>
+    <img src="{% new_static 'bihar/img/logo.png' %}" style="width: 239px;"/>
     {{ block.super }}
 {% endblock %}
