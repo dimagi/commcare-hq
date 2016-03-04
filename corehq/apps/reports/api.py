@@ -40,6 +40,3 @@ class ReportDataSource(object):
         """
 
         return {}
-
-    def get_total_records(self):
-        return 0
