@@ -697,11 +697,12 @@ def copy_tf_localsettings():
 @parallel
 @roles(ROLES_TOUCHFORMS)
 def copy_formplayer_properties():
-    sudo(
-        'cp {}/submodules/formplayer/config/{}.properties '
-        '{}/submodules/formplayer/config'.format(
-            env.code_current, env.environment, env.code_root
-        ))
+    with settings(warn_only=True):
+        sudo(
+            'cp {}/submodules/formplayer/config/{}.properties '
+            '{}/submodules/formplayer/config'.format(
+                env.code_current, env.environment, env.code_root
+            ))
 
 
 @task
