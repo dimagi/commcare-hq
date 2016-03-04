@@ -5,11 +5,16 @@ from casexml.apps.case.models import CommCareCase
 from corehq.apps.cloudcare.api import get_filtered_cases, get_filters_from_request, api_closed_to_status
 from corehq.apps.api.resources.v0_1 import CustomResourceMeta, RequirePermissionAuthentication
 from corehq.apps.api.util import get_object_or_not_exist
-from corehq.apps.api.resources import HqBaseResource, DomainSpecificResourceMixin, dict_object
+from corehq.apps.api.resources import (
+    CouchResourceMixin,
+    dict_object,
+    DomainSpecificResourceMixin,
+    HqBaseResource,
+)
 from corehq.apps.users.models import Permissions
 
 
-class CommCareCaseResource(HqBaseResource, DomainSpecificResourceMixin):
+class CommCareCaseResource(CouchResourceMixin, HqBaseResource, DomainSpecificResourceMixin):
     type = "case"
     id = fields.CharField(attribute='case_id', readonly=True, unique=True)
     case_id = id
