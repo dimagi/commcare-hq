@@ -22,29 +22,29 @@
     {% endif %}
     {% if app %}
     <script>
-        COMMCAREHQ.appView = {
-            settings: {
-                sections: {{ settings_layout|JSON }},
-                values: {{ settings_values|JSON }},
-                {% if request|toggle_enabled:"CUSTOM_PROPERTIES" %}
-                customProperties: {{ custom_properties|JSON }},
-                {% endif %}
+        COMMCAREHQ.pageContext.set('settings_layout', {{ settings_layout|JSON }});
+        COMMCAREHQ.pageContext.set('settings_values', {{ settings_values|JSON }});
+        COMMCAREHQ.pageContext.set('custom_properties', {{ custom_properties|JSON }});
+        COMMCAREHQ.pageContext.set('is_previewer', {{ request.couch_user.is_previewer|BOOL }});
+        COMMCAREHQ.pageContext.set('url:edit_commcare_settings', '{% url "edit_commcare_settings" domain app.id %}');
+        COMMCAREHQ.pageContext.set('is_cloudcare_allowed', {{ is_cloudcare_allowed|BOOL }});
+        $(function () {
+            var commcareSettings = new CommcareSettings({
+                sections: COMMCAREHQ.pageContext.get('settings_layout'),
+                values: COMMCAREHQ.pageContext.get('settings_values'),
+                customProperties: (COMMCAREHQ.toggleEnabled('CUSTOM_PROPERTIES') ?
+                        COMMCAREHQ.pageContext.get('custom_properties') : undefined),
                 urls: {
-                    save: '{% url "edit_commcare_settings" domain app.id %}'
+                    save: COMMCAREHQ.pageContext.get('url:edit_commcare_settings')
                 },
                 user: {
-                    is_previewer: {{ request.couch_user.is_previewer|BOOL }}
+                    is_previewer: COMMCAREHQ.pageContext.get('is_previewer')
                 },
                 permissions: {
-                    cloudcare: {{ is_cloudcare_allowed|BOOL }}
-                },
-                warning: '{% trans "This is not an allowed value for this field" %}'
-            }
-        };
-
-        $(function () {
-            COMMCAREHQ.appView.settings = new CommcareSettings(COMMCAREHQ.appView.settings);
-            $('#commcare-settings').koApplyBindings(COMMCAREHQ.appView.settings);
+                    cloudcare: COMMCAREHQ.pageContext.get('is_cloudcare_allowed')
+                }
+            });
+            $('#commcare-settings').koApplyBindings(commcareSettings);
         });
 
         $(function () {

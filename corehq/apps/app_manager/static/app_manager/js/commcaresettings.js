@@ -5,7 +5,7 @@ function CommcareSettings(options) {
     self.sections = options.sections;
     self.user = options.user;
     self.permissions = options.permissions;
-    self.warning = options.warning;
+    self.warning = django.gettext("This is not an allowed value for this field");
 
     self.customPropertyType = 'custom_properties';
     self.customProperties = ko.observableArray(_.map(options.customProperties, function(d) {
