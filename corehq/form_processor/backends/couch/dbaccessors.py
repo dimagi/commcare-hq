@@ -74,18 +74,12 @@ class FormAccessorCouch(AbstractFormAccessor):
         form.save()
 
     @staticmethod
-    def get_deleted_forms_for_user(domain, user_id, ids_only=False):
-        doc_ids = get_deleted_form_ids_for_user(user_id)
-        if ids_only:
-            return doc_ids
-        return [XFormInstance.wrap(doc) for doc in iter_docs(XFormInstance.get_db(), doc_ids)]
+    def get_deleted_form_ids_for_user(domain, user_id):
+        return get_deleted_form_ids_for_user(user_id)
 
     @staticmethod
-    def get_forms_for_user(domain, user_id, ids_only=False):
-        doc_ids = get_form_ids_for_user(domain, user_id)
-        if ids_only:
-            return doc_ids
-        return [XFormInstance.wrap(doc) for doc in iter_docs(XFormInstance.get_db(), doc_ids)]
+    def get_form_ids_for_user(domain, user_id):
+        return get_form_ids_for_user(domain, user_id)
 
     @staticmethod
     def forms_have_multimedia(domain, app_id, xmlns):

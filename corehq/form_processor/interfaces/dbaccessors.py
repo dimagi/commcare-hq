@@ -41,6 +41,14 @@ class AbstractFormAccessor(six.with_metaclass(ABCMeta)):
         raise NotImplementedError
 
     @abstractmethod
+    def get_form_ids_for_user(domain, form_ids):
+        raise NotImplementedError
+
+    @abstractmethod
+    def get_deleted_form_ids_for_user(domain, user_id):
+        raise NotImplementedError
+
+    @abstractmethod
     def get_forms_by_type(domain, type_, limit, recent_first=False):
         raise NotImplementedError
 
@@ -121,11 +129,11 @@ class FormAccessors(object):
     def update_form_problem_and_state(self, form):
         self.db_accessor.update_form_problem_and_state(form)
 
-    def get_deleted_forms_for_user(self, domain, user_id, ids_only=False):
-        return self.db_accessor.get_deleted_forms_for_user(domain, user_id, ids_only=False)
+    def get_deleted_form_ids_for_user(self, domain, user_id):
+        return self.db_accessor.get_deleted_form_ids_for_user(domain, user_id)
 
-    def get_forms_for_user(self, domain, user_id, ids_only=False):
-        return self.db_accessor.get_forms_for_user(domain, user_id, ids_only)
+    def get_form_ids_for_user(self, domain, user_id):
+        return self.db_accessor.get_form_ids_for_user(domain, user_id)
 
     def get_attachment_content(self, form_id, attachment_name):
         return self.db_accessor.get_attachment_content(form_id, attachment_name)

@@ -243,32 +243,30 @@ class FormAccessorSQL(AbstractFormAccessor):
             cursor.execute('SELECT delete_all_forms(%s, %s)', [domain, user_id])
 
     @staticmethod
-    def get_deleted_forms_for_user(domain, user_id, ids_only=False):
-        return FormAccessorSQL._get_forms_for_user(
+    def get_deleted_form_ids_for_user(domain, user_id):
+        return FormAccessorSQL._get_form_ids_for_user(
             domain,
             user_id,
-            XFormInstanceSQL.DELETED,
-            ids_only
+            True,
         )
 
     @staticmethod
-    def get_forms_for_user(domain, user_id, ids_only=False):
-        return FormAccessorSQL._get_forms_for_user(
+    def get_form_ids_for_user(domain, user_id):
+        return FormAccessorSQL._get_form_ids_for_user(
             domain,
             user_id,
-            XFormInstanceSQL.NORMAL,
-            ids_only
+            False,
         )
 
     @staticmethod
-    def _get_forms_for_user(domain, user_id, state, ids_only=False):
-        forms = list(XFormInstanceSQL.objects.raw(
-            'SELECT * from get_forms_by_user_id(%s, %s, %s)',
-            [domain, user_id, state],
-        ))
-        if ids_only:
-            return [form.form_id for form in forms]
-        return forms
+    def _get_form_ids_for_user(domain, user_id, is_deleted):
+        with get_cursor(XFormInstanceSQL) as cursor:
+            cursor.execute(
+                'SELECT form_id FROM get_form_ids_for_user(%s, %s, %s)',
+                [domain, user_id, is_deleted]
+            )
+            results = fetchall_as_namedtuple(cursor)
+            return [result.form_id for result in results]
 
     @staticmethod
     def get_all_forms_received_since(received_on_since=None, chunk_size=500):

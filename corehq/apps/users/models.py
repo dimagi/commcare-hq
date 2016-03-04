@@ -1504,19 +1504,11 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
         user._hq_user = self # don't tell anyone that we snuck this here
         return user
 
-    def get_forms(self, deleted=False, wrap=True):
-        accessor = FormAccessors(self.domain)
-        if deleted:
-            forms_or_form_ids = accessor.get_deleted_forms_for_user(
-                self.domain,
-                self.user_id,
-                ids_only=not wrap
-            )
-        else:
-            forms_or_form_ids = accessor.get_forms_for_user(self.domain, self.user_id, ids_only=not wrap)
+    def _get_form_ids(self):
+        return FormAccessors(self.domain).get_form_ids_for_user(self.domain, self.user_id)
 
-        for form_or_form_id in forms_or_form_ids:
-            yield form_or_form_id
+    def _get_deleted_form_ids(self):
+        return FormAccessors(self.domain).get_deleted_form_ids_for_user(self.domain, self.user_id)
 
     @property
     def form_count(self):
@@ -1564,7 +1556,7 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
             tag_cases_as_deleted_and_remove_indices.delay(self.domain, case_id_list, deletion_id, deletion_date)
             deleted_cases.update(case_id_list)
 
-        for form_id_list in chunked(self.get_forms(wrap=False), 50):
+        for form_id_list in chunked(self._get_form_ids(), 50):
             tag_forms_as_deleted_rebuild_associated_cases.delay(
                 self.user_id, self.domain, form_id_list, deletion_id, deletion_date, deleted_cases=deleted_cases
             )
