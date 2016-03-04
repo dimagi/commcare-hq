@@ -576,7 +576,8 @@ var DetailScreenConfig = (function () {
                     lang: that.lang,
                     langs: that.screen.langs,
                     items: that.original['enum'],
-                    modalTitle: 'Editing mapping for ' + that.original.field
+                    modalTitle: 'Editing mapping for ' + that.original.field,
+                    multimedia: that.screen.config.multimedia
                 };
                 that.enum_extra = uiElement.key_value_mapping(o);
             }());
@@ -647,6 +648,7 @@ var DetailScreenConfig = (function () {
                     that.time_ago_extra.ui.detach();
 
                     if (this.val() === "enum" || this.val() === "enum-image") {
+                        that.enum_extra.values_are_icons = this.val() === 'enum-image';
                         that.format.ui.parent().append(that.enum_extra.ui);
                     } else if (this.val() === "graph") {
                         // Replace format select with edit button
@@ -1050,6 +1052,7 @@ var DetailScreenConfig = (function () {
             this.model = spec.model || 'case';
             this.lang = spec.lang;
             this.langs = spec.langs || [];
+            this.multimedia = spec.multimedia || {};
             if (spec.hasOwnProperty('parentSelect') && spec.parentSelect) {
                 this.parentSelect = new ParentSelect({
                     active: spec.parentSelect.active,
