@@ -622,7 +622,10 @@ class CommCareCaseSQL(DisabledDbMixin, models.Model, RedisLockableMixIn,
             transactions = CaseAccessorSQL.get_transactions_by_type(self.case_id, transaction_type)
         else:
             transactions = []
-        transactions += self.get_tracked_models_to_create(CaseTransaction)
+        transactions += filter(
+            lambda t: (t.type & transaction_type) == transaction_type,
+            self.get_tracked_models_to_create(CaseTransaction)
+        )
         return transactions
 
     def modified_since_sync(self, sync_log):
