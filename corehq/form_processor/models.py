@@ -199,8 +199,8 @@ class XFormInstanceSQL(DisabledDbMixin, models.Model, RedisLockableMixIn, Attach
     # The time at which the server has received the form
     received_on = models.DateTimeField()
 
-    auth_context = JSONField(lazy=True, default=dict)
-    openrosa_headers = JSONField(lazy=True, default=dict)
+    auth_context = JSONField(default=dict)
+    openrosa_headers = JSONField(default=dict)
 
     # Used to tag forms that were forcefully submitted
     # without a touchforms session completing normally
@@ -370,7 +370,7 @@ class AbstractAttachment(DisabledDbMixin, models.Model, SaveStateMixin):
     # RFC-1864-compliant Content-MD5 header value
     md5 = models.CharField(max_length=255, default=None)
 
-    properties = JSONField(lazy=True, default=dict)
+    properties = JSONField(default=dict)
 
     def write_content(self, content):
         if not self.name:
@@ -532,7 +532,7 @@ class CommCareCaseSQL(DisabledDbMixin, models.Model, RedisLockableMixIn,
     external_id = models.CharField(max_length=255)
     location_id = models.CharField(max_length=255, null=True)
 
-    case_json = JSONField(lazy=True, default=dict)
+    case_json = JSONField(default=dict)
 
     @property
     def doc_type(self):
@@ -986,7 +986,7 @@ class CaseTransaction(DisabledDbMixin, SaveStateMixin, models.Model):
     server_date = models.DateTimeField(null=False)
     type = models.PositiveSmallIntegerField(choices=TYPE_CHOICES)
     revoked = models.BooleanField(default=False, null=False)
-    details = JSONField(lazy=True, default=dict)
+    details = JSONField(default=dict)
 
     @staticmethod
     def _should_process(transaction_type):
