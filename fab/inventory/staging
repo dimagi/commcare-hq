@@ -2,6 +2,8 @@
 hqproxy4.internal.commcarehq.org
 
 [webworkers]
+hqdjango2-staging.internal.commcarehq.org
+hqdjango3-staging.internal.commcarehq.org
 hqdjango4-staging.internal.commcarehq.org
 hqdjango5-staging.internal.commcarehq.org
 
@@ -15,9 +17,11 @@ hqdb0-staging.internal.commcarehq.org
 hqdb0-staging.internal.commcarehq.org
 
 [zookeeper]
+hqdjango2-staging.internal.commcarehq.org
 hqkafka0-staging.internal.commcarehq.org
 
 [kafka]
+hqdjango2-staging.internal.commcarehq.org kafka_broker_id=0
 hqkafka0-staging.internal.commcarehq.org kafka_broker_id=0
 
 [celery]
@@ -27,6 +31,7 @@ hqdb0-staging.internal.commcarehq.org
 hqdb0-staging.internal.commcarehq.org
 
 [touchforms]
+hqdjango3-staging.internal.commcarehq.org
 hqtouch0-staging.internal.commcarehq.org
 
 [redis]
@@ -36,7 +41,8 @@ hqdb0-staging.internal.commcarehq.org
 hqdb0-staging.internal.commcarehq.org
 
 [elasticsearch]
-hqes0-staging.internal.commcarehq.org elasticsearch_node_name=hqdjango7-staging
+hqdjango2-staging.internal.commcarehq.org elasticsearch_node_name=hqdjango2-staging
+hqes0-staging.internal.commcarehq.org elasticsearch_node_name=hqes0-staging
 
 [shared_dir_host]
 hqdb0-staging.internal.commcarehq.org
@@ -45,5 +51,7 @@ hqdb0-staging.internal.commcarehq.org
 hqdb0-staging.internal.commcarehq.org
 
 [riakcs]
+hqdjango2-staging.internal.commcarehq.org
+hqdjango3-staging.internal.commcarehq.org
 hqdjango4-staging.internal.commcarehq.org
 hqdjango5-staging.internal.commcarehq.org
