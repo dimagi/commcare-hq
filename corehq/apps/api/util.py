@@ -1,6 +1,9 @@
 from django.core.exceptions import ObjectDoesNotExist
 from django.utils.translation import ugettext as _
+
 from couchdbkit.exceptions import ResourceNotFound
+from tastypie.bundle import Bundle
+
 
 def get_object_or_not_exist(cls, doc_id, domain, additional_doc_types=None):
     """
@@ -35,3 +38,9 @@ def object_does_not_exist(doc_type, doc_id):
     return ObjectDoesNotExist(_("Could not find %(doc_type)s with id %(id)s") % \
                               {"doc_type": doc_type, "id": doc_id})
 
+
+def get_obj(bundle_or_obj):
+    if isinstance(bundle_or_obj, Bundle):
+        return bundle_or_obj.obj
+    else:
+        return bundle_or_obj
