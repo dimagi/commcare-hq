@@ -1,4 +1,4 @@
-{% extends "reports/async/bootstrap2/tabular.html" %}
+{% extends "reports/async/bootstrap3/tabular.html" %}
 {% load hq_shared_tags %}
 {% load i18n %}
 {% block pretable %}
@@ -8,6 +8,6 @@
     {% if report_table.rows %}
     {{ block.super }}
     {% else %}
-    <p class="muted">{% trans "Sorry, there are no clients matching this report" %}</p>
+    <p class="text-muted">{% trans "Sorry, there are no clients matching this report" %}</p>
     {% endif %}
 {% endblock %}
