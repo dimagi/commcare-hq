@@ -695,8 +695,9 @@ class SelfRegistrationForm(forms.Form):
         super(SelfRegistrationForm, self).__init__(*args, **kwargs)
 
         self.helper = FormHelper()
-        self.helper.form_class = 'form form-horizontal'
-
+        self.helper.form_class = 'form-horizontal'
+        self.helper.label_class = 'col-xs-4'
+        self.helper.field_class = 'col-xs-8'
         layout_fields = [
             crispy.Fieldset(
                 _('Register'),
@@ -704,7 +705,7 @@ class SelfRegistrationForm(forms.Form):
                 crispy.Field('password'),
                 crispy.Field('password2'),
             ),
-            FormActions(
+            hqcrispy.FormActions(
                 StrictButton(
                     _('Register'),
                     css_class='btn-primary',
