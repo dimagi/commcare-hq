@@ -222,6 +222,23 @@ COMMCAREHQ.makeSaveButton = function(messageStrings, cssClass) {
     return SaveButton;
 };
 
+COMMCAREHQ.SaveButton = COMMCAREHQ.makeSaveButton({
+    SAVE: django.gettext("Save"),
+    SAVING: django.gettext("Saving..."),
+    SAVED: django.gettext("Saved"),
+    RETRY: django.gettext("Try Again"),
+    ERROR_SAVING: django.gettext("There was an error saving")
+}, 'btn btn-success');
+
+COMMCAREHQ.DeleteButton = COMMCAREHQ.makeSaveButton({
+    SAVE: django.gettext("Delete"),
+    SAVING: django.gettext("Deleting..."),
+    SAVED: django.gettext("Deleted"),
+    RETRY: django.gettext("Try Again"),
+    ERROR_SAVING: django.gettext("There was an error deleting")
+}, 'btn btn-danger');
+
+
 COMMCAREHQ.beforeUnload = [];
 
 COMMCAREHQ.bindBeforeUnload = function (callback) {
