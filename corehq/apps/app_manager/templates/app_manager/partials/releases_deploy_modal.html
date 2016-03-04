@@ -72,13 +72,14 @@
                                                     </a>
                                                 </p>
                                                 <p>
-                                                    <button class="btn btn-xs btn-success" data-bind="
+                                                    <a href="#" data-bind="
                                                         click: get_app_code,
-                                                        visible: !app_code()
+                                                        visible: !app_code() && !failed_url_generation() && !generating_url()
                                                         ">
                                                         {% trans "Enter App Code" %}
-                                                    </button>
+                                                    </a>
                                                     <span data-bind="visible: app_code">
+                                                        {% trans "Enter app code on installation screen: " %}
                                                         <code class="bitly" data-bind="text: app_code"></code>
                                                     </span>
                                                     <img data-bind="visible: generating_url()"
