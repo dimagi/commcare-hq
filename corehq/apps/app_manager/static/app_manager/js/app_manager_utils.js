@@ -55,7 +55,7 @@ hqDefine('app_manager/js/app_manager_utils', function () {
     app_manager_utils.bitly_nato_phonetic = function (bitly_url) {
         /**
          * We use this method to explicitly spell out the bitly code for
-         * users with extra special needs.
+         * users who have trouble reading the letters (esp. 1 and l, O and 0)
          */
         'use strict';
         if (bitly_to_phonetic === undefined) {
