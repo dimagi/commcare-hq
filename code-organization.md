@@ -202,6 +202,13 @@ If you compare it to the above example, you'll notice that the
 closure function itself is exactly the same. It's just being passed
 to `hqDefine` instead of being called directly.
 
+If you're working on a page that doesn't inherit
+from the main template, you'll have to include
+```html
+<script src="{% new_static 'hqwebapp/js/hqModules.js' %}"></script>
+```
+to use `hqDefine` and `hqImport`.
+
 A note about using modules on an html page.
 Whereas any other module system is also a module *loader*,
 `hqImport` is just a module *dereferencer*; what I mean by that is that
