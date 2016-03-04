@@ -384,7 +384,10 @@ function processMetadata(metadata) {
 function zoomToAll(map) {
     if (map.activeOverlay) {
         setTimeout(function() {
-            map.fitBounds(map.activeOverlay.getBounds(), {padding: [60, 60]});
+            var bounds = map.activeOverlay.getBounds();
+            if (bounds.isValid()) {
+                map.fitBounds(map.activeOverlay.getBounds(), {padding: [60, 60]});
+            }
         }, 0); // run at next tick to avoid race condition and freeze
                // (https://github.com/Leaflet/Leaflet/issues/2021)
     }

@@ -14,7 +14,8 @@ from corehq.pillows.mappings.user_mapping import USER_INDEX
 from corehq.pillows.mappings.xform_mapping import XFORM_INDEX
 from corehq.pillows.xform import XFormPillow
 from corehq.util.elastic import delete_es_index, ensure_index_deleted
-from corehq.util.test_utils import get_form_ready_to_save
+from corehq.util.test_utils import get_form_ready_to_save, trap_extra_setup
+from elasticsearch.exceptions import ConnectionError
 from testapps.test_pillowtop.utils import make_a_case
 
 
@@ -23,6 +24,11 @@ DOMAIN = 'reindex-test-domain'
 
 class PillowtopReindexerTest(TestCase):
     domain = DOMAIN
+
+    @classmethod
+    def setUpClass(cls):
+        with trap_extra_setup(ConnectionError):
+            CasePillow()  # verify connection to elasticsearch
 
     def test_user_reindexer(self):
         delete_all_users()

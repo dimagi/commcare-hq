@@ -29,7 +29,7 @@ class StockTransactionTests(TestCase):
         ).save()
 
         product_id = uuid.uuid4().hex
-        SQLProduct(product_id=product_id).save()
+        SQLProduct(product_id=product_id, domain='fakedomain').save()
         report = StockReport.objects.create(
             form_id=uuid.uuid4().hex,
             date=ago(1),

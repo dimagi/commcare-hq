@@ -1,5 +1,5 @@
 from corehq.apps.sms.mixin import UnrecognizedBackendException
-from corehq.apps.sms.models import SQLMobileBackend, Log, CallLog
+from corehq.apps.sms.models import SQLMobileBackend, Log, CallLog, OUTGOING
 from dimagi.utils.couch.migration import SyncSQLToCouchMixin
 from django.db import models
 
@@ -140,3 +140,32 @@ class Call(SyncSQLToCouchMixin, Log):
     @classmethod
     def _migration_get_couch_model_class(cls):
         return CallLog
+
+    @classmethod
+    def by_gateway_session_id(cls, gateway_session_id):
+        result = cls.objects.filter(
+            gateway_session_id=gateway_session_id
+        ).order_by('-date')[:1]
+
+        if result:
+            return result[0]
+
+        return None
+
+    @classmethod
+    def answered_call_exists(cls, contact_doc_type, contact_id, from_timestamp, to_timestamp=None):
+        qs = cls.by_recipient(
+            contact_doc_type,
+            contact_id
+        ).filter(
+            direction=OUTGOING,
+            date__gte=from_timestamp,
+            answered=True
+        )
+
+        if to_timestamp:
+            qs = qs.filter(
+                date__lte=to_timestamp
+            )
+
+        return qs.count() > 0

@@ -30,7 +30,8 @@ function HQReportDataTables(options) {
     self.aaSorting = options.aaSorting || null;
     // a list of functions to call back to after ajax.
     // see user configurable charts for an example usage
-    self.extraCallbacks = options.extraCallbacks;
+    self.successCallbacks = options.successCallbacks;
+    self.errorCallbacks = options.errorCallbacks;
     self.includeFilter = options.includeFilter || false;
     self.datatable = null;
     self.rendered = false;
@@ -139,9 +140,9 @@ function HQReportDataTables(options) {
                         if ('context' in data){
                             load(data['context'], ICON_PATH);
                         }
-                        if (self.extraCallbacks) {
-                            for (i = 0; i < self.extraCallbacks.length; i++) {
-                                self.extraCallbacks[i](data);
+                        if (self.successCallbacks) {
+                            for (i = 0; i < self.successCallbacks.length; i++) {
+                                self.successCallbacks[i](data);
                             }
                         }
                         return result
@@ -151,14 +152,19 @@ function HQReportDataTables(options) {
                         "url": sSource,
                         "data": (self.useBootstrap3) ? self.fmtParams(aoData) : aoData,
                         "success": custom_callback,
-                        "error": function(data) {
+                        "error": function(jqXHR, textStatus, errorThrown) {
                             $(".dataTables_processing").hide();
-                            if (data.status === 400) {
+                            if (jqXHR.status === 400) {
                                 $(".dataTables_empty").html(self.badRequestErrorText);
                             } else {
                                 $(".dataTables_empty").html(self.errorText);                                
                             }
                             $(".dataTables_empty").show();
+                            if (self.errorCallbacks) {
+                                for (i = 0; i < self.errorCallbacks.length; i++) {
+                                    self.errorCallbacks[i](jqXHR, textStatus, errorThrown);
+                                }
+                            }
                         }
                     } );
                 };

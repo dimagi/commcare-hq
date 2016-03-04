@@ -37,6 +37,8 @@ from dimagi.utils.modules import to_function
 from corehq.util.quickcache import skippable_quickcache
 from casexml.apps.case.mock import CaseBlock
 from casexml.apps.case.models import CommCareCase
+from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
+from corehq.form_processor.exceptions import CaseNotFound
 from corehq.apps.commtrack.const import USER_LOCATION_OWNER_MAP_TYPE
 from casexml.apps.phone.models import User as CaseXMLUser
 from corehq.apps.cachehq.mixins import QuickCachedDocumentMixin
@@ -739,12 +741,6 @@ class EulaMixin(DocumentSchema):
         return current_eula
 
 
-class KeyboardShortcutsConfig(DocumentSchema):
-    enabled = BooleanProperty(False)
-    main_key = StringProperty(choices=["ctrl", "option", "command", "alt", "shift", "control"])
-    main_keycode = IntegerProperty()
-
-
 class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, UnicodeMixIn, EulaMixin):
     """
     A user (for web and commcare)
@@ -762,7 +758,6 @@ class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, UnicodeMixIn, EulaMi
     email_opt_out = BooleanProperty(default=False)
     subscribed_to_commcare_users = BooleanProperty(default=False)
     announcements_seen = ListProperty()
-    keyboard_shortcuts = SchemaProperty(KeyboardShortcutsConfig)
     user_data = DictProperty()
     location_id = StringProperty()
     has_built_app = BooleanProperty(default=False)
@@ -1752,7 +1747,6 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
             )
 
         from corehq.apps.locations.models import Location
-        from corehq.apps.commtrack.models import SupplyPointCase
 
         def _get_linked_supply_point_ids():
             mapping = self.get_location_map_case()
@@ -1761,11 +1755,7 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
             return []
 
         def _get_linked_supply_points():
-            for doc in iter_docs(
-                CommCareCase.get_db(),
-                _get_linked_supply_point_ids()
-            ):
-                yield SupplyPointCase.wrap(doc)
+            return SupplyInterface(self.domain).get_supply_points(_get_linked_supply_point_ids())
 
         def _gen():
             location_ids = [sp.location_id for sp in _get_linked_supply_points()]
@@ -1891,8 +1881,8 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
         """
         try:
             from corehq.apps.commtrack.util import location_map_case_id
-            return CommCareCase.get(location_map_case_id(self))
-        except ResourceNotFound:
+            return CaseAccessors(self.domain).get_case(location_map_case_id(self))
+        except CaseNotFound:
             return None
 
     @property

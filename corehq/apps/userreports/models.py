@@ -431,6 +431,12 @@ class ReportConfiguration(UnicodeMixIn, QuickCachedDocumentMixin, Document):
         self.by_domain.clear(self.__class__, self.domain)
         self.count_by_data_source.clear(self.__class__, self.domain, self.config_id)
 
+    @property
+    def is_static(self):
+        return any(
+            self._id.startswith(prefix)
+            for prefix in [STATIC_PREFIX, CUSTOM_REPORT_PREFIX]
+        )
 
 STATIC_PREFIX = 'static-'
 CUSTOM_REPORT_PREFIX = 'custom-'

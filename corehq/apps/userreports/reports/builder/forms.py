@@ -707,7 +707,11 @@ class ConfigureNewReportBase(forms.Form):
             if matching_data_source.is_deactivated:
                 matching_data_source.is_deactivated = False
                 reactivated = True
-            changed = self._change_indicators(matching_data_source.configured_indicators)
+            changed = False
+            indicators = self.ds_builder.indicators(self._number_columns)
+            if matching_data_source.configured_indicators != indicators:
+                matching_data_source.configured_indicators = indicators
+                changed = True
             if changed or reactivated:
                 matching_data_source.save()
                 tasks.rebuild_indicators.delay(matching_data_source._id)
@@ -798,7 +802,9 @@ class ConfigureNewReportBase(forms.Form):
         )
 
     def _get_property_from_column(self, col):
-        return self._properties_by_column[col].id
+        column = self._properties_by_column.get(col)
+        if column:
+            return column.id
 
     def _column_exists(self, column_id):
         """
@@ -823,7 +829,7 @@ class ConfigureNewReportBase(forms.Form):
     @property
     @memoized
     def _number_columns(self):
-        return [col["field"] for col in self._report_columns if col["aggregation"] in ["avg", "sum"]]
+        return [col["field"] for col in self._report_columns if col.get("aggregation", None) in ["avg", "sum"]]
 
     @property
     def _report_filters(self):

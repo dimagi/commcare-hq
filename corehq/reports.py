@@ -120,7 +120,7 @@ def REPORTS(project):
         sms.MessageEventDetailReport,
         sms.SurveyDetailReport,
         sms.MessageLogReport,
-        ivr.CallLogReport,
+        ivr.CallReport,
         ivr.ExpectedCallbackReport,
     ])
 

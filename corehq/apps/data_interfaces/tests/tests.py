@@ -1,12 +1,18 @@
 from os.path import abspath, dirname, join
-from datetime import datetime
 
 from django.test import TestCase
 from django.test import Client
-from corehq.util.spreadsheets.excel import WorkbookJSONReader
 
-from couchforms.models import XFormInstance
+from corehq.form_processor.interfaces.dbaccessors import FormAccessors
+from corehq.form_processor.tests.utils import FormProcessorTestUtils, run_with_all_backends
+from corehq.form_processor.utils.xform import TestFormMetadata, get_simple_wrapped_form
+from corehq.util.context_managers import drop_connected_signals
+from corehq.util.spreadsheets.excel import WorkbookJSONReader
+from couchforms.signals import xform_archived
+
 from django_prbac.models import UserRole, Role, Grant
+from corehq.apps.domain.models import Domain
+from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.users.models import WebUser
 from corehq.apps.data_interfaces.utils import archive_forms_old
 from corehq import privileges, toggles
@@ -15,22 +21,32 @@ from corehq.apps.accounting import generator
 THISDIR = dirname(abspath(__file__))
 BASE_PATH = join(THISDIR, 'files')
 BASIC_XLSX = 'basic_forms_bulk.xlsx'
+DOMAIN_NAME = 'test'
 MISSING_XLSX = 'missing_forms_bulk.xlsx'
 MALFORM_XLSX = 'malformatted_forms_bulk.xlsx'
 WRONG_FILETYPE = 'wrong_file.xyz'
 
 
+def setup():
+    # http://nose.readthedocs.org/en/latest/writing_tests.html#test-modules
+    create_domain(DOMAIN_NAME)
+
+
+def teardown():
+    # http://nose.readthedocs.org/en/latest/writing_tests.html#test-modules
+    Domain.get_by_name(DOMAIN_NAME, strict=True).delete()
+
+
 class BulkArchiveForms(TestCase):
     def setUp(self):
-        self.domain_name = 'test'
         self.password = "password"
 
         username = "ben"
         email = "ben@domain.com"
 
         self.client = Client()
-        self.user = WebUser.create(self.domain_name, username, self.password, email, is_admin=True)
-        self.url = '/a/{}/data/edit/archive_forms/'.format(self.domain_name)
+        self.user = WebUser.create(DOMAIN_NAME, username, self.password, email, is_admin=True)
+        self.url = '/a/{}/data/edit/archive_forms/'.format(DOMAIN_NAME)
 
         django_user = self.user.get_django_user()
         try:
@@ -104,55 +120,48 @@ class BulkArchiveFormsUnit(TestCase):
     }
 
     def setUp(self):
-        self.domain_name = 'test'
-        self.password = "password"
-        username = "ben"
-        email = "ben@domain.com"
-        self.user = WebUser.create(self.domain_name, username, self.password, email)
+        self.username = "ben"
         self.xforms = {}
 
         for key, _id, in self.XFORMS.iteritems():
-            self.xforms[_id] = XFormInstance(xmlns='fake-xmlns',
-                domain=self.domain_name,
-                received_on=datetime.utcnow(),
-                form={
-                    '#type': 'fake-type',
-                    '@xmlns': 'fake-xmlns'
-                })
-            self.xforms[_id]['_id'] = _id
-            self.xforms[_id].save()
+            meta = TestFormMetadata(domain=DOMAIN_NAME)
+            self.xforms[_id] = get_simple_wrapped_form(_id, metadata=meta)
 
     def tearDown(self):
-        self.user.delete()
-        for key, xform, in self.xforms.iteritems():
-            xform.delete()
+        FormProcessorTestUtils.delete_all_xforms(DOMAIN_NAME)
 
+    @run_with_all_backends
     def test_archive_forms_basic(self):
         uploaded_file = WorkbookJSONReader(join(BASE_PATH, BASIC_XLSX))
 
-        response = archive_forms_old(self.domain_name, self.user, list(uploaded_file.get_worksheet()))
+        with drop_connected_signals(xform_archived):
+            response = archive_forms_old(DOMAIN_NAME, 'user1', self.username, list(uploaded_file.get_worksheet()))
+            print response
 
         # Need to re-get instance from DB to get updated attributes
         for key, _id in self.XFORMS.iteritems():
-            self.assertEqual(XFormInstance.get(_id).doc_type, 'XFormArchived')
+            self.assertTrue(FormAccessors(DOMAIN_NAME).get_form(_id).is_archived)
 
         self.assertEqual(len(response['success']), len(self.xforms))
 
+    @run_with_all_backends
     def test_archive_forms_missing(self):
         uploaded_file = WorkbookJSONReader(join(BASE_PATH, MISSING_XLSX))
 
-        response = archive_forms_old(self.domain_name, self.user, list(uploaded_file.get_worksheet()))
+        with drop_connected_signals(xform_archived):
+            response = archive_forms_old(DOMAIN_NAME, 'user1', self.username, list(uploaded_file.get_worksheet()))
 
         for key, _id in self.XFORMS.iteritems():
-            self.assertEqual(XFormInstance.get(_id).doc_type, 'XFormArchived')
+            self.assertTrue(FormAccessors(DOMAIN_NAME).get_form(_id).is_archived)
 
         self.assertEqual(len(response['success']), len(self.xforms))
         self.assertEqual(len(response['errors']), 1,
                          "One error for trying to archive a missing form")
 
+    @run_with_all_backends
     def test_archive_forms_wrong_domain(self):
         uploaded_file = WorkbookJSONReader(join(BASE_PATH, BASIC_XLSX))
 
-        response = archive_forms_old('wrong_domain', self.user, list(uploaded_file.get_worksheet()))
+        response = archive_forms_old('wrong_domain', 'user1', self.username, list(uploaded_file.get_worksheet()))
 
         self.assertEqual(len(response['errors']), len(self.xforms), "Error when wrong domain")

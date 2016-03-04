@@ -1431,10 +1431,6 @@ class Subscription(models.Model):
             raise SubscriptionReminderError(
                 "This subscription has no end date."
             )
-        if self.is_renewed:
-            # no need to send a reminder email if the subscription
-            # is already renewed
-            return
         today = datetime.date.today()
         num_days_left = (self.date_end - today).days
         if num_days_left == 1:
@@ -2082,7 +2078,8 @@ class BillingRecordBase(models.Model):
             try:
                 web_user = WebUser.get_by_username(email)
                 if web_user is not None:
-                    greeting = _("Dear %s,") % web_user.first_name
+                    if web_user.first_name:
+                        greeting = _("Dear %s,") % web_user.first_name
                     can_view_statement = web_user.is_domain_admin(domain)
             except ResourceNotFound:
                 pass

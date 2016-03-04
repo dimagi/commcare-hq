@@ -97,6 +97,9 @@ def get_pillow_config_by_name(pillow_name):
 def force_seq_int(seq):
     if seq is None or seq == '':
         return None
+    elif isinstance(seq, dict):
+        # multi-topic checkpoints don't support a single sequence id
+        return None
     elif isinstance(seq, basestring):
         return int(seq.split('-')[0])
     else:
@@ -118,9 +121,9 @@ def get_pillow_json(pillow_config):
               else pillow_config.get_instance())
 
     checkpoint = pillow.get_checkpoint()
-    timestamp = checkpoint.get('timestamp')
+    timestamp = checkpoint.timestamp
     if timestamp:
-        time_since_last = datetime.utcnow() - string_to_utc_datetime(timestamp)
+        time_since_last = datetime.utcnow() - timestamp
         hours_since_last = time_since_last.total_seconds() // 3600
 
         try:
@@ -132,11 +135,15 @@ def get_pillow_json(pillow_config):
     else:
         time_since_last = ''
         hours_since_last = None
+    try:
+        db_seq = pillow.get_change_feed().get_latest_change_id()
+    except ValueError:
+        db_seq = None
     return {
         'name': pillow_config.name,
-        'seq': force_seq_int(checkpoint.get('seq')),
-        'old_seq': force_seq_int(checkpoint.get('old_seq')) or 0,
-        'db_seq': force_seq_int(pillow.get_change_feed().get_latest_change_id()),
+        'seq': force_seq_int(checkpoint.wrapped_sequence),
+        'old_seq': force_seq_int(checkpoint.old_sequence) or 0,
+        'db_seq': force_seq_int(db_seq),
         'time_since_last': time_since_last,
         'hours_since_last': hours_since_last
     }

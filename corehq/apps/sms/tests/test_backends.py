@@ -5,11 +5,12 @@ from corehq.apps.domain.models import Domain
 from corehq.apps.sms.api import (send_sms, send_sms_to_verified_number,
     send_sms_with_backend, send_sms_with_backend_name)
 from corehq.apps.sms.mixin import BadSMSConfigException
-from corehq.apps.sms.models import (SMS, SMSLog, CommConnectCase,
+from corehq.apps.sms.models import (SMS, QueuedSMS, CommConnectCase,
     SQLMobileBackendMapping, SQLMobileBackend, MobileBackendInvitation,
     PhoneLoadBalancingMixin, BackendMap)
 from corehq.apps.sms.tasks import handle_outgoing
 from corehq.apps.sms.tests.util import BaseSMSTest, delete_domain_phone_numbers
+from corehq.form_processor.tests.utils import set_case_property_directly
 from corehq.messaging.smsbackends.apposit.models import SQLAppositBackend
 from corehq.messaging.smsbackends.grapevine.models import SQLGrapevineBackend
 from corehq.messaging.smsbackends.http.models import SQLHttpBackend
@@ -43,15 +44,15 @@ class AllBackendTest(BaseSMSTest):
 
         self.test_phone_number = '99912345'
         self.contact1 = CommCareCase(domain=self.domain_obj.name)
-        self.contact1.set_case_property('contact_phone_number', self.test_phone_number)
-        self.contact1.set_case_property('contact_phone_number_is_verified', '1')
+        set_case_property_directly(self.contact1, 'contact_phone_number', self.test_phone_number)
+        set_case_property_directly(self.contact1, 'contact_phone_number_is_verified', '1')
         self.contact1.save()
         self.contact1 = CommConnectCase.wrap(self.contact1.to_json())
 
         # For use with megamobile only
         self.contact2 = CommCareCase(domain=self.domain_obj.name)
-        self.contact2.set_case_property('contact_phone_number', '63%s' % self.test_phone_number)
-        self.contact2.set_case_property('contact_phone_number_is_verified', '1')
+        set_case_property_directly(self.contact2, 'contact_phone_number', '63%s' % self.test_phone_number)
+        set_case_property_directly(self.contact2, 'contact_phone_number_is_verified', '1')
         self.contact2.save()
         self.contact2 = CommConnectCase.wrap(self.contact2.to_json())
 
@@ -497,8 +498,8 @@ class OutgoingFrameworkTestCase(BaseSMSTest):
         )
 
         self.case = CommCareCase(domain=self.domain)
-        self.case.set_case_property('contact_phone_number', '15551234567')
-        self.case.set_case_property('contact_phone_number_is_verified', '1')
+        set_case_property_directly(self.case, 'contact_phone_number', '15551234567')
+        set_case_property_directly(self.case, 'contact_phone_number_is_verified', '1')
         self.case.save()
 
         self.contact = CommConnectCase.wrap(self.case.to_json())
@@ -651,7 +652,7 @@ class OutgoingFrameworkTestCase(BaseSMSTest):
 
     def __test_contact_level_backend(self):
         # Test sending to verified number with a contact-level backend owned by the domain
-        self.case.set_case_property('contact_backend_id', 'BACKEND')
+        set_case_property_directly(self.case, 'contact_backend_id', 'BACKEND')
         self.case.save()
         self.contact = CommConnectCase.wrap(self.case.to_json())
         verified_number = self.contact.get_verified_number()
@@ -1125,11 +1126,12 @@ class LoadBalancingAndRateLimitingTestCase(BaseSMSTest):
         self.domain_obj = Domain.get(self.domain_obj.get_id)
 
     def tearDown(self):
+        QueuedSMS.objects.all().delete()
         self.domain_obj.delete()
         super(LoadBalancingAndRateLimitingTestCase, self).tearDown()
 
     def create_outgoing_sms(self, backend):
-        sms = SMSLog(
+        sms = QueuedSMS(
             domain=self.domain,
             date=datetime.utcnow(),
             direction='O',

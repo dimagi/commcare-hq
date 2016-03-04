@@ -43,6 +43,8 @@ class CommCareCaseSQLSerializer(serializers.ModelSerializer):
     user_id = serializers.CharField(source='modified_by')
     indices = CommCareCaseIndexSQLSerializer(many=True, read_only=True)
     actions = CaseTransactionActionSerializer(many=True, read_only=True, source='non_revoked_transactions')
+    case_json = serializers.JSONField()
 
     class Meta:
         model = CommCareCaseSQL
+        exclude = ('case_json',)

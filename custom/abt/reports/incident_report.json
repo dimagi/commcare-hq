@@ -27,6 +27,18 @@
     ],
     "filters": [
       {
+        "compare_as_string": false,
+        "datatype": "string",
+        "required": false,
+        "slug": "timeEnd",
+        "field": "timeEnd",
+        "type": "date",
+        "display": {
+          "fra": "Date soumis",
+          "en": "Date submitted"
+        }
+      },
+      {
         "display": "Form Name",
         "field": "form_name",
         "type": "dynamic_choice_list",
