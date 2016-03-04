@@ -281,7 +281,16 @@ class SqlData(ReportDataSource):
         return self._get_data()
 
     def get_total_records(self):
-        return len(self.get_data())
+        qc = self.query_context()
+        for c in self.columns:
+            qc.append_column(c.view)
+
+        session = connection_manager.get_scoped_session(self.engine_id)
+        try:
+            return qc.count(session.connection(), self.filter_values)
+        except:
+            session.rollback()
+            raise
 
 
 class SqlTabularReport(GenericTabularReport, SqlData):
