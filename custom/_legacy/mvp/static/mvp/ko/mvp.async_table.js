@@ -67,7 +67,7 @@ var CHWIndicator = function (options) {
     };
     
     self.mark_as_error = function () {
-        $('.status-'+self.slug).replaceWith('<i class="icon icon-warning-sign"></i>');
+        $('.status-'+self.slug).replaceWith('<i class="fa fa-exclamation-triangle"></i>');
     };
 
     self.apply_updates = function () {
