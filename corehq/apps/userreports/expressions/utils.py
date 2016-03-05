@@ -2,8 +2,6 @@ import copy
 import ast
 from simpleeval import SimpleEval, DEFAULT_OPERATORS, InvalidExpression
 
-from corehq.apps.userreports.exceptions import BadSpecError
-
 
 def safe_pow_fn(a, b):
     raise InvalidExpression
@@ -19,8 +17,10 @@ def eval_statements(statement, variable_context):
         statement: a simple python-like math statement
         variable_context: a dict with variable names as key and assigned values as dict values
     """
+    # variable values should be numbers
+    var_types = set(type(value) for value in variable_context.values())
+    if not var_types.issubset(set([int, float, long])):
+        raise InvalidExpression
+
     evaluator = SimpleEval(operators=SAFE_OPERATORS, names=variable_context)
-    try:
-        return evaluator.eval(statement)
-    except (InvalidExpression, SyntaxError), e:
-        raise BadSpecError(e)
+    return evaluator.eval(statement)

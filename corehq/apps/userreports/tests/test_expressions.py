@@ -3,6 +3,7 @@ from datetime import date, datetime
 from decimal import Decimal
 from django.test import SimpleTestCase
 from fakecouch import FakeCouchDb
+from simpleeval import InvalidExpression
 from casexml.apps.case.models import CommCareCase
 from corehq.apps.userreports.exceptions import BadSpecError
 from corehq.apps.userreports.expressions.factory import ExpressionFactory
@@ -760,12 +761,9 @@ def test_valid_eval_expression(self, source_doc, statement, context, expected_va
 
 
 @generate_cases([
-    # variables cant be strings
-    ({}, "a + b", {"a": 2, "b": 'text'}),
-    # missing context
-    ({}, "a + (a*b)", {"a": 2}),
-    # context must be dict
+    # context must be non-empty dict
     ({}, "2 + 3", "text context"),
+    ({}, "2 + 3", {}),
     # statement must be string
     ({}, 2 + 3, {"a": 2, "b": 3})
 ])
@@ -774,11 +772,8 @@ def test_invalid_eval_expression(self, source_doc, statement, context):
         ExpressionFactory.from_spec({
             "type": "evaluator",
             "statement": statement,
-            "context_variables": {
-                "type": "dict",
-                "properties": context
-            }
-        })(source_doc)
+            "context_variables": context
+        })
 
 
 @generate_cases([
@@ -794,12 +789,21 @@ def test_supported_evluator_statements(self, eq, context, expected_value):
 
 
 @generate_cases([
+    # variables can't be strings
+    ("a + b", {"a": 2, "b": 'text'}),
+    # missing context
+    ("a + (a*b)", {"a": 2}),
     ("a**b", {"a": 2, "b": 23}),
     ("lambda x: x*x", {"a": 2}),
-    ("int(10 in range(1,20))", {}),
-    ("max(a, b)", {"a": 3, "b": 5}),
-    ("23 'a'", {}),
+    ("int(10 in range(1,20))", {"a": 2}),
+    ("max(a, b)", {"a": 3, "b": 5})
 ])
 def test_unsupported_evluator_statements(self, eq, context):
-    with self.assertRaises(BadSpecError):
+    with self.assertRaises(InvalidExpression):
         eval_statements(eq, context)
+    expression = ExpressionFactory.from_spec({
+        "type": "evaluator",
+        "statement": eq,
+        "context_variables": context
+    })
+    self.assertEqual(expression({}), None)

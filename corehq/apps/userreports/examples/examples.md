@@ -444,20 +444,7 @@ Note that the test must also change in this scenario.
 
 ## Evaluator Examples
 
-### Age in years to age in months (simple case)
-
-```json
-{
-    "type": "evaluator",
-    "statement": "30.4 * age_in_years",
-    "context_variables": {
-        "age_in_years": 5,
-    }
-}
-```
-returns 30.4 * 5 (152)
-
-### Age in years to age in months (nested expression)
+### Age in years to age in months
 
 In the above example, `age_in_years` can be replaces with another expression to get the property from the doc
 ```json

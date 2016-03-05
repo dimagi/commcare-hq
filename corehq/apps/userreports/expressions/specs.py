@@ -1,6 +1,6 @@
 import json
 from couchdbkit.exceptions import ResourceNotFound
-from datetime import timedelta
+from simpleeval import InvalidExpression
 from corehq.apps.userreports.exceptions import BadSpecError
 from corehq.util.couch import get_db_by_doc_type
 from dimagi.ext.jsonobject import JsonObject, StringProperty, ListProperty, DictProperty
@@ -252,15 +252,14 @@ class EvalExpressionSpec(JsonObject):
 
     def __call__(self, item, context=None):
         var_dict = self.get_variables(item, context)
-        return eval_statements(self.statement, var_dict)
+        try:
+            return eval_statements(self.statement, var_dict)
+        except (InvalidExpression, SyntaxError):
+            return None
 
     def get_variables(self, item, context):
         var_dict = {
             slug: variable_expression(item, context)
             for slug, variable_expression in self._context_variables.items()
         }
-        var_types = set(type(value) for value in var_dict.values())
-        if not var_types.issubset(set([int, float, long])):
-            raise BadSpecError
-        else:
-            return var_dict
+        return var_dict
