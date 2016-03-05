@@ -1,6 +1,5 @@
 from collections import defaultdict
-from datetime import date, datetime, timedelta
-from dateutil.relativedelta import relativedelta
+from datetime import date, datetime, timedelta, time
 
 from django.template.loader import render_to_string
 from django.utils.translation import ugettext as _
@@ -10,7 +9,6 @@ from corehq.apps.hqcase.dbaccessors import get_number_of_cases_in_domain, \
 from corehq.util.dates import iso_string_to_datetime
 from corehq.apps.app_manager.models import ApplicationBase
 from corehq.apps.users.util import WEIRD_USER_IDS
-from corehq.apps.es.sms import SMSES
 from corehq.apps.es.forms import FormES
 from corehq.apps.hqadmin.reporting.reports import (
     get_mobile_users,
@@ -21,6 +19,7 @@ from couchforms.analytics import get_number_of_forms_per_domain, \
 
 from corehq.apps.domain.models import Domain
 from corehq.apps.reminders.models import CaseReminderHandler
+from corehq.apps.sms.models import SMS, INCOMING, OUTGOING
 from corehq.apps.reports.util import make_form_couch_key
 from corehq.apps.users.models import CouchUser
 from corehq.elastic import es_query, ADD_TO_ES_FILTER
@@ -59,19 +58,14 @@ def active_mobile_users(domain, *args):
         .aggregations.user.keys
     )
 
-    sms_users = set(
-        SMSES()
-        .incoming_messages()
-        .user_aggregation()
-        .to_commcare_user()
-        .domain(domain)
-        .received(gte=then)
-        .size(0)
-        .run()
-        .aggregations.user.keys
-    )
+    sms_users = SMS.objects.filter(
+        domain=domain,
+        date__gte=then,
+        direction=INCOMING,
+        couch_recipient_doc_type='CommCareUser'
+    ).values_list('couch_recipient', flat=True).distinct()
 
-    num_users = len(form_users | sms_users)
+    num_users = len(form_users | set(sms_users))
     return num_users if 'inactive' not in args else len(user_ids) - num_users
 
 
@@ -127,18 +121,23 @@ def forms_in_last(domain, days):
 
 
 def _sms_helper(domain, direction=None, days=None):
-    query = SMSES().domain(domain).size(0)
+    qs = SMS.objects.filter(domain=domain)
 
     if direction:
-        query = query.direction(direction)
+        qs = qs.filter(direction=direction)
 
     if days:
-        query = query.received(date.today() - relativedelta(days=30))
+        date_filter = datetime.utcnow() - timedelta(days=30)
+        date_filter = datetime.combine(date_filter.date(), time(0, 0))
+        qs = qs.filter(date__gte=date_filter)
 
-    return query.run().total
+    return qs.count()
 
 
 def sms(domain, direction):
+    """
+    direction should be INCOMING or OUTGOING
+    """
     return _sms_helper(domain, direction=direction)
 
 
@@ -151,11 +150,11 @@ def sms_in_last_bool(domain, days=None):
 
 
 def sms_in_in_last(domain, days=None):
-    return _sms_helper(domain, direction="I", days=days)
+    return _sms_helper(domain, direction=INCOMING, days=days)
 
 
 def sms_out_in_last(domain, days=None):
-    return _sms_helper(domain, direction="O", days=days)
+    return _sms_helper(domain, direction=OUTGOING, days=days)
 
 
 def active(domain, *args):
