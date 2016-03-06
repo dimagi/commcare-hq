@@ -1,38 +1,34 @@
 import calendar
-from decimal import Decimal
 import datetime
+from decimal import Decimal
+
 from django.db import transaction
 from django.db.models import F, Q, Min, Max
-from django.template.loader import render_to_string
-
 from django.utils.translation import ugettext as _
-from corehq.apps.accounting.utils import (
-    ensure_domain_instance,
-    log_accounting_error,
-    log_accounting_info,
-)
-from corehq.apps.domain.models import Domain
+
 from dimagi.utils.decorators.memoized import memoized
 
 from corehq.apps.accounting.exceptions import (
-    LineItemError,
-    InvoiceError,
-    InvoiceEmailThrottledError,
     InvoiceAlreadyCreatedError,
+    InvoiceEmailThrottledError,
+    InvoiceError,
+    LineItemError,
 )
 from corehq.apps.accounting.models import (
     LineItem, FeatureType, Invoice, DefaultProductPlan, Subscriber,
     Subscription, BillingAccount, SubscriptionAdjustment,
     SubscriptionAdjustmentMethod, BillingRecord,
-    BillingContactInfo, SoftwarePlanEdition, CreditLine,
+    SoftwarePlanEdition, CreditLine,
     EntryPoint, WireInvoice, WireBillingRecord,
-    SMALL_INVOICE_THRESHOLD, WirePrepaymentBillingRecord,
-    WirePrepaymentInvoice,
-    UNLIMITED_FEATURE_USAGE,
+    SMALL_INVOICE_THRESHOLD, UNLIMITED_FEATURE_USAGE,
+)
+from corehq.apps.accounting.utils import (
+    ensure_domain_instance,
+    log_accounting_error,
+    log_accounting_info,
 )
 from corehq.apps.smsbillables.models import SmsBillable
 from corehq.apps.users.models import CommCareUser
-
 
 DEFAULT_DAYS_UNTIL_DUE = 30
 
