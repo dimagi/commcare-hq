@@ -187,10 +187,11 @@ class DomainInvoiceFactory(object):
             invoice.calculate_credit_adjustments()
             invoice.update_balance()
             invoice.save()
-            total_balance = sum(invoice.balance for invoice in Invoice.objects.filter(
+            visible_domain_invoices = Invoice.objects.filter(
                 is_hidden=False,
                 subscription__subscriber__domain=invoice.get_domain(),
-            ))
+            )
+            total_balance = sum(invoice.balance for invoice in visible_domain_invoices)
 
             should_set_date_due = ((total_balance > SMALL_INVOICE_THRESHOLD) or
                                    (invoice.account.auto_pay_enabled and total_balance > Decimal(0)))
