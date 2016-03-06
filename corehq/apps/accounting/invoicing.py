@@ -53,9 +53,11 @@ class DomainInvoiceFactory(object):
             raise InvoiceError("Domain '%s' is not a valid domain on HQ!" % domain)
         self.is_community_invoice = False
 
-    @property
-    def subscriber(self):
-        return Subscriber.objects.get_or_create(domain=self.domain.name)[0]
+    def create_invoices(self):
+        subscriptions = self.get_subscriptions()
+        self.ensure_full_coverage(subscriptions)
+        for subscription in subscriptions:
+            self.create_invoice_for_subscription(subscription)
 
     def get_subscriptions(self):
         subscriptions = Subscription.objects.filter(
@@ -64,33 +66,6 @@ class DomainInvoiceFactory(object):
         ).filter(Q(date_end=None) | Q(date_end__gt=F('date_start'))
         ).order_by('date_start', 'date_end').all()
         return list(subscriptions)
-
-    def get_community_ranges(self, subscriptions):
-        community_ranges = []
-        if len(subscriptions) == 0:
-            community_ranges.append((self.date_start, self.date_end))
-        else:
-            prev_sub_end = self.date_end
-            for ind, sub in enumerate(subscriptions):
-                if ind == 0 and sub.date_start > self.date_start:
-                    # the first subscription started AFTER the beginning
-                    # of the invoicing period
-                    community_ranges.append((self.date_start, sub.date_start))
-
-                if prev_sub_end < self.date_end and sub.date_start > prev_sub_end:
-                    community_ranges.append((prev_sub_end, sub.date_start))
-                prev_sub_end = sub.date_end
-
-                if (ind == len(subscriptions) - 1
-                    and sub.date_end is not None
-                    and sub.date_end <= self.date_end
-                ):
-                    # the last subscription ended BEFORE the end of
-                    # the invoicing period
-                    community_ranges.append(
-                        (sub.date_end, self.date_end + datetime.timedelta(days=1))
-                    )
-        return community_ranges
 
     def ensure_full_coverage(self, subscriptions):
         plan_version = DefaultProductPlan.get_default_plan_by_domain(
@@ -130,12 +105,6 @@ class DomainInvoiceFactory(object):
             )
             community_subscription.save()
             subscriptions.append(community_subscription)
-
-    def create_invoices(self):
-        subscriptions = self.get_subscriptions()
-        self.ensure_full_coverage(subscriptions)
-        for subscription in subscriptions:
-            self.create_invoice_for_subscription(subscription)
 
     def create_invoice_for_subscription(self, subscription):
         if subscription.is_trial:
@@ -208,6 +177,33 @@ class DomainInvoiceFactory(object):
 
         return invoice
 
+    def get_community_ranges(self, subscriptions):
+        community_ranges = []
+        if len(subscriptions) == 0:
+            community_ranges.append((self.date_start, self.date_end))
+        else:
+            prev_sub_end = self.date_end
+            for ind, sub in enumerate(subscriptions):
+                if ind == 0 and sub.date_start > self.date_start:
+                    # the first subscription started AFTER the beginning
+                    # of the invoicing period
+                    community_ranges.append((self.date_start, sub.date_start))
+
+                if prev_sub_end < self.date_end and sub.date_start > prev_sub_end:
+                    community_ranges.append((prev_sub_end, sub.date_start))
+                prev_sub_end = sub.date_end
+
+                if (ind == len(subscriptions) - 1
+                    and sub.date_end is not None
+                    and sub.date_end <= self.date_end
+                ):
+                    # the last subscription ended BEFORE the end of
+                    # the invoicing period
+                    community_ranges.append(
+                        (sub.date_end, self.date_end + datetime.timedelta(days=1))
+                    )
+        return community_ranges
+
     @staticmethod
     def generate_line_items(invoice, subscription):
         product_rate = subscription.plan_version.product_rate
@@ -220,6 +216,10 @@ class DomainInvoiceFactory(object):
             )
             feature_factory = feature_factory_class(subscription, feature_rate, invoice)
             feature_factory.create()
+
+    @property
+    def subscriber(self):
+        return Subscriber.objects.get_or_create(domain=self.domain.name)[0]
 
 
 class DomainWireInvoiceFactory(object):
