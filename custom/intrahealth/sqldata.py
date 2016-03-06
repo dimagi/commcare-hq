@@ -774,7 +774,7 @@ class CountUniqueAndSumQueryMeta(IntraHealthQueryMeta):
 
 class IntraHealthCustomColumn(CustomQueryColumn):
 
-    def get_query_meta(self, default_table_name, default_filters, default_group_by):
+    def get_query_meta(self, default_table_name, default_filters, default_group_by, default_order_by):
         table_name = self.table_name or default_table_name
         filters = self.filters or default_filters
         group_by = self.group_by or default_group_by
