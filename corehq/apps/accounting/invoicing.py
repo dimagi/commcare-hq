@@ -108,6 +108,23 @@ class DomainInvoiceFactory(object):
             subscriptions.append(community_subscription)
 
     def _create_invoice_for_subscription(self, subscription):
+        def _get_invoice_start(sub, date_start):
+            if sub.date_start > date_start:
+                return sub.date_start
+            else:
+                return date_start
+
+        def _get_invoice_end(sub, date_end):
+            if (
+                sub.date_end is not None
+                and sub.date_end <= date_end
+            ):
+                # Since the Subscription is actually terminated on date_end
+                # have the invoice period be until the day before date_end.
+                return sub.date_end - datetime.timedelta(days=1)
+            else:
+                return date_end
+
         if subscription.is_trial:
             # Don't create invoices for trial subscriptions
             log_accounting_info(
@@ -116,18 +133,8 @@ class DomainInvoiceFactory(object):
             )
             return
 
-        if subscription.date_start > self.date_start:
-            invoice_start = subscription.date_start
-        else:
-            invoice_start = self.date_start
-
-        if (subscription.date_end is not None
-           and subscription.date_end <= self.date_end):
-            # Since the Subscription is actually terminated on date_end
-            # have the invoice period be until the day before date_end.
-            invoice_end = subscription.date_end - datetime.timedelta(days=1)
-        else:
-            invoice_end = self.date_end
+        invoice_start = _get_invoice_start(subscription, self.date_start)
+        invoice_end = _get_invoice_end(subscription, self.date_end)
 
         with transaction.atomic():
             invoice = self._generate_invoice(subscription, invoice_start, invoice_end)
