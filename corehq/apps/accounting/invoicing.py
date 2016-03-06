@@ -67,6 +67,7 @@ class DomainInvoiceFactory(object):
         ).order_by('date_start', 'date_end').all()
         return list(subscriptions)
 
+    @transaction.atomic
     def ensure_full_coverage(self, subscriptions):
         plan_version = DefaultProductPlan.get_default_plan_by_domain(
             self.domain, edition=SoftwarePlanEdition.COMMUNITY
