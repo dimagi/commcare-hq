@@ -54,8 +54,7 @@ class DomainInvoiceFactory(object):
         self.domain = ensure_domain_instance(domain)
         self.logged_throttle_error = False
         if self.domain is None:
-            raise InvoiceError("Domain '%s' is not a valid domain on HQ!"
-                               % domain)
+            raise InvoiceError("Domain '%s' is not a valid domain on HQ!" % domain)
         self.is_community_invoice = False
 
     @property
