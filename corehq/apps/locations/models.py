@@ -633,7 +633,8 @@ class Location(SyncCouchToSQLMixin, CachedCouchDocumentMixin, Document):
         with transaction.atomic():
             for loc in to_delete:
                 loc._close_case_and_remove_users()
-            SQLLocation.objects.get(location_id=self._id).delete()
+            # delete all SQLLocations without calling their `delete` methods
+            self.sql_location.get_descendants(include_self=True).delete()
             Location.get_db().bulk_delete(to_delete)
 
     @classmethod
