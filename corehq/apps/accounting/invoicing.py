@@ -183,7 +183,7 @@ class DomainInvoiceFactory(object):
                     invoice=invoice,
                 )
 
-            self.generate_line_items(invoice, subscription)
+            DomainInvoiceFactory.generate_line_items(invoice, subscription)
             invoice.calculate_credit_adjustments()
             invoice.update_balance()
             invoice.save()
@@ -213,7 +213,8 @@ class DomainInvoiceFactory(object):
 
         return invoice
 
-    def generate_line_items(self, invoice, subscription):
+    @staticmethod
+    def generate_line_items(invoice, subscription):
         product_rate = subscription.plan_version.product_rate
         product_factory = ProductLineItemFactory(subscription, product_rate, invoice)
         product_factory.create()
