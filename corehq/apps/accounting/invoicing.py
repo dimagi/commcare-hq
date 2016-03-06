@@ -54,12 +54,12 @@ class DomainInvoiceFactory(object):
         self.is_community_invoice = False
 
     def create_invoices(self):
-        subscriptions = self.get_subscriptions()
-        self.ensure_full_coverage(subscriptions)
+        subscriptions = self._get_subscriptions()
+        self._ensure_full_coverage(subscriptions)
         for subscription in subscriptions:
-            self.create_invoice_for_subscription(subscription)
+            self._create_invoice_for_subscription(subscription)
 
-    def get_subscriptions(self):
+    def _get_subscriptions(self):
         subscriptions = Subscription.objects.filter(
             subscriber=self.subscriber, date_start__lte=self.date_end
         ).filter(Q(date_end=None) | Q(date_end__gt=self.date_start)
@@ -68,13 +68,13 @@ class DomainInvoiceFactory(object):
         return list(subscriptions)
 
     @transaction.atomic
-    def ensure_full_coverage(self, subscriptions):
+    def _ensure_full_coverage(self, subscriptions):
         plan_version = DefaultProductPlan.get_default_plan_by_domain(
             self.domain, edition=SoftwarePlanEdition.COMMUNITY
         ).plan.get_version()
         if not plan_version.feature_charges_exist_for_domain(self.domain):
             return
-        community_ranges = self.get_community_ranges(subscriptions)
+        community_ranges = self._get_community_ranges(subscriptions)
         if not community_ranges:
             return
         do_not_invoice = any([s.do_not_invoice for s in subscriptions])
@@ -107,7 +107,7 @@ class DomainInvoiceFactory(object):
             community_subscription.save()
             subscriptions.append(community_subscription)
 
-    def create_invoice_for_subscription(self, subscription):
+    def _create_invoice_for_subscription(self, subscription):
         if subscription.is_trial:
             # Don't create invoices for trial subscriptions
             log_accounting_info(
@@ -148,7 +148,7 @@ class DomainInvoiceFactory(object):
                     invoice=invoice,
                 )
 
-            DomainInvoiceFactory.generate_line_items(invoice, subscription)
+            DomainInvoiceFactory._generate_line_items(invoice, subscription)
             invoice.calculate_credit_adjustments()
             invoice.update_balance()
             invoice.save()
@@ -178,7 +178,7 @@ class DomainInvoiceFactory(object):
 
         return invoice
 
-    def get_community_ranges(self, subscriptions):
+    def _get_community_ranges(self, subscriptions):
         community_ranges = []
         if len(subscriptions) == 0:
             community_ranges.append((self.date_start, self.date_end))
@@ -206,7 +206,7 @@ class DomainInvoiceFactory(object):
         return community_ranges
 
     @staticmethod
-    def generate_line_items(invoice, subscription):
+    def _generate_line_items(invoice, subscription):
         product_rate = subscription.plan_version.product_rate
         product_factory = ProductLineItemFactory(subscription, product_rate, invoice)
         product_factory.create()
