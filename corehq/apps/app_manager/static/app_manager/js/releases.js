@@ -246,6 +246,7 @@ function ReleasesMain(o) {
             success: function (savedApps) {
                 self.addSavedApps(savedApps);
                 self.fetchState('');
+                window.scrollTo(0,document.body.scrollHeight);
             },
             error: function () {
                 self.fetchState('error');
