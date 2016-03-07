@@ -1,12 +1,11 @@
-{% extends "settings/bootstrap2/base_template.html" %}
+{% extends "settings/bootstrap3/base_template.html" %}
 {% load i18n %}
 
-{% block main_column %}
+{% block page_content %}
 <ol class="breadcrumb">
     {% for step in steps %}
     <li>
         <a href="{{ step.url }}" class="breadcrumb-{{ forloop.counter }}">{{ step.title }}</a>
-        {% if not forloop.last %}<span class="divider">&gt;</span>{% endif %}
     </li>
     {% endfor %}
 </ol>
