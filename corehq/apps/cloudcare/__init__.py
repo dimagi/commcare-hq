@@ -8,8 +8,11 @@ class CloudcareAppConfig(AppConfig):
 
     def ready(self):
         # Also sync this app's design docs to NEW_APPS_DB
-        ExtraPreindexPlugin.register('cloudcare', __file__, settings.NEW_APPS_DB)
+        ExtraPreindexPlugin.register('cloudcare', __file__,
+                                     (settings.APPS_DB, settings.NEW_APPS_DB))
 
 
 # constants
 CLOUDCARE_DEVICE_ID = "cloudcare"
+
+default_app_config = 'corehq.apps.cloudcare.CloudcareAppConfig'
