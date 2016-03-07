@@ -229,3 +229,64 @@ class TestReportAggregation(ConfigurableReportTestMixin, TestCase):
                 ]
             ]]
         )
+
+    def test_sort_expression(self):
+        report_config = self._create_report(
+            aggregation_columns=['indicator_col_id_first_name'],
+            columns=[{
+                "type": "field",
+                "display": "indicator_col_id_first_name",
+                "field": 'indicator_col_id_first_name',
+                'column_id': 'indicator_col_id_first_name',
+                'aggregation': 'simple'
+            }]
+        )
+
+        default_sorted_view = self._create_view(report_config)
+        self.assertEqual(
+            default_sorted_view.export_table,
+            [[
+                u'foo',
+                [
+                    [u'indicator_col_id_first_name'],
+                    [u'Ada'],
+                    [u'Alan']
+                ]
+            ]]
+        )
+
+        report_config.sort_expression = [{
+            'field': 'indicator_col_id_first_name',
+            'order': 'ASC',
+        }]
+        report_config.save()
+        ascending_sorted_view = self._create_view(report_config)
+        self.assertEqual(
+            ascending_sorted_view.export_table,
+            [[
+                u'foo',
+                [
+                    [u'indicator_col_id_first_name'],
+                    [u'Ada'],
+                    [u'Alan']
+                ]
+            ]]
+        )
+
+        report_config.sort_expression = [{
+            'field': 'indicator_col_id_first_name',
+            'order': 'DESC',
+        }]
+        report_config.save()
+        descending_sorted_view = self._create_view(report_config)
+        self.assertEqual(
+            descending_sorted_view.export_table,
+            [[
+                u'foo',
+                [
+                    [u'indicator_col_id_first_name'],
+                    [u'Alan'],
+                    [u'Ada']
+                ]
+            ]]
+        )

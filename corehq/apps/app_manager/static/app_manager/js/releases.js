@@ -237,7 +237,7 @@ hqDefine('app_manager/js/releases.js', function () {
             }
         };
 
-        self.getMoreSavedApps = function () {
+        self.getMoreSavedApps = function (scroll) {
             self.fetchState('pending');
             $.ajax({
                 url: self.url('fetch'),
@@ -249,6 +249,11 @@ hqDefine('app_manager/js/releases.js', function () {
                 success: function (savedApps) {
                     self.addSavedApps(savedApps);
                     self.fetchState('');
+                    if (scroll) {
+                        // Scroll so the bottom of main content (and the "View More" button) aligns with the bottom of the window
+                        var $content = $("#hq-content");
+                        window.scrollTo(0, $content.position().top + $content.height() - window.innerHeight);
+                    }
                 },
                 error: function () {
                     self.fetchState('error');
@@ -327,7 +332,7 @@ hqDefine('app_manager/js/releases.js', function () {
         self.reloadApps = function () {
             self.savedApps([]);
             self.nextVersionToFetch = null;
-            self.getMoreSavedApps();
+            self.getMoreSavedApps(false);
         };
         self.actuallyMakeBuild = function () {
             var comment = window.prompt(
