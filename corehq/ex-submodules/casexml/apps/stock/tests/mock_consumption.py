@@ -1,3 +1,4 @@
+from casexml.apps.stock.models import ConsumptionMixin
 from dimagi.utils import parsing as dateparse
 from datetime import datetime, timedelta
 from casexml.apps.stock.consumption import compute_daily_consumption_from_transactions, ConsumptionConfiguration
@@ -5,7 +6,10 @@ import collections
 
 to_ts = dateparse.json_format_datetime
 
-MockTransaction = collections.namedtuple('MockTransaction', ['action', 'value', 'received_on'])
+class MockTransaction(
+    collections.namedtuple('MockTransaction', ['type', 'normalized_value', 'received_on']),
+    ConsumptionMixin):
+    pass
 
 
 def mock_transaction(action, value, age):
