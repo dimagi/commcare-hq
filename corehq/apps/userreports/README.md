@@ -91,6 +91,7 @@ add_months      | A way to add months to a date | `my_date + relativedelta(month
 month_start_date| First day in the month of a date | `2015-01-20` -> `2015-01-01`
 month_end_date  | Last day in the month of a date | `2015-01-20` -> `2015-01-31`
 diff_days       | A way to get duration in days between two dates | `(to_date - from-date).days`
+evaluator       | A way to do arithmetic operations | `a + b*c / d`
 
 
 ### JSON snippets for expressions
@@ -361,6 +362,28 @@ The from_date_expression and to_date_expression can be any valid expressions, or
 }
 ```
 
+#### "Evaluator" expression
+`evaluator` expression can be used to evaluate statements that contain arithmetic (and simple python like statements). It evaluates the statement specified by `statement` which can contain variables as defined in `context_variables`.
+
+```json
+{
+    "type": "evaluator",
+    "statement": "a + b - c + 6",
+    "context_variables": {
+        "a": 1,
+        "b": 20,
+        "c": 2
+    }
+}
+```
+This returns 25 (1 + 20 - 2 + 6).
+
+`statement` can be any statement that returns a valid number. All python math [operators](https://en.wikibooks.org/wiki/Python_Programming/Basic_Math#Mathematical_Operators) except power opertor are available for use.
+
+`context_variables` is a dictionary of Expressions where keys are names of variables used in the `statement` and values are expressions to generate those variables.
+Variables can be any valid numbers (Python datatypes `int`, `float`, and `long` are considered valid numbers.) or also expressions that return numbers.
+
+More examples can be found on practical [examples page](corehq/apps/userreports/examples/examples.md#evaluator-examples).
 
 #### "Month Start Date" and "Month End Date" expressions
 
