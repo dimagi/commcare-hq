@@ -4,6 +4,7 @@ from corehq.apps.commtrack.sms import process
 from corehq.apps.sms.api import send_sms_to_verified_number
 from custom.ilsgateway.tanzania.handlers.ils_stock_report_parser import ILSStockReportParser
 from custom.ilsgateway.tanzania.handlers.keyword import KeywordHandler
+from dimagi.utils.decorators.memoized import memoized
 
 
 class GenericStockReportHandler(KeywordHandler):
@@ -13,6 +14,7 @@ class GenericStockReportHandler(KeywordHandler):
     status_value = None
 
     @property
+    @memoized
     def data(self):
         return ILSStockReportParser(
             self.domain_object,

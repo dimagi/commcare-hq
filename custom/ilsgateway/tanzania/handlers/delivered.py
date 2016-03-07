@@ -2,12 +2,13 @@ from datetime import datetime
 from corehq.apps.locations.dbaccessors import get_users_by_location_id
 from corehq.apps.products.models import SQLProduct
 from corehq.apps.sms.api import send_sms_to_verified_number
+from custom.ilsgateway.tanzania.exceptions import InvalidProductCodeException
 from custom.ilsgateway.tanzania.handlers.generic_stock_report_handler import GenericStockReportHandler
 from custom.ilsgateway.tanzania.handlers.ils_stock_report_parser import Formatter
 from custom.ilsgateway.models import SupplyPointStatus, SupplyPointStatusTypes, SupplyPointStatusValues
 from custom.ilsgateway.tanzania.handlers.soh import parse_report
 from custom.ilsgateway.tanzania.reminders import DELIVERY_CONFIRM_DISTRICT, DELIVERY_PARTIAL_CONFIRM, \
-    DELIVERY_CONFIRM_CHILDREN, DELIVERED_CONFIRM
+    DELIVERY_CONFIRM_CHILDREN, DELIVERED_CONFIRM, INVALID_PRODUCT_CODE
 
 
 class DeliveryFormatter(Formatter):
@@ -43,6 +44,9 @@ class DeliveredHandler(GenericStockReportHandler):
                                          status_date=datetime.utcnow())
 
     def get_message(self, data):
+        for error in data['errors']:
+            if isinstance(error, InvalidProductCodeException):
+                return INVALID_PRODUCT_CODE % {'product_code': error.message}
         products = sorted([
             (SQLProduct.objects.get(product_id=tx.product_id).code, tx.quantity)
             for tx in data['transactions']
