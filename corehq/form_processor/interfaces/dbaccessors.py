@@ -80,10 +80,6 @@ class AbstractFormAccessor(six.with_metaclass(ABCMeta)):
     def soft_delete_forms(domain, form_ids, deletion_date=None, deletion_id=None):
         raise NotImplementedError
 
-    @abstractmethod
-    def soft_undelete_forms(domain, form_ids):
-        raise NotImplementedError
-
 
 class FormAccessors(object):
     """
@@ -143,9 +139,6 @@ class FormAccessors(object):
 
     def soft_delete_forms(self, form_ids, deletion_date=None, deletion_id=None):
         return self.db_accessor.soft_delete_forms(self.domain, form_ids, deletion_date, deletion_id)
-
-    def soft_undelete_forms(self, form_ids):
-        return self.db_accessor.soft_undelete_forms(self.domain, form_ids)
 
 
 class AbstractCaseAccessor(six.with_metaclass(ABCMeta)):
@@ -225,14 +218,6 @@ class AbstractCaseAccessor(six.with_metaclass(ABCMeta)):
     def soft_delete_cases(domain, case_ids, deletion_date=None, deletion_id=None):
         raise NotImplementedError
 
-    @abstractmethod
-    def soft_undelete_cases(domain, case_ids):
-        raise NotImplementedError
-
-    @abstractmethod
-    def get_deleted_case_ids_by_owner(domain, owner_id):
-        raise NotImplementedError
-
 
 class CaseAccessors(object):
     """
@@ -305,15 +290,9 @@ class CaseAccessors(object):
     def soft_delete_cases(self, case_ids, deletion_date=None, deletion_id=None):
         return self.db_accessor.soft_delete_cases(self.domain, case_ids, deletion_date, deletion_id)
 
-    def soft_undelete_cases(self, case_ids):
-        return self.db_accessor.soft_undelete_cases(self.domain, case_ids)
-
     @quickcache(['self.domain'], timeout=30 * 60)
     def get_case_types(self):
         return self.db_accessor.get_case_types_for_domain(self.domain)
-
-    def get_deleted_case_ids_by_owner(self, owner_id):
-        self.db_accessor.get_deleted_case_ids_by_owner(self.domain, owner_id)
 
 
 def get_cached_case_attachment(domain, case_id, attachment_id, is_image=False):

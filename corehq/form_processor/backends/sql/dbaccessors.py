@@ -153,17 +153,6 @@ class FormAccessorSQL(AbstractFormAccessor):
             return sum([result.affected_count for result in results])
 
     @staticmethod
-    def soft_undelete_forms(domain, form_ids):
-        assert isinstance(form_ids, list)
-        with get_cursor(CommCareCaseSQL) as cursor:
-            cursor.execute(
-                'SELECT soft_undelete_forms(%s, %s) as affected_count',
-                [domain, form_ids]
-            )
-            results = fetchall_as_namedtuple(cursor)
-            return sum([result.affected_count for result in results])
-
-    @staticmethod
     @transaction.atomic
     def _archive_unarchive_form(form, user_id, archive):
         from casexml.apps.case.xform import get_case_ids_from_form
@@ -616,27 +605,6 @@ class CaseAccessorSQL(AbstractCaseAccessor):
             )
             results = fetchall_as_namedtuple(cursor)
             return sum([result.affected_count for result in results])
-
-    @staticmethod
-    def soft_undelete_cases(domain, case_ids):
-        assert isinstance(case_ids, list)
-        with get_cursor(CommCareCaseSQL) as cursor:
-            cursor.execute(
-                'SELECT soft_undelete_cases(%s, %s) as affected_count',
-                [domain, case_ids]
-            )
-            results = fetchall_as_namedtuple(cursor)
-            return sum([result.affected_count for result in results])
-
-    @staticmethod
-    def get_deleted_case_ids_by_owner(domain, owner_id):
-        with get_cursor(CommCareCaseSQL) as cursor:
-            cursor.execute(
-                'SELECT case_id FROM get_deleted_case_ids_by_owner(%s, %s)',
-                [domain, owner_id]
-            )
-            results = fetchall_as_namedtuple(cursor)
-            return [result.case_id for result in results]
 
 
 class LedgerAccessorSQL(object):
