@@ -250,10 +250,8 @@ class TableConfiguration(DocumentSchema):
         Return each instance of a repeat group at the path from the given docs.
         If path is [], just return the docs
 
-        >>> TableConfiguration._get_sub_documents_helper(['foo'], [{'foo': {'bar': 'a'}}, {'foo': {'bar': 'b'}}])
-        [{'bar': 'a'}, {'bar': 'b'}]
-        >>> TableConfiguration._get_sub_documents_helper(['foo', 'bar'], [{'foo': [{'bar': {'baz': 'a'}}, {'bar': {'baz': 'b'}},]}]
-        [{'baz': 'a'}, {'baz': 'b'}]
+        See corehq.apps.export.tests.test_table_configuration.TableConfigurationGetRowsTest.test_get_sub_documents
+        for examples
 
         :param path: A list of a strings
         :param docs: A list of dicts representing form submissions
