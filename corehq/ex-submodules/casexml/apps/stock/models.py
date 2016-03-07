@@ -42,8 +42,8 @@ class ConsumptionMixin(object):
     def is_stockout(self):
         return (
             self.type == const.TRANSACTION_TYPE_STOCKOUT or
-            (self.type == const.TRANSACTION_TYPE_STOCKONHAND and self.consumption_value == 0) or
-            (self.type == 'stockedoutfor' and self.consumption_value > 0)
+            (self.type == const.TRANSACTION_TYPE_STOCKONHAND and self.normalized_value == 0) or
+            (self.type == 'stockedoutfor' and self.normalized_value > 0)
         )
 
     @property
