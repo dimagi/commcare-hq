@@ -1,5 +1,6 @@
 from datetime import datetime, timedelta
 import json
+import warnings
 from dimagi.utils.make_uuid import random_hex
 from django import template
 from django.conf import settings
@@ -107,7 +108,9 @@ def cachebuster(url):
 
 @register.simple_tag()
 def new_static(url, **kwargs):
-    return static(url, **kwargs)
+    if kwargs:
+        warnings.warn('new_static no longer accepts arguments', PendingDeprecationWarning)
+    return static(url)
 
 
 @quickcache(['couch_user.username'])
