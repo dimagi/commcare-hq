@@ -335,6 +335,7 @@ class CaseAccessorSQL(AbstractCaseAccessor):
     def get_all_reverse_indices_info(domain, case_ids):
         # TODO: If the domain field is used on CommCareCaseIndexSQL
         # in the future, this function should filter by it.
+        assert isinstance(case_ids, list)
         indexes = CommCareCaseIndexSQL.objects.raw('SELECT * FROM get_all_reverse_indices(%s)', [case_ids])
         return [
             CaseIndexInfo(
