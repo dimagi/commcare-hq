@@ -1,7 +1,9 @@
+from django.utils import translation
+
 from casexml.apps.stock.models import StockTransaction
 from corehq.apps.commtrack.models import StockState
 from custom.ilsgateway.models import SupplyPointStatus, SupplyPointStatusTypes, SupplyPointStatusValues
-from custom.ilsgateway.tanzania.reminders import SOH_CONFIRM, SOH_PARTIAL_CONFIRM, SOH_BAD_FORMAT
+from custom.ilsgateway.tanzania.reminders import SOH_CONFIRM, SOH_PARTIAL_CONFIRM, SOH_BAD_FORMAT, LANGUAGE_CONFIRM
 from custom.ilsgateway.tests.handlers.utils import ILSTestScript, add_products
 
 
@@ -19,6 +21,8 @@ class ILSSoHTest(ILSTestScript):
         self.assertEqual(StockTransaction.objects.all().count(), 3)
         self.assertEqual(StockState.objects.all().count(), 3)
 
+        quantities = [400, 569, 678]
+
         self.assertEqual(2, SupplyPointStatus.objects.count())
         soh_status = SupplyPointStatus.objects.get(status_type=SupplyPointStatusTypes.SOH_FACILITY)
         self.assertEqual(self.user1.location_id, soh_status.location_id)
@@ -26,8 +30,8 @@ class ILSSoHTest(ILSTestScript):
         la_status = SupplyPointStatus.objects.get(status_type=SupplyPointStatusTypes.LOSS_ADJUSTMENT_FACILITY)
         self.assertEqual(self.user1.location_id, la_status.location_id)
         self.assertEqual(SupplyPointStatusValues.REMINDER_SENT, la_status.status_value)
-        for stock_transaction in StockTransaction.objects.all():
-            self.assertTrue(stock_transaction.stock_on_hand != 0)
+        for idx, stock_transaction in enumerate(StockTransaction.objects.all().order_by('pk')):
+            self.assertEqual(stock_transaction.stock_on_hand, quantities[idx])
 
     def test_stock_on_hand_stockouts(self):
         script = """
@@ -229,3 +233,31 @@ class ILSSoHTest(ILSTestScript):
         self.run_script(script)
 
         self.assertEqual(StockState.objects.get(sql_product__code='ff').stock_on_hand, 100)
+
+    def test_stock_on_hand_language_swahili(self):
+        translation.activate("sw")
+        product_codes = ["fs", "md"]
+        add_products(self.loc1.sql_location, product_codes)
+
+        script = """
+            5551234 > hmk fs100md100
+            5551234 < %(soh_confirm)s
+        """ % {"soh_confirm": unicode(SOH_CONFIRM)}
+        self.run_script(script)
+
+    def test_stock_on_hand_language_english(self):
+        translation.activate("en")
+        product_codes = ["fs", "md"]
+        add_products(self.loc1.sql_location, product_codes)
+
+        language_message = """
+            5551234 > language en
+            5551234 < {0}
+        """.format(unicode(LANGUAGE_CONFIRM % dict(language='English')))
+        self.run_script(language_message)
+
+        script = """
+            5551234 > hmk fs100md100
+            5551234 < %(soh_confirm)s
+        """ % {"soh_confirm": unicode(SOH_CONFIRM)}
+        self.run_script(script)
