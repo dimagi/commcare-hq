@@ -13,3 +13,5 @@ class CloudcareAppConfig(AppConfig):
 
 # constants
 CLOUDCARE_DEVICE_ID = "cloudcare"
+
+default_app_config = 'corehq.apps.cloudcare.CloudcareAppConfig'
