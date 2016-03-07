@@ -84,12 +84,14 @@ casexml.apps.stock:
   - corehq.sql_accessors
   - corehq.sql_proxy_accessors
   - corehq.apps.commtrack
+  - corehq.apps.domain
   - corehq.apps.hqcase
   - corehq.apps.locations
   - corehq.apps.products
   - corehq.apps.reminders
   - corehq.apps.sms
   - corehq.apps.smsforms
+  - corehq.apps.users
   - corehq.apps.tzmigration
   - couchforms
   - phonelog
