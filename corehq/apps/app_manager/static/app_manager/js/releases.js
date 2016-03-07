@@ -30,42 +30,6 @@ function SavedApp(app_data, releasesMain) {
         }
     };
 
-    self.get_short_odk_url = ko.computed(function() {
-        if (self.include_media()) {
-           if (self.short_odk_media_url) {
-                if (!self.short_odk_media_url()){
-                    self.generate_short_url('short_odk_media_url');
-                }
-               return self.short_odk_media_url();
-           }
-        } else {
-            if (self.short_odk_url) {
-                // short_odk_url is generated on first click. 
-                // not having `self.generate_short_url()` here prevents the 
-                // link from being automatically generated when a build is created.
-                return self.short_odk_url();
-            }
-        }
-        return false;
-    });
-
-    self.get_app_code = ko.computed(function() {
-        var short_odk_url = self.get_short_odk_url();
-        if (short_odk_url) {
-            // Matches "foo" in "http://bit.ly/foo" and "https://is.gd/X/foo/" ("*" is not greedy)
-            var re = /^http.*\/(\w+)\/?/;
-            var match = short_odk_url.match(re);
-            if (match) {
-                return match[1];
-            }
-        }
-        return false;
-    });
-
-    self.get_short_odk_url_phonetic = ko.computed(function () {
-        return app_manager_utils.bitly_nato_phonetic(self.get_short_odk_url());
-    });
-
     self.allow_media_install = ko.computed(function(){
         return self.doc_type() !== "RemoteApp";  // remote apps don't support multimedia
     });
