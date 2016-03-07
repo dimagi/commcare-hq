@@ -56,7 +56,6 @@ branches:
   - revamp-multimedia # Jenny 2/16
   - analytics-retry # Cal 2/18
 #  - upgrade-django-tastypie # Nick P 2/22
-  - email_list-soft_assert # Nick P 2/23
   - j2me # j$ 2/23
   # B3 Changes round 2
   - b3-reports-data  # BB 2/23
