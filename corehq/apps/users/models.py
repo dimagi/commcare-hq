@@ -1552,17 +1552,6 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
             django_user.delete()
         self.save()
 
-    def unretire(self):
-        if self.base_doc.endswith(DELETED_SUFFIX):
-            self.base_doc = self.base_doc[:-len(DELETED_SUFFIX)]
-
-        deleted_form_ids = self._get_deleted_form_ids()
-        FormAccessors(self.domain).soft_undelete_forms(deleted_form_ids)
-
-        deleted_case_ids = self._get_deleted_case_ids()
-        CaseAccessors(self.domain).soft_undelete_cases(deleted_case_ids)
-        self.save()
-
     def get_case_sharing_groups(self):
         from corehq.apps.groups.models import Group
         # get faked location group objects
