@@ -285,11 +285,8 @@ class ConfigurableReport(JSONResponseMixin, BaseDomainView):
                 'warning': msg
             })
 
-        # todo: this is ghetto pagination - still doing a lot of work in the database
         datatables_params = DatatablesParams.from_request_dict(request.GET)
-        end = min(datatables_params.start + datatables_params.count, total_records)
-        data = list(data_source.get_data())
-        page = data[datatables_params.start:end]
+        page = list(data_source.get_data(start=datatables_params.start, limit=datatables_params.count))
 
         json_response = {
             'aaData': page,
@@ -298,9 +295,10 @@ class ConfigurableReport(JSONResponseMixin, BaseDomainView):
             "iTotalDisplayRecords": total_records,
         }
         if data_source.has_total_row:
+            # TODO - use sqlagg to get total_row
             json_response.update({
                 "total_row": get_total_row(
-                    data, data_source.aggregation_columns, data_source.column_configs,
+                    data_source.get_data(), data_source.aggregation_columns, data_source.column_configs,
                     get_expanded_columns(data_source.column_configs, data_source.config)
                 ),
             })
