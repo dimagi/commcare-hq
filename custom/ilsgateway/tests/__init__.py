@@ -21,5 +21,6 @@ from .handlers.stockout import *
 from .handlers.messageinitatior import *
 from .handlers.bugs import *
 from .handlers.deliverygroups import *
+from .handlers.help import *
 from .test_reminders import *
 from .test_report_runner import *
