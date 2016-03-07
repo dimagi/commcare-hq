@@ -113,9 +113,11 @@ class ConfigurableReportDataSource(SqlData):
                 for sort_column_id, order in self._order_by
                 if self._column_configs[sort_column_id].type != 'percent'
             ]
-        return [
-            OrderBy(self.column_configs[0].column_id, is_ascending=True)
-        ] if self.column_configs[0].type != 'percent' else []
+        if self.column_configs and self.column_configs[0].type != 'percent':
+            return [
+                OrderBy(self.column_configs[0].column_id, is_ascending=True)
+            ]
+        return []
 
     @property
     def columns(self):
