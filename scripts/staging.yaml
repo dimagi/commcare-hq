@@ -92,4 +92,5 @@ submodules:
   submodules/django-prbac-src:
     branches: []
   corehq/apps/prelogin:
-    branches: []
+    branches: #[]
+      - bring-back-static-versioning  # Danny 3/7
