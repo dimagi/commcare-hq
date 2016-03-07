@@ -58,6 +58,4 @@ class TestDeleteDomain(TestCase):
 
     def tearDown(self):
         FacilityInCharge.objects.all().delete()
-        for loc in self.locations.values():
-            loc.delete()
         self.domain2.delete()
