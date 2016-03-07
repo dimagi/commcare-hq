@@ -872,13 +872,14 @@ class CommConnectCase(CommCareCase, CommCareMobileContactMixin):
         app_label = "sms"
 
 
-class PhoneNumber(models.Model):
+class PhoneBlacklist(models.Model):
     """
-    Represents a single phone number. This is not intended to be a
-    comprehensive list of phone numbers in the system (yet). For
-    now, it's only used to prevent sending SMS/IVR to phone numbers who
-    have opted out.
+    Each entry represents a single phone number and whether we can send SMS
+    to that number or make calls to that number.
     """
+    class Meta:
+        db_table = 'messaging_phoneblacklist'
+
     phone_number = models.CharField(max_length=30, unique=True, null=False, db_index=True)
 
     # True if it's ok to send SMS to this phone number, False if not
