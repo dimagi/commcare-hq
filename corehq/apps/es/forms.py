@@ -55,9 +55,11 @@ def completed(gt=None, gte=None, lt=None, lte=None):
 
 
 def user_id(user_ids):
+    if not isinstance(user_ids, (list, set)):
+        user_ids = [user_ids]
     return filters.term(
         'form.meta.userID',
-        [x if x is not None else NULL_VALUE for x in list(user_ids)]
+        [x if x is not None else NULL_VALUE for x in user_ids]
     )
 
 
