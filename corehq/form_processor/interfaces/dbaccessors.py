@@ -5,6 +5,7 @@ import six
 from StringIO import StringIO
 
 from corehq.util.quickcache import quickcache
+from dimagi.utils.chunked import chunked
 from dimagi.utils.decorators.memoized import memoized
 
 from ..utils import should_use_sql_backend
@@ -90,6 +91,12 @@ class FormAccessors(object):
 
     def get_forms(self, form_ids):
         return self.db_accessor.get_forms(form_ids)
+
+    def iter_forms(self, form_ids):
+        for chunk in chunked(form_ids, 100):
+            chunk = list(filter(None, chunk))
+            for form in self.get_forms(chunk):
+                yield form
 
     def form_exists(self, form_id):
         return self.db_accessor.form_exists(form_id)
@@ -214,6 +221,12 @@ class CaseAccessors(object):
 
     def get_cases(self, case_ids, ordered=False):
         return self.db_accessor.get_cases(case_ids, ordered=ordered)
+
+    def iter_cases(self, case_ids):
+        for chunk in chunked(case_ids, 100):
+            chunk = list(filter(None, chunk))
+            for case in self.get_cases(chunk):
+                yield case
 
     def get_case_xform_ids(self, case_ids):
         return self.db_accessor.get_case_xform_ids(case_ids)

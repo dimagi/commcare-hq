@@ -6,14 +6,12 @@
 
             if ($change_doc_type) {
                 $('#id_doc_type_choices').parent().parent().hide();
-                $('#id_change_doc_type').removeAttr('checked');
+                $('#id_change_doc_type').removeProp('checked');
                 $change_doc_type.change(function () {
                     var $doc_type = $('#id_doc_type_choices').parent().parent();
-                    ($(this).attr('checked')) ? $doc_type.fadeIn() : $doc_type.fadeOut();
+                    ($(this).prop('checked')) ? $doc_type.fadeIn() : $doc_type.fadeOut();
                 });
             }
-
-            $('#crud_update_modal #id_slug').addClass('disabled').attr('disabled', 'disabled');
 
         })
     </script>

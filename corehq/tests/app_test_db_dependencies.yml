@@ -201,6 +201,7 @@ corehq.apps.locations:
   - corehq.apps.tour
 corehq.apps.userreports:
   - casexml.apps.case
+  - casexml.apps.phone
   - casexml.apps.stock
   - corehq.couchapps
   - corehq.form_processor
@@ -217,6 +218,7 @@ corehq.apps.userreports:
   - corehq.apps.users
   - couchforms
   - corehq.apps.smsforms
+  - pillowtop
 couchforms:
   - casexml.apps.case
   - casexml.apps.phone
@@ -292,6 +294,7 @@ corehq.apps.repeaters:
   - corehq.apps.users
   - corehq.couchapps
   - couchforms
+  - phonelog
   - django_prbac
   # unfortunately domain.delete() needs all of these - otherwise they could be removed
   - custom.logistics
@@ -372,6 +375,16 @@ corehq.couchapps:
   - casexml.apps.phone
   - corehq.apps.tzmigration
   - corehq.apps.domain
+  - corehq.form_processor
+  - corehq.sql_accessors
+  - couchforms
+corehq.apps.data_interfaces:
+  - casexml.apps.case
+  - casexml.apps.phone
+  - corehq.apps.tzmigration
+  - corehq.apps.domain
+  - corehq.apps.hqcase
+  - corehq.couchapps
   - corehq.form_processor
   - corehq.sql_accessors
   - couchforms

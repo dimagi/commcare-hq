@@ -3,20 +3,13 @@
 {% load hq_shared_tags %}
 
 {% block js %}{{ block.super }}
-    <script src="{% new_static 'style/js/bootstrap2/main.js' %}"></script>
+    <script src="{% new_static 'style/js/bootstrap3/main.js' %}"></script>
     <script src="{% new_static 'app_manager/js/case-knockout-bindings.js' %}"></script>
 {% endblock %}
 
 {% block page_title %}{% trans "Configure Report Settings" %}{% endblock page_title %}
 
 {% block js-inline %}{{ block.super }}
-    <script>
-        $(function () {
-            $('.hq-help-template').each(function () {
-                COMMCAREHQ.transformHelpTemplate($(this), true);
-            });
-        });
-    </script>
     <script type="text/javascript">
         /**
          * Knockout view model representing a row in the filter property list

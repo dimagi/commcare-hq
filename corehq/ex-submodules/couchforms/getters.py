@@ -8,6 +8,8 @@ from couchforms.const import (
 import logging
 from datetime import datetime
 from django.conf import settings
+
+from dimagi.utils.logging import notify_error
 from dimagi.utils.parsing import string_to_utc_datetime
 from dimagi.utils.web import get_ip, get_site_domain
 
@@ -21,6 +23,10 @@ def get_path(request):
     return request.path
 
 
+class MultimediaBug(Exception):
+    pass
+
+
 def get_instance_and_attachment(request):
     try:
         return request._instance_and_attachment
@@ -30,6 +36,10 @@ def get_instance_and_attachment(request):
     if request.META['CONTENT_TYPE'].startswith('multipart/form-data'):
         # ODK submission; of the form
         # $ curl --form 'xml_submission_file=@form.xml' $URL
+
+        if request.POST.keys():
+            raise MultimediaBug("Received a submission with POST.keys()")
+
         try:
             instance = request.FILES[MAGIC_PROPERTY].read()
         except MultiValueDictKeyError:

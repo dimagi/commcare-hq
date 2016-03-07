@@ -20,16 +20,21 @@ from corehq.apps.indicators.models import (
     DynamicIndicatorDefinition,
 )
 from corehq.apps.indicators.utils import get_indicator_domains, get_namespaces
-from corehq.apps.style.decorators import use_bootstrap3
+from corehq.apps.style.decorators import use_bootstrap3, use_jquery_ui, \
+    use_jquery_ui_multiselect
+from corehq.apps.style.utils import set_bootstrap_version3
 from dimagi.utils.decorators.memoized import memoized
 from dimagi.utils.modules import to_function
 
 
 @require_edit_indicators
 @login_and_domain_required
-def default_admin(request, domain, template="reports/bootstrap2/base_template.html", **kwargs):
+def default_admin(request, domain, template="reports/bootstrap3/base_template.html", **kwargs):
     if request.domain not in get_indicator_domains():
         raise Http404
+    set_bootstrap_version3()
+    request.use_jquery_ui = True
+    request.use_datatables = True
     from corehq.apps.indicators.admin import BaseIndicatorAdminInterface
     context = dict(
         domain=domain,
@@ -60,6 +65,9 @@ class BulkCopyIndicatorsView(TemplateView):
     template_name = "indicators/forms/copy_to_domain.html"
 
     @method_decorator(require_edit_indicators)
+    @use_bootstrap3
+    @use_jquery_ui
+    @use_jquery_ui_multiselect
     def dispatch(self, request, domain, indicator_type=None, *args, **kwargs):
         self.domain = domain
         try:

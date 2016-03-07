@@ -45,12 +45,14 @@
 trunk: master
 name: autostaging
 branches:
-  - use-hqImport  # Danny 2/26
+  - flip_apps_db  # Danny 3/1
+#  - calculatedIcons+use-hqImport # Sravan 3/2
+#  - use-hqImport  # Danny 2/26
+  - calculatedIcons # Sravan 3/2
   - vellum-staging # J$ 11/13
   - java-tf-deploy # Ben/Will 1/21/16
   - finish-two-factor # Cal 1/21
   - show-form-case-refs-in-summary # j$ 1/29
-  - keyboard-shortcuts-cleanup # Jenny 3/1
   - revamp-multimedia # Jenny 2/16
   - analytics-retry # Cal 2/18
   - upgrade-django-tastypie # Nick P 2/22
@@ -68,9 +70,10 @@ branches:
   - b3-reports-inspect-data  # Biyeun 1/21
   - b3-reports-manage-deployments  # Biyeun 1/21
   - b3-reports-messaging  # Biyeun 1/21
-  - drilldown-async # Biyeun 2/29
+  - no-js-in-filter # Biyeun 2/29
   - import_build-anchor-tag # Nick P 2/29
   - b3-project-settings-accounting  # Biyeun 3/1
+  - report-builder-text # Cal 3/1
 submodules:
   submodules/touchforms-src:
     # let's leave this here even when empty

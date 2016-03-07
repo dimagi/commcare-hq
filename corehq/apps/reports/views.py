@@ -638,7 +638,8 @@ class AddSavedReportConfigView(View):
         self.domain = domain
 
         if not self.saved_report_config_form.is_valid():
-            return HttpResponseBadRequest()
+            errors = self.saved_report_config_form.errors.get('__all__', [])
+            return HttpResponseBadRequest(', '.join(errors))
 
         update_config_data = copy(self.saved_report_config_form.cleaned_data)
         del update_config_data['_id']

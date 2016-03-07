@@ -1046,7 +1046,7 @@ class Domain(QuickCachedDocumentMixin, Document, SnapshotMixin):
         left around for special applications, and not a feature
         flag that should be set normally.
         """
-        return toggles.MULTIPLE_LOCATIONS_PER_USER.enabled(self)
+        return toggles.MULTIPLE_LOCATIONS_PER_USER.enabled(self.name)
 
     def convert_to_commtrack(self):
         """

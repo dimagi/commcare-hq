@@ -537,7 +537,11 @@ class CommCareCaseSQL(DisabledDbMixin, models.Model, RedisLockableMixIn,
     def to_json(self):
         from .serializers import CommCareCaseSQLSerializer
         serializer = CommCareCaseSQLSerializer(self)
-        return serializer.data
+        ret = serializer.data
+        for key in self.case_json:
+            if key not in ret:
+                ret[key] = self.case_json[key]
+        return ret
 
     def dumps(self, pretty=False):
         indent = 4 if pretty else None
@@ -631,6 +635,16 @@ class CommCareCaseSQL(DisabledDbMixin, models.Model, RedisLockableMixIn,
         ]
         return normalized_actions
 
+    def get_case_property(self, property):
+        if property in self.case_json:
+            return self.case_json[property]
+
+        allowed_fields = [
+            field.name for field in self._meta.fields
+            if field.name not in ('id', 'case_json')
+        ]
+        if property in allowed_fields:
+            return getattr(self, property)
 
     def on_tracked_models_cleared(self, model_class=None):
         self._saved_indices.reset_cache(self)

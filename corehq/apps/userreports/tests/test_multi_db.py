@@ -128,11 +128,12 @@ class UCRMultiDBTest(TestCase):
 
         # save to the other
         pillow.bootstrap(configs=[self.ds_2])
+        orig_id = sample_doc['_id']
         sample_doc['_id'] = uuid.uuid4().hex
         pillow.change_transport(sample_doc)
         self.assertEqual(1, self.ds1_adapter.get_query_object().count())
         self.assertEqual(1, self.ds2_adapter.get_query_object().count())
-        self.assertEqual(1, self.ds1_adapter.get_query_object().filter_by(doc_id='some-doc-id').count())
+        self.assertEqual(1, self.ds1_adapter.get_query_object().filter_by(doc_id=orig_id).count())
         self.assertEqual(1, self.ds2_adapter.get_query_object().filter_by(doc_id=sample_doc['_id']).count())
 
     def test_report_data_source(self):

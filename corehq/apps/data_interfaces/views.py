@@ -441,13 +441,13 @@ class CaseGroupCaseManagementView(DataInterfaceSection, CRUDPaginatedViewMixin):
                 'template': 'case-message-template',
             }
         item_data = self._get_item_data(case)
-        if case._id in self.case_group.cases:
+        if case.case_id in self.case_group.cases:
             message = '<span class="label label-important">%s</span>' % _("Case already in group")
         elif case.doc_type != 'CommCareCase':
             message = '<span class="label label-important">%s</span>' % _("It looks like this case was deleted.")
         else:
             message = '<span class="label label-success">%s</span>' % _("Case added")
-            self.case_group.cases.append(case._id)
+            self.case_group.cases.append(case.case_id)
             self.case_group.save()
         item_data['message'] = message
         return {
