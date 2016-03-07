@@ -28,6 +28,9 @@ class GenericStockReportHandler(KeywordHandler):
     def on_success(self):
         raise NotImplemented()
 
+    def on_error(self, data):
+        raise NotImplemented()
+
     def handle(self):
         location = self.user.location
         domain = self.domain_object
@@ -42,8 +45,17 @@ class GenericStockReportHandler(KeywordHandler):
                 data = self.data
                 if not data:
                     return True
+
+                if not data.get('transactions'):
+                    self.on_error(data)
+                    return True
+
                 process(domain.name, data)
-                self.on_success()
+                if not data['errors']:
+                    self.on_success()
+                else:
+                    self.on_error(data)
+                    return True
                 self.respond(self.get_message(data))
             except NotAUserClassError:
                 return True

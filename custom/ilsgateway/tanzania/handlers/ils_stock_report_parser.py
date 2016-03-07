@@ -22,7 +22,11 @@ class ILSStockReportParser(StockReportParser):
 
     def parse(self, text):
         text = self._formatterBridge.format(text)
-        result = super(ILSStockReportParser, self).parse(text)
+        result = {}
+        try:
+            result = super(ILSStockReportParser, self).parse(text)
+        except SMSError:
+            pass
         result['errors'] = self.errors
         return result
 
