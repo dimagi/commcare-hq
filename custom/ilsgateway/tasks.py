@@ -246,37 +246,37 @@ district_delivery_partial = partial(send_for_day, cutoff=13, reminder_class=Deli
                                     location_type='DISTRICT')
 
 
-@periodic_task(run_every=crontab(day_of_month="13-15", hour=14, minute=0),
+@periodic_task(run_every=crontab(day_of_month="13-15", hour=11, minute=0),
                queue="logistics_reminder_queue")
 def first_facility_delivery_task():
     facility_delivery_partial(15)
 
 
-@periodic_task(run_every=crontab(day_of_month="20-22", hour=14, minute=0),
+@periodic_task(run_every=crontab(day_of_month="20-22", hour=11, minute=0),
                queue="logistics_reminder_queue")
 def second_facility_delivery_task():
     facility_delivery_partial(22)
 
 
-@periodic_task(run_every=crontab(day_of_month="26-30", hour=14, minute=0),
+@periodic_task(run_every=crontab(day_of_month="26-30", hour=11, minute=0),
                queue="logistics_reminder_queue")
 def third_facility_delivery_task():
     facility_delivery_partial(30)
 
 
-@periodic_task(run_every=crontab(day_of_month="11-13", hour=8, minute=0),
+@periodic_task(run_every=crontab(day_of_month="11-13", hour=5, minute=0),
                queue="logistics_reminder_queue")
 def first_district_delivery_task():
     district_delivery_partial(13)
 
 
-@periodic_task(run_every=crontab(day_of_month="18-20", hour=14, minute=0),
+@periodic_task(run_every=crontab(day_of_month="18-20", hour=11, minute=0),
                queue="logistics_reminder_queue")
 def second_district_delivery_task():
     district_delivery_partial(20)
 
 
-@periodic_task(run_every=crontab(day_of_month="26-28", hour=14, minute=0),
+@periodic_task(run_every=crontab(day_of_month="26-28", hour=11, minute=0),
                queue="logistics_reminder_queue")
 def third_district_delivery_task():
     district_delivery_partial(28)
@@ -286,46 +286,46 @@ facility_randr_partial = partial(send_for_day, cutoff=5, reminder_class=RandrRem
 district_randr_partial = partial(send_for_day, cutoff=13, reminder_class=RandrReminder, location_type='DISTRICT')
 
 
-@periodic_task(run_every=crontab(day_of_month="3-5", hour=8, minute=0),
+@periodic_task(run_every=crontab(day_of_month="3-5", hour=5, minute=0),
                queue="logistics_reminder_queue")
 def first_facility():
     """Last business day before or on 5th day of the Submission month, 8:00am"""
     facility_randr_partial(5)
 
 
-@periodic_task(run_every=crontab(day_of_month="8-10", hour=8, minute=0),
+@periodic_task(run_every=crontab(day_of_month="8-10", hour=5, minute=0),
                queue="logistics_reminder_queue")
 def second_facility():
     """Last business day before or on 10th day of the submission month, 8:00am"""
     facility_randr_partial(10)
 
 
-@periodic_task(run_every=crontab(day_of_month="10-12", hour=8, minute=0),
+@periodic_task(run_every=crontab(day_of_month="10-12", hour=5, minute=0),
                queue="logistics_reminder_queue")
 def third_facility():
     """Last business day before or on 12th day of the submission month, 8:00am"""
     facility_randr_partial(12)
 
 
-@periodic_task(run_every=crontab(day_of_month="11-13", hour=8, minute=0),
+@periodic_task(run_every=crontab(day_of_month="11-13", hour=5, minute=0),
                queue="logistics_reminder_queue")
 def first_district():
     district_randr_partial(13)
 
 
-@periodic_task(run_every=crontab(day_of_month="13-15", hour=8, minute=0),
+@periodic_task(run_every=crontab(day_of_month="13-15", hour=5, minute=0),
                queue="logistics_reminder_queue")
 def second_district():
     district_randr_partial(15)
 
 
-@periodic_task(run_every=crontab(day_of_month="15-17", hour=14, minute=0),
+@periodic_task(run_every=crontab(day_of_month="15-17", hour=11, minute=0),
                queue="logistics_reminder_queue")
 def third_district():
     district_randr_partial(17)
 
 
-@periodic_task(run_every=crontab(day_of_month="26-31", hour=14, minute=15),
+@periodic_task(run_every=crontab(day_of_month="26-31", hour=11, minute=15),
                queue="logistics_reminder_queue")
 def supervision_task():
     now = datetime.utcnow()
@@ -341,7 +341,7 @@ def get_last_and_nth_business_day(date, n):
     return last_month_last_day, nth_business_day
 
 
-@periodic_task(run_every=crontab(day_of_month="26-31", hour=14, minute=0),
+@periodic_task(run_every=crontab(day_of_month="26-31", hour=11, minute=0),
                queue="logistics_reminder_queue")
 def first_soh_task():
     now = datetime.utcnow()
@@ -350,7 +350,7 @@ def first_soh_task():
         send_for_all_domains(last_business_day, SOHReminder)
 
 
-@periodic_task(run_every=crontab(day_of_month="1-3", hour=9, minute=0),
+@periodic_task(run_every=crontab(day_of_month="1-3", hour=6, minute=0),
                queue="logistics_reminder_queue")
 def second_soh_task():
     now = datetime.utcnow()
@@ -359,7 +359,7 @@ def second_soh_task():
         send_for_all_domains(last_month_last_day, SOHReminder)
 
 
-@periodic_task(run_every=crontab(day_of_month="5-7", hour=8, minute=15),
+@periodic_task(run_every=crontab(day_of_month="5-7", hour=5, minute=15),
                queue="logistics_reminder_queue")
 def third_soh_task():
     now = datetime.utcnow()
