@@ -234,7 +234,7 @@ function ReleasesMain(o) {
         }
     };
 
-    self.getMoreSavedApps = function () {
+    self.getMoreSavedApps = function (scroll) {
         self.fetchState('pending');
         $.ajax({
             url: self.url('fetch'),
@@ -246,7 +246,11 @@ function ReleasesMain(o) {
             success: function (savedApps) {
                 self.addSavedApps(savedApps);
                 self.fetchState('');
-                window.scrollTo(0,document.body.scrollHeight);
+                if (scroll) {
+                    // Scroll so the bottom of main content (and the "View More" button) aligns with the bottom of the window
+                    var $content = $("#hq-content");
+                    window.scrollTo(0, $content.position().top + $content.height() - window.innerHeight);
+                }
             },
             error: function () {
                 self.fetchState('error');
@@ -325,7 +329,7 @@ function ReleasesMain(o) {
     self.reloadApps = function () {
         self.savedApps([]);
         self.nextVersionToFetch = null;
-        self.getMoreSavedApps();
+        self.getMoreSavedApps(false);
     };
     self.actuallyMakeBuild = function () {
         var comment = window.prompt(
