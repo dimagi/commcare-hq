@@ -16,7 +16,6 @@ class ILSLossesAdjustmentsTest(ILSTestScript):
         """.format(unicode(SOH_CONFIRM))
         self.run_script(script)
 
-        self.run_script(script)
         self.assertEqual(StockState.objects.count(), 3)
         for ps in StockState.objects.all():
             self.assertEqual(self.user_fac1.location.linked_supply_point().get_id, ps.case_id)
@@ -42,7 +41,6 @@ class ILSLossesAdjustmentsTest(ILSTestScript):
         """.format(unicode(SOH_CONFIRM))
         self.run_script(script)
 
-        self.run_script(script)
         self.assertEqual(StockState.objects.count(), 3)
         for ps in StockState.objects.all():
             self.assertEqual(self.user_fac1.location.linked_supply_point().get_id, ps.case_id)
