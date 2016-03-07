@@ -262,3 +262,4 @@ $(function () {
 
 COMMCAREHQ.toggleEnabled = hqImport('hqwebapp/js/toggles.js').toggleEnabled;
 COMMCAREHQ.previewEnabled = hqImport('hqwebapp/js/toggles.js').previewEnabled;
+COMMCAREHQ.staticFilesHaveBeenUpgraded = 'They Sure Have!';
