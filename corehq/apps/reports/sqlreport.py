@@ -242,12 +242,14 @@ class SqlData(ReportDataSource):
         else:
             return []
 
-    @property
-    def query_context(self):
-        return sqlagg.QueryContext(self.table_name, self.wrapped_filters, self.group_by, self.order_by)
+    def query_context(self, start=None, limit=None):
+        return sqlagg.QueryContext(
+            self.table_name, self.wrapped_filters, self.group_by, self.order_by,
+            start=start, limit=limit
+        )
 
-    def get_data(self):
-        data = self._get_data()
+    def get_data(self, start=None, limit=None):
+        data = self._get_data(start=start, limit=limit)
         formatter = DataFormatter(DictDataFormat(self.columns, no_value=None))
         formatted_data = formatter.format(data, keys=self.keys, group_by=self.group_by)
 
@@ -259,11 +261,11 @@ class SqlData(ReportDataSource):
     def slugs(self):
         return [c.slug for c in self.columns]
 
-    def _get_data(self):
+    def _get_data(self, start=None, limit=None):
         if self.keys is not None and not self.group_by:
             raise SqlReportException('Keys supplied without group_by.')
 
-        qc = self.query_context
+        qc = self.query_context(start=start, limit=limit)
         for c in self.columns:
             qc.append_column(c.view)
 
