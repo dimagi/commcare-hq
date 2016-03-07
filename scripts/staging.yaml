@@ -74,7 +74,6 @@ branches:
   - import_build-anchor-tag # Nick P 2/29
   - b3-project-settings-accounting  # Biyeun 3/1
   - report-builder-text # Cal 3/1
-  - ucr-pagination # Nick P 3/7
 submodules:
   submodules/touchforms-src:
     # let's leave this here even when empty
