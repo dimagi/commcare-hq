@@ -658,16 +658,6 @@ class CaseAccessorsTests(TestCase):
         case = accessors.get_case('c3')
         self.assertFalse(case.is_deleted)
 
-        # undelete
-        num = accessors.soft_undelete_cases(['c2'])
-        self.assertEqual(num, 1)
-
-        c1 = accessors.get_case('c1')
-        c2 = accessors.get_case('c2')
-        self.assertTrue(c1.is_deleted)
-        self.assertFalse(c2.is_deleted)
-        self.assertIsNone(c2.deletion_id)
-
 
 def _create_case(domain=None, form_id=None, case_type=None, user_id=None):
     """

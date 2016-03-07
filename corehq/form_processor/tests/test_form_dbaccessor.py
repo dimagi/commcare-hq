@@ -334,17 +334,6 @@ class FormAccessorsTests(TestCase):
         form = accessors.get_form('f3')
         self.assertFalse(form.is_deleted)
 
-        # undelete
-        num = accessors.soft_undelete_forms(['f2'])
-        self.assertEqual(num, 1)
-
-        f1 = accessors.get_form('f1')
-        f2 = accessors.get_form('f2')
-        self.assertTrue(f1.is_deleted)
-        self.assertFalse(f2.is_deleted)
-        self.assertTrue(f2.is_archived)  # check that state is restored to value prior to delete
-        self.assertIsNone(f2.deletion_id)
-
 
 def _simulate_form_edit():
     existing_form = create_form_for_test(DOMAIN, save=False)
