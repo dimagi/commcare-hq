@@ -7,9 +7,8 @@ from unidecode import unidecode
 
 from corehq.apps.export.filters import (
     ReceivedOnRangeFilter,
-    FormSubmittedByFilter,
     GroupFormSubmittedByFilter,
-    OR, OwnerFilter, LastModifiedByFilter)
+    OR, OwnerFilter, LastModifiedByFilter, UserTypeFilter, OwnerTypeFilter)
 from corehq.apps.groups.models import Group
 from corehq.apps.reports.models import HQUserType
 from corehq.apps.reports.util import (
@@ -27,6 +26,7 @@ from corehq.apps.style.forms.widgets import (
     Select2MultipleChoiceWidget,
     DateRangePickerWidget,
 )
+from corehq.pillows import utils
 from couchexport.util import SerializableFunction
 
 from crispy_forms.bootstrap import InlineField
@@ -242,6 +242,27 @@ class BaseFilterExportDownloadForm(forms.Form):
         )
         return users_matching_filter(self.domain_object.name, user_filters)
 
+    def _get_es_user_types(self):
+        """
+        Return a list of elastic search user types (each item in the return list
+        is in corehq.pillows.utils.USER_TYPES) corresponding to the selected
+        export user types.
+        """
+        es_user_types = []
+        export_user_types = self.cleaned_data['user_types']
+        export_to_es_user_types_map = {
+            self._USER_MOBILE: [utils.MOBILE_USER_TYPE],
+            self._USER_DEMO: [utils.DEMO_USER_TYPE],
+            self._USER_ADMIN: [utils.ADMIN_USER_TYPE, utils.SYSTEM_USER_TYPE],
+            self._USER_UNKNOWN: [
+                utils.UNKNOWN_USER_TYPE, utils.WEB_USER_TYPE
+            ],
+            self._USER_SUPPLY: [utils.COMMCARE_SUPPLY_USER_TYPE]
+        }
+        for type_ in export_user_types:
+            es_user_types.extend(export_to_es_user_types_map[type_])
+        return es_user_types
+
     def _get_group(self):
         group = self.cleaned_data['group']
         if group:
@@ -398,7 +419,7 @@ class FilterFormESExportDownloadForm(GenericFilterFormExportDownloadForm):
     def _get_user_filter(self):
         group = self.cleaned_data['group']
         if not group:
-            return FormSubmittedByFilter(self._get_filtered_users())
+            return UserTypeFilter(self._get_es_user_types())
 
 
 class GenericFilterCaseExportDownloadForm(BaseFilterExportDownloadForm):
@@ -439,7 +460,7 @@ class FilterCaseESExportDownloadForm(GenericFilterCaseExportDownloadForm):
             case_sharing_groups = [g.get_id for g in
                                    Group.get_case_sharing_groups(self.domain_object.name)]
             case_filter = [OR(
-                OwnerFilter(self._get_filtered_users()),
+                OwnerTypeFilter(self._get_es_user_types()),
                 OwnerFilter(case_sharing_groups),
                 LastModifiedByFilter(case_sharing_groups)
             )]

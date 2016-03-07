@@ -22,6 +22,7 @@ class FormES(HQESQuery):
             submitted,
             completed,
             user_id,
+            user_type,
         ] + super(FormES, self).builtin_filters
 
     def user_aggregation(self):
@@ -58,3 +59,7 @@ def user_id(user_ids):
         'form.meta.userID',
         [x if x is not None else NULL_VALUE for x in list(user_ids)]
     )
+
+
+def user_type(user_types):
+    return filters.term("user_type", user_types)
