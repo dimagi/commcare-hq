@@ -6,6 +6,9 @@ import dateutil.parser
 from django.utils.http import urlencode
 from django.test import TestCase
 from django.core.urlresolvers import reverse
+from elasticsearch import ConnectionError
+from corehq.util.elastic import ensure_index_deleted
+from corehq.util.test_utils import trap_extra_setup
 from django_prbac.models import Role
 from tastypie.models import ApiKey
 from tastypie.resources import Resource
@@ -35,6 +38,7 @@ from corehq.apps.api.es import ElasticAPIQuerySet
 from corehq.apps.users.analytics import update_analytics_indexes
 from django.conf import settings
 from custom.hope.models import CC_BIHAR_PREGNANCY
+from pillowtop.es_utils import completely_initialize_pillow_index
 
 
 class FakeXFormES(object):
@@ -267,6 +271,18 @@ class TestCommCareCaseResource(APIResourceTest):
     Tests the CommCareCaseREsource, currently only v0_4
     """
     resource = v0_4.CommCareCaseResource
+
+    @classmethod
+    def setUpClass(cls):
+        super(cls, TestCommCareCaseResource).setUpClass()
+        cls.pillow = XFormPillow(online=False)
+        with trap_extra_setup(ConnectionError, msg="cannot connect to elasicsearch"):
+            completely_initialize_pillow_index(cls.pillow)
+
+    @classmethod
+    def tearDownClass(cls):
+        super(cls, TestCommCareCaseResource).tearDownClass()
+        ensure_index_deleted(cls.pillow.es_index)
 
     def test_get_list(self):
         """
