@@ -66,7 +66,7 @@ class SOHHandler(GenericStockReportHandler):
     formatter = SohFormatter
 
     def get_message(self, data):
-        if data['error']:
+        if data['errors']:
             return SOH_BAD_FORMAT
         reported_earlier = StockState.objects.filter(
             case_id=self.sql_location.couch_location.linked_supply_point().get_id,
