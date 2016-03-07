@@ -2,6 +2,7 @@ import collections
 import json
 import math
 from decimal import Decimal
+
 from dimagi.utils import parsing as dateparse
 from datetime import datetime, timedelta
 from casexml.apps.stock import const
@@ -214,11 +215,11 @@ def compute_daily_consumption_from_transactions(transactions, window_start, conf
         for tx in transactions:
             base_action_type = tx.action
             is_stockout = (
-                base_action_type == 'stockout' or
-                (base_action_type == 'stockonhand' and tx.value == 0) or
+                base_action_type == const.TRANSACTION_TYPE_STOCKOUT or
+                (base_action_type == const.TRANSACTION_TYPE_STOCKONHAND and tx.value == 0) or
                 (base_action_type == 'stockedoutfor' and tx.value > 0)
             )
-            is_checkpoint = (base_action_type == 'stockonhand' and not is_stockout)
+            is_checkpoint = (base_action_type == const.TRANSACTION_TYPE_STOCKONHAND and not is_stockout)
 
             if is_checkpoint:
                 if period:
@@ -230,12 +231,12 @@ def compute_daily_consumption_from_transactions(transactions, window_start, conf
                 if period:
                     # throw out current period
                     period = None
-            elif base_action_type == 'consumption':
+            elif base_action_type == const.TRANSACTION_TYPE_CONSUMPTION:
                 # TODO in the future it's possible we'll want to break this out by action_type, in order to track
                 # different kinds of consumption: normal vs losses, etc.
                 if period:
                     period.add(tx)
-            elif configuration.exclude_invalid_periods and base_action_type == 'receipts':
+            elif configuration.exclude_invalid_periods and base_action_type == const.TRANSACTION_TYPE_RECEIPTS:
                 if period and period.start:
                     period.receipt(tx.value)
 
