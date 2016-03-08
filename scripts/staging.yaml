@@ -45,7 +45,7 @@
 trunk: master
 name: autostaging
 branches:
-  - test-fab-compress-throwaway  # Danny 3/7
+  - ko3-app-manager  # Danny 3/7
   - bring-back-static-versioning  # Danny 3/7
   - cloudcare-on-apps-db  # Danny 3/7
   - flip_apps_db  # Danny 3/1
