@@ -902,6 +902,10 @@ class CaseTransaction(DisabledDbMixin, models.Model):
         return bool(self.TYPE_FORM & self.type)
 
     @property
+    def is_ledger_transaction(self):
+        return bool(self.is_form_transaction and self.TYPE_LEDGER & self.type)
+
+    @property
     def is_case_create(self):
         return bool(self.is_form_transaction and self.TYPE_CASE_CREATE & self.type)
 
