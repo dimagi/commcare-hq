@@ -55,7 +55,7 @@ from corehq.util.view_utils import absolute_reverse
 from corehq.util.dates import get_previous_month_date_range
 
 
-@transaction.atomic()
+@transaction.atomic
 def _activate_subscription(subscription):
     subscription.is_active = True
     subscription.save()
@@ -83,7 +83,7 @@ def activate_subscriptions(based_on_date=None):
         _activate_subscription(subscription)
 
 
-@transaction.atomic()
+@transaction.atomic
 def _deactivate_subscription(subscription, ending_date):
     subscription.is_active = False
     subscription.save()

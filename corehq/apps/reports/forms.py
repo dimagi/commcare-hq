@@ -89,7 +89,7 @@ class SavedReportConfigForm(forms.Form):
                 self.cleaned_data['days'] = 7
             elif date_range == 'last30':
                 self.cleaned_data['days'] = 30
-            elif (date_range == 'lastn' and self.cleaned_data['days'] is None
+            elif (date_range == 'lastn' and self.cleaned_data.get('days') is None
                   and self.cleaned_data['report_type'] != ConfigurableReport.prefix):
                 raise forms.ValidationError(
                     "Field 'days' was expected but not provided."

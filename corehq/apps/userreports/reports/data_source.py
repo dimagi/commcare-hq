@@ -113,9 +113,11 @@ class ConfigurableReportDataSource(SqlData):
                 for sort_column_id, order in self._order_by
                 if self._column_configs[sort_column_id].type != 'percent'
             ]
-        return [
-            OrderBy(self.column_configs[0].column_id, is_ascending=True)
-        ] if self.column_configs[0].type != 'percent' else []
+        if self.column_configs and self.column_configs[0].type != 'percent':
+            return [
+                OrderBy(self.column_configs[0].column_id, is_ascending=True)
+            ]
+        return []
 
     @property
     def columns(self):
@@ -136,9 +138,9 @@ class ConfigurableReportDataSource(SqlData):
         return [w for sql_conf in self.sql_column_configs for w in sql_conf.warnings]
 
     @memoized
-    def get_data(self):
+    def get_data(self, start=None, limit=None):
         try:
-            ret = super(ConfigurableReportDataSource, self).get_data()
+            ret = super(ConfigurableReportDataSource, self).get_data(start=start, limit=limit)
         except (
             ColumnNotFoundException,
             ProgrammingError,
@@ -156,4 +158,5 @@ class ConfigurableReportDataSource(SqlData):
         return any(column_config.calculate_total for column_config in self.column_configs)
 
     def get_total_records(self):
+        # TODO - actually use sqlagg to get a count of rows
         return len(self.get_data())
