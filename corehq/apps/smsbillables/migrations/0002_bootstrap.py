@@ -25,6 +25,8 @@ from corehq.apps.smsbillables.management.commands.bootstrap_telerivet_gateway im
     bootstrap_telerivet_gateway
 from corehq.apps.smsbillables.management.commands.bootstrap_twilio_gateway_incoming import \
     bootstrap_twilio_gateway_incoming
+from corehq.apps.smsbillables.management.commands.bootstrap_usage_fees import \
+    bootstrap_usage_fees
 from corehq.apps.smsbillables.management.commands.bootstrap_yo_gateway import \
     bootstrap_yo_gateway
 from corehq.apps.smsbillables.management.commands.add_moz_zero_charge import \
@@ -57,7 +59,7 @@ def bootstrap_sms(apps, schema_editor):
         'corehq/apps/smsbillables/management/commands/pricing_data/twilio-rates-2015_10_06.csv'
     )
     bootstrap_unicel_gateway(apps)
-    call_command('bootstrap_usage_fees')
+    bootstrap_usage_fees(apps)
     bootstrap_moz_gateway(apps)
     bootstrap_test_gateway(apps)
     bootstrap_telerivet_gateway(apps)
