@@ -888,6 +888,10 @@ class CommCareUserSelfRegistrationView(TemplateView, DomainViewMixin):
     urlname = "commcare_user_self_register"
     strict_domain_fetching = True
 
+    @use_bootstrap3
+    def dispatch(self, request, *args, **kwargs):
+        return super(CommCareUserSelfRegistrationView, self).dispatch(request, *args, **kwargs)
+
     @property
     @memoized
     def token(self):

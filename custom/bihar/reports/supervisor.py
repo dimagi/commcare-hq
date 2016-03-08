@@ -45,6 +45,7 @@ class ConvenientBaseMixIn(object):
     flush_layout = True
     mobile_enabled = True
     fields = []
+    is_bootstrap3 = True
 
     extra_context_providers = [shared_bihar_context]
 
