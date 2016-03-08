@@ -52,3 +52,9 @@ hqes3.internal.commcarehq.org elasticsearch_node_name=hqes3
 
 [shared_dir_host]
 hqdb0.internal.commcarehq.org
+
+[riakcs]
+hqriak4.internal.commcarehq.org
+
+[stanchion]
+hqriak4.internal.commcarehq.org
