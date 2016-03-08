@@ -123,7 +123,7 @@ def get_export_download(export_instances, filters, filename=None):
     return download
 
 
-def get_export_file(export_instances, filters):
+def get_export_file(export_instances, filters, progress_tracker=None):
     """
     Return an export file for the given ExportInstance and list of filters
     # TODO: Add a note about cleaning up the file?
@@ -134,7 +134,7 @@ def get_export_file(export_instances, filters):
         for export_instance in export_instances:
             # TODO: Don't get the docs multiple times if you don't have to
             docs = _get_export_documents(export_instance, filters)
-            _write_export_instance(writer, export_instance, docs)
+            _write_export_instance(writer, export_instance, docs, progress_tracker)
 
     return ExportFile(writer.path, writer.format)
 
@@ -146,16 +146,19 @@ def _get_export_documents(export_instance, filters):
     return query.scroll()
 
 
-def _write_export_instance(writer, export_instance, documents):
+def _write_export_instance(writer, export_instance, documents, progress_tracker=None):
     """
     Write rows to the given open _Writer.
     Rows will be written to each table in the export instance for each of
     the given documents.
     :param writer: An open _Writer
     :param export_instance: An ExportInstance
-    :param documents: A list of documents
+    :param documents: A ScanResult, or if progress_tracker is None, any iterable yielding documents
+    :param progress_tracker: A task for soil to track progress against
     :return: None
     """
+    if progress_tracker:
+        DownloadBase.set_progress(progress_tracker, 0, documents.count)
 
     for row_number, doc in enumerate(documents):
         for table in export_instance.tables:
@@ -164,6 +167,8 @@ def _write_export_instance(writer, export_instance, documents):
                 # It might be bad to write one row at a time when you can do more (from a performance perspective)
                 # Regardless, we should handle the batching of rows in the _Writer class, not here.
                 writer.write(table, row)
+        if progress_tracker:
+            DownloadBase.set_progress(progress_tracker, row_number + 1, documents.count)
 
 
 def _get_base_query(export_instance):
