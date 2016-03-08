@@ -29,15 +29,19 @@ class ILSDeliveredTest(ILSTestScript):
     def test_delivery_facility_received_quantities_reported(self):
         translation.activate('sw')
 
+        sohs = {
+            'jd': 400,
+            'mc': 569
+        }
         script = """
             5551234 > delivered jd 400 mc 569
             5551234 < {0}
             """.format(DELIVERED_CONFIRM % {'reply_list': 'jd 400, mc 569'})
         self.run_script(script)
         self.assertEqual(2, StockState.objects.count())
-        for ps in StockState.objects.all():
+        for ps in StockState.objects.all().order_by('pk'):
             self.assertEqual(self.loc1.linked_supply_point().get_id, ps.case_id)
-            self.assertTrue(0 != ps.stock_on_hand)
+            self.assertEqual(ps.stock_on_hand, sohs[ps.sql_product.code])
 
     def test_delivery_facility_not_received(self):
         translation.activate('sw')
