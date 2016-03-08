@@ -19,9 +19,9 @@
 </style>
 {% endblock %}
 {% block js %}{{ block.super }}
-<script src="{% static 'jquery/dist/jquery.min.js' %}"></script>
-<script src="{% static 'jquery-migrate/jquery-migrate.min.js' %}"></script>
-<script src="{% static 'hqwebapp/js/lib/jquery.sparkline.min.js' %}"></script>
+<script src="{% new_static 'jquery/dist/jquery.min.js' %}"></script>
+<script src="{% new_static 'jquery-migrate/jquery-migrate.min.js' %}"></script>
+<script src="{% new_static 'hqwebapp/js/lib/jquery.sparkline.min.js' %}"></script>
 <script>
     $(function () {
         $(".sparkpie").each(function () {
