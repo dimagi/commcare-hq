@@ -613,6 +613,19 @@ class CommCareCaseSQL(DisabledDbMixin, models.Model, RedisLockableMixIn,
         transactions += self.get_tracked_models_to_create(CaseTransaction)
         return transactions
 
+    def get_transaction_by_form_id(self, form_id):
+        from corehq.form_processor.backends.sql.dbaccessors import CaseAccessorSQL
+        transaction = CaseAccessorSQL.get_transaction_by_form_id(self.case_id, form_id)
+
+        if not transaction:
+            transactions = filter(
+                lambda t: t.form_id == form_id,
+                self.get_tracked_models_to_create(CaseTransaction)
+            )
+            assert len(transactions) <= 1
+            transaction = transactions[0] if transactions else None
+        return transaction
+
     @property
     def non_revoked_transactions(self):
         return [t for t in self.transactions if not t.revoked]
@@ -988,14 +1001,19 @@ class CaseTransaction(DisabledDbMixin, models.Model):
 
     @classmethod
     def _from_form(cls, case, xform, transaction_type):
-        return CaseTransaction(
-            case=case,
-            form_id=xform.form_id,
-            sync_log_id=xform.last_sync_token,
-            server_date=xform.received_on,
-            type=transaction_type,
-            revoked=not xform.is_normal
-        )
+        transaction = case.get_transaction_by_form_id(xform.form_id)
+        if transaction:
+            transaction.type |= transaction_type
+            return transaction
+        else:
+            return CaseTransaction(
+                case=case,
+                form_id=xform.form_id,
+                sync_log_id=xform.last_sync_token,
+                server_date=xform.received_on,
+                type=transaction_type,
+                revoked=not xform.is_normal
+            )
 
     @classmethod
     def type_from_action_type_slug(cls, action_type_slug):

@@ -19,6 +19,7 @@ class Migration(migrations.Migration):
 
     operations = [
         migrator.get_migration('get_case_transactions_by_type.sql'),
+        migrator.get_migration('get_case_transaction_by_form_id.sql'),
         HqRunSQL(
             "DROP FUNCTION IF EXISTS get_case_transactions_for_rebuild(TEXT);",
             "SELECT 1"

@@ -405,6 +405,15 @@ class CaseAccessorSQL(AbstractCaseAccessor):
         return list(CaseTransaction.objects.raw('SELECT * from get_case_transactions(%s)', [case_id]))
 
     @staticmethod
+    def get_transaction_by_form_id(case_id, form_id):
+        transactions = list(CaseTransaction.objects.raw(
+            'SELECT * from get_case_transaction_by_form_id(%s, %s)',
+            [case_id, form_id])
+        )
+        assert len(transactions) <= 1
+        return transactions if transactions else None
+
+    @staticmethod
     def get_transactions_by_type(case_id, transaction_type):
         return list(CaseTransaction.objects.raw(
             'SELECT * from get_case_transactions_by_type(%s, %s)',
