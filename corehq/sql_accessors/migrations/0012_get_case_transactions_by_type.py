@@ -3,7 +3,7 @@ from __future__ import unicode_literals
 
 from django.db import migrations
 
-from corehq.sql_db.operations import RawSQLMigration
+from corehq.sql_db.operations import RawSQLMigration, HqRunSQL
 
 migrator = RawSQLMigration(('corehq', 'sql_accessors', 'sql_templates'), {})
 
@@ -16,5 +16,8 @@ class Migration(migrations.Migration):
 
     operations = [
         migrator.get_migration('get_case_transactions_by_type.sql'),
-        migrator.get_migration('get_case_transactions_for_rebuild.sql'),  # Drops function
+        HqRunSQL(
+            "DROP FUNCTION IF EXISTS get_case_transactions_for_rebuild(TEXT);",
+            "SELECT 1"
+        )
     ]
