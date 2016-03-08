@@ -3,8 +3,8 @@ from django.utils import translation
 from casexml.apps.stock.models import StockTransaction
 from corehq.apps.commtrack.models import StockState
 from custom.ilsgateway.models import SupplyPointStatus, SupplyPointStatusTypes, SupplyPointStatusValues
-from custom.ilsgateway.tanzania.reminders import SOH_CONFIRM, SOH_PARTIAL_CONFIRM, SOH_BAD_FORMAT, LANGUAGE_CONFIRM
-from custom.ilsgateway.tests.handlers.utils import ILSTestScript, add_products
+from custom.ilsgateway.tanzania.reminders import SOH_CONFIRM, SOH_BAD_FORMAT, LANGUAGE_CONFIRM
+from custom.ilsgateway.tests.handlers.utils import ILSTestScript
 
 
 class ILSSoHTest(ILSTestScript):
@@ -79,54 +79,17 @@ class ILSSoHTest(ILSTestScript):
                 this_pkmax = max(this_pkmax, pr.pk)
             pkmax = max(this_pkmax, pkmax)
 
-    def test_stock_on_hand_partial_report(self):
-        add_products(self.loc1.sql_location, ["id", "dp", "fs", "md", "ff", "dx", "bp", "pc", "qi"])
-        script = """
-            5551234 > Hmk Id 400
-            5551234 < {}
-        """.format(SOH_PARTIAL_CONFIRM % {
-            'contact_name': self.user1.full_name,
-            'facility_name': self.loc1.name,
-            'product_list': 'bp dp dx ff fs md pc qi'
-        })
-        self.run_script(script)
-        script = """
-            5551234 > Hmk Dp 569 ip 454 ff 5655
-            5551234 < {}
-        """.format(SOH_PARTIAL_CONFIRM % {
-            'contact_name': self.user1.full_name,
-            'facility_name': self.loc1.name,
-            'product_list': 'bp dx fs md pc qi'
-        })
-        self.run_script(script)
-
-        script = """
-            5551234 > Hmk Bp 343 Dx 565 Fs 2322 Md 100 Pc 8778 Qi 34
-            5551234 < %(soh_confirm)s
-        """ % {"soh_confirm": unicode(SOH_CONFIRM)}
-        self.run_script(script)
-
     def test_product_aliases(self):
-
-        add_products(self.loc1.sql_location, ["id", "dp", "ip"])
         script = """
             5551234 > Hmk iucd 400
             5551234 < {}
-        """.format(SOH_PARTIAL_CONFIRM % {
-            'contact_name': self.user1.full_name,
-            'facility_name': self.loc1.name,
-            'product_list': 'dp ip'
-        })
+        """.format(unicode(SOH_CONFIRM))
         self.run_script(script)
 
         script = """
             5551234 > Hmk Depo 569
             5551234 < {}
-        """.format(SOH_PARTIAL_CONFIRM % {
-            'contact_name': self.user1.full_name,
-            'facility_name': self.loc1.name,
-            'product_list': 'ip'
-        })
+        """.format(unicode(SOH_CONFIRM))
         self.run_script(script)
 
         script = """
@@ -136,10 +99,7 @@ class ILSSoHTest(ILSTestScript):
         self.run_script(script)
 
     def test_stock_on_hand_delimiter_standard(self):
-        product_codes = ["fs", "md", "ff", "dx", "bp", "pc", "qi"]
-        add_products(self.loc1.sql_location, product_codes)
-
-        #standard spacing
+        # standard spacing
         script = """
             5551234 > hmk fs100 md100 ff100 dx100 bp100 pc100 qi100
             5551234 < %(soh_confirm)s
@@ -147,10 +107,7 @@ class ILSSoHTest(ILSTestScript):
         self.run_script(script)
 
     def test_stock_on_hand_delimiter_no_spaces(self):
-        product_codes = ["fs", "md", "ff", "dx", "bp", "pc", "qi"]
-        add_products(self.loc1.sql_location, product_codes)
-
-        #no spaces
+        # no spaces
         script = """
             5551234 > hmk fs100md100ff100dx100bp100pc100qi100
             5551234 < %(soh_confirm)s
@@ -158,10 +115,7 @@ class ILSSoHTest(ILSTestScript):
         self.run_script(script)
 
     def test_stock_on_hand_delimiters_mixed_spacing(self):
-        product_codes = ["fs", "md", "ff", "dx", "bp", "pc", "qi"]
-        add_products(self.loc1.sql_location, product_codes)
-
-        #no spaces
+        # no spaces
         script = """
             5551234 > hmk fs100 md 100 ff100 dx  100bp   100 pc100 qi100
             5551234 < %(soh_confirm)s
@@ -169,10 +123,7 @@ class ILSSoHTest(ILSTestScript):
         self.run_script(script)
 
     def test_stock_on_hand_delimiters_all_spaced_out(self):
-        product_codes = ["fs", "md", "ff", "dx", "bp", "pc", "qi"]
-        add_products(self.loc1.sql_location, product_codes)
-
-        #all space delimited
+        # all space delimited
         script = """
             5551234 > hmk fs 100 md 100 ff 100 dx 100 bp 100 pc 100 qi 100
             5551234 < %(soh_confirm)s
@@ -180,10 +131,7 @@ class ILSSoHTest(ILSTestScript):
         self.run_script(script)
 
     def test_stock_on_hand_delimiters_commas(self):
-        product_codes = ["fs", "md", "ff"]
-        add_products(self.loc1.sql_location, product_codes)
-
-        #commas
+        # commas
         script = """
             5551234 > hmk fs100,md100,ff100
             5551234 < %(soh_confirm)s
@@ -191,10 +139,7 @@ class ILSSoHTest(ILSTestScript):
         self.run_script(script)
 
     def test_stock_on_hand_delimiters_commas_and_spaces(self):
-        product_codes = ["fs", "md", "ff"]
-        add_products(self.loc1.sql_location, product_codes)
-
-        #commas
+        # commas
         script = """
             5551234 > hmk fs100, md100, ff100
             5551234 < %(soh_confirm)s
@@ -202,10 +147,7 @@ class ILSSoHTest(ILSTestScript):
         self.run_script(script)
 
     def test_stock_on_hand_delimiters_extra_spaces(self):
-        product_codes = ["fs", "md", "ff", "pc"]
-        add_products(self.loc1.sql_location, product_codes)
-
-        #extra spaces
+        # extra spaces
         script = """
             5551234 > hmk fs  100   md    100     ff      100       pc        100
             5551234 < %(soh_confirm)s
@@ -213,16 +155,11 @@ class ILSSoHTest(ILSTestScript):
         self.run_script(script)
 
     def test_stock_on_hand_mixed_delimiters_and_spacing(self):
-        product_codes = ["fs", "md", "ff", "pc", "qi", "bp", "dx"]
-        add_products(self.loc1.sql_location, product_codes)
-
-        #mixed - commas, spacing
+        # mixed - commas, spacing
         script = """
             5551234 > hmk fs100 , md100,ff 100 pc  100  qi,       1000,bp, 100, dx,100
             5551234 < %(soh_confirm)s
-        """ % {"soh_confirm": unicode(SOH_PARTIAL_CONFIRM) % {
-            "contact_name": self.user1.full_name, "facility_name": self.loc1.name, "product_list": "bp dx qi"
-        }}
+        """ % {"soh_confirm": unicode(SOH_CONFIRM)}
         self.run_script(script)
 
     def test_stock_on_hand_invalid_code(self):
@@ -231,14 +168,10 @@ class ILSSoHTest(ILSTestScript):
             5551234 < %(soh_bad_format)s
         """ % {'soh_bad_format': unicode(SOH_BAD_FORMAT)}
         self.run_script(script)
-
         self.assertEqual(StockState.objects.get(sql_product__code='ff').stock_on_hand, 100)
 
     def test_stock_on_hand_language_swahili(self):
         translation.activate("sw")
-        product_codes = ["fs", "md"]
-        add_products(self.loc1.sql_location, product_codes)
-
         script = """
             5551234 > hmk fs100md100
             5551234 < %(soh_confirm)s
@@ -247,9 +180,6 @@ class ILSSoHTest(ILSTestScript):
 
     def test_stock_on_hand_language_english(self):
         translation.activate("en")
-        product_codes = ["fs", "md"]
-        add_products(self.loc1.sql_location, product_codes)
-
         language_message = """
             5551234 > language en
             5551234 < {0}
