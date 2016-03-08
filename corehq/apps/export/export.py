@@ -143,7 +143,8 @@ def _get_export_documents(export_instance, filters):
     query = _get_base_query(export_instance)
     for filter in filters:
         query = query.filter(filter.to_es_filter())
-    return query.scroll()
+    # size here limits each scroll request, not the total number of results
+    return query.size(100).scroll()
 
 
 def _write_export_instance(writer, export_instance, documents, progress_tracker=None):
