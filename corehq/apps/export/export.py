@@ -153,7 +153,7 @@ def _write_export_instance(writer, export_instance, documents):
     the given documents.
     :param writer: An open _Writer
     :param export_instance: An ExportInstance
-    :param documents: An iterable of documents
+    :param documents: A list of documents
     :return: None
     """
 
