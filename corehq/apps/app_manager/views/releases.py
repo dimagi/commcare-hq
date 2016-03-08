@@ -1,4 +1,5 @@
 import json
+import re
 
 from django.template.loader import render_to_string
 from django.utils.translation import ugettext_lazy
@@ -207,13 +208,22 @@ def delete_copy(request, domain, app_id):
 
 
 def odk_install(request, domain, app_id, with_media=False):
+
+    def strip_bitly(url):
+        """
+        Given a bitly URL, returns an app code. Other URLs, "" and None returned as-is
+        """
+        return re.sub(r'^https?://bit\.ly/(\w+)/?', r'\1', url) if url else url
+
     app = get_app(domain, app_id)
     qr_code_view = "odk_qr_code" if not with_media else "odk_media_qr_code"
+    profile_url = app.odk_profile_display_url if not with_media else app.odk_media_profile_display_url
     context = {
         "domain": domain,
         "app": app,
         "qr_code": reverse("corehq.apps.app_manager.views.%s" % qr_code_view, args=[domain, app_id]),
-        "profile_url": app.odk_profile_display_url if not with_media else app.odk_media_profile_display_url,
+        "profile_url": profile_url,
+        "app_code": strip_bitly(profile_url),
     }
     return render(request, "app_manager/odk_install.html", context)
 
