@@ -1009,3 +1009,37 @@ class LedgerValue(DisabledDbMixin, models.Model):
     class Meta:
         app_label = "form_processor"
         db_table = LedgerValue_DB_TABLE
+
+
+class LedgerTransaction(DisabledDbMixin, models.Model):
+    TYPE_BALANCE = 1
+    TYPE_TRANSFER = 2
+    TYPE_CHOICES = (
+        (TYPE_BALANCE, 'balance'),
+        (TYPE_TRANSFER, 'transfer'),
+    )
+
+    INFERRED_TYPE_STOCK_ON_HAND = 1
+    INFERRED_TYPE_CONSUMPTION = 2
+    INFERRED_TYPE_RECEIPTS = 4
+
+    INFERRED_TYPE_CHOICES = (
+        (INFERRED_TYPE_STOCK_ON_HAND, 'stockonhand'),
+        (INFERRED_TYPE_CONSUMPTION, 'consumption'),
+        (INFERRED_TYPE_RECEIPTS, 'receipts'),
+    )
+
+    form_id = models.CharField(max_length=255, null=True)
+    server_date = models.DateTimeField()
+    type = models.PositiveSmallIntegerField(choices=TYPE_CHOICES)
+    case_id = models.CharField(max_length=255, db_index=True, default=None)
+    entry_id = models.CharField(max_length=100, db_index=True, default=None)
+    section_id = models.CharField(max_length=100, db_index=True, default=None)
+
+    inferred_type = models.PositiveSmallIntegerField(choices=INFERRED_TYPE_CHOICES)
+    user_defined_type = TruncatingCharField(max_length=20, null=True, blank=True)
+
+    # change from previous balance
+    delta = models.IntegerField(default=0)
+    # new balance
+    updated_balance = models.IntegerField(default=0)
