@@ -40,60 +40,41 @@
                                     </ul>
                                     <div class="tab-content">
                                         <div class="tab-pane">
+                                            <div class="spacer"></div>
                                             <p>
-                                                {% trans "Download" %}
+                                                {% blocktrans %}
+                                                Download
                                                 <a href="https://play.google.com/store/apps/details?id=org.commcare.dalvik">
-                                                    {% trans "CommCare from Google Play" %}
+                                                    <strong>CommCare</strong> from Google Play
                                                 </a>
-                                                {% trans "to your Android device." %}
+                                                to your Android device.
+                                                {% endblocktrans %}
                                             </p>
                                             {% if multimedia_state.has_media %}
-                                                <div class="checkbox">
-                                                    <label data-bind="visible: allow_media_install">
-                                                        <input type="checkbox" data-bind="checked: include_media, enable: mm_supported()">
-                                                        {% trans "Include Multimedia" %}
-                                                        <span data-bind="visible: !mm_supported()" class="label label-default">
-                                                            {% trans "Only supported for versions made after 2013-10-15" %}
-                                                        </span>
-                                                    </label>
-                                                </div>
-                                                {% endif %}
-                                                <p>
-                                                    <span data-bind="visible: get_app_code()">
-                                                        {% blocktrans %}
-                                                        Open the app on your Android and use one of the following installation methods:
-                                                        {% endblocktrans %}
+                                            <div class="checkbox">
+                                                <label data-bind="visible: allow_media_install">
+                                                    <input type="checkbox" data-bind="checked: include_media, enable: mm_supported()">
+                                                    {% trans "Include Multimedia" %}
+                                                    <span data-bind="visible: !mm_supported()" class="label label-default">
+                                                        {% trans "Only supported for versions made after 2013-10-15" %}
                                                     </span>
-                                                    <span data-bind="visible: !get_app_code() && !generating_url()">
-                                                        {% blocktrans %}
-                                                        Open the app on your Android and use the following installation method:
-                                                        {% endblocktrans %}
-                                                    </span>
-                                                </p>
-                                                <p>
+                                                </label>
+                                            </div>
+                                            {% endif %}
+                                            <p>
+                                                <span data-bind="visible: !generating_url()">
+                                                    {% blocktrans %}
+                                                    Open the app on your Android device and <strong>scan
                                                     <a href="#" data-bind="
                                                         openRemoteModal: get_odk_install_url,
                                                         click: clickScan
-                                                    ">
-                                                        {% trans "Scan Application Barcode" %}
-                                                    </a>
-                                                </p>
-                                                <p>
-                                                    <span data-bind="visible: get_app_code()">
-                                                        {% trans "Or Enter App Code:" %}
-                                                        <code class="bitly" data-bind="text: get_app_code()"></code>
-                                                    </span>
-                                                    <img data-bind="visible: generating_url()"
-                                                        src="{% static 'hqwebapp/img/ajax-loader.gif' %}"/>
-                                                    <span class="text-warning" data-bind="visible: !get_app_code() && !generating_url()">
-                                                        {% blocktrans %}
-                                                        (No app code available. If you would like to use an app code instead
-                                                        of scanning the application barcode, try making another version.)
-                                                        {% endblocktrans %}
-                                                    </span>
-                                                </p>
-                                            </div>
+                                                    ">the application barcode</a></strong>.
+                                                    {% endblocktrans %}
+                                                </span>
+                                            </p>
+                                        </div>
                                         <div class="tab-pane">
+                                            <div class="spacer"></div>
                                             <div data-bind="ifnot: hqImport('app_manager/js/app_manager.js').versionGE(build_spec.version(), '2.13.0')">
                                                 Upgrade to CommCare 2.13 to use this feature
                                             </div>
