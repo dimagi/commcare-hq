@@ -1,5 +1,4 @@
 from corehq.apps.commtrack.const import COMMTRACK_USERNAME
-from corehq.apps.reports.models import HQUserType
 from corehq.apps.users.models import CouchUser
 from corehq.apps.users.util import SYSTEM_USER_ID, DEMO_USER_ID
 from corehq.util.quickcache import quickcache
