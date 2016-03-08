@@ -1,4 +1,4 @@
-from django.http import Http404
+from django.http import Http404, HttpResponse
 from django.core.exceptions import PermissionDenied
 from corehq.apps.domain.decorators import login_and_domain_required, domain_specific_login_redirect
 from functools import wraps
@@ -20,6 +20,8 @@ def require_permission_raw(permission_check, login_decorator=login_and_domain_re
             elif request.user.is_superuser or permission_check(request.couch_user, domain):
                 return view_func(request, domain, *args, **kwargs)
             else:
+                if request.is_ajax():
+                    return HttpResponse(_("Sorry, you don't have permission to do this action!"), status=403)
                 raise PermissionDenied()
 
         if login_decorator:

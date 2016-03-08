@@ -291,6 +291,7 @@ HQ_APPS = (
     'corehq.messaging.smsbackends.mach',
     'corehq.messaging.smsbackends.http',
     'corehq.messaging.smsbackends.smsgh',
+    'corehq.messaging.smsbackends.push',
     'corehq.messaging.smsbackends.apposit',
     'corehq.messaging.smsbackends.test',
     'corehq.apps.performance_sms',
@@ -385,6 +386,7 @@ APPS_TO_EXCLUDE_FROM_TESTS = (
     'corehq.messaging.smsbackends.megamobile',
     'corehq.messaging.smsbackends.yo',
     'corehq.messaging.smsbackends.smsgh',
+    'corehq.messaging.smsbackends.push',
     'corehq.messaging.smsbackends.apposit',
     'crispy_forms',
     'django_extensions',
@@ -1278,6 +1280,7 @@ SMS_LOADED_SQL_BACKENDS = [
     'corehq.messaging.smsbackends.http.models.SQLHttpBackend',
     'corehq.messaging.smsbackends.mach.models.SQLMachBackend',
     'corehq.messaging.smsbackends.megamobile.models.SQLMegamobileBackend',
+    'corehq.messaging.smsbackends.push.models.PushBackend',
     'corehq.messaging.smsbackends.sislog.models.SQLSislogBackend',
     'corehq.messaging.smsbackends.smsgh.models.SQLSMSGHBackend',
     'corehq.messaging.smsbackends.telerivet.models.SQLTelerivetBackend',
@@ -1414,6 +1417,11 @@ PILLOWTOPS = {
             'name': 'SqlCaseToElasticsearchPillow',
             'class': 'pillowtop.pillow.interface.ConstructedPillow',
             'instance': 'corehq.pillows.case.get_sql_case_to_elasticsearch_pillow',
+        },
+        {
+            'name': 'kafka-ucr-main',
+            'class': 'corehq.apps.userreports.pillow.ConfigurableReportKafkaPillow',
+            'instance': 'corehq.apps.userreports.pillow.get_kafka_ucr_pillow',
         },
     ]
 }
@@ -1562,6 +1570,7 @@ DOMAIN_MODULE_MAP = {
     'pathways-india-mis': 'custom.care_pathways',
     'pathways-tanzania': 'custom.care_pathways',
     'care-macf-malawi': 'custom.care_pathways',
+    'care-macf-bangladesh': 'custom.care_pathways',
     'kemri': 'custom.openclinica',
     'novartis': 'custom.openclinica',
 }

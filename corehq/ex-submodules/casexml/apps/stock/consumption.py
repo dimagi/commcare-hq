@@ -1,7 +1,6 @@
-import collections
 import json
-import math
 from decimal import Decimal
+
 from dimagi.utils import parsing as dateparse
 from datetime import datetime, timedelta
 from casexml.apps.stock import const
@@ -134,23 +133,6 @@ def get_transactions(case_id, product_id, section_id, window_start, window_end):
     """
     Given a case/product pair, get transactions in a format ready for consumption calc
     """
-    # todo: get rid of this middle layer once the consumption calc has
-    # been updated to deal with the regular transaction objects
-    SimpleTransaction = collections.namedtuple('SimpleTransaction', ['action', 'value', 'received_on'])
-
-    def _to_consumption_tx(txn):
-        if txn.type in (const.TRANSACTION_TYPE_STOCKONHAND, const.TRANSACTION_TYPE_STOCKOUT,
-                        const.TRANSACTION_TYPE_LA):
-            value = txn.stock_on_hand
-        else:
-            assert txn.type in (const.TRANSACTION_TYPE_RECEIPTS, const.TRANSACTION_TYPE_CONSUMPTION)
-            value = math.fabs(txn.quantity)
-        return SimpleTransaction(
-            action=txn.type,
-            value=value,
-            received_on=txn.report.date,
-        )
-
     # todo: beginning of window date filtering
     db_transactions = StockTransaction.objects.filter(
         case_id=case_id, product_id=product_id,
@@ -166,10 +148,10 @@ def get_transactions(case_id, product_id, section_id, window_start, window_end):
         if first:
             previous = db_tx.get_previous_transaction()
             if previous:
-                yield _to_consumption_tx(db_tx)
+                yield db_tx
             first = False
 
-        yield _to_consumption_tx(db_tx)
+        yield db_tx
 
 
 def compute_daily_consumption_from_transactions(transactions, window_start, configuration=None):
@@ -178,21 +160,21 @@ def compute_daily_consumption_from_transactions(transactions, window_start, conf
     class ConsumptionPeriod(object):
         def __init__(self, tx):
             self.start = from_ts(tx.received_on)
-            self.start_soh = tx.value
+            self.start_soh = tx.normalized_value
             self.end_soh = None
             self.end = None
             self.consumption = 0
             self.receipts = 0
 
         def add(self, tx):
-            self.consumption += tx.value
+            self.consumption += tx.normalized_value
 
         def receipt(self, receipt):
             self.receipts += receipt
 
         def close_out(self, tx):
             self.end = from_ts(tx.received_on)
-            self.end_soh = tx.value
+            self.end_soh = tx.normalized_value
 
         def is_valid(self):
             return self.start_soh + Decimal(self.receipts) >= self.end_soh
@@ -212,32 +194,24 @@ def compute_daily_consumption_from_transactions(transactions, window_start, conf
     def split_periods(transactions):
         period = None
         for tx in transactions:
-            base_action_type = tx.action
-            is_stockout = (
-                base_action_type == 'stockout' or
-                (base_action_type == 'stockonhand' and tx.value == 0) or
-                (base_action_type == 'stockedoutfor' and tx.value > 0)
-            )
-            is_checkpoint = (base_action_type == 'stockonhand' and not is_stockout)
-
-            if is_checkpoint:
+            if tx.is_checkpoint:
                 if period:
                     period.close_out(tx)
                     if not configuration.exclude_invalid_periods or period.is_valid():
                         yield period
                 period = ConsumptionPeriod(tx)
-            elif is_stockout:
+            elif tx.is_stockout:
                 if period:
                     # throw out current period
                     period = None
-            elif base_action_type == 'consumption':
+            elif tx.type == const.TRANSACTION_TYPE_CONSUMPTION:
                 # TODO in the future it's possible we'll want to break this out by action_type, in order to track
                 # different kinds of consumption: normal vs losses, etc.
                 if period:
                     period.add(tx)
-            elif configuration.exclude_invalid_periods and base_action_type == 'receipts':
+            elif configuration.exclude_invalid_periods and tx.type == const.TRANSACTION_TYPE_RECEIPTS:
                 if period and period.start:
-                    period.receipt(tx.value)
+                    period.receipt(tx.normalized_value)
 
     periods = list(split_periods(transactions))
 

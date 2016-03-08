@@ -43,7 +43,7 @@
         };
         var el = $('#releases-table');
         var releasesMain = new ReleasesMain(o);
-        _.defer(function(){ releasesMain.getMoreSavedApps(); });
+        _.defer(function(){ releasesMain.getMoreSavedApps(false); });
         el.koApplyBindings(releasesMain);
     });
 
@@ -176,7 +176,7 @@
                 <td>
                     <div class="hide" data-bind="visible: !editing_comment(), css: {hide: false}">
                         <b class="hide"
-                           data-bind="visible: comment_user_name, text: comment_user_name">
+                           data-bind="visible: comment_user_name, text: comment_user_name, css: {hide: false}">
                         </b>
                         <span data-bind="text: build_comment"></span>
                         <b class="hide" data-bind="visible: !build_comment(), css: {hide: false}">
@@ -265,7 +265,9 @@
                         </div>
                     </div>
                     <div data-bind="visible: fetchState() !== 'pending' && !doneFetching(), css: {hide: false}" class="hide">
-                        <a href="#" class="btn btn-default" data-bind="click: getMoreSavedApps">{% trans "View More" %}</a>
+                        <a href="#" class="btn btn-default btn-block" data-bind="click: function() { getMoreSavedApps(true); }">
+                            {% trans "View More" %}
+                        </a>
                     </div>
                     <div data-bind="visible: doneFetching() && !savedApps().length, css: {hide: false}" class="hide">
                         <div class="alert alert-info">

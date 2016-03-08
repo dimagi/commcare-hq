@@ -9,62 +9,80 @@ function SavedApp(app_data, releasesMain) {
     if(!self.generating_url){
         self.generating_url = ko.observable(false);
     }
+    self.include_media.subscribe(function() {
+        // If we've generated an app code ensure that we update it when we toggle media
+        if (self.app_code()) {
+            self.get_app_code();
+        }
+    });
+    self.app_code = ko.observable(null);
+    self.failed_url_generation = ko.observable(false);
+    self.base_url = function() {
+        return '/a/' + self.domain() + '/apps/odk/' + self.id() + '/';
+    };
 
-    self.generate_short_url = function(url_type){
+    self.should_generate_url = function(url_type) {
+        var types = _.values(SavedApp.URL_TYPES);
+        return (types.indexOf(url_type) !== 1 &&
+            !ko.utils.unwrapObservable(self[url_type]));
+    };
+
+    self.generate_short_url = function(url_type) {
         //accepted_url_types = ['short_odk_url', 'short_odk_media_url', 'short_url']
-        url_type = url_type || 'short_odk_url';
-        var base_url = '/a/' + self.domain() + '/apps/odk/' + self.id() + '/',
-            should_generate_url = ((url_type === 'short_odk_url') && self.short_odk_url && !self.short_odk_url()) ||
-                                  ((url_type === 'short_odk_media_url') && self.short_odk_media_url && !self.short_odk_media_url()) ||
-                                  ((url_type === 'short_url') && self.short_url && !self.short_url());
+        url_type = url_type || SavedApp.URL_TYPES.SHORT_ODK_URL;
+        var base_url = self.base_url(),
+            should_generate_url = self.should_generate_url();
         
         if (should_generate_url && !self.generating_url()){
             self.generating_url(true);
             $.ajax({
                 url: base_url + url_type + '/'
             }).done(function(data){
+                var bitly_code = self.parse_bitly_url(data);
                 self[url_type](data);
+
+                self.failed_url_generation(!bitly_code);
+                self.app_code(bitly_code);
+
+            }).fail(function() {
+                self.app_code(null);
+                self.failed_url_generation(true);
             }).always(function(){
                 self.generating_url(false);
             });
         }
     };
 
-    self.get_short_odk_url = ko.computed(function() {
+    self.get_short_odk_url = function() {
+        var url_type;
         if (self.include_media()) {
-           if (self.short_odk_media_url) {
-                if (!self.short_odk_media_url()){
-                    self.generate_short_url('short_odk_media_url');
-                }
-               return self.short_odk_media_url();
-           }
+            url_type = SavedApp.URL_TYPES.SHORT_ODK_MEDIA_URL;
         } else {
-            if (self.short_odk_url) {
-                // short_odk_url is generated on first click. 
-                // not having `self.generate_short_url()` here prevents the 
-                // link from being automatically generated when a build is created.
-                return self.short_odk_url();
-            }
+            url_type = SavedApp.URL_TYPES.SHORT_ODK_URL;
         }
-        return false;
-    });
+        if (!ko.utils.unwrapObservable(self[url_type])) {
+            return self.generate_short_url(url_type);
+        } else {
+            return ko.utils.unwrapObservable(self[url_type]);
+        }
+    };
 
-    self.get_app_code = ko.computed(function() {
+    self.parse_bitly_url = function(url) {
+        // Matches "foo" in "http://bit.ly/foo" and "https://is.gd/X/foo/" ("*" is not greedy)
+        var re = /^http.*\/(\w+)\/?/;
+        var match = url.match(re);
+        if (match) {
+            return match[1];
+        }
+        return null;
+    };
+
+    self.get_app_code = function() {
         var short_odk_url = self.get_short_odk_url();
         if (short_odk_url) {
-            // Matches "foo" in "http://bit.ly/foo" and "https://is.gd/X/foo/" ("*" is not greedy)
-            var re = /^http.*\/(\w+)\/?/;
-            var match = short_odk_url.match(re);
-            if (match) {
-                return match[1];
-            }
+            self.app_code(self.parse_bitly_url(short_odk_url));
         }
-        return false;
-    });
-
-    self.get_short_odk_url_phonetic = ko.computed(function () {
-        return app_manager_utils.bitly_nato_phonetic(self.get_short_odk_url());
-    });
+    };
 
     self.allow_media_install = ko.computed(function(){
         return self.doc_type() !== "RemoteApp";  // remote apps don't support multimedia
@@ -125,7 +143,6 @@ function SavedApp(app_data, releasesMain) {
     };
 
     self.clickDeploy = function () {
-        self.generate_short_url('short_odk_url');
         ga_track_event('App Manager', 'Deploy Button', self.id());
         analytics.workflow('Clicked Deploy');
         $.post(releasesMain.options.urls.hubspot_click_deploy);
@@ -234,7 +251,7 @@ function ReleasesMain(o) {
         }
     };
 
-    self.getMoreSavedApps = function () {
+    self.getMoreSavedApps = function (scroll) {
         self.fetchState('pending');
         $.ajax({
             url: self.url('fetch'),
@@ -246,6 +263,11 @@ function ReleasesMain(o) {
             success: function (savedApps) {
                 self.addSavedApps(savedApps);
                 self.fetchState('');
+                if (scroll) {
+                    // Scroll so the bottom of main content (and the "View More" button) aligns with the bottom of the window
+                    var $content = $("#hq-content");
+                    window.scrollTo(0, $content.position().top + $content.height() - window.innerHeight);
+                }
             },
             error: function () {
                 self.fetchState('error');
@@ -324,7 +346,7 @@ function ReleasesMain(o) {
     self.reloadApps = function () {
         self.savedApps([]);
         self.nextVersionToFetch = null;
-        self.getMoreSavedApps();
+        self.getMoreSavedApps(false);
     };
     self.actuallyMakeBuild = function () {
         var comment = window.prompt(
@@ -350,3 +372,9 @@ function ReleasesMain(o) {
         });
     };
 }
+
+SavedApp.URL_TYPES = {
+    SHORT_ODK_URL: 'short_odk_url',
+    SHORT_ODK_MEDIA_URL: 'short_odk_media_url',
+    SHORT_URL: 'short_url'
+};

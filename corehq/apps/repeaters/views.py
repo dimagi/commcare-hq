@@ -1,3 +1,5 @@
+import json
+
 from django.core.urlresolvers import reverse
 from django.views.generic import View
 
@@ -50,6 +52,8 @@ class RepeatRecordView(View):
 
         if content_type == 'text/xml':
             payload = indent_xml(payload)
+        elif content_type == 'application/json':
+            payload = json.dumps(json.loads(payload), indent=4)
 
         return json_response({
             'payload': payload,

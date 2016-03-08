@@ -7,11 +7,12 @@ from django.test import TestCase
 from corehq.form_processor.backends.sql.dbaccessors import CaseAccessorSQL
 from corehq.form_processor.backends.sql.processor import FormProcessorSQL
 from corehq.form_processor.exceptions import AttachmentNotFound, CaseNotFound, CaseSaveError
-from corehq.form_processor.interfaces.dbaccessors import CaseIndexInfo
+from corehq.form_processor.interfaces.dbaccessors import CaseIndexInfo, CaseAccessors
 from corehq.form_processor.interfaces.processor import ProcessedForms
 from corehq.form_processor.models import XFormInstanceSQL, CommCareCaseSQL, \
     CaseTransaction, CommCareCaseIndexSQL, CaseAttachmentSQL, SupplyPointCaseMixin
-from corehq.form_processor.tests import FormProcessorTestUtils
+from corehq.form_processor.tests import FormProcessorTestUtils, run_with_all_backends
+from corehq.form_processor.tests.test_basic_cases import _submit_case_block
 from corehq.sql_db.routers import db_for_read_write
 from crispy_forms.tests.utils import override_settings
 
@@ -661,6 +662,33 @@ class CaseAccessorTestsSQL(TestCase):
             revoked=False
         ))
         self.assertEqual(len(case.closed_transactions), 2)
+
+
+class CaseAccessorsTests(TestCase):
+
+    def tearDown(self):
+        FormProcessorTestUtils.delete_all_xforms(DOMAIN)
+        FormProcessorTestUtils.delete_all_cases(DOMAIN)
+
+    @run_with_all_backends
+    def test_soft_delete(self):
+        _submit_case_block(True, 'c1', domain=DOMAIN)
+        _submit_case_block(True, 'c2', domain=DOMAIN)
+        _submit_case_block(True, 'c3', domain=DOMAIN)
+
+        accessors = CaseAccessors(DOMAIN)
+
+        # delete
+        num = accessors.soft_delete_cases(['c1', 'c2'], deletion_id='123')
+        self.assertEqual(num, 2)
+
+        for case_id in ['c1', 'c2']:
+            case = accessors.get_case(case_id)
+            self.assertTrue(case.is_deleted)
+            self.assertEqual(case.deletion_id, '123')
+
+        case = accessors.get_case('c3')
+        self.assertFalse(case.is_deleted)
 
 
 def _create_case(domain=None, form_id=None, case_type=None, user_id=None):

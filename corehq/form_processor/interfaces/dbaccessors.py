@@ -5,6 +5,7 @@ import six
 from StringIO import StringIO
 
 from corehq.util.quickcache import quickcache
+from dimagi.utils.chunked import chunked
 from dimagi.utils.decorators.memoized import memoized
 
 from ..utils import should_use_sql_backend
@@ -40,6 +41,14 @@ class AbstractFormAccessor(six.with_metaclass(ABCMeta)):
         raise NotImplementedError
 
     @abstractmethod
+    def get_form_ids_for_user(domain, form_ids):
+        raise NotImplementedError
+
+    @abstractmethod
+    def get_deleted_form_ids_for_user(domain, user_id):
+        raise NotImplementedError
+
+    @abstractmethod
     def get_forms_by_type(domain, type_, limit, recent_first=False):
         raise NotImplementedError
 
@@ -67,6 +76,10 @@ class AbstractFormAccessor(six.with_metaclass(ABCMeta)):
     def forms_have_multimedia(domain, app_id, xmlns):
         raise NotImplementedError
 
+    @abstractmethod
+    def soft_delete_forms(domain, form_ids, deletion_date=None, deletion_id=None):
+        raise NotImplementedError
+
 
 class FormAccessors(object):
     """
@@ -91,6 +104,12 @@ class FormAccessors(object):
     def get_forms(self, form_ids):
         return self.db_accessor.get_forms(form_ids)
 
+    def iter_forms(self, form_ids):
+        for chunk in chunked(form_ids, 100):
+            chunk = list(filter(None, chunk))
+            for form in self.get_forms(chunk):
+                yield form
+
     def form_exists(self, form_id):
         return self.db_accessor.form_exists(form_id)
 
@@ -106,17 +125,21 @@ class FormAccessors(object):
     def update_form_problem_and_state(self, form):
         self.db_accessor.update_form_problem_and_state(form)
 
-    def get_deleted_forms_for_user(self, domain, user_id, ids_only=False):
-        return self.db_accessor.get_deleted_forms_for_user(domain, user_id, ids_only=False)
+    def get_deleted_form_ids_for_user(self, domain, user_id):
+        return self.db_accessor.get_deleted_form_ids_for_user(domain, user_id)
 
-    def get_forms_for_user(self, domain, user_id, ids_only=False):
-        return self.db_accessor.get_forms_for_user(domain, user_id, ids_only)
+    def get_form_ids_for_user(self, domain, user_id):
+        return self.db_accessor.get_form_ids_for_user(domain, user_id)
 
     def get_attachment_content(self, form_id, attachment_name):
         return self.db_accessor.get_attachment_content(form_id, attachment_name)
 
     def forms_have_multimedia(self, app_id, xmlns):
         return self.db_accessor.forms_have_multimedia(self.domain, app_id, xmlns)
+
+    def soft_delete_forms(self, form_ids, deletion_date=None, deletion_id=None):
+        return self.db_accessor.soft_delete_forms(self.domain, form_ids, deletion_date, deletion_id)
+
 
 class AbstractCaseAccessor(six.with_metaclass(ABCMeta)):
     """
@@ -191,6 +214,10 @@ class AbstractCaseAccessor(six.with_metaclass(ABCMeta)):
     def get_cases_by_external_id(domain, external_id, case_type=None):
         raise NotImplementedError
 
+    @abstractmethod
+    def soft_delete_cases(domain, case_ids, deletion_date=None, deletion_id=None):
+        raise NotImplementedError
+
 
 class CaseAccessors(object):
     """
@@ -214,6 +241,12 @@ class CaseAccessors(object):
 
     def get_cases(self, case_ids, ordered=False):
         return self.db_accessor.get_cases(case_ids, ordered=ordered)
+
+    def iter_cases(self, case_ids):
+        for chunk in chunked(case_ids, 100):
+            chunk = list(filter(None, chunk))
+            for case in self.get_cases(chunk):
+                yield case
 
     def get_case_xform_ids(self, case_ids):
         return self.db_accessor.get_case_xform_ids(case_ids)
@@ -253,6 +286,9 @@ class CaseAccessors(object):
 
     def get_cases_by_external_id(self, external_id, case_type=None):
         return self.db_accessor.get_cases_by_external_id(self.domain, external_id, case_type)
+
+    def soft_delete_cases(self, case_ids, deletion_date=None, deletion_id=None):
+        return self.db_accessor.soft_delete_cases(self.domain, case_ids, deletion_date, deletion_id)
 
     @quickcache(['self.domain'], timeout=30 * 60)
     def get_case_types(self):

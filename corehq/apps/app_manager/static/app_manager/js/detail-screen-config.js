@@ -1095,9 +1095,9 @@ var DetailScreenConfig = (function () {
                         fixtures: spec.fixtures,
                         containsSortConfiguration: columnType == "short",
                         containsParentConfiguration: columnType == "short",
-                        containsFixtureConfiguration: (columnType == "short" && window.toggles.FIXTURE_CASE_SELECTION),
+                        containsFixtureConfiguration: (columnType == "short" && COMMCAREHQ.toggleEnabled('FIXTURE_CASE_SELECTION')),
                         containsFilterConfiguration: columnType == "short",
-                        containsCaseListLookupConfiguration: (columnType == "short" && window.toggles.CASE_LIST_LOOKUP),
+                        containsCaseListLookupConfiguration: (columnType == "short" && COMMCAREHQ.toggleEnabled('CASE_LIST_LOOKUP')),
                         containsCustomXMLConfiguration: columnType == "short",
                         allowsTabs: columnType == 'long',
                         allowsEmptyColumns: columnType == 'long'
@@ -1125,7 +1125,7 @@ var DetailScreenConfig = (function () {
                     }
                 }
                 this.customXMLViewModel = {
-                    enabled: window.toggles.CASE_LIST_CUSTOM_XML,
+                    enabled: COMMCAREHQ.toggleEnabled('CASE_LIST_CUSTOM_XML'),
                     xml: ko.observable(spec.state.short.custom_xml || "")
                 };
                 this.customXMLViewModel.xml.subscribe(function(v){
@@ -1204,26 +1204,26 @@ var DetailScreenConfig = (function () {
         {value: "address", label: DetailScreenConfig.message.ADDRESS_FORMAT}
     ];
 
-    if (window.toggles.MM_CASE_PROPERTIES) {
+    if (COMMCAREHQ.toggleEnabled('MM_CASE_PROPERTIES')) {
         DetailScreenConfig.MENU_OPTIONS.push(
             {value: "picture", label: DetailScreenConfig.message.PICTURE_FORMAT},
             {value: "audio", label: DetailScreenConfig.message.AUDIO_FORMAT}
         );
     }
 
-    if (window.feature_previews.ENUM_IMAGE) {
+    if (COMMCAREHQ.previewEnabled('ENUM_IMAGE')) {
         DetailScreenConfig.MENU_OPTIONS.push(
             {value: "enum-image", label: DetailScreenConfig.message.ENUM_IMAGE_FORMAT + ' (Preview!)'}
         );
     }
 
-    if (window.feature_previews.CALC_XPATHS) {
+    if (COMMCAREHQ.previewEnabled('CALC_XPATHS')) {
         DetailScreenConfig.MENU_OPTIONS.push(
             {value: "calculate", label: DetailScreenConfig.message.CALC_XPATH_FORMAT + ' (Preview!)'}
         );
     }
 
-    if (window.toggles.CASE_LIST_DISTANCE_SORT) {
+    if (COMMCAREHQ.toggleEnabled('CASE_LIST_DISTANCE_SORT')) {
         DetailScreenConfig.MENU_OPTIONS.push(
             {value: "distance", label: DetailScreenConfig.message.DISTANCE_FORMAT + ' (Preview!)'}
         );

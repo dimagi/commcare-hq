@@ -1,6 +1,7 @@
 from couchdbkit.ext.django.schema import StringProperty, ListProperty
 
 from casexml.apps.case.models import CommCareCase
+from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 from dimagi.ext.couchdbkit import Document
 from dimagi.utils.couch.database import iter_docs
 from dimagi.utils.couch.undo import UndoableDocument, DeleteDocRecord
@@ -26,10 +27,9 @@ class CommCareCaseGroup(UndoableDocument):
             case_ids = case_ids[skip:]
         if limit is not None:
             case_ids = case_ids[:limit]
-        for case_doc in iter_docs(CommCareCase.get_db(), case_ids):
-            # don't let CommCareCase-Deleted get through
-            if case_doc['doc_type'] == 'CommCareCase':
-                yield CommCareCase.wrap(case_doc)
+        for case in CaseAccessors(self.domain).iter_cases(case_ids):
+            if not case.is_deleted:
+                yield case
 
     def get_total_cases(self, clean_list=False):
         if clean_list:
@@ -38,11 +38,13 @@ class CommCareCaseGroup(UndoableDocument):
 
     def clean_cases(self):
         cleaned_list = []
-        for case_doc in iter_docs(CommCareCase.get_db(), self.cases):
-            # don't let CommCareCase-Deleted get through
-            if case_doc['doc_type'] == 'CommCareCase':
-                cleaned_list.append(case_doc['_id'])
-        if len(self.cases) != len(cleaned_list):
+        changed = False
+        for case in CaseAccessors(self.domain).iter_cases(self.cases):
+            if not case.is_deleted:
+                cleaned_list.append(case.case_id)
+            else:
+                changed = True
+        if changed:
             self.cases = cleaned_list
             self.save()
 

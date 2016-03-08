@@ -29,26 +29,7 @@ class UserModelTest(TestCase):
         self.domain_obj.delete()
 
     @run_with_all_backends
-    def test_get_forms(self):
-        forms = list(self.user.get_forms())
-
-        self.assertEqual(len(forms), 1)
-
-    @run_with_all_backends
-    def test_get_forms_no_wrap(self):
-        form_ids = list(self.user.get_forms(wrap=False))
-
+    def test_get_form_ids(self):
+        form_ids = list(self.user._get_form_ids())
         self.assertEqual(len(form_ids), 1)
         self.assertEqual(form_ids[0], '123')
-
-    @run_with_all_backends
-    def test_get_deleted_forms(self):
-        form = get_simple_wrapped_form('deleted', metadata=self.metadata)
-        form.soft_delete()
-
-        form_ids = list(self.user.get_forms(wrap=False))
-        self.assertEqual(len(form_ids), 1)
-
-        deleted_forms = list(self.user.get_forms(deleted=True))
-        self.assertEqual(len(deleted_forms), 1)
-        self.assertEqual(deleted_forms[0].form_id, 'deleted')
