@@ -45,6 +45,8 @@ CaseAttachmentSQL_DB_TABLE = 'form_processor_caseattachmentsql'
 CaseTransaction_DB_TABLE = 'form_processor_casetransaction'
 LedgerValue_DB_TABLE = 'form_processor_ledgervalue'
 
+CaseAction = namedtuple("CaseAction", ["action_type", "updated_known_properties", "indices"])
+
 
 class Attachment(namedtuple('Attachment', 'name raw_content content_type')):
     @property
@@ -1007,5 +1009,3 @@ class LedgerValue(DisabledDbMixin, models.Model):
     class Meta:
         app_label = "form_processor"
         db_table = LedgerValue_DB_TABLE
-
-CaseAction = namedtuple("CaseAction", ["action_type", "updated_known_properties", "indices"])
