@@ -48,6 +48,17 @@ LedgerValue_DB_TABLE = 'form_processor_ledgervalue'
 CaseAction = namedtuple("CaseAction", ["action_type", "updated_known_properties", "indices"])
 
 
+class TruncatingCharField(models.CharField):
+    """
+    http://stackoverflow.com/a/3460942
+    """
+    def get_prep_value(self, value):
+        value = super(TruncatingCharField, self).get_prep_value(value)
+        if value:
+            return value[:self.max_length]
+        return value
+
+
 class Attachment(namedtuple('Attachment', 'name raw_content content_type')):
     @property
     @memoized

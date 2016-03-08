@@ -1,17 +1,7 @@
 import math
 from django.db import models
 from corehq.apps.products.models import SQLProduct
-
-
-class TruncatingCharField(models.CharField):
-    """
-    http://stackoverflow.com/a/3460942
-    """
-    def get_prep_value(self, value):
-        value = super(TruncatingCharField, self).get_prep_value(value)
-        if value:
-            return value[:self.max_length]
-        return value
+from corehq.form_processor.models import TruncatingCharField
 
 
 class StockReport(models.Model):
