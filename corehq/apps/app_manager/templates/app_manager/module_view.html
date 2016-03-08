@@ -33,6 +33,7 @@
     <script>
         $(function () {
             var state = hqImport('app_manager/js/detail-screen-config.js').state;
+            var DetailScreenConfig = hqImport('app_manager/js/detail-screen-config.js').DetailScreenConfig;
             state.requires_case_details({{ module.requires_case_details|BOOL }});
 
             var details = {{ details|JSON }};
@@ -61,7 +62,8 @@
                     fixtures: fixtures,
                     parentSelect: detail.parent_select,
                     fixtureSelect: detail.fixture_select,
-                    contextVariables: state
+                    contextVariables: state,
+                    multimedia: {{multimedia.object_map|JSON}}
                 });
                 var $list_home = $("#" + detail.type + "-detail-screen-config-tab");
                 $list_home.koApplyBindings(detailScreenConfig);
