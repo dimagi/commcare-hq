@@ -823,3 +823,11 @@ PROJECT_HEALTH_DASHBOARD = StaticToggle(
     TAG_PRODUCT_PATH,
     [NAMESPACE_DOMAIN]
 )
+
+
+UNLIMITED_REPORT_BUILDER_REPORTS = StaticToggle(
+    'unlimited_report_builder_reports',
+    'Allow unlimited reports created in report builder',
+    TAG_PRODUCT_PATH,
+    [NAMESPACE_DOMAIN]
+)
