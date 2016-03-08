@@ -99,7 +99,7 @@ class FormAccessorSQL(AbstractFormAccessor):
         _attach_prefetch_models(forms_by_id, attachments, 'form_id', 'cached_attachments')
 
         if ordered:
-            _order_list(form_ids, forms, 'form_id')
+            forms = _order_list(form_ids, forms, 'form_id')
 
         return forms
 
