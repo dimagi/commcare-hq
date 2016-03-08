@@ -29,6 +29,7 @@
         COMMCAREHQ.pageContext.set('url:edit_commcare_settings', '{% url "edit_commcare_settings" domain app.id %}');
         COMMCAREHQ.pageContext.set('is_cloudcare_allowed', {{ is_cloudcare_allowed|BOOL }});
         $(function () {
+            var CommcareSettings = hqImport('app_manager/js/commcaresettings.js').CommcareSettings;
             var commcareSettings = new CommcareSettings({
                 sections: COMMCAREHQ.pageContext.get('settings_layout'),
                 values: COMMCAREHQ.pageContext.get('settings_values'),
@@ -161,6 +162,7 @@
             var buildLangs = {{ app.build_langs|JSON }};
             var saveURL = "{% url "edit_app_langs" domain app.id %}";
             var validate = !{{ app.is_remote_app|BOOL }};
+            var SupportedLanguages = hqImport('app_manager/js/supported-languages.js').SupportedLanguages;
             $("#supported-languages").koApplyBindings(new SupportedLanguages({
                 langs: langs,
                 buildLangs: buildLangs,

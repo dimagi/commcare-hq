@@ -13,8 +13,8 @@ class MeanColumnWithCasting(BaseColumn):
 
 class CustomMedianQueryMeta(MedianQueryMeta):
 
-    def __init__(self, table_name, filters, group_by):
-        super(CustomMedianQueryMeta, self).__init__(table_name, filters, group_by, [])
+    def __init__(self, table_name, filters, group_by, order_by):
+        super(CustomMedianQueryMeta, self).__init__(table_name, filters, group_by, order_by)
 
     def _build_median_table(self, metadata):
         """

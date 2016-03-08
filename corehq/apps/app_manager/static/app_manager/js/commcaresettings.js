@@ -1,4 +1,5 @@
-function CommcareSettings(options) {
+hqDefine('app_manager/js/commcaresettings.js', function () {
+    function CommcareSettings(options) {
     var app_manager = hqImport('app_manager/js/app_manager.js');
     var self = this;
     var initialValues = options.values;
@@ -315,10 +316,10 @@ function CommcareSettings(options) {
         self.customProperties.remove(customProperty);
     };
 
-}
-CommcareSettings.widgets = {};
+    }
+    CommcareSettings.widgets = {};
 
-CommcareSettings.widgets.select = function (self) {
+    CommcareSettings.widgets.select = function (self) {
     self.updateOptions = function() {
         var values = ko.utils.unwrapObservable(self.values);
         var value_names = ko.utils.unwrapObservable(self.value_names);
@@ -372,9 +373,9 @@ CommcareSettings.widgets.select = function (self) {
             return option.value === value;
         });
     };
-};
+    };
 
-CommcareSettings.widgets.bool = function (self) {
+    CommcareSettings.widgets.bool = function (self) {
     if (!self.values) {
         self.values = [true, false];
     }
@@ -388,9 +389,9 @@ CommcareSettings.widgets.bool = function (self) {
             );
         }
     });
-};
+    };
 
-CommcareSettings.widgets.build_spec = function (self, settingsIndex) {
+    CommcareSettings.widgets.build_spec = function (self, settingsIndex) {
     var app_manager = hqImport('app_manager/js/app_manager.js');
     function update(appVersion) {
         var major = appVersion.split('/')[0].split('.')[0];
@@ -411,9 +412,9 @@ CommcareSettings.widgets.build_spec = function (self, settingsIndex) {
         self.updateOptions();
         self.selectedOption(self["default"]);
     });
-};
+    };
 
-CommcareSettings.widgets.image_uploader = function (self) {
+    CommcareSettings.widgets.image_uploader = function (self) {
     self.slug = "hq_" + self.id;
     self.href = "#" + self.slug;
     self.path = getPathFromSlug(self.slug);
@@ -432,7 +433,24 @@ CommcareSettings.widgets.image_uploader = function (self) {
     self.removeLogo = function() {
         removeLogo(self.slug);
     };
-};
+    };
+
+    CommcareSettings.widgets.number = function (self) {
+        self.valueIsLegal = function () {
+            var value = self.value();
+            if (self.min_value && value < self.min_value) {
+                return false;
+            }
+            if (self.max_value && value > self.max_value) {
+                return false;
+            }
+            return true;
+        };
+    };
+    return {
+        CommcareSettings: CommcareSettings
+    };
+});
 
 $(function () {
     ko.bindingHandlers.passwordSetter = {
@@ -445,16 +463,3 @@ $(function () {
         }
     }
 });
-
-CommcareSettings.widgets.number = function (self) {
-    self.valueIsLegal = function () {
-        var value = self.value();
-        if (self.min_value && value < self.min_value) {
-            return false;
-        }
-        if (self.max_value && value > self.max_value) {
-            return false;
-        }
-        return true;
-    };
-};
