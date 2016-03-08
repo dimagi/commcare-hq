@@ -5,7 +5,6 @@ from corehq.apps.users.util import SYSTEM_USER_ID, DEMO_USER_ID
 from corehq.util.quickcache import quickcache
 
 SYSTEM_USER_TYPE = "system"
-ADMIN_USER_TYPE = "admin"
 DEMO_USER_TYPE = "demo"
 COMMCARE_SUPPLY_USER_TYPE = "supply"
 WEB_USER_TYPE = "web"
@@ -13,7 +12,6 @@ MOBILE_USER_TYPE = "mobile"
 UNKNOWN_USER_TYPE = "unknown"
 USER_TYPES = (
     SYSTEM_USER_TYPE,
-    ADMIN_USER_TYPE,
     DEMO_USER_TYPE,
     COMMCARE_SUPPLY_USER_TYPE,
     WEB_USER_TYPE,
@@ -47,8 +45,8 @@ def get_deleted_doc_types(doc_type):
 ONE_DAY = 60 * 60 * 24
 
 
-@quickcache(['user_id', 'username'], timeout=ONE_DAY)
-def get_user_type(user_id, username):
+@quickcache(['user_id'], timeout=ONE_DAY)
+def get_user_type(user_id):
     if user_id == SYSTEM_USER_ID:
         # Every form with user_id == system also has username == system.
         # But there are some forms where username == system but the user_id is different.
@@ -58,8 +56,6 @@ def get_user_type(user_id, username):
         return DEMO_USER_TYPE
     elif user_id == COMMTRACK_USERNAME:
         return COMMCARE_SUPPLY_USER_TYPE
-    elif username == HQUserType.human_readable[HQUserType.ADMIN]:
-        return ADMIN_USER_TYPE
     else:
         try:
             user = CouchUser.get(user_id)

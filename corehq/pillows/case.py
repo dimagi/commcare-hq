@@ -2,12 +2,10 @@ import copy
 from casexml.apps.case.models import CommCareCase
 from corehq.apps.change_feed import topics
 from corehq.apps.change_feed.consumer.feed import KafkaChangeFeed
-from corehq.apps.es import FormES
 from corehq.elastic import get_es_new
 from corehq.form_processor.change_providers import SqlCaseChangeProvider
 from corehq.pillows.mappings.case_mapping import CASE_MAPPING, CASE_INDEX
-from corehq.pillows.utils import get_user_type, ONE_DAY
-from corehq.util.quickcache import quickcache
+from corehq.pillows.utils import get_user_type
 from dimagi.utils.couch import LockManager
 from dimagi.utils.decorators.memoized import memoized
 from .base import HQPillow
@@ -75,9 +73,7 @@ def transform_case_for_elasticsearch(doc_dict):
         if doc_ret.get("user_id"):
             doc_ret["owner_id"] = doc_ret["user_id"]
 
-    owner_id = doc_ret.get("owner_id", None)
-    username = _get_username(doc_ret.get('domain', None), owner_id)
-    doc_ret['owner_type'] = get_user_type(owner_id, username)
+    doc_ret['owner_type'] = get_user_type(doc_ret.get("owner_id", None))
 
     return doc_ret
 
@@ -112,21 +108,3 @@ def get_couch_case_reindexer():
 
 def get_sql_case_reindexer():
     return PillowReindexer(get_sql_case_to_elasticsearch_pillow(), SqlCaseChangeProvider())
-
-@quickcache(['domain', 'user_id'], timeout=ONE_DAY)
-def _get_username(domain, user_id):
-    """
-    Get the username for the given user_id. We are replicating the beahvior of
-    corehq.apps.reports.util.get_all_users_by_domain
-    """
-    # TODO: This assumes that the form index will be built before the case index. Will that always be true? Is this safe?
-    query = (FormES()
-             .domain(domain)
-             .user_id(user_id)
-             .size(1)
-             .sort('received_on', desc=True)
-             .source("form.meta.username"))
-    try:
-        return query.run().hits[0].get("form", {}).get("meta", {}).get("username", None)
-    except IndexError:
-        return None

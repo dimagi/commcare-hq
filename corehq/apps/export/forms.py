@@ -138,14 +138,12 @@ class BaseFilterExportDownloadForm(forms.Form):
 
     _USER_MOBILE = 'mobile'
     _USER_DEMO = 'demo_user'
-    _USER_ADMIN = 'admin'
     _USER_UNKNOWN = 'unknown'
     _USER_SUPPLY = 'supply'
 
     _USER_TYPES_CHOICES = [
         (_USER_MOBILE, ugettext_lazy("All Mobile Workers")),
         (_USER_DEMO, ugettext_lazy("Demo User")),
-        (_USER_ADMIN, ugettext_lazy("Admin User")),
         (_USER_UNKNOWN, ugettext_lazy("Unknown Users")),
         (_USER_SUPPLY, ugettext_lazy("CommCare Supply")),
     ]
@@ -231,7 +229,10 @@ class BaseFilterExportDownloadForm(forms.Form):
         user_filter_toggles = [
             self._USER_MOBILE in user_types,
             self._USER_DEMO in user_types,
-            self._USER_ADMIN in user_types,
+            # The following line results in all users who match the
+            # HQUserType.ADMIN filter to be included if the unknown users
+            # filter is selected.
+            self._USER_UNKNOWN in user_types,
             self._USER_UNKNOWN in user_types,
             self._USER_SUPPLY in user_types
         ]
@@ -253,9 +254,8 @@ class BaseFilterExportDownloadForm(forms.Form):
         export_to_es_user_types_map = {
             self._USER_MOBILE: [utils.MOBILE_USER_TYPE],
             self._USER_DEMO: [utils.DEMO_USER_TYPE],
-            self._USER_ADMIN: [utils.ADMIN_USER_TYPE, utils.SYSTEM_USER_TYPE],
             self._USER_UNKNOWN: [
-                utils.UNKNOWN_USER_TYPE, utils.WEB_USER_TYPE
+                utils.UNKNOWN_USER_TYPE, utils.SYSTEM_USER_TYPE, utils.WEB_USER_TYPE
             ],
             self._USER_SUPPLY: [utils.COMMCARE_SUPPLY_USER_TYPE]
         }

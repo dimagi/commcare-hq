@@ -90,14 +90,10 @@ def transform_xform_for_elasticsearch(doc_dict, include_props=True):
                 doc_ret['form']['meta']['appVersion'] = doc_ret['form']['meta']['appVersion'].get('#text')
 
         try:
-            username = doc_ret['form']['meta']['username']
-        except KeyError:
-            username = None
-        try:
             user_id = doc_ret['form']['meta']['userID']
         except KeyError:
             user_id = None
-        doc_ret['user_type'] = get_user_type(user_id, username)
+        doc_ret['user_type'] = get_user_type(user_id)
 
         case_blocks = extract_case_blocks(doc_ret)
         for case_dict in case_blocks:
