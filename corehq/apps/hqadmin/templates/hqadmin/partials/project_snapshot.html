@@ -1,11 +1,5 @@
 <html>
     <head>
-        <title>Deploy Snapshot</title>
-        <style>
-            .text-diff-added{color:#55a532}
-            .text-diff-deleted{color:#bd2c00}
-            .diffstat{font-size:12px;font-weight:bold;color:#666;white-space:nowrap;cursor:default}
-        </style>
     </head>
     <body>
         <h2>Deployed by {{ user }}, cheers!</h2>
@@ -15,11 +9,11 @@
             <li>
                 <a href="{{ pr.url }}">#{{ pr.number }} {{ pr.title }}</a>
                 <i>opened by</i> @{{ pr.opened_by }}
-                <span class="diffstat">
-                    <span class="text-diff-added">
+                <span class="diffstat" style="font-size:12px;font-weight:bold;color:#666;white-space:nowrap;cursor:default">
+                    <span class="text-diff-added" style="color:#55a532">
                       +{{ pr.additions }}
                     </span>
-                    <span class="text-diff-deleted">
+                    <span class="text-diff-deleted" style="color:#bd2c00">
                       −{{ pr.deletions }}
                     </span>
                 </span>
