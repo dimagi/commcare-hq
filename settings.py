@@ -110,6 +110,7 @@ DJANGO_LOG_FILE = "%s/%s" % (FILEPATH, "commcarehq.django.log")
 ACCOUNTING_LOG_FILE = "%s/%s" % (FILEPATH, "commcarehq.accounting.log")
 ANALYTICS_LOG_FILE = "%s/%s" % (FILEPATH, "commcarehq.analytics.log")
 DATADOG_LOG_FILE = "%s/%s" % (FILEPATH, "commcarehq.datadog.log")
+FORMPLAYER_EXPERIMENT_DIRECTORY = "%s/%s/" % (FILEPATH, "formplayer_experiment")
 
 
 # URL prefix for admin media -- CSS, JavaScript and images. Make sure to use a
