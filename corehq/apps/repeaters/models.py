@@ -524,7 +524,7 @@ class RepeatRecord(Document, CouchDocLockableMixIn):
     def get_payload(self):
         return self.repeater.get_payload(self)
 
-    def fire(self, max_tries=3, post_fn=None, force_send=False):
+    def fire(self, max_tries=3, force_send=False):
         try:
             payload = self.get_payload()
         except ResourceNotFound:
@@ -543,7 +543,6 @@ class RepeatRecord(Document, CouchDocLockableMixIn):
             # Mark it succeeded so that we don't try again
             self.update_success()
         else:
-            post_fn = post_fn or simple_post_with_cached_timeout
             headers = self.repeater.get_headers(self)
             if self.try_now() or force_send:
                 # we don't use celery's version of retry because
@@ -551,7 +550,12 @@ class RepeatRecord(Document, CouchDocLockableMixIn):
                 failure_reason = None
                 for i in range(max_tries):
                     try:
-                        resp = post_fn(payload, self.url, headers=headers, force_send=force_send)
+                        resp = simple_post_with_cached_timeout(
+                            payload,
+                            self.url,
+                            headers=headers,
+                            force_send=force_send
+                        )
                         if 200 <= resp.status_code < 300:
                             self.update_success()
                             break
