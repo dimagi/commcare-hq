@@ -14,20 +14,25 @@ from corehq.apps.locations.models import SQLLocation
 from corehq.apps.products.models import Product
 from custom.ilsgateway.api import ILSGatewayEndpoint, ILSGatewayAPI
 from custom.ilsgateway.balance import BalanceMigration
+from custom.ilsgateway.tanzania.reminders import REMINDER_MONTHLY_SOH_SUMMARY, REMINDER_MONTHLY_DELIVERY_SUMMARY, \
+    REMINDER_MONTHLY_RANDR_SUMMARY
 from custom.ilsgateway.tanzania.reminders.delivery import DeliveryReminder
 from custom.ilsgateway.tanzania.reminders.randr import RandrReminder
+from custom.ilsgateway.tanzania.reminders.reports import get_district_people, construct_soh_summary, \
+    construct_delivery_summary, construct_randr_summary
+from custom.ilsgateway.tanzania.reminders.soh_thank_you import SOHThankYouReminder
 from custom.ilsgateway.tanzania.reminders.stockonhand import SOHReminder
 from custom.ilsgateway.tanzania.reminders.supervision import SupervisionReminder
 from custom.ilsgateway.tanzania.warehouse.updater import populate_report_data, default_start_date, \
     process_facility_warehouse_data, process_non_facility_warehouse_data
 from custom.ilsgateway.temporary import fix_stock_data
-from custom.ilsgateway.utils import send_for_day, send_for_all_domains
+from custom.ilsgateway.utils import send_for_day, send_for_all_domains, send_translated_message
 from custom.logistics.commtrack import bootstrap_domain as ils_bootstrap_domain, save_stock_data_checkpoint
 from custom.ilsgateway.models import ILSGatewayConfig, SupplyPointStatus, DeliveryGroupReport, ReportRun, \
     GroupSummary, OrganizationSummary, ProductAvailabilityData, Alert, PendingReportingDataRecalculation
 from custom.logistics.models import StockDataCheckpoint
 from custom.logistics.tasks import stock_data_task
-from dimagi.utils.dates import get_business_day_of_month
+from dimagi.utils.dates import get_business_day_of_month, get_business_day_of_month_before
 
 
 @periodic_task(run_every=crontab(hour="4", minute="00", day_of_week="*"),
@@ -366,6 +371,71 @@ def third_soh_task():
     last_month_last_day, fifth_business_day = get_last_and_nth_business_day(now, 5)
     if now.day == fifth_business_day.day:
         send_for_all_domains(last_month_last_day, SOHReminder)
+
+
+@periodic_task(run_every=crontab(day_of_month="6-8", hour=13, minute=0),
+               queue="logistics_reminder_queue")
+def soh_summary_task():
+    """
+        6th business day of the month @ 3pm Tanzania time
+    """
+    now = datetime.utcnow()
+    sixth_business_day = get_business_day_of_month(month=now.month, year=now.year, count=6)
+    if now.day != sixth_business_day.day:
+        return
+
+    for domain in ILSGatewayConfig.get_all_enabled_domains():
+        for user in get_district_people(domain):
+            send_translated_message(user, REMINDER_MONTHLY_SOH_SUMMARY, **construct_soh_summary(user.location))
+
+
+@periodic_task(run_every=crontab(day_of_month="26-31", hour=13, minute=0),
+               queue="logistics_reminder_queue")
+def delivery_summary_task():
+    """
+        last business day of month 3pm Tanzania time
+    """
+    now = datetime.utcnow()
+    last_business_day = get_business_day_of_month(month=now.month, year=now.year, count=-1)
+    if now.day != last_business_day.day:
+        return
+
+    for domain in ILSGatewayConfig.get_all_enabled_domains():
+        for user in get_district_people(domain):
+            send_translated_message(
+                user, REMINDER_MONTHLY_DELIVERY_SUMMARY, **construct_delivery_summary(user.location)
+            )
+
+
+@periodic_task(run_every=crontab(day_of_month="15-17", hour=13, minute=0),
+               queue="logistics_reminder_queue")
+def randr_summary_task():
+    """
+        on 17th day of month or before if it's not a business day @ 3pm Tanzania time
+    """
+
+    now = datetime.utcnow()
+    business_day = get_business_day_of_month_before(month=now.month, year=now.year, day=17)
+    if now.day != business_day.day:
+        return
+
+    for domain in ILSGatewayConfig.get_all_enabled_domains():
+        for user in get_district_people(domain):
+            send_translated_message(
+                user, REMINDER_MONTHLY_RANDR_SUMMARY, **construct_randr_summary(user.location)
+            )
+
+
+@periodic_task(run_every=crontab(day_of_month="18-20", hour=14, minute=0),
+               queue="logistics_reminder_queue")
+def soh_thank_you_task():
+    """
+    Last business day before the 20th at 4:00 PM Tanzania time
+    """
+    now = datetime.utcnow()
+    last_month = datetime(now.year, now.month, 1) - timedelta(days=1)
+    for domain in ILSGatewayConfig.get_all_enabled_domains():
+        SOHThankYouReminder(domain=domain, date=last_month).send()
 
 
 def recalculate_on_group_change(location, last_run):
