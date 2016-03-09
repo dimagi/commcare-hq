@@ -45,7 +45,7 @@ class CVSUSqlDataMixin(object):
         if self.keys is not None and not self.group_by:
             raise SqlReportException('Keys supplied without group_by.')
 
-        qc = self.query_context
+        qc = self.query_context()
         for c in self.columns:
             qc.append_column(c.view)
 

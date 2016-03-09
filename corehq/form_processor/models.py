@@ -1,4 +1,3 @@
-import hashlib
 import json
 import logging
 import mimetypes
@@ -194,6 +193,9 @@ class XFormInstanceSQL(DisabledDbMixin, models.Model, RedisLockableMixIn, Attach
     state = models.PositiveSmallIntegerField(choices=STATES, default=NORMAL)
     initial_processing_complete = models.BooleanField(default=False)
 
+    deleted_on = models.DateTimeField(null=True)
+    deletion_id = models.CharField(max_length=255, null=True)
+
     @classmethod
     def get_obj_id(cls, obj):
         return obj.form_id
@@ -229,7 +231,9 @@ class XFormInstanceSQL(DisabledDbMixin, models.Model, RedisLockableMixIn, Attach
 
     @property
     def is_deleted(self):
-        return self.state == self.DELETED
+        # deleting a form adds the deleted state to the current state
+        # in order to support restoring the pre-deleted state.
+        return self.state & self.DELETED == self.DELETED
 
     @property
     @memoized
@@ -263,7 +267,8 @@ class XFormInstanceSQL(DisabledDbMixin, models.Model, RedisLockableMixIn, Attach
 
     def soft_delete(self):
         from corehq.form_processor.backends.sql.dbaccessors import FormAccessorSQL
-        return FormAccessorSQL.update_state(self.form_id, XFormInstanceSQL.DELETED)
+        FormAccessorSQL.soft_delete_forms(self.domain, [self.form_id])
+        self.state |= self.DELETED
 
     def to_json(self):
         from .serializers import XFormInstanceSQLSerializer
@@ -495,6 +500,8 @@ class CommCareCaseSQL(DisabledDbMixin, models.Model, RedisLockableMixIn,
     closed_by = models.CharField(max_length=255, null=True)
 
     deleted = models.BooleanField(default=False, null=False)
+    deleted_on = models.DateTimeField(null=True)
+    deletion_id = models.CharField(max_length=255, null=True)
 
     external_id = models.CharField(max_length=255)
     location_id = models.CharField(max_length=255, null=True)
@@ -524,8 +531,8 @@ class CommCareCaseSQL(DisabledDbMixin, models.Model, RedisLockableMixIn,
 
     def soft_delete(self):
         from corehq.form_processor.backends.sql.dbaccessors import CaseAccessorSQL
+        CaseAccessorSQL.soft_delete_cases(self.domain, [self.case_id])
         self.deleted = True
-        CaseAccessorSQL.save_case(self)
 
     @property
     def is_deleted(self):

@@ -1,3 +1,4 @@
+import math
 from django.db import models
 from corehq.apps.products.models import SQLProduct
 
@@ -36,7 +37,21 @@ class StockReport(models.Model):
         app_label = 'stock'
 
 
-class StockTransaction(models.Model):
+class ConsumptionMixin(object):
+    @property
+    def is_stockout(self):
+        return (
+            self.type == const.TRANSACTION_TYPE_STOCKOUT or
+            (self.type == const.TRANSACTION_TYPE_STOCKONHAND and self.normalized_value == 0) or
+            (self.type == 'stockedoutfor' and self.normalized_value > 0)
+        )
+
+    @property
+    def is_checkpoint(self):
+        return self.type == const.TRANSACTION_TYPE_STOCKONHAND and not self.is_stockout
+
+
+class StockTransaction(models.Model, ConsumptionMixin):
     report = models.ForeignKey(StockReport)
     sql_product = models.ForeignKey(SQLProduct)
 
@@ -76,6 +91,19 @@ class StockTransaction(models.Model):
             self.case_id, self.section_id, self.product_id).exclude(pk=self.pk)
         if siblings.count():
             return siblings[0]
+
+    @property
+    def normalized_value(self):
+        if self.type in (const.TRANSACTION_TYPE_STOCKONHAND, const.TRANSACTION_TYPE_STOCKOUT,
+                        const.TRANSACTION_TYPE_LA):
+            return self.stock_on_hand
+        else:
+            assert self.type in (const.TRANSACTION_TYPE_RECEIPTS, const.TRANSACTION_TYPE_CONSUMPTION)
+            return math.fabs(self.quantity)
+
+    @property
+    def received_on(self):
+        return self.report.date
 
     @classmethod
     def latest(cls, case_id, section_id, product_id):
