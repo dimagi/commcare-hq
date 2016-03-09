@@ -11,7 +11,6 @@ from casexml.apps.case.util import post_case_blocks
 from corehq.apps.change_feed import data_sources
 from corehq.apps.change_feed import topics
 from corehq.apps.change_feed.producer import producer
-from corehq.apps.userreports.data_source_providers import MockDataSourceProvider
 from corehq.apps.userreports.exceptions import StaleRebuildError
 from corehq.apps.userreports.pillow import ConfigurableIndicatorPillow, REBUILD_CHECK_INTERVAL, \
     ConfigurableReportTableManagerMixin, get_kafka_ucr_pillow
@@ -30,12 +29,12 @@ from testapps.test_pillowtop.utils import get_current_kafka_seq
 class ConfigurableReportTableManagerTest(SimpleTestCase):
 
     def test_needs_bootstrap_on_initialization(self):
-        table_manager = ConfigurableReportTableManagerMixin(MockDataSourceProvider())
+        table_manager = ConfigurableReportTableManagerMixin()
         self.assertTrue(table_manager.needs_bootstrap())
 
     def test_bootstrap_sets_time(self):
         before_now = datetime.utcnow() - timedelta(microseconds=1)
-        table_manager = ConfigurableReportTableManagerMixin(MockDataSourceProvider())
+        table_manager = ConfigurableReportTableManagerMixin()
         table_manager.bootstrap([])
         after_now = datetime.utcnow() + timedelta(microseconds=1)
         self.assertTrue(table_manager.bootstrapped)
@@ -45,7 +44,7 @@ class ConfigurableReportTableManagerTest(SimpleTestCase):
 
     def test_needs_bootstrap_window(self):
         before_now = datetime.utcnow() - timedelta(microseconds=1)
-        table_manager = ConfigurableReportTableManagerMixin(MockDataSourceProvider())
+        table_manager = ConfigurableReportTableManagerMixin()
         table_manager.bootstrap([])
         table_manager.last_bootstrapped = before_now - timedelta(seconds=REBUILD_CHECK_INTERVAL - 5)
         self.assertFalse(table_manager.needs_bootstrap())
