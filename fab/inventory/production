@@ -56,5 +56,10 @@ hqdb0.internal.commcarehq.org
 [riakcs]
 hqriak4.internal.commcarehq.org
 
+[riakcs:vars]
+datavol_device=/dev/xvdb
+# http://docs.basho.com/riak/latest/ops/tuning/linux/#Storage-and-File-System-Tuning
+datavol_opts=barrier=0,data=writeback
+
 [stanchion]
 hqriak4.internal.commcarehq.org
