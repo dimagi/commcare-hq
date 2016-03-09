@@ -142,9 +142,12 @@ class testReportXFormProcessing(TestCase):
         del(orig['form']['meta']['appVersion'])
         del(restored['form']['meta']['appVersion'])
 
+        # user_type gets added in change_transform
+        del(restored['user_type'])
+        del(for_indexing['user_type'])
+
         self.assertNotEqual(for_indexing, orig)
         self.assertNotEqual(for_indexing, restored)
-
         self.assertEqual(orig, restored)
 
     def testSubCaseForm(self):
