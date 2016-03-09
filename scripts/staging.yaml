@@ -71,6 +71,7 @@ branches:
   - b3-project-settings-accounting  # Biyeun 3/1
   - report-builder-text # Cal 3/1
   - b3-bihar # BB 3/7
+  - certificate-validate # Cal 3/9
 submodules:
   submodules/touchforms-src:
     # let's leave this here even when empty
