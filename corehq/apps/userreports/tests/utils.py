@@ -4,7 +4,6 @@ import json
 import os
 import uuid
 from corehq.apps.userreports.models import DataSourceConfiguration, ReportConfiguration
-from corehq.util.dates import iso_string_to_date
 from dimagi.utils.parsing import json_format_datetime
 
 
