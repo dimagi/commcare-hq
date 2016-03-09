@@ -54,6 +54,10 @@ hqes3.internal.commcarehq.org elasticsearch_node_name=hqes3
 hqdb0.internal.commcarehq.org
 
 [riakcs]
+hqriak0.internal.commcarehq.org
+hqriak1.internal.commcarehq.org
+hqriak2.internal.commcarehq.org
+hqriak3.internal.commcarehq.org
 hqriak4.internal.commcarehq.org
 
 [riakcs:vars]
@@ -62,4 +66,4 @@ datavol_device=/dev/xvdb
 datavol_opts=barrier=0,data=writeback
 
 [stanchion]
-hqriak4.internal.commcarehq.org
+hqriak0.internal.commcarehq.org
