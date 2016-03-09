@@ -2,7 +2,7 @@ import json
 from datadog import api as datadog_api
 import requests
 from django.core.management import call_command
-from django.template.loader import render_to_string
+from corehq.apps.hqadmin.management.utils import get_deploy_email_message_body
 from dimagi.utils import gitinfo
 from django.core.management.base import BaseCommand
 from corehq.apps.hqadmin.models import HqDeploy
@@ -76,9 +76,6 @@ class Command(BaseCommand):
             )
 
         if options['mail_admins']:
-            snapshot_table = render_to_string('hqadmin/partials/project_snapshot.html', dictionary={'snapshot': git_snapshot})
-            message = "Deployed by %s, cheers!" % options['user']
-            snapshot_body = "<html><head><title>Deploy Snapshot</title></head><body><h2>%s</h2>%s</body></html>" % (message, snapshot_table)
-
-            call_command('mail_admins', snapshot_body, **{'subject': 'Deploy successful', 'html': True})
-
+            message_body = get_deploy_email_message_body(
+                environment=options['environment'], user=options['user'])
+            call_command('mail_admins', message_body, **{'subject': 'Deploy successful', 'html': True})
