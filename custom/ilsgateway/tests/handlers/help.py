@@ -1,5 +1,4 @@
 from django.utils import translation
-from django.utils.translation import ugettext as _
 
 from custom.ilsgateway.tanzania.reminders import HELP_REGISTERED
 from custom.ilsgateway.tests import ILSTestScript
@@ -13,11 +12,11 @@ class TestHelp(ILSTestScript):
         script = """
           5551234 > msaada
           5551234 < %(help_registered)s
-        """ % {'help_registered': _(HELP_REGISTERED)}
+        """ % {'help_registered': unicode(HELP_REGISTERED)}
         self.run_script(script)
 
         script = """
           5555678 > help
           5555678 < %(help_registered)s
-        """ % {'help_registered': _(HELP_REGISTERED)}
+        """ % {'help_registered': unicode(HELP_REGISTERED)}
         self.run_script(script)

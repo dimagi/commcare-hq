@@ -44,6 +44,7 @@ class ILSTestScript(TestScript):
                              domain=domain.name, parent=region)
         facility = make_loc(code="loc1", name="Test Facility 1", type="FACILITY",
                             domain=domain.name, parent=district, metadata={'groups': 'A'})
+        cls.facility_sp_id = facility.sql_location.supply_point_id
         facility2 = make_loc(code="loc2", name="Test Facility 2", type="FACILITY",
                              domain=domain.name, parent=district, metadata={'groups': 'B'})
         cls.facility3 = make_loc(

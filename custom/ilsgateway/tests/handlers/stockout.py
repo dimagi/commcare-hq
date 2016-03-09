@@ -17,8 +17,8 @@ class TestStockout(ILSTestScript):
             5551234 < %(soh_confirm)s
         """ % {"soh_confirm": unicode(SOH_CONFIRM)}
         self.run_script(script)
-        self.assertEqual(StockTransaction.objects.all().count(), 3)
-        self.assertEqual(StockState.objects.all().count(), 3)
+        self.assertEqual(StockTransaction.objects.filter(case_id=self.facility_sp_id).count(), 3)
+        self.assertEqual(StockState.objects.filter(case_id=self.facility_sp_id).count(), 3)
 
         quantities = [400, 569, 678]
         for (idx, stock_transaction) in enumerate(StockTransaction.objects.all().order_by('pk')):

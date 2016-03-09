@@ -40,10 +40,10 @@ class ILSSoHTest(ILSTestScript):
         """ % {"soh_confirm": unicode(SOH_CONFIRM)}
         self.run_script(script)
 
-        self.assertEqual(StockTransaction.objects.all().count(), 3)
-        self.assertEqual(StockState.objects.all().count(), 3)
+        self.assertEqual(StockTransaction.objects.filter(case_id=self.facility_sp_id).count(), 3)
+        self.assertEqual(StockState.objects.filter(case_id=self.facility_sp_id).count(), 3)
 
-        for stock_transaction in StockTransaction.objects.all():
+        for stock_transaction in StockTransaction.objects.filter(case_id=self.facility_sp_id):
             self.assertTrue(stock_transaction.stock_on_hand == 0)
 
     def test_stock_on_hand_update(self):
@@ -67,15 +67,24 @@ class ILSSoHTest(ILSTestScript):
             )
             self.run_script(script)
             self.assertEqual(
-                StockTransaction.objects.filter(type__in=['stockonhand', 'stockout'], pk__gt=pkmax).count(), 3
+                StockTransaction.objects.filter(
+                    case_id=self.facility_sp_id,
+                    type__in=['stockonhand', 'stockout'],
+                    pk__gt=pkmax
+                ).count(), 3
             )
             self.assertEqual(StockState.objects.count(), 3)
             for code, amt in prod_amt_config:
-                ps = StockState.objects.get(sql_product__code__iexact=code)
+                ps = StockState.objects.get(
+                    sql_product__code__iexact=code,
+                    case_id=self.facility_sp_id
+                )
                 self.assertEqual(amt, ps.stock_on_hand)
                 pr = StockTransaction.objects.get(
+                    case_id=self.facility_sp_id,
                     pk__gt=pkmax, sql_product__code__iexact=code, type__in=['stockonhand', 'stockout']
                 )
+                self.assertEqual(amt, pr.stock_on_hand)
                 this_pkmax = max(this_pkmax, pr.pk)
             pkmax = max(this_pkmax, pkmax)
 
@@ -168,7 +177,10 @@ class ILSSoHTest(ILSTestScript):
             5551234 < %(soh_bad_format)s
         """ % {'soh_bad_format': unicode(SOH_BAD_FORMAT)}
         self.run_script(script)
-        self.assertEqual(StockState.objects.get(sql_product__code='ff').stock_on_hand, 100)
+        self.assertEqual(StockState.objects.get(
+            sql_product__code='ff',
+            case_id=self.facility_sp_id
+        ).stock_on_hand, 100)
 
     def test_stock_on_hand_language_swahili(self):
         translation.activate("sw")

@@ -1,5 +1,4 @@
 from django.utils import translation
-from django.utils.translation import ugettext as _
 
 from custom.ilsgateway.tanzania.reminders import LANGUAGE_CONFIRM, LANGUAGE_UNKNOWN, HELP_REGISTERED
 from custom.ilsgateway.tests.handlers.utils import ILSTestScript
@@ -10,7 +9,7 @@ class ILSLanguageTest(ILSTestScript):
     def _verify_language(self, language, phone_number):
         previous_language = translation.get_language()
         translation.activate(language)
-        expected = _(HELP_REGISTERED)
+        expected = unicode(HELP_REGISTERED)
         translation.activate(previous_language)
         script = """
           %(phone)s > help
@@ -23,7 +22,7 @@ class ILSLanguageTest(ILSTestScript):
         script = """
             5551234 > language en
             5551234 < %(language_confirm)s
-            """ % {'language_confirm': _(LANGUAGE_CONFIRM) % {"language": "English"}}
+            """ % {'language_confirm': unicode(LANGUAGE_CONFIRM) % {"language": "English"}}
         self.run_script(script)
         self._verify_language('en', '5551234')
 
@@ -32,7 +31,7 @@ class ILSLanguageTest(ILSTestScript):
         script = """
             5551234 > lugha sw
             5551234 < %(language_confirm)s
-            """ % {'language_confirm': _(LANGUAGE_CONFIRM) % {"language": "Swahili"}}
+            """ % {'language_confirm': unicode(LANGUAGE_CONFIRM) % {"language": "Swahili"}}
         self.run_script(script)
         self._verify_language('sw', '5551234')
 
@@ -41,5 +40,5 @@ class ILSLanguageTest(ILSTestScript):
         script = """
             5551234 > language de
             5551234 < %(language_unknown)s
-            """ % {'language_unknown': _(LANGUAGE_UNKNOWN) % {"language": "de"}}
+            """ % {'language_unknown': unicode(LANGUAGE_UNKNOWN) % {"language": "de"}}
         self.run_script(script)
