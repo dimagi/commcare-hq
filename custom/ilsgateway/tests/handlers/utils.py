@@ -53,25 +53,27 @@ class ILSTestScript(TestScript):
         )
         cls.user1 = bootstrap_user(
             facility, username='stella', domain=domain.name, home_loc='loc1', phone_number='5551234',
-            first_name='stella', last_name='Test'
+            first_name='stella', last_name='Test', language='sw'
         )
         bootstrap_user(facility2, username='bella', domain=domain.name, home_loc='loc2', phone_number='5555678',
-                       first_name='bella', last_name='Test')
+                       first_name='bella', last_name='Test', language='sw')
         bootstrap_user(district, username='trella', domain=domain.name, home_loc='dis1', phone_number='555',
-                       first_name='trella', last_name='Test')
+                       first_name='trella', last_name='Test', language='sw')
         bootstrap_user(district, username='msd_person', domain=domain.name, phone_number='111',
-                       first_name='MSD', last_name='Person', user_data={'role': 'MSD'})
+                       first_name='MSD', last_name='Person', user_data={'role': 'MSD'}, language='sw')
 
         for x in xrange(1, 4):
             bootstrap_user(
                 cls.facility3,
                 username='person{}'.format(x), domain=domain.name, phone_number=str(32346 + x),
-                first_name='Person {}'.format(x), last_name='Person {}'. format(x), home_loc='d31049'
+                first_name='Person {}'.format(x), last_name='Person {}'. format(x), home_loc='d31049',
+                language='sw'
             )
             bootstrap_user(
                 cls.district2,
                 username='dperson{}'.format(x), domain=domain.name, phone_number=str(32349 + x),
-                first_name='dPerson {}'.format(x), last_name='dPerson {}'. format(x), home_loc='d10101'
+                first_name='dPerson {}'.format(x), last_name='dPerson {}'. format(x), home_loc='d10101',
+                language='sw'
             )
 
         create_products(cls, domain.name, ["id", "dp", "fs", "md", "ff", "dx", "bp", "pc", "qi", "jd", "mc", "ip"])

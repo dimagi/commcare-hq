@@ -35,8 +35,9 @@ class DeliveredHandler(GenericStockReportHandler):
 
         for user in users:
             if user.get_verified_number():
-                send_sms_to_verified_number(user.get_verified_number(), DELIVERY_CONFIRM_CHILDREN %
-                                            {"district_name": location.name})
+                with localize(user.get_language_code()):
+                    send_sms_to_verified_number(user.get_verified_number(), DELIVERY_CONFIRM_CHILDREN %
+                                                {"district_name": location.name})
 
     def on_success(self):
         SupplyPointStatus.objects.create(location_id=self.location_id,

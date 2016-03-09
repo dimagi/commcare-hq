@@ -1,5 +1,6 @@
 from django.utils import translation
 
+from corehq.util.translation import localize
 from custom.ilsgateway.tanzania.reminders import LANGUAGE_CONFIRM, LANGUAGE_UNKNOWN, HELP_REGISTERED
 from custom.ilsgateway.tests.handlers.utils import ILSTestScript
 
@@ -18,27 +19,30 @@ class ILSLanguageTest(ILSTestScript):
         self.run_script(script)
 
     def test_language_english(self):
-        translation.activate('en')
+        with localize('en'):
+            response = unicode(LANGUAGE_CONFIRM)
         script = """
             5551234 > language en
             5551234 < %(language_confirm)s
-            """ % {'language_confirm': unicode(LANGUAGE_CONFIRM) % {"language": "English"}}
+            """ % {'language_confirm': response % {"language": "English"}}
         self.run_script(script)
         self._verify_language('en', '5551234')
 
     def test_language_swahili(self):
-        translation.activate('sw')
+        with localize('sw'):
+            response = unicode(LANGUAGE_CONFIRM)
         script = """
             5551234 > lugha sw
             5551234 < %(language_confirm)s
-            """ % {'language_confirm': unicode(LANGUAGE_CONFIRM) % {"language": "Swahili"}}
+            """ % {'language_confirm': response % {"language": "Swahili"}}
         self.run_script(script)
         self._verify_language('sw', '5551234')
 
     def test_language_unknown(self):
-        translation.activate('sw')
+        with localize('sw'):
+            response = unicode(LANGUAGE_UNKNOWN)
         script = """
             5551234 > language de
             5551234 < %(language_unknown)s
-            """ % {'language_unknown': unicode(LANGUAGE_UNKNOWN) % {"language": "de"}}
+            """ % {'language_unknown': response % {"language": "de"}}
         self.run_script(script)

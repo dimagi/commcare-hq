@@ -1,9 +1,9 @@
 from datetime import datetime
 
-from django.utils import translation
 from django.utils.translation import ugettext as _
 
 from casexml.apps.stock.models import StockTransaction
+from corehq.util.translation import localize
 from custom.ilsgateway.tanzania.reminders import SOH_CONFIRM
 from custom.ilsgateway.tests import ILSTestScript
 
@@ -11,11 +11,12 @@ from custom.ilsgateway.tests import ILSTestScript
 class TestBugs(ILSTestScript):
 
     def test_unicode_characters(self):
-        translation.activate('sw')
+        with localize('sw'):
+            response = _(SOH_CONFIRM)
         script = u"""
             5551234 > Hmk Id 400 \u0660Dp 569 Ip 678
             5551234 < %(soh_confirm)s
-        """ % {"soh_confirm": _(SOH_CONFIRM)}
+        """ % {"soh_confirm": response}
 
         now = datetime.utcnow()
         self.run_script(script)
