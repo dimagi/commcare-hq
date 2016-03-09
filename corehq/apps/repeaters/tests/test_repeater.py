@@ -463,23 +463,3 @@ class TestRepeaterFormat(BaseRepeaterTest):
         repeat_record.fire(post_fn=post_fn)
         headers = self.repeater.get_headers(repeat_record)
         post_fn.assert_called_with(payload, self.repeater.url, headers=headers, force_send=False)
-
-
-class RepeaterLockTest(TestCase):
-
-    def tearDown(self):
-        repeat_records = RepeatRecord.all()
-        for repeat_record in repeat_records:
-            repeat_record.delete()
-
-    def testLocks(self):
-        r = RepeatRecord(domain='test')
-        r.save()
-        r2 = RepeatRecord.get(r._id)
-        self.assertTrue(r.acquire_lock(datetime.utcnow()))
-        r3 = RepeatRecord.get(r._id)
-        self.assertFalse(r2.acquire_lock(datetime.utcnow()))
-        self.assertFalse(r3.acquire_lock(datetime.utcnow()))
-        r.release_lock()
-        r4 = RepeatRecord.get(r._id)
-        self.assertTrue(r4.acquire_lock(datetime.utcnow()))

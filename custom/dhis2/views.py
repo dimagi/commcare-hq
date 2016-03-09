@@ -3,7 +3,7 @@ from corehq.apps.domain.decorators import require_superuser
 from django.http import HttpResponse
 
 from corehq.apps.repeaters.models import RepeatRecord
-from corehq.apps.repeaters.tasks import process_repeater_list
+from corehq.apps.repeaters.tasks import process_repeat_record
 
 PAGE = """
 <html>
@@ -25,5 +25,6 @@ def check_repeaters(request, domain):
     elif request.method == 'POST':
         start = datetime.utcnow()
         repeat_records = RepeatRecord.all(domain, due_before=start, limit=100)
-        process_repeater_list(repeat_records)
+        for record in repeat_records:
+            process_repeat_record(record)
         return HttpResponse(PAGE % {'status': 'Done', 'domain': domain})
