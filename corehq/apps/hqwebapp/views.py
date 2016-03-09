@@ -381,7 +381,7 @@ def _login(req, domain_name, template_name):
         })
 
     auth_view = HQLoginView if not domain_name else CloudCareLoginView
-    return auth_view.as_view(extra_context=context)(req)
+    return auth_view.as_view(template_name=template_name, extra_context=context)(req)
 
 
 def login(req, domain_type='commcare'):
