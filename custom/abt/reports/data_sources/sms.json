@@ -7,7 +7,9 @@
         "airsethiopia",
         "abtmali",
         "airsmadagascar",
-        "airstanzania"
+        "airstanzania",
+        "airsghana",
+        "airsbenin"
     ],
     "config": {
         "engine_id": "default",
