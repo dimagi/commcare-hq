@@ -216,3 +216,9 @@ def get_kafka_ucr_pillow():
     return ConfigurableReportKafkaPillow(
         data_source_provider=DynamicDataSourceProvider(), pillow_name='kafka-ucr-main'
     )
+
+
+def get_kafka_ucr_static_pillow():
+    return ConfigurableReportKafkaPillow(
+        data_source_provider=StaticDataSourcePillow(), pillow_name='kafka-ucr-static'
+    )
