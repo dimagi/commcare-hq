@@ -6,7 +6,7 @@ from corehq.form_processor.interfaces.supply import SupplyInterface
 def bootstrap_user(loc, username=TEST_USER, domain=TEST_DOMAIN,
                    phone_number=TEST_NUMBER, password=TEST_PASSWORD,
                    backend=TEST_BACKEND, first_name='', last_name='',
-                   home_loc=None, user_data=None,
+                   home_loc=None, user_data=None, language=None
                    ):
     user_data = user_data or {}
     user = CommCareUser.create(
@@ -18,6 +18,8 @@ def bootstrap_user(loc, username=TEST_USER, domain=TEST_DOMAIN,
         first_name=first_name,
         last_name=last_name
     )
+    if language:
+        user.language = language
     if home_loc == loc.site_code:
         interface = SupplyInterface(domain)
         if not interface.get_by_location(loc):
@@ -26,4 +28,5 @@ def bootstrap_user(loc, username=TEST_USER, domain=TEST_DOMAIN,
         user.set_location(loc)
 
     user.save_verified_number(domain, phone_number, verified=True, backend_id=backend)
+    user.save()
     return CommCareUser.wrap(user.to_json())

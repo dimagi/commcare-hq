@@ -19,5 +19,10 @@ from .handlers.supervision import *
 from .handlers.yes import *
 from .handlers.stockout import *
 from .handlers.messageinitatior import *
+from .handlers.bugs import *
+from .handlers.deliverygroups import *
+from .handlers.help import *
 from .test_reminders import *
 from .test_report_runner import *
+from .test_reminders2 import *
+from .test_report_reminders import *

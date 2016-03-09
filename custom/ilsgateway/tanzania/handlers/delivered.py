@@ -2,12 +2,14 @@ from datetime import datetime
 from corehq.apps.locations.dbaccessors import get_users_by_location_id
 from corehq.apps.products.models import SQLProduct
 from corehq.apps.sms.api import send_sms_to_verified_number
+from corehq.util.translation import localize
+from custom.ilsgateway.tanzania.exceptions import InvalidProductCodeException
 from custom.ilsgateway.tanzania.handlers.generic_stock_report_handler import GenericStockReportHandler
 from custom.ilsgateway.tanzania.handlers.ils_stock_report_parser import Formatter
 from custom.ilsgateway.models import SupplyPointStatus, SupplyPointStatusTypes, SupplyPointStatusValues
 from custom.ilsgateway.tanzania.handlers.soh import parse_report
 from custom.ilsgateway.tanzania.reminders import DELIVERY_CONFIRM_DISTRICT, DELIVERY_PARTIAL_CONFIRM, \
-    DELIVERY_CONFIRM_CHILDREN, DELIVERED_CONFIRM
+    DELIVERY_CONFIRM_CHILDREN, DELIVERED_CONFIRM, INVALID_PRODUCT_CODE
 
 
 class DeliveryFormatter(Formatter):
@@ -33,8 +35,9 @@ class DeliveredHandler(GenericStockReportHandler):
 
         for user in users:
             if user.get_verified_number():
-                send_sms_to_verified_number(user.get_verified_number(), DELIVERY_CONFIRM_CHILDREN %
-                                            {"district_name": location.name})
+                with localize(user.get_language_code()):
+                    send_sms_to_verified_number(user.get_verified_number(), DELIVERY_CONFIRM_CHILDREN %
+                                                {"district_name": location.name})
 
     def on_success(self):
         SupplyPointStatus.objects.create(location_id=self.location_id,
@@ -43,13 +46,20 @@ class DeliveredHandler(GenericStockReportHandler):
                                          status_date=datetime.utcnow())
 
     def get_message(self, data):
-        products = sorted([
-            (SQLProduct.objects.get(product_id=tx.product_id).code, tx.quantity)
-            for tx in data['transactions']
-        ], key=lambda x: x[0])
-        return DELIVERED_CONFIRM % {'reply_list': ', '.join(
-            ['{} {}'.format(product, quantity) for product, quantity in products]
-        )}
+        with localize(self.user.get_language_code()):
+            products = sorted([
+                (SQLProduct.objects.get(product_id=tx.product_id).code, tx.quantity)
+                for tx in data['transactions']
+            ], key=lambda x: x[0])
+            return DELIVERED_CONFIRM % {'reply_list': ', '.join(
+                ['{} {}'.format(product, quantity) for product, quantity in products]
+            )}
+
+    def on_error(self, data):
+        for error in data['errors']:
+            if isinstance(error, InvalidProductCodeException):
+                self.respond(INVALID_PRODUCT_CODE, product_code=unicode(error))
+                return
 
     def help(self):
         location = self.user.location
