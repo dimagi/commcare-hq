@@ -18,3 +18,9 @@ class DynamicDataSourceProvider(DataSourceProvider):
 class StaticDataSourceProvider(DataSourceProvider):
     def get_data_sources(self):
         return StaticDataSourceConfiguration.all()
+
+
+class MockDataSourceProvider(DataSourceProvider):
+    # for testing only
+    def get_data_sources(self):
+        return []
