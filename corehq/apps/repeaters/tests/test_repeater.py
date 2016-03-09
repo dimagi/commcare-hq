@@ -14,6 +14,7 @@ from django.test.client import Client
 from corehq.apps.app_manager.tests.util import TestXmlMixin
 from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.receiverwrapper.exceptions import DuplicateFormatException, IgnoreDocument
+from corehq.apps.repeaters.tasks import check_repeaters
 from corehq.apps.repeaters.models import (
     CaseRepeater,
     FormRepeater,
@@ -223,6 +224,17 @@ class RepeaterTest(BaseRepeaterTest):
 
         self.post_xml(update_xform_xml, self.domain)
         self.assertEqual(len(self.repeat_records(self.domain)), 2)
+
+    def test_check_repeat_records(self):
+        self.assertEqual(len(RepeatRecord.all()), 2)
+
+        with patch('corehq.apps.repeaters.models.simple_post_with_cached_timeout') as mock_fire:
+            check_repeaters()
+            self.assertEqual(mock_fire.call_count, 2)
+
+        with patch('corehq.apps.repeaters.models.simple_post_with_cached_timeout') as mock_fire:
+            check_repeaters()
+            self.assertEqual(mock_fire.call_count, 0)
 
 
 class CaseRepeaterTest(BaseRepeaterTest, TestXmlMixin):
