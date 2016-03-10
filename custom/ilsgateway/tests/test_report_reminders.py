@@ -75,16 +75,16 @@ class TestReportSummaryBase(TestScript):
         cls.domain = prepare_domain(TEST_DOMAIN)
 
         cls.district = make_loc(code="dis1", name="TEST DISTRICT", type="DISTRICT", domain=TEST_DOMAIN,
-                                metadata={'groups': DeliveryGroups().current_submitting_group()})
+                                metadata={'group': DeliveryGroups().current_submitting_group()})
         cls.facility = make_loc(code="d10001", name="Test Facility 1", type="FACILITY",
                                 domain=TEST_DOMAIN, parent=cls.district,
-                                metadata={'groups': DeliveryGroups().current_submitting_group()})
+                                metadata={'group': DeliveryGroups().current_submitting_group()})
         cls.facility2 = make_loc(code="d10002", name="Test Facility 2", type="FACILITY",
                                  domain=TEST_DOMAIN, parent=cls.district,
-                                 metadata={'groups': DeliveryGroups().current_delivering_group()})
+                                 metadata={'group': DeliveryGroups().current_delivering_group()})
         cls.facility3 = make_loc(code="d10003", name="Test Facility 3", type="FACILITY",
                                  domain=TEST_DOMAIN, parent=cls.district,
-                                 metadata={'groups': DeliveryGroups().current_submitting_group()})
+                                 metadata={'group': DeliveryGroups().current_submitting_group()})
 
         cls.facilities = [cls.facility, cls.facility2, cls.facility3]
         cls.district_user = bootstrap_user(
@@ -108,7 +108,7 @@ class TestReportSummaryBase(TestScript):
         )
 
         for facility in cls.facilities:
-            facility.metadata['groups'] = cls.relevant_group()
+            facility.metadata['group'] = cls.relevant_group()
             facility.save()
         create_products(cls, TEST_DOMAIN, ["id", "dp", "fs", "md", "ff", "dx", "bp", "pc", "qi", "jd", "mc", "ip"])
 
