@@ -4,10 +4,10 @@ a feature preview, you shouldn't need to migrate the data, as long as the
 slug is kept intact.
 """
 from django.utils.translation import ugettext_lazy as _
-from corehq.toggles import TAG_PREVIEW
 from django_prbac.utils import has_privilege as prbac_has_privilege
 
-from .toggles import StaticToggle, NAMESPACE_DOMAIN
+from .toggles import StaticToggle, NAMESPACE_DOMAIN, TAG_PREVIEW, \
+    all_toggles_by_name_in_scope
 
 
 class FeaturePreview(StaticToggle):
@@ -37,14 +37,20 @@ class FeaturePreview(StaticToggle):
 
 
 def all_previews():
-    for toggle_name, toggle in globals().items():
-        if not toggle_name.startswith('__'):
-            if isinstance(toggle, StaticToggle):
-                yield toggle
+    return all_toggles_by_name_in_scope(globals()).values()
+
+
+def all_previews_by_name():
+    return all_toggles_by_name_in_scope(globals())
 
 
 def previews_dict(domain):
     return {t.slug: True for t in all_previews() if t.enabled(domain)}
+
+
+def preview_values_by_name(domain):
+    return {toggle_name: toggle.enabled(domain)
+            for toggle_name, toggle in all_previews_by_name().items()}
 
 
 SUBMIT_HISTORY_FILTERS = FeaturePreview(

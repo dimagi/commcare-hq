@@ -117,7 +117,7 @@ class SMSUsersSyncTest(TestCase):
         ilsgateway_smsuser = self.api_object.sms_user_sync(smsuser)
         self.assertIsNotNone(ilsgateway_smsuser)
         self.assertEqual(len(CommCareUser.by_domain(TEST_DOMAIN)), 0)
-
+        self.assertListEqual(list(VerifiedNumber.by_owner_id(ilsgateway_smsuser.get_id)), [])
         smsuser.is_active = True
         ilsgateway_smsuser = self.api_object.sms_user_sync(smsuser)
         self.assertIsNotNone(ilsgateway_smsuser)

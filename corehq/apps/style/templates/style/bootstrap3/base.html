@@ -213,7 +213,7 @@
                     relativeUrls: false
                 };
             </script>
-            <script src="{% new_static 'less/dist/less-1.7.3.min.js' cache=True %}"></script>
+            <script src="{% new_static 'less/dist/less-1.7.3.min.js' %}"></script>
             {% if less_watch %}<script>less.watch();</script>{% endif %}
         {% endif %}
     </head>
@@ -339,29 +339,20 @@
         <script type="text/javascript" src="{% new_static 'style/js/layout.js' %}"></script>
         <script type="text/javascript" src="{% new_static 'style/js/form_tools.js' %}"></script>
         <script type="text/javascript" src="{% new_static 'style/js/hq.helpers.js' %}"></script>
-        <script type="text/javascript" src="{% new_static 'style/js/bootstrap3/main.js' %}"></script>
         <script type="text/javascript" src="{% new_static 'hqwebapp/js/hqModules.js' %}"></script>
+        <script type="text/javascript" src="{% new_static 'hqwebapp/js/toggles.js' %}"></script>
+        <script type="text/javascript" src="{% new_static 'style/js/bootstrap3/main.js' %}"></script>
         {% endcompress %}
 
-        <script type="text/javascript">
-            COMMCAREHQ.SaveButton = COMMCAREHQ.makeSaveButton({
-                SAVE: '{% trans "Save"|escapejs %}',
-                SAVING: '{% trans "Saving..."|escapejs %}',
-                SAVED: '{% trans "Saved"|escapejs %}',
-                RETRY: '{% trans "Try Again"|escapejs %}',
-                ERROR_SAVING: '{% trans "There was an error saving"|escapejs %}'
-            }, 'btn btn-success');
-            COMMCAREHQ.DeleteButton = COMMCAREHQ.makeSaveButton({
-                SAVE: '{% trans "Delete"|escapejs %}',
-                SAVING: '{% trans "Deleting..."|escapejs %}',
-                SAVED: '{% trans "Deleted"|escapejs %}',
-                RETRY: '{% trans "Try Again"|escapejs %}',
-                ERROR_SAVING: '{% trans "There was an error deleting"|escapejs %}'
-            }, 'btn btn-danger');
+        {% if request.domain and request.user.username %}
+            <script type="text/javascript" src="{% toggle_js_url request.domain request.user.username %}"></script>
+        {% endif %}
 
-            $('.hq-help-template').each(function () {
-                COMMCAREHQ.makeHqHelp($(this).data()).insertAfter(this);
-                $(this).remove();
+        <script type="text/javascript">
+            $(function(){
+                $('.hq-help-template').each(function () {
+                    COMMCAREHQ.transformHelpTemplate($(this), true);
+                });
             });
         </script>
         {# JavaScript Display Logic Libaries #}
@@ -404,10 +395,13 @@
             }
 
             var message_element = $("#message-alerts").get(0);
-            ko.cleanNode(message_element);
-            $(message_element).koApplyBindings({
-                alerts: message_alerts
-            });
+            // if not no_header
+            if (typeof message_element !== 'undefined') {
+                ko.cleanNode(message_element);
+                $(message_element).koApplyBindings({
+                    alerts: message_alerts
+                });
+            }
 
         </script>
 
@@ -485,9 +479,6 @@
         </script>
         <![endif]-->
         
-        {% include 'style/includes/keyboard_shortcuts.html' %}
-        {% block keyboard_shortcuts %}{% endblock keyboard_shortcuts %}
-
         {% block js-inline %}{% endblock js-inline %}
 
     </body>

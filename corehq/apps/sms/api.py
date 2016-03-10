@@ -13,9 +13,9 @@ from corehq import privileges
 from corehq.apps.accounting.utils import domain_has_privilege, log_accounting_error
 from corehq.apps.sms.util import (clean_phone_number, clean_text,
     get_backend_classes)
-from corehq.apps.sms.models import (SMSLog, OUTGOING, INCOMING,
+from corehq.apps.sms.models import (OUTGOING, INCOMING,
     PhoneNumber, SMS, SelfRegistrationInvitation, MessagingEvent,
-    SQLMobileBackend, SQLSMSBackend)
+    SQLMobileBackend, SQLSMSBackend, QueuedSMS)
 from corehq.apps.sms.messages import (get_message, MSG_OPTED_IN,
     MSG_OPTED_OUT, MSG_DUPLICATE_USERNAME, MSG_USERNAME_TOO_LONG,
     MSG_REGISTRATION_WELCOME_CASE, MSG_REGISTRATION_WELCOME_MOBILE_WORKER)
@@ -39,6 +39,13 @@ class DomainScopeValidationError(Exception):
 
 class BackendAuthorizationException(Exception):
     pass
+
+
+def get_utcnow():
+    """
+    Used to make it easier to mock utcnow() in the tests.
+    """
+    return datetime.utcnow()
 
 
 class MessageMetadata(object):
@@ -69,7 +76,7 @@ def log_sms_exception(msg):
     notify_exception(None, message=message, details={
         'domain': msg.domain,
         'date': msg.date,
-        'message_id': msg._id,
+        'message_id': msg.couch_id,
     })
 
 
@@ -86,6 +93,10 @@ def get_location_id_by_verified_number(v):
     return get_location_id_by_contact(v.domain, v.owner)
 
 
+def get_sms_class():
+    return QueuedSMS if settings.SMS_QUEUE_ENABLED else SMS
+
+
 def send_sms(domain, contact, phone_number, text, metadata=None):
     """
     Sends an outbound SMS. Returns false if it fails.
@@ -96,11 +107,11 @@ def send_sms(domain, contact, phone_number, text, metadata=None):
         phone_number = str(phone_number)
     phone_number = clean_phone_number(phone_number)
 
-    msg = SMSLog(
+    msg = get_sms_class()(
         domain=domain,
         phone_number=phone_number,
         direction=OUTGOING,
-        date = datetime.utcnow(),
+        date=get_utcnow(),
         backend_id=None,
         location_id=get_location_id_by_contact(domain, contact),
         text = text
@@ -132,12 +143,12 @@ def send_sms_to_verified_number(verified_number, text, metadata=None,
             return False
         raise
 
-    msg = SMSLog(
+    msg = get_sms_class()(
         couch_recipient_doc_type = verified_number.owner_doc_type,
         couch_recipient = verified_number.owner_id,
         phone_number = "+" + str(verified_number.phone_number),
         direction = OUTGOING,
-        date = datetime.utcnow(),
+        date=get_utcnow(),
         domain = verified_number.domain,
         backend_id=backend.couch_id,
         location_id=get_location_id_by_verified_number(verified_number),
@@ -150,11 +161,11 @@ def send_sms_to_verified_number(verified_number, text, metadata=None,
 
 def send_sms_with_backend(domain, phone_number, text, backend_id, metadata=None):
     phone_number = clean_phone_number(phone_number)
-    msg = SMSLog(
+    msg = get_sms_class()(
         domain=domain,
         phone_number=phone_number,
         direction=OUTGOING,
-        date=datetime.utcnow(),
+        date=get_utcnow(),
         backend_id=backend_id,
         text=text
     )
@@ -166,11 +177,11 @@ def send_sms_with_backend(domain, phone_number, text, backend_id, metadata=None)
 def send_sms_with_backend_name(domain, phone_number, text, backend_name, metadata=None):
     phone_number = clean_phone_number(phone_number)
     backend = SQLMobileBackend.load_by_name(SQLMobileBackend.SMS, domain, backend_name)
-    msg = SMSLog(
+    msg = get_sms_class()(
         domain=domain,
         phone_number=phone_number,
         direction=OUTGOING,
-        date=datetime.utcnow(),
+        date=get_utcnow(),
         backend_id=backend.couch_id,
         text=text
     )
@@ -194,7 +205,7 @@ def queue_outgoing_sms(msg):
         try:
             msg.processed = False
             msg.datetime_to_process = msg.date
-            msg.queued_timestamp = datetime.utcnow()
+            msg.queued_timestamp = get_utcnow()
             msg.save()
         except:
             log_sms_exception(msg)
@@ -205,6 +216,8 @@ def queue_outgoing_sms(msg):
     else:
         msg.processed = True
         msg_sent = send_message_via_backend(msg)
+        if msg_sent:
+            create_billable_for_sms(msg)
         return msg_sent
 
 
@@ -253,7 +266,6 @@ def send_message_via_backend(msg, backend=None, orig_phone_number=None):
         msg.backend_api = backend.hq_api_id
         msg.backend_id = backend.couch_id
         msg.save()
-        create_billable_for_sms(msg)
         return True
     except Exception:
         log_sms_exception(msg)
@@ -434,10 +446,10 @@ def incoming(phone_number, text, backend_api, timestamp=None,
     if text is None:
         text = ""
     phone_number = clean_phone_number(phone_number)
-    msg = SMSLog(
+    msg = get_sms_class()(
         phone_number=phone_number,
         direction=INCOMING,
-        date=timestamp or datetime.utcnow(),
+        date=timestamp or get_utcnow(),
         text=text,
         domain_scope=domain_scope,
         backend_api=backend_api,
@@ -447,7 +459,7 @@ def incoming(phone_number, text, backend_api, timestamp=None,
     )
     if settings.SMS_QUEUE_ENABLED:
         msg.processed = False
-        msg.datetime_to_process = datetime.utcnow()
+        msg.datetime_to_process = get_utcnow()
         msg.queued_timestamp = msg.datetime_to_process
         msg.save()
         enqueue_directly(msg)
@@ -536,13 +548,22 @@ def process_incoming(msg):
             import verify
             verify.process_verification(v, msg)
 
-    if msg.domain and domain_has_privilege(msg.domain, privileges.INBOUND_SMS):
+    # If the sms queue is enabled, then the billable gets created in remove_from_queue()
+    if (
+        not settings.SMS_QUEUE_ENABLED and
+        msg.domain and
+        domain_has_privilege(msg.domain, privileges.INBOUND_SMS)
+    ):
         create_billable_for_sms(msg)
 
 
 def create_billable_for_sms(msg, delay=True):
+    if not isinstance(msg, SMS):
+        raise Exception("Expected msg to be an SMS")
+
     if not msg.domain:
         return
+
     try:
         from corehq.apps.sms.tasks import store_billable
         if delay:

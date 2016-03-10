@@ -1,24 +1,6 @@
-{% extends 'style/bootstrap2/two_column.html' %}
+{% extends 'style/bootstrap3/base_section.html' %}
 {% load i18n %}
 {% load hq_shared_tags %}
-
-{% block title %}{% trans "Chat over SMS" %}{% endblock %}
-
-{% block page-title %}
-    <ul class="breadcrumb">
-        <li>
-            <a href="{% url "sms_default" domain %}"><strong>{% trans "Messaging" %}</strong></a> <span class="divider">&gt;</span>
-        </li>
-        <li class="active">
-            <div id="report-title"><a href="{% url "chat_contacts" domain %}">{% trans "Chat over SMS" %}</a></div>
-        </li>
-    </ul>
-{% endblock %}
-
-{% block head %}{{ block.super }}
-    {% include "imports/datatables.html" %}
-    <script type="text/javascript" src="{% static 'reports/javascripts/config.dataTables.bootstrap.js' %}"></script>
-{% endblock %}
 
 {% block js-inline %}{{ block.super }}
 <script>
@@ -45,11 +27,11 @@
             "aoColumnDefs": [
                 {
                     "aTargets": [0],
-                    "fnRender": function(obj) {
-                        return '<a target="_blank" href="'+obj.aData[4]+'">'+obj.aData[0]+'</a>'+
+                    "render": function(data, type, row, meta) {
+                        return '<a target="_blank" href="'+row[4]+'">'+row[0]+'</a>'+
                                '<span class="btn btn-primary pull-right" '+
-                               'onClick="window.open(\''+obj.aData[5]+'\', \'_blank\', \'location=no,menubar=no,scrollbars=no,status=no,toolbar=no,height=400,width=400\');">'+
-                               '{% trans "Chat" %} <i class="icon icon-white icon-share-alt"></i></span>';
+                               'onClick="window.open(\''+row[5]+'\', \'_blank\', \'location=no,menubar=no,scrollbars=no,status=no,toolbar=no,height=400,width=400\');">'+
+                               '{% trans "Chat" %} <i class="fa fa-share"></i></span>';
                     }
                 }
             ],
@@ -59,13 +41,14 @@
             "bFilter": true,
             "oLanguage": {
                 "sLengthMenu": "{% trans "Show" %} _MENU_ {% trans "contacts per page" %}",
-                "sProcessing": '<img src="{% static "hqwebapp/img/ajax-loader.gif" %}" alt="loading indicator" /> {% trans "Loading Contacts..." %}',
+                "sProcessing": '<img src="{% new_static "hqwebapp/img/ajax-loader.gif" %}" alt="loading indicator" /> {% trans "Loading Contacts..." %}',
                 "sInfo": "{% trans "Showing _START_ to _END_ of _TOTAL_ contacts" %}",
                 "sInfoFiltered": "{% trans "(filtered from _MAX_ total contacts)" %}",
             },
             "sAjaxSource": "{% url "chat_contact_list" domain %}",
             "sDom": "lrtip",
-            "sPaginationType": "bootstrap"
+            "useBootstrap3": true,
+            "paginationType": "bs_normal"
         });
         var filterViewModel = new FilterViewModel();
         $('#id_filter').koApplyBindings(filterViewModel);
@@ -73,11 +56,19 @@
 </script>
 {% endblock %}
 
-{% block main_column %}
-    <div id="id_filter" style="padding-bottom: 50px;" class="input-append">
-        <input id="id_filter_text" type="text" data-bind="value: filterText" placeholder="{% trans "Search by name or phone number" %}" />
-        <button class="btn btn-primary" data-bind="click: performFilter">{% trans "Search" %}</button>
-        <button class="btn" data-bind="click: clearFilter">{% trans "Clear" %}</button>
+{% block page_content %}
+    <div id="id_filter" style="padding-bottom: 40px;" class="row">
+        <div class="col-xs-8">
+            <input id="id_filter_text"
+                   type="text"
+                   data-bind="value: filterText"
+                   placeholder="{% trans "Search by name or phone number" %}"
+                   class="form-control" />
+        </div>
+        <div class="col-xs-4">
+            <button class="btn btn-primary" data-bind="click: performFilter">{% trans "Search" %}</button>
+            <button class="btn btn-default" data-bind="click: clearFilter">{% trans "Clear" %}</button>
+        </div>
     </div>
     <table id="contact_list" class="table table-striped table-bordered">
         <thead>

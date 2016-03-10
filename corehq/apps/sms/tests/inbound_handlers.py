@@ -7,6 +7,8 @@ from corehq.apps.smsforms.app import submit_unfinished_form
 from corehq.apps.smsforms.models import SQLXFormsSession
 from datetime import date, time
 
+from corehq.form_processor.tests.utils import set_case_property_directly
+
 
 class KeywordTestCase(TouchformsTestCase):
     """
@@ -660,8 +662,8 @@ class KeywordTestCase(TouchformsTestCase):
 
         # Test initator filters
         case = self.get_case("pid1237")
-        case.set_case_property("contact_phone_number", "999124")
-        case.set_case_property("contact_phone_number_is_verified", "1")
+        set_case_property_directly(case, "contact_phone_number", "999124")
+        set_case_property_directly(case, "contact_phone_number_is_verified", "1")
         case.save()
 
         incoming("999123", "for_user", "TEST")

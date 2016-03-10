@@ -4,11 +4,14 @@ from celery.task import task
 from time import sleep
 from corehq.apps.sms.mixin import (VerifiedNumber, InvalidFormatException,
     PhoneNumberInUseException)
-from corehq.apps.sms.models import (SMSLog, OUTGOING, INCOMING, SMS,
-    PhoneLoadBalancingMixin, CommConnectCase)
+from corehq.apps.sms.models import (OUTGOING, INCOMING, SMS,
+    PhoneLoadBalancingMixin, CommConnectCase, QueuedSMS)
 from corehq.apps.sms.api import (send_message_via_backend, process_incoming,
-    log_sms_exception)
+    log_sms_exception, create_billable_for_sms, get_utcnow)
+from django.db import transaction
 from django.conf import settings
+from corehq import privileges
+from corehq.apps.accounting.utils import domain_has_privilege
 from corehq.apps.domain.models import Domain
 from corehq.apps.smsbillables.models import SmsBillable
 from corehq.util.timezones.conversions import ServerTime
@@ -20,28 +23,49 @@ from dimagi.utils.rate_limit import rate_limit
 from threading import Thread
 
 
+def remove_from_queue(queued_sms):
+    with transaction.atomic():
+        sms = SMS()
+        for field in sms._meta.fields:
+            if field.name != 'id':
+                setattr(sms, field.name, getattr(queued_sms, field.name))
+        queued_sms.delete(sync_to_couch=False)  # Remove sync_to_couch when SMSLog is removed
+        sms.save()
+
+    if sms.direction == OUTGOING and sms.processed and not sms.error:
+        create_billable_for_sms(sms)
+    elif sms.direction == INCOMING and sms.domain and domain_has_privilege(sms.domain, privileges.INBOUND_SMS):
+        create_billable_for_sms(sms)
+
+
 def handle_unsuccessful_processing_attempt(msg):
     msg.num_processing_attempts += 1
     if msg.num_processing_attempts < settings.SMS_QUEUE_MAX_PROCESSING_ATTEMPTS:
         delay_processing(msg, settings.SMS_QUEUE_REPROCESS_INTERVAL)
     else:
         msg.set_system_error(SMS.ERROR_TOO_MANY_UNSUCCESSFUL_ATTEMPTS)
+        remove_from_queue(msg)
+
 
 def handle_successful_processing_attempt(msg):
-    utcnow = datetime.utcnow()
+    utcnow = get_utcnow()
     msg.num_processing_attempts += 1
     msg.processed = True
     msg.processed_timestamp = utcnow
     if msg.direction == OUTGOING:
         msg.date = utcnow
     msg.save()
+    remove_from_queue(msg)
+
 
 def delay_processing(msg, minutes):
     msg.datetime_to_process += timedelta(minutes=minutes)
     msg.save()
 
+
 def get_lock(client, key):
     return client.lock(key, timeout=settings.SMS_QUEUE_PROCESSING_LOCK_TIMEOUT*60)
+
 
 def time_within_windows(domain_now, windows):
     weekday = domain_now.weekday()
@@ -54,6 +78,7 @@ def time_within_windows(domain_now, windows):
             return True
 
     return False
+
 
 def handle_domain_specific_delays(msg, domain_object, utcnow):
     """
@@ -74,14 +99,17 @@ def handle_domain_specific_delays(msg, domain_object, utcnow):
         if time_within_windows(domain_now, domain_object.sms_conversation_times):
             sms_conversation_length = domain_object.sms_conversation_length
             conversation_start_timestamp = utcnow - timedelta(minutes=sms_conversation_length)
-            if SMSLog.inbound_entry_exists(msg.couch_recipient_doc_type,
-                                           msg.couch_recipient,
-                                           conversation_start_timestamp,
-                                           utcnow):
+            if SMS.inbound_entry_exists(
+                msg.couch_recipient_doc_type,
+                msg.couch_recipient,
+                conversation_start_timestamp,
+                to_timestamp=utcnow
+            ):
                 delay_processing(msg, 1)
                 return True
 
     return False
+
 
 def message_is_stale(msg, utcnow):
     oldest_allowable_datetime = \
@@ -90,17 +118,6 @@ def message_is_stale(msg, utcnow):
         return msg.date < oldest_allowable_datetime
     else:
         return True
-
-def _wait_and_release_lock(lock, timeout, start_timestamp):
-    while (datetime.utcnow() - start_timestamp) < timedelta(seconds=timeout):
-        sleep(0.1)
-    release_lock(lock, True)
-
-
-def wait_and_release_lock(lock, timeout):
-    timestamp = datetime.utcnow()
-    t = Thread(target=_wait_and_release_lock, args=(lock, timeout, timestamp))
-    t.start()
 
 
 def handle_outgoing(msg):
@@ -134,7 +151,9 @@ def handle_outgoing(msg):
         orig_phone_number=orig_phone_number
     )
 
-    if not msg.error:
+    if msg.error:
+        remove_from_queue(msg)
+    else:
         # Only do the following if an unrecoverable error did not happen
         if result:
             handle_successful_processing_attempt(msg)
@@ -154,27 +173,33 @@ def handle_incoming(msg):
 
 
 @task(queue="sms_queue", ignore_result=True, acks_late=True)
-def process_sms(message_id):
+def process_sms(queued_sms_pk):
     """
-    message_id - _id of an SMSLog entry
+    queued_sms_pk - pk of a QueuedSMS entry
     """
     client = get_redis_client()
-    utcnow = datetime.utcnow()
+    utcnow = get_utcnow()
     # Prevent more than one task from processing this SMS, just in case
     # the message got enqueued twice.
-    message_lock = get_lock(client, "sms-queue-processing-%s" % message_id)
+    message_lock = get_lock(client, "sms-queue-processing-%s" % queued_sms_pk)
 
     if message_lock.acquire(blocking=False):
-        msg = SMSLog.get(message_id)
+        try:
+            msg = QueuedSMS.objects.get(pk=queued_sms_pk)
+        except QueuedSMS.DoesNotExist:
+            # The message was already processed and removed from the queue
+            release_lock(message_lock, True)
+            return
 
         if message_is_stale(msg, utcnow):
             msg.set_system_error(SMS.ERROR_MESSAGE_IS_STALE)
+            remove_from_queue(msg)
             release_lock(message_lock, True)
             return
 
         if msg.direction == OUTGOING:
             if msg.domain:
-                domain_object = Domain.get_by_name(msg.domain, strict=True)
+                domain_object = Domain.get_by_name(msg.domain)
             else:
                 domain_object = None
             if domain_object and handle_domain_specific_delays(msg, domain_object, utcnow):
@@ -199,18 +224,22 @@ def process_sms(message_id):
                 handle_incoming(msg)
             else:
                 msg.set_system_error(SMS.ERROR_INVALID_DIRECTION)
+                remove_from_queue(msg)
 
             if recipient_block:
                 release_lock(recipient_lock, True)
 
         release_lock(message_lock, True)
         if requeue:
-            process_sms.delay(message_id)
+            process_sms.delay(queued_sms_pk)
 
 
 @task(ignore_result=True)
 def store_billable(msg):
-    if msg._id and not SmsBillable.objects.filter(log_id=msg._id).exists():
+    if not isinstance(msg, SMS):
+        raise Exception("Expected msg to be an SMS")
+
+    if msg.couch_id and not SmsBillable.objects.filter(log_id=msg.couch_id).exists():
         try:
             msg.text.encode('iso-8859-1')
             msg_length = 160

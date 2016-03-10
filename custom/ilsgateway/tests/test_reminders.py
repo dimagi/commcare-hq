@@ -35,7 +35,7 @@ class TestReminders(TestCase):
         region = make_loc(code="reg1", name="Test Region 1", type="REGION",
                           domain=domain.name, parent=msdzone)
         cls.district = make_loc(code="dis1", name="Test District 1", type="DISTRICT",
-                            domain=domain.name, parent=region)
+                                domain=domain.name, parent=region)
         cls.facility = make_loc(code="loc1", name="Test Facility 1", type="FACILITY",
                                 domain=domain.name, parent=cls.district)
         cls.facility.metadata['group'] = 'B'

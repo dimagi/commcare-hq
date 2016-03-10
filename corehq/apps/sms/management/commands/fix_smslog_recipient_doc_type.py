@@ -1,12 +1,13 @@
 from django.core.management.base import BaseCommand, CommandError
 from optparse import make_option
-from corehq.apps.sms.models import SMSLog
+from corehq.apps.sms.models import SMS
 from corehq.apps.users.models import CouchUser
 from django.conf import settings
 
+
 class Command(BaseCommand):
     args = "<domain1 domain2 ... >"
-    help = "Fix couch_recipient_doc_type on SMSLog entries."
+    help = "Fix couch_recipient_doc_type on SMS entries."
 
     def handle(self, *args, **options):
         if len(args) == 0:
@@ -15,7 +16,7 @@ class Command(BaseCommand):
         for domain in args:
             print "*** Processing Domain %s ***" % domain
             user_cache = {}
-            for msg in SMSLog.by_domain_asc(domain).all():
+            for msg in SMS.by_domain(domain):
                 if msg.couch_recipient:
                     if msg.couch_recipient_doc_type != "CommCareCase":
                         user = None
@@ -37,4 +38,3 @@ class Command(BaseCommand):
                         msg.couch_recipient = None
                         msg.couch_recipient_doc_type = None
                         msg.save()
-

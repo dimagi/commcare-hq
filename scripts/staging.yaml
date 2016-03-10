@@ -45,16 +45,19 @@
 trunk: master
 name: autostaging
 branches:
-  - use-hqImport  # Danny 2/26
+  - better-deploy-email  # Danny 3/10
+  - toggles-js-fix-cache  # Danny 3/8
+  - ko3-app-manager  # Danny 3/7
+  - cloudcare-on-apps-db  # Danny 3/7
+  - flip_apps_db  # Danny 3/1
+  - calculatedIcons # Sravan 3/2
   - vellum-staging # J$ 11/13
-  - java-tf-deploy # Ben/Will 1/21/16
+#  - java-tf-deploy # Ben/Will 1/21/16
   - finish-two-factor # Cal 1/21
   - show-form-case-refs-in-summary # j$ 1/29
-  - keyboard-shortcuts-cleanup # Jenny 3/1
   - revamp-multimedia # Jenny 2/16
   - analytics-retry # Cal 2/18
-  - upgrade-django-tastypie # Nick P 2/22
-  - email_list-soft_assert # Nick P 2/23
+#  - upgrade-django-tastypie # Nick P 2/22
   - j2me # j$ 2/23
   # B3 Changes round 2
   - b3-reports-data  # BB 2/23
@@ -64,13 +67,13 @@ branches:
   - b3-reports-home  # BB 2/23
   - b3-reports-case-form  # BB 2/24
   # B3 Report Migration branches
-  - b3-reports-worker-monitoring  # Biyeun 1/21
-  - b3-reports-inspect-data  # Biyeun 1/21
-  - b3-reports-manage-deployments  # Biyeun 1/21
-  - b3-reports-messaging  # Biyeun 1/21
-  - drilldown-async # Biyeun 2/29
+  - no-js-in-filter # Biyeun 2/29
   - import_build-anchor-tag # Nick P 2/29
   - b3-project-settings-accounting  # Biyeun 3/1
+  - report-builder-text # Cal 3/1
+  - b3-bihar # BB 3/7
+  - certificate-validate # Cal 3/9
+  - sql-saved-exports-2 # Noah 3/9  includes ES reindex
 submodules:
   submodules/touchforms-src:
     # let's leave this here even when empty
@@ -91,4 +94,5 @@ submodules:
   submodules/django-prbac-src:
     branches: []
   corehq/apps/prelogin:
-    branches: []
+    branches: #[]
+      - bring-back-static-versioning  # Danny 3/7

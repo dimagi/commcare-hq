@@ -214,6 +214,7 @@ class FundamentalCaseTests(TestCase):
 
 
 def _submit_case_block(create, case_id, **kwargs):
+    domain = kwargs.pop('domain', DOMAIN)
     return post_case_blocks(
         [
             CaseBlock(
@@ -221,5 +222,5 @@ def _submit_case_block(create, case_id, **kwargs):
                 case_id=case_id,
                 **kwargs
             ).as_xml()
-        ], domain=DOMAIN
+        ], domain=domain
     )

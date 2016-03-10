@@ -1,18 +1,8 @@
-{% extends 'style/bootstrap2/centered.html' %}
+{% extends 'style/bootstrap3/base_page.html' %}
 {% load hqstyle_tags %}
 {% load crispy_forms_tags %}
 {% load hq_shared_tags %}
 {% load i18n %}
-
-{% block js %}
-    <script src="{% static 'hqwebapp/js/lib/jquery-ui/jquery-ui-1.9.2.multiselect-deps.custom.min.js' %}"></script>
-    <script src="{% static 'hqwebapp/js/lib/jquery-ui/multiselect/ui.multiselect.js' %}"></script>
-{% endblock %}
-
-{% block head %}
-    <link rel="stylesheet" href="{% static 'hqwebapp/js/lib/jquery-ui-datepicker/datepicker-theme/jquery-ui-1.8.17.custom.css' %}" />
-    <link rel="stylesheet" href="{% static 'hqwebapp/js/lib/jquery-ui/multiselect/ui.multiselect.css' %}" />
-{% endblock %}
 
 {% block title %}{% trans 'Bulk Copy Indicators' %}{% endblock title %}
 
@@ -24,16 +14,17 @@
     </script>
 {% endblock %}
 
-{% block centered-content %}
-    <ul class="breadcrumb">
-        <li><a href="{% url "default_indicator_admin" domain %}">{% trans 'Administer Indicators' %}</a> <span class="divider">&gt;</span></li>
-        <li class="active"><a href="{% url "indicator_bulk_copy" domain indicator_type %}">{% trans 'Bulk Copy Indicators:' %} {{ indicator_name }}</a></li>
-    </ul>
+{% block content %}
+<ol id="hq-breadcrumbs" class="breadcrumb breadcrumb-hq-section">
+    <li><strong><a href="{% url "default_indicator_admin" domain %}">{% trans 'Administer Indicators' %}</a></strong></li>
+    <li class="active"><a href="{% url "indicator_bulk_copy" domain indicator_type %}">{% trans 'Bulk Copy Indicators:' %} {{ indicator_name }}</a></li>
+</ol>
+<div class="container">
     <div class="page-header">
         <h1>{% trans 'Bulk Copy Indicators' %}  <small>{{ indicator_name }}</small></h1>
     </div>
     <div class="row">
-        <div class="span12">
+        <div class="col-sm-12">
             {% if status %}
                 {% if status.success %}
                     <h2>{% trans 'Successfully copied the following indicators' %}</h2>
@@ -52,7 +43,7 @@
                     </ul>
                 {% endif %}
                 <div class="form-actions">
-                    <a href="" class="btn btn-primary">Copy More</a>
+                    <a href="" class="btn btn-primary">{% trans 'Copy More' %}</a>
                 </div>
             {% else %}
                 <form action="" method="post" class="form form-horizontal">
@@ -61,13 +52,16 @@
                         {% if form %}
                             {% crispy form %}
                         {% endif %}
-                        <div class="form-actions text-align-right">
-                            <button type="submit" class="btn btn-primary">{% trans 'Copy' %}</button>
-                            <a href="{% url "default_indicator_admin" domain %}" class="btn">{% trans 'Cancel' %}</a>
+                        <div class="form-actions">
+                            <div class="col-sm-offset-3">
+                                <button type="submit" class="btn btn-primary">{% trans 'Copy' %}</button>
+                                <a href="{% url "default_indicator_admin" domain %}" class="btn btn-default">{% trans 'Cancel' %}</a>
+                            </div>
                         </div>
                     </fieldset>
                 </form>
             {% endif %}
         </div>
     </div>
+</div>
 {% endblock %}
