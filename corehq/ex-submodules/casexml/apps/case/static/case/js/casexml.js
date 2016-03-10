@@ -237,12 +237,13 @@ var casexml = (function () {
                         timeStart = options.timeStart || '',
                         xform;
                     options.date_modified = timeEnd;
-                    xform = $('<data/>').attr({xmlns: casexml.cloudcareEditXMLNS}).append(
+                    xform = $('<data/>').attr({xmlns: casexml.cloudcareEditXMLNS, name: options.form_name}).append(
                         $('<meta/>').attr({xmlns: casexml.openrosaXFormsXMLNS}).append(
                             $('<instanceID/>').text(casexml.guid()),
                             $('<timeStart/>').text(timeStart),
                             $('<timeEnd/>').text(timeEnd),
-                            $('<userID/>').text(options.user_id)
+                            $('<userID/>').text(options.user_id),
+                            $('<username/>').text(options.username)
 //                            $('<deviceID/>')
                         )
                     ).append(o.toXML(options));

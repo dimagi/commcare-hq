@@ -1,12 +1,13 @@
 import uuid
 
 from django.test import SimpleTestCase
+from elasticsearch.exceptions import ConnectionError
 from mock import patch, MagicMock
 
 from corehq.apps.reports.analytics.esaccessors import get_user_stubs
 from corehq.elastic import doc_exists_in_es
 from corehq.pillows.user import UserPillow
-from corehq.util.test_utils import mock_out_couch
+from corehq.util.test_utils import trap_extra_setup, mock_out_couch
 from dimagi.utils.couch.undo import DELETED_SUFFIX
 
 from ..models import CommCareUser, WebUser
@@ -58,7 +59,8 @@ class TestUserSyncToEs(SimpleTestCase):
     @classmethod
     def setUpClass(cls):
         # create the index
-        cls.pillow = UserPillow()
+        with trap_extra_setup(ConnectionError):
+            cls.pillow = UserPillow()
 
     def test_sync_to_es_create_update_delete(self, *mocks):
         domain = 'user_es_domain'

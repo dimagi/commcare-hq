@@ -35,7 +35,8 @@ class SqlCaseUpdateStrategy(UpdateStrategy):
     def update_from_case_update(self, case_update, xformdoc, other_forms=None):
         self._apply_case_update(case_update, xformdoc)
 
-        transaction = CaseTransaction.form_transaction(self.case, xformdoc)
+        types = [CaseTransaction.type_from_action_type_slug(a.action_type_slug) for a in case_update.actions]
+        transaction = CaseTransaction.form_transaction(self.case, xformdoc, types)
         if transaction not in self.case.get_tracked_models_to_create(CaseTransaction):
             # don't add multiple transactions for the same form
             self.case.track_create(transaction)
@@ -192,7 +193,7 @@ class SqlCaseUpdateStrategy(UpdateStrategy):
         for transaction in transactions:
             if not transaction.is_relevant:
                 continue
-            elif transaction.type == CaseTransaction.TYPE_FORM:
+            elif transaction.is_form_transaction:
                 self._apply_form_transaction(transaction)
                 real_transactions.append(transaction)
 

@@ -1,5 +1,7 @@
 from datetime import datetime, timedelta
 import json
+import warnings
+from dimagi.utils.make_uuid import random_hex
 from django import template
 from django.conf import settings
 from django.core.urlresolvers import reverse
@@ -13,8 +15,6 @@ from corehq.apps.domain.models import Domain
 from corehq.util.quickcache import quickcache
 from corehq.util.soft_assert import soft_assert
 from dimagi.utils.web import json_handler
-
-import corehq.apps.style.utils as style_utils
 
 
 register = template.Library()
@@ -94,7 +94,7 @@ except (ImportError, SyntaxError):
 def static(url):
     resource_url = url
     version = resource_versions.get(resource_url)
-    url = settings.STATIC_URL + url
+    url = settings.STATIC_CDN + settings.STATIC_URL + url
     is_less = url.endswith('.less')
     if version and not is_less:
         url += "?version=%s" % version
@@ -106,27 +106,11 @@ def cachebuster(url):
     return resource_versions.get(url, "")
 
 
-@register.simple_tag
+@register.simple_tag()
 def new_static(url, **kwargs):
-    """Caching must explicitly be defined on tags with any of the extensions
-    that could be compressed by django compressor. The static tag above will
-    eventually turn into this tag.
-    :param url:
-    :param kwargs:
-    :return:
-    """
-    can_be_compressed = url.endswith(('.less', '.css', '.js'))
-    use_cache = kwargs.pop('cache', False)
-    use_versions = not can_be_compressed or use_cache
-
-    resource_url = url
-    url = settings.STATIC_URL + url
-    if use_versions:
-        version = resource_versions.get(resource_url)
-        if version:
-            url += "?version=%s" % version
-
-    return url
+    if kwargs:
+        warnings.warn('new_static no longer accepts arguments', PendingDeprecationWarning)
+    return static(url)
 
 
 @quickcache(['couch_user.username'])
@@ -226,6 +210,29 @@ def _toggle_enabled(module, request, toggle_or_toggle_name):
 def toggle_enabled(request, toggle_or_toggle_name):
     import corehq.toggles
     return _toggle_enabled(corehq.toggles, request, toggle_or_toggle_name)
+
+
+@register.simple_tag
+def toggle_js_url(domain, username):
+    return '{url}?username={username}&cachebuster={domain_cb}-{user_cb}'.format(
+        url=reverse('toggles_js', args=[domain]),
+        username=username,
+        domain_cb=toggle_js_domain_cachebuster(domain),
+        user_cb=toggle_js_user_cachebuster(username),
+    )
+
+
+@quickcache(['domain'], timeout=30 * 24 * 60 * 60)
+def toggle_js_domain_cachebuster(domain):
+    # to get fresh cachebusters on the next deploy
+    # change the date below (output from *nix `date` command)
+    #   Thu Mar  3 16:21:30 EST 2016
+    return random_hex()[:3]
+
+
+@quickcache(['username'], timeout=30 * 24 * 60 * 60)
+def toggle_js_user_cachebuster(username):
+    return random_hex()[:3]
 
 
 @register.filter

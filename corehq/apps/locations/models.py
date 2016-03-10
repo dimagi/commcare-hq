@@ -10,6 +10,8 @@ from datetime import datetime
 from django.db import models, transaction
 import json_field
 from casexml.apps.case.cleanup import close_case
+from corehq.form_processor.interfaces.supply import SupplyInterface
+from corehq.form_processor.exceptions import CaseNotFound
 from corehq.apps.commtrack.const import COMMTRACK_USERNAME
 from corehq.apps.domain.models import Domain
 from corehq.apps.products.models import SQLProduct
@@ -208,7 +210,7 @@ class LocationManager(LocationQueriesMixin, TreeManager):
 
 class OnlyUnarchivedLocationManager(LocationManager):
     def get_queryset(self):
-        return (super(OnlyUnarchivedLocationManager, self).get_query_set()
+        return (super(OnlyUnarchivedLocationManager, self).get_queryset()
                 .filter(is_archived=False))
 
 
@@ -399,12 +401,11 @@ class SQLLocation(MPTTModel):
             return None
 
     def linked_supply_point(self):
-        from corehq.apps.commtrack.models import SupplyPointCase
         if not self.supply_point_id:
             return None
         try:
-            return SupplyPointCase.get(self.supply_point_id)
-        except:
+            return SupplyInterface(self.domain).get_supply_point(self.supply_point_id)
+        except CaseNotFound:
             return None
 
     @property

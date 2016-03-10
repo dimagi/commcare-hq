@@ -8,6 +8,7 @@ from django.contrib.auth.models import User
 from casexml.apps.phone.xml import USER_REGISTRATION_XMLNS,\
     USER_REGISTRATION_XMLNS_DEPRECATED
 from corehq.apps.domain.models import Domain
+from corehq.apps.domain.shortcuts import create_domain
 
 
 class CreateTestCase(TestCase):
@@ -35,6 +36,8 @@ class CreateTestCase(TestCase):
         email = "joe@domain.com"
         password = "password"
         domain = "test"
+        domain_obj = create_domain(domain)
+        self.addCleanup(domain_obj.delete)
         couch_user = WebUser.create(domain, username, password, email)
 
         self.assertEqual(couch_user.domains, [domain])
@@ -53,6 +56,10 @@ class CreateTestCase(TestCase):
         email = "joe@domain.com"
         password = "password"
         # create django user
+        domain1 = create_domain('domain1')
+        domain2 = create_domain('domain2')
+        self.addCleanup(domain2.delete)
+        self.addCleanup(domain1.delete)
         couch_user = WebUser.create(None, username, password, email)
         self.assertEqual(couch_user.username, username)
         self.assertEqual(couch_user.email, email)
@@ -173,6 +180,8 @@ class TestDomainMemberships(TestCase):
         cls.webuser.delete()
         cls.webuser2.delete()
         cls.project.delete()
+        cls.domain_obj.delete()
+        cls.nodomain_obj.delete()
 
     @classmethod
     def setUpClass(cls):
@@ -182,6 +191,8 @@ class TestDomainMemberships(TestCase):
         w2_email = "ben@domain.com"
         cc_username = "mobby"
         password = "password"
+        cls.domain_obj = create_domain(cls.domain)
+        cls.nodomain_obj = create_domain('nodomain')
         cls.project = Domain(name=cls.domain)
         cls.project.save()
 

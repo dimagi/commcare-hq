@@ -17,11 +17,9 @@ def recalculate_domain_consumption(domain):
     products = Product.by_domain(domain)
     for supply_point_id in found_doc_ids:
         for product in products:
-            filtered_transactions = StockTransaction.objects.filter(
-                case_id=supply_point_id,
-                product_id=product._id,
-                section_id=const.SECTION_TYPE_STOCK,
-            ).order_by('-report__date', '-pk')
+            filtered_transactions = StockTransaction.get_ordered_transactions_for_stock(
+                supply_point_id, const.SECTION_TYPE_STOCK, product._id
+            )
             if filtered_transactions:
                 update_stock_state_for_transaction(filtered_transactions[0])
 

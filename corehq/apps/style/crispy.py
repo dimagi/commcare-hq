@@ -11,7 +11,7 @@ from django.template.loader import render_to_string
 
 def _get_offsets(context):
     label_class = context.get('label_class', '')
-    return re.sub(r'(sm|md|lg)-', '\g<1>-offset-', label_class)
+    return re.sub(r'(xs|sm|md|lg)-', '\g<1>-offset-', label_class)
 
 
 class FormActions(OriginalFormActions):
@@ -206,6 +206,29 @@ class LinkButton(LayoutObject):
             'button_attrs': flatatt(self.attrs if isinstance(self.attrs, dict) else {}),
         })
         return render_to_string(template, context)
+
+
+class B3TextField(OldField):
+
+    def __init__(self, field_name, text, *args, **kwargs):
+        self.text = text
+        super(B3TextField, self).__init__(field_name, *args, **kwargs)
+        self.template = 'style/crispy/bootstrap3/text_field.html'
+
+    def render(self, form, form_style, context, template_pack=None):
+        template_pack = template_pack or get_template_pack()
+        context.update({
+            'field_text': self.text,
+        })
+        if hasattr(self, 'wrapper_class'):
+            context['wrapper_class'] = self.wrapper_class
+
+        html = ''
+        for field in self.fields:
+            html += render_field(field, form, form_style, context,
+                                 template=self.template, attrs=self.attrs,
+                                 template_pack=template_pack)
+        return html
 
 
 class FieldsetAccordionGroup(AccordionGroup):

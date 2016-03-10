@@ -5,7 +5,7 @@ from corehq.apps.receiverwrapper import submit_form_locally
 from corehq.util.test_utils import TestFileMixin
 from corehq.form_processor.interfaces.processor import FormProcessorInterface
 from corehq.form_processor.tests.utils import run_with_all_backends
-from phonelog.models import UserEntry, DeviceReportEntry
+from phonelog.models import UserEntry, DeviceReportEntry, UserErrorEntry
 
 
 class DeviceLogTest(TestCase, TestFileMixin):
@@ -18,6 +18,7 @@ class DeviceLogTest(TestCase, TestFileMixin):
     def tearDown(self):
         DeviceReportEntry.objects.all().delete()
         UserEntry.objects.all().delete()
+        UserErrorEntry.objects.all().delete()
 
     @run_with_all_backends
     def test_basic_devicelog(self):
@@ -54,3 +55,12 @@ class DeviceLogTest(TestCase, TestFileMixin):
         self.assertEqual(first.user_id, '428d454aa9abc74e1964e16d3565d6b6')
         self.assertEqual(first.username, 'ricatla')
         self.assertEqual(first.sync_token, '848609ceef09fa567e98ca61e3b0514d')
+
+        # Assert UserErrorEntries
+        self.assertEqual(UserErrorEntry.objects.count(), 2)
+        user_error = UserErrorEntry.objects.all()[1]
+        self.assertEqual(user_error.type, 'error-config')
+        self.assertEqual(user_error.user_id, '428d454aa9abc74e1964e16d3565d6b6')
+        self.assertEqual(user_error.version_number, 604)
+        self.assertEqual(user_error.app_id, '36c0bdd028d14a52cbff95bb1bfd0962')
+        self.assertEqual(user_error.expr, '/data/fake')

@@ -5,10 +5,8 @@ from datetime import date
 import xlrd
 from django.utils.translation import ugettext_lazy as _
 from couchdbkit import NoResultFound
-from corehq.apps.hqcase.dbaccessors import get_cases_in_domain_by_external_id
 
 from corehq.apps.importer.const import LookupErrors, ImportErrors
-from casexml.apps.case.models import CommCareCase
 from corehq.apps.groups.models import Group
 from corehq.apps.importer.exceptions import (
     ImporterExcelFileEncrypted,
@@ -22,6 +20,9 @@ from corehq.apps.users.cases import get_wrapped_owner
 from corehq.apps.users.models import CouchUser
 from corehq.apps.users.util import format_username
 from corehq.apps.locations.models import SQLLocation, Location
+from corehq.form_processor.exceptions import CaseNotFound
+from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
+from corehq.form_processor.utils.general import should_use_sql_backend
 from corehq.util.soft_assert import soft_assert
 
 
@@ -353,27 +354,23 @@ def lookup_case(search_field, search_id, domain, case_type):
     error code (if there was an error in lookup).
     """
     found = False
+    case_accessors = CaseAccessors(domain)
     if search_field == 'case_id':
         try:
-            case = CommCareCase.get(search_id)
-
+            case = case_accessors.get_case(search_id)
             if case.domain == domain and case.type == case_type:
                 found = True
-        except Exception:
+        except CaseNotFound:
             pass
     elif search_field == 'external_id':
-        results = get_cases_in_domain_by_external_id(domain, search_id)
-        if results:
-            cases_by_type = [case for case in results
-                             if case.type == case_type]
-
-            if not cases_by_type:
-                return (None, LookupErrors.NotFound)
-            elif len(cases_by_type) > 1:
-                return (None, LookupErrors.MultipleResults)
-            else:
-                case = cases_by_type[0]
-                found = True
+        cases_by_type = case_accessors.get_cases_by_external_id(search_id, case_type=case_type)
+        if not cases_by_type:
+            return (None, LookupErrors.NotFound)
+        elif len(cases_by_type) > 1:
+            return (None, LookupErrors.MultipleResults)
+        else:
+            case = cases_by_type[0]
+            found = True
 
     if found:
         return (case, None)
@@ -488,3 +485,19 @@ def get_id_from_name(name, domain, cache):
     id = get_from_user(name) or get_from_group(name) or get_from_location(name)
     cache[name] = id
     return id
+
+
+def get_case_properties_for_case_type(domain, case_type):
+    if should_use_sql_backend(domain):
+        from corehq.apps.export.models import CaseExportDataSchema
+        from corehq.apps.export.const import MAIN_TABLE
+        schema = CaseExportDataSchema.generate_schema_from_builds(
+            domain,
+            case_type,
+        )
+        group_schemas = [gs for gs in schema.group_schemas if gs.path == MAIN_TABLE]
+        if group_schemas:
+            return sorted(set([item.path[0] for item in group_schemas[0].items]))
+    else:
+        from corehq.apps.hqcase.dbaccessors import get_case_properties
+        return get_case_properties(domain, case_type)

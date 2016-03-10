@@ -27,7 +27,7 @@ hqdb0-staging.internal.commcarehq.org
 hqdb0-staging.internal.commcarehq.org
 
 [touchforms]
-hqdjango2-staging.internal.commcarehq.org
+hqdjango3-staging.internal.commcarehq.org
 
 [redis]
 hqdb0-staging.internal.commcarehq.org

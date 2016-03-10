@@ -13,6 +13,9 @@ class MeanColumnWithCasting(BaseColumn):
 
 class CustomMedianQueryMeta(MedianQueryMeta):
 
+    def __init__(self, table_name, filters, group_by, order_by):
+        super(CustomMedianQueryMeta, self).__init__(table_name, filters, group_by, order_by)
+
     def _build_median_table(self, metadata):
         """
         CREATE TEMP TABLE temp_median (id serial PRIMARY KEY, user_name VARCHAR(50), value INT);

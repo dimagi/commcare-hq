@@ -932,13 +932,6 @@ class MessagingTab(UITab):
                 ],
             })
 
-        if self.can_access_reminders:
-            reminders_urls.append({
-                'title': _("Reminders in Error"),
-                'url': reverse('reminders_in_error', args=[self.domain]),
-                'show_in_dropdown': True,
-            })
-
         return reminders_urls
 
     @property
@@ -1543,6 +1536,8 @@ class AdminReportsTab(UITab):
                                 args=('pillow_errors',))},
                 {'title': _('Login as another user'),
                  'url': reverse(AuthenticateAs.urlname)},
+                {'title': _('Look up user by email'),
+                 'url': reverse('web_user_lookup')},
             ])
         return [
             (_('Administrative Reports'), [

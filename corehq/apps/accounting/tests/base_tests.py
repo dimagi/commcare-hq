@@ -6,7 +6,8 @@ from django_prbac.models import Role
 
 
 class BaseAccountingTest(TestCase):
-    def setUp(self):
+    @classmethod
+    def setUpClass(cls):
         Role.get_cache().clear()
         generator.instantiate_accounting_for_tests()
 

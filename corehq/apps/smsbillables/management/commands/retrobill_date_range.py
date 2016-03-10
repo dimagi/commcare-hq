@@ -1,6 +1,6 @@
 import datetime
 from corehq.apps.domain.models import Domain
-from corehq.apps.sms.models import SMSLog
+from corehq.apps.sms.models import SMS
 from corehq.apps.smsbillables.models import SmsBillable
 from django.core.management import BaseCommand
 from optparse import make_option
@@ -24,22 +24,20 @@ class Command(BaseCommand):
         end_datetime = datetime.datetime(*str_to_int_tuple(args[6:12]))
 
         for domain in Domain.get_all():
-            key = [domain.name, 'SMSLog']
-            sms_docs = SMSLog.get_db().view('sms/by_domain',
-                                            reduce=False,
-                                            startkey=key + [start_datetime.isoformat()],
-                                            endkey=key + [end_datetime.isoformat(), {}],
+            result = SMS.by_domain(
+                domain.name,
+                start_date=start_datetime,
+                end_date=end_datetime
             )
 
-            for sms_doc in sms_docs:
-                sms_log = SMSLog.get(sms_doc['id'])
+            for sms_log in result:
                 if options.get('create', False):
                     SmsBillable.create(sms_log)
-                    print 'Created billable for SMSLog %s in domain %s from %s' \
-                          % (sms_doc['id'], domain.name, sms_log.date)
+                    print 'Created billable for SMS %s in domain %s from %s' \
+                          % (sms_log.couch_id, domain.name, sms_log.date)
                 else:
-                    print 'Found SMSLog %s in domain %s from %s' \
-                          % (sms_doc['id'], domain.name, sms_log.date)
+                    print 'Found SMS %s in domain %s from %s' \
+                          % (sms_log.couch_id, domain.name, sms_log.date)
                 num_sms += 1
 
         print 'Number of SMSs in datetime range: %d' % num_sms

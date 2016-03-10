@@ -78,6 +78,7 @@ var MVISIndicator = function (indicator) {
             self.numerators(data.table.numerators || []);
             self.denominators(data.table.denominators || []);
             self.is_loaded(true);
+            $('.mvp-table').trigger('mvp.loaded');
         }
         queue.next(false);
     };

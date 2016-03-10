@@ -97,6 +97,7 @@ urlpatterns = patterns('',
     (r'^formtranslate/', include('formtranslate.urls')),
     (r'^unicel/', include('corehq.messaging.smsbackends.unicel.urls')),
     (r'^smsgh/', include('corehq.messaging.smsbackends.smsgh.urls')),
+    (r'^push/', include('corehq.messaging.smsbackends.push.urls')),
     (r'^apposit/', include('corehq.messaging.smsbackends.apposit.urls')),
     (r'^tropo/', include('corehq.messaging.smsbackends.tropo.urls')),
     (r'^twilio/', include('corehq.messaging.smsbackends.twilio.urls')),
@@ -139,11 +140,7 @@ urlpatterns = patterns('',
 if settings.ENABLE_PRELOGIN_SITE:
     urlpatterns += patterns('', *PRELOGIN_APP_URLS)
 
-#django-staticfiles static/ url mapper
 if settings.DEBUG:
     urlpatterns += patterns('',
         url(r'^mocha/', include('corehq.apps.mocha.urls')),
-    )
-    urlpatterns += patterns('django.contrib.staticfiles.views',
-        url(r'^static/(?P<path>.*)$', 'serve'),
     )

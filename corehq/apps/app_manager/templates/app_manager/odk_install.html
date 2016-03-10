@@ -14,9 +14,9 @@
                 <img src="{{ qr_code }}" width=250 alt="Download" >
             </p>
             <p>
-                {% trans "You can also visit:" %}
-                <code><a href="{{ profile_url }}">{{ profile_url }}</a></code>
-                {% trans "in your mobile browser." %}
+                {% blocktrans %}
+                You can also click <strong><a href="{{ profile_url }}">here</a></strong> in your mobile browser.
+                {% endblocktrans %}
             </p>
             <p>
                 {% trans "For more about CommCare on Android, visit" %}

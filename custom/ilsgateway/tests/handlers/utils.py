@@ -8,8 +8,8 @@ from corehq.apps.locations.models import Location, SQLLocation, LocationType
 from corehq.apps.products.models import Product, SQLProduct
 from corehq.apps.sms.tests.util import setup_default_sms_test_backend, delete_domain_phone_numbers
 from corehq.apps.users.models import CommCareUser
+from custom.ilsgateway.utils import make_loc
 from custom.logistics.tests.test_script import TestScript
-from corehq.apps.commtrack.tests.util import make_loc
 from custom.ilsgateway.models import ILSGatewayConfig
 from custom.logistics.tests.utils import bootstrap_user
 from casexml.apps.stock.models import DocDomainMapping
@@ -33,43 +33,47 @@ class ILSTestScript(TestScript):
         mohsw = make_loc(code="moh1", name="Test MOHSW 1", type="MOHSW", domain=domain.name)
 
         msdzone = make_loc(code="msd1", name="MSD Zone 1", type="MSDZONE",
-                          domain=domain.name, parent=mohsw)
+                           domain=domain.name, parent=mohsw)
 
         region = make_loc(code="reg1", name="Test Region 1", type="REGION",
                           domain=domain.name, parent=msdzone)
 
         district = make_loc(code="dis1", name="Test District 1", type="DISTRICT",
                             domain=domain.name, parent=region)
-        district2 = make_loc(code="d10101", name="Test District 2", type="DISTRICT",
+        cls.district2 = make_loc(code="d10101", name="Test District 2", type="DISTRICT",
                              domain=domain.name, parent=region)
         facility = make_loc(code="loc1", name="Test Facility 1", type="FACILITY",
-                            domain=domain.name, parent=district)
+                            domain=domain.name, parent=district, metadata={'group': 'A'})
+        cls.facility_sp_id = facility.sql_location.supply_point_id
         facility2 = make_loc(code="loc2", name="Test Facility 2", type="FACILITY",
-                             domain=domain.name, parent=district)
-        facility3 = make_loc(
-            code="d31049", name="Test Facility 3", type="FACILITY", domain=domain.name, parent=district
+                             domain=domain.name, parent=district, metadata={'group': 'B'})
+        cls.facility3 = make_loc(
+            code="d31049", name="Test Facility 3", type="FACILITY", domain=domain.name, parent=district,
+            metadata={'group': 'C'}
         )
         cls.user1 = bootstrap_user(
             facility, username='stella', domain=domain.name, home_loc='loc1', phone_number='5551234',
-            first_name='stella', last_name='Test'
+            first_name='stella', last_name='Test', language='sw'
         )
         bootstrap_user(facility2, username='bella', domain=domain.name, home_loc='loc2', phone_number='5555678',
-                       first_name='bella', last_name='Test')
+                       first_name='bella', last_name='Test', language='sw')
         bootstrap_user(district, username='trella', domain=domain.name, home_loc='dis1', phone_number='555',
-                       first_name='trella', last_name='Test')
+                       first_name='trella', last_name='Test', language='sw')
         bootstrap_user(district, username='msd_person', domain=domain.name, phone_number='111',
-                       first_name='MSD', last_name='Person', user_data={'role': 'MSD'})
+                       first_name='MSD', last_name='Person', user_data={'role': 'MSD'}, language='sw')
 
         for x in xrange(1, 4):
             bootstrap_user(
-                facility3,
+                cls.facility3,
                 username='person{}'.format(x), domain=domain.name, phone_number=str(32346 + x),
-                first_name='Person {}'.format(x), last_name='Person {}'. format(x), home_loc='d31049'
+                first_name='Person {}'.format(x), last_name='Person {}'. format(x), home_loc='d31049',
+                language='sw'
             )
             bootstrap_user(
-                district2,
+                cls.district2,
                 username='dperson{}'.format(x), domain=domain.name, phone_number=str(32349 + x),
-                first_name='dPerson {}'.format(x), last_name='dPerson {}'. format(x), home_loc='d10101'
+                first_name='dPerson {}'.format(x), last_name='dPerson {}'. format(x), home_loc='d10101',
+                language='sw'
             )
 
         create_products(cls, domain.name, ["id", "dp", "fs", "md", "ff", "dx", "bp", "pc", "qi", "jd", "mc", "ip"])

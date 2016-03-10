@@ -73,7 +73,7 @@ class ReportAPITest(unittest.TestCase):
     def test_basic(self):
         ds = UserDataSource({}, keys=[["user1"], ["user2"]], group_by=['user'])
         data = ds.get_data()
-        self.assertEqual(data, [
+        self.assertItemsEqual(data, [
             {
                 'user': 'Bob',
                 'indicator_a': 1,

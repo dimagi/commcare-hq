@@ -11,6 +11,7 @@ from corehq.sql_db.connections import UCR_ENGINE_ID
 from custom.apps.cvsu.mixins import CVSUSqlDataMixin, FilterMixin, DateColumnMixin, combine_month_year, format_date, \
     combine_quarter_year, format_year
 from custom.apps.cvsu.utils import dynamic_date_aggregation
+from custom.utils.utils import clean_IN_filter_value
 from .filters import ALL_CVSU_GROUP
 from dimagi.utils.decorators.memoized import memoized
 from sqlagg import AliasColumn
@@ -133,9 +134,12 @@ class BaseSqlData(SqlData):
     @property
     def filter_values(self):
         users = tuple([user.user_id for user in self.users])
-        return dict(startdate=self.datespan.startdate,
-                    enddate=self.datespan.enddate,
-                    users=users)
+        config = dict(
+            startdate=self.datespan.startdate,
+            enddate=self.datespan.enddate,
+            users=users
+        )
+        return clean_IN_filter_value(config, "users")
 
     @property
     def data(self):
