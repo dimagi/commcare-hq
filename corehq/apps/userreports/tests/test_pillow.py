@@ -14,7 +14,7 @@ from corehq.apps.change_feed.producer import producer
 from corehq.apps.userreports.data_source_providers import MockDataSourceProvider
 from corehq.apps.userreports.exceptions import StaleRebuildError
 from corehq.apps.userreports.pillow import ConfigurableIndicatorPillow, REBUILD_CHECK_INTERVAL, \
-    ConfigurableReportTableManagerMixin, get_kafka_ucr_pillow
+    ConfigurableReportTableManagerMixin, get_kafka_ucr_pillow, get_kafka_ucr_static_pillow
 from corehq.apps.userreports.sql import IndicatorSqlAdapter
 from corehq.apps.userreports.tasks import rebuild_indicators
 from corehq.apps.userreports.tests.utils import get_sample_data_source, get_sample_doc_and_indicators
@@ -187,6 +187,13 @@ class KafkaIndicatorPillowTest(IndicatorPillowTestBase):
         self._check_sample_doc_state(expected_indicators)
 
         CaseAccessorSQL.hard_delete_cases(case.domain, [case.case_id])
+
+
+class StaticKafkaIndicatorPillowTest(TestCase):
+    dependent_apps = ['pillowtop']
+
+    def test_bootstrap_can_be_called(self):
+        get_kafka_ucr_static_pillow().bootstrap()
 
 
 class IndicatorConfigFilterTest(SimpleTestCase):
