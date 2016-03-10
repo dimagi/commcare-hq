@@ -1030,16 +1030,6 @@ class LedgerTransaction(DisabledDbMixin, models.Model):
         (TYPE_TRANSFER, 'transfer'),
     )
 
-    INFERRED_TYPE_STOCK_ON_HAND = 1
-    INFERRED_TYPE_CONSUMPTION = 2
-    INFERRED_TYPE_RECEIPTS = 4
-
-    INFERRED_TYPE_CHOICES = (
-        (INFERRED_TYPE_STOCK_ON_HAND, 'stockonhand'),
-        (INFERRED_TYPE_CONSUMPTION, 'consumption'),
-        (INFERRED_TYPE_RECEIPTS, 'receipts'),
-    )
-
     form_id = models.CharField(max_length=255, null=True)
     server_date = models.DateTimeField()
     type = models.PositiveSmallIntegerField(choices=TYPE_CHOICES)
@@ -1047,10 +1037,49 @@ class LedgerTransaction(DisabledDbMixin, models.Model):
     entry_id = models.CharField(max_length=100, db_index=True, default=None)
     section_id = models.CharField(max_length=100, db_index=True, default=None)
 
-    inferred_type = models.PositiveSmallIntegerField(choices=INFERRED_TYPE_CHOICES)
     user_defined_type = TruncatingCharField(max_length=20, null=True, blank=True)
 
     # change from previous balance
     delta = models.IntegerField(default=0)
     # new balance
     updated_balance = models.IntegerField(default=0)
+
+    def get_consumption_transactions(self):
+        """
+        This adds in the inferred transactions for BALANCE transactions and converts
+        TRANSFER transactions to ``consumption`` / ``receipts``
+        :return: list of ``ConsumptionTransaction`` objects
+        """
+        from casexml.apps.stock.const import (
+            TRANSACTION_TYPE_STOCKONHAND,
+            TRANSACTION_TYPE_RECEIPTS,
+            TRANSACTION_TYPE_CONSUMPTION
+        )
+        transactions = [
+            ConsumptionTransaction(
+                TRANSACTION_TYPE_CONSUMPTION if self.delta < 0 else TRANSACTION_TYPE_RECEIPTS,
+                abs(self.delta),
+                self.server_date
+            )
+        ]
+        if self.type == LedgerTransaction.TYPE_BALANCE:
+            transactions.append(
+                ConsumptionTransaction(
+                    TRANSACTION_TYPE_STOCKONHAND,
+                    self.updated_balance,
+                    self.server_date
+                )
+            )
+        return transactions
+
+
+class ConsumptionTransaction(namedtuple('ConsumptionTransaction', ['type', 'normalized_value', 'received_on'])):
+    @property
+    def is_stockout(self):
+        from casexml.apps.stock.const import TRANSACTION_TYPE_STOCKONHAND
+        return self.type == TRANSACTION_TYPE_STOCKONHAND and self.normalized_value == 0
+
+    @property
+    def is_checkpoint(self):
+        from casexml.apps.stock.const import TRANSACTION_TYPE_STOCKONHAND
+        return self.type == TRANSACTION_TYPE_STOCKONHAND and not self.is_stockout
