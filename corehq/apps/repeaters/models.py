@@ -26,7 +26,6 @@ from dimagi.utils.decorators.memoized import memoized
 from dimagi.utils.parsing import json_format_datetime
 from dimagi.utils.mixins import UnicodeMixIn
 from dimagi.utils.post import simple_post
-from dimagi.utils.couch import LockableMixIn, CouchDocLockableMixIn
 
 from .dbaccessors import (
     get_pending_repeat_record_count,
@@ -433,7 +432,7 @@ class AppStructureRepeater(Repeater):
         return None
 
 
-class RepeatRecord(Document, CouchDocLockableMixIn):
+class RepeatRecord(Document):
     """
     An record of a particular instance of something that needs to be forwarded
     with a link to the proper repeater object
