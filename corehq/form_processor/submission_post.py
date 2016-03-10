@@ -12,11 +12,12 @@ from django.http import (
     HttpResponseBadRequest,
     HttpResponseForbidden,
 )
-
+import sys
 import couchforms
 from casexml.apps.case.exceptions import PhoneDateValueError, IllegalCaseId, UsesReferrals
 from corehq.apps.commtrack.exceptions import MissingProductId
 from corehq.apps.tzmigration import timezone_migration_in_progress
+from corehq.form_processor.exceptions import CouchSaveAborted
 from corehq.form_processor.interfaces.dbaccessors import FormAccessors
 from corehq.form_processor.interfaces.processor import FormProcessorInterface
 from corehq.form_processor.parsers.form import process_xform_xml
@@ -298,18 +299,27 @@ def handle_unexpected_error(interface, instance, e):
     # and then resubmit, the new submission never has a
     # chance to get reprocessed; it'll just get saved as
     # a duplicate.
+    _notify_submission_error(interface, instance, e)
+    FormAccessors(interface.domain).save_new_form(instance)
+
+
+def _notify_submission_error(interface, instance, e):
     from corehq.util.global_request.api import get_request
     request = get_request()
-
     error_message = u'{}: {}'.format(type(e).__name__, unicode(e))
     instance = interface.xformerror_from_xform_instance(instance, error_message, with_new_id=True)
     domain = getattr(instance, 'domain', '---')
-    notify_exception(request, u"Error in case or stock processing for domain: {}".format(domain), details={
+    message = u"Error in case or stock processing for domain: {}".format(domain)
+    details = {
         'original form ID': instance.orig_id,
         'error form ID': instance.form_id,
         'error message': error_message
-    })
-    FormAccessors(interface.domain).save_new_form(instance)
+    }
+    should_email = not isinstance(e, CouchSaveAborted)  # intentionally don't double-email these
+    if should_email:
+        notify_exception(request, message, details=details)
+    else:
+        logging.error(message, exc_info=sys.exc_info(), extra={'details': details})
 
 
 @contextlib.contextmanager
