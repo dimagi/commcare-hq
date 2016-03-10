@@ -46,9 +46,7 @@ trunk: master
 name: autostaging
 branches:
   - better-deploy-email  # Danny 3/10
-  - toggles-js-fix-cache  # Danny 3/8
   - ko3-app-manager  # Danny 3/7
-  - cloudcare-on-apps-db  # Danny 3/7
   - flip_apps_db  # Danny 3/1
   - calculatedIcons # Sravan 3/2
   - vellum-staging # J$ 11/13
@@ -71,7 +69,6 @@ branches:
   - import_build-anchor-tag # Nick P 2/29
   - b3-project-settings-accounting  # Biyeun 3/1
   - report-builder-text # Cal 3/1
-  - certificate-validate # Cal 3/9
   - sql-saved-exports-2 # Noah 3/9  includes ES reindex
 submodules:
   submodules/touchforms-src:
