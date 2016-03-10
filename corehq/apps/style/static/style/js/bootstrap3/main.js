@@ -212,8 +212,10 @@ COMMCAREHQ.makeSaveButton = function(messageStrings, cssClass) {
                 fireChange = function () {
                     button.fire('change');
                 };
-            $form.find('*').change(fireChange);
-            $form.find('input, textarea').bind('textchange', fireChange);
+            _.defer(function () {
+                $form.find('*').change(fireChange);
+                $form.find('input, textarea').bind('textchange', fireChange);
+            });
             return button;
         },
         message: messageStrings
