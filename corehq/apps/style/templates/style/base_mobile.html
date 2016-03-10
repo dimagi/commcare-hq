@@ -13,37 +13,37 @@
         <link type="text/less"
               rel="stylesheet"
               media="all"
-              href="{% new_static 'style/less/bootstrap.debug.less' %}" />
+              href="{% static 'style/less/bootstrap.debug.less' %}" />
         <link type="text/less"
               rel="stylesheet"
               media="all"
-              href="{% new_static 'font-awesome/less/font-awesome.less' %}" />
+              href="{% static 'font-awesome/less/font-awesome.less' %}" />
         <link type="text/less"
               rel="stylesheet"
               media="all"
-              href="{% new_static 'style/less/font-commcare.less' %}" />
+              href="{% static 'style/less/font-commcare.less' %}" />
         <link type="text/less"
               rel="stylesheet"
               media="all"
-              href="{% new_static 'style/less/style.debug.less' %}" />
+              href="{% static 'style/less/style.debug.less' %}" />
     {% else %}
     {% compress css %}
         <link type="text/less"
               rel="stylesheet"
               media="all"
-              href="{% new_static 'style/less/bootstrap.less' %}" />
+              href="{% static 'style/less/bootstrap.less' %}" />
         <link type="text/less"
               rel="stylesheet"
               media="all"
-              href="{% new_static 'font-awesome/less/font-awesome.less' %}" />
+              href="{% static 'font-awesome/less/font-awesome.less' %}" />
         <link type="text/less"
               rel="stylesheet"
               media="all"
-              href="{% new_static 'style/less/font-commcare.less' %}" />
+              href="{% static 'style/less/font-commcare.less' %}" />
         <link type="text/less"
               rel="stylesheet"
               media="all"
-              href="{% new_static 'style/less/style.less' %}" />
+              href="{% static 'style/less/style.less' %}" />
     {% endcompress %}
     {% endif %}
     {% block stylesheets %}
@@ -53,7 +53,7 @@
     {% include "style/includes/bootstrap3/core_libraries.html" %}
     {% endcompress %}
 
-    <link rel="shortcut icon" href="{% new_static 'style/img/favicon.png' %}" />
+    <link rel="shortcut icon" href="{% static 'style/img/favicon.png' %}" />
     {% block head %}{% endblock %}
 </head>
 <body>
@@ -62,7 +62,7 @@
     <div class="container-fluid">
         <div class="navbar-header">
             <div class="navbar-brand">
-                <img src="{% new_static 'hqstyle/img/commcare-logo-mobile.png' %}" alt="CommCare HQ Mobile" />
+                <img src="{% static 'hqstyle/img/commcare-logo-mobile.png' %}" alt="CommCare HQ Mobile" />
             </div>
             <div class="pull-right mobile-nav">
                 {% block mobile-nav %}
