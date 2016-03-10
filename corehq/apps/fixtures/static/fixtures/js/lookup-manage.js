@@ -359,7 +359,7 @@ $(function () {
                     $("#download-progress").hide();
                     $("#download-complete").hide();
     });
-    $('.alert .close').live("click", function(e) {
+    $('.alert .close').on("click", function(e) {
         $(this).parent().hide();
     });
 });
