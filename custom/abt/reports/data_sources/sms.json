@@ -362,6 +362,11 @@
                 "Tanzania": {
                   "default": 0,
                   "cases": {
+                      "Kaskazini Pemba": 2914,
+                      "Kaskazini Unguja": 5746,
+                      "Kusini Pemba": 278,
+                      "Kusini Unguja": 10221,
+                      "Mjini Magharibi": 10380,
                       "Geita": 82337,
                       "Kagera": 158121,
                       "Mara": 79401,
@@ -560,8 +565,8 @@
                     "Bukoba Rural": 62730,
                     "Missenyi": 54578,
                     "Ngara": 40813,
-                    "Butiama": 47577,
-                    "Musoma Rural": 31824,
+                    "Butiama DC": 47577,
+                    "Musoma DC": 31824,
                     "Kwimba": 91547,
                     "Sengerema": 62000,
                     "Micheweni": 2914,
