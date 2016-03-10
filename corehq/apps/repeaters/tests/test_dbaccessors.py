@@ -92,7 +92,7 @@ class TestRepeatRecordDBAccessors(TestCase):
         self.assertEqual(len(records), 0)
 
     def test_iterate_repeat_records(self):
-        records = list(iterate_repeat_records(datetime.utcnow()))
+        records = list(iterate_repeat_records(datetime.utcnow(), chunk_size=2))
         self.assertEqual(len(records), 3)  # Should grab all but the succeeded one
 
 

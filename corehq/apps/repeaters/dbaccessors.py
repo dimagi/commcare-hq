@@ -97,7 +97,7 @@ def _get_repeater_ids_by_domain(domain):
     return [result['id'] for result in results]
 
 
-def iterate_repeat_records(due_before, chunk_size=10, database=None, startkey_docid=None):
+def iterate_repeat_records(due_before, chunk_size=10000, database=None):
     from .models import RepeatRecord
     json_now = json_format_datetime(due_before)
 
@@ -107,11 +107,6 @@ def iterate_repeat_records(due_before, chunk_size=10, database=None, startkey_do
         'endkey': [None, json_now, {}],
         'include_docs': True
     }
-    if startkey_docid:
-        view_kwargs.update({
-            'startkey_docid': startkey_docid,
-            'skip': 1
-        })
     for doc in paginate_view(
             RepeatRecord.get_db(),
             'receiverwrapper/repeat_records_by_next_check',
