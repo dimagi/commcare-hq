@@ -37,6 +37,8 @@ class TestDjangoCompressOffline(SimpleTestCase):
             return
         for tag in DISALLOWED_TAGS:
             self.assertNotRegexpMatches(tag[0], line.strip(), tag[1])
+        if not 'static' in line:
+            return
 
     def _is_b3(self, filename):
         if filename in IGNORED_FILES:
