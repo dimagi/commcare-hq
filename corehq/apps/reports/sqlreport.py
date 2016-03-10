@@ -158,6 +158,7 @@ class AggregateColumn(Column):
 
 
 class SqlData(ReportDataSource):
+    no_value = None
     table_name = None
     """The name of the table to run the query against."""
 
@@ -250,7 +251,7 @@ class SqlData(ReportDataSource):
 
     def get_data(self, start=None, limit=None):
         data = self._get_data(start=start, limit=limit)
-        formatter = DataFormatter(DictDataFormat(self.columns, no_value=None))
+        formatter = DataFormatter(DictDataFormat(self.columns, no_value=self.no_value))
         formatted_data = formatter.format(data, keys=self.keys, group_by=self.group_by)
 
         if self.group_by:
