@@ -34,7 +34,6 @@
  {% endif %}
 {% endblock %}
 {% block filter_js %}
-<script type="text/javascript" src="{% static 'reports/ko/report_filter.drilldown_options.js' %}"></script>
 {% if not is_empty %}
 <script type="text/javascript">
     $.getScript("{% new_static 'reports/ko/report_filter.drilldown_options.js' %}", function () {
