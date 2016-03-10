@@ -198,6 +198,7 @@ class AggregateDateColumn(ReportColumn):
                 columns=[
                     YearColumn(self.field, alias=self._year_column_alias()),
                     MonthColumn(self.field, alias=self._month_column_alias()),
+                    SimpleColumn(self.field, alias=self.column_id),
                 ],
                 slug=self.column_id,
                 data_slug=self.column_id,
