@@ -12,7 +12,16 @@ TRANSFORM_FUNCTIONS = {
 }
 TRANSFORM_FUNCTIONS.update(DEID_TRANSFORM_FUNCTIONS)
 
-SystemProperty = namedtuple('SystemProperty', ['tag', 'name'])
+
+class SystemProperty(object):
+    def __init__(self, tag, name, path, description=None, transform=None, is_advanced=True):
+        self.tag = tag
+        self.name = name
+        self.path = path
+        self.description = description
+        self.transform = transform
+        self.is_advanced = is_advanced
+
 
 PROPERTY_TAG_NONE = None
 PROPERTY_TAG_INFO = 'info'
@@ -26,14 +35,14 @@ MAIN_TABLE_PROPERTIES = [
 ]
 
 CASE_HISTORY_PROPERTIES = [
-    SystemProperty(PROPERTY_TAG_NONE, 'action_type'),
-    SystemProperty(PROPERTY_TAG_NONE, 'user_id'),
-    SystemProperty(PROPERTY_TAG_NONE, 'date'),
-    SystemProperty(PROPERTY_TAG_NONE, 'server_date'),
-    SystemProperty(PROPERTY_TAG_NONE, 'xform_id'),
-    SystemProperty(PROPERTY_TAG_NONE, 'xform_xmlns'),
-    SystemProperty(PROPERTY_TAG_NONE, 'xform_name'),
-    SystemProperty(PROPERTY_TAG_SERVER, 'state'),
+    SystemProperty(PROPERTY_TAG_NONE, 'action_type', 'action_type'),
+    SystemProperty(PROPERTY_TAG_NONE, 'user_id', 'user_id'),
+    SystemProperty(PROPERTY_TAG_NONE, 'date', 'date'),
+    SystemProperty(PROPERTY_TAG_NONE, 'server_date', 'server_date'),
+    SystemProperty(PROPERTY_TAG_NONE, 'xform_id', 'xform_id'),
+    SystemProperty(PROPERTY_TAG_NONE, 'xform_xmlns', 'xform_xmlns'),
+    SystemProperty(PROPERTY_TAG_NONE, 'xform_name', 'xform_name'),
+    SystemProperty(PROPERTY_TAG_SERVER, 'state', 'state'),
 ]
 
 FORM_EXPORT = 'form'
