@@ -224,7 +224,8 @@ class MyProjectsList(BaseMyAccountView):
     @property
     def page_context(self):
         return {
-            'domains': self.all_domains
+            'domains': self.all_domains,
+            'web_user': self.request.couch_user.is_web_user
         }
 
     @property
