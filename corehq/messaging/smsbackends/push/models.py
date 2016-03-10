@@ -2,6 +2,7 @@ import requests
 from corehq.apps.sms.models import SQLSMSBackend
 from corehq.messaging.smsbackends.push.forms import PushBackendForm
 from django.conf import settings
+from lxml import etree
 from xml.sax.saxutils import escape
 
 
@@ -74,13 +75,31 @@ class PushBackend(SQLSMSBackend):
         return PushBackendForm
 
     def response_is_error(self, response):
-        return False
+        return response.status_code != 200
 
     def handle_error(self, response, msg):
         pass
 
     def handle_success(self, response, msg):
-        pass
+        response.encoding = 'utf-8'
+        if not response.text:
+            return
+
+        try:
+            xml = etree.fromstring(response.text.encode('utf-8'))
+        except etree.XMLSyntaxError:
+            return
+
+        data_points = xml.xpath('/methodResponse/params/param/value/struct/member')
+        for data_point in data_points:
+            name = data_point.xpath('name/text()')
+            name = name[0] if name else None
+
+            if name == 'Identifier':
+                value = data_point.xpath('value/string/text()')
+                value = value[0] if value else None
+                msg.backend_message_id = value
+                break
 
     def get_outbound_payload(self, msg):
         config = self.config
