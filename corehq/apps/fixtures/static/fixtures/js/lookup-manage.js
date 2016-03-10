@@ -281,8 +281,8 @@ $(function () {
                         success: function (resp) {
                             var progress = $("#download-progress");
                             if (resp.replace(/[ \t\n]/g, '')) {
-                                $("#downloading").hide();
-                                progress.show().html(resp);
+                                $("#downloading").addClass('hide');
+                                progress.removeClass('hide').html(resp);
                                 if (progress.find(".alert-success").length) {
                                     keep_polling = false;
                                 }
@@ -298,12 +298,12 @@ $(function () {
                     });
                 }
             }
-            $("#fixture-download").one("hidden", function() {
+            $("#fixture-download").on("hide.bs.modal", function() {
                 // stop polling if dialog is closed
                 keep_polling = false;
             });
-            $("#download-progress").hide();
-            $("#downloading").show();
+            $("#download-progress").addClass('hide');
+            $("#downloading").removeClass('hide');
             poll();
         };
 
@@ -351,15 +351,15 @@ $(function () {
     var el = $('#fixtures-ui');
     var app = new App();
     el.koApplyBindings(app);
-    el.show();
+    el.removeClass('hide');
     app.loadData();
     $('#fixture-upload').koApplyBindings(app);
-    $("#fixture-download").on("hidden", function(){
-                    $("#downloading").show();
-                    $("#download-progress").hide();
-                    $("#download-complete").hide();
+    $("#fixture-download").on("hidden.bs.modal", function(){
+                    $("#downloading").removeClass('hide');
+                    $("#download-progress").addClass('hide');
+                    $("#download-complete").addClass('hide');
     });
     $('.alert .close').on("click", function(e) {
-        $(this).parent().hide();
+        $(this).parent().addClass('hide');
     });
 });
