@@ -225,13 +225,13 @@ $(function () {
                 self.selectedTables.removeAll();
                 if ($elem.data("all")) {
                     $.each($checkboxes, function() {
-                        $(this).attr("checked", true);
+                        $(this).prop("checked", true);
                         self.selectedTables.push(this.value); 
                     });
                 }
                 else {
                     $.each($checkboxes, function() {
-                        $(this).attr("checked", false);
+                        $(this).removeProp("checked");
                     });
                 }
             }
