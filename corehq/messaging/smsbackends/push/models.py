@@ -1,6 +1,7 @@
 import requests
 from corehq.apps.sms.models import SQLSMSBackend
 from corehq.messaging.smsbackends.push.forms import PushBackendForm
+from django.conf import settings
 from xml.sax.saxutils import escape
 
 
@@ -94,7 +95,12 @@ class PushBackend(SQLSMSBackend):
     def send(self, msg, *args, **kwargs):
         headers = {'Content-Type': 'application/xml'}
         payload = self.get_outbound_payload(msg)
-        response = requests.post(self.get_url(), data=payload, headers=headers)
+        response = requests.post(
+            self.get_url(),
+            data=payload,
+            headers=headers,
+            timeout=settings.SMS_GATEWAY_TIMEOUT
+        )
 
         if self.response_is_error(response):
             self.handle_error(response, msg)
