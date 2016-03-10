@@ -8,7 +8,6 @@ from dimagi.utils.decorators.log_exception import log_exception
 from casexml.apps.case.exceptions import IllegalCaseId
 from casexml.apps.stock.models import StockTransaction
 from corehq.form_processor.casedb_base import AbstractCaseDbCache
-from corehq.form_processor.interfaces.ledger_processor import LedgerDB
 from corehq.form_processor.interfaces.processor import FormProcessorInterface
 from casexml.apps.stock import const as stockconst
 from corehq.form_processor.parsers.ledgers import get_stock_actions
@@ -32,8 +31,9 @@ class StockProcessingResult(object):
         self.stock_report_helpers = stock_report_helpers or []
 
     def get_models_to_save(self):
-        processor = FormProcessorInterface(domain=self.domain).ledger_processor
-        ledger_db = LedgerDB(processor=processor)
+        interface = FormProcessorInterface(domain=self.domain)
+        processor = interface.ledger_processor
+        ledger_db = interface.ledger_db
         update_results = []
 
         for stock_report_helper in self.stock_report_helpers:

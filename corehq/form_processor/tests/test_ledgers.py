@@ -87,7 +87,7 @@ class LedgerTests(TestCase):
             for prod_id, balance in balances.items()
         ])
         for prod_id, expected_balance in balances.items():
-            balance = self.interface.ledger_processor.get_current_ledger_value(
+            balance = self.interface.ledger_db.get_current_ledger_value(
                 UniqueLedgerReference(
                 case_id=self.case.case_id,
                 section_id='stock',
@@ -144,7 +144,7 @@ class LedgerTests(TestCase):
             )
 
     def _assert_ledger_state(self, expected_balance):
-        ledgers = self.interface.ledger_processor.get_ledgers_for_case(self.case.case_id)
+        ledgers = self.interface.ledger_db.get_ledgers_for_case(self.case.case_id)
         self.assertEqual(1, len(ledgers))
         ledger = ledgers[0]
         self.assertEqual(self.case.case_id, ledger.case_id)
