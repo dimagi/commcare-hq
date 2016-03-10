@@ -70,6 +70,7 @@ branches:
   - report-builder-text # Cal 3/1
 #  - sql-saved-exports-2 # Noah 3/9  includes ES reindex
   - certificate-validation # Cal 3/10
+  - fix-aggregate-date # Nick P 3/10
 submodules:
   submodules/touchforms-src:
     # let's leave this here even when empty
