@@ -108,16 +108,30 @@ class ConfigurableReportDataSource(SqlData):
 
     @property
     def order_by(self):
+        def _contributions(column_id):
+            if column_id in self._column_configs:
+                return self._column_configs[column_id].get_sort_by_columns()
+            else:
+                return [column_id]
+
+        # allow throwing exception if the report explicitly sorts on an unsortable column type
         if self._order_by:
             return [
-                OrderBy(sort_column_id, order == ASCENDING)
+                OrderBy(order_by, order == ASCENDING)
                 for sort_column_id, order in self._order_by
-                if self._column_configs[sort_column_id].type != 'percent'
+                for order_by in _contributions(sort_column_id)
             ]
-        if self.column_configs and self.column_configs[0].type != 'percent':
-            return [
-                OrderBy(self.column_configs[0].column_id, is_ascending=True)
-            ]
+
+        # swallow exception if first column is unsortable
+        if self.column_configs:
+            try:
+                return [
+                    OrderBy(order_by, is_ascending=True)
+                    for order_by in _contributions(self.column_configs[0].column_id)
+                ]
+            except NotImplementedError:
+                pass
+
         return []
 
     @property
