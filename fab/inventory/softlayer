@@ -40,7 +40,7 @@ _test1
 db0
 
 [rabbitmq:children]
-db0
+es2
 
 [zookeeper:children]
 es2
