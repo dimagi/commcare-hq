@@ -61,7 +61,7 @@ branches:
   - b3-reports-data  # BB 2/23
   - b3-data-import-cases  # BB 2/23
   - b3-data-lookup-tables  # BB 2/23
-  - b3-reports-case-form+b3-reports-home  # BB 2/24
+  - b3-reports-case-form+b3-reports-home_2
   - b3-reports-home  # BB 2/23
   - b3-reports-case-form  # BB 2/24
   # B3 Report Migration branches
@@ -69,7 +69,7 @@ branches:
   - import_build-anchor-tag # Nick P 2/29
   - b3-project-settings-accounting  # Biyeun 3/1
   - report-builder-text # Cal 3/1
-#  - sql-saved-exports-2 # Noah 3/9  includes ES reindex
+  - sql-saved-exports-2 # Noah 3/9  includes ES reindex
   - certificate-validation # Cal 3/10
   - fix-aggregate-date # Nick P 3/10
 submodules:
