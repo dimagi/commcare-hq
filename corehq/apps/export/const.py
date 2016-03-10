@@ -4,6 +4,14 @@ so if changing a value, ensure that both places reflect the change
 """
 from collections import namedtuple
 
+DEID_TRANSFORM_FUNCTIONS = {
+    'deid_id': lambda x: x,  # TODO: map these to actual deid functions
+    'deid_date': lambda x: x,
+}
+TRANSFORM_FUNCTIONS = {
+}
+TRANSFORM_FUNCTIONS.update(DEID_TRANSFORM_FUNCTIONS)
+
 SystemProperty = namedtuple('SystemProperty', ['tag', 'name'])
 
 PROPERTY_TAG_NONE = None
@@ -33,10 +41,3 @@ CASE_EXPORT = 'case'
 
 MAIN_TABLE = []
 CASE_HISTORY_TABLE = ['case_history']
-
-DEID_TRANSFORM_FUNCTIONS = {
-    'deid_id': lambda x: x,  # TODO: map these to actual deid functions
-    'deid_date': lambda x: x,
-}
-TRANSFORM_FUNCTIONS = {}
-TRANSFORM_FUNCTIONS.update(DEID_TRANSFORM_FUNCTIONS)
