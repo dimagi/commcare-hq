@@ -48,7 +48,7 @@ branches:
   - better-deploy-email  # Danny 3/10
   - ko3-app-manager  # Danny 3/7
   - flip_apps_db  # Danny 3/1
-  - calculatedIcons # Sravan 3/2
+#  - calculatedIcons # Sravan 3/2
   - vellum-staging # J$ 11/13
 #  - java-tf-deploy # Ben/Will 1/21/16
   - finish-two-factor # Cal 1/21
