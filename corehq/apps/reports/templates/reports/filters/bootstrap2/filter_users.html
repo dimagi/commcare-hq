@@ -23,7 +23,6 @@
         <button class="btn btn-success">{% commcare_user %}s {% trans "Only" %}</button>
     </div>
 {% endif %}
-
 <script type="text/javascript">
     $.getScript("{% static 'reports/javascripts/field.filter_buttons.js' %}", function() {
         linkButtonGroup("{{ css_id }}");
