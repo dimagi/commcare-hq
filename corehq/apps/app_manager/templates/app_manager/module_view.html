@@ -62,7 +62,8 @@
                     fixtures: fixtures,
                     parentSelect: detail.parent_select,
                     fixtureSelect: detail.fixture_select,
-                    contextVariables: state
+                    contextVariables: state,
+                    multimedia: {{multimedia.object_map|JSON}}
                 });
                 var $list_home = $("#" + detail.type + "-detail-screen-config-tab");
                 $list_home.koApplyBindings(detailScreenConfig);
