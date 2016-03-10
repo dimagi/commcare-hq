@@ -652,6 +652,19 @@ class LedgerAccessorSQL(object):
 
             ledger_value.clear_tracked_models()
 
+    @staticmethod
+    def get_ledger_transactions_for_case(case_id, entry_id=None, section_id=None):
+        return RawQuerySetWrapper(LedgerTransaction.objects.raw(
+            "SELECT * FROM get_ledger_transactions_for_case(%s, %s, %s)",
+            [case_id, entry_id, section_id]
+        ))
+
+    @staticmethod
+    def get_ledger_transactions_in_window(case_id, entry_id, section_id, window_start, window_end):
+        return RawQuerySetWrapper(LedgerTransaction.objects.raw(
+            "SELECT * FROM get_ledger_transactions_for_case(%s, %s, %s, %s, %s)",
+            [case_id, entry_id, section_id, window_start, window_end]
+        ))
 
 
 def _order_list(id_list, object_list, id_property):
@@ -693,3 +706,32 @@ def _batch_iterate(batch_fn, next_start_from_fn, start_from=None, chunk_size=500
             batch = batch_fn(start_from, limit=chunk_size)
         else:
             batch = []  # equivalent to return
+
+
+class RawQuerySetWrapper(object):
+    def __init__(self, queryset):
+        self.queryset = queryset
+        self._result_cache = None
+
+    def _fetch_all(self):
+        if self._result_cache is None:
+            self._result_cache = list(self.queryset)
+        return self._result_cache
+
+    def __getattr__(self, item):
+        return getattr(self.queryset, item)
+
+    def __getitem__(self, k):
+        self._fetch_all()
+        return list(self._result_cache)[k]
+
+    def __iter__(self):
+        return self.queryset.__iter__()
+
+    def __len__(self):
+        self._fetch_all()
+        return len(self._result_cache)
+
+    def __nonzero__(self):
+        self._fetch_all()
+        return bool(self._result_cache)

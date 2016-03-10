@@ -5,7 +5,7 @@ from django.test import TestCase
 from casexml.apps.case.mock import CaseFactory, CaseBlock
 from corehq.apps.commtrack.helpers import make_product
 from corehq.apps.hqcase.utils import submit_case_blocks
-from corehq.form_processor.backends.sql.dbaccessors import CaseAccessorSQL
+from corehq.form_processor.backends.sql.dbaccessors import CaseAccessorSQL, LedgerAccessorSQL
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 from corehq.form_processor.interfaces.processor import FormProcessorInterface
 from corehq.form_processor.models import CaseTransaction, LedgerTransaction
@@ -67,7 +67,7 @@ class LedgerTests(TestCase):
         # make sure the form is part of the case's history
         self.assertEqual(orignal_form_count + 1, len(self.interface.get_case_forms(self.case.case_id)))
         if should_use_sql_backend(DOMAIN):
-            txs = LedgerTransaction.objects.filter(case_id=self.case.case_id)
+            txs = LedgerAccessorSQL.get_ledger_transactions_for_case(self.case.case_id)
             self.assertEqual(1, len(txs))
             self.assertEqual(LedgerTransaction.TYPE_BALANCE, txs[0].type)
             self.assertEqual(self.product_a._id, txs[0].entry_id)

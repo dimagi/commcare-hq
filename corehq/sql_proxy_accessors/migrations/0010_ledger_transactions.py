@@ -23,4 +23,5 @@ class Migration(migrations.Migration):
             "SELECT 1"
         ),
         migrator.get_migration('save_ledger_values.sql'),
+        migrator.get_migration('get_ledger_transactions_for_case.sql'),
     ]
