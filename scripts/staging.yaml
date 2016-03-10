@@ -70,6 +70,7 @@ branches:
   - b3-project-settings-accounting  # Biyeun 3/1
   - report-builder-text # Cal 3/1
 #  - sql-saved-exports-2 # Noah 3/9  includes ES reindex
+  - certificate-validation # Cal 3/10
 submodules:
   submodules/touchforms-src:
     # let's leave this here even when empty
