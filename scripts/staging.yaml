@@ -45,7 +45,6 @@
 trunk: master
 name: autostaging
 branches:
-  - better-deploy-email  # Danny 3/10
   - ko3-app-manager  # Danny 3/7
   - flip_apps_db  # Danny 3/1
 #  - calculatedIcons # Sravan 3/2
