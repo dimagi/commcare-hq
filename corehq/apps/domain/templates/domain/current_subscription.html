@@ -4,8 +4,8 @@
 {% load i18n %}
 
 {% block js %}{{ block.super }}
-    <script type="text/javascript" src="{% new_static 'accounting/ko/accounting.payment_method_handler.js' %}"></script>
-    <script type="text/javascript" src="{% new_static 'accounting/ko/accounting.credits.js' %}"></script>
+    <script type="text/javascript" src="{% static 'accounting/ko/accounting.payment_method_handler.js' %}"></script>
+    <script type="text/javascript" src="{% static 'accounting/ko/accounting.credits.js' %}"></script>
     <script type="text/javascript" src="https://js.stripe.com/v2/"></script>
 {% endblock %}
 

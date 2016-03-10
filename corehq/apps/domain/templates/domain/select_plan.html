@@ -10,19 +10,19 @@
     <link type="text/less"
           rel="stylesheet"
           media="all"
-          href="{% new_static 'accounting/less/pricing.debug.less' %}" />
+          href="{% static 'accounting/less/pricing.debug.less' %}" />
 {% else %}
     {% compress css %}
         <link type="text/less"
               rel="stylesheet"
               media="all"
-              href="{% new_static 'accounting/less/pricing.less' %}" />
+              href="{% static 'accounting/less/pricing.less' %}" />
     {% endcompress %}
 {% endif %}
 {% endblock %}
 
 {% block js %}{{ block.super }}
-    <script type="text/javascript" src="{% new_static 'accounting/ko/accounting.pricing_table.js' %}"></script>
+    <script type="text/javascript" src="{% static 'accounting/ko/accounting.pricing_table.js' %}"></script>
 {% endblock %}
 
 {% block js-inline %}{{ block.super }}
