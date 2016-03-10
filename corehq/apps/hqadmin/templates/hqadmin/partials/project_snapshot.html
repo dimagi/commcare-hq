@@ -3,6 +3,7 @@
     </head>
     <body>
         <h2>Deployed by {{ user }}, cheers!</h2>
+        {% if pr_merges %}
         <p>We just deployed the following PRs:</p>
         <ul>
             {% for pr in pr_merges %}
@@ -20,6 +21,9 @@
             </li>
             {% endfor %}
         </ul>
+        {% else %}
+        <p>No PRs were merged since last deploy.</p>
+        {% endif %}
         <p>Here's the complete diff on github: <a href="{{ compare_url }}">{{ compare_url }}</a></p>
     </body>
 </html>

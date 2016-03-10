@@ -14,7 +14,7 @@ def get_deploy_email_message_body(environment, user):
         oneline=True, grep='Merge pull request #'
     ).strip().split('\n')
     pr_numbers = [int(re.search(r'Merge pull request #(\d+)', line).group(1))
-                  for line in pr_merges]
+                  for line in pr_merges if line]
     pool = Pool(5)
     pr_infos = pool.map(_get_pr_info, pr_numbers)
 
