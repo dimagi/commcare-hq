@@ -4,7 +4,8 @@ from corehq.messaging.smsbackends.push.forms import PushBackendForm
 from xml.sax.saxutils import escape
 
 
-OUTBOUND_REQUEST_XML = """<methodCall>
+OUTBOUND_REQUEST_XML = """<?xml version="1.0" encoding="UTF-8"?>
+<methodCall>
     <methodName>EAPIGateway.SendSMS</methodName>
     <params>
         <param>
@@ -87,7 +88,7 @@ class PushBackend(SQLSMSBackend):
             service=escape(config.service),
             password=escape(config.password),
             number=escape(msg.phone_number),
-            text=escape(msg.text),
+            text=escape(msg.text.encode('utf-8')),
         )
 
     def send(self, msg, *args, **kwargs):
