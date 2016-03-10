@@ -302,7 +302,7 @@ def _fmt_date(date):
                 cls=_timedelta_class(datetime.utcnow() - date),
                 text=_(_naturaltime_with_hover(date)),
             ),
-            date.toordinal(),
+            int(date.strftime("%s")),
         )
 
 
