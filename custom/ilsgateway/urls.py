@@ -34,5 +34,7 @@ urlpatterns = patterns('custom.ilsgateway.views',
         name='product_availability_delete'
     ),
     url(r'^fix_stock_data/$', 'fix_stock_data_view', name='fix_stock_data'),
+    url(r'^recalculate_march_reporting_data/$', 'recalculate_march_reporting_data',
+        name='recalculate_march_reporting_data'),
     url(r'^balance/$', BalanceMigrationView.as_view(), name='balance_migration')
 )

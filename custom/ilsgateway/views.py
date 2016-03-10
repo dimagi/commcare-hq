@@ -33,7 +33,7 @@ from custom.ilsgateway.tanzania.reports.delivery import DeliveryReport
 from custom.ilsgateway.tanzania.reports.randr import RRreport
 from custom.ilsgateway.tanzania.reports.stock_on_hand import StockOnHandReport
 from custom.ilsgateway.tanzania.reports.supervision import SupervisionReport
-from custom.ilsgateway.tasks import clear_report_data, fix_stock_data_task
+from custom.ilsgateway.tasks import clear_report_data, fix_stock_data_task, recalculate_march_reporting_data_task
 from casexml.apps.stock.models import StockTransaction
 from custom.logistics.models import StockDataCheckpoint
 from custom.logistics.tasks import fix_groups_in_location_task, resync_web_users
@@ -328,6 +328,13 @@ def change_runner_date_to_last_migration(request, domain):
     last_run = ReportRun.last_success(domain)
     last_run.end = checkpoint.date
     last_run.save()
+    return HttpResponse('OK')
+
+
+@domain_admin_required
+@require_POST
+def recalculate_march_reporting_data(request, domain):
+    recalculate_march_reporting_data_task.delay(domain)
     return HttpResponse('OK')
 
 
