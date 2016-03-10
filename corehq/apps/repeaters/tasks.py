@@ -39,7 +39,7 @@ def check_repeaters():
         process_repeat_record.delay(record)
 
 
-@task
+@task(queue=settings.CELERY_REPEAT_RECORD_QUEUE)
 def process_repeat_record(repeat_record):
     redis_client = get_redis_client().client.get_client()
 

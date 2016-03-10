@@ -553,6 +553,11 @@ CELERY_REMINDER_RULE_QUEUE = CELERY_MAIN_QUEUE
 CELERY_REMINDER_CASE_UPDATE_QUEUE = CELERY_MAIN_QUEUE
 
 
+# This is the celery queue to use for sending repeat records.
+# It's set to the main queue here and can be overridden to put it
+# on its own queue.
+CELERY_REPEAT_RECORD_QUEUE = CELERY_MAIN_QUEUE
+
 # websockets config
 WEBSOCKET_URL = '/ws/'
 WS4REDIS_PREFIX = 'ws'
