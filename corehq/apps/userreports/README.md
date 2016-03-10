@@ -385,6 +385,76 @@ Variables can be any valid numbers (Python datatypes `int`, `float`, and `long` 
 
 More examples can be found on practical [examples page](corehq/apps/userreports/examples/examples.md#evaluator-examples).
 
+#### Case --> Form Lookup
+
+```json
+{
+   "type": "get_case_forms",
+   "case_id_expression": {},  # required
+   "filter": {},  # optional - possibly to remove for now in favor of filter expression
+}
+```
+
+Gets a list of forms from a case, optionally filtering (TBD if that belongs here).
+
+#### Filter Expression
+
+```json
+{
+  "type": "filter",  # not sure on name
+  "items_expression": {},  # expression should return a list
+  "filter_expression": {}  # will be called on each item, should return true or false indicating whether to include
+}
+```
+
+This should work just like python's `filter` function.
+
+#### Map Expression
+
+```json
+{
+  "type": "map",  # not sure on name
+  "items_expression": {},  # expression should return a list
+  "map_expression": {}  # expression to be evaluated on each item in the list
+}
+```
+
+In python the equivalent would be `map(lambda x: x.y, my_list)`, which would return a new list with the lambda function applied.
+
+#### Reduce Expression
+
+```json
+{
+  "type": "reduce",  # not sure on name
+  "items_expression":  {},  # expression should return a list
+  "aggregation_fn": "sum"  # one of a fixed set of allowed aggregation functions
+}
+```
+
+It would be cool if we could do custom reduces (by defining a function that takes in two values and spits out a single value). That might look like the following:
+
+```json
+{
+  "type": "custom_reduce",  # not sure on name
+  "items_expression":  {},  # expression should return a list
+  "reduce_statement": "x + y"  # required to only use these two variables
+}
+```
+
+Behind the scenes that could use the evaluator pretty easily.
+
+#### Flatten Expression
+
+```json
+{
+  "type": "flatten",  # not sure on name. in python this is itertools.chain
+  "items_expression":  {},  # expression should return a list of lists
+}
+```
+
+In python, `flatten([1, 2], [3, 4, 5], [6])` would return `[1, 2, 3, 4, 5, 6]`
+
+
 #### "Month Start Date" and "Month End Date" expressions
 
 `month_start_date` returns date of first day in the month of given date and `month_end_date` returns date of last day in the month of given date.
