@@ -85,8 +85,12 @@
                                        event: {change: changeNewOwner}, ic"></select>
                     </span>
                 <button type="submit"
-                        data-bind="hqbSubmitReady: is_submit_enabled, disabled: is_submit_enabled"
+                        data-bind="hqbSubmitReady: is_submit_enabled, visible: is_submit_enabled"
                         class="btn btn-default disabled">{% trans 'Reassign' %}</button>
+                <button type="button"
+                        disabled="disabled"
+                        data-bind="visible: !is_submit_enabled()"
+                        class="btn btn-default">{% trans 'Reassign' %}</button>
                 <div class="help-block" data-bind="visible: is_only_user_reassign">{% trans 'Note: No groups with Case Sharing are available.' %}</div>
             </form>
         </div>
