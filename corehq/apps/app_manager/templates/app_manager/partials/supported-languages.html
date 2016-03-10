@@ -50,7 +50,7 @@
             </td>
             <td><p class="help-block" data-bind="text: message"></p></td>
             <td>
-                <a href="#" data-bind="click: $root.removeLanguage">Delete</a>
+                <a href="#" data-bind="click: $root.removeLanguage">{% trans 'Delete' %}</a>
             </td>
         </tr>
     </tbody>
@@ -61,12 +61,12 @@
 </button>
 <span class='label label-warning' data-bind="visible: addLanguageDisabled">{% trans 'Please save before adding another language' %}</span>
 <div data-bind="if: removedLanguages().length">
-    <h6>Deleting Languages:</h6>
+    <h6>{% trans 'Deleting Languages:' %}</h6>
     <table class="table">
         <tbody data-bind="foreach: removedLanguages">
             <tr>
                 <td data-bind="text: langcode"></td>
-                <td><a href="#" data-bind="click: $root.unremoveLanguage">Don't Delete</a></td>
+                <td><a href="#" data-bind="click: $root.unremoveLanguage">{% trans "Don't Delete" %}</a></td>
             </tr>
         </tbody>
     </table>

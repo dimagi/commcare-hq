@@ -1,9 +1,12 @@
 import sys
+from datetime import datetime
 from django.http import HttpResponse, HttpResponseBadRequest
 from django.views.decorators.csrf import csrf_exempt
 from corehq.apps.ivr.api import incoming, IVR_EVENT_NEW_CALL, IVR_EVENT_INPUT, IVR_EVENT_DISCONNECT
-from corehq.apps.sms.models import CallLog, SQLMobileBackend
+from corehq.apps.ivr.models import Call
+from corehq.apps.sms.models import SQLMobileBackend
 from dimagi.utils.couch import CriticalSection
+from dimagi.utils.couch.cache.cache_core import get_redis_client
 
 
 @csrf_exempt
@@ -49,6 +52,19 @@ def ivr(request):
     return result
 
 
+def log_metadata_received(call):
+    """
+    Only temporary, for debugging.
+    """
+    try:
+        key = 'kookoo-metadata-received-%s' % call.pk
+        client = get_redis_client()
+        client.set(key, datetime.utcnow().strftime('%Y-%m-%d %H:%M:%S'))
+        client.expire(key, 7 * 24 * 60 * 60)
+    except:
+        pass
+
+
 @csrf_exempt
 def ivr_finished(request):
     """
@@ -69,19 +85,15 @@ def ivr_finished(request):
     gateway_session_id = "KOOKOO-" + sid
 
     with CriticalSection([gateway_session_id], timeout=300):
-        call_log_entry = CallLog.view("sms/call_by_session",
-                                      startkey=[gateway_session_id, {}],
-                                      endkey=[gateway_session_id],
-                                      descending=True,
-                                      include_docs=True,
-                                      limit=1).one()
-        if call_log_entry is not None:
+        call = Call.by_gateway_session_id(gateway_session_id)
+        if call:
+            log_metadata_received(call)
             try:
                 duration = int(duration)
             except Exception:
                 duration = None
-            call_log_entry.answered = (status == "answered")
-            call_log_entry.duration = duration
-            call_log_entry.save()
-    
-    return HttpResponse("")
+            call.answered = (status == 'answered')
+            call.duration = duration
+            call.save()
+
+    return HttpResponse('')

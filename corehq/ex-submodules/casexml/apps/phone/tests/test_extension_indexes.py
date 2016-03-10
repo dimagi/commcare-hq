@@ -1,6 +1,7 @@
 import json
 import os.path
 import uuid
+from nose.tools import nottest
 
 import re
 from casexml.apps.case.mock import CaseIndex, CaseStructure
@@ -9,8 +10,10 @@ from casexml.apps.case.tests.util import assert_user_doesnt_have_cases, \
 from casexml.apps.phone.models import get_properly_wrapped_sync_log
 from casexml.apps.phone.tests.test_sync_mode import SyncBaseTest
 from corehq.form_processor.tests import run_with_all_backends
+from corehq.util.test_utils import softer_assert
 
 
+@nottest
 def get_test_file_json(filename):
     base = os.path.dirname(__file__)
     file_path = 'data'
@@ -21,7 +24,9 @@ def get_test_file_json(filename):
     return json.loads(file_contents)
 
 
+@nottest
 def test_generator(test_name, skip=False):
+    @softer_assert
     def test(self):
         if skip:
             self.skipTest(skip)

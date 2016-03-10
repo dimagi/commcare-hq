@@ -3,6 +3,7 @@ from datetime import date, datetime
 from decimal import Decimal
 from django.test import SimpleTestCase
 from fakecouch import FakeCouchDb
+from simpleeval import InvalidExpression
 from casexml.apps.case.models import CommCareCase
 from corehq.apps.userreports.exceptions import BadSpecError
 from corehq.apps.userreports.expressions.factory import ExpressionFactory
@@ -10,6 +11,7 @@ from corehq.apps.userreports.expressions.specs import (
     PropertyNameGetterSpec,
     PropertyPathGetterSpec,
 )
+from corehq.apps.userreports.expressions.specs import eval_statements
 from corehq.apps.userreports.specs import EvaluationContext
 from corehq.util.test_utils import generate_cases
 
@@ -713,3 +715,95 @@ def test_add_days_to_date_expression(self, source_doc, count_expression, expecte
         'count_expression': count_expression
     })
     self.assertEqual(expected_value, expression(source_doc))
+
+
+@generate_cases([
+    ({}, "a + b", {"a": 2, "b": 3}, 2 + 3),
+    # supports string manupulation
+    ({}, "str(a)+'text'", {"a": 3}, "3text"),
+    # context can contain expressions
+    (
+        {"age": 1},
+        "a + b",
+        {
+            "a": {
+                "type": "property_name",
+                "property_name": "age"
+            },
+            "b": 5
+        },
+        1 + 5
+    ),
+    # context variable can itself be evaluation expression
+    (
+        {},
+        "age + b",
+        {
+            "age": {
+                "type": "evaluator",
+                "statement": "a",
+                "context_variables": {
+                    "a": 2
+                }
+            },
+            "b": 5
+        },
+        5 + 2
+    )
+])
+def test_valid_eval_expression(self, source_doc, statement, context, expected_value):
+    expression = ExpressionFactory.from_spec({
+        "type": "evaluator",
+        "statement": statement,
+        "context_variables": context
+    })
+    self.assertEqual(expression(source_doc), expected_value)
+
+
+@generate_cases([
+    # context must be non-empty dict
+    ({}, "2 + 3", "text context"),
+    ({}, "2 + 3", {}),
+    # statement must be string
+    ({}, 2 + 3, {"a": 2, "b": 3})
+])
+def test_invalid_eval_expression(self, source_doc, statement, context):
+    with self.assertRaises(BadSpecError):
+        ExpressionFactory.from_spec({
+            "type": "evaluator",
+            "statement": statement,
+            "context_variables": context
+        })
+
+
+@generate_cases([
+    ("a + (a*b)", {"a": 2, "b": 3}, 2 + (2 * 3)),
+    ("a-b", {"a": 5, "b": 2}, 5 - 2),
+    ("a+b+c+9", {"a": 5, "b": 2, "c": 8}, 5 + 2 + 8 + 9),
+    ("a*b", {"a": 2, "b": 23}, 2 * 23),
+    ("a*b if a > b else b -a", {"a": 2, "b": 23}, 23 - 2),
+    ("'text1' if a < 5 else `text2`", {"a": 4}, 'text1')
+])
+def test_supported_evluator_statements(self, eq, context, expected_value):
+    self.assertEqual(eval_statements(eq, context), expected_value)
+
+
+@generate_cases([
+    # variables can't be strings
+    ("a + b", {"a": 2, "b": 'text'}),
+    # missing context
+    ("a + (a*b)", {"a": 2}),
+    ("a**b", {"a": 2, "b": 23}),
+    ("lambda x: x*x", {"a": 2}),
+    ("int(10 in range(1,20))", {"a": 2}),
+    ("max(a, b)", {"a": 3, "b": 5})
+])
+def test_unsupported_evluator_statements(self, eq, context):
+    with self.assertRaises(InvalidExpression):
+        eval_statements(eq, context)
+    expression = ExpressionFactory.from_spec({
+        "type": "evaluator",
+        "statement": eq,
+        "context_variables": context
+    })
+    self.assertEqual(expression({}), None)

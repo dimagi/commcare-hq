@@ -1,23 +1,39 @@
 /* global $, sinon */
 
 describe('App Releases', function() {
+    function get_saved_apps(num, extraProps) {
+        extraProps = extraProps || {};
+        return _.map(_.range(num), function (version) {
+            return _.extend({
+                id: version,
+                version: version,
+                doc_type: 'Application',
+                build_comment: '',
+                build_broken: false,
+                is_released: false,
+                domain: 'test-domain'
+            }, extraProps);
+        });
+    }
+    var urls = {
+            download_zip: 'download_zip_url ___',
+            download_multimedia: 'download_multimedia_url ___',
+            fetch: 'fetch_url',
+            odk_media: 'odk_media',
+            odk: 'odk'
+        },
+        options = {
+            urls: urls,
+            currentAppVersion: -1,
+            recipient_contacts: [],
+            download_modal_id: '#download-zip-modal-test'
+        };
     describe('SavedApp', function() {
         var releases = null,
-            urls = {
-                download_zip: 'download_zip_url ___',
-                download_multimedia: 'download_multimedia_url ___',
-                fetch: 'fetch_url',
-                odk_media: 'odk_media'
-            },
-            options = {
-                urls: urls,
-                currentAppVersion: -1,
-                recipient_contacts: [],
-                download_modal_id: '#download-zip-modal-test'
-            },
             ajax_stub;
 
         beforeEach(function() {
+            var ReleasesMain = hqImport('app_manager/js/releases.js').ReleasesMain;
             ajax_stub = sinon.stub($, 'ajax');
             releases = new ReleasesMain(options);
             releases.addSavedApps(get_saved_apps(releases.fetchLimit));
@@ -26,19 +42,6 @@ describe('App Releases', function() {
         afterEach(function() {
             ajax_stub.restore();
         });
-
-        function get_saved_apps(num) {
-            return _.map(_.range(num), function (version) {
-                return {
-                    id: version,
-                    version: version,
-                    doc_type: 'Application',
-                    build_comment: '',
-                    build_broken: false,
-                    is_released: false
-                };
-            });
-        }
 
         it('should only make one request when downloading zip', function() {
             app = releases.savedApps()[0];
@@ -73,6 +76,98 @@ describe('App Releases', function() {
                 assert.equal($.ajax.callCount, 2);
                 assert.equal(ajax_stub.firstCall.args[0].url, releases.url('download_zip', app.id()));
             });
+        });
+
+    });
+
+    describe('app_code', function() {
+        var ReleasesMain = hqImport('app_manager/js/releases.js').ReleasesMain;
+        var SavedApp = hqImport('app_manager/js/releases.js').SavedApp;
+        var savedApp,
+            releases;
+        beforeEach(function() {
+            releases = new ReleasesMain(options);
+
+            this.server = sinon.fakeServer.create();
+            this.server.respondWith(
+                "GET",
+                new RegExp(SavedApp.URL_TYPES.SHORT_ODK_MEDIA_URL),
+                [200, { "Content-type": "text/html" }, 'http://bit.ly/media/']
+            );
+            this.server.respondWith(
+                "GET",
+                new RegExp(SavedApp.URL_TYPES.SHORT_ODK_URL),
+                [200, { "Content-type": "text/html" }, 'http://bit.ly/nomedia/']
+            );
+        });
+
+        it('should correctly load media url', function() {
+            var props = { include_media: true };
+            props[SavedApp.URL_TYPES.SHORT_ODK_MEDIA_URL] = null;
+            releases.addSavedApps(get_saved_apps(1, props));
+
+            savedApp = releases.savedApps()[0];
+
+            savedApp.get_app_code();
+
+            assert.equal(savedApp.generating_url(), true);
+
+            this.server.respond();
+
+            assert.equal(savedApp.generating_url(), false);
+            assert.equal(savedApp.app_code(), 'media');
+        });
+
+        it('should correctly load non media url', function() {
+            var props = { include_media: false };
+            props[SavedApp.URL_TYPES.SHORT_ODK_URL] = null;
+            releases.addSavedApps(get_saved_apps(1, props));
+
+            savedApp = releases.savedApps()[0];
+
+            savedApp.get_app_code();
+
+            assert.equal(savedApp.generating_url(), true);
+
+            this.server.respond();
+
+            assert.equal(savedApp.generating_url(), false);
+            assert.equal(savedApp.app_code(), 'nomedia');
+        });
+
+        it('should correctly toggle between media and non media', function() {
+            var props = { include_media: false };
+
+            props[SavedApp.URL_TYPES.SHORT_ODK_URL] = null;
+            props[SavedApp.URL_TYPES.SHORT_ODK_MEDIA_URL] = null;
+            releases.addSavedApps(get_saved_apps(1, props));
+            savedApp = releases.savedApps()[0];
+
+            savedApp.get_app_code();
+
+            assert.equal(savedApp.generating_url(), true);
+
+            this.server.respond();
+
+            assert.equal(savedApp.generating_url(), false);
+            assert.equal(savedApp.app_code(), 'nomedia');
+
+            // Toggle to include media
+            savedApp.include_media(true);
+            assert.equal(savedApp.generating_url(), true);
+            this.server.respond();
+
+            assert.equal(savedApp.generating_url(), false);
+            assert.equal(savedApp.app_code(), 'media');
+
+            // Toggle and ensure no more ajax calls
+            savedApp.include_media(false);
+            assert.equal(savedApp.generating_url(), false);
+            assert.equal(savedApp.app_code(), 'nomedia');
+
+            savedApp.include_media(true);
+            assert.equal(savedApp.generating_url(), false);
+            assert.equal(savedApp.app_code(), 'media');
         });
     });
 });

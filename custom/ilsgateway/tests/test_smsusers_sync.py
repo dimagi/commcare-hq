@@ -42,7 +42,7 @@ class SMSUsersSyncTest(TestCase):
         self.assertEqual(username, ilsgateway_smsuser.username)
         self.assertEqual(first_name, ilsgateway_smsuser.first_name)
         self.assertEqual(last_name, ilsgateway_smsuser.last_name)
-        self.assertEqual(smsuser.is_active, str(ilsgateway_smsuser.is_active))
+        self.assertEqual(smsuser.is_active, ilsgateway_smsuser.is_active)
         self.assertEqual(TEST_DOMAIN, ilsgateway_smsuser.get_domains()[0])
         self.assertEqual(ilsgateway_smsuser.default_phone_number, '4224242442')
         verified_number = VerifiedNumber.by_phone(ilsgateway_smsuser.default_phone_number)
@@ -62,7 +62,7 @@ class SMSUsersSyncTest(TestCase):
         self.assertEqual(username, ilsgateway_smsuser.username)
         self.assertEqual(first_name, ilsgateway_smsuser.first_name)
         self.assertEqual(last_name, ilsgateway_smsuser.last_name)
-        self.assertEqual(smsuser.is_active, str(ilsgateway_smsuser.is_active))
+        self.assertEqual(smsuser.is_active, ilsgateway_smsuser.is_active)
         self.assertEqual(TEST_DOMAIN, ilsgateway_smsuser.get_domains()[0])
         self.assertEqual(ilsgateway_smsuser.default_phone_number, '222')
         verified_number = VerifiedNumber.by_phone(ilsgateway_smsuser.default_phone_number)
@@ -105,6 +105,23 @@ class SMSUsersSyncTest(TestCase):
         vn2 = VerifiedNumber.by_phone('3333')
         self.assertIsNone(vn1)
         self.assertIsNone(vn2)
+
+    def test_user_deactivation(self):
+        with open(os.path.join(self.datapath, 'sample_smsusers.json')) as f:
+            smsuser = SMSUser(json.loads(f.read())[2])
+        ilsgateway_smsuser = self.api_object.sms_user_sync(smsuser)
+        self.assertIsNotNone(ilsgateway_smsuser.get_id)
+        self.assertEqual(len(CommCareUser.by_domain(TEST_DOMAIN)), 1)
+
+        smsuser.is_active = False
+        ilsgateway_smsuser = self.api_object.sms_user_sync(smsuser)
+        self.assertIsNotNone(ilsgateway_smsuser)
+        self.assertEqual(len(CommCareUser.by_domain(TEST_DOMAIN)), 0)
+        self.assertListEqual(list(VerifiedNumber.by_owner_id(ilsgateway_smsuser.get_id)), [])
+        smsuser.is_active = True
+        ilsgateway_smsuser = self.api_object.sms_user_sync(smsuser)
+        self.assertIsNotNone(ilsgateway_smsuser)
+        self.assertEqual(len(CommCareUser.by_domain(TEST_DOMAIN)), 1)
 
     def test_smsusers_migration(self):
         checkpoint = MigrationCheckpoint(

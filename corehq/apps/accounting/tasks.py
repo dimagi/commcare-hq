@@ -22,7 +22,6 @@ from dimagi.utils.django.email import send_HTML_email
 
 from corehq.apps.accounting import utils
 from corehq.apps.accounting.exceptions import (
-    BillingContactInfoError,
     CreditLineError,
     InvoiceAlreadyCreatedError,
     InvoiceError,
@@ -56,7 +55,7 @@ from corehq.util.view_utils import absolute_reverse
 from corehq.util.dates import get_previous_month_date_range
 
 
-@transaction.atomic()
+@transaction.atomic
 def _activate_subscription(subscription):
     subscription.is_active = True
     subscription.save()
@@ -84,7 +83,7 @@ def activate_subscriptions(based_on_date=None):
         _activate_subscription(subscription)
 
 
-@transaction.atomic()
+@transaction.atomic
 def _deactivate_subscription(subscription, ending_date):
     subscription.is_active = False
     subscription.save()
@@ -175,8 +174,6 @@ def generate_invoices(based_on_date=None):
                 "There was an error utilizing credits for "
                 "domain %s: %s" % (domain.name, e)
             )
-        except BillingContactInfoError as e:
-            log_accounting_error("BillingContactInfoError: %s" % e)
         except InvoiceError as e:
             log_accounting_error(
                 "Could not create invoice for domain %s: %s" % (domain.name, e)

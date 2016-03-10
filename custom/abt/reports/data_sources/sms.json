@@ -7,7 +7,9 @@
         "airsethiopia",
         "abtmali",
         "airsmadagascar",
-        "airstanzania"
+        "airstanzania",
+        "airsghana",
+        "airsbenin"
     ],
     "config": {
         "engine_id": "default",
@@ -548,6 +550,11 @@
                 "Tanzania": {
                   "default": 0,
                   "cases": {
+                    "Kaskazini A": 623,
+                    "Kaskazini B": 5123,
+                    "Chakechake": 278,
+                    "Kusini": 4073,
+                    "Magharibi": 10380,
                     "Chato": 62337,
                     "Geita TC": 20000,
                     "Bukoba Rural": 62730,
@@ -557,7 +564,7 @@
                     "Musoma Rural": 31824,
                     "Kwimba": 91547,
                     "Sengerema": 62000,
-                    "Micheweni": 3192,
+                    "Micheweni": 2914,
                     "Central": 6148,
                     "North B": 5736,
                     "South": 4073,
@@ -816,6 +823,7 @@
                         }
                       }
                     },
+
                     "Nyantimba": 1283,
                     "Mtakuja": 2858,
                     "Nyankumbu": 2858,
@@ -894,7 +902,8 @@
                     "Kibuteni": 4073,
                     "Mombasa": 4457,
                     "Selemu": 2757,
-                    "Shakani": 3165
+                    "Shakani": 3166,
+                    "Ndijani Mseweni": 5260
                   },
                   "type": "switch",
                   "switch_on": {

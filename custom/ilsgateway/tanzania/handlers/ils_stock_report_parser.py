@@ -1,6 +1,7 @@
 from corehq.apps.commtrack.sms import StockReportParser, SMSError
 from corehq.form_processor.parsers.ledgers.helpers import StockTransactionHelper
 from custom.ilsgateway import LOGISTICS_PRODUCT_ALIASES
+from custom.ilsgateway.tanzania.exceptions import InvalidProductCodeException
 
 
 class Formatter(object):
@@ -17,11 +18,16 @@ class ILSStockReportParser(StockReportParser):
         super(ILSStockReportParser, self).__init__(domain, v)
         self._formatterBridge = formatter
         self.error = False
+        self.errors = []
 
     def parse(self, text):
         text = self._formatterBridge.format(text)
-        result = super(ILSStockReportParser, self).parse(text)
-        result['error'] = self.error
+        result = {}
+        try:
+            result = super(ILSStockReportParser, self).parse(text)
+        except SMSError:
+            pass
+        result['errors'] = self.errors
         return result
 
     def product_from_code(self, prod_code):
@@ -40,7 +46,7 @@ class ILSStockReportParser(StockReportParser):
                 if product:
                     products.append(product)
                 else:
-                    self.error = True
+                    self.errors.append(InvalidProductCodeException(arg.lower()))
             else:
                 if not products:
                     continue

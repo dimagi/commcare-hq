@@ -1,7 +1,7 @@
 from django.core.files.uploadedfile import UploadedFile
 
 from corehq.apps.receiverwrapper import submit_form_locally
-from corehq.couchapps.dbaccessors import get_attachment_size_by_domain, get_attachment_size_by_domain_app_id_xmlns
+from corehq.couchapps.dbaccessors import forms_have_multimedia
 from corehq.form_processor.tests.utils import FormProcessorTestUtils
 from django.test import TestCase
 from dimagi.utils.make_uuid import random_hex
@@ -29,9 +29,9 @@ XMLNS_1 = 'http://openrosa.org/formdesigner/abc'
 XMLNS_2 = 'http://openrosa.org/formdesigner/def'
 COMBOS = [
     (APP_ID_1, XMLNS_1, True),
-    (APP_ID_1, XMLNS_1, False),
-    (APP_ID_1, XMLNS_2, False),
     (APP_ID_2, XMLNS_2, True),
+    (APP_ID_1, XMLNS_2, False),
+    (APP_ID_2, XMLNS_1, False),
 ]
 
 
@@ -56,23 +56,6 @@ class AttachmentsTest(TestCase):
     def tearDownClass(cls):
         FormProcessorTestUtils.delete_all_xforms(DOMAIN)
 
-    def test_get_attachment_size_by_domain(self):
-        atts = get_attachment_size_by_domain(DOMAIN)
-        self.assertIn((APP_ID_1, XMLNS_1), atts)
-        self.assertIn((APP_ID_2, XMLNS_2), atts)
-        self.assertNotIn((APP_ID_1, XMLNS_2), atts)
-        self.assertNotIn((APP_ID_2, XMLNS_1), atts)
-
-    def test_get_attachment_size_by_domain_app_id_xmlns_app_id(self):
-        atts = get_attachment_size_by_domain_app_id_xmlns(DOMAIN, APP_ID_1)
-        self.assertEqual(len(atts), 1)
-        self.assertIn((APP_ID_1, XMLNS_1), atts)
-
-    def test_get_attachment_size_by_domain_app_id_xmlns_xmlns_1(self):
-        atts = get_attachment_size_by_domain_app_id_xmlns(DOMAIN, APP_ID_1, xmlns=XMLNS_1)
-        self.assertEqual(len(atts), 1)
-        self.assertIn((APP_ID_1, XMLNS_1), atts)
-
-    def test_get_attachment_size_by_domain_app_id_xmlns_xmlns_2(self):
-        atts = get_attachment_size_by_domain_app_id_xmlns(DOMAIN, APP_ID_1, xmlns=XMLNS_2)
-        self.assertEqual(atts, {})
+    def test_forms_have_multimedia(self):
+        for app_id, xmlns, with_attachments in COMBOS:
+            self.assertEqual(forms_have_multimedia(DOMAIN, app_id, xmlns), with_attachments, [app_id, xmlns])

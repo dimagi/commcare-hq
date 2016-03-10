@@ -2,7 +2,6 @@ from collections import defaultdict, namedtuple
 import datetime
 from urllib import urlencode
 import math
-from django.db.models.aggregates import Max, Min, Avg, StdDev, Count
 import operator
 from pygooglechart import ScatterChart
 import pytz
@@ -34,15 +33,12 @@ from corehq.apps.reports.filters.forms import CompletionOrSubmissionTimeFilter, 
 from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn, DTSortType, DataTablesColumnGroup
 from corehq.apps.reports.generic import GenericTabularReport
 from corehq.apps.reports.models import HQUserType
-from corehq.apps.reports.util import make_form_couch_key, friendly_timedelta, format_datatables_data
+from corehq.apps.reports.util import friendly_timedelta, format_datatables_data
 from corehq.apps.reports.analytics.esaccessors import get_form_counts_by_user_xmlns
-from corehq.apps.sofabed.models import FormData
 from corehq.apps.users.models import CommCareUser
 from corehq.const import SERVER_DATETIME_FORMAT
-from corehq.util.dates import iso_string_to_datetime
 from corehq.util.timezones.conversions import ServerTime, PhoneTime
 from corehq.util.view_utils import absolute_reverse
-from couchforms.models import XFormInstance
 from dimagi.utils.dates import DateSpan, today_or_tomorrow
 from dimagi.utils.decorators.memoized import memoized
 from dimagi.utils.parsing import json_format_date, string_to_utc_datetime
@@ -66,6 +62,7 @@ WorkerActivityReportData = namedtuple('WorkerActivityReportData', [
 
 class WorkerMonitoringReportTableBase(GenericTabularReport, ProjectReport, ProjectReportParametersMixin):
     exportable = True
+    is_bootstrap3 = True
 
     def get_user_link(self, user):
         user_link = self.get_raw_user_link(user)
@@ -861,7 +858,7 @@ class FormCompletionVsSubmissionTrendsReport(WorkerMonitoringFormReportTableBase
         try:
             return self._get_rows()
         except TooMuchDataError as e:
-            return [['<span class="label label-important">{}</span>'.format(e)] + ['--'] * 5]
+            return [['<span class="label label-danger">{}</span>'.format(e)] + ['--'] * 5]
 
     def _get_rows(self):
         rows = []
@@ -934,7 +931,7 @@ class FormCompletionVsSubmissionTrendsReport(WorkerMonitoringFormReportTableBase
     def _format_td_status(self, td, use_label=True):
         status = list()
         template = '<span class="label %(klass)s">%(status)s</span>'
-        klass = ""
+        klass = "label-default"
         if isinstance(td, int):
             td = datetime.timedelta(seconds=td)
         if isinstance(td, datetime.timedelta):
@@ -945,17 +942,17 @@ class FormCompletionVsSubmissionTrendsReport(WorkerMonitoringFormReportTableBase
             status = ["%s %s%s" % (val, names[i], "s" if val != 1 else "") for (i, val) in enumerate(vals) if val > 0]
 
             if td.days > 1:
-                klass = "label-important"
+                klass = "label-danger"
             elif td.days == 1:
                 klass = "label-warning"
             elif hours > 5:
-                klass = "label-info"
+                klass = "label-primary"
             if not status:
                 status.append("same")
             elif td.days < 0:
                 if abs(td).seconds > 15*60:
                     status = [_("submitted before completed [strange]")]
-                    klass = "label-inverse"
+                    klass = "label-info"
                 else:
                     status = [_("same")]
 
@@ -972,6 +969,7 @@ class FormCompletionVsSubmissionTrendsReport(WorkerMonitoringFormReportTableBase
 class WorkerMonitoringChartBase(ProjectReport, ProjectReportParametersMixin):
     flush_layout = True
     report_template_path = "reports/async/bootstrap2/basic.html"
+    is_bootstrap3 = True
 
 
 class WorkerActivityTimes(WorkerMonitoringChartBase,

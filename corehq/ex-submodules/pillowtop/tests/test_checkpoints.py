@@ -43,53 +43,53 @@ class PillowCheckpointDbTest(TestCase):
         self.assertTrue(bool(created))
 
     def test_create_initial_checkpoint(self):
-        checkpoint, created = self.checkpoint.get_or_create()
-        self.assertEqual('0', checkpoint['seq'])
+        checkpoint, created = self.checkpoint.get_or_create_wrapped()
+        self.assertEqual('0', checkpoint.sequence)
         self.assertTrue(bool(created))
 
     def test_db_changes_returned(self):
-        self.checkpoint.get_or_create()
+        self.checkpoint.get_or_create_wrapped()
         self.save_checkpoint(self._checkpoint_id, '1')
-        checkpoint = self.checkpoint.get_or_create().document
-        self.assertEqual('1', checkpoint['seq'])
+        checkpoint = self.checkpoint.get_or_create_wrapped().document
+        self.assertEqual('1', checkpoint.sequence)
 
     def test_verify_unchanged_ok(self):
-        self.checkpoint.get_or_create()
-        checkpoint = self.checkpoint.get_or_create(verify_unchanged=True).document
-        self.assertEqual('0', checkpoint['seq'])
+        self.checkpoint.get_or_create_wrapped()
+        checkpoint = self.checkpoint.get_or_create_wrapped(verify_unchanged=True).document
+        self.assertEqual('0', checkpoint.sequence)
 
     def test_verify_unchanged_fail(self):
-        self.checkpoint.get_or_create()
+        self.checkpoint.get_or_create_wrapped()
         self.save_checkpoint(self._checkpoint_id, '1')
         with self.assertRaises(PillowtopCheckpointReset):
-            self.checkpoint.get_or_create(verify_unchanged=True)
+            self.checkpoint.get_or_create_wrapped(verify_unchanged=True)
 
     def test_update(self):
-        self.checkpoint.get_or_create()
+        self.checkpoint.get_or_create_wrapped()
         for seq in ['1', '5', '22']:
             self.checkpoint.update_to(seq)
-            self.assertEqual(seq, self.checkpoint.get_or_create().document['seq'])
+            self.assertEqual(seq, self.checkpoint.get_or_create_wrapped().document.sequence)
 
     def test_update_verify_unchanged_fail(self):
-        self.checkpoint.get_or_create()
+        self.checkpoint.get_or_create_wrapped()
         self.save_checkpoint(self._checkpoint_id, '1')
         with self.assertRaises(PillowtopCheckpointReset):
             self.checkpoint.update_to('2')
 
     def test_touch_checkpoint_noop(self):
-        checkpoint, created = self.checkpoint.get_or_create()
+        checkpoint, created = self.checkpoint.get_or_create_wrapped()
         self.assertTrue(created)
-        first_checkpoint, created = self.checkpoint.get_or_create()
+        first_checkpoint, created = self.checkpoint.get_or_create_wrapped()
         self.assertFalse(created)
         self.checkpoint.touch(min_interval=10)
-        second_checkpoint, created = self.checkpoint.get_or_create()
+        second_checkpoint, created = self.checkpoint.get_or_create_wrapped()
         self.assertFalse(created)
-        self.assertEqual(first_checkpoint['timestamp'], second_checkpoint['timestamp'])
+        self.assertEqual(first_checkpoint.timestamp, second_checkpoint.timestamp)
 
     def test_touch_checkpoint_update(self):
-        timestamp = self.checkpoint.get_or_create().document['timestamp']
+        timestamp = self.checkpoint.get_or_create_wrapped().document.timestamp
         time.sleep(.1)
         self.checkpoint.touch(min_interval=0)
-        timestamp_back = self.checkpoint.get_or_create().document['timestamp']
+        timestamp_back = self.checkpoint.get_or_create_wrapped().document.timestamp
         self.assertNotEqual(timestamp_back, timestamp)
 

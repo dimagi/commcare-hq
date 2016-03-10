@@ -1,18 +1,34 @@
 {% extends "style/bootstrap2/two_column.html" %}
 {% load hq_shared_tags %}
 {% load i18n %}
+
+{% block stylesheets %}{{ block.super }}
+    <link href="{% static 'select2-3.4.5-legacy/select2.css' %}" rel="stylesheet"/>
+    <link rel="stylesheet" type="text/css" href="{% static "reports/css/daterangepicker-bs2.css" %}">
+
+{% endblock %}
+
 {% block js %}{{ block.super }}
     {% block reports-js %}
     {% include "imports/datatables.html" %}
     <script src="{% static 'reports/javascripts/config.dataTables.bootstrap.js' %}"></script>
     <script src="{% static 'jquery-ui-1.8.23-legacy/jquery-ui.min.js' %}"></script>
-    <script src="{% static 'hqwebapp/js/main.js' %}"></script>
+    <script src="{% static 'style/js/bootstrap2/main.js' %}"></script>
     <script src="{% static 'hqwebapp/js/lib/jquery.history.js' %}"></script>
     <script src="{% static 'style/lib/knockout_plugins/knockout_mapping.ko.min.js' %}"></script>
     <script src="{% static 'style/ko/knockout_bindings.ko.js' %}"></script>
     <script src="{% static 'reports/javascripts/datepicker.js' %}"></script>
     <script src="{% static 'reports/javascripts/reports.config.js' %}"></script>
     <script src="{% static 'reports/javascripts/reports.async.js' %}"></script>
+
+    {# Datespan Javascript Lib dependencies #}
+    <script type="text/javascript" src="{% static 'reports/javascripts/bootstrap-daterangepicker/moment.min.js' %}"></script>
+    <script type="text/javascript" src="{% static 'reports/javascripts/bootstrap-daterangepicker/daterangepicker.min.js' %}"></script>
+    <script type="text/javascript" src="{% static 'reports/javascripts/daterangepicker.js' %}"></script>
+    {# end Datespan Javascript Lib dependencies #}
+
+    <script src="{% static 'select2-3.4.5-legacy/select2.min.js' %}"></script>
+
     {% endblock %}
 {% endblock %}
 

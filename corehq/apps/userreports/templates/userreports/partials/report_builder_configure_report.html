@@ -3,20 +3,13 @@
 {% load hq_shared_tags %}
 
 {% block js %}{{ block.super }}
-    <script src="{% new_static 'hqwebapp/js/main.js' %}"></script>
+    <script src="{% new_static 'style/js/bootstrap3/main.js' %}"></script>
     <script src="{% new_static 'app_manager/js/case-knockout-bindings.js' %}"></script>
 {% endblock %}
 
 {% block page_title %}{% trans "Configure Report Settings" %}{% endblock page_title %}
 
 {% block js-inline %}{{ block.super }}
-    <script>
-        $(function () {
-            $('.hq-help-template').each(function () {
-                COMMCAREHQ.transformHelpTemplate($(this), true);
-            });
-        });
-    </script>
     <script type="text/javascript">
         /**
          * Knockout view model representing a row in the filter property list
@@ -29,6 +22,7 @@
             this.displayText = ko.observable("");
             this.userModifiedDisplayText = false;
             this.format = ko.observable("");
+            this.calculation = ko.observable("Count per Choice");
             this.dataSourceField = ko.observable("");
 
             /**
@@ -39,7 +33,8 @@
                 return {
                     property: this.property(),
                     display_text: this.displayText(),
-                    format: this.format()
+                    format: this.format(),
+                    calculation: this.calculation()
                 };
             };
 
@@ -64,6 +59,7 @@
             i.dataSourceField(o.data_source_field !== undefined ? o.data_source_field : null);
             i.displayText(o.display_text);
             i.userModifiedDisplayText = true;
+            i.calculation(o.calculation);
             i.format(o.format);
             return i;
         };
@@ -79,11 +75,14 @@
             this.propertyHelpText = options.propertyHelpText !== undefined ? options.propertyHelpText : null;
             this.displayHelpText = options.displayHelpText !== undefined ? options.displayHelpText : null;
             this.formatHelpText = options.formatHelpText !== undefined ? options.formatHelpText : null;
+            this.calcHelpText = options.calcHelpText !== undefined ? options.calcHelpText : null;
             this.analyticsAction = options.analyticsAction !== undefined ? options.analyticsAction : null;
             this.analyticsLabel = options.analyticsLabel !== undefined ? options.analyticsLabel : '{{ report_type }}';
 
             this.hasFormatCol = ko.observable(options.hasFormatCol !== undefined ? options.hasFormatCol : true);
+            this.hasCalculationCol = ko.observable(options.hasCalculationCol !== undefined ? options.hasCalculationCol : false);
             this.formatOptions = ko.observableArray(["Choice", "Date"]);
+            this.calculationOptions = ko.observableArray(["Count per Choice", "Sum", "Average"]);
             this.propertyOptions = ko.observableArray({{ property_options|JSON }});
             var rawOptions = {{ property_options|JSON }};
             this.optionsContainQuestions = _.any(rawOptions, function (o) {
@@ -139,6 +138,7 @@
             // TODO: Pass help texts from template so that they can be translated.
             this.filtersList = new propertyList({
                 hasFormatCol: {% if form.source_type == "case" %}true{% else %}false{% endif %},
+                hasCalculationCol: false,
                 initialCols: initialFilters,
                 buttonText: 'Add Filter',
                 analyticsAction: 'Add Filter',
@@ -148,9 +148,11 @@
             });
             this.columnsList = new propertyList({
                 hasFormatCol: false,
+                hasCalculationCol: {% if report_type == "table" or report_type == "worker" %}true{% else %}false{% endif %},
                 initialCols: initialColumns,
                 buttonText: 'Add Column',
-                analyticsAction: 'Add Column'
+                analyticsAction: 'Add Column',
+                calcHelpText: '{{ calculation_help_text|escapejs }}'
             });
             this.submitHandler = function(formElement){
                 var isValid = true;
