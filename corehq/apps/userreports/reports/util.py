@@ -19,16 +19,12 @@ def get_total_row(data, aggregation_columns, column_configs, column_id_to_expand
     for column_config in column_configs:
         column_ids = column_id_to_expanded_column_ids.get(column_config.column_id, [column_config.column_id])
         for column_id in column_ids:
-            if column_config.calculate_total:
-                total_row.append(reduce(
-                    lambda x, y: (
-                        x + y
-                        if isinstance(x, (int, long, float)) and isinstance(y, (int, long, float))
-                        else ''
-                    ),
-                    map(lambda row: row[column_id], data),
-                    0
-                ))
+            countables = filter(
+                lambda x: isinstance(x, (int, long, float)),
+                map(lambda row: row[column_id], data)
+            ) if column_config.calculate_total else []
+            if countables:
+                total_row.append(sum(countables))
             else:
                 total_row.append('')
     if total_row[0] == '' and aggregation_columns:

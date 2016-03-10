@@ -281,6 +281,12 @@ class SqlData(ReportDataSource):
     def data(self):
         return self._get_data()
 
+    def get_total_row(self):
+        # TODO - move to sqlagg
+        return calculate_total_row(self.get_data())
+    # would be tight to make this datatype-aware, so we know whether to return zeroes or blanks
+    # alternatively, do the default (blanks when empty) and handle extra formatting in UCR - DO THIS
+
 
 class SqlTabularReport(GenericTabularReport, SqlData):
     no_value = '--'
@@ -395,7 +401,7 @@ class SummingSqlTabularReport(SqlTabularReport):
     @property
     def rows(self):
         ret = list(super(SummingSqlTabularReport, self).rows)
-        self.total_row = calculate_total_row(ret)
+        self.total_row = calculate_total_row(ret) if ret else []
         return ret
 
 
