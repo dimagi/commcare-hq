@@ -34,6 +34,7 @@ $(function () {
             raw_fields = self.fields();
             self.original_tag = self.tag();
             self.original_visibility = self.is_global();
+            self.isVisible = ko.observable(true);
         self.fields = ko.observableArray([]);
         makeEditable(self);
         if (!o._id) {
@@ -111,7 +112,7 @@ $(function () {
                         error_message = somethingWentWrong;
                     }
                     $("#FailText").text(error_message);
-                    $("#editFailure").show();
+                    $("#editFailure").removeClass('hide');
                     self.cancel();
                     self.saveState('saved');
                     },
@@ -126,7 +127,7 @@ $(function () {
                             .text('')
                             .append($failMsg)
                             .append($failList);
-                        $("#editFailure").show();
+                        $("#editFailure").removeClass('hide');
                         self.cancel();
                         self.saveState('saved');
                         return;
@@ -147,7 +148,7 @@ $(function () {
                         }
                     }
                     for (var j = 0; j < indicesToRemoveAt.length; j += 1){
-                        var index = indicesToRemoveAt[j]
+                        var index = indicesToRemoveAt[j];
                         self.fields.remove(self.fields()[index]);
                     }
                 }
@@ -159,23 +160,24 @@ $(function () {
             self.tag(self.original_tag);
             self.is_global(self.original_visibility);
             if (!self._id()) {
-                app.data_types.remove(self);
-                return;
-            }
-            for (var i = 0; i < self.fields().length; i += 1) {
-                var field = self.fields()[i];
-                if (field.is_new() == true){
-                    indicesToRemoveAt.push(i);
-                    continue;
+                self.isVisible(false);
+                app.removeBadDataType(self);
+            } else {
+                for (var i = 0; i < self.fields().length; i += 1) {
+                    var field = self.fields()[i];
+                    if (field.is_new() == true){
+                        indicesToRemoveAt.push(i);
+                        continue;
+                    }
+                    field.tag(field.original_tag());
+                    field.remove(false);
                 }
-                field.tag(field.original_tag());
-                field.remove(false);
+                for (var j = 0; j < indicesToRemoveAt.length; j += 1){
+                    var index = indicesToRemoveAt[j]
+                    self.fields.remove(self.fields()[index]);
+                }
             }
-            for (var j = 0; j < indicesToRemoveAt.length; j += 1){
-                var index = indicesToRemoveAt[j]
-                self.fields.remove(self.fields()[index]);
-            }
-        }
+        };
         self.serialize = function () {
             return log({
                 _id: self._id(),
@@ -217,6 +219,15 @@ $(function () {
         self.loading = ko.observable(0);
         self.file = ko.observable();
         self.selectedTables = ko.observableArray([]);
+
+        self.removeBadDataType = function (dataType) {
+            setTimeout(function () {
+                // This needs to be here otherwise if you remove the dataType
+                // directly from the dataType, the DOM freezes and the page
+                // can't scroll.
+                self.data_types.remove(dataType);
+            }, 1000);
+        };
 
         self.updateSelectedTables = function(element, event) {
             var $elem = $(event.srcElement || event.currentTarget);
@@ -311,7 +322,7 @@ $(function () {
             var error_message = "Sorry, something went wrong with the download. If you see this repeatedly please report an issue."
             $("#fixture-download").modal("hide");
             $("#FailText").text(error_message);
-            $("#editFailure").show();
+            $("#editFailure").removeClass('hide');
         };
 
         self.addDataType = function () {
