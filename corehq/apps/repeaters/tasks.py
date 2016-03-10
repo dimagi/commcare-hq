@@ -1,7 +1,6 @@
 from datetime import datetime
 
 from django.conf import settings
-from dimagi.utils.couch import LockManager
 from celery.task import periodic_task, task
 from celery.utils.log import get_task_logger
 from dimagi.utils.couch.cache.cache_core import get_redis_client
