@@ -167,7 +167,7 @@ class CommCareExchangeHomeView(BaseCommCareExchangeSectionView):
                     message=(
                         "Fetched Exchange Snapshot Error: {}. "
                         "The problem snapshot id: {}".format(
-                        e.message, res['_source']['_id'])
+                            e.message, res['_source']['_id'])
                     )
                 )
         if self.sort_by == 'newest':
@@ -370,7 +370,7 @@ def copy_snapshot(request, snapshot):
             messages.error(request, _("You must specify a name for the new project"))
             return HttpResponseRedirect(reverse(ProjectInformationView.urlname, args=[snapshot]))
     else:
-        return  HttpResponseRedirect(reverse(ProjectInformationView.urlname, args=[snapshot]))
+        return HttpResponseRedirect(reverse(ProjectInformationView.urlname, args=[snapshot]))
 
 
 def project_image(request, snapshot):
@@ -426,6 +426,7 @@ class DeploymentInfoView(BaseCommCareExchangeSectionView):
 class DeploymentsView(BaseCommCareExchangeSectionView):
     urlname = 'deployments'
     template_name = 'appstore/deployments.html'
+    projects_per_page = 10
 
     @property
     @memoized
@@ -451,11 +452,12 @@ class DeploymentsView(BaseCommCareExchangeSectionView):
 
     @property
     def page_context(self):
-        more_pages = False if len(self.d_results) <= self.page * 10 else True
+        more_pages = False if len(self.d_results) <= self.page * self.projects_per_page else True
         facet_map = fill_mapping_with_facets(DEPLOYMENT_MAPPING, self.results, self.params)
         include_unapproved = True if self.request.GET.get('is_approved', "") == "false" else False
+        deployments = self.d_results[(self.page - 1) * self.projects_per_page:self.page * self.projects_per_page]
         return {
-            'deployments': self.d_results[(self.page - 1) * 10:self.page * 10],
+            'deployments': deployments,
             'page': self.page,
             'prev_page': self.page - 1,
             'next_page': (self.page + 1),
@@ -464,7 +466,7 @@ class DeploymentsView(BaseCommCareExchangeSectionView):
             'facet_map': facet_map,
             'query_str': self.request.META['QUERY_STRING'],
             'search_url': reverse(self.urlname),
-            'search_query': self.params.get('search', [""])[0]\
+            'search_query': self.params.get('search', [""])[0]
         }
 
 
