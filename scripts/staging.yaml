@@ -61,7 +61,7 @@ branches:
   - b3-reports-data  # BB 2/23
   - b3-data-import-cases  # BB 2/23
   - b3-data-lookup-tables  # BB 2/23
-  - b3-reports-case-form+b3-reports-home  # BB 2/24
+  - b3-reports-case-form+b3-reports-home_2
   - b3-reports-home  # BB 2/23
   - b3-reports-case-form  # BB 2/24
   # B3 Report Migration branches
