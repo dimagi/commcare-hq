@@ -38,10 +38,10 @@ class TestReminders(TestCase):
                                 domain=domain.name, parent=region)
         cls.facility = make_loc(code="loc1", name="Test Facility 1", type="FACILITY",
                                 domain=domain.name, parent=cls.district)
-        cls.facility.metadata['groups'] = 'B'
+        cls.facility.metadata['group'] = 'B'
         cls.facility2 = make_loc(code="loc2", name="Test Facility 2", type="FACILITY",
                                  domain=domain.name, parent=cls.district)
-        cls.facility2.metadata['groups'] = 'C'
+        cls.facility2.metadata['group'] = 'C'
         cls.facility.save()
         cls.facility2.save()
 

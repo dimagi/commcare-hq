@@ -14,8 +14,8 @@ class TestDeliveryGroups(ILSTestScript):
         )))
 
         for location in Location.by_domain(TEST_DOMAIN):
-            if location.metadata.get('groups') != submitting_group:
-                location.metadata['groups'] = submitting_group
+            if location.metadata.get('group') != submitting_group:
+                location.metadata['group'] = submitting_group
                 location.save()
                 break
 
