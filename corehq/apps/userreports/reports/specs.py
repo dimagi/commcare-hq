@@ -193,7 +193,7 @@ class AggregateDateColumn(ReportColumn):
         return SqlColumnConfig(columns=[
             AggregateColumn(
                 header=self.get_header(lang),
-                aggregate_fn=lambda year, month: {'year': year, 'month': month},
+                aggregate_fn=lambda year, month, date: {'year': year, 'month': month},
                 format_fn=self.get_format_fn(),
                 columns=[
                     YearColumn(self.field, alias=self._year_column_alias()),
