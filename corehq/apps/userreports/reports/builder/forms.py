@@ -270,13 +270,19 @@ class DataSourceBuilder(object):
 
     @classmethod
     def _get_data_source_properties_from_case(cls, case_properties):
+        property_map = {
+            'closed': _('Case Closed'),
+            'user_id': _('User ID Last Updating Case'),
+            'owner_name': _('Case Owner'),
+            'mobile worker': _('Mobile Worker Last Updating Case'),
+        }
         properties = OrderedDict()
         for property in case_properties:
             properties[property] = DataSourceProperty(
                 type='case_property',
                 id=property,
                 column_id=get_column_name(property),
-                text=property,
+                text=property_map.get(property, property.replace('_', ' ')),
                 source=property
             )
         properties['computed/owner_name'] = cls._get_owner_name_pseudo_property()
@@ -292,7 +298,7 @@ class DataSourceBuilder(object):
             type='case_property',
             id='computed/owner_name',
             column_id=get_column_name('computed/owner_name'),
-            text='owner name',
+            text=_('Case Owner'),
             source='computed/owner_name'
         )
 
@@ -305,14 +311,28 @@ class DataSourceBuilder(object):
             type='case_property',
             id='computed/user_name',
             column_id=get_column_name('computed/user_name'),
-            text='mobile worker',
+            text=_('Mobile Worker Last Updating Case'),
             source='computed/user_name',
         )
 
     @staticmethod
     def _get_data_source_properties_from_form(form, form_xml):
+        property_map = {
+            'username': _('User Name'),
+            'userID': _('User ID'),
+            'timeStart': _('Date Form Started'),
+            'timeEnd': _('Date Form Completed'),
+        }
         properties = OrderedDict()
         questions = form_xml.get_questions([])
+        for prop in FORM_METADATA_PROPERTIES:
+            properties[prop[0]] = DataSourceProperty(
+                type="meta",
+                id=prop[0],
+                column_id=get_column_name(prop[0].strip("/")),
+                text=property_map.get(prop[0], prop[0]),
+                source=prop,
+            )
         for question in questions:
             properties[question['value']] = DataSourceProperty(
                 type="question",
@@ -320,14 +340,6 @@ class DataSourceBuilder(object):
                 column_id=get_column_name(question['value'].strip("/")),
                 text=question['label'],
                 source=question,
-            )
-        for prop in FORM_METADATA_PROPERTIES:
-            properties[prop[0]] = DataSourceProperty(
-                type="meta",
-                id=prop[0],
-                column_id=get_column_name(prop[0].strip("/")),
-                text=prop[0],
-                source=prop,
             )
         if form.get_app().auto_gps_capture:
             properties['location'] = DataSourceProperty(
@@ -387,6 +399,9 @@ class DataSourceForm(forms.Form):
         self.report_type = report_type
 
         self.app_source_helper = ApplicationDataSourceUIHelper()
+        self.app_source_helper.source_type_field.label = _('Forms or Cases')
+        self.app_source_helper.source_type_field.choices = [("case", _("Cases")), ("form", _("Forms"))]
+        self.app_source_helper.source_field.label = _('<span data-bind="text: labelMap[sourceType()]"></span>')
         self.app_source_helper.bootstrap(self.domain)
         report_source_fields = self.app_source_helper.get_fields()
         report_source_help_texts = {
@@ -726,14 +741,14 @@ class ConfigureNewReportBase(forms.Form):
                 exists_in_current_version=True,
                 property='closed',
                 data_source_field=None,
-                display_text='closed',
+                display_text=_('Closed'),
                 format='Choice',
             ),
             FilterViewModel(
                 exists_in_current_version=True,
                 property='computed/owner_name',
                 data_source_field=None,
-                display_text='owner name',
+                display_text=_('Case Owner'),
                 format='Choice',
             ),
         ]
@@ -867,7 +882,7 @@ class ConfigureNewReportBase(forms.Form):
 
 
 class ConfigureBarChartReportForm(ConfigureNewReportBase):
-    group_by = forms.ChoiceField(label="Group by")
+    group_by = forms.ChoiceField(label=_("Bar Chart Categories"))
     report_type = 'chart'
 
     def __init__(self, report_name, app_id, source_type, report_source_id, existing_report=None, *args, **kwargs):
@@ -948,6 +963,7 @@ class ConfigureBarChartReportForm(ConfigureNewReportBase):
 
 
 class ConfigurePieChartReportForm(ConfigureBarChartReportForm):
+    group_by = forms.ChoiceField(label=_("Pie Chart Segments"))
 
     @property
     def container_fieldset(self):
@@ -983,8 +999,22 @@ class ConfigureListReportForm(ConfigureNewReportBase):
 
     @property
     def container_fieldset(self):
+        source_name = ''
+        if self.source_type == 'case':
+            source_name = self.report_source_id
+        if self.source_type == 'form':
+            source_name = Form.get_form(self.report_source_id).default_name()
         return crispy.Fieldset(
-            "",
+            '',
+            crispy.Fieldset(
+                _legend(
+                    _("Rows"),
+                    _('This report will show one row for each {name} {source}'.format(
+                            name=source_name, source=self.source_type
+                        )
+                    ),
+                )
+            ),
             self.column_fieldset,
             self.filter_fieldset
         )
@@ -1017,11 +1047,17 @@ class ConfigureListReportForm(ConfigureNewReportBase):
                         exists_in_current_version=exists,
                         property=self._get_property_from_column(c['field']) if exists else None,
                         data_source_field=c['field'] if not exists else None,
-                        calculation=reverse_agg_map.get(c.get('aggregation'), 'None')
+                        calculation=reverse_agg_map.get(c.get('aggregation'), 'Count per Choice')
                     )
                 )
             return cols
-        return []
+        return [ColumnViewModel(
+                        display_text='',
+                        exists_in_current_version=True,
+                        property=None,
+                        data_source_field=None,
+                        calculation='Count per Choice'
+                    )]
 
     @property
     def _report_columns(self):
@@ -1044,6 +1080,7 @@ class ConfigureListReportForm(ConfigureNewReportBase):
 class ConfigureTableReportForm(ConfigureListReportForm, ConfigureBarChartReportForm):
     report_type = 'table'
     column_legend_fine_print = ugettext_noop('Add columns for this report to aggregate. Each property you add will create a column for every value of that property.  For example, if you add a column for a yes or no question, the report will show a column for "yes" and a column for "no."')
+    group_by = forms.ChoiceField(label=_("Show one row for each"))
 
     @property
     def container_fieldset(self):
@@ -1167,7 +1204,13 @@ class ConfigureWorkerReportForm(ConfigureTableReportForm):
     @property
     def container_fieldset(self):
         return crispy.Fieldset(
-            "",
+            '',
+            crispy.Fieldset(
+                _legend(
+                    _("Rows"),
+                    _('This report will show one row for each mobile worker'),
+                )
+            ),
             self.column_fieldset,
             self.filter_fieldset
         )
