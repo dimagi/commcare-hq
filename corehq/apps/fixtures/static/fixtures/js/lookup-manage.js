@@ -165,7 +165,7 @@ $(function () {
             } else {
                 for (var i = 0; i < self.fields().length; i += 1) {
                     var field = self.fields()[i];
-                    if (field.is_new() == true){
+                    if (field.is_new() === true){
                         indicesToRemoveAt.push(i);
                         continue;
                     }
@@ -173,7 +173,7 @@ $(function () {
                     field.remove(false);
                 }
                 for (var j = 0; j < indicesToRemoveAt.length; j += 1){
-                    var index = indicesToRemoveAt[j]
+                    var index = indicesToRemoveAt[j];
                     self.fields.remove(self.fields()[index]);
                 }
             }
