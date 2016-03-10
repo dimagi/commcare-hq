@@ -8,7 +8,7 @@ from django.db.models import Count, Q
 from django.http.response import HttpResponseRedirect, Http404
 from django.shortcuts import get_object_or_404
 from django.utils.decorators import method_decorator
-from django.views.generic.base import TemplateView
+from django.views.generic.base import TemplateView, RedirectView
 from django.views.generic.edit import DeleteView
 from django.views.generic.list import ListView
 from corehq.apps.commtrack.models import StockState
@@ -397,3 +397,21 @@ class BalanceMigrationView(BaseDomainView):
             ).count(),
             'problems': ILSMigrationProblem.objects.filter(domain=self.domain)
         }
+
+
+class DashboardPageRedirect(RedirectView):
+
+    def get_redirect_url(self, *args, **kwargs):
+        domain = kwargs['domain']
+        user = self.request.couch_user
+        dm = user.get_domain_membership(domain)
+        url = DashboardReport.get_url(domain)
+
+        if dm:
+            loc_id = dm.location_id
+            url = '%s?location_id=%s&filter_by_program=all' % (
+                url,
+                loc_id or ''
+            )
+
+        return url
