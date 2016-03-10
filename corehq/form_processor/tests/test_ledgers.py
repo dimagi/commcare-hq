@@ -8,9 +8,10 @@ from corehq.apps.hqcase.utils import submit_case_blocks
 from corehq.form_processor.backends.sql.dbaccessors import CaseAccessorSQL
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 from corehq.form_processor.interfaces.processor import FormProcessorInterface
-from corehq.form_processor.models import CaseTransaction
+from corehq.form_processor.models import CaseTransaction, LedgerTransaction
 from corehq.form_processor.parsers.ledgers.helpers import UniqueLedgerReference
 from corehq.form_processor.tests import FormProcessorTestUtils, run_with_all_backends
+from corehq.form_processor.utils.general import should_use_sql_backend
 
 DOMAIN = 'ledger-tests'
 
@@ -65,6 +66,14 @@ class LedgerTests(TestCase):
         self._assert_ledger_state(100)
         # make sure the form is part of the case's history
         self.assertEqual(orignal_form_count + 1, len(self.interface.get_case_forms(self.case.case_id)))
+        if should_use_sql_backend(DOMAIN):
+            txs = LedgerTransaction.objects.filter(case_id=self.case.case_id)
+            self.assertEqual(1, len(txs))
+            self.assertEqual(LedgerTransaction.TYPE_BALANCE, txs[0].type)
+            self.assertEqual(self.product_a._id, txs[0].entry_id)
+            self.assertEqual('stock', txs[0].section_id)
+            self.assertEqual(100, txs[0].delta)
+            self.assertEqual(100, txs[0].updated_balance)
 
     @run_with_all_backends
     def test_balance_submission_multiple(self):
