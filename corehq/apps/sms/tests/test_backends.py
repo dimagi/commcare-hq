@@ -359,10 +359,11 @@ class AllBackendTest(BaseSMSTest):
 
     def test_push_inbound_sms(self):
         xml = """
-        <root>
-            <param name="MobileNumber">99912345</param>
-            <param name="Text">push test</param>
-        </root>
+        <?xml version="1.0" encoding="UTF-8"?>
+        <bspostevent>
+            <field name="MobileNumber" type="string">99912345</field>
+            <field name="Text" type="string">push test</field>
+        </bspostevent>
         """
         self._simulate_inbound_request_with_payload(
             '/push/sms/%s/' % self.push_backend.inbound_api_key,
