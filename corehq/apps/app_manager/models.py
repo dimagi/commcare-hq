@@ -4745,7 +4745,8 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
             'include_media_suite': with_media,
             'uniqueid': self.copy_of or self.id,
             'name': self.name,
-            'descriptor': u"Profile File"
+            'descriptor': u"Profile File",
+            'cert_validate_url': reverse('certificate_validate')
         }).encode('utf-8')
 
     @property
