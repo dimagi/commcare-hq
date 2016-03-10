@@ -221,6 +221,26 @@ class RepeaterTest(BaseRepeaterTest):
             check_repeaters()
             self.assertEqual(mock_fire.call_count, 0)
 
+    def test_process_repeat_record_locking(self):
+        self.assertEqual(len(RepeatRecord.all()), 2)
+
+        with patch('corehq.apps.repeaters.tasks.process_repeat_record') as mock_process:
+            check_repeaters()
+            self.assertEqual(mock_process.delay.call_count, 2)
+
+        with patch('corehq.apps.repeaters.tasks.process_repeat_record') as mock_process:
+            check_repeaters()
+            self.assertEqual(mock_process.delay.call_count, 0)
+
+        records = RepeatRecord.all()
+        # Saving should unlock them again by changing the rev
+        for record in records:
+            record.save()
+
+        with patch('corehq.apps.repeaters.tasks.process_repeat_record') as mock_process:
+            check_repeaters()
+            self.assertEqual(mock_process.delay.call_count, 2)
+
 
 class CaseRepeaterTest(BaseRepeaterTest, TestXmlMixin):
     @classmethod

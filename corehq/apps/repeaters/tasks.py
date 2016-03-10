@@ -11,7 +11,6 @@ from corehq.apps.repeaters.dbaccessors import iterate_repeat_records
 from corehq.apps.repeaters.models import RepeatRecord
 from corehq.apps.repeaters.const import (
     CHECK_REPEATERS_INTERVAL,
-    RECORDS_IN_PROGRESS_REDIS_KEY,
 )
 
 logging = get_task_logger(__name__)
@@ -29,11 +28,13 @@ def check_repeaters():
 
     for record in iterate_repeat_records(start):
         now = datetime.utcnow()
+        lock_key = _get_repeat_record_lock_key(record)
 
         if now > cutoff:
             break
 
-        if redis_client.sismember(RECORDS_IN_PROGRESS_REDIS_KEY, record._id):
+        lock = redis_client.lock(lock_key, timeout=60 * 60 * 24)
+        if not lock.acquire(blocking=False):
             continue
 
         process_repeat_record.delay(record)
@@ -41,21 +42,20 @@ def check_repeaters():
 
 @task(queue=settings.CELERY_REPEAT_RECORD_QUEUE)
 def process_repeat_record(repeat_record):
-    redis_client = get_redis_client().client.get_client()
-
-    redis_client.sadd(RECORDS_IN_PROGRESS_REDIS_KEY, repeat_record._id)
     try:
-        lock = RepeatRecord.get_obj_lock(repeat_record)
-        lock.acquire()
-
-        with LockManager(repeat_record, lock) as record:
-            if record.repeater.doc_type.endswith(DELETED_SUFFIX):
-                if not record.doc_type.endswith(DELETED_SUFFIX):
-                    record.doc_type += DELETED_SUFFIX
-            else:
-                record.fire()
-            record.save()
+        if repeat_record.repeater.doc_type.endswith(DELETED_SUFFIX):
+            if not repeat_record.doc_type.endswith(DELETED_SUFFIX):
+                repeat_record.doc_type += DELETED_SUFFIX
+        else:
+            repeat_record.fire()
+        repeat_record.save()
     except Exception:
         logging.exception('Failed to process repeat record: {}'.format(repeat_record._id))
-    finally:
-        redis_client.srem(RECORDS_IN_PROGRESS_REDIS_KEY, record._id)
+
+
+def _get_repeat_record_lock_key(record):
+    """
+    Including the rev in the key means that the record will be unlocked for processing
+    every time we execute a `save()` call.
+    """
+    return 'repeat_record_in_progress-{}_{}'.format(record._id, record._rev)
