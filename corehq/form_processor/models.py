@@ -1030,7 +1030,7 @@ class LedgerTransaction(DisabledDbMixin, models.Model):
         (TYPE_TRANSFER, 'transfer'),
     )
 
-    form_id = models.CharField(max_length=255, null=True)
+    form_id = models.CharField(max_length=255, null=False)
     server_date = models.DateTimeField()
     type = models.PositiveSmallIntegerField(choices=TYPE_CHOICES)
     case_id = models.CharField(max_length=255, db_index=True, default=None)
