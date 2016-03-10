@@ -501,20 +501,18 @@ def _make_location_admininstrative(location):
 
 def _reopen_or_create_supply_point(location):
     from .helpers import update_supply_point_from_location
-    from .dbaccessors import get_supply_point_by_location_id
-    supply_point = get_supply_point_by_location_id(location.domain, location.location_id)
+    supply_point = SupplyInterface(location.domain).get_closed_and_open_by_location_id_and_domain(
+        location.domain,
+        location.location_id
+    )
     if supply_point:
         if supply_point and supply_point.closed:
             form_ids = CaseAccessors(supply_point.domain).get_case_xform_ids(supply_point.case_id)
             form_accessor = FormAccessors(supply_point.domain)
-            for form_id in form_ids:
-                form = form_accessor.get_form(form_id)
-                closes_case = any(map(
-                    lambda case_update: case_update.closes_case(),
-                    get_case_updates(form),
-                ))
-                if closes_case:
-                    form.archive(user_id=const.COMMTRACK_USERNAME)
+            transactions = supply_point.closed_transactions
+            for transaction in transactions:
+                transaction.form.archive(user_id=const.COMMTRACK_USERNAME)
+
         update_supply_point_from_location(supply_point, location)
         return supply_point
     else:
