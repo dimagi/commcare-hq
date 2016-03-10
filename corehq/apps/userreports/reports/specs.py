@@ -75,6 +75,9 @@ class ReportColumn(JsonObject):
     def get_group_by_columns(self):
         raise NotImplementedError(_("You can't group by columns of type {}".format(self.type)))
 
+    def get_sort_by_columns(self):
+        raise NotImplementedError(_("You can't sort by columns of type {}").format(self.type))
+
     def get_header(self, lang):
         return localize(self.display, lang)
 
@@ -135,6 +138,9 @@ class FieldColumn(ReportColumn):
         ])
 
     def get_group_by_columns(self):
+        return [self.column_id]
+
+    def get_sort_by_columns(self):
         return [self.column_id]
 
 
@@ -219,6 +225,9 @@ class AggregateDateColumn(ReportColumn):
         return _format
 
     def get_group_by_columns(self):
+        return [self._year_column_alias(), self._month_column_alias()]
+
+    def get_sort_by_columns(self):
         return [self._year_column_alias(), self._month_column_alias()]
 
 
