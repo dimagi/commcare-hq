@@ -71,7 +71,6 @@ branches:
   - import_build-anchor-tag # Nick P 2/29
   - b3-project-settings-accounting  # Biyeun 3/1
   - report-builder-text # Cal 3/1
-  - b3-bihar # BB 3/7
   - certificate-validate # Cal 3/9
   - sql-saved-exports-2 # Noah 3/9  includes ES reindex
 submodules:
