@@ -65,3 +65,9 @@ es2
 
 [shared_dir_host:children]
 db0
+
+[db0:vars]
+# /dev/xvda: 26.8 GB (/boot & /)
+# /dev/xvdb: 2147 MB (swap)
+# /dev/xvdc: 1073.7 GB (/opt/data)
+datavol_device=/dev/xvdc
