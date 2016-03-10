@@ -10,7 +10,8 @@ from corehq.form_processor.interfaces.dbaccessors import AbstractCaseAccessor, A
 from corehq.form_processor.models import (
     XFormInstanceSQL, CommCareCaseIndexSQL, CaseAttachmentSQL, CaseTransaction,
     CommCareCaseSQL, XFormAttachmentSQL, XFormOperationSQL,
-    CommCareCaseIndexSQL_DB_TABLE, CaseAttachmentSQL_DB_TABLE, LedgerValue, LedgerValue_DB_TABLE)
+    CommCareCaseIndexSQL_DB_TABLE, CaseAttachmentSQL_DB_TABLE, LedgerValue, LedgerValue_DB_TABLE, LedgerTransaction,
+    LedgerTransaction_DB_TABLE)
 from corehq.form_processor.utils.sql import fetchone_as_namedtuple, fetchall_as_namedtuple, case_adapter, \
     case_transaction_adapter, case_index_adapter, case_attachment_adapter
 from corehq.sql_db.routers import db_for_read_write
@@ -631,19 +632,26 @@ class LedgerAccessorSQL(object):
         if not ledger_values:
             return
 
-        case_ids = [lv.case_id for lv in ledger_values]
+        for ledger_value in ledger_values:
+            transactions = ledger_value.get_tracked_models_to_create(LedgerTransaction)
 
-        for ledger in ledger_values:
-            ledger.last_modified = datetime.utcnow()
+            for ledger in ledger_values:
+                ledger.last_modified = datetime.utcnow()
 
-        with get_cursor(LedgerValue) as cursor:
-            try:
-                cursor.execute(
-                    "SELECT save_ledger_values(%s, %s::{}[])".format(LedgerValue_DB_TABLE),
-                    [case_ids, ledger_values]
-                )
-            except InternalError as e:
-                raise LedgerSaveError(e)
+            with get_cursor(LedgerValue) as cursor:
+                try:
+                    cursor.execute(
+                        "SELECT save_ledger_values(%s, %s::{}, %s::{}[])".format(
+                            LedgerValue_DB_TABLE,
+                            LedgerTransaction_DB_TABLE
+                        ),
+                        [ledger_value.case_id, ledger_value, transactions]
+                    )
+                except InternalError as e:
+                    raise LedgerSaveError(e)
+
+            ledger_value.clear_tracked_models()
+
 
 
 def _order_list(id_list, object_list, id_property):

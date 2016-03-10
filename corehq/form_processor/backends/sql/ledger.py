@@ -2,7 +2,7 @@ from corehq.apps.commtrack.processing import compute_ledger_values
 from corehq.form_processor.backends.sql.dbaccessors import LedgerAccessorSQL
 from corehq.form_processor.interfaces.ledger_processor import LedgerProcessorInterface, StockModelUpdateResult, \
     LedgerDBInterface
-from corehq.form_processor.models import LedgerValue
+from corehq.form_processor.models import LedgerValue, LedgerTransaction
 
 
 class LedgerDBSQL(LedgerDBInterface):
@@ -47,6 +47,35 @@ class LedgerProcessorSQL(LedgerProcessorInterface):
                 ledger_value = LedgerValue(**stock_trans.ledger_reference._asdict())
             ledger_value.balance = new_ledger_values.balance
 
+
+            ledger_value.track_create(
+                _get_ledget_transaction(_lazy_original_balance, stock_report_helper, stock_trans, new_ledger_values.balance)
+            )
+
             to_save.append(ledger_value)
 
         return StockModelUpdateResult(to_save=to_save)
+
+
+def _get_ledget_transaction(lazy_original_balance, stock_report_helper, stock_trans, new_balance):
+    return LedgerTransaction(
+        form_id=stock_report_helper.form_id,
+        server_date=stock_report_helper.server_date,
+        type=_report_type_to_ledger_type(stock_report_helper.report_type),
+        case_id=stock_trans.case_id,
+        section_id=stock_trans.section_id,
+        entry_id=stock_trans.product_id,
+        user_defined_type=stock_trans.subaction,
+        delta=new_balance - lazy_original_balance(),
+        updated_balance=new_balance
+    )
+
+
+def _report_type_to_ledger_type(report_type):
+    from casexml.apps.stock.const import REPORT_TYPE_BALANCE, REPORT_TYPE_TRANSFER
+    if report_type == REPORT_TYPE_BALANCE:
+        return LedgerTransaction.TYPE_BALANCE
+    if report_type == REPORT_TYPE_TRANSFER:
+        return LedgerTransaction.TYPE_TRANSFER
+
+    raise ValueError('Invalid stock report type {}!'.format(report_type))

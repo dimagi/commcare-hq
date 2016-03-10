@@ -44,6 +44,7 @@ CommCareCaseIndexSQL_DB_TABLE = 'form_processor_commcarecaseindexsql'
 CaseAttachmentSQL_DB_TABLE = 'form_processor_caseattachmentsql'
 CaseTransaction_DB_TABLE = 'form_processor_casetransaction'
 LedgerValue_DB_TABLE = 'form_processor_ledgervalue'
+LedgerTransaction_DB_TABLE = 'form_processor_ledgertransaction'
 
 CaseAction = namedtuple("CaseAction", ["action_type", "updated_known_properties", "indices"])
 
@@ -1002,7 +1003,7 @@ class FormEditRebuild(CaseTransactionDetail):
     deprecated_form_id = StringProperty()
 
 
-class LedgerValue(DisabledDbMixin, models.Model):
+class LedgerValue(DisabledDbMixin, models.Model, TrackRelatedChanges):
     """
     Represents the current state of a ledger. Supercedes StockState
     """
@@ -1071,6 +1072,10 @@ class LedgerTransaction(DisabledDbMixin, models.Model):
                 )
             )
         return transactions
+
+    class Meta:
+        db_table = LedgerTransaction_DB_TABLE
+        app_label = "form_processor"
 
 
 class ConsumptionTransaction(namedtuple('ConsumptionTransaction', ['type', 'normalized_value', 'received_on'])):

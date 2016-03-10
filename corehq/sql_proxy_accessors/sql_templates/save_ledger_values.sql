@@ -1,7 +1,9 @@
-DROP FUNCTION IF EXISTS save_ledger_values(TEXT[], form_processor_ledgervalue[]);
+DROP FUNCTION IF EXISTS save_ledger_values(TEXT, form_processor_ledgervalue, form_processor_ledgertransaction[]);
 
-CREATE FUNCTION save_ledger_values(case_ids TEXT[], ledger_values form_processor_ledgervalue[]) RETURNS VOID AS $$
+CREATE FUNCTION save_ledger_values(
+    case_id TEXT,
+    ledger_value form_processor_ledgervalue,
+    ledger_transactions form_processor_ledgertransaction[]) RETURNS VOID AS $$
     CLUSTER '{{ PL_PROXY_CLUSTER_NAME }}';
-    SPLIT case_ids, ledger_values;
-    RUN ON hash_string(case_ids, 'siphash24');
+    RUN ON hash_string(case_id, 'siphash24');
 $$ LANGUAGE plproxy;
