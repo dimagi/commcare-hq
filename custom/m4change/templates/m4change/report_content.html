@@ -1,4 +1,4 @@
-{% extends 'reports/async/bootstrap2/tabular.html' %}
+{% extends 'reports/async/bootstrap3/tabular.html' %}
 {% load url from future %}
 {% load hq_shared_tags %}
 {% load report_tags %}
@@ -6,32 +6,24 @@
 {% load i18n %}
 
 {% block pretable %}
-    <div id="logo-top" class="row-fluid">
-        <div class="span3" id="logo-top-left">
-            <img src="{% static 'm4change/images/SurePLogo.jpg' %}" alt="sure_p_logo"/>
+    <div id="logo-top" class="row">
+        <div class="col-sm-3" id="logo-top-left">
+            <img src="{% new_static 'm4change/images/SurePLogo.jpg' %}" alt="sure_p_logo"/>
         </div>
-        <div class="span6" id="logo-title">
+        <div class="col-sm-6" id="logo-title">
             {{ block.super }}
         </div>
-        <div class="span3" id="logo-top-right">
-            <img src="{% static 'm4change/images/NigeriaCoatofArms.png' %}" alt="nigeria_coat_of_arms"/>
+        <div class="col-sm-3" id="logo-top-right">
+            <img src="{% new_static 'm4change/images/NigeriaCoatofArms.png' %}" alt="nigeria_coat_of_arms"/>
         </div>
     </div>
 {% endblock %}
 
 {% block posttable %}
-    <div id="logo-bottom" class="row-fluid">
-        <div class="span12">
-            <img src="{% static 'm4change/images/PathfinderInternationalLogo.jpg' %}"
+    <div id="logo-bottom" class="row">
+        <div class="col-sm-12">
+            <img src="{% new_static 'm4change/images/PathfinderInternationalLogo.jpg' %}"
                  alt="pathfinder_international_logo"/>
         </div>
     </div>
-{% endblock %}
-
-{% block reportcontent %}
-    {% compress css %}
-    <link type="text/less" rel="stylesheet" media="all" href="{% static 'style/less/hqstyle-core.less' %}"/>
-    {% endcompress %}
-    <link rel="stylesheet" href="{% static 'm4change/css/reports.css' %}"/>
-    {{ block.super }}
 {% endblock %}
