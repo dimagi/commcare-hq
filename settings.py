@@ -110,7 +110,10 @@ DJANGO_LOG_FILE = "%s/%s" % (FILEPATH, "commcarehq.django.log")
 ACCOUNTING_LOG_FILE = "%s/%s" % (FILEPATH, "commcarehq.accounting.log")
 ANALYTICS_LOG_FILE = "%s/%s" % (FILEPATH, "commcarehq.analytics.log")
 DATADOG_LOG_FILE = "%s/%s" % (FILEPATH, "commcarehq.datadog.log")
+
 FORMPLAYER_EXPERIMENT_DIRECTORY = "%s/%s/" % (FILEPATH, "formplayer_experiment")
+FORMPLAYER_TIMING_FILE = "%s/%s/" % (FORMPLAYER_EXPERIMENT_DIRECTORY, "formplayer.timing.log")
+FORMPLAYER_DIFF_FILE = "%s/%s/" % (FORMPLAYER_EXPERIMENT_DIRECTORY, "formplayer.diff.log")
 
 
 # URL prefix for admin media -- CSS, JavaScript and images. Make sure to use a
@@ -806,6 +809,12 @@ LOGGING = {
         },
         'datadog': {
             'format': '%(metric)s %(created)s %(value)s metric_type=%(metric_type)s %(message)s'
+        },
+        'formplayer_timing': {
+            'format': '%(asctime)s, %(action)s, %(control_duration)s, %(candidate_duration)s'
+        },
+        'formplayer_diff': {
+            'format': '%(asctime)s, %(action)s, %(request)s, %(control)s, %(candidate)s'
         }
     },
     'filters': {
@@ -847,6 +856,18 @@ LOGGING = {
             'class': 'logging.FileHandler',
             'formatter': 'datadog',
             'filename': DATADOG_LOG_FILE
+        },
+        'formplayer_diff': {
+            'level': 'INFO',
+            'class': 'logging.FileHandler',
+            'formatter': 'formplayer_diff',
+            'filename': FORMPLAYER_DIFF_FILE
+        },
+        'formplayer_timing': {
+            'level': 'INFO',
+            'class': 'logging.FileHandler',
+            'formatter': 'formplayer_timing',
+            'filename': FORMPLAYER_TIMING_FILE
         },
         'couchlog': {
             'level': 'WARNING',
@@ -920,6 +941,11 @@ LOGGING = {
             'handler': ['datadog'],
             'level': 'INFO',
             'propogate': False,
+        },
+        'formplayer': {
+            'handlers': ['formplayer_diff', 'formplayer_timing'],
+            'level': 'INFO',
+            'propogate': True,
         },
     }
 }
