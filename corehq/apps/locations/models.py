@@ -210,7 +210,7 @@ class LocationManager(LocationQueriesMixin, TreeManager):
 
 class OnlyUnarchivedLocationManager(LocationManager):
     def get_queryset(self):
-        return (super(OnlyUnarchivedLocationManager, self).get_query_set()
+        return (super(OnlyUnarchivedLocationManager, self).get_queryset()
                 .filter(is_archived=False))
 
 

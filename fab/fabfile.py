@@ -1152,7 +1152,7 @@ def update_manifest(save=False, soft=False, use_current_release=False):
         )
 
 
-@roles(ROLES_DJANGO)
+@roles(set(ROLES_STATIC + ROLES_DJANGO))
 @parallel
 def version_static():
     """

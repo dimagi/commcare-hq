@@ -14,20 +14,25 @@ from corehq.apps.locations.models import SQLLocation
 from corehq.apps.products.models import Product
 from custom.ilsgateway.api import ILSGatewayEndpoint, ILSGatewayAPI
 from custom.ilsgateway.balance import BalanceMigration
+from custom.ilsgateway.tanzania.reminders import REMINDER_MONTHLY_SOH_SUMMARY, REMINDER_MONTHLY_DELIVERY_SUMMARY, \
+    REMINDER_MONTHLY_RANDR_SUMMARY
 from custom.ilsgateway.tanzania.reminders.delivery import DeliveryReminder
 from custom.ilsgateway.tanzania.reminders.randr import RandrReminder
+from custom.ilsgateway.tanzania.reminders.reports import get_district_people, construct_soh_summary, \
+    construct_delivery_summary, construct_randr_summary
+from custom.ilsgateway.tanzania.reminders.soh_thank_you import SOHThankYouReminder
 from custom.ilsgateway.tanzania.reminders.stockonhand import SOHReminder
 from custom.ilsgateway.tanzania.reminders.supervision import SupervisionReminder
 from custom.ilsgateway.tanzania.warehouse.updater import populate_report_data, default_start_date, \
     process_facility_warehouse_data, process_non_facility_warehouse_data
 from custom.ilsgateway.temporary import fix_stock_data
-from custom.ilsgateway.utils import send_for_day, send_for_all_domains
+from custom.ilsgateway.utils import send_for_day, send_for_all_domains, send_translated_message
 from custom.logistics.commtrack import bootstrap_domain as ils_bootstrap_domain, save_stock_data_checkpoint
 from custom.ilsgateway.models import ILSGatewayConfig, SupplyPointStatus, DeliveryGroupReport, ReportRun, \
     GroupSummary, OrganizationSummary, ProductAvailabilityData, Alert, PendingReportingDataRecalculation
 from custom.logistics.models import StockDataCheckpoint
 from custom.logistics.tasks import stock_data_task
-from dimagi.utils.dates import get_business_day_of_month
+from dimagi.utils.dates import get_business_day_of_month, get_business_day_of_month_before
 
 
 @periodic_task(run_every=crontab(hour="4", minute="00", day_of_week="*"),
@@ -193,6 +198,25 @@ def fix_stock_data_task(domain):
     fix_stock_data(domain)
 
 
+@task(queue='logistics_background_queue', ignore_result=True)
+def recalculate_march_reporting_data_task(domain):
+    locations_ids = list(SQLLocation.objects.filter(domain=domain).values_list('location_id', flat=True))
+    GroupSummary.objects.filter(
+        org_summary__location_id=locations_ids, org_summary__date__gte=datetime(2016, 3, 1)
+    ).delete()
+    OrganizationSummary.objects.filter(location_id__in=locations_ids, date__gte=datetime(2016, 3, 1)).delete()
+    ProductAvailabilityData.objects.filter(
+        location_id__in=locations_ids,
+        date__gte=datetime(2016, 3, 1)
+    ).delete()
+    stock_data_checkpoint = StockDataCheckpoint.objects.get(domain=domain)
+    end_date = stock_data_checkpoint.date
+    ReportRun.objects.create(start=datetime(2016, 3, 1), end=end_date,
+                             start_run=datetime.utcnow(), domain=domain, complete=True, has_error=True)
+
+    report_run.delay(domain)
+
+
 # @periodic_task(run_every=timedelta(days=1), queue=getattr(settings, 'CELERY_PERIODIC_QUEUE', 'celery'))
 @task(queue='logistics_background_queue', ignore_result=True)
 def report_run(domain, locations=None, strict=True):
@@ -246,37 +270,37 @@ district_delivery_partial = partial(send_for_day, cutoff=13, reminder_class=Deli
                                     location_type='DISTRICT')
 
 
-@periodic_task(run_every=crontab(day_of_month="13-15", hour=14, minute=0),
+@periodic_task(run_every=crontab(day_of_month="13-15", hour=11, minute=0),
                queue="logistics_reminder_queue")
 def first_facility_delivery_task():
     facility_delivery_partial(15)
 
 
-@periodic_task(run_every=crontab(day_of_month="20-22", hour=14, minute=0),
+@periodic_task(run_every=crontab(day_of_month="20-22", hour=11, minute=0),
                queue="logistics_reminder_queue")
 def second_facility_delivery_task():
     facility_delivery_partial(22)
 
 
-@periodic_task(run_every=crontab(day_of_month="26-30", hour=14, minute=0),
+@periodic_task(run_every=crontab(day_of_month="26-30", hour=11, minute=0),
                queue="logistics_reminder_queue")
 def third_facility_delivery_task():
     facility_delivery_partial(30)
 
 
-@periodic_task(run_every=crontab(day_of_month="11-13", hour=8, minute=0),
+@periodic_task(run_every=crontab(day_of_month="11-13", hour=5, minute=0),
                queue="logistics_reminder_queue")
 def first_district_delivery_task():
     district_delivery_partial(13)
 
 
-@periodic_task(run_every=crontab(day_of_month="18-20", hour=14, minute=0),
+@periodic_task(run_every=crontab(day_of_month="18-20", hour=11, minute=0),
                queue="logistics_reminder_queue")
 def second_district_delivery_task():
     district_delivery_partial(20)
 
 
-@periodic_task(run_every=crontab(day_of_month="26-28", hour=14, minute=0),
+@periodic_task(run_every=crontab(day_of_month="26-28", hour=11, minute=0),
                queue="logistics_reminder_queue")
 def third_district_delivery_task():
     district_delivery_partial(28)
@@ -286,46 +310,46 @@ facility_randr_partial = partial(send_for_day, cutoff=5, reminder_class=RandrRem
 district_randr_partial = partial(send_for_day, cutoff=13, reminder_class=RandrReminder, location_type='DISTRICT')
 
 
-@periodic_task(run_every=crontab(day_of_month="3-5", hour=8, minute=0),
+@periodic_task(run_every=crontab(day_of_month="3-5", hour=5, minute=0),
                queue="logistics_reminder_queue")
 def first_facility():
     """Last business day before or on 5th day of the Submission month, 8:00am"""
     facility_randr_partial(5)
 
 
-@periodic_task(run_every=crontab(day_of_month="8-10", hour=8, minute=0),
+@periodic_task(run_every=crontab(day_of_month="8-10", hour=5, minute=0),
                queue="logistics_reminder_queue")
 def second_facility():
     """Last business day before or on 10th day of the submission month, 8:00am"""
     facility_randr_partial(10)
 
 
-@periodic_task(run_every=crontab(day_of_month="10-12", hour=8, minute=0),
+@periodic_task(run_every=crontab(day_of_month="10-12", hour=5, minute=0),
                queue="logistics_reminder_queue")
 def third_facility():
     """Last business day before or on 12th day of the submission month, 8:00am"""
     facility_randr_partial(12)
 
 
-@periodic_task(run_every=crontab(day_of_month="11-13", hour=8, minute=0),
+@periodic_task(run_every=crontab(day_of_month="11-13", hour=5, minute=0),
                queue="logistics_reminder_queue")
 def first_district():
     district_randr_partial(13)
 
 
-@periodic_task(run_every=crontab(day_of_month="13-15", hour=8, minute=0),
+@periodic_task(run_every=crontab(day_of_month="13-15", hour=5, minute=0),
                queue="logistics_reminder_queue")
 def second_district():
     district_randr_partial(15)
 
 
-@periodic_task(run_every=crontab(day_of_month="15-17", hour=14, minute=0),
+@periodic_task(run_every=crontab(day_of_month="15-17", hour=11, minute=0),
                queue="logistics_reminder_queue")
 def third_district():
     district_randr_partial(17)
 
 
-@periodic_task(run_every=crontab(day_of_month="26-31", hour=14, minute=15),
+@periodic_task(run_every=crontab(day_of_month="26-31", hour=11, minute=15),
                queue="logistics_reminder_queue")
 def supervision_task():
     now = datetime.utcnow()
@@ -341,7 +365,7 @@ def get_last_and_nth_business_day(date, n):
     return last_month_last_day, nth_business_day
 
 
-@periodic_task(run_every=crontab(day_of_month="26-31", hour=14, minute=0),
+@periodic_task(run_every=crontab(day_of_month="26-31", hour=11, minute=0),
                queue="logistics_reminder_queue")
 def first_soh_task():
     now = datetime.utcnow()
@@ -350,7 +374,7 @@ def first_soh_task():
         send_for_all_domains(last_business_day, SOHReminder)
 
 
-@periodic_task(run_every=crontab(day_of_month="1-3", hour=9, minute=0),
+@periodic_task(run_every=crontab(day_of_month="1-3", hour=6, minute=0),
                queue="logistics_reminder_queue")
 def second_soh_task():
     now = datetime.utcnow()
@@ -359,13 +383,78 @@ def second_soh_task():
         send_for_all_domains(last_month_last_day, SOHReminder)
 
 
-@periodic_task(run_every=crontab(day_of_month="5-7", hour=8, minute=15),
+@periodic_task(run_every=crontab(day_of_month="5-7", hour=5, minute=15),
                queue="logistics_reminder_queue")
 def third_soh_task():
     now = datetime.utcnow()
     last_month_last_day, fifth_business_day = get_last_and_nth_business_day(now, 5)
     if now.day == fifth_business_day.day:
         send_for_all_domains(last_month_last_day, SOHReminder)
+
+
+@periodic_task(run_every=crontab(day_of_month="6-8", hour=13, minute=0),
+               queue="logistics_reminder_queue")
+def soh_summary_task():
+    """
+        6th business day of the month @ 3pm Tanzania time
+    """
+    now = datetime.utcnow()
+    sixth_business_day = get_business_day_of_month(month=now.month, year=now.year, count=6)
+    if now.day != sixth_business_day.day:
+        return
+
+    for domain in ILSGatewayConfig.get_all_enabled_domains():
+        for user in get_district_people(domain):
+            send_translated_message(user, REMINDER_MONTHLY_SOH_SUMMARY, **construct_soh_summary(user.location))
+
+
+@periodic_task(run_every=crontab(day_of_month="26-31", hour=13, minute=0),
+               queue="logistics_reminder_queue")
+def delivery_summary_task():
+    """
+        last business day of month 3pm Tanzania time
+    """
+    now = datetime.utcnow()
+    last_business_day = get_business_day_of_month(month=now.month, year=now.year, count=-1)
+    if now.day != last_business_day.day:
+        return
+
+    for domain in ILSGatewayConfig.get_all_enabled_domains():
+        for user in get_district_people(domain):
+            send_translated_message(
+                user, REMINDER_MONTHLY_DELIVERY_SUMMARY, **construct_delivery_summary(user.location)
+            )
+
+
+@periodic_task(run_every=crontab(day_of_month="15-17", hour=13, minute=0),
+               queue="logistics_reminder_queue")
+def randr_summary_task():
+    """
+        on 17th day of month or before if it's not a business day @ 3pm Tanzania time
+    """
+
+    now = datetime.utcnow()
+    business_day = get_business_day_of_month_before(month=now.month, year=now.year, day=17)
+    if now.day != business_day.day:
+        return
+
+    for domain in ILSGatewayConfig.get_all_enabled_domains():
+        for user in get_district_people(domain):
+            send_translated_message(
+                user, REMINDER_MONTHLY_RANDR_SUMMARY, **construct_randr_summary(user.location)
+            )
+
+
+@periodic_task(run_every=crontab(day_of_month="18-20", hour=14, minute=0),
+               queue="logistics_reminder_queue")
+def soh_thank_you_task():
+    """
+    Last business day before the 20th at 4:00 PM Tanzania time
+    """
+    now = datetime.utcnow()
+    last_month = datetime(now.year, now.month, 1) - timedelta(days=1)
+    for domain in ILSGatewayConfig.get_all_enabled_domains():
+        SOHThankYouReminder(domain=domain, date=last_month).send()
 
 
 def recalculate_on_group_change(location, last_run):

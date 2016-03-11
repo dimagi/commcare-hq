@@ -66,51 +66,6 @@
     });
     </script>
 {% endblock %}
-{% block keyboard_shortcuts %}
-    {% if request.couch_user.keyboard_shortcuts.enabled %}
-    <script>
-        var KeyboardNavigator = hqImport('hqwebapp/js/keyboard_navigator.js');
-        var nav_key = {{ request.couch_user.keyboard_shortcuts.main_key|JSON }};
-
-        // overrides default behavior and allows for shortcuts in inputs
-        hqImport("style/includes/keyboard_shortcuts.html#key").key.filter = function(event) {
-            return true;
-        };
-
-        var KeyboardShortcuts = hqImport('style/includes/keyboard_shortcuts.html#shortcuts');
-        KeyboardShortcuts.shortcuts.push({
-            shortcut: nav_key + "+s",
-            handler: KeyboardShortcuts.gen_click_fn("#settings-save-btn .btn, #fd-save-button .btn"),
-            desc: "Save application"
-        });
-
-        function gen_sidebar_elements() {
-            return $('.sidebar .nav-hq-sidebar a:not(a:has(.fa-pencil))');
-        }
-        var sidebar_navigator = new KeyboardNavigator.model();
-        sidebar_navigator.init({
-            nav_key: 'option',
-            action_key: 'enter',
-            forward_keys: ['j', 'down'],
-            back_keys: ['k', 'up'],
-            element_list_generator: gen_sidebar_elements,
-            reset_index: false
-        });
-
-        function gen_tab_elements() {
-            return $("[data-toggle='tab']:not(.sidebar .nav-hq-sidebar a)");
-        }
-        var tab_navigator = new KeyboardNavigator.model();
-        tab_navigator.init({
-            name: 'tabs',
-            nav_key: 'option',
-            action_key: 'enter',
-            element_list_generator: gen_tab_elements,
-            reset_index: false
-        });
-    </script>
-    {% endif %}
-{% endblock %}
 
 {% block page_breadcrumbs %}
     {% if not formdesigner %}

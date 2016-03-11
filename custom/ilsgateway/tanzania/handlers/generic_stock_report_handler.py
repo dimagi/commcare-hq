@@ -4,6 +4,7 @@ from corehq.apps.commtrack.sms import process
 from corehq.apps.sms.api import send_sms_to_verified_number
 from custom.ilsgateway.tanzania.handlers.ils_stock_report_parser import ILSStockReportParser
 from custom.ilsgateway.tanzania.handlers.keyword import KeywordHandler
+from dimagi.utils.decorators.memoized import memoized
 
 
 class GenericStockReportHandler(KeywordHandler):
@@ -13,6 +14,7 @@ class GenericStockReportHandler(KeywordHandler):
     status_value = None
 
     @property
+    @memoized
     def data(self):
         return ILSStockReportParser(
             self.domain_object,
@@ -24,6 +26,9 @@ class GenericStockReportHandler(KeywordHandler):
         raise NotImplemented()
 
     def on_success(self):
+        raise NotImplemented()
+
+    def on_error(self, data):
         raise NotImplemented()
 
     def handle(self):
@@ -40,8 +45,17 @@ class GenericStockReportHandler(KeywordHandler):
                 data = self.data
                 if not data:
                     return True
+
+                if not data.get('transactions'):
+                    self.on_error(data)
+                    return True
+
                 process(domain.name, data)
-                self.on_success()
+                if not data['errors']:
+                    self.on_success()
+                else:
+                    self.on_error(data)
+                    return True
                 self.respond(self.get_message(data))
             except NotAUserClassError:
                 return True

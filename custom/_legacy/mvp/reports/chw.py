@@ -97,7 +97,7 @@ class CHWManagerReport(GenericTabularReport, MVPIndicatorReport, DatespanMixin):
     @property
     def piecewise_rows(self):
         rows = []
-        d_text = lambda slug: format_html('<i class="icon icon-spinner status-{0}"></i>', slug)
+        d_text = lambda slug: format_html('<i class="fa fa-refresh fa-spin status-{0}"></i>', slug)
 
         def _create_stat_cell(stat_type, slug):
             stat_cell = self.table_cell(None, d_text(slug))
@@ -299,7 +299,7 @@ class CHWManagerReport(GenericTabularReport, MVPIndicatorReport, DatespanMixin):
                     v_text = mark_safe('<span class="label label-success">%s</span>' % v_text)
                 elif v < avg-(std*2) and v is not None:
                     # more than two stds below average
-                    v_text = mark_safe('<span class="label label-important">%s</span>' % v_text)
+                    v_text = mark_safe('<span class="label label-danger">%s</span>' % v_text)
 
                 formatted_values[user_id] = _formatted_cell(v, v_text)
         else:

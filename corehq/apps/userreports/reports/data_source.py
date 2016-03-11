@@ -1,21 +1,24 @@
 from collections import OrderedDict
 
+from sqlalchemy.exc import ProgrammingError
+
+from dimagi.utils.decorators.memoized import memoized
 from sqlagg import (
     ColumnNotFoundException,
     TableNotFoundException,
 )
 from sqlagg.columns import SimpleColumn
-from sqlalchemy.exc import ProgrammingError
+from sqlagg.sorting import OrderBy
 
 from corehq.apps.reports.sqlreport import SqlData, DatabaseColumn
 from corehq.apps.userreports.exceptions import (
     UserReportsError, TableNotFoundWarning,
-    SortConfigurationError)
+)
 from corehq.apps.userreports.models import DataSourceConfiguration, get_datasource_config
-from corehq.apps.userreports.reports.sorting import get_default_sort_value, DESCENDING
+from corehq.apps.userreports.reports.sorting import ASCENDING
+from corehq.apps.userreports.reports.util import get_expanded_columns, get_total_row
 from corehq.apps.userreports.sql import get_table_name
 from corehq.apps.userreports.sql.connection import get_engine_id
-from dimagi.utils.decorators.memoized import memoized
 
 
 class ConfigurableReportDataSource(SqlData):
@@ -104,6 +107,20 @@ class ConfigurableReportDataSource(SqlData):
         ]
 
     @property
+    def order_by(self):
+        if self._order_by:
+            return [
+                OrderBy(sort_column_id, order == ASCENDING)
+                for sort_column_id, order in self._order_by
+                if self._column_configs[sort_column_id].type != 'percent'
+            ]
+        if self.column_configs and self.column_configs[0].type != 'percent':
+            return [
+                OrderBy(self.column_configs[0].column_id, is_ascending=True)
+            ]
+        return []
+
+    @property
     def columns(self):
         db_columns = [c for sql_conf in self.sql_column_configs for c in sql_conf.columns]
         fields = {c.slug for c in db_columns}
@@ -122,9 +139,9 @@ class ConfigurableReportDataSource(SqlData):
         return [w for sql_conf in self.sql_column_configs for w in sql_conf.warnings]
 
     @memoized
-    def get_data(self):
+    def get_data(self, start=None, limit=None):
         try:
-            ret = super(ConfigurableReportDataSource, self).get_data()
+            ret = super(ConfigurableReportDataSource, self).get_data(start=start, limit=limit)
         except (
             ColumnNotFoundException,
             ProgrammingError,
@@ -135,75 +152,18 @@ class ConfigurableReportDataSource(SqlData):
 
         for report_column in self.column_configs:
             report_column.format_data(ret)
-        return self._sort_data(ret)
-
-    def _sort_data(self, data):
-        # TODO: Should sort in the database instead of memory, but not currently supported by sqlagg.
-        try:
-            # If a sort order is specified, sort by it.
-            if self._order_by:
-                for col in reversed(self._order_by):
-                    sort_column_id, order = col
-                    is_descending = order == DESCENDING
-                    try:
-                        matching_report_column = self._column_configs[sort_column_id]
-                    except KeyError:
-                        raise SortConfigurationError('Sort column {} not found in report!'.format(sort_column_id))
-
-                    def get_datatype(report_column):
-                        """
-                        Given a report column, get the data type by trying to pull it out
-                        from the data source config of the db column it points at. Defaults to "string"
-                        """
-                        try:
-                            field = report_column.field
-                        except AttributeError:
-                            # if the report column doesn't have a field object, default to string.
-                            # necessary for percent columns
-                            return 'string'
-
-                        matching_indicators = filter(
-                            lambda configured_indicator: configured_indicator['column_id'] == field,
-                            self.config.configured_indicators
-                        )
-                        if not len(matching_indicators) == 1:
-                            raise SortConfigurationError(
-                                'Number of indicators matching column %(col)s is %(num_matching)d' % {
-                                    'col': col[0],
-                                    'num_matching': len(matching_indicators),
-                                }
-                            )
-                        return matching_indicators[0].get('datatype')
-
-                    datatype = get_datatype(matching_report_column)
-
-                    def sort_by(row):
-                        value = row.get(sort_column_id, None)
-                        if value is not None:
-                            return value
-                        else:
-                            return get_default_sort_value(datatype)
-
-                    data.sort(
-                        key=sort_by,
-                        reverse=is_descending
-                    )
-                return data
-            # Otherwise sort by the first column (if the report has columns)
-            elif self.column_configs:
-                return sorted(data, key=lambda x: x.get(
-                    self.column_configs[0].column_id,
-                    next(x.itervalues())
-                ))
-            return data
-        except (SortConfigurationError, TypeError):
-            # if the data isn't sortable according to the report spec
-            # just return the data in the order we got it
-            return data
+        return ret
 
     @property
     def has_total_row(self):
         return any(column_config.calculate_total for column_config in self.column_configs)
 
     def get_total_records(self):
+        # TODO - actually use sqlagg to get a count of rows
         return len(self.get_data())
+
+    def get_total_row(self):
+        return get_total_row(
+            self.get_data(), self.aggregation_columns, self.column_configs,
+            get_expanded_columns(self.column_configs, self.config)
+        )

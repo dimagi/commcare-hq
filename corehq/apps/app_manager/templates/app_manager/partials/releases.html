@@ -12,6 +12,7 @@
        });
     });
     $(function () {
+        var ReleasesMain = hqImport('app_manager/js/releases.js').ReleasesMain;
         // init releases
         {# The '___' in these urls will later be replaced by an app's _id ReleasesMain's url function #}
         var urls = {
@@ -43,7 +44,7 @@
         };
         var el = $('#releases-table');
         var releasesMain = new ReleasesMain(o);
-        _.defer(function(){ releasesMain.getMoreSavedApps(); });
+        _.defer(function(){ releasesMain.getMoreSavedApps(false); });
         el.koApplyBindings(releasesMain);
     });
 
@@ -265,7 +266,9 @@
                         </div>
                     </div>
                     <div data-bind="visible: fetchState() !== 'pending' && !doneFetching(), css: {hide: false}" class="hide">
-                        <a href="#" class="btn btn-default" data-bind="click: getMoreSavedApps">{% trans "View More" %}</a>
+                        <a href="#" class="btn btn-default btn-block" data-bind="click: function() { getMoreSavedApps(true); }">
+                            {% trans "View More" %}
+                        </a>
                     </div>
                     <div data-bind="visible: doneFetching() && !savedApps().length, css: {hide: false}" class="hide">
                         <div class="alert alert-info">

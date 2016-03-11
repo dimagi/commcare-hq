@@ -6,6 +6,8 @@ from pillowtop.models import DjangoPillowCheckpoint
 from pillowtop.pillow.interface import ChangeEventHandler
 
 
+DEFAULT_EMPTY_CHECKPOINT_SEQUENCE = '0'
+
 DocGetOrCreateResult = namedtuple('DocGetOrCreateResult', ['document', 'created'])
 
 
@@ -16,7 +18,7 @@ def get_or_create_checkpoint(checkpoint_id):
     except DjangoPillowCheckpoint.DoesNotExist:
         checkpoint = DjangoPillowCheckpoint.objects.create(
             checkpoint_id=checkpoint_id,
-            sequence='0',
+            sequence=DEFAULT_EMPTY_CHECKPOINT_SEQUENCE,
             timestamp=datetime.utcnow(),
         )
         created = True
@@ -26,7 +28,7 @@ def get_or_create_checkpoint(checkpoint_id):
 def reset_checkpoint(checkpoint_id):
     checkpoint = get_or_create_checkpoint(checkpoint_id).document
     checkpoint.old_sequence = checkpoint.sequence
-    checkpoint.sequence = '0'
+    checkpoint.sequence = DEFAULT_EMPTY_CHECKPOINT_SEQUENCE
     checkpoint.timestamp = datetime.utcnow()
     checkpoint.save()
 

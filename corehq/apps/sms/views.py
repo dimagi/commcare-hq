@@ -34,8 +34,15 @@ from corehq.apps.sms.api import (
 from corehq.apps.domain.views import BaseDomainView, DomainViewMixin
 from corehq.apps.hqwebapp.views import CRUDPaginatedViewMixin
 from corehq.apps.sms.dbaccessors import get_forwarding_rules_for_domain
-from corehq.apps.style.decorators import use_bootstrap3, use_timepicker, use_typeahead, use_select2, use_jquery_ui, \
-    upgrade_knockout_js
+from corehq.apps.style.decorators import (
+    use_bootstrap3,
+    use_timepicker,
+    use_typeahead,
+    use_select2,
+    use_jquery_ui,
+    upgrade_knockout_js,
+    use_datatables,
+)
 from corehq.apps.users.decorators import require_permission
 from corehq.apps.users.models import CouchUser, Permissions, CommCareUser
 from corehq.apps.users import models as user_models
@@ -153,6 +160,7 @@ class ComposeMessageView(BaseMessagingSectionView):
         return super(BaseMessagingSectionView, self).dispatch(*args, **kwargs)
 
 
+@csrf_exempt
 def post(request, domain):
     """
     I don't know of anywhere this is being invoked from. If the soft asserts
@@ -589,13 +597,16 @@ class GlobalBackendMap(BaseAdminSectionView):
         return self.get(request, *args, **kwargs)
 
 
-@require_permission(Permissions.edit_data)
-@requires_privilege_with_fallback(privileges.OUTBOUND_SMS)
-def chat_contacts(request, domain):
-    context = {
-        "domain" : domain,
-    }
-    return render(request, "sms/chat_contacts.html", context)
+class ChatOverSMSView(BaseMessagingSectionView):
+    urlname = 'chat_contacts'
+    template_name = 'sms/chat_contacts.html'
+    page_title = _("Chat over SMS")
+
+    @method_decorator(require_permission(Permissions.edit_data))
+    @use_bootstrap3
+    @use_datatables
+    def dispatch(self, *args, **kwargs):
+        return super(ChatOverSMSView, self).dispatch(*args, **kwargs)
 
 
 def get_case_contact_info(domain_obj, case_ids):

@@ -1536,6 +1536,8 @@ class AdminReportsTab(UITab):
                                 args=('pillow_errors',))},
                 {'title': _('Login as another user'),
                  'url': reverse(AuthenticateAs.urlname)},
+                {'title': _('Look up user by email'),
+                 'url': reverse('web_user_lookup')},
             ])
         return [
             (_('Administrative Reports'), [

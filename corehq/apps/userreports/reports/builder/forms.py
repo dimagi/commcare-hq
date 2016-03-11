@@ -50,6 +50,8 @@ from corehq.apps.userreports.sql import get_column_name
 from corehq.apps.userreports.ui.fields import JsonField
 from dimagi.utils.decorators.memoized import memoized
 
+from corehq.toggles import UNLIMITED_REPORT_BUILDER_REPORTS
+
 
 class FilterField(JsonField):
     """
@@ -452,28 +454,17 @@ class DataSourceForm(forms.Form):
         report won't be able to use one of the existing ones.
         """
         cleaned_data = super(DataSourceForm, self).clean()
-        source_type = cleaned_data.get('source_type')
-        report_source = cleaned_data.get('source')
-        app_id = cleaned_data.get('application')
 
-        if report_source and source_type and app_id:
-
-            app = Application.get(app_id)
-            ds_builder = DataSourceBuilder(self.domain, app, source_type, report_source)
-
-            existing_sources = DataSourceConfiguration.by_domain(self.domain)
-            active_source = filter(lambda config: not config.is_deactivated, existing_sources)
-            if len(active_source) >= 5:
-                match = ds_builder.get_existing_match()
-                if not match or match.is_deactivated:
-                    raise forms.ValidationError(_(
-                        "Too many data sources!\n"
-                        "Creating this report would cause you to go over the maximum "
-                        "number of data sources allowed in this domain. The current "
-                        "limit is 5. "
-                        "To continue, delete all of the reports using a particular "
-                        "data source (or the data source itself) and try again. "
-                    ))
+        existing_reports = ReportConfiguration.by_domain(self.domain)
+        builder_reports = filter(lambda report: report.report_meta.created_by_builder, existing_reports)
+        if len(builder_reports) >= 5 and not UNLIMITED_REPORT_BUILDER_REPORTS.enabled(self.domain):
+            raise forms.ValidationError(_(
+                "Too many reports!\n"
+                "Creating this report would cause you to go over the maximum "
+                "number of report builder reports allowed in this domain. The current "
+                "limit is 5. "
+                "To continue, delete another report and try again. "
+            ))
 
         return cleaned_data
 
@@ -650,14 +641,6 @@ class ConfigureNewReportBase(forms.Form):
 
                 self.existing_report.config_id = matching_data_source._id
             elif matching_data_source.is_deactivated:
-                existing_sources = DataSourceConfiguration.by_domain(self.domain)
-                active_sources = filter(lambda config: not config.is_deactivated, existing_sources)
-                if len(active_sources) >= 5:
-                    raise forms.ValidationError(_(
-                        "Editing this report would require a new data source. The limit is 5. "
-                        "To continue, first delete all of the reports using a particular "
-                        "data source (or the data source itself) and try again. "
-                    ))
                 matching_data_source.is_deactivated = False
                 reactivated = True
             changed = False
@@ -669,22 +652,11 @@ class ConfigureNewReportBase(forms.Form):
                 matching_data_source.save()
                 tasks.rebuild_indicators.delay(matching_data_source._id)
         else:
-            # We need to create a new data source
-            existing_sources = DataSourceConfiguration.by_domain(self.domain)
-            active_sources = filter(lambda config: not config.is_deactivated, existing_sources)
-
             # Delete the old one if no other reports use it
             old_data_source = DataSourceConfiguration.get(self.existing_report.config_id)
             if old_data_source.get_report_count() <= 1:
                 old_data_source.deactivate()
 
-            # Make sure the user can create more data sources
-            elif len(active_sources) >= 5:
-                raise forms.ValidationError(_(
-                    "Editing this report would require a new data source. The limit is 5. "
-                    "To continue, first delete all of the reports using a particular "
-                    "data source (or the data source itself) and try again. "
-                ))
             data_source_config_id = self._build_data_source()
             self.existing_report.config_id = data_source_config_id
 

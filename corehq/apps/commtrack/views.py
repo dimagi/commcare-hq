@@ -22,7 +22,7 @@ from corehq.apps.domain.decorators import (
     domain_admin_required,
 )
 from corehq.apps.domain.views import BaseDomainView
-from corehq.apps.locations.models import LocationType
+from corehq.apps.locations.models import LocationType, SQLLocation
 
 from .forms import ConsumptionForm, StockLevelsForm, CommTrackSettingsForm
 from .models import CommtrackActionConfig, StockRestoreConfig
@@ -339,10 +339,20 @@ class RebuildStockStateView(BaseCommTrackManageView):
         stock_state_limit_exceeded = False
         stock_transaction_limit_exceeded = False
 
+        query = StockTransaction.objects.filter(report__domain=self.domain)
+        if self.location_id:
+            try:
+                case_id = (SQLLocation.objects
+                           .get(domain=self.domain, location_id=self.location_id)
+                           .supply_point_id)
+            except SQLLocation.DoesNotExist:
+                messages.error(self.request, 'Your location id did not match a location')
+            else:
+                query = query.filter(case_id=case_id)
+
         stock_state_keys = [
             (txn.case_id, txn.section_id, txn.product_id)
-            for txn in
-            StockTransaction.objects.filter(report__domain=self.domain)
+            for txn in query
             .order_by('case_id', 'section_id', 'product_id')
             .distinct('case_id', 'section_id', 'product_id')
             [:stock_state_limit]
@@ -382,6 +392,10 @@ class RebuildStockStateView(BaseCommTrackManageView):
             'stock_transaction_limit_exceeded': stock_transaction_limit_exceeded,
             'stock_transaction_limit': stock_transaction_limit,
         }
+
+    def get(self, *args, **kwargs):
+        self.location_id = self.request.GET.get('location_id')
+        return super(RebuildStockStateView, self).get(*args, **kwargs)
 
     def post(self, request, *args, **kwargs):
         case_id = request.POST.get('case_id')

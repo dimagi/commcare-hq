@@ -50,6 +50,7 @@ from corehq.apps.style.decorators import use_bootstrap3
 from corehq.apps.users.models import CouchUser
 from corehq.apps.users.util import format_username
 from corehq.apps.hqwebapp.doc_info import get_doc_info
+from corehq.middleware import always_allow_browser_caching
 from corehq.util.datadog.utils import create_datadog_event, log_counter, sanitize_url
 from corehq.util.datadog.metrics import JSERROR_COUNT
 from corehq.util.datadog.const import DATADOG_UNKNOWN
@@ -1128,3 +1129,12 @@ class DataTablesAJAXPaginationMixin(object):
             'iTotalRecords': total_records,
             'iTotalDisplayRecords': filtered_records or total_records,
         }))
+
+
+@always_allow_browser_caching
+@login_and_domain_required
+def toggles_js(request, domain, template='hqwebapp/js/toggles_template.js'):
+    return render(request, template, {
+        'toggles_dict': toggles.toggle_values_by_name(username=request.user.username, domain=domain),
+        'previews_dict': feature_previews.preview_values_by_name(domain=domain)
+    })

@@ -33,6 +33,7 @@ from corehq.apps.callcenter.indicator_sets import CallCenterIndicators
 from corehq.apps.hqcase.utils import get_case_by_domain_hq_user_id
 from corehq.apps.style.decorators import use_datatables, use_jquery_ui, \
     use_bootstrap3
+from corehq.apps.style.utils import set_bootstrap_version3
 from corehq.apps.style.views import BaseB3SectionPageView
 from corehq.toggles import any_toggle_enabled, SUPPORT
 from corehq.util.couchdb_management import couch_config
@@ -47,7 +48,6 @@ from corehq.apps.data_analytics.admin import MALTRowAdmin
 from corehq.apps.hqadmin.history import get_recent_changes, download_changes
 from corehq.apps.hqadmin.models import HqDeploy
 from corehq.apps.hqadmin.forms import BrokenBuildsForm
-from corehq.apps.hqwebapp.views import BasePageView
 from corehq.apps.domain.decorators import require_superuser, require_superuser_or_developer
 from corehq.apps.domain.models import Domain
 from corehq.apps.hqadmin.escheck import (
@@ -64,7 +64,7 @@ from corehq.apps.hqadmin.reporting.reports import (
 )
 from corehq.apps.ota.views import get_restore_response, get_restore_params
 from corehq.apps.reports.graph_models import Axis, LineChart
-from corehq.apps.users.models import CommCareUser
+from corehq.apps.users.models import CommCareUser, WebUser
 from corehq.apps.users.util import format_username
 from corehq.sql_db.connections import Session
 from corehq.elastic import parse_args_for_es, run_query, ES_META
@@ -558,6 +558,24 @@ def _lookup_id_in_couch(doc_id, db_name=None):
         "doc": "NOT FOUND",
         "doc_id": doc_id,
     }
+
+
+@require_superuser
+def web_user_lookup(request):
+    template = "hqadmin/web_user_lookup.html"
+    set_bootstrap_version3()
+    web_user_email = request.GET.get("q")
+    if not web_user_email:
+        return render(request, template, {})
+
+    web_user = WebUser.get_by_username(web_user_email)
+    if web_user is None:
+        messages.error(
+            request, "Sorry, no user found with email {}. Did you enter it correctly?".format(web_user_email)
+        )
+    return render(request, template, {
+        'web_user': web_user
+    })
 
 
 @require_superuser

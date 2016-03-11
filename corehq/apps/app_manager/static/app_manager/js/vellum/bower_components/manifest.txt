@@ -3,9 +3,8 @@
 │ │ └── jquery#1.11.3
 │ └── jquery#1.11.3 (3.0.0-beta1 available)
 ├── Caret.js#0.2.2 (latest is 0.3.1)
-├── MediaUploader#f3d413f33f
+├── MediaUploader#06e78218ed
 ├── XMLWriter#ab8760d6e0
-├── almond#0.2.9 extraneous (latest is 0.3.1)
 ├── chai#3.5.0
 ├── equivalent-xml-js#7de21be295
 ├── fuse.js#2.0.2
@@ -14,7 +13,6 @@
 ├─┬ jstree#3.2.1
 │ └── jquery#1.11.3 (3.0.0-beta1 available)
 ├── langcodes#dd833883b5
-├── lodash#2.4.2 extraneous (latest is 4.6.0)
 ├── markdown-it#6.0.0
 ├── require-css#0.1.8
 ├── require-less#0.1.5

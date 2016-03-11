@@ -8,6 +8,7 @@ from corehq.apps.crud.models import BaseAdminCRUDForm
 from corehq.apps.indicators.models import FormDataAliasIndicatorDefinition, FormLabelIndicatorDefinition, CaseDataInFormIndicatorDefinition, FormDataInCaseIndicatorDefinition, CouchIndicatorDef, CountUniqueCouchIndicatorDef, MedianCouchIndicatorDef, CombinedCouchViewIndicatorDefinition, SumLastEmittedCouchIndicatorDef, DynamicIndicatorDefinition, NoGroupCouchIndicatorDefBase
 from corehq.apps.indicators.utils import get_namespaces, get_namespace_name, get_indicator_domains
 from corehq.apps.users.models import Permissions
+from crispy_forms.helper import FormHelper
 from dimagi.utils.decorators.memoized import memoized
 
 
@@ -22,6 +23,10 @@ class BaseIndicatorDefinitionForm(BaseAdminCRUDForm):
                                                           label_suffix, empty_permitted, doc_id)
         self.domain = domain
         self.fields['namespace'].widget = forms.Select(choices=get_namespaces(self.domain, as_choices=True))
+        self.helper = FormHelper()
+        self.helper.form_tag = False
+        self.helper.label_class = 'col-sm-3'
+        self.helper.field_class = 'col-sm-9'
 
     @property
     @memoized
@@ -192,6 +197,10 @@ class BulkCopyIndicatorsForm(forms.Form):
 
         self.fields['destination_domain'].widget = forms.Select(choices=[(d, d) for d in self.available_domains])
         self.fields['indicator_ids'].choices = self.available_indicators
+
+        self.helper = FormHelper()
+        self.helper.label_class = 'col-sm-3'
+        self.helper.field_class = 'col-sm-9'
 
     @property
     @memoized

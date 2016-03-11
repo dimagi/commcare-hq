@@ -127,20 +127,42 @@ def all_toggles():
     """
     Loads all toggles
     """
+    return all_toggles_by_name_in_scope(globals()).values()
+
+
+def all_toggles_by_name():
     # trick for listing the attributes of the current module.
     # http://stackoverflow.com/a/990450/8207
-    for toggle_name, toggle in globals().items():
+    return all_toggles_by_name_in_scope(globals())
+
+
+def all_toggles_by_name_in_scope(scope_dict):
+    result = {}
+    for toggle_name, toggle in scope_dict.items():
         if not toggle_name.startswith('__'):
             if isinstance(toggle, StaticToggle):
-                yield toggle
+                result[toggle_name] = toggle
+    return result
 
 
 def toggles_dict(username=None, domain=None):
     """
     Loads all toggles into a dictionary for use in JS
+
+    (only enabled toggles are included)
     """
     return {t.slug: True for t in all_toggles() if (t.enabled(username) or
                                                     t.enabled(domain))}
+
+
+def toggle_values_by_name(username=None, domain=None):
+    """
+    Loads all toggles into a dictionary for use in JS
+
+    all toggles (including those not enabled) are included
+    """
+    return {toggle_name: (toggle.enabled(username) or toggle.enabled(domain))
+            for toggle_name, toggle in all_toggles_by_name().items()}
 
 
 APP_BUILDER_CUSTOM_PARENT_REF = StaticToggle(
@@ -305,6 +327,13 @@ REPORT_BUILDER_MAP_REPORTS = StaticToggle(
     'report_builder_map_reports',
     'Report Builder map reports',
     TAG_PRODUCT_PATH,
+    [NAMESPACE_DOMAIN]
+)
+
+KAFKA_UCRS = StaticToggle(
+    'kafka-ucrs',
+    'Use new kafka-based UCR processing',
+    TAG_EXPERIMENTAL,
     [NAMESPACE_DOMAIN]
 )
 
@@ -791,6 +820,14 @@ NOTIFICATIONS = StaticToggle(
 PROJECT_HEALTH_DASHBOARD = StaticToggle(
     'project_health_dashboard',
     'Shows the project health dashboard in the reports navigation',
+    TAG_PRODUCT_PATH,
+    [NAMESPACE_DOMAIN]
+)
+
+
+UNLIMITED_REPORT_BUILDER_REPORTS = StaticToggle(
+    'unlimited_report_builder_reports',
+    'Allow unlimited reports created in report builder',
     TAG_PRODUCT_PATH,
     [NAMESPACE_DOMAIN]
 )

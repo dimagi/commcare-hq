@@ -477,6 +477,9 @@ class ILSGatewayAPI(APISynchronization):
             return None
 
         if not sms_user.is_active:
+            verified_numbers = VerifiedNumber.by_owner_id(sms_user.get_id)
+            for vn in verified_numbers:
+                vn.delete()
             return sms_user
 
         sms_user.save()

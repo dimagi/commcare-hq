@@ -1,12 +1,11 @@
-/*globals $, COMMCAREHQ, ko, _, CC_UTILS */
+/*globals $, COMMCAREHQ, ko, _ */
 
-var action_names = ["open_case", "update_case", "close_case", "case_preload",
-    // Usercase actions are managed in the User Case Management tab.
-    "usercase_update", "usercase_preload"];
-
-var CaseConfig = (function () {
+hqDefine('app_manager/js/case-config-ui-2.js', function () {
     "use strict";
-
+    var caseConfigUtils = hqImport('app_manager/js/case-config-utils.js');
+    var action_names = ["open_case", "update_case", "close_case", "case_preload",
+        // Usercase actions are managed in the User Case Management tab.
+        "usercase_update", "usercase_preload"];
 
     var CaseConfig = function (params) {
         var self = this;
@@ -122,10 +121,10 @@ var CaseConfig = (function () {
         };
 
         self.getQuestions = function (filter, excludeHidden, includeRepeat, excludeTrigger) {
-            return CC_UTILS.getQuestions(self.questions, filter, excludeHidden, includeRepeat, excludeTrigger);
+            return caseConfigUtils.getQuestions(self.questions, filter, excludeHidden, includeRepeat, excludeTrigger);
         };
         self.getAnswers = function (condition) {
-            return CC_UTILS.getAnswers(self.questions, condition);
+            return caseConfigUtils.getAnswers(self.questions, condition);
         };
 
         self.change = function () {
@@ -296,10 +295,10 @@ var CaseConfig = (function () {
                 if (!self.case_preload) {
                     return [];
                 }
-                return CC_UTILS.filteredSuggestedProperties(self.suggestedProperties(), self.case_preload());
+                return caseConfigUtils.filteredSuggestedProperties(self.suggestedProperties(), self.case_preload());
             }, self);
             self.suggestedSaveProperties = ko.computed(function () {
-                return CC_UTILS.filteredSuggestedProperties(self.suggestedProperties(), self.case_properties());
+                return caseConfigUtils.filteredSuggestedProperties(self.suggestedProperties(), self.case_properties());
             }, self);
 
             self.addProperty = function () {
@@ -480,10 +479,10 @@ var CaseConfig = (function () {
                 if (!self.case_preload) {
                     return [];
                 }
-                return CC_UTILS.filteredSuggestedProperties(self.suggestedProperties(), self.case_preload());
+                return caseConfigUtils.filteredSuggestedProperties(self.suggestedProperties(), self.case_preload());
             }, self);
             self.suggestedSaveProperties = ko.computed(function () {
-                return CC_UTILS.filteredSuggestedProperties(self.suggestedProperties(), self.case_properties());
+                return caseConfigUtils.filteredSuggestedProperties(self.suggestedProperties(), self.case_properties());
             }, self);
 
             self.addProperty = function () {
@@ -735,12 +734,12 @@ var CaseConfig = (function () {
                 path: self.open_case.name_path,
                 required: true
             }] : [];
-            var case_properties = CC_UTILS.propertyDictToArray(
+            var case_properties = caseConfigUtils.propertyDictToArray(
                 required_properties,
                 self.update_case.update,
                 caseConfig
             );
-            var case_preload = CC_UTILS.propertyDictToArray(
+            var case_preload = caseConfigUtils.propertyDictToArray(
                 [],
                 self.case_preload.preload,
                 caseConfig,
@@ -778,9 +777,9 @@ var CaseConfig = (function () {
         },
         from_case_transaction: function (case_transaction) {
             var o = CaseTransaction.unwrap(case_transaction);
-            var x = CC_UTILS.propertyArrayToDict(['name'], o.case_properties);
+            var x = caseConfigUtils.propertyArrayToDict(['name'], o.case_properties);
             var case_properties = x[0], case_name = x[1].name;
-            var case_preload = CC_UTILS.preloadArrayToDict(o.case_preload);
+            var case_preload = caseConfigUtils.preloadArrayToDict(o.case_preload);
             var open_condition = o.condition;
             var close_condition = o.close_condition;
             var update_condition = DEFAULT_CONDITION_ALWAYS;
@@ -821,12 +820,12 @@ var CaseConfig = (function () {
         },
         to_usercase_transaction: function (o, caseConfig) {
             var self = HQFormActions.normalize(o);
-            var case_properties = CC_UTILS.propertyDictToArray(
+            var case_properties = caseConfigUtils.propertyDictToArray(
                 [],  // usercase has no required properties; it has already been created with everything it needs
                 self.usercase_update.update,
                 caseConfig
             );
-            var case_preload = CC_UTILS.propertyDictToArray(
+            var case_preload = caseConfigUtils.propertyDictToArray(
                 [],
                 self.usercase_preload.preload,
                 caseConfig,
@@ -854,9 +853,9 @@ var CaseConfig = (function () {
         },
         from_usercase_transaction: function (usercase_transaction) {
             var o = UserCaseTransaction.unwrap(usercase_transaction);
-            var x = CC_UTILS.propertyArrayToDict([], o.case_properties);
+            var x = caseConfigUtils.propertyArrayToDict([], o.case_properties);
             var case_properties = x[0];
-            var case_preload = CC_UTILS.preloadArrayToDict(o.case_preload);
+            var case_preload = caseConfigUtils.preloadArrayToDict(o.case_preload);
             return {
                 usercase_update: {
                     update: case_properties,
@@ -884,7 +883,7 @@ var CaseConfig = (function () {
         },
         to_case_transaction: function (o, caseConfig) {
             var self = HQOpenSubCaseAction.normalize(o);
-            var case_properties = CC_UTILS.propertyDictToArray([{
+            var case_properties = caseConfigUtils.propertyDictToArray([{
                     path: self.case_name,
                     key: 'name',
                     required: true
@@ -925,7 +924,7 @@ var CaseConfig = (function () {
         },
         from_case_transaction: function (case_transaction) {
             var o = CaseTransaction.unwrap(case_transaction);
-            var x = CC_UTILS.propertyArrayToDict(['name'], o.case_properties);
+            var x = caseConfigUtils.propertyArrayToDict(['name'], o.case_properties);
             var case_properties = x[0], case_name = x[1].name;
 
             return {
@@ -943,4 +942,4 @@ var CaseConfig = (function () {
     return {
         CaseConfig: CaseConfig
     };
-}());
+});
