@@ -52,6 +52,11 @@ class MonthlyPerformanceSummary(jsonobject.JsonObject):
         )
 
     @property
+    def previous_month(self):
+        prev_year, prev_month = add_months(self.month.year, self.month.month, -1)
+        return datetime.datetime(prev_year, prev_month, 1)
+
+    @property
     def delta_performing(self):
         return self.performing - self._previous_summary.performing if self._previous_summary else self.performing
 

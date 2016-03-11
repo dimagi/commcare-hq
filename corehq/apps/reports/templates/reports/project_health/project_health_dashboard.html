@@ -58,8 +58,11 @@
     <thead>
         <tr>
             <th>{% trans "Category" %}</th>
-            <th>{% trans "Last month" %}</th>
-            <th>{% trans "Change from previous month" %}</th>
+            <th>{{ last_month.month|date:"F 'y" }}</th>
+            <th>
+                {% blocktrans with prev_month=last_month.previous_month|date:"F" %}
+                    Change from {{ prev_month }}
+                {% endblocktrans %}</th>
         </tr>
     </thead>
     <tr>
