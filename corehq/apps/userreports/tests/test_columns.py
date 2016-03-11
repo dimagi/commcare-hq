@@ -275,7 +275,7 @@ class TestAggregateDateColumn(SimpleTestCase):
 
     def test_group_by(self):
         wrapped = ReportColumnFactory.from_spec(self._spec)
-        self.assertEqual(['a_date_year', 'a_date_month'], wrapped.get_group_by_columns())
+        self.assertEqual(['a_date_year', 'a_date_month'], wrapped.get_database_column_ids())
 
     def test_format(self):
         wrapped = ReportColumnFactory.from_spec(self._spec)

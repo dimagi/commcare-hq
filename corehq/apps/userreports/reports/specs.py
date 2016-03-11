@@ -72,7 +72,7 @@ class ReportColumn(JsonObject):
             return TransformFactory.get_transform(self.transform).get_transform_function()
         return None
 
-    def get_group_by_columns(self):
+    def get_database_column_ids(self):
         raise NotImplementedError(_("You can't group by columns of type {}".format(self.type)))
 
     def get_header(self, lang):
@@ -134,7 +134,7 @@ class FieldColumn(ReportColumn):
             )
         ])
 
-    def get_group_by_columns(self):
+    def get_database_column_ids(self):
         return [self.column_id]
 
 
@@ -218,7 +218,7 @@ class AggregateDateColumn(ReportColumn):
             return '{}-{:02d}'.format(int(data['year']), int(data['month']))
         return _format
 
-    def get_group_by_columns(self):
+    def get_database_column_ids(self):
         return [self._year_column_alias(), self._month_column_alias()]
 
 
