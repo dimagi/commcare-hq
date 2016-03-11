@@ -32,7 +32,6 @@ from corehq.apps.userreports.models import (
 from corehq.apps.userreports.reports.factory import ReportFactory
 from corehq.apps.userreports.reports.util import (
     get_expanded_columns,
-    get_total_row,
 )
 from corehq.apps.userreports.util import default_language, localize
 from corehq.util.couch import get_document_or_404, get_document_or_not_found, \
@@ -297,10 +296,7 @@ class ConfigurableReport(JSONResponseMixin, BaseDomainView):
         if data_source.has_total_row:
             # TODO - use sqlagg to get total_row
             json_response.update({
-                "total_row": get_total_row(
-                    data_source.get_data(), data_source.aggregation_columns, data_source.column_configs,
-                    get_expanded_columns(data_source.column_configs, data_source.config)
-                ),
+                "total_row": data_source.get_total_row(),
             })
         return self.render_json_response(json_response)
 
@@ -362,13 +358,7 @@ class ConfigurableReport(JSONResponseMixin, BaseDomainView):
             column_ids.extend(column_id_to_expanded_column_ids.get(column.column_id, [column.column_id]))
 
         rows = [[raw_row[column_id] for column_id in column_ids] for raw_row in raw_rows]
-        total_rows = (
-            [get_total_row(
-                raw_rows, data.aggregation_columns, data.column_configs,
-                column_id_to_expanded_column_ids
-            )]
-            if data.has_total_row else []
-        )
+        total_rows = [data.get_total_row()] if data.has_total_row else []
         return [
             [
                 self.title,
