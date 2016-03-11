@@ -210,6 +210,17 @@ class FormProcessorSQL(object):
 
 
 def get_case_transactions(case_id, updated_xforms=None):
+    """
+    This fetches all the transactions required to rebuild the case along
+    with all the forms for those transactions.
+
+    For any forms that have been updated it replaces the old form
+    with the new one.
+
+    :param case_id: ID of case to rebuild
+    :param updated_xforms: list of forms that have been changed.
+    :return: list of ``CaseTransaction`` objects with their associated forms attached.
+    """
     transactions = CaseAccessorSQL.get_transactions_for_case_rebuild(case_id)
     form_ids = {tx.form_id for tx in transactions}
     updated_xforms_map = {
