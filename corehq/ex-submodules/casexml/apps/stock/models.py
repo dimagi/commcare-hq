@@ -78,9 +78,12 @@ class StockTransaction(models.Model, ConsumptionMixin):
 
     def get_previous_transaction(self):
         siblings = StockTransaction.get_ordered_transactions_for_stock(
-            self.case_id, self.section_id, self.product_id).exclude(pk=self.pk)
-        if siblings.count():
+            self.case_id, self.section_id, self.product_id
+        ).filter(report__date__lte=self.report.date).exclude(pk=self.pk)
+        try:
             return siblings[0]
+        except IndexError:
+            return None
 
     @property
     def normalized_value(self):

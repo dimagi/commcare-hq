@@ -189,7 +189,7 @@ class LedgerAccessorCouch(AbstractLedgerAccessor):
             if first:
                 previous = db_tx.get_previous_transaction()
                 if previous:
-                    yield db_tx
+                    yield previous
                 first = False
 
             yield db_tx
