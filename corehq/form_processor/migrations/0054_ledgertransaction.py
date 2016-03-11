@@ -29,6 +29,7 @@ class Migration(migrations.Migration):
                 ('updated_balance', models.IntegerField(default=0)),
             ],
             options={
+                'db_table': 'form_processor_ledgertransaction',
             },
             bases=(corehq.form_processor.models.DisabledDbMixin, models.Model),
         ),
@@ -38,17 +39,9 @@ class Migration(migrations.Migration):
             field=models.CharField(default=None, max_length=255, db_index=True),
             preserve_default=True,
         ),
-        migrations.AlterField(
-            model_name='ledgertransaction',
-            name='entry_id',
-            field=models.CharField(default=None, max_length=100, db_index=True),
-            preserve_default=True,
-        ),
-        migrations.AlterField(
-            model_name='ledgertransaction',
-            name='section_id',
-            field=models.CharField(default=None, max_length=100, db_index=True),
-            preserve_default=True,
+        migrations.AlterIndexTogether(
+            name='ledgertransaction',
+            index_together=set([('case_id', 'entry_id', 'section_id')]),
         ),
         # drop unused indexes
         HqRunSQL(

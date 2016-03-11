@@ -1036,8 +1036,8 @@ class LedgerTransaction(DisabledDbMixin, models.Model):
     report_date = models.DateTimeField()
     type = models.PositiveSmallIntegerField(choices=TYPE_CHOICES)
     case_id = models.CharField(max_length=255, db_index=True, default=None)
-    entry_id = models.CharField(max_length=100, db_index=True, default=None)
-    section_id = models.CharField(max_length=100, db_index=True, default=None)
+    entry_id = models.CharField(max_length=100, default=None)
+    section_id = models.CharField(max_length=100, default=None)
 
     user_defined_type = TruncatingCharField(max_length=20, null=True, blank=True)
 
@@ -1097,6 +1097,9 @@ class LedgerTransaction(DisabledDbMixin, models.Model):
     class Meta:
         db_table = LedgerTransaction_DB_TABLE
         app_label = "form_processor"
+        index_together = [
+            ["case_id", "entry_id", "section_id"],
+        ]
 
 
 class ConsumptionTransaction(namedtuple('ConsumptionTransaction', ['type', 'normalized_value', 'received_on'])):
