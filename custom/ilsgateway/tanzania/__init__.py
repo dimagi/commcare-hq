@@ -265,7 +265,7 @@ class MultiReport(SqlTabularReport, ILSMixin, CustomProjectReport,
     def report_config(self):
         org_summary = OrganizationSummary.objects.filter(
             date__range=(self.datespan.startdate, self.datespan.enddate),
-            location_id=self.request.GET.get('location_id')
+            location_id=self.location.location_id
         )
         config = dict(
             domain=self.domain,
@@ -275,7 +275,7 @@ class MultiReport(SqlTabularReport, ILSMixin, CustomProjectReport,
             datespan_type=self.type,
             datespan_first=self.first,
             datespan_second=self.second,
-            location_id=self.request.GET.get('location_id'),
+            location_id=self.location.location_id,
             soh_month=True if self.request.GET.get('soh_month', '') == 'True' else False,
             products=[],
             program='',
