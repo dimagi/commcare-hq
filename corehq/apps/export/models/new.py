@@ -39,7 +39,8 @@ from corehq.apps.export.const import (
     CASE_EXPORT,
     MAIN_TABLE,
     TRANSFORM_FUNCTIONS,
-    DEID_TRANSFORM_FUNCTIONS)
+    DEID_TRANSFORM_FUNCTIONS, TOP_MAIN_FORM_TABLE_PROPERTIES,
+    BOTTOM_MAIN_FORM_TABLE_PROPERTIES, PROPERTY_TAG_INFO)
 from corehq.apps.export.dbaccessors import (
     get_latest_case_export_schema,
     get_latest_form_export_schema,
@@ -702,6 +703,16 @@ class FormExportDataSchema(ExportDataSchema):
         return current_xform_schema
 
     @staticmethod
+    def _generate_export_item_from_system_prop(system_property, app_id, app_version):
+        return SystemExportItem(
+            path=system_property.path.split("."),
+            label=system_property.name,
+            tag=system_property.tag,
+            is_advanced=system_property.is_advanced,
+            last_occurrences={app_id: app_version},
+        )
+
+    @staticmethod
     def _generate_schema_from_xform(xform, langs, app_id, app_version):
         questions = xform.get_questions(langs)
         schema = FormExportDataSchema()
@@ -714,13 +725,12 @@ class FormExportDataSchema(ExportDataSchema):
                 last_occurrences={app_id: app_version},
             )
             if group_path is None:
-                for system_prop in MAIN_FORM_TABLE_PROPERTIES:
-                    group_schema.items.append(ScalarItem(
-                        path=[system_prop.name],
-                        label=system_prop.name,
-                        tag=system_prop.tag,
-                        last_occurrences={app_id: app_version},
-                    ))
+                for system_prop in TOP_MAIN_FORM_TABLE_PROPERTIES:
+                    group_schema.items.append(
+                        FormExportDataSchema._generate_export_item_from_system_prop(
+                            system_prop, app_id, app_version
+                        )
+                    )
 
             for question in group_questions:
                 # Create ExportItem based on the question type
@@ -730,6 +740,14 @@ class FormExportDataSchema(ExportDataSchema):
                     app_version,
                 )
                 group_schema.items.append(item)
+
+            if group_path is None:
+                for system_prop in BOTTOM_MAIN_FORM_TABLE_PROPERTIES:
+                    group_schema.items.append(
+                        FormExportDataSchema._generate_export_item_from_system_prop(
+                            system_prop, app_id, app_version
+                        )
+                    )
 
             schema.group_schemas.append(group_schema)
 
