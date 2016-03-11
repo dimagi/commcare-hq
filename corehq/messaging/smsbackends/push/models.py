@@ -78,7 +78,7 @@ class PushBackend(SQLSMSBackend):
         return response.status_code != 200
 
     def handle_error(self, response, msg):
-        pass
+        raise PushException("Received HTTP response %s from push backend" % response.status_code)
 
     def handle_success(self, response, msg):
         response.encoding = 'utf-8'
