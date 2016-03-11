@@ -45,11 +45,10 @@
 trunk: master
 name: autostaging
 branches:
-  - toggles-js-fix-cache  # Danny 3/8
+  - pin-deploy-to-commit  # Danny 3/10
   - ko3-app-manager  # Danny 3/7
-  - cloudcare-on-apps-db  # Danny 3/7
   - flip_apps_db  # Danny 3/1
-  - calculatedIcons # Sravan 3/2
+#  - calculatedIcons # Sravan 3/2
   - vellum-staging # J$ 11/13
 #  - java-tf-deploy # Ben/Will 1/21/16
   - finish-two-factor # Cal 1/21
@@ -62,15 +61,17 @@ branches:
   - b3-reports-data  # BB 2/23
   - b3-data-import-cases  # BB 2/23
   - b3-data-lookup-tables  # BB 2/23
-  - b3-reports-case-form+b3-reports-home  # BB 2/24
+  - b3-reports-case-form+b3-reports-home_2
   - b3-reports-home  # BB 2/23
   - b3-reports-case-form  # BB 2/24
   # B3 Report Migration branches
-  - no-js-in-filter # Biyeun 2/29
   - import_build-anchor-tag # Nick P 2/29
   - b3-project-settings-accounting  # Biyeun 3/1
+  - b3-commcare-exchange # biyeun 3/10
   - report-builder-text # Cal 3/1
-  - b3-bihar # BB 3/7
+  - sql-saved-exports-2 # Noah 3/9  includes ES reindex
+  - certificate-validation # Cal 3/10
+  - fix-aggregate-date # Nick P 3/10
 submodules:
   submodules/touchforms-src:
     # let's leave this here even when empty
@@ -91,5 +92,4 @@ submodules:
   submodules/django-prbac-src:
     branches: []
   corehq/apps/prelogin:
-    branches: #[]
-      - bring-back-static-versioning  # Danny 3/7
+    branches: []

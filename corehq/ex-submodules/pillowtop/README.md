@@ -2,41 +2,16 @@ pillowtop
 =========
 A couchdb listening framework to transform and process changes.
 
+NOTE: this readme is out of date and does not reflect the latest changes to the library.
+Please see [read the docs](http://commcare-hq.readthedocs.org/en/latest/change_feeds.html) for more up to date information and best practices.
+
+
 Django Config
 =============
 
-In your settings file, add a `PILLOWTOPS = {}` dictionary
-
-Fill the array with categories mapping the fully qualified class names of your pillows, for example:
-
-```python
-PILLOWTOPS = {
-    'core': [
-        'corehq.pillows.case.CasePillow',
-        'corehq.pillows.xform.XFormPillow',
-    ],
-    'core_ext': [
-        'corehq.apps.userreports.pillow.ConfigurableIndicatorPillow',
-        'corehq.apps.userreports.pillow.StaticDataSourcePillow',
-    ],
-    'phonelog': [
-        'corehq.pillows.log.PhoneLogPillow',
-    ],
-}
-```
-
 See CommCare HQ's `settings.py`for a complete example.
 
-The pillows depending on their config, need the following:
-
-- A couch db to connect to its _changes feed
-- An optional _changes filter
-
-Supported backends:
-
-- Elastic Listener
-
-  For elasticsearch endpoint to send json data directly to an elasticsearch index+type mapping.
+To configure a subset of pillows to run, just copy that setting to your `localsettings.py` and remove anything you don't want.
 
 
 Running pillowtop
@@ -109,7 +84,4 @@ It would be nice if you could use PythonPillow as more of a mixin instead of sub
 Extending pillowtop
 ===================
 
-Inherit the BasicPillow class
-
-Implement at a bare minimum change_transport - and override the other processing steps where
-necessary.
+Use `ConstructedPillow` whenever possible.

@@ -1,5 +1,6 @@
 import functools
 import logging
+import mimetypes
 import os
 import datetime
 from django.conf import settings
@@ -156,7 +157,14 @@ class NoCacheMiddleware(object):
             response['Expires'] = "-1"
             response['Pragma'] = "no-cache"
         else:
+            content_type, _ = mimetypes.guess_type(request.path)
             response['Cache-Control'] = "max-age=31536000"
+            del response['Vary']
+            del response['Set-Cookie']
+            response['Content-Type'] = content_type
+            del response['Content-Language']
+            response['Content-Length'] = len(response.content)
+            del response['HTTP_X_OPENROSA_VERSION']
         return response
 
     @staticmethod

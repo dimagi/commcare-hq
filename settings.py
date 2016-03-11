@@ -135,6 +135,7 @@ TEMPLATE_LOADERS = (
 CSRF_SOFT_MODE = True
 
 MIDDLEWARE_CLASSES = [
+    'corehq.middleware.NoCacheMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.locale.LocaleMiddleware',
@@ -143,7 +144,6 @@ MIDDLEWARE_CLASSES = [
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.common.BrokenLinkEmailsMiddleware',
     'corehq.middleware.OpenRosaMiddleware',
-    'corehq.middleware.NoCacheMiddleware',
     'corehq.util.global_request.middleware.GlobalRequestMiddleware',
     'corehq.apps.users.middleware.UsersMiddleware',
     'corehq.middleware.TimeoutMiddleware',
@@ -1460,6 +1460,11 @@ PILLOWTOPS = {
             'class': 'corehq.apps.userreports.pillow.ConfigurableReportKafkaPillow',
             'instance': 'corehq.apps.userreports.pillow.get_kafka_ucr_pillow',
         },
+        {
+            'name': 'kafka-ucr-static',
+            'class': 'corehq.apps.userreports.pillow.ConfigurableReportKafkaPillow',
+            'instance': 'corehq.apps.userreports.pillow.get_kafka_ucr_static_pillow',
+        },
     ]
 }
 
@@ -1555,7 +1560,8 @@ CUSTOM_MODULES = [
 ]
 
 CUSTOM_DASHBOARD_PAGE_URL_NAMES = {
-    'ews-ghana': 'dashboard_page'
+    'ews-ghana': 'dashboard_page',
+    'ils-gateway': 'ils_dashboard_report'
 }
 
 REMOTE_APP_NAMESPACE = "%(domain)s.commcarehq.org"

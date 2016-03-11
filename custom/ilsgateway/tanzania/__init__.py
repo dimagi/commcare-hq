@@ -240,7 +240,7 @@ class MultiReport(SqlTabularReport, ILSMixin, CustomProjectReport,
         if hasattr(self, 'request') and self.request.GET.get('location_id', ''):
             return SQLLocation.objects.get(location_id=self.request.GET.get('location_id', ''))
         else:
-            return None
+            return SQLLocation.objects.filter(location_type__name='MOHSW', domain=self.domain)[0]
 
     @property
     @memoized

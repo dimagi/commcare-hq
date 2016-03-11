@@ -26,6 +26,13 @@ class Reminder(object):
     def get_sql_locations(self):
         return SQLLocation.objects.filter(location_type__name=self.location_type)
 
+    def get_people(self):
+        for sql_location in self.get_sql_locations():
+            if not self.location_filter(sql_location):
+                continue
+            for user in self.get_location_users(sql_location):
+                yield user
+
     def send(self):
         locations_ids = set()
         status_type = self.get_status_type()
@@ -41,7 +48,8 @@ class Reminder(object):
 
             if sent:
                 locations_ids.add(sql_location.location_id)
-        update_statuses(locations_ids, status_type, SupplyPointStatusValues.REMINDER_SENT)
+        if status_type:
+            update_statuses(locations_ids, status_type, SupplyPointStatusValues.REMINDER_SENT)
 
     def get_location_users(self, sql_location):
         return get_users_by_location_id(self.domain, sql_location.location_id)
@@ -61,5 +69,5 @@ class GroupReminder(Reminder):
             status_type=self.get_status_type(),
             status_date__gte=self.date
         ).exists()
-        return (self.location_type == 'DISTRICT'
-                or current_group in location.metadata.get('group', [])) and not status_exists
+        return (self.location_type == 'DISTRICT' or
+                current_group == location.metadata.get('group', None)) and not status_exists

@@ -4,8 +4,8 @@ from datetime import datetime, timedelta
 from casexml.apps.case.models import CommCareCase
 from corehq.apps.change_feed import topics
 from corehq.apps.change_feed.consumer.feed import KafkaChangeFeed, MultiTopicCheckpointEventHandler
+from corehq.apps.userreports.data_source_providers import DynamicDataSourceProvider, StaticDataSourceProvider
 from corehq.apps.userreports.exceptions import TableRebuildError, StaleRebuildError
-from corehq.apps.userreports.models import DataSourceConfiguration, StaticDataSourceConfiguration
 from corehq.apps.userreports.sql import IndicatorSqlAdapter, metadata
 from corehq.apps.userreports.tasks import is_static, rebuild_indicators
 from corehq.sql_db.connections import connection_manager
@@ -26,13 +26,14 @@ UCR_STATIC_CHECKPOINT_ID = 'pillow-checkpoint-ucr-static'
 
 class ConfigurableReportTableManagerMixin(object):
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self, data_source_provider, *args, **kwargs):
         self.bootstrapped = False
         self.last_bootstrapped = datetime.utcnow()
+        self.data_source_provider = data_source_provider
         super(ConfigurableReportTableManagerMixin, self).__init__(*args, **kwargs)
 
     def get_all_configs(self):
-        return filter(lambda config: not config.is_deactivated, DataSourceConfiguration.all())
+        return self.data_source_provider.get_data_sources()
 
     def needs_bootstrap(self):
         return (
@@ -106,11 +107,17 @@ class ConfigurableReportTableManagerMixin(object):
 
 class ConfigurableIndicatorPillow(ConfigurableReportTableManagerMixin, PythonPillow):
 
-    def __init__(self, pillow_checkpoint_id=UCR_CHECKPOINT_ID):
+    def __init__(self, data_source_provider=None, pillow_checkpoint_id=UCR_CHECKPOINT_ID):
         # todo: this will need to not be hard-coded if we ever split out forms and cases into their own databases
         couch_db = CachedCouchDB(CommCareCase.get_db().uri, readonly=False)
         checkpoint = PillowCheckpoint(pillow_checkpoint_id)
-        super(ConfigurableIndicatorPillow, self).__init__(couch_db=couch_db, checkpoint=checkpoint)
+        if data_source_provider is None:
+            data_source_provider = DynamicDataSourceProvider()
+        super(ConfigurableIndicatorPillow, self).__init__(
+            data_source_provider=data_source_provider,
+            couch_db=couch_db,
+            checkpoint=checkpoint,
+        )
 
     def run(self):
         self.bootstrap()
@@ -141,10 +148,10 @@ class ConfigurableIndicatorPillow(ConfigurableReportTableManagerMixin, PythonPil
 class StaticDataSourcePillow(ConfigurableIndicatorPillow):
 
     def __init__(self):
-        super(StaticDataSourcePillow, self).__init__(pillow_checkpoint_id=UCR_STATIC_CHECKPOINT_ID)
-
-    def get_all_configs(self):
-        return StaticDataSourceConfiguration.all()
+        super(StaticDataSourcePillow, self).__init__(
+            data_source_provider=StaticDataSourceProvider(),
+            pillow_checkpoint_id=UCR_STATIC_CHECKPOINT_ID,
+        )
 
     def rebuild_table(self, sql_adapter):
         super(StaticDataSourcePillow, self).rebuild_table(sql_adapter)
@@ -182,7 +189,7 @@ class ConfigurableReportKafkaPillow(ConstructedPillow):
     # we could easily remove the class and push all the stuff in __init__ to
     # get_kafka_ucr_pillow below if we wanted.
 
-    def __init__(self, pillow_name):
+    def __init__(self, data_source_provider, pillow_name):
         change_feed = KafkaChangeFeed(topics.ALL, group_id=pillow_name)
         checkpoint = PillowCheckpoint(pillow_name)
         event_handler = MultiTopicCheckpointEventHandler(
@@ -192,7 +199,7 @@ class ConfigurableReportKafkaPillow(ConstructedPillow):
             name=pillow_name,
             document_store=None,
             change_feed=change_feed,
-            processor=ConfigurableReportPillowProcessor(),
+            processor=ConfigurableReportPillowProcessor(data_source_provider),
             checkpoint=checkpoint,
             change_processed_event_handler=event_handler
         )
@@ -205,4 +212,12 @@ class ConfigurableReportKafkaPillow(ConstructedPillow):
 
 
 def get_kafka_ucr_pillow():
-    return ConfigurableReportKafkaPillow(pillow_name='kafka-ucr-main')
+    return ConfigurableReportKafkaPillow(
+        data_source_provider=DynamicDataSourceProvider(), pillow_name='kafka-ucr-main'
+    )
+
+
+def get_kafka_ucr_static_pillow():
+    return ConfigurableReportKafkaPillow(
+        data_source_provider=StaticDataSourceProvider(), pillow_name='kafka-ucr-static'
+    )

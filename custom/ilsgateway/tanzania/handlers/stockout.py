@@ -1,6 +1,8 @@
+from corehq.util.translation import localize
+from custom.ilsgateway.tanzania.exceptions import InvalidProductCodeException
 from custom.ilsgateway.tanzania.handlers.generic_stock_report_handler import GenericStockReportHandler
 from custom.ilsgateway.tanzania.handlers.ils_stock_report_parser import Formatter
-from custom.ilsgateway.tanzania.reminders import STOCKOUT_CONFIRM
+from custom.ilsgateway.tanzania.reminders import STOCKOUT_CONFIRM, INVALID_PRODUCT_CODE
 
 
 class StockoutFormatter(Formatter):
@@ -15,11 +17,17 @@ class StockoutHandler(GenericStockReportHandler):
     formatter = StockoutFormatter
 
     def get_message(self, data):
-        return STOCKOUT_CONFIRM % {
-            'contact_name': self.verified_contact.owner.full_name,
-            'product_names': self.msg.text.split(' ', 1)[1],
-            'facility_name': self.sql_location.name
-        }
+        with localize(self.user.get_language_code()):
+            return STOCKOUT_CONFIRM % {
+                'contact_name': self.verified_contact.owner.full_name,
+                'product_names': self.msg.text.split(' ', 1)[1],
+                'facility_name': self.sql_location.name
+            }
 
     def on_success(self):
         pass
+
+    def on_error(self, data):
+        for error in data['errors']:
+            if isinstance(error, InvalidProductCodeException):
+                self.respond(INVALID_PRODUCT_CODE, product_code=error.message)
