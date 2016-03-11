@@ -1,3 +1,6 @@
+from corehq.util.quickcache import quickcache
+
+
 def get_number_of_fixture_data_types_in_domain(domain):
     from corehq.apps.fixtures.models import FixtureDataType
     num_fixtures = FixtureDataType.get_db().view(
@@ -10,6 +13,7 @@ def get_number_of_fixture_data_types_in_domain(domain):
     return num_fixtures['value'] if num_fixtures is not None else 0
 
 
+@quickcache(['domain'], timeout=30 * 60)
 def get_fixture_data_types_in_domain(domain):
     # We're getting an odd error from cloudant where deleted docs are being
     # returned in the view.  Until that's resolved, we can manually filter out
