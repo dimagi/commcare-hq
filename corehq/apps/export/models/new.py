@@ -186,8 +186,6 @@ class ExportColumn(DocumentSchema):
         return bool(set(self.transforms) & set(DEID_TRANSFORM_FUNCTIONS))
 
     def get_headers(self):
-        # TODO: id columns need special treatment
-        # see couchexport.models.ExportTable#get_headers_row
         if self.is_deidentifed:
             return [u"{} {}".format(self.label, "[sensitive]")]
         else:
