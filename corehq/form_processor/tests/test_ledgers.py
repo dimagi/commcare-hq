@@ -28,7 +28,7 @@ TRANSFER_BLOCK = """
 """
 
 TestLedger = namedtuple('TestLedger', ['block', 'quantity', 'product_id'])
-
+TransactionValues = namedtuple('TransactionValues', ['type', 'product_id', 'delta', 'updated_balance'])
 
 class LedgerTests(TestCase):
 
@@ -59,21 +59,19 @@ class LedgerTests(TestCase):
     def _set_balance(self, balance):
         self._submit_ledgers([TestLedger(BALANCE_BLOCK, balance, None)])
 
+    def _transfer(self, amount):
+        self._submit_ledgers([TestLedger(TRANSFER_BLOCK, amount, None)])
+
     @run_with_all_backends
     def test_balance_submission(self):
         orignal_form_count = len(self.interface.get_case_forms(self.case.case_id))
-        self._submit_ledgers([TestLedger(BALANCE_BLOCK, 100, None)])
+        self._set_balance(100)
         self._assert_ledger_state(100)
         # make sure the form is part of the case's history
         self.assertEqual(orignal_form_count + 1, len(self.interface.get_case_forms(self.case.case_id)))
-        if should_use_sql_backend(DOMAIN):
-            txs = LedgerAccessorSQL.get_ledger_transactions_for_case(self.case.case_id)
-            self.assertEqual(1, len(txs))
-            self.assertEqual(LedgerTransaction.TYPE_BALANCE, txs[0].type)
-            self.assertEqual(self.product_a._id, txs[0].entry_id)
-            self.assertEqual('stock', txs[0].section_id)
-            self.assertEqual(100, txs[0].delta)
-            self.assertEqual(100, txs[0].updated_balance)
+        self._assert_transactions([
+            self._txv(100, 100)
+        ])
 
     @run_with_all_backends
     def test_balance_submission_multiple(self):
@@ -86,7 +84,13 @@ class LedgerTests(TestCase):
             TestLedger(BALANCE_BLOCK, balance, prod_id)
             for prod_id, balance in balances.items()
         ])
+        expected_transactions = []
         for prod_id, expected_balance in balances.items():
+            expected_transactions.append(self._txv(
+                expected_balance,
+                expected_balance,
+                product_id=prod_id
+            ))
             balance = self.interface.ledger_db.get_current_ledger_value(
                 UniqueLedgerReference(
                 case_id=self.case.case_id,
@@ -94,6 +98,8 @@ class LedgerTests(TestCase):
                 entry_id=prod_id
             ))
             self.assertEqual(expected_balance, balance)
+
+        self._assert_transactions(expected_transactions, ignore_ordering=True)
 
     @run_with_all_backends
     def test_balance_submission_with_prior_balance(self):
@@ -104,19 +110,34 @@ class LedgerTests(TestCase):
         self._set_balance(150)
         self._assert_ledger_state(150)
 
+        self._assert_transactions([
+            self._txv(100, 100),
+            self._txv(-50, 50),
+            self._txv(100, 150),
+        ])
+
     @run_with_all_backends
     def test_transfer_submission(self):
         orignal_form_count = len(self.interface.get_case_forms(self.case.case_id))
-        self._submit_ledgers([TestLedger(TRANSFER_BLOCK, 100, None)])
+        self._transfer(100)
         self._assert_ledger_state(100)
         # make sure the form is part of the case's history
         self.assertEqual(orignal_form_count + 1, len(self.interface.get_case_forms(self.case.case_id)))
 
+        self._assert_transactions([
+            self._txv(100, 100, type_=LedgerTransaction.TYPE_TRANSFER),
+        ])
+
     @run_with_all_backends
     def test_transfer_submission_with_prior_balance(self):
         self._set_balance(100)
-        self._submit_ledgers([TestLedger(TRANSFER_BLOCK, 100, None)])
+        self._transfer(100)
         self._assert_ledger_state(200)
+
+        self._assert_transactions([
+            self._txv(100, 100),
+            self._txv(100, 200, type_=LedgerTransaction.TYPE_TRANSFER),
+        ])
 
     @run_with_all_backends
     def test_ledger_update_with_case_update(self):
@@ -143,6 +164,10 @@ class LedgerTests(TestCase):
                 {t.type for t in transactions[1:]}
             )
 
+        self._assert_transactions([
+            self._txv(100, 100),
+        ])
+
     def _assert_ledger_state(self, expected_balance):
         ledgers = self.interface.ledger_db.get_ledgers_for_case(self.case.case_id)
         self.assertEqual(1, len(ledgers))
@@ -151,3 +176,20 @@ class LedgerTests(TestCase):
         self.assertEqual(self.product_a._id, ledger.entry_id)
         self.assertEqual('stock', ledger.section_id)
         self.assertEqual(expected_balance, ledger.balance)
+
+    def _assert_transactions(self, values, ignore_ordering=False):
+        if should_use_sql_backend(DOMAIN):
+            txs = LedgerAccessorSQL.get_ledger_transactions_for_case(self.case.case_id)
+            self.assertEqual(len(values), len(txs))
+            if ignore_ordering:
+                values = sorted(values, key=lambda v: (v.type, v.product_id))
+                txs = sorted(txs, key=lambda t: (t.type, t.entry_id))
+            for expected, tx in zip(values, txs):
+                self.assertEqual(expected.type, tx.type)
+                self.assertEqual(expected.product_id, tx.entry_id)
+                self.assertEqual('stock', tx.section_id)
+                self.assertEqual(expected.delta, tx.delta)
+                self.assertEqual(expected.updated_balance, tx.updated_balance)
+
+    def _txv(self, delta, updated_balance, type_=LedgerTransaction.TYPE_BALANCE, product_id=None):
+        return TransactionValues(type_, product_id or self.product_a._id, delta, updated_balance)

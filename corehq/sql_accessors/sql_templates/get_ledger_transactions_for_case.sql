@@ -26,6 +26,8 @@ BEGIN
         select_expr := select_expr || date_filter;
     END IF;
 
+    select_expr := select_expr || ' ORDER BY server_date';
+
     RETURN QUERY
     EXECUTE select_expr
         USING p_case_id, p_entry_id, p_section_id, date_window_start, date_window_end;

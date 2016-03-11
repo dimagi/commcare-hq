@@ -953,7 +953,7 @@ class CaseTransaction(DisabledDbMixin, models.Model):
             "sync_log_id='{self.sync_log_id}', "
             "type='{self.type}', "
             "server_date='{self.server_date}', "
-            "revoked='{self.revoked}'"
+            "revoked='{self.revoked}')"
         ).format(self=self)
 
     class Meta:
@@ -1072,6 +1072,26 @@ class LedgerTransaction(DisabledDbMixin, models.Model):
                 )
             )
         return transactions
+
+    @property
+    def readable_type(self):
+        for type_, type_slug in self.TYPE_CHOICES:
+            if self.type == type_:
+                return type_slug
+
+    def __unicode__(self):
+        return (
+            "LedgerTransaction("
+            "form_id='{self.form_id}', "
+            "server_date='{self.server_date}', "
+            "type='{self.readable_type}', "
+            "case_id='{self.case_id}', "
+            "entry_id='{self.entry_id}', "
+            "section_id='{self.section_id}', "
+            "user_defined_type='{self.user_defined_type}', "
+            "delta='{self.delta}', "
+            "updated_balance='{self.updated_balance}')"
+        ).format(self=self)
 
     class Meta:
         db_table = LedgerTransaction_DB_TABLE

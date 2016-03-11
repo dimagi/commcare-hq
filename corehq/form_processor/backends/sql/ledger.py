@@ -30,28 +30,29 @@ class LedgerProcessorSQL(LedgerProcessorInterface):
         latest_values = {}
         to_save = []
         for stock_trans in stock_report_helper.transactions:
-            def _lazy_original_balance():
+            def _original_balance():
                 # needs to be in closures because it's zero-argument.
                 # see compute_ledger_values for more information
-                if stock_trans.ledger_reference in latest_values:
-                    return latest_values[stock_trans.ledger_reference]
-                else:
-                    return ledger_db.get_current_ledger_value(stock_trans.ledger_reference)
+                reference = stock_trans.ledger_reference
+                if reference not in latest_values:
+                    latest_values[reference] = ledger_db.get_current_ledger_value(reference)
+                return latest_values[reference]
 
             new_ledger_values = compute_ledger_values(
-                _lazy_original_balance, stock_report_helper.report_type, stock_trans.relative_quantity
+                _original_balance, stock_report_helper.report_type, stock_trans.relative_quantity
             )
 
             ledger_value = ledger_db.get_ledger(stock_trans.ledger_reference)
             if not ledger_value:
                 ledger_value = LedgerValue(**stock_trans.ledger_reference._asdict())
-            ledger_value.balance = new_ledger_values.balance
-
 
             ledger_value.track_create(
-                _get_ledget_transaction(_lazy_original_balance, stock_report_helper, stock_trans, new_ledger_values.balance)
+                _get_ledget_transaction(_original_balance, stock_report_helper, stock_trans, new_ledger_values.balance)
             )
 
+            # only do this after we've created the transaction otherwise we'll get the wrong delta
+            ledger_value.balance = new_ledger_values.balance
+            latest_values[stock_trans.ledger_reference] = new_ledger_values.balance
             to_save.append(ledger_value)
 
         return StockModelUpdateResult(to_save=to_save)
