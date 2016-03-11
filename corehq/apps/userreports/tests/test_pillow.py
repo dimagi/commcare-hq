@@ -8,7 +8,6 @@ from casexml.apps.case.mock import CaseBlock
 from casexml.apps.case.models import CommCareCase
 from casexml.apps.case.signals import case_post_save
 from casexml.apps.case.util import post_case_blocks
-from corehq.apps.change_feed import data_sources
 from corehq.apps.change_feed import topics
 from corehq.apps.change_feed.producer import producer
 from corehq.apps.userreports.data_source_providers import MockDataSourceProvider
@@ -17,13 +16,13 @@ from corehq.apps.userreports.pillow import ConfigurableIndicatorPillow, REBUILD_
     ConfigurableReportTableManagerMixin, get_kafka_ucr_pillow, get_kafka_ucr_static_pillow
 from corehq.apps.userreports.sql import IndicatorSqlAdapter
 from corehq.apps.userreports.tasks import rebuild_indicators
-from corehq.apps.userreports.tests.utils import get_sample_data_source, get_sample_doc_and_indicators
+from corehq.apps.userreports.tests.utils import get_sample_data_source, get_sample_doc_and_indicators, \
+    doc_to_change
 from corehq.form_processor.backends.sql.dbaccessors import CaseAccessorSQL
 from corehq.util.decorators import temporarily_enable_toggle
 from corehq.util.test_utils import softer_assert
 from corehq.toggles import KAFKA_UCRS
 from corehq.util.context_managers import drop_connected_signals
-from pillowtop.feed.interface import Change, ChangeMeta
 from testapps.test_pillowtop.utils import get_current_kafka_seq
 
 
@@ -147,7 +146,7 @@ class KafkaIndicatorPillowTest(IndicatorPillowTestBase):
     def test_basic_doc_processing(self, datetime_mock):
         datetime_mock.utcnow.return_value = self.fake_time_now
         sample_doc, expected_indicators = get_sample_doc_and_indicators(self.fake_time_now)
-        self.pillow.processor(_doc_to_change(sample_doc))
+        self.pillow.processor(doc_to_change(sample_doc))
         self._check_sample_doc_state(expected_indicators)
 
     @patch('corehq.apps.userreports.specs.datetime')
@@ -163,7 +162,7 @@ class KafkaIndicatorPillowTest(IndicatorPillowTestBase):
 
         # send to kafka
         since = get_current_kafka_seq(topics.CASE)
-        producer.send_change(topics.CASE, _doc_to_change(sample_doc).metadata)
+        producer.send_change(topics.CASE, doc_to_change(sample_doc).metadata)
 
         # run pillow and check changes
         self.pillow.process_changes(since={topics.CASE: since}, forever=False)
@@ -229,23 +228,6 @@ class IndicatorConfigFilterTest(SimpleTestCase):
         ]
         for document in matching:
             self.assertTrue(self.config.deleted_filter(document), 'Failing dog: %s' % document)
-
-
-def _doc_to_change(doc):
-    return Change(
-        id=doc['_id'],
-        sequence_id='0',
-        document=doc,
-        metadata=ChangeMeta(
-            document_id=doc['_id'],
-            data_source_type=data_sources.COUCH,
-            data_source_name=CommCareCase.get_db().dbname,
-            document_type=doc['doc_type'],
-            document_subtype=doc['type'],
-            domain=doc['domain'],
-            is_deletion=False,
-        )
-    )
 
 
 def _save_sql_case(doc):
