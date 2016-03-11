@@ -26,10 +26,11 @@ UCR_STATIC_CHECKPOINT_ID = 'pillow-checkpoint-ucr-static'
 
 class ConfigurableReportTableManagerMixin(object):
 
-    def __init__(self, data_source_provider, *args, **kwargs):
+    def __init__(self, data_source_provider, auto_repopulate_tables=False, *args, **kwargs):
         self.bootstrapped = False
         self.last_bootstrapped = datetime.utcnow()
         self.data_source_provider = data_source_provider
+        self.auto_repopulate_tables = auto_repopulate_tables
         super(ConfigurableReportTableManagerMixin, self).__init__(*args, **kwargs)
 
     def get_all_configs(self):
@@ -103,6 +104,8 @@ class ConfigurableReportTableManagerMixin(object):
             if config._rev != latest_rev:
                 raise StaleRebuildError('Tried to rebuild a stale table ({})! Ignoring...'.format(config))
         sql_adapter.rebuild_table()
+        if self.auto_repopulate_tables:
+            rebuild_indicators.delay(sql_adapter.config.get_id)
 
 
 class ConfigurableIndicatorPillow(ConfigurableReportTableManagerMixin, PythonPillow):
@@ -150,12 +153,9 @@ class StaticDataSourcePillow(ConfigurableIndicatorPillow):
     def __init__(self):
         super(StaticDataSourcePillow, self).__init__(
             data_source_provider=StaticDataSourceProvider(),
+            auto_repopulate_tables=True,
             pillow_checkpoint_id=UCR_STATIC_CHECKPOINT_ID,
         )
-
-    def rebuild_table(self, sql_adapter):
-        super(StaticDataSourcePillow, self).rebuild_table(sql_adapter)
-        rebuild_indicators.delay(sql_adapter.config.get_id)
 
 
 class ConfigurableReportPillowProcessor(ConfigurableReportTableManagerMixin, PillowProcessor):
