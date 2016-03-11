@@ -208,7 +208,7 @@ def recalculate_march_reporting_data_task(domain):
     statuses = SupplyPointStatus.objects.filter(
         status_date__gte=datetime(2016, 2, 29),
         status_date__lt=datetime(2016, 3, 1),
-        location_id__in=SQLLocation.objects.filter(
+        location_id__in=SQLLocation.active_objects.filter(
             location_type__administrative=False, domain=domain
         ).values_list('location_id', flat=True),
         status_type__in=[SupplyPointStatusTypes.SOH_FACILITY, SupplyPointStatusTypes.SUPERVISION_FACILITY]
@@ -222,7 +222,7 @@ def recalculate_march_reporting_data_task(domain):
     for location_id, statuses in location_to_statuses.iteritems():
         process_facility_statuses(location_id, statuses)
 
-    sql_locations = SQLLocation.objects.filter(
+    sql_locations = SQLLocation.active_objects.filter(
         location_type__administrative=False, domain=domain
     )
     for sql_location in sql_locations:
