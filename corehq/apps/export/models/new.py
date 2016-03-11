@@ -34,7 +34,7 @@ from corehq.apps.export.const import (
     PROPERTY_TAG_DELETED,
     CASE_HISTORY_PROPERTIES,
     CASE_HISTORY_TABLE,
-    MAIN_TABLE_PROPERTIES,
+    MAIN_FORM_TABLE_PROPERTIES,
     FORM_EXPORT,
     CASE_EXPORT,
     MAIN_TABLE,
@@ -714,7 +714,7 @@ class FormExportDataSchema(ExportDataSchema):
                 last_occurrences={app_id: app_version},
             )
             if group_path is None:
-                for system_prop in MAIN_TABLE_PROPERTIES:
+                for system_prop in MAIN_FORM_TABLE_PROPERTIES:
                     group_schema.items.append(ScalarItem(
                         path=[system_prop.name],
                         label=system_prop.name,
