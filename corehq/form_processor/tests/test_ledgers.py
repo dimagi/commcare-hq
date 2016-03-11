@@ -18,6 +18,7 @@ from corehq.form_processor.utils.general import should_use_sql_backend
 DOMAIN = 'ledger-tests'
 TransactionValues = namedtuple('TransactionValues', ['type', 'product_id', 'delta', 'updated_balance'])
 
+
 class LedgerTests(TestCase):
 
     @classmethod
@@ -124,6 +125,27 @@ class LedgerTests(TestCase):
         self._assert_transactions([
             self._txv(100, 100),
             self._txv(100, 200, type_=LedgerTransaction.TYPE_TRANSFER),
+        ])
+
+    @run_with_all_backends
+    def test_full_combination(self):
+        self._set_balance(100)
+        self._transfer_in(100)
+        self._assert_ledger_state(200)
+        self._transfer_out(20)
+        self._assert_ledger_state(180)
+        self._set_balance(150)
+        self._set_balance(170)
+        self._transfer_out(30)
+        self._assert_ledger_state(140)
+
+        self._assert_transactions([
+            self._txv(100, 100),
+            self._txv(100, 200, type_=LedgerTransaction.TYPE_TRANSFER),
+            self._txv(-20, 180, type_=LedgerTransaction.TYPE_TRANSFER),
+            self._txv(-30, 150),
+            self._txv(20, 170),
+            self._txv(-30, 140, type_=LedgerTransaction.TYPE_TRANSFER),
         ])
 
     @run_with_all_backends
