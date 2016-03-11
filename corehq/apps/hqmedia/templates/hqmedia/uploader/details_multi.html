@@ -1,8 +1,8 @@
 {% load i18n %}
 <% if (unknowns.length > 0) { %>
 <div class="well well-small">
-    <h4>{% trans 'No Matches' %} <span class="badge badge-important"><%= unknowns.length %></span></h4>
-    <ul>
+    <h4>{% trans 'No Matches' %} <span class="label label-danger"><%= unknowns.length %></span></h4>
+    <ul class="list-unstyled">
         <% for (var u=0; u < unknowns.length; u++) {
         var unknown = unknowns[u]; %>
         <li><p>
@@ -16,8 +16,8 @@
 <% var m = 0; %>
 <% if (images.length > 0) { %>
     <div class="well well-small">
-        <h4>{% trans 'Matched Images' %} <span class="badge badge-success"><%= images.length %></span></h4>
-        <ul>
+        <h4>{% trans 'Matched Images' %} <span class="label label-success"><%= images.length %></span></h4>
+        <ul class="list-unstyled">
             <% for (var i=0; i < images.length; i++) {
                 var image = images[i]; %>
                 <li>
@@ -40,8 +40,8 @@
 <% } %>
 <% if (audio.length > 0) { %>
 <div class="well well-small">
-    <h4>{% trans 'Matched Audio' %} <span class="badge badge-success"><%= audio.length %></span></h4>
-    <ul>
+    <h4>{% trans 'Matched Audio' %} <span class="label label-success"><%= audio.length %></span></h4>
+    <ul class="list-unstyled">
         <% for (var a=0; a < audio.length; a++) {
         var sound = audio[a]; %>
         <li>
@@ -64,8 +64,8 @@
 <% } %>
 <% if (video.length > 0) { %>
 <div class="well well-small">
-    <h4>{% trans 'Matched Videos' %} <span class="badge badge-success"><%= video.length %></span></h4>
-    <ul>
+    <h4>{% trans 'Matched Videos' %} <span class="label label-success"><%= video.length %></span></h4>
+    <ul class="list-unstyled">
         <% for (var v=0; v < video.length; v++) {
         var vid = video[v]; %>
         <li>
