@@ -32,6 +32,7 @@ class CaseES(HQESQuery):
             is_closed,
             case_type,
             owner,
+            owner_type,
             user,
             opened_by,
             active_in_range,
@@ -64,6 +65,10 @@ def case_type(type_):
 
 def owner(owner_id):
     return filters.term('owner_id', owner_id)
+
+
+def owner_type(owner_type):
+    return filters.term('owner_type', owner_type)
 
 
 def user(user_id):
