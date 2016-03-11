@@ -566,11 +566,10 @@ def record_successful_deploy(url):
         })
 
 
-@task
 @roles(ROLES_DB_ONLY)
 def set_in_progress_flag():
     with cd(env.code_root):
-        sudo('%(virtualenv_root)s/bin/python manage.py celery_deploy_in_progress' % env)
+        sudo('%(virtualenv_root)s/bin/python manage.py deploy_in_progress' % env)
 
 
 @roles(ROLES_ALL_SRC)
@@ -671,7 +670,6 @@ def _deploy_without_asking():
 
             if all(execute(_migrations_exist).values()):
                 _execute_with_timing(_stop_pillows)
-                execute(set_in_progress_flag)
                 _execute_with_timing(stop_celery_tasks)
             _execute_with_timing(_migrate)
         else:
@@ -1044,6 +1042,7 @@ def restart_services():
 def services_restart():
     """Stop and restart all supervisord services"""
     _require_target()
+    set_in_progress_flag()
     _supervisor_command('stop all')
 
     _supervisor_command('update')
@@ -1326,6 +1325,7 @@ def _stop_pillows(current=False):
 @parallel
 def stop_celery_tasks():
     _require_target()
+    set_in_progress_flag()
     with cd(env.code_root):
         sudo('scripts/supervisor-group-ctl stop celery')
 
