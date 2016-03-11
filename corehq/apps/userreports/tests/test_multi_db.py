@@ -5,11 +5,11 @@ from mock import patch
 from sqlalchemy import create_engine
 from sqlalchemy.exc import ProgrammingError
 from corehq.apps.userreports.models import DataSourceConfiguration, ReportConfiguration
-from corehq.apps.userreports.pillow import ConfigurableIndicatorPillow
+from corehq.apps.userreports.pillow import get_kafka_ucr_pillow
 from corehq.apps.userreports.reports.factory import ReportFactory
 from corehq.apps.userreports.sql.connection import get_engine_id
 from corehq.apps.userreports.tests.utils import get_sample_data_source, get_sample_doc_and_indicators, \
-    get_sample_report_config
+    get_sample_report_config, doc_to_change
 from corehq.apps.userreports.sql import IndicatorSqlAdapter
 from corehq.sql_db import connections
 
@@ -107,21 +107,21 @@ class UCRMultiDBTest(TestCase):
 
     def test_pillow_save_to_multiple_databases(self):
         self.assertNotEqual(self.ds1_adapter.engine.url, self.ds2_adapter.engine.url)
-        pillow = ConfigurableIndicatorPillow()
+        pillow = get_kafka_ucr_pillow()
         pillow.bootstrap(configs=[self.ds_1, self.ds_2])
         self.assertNotEqual(self.ds1_adapter.engine.url, self.ds2_adapter.engine.url)
         sample_doc, _ = get_sample_doc_and_indicators()
-        pillow.change_transport(sample_doc)
+        pillow.processor(doc_to_change(sample_doc))
         self.assertNotEqual(self.ds1_adapter.engine.url, self.ds2_adapter.engine.url)
         self.assertEqual(1, self.ds1_adapter.get_query_object().count())
         self.assertEqual(1, self.ds2_adapter.get_query_object().count())
 
     def test_pillow_save_to_one_database_at_a_time(self):
-        pillow = ConfigurableIndicatorPillow()
+        pillow = get_kafka_ucr_pillow()
         pillow.bootstrap(configs=[self.ds_1])
 
         sample_doc, _ = get_sample_doc_and_indicators()
-        pillow.change_transport(sample_doc)
+        pillow.processor(doc_to_change(sample_doc))
 
         self.assertEqual(1, self.ds1_adapter.get_query_object().count())
         self.assertEqual(0, self.ds2_adapter.get_query_object().count())
@@ -130,7 +130,7 @@ class UCRMultiDBTest(TestCase):
         pillow.bootstrap(configs=[self.ds_2])
         orig_id = sample_doc['_id']
         sample_doc['_id'] = uuid.uuid4().hex
-        pillow.change_transport(sample_doc)
+        pillow.processor(doc_to_change(sample_doc))
         self.assertEqual(1, self.ds1_adapter.get_query_object().count())
         self.assertEqual(1, self.ds2_adapter.get_query_object().count())
         self.assertEqual(1, self.ds1_adapter.get_query_object().filter_by(doc_id=orig_id).count())
