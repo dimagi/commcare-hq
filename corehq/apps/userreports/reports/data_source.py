@@ -13,7 +13,7 @@ from sqlagg.sorting import OrderBy
 from corehq.apps.reports.sqlreport import SqlData, DatabaseColumn
 from corehq.apps.userreports.exceptions import (
     UserReportsError, TableNotFoundWarning,
-)
+    InvalidQueryColumn)
 from corehq.apps.userreports.models import DataSourceConfiguration, get_datasource_config
 from corehq.apps.userreports.reports.sorting import ASCENDING
 from corehq.apps.userreports.reports.util import get_expanded_columns, get_total_row
@@ -109,10 +109,13 @@ class ConfigurableReportDataSource(SqlData):
                 for order_by in self._get_db_column_ids(sort_column_id)
             ]
         elif self.column_configs:
-            return [
-                OrderBy(order_by, is_ascending=True)
-                for order_by in self._get_db_column_ids(self.column_configs[0].column_id)
-            ]
+            try:
+                return [
+                    OrderBy(order_by, is_ascending=True)
+                    for order_by in self._get_db_column_ids(self.column_configs[0].column_id)
+                ]
+            except InvalidQueryColumn:
+                pass
         return []
 
     @property

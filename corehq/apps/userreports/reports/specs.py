@@ -1,6 +1,7 @@
 import json
 from django.utils.translation import ugettext as _
 from jsonobject.exceptions import BadValueError
+from corehq.apps.userreports.exceptions import InvalidQueryColumn
 
 from corehq.apps.userreports.reports.sorting import ASCENDING, DESCENDING
 from corehq.apps.userreports.sql.columns import DEFAULT_MAXIMUM_EXPANSION
@@ -78,7 +79,7 @@ class ReportColumn(JsonObject):
         the normal column_ids if the same column ends up in multiple columns in
         the query (e.g. an aggregate date splitting into year and month)
         """
-        raise NotImplementedError(_("You can't group by columns of type {}".format(self.type)))
+        raise InvalidQueryColumn(_("You can't query on columns of type {}".format(self.type)))
 
     def get_header(self, lang):
         return localize(self.display, lang)
