@@ -435,14 +435,30 @@ class Graph(FormattedDetailColumn):
                         y_function=s.y_function,
                         radius_function=s.radius_function,
                         configuration=sx.ConfigurationGroup(
-                            configs=[
-                                # TODO: It might be worth wrapping
-                                #       these values in quotes (as appropriate)
-                                #       to prevent the user from having to
-                                #       figure out why their unquoted colors
-                                #       aren't working.
-                                sx.ConfigurationItem(id=k, xpath_function=v)
-                                for k, v in s.config.iteritems()]
+                            configs=(
+                                [
+                                    # TODO: It might be worth wrapping
+                                    #       these values in quotes (as appropriate)
+                                    #       to prevent the user from having to
+                                    #       figure out why their unquoted colors
+                                    #       aren't working.
+                                    sx.ConfigurationItem(id=k, xpath_function=v)
+                                    for k, v in s.config.iteritems()
+                                ] + [
+                                    sx.ConfigurationItem(
+                                        id=k,
+                                        # TODO: different function? this depends on series & graph
+                                        # not having any colliding keys
+                                        locale_id=self.id_strings.graph_configuration(
+                                            self.module,
+                                            self.detail_type,
+                                            self.column,
+                                            k
+                                        )
+                                    )
+                                    for k, v in s.config.locale_specific_config.iteritems()
+                                ]
+                            )
                         )
                     )
                     for s in self.column.graph_configuration.series],
