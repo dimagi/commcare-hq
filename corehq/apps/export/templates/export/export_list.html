@@ -37,6 +37,8 @@
     listExportsApp.constant('processApplicationDataFormSuccessCallback', function (data) {
         window.location = data.url;
     });
+    listExportsApp.constant('bulk_download_url', "{{ bulk_download_url }}");
+    listExportsApp.constant('legacy_bulk_download_url', "{{ legacy_bulk_download_url }}");
 }(window.angular));
 </script>
 <script type="text/javascript">
