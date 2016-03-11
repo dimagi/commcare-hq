@@ -12,8 +12,6 @@ from corehq.apps.userreports.tests.utils import get_sample_data_source, get_samp
     get_sample_report_config, doc_to_change
 from corehq.apps.userreports.sql import IndicatorSqlAdapter
 from corehq.sql_db import connections
-from corehq.toggles import KAFKA_UCRS
-from corehq.util.decorators import temporarily_enable_toggle
 
 
 class UCRMultiDBTest(TestCase):
@@ -107,7 +105,6 @@ class UCRMultiDBTest(TestCase):
         self.assertEqual(settings.SQL_REPORTING_DATABASE_URL, str(self.ds1_adapter.engine.url))
         self.assertEqual(self.db2_url, str(self.ds2_adapter.engine.url))
 
-    @temporarily_enable_toggle(KAFKA_UCRS, 'user-reports')
     def test_pillow_save_to_multiple_databases(self):
         self.assertNotEqual(self.ds1_adapter.engine.url, self.ds2_adapter.engine.url)
         pillow = get_kafka_ucr_pillow()
@@ -119,7 +116,6 @@ class UCRMultiDBTest(TestCase):
         self.assertEqual(1, self.ds1_adapter.get_query_object().count())
         self.assertEqual(1, self.ds2_adapter.get_query_object().count())
 
-    @temporarily_enable_toggle(KAFKA_UCRS, 'user-reports')
     def test_pillow_save_to_one_database_at_a_time(self):
         pillow = get_kafka_ucr_pillow()
         pillow.bootstrap(configs=[self.ds_1])
@@ -140,7 +136,6 @@ class UCRMultiDBTest(TestCase):
         self.assertEqual(1, self.ds1_adapter.get_query_object().filter_by(doc_id=orig_id).count())
         self.assertEqual(1, self.ds2_adapter.get_query_object().filter_by(doc_id=sample_doc['_id']).count())
 
-    @temporarily_enable_toggle(KAFKA_UCRS, 'user-reports')
     def test_report_data_source(self):
         # bootstrap report data sources against indicator data sources
         report_config_template = get_sample_report_config()
