@@ -87,7 +87,7 @@ hqDefine('app_manager/js/detail-screen-config.js', function () {
 
         self.showWarning = ko.observable(false);
         self.hasValidPropertyName = function(){
-            return DetailScreenConfig.field_val_re.test(self.textField.val());
+            return module.DetailScreenConfig.field_val_re.test(self.textField.val());
         };
         this.textField.on('change', function(){
             if (!self.hasValidPropertyName()){
