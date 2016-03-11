@@ -3319,9 +3319,15 @@ def _filter_by_user_id(user, ui_filter):
 
 
 def _filter_by_parent_location_id(user, ui_filter):
+    """
+    A list of location IDs that share the same parent (i.e. siblings)
+    """
+    from corehq.apps.reports_core.filters import Choice
     location = user.sql_location
-    location_parent = location.parent.location_id if location and location.parent else None
-    return ui_filter.value(**{ui_filter.name: location_parent})
+    if location and location.parent:
+        return [Choice(value=l.location_id, display=None) for l in location.parent.get_children()]
+    else:
+        return []
 
 
 def _filter_by_ancestor_location_type_id(user, ui_filter):
