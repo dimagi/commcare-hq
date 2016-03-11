@@ -1350,7 +1350,11 @@ PILLOWTOPS = {
         'corehq.pillows.reportcase.ReportCasePillow',
         'corehq.pillows.reportxform.ReportXFormPillow',
         'corehq.apps.userreports.pillow.ConfigurableIndicatorPillow',
-        'corehq.apps.userreports.pillow.StaticDataSourcePillow',
+        {
+            'name': 'kafka-ucr-static',
+            'class': 'corehq.apps.userreports.pillow.ConfigurableReportKafkaPillow',
+            'instance': 'corehq.apps.userreports.pillow.get_kafka_ucr_static_pillow',
+        },
     ],
     'cache': [
         {
@@ -1422,11 +1426,6 @@ PILLOWTOPS = {
             'name': 'kafka-ucr-main',
             'class': 'corehq.apps.userreports.pillow.ConfigurableReportKafkaPillow',
             'instance': 'corehq.apps.userreports.pillow.get_kafka_ucr_pillow',
-        },
-        {
-            'name': 'kafka-ucr-static',
-            'class': 'corehq.apps.userreports.pillow.ConfigurableReportKafkaPillow',
-            'instance': 'corehq.apps.userreports.pillow.get_kafka_ucr_static_pillow',
         },
     ]
 }

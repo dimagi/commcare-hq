@@ -505,19 +505,6 @@
         "full_class_name": "pillowtop.pillow.interface.ConstructedPillow",
         "name": "SqlXFormToElasticsearchPillow"
     },
-    "StaticDataSourcePillow": {
-        "advertised_name": "corehq.apps.userreports.pillow.StaticDataSourcePillow.testhq",
-        "change_feed_type": "CouchChangeFeed",
-        "checkpoint_id": "pillow-checkpoint-ucr-static",
-        "couch_filter": null,
-        "couchdb_type": "CachedCouchDB",
-        "couchdb_uri": "http://{COUCH_SERVER_ROOT}/test_commcarehq",
-        "document_class": null,
-        "extra_args": {},
-        "full_class_name": "corehq.apps.userreports.pillow.StaticDataSourcePillow",
-        "include_docs": false,
-        "name": "StaticDataSourcePillow"
-    },
     "TauxDeRuptureFluffPillow": {
         "advertised_name": "fluff.TauxDeRuptureFluffPillow.testhq",
         "change_feed_type": "KafkaChangeFeed",

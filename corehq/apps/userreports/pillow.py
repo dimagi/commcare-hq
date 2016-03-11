@@ -149,16 +149,6 @@ class ConfigurableIndicatorPillow(ConfigurableReportTableManagerMixin, PythonPil
                 table.delete(doc)
 
 
-class StaticDataSourcePillow(ConfigurableIndicatorPillow):
-
-    def __init__(self):
-        super(StaticDataSourcePillow, self).__init__(
-            data_source_provider=StaticDataSourceProvider(),
-            auto_repopulate_tables=True,
-            pillow_checkpoint_id=UCR_STATIC_CHECKPOINT_ID,
-        )
-
-
 class ConfigurableReportPillowProcessor(ConfigurableReportTableManagerMixin, PillowProcessor):
 
     def process_change(self, pillow_instance, change, do_set_checkpoint):
