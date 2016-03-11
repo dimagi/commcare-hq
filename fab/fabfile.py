@@ -1042,7 +1042,7 @@ def restart_services():
 def services_restart():
     """Stop and restart all supervisord services"""
     _require_target()
-    set_in_progress_flag()
+    execute(set_in_progress_flag)
     _supervisor_command('stop all')
 
     _supervisor_command('update')
@@ -1325,7 +1325,7 @@ def _stop_pillows(current=False):
 @parallel
 def stop_celery_tasks():
     _require_target()
-    set_in_progress_flag()
+    execute(set_in_progress_flag)
     with cd(env.code_root):
         sudo('scripts/supervisor-group-ctl stop celery')
 
