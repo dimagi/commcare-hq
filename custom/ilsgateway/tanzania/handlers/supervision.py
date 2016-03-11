@@ -10,12 +10,13 @@ class SupervisionHandler(KeywordHandler):
     
     def help(self):
         self.respond(SUPERVISION_HELP)
+        return True
 
     def handle(self):
         subcommand = self.args[0].strip().lower()
         location = self.user.location
         if not location:
-            return
+            return True
         if re.match("hap", subcommand) or re.match("no", subcommand):
             status_value = SupplyPointStatusValues.NOT_RECEIVED
             self.respond(SUPERVISION_CONFIRM_NO)
@@ -30,3 +31,4 @@ class SupervisionHandler(KeywordHandler):
                                          status_value=status_value,
                                          location_id=location.get_id,
                                          status_date=datetime.utcnow())
+        return True
