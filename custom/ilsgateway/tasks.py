@@ -10,7 +10,7 @@ from psycopg2._psycopg import DatabaseError
 
 from casexml.apps.stock.models import StockReport, StockTransaction
 from corehq.apps.commtrack.models import StockState
-from corehq.apps.locations.models import SQLLocation
+from corehq.apps.locations.models import SQLLocation, Location
 from corehq.apps.products.models import Product
 from custom.ilsgateway.api import ILSGatewayEndpoint, ILSGatewayAPI
 from custom.ilsgateway.balance import BalanceMigration
@@ -24,12 +24,14 @@ from custom.ilsgateway.tanzania.reminders.soh_thank_you import SOHThankYouRemind
 from custom.ilsgateway.tanzania.reminders.stockonhand import SOHReminder
 from custom.ilsgateway.tanzania.reminders.supervision import SupervisionReminder
 from custom.ilsgateway.tanzania.warehouse.updater import populate_report_data, default_start_date, \
-    process_facility_warehouse_data, process_non_facility_warehouse_data
+    process_facility_warehouse_data, process_non_facility_warehouse_data, process_facility_statuses, \
+    process_facility_product_reports
 from custom.ilsgateway.temporary import fix_stock_data
 from custom.ilsgateway.utils import send_for_day, send_for_all_domains, send_translated_message
 from custom.logistics.commtrack import bootstrap_domain as ils_bootstrap_domain, save_stock_data_checkpoint
 from custom.ilsgateway.models import ILSGatewayConfig, SupplyPointStatus, DeliveryGroupReport, ReportRun, \
-    GroupSummary, OrganizationSummary, ProductAvailabilityData, Alert, PendingReportingDataRecalculation
+    GroupSummary, OrganizationSummary, ProductAvailabilityData, Alert, PendingReportingDataRecalculation, \
+    SupplyPointStatusTypes
 from custom.logistics.models import StockDataCheckpoint
 from custom.logistics.tasks import stock_data_task
 from dimagi.utils.dates import get_business_day_of_month, get_business_day_of_month_before
@@ -200,21 +202,46 @@ def fix_stock_data_task(domain):
 
 @task(queue='logistics_background_queue', ignore_result=True)
 def recalculate_march_reporting_data_task(domain):
-    locations_ids = list(SQLLocation.objects.filter(domain=domain).values_list('location_id', flat=True))
-    GroupSummary.objects.filter(
-        org_summary__location_id=locations_ids, org_summary__date__gte=datetime(2016, 3, 1)
-    ).delete()
-    OrganizationSummary.objects.filter(location_id__in=locations_ids, date__gte=datetime(2016, 3, 1)).delete()
-    ProductAvailabilityData.objects.filter(
-        location_id__in=locations_ids,
-        date__gte=datetime(2016, 3, 1)
-    ).delete()
     stock_data_checkpoint = StockDataCheckpoint.objects.get(domain=domain)
     end_date = stock_data_checkpoint.date
-    ReportRun.objects.create(start=datetime(2016, 3, 1), end=end_date,
-                             start_run=datetime.utcnow(), domain=domain, complete=True, has_error=True)
 
-    report_run.delay(domain)
+    statuses = SupplyPointStatus.objects.filter(
+        status_date__gte=datetime(2016, 2, 29),
+        status_date__lt=datetime(2016, 3, 1),
+        location_id__in=SQLLocation.objects.filter(
+            location_type__administrative=False, domain=domain
+        ).values_list('location_id', flat=True),
+        status_type__in=[SupplyPointStatusTypes.SOH_FACILITY, SupplyPointStatusTypes.SUPERVISION_FACILITY]
+    ).order_by('status_date')
+
+    location_to_statuses = defaultdict(list)
+
+    for status in statuses:
+        location_to_statuses[status.location_id].append(status)
+
+    for location_id, statuses in location_to_statuses.iteritems():
+        process_facility_statuses(location_id, statuses)
+
+    sql_locations = SQLLocation.objects.filter(
+        location_type__administrative=False, domain=domain
+    )
+    for sql_location in sql_locations:
+        reports = StockReport.objects.filter(
+            domain=domain,
+            date__gte=datetime(2016, 2, 29),
+            date__lt=datetime(2016, 3, 1),
+            stocktransaction__case_id=sql_location.supply_point_id,
+            stocktransaction__type='stockonhand'
+        ).distinct()
+        process_facility_product_reports(sql_location.location_id, reports)
+
+    non_facilities = list(Location.filter_by_type(domain, 'DISTRICT'))
+    non_facilities += list(Location.filter_by_type(domain, 'REGION'))
+    non_facilities += list(Location.filter_by_type(domain, 'MSDZONE'))
+    non_facilities += list(Location.filter_by_type(domain, 'MOHSW'))
+
+    for non_facility in non_facilities:
+        process_non_facility_warehouse_data(non_facility, datetime(2016, 3, 1), end_date, strict=False)
 
 
 # @periodic_task(run_every=timedelta(days=1), queue=getattr(settings, 'CELERY_PERIODIC_QUEUE', 'celery'))
