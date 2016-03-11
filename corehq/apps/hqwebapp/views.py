@@ -59,7 +59,7 @@ from dimagi.utils.decorators.memoized import memoized
 from dimagi.utils.logging import notify_exception
 from dimagi.utils.web import get_url_base, json_response, get_site_domain
 from dimagi.utils.couch.cache.cache_core import get_redis_default_cache
-from corehq.apps.hqadmin.management.commands.celery_deploy_in_progress import DEPLOY_IN_PROGRESS_FLAG
+from corehq.apps.hqadmin.management.commands.deploy_in_progress import DEPLOY_IN_PROGRESS_FLAG
 from corehq.apps.domain.models import Domain
 from soil import heartbeat, DownloadBase
 from soil import views as soil_views
