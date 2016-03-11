@@ -8,7 +8,7 @@ from django.db.models import Count, Q
 from django.http.response import HttpResponseRedirect, Http404
 from django.shortcuts import get_object_or_404
 from django.utils.decorators import method_decorator
-from django.views.generic.base import TemplateView
+from django.views.generic.base import TemplateView, RedirectView
 from django.views.generic.edit import DeleteView
 from django.views.generic.list import ListView
 from corehq.apps.commtrack.models import StockState
@@ -16,7 +16,7 @@ from corehq.apps.products.models import SQLProduct
 from corehq.apps.domain.views import BaseDomainView, DomainViewMixin
 from corehq.apps.locations.models import SQLLocation
 from corehq.apps.sms.mixin import VerifiedNumber
-from corehq.apps.sms.models import SMSLog
+from corehq.apps.sms.models import SMS, INCOMING, OUTGOING
 from corehq.apps.sms.util import clean_phone_number
 from corehq.apps.users.models import CommCareUser, WebUser, UserRole
 from django.http import HttpResponse
@@ -33,7 +33,7 @@ from custom.ilsgateway.tanzania.reports.delivery import DeliveryReport
 from custom.ilsgateway.tanzania.reports.randr import RRreport
 from custom.ilsgateway.tanzania.reports.stock_on_hand import StockOnHandReport
 from custom.ilsgateway.tanzania.reports.supervision import SupervisionReport
-from custom.ilsgateway.tasks import clear_report_data, fix_stock_data_task
+from custom.ilsgateway.tasks import clear_report_data, fix_stock_data_task, recalculate_march_reporting_data_task
 from casexml.apps.stock.models import StockTransaction
 from custom.logistics.models import StockDataCheckpoint
 from custom.logistics.tasks import fix_groups_in_location_task, resync_web_users
@@ -96,8 +96,8 @@ class GlobalStats(BaseDomainView):
             'products': SQLProduct.objects.filter(domain=self.domain, is_archived=False).count(),
             'product_stocks': StockState.objects.filter(sql_product__domain=self.domain).count(),
             'stock_transactions': StockTransaction.objects.filter(report__domain=self.domain).count(),
-            'inbound_messages': SMSLog.count_incoming_by_domain(self.domain),
-            'outbound_messages': SMSLog.count_outgoing_by_domain(self.domain)
+            'inbound_messages': SMS.count_by_domain(self.domain, direction=INCOMING),
+            'outbound_messages': SMS.count_by_domain(self.domain, direction=OUTGOING),
         }
 
         if self.show_supply_point_types:
@@ -331,6 +331,13 @@ def change_runner_date_to_last_migration(request, domain):
     return HttpResponse('OK')
 
 
+@domain_admin_required
+@require_POST
+def recalculate_march_reporting_data(request, domain):
+    recalculate_march_reporting_data_task.delay(domain)
+    return HttpResponse('OK')
+
+
 class ReportRunListView(ListView, DomainViewMixin):
     context_object_name = 'runs'
     template_name = 'ilsgateway/report_run_list.html'
@@ -384,7 +391,9 @@ class BalanceMigrationView(BaseDomainView):
         return {
             'stats': get_object_or_404(ILSMigrationStats, domain=self.domain),
             'products_count': SQLProduct.objects.filter(domain=self.domain).count(),
-            'locations_count': SQLLocation.objects.filter(domain=self.domain).exclude(is_archived=True).count(),
+            'locations_count': SQLLocation.objects.filter(
+                domain=self.domain
+            ).exclude(is_archived=True).exclude(location_type__name='MSDZONE').count(),
             'web_users_count': WebUser.by_domain(self.domain, reduce=True)[0]['value'],
             'sms_users_count': CommCareUser.by_domain(self.domain, reduce=True)[0]['value'],
             'supply_points_count': SQLLocation.active_objects.filter(
@@ -395,3 +404,21 @@ class BalanceMigrationView(BaseDomainView):
             ).count(),
             'problems': ILSMigrationProblem.objects.filter(domain=self.domain)
         }
+
+
+class DashboardPageRedirect(RedirectView):
+
+    def get_redirect_url(self, *args, **kwargs):
+        domain = kwargs['domain']
+        user = self.request.couch_user
+        dm = user.get_domain_membership(domain)
+        url = DashboardReport.get_url(domain)
+
+        if dm:
+            loc_id = dm.location_id
+            url = '%s?location_id=%s&filter_by_program=all' % (
+                url,
+                loc_id or ''
+            )
+
+        return url

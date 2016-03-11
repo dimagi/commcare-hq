@@ -250,7 +250,7 @@ def _sms_backend_is_global(sms_backend_id):
 
 class SmsBillable(models.Model):
     """
-    A record of matching a fee to a particular MessageLog (or SMSLog).
+    A record of matching a fee to a particular SMS.
 
     If on closer inspection we determine a particular SmsBillable is invalid (whether something is
     awry with the api_response, or we used the incorrect fee and want to recalculate) we can set
@@ -301,7 +301,7 @@ class SmsBillable(models.Model):
         direction = message_log.direction
 
         billable = cls(
-            log_id=message_log._id,
+            log_id=message_log.couch_id,
             phone_number=phone_number,
             direction=direction,
             date_sent=message_log.date,
@@ -331,7 +331,7 @@ class SmsBillable(models.Model):
                                                billable.gateway_fee.currency.code)
             else:
                 smsbillables_logging.error(
-                    "No matching gateway fee criteria for SMSLog %s" % message_log._id
+                    "No matching gateway fee criteria for SMS %s" % message_log.couch_id
                 )
 
         # Fetch usage_fee todo

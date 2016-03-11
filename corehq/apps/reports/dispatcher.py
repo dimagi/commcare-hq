@@ -279,7 +279,7 @@ class DomainReportDispatcher(ReportDispatcher):
 
     @cls_to_view_login_and_domain
     def dispatch(self, request, *args, **kwargs):
-        return super(ReportDispatcher, self).dispatch(request, *args, **kwargs)
+        return super(DomainReportDispatcher, self).dispatch(request, *args, **kwargs)
 
 
 class AdminReportDispatcher(ReportDispatcher):

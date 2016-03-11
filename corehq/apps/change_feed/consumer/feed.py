@@ -1,3 +1,4 @@
+from copy import copy
 import json
 from dimagi.utils.logging import notify_error
 from django.conf import settings
@@ -6,6 +7,7 @@ from kafka.common import ConsumerTimeout, KafkaConfigurationError, KafkaUnavaila
 from corehq.apps.change_feed.data_sources import get_document_store
 from corehq.apps.change_feed.exceptions import UnknownDocumentStore
 import logging
+from pillowtop.checkpoints.manager import PillowCheckpointEventHandler, DEFAULT_EMPTY_CHECKPOINT_SEQUENCE
 from pillowtop.feed.interface import ChangeFeed, Change, ChangeMeta
 
 
@@ -26,6 +28,7 @@ class KafkaChangeFeed(ChangeFeed):
         self._topics = topics
         self._group_id = group_id
         self._partition = partition
+        self._processed_topic_offsets = {}  # maps topics to sequence IDs
 
     def __unicode__(self):
         return u'KafkaChangeFeed: topics: {}, group: {}'.format(self._topics, self._group_id)
@@ -45,15 +48,15 @@ class KafkaChangeFeed(ChangeFeed):
         # in milliseconds, -1 means wait forever for changes
         timeout = -1 if forever else MIN_TIMEOUT
 
-        reset = 'smallest' if since is not None else 'largest'
+        start_from_latest = since is None
+        reset = 'smallest' if not start_from_latest else 'largest'
         consumer = self._get_consumer(timeout, auto_offset_reset=reset)
-        if since is not None:
+        if not start_from_latest:
             if isinstance(since, dict):
-                # multiple topics
-                offsets = [(topic, self._partition, offset) for topic, offset in since.items()]
+                self._processed_topic_offsets = copy(since)
             else:
                 # single topic
-                topic = self._get_single_topic_or_fail()
+                single_topic = self._get_single_topic_or_fail()
                 try:
                     offset = int(since)  # coerce sequence IDs to ints
                 except ValueError:
@@ -63,16 +66,26 @@ class KafkaChangeFeed(ChangeFeed):
                     # since kafka only keeps 7 days of data this isn't a big deal. Hopefully we will only see
                     # these once when each pillow moves over.
                     offset = 0
-                offsets = [(topic, self._partition, offset)]
+                self._processed_topic_offsets = {single_topic: offset}
 
+            offsets = [(topic, self._partition, self._processed_topic_offsets.get(topic, 0))
+                       for topic in self._topics]
             # this is how you tell the consumer to start from a certain point in the sequence
             consumer.set_topic_partitions(*offsets)
         try:
             for message in consumer:
+                self._processed_topic_offsets[message.topic] = message.offset
                 yield change_from_kafka_message(message)
         except ConsumerTimeout:
             assert not forever, 'Kafka pillow should not timeout when waiting forever!'
             # no need to do anything since this is just telling us we've reached the end of the feed
+
+    def get_current_checkpoint_offsets(self):
+        # the way kafka works, the checkpoint should increment by 1 because
+        # querying the feed is inclusive of the value passed in.
+        return {
+            topic: sequence + 1 for topic, sequence in self._processed_topic_offsets.items()
+        }
 
     def get_current_offsets(self):
         consumer = self._get_consumer(MIN_TIMEOUT, auto_offset_reset='smallest')
@@ -111,6 +124,30 @@ class KafkaChangeFeed(ChangeFeed):
             *self._topics,
             **config
         )
+
+
+class MultiTopicCheckpointEventHandler(PillowCheckpointEventHandler):
+    """
+    Event handler that supports checkpoints when subscribing to multiple topics.
+    """
+
+    def __init__(self, checkpoint, checkpoint_frequency, change_feed):
+        self.checkpoint = checkpoint
+        self.checkpoint_frequency = checkpoint_frequency
+        assert isinstance(change_feed, KafkaChangeFeed)
+        self.change_feed = change_feed
+        # todo: do this somewhere smarter?
+        checkpoint_doc = self.checkpoint.get_or_create_wrapped().document
+        if checkpoint_doc.sequence_format != 'json':
+            checkpoint_doc.sequence_format = 'json'
+            # convert initial default to json default
+            if checkpoint_doc.sequence == DEFAULT_EMPTY_CHECKPOINT_SEQUENCE:
+                checkpoint_doc.sequence = '{}'
+            checkpoint_doc.save()
+
+    def fire_change_processed(self, change, context):
+        if context.changes_seen % self.checkpoint_frequency == 0 and context.do_set_checkpoint:
+            self.checkpoint.update_to(json.dumps(self.change_feed.get_current_checkpoint_offsets()))
 
 
 def change_from_kafka_message(message):

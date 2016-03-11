@@ -1,6 +1,13 @@
 {% extends "style/bootstrap2/two_column.html" %}
 {% load hq_shared_tags %}
 {% load i18n %}
+
+{% block stylesheets %}{{ block.super }}
+    <link href="{% static 'select2-3.4.5-legacy/select2.css' %}" rel="stylesheet"/>
+    <link rel="stylesheet" type="text/css" href="{% static "reports/css/daterangepicker-bs2.css" %}">
+
+{% endblock %}
+
 {% block js %}{{ block.super }}
     {% block reports-js %}
     {% include "imports/datatables.html" %}
@@ -13,6 +20,15 @@
     <script src="{% static 'reports/javascripts/datepicker.js' %}"></script>
     <script src="{% static 'reports/javascripts/reports.config.js' %}"></script>
     <script src="{% static 'reports/javascripts/reports.async.js' %}"></script>
+
+    {# Datespan Javascript Lib dependencies #}
+    <script type="text/javascript" src="{% static 'reports/javascripts/bootstrap-daterangepicker/moment.min.js' %}"></script>
+    <script type="text/javascript" src="{% static 'reports/javascripts/bootstrap-daterangepicker/daterangepicker.min.js' %}"></script>
+    <script type="text/javascript" src="{% static 'reports/javascripts/daterangepicker.js' %}"></script>
+    {# end Datespan Javascript Lib dependencies #}
+
+    <script src="{% static 'select2-3.4.5-legacy/select2.min.js' %}"></script>
+
     {% endblock %}
 {% endblock %}
 

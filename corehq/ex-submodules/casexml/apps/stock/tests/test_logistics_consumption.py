@@ -25,7 +25,11 @@ class LogisticsConsumptionTest(TestCase):
         ).save()
 
         cls.product_id = uuid.uuid4().hex
-        SQLProduct(product_id=cls.product_id).save()
+        SQLProduct(product_id=cls.product_id, domain='fakedomain').save()
+
+    @classmethod
+    def tearDownClass(cls):
+        cls.domain.delete()
 
     def create_transactions(self, domain=None):
         report = StockReport.objects.create(

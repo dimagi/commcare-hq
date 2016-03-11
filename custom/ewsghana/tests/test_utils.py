@@ -1,3 +1,5 @@
+from nose.tools import nottest
+
 from corehq.apps.locations.models import Location
 from corehq.apps.products.models import SQLProduct
 
@@ -8,6 +10,7 @@ def assign_products_to_locations(location, products_codes_list):
     sql_location.save()
 
 
+@nottest
 def create_test_locations(domain):
     country = Location(name='national', site_code='ghana', location_type='country', domain=domain)
     country.save()

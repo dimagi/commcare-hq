@@ -42,6 +42,11 @@ class KafkaProcessor(PillowProcessor):
 
 
 class ChangeFeedPillow(PythonPillow):
+    """
+    This pillow takes changes from a CouchDB and republishes them to Kafka.
+    It is used as an intermediary to convert couch-based change listeners
+    to kafka-based ones.
+    """
 
     def __init__(self, couch_db, kafka, checkpoint):
         super(ChangeFeedPillow, self).__init__(couch_db=couch_db, checkpoint=checkpoint, chunk_size=10)

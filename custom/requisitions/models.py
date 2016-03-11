@@ -127,3 +127,9 @@ class RequisitionCase(CommCareCase):
                 ]
             }
         ]
+
+    def set_case_property(self, property, value):
+        # technically updates to cases should only happen via form submissions
+        # leaving as is for now since this is custom code
+        # SK 2016-02-03
+        setattr(self, property, value)

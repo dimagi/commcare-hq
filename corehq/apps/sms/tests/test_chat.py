@@ -3,6 +3,8 @@ from corehq.apps.domain.models import Domain
 from corehq.apps.sms.models import SMS, SQLLastReadMessage, OUTGOING, INCOMING
 from corehq.apps.sms.views import ChatMessageHistory
 from corehq.apps.users.models import CommCareUser
+from corehq.form_processor.tests.utils import set_case_property_directly
+from corehq.util.test_utils import softer_assert
 from datetime import datetime
 from dimagi.utils.parsing import json_format_datetime
 from django.test import TestCase
@@ -62,7 +64,7 @@ class ChatHistoryTestCase(TestCase):
         cls.domain_obj.save()
 
         cls.contact1 = CommCareCase(domain=cls.domain, name='test-case')
-        cls.contact1.set_case_property('custom_name', 'custom-name')
+        set_case_property_directly(cls.contact1, 'custom_name', 'custom-name')
         cls.contact1.save()
 
         cls.contact2 = CommCareCase(domain='another-domain')
@@ -246,6 +248,7 @@ class ChatHistoryTestCase(TestCase):
             'Unknown'
         )
 
+    @softer_assert
     def test_start_date(self):
         with self.patch_start_date(None):
             self.assertIsNone(self.new_view.start_date)

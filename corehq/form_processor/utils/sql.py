@@ -55,6 +55,8 @@ def form_adapter(form):
         adapt(form.problem).getquoted(),
         adapt(form.user_id).getquoted(),
         adapt(form.initial_processing_complete).getquoted(),
+        adapt(form.deleted_on).getquoted(),
+        adapt(form.deletion_id).getquoted(),
     ]
     return _adapt_fields(fields, XFormInstanceSQL_DB_TABLE)
 
@@ -94,6 +96,8 @@ def case_adapter(case):
         adapt(json.dumps(case.case_json, cls=JSONEncoder)).getquoted(),
         adapt(case.name).getquoted(),
         adapt(case.location_id).getquoted(),
+        adapt(case.deleted_on).getquoted(),
+        adapt(case.deletion_id).getquoted(),
     ]
     return _adapt_fields(fields, CommCareCaseSQL_DB_TABLE)
 

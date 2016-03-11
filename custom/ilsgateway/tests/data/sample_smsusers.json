@@ -3,7 +3,7 @@
     "id": 1,
     "name": "Test user",
     "role": "ic",
-    "is_active": "True",
+    "is_active": true,
     "supply_point": 79,
     "email": "test@gmail.com",
     "phone_numbers": [
@@ -20,7 +20,7 @@
     "date_updated": "2014-07-15T00:00:00",
     "email": "",
     "id": 1,
-    "is_active": "True",
+    "is_active": true,
     "name": "Facility in-charge MICHENJELE DISP",
     "phone_numbers": [
       {
@@ -37,7 +37,7 @@
     "date_updated": "2014-07-15T00:00:00",
     "email": "test3@example.com",
     "id": 2,
-    "is_active": "True",
+    "is_active": true,
     "name": "test3",
     "phone_numbers": [
       {
@@ -59,7 +59,7 @@
     "date_updated": "2014-07-15T00:00:00",
     "email": "test4@example.com",
     "id": 3,
-    "is_active": "True",
+    "is_active": true,
     "name": "Test4",
     "phone_numbers": [],
     "role": "District Pharmacist",
@@ -70,7 +70,7 @@
     "date_updated": "2014-07-15T00:00:00",
     "email": "",
     "id": 4,
-    "is_active": "True",
+    "is_active": true,
     "name": "Test5",
     "phone_numbers": [
       {
@@ -87,13 +87,30 @@
     "date_updated": "2014-07-15T00:00:00",
     "email": "test6@example.com",
     "id": 5,
-    "is_active": "True",
+    "is_active": true,
     "name": "Test6",
     "phone_numbers": [
       {
         "backend": "push_backend",
         "default": true,
         "phone_number": "123456789"
+      }
+    ],
+    "role": "RMO",
+    "supply_point": 50
+  },
+  {
+    "backend": "message_tester",
+    "date_updated": "2014-07-15T00:00:00",
+    "email": "test7@example.com",
+    "id": 5,
+    "is_active": false,
+    "name": "Test7",
+    "phone_numbers": [
+      {
+        "backend": "push_backend",
+        "default": true,
+        "phone_number": "456789"
       }
     ],
     "role": "RMO",

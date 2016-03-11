@@ -1,6 +1,6 @@
 import json
 from couchdbkit.exceptions import ResourceNotFound
-from datetime import timedelta
+from simpleeval import InvalidExpression
 from corehq.apps.userreports.exceptions import BadSpecError
 from corehq.util.couch import get_db_by_doc_type
 from dimagi.ext.jsonobject import JsonObject, StringProperty, ListProperty, DictProperty
@@ -12,6 +12,7 @@ from corehq.apps.userreports.expressions.getters import (
     transform_from_datatype, transform_date, transform_int)
 from corehq.apps.userreports.indicators.specs import DataTypeProperty
 from corehq.apps.userreports.specs import TypeProperty, EvaluationContext
+from .utils import eval_statements
 from corehq.util.quickcache import quickcache
 
 
@@ -239,3 +240,26 @@ class DictExpressionSpec(JsonObject):
         for property_name, expression in self._compiled_properties.items():
             ret[property_name] = expression(item, context)
         return ret
+
+
+class EvalExpressionSpec(JsonObject):
+    type = TypeProperty('evaluator')
+    statement = StringProperty(required=True)
+    context_variables = DictProperty(required=True)
+
+    def configure(self, context_variables):
+        self._context_variables = context_variables
+
+    def __call__(self, item, context=None):
+        var_dict = self.get_variables(item, context)
+        try:
+            return eval_statements(self.statement, var_dict)
+        except (InvalidExpression, SyntaxError):
+            return None
+
+    def get_variables(self, item, context):
+        var_dict = {
+            slug: variable_expression(item, context)
+            for slug, variable_expression in self._context_variables.items()
+        }
+        return var_dict

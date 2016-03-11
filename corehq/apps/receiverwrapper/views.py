@@ -21,11 +21,33 @@ import couchforms
 from django.views.decorators.http import require_POST
 from django.views.decorators.csrf import csrf_exempt
 
+from couchforms.const import MAGIC_PROPERTY
+from couchforms.getters import MultimediaBug
+from dimagi.utils.logging import notify_exception
+
 
 @count_by_response_code('commcare.xform_submissions')
 def _process_form(request, domain, app_id, user_id, authenticated,
                   auth_cls=AuthContext):
-    instance, attachments = couchforms.get_instance_and_attachment(request)
+    try:
+        instance, attachments = couchforms.get_instance_and_attachment(request)
+    except MultimediaBug as e:
+        try:
+            instance = request.FILES[MAGIC_PROPERTY].read()
+            xform = convert_xform_to_json(instance)
+            meta = xform.get("meta", {})
+        except:
+            meta = {}
+
+        notify_exception(None, "Received a submission with POST.keys()", {
+            "domain": domain,
+            "app_id": app_id,
+            "user_id": user_id,
+            "authenticated": authenticated,
+            "form_meta": meta,
+        })
+        return HttpResponseBadRequest(e.message)
+
     app_id, build_id = get_app_and_build_ids(domain, app_id)
     response = SubmissionPost(
         instance=instance,

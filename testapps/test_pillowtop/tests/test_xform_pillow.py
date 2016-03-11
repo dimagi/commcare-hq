@@ -7,7 +7,8 @@ from corehq.form_processor.utils import TestFormMetadata
 from corehq.form_processor.tests.utils import FormProcessorTestUtils
 from corehq.pillows.xform import XFormPillow, get_sql_xform_to_elasticsearch_pillow
 from corehq.util.elastic import delete_es_index, ensure_index_deleted
-from corehq.util.test_utils import get_form_ready_to_save
+from corehq.util.test_utils import get_form_ready_to_save, trap_extra_setup
+from elasticsearch.exceptions import ConnectionError
 from testapps.test_pillowtop.utils import get_test_kafka_consumer
 
 
@@ -17,7 +18,8 @@ class XFormPillowTest(TestCase):
 
     def setUp(self):
         FormProcessorTestUtils.delete_all_xforms()
-        self.pillow = XFormPillow()
+        with trap_extra_setup(ConnectionError):
+            self.pillow = XFormPillow()
         self.elasticsearch = self.pillow.get_es_new()
         delete_es_index(self.pillow.es_index)
 

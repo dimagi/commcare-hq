@@ -11,6 +11,7 @@ class BaseIndicatorAdminInterface(BaseCRUDAdminInterface):
     base_template = 'reports/bootstrap2/base_template.html'
     report_template_path = "indicators/interfaces/indicator_admin.html"
     dispatcher = IndicatorAdminInterfaceDispatcher
+    is_bootstrap3 = True
 
     crud_item_type = "Indicator Definition"
 

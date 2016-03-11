@@ -35,7 +35,7 @@ COMMCAREHQ.makeHqHelp = function (opts, wrap) {
     wrap = wrap === undefined ? true : wrap;
     var el = $(
         '<div class="hq-help">' + 
-            '<a href="#">' +
+            '<a href="#" tabindex="-1">' +
                 '<i class="fa fa-question-circle icon-question-sign"></i></a></div>'
     );
     _.each(['content', 'title', 'html'], function(attr) {
@@ -222,6 +222,23 @@ COMMCAREHQ.makeSaveButton = function(messageStrings, cssClass) {
     return SaveButton;
 };
 
+COMMCAREHQ.SaveButton = COMMCAREHQ.makeSaveButton({
+    SAVE: django.gettext("Save"),
+    SAVING: django.gettext("Saving..."),
+    SAVED: django.gettext("Saved"),
+    RETRY: django.gettext("Try Again"),
+    ERROR_SAVING: django.gettext("There was an error saving")
+}, 'btn btn-success');
+
+COMMCAREHQ.DeleteButton = COMMCAREHQ.makeSaveButton({
+    SAVE: django.gettext("Delete"),
+    SAVING: django.gettext("Deleting..."),
+    SAVED: django.gettext("Deleted"),
+    RETRY: django.gettext("Try Again"),
+    ERROR_SAVING: django.gettext("There was an error deleting")
+}, 'btn btn-danger');
+
+
 COMMCAREHQ.beforeUnload = [];
 
 COMMCAREHQ.bindBeforeUnload = function (callback) {
@@ -242,3 +259,6 @@ $(function () {
     COMMCAREHQ.initBlock($("body"));
     $(window).bind('beforeunload', COMMCAREHQ.beforeUnloadCallback);
 });
+
+COMMCAREHQ.toggleEnabled = hqImport('hqwebapp/js/toggles.js').toggleEnabled;
+COMMCAREHQ.previewEnabled = hqImport('hqwebapp/js/toggles.js').previewEnabled;

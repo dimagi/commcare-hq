@@ -2,12 +2,12 @@ from django import forms
 from django.core.exceptions import ValidationError
 from django.utils.translation import ugettext_lazy as _
 
+from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 from crispy_forms.helper import FormHelper
 from crispy_forms import layout as crispy
 from crispy_forms import bootstrap as twbscrispy
 
 from corehq.apps.es.users import UserES
-from corehq.apps.hqcase.dbaccessors import get_case_types_for_domain
 from corehq.apps.repeaters.models import RegisterGenerator
 from corehq.apps.style import crispy as hqcrispy
 from corehq.apps.users.util import raw_username
@@ -158,7 +158,7 @@ class CaseRepeaterForm(GenericRepeaterForm):
     @property
     @memoized
     def case_type_choices(self):
-        return [(t, t) for t in get_case_types_for_domain(self.domain)]
+        return [(t, t) for t in CaseAccessors(self.domain).get_case_types()]
 
     @property
     @memoized

@@ -5,16 +5,18 @@ from corehq.apps.domain.models import Domain
 from corehq.apps.sms.api import (send_sms, send_sms_to_verified_number,
     send_sms_with_backend, send_sms_with_backend_name)
 from corehq.apps.sms.mixin import BadSMSConfigException
-from corehq.apps.sms.models import (SMS, SMSLog, CommConnectCase,
+from corehq.apps.sms.models import (SMS, QueuedSMS, CommConnectCase,
     SQLMobileBackendMapping, SQLMobileBackend, MobileBackendInvitation,
     PhoneLoadBalancingMixin, BackendMap)
 from corehq.apps.sms.tasks import handle_outgoing
 from corehq.apps.sms.tests.util import BaseSMSTest, delete_domain_phone_numbers
+from corehq.form_processor.tests.utils import set_case_property_directly
 from corehq.messaging.smsbackends.apposit.models import SQLAppositBackend
 from corehq.messaging.smsbackends.grapevine.models import SQLGrapevineBackend
 from corehq.messaging.smsbackends.http.models import SQLHttpBackend
 from corehq.messaging.smsbackends.mach.models import SQLMachBackend
 from corehq.messaging.smsbackends.megamobile.models import SQLMegamobileBackend
+from corehq.messaging.smsbackends.push.models import PushBackend
 from corehq.messaging.smsbackends.sislog.models import SQLSislogBackend
 from corehq.messaging.smsbackends.smsgh.models import SQLSMSGHBackend
 from corehq.messaging.smsbackends.telerivet.models import SQLTelerivetBackend
@@ -43,15 +45,15 @@ class AllBackendTest(BaseSMSTest):
 
         self.test_phone_number = '99912345'
         self.contact1 = CommCareCase(domain=self.domain_obj.name)
-        self.contact1.set_case_property('contact_phone_number', self.test_phone_number)
-        self.contact1.set_case_property('contact_phone_number_is_verified', '1')
+        set_case_property_directly(self.contact1, 'contact_phone_number', self.test_phone_number)
+        set_case_property_directly(self.contact1, 'contact_phone_number_is_verified', '1')
         self.contact1.save()
         self.contact1 = CommConnectCase.wrap(self.contact1.to_json())
 
         # For use with megamobile only
         self.contact2 = CommCareCase(domain=self.domain_obj.name)
-        self.contact2.set_case_property('contact_phone_number', '63%s' % self.test_phone_number)
-        self.contact2.set_case_property('contact_phone_number_is_verified', '1')
+        set_case_property_directly(self.contact2, 'contact_phone_number', '63%s' % self.test_phone_number)
+        set_case_property_directly(self.contact2, 'contact_phone_number_is_verified', '1')
         self.contact2.save()
         self.contact2 = CommConnectCase.wrap(self.contact2.to_json())
 
@@ -151,6 +153,13 @@ class AllBackendTest(BaseSMSTest):
         )
         self.yo_backend.save()
 
+        self.push_backend = PushBackend(
+            name='PUSH',
+            is_global=True,
+            hq_api_id=PushBackend.get_api_id()
+        )
+        self.push_backend.save()
+
     def _test_outbound_backend(self, backend, msg_text, mock_send):
         SQLMobileBackendMapping.set_default_domain_backend(self.domain_obj.name, backend)
 
@@ -211,8 +220,10 @@ class AllBackendTest(BaseSMSTest):
     @patch('corehq.messaging.smsbackends.apposit.models.SQLAppositBackend.send')
     @patch('corehq.messaging.smsbackends.sislog.models.SQLSislogBackend.send')
     @patch('corehq.messaging.smsbackends.yo.models.SQLYoBackend.send')
+    @patch('corehq.messaging.smsbackends.push.models.PushBackend.send')
     def test_outbound_sms(
             self,
+            push_send,
             yo_send,
             sislog_send,
             apposit_send,
@@ -239,6 +250,7 @@ class AllBackendTest(BaseSMSTest):
         self._test_outbound_backend(self.apposit_backend, 'apposit test', apposit_send)
         self._test_outbound_backend(self.sislog_backend, 'sislog test', sislog_send)
         self._test_outbound_backend(self.yo_backend, 'yo test', yo_send)
+        self._test_outbound_backend(self.push_backend, 'push test', push_send)
 
     def test_unicel_inbound_sms(self):
         self._simulate_inbound_request('/unicel/in/', phone_param=InboundParams.SENDER,
@@ -345,6 +357,20 @@ class AllBackendTest(BaseSMSTest):
 
         user.delete()
 
+    def test_push_inbound_sms(self):
+        xml = """
+        <root>
+            <param name="MobileNumber">99912345</param>
+            <param name="Text">push test</param>
+        </root>
+        """
+        self._simulate_inbound_request_with_payload(
+            '/push/sms/%s/' % self.push_backend.inbound_api_key,
+            content_type='application/xml', payload=xml)
+
+        self._verify_inbound_request(self.push_backend.get_api_id(), 'push test',
+            backend_couch_id=self.push_backend.couch_id)
+
     def tearDown(self):
         delete_domain_phone_numbers(self.domain_obj.name)
         self.contact1.delete()
@@ -363,6 +389,7 @@ class AllBackendTest(BaseSMSTest):
         self.apposit_backend.delete()
         self.sislog_backend.delete()
         self.yo_backend.delete()
+        self.push_backend.delete()
         super(AllBackendTest, self).tearDown()
 
 
@@ -497,8 +524,8 @@ class OutgoingFrameworkTestCase(BaseSMSTest):
         )
 
         self.case = CommCareCase(domain=self.domain)
-        self.case.set_case_property('contact_phone_number', '15551234567')
-        self.case.set_case_property('contact_phone_number_is_verified', '1')
+        set_case_property_directly(self.case, 'contact_phone_number', '15551234567')
+        set_case_property_directly(self.case, 'contact_phone_number_is_verified', '1')
         self.case.save()
 
         self.contact = CommConnectCase.wrap(self.case.to_json())
@@ -651,7 +678,7 @@ class OutgoingFrameworkTestCase(BaseSMSTest):
 
     def __test_contact_level_backend(self):
         # Test sending to verified number with a contact-level backend owned by the domain
-        self.case.set_case_property('contact_backend_id', 'BACKEND')
+        set_case_property_directly(self.case, 'contact_backend_id', 'BACKEND')
         self.case.save()
         self.contact = CommConnectCase.wrap(self.case.to_json())
         verified_number = self.contact.get_verified_number()
@@ -1125,11 +1152,12 @@ class LoadBalancingAndRateLimitingTestCase(BaseSMSTest):
         self.domain_obj = Domain.get(self.domain_obj.get_id)
 
     def tearDown(self):
+        QueuedSMS.objects.all().delete()
         self.domain_obj.delete()
         super(LoadBalancingAndRateLimitingTestCase, self).tearDown()
 
     def create_outgoing_sms(self, backend):
-        sms = SMSLog(
+        sms = QueuedSMS(
             domain=self.domain,
             date=datetime.utcnow(),
             direction='O',

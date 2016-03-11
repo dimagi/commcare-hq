@@ -52,20 +52,6 @@ def get_forms_by_type(domain, type_, recent_first=False,
 
 
 @unit_testing_only
-def get_forms_of_all_types(domain):
-    startkey = [domain]
-    endkey = startkey + [{}]
-    return XFormInstance.view(
-        "couchforms/all_submissions_by_domain",
-        startkey=startkey,
-        endkey=endkey,
-        reduce=False,
-        include_docs=True,
-        classes=doc_types(),
-    ).all()
-
-
-@unit_testing_only
 def get_commtrack_forms(domain):
     key = ['submission xmlns', domain, COMMTRACK_REPORT_XMLNS]
     return XFormInstance.view(

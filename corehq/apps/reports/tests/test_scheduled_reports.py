@@ -1,5 +1,6 @@
 from datetime import datetime
 from django.test import SimpleTestCase, TestCase
+from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.reports.models import ReportNotification, ReportConfig
 from corehq.apps.reports.scheduled import guess_reporting_minute, get_scheduled_reports
 from corehq.apps.reports.tasks import get_report_queue
@@ -171,8 +172,18 @@ class ScheduledReportSendingTest(TestCase):
         'corehq.apps.userreports',
     ]
 
+    domain = 'test-scheduled-reports'
+
+    @classmethod
+    def setUpClass(cls):
+        cls.domain_obj = create_domain(cls.domain)
+
+    @classmethod
+    def tearDownClass(cls):
+        cls.domain_obj.delete()
+
     def test_get_scheduled_report_response(self):
-        domain = 'test-scheduled-reports'
+        domain = self.domain
         user = WebUser.create(
             domain=domain,
             username='dummy@example.com',

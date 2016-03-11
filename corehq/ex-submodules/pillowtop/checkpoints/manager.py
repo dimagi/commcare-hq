@@ -6,6 +6,8 @@ from pillowtop.models import DjangoPillowCheckpoint
 from pillowtop.pillow.interface import ChangeEventHandler
 
 
+DEFAULT_EMPTY_CHECKPOINT_SEQUENCE = '0'
+
 DocGetOrCreateResult = namedtuple('DocGetOrCreateResult', ['document', 'created'])
 
 
@@ -16,7 +18,7 @@ def get_or_create_checkpoint(checkpoint_id):
     except DjangoPillowCheckpoint.DoesNotExist:
         checkpoint = DjangoPillowCheckpoint.objects.create(
             checkpoint_id=checkpoint_id,
-            sequence='0',
+            sequence=DEFAULT_EMPTY_CHECKPOINT_SEQUENCE,
             timestamp=datetime.utcnow(),
         )
         created = True
@@ -26,7 +28,7 @@ def get_or_create_checkpoint(checkpoint_id):
 def reset_checkpoint(checkpoint_id):
     checkpoint = get_or_create_checkpoint(checkpoint_id).document
     checkpoint.old_sequence = checkpoint.sequence
-    checkpoint.sequence = '0'
+    checkpoint.sequence = DEFAULT_EMPTY_CHECKPOINT_SEQUENCE
     checkpoint.timestamp = datetime.utcnow()
     checkpoint.save()
 
@@ -37,11 +39,7 @@ class PillowCheckpoint(object):
         self.checkpoint_id = checkpoint_id
         self._last_checkpoint = None
 
-    def get_or_create(self, verify_unchanged=False):
-        result = self._get_or_create(verify_unchanged)
-        return DocGetOrCreateResult(DjangoPillowCheckpoint.to_dict(result.document), result.created)
-
-    def _get_or_create(self, verify_unchanged=False):
+    def get_or_create_wrapped(self, verify_unchanged=False):
         result = get_or_create_checkpoint(self.checkpoint_id)
         checkpoint, created = result
         if (verify_unchanged and self._last_checkpoint and
@@ -60,7 +58,7 @@ class PillowCheckpoint(object):
         pillow_logging.info(
             "(%s) setting checkpoint: %s" % (self.checkpoint_id, seq)
         )
-        checkpoint = self._get_or_create(verify_unchanged=True).document
+        checkpoint = self.get_or_create_wrapped(verify_unchanged=True).document
         checkpoint.sequence = seq
         checkpoint.timestamp = datetime.utcnow()
         checkpoint.save()
@@ -74,7 +72,7 @@ class PillowCheckpoint(object):
         Update the checkpoint timestamp without altering the sequence.
         :param min_interval: minimum interval between timestamp updates
         """
-        checkpoint = self._get_or_create(verify_unchanged=True).document
+        checkpoint = self.get_or_create_wrapped(verify_unchanged=True).document
         now = datetime.utcnow()
         previous = self._last_checkpoint.timestamp if self._last_checkpoint else None
         do_update = True

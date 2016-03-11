@@ -79,9 +79,8 @@
 
 {% block filter_js %} {{ block.super }}
 {% if unknown_available or display_app_type %}
-<script type="text/javascript" src="{% new_static 'reports/ko/report_filter.advanced_forms_options.js' %}"></script>
 <script type="text/javascript">
-    $(function () {
+    $.getScript("{% new_static 'reports/ko/report_filter.advanced_forms_options.js' %}", function () {
        $('#{{ css_id }}-advanced-options').advanceFormsOptions({
            show: {{ show_advanced|JSON }},
            is_unknown_shown: {{ unknown.show|yesno:'true,false' }},

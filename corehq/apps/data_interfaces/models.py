@@ -5,7 +5,7 @@ from datetime import date, datetime, time, timedelta
 from dateutil.parser import parse
 from django.db import models
 from corehq.apps.hqcase.utils import update_case
-
+from corehq.form_processor.models import CommCareCaseSQL
 
 ALLOWED_DATE_REGEX = re.compile('^\d{4}-\d{2}-\d{2}')
 AUTO_UPDATE_XMLNS = 'http://commcarehq.org/hq_case_update_rule'
@@ -58,7 +58,7 @@ class AutomaticUpdateRule(models.Model):
                  .case_type(case_type)
                  .server_modified_range(lte=boundary_date)
                  .is_closed(closed=False)
-                 .fields([]))
+                 .exclude_source())
         results = query.run()
         return results.doc_ids
 
@@ -83,7 +83,7 @@ class AutomaticUpdateRule(models.Model):
             elif action.action == AutomaticUpdateAction.ACTION_CLOSE:
                 close = True
 
-        update_case(case.domain, case.get_id, case_properties=properties, close=close,
+        update_case(case.domain, case.case_id, case_properties=properties, close=close,
             xmlns=AUTO_UPDATE_XMLNS)
         return close
 
@@ -97,10 +97,10 @@ class AutomaticUpdateRule(models.Model):
         if not self.active:
             raise Exception("Attempted to call apply_rule on an inactive rule")
 
-        if not isinstance(case, CommCareCase) or case.domain != self.domain:
+        if not isinstance(case, (CommCareCase, CommCareCaseSQL)) or case.domain != self.domain:
             raise Exception("Invalid case given")
 
-        if case.doc_type != 'CommCareCase':
+        if case.is_deleted:
             # Exclude deleted cases
             return False
 

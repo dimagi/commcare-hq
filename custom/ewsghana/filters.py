@@ -17,7 +17,7 @@ from corehq.apps.reports.filters.fixtures import AsyncLocationFilter
 from corehq.util import reverse
 from custom.common import ALL_OPTION
 from corehq.apps.domain.models import Domain
-from custom.ewsghana.utils import ews_date_format
+from custom.ewsghana.utils import ews_date_format, calculate_last_period
 
 
 class ProductByProgramFilter(BaseDrilldownOptionFilter):
@@ -240,9 +240,7 @@ class EWSDateFilter(BaseReportFilter):
 
     @staticmethod
     def last_reporting_period():
-        now = datetime.utcnow()
-        date = now - relativedelta(days=(7 - (4 - now.weekday())) % 7)
-        return date - relativedelta(days=7), date
+        return calculate_last_period()
 
     @property
     def default_week(self):

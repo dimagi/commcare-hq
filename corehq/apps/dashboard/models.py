@@ -1,6 +1,7 @@
+from corehq.apps.export.views import ExportsPermissionsMixin
 from django.core.urlresolvers import reverse
 from corehq.apps.app_manager.dbaccessors import get_brief_apps_in_domain
-from corehq.apps.reports.models import ReportConfig
+from corehq.apps.reports.models import ReportConfig, FormExportSchema, CaseExportSchema
 from dimagi.utils.decorators.memoized import memoized
 
 
@@ -342,3 +343,41 @@ class AppsPaginatedContext(BasePaginatedTileContextProcessor):
                                None,  # full_name
                                _get_release_manager_url(a),
                                self.secondary_url_icon) for a in apps]
+
+
+class DataPaginatedContext(BasePaginatedTileContextProcessor, ExportsPermissionsMixin):
+    """Generates the Paginated context for the Data Tile."""
+    domain = None
+
+    def __init__(self, tile_config, request, in_data):
+        self.domain = request.domain
+        super(DataPaginatedContext, self).__init__(tile_config, request, in_data)
+
+    @property
+    def total(self):
+        return len(self.form_exports) + len(self.case_exports)
+
+    @property
+    @memoized
+    def form_exports(self):
+        exports = []
+        if self.has_edit_permissions:
+            exports = FormExportSchema.get_stale_exports(self.request.domain)
+        return exports
+
+    @property
+    @memoized
+    def case_exports(self):
+        exports = []
+        if self.has_edit_permissions:
+            exports = CaseExportSchema.get_stale_exports(self.domain)
+        return exports
+
+    @property
+    def paginated_items(self):
+        for export in self.form_exports + self.case_exports:
+            urlname = 'export_download_forms' if isinstance(export, FormExportSchema) else 'export_download_cases'
+            yield self._fmt_item(
+                export.name,
+                reverse(urlname, args=(self.request.domain, export.get_id))
+            )

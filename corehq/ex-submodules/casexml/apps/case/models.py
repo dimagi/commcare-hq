@@ -99,6 +99,11 @@ class CommCareCaseAction(LooselyEqualDocumentSchema):
             ))
             return None
 
+    @property
+    def form(self):
+        """For compatability with CaseTransaction"""
+        return self.xform
+
     def get_user_id(self):
         key = 'xform-%s-user_id' % self.xform_id
         id = cache.get(key)
@@ -219,6 +224,14 @@ class CommCareCase(SafeSaveDocument, IndexHoldingMixIn, ComputedDocumentMixin,
     def has_indices(self):
         return self.indices or self.reverse_indices
 
+    @property
+    def closed_transactions(self):
+        return filter(lambda action: action.action_type == const.CASE_ACTION_CLOSE, self.actions)
+
+    @property
+    def deletion_id(self):
+        return getattr(self, '-deletion_id', None)
+
     def soft_delete(self):
         self.doc_type += DELETED_SUFFIX
         self.save()
@@ -330,9 +343,6 @@ class CommCareCase(SafeSaveDocument, IndexHoldingMixIn, ComputedDocumentMixin,
             return getattr(self, property)
         except Exception:
             return None
-
-    def set_case_property(self, property, value):
-        setattr(self, property, value)
 
     def case_properties(self):
         return self.to_json()

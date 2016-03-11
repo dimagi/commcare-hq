@@ -28,12 +28,12 @@ class Command(BaseCommand):
 
         checkpoint = pillow.get_checkpoint()
         try:
-            seq = PillowCheckpointSeqStore.objects.get(checkpoint_id=checkpoint['_id'])
+            seq = PillowCheckpointSeqStore.objects.get(checkpoint_id=checkpoint.checkpoint_id)
         except PillowCheckpointSeqStore.DoesNotExist:
             print "No new sequence exists for that pillow. You'll have to do it manually."
             exit()
 
-        old_seq = checkpoint['seq']
+        old_seq = checkpoint.sequence
         new_seq = seq.seq
         confirm("\nReset checkpoint for '{}' pillow from:\n\n{}\n\nto\n\n{}\n\n".format(pillow_name, old_seq, new_seq))
         pillow.checkpoint.update_to(new_seq)

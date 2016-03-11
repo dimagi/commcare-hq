@@ -37,6 +37,8 @@ from dimagi.utils.modules import to_function
 from corehq.util.quickcache import skippable_quickcache
 from casexml.apps.case.mock import CaseBlock
 from casexml.apps.case.models import CommCareCase
+from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
+from corehq.form_processor.exceptions import CaseNotFound
 from corehq.apps.commtrack.const import USER_LOCATION_OWNER_MAP_TYPE
 from casexml.apps.phone.models import User as CaseXMLUser
 from corehq.apps.cachehq.mixins import QuickCachedDocumentMixin
@@ -739,12 +741,6 @@ class EulaMixin(DocumentSchema):
         return current_eula
 
 
-class KeyboardShortcutsConfig(DocumentSchema):
-    enabled = BooleanProperty(False)
-    main_key = StringProperty(choices=["ctrl", "option", "command", "alt", "shift", "control"])
-    main_keycode = IntegerProperty()
-
-
 class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, UnicodeMixIn, EulaMixin):
     """
     A user (for web and commcare)
@@ -762,7 +758,6 @@ class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, UnicodeMixIn, EulaMi
     email_opt_out = BooleanProperty(default=False)
     subscribed_to_commcare_users = BooleanProperty(default=False)
     announcements_seen = ListProperty()
-    keyboard_shortcuts = SchemaProperty(KeyboardShortcutsConfig)
     user_data = DictProperty()
     location_id = StringProperty()
     has_built_app = BooleanProperty(default=False)
@@ -1509,47 +1504,11 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
         user._hq_user = self # don't tell anyone that we snuck this here
         return user
 
-    def get_forms(self, deleted=False, wrap=True):
-        accessor = FormAccessors(self.domain)
-        if deleted:
-            forms_or_form_ids = accessor.get_deleted_forms_for_user(
-                self.domain,
-                self.user_id,
-                ids_only=not wrap
-            )
-        else:
-            forms_or_form_ids = accessor.get_forms_for_user(self.domain, self.user_id, ids_only=not wrap)
+    def _get_form_ids(self):
+        return FormAccessors(self.domain).get_form_ids_for_user(self.domain, self.user_id)
 
-        for form_or_form_id in forms_or_form_ids:
-            yield form_or_form_id
-
-    @property
-    def form_count(self):
-        key = ["submission user", self.domain, self.user_id]
-        result = XFormInstance.view('all_forms/view',
-            startkey=key,
-            endkey=key + [{}],
-            reduce=True
-        ).one()
-        if result:
-            return result['value']
-        else:
-            return 0
-
-    def _get_deleted_cases(self):
-        case_ids = [r["id"] for r in CommCareCase.get_db().view(
-            'deleted_data/deleted_cases_by_user',
-            startkey=[self.user_id],
-            endkey=[self.user_id, {}],
-            reduce=False,
-        )]
-        for doc in iter_docs(CommCareCase.get_db(), case_ids):
-            yield CommCareCase.wrap(doc)
-
-    def _get_case_docs(self):
-        case_ids = get_case_ids_in_domain_by_owner(
-            self.domain, owner_id=self.user_id)
-        return iter_docs(CommCareCase.get_db(), case_ids)
+    def _get_case_ids(self):
+        return CaseAccessors(self.domain).get_case_ids_by_owners([self.user_id])
 
     def get_owner_ids(self):
         owner_ids = [self.user_id]
@@ -1559,7 +1518,7 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
     def retire(self):
         suffix = DELETED_SUFFIX
         deletion_id = random_hex()
-        deletion_date = json_format_datetime(datetime.utcnow())
+        deletion_date = datetime.utcnow()
         deleted_cases = set()
         # doc_type remains the same, since the views use base_doc instead
         if not self.base_doc.endswith(suffix):
@@ -1567,12 +1526,11 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
             self['-deletion_id'] = deletion_id
             self['-deletion_date'] = deletion_date
 
-        for caselist in chunked(self._get_case_docs(), 50):
-            tag_cases_as_deleted_and_remove_indices.delay(self.domain, caselist, deletion_id, deletion_date)
-            for case in caselist:
-                deleted_cases.add(case['_id'])
+        for case_id_list in chunked(self._get_case_ids(), 50):
+            tag_cases_as_deleted_and_remove_indices.delay(self.domain, case_id_list, deletion_id, deletion_date)
+            deleted_cases.update(case_id_list)
 
-        for form_id_list in chunked(self.get_forms(wrap=False), 50):
+        for form_id_list in chunked(self._get_form_ids(), 50):
             tag_forms_as_deleted_rebuild_associated_cases.delay(
                 self.user_id, self.domain, form_id_list, deletion_id, deletion_date, deleted_cases=deleted_cases
             )
@@ -1586,21 +1544,6 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
             pass
         else:
             django_user.delete()
-        self.save()
-
-    def unretire(self):
-        def chop_suffix(string, suffix=DELETED_SUFFIX):
-            if string.endswith(suffix):
-                return string[:-len(suffix)]
-            else:
-                return string
-        self.base_doc = chop_suffix(self.base_doc)
-        for form in self.get_forms(deleted=True):
-            form.doc_type = chop_suffix(form.doc_type)
-            form.save()
-        for case in self._get_deleted_cases():
-            case.doc_type = chop_suffix(case.doc_type)
-            case.save()
         self.save()
 
     def get_case_sharing_groups(self):
@@ -1752,7 +1695,6 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
             )
 
         from corehq.apps.locations.models import Location
-        from corehq.apps.commtrack.models import SupplyPointCase
 
         def _get_linked_supply_point_ids():
             mapping = self.get_location_map_case()
@@ -1761,11 +1703,7 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
             return []
 
         def _get_linked_supply_points():
-            for doc in iter_docs(
-                CommCareCase.get_db(),
-                _get_linked_supply_point_ids()
-            ):
-                yield SupplyPointCase.wrap(doc)
+            return SupplyInterface(self.domain).get_supply_points(_get_linked_supply_point_ids())
 
         def _gen():
             location_ids = [sp.location_id for sp in _get_linked_supply_points()]
@@ -1891,8 +1829,8 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
         """
         try:
             from corehq.apps.commtrack.util import location_map_case_id
-            return CommCareCase.get(location_map_case_id(self))
-        except ResourceNotFound:
+            return CaseAccessors(self.domain).get_case(location_map_case_id(self))
+        except CaseNotFound:
             return None
 
     @property

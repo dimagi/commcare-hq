@@ -16,7 +16,6 @@ from corehq.form_processor.interfaces.supply import SupplyInterface
 from corehq.util.quickcache import quickcache
 from corehq.apps.products.models import SQLProduct
 from corehq.apps.sms.api import add_msg_tags, send_sms_to_verified_number, send_sms as core_send_sms
-from corehq.apps.sms.models import SMSLog, OUTGOING
 from corehq.apps.sms.util import set_domain_default_backend_to_test_backend
 from corehq.apps.users.models import CommCareUser, WebUser, UserRole
 from custom.ewsghana.models import EWSGhanaConfig, EWSExtension
@@ -61,24 +60,6 @@ def calculate_last_period(enddate=None):
     last_friday = last_friday.replace(hour=0, minute=0, second=0, microsecond=0)
     end_of_next_thursday = (last_friday + timedelta(days=7)) - timedelta(microseconds=1)
     return last_friday, end_of_next_thursday
-
-
-def send_test_message(verified_number, text, metadata=None):
-    msg = SMSLog(
-        couch_recipient_doc_type=verified_number.owner_doc_type,
-        couch_recipient=verified_number.owner_id,
-        phone_number="+" + str(verified_number.phone_number),
-        direction=OUTGOING,
-        date=datetime.utcnow(),
-        domain=verified_number.domain,
-        text=text,
-        processed=True,
-        datetime_to_process=datetime.utcnow(),
-        queued_timestamp=datetime.utcnow()
-    )
-    msg.save()
-    add_msg_tags(msg, metadata)
-    return True
 
 
 def get_products_ids_assigned_to_rel_sp(domain, active_location=None):

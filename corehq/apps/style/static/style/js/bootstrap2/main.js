@@ -204,7 +204,7 @@ var COMMCAREHQ = (function () {
 
             var el = $(
                 '<div style="' + containerStyle + '" class="hq-help">' +
-                    '<a href="#">' +
+                    '<a href="#" tabindex="-1">' +
                         '<i class="' + iconClass + '"></i></a></div>'
                 ),
                 attrs = ['content', 'title', 'placement'];

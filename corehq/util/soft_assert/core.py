@@ -1,9 +1,17 @@
 from collections import namedtuple
 import hashlib
 import traceback
+from django.conf import settings
 
 from corehq.util.cache_utils import ExponentialBackoff
 
+
+def is_hard_mode():
+    """Check if soft assert is in hard mode (true when testing)
+
+    Use `corehq.util.test_utils.softer_assert` to override in tests
+    """
+    return settings.UNIT_TESTING
 
 SoftAssertInfo = namedtuple('SoftAssertInfo',
                             ['traceback', 'count', 'msg', 'key', 'line',
@@ -34,7 +42,7 @@ class SoftAssert(object):
         returns the assertion itself
         """
         if not assertion:
-            if self.debug:
+            if self.debug or is_hard_mode():
                 raise AssertionError(msg)
             short_tb = get_traceback(skip=self.tb_skip, limit=self.key_limit)
             full_tb = get_traceback(skip=self.tb_skip)

@@ -1,4 +1,5 @@
 from django.test import TestCase
+from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.users.models import WebUser
 
 from ..models import DropboxUploadHelper
@@ -9,11 +10,13 @@ class DropboxUploadHelperTest(TestCase):
 
     @classmethod
     def setUpClass(cls):
+        cls.domain = create_domain('adomain')
         cls.user = WebUser.create('adomain', 'ben', '***')
 
     @classmethod
     def tearDownClass(cls):
         cls.user.delete()
+        cls.domain.delete()
 
     def test_successful_creation(self):
         kwargs = {

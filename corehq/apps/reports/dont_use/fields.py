@@ -44,6 +44,8 @@ class ReportField(object):
     def render(self):
         if not self.template: return ""
         self.context["slug"] = self.slug
+        self.context['css_label_class'] = self.css_label
+        self.context['css_field_class'] = self.css_field
         self.update_context()
         return render_to_string(self.get_bootstrap_template(), self.context)
 
@@ -87,8 +89,6 @@ class ReportSelectField(ReportField):
         self.update_params()
         self.context['hide_field'] = self.hide_field
         self.context['help_text'] = self.help_text
-        self.context['css_label_class'] = self.css_label
-        self.context['css_field_class'] = self.css_field
         self.context['select'] = dict(
             options=self.options,
             default=self.default_option,

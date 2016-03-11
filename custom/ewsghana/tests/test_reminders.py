@@ -4,6 +4,7 @@ from decimal import Decimal
 from casexml.apps.stock.models import StockTransaction, StockReport
 
 from corehq.apps.commtrack.models import StockState
+from corehq.apps.locations.models import SQLLocation
 from corehq.apps.locations.tests.util import make_loc
 from corehq.apps.products.models import SQLProduct, Product
 from corehq.apps.sms.models import SMS
@@ -157,6 +158,8 @@ class TestReminders(EWSTestCase):
         cls.user1.delete()
         cls.user2.delete()
         cls.user3.delete()
+        FacilityInCharge.objects.all().delete()
+        SQLLocation.objects.all().delete()
 
         super(TestReminders, cls).tearDownClass()
 

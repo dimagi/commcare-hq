@@ -270,7 +270,6 @@ class APISynchronization(UserMigrationMixin):
         elif phone_number:
             user.phone_numbers = []
             user.delete_verified_number(phone_number)
-        user.save()
 
     def add_phone_numbers(self, ilsgateway_smsuser, user):
         if ilsgateway_smsuser.phone_numbers:
@@ -287,6 +286,7 @@ class APISynchronization(UserMigrationMixin):
         # sanity check
         assert len(username) <= 128
         user = CouchUser.get_by_username(username)
+
         splitted_value = ilsgateway_smsuser.name.split(' ', 1)
         if not first_name:
             first_name = splitted_value[0][:30] if splitted_value else ''
@@ -299,7 +299,7 @@ class APISynchronization(UserMigrationMixin):
         user_dict = {
             'first_name': first_name,
             'last_name': last_name,
-            'is_active': bool(ilsgateway_smsuser.is_active),
+            'is_active': ilsgateway_smsuser.is_active,
             'email': ilsgateway_smsuser.email,
             'user_data': {}
         }
@@ -308,6 +308,8 @@ class APISynchronization(UserMigrationMixin):
             user_dict['user_data']['role'] = ilsgateway_smsuser.role
 
         if user is None and username_part:
+            if not ilsgateway_smsuser.is_active:
+                return
             try:
                 user_password = password or User.objects.make_random_password()
                 user = CommCareUser.create(domain=self.domain, username=username, password=user_password,
@@ -322,7 +324,9 @@ class APISynchronization(UserMigrationMixin):
             except Exception as e:
                 logging.error(e)
         else:
+            user.is_active = ilsgateway_smsuser.is_active
             self.edit_phone_numbers(ilsgateway_smsuser, user)
+            user.save()
         return user
 
     def save_verified_number(self, user, phone_number):

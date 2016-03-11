@@ -7,7 +7,6 @@ from corehq.apps.settings.forms import (
 )
 from corehq.apps.style.decorators import use_bootstrap3, use_select2
 from corehq.apps.users.forms import AddPhoneNumberForm
-from dimagi.utils.couch.resource_conflict import retry_resource
 from django.contrib import messages
 from django.views.decorators.http import require_POST
 import langcodes
@@ -233,7 +232,8 @@ class MyProjectsList(BaseMyAccountView):
     @property
     def page_context(self):
         return {
-            'domains': self.all_domains
+            'domains': self.all_domains,
+            'web_user': self.request.couch_user.is_web_user
         }
 
     @property
@@ -399,15 +399,6 @@ class BaseProjectDataView(BaseDomainView):
     @property
     def section_url(self):
         return reverse('data_interfaces_default', args=[self.domain])
-
-
-@require_POST
-@retry_resource(3)
-def keyboard_config(request):
-    request.couch_user.keyboard_shortcuts["enabled"] = bool(request.POST.get('enable'))
-    request.couch_user.keyboard_shortcuts["main_key"] = request.POST.get('main-key', 'option')
-    request.couch_user.save()
-    return HttpResponseRedirect(request.GET.get('next'))
 
 
 @require_POST

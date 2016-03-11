@@ -34,15 +34,22 @@ from corehq.apps.sms.api import (
 from corehq.apps.domain.views import BaseDomainView, DomainViewMixin
 from corehq.apps.hqwebapp.views import CRUDPaginatedViewMixin
 from corehq.apps.sms.dbaccessors import get_forwarding_rules_for_domain
-from corehq.apps.style.decorators import use_bootstrap3, use_timepicker, use_typeahead, use_select2, use_jquery_ui, \
-    upgrade_knockout_js
+from corehq.apps.style.decorators import (
+    use_bootstrap3,
+    use_timepicker,
+    use_typeahead,
+    use_select2,
+    use_jquery_ui,
+    upgrade_knockout_js,
+    use_datatables,
+)
 from corehq.apps.users.decorators import require_permission
 from corehq.apps.users.models import CouchUser, Permissions, CommCareUser
 from corehq.apps.users import models as user_models
 from corehq.apps.users.views.mobile.users import EditCommCareUserView
 from corehq.apps.sms.models import (
-    SMSLog, SMS, INCOMING, OUTGOING, ForwardingRule,
-    LastReadMessage, MessagingEvent, SelfRegistrationInvitation,
+    SMS, INCOMING, OUTGOING, ForwardingRule,
+    MessagingEvent, SelfRegistrationInvitation,
     SQLMobileBackend, SQLMobileBackendMapping, PhoneLoadBalancingMixin,
     SQLLastReadMessage
 )
@@ -71,6 +78,7 @@ from corehq.util.timezones.conversions import ServerTime, UserTime
 from corehq.util.quickcache import quickcache
 from django.contrib import messages
 from django.db.models import Q
+from corehq.util.soft_assert import soft_assert
 from corehq.util.timezones.utils import get_timezone_for_user
 from django.views.decorators.csrf import csrf_exempt
 from django.views.generic import View
@@ -152,34 +160,14 @@ class ComposeMessageView(BaseMessagingSectionView):
         return super(BaseMessagingSectionView, self).dispatch(*args, **kwargs)
 
 
+@csrf_exempt
 def post(request, domain):
-    # TODO: Figure out if this is being used anywhere and remove it if not
     """
-    We assume sms sent to HQ will come in the form
-    http://hqurl.com?username=%(username)s&password=%(password)s&id=%(phone_number)s&text=%(message)s
+    I don't know of anywhere this is being invoked from. If the soft asserts
+    don't produce any results then I'll remove it.
     """
-    text = request.REQUEST.get('text', '')
-    to = request.REQUEST.get('id', '')
-    username = request.REQUEST.get('username', '')
-    # ah, plaintext passwords....  
-    # this seems to be the most common API that a lot of SMS gateways expose
-    password = request.REQUEST.get('password', '')
-    if not text or not to or not username or not password:
-        error_msg = 'ERROR missing parameters. Received: %(1)s, %(2)s, %(3)s, %(4)s' % \
-                     ( text, to, username, password )
-        logging.error(error_msg)
-        return HttpResponseBadRequest(error_msg)
-    user = authenticate(username=username, password=password)
-    if user is None or not user.is_active:
-        return HttpResponseBadRequest("Authentication fail")
-    msg = SMSLog(domain=domain,
-                 # TODO: how to map phone numbers to recipients, when phone numbers are shared?
-                 #couch_recipient=id, 
-                 phone_number=to,
-                 direction=INCOMING,
-                 date = datetime.utcnow(),
-                 text = text)
-    msg.save()
+    _assert = soft_assert('@'.join(['gcapalbo', 'dimagi.com']), exponential_backoff=False)
+    _assert(False, "sms post invoked")
     return HttpResponse('OK')
 
 
@@ -609,13 +597,16 @@ class GlobalBackendMap(BaseAdminSectionView):
         return self.get(request, *args, **kwargs)
 
 
-@require_permission(Permissions.edit_data)
-@requires_privilege_with_fallback(privileges.OUTBOUND_SMS)
-def chat_contacts(request, domain):
-    context = {
-        "domain" : domain,
-    }
-    return render(request, "sms/chat_contacts.html", context)
+class ChatOverSMSView(BaseMessagingSectionView):
+    urlname = 'chat_contacts'
+    template_name = 'sms/chat_contacts.html'
+    page_title = _("Chat over SMS")
+
+    @method_decorator(require_permission(Permissions.edit_data))
+    @use_bootstrap3
+    @use_datatables
+    def dispatch(self, *args, **kwargs):
+        return super(ChatOverSMSView, self).dispatch(*args, **kwargs)
 
 
 def get_case_contact_info(domain_obj, case_ids):

@@ -9,6 +9,7 @@ from corehq.form_processor.interfaces.supply import SupplyInterface
 from dimagi.ext.jsonobject import JsonObject, StringProperty, BooleanProperty, DecimalProperty, ListProperty, IntegerProperty,\
     FloatProperty, DictProperty
 from corehq.apps.commtrack.models import CommtrackConfig, CommtrackActionConfig
+from corehq.apps.commtrack.helpers import update_supply_point_from_location
 from corehq.apps.locations.models import SQLLocation, LocationType
 from corehq.apps.programs.models import Program
 from corehq.apps.users.models import UserRole, WebUser
@@ -69,7 +70,7 @@ class SMSUser(JsonObject):
     id = IntegerProperty()
     name = StringProperty()
     role = StringProperty()
-    is_active = StringProperty()
+    is_active = BooleanProperty()
     supply_point = DecimalProperty()
     email = StringProperty()
     phone_numbers = ListProperty(item_type=Connection)
@@ -88,6 +89,7 @@ class Location(JsonObject):
     code = StringProperty()
     groups = ListProperty()
     historical_groups = DictProperty()
+    is_active = BooleanProperty()
 
 
 class ProductStock(JsonObject):
@@ -264,7 +266,7 @@ class ILSGatewayAPI(APISynchronization):
                 'date_updated',
                 filters={
                     'type': 'facility',
-                    'is_active': True
+                    'supplypoint__active': True
                 }
             ),
             ApiSyncObject(
@@ -474,6 +476,12 @@ class ILSGatewayAPI(APISynchronization):
         if not sms_user:
             return None
 
+        if not sms_user.is_active:
+            verified_numbers = VerifiedNumber.by_owner_id(sms_user.get_id)
+            for vn in verified_numbers:
+                vn.delete()
+            return sms_user
+
         sms_user.save()
         if ilsgateway_smsuser.supply_point:
             try:
@@ -576,7 +584,7 @@ class ILSGatewayAPI(APISynchronization):
             if apply_updates(location, location_dict):
                 location.save()
                 if case:
-                    case.update_from_location(location)
+                    update_supply_point_from_location(case, location)
                 else:
                     SupplyInterface.create_from_location(self.domain, location)
             location_parent = location.parent

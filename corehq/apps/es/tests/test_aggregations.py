@@ -12,6 +12,7 @@ from corehq.apps.es.aggregations import (
     StatsAggregation,
     ExtendedStatsAggregation,
     TopHitsAggregation,
+    MissingAggregation,
 )
 from corehq.apps.es.es_query import HQESQuery, ESQuerySet
 from corehq.apps.es.tests.utils import ElasticTestMixin
@@ -289,6 +290,35 @@ class TestAggregations(ElasticTestMixin, SimpleTestCase):
                 is_ascending=False,
                 size=2,
                 include=['title'])
+        )
+        self.checkQuery(query, json_output)
+
+    def test_missing_aggregation(self):
+        json_output = {
+            "query": {
+                "filtered": {
+                    "filter": {
+                        "and": [
+                            {"match_all": {}}
+                        ]
+                    },
+                    "query": {"match_all": {}}
+                }
+            },
+            "aggs": {
+                "missing_user_id": {
+                    "missing": {
+                        "field": "user_id"
+                    }
+                },
+            },
+            "size": SIZE_LIMIT
+        }
+        query = HQESQuery('cases').aggregation(
+            MissingAggregation(
+                'missing_user_id',
+                'user_id',
+            )
         )
         self.checkQuery(query, json_output)
 

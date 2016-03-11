@@ -6,6 +6,8 @@ class ILSArrivedTest(ILSTestScript):
 
     def setUp(self):
         super(ILSArrivedTest, self).setUp()
+        self.user_fac1.language = 'en'
+        self.user_fac1.save()
 
     def test_arrived_help(self):
         msg = """
