@@ -148,13 +148,15 @@ class ExportColumn(DocumentSchema):
         """
 
         is_main_table = group_schema_path == MAIN_TABLE
+        is_advanced = isinstance(item, SystemExportItem) and item.is_advanced
 
         column = ExportColumn(
             item=item,
             label=item.label,
+            is_advanced=is_advanced,
         )
         column.update_properties_from_app_ids_and_versions(app_ids_and_versions)
-        column.selected = not column._is_deleted(app_ids_and_versions) and is_main_table
+        column.selected = not column._is_deleted(app_ids_and_versions) and is_main_table and not is_advanced
         return column
 
     def _is_deleted(self, app_ids_and_versions):
@@ -179,7 +181,7 @@ class ExportColumn(DocumentSchema):
 
         if self.item.tag:
             tags.append(self.item.tag)
-        self.is_advanced = is_deleted
+        self.is_advanced = is_deleted or self.is_advanced
         self.tags = tags
 
     @property
