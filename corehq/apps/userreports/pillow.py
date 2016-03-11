@@ -1,7 +1,6 @@
 from collections import defaultdict
 from alembic.autogenerate.api import compare_metadata
 from datetime import datetime, timedelta
-from casexml.apps.case.models import CommCareCase
 from corehq.apps.change_feed import topics
 from corehq.apps.change_feed.consumer.feed import KafkaChangeFeed, MultiTopicCheckpointEventHandler
 from corehq.apps.userreports.data_source_providers import DynamicDataSourceProvider, StaticDataSourceProvider
@@ -13,8 +12,6 @@ from corehq.toggles import KAFKA_UCRS
 from corehq.util.soft_assert import soft_assert
 from fluff.signals import get_migration_context, get_tables_to_rebuild
 from pillowtop.checkpoints.manager import PillowCheckpoint
-from pillowtop.couchdb import CachedCouchDB
-from pillowtop.listener import PythonPillow
 from pillowtop.pillow.interface import ConstructedPillow
 from pillowtop.processors import PillowProcessor
 
