@@ -104,21 +104,15 @@ class ConfigurableReportDataSource(SqlData):
         # allow throwing exception if the report explicitly sorts on an unsortable column type
         if self._order_by:
             return [
-                OrderBy(order_by, order == ASCENDING)
+                OrderBy(order_by, is_ascending=(order == ASCENDING))
                 for sort_column_id, order in self._order_by
                 for order_by in self._get_db_column_ids(sort_column_id)
             ]
-
-        # swallow exception if first column is unsortable
-        if self.column_configs:
-            try:
-                return [
-                    OrderBy(order_by, is_ascending=True)
-                    for order_by in self._get_db_column_ids(self.column_configs[0].column_id)
-                ]
-            except NotImplementedError:
-                pass
-
+        elif self.column_configs:
+            return [
+                OrderBy(order_by, is_ascending=True)
+                for order_by in self._get_db_column_ids(self.column_configs[0].column_id)
+            ]
         return []
 
     @property
