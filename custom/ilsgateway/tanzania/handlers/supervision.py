@@ -24,7 +24,7 @@ class SupervisionHandler(KeywordHandler):
             self.respond(SUPERVISION_CONFIRM_YES)
         else:
             self.help()
-            return
+            return True
 
         SupplyPointStatus.objects.create(status_type=SupplyPointStatusTypes.SUPERVISION_FACILITY,
                                          status_value=status_value,
