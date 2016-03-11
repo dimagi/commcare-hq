@@ -411,7 +411,7 @@ class CaseAccessorSQL(AbstractCaseAccessor):
             [case_id, form_id])
         )
         assert len(transactions) <= 1
-        return transactions if transactions else None
+        return transactions[0] if transactions else None
 
     @staticmethod
     def get_transactions_by_type(case_id, transaction_type):

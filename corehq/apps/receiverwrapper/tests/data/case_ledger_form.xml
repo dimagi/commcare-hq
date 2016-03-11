@@ -1,0 +1,47 @@
+<?xml version='1.0' ?>
+<form version="1" uiVersion="1" xmlns:jrm="http://openrosa.org/jr/xforms" xmlns="http://commcarehq.org/test/submit">
+	<meta>
+	    <DeviceID>myphone</DeviceID>
+	    <TimeStart>2010-06-29T13:42:50.137</TimeStart>
+	    <TimeEnd>2010-06-29T13:55:50.137</TimeEnd>
+	    <username>someuser</username>
+	    <userID>someuserid</userID>
+	    <uid>ad38211be256653bceac8e2156475664</uid>
+	</meta>
+    <data>
+        <n1:case case_id="fbb69a88-1eca-463a-883e-1148b96fb03b" date_modified="2016-03-02T10:21:48.715+01" user_id="e499e67838e9efb6fe210c147045b1dc" xmlns:n1="http://commcarehq.org/case/transaction/v2">
+			<n1:create>
+				<n1:case_name>school-program</n1:case_name>
+				<n1:owner_id>-</n1:owner_id>
+				<n1:case_type>invoice</n1:case_type>
+			</n1:create>
+			<n1:update>
+				<n1:amount-owed-to-entrepreneur>119600</n1:amount-owed-to-entrepreneur>
+				<n1:entrepreneur>joe</n1:entrepreneur>
+				<n1:month>2</n1:month>
+				<n1:owner_id>91cadfa4cb957cf021c76dfe31d206a6</n1:owner_id>
+				<n1:year>2016</n1:year>
+			</n1:update>
+		</n1:case>
+        <n3:case case_id="fbb69a88-1eca-463a-883e-1148b96fb03b" date_modified="2016-03-02T10:21:48.715+01" user_id="e499e67838e9efb6fe210c147045b1dc" xmlns:n3="http://commcarehq.org/case/transaction/v2">
+			<n3:close></n3:close>
+		</n3:case>
+        <n2:case case_id="fbb69a88-1eca-463a-883e-1148b96fb03c" date_modified="2016-03-02T10:21:48.715+01" user_id="e499e67838e9efb6fe210c147045b1dc" xmlns:n2="http://commcarehq.org/case/transaction/v2">
+			<n2:create>
+				<n2:case_name>school-program</n2:case_name>
+				<n2:owner_id>-</n2:owner_id>
+				<n2:case_type>invoice</n2:case_type>
+			</n2:create>
+			<n2:update>
+				<n2:amount-owed-to-entrepreneur>119600</n2:amount-owed-to-entrepreneur>
+				<n2:entrepreneur>joe</n2:entrepreneur>
+				<n2:month>2</n2:month>
+				<n2:owner_id>91cadfa4cb957cf021c76dfe31d206a6</n2:owner_id>
+				<n2:year>2016</n2:year>
+			</n2:update>
+		</n2:case>
+        <balance xmlns="http://commcarehq.org/ledger/v1" entity-id="fbb69a88-1eca-463a-883e-1148b96fb03b" date="2000-01-01" section-id="stock">
+            <entry id="fbb69a88-1eca-463a-883e-1148b96fb03b" quantity="10" />
+        </balance>
+    </data>
+</form>
