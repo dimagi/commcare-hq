@@ -48,6 +48,11 @@
 {% endblock %}
 {% block main_column_content %}
     <h1>{% trans "Project Health Dashboard" %}</h1>
+    <p class="lead">
+        {% blocktrans %}
+        A summary of the overall health of your project based on how your users are doing over time.
+        {% endblocktrans %}
+    </p>
     <h2>{% trans "Last Month Stats" %}</h2>
 <table class="table lead">
     <thead>
@@ -58,7 +63,9 @@
         </tr>
     </thead>
     <tr>
-        <th>{% trans "Performing users" %}</th>
+        <td>{% trans "Performing users" %}
+            <p class="text-muted"><small>{% blocktrans %}Users who submitted at least {{ threshold }} or more forms last month.{% endblocktrans %}</small></p>
+        </td>
         <td>{{ last_month.performing }}</td>
         <td>
             {% chevron last_month.delta_performing_pct %}
@@ -66,7 +73,10 @@
         </td>
     </tr>
     <tr>
-        <th>{% trans "All active users" %}</th>
+        <td>
+            {% trans "All active users" %}
+            <p class="text-muted"><small>{% blocktrans %}Users who submitted any forms last month.{% endblocktrans %}</small></p>
+        </td>
         <td>{{ last_month.active }}</td>
         <td>
             {% chevron last_month.delta_active_pct %}
@@ -75,21 +85,39 @@
     </tr>
 </table>
 <h2>{% trans "Performing / Active User Trends" %}</h2>
+    <p class="lead">
+        {% trans "How the counts of performing and active users have changed in the last six months." %}
+    </p>
 <div id="chart"><svg></svg></div>
 <div class="col-md-4">
     <h2>{% trans "Active, Non-Performing Users" %}</h2>
+    <p class="lead">
+        {% blocktrans %}
+            These are people who used CommCare last month but didn't submit {{ threshold }} forms.
+            They could use a boost!
+        {% endblocktrans %}
+    </p>
     {% with last_month.get_unhealthy_users as user_list %}
         {% include "reports/project_health/partials/user_list.html" %}
     {% endwith %}
 </div>
 <div class="col-md-4">
     <h2>{% trans "Newly Inactive Users" %}</h2>
+    <p class="lead">
+        {% trans "These are people who stopped using CommCare last month" %}
+    </p>
     {% with last_month.get_dropouts as user_list %}
         {% include "reports/project_health/partials/user_list.html" %}
     {% endwith %}
 </div>
 <div class="col-md-4">
     <h2>{% trans "Newly Performing Users" %}</h2>
+    <p class="lead">
+        {% blocktrans %}
+            These are people who submitted at least {{ threshold }} forms this month and didn't last month.
+            Give them a high five!
+        {% endblocktrans %}
+    </p>
     {% with last_month.get_newly_performing as user_list %}
         {% include "reports/project_health/partials/user_list.html" %}
     {% endwith %}

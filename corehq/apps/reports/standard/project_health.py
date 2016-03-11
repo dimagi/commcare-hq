@@ -175,5 +175,6 @@ class ProjectHealthDashboard(ProjectReport):
 
         return {
             'rows': rows,
-            'last_month': rows[-1]
+            'last_month': rows[-1],
+            'threshold': 15,  # todo: use dynamic thresholds
         }
