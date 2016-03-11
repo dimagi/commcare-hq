@@ -7,6 +7,7 @@ from casexml.apps.case.models import CommCareCase
 from casexml.apps.case.util import iter_cases
 from corehq.form_processor.backends.couch.update_strategy import CouchCaseUpdateStrategy
 from corehq.form_processor.casedb_base import AbstractCaseDbCache
+from corehq.form_processor.exceptions import CouchSaveAborted
 
 
 class CaseDbCacheCouch(AbstractCaseDbCache):
@@ -64,12 +65,13 @@ class CaseDbCacheCouch(AbstractCaseDbCache):
             except ResourceNotFound:
                 pass
             else:
-                assert rev == case.get_rev, (
-                    "Aborting because there would have been "
-                    "a document update conflict. {} {} {}".format(
-                        case.get_id, case.get_rev, rev
+                if rev != case.get_rev:
+                    raise CouchSaveAborted(
+                        "Aborting because there would have been "
+                        "a document update conflict. {} {} {}".format(
+                            case.get_id, case.get_rev, rev
+                        )
                     )
-                )
         return cases
 
     def post_process_case(self, case, xform):

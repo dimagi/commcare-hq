@@ -20,6 +20,10 @@ class AttachmentNotFound(UnicodeMixIn, ResourceNotFound, ObjectDoesNotExist):
         return "Attachment '{}' not found".format(self.attachment_name)
 
 
+class CouchSaveAborted(Exception):
+    pass
+
+
 class CaseSaveError(Exception):
     pass
 

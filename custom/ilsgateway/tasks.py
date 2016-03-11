@@ -198,6 +198,25 @@ def fix_stock_data_task(domain):
     fix_stock_data(domain)
 
 
+@task(queue='logistics_background_queue', ignore_result=True)
+def recalculate_march_reporting_data_task(domain):
+    locations_ids = list(SQLLocation.objects.filter(domain=domain).values_list('location_id', flat=True))
+    GroupSummary.objects.filter(
+        org_summary__location_id=locations_ids, org_summary__date__gte=datetime(2016, 3, 1)
+    ).delete()
+    OrganizationSummary.objects.filter(location_id__in=locations_ids, date__gte=datetime(2016, 3, 1)).delete()
+    ProductAvailabilityData.objects.filter(
+        location_id__in=locations_ids,
+        date__gte=datetime(2016, 3, 1)
+    ).delete()
+    stock_data_checkpoint = StockDataCheckpoint.objects.get(domain=domain)
+    end_date = stock_data_checkpoint.date
+    ReportRun.objects.create(start=datetime(2016, 3, 1), end=end_date,
+                             start_run=datetime.utcnow(), domain=domain, complete=True, has_error=True)
+
+    report_run.delay(domain)
+
+
 @periodic_task(run_every=crontab(hour="4", minute="00", day_of_week="*"),
                queue='logistics_background_queue')
 def report_run(domain, locations=None, strict=True):

@@ -16,6 +16,7 @@ from corehq.apps.userreports.exceptions import (
 )
 from corehq.apps.userreports.models import DataSourceConfiguration, get_datasource_config
 from corehq.apps.userreports.reports.sorting import ASCENDING
+from corehq.apps.userreports.reports.util import get_expanded_columns, get_total_row
 from corehq.apps.userreports.sql import get_table_name
 from corehq.apps.userreports.sql.connection import get_engine_id
 
@@ -160,3 +161,9 @@ class ConfigurableReportDataSource(SqlData):
     def get_total_records(self):
         # TODO - actually use sqlagg to get a count of rows
         return len(self.get_data())
+
+    def get_total_row(self):
+        return get_total_row(
+            self.get_data(), self.aggregation_columns, self.column_configs,
+            get_expanded_columns(self.column_configs, self.config)
+        )

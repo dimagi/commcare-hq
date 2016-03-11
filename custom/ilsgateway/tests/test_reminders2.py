@@ -75,7 +75,7 @@ class TestStockOnHandReminders(RemindersTest):
 class TestDeliveryReminder(RemindersTest):
 
     def setUp(self):
-        self.facility.metadata['groups'] = DeliveryGroups().current_delivering_group()
+        self.facility.metadata['group'] = DeliveryGroups().current_delivering_group()
         self.facility.save()
 
     def test_group_exclusion(self):
@@ -83,12 +83,12 @@ class TestDeliveryReminder(RemindersTest):
         self.assertEqual(len(people), 1)
         self.assertEqual(people[0].get_id, self.user1.get_id)
 
-        self.facility.metadata['groups'] = DeliveryGroups().current_submitting_group()
+        self.facility.metadata['group'] = DeliveryGroups().current_submitting_group()
         self.facility.save()
         people = list(DeliveryReminder(TEST_DOMAIN, datetime.utcnow()).get_people())
         self.assertEqual(len(people), 0)
 
-        self.facility.metadata['groups'] = DeliveryGroups().current_processing_group()
+        self.facility.metadata['group'] = DeliveryGroups().current_processing_group()
         self.facility.save()
         people = list(DeliveryReminder(TEST_DOMAIN, datetime.utcnow()).get_people())
         self.assertEqual(len(people), 0)
@@ -120,7 +120,7 @@ class TestDeliveryReminder(RemindersTest):
 class TestRandRReminder(RemindersTest):
 
     def setUp(self):
-        self.facility.metadata['groups'] = DeliveryGroups().current_submitting_group()
+        self.facility.metadata['group'] = DeliveryGroups().current_submitting_group()
         self.facility.save()
 
     def test_group_exclusion(self):
@@ -128,12 +128,12 @@ class TestRandRReminder(RemindersTest):
         self.assertEqual(len(people), 1)
         self.assertEqual(people[0].get_id, self.user1.get_id)
 
-        self.facility.metadata['groups'] = DeliveryGroups().current_delivering_group()
+        self.facility.metadata['group'] = DeliveryGroups().current_delivering_group()
         self.facility.save()
         people = list(RandrReminder(TEST_DOMAIN, datetime.utcnow()).get_people())
         self.assertEqual(len(people), 0)
 
-        self.facility.metadata['groups'] = DeliveryGroups().current_processing_group()
+        self.facility.metadata['group'] = DeliveryGroups().current_processing_group()
         self.facility.save()
         people = list(RandrReminder(TEST_DOMAIN, datetime.utcnow()).get_people())
         self.assertEqual(len(people), 0)
@@ -165,7 +165,7 @@ class TestRandRReminder(RemindersTest):
 class TestSupervisionStatusSet(RemindersTest):
 
     def setUp(self):
-        self.facility.metadata['groups'] = DeliveryGroups().current_submitting_group()
+        self.facility.metadata['group'] = DeliveryGroups().current_submitting_group()
         self.facility.save()
 
     def test_reminder_set(self):
@@ -174,7 +174,7 @@ class TestSupervisionStatusSet(RemindersTest):
         self.assertEqual(len(people), 1)
         self.assertEqual(people[0].get_id, self.user1.get_id)
 
-        self.facility.metadata['groups'] = DeliveryGroups().current_delivering_group()
+        self.facility.metadata['group'] = DeliveryGroups().current_delivering_group()
         self.facility.save()
         people = list(SupervisionReminder(TEST_DOMAIN, datetime.utcnow()).get_people())
         self.assertEqual(len(people), 1)

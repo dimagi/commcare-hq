@@ -70,4 +70,4 @@ class GroupReminder(Reminder):
             status_date__gte=self.date
         ).exists()
         return (self.location_type == 'DISTRICT' or
-                current_group == location.metadata.get('groups', None)) and not status_exists
+                current_group == location.metadata.get('group', None)) and not status_exists

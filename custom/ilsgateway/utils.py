@@ -107,5 +107,5 @@ def last_location_group(location):
 
 def get_sql_locations_by_domain_and_group(domain, group):
     for sql_location in SQLLocation.objects.filter(domain=domain):
-        if sql_location.metadata.get('groups') == group:
+        if sql_location.metadata.get('group') == group:
             yield sql_location

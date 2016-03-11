@@ -189,6 +189,15 @@
                 </div>
             </div>
         </div>
+        <div class="row-fluid">
+            <div class="span12">
+                <div class="btn-toolbar">
+                    <button class="btn" id="recalculate_march_reporting_data">
+                        {% trans "Recalculate March reporting data" %}
+                    </button>
+                </div>
+            </div>
+        </div>
     {% endif %}
 {% endblock %}
 
@@ -258,6 +267,12 @@
 
         $("#fix_stock_data").click(function() {
             var url = '{% url 'fix_stock_data' domain %}';
+            var successMessage = "{% trans "Started" %}";
+            _post(this, url, {success: successMessage});
+        });
+
+        $("#recalculate_march_reporting_data").click(function() {
+            var url = '{% url 'recalculate_march_reporting_data' domain %}';
             var successMessage = "{% trans "Started" %}";
             _post(this, url, {success: successMessage});
         });
