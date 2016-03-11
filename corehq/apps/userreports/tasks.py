@@ -70,7 +70,7 @@ def rebuild_indicators(indicator_config_id):
     _iteratively_build_table(config)
 
 
-@task(queue='ucr_queue', ignore_result=True)
+@task(queue='ucr_queue', ignore_result=True, acks_late=True)
 def resume_building_indicators(indicator_config_id):
     config = _get_config_by_id(indicator_config_id)
     redis_client = get_redis_client().client.get_client()
