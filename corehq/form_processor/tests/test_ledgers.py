@@ -4,6 +4,8 @@ from django.conf import settings
 from django.test import TestCase
 from casexml.apps.case.mock import CaseFactory, CaseBlock
 from corehq.apps.commtrack.helpers import make_product
+from corehq.apps.commtrack.tests import get_single_balance_block
+from corehq.apps.commtrack.tests.util import get_single_transfer_block
 from corehq.apps.hqcase.utils import submit_case_blocks
 from corehq.form_processor.backends.sql.dbaccessors import CaseAccessorSQL, LedgerAccessorSQL
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
@@ -14,20 +16,6 @@ from corehq.form_processor.tests import FormProcessorTestUtils, run_with_all_bac
 from corehq.form_processor.utils.general import should_use_sql_backend
 
 DOMAIN = 'ledger-tests'
-
-BALANCE_BLOCK = """
-<balance xmlns="http://commcarehq.org/ledger/v1" entity-id="{case_id}" date="2000-01-01" section-id="stock">
-    <entry id="{product_id}" quantity="{quantity}" />
-</balance>
-"""
-
-TRANSFER_BLOCK = """
-<transfer xmlns="http://commcarehq.org/ledger/v1" dest="{case_id}" date="2000-01-02" section-id="stock">
-    <entry id="{product_id}" quantity="{quantity}" />
-</transfer >
-"""
-
-TestLedger = namedtuple('TestLedger', ['block', 'quantity', 'product_id'])
 TransactionValues = namedtuple('TransactionValues', ['type', 'product_id', 'delta', 'updated_balance'])
 
 class LedgerTests(TestCase):
@@ -45,22 +33,23 @@ class LedgerTests(TestCase):
         self.factory = CaseFactory(domain=DOMAIN)
         self.case = self.factory.create_case()
 
-    def _submit_ledgers(self, test_ledgers):
-        return submit_case_blocks([
-            ledger.block.format(
-                case_id=self.case.case_id,
-                product_id=ledger.product_id or self.product_a._id,
-                quantity=ledger.quantity
-            )
-            for ledger in test_ledgers],
-            DOMAIN
-        )
+    def _submit_ledgers(self, ledger_blocks):
+        return submit_case_blocks(ledger_blocks, DOMAIN)
 
     def _set_balance(self, balance):
-        self._submit_ledgers([TestLedger(BALANCE_BLOCK, balance, None)])
+        self._submit_ledgers([
+            get_single_balance_block(self.case.case_id, self.product_a._id, balance)
+        ])
 
-    def _transfer(self, amount):
-        self._submit_ledgers([TestLedger(TRANSFER_BLOCK, amount, None)])
+    def _transfer_in(self, amount):
+        self._submit_ledgers([
+            get_single_transfer_block(None, self.case.case_id, self.product_a._id, amount)
+        ])
+
+    def _transfer_out(self, amount):
+        self._submit_ledgers([
+            get_single_transfer_block(self.case.case_id, None, self.product_a._id, amount)
+        ])
 
     @run_with_all_backends
     def test_balance_submission(self):
@@ -81,15 +70,13 @@ class LedgerTests(TestCase):
             self.product_c._id: 25,
         }
         self._submit_ledgers([
-            TestLedger(BALANCE_BLOCK, balance, prod_id)
+            get_single_balance_block(self.case.case_id, prod_id, balance)
             for prod_id, balance in balances.items()
         ])
         expected_transactions = []
         for prod_id, expected_balance in balances.items():
             expected_transactions.append(self._txv(
-                expected_balance,
-                expected_balance,
-                product_id=prod_id
+                expected_balance, expected_balance, product_id=prod_id
             ))
             balance = self.interface.ledger_db.get_current_ledger_value(
                 UniqueLedgerReference(
@@ -119,7 +106,7 @@ class LedgerTests(TestCase):
     @run_with_all_backends
     def test_transfer_submission(self):
         orignal_form_count = len(self.interface.get_case_forms(self.case.case_id))
-        self._transfer(100)
+        self._transfer_in(100)
         self._assert_ledger_state(100)
         # make sure the form is part of the case's history
         self.assertEqual(orignal_form_count + 1, len(self.interface.get_case_forms(self.case.case_id)))
@@ -131,7 +118,7 @@ class LedgerTests(TestCase):
     @run_with_all_backends
     def test_transfer_submission_with_prior_balance(self):
         self._set_balance(100)
-        self._transfer(100)
+        self._transfer_in(100)
         self._assert_ledger_state(200)
 
         self._assert_transactions([
@@ -143,11 +130,8 @@ class LedgerTests(TestCase):
     def test_ledger_update_with_case_update(self):
         submit_case_blocks([
             CaseBlock(case_id=self.case.case_id, update={'a': "1"}).as_string(),
-            BALANCE_BLOCK.format(
-                case_id=self.case.case_id,
-                product_id=self.product_a._id,
-                quantity=100
-            )],
+            get_single_balance_block(self.case.case_id, self.product_a._id, 100)
+            ],
             DOMAIN
         )
 
