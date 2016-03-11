@@ -66,6 +66,21 @@ class ExportItem(DocumentSchema):
     last_occurrences = DictProperty()
 
     @classmethod
+    def wrap(cls, data):
+        if cls is ExportItem:
+            doc_type = data['doc_type']
+            if doc_type == 'ExportItem':
+                return super(ExportItem, cls).wrap(data)
+            elif doc_type == 'ScalarItem':
+                return ScalarItem.wrap(data)
+            elif doc_type == 'MultipleChoiceItem':
+                return MultipleChoiceItem.wrap(data)
+            else:
+                raise ValueError('Unexpected doc_type for export item', doc_type)
+        else:
+            return super(ExportItem, cls).wrap(data)
+
+    @classmethod
     def create_from_question(cls, question, app_id, app_version):
         return cls(
             path=_question_path_to_doc_path(question['value']),
