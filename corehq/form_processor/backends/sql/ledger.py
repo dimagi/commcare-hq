@@ -30,7 +30,7 @@ class LedgerProcessorSQL(LedgerProcessorInterface):
         latest_values = {}
         to_save = []
         for stock_trans in stock_report_helper.transactions:
-            def _original_balance():
+            def _lazy_original_balance():
                 # needs to be in closures because it's zero-argument.
                 # see compute_ledger_values for more information
                 reference = stock_trans.ledger_reference
@@ -39,7 +39,7 @@ class LedgerProcessorSQL(LedgerProcessorInterface):
                 return latest_values[reference]
 
             new_ledger_values = compute_ledger_values(
-                _original_balance, stock_report_helper.report_type, stock_trans.relative_quantity
+                _lazy_original_balance, stock_report_helper.report_type, stock_trans.relative_quantity
             )
 
             ledger_value = ledger_db.get_ledger(stock_trans.ledger_reference)
@@ -47,7 +47,7 @@ class LedgerProcessorSQL(LedgerProcessorInterface):
                 ledger_value = LedgerValue(**stock_trans.ledger_reference._asdict())
 
             ledger_value.track_create(
-                _get_ledget_transaction(_original_balance, stock_report_helper, stock_trans, new_ledger_values.balance)
+                _get_ledget_transaction(_lazy_original_balance, stock_report_helper, stock_trans, new_ledger_values.balance)
             )
 
             # only do this after we've created the transaction otherwise we'll get the wrong delta
