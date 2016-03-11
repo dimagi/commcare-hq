@@ -34,13 +34,14 @@ from corehq.apps.export.const import (
     PROPERTY_TAG_DELETED,
     CASE_HISTORY_PROPERTIES,
     CASE_HISTORY_TABLE,
-    MAIN_FORM_TABLE_PROPERTIES,
     FORM_EXPORT,
     CASE_EXPORT,
     MAIN_TABLE,
     TRANSFORM_FUNCTIONS,
-    DEID_TRANSFORM_FUNCTIONS, TOP_MAIN_FORM_TABLE_PROPERTIES,
-    BOTTOM_MAIN_FORM_TABLE_PROPERTIES, PROPERTY_TAG_INFO)
+    DEID_TRANSFORM_FUNCTIONS,
+    TOP_MAIN_FORM_TABLE_PROPERTIES,
+    BOTTOM_MAIN_FORM_TABLE_PROPERTIES,
+)
 from corehq.apps.export.dbaccessors import (
     get_latest_case_export_schema,
     get_latest_form_export_schema,
@@ -134,7 +135,7 @@ class ExportColumn(DocumentSchema):
         if transform_dates:
             value = couch_to_excel_datetime(value, None)
         for transform in self.transforms:
-            value = TRANSFORM_FUNCTIONS[transform](value)
+            value = TRANSFORM_FUNCTIONS[transform](value, None)
         return value
 
     @staticmethod
@@ -149,11 +150,13 @@ class ExportColumn(DocumentSchema):
 
         is_main_table = group_schema_path == MAIN_TABLE
         is_advanced = isinstance(item, SystemExportItem) and item.is_advanced
+        transform = item.transform if isinstance(item, SystemExportItem) else None
 
         column = ExportColumn(
             item=item,
             label=item.label,
             is_advanced=is_advanced,
+            transforms=[transform] if transform else [], 
         )
         column.update_properties_from_app_ids_and_versions(app_ids_and_versions)
         column.selected = not column._is_deleted(app_ids_and_versions) and is_main_table and not is_advanced
@@ -253,10 +256,13 @@ class TableConfiguration(DocumentSchema):
             rows.append(ExportRow(data=row_data))
         return rows
 
-    def get_column(self, item_path):
+    def get_column(self, item_path, item_transform):
+        # Columns should be unique by item path and item transform
         for column in self.columns:
             if column.item.path == item_path:
-                return column
+                transform = column.item.transform if isinstance(column.item, SystemExportItem) else None
+                if transform == item_transform:
+                    return column
         return None
 
     def _get_sub_documents(self, document, row_number):
@@ -365,7 +371,9 @@ class ExportInstance(BlobMixin, Document):
             )
             columns = []
             for item in group_schema.items:
-                column = table.get_column(item.path) or ExportColumn.create_default_from_export_item(
+                column = table.get_column(
+                    item.path, item.transform if isinstance(item, SystemExportItem) else None
+                ) or ExportColumn.create_default_from_export_item(
                     table.path,
                     item,
                     latest_app_ids_and_versions,
@@ -520,6 +528,7 @@ class ScalarItem(ExportItem):
 
 class SystemExportItem(ScalarItem):
     is_advanced = BooleanProperty(default=False)
+    transform = StringProperty()
 
 
 class Option(DocumentSchema):
@@ -608,6 +617,14 @@ class ExportDataSchema(Document):
         schema = cls()
 
         def resolvefn(group_schema1, group_schema2):
+
+            def keyfn(export_item):
+                return'{}:{}:{}'.format(
+                    _list_path_to_string(export_item.path),
+                    export_item.doc_type,
+                    export_item.transform if isinstance(export_item, SystemExportItem) else "",
+                )
+
             group_schema = ExportGroupSchema(
                 path=group_schema1.path,
                 last_occurrences=_merge_dicts(
@@ -619,7 +636,7 @@ class ExportDataSchema(Document):
             items = _merge_lists(
                 group_schema1.items,
                 group_schema2.items,
-                keyfn=lambda item: '{}:{}'.format(_list_path_to_string(item.path), item.doc_type),
+                keyfn=keyfn,
                 resolvefn=lambda item1, item2: item1.__class__.merge(item1, item2),
                 copyfn=lambda item: item.__class__(item.to_json()),
             )
@@ -711,6 +728,7 @@ class FormExportDataSchema(ExportDataSchema):
             label=system_property.name,
             tag=system_property.tag,
             is_advanced=system_property.is_advanced,
+            transform=system_property.transform,
             last_occurrences={app_id: app_version},
         )
 
@@ -916,7 +934,7 @@ def _list_path_to_string(path, separator='.'):
 
 
 def _merge_lists(one, two, keyfn, resolvefn, copyfn):
-    """Merges two lists. The alogorithm is to first iterate over the first list. If the item in the first list
+    """Merges two lists. The algorithm is to first iterate over the first list. If the item in the first list
     does not exist in the second list, add that item to the merged list. If the item does exist in the second
     list, resolve the conflict using the resolvefn. After the first list has been iterated over, simply append
     any items in the second list that have not already been added.

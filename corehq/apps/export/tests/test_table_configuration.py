@@ -245,8 +245,8 @@ class SplitColumnTest(SimpleTestCase):
             ]
         )
 
-        column = table_configuration.get_column(['form', 'repeat1', 'q1'])
+        column = table_configuration.get_column(['form', 'repeat1', 'q1'], None)
         self.assertEqual(column.item.path, ['form', 'repeat1', 'q1'])
 
-        column = table_configuration.get_column(['form', 'repeat1', 'DoesNotExist'])
+        column = table_configuration.get_column(['form', 'repeat1', 'DoesNotExist'], None)
         self.assertIsNone(column)

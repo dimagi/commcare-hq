@@ -67,7 +67,7 @@ class TestConvertSavedExportSchemaToFormExportInstance(TestCase, TestFileMixin):
         table = instance.get_table(MAIN_TABLE)
         self.assertEqual(table.display_name, 'My Forms')
 
-        column = table.get_column(['data', 'question1'])
+        column = table.get_column(['data', 'question1'], None)
         self.assertEqual(column.label, 'Question One')
         self.assertEqual(column.selected, True)
 
@@ -82,7 +82,7 @@ class TestConvertSavedExportSchemaToFormExportInstance(TestCase, TestFileMixin):
         table = instance.get_table(['data', 'repeat'])
         self.assertEqual(table.display_name, 'Repeat: question1')
 
-        column = table.get_column(['data', 'repeat', 'question2'])
+        column = table.get_column(['data', 'repeat', 'question2'], None)
         self.assertEqual(column.label, 'Question Two')
         self.assertEqual(column.selected, True)
 

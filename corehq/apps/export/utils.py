@@ -50,7 +50,10 @@ def convert_saved_export_to_export_instance(saved_export):
                     column_index=column.index,
                 )
 
-            new_column = new_table.get_column(_convert_index_to_path(index))
+            new_column = new_table.get_column(
+                _convert_index_to_path(index),
+                _convert_serializable_function_to_transform(column.transform)
+            )
             if not new_column:
                 continue
             new_column.label = column.display
@@ -82,3 +85,11 @@ def _convert_index_to_path(index):
         return ['data'] + _strip_repeat_index(index).split('.')[1:]
     else:
         return ['data'] + index.split('.')[1:]
+
+
+def _convert_serializable_function_to_transform(serializable_function):
+    if serializable_function is None:
+        return None
+    else:
+        # TODO: Write this
+        raise NotImplementedError
