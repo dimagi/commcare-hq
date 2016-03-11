@@ -637,8 +637,7 @@ class LedgerAccessorSQL(AbstractLedgerAccessor):
         for ledger_value in ledger_values:
             transactions = ledger_value.get_tracked_models_to_create(LedgerTransaction)
 
-            for ledger in ledger_values:
-                ledger.last_modified = datetime.utcnow()
+            ledger_value.last_modified = datetime.utcnow()
 
             with get_cursor(LedgerValue) as cursor:
                 try:
