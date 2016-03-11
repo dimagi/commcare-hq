@@ -358,8 +358,7 @@ class AllBackendTest(BaseSMSTest):
         user.delete()
 
     def test_push_inbound_sms(self):
-        xml = """
-        <?xml version="1.0" encoding="UTF-8"?>
+        xml = """<?xml version="1.0" encoding="UTF-8"?>
         <bspostevent>
             <field name="MobileNumber" type="string">99912345</field>
             <field name="Text" type="string">push test</field>
