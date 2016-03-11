@@ -560,7 +560,7 @@ def record_successful_deploy(deploy_metadata):
         sudo((
             '%(virtualenv_current)s/bin/python manage.py '
             'record_deploy_success --user "%(user)s" --environment '
-            '"%(environment)s" --mail_admins'
+            '"%(environment)s" --url %(url)s --mail_admins'
         ) % {
             'virtualenv_current': env.virtualenv_current,
             'user': env.user,
