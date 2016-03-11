@@ -73,6 +73,8 @@ class ExportItem(DocumentSchema):
                 return super(ExportItem, cls).wrap(data)
             elif doc_type == 'ScalarItem':
                 return ScalarItem.wrap(data)
+            elif doc_type == 'SystemExportItem':
+                return SystemExportItem.wrap(data)
             elif doc_type == 'MultipleChoiceItem':
                 return MultipleChoiceItem.wrap(data)
             else:
@@ -513,6 +515,10 @@ class ScalarItem(ExportItem):
     """
     A text, numeric, date, etc. question or case property
     """
+
+
+class SystemExportItem(ScalarItem):
+    is_advanced = BooleanProperty(default=False)
 
 
 class Option(DocumentSchema):
