@@ -201,6 +201,9 @@ class ConfigurableReportKafkaPillow(ConstructedPillow):
     def bootstrap(self, configs=None):
         self._processor.bootstrap(configs)
 
+    def rebuild_table(self, sql_adapter):
+        self._processor.rebuild_table(sql_adapter)
+
 
 def get_kafka_ucr_pillow():
     return ConfigurableReportKafkaPillow(

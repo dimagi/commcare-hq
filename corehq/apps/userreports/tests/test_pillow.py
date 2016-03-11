@@ -12,7 +12,7 @@ from corehq.apps.change_feed import topics
 from corehq.apps.change_feed.producer import producer
 from corehq.apps.userreports.data_source_providers import MockDataSourceProvider
 from corehq.apps.userreports.exceptions import StaleRebuildError
-from corehq.apps.userreports.pillow import ConfigurableIndicatorPillow, REBUILD_CHECK_INTERVAL, \
+from corehq.apps.userreports.pillow import REBUILD_CHECK_INTERVAL, \
     ConfigurableReportTableManagerMixin, get_kafka_ucr_pillow, get_kafka_ucr_static_pillow
 from corehq.apps.userreports.sql import IndicatorSqlAdapter
 from corehq.apps.userreports.tasks import rebuild_indicators
@@ -87,9 +87,10 @@ class IndicatorPillowTest(IndicatorPillowTestBase):
     @softer_assert
     def setUp(self):
         super(IndicatorPillowTest, self).setUp()
-        self.pillow = ConfigurableIndicatorPillow()
+        self.pillow = get_kafka_ucr_pillow()
         self.pillow.bootstrap(configs=[self.config])
 
+    @temporarily_enable_toggle(KAFKA_UCRS, 'user-reports')
     def test_stale_rebuild(self):
         later_config = copy(self.config)
         later_config.save()
@@ -98,13 +99,15 @@ class IndicatorPillowTest(IndicatorPillowTestBase):
             self.pillow.rebuild_table(IndicatorSqlAdapter(self.config))
 
     @patch('corehq.apps.userreports.specs.datetime')
+    @temporarily_enable_toggle(KAFKA_UCRS, 'user-reports')
     def test_change_transport(self, datetime_mock):
         datetime_mock.utcnow.return_value = self.fake_time_now
         sample_doc, expected_indicators = get_sample_doc_and_indicators(self.fake_time_now)
-        self.pillow.change_transport(sample_doc)
+        self.pillow.processor(doc_to_change(sample_doc))
         self._check_sample_doc_state(expected_indicators)
 
     @patch('corehq.apps.userreports.specs.datetime')
+    @temporarily_enable_toggle(KAFKA_UCRS, 'user-reports')
     def test_rebuild_indicators(self, datetime_mock):
         datetime_mock.utcnow.return_value = self.fake_time_now
         self.config.save()
@@ -113,17 +116,18 @@ class IndicatorPillowTest(IndicatorPillowTestBase):
         rebuild_indicators(self.config._id)
         self._check_sample_doc_state(expected_indicators)
 
+    @temporarily_enable_toggle(KAFKA_UCRS, 'user-reports')
     def test_bad_integer_datatype(self):
         self.config.save()
         bad_ints = ['a', '', None]
         for bad_value in bad_ints:
-            self.pillow.change_transport({
+            self.pillow.processor(doc_to_change({
                 '_id': uuid.uuid4().hex,
                 'doc_type': 'CommCareCase',
                 'domain': 'user-reports',
                 'type': 'ticket',
                 'priority': bad_value
-            })
+            }))
         # make sure we saved rows to the table for everything
         self.assertEqual(len(bad_ints), self.adapter.get_query_object().count())
 
