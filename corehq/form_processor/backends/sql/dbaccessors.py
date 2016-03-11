@@ -2,11 +2,13 @@ import logging
 from itertools import groupby
 from datetime import datetime
 
+import itertools
 from django.db import connections, InternalError, transaction
+
 from corehq.form_processor.exceptions import XFormNotFound, CaseNotFound, AttachmentNotFound, CaseSaveError, \
     LedgerSaveError
 from corehq.form_processor.interfaces.dbaccessors import AbstractCaseAccessor, AbstractFormAccessor, \
-    CaseIndexInfo, AttachmentContent
+    CaseIndexInfo, AttachmentContent, AbstractLedgerAccessor
 from corehq.form_processor.models import (
     XFormInstanceSQL, CommCareCaseIndexSQL, CaseAttachmentSQL, CaseTransaction,
     CommCareCaseSQL, XFormAttachmentSQL, XFormOperationSQL,
@@ -609,7 +611,7 @@ class CaseAccessorSQL(AbstractCaseAccessor):
             return sum([result.affected_count for result in results])
 
 
-class LedgerAccessorSQL(object):
+class LedgerAccessorSQL(AbstractLedgerAccessor):
     @staticmethod
     def get_ledger_values_for_case(case_id):
         return list(LedgerValue.objects.raw(
@@ -665,6 +667,15 @@ class LedgerAccessorSQL(object):
             "SELECT * FROM get_ledger_transactions_for_case(%s, %s, %s, %s, %s)",
             [case_id, entry_id, section_id, window_start, window_end]
         ))
+
+    @staticmethod
+    def get_transactions_for_consumption(case_id, product_id, section_id, window_start, window_end):
+        transactions = LedgerAccessorSQL.get_ledger_transactions_in_window(
+            case_id, product_id, section_id, window_start, window_end
+        )
+        return itertools.chain.from_iterable([
+            transaction.get_consumption_transactions() for transaction in transactions
+        ])
 
 
 def _order_list(id_list, object_list, id_property):

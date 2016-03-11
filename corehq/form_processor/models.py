@@ -1033,6 +1033,7 @@ class LedgerTransaction(DisabledDbMixin, models.Model):
 
     form_id = models.CharField(max_length=255, null=False)
     server_date = models.DateTimeField()
+    report_date = models.DateTimeField()
     type = models.PositiveSmallIntegerField(choices=TYPE_CHOICES)
     case_id = models.CharField(max_length=255, db_index=True, default=None)
     entry_id = models.CharField(max_length=100, db_index=True, default=None)
@@ -1060,7 +1061,7 @@ class LedgerTransaction(DisabledDbMixin, models.Model):
             ConsumptionTransaction(
                 TRANSACTION_TYPE_CONSUMPTION if self.delta < 0 else TRANSACTION_TYPE_RECEIPTS,
                 abs(self.delta),
-                self.server_date
+                self.report_date
             )
         ]
         if self.type == LedgerTransaction.TYPE_BALANCE:
@@ -1068,7 +1069,7 @@ class LedgerTransaction(DisabledDbMixin, models.Model):
                 ConsumptionTransaction(
                     TRANSACTION_TYPE_STOCKONHAND,
                     self.updated_balance,
-                    self.server_date
+                    self.report_date
                 )
             )
         return transactions

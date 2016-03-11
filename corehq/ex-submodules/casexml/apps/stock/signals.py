@@ -119,6 +119,7 @@ def update_stock_state_for_transaction(instance):
         consumption_calc = None
 
     state.daily_consumption = compute_daily_consumption(
+        domain_name,
         instance.case_id,
         instance.product_id,
         instance.report.date,

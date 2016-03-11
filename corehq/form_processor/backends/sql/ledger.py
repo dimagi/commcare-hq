@@ -62,6 +62,7 @@ def _get_ledget_transaction(lazy_original_balance, stock_report_helper, stock_tr
     return LedgerTransaction(
         form_id=stock_report_helper.form_id,
         server_date=stock_report_helper.server_date,
+        report_date=stock_report_helper.timestamp,
         type=_report_type_to_ledger_type(stock_report_helper.report_type),
         case_id=stock_trans.case_id,
         section_id=stock_trans.section_id,

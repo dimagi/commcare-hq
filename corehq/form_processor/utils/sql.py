@@ -164,6 +164,7 @@ def ledger_transaction_adapter(ledger_transaction):
         adapt(ledger_transaction.id).getquoted(),
         adapt(ledger_transaction.form_id).getquoted(),
         adapt(ledger_transaction.server_date).getquoted(),
+        adapt(ledger_transaction.report_date).getquoted(),
         adapt(ledger_transaction.type).getquoted(),
         adapt(ledger_transaction.case_id).getquoted(),
         adapt(ledger_transaction.entry_id).getquoted(),

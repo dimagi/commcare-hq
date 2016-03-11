@@ -11,7 +11,7 @@ DECLARE
     select_expr    TEXT := 'SELECT * FROM form_processor_ledgertransaction WHERE case_id = $1';
     entry_filter   TEXT := ' AND entry_id = $2';
     section_filter TEXT := ' AND section_id = $3';
-    date_filter    TEXT := ' AND server_date > $4 AND server_date <= %5';
+    date_filter    TEXT := ' AND report_date > $4 AND report_date <= $5';
     exists        BOOLEAN;
 BEGIN
     IF p_entry_id <> '' THEN
@@ -26,7 +26,7 @@ BEGIN
         select_expr := select_expr || date_filter;
     END IF;
 
-    select_expr := select_expr || ' ORDER BY server_date';
+    select_expr := select_expr || ' ORDER BY report_date asc';
 
     RETURN QUERY
     EXECUTE select_expr

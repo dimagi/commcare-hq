@@ -7,7 +7,6 @@ from casexml.apps.stock.consumption import compute_daily_consumption, Consumptio
 from casexml.apps.stock.tests.mock_consumption import ago, now
 from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.products.models import SQLProduct
-from corehq.form_processor.tests import FormProcessorTestUtils
 
 
 class StockTestBase(TestCase):
@@ -30,10 +29,11 @@ class StockTestBase(TestCase):
         self._stock_report = functools.partial(_stock_report, self.domain.name, self.case_id, self.product_id)
         self._receipt_report = functools.partial(_receipt_report, self.domain.name, self.case_id, self.product_id)
         self._test_config = ConsumptionConfiguration.test_config()
-        self._compute_consumption = functools.partial(compute_daily_consumption, self.case_id,
+        self._compute_consumption = functools.partial(compute_daily_consumption, self.domain.name, self.case_id,
                                                       self.product_id, now, configuration=self._test_config)
 
     def tearDown(self):
+        from corehq.form_processor.tests import FormProcessorTestUtils
         FormProcessorTestUtils.delete_all_xforms(self.domain.name)
         FormProcessorTestUtils.delete_all_cases(self.domain.name)
 

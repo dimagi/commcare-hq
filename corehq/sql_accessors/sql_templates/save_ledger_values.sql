@@ -31,10 +31,10 @@ BEGIN
             RAISE EXCEPTION 'Updating ledger transactions is not supported';
         ELSE
             INSERT INTO form_processor_ledgertransaction (
-                form_id, server_date, type, case_id, entry_id, section_id,
+                form_id, server_date, report_date, type, case_id, entry_id, section_id,
                 user_defined_type, delta, updated_balance
             ) VALUES (
-                ledger_transaction.form_id, ledger_transaction.server_date, ledger_transaction.type,
+                ledger_transaction.form_id, ledger_transaction.server_date, ledger_transaction.report_date, ledger_transaction.type,
                 ledger_transaction.case_id, ledger_transaction.entry_id, ledger_transaction.section_id,
                 ledger_transaction.user_defined_type, ledger_transaction.delta, ledger_transaction.updated_balance
             );

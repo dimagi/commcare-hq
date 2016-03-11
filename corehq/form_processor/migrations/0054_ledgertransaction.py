@@ -19,6 +19,7 @@ class Migration(migrations.Migration):
                 ('id', models.AutoField(verbose_name='ID', serialize=False, auto_created=True, primary_key=True)),
                 ('form_id', models.CharField(max_length=255)),
                 ('server_date', models.DateTimeField()),
+                ('report_date', models.DateTimeField()),
                 ('type', models.PositiveSmallIntegerField(choices=[(1, b'balance'), (2, b'transfer')])),
                 ('case_id', models.CharField(default=None, max_length=255)),
                 ('entry_id', models.CharField(default=None, max_length=100)),

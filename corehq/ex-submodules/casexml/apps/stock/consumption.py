@@ -4,8 +4,6 @@ from decimal import Decimal
 from dimagi.utils import parsing as dateparse
 from datetime import datetime, timedelta
 from casexml.apps.stock import const
-from casexml.apps.stock.models import StockTransaction
-from dimagi.utils.dates import force_to_datetime
 
 DEFAULT_CONSUMPTION_FUNCTION = lambda case_id, product_id: None
 
@@ -68,7 +66,8 @@ def span_days(start, end):
     return span.days + span.seconds / 86400.
 
 
-def compute_daily_consumption(case_id,
+def compute_daily_consumption(domain,
+                        case_id,
                         product_id,
                         window_end,
                         section_id=const.SECTION_TYPE_STOCK,
@@ -81,10 +80,11 @@ def compute_daily_consumption(case_id,
 
     Returns None if there is insufficient history.
     """
+    from corehq.form_processor.interfaces.dbaccessors import LedgerAccessors
 
     configuration = configuration or ConsumptionConfiguration()
     window_start = window_end - timedelta(days=configuration.max_window)
-    transactions = get_transactions(
+    transactions = LedgerAccessors(domain).get_transactions_for_consumption(
         case_id,
         product_id,
         section_id,
@@ -94,7 +94,8 @@ def compute_daily_consumption(case_id,
     return compute_daily_consumption_from_transactions(transactions, window_start, configuration)
 
 
-def compute_consumption_or_default(case_id,
+def compute_consumption_or_default(domain,
+                                   case_id,
                                    product_id,
                                    window_end,
                                    section_id=const.SECTION_TYPE_STOCK,
@@ -105,6 +106,7 @@ def compute_consumption_or_default(case_id,
     """
     configuration = configuration or ConsumptionConfiguration()
     daily_consumption = compute_daily_consumption(
+        domain,
         case_id,
         product_id,
         window_end,
@@ -127,31 +129,6 @@ def compute_default_monthly_consumption(case_id, product_id, configuration):
         case_id,
         product_id,
     )
-
-
-def get_transactions(case_id, product_id, section_id, window_start, window_end):
-    """
-    Given a case/product pair, get transactions in a format ready for consumption calc
-    """
-    # todo: beginning of window date filtering
-    db_transactions = StockTransaction.objects.filter(
-        case_id=case_id, product_id=product_id,
-        report__date__gt=window_start,
-        report__date__lte=force_to_datetime(window_end),
-        section_id=section_id,
-    ).order_by('report__date', 'pk')
-
-    first = True
-    for db_tx in db_transactions:
-        # for the very first transaction, include the previous one if there as well
-        # to capture the data on the edge of the window
-        if first:
-            previous = db_tx.get_previous_transaction()
-            if previous:
-                yield db_tx
-            first = False
-
-        yield db_tx
 
 
 def compute_daily_consumption_from_transactions(transactions, window_start, configuration=None):
