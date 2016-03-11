@@ -107,7 +107,7 @@
 <div class="col-md-4">
     <h2>{% trans "Newly Inactive Users" %}</h2>
     <p class="lead">
-        {% trans "These are people who stopped using CommCare last month" %}
+        {% trans "These are people who stopped using CommCare last month. They could use a follow up!" %}
     </p>
     {% with last_month.get_dropouts as user_list %}
         {% include "reports/project_health/partials/user_list.html" %}
