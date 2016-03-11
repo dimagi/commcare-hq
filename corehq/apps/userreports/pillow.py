@@ -108,47 +108,6 @@ class ConfigurableReportTableManagerMixin(object):
             rebuild_indicators.delay(sql_adapter.config.get_id)
 
 
-class ConfigurableIndicatorPillow(ConfigurableReportTableManagerMixin, PythonPillow):
-
-    def __init__(self, data_source_provider=None, auto_repopulate_tables=False,
-                 pillow_checkpoint_id=UCR_CHECKPOINT_ID):
-        # todo: this will need to not be hard-coded if we ever split out forms and cases into their own databases
-        couch_db = CachedCouchDB(CommCareCase.get_db().uri, readonly=False)
-        checkpoint = PillowCheckpoint(pillow_checkpoint_id)
-        if data_source_provider is None:
-            data_source_provider = DynamicDataSourceProvider()
-        super(ConfigurableIndicatorPillow, self).__init__(
-            data_source_provider=data_source_provider,
-            couch_db=couch_db,
-            checkpoint=checkpoint,
-        )
-
-    def run(self):
-        self.bootstrap()
-        super(ConfigurableIndicatorPillow, self).run()
-
-    def change_trigger(self, changes_dict):
-        self.bootstrap_if_needed()
-        if changes_dict.get('deleted', False):
-            # we don't currently support hard-deletions at all.
-            # we may want to change this at some later date but seem ok for now.
-            # see https://github.com/dimagi/commcare-hq/pull/6944 for rationale
-            pass
-        return super(ConfigurableIndicatorPillow, self).change_trigger(changes_dict)
-
-    def change_transport(self, doc):
-        domain = doc.get('domain', None)
-        # domains with kafka ucrs enabled should be processed by the other pillow
-        if KAFKA_UCRS.enabled(domain):
-            return
-
-        for table in self.table_adapters:
-            if table.config.filter(doc):
-                table.save(doc)
-            elif table.config.deleted_filter(doc):
-                table.delete(doc)
-
-
 class ConfigurableReportPillowProcessor(ConfigurableReportTableManagerMixin, PillowProcessor):
 
     def process_change(self, pillow_instance, change, do_set_checkpoint):

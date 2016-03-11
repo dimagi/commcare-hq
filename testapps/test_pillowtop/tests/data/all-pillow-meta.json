@@ -114,19 +114,6 @@
         "name": "CasePillow",
         "unique_id": "d94ad23a98ddd2e9c36a9dc73bb58bac"
     },
-    "ConfigurableIndicatorPillow": {
-        "advertised_name": "corehq.apps.userreports.pillow.ConfigurableIndicatorPillow.testhq",
-        "change_feed_type": "CouchChangeFeed",
-        "checkpoint_id": "pillow-checkpoint-ucr-main",
-        "couch_filter": null,
-        "couchdb_type": "CachedCouchDB",
-        "couchdb_uri": "http://{COUCH_SERVER_ROOT}/test_commcarehq",
-        "document_class": null,
-        "extra_args": {},
-        "full_class_name": "corehq.apps.userreports.pillow.ConfigurableIndicatorPillow",
-        "include_docs": false,
-        "name": "ConfigurableIndicatorPillow"
-    },
     "CouvertureFluffPillow": {
         "advertised_name": "fluff.CouvertureFluffPillow.testhq",
         "change_feed_type": "KafkaChangeFeed",
