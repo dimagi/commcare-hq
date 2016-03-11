@@ -47,7 +47,8 @@
 </script>
 {% endblock %}
 {% block main_column_content %}
-<h1>{% trans "Last Month Stats" %}</h1>
+    <h1>{% trans "Project Health Dashboard" %}</h1>
+    <h2>{% trans "Last Month Stats" %}</h2>
 <table class="table lead">
     <thead>
         <tr>
@@ -73,22 +74,22 @@
         </td>
     </tr>
 </table>
-<h1>{% trans "Performing / Active User Trends" %}</h1>
+<h2>{% trans "Performing / Active User Trends" %}</h2>
 <div id="chart"><svg></svg></div>
 <div class="col-md-4">
-    <h1>{% trans "Active, Non-Performing Users" %}</h1>
+    <h2>{% trans "Active, Non-Performing Users" %}</h2>
     {% with last_month.get_unhealthy_users as user_list %}
         {% include "reports/project_health/partials/user_list.html" %}
     {% endwith %}
 </div>
 <div class="col-md-4">
-    <h1>{% trans "Newly Inactive Users" %}</h1>
+    <h2>{% trans "Newly Inactive Users" %}</h2>
     {% with last_month.get_dropouts as user_list %}
         {% include "reports/project_health/partials/user_list.html" %}
     {% endwith %}
 </div>
 <div class="col-md-4">
-    <h1>{% trans "Newly Performing Users" %}</h1>
+    <h2>{% trans "Newly Performing Users" %}</h2>
     {% with last_month.get_newly_performing as user_list %}
         {% include "reports/project_health/partials/user_list.html" %}
     {% endwith %}
