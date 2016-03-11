@@ -942,6 +942,16 @@ LOGGING = {
             'level': 'INFO',
             'propogate': False,
         },
+        'formplayer_timing': {
+            'handlers': ['formplayer_timing'],
+            'level': 'INFO',
+            'propogate': True,
+        },
+        'formplayer_diff': {
+            'handlers': ['formplayer_diff'],
+            'level': 'INFO',
+            'propogate': True,
+        },
         'formplayer': {
             'handlers': ['formplayer_diff', 'formplayer_timing'],
             'level': 'INFO',
