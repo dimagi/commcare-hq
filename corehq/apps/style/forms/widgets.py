@@ -1,7 +1,15 @@
 from django import forms
 from django.forms.fields import MultiValueField, CharField
 from django.forms.util import flatatt
-from django.forms.widgets import CheckboxInput, HiddenInput, Input, RadioSelect, RadioFieldRenderer, RadioChoiceInput, TextInput, MultiWidget
+from django.forms.widgets import (
+    CheckboxInput,
+    Input,
+    MultiWidget,
+    RadioChoiceInput,
+    RadioFieldRenderer,
+    RadioSelect,
+    TextInput,
+)
 from django.utils.encoding import force_unicode
 from django.utils.html import conditional_escape
 from django.utils.safestring import mark_safe
