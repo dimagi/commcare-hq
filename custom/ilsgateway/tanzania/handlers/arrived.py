@@ -11,7 +11,7 @@ class ArrivedHandler(KeywordHandler):
     def handle(self):
         if not self.args:
             self.respond(ARRIVED_HELP)
-            return
+            return True
 
         msdcode = self.args[0]
         try:
