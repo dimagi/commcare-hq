@@ -314,7 +314,7 @@ def get_cached_case_attachment(domain, case_id, attachment_id, is_image=False):
 
 class AbstractLedgerAccessor(six.with_metaclass(ABCMeta)):
     @abstractmethod
-    def get_transactions_for_consumption(case_id, product_id, section_id, window_start, window_end):
+    def get_transactions_for_consumption(domain, case_id, product_id, section_id, window_start, window_end):
         raise NotImplementedError
 
 
@@ -336,4 +336,6 @@ class LedgerAccessors(object):
             return LedgerAccessorCouch
 
     def get_transactions_for_consumption(self, case_id, product_id, section_id, window_start, window_end):
-        return self.db_accessor.get_transactions_for_consumption(case_id, product_id, section_id, window_start, window_end)
+        return self.db_accessor.get_transactions_for_consumption(
+            self.domain, case_id, product_id, section_id, window_start, window_end
+        )

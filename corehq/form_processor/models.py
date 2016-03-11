@@ -1046,7 +1046,7 @@ class LedgerTransaction(DisabledDbMixin, models.Model):
     # new balance
     updated_balance = models.IntegerField(default=0)
 
-    def get_consumption_transactions(self):
+    def get_consumption_transactions(self, exclude_inferred_receipts=False):
         """
         This adds in the inferred transactions for BALANCE transactions and converts
         TRANSFER transactions to ``consumption`` / ``receipts``
@@ -1059,12 +1059,15 @@ class LedgerTransaction(DisabledDbMixin, models.Model):
         )
         transactions = [
             ConsumptionTransaction(
-                TRANSACTION_TYPE_CONSUMPTION if self.delta < 0 else TRANSACTION_TYPE_RECEIPTS,
+                TRANSACTION_TYPE_RECEIPTS if self.delta > 0 else TRANSACTION_TYPE_CONSUMPTION ,
                 abs(self.delta),
                 self.report_date
             )
         ]
         if self.type == LedgerTransaction.TYPE_BALANCE:
+            if self.delta > 0 and exclude_inferred_receipts:
+                transactions = []
+
             transactions.append(
                 ConsumptionTransaction(
                     TRANSACTION_TYPE_STOCKONHAND,

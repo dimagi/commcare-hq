@@ -138,10 +138,11 @@ class ConsumptionCalcTest(SimpleTestCase):
 
 class ConsumptionCalcTestNew(SimpleTestCase):
 
-    def consumption(self, txdata, window, params=None):
+    def consumption(self, txdata, window, exclude_invalid_periods=False):
         consumption_tx_data = []
         for tx in txdata:
-            consumption_tx_data.extend(tx.get_consumption_transactions())
+            consumption_tx_data.extend(tx.get_consumption_transactions(exclude_invalid_periods))
+        params = {'exclude_invalid_periods': exclude_invalid_periods}
         return consumption(consumption_tx_data, window, params)
 
     def test_one_period(self):
@@ -178,19 +179,18 @@ class ConsumptionCalcTestNew(SimpleTestCase):
             ], 60), 5.4)
 
     def test_one_period_with_receipts(self):
-        consumption_with_receipts = partial(self.consumption, params={'exclude_invalid_periods': True})
         self.assertIsNone(
-            consumption_with_receipts([
+            self.consumption([
                 _tx_new(LedgerTransaction.TYPE_BALANCE, 25, 25, 5),
                 _tx_new(LedgerTransaction.TYPE_TRANSFER, 10, 35, 0),
-                _tx_new(LedgerTransaction.TYPE_BALANCE, 0, 40, 0),  # invalid
-            ], 60))
+                _tx_new(LedgerTransaction.TYPE_BALANCE, 5, 40, 0),  # invalid
+            ], 60, exclude_invalid_periods=True))
 
         self.assertIsNotNone(
             self.consumption([
                 _tx_new(LedgerTransaction.TYPE_BALANCE, 25, 25, 5),
                 _tx_new(LedgerTransaction.TYPE_TRANSFER, 10, 35, 0),
-                _tx_new(LedgerTransaction.TYPE_BALANCE, 0, 40, 0),  # invalid
+                _tx_new(LedgerTransaction.TYPE_BALANCE, 5, 40, 0),  # invalid
             ], 60)
         )
 
@@ -263,5 +263,5 @@ def _tx_new(type_, delta, updated_balance, age):
         type=type_,
         delta=delta,
         updated_balance=updated_balance,
-        server_date=ago(age)
+        report_date=ago(age)
     )

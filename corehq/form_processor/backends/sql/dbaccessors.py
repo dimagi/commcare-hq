@@ -669,12 +669,15 @@ class LedgerAccessorSQL(AbstractLedgerAccessor):
         ))
 
     @staticmethod
-    def get_transactions_for_consumption(case_id, product_id, section_id, window_start, window_end):
+    def get_transactions_for_consumption(domain, case_id, product_id, section_id, window_start, window_end):
+        from corehq.apps.commtrack.consumption import should_exclude_invalid_periods
         transactions = LedgerAccessorSQL.get_ledger_transactions_in_window(
             case_id, product_id, section_id, window_start, window_end
         )
+        exclude_inferred_receipts = should_exclude_invalid_periods(domain)
         return itertools.chain.from_iterable([
-            transaction.get_consumption_transactions() for transaction in transactions
+            transaction.get_consumption_transactions(exclude_inferred_receipts)
+            for transaction in transactions
         ])
 
 
