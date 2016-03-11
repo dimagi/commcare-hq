@@ -167,7 +167,7 @@ class ConfigurableReportDataSource(SqlData):
         # for columns that end up being complex queries (e.g. aggregate dates)
         # there could be more than one column ID and they may specify aliases
         if column_id in self._column_configs:
-            return self._column_configs[column_id].get_database_column_ids()
+            return self._column_configs[column_id].get_query_column_ids()
         else:
             # if the column isn't found just treat it as a normal field
             return [column_id]

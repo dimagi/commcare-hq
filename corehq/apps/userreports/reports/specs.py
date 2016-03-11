@@ -72,7 +72,12 @@ class ReportColumn(JsonObject):
             return TransformFactory.get_transform(self.transform).get_transform_function()
         return None
 
-    def get_database_column_ids(self):
+    def get_query_column_ids(self):
+        """
+        Gets column IDs associated with a query. These could be different from
+        the normal column_ids if the same column ends up in multiple columns in
+        the query (e.g. an aggregate date splitting into year and month)
+        """
         raise NotImplementedError(_("You can't group by columns of type {}".format(self.type)))
 
     def get_header(self, lang):
@@ -134,7 +139,7 @@ class FieldColumn(ReportColumn):
             )
         ])
 
-    def get_database_column_ids(self):
+    def get_query_column_ids(self):
         return [self.column_id]
 
 
@@ -218,7 +223,7 @@ class AggregateDateColumn(ReportColumn):
             return '{}-{:02d}'.format(int(data['year']), int(data['month']))
         return _format
 
-    def get_database_column_ids(self):
+    def get_query_column_ids(self):
         return [self._year_column_alias(), self._month_column_alias()]
 
 
