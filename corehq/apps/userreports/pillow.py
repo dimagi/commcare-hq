@@ -189,7 +189,7 @@ class ConfigurableReportKafkaPillow(ConstructedPillow):
     # we could easily remove the class and push all the stuff in __init__ to
     # get_kafka_ucr_pillow below if we wanted.
 
-    def __init__(self, data_source_provider, pillow_name):
+    def __init__(self, processor, pillow_name):
         change_feed = KafkaChangeFeed(topics.ALL, group_id=pillow_name)
         checkpoint = PillowCheckpoint(pillow_name)
         event_handler = MultiTopicCheckpointEventHandler(
@@ -199,7 +199,7 @@ class ConfigurableReportKafkaPillow(ConstructedPillow):
             name=pillow_name,
             document_store=None,
             change_feed=change_feed,
-            processor=ConfigurableReportPillowProcessor(data_source_provider),
+            processor=processor,
             checkpoint=checkpoint,
             change_processed_event_handler=event_handler
         )
@@ -213,11 +213,19 @@ class ConfigurableReportKafkaPillow(ConstructedPillow):
 
 def get_kafka_ucr_pillow():
     return ConfigurableReportKafkaPillow(
-        data_source_provider=DynamicDataSourceProvider(), pillow_name='kafka-ucr-main'
+        processor=ConfigurableReportPillowProcessor(
+            data_source_provider=DynamicDataSourceProvider(),
+            auto_repopulate_tables=False,
+        ),
+        pillow_name='kafka-ucr-main',
     )
 
 
 def get_kafka_ucr_static_pillow():
     return ConfigurableReportKafkaPillow(
-        data_source_provider=StaticDataSourceProvider(), pillow_name='kafka-ucr-static'
+        processor=ConfigurableReportPillowProcessor(
+            data_source_provider=StaticDataSourceProvider(),
+            auto_repopulate_tables=True,
+        ),
+        pillow_name='kafka-ucr-static',
     )
