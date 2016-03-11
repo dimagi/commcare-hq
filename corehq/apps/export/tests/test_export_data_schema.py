@@ -2,11 +2,14 @@ import os
 from mock import patch
 
 from django.test import SimpleTestCase, TestCase
+
+from corehq.apps.export.models.new import SystemExportItem
 from dimagi.utils.couch.database import safe_delete
 from corehq.apps.app_manager.tests.util import TestXmlMixin
 from corehq.apps.app_manager.models import XForm, Application
-from corehq.apps.export.models import FormExportDataSchema, CaseExportDataSchema, ExportDataSchema
-from corehq.apps.export.const import CASE_HISTORY_PROPERTIES, PROPERTY_TAG_UPDATE, MAIN_TABLE_PROPERTIES, \
+from corehq.apps.export.models import FormExportDataSchema, CaseExportDataSchema, ExportDataSchema, \
+    MultipleChoiceItem
+from corehq.apps.export.const import CASE_HISTORY_PROPERTIES, PROPERTY_TAG_UPDATE, MAIN_FORM_TABLE_PROPERTIES, \
     MAIN_TABLE
 
 
@@ -29,7 +32,7 @@ class TestFormExportDataSchema(SimpleTestCase, TestXmlMixin):
 
         group_schema = schema.group_schemas[0]
 
-        self.assertEqual(len(group_schema.items), 2 + len(MAIN_TABLE_PROPERTIES))
+        self.assertEqual(len(group_schema.items), 2 + len(MAIN_FORM_TABLE_PROPERTIES))
 
         form_items = filter(lambda item: item.tag is None, group_schema.items)
         self.assertEqual(form_items[0].path, ['form', 'question1'])
@@ -48,7 +51,7 @@ class TestFormExportDataSchema(SimpleTestCase, TestXmlMixin):
         self.assertEqual(len(schema.group_schemas), 2)
 
         group_schema = schema.group_schemas[0]
-        self.assertEqual(len(group_schema.items), 1 + len(MAIN_TABLE_PROPERTIES))
+        self.assertEqual(len(group_schema.items), 1 + len(MAIN_FORM_TABLE_PROPERTIES))
         self.assertEqual(group_schema.path, MAIN_TABLE)
 
         form_items = filter(lambda item: item.tag is None, group_schema.items)
@@ -71,7 +74,7 @@ class TestFormExportDataSchema(SimpleTestCase, TestXmlMixin):
         self.assertEqual(len(schema.group_schemas), 1)
         group_schema = schema.group_schemas[0]
 
-        self.assertEqual(len(group_schema.items), 2 + len(MAIN_TABLE_PROPERTIES))
+        self.assertEqual(len(group_schema.items), 2 + len(MAIN_FORM_TABLE_PROPERTIES))
         form_items = filter(lambda item: item.tag is None, group_schema.items)
         self.assertEqual(form_items[0].path, ['form', 'question1'])
 
@@ -166,7 +169,7 @@ class TestMergingFormExportDataSchema(SimpleTestCase, TestXmlMixin):
         self.assertEqual(len(merged.group_schemas), 1)
 
         group_schema = merged.group_schemas[0]
-        self.assertEqual(len(group_schema.items), 3 + len(MAIN_TABLE_PROPERTIES))
+        self.assertEqual(len(group_schema.items), 3 + len(MAIN_FORM_TABLE_PROPERTIES))
         self.assertTrue(all(map(
             lambda item: item.last_occurrences[self.app_id] == 2,
             group_schema.items,
@@ -179,14 +182,15 @@ class TestMergingFormExportDataSchema(SimpleTestCase, TestXmlMixin):
         self.assertEqual(len(merged.group_schemas), 1)
 
         group_schema = merged.group_schemas[0]
-        self.assertEqual(len(group_schema.items), 2 + len(MAIN_TABLE_PROPERTIES))
+        self.assertEqual(len(group_schema.items), 2 + len(MAIN_FORM_TABLE_PROPERTIES))
 
-        v1items = filter(lambda item: item.last_occurrences[self.app_id] == 1, group_schema.items)
-        v2items = filter(lambda item: item.last_occurrences[self.app_id] == 2, group_schema.items)
+        non_system_items = [i for i in group_schema.items if not isinstance(i, SystemExportItem)]
+        v1items = filter(lambda item: item.last_occurrences[self.app_id] == 1, non_system_items)
+        v2items = filter(lambda item: item.last_occurrences[self.app_id] == 2, non_system_items)
 
         self.assertEqual(
             len(v2items),
-            1 + len(MAIN_TABLE_PROPERTIES),
+            1,
             'There should be 1 item that was found in the second version. There was {}'.format(len(v2items))
         )
         self.assertEqual(
@@ -231,7 +235,7 @@ class TestMergingFormExportDataSchema(SimpleTestCase, TestXmlMixin):
         group_schema2 = merged.group_schemas[1]
 
         self.assertEqual(group_schema1.last_occurrences[self.app_id], 2)
-        self.assertEqual(len(group_schema1.items), 2 + len(MAIN_TABLE_PROPERTIES))
+        self.assertEqual(len(group_schema1.items), 2 + len(MAIN_FORM_TABLE_PROPERTIES))
 
         self.assertEqual(group_schema2.last_occurrences[self.app_id], 1)
         self.assertEqual(len(group_schema2.items), 1)
