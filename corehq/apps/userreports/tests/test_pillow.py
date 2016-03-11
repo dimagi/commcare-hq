@@ -83,6 +83,11 @@ class IndicatorPillowTestBase(TestCase):
 
 
 class IndicatorPillowTest(IndicatorPillowTestBase):
+    dependent_apps = [
+        'couchforms', 'pillowtop', 'corehq.couchapps', 'corehq.apps.tzmigration',
+        'corehq.form_processor', 'corehq.sql_accessors', 'corehq.sql_proxy_accessors',
+        'casexml.apps.case', 'casexml.apps.phone'
+    ]
 
     @softer_assert
     def setUp(self):
@@ -130,20 +135,6 @@ class IndicatorPillowTest(IndicatorPillowTestBase):
             }))
         # make sure we saved rows to the table for everything
         self.assertEqual(len(bad_ints), self.adapter.get_query_object().count())
-
-
-class KafkaIndicatorPillowTest(IndicatorPillowTestBase):
-    dependent_apps = [
-        'couchforms', 'pillowtop', 'corehq.couchapps', 'corehq.apps.tzmigration',
-        'corehq.form_processor', 'corehq.sql_accessors', 'corehq.sql_proxy_accessors',
-        'casexml.apps.case', 'casexml.apps.phone'
-    ]
-
-    @softer_assert
-    def setUp(self):
-        super(KafkaIndicatorPillowTest, self).setUp()
-        self.pillow = get_kafka_ucr_pillow()
-        self.pillow.bootstrap(configs=[self.config])
 
     @patch('corehq.apps.userreports.specs.datetime')
     @temporarily_enable_toggle(KAFKA_UCRS, 'user-reports')
