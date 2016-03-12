@@ -19,6 +19,7 @@ from corehq.apps.userreports.reports.sorting import ASCENDING
 from corehq.apps.userreports.reports.util import get_expanded_columns, get_total_row
 from corehq.apps.userreports.sql import get_table_name
 from corehq.apps.userreports.sql.connection import get_engine_id
+from corehq.util.soft_assert import soft_assert
 
 
 class ConfigurableReportDataSource(SqlData):
@@ -144,6 +145,11 @@ class ConfigurableReportDataSource(SqlData):
             ColumnNotFoundException,
             ProgrammingError,
         ) as e:
+            _soft_assert = soft_assert(
+                to='{}@{}'.format('npellegrino+ucr-get-data', 'dimagi.com'),
+                exponential_backoff=False,
+            )
+            _soft_assert(False, unicode(e))
             raise UserReportsError(unicode(e))
         except TableNotFoundException:
             raise TableNotFoundWarning
