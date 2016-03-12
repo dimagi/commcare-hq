@@ -39,7 +39,7 @@ class LossAndAdjustment(KeywordHandler):
         error = False
         for product_code, quantity in parsed_report:
             try:
-                product_id = SQLProduct.objects.get(domain=self.domain, code=product_code).product_id
+                product_id = SQLProduct.objects.get(domain=self.domain, code__iexact=product_code).product_id
                 self._create_stock_transaction(report, product_id, quantity)
             except SQLProduct.DoesNotExist:
                 error = True
