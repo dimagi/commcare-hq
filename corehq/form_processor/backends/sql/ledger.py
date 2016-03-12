@@ -47,7 +47,7 @@ class LedgerProcessorSQL(LedgerProcessorInterface):
                 ledger_value = LedgerValue(**stock_trans.ledger_reference._asdict())
 
             ledger_value.track_create(
-                _get_ledget_transaction(_lazy_original_balance, stock_report_helper, stock_trans, new_ledger_values.balance)
+                _get_ledger_transaction(_lazy_original_balance, stock_report_helper, stock_trans, new_ledger_values.balance)
             )
 
             # only do this after we've created the transaction otherwise we'll get the wrong delta
@@ -58,7 +58,7 @@ class LedgerProcessorSQL(LedgerProcessorInterface):
         return StockModelUpdateResult(to_save=to_save)
 
 
-def _get_ledget_transaction(lazy_original_balance, stock_report_helper, stock_trans, new_balance):
+def _get_ledger_transaction(lazy_original_balance, stock_report_helper, stock_trans, new_balance):
     return LedgerTransaction(
         form_id=stock_report_helper.form_id,
         server_date=stock_report_helper.server_date,
