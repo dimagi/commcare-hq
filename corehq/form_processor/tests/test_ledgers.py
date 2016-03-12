@@ -60,7 +60,7 @@ class LedgerTests(TestCase):
         # make sure the form is part of the case's history
         self.assertEqual(orignal_form_count + 1, len(self.interface.get_case_forms(self.case.case_id)))
         self._assert_transactions([
-            self._txv(100, 100)
+            self._expected_val(100, 100)
         ])
 
     @run_with_all_backends
@@ -76,7 +76,7 @@ class LedgerTests(TestCase):
         ])
         expected_transactions = []
         for prod_id, expected_balance in balances.items():
-            expected_transactions.append(self._txv(
+            expected_transactions.append(self._expected_val(
                 expected_balance, expected_balance, product_id=prod_id
             ))
             balance = self.interface.ledger_db.get_current_ledger_value(
@@ -99,9 +99,9 @@ class LedgerTests(TestCase):
         self._assert_ledger_state(150)
 
         self._assert_transactions([
-            self._txv(100, 100),
-            self._txv(-50, 50),
-            self._txv(100, 150),
+            self._expected_val(100, 100),
+            self._expected_val(-50, 50),
+            self._expected_val(100, 150),
         ])
 
     @run_with_all_backends
@@ -113,7 +113,7 @@ class LedgerTests(TestCase):
         self.assertEqual(orignal_form_count + 1, len(self.interface.get_case_forms(self.case.case_id)))
 
         self._assert_transactions([
-            self._txv(100, 100, type_=LedgerTransaction.TYPE_TRANSFER),
+            self._expected_val(100, 100, type_=LedgerTransaction.TYPE_TRANSFER),
         ])
 
     @run_with_all_backends
@@ -123,8 +123,8 @@ class LedgerTests(TestCase):
         self._assert_ledger_state(200)
 
         self._assert_transactions([
-            self._txv(100, 100),
-            self._txv(100, 200, type_=LedgerTransaction.TYPE_TRANSFER),
+            self._expected_val(100, 100),
+            self._expected_val(100, 200, type_=LedgerTransaction.TYPE_TRANSFER),
         ])
 
     @run_with_all_backends
@@ -140,12 +140,12 @@ class LedgerTests(TestCase):
         self._assert_ledger_state(140)
 
         self._assert_transactions([
-            self._txv(100, 100),
-            self._txv(100, 200, type_=LedgerTransaction.TYPE_TRANSFER),
-            self._txv(-20, 180, type_=LedgerTransaction.TYPE_TRANSFER),
-            self._txv(-30, 150),
-            self._txv(20, 170),
-            self._txv(-30, 140, type_=LedgerTransaction.TYPE_TRANSFER),
+            self._expected_val(100, 100),
+            self._expected_val(100, 200, type_=LedgerTransaction.TYPE_TRANSFER),
+            self._expected_val(-20, 180, type_=LedgerTransaction.TYPE_TRANSFER),
+            self._expected_val(-30, 150),
+            self._expected_val(20, 170),
+            self._expected_val(-30, 140, type_=LedgerTransaction.TYPE_TRANSFER),
         ])
 
     @run_with_all_backends
@@ -171,7 +171,7 @@ class LedgerTests(TestCase):
             )
 
         self._assert_transactions([
-            self._txv(100, 100),
+            self._expected_val(100, 100),
         ])
 
     def _assert_ledger_state(self, expected_balance):
@@ -197,5 +197,5 @@ class LedgerTests(TestCase):
                 self.assertEqual(expected.delta, tx.delta)
                 self.assertEqual(expected.updated_balance, tx.updated_balance)
 
-    def _txv(self, delta, updated_balance, type_=LedgerTransaction.TYPE_BALANCE, product_id=None):
+    def _expected_val(self, delta, updated_balance, type_=LedgerTransaction.TYPE_BALANCE, product_id=None):
         return TransactionValues(type_, product_id or self.product_a._id, delta, updated_balance)
