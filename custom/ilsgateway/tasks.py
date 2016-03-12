@@ -246,6 +246,11 @@ def recalculate_march_reporting_data_task(domain):
 
 @periodic_task(run_every=crontab(hour="4", minute="00", day_of_week="*"),
                queue='logistics_background_queue')
+def report_run_periodic_task():
+    report_run('ils-gateway')
+
+
+@task(queue='logistics_background_queue', ignore_result=True)
 def report_run(domain, locations=None, strict=True):
     last_successful_run = ReportRun.last_success(domain)
     recalculation_on_location_change(domain, last_successful_run)
