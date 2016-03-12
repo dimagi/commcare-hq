@@ -138,11 +138,15 @@ class ConsumptionCalcTest(SimpleTestCase):
 
 class ConsumptionCalcTestNew(SimpleTestCase):
 
-    def consumption(self, txdata, window, exclude_invalid_periods=False):
+    def consumption(self, txdata, window, params=None):
         consumption_tx_data = []
+        exclude_inferred_receipts = params.get('exclude_invalid_periods', False) if params else False
         for tx in txdata:
-            consumption_tx_data.extend(tx.get_consumption_transactions(exclude_invalid_periods))
-        params = {'exclude_invalid_periods': exclude_invalid_periods}
+            consumption_tx_data.extend(tx.get_consumption_transactions(
+                exclude_inferred_receipts)
+            )
+        for tx in consumption_tx_data:
+            print tx
         return consumption(consumption_tx_data, window, params)
 
     def test_one_period(self):
@@ -184,7 +188,7 @@ class ConsumptionCalcTestNew(SimpleTestCase):
                 _tx_new(LedgerTransaction.TYPE_BALANCE, 25, 25, 5),
                 _tx_new(LedgerTransaction.TYPE_TRANSFER, 10, 35, 0),
                 _tx_new(LedgerTransaction.TYPE_BALANCE, 5, 40, 0),  # invalid
-            ], 60, exclude_invalid_periods=True))
+            ], 60, {'exclude_invalid_periods': True}))
 
         self.assertIsNotNone(
             self.consumption([
