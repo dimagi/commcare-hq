@@ -66,12 +66,9 @@ def span_days(start, end):
     return span.days + span.seconds / 86400.
 
 
-def compute_daily_consumption(domain,
-                        case_id,
-                        product_id,
-                        window_end,
-                        section_id=const.SECTION_TYPE_STOCK,
-                        configuration=None):
+def compute_daily_consumption(
+        domain, case_id, product_id, window_end,
+        section_id=const.SECTION_TYPE_STOCK, configuration=None):
     """
     Computes the consumption for a product at a supply point.
 
@@ -94,12 +91,9 @@ def compute_daily_consumption(domain,
     return compute_daily_consumption_from_transactions(transactions, window_start, configuration)
 
 
-def compute_consumption_or_default(domain,
-                                   case_id,
-                                   product_id,
-                                   window_end,
-                                   section_id=const.SECTION_TYPE_STOCK,
-                                   configuration=None):
+def compute_consumption_or_default(
+        domain, case_id, product_id, window_end,
+        section_id=const.SECTION_TYPE_STOCK, configuration=None):
     """
     Used when it's not important to know if the consumption
     value is real or just a default value
