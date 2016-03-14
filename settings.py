@@ -808,14 +808,17 @@ LOGGING = {
         'pillowtop': {
             'format': '%(asctime)s %(levelname)s %(module)s %(message)s'
         },
+        'couch-request-formatter': {
+            'format': '%(asctime)s [%(username)s:%(domain)s] %(hq_url)s %(method)s %(error_status)s %(path)s %(duration)s'
+        },
         'datadog': {
             'format': '%(metric)s %(created)s %(value)s metric_type=%(metric_type)s %(message)s'
-        }
+        },
     },
     'filters': {
-        'require_debug_false': {
-            '()': 'django.utils.log.RequireDebugFalse'
-        }
+        'hqcontext': {
+            '()': 'corehq.util.log.HQRequestFilter',
+        },
     },
     'handlers': {
         'pillowtop': {
@@ -830,27 +833,44 @@ LOGGING = {
         },
         'file': {
             'level': 'INFO',
-            'class': 'logging.FileHandler',
+            'class': 'logging.handlers.RotatingFileHandler',
             'formatter': 'verbose',
-            'filename': DJANGO_LOG_FILE
+            'filename': DJANGO_LOG_FILE,
+            'maxBytes': 10 * 1024 * 1024,  # 10 MB
+            'backupCount': 20  # Backup 200 MB of logs
+        },
+        'couch-request-handler': {
+            'level': 'DEBUG',
+            'class': 'logging.handlers.RotatingFileHandler',
+            'formatter': 'couch-request-formatter',
+            'filters': ['hqcontext'],
+            'filename': COUCH_LOG_FILE,
+            'maxBytes': 10 * 1024 * 1024,  # 10 MB
+            'backupCount': 20  # Backup 200 MB of logs
         },
         'accountinglog': {
             'level': 'INFO',
-            'class': 'logging.FileHandler',
+            'class': 'logging.handlers.RotatingFileHandler',
             'formatter': 'verbose',
-            'filename': ACCOUNTING_LOG_FILE
+            'filename': ACCOUNTING_LOG_FILE,
+            'maxBytes': 10 * 1024 * 1024,  # 10 MB
+            'backupCount': 20  # Backup 200 MB of logs
         },
-        'analytics': {
+        'analyticslog': {
             'level': 'DEBUG',
-            'class': 'logging.FileHandler',
-            'formatter': 'simple',
-            'filename': ANALYTICS_LOG_FILE
+            'class': 'logging.handlers.RotatingFileHandler',
+            'formatter': 'verbose',
+            'filename': ANALYTICS_LOG_FILE,
+            'maxBytes': 10 * 1024 * 1024,  # 10 MB
+            'backupCount': 20  # Backup 200 MB of logs
         },
         'datadog': {
             'level': 'INFO',
-            'class': 'logging.FileHandler',
+            'class': 'logging.handlers.RotatingFileHandler',
             'formatter': 'datadog',
-            'filename': DATADOG_LOG_FILE
+            'filename': DATADOG_LOG_FILE,
+            'maxBytes': 10 * 1024 * 1024,  # 10 MB
+            'backupCount': 20  # Backup 200 MB of logs
         },
         'couchlog': {
             'level': 'WARNING',
@@ -858,12 +878,10 @@ LOGGING = {
         },
         'mail_admins': {
             'level': 'ERROR',
-            'filters': ['require_debug_false'],
             'class': 'corehq.util.log.HqAdminEmailHandler',
         },
         'notify_exception': {
             'level': 'ERROR',
-            'filters': ['require_debug_false'],
             'class': 'corehq.util.log.NotifyExceptionEmailer',
         },
         'null': {
@@ -875,6 +893,11 @@ LOGGING = {
             'handlers': ['console', 'file', 'couchlog'],
             'propagate': True,
             'level': 'INFO',
+        },
+        'couchdbkit.request': {
+            'handlers': ['couch-request-handler'],
+            'level': 'DEBUG',
+            'propagate': False,
         },
         'django.request': {
             'handlers': ['mail_admins'],
@@ -911,12 +934,17 @@ LOGGING = {
             'propagate': False,
         },
         'analytics': {
-            'handlers': ['analytics'],
+            'handlers': ['analyticslog'],
             'level': 'DEBUG',
+            'propagate': False
+        },
+        'elasticsearch': {
+            'handlers': ['file'],
+            'level': 'ERROR',
             'propagate': True,
         },
         'datadog-metrics': {
-            'handler': ['datadog'],
+            'handlers': ['datadog'],
             'level': 'INFO',
             'propogate': False,
         },
