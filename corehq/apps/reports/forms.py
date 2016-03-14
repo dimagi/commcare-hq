@@ -1,3 +1,5 @@
+from django.utils.translation import ugettext
+from corehq.apps.style.crispy import FormActions, B3MultiField
 import langcodes
 
 from django import forms
@@ -130,8 +132,8 @@ class ScheduledReportForm(forms.Form):
 
     recipient_emails = MultiEmailField(
         label='Other recipients',
-        required=False)
-
+        required=False
+    )
     email_subject = forms.CharField(
         required=False,
         help_text='Translated into recipient\'s language if set to "%(default_subject)s".' % {
@@ -150,26 +152,39 @@ class ScheduledReportForm(forms.Form):
         self.helper = FormHelper()
         self.helper.form_class = 'form-horizontal'
         self.helper.form_id = 'id-scheduledReportForm'
+        self.helper.label_class = 'col-sm-3 col-md-2'
+        self.helper.field_class = 'col-sm-9 col-md-8 col-lg-6'
         self.helper.add_layout(
             crispy.Layout(
-                'config_ids',
-                'interval',
-                'day',
-                'hour',
-                'send_to_owner',
-                'attach_excel',
-                crispy.Field(
-                    'email_subject',
-                    css_class='input-xlarge',
+                crispy.Fieldset(
+                    ugettext("Configure Scheduled Report"),
+                    'config_ids',
+                    'interval',
+                    'day',
+                    'hour',
+                    B3MultiField(
+                        ugettext("Send Options"),
+                        'send_to_owner'
+                    ),
+                    B3MultiField(
+                        ugettext("Excel Attachment"),
+                        'attach_excel'
+                    ),
+                    crispy.Field(
+                        'email_subject',
+                        css_class='input-xlarge',
+                    ),
+                    'recipient_emails',
+                    'language',
+                    crispy.HTML(
+                        render_to_string('reports/partials/privacy_disclaimer.html')
+                    )
                 ),
-                'recipient_emails',
-                'language',
-                crispy.HTML(
-                    render_to_string('reports/partials/privacy_disclaimer.html')
+                FormActions(
+                    crispy.Submit('submit_btn', 'Submit')
                 )
             )
         )
-        self.helper.add_input(crispy.Submit('submit_btn', 'Submit'))
 
         super(ScheduledReportForm, self).__init__(*args, **kwargs)
 
