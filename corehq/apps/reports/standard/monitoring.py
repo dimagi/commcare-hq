@@ -331,7 +331,6 @@ class CaseActivityReport(WorkerMonitoringCaseReportTableBase):
             .aggregation(active_total_aggregation)\
             .aggregation(inactive_total_aggregation)
 
-
         query = (
             case_es.CaseES()
             .domain(self.domain)
