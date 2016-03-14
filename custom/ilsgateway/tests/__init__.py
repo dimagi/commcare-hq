@@ -22,6 +22,7 @@ from .handlers.messageinitatior import *
 from .handlers.bugs import *
 from .handlers.deliverygroups import *
 from .handlers.help import *
+from .handlers.register import *
 from .test_reminders import *
 from .test_report_runner import *
 from .test_reminders2 import *
