@@ -796,6 +796,101 @@ MESSAGE_STORAGE = 'django.contrib.messages.storage.session.SessionStorage'
 
 DIGEST_LOGIN_FACTORY = 'django_digest.NoEmailLoginFactory'
 
+# Django Compressor
+COMPRESS_PRECOMPILERS = (
+    ('text/less', 'corehq.apps.style.precompilers.LessFilter'),
+)
+COMPRESS_ENABLED = True
+COMPRESS_JS_COMPRESSOR = 'corehq.apps.style.uglify.JsUglifySourcemapCompressor'
+# use 'compressor.js.JsCompressor' for faster local compressing (will get rid of source maps)
+
+LESS_B3_PATHS = {
+    'variables': '../../../style/less/bootstrap3/includes/variables',
+    'mixins': '../../../style/less/bootstrap3/includes/mixins',
+}
+
+LESS_FOR_BOOTSTRAP_3_BINARY = '/opt/lessc/bin/lessc'
+
+# Invoicing
+INVOICE_STARTING_NUMBER = 0
+INVOICE_PREFIX = ''
+INVOICE_TERMS = ''
+INVOICE_FROM_ADDRESS = {}
+BANK_ADDRESS = {}
+BANK_NAME = ''
+BANK_ACCOUNT_NUMBER = ''
+BANK_ROUTING_NUMBER_ACH = ''
+BANK_ROUTING_NUMBER_WIRE = ''
+BANK_SWIFT_CODE = ''
+
+STRIPE_PUBLIC_KEY = ''
+STRIPE_PRIVATE_KEY = ''
+
+SQL_REPORTING_DATABASE_URL = None
+UCR_DATABASE_URL = None
+
+# Override this in localsettings to specify custom reporting databases
+CUSTOM_DATABASES = {}
+
+PL_PROXY_CLUSTER_NAME = 'commcarehq'
+
+USE_PARTITIONED_DATABASE = False
+
+# number of days since last access after which a saved export is considered unused
+SAVED_EXPORT_ACCESS_CUTOFF = 35
+
+# override for production
+DEFAULT_PROTOCOL = 'http'
+
+# Dropbox
+DROPBOX_KEY = ''
+DROPBOX_SECRET = ''
+DROPBOX_APP_NAME = ''
+
+# Amazon S3
+S3_ACCESS_KEY = None
+S3_SECRET_KEY = None
+
+# Supervisor RPC
+SUPERVISOR_RPC_ENABLED = False
+SUBSCRIPTION_USERNAME = None
+SUBSCRIPTION_PASSWORD = None
+
+ENVIRONMENT_HOSTS = {
+    'pillowtop': ['localhost']
+}
+
+DATADOG_API_KEY = None
+DATADOG_APP_KEY = None
+
+# Override with the PEM export of an RSA private key, for use with any
+# encryption or signing workflows.
+HQ_PRIVATE_KEY = None
+
+
+KAFKA_URL = 'localhost:9092'
+
+
+try:
+    # try to see if there's an environmental variable set for local_settings
+    custom_settings = os.environ.get('CUSTOMSETTINGS', None)
+    if custom_settings:
+        if custom_settings == 'demo':
+            from settings_demo import *
+        else:
+            custom_settings_module = importlib.import_module(custom_settings)
+            try:
+                attrlist = custom_settings_module.__all__
+            except AttributeError:
+                attrlist = dir(custom_settings_module)
+            for attr in attrlist:
+                globals()[attr] = getattr(custom_settings_module, attr)
+    else:
+        from localsettings import *
+except ImportError:
+    # fallback in case nothing else is found - used for readthedocs
+    from dev_settings import *
+
 LOGGING = {
     'version': 1,
     'disable_existing_loggers': True,
@@ -951,101 +1046,6 @@ LOGGING = {
         },
     }
 }
-
-# Django Compressor
-COMPRESS_PRECOMPILERS = (
-    ('text/less', 'corehq.apps.style.precompilers.LessFilter'),
-)
-COMPRESS_ENABLED = True
-COMPRESS_JS_COMPRESSOR = 'corehq.apps.style.uglify.JsUglifySourcemapCompressor'
-# use 'compressor.js.JsCompressor' for faster local compressing (will get rid of source maps)
-
-LESS_B3_PATHS = {
-    'variables': '../../../style/less/bootstrap3/includes/variables',
-    'mixins': '../../../style/less/bootstrap3/includes/mixins',
-}
-
-LESS_FOR_BOOTSTRAP_3_BINARY = '/opt/lessc/bin/lessc'
-
-# Invoicing
-INVOICE_STARTING_NUMBER = 0
-INVOICE_PREFIX = ''
-INVOICE_TERMS = ''
-INVOICE_FROM_ADDRESS = {}
-BANK_ADDRESS = {}
-BANK_NAME = ''
-BANK_ACCOUNT_NUMBER = ''
-BANK_ROUTING_NUMBER_ACH = ''
-BANK_ROUTING_NUMBER_WIRE = ''
-BANK_SWIFT_CODE = ''
-
-STRIPE_PUBLIC_KEY = ''
-STRIPE_PRIVATE_KEY = ''
-
-SQL_REPORTING_DATABASE_URL = None
-UCR_DATABASE_URL = None
-
-# Override this in localsettings to specify custom reporting databases
-CUSTOM_DATABASES = {}
-
-PL_PROXY_CLUSTER_NAME = 'commcarehq'
-
-USE_PARTITIONED_DATABASE = False
-
-# number of days since last access after which a saved export is considered unused
-SAVED_EXPORT_ACCESS_CUTOFF = 35
-
-# override for production
-DEFAULT_PROTOCOL = 'http'
-
-# Dropbox
-DROPBOX_KEY = ''
-DROPBOX_SECRET = ''
-DROPBOX_APP_NAME = ''
-
-# Amazon S3
-S3_ACCESS_KEY = None
-S3_SECRET_KEY = None
-
-# Supervisor RPC
-SUPERVISOR_RPC_ENABLED = False
-SUBSCRIPTION_USERNAME = None
-SUBSCRIPTION_PASSWORD = None
-
-ENVIRONMENT_HOSTS = {
-    'pillowtop': ['localhost']
-}
-
-DATADOG_API_KEY = None
-DATADOG_APP_KEY = None
-
-# Override with the PEM export of an RSA private key, for use with any
-# encryption or signing workflows.
-HQ_PRIVATE_KEY = None
-
-
-KAFKA_URL = 'localhost:9092'
-
-
-try:
-    # try to see if there's an environmental variable set for local_settings
-    custom_settings = os.environ.get('CUSTOMSETTINGS', None)
-    if custom_settings:
-        if custom_settings == 'demo':
-            from settings_demo import *
-        else:
-            custom_settings_module = importlib.import_module(custom_settings)
-            try:
-                attrlist = custom_settings_module.__all__
-            except AttributeError:
-                attrlist = dir(custom_settings_module)
-            for attr in attrlist:
-                globals()[attr] = getattr(custom_settings_module, attr)
-    else:
-        from localsettings import *
-except ImportError:
-    # fallback in case nothing else is found - used for readthedocs
-    from dev_settings import *
 
 fix_logger_obfuscation_ = globals().get("FIX_LOGGER_ERROR_OBFUSCATION")
 helper.fix_logger_obfuscation(fix_logger_obfuscation_, LOGGING)
