@@ -1090,4 +1090,8 @@ class RowNumberColumn(ExportColumn):
         return headers
 
     def get_value(self, doc, base_path, transform_dates=False, row_index=None):
-        return [".".join([unicode(i) for i in row_index])] + list(row_index)
+        assert row_index
+        return (
+            [".".join([unicode(i) for i in row_index])]
+            + (list(row_index) if len(row_index) > 1 else [])
+        )
