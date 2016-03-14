@@ -1,5 +1,8 @@
-{% extends "bihar/base_template_mobile.html" %}
+
+{% extends "reports/mobile/mobile_report_base.html" %}
 {% load hq_shared_tags %}
+{% load i18n %}
+
 {% block head %}{{ block.super }}
 <style>
     .table th {
@@ -7,3 +10,11 @@
     }
 </style>
 {% endblock %}
+{% block mobile-nav %}
+    <a href="{{ home }}" class="btn btn-default">{% trans 'Main Menu' %}</a>
+{% endblock %}
+{% block mobile-footer %}
+    <img src="{% static 'bihar/img/logo.png' %}" style="width: 239px;"/>
+    {{ block.super }}
+{% endblock %}
+

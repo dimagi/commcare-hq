@@ -46,8 +46,8 @@ class TestDomainInvoiceFactory(BaseAccountingTest):
             self.account, self.domain, some_plan,
             date_start=self.invoice_start + datetime.timedelta(days=3)
         )
-        subscriptions = self.invoice_factory.get_subscriptions()
-        community_ranges = self.invoice_factory.get_community_ranges(subscriptions)
+        subscriptions = self.invoice_factory._get_subscriptions()
+        community_ranges = self.invoice_factory._get_community_ranges(subscriptions)
         self.assertEqual(len(community_ranges), 1)
         self.assertEqual(community_ranges[0][0], self.invoice_start)
         self.assertEqual(community_ranges[0][1], subscription.date_start)
@@ -60,8 +60,8 @@ class TestDomainInvoiceFactory(BaseAccountingTest):
             date_start=self.invoice_start,
             date_end=self.invoice_end - datetime.timedelta(days=3)
         )
-        subscriptions = self.invoice_factory.get_subscriptions()
-        community_ranges = self.invoice_factory.get_community_ranges(subscriptions)
+        subscriptions = self.invoice_factory._get_subscriptions()
+        community_ranges = self.invoice_factory._get_community_ranges(subscriptions)
         self.assertEqual(len(community_ranges), 1)
         self.assertEqual(community_ranges[0][0], subscription.date_end)
         self.assertEqual(community_ranges[0][1],
@@ -89,9 +89,9 @@ class TestDomainInvoiceFactory(BaseAccountingTest):
             date_start=final_start,
             date_end=self.invoice_end - datetime.timedelta(days=1),
         )
-        subscriptions = self.invoice_factory.get_subscriptions()
+        subscriptions = self.invoice_factory._get_subscriptions()
         self.assertEqual(len(subscriptions), 3)
-        community_ranges = self.invoice_factory.get_community_ranges(subscriptions)
+        community_ranges = self.invoice_factory._get_community_ranges(subscriptions)
         self.assertEqual(len(community_ranges), 4)
         self._clean_subs()
 
@@ -102,13 +102,13 @@ class TestDomainInvoiceFactory(BaseAccountingTest):
             date_start=self.invoice_start,
             date_end=self.invoice_end + datetime.timedelta(days=1),
         )
-        subscriptions = self.invoice_factory.get_subscriptions()
-        community_ranges = self.invoice_factory.get_community_ranges(subscriptions)
+        subscriptions = self.invoice_factory._get_subscriptions()
+        community_ranges = self.invoice_factory._get_community_ranges(subscriptions)
         self.assertEqual(len(community_ranges), 0)
         self._clean_subs()
 
     def test_no_coverage(self):
-        subscriptions = self.invoice_factory.get_subscriptions()
+        subscriptions = self.invoice_factory._get_subscriptions()
         self.assertEqual(len(subscriptions), 0)
-        community_ranges = self.invoice_factory.get_community_ranges(subscriptions)
+        community_ranges = self.invoice_factory._get_community_ranges(subscriptions)
         self.assertEqual(len(community_ranges), 1)

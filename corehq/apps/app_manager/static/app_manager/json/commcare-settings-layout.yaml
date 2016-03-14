@@ -68,6 +68,7 @@
     - properties.cc-log-entity-detail-enabled
     - properties.cc-inflation-target-density
     - hq.use_grid_menus
+    - properties.cc-grid-menus
 
 - title: 'Advanced'
   id: app-settings-advanced

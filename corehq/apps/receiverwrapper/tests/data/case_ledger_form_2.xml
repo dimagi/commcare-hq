@@ -1,0 +1,23 @@
+<?xml version='1.0' ?>
+<form version="1" uiVersion="1" xmlns:jrm="http://openrosa.org/jr/xforms" xmlns="http://commcarehq.org/test/submit">
+	<meta>
+	    <DeviceID>myphone</DeviceID>
+	    <TimeStart>2010-06-29T13:42:50.137</TimeStart>
+	    <TimeEnd>2010-06-29T13:55:50.137</TimeEnd>
+	    <username>someuser</username>
+	    <userID>someuserid</userID>
+	    <uid>ad38211be256653bceac8e2156475665</uid>
+	</meta>
+    <data>
+        <foo>bar</foo>
+        <n14:case case_id="fbb69a88-1eca-463a-883e-1148b96fb03b" date_modified="2016-03-02T10:21:48.715+01" user_id="e499e67838e9efb6fe210c147045b1dc" xmlns:n14="http://commcarehq.org/case/transaction/v2">
+			<n14:update>
+				<n14:amount-owed-to-entrepreneur>119700</n14:amount-owed-to-entrepreneur>
+				<n14:entrepreneur>ben</n14:entrepreneur>
+				<n14:month>2</n14:month>
+				<n14:owner_id>91cadfa4cb957cf021c76dfe31d206a6</n14:owner_id>
+				<n14:year>2016</n14:year>
+			</n14:update>
+		</n14:case>
+    </data>
+</form>

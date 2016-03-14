@@ -5,13 +5,26 @@ from corehq.form_processor.models import (
 )
 
 
+class DeletableModelSerializer(serializers.ModelSerializer):
+    """
+    A ModelSerializer that takes an additional `fields` argument that
+    controls which fields should be displayed.
+    """
+
+    def __init__(self, instance=None, *args, **kwargs):
+        super(DeletableModelSerializer, self).__init__(instance=instance, *args, **kwargs)
+        if not instance.is_deleted:
+            self.fields.pop('deletion_id')
+            self.fields.pop('deleted_on')
+
+
 class XFormOperationSQLSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = XFormOperationSQL
 
 
-class XFormInstanceSQLSerializer(serializers.ModelSerializer):
+class XFormInstanceSQLSerializer(DeletableModelSerializer):
     history = XFormOperationSQLSerializer(many=True, read_only=True)
     form = serializers.JSONField(source='form_data')
     auth_context = serializers.DictField()
@@ -37,7 +50,7 @@ class CaseTransactionActionSerializer(serializers.ModelSerializer):
         fields = ('xform_id', 'server_date', 'date', 'sync_log_id')
 
 
-class CommCareCaseSQLSerializer(serializers.ModelSerializer):
+class CommCareCaseSQLSerializer(DeletableModelSerializer):
     _id = serializers.CharField(source='case_id')
     doc_type = serializers.CharField()
     user_id = serializers.CharField(source='modified_by')

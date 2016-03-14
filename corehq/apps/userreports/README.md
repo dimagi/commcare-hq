@@ -383,7 +383,7 @@ This returns 25 (1 + 20 - 2 + 6).
 `context_variables` is a dictionary of Expressions where keys are names of variables used in the `statement` and values are expressions to generate those variables.
 Variables can be any valid numbers (Python datatypes `int`, `float`, and `long` are considered valid numbers.) or also expressions that return numbers.
 
-More examples can be found on practical [examples page](corehq/apps/userreports/examples/examples.md#evaluator-examples).
+More examples can be found on practical [examples page](examples/examples.md#evaluator-examples).
 
 #### "Month Start Date" and "Month End Date" expressions
 
@@ -548,7 +548,7 @@ The following filter represents the statement: `!(doc["nationality"] == "europea
 
 ### Practical Examples
 
-See [examples.md](https://github.com/dimagi/commcare-hq/blob/master/corehq/apps/userreports/examples/examples.md) for some practical examples showing various filter types.
+See [examples.md](examples/examples.md) for some practical examples showing various filter types.
 
 
 ## Indicators
@@ -701,7 +701,7 @@ You can save multiple rows per case/form by specifying a root level `base_item_e
 You can also use the `root_doc` expression type to reference parent properties.
 This can be combined with the `iterator` expression type to do complex data source transforms.
 This is not described in detail, but the following sample (which creates a table off of a repeat element called "time_logs" can be used as a guide).
-There are also additional examples in the [examples](https://github.com/dimagi/commcare-hq/blob/master/corehq/apps/userreports/examples/examples.md):
+There are also additional examples in the [examples](examples/examples.md):
 
 ```
 {
@@ -1371,7 +1371,7 @@ They conform to a slightly different style:
 ```
 
 Having defined the data source you need to add the path to the data source file to the `STATIC_DATA_SOURCES`
-setting in `settings.py`. Now when the `StaticDataSourcePillow` is run it will pick up the data source
+setting in `settings.py`. Now when the static data source pillow is run it will pick up the data source
 and rebuild it.
 
 Changes to the data source require restarting the pillow which will rebuild the SQL table. Alternately you
@@ -1424,7 +1424,7 @@ Following are some custom expressions that are currently available.
 - `location_type_name`:  A way to get location type from a location document id.
 - `location_parent_id`:  A shortcut to get a location's parent ID a location id.
 
-You can find examples of these in [practical examples](https://github.com/dimagi/commcare-hq/blob/master/corehq/apps/userreports/examples/examples.md).
+You can find examples of these in [practical examples](examples/examples.md).
 
 ## Inspecting database tables
 

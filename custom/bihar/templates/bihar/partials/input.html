@@ -1,9 +1,19 @@
-<form>
+<form class="form-horizontal">
     {% for i in inputs %}
-        <div>
-            {{ i.label }}
+        <div class="form-group">
+            <label class="control-label col-xs-4">
+                {{ i.label }}
+            </label>
+            <div class="col-xs-8">
+                <input type="{{ i.type }}" name="{{ i.name }}"
+                       {% if i.type != 'hidden' and i.type != 'checkbox' %}
+                       class="form-control"{% endif %} />
+            </div>
         </div>
-        <input type="{{ i.type }}" name="{{ i.name }}"/><br/>
     {% endfor %}
-    <input type="submit" />
+    <div class="form-actions">
+        <div class="col-xs-offset-4">
+            <input type="submit" class="btn btn-primary" />
+        </div>
+    </div>
 </form>

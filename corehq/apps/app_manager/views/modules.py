@@ -200,7 +200,6 @@ def _get_report_module_context(app, module):
 
 
 def _get_fixture_types(domain):
-    # TODO: Don't hit the DB here and when getting fixture columns
     return [f.tag for f in FixtureDataType.by_domain(domain)]
 
 

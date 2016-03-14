@@ -8,7 +8,7 @@ from django.db.models import Count, Q
 from django.http.response import HttpResponseRedirect, Http404
 from django.shortcuts import get_object_or_404
 from django.utils.decorators import method_decorator
-from django.views.generic.base import TemplateView
+from django.views.generic.base import TemplateView, RedirectView
 from django.views.generic.edit import DeleteView
 from django.views.generic.list import ListView
 from corehq.apps.commtrack.models import StockState
@@ -33,7 +33,7 @@ from custom.ilsgateway.tanzania.reports.delivery import DeliveryReport
 from custom.ilsgateway.tanzania.reports.randr import RRreport
 from custom.ilsgateway.tanzania.reports.stock_on_hand import StockOnHandReport
 from custom.ilsgateway.tanzania.reports.supervision import SupervisionReport
-from custom.ilsgateway.tasks import clear_report_data, fix_stock_data_task
+from custom.ilsgateway.tasks import clear_report_data, fix_stock_data_task, recalculate_march_reporting_data_task
 from casexml.apps.stock.models import StockTransaction
 from custom.logistics.models import StockDataCheckpoint
 from custom.logistics.tasks import fix_groups_in_location_task, resync_web_users
@@ -331,6 +331,13 @@ def change_runner_date_to_last_migration(request, domain):
     return HttpResponse('OK')
 
 
+@domain_admin_required
+@require_POST
+def recalculate_march_reporting_data(request, domain):
+    recalculate_march_reporting_data_task.delay(domain)
+    return HttpResponse('OK')
+
+
 class ReportRunListView(ListView, DomainViewMixin):
     context_object_name = 'runs'
     template_name = 'ilsgateway/report_run_list.html'
@@ -397,3 +404,21 @@ class BalanceMigrationView(BaseDomainView):
             ).count(),
             'problems': ILSMigrationProblem.objects.filter(domain=self.domain)
         }
+
+
+class DashboardPageRedirect(RedirectView):
+
+    def get_redirect_url(self, *args, **kwargs):
+        domain = kwargs['domain']
+        user = self.request.couch_user
+        dm = user.get_domain_membership(domain)
+        url = DashboardReport.get_url(domain)
+
+        if dm:
+            loc_id = dm.location_id
+            url = '%s?location_id=%s&filter_by_program=all' % (
+                url,
+                loc_id or ''
+            )
+
+        return url

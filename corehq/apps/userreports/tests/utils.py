@@ -3,9 +3,11 @@ from decimal import Decimal
 import json
 import os
 import uuid
+from casexml.apps.case.models import CommCareCase
+from corehq.apps.change_feed import data_sources
 from corehq.apps.userreports.models import DataSourceConfiguration, ReportConfiguration
-from corehq.util.dates import iso_string_to_date
 from dimagi.utils.parsing import json_format_datetime
+from pillowtop.feed.interface import Change, ChangeMeta
 
 
 def get_sample_report_config():
@@ -56,3 +58,20 @@ def get_sample_doc_and_indicators(fake_time_now=None):
         'inserted_at': fake_time_now,
     }
     return sample_doc, expected_indicators
+
+
+def doc_to_change(doc):
+    return Change(
+        id=doc['_id'],
+        sequence_id='0',
+        document=doc,
+        metadata=ChangeMeta(
+            document_id=doc['_id'],
+            data_source_type=data_sources.COUCH,
+            data_source_name=CommCareCase.get_db().dbname,
+            document_type=doc['doc_type'],
+            document_subtype=doc['type'],
+            domain=doc['domain'],
+            is_deletion=False,
+        )
+    )

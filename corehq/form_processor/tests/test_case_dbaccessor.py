@@ -1,5 +1,6 @@
 import uuid
 from datetime import datetime
+from collections import namedtuple
 import time
 
 from django.test import TestCase
@@ -7,15 +8,17 @@ from django.test import TestCase
 from corehq.form_processor.backends.sql.dbaccessors import CaseAccessorSQL
 from corehq.form_processor.backends.sql.processor import FormProcessorSQL
 from corehq.form_processor.exceptions import AttachmentNotFound, CaseNotFound, CaseSaveError
-from corehq.form_processor.interfaces.dbaccessors import CaseIndexInfo
+from corehq.form_processor.interfaces.dbaccessors import CaseIndexInfo, CaseAccessors
 from corehq.form_processor.interfaces.processor import ProcessedForms
 from corehq.form_processor.models import XFormInstanceSQL, CommCareCaseSQL, \
     CaseTransaction, CommCareCaseIndexSQL, CaseAttachmentSQL, SupplyPointCaseMixin
-from corehq.form_processor.tests import FormProcessorTestUtils
+from corehq.form_processor.tests import FormProcessorTestUtils, run_with_all_backends
+from corehq.form_processor.tests.test_basic_cases import _submit_case_block
 from corehq.sql_db.routers import db_for_read_write
 from crispy_forms.tests.utils import override_settings
 
 DOMAIN = 'test-case-accessor'
+CaseTransactionTrace = namedtuple('CaseTransactionTrace', 'form_id include')
 
 
 @override_settings(TESTS_SHOULD_USE_SQL_BACKEND=True)
@@ -66,9 +69,12 @@ class CaseAccessorTestsSQL(TestCase):
         form_id1 = uuid.uuid4().hex
         case = _create_case(form_id=form_id1)
 
-        form_ids = _create_case_transactions(case)
+        traces = _create_case_transactions(case)
 
-        self.assertEqual([form_id1, form_ids[1], form_ids[2]], CaseAccessorSQL.get_case_xform_ids(case.case_id))
+        self.assertEqual(
+            set([form_id1] + map(lambda t: t.form_id, filter(lambda t: t.include, traces))),
+            set(CaseAccessorSQL.get_case_xform_ids(case.case_id))
+        )
 
     def test_get_indices(self):
         case = _create_case()
@@ -242,20 +248,37 @@ class CaseAccessorTestsSQL(TestCase):
         self.assertEqual(1, len(transactions))
         self.assertEqual(form_id, transactions[0].form_id)
 
-        form_ids = _create_case_transactions(case)
+        traces = _create_case_transactions(case)
 
         transactions = CaseAccessorSQL.get_transactions(case.case_id)
         self.assertEqual(6, len(transactions))
-        self.assertEqual([form_id] + form_ids, [t.form_id for t in transactions])
+        self.assertEqual(
+            [form_id] + map(lambda trace: trace.form_id, traces),
+            [t.form_id for t in transactions],
+        )
+
+    def test_get_transaction_by_form_id(self):
+        form_id = uuid.uuid4().hex
+        case = _create_case(form_id=form_id)
+
+        transaction = CaseAccessorSQL.get_transaction_by_form_id(case.case_id, form_id)
+        self.assertEqual(form_id, transaction.form_id)
+        self.assertEqual(case.case_id, transaction.case_id)
+
+        transaction = CaseAccessorSQL.get_transaction_by_form_id(case.case_id, 'wrong')
+        self.assertIsNone(transaction)
 
     def test_get_transactions_for_case_rebuild(self):
         form_id = uuid.uuid4().hex
         case = _create_case(form_id=form_id)
-        form_ids = _create_case_transactions(case)
+        traces = _create_case_transactions(case)
 
         transactions = CaseAccessorSQL.get_transactions_for_case_rebuild(case.case_id)
-        self.assertEqual(2, len(transactions))
-        self.assertEqual([form_id, form_ids[0]], [t.form_id for t in transactions])
+        self.assertEqual(4, len(transactions))
+        self.assertEqual(
+            [form_id] + map(lambda t: t.form_id, filter(lambda t: t.include, traces)),
+            [t.form_id for t in transactions],
+        )
 
     def test_get_case_by_location(self):
         case = _create_case(case_type=SupplyPointCaseMixin.CASE_TYPE)
@@ -630,6 +653,61 @@ class CaseAccessorTestsSQL(TestCase):
         types = CaseAccessorSQL.get_case_types_for_domain(DOMAIN)
         self.assertEqual(case_types, types)
 
+    def test_closed_transactions(self):
+        case = _create_case()
+        _create_case_transactions(case)
+
+        self.assertEqual(len(case.closed_transactions), 1)
+        self.assertTrue(case.closed_transactions[0].is_case_close)
+
+    def test_closed_transactions_with_tracked(self):
+        case = _create_case()
+        _create_case_transactions(case)
+
+        case.track_create(CaseTransaction(
+            case=case,
+            form_id=uuid.uuid4().hex,
+            server_date=datetime.utcnow(),
+            type=CaseTransaction.TYPE_FORM | CaseTransaction.TYPE_CASE_CLOSE,
+            revoked=True
+        ))
+        # exclude based on type
+        case.track_create(CaseTransaction(
+            case=case,
+            form_id=uuid.uuid4().hex,
+            server_date=datetime.utcnow(),
+            type=CaseTransaction.TYPE_FORM | CaseTransaction.TYPE_CASE_ATTACHMENT,
+            revoked=False
+        ))
+        self.assertEqual(len(case.closed_transactions), 2)
+
+
+class CaseAccessorsTests(TestCase):
+
+    def tearDown(self):
+        FormProcessorTestUtils.delete_all_xforms(DOMAIN)
+        FormProcessorTestUtils.delete_all_cases(DOMAIN)
+
+    @run_with_all_backends
+    def test_soft_delete(self):
+        _submit_case_block(True, 'c1', domain=DOMAIN)
+        _submit_case_block(True, 'c2', domain=DOMAIN)
+        _submit_case_block(True, 'c3', domain=DOMAIN)
+
+        accessors = CaseAccessors(DOMAIN)
+
+        # delete
+        num = accessors.soft_delete_cases(['c1', 'c2'], deletion_id='123')
+        self.assertEqual(num, 2)
+
+        for case_id in ['c1', 'c2']:
+            case = accessors.get_case(case_id)
+            self.assertTrue(case.is_deleted)
+            self.assertEqual(case.deletion_id, '123')
+
+        case = accessors.get_case('c3')
+        self.assertFalse(case.is_deleted)
+
 
 def _create_case(domain=None, form_id=None, case_type=None, user_id=None):
     """
@@ -671,33 +749,39 @@ def _create_case(domain=None, form_id=None, case_type=None, user_id=None):
 
 
 def _create_case_transactions(case):
-    form_uuid_1 = uuid.uuid4().hex
+    traces = [
+        CaseTransactionTrace(form_id=uuid.uuid4().hex, include=True),
+        CaseTransactionTrace(form_id=uuid.uuid4().hex, include=True),
+        CaseTransactionTrace(form_id=uuid.uuid4().hex, include=True),
+        CaseTransactionTrace(form_id=uuid.uuid4().hex, include=False),
+        CaseTransactionTrace(form_id=uuid.uuid4().hex, include=False),
+    ]
+
     case.track_create(CaseTransaction(
         case=case,
-        form_id=form_uuid_1,
+        form_id=traces[0].form_id,
         server_date=datetime.utcnow(),
-        type=CaseTransaction.TYPE_FORM,
+        type=CaseTransaction.TYPE_FORM | CaseTransaction.TYPE_CASE_CREATE | CaseTransaction.TYPE_LEDGER,
         revoked=False
     ))
-    # Same form but ledger transaction
     case.track_create(CaseTransaction(
         case=case,
-        form_id=form_uuid_1,
+        form_id=traces[1].form_id,
         server_date=datetime.utcnow(),
-        type=CaseTransaction.TYPE_LEDGER,
+        type=CaseTransaction.TYPE_FORM | CaseTransaction.TYPE_LEDGER,
         revoked=False
     ))
     case.track_create(CaseTransaction(
         case=case,
-        form_id=uuid.uuid4().hex,
+        form_id=traces[2].form_id,
         server_date=datetime.utcnow(),
-        type=CaseTransaction.TYPE_LEDGER,
+        type=CaseTransaction.TYPE_FORM | CaseTransaction.TYPE_CASE_CLOSE,
         revoked=False
     ))
     # exclude revoked
     case.track_create(CaseTransaction(
         case=case,
-        form_id=uuid.uuid4().hex,
+        form_id=traces[3].form_id,
         server_date=datetime.utcnow(),
         type=CaseTransaction.TYPE_FORM,
         revoked=True
@@ -705,11 +789,10 @@ def _create_case_transactions(case):
     # exclude based on type
     case.track_create(CaseTransaction(
         case=case,
-        form_id=uuid.uuid4().hex,
+        form_id=traces[4].form_id,
         server_date=datetime.utcnow(),
         type=CaseTransaction.TYPE_REBUILD_FORM_ARCHIVED,
         revoked=False
     ))
-    form_ids = [t.form_id for t in case.get_tracked_models_to_create(CaseTransaction)]
     CaseAccessorSQL.save_case(case)
-    return form_ids
+    return traces

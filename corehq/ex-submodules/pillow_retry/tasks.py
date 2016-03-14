@@ -67,8 +67,8 @@ def process_pillow_retry(error_doc_id):
 
         try:
             try:
-                from corehq.apps.userreports.pillow import ConfigurableIndicatorPillow
-                if isinstance(pillow, ConfigurableIndicatorPillow):
+                from corehq.apps.userreports.pillow import ConfigurableReportKafkaPillow
+                if isinstance(pillow, ConfigurableReportKafkaPillow):
                     raise Exception('this is temporarily not supported!')
             except ImportError:
                 pass

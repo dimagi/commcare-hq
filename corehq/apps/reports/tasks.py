@@ -211,7 +211,7 @@ def rebuild_export_async(config, schema):
     rebuild_export(config, schema)
 
 
-@periodic_task(run_every=crontab(hour="12, 22", minute="0", day_of_week="*"), queue=getattr(settings, 'CELERY_PERIODIC_QUEUE','celery'))
+@periodic_task(run_every=crontab(hour="22", minute="0", day_of_week="*"), queue='background_queue')
 def update_calculated_properties():
     results = DomainES().is_snapshot(False).fields(["name", "_id"]).run().hits
     all_stats = _all_domain_stats()
@@ -226,10 +226,14 @@ def update_calculated_properties():
                 "cp_n_active_cases": int(CALC_FNS["cases_in_last"](dom, 120)),
                 "cp_n_users_submitted_form": total_distinct_users([dom]),
                 "cp_n_inactive_cases": int(CALC_FNS["inactive_cases_in_last"](dom, 120)),
+                "cp_n_30_day_cases": int(CALC_FNS["cases_in_last"](dom, 30)),
                 "cp_n_60_day_cases": int(CALC_FNS["cases_in_last"](dom, 60)),
+                "cp_n_90_day_cases": int(CALC_FNS["cases_in_last"](dom, 90)),
                 "cp_n_cases": int(all_stats["cases"].get(dom, 0)),
                 "cp_n_forms": int(all_stats["forms"].get(dom, 0)),
                 "cp_n_forms_30_d": int(CALC_FNS["forms_in_last"](dom, 30)),
+                "cp_n_forms_60_d": int(CALC_FNS["forms_in_last"](dom, 60)),
+                "cp_n_forms_90_d": int(CALC_FNS["forms_in_last"](dom, 90)),
                 "cp_first_form": CALC_FNS["first_form_submission"](dom, False),
                 "cp_last_form": CALC_FNS["last_form_submission"](dom, False),
                 "cp_is_active": CALC_FNS["active"](dom),
@@ -239,10 +243,16 @@ def update_calculated_properties():
                 "cp_n_out_sms": int(CALC_FNS["sms"](dom, "O")),
                 "cp_n_sms_ever": int(CALC_FNS["sms_in_last"](dom)),
                 "cp_n_sms_30_d": int(CALC_FNS["sms_in_last"](dom, 30)),
+                "cp_n_sms_60_d": int(CALC_FNS["sms_in_last"](dom, 60)),
+                "cp_n_sms_90_d": int(CALC_FNS["sms_in_last"](dom, 90)),
                 "cp_sms_ever": int(CALC_FNS["sms_in_last_bool"](dom)),
                 "cp_sms_30_d": int(CALC_FNS["sms_in_last_bool"](dom, 30)),
                 "cp_n_sms_in_30_d": int(CALC_FNS["sms_in_in_last"](dom, 30)),
+                "cp_n_sms_in_60_d": int(CALC_FNS["sms_in_in_last"](dom, 60)),
+                "cp_n_sms_in_90_d": int(CALC_FNS["sms_in_in_last"](dom, 90)),
                 "cp_n_sms_out_30_d": int(CALC_FNS["sms_out_in_last"](dom, 30)),
+                "cp_n_sms_out_60_d": int(CALC_FNS["sms_out_in_last"](dom, 60)),
+                "cp_n_sms_out_90_d": int(CALC_FNS["sms_out_in_last"](dom, 90)),
             }
             if calced_props['cp_first_form'] is None:
                 del calced_props['cp_first_form']
@@ -257,7 +267,7 @@ def is_app_active(app_id, domain):
     return app_has_been_submitted_to_in_last_30_days(domain, app_id)
 
 
-@periodic_task(run_every=crontab(hour="12, 22", minute="0", day_of_week="*"), queue=getattr(settings, 'CELERY_PERIODIC_QUEUE','celery'))
+@periodic_task(run_every=crontab(hour="2", minute="0", day_of_week="*"), queue='background_queue')
 def apps_update_calculated_properties():
     es = get_es_new()
     q = {"filter": {"and": [{"missing": {"field": "copy_of"}}]}}

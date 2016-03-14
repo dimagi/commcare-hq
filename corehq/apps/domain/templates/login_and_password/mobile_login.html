@@ -1,5 +1,74 @@
-{% extends "style/bootstrap2/base_mobile.html" %}
+{% extends "style/base_mobile.html" %}
+{% load hq_shared_tags %}
+{% load i18n %}
 {% block title %}Login to CommCareHQ{% endblock %}
-{% block content %}
-    {% include "login_and_password/partials/login_form.html" %}
+{% block header %}
+    <div class="page-header container-fluid">
+        <h1>{% trans "Welcome back to " %}{% if hr_name %}{{ hr_name }}{% elif domain %}{{ domain }}{% else %}{{ SITE_NAME }}{% endif %}!</h1>
+        <p class="lead">
+            {% if next %}
+                {% trans "Looks like your CommCare session has expired. Please log-in again to continue working." %}
+            {% else %}
+                {% trans "Please sign in below to continue." %}
+            {% endif %}
+        </p>
+
+        {% if next %}
+        <p>
+            {% trans "You will be transferred to your original destination after you sign in." %}
+        </p>
+        {% endif %}
+    </div>
 {% endblock %}
+{% block content %}
+    {% load i18n %}
+    <form class="form-horizontal form-login" name="form" method="post" >
+        {% csrf_token %}
+        {% for global_error in form.non_field_errors %}
+        <div class="alert alert-danger">
+            {{ global_error }}
+        </div>
+        {% endfor %}
+        {% if next %}
+            <input name="next" type="hidden" value="{{next}}" />
+        {% endif %}
+        {% if domain %}
+            <input name="domain" type="hidden" value="{{ domain }}"/>
+        {% endif %}
+        <fieldset>
+        {% for field in form.visible_fields %}
+            <div class="form-group{% if field.errors %} error{% endif %}">
+                <label class="control-label col-xs-3" for="{{ field.id }}">{{ field.label }}</label>
+                <div class="col-xs-9">
+                    {{ field }}
+                    {% for error in field.errors %}
+                        <span class="help-inline">{{ error }}</span>
+                    {% endfor %}
+                    {% if field.name == "password" %}
+                        <p class="help-block">
+                            <a href="{% url "password_reset_email" %}">
+                                <i class="fa fa-question-circle"></i>
+                                {% trans "Forgot your password?" %}
+                            </a>
+                        </p>
+                    {% endif %}
+                </div>
+            </div>
+        {% endfor %}
+        </fieldset>
+        <div class="form-actions">
+            <div class="col-xs-offset-3">
+                <button tabindex="3" type="submit" class="btn btn-primary">{% trans "Sign In" %}</button>
+            </div>
+        </div>
+    </form>
+    <script type="text/javascript">
+        $(function () {
+            $('#id_username').attr('tabindex', '1').focus();
+            $('#id_password').attr('tabindex', '2');
+            $('input[type="text"]').addClass('form-control');
+            $('input[type="password"]').addClass('form-control');
+        });
+    </script>
+{% endblock %}
+{% block mobile-logout %}{% endblock %}

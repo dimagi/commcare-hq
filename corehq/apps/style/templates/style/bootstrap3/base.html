@@ -213,7 +213,7 @@
                     relativeUrls: false
                 };
             </script>
-            <script src="{% new_static 'less/dist/less-1.7.3.min.js' cache=True %}"></script>
+            <script src="{% new_static 'less/dist/less-1.7.3.min.js' %}"></script>
             {% if less_watch %}<script>less.watch();</script>{% endif %}
         {% endif %}
     </head>
@@ -395,10 +395,13 @@
             }
 
             var message_element = $("#message-alerts").get(0);
-            ko.cleanNode(message_element);
-            $(message_element).koApplyBindings({
-                alerts: message_alerts
-            });
+            // if not no_header
+            if (typeof message_element !== 'undefined') {
+                ko.cleanNode(message_element);
+                $(message_element).koApplyBindings({
+                    alerts: message_alerts
+                });
+            }
 
         </script>
 

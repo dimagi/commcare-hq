@@ -2,6 +2,7 @@ from datetime import datetime, timedelta
 from corehq.apps.locations.dbaccessors import get_users_by_location_id
 
 from corehq.apps.sms.api import send_sms_to_verified_number
+from corehq.util.translation import localize
 from dimagi.utils.dates import get_business_day_of_month_before
 from corehq.apps.locations.models import SQLLocation
 from custom.ilsgateway.tanzania.handlers.keyword import KeywordHandler
@@ -17,6 +18,7 @@ class MessageInitiatior(KeywordHandler):
 
     def help(self):
         self.respond(TEST_HANDLER_HELP)
+        return True
 
     def get_district_by_name(self, name):
         try:
@@ -28,7 +30,8 @@ class MessageInitiatior(KeywordHandler):
         for user in get_users_by_location_id(self.domain, sql_location.location_id):
             verified_number = user.get_verified_number()
             if verified_number:
-                send_sms_to_verified_number(verified_number, message % kwargs)
+                with localize(user.get_language_code()):
+                    send_sms_to_verified_number(verified_number, message % kwargs)
 
     def handle(self):
         if len(self.args) < 2:
@@ -40,13 +43,13 @@ class MessageInitiatior(KeywordHandler):
         fw_message = " ".join(self.args[2:])
 
         try:
-            sql_location = SQLLocation.objects.get(domain=self.domain, site_code=msd_code)
+            sql_location = SQLLocation.objects.get(domain=self.domain, site_code__iexact=msd_code)
         except SQLLocation.DoesNotExist:
             sql_location = self.get_district_by_name(rest)
 
         if not sql_location:
             self.respond(TEST_HANDLER_BAD_CODE, code=msd_code)
-            return
+            return True
 
         if command in ['soh', 'hmk']:
             self.send_message(sql_location, SOH_HELP_MESSAGE)
@@ -131,3 +134,4 @@ class MessageInitiatior(KeywordHandler):
             self.send_message(sql_location, SOH_THANK_YOU)
 
         self.respond(TEST_HANDLER_CONFIRM)
+        return True

@@ -16,6 +16,7 @@ from corehq.messaging.smsbackends.grapevine.models import SQLGrapevineBackend
 from corehq.messaging.smsbackends.http.models import SQLHttpBackend
 from corehq.messaging.smsbackends.mach.models import SQLMachBackend
 from corehq.messaging.smsbackends.megamobile.models import SQLMegamobileBackend
+from corehq.messaging.smsbackends.push.models import PushBackend
 from corehq.messaging.smsbackends.sislog.models import SQLSislogBackend
 from corehq.messaging.smsbackends.smsgh.models import SQLSMSGHBackend
 from corehq.messaging.smsbackends.telerivet.models import SQLTelerivetBackend
@@ -152,6 +153,13 @@ class AllBackendTest(BaseSMSTest):
         )
         self.yo_backend.save()
 
+        self.push_backend = PushBackend(
+            name='PUSH',
+            is_global=True,
+            hq_api_id=PushBackend.get_api_id()
+        )
+        self.push_backend.save()
+
     def _test_outbound_backend(self, backend, msg_text, mock_send):
         SQLMobileBackendMapping.set_default_domain_backend(self.domain_obj.name, backend)
 
@@ -212,8 +220,10 @@ class AllBackendTest(BaseSMSTest):
     @patch('corehq.messaging.smsbackends.apposit.models.SQLAppositBackend.send')
     @patch('corehq.messaging.smsbackends.sislog.models.SQLSislogBackend.send')
     @patch('corehq.messaging.smsbackends.yo.models.SQLYoBackend.send')
+    @patch('corehq.messaging.smsbackends.push.models.PushBackend.send')
     def test_outbound_sms(
             self,
+            push_send,
             yo_send,
             sislog_send,
             apposit_send,
@@ -240,6 +250,7 @@ class AllBackendTest(BaseSMSTest):
         self._test_outbound_backend(self.apposit_backend, 'apposit test', apposit_send)
         self._test_outbound_backend(self.sislog_backend, 'sislog test', sislog_send)
         self._test_outbound_backend(self.yo_backend, 'yo test', yo_send)
+        self._test_outbound_backend(self.push_backend, 'push test', push_send)
 
     def test_unicel_inbound_sms(self):
         self._simulate_inbound_request('/unicel/in/', phone_param=InboundParams.SENDER,
@@ -346,6 +357,20 @@ class AllBackendTest(BaseSMSTest):
 
         user.delete()
 
+    def test_push_inbound_sms(self):
+        xml = """<?xml version="1.0" encoding="UTF-8"?>
+        <bspostevent>
+            <field name="MobileNumber" type="string">99912345</field>
+            <field name="Text" type="string">push test</field>
+        </bspostevent>
+        """
+        self._simulate_inbound_request_with_payload(
+            '/push/sms/%s/' % self.push_backend.inbound_api_key,
+            content_type='application/xml', payload=xml)
+
+        self._verify_inbound_request(self.push_backend.get_api_id(), 'push test',
+            backend_couch_id=self.push_backend.couch_id)
+
     def tearDown(self):
         delete_domain_phone_numbers(self.domain_obj.name)
         self.contact1.delete()
@@ -364,6 +389,7 @@ class AllBackendTest(BaseSMSTest):
         self.apposit_backend.delete()
         self.sislog_backend.delete()
         self.yo_backend.delete()
+        self.push_backend.delete()
         super(AllBackendTest, self).tearDown()
 
 
