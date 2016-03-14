@@ -1203,6 +1203,7 @@ class LedgerTransaction(DisabledDbMixin, models.Model):
             "LedgerTransaction("
             "form_id='{self.form_id}', "
             "server_date='{self.server_date}', "
+            "report_date='{self.report_date}', "
             "type='{self.readable_type}', "
             "case_id='{self.case_id}', "
             "entry_id='{self.entry_id}', "
