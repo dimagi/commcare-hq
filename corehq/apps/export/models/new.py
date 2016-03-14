@@ -202,6 +202,21 @@ class ExportColumn(DocumentSchema):
         else:
             return [self.label]
 
+    @classmethod
+    def wrap(cls, data):
+        if cls is ExportColumn:
+            doc_type = data['doc_type']
+            if doc_type == 'ExportColumn':
+                return super(ExportColumn, cls).wrap(data)
+            elif doc_type == 'SplitExportColumn':
+                return SplitExportColumn.wrap(data)
+            elif doc_type == 'RowNumberColumn':
+                return RowNumberColumn.wrap(data)
+            else:
+                raise ValueError('Unexpected doc_type for export column', doc_type)
+        else:
+            return super(ExportColumn, cls).wrap(data)
+
 
 class DocRow(namedtuple("DocRow", ["doc", "row"])):
     """
