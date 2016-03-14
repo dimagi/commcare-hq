@@ -3,7 +3,9 @@ from datetime import datetime
 from xml.etree import ElementTree
 from couchdbkit.exceptions import ResourceNotFound, ResourceConflict
 from django.db import models
-from corehq.apps.fixtures.dbaccessors import get_owner_ids_by_type
+from corehq.apps.cachehq.mixins import QuickCachedDocumentMixin
+from corehq.apps.fixtures.dbaccessors import get_owner_ids_by_type, \
+    get_fixture_data_types_in_domain
 from corehq.apps.fixtures.exceptions import FixtureException, FixtureTypeCheckError
 from corehq.apps.fixtures.utils import clean_fixture_field_name
 from corehq.apps.users.models import CommCareUser
@@ -22,7 +24,7 @@ class FixtureTypeField(DocumentSchema):
     properties = StringListProperty()
 
 
-class FixtureDataType(Document):
+class FixtureDataType(QuickCachedDocumentMixin, Document):
     domain = StringProperty()
     is_global = BooleanProperty(default=False)
     tag = StringProperty()
@@ -89,6 +91,10 @@ class FixtureDataType(Document):
     def delete_fixtures_by_domain(cls, domain, transaction):
         for type in FixtureDataType.by_domain(domain):
             type.recursive_delete(transaction)
+
+    def clear_caches(self):
+        super(FixtureDataType, self).clear_caches()
+        get_fixture_data_types_in_domain.clear(self.domain)
 
 
 class FixtureItemField(DocumentSchema):

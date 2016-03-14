@@ -33,6 +33,7 @@ describe('App Releases', function() {
             ajax_stub;
 
         beforeEach(function() {
+            var ReleasesMain = hqImport('app_manager/js/releases.js').ReleasesMain;
             ajax_stub = sinon.stub($, 'ajax');
             releases = new ReleasesMain(options);
             releases.addSavedApps(get_saved_apps(releases.fetchLimit));
@@ -80,6 +81,8 @@ describe('App Releases', function() {
     });
 
     describe('app_code', function() {
+        var ReleasesMain = hqImport('app_manager/js/releases.js').ReleasesMain;
+        var SavedApp = hqImport('app_manager/js/releases.js').SavedApp;
         var savedApp,
             releases;
         beforeEach(function() {

@@ -131,6 +131,7 @@ TEMPLATE_LOADERS = (
 CSRF_SOFT_MODE = True
 
 MIDDLEWARE_CLASSES = [
+    'corehq.middleware.NoCacheMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.locale.LocaleMiddleware',
@@ -139,7 +140,6 @@ MIDDLEWARE_CLASSES = [
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.common.BrokenLinkEmailsMiddleware',
     'corehq.middleware.OpenRosaMiddleware',
-    'corehq.middleware.NoCacheMiddleware',
     'corehq.util.global_request.middleware.GlobalRequestMiddleware',
     'corehq.apps.users.middleware.UsersMiddleware',
     'corehq.middleware.TimeoutMiddleware',
@@ -1349,8 +1349,26 @@ PILLOWTOPS = {
     'core_ext': [
         'corehq.pillows.reportcase.ReportCasePillow',
         'corehq.pillows.reportxform.ReportXFormPillow',
-        'corehq.apps.userreports.pillow.ConfigurableIndicatorPillow',
-        'corehq.apps.userreports.pillow.StaticDataSourcePillow',
+        {
+            'name': 'DefaultChangeFeedPillow',
+            'class': 'corehq.apps.change_feed.pillow.ChangeFeedPillow',
+            'instance': 'corehq.apps.change_feed.pillow.get_default_couch_db_change_feed_pillow',
+        },
+        {
+            'name': 'UserGroupsDbKafkaPillow',
+            'class': 'pillowtop.pillow.interface.ConstructedPillow',
+            'instance': 'corehq.apps.change_feed.pillow.get_user_groups_db_kafka_pillow',
+        },
+        {
+            'name': 'kafka-ucr-main',
+            'class': 'corehq.apps.userreports.pillow.ConfigurableReportKafkaPillow',
+            'instance': 'corehq.apps.userreports.pillow.get_kafka_ucr_pillow',
+        },
+        {
+            'name': 'kafka-ucr-static',
+            'class': 'corehq.apps.userreports.pillow.ConfigurableReportKafkaPillow',
+            'instance': 'corehq.apps.userreports.pillow.get_kafka_ucr_static_pillow',
+        },
     ],
     'cache': [
         {
@@ -1394,16 +1412,6 @@ PILLOWTOPS = {
     ],
     'experimental': [
         {
-            'name': 'DefaultChangeFeedPillow',
-            'class': 'corehq.apps.change_feed.pillow.ChangeFeedPillow',
-            'instance': 'corehq.apps.change_feed.pillow.get_default_couch_db_change_feed_pillow',
-        },
-        {
-            'name': 'UserGroupsDbKafkaPillow',
-            'class': 'pillowtop.pillow.interface.ConstructedPillow',
-            'instance': 'corehq.apps.change_feed.pillow.get_user_groups_db_kafka_pillow',
-        },
-        {
             'name': 'BlobDeletionPillow',
             'class': 'pillowtop.pillow.interface.ConstructedPillow',
             'instance': 'corehq.blobs.pillow.get_blob_deletion_pillow',
@@ -1417,11 +1425,6 @@ PILLOWTOPS = {
             'name': 'SqlCaseToElasticsearchPillow',
             'class': 'pillowtop.pillow.interface.ConstructedPillow',
             'instance': 'corehq.pillows.case.get_sql_case_to_elasticsearch_pillow',
-        },
-        {
-            'name': 'kafka-ucr-main',
-            'class': 'corehq.apps.userreports.pillow.ConfigurableReportKafkaPillow',
-            'instance': 'corehq.apps.userreports.pillow.get_kafka_ucr_pillow',
         },
     ]
 }
@@ -1518,7 +1521,8 @@ CUSTOM_MODULES = [
 ]
 
 CUSTOM_DASHBOARD_PAGE_URL_NAMES = {
-    'ews-ghana': 'dashboard_page'
+    'ews-ghana': 'dashboard_page',
+    'ils-gateway': 'ils_dashboard_report'
 }
 
 REMOTE_APP_NAMESPACE = "%(domain)s.commcarehq.org"

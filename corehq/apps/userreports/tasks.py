@@ -54,7 +54,7 @@ def _build_indicators(indicator_config_id, relevant_ids):
         redis_client.delete(redis_key)
 
 
-@task(queue='ucr_queue', ignore_result=True, acks_late=True)
+@task(queue='ucr_queue', ignore_result=True)
 def rebuild_indicators(indicator_config_id):
     config = _get_config_by_id(indicator_config_id)
     adapter = IndicatorSqlAdapter(config)
@@ -77,7 +77,8 @@ def resume_building_indicators(indicator_config_id):
     redis_key = _get_redis_key_for_config(config)
 
     if len(redis_client.smembers(redis_key)) > 0:
-        relevant_ids = redis_client.smembers(redis_key)
+        # redis returns a set, which we cant pull a last member from
+        relevant_ids = tuple(redis_client.smembers(redis_key))
         _build_indicators(indicator_config_id, relevant_ids)
         last_id = relevant_ids[-1]
 

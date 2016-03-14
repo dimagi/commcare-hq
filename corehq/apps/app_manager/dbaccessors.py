@@ -2,6 +2,7 @@ from collections import namedtuple
 
 from couchdbkit.exceptions import DocTypeError
 from couchdbkit.resource import ResourceNotFound
+from corehq.util.quickcache import quickcache
 from django.http import Http404
 
 from corehq.apps.es import AppES
@@ -9,6 +10,7 @@ from corehq.apps.es import AppES
 AppBuildVersion = namedtuple('AppBuildVersion', ['app_id', 'build_id', 'version'])
 
 
+@quickcache(['domain'], timeout=1 * 60 * 60)
 def domain_has_apps(domain):
     from .models import Application
     results = Application.get_db().view('app_manager/applications_brief',

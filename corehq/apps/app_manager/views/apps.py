@@ -761,9 +761,9 @@ def drop_user_case(request, domain, app_id):
                 for action in list(form.actions.load_update_cases):
                     if action.auto_select and action.auto_select.mode == AUTO_SELECT_USERCASE:
                         form.actions.load_update_cases.remove(action)
-            app.save()
-            messages.success(
-                request,
-                _('You have successfully removed User Case properties from this application.')
-            )
+    app.save()
+    messages.success(
+        request,
+        _('You have successfully removed User Case properties from this application.')
+    )
     return back_to_main(request, domain, app_id=app_id)

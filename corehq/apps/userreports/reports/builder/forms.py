@@ -50,6 +50,8 @@ from corehq.apps.userreports.sql import get_column_name
 from corehq.apps.userreports.ui.fields import JsonField
 from dimagi.utils.decorators.memoized import memoized
 
+from corehq.toggles import UNLIMITED_REPORT_BUILDER_REPORTS
+
 
 class FilterField(JsonField):
     """
@@ -455,7 +457,7 @@ class DataSourceForm(forms.Form):
 
         existing_reports = ReportConfiguration.by_domain(self.domain)
         builder_reports = filter(lambda report: report.report_meta.created_by_builder, existing_reports)
-        if len(builder_reports) >= 5:
+        if len(builder_reports) >= 5 and not UNLIMITED_REPORT_BUILDER_REPORTS.enabled(self.domain):
             raise forms.ValidationError(_(
                 "Too many reports!\n"
                 "Creating this report would cause you to go over the maximum "

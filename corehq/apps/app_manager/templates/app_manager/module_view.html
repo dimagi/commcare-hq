@@ -33,6 +33,7 @@
     <script>
         $(function () {
             var state = hqImport('app_manager/js/detail-screen-config.js').state;
+            var DetailScreenConfig = hqImport('app_manager/js/detail-screen-config.js').DetailScreenConfig;
             state.requires_case_details({{ module.requires_case_details|BOOL }});
 
             var details = {{ details|JSON }};

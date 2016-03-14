@@ -102,7 +102,7 @@ class FormAccessorSQL(AbstractFormAccessor):
         _attach_prefetch_models(forms_by_id, attachments, 'form_id', 'cached_attachments')
 
         if ordered:
-            _order_list(form_ids, forms, 'form_id')
+            forms = _order_list(form_ids, forms, 'form_id')
 
         return forms
 
@@ -408,11 +408,24 @@ class CaseAccessorSQL(AbstractCaseAccessor):
         return list(CaseTransaction.objects.raw('SELECT * from get_case_transactions(%s)', [case_id]))
 
     @staticmethod
-    def get_transactions_for_case_rebuild(case_id):
-        return list(CaseTransaction.objects.raw(
-            'SELECT * from get_case_transactions_for_rebuild(%s)',
-            [case_id])
+    def get_transaction_by_form_id(case_id, form_id):
+        transactions = list(CaseTransaction.objects.raw(
+            'SELECT * from get_case_transaction_by_form_id(%s, %s)',
+            [case_id, form_id])
         )
+        assert len(transactions) <= 1
+        return transactions[0] if transactions else None
+
+    @staticmethod
+    def get_transactions_by_type(case_id, transaction_type):
+        return list(CaseTransaction.objects.raw(
+            'SELECT * from get_case_transactions_by_type(%s, %s)',
+            [case_id, transaction_type])
+        )
+
+    @staticmethod
+    def get_transactions_for_case_rebuild(case_id):
+        return CaseAccessorSQL.get_transactions_by_type(case_id, CaseTransaction.TYPE_FORM)
 
     @staticmethod
     def case_has_transactions_since_sync(case_id, sync_log_id, sync_log_date):
