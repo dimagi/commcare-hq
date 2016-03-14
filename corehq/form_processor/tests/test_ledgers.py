@@ -4,13 +4,11 @@ from django.conf import settings
 from django.test import TestCase
 from casexml.apps.case.mock import CaseFactory, CaseBlock
 from corehq.apps.commtrack.helpers import make_product
-from corehq.apps.commtrack.tests import get_single_balance_block
-from corehq.apps.commtrack.tests.util import get_single_transfer_block
 from corehq.apps.hqcase.utils import submit_case_blocks
 from corehq.form_processor.backends.sql.dbaccessors import CaseAccessorSQL, LedgerAccessorSQL
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 from corehq.form_processor.interfaces.processor import FormProcessorInterface
-from corehq.form_processor.models import CaseTransaction, LedgerTransaction
+from corehq.form_processor.models import LedgerTransaction
 from corehq.form_processor.parsers.ledgers.helpers import UniqueLedgerReference
 from corehq.form_processor.tests import FormProcessorTestUtils, run_with_all_backends
 from corehq.form_processor.utils.general import should_use_sql_backend
@@ -38,16 +36,19 @@ class LedgerTests(TestCase):
         return submit_case_blocks(ledger_blocks, DOMAIN)
 
     def _set_balance(self, balance):
+        from corehq.apps.commtrack.tests import get_single_balance_block
         self._submit_ledgers([
             get_single_balance_block(self.case.case_id, self.product_a._id, balance)
         ])
 
     def _transfer_in(self, amount):
+        from corehq.apps.commtrack.tests.util import get_single_transfer_block
         self._submit_ledgers([
             get_single_transfer_block(None, self.case.case_id, self.product_a._id, amount)
         ])
 
     def _transfer_out(self, amount):
+        from corehq.apps.commtrack.tests.util import get_single_transfer_block
         self._submit_ledgers([
             get_single_transfer_block(self.case.case_id, None, self.product_a._id, amount)
         ])
@@ -65,6 +66,7 @@ class LedgerTests(TestCase):
 
     @run_with_all_backends
     def test_balance_submission_multiple(self):
+        from corehq.apps.commtrack.tests import get_single_balance_block
         balances = {
             self.product_a._id: 100,
             self.product_b._id: 50,
@@ -150,6 +152,7 @@ class LedgerTests(TestCase):
 
     @run_with_all_backends
     def test_ledger_update_with_case_update(self):
+        from corehq.apps.commtrack.tests import get_single_balance_block
         submit_case_blocks([
             CaseBlock(case_id=self.case.case_id, update={'a': "1"}).as_string(),
             get_single_balance_block(self.case.case_id, self.product_a._id, 100)],
