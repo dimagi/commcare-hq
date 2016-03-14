@@ -1213,6 +1213,7 @@ def set_celery_supervisorconf():
         'saved_exports_queue':          ['supervisor_celery_saved_exports_queue.conf'],
         'ucr_queue':                    ['supervisor_celery_ucr_queue.conf'],
         'email_queue':                  ['supervisor_celery_email_queue.conf'],
+        'repeat_record_queue':          ['supervisor_celery_repeat_record_queue.conf'],
         'logistics_reminder_queue':     ['supervisor_celery_logistics_reminder_queue.conf'],
         'logistics_background_queue':   ['supervisor_celery_logistics_background_queue.conf'],
         'flower':                       ['supervisor_celery_flower.conf'],
