@@ -900,11 +900,6 @@ LOGGING = {
             'level': 'ERROR',
             'propagate': False,
         },
-        'currency_update': {
-            'handlers': ['file'],
-            'level': 'INFO',
-            'propagate': False,
-        },
         'accounting': {
             'handlers': ['accountinglog', 'console', 'couchlog', 'mail_admins'],
             'level': 'INFO',
