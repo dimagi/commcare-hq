@@ -26,7 +26,6 @@ from dimagi.utils.decorators.memoized import memoized
 from dimagi.utils.parsing import json_format_datetime
 from dimagi.utils.mixins import UnicodeMixIn
 from dimagi.utils.post import simple_post
-from dimagi.utils.couch import LockableMixIn
 
 from .dbaccessors import (
     get_pending_repeat_record_count,
@@ -433,7 +432,7 @@ class AppStructureRepeater(Repeater):
         return None
 
 
-class RepeatRecord(Document, LockableMixIn):
+class RepeatRecord(Document):
     """
     An record of a particular instance of something that needs to be forwarded
     with a link to the proper repeater object
@@ -524,7 +523,7 @@ class RepeatRecord(Document, LockableMixIn):
     def get_payload(self):
         return self.repeater.get_payload(self)
 
-    def fire(self, max_tries=3, post_fn=None, force_send=False):
+    def fire(self, max_tries=3, force_send=False):
         try:
             payload = self.get_payload()
         except ResourceNotFound:
@@ -543,7 +542,6 @@ class RepeatRecord(Document, LockableMixIn):
             # Mark it succeeded so that we don't try again
             self.update_success()
         else:
-            post_fn = post_fn or simple_post_with_cached_timeout
             headers = self.repeater.get_headers(self)
             if self.try_now() or force_send:
                 # we don't use celery's version of retry because
@@ -551,7 +549,12 @@ class RepeatRecord(Document, LockableMixIn):
                 failure_reason = None
                 for i in range(max_tries):
                     try:
-                        resp = post_fn(payload, self.url, headers=headers, force_send=force_send)
+                        resp = simple_post_with_cached_timeout(
+                            payload,
+                            self.url,
+                            headers=headers,
+                            force_send=force_send
+                        )
                         if 200 <= resp.status_code < 300:
                             self.update_success()
                             break

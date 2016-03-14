@@ -1,10 +1,10 @@
+from collections import namedtuple
 from StringIO import StringIO
 from datetime import datetime, timedelta
-from mock import MagicMock, patch
+from mock import patch
 
 from casexml.apps.case.models import CommCareCase
 from casexml.apps.case.mock import CaseBlock, CaseFactory
-from casexml.apps.case.tests.util import check_xml_line_by_line
 from casexml.apps.case.xml import V1
 
 from django.core.urlresolvers import reverse
@@ -14,15 +14,18 @@ from django.test.client import Client
 from corehq.apps.app_manager.tests.util import TestXmlMixin
 from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.receiverwrapper.exceptions import DuplicateFormatException, IgnoreDocument
+from corehq.apps.repeaters.tasks import check_repeaters
 from corehq.apps.repeaters.models import (
     CaseRepeater,
     FormRepeater,
     RepeatRecord,
     RegisterGenerator)
 from corehq.apps.repeaters.repeater_generators import BasePayloadGenerator
+from corehq.apps.repeaters.const import MIN_RETRY_WAIT
 from couchforms.models import XFormInstance
 from couchforms.const import DEVICE_LOG_XMLNS
 
+MockResponse = namedtuple('MockResponse', 'status_code')
 case_id = "ABC123CASEID"
 instance_id = "XKVB636DFYL38FNX3D38WV5EH"
 update_instance_id = "ZYXKVB636DFYL38FNX3D38WV5"
@@ -115,23 +118,6 @@ class RepeaterTest(BaseRepeaterTest):
         self.log = []
         self.post_xml(xform_xml, self.domain)
 
-    def clear_log(self):
-        for i in range(len(self.log)):
-            self.log.pop()
-
-    def make_post_fn(self, status_codes):
-        status_codes = iter(status_codes)
-
-        def post_fn(data, url, headers=None, force_send=False):
-            status_code = status_codes.next()
-            self.log.append((url, status_code, data, headers))
-
-            class resp:
-                status = status_code
-            return resp
-
-        return post_fn
-
     def tearDown(self):
         self.case_repeater.delete()
         self.form_repeater.delete()
@@ -147,29 +133,23 @@ class RepeaterTest(BaseRepeaterTest):
         for repeat_record in repeat_records:
             self.assertNotEqual(repeat_record.payload_id, '1234')
 
-    def test_repeater(self):
-        #  this test should probably be divided into more units
-
-        CommCareCase.get(case_id)
-
+    def test_repeater_failed_sends(self):
+        """
+        This tests records that fail to send three times
+        """
         def now():
             return datetime.utcnow()
 
         repeat_records = RepeatRecord.all(domain=self.domain, due_before=now())
         self.assertEqual(len(repeat_records), 2)
 
-        self.clear_log()
-
-        records_by_repeater_id = {}
         for repeat_record in repeat_records:
-            repeat_record.fire(post_fn=self.make_post_fn([404, 404, 404]))
+            with patch(
+                    'corehq.apps.repeaters.models.simple_post_with_cached_timeout',
+                    return_value=MockResponse(status_code=404)) as mock_post:
+                repeat_record.fire()
+                self.assertEqual(mock_post.call_count, 3)
             repeat_record.save()
-            records_by_repeater_id[repeat_record.repeater_id] = repeat_record
-
-        for (url, status, data, headers) in self.log:
-            self.assertEqual(status, 404)
-
-        self.clear_log()
 
         next_check_time = now() + timedelta(minutes=60)
 
@@ -181,39 +161,45 @@ class RepeaterTest(BaseRepeaterTest):
 
         repeat_records = RepeatRecord.all(
             domain=self.domain,
-            due_before=next_check_time + timedelta(seconds=2),
+            due_before=next_check_time,
         )
         self.assertEqual(len(repeat_records), 2)
 
-        for repeat_record in repeat_records:
-            self.assertLess(abs(next_check_time - repeat_record.next_check),
-                            timedelta(seconds=3))
-            repeat_record.fire(post_fn=self.make_post_fn([404, 200]))
-            repeat_record.save()
+    def test_update_failure_next_check(self):
+        now = datetime.utcnow()
+        record = RepeatRecord(domain=self.domain, next_check=now)
+        self.assertIsNone(record.last_checked)
 
-        self.assertEqual(len(self.log), 4)
+        record.update_failure()
+        self.assertTrue(record.last_checked > now)
+        self.assertEqual(record.next_check, record.last_checked + MIN_RETRY_WAIT)
+
+    def test_repeater_successful_send(self):
+
+        repeat_records = RepeatRecord.all(domain=self.domain, due_before=datetime.utcnow())
+        mocked_responses = [MockResponse(status_code=404), MockResponse(status_code=200)]
+        for repeat_record in repeat_records:
+            with patch(
+                    'corehq.apps.repeaters.models.simple_post_with_cached_timeout',
+                    side_effect=mocked_responses) as mock_post:
+                repeat_record.fire()
+                self.assertEqual(mock_post.call_count, 2)
+                mock_post.assert_any_call(
+                    repeat_record.get_payload(),
+                    repeat_record.repeater.get_url(repeat_record),
+                    headers=repeat_record.repeater.get_headers(repeat_record),
+                    force_send=False,
+                )
+            repeat_record.save()
 
         # The following is pretty fickle and depends on which of
         #   - corehq.apps.repeaters.signals
         #   - casexml.apps.case.signals
         # gets loaded first.
         # This is deterministic but easily affected by minor code changes
-
-        # check case stuff
-        rec = records_by_repeater_id[self.case_repeater.get_id]
-        self.assertEqual(self.log[1][:2], (self.case_repeater.get_url(rec), 200))
-        self.assertIn('server-modified-on', self.log[1][3])
-        check_xml_line_by_line(self, self.log[1][2], case_block)
-
-        # check form stuff
-        rec = records_by_repeater_id[self.form_repeater.get_id]
-        self.assertEqual(self.log[3][:3],
-                         (self.form_repeater.get_url(rec), 200, xform_xml))
-        self.assertIn('received-on', self.log[3][3])
-
         repeat_records = RepeatRecord.all(
             domain=self.domain,
-            due_before=next_check_time,
+            due_before=datetime.utcnow(),
         )
         for repeat_record in repeat_records:
             self.assertEqual(repeat_record.succeeded, True)
@@ -223,6 +209,37 @@ class RepeaterTest(BaseRepeaterTest):
 
         self.post_xml(update_xform_xml, self.domain)
         self.assertEqual(len(self.repeat_records(self.domain)), 2)
+
+    def test_check_repeat_records(self):
+        self.assertEqual(len(RepeatRecord.all()), 2)
+
+        with patch('corehq.apps.repeaters.models.simple_post_with_cached_timeout') as mock_fire:
+            check_repeaters()
+            self.assertEqual(mock_fire.call_count, 2)
+
+        with patch('corehq.apps.repeaters.models.simple_post_with_cached_timeout') as mock_fire:
+            check_repeaters()
+            self.assertEqual(mock_fire.call_count, 0)
+
+    def test_process_repeat_record_locking(self):
+        self.assertEqual(len(RepeatRecord.all()), 2)
+
+        with patch('corehq.apps.repeaters.tasks.process_repeat_record') as mock_process:
+            check_repeaters()
+            self.assertEqual(mock_process.delay.call_count, 2)
+
+        with patch('corehq.apps.repeaters.tasks.process_repeat_record') as mock_process:
+            check_repeaters()
+            self.assertEqual(mock_process.delay.call_count, 0)
+
+        records = RepeatRecord.all()
+        # Saving should unlock them again by changing the rev
+        for record in records:
+            record.save()
+
+        with patch('corehq.apps.repeaters.tasks.process_repeat_record') as mock_process:
+            check_repeaters()
+            self.assertEqual(mock_process.delay.call_count, 2)
 
 
 class CaseRepeaterTest(BaseRepeaterTest, TestXmlMixin):
@@ -459,27 +476,12 @@ class TestRepeaterFormat(BaseRepeaterTest):
                 return payload
 
         repeat_record = self.repeater.register(CommCareCase.get(case_id))
-        post_fn = MagicMock()
-        repeat_record.fire(post_fn=post_fn)
-        headers = self.repeater.get_headers(repeat_record)
-        post_fn.assert_called_with(payload, self.repeater.url, headers=headers, force_send=False)
-
-
-class RepeaterLockTest(TestCase):
-
-    def tearDown(self):
-        repeat_records = RepeatRecord.all()
-        for repeat_record in repeat_records:
-            repeat_record.delete()
-
-    def testLocks(self):
-        r = RepeatRecord(domain='test')
-        r.save()
-        r2 = RepeatRecord.get(r._id)
-        self.assertTrue(r.acquire_lock(datetime.utcnow()))
-        r3 = RepeatRecord.get(r._id)
-        self.assertFalse(r2.acquire_lock(datetime.utcnow()))
-        self.assertFalse(r3.acquire_lock(datetime.utcnow()))
-        r.release_lock()
-        r4 = RepeatRecord.get(r._id)
-        self.assertTrue(r4.acquire_lock(datetime.utcnow()))
+        with patch('corehq.apps.repeaters.models.simple_post_with_cached_timeout') as mock_post:
+            repeat_record.fire()
+            headers = self.repeater.get_headers(repeat_record)
+            mock_post.assert_called_with(
+                payload,
+                self.repeater.url,
+                headers=headers,
+                force_send=False
+            )

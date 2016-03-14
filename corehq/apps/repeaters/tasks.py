@@ -1,12 +1,16 @@
 from datetime import datetime
-import json
 
 from django.conf import settings
-from celery.task import periodic_task
+from celery.task import periodic_task, task
 from celery.utils.log import get_task_logger
+from dimagi.utils.couch.cache.cache_core import get_redis_client
+from dimagi.utils.couch.undo import DELETED_SUFFIX
 
-from corehq.apps.repeaters.models import RepeatRecord
-from corehq.apps.repeaters.const import CHECK_REPEATERS_INTERVAL
+from corehq.apps.repeaters.dbaccessors import iterate_repeat_records
+from corehq.apps.repeaters.const import (
+    CHECK_REPEATERS_INTERVAL,
+    CHECK_REPEATERS_KEY,
+)
 
 logging = get_task_logger(__name__)
 
@@ -17,75 +21,50 @@ logging = get_task_logger(__name__)
 )
 def check_repeaters():
     start = datetime.utcnow()
-    LIMIT = 100
-    progress_report = new_progress_report()
+    cutoff = start + CHECK_REPEATERS_INTERVAL
 
-    def loop():
-        # take LIMIT records off the top
-        # the assumption is that they all get 'popped' in the for loop
-        # the only exception I can see is if there's a problem with the
-        # locking, a large number of locked tasks could pile up at the top,
-        # so make a provision for that worst case
-        number_locked = progress_report['number_locked']
-        repeat_records = RepeatRecord.all(
-            due_before=start,
-            limit=LIMIT + number_locked
-        )
-        return process_repeater_list(
-            repeat_records,
-            start=start,
-            cutoff=start + CHECK_REPEATERS_INTERVAL,
-            progress_report=progress_report
-        )
+    redis_client = get_redis_client().client.get_client()
 
-    while loop():
-        pass
+    # Timeout for slightly less than periodic check
+    check_repeater_lock = redis_client.lock(
+        CHECK_REPEATERS_KEY,
+        timeout=CHECK_REPEATERS_INTERVAL.seconds - 10
+    )
+    if not check_repeater_lock.acquire(blocking=False):
+        return
 
-    now = datetime.utcnow()
-    progress_report['timedelta'] = unicode(now - start)
-    progress_report['time'] = unicode(now)
-    logging.info(json.dumps(progress_report))
-
-
-def new_progress_report():
-    return {'success': [], 'fail': [], 'locked': [], 'deleted': [], 'number_locked': 0}
-
-
-def process_repeater_list(repeat_records, start=None, cutoff=datetime.max, progress_report=None):
-    """
-    Attempts to process a list of repeat records, with a bunch of optional arguments that are
-    used by the periodic task.
-    """
-    start = start or datetime.utcnow()
-    progress_report = progress_report or new_progress_report()
-    DELETED = '-Deleted'
-
-    if repeat_records.count() <= progress_report['number_locked']:
-        # don't keep spinning if there's nothing left to fetch
-        return False
-
-    for repeat_record in repeat_records:
+    for record in iterate_repeat_records(start):
         now = datetime.utcnow()
+        lock_key = _get_repeat_record_lock_key(record)
 
-        # abort if taking too long, so the next task can take over
         if now > cutoff:
-            return False
+            break
 
-        if repeat_record.acquire_lock(start):
-            if repeat_record.repeater.doc_type.endswith(DELETED):
-                if not repeat_record.doc_type.endswith(DELETED):
-                    repeat_record.doc_type += DELETED
-                progress_report['deleted'].append(repeat_record.get_id)
-            else:
-                repeat_record.fire()
-                if repeat_record.succeeded:
-                    progress_report['success'].append(repeat_record.get_id)
-                else:
-                    progress_report['fail'].append(repeat_record.get_id)
-            repeat_record.save()
-            repeat_record.release_lock()
+        lock = redis_client.lock(lock_key, timeout=60 * 60 * 24)
+        if not lock.acquire(blocking=False):
+            continue
+
+        process_repeat_record.delay(record)
+
+    check_repeater_lock.release()
+
+
+@task(queue=settings.CELERY_REPEAT_RECORD_QUEUE)
+def process_repeat_record(repeat_record):
+    try:
+        if repeat_record.repeater.doc_type.endswith(DELETED_SUFFIX):
+            if not repeat_record.doc_type.endswith(DELETED_SUFFIX):
+                repeat_record.doc_type += DELETED_SUFFIX
         else:
-            progress_report['locked'].append(repeat_record.get_id)
-            progress_report['number_locked'] += 1
+            repeat_record.fire()
+        repeat_record.save()
+    except Exception:
+        logging.exception('Failed to process repeat record: {}'.format(repeat_record._id))
 
-    return progress_report
+
+def _get_repeat_record_lock_key(record):
+    """
+    Including the rev in the key means that the record will be unlocked for processing
+    every time we execute a `save()` call.
+    """
+    return 'repeat_record_in_progress-{}_{}'.format(record._id, record._rev)
