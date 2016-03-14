@@ -330,13 +330,6 @@ REPORT_BUILDER_MAP_REPORTS = StaticToggle(
     [NAMESPACE_DOMAIN]
 )
 
-KAFKA_UCRS = StaticToggle(
-    'kafka-ucrs',
-    'Use new kafka-based UCR processing',
-    TAG_EXPERIMENTAL,
-    [NAMESPACE_DOMAIN]
-)
-
 STOCK_TRANSACTION_EXPORT = StaticToggle(
     'ledger_export',
     'Show "export transactions" link on case details page',

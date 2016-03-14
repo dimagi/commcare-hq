@@ -31,7 +31,7 @@ class ILSLossesAdjustmentsTest(ILSTestScript):
             self.assertEqual(ps.stock_on_hand, sohs[ps.sql_product.code])
 
         script = """
-            5551234 > um id -3 dp -5 ip 13
+            5551234 > um ID -3 dp -5 IP 13
             5551234 < {0}
         """.format(response2)
         self.run_script(script)

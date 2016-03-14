@@ -2,6 +2,7 @@ import uuid
 from mock import patch
 
 from django.test import TestCase
+from casexml.apps.case.signals import case_post_save
 
 from corehq.apps.userreports import tasks
 from corehq.apps.userreports.dbaccessors import delete_all_report_configs
@@ -15,6 +16,7 @@ from casexml.apps.case.xml import V2
 from corehq.apps.userreports.reports.view import ConfigurableReport
 from corehq.sql_db.connections import Session
 from corehq.form_processor.interfaces.processor import FormProcessorInterface
+from corehq.util.context_managers import drop_connected_signals
 
 
 class ConfigurableReportTestMixin(object):
@@ -30,7 +32,8 @@ class ConfigurableReportTestMixin(object):
             case_type=cls.case_type,
             update=properties,
         ).as_xml()
-        post_case_blocks([case_block], {'domain': cls.domain})
+        with drop_connected_signals(case_post_save):
+            post_case_blocks([case_block], {'domain': cls.domain})
         return CommCareCase.get(id)
 
     @classmethod

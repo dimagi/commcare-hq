@@ -891,6 +891,10 @@ class CaseTransaction(DisabledDbMixin, models.Model):
         (TYPE_REBUILD_FORM_ARCHIVED, 'form_archive_rebuild'),
         (TYPE_REBUILD_FORM_EDIT, 'form_edit_rebuild'),
         (TYPE_LEDGER, 'ledger'),
+        (TYPE_CASE_CREATE, 'case_create'),
+        (TYPE_CASE_CLOSE, 'case_close'),
+        (TYPE_CASE_ATTACHMENT, 'case_attachment'),
+        (TYPE_CASE_INDEX, 'case_index'),
     )
     TYPES_TO_PROCESS = (
         TYPE_FORM,
@@ -954,6 +958,14 @@ class CaseTransaction(DisabledDbMixin, models.Model):
     @property
     def is_case_attachment(self):
         return bool(self.is_form_transaction and self.TYPE_CASE_ATTACHMENT & self.type)
+
+    @property
+    def readable_type(self):
+        readable_type = []
+        for type_, type_slug in self.TYPE_CHOICES:
+            if self.type & type_:
+                readable_type.append(type_slug)
+        return ' '.join(readable_type)
 
     def __eq__(self, other):
         if not isinstance(other, CaseTransaction):

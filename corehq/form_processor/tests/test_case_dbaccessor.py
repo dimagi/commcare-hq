@@ -257,6 +257,17 @@ class CaseAccessorTestsSQL(TestCase):
             [t.form_id for t in transactions],
         )
 
+    def test_get_transaction_by_form_id(self):
+        form_id = uuid.uuid4().hex
+        case = _create_case(form_id=form_id)
+
+        transaction = CaseAccessorSQL.get_transaction_by_form_id(case.case_id, form_id)
+        self.assertEqual(form_id, transaction.form_id)
+        self.assertEqual(case.case_id, transaction.case_id)
+
+        transaction = CaseAccessorSQL.get_transaction_by_form_id(case.case_id, 'wrong')
+        self.assertIsNone(transaction)
+
     def test_get_transactions_for_case_rebuild(self):
         form_id = uuid.uuid4().hex
         case = _create_case(form_id=form_id)

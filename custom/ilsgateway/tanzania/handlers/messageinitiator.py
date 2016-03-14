@@ -18,6 +18,7 @@ class MessageInitiatior(KeywordHandler):
 
     def help(self):
         self.respond(TEST_HANDLER_HELP)
+        return True
 
     def get_district_by_name(self, name):
         try:
@@ -48,7 +49,7 @@ class MessageInitiatior(KeywordHandler):
 
         if not sql_location:
             self.respond(TEST_HANDLER_BAD_CODE, code=msd_code)
-            return
+            return True
 
         if command in ['soh', 'hmk']:
             self.send_message(sql_location, SOH_HELP_MESSAGE)
@@ -133,3 +134,4 @@ class MessageInitiatior(KeywordHandler):
             self.send_message(sql_location, SOH_THANK_YOU)
 
         self.respond(TEST_HANDLER_CONFIRM)
+        return True
