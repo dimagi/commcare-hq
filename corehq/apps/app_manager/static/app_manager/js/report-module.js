@@ -197,7 +197,8 @@ hqDefine('app_manager/js/report-module.js', function () {
                         StaticChoiceFilter: ['select_value'],
                         StaticDatespanFilter: ['date_range'],
                         CustomDatespanFilter: ['operator', 'date_number', 'date_number2'],
-                        CustomMonthFilter: ['start_of_month', 'period']
+                        CustomMonthFilter: ['start_of_month', 'period'],
+                        AncestorLocationTypeFilter: ['ancestor_location_type_name']
                     };
                     _.each(docTypeToField, function(field, docType) {
                         if(filter.selectedValue.doc_type() === docType) {
@@ -236,13 +237,13 @@ hqDefine('app_manager/js/report-module.js', function () {
             'CustomDataAutoFilter',
             'StaticChoiceListFilter',
             'StaticChoiceFilter',
-            'MobileSelectFilter'
+            'MobileSelectFilter',
+            'AncestorLocationTypeFilter'
         ];
         this.autoFilterTypes = [
             'case_sharing_group',
             'location_id',
             'parent_location_id',
-            'ancestor_location_type_id',
             'username',
             'user_id'
         ];

@@ -8,7 +8,6 @@ from corehq.apps.app_manager.models import (
     _filter_by_case_sharing_group_id,
     _filter_by_location_id,
     _filter_by_parent_location_id,
-    _filter_by_ancestor_location_type_id,
     _filter_by_username,
     _filter_by_user_id,
 )
@@ -270,14 +269,6 @@ class AutoFilterTests(TestCase):
         result = _filter_by_parent_location_id(self.jon, self.ui_filter)
         self.ui_filter.value.assert_called_with(test_filter=self.massachusetts.location_id)
         self.assertEqual(result, 'result')
-
-    def test_filter_by_ancestor_location_type_id(self):
-        result = _filter_by_ancestor_location_type_id(self.nate, None)
-        self.assertEqual(result, [
-            Choice(value=self.country.id, display='country'),
-            Choice(value=self.state.id, display='state'),
-            # Note: These are ancestors, so the user's own location type is excluded
-        ])
 
     def test_filter_by_username(self):
         result = _filter_by_username(self.sheel, None)
