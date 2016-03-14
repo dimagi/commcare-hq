@@ -15,7 +15,7 @@ jsonfield==1.0.3
 dropbox==2.2.0
 defusedxml==0.4.1
 diff-match-patch==20120106
-django-tastypie==0.12.2
+django-tastypie==0.13.3
 djangorestframework==3.3.1
 djtables==0.1.1
 elasticsearch==1.9.0
