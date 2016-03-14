@@ -3494,11 +3494,6 @@ class AncestorLocationTypeFilter(ReportAppFilter):
     ancestor_location_type_name = StringProperty()
 
     def get_filter_value(self, user, ui_filter):
-        """
-        A list of locations who have the same ancestor as user param
-
-        :raises LocationType.DoesNotExist: if ancestor_location_type_name does not match a location type
-        """
         from corehq.apps.locations.models import SQLLocation
 
         try:
