@@ -41,7 +41,7 @@ from corehq.apps.export.const import (
     DEID_TRANSFORM_FUNCTIONS,
     TOP_MAIN_FORM_TABLE_PROPERTIES,
     BOTTOM_MAIN_FORM_TABLE_PROPERTIES,
-)
+    PROPERTY_TAG_ROW)
 from corehq.apps.export.dbaccessors import (
     get_latest_case_export_schema,
     get_latest_form_export_schema,
@@ -152,7 +152,12 @@ class ExportColumn(DocumentSchema):
         is_advanced = isinstance(item, SystemExportItem) and item.is_advanced
         transform = item.transform if isinstance(item, SystemExportItem) else None
 
-        column = ExportColumn(
+        if item.tag == PROPERTY_TAG_ROW:
+            column_class = RowNumberColumn
+        else:
+            column_class = ExportColumn
+
+        column = column_class(
             item=item,
             label=item.label,
             is_advanced=is_advanced,
