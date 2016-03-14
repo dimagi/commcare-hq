@@ -5,17 +5,43 @@ from datetime import datetime
 import itertools
 from django.db import connections, InternalError, transaction
 
-from corehq.form_processor.exceptions import XFormNotFound, CaseNotFound, AttachmentNotFound, CaseSaveError, \
+from corehq.form_processor.exceptions import (
+    XFormNotFound,
+    CaseNotFound,
+    AttachmentNotFound,
+    CaseSaveError,
     LedgerSaveError
-from corehq.form_processor.interfaces.dbaccessors import AbstractCaseAccessor, AbstractFormAccessor, \
-    CaseIndexInfo, AttachmentContent, AbstractLedgerAccessor
+)
+from corehq.form_processor.interfaces.dbaccessors import (
+    AbstractCaseAccessor,
+    AbstractFormAccessor,
+    CaseIndexInfo,
+    AttachmentContent,
+    AbstractLedgerAccessor
+)
 from corehq.form_processor.models import (
-    XFormInstanceSQL, CommCareCaseIndexSQL, CaseAttachmentSQL, CaseTransaction,
-    CommCareCaseSQL, XFormAttachmentSQL, XFormOperationSQL,
-    CommCareCaseIndexSQL_DB_TABLE, CaseAttachmentSQL_DB_TABLE, LedgerValue, LedgerValue_DB_TABLE, LedgerTransaction,
-    LedgerTransaction_DB_TABLE)
-from corehq.form_processor.utils.sql import fetchone_as_namedtuple, fetchall_as_namedtuple, case_adapter, \
-    case_transaction_adapter, case_index_adapter, case_attachment_adapter
+    XFormInstanceSQL,
+    CommCareCaseIndexSQL,
+    CaseAttachmentSQL,
+    CaseTransaction,
+    CommCareCaseSQL,
+    XFormAttachmentSQL,
+    XFormOperationSQL,
+    CommCareCaseIndexSQL_DB_TABLE,
+    CaseAttachmentSQL_DB_TABLE,
+    LedgerTransaction_DB_TABLE,
+    LedgerValue_DB_TABLE,
+    LedgerValue,
+    LedgerTransaction,
+)
+from corehq.form_processor.utils.sql import (
+    fetchone_as_namedtuple,
+    fetchall_as_namedtuple,
+    case_adapter,
+    case_transaction_adapter,
+    case_index_adapter,
+    case_attachment_adapter
+)
 from corehq.sql_db.routers import db_for_read_write
 from corehq.util.test_utils import unit_testing_only
 

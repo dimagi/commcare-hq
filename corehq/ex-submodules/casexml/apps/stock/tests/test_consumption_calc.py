@@ -157,29 +157,29 @@ class ConsumptionCalcTestNew(SimpleTestCase):
             ], 60), 0.)
         self.assertAlmostEqual(
             self.consumption([
-                 _tx_new(LedgerTransaction.TYPE_BALANCE, 25, 25, 5),
-                 _tx_new(LedgerTransaction.TYPE_BALANCE, 10, 35, 0),
+                _tx_new(LedgerTransaction.TYPE_BALANCE, 25, 25, 5),
+                _tx_new(LedgerTransaction.TYPE_BALANCE, 10, 35, 0),
             ], 60), 0.)
         # 15 / 5 = 3
         self.assertAlmostEqual(
             self.consumption([
-                 _tx_new(LedgerTransaction.TYPE_BALANCE, 25, 25, 5),
-                 _tx_new(LedgerTransaction.TYPE_BALANCE, -15, 10, 0),
+                _tx_new(LedgerTransaction.TYPE_BALANCE, 25, 25, 5),
+                _tx_new(LedgerTransaction.TYPE_BALANCE, -15, 10, 0),
             ], 60), 3.)
         # 27 / 5 = 5.4
         self.assertAlmostEqual(
             self.consumption([
-                 _tx_new(LedgerTransaction.TYPE_BALANCE, 25, 25, 5),
-                 _tx_new(LedgerTransaction.TYPE_TRANSFER, 12, 37, 3),
-                 _tx_new(LedgerTransaction.TYPE_BALANCE, -27, 10, 0),
+                _tx_new(LedgerTransaction.TYPE_BALANCE, 25, 25, 5),
+                _tx_new(LedgerTransaction.TYPE_TRANSFER, 12, 37, 3),
+                _tx_new(LedgerTransaction.TYPE_BALANCE, -27, 10, 0),
             ], 60), 5.4)
         # (6 + 21) / 5 = 5.4
         self.assertAlmostEqual(
             self.consumption([
-                 _tx_new(LedgerTransaction.TYPE_BALANCE, 25, 25, 5),
-                 _tx_new(LedgerTransaction.TYPE_TRANSFER, -6, 19, 3),
-                 _tx_new(LedgerTransaction.TYPE_TRANSFER, 12, 31, 3),
-                 _tx_new(LedgerTransaction.TYPE_BALANCE, -21, 10, 0),
+                _tx_new(LedgerTransaction.TYPE_BALANCE, 25, 25, 5),
+                _tx_new(LedgerTransaction.TYPE_TRANSFER, -6, 19, 3),
+                _tx_new(LedgerTransaction.TYPE_TRANSFER, 12, 31, 3),
+                _tx_new(LedgerTransaction.TYPE_BALANCE, -21, 10, 0),
             ], 60), 5.4)
 
     def test_one_period_with_receipts(self):
@@ -211,24 +211,24 @@ class ConsumptionCalcTestNew(SimpleTestCase):
 
                 _tx_new(LedgerTransaction.TYPE_TRANSFER, -10, -4, 0),
                 _tx_new(LedgerTransaction.TYPE_BALANCE, 14, 10, 0),
-            ], 60), 44/15.)
+            ], 60), 44 / 15.)
 
     def test_excluded_period(self):
         self.assertAlmostEqual(self.consumption([
-                _tx_new(LedgerTransaction.TYPE_BALANCE, 25, 25, 15),
+            _tx_new(LedgerTransaction.TYPE_BALANCE, 25, 25, 15),
 
-                _tx_new(LedgerTransaction.TYPE_TRANSFER, -4, 21, 12),
-                _tx_new(LedgerTransaction.TYPE_BALANCE, 12, 33, 12),
+            _tx_new(LedgerTransaction.TYPE_TRANSFER, -4, 21, 12),
+            _tx_new(LedgerTransaction.TYPE_BALANCE, 12, 33, 12),
 
-                _tx_new(LedgerTransaction.TYPE_TRANSFER, 36, -3, 7),
-                _tx_new(LedgerTransaction.TYPE_BALANCE, 3, 0, 7),  # stockout
+            _tx_new(LedgerTransaction.TYPE_TRANSFER, 36, -3, 7),
+            _tx_new(LedgerTransaction.TYPE_BALANCE, 3, 0, 7),  # stockout
 
-                _tx_new(LedgerTransaction.TYPE_TRANSFER, -5, -5, 5),
-                _tx_new(LedgerTransaction.TYPE_BALANCE, 25, 20, 5),  # restock, consumption days 12-5 ignored
+            _tx_new(LedgerTransaction.TYPE_TRANSFER, -5, -5, 5),
+            _tx_new(LedgerTransaction.TYPE_BALANCE, 25, 20, 5),  # restock, consumption days 12-5 ignored
 
-                _tx_new(LedgerTransaction.TYPE_TRANSFER, -10, 10, 0),
-                _tx_new(LedgerTransaction.TYPE_BALANCE, 14, 24, 0),
-            ], 60), 1.75)
+            _tx_new(LedgerTransaction.TYPE_TRANSFER, -10, 10, 0),
+            _tx_new(LedgerTransaction.TYPE_BALANCE, 14, 24, 0),
+        ], 60), 1.75)
 
     def test_prorated_period(self):
         tx_past_window = [
@@ -257,9 +257,9 @@ class ConsumptionCalcTestNew(SimpleTestCase):
             _tx_new(LedgerTransaction.TYPE_BALANCE, 14, 10, 0),
         ]
         self.assertEqual(self.consumption(tx, 60, {'min_periods': 4}), None)
-        self.assertAlmostEqual(self.consumption(tx, 60, {'min_periods': 3}), 44/15.)
+        self.assertAlmostEqual(self.consumption(tx, 60, {'min_periods': 3}), 44 / 15.)
         self.assertEqual(self.consumption(tx, 60, {'min_window': 16}), None)
-        self.assertAlmostEqual(self.consumption(tx, 60, {'min_window': 15}), 44/15.)
+        self.assertAlmostEqual(self.consumption(tx, 60, {'min_window': 15}), 44 / 15.)
 
 
 def _tx_new(type_, delta, updated_balance, age):

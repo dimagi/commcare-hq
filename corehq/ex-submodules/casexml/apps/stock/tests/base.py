@@ -29,8 +29,10 @@ class StockTestBase(TestCase):
         self._stock_report = functools.partial(_stock_report, self.domain.name, self.case_id, self.product_id)
         self._receipt_report = functools.partial(_receipt_report, self.domain.name, self.case_id, self.product_id)
         self._test_config = ConsumptionConfiguration.test_config()
-        self._compute_consumption = functools.partial(compute_daily_consumption, self.domain.name, self.case_id,
-                                                      self.product_id, now, configuration=self._test_config)
+        self._compute_consumption = functools.partial(
+            compute_daily_consumption, self.domain.name, self.case_id,
+            self.product_id, now, configuration=self._test_config
+        )
 
     def tearDown(self):
         from corehq.form_processor.tests import FormProcessorTestUtils
@@ -43,7 +45,9 @@ def _stock_report(domain, case_id, product_id, amount, days_ago):
     from corehq.apps.hqcase.utils import submit_case_blocks
     from dimagi.utils.parsing import json_format_date
     date_string = json_format_date(ago(days_ago))
-    stock_block = get_single_balance_block(case_id=case_id, product_id=product_id, quantity=amount, date_string=date_string)
+    stock_block = get_single_balance_block(
+        case_id=case_id, product_id=product_id, quantity=amount, date_string=date_string
+    )
     submit_case_blocks(stock_block, domain=domain)
 
 
@@ -52,5 +56,7 @@ def _receipt_report(domain, case_id, product_id, amount, days_ago):
     from dimagi.utils.parsing import json_format_date
     from corehq.apps.hqcase.utils import submit_case_blocks
     date_string = json_format_date(ago(days_ago))
-    stock_block = get_single_transfer_block(src_id=None, dest_id=case_id, product_id=product_id, quantity=amount, date_string=date_string)
+    stock_block = get_single_transfer_block(
+        src_id=None, dest_id=case_id, product_id=product_id, quantity=amount, date_string=date_string
+    )
     submit_case_blocks(stock_block, domain=domain)

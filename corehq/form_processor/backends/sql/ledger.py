@@ -46,9 +46,13 @@ class LedgerProcessorSQL(LedgerProcessorInterface):
             if not ledger_value:
                 ledger_value = LedgerValue(**stock_trans.ledger_reference._asdict())
 
-            ledger_value.track_create(
-                _get_ledger_transaction(_lazy_original_balance, stock_report_helper, stock_trans, new_ledger_values.balance)
+            transaction = _get_ledger_transaction(
+                _lazy_original_balance,
+                stock_report_helper,
+                stock_trans,
+                new_ledger_values.balance
             )
+            ledger_value.track_create(transaction)
 
             # only do this after we've created the transaction otherwise we'll get the wrong delta
             ledger_value.balance = new_ledger_values.balance

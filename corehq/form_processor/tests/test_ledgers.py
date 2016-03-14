@@ -152,8 +152,7 @@ class LedgerTests(TestCase):
     def test_ledger_update_with_case_update(self):
         submit_case_blocks([
             CaseBlock(case_id=self.case.case_id, update={'a': "1"}).as_string(),
-            get_single_balance_block(self.case.case_id, self.product_a._id, 100)
-            ],
+            get_single_balance_block(self.case.case_id, self.product_a._id, 100)],
             DOMAIN
         )
 

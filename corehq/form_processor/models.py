@@ -1174,7 +1174,7 @@ class LedgerTransaction(DisabledDbMixin, models.Model):
         )
         transactions = [
             ConsumptionTransaction(
-                TRANSACTION_TYPE_RECEIPTS if self.delta > 0 else TRANSACTION_TYPE_CONSUMPTION ,
+                TRANSACTION_TYPE_RECEIPTS if self.delta > 0 else TRANSACTION_TYPE_CONSUMPTION,
                 abs(self.delta),
                 self.report_date
             )
