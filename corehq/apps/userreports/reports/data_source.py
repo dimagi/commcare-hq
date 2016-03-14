@@ -19,6 +19,7 @@ from corehq.apps.userreports.reports.sorting import ASCENDING
 from corehq.apps.userreports.reports.util import get_expanded_columns, get_total_row
 from corehq.apps.userreports.sql import get_table_name
 from corehq.apps.userreports.sql.connection import get_engine_id
+from corehq.sql_db.connections import connection_manager
 from corehq.util.soft_assert import soft_assert
 
 
@@ -163,8 +164,13 @@ class ConfigurableReportDataSource(SqlData):
         return any(column_config.calculate_total for column_config in self.column_configs)
 
     def get_total_records(self):
-        # TODO - actually use sqlagg to get a count of rows
-        return len(self.get_data())
+        qc = self.query_context()
+        for c in self.columns:
+            # TODO - don't append columns that are not part of filters or group bys
+            qc.append_column(c.view)
+
+        session = connection_manager.get_scoped_session(self.engine_id)
+        return qc.count(session.connection(), self.filter_values)
 
     def get_total_row(self):
         return get_total_row(
