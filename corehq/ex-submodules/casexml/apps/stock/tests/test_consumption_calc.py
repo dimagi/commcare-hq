@@ -145,8 +145,6 @@ class ConsumptionCalcTestNew(SimpleTestCase):
             consumption_tx_data.extend(tx.get_consumption_transactions(
                 exclude_inferred_receipts)
             )
-        for tx in consumption_tx_data:
-            print tx
         return consumption(consumption_tx_data, window, params)
 
     def test_one_period(self):
