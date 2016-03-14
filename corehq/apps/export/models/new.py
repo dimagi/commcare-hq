@@ -41,7 +41,7 @@ from corehq.apps.export.const import (
     DEID_TRANSFORM_FUNCTIONS,
     TOP_MAIN_FORM_TABLE_PROPERTIES,
     BOTTOM_MAIN_FORM_TABLE_PROPERTIES,
-    PROPERTY_TAG_ROW)
+    PROPERTY_TAG_ROW, MAIN_CASE_TABLE_PROPERTIES)
 from corehq.apps.export.dbaccessors import (
     get_latest_case_export_schema,
     get_latest_form_export_schema,
@@ -684,6 +684,17 @@ class ExportDataSchema(Document):
             app_version,
         )
 
+    @staticmethod
+    def _generate_export_item_from_system_prop(system_property, app_id, app_version):
+        return SystemExportItem(
+            path=system_property.path.split("."),
+            label=system_property.name,
+            tag=system_property.tag,
+            is_advanced=system_property.is_advanced,
+            transform=system_property.transform,
+            last_occurrences={app_id: app_version},
+        )
+
 
 class FormExportDataSchema(ExportDataSchema):
 
@@ -740,17 +751,6 @@ class FormExportDataSchema(ExportDataSchema):
         current_xform_schema.save()
 
         return current_xform_schema
-
-    @staticmethod
-    def _generate_export_item_from_system_prop(system_property, app_id, app_version):
-        return SystemExportItem(
-            path=system_property.path.split("."),
-            label=system_property.name,
-            tag=system_property.tag,
-            is_advanced=system_property.is_advanced,
-            transform=system_property.transform,
-            last_occurrences={app_id: app_version},
-        )
 
     @staticmethod
     def _generate_schema_from_xform(xform, langs, app_id, app_version):
@@ -856,9 +856,9 @@ class CaseExportDataSchema(ExportDataSchema):
             )
 
             current_case_schema = CaseExportDataSchema._merge_schemas(
-                current_case_schema,
                 case_schema,
-                case_history_schema
+                case_history_schema,
+                current_case_schema,
             )
 
             current_case_schema.record_update(app.copy_of, app.version)
@@ -874,7 +874,10 @@ class CaseExportDataSchema(ExportDataSchema):
 
     @staticmethod
     def _generate_schema_from_case_property_mapping(case_property_mapping, app_id, app_version):
-        """Generates the schema for the main Case tab on the export page"""
+        """
+        Generates the schema for the main Case tab on the export page
+        Includes system export properties for the case.
+        """
         assert len(case_property_mapping.keys()) == 1
         schema = CaseExportDataSchema()
 
@@ -883,12 +886,27 @@ class CaseExportDataSchema(ExportDataSchema):
                 path=MAIN_TABLE,
                 last_occurrences={app_id: app_version},
             )
+
+            for system_prop in MAIN_CASE_TABLE_PROPERTIES[0]:
+                group_schema.items.append(
+                    CaseExportDataSchema._generate_export_item_from_system_prop(
+                        system_prop, app_id, app_version
+                    )
+                )
+
             for prop in case_properties:
                 group_schema.items.append(ScalarItem(
                     path=[prop],
                     label=prop,
                     last_occurrences={app_id: app_version},
                 ))
+
+            for system_prop in MAIN_CASE_TABLE_PROPERTIES[1]:
+                group_schema.items.append(
+                    CaseExportDataSchema._generate_export_item_from_system_prop(
+                        system_prop, app_id, app_version
+                    )
+                )
 
             schema.group_schemas.append(group_schema)
 

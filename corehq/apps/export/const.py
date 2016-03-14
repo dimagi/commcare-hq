@@ -77,25 +77,33 @@ BOTTOM_MAIN_FORM_TABLE_PROPERTIES = [
 MAIN_FORM_TABLE_PROPERTIES = TOP_MAIN_FORM_TABLE_PROPERTIES + BOTTOM_MAIN_FORM_TABLE_PROPERTIES
 
 
-MAIN_CASE_TABLE_PROPERTIES = [
-    SystemProperty(PROPERTY_TAG_INFO, 'caseid', '_id', _("The id of the case")),
-    SystemProperty(PROPERTY_TAG_INFO, 'case_type', 'type', _("The type of the case")),
-    SystemProperty(PROPERTY_TAG_INFO, 'closed', 'closed', _("True if the case is closed, otherwise False")),
-    SystemProperty(PROPERTY_TAG_INFO, 'closed_by_user_id', 'closed_by', _("The id of the user who closed the case"), ),
-    SystemProperty(PROPERTY_TAG_INFO, 'closed_by_username', 'closed_by', _("The username of the user who closed the case"), USERNAME_TRANSFORM),
-    SystemProperty(PROPERTY_TAG_INFO, 'closed_date', 'closed_on', _("The date and time at which the case was closed")),
-    SystemProperty(PROPERTY_TAG_INFO, 'external_id', 'external_id', _("The external id for this case")),
-    SystemProperty(PROPERTY_TAG_INFO, 'last_modified_by_user_id', 'user_id', _("The id of the user who last modified this case")),
-    SystemProperty(PROPERTY_TAG_INFO, 'last_modified_by_user_username', 'user_id', _("The username of the user who last modified this case"), USERNAME_TRANSFORM),
-    SystemProperty(PROPERTY_TAG_INFO, 'last_modified_date', 'modified_on', _("The date and time at which the case was last modified")),
-    SystemProperty(PROPERTY_TAG_INFO, 'opened_by_user_id', 'opened_by', _("The id of the user who opened the case")),
-    SystemProperty(PROPERTY_TAG_INFO, 'opened_by_username', 'opened_by', _("The username of the user who opened the case"), USERNAME_TRANSFORM),
-    SystemProperty(PROPERTY_TAG_INFO, 'opened_date', 'opened_on', _("The date and time at which the case was opened")),
-    SystemProperty(PROPERTY_TAG_INFO, 'owner_id', 'owner_id', _("The id of the user who owns the case")),
-    SystemProperty(PROPERTY_TAG_INFO, 'owner_name', 'owner_id', _("The username of the user who owns the case"), USERNAME_TRANSFORM),
-    SystemProperty(PROPERTY_TAG_INFO, 'server_last_modified_date', 'server_modified_on', _("The date and time at which the server received the form that last modified the case"), USERNAME_TRANSFORM),
-    SystemProperty(PROPERTY_TAG_INFO, 'doc_typ', 'doc_typ'),
-]
+MAIN_CASE_TABLE_PROPERTIES = (
+    # This first list is displayed above the case properties
+    [
+        SystemProperty(PROPERTY_TAG_ROW, 'number', 'number', is_advanced=False),
+        SystemProperty(PROPERTY_TAG_INFO, 'caseid', '_id', _("The id of the case"), is_advanced=False),
+    ],
+    # This second list is displayed below the case properties
+    [
+        SystemProperty(PROPERTY_TAG_INFO, 'case_type', 'type', _("The type of the case")),
+        SystemProperty(PROPERTY_TAG_INFO, 'closed', 'closed', _("True if the case is closed, otherwise False"), is_advanced=False),
+        SystemProperty(PROPERTY_TAG_INFO, 'closed_by_user_id', 'closed_by', _("The id of the user who closed the case"), ),
+        SystemProperty(PROPERTY_TAG_INFO, 'closed_by_username', 'closed_by', _("The username of the user who closed the case"), USERNAME_TRANSFORM, is_advanced=False),
+        SystemProperty(PROPERTY_TAG_INFO, 'closed_date', 'closed_on', _("The date and time at which the case was closed"), is_advanced=False),
+        SystemProperty(PROPERTY_TAG_INFO, 'external_id', 'external_id', _("The external id for this case")),
+        SystemProperty(PROPERTY_TAG_INFO, 'last_modified_by_user_id', 'user_id', _("The id of the user who last modified this case")),
+        SystemProperty(PROPERTY_TAG_INFO, 'last_modified_by_user_username', 'user_id', _("The username of the user who last modified this case"), USERNAME_TRANSFORM, is_advanced=False),
+        SystemProperty(PROPERTY_TAG_INFO, 'last_modified_date', 'modified_on', _("The date and time at which the case was last modified"), is_advanced=False),
+        SystemProperty(PROPERTY_TAG_INFO, 'opened_by_user_id', 'opened_by', _("The id of the user who opened the case")),
+        SystemProperty(PROPERTY_TAG_INFO, 'opened_by_username', 'opened_by', _("The username of the user who opened the case"), USERNAME_TRANSFORM, is_advanced=False),
+        SystemProperty(PROPERTY_TAG_INFO, 'opened_date', 'opened_on', _("The date and time at which the case was opened"), is_advanced=False),
+        SystemProperty(PROPERTY_TAG_INFO, 'owner_id', 'owner_id', _("The id of the user who owns the case")),
+        SystemProperty(PROPERTY_TAG_INFO, 'owner_name', 'owner_id', _("The username of the user who owns the case"), USERNAME_TRANSFORM, is_advanced=False),
+        SystemProperty(PROPERTY_TAG_INFO, 'server_last_modified_date', 'server_modified_on', _("The date and time at which the server received the form that last modified the case"), USERNAME_TRANSFORM),
+        # TODO: Make sure state gets converted to a doc_type or whatever in the form es index
+        SystemProperty(PROPERTY_TAG_SERVER, 'doc_type', 'doc_type'),
+    ]
+)
 
 CASE_HISTORY_PROPERTIES = [
     SystemProperty(PROPERTY_TAG_NONE, 'action_type', 'action_type'),
