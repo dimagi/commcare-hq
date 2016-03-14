@@ -3,6 +3,9 @@ from datetime import datetime, timedelta, date
 import itertools
 import json
 from corehq.apps.domain.views import BaseDomainView
+from corehq.apps.export.dbaccessors import (
+    get_properly_wrapped_export_instance
+)
 from corehq.apps.hqwebapp.view_permissions import user_can_view_reports
 from corehq.apps.users.permissions import FORM_EXPORT_PERMISSION, CASE_EXPORT_PERMISSION, \
     DEID_EXPORT_PERMISSION
@@ -518,8 +521,7 @@ def hq_download_saved_export(req, domain, export_id):
     # quasi-security hack: the first key of the index is always assumed
     # to be the domain
     assert domain == export.configuration.index[0]
-    cutoff = datetime.utcnow() - timedelta(days=settings.SAVED_EXPORT_ACCESS_CUTOFF)
-    if not export.last_accessed or export.last_accessed < cutoff:
+    if _should_update_export(export.last_accessed):
         group_id = req.GET.get('group_export_id')
         if group_id:
             try:
@@ -530,23 +532,55 @@ def hq_download_saved_export(req, domain, export_id):
                 schema = next(itertools.islice(group_config.all_export_schemas,
                                                list_index,
                                                list_index+1))
-                rebuild_export_async.delay(export.configuration, schema, 'couch')
+                rebuild_export_async.delay(export.configuration, schema)
             except Exception:
                 notify_exception(req, 'Failed to rebuild export during download')
 
     export.last_accessed = datetime.utcnow()
     export.save()
-    export = SavedBasicExport.get(export_id)
-    content_type = Format.from_format(export.configuration.format).mimetype
+
     payload = export.get_payload(stream=True)
+    return _build_download_saved_export_response(
+        payload, export.configuration.format, export.configuration.filename
+    )
+
+
+@csrf_exempt
+@login_or_digest_or_basic_or_apikey(default='digest')
+@require_form_export_permission
+@require_GET
+def hq_download_new_saved_export(req, domain, export_instance_id):
+    export_instance = get_properly_wrapped_export_instance(export_instance_id)
+    assert domain == export_instance.domain
+    if _should_update_export(export_instance.last_accessed):
+        try:
+            from corehq.apps.export.tasks import rebuild_export_task
+            rebuild_export_task.delay(export_instance)
+        except Exception:
+            notify_exception(req, 'Failed to rebuild export during download')
+    export_instance.last_accessed = datetime.utcnow()
+    export_instance.save()
+    payload = export_instance.get_payload(stream=True)
+    return _build_download_saved_export_response(
+        payload, export_instance.export_format, export_instance.filename
+    )
+
+
+def _build_download_saved_export_response(payload, format, filename):
+    content_type = Format.from_format(format).mimetype
     response = StreamingHttpResponse(FileWrapper(payload), content_type=content_type)
-    if export.configuration.format != 'html':
+    if format != 'html':
         # ht: http://stackoverflow.com/questions/1207457/convert-unicode-to-string-in-python-containing-extra-symbols
         normalized_filename = unicodedata.normalize(
-            'NFKD', unicode(export.configuration.filename),
+            'NFKD', unicode(filename),
         ).encode('ascii', 'ignore')
         response['Content-Disposition'] = 'attachment; filename="%s"' % normalized_filename
     return response
+
+
+def _should_update_export(last_accessed):
+    cutoff = datetime.utcnow() - timedelta(days=settings.SAVED_EXPORT_ACCESS_CUTOFF)
+    return not last_accessed or last_accessed < cutoff
 
 
 @login_or_digest

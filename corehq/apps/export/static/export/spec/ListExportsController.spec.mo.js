@@ -26,6 +26,8 @@ describe('ListExportsController Unit Tests', function() {
                 }
             });
         }]);
+        listExportsTestApp.constant('bulk_download_url', "/fake/bulk/download/url");
+        listExportsTestApp.constant('legacy_bulk_download_url', "/fake/legacy/bulk/download/url");
         module('ngtest.ListExportsApp');
         // Kickstart the injectors previously registered with calls to angular.mock.module
         inject(function () {});
@@ -156,7 +158,7 @@ describe('ListExportsController Unit Tests', function() {
                 $httpBackend.flush();
                 $httpBackend.expectPOST(mockBackendUrls.UPDATE_EMAILED_EXPORT_DATA);
                 exportToUpdate = currentScope.exports[0];
-                component = exportToUpdate.emailedExports[0];
+                component = exportToUpdate.emailedExport;
                 currentScope.updateEmailedExportData(component, exportToUpdate);
             });
 
