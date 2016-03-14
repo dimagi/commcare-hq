@@ -170,7 +170,15 @@ class ConfigurableReportDataSource(SqlData):
             qc.append_column(c.view)
 
         session = connection_manager.get_scoped_session(self.engine_id)
-        return qc.count(session.connection(), self.filter_values)
+        try:
+            return qc.count(session.connection(), self.filter_values)
+        except (
+            ColumnNotFoundException,
+            ProgrammingError,
+        ) as e:
+            raise UserReportsError(unicode(e))
+        except TableNotFoundException:
+            raise TableNotFoundWarning
 
     def get_total_row(self):
         return get_total_row(
