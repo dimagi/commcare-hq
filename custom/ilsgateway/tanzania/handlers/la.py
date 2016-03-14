@@ -11,7 +11,12 @@ from custom.ilsgateway.tanzania.reminders import LOSS_ADJUST_HELP, LOSS_ADJUST_B
 class LossAndAdjustment(KeywordHandler):
 
     def _create_stock_transaction(self, report, product_id, quantity):
-        current_soh = StockState.objects.get(product_id=product_id, case_id=self.case_id).stock_on_hand
+        try:
+            current_soh = StockState.objects.get(product_id=product_id, case_id=self.case_id).stock_on_hand
+        except StockState.DoesNotExist:
+            # When stock state does not exist it means that stock on hand has never been reported.
+            # Loss and adjustments report should be sent after SOH report.
+            return
         StockTransaction.objects.create(
             report=report,
             section_id=SECTION_TYPE_STOCK,
