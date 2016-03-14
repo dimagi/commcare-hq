@@ -170,11 +170,7 @@ class ConfigurableReportDataSource(SqlData):
             qc.append_column(c.view)
 
         session = connection_manager.get_scoped_session(self.engine_id)
-        try:
-            return qc.count(session.connection(), self.filter_values)
-        except:
-            session.rollback()
-            raise
+        return qc.count(session.connection(), self.filter_values)
 
     def get_total_row(self):
         return get_total_row(
