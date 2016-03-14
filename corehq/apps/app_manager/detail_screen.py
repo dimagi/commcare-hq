@@ -447,12 +447,11 @@ class Graph(FormattedDetailColumn):
                                 ] + [
                                     sx.ConfigurationItem(
                                         id=k,
-                                        # TODO: different function? this depends on series & graph
-                                        # not having any colliding keys
-                                        locale_id=self.id_strings.graph_configuration(
+                                        locale_id=self.id_strings.graph_series_configuration(
                                             self.module,
                                             self.detail_type,
                                             self.column,
+                                            index,
                                             k
                                         )
                                     )
@@ -461,7 +460,7 @@ class Graph(FormattedDetailColumn):
                             )
                         )
                     )
-                    for s in self.column.graph_configuration.series],
+                    for index, s in enumerate(self.column.graph_configuration.series]),
                 configuration=sx.ConfigurationGroup(
                     configs=(
                         [

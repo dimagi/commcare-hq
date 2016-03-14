@@ -62,6 +62,9 @@ def _create_custom_app_strings(app, lang, for_default=False):
                         yield id_strings.graph_annotation(module, detail_type, column, index), trans(item.values)
                     for property, values in column.graph_configuration.locale_specific_config.iteritems():
                         yield id_strings.graph_configuration(module, detail_type, column, property), trans(values)
+                    for index, item in enumerate(column.graph_configuration.series):
+                        for property, values in item.locale_specific_config.iteritems():
+                            yield id_strings.graph_series_configuration(module, detail_type, column, index, property), trans(values)
 
             for tab in detail.get_tabs():
                 yield id_strings.detail_tab_title_locale(module, detail_type, tab), trans(tab.header)

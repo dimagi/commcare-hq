@@ -116,6 +116,20 @@ def graph_configuration(module, detail_type, column, key):
     )
 
 
+@pattern('m%d.%s.%s_%s_%s.graph.key.%s')
+def graph_series_configuration(module, detail_type, column, series_index, key):
+    field = column.field.replace('#', '')
+    return u"m{module.id}.{detail_type}.{d.model}_{field}_{d_id}.graph.series_{series_index}.key.{key}".format(
+        module=module,
+        detail_type=detail_type,
+        d=column,
+        field=field,
+        d_id=column.id + 1,
+        series_index=series_index,
+        key=key
+    )
+
+
 @pattern('m%d.%s.%s_%s_%s.graph.a.%d')
 def graph_annotation(module, detail_type, column, annotation_index):
     field = column.field.replace('#', '')

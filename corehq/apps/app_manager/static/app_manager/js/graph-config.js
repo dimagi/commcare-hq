@@ -97,6 +97,11 @@ hqDefine('app_manager/js/graph-config.js', function () {
                 if (s.radiusFunction !== undefined){
                     series.radius_function = s.radiusFunction;
                 }
+                series.locale_specific_config = _.reduce(
+                    s.localeSpecificConfigurations, function(memo, conf){
+                        memo[conf.property] = omitNulls(conf.values);
+                        return memo;
+                }, {});
                 // convert the list of config objects to a single object (since
                 // order no longer matters)
                 series.config = _.reduce(s.configPairs, function(memo, pair){
@@ -152,6 +157,14 @@ hqDefine('app_manager/js/graph-config.js', function () {
                 if (s.radius_function !== undefined){
                     series.radiusFunction = s.radius_function;
                 }
+                series.localeSpecificConfigurations = _.map(_.pairs(s.locale_specific_config), function(pair){
+                    return {
+                        'lang': moduleOptions.lang,
+                        'langs': moduleOptions.langs,
+                        'property': pair[0],
+                        'values': pair[1]
+                    };
+                });
                 series.configPairs = _.map(_.pairs(s.config), function(pair){
                     return {
                         'property': pair[0],
@@ -508,6 +521,20 @@ hqDefine('app_manager/js/graph-config.js', function () {
             'name': "ex: 'My Y-Values 1'",
             'x-name': "ex: 'My X-Values'",
         };
+        self.localeSpecificConfigurations = ko.observableArray(_.map(
+            ['name', 'x-name'],
+            function(s){return new LocalizedConfigPropertyValuePair({
+                'property': s,
+                'lang': self.lang,
+                'langs': self.langs
+            });}
+        ));
+        if (original.localeSpecificConfigurations && original.localeSpecificConfigurations.length !== 0) {
+            self.localeSpecificConfigurations(_.map(original.localeSpecificConfigurations, function (o) {
+                return new LocalizedConfigPropertyValuePair(o);
+            }));
+        }
+        self.localeSpecificConfigurations.sort();
 
         self.toggleShowDataPath = function() {
             self.showDataPath(!self.showDataPath());
@@ -531,7 +558,6 @@ hqDefine('app_manager/js/graph-config.js', function () {
         // triangle-up and triangle-down are also options
         self.configPropertyHints['point-style'] = "'none', 'circle', 'cross', 'diamond', ...";
         self.configPropertyHints['secondary-y'] = 'true() or false()';
-
     };
     XYGraphSeries.prototype = new GraphSeries();
     XYGraphSeries.constructor = XYGraphSeries;
