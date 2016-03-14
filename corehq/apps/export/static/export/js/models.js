@@ -154,7 +154,11 @@ Exports.ViewModels.ExportColumn = function(columnJSON) {
 };
 
 Exports.ViewModels.ExportColumn.prototype.formatProperty = function() {
-    return this.item.path().join('.');
+    if (this.item.doc_type() === "SystemExportItem"){
+        return this.item.label();
+    } else {
+        return this.item.path().join('.');
+    }
 };
 
 Exports.ViewModels.ExportColumn.prototype.isDeidSelectVisible = function() {
