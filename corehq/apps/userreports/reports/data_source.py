@@ -166,6 +166,7 @@ class ConfigurableReportDataSource(SqlData):
     def get_total_records(self):
         qc = self.query_context()
         for c in self.columns:
+            # TODO - don't append columns that are not part of filters or group bys
             qc.append_column(c.view)
 
         session = connection_manager.get_scoped_session(self.engine_id)
