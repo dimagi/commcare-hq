@@ -28,8 +28,7 @@
                             <i class="{{ item.secondary_url_icon }}"></i>
                         </a>
                     </div>
-                    <a class="list-group-item"
-                       href="{{ item.url }}"
+                    <div class="list-group-item"
                        data-ng-repeat="item in paginatedItems"
                        data-ng-if="!item.secondary_url"
                        popover-placement="right"
@@ -38,8 +37,8 @@
                        popover-trigger="mouseenter"
                        track-analytics=""
                        title="">
-                        {{ item.name }}
-                    </a>
+                      <a href="{{ item.url }}">{{ item.name }}</a>
+                    </div>
             </div>
             <pagination direction-links="true"
                         total-items="total"

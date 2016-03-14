@@ -154,18 +154,18 @@ class ApplicationStatusReport(DeploymentsReport):
 
     @property
     def export_table(self):
-        def _fmt_ordinal(ordinal):
-            if ordinal is not None and ordinal >= 0:
-                return safe_strftime(date.fromordinal(ordinal), USER_DATE_FORMAT)
+        def _fmt_timestamp(timestamp):
+            if timestamp is not None and timestamp >= 0:
+                return safe_strftime(date.fromtimestamp(timestamp), USER_DATE_FORMAT)
             return SCALAR_NEVER_WAS
 
         result = super(ApplicationStatusReport, self).export_table
         table = result[0][1]
         for row in table[1:]:
             # Last submission
-            row[1] = _fmt_ordinal(row[1])
+            row[1] = _fmt_timestamp(row[1])
             # Last sync
-            row[2] = _fmt_ordinal(row[2])
+            row[2] = _fmt_timestamp(row[2])
         return result
 
 

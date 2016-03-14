@@ -16,7 +16,8 @@ from corehq.apps.receiverwrapper.util import get_app_and_build_ids, determine_au
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 from corehq.form_processor.submission_post import SubmissionPost
 from corehq.form_processor.utils import convert_xform_to_json
-from corehq.util.datadog.utils import count_by_response_code
+from corehq.util.datadog.metrics import MULTIMEDIA_SUBMISSION_ERROR_COUNT
+from corehq.util.datadog.utils import count_by_response_code, log_counter
 import couchforms
 from django.views.decorators.http import require_POST
 from django.views.decorators.csrf import csrf_exempt
@@ -39,13 +40,15 @@ def _process_form(request, domain, app_id, user_id, authenticated,
         except:
             meta = {}
 
-        notify_exception(None, "Received a submission with POST.keys()", {
+        details = {
             "domain": domain,
             "app_id": app_id,
             "user_id": user_id,
             "authenticated": authenticated,
             "form_meta": meta,
-        })
+        }
+        log_counter(MULTIMEDIA_SUBMISSION_ERROR_COUNT, details)
+        notify_exception(None, "Received a submission with POST.keys()", details)
         return HttpResponseBadRequest(e.message)
 
     app_id, build_id = get_app_and_build_ids(domain, app_id)

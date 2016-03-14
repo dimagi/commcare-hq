@@ -1,6 +1,7 @@
 import json
 from django.utils.translation import ugettext as _
 from jsonobject.exceptions import BadValueError
+from corehq.apps.userreports.exceptions import InvalidQueryColumn
 
 from corehq.apps.userreports.reports.sorting import ASCENDING, DESCENDING
 from corehq.apps.userreports.sql.columns import DEFAULT_MAXIMUM_EXPANSION
@@ -72,8 +73,13 @@ class ReportColumn(JsonObject):
             return TransformFactory.get_transform(self.transform).get_transform_function()
         return None
 
-    def get_group_by_columns(self):
-        raise NotImplementedError(_("You can't group by columns of type {}".format(self.type)))
+    def get_query_column_ids(self):
+        """
+        Gets column IDs associated with a query. These could be different from
+        the normal column_ids if the same column ends up in multiple columns in
+        the query (e.g. an aggregate date splitting into year and month)
+        """
+        raise InvalidQueryColumn(_("You can't query on columns of type {}".format(self.type)))
 
     def get_header(self, lang):
         return localize(self.display, lang)
@@ -134,7 +140,7 @@ class FieldColumn(ReportColumn):
             )
         ])
 
-    def get_group_by_columns(self):
+    def get_query_column_ids(self):
         return [self.column_id]
 
 
@@ -193,12 +199,11 @@ class AggregateDateColumn(ReportColumn):
         return SqlColumnConfig(columns=[
             AggregateColumn(
                 header=self.get_header(lang),
-                aggregate_fn=lambda year, month, date: {'year': year, 'month': month},
+                aggregate_fn=lambda year, month: {'year': year, 'month': month},
                 format_fn=self.get_format_fn(),
                 columns=[
                     YearColumn(self.field, alias=self._year_column_alias()),
                     MonthColumn(self.field, alias=self._month_column_alias()),
-                    SimpleColumn(self.field, alias=self.column_id),
                 ],
                 slug=self.column_id,
                 data_slug=self.column_id,
@@ -219,7 +224,7 @@ class AggregateDateColumn(ReportColumn):
             return '{}-{:02d}'.format(int(data['year']), int(data['month']))
         return _format
 
-    def get_group_by_columns(self):
+    def get_query_column_ids(self):
         return [self._year_column_alias(), self._month_column_alias()]
 
 

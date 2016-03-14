@@ -13,12 +13,13 @@ from sqlagg.sorting import OrderBy
 from corehq.apps.reports.sqlreport import SqlData, DatabaseColumn
 from corehq.apps.userreports.exceptions import (
     UserReportsError, TableNotFoundWarning,
-)
+    InvalidQueryColumn)
 from corehq.apps.userreports.models import DataSourceConfiguration, get_datasource_config
 from corehq.apps.userreports.reports.sorting import ASCENDING
 from corehq.apps.userreports.reports.util import get_expanded_columns, get_total_row
 from corehq.apps.userreports.sql import get_table_name
 from corehq.apps.userreports.sql.connection import get_engine_id
+from corehq.util.soft_assert import soft_assert
 
 
 class ConfigurableReportDataSource(SqlData):
@@ -93,31 +94,29 @@ class ConfigurableReportDataSource(SqlData):
 
     @property
     def group_by(self):
-        def _contributions(column_id):
-            # ask each column for its group_by contribution and combine to a single list
-            # if the column isn't found just treat it as a normal field
-            if column_id in self._column_configs:
-                return self._column_configs[column_id].get_group_by_columns()
-            else:
-                return [column_id]
-
+        # ask each column for its group_by contribution and combine to a single list
         return [
             group_by for col_id in self.aggregation_columns
-            for group_by in _contributions(col_id)
+            for group_by in self._get_db_column_ids(col_id)
         ]
 
     @property
     def order_by(self):
+        # allow throwing exception if the report explicitly sorts on an unsortable column type
         if self._order_by:
             return [
-                OrderBy(sort_column_id, order == ASCENDING)
+                OrderBy(order_by, is_ascending=(order == ASCENDING))
                 for sort_column_id, order in self._order_by
-                if self._column_configs[sort_column_id].type != 'percent'
+                for order_by in self._get_db_column_ids(sort_column_id)
             ]
-        if self.column_configs and self.column_configs[0].type != 'percent':
-            return [
-                OrderBy(self.column_configs[0].column_id, is_ascending=True)
-            ]
+        elif self.column_configs:
+            try:
+                return [
+                    OrderBy(order_by, is_ascending=True)
+                    for order_by in self._get_db_column_ids(self.column_configs[0].column_id)
+                ]
+            except InvalidQueryColumn:
+                pass
         return []
 
     @property
@@ -146,6 +145,11 @@ class ConfigurableReportDataSource(SqlData):
             ColumnNotFoundException,
             ProgrammingError,
         ) as e:
+            _soft_assert = soft_assert(
+                to='{}@{}'.format('npellegrino+ucr-get-data', 'dimagi.com'),
+                exponential_backoff=False,
+            )
+            _soft_assert(False, unicode(e))
             raise UserReportsError(unicode(e))
         except TableNotFoundException:
             raise TableNotFoundWarning
@@ -167,3 +171,12 @@ class ConfigurableReportDataSource(SqlData):
             self.get_data(), self.aggregation_columns, self.column_configs,
             get_expanded_columns(self.column_configs, self.config)
         )
+
+    def _get_db_column_ids(self, column_id):
+        # for columns that end up being complex queries (e.g. aggregate dates)
+        # there could be more than one column ID and they may specify aliases
+        if column_id in self._column_configs:
+            return self._column_configs[column_id].get_query_column_ids()
+        else:
+            # if the column isn't found just treat it as a normal field
+            return [column_id]

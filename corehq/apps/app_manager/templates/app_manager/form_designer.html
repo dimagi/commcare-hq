@@ -9,9 +9,9 @@
 
 {% block js-inline %}{{ block.super }}
     {% if not vellum_debug %}
-        <link href="{% new_static 'app_manager/js/vellum/style.css' %}" type="text/css" rel="stylesheet"></link>
+        <link href="{% new_static 'app_manager/js/vellum/style.css' %}" type="text/css" rel="stylesheet"/>
     {% elif vellum_debug == "dev-min" %}
-        <link href="{% new_static 'formdesigner/_build/style.css' %}" type="text/css" rel="stylesheet"></link>
+        <link href="{% new_static 'formdesigner/_build/style.css' %}" type="text/css" rel="stylesheet"/>
     {% endif %}
     <script>
         var CKEDITOR_BASEPATH = "{% new_static 'app_manager/js/vellum/lib/ckeditor/' %}";
@@ -97,7 +97,7 @@
                         $('.breadcrumb-hq-section').outerHeight();
                 }
             },
-            csrftoken: $.cookie('csrftoken'),
+            csrftoken: $.cookie('csrftoken')
         };
 
         define("jquery", [], function () { return window.jQuery; });
