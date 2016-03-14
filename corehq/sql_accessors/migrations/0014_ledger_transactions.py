@@ -1,20 +1,20 @@
 # -*- coding: utf-8 -*-
 from __future__ import unicode_literals
 
-from django.conf import settings
-from django.db import models, migrations
+from django.db import migrations
 
+from corehq.form_processor.models import XFormInstanceSQL
 from corehq.sql_db.operations import RawSQLMigration, HqRunSQL
 
-migrator = RawSQLMigration(('corehq', 'sql_proxy_accessors', 'sql_templates'), {
-    'PL_PROXY_CLUSTER_NAME': settings.PL_PROXY_CLUSTER_NAME
+migrator = RawSQLMigration(('corehq', 'sql_accessors', 'sql_templates'), {
+    'FORM_STATE_DELETED': XFormInstanceSQL.DELETED
 })
 
 
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('sql_proxy_accessors', '0009_soft_delete'),
+        ('sql_accessors', '0013_merge'),
     ]
 
     operations = [
