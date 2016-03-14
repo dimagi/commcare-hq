@@ -7,9 +7,9 @@ from dimagi.utils.couch.cache.cache_core import get_redis_client
 from dimagi.utils.couch.undo import DELETED_SUFFIX
 
 from corehq.apps.repeaters.dbaccessors import iterate_repeat_records
-from corehq.apps.repeaters.models import RepeatRecord
 from corehq.apps.repeaters.const import (
     CHECK_REPEATERS_INTERVAL,
+    CHECK_REPEATERS_KEY,
 )
 
 logging = get_task_logger(__name__)
@@ -25,6 +25,14 @@ def check_repeaters():
 
     redis_client = get_redis_client().client.get_client()
 
+    # Timeout for slightly less than periodic check
+    check_repeater_lock = redis_client.lock(
+        CHECK_REPEATERS_KEY,
+        timeout=CHECK_REPEATERS_INTERVAL.seconds - 10
+    )
+    if not check_repeater_lock.acquire(blocking=False):
+        return
+
     for record in iterate_repeat_records(start):
         now = datetime.utcnow()
         lock_key = _get_repeat_record_lock_key(record)
@@ -37,6 +45,8 @@ def check_repeaters():
             continue
 
         process_repeat_record.delay(record)
+
+    check_repeater_lock.release()
 
 
 @task(queue=settings.CELERY_REPEAT_RECORD_QUEUE)
