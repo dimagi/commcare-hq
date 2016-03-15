@@ -17,6 +17,7 @@ from dimagi.utils.couch.migration import (SyncCouchToSQLMixin,
     SyncSQLToCouchMixin)
 from dimagi.utils.mixins import UnicodeMixIn
 from dimagi.utils.parsing import json_format_datetime
+from corehq.apps.sms.change_publishers import publish_sms_saved
 from corehq.apps.sms.mixin import (CommCareMobileContactMixin,
     PhoneNumberInUseException, InvalidFormatException, VerifiedNumber,
     apply_leniency, BadSMSConfigException)
@@ -499,6 +500,8 @@ class SMSBase(SyncSQLToCouchMixin, Log):
 class SMS(SMSBase):
     def save(self, *args, **kwargs):
         from corehq.apps.sms.tasks import sync_sms_to_couch
+
+        publish_sms_saved(self)
 
         sync_to_couch = kwargs.pop('sync_to_couch', True)
         super(SyncSQLToCouchMixin, self).save(*args, **kwargs)
