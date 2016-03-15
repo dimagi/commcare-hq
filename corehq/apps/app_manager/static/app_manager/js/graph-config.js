@@ -165,6 +165,7 @@ hqDefine('app_manager/js/graph-config.js', function () {
                         'values': pair[1]
                     };
                 });
+                series.localeSpecificConfigurations = _.sortBy(series.localeSpecificConfigurations, 'property');
                 series.configPairs = _.map(_.pairs(s.config), function(pair){
                     return {
                         'property': pair[0],
@@ -453,6 +454,8 @@ hqDefine('app_manager/js/graph-config.js', function () {
         original = original || {};
         childCaseTypes = childCaseTypes || [];
         fixtures = fixtures || [];
+        self.lang = lang;
+        self.langs = langs;
 
         function origOrDefault(prop, fallback){
             return original[prop] === undefined ? fallback : original[prop];
@@ -527,8 +530,8 @@ hqDefine('app_manager/js/graph-config.js', function () {
             ['name', 'x-name'],
             function(s){return new LocalizedConfigPropertyValuePair({
                 'property': s,
-                'lang': lang,
-                'langs': langs,
+                'lang': self.lang,
+                'langs': self.langs,
             });}
         ));
         if (original.localeSpecificConfigurations && original.localeSpecificConfigurations.length !== 0) {
