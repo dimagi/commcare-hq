@@ -327,7 +327,7 @@ def es_filter_cases(domain, filters=None):
     return [CommCareCase.wrap(r["_source"]) for r in res['hits']['hits'] if r["_source"]]
 
 
-def get_filters_from_request(request, limit_top_level=None):
+def get_filters_from_request_params(request_params, limit_top_level=None):
     """
     limit_top_level lets you specify a whitelist of top-level properties you can include in the filters,
     properties with a / in them are always included in the filters
@@ -340,7 +340,7 @@ def get_filters_from_request(request, limit_top_level=None):
     
     # super weird hack: force decoding keys because sometimes (only seen in 
     # production) django doesn't do this for us.
-    filters = dict((_decode(k), v) for k, v in request.REQUEST.items())
+    filters = dict((_decode(k), v) for k, v in request_params.items())
     if limit_top_level is not None:
         filters = dict([(key, val) for key, val in filters.items() if '/' in key or key in limit_top_level])
 

@@ -32,8 +32,9 @@ from corehq.apps.app_manager.dbaccessors import get_app, get_latest_build_doc, \
     get_brief_apps_in_domain
 from corehq.apps.app_manager.models import Application, ApplicationBase
 import json
-from corehq.apps.cloudcare.api import look_up_app_json, get_filtered_cases, get_filters_from_request,\
-    api_closed_to_status, CaseAPIResult, CASE_STATUS_OPEN, get_app_json, get_open_form_sessions
+from corehq.apps.cloudcare.api import look_up_app_json, get_filtered_cases, \
+    api_closed_to_status, CaseAPIResult, CASE_STATUS_OPEN, get_app_json, get_open_form_sessions, \
+    get_filters_from_request_params
 from dimagi.utils.parsing import string_to_boolean
 from dimagi.utils.logging import notify_exception
 from django.conf import settings
@@ -82,7 +83,7 @@ class CloudcareMain(View):
 
     def get(self, request, domain, urlPath):
         try:
-            preview = string_to_boolean(request.REQUEST.get("preview", "false"))
+            preview = string_to_boolean(request.GET.get("preview", "false"))
         except ValueError:
             # this is typically only set at all if it's intended to be true so this
             # is a reasonable default for "something went wrong"
@@ -245,14 +246,16 @@ cloudcare_api = login_or_digest_ex(allow_cc_users=True)
 
 
 def get_cases_vary_on(request, domain):
+    request_params = request.GET if request.method == 'GET' else request.POST
+
     return [
         request.couch_user.get_id
-        if request.couch_user.is_commcare_user() else request.REQUEST.get('user_id', ''),
-        request.REQUEST.get('ids_only', 'false'),
-        request.REQUEST.get('case_id', ''),
-        request.REQUEST.get('footprint', 'false'),
-        request.REQUEST.get('closed', 'false'),
-        json.dumps(get_filters_from_request(request)),
+        if request.couch_user.is_commcare_user() else request_params.get('user_id', ''),
+        request_params.get('ids_only', 'false'),
+        request_params.get('case_id', ''),
+        request_params.get('footprint', 'false'),
+        request_params.get('closed', 'false'),
+        json.dumps(get_filters_from_request_params(request_params)),
         domain,
     ]
 
@@ -268,27 +271,30 @@ def get_cases_skip_arg(request, domain):
     """
     if not toggles.CLOUDCARE_CACHE.enabled(domain):
         return True
-    return (not string_to_boolean(request.REQUEST.get('use_cache', 'false')) or
-        not string_to_boolean(request.REQUEST.get('ids_only', 'false')))
+    request_params = request.GET if request.method == 'GET' else request.POST
+    return (not string_to_boolean(request_params.get('use_cache', 'false')) or
+        not string_to_boolean(request_params.get('ids_only', 'false')))
 
 
 @cloudcare_api
 @skippable_quickcache(get_cases_vary_on, get_cases_skip_arg, timeout=240 * 60)
 def get_cases(request, domain):
+    request_params = request.GET if request.method == 'GET' else request.POST
+
     if request.couch_user.is_commcare_user():
         user_id = request.couch_user.get_id
     else:
-        user_id = request.REQUEST.get("user_id", "")
+        user_id = request_params.get("user_id", "")
 
     if not user_id and not request.couch_user.is_web_user():
         return HttpResponseBadRequest("Must specify user_id!")
 
-    ids_only = string_to_boolean(request.REQUEST.get("ids_only", "false"))
-    case_id = request.REQUEST.get("case_id", "")
-    footprint = string_to_boolean(request.REQUEST.get("footprint", "false"))
+    ids_only = string_to_boolean(request_params.get("ids_only", "false"))
+    case_id = request_params.get("case_id", "")
+    footprint = string_to_boolean(request_params.get("footprint", "false"))
 
     if toggles.HSPH_HACK.enabled(domain):
-        hsph_case_id = request.REQUEST.get('hsph_hack', None)
+        hsph_case_id = request_params.get('hsph_hack', None)
         if hsph_case_id != 'None' and hsph_case_id and user_id:
             case = CommCareCase.get(hsph_case_id)
             usercase_id = CommCareUser.get_by_user_id(user_id).get_usercase_id()
@@ -309,8 +315,8 @@ def get_cases(request, domain):
         assert case.domain == domain
         cases = [CaseAPIResult(id=case_id, couch_doc=case, id_only=ids_only)]
     else:
-        filters = get_filters_from_request(request)
-        status = api_closed_to_status(request.REQUEST.get('closed', 'false'))
+        filters = get_filters_from_request_params(request_params)
+        status = api_closed_to_status(request_params.get('closed', 'false'))
         case_type = filters.get('properties/case_type', None)
         cases = get_filtered_cases(domain, status=status, case_type=case_type,
                                    user_id=user_id, filters=filters,
@@ -466,7 +472,8 @@ def get_ledgers(request, domain):
         ...
     }
     """
-    case_id = request.REQUEST.get('case_id')
+    request_params = request.GET if request.method == 'GET' else request.POST
+    case_id = request_params.get('case_id')
     if not case_id:
         return json_response(
             {'message': 'You must specify a case id to make this query.'},
