@@ -4,7 +4,7 @@ import sys
 import tempfile
 import uuid
 
-from django.db.backends.creation import TEST_DATABASE_PREFIX
+from django.db.backends.base.creation import TEST_DATABASE_PREFIX
 
 
 def is_testing():
