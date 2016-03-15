@@ -1,5 +1,5 @@
 BEGIN {
-  line="import time; print(__file__, time.time())";
+  line="import time; print('{} {}'.format(__file__, time.time()))";
   begun=0;
   multiline_comment = "";
 }
@@ -36,4 +36,9 @@ begun { print }
     begun = 1;
   }
 }
-END {print line}
+END {
+    if (!begun) {
+        print line
+    }
+    print line
+}
