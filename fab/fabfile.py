@@ -1199,6 +1199,7 @@ def get_celery_queues():
     return queues
 
 @roles(ROLES_CELERY)
+@parallel
 def set_celery_supervisorconf():
 
     conf_files = {
@@ -1226,6 +1227,7 @@ def set_celery_supervisorconf():
 
 
 @roles(ROLES_PILLOWTOP)
+@parallel
 def set_pillowtop_supervisorconf():
     # Don't run for preview,
     # and also don't run if there are no hosts for the 'django_pillowtop' role.
@@ -1240,36 +1242,43 @@ def set_pillowtop_supervisorconf():
 
 
 @roles(ROLES_DJANGO)
+@parallel
 def set_djangoapp_supervisorconf():
     _rebuild_supervisor_conf_file('make_supervisor_conf', 'supervisor_django.conf')
 
 
 @roles(ROLES_DJANGO)
+@parallel
 def set_errand_boy_supervisorconf():
     _rebuild_supervisor_conf_file('make_supervisor_conf', 'supervisor_errand_boy.conf')
 
 
 @roles(ROLES_TOUCHFORMS)
+@parallel
 def set_formsplayer_supervisorconf():
     _rebuild_supervisor_conf_file('make_supervisor_conf', 'supervisor_formsplayer.conf')
 
 @roles(ROLES_SMS_QUEUE)
+@parallel
 def set_sms_queue_supervisorconf():
     if 'sms_queue' in get_celery_queues():
         _rebuild_supervisor_conf_file('make_supervisor_conf', 'supervisor_sms_queue.conf')
 
 @roles(ROLES_REMINDER_QUEUE)
+@parallel
 def set_reminder_queue_supervisorconf():
     if 'reminder_queue' in get_celery_queues():
         _rebuild_supervisor_conf_file('make_supervisor_conf', 'supervisor_reminder_queue.conf')
 
 @roles(ROLES_PILLOW_RETRY_QUEUE)
+@parallel
 def set_pillow_retry_queue_supervisorconf():
     if 'pillow_retry_queue' in get_celery_queues():
         _rebuild_supervisor_conf_file('make_supervisor_conf', 'supervisor_pillow_retry_queue.conf')
 
 
 @roles(ROLES_STATIC)
+@parallel
 def set_websocket_supervisorconf():
     _rebuild_supervisor_conf_file('make_supervisor_conf', 'supervisor_websockets.conf')
 
