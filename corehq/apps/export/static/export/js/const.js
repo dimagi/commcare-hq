@@ -27,5 +27,7 @@ Exports.Constants.ANALYTICS_EVENT_CATEGORIES = {
 Exports.Constants.FORM_EXPORT = 'form';
 Exports.Constants.CASE_EXPORT = 'case';
 
+// These must match the constants in corehq/apps/export/const.py
 Exports.Constants.MAIN_TABLE = [];
-Exports.Constants.CASE_HISTORY = ['case_history'];
+Exports.Constants.CASE_HISTORY = ['actions'];
+Exports.Constants.CASE_HISTORY = ['indices'];

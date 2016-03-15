@@ -41,7 +41,8 @@ from corehq.apps.export.const import (
     DEID_TRANSFORM_FUNCTIONS,
     TOP_MAIN_FORM_TABLE_PROPERTIES,
     BOTTOM_MAIN_FORM_TABLE_PROPERTIES,
-    PROPERTY_TAG_ROW, MAIN_CASE_TABLE_PROPERTIES)
+    PROPERTY_TAG_ROW, MAIN_CASE_TABLE_PROPERTIES, PARENT_CASE_TABLE,
+    PARENT_CASE_TABLE_PROPERTIES)
 from corehq.apps.export.dbaccessors import (
     get_latest_case_export_schema,
     get_latest_form_export_schema,
@@ -854,11 +855,16 @@ class CaseExportDataSchema(ExportDataSchema):
                 app.copy_of,
                 app.version,
             )
+            parent_case_schema = CaseExportDataSchema._generate_schema_for_parent_case_table(
+                app.copy_of,
+                app.version
+            )
 
             current_case_schema = CaseExportDataSchema._merge_schemas(
                 case_schema,
                 case_history_schema,
                 current_case_schema,
+                parent_case_schema,
             )
 
             current_case_schema.record_update(app.copy_of, app.version)
@@ -923,12 +929,11 @@ class CaseExportDataSchema(ExportDataSchema):
             last_occurrences={app_id: app_version},
         )
         for system_prop in CASE_HISTORY_PROPERTIES:
-            group_schema.items.append(ScalarItem(
-                path=[system_prop.name],
-                label=system_prop.name,
-                tag=system_prop.tag,
-                last_occurrences={app_id: app_version},
-            ))
+            group_schema.items.append(
+                CaseExportDataSchema._generate_export_item_from_system_prop(
+                    system_prop, app_id, app_version
+                )
+            )
 
         for case_type, case_properties in case_property_mapping.iteritems():
             for prop in case_properties:
@@ -941,6 +946,26 @@ class CaseExportDataSchema(ExportDataSchema):
 
         schema.group_schemas.append(group_schema)
         return schema
+
+    @staticmethod
+    def _generate_schema_for_parent_case_table(app_id, app_version):
+        """
+        Generates the schema for the parent cases tab on the case export page
+        """
+        return CaseExportDataSchema(
+            group_schemas=[
+                ExportGroupSchema(
+                    path=PARENT_CASE_TABLE,
+                    last_occurrences={app_id: app_version},
+                    items=[
+                        CaseExportDataSchema._generate_export_item_from_system_prop(
+                            system_prop, app_id, app_version
+                        )
+                        for system_prop in PARENT_CASE_TABLE_PROPERTIES
+                    ]
+                ),
+            ]
+        )
 
 
 def _string_path_to_list(path):

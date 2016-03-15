@@ -101,23 +101,35 @@ MAIN_CASE_TABLE_PROPERTIES = (
         SystemProperty(PROPERTY_TAG_INFO, 'owner_name', 'owner_id', _("The username of the user who owns the case"), USERNAME_TRANSFORM, is_advanced=False),
         SystemProperty(PROPERTY_TAG_INFO, 'server_last_modified_date', 'server_modified_on', _("The date and time at which the server received the form that last modified the case"), USERNAME_TRANSFORM),
         # TODO: Make sure state gets converted to a doc_type or whatever in the form es index
-        SystemProperty(PROPERTY_TAG_SERVER, 'doc_type', 'doc_type'),
+        SystemProperty(PROPERTY_TAG_SERVER, 'state', 'doc_type'),
     ]
 )
 
 CASE_HISTORY_PROPERTIES = [
-    SystemProperty(PROPERTY_TAG_NONE, 'action_type', 'action_type'),
-    SystemProperty(PROPERTY_TAG_NONE, 'user_id', 'user_id'),
-    SystemProperty(PROPERTY_TAG_NONE, 'date', 'date'),
-    SystemProperty(PROPERTY_TAG_NONE, 'server_date', 'server_date'),
-    SystemProperty(PROPERTY_TAG_NONE, 'xform_id', 'xform_id'),
-    SystemProperty(PROPERTY_TAG_NONE, 'xform_xmlns', 'xform_xmlns'),
-    SystemProperty(PROPERTY_TAG_NONE, 'xform_name', 'xform_name'),
-    SystemProperty(PROPERTY_TAG_SERVER, 'state', 'state'),
+    SystemProperty(PROPERTY_TAG_ROW, 'number', 'number', is_advanced=False),
+    SystemProperty(PROPERTY_TAG_NONE, 'action_type', 'actions.action_type', is_advanced=False),
+    SystemProperty(PROPERTY_TAG_NONE, 'user_id', 'actions.user_id', is_advanced=False),
+    SystemProperty(PROPERTY_TAG_NONE, 'date', 'actions.date', is_advanced=False),
+    SystemProperty(PROPERTY_TAG_NONE, 'server_date', 'actions.server_date', is_advanced=False),
+    SystemProperty(PROPERTY_TAG_NONE, 'xform_id', 'actions.xform_id', is_advanced=False),
+    SystemProperty(PROPERTY_TAG_NONE, 'xform_xmlns', 'actions.xform_xmlns', is_advanced=False),
+    SystemProperty(PROPERTY_TAG_NONE, 'xform_name', 'actions.xform_name', is_advanced=False),
+    SystemProperty(PROPERTY_TAG_NONE, 'deprecated', 'actions.deprecated', is_advanced=False),
+    SystemProperty(PROPERTY_TAG_NONE, 'sync_log_id', 'actions.sync_log_id'),
+]
+
+PARENT_CASE_TABLE_PROPERTIES = [
+    SystemProperty(PROPERTY_TAG_ROW, 'number', 'number', is_advanced=False),
+    SystemProperty(PROPERTY_TAG_NONE, 'parent_case_id', 'indices.referenced_id', is_advanced=False),
+    SystemProperty(PROPERTY_TAG_NONE, 'parent_case_type', 'indices.referenced_type', is_advanced=False),
+    SystemProperty(PROPERTY_TAG_NONE, 'relationship_type', 'indices.relationship', is_advanced=False),
+    SystemProperty(PROPERTY_TAG_SERVER, 'state', 'indices.doc_type', is_advanced=False),
 ]
 
 FORM_EXPORT = 'form'
 CASE_EXPORT = 'case'
 
+# These must match the constants in corehq/apps/export/static/export/js/const.js
 MAIN_TABLE = []
-CASE_HISTORY_TABLE = ['case_history']
+CASE_HISTORY_TABLE = ['actions']
+PARENT_CASE_TABLE = ['indices']
