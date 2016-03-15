@@ -352,8 +352,8 @@ def csrf_failure(request, reason=None, template_name="csrf_failure.html"):
 
 def _login(req, domain_name, template_name):
 
-    if req.user.is_authenticated() and req.method != "POST":
-        redirect_to = req.REQUEST.get('next', '')
+    if req.user.is_authenticated() and req.method == "GET":
+        redirect_to = req.GET.get('next', '')
         if redirect_to:
             return HttpResponseRedirect(redirect_to)
         if not domain_name:
@@ -371,10 +371,11 @@ def _login(req, domain_name, template_name):
     context = {}
     if domain_name:
         domain = Domain.get_by_name(domain_name)
+        req_params = req.GET if req.method == 'GET' else req.POST
         context.update({
             'domain': domain_name,
             'hr_name': domain.display_name() if domain else domain_name,
-            'next': req.REQUEST.get('next', '/a/%s/' % domain),
+            'next': req_params.get('next', '/a/%s/' % domain),
             'allow_domain_requests': domain.allow_domain_requests,
         })
 
@@ -386,7 +387,8 @@ def login(req, domain_type='commcare'):
     # this view, and the one below, is overridden because
     # we need to set the base template to use somewhere
     # somewhere that the login page can access it.
-    domain = req.REQUEST.get('domain', None)
+    req_params = req.GET if req.method == 'GET' else req.POST
+    domain = req_params.get('domain', None)
 
     from corehq.apps.domain.utils import get_dummy_domain
     # For showing different logos based on CommTrack, CommConnect, CommCare...
