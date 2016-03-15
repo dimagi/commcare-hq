@@ -12,6 +12,8 @@ from corehq.apps.export.dbaccessors import (
     get_latest_form_export_schema,
     get_form_export_instances,
     get_case_export_instances,
+    get_all_daily_saved_export_instances,
+    get_properly_wrapped_export_instance,
 )
 
 
@@ -109,6 +111,10 @@ class TestExportInstanceDBAccessors(TestCase):
             domain='wrong-domain',
             name='Forms',
         )
+        cls.form_instance_daily_saved = FormExportInstance(
+            domain='wrong-domain',
+            is_daily_saved_export=True,
+        )
         cls.case_instance_deid = CaseExportInstance(
             domain=cls.domain,
             name='Cases',
@@ -119,11 +125,18 @@ class TestExportInstanceDBAccessors(TestCase):
             name='Cases',
             is_deidentified=False
         )
+        cls.case_instance_daily_saved = CaseExportInstance(
+            domain='wrong-domain',
+            is_daily_saved_export=True,
+        )
+
         cls.instances = [
             cls.form_instance_deid,
             cls.form_instance_wrong,
+            cls.form_instance_daily_saved,
             cls.case_instance,
             cls.case_instance_deid,
+            cls.case_instance_daily_saved,
         ]
         for instance in cls.instances:
             instance.save()
@@ -144,3 +157,14 @@ class TestExportInstanceDBAccessors(TestCase):
     def test_get_case_export_instances_wrong_domain(self):
         instances = get_case_export_instances('wrong')
         self.assertEqual(len(instances), 0)
+
+    def test_get_daily_saved_exports(self):
+        instances = get_all_daily_saved_export_instances()
+        self.assertEqual(len(instances), 2)
+
+    def test_get_properly_wrapped_export_instance(self):
+        instance = get_properly_wrapped_export_instance(self.form_instance_daily_saved._id)
+        self.assertEqual(type(instance), type(self.form_instance_daily_saved))
+
+        instance = get_properly_wrapped_export_instance(self.case_instance._id)
+        self.assertEqual(type(instance), type(self.case_instance))
