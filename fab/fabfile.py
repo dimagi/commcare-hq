@@ -600,10 +600,10 @@ def hotfix_deploy():
     except Exception:
         execute(mail_admins, "Deploy failed", "You had better check the logs.")
         # hopefully bring the server back to life
-        execute(services_restart)
+        silent_services_restart()
         raise
     else:
-        execute(services_restart)
+        silent_services_restart()
         url = deploy_metadata.diff_url
         execute(record_successful_deploy, url)
 
@@ -671,6 +671,7 @@ def _deploy_without_asking():
 
             if all(execute(_migrations_exist).values()):
                 _execute_with_timing(_stop_pillows)
+                execute(set_in_progress_flag)
                 _execute_with_timing(stop_celery_tasks)
             _execute_with_timing(_migrate)
         else:
@@ -693,11 +694,13 @@ def _deploy_without_asking():
     except Exception:
         _execute_with_timing(mail_admins, "Deploy failed", "You had better check the logs.")
         # hopefully bring the server back to life
-        _execute_with_timing(services_restart)
+        execute(set_in_progress_flag)
+        silent_services_restart()
         raise
     else:
         _execute_with_timing(update_current)
-        _execute_with_timing(services_restart)
+        execute(set_in_progress_flag)
+        silent_services_restart()
         _execute_with_timing(record_successful_release)
         url = deploy_metadata.diff_url
         _execute_with_timing(record_successful_deploy, url)
@@ -815,7 +818,7 @@ def rollback():
     if all(exists.values()):
         print blue('Updating current and restarting services')
         execute(update_current, unique_release)
-        execute(services_restart)
+        silent_services_restart()
         execute(mark_last_release_unsuccessful)
     else:
         print red('Aborting because not all hosts have release')
@@ -893,7 +896,7 @@ def force_update_static():
     execute(_do_collectstatic, use_current_release=True)
     execute(_do_compress, use_current_release=True)
     execute(update_manifest, use_current_release=True)
-    execute(services_restart)
+    silent_services_restart()
 
 
 @task
@@ -1033,17 +1036,24 @@ def restart_services():
 
     @roles(env.supervisor_roles)
     def _inner():
-        services_restart(use_current_release=True)
+        silent_services_restart(use_current_release=True)
 
     execute(_inner)
 
 
+def silent_services_restart(use_current_release=False):
+    """
+    Restarts services and sets the in progress flag so that pingdom doesn't yell falsely
+    """
+    execute(set_in_progress_flag, use_current_release)
+    execute(services_restart)
+
+
 @roles(ROLES_ALL_SERVICES)
 @parallel
-def services_restart(use_current_release=False):
+def services_restart():
     """Stop and restart all supervisord services"""
     _require_target()
-    execute(set_in_progress_flag, use_current_release)
     _supervisor_command('stop all')
 
     _supervisor_command('update')
@@ -1336,7 +1346,6 @@ def _stop_pillows(current=False):
 @parallel
 def stop_celery_tasks():
     _require_target()
-    execute(set_in_progress_flag)
     with cd(env.code_root):
         sudo('scripts/supervisor-group-ctl stop celery')
 
