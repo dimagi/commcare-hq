@@ -35,7 +35,7 @@ from dimagi.utils.parsing import json_format_datetime
 
 class FormAccessorCouch(AbstractFormAccessor):
     @staticmethod
-    def form_exists(self, form_id, domain=None):
+    def form_exists(form_id, domain=None):
         if not domain:
             return XFormInstance.get_db().doc_exist(form_id)
         else:

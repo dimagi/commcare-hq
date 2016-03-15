@@ -47,7 +47,7 @@
         $(function () {
             $('.edit-form-pencil').hide().tooltip({
                 title: "{% trans "Edit in form builder" %}",
-                placement: 'auto',
+                placement: 'auto'
             });
             $('.edit-form-li').each(function () {
                 if ($(this).is('.active') && {{ formdesigner|JSON }}) {
@@ -85,10 +85,10 @@
             });
             $tabContent.on('focus', '.collapse', function() {
                 inSelectElement = true;
-            })
+            });
             $tabContent.on('blur', '.collapse', function() {
                 inSelectElement = false;
-            })
+            });
         });
     </script>
     <script>

@@ -10,24 +10,31 @@ from psycopg2._psycopg import DatabaseError
 
 from casexml.apps.stock.models import StockReport, StockTransaction
 from corehq.apps.commtrack.models import StockState
-from corehq.apps.locations.models import SQLLocation
+from corehq.apps.locations.models import SQLLocation, Location
 from corehq.apps.products.models import Product
 from custom.ilsgateway.api import ILSGatewayEndpoint, ILSGatewayAPI
 from custom.ilsgateway.balance import BalanceMigration
+from custom.ilsgateway.tanzania.reminders import REMINDER_MONTHLY_SOH_SUMMARY, REMINDER_MONTHLY_DELIVERY_SUMMARY, \
+    REMINDER_MONTHLY_RANDR_SUMMARY
 from custom.ilsgateway.tanzania.reminders.delivery import DeliveryReminder
 from custom.ilsgateway.tanzania.reminders.randr import RandrReminder
+from custom.ilsgateway.tanzania.reminders.reports import get_district_people, construct_soh_summary, \
+    construct_delivery_summary, construct_randr_summary
+from custom.ilsgateway.tanzania.reminders.soh_thank_you import SOHThankYouReminder
 from custom.ilsgateway.tanzania.reminders.stockonhand import SOHReminder
 from custom.ilsgateway.tanzania.reminders.supervision import SupervisionReminder
 from custom.ilsgateway.tanzania.warehouse.updater import populate_report_data, default_start_date, \
-    process_facility_warehouse_data, process_non_facility_warehouse_data
+    process_facility_warehouse_data, process_non_facility_warehouse_data, process_facility_statuses, \
+    process_facility_product_reports
 from custom.ilsgateway.temporary import fix_stock_data
-from custom.ilsgateway.utils import send_for_day, send_for_all_domains
+from custom.ilsgateway.utils import send_for_day, send_for_all_domains, send_translated_message
 from custom.logistics.commtrack import bootstrap_domain as ils_bootstrap_domain, save_stock_data_checkpoint
 from custom.ilsgateway.models import ILSGatewayConfig, SupplyPointStatus, DeliveryGroupReport, ReportRun, \
-    GroupSummary, OrganizationSummary, ProductAvailabilityData, Alert, PendingReportingDataRecalculation
+    GroupSummary, OrganizationSummary, ProductAvailabilityData, Alert, PendingReportingDataRecalculation, \
+    SupplyPointStatusTypes
 from custom.logistics.models import StockDataCheckpoint
 from custom.logistics.tasks import stock_data_task
-from dimagi.utils.dates import get_business_day_of_month
+from dimagi.utils.dates import get_business_day_of_month, get_business_day_of_month_before
 
 
 @periodic_task(run_every=crontab(hour="4", minute="00", day_of_week="*"),
@@ -193,7 +200,56 @@ def fix_stock_data_task(domain):
     fix_stock_data(domain)
 
 
-# @periodic_task(run_every=timedelta(days=1), queue=getattr(settings, 'CELERY_PERIODIC_QUEUE', 'celery'))
+@task(queue='logistics_background_queue', ignore_result=True)
+def recalculate_march_reporting_data_task(domain):
+    stock_data_checkpoint = StockDataCheckpoint.objects.get(domain=domain)
+    end_date = stock_data_checkpoint.date
+
+    statuses = SupplyPointStatus.objects.filter(
+        status_date__gte=datetime(2016, 2, 29),
+        status_date__lt=datetime(2016, 3, 1),
+        location_id__in=SQLLocation.active_objects.filter(
+            location_type__administrative=False, domain=domain
+        ).values_list('location_id', flat=True),
+        status_type__in=[SupplyPointStatusTypes.SOH_FACILITY, SupplyPointStatusTypes.SUPERVISION_FACILITY]
+    ).order_by('status_date')
+
+    location_to_statuses = defaultdict(list)
+
+    for status in statuses:
+        location_to_statuses[status.location_id].append(status)
+
+    for location_id, statuses in location_to_statuses.iteritems():
+        process_facility_statuses(location_id, statuses)
+
+    sql_locations = SQLLocation.active_objects.filter(
+        location_type__administrative=False, domain=domain
+    )
+    for sql_location in sql_locations:
+        reports = StockReport.objects.filter(
+            domain=domain,
+            date__gte=datetime(2016, 2, 29),
+            date__lt=datetime(2016, 3, 1),
+            stocktransaction__case_id=sql_location.supply_point_id,
+            stocktransaction__type='stockonhand'
+        ).distinct()
+        process_facility_product_reports(sql_location.location_id, reports)
+
+    non_facilities = list(Location.filter_by_type(domain, 'DISTRICT'))
+    non_facilities += list(Location.filter_by_type(domain, 'REGION'))
+    non_facilities += list(Location.filter_by_type(domain, 'MSDZONE'))
+    non_facilities += list(Location.filter_by_type(domain, 'MOHSW'))
+
+    for non_facility in non_facilities:
+        process_non_facility_warehouse_data(non_facility, datetime(2016, 3, 1), end_date, strict=False)
+
+
+@periodic_task(run_every=crontab(hour="4", minute="00", day_of_week="*"),
+               queue='logistics_background_queue')
+def report_run_periodic_task():
+    report_run('ils-gateway')
+
+
 @task(queue='logistics_background_queue', ignore_result=True)
 def report_run(domain, locations=None, strict=True):
     last_successful_run = ReportRun.last_success(domain)
@@ -201,10 +257,8 @@ def report_run(domain, locations=None, strict=True):
 
     last_run = ReportRun.last_run(domain)
     start_date = (datetime.min if not last_successful_run else last_successful_run.end)
+    end_date = datetime.utcnow()
 
-    stock_data_checkpoint = StockDataCheckpoint.objects.get(domain=domain)
-    # TODO Change this to datetime.utcnow() when project goes live
-    end_date = stock_data_checkpoint.date
     running = ReportRun.objects.filter(complete=False, domain=domain)
     if running.count() > 0:
         raise Exception("Warehouse already running, will do nothing...")
@@ -366,6 +420,71 @@ def third_soh_task():
     last_month_last_day, fifth_business_day = get_last_and_nth_business_day(now, 5)
     if now.day == fifth_business_day.day:
         send_for_all_domains(last_month_last_day, SOHReminder)
+
+
+@periodic_task(run_every=crontab(day_of_month="6-8", hour=13, minute=0),
+               queue="logistics_reminder_queue")
+def soh_summary_task():
+    """
+        6th business day of the month @ 3pm Tanzania time
+    """
+    now = datetime.utcnow()
+    sixth_business_day = get_business_day_of_month(month=now.month, year=now.year, count=6)
+    if now.day != sixth_business_day.day:
+        return
+
+    for domain in ILSGatewayConfig.get_all_enabled_domains():
+        for user in get_district_people(domain):
+            send_translated_message(user, REMINDER_MONTHLY_SOH_SUMMARY, **construct_soh_summary(user.location))
+
+
+@periodic_task(run_every=crontab(day_of_month="26-31", hour=13, minute=0),
+               queue="logistics_reminder_queue")
+def delivery_summary_task():
+    """
+        last business day of month 3pm Tanzania time
+    """
+    now = datetime.utcnow()
+    last_business_day = get_business_day_of_month(month=now.month, year=now.year, count=-1)
+    if now.day != last_business_day.day:
+        return
+
+    for domain in ILSGatewayConfig.get_all_enabled_domains():
+        for user in get_district_people(domain):
+            send_translated_message(
+                user, REMINDER_MONTHLY_DELIVERY_SUMMARY, **construct_delivery_summary(user.location)
+            )
+
+
+@periodic_task(run_every=crontab(day_of_month="15-17", hour=13, minute=0),
+               queue="logistics_reminder_queue")
+def randr_summary_task():
+    """
+        on 17th day of month or before if it's not a business day @ 3pm Tanzania time
+    """
+
+    now = datetime.utcnow()
+    business_day = get_business_day_of_month_before(month=now.month, year=now.year, day=17)
+    if now.day != business_day.day:
+        return
+
+    for domain in ILSGatewayConfig.get_all_enabled_domains():
+        for user in get_district_people(domain):
+            send_translated_message(
+                user, REMINDER_MONTHLY_RANDR_SUMMARY, **construct_randr_summary(user.location)
+            )
+
+
+@periodic_task(run_every=crontab(day_of_month="18-20", hour=14, minute=0),
+               queue="logistics_reminder_queue")
+def soh_thank_you_task():
+    """
+    Last business day before the 20th at 4:00 PM Tanzania time
+    """
+    now = datetime.utcnow()
+    last_month = datetime(now.year, now.month, 1) - timedelta(days=1)
+    for domain in ILSGatewayConfig.get_all_enabled_domains():
+        SOHThankYouReminder(domain=domain, date=last_month).send()
 
 
 def recalculate_on_group_change(location, last_run):

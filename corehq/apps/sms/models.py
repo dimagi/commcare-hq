@@ -497,7 +497,13 @@ class SMSBase(SyncSQLToCouchMixin, Log):
 
 
 class SMS(SMSBase):
-    pass
+    def save(self, *args, **kwargs):
+        from corehq.apps.sms.tasks import sync_sms_to_couch
+
+        sync_to_couch = kwargs.pop('sync_to_couch', True)
+        super(SyncSQLToCouchMixin, self).save(*args, **kwargs)
+        if sync_to_couch:
+            sync_sms_to_couch.delay(self)
 
 
 class QueuedSMS(SMSBase):

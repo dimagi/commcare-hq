@@ -121,6 +121,7 @@ class PatientListReport(SqlTabularReport, CustomProjectReport, ProjectReportPara
 
     fields = ['custom.succeed.fields.CareSite',
               'custom.succeed.fields.PatientStatus']
+    is_bootstrap3 = True
 
     @classmethod
     def show_in_navigation(cls, domain=None, project=None, user=None):

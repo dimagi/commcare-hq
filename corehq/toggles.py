@@ -330,13 +330,6 @@ REPORT_BUILDER_MAP_REPORTS = StaticToggle(
     [NAMESPACE_DOMAIN]
 )
 
-KAFKA_UCRS = StaticToggle(
-    'kafka-ucrs',
-    'Use new kafka-based UCR processing',
-    TAG_EXPERIMENTAL,
-    [NAMESPACE_DOMAIN]
-)
-
 STOCK_TRANSACTION_EXPORT = StaticToggle(
     'ledger_export',
     'Show "export transactions" link on case details page',
@@ -523,13 +516,6 @@ BULK_SMS_VERIFICATION = StaticToggle(
     TAG_ONE_OFF,
     [NAMESPACE_USER, NAMESPACE_DOMAIN],
 )
-
-BULK_PAYMENTS = StaticToggle(
-    'bulk_payments',
-    'Enable payment of invoices by bulk credit payments and invoice generation for wire transfers',
-    TAG_PRODUCT_CORE
-)
-
 
 ENABLE_LOADTEST_USERS = StaticToggle(
     'enable_loadtest_users',
@@ -820,6 +806,14 @@ NOTIFICATIONS = StaticToggle(
 PROJECT_HEALTH_DASHBOARD = StaticToggle(
     'project_health_dashboard',
     'Shows the project health dashboard in the reports navigation',
+    TAG_PRODUCT_PATH,
+    [NAMESPACE_DOMAIN]
+)
+
+
+UNLIMITED_REPORT_BUILDER_REPORTS = StaticToggle(
+    'unlimited_report_builder_reports',
+    'Allow unlimited reports created in report builder',
     TAG_PRODUCT_PATH,
     [NAMESPACE_DOMAIN]
 )
