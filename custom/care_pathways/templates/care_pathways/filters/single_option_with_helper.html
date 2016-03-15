@@ -1,4 +1,4 @@
-{% extends 'reports/filters/bootstrap2/single_option.html' %}
+{% extends 'reports/filters/bootstrap3/single_option.html' %}
 
 {% block filter_js %}
     {{ block.super }}
@@ -7,7 +7,7 @@
     $(function () {
         $("fieldset .helptext").each( function (index, data) {
             console.log(data.textContent);
-            $(this).parent().prev("label").append('<span class="hq-help-template" data-placement="top" data-content="' + data.textContent + '"></span>');
+            $(this).parent().prev("label").append('<span class="hq-help-template" data-placement="top" data-bootstrap3="true" data-content="' + data.textContent + '"></span>');
             $(this).remove();
         });
         $('fieldset .hq-help-template').each(function () {
