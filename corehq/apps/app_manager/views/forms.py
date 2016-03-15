@@ -164,7 +164,7 @@ def edit_advanced_form_actions(request, domain, app_id, module_id, form_id):
 def edit_form_actions(request, domain, app_id, module_id, form_id):
     app = get_app(domain, app_id)
     form = app.get_module(module_id).get_form(form_id)
-    old_load_from_form = form.load_from_form
+    old_load_from_form = form.actions.load_from_form
     form.actions = FormActions.wrap(json.loads(request.POST['actions']))
     if old_load_from_form:
         form.actions.load_from_form = old_load_from_form
