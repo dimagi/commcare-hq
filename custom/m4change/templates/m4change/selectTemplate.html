@@ -1,13 +1,13 @@
-{% extends 'reports/async/bootstrap2/tabular.html' %}
+{% extends 'reports/async/bootstrap3/tabular.html' %}
 {% load url from future %}
 {% load hq_shared_tags %}
 {% load report_tags %}
 {% load i18n %}
 
 {% block js %} {{ block.super }}
-    <script type="text/javascript" src="{% static 'case/js/cheapxml.js' %}"></script>
-    <script type="text/javascript" src="{% static 'case/js/casexml.js' %}"></script>
-    <script type="text/javascript" src="{% static 'm4change/javascripts/mcct_project_review_page_management.js' %}"></script>
+    <script type="text/javascript" src="{% new_static 'case/js/cheapxml.js' %}"></script>
+    <script type="text/javascript" src="{% new_static 'case/js/casexml.js' %}"></script>
+    <script type="text/javascript" src="{% new_static 'm4change/javascripts/mcct_project_review_page_management.js' %}"></script>
 {% endblock %}
 
 {% block js-inline %} {{ block.super }}
@@ -38,7 +38,7 @@
             $mcctProjectReviewPageManagement.find('.dataTables_length select').change(selectNone);
 
             function selectNone() {
-                $mcctProjectReviewPageManagement.find('input.selected-element:checked').attr('checked', false).change();
+                $mcctProjectReviewPageManagement.find('input.selected-element:checked').prop('checked', false).change();
             }
         }
 
@@ -74,21 +74,21 @@
 {% endblock %}
 
 {% block pretable %}
-    <div id="logo-top" class="row-fluid">
-        <div class="span3" id="logo-top-left">
-            <img src="{% static 'm4change/images/SurePLogo.jpg' %}" alt="sure_p_logo"/>
+    <div id="logo-top" class="row">
+        <div class="col-sm-3" id="logo-top-left">
+            <img src="{% new_static 'm4change/images/SurePLogo.jpg' %}" alt="sure_p_logo"/>
         </div>
-        <div class="span6 buttons" id="logo-title">
+        <div class="col-sm-6 buttons" id="logo-title">
             {{ block.super }}
             <form id="report_buttons" class="well form-inline" style="margin: 1em;">
                 {% block status_button %}
-                    <button class="btn" disabled="disabled" data-bind="click: updateStatus.bind(undefined, 'reviewed'), mcctProjectReviewPage: selected_forms">{% trans 'Review' %}</button>
+                    <button class="btn btn-default" disabled="disabled" data-bind="click: updateStatus.bind(undefined, 'reviewed'), mcctProjectReviewPage: selected_forms">{% trans 'Review' %}</button>
                 {% endblock %}
-                <a class="btn" href="{% url 'corehq.apps.reports.views.default' domain %}">{% trans 'Cancel' %}</a>
+                <a class="btn btn-default" href="{% url 'corehq.apps.reports.views.default' domain %}">{% trans 'Cancel' %}</a>
                 {%  block reject_button %}
-                    <button id="reject_button" class="btn" disabled="disabled" data-bind="click: updateStatus.bind(undefined, 'rejected'), mcctProjectReviewPage: selected_forms">{% trans 'Reject' %}</button>
+                    <button id="reject_button" class="btn btn-default" disabled="disabled" data-bind="click: updateStatus.bind(undefined, 'rejected'), mcctProjectReviewPage: selected_forms">{% trans 'Reject' %}</button>
                     <label for="reject_reason">{% trans 'Reason' %}:</label>
-                    <select id="reject_reason" disabled="disabled" data-bind="value: reject_reason">
+                    <select id="reject_reason" disabled="disabled" class="form-control" data-bind="value: reject_reason">
                         <option value="none">{% trans 'None' %}</option>
                         <option value="phone_number">{% trans 'Incorrect phone number' %}</option>
                         <option value="double">{% trans 'Double entry' %}</option>
@@ -96,22 +96,23 @@
                     </select>
                 {% endblock %}
                 <span class="hq-help-template"
-                    data-placement="top"
-                    data-title="{% trans 'Help' %}"
-                    data-content="{% block help_content %}{% endblock %}"
+                      data-bootstrap3="true"
+                      data-placement="top"
+                      data-title="{% trans 'Help' %}"
+                      data-content="{% block help_content %}{% endblock %}"
                 ></span>
             </form>
         </div>
-        <div class="span3" id="logo-top-right">
-            <img src="{% static 'm4change/images/NigeriaCoatofArms.png' %}" alt="nigeria_coat_of_arms"/>
+        <div class="col-sm-3" id="logo-top-right">
+            <img src="{% new_static 'm4change/images/NigeriaCoatofArms.png' %}" alt="nigeria_coat_of_arms"/>
         </div>
     </div>
 {% endblock %}
 
 {% block posttable %}
-    <div id="logo-bottom" class="row-fluid">
-        <div class="span12">
-            <img src="{% static 'm4change/images/PathfinderInternationalLogo.jpg' %}"
+    <div id="logo-bottom" class="row">
+        <div class="col-sm-12">
+            <img src="{% new_static 'm4change/images/PathfinderInternationalLogo.jpg' %}"
                  alt="pathfinder_international_logo"/>
         </div>
     </div>

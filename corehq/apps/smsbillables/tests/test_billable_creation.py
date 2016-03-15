@@ -1,7 +1,7 @@
 from datetime import datetime
 from django.test import TestCase
 from corehq.apps.sms.api import create_billable_for_sms
-from corehq.apps.sms.models import SMSLog, OUTGOING
+from corehq.apps.sms.models import SMS, OUTGOING
 from corehq.apps.smsbillables.models import SmsBillable
 from corehq.messaging.smsbackends.tropo.models import SQLTropoBackend
 
@@ -25,7 +25,7 @@ class TestBillableCreation(TestCase):
         )
 
     def _get_fake_sms(self, text):
-        msg = SMSLog(
+        msg = SMS(
             domain=self.domain,
             phone_number='+16175555454',
             direction=OUTGOING,
@@ -41,7 +41,7 @@ class TestBillableCreation(TestCase):
         create_billable_for_sms(msg, delay=False)
         sms_billables = SmsBillable.objects.filter(
             domain=self.domain,
-            log_id=msg._id
+            log_id=msg.couch_id
         )
         self.assertEqual(sms_billables.count(), 1)
 
@@ -50,7 +50,7 @@ class TestBillableCreation(TestCase):
         create_billable_for_sms(msg, delay=False)
         sms_billables = SmsBillable.objects.filter(
             domain=self.domain,
-            log_id=msg._id
+            log_id=msg.couch_id
         )
         self.assertEqual(sms_billables.count(), 2)
 

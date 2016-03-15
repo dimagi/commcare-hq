@@ -6,7 +6,7 @@ from decimal import Decimal
 
 from dimagi.utils.data import generator as data_gen
 from corehq.apps.accounting.models import Currency
-from corehq.apps.sms.models import INCOMING, OUTGOING, SMSLog
+from corehq.apps.sms.models import INCOMING, OUTGOING, SMS
 from corehq.apps.sms.util import get_sms_backend_classes
 
 
@@ -182,7 +182,7 @@ def arbitrary_messages_by_backend_and_direction(backend_ids,
     messages = []
     for api_id, instance_id in backend_ids.items():
         for direction in directions:
-            sms_log = SMSLog(
+            sms_log = SMS(
                 direction=direction,
                 phone_number=phone_number,
                 domain=domain,

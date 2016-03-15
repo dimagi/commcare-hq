@@ -19,3 +19,14 @@ class LoggingProcessor(PillowProcessor):
 
     def process_change(self, pillow_instance, change, do_set_checkpoint):
         self.logger.info(change)
+
+
+class CountingProcessor(PillowProcessor):
+    """
+    Processor that just counts how many things it has processed
+    """
+    def __init__(self):
+        self.count = 0
+
+    def process_change(self, pillow_instance, change, do_set_checkpoint):
+        self.count += 1

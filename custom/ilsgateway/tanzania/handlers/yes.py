@@ -5,7 +5,8 @@ from custom.ilsgateway.tanzania.reminders import YES_HELP
 class YesHandler(KeywordHandler):
 
     def help(self):
-        self.handle()
+        return self.handle()
 
     def handle(self):
         self.respond(YES_HELP)
+        return True

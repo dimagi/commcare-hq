@@ -37,7 +37,7 @@
 <script type="text/javascript" src="{% static 'reports/ko/report_filter.drilldown_options.js' %}"></script>
 {% if not is_empty %}
 <script type="text/javascript">
-    $(function () {
+    $.getScript("{% new_static 'reports/ko/report_filter.drilldown_options.js' %}", function () {
        $('#{{ css_id }}').drilldownOptionFilter({
            drilldown_map: {{ option_map|JSON }},
            controls: {{ controls|JSON }},

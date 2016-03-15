@@ -22,7 +22,7 @@ from corehq.apps.app_manager.views.schedules import get_schedule_context
 from corehq.apps.app_manager.views.utils import back_to_main, \
     CASE_TYPE_CONFLICT_MSG
 
-from corehq import toggles, privileges
+from corehq import toggles, privileges, feature_previews
 from corehq.apps.accounting.utils import domain_has_privilege
 from corehq.apps.app_manager.exceptions import (
     BlankXFormError,
@@ -466,6 +466,8 @@ def get_form_view_context_and_template(request, domain, form, langs, messages=me
         'allow_form_workflow': not isinstance(form, CareplanForm),
         'allow_usercase': domain_has_privilege(request.domain, privileges.USER_CASE),
         'is_usercase_in_use': is_usercase_in_use(request.domain),
+        'is_module_filter_enabled': (feature_previews.MODULE_FILTER.enabled(request.domain) and
+                                     app.enable_module_filtering),
     }
 
     if tours.NEW_APP.is_enabled(request.user):

@@ -25,6 +25,7 @@ from corehq.apps.userreports.exceptions import (
     BadSpecError,
     DataSourceConfigurationNotFoundError,
     ReportConfigurationNotFoundError,
+    StaticDataSourceConfigurationNotFoundError,
 )
 from corehq.apps.userreports.expressions.factory import ExpressionFactory
 from corehq.apps.userreports.filters.factory import FilterFactory
@@ -430,6 +431,12 @@ class ReportConfiguration(UnicodeMixIn, QuickCachedDocumentMixin, Document):
         self.by_domain.clear(self.__class__, self.domain)
         self.count_by_data_source.clear(self.__class__, self.domain, self.config_id)
 
+    @property
+    def is_static(self):
+        return any(
+            self._id.startswith(prefix)
+            for prefix in [STATIC_PREFIX, CUSTOM_REPORT_PREFIX]
+        )
 
 STATIC_PREFIX = 'static-'
 CUSTOM_REPORT_PREFIX = 'custom-'
@@ -475,8 +482,9 @@ class StaticDataSourceConfiguration(JsonObject):
         for ds in cls.all():
             if ds.get_id == config_id:
                 return ds
-        raise BadSpecError(_('The data source referenced by this report could '
-                             'not be found.'))
+        raise StaticDataSourceConfigurationNotFoundError(_(
+            'The data source referenced by this report could not be found.'
+        ))
 
 
 class StaticReportConfiguration(JsonObject):
@@ -549,7 +557,7 @@ def get_datasource_config(config_id, domain):
     is_static = config_id.startswith(StaticDataSourceConfiguration._datasource_id_prefix)
     if is_static:
         config = StaticDataSourceConfiguration.by_id(config_id)
-        if not config or config.domain != domain:
+        if config.domain != domain:
             _raise_not_found()
     else:
         try:

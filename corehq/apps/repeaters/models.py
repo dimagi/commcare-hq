@@ -4,6 +4,7 @@ from datetime import datetime, timedelta
 import logging
 import urllib
 import urlparse
+from requests.exceptions import Timeout, ConnectionError
 from corehq.apps.cachehq.mixins import QuickCachedDocumentMixin
 from corehq.form_processor.exceptions import XFormNotFound
 from corehq.util.datadog.metrics import REPEATER_ERROR_COUNT
@@ -13,7 +14,6 @@ from corehq.util.quickcache import quickcache
 from dimagi.ext.couchdbkit import *
 from couchdbkit.exceptions import ResourceNotFound
 from django.core.cache import cache
-import socket
 import hashlib
 
 from casexml.apps.case.models import CommCareCase
@@ -21,11 +21,11 @@ from casexml.apps.case.xml import V2, LEGAL_VERSIONS
 from corehq.apps.receiverwrapper.exceptions import DuplicateFormatException, IgnoreDocument
 
 from couchforms.models import XFormInstance
+from couchforms.const import DEVICE_LOG_XMLNS
 from dimagi.utils.decorators.memoized import memoized
 from dimagi.utils.parsing import json_format_datetime
 from dimagi.utils.mixins import UnicodeMixIn
 from dimagi.utils.post import simple_post
-from dimagi.utils.couch import LockableMixIn
 
 from .dbaccessors import (
     get_pending_repeat_record_count,
@@ -38,7 +38,9 @@ from .const import (
     RECORD_FAILURE_STATE,
     RECORD_SUCCESS_STATE,
     RECORD_PENDING_STATE,
+    POST_TIMEOUT,
 )
+from .exceptions import RequestConnectionError
 
 
 repeater_types = {}
@@ -57,19 +59,19 @@ def simple_post_with_cached_timeout(data, url, expiry=60 * 60, force_send=False,
 
     cache_value = cache.get(key)
 
-    if cache_value == 'timeout' and not force_send:
-        raise socket.timeout('recently timed out, not retrying')
-    elif cache_value == 'error' and not force_send:
-        raise socket.timeout('recently errored, not retrying')
+    if cache_value and not force_send:
+        raise RequestConnectionError(cache_value)
 
     try:
         resp = simple_post(data, url, *args, **kwargs)
-    except socket.timeout:
-        cache.set(key, 'timeout', expiry)
-        raise
+    except (Timeout, ConnectionError), e:
+        cache.set(key, e.message, expiry)
+        raise RequestConnectionError(e.message)
 
     if not 200 <= resp.status_code < 300:
-        cache.set(key, 'error', expiry)
+        message = 'HTTP response not a 200 or 300'
+        cache.set(key, message, expiry)
+        raise RequestConnectionError(message)
     return resp
 
 
@@ -337,6 +339,9 @@ class FormRepeater(Repeater):
     def payload_doc(self, repeat_record):
         return XFormInstance.get(repeat_record.payload_id)
 
+    def allowed_to_forward(self, payload):
+        return payload.xmlns != DEVICE_LOG_XMLNS
+
     def get_url(self, repeat_record):
         url = super(FormRepeater, self).get_url(repeat_record)
         if not self.include_app_id_param:
@@ -409,6 +414,9 @@ class ShortFormRepeater(Repeater):
     def payload_doc(self, repeat_record):
         return XFormInstance.get(repeat_record.payload_id)
 
+    def allowed_to_forward(self, payload):
+        return payload.xmlns != DEVICE_LOG_XMLNS
+
     def get_headers(self, repeat_record):
         headers = super(ShortFormRepeater, self).get_headers(repeat_record)
         headers.update({
@@ -426,7 +434,7 @@ class AppStructureRepeater(Repeater):
         return None
 
 
-class RepeatRecord(Document, LockableMixIn):
+class RepeatRecord(Document):
     """
     An record of a particular instance of something that needs to be forwarded
     with a link to the proper repeater object
@@ -517,7 +525,7 @@ class RepeatRecord(Document, LockableMixIn):
     def get_payload(self):
         return self.repeater.get_payload(self)
 
-    def fire(self, max_tries=3, post_fn=None, force_send=False):
+    def fire(self, max_tries=3, force_send=False):
         try:
             payload = self.get_payload()
         except ResourceNotFound:
@@ -536,7 +544,6 @@ class RepeatRecord(Document, LockableMixIn):
             # Mark it succeeded so that we don't try again
             self.update_success()
         else:
-            post_fn = post_fn or simple_post_with_cached_timeout
             headers = self.repeater.get_headers(self)
             if self.try_now() or force_send:
                 # we don't use celery's version of retry because
@@ -544,7 +551,13 @@ class RepeatRecord(Document, LockableMixIn):
                 failure_reason = None
                 for i in range(max_tries):
                     try:
-                        resp = post_fn(payload, self.url, headers=headers, force_send=force_send)
+                        resp = simple_post_with_cached_timeout(
+                            payload,
+                            self.url,
+                            headers=headers,
+                            force_send=force_send,
+                            timeout=POST_TIMEOUT,
+                        )
                         if 200 <= resp.status_code < 300:
                             self.update_success()
                             break

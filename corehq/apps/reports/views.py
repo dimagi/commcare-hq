@@ -110,7 +110,6 @@ from corehq.apps.hqwebapp.utils import csrf_inline
 from corehq.apps.locations.permissions import can_edit_form_location
 from corehq.apps.products.models import SQLProduct
 from corehq.apps.receiverwrapper import submit_form_locally
-from corehq.apps.sofabed.models import CaseData
 from corehq.apps.userreports.util import default_language as ucr_default_language
 from corehq.apps.users.decorators import require_permission
 from corehq.apps.users.export import export_users
@@ -605,7 +604,8 @@ class AddSavedReportConfigView(View):
         self.domain = domain
 
         if not self.saved_report_config_form.is_valid():
-            return HttpResponseBadRequest()
+            errors = self.saved_report_config_form.errors.get('__all__', [])
+            return HttpResponseBadRequest(', '.join(errors))
 
         update_config_data = copy(self.saved_report_config_form.cleaned_data)
         del update_config_data['_id']
@@ -1152,28 +1152,6 @@ def resave_case(request, domain, case_id):
 @require_case_view_permission
 @require_permission(Permissions.edit_data)
 @require_POST
-def bootstrap_ledgers(request, domain, case_id):
-    # todo: this is just to fix a mobile issue that requires ledgers to be initialized
-    # this view and code can be removed when that bug is released (likely anytime after
-    # october 2015 if you are reading this after then)
-    case = _get_case_or_404(domain, case_id)
-    if (not StockTransaction.objects.filter(case_id=case_id).exists() and
-            SQLProduct.objects.filter(domain=domain).exists()):
-        submit_case_blocks([
-            '''<balance xmlns="http://commcarehq.org/ledger/v1" entity-id="{case_id}" date="{date}" section-id="stock">
-           <entry id="{product_id}" quantity="0" />
-        </balance>'''.format(
-            date=json_format_datetime(datetime.utcnow()),
-            case_id=case_id,
-            product_id=SQLProduct.objects.filter(domain=domain).values_list('product_id', flat=True)[0]
-        )], domain=domain)
-        messages.success(request, _(u'An empty ledger was added to Case %s.' % case.name),)
-    return HttpResponseRedirect(reverse('case_details', args=[domain, case_id]))
-
-
-@require_case_view_permission
-@require_permission(Permissions.edit_data)
-@require_POST
 def close_case_view(request, domain, case_id):
     case = _get_case_or_404(domain, case_id)
     if case.closed:
@@ -1504,9 +1482,8 @@ class EditFormInstance(View):
 
         # add usercase to session
         if self._form_uses_usercase(self._get_form_from_instance(instance)):
-            try:
-                usercase_id = CaseData.objects.get(user_id=user._id, type=USERCASE_TYPE).case_id
-            except CaseData.DoesNotExist:
+            usercase_id = user.get_usercase_id()
+            if not usercase_id:
                 return _error(_('Could not find the user-case for this form'))
             edit_session_data[USERCASE_ID] = usercase_id
 

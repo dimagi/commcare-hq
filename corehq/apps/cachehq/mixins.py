@@ -22,6 +22,8 @@ class _InvalidateCacheMixin(object):
         for doc in docs:
             doc.clear_caches()
 
+    bulk_save = save_docs
+
     def delete(self):
         id = self._id
         try:
@@ -33,6 +35,16 @@ class _InvalidateCacheMixin(object):
         self._doc['_id'] = id
         self.clear_caches()
         invalidate_document(self, couch_db=self.get_db(), deleted=True)
+
+    @classmethod
+    def delete_docs(cls, docs, all_or_nothing=False, empty_on_delete=False):
+        super(_InvalidateCacheMixin, cls).bulk_delete(
+            docs, all_or_nothing=all_or_nothing, empty_on_delete=empty_on_delete)
+        for doc in docs:
+            doc.clear_caches()
+            invalidate_document(doc, couch_db=cls.get_db(), deleted=True)
+
+    bulk_delete = delete_docs
 
 
 def dont_cache_docs(*args, **kwargs):

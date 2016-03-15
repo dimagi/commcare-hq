@@ -1,6 +1,7 @@
 from casexml.apps.case.models import CommCareCase
+from corehq.apps.ivr.models import Call
 from corehq.apps.sms.mixin import VerifiedNumber
-from corehq.apps.sms.models import CallLog, INCOMING
+from corehq.apps.sms.models import INCOMING
 from corehq.apps.sms.util import register_sms_contact
 from django.test import TestCase
 
@@ -20,11 +21,7 @@ class LogCallTestCase(TestCase):
         return '99900000000'
 
     def delete_call_logs(self, domain):
-        calls = CallLog.by_domain_asc(domain).all()
-        if calls:
-            CallLog.get_db().bulk_delete([
-                call.to_json() for call in calls
-            ])
+        Call.by_domain(domain).delete()
 
     def setUp(self):
         self.domain = 'test-log-call-domain'
@@ -57,12 +54,12 @@ class LogCallTestCase(TestCase):
             # want to run the test on subclasses.
             return
 
-        self.assertEqual(CallLog.count_by_domain(self.domain), 0)
+        self.assertEqual(Call.by_domain(self.domain).count(), 0)
         response = self.simulate_inbound_call(self.phone_number)
         self.check_response(response)
-        self.assertEqual(CallLog.count_by_domain(self.domain), 1)
+        self.assertEqual(Call.by_domain(self.domain).count(), 1)
 
-        call = CallLog.by_domain_asc(self.domain).all()[0]
+        call = Call.by_domain(self.domain)[0]
         self.assertEqual(call.couch_recipient_doc_type, 'CommCareCase')
         self.assertEqual(call.couch_recipient, self.case.get_id)
         self.assertEqual(call.direction, INCOMING)

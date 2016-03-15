@@ -14,7 +14,9 @@ from corehq.apps.sms.views import (
     ComposeMessageView,
     SMSLanguagesView,
     ChatMessageHistory,
-    ChatLastReadMessage)
+    ChatLastReadMessage,
+    ChatOverSMSView
+)
 from corehq.apps.smsbillables.dispatcher import SMSAdminInterfaceDispatcher
 from corehq.messaging.smsbackends.telerivet.urls import domain_specific as telerivet_urls
 
@@ -27,7 +29,6 @@ urlpatterns = patterns('corehq.apps.sms.views',
     url(r'^compose/$', ComposeMessageView.as_view(), name=ComposeMessageView.urlname),
     url(r'^message_test/(?P<phone_number>\d+)/$', 'message_test', name='message_test'),
     url(r'^api/send_sms/$', 'api_send_sms', name='api_send_sms'),
-    url(r'^history/$', 'messaging', name='messaging'),
     url(r'^forwarding_rules/$', 'list_forwarding_rules', name='list_forwarding_rules'),
     url(r'^add_forwarding_rule/$', 'add_forwarding_rule', name='add_forwarding_rule'),
     url(r'^edit_forwarding_rule/(?P<forwarding_rule_id>[\w-]+)/$', 'add_forwarding_rule', name='edit_forwarding_rule'),
@@ -39,7 +40,7 @@ urlpatterns = patterns('corehq.apps.sms.views',
         EditDomainGatewayView.as_view(), name=EditDomainGatewayView.urlname
     ),
     url(r'^gateways/$', DomainSmsGatewayListView.as_view(), name=DomainSmsGatewayListView.urlname),
-    url(r'^chat_contacts/$', 'chat_contacts', name='chat_contacts'),
+    url(r'^chat_contacts/$', ChatOverSMSView.as_view(), name=ChatOverSMSView.urlname),
     url(r'^chat_contact_list/$', 'chat_contact_list', name='chat_contact_list'),
     url(r'^chat/(?P<contact_id>[\w-]+)/(?P<vn_id>[\w-]+)/$', 'chat', name='sms_chat'),
     url(r'^chat/(?P<contact_id>[\w-]+)/?$', 'chat', name='sms_chat'),

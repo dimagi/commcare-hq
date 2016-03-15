@@ -54,7 +54,7 @@ class PillowCheckpointSeqStore(models.Model):
             return None
 
         try:
-            store = cls.objects.get(checkpoint_id=pillow.get_checkpoint()['_id'])
+            store = cls.objects.get(checkpoint_id=pillow.checkpoint.checkpoint_id)
         except cls.DoesNotExist:
             return None
 

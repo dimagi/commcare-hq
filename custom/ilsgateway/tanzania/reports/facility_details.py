@@ -2,7 +2,7 @@ from corehq.apps.commtrack.models import StockState
 from corehq.apps.locations.dbaccessors import get_user_docs_by_location
 from corehq.apps.locations.models import SQLLocation
 from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn
-from corehq.apps.sms.models import SMSLog
+from corehq.apps.sms.models import SMS
 from corehq.util.timezones.conversions import ServerTime
 from corehq.const import SERVER_DATETIME_FORMAT_NO_SEC
 from custom.ilsgateway.models import SupplyPointStatusTypes, ILSNotes
@@ -165,20 +165,18 @@ class RecentMessages(ILSData):
 
     @property
     def rows(self):
-        data = SMSLog.by_domain_date(self.config['domain'])
+        data = (SMS.by_domain(self.config['domain'])
+                .filter(location_id=self.config['location_id'])
+                .order_by('date'))
         messages = []
-        location_id = self.config['location_id']
         for message in data:
-            if message.location_id != location_id:
-                continue
-
             timestamp = ServerTime(message.date).user_time(self.config['timezone']).done()
             messages.append([
                 _fmt_timestamp(timestamp),
                 _fmt(message.direction),
                 _fmt(message.text),
             ])
-        return sorted(messages, key=lambda x: x[0]['sort_key']) if messages else messages
+        return messages
 
 
 class FacilityDetailsReport(MultiReport):

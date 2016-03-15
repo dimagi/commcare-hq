@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2016-02-25 15:32+0000\n"
+"POT-Creation-Date: 2016-03-04 20:04+0000\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -102,6 +102,14 @@ msgstr ""
 
 #: corehq/apps/registration/static/registration/js/password.js:26
 msgid "Good Job! Your password is strong!"
+msgstr ""
+
+#: corehq/apps/reports_core/static/reports_core/js/maps.js:29
+msgid "Streets"
+msgstr ""
+
+#: corehq/apps/reports_core/static/reports_core/js/maps.js:30
+msgid "Satellite"
 msgstr ""
 
 #: corehq/apps/reports_core/templates/reports_core/filters/datespan_filter/datespan_filter.js:18

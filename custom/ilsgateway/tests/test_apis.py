@@ -42,7 +42,7 @@ class ApisTest(TestCase):
         self.assertEqual(smsuser.role, "ic")
         self.assertEqual(smsuser.supply_point, 79)
         self.assertEqual(smsuser.email, "test@gmail.com")
-        self.assertEqual(smsuser.is_active, "True")
+        self.assertEqual(smsuser.is_active, True)
 
     def test_parse_location_json(self):
         with open(os.path.join(self.datapath, 'sample_locations.json')) as f:

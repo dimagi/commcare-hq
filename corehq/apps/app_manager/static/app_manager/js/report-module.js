@@ -1,8 +1,7 @@
-// TODO: Ideally the separator would be defined in one place. Right now it is
-//       also defined corehq.apps.userreports.reports.filters.CHOICE_DELIMITER
-var select2Separator = "\u001F";
-
-var ReportModule = (function () {
+hqDefine('app_manager/js/report-module.js', function () {
+    // TODO: Ideally the separator would be defined in one place. Right now it is
+    //       also defined corehq.apps.userreports.reports.filters.CHOICE_DELIMITER
+    var select2Separator = "\u001F";
 
     function KeyValuePair(key, value, config) {
         var self = this;
@@ -342,6 +341,7 @@ var ReportModule = (function () {
                 for (var i = 0; i < reports.length; i++) {
                     if (!reports[i].reportId() || !reports[i].display()) {
                         alert('Reports must have all properties set!');
+                        break;
                     }
                 }
                 self.moduleName[self.lang] = self.currentModuleName();
@@ -412,5 +412,8 @@ var ReportModule = (function () {
         }
     }
 
-    return ReportModule;
-}());
+    return {
+        ReportModule: ReportModule,
+        select2Separator: select2Separator
+    };
+});

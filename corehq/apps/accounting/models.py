@@ -1081,25 +1081,24 @@ class Subscription(models.Model):
         return ['do_not_invoice', 'no_invoice_reason', 'salesforce_contract_id']
 
     @property
+    def next_subscription_filter(self):
+        return (Subscription.objects.
+                filter(subscriber=self.subscriber, date_start__gt=self.date_start).
+                exclude(pk=self.pk).
+                exclude(date_start=F('date_end')))
+
+    @property
     def is_renewed(self):
         """
         Checks to see if there's another Subscription for this subscriber
         that starts after this subscription.
         """
-        return Subscription.objects.filter(
-            subscriber=self.subscriber, date_start__gt=self.date_start
-        ).exclude(pk=self.pk).exists()
+        return self.next_subscription_filter.exists()
 
     @property
     def next_subscription(self):
         try:
-            return Subscription.objects.filter(
-                subscriber=self.subscriber, date_start__gt=self.date_start
-            ).exclude(
-                pk=self.pk
-            ).exclude(
-                date_start=F('date_end')
-            ).order_by('date_start')[0]
+            return self.next_subscription_filter.order_by('date_start')[0]
         except (Subscription.DoesNotExist, IndexError):
             return None
 
@@ -1431,10 +1430,6 @@ class Subscription(models.Model):
             raise SubscriptionReminderError(
                 "This subscription has no end date."
             )
-        if self.is_renewed:
-            # no need to send a reminder email if the subscription
-            # is already renewed
-            return
         today = datetime.date.today()
         num_days_left = (self.date_end - today).days
         if num_days_left == 1:
@@ -2082,7 +2077,8 @@ class BillingRecordBase(models.Model):
             try:
                 web_user = WebUser.get_by_username(email)
                 if web_user is not None:
-                    greeting = _("Dear %s,") % web_user.first_name
+                    if web_user.first_name:
+                        greeting = _("Dear %s,") % web_user.first_name
                     can_view_statement = web_user.is_domain_admin(domain)
             except ResourceNotFound:
                 pass
@@ -2509,13 +2505,13 @@ class InvoicePdf(SafeSaveDocument):
 
 class LineItemManager(models.Manager):
     def get_products(self):
-        return self.get_query_set().filter(feature_rate__exact=None)
+        return self.get_queryset().filter(feature_rate__exact=None)
 
     def get_features(self):
-        return self.get_query_set().filter(product_rate__exact=None)
+        return self.get_queryset().filter(product_rate__exact=None)
 
     def get_feature_by_type(self, feature_type):
-        return self.get_query_set().filter(feature_rate__feature__feature_type=feature_type)
+        return self.get_queryset().filter(feature_rate__feature__feature_type=feature_type)
 
 
 class LineItem(models.Model):

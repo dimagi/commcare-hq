@@ -41,6 +41,8 @@ import datetime
 
 from corehq.elastic import SIZE_LIMIT
 
+MISSING_KEY = None
+
 
 class AggregationResult(object):
     def __init__(self, raw, aggregation):
@@ -111,6 +113,13 @@ class BucketResult(AggregationResult):
         return {b['key']: b['doc_count'] for b in self.normalized_buckets}
 
 
+class MissingResult(AggregationResult):
+
+    @property
+    def bucket(self):
+        return Bucket(self.result, self._aggregations)
+
+
 class TopHitsResult(AggregationResult):
 
     @property
@@ -166,7 +175,7 @@ class Bucket(object):
 
     @property
     def key(self):
-        return self.result['key']
+        return self.result.get('key', MISSING_KEY)
 
     @property
     def doc_count(self):
@@ -200,6 +209,25 @@ class TermsAggregation(Aggregation):
             "field": field,
             "size": size if size is not None else SIZE_LIMIT,
         }
+
+
+class MissingAggregation(Aggregation):
+    """
+    A field data based single bucket aggregation, that creates a bucket of all
+    documents in the current document set context that are missing a field value
+    (effectively, missing a field or having the configured NULL value set).
+
+    :param name: aggregation name
+    :param field: name of the field to bucket on
+    """
+    type = "missing"
+    result_class = MissingResult
+
+    def __init__(self, name, field):
+        assert re.match(r'\w+$', name), \
+            "Names must be valid python variable names, was {}".format(name)
+        self.name = name
+        self.body = {"field": field}
 
 
 class StatsAggregation(Aggregation):

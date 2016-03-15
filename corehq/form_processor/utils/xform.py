@@ -49,6 +49,10 @@ def get_simple_form_xml(form_id, case_id=None, metadata=None):
     if case_id:
         case_block = CaseBlock(create=True, case_id=case_id).as_string()
     form_xml = SIMPLE_FORM.format(uuid=form_id, case_block=case_block, **metadata.to_json())
+
+    if not metadata.user_id:
+        form_xml = form_xml.replace('<n1:userID>{}</n1:userID>'.format(metadata.user_id), '')
+
     return form_xml
 
 

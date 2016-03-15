@@ -123,6 +123,7 @@
 
 <script>
     $(function () {
+        var CommcareSettings = hqImport('app_manager/js/commcaresettings.js').CommcareSettings;
         CommcareSettings.widgets.text_input = CommcareSettings.widgets.select;
     });
 </script>
@@ -168,7 +169,7 @@ todo fix
 
 <div class="tab-pane" id="commcare-settings">
     {% if app.short_comment %}
-        <div id="app_short_comment" class="well">{{ app.short_comment }}</div>
+        <div id="app_short_comment" class="app-comment well">{{ app.short_comment }}</div>
     {% endif %}
     <form class="form-horizontal">
         <div class="clearfix">

@@ -174,9 +174,8 @@ class CommTrackTest(TestCase):
         self.group = Group(domain=TEST_DOMAIN, name='commtrack-folks',
                            users=[u._id for u in self.users],
                            case_sharing=True)
+        self.group._id = self.sp.owner_id
         self.group.save()
-        self.sp.owner_id = self.group._id
-        self.sp.save()
         self.products = sorted(Product.by_domain(self.domain.name), key=lambda p: p._id)
         self.assertEqual(3, len(self.products))
 

@@ -1,21 +1,26 @@
 from collections import OrderedDict
 
+from sqlalchemy.exc import ProgrammingError
+
+from dimagi.utils.decorators.memoized import memoized
 from sqlagg import (
     ColumnNotFoundException,
     TableNotFoundException,
 )
 from sqlagg.columns import SimpleColumn
-from sqlalchemy.exc import ProgrammingError
+from sqlagg.sorting import OrderBy
 
 from corehq.apps.reports.sqlreport import SqlData, DatabaseColumn
 from corehq.apps.userreports.exceptions import (
     UserReportsError, TableNotFoundWarning,
-    SortConfigurationError)
+    InvalidQueryColumn)
 from corehq.apps.userreports.models import DataSourceConfiguration, get_datasource_config
-from corehq.apps.userreports.reports.sorting import get_default_sort_value, DESCENDING
+from corehq.apps.userreports.reports.sorting import ASCENDING
+from corehq.apps.userreports.reports.util import get_expanded_columns, get_total_row
 from corehq.apps.userreports.sql import get_table_name
 from corehq.apps.userreports.sql.connection import get_engine_id
-from dimagi.utils.decorators.memoized import memoized
+from corehq.sql_db.connections import connection_manager
+from corehq.util.soft_assert import soft_assert
 
 
 class ConfigurableReportDataSource(SqlData):
@@ -90,18 +95,30 @@ class ConfigurableReportDataSource(SqlData):
 
     @property
     def group_by(self):
-        def _contributions(column_id):
-            # ask each column for its group_by contribution and combine to a single list
-            # if the column isn't found just treat it as a normal field
-            if column_id in self._column_configs:
-                return self._column_configs[column_id].get_group_by_columns()
-            else:
-                return [column_id]
-
+        # ask each column for its group_by contribution and combine to a single list
         return [
             group_by for col_id in self.aggregation_columns
-            for group_by in _contributions(col_id)
+            for group_by in self._get_db_column_ids(col_id)
         ]
+
+    @property
+    def order_by(self):
+        # allow throwing exception if the report explicitly sorts on an unsortable column type
+        if self._order_by:
+            return [
+                OrderBy(order_by, is_ascending=(order == ASCENDING))
+                for sort_column_id, order in self._order_by
+                for order_by in self._get_db_column_ids(sort_column_id)
+            ]
+        elif self.column_configs:
+            try:
+                return [
+                    OrderBy(order_by, is_ascending=True)
+                    for order_by in self._get_db_column_ids(self.column_configs[0].column_id)
+                ]
+            except InvalidQueryColumn:
+                pass
+        return []
 
     @property
     def columns(self):
@@ -122,88 +139,50 @@ class ConfigurableReportDataSource(SqlData):
         return [w for sql_conf in self.sql_column_configs for w in sql_conf.warnings]
 
     @memoized
-    def get_data(self):
+    def get_data(self, start=None, limit=None):
         try:
-            ret = super(ConfigurableReportDataSource, self).get_data()
+            ret = super(ConfigurableReportDataSource, self).get_data(start=start, limit=limit)
         except (
             ColumnNotFoundException,
             ProgrammingError,
         ) as e:
+            _soft_assert = soft_assert(
+                to='{}@{}'.format('npellegrino+ucr-get-data', 'dimagi.com'),
+                exponential_backoff=False,
+            )
+            _soft_assert(False, unicode(e))
             raise UserReportsError(unicode(e))
         except TableNotFoundException:
             raise TableNotFoundWarning
 
         for report_column in self.column_configs:
             report_column.format_data(ret)
-        return self._sort_data(ret)
-
-    def _sort_data(self, data):
-        # TODO: Should sort in the database instead of memory, but not currently supported by sqlagg.
-        try:
-            # If a sort order is specified, sort by it.
-            if self._order_by:
-                for col in reversed(self._order_by):
-                    sort_column_id, order = col
-                    is_descending = order == DESCENDING
-                    try:
-                        matching_report_column = self._column_configs[sort_column_id]
-                    except KeyError:
-                        raise SortConfigurationError('Sort column {} not found in report!'.format(sort_column_id))
-
-                    def get_datatype(report_column):
-                        """
-                        Given a report column, get the data type by trying to pull it out
-                        from the data source config of the db column it points at. Defaults to "string"
-                        """
-                        try:
-                            field = report_column.field
-                        except AttributeError:
-                            # if the report column doesn't have a field object, default to string.
-                            # necessary for percent columns
-                            return 'string'
-
-                        matching_indicators = filter(
-                            lambda configured_indicator: configured_indicator['column_id'] == field,
-                            self.config.configured_indicators
-                        )
-                        if not len(matching_indicators) == 1:
-                            raise SortConfigurationError(
-                                'Number of indicators matching column %(col)s is %(num_matching)d' % {
-                                    'col': col[0],
-                                    'num_matching': len(matching_indicators),
-                                }
-                            )
-                        return matching_indicators[0].get('datatype')
-
-                    datatype = get_datatype(matching_report_column)
-
-                    def sort_by(row):
-                        value = row.get(sort_column_id, None)
-                        if value is not None:
-                            return value
-                        else:
-                            return get_default_sort_value(datatype)
-
-                    data.sort(
-                        key=sort_by,
-                        reverse=is_descending
-                    )
-                return data
-            # Otherwise sort by the first column (if the report has columns)
-            elif self.column_configs:
-                return sorted(data, key=lambda x: x.get(
-                    self.column_configs[0].column_id,
-                    next(x.itervalues())
-                ))
-            return data
-        except (SortConfigurationError, TypeError):
-            # if the data isn't sortable according to the report spec
-            # just return the data in the order we got it
-            return data
+        return ret
 
     @property
     def has_total_row(self):
         return any(column_config.calculate_total for column_config in self.column_configs)
 
     def get_total_records(self):
-        return len(self.get_data())
+        qc = self.query_context()
+        for c in self.columns:
+            # TODO - don't append columns that are not part of filters or group bys
+            qc.append_column(c.view)
+
+        session = connection_manager.get_scoped_session(self.engine_id)
+        return qc.count(session.connection(), self.filter_values)
+
+    def get_total_row(self):
+        return get_total_row(
+            self.get_data(), self.aggregation_columns, self.column_configs,
+            get_expanded_columns(self.column_configs, self.config)
+        )
+
+    def _get_db_column_ids(self, column_id):
+        # for columns that end up being complex queries (e.g. aggregate dates)
+        # there could be more than one column ID and they may specify aliases
+        if column_id in self._column_configs:
+            return self._column_configs[column_id].get_query_column_ids()
+        else:
+            # if the column isn't found just treat it as a normal field
+            return [column_id]

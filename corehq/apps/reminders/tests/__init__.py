@@ -3,11 +3,13 @@ from casexml.apps.case.sharedmodels import CommCareCaseIndex
 from corehq.apps.accounting.models import SoftwarePlanEdition
 from corehq.apps.accounting.tests.base_tests import BaseAccountingTest
 from corehq.apps.accounting.tests.utils import DomainSubscriptionMixin
+from corehq.apps.ivr.models import Call
 from corehq.apps.reminders.models import *
 from corehq.apps.reminders.event_handlers import get_message_template_params
 from corehq.apps.users.models import CommCareUser
-from corehq.apps.sms.models import CallLog, ExpectedCallbackEventLog, CALLBACK_RECEIVED, CALLBACK_PENDING, CALLBACK_MISSED
+from corehq.apps.sms.models import ExpectedCallback, CALLBACK_RECEIVED, CALLBACK_PENDING, CALLBACK_MISSED
 from corehq.apps.sms.tests.util import setup_default_sms_test_backend, delete_domain_phone_numbers
+from corehq.form_processor.tests.utils import set_case_property_directly
 from dimagi.utils.parsing import json_format_datetime
 from dimagi.utils.couch import LOCK_EXPIRATION
 from corehq.apps.domain.models import Domain
@@ -85,7 +87,7 @@ class ReminderTestCase(BaseReminderTestCase):
 
         # create reminder
         CaseReminderHandler.now = datetime(year=2011, month=7, day=7, hour=19, minute=8)
-        self.case.set_case_property('start_sending', 'ok')
+        set_case_property_directly(self.case, 'start_sending', 'ok')
         self.case.save()
         CaseReminderHandler.fire_reminders()
         reminder = self.handler.get_reminder(self.case)
@@ -98,7 +100,7 @@ class ReminderTestCase(BaseReminderTestCase):
 
         # fire a day after created
         CaseReminderHandler.now = datetime(year=2011, month=7, day=8, hour=19, minute=8)
-        self.case.set_case_property('irrelevant_1', 'ok')
+        set_case_property_directly(self.case, 'irrelevant_1', 'ok')
         self.case.save()
         CaseReminderHandler.fire_reminders()
         reminder = self.handler.get_reminder(self.case)
@@ -123,7 +125,7 @@ class ReminderTestCase(BaseReminderTestCase):
 
         # fire three days after last fired
         CaseReminderHandler.now = datetime(year=2011, month=7, day=11, hour=19, minute=8)
-        self.case.set_case_property('irrelevant_2', 'ok')
+        set_case_property_directly(self.case, 'irrelevant_2', 'ok')
         self.case.save()
         CaseReminderHandler.fire_reminders()
         reminder = self.handler.get_reminder(self.case)
@@ -137,7 +139,7 @@ class ReminderTestCase(BaseReminderTestCase):
         # set stop_sending to 'ok' should make it stop sending and make the reminder inactive
         last_fired = CaseReminderHandler.now
         CaseReminderHandler.now = datetime(year=2011, month=7, day=14, hour=19, minute=8)
-        self.case.set_case_property('stop_sending', 'ok')
+        set_case_property_directly(self.case, 'stop_sending', 'ok')
         self.case.save()
         CaseReminderHandler.fire_reminders()
         reminder = self.handler.get_reminder(self.case)
@@ -220,7 +222,7 @@ class ReminderIrregularScheduleTestCase(BaseReminderTestCase):
 
         # Spawn CaseReminder
         CaseReminderHandler.now = datetime(year=2012, month=1, day=1, hour=4, minute=0)
-        self.case.set_case_property('start_sending', 'ok')
+        set_case_property_directly(self.case, 'start_sending', 'ok')
         self.case.save()
         reminder = self.handler.get_reminder(self.case)
         self.assertNotEqual(reminder, None)
@@ -368,12 +370,19 @@ class ReminderCallbackTestCase(BaseReminderTestCase):
         self.user.delete()
         super(ReminderCallbackTestCase, self).tearDown()
 
+    def get_expected_callback(self, date, recipient_id):
+        return ExpectedCallback.by_domain_recipient_date(
+            self.domain,
+            recipient_id,
+            date
+        )
+
     def test_ok(self):
         self.assertEqual(self.handler.get_reminder(self.case), None)
 
         # Spawn CaseReminder
         CaseReminderHandler.now = datetime(year=2011, month=12, day=31, hour=23, minute=0)
-        self.case.set_case_property('start_sending', 'ok')
+        set_case_property_directly(self.case, 'start_sending', 'ok')
         self.case.save()
         reminder = self.handler.get_reminder(self.case)
         self.assertNotEqual(reminder, None)
@@ -403,22 +412,22 @@ class ReminderCallbackTestCase(BaseReminderTestCase):
         self.assertEqual(reminder.schedule_iteration_num, 1)
         self.assertEqual(reminder.current_event_sequence_num, 1)
         self.assertEqual(reminder.last_fired, CaseReminderHandler.now)
-        
-        event = ExpectedCallbackEventLog.view("sms/expected_callback_event",
-                                              key=["test", json_format_datetime(datetime(year=2012, month=1, day=1, hour=8, minute=1)), self.user_id],
-                                              include_docs=True).one()
+
+        event = self.get_expected_callback(
+            datetime(2012, 1, 1, 8, 1),
+            self.user_id
+        )
         self.assertNotEqual(event, None)
         self.assertEqual(event.status, CALLBACK_PENDING)
         
         # Create a callback
-        c = CallLog(
-            couch_recipient_doc_type    = "CommCareUser",
-            couch_recipient             = self.user_id,
-            phone_number                = "14445551234",
-            direction                   = "I",
-            date                        = datetime(year=2012, month=1, day=1, hour=8, minute=5)
+        Call.objects.create(
+            couch_recipient_doc_type='CommCareUser',
+            couch_recipient=self.user_id,
+            phone_number='14445551234',
+            direction='I',
+            date=datetime(year=2012, month=1, day=1, hour=8, minute=5)
         )
-        c.save()
 
         # Day1, 11:15 timeout (should move on to next event)
         CaseReminderHandler.now = datetime(year=2012, month=1, day=1, hour=8, minute=15)
@@ -440,9 +449,10 @@ class ReminderCallbackTestCase(BaseReminderTestCase):
         self.assertEqual(reminder.current_event_sequence_num, 0)
         self.assertEqual(reminder.last_fired, CaseReminderHandler.now)
 
-        event = ExpectedCallbackEventLog.view("sms/expected_callback_event",
-                                              key=["test", json_format_datetime(datetime(year=2012, month=1, day=1, hour=8, minute=1)), self.user_id],
-                                              include_docs=True).one()
+        event = self.get_expected_callback(
+            datetime(2012, 1, 1, 8, 1),
+            self.user_id
+        )
         self.assertNotEqual(event, None)
         self.assertEqual(event.status, CALLBACK_RECEIVED)
 
@@ -466,10 +476,11 @@ class ReminderCallbackTestCase(BaseReminderTestCase):
         self.assertEqual(reminder.schedule_iteration_num, 2)
         self.assertEqual(reminder.current_event_sequence_num, 1)
         self.assertEqual(reminder.last_fired, CaseReminderHandler.now)
-        
-        event = ExpectedCallbackEventLog.view("sms/expected_callback_event",
-                                              key=["test", json_format_datetime(datetime(year=2012, month=1, day=2, hour=8, minute=1)), self.user_id],
-                                              include_docs=True).one()
+
+        event = self.get_expected_callback(
+            datetime(2012, 1, 2, 8, 1),
+            self.user_id
+        )
         self.assertNotEqual(event, None)
         self.assertEqual(event.status, CALLBACK_PENDING)
         
@@ -482,10 +493,11 @@ class ReminderCallbackTestCase(BaseReminderTestCase):
         self.assertEqual(reminder.schedule_iteration_num, 2)
         self.assertEqual(reminder.current_event_sequence_num, 1)
         self.assertEqual(reminder.last_fired, CaseReminderHandler.now)
-        
-        event = ExpectedCallbackEventLog.view("sms/expected_callback_event",
-                                              key=["test", json_format_datetime(datetime(year=2012, month=1, day=2, hour=8, minute=1)), self.user_id],
-                                              include_docs=True).one()
+
+        event = self.get_expected_callback(
+            datetime(2012, 1, 2, 8, 1),
+            self.user_id
+        )
         self.assertNotEqual(event, None)
         self.assertEqual(event.status, CALLBACK_PENDING)
         
@@ -498,10 +510,11 @@ class ReminderCallbackTestCase(BaseReminderTestCase):
         self.assertEqual(reminder.schedule_iteration_num, 3)
         self.assertEqual(reminder.current_event_sequence_num, 0)
         self.assertEqual(reminder.last_fired, CaseReminderHandler.now)
-        
-        event = ExpectedCallbackEventLog.view("sms/expected_callback_event",
-                                              key=["test", json_format_datetime(datetime(year=2012, month=1, day=2, hour=8, minute=1)), self.user_id],
-                                              include_docs=True).one()
+
+        event = self.get_expected_callback(
+            datetime(2012, 1, 2, 8, 1),
+            self.user_id
+        )
         self.assertNotEqual(event, None)
         self.assertEqual(event.status, CALLBACK_MISSED)
         
@@ -525,10 +538,11 @@ class ReminderCallbackTestCase(BaseReminderTestCase):
         self.assertEqual(reminder.schedule_iteration_num, 3)
         self.assertEqual(reminder.current_event_sequence_num, 1)
         self.assertEqual(reminder.last_fired, CaseReminderHandler.now)
-        
-        event = ExpectedCallbackEventLog.view("sms/expected_callback_event",
-                                              key=["test", json_format_datetime(datetime(year=2012, month=1, day=3, hour=8, minute=1)), self.user_id],
-                                              include_docs=True).one()
+
+        event = self.get_expected_callback(
+            datetime(2012, 1, 3, 8, 1),
+            self.user_id
+        )
         self.assertNotEqual(event, None)
         self.assertEqual(event.status, CALLBACK_PENDING)
         
@@ -541,22 +555,22 @@ class ReminderCallbackTestCase(BaseReminderTestCase):
         self.assertEqual(reminder.schedule_iteration_num, 3)
         self.assertEqual(reminder.current_event_sequence_num, 1)
         self.assertEqual(reminder.last_fired, CaseReminderHandler.now)
-        
-        event = ExpectedCallbackEventLog.view("sms/expected_callback_event",
-                                              key=["test", json_format_datetime(datetime(year=2012, month=1, day=3, hour=8, minute=1)), self.user_id],
-                                              include_docs=True).one()
+
+        event = self.get_expected_callback(
+            datetime(2012, 1, 3, 8, 1),
+            self.user_id
+        )
         self.assertNotEqual(event, None)
         self.assertEqual(event.status, CALLBACK_PENDING)
         
         # Create a callback (with phone_number missing country code)
-        c = CallLog(
-            couch_recipient_doc_type    = "CommCareUser",
-            couch_recipient             = self.user_id,
-            phone_number                = "4445551234",
-            direction                   = "I",
-            date                        = datetime(year=2012, month=1, day=3, hour=8, minute=22)
+        Call.objects.create(
+            couch_recipient_doc_type='CommCareUser',
+            couch_recipient=self.user_id,
+            phone_number='4445551234',
+            direction='I',
+            date=datetime(year=2012, month=1, day=3, hour=8, minute=22)
         )
-        c.save()
         
         # Day3, 11:45 timeout (should deactivate the reminder)
         CaseReminderHandler.now = datetime(year=2012, month=1, day=3, hour=8, minute=45)
@@ -567,10 +581,11 @@ class ReminderCallbackTestCase(BaseReminderTestCase):
         self.assertEqual(reminder.current_event_sequence_num, 0)
         self.assertEqual(reminder.last_fired, CaseReminderHandler.now)
         self.assertEqual(reminder.active, False)
-        
-        event = ExpectedCallbackEventLog.view("sms/expected_callback_event",
-                                              key=["test", json_format_datetime(datetime(year=2012, month=1, day=3, hour=8, minute=1)), self.user_id],
-                                              include_docs=True).one()
+
+        event = self.get_expected_callback(
+            datetime(2012, 1, 3, 8, 1),
+            self.user_id
+        )
         self.assertNotEqual(event, None)
         self.assertEqual(event.status, CALLBACK_RECEIVED)
 
@@ -679,10 +694,10 @@ class CaseTypeReminderTestCase(BaseReminderTestCase):
         # Initial condition
         CaseReminderHandler.now = datetime(year=2012, month=2, day=16, hour=11, minute=0)
         
-        self.case1.set_case_property("start_sending1", "ok")
-        self.case1.set_case_property("start_sending2", "ok")
-        self.case2.set_case_property("start_sending1", "ok")
-        self.case2.set_case_property("start_sending3", "ok")
+        set_case_property_directly(self.case1, "start_sending1", "ok")
+        set_case_property_directly(self.case1, "start_sending2", "ok")
+        set_case_property_directly(self.case2, "start_sending1", "ok")
+        set_case_property_directly(self.case2, "start_sending3", "ok")
         self.case1.save()
         self.case2.save()
         
@@ -835,7 +850,7 @@ class StartConditionReminderTestCase(BaseReminderTestCase):
         CaseReminderHandler.now = datetime(year=2012, month=2, day=17, hour=12, minute=0)
         self.assertEqual(self.handler1.get_reminder(self.case1), None)
         
-        self.case1.set_case_property("start_sending1", "ok")
+        set_case_property_directly(self.case1, "start_sending1", "ok")
         self.case1.save()
         
         reminder = self.handler1.get_reminder(self.case1)
@@ -848,7 +863,7 @@ class StartConditionReminderTestCase(BaseReminderTestCase):
         
         # Test that saving the case without changing the start condition has no effect
         old_reminder_id = reminder._id
-        self.case1.set_case_property("case_property1", "abc")
+        set_case_property_directly(self.case1, "case_property1", "abc")
         self.case1.save()
         reminder = self.handler1.get_reminder(self.case1)
         self.assertNotEqual(reminder, None)
@@ -856,7 +871,7 @@ class StartConditionReminderTestCase(BaseReminderTestCase):
         
         # Test retiring the reminder
         old_reminder_id = reminder._id
-        self.case1.set_case_property("start_sending1", None)
+        set_case_property_directly(self.case1, "start_sending1", None)
         self.case1.save()
         
         self.assertEqual(self.handler1.get_reminder(self.case1), None)
@@ -867,7 +882,7 @@ class StartConditionReminderTestCase(BaseReminderTestCase):
         #
         # Spawn the reminder with datetime start condition value
         start = datetime(2012,2,20,9,0,0)
-        self.case1.set_case_property("start_sending1", start)
+        set_case_property_directly(self.case1, "start_sending1", start)
         self.case1.save()
         
         reminder = self.handler1.get_reminder(self.case1)
@@ -881,7 +896,7 @@ class StartConditionReminderTestCase(BaseReminderTestCase):
         # Reset the datetime start condition
         old_reminder_id = reminder._id
         start = datetime(2012,2,22,10,15,0)
-        self.case1.set_case_property("start_sending1", start)
+        set_case_property_directly(self.case1, "start_sending1", start)
         self.case1.save()
         
         reminder = self.handler1.get_reminder(self.case1)
@@ -895,7 +910,7 @@ class StartConditionReminderTestCase(BaseReminderTestCase):
         
         # Test that saving the case without changing the start condition has no effect
         old_reminder_id = reminder._id
-        self.case1.set_case_property("case_property1", "xyz")
+        set_case_property_directly(self.case1, "case_property1", "xyz")
         self.case1.save()
         reminder = self.handler1.get_reminder(self.case1)
         self.assertNotEqual(reminder, None)
@@ -903,7 +918,7 @@ class StartConditionReminderTestCase(BaseReminderTestCase):
         
         # Retire the reminder
         old_reminder_id = reminder._id
-        self.case1.set_case_property("start_sending1", None)
+        set_case_property_directly(self.case1, "start_sending1", None)
         self.case1.save()
         
         reminder = self.handler1.get_reminder(self.case1)
@@ -915,7 +930,7 @@ class StartConditionReminderTestCase(BaseReminderTestCase):
         #
         # Spawn the reminder with date start condition value
         start = date(2012,2,20)
-        self.case1.set_case_property("start_sending1", start)
+        set_case_property_directly(self.case1, "start_sending1", start)
         self.case1.save()
         
         reminder = self.handler1.get_reminder(self.case1)
@@ -929,7 +944,7 @@ class StartConditionReminderTestCase(BaseReminderTestCase):
         # Reset the date start condition
         old_reminder_id = reminder._id
         start = date(2012,2,22)
-        self.case1.set_case_property("start_sending1", start)
+        set_case_property_directly(self.case1, "start_sending1", start)
         self.case1.save()
         
         reminder = self.handler1.get_reminder(self.case1)
@@ -943,7 +958,7 @@ class StartConditionReminderTestCase(BaseReminderTestCase):
         
         # Test that saving the case without changing the start condition has no effect
         old_reminder_id = reminder._id
-        self.case1.set_case_property("case_property1", "abc")
+        set_case_property_directly(self.case1, "case_property1", "abc")
         self.case1.save()
         reminder = self.handler1.get_reminder(self.case1)
         self.assertNotEqual(reminder, None)
@@ -951,7 +966,7 @@ class StartConditionReminderTestCase(BaseReminderTestCase):
         
         # Retire the reminder
         old_reminder_id = reminder._id
-        self.case1.set_case_property("start_sending1", None)
+        set_case_property_directly(self.case1, "start_sending1", None)
         self.case1.save()
         
         reminder = self.handler1.get_reminder(self.case1)
@@ -962,7 +977,7 @@ class StartConditionReminderTestCase(BaseReminderTestCase):
         # Test changing a start condition which is a string representation of a datetime value
         #
         # Spawn the reminder with datetime start condition value
-        self.case1.set_case_property("start_sending1", "2012-02-25 11:15")
+        set_case_property_directly(self.case1, "start_sending1", "2012-02-25 11:15")
         self.case1.save()
         
         reminder = self.handler1.get_reminder(self.case1)
@@ -975,7 +990,7 @@ class StartConditionReminderTestCase(BaseReminderTestCase):
         
         # Reset the datetime start condition
         old_reminder_id = reminder._id
-        self.case1.set_case_property("start_sending1", "2012-02-26 11:20")
+        set_case_property_directly(self.case1, "start_sending1", "2012-02-26 11:20")
         self.case1.save()
         
         reminder = self.handler1.get_reminder(self.case1)
@@ -989,7 +1004,7 @@ class StartConditionReminderTestCase(BaseReminderTestCase):
         
         # Test that saving the case without changing the start condition has no effect
         old_reminder_id = reminder._id
-        self.case1.set_case_property("case_property1", "xyz")
+        set_case_property_directly(self.case1, "case_property1", "xyz")
         self.case1.save()
         reminder = self.handler1.get_reminder(self.case1)
         self.assertNotEqual(reminder, None)
@@ -997,7 +1012,7 @@ class StartConditionReminderTestCase(BaseReminderTestCase):
         
         # Retire the reminder
         old_reminder_id = reminder._id
-        self.case1.set_case_property("start_sending1", None)
+        set_case_property_directly(self.case1, "start_sending1", None)
         self.case1.save()
         
         reminder = self.handler1.get_reminder(self.case1)
@@ -1053,7 +1068,7 @@ class ReminderLockTestCase(BaseReminderTestCase):
         CaseReminderHandler.now = datetime(year=2012, month=2, day=17, hour=12, minute=0)
         self.assertEqual(self.handler1.get_reminder(self.case1), None)
         
-        self.case1.set_case_property("start_sending1", "ok")
+        set_case_property_directly(self.case1, "start_sending1", "ok")
         self.case1.save()
         
         reminder = self.handler1.get_reminder(self.case1)
@@ -1096,7 +1111,7 @@ class MessageTestCase(BaseReminderTestCase):
             type="parent",
             name="P001",
         )
-        self.parent_case.set_case_property("parent_prop1", "abc")
+        set_case_property_directly(self.parent_case, "parent_prop1", "abc")
         self.parent_case.save()
 
         self.child_case = CommCareCase(
@@ -1109,7 +1124,7 @@ class MessageTestCase(BaseReminderTestCase):
                 referenced_id=self.parent_case._id,
             )],
         )
-        self.child_case.set_case_property("child_prop1", "def")
+        set_case_property_directly(self.child_case, "child_prop1", "def")
         self.child_case.save()
 
     def tearDown(self):
@@ -1158,43 +1173,43 @@ class ReminderDefinitionCalculationsTestCase(TestCase):
             (None, False, False)
         )
 
-        case.set_case_property('start_date_case_property', '')
+        set_case_property_directly(case, 'start_date_case_property', '')
         self.assertEqual(
             reminder.get_case_criteria_reminder_start_date_info(case, now),
             (None, False, False)
         )
 
-        case.set_case_property('start_date_case_property', '   ')
+        set_case_property_directly(case, 'start_date_case_property', '   ')
         self.assertEqual(
             reminder.get_case_criteria_reminder_start_date_info(case, now),
             (None, False, False)
         )
 
-        case.set_case_property('start_date_case_property', 'abcdefg')
+        set_case_property_directly(case, 'start_date_case_property', 'abcdefg')
         self.assertEqual(
             reminder.get_case_criteria_reminder_start_date_info(case, now),
             (None, False, False)
         )
 
-        case.set_case_property('start_date_case_property', '2016-01-32')
+        set_case_property_directly(case, 'start_date_case_property', '2016-01-32')
         self.assertEqual(
             reminder.get_case_criteria_reminder_start_date_info(case, now),
             (None, False, False)
         )
 
-        case.set_case_property('start_date_case_property', '2016-01-10')
+        set_case_property_directly(case, 'start_date_case_property', '2016-01-10')
         self.assertEqual(
             reminder.get_case_criteria_reminder_start_date_info(case, now),
             (datetime(2016, 1, 10), True, False)
         )
 
-        case.set_case_property('start_date_case_property', date(2016, 1, 11))
+        set_case_property_directly(case, 'start_date_case_property', date(2016, 1, 11))
         self.assertEqual(
             reminder.get_case_criteria_reminder_start_date_info(case, now),
             (datetime(2016, 1, 11), True, False)
         )
 
-        case.set_case_property('start_date_case_property', datetime(2016, 1, 12))
+        set_case_property_directly(case, 'start_date_case_property', datetime(2016, 1, 12))
         self.assertEqual(
             reminder.get_case_criteria_reminder_start_date_info(case, now),
             (datetime(2016, 1, 12), True, False)
@@ -1223,43 +1238,43 @@ class ReminderDefinitionCalculationsTestCase(TestCase):
             (now, True, True)
         )
 
-        case.set_case_property('start_date_case_property', '')
+        set_case_property_directly(case, 'start_date_case_property', '')
         self.assertEqual(
             reminder.get_case_criteria_reminder_start_date_info(case, now),
             (now, True, True)
         )
 
-        case.set_case_property('start_date_case_property', '   ')
+        set_case_property_directly(case, 'start_date_case_property', '   ')
         self.assertEqual(
             reminder.get_case_criteria_reminder_start_date_info(case, now),
             (now, True, True)
         )
 
-        case.set_case_property('start_date_case_property', 'abcdefg')
+        set_case_property_directly(case, 'start_date_case_property', 'abcdefg')
         self.assertEqual(
             reminder.get_case_criteria_reminder_start_date_info(case, now),
             (now, True, True)
         )
 
-        case.set_case_property('start_date_case_property', '2016-01-32')
+        set_case_property_directly(case, 'start_date_case_property', '2016-01-32')
         self.assertEqual(
             reminder.get_case_criteria_reminder_start_date_info(case, now),
             (now, True, True)
         )
 
-        case.set_case_property('start_date_case_property', '2016-01-10')
+        set_case_property_directly(case, 'start_date_case_property', '2016-01-10')
         self.assertEqual(
             reminder.get_case_criteria_reminder_start_date_info(case, now),
             (datetime(2016, 1, 10), True, False)
         )
 
-        case.set_case_property('start_date_case_property', date(2016, 1, 11))
+        set_case_property_directly(case, 'start_date_case_property', date(2016, 1, 11))
         self.assertEqual(
             reminder.get_case_criteria_reminder_start_date_info(case, now),
             (datetime(2016, 1, 11), True, False)
         )
 
-        case.set_case_property('start_date_case_property', datetime(2016, 1, 12))
+        set_case_property_directly(case, 'start_date_case_property', datetime(2016, 1, 12))
         self.assertEqual(
             reminder.get_case_criteria_reminder_start_date_info(case, now),
             (datetime(2016, 1, 12), True, False)

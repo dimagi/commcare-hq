@@ -144,7 +144,7 @@ function LocationModel(data, root, depth, func, withAllOption) {
   // helpers to account for the 'all' meta-entry
   this.num_children = ko.computed(function() {
       var length = this.children().length;
-      if (withAllOption && length !== 0) {
+      if (this.withAllOption && length !== 0) {
           length -= 1;
       }
       return length;

@@ -11,61 +11,26 @@ from corehq.apps.locations.models import SQLLocation, LocationType
 from corehq.apps.locations.util import location_hierarchy_config, load_locs_json
 from corehq.apps.products.models import SQLProduct
 from corehq.apps.programs.models import Program
-from corehq.apps.reports.filters.base import BaseDrilldownOptionFilter, BaseSingleOptionFilter, \
-    BaseMultipleOptionFilter, BaseReportFilter, CheckboxFilter
+from corehq.apps.reports.filters.base import BaseSingleOptionFilter, BaseMultipleOptionFilter, BaseReportFilter,\
+    CheckboxFilter
 from corehq.apps.reports.filters.fixtures import AsyncLocationFilter
 from corehq.util import reverse
 from custom.common import ALL_OPTION
 from corehq.apps.domain.models import Domain
-from custom.ewsghana.utils import ews_date_format
+from custom.ewsghana.utils import ews_date_format, calculate_last_period
 
 
-class ProductByProgramFilter(BaseDrilldownOptionFilter):
-    slug = "filter_by"
-    single_option_select = 0
-    template = "common/drilldown_options.html"
-    label = ugettext_noop("Filter By")
+class ProductByProgramFilter(BaseSingleOptionFilter):
+    slug = "filter_by_program"
+    label = ugettext_noop("Filter By Program")
+    default_text = ''
 
     @property
-    def drilldown_map(self):
-        options = [{"val": ALL_OPTION, "text": "All", "next": []}]
+    def options(self):
+        options = [(ALL_OPTION, "All")]
         for program in Program.by_domain(self.domain):
-            options.append({"val": program.get_id, "text": program.name})
+            options.append((program.get_id, program.name))
         return options
-
-    @classmethod
-    def get_labels(cls):
-        return [('Program', 'program')]
-
-    @property
-    def filter_context(self):
-        controls = []
-        for level, label in enumerate(self.rendered_labels):
-            controls.append({
-                'label': label[0],
-                'slug': label[1],
-                'level': level,
-            })
-
-        return {
-            'option_map': self.drilldown_map,
-            'controls': controls,
-            'selected': self.selected,
-            'use_last': self.use_only_last,
-            'notifications': self.final_notifications,
-            'empty_text': self.drilldown_empty_text,
-            'is_empty': not self.drilldown_map,
-            'single_option_select': self.single_option_select
-        }
-
-    @classmethod
-    def _get_label_value(cls, request, label):
-        slug = str(label[1])
-        val = request.GET.getlist('%s_%s' % (cls.slug, str(label[1])))
-        return {
-            'slug': slug,
-            'value': val,
-        }
 
 
 class ViewReportFilter(BaseSingleOptionFilter):
@@ -240,9 +205,7 @@ class EWSDateFilter(BaseReportFilter):
 
     @staticmethod
     def last_reporting_period():
-        now = datetime.utcnow()
-        date = now - relativedelta(days=(7 - (4 - now.weekday())) % 7)
-        return date - relativedelta(days=7), date
+        return calculate_last_period()
 
     @property
     def default_week(self):

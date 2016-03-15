@@ -73,6 +73,7 @@ USE_I18N = True
 # Examples: "http://media.lawrence.com", "http://example.com/media/"
 MEDIA_URL = '/media/'
 STATIC_URL = '/static/'
+STATIC_CDN = ''
 
 FILEPATH = os.path.abspath(os.path.dirname(__file__))
 # media for user uploaded media.  in general this won't be used at all.
@@ -130,6 +131,7 @@ TEMPLATE_LOADERS = (
 CSRF_SOFT_MODE = True
 
 MIDDLEWARE_CLASSES = [
+    'corehq.middleware.NoCacheMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.locale.LocaleMiddleware',
@@ -138,7 +140,6 @@ MIDDLEWARE_CLASSES = [
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.common.BrokenLinkEmailsMiddleware',
     'corehq.middleware.OpenRosaMiddleware',
-    'corehq.middleware.NoCacheMiddleware',
     'corehq.util.global_request.middleware.GlobalRequestMiddleware',
     'corehq.apps.users.middleware.UsersMiddleware',
     'corehq.middleware.TimeoutMiddleware',
@@ -290,6 +291,7 @@ HQ_APPS = (
     'corehq.messaging.smsbackends.mach',
     'corehq.messaging.smsbackends.http',
     'corehq.messaging.smsbackends.smsgh',
+    'corehq.messaging.smsbackends.push',
     'corehq.messaging.smsbackends.apposit',
     'corehq.messaging.smsbackends.test',
     'corehq.apps.performance_sms',
@@ -384,6 +386,7 @@ APPS_TO_EXCLUDE_FROM_TESTS = (
     'corehq.messaging.smsbackends.megamobile',
     'corehq.messaging.smsbackends.yo',
     'corehq.messaging.smsbackends.smsgh',
+    'corehq.messaging.smsbackends.push',
     'corehq.messaging.smsbackends.apposit',
     'crispy_forms',
     'django_extensions',
@@ -549,6 +552,11 @@ CELERY_REMINDER_RULE_QUEUE = CELERY_MAIN_QUEUE
 # on its own queue.
 CELERY_REMINDER_CASE_UPDATE_QUEUE = CELERY_MAIN_QUEUE
 
+
+# This is the celery queue to use for sending repeat records.
+# It's set to the main queue here and can be overridden to put it
+# on its own queue.
+CELERY_REPEAT_RECORD_QUEUE = CELERY_MAIN_QUEUE
 
 # websockets config
 WEBSOCKET_URL = '/ws/'
@@ -897,11 +905,6 @@ LOGGING = {
             'level': 'ERROR',
             'propagate': False,
         },
-        'currency_update': {
-            'handlers': ['file'],
-            'level': 'INFO',
-            'propagate': False,
-        },
         'accounting': {
             'handlers': ['accountinglog', 'console', 'couchlog', 'mail_admins'],
             'level': 'INFO',
@@ -1062,6 +1065,8 @@ INDICATOR_CONFIG = {
     "mvp-sauri": ['mvp_indicators'],
     "mvp-potou": ['mvp_indicators'],
 }
+
+COMPRESS_URL = STATIC_CDN + STATIC_URL
 
 ####### Couch Forms & Couch DB Kit Settings #######
 COUCH_DATABASE_NAME = helper.get_db_name(COUCH_DATABASE_NAME, UNIT_TESTING)
@@ -1275,6 +1280,7 @@ SMS_LOADED_SQL_BACKENDS = [
     'corehq.messaging.smsbackends.http.models.SQLHttpBackend',
     'corehq.messaging.smsbackends.mach.models.SQLMachBackend',
     'corehq.messaging.smsbackends.megamobile.models.SQLMegamobileBackend',
+    'corehq.messaging.smsbackends.push.models.PushBackend',
     'corehq.messaging.smsbackends.sislog.models.SQLSislogBackend',
     'corehq.messaging.smsbackends.smsgh.models.SQLSMSGHBackend',
     'corehq.messaging.smsbackends.telerivet.models.SQLTelerivetBackend',
@@ -1343,8 +1349,26 @@ PILLOWTOPS = {
     'core_ext': [
         'corehq.pillows.reportcase.ReportCasePillow',
         'corehq.pillows.reportxform.ReportXFormPillow',
-        'corehq.apps.userreports.pillow.ConfigurableIndicatorPillow',
-        'corehq.apps.userreports.pillow.StaticDataSourcePillow',
+        {
+            'name': 'DefaultChangeFeedPillow',
+            'class': 'corehq.apps.change_feed.pillow.ChangeFeedPillow',
+            'instance': 'corehq.apps.change_feed.pillow.get_default_couch_db_change_feed_pillow',
+        },
+        {
+            'name': 'UserGroupsDbKafkaPillow',
+            'class': 'pillowtop.pillow.interface.ConstructedPillow',
+            'instance': 'corehq.apps.change_feed.pillow.get_user_groups_db_kafka_pillow',
+        },
+        {
+            'name': 'kafka-ucr-main',
+            'class': 'corehq.apps.userreports.pillow.ConfigurableReportKafkaPillow',
+            'instance': 'corehq.apps.userreports.pillow.get_kafka_ucr_pillow',
+        },
+        {
+            'name': 'kafka-ucr-static',
+            'class': 'corehq.apps.userreports.pillow.ConfigurableReportKafkaPillow',
+            'instance': 'corehq.apps.userreports.pillow.get_kafka_ucr_static_pillow',
+        },
     ],
     'cache': [
         {
@@ -1387,16 +1411,6 @@ PILLOWTOPS = {
         'mvp_docs.pillows.MVPCaseIndicatorPillow',
     ],
     'experimental': [
-        {
-            'name': 'DefaultChangeFeedPillow',
-            'class': 'corehq.apps.change_feed.pillow.ChangeFeedPillow',
-            'instance': 'corehq.apps.change_feed.pillow.get_default_couch_db_change_feed_pillow',
-        },
-        {
-            'name': 'UserGroupsDbKafkaPillow',
-            'class': 'pillowtop.pillow.interface.ConstructedPillow',
-            'instance': 'corehq.apps.change_feed.pillow.get_user_groups_db_kafka_pillow',
-        },
         {
             'name': 'BlobDeletionPillow',
             'class': 'pillowtop.pillow.interface.ConstructedPillow',
@@ -1490,15 +1504,14 @@ ES_XFORM_FULL_INDEX_DOMAINS = [
 
 CUSTOM_UCR_EXPRESSIONS = [
     ('abt_supervisor', 'custom.abt.reports.expressions.abt_supervisor_expression'),
-    ('mvp_medical_cause', 'mvp.ucr.reports.expressions.medical_cause_expression'),
-    ('mvp_no_treatment_reason', 'mvp.ucr.reports.expressions.no_treatment_reason_expression'),
-    ('mvp_treatment_provider_name', 'mvp.ucr.reports.expressions.treatment_provider_name_expression'),
-    ('mvp_treatment_place_name', 'mvp.ucr.reports.expressions.treatment_place_name_expression'),
-    ('mvp_death_place', 'mvp.ucr.reports.expressions.death_place_expression'),
     ('succeed_referenced_id', 'custom.succeed.expressions.succeed_referenced_id'),
     ('location_type_name', 'corehq.apps.locations.ucr_expressions.location_type_name'),
     ('location_parent_id', 'corehq.apps.locations.ucr_expressions.location_parent_id'),
     ('cvsu_expression', 'custom.apps.cvsu.expressions.cvsu_expression')
+]
+
+CUSTOM_UCR_EXPRESSION_LISTS = [
+    ('mvp.ucr.reports.expressions.CUSTOM_UCR_EXPRESSIONS'),
 ]
 
 CUSTOM_MODULES = [
@@ -1508,7 +1521,8 @@ CUSTOM_MODULES = [
 ]
 
 CUSTOM_DASHBOARD_PAGE_URL_NAMES = {
-    'ews-ghana': 'dashboard_page'
+    'ews-ghana': 'dashboard_page',
+    'ils-gateway': 'ils_dashboard_report'
 }
 
 REMOTE_APP_NAMESPACE = "%(domain)s.commcarehq.org"
@@ -1560,6 +1574,7 @@ DOMAIN_MODULE_MAP = {
     'pathways-india-mis': 'custom.care_pathways',
     'pathways-tanzania': 'custom.care_pathways',
     'care-macf-malawi': 'custom.care_pathways',
+    'care-macf-bangladesh': 'custom.care_pathways',
     'kemri': 'custom.openclinica',
     'novartis': 'custom.openclinica',
 }

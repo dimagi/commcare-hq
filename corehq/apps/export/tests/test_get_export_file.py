@@ -2,6 +2,7 @@ import json
 
 from StringIO import StringIO
 from django.test import SimpleTestCase
+from elasticsearch.exceptions import ConnectionError
 from openpyxl import load_workbook
 
 from corehq.apps.export.const import MAIN_TABLE
@@ -30,6 +31,7 @@ from corehq.apps.export.tests.util import (
 )
 from corehq.pillows.case import CasePillow
 from corehq.util.elastic import ensure_index_deleted
+from corehq.util.test_utils import trap_extra_setup
 from couchexport.export import get_writer
 from couchexport.models import Format
 from pillowtop.es_utils import completely_initialize_pillow_index
@@ -229,7 +231,8 @@ class ExportTest(SimpleTestCase):
     @classmethod
     def setUpClass(cls):
         cls.case_pillow = CasePillow(online=False)
-        completely_initialize_pillow_index(cls.case_pillow)
+        with trap_extra_setup(ConnectionError, msg="cannot connect to elasicsearch"):
+            completely_initialize_pillow_index(cls.case_pillow)
 
         case = new_case(foo="apple", bar="banana")
         cls.case_pillow.send_robust(case.to_json())

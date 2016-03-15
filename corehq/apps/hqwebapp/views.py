@@ -50,6 +50,7 @@ from corehq.apps.style.decorators import use_bootstrap3
 from corehq.apps.users.models import CouchUser
 from corehq.apps.users.util import format_username
 from corehq.apps.hqwebapp.doc_info import get_doc_info
+from corehq.middleware import always_allow_browser_caching
 from corehq.util.datadog.utils import create_datadog_event, log_counter, sanitize_url
 from corehq.util.datadog.metrics import JSERROR_COUNT
 from corehq.util.datadog.const import DATADOG_UNKNOWN
@@ -58,7 +59,7 @@ from dimagi.utils.decorators.memoized import memoized
 from dimagi.utils.logging import notify_exception
 from dimagi.utils.web import get_url_base, json_response, get_site_domain
 from dimagi.utils.couch.cache.cache_core import get_redis_default_cache
-from corehq.apps.hqadmin.management.commands.celery_deploy_in_progress import CELERY_DEPLOY_IN_PROGRESS_FLAG
+from corehq.apps.hqadmin.management.commands.deploy_in_progress import DEPLOY_IN_PROGRESS_FLAG
 from corehq.apps.domain.models import Domain
 from soil import heartbeat, DownloadBase
 from soil import views as soil_views
@@ -85,7 +86,7 @@ def couch_check():
 
 def is_deploy_in_progress():
     cache = get_redis_default_cache()
-    return cache.get(CELERY_DEPLOY_IN_PROGRESS_FLAG) is not None
+    return cache.get(DEPLOY_IN_PROGRESS_FLAG) is not None
 
 
 def celery_check():
@@ -96,15 +97,12 @@ def celery_check():
         app.config_from_object(settings)
         i = app.control.inspect()
         ping = i.ping()
-        if not ping and not is_deploy_in_progress():
+        if not ping:
             chk = (False, 'No running Celery workers were found.')
         else:
             chk = (True, None)
     except IOError as e:
-        if is_deploy_in_progress():
-            chk = (True, None)
-        else:
-            chk = (False, "Error connecting to the backend: " + str(e))
+        chk = (False, "Error connecting to the backend: " + str(e))
     except ImportError as e:
         chk = (False, str(e))
 
@@ -127,7 +125,7 @@ def hb_check():
             else:
                 hb = heartbeat.is_alive()
         except Exception:
-            hb = is_deploy_in_progress()
+            hb = False
     else:
         try:
             hb = heartbeat.is_alive()
@@ -305,7 +303,7 @@ def server_up(req):
                     message.append(custom_msg)
                 else:
                     message.append(check_info['message'])
-    if failed:
+    if failed and not is_deploy_in_progress():
         create_datadog_event(
             'Serverup check failed', '\n'.join(message),
             alert_type='error', aggregation_key='serverup',
@@ -1128,3 +1126,12 @@ class DataTablesAJAXPaginationMixin(object):
             'iTotalRecords': total_records,
             'iTotalDisplayRecords': filtered_records or total_records,
         }))
+
+
+@always_allow_browser_caching
+@login_and_domain_required
+def toggles_js(request, domain, template='hqwebapp/js/toggles_template.js'):
+    return render(request, template, {
+        'toggles_dict': toggles.toggle_values_by_name(username=request.user.username, domain=domain),
+        'previews_dict': feature_previews.preview_values_by_name(domain=domain)
+    })

@@ -1,4 +1,4 @@
-{% extends 'sms/default.html' %}
+{% extends 'style/bootstrap2/two_column.html' %}
 {% load i18n %}
 
 {% block main_column %}
@@ -19,5 +19,4 @@
             <button type="submit" name="send_sms_button" class="btn btn-primary">{% trans "Send Message" %}</button>
         </div>
     </form>
-{{ block.super }}
 {% endblock %}

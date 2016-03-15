@@ -104,6 +104,7 @@ class BaseReport(CustomProjectReport, ElasticProjectInspectionReport, ProjectRep
         asynchronous = True
         ajax_pagination = True
         include_inactive = True
+        is_bootstrap3 = True
 
         fields = [
             AsyncLocationFilter,
@@ -187,8 +188,8 @@ class McctProjectReview(BaseReport):
             DataTablesColumn(_("Phone No."), sortable=False),
             DataTablesColumn(_("Amount"), sortable=False),
             DataTablesColumn(_("Visits"), sortable=False),
-            DataTablesColumn(mark_safe('Status/Action  <a href="#" class="select-all btn btn-mini btn-inverse">all</a> '
-                                       '<a href="#" class="select-none btn btn-mini btn-warning">none</a>'),
+            DataTablesColumn(mark_safe('Status/Action  <a href="#" class="select-all btn btn-xs btn-info">all</a> '
+                                       '<a href="#" class="select-none btn btn-xs btn-default">none</a>'),
                              sortable=False, span=3))
         return headers
 
@@ -332,8 +333,8 @@ class McctRejectedClientPage(McctClientApprovalPage):
             DataTablesColumn(_("Amount"), sortable=False),
             DataTablesColumn(_("Comment"), sortable=False),
             DataTablesColumn(_("User"), sortable=False),
-            DataTablesColumn(mark_safe('Status/Action  <a href="#" class="select-all btn btn-mini btn-inverse">all</a> '
-                                       '<a href="#" class="select-none btn btn-mini btn-warning">none</a>'),
+            DataTablesColumn(mark_safe('Status/Action  <a href="#" class="select-all btn btn-xs btn-info">all</a> '
+                                       '<a href="#" class="select-none btn btn-xs btn-default">none</a>'),
                              sortable=False, span=3))
         return headers
 

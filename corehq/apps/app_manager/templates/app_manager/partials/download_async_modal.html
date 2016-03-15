@@ -8,6 +8,7 @@
     {% include 'app_manager/partials/download_async_modal.html' with element_id={ID_OF_MODAL} %}
 
     Also need to include associated JavaScript:
+    <script src="{% new_static 'app_manager/js/download_async_modal.js' %}"></script>
     {% include 'app_manager/partials/download_async_modal_inline.html' with element_id={ID_OF_MODAL} download_url={URL_TO_DOWNLOAD} %}
 
     Simply set ID_OF_MODAL and URL_TO_DOWNLOAD.

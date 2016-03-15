@@ -8,7 +8,7 @@ from xml.sax.saxutils import unescape
 from corehq.apps.app_manager import id_strings
 from corehq.apps.app_manager.const import (
     RETURN_TO, )
-from corehq.apps.app_manager.exceptions import SuiteError
+from corehq.apps.app_manager.exceptions import SuiteError, SuiteValidationError
 from corehq.apps.app_manager.suite_xml.contributors import PostProcessor
 from corehq.apps.app_manager.suite_xml.xml_models import StackDatum, Stack, CreateFrame
 from corehq.apps.app_manager.xpath import CaseIDXPath, session_var, \
@@ -295,7 +295,7 @@ class EndOfFormNavigationWorkflow(object):
                 if manual_values:
                     yield StackDatum(id=child.id, value=manual_values)
                 else:
-                    raise SuiteError("Unable to link forms, missing form variable: {}".format(
+                    raise SuiteValidationError("Unable to link forms, missing form variable: {}".format(
                         child.id
                     ))
 
@@ -403,7 +403,7 @@ class CaseListFormWorkflow(object):
             # This error is raised when we can't find a datum that matches the case type we're looking for among
             # the list of datums that are common between all the forms in the module which implies that not all
             # the forms have the same case management configuration.
-            raise SuiteError(
+            raise SuiteValidationError(
                 u"The '{}' module is not properly configured to have a Case List Registration Form. All forms"
                 u" in the module should have the same case management configuration.".format(module.default_name())
             )

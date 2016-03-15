@@ -7,6 +7,8 @@ var CaseManagement = function (o) {
     self.receiverUrl = o.receiverUrl;
     self.updatedCase = null;
     self.webUserID = o.webUserID;
+    self.webUserName = o.webUserName;
+    self.form_name = o.form_name;
 
     self.owners_by_type = {
         'user': o.users
@@ -130,7 +132,9 @@ var CaseManagement = function (o) {
                     case_id: case_id,
                     properties: {owner_id: new_owner}
                 }).asXFormInstance({
-                    user_id: self.webUserID
+                    user_id: self.webUserID,
+                    username: self.webUserName,
+                    form_name: self.form_name
                 }).serialize();
 
                 $.ajax({

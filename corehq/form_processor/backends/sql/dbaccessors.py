@@ -99,7 +99,7 @@ class FormAccessorSQL(AbstractFormAccessor):
         _attach_prefetch_models(forms_by_id, attachments, 'form_id', 'cached_attachments')
 
         if ordered:
-            _order_list(form_ids, forms, 'form_id')
+            forms = _order_list(form_ids, forms, 'form_id')
 
         return forms
 
@@ -141,12 +141,16 @@ class FormAccessorSQL(AbstractFormAccessor):
         FormAccessorSQL._archive_unarchive_form(form, user_id, False)
 
     @staticmethod
-    def update_state(form_id, state):
-        with get_cursor(XFormInstanceSQL) as cursor:
+    def soft_delete_forms(domain, form_ids, deletion_date=None, deletion_id=None):
+        assert isinstance(form_ids, list)
+        deletion_date = deletion_date or datetime.utcnow()
+        with get_cursor(CommCareCaseSQL) as cursor:
             cursor.execute(
-                'SELECT update_form_state(%s, %s)',
-                [form_id, state]
+                'SELECT soft_delete_forms(%s, %s, %s, %s) as affected_count',
+                [domain, form_ids, deletion_date, deletion_id]
             )
+            results = fetchall_as_namedtuple(cursor)
+            return sum([result.affected_count for result in results])
 
     @staticmethod
     @transaction.atomic
@@ -228,32 +232,30 @@ class FormAccessorSQL(AbstractFormAccessor):
             cursor.execute('SELECT delete_all_forms(%s, %s)', [domain, user_id])
 
     @staticmethod
-    def get_deleted_forms_for_user(domain, user_id, ids_only=False):
-        return FormAccessorSQL._get_forms_for_user(
+    def get_deleted_form_ids_for_user(domain, user_id):
+        return FormAccessorSQL._get_form_ids_for_user(
             domain,
             user_id,
-            XFormInstanceSQL.DELETED,
-            ids_only
+            True,
         )
 
     @staticmethod
-    def get_forms_for_user(domain, user_id, ids_only=False):
-        return FormAccessorSQL._get_forms_for_user(
+    def get_form_ids_for_user(domain, user_id):
+        return FormAccessorSQL._get_form_ids_for_user(
             domain,
             user_id,
-            XFormInstanceSQL.NORMAL,
-            ids_only
+            False,
         )
 
     @staticmethod
-    def _get_forms_for_user(domain, user_id, state, ids_only=False):
-        forms = list(XFormInstanceSQL.objects.raw(
-            'SELECT * from get_forms_by_user_id(%s, %s, %s)',
-            [domain, user_id, state],
-        ))
-        if ids_only:
-            return [form.form_id for form in forms]
-        return forms
+    def _get_form_ids_for_user(domain, user_id, is_deleted):
+        with get_cursor(XFormInstanceSQL) as cursor:
+            cursor.execute(
+                'SELECT form_id FROM get_form_ids_for_user(%s, %s, %s)',
+                [domain, user_id, is_deleted]
+            )
+            results = fetchall_as_namedtuple(cursor)
+            return [result.form_id for result in results]
 
     @staticmethod
     def get_all_forms_received_since(received_on_since=None, chunk_size=500):
@@ -272,6 +274,10 @@ class FormAccessorSQL(AbstractFormAccessor):
         # sort and add additional limit in memory in case the sharded setup returns more than
         # the requested number of cases
         return sorted(results, key=lambda form: form.received_on)[:limit]
+
+    @staticmethod
+    def forms_have_multimedia(domain, app_id, xmlns):
+        raise NotImplementedError
 
 
 class CaseAccessorSQL(AbstractCaseAccessor):
@@ -329,6 +335,7 @@ class CaseAccessorSQL(AbstractCaseAccessor):
     def get_all_reverse_indices_info(domain, case_ids):
         # TODO: If the domain field is used on CommCareCaseIndexSQL
         # in the future, this function should filter by it.
+        assert isinstance(case_ids, list)
         indexes = CommCareCaseIndexSQL.objects.raw('SELECT * FROM get_all_reverse_indices(%s)', [case_ids])
         return [
             CaseIndexInfo(
@@ -398,11 +405,24 @@ class CaseAccessorSQL(AbstractCaseAccessor):
         return list(CaseTransaction.objects.raw('SELECT * from get_case_transactions(%s)', [case_id]))
 
     @staticmethod
-    def get_transactions_for_case_rebuild(case_id):
-        return list(CaseTransaction.objects.raw(
-            'SELECT * from get_case_transactions_for_rebuild(%s)',
-            [case_id])
+    def get_transaction_by_form_id(case_id, form_id):
+        transactions = list(CaseTransaction.objects.raw(
+            'SELECT * from get_case_transaction_by_form_id(%s, %s)',
+            [case_id, form_id])
         )
+        assert len(transactions) <= 1
+        return transactions[0] if transactions else None
+
+    @staticmethod
+    def get_transactions_by_type(case_id, transaction_type):
+        return list(CaseTransaction.objects.raw(
+            'SELECT * from get_case_transactions_by_type(%s, %s)',
+            [case_id, transaction_type])
+        )
+
+    @staticmethod
+    def get_transactions_for_case_rebuild(case_id):
+        return CaseAccessorSQL.get_transactions_by_type(case_id, CaseTransaction.TYPE_FORM)
 
     @staticmethod
     def case_has_transactions_since_sync(case_id, sync_log_id, sync_log_date):
@@ -565,21 +585,40 @@ class CaseAccessorSQL(AbstractCaseAccessor):
             return dict((result.case_id, result.server_modified_on) for result in results)
 
     @staticmethod
-    def get_case_by_external_id(domain, external_id, case_type=None):
-        try:
-            return CommCareCaseSQL.objects.raw(
-                'SELECT * FROM get_case_by_external_id(%s, %s, %s)',
-                [domain, external_id, case_type]
-            )[0]
-        except IndexError:
-            raise CaseNotFound
+    def get_cases_by_external_id(domain, external_id, case_type=None):
+        return list(CommCareCaseSQL.objects.raw(
+            'SELECT * FROM get_case_by_external_id(%s, %s, %s)',
+            [domain, external_id, case_type]
+        ))
 
     @staticmethod
     def get_case_by_domain_hq_user_id(domain, user_id, case_type):
         try:
-            return CaseAccessorSQL.get_case_by_external_id(domain, user_id, case_type)
-        except CaseNotFound:
+            return CaseAccessorSQL.get_cases_by_external_id(domain, user_id, case_type)[0]
+        except IndexError:
             return None
+
+    @staticmethod
+    def get_case_types_for_domain(domain):
+        with get_cursor(CommCareCaseSQL) as cursor:
+            cursor.execute(
+                'SELECT case_type FROM get_case_types_for_domain(%s)',
+                [domain]
+            )
+            results = fetchall_as_namedtuple(cursor)
+            return {result.case_type for result in results}
+
+    @staticmethod
+    def soft_delete_cases(domain, case_ids, deletion_date=None, deletion_id=None):
+        assert isinstance(case_ids, list)
+        deletion_date = deletion_date or datetime.utcnow()
+        with get_cursor(CommCareCaseSQL) as cursor:
+            cursor.execute(
+                'SELECT soft_delete_cases(%s, %s, %s, %s) as affected_count',
+                [domain, case_ids, deletion_date, deletion_id]
+            )
+            results = fetchall_as_namedtuple(cursor)
+            return sum([result.affected_count for result in results])
 
 
 class LedgerAccessorSQL(object):

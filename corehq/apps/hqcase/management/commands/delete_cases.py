@@ -2,8 +2,7 @@ from optparse import make_option
 from django.core.management.base import NoArgsCommand, BaseCommand
 from couchdbkit import ResourceNotFound
 from casexml.apps.case.models import CommCareCase
-from corehq.apps.hqcase.dbaccessors import \
-    get_number_of_cases_in_domain_by_owner, get_case_ids_in_domain_by_owner
+from corehq.apps.hqcase.dbaccessors import get_case_ids_in_domain_by_owner
 from dimagi.utils.decorators.memoized import memoized
 from dimagi.utils.couch.database import iter_bulk_delete
 from corehq.apps.users.models import CouchUser, CommCareUser
@@ -24,10 +23,6 @@ class Command(BaseCommand):
     @memoized
     def db(self):
         return CommCareCase.get_db()
-
-    def get_case_count(self):
-        return get_number_of_cases_in_domain_by_owner(
-            self.domain, self.user.user_id)
 
     def delete_all(self):
         case_ids = get_case_ids_in_domain_by_owner(
@@ -58,9 +53,7 @@ class Command(BaseCommand):
         self.domain = self.user.domain
 
         if not options.get('no_prompt'):
-            msg = "Delete all {} cases {} by {}? (y/n)\n".format(
-                self.get_case_count(),
-                "owned",
+            msg = "Delete all cases owned by {}? (y/n)\n".format(
                 self.user.username,
             )
             if not raw_input(msg) == 'y':

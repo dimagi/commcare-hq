@@ -8,11 +8,13 @@ from django.test import TestCase
 from corehq.form_processor.backends.sql.dbaccessors import FormAccessorSQL, CaseAccessorSQL
 from corehq.form_processor.backends.sql.processor import FormProcessorSQL
 from corehq.form_processor.exceptions import XFormNotFound, AttachmentNotFound
+from corehq.form_processor.interfaces.dbaccessors import FormAccessors
 from corehq.form_processor.interfaces.processor import ProcessedForms
 from corehq.form_processor.models import XFormInstanceSQL, XFormOperationSQL, XFormAttachmentSQL
 from corehq.form_processor.parsers.form import apply_deprecation
-from corehq.form_processor.tests.utils import create_form_for_test, FormProcessorTestUtils
-from corehq.form_processor.utils import get_simple_form_xml
+from corehq.form_processor.tests.utils import create_form_for_test, FormProcessorTestUtils, run_with_all_backends
+from corehq.form_processor.utils import get_simple_form_xml, get_simple_wrapped_form
+from corehq.form_processor.utils.xform import TestFormMetadata
 from corehq.sql_db.routers import db_for_read_write
 from crispy_forms.tests.utils import override_settings
 
@@ -303,6 +305,34 @@ class FormAccessorTestsSQL(TestCase):
         self.assertEqual(DOMAIN, form.domain)
         self.assertEqual('user1', form.user_id)
         return form
+
+
+class FormAccessorsTests(TestCase):
+
+    def tearDown(self):
+        FormProcessorTestUtils.delete_all_xforms(DOMAIN)
+
+    @run_with_all_backends
+    def test_soft_delete(self):
+        meta = TestFormMetadata(domain=DOMAIN)
+        get_simple_wrapped_form('f1', metadata=meta)
+        f2 = get_simple_wrapped_form('f2', metadata=meta)
+        f2.archive()
+        get_simple_wrapped_form('f3', metadata=meta)
+
+        accessors = FormAccessors(DOMAIN)
+
+        # delete
+        num = accessors.soft_delete_forms(['f1', 'f2'], deletion_id='123')
+        self.assertEqual(num, 2)
+
+        for form_id in ['f1', 'f2']:
+            form = accessors.get_form(form_id)
+            self.assertTrue(form.is_deleted)
+            self.assertEqual(form.deletion_id, '123')
+
+        form = accessors.get_form('f3')
+        self.assertFalse(form.is_deleted)
 
 
 def _simulate_form_edit():

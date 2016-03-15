@@ -76,6 +76,7 @@ from corehq.apps.app_manager.dbaccessors import (
     get_app,
     get_latest_build_doc,
     get_latest_released_app_doc,
+    domain_has_apps,
 )
 from corehq.apps.app_manager.util import (
     split_path,
@@ -3471,7 +3472,7 @@ class CustomMonthFilter(ReportAppFilter):
     )
     # DateSpan to return i.t.o. number of months to go back
     period = IntegerProperty(
-        default=0,
+        default=DEFAULT_MONTH_FILTER_PERIOD_LENGTH,
         validators=(is_gte(0),)
     )
 
@@ -3479,7 +3480,7 @@ class CustomMonthFilter(ReportAppFilter):
     def wrap(cls, doc):
         doc['start_of_month'] = int(doc['start_of_month'])
         if 'period' in doc:
-            doc['period'] = int(doc['period'])
+            doc['period'] = int(doc['period'] or DEFAULT_MONTH_FILTER_PERIOD_LENGTH)
         return super(CustomMonthFilter, cls).wrap(doc)
 
     def get_filter_value(self, user, ui_filter):
@@ -4417,6 +4418,7 @@ class ApplicationBase(VersionedDoc, SnapshotMixin,
         return copy
 
     def delete_app(self):
+        domain_has_apps.clear(self.domain)
         self.doc_type += '-Deleted'
         record = DeleteApplicationRecord(
             domain=self.domain,
@@ -4425,6 +4427,12 @@ class ApplicationBase(VersionedDoc, SnapshotMixin,
         )
         record.save()
         return record
+
+    def save(self, response_json=None, increment_version=None, **params):
+        if not self._id and not domain_has_apps(self.domain):
+            domain_has_apps.clear(self.domain)
+        super(ApplicationBase, self).save(
+            response_json=response_json, increment_version=increment_version, **params)
 
     def set_form_versions(self, previous_version):
         # by default doing nothing here is fine.

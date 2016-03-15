@@ -304,8 +304,79 @@ class Log(models.Model):
     # The MessagingSubEvent that this log is tied to
     messaging_subevent = models.ForeignKey('MessagingSubEvent', null=True, on_delete=models.PROTECT)
 
+    def set_system_error(self, message=None):
+        self.error = True
+        self.system_error_message = message
+        self.save()
 
-class SMS(SyncSQLToCouchMixin, Log):
+    @classmethod
+    def by_domain(cls, domain, start_date=None, end_date=None):
+        qs = cls.objects.filter(domain=domain)
+
+        if start_date:
+            qs = qs.filter(date__gte=start_date)
+
+        if end_date:
+            qs = qs.filter(date__lte=end_date)
+
+        return qs
+
+    @classmethod
+    def by_recipient(cls, contact_doc_type, contact_id):
+        return cls.objects.filter(
+            couch_recipient_doc_type=contact_doc_type,
+            couch_recipient=contact_id,
+        )
+
+    @classmethod
+    def get_last_log_for_recipient(cls, contact_doc_type, contact_id, direction=None):
+        qs = cls.by_recipient(contact_doc_type, contact_id)
+
+        if direction:
+            qs = qs.filter(direction=direction)
+
+        qs = qs.order_by('-date')[:1]
+
+        if qs:
+            return qs[0]
+
+        return None
+
+    @classmethod
+    def count_by_domain(cls, domain, direction=None):
+        qs = cls.objects.filter(domain=domain)
+
+        if direction:
+            qs = qs.filter(direction=direction)
+
+        return qs.count()
+
+    @property
+    def recipient(self):
+        if self.couch_recipient_doc_type == 'CommCareCase':
+            return CommConnectCase.get(self.couch_recipient)
+        else:
+            return CouchUser.get_by_user_id(self.couch_recipient)
+
+    @classmethod
+    def inbound_entry_exists(cls, contact_doc_type, contact_id, from_timestamp, to_timestamp=None):
+        qs = cls.by_recipient(
+            contact_doc_type,
+            contact_id
+        ).filter(
+            direction=INCOMING,
+            date__gte=from_timestamp
+        )
+
+        if to_timestamp:
+            qs = qs.filter(
+                date__lte=to_timestamp
+            )
+
+        return len(qs[:1]) > 0
+
+
+class SMSBase(SyncSQLToCouchMixin, Log):
     ERROR_TOO_MANY_UNSUCCESSFUL_ATTEMPTS = 'TOO_MANY_UNSUCCESSFUL_ATTEMPTS'
     ERROR_MESSAGE_IS_STALE = 'MESSAGE_IS_STALE'
     ERROR_INVALID_DIRECTION = 'INVALID_DIRECTION'
@@ -368,6 +439,7 @@ class SMS(SyncSQLToCouchMixin, Log):
     fri_risk_profile = models.CharField(max_length=1, null=True)
 
     class Meta:
+        abstract = True
         app_label = 'sms'
 
     @classmethod
@@ -411,6 +483,42 @@ class SMS(SyncSQLToCouchMixin, Log):
     @classmethod
     def _migration_get_couch_model_class(cls):
         return SMSLog
+
+    @property
+    def outbound_backend(self):
+        if self.backend_id:
+            return SQLMobileBackend.load(self.backend_id, is_couch_id=True)
+
+        return SQLMobileBackend.load_default_by_phone_and_domain(
+            SQLMobileBackend.SMS,
+            smsutil.clean_phone_number(self.phone_number),
+            domain=self.domain
+        )
+
+
+class SMS(SMSBase):
+    def save(self, *args, **kwargs):
+        from corehq.apps.sms.tasks import sync_sms_to_couch
+
+        sync_to_couch = kwargs.pop('sync_to_couch', True)
+        super(SyncSQLToCouchMixin, self).save(*args, **kwargs)
+        if sync_to_couch:
+            sync_sms_to_couch.delay(self)
+
+
+class QueuedSMS(SMSBase):
+    class Meta:
+        db_table = 'sms_queued'
+
+    @classmethod
+    def get_queued_sms(cls):
+        return cls.objects.filter(
+            datetime_to_process__lte=datetime.utcnow(),
+        )
+
+    def _migration_do_sync(self):
+        if not self.couch_id:
+            super(QueuedSMS, self)._migration_do_sync()
 
 
 class LastReadMessage(SyncCouchToSQLMixin, Document, CouchDocLockableMixIn):
@@ -662,6 +770,29 @@ class ExpectedCallback(SyncSQLToCouchMixin, models.Model):
     couch_recipient_doc_type = models.CharField(max_length=126, null=True)
     couch_recipient = models.CharField(max_length=126, null=True, db_index=True)
     status = models.CharField(max_length=126, null=True)
+
+    @classmethod
+    def by_domain(cls, domain, start_date=None, end_date=None):
+        qs = cls.objects.filter(domain=domain)
+
+        if start_date:
+            qs = qs.filter(date__gte=start_date)
+
+        if end_date:
+            qs = qs.filter(date__lte=end_date)
+
+        return qs
+
+    @classmethod
+    def by_domain_recipient_date(cls, domain, recipient_id, date):
+        try:
+            return cls.objects.get(
+                domain=domain,
+                couch_recipient=recipient_id,
+                date=date
+            )
+        except cls.DoesNotExist:
+            return None
 
     @classmethod
     def _migration_get_fields(cls):

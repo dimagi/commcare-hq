@@ -58,6 +58,10 @@ class AbstractXFormInstance(object):
     def is_deleted(self):
         raise NotImplementedError()
 
+    # @property
+    # def deletion_id(self):
+    #     raise NotImplementedError
+
     def auth_context(self):
         raise NotImplementedError()
 
@@ -128,6 +132,10 @@ class AbstractCommCareCase(object):
     def is_deleted(self):
         raise NotImplementedError()
 
+    # @property
+    # def deletion_id(self):
+    #     raise NotImplementedError
+
     def dynamic_case_properties(self):
         raise NotImplementedError()
 
@@ -135,6 +143,12 @@ class AbstractCommCareCase(object):
         raise NotImplementedError
 
     def modified_since_sync(self, sync_log):
+        raise NotImplementedError
+
+    def get_subcases(self):
+        raise NotImplementedError
+
+    def get_case_property(self, property):
         raise NotImplementedError
 
     def to_xml(self, version, include_case_on_closed=False):

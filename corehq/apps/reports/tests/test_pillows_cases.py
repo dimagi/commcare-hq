@@ -1,3 +1,4 @@
+from django.conf import settings
 from django.test import TestCase
 from casexml.apps.case.xform import extract_case_blocks
 from corehq.apps.api.es import report_term_filter
@@ -6,8 +7,8 @@ from corehq.pillows.case import CasePillow
 from corehq.pillows.reportcase import ReportCasePillow
 from corehq.pillows.reportxform import ReportXFormPillow
 from corehq.pillows.xform import XFormPillow
-from django.conf import settings
 from corehq.pillows.mappings.reportcase_mapping import REPORT_CASE_MAPPING
+from corehq.util.test_utils import softer_assert
 
 XFORM_MULTI_CASES = {
     "_id": "multi-case-test",
@@ -450,6 +451,7 @@ EXAMPLE_CASE = {
 
 class testReportCaseProcessing(TestCase):
 
+    @softer_assert
     def testXFormPillowSingleCaseProcess(self):
         """
         Test that xform pillow can process and cleanup a single xform with a case submission
@@ -461,7 +463,7 @@ class testReportCaseProcessing(TestCase):
         self.assertIsNone(changed['form']['case'].get('@date_modified'))
         self.assertIsNotNone(xform['form']['case']['@date_modified'])
 
-
+    @softer_assert
     def testXFormPillowListCaseProcess(self):
         """
         Test that xform pillow can process and cleanup a single xform with a list of cases in it
@@ -492,6 +494,7 @@ class testReportCaseProcessing(TestCase):
         self.assertEqual(changed_with_owner_id.get("owner_id"), "testuser")
         self.assertEqual(changed_with_no_owner_id.get("owner_id"), "testuser")
 
+    @softer_assert
     def testReportXFormTransform(self):
         form = XFORM_SINGLE_CASE
         report_pillow = ReportXFormPillow(online=False)

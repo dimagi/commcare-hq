@@ -4,6 +4,8 @@ from corehq.apps.sms.models import CommConnectCase
 from datetime import datetime, timedelta
 from django.test import TestCase
 
+from corehq.form_processor.tests.utils import set_case_property_directly
+
 
 class PhoneNumberLookupTestCase(TestCase):
     def assertNoMatch(self, phone_search, suffix_search, owner_id_search):
@@ -104,24 +106,24 @@ class CaseContactPhoneNumberTestCase(TestCase):
         case.save()
         self.assertIsNone(self.get_case_verified_number(case))
 
-        case.set_case_property('contact_phone_number', '99987658765')
+        set_case_property_directly(case, 'contact_phone_number', '99987658765')
         case.save()
         self.assertIsNone(self.get_case_verified_number(case))
 
-        case.set_case_property('contact_phone_number_is_verified', '1')
+        set_case_property_directly(case, 'contact_phone_number_is_verified', '1')
         case.save()
         self.assertPhoneNumberDetails(case, '99987658765', None, None, _rev='1')
         _id = self.get_case_verified_number(case)._id
 
-        case.set_case_property('contact_phone_number', '99987698769')
+        set_case_property_directly(case, 'contact_phone_number', '99987698769')
         case.save()
         self.assertPhoneNumberDetails(case, '99987698769', None, None, _id=_id, _rev='2')
 
-        case.set_case_property('contact_backend_id', 'sms-backend')
+        set_case_property_directly(case, 'contact_backend_id', 'sms-backend')
         case.save()
         self.assertPhoneNumberDetails(case, '99987698769', 'sms-backend', None, _id=_id, _rev='3')
 
-        case.set_case_property('contact_ivr_backend_id', 'ivr-backend')
+        set_case_property_directly(case, 'contact_ivr_backend_id', 'ivr-backend')
         case.save()
         self.assertPhoneNumberDetails(case, '99987698769', 'sms-backend', 'ivr-backend', _id=_id, _rev='4')
 
@@ -135,7 +137,7 @@ class CaseContactPhoneNumberTestCase(TestCase):
         v.save()
         self.assertTrue(v._rev.startswith('5-'))
 
-        case.set_case_property('contact_phone_number', '99912341234')
+        set_case_property_directly(case, 'contact_phone_number', '99912341234')
         case.save()
         self.assertTrue(self.get_case_verified_number(case)._rev.startswith('5-'))
 
@@ -147,8 +149,8 @@ class CaseContactPhoneNumberTestCase(TestCase):
             domain='case-phone-number-test',
             name='TEST1'
         )
-        case.set_case_property('contact_phone_number', '99987658765')
-        case.set_case_property('contact_phone_number_is_verified', '1')
+        set_case_property_directly(case, 'contact_phone_number', '99987658765')
+        set_case_property_directly(case, 'contact_phone_number_is_verified', '1')
         case.save()
         self.assertIsNotNone(self.get_case_verified_number(case))
 
@@ -162,8 +164,8 @@ class CaseContactPhoneNumberTestCase(TestCase):
             domain='case-phone-number-test',
             name='TEST1'
         )
-        case.set_case_property('contact_phone_number', '99987658765')
-        case.set_case_property('contact_phone_number_is_verified', '1')
+        set_case_property_directly(case, 'contact_phone_number', '99987658765')
+        set_case_property_directly(case, 'contact_phone_number_is_verified', '1')
         case.save()
         self.assertIsNotNone(self.get_case_verified_number(case))
 
@@ -177,12 +179,12 @@ class CaseContactPhoneNumberTestCase(TestCase):
             domain='case-phone-number-test',
             name='TEST1'
         )
-        case.set_case_property('contact_phone_number', '99987658765')
-        case.set_case_property('contact_phone_number_is_verified', '1')
+        set_case_property_directly(case, 'contact_phone_number', '99987658765')
+        set_case_property_directly(case, 'contact_phone_number_is_verified', '1')
         case.save()
         self.assertIsNotNone(self.get_case_verified_number(case))
 
-        case.set_case_property('contact_phone_number', '0')
+        set_case_property_directly(case, 'contact_phone_number', '0')
         case.save()
         self.assertIsNone(self.get_case_verified_number(case))
         case.delete()
@@ -192,12 +194,12 @@ class CaseContactPhoneNumberTestCase(TestCase):
             domain='case-phone-number-test',
             name='TEST1'
         )
-        case.set_case_property('contact_phone_number', '99987658765')
-        case.set_case_property('contact_phone_number_is_verified', '1')
+        set_case_property_directly(case, 'contact_phone_number', '99987658765')
+        set_case_property_directly(case, 'contact_phone_number_is_verified', '1')
         case.save()
         self.assertIsNotNone(self.get_case_verified_number(case))
 
-        case.set_case_property('contact_phone_number', 'xyz')
+        set_case_property_directly(case, 'contact_phone_number', 'xyz')
         case.save()
         self.assertIsNone(self.get_case_verified_number(case))
         case.delete()
@@ -207,22 +209,22 @@ class CaseContactPhoneNumberTestCase(TestCase):
             domain='case-phone-number-test',
             name='TEST1'
         )
-        case1.set_case_property('contact_phone_number', '99987658765')
-        case1.set_case_property('contact_phone_number_is_verified', '1')
+        set_case_property_directly(case1, 'contact_phone_number', '99987658765')
+        set_case_property_directly(case1, 'contact_phone_number_is_verified', '1')
         case1.save()
 
         case2 = CommCareCase(
             domain='case-phone-number-test',
             name='TEST2'
         )
-        case2.set_case_property('contact_phone_number', '99987698769')
-        case2.set_case_property('contact_phone_number_is_verified', '1')
+        set_case_property_directly(case2, 'contact_phone_number', '99987698769')
+        set_case_property_directly(case2, 'contact_phone_number_is_verified', '1')
         case2.save()
 
         self.assertIsNotNone(self.get_case_verified_number(case1))
         self.assertIsNotNone(self.get_case_verified_number(case2))
 
-        case2.set_case_property('contact_phone_number', '99987658765')
+        set_case_property_directly(case2, 'contact_phone_number', '99987658765')
         case2.save()
         self.assertIsNotNone(self.get_case_verified_number(case1))
         self.assertIsNone(self.get_case_verified_number(case2))

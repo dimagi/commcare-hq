@@ -100,12 +100,12 @@
             {% if allow_form_filtering %}
             var putInRoot = {{ module.put_in_root|BOOL }};
             var isUserCaseInUse = {{ is_usercase_in_use|BOOL }};
+            var isModuleFilterEnabled = {{ is_module_filter_enabled|BOOL }};
             var formFilter = {{ form.form_filter|JSON }};
             var allOtherFormsRequireACase = {{ form.all_other_forms_require_a_case|BOOL }};
             var formFilterAllowed = ko.computed(function () {
-                return ((allOtherFormsRequireACase &&
-                         form_requires() === 'case') ||
-                        isUserCaseInUse) && !putInRoot;
+                return ((allOtherFormsRequireACase && form_requires() === 'case' && !putInRoot) ||
+                        isUserCaseInUse || isModuleFilterEnabled);
             });
             $('#form-filter').koApplyBindings({
                     formFilter: ko.observable(formFilter),
@@ -114,6 +114,7 @@
             {% endif %}
 
             {% if allow_form_workflow %}
+                var FormWorkflow = hqImport('app_manager/js/form_workflow.js').FormWorkflow;
                 var labels = {};
                 labels[FormWorkflow.Values.DEFAULT] = "{% trans "Home Screen" %}";
                 labels[FormWorkflow.Values.ROOT] = "{% trans "Module Menu" %}";
@@ -190,7 +191,7 @@
 {% block form-view %}
     <div id="build_errors"></div>
     {% if form.short_comment %}
-        <div id="form_short_comment" class="well">{{ form.short_comment }}</div>
+        <div id="form_short_comment" class="app-comment well">{{ form.short_comment }}</div>
     {% endif %}
     <div class="pull-right">
         <form action="{% url "delete_form" domain app.id module.unique_id form.unique_id %}" method="post">

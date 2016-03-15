@@ -36,6 +36,7 @@ class CallCenterUtilsTests(TestCase):
 
     @classmethod
     def tearDownClass(cls):
+        CommCareUser.get(cls.user_id).delete()
         cls.domain.delete()
 
     def setUp(self):

@@ -59,16 +59,9 @@
                                                 </div>
                                                 {% endif %}
                                                 <p>
-                                                    <span data-bind="visible: get_app_code()">
-                                                        {% blocktrans %}
-                                                        Open the app on your Android and use one of the following installation methods:
-                                                        {% endblocktrans %}
-                                                    </span>
-                                                    <span data-bind="visible: !get_app_code() && !generating_url()">
-                                                        {% blocktrans %}
-                                                        Open the app on your Android and use the following installation method:
-                                                        {% endblocktrans %}
-                                                    </span>
+                                                    {% blocktrans %}
+                                                    Open the app on your Android and use one of the following installation methods:
+                                                    {% endblocktrans %}
                                                 </p>
                                                 <p>
                                                     <a href="#" data-bind="
@@ -79,13 +72,21 @@
                                                     </a>
                                                 </p>
                                                 <p>
-                                                    <span data-bind="visible: get_app_code()">
-                                                        {% trans "Or Enter App Code:" %}
-                                                        <code class="bitly" data-bind="text: get_app_code()"></code>
+                                                    <a href="#" data-bind="
+                                                        click: get_app_code,
+                                                        visible: !app_code() && !failed_url_generation() && !generating_url()
+                                                        ">
+                                                        {% trans "Enter App Code" %}
+                                                    </a>
+                                                    <span data-bind="visible: app_code">
+                                                        {% trans "Enter app code on installation screen: " %}
+                                                        <code class="bitly" data-bind="text: app_code"></code>
                                                     </span>
                                                     <img data-bind="visible: generating_url()"
                                                         src="{% static 'hqwebapp/img/ajax-loader.gif' %}"/>
-                                                    <span class="text-warning" data-bind="visible: !get_app_code() && !generating_url()">
+                                                    <span class="text-warning" data-bind="
+                                                        visible: failed_url_generation() && !generating_url()
+                                                        ">
                                                         {% blocktrans %}
                                                         (No app code available. If you would like to use an app code instead
                                                         of scanning the application barcode, try making another version.)

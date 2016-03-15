@@ -84,12 +84,14 @@ casexml.apps.stock:
   - corehq.sql_accessors
   - corehq.sql_proxy_accessors
   - corehq.apps.commtrack
+  - corehq.apps.domain
   - corehq.apps.hqcase
   - corehq.apps.locations
   - corehq.apps.products
   - corehq.apps.reminders
   - corehq.apps.sms
   - corehq.apps.smsforms
+  - corehq.apps.users
   - corehq.apps.tzmigration
   - couchforms
   - phonelog
@@ -201,6 +203,7 @@ corehq.apps.locations:
   - corehq.apps.tour
 corehq.apps.userreports:
   - casexml.apps.case
+  - casexml.apps.phone
   - casexml.apps.stock
   - corehq.couchapps
   - corehq.form_processor
@@ -217,6 +220,7 @@ corehq.apps.userreports:
   - corehq.apps.users
   - couchforms
   - corehq.apps.smsforms
+  - pillowtop
 couchforms:
   - casexml.apps.case
   - casexml.apps.phone
@@ -292,6 +296,7 @@ corehq.apps.repeaters:
   - corehq.apps.users
   - corehq.couchapps
   - couchforms
+  - phonelog
   - django_prbac
   # unfortunately domain.delete() needs all of these - otherwise they could be removed
   - custom.logistics
@@ -346,3 +351,64 @@ corehq.apps.callcenter:
   - corehq.sql_proxy_accessors
   - couchforms
   - django_digest
+corehq.apps.hqcase:
+  - auditcare
+  - casexml.apps.case
+  - casexml.apps.phone
+  - corehq.apps.tzmigration
+  - corehq.apps.domain
+  - corehq.apps.dropbox
+  - corehq.apps.groups
+  - corehq.apps.reminders
+  - corehq.apps.tour
+  - corehq.apps.userhack
+  - corehq.apps.users
+  - corehq.couchapps
+  - corehq.form_processor
+  - corehq.sql_accessors
+  - couchforms
+  - django.contrib.admin
+  - django_digest
+  - django_prbac
+  - tastypie
+  - touchforms.formplayer
+corehq.couchapps:
+  - casexml.apps.case
+  - casexml.apps.phone
+  - corehq.apps.tzmigration
+  - corehq.apps.domain
+  - corehq.form_processor
+  - corehq.sql_accessors
+  - couchforms
+corehq.apps.data_interfaces:
+  - casexml.apps.case
+  - casexml.apps.phone
+  - corehq.apps.tzmigration
+  - corehq.apps.domain
+  - corehq.apps.hqcase
+  - corehq.couchapps
+  - corehq.form_processor
+  - corehq.sql_accessors
+  - couchforms
+corehq.apps.users:
+  - auditcare
+  - casexml.apps.case
+  - casexml.apps.phone
+  - corehq.apps.domain
+  - corehq.apps.dropbox
+  - corehq.apps.hqcase
+  - corehq.apps.reminders
+  - corehq.apps.sms
+  - corehq.apps.smsforms
+  - corehq.apps.tour
+  - corehq.apps.tzmigration
+  - corehq.apps.userhack
+  - corehq.couchapps
+  - corehq.form_processor
+  - corehq.sql_accessors
+  - couchforms
+  - django.contrib.admin
+  - django_digest
+  - django_prbac
+  - tastypie
+  - touchforms.formplayer
