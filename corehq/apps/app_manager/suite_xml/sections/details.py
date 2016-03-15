@@ -6,7 +6,6 @@ from xml.sax.saxutils import escape
 from django.utils.translation import ugettext_lazy as _
 from eulxml.xmlmap.core import load_xmlobject_from_string
 
-
 from corehq.apps.app_manager.const import RETURN_TO
 from corehq.apps.app_manager.suite_xml.const import FIELD_TYPE_LEDGER
 from corehq.apps.app_manager.suite_xml.contributors import SectionContributor
@@ -36,7 +35,7 @@ from corehq.apps.app_manager.suite_xml.xml_models import (
 from corehq.apps.app_manager.suite_xml.features.scheduler import schedule_detail_variables
 from corehq.apps.app_manager.util import create_temp_sort_column
 from corehq.apps.app_manager import id_strings
-from corehq.apps.app_manager.exceptions import SuiteError
+from corehq.apps.app_manager.exceptions import SuiteError, SuiteValidationError
 from corehq.apps.app_manager.xpath import session_var, XPath
 from dimagi.utils.decorators.memoized import memoized
 
@@ -215,7 +214,7 @@ class DetailContributor(SectionContributor):
                         module=module.default_name(),
                         case_type=target_meta.case_type
                     )
-                    raise SuiteError(message)
+                    raise SuiteValidationError(message)
                 else:
                     frame.add_datum(StackDatum(
                         id=target_meta.datum.id,
