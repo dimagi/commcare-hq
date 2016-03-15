@@ -2,15 +2,6 @@
 # -*- coding: utf-8 -*-
 """
 Server layout:
-    ~/services/
-        This contains two subfolders
-            /apache/
-            /supervisor/
-        which hold the configurations for these applications
-        for each environment (staging, production, etc) running on the server.
-        Theses folders are included in the global /etc/apache2 and
-        /etc/supervisor configurations.
-
     ~/www/
         This folder contains the code, python environment, and logs
         for each environment (staging, production, etc) running on the server.
@@ -24,6 +15,15 @@ Server layout:
     ~/www/<environment>/current
         This path is a symlink to the release that is being run
         (~/www/<environment>/releases<YYYY-MM-DD-HH.SS>).
+
+    ~/www/<environment>/current/services/
+        This contains two subfolders
+            /supervisor/
+        which hold the configurations for these applications
+        for each environment (staging, production, etc) running on the server.
+        Theses folders are included in the global /etc/apache2 and
+        /etc/supervisor configurations.
+
 """
 import datetime
 import json
@@ -227,7 +227,7 @@ def _setup_path():
     env.project_media = posixpath.join(env.code_root, 'media')
     env.virtualenv_current = posixpath.join(env.code_current, 'python_env')
     env.virtualenv_root = posixpath.join(env.code_root, 'python_env')
-    env.services = posixpath.join(env.home, 'services')
+    env.services = posixpath.join(env.code_root, 'services')
     env.jython_home = '/usr/local/lib/jython'
     env.db = '%s_%s' % (env.project, env.environment)
 
@@ -662,7 +662,6 @@ def _deploy_without_asking():
         _execute_with_timing(_do_collectstatic)
         _execute_with_timing(_do_compress)
 
-        _execute_with_timing(clear_services_dir)
         _set_supervisor_config()
 
         do_migrate = env.should_migrate
@@ -976,35 +975,6 @@ def update_virtualenv():
 
 
 @task
-def wipe_supervisor_conf():
-    _require_target()
-    execute(clear_services_dir, current=True)
-    execute(services_restart)
-
-
-@roles(ROLES_ALL_SERVICES)
-@parallel
-def clear_services_dir(current=False):
-    """
-    remove old confs from directory first
-    the clear_supervisor_confs management command will scan the directory and find prefixed conf files of the supervisord files
-    and delete them matching the prefix of the current server environment
-
-    """
-    code_root = env.code_current if current else env.code_root
-    venv_root = env.virtualenv_current if current else env.virtualenv_root
-    services_dir = posixpath.join(env.services, u'supervisor')
-    with cd(code_root):
-        sudo((
-            '%(virtualenv_root)s/bin/python manage.py '
-            'clear_supervisor_confs --conf_location "%(conf_location)s"'
-        ) % {
-            'virtualenv_root': venv_root,
-            'conf_location': services_dir,
-        })
-
-
-@task
 def supervisorctl(command):
     require('supervisor_roles',
             provided_by=('staging', 'preview', 'production', 'old_india', 'softlayer', 'zambia'))
@@ -1171,6 +1141,8 @@ def version_static():
 
 
 def _rebuild_supervisor_conf_file(conf_command, filename, params=None):
+    sudo('mkdir -p {}', posixpath.join(env.services, 'supervisor'))
+
     with cd(env.code_root):
         sudo((
             '%(virtualenv_root)s/bin/python manage.py '
