@@ -16,7 +16,7 @@ from django.views.generic import View
 
 from couchdbkit import ResourceConflict, ResourceNotFound
 
-from casexml.apps.case.models import CommCareCase
+from casexml.apps.case.models import CommCareCase, CASE_STATUS_OPEN
 from casexml.apps.case.xml import V2
 from casexml.apps.phone.fixtures import generator
 from casexml.apps.stock.models import StockTransaction
@@ -40,9 +40,15 @@ from corehq.apps.app_manager.models import Application, ApplicationBase
 from corehq.apps.app_manager.suite_xml.sections.details import get_instances_for_module
 from corehq.apps.app_manager.suite_xml.sections.entries import EntriesHelper
 from corehq.apps.app_manager.util import get_cloudcare_session_data
-from corehq.apps.cloudcare.api import look_up_app_json, get_filtered_cases, \
-    api_closed_to_status, CaseAPIResult, CASE_STATUS_OPEN, get_app_json, get_open_form_sessions, \
-    get_filters_from_request_params
+from corehq.apps.cloudcare.api import (
+    api_closed_to_status,
+    CaseAPIResult,
+    get_app_json,
+    get_filtered_cases,
+    get_filters_from_request_params,
+    get_open_form_sessions,
+    look_up_app_json,
+)
 from corehq.apps.cloudcare.dbaccessors import get_cloudcare_apps
 from corehq.apps.cloudcare.decorators import require_cloudcare_access
 from corehq.apps.cloudcare.exceptions import RemoteAppError
