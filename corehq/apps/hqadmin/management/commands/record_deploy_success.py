@@ -72,7 +72,8 @@ class Command(BaseCommand):
             datadog_api.Event.create(
                 title="Deploy Success",
                 text=deploy_notification_text.format(diff_link=link),
-                tags=tags
+                tags=tags,
+                alert_type="success"
             )
 
             print "\n=============================================================\n" \
