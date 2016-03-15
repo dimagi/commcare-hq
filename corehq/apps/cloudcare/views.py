@@ -1,62 +1,66 @@
-from couchdbkit import ResourceConflict, ResourceNotFound
+import HTMLParser
+import json
+from xml.etree import ElementTree
+
+from django.conf import settings
+from django.contrib import messages
+from django.core.urlresolvers import reverse
+from django.http import HttpResponseRedirect, HttpResponse, HttpResponseBadRequest, Http404
+from django.shortcuts import get_object_or_404
+from django.shortcuts import render
+from django.template.loader import render_to_string
 from django.utils.decorators import method_decorator
+from django.utils.translation import ugettext as _, ugettext_noop
+from django.views.decorators.cache import cache_page
+from django.views.generic import View
+
+from couchdbkit import ResourceConflict, ResourceNotFound
+
+from casexml.apps.case.models import CommCareCase
+from casexml.apps.case.xml import V2
+from casexml.apps.phone.fixtures import generator
 from casexml.apps.stock.models import StockTransaction
 from casexml.apps.stock.utils import get_current_ledger_transactions
-from corehq.apps.accounting.decorators import requires_privilege_for_commcare_user, requires_privilege_with_fallback
-from corehq.apps.app_manager.exceptions import FormNotFoundException, ModuleNotFoundException
-from corehq.apps.app_manager.suite_xml.sections.details import get_instances_for_module
-from corehq.apps.app_manager.suite_xml.sections.entries import EntriesHelper
-from corehq.apps.app_manager.util import get_cloudcare_session_data
-from corehq.apps.cloudcare.dbaccessors import get_cloudcare_apps
-from corehq.util.couch import get_document_or_404
-from corehq.util.quickcache import skippable_quickcache
-from corehq.util.xml_utils import indent_xml
 from couchforms.const import ATTACHMENT_NAME
 from couchforms.models import XFormInstance
 from dimagi.utils.couch.database import iter_docs
-from django.views.decorators.cache import cache_page
-from casexml.apps.case.models import CommCareCase
+from dimagi.utils.logging import notify_exception
+from dimagi.utils.parsing import string_to_boolean
+from dimagi.utils.web import json_response, get_url_base, json_handler
+from touchforms.formplayer.api import DjangoAuth, get_raw_instance, sync_db
+from touchforms.formplayer.models import EntrySession
+from xml2json.lib import xml2json
+
 from corehq import toggles, privileges
+from corehq.apps.accounting.decorators import requires_privilege_for_commcare_user, requires_privilege_with_fallback
+from corehq.apps.app_manager.dbaccessors import get_app, get_latest_build_doc, \
+    get_brief_apps_in_domain
+from corehq.apps.app_manager.exceptions import FormNotFoundException, ModuleNotFoundException
+from corehq.apps.app_manager.models import Application, ApplicationBase
+from corehq.apps.app_manager.suite_xml.sections.details import get_instances_for_module
+from corehq.apps.app_manager.suite_xml.sections.entries import EntriesHelper
+from corehq.apps.app_manager.util import get_cloudcare_session_data
+from corehq.apps.cloudcare.api import look_up_app_json, get_filtered_cases, \
+    api_closed_to_status, CaseAPIResult, CASE_STATUS_OPEN, get_app_json, get_open_form_sessions, \
+    get_filters_from_request_params
+from corehq.apps.cloudcare.dbaccessors import get_cloudcare_apps
+from corehq.apps.cloudcare.decorators import require_cloudcare_access
 from corehq.apps.cloudcare.exceptions import RemoteAppError
 from corehq.apps.cloudcare.models import ApplicationAccess
 from corehq.apps.cloudcare.touchforms_api import SessionDataHelper
 from corehq.apps.domain.decorators import login_and_domain_required, login_or_digest_ex, domain_admin_required
 from corehq.apps.groups.models import Group
-from corehq.apps.users.models import CouchUser, CommCareUser
-from corehq.apps.users.views import BaseUserSettingsView
-from dimagi.utils.web import json_response, get_url_base, json_handler
-from django.http import HttpResponseRedirect, HttpResponse, HttpResponseBadRequest, Http404
-from django.shortcuts import render
-from django.template.loader import render_to_string
-from corehq.apps.app_manager.dbaccessors import get_app, get_latest_build_doc, \
-    get_brief_apps_in_domain
-from corehq.apps.app_manager.models import Application, ApplicationBase
-import json
-from corehq.apps.cloudcare.api import look_up_app_json, get_filtered_cases, \
-    api_closed_to_status, CaseAPIResult, CASE_STATUS_OPEN, get_app_json, get_open_form_sessions, \
-    get_filters_from_request_params
-from dimagi.utils.parsing import string_to_boolean
-from dimagi.utils.logging import notify_exception
-from django.conf import settings
-from touchforms.formplayer.api import DjangoAuth, get_raw_instance, sync_db
-from django.core.urlresolvers import reverse
-from casexml.apps.phone.fixtures import generator
-from casexml.apps.case.xml import V2
-from xml.etree import ElementTree
-from corehq.apps.cloudcare.decorators import require_cloudcare_access
-import HTMLParser
-from django.contrib import messages
-from django.utils.translation import ugettext as _, ugettext_noop
-from django.views.generic import View
-from touchforms.formplayer.models import EntrySession
-from xml2json.lib import xml2json
 from corehq.apps.reports.formdetails import readable
 from corehq.apps.style.decorators import (
     use_datatables,
     use_bootstrap3,
     use_jquery_ui,
 )
-from django.shortcuts import get_object_or_404
+from corehq.apps.users.models import CouchUser, CommCareUser
+from corehq.apps.users.views import BaseUserSettingsView
+from corehq.util.couch import get_document_or_404
+from corehq.util.quickcache import skippable_quickcache
+from corehq.util.xml_utils import indent_xml
 
 
 @require_cloudcare_access

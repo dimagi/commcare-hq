@@ -2,15 +2,21 @@ from tastypie import fields
 
 from casexml.apps.case.models import CommCareCase
 
-from corehq.apps.cloudcare.api import get_filtered_cases, api_closed_to_status, \
-    get_filters_from_request_params
-from corehq.apps.api.resources.v0_1 import CustomResourceMeta, RequirePermissionAuthentication
-from corehq.apps.api.util import get_object_or_not_exist
 from corehq.apps.api.resources import (
     CouchResourceMixin,
     dict_object,
     DomainSpecificResourceMixin,
     HqBaseResource,
+)
+from corehq.apps.api.resources.v0_1 import (
+    CustomResourceMeta,
+    RequirePermissionAuthentication,
+)
+from corehq.apps.api.util import get_object_or_not_exist
+from corehq.apps.cloudcare.api import (
+    api_closed_to_status,
+    get_filtered_cases,
+    get_filters_from_request_params,
 )
 from corehq.apps.users.models import Permissions
 
