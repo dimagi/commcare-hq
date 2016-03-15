@@ -69,8 +69,6 @@ branches:
   - report-builder-text # Cal 3/1
   - sql-saved-exports-2 # Noah 3/9  includes ES reindex
   - certificate-validation # Cal 3/10
-  - b3-report-updates  # BB 3/14
-  - b3-soil-download  # BB 3/14
   - multi-db-deploy  # SK 3/15
   - upgrade_django-websocket-redis # Nick P 3/15
   - req-params-login # Nick P 3/15
