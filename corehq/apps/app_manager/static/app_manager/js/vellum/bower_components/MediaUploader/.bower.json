@@ -1,11 +1,11 @@
 {
   "name": "MediaUploader",
   "homepage": "https://github.com/dimagi/MediaUploader",
-  "_release": "06e78218ed",
+  "_release": "51a6085bfa",
   "_resolution": {
     "type": "branch",
     "branch": "master",
-    "commit": "06e78218ed93f01b5808e9ef9e996ae8a7487e9c"
+    "commit": "51a6085bfa9fd715b6c9af5a9540f6cfc6573074"
   },
   "_source": "git://github.com/dimagi/MediaUploader.git",
   "_target": "master",
