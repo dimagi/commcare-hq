@@ -1,5 +1,6 @@
+from importlib import import_module
+
 from django.contrib.auth import get_user
-from django.utils.importlib import import_module
 from corehq.apps.domain.decorators import login_and_domain_required
 from django.conf import settings
 from corehq.apps.users.models import CouchUser
