@@ -162,6 +162,7 @@ from corehq.apps.style.decorators import (
     use_jquery_ui,
     use_jquery_ui_multiselect,
     use_select2,
+    use_datatables,
 )
 
 
@@ -227,6 +228,7 @@ class MySavedReportsView(BaseProjectReportSectionView):
     template_name = 'reports/reports_home.html'
 
     @use_jquery_ui
+    @use_datatables
     def dispatch(self, request, *args, **kwargs):
         return super(MySavedReportsView, self).dispatch(request, *args, **kwargs)
 
