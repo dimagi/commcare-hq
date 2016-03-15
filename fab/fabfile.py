@@ -694,12 +694,10 @@ def _deploy_without_asking():
     except Exception:
         _execute_with_timing(mail_admins, "Deploy failed", "You had better check the logs.")
         # hopefully bring the server back to life
-        execute(set_in_progress_flag)
         silent_services_restart()
         raise
     else:
         _execute_with_timing(update_current)
-        execute(set_in_progress_flag)
         silent_services_restart()
         _execute_with_timing(record_successful_release)
         url = deploy_metadata.diff_url
