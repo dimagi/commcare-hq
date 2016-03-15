@@ -71,8 +71,6 @@ archive_loc = function(button, name, loc_id) {
             }
         });
         $(archive_location_modal).modal('hide');
-        analytics.workflow('User clicks "Archive Location" on modal');
-        ga_track_event('Organizations', 'User clicks "Archive Location" on modal');
     }
 
     var modal_context = {
@@ -84,7 +82,7 @@ archive_loc = function(button, name, loc_id) {
     $(archive_location_modal).koApplyBindings(modal_context);
     $(archive_location_modal).modal('show');
     analytics.workflow('User clicks "Archive" for location');
-    ga_track_event('Organizations', 'User clicks "Archive" for location');
+    ga_track_event('Organizations', 'Archive');
 
 }
 
@@ -123,7 +121,7 @@ delete_loc = function(button, name, loc_id) {
             });
             $(delete_location_modal).modal('hide');
             analytics.workflow('User clicks "Delete Location" on modal');
-            ga_track_event('Organizations', 'User clicks "Delete Location" on modal')
+            ga_track_event('Organization Structure', 'Delete')
         }
     }
 
@@ -146,7 +144,7 @@ delete_loc = function(button, name, loc_id) {
         }
     });
     analytics.workflow('User clicks "Delete" for location');
-    ga_track_event('Organizations', 'User clicks "Delete" for location');
+    ga_track_event('Organization Structure', 'Delete');
 }
 
 remove_elements_after_action = function(button) {
@@ -159,19 +157,15 @@ $(function() {
     model.load(locs, selected_loc);
 });
 
-$('#bulk-import-locations').click(function () {
-    analytics.workflow('User clicks "Bulk Import" for organizations')
-    ga_track_event('Organizations', 'User clicks "Bulk Import" for organizations')
-});
 
 $('#edit-org-levels').click(function () {
-    analytics.workflow('User clicks "Edit Organization Levels"')
-    ga_track_event('Organizations', 'User clicks "Edit Organization Levels"')
+    analytics.workflow('User clicks "Edit Organization Levels"');
+    ga_track_event('Organization Structure', 'Edit Organization Levels');
 });
 
 $('#edit-loc-fields').click(function () {
-    analytics.workflow('User clicks "Edit Location Fields"')
-    ga_track_event('Organizations', 'User clicks "Edit Locations Fields"')
+    analytics.workflow('User clicks "Edit Location Fields"');
+    ga_track_event('Organization Structure', 'Edit Location Fields');
 });
 
 </script>
@@ -216,7 +210,6 @@ $('#edit-loc-fields').click(function () {
         <div class="btn-toolbar">
             <a class="btn btn-primary"
                href="{% url "location_import" domain %}"
-               id="bulk-import-locations"
                {% if not has_location_types or not can_edit_any_location %}
                    disabled
                {% endif %}

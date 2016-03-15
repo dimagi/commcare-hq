@@ -7,11 +7,11 @@
         $(function() {
             $('#download_link').click(function() {
                 analytics.workflow('User clicks "Download Organization Structure"');
-                ga_track_event('Organizations', 'User clicks "Download Organization Structure"');
+                ga_track_event('Organization Structure', 'Bulk Import', 'Download');
             });
             $("button[type='submit']").click(function() {
                 analytics.workflow('User clicks "Upload Organization Structure"');
-                ga_track_event('Organizations', 'User clicks "Upload Organization Structure"');
+                ga_track_event('Organization Structure', 'Bulk Import', 'Upload');
             })
         });
     </script>

@@ -67,16 +67,16 @@
           }
           if (this.name === 'update-loc') {
               analytics.workflow('User clicks "Update Location"');
-              ga_track_event('Organizations', 'User clicks "Update Location"');
+              ga_track_event('Organization Structure', 'Edit', 'Update Location');
           } else {
               analytics.workflow('User clicks "Create Location" via "New Child Location" tab');
-              ga_track_event('Organizations', 'User clicks "Create Location" via "New Child Location" tab');
+              ga_track_event('Organization Structure', 'Edit', 'Create Child Location');
           }
       });
 
       $("#edit_users :button[type='submit']").click(function() {
           analytics.workflow('User clicks "Update Users at this Location"');
-          ga_track_event('Organizations', 'User clicks "Update Users at this Location"');
+          ga_track_event('Organization Structure', 'Edit', 'Update Users at this Location');
       });
 
       $('#move_confirm').click(function(e) {
