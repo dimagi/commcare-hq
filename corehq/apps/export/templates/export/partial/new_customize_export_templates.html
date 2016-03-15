@@ -8,7 +8,7 @@
                 <input type="checkbox" data-bind="checked: table.selected" />
             </span>
             <span>
-                <span data-bind="text: Exports.Utils.getTableName(table.path(), $root.type())" />
+                <span data-bind="text: table.label()" />
             </span>
         </legend>
         <div data-bind="visibleFade: table.selected">

@@ -517,7 +517,7 @@ class FormExportInstanceDefaults(ExportInstanceDefaults):
         if table_path == MAIN_TABLE:
             return _('Forms')
         else:
-            return _('Repeat: {}').format(_list_path_to_string(table_path))
+            return _('Repeat: {}').format((table_path[-1] if len(table_path) else None) or "")
 
 
 class CaseExportInstanceDefaults(ExportInstanceDefaults):
@@ -528,6 +528,8 @@ class CaseExportInstanceDefaults(ExportInstanceDefaults):
             return _('Cases')
         elif table_path == CASE_HISTORY_TABLE:
             return _('Case History')
+        elif table_path == PARENT_CASE_TABLE:
+            return _('Parent Cases')
         else:
             return _('Unknown')
 
