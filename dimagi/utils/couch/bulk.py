@@ -64,7 +64,7 @@ class CouchTransaction(object):
 
     def commit(self):
         for cls, docs in self.docs_to_delete.items():
-            cls.get_db().bulk_delete(docs)
+            cls.bulk_delete(docs)
 
         for cls, doc_map in self.docs_to_save.items():
             docs = doc_map.values()
