@@ -1141,7 +1141,7 @@ def version_static():
 
 
 def _rebuild_supervisor_conf_file(conf_command, filename, params=None):
-    sudo('mkdir -p {}', posixpath.join(env.services, 'supervisor'))
+    sudo('mkdir -p {}'.format(posixpath.join(env.services, 'supervisor')))
 
     with cd(env.code_root):
         sudo((
