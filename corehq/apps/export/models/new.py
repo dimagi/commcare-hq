@@ -944,8 +944,15 @@ class CaseExportDataSchema(ExportDataSchema):
 
         for case_type, case_properties in case_property_mapping.iteritems():
             for prop in case_properties:
+                # Yeah... let's not hard code this list everywhere
+                # This list comes from casexml.apps.case.xml.parser.CaseActionBase.from_v2
+                if prop in ["type", "name", "external_id", "user_id", "owner_id", "opened_on"]:
+                    path_start = "updated_known_properties"
+                else:
+                    path_start = "updated_unknown_properties"
+
                 group_schema.items.append(ScalarItem(
-                    path=[prop],
+                    path=CASE_HISTORY_TABLE + [path_start, prop],
                     label=prop,
                     tag=PROPERTY_TAG_UPDATE,
                     last_occurrences={app_id: app_version},
