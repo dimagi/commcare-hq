@@ -606,7 +606,6 @@ def hotfix_deploy():
         silent_services_restart()
         raise
     else:
-        execute(services_restart)
         silent_services_restart()
         execute(record_successful_deploy, deploy_metadata)
 
