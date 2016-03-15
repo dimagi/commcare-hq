@@ -94,18 +94,20 @@ def create_from_request(request):
     From an inbound request (representing an incoming message),
     create a message (log) object with the right fields populated.
     """
-    sender = request.REQUEST[InboundParams.SENDER]
-    message = request.REQUEST[InboundParams.MESSAGE]
+    request_params = request.GET if request.method == 'GET' else request.POST
+
+    sender = request_params[InboundParams.SENDER]
+    message = request_params[InboundParams.MESSAGE]
 
     if len(sender) == 10:
         # add india country code
         sender = '91' + sender
 
-    is_unicode = request.REQUEST.get(InboundParams.DCS, "") == "8"
+    is_unicode = request_params.get(InboundParams.DCS, "") == "8"
     if is_unicode:
         message = message.decode("hex").decode("utf_16_be")
 
-    backend_message_id = request.REQUEST.get(InboundParams.MID, None)
+    backend_message_id = request_params.get(InboundParams.MID, None)
 
     log = incoming(sender, message, SQLUnicelBackend.get_api_id(), backend_message_id=backend_message_id)
 
