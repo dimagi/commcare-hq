@@ -45,7 +45,6 @@
 trunk: master
 name: autostaging
 branches:
-  - pin-deploy-to-commit  # Danny 3/10
   - ko3-app-manager  # Danny 3/7
   - flip_apps_db  # Danny 3/1
   - calculatedIcons # Sravan 3/2
@@ -92,7 +91,8 @@ submodules:
   submodules/django-digest-src:
     branches: []
   submodules/dimagi-utils-src:
-    branches: []
+    branches:
+      - request-params # Nick P 3/15
   submodules/django-prbac-src:
     branches: []
   corehq/apps/prelogin:
