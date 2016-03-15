@@ -2,6 +2,8 @@ from functools import partial
 import pprint
 import sqlalchemy
 import logging
+
+from django.db import DEFAULT_DB_ALIAS
 from django.dispatch import Signal
 from django.conf import settings
 from itertools import chain
@@ -24,7 +26,7 @@ class RebuildTableException(Exception):
 
 
 def catch_signal(sender, **kwargs):
-    if settings.UNIT_TESTING:
+    if settings.UNIT_TESTING or kwargs['using'] != DEFAULT_DB_ALIAS:
         return
 
     from fluff.pillow import FluffPillow
