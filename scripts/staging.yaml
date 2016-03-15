@@ -55,13 +55,12 @@ branches:
   - show-form-case-refs-in-summary # j$ 1/29
   - revamp-multimedia # Jenny 2/16
   - analytics-retry # Cal 2/18
-#  - upgrade-django-tastypie # Nick P 2/22
   - j2me # j$ 2/23
   # B3 Changes round 2
   - b3-reports-data  # BB 2/23
   - b3-data-import-cases  # BB 2/23
   - b3-data-lookup-tables  # BB 2/23
-  - b3-reports-case-form+b3-reports-home_2
+  - b3-reports-case-form+b3-reports-home
   - b3-reports-home  # BB 2/23
   - b3-reports-case-form  # BB 2/24
   # B3 Report Migration branches
@@ -71,8 +70,11 @@ branches:
   - report-builder-text # Cal 3/1
   - sql-saved-exports-2 # Noah 3/9  includes ES reindex
   - certificate-validation # Cal 3/10
-  - count-sqlagg # Nick P 3/11
   - pause-deploys # Ben 3/14
+  - b3-report-updates  # BB 3/14
+  - b3-soil-download  # BB 3/14
+  - multi-db-deploy  # SK 3/15
+  - upgrade_django-websocket-redis # Nick P 3/15
 submodules:
   submodules/touchforms-src:
     # let's leave this here even when empty

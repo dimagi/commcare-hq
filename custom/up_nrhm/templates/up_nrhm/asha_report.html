@@ -1,4 +1,4 @@
-{% extends "reports/async/bootstrap2/tabular.html" %}
+{% extends "reports/async/bootstrap3/tabular.html" %}
 {% load i18n %}
 {% load hq_shared_tags %}
 
@@ -37,8 +37,8 @@
         {% endfor %}
     </h4>
     {% if sf == "sf2" %}
-    <div class="row hq-flush-content">
-        <div class="span6">
+    <div class="row">
+        <div class="col-sm-6">
             <table class="table table-striped">
                 <tr>
                     <td><strong>Total number of ASHAs under the Facilitator</strong></td>

@@ -111,24 +111,26 @@ class DeployMetadata(object):
         self.env = env
         self.timestamp = datetime.datetime.utcnow().strftime('%Y-%m-%d_%H.%M')
         self._deploy_ref = None
+        self._deploy_tag = None
+        self._git = sh.git.bake(_tty_out=False)
 
-    def _tag_commit(self):
-        sh.git.fetch("origin", "--tags")
-        deploy_commit = sh.git("rev-parse", self.env.code_branch).strip()
+    def tag_commit(self):
+        self._git.fetch("origin", "--tags")
+        deploy_commit = self.deploy_ref
         self._check_deploy_commit(deploy_commit, self.env.code_branch)
         pattern = "*{}*".format(self.env.environment)
-        self.last_tag = sh.tail(sh.git.tag("-l", pattern), "-1").strip()
+        self.last_tag = sh.tail(self._git.tag("-l", pattern), "-1").strip()
 
         tag_name = "{}-{}-deploy".format(self.timestamp, self.env.environment)
         # turn whatever `code_branch` is into a commit
         msg = "{} deploy at {}".format(self.env.environment, self.timestamp)
-        sh.git.tag(tag_name, "-m", msg, deploy_commit)
-        sh.git.push("origin", tag_name)
-        self._deploy_ref = tag_name
+        self._git.tag(tag_name, "-m", msg, deploy_commit)
+        self._git.push("origin", tag_name)
+        self._deploy_tag = tag_name
 
     def _check_deploy_commit(self, deploy_commit, code_branch):
         try:
-            origin_commit = sh.git("rev-parse", "origin/{}".format(code_branch)).strip()
+            origin_commit = self._git("rev-parse", "origin/{}".format(code_branch)).strip()
         except sh.ErrorReturnCode:
             print yellow("Branch '{}' was not found on origin".format(code_branch))
             if not console.confirm("Do you want to deploy it anyways?", default=False):
@@ -139,26 +141,26 @@ class DeployMetadata(object):
                 print ("Your local copy of '{}' differs from the version on "
                        "'origin'.\n".format(code_branch))
                 print "Here's the latest local commit:",
-                print sh.git.show(deploy_commit, "--quiet")
+                print self._git.show(deploy_commit, "--quiet")
                 print "Here's the latest commit on 'origin':",
-                print sh.git.show(origin_commit, "--quiet")
+                print self._git.show(origin_commit, "--quiet")
                 if not console.confirm("Are you sure you want to deploy the "
                                        "local commit?", default=False):
                     utils.abort('Check yourself before you wreck yourself.')
 
     @property
     def diff_url(self):
-        if self._deploy_ref is None:
+        if self._deploy_tag is None:
             raise Exception("You haven't tagged anything yet.")
         return "https://github.com/dimagi/commcare-hq/compare/{}...{}".format(
             self.last_tag,
-            self.tag,
+            self._deploy_tag,
         )
 
     @property
-    def tag(self):
+    def deploy_ref(self):
         if self._deploy_ref is None:
-            self._tag_commit()
+            self._deploy_ref = self._git("rev-parse", self.env.code_branch).strip()
         return self._deploy_ref
 
 
@@ -552,8 +554,9 @@ def mail_admins(subject, message):
 
 
 @roles(ROLES_DB_ONLY)
-def record_successful_deploy(url):
+def record_successful_deploy(deploy_metadata):
     with cd(env.code_current):
+        deploy_metadata.tag_commit()
         sudo((
             '%(virtualenv_current)s/bin/python manage.py '
             'record_deploy_success --user "%(user)s" --environment '
@@ -562,7 +565,7 @@ def record_successful_deploy(url):
             'virtualenv_current': env.virtualenv_current,
             'user': env.user,
             'environment': env.environment,
-            'url': url,
+            'url': deploy_metadata.diff_url,
         })
 
 
@@ -596,16 +599,16 @@ def hotfix_deploy():
     _require_target()
     run('echo ping!')  # workaround for delayed console response
     try:
-        execute(update_code, deploy_metadata.tag, True)
+        execute(update_code, deploy_metadata.deploy_ref, True)
     except Exception:
         execute(mail_admins, "Deploy failed", "You had better check the logs.")
         # hopefully bring the server back to life
         silent_services_restart()
         raise
     else:
+        execute(services_restart)
         silent_services_restart()
-        url = deploy_metadata.diff_url
-        execute(record_successful_deploy, url)
+        execute(record_successful_deploy, deploy_metadata)
 
 
 def _confirm_translated():
@@ -620,7 +623,7 @@ def _confirm_translated():
 @task
 def setup_release():
     _execute_with_timing(create_code_dir)
-    _execute_with_timing(update_code, deploy_metadata.tag)
+    _execute_with_timing(update_code, deploy_metadata.deploy_ref)
     _execute_with_timing(update_virtualenv)
 
     _execute_with_timing(copy_release_files)
@@ -700,8 +703,7 @@ def _deploy_without_asking():
         _execute_with_timing(update_current)
         silent_services_restart()
         _execute_with_timing(record_successful_release)
-        url = deploy_metadata.diff_url
-        _execute_with_timing(record_successful_deploy, url)
+        _execute_with_timing(record_successful_deploy, deploy_metadata)
 
 
 @task

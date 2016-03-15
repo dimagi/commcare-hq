@@ -21,7 +21,7 @@ from corehq.apps.repeaters.models import (
     RepeatRecord,
     RegisterGenerator)
 from corehq.apps.repeaters.repeater_generators import BasePayloadGenerator
-from corehq.apps.repeaters.const import MIN_RETRY_WAIT
+from corehq.apps.repeaters.const import MIN_RETRY_WAIT, POST_TIMEOUT
 from couchforms.models import XFormInstance
 from couchforms.const import DEVICE_LOG_XMLNS
 
@@ -189,6 +189,7 @@ class RepeaterTest(BaseRepeaterTest):
                     repeat_record.repeater.get_url(repeat_record),
                     headers=repeat_record.repeater.get_headers(repeat_record),
                     force_send=False,
+                    timeout=POST_TIMEOUT,
                 )
             repeat_record.save()
 
@@ -483,5 +484,6 @@ class TestRepeaterFormat(BaseRepeaterTest):
                 payload,
                 self.repeater.url,
                 headers=headers,
-                force_send=False
+                force_send=False,
+                timeout=POST_TIMEOUT,
             )
