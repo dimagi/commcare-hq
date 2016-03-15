@@ -10,8 +10,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: CommCare HQ\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2016-03-15 18:08+0000\n"
-"PO-Revision-Date: 2016-03-04 20:04+0000\n"
+"POT-Creation-Date: 2016-03-15 18:47+0000\n"
+"PO-Revision-Date: 2016-03-15 18:12+0000\n"
 "Last-Translator: Dimagi Dev <devops@dimagi.com>\n"
 "Language-Team: Hindi (http://www.transifex.com/dimagi/commcare-hq/language/"
 "hi/)\n"
@@ -2882,10 +2882,8 @@ msgid "Could not find %(doc_type)s with id %(id)s"
 msgstr ""
 
 #: corehq/apps/app_manager/commcare_settings.py:28
-#, fuzzy
-#| msgid "Name"
 msgid "name"
-msgstr "नाम"
+msgstr ""
 
 #: corehq/apps/app_manager/commcare_settings.py:43
 #: custom/bihar/reports/due_list.py:124 custom/bihar/reports/due_list.py:174
@@ -12583,10 +12581,9 @@ msgid "See a user's projects by entering their email address below."
 msgstr ""
 
 #: corehq/apps/hqadmin/templates/hqadmin/web_user_lookup.html:12
-#, fuzzy, python-format
-#| msgid "Home Visit Information"
+#, python-format
 msgid "%(user_name)s's Information"
-msgstr "गृह भ्रमण की जानकारी"
+msgstr ""
 
 #: corehq/apps/hqadmin/templates/hqadmin/web_user_lookup.html:14
 msgid "ID"
@@ -27859,10 +27856,8 @@ msgid "Dear %(name)s, %(location)s is experiencing the following problems: "
 msgstr ""
 
 #: custom/ewsghana/filters.py:25
-#, fuzzy
-#| msgid "Filter Name"
 msgid "Filter By Program"
-msgstr "Relatorio Semanal aos Coordinadores do Distrito e os NEDs"
+msgstr ""
 
 #: custom/ewsghana/filters.py:37
 msgid "Product Availability"
@@ -31383,10 +31378,8 @@ msgstr ""
 
 #: custom/reports/mc/reports/old_sql.py:478
 #: custom/reports/mc/reports/sql.py:61
-#, fuzzy
-#| msgid "Referrals"
 msgid "msg_bad_referrals"
-msgstr "रेफेरल"
+msgstr ""
 
 #: custom/reports/mc/reports/old_sql.py:482
 #: custom/reports/mc/reports/sql.py:65
@@ -32567,6 +32560,21 @@ msgid ""
 "have problems filling in the rest of your form please report an issue."
 msgstr ""
 
+#~ msgid "All Applications"
+#~ msgstr "Casos IRA Tratados"
+
+#~ msgid "Remote Application"
+#~ msgstr "Casos IRA Tratados"
+
+#~ msgid "Deleted Application"
+#~ msgstr "Casos IRA Tratados"
+
+#~ msgid "Report builder"
+#~ msgstr "Manejo de Casos"
+
+#~ msgid "Deleting..."
+#~ msgstr "Manejo de Casos"
+
 #~ msgid "Software & Services"
 #~ msgstr "Relatorio Semanal aos Coordinadores do Distrito e os NEDs"
 
@@ -32607,6 +32615,9 @@ msgstr ""
 #~ msgstr "Casos IRA Tratados"
 
 #~ msgid "Conditions"
+#~ msgstr "Relatorio Semanal aos Coordinadores do Distrito e os NEDs"
+
+#~ msgid "Filter Name"
 #~ msgstr "Relatorio Semanal aos Coordinadores do Distrito e os NEDs"
 
 #~ msgid "Create & Preview"

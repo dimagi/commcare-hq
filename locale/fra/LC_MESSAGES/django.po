@@ -30,8 +30,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: CommCare HQ\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2016-03-15 18:08+0000\n"
-"PO-Revision-Date: 2016-03-04 20:18+0000\n"
+"POT-Creation-Date: 2016-03-15 18:47+0000\n"
+"PO-Revision-Date: 2016-03-15 18:12+0000\n"
 "Last-Translator: Dimagi Dev <devops@dimagi.com>\n"
 "Language-Team: French (http://www.transifex.com/dimagi/commcare-hq/language/"
 "fr/)\n"
@@ -3135,17 +3135,13 @@ msgid "Could not find %(doc_type)s with id %(id)s"
 msgstr "Impossible de trouver des %(doc_type)s dont l'identifiant est %(id)s"
 
 #: corehq/apps/app_manager/commcare_settings.py:28
-#, fuzzy
-#| msgid "named"
 msgid "name"
-msgstr "nommé"
+msgstr ""
 
 #: corehq/apps/app_manager/commcare_settings.py:43
 #: custom/bihar/reports/due_list.py:124 custom/bihar/reports/due_list.py:174
-#, fuzzy
-#| msgid "Title"
 msgid "title"
-msgstr "Titre"
+msgstr ""
 
 #: corehq/apps/app_manager/fields.py:67 corehq/apps/hqwebapp/doc_info.py:110
 #: corehq/apps/reminders/forms.py:375 corehq/apps/sms/models.py:1055
@@ -3423,10 +3419,8 @@ msgid ""
 msgstr ""
 
 #: corehq/apps/app_manager/models.py:4224
-#, fuzzy
-#| msgid "Table name"
 msgid "value_names"
-msgstr "Nom de tableau"
+msgstr ""
 
 #: corehq/apps/app_manager/models.py:4798
 msgid "Error in form \"{}\": {}"
@@ -4030,21 +4024,13 @@ msgstr ""
 "téléphone."
 
 #: corehq/apps/app_manager/templates/app_manager/odk_install.html:17
-#, fuzzy, python-format
-#| msgid ""
-#| "\n"
-#| "                    Check out the <a href=\"%(appstore_url)s\">CommCare "
-#| "Exchange</a>.\n"
-#| "                "
+#, python-format
 msgid ""
 "\n"
 "                You can also click <strong><a href=\"%(profile_url)s\">here</"
 "a></strong> in your mobile browser.\n"
 "                "
 msgstr ""
-"\n"
-"                    Jetez un coup d'œil à <a href=\"%(appstore_url)s"
-"\">CommCare Exchange</a>."
 
 #: corehq/apps/app_manager/templates/app_manager/odk_install.html:22
 msgid "For more about CommCare on Android, visit"
@@ -5953,31 +5939,20 @@ msgstr ""
 "2013"
 
 #: corehq/apps/app_manager/templates/app_manager/partials/releases_deploy_modal.html:62
-#, fuzzy
-#| msgid ""
-#| "\n"
-#| "                                    Everything in<br />\n"
-#| "                                    Scope, plus:\n"
-#| "                                "
 msgid ""
 "\n"
 "                                                    Open the app on your "
 "Android and use one of the following installation methods:\n"
 "                                                    "
 msgstr ""
-"\n"
-"Tout dans <br/>\n"
-"Scope, plus:"
 
 #: corehq/apps/app_manager/templates/app_manager/partials/releases_deploy_modal.html:71
 msgid "Scan Application Barcode"
 msgstr ""
 
 #: corehq/apps/app_manager/templates/app_manager/partials/releases_deploy_modal.html:79
-#, fuzzy
-#| msgid "Enter a worker"
 msgid "Enter App Code"
-msgstr "Inscrire un utilisateur mobile"
+msgstr ""
 
 #: corehq/apps/app_manager/templates/app_manager/partials/releases_deploy_modal.html:82
 msgid "Enter app code on installation screen: "
@@ -6105,10 +6080,8 @@ msgid "Please save before adding another language"
 msgstr "S'il vous plaît enregistrez avant d'ajouter une autre langue"
 
 #: corehq/apps/app_manager/templates/app_manager/partials/supported-languages.html:64
-#, fuzzy
-#| msgid "Languages"
 msgid "Deleting Languages:"
-msgstr "Langues"
+msgstr ""
 
 #: corehq/apps/app_manager/templates/app_manager/partials/supported-languages.html:69
 msgid "Don't Delete"
@@ -7025,10 +6998,8 @@ msgid "Sync consumption fixtures"
 msgstr "Synchronisation du tableau des consommation"
 
 #: corehq/apps/commtrack/forms.py:55
-#, fuzzy
-#| msgid "Use automatic consumption calculation"
 msgid "You must use automatic consumption calculation or "
-msgstr "Utiliser le calcul de consommation automatique"
+msgstr ""
 
 #: corehq/apps/commtrack/forms.py:71 corehq/apps/commtrack/forms.py:76
 #: corehq/apps/commtrack/views.py:259
@@ -7978,10 +7949,8 @@ msgid ""
 msgstr ""
 
 #: corehq/apps/data_interfaces/templates/data_interfaces/interfaces/case_management.html:22
-#, fuzzy
-#| msgid "Case Reassignment"
 msgid "Case Reassignment (via HQ)"
-msgstr "Transfert de dossier"
+msgstr ""
 
 #: corehq/apps/data_interfaces/templates/data_interfaces/interfaces/case_management.html:66
 msgid "Reassign selected cases to"
@@ -12401,10 +12370,8 @@ msgid "Workbook does not contain a sheet called '%(title)s'"
 msgstr "Le classeur ne contient aucune feuille intitulée '%(title)s'"
 
 #: corehq/apps/fixtures/upload.py:165
-#, fuzzy
-#| msgid "duplicate"
 msgid "duplicate_tag"
-msgstr "dupliquer"
+msgstr ""
 
 #: corehq/apps/fixtures/upload.py:192
 #, python-format
@@ -12461,10 +12428,8 @@ msgid "invalid_field_with_property"
 msgstr ""
 
 #: corehq/apps/fixtures/upload.py:353
-#, fuzzy
-#| msgid "Case property"
 msgid "invalid_property"
-msgstr "Propriété de Cas"
+msgstr ""
 
 #: corehq/apps/fixtures/upload.py:359
 msgid "wrong_field_property_combos"
@@ -13357,10 +13322,9 @@ msgid "See a user's projects by entering their email address below."
 msgstr ""
 
 #: corehq/apps/hqadmin/templates/hqadmin/web_user_lookup.html:12
-#, fuzzy, python-format
-#| msgid "Basic Information"
+#, python-format
 msgid "%(user_name)s's Information"
-msgstr "Information de base"
+msgstr ""
 
 #: corehq/apps/hqadmin/templates/hqadmin/web_user_lookup.html:14
 msgid "ID"
@@ -15152,10 +15116,8 @@ msgid "The following indicators were not successfully copied."
 msgstr "Les indicateurs suivants n'ont pas été correctement."
 
 #: corehq/apps/indicators/templates/indicators/forms/copy_to_domain.html:46
-#, fuzzy
-#| msgid "Copy"
 msgid "Copy More"
-msgstr "Copier"
+msgstr ""
 
 #: corehq/apps/indicators/templates/indicators/forms/copy_to_domain.html:51
 msgid "Choose Destination &amp; Indicators"
@@ -18122,21 +18084,12 @@ msgid "Technology for Reminder Messages"
 msgstr "Technologie pour les messages de rappel"
 
 #: corehq/apps/prelogin/templates/prelogin/_sections/software_services/lead.html:8
-#, fuzzy
-#| msgid ""
-#| "\n"
-#| "                            CommCare Software Pricing <br class=\"visible-"
-#| "xs visible-sm\" />& Implementation Services\n"
-#| "                        "
 msgid ""
 "\n"
 "                            CommCare Software Pricing <br class=\"visible-xs "
 "visible-sm\" />&amp; Implementation Services\n"
 "                        "
 msgstr ""
-"\n"
-"Tarification Logiciel CommCare <br class=\"visible-xs visible-sm\" />& "
-"Services d'implémentation "
 
 #: corehq/apps/prelogin/templates/prelogin/_sections/software_services/lead.html:13
 msgid ""
@@ -18189,10 +18142,8 @@ msgstr ""
 
 #: corehq/apps/prelogin/templates/prelogin/_sections/software_services/lead.html:46
 #: corehq/apps/prelogin/templates/prelogin/_sections/software_services/lead.html:83
-#, fuzzy
-#| msgid "View Software Features & Pricing"
 msgid "View Software Features &amp; Pricing"
-msgstr "Voir les fonctionnalités de logiciel et tarification "
+msgstr ""
 
 #: corehq/apps/prelogin/templates/prelogin/_sections/software_services/lead.html:55
 msgid ""
@@ -22512,10 +22463,8 @@ msgid "Change from Previous Month"
 msgstr ""
 
 #: corehq/apps/reports/templates/reports/project_health/project_health_dashboard.html:50
-#, fuzzy
-#| msgid "PHE Dashboard"
 msgid "Project Health Dashboard"
-msgstr "Tableau de bord PHE"
+msgstr ""
 
 #: corehq/apps/reports/templates/reports/project_health/project_health_dashboard.html:52
 msgid ""
@@ -22530,18 +22479,12 @@ msgid "Last Month Stats"
 msgstr ""
 
 #: corehq/apps/reports/templates/reports/project_health/project_health_dashboard.html:63
-#, fuzzy, python-format
-#| msgid ""
-#| "\n"
-#| "                    Manage Lookup Tables\n"
-#| "                "
+#, python-format
 msgid ""
 "\n"
 "                    Change from %(prev_month)s\n"
 "                "
 msgstr ""
-"\n"
-"Gestion des Tables de Recherche "
 
 #: corehq/apps/reports/templates/reports/project_health/project_health_dashboard.html:69
 msgid "Performing users"
@@ -25968,10 +25911,8 @@ msgstr ""
 "calcul)"
 
 #: corehq/apps/users/decorators.py:24
-#, fuzzy
-#| msgid "Sorry, you don't have permission to access that page!"
 msgid "Sorry, you don't have permission to do this action!"
-msgstr "Désolé! Vous n'avez pas les permissions pour accéder cette page!"
+msgstr ""
 
 #: corehq/apps/users/forms.py:59
 #, python-format
@@ -27798,22 +27739,16 @@ msgid "Megamobile Settings"
 msgstr ""
 
 #: corehq/messaging/smsbackends/push/forms.py:9
-#, fuzzy
-#| msgid "Cancel"
 msgid "Channel"
-msgstr "Annuler"
+msgstr ""
 
 #: corehq/messaging/smsbackends/push/forms.py:12
-#, fuzzy
-#| msgid "Services"
 msgid "Service"
-msgstr "Services"
+msgstr ""
 
 #: corehq/messaging/smsbackends/push/forms.py:21
-#, fuzzy
-#| msgid "Phone Settings"
 msgid "Push Settings"
-msgstr "Paramètres de téléphone"
+msgstr ""
 
 #: corehq/messaging/smsbackends/smsgh/forms.py:12
 msgid "Client Id"
@@ -29787,10 +29722,8 @@ msgid "Dear %(name)s, %(location)s is experiencing the following problems: "
 msgstr ""
 
 #: custom/ewsghana/filters.py:25
-#, fuzzy
-#| msgid "Delete Program"
 msgid "Filter By Program"
-msgstr "Supprimer le program"
+msgstr ""
 
 #: custom/ewsghana/filters.py:37
 msgid "Product Availability"
@@ -33313,10 +33246,8 @@ msgstr ""
 
 #: custom/reports/mc/reports/old_sql.py:460
 #: custom/reports/mc/reports/sql.py:43
-#, fuzzy
-#| msgid "deaths_children"
 msgid "msg_children"
-msgstr "décès_enfants"
+msgstr ""
 
 #: custom/reports/mc/reports/old_sql.py:464
 #: custom/reports/mc/reports/sql.py:47
@@ -33325,17 +33256,13 @@ msgstr ""
 
 #: custom/reports/mc/reports/old_sql.py:468
 #: custom/reports/mc/reports/sql.py:51
-#, fuzzy
-#| msgid "diagnosed_diarrhea"
 msgid "msg_diarrhoea"
-msgstr "diagnostiqué_diarrhée"
+msgstr ""
 
 #: custom/reports/mc/reports/old_sql.py:472
 #: custom/reports/mc/reports/sql.py:55
-#, fuzzy
-#| msgid "Malaria"
 msgid "msg_malaria"
-msgstr "Paludisme"
+msgstr ""
 
 #: custom/reports/mc/reports/old_sql.py:476
 #: custom/reports/mc/reports/sql.py:59
@@ -33344,10 +33271,8 @@ msgstr ""
 
 #: custom/reports/mc/reports/old_sql.py:478
 #: custom/reports/mc/reports/sql.py:61
-#, fuzzy
-#| msgid "Referrals"
 msgid "msg_bad_referrals"
-msgstr "Envoi vers spécialistes"
+msgstr ""
 
 #: custom/reports/mc/reports/old_sql.py:482
 #: custom/reports/mc/reports/sql.py:65
@@ -34569,58 +34494,19 @@ msgstr ""
 "problème."
 
 #~ msgid "All Applications"
-#~ msgstr "Toutes les applications"
+#~ msgstr "Casos IRA Tratados"
+
+#~ msgid "Remote Application"
+#~ msgstr "Casos IRA Tratados"
 
 #~ msgid "Deleted Application"
-#~ msgstr "Application supprimée"
-
-#~ msgid "You can also visit:"
-#~ msgstr "Vous pouvez aussi consulter :"
-
-#~ msgid "in your mobile browser."
-#~ msgstr "dans votre navigateur mobile."
-
-#~ msgid ""
-#~ "You must use automatic consumption calculation or  specify a value for "
-#~ "all consumption settings."
-#~ msgstr ""
-#~ "Vous devez utiliser le calcul de consommation automatique ou spécifier "
-#~ "une valeur pour tous les paramètres de consommation."
-
-#~ msgid ""
-#~ "If access to a project space is restricted only users added to the domain "
-#~ "and staff members will have access."
-#~ msgstr ""
-#~ "Si l'accès à un espace projet est restreint, seules les utilisateurs "
-#~ "ajoutés au domaine et les membres du personnel Dimagi y auront accès."
+#~ msgstr "Casos IRA Tratados"
 
 #~ msgid "Report builder"
-#~ msgstr "Éditeur de Rapports"
-
-#~ msgid "There was an error saving"
-#~ msgstr "Une erreur est survenue au cours de l'enregistrement"
+#~ msgstr "Manejo de Casos"
 
 #~ msgid "Deleting..."
-#~ msgstr "En cours de suppression"
-
-#~ msgid "Deleted User"
-#~ msgstr "Utilisateur supprimé"
-
-#~ msgid ""
-#~ "Whoa! I don't even know how you got here! But I guess since you're here..."
-#~ msgstr ""
-#~ "Wow ! Je ne sais pas comment vous êtes arrivé ici ! Mais puisque vous "
-#~ "êtes ici..."
-
-#~ msgid "The user <strong>%(username)s</strong> no longer exists."
-#~ msgstr "L'utilisateur <strong>%(username)s</strong> n'existe plus."
-
-#~ msgid "If you think this user was deleted in error: "
-#~ msgstr ""
-#~ "Si vous pensez que la suppression de cet utilisateur est une erreur : "
-
-#~ msgid "Restore User"
-#~ msgstr "Restaurer l'utilisateur"
+#~ msgstr "Manejo de Casos"
 
 #~ msgid "Software & Services"
 #~ msgstr "Relatorio Semanal aos Coordinadores do Distrito e os NEDs"

@@ -3,6 +3,7 @@
 # This file is distributed under the same license as the PACKAGE package.
 #
 # Translators:
+# Dimagi Dev <devops@dimagi.com>, 2016
 # esoergel, 2015
 # esoergel, 2015
 # Kamil Krampa <kkrampa@soldevelo.com>, 2015-2016
@@ -10,9 +11,9 @@ msgid ""
 msgstr ""
 "Project-Id-Version: CommCare HQ\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2016-03-15 18:08+0000\n"
-"PO-Revision-Date: 2016-03-14 11:06+0000\n"
-"Last-Translator: Kamil Krampa <kkrampa@soldevelo.com>\n"
+"POT-Creation-Date: 2016-03-15 18:47+0000\n"
+"PO-Revision-Date: 2016-03-15 18:37+0000\n"
+"Last-Translator: Dimagi Dev <devops@dimagi.com>\n"
 "Language-Team: Swahili (http://www.transifex.com/dimagi/commcare-hq/language/"
 "sw/)\n"
 "MIME-Version: 1.0\n"
@@ -27842,10 +27843,8 @@ msgid "Dear %(name)s, %(location)s is experiencing the following problems: "
 msgstr ""
 
 #: custom/ewsghana/filters.py:25
-#, fuzzy
-#| msgid "Filter Name"
 msgid "Filter By Program"
-msgstr "Relatorio Semanal aos Coordinadores do Distrito e os NEDs"
+msgstr ""
 
 #: custom/ewsghana/filters.py:37
 msgid "Product Availability"
@@ -28453,6 +28452,8 @@ msgid ""
 "Thank you %(contact_name)s for reporting your stock on hand for %"
 "(facility_name)s.  Still missing %(product_list)s."
 msgstr ""
+"Asante %(contact_name)s kwa kutuma taarifa za akiba ya vifaa vilivyopo vya %"
+"(facility_name)s, bado taarifa za %(product_list)s"
 
 #: custom/ilsgateway/tanzania/reminders/__init__.py:53
 msgid ""
@@ -28652,20 +28653,14 @@ msgstr ""
 "(facility_name)s."
 
 #: custom/ilsgateway/tanzania/reminders/__init__.py:146
-#, fuzzy
-#| msgid ""
-#| "Please send in your stock on hand information in the format 'soh "
-#| "<product> <amount> <product> <amount>...'"
 msgid "Please send in stockout reports in the form 'so <product>'"
 msgstr ""
-"Tafadhali tuma hesabu ya mkono ya vifaaa vilivyopo katika mpangilio huu 'hmk "
-"<jina la vifaa> <idadi> <jina la vifaa> <idadi>...'"
+"Tafadhali tuma taarifa za hakuna katika mpangilio ufuatao, 'hakuna <kifaa>'"
 
 #: custom/ilsgateway/tanzania/reminders/__init__.py:148
-#, fuzzy, python-format
-#| msgid "Invalid msd code %(code)s"
+#, python-format
 msgid "Sorry, invalid product code %(product_code)s"
-msgstr "Namba ya MSD sio sahihi %(code)s"
+msgstr "Samahani, kodi ya kifaa %(product_code)s sio sahihi"
 
 #: custom/ilsgateway/tanzania/reminders/__init__.py:153
 #, python-format
@@ -32613,6 +32608,21 @@ msgid ""
 "have problems filling in the rest of your form please report an issue."
 msgstr ""
 
+#~ msgid "All Applications"
+#~ msgstr "Casos IRA Tratados"
+
+#~ msgid "Remote Application"
+#~ msgstr "Casos IRA Tratados"
+
+#~ msgid "Deleted Application"
+#~ msgstr "Casos IRA Tratados"
+
+#~ msgid "Report builder"
+#~ msgstr "Manejo de Casos"
+
+#~ msgid "Deleting..."
+#~ msgstr "Manejo de Casos"
+
 #~ msgid "Software & Services"
 #~ msgstr "Relatorio Semanal aos Coordinadores do Distrito e os NEDs"
 
@@ -32653,6 +32663,9 @@ msgstr ""
 #~ msgstr "Casos IRA Tratados"
 
 #~ msgid "Conditions"
+#~ msgstr "Relatorio Semanal aos Coordinadores do Distrito e os NEDs"
+
+#~ msgid "Filter Name"
 #~ msgstr "Relatorio Semanal aos Coordinadores do Distrito e os NEDs"
 
 #~ msgid "Create & Preview"

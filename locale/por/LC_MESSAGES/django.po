@@ -12,8 +12,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: CommCare HQ\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2016-03-15 18:08+0000\n"
-"PO-Revision-Date: 2016-03-04 20:04+0000\n"
+"POT-Creation-Date: 2016-03-15 18:47+0000\n"
+"PO-Revision-Date: 2016-03-15 18:12+0000\n"
 "Last-Translator: Dimagi Dev <devops@dimagi.com>\n"
 "Language-Team: Portuguese (http://www.transifex.com/dimagi/commcare-hq/"
 "language/pt/)\n"
@@ -2895,10 +2895,8 @@ msgid "Could not find %(doc_type)s with id %(id)s"
 msgstr ""
 
 #: corehq/apps/app_manager/commcare_settings.py:28
-#, fuzzy
-#| msgid "Plan Name"
 msgid "name"
-msgstr "Nome do plano"
+msgstr ""
 
 #: corehq/apps/app_manager/commcare_settings.py:43
 #: custom/bihar/reports/due_list.py:124 custom/bihar/reports/due_list.py:174
@@ -3180,10 +3178,8 @@ msgid ""
 msgstr ""
 
 #: corehq/apps/app_manager/models.py:4224
-#, fuzzy
-#| msgid "Table name"
 msgid "value_names"
-msgstr "Nome da tabela "
+msgstr ""
 
 #: corehq/apps/app_manager/models.py:4798
 msgid "Error in form \"{}\": {}"
@@ -5791,10 +5787,8 @@ msgid "Please save before adding another language"
 msgstr ""
 
 #: corehq/apps/app_manager/templates/app_manager/partials/supported-languages.html:64
-#, fuzzy
-#| msgid "Languages"
 msgid "Deleting Languages:"
-msgstr "Idiomas"
+msgstr ""
 
 #: corehq/apps/app_manager/templates/app_manager/partials/supported-languages.html:69
 msgid "Don't Delete"
@@ -11783,10 +11777,8 @@ msgid "invalid_field_with_property"
 msgstr ""
 
 #: corehq/apps/fixtures/upload.py:353
-#, fuzzy
-#| msgid "Case property"
 msgid "invalid_property"
-msgstr "Propriedade do Caso"
+msgstr ""
 
 #: corehq/apps/fixtures/upload.py:359
 msgid "wrong_field_property_combos"
@@ -14272,10 +14264,8 @@ msgid "The following indicators were not successfully copied."
 msgstr ""
 
 #: corehq/apps/indicators/templates/indicators/forms/copy_to_domain.html:46
-#, fuzzy
-#| msgid "Copy"
 msgid "Copy More"
-msgstr "Copiar"
+msgstr ""
 
 #: corehq/apps/indicators/templates/indicators/forms/copy_to_domain.html:51
 msgid "Choose Destination &amp; Indicators"
@@ -25969,16 +25959,12 @@ msgid "Channel"
 msgstr ""
 
 #: corehq/messaging/smsbackends/push/forms.py:12
-#, fuzzy
-#| msgid "Send invoice"
 msgid "Service"
-msgstr "Mandar fatura"
+msgstr ""
 
 #: corehq/messaging/smsbackends/push/forms.py:21
-#, fuzzy
-#| msgid "Settings"
 msgid "Push Settings"
-msgstr "Configuração"
+msgstr ""
 
 #: corehq/messaging/smsbackends/smsgh/forms.py:12
 msgid "Client Id"
@@ -27908,10 +27894,8 @@ msgid "Dear %(name)s, %(location)s is experiencing the following problems: "
 msgstr ""
 
 #: custom/ewsghana/filters.py:25
-#, fuzzy
-#| msgid "Filter Name"
 msgid "Filter By Program"
-msgstr "Relatorio Semanal aos Coordinadores do Distrito e os NEDs"
+msgstr ""
 
 #: custom/ewsghana/filters.py:37
 msgid "Product Availability"
@@ -31437,10 +31421,8 @@ msgstr "Relatorio Semanal aos Coordinadores do Distrito e os NEDs"
 
 #: custom/reports/mc/reports/old_sql.py:460
 #: custom/reports/mc/reports/sql.py:43
-#, fuzzy
-#| msgid "deaths_children"
 msgid "msg_children"
-msgstr "Crianças (2 - 59 meses)"
+msgstr ""
 
 #: custom/reports/mc/reports/old_sql.py:464
 #: custom/reports/mc/reports/sql.py:47
@@ -31449,17 +31431,13 @@ msgstr ""
 
 #: custom/reports/mc/reports/old_sql.py:468
 #: custom/reports/mc/reports/sql.py:51
-#, fuzzy
-#| msgid "diagnosed_diarrhea"
 msgid "msg_diarrhoea"
-msgstr "Total Diarreia"
+msgstr ""
 
 #: custom/reports/mc/reports/old_sql.py:472
 #: custom/reports/mc/reports/sql.py:55
-#, fuzzy
-#| msgid "treated_malaria"
 msgid "msg_malaria"
-msgstr "Total casos malária tratados"
+msgstr ""
 
 #: custom/reports/mc/reports/old_sql.py:476
 #: custom/reports/mc/reports/sql.py:59
@@ -32655,11 +32633,20 @@ msgstr ""
 "problemas para preencher o restante do formulário por favor envie  um "
 "relatorio do problema usando os links de abaixo."
 
-#~ msgid "You can also visit:"
-#~ msgstr "Você também pode visitar:"
+#~ msgid "All Applications"
+#~ msgstr "Casos IRA Tratados"
 
-#~ msgid "in your mobile browser."
-#~ msgstr "no seu browser móvel."
+#~ msgid "Remote Application"
+#~ msgstr "Casos IRA Tratados"
+
+#~ msgid "Deleted Application"
+#~ msgstr "Casos IRA Tratados"
+
+#~ msgid "Report builder"
+#~ msgstr "Manejo de Casos"
+
+#~ msgid "Deleting..."
+#~ msgstr "Manejo de Casos"
 
 #~ msgid "Software & Services"
 #~ msgstr "Relatorio Semanal aos Coordinadores do Distrito e os NEDs"
@@ -32701,6 +32688,9 @@ msgstr ""
 #~ msgstr "Casos IRA Tratados"
 
 #~ msgid "Conditions"
+#~ msgstr "Relatorio Semanal aos Coordinadores do Distrito e os NEDs"
+
+#~ msgid "Filter Name"
 #~ msgstr "Relatorio Semanal aos Coordinadores do Distrito e os NEDs"
 
 #~ msgid "Create & Preview"

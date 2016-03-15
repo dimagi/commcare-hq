@@ -7,8 +7,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: CommCare HQ\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2016-03-15 18:08+0000\n"
-"PO-Revision-Date: 2016-03-04 20:04+0000\n"
+"POT-Creation-Date: 2016-03-15 18:47+0000\n"
+"PO-Revision-Date: 2016-03-15 18:12+0000\n"
 "Last-Translator: Dimagi Dev <devops@dimagi.com>\n"
 "Language-Team: Spanish (http://www.transifex.com/dimagi/commcare-hq/language/"
 "es/)\n"
@@ -27839,10 +27839,8 @@ msgid "Dear %(name)s, %(location)s is experiencing the following problems: "
 msgstr ""
 
 #: custom/ewsghana/filters.py:25
-#, fuzzy
-#| msgid "Filter Name"
 msgid "Filter By Program"
-msgstr "Relatorio Semanal aos Coordinadores do Distrito e os NEDs"
+msgstr ""
 
 #: custom/ewsghana/filters.py:37
 msgid "Product Availability"
@@ -32537,6 +32535,21 @@ msgid ""
 "have problems filling in the rest of your form please report an issue."
 msgstr ""
 
+#~ msgid "All Applications"
+#~ msgstr "Casos IRA Tratados"
+
+#~ msgid "Remote Application"
+#~ msgstr "Casos IRA Tratados"
+
+#~ msgid "Deleted Application"
+#~ msgstr "Casos IRA Tratados"
+
+#~ msgid "Report builder"
+#~ msgstr "Manejo de Casos"
+
+#~ msgid "Deleting..."
+#~ msgstr "Manejo de Casos"
+
 #~ msgid "Software & Services"
 #~ msgstr "Relatorio Semanal aos Coordinadores do Distrito e os NEDs"
 
@@ -32577,6 +32590,9 @@ msgstr ""
 #~ msgstr "Casos IRA Tratados"
 
 #~ msgid "Conditions"
+#~ msgstr "Relatorio Semanal aos Coordinadores do Distrito e os NEDs"
+
+#~ msgid "Filter Name"
 #~ msgstr "Relatorio Semanal aos Coordinadores do Distrito e os NEDs"
 
 #~ msgid "Create & Preview"
