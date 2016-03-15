@@ -62,7 +62,7 @@ COMMCAREHQ.initBlock = function ($elem) {
         e.preventDefault();
         if (!$(this).data('clicked')) {
             $(this).prev('form').submit();
-            $(this).data('clicked', 'true').children('i').removeClass().addClass("icon-refresh icon-spin");
+            $(this).data('clicked', 'true').children('i').removeClass().addClass("icon-refresh icon-spin fa fa-refresh fa-spin");
         }
     });
 
