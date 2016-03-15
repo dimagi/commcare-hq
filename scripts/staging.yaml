@@ -70,7 +70,6 @@ branches:
   - sql-saved-exports-2 # Noah 3/9  includes ES reindex
   - certificate-validation # Cal 3/10
   - multi-db-deploy  # SK 3/15
-  - upgrade_django-websocket-redis # Nick P 3/15
   - req-params-login # Nick P 3/15
   - move-services-dir # Ben 3/15
 submodules:
