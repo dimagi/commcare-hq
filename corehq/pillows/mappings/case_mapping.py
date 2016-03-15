@@ -1,7 +1,8 @@
 from corehq.pillows.core import DATE_FORMATS_ARR, DATE_FORMATS_STRING
+from corehq.pillows.mappings import NULL_VALUE
 from corehq.util.elastic import es_index
 
-CASE_INDEX = es_index("hqcases_7a8d2b81335e0a8cef1de718313a23b9")
+CASE_INDEX = es_index("hqcases_2016-03-04")
 
 
 CASE_MAPPING = {
@@ -79,6 +80,7 @@ CASE_MAPPING = {
         'opened_on': {'format': DATE_FORMATS_STRING,
                       'type': 'date'},
         'owner_id': {'type': 'string'},
+        'owner_type': {'type': 'string', "index": "not_analyzed", "null_value": NULL_VALUE},
         'referrals': {'enabled': False, 'type': 'object'},
         'server_modified_on': {'format': DATE_FORMATS_STRING,
                                'type': 'date'},
