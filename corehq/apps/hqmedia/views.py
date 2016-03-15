@@ -92,7 +92,7 @@ class BaseMultimediaUploaderView(BaseMultimediaTemplateView):
 
 class MultimediaReferencesView(BaseMultimediaUploaderView):
     name = "hqmedia_references"
-    template_name = "hqmedia/references.html"
+    template_name = "hqmedia/partials/references.html"
 
     @property
     def page_context(self):
@@ -102,7 +102,6 @@ class MultimediaReferencesView(BaseMultimediaUploaderView):
         context.update({
             "references": self.app.get_references(),
             "object_map": self.app.get_object_map(),
-            "totals": self.app.get_reference_totals(),
             "sessionid": self.request.COOKIES.get('sessionid'),
         })
         return context
@@ -121,7 +120,7 @@ class MultimediaReferencesView(BaseMultimediaUploaderView):
 
 class BulkUploadMultimediaView(BaseMultimediaUploaderView):
     name = "hqmedia_bulk_upload"
-    template_name = "hqmedia/bulk_upload.html"
+    template_name = "hqmedia/partials/bulk_upload.html"
 
     @property
     def upload_controllers(self):
