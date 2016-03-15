@@ -4,6 +4,7 @@ from datetime import datetime, timedelta
 import logging
 import urllib
 import urlparse
+from requests.exceptions import Timeout, ConnectionError
 from corehq.apps.cachehq.mixins import QuickCachedDocumentMixin
 from corehq.form_processor.exceptions import XFormNotFound
 from corehq.util.datadog.metrics import REPEATER_ERROR_COUNT
@@ -13,7 +14,6 @@ from corehq.util.quickcache import quickcache
 from dimagi.ext.couchdbkit import *
 from couchdbkit.exceptions import ResourceNotFound
 from django.core.cache import cache
-import socket
 import hashlib
 
 from casexml.apps.case.models import CommCareCase
@@ -39,6 +39,7 @@ from .const import (
     RECORD_SUCCESS_STATE,
     RECORD_PENDING_STATE,
 )
+from .exceptions import RequestConnectionError
 
 
 repeater_types = {}
@@ -57,19 +58,19 @@ def simple_post_with_cached_timeout(data, url, expiry=60 * 60, force_send=False,
 
     cache_value = cache.get(key)
 
-    if cache_value == 'timeout' and not force_send:
-        raise socket.timeout('recently timed out, not retrying')
-    elif cache_value == 'error' and not force_send:
-        raise socket.timeout('recently errored, not retrying')
+    if cache_value and not force_send:
+        raise RequestConnectionError(cache_value)
 
     try:
         resp = simple_post(data, url, *args, **kwargs)
-    except socket.timeout:
-        cache.set(key, 'timeout', expiry)
-        raise
+    except (Timeout, ConnectionError), e:
+        cache.set(key, e.message, expiry)
+        raise RequestConnectionError(e.message)
 
     if not 200 <= resp.status_code < 300:
-        cache.set(key, 'error', expiry)
+        message = 'HTTP response not a 200 or 300'
+        cache.set(key, message, expiry)
+        raise RequestConnectionError(message)
     return resp
 
 
@@ -553,7 +554,8 @@ class RepeatRecord(Document):
                             payload,
                             self.url,
                             headers=headers,
-                            force_send=force_send
+                            force_send=force_send,
+                            timeout=45,
                         )
                         if 200 <= resp.status_code < 300:
                             self.update_success()
