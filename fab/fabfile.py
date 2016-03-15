@@ -567,8 +567,8 @@ def record_successful_deploy(url):
 
 
 @roles(ROLES_DB_ONLY)
-def set_in_progress_flag():
-    with cd(env.code_root):
+def set_in_progress_flag(use_current_release=False):
+    with cd(env.code_root if not use_current_release else env.code_current):
         sudo('%(virtualenv_root)s/bin/python manage.py deploy_in_progress' % env)
 
 
@@ -1032,17 +1032,17 @@ def restart_services():
 
     @roles(env.supervisor_roles)
     def _inner():
-        services_restart()
+        services_restart(use_current_release=True)
 
     execute(_inner)
 
 
 @roles(ROLES_ALL_SERVICES)
 @parallel
-def services_restart():
+def services_restart(use_current_release=False):
     """Stop and restart all supervisord services"""
     _require_target()
-    execute(set_in_progress_flag)
+    execute(set_in_progress_flag, use_current_release)
     _supervisor_command('stop all')
 
     _supervisor_command('update')
