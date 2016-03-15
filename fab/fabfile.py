@@ -1058,7 +1058,7 @@ def _migrate():
     _require_target()
     with cd(env.code_root):
         sudo('%(virtualenv_root)s/bin/python manage.py sync_finish_couchdb_hq' % env)
-        sudo('%(virtualenv_root)s/bin/python manage.py migrate --noinput' % env)
+        sudo('%(virtualenv_root)s/bin/python manage.py migrate_multi --noinput' % env)
 
 
 @roles(ROLES_DB_ONLY)
