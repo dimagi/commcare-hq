@@ -164,9 +164,11 @@ def edit_advanced_form_actions(request, domain, app_id, module_id, form_id):
 def edit_form_actions(request, domain, app_id, module_id, form_id):
     app = get_app(domain, app_id)
     form = app.get_module(module_id).get_form(form_id)
-    old_form_case_load = form.form_case_load
+    old_load_from_form = form.load_from_form
     form.actions = FormActions.wrap(json.loads(request.POST['actions']))
-    form.actions.form_case_load = old_form_case_load
+    if old_load_from_form:
+        form.actions.load_from_form = old_load_from_form
+
     for condition in (form.actions.open_case.condition, form.actions.close_case.condition):
         if isinstance(condition.answer, basestring):
             condition.answer = condition.answer.strip('"\'')
