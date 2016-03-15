@@ -150,20 +150,25 @@ class ExportColumn(DocumentSchema):
         """
 
         is_main_table = group_schema_path == MAIN_TABLE
-        is_advanced = isinstance(item, SystemExportItem) and item.is_advanced
-        transform = item.transform if isinstance(item, SystemExportItem) else None
+        is_system_property = isinstance(item, SystemExportItem)
+        is_advanced = is_system_property and item.is_advanced
+        transform = item.transform if is_system_property else None
 
         if item.tag == PROPERTY_TAG_ROW:
             column_class = RowNumberColumn
         else:
             column_class = ExportColumn
 
-        column = column_class(
-            item=item,
-            label=item.label,
-            is_advanced=is_advanced,
-            transforms=[transform] if transform else [], 
-        )
+        constructor_args = {
+            "item": item,
+            "label": item.label,
+            "is_advanced": is_advanced,
+            "transforms": [transform] if transform else [],
+        }
+        if is_system_property:
+            constructor_args["nesting_level"] = len(group_schema_path) + 1
+
+        column = column_class(**constructor_args)
         column.update_properties_from_app_ids_and_versions(app_ids_and_versions)
         column.selected = not column._is_deleted(app_ids_and_versions) and is_main_table and not is_advanced
         return column
