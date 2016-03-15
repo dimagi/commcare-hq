@@ -455,12 +455,12 @@ class Graph(FormattedDetailColumn):
                                             k
                                         )
                                     )
-                                    for k, v in s.config.locale_specific_config.iteritems()
+                                    for k, v in s.locale_specific_config.iteritems()
                                 ]
                             )
                         )
                     )
-                    for index, s in enumerate(self.column.graph_configuration.series]),
+                    for index, s in enumerate(self.column.graph_configuration.series)],
                 configuration=sx.ConfigurationGroup(
                     configs=(
                         [
