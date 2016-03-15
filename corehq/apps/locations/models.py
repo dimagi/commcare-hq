@@ -639,8 +639,8 @@ class Location(SyncCouchToSQLMixin, CachedCouchDocumentMixin, Document):
 
     @classmethod
     def _migration_get_fields(cls):
-        return ["domain", "name", "location_id", "site_code", "external_id",
-                "metadata", "is_archived", "latitude", "longitude"]
+        return ["domain", "name", "site_code", "external_id", "metadata",
+                "is_archived", "latitude", "longitude"]
 
     @classmethod
     def _migration_get_sql_model_class(cls):
