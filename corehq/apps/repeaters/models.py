@@ -38,6 +38,7 @@ from .const import (
     RECORD_FAILURE_STATE,
     RECORD_SUCCESS_STATE,
     RECORD_PENDING_STATE,
+    POST_TIMEOUT,
 )
 from .exceptions import RequestConnectionError
 
@@ -555,7 +556,7 @@ class RepeatRecord(Document):
                             self.url,
                             headers=headers,
                             force_send=force_send,
-                            timeout=45,
+                            timeout=POST_TIMEOUT,
                         )
                         if 200 <= resp.status_code < 300:
                             self.update_success()
