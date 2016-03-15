@@ -568,8 +568,9 @@ def record_successful_deploy(url):
 
 @roles(ROLES_DB_ONLY)
 def set_in_progress_flag(use_current_release=False):
+    venv = env.virtualenv_root if not use_current_release else env.virtualenv_current
     with cd(env.code_root if not use_current_release else env.code_current):
-        sudo('%(virtualenv_root)s/bin/python manage.py deploy_in_progress' % env)
+        sudo('{}/bin/python manage.py deploy_in_progress'.format(venv))
 
 
 @roles(ROLES_ALL_SRC)
