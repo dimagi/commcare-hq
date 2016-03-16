@@ -36,6 +36,7 @@ def get_reindex_commands(pillow_class_name):
         'SMSPillow': ['ptop_fast_reindex_smslogs'],
         'ReportXFormPillow': ['ptop_fast_reindex_reportxforms'],
         'ReportCasePillow': ['ptop_fast_reindex_reportcases'],
+        'CaseSearchPillow': ['ptop_fast_reindex_case_search'],
     }
     return pillow_command_map.get(pillow_class_name, [])
 

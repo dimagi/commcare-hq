@@ -1,0 +1,22 @@
+{
+    "date_detection": false,
+    "dynamic": false,
+    "_meta": {
+        "comment": "",
+        "created": "2013-09-19 @dmyung"
+    },
+    "properties": {
+        "case_properties": {
+            "type": "nested",
+            "dynamic": false,
+            "properties": {
+                "key": {
+                    "type": "string"
+                },
+                "value": {
+                    "type": "string"
+                }
+            }
+        }
+    }
+}
