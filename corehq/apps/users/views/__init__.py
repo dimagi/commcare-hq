@@ -22,6 +22,7 @@ from django.views.decorators.http import require_POST
 from djangular.views.mixins import allow_remote_invocation, JSONResponseMixin
 
 from couchdbkit.exceptions import ResourceNotFound
+from corehq.util.view_utils import json_error
 from dimagi.utils.couch import CriticalSection
 from dimagi.utils.decorators.memoized import memoized
 from dimagi.utils.web import json_response
@@ -550,6 +551,7 @@ def undo_remove_web_user(request, domain, record_id):
 # If any permission less than domain admin were allowed here, having that permission would give you the permission
 # to change the permissions of your own role such that you could do anything, and would thus be equivalent to having
 # domain admin permissions.
+@json_error
 @domain_admin_required
 @require_POST
 def post_user_role(request, domain):
