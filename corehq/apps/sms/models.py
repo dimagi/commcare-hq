@@ -498,15 +498,29 @@ class SMSBase(SyncSQLToCouchMixin, Log):
 
 
 class SMS(SMSBase):
+    def to_json(self):
+        result = {}
+        for field in self._meta.fields:
+            field_name = field.name
+            if field_name == 'couch_id':
+                result['_id'] = self.couch_id
+            elif field_name == 'messaging_subevent':
+                result['messaging_subevent_id'] = self.messaging_subevent_id
+            else:
+                result[field_name] = getattr(self, field_name)
+
+        return result
+
     def save(self, *args, **kwargs):
         from corehq.apps.sms.tasks import sync_sms_to_couch
 
-        publish_sms_saved(self)
-
         sync_to_couch = kwargs.pop('sync_to_couch', True)
         super(SyncSQLToCouchMixin, self).save(*args, **kwargs)
+
         if sync_to_couch:
             sync_sms_to_couch.delay(self)
+
+        publish_sms_saved(self)
 
 
 class QueuedSMS(SMSBase):
