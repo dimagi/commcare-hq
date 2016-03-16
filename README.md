@@ -511,12 +511,17 @@ To run the standard tests for CommCare HQ, simply run
 
 To run a particular test or subset of tests
 
-    $ ./manage.py test <app_name>[.<TestClass>[.<test_name>]]
+    $ ./manage.py test <test.module.path>[:<TestClass>[.<test_name>]]
 
     # examples
-    $ ./manage.py test app_manager
-    $ ./manage.py test app_manager.SuiteTest
-    $ ./manage.py test app_manager.SuiteTest.test_picture_format
+    $ ./manage.py test corehq.apps.app_manager
+    $ ./manage.py test corehq.apps.app_manager.tests.test_suite:SuiteTest
+    $ ./manage.py test corehq.apps.app_manager.tests.test_suite:SuiteTest.test_picture_format
+
+    # alternate: file system path
+    $ ./manage.py test corehq/apps/app_manager
+    $ ./manage.py test corehq/apps/app_manager/tests/test_suite.py:SuiteTest
+    $ ./manage.py test corehq/apps/app_manager/tests/test_suite.py:SuiteTest.test_picture_format
 
 If database tests are failing because of a `permission denied` error, give your postgres user permissions to create a database. 
 In the postgres shell, run the following as a superuser: `ALTER USER commcarehq CREATEDB;`
