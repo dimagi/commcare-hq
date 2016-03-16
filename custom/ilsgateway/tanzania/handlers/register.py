@@ -92,8 +92,9 @@ class RegisterHandler(KeywordHandler):
         elif split_name:
             first_name = split_name[0]
 
-        self.user.first_name = first_name
-        self.user.last_name = last_name
+        if first_name or last_name:
+            self.user.first_name = first_name
+            self.user.last_name = last_name
         self.user.is_active = True
         self.user.user_data['role'] = role
         self.user.save()
