@@ -180,7 +180,8 @@ APP_BUILDER_CAREPLAN = StaticToggle(
 APP_BUILDER_ADVANCED = StaticToggle(
     'advanced-app-builder',
     'Advanced Module in App-Builder',
-    TAG_EXPERIMENTAL
+    TAG_EXPERIMENTAL,
+    [NAMESPACE_DOMAIN],
 )
 
 APP_BUILDER_SHADOW_MODULES = StaticToggle(
