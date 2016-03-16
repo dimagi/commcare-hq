@@ -322,7 +322,7 @@ def expected_bulk_app_sheet_rows(app):
                             for key, val in series.locale_specific_config.iteritems():
                                 rows[module_string].append(
                                     (
-                                        "{} {} (graph series config)" % (key, i),
+                                        "{} {} (graph series config)".format(key, i),
                                         list_or_detail
                                     ) + tuple(val.get(lang, "") for lang in app.langs)
                                 )
@@ -840,7 +840,7 @@ def update_case_list_translations(sheet, rows, app):
             )
         for graph_config_row in row.get('series_configs', []):
             config_key = graph_config_row['id']
-            series_index = graph_config_row['series_index']
+            series_index = int(graph_config_row['series_index'])
             _update_translation(
                 graph_config_row,
                 detail['graph_configuration']['series'][series_index]['locale_specific_config'][config_key],
