@@ -9,6 +9,7 @@ from casexml.apps.case.dbaccessors import get_all_reverse_indices_info
 from casexml.apps.case.mock import CaseBlock
 from casexml.apps.case.models import CommCareCase
 from casexml.apps.case.xml import V2
+from corehq.form_processor.interfaces.dbaccessors import CaseAccessors, FormAccessors
 from corehq.form_processor.models import UserArchivedRebuild
 from corehq.util.log import SensitiveErrorMail
 from couchforms.exceptions import UnexpectedDeletedXForm
@@ -43,15 +44,10 @@ def bulk_upload_async(domain, user_specs, group_specs, location_specs):
 
 
 @task(rate_limit=2, queue='background_queue', ignore_result=True)  # limit this to two bulk saves a second so cloudant has time to reindex
-def tag_cases_as_deleted_and_remove_indices(domain, docs, deletion_id, deletion_date):
+def tag_cases_as_deleted_and_remove_indices(domain, case_ids, deletion_id, deletion_date):
     from corehq.apps.sms.tasks import delete_phone_numbers_for_owners
     from corehq.apps.reminders.tasks import delete_reminders_for_cases
-    for doc in docs:
-        doc['doc_type'] += DELETED_SUFFIX
-        doc['-deletion_id'] = deletion_id
-        doc['-deletion_date'] = deletion_date
-    CommCareCase.get_db().bulk_save(docs)
-    case_ids = [doc['_id'] for doc in docs]
+    CaseAccessors(domain).soft_delete_cases(list(case_ids), deletion_date, deletion_id)
     _remove_indices_from_deleted_cases_task.delay(domain, case_ids)
     delete_phone_numbers_for_owners.delay(case_ids)
     delete_reminders_for_cases.delay(domain, case_ids)
@@ -65,27 +61,22 @@ def tag_forms_as_deleted_rebuild_associated_cases(user_id, domain, form_id_list,
     for a rebuild.
     - 2 saves/sec for cloudant slowness (rate_limit)
     """
-    if deleted_cases is None:
-        deleted_cases = set()
-
+    deleted_cases = deleted_cases or set()
     cases_to_rebuild = set()
-    forms_to_check = get_docs(XFormInstance.get_db(), form_id_list)
-    forms_to_save = []
-    for form in forms_to_check:
-        assert form['domain'] == domain
-        if not is_deleted(form):
-            form['doc_type'] += DELETED_SUFFIX
-            form['-deletion_id'] = deletion_id
-            form['-deletion_date'] = deletion_date
-            forms_to_save.append(form)
+
+    for form in FormAccessors(domain).iter_forms(form_id_list):
+        if form.domain != domain:
+            continue
 
         # rebuild all cases anyways since we don't know if this has run or not if the task was killed
         cases_to_rebuild.update(get_case_ids_from_form(form))
 
-    XFormInstance.get_db().bulk_save(forms_to_save)
+    # do this after getting case_id's since iter_forms won't return deleted forms
+    FormAccessors(domain).soft_delete_forms(list(form_id_list), deletion_date, deletion_id)
+
     detail = UserArchivedRebuild(user_id=user_id)
-    for case in cases_to_rebuild - deleted_cases:
-        _rebuild_case_with_retries.delay(domain, case, detail)
+    for case_id in cases_to_rebuild - deleted_cases:
+        _rebuild_case_with_retries.delay(domain, case_id, detail)
 
 
 @task(queue='background_queue', ignore_result=True, acks_late=True)
@@ -96,6 +87,7 @@ def _remove_indices_from_deleted_cases_task(domain, case_ids):
         remove_indices_from_deleted_cases(domain, case_ids)
     except BulkSaveError as e:
         notify_exception(
+            None,
             "_remove_indices_from_deleted_cases_task "
             "experienced a BulkSaveError. errors: {!r}".format(e.errors)
         )
@@ -105,7 +97,7 @@ def _remove_indices_from_deleted_cases_task(domain, case_ids):
 def remove_indices_from_deleted_cases(domain, case_ids):
     from corehq.apps.hqcase.utils import submit_case_blocks
     deleted_ids = set(case_ids)
-    indexes_referencing_deleted_cases = get_all_reverse_indices_info(domain, case_ids)
+    indexes_referencing_deleted_cases = CaseAccessors(domain).get_all_reverse_indices_info(list(case_ids))
     case_updates = [
         CaseBlock(
             case_id=index_info.case_id,

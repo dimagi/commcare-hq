@@ -19,17 +19,19 @@ from corehq.apps.reports.util import format_datatables_data
 from corehq.apps.users.models import CommCareUser
 from corehq.const import USER_DATE_FORMAT
 from corehq.util.couch import get_document_or_404
-from couchforms.analytics import get_last_form_submission_for_user_for_app
+from corehq.apps.reports.analytics.esaccessors import get_last_form_submissions_by_user
 from django.utils.translation import ugettext_noop
 from django.utils.translation import ugettext as _
 from dimagi.utils.couch.database import iter_docs
 from dimagi.utils.dates import safe_strftime
+from dimagi.utils.parsing import string_to_utc_datetime
 
 
 class DeploymentsReport(GenericTabularReport, ProjectReport, ProjectReportParametersMixin):
     """
     Base class for all deployments reports
     """
+    is_bootstrap3 = True
    
     @classmethod
     def show_in_navigation(cls, domain=None, project=None, user=None):
@@ -41,7 +43,8 @@ class DeploymentsReport(GenericTabularReport, ProjectReport, ProjectReportParame
 
 def _build_html(version_info):
     version = version_info.build_version or _("Unknown")
-    def fmt(title, extra_class=u'', extra_text=u''):
+
+    def fmt(title, extra_class=u'label-default', extra_text=u''):
         return format_html(
             u'<span class="label{extra_class}" title="{title}">'
             u'{extra_text}{version}</span>',
@@ -50,6 +53,7 @@ def _build_html(version_info):
             extra_class=extra_class,
             extra_text=extra_text,
         )
+
     if version_info.source == BuildVersionSource.BUILD_ID:
         return fmt(title=_("This was taken from build id"),
                    extra_class=u' label-success')
@@ -94,26 +98,34 @@ class ApplicationStatusReport(DeploymentsReport):
         rows = []
         selected_app = self.request_params.get(SelectApplicationFilter.slug, None)
 
+        user_ids = map(lambda user: user.user_id, self.users)
+        user_xform_dicts_map = get_last_form_submissions_by_user(self.domain, user_ids, selected_app)
+
         for user in self.users:
-            last_seen = last_sync = app_name = None
+            xform_dict = last_seen = last_sync = app_name = None
 
-            xform = get_last_form_submission_for_user_for_app(
-                self.domain, user.user_id, selected_app)
+            if user_xform_dicts_map.get(user.user_id):
+                xform_dict = user_xform_dicts_map[user.user_id][0]
 
-            if xform:
-                last_seen = xform.received_on
+            if xform_dict:
+                last_seen = string_to_utc_datetime(xform_dict.get('received_on'))
 
-                if xform.app_id:
+                if xform_dict.get('app_id'):
                     try:
-                        app = get_app(self.domain, xform.app_id)
+                        app = get_app(self.domain, xform_dict.get('app_id'))
                     except ResourceNotFound:
                         pass
                     else:
                         app_name = app.name
                 else:
-                    app_name = get_meta_appversion_text(xform)
+                    app_name = get_meta_appversion_text(xform_dict['form']['meta'])
 
-                app_version_info = get_app_version_info(xform)
+                app_version_info = get_app_version_info(
+                    self.domain,
+                    xform_dict.get('build_id'),
+                    xform_dict.get('version'),
+                    xform_dict['form']['meta'],
+                )
                 build_html = _build_html(app_version_info)
                 commcare_version = (
                     'CommCare {}'.format(app_version_info.commcare_version)
@@ -142,18 +154,18 @@ class ApplicationStatusReport(DeploymentsReport):
 
     @property
     def export_table(self):
-        def _fmt_ordinal(ordinal):
-            if ordinal is not None and ordinal >= 0:
-                return safe_strftime(date.fromordinal(ordinal), USER_DATE_FORMAT)
+        def _fmt_timestamp(timestamp):
+            if timestamp is not None and timestamp >= 0:
+                return safe_strftime(date.fromtimestamp(timestamp), USER_DATE_FORMAT)
             return SCALAR_NEVER_WAS
 
         result = super(ApplicationStatusReport, self).export_table
         table = result[0][1]
         for row in table[1:]:
             # Last submission
-            row[1] = _fmt_ordinal(row[1])
+            row[1] = _fmt_timestamp(row[1])
             # Last sync
-            row[2] = _fmt_ordinal(row[2])
+            row[2] = _fmt_timestamp(row[2])
         return result
 
 
@@ -194,7 +206,7 @@ class SyncHistoryReport(DeploymentsReport):
 
     @property
     def rows(self):
-        base_link_url = '{}?q={{id}}'.format(reverse('global_quick_find'))
+        base_link_url = '{}?id={{id}}'.format(reverse('raw_couch'))
 
         user_id = self.request.GET.get('individual')
         if not user_id:
@@ -215,7 +227,7 @@ class SyncHistoryReport(DeploymentsReport):
                     )
                 else:
                     return format_datatables_data(
-                        '<span class="label">{text}</span>'.format(
+                        '<span class="label label-default">{text}</span>'.format(
                             text=_("Unknown"),
                         ),
                         -1,
@@ -232,7 +244,7 @@ class SyncHistoryReport(DeploymentsReport):
                 if not sync_log.had_state_error:
                     return u'<span class="label label-success">&#10003;</span>'
                 else:
-                    return (u'<span class="label label-important">X</span>'
+                    return (u'<span class="label label-danger">X</span>'
                             u'State error {}<br>Expected hash: {:.10}...').format(
                         _naturaltime_with_hover(sync_log.error_date),
                         sync_log.error_hash,
@@ -283,14 +295,14 @@ def _fmt_date(date):
         return _bootstrap_class(delta, timedelta(days=7), timedelta(days=3))
 
     if not date:
-        return format_datatables_data(u'<span class="label">{0}</span>'.format(_("Never")), -1)
+        return format_datatables_data(u'<span class="label label-default">{0}</span>'.format(_("Never")), -1)
     else:
         return format_datatables_data(
             u'<span class="{cls}">{text}</span>'.format(
                 cls=_timedelta_class(datetime.utcnow() - date),
                 text=_(_naturaltime_with_hover(date)),
             ),
-            date.toordinal(),
+            int(date.strftime("%s")),
         )
 
 
@@ -304,7 +316,7 @@ def _bootstrap_class(obj, severe, warn):
     assumes bigger is worse and default is good.
     """
     if obj > severe:
-        return "label label-important"
+        return "label label-danger"
     elif obj > warn:
         return "label label-warning"
     else:

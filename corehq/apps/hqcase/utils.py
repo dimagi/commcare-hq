@@ -11,6 +11,8 @@ from django.template.loader import render_to_string
 from casexml.apps.phone.xml import get_case_xml
 from casexml.apps.case.mock import CaseBlock
 from casexml.apps.case.models import CommCareCase
+from corehq.form_processor.exceptions import CaseNotFound
+from corehq.form_processor.interfaces.dbaccessors import get_cached_case_attachment, CaseAccessors
 from dimagi.utils.parsing import json_format_datetime
 from casexml.apps.case.xml import V2
 from casexml.apps.phone.caselogic import get_related_cases
@@ -101,6 +103,7 @@ def get_case_by_identifier(domain, identifier):
     # circular import
     from corehq.apps.api.es import CaseES
     case_es = CaseES(domain)
+    case_accessors = CaseAccessors(domain)
 
     def _query_by_type(i_type):
         q = case_es.base_query(
@@ -113,7 +116,7 @@ def get_case_by_identifier(domain, identifier):
         response = case_es.run_query(q)
         raw_docs = response['hits']['hits']
         if raw_docs:
-            return CommCareCase.get(raw_docs[0]['_id'])
+            return case_accessors.get_case(raw_docs[0]['_id'])
 
     # Try by any of the allowed identifiers
     for identifier_type in ALLOWED_CASE_IDENTIFIER_TYPES:
@@ -123,10 +126,10 @@ def get_case_by_identifier(domain, identifier):
 
     # Try by case id
     try:
-        case_by_id = CommCareCase.get(identifier)
+        case_by_id = case_accessors.get_case(identifier)
         if case_by_id.domain == domain:
             return case_by_id
-    except (ResourceNotFound, KeyError):
+    except (CaseNotFound, KeyError):
         pass
 
     return None
@@ -194,7 +197,7 @@ def assign_cases(caselist, owner_id, acting_user=None, update=None):
     return [c._id for c in filtered_cases]
 
 
-def make_creating_casexml(case, new_case_id, new_parent_ids=None):
+def make_creating_casexml(domain, case, new_case_id, new_parent_ids=None):
     new_parent_ids = new_parent_ids or {}
     old_case_id = case._id
     case._id = new_case_id
@@ -206,7 +209,7 @@ def make_creating_casexml(case, new_case_id, new_parent_ids=None):
         index.referenced_id = new
     try:
         case_block = get_case_xml(case, (const.CASE_ACTION_CREATE, const.CASE_ACTION_UPDATE), version='2.0')
-        case_block, attachments = _process_case_block(case_block, case.case_attachments, old_case_id)
+        case_block, attachments = _process_case_block(domain, case_block, case.case_attachments, old_case_id)
     finally:
         case._id = old_case_id
         for index in case.indices:
@@ -214,7 +217,7 @@ def make_creating_casexml(case, new_case_id, new_parent_ids=None):
     return case_block, attachments
 
 
-def _process_case_block(case_block, attachments, old_case_id):
+def _process_case_block(domain, case_block, attachments, old_case_id):
     def get_namespace(element):
         m = re.match('\{.*\}', element.tag)
         return m.group(0)[1:-1] if m else ''
@@ -223,7 +226,8 @@ def _process_case_block(case_block, attachments, old_case_id):
         mime = attachment['server_mime']
         size = attachment['attachment_size']
         src = attachment['attachment_src']
-        attachment_meta, attachment_stream = CommCareCase.fetch_case_attachment(old_case_id, tag)
+        cached_attachment = get_cached_case_attachment(domain, old_case_id, tag)
+        attachment_meta, attachment_stream = cached_attachment.get()
         return UploadedFile(attachment_stream, src, size=size, content_type=mime)
 
     # Remove namespace because it makes looking up tags a pain

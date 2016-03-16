@@ -16,7 +16,7 @@ from corehq.apps.export.views import (
     CaseExportListView,
     BulkDownloadFormExportView,
     DeIdFormExportListView,
-)
+    DownloadNewFormExportView)
 
 urlpatterns = patterns(
     'corehq.apps.export.views',
@@ -47,6 +47,9 @@ urlpatterns = patterns(
     url(r"^custom/form/download/(?P<export_id>[\w\-]+)/$",
         DownloadFormExportView.as_view(),
         name=DownloadFormExportView.urlname),
+    url(r"^custom/new/form/download/(?P<export_id>[\w\-]+)/$",
+        DownloadNewFormExportView.as_view(),
+        name=DownloadNewFormExportView.urlname),
     url(r"^custom/new/form/edit/(?P<export_id>[\w\-]+)/$",
         EditNewCustomFormExportView.as_view(),
         name=EditNewCustomFormExportView.urlname),

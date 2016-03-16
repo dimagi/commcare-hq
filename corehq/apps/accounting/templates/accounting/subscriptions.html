@@ -4,10 +4,9 @@
 {% load i18n %}
 
 {% block js %}{{ block.super }}
-    <script src="{% static 'accounting/js/stay-on-tab.js' %}"></script>
-    <script src="{% static 'accounting/js/accounting.billing_info_handler.js' %}"></script>
-    <script src="{% static 'accounting/js/adjust-balance-modal.js' %}"></script>
-
+    <script src="{% new_static 'accounting/js/stay-on-tab.js' %}"></script>
+    <script src="{% new_static 'accounting/js/accounting.billing_info_handler.js' %}"></script>
+    <script src="{% new_static 'accounting/js/adjust-balance-modal.js' %}"></script>
 {% endblock %}
 
 {% block js-inline %}{{ block.super }}
@@ -42,7 +41,7 @@
     </script>
 {% endblock %}
 
-{% block main_column %}
+{% block page_content %}
     <ul class="nav nav-tabs" id="user-settings-tabs">
         <li><a href="#subscription" data-toggle="tab">{% trans "Subscription" %}</a></li>
         <li><a href="#invoices" data-toggle="tab">{% trans "Invoices" %}</a></li>
@@ -56,7 +55,7 @@
         <li><a href="#suppress" data-toggle="tab">{% trans "Suppress" %}</a></li>
     </ul>
 
-    <div class="tab-content">
+    <div class="tab-content tab-padded">
         <div class="tab-pane" id="subscription">
             {{ block.super }}
         </div>
@@ -91,7 +90,7 @@
         </div>
 
         <div class="tab-pane" id="cancel">
-            <div class="alert alert-error">
+            <div class="alert alert-danger">
                 Do this ONLY if absolutely necessary.
                 Do not cancel subscriptions just to change start dates.
                 Canceling will have real time effects to the domain like
@@ -101,11 +100,13 @@
                 {% crispy cancel_form %}
             </form>
             {% if subscription_canceled %}
-                <div class="alert">
-                  Subscription has been canceled.
+                <div class="alert alert-danger">
+                    Subscription has been canceled.
                 </div>
             {% elif disable_cancel %}
-                Subscription has already ended.
+                <div class="alert alert-info">
+                    Subscription has already ended.
+                </div>
             {% endif %}
         </div>
         <div class="tab-pane" id="suppress">

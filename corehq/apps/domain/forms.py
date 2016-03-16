@@ -714,8 +714,9 @@ class PrivacySecurityForm(forms.Form):
     restrict_superusers = BooleanField(
         label=ugettext_lazy("Restrict Dimagi Staff Access"),
         required=False,
-        help_text=ugettext_lazy("If access to a project space is restricted only users added " +
-                                "to the domain and staff members will have access.")
+        help_text=ugettext_lazy("Dimagi staff sometimes require access to projects to provide support. " + 
+                                "Checking this box may restrict your ability to receive this support in the event " +
+                                "you report an issue. You may also miss out on important communications and updates.")
     )
     secure_submissions = BooleanField(
         label=ugettext_lazy("Secure submissions"),
@@ -959,14 +960,11 @@ pwd_pattern = re.compile( r"([-\w]){"  + str(min_pwd) + ',' + str(max_pwd) + '}'
 
 def clean_password(txt):
     # TODO: waiting on upstream PR to fix TypeError https://github.com/taxpon/pyzxcvbn/pull/1
-    try:
-        strength = zxcvbn(txt, user_inputs=['commcare', 'hq', 'dimagi', 'commcarehq'])
-    except TypeError:
-        raise forms.ValidationError(_('Please do not use years in your password.'))
-    else:
-        if strength['score'] < 2:
-            raise forms.ValidationError(_('Password is not strong enough. Try making your password more complex.'))
-        return txt
+    # until then, we are using a dimagi hosted fork
+    strength = zxcvbn(txt, user_inputs=['commcare', 'hq', 'dimagi', 'commcarehq'])
+    if strength['score'] < 2:
+        raise forms.ValidationError(_('Password is not strong enough. Try making your password more complex.'))
+    return txt
 
 
 class HQPasswordResetForm(forms.Form):

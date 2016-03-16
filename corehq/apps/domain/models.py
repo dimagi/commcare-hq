@@ -514,15 +514,12 @@ class Domain(QuickCachedDocumentMixin, Document, SnapshotMixin):
             # but in order not to break anything in the wild,
             # I'm opting to notify by email if/when this happens
             # but fall back to the previous behavior of returning None
-            try:
+            if settings.DEBUG:
                 raise ValueError('%r is not a valid domain name' % name)
-            except ValueError:
-                if settings.DEBUG:
-                    raise
-                else:
-                    _assert = soft_assert(notify_admins=True, exponential_backoff=False)
-                    _assert(False, '%r is not a valid domain name' % name)
-                    return None
+            else:
+                _assert = soft_assert(notify_admins=True, exponential_backoff=False)
+                _assert(False, '%r is not a valid domain name' % name)
+                return None
 
         def _get_by_name(stale=False):
             extra_args = {'stale': settings.COUCH_STALE_QUERY} if stale else {}
@@ -1049,7 +1046,7 @@ class Domain(QuickCachedDocumentMixin, Document, SnapshotMixin):
         left around for special applications, and not a feature
         flag that should be set normally.
         """
-        return toggles.MULTIPLE_LOCATIONS_PER_USER.enabled(self)
+        return toggles.MULTIPLE_LOCATIONS_PER_USER.enabled(self.name)
 
     def convert_to_commtrack(self):
         """

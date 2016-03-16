@@ -1,4 +1,4 @@
-{% extends "reports/async/bootstrap2/tabular.html" %}
+{% extends "reports/async/bootstrap3/tabular.html" %}
 {% load hq_shared_tags %}
 {% load i18n %}
 
@@ -36,8 +36,8 @@
         <tr>
             <th>{% trans 'Form Submission' %}</th>
             <td>
-                {% if xform_instance %}
-                    <a target="_blank" href="{% url 'render_form_data' domain xform_instance.get_id %}">{% trans 'View' %}</a>
+                {% if xforms_session.submission_id %}
+                    <a target="_blank" href="{% url 'render_form_data' domain xforms_session.submission_id %}">{% trans 'View' %}</a>
                 {% else %}
                     {% trans 'n/a' %}
                 {% endif %}

@@ -59,7 +59,6 @@ domain_specific = patterns('',
     (r'^sqlextract/', include('ctable_view.urls')),
     (r'^fri/', include('custom.fri.urls')),
     (r'^ilsgateway/', include('custom.ilsgateway.urls')),
-    (r'^dhis2/', include('custom.dhis2.urls')),
     (r'^ewsghana/', include('custom.ewsghana.urls')),
     (r'^up_nrhm/', include('custom.up_nrhm.urls')),
     (r'^', include('custom.m4change.urls')),
@@ -97,6 +96,7 @@ urlpatterns = patterns('',
     (r'^formtranslate/', include('formtranslate.urls')),
     (r'^unicel/', include('corehq.messaging.smsbackends.unicel.urls')),
     (r'^smsgh/', include('corehq.messaging.smsbackends.smsgh.urls')),
+    (r'^push/', include('corehq.messaging.smsbackends.push.urls')),
     (r'^apposit/', include('corehq.messaging.smsbackends.apposit.urls')),
     (r'^tropo/', include('corehq.messaging.smsbackends.tropo.urls')),
     (r'^twilio/', include('corehq.messaging.smsbackends.twilio.urls')),
@@ -139,11 +139,7 @@ urlpatterns = patterns('',
 if settings.ENABLE_PRELOGIN_SITE:
     urlpatterns += patterns('', *PRELOGIN_APP_URLS)
 
-#django-staticfiles static/ url mapper
 if settings.DEBUG:
     urlpatterns += patterns('',
         url(r'^mocha/', include('corehq.apps.mocha.urls')),
-    )
-    urlpatterns += patterns('django.contrib.staticfiles.views',
-        url(r'^static/(?P<path>.*)$', 'serve'),
     )

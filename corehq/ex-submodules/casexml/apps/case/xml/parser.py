@@ -269,7 +269,7 @@ class CaseUpdate(object):
             self.actions.append(ATTACHMENT_ACTION_FUNCTION_MAP[self.version](self.attachment_block))
 
         if not self.actions:
-            self.actions.append(NOOP_ACTION_FUNCTION_MAP[self.version](self.raw_block))
+            self.actions.append(NOOP_ACTION_FUNCTION_MAP[self.version]({}))
 
     def guess_modified_on(self):
         """

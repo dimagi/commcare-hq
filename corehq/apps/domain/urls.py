@@ -26,7 +26,8 @@ from corehq.apps.domain.views import (
     WireInvoiceView, SubscriptionRenewalView, CreditsWireInvoiceView,
     CardsView, CardView, PasswordResetView
 )
-from corehq.apps.repeaters.views import AddCaseRepeaterView
+from corehq.apps.repeaters.views import AddCaseRepeaterView, RepeatRecordView
+from corehq.apps.reports.dispatcher import DomainReportDispatcher
 
 #
 # After much reading, I discovered that Django matches URLs derived from the environment
@@ -139,6 +140,7 @@ domain_settings = patterns(
         name=InternalSubscriptionManagementView.urlname),
     url(r'^billing_information/$', EditExistingBillingAccountView.as_view(),
         name=EditExistingBillingAccountView.urlname),
+    url(r'^repeat_record/', RepeatRecordView.as_view(), name=RepeatRecordView.urlname),
     url(r'^forwarding/$', DomainForwardingOptionsView.as_view(), name=DomainForwardingOptionsView.urlname),
     url(r'^forwarding/new/FormRepeater/$', AddFormRepeaterView.as_view(), {'repeater_type': 'FormRepeater'},
         name=AddFormRepeaterView.urlname),
@@ -160,4 +162,5 @@ domain_settings = patterns(
     url(r'^previews/$', FeaturePreviewsView.as_view(), name=FeaturePreviewsView.urlname),
     url(r'^flags/$', FeatureFlagsView.as_view(), name=FeatureFlagsView.urlname),
     url(r'^sms_rates/$', SMSRatesView.as_view(), name=SMSRatesView.urlname),
+    DomainReportDispatcher.url_pattern()
 )

@@ -10,6 +10,7 @@ from dimagi.utils.decorators.memoized import memoized
 
 from casexml.apps.case.cleanup import close_case
 from casexml.apps.case.models import CommCareCase
+from casexml.apps.case.xform import get_case_updates
 from casexml.apps.stock.consumption import (ConsumptionConfiguration, compute_default_monthly_consumption)
 from casexml.apps.stock.models import StockReport, DocDomainMapping
 from casexml.apps.stock.utils import months_of_stock_remaining, state_stock_category
@@ -23,6 +24,7 @@ from corehq.apps.domain.signals import commcare_domain_pre_delete
 from corehq.apps.locations.models import Location, SQLLocation
 from corehq.apps.products.models import Product, SQLProduct
 from corehq.form_processor.interfaces.supply import SupplyInterface
+from corehq.form_processor.interfaces.dbaccessors import CaseAccessors, FormAccessors
 from corehq.util.quickcache import quickcache
 from . import const
 from .const import StockActions, RequisitionActions, DAYS_IN_MONTH
@@ -341,67 +343,6 @@ class SupplyPointCase(CommCareCase):
     def sql_location(self):
         return SQLLocation.objects.get(location_id=self.location_id)
 
-    def update_from_location(self, location):
-        from corehq.apps.commtrack.helpers import update_supply_point_from_location
-        return update_supply_point_from_location(self, location)
-
-    def to_full_dict(self):
-        data = super(SupplyPointCase, self).to_full_dict()
-        data.update({
-            'location_type': None,
-            'location_site_code': None,
-            'location_parent_name': None,
-        })
-        try:
-            location = self.sql_location
-        except SQLLocation.DoesNotExist:
-            pass
-        else:
-            data['location_type'] = location.location_type_name
-            data['location_site_code'] = location.site_code
-            if location.parent:
-                data['location_parent_name'] = location.parent.name
-
-        return data
-
-    @classmethod
-    def get_display_config(cls):
-        return [
-            {
-                "layout": [
-                    [
-                        {
-                            "expr": "name",
-                            "name": _("Name"),
-                        },
-                        {
-                            "expr": "location_type",
-                            "name": _("Type"),
-                        },
-                        {
-                            "expr": "location_site_code",
-                            "name": _("Code"),
-                        },
-                        #{
-                            #"expr": "last_reported",
-                            #"name": _("Last Reported"),
-                        #},
-                    ],
-                    [
-                        {
-                            "expr": "location_parent_name",
-                            "name": _("Parent Location"),
-                        },
-                        {
-                            "expr": "owner_id",
-                            "name": _("Location"),
-                            "process": "doc_info",
-                        },
-                    ],
-                ],
-            }
-        ]
-
 
 UNDERSTOCK_THRESHOLD = 0.5  # months
 OVERSTOCK_THRESHOLD = 2.  # months
@@ -414,7 +355,7 @@ class ActiveManager(models.Manager):
     """
 
     def get_queryset(self):
-        return super(ActiveManager, self).get_query_set() \
+        return super(ActiveManager, self).get_queryset() \
             .exclude(sql_product__is_archived=True) \
             .exclude(sql_location__is_archived=True)
 
@@ -559,14 +500,20 @@ def _make_location_admininstrative(location):
 
 
 def _reopen_or_create_supply_point(location):
-    from .dbaccessors import get_supply_point_by_location_id
-    supply_point = get_supply_point_by_location_id(location.domain, location.location_id)
+    from .helpers import update_supply_point_from_location
+    supply_point = SupplyInterface(location.domain).get_closed_and_open_by_location_id_and_domain(
+        location.domain,
+        location.location_id
+    )
     if supply_point:
         if supply_point and supply_point.closed:
-            for action in supply_point.actions:
-                if action.action_type == 'close':
-                    action.xform.archive(user_id=const.COMMTRACK_USERNAME)
-        supply_point.update_from_location(location)
+            form_ids = CaseAccessors(supply_point.domain).get_case_xform_ids(supply_point.case_id)
+            form_accessor = FormAccessors(supply_point.domain)
+            transactions = supply_point.closed_transactions
+            for transaction in transactions:
+                transaction.form.archive(user_id=const.COMMTRACK_USERNAME)
+
+        update_supply_point_from_location(supply_point, location)
         return supply_point
     else:
         return SupplyInterface.create_from_location(location.domain, location)
@@ -583,7 +530,7 @@ def sync_supply_point(location):
         return None
     else:
         updated_supply_point = _reopen_or_create_supply_point(location)
-        return updated_supply_point._id
+        return updated_supply_point.case_id
 
 
 @receiver(post_save, sender=StockState)

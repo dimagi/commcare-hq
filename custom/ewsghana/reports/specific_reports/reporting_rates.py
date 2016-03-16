@@ -60,14 +60,24 @@ class ReportingRates(ReportingRatesData):
 
             chart_data = sorted([
                 dict(value=non_reported_percent,
-                     label=_('Non-Reporting %s%%' % non_reported_formatted),
-                     description=_("%s%% (%d) Non-Reported (%s)" %
-                                   (non_reported_formatted, data['non_reported'], self.datetext())),
+                     label=_('Non-Reporting %s%%') % non_reported_formatted,
+                     description=_(
+                         "%(formatted_percent)s%% (%(raw_number)d) Non-Reported (%(date_range)s)"
+                     ) % {
+                         'formatted_percent': non_reported_formatted,
+                         'raw_number': data['non_reported'],
+                         'date_range': self.datetext(),
+                     },
                      color='red'),
                 dict(value=reported_percent,
-                     label=_('Reporting %s%%' % reported_formatted),
-                     description=_("%s%% (%d) Reported (%s)" % (reported_formatted, data['reported'],
-                                                                self.datetext())),
+                     label=_('Reporting %s%%') % reported_formatted,
+                     description=_(
+                         "%(formatted_percent)s%% (%(raw_number)d) Reported (%(date_range)s)"
+                     ) % {
+                         'formatted_percent': reported_formatted,
+                         'raw_number': data['reported'],
+                         'date_range': self.datetext(),
+                     },
                      color='green'),
             ], key=lambda x: x['value'], reverse=True)
         pie_chart = EWSPieChart('', '', chart_data, [chart_data[0]['color'], chart_data[1]['color']])
@@ -111,13 +121,23 @@ class ReportingDetails(ReportingRatesData):
             chart_data = [
                 dict(value=complete_formatted,
                      label=_('Complete %s%%') % complete_formatted,
-                     description=_("%s%% (%d) Complete Reports in %s") %
-                                  (complete_formatted, data['complete'], self.datetext()),
+                     description=_(
+                         "%(formatted_percent)s%% (%(raw_number)d) Complete Reports in %(date_range)s"
+                     ) % {
+                         'formatted_percent': complete_formatted,
+                         'raw_number': data['complete'],
+                         'date_range': self.datetext()
+                     },
                      color='green'),
                 dict(value=incomplete_formatted,
                      label=_('Incomplete %s%%') % incomplete_formatted,
-                     description=_("%s%% (%d) Incomplete Reports in %s") %
-                                  (incomplete_formatted, data['incomplete'], self.datetext()),
+                     description=_(
+                         "%(formatted_percent)s%% (%(raw_number)d) Incomplete Reports in %(date_range)s"
+                     ) % {
+                         'formatted_percent': incomplete_formatted,
+                         'raw_number': data['incomplete'],
+                         'date_range': self.datetext(),
+                     },
                      color='purple'),
             ]
         pie_chart = EWSPieChart('', '', chart_data, ['green', 'purple'])
@@ -165,7 +185,8 @@ class SummaryReportingRates(ReportingRatesData):
                     ReportingRatesReport,
                     self.config['domain'],
                     '?location_id=%s&startdate=%s&enddate=%s',
-                    (values['location_id'], self.config['startdate'], self.config['enddate'])
+                    (values['location_id'], self.config['startdate'].strftime('%Y-%m-%d'),
+                     self.config['enddate'].strftime('%Y-%m-%d'))
                 )
                 is_rendered_as_email = self.config['is_rendered_as_email']
                 rows.append(
@@ -377,7 +398,9 @@ class ReportingRatesReport(MultiReport):
     def reporting_rates(self):
         complete = 0
         incomplete = 0
-        all_locations_count = self.location.get_descendants().count()
+        all_locations_count = self.location.get_descendants().filter(
+            location_type__administrative=False, is_archived=False
+        ).count()
         transactions = self.get_stock_transactions().values_list('case_id', 'product_id', 'report__date')
         grouped_by_case = {}
         parent_sum_rates = {}
@@ -400,12 +423,16 @@ class ReportingRatesReport(MultiReport):
         elif self.location.location_type.name == 'region':
             aggregate_type = 'district'
         if aggregate_type:
-            for location in self.location.get_children().filter(location_type__administrative=True):
+            for location in self.location.get_children().filter(
+                location_type__administrative=True, is_archived=False
+            ):
                 parent_sum_rates[location.name] = {
                     'complete': 0,
                     'incomplete': 0,
                     'location_id': location.location_id,
-                    'all': location.get_descendants().filter(location_type__administrative=False).count()
+                    'all': location.get_descendants().filter(
+                        location_type__administrative=False, is_archived=False
+                    ).count()
                 }
 
         for (case_id, product_id, date) in transactions:

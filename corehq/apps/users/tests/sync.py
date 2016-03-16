@@ -1,5 +1,6 @@
 from django.contrib.auth.models import User
 from django.test import TestCase
+from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.users.models import WebUser, CommCareUser
 
 class SyncWebUserTestCase(TestCase):
@@ -7,6 +8,7 @@ class SyncWebUserTestCase(TestCase):
         domain = 'test'
         username = "mr-danny@dimagi.com"
         password = "s3cr3t"
+        self.domain_obj = create_domain(domain)
         self.web_user = WebUser.create(domain, username, password)
         self.web_user.save()
 
@@ -37,12 +39,14 @@ class SyncWebUserTestCase(TestCase):
 
     def tearDown(self):
         WebUser.get_by_user_id(self.web_user.user_id).delete()
+        self.domain_obj.delete()
 
 class SyncCommCareUserTestCase(TestCase):
     def setUp(self):
         self.domain = 'test'
         self.username = "mr-danny@test.commcarehq.org"
         self.password = "s3cr3t"
+        self.domain_obj = create_domain(self.domain)
         self.commcare_user = CommCareUser.create(self.domain, self.username, self.password)
         self.commcare_user.save()
 
@@ -80,4 +84,4 @@ class SyncCommCareUserTestCase(TestCase):
 
     def tearDown(self):
         CommCareUser.get_by_user_id(self.commcare_user.user_id).delete()
-
+        self.domain_obj.delete()

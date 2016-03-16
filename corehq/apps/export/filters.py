@@ -8,6 +8,7 @@ from corehq.apps.es.cases import (
     closed_range,
     opened_by
 )
+from corehq.apps.es.forms import app, submitted, user_id
 from corehq.apps.export.esaccessors import get_group_user_ids
 
 
@@ -22,7 +23,25 @@ class ExportFilter(object):
         """
         raise NotImplementedError
 
-    # TODO: Add another function here to be used for couch filtering
+
+class OR(ExportFilter):
+
+    def __init__(self, *args):
+        self.operand_filters = args
+
+    def to_es_filter(self):
+        return esfilters.OR(*[f.to_es_filter() for f in self.operand_filters])
+
+
+class AppFilter(ExportFilter):
+    """
+    Filter on app_id
+    """
+    def __init__(self, app_id):
+        self.app_id = app_id
+
+    def to_es_filter(self):
+        return app(self.app_id)
 
 
 class RangeExportFilter(ExportFilter):
@@ -135,3 +154,19 @@ class GroupClosedByFilter(GroupFilter):
 
 # TODO: owner/modifier/closer in location filters
 # TODO: Add form filters
+
+class ReceivedOnRangeFilter(RangeExportFilter):
+    def to_es_filter(self):
+        return submitted(self.gt, self.gte, self.lt, self.lte)
+
+
+class FormSubmittedByFilter(ExportFilter):
+    def __init__(self, submitted_by):
+        self.submitted_by = submitted_by
+
+    def to_es_filter(self):
+        return user_id(self.submitted_by)
+
+
+class GroupFormSubmittedByFilter(GroupFilter):
+    base_filter = FormSubmittedByFilter

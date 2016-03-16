@@ -13,10 +13,7 @@ from django.utils.translation import ugettext as _
 from django.utils.safestring import mark_safe
 from django.utils.html import escape
 
-from casexml.apps.case.const import CASE_INDEX_EXTENSION
-from casexml.apps.case.dbaccessors import get_reverse_indices_json
 from casexml.apps.case.models import CommCareCase
-from casexml.apps.case.sharedmodels import CommCareCaseIndex
 from casexml.apps.stock.utils import get_current_ledger_transactions
 from corehq.apps.products.models import SQLProduct
 from couchdbkit import ResourceNotFound
@@ -27,10 +24,182 @@ register = template.Library()
 DYNAMIC_CASE_PROPERTIES_COLUMNS = 4
 
 
-def wrapped_case(case):
-    json = case.to_json()
-    case_class = CommCareCase.get_wrap_class(json)
-    return case_class.wrap(case.to_json())
+class CaseDisplayWrapper(object):
+    def __init__(self, case):
+        self.case = case
+
+    def actions(self):
+        actions = self.case.to_json()['actions']
+        return actions.reverse()
+
+    def to_full_dict(self):
+        """
+        Include calculated properties that need to be available to the case
+        details display by overriding this method.
+        """
+        json = self.case.to_json()
+        json['status'] = _('Closed') if self.case.closed else _('Open')
+
+        return json
+
+    def get_display_config(self):
+        return [
+            {
+                "layout": [
+                    [
+                        {
+                            "expr": "name",
+                            "name": _("Name"),
+                        },
+                        {
+                            "expr": "opened_on",
+                            "name": _("Opened On"),
+                            "parse_date": True,
+                            'is_phone_time': True,
+                        },
+                        {
+                            "expr": "modified_on",
+                            "name": _("Modified On"),
+                            "parse_date": True,
+                            "is_phone_time": True,
+                        },
+                        {
+                            "expr": "closed_on",
+                            "name": _("Closed On"),
+                            "parse_date": True,
+                            "is_phone_time": True,
+                        },
+                    ],
+                    [
+                        {
+                            "expr": "type",
+                            "name": _("Case Type"),
+                            "format": '<code>{0}</code>',
+                        },
+                        {
+                            "expr": "user_id",
+                            "name": _("Last Submitter"),
+                            "process": 'doc_info',
+                        },
+                        {
+                            "expr": "owner_id",
+                            "name": _("Owner"),
+                            "process": 'doc_info',
+                        },
+                        {
+                            "expr": "_id",
+                            "name": _("Case ID"),
+                        },
+                    ],
+                ],
+            }
+        ]
+
+    def dynamic_properties(self):
+        # pop seen properties off of remaining case properties
+        dynamic_data = self.case.dynamic_case_properties()
+        # hack - as of commcare 2.0, external id is basically a dynamic property
+        # so also check and add it here
+        if self.case.external_id:
+            dynamic_data['external_id'] = self.case.external_id
+
+        return dynamic_data
+
+    @property
+    def related_cases_columns(self):
+        return [
+            {
+                'name': _('Status'),
+                'expr': "status"
+            },
+            {
+                'name': _('Case Type'),
+                'expr': "type",
+            },
+            {
+                'name': _('Date Opened'),
+                'expr': "opened_on",
+                'parse_date': True,
+                "is_phone_time": True,
+            },
+            {
+                'name': _('Date Modified'),
+                'expr': "modified_on",
+                'parse_date': True,
+                "is_phone_time": True,
+            }
+        ]
+
+    @property
+    def related_type_info(self):
+        return None
+
+
+class SupplyPointDisplayWrapper(CaseDisplayWrapper):
+    def to_full_dict(self):
+        from corehq.apps.locations.models import SQLLocation
+        data = super(SupplyPointDisplayWrapper, self).to_full_dict()
+        data.update({
+            'location_type': None,
+            'location_site_code': None,
+            'location_parent_name': None,
+        })
+        try:
+            location = SQLLocation.objects.get(location_id=self.case.location_id)
+        except (SQLLocation.DoesNotExist, AttributeError):
+            pass
+        else:
+            data['location_type'] = location.location_type_name
+            data['location_site_code'] = location.site_code
+            if location.parent:
+                data['location_parent_name'] = location.parent.name
+
+        return data
+
+    def get_display_config(self):
+        return [
+            {
+                "layout": [
+                    [
+                        {
+                            "expr": "name",
+                            "name": _("Name"),
+                        },
+                        {
+                            "expr": "location_type",
+                            "name": _("Type"),
+                        },
+                        {
+                            "expr": "location_site_code",
+                            "name": _("Code"),
+                        },
+                        #{
+                            #"expr": "last_reported",
+                            #"name": _("Last Reported"),
+                        #},
+                    ],
+                    [
+                        {
+                            "expr": "location_parent_name",
+                            "name": _("Parent Location"),
+                        },
+                        {
+                            "expr": "owner_id",
+                            "name": _("Location"),
+                            "process": "doc_info",
+                        },
+                    ],
+                ],
+            }
+        ]
+
+
+def get_wrapped_case(case):
+    from corehq.apps.commtrack import const
+    wrapper_class = {
+        const.SUPPLY_POINT_CASE_TYPE: SupplyPointDisplayWrapper,
+    }.get(case.type, CaseDisplayWrapper)
+    return wrapper_class(case)
 
 
 def normalize_date(val):
@@ -48,24 +217,19 @@ def render_case(case, options):
     Change to kwargs when we're on a version of Django that does.
     """
     from corehq.apps.hqwebapp.templatetags.proptable_tags import get_tables_as_rows, get_default_definition
-    case = wrapped_case(case)
+    wrapped_case = get_wrapped_case(case)
     timezone = options.get('timezone', pytz.utc)
     timezone = timezone.localize(datetime.datetime.utcnow()).tzinfo
     _get_tables_as_rows = partial(get_tables_as_rows, timezone=timezone)
-    display = options.get('display') or case.get_display_config()
+    display = options.get('display') or wrapped_case.get_display_config()
     show_transaction_export = options.get('show_transaction_export') or False
     get_case_url = options['get_case_url']
 
-    data = copy.deepcopy(case.to_full_dict())
+    data = copy.deepcopy(wrapped_case.to_full_dict())
 
     default_properties = _get_tables_as_rows(data, display)
 
-    # pop seen properties off of remaining case properties
-    dynamic_data = case.dynamic_case_properties()
-    # hack - as of commcare 2.0, external id is basically a dynamic property
-    # so also check and add it here
-    if case.external_id:
-        dynamic_data['external_id'] = case.external_id
+    dynamic_data = wrapped_case.dynamic_properties()
 
     for section in display:
         for row in section['layout']:
@@ -81,9 +245,6 @@ def render_case(case, options):
     else:
         dynamic_properties = None
 
-    actions = case.to_json()['actions']
-    actions.reverse()
-
     the_time_is_now = datetime.datetime.utcnow()
     tz_offset_ms = int(timezone.utcoffset(the_time_is_now).total_seconds()) * 1000
     tz_abbrev = timezone.localize(the_time_is_now).tzname()
@@ -95,7 +256,7 @@ def render_case(case, options):
         except SQLProduct.DoesNotExist:
             return (_('Unknown Product ("{}")').format(product_id))
 
-    ledgers = get_current_ledger_transactions(case._id)
+    ledgers = get_current_ledger_transactions(case.case_id)
     for section, product_map in ledgers.items():
         product_tuples = sorted(
             (_product_name(product_id), product_map[product_id]) for product_id in product_map
@@ -111,8 +272,8 @@ def render_case(case, options):
         "dynamic_properties_options": {
             "style": "table"
         },
-        "case": case,
-        "case_actions": mark_safe(json.dumps(actions)),
+        "case": wrapped_case.case,
+        "case_actions": mark_safe(json.dumps(wrapped_case.actions())),
         "timezone": timezone,
         "tz_abbrev": tz_abbrev,
         "case_hierarchy_options": {
@@ -123,7 +284,7 @@ def render_case(case, options):
         "ledgers": ledgers,
         "timezone_offset": tz_offset_ms,
         "show_transaction_export": show_transaction_export,
-        "xform_api_url": reverse('single_case_forms', args=[case.domain, case._id]),
+        "xform_api_url": reverse('single_case_forms', args=[case.domain, case.case_id]),
     })
 
 
@@ -172,12 +333,12 @@ def get_session_data(case, current_case, type_info):
     if type_info and case.type in type_info:
         attr = type_info[case.type]['case_id_attr']
         return {
-            attr: case._id,
-            'case_id': current_case._id
+            attr: case.case_id,
+            'case_id': current_case.case_id
         }
     else:
         return {
-            'case_id': case._id
+            'case_id': case.case_id
         }
 
 
@@ -229,20 +390,6 @@ def process_case_hierarchy(case_output, get_case_url, type_info):
 
 
 def get_case_hierarchy(case, type_info):
-
-    def get_all_reverse_indices(case):
-        """
-        Return a list of child and extension type reverse indices for the given
-        case
-        """
-        children_indices = case.reverse_indices
-        extension_indices = [
-            CommCareCaseIndex.wrap(raw) for raw in
-            get_reverse_indices_json(case.domain, case.case_id, CASE_INDEX_EXTENSION)
-        ]
-        return extension_indices + children_indices
-
-
     def get_children(case, referenced_type=None, seen=None):
         seen = seen or set()
 
@@ -250,9 +397,9 @@ def get_case_hierarchy(case, type_info):
         if referenced_type and referenced_type in ignore_types:
             return None
 
-        seen.add(case._id)
+        seen.add(case.case_id)
         children = [
-            get_children(i.referenced_case, i.referenced_type, seen) for i in get_all_reverse_indices(case)
+            get_children(i.referenced_case, i.referenced_type, seen) for i in case.reverse_indices
             if i.referenced_id not in seen
         ]
 
@@ -294,26 +441,24 @@ def get_flat_descendant_case_list(case, get_case_url, type_info=None):
 
 @register.simple_tag
 def render_case_hierarchy(case, options):
-    # todo: what are these doing here?
     from corehq.apps.hqwebapp.templatetags.proptable_tags import get_display_data
 
-    case = wrapped_case(case)
+    wrapped_case = get_wrapped_case(case)
     get_case_url = options.get('get_case_url')
     timezone = options.get('timezone', pytz.utc)
-    columns = options.get('columns') or case.related_cases_columns
+    columns = options.get('columns') or wrapped_case.related_cases_columns
     show_view_buttons = options.get('show_view_buttons', True)
-    type_info = options.get('related_type_info', case.related_type_info)
+    type_info = options.get('related_type_info', wrapped_case.related_type_info)
 
     descendent_case_list = get_flat_descendant_case_list(
         case, get_case_url, type_info=type_info
     )
 
-    case_list = []
+    parent_cases = []
     if case.indices:
         # has parent case(s)
         # todo: handle duplicates in ancestor path (bubbling up of parent-child
         # relationships)
-        parent_cases = []
         for idx in case.indices:
             try:
                 parent_cases.append(idx.referenced_case)
@@ -332,13 +477,13 @@ def render_case_hierarchy(case, options):
             if not getattr(c, 'treetable_parent_node_id', None) and last_parent_id:
                 c.treetable_parent_node_id = last_parent_id
 
-        case_list = parent_cases + descendent_case_list
+    case_list = parent_cases + descendent_case_list
 
     for c in case_list:
         if not c:
             continue
         c.columns = []
-        case_dict = c.to_full_dict()
+        case_dict = get_wrapped_case(c).to_full_dict()
         for column in columns:
             c.columns.append(get_display_data(
                 case_dict, column, timezone=timezone))
@@ -362,7 +507,7 @@ def case_inline_display(case):
         if case.opened_on:
             ret = "%s (%s: %s)" % (case.name, _("Opened"), case.opened_on.date())
         else:
-            ret =  case.name
+            ret = case.name
     else:
         ret = _("Empty Case")
 

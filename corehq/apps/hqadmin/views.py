@@ -31,7 +31,9 @@ from couchdbkit import ResourceNotFound
 from casexml.apps.case.models import CommCareCase
 from corehq.apps.callcenter.indicator_sets import CallCenterIndicators
 from corehq.apps.hqcase.utils import get_case_by_domain_hq_user_id
-from corehq.apps.style.decorators import use_datatables, use_jquery_ui
+from corehq.apps.style.decorators import use_datatables, use_jquery_ui, \
+    use_bootstrap3
+from corehq.apps.style.utils import set_bootstrap_version3
 from corehq.apps.style.views import BaseB3SectionPageView
 from corehq.toggles import any_toggle_enabled, SUPPORT
 from corehq.util.couchdb_management import couch_config
@@ -46,7 +48,6 @@ from corehq.apps.data_analytics.admin import MALTRowAdmin
 from corehq.apps.hqadmin.history import get_recent_changes, download_changes
 from corehq.apps.hqadmin.models import HqDeploy
 from corehq.apps.hqadmin.forms import BrokenBuildsForm
-from corehq.apps.hqwebapp.views import BasePageView
 from corehq.apps.domain.decorators import require_superuser, require_superuser_or_developer
 from corehq.apps.domain.models import Domain
 from corehq.apps.hqadmin.escheck import (
@@ -63,7 +64,7 @@ from corehq.apps.hqadmin.reporting.reports import (
 )
 from corehq.apps.ota.views import get_restore_response, get_restore_params
 from corehq.apps.reports.graph_models import Axis, LineChart
-from corehq.apps.users.models import CommCareUser
+from corehq.apps.users.models import CommCareUser, WebUser
 from corehq.apps.users.util import format_username
 from corehq.sql_db.connections import Session
 from corehq.elastic import parse_args_for_es, run_query, ES_META
@@ -114,26 +115,22 @@ class BaseAdminSectionView(BaseB3SectionPageView):
         return reverse(self.urlname)
 
 
-class AuthenticateAs(BasePageView):
+class AuthenticateAs(BaseAdminSectionView):
     urlname = 'authenticate_as'
-    page_title = _("Login as other user")
+    page_title = _("Login as Other User")
     template_name = 'hqadmin/authenticate_as.html'
 
     @method_decorator(require_superuser)
+    @use_bootstrap3
     def dispatch(self, *args, **kwargs):
         return super(AuthenticateAs, self).dispatch(*args, **kwargs)
 
-    def page_url(self):
-        return reverse(self.urlname)
-
-    def get_context_data(self, **kwargs):
-        context = super(AuthenticateAs, self).get_context_data(**kwargs)
-        context.update({
+    @property
+    def page_context(self):
+        return {
             'hide_filters': True,
-            'page_url': self.page_url(),
-            'form': AuthenticateAsForm(initial=kwargs)
-        })
-        return context
+            'form': AuthenticateAsForm(initial=self.kwargs)
+        }
 
     def post(self, request, *args, **kwargs):
         form = AuthenticateAsForm(self.request.POST)
@@ -564,6 +561,24 @@ def _lookup_id_in_couch(doc_id, db_name=None):
 
 
 @require_superuser
+def web_user_lookup(request):
+    template = "hqadmin/web_user_lookup.html"
+    set_bootstrap_version3()
+    web_user_email = request.GET.get("q")
+    if not web_user_email:
+        return render(request, template, {})
+
+    web_user = WebUser.get_by_username(web_user_email)
+    if web_user is None:
+        messages.error(
+            request, "Sorry, no user found with email {}. Did you enter it correctly?".format(web_user_email)
+        )
+    return render(request, template, {
+        'web_user': web_user
+    })
+
+
+@require_superuser
 def doc_in_es(request):
     doc_id = request.GET.get("id")
     if not doc_id:
@@ -682,20 +697,29 @@ def callcenter_test(request):
     return render(request, "hqadmin/callcenter_test.html", context)
 
 
-@require_superuser
-def malt_as_csv(request):
-    from django.core.exceptions import ValidationError
+class DownloadMALTView(BaseAdminSectionView):
+    urlname = 'download_malt'
+    page_title = ugettext_lazy("Download MALT")
+    template_name = "hqadmin/malt_downloader.html"
 
-    if 'year_month' in request.GET:
-        try:
-            year, month = request.GET['year_month'].split('-')
-            year, month = int(year), int(month)
-            return _malt_csv_response(month, year)
-        except (ValueError, ValidationError):
-            messages.error(request, "Enter a valid year-month. e.g. 2015-09 (for December 2015)")
-            return render(request, "hqadmin/malt_downloader.html")
-    else:
-        return render(request, "hqadmin/malt_downloader.html")
+    @method_decorator(require_superuser)
+    @use_bootstrap3
+    def dispatch(self, request, *args, **kwargs):
+        return super(DownloadMALTView, self).dispatch(request, *args, **kwargs)
+
+    def get(self, request, *args, **kwargs):
+        from django.core.exceptions import ValidationError
+        if 'year_month' in request.GET:
+            try:
+                year, month = request.GET['year_month'].split('-')
+                year, month = int(year), int(month)
+                return _malt_csv_response(month, year)
+            except (ValueError, ValidationError):
+                messages.error(
+                    request,
+                    _("Enter a valid year-month. e.g. 2015-09 (for December 2015)")
+                )
+        return super(DownloadMALTView, self).get(request, *args, **kwargs)
 
 
 def _malt_csv_response(month, year):

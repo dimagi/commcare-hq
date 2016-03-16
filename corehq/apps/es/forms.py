@@ -21,6 +21,7 @@ class FormES(HQESQuery):
             submitted,
             completed,
             user_id,
+            user_ids_handle_unknown,
         ] + super(FormES, self).builtin_filters
 
     def user_aggregation(self):
@@ -36,12 +37,12 @@ class FormES(HQESQuery):
         return self.terms_aggregation('domain', 'domain')
 
 
-def xmlns(xmlns):
-    return filters.term('xmlns.exact', xmlns)
+def xmlns(xmlnss):
+    return filters.term('xmlns.exact', xmlnss)
 
 
-def app(app_id):
-    return filters.term('app_id', app_id)
+def app(app_ids):
+    return filters.term('app_id', app_ids)
 
 
 def submitted(gt=None, gte=None, lt=None, lte=None):
@@ -54,3 +55,20 @@ def completed(gt=None, gte=None, lt=None, lte=None):
 
 def user_id(user_ids):
     return filters.term('form.meta.userID', list(user_ids))
+
+
+def user_ids_handle_unknown(user_ids):
+    missing_users = None in user_ids
+
+    user_ids = filter(None, user_ids)
+
+    if not missing_users:
+        user_filter = user_id(user_ids)
+    elif user_ids and missing_users:
+        user_filter = filters.OR(
+            user_id(user_ids),
+            filters.missing('form.meta.userID'),
+        )
+    else:
+        user_filter = filters.missing('form.meta.userID')
+    return user_filter

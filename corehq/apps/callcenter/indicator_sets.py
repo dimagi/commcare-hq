@@ -177,7 +177,7 @@ class CallCenterIndicators(object):
         """
         :return: Set of all case types for the domain excluding the CallCenter case type.
         """
-        case_types = set(get_case_types_for_domain(self.domain))
+        case_types = get_case_types_for_domain(self.domain)
         case_types.remove(self.cc_case_type)
         return case_types
 

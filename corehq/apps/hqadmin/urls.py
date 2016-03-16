@@ -3,7 +3,10 @@ from django.views.generic import TemplateView
 from corehq.apps.domain.decorators import require_superuser
 from corehq.apps.domain.utils import new_domain_re
 from corehq.apps.reports.dispatcher import AdminReportDispatcher
-from .views import FlagBrokenBuilds, AuthenticateAs, SystemInfoView
+from .views import (
+    FlagBrokenBuilds, AuthenticateAs, SystemInfoView,
+    DownloadMALTView,
+)
 
 from corehq.apps.api.urls import admin_urlpatterns as admin_api_urlpatterns
 
@@ -26,11 +29,13 @@ urlpatterns = patterns('corehq.apps.hqadmin.views',
     url(r'^admin_reports_stats_data/$', 'admin_reports_stats_data', name="admin_reports_stats_data"),
     url(r'^loadtest/$', 'loadtest', name="loadtest_report"),
     url(r'^do_pillow_op/$', 'pillow_operation_api', name="pillow_operation_api"),
+    url(r'^web_user_lookup/$', 'web_user_lookup', name='web_user_lookup'),
     url(r'^doc_in_es/$', 'doc_in_es', name='doc_in_es'),
     url(r'^raw_couch/$', 'raw_couch', name='raw_couch'),
     url(r'^callcenter_test/$', 'callcenter_test', name='callcenter_test'),
     (r'^api/', include(admin_api_urlpatterns)),
-    url(r'^download_malt/$', 'malt_as_csv', name='download_malt'),
+    url(r'^download_malt/$',
+        DownloadMALTView.as_view(), name=DownloadMALTView.urlname),
     url(r'^dimagisphere/$',
         require_superuser(TemplateView.as_view(template_name='hqadmin/dimagisphere/form_feed.html')),
         name='dimagisphere'),

@@ -1,4 +1,4 @@
-from django.conf.urls import patterns, url
+from django.conf.urls import patterns, url, include
 from corehq.apps.sms.views import (
     DomainSmsGatewayListView,
     SubscribeSMSView,
@@ -12,8 +12,15 @@ from corehq.apps.sms.views import (
     EditGlobalGatewayView,
     GlobalBackendMap,
     ComposeMessageView,
-    SMSLanguagesView)
+    SMSLanguagesView,
+    ChatMessageHistory,
+    ChatLastReadMessage,
+    ChatOverSMSView
+)
 from corehq.apps.smsbillables.dispatcher import SMSAdminInterfaceDispatcher
+from corehq.messaging.smsbackends.telerivet.urls import domain_specific as telerivet_urls
+
+
 
 urlpatterns = patterns('corehq.apps.sms.views',
     url(r'^$', 'default', name='sms_default'),
@@ -22,7 +29,6 @@ urlpatterns = patterns('corehq.apps.sms.views',
     url(r'^compose/$', ComposeMessageView.as_view(), name=ComposeMessageView.urlname),
     url(r'^message_test/(?P<phone_number>\d+)/$', 'message_test', name='message_test'),
     url(r'^api/send_sms/$', 'api_send_sms', name='api_send_sms'),
-    url(r'^history/$', 'messaging', name='messaging'),
     url(r'^forwarding_rules/$', 'list_forwarding_rules', name='list_forwarding_rules'),
     url(r'^add_forwarding_rule/$', 'add_forwarding_rule', name='add_forwarding_rule'),
     url(r'^edit_forwarding_rule/(?P<forwarding_rule_id>[\w-]+)/$', 'add_forwarding_rule', name='edit_forwarding_rule'),
@@ -34,12 +40,12 @@ urlpatterns = patterns('corehq.apps.sms.views',
         EditDomainGatewayView.as_view(), name=EditDomainGatewayView.urlname
     ),
     url(r'^gateways/$', DomainSmsGatewayListView.as_view(), name=DomainSmsGatewayListView.urlname),
-    url(r'^chat_contacts/$', 'chat_contacts', name='chat_contacts'),
+    url(r'^chat_contacts/$', ChatOverSMSView.as_view(), name=ChatOverSMSView.urlname),
     url(r'^chat_contact_list/$', 'chat_contact_list', name='chat_contact_list'),
     url(r'^chat/(?P<contact_id>[\w-]+)/(?P<vn_id>[\w-]+)/$', 'chat', name='sms_chat'),
     url(r'^chat/(?P<contact_id>[\w-]+)/?$', 'chat', name='sms_chat'),
-    url(r'^api/history/$', 'api_history', name='api_history'),
-    url(r'^api/last_read_message/$', 'api_last_read_message', name='api_last_read_message'),
+    url(r'^api/history/$', ChatMessageHistory.as_view(), name=ChatMessageHistory.urlname),
+    url(r'^api/last_read_message/$', ChatLastReadMessage.as_view(), name=ChatLastReadMessage.urlname),
     url(r'^settings/$', SMSSettingsView.as_view(), name=SMSSettingsView.urlname),
     url(r'^subscribe_sms/$', SubscribeSMSView.as_view(), name=SubscribeSMSView.urlname),
     url(r'^languages/$', SMSLanguagesView.as_view(), name=SMSLanguagesView.urlname),
@@ -50,7 +56,9 @@ urlpatterns = patterns('corehq.apps.sms.views',
         name=ManageRegistrationInvitationsView.urlname),
     url(r'^app_info/(?P<token>[\w-]+)/$', InvitationAppInfoView.as_view(),
         name=InvitationAppInfoView.urlname),
+    url(r'^telerivet/', include(telerivet_urls)),
 )
+
 
 sms_admin_interface_urls = patterns('corehq.apps.sms.views',
     url(r'^$', GlobalSmsGatewayListView.as_view(), name='default_sms_admin_interface'),

@@ -1,34 +1,21 @@
 {% extends "app_manager/managed_app.html" %}
 {% load xforms_extras %}
 {% load hq_shared_tags %}
+{% load compress %}
 {% load i18n %}
 
 {% block title %}{{ form.name|clean_trans:langs }}{% endblock %}
 
 {% block stylesheets %}{{ block.super }}
     <link rel="stylesheet" href="{% new_static 'syntaxhighlighter/styles/shCoreDefault.css' %}"/>
-    <style>
-        .casexml ul {
-            margin-left: 15px;
-        }
-        input[type="radio"]{
-            margin: 3px 5px 5px 0px;
-        }
-        .bigdrop {
-            width: 600px !important;
-        }
-        .nested-fieldset {
-            margin-left: 50px;
-        }
-        .nested-fieldset .form-inline {
-            margin-left: 50px;
-        }
-    </style>
 {% endblock %}
 
 {% block js %}{{ block.super }}
+    {% compress js %}
+    <script src="{% new_static 'syntaxhighlighter/scripts/XRegExp.js' %}"></script>
     <script src="{% new_static 'syntaxhighlighter/scripts/shCore.js' %}"></script>
     <script src="{% new_static 'syntaxhighlighter/scripts/shBrushXml.js' %}"></script>
+    {% endcompress %}
     <script src="{% new_static 'style/ko/knockout_subscribables.ko.js' %}"></script>
     <script src="{% new_static 'jquery.caret/dist/jquery.caret-1.5.2.min.js' %}"></script>
 {% endblock %}
@@ -113,12 +100,12 @@
             {% if allow_form_filtering %}
             var putInRoot = {{ module.put_in_root|BOOL }};
             var isUserCaseInUse = {{ is_usercase_in_use|BOOL }};
+            var isModuleFilterEnabled = {{ is_module_filter_enabled|BOOL }};
             var formFilter = {{ form.form_filter|JSON }};
             var allOtherFormsRequireACase = {{ form.all_other_forms_require_a_case|BOOL }};
             var formFilterAllowed = ko.computed(function () {
-                return ((allOtherFormsRequireACase &&
-                         form_requires() === 'case') ||
-                        isUserCaseInUse) && !putInRoot;
+                return ((allOtherFormsRequireACase && form_requires() === 'case' && !putInRoot) ||
+                        isUserCaseInUse || isModuleFilterEnabled);
             });
             $('#form-filter').koApplyBindings({
                     formFilter: ko.observable(formFilter),
@@ -127,6 +114,7 @@
             {% endif %}
 
             {% if allow_form_workflow %}
+                var FormWorkflow = hqImport('app_manager/js/form_workflow.js').FormWorkflow;
                 var labels = {};
                 labels[FormWorkflow.Values.DEFAULT] = "{% trans "Home Screen" %}";
                 labels[FormWorkflow.Values.ROOT] = "{% trans "Module Menu" %}";
@@ -194,16 +182,18 @@
     </script>
     <script>
         $(function () {
-            COMMCAREHQ.app_manager.setupValidation(
-                '{% url "validate_form_for_build" domain app.id form.unique_id %}');
+            var setupValidation = hqImport('app_manager/js/app_manager.js').setupValidation;
+            setupValidation('{% url "validate_form_for_build" domain app.id form.unique_id %}');
         });
     </script>
 {% endblock %}
 
 {% block form-view %}
     <div id="build_errors"></div>
-    <div id="form_short_comment" class="app-comment">{{ form.short_comment }}</div>
-    <div class="delete-me">
+    {% if form.short_comment %}
+        <div id="form_short_comment" class="app-comment well">{{ form.short_comment }}</div>
+    {% endif %}
+    <div class="pull-right">
         <form action="{% url "delete_form" domain app.id module.unique_id form.unique_id %}" method="post">
             {% csrf_token %}
             <button type="submit" class="disable-on-submit btn btn-danger">

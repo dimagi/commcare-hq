@@ -1,11 +1,16 @@
-from contextlib import contextmanager
-from copy import copy
+from __future__ import absolute_import
 import os
 import unittest
+import yaml
+from contextlib import contextmanager
+from copy import copy
+
 from django.apps import apps
 from django.test.simple import build_test
-import yaml
 from django.conf import settings
+from nose.tools import nottest
+
+build_test = nottest(build_test)
 
 
 class DependenciesNotFound(Exception):
@@ -117,6 +122,7 @@ class AppAndTestMap(object):
         return dependencies
 
 
+@nottest
 @contextmanager
 def optimize_apps_for_test_labels(test_labels):
     test_map = AppAndTestMap()
@@ -140,6 +146,7 @@ def optimize_apps_for_test_labels(test_labels):
         apps.unset_installed_apps()
 
 
+@nottest
 def get_app_test_db_dependencies():
     file_path = os.path.join(os.path.dirname(__file__), 'app_test_db_dependencies.yml')
     all_dependencies = {}

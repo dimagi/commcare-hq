@@ -9,8 +9,7 @@ from dimagi.utils.couch import LockManager
 from dimagi.utils.decorators.memoized import memoized
 from .base import HQPillow
 import logging
-from pillowtop.checkpoints.manager import PillowCheckpoint, get_django_checkpoint_store, \
-    PillowCheckpointEventHandler
+from pillowtop.checkpoints.manager import PillowCheckpoint, PillowCheckpointEventHandler
 from pillowtop.es_utils import doc_exists, ElasticsearchIndexMeta
 from pillowtop.listener import lock_manager
 from pillowtop.pillow.interface import ConstructedPillow
@@ -77,7 +76,6 @@ def transform_case_for_elasticsearch(doc_dict):
 
 def get_sql_case_to_elasticsearch_pillow():
     checkpoint = PillowCheckpoint(
-        get_django_checkpoint_store(),
         'sql-cases-to-elasticsearch',
     )
     case_processor = ElasticProcessor(
@@ -89,7 +87,7 @@ def get_sql_case_to_elasticsearch_pillow():
         name='SqlCaseToElasticsearchPillow',
         document_store=None,
         checkpoint=checkpoint,
-        change_feed=KafkaChangeFeed(topic=topics.CASE_SQL, group_id='sql-cases-to-es'),
+        change_feed=KafkaChangeFeed(topics=[topics.CASE_SQL], group_id='sql-cases-to-es'),
         processor=case_processor,
         change_processed_event_handler=PillowCheckpointEventHandler(
             checkpoint=checkpoint, checkpoint_frequency=100,

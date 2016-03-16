@@ -1,14 +1,13 @@
-{% extends "style/bootstrap2/base_mobile.html" %}
+{% extends "style/base_mobile.html" %}
 {% load hq_shared_tags %}
 {% load i18n %}
-{% block content %} 
-    <div class="navbar">
-        <div class="navbar-inner">
-            <img class="brand" src="{% static 'hqstyle/img/commcare-logo-mobile.png' %}" alt="CommCare HQ Mobile" />
-            <h1 class="page-title">{% trans title %}</h1>
-            {% block mobile-nav %}
-            {% endblock %}
-        </div>
-    </div>
+{% block breadcrumbs %}
+<ol id="hq-breadcrumbs" class="breadcrumb breadcrumb-hq-section breadcrumb-mobile">
+    <li>{% trans title %}</li>
+    {% block crumb %}
+    {% endblock %}
+</ol>
+{% endblock %}
+{% block content %}
     {{ report }}
 {% endblock %}

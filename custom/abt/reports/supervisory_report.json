@@ -7,10 +7,12 @@
         "airsrwanda",
         "airszambia",
         "airszimbabwe",
-        "airstanzania"
+        "airstanzania",
+        "airsghana",
+        "airsbenin"
     ],
     "report_id": "supervisory_report",
-    "data_source_table": "supervisory-003",
+    "data_source_table": "supervisory-005",
     "config": {
         "doc_type": "ReportConfiguration",
         "domain": "airs",

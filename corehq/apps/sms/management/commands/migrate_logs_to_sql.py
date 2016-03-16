@@ -3,7 +3,7 @@ from corehq.apps.sms.models import (SMSLog, SMS, CallLog, LastReadMessage,
     ExpectedCallbackEventLog, ExpectedCallback, SQLLastReadMessage,
     MigrationStatus)
 from custom.fri.models import FRISMSLog
-from dimagi.utils.couch.database import iter_docs
+from dimagi.utils.couch.database import iter_docs_with_retry
 from django.core.management.base import BaseCommand
 from optparse import make_option
 
@@ -86,7 +86,7 @@ class Command(BaseCommand):
         count = 0
         ids = get_couch_ids_method()
         total_count = len(ids)
-        for doc in iter_docs(couch_model.get_db(), ids):
+        for doc in iter_docs_with_retry(couch_model.get_db(), ids):
             try:
                 self.clean_doc(doc)
                 couch_obj = couch_model.wrap(doc)

@@ -60,6 +60,9 @@ def get_cases_in_domain(domain, type=None):
 
 
 def get_case_types_for_domain(domain):
+    """
+    :return: set of case types
+    """
     key = [domain]
     rows = CommCareCase.get_db().view(
         'case_types_by_domain/view',
@@ -67,11 +70,11 @@ def get_case_types_for_domain(domain):
         endkey=key + [{}],
         group_level=2,
     ).all()
-    case_types = []
+    case_types = set()
     for row in rows:
         _, case_type = row['key']
         if case_type:
-            case_types.append(case_type)
+            case_types.add(case_type)
     return case_types
 
 
@@ -136,28 +139,6 @@ def _get_case_ids(domain, owner_id, is_closed):
     )]
 
 
-def get_total_case_count():
-    """
-    Total count of all cases in the database.
-    """
-    from casexml.apps.case.models import CommCareCase
-    results = CommCareCase.get_db().view(
-        'cases_by_owner/view',
-        reduce=True,
-    ).one()
-    return results['value'] if results else 0
-
-
-def get_number_of_cases_in_domain_by_owner(domain, owner_id):
-    res = CommCareCase.get_db().view(
-        'cases_by_owner/view',
-        startkey=[domain, owner_id],
-        endkey=[domain, owner_id, {}],
-        reduce=True,
-    ).one()
-    return res['value'] if res else 0
-
-
 def iter_lite_cases_json(case_ids, chunksize=100):
     for case_id_chunk in chunked(case_ids, chunksize):
         rows = CommCareCase.get_db().view(
@@ -203,17 +184,6 @@ def get_cases_in_domain_by_external_id(domain, external_id):
         reduce=False,
         include_docs=True,
     ).all()
-
-
-def get_one_case_in_domain_by_external_id(domain, external_id):
-    return CommCareCase.view(
-        'cases_by_domain_external_id/view',
-        key=[domain, external_id],
-        reduce=False,
-        include_docs=True,
-        # limit for efficiency, 2 instead of 1 so it raises if multiple found
-        limit=2,
-    ).one()
 
 
 def get_supply_point_case_in_domain_by_id(

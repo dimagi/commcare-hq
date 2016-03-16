@@ -5,7 +5,6 @@ from django.http import (
     HttpResponseBadRequest,
     HttpResponseForbidden,
 )
-from casexml.apps.case.models import CommCareCase
 from casexml.apps.case.xform import get_case_updates, is_device_report
 from corehq.apps.domain.decorators import login_or_digest_ex, login_or_basic_ex
 from corehq.apps.receiverwrapper.auth import (
@@ -14,18 +13,44 @@ from corehq.apps.receiverwrapper.auth import (
     domain_requires_auth,
 )
 from corehq.apps.receiverwrapper.util import get_app_and_build_ids, determine_authtype
+from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 from corehq.form_processor.submission_post import SubmissionPost
 from corehq.form_processor.utils import convert_xform_to_json
-from corehq.util.datadog.utils import count_by_response_code
+from corehq.util.datadog.metrics import MULTIMEDIA_SUBMISSION_ERROR_COUNT
+from corehq.util.datadog.utils import count_by_response_code, log_counter
 import couchforms
 from django.views.decorators.http import require_POST
 from django.views.decorators.csrf import csrf_exempt
+
+from couchforms.const import MAGIC_PROPERTY
+from couchforms.getters import MultimediaBug
+from dimagi.utils.logging import notify_exception
 
 
 @count_by_response_code('commcare.xform_submissions')
 def _process_form(request, domain, app_id, user_id, authenticated,
                   auth_cls=AuthContext):
-    instance, attachments = couchforms.get_instance_and_attachment(request)
+    try:
+        instance, attachments = couchforms.get_instance_and_attachment(request)
+    except MultimediaBug as e:
+        try:
+            instance = request.FILES[MAGIC_PROPERTY].read()
+            xform = convert_xform_to_json(instance)
+            meta = xform.get("meta", {})
+        except:
+            meta = {}
+
+        details = {
+            "domain": domain,
+            "app_id": app_id,
+            "user_id": user_id,
+            "authenticated": authenticated,
+            "form_meta": meta,
+        }
+        log_counter(MULTIMEDIA_SUBMISSION_ERROR_COUNT, details)
+        notify_exception(None, "Received a submission with POST.keys()", details)
+        return HttpResponseBadRequest(e.message)
+
     app_id, build_id = get_app_and_build_ids(domain, app_id)
     response = SubmissionPost(
         instance=instance,
@@ -133,7 +158,7 @@ def _noauth_post(request, domain, app_id=None):
 
         # todo: consider whether we want to remove this call, and/or pass the result
         # through to the next function so we don't have to get the cases again later
-        cases = CommCareCase.bulk_get_lite(list(case_ids))
+        cases = CaseAccessors(domain).get_cases(list(case_ids))
         for case in cases:
             if case.domain != domain:
                 return False

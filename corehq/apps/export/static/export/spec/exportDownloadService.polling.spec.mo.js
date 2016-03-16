@@ -40,7 +40,7 @@ describe('DownloadExportFormController -> exportDownloadService - Polling', func
             assert.equal(DnldExpData.exportDownloadService.downloadError, progressErrorResponse.progress.error);
             DnldExpData.exportDownloadService.resetDownload();
             DnldExpData.currentScope.$apply();
-            assert.isNull(DnldExpData.exportDownloadService.downloadError);
+            assert.isFalse(DnldExpData.exportDownloadService.downloadError);
         });
     });
 
@@ -62,7 +62,7 @@ describe('DownloadExportFormController -> exportDownloadService - Polling', func
             for (var r=0; r < 3; r++) {
                 DnldExpData.$interval.flush(2000);
                 DnldExpData.$httpBackend.flush();
-                assert.isNull(DnldExpData.exportDownloadService.downloadError);
+                assert.isFalse(DnldExpData.exportDownloadService.downloadError);
             }
             // on 4th retry, show download error
             DnldExpData.$interval.flush(2000);
@@ -81,7 +81,7 @@ describe('DownloadExportFormController -> exportDownloadService - Polling', func
             assert.equal(DnldExpData.exportDownloadService._numErrors, 5);
             DnldExpData.exportDownloadService.resetDownload();
             DnldExpData.currentScope.$apply();
-            assert.isNull(DnldExpData.exportDownloadService.downloadError);
+            assert.isFalse(DnldExpData.exportDownloadService.downloadError);
             assert.equal(DnldExpData.exportDownloadService._numErrors, 0);
         });
     });
@@ -103,7 +103,7 @@ describe('DownloadExportFormController -> exportDownloadService - Polling', func
             for (var r=0; r < 10; r++) {
                 DnldExpData.$interval.flush(2000);
                 DnldExpData.$httpBackend.flush();
-                assert.isFalse(DnldExpData.exportDownloadService.showCeleryError);
+                assert.isFalse(DnldExpData.exportDownloadService.celeryError);
             }
             // on 11th retry, throw celery error
             DnldExpData.$interval.flush(2000);
@@ -111,18 +111,18 @@ describe('DownloadExportFormController -> exportDownloadService - Polling', func
         });
 
         it('poll stops on celery error after 11th retry, registers celery error', function () {
-            assert.isTrue(DnldExpData.exportDownloadService.showCeleryError);
+            assert.isTrue(DnldExpData.exportDownloadService.celeryError);
             // make sure polling stops
             DnldExpData.$interval.flush(2000);
             assert.throw(DnldExpData.$httpBackend.flush);
         });
 
         it('registers a reset', function () {
-            assert.isTrue(DnldExpData.exportDownloadService.showCeleryError);
+            assert.isTrue(DnldExpData.exportDownloadService.celeryError);
             assert.equal(DnldExpData.exportDownloadService._numCeleryRetries, 12);
             DnldExpData.exportDownloadService.resetDownload();
             DnldExpData.currentScope.$apply();
-            assert.isFalse(DnldExpData.exportDownloadService.showCeleryError);
+            assert.isFalse(DnldExpData.exportDownloadService.celeryError);
             assert.equal(DnldExpData.exportDownloadService._numCeleryRetries, 0);
         });
     });
@@ -143,7 +143,7 @@ describe('DownloadExportFormController -> exportDownloadService - Polling', func
             for (var r=0; r < 3; r++) {
                 DnldExpData.$interval.flush(2000);
                 DnldExpData.$httpBackend.flush();
-                assert.isNull(DnldExpData.exportDownloadService.downloadError);
+                assert.isFalse(DnldExpData.exportDownloadService.downloadError);
             }
             // on 4th retry, show 'default' download error
             DnldExpData.$interval.flush(2000);
@@ -162,7 +162,7 @@ describe('DownloadExportFormController -> exportDownloadService - Polling', func
             assert.equal(DnldExpData.exportDownloadService._numErrors, 5);
             DnldExpData.exportDownloadService.resetDownload();
             DnldExpData.currentScope.$apply();
-            assert.isNull(DnldExpData.exportDownloadService.downloadError);
+            assert.isFalse(DnldExpData.exportDownloadService.downloadError);
             assert.equal(DnldExpData.exportDownloadService._numErrors, 0);
         });
     });

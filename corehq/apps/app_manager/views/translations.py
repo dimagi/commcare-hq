@@ -35,22 +35,34 @@ def get_index_for_defaults(langs):
 @require_can_edit_apps
 @get_file("bulk_upload_file")
 def upload_bulk_ui_translations(request, domain, app_id):
+
+    def _html_message(header_text, messages):
+        message = header_text + "<br>"
+        for prop in messages:
+            message += "<li>%s</li>" % prop
+        return message
+
     success = False
     try:
         app = get_app(domain, app_id)
-        trans_dict, error_properties = process_ui_translation_upload(
+        trans_dict, error_properties, warnings = process_ui_translation_upload(
             app, request.file
         )
         if error_properties:
-            message = _("We found problem with following translations:")
-            message += "<br>"
-            for prop in error_properties:
-                message += "<li>%s</li>" % prop
+            message = _html_message(_("Upload failed. We found problems with the following translations:"),
+                                    error_properties)
             messages.error(request, message, extra_tags='html')
         else:
+            # update translations only if there were no errors
             app.translations = dict(trans_dict)
             app.save()
             success = True
+
+        if warnings:
+            message = _html_message(_("Upload succeeded, but we found following issues for some properties"),
+                                    warnings)
+            messages.warning(request, message, extra_tags='html')
+
     except Exception:
         notify_exception(request, 'Bulk Upload Translations Error')
         messages.error(request, _("Something went wrong! Update failed. We're looking into it"))
@@ -100,25 +112,31 @@ def process_ui_translation_upload(app, trans_file):
 
     workbook = WorkbookJSONReader(trans_file)
     translations = workbook.get_worksheet(title='translations')
-    valid_translatable_strings = load_translations('en', 2)
 
+    commcare_ui_strings = load_translations('en', 2).keys()
     default_trans = get_default_translations_for_download(app)
     lang_with_defaults = app.langs[get_index_for_defaults(app.langs)]
+
     trans_dict = defaultdict(dict)
+    # Use this to hard fail and not update any translations
     error_properties = []
+    # Use this to pass warnings without failing hard
+    warnings = []
     for row in translations:
+        if row["property"] not in commcare_ui_strings:
+            # Add a warning for  unknown properties, but still add them to the translation dict
+            warnings.append(row["property"] + " is not a known CommCare UI string, but we added it anyway")
         for lang in app.langs:
             if row.get(lang):
                 all_parameters = re.findall("\$.*?}", row[lang])
                 for param in all_parameters:
                     if not re.match("\$\{[0-9]+}", param):
                         error_properties.append(row["property"] + ' - ' + row[lang])
-                if row["property"] not in valid_translatable_strings:
-                    error_properties.append(row["property"] + " is not a known property")
-                if not (lang_with_defaults == lang
-                        and row[lang] == default_trans.get(row["property"], "")):
+                if not (lang_with_defaults == lang and
+                        row[lang] == default_trans.get(row["property"], "")):
                     trans_dict[lang].update({row["property"]: row[lang]})
-    return trans_dict, error_properties
+
+    return trans_dict, error_properties, warnings
 
 
 def build_ui_translation_download_file(app):

@@ -5,6 +5,7 @@ from __future__ import absolute_import, print_function, unicode_literals
 from django.test import TestCase
 
 # External imports
+from django.core.management import call_command
 from django_prbac.models import Grant, Role
 
 # CCHQ imports
@@ -15,6 +16,17 @@ class TestCchqPrbacBootstrap(TestCase):
     """
     Tests the PRBAC bootstrap with and without --dry-run
     """
+
+    @classmethod
+    def setUpClass(cls):
+        Grant.objects.all().delete()
+        Role.objects.all().delete()
+
+    @classmethod
+    def tearDownClass(cls):
+        # re-bootstrap for other tests
+        call_command('cchq_prbac_bootstrap', testing=True)
+        call_command('cchq_software_plan_bootstrap', testing=True, fresh_start=True)
 
     def test_dry_run(self):
         """

@@ -4,8 +4,8 @@ import functools
 import json
 import os
 import tempfile
-from django.conf import settings
 
+from django.conf import settings
 from django.contrib import messages
 from django.core.exceptions import ValidationError
 from django.core.urlresolvers import reverse
@@ -13,23 +13,30 @@ from django.http import HttpResponseRedirect, HttpResponse
 from django.http.response import Http404
 from django.shortcuts import render
 from django.utils.http import urlencode
-from django.utils.translation import ugettext as _, ugettext_noop, ugettext_lazy
+from django.utils.translation import ugettext as _, ugettext_lazy
 from django.views.decorators.http import require_POST
 from django.views.generic import View
-from corehq.apps.analytics.tasks import track_workflow
+
+
 from djangular.views.mixins import JSONResponseMixin, allow_remote_invocation
-
-from corehq.apps.app_manager.dbaccessors import domain_has_apps
-from corehq.apps.app_manager.models import Application, Form
-
 from sqlalchemy import types, exc
 from sqlalchemy.exc import ProgrammingError
 
+from couchexport.export import export_from_tables
+from couchexport.files import Temp
+from couchexport.models import Format
+from couchexport.shortcuts import export_response
+from dimagi.utils.decorators.memoized import memoized
+from dimagi.utils.web import json_response
+
+from corehq import toggles
+from corehq.apps.analytics.tasks import track_workflow
+from corehq.apps.app_manager.dbaccessors import domain_has_apps
+from corehq.apps.app_manager.models import Application, Form
 from corehq.apps.dashboard.models import IconContext, TileConfiguration, Tile
+from corehq.apps.domain.decorators import login_and_domain_required, login_or_basic
 from corehq.apps.domain.views import BaseDomainView
 from corehq.apps.reports.dispatcher import cls_to_view_login_and_domain
-from corehq import toggles
-from corehq.apps.domain.decorators import login_and_domain_required, login_or_basic
 from corehq.apps.style.decorators import (
     use_bootstrap3,
     use_select2,
@@ -45,14 +52,6 @@ from corehq.apps.userreports.exceptions import (
     ReportConfigurationNotFoundError,
     UserQueryError,
 )
-from corehq.apps.userreports.reports.builder.forms import (
-    ConfigurePieChartReportForm,
-    ConfigureTableReportForm,
-    DataSourceForm,
-    ConfigureBarChartReportForm,
-    ConfigureListReportForm,
-    ConfigureWorkerReportForm,
-    ConfigureMapReportForm)
 from corehq.apps.userreports.models import (
     ReportConfiguration,
     DataSourceConfiguration,
@@ -61,6 +60,14 @@ from corehq.apps.userreports.models import (
     get_datasource_config,
     get_report_config,
 )
+from corehq.apps.userreports.reports.builder.forms import (
+    ConfigurePieChartReportForm,
+    ConfigureTableReportForm,
+    DataSourceForm,
+    ConfigureBarChartReportForm,
+    ConfigureListReportForm,
+    ConfigureWorkerReportForm,
+    ConfigureMapReportForm)
 from corehq.apps.userreports.reports.filters.choice_providers import ChoiceQueryContext
 from corehq.apps.userreports.reports.view import ConfigurableReport
 from corehq.apps.userreports.sql import IndicatorSqlAdapter
@@ -75,14 +82,6 @@ from corehq.apps.users.decorators import require_permission
 from corehq.apps.users.models import Permissions
 from corehq.toggles import REPORT_BUILDER_MAP_REPORTS
 from corehq.util.couch import get_document_or_404
-
-from couchexport.export import export_from_tables
-from couchexport.files import Temp
-from couchexport.models import Format
-from couchexport.shortcuts import export_response
-
-from dimagi.utils.web import json_response
-from dimagi.utils.decorators.memoized import memoized
 
 
 def get_datasource_config_or_404(config_id, domain):
@@ -351,7 +350,7 @@ class ConfigureChartReport(ReportBuilderView):
     page_title = ugettext_lazy("Configure Report")
     template_name = "userreports/partials/report_builder_configure_report.html"
     url_args = ['report_name', 'application', 'source_type', 'source']
-    report_title = ugettext_noop("Chart Report: {}")
+    report_title = ugettext_lazy("Chart Report: {}")
     report_type = 'chart'
     existing_report = None
 
@@ -382,6 +381,7 @@ class ConfigureChartReport(ReportBuilderView):
             'filter_property_help_text': _('Choose the property you would like to add as a filter to this report.'),
             'filter_display_help_text': _('Web users viewing the report will see this display text instead of the property name. Name your filter something easy for users to understand.'),
             'filter_format_help_text': _('What type of property is this filter?<br/><br/><strong>Date</strong>: select this if the property is a date.<br/><strong>Choice</strong>: select this if the property is text or multiple choice.'),
+            'calculation_help_text': _("Column format selection will determine how each row's value is calculated.")
         }
 
     @property
@@ -426,7 +426,7 @@ class ConfigureChartReport(ReportBuilderView):
 
 
 class ConfigureListReport(ConfigureChartReport):
-    report_title = ugettext_noop("List Report: {}")
+    report_title = ugettext_lazy("List Report: {}")
     report_type = 'list'
 
     @property
@@ -436,7 +436,7 @@ class ConfigureListReport(ConfigureChartReport):
 
 
 class ConfigureTableReport(ConfigureChartReport):
-    report_title = ugettext_noop("Table Report: {}")
+    report_title = ugettext_lazy("Table Report: {}")
     report_type = 'table'
 
     @property
@@ -446,7 +446,7 @@ class ConfigureTableReport(ConfigureChartReport):
 
 
 class ConfigureWorkerReport(ConfigureChartReport):
-    report_title = ugettext_noop("Worker Report: {}")
+    report_title = ugettext_lazy("Worker Report: {}")
     report_type = 'worker'
 
     @property
@@ -456,7 +456,7 @@ class ConfigureWorkerReport(ConfigureChartReport):
 
 
 class ConfigureMapReport(ConfigureChartReport):
-    report_title = ugettext_noop("Map Report: {}")
+    report_title = ugettext_lazy("Map Report: {}")
     report_type = 'map'
 
     @property
@@ -547,7 +547,7 @@ def edit_data_source(request, domain, config_id):
 @login_and_domain_required
 @toggles.USER_CONFIGURABLE_REPORTS.required_decorator()
 def create_data_source(request, domain):
-    return _edit_data_source_shared(request, domain, DataSourceConfiguration(domain=domain))
+    return _edit_data_source_shared(request, domain, DataSourceConfiguration(domain=domain), create=True)
 
 
 @login_and_domain_required
@@ -579,12 +579,15 @@ def create_data_source_from_app(request, domain):
     return render(request, 'userreports/data_source_from_app.html', context)
 
 
-def _edit_data_source_shared(request, domain, config, read_only=False):
+def _edit_data_source_shared(request, domain, config, read_only=False, create=False):
     if request.method == 'POST':
         form = ConfigurableDataSourceEditForm(domain, config, read_only, data=request.POST)
         if form.is_valid():
             config = form.save(commit=True)
             messages.success(request, _(u'Data source "{}" saved!').format(config.display_name))
+            if create:
+                # if we just created a data source, redirect to the edit view to avoid creating a new one
+                return HttpResponseRedirect(reverse('edit_configurable_data_source', args=[domain, config._id]))
     else:
         form = ConfigurableDataSourceEditForm(domain, config, read_only)
     context = _shared_context(domain)
@@ -757,6 +760,15 @@ def export_data_source(request, domain, config_id):
 
     try:
         params = process_url_params(request.GET, table.columns)
+        allowed_formats = [
+            Format.CSV,
+            Format.HTML,
+            Format.XLS,
+            Format.XLS_2007,
+        ]
+        if params.format not in allowed_formats:
+            msg = ugettext_lazy('format must be one of the following: {}').format(', '.join(allowed_formats))
+            return HttpResponse(msg, status=400)
     except UserQueryError as e:
         return HttpResponse(e.message, status=400)
 
@@ -790,8 +802,10 @@ def export_data_source(request, domain, config_id):
             tables = [[config.table_id, get_table(q)]]
             export_from_tables(tables, tmpfile, params.format)
         except exc.DataError:
-            msg = _("There was a problem executing your query, please make "
-                    "sure your parameters are valid.")
+            msg = ugettext_lazy(
+                "There was a problem executing your query, "
+                "please make sure your parameters are valid."
+            )
             return HttpResponse(msg, status=400)
         return export_response(Temp(path), params.format, config.display_name)
 

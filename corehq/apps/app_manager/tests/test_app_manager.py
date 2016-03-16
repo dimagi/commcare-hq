@@ -1,3 +1,4 @@
+# coding: utf-8
 import json
 from corehq.apps.app_manager.const import APP_V2
 from corehq.apps.app_manager.tests.util import add_build, patch_default_builds
@@ -48,7 +49,7 @@ class AppManagerTest(TestCase):
             module = self.app.get_module(i)
             detail = module.ref_details.short
             detail.columns.append(
-                DetailColumn(header={"en": "test"}, model="case", field="test", format="plain")
+                DetailColumn(header={"en": u"test 字 unicode"}, model="case", field="test", format="plain")
             )
             detail.columns.append(
                 DetailColumn(header={"en": "age"}, model="case", field="age", format="years-ago")
@@ -71,6 +72,10 @@ class AppManagerTest(TestCase):
     def testCreateJadJar(self):
         self.app.build_spec = BuildSpec(**self.build1)
         self.app.create_build_files(save=True)
+        self.app.save(increment_version=False)
+        # get a fresh one from the db to make sure attachments aren't cached
+        # since that's closer to the real situation
+        self.app = Application.get(self.app._id)
         self.app.create_jadjar_from_build_files(save=True)
         self.app.save(increment_version=False)
         self._check_has_build_files(self.app, self.jad_jar_paths)

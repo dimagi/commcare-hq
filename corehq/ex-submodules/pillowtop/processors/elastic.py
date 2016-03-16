@@ -1,5 +1,6 @@
 from .interface import PillowProcessor
 from pillowtop.listener import send_to_elasticsearch
+from pillowtop.logger import pillow_logging
 
 
 class ElasticProcessor(PillowProcessor):
@@ -15,7 +16,12 @@ class ElasticProcessor(PillowProcessor):
     def process_change(self, pillow_instance, change, do_set_checkpoint):
         # todo: if deletion - delete
         # prepare doc for es
-        doc_ready_to_save = self.doc_transform_fn(change.get_document())
+        doc = change.get_document()
+        if doc is None:
+            pillow_logging.warning("Unable to get document from change: {}".format(change))
+            return
+
+        doc_ready_to_save = self.doc_transform_fn(doc)
         # send it across
         send_to_elasticsearch(
             index=self.index_meta.index,

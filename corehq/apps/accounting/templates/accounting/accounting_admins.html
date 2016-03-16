@@ -1,4 +1,4 @@
-{% extends 'style/bootstrap2/base_paginated_crud.html' %}
+{% extends 'style/bootstrap3/base_paginated_crud.html' %}
 {% load hq_shared_tags %}
 {% load i18n %}
 {% load crispy_forms_tags %}
@@ -14,10 +14,10 @@
 
 {% block pagination_templates %}
     <script type="text/html" id="accounting-admin-row">
-        <td class="span8">
+        <td class="col-sm-8">
             <a data-bind="text: username"></a>
         </td>
-        <td class="span4">
+        <td class="col-sm-4">
             <button type="button"
                     data-toggle="modal"
                     data-bind="
@@ -26,61 +26,66 @@
                         }
                     "
                     class="btn btn-danger">
-                <i class="icon-remove"></i> {% trans 'Remove' %}
+                <i class="fa fa-remove"></i> {% trans 'Remove' %}
             </button>
 
-            <div class="modal hide fade"
+            <div class="modal fade"
                  data-bind="
                     attr: {
                         id: 'remove-admin-' + id
                     }
                  ">
-                <div class="modal-header">
-                    <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
-                    <h3>
-                        {% blocktrans %}
-                            Remove <strong data-bind="text: username"></strong>
-                            from admins?
-                        {% endblocktrans %}
-                    </h3>
+                <div class="modal-dialog">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
+                            <h4 class="modal-title">
+                                {% blocktrans %}
+                                    Remove <strong data-bind="text: username"></strong>
+                                    from admins?
+                                {% endblocktrans %}
+                            </h4>
+                        </div>
+                        <div class="modal-body">
+                            <p>
+                                {% blocktrans %}
+                                Yes, remove <strong data-bind="text: username"></strong>'s
+                                Accounting Admin privileges.
+                                {% endblocktrans %}
+                            </p>
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button"
+                                    class="btn btn-default"
+                                    data-dismiss="modal">
+                                {% trans 'Cancel' %}
+                            </button>
+                            <button type="button"
+                                    class="btn btn-danger delete-item-confirm"
+                                    data-loading-text="{% trans 'Removing User...' %}">
+                                <i class="fa fa-remove"></i> {% trans 'Remove User' %}
+                            </button>
+                        </div>
+                    </div>
                 </div>
-                <div class="modal-body">
-                    <p>
-                        {% blocktrans %}
-                        Yes, remove <strong data-bind="text: username"></strong>'s
-                        Accounting Admin privileges.
-                        {% endblocktrans %}
-                    </p>
-                </div>
-                <div class="modal-footer">
-                    <button type="button"
-                            class="btn"
-                            data-dismiss="modal">
-                        {% trans 'Cancel' %}
-                    </button>
-                    <button type="button"
-                            class="btn btn-danger delete-item-confirm"
-                            data-loading-text="{% trans 'Removing User...' %}">
-                        <i class="icon-remove"></i> {% trans 'Remove User' %}
-                    </button>
-                </div>
+
             </div>
         </td>
     </script>
     <script type="text/html" id="accounting-admin-new">
-        <td class="span8">
+        <td class="col-sm-8">
             <a data-bind="text: username"></a>
         </td>
-        <td class="span4">
+        <td class="col-sm-4">
             <span class="label label-success">{% trans 'New' %}</span>
         </td>
     </script>
     <script type="text/html" id="accounting-admin-removed">
-        <td class="span8">
+        <td class="col-sm-8">
             <a data-bind="text: username"></a>
         </td>
-        <td class="span4">
-            <span class="label label-inverse">{% trans 'Removed' %}</span>
+        <td class="col-sm-4">
+            <span class="label label-default">{% trans 'Removed' %}</span>
         </td>
     </script>
 

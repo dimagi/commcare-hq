@@ -7,12 +7,12 @@ from dimagi.utils.dates import add_months
 from custom.ilsgateway.models import Alert, ProductAvailabilityData
 
 
-def populate_no_primary_alerts(location, date):
+def populate_no_primary_alerts(location, date, users):
     # First of all we have to delete all existing alert for this date.
     alert = Alert.objects.filter(location_id=location.get_id, date=date, type=const.NO_PRIMARY_CONTACT)
     alert.delete()
     # create no primary contact alerts
-    if not get_users_by_location_id(location.domain, location.get_id):
+    if not users:
         create_alert(location, date, NO_PRIMARY_CONTACT, {'org': location})
 
 

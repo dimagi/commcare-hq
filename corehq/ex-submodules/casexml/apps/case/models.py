@@ -99,6 +99,11 @@ class CommCareCaseAction(LooselyEqualDocumentSchema):
             ))
             return None
 
+    @property
+    def form(self):
+        """For compatability with CaseTransaction"""
+        return self.xform
+
     def get_user_id(self):
         key = 'xform-%s-user_id' % self.xform_id
         id = cache.get(key)
@@ -219,20 +224,17 @@ class CommCareCase(SafeSaveDocument, IndexHoldingMixIn, ComputedDocumentMixin,
     def has_indices(self):
         return self.indices or self.reverse_indices
 
+    @property
+    def closed_transactions(self):
+        return filter(lambda action: action.action_type == const.CASE_ACTION_CLOSE, self.actions)
+
+    @property
+    def deletion_id(self):
+        return getattr(self, '-deletion_id', None)
+
     def soft_delete(self):
         self.doc_type += DELETED_SUFFIX
         self.save()
-
-    def to_full_dict(self):
-        """
-        Include calculated properties that need to be available to the case
-        details display by overriding this method.
-
-        """
-        json = self.to_json()
-        json['status'] = _('Closed') if self.closed else _('Open')
-
-        return json
 
     def get_json(self, lite=False):
         ret = {
@@ -342,9 +344,6 @@ class CommCareCase(SafeSaveDocument, IndexHoldingMixIn, ComputedDocumentMixin,
         except Exception:
             return None
 
-    def set_case_property(self, property, value):
-        setattr(self, property, value)
-
     def case_properties(self):
         return self.to_json()
 
@@ -374,130 +373,11 @@ class CommCareCase(SafeSaveDocument, IndexHoldingMixIn, ComputedDocumentMixin,
         Gets the form docs associated with a case. If it can't find a form
         it won't be included.
         """
-        forms = iter_docs(self.get_db(), self.xform_ids)
-        return [XFormInstance(form) for form in forms]
+        from couchforms.dbaccessors import get_forms_by_id
+        return get_forms_by_id(self.xform_ids)
 
     def get_attachment(self, attachment_name):
         return self.fetch_attachment(attachment_name)
-
-    def get_attachment_server_url(self, attachment_key):
-        """
-        A server specific URL for remote clients to access case attachment resources async.
-        """
-        if attachment_key in self.case_attachments:
-            return "%s%s" % (web.get_url_base(),
-                             reverse("api_case_attachment", kwargs={
-                                 "domain": self.domain,
-                                 "case_id": self._id,
-                                 "attachment_id": attachment_key,
-                             })
-            )
-        else:
-            return None
-
-
-    @classmethod
-    def cache_and_get_object(cls, cobject, case_id, attachment_key, size_key=OBJECT_ORIGINAL):
-        """
-        Retrieve cached_object or image and cache sizes if necessary
-        """
-        if not cobject.is_cached():
-            resp = cls.get_db().fetch_attachment(case_id, attachment_key, stream=True)
-            stream = StringIO(resp.read())
-            headers = resp.resp.headers
-            cobject.cache_put(stream, headers)
-
-        meta, stream = cobject.get(size_key=size_key)
-        return meta, stream
-
-
-    @classmethod
-    def fetch_case_image(cls, case_id, attachment_key, filesize_limit=0, width_limit=0, height_limit=0, fixed_size=None):
-        """
-        Return (metadata, stream) information of best matching image attachment.
-        attachment_key is the case property of the attachment
-        attachment filename is the filename of the original submission - full extension and all.
-        """
-        if fixed_size is not None:
-            size_key = fixed_size
-        else:
-            size_key = OBJECT_ORIGINAL
-
-        constraint_dict = {}
-        if filesize_limit:
-            constraint_dict['content_length'] = filesize_limit
-
-        if height_limit:
-            constraint_dict['height'] = height_limit
-
-        if width_limit:
-            constraint_dict['width'] = width_limit
-        do_constrain = bool(constraint_dict)
-
-        # if size key is None, then one of the limit criteria are set
-        attachment_cache_key = "%(case_id)s_%(attachment)s" % {
-            "case_id": case_id,
-            "attachment": attachment_key,
-        }
-
-        cached_image = CachedImage(attachment_cache_key)
-        meta, stream = cls.cache_and_get_object(cached_image, case_id, attachment_key, size_key=size_key)
-
-        # now that we got it cached, let's check for size constraints
-
-        if do_constrain:
-            #check this size first
-            #see if the current size matches the criteria
-
-            def meets_constraint(constraints, meta):
-                for c, limit in constraints.items():
-                    if meta[c] > limit:
-                        return False
-                return True
-
-            if meets_constraint(constraint_dict, meta):
-                #yay, do nothing
-                pass
-            else:
-                #this meta is no good, find another one
-                lesser_keys = IMAGE_SIZE_ORDERING[0:IMAGE_SIZE_ORDERING.index(size_key)]
-                lesser_keys.reverse()
-                is_met = False
-                for lesser_size in lesser_keys:
-                    less_meta, less_stream = cached_image.get_size(lesser_size)
-                    if meets_constraint(constraint_dict, less_meta):
-                        meta = less_meta
-                        stream = less_stream
-                        is_met = True
-                        break
-                if not is_met:
-                    meta = None
-                    stream = None
-
-        return meta, stream
-
-
-    @classmethod
-    def fetch_case_attachment(cls, case_id, attachment_key, fixed_size=None, **kwargs):
-        """
-        Return (metadata, stream) information of best matching image attachment.
-        TODO: This should be the primary case_attachment retrieval method, the image one is a silly separation of similar functionality
-        Additional functionality to be abstracted by content_type of underlying attachment
-        """
-        size_key = OBJECT_ORIGINAL
-        if fixed_size is not None and fixed_size in OBJECT_SIZE_MAP:
-            size_key = fixed_size
-
-        # if size key is None, then one of the limit criteria are set
-        attachment_cache_key = "%(case_id)s_%(attachment)s" % {
-            "case_id": case_id,
-            "attachment": attachment_key
-        }
-
-        cobject = CachedObject(attachment_cache_key)
-        meta, stream = cls.cache_and_get_object(cobject, case_id, attachment_key, size_key=size_key)
-
-        return meta, stream
 
     def dynamic_case_properties(self):
         """(key, value) tuples sorted by key"""
@@ -517,102 +397,6 @@ class CommCareCase(SafeSaveDocument, IndexHoldingMixIn, ComputedDocumentMixin,
         self.server_modified_on = datetime.utcnow()
         super(CommCareCase, self).save(**params)
         case_post_save.send(CommCareCase, case=self)
-
-    def to_xml(self, version, include_case_on_closed=False):
-        from xml.etree import ElementTree
-        if self.closed:
-            if include_case_on_closed:
-                elem = get_case_element(self, ('create', 'update', 'close'), version)
-            else:
-                elem = get_case_element(self, ('close'), version)
-        else:
-            elem = get_case_element(self, ('create', 'update'), version)
-        return ElementTree.tostring(elem)
-    
-    # The following methods involving display configuration should probably go
-    # in their own layer, but for now it seems fine.
-    @classmethod
-    def get_display_config(cls):
-        return [
-            {
-                "layout": [
-                    [
-                        {
-                            "expr": "name",
-                            "name": _("Name"),
-                        },
-                        {
-                            "expr": "opened_on",
-                            "name": _("Opened On"),
-                            "parse_date": True,
-                            'is_phone_time': True,
-                        },
-                        {
-                            "expr": "modified_on",
-                            "name": _("Modified On"),
-                            "parse_date": True,
-                            "is_phone_time": True,
-                        },
-                        {
-                            "expr": "closed_on",
-                            "name": _("Closed On"),
-                            "parse_date": True,
-                            "is_phone_time": True,
-                        },
-                    ],
-                    [
-                        {
-                            "expr": "type",
-                            "name": _("Case Type"),
-                            "format": '<code>{0}</code>',
-                        },
-                        {
-                            "expr": "user_id",
-                            "name": _("Last Submitter"),
-                            "process": 'doc_info',
-                        },
-                        {
-                            "expr": "owner_id",
-                            "name": _("Owner"),
-                            "process": 'doc_info',
-                        },
-                        {
-                            "expr": "_id",
-                            "name": _("Case ID"),
-                        },
-                    ],
-                ],
-            }
-        ]
-
-    @property
-    def related_cases_columns(self):
-        return [
-            {
-                'name': _('Status'),
-                'expr': "status"
-            },
-            {
-                'name': _('Case Type'),
-                'expr': "type",
-            },
-            {
-                'name': _('Date Opened'),
-                'expr': "opened_on",
-                'parse_date': True,
-                "is_phone_time": True,
-            },
-            {
-                'name': _('Date Modified'),
-                'expr': "modified_on",
-                'parse_date': True,
-                "is_phone_time": True,
-            }
-        ]
-
-    @property
-    def related_type_info(self):
-        return None
 
 
 # import signals

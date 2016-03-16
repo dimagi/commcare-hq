@@ -22,6 +22,7 @@ class MultiReportPage(CustomProjectReport, ProjectReportParametersMixin, Datespa
     title = ''
     report_template_path = "cvsu/multi_report.html"
     flush_layout = True
+    is_bootstrap3 = True
 
     @property
     @memoized

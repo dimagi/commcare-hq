@@ -53,3 +53,29 @@
     }
   }
 }
+
+.nav-settings-bar > .navbar-nav {
+  padding-right: 10px;
+}
+
+@navbar-mobile-height: 40px;
+
+.navbar-mobile.navbar {
+  min-height: @navbar-mobile-height;
+  height: @navbar-mobile-height;
+
+  .navbar-brand {
+    padding: 3px 10px;
+    height: @navbar-mobile-height - 6;
+  }
+  .navbar-one {
+    float: right;
+  }
+  a, a:link, a:visited {
+    color: @cc-neutral-mid;
+  }
+}
+
+.mobile-nav {
+  padding: 3px 10px;
+}

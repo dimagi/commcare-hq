@@ -2,22 +2,19 @@ import base64
 import StringIO
 from datetime import datetime
 import json
-from django.contrib import messages
 from django.core.urlresolvers import reverse, reverse_lazy
-from django.db.models import Count, Q
+from django.db.models import Count
 from django.http.response import HttpResponseRedirect, Http404
 from django.shortcuts import get_object_or_404
 from django.utils.decorators import method_decorator
-from django.views.generic.base import TemplateView
+from django.views.generic.base import TemplateView, RedirectView
 from django.views.generic.edit import DeleteView
 from django.views.generic.list import ListView
 from corehq.apps.commtrack.models import StockState
 from corehq.apps.products.models import SQLProduct
 from corehq.apps.domain.views import BaseDomainView, DomainViewMixin
 from corehq.apps.locations.models import SQLLocation
-from corehq.apps.sms.mixin import VerifiedNumber
-from corehq.apps.sms.models import SMSLog
-from corehq.apps.sms.util import clean_phone_number
+from corehq.apps.sms.models import SMS, INCOMING, OUTGOING
 from corehq.apps.users.models import CommCareUser, WebUser, UserRole
 from django.http import HttpResponse
 from django.utils.translation import ugettext_noop
@@ -25,25 +22,15 @@ from django.views.decorators.http import require_POST
 from corehq.apps.domain.decorators import domain_admin_required
 from corehq.const import SERVER_DATETIME_FORMAT_NO_SEC
 from custom.ilsgateway import DashboardReport
-from custom.ilsgateway.comparison_reports import ProductAvailabilityReport
 from custom.ilsgateway.forms import SupervisionDocumentForm
-from custom.ilsgateway.stock_data import ILSStockDataSynchronization
 from custom.ilsgateway.tanzania import make_url
 from custom.ilsgateway.tanzania.reports.delivery import DeliveryReport
 from custom.ilsgateway.tanzania.reports.randr import RRreport
 from custom.ilsgateway.tanzania.reports.stock_on_hand import StockOnHandReport
 from custom.ilsgateway.tanzania.reports.supervision import SupervisionReport
-from custom.ilsgateway.tasks import clear_report_data, fix_stock_data_task
 from casexml.apps.stock.models import StockTransaction
-from custom.logistics.models import StockDataCheckpoint
-from custom.logistics.tasks import fix_groups_in_location_task, resync_web_users
-from custom.ilsgateway.api import ILSGatewayAPI
-from custom.logistics.tasks import stock_data_task
-from custom.ilsgateway.api import ILSGatewayEndpoint
-from custom.ilsgateway.models import ILSGatewayConfig, ReportRun, SupervisionDocument, ILSNotes, \
-    ProductAvailabilityData, ILSMigrationStats, ILSMigrationProblem
-from custom.ilsgateway.tasks import report_run, ils_clear_stock_data_task, \
-    ils_bootstrap_domain_task
+from custom.ilsgateway.models import ILSGatewayConfig, ReportRun, SupervisionDocument, ILSNotes
+from custom.ilsgateway.tasks import report_run
 from custom.logistics.views import BaseConfigView
 
 
@@ -96,8 +83,8 @@ class GlobalStats(BaseDomainView):
             'products': SQLProduct.objects.filter(domain=self.domain, is_archived=False).count(),
             'product_stocks': StockState.objects.filter(sql_product__domain=self.domain).count(),
             'stock_transactions': StockTransaction.objects.filter(report__domain=self.domain).count(),
-            'inbound_messages': SMSLog.count_incoming_by_domain(self.domain),
-            'outbound_messages': SMSLog.count_outgoing_by_domain(self.domain)
+            'inbound_messages': SMS.count_by_domain(self.domain, direction=INCOMING),
+            'outbound_messages': SMS.count_by_domain(self.domain, direction=OUTGOING),
         }
 
         if self.show_supply_point_types:
@@ -222,39 +209,8 @@ class SupervisionDocumentDeleteView(TemplateView, DomainViewMixin):
 
 @domain_admin_required
 @require_POST
-def sync_ilsgateway(request, domain):
-    ils_bootstrap_domain_task.delay(domain)
-    return HttpResponse('OK')
-
-
-@domain_admin_required
-@require_POST
-def ils_sync_stock_data(request, domain):
-    config = ILSGatewayConfig.for_domain(domain)
-    domain = config.domain
-    endpoint = ILSGatewayEndpoint.from_config(config)
-    stock_data_task.delay(ILSStockDataSynchronization(domain, endpoint))
-    return HttpResponse('OK')
-
-
-@domain_admin_required
-@require_POST
-def ils_clear_stock_data(request, domain):
-    ils_clear_stock_data_task.delay(domain)
-    return HttpResponse('OK')
-
-
-@domain_admin_required
-@require_POST
 def run_warehouse_runner(request, domain):
     report_run.delay(domain)
-    return HttpResponse('OK')
-
-
-@domain_admin_required
-@require_POST
-def fix_stock_data_view(request, domain):
-    fix_stock_data_task.delay(domain)
     return HttpResponse('OK')
 
 
@@ -269,22 +225,6 @@ def end_report_run(request, domain):
     except ReportRun.DoesNotExist, ReportRun.MultipleObjectsReturned:
         pass
     return HttpResponseRedirect(reverse(ILSConfigView.urlname, kwargs={'domain': domain}))
-
-
-@domain_admin_required
-@require_POST
-def ils_resync_web_users(request, domain):
-    config = ILSGatewayConfig.for_domain(domain)
-    endpoint = ILSGatewayEndpoint.from_config(config)
-    resync_web_users.delay(ILSGatewayAPI(domain=domain, endpoint=endpoint))
-    return HttpResponse('OK')
-
-
-@domain_admin_required
-@require_POST
-def delete_reports_runs(request, domain):
-    clear_report_data.delay(domain)
-    return HttpResponse('OK')
 
 
 @require_POST
@@ -314,23 +254,6 @@ def save_ils_note(request, domain):
     return HttpResponse(json.dumps(data), content_type='application/json')
 
 
-@domain_admin_required
-@require_POST
-def fix_groups_in_location(request, domain):
-    fix_groups_in_location_task.delay(domain)
-    return HttpResponse('OK')
-
-
-@domain_admin_required
-@require_POST
-def change_runner_date_to_last_migration(request, domain):
-    checkpoint = StockDataCheckpoint.objects.get(domain=domain)
-    last_run = ReportRun.last_success(domain)
-    last_run.end = checkpoint.date
-    last_run.save()
-    return HttpResponse('OK')
-
-
 class ReportRunListView(ListView, DomainViewMixin):
     context_object_name = 'runs'
     template_name = 'ilsgateway/report_run_list.html'
@@ -357,41 +280,19 @@ class ReportRunDeleteView(DeleteView, DomainViewMixin):
         return reverse_lazy('report_run_list', args=[self.domain])
 
 
-class ProductAvailabilityDeleteView(DeleteView, DomainViewMixin):
-    model = ProductAvailabilityData
+class DashboardPageRedirect(RedirectView):
 
-    template_name = 'ilsgateway/confirm_delete.html'
+    def get_redirect_url(self, *args, **kwargs):
+        domain = kwargs['domain']
+        user = self.request.couch_user
+        dm = user.get_domain_membership(domain)
+        url = DashboardReport.get_url(domain)
 
-    def get_success_url(self):
-        return ProductAvailabilityReport.get_url(
-            domain=self.domain
-        ) + '?location_id=%s' % self.object.location_id
+        if dm:
+            loc_id = dm.location_id
+            url = '%s?location_id=%s&filter_by_program=all' % (
+                url,
+                loc_id or ''
+            )
 
-    def dispatch(self, request, *args, **kwargs):
-        if not self.request.couch_user.is_domain_admin():
-            raise Http404()
-        return super(ProductAvailabilityDeleteView, self).dispatch(request, *args, **kwargs)
-
-
-class BalanceMigrationView(BaseDomainView):
-
-    template_name = 'ilsgateway/balance.html'
-    section_name = 'Balance'
-    section_url = ''
-
-    @property
-    def page_context(self):
-        return {
-            'stats': get_object_or_404(ILSMigrationStats, domain=self.domain),
-            'products_count': SQLProduct.objects.filter(domain=self.domain).count(),
-            'locations_count': SQLLocation.objects.filter(domain=self.domain).exclude(is_archived=True).count(),
-            'web_users_count': WebUser.by_domain(self.domain, reduce=True)[0]['value'],
-            'sms_users_count': CommCareUser.by_domain(self.domain, reduce=True)[0]['value'],
-            'supply_points_count': SQLLocation.active_objects.filter(
-                domain=self.domain, location_type__name='FACILITY'
-            ).exclude(supply_point_id__isnull=True).count(),
-            'facilites_count': SQLLocation.active_objects.filter(
-                domain=self.domain, location_type__name='FACILITY'
-            ).count(),
-            'problems': ILSMigrationProblem.objects.filter(domain=self.domain)
-        }
+        return url

@@ -575,8 +575,7 @@ def mock_checkpoint():
     # in the future we may want to explicitly use django tests instead of regular tests
     # if we're going to depend on a django environment.
     from pillowtop.checkpoints.manager import PillowCheckpoint
-    from pillowtop.dao.mock import MockDocumentStore
-    return PillowCheckpoint(MockDocumentStore(), 'mock-checkpoint')
+    return PillowCheckpoint('mock-checkpoint')
 
 
 class MockDoc(Document):

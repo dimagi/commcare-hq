@@ -8,4 +8,4 @@ def incoming(request):
     """
     # for now just save this information in the message log and return
     message = create_from_request(request)
-    return HttpResponse(json.dumps({'status': 'success', 'message_id': message._id}), 'text/json')
+    return HttpResponse(json.dumps({'status': 'success', 'message_id': message.couch_id}), 'text/json')

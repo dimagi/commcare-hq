@@ -7,7 +7,9 @@
         "airsrwanda",
         "airszambia",
         "airszimbabwe",
-        "airstanzania"
+        "airstanzania",
+        "airsghana",
+        "airsbenin"
     ],
     "config": {
         "engine_id": "default",
@@ -200,16 +202,48 @@
                 "datatype": "string",
                 "display_name": "level_4",
                 "expression": {
-                    "expression": {
-                        "datatype": null,
-                        "property_path": [
-                            "form",
-                            "location_data",
-                            "level_4_name"
-                        ],
-                        "type": "property_path"
+                    "type": "conditional",
+                    "test": {
+                        "type": "boolean_expression",
+                        "operator": "eq",
+                        "expression": {
+                            "expression": {
+                                "datatype": "string",
+                                "property_path": [
+                                    "form",
+                                    "location_data",
+                                    "level_4_name"
+                                ],
+                                "type": "property_path"
+                            },
+                            "type": "root_doc"
+                        },
+                        "property_value": ""
                     },
-                    "type": "root_doc"
+                    "expression_if_true": {
+                        "expression": {
+                            "datatype": null,
+                            "property_path": [
+                                "form",
+                                "location_data",
+                                "level_3_name"
+                            ],
+                            "type": "property_path"
+                        },
+                        "type": "root_doc"
+                    },
+                    "expression_if_false": {
+                        "expression": {
+                            "datatype": null,
+                            "property_path": [
+                                "form",
+                                "location_data",
+                                "level_4_name"
+                            ],
+                            "type": "property_path"
+                        },
+                        "type": "root_doc"
+                    }
                 },
                 "is_nullable": true,
                 "is_primary_key": false,
@@ -318,6 +352,6 @@
         "display_name": "Supervisory Indicators",
         "named_filters": {},
         "referenced_doc_type": "XFormInstance",
-        "table_id": "supervisory-003"
+        "table_id": "supervisory-005"
     }
 }

@@ -7,6 +7,7 @@ import re
 import sys
 import traceback
 import uuid
+from django.utils.decorators import method_decorator
 import httpagentparser
 
 from django.conf import settings
@@ -33,6 +34,7 @@ from django.template import loader
 from django.template.context import RequestContext
 from restkit import Resource
 
+from corehq import toggles, feature_previews
 from corehq.apps.accounting.models import Subscription
 from corehq.apps.app_manager.models import Application
 from corehq.apps.domain.decorators import require_superuser, login_and_domain_required
@@ -44,9 +46,11 @@ from corehq.apps.dropbox.exceptions import DropboxUploadAlreadyInProgress
 from corehq.apps.hqwebapp.encoders import LazyEncoder
 from corehq.apps.hqwebapp.forms import EmailAuthenticationForm, CloudCareAuthenticationForm
 from corehq.apps.reports.util import is_mobile_worker_with_report_access
+from corehq.apps.style.decorators import use_bootstrap3
 from corehq.apps.users.models import CouchUser
 from corehq.apps.users.util import format_username
 from corehq.apps.hqwebapp.doc_info import get_doc_info
+from corehq.middleware import always_allow_browser_caching
 from corehq.util.datadog.utils import create_datadog_event, log_counter, sanitize_url
 from corehq.util.datadog.metrics import JSERROR_COUNT
 from corehq.util.datadog.const import DATADOG_UNKNOWN
@@ -55,7 +59,7 @@ from dimagi.utils.decorators.memoized import memoized
 from dimagi.utils.logging import notify_exception
 from dimagi.utils.web import get_url_base, json_response, get_site_domain
 from dimagi.utils.couch.cache.cache_core import get_redis_default_cache
-from corehq.apps.hqadmin.management.commands.celery_deploy_in_progress import CELERY_DEPLOY_IN_PROGRESS_FLAG
+from corehq.apps.hqadmin.management.commands.deploy_in_progress import DEPLOY_IN_PROGRESS_FLAG
 from corehq.apps.domain.models import Domain
 from soil import heartbeat, DownloadBase
 from soil import views as soil_views
@@ -82,7 +86,7 @@ def couch_check():
 
 def is_deploy_in_progress():
     cache = get_redis_default_cache()
-    return cache.get(CELERY_DEPLOY_IN_PROGRESS_FLAG) is not None
+    return cache.get(DEPLOY_IN_PROGRESS_FLAG) is not None
 
 
 def celery_check():
@@ -93,15 +97,12 @@ def celery_check():
         app.config_from_object(settings)
         i = app.control.inspect()
         ping = i.ping()
-        if not ping and not is_deploy_in_progress():
+        if not ping:
             chk = (False, 'No running Celery workers were found.')
         else:
             chk = (True, None)
     except IOError as e:
-        if is_deploy_in_progress():
-            chk = (True, None)
-        else:
-            chk = (False, "Error connecting to the backend: " + str(e))
+        chk = (False, "Error connecting to the backend: " + str(e))
     except ImportError as e:
         chk = (False, str(e))
 
@@ -124,7 +125,7 @@ def hb_check():
             else:
                 hb = heartbeat.is_alive()
         except Exception:
-            hb = is_deploy_in_progress()
+            hb = False
     else:
         try:
             hb = heartbeat.is_alive()
@@ -302,7 +303,7 @@ def server_up(req):
                     message.append(custom_msg)
                 else:
                     message.append(check_info['message'])
-    if failed:
+    if failed and not is_deploy_in_progress():
         create_datadog_event(
             'Serverup check failed', '\n'.join(message),
             alert_type='error', aggregation_key='serverup',
@@ -310,6 +311,7 @@ def server_up(req):
         return HttpResponse('<br>'.join(message), status=500)
     else:
         return HttpResponse("success")
+
 
 def no_permissions(request, redirect_to=None, template_name="403.html"):
     """
@@ -334,8 +336,8 @@ def csrf_failure(request, reason=None, template_name="csrf_failure.html"):
 
 def _login(req, domain_name, template_name):
 
-    if req.user.is_authenticated() and req.method != "POST":
-        redirect_to = req.REQUEST.get('next', '')
+    if req.user.is_authenticated() and req.method == "GET":
+        redirect_to = req.GET.get('next', '')
         if redirect_to:
             return HttpResponseRedirect(redirect_to)
         if not domain_name:
@@ -353,10 +355,11 @@ def _login(req, domain_name, template_name):
     context = {}
     if domain_name:
         domain = Domain.get_by_name(domain_name)
+        req_params = req.GET if req.method == 'GET' else req.POST
         context.update({
             'domain': domain_name,
             'hr_name': domain.display_name() if domain else domain_name,
-            'next': req.REQUEST.get('next', '/a/%s/' % domain),
+            'next': req_params.get('next', '/a/%s/' % domain),
             'allow_domain_requests': domain.allow_domain_requests,
         })
 
@@ -370,7 +373,8 @@ def login(req, domain_type='commcare'):
     # this view, and the one below, is overridden because
     # we need to set the base template to use somewhere
     # somewhere that the login page can access it.
-    domain = req.REQUEST.get('domain', None)
+    req_params = req.GET if req.method == 'GET' else req.POST
+    domain = req_params.get('domain', None)
 
     from corehq.apps.domain.utils import get_dummy_domain
     # For showing different logos based on CommTrack, CommConnect, CommCare...
@@ -396,6 +400,7 @@ def is_mobile_url(url):
     # Minor hack
     return ('reports/custom/mobile' in url)
 
+
 def logout(req):
     referer = req.META.get('HTTP_REFERER')
     domain = get_domain_from_url(urlparse(referer).path) if referer else None
@@ -413,9 +418,10 @@ def logout(req):
     else:
         return HttpResponseRedirect(reverse('login'))
 
+
 @login_and_domain_required
 def retrieve_download(req, domain, download_id, template="style/includes/file_download.html"):
-    return soil_views.retrieve_download(req, download_id, template)
+    return soil_views.retrieve_download(req, download_id, template, extra_context={'domain': domain})
 
 
 def dropbox_next_url(request, download_id):
@@ -516,6 +522,9 @@ def bug_report(req):
 
     report['user_agent'] = req.META['HTTP_USER_AGENT']
     report['datetime'] = datetime.utcnow()
+    report['feature_flags'] = toggles.toggles_dict(username=report['username'],
+                                                   domain=report['domain']).keys()
+    report['feature_previews'] = feature_previews.previews_dict(report['domain']).keys()
 
     try:
         couch_user = CouchUser.get_by_username(report['username'])
@@ -549,6 +558,8 @@ def bug_report(req):
         u"url: {url}\n"
         u"datetime: {datetime}\n"
         u"User Agent: {user_agent}\n"
+        u"Feature Flags: {feature_flags}\n"
+        u"Feature Previews: {feature_previews}\n"
         u"Message:\n\n"
         u"{message}\n"
         ).format(**report)
@@ -613,11 +624,14 @@ def render_static(request, template):
 def eula(request):
     return render_static(request, "eula.html")
 
+
 def cda(request):
     return render_static(request, "cda.html")
 
+
 def apache_license(request):
     return render_static(request, "apache_license.html")
+
 
 def bsd_license(request):
     return render_static(request, "bsd_license.html")
@@ -982,6 +996,7 @@ class CRUDPaginatedViewMixin(object):
         """
         raise NotImplementedError("You must implement get_deleted_item_data")
 
+
 @login_required
 def quick_find(request):
     query = request.GET.get('q')
@@ -1019,6 +1034,7 @@ def osdd(request, template='osdd.xml'):
     response['Content-Type'] = 'application/xml'
     return response
 
+
 @require_superuser
 def maintenance_alerts(request, template='style/bootstrap2/maintenance_alerts.html'):
     from corehq.apps.hqwebapp.models import MaintenanceAlert
@@ -1031,6 +1047,32 @@ def maintenance_alerts(request, template='style/bootstrap2/maintenance_alerts.ht
             'id': alert.id,
         } for alert in MaintenanceAlert.objects.order_by('-created')[:5]]
     })
+
+class MaintenanceAlertsView(BasePageView):
+    urlname = 'alerts'
+    page_title = ugettext_noop("Maintenance Alerts")
+    template_name = 'style/maintenance_alerts.html'
+
+    @method_decorator(require_superuser)
+    @use_bootstrap3
+    def dispatch(self, request, *args, **kwargs):
+        return super(MaintenanceAlertsView, self).dispatch(request, *args, **kwargs)
+
+    @property
+    def page_context(self):
+        from corehq.apps.hqwebapp.models import MaintenanceAlert
+        return {
+            'alerts': [{
+            'created': unicode(alert.created),
+            'active': alert.active,
+            'html': alert.html,
+            'id': alert.id,
+            } for alert in MaintenanceAlert.objects.order_by('-created')[:5]]
+        }
+
+    @property
+    def page_url(self):
+        return reverse(self.urlname)
 
 
 @require_POST
@@ -1086,3 +1128,12 @@ class DataTablesAJAXPaginationMixin(object):
             'iTotalRecords': total_records,
             'iTotalDisplayRecords': filtered_records or total_records,
         }))
+
+
+@always_allow_browser_caching
+@login_and_domain_required
+def toggles_js(request, domain, template='hqwebapp/js/toggles_template.js'):
+    return render(request, template, {
+        'toggles_dict': toggles.toggle_values_by_name(username=request.user.username, domain=domain),
+        'previews_dict': feature_previews.preview_values_by_name(domain=domain)
+    })

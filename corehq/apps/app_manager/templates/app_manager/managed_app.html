@@ -6,23 +6,6 @@
 
 {% block title %}{{ module.name|clean_trans:langs }}{% endblock %}
 
-{% block stylesheets %}{{ block.super }}
-<style>
-    .edit-form-pencil {
-        position: absolute;
-        right: 0;
-        top: 3px;
-        opacity: 0.5;
-    }
-    .edit-form-li {
-        position: relative;
-    }
-    .edit-form-li.active .edit-form-pencil .fa {
-        color: white;
-    }
-</style>
-{% endblock %}
-
 {% block js %}
     {{ block.super }}
     <script src="{% new_static 'app_manager/js/app_manager.js' %}"></script>
@@ -34,7 +17,8 @@
     {{ block.super }}
     <script>
         $(function () {
-            COMMCAREHQ.app_manager.init({
+            var init = hqImport('app_manager/js/app_manager.js').init;
+            init({
                 appVersion: {% if app.version %}{{ app.version }}{% else %}-1{% endif %},
                 commcareVersion: {{ app.commcare_minor_release|JSON }},
                 latestCommcareVersion: {% if latest_commcare_version %}{{ latest_commcare_version|JSON }}{% else %}null{% endif %}
@@ -63,7 +47,7 @@
         $(function () {
             $('.edit-form-pencil').hide().tooltip({
                 title: "{% trans "Edit in form builder" %}",
-                placement: 'auto',
+                placement: 'auto'
             });
             $('.edit-form-li').each(function () {
                 if ($(this).is('.active') && {{ formdesigner|JSON }}) {
@@ -101,10 +85,10 @@
             });
             $tabContent.on('focus', '.collapse', function() {
                 inSelectElement = true;
-            })
+            });
             $tabContent.on('blur', '.collapse', function() {
                 inSelectElement = false;
-            })
+            });
         });
     </script>
     <script>
@@ -135,7 +119,7 @@
 <nav class="app-manager-content hide">
     <ul class="nav nav-hq-sidebar">
         <li {% if release_manager %}class="active"{% endif %}>
-            <a href="{% url "release_manager" domain app.id %}" id="tour-deploy-link">
+            <a id="demand-releases" href="{% url "view_app" domain app.id %}releases/#releases" data-toggle="tab">
                 <i class="fa fa-download"></i>
                 {% trans "Deploy" %}
             </a>
@@ -144,14 +128,14 @@
         <li {% if not module and not form and not release_manager %}class="app-name-div
                 {% if not copy_app_form or not copy_app_form.is_bound %}active{% endif %}"
             {% endif %}>
-            <a href="{% url "view_app" domain app.id %}#app-settings" data-toggle="tab">
+            <a href="{% url "view_app" domain app.id %}#app-settings" data-toggle="tab" data-default="1">
                 <i class="fa fa-cog"></i>
                 {% trans "Settings" %}
             </a>
         </li>
         {% if app.get_doc_type == 'Application' %}
         <li>
-            <a id="multimedia-shower" href="{% url "view_app" domain app.id %}multimedia/#multimedia" data-toggle="tab">
+            <a id="demand-multimedia" href="{% url "view_app" domain app.id %}multimedia/#multimedia" data-toggle="tab">
                 <i class="fa fa-photo"></i>
                 {% trans "Multimedia" %}
             </a>

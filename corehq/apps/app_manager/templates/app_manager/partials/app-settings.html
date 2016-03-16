@@ -123,6 +123,7 @@
 
 <script>
     $(function () {
+        var CommcareSettings = hqImport('app_manager/js/commcaresettings.js').CommcareSettings;
         CommcareSettings.widgets.text_input = CommcareSettings.widgets.select;
     });
 </script>
@@ -130,24 +131,23 @@
 <script type="text/html" id="CommcareSettings.widgets.text_input">
     <span data-bind="template: 'CommcareSettings.widgets.select'"></span>
     <aside id="custom-keys-help" data-bind="visible: visibleValue() === 'custom-keys'">
-        <i class="fa fa-arrow-right"></i>
         <span>Customize through
             <a href="#" data-bind="click: function () {$('#custom-keys-example').slideToggle()}">{% trans "User Interface Translations" %}</a>.
         </span>
         <div id="custom-keys-example" style="display: none;">
             <h6>Example:</h6>
-            <ul class="list-unstyled">
-                <li><span>polish.TextField.charactersKey1</span><span>.,</span><li>
-                <li><span>polish.TextField.charactersKey2</span><span>abc2</span><li>
-                <li><span>polish.TextField.charactersKey3</span><span>def3</span><li>
-                <li><span>polish.TextField.charactersKey4</span><span>ghi4</span><li>
-                <li><span>polish.TextField.charactersKey5</span><span>jkl5</span><li>
-                <li><span>polish.TextField.charactersKey6</span><span>mno6</span><li>
-                <li><span>polish.TextField.charactersKey7</span><span>pqrs7</span><li>
-                <li><span>polish.TextField.charactersKey8</span><span>tuv8</span><li>
-                <li><span>polish.TextField.charactersKey9</span><span>wxyz9</span><li>
-                <li><span>polish.TextField.charactersKey0</span><span> 0</span><li>
-            </ul>
+            <div class="row">
+                <div class="col-sm-6">polish.TextField.charactersKey1</div><div class="col-sm-6">.,</div>
+                <div class="col-sm-6">polish.TextField.charactersKey2</div><div class="col-sm-6">abc2</div>
+                <div class="col-sm-6">polish.TextField.charactersKey3</div><div class="col-sm-6">def3</div>
+                <div class="col-sm-6">polish.TextField.charactersKey4</div><div class="col-sm-6">ghi4</div>
+                <div class="col-sm-6">polish.TextField.charactersKey5</div><div class="col-sm-6">jkl5</div>
+                <div class="col-sm-6">polish.TextField.charactersKey6</div><div class="col-sm-6">mno6</div>
+                <div class="col-sm-6">polish.TextField.charactersKey7</div><div class="col-sm-6">pqrs7</div>
+                <div class="col-sm-6">polish.TextField.charactersKey8</div><div class="col-sm-6">tuv8</div>
+                <div class="col-sm-6">polish.TextField.charactersKey9</div><div class="col-sm-6">wxyz9</div>
+                <div class="col-sm-6">polish.TextField.charactersKey0</div><div class="col-sm-6"> 0</div>
+            </div>
         </div>
     </aside>
 </script>
@@ -168,7 +168,9 @@ todo fix
 
 
 <div class="tab-pane" id="commcare-settings">
-    <div id="app_short_comment" class="app-comment">{{ app.short_comment }}</div>
+    {% if app.short_comment %}
+        <div id="app_short_comment" class="app-comment well">{{ app.short_comment }}</div>
+    {% endif %}
     <form class="form-horizontal">
         <div class="clearfix">
             <div class="pull-right">

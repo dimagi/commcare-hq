@@ -1,6 +1,6 @@
 from corehq.util.elastic import es_index
 
-USER_INDEX = es_index("hqusers_2016-01-20_1610")
+USER_INDEX = es_index("hqusers_2016-02-16_1402")
 USER_MAPPING={'_all': {'analyzer': 'standard'},
  '_meta': {'comment': 'Simon modified on 2016-01-20',
            'created': None},

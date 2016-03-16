@@ -8,6 +8,8 @@ from tastypie.exceptions import InvalidSortError, ImmediateHttpResponse
 
 from corehq import privileges
 from corehq.apps.accounting.utils import domain_has_privilege
+from corehq.apps.api.util import get_obj
+
 
 class dict_object(object):
     def __init__(self, dict):
@@ -191,3 +193,10 @@ class DomainSpecificResourceMixin(object):
             return self._build_reverse_url("api_dispatch_list", kwargs=kwargs)
         except NoReverseMatch:
             return None
+
+
+class CouchResourceMixin(object):
+    def detail_uri_kwargs(self, bundle_or_obj):
+        return {
+            'pk': get_obj(bundle_or_obj)._id
+        }

@@ -10,6 +10,14 @@ class TestReportAggregation(ConfigurableReportTestMixin, TestCase):
     """
     Integration tests for configurable report aggregation
     """
+    dependent_apps = [
+        'corehq.apps.tzmigration',
+        'casexml.apps.case',
+        'casexml.apps.phone',
+        'corehq.couchapps',
+        'corehq.form_processor',
+        'couchforms',
+    ]
 
     @classmethod
     def _create_data(cls):
@@ -226,6 +234,67 @@ class TestReportAggregation(ConfigurableReportTestMixin, TestCase):
                     [u'report_column_display_first_name', u'report_column_display_number'],
                     [u'Ada', 3],
                     [u'Alan', 6]
+                ]
+            ]]
+        )
+
+    def test_sort_expression(self):
+        report_config = self._create_report(
+            aggregation_columns=['indicator_col_id_first_name'],
+            columns=[{
+                "type": "field",
+                "display": "indicator_col_id_first_name",
+                "field": 'indicator_col_id_first_name',
+                'column_id': 'indicator_col_id_first_name',
+                'aggregation': 'simple'
+            }]
+        )
+
+        default_sorted_view = self._create_view(report_config)
+        self.assertEqual(
+            default_sorted_view.export_table,
+            [[
+                u'foo',
+                [
+                    [u'indicator_col_id_first_name'],
+                    [u'Ada'],
+                    [u'Alan']
+                ]
+            ]]
+        )
+
+        report_config.sort_expression = [{
+            'field': 'indicator_col_id_first_name',
+            'order': 'ASC',
+        }]
+        report_config.save()
+        ascending_sorted_view = self._create_view(report_config)
+        self.assertEqual(
+            ascending_sorted_view.export_table,
+            [[
+                u'foo',
+                [
+                    [u'indicator_col_id_first_name'],
+                    [u'Ada'],
+                    [u'Alan']
+                ]
+            ]]
+        )
+
+        report_config.sort_expression = [{
+            'field': 'indicator_col_id_first_name',
+            'order': 'DESC',
+        }]
+        report_config.save()
+        descending_sorted_view = self._create_view(report_config)
+        self.assertEqual(
+            descending_sorted_view.export_table,
+            [[
+                u'foo',
+                [
+                    [u'indicator_col_id_first_name'],
+                    [u'Alan'],
+                    [u'Ada']
                 ]
             ]]
         )

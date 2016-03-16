@@ -6,7 +6,7 @@
         {% trans "Module Filter" %}
     </label>
     <div class="col-sm-4 commcare-feature" data-since-version="2.20">
-        <input type="text"
+        <textarea
             class="form-control"
             placeholder="{% trans "XPath expression" %}"
             name="module_filter"
@@ -14,7 +14,7 @@
                 text: {% if ko_value %}{{ ko_value }}{% else %}xpath{% endif %},
                 allowCaseHashtags: false,
                 errorHtml: $('#module-filter-xpath-error-html').html()
-            }"/>
+            }"></textarea>
         <script type="text/html" id="module-filter-xpath-error-html">
             There is something wrong with the logic in the Module Filter.
             Check to make sure your parentheses match.

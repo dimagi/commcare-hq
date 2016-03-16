@@ -3,7 +3,6 @@
 {% load hq_shared_tags %}
 
 {% block js %}{{ block.super }}
-    <script src="{% new_static 'hqwebapp/js-custom/hq.legacy.js' %}"></script>
     <script src="{% new_static 'reports/javascripts/reports.config.js' %}"></script>
     <script src="{% new_static 'reports/ko/saved_reports.js' %}"></script>
 {% endblock %}
@@ -29,6 +28,7 @@
             {% endif %}
         });
     </script>
+    {% if not report.is_static %}
     <script type="text/javascript">
         $(function(){
             // Poll the status of the data source
@@ -55,6 +55,7 @@
             })();
         });
     </script>
+    {% endif %}
     <script type="text/javascript">
         var standardHQReport = new HQReport({
             domain: '{{ domain }}',
@@ -113,6 +114,7 @@
 
 {% block report_alerts %}
     {{ block.super }}
+    {% if not report.is_static %}
     <div id="built-warning" class="alert alert-warning hide">
         <h4><i class="fa fa-exclamation-triangle"></i> {% trans "Your report is still being populated." %}</h4>
         {% blocktrans %}
@@ -120,6 +122,7 @@
         The report will refresh automatically when the data is finished being populated.
         {% endblocktrans %}
     </div>
+    {% endif %}
 {% endblock %}
 
 {% block page_actions %}

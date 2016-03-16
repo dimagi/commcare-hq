@@ -2,9 +2,10 @@ import datetime
 import logging
 import uuid
 
+from PIL import Image
 from django.db import transaction
 from casexml.apps.case.xform import get_case_updates
-from corehq.form_processor.backends.sql.dbaccessors import FormAccessorSQL, CaseAccessorSQL
+from corehq.form_processor.backends.sql.dbaccessors import FormAccessorSQL, CaseAccessorSQL, LedgerAccessorSQL
 from corehq.form_processor.backends.sql.update_strategy import SqlCaseUpdateStrategy
 from corehq.form_processor.change_publishers import publish_form_saved, publish_case_saved
 from corehq.form_processor.exceptions import CaseNotFound, XFormNotFound
@@ -27,9 +28,11 @@ class FormProcessorSQL(object):
                 name=attachment.name,
                 attachment_id=uuid.uuid4(),
                 content_type=attachment.content_type,
-                md5=attachment.md5,
             )
-            xform_attachment.write_content(attachment.content)
+            xform_attachment.write_content(attachment.content_as_file())
+            if xform_attachment.is_image:
+                img_size = Image.open(attachment.content_as_file()).size
+                xform_attachment.properties = dict(width=img_size[0], height=img_size[1])
             xform_attachments.append(xform_attachment)
 
         xform.unsaved_attachments = xform_attachments
@@ -48,7 +51,7 @@ class FormProcessorSQL(object):
 
     @classmethod
     def is_duplicate(cls, xform_id, domain=None):
-        return FormAccessorSQL.form_with_id_exists(xform_id, domain=domain)
+        return FormAccessorSQL.form_exists(xform_id, domain=domain)
 
     @classmethod
     def hard_delete_case_and_forms(cls, domain, case, xforms):
@@ -68,8 +71,12 @@ class FormProcessorSQL(object):
             if cases:
                 for case in cases:
                     CaseAccessorSQL.save_case(case)
+
+            ledgers_to_save = []
             for stock_update in stock_updates or []:
-                stock_update.commit()
+                ledgers_to_save.extend(stock_update.to_save)
+
+            LedgerAccessorSQL.save_ledger_values(ledgers_to_save)
 
         cls._publish_changes(processed_forms, cases)
 
@@ -203,6 +210,17 @@ class FormProcessorSQL(object):
 
 
 def get_case_transactions(case_id, updated_xforms=None):
+    """
+    This fetches all the transactions required to rebuild the case along
+    with all the forms for those transactions.
+
+    For any forms that have been updated it replaces the old form
+    with the new one.
+
+    :param case_id: ID of case to rebuild
+    :param updated_xforms: list of forms that have been changed.
+    :return: list of ``CaseTransaction`` objects with their associated forms attached.
+    """
     transactions = CaseAccessorSQL.get_transactions_for_case_rebuild(case_id)
     form_ids = {tx.form_id for tx in transactions}
     updated_xforms_map = {

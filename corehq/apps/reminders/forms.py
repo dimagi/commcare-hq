@@ -1856,112 +1856,6 @@ def clean_selection(value):
         return value
 
 
-class OneTimeReminderForm(Form):
-    _cchq_domain = None
-    send_type = ChoiceField(choices=NOW_OR_LATER)
-    date = CharField(required=False)
-    time = CharField(required=False)
-    datetime = DateTimeField(required=False)
-    recipient_type = ChoiceField(choices=ONE_TIME_RECIPIENT_CHOICES)
-    case_group_id = CharField(required=False)
-    user_group_id = CharField(required=False)
-    content_type = ChoiceField(choices=(
-        (METHOD_SMS, ugettext_lazy("SMS Message")),
-    ))
-    subject = TrimmedCharField(required=False)
-    message = TrimmedCharField(required=False)
-    form_unique_id = CharField(required=False)
-
-    def __init__(self, *args, **kwargs):
-        can_use_survey = kwargs.pop('can_use_survey', False)
-        super(OneTimeReminderForm, self).__init__(*args, **kwargs)
-        if can_use_survey:
-            add_field_choices(self, 'content_type', [
-                (METHOD_SMS_SURVEY, _('SMS Survey')),
-            ])
-        add_field_choices(self, 'content_type', [
-            (METHOD_EMAIL, _('Email')),
-        ])
-
-    def clean_recipient_type(self):
-        return clean_selection(self.cleaned_data.get("recipient_type"))
-
-    def clean_case_group_id(self):
-        if self.cleaned_data.get("recipient_type") == RECIPIENT_SURVEY_SAMPLE:
-            value = self.cleaned_data.get("case_group_id")
-            return clean_case_group_id(value, self._cchq_domain)
-        else:
-            return None
-
-    def clean_user_group_id(self):
-        if self.cleaned_data.get("recipient_type") == RECIPIENT_USER_GROUP:
-            value = self.cleaned_data.get("user_group_id")
-            return clean_group_id(value, self._cchq_domain)
-        else:
-            return None
-
-    def clean_date(self):
-        if self.cleaned_data.get("send_type") == SEND_NOW:
-            return None
-        else:
-            value = self.cleaned_data.get("date")
-            validate_date(value)
-            return parse(value).date()
-
-    def clean_time(self):
-        if self.cleaned_data.get("send_type") == SEND_NOW:
-            return None
-        else:
-            value = self.cleaned_data.get("time")
-            validate_time(value)
-            return parse(value).time()
-
-    def clean_subject(self):
-        value = self.cleaned_data.get("subject")
-        if self.cleaned_data.get("content_type") == METHOD_EMAIL:
-            if value:
-                return value
-            else:
-                raise ValidationError("This field is required.")
-        else:
-            return None
-
-    def clean_message(self):
-        value = self.cleaned_data.get("message")
-        if self.cleaned_data.get("content_type") in (METHOD_SMS, METHOD_EMAIL):
-            if value:
-                return value
-            else:
-                raise ValidationError("This field is required.")
-        else:
-            return None
-
-    def clean_datetime(self):
-        utcnow = datetime.utcnow()
-        timezone = get_timezone_for_user(None, self._cchq_domain) # Use project timezone only
-        if self.cleaned_data.get("send_type") == SEND_NOW:
-            start_datetime = utcnow + timedelta(minutes=1)
-        else:
-            dt = self.cleaned_data.get("date")
-            tm = self.cleaned_data.get("time")
-            if dt is None or tm is None:
-                return None
-            start_datetime = datetime.combine(dt, tm)
-            start_datetime = UserTime(start_datetime, timezone).server_time().done()
-            if start_datetime < utcnow:
-                raise ValidationError(_("Date and time cannot occur in the past."))
-        return start_datetime
-
-    def clean_form_unique_id(self):
-        if self.cleaned_data.get("content_type") == METHOD_SMS_SURVEY:
-            value = self.cleaned_data.get("form_unique_id")
-            if value is None:
-                raise ValidationError(_("Please create a form first, and then create the broadcast."))
-            validate_form_unique_id(value, self._cchq_domain)
-            return value
-        else:
-            return None
-
 class RecordListWidget(Widget):
     
     # When initialized, expects to be passed attrs={"input_name" : < first dot-separated name of all related records in the html form >}
@@ -1987,6 +1881,7 @@ class RecordListWidget(Widget):
             'name': name,
         })
 
+
 class RecordListField(Field):
     required = None
     label = None
@@ -2003,19 +1898,6 @@ class RecordListField(Field):
 
     def clean(self, value):
         return value
-
-
-class ListField(Field):
-    
-    def __init__(self, *args, **kwargs):
-        kwargs["widget"] = CheckboxSelectMultiple
-        super(ListField, self).__init__(*args, **kwargs)
-    
-    def clean(self, value):
-        return value
-
-class RemindersInErrorForm(Form):
-    selected_reminders = ListField(required=False)
 
 
 class KeywordForm(Form):

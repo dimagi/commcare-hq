@@ -5,7 +5,7 @@
         <title>Doc {{ doc_id }} {{ es_info.status }}</title>
         {% if less_debug %}
             <link type="text/less" rel="stylesheet" media="all" href="{% static 'style/less/hqstyle-core-debug.less' %}"/>
-            <script src="{% static 'style/lib/lessjs/less-1.3.1.min.js' %}"></script>
+            <script src="{% static 'less/dist/less-1.3.1.min.js' %}"></script>
             {% if less_watch %}<script>less.watch();</script>{% endif %}
         {% else %}
         {% compress css %}

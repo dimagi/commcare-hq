@@ -87,6 +87,7 @@ def invoice_column_cell(invoice):
 class AddItemInterface(GenericTabularReport):
     base_template = 'accounting/add_new_item_button.html'
     exportable = True
+    is_bootstrap3 = True
 
     item_name = None
     new_item_view = None
@@ -351,7 +352,7 @@ class SubscriptionInterface(AddItemInterface):
                 subscription.pro_bono_status,
             ]
             if not self.is_rendered_as_email:
-                columns.append(mark_safe('<a href="./%d" class="btn">Edit</a>' % subscription.id))
+                columns.append(mark_safe('<a href="./%d" class="btn btn-default">Edit</a>' % subscription.id))
             rows.append(columns)
 
         return rows
@@ -477,6 +478,7 @@ class InvoiceInterfaceBase(GenericTabularReport):
     dispatcher = AccountingAdminInterfaceDispatcher
     exportable = True
     export_format_override = Format.CSV
+    is_bootstrap3 = True
 
 
 class WireInvoiceInterface(InvoiceInterfaceBase):
@@ -784,7 +786,7 @@ class InvoiceInterface(InvoiceInterfaceBase):
                 adjust_attrs = {
                     "data-toggle": "modal",
                     "data-target": adjust_href,
-                    "class": "btn",
+                    "class": "btn btn-default",
                 }
                 columns.append(
                     mark_safe(make_anchor_tag(adjust_href, adjust_name, adjust_attrs)),
@@ -951,6 +953,7 @@ class PaymentRecordInterface(GenericTabularReport):
     base_template = 'accounting/report_filter_actions.html'
     asynchronous = True
     exportable = True
+    is_bootstrap3 = True
 
     fields = [
         'corehq.apps.accounting.interface.DateCreatedFilter',
@@ -1048,6 +1051,7 @@ class SubscriptionAdjustmentInterface(GenericTabularReport):
     base_template = 'accounting/report_filter_actions.html'
     asynchronous = True
     exportable = True
+    is_bootstrap3 = True
 
     fields = [
         'corehq.apps.accounting.interface.DomainFilter',
@@ -1121,6 +1125,7 @@ class CreditAdjustmentInterface(GenericTabularReport):
     base_template = 'accounting/report_filter_actions.html'
     asynchronous = True
     exportable = True
+    is_bootstrap3 = True
 
     fields = [
         'corehq.apps.accounting.interface.NameFilter',

@@ -1,6 +1,9 @@
 from decimal import Decimal
 import random
 import datetime
+
+from dimagi.utils.dates import add_months_to_date
+
 from corehq.apps.accounting import tasks, utils, generator
 from corehq.apps.accounting.models import (
     CreditLine, CreditAdjustment, FeatureType, SoftwareProductType,
@@ -58,7 +61,6 @@ class TestCreditLines(BaseInvoiceTestCase):
         )
         self._test_credit_use(rate_credit_by_account)
         self._test_credit_use(rate_credit_by_subscription)
-        self._clean_credits()
 
     def test_feature_line_item_credits(self):
         """
@@ -95,7 +97,6 @@ class TestCreditLines(BaseInvoiceTestCase):
         )
         self._test_credit_use(rate_credit_by_account)
         self._test_credit_use(rate_credit_by_subscription)
-        self._clean_credits()
 
     def _generate_users_fee_to_credit_against(self):
         user_rate = self.subscription.plan_version.feature_rates.filter(feature__feature_type=FeatureType.USER)[:1].get()
@@ -142,9 +143,14 @@ class TestCreditLines(BaseInvoiceTestCase):
         other_domain = generator.arbitrary_domain()
         # so that the other subscription doesn't draw from the same account credits, have it start 4 months later
         new_subscription_start = utils.months_from_date(self.subscription.date_start, 4)
-        other_subscription, _ = generator.generate_domain_subscription_from_date(
-            new_subscription_start, self.account, other_domain.name, min_num_months=self.min_subscription_length,
+
+        other_subscription = generator.generate_domain_subscription(
+            self.account,
+            self.domain,
+            date_start=new_subscription_start,
+            date_end=add_months_to_date(new_subscription_start, self.min_subscription_length),
         )
+
         # other account credit that shouldn't count toward this invoice
         other_account = generator.billing_account(self.dimagi_user, generator.arbitrary_web_user())
 
@@ -156,15 +162,12 @@ class TestCreditLines(BaseInvoiceTestCase):
 
         self._test_credit_use(subscription_credit)
         self._test_credit_use(account_credit)
-        self._clean_credits()
 
     def test_combined_credits(self):
         """
         Test that line item credits get applied first to the line items
         and invoice credits get applied to the remaining balance.
         """
-        self._clean_credits()
-
         user_rate_credit_by_account = CreditLine.add_credit(
             self.monthly_user_fee, account=self.account,
             feature_type=self.user_rate.feature.feature_type,
@@ -192,7 +195,6 @@ class TestCreditLines(BaseInvoiceTestCase):
         self._test_credit_use(user_rate_credit_by_subscription)
         self._test_credit_use(subscription_credit)
         self._test_credit_use(account_credit)
-        self._clean_credits()
 
     def _generate_subscription_and_account_invoice_credits(self, monthly_fee, subscription, account):
         subscription_credit = CreditLine.add_credit(
@@ -257,10 +259,6 @@ class TestCreditLines(BaseInvoiceTestCase):
         current_account_credit = CreditLine.objects.get(id=account_credit.id)
         self.assertEqual(current_account_credit.balance, self.product_rate.monthly_fee + self.monthly_user_fee)
 
-    def _clean_credits(self):
-        CreditAdjustment.objects.all().delete()
-        CreditLine.objects.all().delete()
-
 
 class TestCreditTransfers(BaseAccountingTest):
 
@@ -273,6 +271,12 @@ class TestCreditTransfers(BaseAccountingTest):
         self.account = BillingAccount.get_or_create_account_by_domain(
             self.domain, created_by="biyeun@dimagi.com",
         )[0]
+
+    def tearDown(self):
+        CreditAdjustment.objects.all().delete()
+        CreditLine.objects.all().delete()
+        generator.delete_all_subscriptions()
+        super(TestCreditTransfers, self).tearDown()
 
     def _ensure_transfer(self, original_credits):
         transferred_credits = []

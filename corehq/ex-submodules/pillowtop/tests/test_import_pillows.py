@@ -1,4 +1,4 @@
-from django.test import override_settings, SimpleTestCase
+from django.test import override_settings, SimpleTestCase, TestCase
 from pillowtop import get_all_pillow_instances, get_all_pillow_classes, get_pillow_by_name
 from pillowtop.checkpoints.manager import PillowCheckpoint
 from pillowtop.dao.mock import MockDocumentStore
@@ -48,7 +48,7 @@ def make_fake_constructed_pillow():
     pillow = FakeConstructedPillow(
         name='FakeConstructedPillowName',
         document_store=fake_dao,
-        checkpoint=PillowCheckpoint(fake_dao, 'fake-constructed-pillow'),
+        checkpoint=PillowCheckpoint('fake-constructed-pillow'),
         change_feed=RandomChangeFeed(10),
         processor=LoggingProcessor(),
     )
@@ -95,12 +95,12 @@ class PillowFactoryFunctionTestCase(SimpleTestCase):
 
 
 @override_settings(PILLOWTOPS=PILLOWTOPS_OVERRIDE)
-class PillowTestCase(SimpleTestCase):
+class PillowTestCase(TestCase):
 
     def test_pillow_reset_checkpoint(self):
         pillow = make_fake_constructed_pillow()
         seq_id = '456'
         pillow.set_checkpoint(Change('123', seq_id))
-        self.assertEqual(pillow.checkpoint.get_or_create().document['seq'], seq_id)
+        self.assertEqual(pillow.checkpoint.get_or_create_wrapped().document.sequence, seq_id)
         pillow.reset_checkpoint()
-        self.assertEqual(pillow.checkpoint.get_or_create().document['seq'], '0')
+        self.assertEqual(pillow.checkpoint.get_or_create_wrapped().document.sequence, '0')

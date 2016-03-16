@@ -1,17 +1,8 @@
 {% extends 'style/bootstrap3/base_section.html' %}
-{% load hq_shared_tags %}
-{% load i18n %}
 {% load crispy_forms_tags %}
-{% block page_content %}
 
-<p>Use this form to generate the restore response for users and cache the results for 24 hours.</p>
-<p>
-    <a href="https://confluence.dimagi.com/display/commcarehq/Restoring+Many+Cases+Quickly+to+a+CommCare+Device" target="_blank">
-    More info
-    </a>
-</p>
-</br>
-<div id="prime-restore-cache-form">
-    {% crispy form %}
-</div>
+{% block page_content %}
+    <div id="prime-restore-cache-form">
+        {% crispy form %}
+    </div>
 {% endblock %}

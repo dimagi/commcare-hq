@@ -1,15 +1,15 @@
 import uuid
 from django.test import TestCase
 from casexml.apps.case.mock import CaseBlock
+from casexml.apps.case.tests.util import delete_all_xforms, delete_all_cases
 from casexml.apps.case.util import post_case_blocks
 from corehq.apps.domain.shortcuts import create_domain
-from corehq.apps.hqadmin.dbaccessors import get_number_of_forms_in_all_domains
 from corehq.apps.groups.models import Group
 from corehq.apps.hqcase.exceptions import CaseAssignmentError
 from corehq.apps.hqcase.utils import assign_case
 from corehq.apps.users.models import CommCareUser
 from corehq.apps.users.util import format_username
-from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
+from corehq.form_processor.interfaces.dbaccessors import CaseAccessors, FormAccessors
 
 
 class CaseAssignmentTest(TestCase):
@@ -21,6 +21,8 @@ class CaseAssignmentTest(TestCase):
         self.original_owner = CommCareUser.create(self.domain, format_username('original-owner', self.domain), "****")
 
     def tearDown(self):
+        delete_all_cases()
+        delete_all_xforms()
         self.primary_user.delete()
         self.original_owner.delete()
 
@@ -82,10 +84,11 @@ class CaseAssignmentTest(TestCase):
 
     def test_assign_noop(self):
         self._make_tree()
-        num_forms = get_number_of_forms_in_all_domains()
+        num_forms = len(FormAccessors(self.domain).get_forms_by_type('XFormInstance', limit=1000))
+        self.assertTrue(num_forms < 1000)
         res = assign_case(self.primary.case_id, self.original_owner._id, include_subcases=True, include_parent_cases=True)
         self.assertEqual(0, len(res))
-        new_num_forms = get_number_of_forms_in_all_domains()
+        new_num_forms = len(FormAccessors(self.domain).get_forms_by_type('XFormInstance', limit=1000))
         self.assertEqual(new_num_forms, num_forms)
 
     def test_assign_exclusion(self):

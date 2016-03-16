@@ -85,7 +85,10 @@ class TestUrgentAlerts(EWSTestCase):
 
         urgent_stockout_alert.send()
         self.assertEqual(SMS.objects.count(), 1)
-        self.assertEqual(SMS.objects.all().first().text, URGENT_STOCKOUT % (self.district.name, "Test Product2"))
+        self.assertEqual(SMS.objects.all().first().text, URGENT_STOCKOUT % {
+            'location': self.district.name,
+            'products': "Test Product2",
+        })
 
         create_stock_report(self.loc1, {'tp': 0})
         create_stock_report(self.loc2, {'tp': 0})
@@ -95,7 +98,10 @@ class TestUrgentAlerts(EWSTestCase):
         urgent_stockout_alert.send()
         smses = SMS.objects.filter(date__gte=now)
         self.assertEqual(smses.count(), 1)
-        self.assertEqual(smses.first().text, URGENT_STOCKOUT % (self.district.name, "Test Product, Test Product2"))
+        self.assertEqual(smses.first().text, URGENT_STOCKOUT % {
+            'location': self.district.name,
+            'products': "Test Product, Test Product2",
+        })
 
     def test_urgent_non_reporting_alert(self):
         urgent_non_reporting = UrgentNonReporting(TEST_DOMAIN)

@@ -75,6 +75,7 @@ from unittest import TestCase
 from StringIO import StringIO
 
 from django.conf import settings
+from testil import tempdir
 
 import corehq.blobs.s3db as mod
 from corehq.blobs.tests.util import TemporaryS3BlobDB
@@ -96,21 +97,21 @@ class TestS3BlobDB(TestCase):
     def test_put_and_get(self):
         name = "test.1"
         info = self.db.put(StringIO(b"content"), name)
-        with self.db.get(info.name) as fh:
+        with self.db.get(info.identifier) as fh:
             self.assertEqual(fh.read(), b"content")
 
     def test_put_and_get_with_unicode_names(self):
         name = "test.\u4500"
         bucket = "doc.4500"
         info = self.db.put(StringIO(b"content"), name, bucket)
-        with self.db.get(info.name, bucket) as fh:
+        with self.db.get(info.identifier, bucket) as fh:
             self.assertEqual(fh.read(), b"content")
 
     def test_put_and_get_with_bucket(self):
         name = "test.2"
         bucket = "doc.2"
         info = self.db.put(StringIO(b"content"), name, bucket)
-        with self.db.get(info.name, bucket) as fh:
+        with self.db.get(info.identifier, bucket) as fh:
             self.assertEqual(fh.read(), b"content")
 
     def test_put_with_bucket_and_get_without_bucket(self):
@@ -118,30 +119,30 @@ class TestS3BlobDB(TestCase):
         bucket = "doc.3"
         info = self.db.put(StringIO(b"content"), name, bucket)
         with self.assertRaises(mod.NotFound):
-            self.db.get(info.name)
+            self.db.get(info.identifier)
 
     def test_delete(self):
         name = "test.4"
         bucket = "doc.4"
         info = self.db.put(StringIO(b"content"), name, bucket)
 
-        self.assertTrue(self.db.delete(info.name, bucket), 'delete failed')
+        self.assertTrue(self.db.delete(info.identifier, bucket), 'delete failed')
 
         with self.assertRaises(mod.NotFound):
-            self.db.get(info.name, bucket)
+            self.db.get(info.identifier, bucket)
 
         # boto3 client reports that the object was deleted even if there was
         # no object to delete
-        #self.assertFalse(self.db.delete(info.name, bucket), 'delete should fail')
+        #self.assertFalse(self.db.delete(info.identifier, bucket), 'delete should fail')
 
     def test_delete_bucket(self):
         bucket = join("doctype", "ys7v136b")
         info = self.db.put(StringIO(b"content"), bucket=bucket)
         self.assertTrue(self.db.delete(bucket=bucket))
 
-        self.assertTrue(info.name)
+        self.assertTrue(info.identifier)
         with self.assertRaises(mod.NotFound):
-            self.db.get(info.name, bucket=bucket)
+            self.db.get(info.identifier, bucket=bucket)
 
     def test_bucket_path(self):
         bucket = join("doctype", "8cd98f0")
@@ -152,23 +153,23 @@ class TestS3BlobDB(TestCase):
         name = "test.1"
         bucket = join("doctype", "8cd98f0")
         info = self.db.put(StringIO(b"content"), name, bucket)
-        self.assertTrue(info.name.startswith(name + "."), info.name)
+        self.assertTrue(info.identifier.startswith(name + "."), info.identifier)
 
     def test_unsafe_attachment_path(self):
         name = "\u4500.1"
         bucket = join("doctype", "8cd98f0")
         info = self.db.put(StringIO(b"content"), name, bucket)
-        self.assertTrue(info.name.startswith("unsafe."), info.name)
+        self.assertTrue(info.identifier.startswith("unsafe."), info.identifier)
 
     def test_unsafe_attachment_name(self):
         name = "test/1"  # name with directory separator
         bucket = join("doctype", "8cd98f0")
         info = self.db.put(StringIO(b"content"), name, bucket)
-        self.assertTrue(info.name.startswith("unsafe."), info.name)
+        self.assertTrue(info.identifier.startswith("unsafe."), info.identifier)
 
     def test_empty_attachment_name(self):
         info = self.db.put(StringIO(b"content"))
-        self.assertNotIn(".", info.name)
+        self.assertNotIn(".", info.identifier)
 
 
 @generate_cases([
@@ -184,3 +185,71 @@ class TestS3BlobDB(TestCase):
 def test_bad_name(self, name, bucket=mod.DEFAULT_BUCKET):
     with self.assertRaises(mod.BadName):
         self.db.get(name, bucket)
+
+
+class TestOpenFileChunk(TestCase):
+
+    @classmethod
+    def setUpClass(cls):
+        cls.tmp_context = tempdir()
+        tmp = cls.tmp_context.__enter__()
+        cls.filepath = join(tmp, "file.txt")
+        with open(cls.filepath, "wb") as fh:
+            fh.write(b"data")
+
+    @classmethod
+    def tearDownClass(cls):
+        cls.tmp_context.__exit__(None, None, None)
+
+    def get_chunk(self, normal_file, start, length):
+        return mod.OpenFileChunk(normal_file, start, length)
+
+
+@generate_cases([
+    (0, 0, b"data"),
+    (1, 1, b"ata",),
+    (2, 2, b"ta",),
+    (3, 3, b"a"),
+    (4, 4, b""),
+    (5, 5, b""),
+], TestOpenFileChunk)
+def test_seek_tell_read(self, to, expect_tell, expect_read):
+    with open(self.filepath, "rb") as normal_file:
+        normal_file.seek(to)
+
+        with self.get_chunk(normal_file, 0, 4) as chunk:
+            self.assertIn(normal_file, mod.OpenFileChunk.file_locks)
+            # chunk seek/tell/read should not affect normal_file
+            chunk.seek(to)
+            self.assertEqual(chunk.tell(), expect_tell)
+            self.assertEqual(chunk.read(), expect_read)
+
+        self.assertEqual(normal_file.tell(), expect_tell)
+        self.assertEqual(normal_file.read(), expect_read)
+        self.assertNotIn(normal_file, mod.OpenFileChunk.file_locks)
+
+
+@generate_cases([
+    (0, (0, b"data"), (0, b"at")),
+    (1, (1, b"ata"), (1, b"t")),
+    (2, (2, b"ta",), (2, b"")),
+    (3, (3, b"a"), (3, b"")),
+    (4, (4, b""), (4, b"")),
+    (5, (5, b""), (5, b"")),
+], TestOpenFileChunk)
+def test_seek_tell_read_in_sub_chunk(self, to, expect_norm, expect_chunk):
+    with open(self.filepath, "rb") as normal_file:
+        normal_file.seek(to)
+
+        with self.get_chunk(normal_file, 1, 2) as chunk:
+            # chunk seek/tell/read should not affect normal_file
+            chunk.seek(to)
+            self.assertEqual((chunk.tell(), chunk.read()), expect_chunk)
+
+        self.assertEqual((normal_file.tell(), normal_file.read()), expect_norm)
+
+
+class TestReadOpenFileChunk(TestOpenFileChunk):
+
+    def get_chunk(self, normal_file, start, length):
+        return mod.ReadOpenFileChunk(normal_file, start, length, 4)

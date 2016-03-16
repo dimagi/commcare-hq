@@ -1,22 +1,24 @@
 from __future__ import absolute_import
-import re
-from uuid import uuid4
+import os
 from contextlib import contextmanager
+from threading import Lock
 
 from corehq.blobs import BlobInfo, DEFAULT_BUCKET
 from corehq.blobs.exceptions import BadName, NotFound
 
 import boto3
+from boto3.s3.transfer import S3Transfer, ReadFileChunk
 from botocore.client import Config
 from botocore.handlers import calculate_md5
 from botocore.exceptions import ClientError
 from botocore.utils import fix_s3_host
 
+from corehq.blobs.interface import AbstractBlobDB, SAFENAME
+
 DEFAULT_S3_BUCKET = "blobdb"
-SAFENAME = re.compile("^[a-z0-9_./-]+$", re.IGNORECASE)
 
 
-class S3BlobDB(object):
+class S3BlobDB(AbstractBlobDB):
 
     def __init__(self, config):
         kwargs = {}
@@ -34,65 +36,29 @@ class S3BlobDB(object):
         # https://github.com/boto/boto3/issues/259
         self.db.meta.client.meta.events.unregister('before-sign.s3', fix_s3_host)
 
-    def put(self, content, basename="", bucket=DEFAULT_BUCKET, content_md5=None):
-        """Put a blob in persistent storage
+    def put(self, content, basename="", bucket=DEFAULT_BUCKET):
+        identifier = self.get_identifier(basename)
+        path = self.get_path(identifier, bucket)
+        self._s3_bucket(create=True)
+        osutil = OpenFileOSUtils()
+        transfer = S3Transfer(self.db.meta.client, osutil=osutil)
+        transfer.upload_file(content, self.s3_bucket_name, path)
+        content.seek(0)
+        content_md5 = get_content_md5(content)
+        content_length = osutil.get_file_size(content)
+        return BlobInfo(identifier, content_length, "md5-" + content_md5)
 
-        :param content: A file-like object in binary read mode.
-        :param basename: Optional name from which the blob name will be
-        derived. This is used to make the unique blob name somewhat
-        recognizable.
-        :param bucket: Optional bucket name used to partition blob data
-        in the persistent storage medium. This may be delimited with
-        slashes (/). It must be a valid relative path.
-        :param content_md5: RFC-1864-compliant Content-MD5 header value.
-        If this parameter is omitted or its value is `None` then content
-        must be a seekable file-like object. NOTE: the value should not
-        be prefixed with `md5-` even though we store it that way.
-        :returns: A `BlobInfo` named tuple. The returned object has a
-        `name` member that must be used to get or delete the blob. It
-        should not be confused with the optional `basename` parameter.
-        """
-        name = self.get_unique_name(basename)
-        path = self.get_path(name, bucket)
-        if content_md5 is None:
-            params = {"body": content, "headers": {}}
-            calculate_md5(params)
-            content_md5 = params["headers"]["Content-MD5"]
-        obj = self._s3_bucket(create=True).put_object(
-            Key=path,
-            Body=content,
-            ContentMD5=content_md5,
-        )
-        return BlobInfo(name, obj.content_length, "md5-" + content_md5)
-
-    def get(self, name, bucket=DEFAULT_BUCKET):
-        """Get a blob
-
-        :param name: The name of the object to get.
-        :param bucket: Optional bucket name. This must have the same
-        value that was passed to ``put``.
-        :raises: `NotFound` if the object does not exist.
-        :returns: A file-like object in binary read mode. The returned
-        object should be closed when finished reading.
-        """
-        path = self.get_path(name, bucket)
-        with maybe_not_found(throw=NotFound(name, bucket)):
+    def get(self, identifier, bucket=DEFAULT_BUCKET):
+        path = self.get_path(identifier, bucket)
+        with maybe_not_found(throw=NotFound(identifier, bucket)):
             resp = self._s3_bucket().Object(path).get()
         return ClosingContextProxy(resp["Body"])  # body stream
 
-    def delete(self, name=None, bucket=DEFAULT_BUCKET):
-        """Delete a blob
-
-        :param name: The name of the object to be deleted. The entire
-        bucket will be deleted if this is not specified.
-        :param bucket: Optional bucket name. This must have the same
-        value that was passed to ``put``.
-        :returns: True if the blob was deleted else false.
-        """
-        path = self.get_path(name, bucket)
+    def delete(self, identifier=None, bucket=DEFAULT_BUCKET):
+        path = self.get_path(identifier, bucket)
         s3_bucket = self._s3_bucket()
         with maybe_not_found():
-            if name is None:
+            if identifier is None:
                 summaries = s3_bucket.objects.filter(Prefix=path + "/")
                 pages = ([{"Key": o.key} for o in page]
                          for page in summaries.pages())
@@ -108,23 +74,11 @@ class S3BlobDB(object):
         return False
 
     def copy_blob(self, content, info, bucket):
-        """Copy blob from other blob database
-
-        :param content: File-like blob content object.
-        :param info: `BlobInfo` object.
-        :param bucket: Bucket name.
-        """
-        if info.digest and info.digest.startswith("md5-"):
-            content_md5 = info.digest[4:]
-        else:
-            params = {"body": content, "headers": {}}
-            calculate_md5(params)
-            content_md5 = params["headers"]["Content-MD5"]
-        self._s3_bucket(create=True).put_object(
-            Key=self.get_path(info.name, bucket),
-            Body=content,
-            ContentMD5=content_md5,
-        )
+        self._s3_bucket(create=True)
+        path = self.get_path(info.identifier, bucket)
+        osutil = OpenFileOSUtils()
+        transfer = S3Transfer(self.db.meta.client, osutil=osutil)
+        transfer.upload_file(content, self.s3_bucket_name, path)
 
     def _s3_bucket(self, create=False):
         if create and not self._s3_bucket_exists:
@@ -137,20 +91,10 @@ class S3BlobDB(object):
             self._s3_bucket_exists = True
         return self.db.Bucket(self.s3_bucket_name)
 
-    @staticmethod
-    def get_unique_name(basename):
-        if not basename:
-            return uuid4().hex
-        if SAFENAME.match(basename) and "/" not in basename:
-            prefix = basename
-        else:
-            prefix = "unsafe"
-        return prefix + "." + uuid4().hex
-
-    def get_path(self, name=None, bucket=DEFAULT_BUCKET):
-        if name is None:
+    def get_path(self, identifier=None, bucket=DEFAULT_BUCKET):
+        if identifier is None:
             return safepath(bucket)
-        return safejoin(bucket, name)
+        return safejoin(bucket, identifier)
 
 
 def safepath(path):
@@ -168,6 +112,12 @@ def safejoin(root, subpath):
 def is_not_found(err, not_found_codes=["NoSuchKey", "NoSuchBucket", "404"]):
     return (err.response["Error"]["Code"] in not_found_codes or
         err.response.get("Errors", {}).get("Error", {}).get("Code") in not_found_codes)
+
+
+def get_content_md5(content):
+    params = {"body": content, "headers": {}}
+    calculate_md5(params)
+    return params["headers"]["Content-MD5"]
 
 
 @contextmanager
@@ -194,3 +144,148 @@ class ClosingContextProxy(object):
 
     def __exit__(self, *args):
         self.obj.close()
+
+
+class OpenFileOSUtils(object):
+
+    def get_file_size(self, fileobj):
+        if not hasattr(fileobj, 'fileno'):
+            pos = fileobj.tell()
+            try:
+                fileobj.seek(0, os.SEEK_END)
+                return fileobj.tell()
+            finally:
+                fileobj.seek(pos)
+        return os.fstat(fileobj.fileno()).st_size
+
+    def open_file_chunk_reader(self, fileobj, start_byte, size, callback):
+        full_size = self.get_file_size(fileobj)
+        return ReadOpenFileChunk(fileobj, start_byte, size, full_size,
+                                 callback, enable_callback=False)
+
+    def open(self, filename, mode):
+        raise NotImplementedError
+
+    def remove_file(self, filename):
+        raise NotImplementedError
+
+    def rename_file(self, current_filename, new_filename):
+        raise NotImplementedError
+
+
+class ReadOpenFileChunk(ReadFileChunk):
+    """Wrapper for OpenFileChunk that implements ReadFileChunk interface
+    """
+
+    def __init__(self, fileobj, start_byte, chunk_size, full_file_size, *args, **kw):
+
+        class FakeFile:
+            def seek(self, pos):
+                pass
+
+        length = min(chunk_size, full_file_size - start_byte)
+        self._chunk = OpenFileChunk(fileobj, start_byte, length)
+        super(ReadOpenFileChunk, self).__init__(
+            FakeFile(), start_byte, chunk_size, full_file_size, *args, **kw)
+        assert self._size == length, (self._size, length)
+
+    def __repr__(self):
+        return ("<ReadOpenFileChunk {} offset={} length={}>".format(
+            self._chunk.file,
+            self._start_byte,
+            self._size,
+        ))
+
+    def read(self, amount=None):
+        data = self._chunk.read(amount)
+        if self._callback is not None and self._callback_enabled:
+            self._callback(len(data))
+        return data
+
+    def seek(self, where):
+        old_pos = self._chunk.tell()
+        self._chunk.seek(where)
+        if self._callback is not None and self._callback_enabled:
+            # To also rewind the callback() for an accurate progress report
+            self._callback(where - old_pos)
+
+    def tell(self):
+        return self._chunk.tell()
+
+    def close(self):
+        self._chunk.close()
+        self._chunk = None
+
+    def __enter__(self):
+        return self
+
+    def __exit__(self, *args, **kwargs):
+        self.close()
+
+
+class OpenFileChunk(object):
+    """A wrapper for reading from a file-like object from multiple threads
+
+    Each thread reading from the file-like object should have its own
+    private instance of this class.
+    """
+
+    init_lock = Lock()
+    file_locks = {}
+
+    def __init__(self, fileobj, start_byte, length):
+        with self.init_lock:
+            try:
+                lock, refs = self.file_locks[fileobj]
+            except KeyError:
+                lock, refs = self.file_locks[fileobj] = (Lock(), set())
+            refs.add(self)
+        self.lock = lock
+        self.file = fileobj
+        self.start = self.offset = start_byte
+        self.length = length
+
+    def read(self, amount=None):
+        if self.offset >= self.start + self.length:
+            return b""
+        with self.lock:
+            pos = self.file.tell()
+            self.file.seek(self.offset)
+
+            if amount is None:
+                amount = self.length
+            amount = min(self.length - self.tell(), amount)
+            read = self.file.read(amount)
+
+            self.offset = self.file.tell()
+            self.file.seek(pos)
+            assert self.offset - self.start >= 0, (self.start, self.offset)
+            assert self.offset <= self.start + self.length, \
+                (self.start, self.length, self.offset)
+        return read
+
+    def seek(self, pos):
+        assert pos >= 0, pos
+        self.offset = self.start + pos
+
+    def tell(self):
+        return self.offset - self.start
+
+    def close(self):
+        if self.file is None:
+            return
+        try:
+            with self.init_lock:
+                lock, refs = self.file_locks[self.file]
+                refs.remove(self)
+                if not refs:
+                    self.file_locks.pop(self.file)
+        finally:
+            self.file = None
+            self.lock = None
+
+    def __enter__(self):
+        return self
+
+    def __exit__(self, *args, **kwargs):
+        self.close()

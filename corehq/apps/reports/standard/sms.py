@@ -48,7 +48,6 @@ from corehq.apps.reminders.views import (
     EditNormalKeywordView,
     EditScheduledReminderView
 )
-from couchforms.models import XFormInstance
 
 
 class MessagesReport(ProjectReport, ProjectReportParametersMixin, GenericTabularReport, DatespanMixin):
@@ -61,6 +60,7 @@ class MessagesReport(ProjectReport, ProjectReportParametersMixin, GenericTabular
         "This report will only show data for users whose phone numbers have "
         "been verified. Phone numbers can be verified from the Settings and "
         "Users tab.")
+    is_bootstrap3 = True
 
     @property
     def headers(self):
@@ -128,6 +128,8 @@ def _sms_count(user, startdate, enddate):
 
 
 class BaseCommConnectLogReport(ProjectReport, ProjectReportParametersMixin, GenericTabularReport, DatespanMixin):
+    is_bootstrap3 = True
+
     def _fmt(self, val):
         if val is None:
             return format_datatables_data("-", "-")
@@ -951,8 +953,6 @@ class SurveyDetailReport(BaseMessagingEventReport):
     def template_context(self):
         return {
             'xforms_session': self.xforms_session,
-            'xform_instance': (XFormInstance.get(self.xforms_session.submission_id)
-                               if self.xforms_session.submission_id else None),
             'contact': get_doc_info_by_id(self.domain, self.xforms_session.connection_id),
             'start_time': (ServerTime(self.xforms_session.start_time)
                            .user_time(self.timezone).done().strftime(SERVER_DATETIME_FORMAT)),

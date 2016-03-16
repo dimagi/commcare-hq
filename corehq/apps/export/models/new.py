@@ -35,7 +35,7 @@ from corehq.apps.export.const import (
     CASE_EXPORT,
     MAIN_TABLE,
     TRANSFORM_FUNCTIONS,
-)
+    DEID_TRANSFORM_FUNCTIONS)
 from corehq.apps.export.dbaccessors import (
     get_latest_case_export_schema,
     get_latest_form_export_schema,
@@ -61,7 +61,7 @@ class ExportItem(DocumentSchema):
     @classmethod
     def create_from_question(cls, question, app_id, app_version):
         return cls(
-            path=_string_path_to_list(question['value']),
+            path=_question_path_to_doc_path(question['value']),
             label=question['label'],
             last_occurrences={app_id: app_version},
         )
@@ -157,8 +157,18 @@ class ExportColumn(DocumentSchema):
         self.is_advanced = is_deleted
         self.tags = tags
 
+    @property
+    def is_deidentifed(self):
+        # TODO: Might be better if we set an is_deidentified flag on the model instead?
+        return bool(set(self.transforms) & set(DEID_TRANSFORM_FUNCTIONS))
+
     def get_headers(self):
-        return [self.label]
+        # TODO: id columns need special treatment
+        # see couchexport.models.ExportTable#get_headers_row
+        if self.is_deidentifed:
+            return [u"{} {}".format(self.label, "[sensitive]")]
+        else:
+            return [self.label]
 
 
 class TableConfiguration(DocumentSchema):
@@ -245,9 +255,13 @@ class ExportInstance(Document):
     domain = StringProperty()
     tables = ListProperty(TableConfiguration)
     export_format = StringProperty(default='csv')
+    last_built = DateTimeProperty()
 
     # Whether to split multiselects into multiple columns
     split_multiselects = BooleanProperty(default=False)
+
+    # Whether to automatically convert dates to excel dates
+    transform_dates = BooleanProperty(default=False)
 
     # Whether to include duplicates and other error'd forms in export
     include_errors = BooleanProperty(default=False)
@@ -268,6 +282,18 @@ class ExportInstance(Document):
         return self.is_deidentified
 
     @property
+    def file_id(self):
+        return 'placeholder'
+
+    @property
+    def export_size(self):
+        return 'placeholder'
+
+    @property
+    def download_url(self):
+        return 'placeholder'
+
+    @property
     def defaults(self):
         return FormExportInstanceDefaults if self.type == FORM_EXPORT else CaseExportInstanceDefaults
 
@@ -276,6 +302,15 @@ class ExportInstance(Document):
             if table.path == path:
                 return table
         return None
+
+    def daily_saved_export_metadata(self):
+        return {
+            'fileId': self.file_id,
+            'size': self.export_size,
+            'lastUpdated': self.last_built,
+            'showExpiredWarning': False,
+            'downloadUrl': self.download_url,
+        }
 
     @classmethod
     def _new_from_schema(cls, schema):
@@ -338,6 +373,9 @@ class CaseExportInstance(ExportInstance):
 class FormExportInstance(ExportInstance):
     xmlns = StringProperty()
     app_id = StringProperty()
+
+    # Whether to include duplicates and other error'd forms in export
+    include_errors = BooleanProperty(default=False)
 
     @property
     def formname(self):
@@ -553,7 +591,7 @@ class FormExportDataSchema(ExportDataSchema):
         return FORM_EXPORT
 
     @staticmethod
-    def generate_schema_from_builds(domain, app_id, form_xmlns):
+    def generate_schema_from_builds(domain, app_id, form_xmlns, force_rebuild=False):
         """Builds a schema from Application builds for a given identifier
 
         :param domain: The domain that the export belongs to
@@ -563,7 +601,7 @@ class FormExportDataSchema(ExportDataSchema):
         """
         original_id, original_rev = None, None
         current_xform_schema = get_latest_form_export_schema(domain, app_id, form_xmlns)
-        if current_xform_schema:
+        if current_xform_schema and not force_rebuild:
             original_id, original_rev = current_xform_schema._id, current_xform_schema._rev
         else:
             current_xform_schema = FormExportDataSchema()
@@ -608,10 +646,10 @@ class FormExportDataSchema(ExportDataSchema):
             # If group_path is None, that means the questions are part of the form and not a repeat group
             # inside of the form
             group_schema = ExportGroupSchema(
-                path=_string_path_to_list(group_path),
+                path=_question_path_to_doc_path(group_path),
                 last_occurrences={app_id: app_version},
             )
-            if group_path == MAIN_TABLE:
+            if group_path is None:
                 for system_prop in MAIN_TABLE_PROPERTIES:
                     group_schema.items.append(ScalarItem(
                         path=[system_prop.name],
@@ -655,7 +693,7 @@ class CaseExportDataSchema(ExportDataSchema):
         return map(lambda app_build_version: app_build_version.build_id, app_build_verions)
 
     @staticmethod
-    def generate_schema_from_builds(domain, case_type):
+    def generate_schema_from_builds(domain, case_type, force_rebuild=False):
         """Builds a schema from Application builds for a given identifier
 
         :param domain: The domain that the export belongs to
@@ -666,7 +704,7 @@ class CaseExportDataSchema(ExportDataSchema):
         original_id, original_rev = None, None
         current_case_schema = get_latest_case_export_schema(domain, case_type)
 
-        if current_case_schema:
+        if current_case_schema and not force_rebuild:
             # Save the original id an rev so we can later save the document under the same _id
             original_id, original_rev = current_case_schema._id, current_case_schema._rev
         else:
@@ -769,6 +807,24 @@ def _string_path_to_list(path):
     return path if path is None else path[1:].split('/')
 
 
+def _question_path_to_doc_path(string_path):
+    """
+    Convert a question path into the format expected by the export code,
+    specifically the logic in ExportColumn.get_value().
+    The export code will use this path to traverse the JSON representation of
+    the form that is stored in ElasticSearch.
+
+    E.g. "/data/question1/" is converted to ["form", "question1"]
+    """
+    path = _string_path_to_list(string_path)
+    if path is None:
+        path = []
+    else:
+        assert path[0] == "data"
+        path[0] = "form"
+    return path
+
+
 def _list_path_to_string(path, separator='.'):
     if not path or (len(path) == 1 and path[0] is None):
         return ''
@@ -861,7 +917,7 @@ class SplitExportColumn(ExportColumn):
     output = [1, '', 'c d']
     """
     item = SchemaProperty(MultipleChoiceItem)
-    ignore_extras = BooleanProperty()
+    ignore_unspecified_options = BooleanProperty()
 
     def get_value(self, doc, base_path):
         """
@@ -872,13 +928,13 @@ class SplitExportColumn(ExportColumn):
         """
         value = super(SplitExportColumn, self).get_value(doc, base_path)
         if not isinstance(value, basestring):
-            return [None] * len(self.item.options) + [] if self.ignore_extras else [value]
+            return [None] * len(self.item.options) + [] if self.ignore_unspecified_options else [value]
 
         selected = OrderedDict((x, 1) for x in value.split(" "))
         row = []
         for option in self.item.options:
             row.append(selected.pop(option.value, None))
-        if not self.ignore_extras:
+        if not self.ignore_unspecified_options:
             row.append(" ".join(selected.keys()))
         return row
 
@@ -892,7 +948,7 @@ class SplitExportColumn(ExportColumn):
                     option=option.value
                 )
             )
-        if not self.ignore_extras:
+        if not self.ignore_unspecified_options:
             headers.append(
                 header_template.format(
                     name=self.label,

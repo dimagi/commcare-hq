@@ -2,21 +2,18 @@ import re
 from django.test.testcases import TestCase
 from corehq.apps.sms.api import incoming
 from corehq.apps.sms.mixin import VerifiedNumber
-from corehq.apps.sms.models import SMSLog
+from corehq.apps.sms.models import SMS, OUTGOING
 from corehq.apps.sms.util import strip_plus
 
 
 class TestScript(TestCase):
 
     def get_last_outbound_sms(self, doc_type, contact_id):
-        sms = SMSLog.view("sms/by_recipient",
-                          startkey=[doc_type, contact_id, "SMSLog", "O", {}],
-                          endkey=[doc_type, contact_id, "SMSLog", "O"],
-                          descending=True,
-                          include_docs=True,
-                          reduce=False,
-                          ).first()
-        return sms
+        return SMS.get_last_log_for_recipient(
+            doc_type,
+            contact_id,
+            direction=OUTGOING
+        )
 
     def parse_script(self, script):
         lines = [line.strip() for line in script.split('\n')]

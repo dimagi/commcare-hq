@@ -1,8 +1,8 @@
-{% extends "settings/bootstrap2/base_template.html" %}
+{% extends "style/bootstrap3/base_section.html" %}
 {% load hq_shared_tags %}
 
 {% block js %} {{ block.super }}
-    <script src="{% static 'commtrack/ko/location_bulk_upload_file.js' %}"></script>
+    <script src="{% new_static 'commtrack/ko/location_bulk_upload_file.js' %}"></script>
     <script type="text/javascript">
         $(function() {
             $('#download_link').click(function() {
@@ -15,6 +15,6 @@
     </script>
 {% endblock %}
 
-{% block main_column %}
+{% block page_content %}
     {% include "locations/manage/partials/bulk_upload.html" %}
 {% endblock %}

@@ -13,3 +13,4 @@ GitPython
 gitdb
 django-kombu
 rawes
+pyzxcvbn

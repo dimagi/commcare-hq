@@ -1,10 +1,12 @@
+from mock import patch
+
 from corehq.apps.locations.models import Location, SQLLocation
 from casexml.apps.case.tests.util import check_user_has_case
 from casexml.apps.case.mock import CaseBlock
-from mock import patch
 from corehq.apps.commtrack.tests.util import CommTrackTest, make_loc, FIXED_USER
-from corehq.apps.commtrack.models import SupplyPointCase
 from corehq.toggles import MULTIPLE_LOCATIONS_PER_USER, NAMESPACE_DOMAIN
+from corehq.form_processor.interfaces.supply import SupplyInterface
+from corehq.form_processor.tests.utils import run_with_all_backends
 
 
 class LocationsTest(CommTrackTest):
@@ -12,8 +14,10 @@ class LocationsTest(CommTrackTest):
 
     def setUp(self):
         super(LocationsTest, self).setUp()
+        self.accessor = SupplyInterface(self.domain.name)
         self.user = self.users[0]
 
+    @run_with_all_backends
     def test_sync(self):
         test_state = make_loc(
             'teststate',
@@ -37,6 +41,7 @@ class LocationsTest(CommTrackTest):
         except SQLLocation.DoesNotExist:
             self.fail("Synced SQL object does not exist")
 
+    @run_with_all_backends
     def test_archive(self):
         test_state = make_loc(
             'teststate',
@@ -72,19 +77,21 @@ class LocationsTest(CommTrackTest):
             1
         )
 
+    @run_with_all_backends
     def test_archive_flips_sp_cases(self):
         loc = make_loc('someloc')
         sp = loc.linked_supply_point()
 
         self.assertFalse(sp.closed)
         loc.archive()
-        sp = SupplyPointCase.get(sp.case_id)
+        sp = loc.linked_supply_point()
         self.assertTrue(sp.closed)
 
         loc.unarchive()
-        sp = SupplyPointCase.get(sp.case_id)
+        sp = loc.linked_supply_point()
         self.assertFalse(sp.closed)
 
+    @run_with_all_backends
     def test_full_delete(self):
         test_loc = make_loc(
             'test_loc',
@@ -113,13 +120,14 @@ class LocationsTest(CommTrackTest):
             0
         )
 
+    @run_with_all_backends
     def test_delete_closes_sp_cases(self):
         loc = make_loc('test_loc')
         sp = loc.linked_supply_point()
 
         self.assertFalse(sp.closed)
         loc.full_delete()
-        sp = SupplyPointCase.get(sp.case_id)
+        sp = self.accessor.get_supply_point(sp.case_id)
         self.assertTrue(sp.closed)
 
 

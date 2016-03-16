@@ -273,6 +273,15 @@ class BasicReportDispatcher(ReportDispatcher):
     map_name = 'BASIC_REPORTS'
 
 
+class DomainReportDispatcher(ReportDispatcher):
+    prefix = 'domain_report'
+    map_name = 'DOMAIN_REPORTS'
+
+    @cls_to_view_login_and_domain
+    def dispatch(self, request, *args, **kwargs):
+        return super(DomainReportDispatcher, self).dispatch(request, *args, **kwargs)
+
+
 class AdminReportDispatcher(ReportDispatcher):
     prefix = 'admin_report'
     map_name = 'ADMIN_REPORTS'

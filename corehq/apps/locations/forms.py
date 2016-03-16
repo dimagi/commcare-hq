@@ -96,6 +96,9 @@ class LocationForm(forms.Form):
 
         self.custom_data = self.get_custom_data(bound_data, is_new)
 
+        self.custom_data.form.helper.label_class = 'col-sm-3 col-md-4 col-lg-2'
+        self.custom_data.form.helper.field_class = 'col-sm-4 col-md-5 col-lg-3'
+
         super(LocationForm, self).__init__(bound_data, *args, **kwargs)
         self.fields['parent_id'].widget.domain = self.location.domain
         self.fields['parent_id'].widget.user = user
@@ -105,6 +108,9 @@ class LocationForm(forms.Form):
 
         self.helper = FormHelper()
         self.helper.form_tag = False
+        self.helper.label_class = 'col-sm-3 col-md-4 col-lg-2'
+        self.helper.field_class = 'col-sm-4 col-md-5 col-lg-3'
+
         self.helper.layout = crispy.Layout(
             crispy.Fieldset(*self.get_fields(is_new))
         )

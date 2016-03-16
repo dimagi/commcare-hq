@@ -11,6 +11,8 @@ from django.contrib import messages
 from corehq.apps.app_manager.views.media_utils import process_media_attribute, \
     handle_media_edits
 
+from dimagi.utils.logging import notify_exception
+
 from corehq.apps.app_manager.views.utils import back_to_main, bail, get_langs
 from corehq import toggles, feature_previews
 from corehq.apps.app_manager.templatetags.xforms_extras import trans
@@ -198,7 +200,6 @@ def _get_report_module_context(app, module):
 
 
 def _get_fixture_types(domain):
-    # TODO: Don't hit the DB here and when getting fixture columns
     return [f.tag for f in FixtureDataType.by_domain(domain)]
 
 
@@ -631,13 +632,33 @@ def edit_report_module(request, domain, app_id, module_id):
     module = app.get_module(module_id)
     assert isinstance(module, ReportModule)
     module.name = params['name']
-    module.report_configs = [ReportAppConfig.wrap(spec) for spec in params['reports']]
+
+    try:
+        module.report_configs = [ReportAppConfig.wrap(spec) for spec in params['reports']]
+    except Exception:
+        notify_exception(
+            request,
+            message="Something went wrong while editing report modules",
+            details={'domain': domain, 'app_id': app_id, }
+        )
+        return HttpResponseBadRequest(_("There was a problem processing your request."))
+
     if (feature_previews.MODULE_FILTER.enabled(domain) and
             app.enable_module_filtering):
         module['module_filter'] = request.POST.get('module_filter')
     module.media_image.update(params['multimedia']['mediaImage'])
     module.media_audio.update(params['multimedia']['mediaAudio'])
-    app.save()
+
+    try:
+        app.save()
+    except Exception:
+        notify_exception(
+            request,
+            message="Something went wrong while saving app {} while editing report modules".format(app_id),
+            details={'domain': domain, 'app_id': app_id, }
+        )
+        return HttpResponseBadRequest(_("There was a problem processing your request."))
+
     return json_response('success')
 
 

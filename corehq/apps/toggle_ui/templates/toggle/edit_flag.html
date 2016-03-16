@@ -6,7 +6,7 @@
 {% block title %}{% trans "Edit Feature Flag: " %}{{ toggle_meta.label }}{% endblock %}
 
 {% block js %}{{ block.super }}
-    <script src="{% new_static 'hqwebapp/js/main.js' %}"></script>
+    <script src="{% new_static 'style/js/bootstrap2/main.js' %}"></script>
 {% endblock %}
 
 {% block stylesheets %}
@@ -125,84 +125,88 @@
 </script>
 {% endblock %}
 {% block page_content %}
-    {% if not usage_info %}
-        <a href="{{ page_url }}?usage_info=true" class="pull-right">
-            <i class="icon-white icon-info-sign"></i>
-            {% trans "Show usage" %}
-        </a>
-    {% endif %}
-    {% if toggle_meta.description %}
-        <p>{{ toggle_meta.description|safe }}</p>
-    {% endif %}
-    <p>{% trans "This flag is tagged as: " %}<span class="label label-{{ toggle_meta.tag.css_class }}">{{ toggle_meta.tag.name }}</span></p>
-    {% if toggle_meta.help_link %}
-    <p><a href="{{ toggle_meta.help_link }}" target="_blank">{% trans "More information" %}</a></p>
-    {% endif %}
-    <div id="toggle_editing_ko">
-        <div data-bind="saveButton: saveButton"></div>
-        <h4>{% trans "Enabled toggle items" %}</h4>
-        <div>
-            {% if toggle_meta.randomness %}
-                <p>
-                    {% blocktrans with percent=toggle_meta.randomness_percent namespace=toggle_meta.namespace %}
-                    And <strong>{{ percent }}%</strong> of all other {{ namespace }}s.
-                    {% endblocktrans %}
-                    {% if not expanded %}
-                        <a href="{% url 'edit_toggle' toggle_meta.slug %}?expand=true">({% trans "see all" %})</a>
+    <div class="row" style="margin-bottom: 50px;">
+        <div class="col-sm-12">
+            {% if not usage_info %}
+                <a href="{{ page_url }}?usage_info=true" class="pull-right">
+                    <i class="icon-white icon-info-sign"></i>
+                    {% trans "Show usage" %}
+                </a>
+            {% endif %}
+            {% if toggle_meta.description %}
+                <p>{{ toggle_meta.description|safe }}</p>
+            {% endif %}
+            <p>{% trans "This flag is tagged as: " %}<span class="label label-{{ toggle_meta.tag.css_class }}">{{ toggle_meta.tag.name }}</span></p>
+            {% if toggle_meta.help_link %}
+            <p><a href="{{ toggle_meta.help_link }}" target="_blank">{% trans "More information" %}</a></p>
+            {% endif %}
+            <div id="toggle_editing_ko">
+                <div data-bind="saveButton: saveButton"></div>
+                <h4>{% trans "Enabled toggle items" %}</h4>
+                <div>
+                    {% if toggle_meta.randomness %}
+                        <p>
+                            {% blocktrans with percent=toggle_meta.randomness_percent namespace=toggle_meta.namespace %}
+                            And <strong>{{ percent }}%</strong> of all other {{ namespace }}s.
+                            {% endblocktrans %}
+                            {% if not expanded %}
+                                <a href="{% url 'edit_toggle' toggle_meta.slug %}?expand=true">({% trans "see all" %})</a>
+                            {% endif %}
+                            <br/>
+                            <ul>
+                                <li>
+                                    <span class="muted">{% trans "Go to the project settings page to see if a toggle is randomly enabled for your domain." %}</span>
+                                </li>
+                            </ul>
+                        </p>
                     {% endif %}
-                    <br/>
-                    <ul>
-                        <li>
-                            <span class="muted">{% trans "Go to the project settings page to see if a toggle is randomly enabled for your domain." %}</span>
-                        </li>
-                    </ul>
-                </p>
+                </div>
+                <hr/>
+                <div class="row" data-bind="visible: latest_use().name">
+                    <div class="span6">
+                        Most recently updated: <strong data-bind="text:latest_use().name"></strong>: <span data-bind="text:latest_use().date"></span>
+                    </div>
+                </div>
+                <!-- ko foreach: items -->
+                <div class="row margin-vertical-sm">
+                    <div class="col-sm-4">
+                        <div class="input-group">
+                            <div class="input-group-btn">
+                                <a href="#" class="btn btn-danger" data-bind="click: $parent.removeItem"><i class="fa fa-trash"></i></a>
+                            </div>
+                            <input class="input-medium form-control" type="text" data-bind="value: value">
+                            <span class="input-group-addon" data-bind="html: namespace" style="font-family:monospace;"></span>
+                            <span data-bind="text: last_used, visible: last_used" class="input-group-addon"></span>
+                        </div>
+                    </div>
+                </div>
+                <!-- /ko -->
+                {% for namespace in namespaces %}
+                    <button class="btn btn-success" data-bind="click: function (){ addItem('{{ namespace }}') }">
+                        <i class="fa fa-plus"></i> {% trans "Add " %}{{ namespace }}
+                    </button>
+                {% endfor %}
+            </div>
+            {% if expanded %}
+                <hr/>
+                <h1>{% trans "All domain/toggle statuses" %}</h1>
+                    <table class="table table-striped">
+                    <thead>
+                        <tr>
+                            <th>{% trans "Domain" %}</th>
+                            <th>{% trans "Enabled?" %}</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                    {% for domain, enabled in domain_toggle_list %}
+                        <tr {% if enabled %}class="info"{% endif %}>
+                            <td>{{ domain }}</td>
+                            <td>{{ enabled }}</td>
+                        </tr>
+                    {% endfor %}
+                    </tbody>
+                </table>
             {% endif %}
         </div>
-        <hr/>
-        <div class="row" data-bind="visible: latest_use().name">
-            <div class="span6">
-                Most recently updated: <strong data-bind="text:latest_use().name"></strong>: <span data-bind="text:latest_use().date"></span>
-            </div>
-        </div>
-        <!-- ko foreach: items -->
-        <div class="row margin-vertical-sm">
-            <div class="col-sm-4">
-                <div class="input-group">
-                    <div class="input-group-btn">
-                        <a href="#" class="btn btn-danger" data-bind="click: $parent.removeItem"><i class="fa fa-trash"></i></a>
-                    </div>
-                    <input class="input-medium form-control" type="text" data-bind="value: value">
-                    <span class="input-group-addon" data-bind="html: namespace" style="font-family:monospace;"></span>
-                    <span data-bind="text: last_used, visible: last_used" class="input-group-addon"></span>
-                </div>
-            </div>
-        </div>
-        <!-- /ko -->
-        {% for namespace in namespaces %}
-            <button class="btn btn-success" data-bind="click: function (){ addItem('{{ namespace }}') }">
-                <i class="fa fa-plus"></i> {% trans "Add " %}{{ namespace }}
-            </button>
-        {% endfor %}
     </div>
-    {% if expanded %}
-        <hr/>
-        <h1>{% trans "All domain/toggle statuses" %}</h1>
-            <table class="table table-striped">
-            <thead>
-                <tr>
-                    <th>{% trans "Domain" %}</th>
-                    <th>{% trans "Enabled?" %}</th>
-                </tr>
-            </thead>
-            <tbody>
-            {% for domain, enabled in domain_toggle_list %}
-                <tr {% if enabled %}class="info"{% endif %}>
-                    <td>{{ domain }}</td>
-                    <td>{{ enabled }}</td>
-                </tr>
-            {% endfor %}
-            </tbody>
-        </table>
-    {% endif %}
 {% endblock %}

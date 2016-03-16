@@ -19,7 +19,6 @@ from django.utils.translation import ugettext as _
 from corehq.apps.app_manager.const import USERCASE_TYPE
 from corehq.apps.domain.dbaccessors import get_docs_in_domain_by_class
 from corehq.apps.hqcase.dbaccessors import get_case_ids_in_domain_by_owner
-from corehq.apps.sofabed.models import CaseData
 from corehq.form_processor.interfaces.supply import SupplyInterface
 from corehq.form_processor.interfaces.dbaccessors import FormAccessors
 from corehq.util.soft_assert import soft_assert
@@ -38,6 +37,8 @@ from dimagi.utils.modules import to_function
 from corehq.util.quickcache import skippable_quickcache
 from casexml.apps.case.mock import CaseBlock
 from casexml.apps.case.models import CommCareCase
+from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
+from corehq.form_processor.exceptions import CaseNotFound
 from corehq.apps.commtrack.const import USER_LOCATION_OWNER_MAP_TYPE
 from casexml.apps.phone.models import User as CaseXMLUser
 from corehq.apps.cachehq.mixins import QuickCachedDocumentMixin
@@ -86,24 +87,6 @@ def _add_to_list(list, obj, default):
 
 def _get_default(list):
     return list[0] if list else None
-
-class OldPermissions(object):
-    EDIT_WEB_USERS = 'edit-users'
-    EDIT_COMMCARE_USERS = 'edit-commcare-users'
-    EDIT_DATA = 'edit-data'
-    EDIT_APPS = 'edit-apps'
-
-    VIEW_REPORTS = 'view-reports'
-    VIEW_REPORT = 'view-report'
-
-    AVAILABLE_PERMISSIONS = [EDIT_DATA, EDIT_WEB_USERS, EDIT_COMMCARE_USERS, EDIT_APPS, VIEW_REPORTS, VIEW_REPORT]
-    perms = 'EDIT_DATA, EDIT_WEB_USERS, EDIT_COMMCARE_USERS, EDIT_APPS, VIEW_REPORTS, VIEW_REPORT'.split(', ')
-    old_to_new = dict([(locals()[attr], attr.lower()) for attr in perms])
-
-    @classmethod
-    def to_new(cls, old_permission):
-        return cls.old_to_new[old_permission]
-
 
 
 class Permissions(DocumentSchema):
@@ -399,38 +382,7 @@ class DomainMembership(Membership):
         if data.get('subject'):
             data['domain'] = data['subject']
             del data['subject']
-        # Do a just-in-time conversion of old permissions
-        old_permissions = data.get('permissions')
-        if old_permissions is not None:
-            del data['permissions']
-            if data.has_key('permissions_data'):
-                permissions_data = data['permissions_data']
-                del data['permissions_data']
-            else:
-                permissions_data = {}
-            if not data['is_admin']:
-                view_report_list = permissions_data.get('view-report')
-                custom_permissions = {}
-                for old_permission in old_permissions:
-                    if old_permission == 'view-report':
-                        continue
-                    # If this hasn't fired by March 2016 we can delete this code
-                    # and the OldPermissions model
-                    _assert = soft_assert(to='@'.join(['czue', 'dimagi.com']), fail_if_debug=True)
-                    _assert(False, 'Old Permissions found in the wild!')
-                    new_permission = OldPermissions.to_new(old_permission)
-                    custom_permissions[new_permission] = True
-                if not view_report_list:
-                    # Anyone whose report permissions haven't been explicitly taken away/reduced
-                    # should be able to see reports by default
-                    custom_permissions['view_reports'] = True
-                else:
-                    custom_permissions['view_report_list'] = view_report_list
 
-
-                self = super(DomainMembership, cls).wrap(data)
-                self.role_id = UserRole.get_or_create_with_permissions(self.domain, custom_permissions).get_id
-                return self
         return super(DomainMembership, cls).wrap(data)
 
     @property
@@ -668,9 +620,9 @@ class _AuthorizableMixin(IsMemberOfMixin):
         try:
             return self.get_role(domain, checking_global_admin=False).name
         except TypeError:
-            return "Unknown User"
+            return _("Unknown User")
         except DomainMembershipError:
-            return "Dimagi User" if self.is_global_admin() else "Unauthorized User"
+            return _("Dimagi User") if self.is_global_admin() else _("Unauthorized User")
         except Exception:
             return None
 
@@ -789,12 +741,6 @@ class EulaMixin(DocumentSchema):
         return current_eula
 
 
-class KeyboardShortcutsConfig(DocumentSchema):
-    enabled = BooleanProperty(False)
-    main_key = StringProperty(choices=["ctrl", "option", "command", "alt", "shift", "control"])
-    main_keycode = IntegerProperty()
-
-
 class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, UnicodeMixIn, EulaMixin):
     """
     A user (for web and commcare)
@@ -812,7 +758,6 @@ class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, UnicodeMixIn, EulaMi
     email_opt_out = BooleanProperty(default=False)
     subscribed_to_commcare_users = BooleanProperty(default=False)
     announcements_seen = ListProperty()
-    keyboard_shortcuts = SchemaProperty(KeyboardShortcutsConfig)
     user_data = DictProperty()
     location_id = StringProperty()
     has_built_app = BooleanProperty(default=False)
@@ -1559,56 +1504,11 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
         user._hq_user = self # don't tell anyone that we snuck this here
         return user
 
-    def get_forms(self, deleted=False, wrap=True):
-        accessor = FormAccessors(self.domain)
-        if deleted:
-            forms_or_form_ids = accessor.get_deleted_forms_for_user(
-                self.domain,
-                self.user_id,
-                ids_only=not wrap
-            )
-        else:
-            forms_or_form_ids = accessor.get_forms_for_user(self.domain, self.user_id, ids_only=not wrap)
+    def _get_form_ids(self):
+        return FormAccessors(self.domain).get_form_ids_for_user(self.domain, self.user_id)
 
-        for form_or_form_id in forms_or_form_ids:
-            yield form_or_form_id
-
-    @property
-    def form_count(self):
-        key = ["submission user", self.domain, self.user_id]
-        result = XFormInstance.view('all_forms/view',
-            startkey=key,
-            endkey=key + [{}],
-            reduce=True
-        ).one()
-        if result:
-            return result['value']
-        else:
-            return 0
-
-    def _get_deleted_cases(self):
-        case_ids = [r["id"] for r in CommCareCase.get_db().view(
-            'deleted_data/deleted_cases_by_user',
-            startkey=[self.user_id],
-            endkey=[self.user_id, {}],
-            reduce=False,
-        )]
-        for doc in iter_docs(CommCareCase.get_db(), case_ids):
-            yield CommCareCase.wrap(doc)
-
-    def _get_case_docs(self):
-        case_ids = get_case_ids_in_domain_by_owner(
-            self.domain, owner_id=self.user_id)
-        return iter_docs(CommCareCase.get_db(), case_ids)
-
-    @property
-    def analytics_only_case_count(self):
-        """
-        Get an approximate count of cases which were last submitted to by this user.
-
-        This number is not guaranteed to be 100% accurate since it depends on a secondary index (sofabed)
-        """
-        return CaseData.objects.filter(user_id=self._id).count()
+    def _get_case_ids(self):
+        return CaseAccessors(self.domain).get_case_ids_by_owners([self.user_id])
 
     def get_owner_ids(self):
         owner_ids = [self.user_id]
@@ -1618,7 +1518,7 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
     def retire(self):
         suffix = DELETED_SUFFIX
         deletion_id = random_hex()
-        deletion_date = json_format_datetime(datetime.utcnow())
+        deletion_date = datetime.utcnow()
         deleted_cases = set()
         # doc_type remains the same, since the views use base_doc instead
         if not self.base_doc.endswith(suffix):
@@ -1626,12 +1526,11 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
             self['-deletion_id'] = deletion_id
             self['-deletion_date'] = deletion_date
 
-        for caselist in chunked(self._get_case_docs(), 50):
-            tag_cases_as_deleted_and_remove_indices.delay(self.domain, caselist, deletion_id, deletion_date)
-            for case in caselist:
-                deleted_cases.add(case['_id'])
+        for case_id_list in chunked(self._get_case_ids(), 50):
+            tag_cases_as_deleted_and_remove_indices.delay(self.domain, case_id_list, deletion_id, deletion_date)
+            deleted_cases.update(case_id_list)
 
-        for form_id_list in chunked(self.get_forms(wrap=False), 50):
+        for form_id_list in chunked(self._get_form_ids(), 50):
             tag_forms_as_deleted_rebuild_associated_cases.delay(
                 self.user_id, self.domain, form_id_list, deletion_id, deletion_date, deleted_cases=deleted_cases
             )
@@ -1645,21 +1544,6 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
             pass
         else:
             django_user.delete()
-        self.save()
-
-    def unretire(self):
-        def chop_suffix(string, suffix=DELETED_SUFFIX):
-            if string.endswith(suffix):
-                return string[:-len(suffix)]
-            else:
-                return string
-        self.base_doc = chop_suffix(self.base_doc)
-        for form in self.get_forms(deleted=True):
-            form.doc_type = chop_suffix(form.doc_type)
-            form.save()
-        for case in self._get_deleted_cases():
-            case.doc_type = chop_suffix(case.doc_type)
-            case.save()
         self.save()
 
     def get_case_sharing_groups(self):
@@ -1811,7 +1695,6 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
             )
 
         from corehq.apps.locations.models import Location
-        from corehq.apps.commtrack.models import SupplyPointCase
 
         def _get_linked_supply_point_ids():
             mapping = self.get_location_map_case()
@@ -1820,11 +1703,7 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
             return []
 
         def _get_linked_supply_points():
-            for doc in iter_docs(
-                CommCareCase.get_db(),
-                _get_linked_supply_point_ids()
-            ):
-                yield SupplyPointCase.wrap(doc)
+            return SupplyInterface(self.domain).get_supply_points(_get_linked_supply_point_ids())
 
         def _gen():
             location_ids = [sp.location_id for sp in _get_linked_supply_points()]
@@ -1950,8 +1829,8 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
         """
         try:
             from corehq.apps.commtrack.util import location_map_case_id
-            return CommCareCase.get(location_map_case_id(self))
-        except ResourceNotFound:
+            return CaseAccessors(self.domain).get_case(location_map_case_id(self))
+        except CaseNotFound:
             return None
 
     @property
@@ -2243,6 +2122,9 @@ class DomainRequest(models.Model):
     full_name = models.CharField(max_length=100, db_index=True)
     is_approved = models.BooleanField(default=False)
     domain = models.CharField(max_length=255, db_index=True)
+
+    class Meta:
+        app_label = "users"
 
     @classmethod
     def by_domain(cls, domain, is_approved=False):

@@ -44,12 +44,12 @@
         <div data-bind="visible: allowed()">
             <div class="row">
                 <div class="col-sm-9">
-                    <input type="text" class="form-control" data-bind="
+                    <textarea class="form-control" data-bind="
                             xpathValidator: {text: inputValue, allowCaseHashtags: true, errorHtml: messages.invalidXpath},
                             hasfocus: hasFocus,
                             css: inputCss,
                             attr: inputAttr
-                    "/>
+                    "></textarea>
                 </div>
                 <div class="col-sm-3">
                     <a href="#" class="btn btn-danger" data-bind="exitInput: $data">

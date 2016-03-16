@@ -3,8 +3,7 @@ from corehq.apps.change_feed import topics
 from corehq.apps.change_feed.consumer.feed import KafkaChangeFeed
 from corehq.blobs import get_blob_db
 from dimagi.utils.couch.database import get_db
-from pillowtop.checkpoints.manager import PillowCheckpoint, \
-    PillowCheckpointEventHandler, get_django_checkpoint_store
+from pillowtop.checkpoints.manager import PillowCheckpoint, PillowCheckpointEventHandler
 from pillowtop.pillow.interface import ConstructedPillow
 from pillowtop.processors import PillowProcessor
 
@@ -34,14 +33,13 @@ def get_blob_deletion_pillow():
     Using the KafkaChangeFeed ties this to the main couch database.
     """
     checkpoint = PillowCheckpoint(
-        get_django_checkpoint_store(),
         'kafka-blob-deletion-pillow-checkpoint',
     )
     return ConstructedPillow(
         name='BlobDeletionPillow',
         document_store=None,
         checkpoint=checkpoint,
-        change_feed=KafkaChangeFeed(topic=topics.META, group_id='blob-deletion-group'),
+        change_feed=KafkaChangeFeed(topics=[topics.META], group_id='blob-deletion-group'),
         processor=BlobDeletionProcessor(get_blob_db(), get_db(None).dbname),
         change_processed_event_handler=PillowCheckpointEventHandler(
             checkpoint=checkpoint,

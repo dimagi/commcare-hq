@@ -9,11 +9,13 @@
          ng-show="!!showDownloadStatus">
         <div class="col-sm-9 col-sm-offset-3">
             <div class="row"
-                 ng-show="!!showCeleryError">
+                 ng-show="!!showError">
                 <div class="col-sm-12">
-                    <div class="alert alert-warning">
+                    <div ng-class="{'alert-warning': !!celeryError, 'alert-danger': !!downloadError}"
+                         class="alert">
                         <i class="fa fa-cog fa-spin"></i>
-                        <strong>{% trans "Server maintenance in progress. Please try again later." %}</strong>
+                        <strong ng-show="!!celeryError">{% trans "Server maintenance in progress. Please try again later." %}</strong>
+                        <strong ng-show="!!downloadError">{% trans "There was an error downloading your export." %}</strong>
                         <p>
                             {% blocktrans %}
                                 If the problem persists, please
@@ -26,7 +28,7 @@
                 </div>
             </div>
             <div class="row"
-                 ng-show="!showCeleryError">
+                 ng-show="!showError">
                 <div class="col-xs-6 col-sm-4 col-md-3">
                     {% angularjs %}
                     <form class="form-inline download-form"
@@ -64,7 +66,7 @@
                     {% endangularjs %}
                 </div>
                 <div class="col-xs-6 col-md-4"
-                     ng-show="!isDownloaded && !showCeleryError">
+                     ng-show="!isDownloaded && !showError">
                     <div class="progress progress-exports">
                         <div id="download-progress-bar"
                              class="progress-bar"
@@ -96,7 +98,7 @@
             {% if show_sync_to_dropbox %}
             <p class="alert alert-info"
                style="margin-top: 10px;"
-               ng-show="!showCeleryError && !isMultimediaDownload">
+               ng-show="!showError && !isMultimediaDownload">
                 <i class="fa fa-info-circle"></i>
                 {% blocktrans %}
                     If you are downloading a large file over

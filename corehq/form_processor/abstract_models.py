@@ -12,6 +12,16 @@ class AbstractXFormInstance(object):
     # def form_id(self):
     #     raise NotImplementedError()
 
+    user_id = None
+
+    @property
+    def attachments(self):
+        """
+        Get the extra attachments for this form. This will not include
+        the form itself
+        """
+        raise NotImplementedError
+
     @property
     def form_data(self):
         raise NotImplementedError()
@@ -47,6 +57,10 @@ class AbstractXFormInstance(object):
     @property
     def is_deleted(self):
         raise NotImplementedError()
+
+    # @property
+    # def deletion_id(self):
+    #     raise NotImplementedError
 
     def auth_context(self):
         raise NotImplementedError()
@@ -118,8 +132,9 @@ class AbstractCommCareCase(object):
     def is_deleted(self):
         raise NotImplementedError()
 
-    def to_xml(self, version, include_case_on_closed=False):
-        raise NotImplementedError()
+    # @property
+    # def deletion_id(self):
+    #     raise NotImplementedError
 
     def dynamic_case_properties(self):
         raise NotImplementedError()
@@ -129,6 +144,41 @@ class AbstractCommCareCase(object):
 
     def modified_since_sync(self, sync_log):
         raise NotImplementedError
+
+    def get_subcases(self):
+        raise NotImplementedError
+
+    def get_case_property(self, property):
+        raise NotImplementedError
+
+    def to_xml(self, version, include_case_on_closed=False):
+        from xml.etree import ElementTree
+        from casexml.apps.phone.xml import get_case_element
+        if self.closed:
+            if include_case_on_closed:
+                elem = get_case_element(self, ('create', 'update', 'close'), version)
+            else:
+                elem = get_case_element(self, ('close'), version)
+        else:
+            elem = get_case_element(self, ('create', 'update'), version)
+        return ElementTree.tostring(elem)
+
+    def get_attachment_server_url(self, attachment_key):
+        """
+        A server specific URL for remote clients to access case attachment resources async.
+        """
+        if attachment_key in self.case_attachments:
+            from dimagi.utils import web
+            from django.core.urlresolvers import reverse
+            return "%s%s" % (web.get_url_base(),
+                             reverse("api_case_attachment", kwargs={
+                                 "domain": self.domain,
+                                 "case_id": self.case_id,
+                                 "attachment_id": attachment_key,
+                             })
+            )
+        else:
+            return None
 
 
 class AbstractLedgerValue(six.with_metaclass(ABCMeta)):
@@ -159,3 +209,27 @@ class AbstractSupplyInterface(six.with_metaclass(ABCMeta)):
     @abstractmethod
     def get_or_create_by_location(cls, location):
         raise NotImplementedError
+
+
+class IsImageMixin(object):
+    @property
+    def is_image(self):
+        if self.content_type is None:
+            return None
+        return True if self.content_type.startswith('image/') else False
+
+
+class CaseAttachmentMixin(IsImageMixin):
+    @property
+    def is_present(self):
+        """
+        Helper method to see if this is a delete vs. update
+        """
+        if self.identifier and (self.attachment_src == self.attachment_from is None):
+            return False
+        else:
+            return True
+
+    @property
+    def attachment_key(self):
+        return self.identifier

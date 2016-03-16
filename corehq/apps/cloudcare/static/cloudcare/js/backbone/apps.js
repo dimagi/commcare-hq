@@ -760,6 +760,7 @@ cloudCare.AppView = Backbone.View.extend({
         };
         data.onLoading = tfLoading;
         data.onLoadingComplete = tfLoadingComplete;
+        data.domain = this.model.get("domain");
         var loadSession = function() {
             var sess = new WebFormSession(data);
             // TODO: probably shouldn't hard code these divs

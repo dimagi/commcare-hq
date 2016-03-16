@@ -27,6 +27,6 @@
     }
     reportTables.render();
 
-    $('div.dataTables_control').hide();
+    $('div.dataTables_control').addClass('hide');
 
 {% endif %}

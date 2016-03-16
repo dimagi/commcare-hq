@@ -90,5 +90,5 @@ def explode_cases(user_id, domain, factor, task=None):
 
 
 def submit_case(case, new_case_id, domain, new_parent_ids=dict()):
-    case_block, attachments = make_creating_casexml(case, new_case_id, new_parent_ids)
+    case_block, attachments = make_creating_casexml(domain, case, new_case_id, new_parent_ids)
     submit_case_blocks(case_block, domain, attachments=attachments)

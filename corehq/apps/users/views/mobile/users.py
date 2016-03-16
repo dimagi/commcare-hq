@@ -72,6 +72,7 @@ from django_prbac.exceptions import PermissionDenied
 from django_prbac.utils import has_privilege
 from soil.exceptions import TaskFailedError
 from soil.util import get_download_context, expose_cached_download
+from zipfile import BadZipfile
 from .custom_data_fields import UserFieldsView
 
 BULK_MOBILE_HELP_SITE = ("https://confluence.dimagi.com/display/commcarepublic"
@@ -107,10 +108,8 @@ class EditCommCareUserView(BaseFullEditUserView):
     def editable_user(self):
         try:
             user = CommCareUser.get_by_user_id(self.editable_user_id, self.domain)
-            if not user:
+            if not user or user.is_deleted():
                 raise Http404()
-            if user.is_deleted():
-                self.template_name = "users/deleted_account.html"
             return user
         except (ResourceNotFound, CouchUser.AccountTypeError, KeyError):
             raise Http404()
@@ -343,13 +342,6 @@ def delete_commcare_user(request, domain, user_id):
     messages.success(request, "User %s has been deleted. All their submissions and cases will be permanently deleted in the next few minutes" % user.username)
     return HttpResponseRedirect(reverse(MobileWorkerListView.urlname, args=[domain]))
 
-@require_can_edit_commcare_users
-@require_POST
-def restore_commcare_user(request, domain, user_id):
-    user = CommCareUser.get_by_user_id(user_id, domain)
-    user.unretire()
-    messages.success(request, "User %s and all their submissions have been restored" % user.username)
-    return HttpResponseRedirect(reverse(EditCommCareUserView.urlname, args=[domain, user_id]))
 
 @require_can_edit_commcare_users
 @require_POST
@@ -705,6 +697,7 @@ class UploadCommCareUsers(BaseManageCommCareUserView):
 
     @property
     def page_context(self):
+        request_params = self.request.GET if self.request.method == 'GET' else self.request.POST
         context = {
             'bulk_upload': {
                 "help_site": {
@@ -716,7 +709,7 @@ class UploadCommCareUsers(BaseManageCommCareUserView):
                 "adjective": _("mobile worker"),
                 "plural_noun": _("mobile workers"),
             },
-            'show_secret_settings': self.request.REQUEST.get("secret", False),
+            'show_secret_settings': request_params.get("secret", False),
         }
         context.update({
             'bulk_upload_form': get_bulk_upload_form(context),
@@ -728,7 +721,7 @@ class UploadCommCareUsers(BaseManageCommCareUserView):
         upload = request.FILES.get('bulk_upload_file')
         try:
             self.workbook = WorkbookJSONReader(upload)
-        except InvalidFileException:
+        except (InvalidFileException, BadZipfile):
             try:
                 csv.DictReader(io.StringIO(upload.read().decode('ascii'),
                                            newline=None))
@@ -895,6 +888,10 @@ class CommCareUserSelfRegistrationView(TemplateView, DomainViewMixin):
     template_name = "users/mobile/commcare_user_self_register.html"
     urlname = "commcare_user_self_register"
     strict_domain_fetching = True
+
+    @use_bootstrap3
+    def dispatch(self, request, *args, **kwargs):
+        return super(CommCareUserSelfRegistrationView, self).dispatch(request, *args, **kwargs)
 
     @property
     @memoized

@@ -3,9 +3,8 @@ from django.test import TestCase
 from corehq.apps.domain.models import Domain
 from corehq.apps.locations.models import LocationType, Location
 from corehq.apps.products.models import Product
-from custom.ilsgateway.models import ProductAvailabilityData, DeliveryGroupReport, SupplyPointWarehouseRecord, \
-    Alert, OrganizationSummary, GroupSummary, SupplyPointStatus, HistoricalLocationGroup, ReportRun, ILSNotes, \
-    SupervisionDocument
+from custom.ilsgateway.models import ProductAvailabilityData, DeliveryGroupReport, Alert, OrganizationSummary, \
+    GroupSummary, SupplyPointStatus, HistoricalLocationGroup, ReportRun, ILSNotes, SupervisionDocument
 
 
 class TestDeleteDomain(TestCase):
@@ -28,11 +27,6 @@ class TestDeleteDomain(TestCase):
             quantity=1,
             message='test',
             delivery_group='A'
-        )
-
-        SupplyPointWarehouseRecord.objects.create(
-            supply_point=location.get_id,
-            create_date=datetime.utcnow()
         )
 
         Alert.objects.create(
@@ -126,11 +120,6 @@ class TestDeleteDomain(TestCase):
 
         self.assertEqual(DeliveryGroupReport.objects.filter(location_id=self.locations['test']).count(), 0)
         self.assertEqual(DeliveryGroupReport.objects.filter(location_id=self.locations['test2']).count(), 1)
-
-        self.assertEqual(SupplyPointWarehouseRecord.objects.filter(supply_point=self.locations['test']).count(), 0)
-        self.assertEqual(SupplyPointWarehouseRecord.objects.filter(
-            supply_point=self.locations['test2']
-        ).count(), 1)
 
         self.assertEqual(SupplyPointStatus.objects.filter(location_id=self.locations['test']).count(), 0)
         self.assertEqual(SupplyPointStatus.objects.filter(location_id=self.locations['test2']).count(), 1)

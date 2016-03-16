@@ -58,16 +58,25 @@ class GroupToUserPillow(PythonPillow):
         return change.document.get('doc_type', None) in ('Group', 'Group-Deleted')
 
     def change_transport(self, doc_dict):
-        user_ids = doc_dict.get("users", [])
-        q = {"filter": {"and": [{"terms": {"_id": user_ids}}]}}
-        for user_source in stream_es_query(es_index='users', q=q, fields=["__group_ids", "__group_names"]):
-            group_ids = set(user_source.get('fields', {}).get("__group_ids", []))
-            group_names = set(user_source.get('fields', {}).get("__group_names", []))
-            if doc_dict["name"] not in group_names or doc_dict["_id"] not in group_ids:
-                group_ids.add(doc_dict["_id"])
-                group_names.add(doc_dict["name"])
-                doc = {"__group_ids": list(group_ids), "__group_names": list(group_names)}
-                self.es.update(USER_INDEX, self.es_type, user_source["_id"], body={"doc": doc})
+        update_es_user_with_groups(doc_dict, self.es)
+
+
+def update_es_user_with_groups(group_doc, es_client=None):
+    if not es_client:
+        es_client = get_es_new()
+
+    user_ids = group_doc.get("users", [])
+    q = {"filter": {"and": [{"terms": {"_id": user_ids}}]}}
+    for user_source in stream_es_query(es_index='users', q=q, fields=["__group_ids", "__group_names"]):
+        group_ids = user_source.get('fields', {}).get("__group_ids", [])
+        group_ids = set(group_ids) if isinstance(group_ids, list) else {group_ids}
+        group_names = user_source.get('fields', {}).get("__group_names", [])
+        group_names = set(group_names) if isinstance(group_names, list) else {group_names}
+        if group_doc["name"] not in group_names or group_doc["_id"] not in group_ids:
+            group_ids.add(group_doc["_id"])
+            group_names.add(group_doc["name"])
+            doc = {"__group_ids": list(group_ids), "__group_names": list(group_names)}
+            es_client.update(USER_INDEX, ES_META['users'].type, user_source["_id"], body={"doc": doc})
 
 
 class UnknownUsersPillow(PythonPillow):

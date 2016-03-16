@@ -1,7 +1,15 @@
-from django.core.urlresolvers import reverse
+import json
 
+from django.core.urlresolvers import reverse
+from django.views.generic import View
+
+from dimagi.utils.web import json_response
+
+from corehq.form_processor.exceptions import XFormNotFound
 from corehq.apps.domain.views import AddRepeaterView
 from corehq.apps.style.decorators import use_select2
+from corehq.apps.repeaters.models import RepeatRecord
+from corehq.util.xml_utils import indent_xml
 from .forms import CaseRepeaterForm
 
 
@@ -23,3 +31,41 @@ class AddCaseRepeaterView(AddRepeaterView):
         repeater.white_listed_case_types = self.add_repeater_form.cleaned_data['white_listed_case_types']
         repeater.black_listed_users = self.add_repeater_form.cleaned_data['black_listed_users']
         return repeater
+
+
+class RepeatRecordView(View):
+
+    urlname = 'repeat_record'
+    http_method_names = ['get', 'post']
+
+    def get(self, request, domain):
+        record = RepeatRecord.get(request.GET.get('record_id'))
+        content_type = record.repeater.get_payload_generator(
+            record.repeater.format_or_default_format()
+        ).content_type
+        try:
+            payload = record.get_payload()
+        except XFormNotFound:
+            return json_response({
+                'error': u'Odd, could not find payload for: {}'.format(record.payload_id)
+            }, status_code=404)
+
+        if content_type == 'text/xml':
+            payload = indent_xml(payload)
+        elif content_type == 'application/json':
+            payload = json.dumps(json.loads(payload), indent=4)
+
+        return json_response({
+            'payload': payload,
+            'content_type': content_type,
+        })
+
+    def post(self, request, domain):
+        # Retriggers a repeat record
+        record = RepeatRecord.get(request.POST.get('record_id'))
+        record.fire(max_tries=1, force_send=True)
+        record.save()
+        return json_response({
+            'success': record.succeeded,
+            'failure_reason': record.failure_reason,
+        })

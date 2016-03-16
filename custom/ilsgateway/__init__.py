@@ -1,5 +1,3 @@
-from custom.ilsgateway.comparison_reports import ProductsCompareReport, LocationsCompareReport, \
-    WebUsersCompareReport, SMSUsersCompareReport, ProductAvailabilityReport, SupplyPointStatusReport
 from custom.ilsgateway.tanzania.reports.alerts import AlertReport
 from custom.ilsgateway.tanzania.reports.dashboard_report import DashboardReport
 from custom.ilsgateway.tanzania.reports.delivery import DeliveryReport
@@ -19,13 +17,7 @@ CUSTOM_REPORTS = (
         FacilityDetailsReport,
         DeliveryReport,
         SupervisionReport,
-        UnrecognizedSMSReport,
-        ProductsCompareReport,
-        LocationsCompareReport,
-        WebUsersCompareReport,
-        SMSUsersCompareReport,
-        ProductAvailabilityReport,
-        SupplyPointStatusReport
+        UnrecognizedSMSReport
     )),
 )
 
@@ -45,3 +37,7 @@ LOGISTICS_PRODUCT_ALIASES = {
     'coc': 'cc',
     'pop': 'pp'
 }
+
+ROOT_LOCATION_TYPE = 'MOHSW'
+
+SLAB_DOMAIN = 'slab-tanzania'

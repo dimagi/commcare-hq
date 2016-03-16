@@ -12,6 +12,8 @@ class AuthenticateAsFormTest(TestCase):
 
     @classmethod
     def setUpClass(cls):
+        cls.domain = Domain(name='pottery')
+        cls.domain.save()
         cls.mobile_worker = CommCareUser.create('potter', 'harry@potter.commcarehq.org', '123')
         cls.regular = WebUser.create('pottery', 'awebuser', '***', is_active=True)
 
@@ -19,6 +21,7 @@ class AuthenticateAsFormTest(TestCase):
     def tearDownClass(cls):
         cls.mobile_worker.delete()
         cls.regular.delete()
+        cls.domain.delete()
 
     def test_valid_data(self):
         data = {

@@ -26,6 +26,7 @@ TEST_NON_SERIALIZED_APPS = ['corehq.form_processor']
 # These things will be imported when you run ./manage.py shell_plus
 SHELL_PLUS_POST_IMPORTS = (
     # Models
+    ('corehq.apps.app_manager.models', 'Application'),
     ('corehq.apps.domain.models', 'Domain'),
     ('corehq.apps.groups.models', 'Group'),
     ('corehq.apps.locations.models', 'Location'),

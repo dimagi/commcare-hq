@@ -6,12 +6,12 @@ import math
 from toggle.shortcuts import toggle_enabled, set_toggle
 
 Tag = namedtuple('Tag', 'name css_class')
-TAG_ONE_OFF = Tag(name='One-Off', css_class='important')
+TAG_ONE_OFF = Tag(name='One-Off', css_class='danger')
 TAG_EXPERIMENTAL = Tag(name='Experimental', css_class='warning')
 TAG_PRODUCT_PATH = Tag(name='Product Path', css_class='info')
 TAG_PRODUCT_CORE = Tag(name='Core Product', css_class='success')
 TAG_PREVIEW = Tag(name='Preview', css_class='default')
-TAG_UNKNOWN = Tag(name='Unknown', css_class='inverse')
+TAG_UNKNOWN = Tag(name='Unknown', css_class='default')
 ALL_TAGS = [TAG_ONE_OFF, TAG_EXPERIMENTAL, TAG_PRODUCT_PATH, TAG_PRODUCT_CORE, TAG_PREVIEW, TAG_UNKNOWN]
 
 
@@ -127,20 +127,42 @@ def all_toggles():
     """
     Loads all toggles
     """
+    return all_toggles_by_name_in_scope(globals()).values()
+
+
+def all_toggles_by_name():
     # trick for listing the attributes of the current module.
     # http://stackoverflow.com/a/990450/8207
-    for toggle_name, toggle in globals().items():
+    return all_toggles_by_name_in_scope(globals())
+
+
+def all_toggles_by_name_in_scope(scope_dict):
+    result = {}
+    for toggle_name, toggle in scope_dict.items():
         if not toggle_name.startswith('__'):
             if isinstance(toggle, StaticToggle):
-                yield toggle
+                result[toggle_name] = toggle
+    return result
 
 
 def toggles_dict(username=None, domain=None):
     """
     Loads all toggles into a dictionary for use in JS
+
+    (only enabled toggles are included)
     """
     return {t.slug: True for t in all_toggles() if (t.enabled(username) or
                                                     t.enabled(domain))}
+
+
+def toggle_values_by_name(username=None, domain=None):
+    """
+    Loads all toggles into a dictionary for use in JS
+
+    all toggles (including those not enabled) are included
+    """
+    return {toggle_name: (toggle.enabled(username) or toggle.enabled(domain))
+            for toggle_name, toggle in all_toggles_by_name().items()}
 
 
 APP_BUILDER_CUSTOM_PARENT_REF = StaticToggle(
@@ -174,13 +196,6 @@ APP_AWARE_SYNC = StaticToggle(
     'App-aware Sync',
     TAG_PRODUCT_PATH,
     [NAMESPACE_DOMAIN]
-)
-
-BOOTSTRAP3_PREVIEW = StaticToggle(
-    'bootstrap3_preview',
-    'Bootstrap 3 Preview',
-    TAG_PRODUCT_PATH,
-    [NAMESPACE_USER]
 )
 
 CASE_LIST_CUSTOM_XML = StaticToggle(
@@ -473,6 +488,13 @@ VELLUM_RICH_TEXT = StaticToggle(
     [NAMESPACE_DOMAIN]
 )
 
+VELLUM_DATA_IN_SETVALUE = StaticToggle(
+    'allow_data_reference_in_setvalue',
+    "Allow data references in a setvalue",
+    TAG_EXPERIMENTAL,
+    [NAMESPACE_DOMAIN]
+)
+
 CACHE_AND_INDEX = StaticToggle(
     'cache_and_index',
     'Enable the "Cache and Index" format option when choosing sort properties '
@@ -494,13 +516,6 @@ BULK_SMS_VERIFICATION = StaticToggle(
     TAG_ONE_OFF,
     [NAMESPACE_USER, NAMESPACE_DOMAIN],
 )
-
-BULK_PAYMENTS = StaticToggle(
-    'bulk_payments',
-    'Enable payment of invoices by bulk credit payments and invoice generation for wire transfers',
-    TAG_PRODUCT_CORE
-)
-
 
 ENABLE_LOADTEST_USERS = StaticToggle(
     'enable_loadtest_users',
@@ -644,6 +659,13 @@ HSPH_HACK = StaticToggle(
     [NAMESPACE_DOMAIN],
 )
 
+USE_FORMPLAYER = StaticToggle(
+    'use_formplayer',
+    'Use the new formplayer server',
+    TAG_ONE_OFF,
+    [NAMESPACE_DOMAIN],
+)
+
 FIXTURE_CASE_SELECTION = StaticToggle(
     'fixture_case',
     'Allow a configurable case list that is filtered based on a fixture type and fixture selection (Due List)',
@@ -669,6 +691,13 @@ BROADCAST_TO_LOCATIONS = StaticToggle(
 MOBILE_WORKER_SELF_REGISTRATION = StaticToggle(
     'mobile_worker_self_registration',
     'Allow mobile workers to self register',
+    TAG_PRODUCT_PATH,
+    [NAMESPACE_DOMAIN],
+)
+
+TELERIVET_SETUP_WALKTHROUGH = StaticToggle(
+    'telerivet_setup_walkthrough',
+    'Use the new Telerivet setup walkthrough for creating Telerivet backends.',
     TAG_PRODUCT_PATH,
     [NAMESPACE_DOMAIN],
 )
@@ -777,6 +806,14 @@ NOTIFICATIONS = StaticToggle(
 PROJECT_HEALTH_DASHBOARD = StaticToggle(
     'project_health_dashboard',
     'Shows the project health dashboard in the reports navigation',
+    TAG_PRODUCT_PATH,
+    [NAMESPACE_DOMAIN]
+)
+
+
+UNLIMITED_REPORT_BUILDER_REPORTS = StaticToggle(
+    'unlimited_report_builder_reports',
+    'Allow unlimited reports created in report builder',
     TAG_PRODUCT_PATH,
     [NAMESPACE_DOMAIN]
 )

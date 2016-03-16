@@ -7,7 +7,9 @@
         "airsethiopia",
         "abtmali",
         "airsmadagascar",
-        "airstanzania"
+        "airstanzania",
+        "airsghana",
+        "airsbenin"
     ],
     "config": {
         "engine_id": "default",
@@ -318,7 +320,7 @@
                   "default": 0,
                   "cases": {
                     "Kirehe": 82946,
-                    "Nyagatare": 61471
+                    "Nyagatare": 77027
                   },
                   "type": "switch",
                   "switch_on": {
@@ -360,6 +362,11 @@
                 "Tanzania": {
                   "default": 0,
                   "cases": {
+                      "Kaskazini Pemba": 2914,
+                      "Kaskazini Unguja": 5746,
+                      "Kusini Pemba": 278,
+                      "Kusini Unguja": 10221,
+                      "Mjini Magharibi": 10380,
                       "Geita": 82337,
                       "Kagera": 158121,
                       "Mara": 79401,
@@ -432,6 +439,8 @@
                   "cases": {
                     "Gahara": 9697,
                     "Gatore": 6062,
+                    "Karama": 7226,
+                    "Katabagemu": 8330,
                     "Kigina": 6454,
                     "Kirehe": 5476,
                     "Kigarama": 7581,
@@ -546,16 +555,21 @@
                 "Tanzania": {
                   "default": 0,
                   "cases": {
+                    "Kaskazini A": 623,
+                    "Kaskazini B": 5123,
+                    "Chakechake": 278,
+                    "Kusini": 4073,
+                    "Magharibi": 10380,
                     "Chato": 62337,
                     "Geita TC": 20000,
                     "Bukoba Rural": 62730,
                     "Missenyi": 54578,
                     "Ngara": 40813,
-                    "Butiama": 47577,
-                    "Musoma Rural": 31824,
+                    "Butiama DC": 47577,
+                    "Musoma DC": 31824,
                     "Kwimba": 91547,
                     "Sengerema": 62000,
-                    "Micheweni": 3192,
+                    "Micheweni": 2914,
                     "Central": 6148,
                     "North B": 5736,
                     "South": 4073,
@@ -814,6 +828,7 @@
                         }
                       }
                     },
+
                     "Nyantimba": 1283,
                     "Mtakuja": 2858,
                     "Nyankumbu": 2858,
@@ -892,7 +907,8 @@
                     "Kibuteni": 4073,
                     "Mombasa": 4457,
                     "Selemu": 2757,
-                    "Shakani": 3165
+                    "Shakani": 3166,
+                    "Ndijani Mseweni": 5260
                   },
                   "type": "switch",
                   "switch_on": {

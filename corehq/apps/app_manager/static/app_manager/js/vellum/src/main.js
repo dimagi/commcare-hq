@@ -1,15 +1,15 @@
 
-require.config({
+requirejs.config({
     paths: {
         vellum: "."
     },
     bundles: {
         "global-deps": [
             "jquery", 
-            "jquery.bootstrap"
+            "jquery.bootstrap", 
+            "underscore"
         ], 
         "local-deps": [
-            "underscore", 
             "jquery.jstree", 
             "save-button", 
             "ckeditor", 

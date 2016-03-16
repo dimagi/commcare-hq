@@ -1,7 +1,12 @@
 #!/bin/bash
 set -ev
 
-source .travis/utils.sh
+source docker/utils.sh
+
+FLAVOUR='travis'
+if [ "${MATRIX_TYPE}" = "javascript" ]; then
+    FLAVOUR='travis-js'
+fi
 
 run_tests() {
     # This function allows overriding the test comnmand and the test that get run
@@ -14,9 +19,9 @@ run_tests() {
     fi
 
     if [ -z ${COMMAND_OVERRIDE} ]; then
-        travis_runner $ENV_VARS web_test ".travis/test_runner.sh $TESTS"
+        docker_run $ENV_VARS web_test ".travis/test_runner.sh $TESTS"
     else
-        travis_runner $ENV_VARS web_test $COMMAND_OVERRIDE
+        docker_run $ENV_VARS web_test $COMMAND_OVERRIDE
     fi
 
 }
@@ -32,8 +37,8 @@ elif [ "${MATRIX_TYPE}" = "python-sharded" ]; then
 
 elif [ "${MATRIX_TYPE}" = "javascript" ]; then
 
-    travis_runner web_test python manage.py migrate --noinput
-    travis_runner web_test docker/wait.sh WEB_TEST
-    travis_runner web_test grunt mocha
+    docker_run web_test python manage.py migrate --noinput
+    docker_run web_test docker/wait.sh WEB_TEST
+    docker_run web_test grunt mocha
 
 fi

@@ -165,7 +165,7 @@ var charts = (function() {
                 }
                 var $svg = d3.select(chartContainer[0]).append("svg");
                 var id = 'chart-' + i;
-                $svg.attr({id: id, width: "50%", height: "200"});
+                $svg.attr({id: id, height: "400"});
                 nv.addGraph(chartMap[config.type](config, data, '#' + id));
             }
         }

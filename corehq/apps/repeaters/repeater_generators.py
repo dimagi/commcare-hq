@@ -26,6 +26,10 @@ class BasePayloadGenerator(object):
     def __init__(self, repeater):
         self.repeater = repeater
 
+    @property
+    def content_type(self):
+        return 'text/xml'
+
     @staticmethod
     def enabled_for_domain(domain):
         return True
@@ -34,7 +38,7 @@ class BasePayloadGenerator(object):
         raise NotImplementedError()
 
     def get_headers(self):
-        return {}
+        return {'Content-type': self.content_type}
 
     def get_test_payload(self):
         return (
@@ -59,9 +63,6 @@ class CaseRepeaterXMLPayloadGenerator(BasePayloadGenerator):
     def get_payload(self, repeat_record, payload_doc):
         return payload_doc.to_xml(self.repeater.version or V2, include_case_on_closed=True)
 
-    def get_headers(self):
-        return {'Content-type': 'application/json'}
-
     def get_test_payload(self):
         from casexml.apps.case.mock import CaseBlock
         return CaseBlock(
@@ -79,8 +80,9 @@ class CaseRepeaterJsonPayloadGenerator(BasePayloadGenerator):
         data = payload_doc.get_json(lite=True)
         return json.dumps(data, cls=DjangoJSONEncoder)
 
-    def get_headers(self):
-        return {'Content-type': 'application/json'}
+    @property
+    def content_type(self):
+        return 'application/json'
 
     def get_test_payload(self):
         from casexml.apps.case.models import CommCareCase
@@ -108,8 +110,9 @@ class ShortFormRepeaterJsonPayloadGenerator(BasePayloadGenerator):
                            'received_on': json_format_datetime(form.received_on),
                            'case_ids': [case._id for case in cases]})
 
-    def get_headers(self):
-        return {'Content-type': 'application/json'}
+    @property
+    def content_type(self):
+        return 'application/json'
 
     def get_test_payload(self):
         return json.dumps({
@@ -127,8 +130,9 @@ class FormRepeaterJsonPayloadGenerator(BasePayloadGenerator):
         bundle = res.build_bundle(obj=form)
         return res.serialize(None, res.full_dehydrate(bundle), 'application/json')
 
-    def get_headers(self):
-        return {'Content-type': 'application/json'}
+    @property
+    def content_type(self):
+        return 'application/json'
 
     def get_test_payload(self):
         return self.get_payload(None, _get_test_form())

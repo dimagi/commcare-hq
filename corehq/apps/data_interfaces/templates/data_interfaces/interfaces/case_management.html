@@ -17,7 +17,9 @@
             groups: {{ groups|JSON }},
             receiverUrl: '{% url "receiver_secure_post" domain %}',
             enddate: '{{ datespan.enddate_param_utc }}',
-            webUserID: '{{ request.couch_user.userID }}'
+            webUserID: '{{ request.couch_user.userID }}',
+            webUserName: '{{ request.couch_user.username }}',
+            form_name: '{%  trans "Case Reassignment (via HQ)" %}'
         };
 
         var caseManagementModel = new CaseManagement(OPTIONS);

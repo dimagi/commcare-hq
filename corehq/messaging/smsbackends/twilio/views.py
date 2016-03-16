@@ -16,45 +16,12 @@ IVR_RESPONSE = """<?xml version="1.0" encoding="UTF-8" ?>
 </Response>"""
 
 
-@csrf_exempt
-def sms_in(request):
-    if request.method == "POST":
-        message_sid = request.POST.get("MessageSid")
-        account_sid = request.POST.get("AccountSid")
-        from_ = request.POST.get("From")
-        to = request.POST.get("To")
-        body = request.POST.get("Body")
-        incoming_sms(
-            from_,
-            body,
-            SQLTwilioBackend.get_api_id(),
-            backend_message_id=message_sid
-        )
-        return HttpResponse(EMPTY_RESPONSE)
-    else:
-        return HttpResponseBadRequest("POST Expected")
-
-
-@csrf_exempt
-def ivr_in(request):
-    if request.method == 'POST':
-        from_number = request.POST.get('From')
-        call_sid = request.POST.get('CallSid')
-        log_call(from_number, '%s-%s' % (SQLTwilioBackend.get_api_id(), call_sid))
-        return HttpResponse(IVR_RESPONSE)
-    else:
-        return HttpResponseBadRequest("POST Expected")
-
-
 class TwilioIncomingSMSView(NewIncomingBackendView):
     urlname = 'twilio_sms'
 
     @property
     def backend_class(self):
         return SQLTwilioBackend
-
-    def get(self, request, api_key, *args, **kwargs):
-        return HttpResponseBadRequest("POST Expected")
 
     def post(self, request, api_key, *args, **kwargs):
         message_sid = request.POST.get('MessageSid')
@@ -78,9 +45,6 @@ class TwilioIncomingIVRView(NewIncomingBackendView):
     @property
     def backend_class(self):
         return SQLTwilioBackend
-
-    def get(self, request, api_key, *args, **kwargs):
-        return HttpResponseBadRequest("POST Expected")
 
     def post(self, request, api_key, *args, **kwargs):
         from_number = request.POST.get('From')

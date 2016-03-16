@@ -1,23 +1,23 @@
-/*globals COMMCAREHQ */
-(function () {
+/*globals hqDefine */
+hqDefine('app_manager/js/app_manager.js', function () {
     'use strict';
-    COMMCAREHQ.app_manager = eventize({});
+    var module = eventize({});
 
-    COMMCAREHQ.app_manager.setCommcareVersion = function (version) {
-        COMMCAREHQ.app_manager.commcareVersion(version);
+    module.setCommcareVersion = function (version) {
+        module.commcareVersion(version);
     };
-    COMMCAREHQ.app_manager.checkCommcareVersion = function (version) {
-        return COMMCAREHQ.app_manager.versionGE(COMMCAREHQ.app_manager.commcareVersion(), version);
+    module.checkCommcareVersion = function (version) {
+        return module.versionGE(module.commcareVersion(), version);
     };
-    COMMCAREHQ.app_manager.checkAreWeThereYet = function (version) {
-        if (!COMMCAREHQ.app_manager.latestCommcareVersion()) {
+    module.checkAreWeThereYet = function (version) {
+        if (!module.latestCommcareVersion()) {
             // We don't know the latest version. Assume this version has arrived
             return true;
         } else {
-            return COMMCAREHQ.app_manager.versionGE(COMMCAREHQ.app_manager.latestCommcareVersion(), version);
+            return module.versionGE(module.latestCommcareVersion(), version);
         }
     };
-    COMMCAREHQ.app_manager.versionGE = function (commcareVersion1, commcareVersion2) {
+    module.versionGE = function (commcareVersion1, commcareVersion2) {
         function parse(version) {
             version = version.split('.');
             version = [parseInt(version[0]), parseInt(version[1])];
@@ -34,11 +34,11 @@
             return false;
         }
     };
-    COMMCAREHQ.app_manager.init = function (args) {
+    module.init = function (args) {
         var appVersion = args.appVersion;
-        COMMCAREHQ.app_manager.commcareVersion = ko.observable();
-        COMMCAREHQ.app_manager.latestCommcareVersion = ko.observable();
-        COMMCAREHQ.app_manager.latestCommcareVersion(args.latestCommcareVersion);
+        module.commcareVersion = ko.observable();
+        module.latestCommcareVersion = ko.observable();
+        module.latestCommcareVersion(args.latestCommcareVersion);
 
         function updateDOM(update) {
             if (update.hasOwnProperty('app-version')) {
@@ -46,14 +46,14 @@
                 $('.variable-version').text(appVersion);
             }
             if (update.hasOwnProperty('commcare-version')) {
-                COMMCAREHQ.app_manager.setCommcareVersion(update['commcare-version']);
+                module.setCommcareVersion(update['commcare-version']);
             }
-            if (COMMCAREHQ.app_manager.fetchAndShowFormValidation) {
-                COMMCAREHQ.app_manager.fetchAndShowFormValidation();
+            if (module.fetchAndShowFormValidation) {
+                module.fetchAndShowFormValidation();
             }
             COMMCAREHQ.updateDOM(update);
         }
-        COMMCAREHQ.app_manager.updateDOM = updateDOM;
+        module.updateDOM = updateDOM;
         function getVar(name) {
             var r = $('input[name="' + name + '"]').first().val();
             return JSON.parse(r);
@@ -78,7 +78,7 @@
                         unsavedMessage: gettext("You have unsaved changes"),
                         success: function (data) {
                             var key;
-                            COMMCAREHQ.app_manager.updateDOM(data.update);
+                            module.updateDOM(data.update);
                             for (key in data.corrections) {
                                 if (data.corrections.hasOwnProperty(key)) {
                                     $form.find('[name="' + key + '"]').val(data.corrections[key]);
@@ -86,8 +86,9 @@
                                 }
                             }
                             if (data.hasOwnProperty('case_list-show') &&
-                                COMMCAREHQ.app_manager.hasOwnProperty('module_view')){
-                                COMMCAREHQ.app_manager.module_view.requires_case_details(data['case_list-show']);
+                                    module.hasOwnProperty('module_view')) {
+                                var requires_case_details = hqImport('app_manager/js/detail-screen-config.js').state.requires_case_details;
+                                requires_case_details(data['case_list-show']);
                             }
                         }
                     });
@@ -181,7 +182,7 @@
                             if ($form.find('input[name="ajax"]').first().val() === "true") {
                                 resetIndexes($sortable);
                                 $.post($form.attr('action'), $form.serialize(), function (data) {
-                                    COMMCAREHQ.app_manager.updateDOM(JSON.parse(data).update);
+                                    module.updateDOM(JSON.parse(data).update);
                                     // re-enable sortable
                                     $sortable.sortable('option', 'disabled', false);
                                     $sortable.find('.drag_handle').show(1000);
@@ -236,17 +237,17 @@
             }
         });
 
-        COMMCAREHQ.app_manager.commcareVersion.subscribe(function () {
+        module.commcareVersion.subscribe(function () {
             $('.commcare-feature').each(function () {
                 // .attr() keeps zero intact in 2.10, data() doesn't
                 var version = '' + $(this).attr('data-since-version') || '1.1',
                     upgradeMessage = $('<span class="upgrade-message"/>'),
                     area = $(this);
 
-                if (COMMCAREHQ.app_manager.checkCommcareVersion(version)) {
+                if (module.checkCommcareVersion(version)) {
                     area.find('upgrade-message').remove();
                     area.find('*:not(".hide")').show();
-                } else if (!COMMCAREHQ.app_manager.checkAreWeThereYet(version)) {
+                } else if (!module.checkAreWeThereYet(version)) {
                     area.parent().hide();
                 } else {
                     area.find('*').hide();
@@ -258,11 +259,11 @@
                 }
             });
         });
-        COMMCAREHQ.app_manager.setCommcareVersion(args.commcareVersion);
+        module.setCommcareVersion(args.commcareVersion);
     };
 
-    COMMCAREHQ.app_manager.setupValidation = function (validation_url) {
-        COMMCAREHQ.app_manager.fetchAndShowFormValidation = function () {
+    module.setupValidation = function (validation_url) {
+        module.fetchAndShowFormValidation = function () {
             $.getJSON(validation_url, function (data) {
                 $('#build_errors').html(data.error_html);
             });
@@ -270,8 +271,8 @@
         if ($.cookie('suppress_build_errors')) {
             $.removeCookie('suppress_build_errors', { path: '/' });
         } else {
-            COMMCAREHQ.app_manager.fetchAndShowFormValidation();
+            module.fetchAndShowFormValidation();
         }
     };
-
-}());
+    return module;
+});

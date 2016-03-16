@@ -6,8 +6,7 @@ from corehq.apps.change_feed.topics import get_topic
 from corehq.apps.users.models import CommCareUser
 from corehq.util.couchdb_management import couch_config
 from couchforms.models import all_known_formlike_doc_types
-from pillowtop.checkpoints.manager import PillowCheckpoint, get_django_checkpoint_store, \
-    PillowCheckpointEventHandler
+from pillowtop.checkpoints.manager import PillowCheckpoint, PillowCheckpointEventHandler
 from pillowtop.couchdb import CachedCouchDB
 from pillowtop.feed.couch import CouchChangeFeed
 from pillowtop.feed.interface import ChangeMeta
@@ -43,6 +42,11 @@ class KafkaProcessor(PillowProcessor):
 
 
 class ChangeFeedPillow(PythonPillow):
+    """
+    This pillow takes changes from a CouchDB and republishes them to Kafka.
+    It is used as an intermediary to convert couch-based change listeners
+    to kafka-based ones.
+    """
 
     def __init__(self, couch_db, kafka, checkpoint):
         super(ChangeFeedPillow, self).__init__(couch_db=couch_db, checkpoint=checkpoint, chunk_size=10)
@@ -63,7 +67,7 @@ def get_default_couch_db_change_feed_pillow():
     return ChangeFeedPillow(
         couch_db=default_couch_db,
         kafka=kafka_client,
-        checkpoint=PillowCheckpoint(get_django_checkpoint_store(), 'default-couch-change-feed')
+        checkpoint=PillowCheckpoint('default-couch-change-feed')
     )
 
 
@@ -76,7 +80,7 @@ def get_user_groups_db_kafka_pillow():
     processor = KafkaProcessor(
         kafka_client, data_source_type=data_sources.COUCH, data_source_name=user_groups_couch_db.dbname
     )
-    checkpoint = PillowCheckpoint(get_django_checkpoint_store(), pillow_name)
+    checkpoint = PillowCheckpoint(pillow_name)
     return ConstructedPillow(
         name=pillow_name,
         document_store=None,  # because we're using include_docs we can be explicit about not using this

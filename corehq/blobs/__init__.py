@@ -34,4 +34,8 @@ def _get_fs_db(settings):
     return FilesystemBlobDB(blob_dir)
 
 
-BlobInfo = namedtuple("BlobInfo", ["name", "length", "digest"])
+class BlobInfo(namedtuple("BlobInfo", ["identifier", "length", "digest"])):
+    @property
+    def md5_hash(self):
+        if self.digest and self.digest.startswith("md5-"):
+            return self.digest[4:]
