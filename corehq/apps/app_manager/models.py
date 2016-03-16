@@ -1532,6 +1532,7 @@ class GraphAnnotations(IndexedSchema):
 
 class GraphSeries(DocumentSchema):
     config = DictProperty()
+    locale_specific_config = DictProperty()
     data_path = StringProperty()
     x_function = StringProperty()
     y_function = StringProperty()
