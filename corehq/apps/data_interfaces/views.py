@@ -246,7 +246,7 @@ class ArchiveFormView(DataInterfaceSection):
         try:
             bulk_archive_forms.delay(
                 self.domain,
-                self.request.user,
+                self.request.couch_user,
                 list(self.uploaded_file.get_worksheet())
             )
             messages.success(self.request, _("We received your file and are processing it. "
