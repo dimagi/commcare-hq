@@ -244,8 +244,7 @@ def form_context(request, domain, app_id, module_id, form_id):
     session_extras.update(get_cloudcare_session_data(domain, form, request.couch_user))
 
     delegation = request.GET.get('task-list') == 'true'
-    offline = request.GET.get('offline') == 'true'
-    session_helper = SessionDataHelper(domain, request.couch_user, case_id, delegation=delegation, offline=offline)
+    session_helper = SessionDataHelper(domain, request.couch_user, case_id, delegation=delegation)
     return json_response(session_helper.get_full_context(
         root_context,
         session_extras
