@@ -53,7 +53,7 @@ from corehq.apps.cloudcare.dbaccessors import get_cloudcare_apps
 from corehq.apps.cloudcare.decorators import require_cloudcare_access
 from corehq.apps.cloudcare.exceptions import RemoteAppError
 from corehq.apps.cloudcare.models import ApplicationAccess
-from corehq.apps.cloudcare.touchforms_api import SessionDataHelper
+from corehq.apps.cloudcare.touchforms_api import BaseSessionDataHelper, CaseSessionDataHelper
 from corehq.apps.domain.decorators import login_and_domain_required, login_or_digest_ex, domain_admin_required
 from corehq.apps.groups.models import Group
 from corehq.apps.reports.formdetails import readable
@@ -245,7 +245,7 @@ def form_context(request, domain, app_id, module_id, form_id):
     session_extras.update(get_cloudcare_session_data(domain, form, request.couch_user))
 
     delegation = request.GET.get('task-list') == 'true'
-    session_helper = SessionDataHelper(domain, request.couch_user, case_id, delegation=delegation)
+    session_helper = CaseSessionDataHelper(domain, request.couch_user, case_id, delegation=delegation)
     return json_response(session_helper.get_full_context(
         root_context,
         session_extras
@@ -357,7 +357,7 @@ def filter_cases(request, domain, app_id, module_id, parent_id=None):
             "footprint": True
         }
 
-        helper = SessionDataHelper(domain, request.couch_user)
+        helper = BaseSessionDataHelper(domain, request.couch_user)
         result = helper.filter_cases(xpath, additional_filters, DjangoAuth(auth_cookie),
                                      extra_instances=extra_instances, use_formplayer=use_formplayer)
         if result.get('status', None) == 'error':

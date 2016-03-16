@@ -10,10 +10,49 @@ from corehq.apps.users.models import CommCareUser, CouchUser
 DELEGATION_STUB_CASE_TYPE = "cc_delegation_stub"
 
 
-class SessionDataHelper(object):
-    def __init__(self, domain, couch_user, case_id_or_case=None, delegation=False):
+class BaseSessionDataHelper(object):
+    def __init__(self, domain, couch_user):
         self.domain = domain
         self.couch_user = couch_user
+
+    def get_session_data(self, device_id=CLOUDCARE_DEVICE_ID):
+        """
+        Get session data used by touchforms.
+        """
+        session_data = {
+            'device_id': device_id,
+            'app_version': '2.0',
+            'domain': self.domain,
+        }
+        session_data.update(get_user_contributions_to_touchforms_session(self.couch_user))
+        return session_data
+
+    def filter_cases(self, xpath, additional_filters=None, auth=None, extra_instances=None, use_formplayer=False):
+        """
+        Filter a list of cases by an xpath expression + additional filters
+        """
+        session_data = self.get_session_data()
+        session_data["additional_filters"] = additional_filters or {}
+        session_data['extra_instances'] = extra_instances or []
+
+        data = {
+            "action": "touchcare-filter-cases",
+            "filter_expr": xpath,
+            "session_data": session_data,
+            "domain": self.domain
+        }
+
+        response = post_data(
+            json.dumps(data),
+            content_type="application/json", auth=auth
+        )
+
+        return json.loads(response)
+
+
+class CaseSessionDataHelper(BaseSessionDataHelper):
+    def __init__(self, domain, couch_user, case_id_or_case, delegation=False):
+        super(CaseSessionDataHelper, self).__init__(domain, couch_user)
         if isinstance(case_id_or_case, basestring):
             self.case_id = case_id_or_case
             self._case = None
@@ -43,50 +82,18 @@ class SessionDataHelper(object):
             assert self.case_type == DELEGATION_STUB_CASE_TYPE
         return self._delegation
 
-
     def get_session_data(self, device_id=CLOUDCARE_DEVICE_ID):
         """
         Get session data used by touchforms.
         """
-        # NOTE: Better to use isinstance(self.couch_user, CommCareUser) here rather than 
-        # self.couch_user.is_commcare_user() since this function is reused by smsforms where
-        # the recipient can be a case.
-        session_data = {
-            'device_id': device_id,
-            'app_version': '2.0',
-            'domain': self.domain,
-        }
-        session_data.update(get_user_contributions_to_touchforms_session(self.couch_user))
+        session_data = super(CaseSessionDataHelper, self).get_session_data(device_id)
         if self.case_id:
             if self.delegation:
                 session_data["delegation_id"] = self.case_id
                 session_data["case_id"] = self._case_parent_id
             else:
                 session_data["case_id"] = self.case_id
-
         return session_data
-
-    def filter_cases(self, xpath, additional_filters=None, auth=None, extra_instances=None, use_formplayer=False):
-        """
-        Filter a list of cases by an xpath expression + additional filters
-        """
-        session_data = self.get_session_data()
-        session_data["additional_filters"] = additional_filters or {}
-        session_data['extra_instances'] = extra_instances or []
-
-        data = {
-            "action": "touchcare-filter-cases",
-            "filter_expr": xpath,
-            "session_data": session_data,
-            "domain": self.domain
-        }
-
-        response = post_data(
-            json.dumps(data),
-            content_type="application/json", auth=auth
-        )
-
-        return json.loads(response)
 
     def get_full_context(self, root_extras=None, session_extras=None):
         """
