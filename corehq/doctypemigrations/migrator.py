@@ -23,11 +23,23 @@ class Migrator(object):
         self.doc_types = doc_types + [doc_type + '-Deleted' for doc_type in doc_types]
         self.slug = slug
         self.source_db_name = source_db_name
-        self.source_db = get_db(source_db_name)
+        self._source_db = None
         self.target_db_name = target_db_name
-        self.target_db = get_db(target_db_name)
+        self._target_db = None
         # shared by the class
         self.instances[self.slug] = self
+
+    @property
+    def source_db(self):
+        if not self._source_db:
+            self._source_db = get_db(self.source_db_name)
+        return self._source_db
+
+    @property
+    def target_db(self):
+        if not self._target_db:
+            self._target_db = get_db(self.target_db_name)
+        return self._target_db
 
     def phase_1_bulk_migrate(self):
         self._record_original_seq(self._get_latest_source_seq(self.source_db))
