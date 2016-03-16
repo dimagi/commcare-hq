@@ -779,6 +779,13 @@ class FormExportDataSchema(ExportDataSchema):
                             system_prop, app_id, app_version
                         )
                     )
+            else:
+                # Add a row number column
+                group_schema.items.append(
+                    FormExportDataSchema._generate_export_item_from_system_prop(
+                        TOP_MAIN_FORM_TABLE_PROPERTIES[0], app_id, app_version
+                    )
+                )
 
             for question in group_questions:
                 # Create ExportItem based on the question type
