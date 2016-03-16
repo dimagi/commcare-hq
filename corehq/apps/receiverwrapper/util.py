@@ -1,6 +1,7 @@
 from collections import namedtuple
 import re
 from couchdbkit import ResourceNotFound
+from corehq.apps.app_manager.dbaccessors import get_app
 from corehq.apps.app_manager.models import ApplicationBase
 from corehq.apps.domain.auth import determine_authtype_from_request
 from corehq.apps.receiverwrapper.exceptions import LocalSubmissionError
@@ -57,7 +58,7 @@ def get_version_from_build_id(domain, build_id):
         return None
 
     try:
-        build = ApplicationBase.get(build_id)
+        build = get_app(domain, build_id)
     except ResourceNotFound:
         return None
     if not build.copy_of:

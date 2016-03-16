@@ -1,6 +1,6 @@
 {% load i18n %}
 {% if not is_alive and not progress.percent %}
-    <p class="alert alert-error alert-danger">
+    <p class="alert alert-danger">
     {% blocktrans %}
         Task processor not detected.
         There may be something wrong with your system.
@@ -10,19 +10,26 @@
     </p>
 {% else %}
     {% if progress.error %}
-        <p class="alert alert-error alert-danger">
+        <p class="alert alert-danger">
             {% trans "Something went wrong! " %} {{ progress.error_message }}
         </p>
     {% else %}
         {% if progress.percent %}
             <div class="progress progress-striped active">
-                <div class="bar" style="width: {{ progress.percent }}%;"></div>
+                <div class="progress-bar"
+                     role="progressbar"
+                     aria-valuenow="{{ progress.percent }}"
+                     aria-valuemin="0"
+                     aria-valuemax="100"
+                     style="width: {{ progress.percent }}%;">
+                   <span class="sr-only">{{ progress.percent }}% {% trans 'Complete' %}</span>
+                </div>
             </div>
         {% endif %}
         {% if progress.total %}
             <p class="help-inline">
                 {% trans "Processed" %} {{ progress.percent }}%
-                ( {{ progress.current|floatformat:"0" }} of {{ progress.total }} )
+                ( {{ progress.current|floatformat:"0" }} {% trans 'of' %} {{ progress.total }} )
             </p>
         {% else %}
         {% endif %}

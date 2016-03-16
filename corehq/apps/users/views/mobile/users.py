@@ -697,6 +697,7 @@ class UploadCommCareUsers(BaseManageCommCareUserView):
 
     @property
     def page_context(self):
+        request_params = self.request.GET if self.request.method == 'GET' else self.request.POST
         context = {
             'bulk_upload': {
                 "help_site": {
@@ -708,7 +709,7 @@ class UploadCommCareUsers(BaseManageCommCareUserView):
                 "adjective": _("mobile worker"),
                 "plural_noun": _("mobile workers"),
             },
-            'show_secret_settings': self.request.REQUEST.get("secret", False),
+            'show_secret_settings': request_params.get("secret", False),
         }
         context.update({
             'bulk_upload_form': get_bulk_upload_form(context),
@@ -887,6 +888,10 @@ class CommCareUserSelfRegistrationView(TemplateView, DomainViewMixin):
     template_name = "users/mobile/commcare_user_self_register.html"
     urlname = "commcare_user_self_register"
     strict_domain_fetching = True
+
+    @use_bootstrap3
+    def dispatch(self, request, *args, **kwargs):
+        return super(CommCareUserSelfRegistrationView, self).dispatch(request, *args, **kwargs)
 
     @property
     @memoized

@@ -3,7 +3,6 @@ from casexml.apps.stock.models import StockTransaction
 from casexml.apps.stock.tests import StockTestBase
 
 
-
 class InferredTransactionsTest(StockTestBase):
 
     def testFirstConsumption(self):

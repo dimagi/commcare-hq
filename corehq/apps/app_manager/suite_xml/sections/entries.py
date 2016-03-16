@@ -5,8 +5,7 @@ from corehq.apps.app_manager.suite_xml.contributors import SuiteContributorByMod
 from corehq.apps.app_manager.suite_xml.utils import get_select_chain_meta
 from corehq.apps.app_manager.exceptions import (
     ParentModuleReferenceError,
-    SuiteError,
-)
+    SuiteValidationError)
 from corehq.apps.app_manager import id_strings
 from corehq.apps.app_manager.const import (
     CAREPLAN_GOAL, CAREPLAN_TASK, RETURN_TO, USERCASE_ID, USERCASE_TYPE, )
@@ -43,7 +42,7 @@ class EntriesHelper(object):
             datums_meta, _ = self.get_datum_meta_assertions_advanced(module, form)
             datums_meta.extend(EntriesHelper.get_new_case_id_datums_meta(form))
         else:
-            raise SuiteError("Unexpected form type '{}' with a case list form: {}".format(
+            raise SuiteValidationError("Unexpected form type '{}' with a case list form: {}".format(
                 form.form_type, form.unique_id
             ))
         return datums_meta

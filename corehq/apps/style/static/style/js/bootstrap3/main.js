@@ -62,7 +62,7 @@ COMMCAREHQ.initBlock = function ($elem) {
         e.preventDefault();
         if (!$(this).data('clicked')) {
             $(this).prev('form').submit();
-            $(this).data('clicked', 'true').children('i').removeClass().addClass("icon-refresh icon-spin");
+            $(this).data('clicked', 'true').children('i').removeClass().addClass("icon-refresh icon-spin fa fa-refresh fa-spin");
         }
     });
 
@@ -169,7 +169,8 @@ COMMCAREHQ.makeSaveButton = function(messageStrings, cssClass) {
                     options.error = function (data) {
                         that.nextState = null;
                         that.setState('retry');
-                        alert_user(data.responseText || SaveButton.message.ERROR_SAVING, 'danger');
+                        var customError = ((data.responseJSON && data.responseJSON.message) ? data.responseJSON.message : data.responseText);
+                        alert_user(customError || SaveButton.message.ERROR_SAVING, 'danger');
                         error.apply(this, arguments);
                     };
                     var jqXHR = $.ajax(options);

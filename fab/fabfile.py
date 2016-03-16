@@ -111,24 +111,26 @@ class DeployMetadata(object):
         self.env = env
         self.timestamp = datetime.datetime.utcnow().strftime('%Y-%m-%d_%H.%M')
         self._deploy_ref = None
+        self._deploy_tag = None
+        self._git = sh.git.bake(_tty_out=False)
 
-    def _tag_commit(self):
-        sh.git.fetch("origin", "--tags")
-        deploy_commit = sh.git("rev-parse", self.env.code_branch).strip()
+    def tag_commit(self):
+        self._git.fetch("origin", "--tags")
+        deploy_commit = self.deploy_ref
         self._check_deploy_commit(deploy_commit, self.env.code_branch)
         pattern = "*{}*".format(self.env.environment)
-        self.last_tag = sh.tail(sh.git.tag("-l", pattern), "-1").strip()
+        self.last_tag = sh.tail(self._git.tag("-l", pattern), "-1").strip()
 
         tag_name = "{}-{}-deploy".format(self.timestamp, self.env.environment)
         # turn whatever `code_branch` is into a commit
         msg = "{} deploy at {}".format(self.env.environment, self.timestamp)
-        sh.git.tag(tag_name, "-m", msg, deploy_commit)
-        sh.git.push("origin", tag_name)
-        self._deploy_ref = tag_name
+        self._git.tag(tag_name, "-m", msg, deploy_commit)
+        self._git.push("origin", tag_name)
+        self._deploy_tag = tag_name
 
     def _check_deploy_commit(self, deploy_commit, code_branch):
         try:
-            origin_commit = sh.git("rev-parse", "origin/{}".format(code_branch)).strip()
+            origin_commit = self._git("rev-parse", "origin/{}".format(code_branch)).strip()
         except sh.ErrorReturnCode:
             print yellow("Branch '{}' was not found on origin".format(code_branch))
             if not console.confirm("Do you want to deploy it anyways?", default=False):
@@ -139,26 +141,26 @@ class DeployMetadata(object):
                 print ("Your local copy of '{}' differs from the version on "
                        "'origin'.\n".format(code_branch))
                 print "Here's the latest local commit:",
-                print sh.git.show(deploy_commit, "--quiet")
+                print self._git.show(deploy_commit, "--quiet")
                 print "Here's the latest commit on 'origin':",
-                print sh.git.show(origin_commit, "--quiet")
+                print self._git.show(origin_commit, "--quiet")
                 if not console.confirm("Are you sure you want to deploy the "
                                        "local commit?", default=False):
                     utils.abort('Check yourself before you wreck yourself.')
 
     @property
     def diff_url(self):
-        if self._deploy_ref is None:
+        if self._deploy_tag is None:
             raise Exception("You haven't tagged anything yet.")
         return "https://github.com/dimagi/commcare-hq/compare/{}...{}".format(
             self.last_tag,
-            self.tag,
+            self._deploy_tag,
         )
 
     @property
-    def tag(self):
+    def deploy_ref(self):
         if self._deploy_ref is None:
-            self._tag_commit()
+            self._deploy_ref = self._git("rev-parse", self.env.code_branch).strip()
         return self._deploy_ref
 
 
@@ -552,8 +554,9 @@ def mail_admins(subject, message):
 
 
 @roles(ROLES_DB_ONLY)
-def record_successful_deploy(url):
+def record_successful_deploy(deploy_metadata):
     with cd(env.code_current):
+        deploy_metadata.tag_commit()
         sudo((
             '%(virtualenv_current)s/bin/python manage.py '
             'record_deploy_success --user "%(user)s" --environment '
@@ -562,15 +565,15 @@ def record_successful_deploy(url):
             'virtualenv_current': env.virtualenv_current,
             'user': env.user,
             'environment': env.environment,
-            'url': url,
+            'url': deploy_metadata.diff_url,
         })
 
 
-@task
 @roles(ROLES_DB_ONLY)
-def set_in_progress_flag():
-    with cd(env.code_root):
-        sudo('%(virtualenv_root)s/bin/python manage.py celery_deploy_in_progress' % env)
+def set_in_progress_flag(use_current_release=False):
+    venv = env.virtualenv_root if not use_current_release else env.virtualenv_current
+    with cd(env.code_root if not use_current_release else env.code_current):
+        sudo('{}/bin/python manage.py deploy_in_progress'.format(venv))
 
 
 @roles(ROLES_ALL_SRC)
@@ -596,16 +599,16 @@ def hotfix_deploy():
     _require_target()
     run('echo ping!')  # workaround for delayed console response
     try:
-        execute(update_code, deploy_metadata.tag, True)
+        execute(update_code, deploy_metadata.deploy_ref, True)
     except Exception:
         execute(mail_admins, "Deploy failed", "You had better check the logs.")
         # hopefully bring the server back to life
-        execute(services_restart)
+        silent_services_restart()
         raise
     else:
         execute(services_restart)
-        url = deploy_metadata.diff_url
-        execute(record_successful_deploy, url)
+        silent_services_restart()
+        execute(record_successful_deploy, deploy_metadata)
 
 
 def _confirm_translated():
@@ -620,7 +623,7 @@ def _confirm_translated():
 @task
 def setup_release():
     _execute_with_timing(create_code_dir)
-    _execute_with_timing(update_code, deploy_metadata.tag)
+    _execute_with_timing(update_code, deploy_metadata.deploy_ref)
     _execute_with_timing(update_virtualenv)
 
     _execute_with_timing(copy_release_files)
@@ -694,14 +697,13 @@ def _deploy_without_asking():
     except Exception:
         _execute_with_timing(mail_admins, "Deploy failed", "You had better check the logs.")
         # hopefully bring the server back to life
-        _execute_with_timing(services_restart)
+        silent_services_restart()
         raise
     else:
         _execute_with_timing(update_current)
-        _execute_with_timing(services_restart)
+        silent_services_restart()
         _execute_with_timing(record_successful_release)
-        url = deploy_metadata.diff_url
-        _execute_with_timing(record_successful_deploy, url)
+        _execute_with_timing(record_successful_deploy, deploy_metadata)
 
 
 @task
@@ -816,7 +818,7 @@ def rollback():
     if all(exists.values()):
         print blue('Updating current and restarting services')
         execute(update_current, unique_release)
-        execute(services_restart)
+        silent_services_restart()
         execute(mark_last_release_unsuccessful)
     else:
         print red('Aborting because not all hosts have release')
@@ -894,7 +896,7 @@ def force_update_static():
     execute(_do_collectstatic, use_current_release=True)
     execute(_do_compress, use_current_release=True)
     execute(update_manifest, use_current_release=True)
-    execute(services_restart)
+    silent_services_restart()
 
 
 @task
@@ -1034,9 +1036,17 @@ def restart_services():
 
     @roles(env.supervisor_roles)
     def _inner():
-        services_restart()
+        silent_services_restart(use_current_release=True)
 
     execute(_inner)
+
+
+def silent_services_restart(use_current_release=False):
+    """
+    Restarts services and sets the in progress flag so that pingdom doesn't yell falsely
+    """
+    execute(set_in_progress_flag, use_current_release)
+    execute(services_restart)
 
 
 @roles(ROLES_ALL_SERVICES)
@@ -1058,7 +1068,7 @@ def _migrate():
     _require_target()
     with cd(env.code_root):
         sudo('%(virtualenv_root)s/bin/python manage.py sync_finish_couchdb_hq' % env)
-        sudo('%(virtualenv_root)s/bin/python manage.py migrate --noinput' % env)
+        sudo('%(virtualenv_root)s/bin/python manage.py migrate_multi --noinput' % env)
 
 
 @roles(ROLES_DB_ONLY)
@@ -1199,6 +1209,7 @@ def get_celery_queues():
     return queues
 
 @roles(ROLES_CELERY)
+@parallel
 def set_celery_supervisorconf():
 
     conf_files = {
@@ -1213,6 +1224,7 @@ def set_celery_supervisorconf():
         'saved_exports_queue':          ['supervisor_celery_saved_exports_queue.conf'],
         'ucr_queue':                    ['supervisor_celery_ucr_queue.conf'],
         'email_queue':                  ['supervisor_celery_email_queue.conf'],
+        'repeat_record_queue':          ['supervisor_celery_repeat_record_queue.conf'],
         'logistics_reminder_queue':     ['supervisor_celery_logistics_reminder_queue.conf'],
         'logistics_background_queue':   ['supervisor_celery_logistics_background_queue.conf'],
         'flower':                       ['supervisor_celery_flower.conf'],
@@ -1225,6 +1237,7 @@ def set_celery_supervisorconf():
 
 
 @roles(ROLES_PILLOWTOP)
+@parallel
 def set_pillowtop_supervisorconf():
     # Don't run for preview,
     # and also don't run if there are no hosts for the 'django_pillowtop' role.
@@ -1239,36 +1252,43 @@ def set_pillowtop_supervisorconf():
 
 
 @roles(ROLES_DJANGO)
+@parallel
 def set_djangoapp_supervisorconf():
     _rebuild_supervisor_conf_file('make_supervisor_conf', 'supervisor_django.conf')
 
 
 @roles(ROLES_DJANGO)
+@parallel
 def set_errand_boy_supervisorconf():
     _rebuild_supervisor_conf_file('make_supervisor_conf', 'supervisor_errand_boy.conf')
 
 
 @roles(ROLES_TOUCHFORMS)
+@parallel
 def set_formsplayer_supervisorconf():
     _rebuild_supervisor_conf_file('make_supervisor_conf', 'supervisor_formsplayer.conf')
 
 @roles(ROLES_SMS_QUEUE)
+@parallel
 def set_sms_queue_supervisorconf():
     if 'sms_queue' in get_celery_queues():
         _rebuild_supervisor_conf_file('make_supervisor_conf', 'supervisor_sms_queue.conf')
 
 @roles(ROLES_REMINDER_QUEUE)
+@parallel
 def set_reminder_queue_supervisorconf():
     if 'reminder_queue' in get_celery_queues():
         _rebuild_supervisor_conf_file('make_supervisor_conf', 'supervisor_reminder_queue.conf')
 
 @roles(ROLES_PILLOW_RETRY_QUEUE)
+@parallel
 def set_pillow_retry_queue_supervisorconf():
     if 'pillow_retry_queue' in get_celery_queues():
         _rebuild_supervisor_conf_file('make_supervisor_conf', 'supervisor_pillow_retry_queue.conf')
 
 
 @roles(ROLES_STATIC)
+@parallel
 def set_websocket_supervisorconf():
     _rebuild_supervisor_conf_file('make_supervisor_conf', 'supervisor_websockets.conf')
 

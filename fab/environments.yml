@@ -107,6 +107,8 @@ softlayer:
         concurrency: 4
       email_queue:
         concurrency: 2
+      repeat_record_queue:
+        concurrency: 3
       flower: {}
 
 preview:
@@ -140,6 +142,8 @@ production:
         concurrency: 4
       email_queue:
         concurrency: 2
+      repeat_record_queue:
+        concurrency: 3
     hqcelery1:
       reminder_queue:
         concurrency: 8
@@ -205,6 +209,8 @@ zambia:
         concurrency: 2
       email_queue:
         concurrency: 2
+      repeat_record_queue:
+        concurrency: 1
       flower: {}
 
 swiss:
@@ -218,5 +224,7 @@ swiss:
       background_queue:
         concurrency: 1
       periodic:
+        concurrency: 1
+      repeat_record_queue:
         concurrency: 1
       flower: {}

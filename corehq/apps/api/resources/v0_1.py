@@ -39,7 +39,11 @@ from corehq.apps.users.models import CommCareUser, WebUser, Permissions
 # API imports
 from corehq.apps.api.serializers import CustomXMLSerializer, XFormInstanceSerializer
 from corehq.apps.api.util import get_object_or_not_exist
-from corehq.apps.api.resources import HqBaseResource, DomainSpecificResourceMixin
+from corehq.apps.api.resources import (
+    CouchResourceMixin,
+    DomainSpecificResourceMixin,
+    HqBaseResource,
+)
 from dimagi.utils.parsing import string_to_boolean
 
 
@@ -161,7 +165,7 @@ class CustomResourceMeta(object):
                              timeframe=getattr(settings, 'CCHQ_API_THROTTLE_TIMEFRAME', 15))
 
 
-class UserResource(HqBaseResource, DomainSpecificResourceMixin):
+class UserResource(CouchResourceMixin, HqBaseResource, DomainSpecificResourceMixin):
     type = "user"
     id = fields.CharField(attribute='get_id', readonly=True, unique=True)
     username = fields.CharField(attribute='username', unique=True)
@@ -323,7 +327,7 @@ class CommCareCaseResource(HqBaseResource, DomainSpecificResourceMixin):
         resource_name = 'case'
 
 
-class XFormInstanceResource(HqBaseResource, DomainSpecificResourceMixin):
+class XFormInstanceResource(CouchResourceMixin, HqBaseResource, DomainSpecificResourceMixin):
     type = "form"
     id = fields.CharField(attribute='get_id', readonly=True, unique=True)
 
@@ -345,7 +349,7 @@ class XFormInstanceResource(HqBaseResource, DomainSpecificResourceMixin):
         detail_allowed_methods = ['get']
         resource_name = 'form'
         ordering = ['received_on']
-        serializer = XFormInstanceSerializer()
+        serializer = XFormInstanceSerializer(formats=['json'])
 
 def _safe_bool(bundle, param, default=False):
     try:

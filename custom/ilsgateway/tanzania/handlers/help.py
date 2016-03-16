@@ -9,3 +9,5 @@ class HelpHandler(KeywordHandler):
             self.respond(HELP_REGISTERED)
         else:
             self.respond(HELP_UNREGISTERED)
+
+        return True

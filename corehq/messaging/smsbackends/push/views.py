@@ -3,6 +3,7 @@ from corehq.apps.sms.views import NewIncomingBackendView
 from corehq.messaging.smsbackends.push.models import PushBackend
 from django.http import HttpResponse, HttpResponseBadRequest
 from lxml import etree
+from xml.sax.saxutils import unescape
 
 
 class PushIncomingView(NewIncomingBackendView):
@@ -14,14 +15,18 @@ class PushIncomingView(NewIncomingBackendView):
 
     def clean_value(self, value):
         if isinstance(value, basestring):
-            return value.strip()
+            return unescape(value.strip())
 
         return value
 
     def get_number_and_message(self, request):
         number = None
         text = None
-        xml = etree.fromstring(request.body)
+        try:
+            xml = etree.fromstring(request.body)
+        except etree.XMLSyntaxError:
+            return None, None
+
         for element in xml:
             name = element.get('name')
             if name == 'MobileNumber':

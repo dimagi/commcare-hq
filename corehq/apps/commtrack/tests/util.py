@@ -20,7 +20,7 @@ from corehq.apps.receiverwrapper import submit_form_locally
 from corehq.apps.users.models import CommCareUser
 from corehq.form_processor.parsers.ledgers.helpers import StockTransactionHelper
 from corehq.util.decorators import require_debug_true
-from dimagi.utils.parsing import json_format_date
+from dimagi.utils.parsing import json_format_datetime
 
 from ..const import StockActions
 from ..models import CommtrackConfig, ConsumptionConfig
@@ -201,7 +201,7 @@ def extract_balance_xml(xml_payload):
 
 
 def get_single_balance_block(case_id, product_id, quantity, date_string=None, section_id='stock'):
-    date_string = date_string or json_format_date(datetime.utcnow())
+    date_string = date_string or json_format_datetime(datetime.utcnow())
     return """
 <balance xmlns="http://commcarehq.org/ledger/v1" entity-id="{case_id}" date="{date}" section-id="{section_id}">
     <entry id="{product_id}" quantity="{quantity}" />
@@ -211,12 +211,14 @@ def get_single_balance_block(case_id, product_id, quantity, date_string=None, se
 
 
 def get_single_transfer_block(src_id, dest_id, product_id, quantity, date_string=None, section_id='stock'):
-    date_string = date_string or json_format_date(datetime.utcnow())
+    date_string = date_string or json_format_datetime(datetime.utcnow())
     return """
-<transfer xmlns="http://commcarehq.org/ledger/v1" src="{src_id}" dest="{dest_id}" date="{date}" section-id="{section_id}">
+<transfer xmlns="http://commcarehq.org/ledger/v1" {src} {dest} date="{date}" section-id="{section_id}">
     <entry id="{product_id}" quantity="{quantity}" />
 </transfer >""".format(
-        src_id=src_id, dest_id=dest_id, product_id=product_id, quantity=quantity,
+        src='src="{}"'.format(src_id) if src_id is not None else '',
+        dest='dest="{}"'.format(dest_id) if dest_id is not None else '',
+        product_id=product_id, quantity=quantity,
         date=date_string, section_id=section_id,
     ).strip()
 

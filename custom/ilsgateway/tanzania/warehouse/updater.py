@@ -16,10 +16,10 @@ from custom.ilsgateway.tanzania.warehouse.alerts import populate_no_primary_aler
 from dimagi.utils.chunked import chunked
 from dimagi.utils.couch.bulk import get_docs
 from dimagi.utils.dates import get_business_day_of_month, add_months, months_between
-from casexml.apps.stock.models import StockReport, StockTransaction
+from casexml.apps.stock.models import StockReport
 from custom.ilsgateway.models import SupplyPointStatus, SupplyPointStatusTypes, DeliveryGroups, \
     OrganizationSummary, GroupSummary, SupplyPointStatusValues, Alert, ProductAvailabilityData, \
-    HistoricalLocationGroup, ILSGatewayConfig
+    ILSGatewayConfig
 
 """
 These functions and variables are ported from:
@@ -30,32 +30,13 @@ https://github.com/dimagi/logistics/blob/tz-master/logistics_project/apps/tanzan
 def _is_valid_status(facility, date, status_type):
     if status_type not in const.NEEDED_STATUS_TYPES:
         return False
-    groups = HistoricalLocationGroup.objects.filter(
-        date__month=date.month,
-        date__year=date.year,
-        location_id=facility.sql_location
-    )
-    if (not facility.metadata.get('group', None)) and (groups.count() == 0):
-        return False
 
-    if groups.count() > 0:
-        codes = [group.group for group in groups]
-    else:
-        try:
-            latest_group = HistoricalLocationGroup.objects.filter(
-                location_id=facility.sql_location
-            ).latest('date')
-            if date.date() < latest_group.date:
-                return False
-            else:
-                codes = [facility.metadata['group']]
-        except HistoricalLocationGroup.DoesNotExist:
-            codes = [facility.metadata['group']]
+    code = facility.metadata['group']
     dg = DeliveryGroups(date.month)
     if status_type == SupplyPointStatusTypes.R_AND_R_FACILITY:
-        return dg.current_submitting_group() in codes
+        return dg.current_submitting_group() == code
     elif status_type == SupplyPointStatusTypes.DELIVERY_FACILITY:
-        return dg.current_delivering_group() in codes
+        return dg.current_delivering_group() == code
     return True
 
 

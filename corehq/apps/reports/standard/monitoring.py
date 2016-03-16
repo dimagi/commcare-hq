@@ -8,8 +8,13 @@ import pytz
 
 from corehq.apps.es import filters
 from corehq.apps.es import cases as case_es
-from corehq.apps.es.aggregations import TermsAggregation, RangeAggregation, AggregationRange, \
-    FilterAggregation
+from corehq.apps.es.aggregations import (
+    TermsAggregation,
+    RangeAggregation,
+    AggregationRange,
+    FilterAggregation,
+    MissingAggregation,
+)
 from corehq.apps.reports import util
 from corehq.apps.reports.analytics.esaccessors import (
     get_last_submission_time_for_user,
@@ -249,6 +254,8 @@ class CaseActivityReport(WorkerMonitoringCaseReportTableBase):
 
         es_results = self.es_queryset(users_by_id)
         buckets = {user_id: bucket for user_id, bucket in es_results.aggregations.users.buckets_dict.items()}
+        if None in users_by_id.keys():
+            buckets[None] = es_results.aggregations.missing_users.bucket
         rows = []
         for user_id, user in users_by_id.items():
             bucket = buckets.get(user_id, None)
@@ -325,8 +332,23 @@ class CaseActivityReport(WorkerMonitoringCaseReportTableBase):
             .aggregation(active_total_aggregation)\
             .aggregation(inactive_total_aggregation)
 
-        query = case_es.CaseES().domain(self.domain).user(users_by_id.keys())
+        query = (
+            case_es.CaseES()
+            .domain(self.domain)
+            .user_ids_handle_unknown(users_by_id.keys())
+        )
         query = query.aggregation(top_level_aggregation)
+        missing_users = None in users_by_id.keys()
+
+        if missing_users:
+            query = query.aggregation(
+                MissingAggregation('missing_users', 'user_id')
+                .aggregation(landmarks_aggregation)
+                .aggregation(touched_total_aggregation)
+                .aggregation(active_total_aggregation)
+                .aggregation(inactive_total_aggregation)
+            )
+
         return query.run()
 
     def _landmarks_aggregation(self, end_date):

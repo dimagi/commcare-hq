@@ -21,7 +21,7 @@ from uuidfield import UUIDField
 
 from corehq.blobs import get_blob_db
 from corehq.blobs.exceptions import NotFound, BadName
-from corehq.form_processor.exceptions import InvalidAttachment
+from corehq.form_processor.exceptions import InvalidAttachment, UnknownActionType
 from corehq.form_processor.track_related import TrackRelatedChanges
 from corehq.sql_db.routers import db_for_read_write
 from couchforms import const
@@ -44,6 +44,20 @@ CommCareCaseIndexSQL_DB_TABLE = 'form_processor_commcarecaseindexsql'
 CaseAttachmentSQL_DB_TABLE = 'form_processor_caseattachmentsql'
 CaseTransaction_DB_TABLE = 'form_processor_casetransaction'
 LedgerValue_DB_TABLE = 'form_processor_ledgervalue'
+LedgerTransaction_DB_TABLE = 'form_processor_ledgertransaction'
+
+CaseAction = namedtuple("CaseAction", ["action_type", "updated_known_properties", "indices"])
+
+
+class TruncatingCharField(models.CharField):
+    """
+    http://stackoverflow.com/a/3460942
+    """
+    def get_prep_value(self, value):
+        value = super(TruncatingCharField, self).get_prep_value(value)
+        if value:
+            return value[:self.max_length]
+        return value
 
 
 class Attachment(namedtuple('Attachment', 'name raw_content content_type')):
@@ -613,6 +627,19 @@ class CommCareCaseSQL(DisabledDbMixin, models.Model, RedisLockableMixIn,
         transactions += self.get_tracked_models_to_create(CaseTransaction)
         return transactions
 
+    def get_transaction_by_form_id(self, form_id):
+        from corehq.form_processor.backends.sql.dbaccessors import CaseAccessorSQL
+        transaction = CaseAccessorSQL.get_transaction_by_form_id(self.case_id, form_id)
+
+        if not transaction:
+            transactions = filter(
+                lambda t: t.form_id == form_id,
+                self.get_tracked_models_to_create(CaseTransaction)
+            )
+            assert len(transactions) <= 1
+            transaction = transactions[0] if transactions else None
+        return transaction
+
     @property
     def non_revoked_transactions(self):
         return [t for t in self.transactions if not t.revoked]
@@ -621,6 +648,23 @@ class CommCareCaseSQL(DisabledDbMixin, models.Model, RedisLockableMixIn,
     @memoized
     def case_attachments(self):
         return {attachment.identifier: attachment for attachment in self.get_attachments()}
+
+    @property
+    @memoized
+    def closed_transactions(self):
+        return self._transactions_by_type(CaseTransaction.TYPE_FORM | CaseTransaction.TYPE_CASE_CLOSE)
+
+    def _transactions_by_type(self, transaction_type):
+        from corehq.form_processor.backends.sql.dbaccessors import CaseAccessorSQL
+        if self.is_saved():
+            transactions = CaseAccessorSQL.get_transactions_by_type(self.case_id, transaction_type)
+        else:
+            transactions = []
+        transactions += filter(
+            lambda t: (t.type & transaction_type) == transaction_type,
+            self.get_tracked_models_to_create(CaseTransaction)
+        )
+        return transactions
 
     def modified_since_sync(self, sync_log):
         if self.server_modified_on >= sync_log.date:
@@ -849,6 +893,10 @@ class CaseTransaction(DisabledDbMixin, models.Model):
     TYPE_REBUILD_FORM_ARCHIVED = 16
     TYPE_REBUILD_FORM_EDIT = 32
     TYPE_LEDGER = 64
+    TYPE_CASE_CREATE = 128
+    TYPE_CASE_CLOSE = 256
+    TYPE_CASE_INDEX = 512
+    TYPE_CASE_ATTACHMENT = 1024
     TYPE_CHOICES = (
         (TYPE_FORM, 'form'),
         (TYPE_REBUILD_WITH_REASON, 'rebuild_with_reason'),
@@ -857,6 +905,10 @@ class CaseTransaction(DisabledDbMixin, models.Model):
         (TYPE_REBUILD_FORM_ARCHIVED, 'form_archive_rebuild'),
         (TYPE_REBUILD_FORM_EDIT, 'form_edit_rebuild'),
         (TYPE_LEDGER, 'ledger'),
+        (TYPE_CASE_CREATE, 'case_create'),
+        (TYPE_CASE_CLOSE, 'case_close'),
+        (TYPE_CASE_ATTACHMENT, 'case_attachment'),
+        (TYPE_CASE_INDEX, 'case_index'),
     )
     TYPES_TO_PROCESS = (
         TYPE_FORM,
@@ -872,9 +924,16 @@ class CaseTransaction(DisabledDbMixin, models.Model):
     revoked = models.BooleanField(default=False, null=False)
     details = JSONField(lazy=True, default=dict)
 
+    @staticmethod
+    def _should_process(transaction_type):
+        return any(map(
+            lambda type_: transaction_type & type_ == type_,
+            CaseTransaction.TYPES_TO_PROCESS,
+        ))
+
     @property
     def is_relevant(self):
-        relevant = not self.revoked and self.type in CaseTransaction.TYPES_TO_PROCESS
+        relevant = not self.revoked and CaseTransaction._should_process(self.type)
         if relevant and self.form:
             relevant = self.form.is_normal
 
@@ -890,6 +949,38 @@ class CaseTransaction(DisabledDbMixin, models.Model):
             self.cached_form = FormAccessorSQL.get_form(self.form_id)
         return self.cached_form
 
+    @property
+    def is_form_transaction(self):
+        return bool(self.TYPE_FORM & self.type)
+
+    @property
+    def is_ledger_transaction(self):
+        return bool(self.is_form_transaction and self.TYPE_LEDGER & self.type)
+
+    @property
+    def is_case_create(self):
+        return bool(self.is_form_transaction and self.TYPE_CASE_CREATE & self.type)
+
+    @property
+    def is_case_close(self):
+        return bool(self.is_form_transaction and self.TYPE_CASE_CLOSE & self.type)
+
+    @property
+    def is_case_index(self):
+        return bool(self.is_form_transaction and self.TYPE_CASE_INDEX & self.type)
+
+    @property
+    def is_case_attachment(self):
+        return bool(self.is_form_transaction and self.TYPE_CASE_ATTACHMENT & self.type)
+
+    @property
+    def readable_type(self):
+        readable_type = []
+        for type_, type_slug in self.TYPE_CHOICES:
+            if self.type & type_:
+                readable_type.append(type_slug)
+        return ' '.join(readable_type)
+
     def __eq__(self, other):
         if not isinstance(other, CaseTransaction):
             return False
@@ -904,23 +995,61 @@ class CaseTransaction(DisabledDbMixin, models.Model):
         return not self.__eq__(other)
 
     @classmethod
-    def form_transaction(cls, case, xform):
-        return cls._from_form(case, xform, transaction_type=CaseTransaction.TYPE_FORM)
+    def form_transaction(cls, case, xform, action_types=None):
+        action_types = action_types or []
+
+        if any(map(lambda action_type: not cls._valid_action_type(action_type), action_types)):
+            raise UnknownActionType('Unknown action type found')
+
+        type_ = cls.TYPE_FORM
+
+        for action_type in action_types:
+            type_ |= action_type
+        return cls._from_form(case, xform, transaction_type=type_)
+
+    @classmethod
+    def _valid_action_type(cls, action_type):
+        return action_type in [
+            cls.TYPE_CASE_CLOSE,
+            cls.TYPE_CASE_INDEX,
+            cls.TYPE_CASE_CREATE,
+            cls.TYPE_CASE_ATTACHMENT,
+            0,
+        ]
 
     @classmethod
     def ledger_transaction(cls, case, xform):
-        return cls._from_form(case, xform, transaction_type=CaseTransaction.TYPE_LEDGER)
+        return cls._from_form(
+            case,
+            xform,
+            transaction_type=CaseTransaction.TYPE_LEDGER | CaseTransaction.TYPE_FORM
+        )
 
     @classmethod
     def _from_form(cls, case, xform, transaction_type):
-        return CaseTransaction(
-            case=case,
-            form_id=xform.form_id,
-            sync_log_id=xform.last_sync_token,
-            server_date=xform.received_on,
-            type=transaction_type,
-            revoked=not xform.is_normal
-        )
+        transaction = case.get_transaction_by_form_id(xform.form_id)
+        if transaction:
+            transaction.type |= transaction_type
+            return transaction
+        else:
+            return CaseTransaction(
+                case=case,
+                form_id=xform.form_id,
+                sync_log_id=xform.last_sync_token,
+                server_date=xform.received_on,
+                type=transaction_type,
+                revoked=not xform.is_normal
+            )
+
+    @classmethod
+    def type_from_action_type_slug(cls, action_type_slug):
+        from casexml.apps.case import const
+        return {
+            const.CASE_ACTION_CLOSE: cls.TYPE_CASE_CLOSE,
+            const.CASE_ACTION_CREATE: cls.TYPE_CASE_CREATE,
+            const.CASE_ACTION_INDEX: cls.TYPE_CASE_INDEX,
+            const.CASE_ACTION_ATTACHMENT: cls.TYPE_CASE_ATTACHMENT,
+        }.get(action_type_slug, 0)
 
     @classmethod
     def rebuild_transaction(cls, case, detail):
@@ -939,7 +1068,7 @@ class CaseTransaction(DisabledDbMixin, models.Model):
             "sync_log_id='{self.sync_log_id}', "
             "type='{self.type}', "
             "server_date='{self.server_date}', "
-            "revoked='{self.revoked}'"
+            "revoked='{self.revoked}')"
         ).format(self=self)
 
     class Meta:
@@ -989,7 +1118,7 @@ class FormEditRebuild(CaseTransactionDetail):
     deprecated_form_id = StringProperty()
 
 
-class LedgerValue(DisabledDbMixin, models.Model):
+class LedgerValue(DisabledDbMixin, models.Model, TrackRelatedChanges):
     """
     Represents the current state of a ledger. Supercedes StockState
     """
@@ -1008,4 +1137,97 @@ class LedgerValue(DisabledDbMixin, models.Model):
         app_label = "form_processor"
         db_table = LedgerValue_DB_TABLE
 
-CaseAction = namedtuple("CaseAction", ["action_type", "updated_known_properties", "indices"])
+
+class LedgerTransaction(DisabledDbMixin, models.Model):
+    TYPE_BALANCE = 1
+    TYPE_TRANSFER = 2
+    TYPE_CHOICES = (
+        (TYPE_BALANCE, 'balance'),
+        (TYPE_TRANSFER, 'transfer'),
+    )
+
+    form_id = models.CharField(max_length=255, null=False)
+    server_date = models.DateTimeField()
+    report_date = models.DateTimeField()
+    type = models.PositiveSmallIntegerField(choices=TYPE_CHOICES)
+    case_id = models.CharField(max_length=255, db_index=True, default=None)
+    entry_id = models.CharField(max_length=100, default=None)
+    section_id = models.CharField(max_length=100, default=None)
+
+    user_defined_type = TruncatingCharField(max_length=20, null=True, blank=True)
+
+    # change from previous balance
+    delta = models.IntegerField(default=0)
+    # new balance
+    updated_balance = models.IntegerField(default=0)
+
+    def get_consumption_transactions(self, exclude_inferred_receipts=False):
+        """
+        This adds in the inferred transactions for BALANCE transactions and converts
+        TRANSFER transactions to ``consumption`` / ``receipts``
+        :return: list of ``ConsumptionTransaction`` objects
+        """
+        from casexml.apps.stock.const import (
+            TRANSACTION_TYPE_STOCKONHAND,
+            TRANSACTION_TYPE_RECEIPTS,
+            TRANSACTION_TYPE_CONSUMPTION
+        )
+        transactions = [
+            ConsumptionTransaction(
+                TRANSACTION_TYPE_RECEIPTS if self.delta > 0 else TRANSACTION_TYPE_CONSUMPTION,
+                abs(self.delta),
+                self.report_date
+            )
+        ]
+        if self.type == LedgerTransaction.TYPE_BALANCE:
+            if self.delta > 0 and exclude_inferred_receipts:
+                transactions = []
+
+            transactions.append(
+                ConsumptionTransaction(
+                    TRANSACTION_TYPE_STOCKONHAND,
+                    self.updated_balance,
+                    self.report_date
+                )
+            )
+        return transactions
+
+    @property
+    def readable_type(self):
+        for type_, type_slug in self.TYPE_CHOICES:
+            if self.type == type_:
+                return type_slug
+
+    def __unicode__(self):
+        return (
+            "LedgerTransaction("
+            "form_id='{self.form_id}', "
+            "server_date='{self.server_date}', "
+            "report_date='{self.report_date}', "
+            "type='{self.readable_type}', "
+            "case_id='{self.case_id}', "
+            "entry_id='{self.entry_id}', "
+            "section_id='{self.section_id}', "
+            "user_defined_type='{self.user_defined_type}', "
+            "delta='{self.delta}', "
+            "updated_balance='{self.updated_balance}')"
+        ).format(self=self)
+
+    class Meta:
+        db_table = LedgerTransaction_DB_TABLE
+        app_label = "form_processor"
+        index_together = [
+            ["case_id", "entry_id", "section_id"],
+        ]
+
+
+class ConsumptionTransaction(namedtuple('ConsumptionTransaction', ['type', 'normalized_value', 'received_on'])):
+    @property
+    def is_stockout(self):
+        from casexml.apps.stock.const import TRANSACTION_TYPE_STOCKONHAND
+        return self.type == TRANSACTION_TYPE_STOCKONHAND and self.normalized_value == 0
+
+    @property
+    def is_checkpoint(self):
+        from casexml.apps.stock.const import TRANSACTION_TYPE_STOCKONHAND
+        return self.type == TRANSACTION_TYPE_STOCKONHAND and not self.is_stockout

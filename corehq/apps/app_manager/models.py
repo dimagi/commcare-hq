@@ -76,6 +76,7 @@ from corehq.apps.app_manager.dbaccessors import (
     get_app,
     get_latest_build_doc,
     get_latest_released_app_doc,
+    domain_has_apps,
 )
 from corehq.apps.app_manager.util import (
     split_path,
@@ -4412,6 +4413,7 @@ class ApplicationBase(VersionedDoc, SnapshotMixin,
         return copy
 
     def delete_app(self):
+        domain_has_apps.clear(self.domain)
         self.doc_type += '-Deleted'
         record = DeleteApplicationRecord(
             domain=self.domain,
@@ -4420,6 +4422,12 @@ class ApplicationBase(VersionedDoc, SnapshotMixin,
         )
         record.save()
         return record
+
+    def save(self, response_json=None, increment_version=None, **params):
+        if not self._id and not domain_has_apps(self.domain):
+            domain_has_apps.clear(self.domain)
+        super(ApplicationBase, self).save(
+            response_json=response_json, increment_version=increment_version, **params)
 
     def set_form_versions(self, previous_version):
         # by default doing nothing here is fine.

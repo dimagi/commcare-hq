@@ -143,6 +143,9 @@ LOSS_ADJUST_CONFIRM = _("Thank you. Have you received supervision this month? "
 
 STOCKOUT_CONFIRM = _('Thank you %(contact_name)s '
                      'for reporting stockouts of %(product_names)s for %(facility_name)s.')
+STOCKOUT_HELP = _("Please send in stockout reports in the form 'so <product>'")
+
+INVALID_PRODUCT_CODE = _("Sorry, invalid product code %(product_code)s")
 
 
 # reminder reports
