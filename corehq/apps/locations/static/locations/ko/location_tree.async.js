@@ -158,7 +158,6 @@ function LocationModel(data, root, depth) {
     this.load(data);
 
     this.new_location_tracking = function() {
-        analytics.workflow('User clicks one of the "+New____" buttons');
         ga_track_event('Organization Structure', '+ New _______');
         return true;
     };

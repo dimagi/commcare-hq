@@ -6,39 +6,30 @@
 {% if request.couch_user %}
     <script type="text/javascript">
         $('#settingsmenu-projectSettings').click(function () {
-            analytics.workflow('User clicks the gear icon');
             ga_track_event('Nav Bar', 'Click Gear Icon');
         });
         $('#settingsmenu-help').click(function () {
-            analytics.workflow('User clicks the question mark');
             ga_track_event('Nav Bar', 'Click Question Mark');
         });
         $('#menuitem-projectsettings').click(function () {
-            analytics.workflow('User clicks "Update Project Settings"');
             ga_track_event('Nav Bar', 'Gear Icon', 'Update Project Settings');
         });
         $('#menuitem-currentsubscription').click(function () {
-            analytics.workflow('User clicks "Current Subscription"');
             ga_track_event('Nav Bar', 'Gear Icon', 'Current Subscription');
         });
         $('#menuitem-accountsettings').click(function () {
-            analytics.workflow('User clicks "My Account Settings"');
             ga_track_event('Nav Bar', 'Gear Icon', 'My Account Settings');
         });
         $('#menuitem-signout').click(function () {
-            analytics.workflow('User clicks "Sign Out"');
             ga_track_event('Nav Bar', 'Gear Icon', 'Sign Out');
         });
         $('#menuitem-helpsite').click(function () {
-            analytics.workflow('User clicks "Visit the Help Site"');
             ga_track_event('Nav Bar', 'Question Mark', 'Visit the Help Site');
         });
         $('#menuitem-userforum').click(function () {
-            analytics.workflow('User clicks "User Forum"');
             ga_track_event('Nav Bar', 'Question Mark', 'User Forum');
         });
         $('#menuitem-issue').click(function () {
-            analytics.workflow('User clicks "Report an Issue"');
             ga_track_event('Nav Bar', 'Question Mark', 'Report an Issue');
         });
     </script>

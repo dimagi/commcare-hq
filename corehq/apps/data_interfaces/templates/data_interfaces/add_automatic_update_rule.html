@@ -63,12 +63,10 @@
 
         $scope.addCondition = function() {
             $scope.conditions_objs.push({});
-            analytics.workflow('User clicks "+ Add Filter"');
             ga_track_event('Automatic Case Closure', 'Rules', 'Add Filter');
         };
         $scope.removeCondition = function(index) {
             $scope.conditions_objs.splice(index, 1);
-            analytics.workflow('User clicks "x Remove"');
             ga_track_event('Automatic Case Closure', 'Rules', 'Remove');
         };
         $scope.matchesDaysSince = function(condition) {

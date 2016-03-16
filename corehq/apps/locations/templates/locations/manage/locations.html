@@ -81,7 +81,6 @@ archive_loc = function(button, name, loc_id) {
     ko.cleanNode(archive_location_modal);
     $(archive_location_modal).koApplyBindings(modal_context);
     $(archive_location_modal).modal('show');
-    analytics.workflow('User clicks "Archive" for location');
     ga_track_event('Organizations', 'Archive');
 
 }
@@ -120,7 +119,6 @@ delete_loc = function(button, name, loc_id) {
                 }
             });
             $(delete_location_modal).modal('hide');
-            analytics.workflow('User clicks "Delete Location" on modal');
             ga_track_event('Organization Structure', 'Delete')
         }
     }
@@ -143,7 +141,6 @@ delete_loc = function(button, name, loc_id) {
             $(delete_location_modal).modal('show');
         }
     });
-    analytics.workflow('User clicks "Delete" for location');
     ga_track_event('Organization Structure', 'Delete');
 }
 
@@ -159,12 +156,10 @@ $(function() {
 
 
 $('#edit-org-levels').click(function () {
-    analytics.workflow('User clicks "Edit Organization Levels"');
     ga_track_event('Organization Structure', 'Edit Organization Levels');
 });
 
 $('#edit-loc-fields').click(function () {
-    analytics.workflow('User clicks "Edit Location Fields"');
     ga_track_event('Organization Structure', 'Edit Location Fields');
 });
 

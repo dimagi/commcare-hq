@@ -30,7 +30,6 @@ function LocationSettingsViewModel(loc_types, commtrack_enabled) {
             setTimeout(function() { $inp.select(); }, 0);
         };
         settings.loc_types.push(new_loctype);
-        analytics.workflow('User clicks "New Organization Level"');
         ga_track_event('Organization Levels', 'New Organization Level');
     };
 
