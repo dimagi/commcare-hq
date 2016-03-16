@@ -100,8 +100,8 @@ class SessionDataHelper(object):
         return ret
 
 
-def get_session_data(domain, couch_user, case_id=None, device_id=CLOUDCARE_DEVICE_ID, delegation=False):
-    return SessionDataHelper(domain, couch_user, case_id, delegation=delegation).get_session_data(device_id)
+def get_session_data(domain, couch_user, case_id=None, device_id=CLOUDCARE_DEVICE_ID):
+    return SessionDataHelper(domain, couch_user, case_id).get_session_data(device_id)
 
 
 def filter_cases(domain, couch_user, xpath, additional_filters=None, auth=None, delegation=False):
