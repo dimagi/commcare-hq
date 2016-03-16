@@ -225,8 +225,10 @@ def form_context(request, domain, app_id, module_id, form_id):
         app=app.name,
         form=form_name,
     )
+    case = None
     if case_id:
-        session_name = u'{0} - {1}'.format(session_name, CommCareCase.get(case_id).name)
+        case = CommCareCase.get(case_id)
+        session_name = u'{0} - {1}'.format(session_name, case.name)
 
     root_context = {
         'form_url': form_url,
@@ -238,7 +240,6 @@ def form_context(request, domain, app_id, module_id, form_id):
             )
         except ResourceNotFound:
             raise Http404()
-
 
     session_extras = {'session_name': session_name, 'app_id': app._id}
     session_extras.update(get_cloudcare_session_data(domain, form, request.couch_user))

@@ -9,17 +9,24 @@ from corehq.apps.users.models import CommCareUser, CouchUser
 
 DELEGATION_STUB_CASE_TYPE = "cc_delegation_stub"
 
+
 class SessionDataHelper(object):
-    def __init__(self, domain, couch_user, case_id=None, delegation=False):
+    def __init__(self, domain, couch_user, case_id_or_case=None, delegation=False):
         self.domain = domain
         self.couch_user = couch_user
-        self.case_id = case_id
+        if isinstance(case_id_or_case, basestring):
+            self.case_id = case_id_or_case
+            self._case = None
+        else:
+            self.case_id = case_id_or_case.case_id
+            self._case = case_id_or_case
         self._delegation = delegation
 
     @property
-    @memoized
     def case(self):
-        return CommCareCase.get(self.case_id)
+        if not self._case:
+            self._case = CommCareCase.get(self.case_id)
+        return self._case
 
     @property
     def case_type(self):
