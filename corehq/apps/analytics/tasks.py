@@ -291,6 +291,7 @@ def _track_workflow_task(email, event, properties=None, timestamp=0):
     api_key = settings.ANALYTICS_IDS.get("KISSMETRICS_KEY", None)
     if api_key:
         km = KISSmetrics.Client(key=api_key)
+
         def _post_func():
             res = km.record(email, event, properties if properties else {}, timestamp)
             _log_response("KM", {'email': email, 'event': event, 'properties': properties, 'timestamp': timestamp}, res)
@@ -310,6 +311,7 @@ def identify(email, properties):
     api_key = settings.ANALYTICS_IDS.get("KISSMETRICS_KEY", None)
     if api_key:
         km = KISSmetrics.Client(key=api_key)
+
         def _post_func():
             res = km.set(email, properties)
             _log_response("KM", {'email': email, 'properties': properties}, res)
