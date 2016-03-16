@@ -107,10 +107,6 @@ class SessionDataHelper(object):
         return ret
 
 
-def get_session_data(domain, couch_user, case_id=None, device_id=CLOUDCARE_DEVICE_ID):
-    return SessionDataHelper(domain, couch_user, case_id).get_session_data(device_id)
-
-
 def get_user_contributions_to_touchforms_session(couch_user_or_commconnect_case):
     return {
         'username': couch_user_or_commconnect_case.raw_username,

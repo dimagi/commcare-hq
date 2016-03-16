@@ -1,9 +1,9 @@
 import uuid
 from corehq.apps.app_manager.util import get_cloudcare_session_data
+from corehq.apps.cloudcare.touchforms_api import SessionDataHelper
 from corehq.apps.smsforms.util import process_sms_form_complete
 from .models import XFORMS_SESSION_SMS, SQLXFormsSession
 from datetime import datetime
-from corehq.apps.cloudcare.touchforms_api import get_session_data
 from touchforms.formplayer.api import (
     XFormsConfig,
     DigestAuth,
@@ -41,7 +41,7 @@ def start_session(domain, contact, app, module, form, case_id=None, yield_respon
     """
     # NOTE: this call assumes that "contact" will expose three
     # properties: .raw_username, .get_id, and .get_language_code
-    session_data = get_session_data(domain, contact, case_id, device_id=COMMCONNECT_DEVICE_ID)
+    session_data = SessionDataHelper(domain, contact, case_id).get_session_data(COMMCONNECT_DEVICE_ID)
     
     # since the API user is a superuser, force touchforms to query only
     # the contact's cases by specifying it as an additional filter
