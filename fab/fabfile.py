@@ -570,9 +570,10 @@ def record_successful_deploy(deploy_metadata):
 
 
 @roles(ROLES_DB_ONLY)
-def set_in_progress_flag():
-    with cd(env.code_root):
-        sudo('%(virtualenv_root)s/bin/python manage.py deploy_in_progress' % env)
+def set_in_progress_flag(use_current_release=False):
+    venv = env.virtualenv_root if not use_current_release else env.virtualenv_current
+    with cd(env.code_root if not use_current_release else env.code_current):
+        sudo('{}/bin/python manage.py deploy_in_progress'.format(venv))
 
 
 @roles(ROLES_ALL_SRC)
@@ -602,10 +603,11 @@ def hotfix_deploy():
     except Exception:
         execute(mail_admins, "Deploy failed", "You had better check the logs.")
         # hopefully bring the server back to life
-        execute(services_restart)
+        silent_services_restart()
         raise
     else:
         execute(services_restart)
+        silent_services_restart()
         execute(record_successful_deploy, deploy_metadata)
 
 
@@ -672,6 +674,7 @@ def _deploy_without_asking():
 
             if all(execute(_migrations_exist).values()):
                 _execute_with_timing(_stop_pillows)
+                execute(set_in_progress_flag)
                 _execute_with_timing(stop_celery_tasks)
             _execute_with_timing(_migrate)
         else:
@@ -694,11 +697,11 @@ def _deploy_without_asking():
     except Exception:
         _execute_with_timing(mail_admins, "Deploy failed", "You had better check the logs.")
         # hopefully bring the server back to life
-        _execute_with_timing(services_restart)
+        silent_services_restart()
         raise
     else:
         _execute_with_timing(update_current)
-        _execute_with_timing(services_restart)
+        silent_services_restart()
         _execute_with_timing(record_successful_release)
         _execute_with_timing(record_successful_deploy, deploy_metadata)
 
@@ -815,7 +818,7 @@ def rollback():
     if all(exists.values()):
         print blue('Updating current and restarting services')
         execute(update_current, unique_release)
-        execute(services_restart)
+        silent_services_restart()
         execute(mark_last_release_unsuccessful)
     else:
         print red('Aborting because not all hosts have release')
@@ -893,7 +896,7 @@ def force_update_static():
     execute(_do_collectstatic, use_current_release=True)
     execute(_do_compress, use_current_release=True)
     execute(update_manifest, use_current_release=True)
-    execute(services_restart)
+    silent_services_restart()
 
 
 @task
@@ -1033,9 +1036,17 @@ def restart_services():
 
     @roles(env.supervisor_roles)
     def _inner():
-        services_restart()
+        silent_services_restart(use_current_release=True)
 
     execute(_inner)
+
+
+def silent_services_restart(use_current_release=False):
+    """
+    Restarts services and sets the in progress flag so that pingdom doesn't yell falsely
+    """
+    execute(set_in_progress_flag, use_current_release)
+    execute(services_restart)
 
 
 @roles(ROLES_ALL_SERVICES)
@@ -1043,7 +1054,6 @@ def restart_services():
 def services_restart():
     """Stop and restart all supervisord services"""
     _require_target()
-    execute(set_in_progress_flag)
     _supervisor_command('stop all')
 
     _supervisor_command('update')
@@ -1199,6 +1209,7 @@ def get_celery_queues():
     return queues
 
 @roles(ROLES_CELERY)
+@parallel
 def set_celery_supervisorconf():
 
     conf_files = {
@@ -1226,6 +1237,7 @@ def set_celery_supervisorconf():
 
 
 @roles(ROLES_PILLOWTOP)
+@parallel
 def set_pillowtop_supervisorconf():
     # Don't run for preview,
     # and also don't run if there are no hosts for the 'django_pillowtop' role.
@@ -1240,36 +1252,43 @@ def set_pillowtop_supervisorconf():
 
 
 @roles(ROLES_DJANGO)
+@parallel
 def set_djangoapp_supervisorconf():
     _rebuild_supervisor_conf_file('make_supervisor_conf', 'supervisor_django.conf')
 
 
 @roles(ROLES_DJANGO)
+@parallel
 def set_errand_boy_supervisorconf():
     _rebuild_supervisor_conf_file('make_supervisor_conf', 'supervisor_errand_boy.conf')
 
 
 @roles(ROLES_TOUCHFORMS)
+@parallel
 def set_formsplayer_supervisorconf():
     _rebuild_supervisor_conf_file('make_supervisor_conf', 'supervisor_formsplayer.conf')
 
 @roles(ROLES_SMS_QUEUE)
+@parallel
 def set_sms_queue_supervisorconf():
     if 'sms_queue' in get_celery_queues():
         _rebuild_supervisor_conf_file('make_supervisor_conf', 'supervisor_sms_queue.conf')
 
 @roles(ROLES_REMINDER_QUEUE)
+@parallel
 def set_reminder_queue_supervisorconf():
     if 'reminder_queue' in get_celery_queues():
         _rebuild_supervisor_conf_file('make_supervisor_conf', 'supervisor_reminder_queue.conf')
 
 @roles(ROLES_PILLOW_RETRY_QUEUE)
+@parallel
 def set_pillow_retry_queue_supervisorconf():
     if 'pillow_retry_queue' in get_celery_queues():
         _rebuild_supervisor_conf_file('make_supervisor_conf', 'supervisor_pillow_retry_queue.conf')
 
 
 @roles(ROLES_STATIC)
+@parallel
 def set_websocket_supervisorconf():
     _rebuild_supervisor_conf_file('make_supervisor_conf', 'supervisor_websockets.conf')
 
@@ -1327,7 +1346,6 @@ def _stop_pillows(current=False):
 @parallel
 def stop_celery_tasks():
     _require_target()
-    execute(set_in_progress_flag)
     with cd(env.code_root):
         sudo('scripts/supervisor-group-ctl stop celery')
 

@@ -242,6 +242,7 @@ corehq.apps.receiverwrapper:
   - casexml.apps.case
   - casexml.apps.phone
   - corehq.apps.accounting
+  - corehq.apps.app_manager
   - corehq.apps.domain
   - corehq.apps.dropbox
   - corehq.apps.locations
