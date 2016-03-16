@@ -10,12 +10,11 @@ from corehq.apps.users.models import CommCareUser, CouchUser
 DELEGATION_STUB_CASE_TYPE = "cc_delegation_stub"
 
 class SessionDataHelper(object):
-    def __init__(self, domain, couch_user, case_id=None, delegation=False, offline=False):
+    def __init__(self, domain, couch_user, case_id=None, delegation=False):
         self.domain = domain
         self.couch_user = couch_user
         self.case_id = case_id
         self._delegation = delegation
-        self.offline = offline
 
     @property
     @memoized
@@ -93,10 +92,9 @@ class SessionDataHelper(object):
         session_data["additional_filters"] = {"footprint": True}
         session_data.update(session_extras)
         online_url = reverse("xform_player_proxy")
-        offline_url = 'http://localhost:%d' % settings.OFFLINE_TOUCHFORMS_PORT
         ret = {
             "session_data": session_data,
-            "xform_url": offline_url if self.offline else online_url,
+            "xform_url": online_url,
         }
         ret.update(root_extras)
         return ret
