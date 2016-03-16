@@ -27,17 +27,15 @@ MALFORM_XLSX = 'malformatted_forms_bulk.xlsx'
 WRONG_FILETYPE = 'wrong_file.xyz'
 
 
-def setup():
-    # http://nose.readthedocs.org/en/latest/writing_tests.html#test-modules
-    create_domain(DOMAIN_NAME)
-
-
-def teardown():
-    # http://nose.readthedocs.org/en/latest/writing_tests.html#test-modules
-    Domain.get_by_name(DOMAIN_NAME, strict=True).delete()
-
-
 class BulkArchiveForms(TestCase):
+    @classmethod
+    def setUpClass(cls):
+        create_domain(DOMAIN_NAME)
+
+    @classmethod
+    def tearDownClass(cls):
+        Domain.get_by_name(DOMAIN_NAME, strict=True).delete()
+
     def setUp(self):
         self.password = "password"
 
