@@ -1,14 +1,16 @@
-from functools import wraps
 import json
 import logging
 import traceback
-from django.core.urlresolvers import reverse as _reverse
-from django.utils.http import urlencode
-from dimagi.utils.web import get_url_base
+from functools import wraps
 
 from django import http
 from django.conf import settings
 from django.core.exceptions import PermissionDenied
+from django.core.urlresolvers import reverse as _reverse
+from django.utils.http import urlencode
+
+from dimagi.utils.web import get_url_base
+
 from corehq.util import global_request
 from corehq.util.soft_assert import soft_assert
 
