@@ -3,16 +3,15 @@ import re
 
 from casexml.apps.case.models import CommCareCase
 from corehq.pillows.case import CasePillow
+from corehq.pillows.const import CASE_SEARCH_ALIAS
 from corehq.pillows.mappings.case_search_mapping import CASE_SEARCH_MAPPING, CASE_SEARCH_INDEX
-
-CASE_SEARCH = "case_search"
 
 
 class CaseSearchPillow(CasePillow):
     """
     Nested case properties indexer.
     """
-    es_alias = CASE_SEARCH
+    es_alias = CASE_SEARCH_ALIAS
 
     es_index = CASE_SEARCH_INDEX
     default_mapping = CASE_SEARCH_MAPPING()
