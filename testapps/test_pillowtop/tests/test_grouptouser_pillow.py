@@ -1,10 +1,12 @@
 from django.test import SimpleTestCase
+from elasticsearch.exceptions import ConnectionError
 
 from corehq.apps.users.models import CommCareUser
 from corehq.elastic import get_es_new
 from corehq.pillows.mappings.user_mapping import USER_INDEX
 from corehq.pillows.user import UserPillow, update_es_user_with_groups
 from corehq.util.elastic import ensure_index_deleted
+from corehq.util.test_utils import trap_extra_setup
 
 
 class GroupToUserPillowTest(SimpleTestCase):
@@ -12,7 +14,8 @@ class GroupToUserPillowTest(SimpleTestCase):
     domain = 'grouptouser-pillowtest-domain'
 
     def setUp(self):
-        ensure_index_deleted(USER_INDEX)
+        with trap_extra_setup(ConnectionError):
+            ensure_index_deleted(USER_INDEX)
         self.user_pillow = UserPillow()
         self.es_client = get_es_new()
         self.user_id = 'user1'
