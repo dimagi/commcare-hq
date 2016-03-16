@@ -66,6 +66,7 @@ from corehq.apps.users.bulkupload import check_headers, dump_users_and_groups, G
 from corehq.apps.users.tasks import bulk_upload_async
 from corehq.apps.users.decorators import require_can_edit_commcare_users
 from corehq.apps.users.views import BaseFullEditUserView, BaseUserSettingsView
+from corehq.util.view_utils import expect_GET
 from dimagi.utils.decorators.memoized import memoized
 from dimagi.utils.html import format_html
 from django_prbac.exceptions import PermissionDenied
@@ -697,7 +698,7 @@ class UploadCommCareUsers(BaseManageCommCareUserView):
 
     @property
     def page_context(self):
-        request_params = self.request.GET if self.request.method == 'GET' else self.request.POST
+        request_params = expect_GET(self.request)
         context = {
             'bulk_upload': {
                 "help_site": {

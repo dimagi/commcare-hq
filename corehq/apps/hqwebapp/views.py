@@ -54,6 +54,7 @@ from corehq.middleware import always_allow_browser_caching
 from corehq.util.datadog.utils import create_datadog_event, log_counter, sanitize_url
 from corehq.util.datadog.metrics import JSERROR_COUNT
 from corehq.util.datadog.const import DATADOG_UNKNOWN
+from corehq.util.view_utils import expect_GET
 from dimagi.utils.couch.database import get_db
 from dimagi.utils.decorators.memoized import memoized
 from dimagi.utils.logging import notify_exception
@@ -355,7 +356,7 @@ def _login(req, domain_name, template_name):
     context = {}
     if domain_name:
         domain = Domain.get_by_name(domain_name)
-        req_params = req.GET if req.method == 'GET' else req.POST
+        req_params = expect_GET(req)
         context.update({
             'domain': domain_name,
             'hr_name': domain.display_name() if domain else domain_name,
@@ -373,7 +374,7 @@ def login(req, domain_type='commcare'):
     # this view, and the one below, is overridden because
     # we need to set the base template to use somewhere
     # somewhere that the login page can access it.
-    req_params = req.GET if req.method == 'GET' else req.POST
+    req_params = expect_GET(req)
     domain = req_params.get('domain', None)
 
     from corehq.apps.domain.utils import get_dummy_domain

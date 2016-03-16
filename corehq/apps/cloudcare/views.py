@@ -66,6 +66,7 @@ from corehq.apps.users.models import CouchUser, CommCareUser
 from corehq.apps.users.views import BaseUserSettingsView
 from corehq.util.couch import get_document_or_404
 from corehq.util.quickcache import skippable_quickcache
+from corehq.util.view_utils import expect_GET
 from corehq.util.xml_utils import indent_xml
 
 
@@ -256,7 +257,7 @@ cloudcare_api = login_or_digest_ex(allow_cc_users=True)
 
 
 def get_cases_vary_on(request, domain):
-    request_params = request.GET if request.method == 'GET' else request.POST
+    request_params = expect_GET(request)
 
     return [
         request.couch_user.get_id
@@ -281,7 +282,7 @@ def get_cases_skip_arg(request, domain):
     """
     if not toggles.CLOUDCARE_CACHE.enabled(domain):
         return True
-    request_params = request.GET if request.method == 'GET' else request.POST
+    request_params = expect_GET(request)
     return (not string_to_boolean(request_params.get('use_cache', 'false')) or
         not string_to_boolean(request_params.get('ids_only', 'false')))
 
@@ -289,7 +290,7 @@ def get_cases_skip_arg(request, domain):
 @cloudcare_api
 @skippable_quickcache(get_cases_vary_on, get_cases_skip_arg, timeout=240 * 60)
 def get_cases(request, domain):
-    request_params = request.GET if request.method == 'GET' else request.POST
+    request_params = expect_GET(request)
 
     if request.couch_user.is_commcare_user():
         user_id = request.couch_user.get_id
@@ -482,7 +483,7 @@ def get_ledgers(request, domain):
         ...
     }
     """
-    request_params = request.GET if request.method == 'GET' else request.POST
+    request_params = expect_GET(request)
     case_id = request_params.get('case_id')
     if not case_id:
         return json_response(
