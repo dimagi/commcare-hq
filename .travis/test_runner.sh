@@ -10,7 +10,7 @@
 
 set -e
 
-COMMAND="coverage run manage.py test --noinput --failfast --traceback --verbosity=2"
+COMMAND="coverage run manage.py test --noinput --stop --verbosity=2"
 
 /moto-s3/env/bin/moto_server s3 &
 
