@@ -22,6 +22,11 @@ from corehq.apps.userreports.sql.connection import get_engine_id
 from corehq.sql_db.connections import connection_manager
 from corehq.util.soft_assert import soft_assert
 
+_soft_assert = soft_assert(
+    to='{}@{}'.format('npellegrino+ucr-get-data', 'dimagi.com'),
+    exponential_backoff=False,
+)
+
 
 class ConfigurableReportDataSource(SqlData):
 
@@ -146,10 +151,6 @@ class ConfigurableReportDataSource(SqlData):
             ColumnNotFoundException,
             ProgrammingError,
         ) as e:
-            _soft_assert = soft_assert(
-                to='{}@{}'.format('npellegrino+ucr-get-data', 'dimagi.com'),
-                exponential_backoff=False,
-            )
             _soft_assert(False, unicode(e))
             raise UserReportsError(unicode(e))
         except TableNotFoundException:
@@ -170,7 +171,16 @@ class ConfigurableReportDataSource(SqlData):
             qc.append_column(c.view)
 
         session = connection_manager.get_scoped_session(self.engine_id)
-        return qc.count(session.connection(), self.filter_values)
+        try:
+            return qc.count(session.connection(), self.filter_values)
+        except (
+            ColumnNotFoundException,
+            ProgrammingError,
+        ) as e:
+            _soft_assert(False, unicode(e))
+            raise UserReportsError(unicode(e))
+        except TableNotFoundException:
+            raise TableNotFoundWarning
 
     def get_total_row(self):
         return get_total_row(
