@@ -12,15 +12,9 @@ from django.utils.http import urlencode
 from dimagi.utils.web import get_url_base
 
 from corehq.util import global_request
-from corehq.util.soft_assert import soft_assert
 
 JSON = 'application/json'
 logger = logging.getLogger('django.request')
-
-_soft_assert = soft_assert(
-    to='{}@{}'.format('npellegrino', 'dimagi.com'),
-    exponential_backoff=True,
-)
 
 
 def set_file_download(response, filename):
@@ -136,5 +130,10 @@ def expect_GET(request):
     if request.method == 'GET':
         return request.GET
     else:
+        from corehq.util.soft_assert import soft_assert
+        _soft_assert = soft_assert(
+            to='{}@{}'.format('npellegrino', 'dimagi.com'),
+            exponential_backoff=True,
+        )
         _soft_assert(False, "received POST when expecting GET")
         return request.POST
