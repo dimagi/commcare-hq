@@ -21,12 +21,22 @@ class CaseSearchPillow(CasePillow):
             '_id': doc_dict.get('_id'),
             'doc_type': doc_dict.get('doc_type'),
             'domain': doc_dict.get('domain'),
-            'case_properties': [
-                {'key': key, 'value': value}
-                for key, value in doc_dict.iteritems()
-                if _is_dynamic_case_property(key)
-            ],
+            'case_properties': _get_case_properties(doc_dict),
         }
+
+
+def _get_case_properties(doc_dict):
+    base_case_properties = [
+        {'key': 'name', 'value': doc_dict.get('name')},
+        {'key': 'external_id', 'value': doc_dict.get('external_id')}
+    ]
+    dynamic_case_properties = [
+        {'key': key, 'value': value}
+        for key, value in doc_dict.iteritems()
+        if _is_dynamic_case_property(key)
+    ]
+
+    return base_case_properties + dynamic_case_properties
 
 
 def _is_dynamic_case_property(prop):
