@@ -3,7 +3,92 @@ from django.test import SimpleTestCase
 from corehq.apps.export.models import TableConfiguration, ExportColumn, \
     ScalarItem, ExportRow
 from corehq.apps.export.models.new import SplitExportColumn, MultipleChoiceItem, \
-    Option, DocRow, RowNumberColumn
+    Option, DocRow, RowNumberColumn, PathNode
+
+
+class TableConfigurationGetSubDocumentsTest(SimpleTestCase):
+    def test_basic(self):
+
+        table = TableConfiguration(path=[])
+        self.assertEqual(
+            table._get_sub_documents(
+                {'foo': 'a'},
+                0
+            ),
+            [
+                DocRow(row=(0,), doc={'foo': 'a'})
+            ]
+        )
+
+    def test_simple_repeat(self):
+        table = TableConfiguration(
+            path=[PathNode(name="foo", is_repeat=True)]
+        )
+        self.assertEqual(
+            table._get_sub_documents(
+                {
+                    'foo': [
+                        {'bar': 'a'},
+                        {'bar': 'b'},
+                    ]
+                },
+                0
+            ),
+            [
+                DocRow(row=(0, 0), doc={'bar': 'a'}),
+                DocRow(row=(0, 1), doc={'bar': 'b'})
+            ]
+        )
+
+    def test_nested_repeat(self):
+        table = TableConfiguration(
+            path=[PathNode(name='foo', is_repeat=True), PathNode(name='bar', is_repeat=True)],
+        )
+        self.assertEqual(
+            table._get_sub_documents(
+                {
+                    'foo': [
+                        {
+                            'bar': [
+                                {'baz': 'a'},
+                                {'baz': 'b'}
+                            ],
+                        },
+                        {
+                            'bar': [
+                                {'baz': 'c'}
+                            ],
+                        },
+                    ],
+                },
+                0
+            ),
+            [
+                DocRow(row=(0, 0, 0), doc={'baz': 'a'}),
+                DocRow(row=(0, 0, 1), doc={'baz': 'b'}),
+                DocRow(row=(0, 1, 0), doc={'baz': 'c'}),
+            ]
+        )
+
+    def test_single_iteration_repeat(self):
+        table = TableConfiguration(
+            path=[PathNode(name='group1', is_repeat=False), PathNode(name='repeat1', is_repeat=True)],
+        )
+        self.assertEqual(
+            table._get_sub_documents(
+                {
+                    'group1': {
+                        'repeat1': {
+                            'baz': 'a'
+                        },
+                    }
+                },
+                0
+            ),
+            [
+                DocRow(row=(0, 0), doc={'baz': 'a'}),
+            ]
+        )
 
 
 class TableConfigurationGetRowsTest(SimpleTestCase):
@@ -44,66 +129,9 @@ class TableConfigurationGetRowsTest(SimpleTestCase):
             [['baz', 'foo']]
         )
 
-    def test_get_sub_documents(self):
-
-        table = TableConfiguration(path=[])
-        self.assertEqual(
-            table._get_sub_documents(
-                {'foo': 'a'},
-                0
-            ),
-            [
-                DocRow(row=(0,), doc={'foo': 'a'})
-            ]
-        )
-
-        table = TableConfiguration(path=['foo'])
-        self.assertEqual(
-            table._get_sub_documents(
-                {
-                    'foo': [
-                        {'bar': 'a'},
-                        {'bar': 'b'},
-                    ]
-                },
-                0
-            ),
-            [
-                DocRow(row=(0, 0), doc={'bar': 'a'}),
-                DocRow(row=(0, 1), doc={'bar': 'b'})
-            ]
-        )
-
-        table = TableConfiguration(path=['foo', 'bar'])
-        self.assertEqual(
-            table._get_sub_documents(
-                {
-                    'foo': [
-                        {
-                            'bar': [
-                                {'baz': 'a'},
-                                {'baz': 'b'}
-                            ],
-                        },
-                        {
-                            'bar': [
-                                {'baz': 'c'}
-                            ],
-                        },
-                    ],
-                },
-                0
-            ),
-            [
-                DocRow(row=(0, 0, 0), doc={'baz': 'a'}),
-                DocRow(row=(0, 0, 1), doc={'baz': 'b'}),
-                DocRow(row=(0, 1, 0), doc={'baz': 'c'}),
-            ]
-        )
-
     def test_repeat(self):
         table_configuration = TableConfiguration(
-            path=['form', 'repeat1'],
+            path=[PathNode(name="form", is_repeat=False), PathNode(name="repeat1", is_repeat=True)],
             columns=[
                 ExportColumn(
                     item=ScalarItem(
@@ -128,7 +156,12 @@ class TableConfigurationGetRowsTest(SimpleTestCase):
 
     def test_double_repeat(self):
         table_configuration = TableConfiguration(
-            path=['form', 'repeat1', 'group1', 'repeat2'],
+            path=[
+                PathNode(name="form", is_repeat=False),
+                PathNode(name="repeat1", is_repeat=True),
+                PathNode(name="group1", is_repeat=False),
+                PathNode(name="repeat2", is_repeat=True),
+            ],
             columns=[
                 RowNumberColumn(
                     selected=True
@@ -230,7 +263,7 @@ class SplitColumnTest(SimpleTestCase):
 
     def test_get_column(self):
         table_configuration = TableConfiguration(
-            path=['form', 'repeat1'],
+            path=[PathNode(name='form', is_repeat=False), PathNode(name="repeat1", is_repeat=True)],
             columns=[
                 ExportColumn(
                     item=ScalarItem(

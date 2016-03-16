@@ -1,6 +1,6 @@
 from dimagi.utils.couch.undo import DELETED_SUFFIX
 
-from .const import TRANSFORM_FUNCTIONS, MAIN_TABLE
+from .const import TRANSFORM_FUNCTIONS
 from .exceptions import ExportInvalidTransform
 
 
@@ -79,6 +79,7 @@ def _strip_repeat_index(index):
 
 
 def _convert_index_to_path(index):
+    from corehq.apps.export.models.new import MAIN_TABLE
     if index == '#':
         return MAIN_TABLE
     elif _is_repeat(index):

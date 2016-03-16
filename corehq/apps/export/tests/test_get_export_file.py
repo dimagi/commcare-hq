@@ -5,7 +5,6 @@ from django.test import SimpleTestCase
 from elasticsearch.exceptions import ConnectionError
 from openpyxl import load_workbook
 
-from corehq.apps.export.const import MAIN_TABLE
 from corehq.apps.export.export import (
     _get_tables,
     _get_writer,
@@ -23,6 +22,8 @@ from corehq.apps.export.models.new import (
     ExportInstance,
     ExportItem,
     CaseExportInstance,
+    PathNode,
+    MAIN_TABLE
 )
 from corehq.apps.export.tests.util import (
     new_case,
@@ -126,7 +127,7 @@ class WriterTest(SimpleTestCase):
                 ),
                 TableConfiguration(
                     label="My other table",
-                    path=['form', 'q2'],
+                    path=[PathNode(name='form', is_repeat=False), PathNode(name="q2", is_repeat=False)],
                     columns=[
                         ExportColumn(
                             label="Q4",
@@ -187,7 +188,7 @@ class WriterTest(SimpleTestCase):
                 tables=[
                     TableConfiguration(
                         label="My other table",
-                        path=['form', 'q2'],
+                        path=[PathNode(name="form", is_repeat=False), PathNode(name="q2", is_repeat=False)],
                         columns=[
                             ExportColumn(
                                 label="Q4",

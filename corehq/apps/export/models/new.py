@@ -33,16 +33,16 @@ from corehq.apps.export.const import (
     PROPERTY_TAG_UPDATE,
     PROPERTY_TAG_DELETED,
     CASE_HISTORY_PROPERTIES,
-    CASE_HISTORY_TABLE,
     FORM_EXPORT,
     CASE_EXPORT,
-    MAIN_TABLE,
     TRANSFORM_FUNCTIONS,
     DEID_TRANSFORM_FUNCTIONS,
     TOP_MAIN_FORM_TABLE_PROPERTIES,
     BOTTOM_MAIN_FORM_TABLE_PROPERTIES,
-    PROPERTY_TAG_ROW, MAIN_CASE_TABLE_PROPERTIES, PARENT_CASE_TABLE,
-    PARENT_CASE_TABLE_PROPERTIES)
+    PROPERTY_TAG_ROW,
+    MAIN_CASE_TABLE_PROPERTIES,
+    PARENT_CASE_TABLE_PROPERTIES,
+)
 from corehq.apps.export.dbaccessors import (
     get_latest_case_export_schema,
     get_latest_form_export_schema,
@@ -140,24 +140,19 @@ class ExportColumn(DocumentSchema):
         return value
 
     @staticmethod
-    def create_default_from_export_item(group_schema_path, item, app_ids_and_versions):
+    def create_default_from_export_item(table_path, item, app_ids_and_versions):
         """Creates a default ExportColumn given an item
 
-        :param group_schema_path: The path of the group_schema that the item belongs to
+        :param table_path: The path of the table_path that the item belongs to
         :param item: An ExportItem instance
         :param app_ids_and_versions: A dictionary of app ids that map to latest build version
         :returns: An ExportColumn instance
         """
 
-        is_main_table = group_schema_path == MAIN_TABLE
+        is_main_table = table_path == MAIN_TABLE
         is_system_property = isinstance(item, SystemExportItem)
         is_advanced = is_system_property and item.is_advanced
         transform = item.transform if is_system_property else None
-
-        if item.tag == PROPERTY_TAG_ROW:
-            column_class = RowNumberColumn
-        else:
-            column_class = ExportColumn
 
         constructor_args = {
             "item": item,
@@ -165,8 +160,12 @@ class ExportColumn(DocumentSchema):
             "is_advanced": is_advanced,
             "transforms": [transform] if transform else [],
         }
-        if is_system_property:
-            constructor_args["nesting_level"] = len(group_schema_path) + 1
+
+        if item.tag == PROPERTY_TAG_ROW:
+            column_class = RowNumberColumn
+            constructor_args["repeat"] = len([node for node in table_path if node.is_repeat])
+        else:
+            column_class = ExportColumn
 
         column = column_class(**constructor_args)
         column.update_properties_from_app_ids_and_versions(app_ids_and_versions)
@@ -236,10 +235,24 @@ class DocRow(namedtuple("DocRow", ["doc", "row"])):
     """
 
 
+class PathNode(DocumentSchema):
+
+    name = StringProperty(required=True)
+    is_repeat=BooleanProperty(default=False)
+
+    def __eq__(self, other):
+        return (
+            type(self) == type(other) and
+            self.doc_type == other.doc_type and
+            self.name == other.name and
+            self.is_repeat == other.is_repeat
+        )
+
+
 class TableConfiguration(DocumentSchema):
     # label saves the user's decision for the table name
     label = StringProperty()
-    path = ListProperty()
+    path = ListProperty(PathNode)
     columns = ListProperty(ExportColumn)
     selected = BooleanProperty(default=False)
 
@@ -274,7 +287,7 @@ class TableConfiguration(DocumentSchema):
 
             row_data = []
             for col in self.selected_columns:
-                val = col.get_value(doc, self.path, row_index=row_index)
+                val = col.get_value(doc, [node.name for node in self.path], row_index=row_index)
                 if isinstance(val, list):
                     row_data.extend(val)
                 else:
@@ -315,8 +328,11 @@ class TableConfiguration(DocumentSchema):
             doc = row_doc.doc
             row_index = row_doc.row
 
-            next_doc = doc.get(path[0], {})
-            if type(next_doc) == list:
+            next_doc = doc.get(path[0].name, {})
+            if path[0].is_repeat:
+                if type(next_doc) != list:
+                    # This happens when a repeat group has a single repeat iteration
+                    next_doc = [next_doc]
                 new_docs.extend([
                     DocRow(row=row_index + (new_doc_index,), doc=new_doc)
                     for new_doc_index, new_doc in enumerate(next_doc)
@@ -522,7 +538,7 @@ class FormExportInstanceDefaults(ExportInstanceDefaults):
         if table_path == MAIN_TABLE:
             return _('Forms')
         else:
-            return _('Repeat: {}').format((table_path[-1] if len(table_path) else None) or "")
+            return _('Repeat: {}').format((table_path[-1].name if len(table_path) else None) or "")
 
 
 class CaseExportInstanceDefaults(ExportInstanceDefaults):
@@ -610,7 +626,7 @@ class ExportGroupSchema(DocumentSchema):
     An object representing the `ExportItem`s that would appear in a single export table, such as all the
     questions in a particular repeat group, or all the questions not in any repeat group.
     """
-    path = ListProperty()
+    path = SchemaListProperty(PathNode)
     items = SchemaListProperty(ExportItem)
     last_occurrence = DictProperty()
 
@@ -676,7 +692,7 @@ class ExportDataSchema(Document):
             group_schemas = _merge_lists(
                 previous_group_schemas,
                 current_schema.group_schemas,
-                keyfn=lambda group_schema: _list_path_to_string(group_schema.path),
+                keyfn=lambda group_schema: _path_nodes_to_string(group_schema.path),
                 resolvefn=resolvefn,
                 copyfn=lambda group_schema: ExportGroupSchema(group_schema.to_json())
             )
@@ -763,13 +779,14 @@ class FormExportDataSchema(ExportDataSchema):
     @staticmethod
     def _generate_schema_from_xform(xform, langs, app_id, app_version):
         questions = xform.get_questions(langs)
+        repeats = [r['value'] for r in xform.get_questions(langs, include_groups=True) if r['tag'] == 'repeat']
         schema = FormExportDataSchema()
 
         for group_path, group_questions in groupby(questions, lambda q: q['repeat']):
             # If group_path is None, that means the questions are part of the form and not a repeat group
             # inside of the form
             group_schema = ExportGroupSchema(
-                path=_question_path_to_doc_path(group_path),
+                path=_question_path_to_path_nodes(group_path, repeats),
                 last_occurrences={app_id: app_version},
             )
             if group_path is None:
@@ -959,7 +976,7 @@ class CaseExportDataSchema(ExportDataSchema):
                     path_start = "updated_unknown_properties"
 
                 group_schema.items.append(ScalarItem(
-                    path=CASE_HISTORY_TABLE + [path_start, prop],
+                    path=[node.name for node in CASE_HISTORY_TABLE] + [path_start, prop],
                     label=prop,
                     tag=PROPERTY_TAG_UPDATE,
                     last_occurrences={app_id: app_version},
@@ -1011,10 +1028,41 @@ def _question_path_to_doc_path(string_path):
     return path
 
 
+def _question_path_to_path_nodes(string_path, repeats):
+    """
+    Return a list of PathNodes suitable for a TableConfiguration or ExportGroupSchema
+    path, from the given path and list of repeats.
+    :param string_path: A path to a question or group, like "/data/group1"
+    :param repeats: A list of repeat groups, like ["/data/repeat1"]
+    :return: A list of PathNodes
+    """
+    if not string_path:
+        return []
+
+    parts = string_path.split("/")
+    assert parts[0] == ""
+    parts = parts[1:]
+
+    repeat_test_string = ""
+    path = []
+    for part in parts:
+        repeat_test_string += "/" + part
+        path.append(PathNode(name=part, is_repeat=repeat_test_string in repeats))
+
+    assert path[0] == PathNode(name="data")
+    path[0].name = "form"
+    return path
+
+
 def _list_path_to_string(path, separator='.'):
     if not path or (len(path) == 1 and path[0] is None):
         return ''
     return separator.join(path)
+
+def _path_nodes_to_string(path, separator=' '):
+    if not path or (len(path) == 1 and path[0] is None):
+        return ''
+    return separator.join(["{}.{}".format(node.name, node.is_repeat) for node in path])
 
 
 def _merge_lists(one, two, keyfn, resolvefn, copyfn):
@@ -1145,12 +1193,12 @@ class SplitExportColumn(ExportColumn):
 
 
 class RowNumberColumn(ExportColumn):
-    nesting_level = IntegerProperty()
+    repeat = IntegerProperty(default=0)
 
     def get_headers(self):
         headers = [self.label]
-        if self.nesting_level > 1:
-            headers += ["{}__{}".format(self.label, i) for i in range(self.nesting_level)]
+        if self.repeat > 0:
+            headers += ["{}__{}".format(self.label, i) for i in range(self.repeat + 1)]
         return headers
 
     def get_value(self, doc, base_path, transform_dates=False, row_index=None):
@@ -1159,3 +1207,9 @@ class RowNumberColumn(ExportColumn):
             [".".join([unicode(i) for i in row_index])]
             + (list(row_index) if len(row_index) > 1 else [])
         )
+
+
+# These must match the constants in corehq/apps/export/static/export/js/const.js
+MAIN_TABLE = []
+CASE_HISTORY_TABLE = [PathNode(name='actions', is_repeat=True)]
+PARENT_CASE_TABLE = [PathNode(name='indices', is_repeat=True)]

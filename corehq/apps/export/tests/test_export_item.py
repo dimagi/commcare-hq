@@ -4,7 +4,7 @@ from corehq.apps.export.models import (
     ExportItem,
     ExportColumn,
 )
-from corehq.apps.export.const import MAIN_TABLE
+from corehq.apps.export.models.new import MAIN_TABLE
 
 
 class TestExportItemGeneration(SimpleTestCase):

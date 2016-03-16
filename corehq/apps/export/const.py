@@ -128,8 +128,3 @@ PARENT_CASE_TABLE_PROPERTIES = [
 
 FORM_EXPORT = 'form'
 CASE_EXPORT = 'case'
-
-# These must match the constants in corehq/apps/export/static/export/js/const.js
-MAIN_TABLE = []
-CASE_HISTORY_TABLE = ['actions']
-PARENT_CASE_TABLE = ['indices']

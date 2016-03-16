@@ -19,7 +19,7 @@ class TestExportColumn(SimpleTestCase):
 class TestRowNumberColumn(SimpleTestCase):
 
     def test_get_headers(self):
-        col = RowNumberColumn(label="row number", nesting_level=3)
+        col = RowNumberColumn(label="row number", repeat=2)
         self.assertEqual(
             col.get_headers(),
             ['row number', 'row number__0', 'row number__1', 'row number__2']

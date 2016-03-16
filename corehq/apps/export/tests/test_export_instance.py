@@ -8,7 +8,11 @@ from corehq.apps.export.models import (
     FormExportInstance,
     TableConfiguration,
 )
-from corehq.apps.export.const import MAIN_TABLE
+from corehq.apps.export.models.new import (
+    PathNode,
+    MAIN_TABLE,
+    FormExportInstanceDefaults,
+)
 
 
 @mock.patch(
@@ -34,7 +38,7 @@ class TestExportInstanceGeneration(SimpleTestCase):
                     last_occurrences={cls.app_id: 3},
                 ),
                 ExportGroupSchema(
-                    path=['data', 'repeat'],
+                    path=[PathNode(name='data'), PathNode(name='repeat', is_repeat=True)],
                     items=[
                         ExportItem(
                             path=['data', 'repeat', 'q2'],
@@ -90,6 +94,20 @@ class TestExportInstanceGeneration(SimpleTestCase):
         self.assertEqual(len(selected), 0)
         self.assertEqual(len(shown), 0)
 
+    def test_default_table_names(self, _):
+        self.assertEqual(
+            FormExportInstanceDefaults.get_default_table_name(MAIN_TABLE),
+            "Forms"
+        )
+        self.assertEqual(
+            FormExportInstanceDefaults.get_default_table_name([
+                PathNode(name="form"),
+                PathNode(name="group1"),
+                PathNode(name="awesome_repeat", is_repeat=True),
+            ]),
+            "Repeat: awesome_repeat"
+        )
+
 
 @mock.patch(
     'corehq.apps.export.models.new.FormExportInstanceDefaults.get_default_instance_name',
@@ -122,7 +140,7 @@ class TestExportInstanceGenerationMultipleApps(SimpleTestCase):
                     },
                 ),
                 ExportGroupSchema(
-                    path=['data', 'repeat'],
+                    path=[PathNode(name='data'), PathNode(name='repeat', is_repeat=True)],
                     items=[
                         ExportItem(
                             path=['data', 'repeat', 'q2'],
@@ -197,7 +215,7 @@ class TestExportInstance(SimpleTestCase):
                     path=MAIN_TABLE
                 ),
                 TableConfiguration(
-                    path=['data', 'repeat'],
+                    path=[PathNode(name='data', is_repeat=False), PathNode(name='repeat', is_repeat=True)],
                 )
             ]
         )
@@ -206,10 +224,17 @@ class TestExportInstance(SimpleTestCase):
         table = self.schema.get_table(MAIN_TABLE)
         self.assertEqual(table.path, MAIN_TABLE)
 
-        table = self.schema.get_table(['data', 'repeat'])
-        self.assertEqual(table.path, ['data', 'repeat'])
+        table = self.schema.get_table([
+            PathNode(name='data', is_repeat=False), PathNode(name='repeat', is_repeat=True)
+        ])
+        self.assertEqual(
+            table.path,
+            [PathNode(name='data', is_repeat=False), PathNode(name='repeat', is_repeat=True)]
+        )
 
-        table = self.schema.get_table(['data', 'DoesNotExist'])
+        table = self.schema.get_table([
+            PathNode(name='data', is_repeat=False), PathNode(name='DoesNotExist', is_repeat=False)
+        ])
         self.assertIsNone(table)
 
 
@@ -262,7 +287,7 @@ class TestExportInstanceFromSavedInstance(TestCase):
                     },
                 ),
                 ExportGroupSchema(
-                    path=['data', 'repeat'],
+                    path=[PathNode(name='data'), PathNode(name='repeat', is_repeat=True)],
                     items=[
                         ExportItem(
                             path=['data', 'repeat', 'q2'],

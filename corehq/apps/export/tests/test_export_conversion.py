@@ -12,7 +12,7 @@ from corehq.apps.export.models import (
     ExportItem,
 )
 from corehq.apps.export.utils import convert_saved_export_to_export_instance, _convert_index_to_path
-from corehq.apps.export.const import MAIN_TABLE
+from corehq.apps.export.models.new import MAIN_TABLE, PathNode
 
 
 class TestConvertSavedExportSchemaToFormExportInstance(TestCase, TestFileMixin):
@@ -36,7 +36,7 @@ class TestConvertSavedExportSchemaToFormExportInstance(TestCase, TestFileMixin):
                     last_occurrences={cls.app_id: 3},
                 ),
                 ExportGroupSchema(
-                    path=['data', 'repeat'],
+                    path=[PathNode(name='data'), PathNode(name='repeat', is_repeat=True)],
                     items=[
                         ExportItem(
                             path=['data', 'repeat', 'question2'],
@@ -79,7 +79,7 @@ class TestConvertSavedExportSchemaToFormExportInstance(TestCase, TestFileMixin):
             instance = convert_saved_export_to_export_instance(saved_export_schema)
 
         self.assertEqual(instance.name, 'Repeat Tester')
-        table = instance.get_table(['data', 'repeat'])
+        table = instance.get_table([PathNode(name='data'), PathNode(name='repeat', is_repeat=True)])
         self.assertEqual(table.display_name, 'Repeat: question1')
 
         column = table.get_column(['data', 'repeat', 'question2'], None)

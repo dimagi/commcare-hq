@@ -3,14 +3,15 @@ from mock import patch
 
 from django.test import SimpleTestCase, TestCase
 
-from corehq.apps.export.models.new import SystemExportItem
+from corehq.apps.export.models.new import SystemExportItem, MAIN_TABLE, \
+    PathNode, _question_path_to_path_nodes
 from dimagi.utils.couch.database import safe_delete
 from corehq.apps.app_manager.tests.util import TestXmlMixin
 from corehq.apps.app_manager.models import XForm, Application
 from corehq.apps.export.models import FormExportDataSchema, CaseExportDataSchema, ExportDataSchema, \
     MultipleChoiceItem
 from corehq.apps.export.const import CASE_HISTORY_PROPERTIES, PROPERTY_TAG_UPDATE, MAIN_FORM_TABLE_PROPERTIES, \
-    MAIN_TABLE, MAIN_CASE_TABLE_PROPERTIES
+    MAIN_CASE_TABLE_PROPERTIES
 
 
 class TestFormExportDataSchema(SimpleTestCase, TestXmlMixin):
@@ -58,9 +59,10 @@ class TestFormExportDataSchema(SimpleTestCase, TestXmlMixin):
         self.assertEqual(form_items[0].path, ['form', 'question1'])
 
         group_schema = schema.group_schemas[1]
-        self.assertEqual(len(group_schema.items), 1)
-        self.assertEqual(group_schema.path, ['form', 'question3'])
-        self.assertEqual(group_schema.items[0].path, ['form', 'question3', 'question4'])
+        self.assertEqual(len(group_schema.items), 2)  # one item is the row number system property
+        self.assertEqual(group_schema.path, [PathNode(name='form'), PathNode(name='question3', is_repeat=True)])
+        # items[0] is the row number system property
+        self.assertEqual(group_schema.items[1].path, ['form', 'question3', 'question4'])
 
     def test_xform_parsing_with_multiple_choice(self):
         form_xml = self.get_xml('multiple_choice_form')
@@ -81,6 +83,51 @@ class TestFormExportDataSchema(SimpleTestCase, TestXmlMixin):
         self.assertEqual(form_items[1].path, ['form', 'question2'])
         self.assertEqual(form_items[1].options[0].value, 'choice1')
         self.assertEqual(form_items[1].options[1].value, 'choice2')
+
+    def test_question_path_to_path_nodes(self):
+        """
+        Confirm that _question_path_to_path_nodes() works as expected
+        """
+        repeat_groups = [
+            "/data/repeat1",
+            "/data/group1/repeat2",
+            "/data/group1/repeat2/repeat3",
+        ]
+        self.assertEqual(
+            _question_path_to_path_nodes("/data/repeat1", repeat_groups),
+            [PathNode(name='form', is_repeat=False), PathNode(name='repeat1', is_repeat=True)]
+        )
+        self.assertEqual(
+            _question_path_to_path_nodes("/data/group1", repeat_groups),
+            [PathNode(name='form', is_repeat=False), PathNode(name='group1', is_repeat=False)]
+        )
+        self.assertEqual(
+            _question_path_to_path_nodes("/data/group1/repeat2", repeat_groups),
+            [
+                PathNode(name='form', is_repeat=False),
+                PathNode(name='group1', is_repeat=False),
+                PathNode(name='repeat2', is_repeat=True),
+            ]
+        )
+        self.assertEqual(
+            _question_path_to_path_nodes("/data/group1/repeat2/repeat3", repeat_groups),
+            [
+                PathNode(name='form', is_repeat=False),
+                PathNode(name='group1', is_repeat=False),
+                PathNode(name='repeat2', is_repeat=True),
+                PathNode(name='repeat3', is_repeat=True),
+            ]
+        )
+        self.assertEqual(
+            _question_path_to_path_nodes("/data/group1/repeat2/repeat3/group2", repeat_groups),
+            [
+                PathNode(name='form', is_repeat=False),
+                PathNode(name='group1', is_repeat=False),
+                PathNode(name='repeat2', is_repeat=True),
+                PathNode(name='repeat3', is_repeat=True),
+                PathNode(name='group2', is_repeat=False),
+            ]
+        )
 
 
 class TestCaseExportDataSchema(SimpleTestCase, TestXmlMixin):
@@ -241,7 +288,7 @@ class TestMergingFormExportDataSchema(SimpleTestCase, TestXmlMixin):
         self.assertEqual(len(group_schema1.items), 2 + len(MAIN_FORM_TABLE_PROPERTIES))
 
         self.assertEqual(group_schema2.last_occurrences[self.app_id], 1)
-        self.assertEqual(len(group_schema2.items), 1)
+        self.assertEqual(len(group_schema2.items), 2)  # One item is the row number system property
 
 
 class TestMergingCaseExportDataSchema(SimpleTestCase, TestXmlMixin):
