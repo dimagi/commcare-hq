@@ -1,4 +1,5 @@
 from casexml.apps.case.models import CommCareCase
+from corehq.apps.app_manager.suite_xml.sections.entries import EntriesHelper
 from dimagi.utils.decorators.memoized import memoized
 from touchforms.formplayer.api import post_data
 import json
@@ -51,8 +52,10 @@ class BaseSessionDataHelper(object):
 
 
 class CaseSessionDataHelper(BaseSessionDataHelper):
-    def __init__(self, domain, couch_user, case_id_or_case, delegation=False):
+    def __init__(self, domain, couch_user, case_id_or_case, app, form, delegation=False):
         super(CaseSessionDataHelper, self).__init__(domain, couch_user)
+        self.form = form
+        self.app = app
         if isinstance(case_id_or_case, basestring):
             self.case_id = case_id_or_case
             self._case = None
@@ -92,8 +95,17 @@ class CaseSessionDataHelper(BaseSessionDataHelper):
                 session_data["delegation_id"] = self.case_id
                 session_data["case_id"] = self._case_parent_id
             else:
-                session_data["case_id"] = self.case_id
+                session_data[self.case_session_variable_name] = self.case_id
         return session_data
+
+    @property
+    def case_session_variable_name(self):
+        session_var = 'case_id'
+        datums = EntriesHelper(self.app).get_datums_meta_for_form_generic(self.form)
+        datums = [datum for datum in datums if datum.case_type == self.case_type]
+        if len(datums) == 1:
+            session_var = datums[0].datum.id
+        return session_var
 
     def get_full_context(self, root_extras=None, session_extras=None):
         """
