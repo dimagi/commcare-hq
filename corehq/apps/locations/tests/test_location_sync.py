@@ -77,6 +77,7 @@ class TestLocationSync(TestCase):
     def test_save_couch_without_loc_type(self):
         with self.assertRaises(SQLLocation.location_type.RelatedObjectDoesNotExist):
             Location(site_code="no-type", name="no-type", domain=DOMAIN).save()
+        self.assertNumLocations(0)
 
     def test_sync_sql_to_couch(self):
         mass = sql_loc("Massachusetts", self.state)

@@ -258,6 +258,7 @@ class SQLLocation(SyncSQLToCouchMixin, MPTTModel):
         couch_obj._sql_location_type = self.location_type
         self._migration_sync_to_couch(couch_obj)
 
+    @transaction.atomic()
     def save(self, *args, **kwargs):
         from corehq.apps.commtrack.models import sync_supply_point
         self.supply_point_id = sync_supply_point(self)
@@ -532,12 +533,12 @@ class Location(SyncCouchToSQLMixin, CachedCouchDocumentMixin, Document):
                                    .get(location_id=self._id))
 
     @property
-    def location_type(self):
-        return self.location_type_object.name
-
-    @property
     def location_id(self):
         return self._id
+
+    @property
+    def location_type(self):
+        return self.location_type_object.name
 
     _sql_location_type = None
     @location_type.setter
@@ -649,7 +650,6 @@ class Location(SyncCouchToSQLMixin, CachedCouchDocumentMixin, Document):
     def _migration_do_sync(self):
         sql_location = self._migration_get_or_create_sql_object()
 
-        # One of these will fail if you try to save a location without a type
         location_type = self._sql_location_type or sql_location.location_type
         sql_location.location_type = location_type
         # sync parent connection
@@ -680,7 +680,11 @@ class Location(SyncCouchToSQLMixin, CachedCouchDocumentMixin, Document):
         kwargs['sync_to_sql'] = False  # only sync here
         super(Location, self).save(*args, **kwargs)
         if sync_to_sql:
-            self._migration_do_sync()
+            try:
+                self._migration_do_sync()
+            except Exception:
+                self.delete()  # roll back on failure to sync
+                raise
 
     @classmethod
     def filter_by_type(cls, domain, loc_type, root_loc=None):
