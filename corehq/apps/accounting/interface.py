@@ -521,10 +521,6 @@ class WireInvoiceInterface(InvoiceInterfaceBase):
             DataTablesColumn("Do Not Invoice"),
         )
 
-        if not self.is_rendered_as_email:
-            header.add_column(DataTablesColumn("View Invoice"))
-        return header
-
     @property
     def rows(self):
         from corehq.apps.accounting.views import (
@@ -572,10 +568,6 @@ class WireInvoiceInterface(InvoiceInterfaceBase):
                 "YES" if invoice.is_hidden else "no",
             ]
 
-            if not self.is_rendered_as_email:
-                columns.extend([
-                    mark_safe(make_anchor_tag(invoice_url, 'Go to Invoice'))
-                ])
             rows.append(columns)
         return rows
 
