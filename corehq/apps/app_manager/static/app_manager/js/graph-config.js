@@ -448,7 +448,7 @@ hqDefine('app_manager/js/graph-config.js', function () {
     Annotation.prototype.constructor = Annotation;
 
     // private
-    var GraphSeries = function (original, childCaseTypes, fixtures, lang, langs){// use moduleOptions instead?
+    var GraphSeries = function (original, childCaseTypes, fixtures, lang, langs){
         PairConfiguration.apply(this, [original]);
         var self = this;
         original = original || {};
