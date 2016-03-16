@@ -10,9 +10,15 @@ from django import http
 from django.conf import settings
 from django.core.exceptions import PermissionDenied
 from corehq.util import global_request
+from corehq.util.soft_assert import soft_assert
 
 JSON = 'application/json'
 logger = logging.getLogger('django.request')
+
+_soft_assert = soft_assert(
+    to='{}@{}'.format('npellegrino', 'dimagi.com'),
+    exponential_backoff=True,
+)
 
 
 def set_file_download(response, filename):
@@ -122,3 +128,11 @@ def reverse(viewname, params=None, absolute=False, **kwargs):
 
 def absolute_reverse(*args, **kwargs):
     return reverse(*args, absolute=True, **kwargs)
+
+
+def expect_GET(request):
+    if request.method == 'GET':
+        return request.GET
+    else:
+        _soft_assert(False, "received POST when expecting GET")
+        return request.POST
