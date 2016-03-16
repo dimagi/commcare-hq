@@ -493,7 +493,7 @@ hqDefine('app_manager/js/case-config-ui-2.js', function () {
                 }, self);
 
                 self.case_properties.push(property);
-                ga_track_event('Case Management', 'User Case Management', 'Save Properties')
+                ga_track_event('Case Management', 'User Case Management', 'Save Properties');
             };
 
             self.removeProperty = function (property) {
