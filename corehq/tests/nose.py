@@ -1,5 +1,8 @@
 """
-A nose plugin that splits testing into two stages:
+Utilities and plugins for running tests with nose
+
+Django-nose database context to run tests in two phases:
+
  - Stage 1 runs all test that don't require DB access (test that don't inherit
    from TransactionTestCase)
  - Stage 2 runs all DB tests (test that do inherit from TransactionTestCase)
@@ -12,6 +15,7 @@ import logging
 import os
 import sys
 import threading
+import types
 from fnmatch import fnmatch
 from unittest.case import TestCase
 
@@ -20,12 +24,17 @@ from couchdbkit import ResourceNotFound
 from couchdbkit.ext.django import loading
 from mock import patch, Mock
 from nose.plugins import Plugin
+from django.apps import AppConfig
+from django.conf import settings
 from django_nose.plugin import DatabaseContext
+
+from corehq.tests.optimizer import optimize_apps_for_test_labels
 
 log = logging.getLogger(__name__)
 
 
 class HqTestFinderPlugin(Plugin):
+    """Find tests in all modules within "tests" packages"""
 
     enabled = True
 
@@ -158,7 +167,6 @@ class ErrorOnDbAccessContext(object):
 
     def setup(self):
         """Disable database access"""
-        from django.conf import settings
         self.original_db_enabled = settings.DB_ENABLED
         settings.DB_ENABLED = False
 
@@ -187,13 +195,64 @@ class ErrorOnDbAccessContext(object):
 
     def teardown(self):
         """Enable database access"""
-        from django.conf import settings
         settings.DB_ENABLED = self.original_db_enabled
         for cls in self.db_classes:
             del cls._db
         couchlog.signals.got_request_exception.connect(
             couchlog.signals.log_request_exception)
         self.db_patch.stop()
+
+
+class AppLabelsPlugin(Plugin):
+    """A plugin that supplies a list of app labels for the db app optimizer
+    """
+    enabled = True
+    user_specified_test_names = []  # globally referenced singleton
+
+    def options(self, parser, env):
+        """Avoid adding a ``--with`` option for this plugin."""
+
+    def configure(self, options, conf):
+        """Do not call super (always enabled)"""
+
+    def loadTestsFromNames(self, names, module=None):
+        if names == ['.'] and os.getcwd() == settings.BASE_DIR:
+            # no user specified names
+            return
+        type(self).user_specified_test_names = names
+
+    @classmethod
+    def get_test_labels(cls, tests):
+        """Get a list of app labels and possibly tests for the db app optimizer
+
+        This should be called after `loadTestsFromNames` has been called.
+        """
+        test_apps = set(app for app in settings.INSTALLED_APPS
+                        if app not in settings.APPS_TO_EXCLUDE_FROM_TESTS
+                           and not app.startswith('django.'))
+        if not cls.user_specified_test_names:
+            return [AppConfig.create(app).label for app in test_apps]
+
+        def iter_names(test):
+            # a.b.c -> a.b.c, a.b, a
+            if isinstance(test.context, type):
+                name = test.context.__module__
+            elif isinstance(test.context, types.ModuleType):
+                name = test.context.__name__
+            else:
+                raise RuntimeError("unknown test type: {!r}".format(test))
+            parts = name.split(".")
+            num_parts = len(parts)
+            for i in range(num_parts):
+                yield ".".join(parts[:num_parts - i])
+
+        labels = set()
+        for test in tests:
+            for name in iter_names(test):
+                if name in test_apps:
+                    labels.add((AppConfig.create(name).label, test.context))
+                    break
+        return list(labels)
 
 
 class HqdbContext(DatabaseContext):
@@ -206,6 +265,10 @@ class HqdbContext(DatabaseContext):
     ``couchdbkit.ext.django.testrunner.CouchDbKitTestSuiteRunner``
     """
 
+    def __init__(self, tests, runner):
+        self.test_labels = AppLabelsPlugin.get_test_labels(tests)
+        super(HqdbContext, self).__init__(tests, runner)
+
     @classmethod
     def verify_test_db(cls, app, uri):
         if '/test_' not in uri:
@@ -217,9 +280,11 @@ class HqdbContext(DatabaseContext):
         return "--collect-only" in sys.argv
 
     def setup(self):
-        from django.conf import settings
         if self.should_skip_test_setup():
             return
+
+        self.optimizer = optimize_apps_for_test_labels(self.test_labels)
+        self.optimizer.__enter__()
 
         from corehq.blobs.tests.util import TemporaryFilesystemBlobDB
         self.blob_db = TemporaryFilesystemBlobDB()
@@ -239,6 +304,7 @@ class HqdbContext(DatabaseContext):
             return
 
         self.blob_db.close()
+        self.optimizer.__exit__(None, None, None)
 
         # delete couch databases
         deleted_databases = []
