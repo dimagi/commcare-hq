@@ -32,6 +32,28 @@ def restore(request, domain, app_id=None):
     return get_restore_response(domain, couch_user, app_id, **get_restore_params(request))
 
 
+@json_error
+@login_or_digest_or_basic_or_apikey()
+def search(request, domain):
+    """
+    Accepts search criteria as GET params, e.g. "https://www.commcarehq.org/a/domain/phone/search/?a=b&c=d"
+    Returns results as a fixture with the same structure as a casedb instance.
+    """
+    couch_user = CouchUser.from_django_user(request.user)
+    criteria = dict(request.GET)
+
+
+@json_error
+@login_or_digest_or_basic_or_apikey()
+def claim(request, domain):
+    couch_user = CouchUser.from_django_user(request.user)
+    # TODO: use request.session to ensure only one extension case if multiple claims for the same beneficiary
+    #       come from the same AWW.
+    if request.method == 'POST':
+        # Create delegate case
+        pass
+
+
 def get_restore_params(request):
     """
     Given a request, get the relevant restore parameters out with sensible defaults
