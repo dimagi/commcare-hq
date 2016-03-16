@@ -69,7 +69,6 @@ branches:
   - report-builder-text # Cal 3/1
   - sql-saved-exports-2 # Noah 3/9  includes ES reindex
   - certificate-validation # Cal 3/10
-  - multi-db-deploy  # SK 3/15
   - move-services-dir # Ben 3/15
 submodules:
   submodules/touchforms-src:
