@@ -1,69 +1,71 @@
-from urlparse import urlparse
-from datetime import datetime
-import logging
 import json
+import logging
 import os
 import re
 import sys
 import traceback
 import uuid
-from django.utils.decorators import method_decorator
-import httpagentparser
+from datetime import datetime
+from urlparse import urlparse
 
 from django.conf import settings
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
-from django.core import cache
-from django.core.cache import InvalidCacheBackendError
-from django.template.loader import render_to_string
-from django.views.decorators.http import require_POST
 from django.contrib.auth.forms import AdminPasswordChangeForm
 from django.contrib.auth.models import User
 from django.contrib.auth.views import login as django_login
 from django.contrib.auth.views import logout as django_logout
+from django.core import cache
+from django.core.cache import InvalidCacheBackendError
+from django.core.mail.message import EmailMessage
+from django.core.urlresolvers import reverse
 from django.http import HttpResponseRedirect, HttpResponse, Http404,\
     HttpResponseServerError, HttpResponseNotFound, HttpResponseBadRequest,\
     HttpResponseForbidden
 from django.shortcuts import redirect, render
-from django.views.generic import TemplateView
-from couchdbkit import ResourceNotFound
-from django.utils.translation import ugettext as _, ugettext_noop
-from django.core.urlresolvers import reverse
-from django.core.mail.message import EmailMessage
 from django.template import loader
 from django.template.context import RequestContext
+from django.template.loader import render_to_string
+from django.utils.decorators import method_decorator
+from django.utils.translation import ugettext as _, ugettext_noop
+from django.views.decorators.http import require_POST
+from django.views.generic import TemplateView
+
+import httpagentparser
+from couchdbkit import ResourceNotFound
 from restkit import Resource
+
+from dimagi.utils.couch.cache.cache_core import get_redis_default_cache
+from dimagi.utils.couch.database import get_db
+from dimagi.utils.decorators.memoized import memoized
+from dimagi.utils.logging import notify_exception
+from dimagi.utils.web import get_url_base, json_response, get_site_domain
+from soil import heartbeat, DownloadBase
+from soil import views as soil_views
 
 from corehq import toggles, feature_previews
 from corehq.apps.accounting.models import Subscription
 from corehq.apps.app_manager.models import Application
 from corehq.apps.domain.decorators import require_superuser, login_and_domain_required
+from corehq.apps.domain.models import Domain
 from corehq.apps.domain.utils import normalize_domain_name, get_domain_from_url
 from corehq.apps.dropbox.decorators import require_dropbox_session
+from corehq.apps.dropbox.exceptions import DropboxUploadAlreadyInProgress
 from corehq.apps.dropbox.models import DropboxUploadHelper
 from corehq.apps.dropbox.views import DROPBOX_ACCESS_TOKEN
-from corehq.apps.dropbox.exceptions import DropboxUploadAlreadyInProgress
+from corehq.apps.hqadmin.management.commands.deploy_in_progress import DEPLOY_IN_PROGRESS_FLAG
+from corehq.apps.hqwebapp.doc_info import get_doc_info
 from corehq.apps.hqwebapp.encoders import LazyEncoder
 from corehq.apps.hqwebapp.forms import EmailAuthenticationForm, CloudCareAuthenticationForm
 from corehq.apps.reports.util import is_mobile_worker_with_report_access
 from corehq.apps.style.decorators import use_bootstrap3
 from corehq.apps.users.models import CouchUser
 from corehq.apps.users.util import format_username
-from corehq.apps.hqwebapp.doc_info import get_doc_info
 from corehq.middleware import always_allow_browser_caching
-from corehq.util.datadog.utils import create_datadog_event, log_counter, sanitize_url
-from corehq.util.datadog.metrics import JSERROR_COUNT
 from corehq.util.datadog.const import DATADOG_UNKNOWN
+from corehq.util.datadog.metrics import JSERROR_COUNT
+from corehq.util.datadog.utils import create_datadog_event, log_counter, sanitize_url
 from corehq.util.view_utils import expect_GET
-from dimagi.utils.couch.database import get_db
-from dimagi.utils.decorators.memoized import memoized
-from dimagi.utils.logging import notify_exception
-from dimagi.utils.web import get_url_base, json_response, get_site_domain
-from dimagi.utils.couch.cache.cache_core import get_redis_default_cache
-from corehq.apps.hqadmin.management.commands.deploy_in_progress import DEPLOY_IN_PROGRESS_FLAG
-from corehq.apps.domain.models import Domain
-from soil import heartbeat, DownloadBase
-from soil import views as soil_views
 
 
 def pg_check():
