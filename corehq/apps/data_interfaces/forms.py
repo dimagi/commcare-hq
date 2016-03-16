@@ -249,7 +249,6 @@ class AddAutomaticCaseUpdateRuleForm(forms.Form):
                     _("Save"),
                     type='submit',
                     css_class='btn btn-primary col-sm-offset-1',
-                    ng_click='trackSaveRule();'
                 ),
             ),
         )

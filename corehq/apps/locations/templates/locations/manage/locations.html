@@ -238,7 +238,7 @@ $('#edit-loc-fields').click(function () {
                 <div style="float:right;" data-bind="if: can_edit()">
                     {% if not show_inactive %}
                         <a class="btn btn-primary"
-                           data-bind="attr: { href: loc_edit_url(uuid()) }, click: track_loc_edit">
+                           data-bind="attr: { href: loc_edit_url(uuid()) }">
                             {% trans "Edit" %}
                         </a>
                     {% endif %}

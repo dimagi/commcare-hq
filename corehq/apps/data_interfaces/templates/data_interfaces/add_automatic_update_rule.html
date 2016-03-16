@@ -80,10 +80,6 @@
         $scope.showUpdateProperty = function() {
             return $scope.action == 'UPDATE_AND_CLOSE';
         };
-        $scope.trackSaveRule = function() {
-            analytics.workflow('User clicks "Save" adding automatic case close rule');
-            ga_track_event('Automatic Case Closure', 'Rules', 'Save');
-        };
 
         angular.element(document).ready(function() {
             djangoRMI.get_case_property_map().success(function(response) {

@@ -31,7 +31,7 @@ function LocationSettingsViewModel(loc_types, commtrack_enabled) {
         };
         settings.loc_types.push(new_loctype);
         analytics.workflow('User clicks "New Organization Level"');
-        ga_track_event('Organizations', 'User clicks "New Organization Level"');
+        ga_track_event('Organization Levels', 'New Organization Level');
     };
 
     this.validate = function() {

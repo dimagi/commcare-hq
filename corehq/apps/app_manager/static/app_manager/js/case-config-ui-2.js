@@ -492,6 +492,7 @@ var CaseConfig = (function () {
                 }, self);
 
                 self.case_properties.push(property);
+                ga_track_event('Case Management', 'User Case Management', 'Save Properties')
             };
 
             self.removeProperty = function (property) {
@@ -520,6 +521,7 @@ var CaseConfig = (function () {
                     }, self);
 
                     self.case_preload.push(property);
+                    ga_track_event('Case Management', 'User Case Management', 'Load Properties');
                 };
 
                 self.removePreload = function (property) {
