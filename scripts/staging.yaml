@@ -93,3 +93,6 @@ submodules:
     branches: []
   corehq/apps/prelogin:
     branches: []
+  corehq/apps/hqmedia/static/hqmedia/MediaUploader:
+    branches:
+      - orangejenny-patch-1 # 3/16
