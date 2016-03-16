@@ -429,3 +429,6 @@ corehq.apps.users:
   - django_prbac
   - tastypie
   - touchforms.formplayer
+corehq.blobs:
+  - corehq.couchapps
+  - couchexport
