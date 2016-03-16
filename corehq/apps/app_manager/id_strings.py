@@ -116,7 +116,7 @@ def graph_configuration(module, detail_type, column, key):
     )
 
 
-@pattern('m%d.%s.%s_%s_%s.graph.key.%s')
+@pattern('m%d.%s.%s_%s_%s.graph.series_%d.key.%s')
 def graph_series_configuration(module, detail_type, column, series_index, key):
     field = column.field.replace('#', '')
     return u"m{module.id}.{detail_type}.{d.model}_{field}_{d_id}.graph.series_{series_index}.key.{key}".format(
