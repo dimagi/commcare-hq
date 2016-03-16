@@ -86,7 +86,7 @@ class CouchPaginator(object):
         From a datatables generated ajax request, return the appropriate
         httpresponse containing the appropriate objects objects.
 
-        Extras allows you to override any individual paramater that gets
+        Extras allows you to override any individual parameter that gets
         returned
         """
         extras = extras or {}
