@@ -28,9 +28,9 @@ def bulk_upload_cases_to_group(download_id, domain, case_group_id, cases):
 
 
 @task(ignore_result=True)
-def bulk_archive_forms(domain, user, uploaded_data):
+def bulk_archive_forms(domain, couch_user, uploaded_data):
     # archive using Excel-data
-    response = archive_forms_old(domain, user.user_id, user.username, uploaded_data)
+    response = archive_forms_old(domain, couch_user.user_id, couch_user.username, uploaded_data)
 
     for msg in response['success']:
         logger.info("[Data interfaces] %s", msg)
@@ -38,7 +38,7 @@ def bulk_archive_forms(domain, user, uploaded_data):
         logger.info("[Data interfaces] %s", msg)
 
     html_content = render_to_string('data_interfaces/archive_email.html', response)
-    send_HTML_email(_('Your archived forms'), user.email, html_content)
+    send_HTML_email(_('Your archived forms'), couch_user.email, html_content)
 
 
 @task
