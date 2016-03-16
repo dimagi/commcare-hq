@@ -109,6 +109,7 @@ corehq.apps.app_manager:
   - corehq.apps.builds
   - corehq.apps.custom_data_fields
   - corehq.apps.domain
+  - corehq.apps.groups
   - corehq.apps.hqmedia
   - corehq.apps.hqwebapp
   - corehq.apps.locations
@@ -119,6 +120,7 @@ corehq.apps.app_manager:
   - corehq.apps.style
   - corehq.apps.tzmigration
   - corehq.apps.users
+  - statici18n
   - tastypie
   # user.delete() needs these ones
   - corehq.apps.dropbox
