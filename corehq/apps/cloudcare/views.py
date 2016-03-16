@@ -53,7 +53,7 @@ from corehq.apps.cloudcare.dbaccessors import get_cloudcare_apps
 from corehq.apps.cloudcare.decorators import require_cloudcare_access
 from corehq.apps.cloudcare.exceptions import RemoteAppError
 from corehq.apps.cloudcare.models import ApplicationAccess
-from corehq.apps.cloudcare.touchforms_api import SessionDataHelper
+from corehq.apps.cloudcare.touchforms_api import BaseSessionDataHelper, CaseSessionDataHelper
 from corehq.apps.domain.decorators import login_and_domain_required, login_or_digest_ex, domain_admin_required
 from corehq.apps.groups.models import Group
 from corehq.apps.reports.formdetails import readable
@@ -225,8 +225,10 @@ def form_context(request, domain, app_id, module_id, form_id):
         app=app.name,
         form=form_name,
     )
+    case = None
     if case_id:
-        session_name = u'{0} - {1}'.format(session_name, CommCareCase.get(case_id).name)
+        case = CommCareCase.get(case_id)
+        session_name = u'{0} - {1}'.format(session_name, case.name)
 
     root_context = {
         'form_url': form_url,
@@ -239,13 +241,11 @@ def form_context(request, domain, app_id, module_id, form_id):
         except ResourceNotFound:
             raise Http404()
 
-
     session_extras = {'session_name': session_name, 'app_id': app._id}
     session_extras.update(get_cloudcare_session_data(domain, form, request.couch_user))
 
     delegation = request.GET.get('task-list') == 'true'
-    offline = request.GET.get('offline') == 'true'
-    session_helper = SessionDataHelper(domain, request.couch_user, case_id, delegation=delegation, offline=offline)
+    session_helper = CaseSessionDataHelper(domain, request.couch_user, case_id, app, form, delegation=delegation)
     return json_response(session_helper.get_full_context(
         root_context,
         session_extras
@@ -357,7 +357,7 @@ def filter_cases(request, domain, app_id, module_id, parent_id=None):
             "footprint": True
         }
 
-        helper = SessionDataHelper(domain, request.couch_user)
+        helper = BaseSessionDataHelper(domain, request.couch_user)
         result = helper.filter_cases(xpath, additional_filters, DjangoAuth(auth_cookie),
                                      extra_instances=extra_instances, use_formplayer=use_formplayer)
         if result.get('status', None) == 'error':
@@ -449,24 +449,6 @@ def get_sessions(request, domain):
     skip = request.GET.get('skip') or 0
     limit = request.GET.get('limit') or 10
     return json_response(get_open_form_sessions(request.user, skip=skip, limit=limit))
-
-
-@cloudcare_api
-def get_session_context(request, domain, session_id):
-    try:
-        session = EntrySession.objects.get(session_id=session_id)
-    except EntrySession.DoesNotExist:
-        session = None
-    if request.method == 'DELETE':
-        if session:
-            session.delete()
-        return json_response({'status': 'success'})
-    else:
-        helper = SessionDataHelper(domain, request.couch_user)
-        return json_response(helper.get_full_context({
-            'session_id': session_id,
-            'app_id': session.app_id if session else None
-        }))
 
 
 @cloudcare_api
