@@ -408,6 +408,48 @@ class Entry(OrderedXmlObject, XmlObject):
             self.instances = sorted_instances
 
 
+class SyncRequestSession(OrderedXmlObject, XmlObject):
+    ROOT_NAME = 'session'
+    ORDER = ('query', 'datum')
+
+    queries = NodeListField('query', None)  # TODO: Not None
+    datums = NodeListField('datum', SessionDatum)
+
+
+class SyncRequest(OrderedXmlObject, XmlObject):
+    """
+    Used for determining search request details
+
+    <sync-request>
+        <post url="">
+            <data key="" ref="some session based xpath expr">
+        </post>
+        <instance/>
+        <command id="...">
+            <display/>
+        </command>
+        <session>
+            <query url="some url" storage-instance="some_easy_to_reference_id">
+                <data key="some_key" ref="session-based xpath ref">
+                <prompt key="some_key">
+                    <display/>
+                </prompt>
+            </query/>
+            <datum/>
+        </session>
+        <stack/>
+    </sync-request>
+    """
+    ROOT_NAME = 'sync-request'
+    ORDER = ('post', 'instance', 'command', 'session', 'stack')
+
+    post = NodeField('post', None)  # TODO: Not None
+    instances = NodeListField('instance', Instance)
+    command = NodeField('command', Command)
+    session = NodeField('session', SyncRequestSession)
+    stacks = NodeListField('stack', Stack)  # Sticking to spec despite the fact that we never have more than one
+
+
 class MenuMixin(XmlObject):
     ROOT_NAME = 'menu'
 
