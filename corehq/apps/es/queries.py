@@ -13,6 +13,14 @@ are available, and put 'em here if you end up using any of 'em.
 import re
 
 
+def BOOL(query):
+    return {"bool": query}
+
+
+def MUST(query):
+    return {"must": query}
+
+
 def match_all():
     """No-op query used because a default must be specified"""
     return {"match_all": {}}
@@ -46,5 +54,33 @@ def search_string_query(search_string, default_fields=None):
             "query": query_string,
             "default_operator": "AND",
             "fields": default_fields if is_simple else None
+        }
+    }
+
+
+def nested(path, query, *args, **kwargs):
+    """
+    Creates a nested query for use with nested documents
+
+    Keyword arguments such as score_mode and others can be added.
+    """
+    nested = {
+        "path": path,
+        "query": query
+    }
+    nested.update(kwargs)
+    return {
+        "nested": nested
+    }
+
+
+def filtered(query, filter_):
+    """
+    Filtered query for performing both filtering and querying at once
+    """
+    return {
+        "filtered": {
+            "query": query,
+            "filter": filter_,
         }
     }
