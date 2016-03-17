@@ -19,6 +19,7 @@ from corehq.apps.cloudcare.api import (
     get_filters_from_request_params,
 )
 from corehq.apps.users.models import Permissions
+from corehq.util.view_utils import expect_GET
 
 
 class CommCareCaseResource(CouchResourceMixin, HqBaseResource, DomainSpecificResourceMixin):
@@ -49,7 +50,7 @@ class CommCareCaseResource(CouchResourceMixin, HqBaseResource, DomainSpecificRes
 
     def obj_get_list(self, bundle, domain, **kwargs):
         user_id = bundle.request.GET.get('user_id')
-        request_params = bundle.request.GET if bundle.request.method == 'GET' else bundle.request.POST
+        request_params = expect_GET(bundle.request)
         status = api_closed_to_status(request_params.get('closed', 'false'))
         filters = get_filters_from_request_params(request_params, limit_top_level=self.fields)
         case_type = filters.get('properties/case_type', None)
