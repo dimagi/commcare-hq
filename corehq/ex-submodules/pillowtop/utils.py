@@ -59,7 +59,11 @@ class PillowConfig(namedtuple('PillowConfig', ['section', 'name', 'class_name', 
         return _import_class_or_function(self.class_name)
 
     def get_instance(self):
-        return get_pillow_instance(self.instance_generator)
+        if self.instance_generator:
+            instance_generator_fn = _import_class_or_function(self.instance_generator)
+            return instance_generator_fn(self.name)
+        else:
+            return get_pillow_instance(self.class_name)
 
 
 def get_pillow_config_from_setting(section, pillow_config_string_or_dict):
@@ -77,7 +81,7 @@ def get_pillow_config_from_setting(section, pillow_config_string_or_dict):
             section,
             pillow_config_string_or_dict.get('name', class_name),
             class_name,
-            pillow_config_string_or_dict.get('instance', class_name),
+            pillow_config_string_or_dict.get('instance', None),
         )
 
 
