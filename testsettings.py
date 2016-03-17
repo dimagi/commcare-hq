@@ -31,11 +31,6 @@ for key, value in {
 
     'NOSE_IGNORE_FILES': '^localsettings',
 
-    'NOSE_EXCLUDE_TESTS': ';'.join([
-        # FIXME failing, excluded for now because they were not run by django test runner
-        'corehq.apps.ota.tests.digest_restore.DigestOtaRestoreTest',
-    ]),
-
     'NOSE_EXCLUDE_DIRS': ';'.join([
         'scripts',
 
