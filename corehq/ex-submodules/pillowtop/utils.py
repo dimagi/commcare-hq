@@ -15,11 +15,11 @@ from pillowtop.exceptions import PillowNotFoundError
 
 
 def get_pillow_instance(full_class_str):
-    pillow_class = get_pillow_class(full_class_str)
+    pillow_class = _get_pillow_class(full_class_str)
     return pillow_class()
 
 
-def get_pillow_class(full_class_str):
+def _get_pillow_class(full_class_str):
     mod_path, pillow_class_name = full_class_str.rsplit('.', 1)
     try:
         mod = importlib.import_module(mod_path)
@@ -56,7 +56,7 @@ class PillowConfig(namedtuple('PillowConfig', ['section', 'name', 'class_name', 
     Helper object for getting pillow classes/instances from settings
     """
     def get_class(self):
-        return get_pillow_class(self.class_name)
+        return _get_pillow_class(self.class_name)
 
     def get_instance(self):
         return get_pillow_instance(self.instance_generator)
