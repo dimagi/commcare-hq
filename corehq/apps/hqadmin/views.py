@@ -736,7 +736,6 @@ def branches_on_staging(request, template='hqadmin/branches_on_staging.html'):
 
 def _get_branches_merged_into_autostaging():
     import sh
-    from collections import namedtuple
     git = sh.git.bake(_tty_out=False)
     # %p %s is parent hashes + subject of commit message, which will look like:
     # <merge base> <merge head> Merge <stuff> into autostaging
