@@ -1,6 +1,5 @@
 import datetime
 import os
-import sys
 from collections import defaultdict
 from functools import wraps
 from unittest.case import TestCase
@@ -16,7 +15,6 @@ from django.apps import AppConfig
 from django.conf import settings
 from django.test import TransactionTestCase
 from django.utils import unittest
-from nose.plugins import Plugin
 from mock import patch, Mock
 from corehq.tests.optimizer import OptimizedTestRunnerMixin
 

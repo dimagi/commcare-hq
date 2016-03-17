@@ -12,7 +12,6 @@ Usage:
     # sort each output file
     # diff tests-django.txt tests-nose.txt
 """
-import os
 from nose.case import FunctionTestCase
 from nose.plugins import Plugin
 

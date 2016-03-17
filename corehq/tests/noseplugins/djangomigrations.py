@@ -2,7 +2,6 @@
 
 Use --no-migrations to disable django database migrations.
 """
-import os
 from nose.plugins import Plugin
 
 
@@ -36,4 +35,3 @@ class DisableMigrations(object):
 
     def __getitem__(self, item):
         return "notmigrations"
-

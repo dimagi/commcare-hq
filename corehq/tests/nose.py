@@ -229,7 +229,7 @@ class AppLabelsPlugin(Plugin):
         """
         test_apps = set(app for app in settings.INSTALLED_APPS
                         if app not in settings.APPS_TO_EXCLUDE_FROM_TESTS
-                           and not app.startswith('django.'))
+                        and not app.startswith('django.'))
         if not cls.user_specified_test_names:
             return [AppConfig.create(app).label for app in test_apps]
 
