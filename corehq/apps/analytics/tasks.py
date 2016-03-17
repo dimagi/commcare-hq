@@ -38,28 +38,19 @@ HUBSPOT_NEW_USER_INVITE_FORM = "3e275361-72be-4e1d-9c68-893c259ed8ff"
 HUBSPOT_EXISTING_USER_INVITE_FORM = "7533717e-3095-4072-85ff-96b139bcb147"
 HUBSPOT_COOKIE = 'hubspotutk'
 
-ANALYTICS_RETRIES = 3
-ANALYTICS_SLEEP = 5
 
-
-def _persistent_analytics_post(func, retries=ANALYTICS_RETRIES, sleep=ANALYTICS_SLEEP):
-    '''
-    this function can block for up to 15 seconds. please only call it from a async task so as not to block
-    page loads for that long.
-    '''
-    for i in range(retries):
-        try:
-            return func()
-        except requests.exceptions.HTTPError as e:
-            # if its a bad request, raise the exception because it is our fault
-            res = e.response
-            status_code = res.status_code if isinstance(res, requests.models.Response) else res.status
-            if status_code == 400:
-                raise
-            if i < retries - 1:
-                time.sleep(sleep)
-            else:
-                raise
+@task(bind=True, queue='background_queue', acks_late=True, ignore_result=True, default_retry_delay=10)
+def _persistent_analytics_post(self, func):
+    try:
+        return func()
+    except requests.exceptions.HTTPError as e:
+        # if its a bad request, raise the exception because it is our fault
+        res = e.response
+        status_code = res.status_code if isinstance(res, requests.models.Response) else res.status
+        if status_code == 400:
+            raise
+        else:
+            self.retry(exc=e)
 
 
 def _raise_for_urllib3_response(response):
@@ -135,7 +126,7 @@ def _hubspot_post(url, data):
             )
             _log_response('HS', data, response)
             response.raise_for_status()
-        _persistent_analytics_post(_post_func)
+        _persistent_analytics_post.delay(_post_func)
 
 
 
@@ -153,7 +144,7 @@ def _get_user_hubspot_id(webuser):
                 return None
             req.raise_for_status()
             return req.json().get("vid", None)
-        return _persistent_analytics_post(_post_func)
+        return _persistent_analytics_post.delay(_post_func)
     return None
 
 
@@ -192,7 +183,7 @@ def _send_form_to_hubspot(form_id, webuser, cookies, meta):
             )
             _log_response('HS', data, response)
             response.raise_for_status()
-        _persistent_analytics_post(_post_func)
+        _persistent_analytics_post.delay(_post_func)
 
 
 @task(queue='background_queue', acks_late=True, ignore_result=True)
@@ -297,7 +288,7 @@ def _track_workflow_task(email, event, properties=None, timestamp=0):
             _log_response("KM", {'email': email, 'event': event, 'properties': properties, 'timestamp': timestamp}, res)
             # TODO: Consider adding some better error handling for bad/failed requests.
             _raise_for_urllib3_response(res)
-        _persistent_analytics_post(_post_func)
+        _persistent_analytics_post.delay(_post_func)
 
 
 @task(queue='background_queue', ignore_result=True)
@@ -317,7 +308,7 @@ def identify(email, properties):
             _log_response("KM", {'email': email, 'properties': properties}, res)
             # TODO: Consider adding some better error handling for bad/failed requests.
             _raise_for_urllib3_response(res)
-        _persistent_analytics_post(_post_func)
+        _persistent_analytics_post.delay(_post_func)
 
 
 @periodic_task(run_every=crontab(minute="0", hour="0"), queue='background_queue')
