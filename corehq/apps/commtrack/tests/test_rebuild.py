@@ -42,12 +42,14 @@ class RebuildStockStateTest(TestCase):
             product_id=self.product.get_id
         )
 
-    def _get_stats(self):
+    def _assert_stats(self, epxected_tx_count, expected_stock_state_balance, expected_tx_balance):
         stock_state = StockState.objects.get(**self._stock_state_key)
         latest_txn = StockTransaction.latest(**self._stock_state_key)
         all_txns = StockTransaction.get_ordered_transactions_for_stock(
             **self._stock_state_key)
-        return stock_state, latest_txn, all_txns
+        self.assertEqual(epxected_tx_count, all_txns.count())
+        self.assertEqual(expected_stock_state_balance, stock_state.stock_on_hand)
+        self.assertEqual(expected_tx_balance, latest_txn.stock_on_hand)
 
     def _submit_ledgers(self, ledger_blocks):
         return submit_case_blocks(
@@ -55,21 +57,14 @@ class RebuildStockStateTest(TestCase):
 
     def test_simple(self):
         self._submit_ledgers(LEDGER_BLOCKS_SIMPLE)
-        stock_state, latest_txn, all_txns = self._get_stats()
-        self.assertEqual(stock_state.stock_on_hand, 100)
-        self.assertEqual(latest_txn.stock_on_hand, 100)
-        self.assertEqual(all_txns.count(), 2)
+        self._assert_stats(2, 100, 100)
 
         rebuild_stock_state(**self._stock_state_key)
 
-        stock_state, latest_txn, all_txns = self._get_stats()
-        self.assertEqual(stock_state.stock_on_hand, 200)
-        self.assertEqual(latest_txn.stock_on_hand, 200)
-        self.assertEqual(all_txns.count(), 2)
+        self._assert_stats(2, 200, 200)
 
     def test_inferred(self):
         self._submit_ledgers(LEDGER_BLOCKS_INFERRED)
-        stock_state, latest_txn, all_txns = self._get_stats()
         # this is weird behavior:
         # it just doesn't process the second one
         # even though knowing yesterday's certainly changes the meaning
@@ -79,17 +74,11 @@ class RebuildStockStateTest(TestCase):
         # (they appear out of order in the form XML) and hence saved out of order.
         # When the older transaction is saved it will only look back in time
         # to create inferred transactions and not ahead.
-        self.assertEqual(stock_state.stock_on_hand, 50)
-        self.assertEqual(latest_txn.stock_on_hand, 50)
-        self.assertEqual(all_txns.count(), 2)
+        self._assert_stats(2, 50, 50)
 
         rebuild_stock_state(**self._stock_state_key)
 
-        stock_state, latest_txn, all_txns = self._get_stats()
-
-        self.assertEqual(stock_state.stock_on_hand, 150)
-        self.assertEqual(latest_txn.stock_on_hand, 150)
-        self.assertEqual(all_txns.count(), 2)
+        self._assert_stats(2, 150, 150)
 
     def test_case_actions(self):
         """
@@ -109,10 +98,8 @@ class RebuildStockStateTest(TestCase):
             case_blocks=get_single_balance_block(quantity=initial_quantity, **self._stock_state_key),
             domain=self.domain,
         )
-        stock_state, latest_txn, all_txns = self._get_stats()
-        self.assertEqual(stock_state.stock_on_hand, initial_quantity)
-        self.assertEqual(latest_txn.stock_on_hand, initial_quantity)
-        self.assertEqual(all_txns.count(), 1)
+        self._assert_stats(1, initial_quantity, initial_quantity)
+
         case = CommCareCase.get(id=self.case.case_id)
         self.assertEqual(1, len(case.actions))
         self.assertEqual([form_id], case.xform_ids)
@@ -126,8 +113,5 @@ class RebuildStockStateTest(TestCase):
         )
         case = CommCareCase.get(id=self.case.case_id)
         self.assertEqual(1, len(case.actions))
-        stock_state, latest_txn, all_txns = self._get_stats()
-        self.assertEqual(stock_state.stock_on_hand, edit_quantity)
-        self.assertEqual(latest_txn.stock_on_hand, edit_quantity)
-        self.assertEqual(all_txns.count(), 1)
+        self._assert_stats(1, edit_quantity, edit_quantity)
         self.assertEqual([form_id], case.xform_ids)
