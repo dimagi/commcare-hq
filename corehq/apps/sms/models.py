@@ -956,6 +956,45 @@ class PhoneBlacklist(models.Model):
         return False
 
 
+class PhoneNumber(SyncSQLToCouchMixin, models.Model)
+    couch_id = models.CharField(max_length=126, db_index=True, null=True)
+    domain = models.CharField(max_length=126, db_index=True, null=True)
+    owner_doc_type = models.CharField(max_length=126, null=True)
+    owner_id = models.CharField(max_length=126, db_index=True, null=True)
+    phone_number = models.CharField(max_length=126, db_index=True, null=True)
+
+    # Points to the name of a SQLMobileBackend (can be domain-level
+    # or system-level) which represents the backend that will be used
+    # when sending SMS to this number. Can be None to use domain/system
+    # defaults.
+    backend_id = models.CharField(max_length=126, null=True)
+
+    # Points to the name of a SQLMobileBackend (can be domain-level
+    # or system-level) which represents the backend that will be used
+    # when making calls to this number. Can be None to use domain/system
+    # defaults.
+    ivr_backend_id = models.CharField(max_length=126, null=True)
+    verified = models.NullBooleanField(default=False)
+    contact_last_modified = models.DateTimeField(null=True)
+
+    @classmethod
+    def _migration_get_fields(cls):
+        return [
+            'domain',
+            'owner_doc_type',
+            'owner_id',
+            'phone_number',
+            'backend_id',
+            'ivr_backend_id',
+            'verified',
+            'contact_last_modified'
+        ]
+
+    @classmethod
+    def _migration_get_couch_model_class(cls):
+        return VerifiedNumber
+
+
 class MessagingStatusMixin(object):
 
     def refresh(self):
