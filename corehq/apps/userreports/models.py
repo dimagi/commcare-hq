@@ -288,9 +288,10 @@ class DataSourceConfiguration(UnicodeMixIn, CachedCouchDocumentMixin, Document):
         return _id_is_static(self._id)
 
     def deactivate(self):
-        self.is_deactivated = True
-        self.save()
-        IndicatorSqlAdapter(self).drop_table()
+        if not self.is_static:
+            self.is_deactivated = True
+            self.save()
+            IndicatorSqlAdapter(self).drop_table()
 
 
 class ReportMeta(DocumentSchema):

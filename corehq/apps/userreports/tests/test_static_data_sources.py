@@ -24,6 +24,12 @@ class TestStaticDataSource(SimpleTestCase, TestFileMixin):
             for config in all:
                 self.assertEqual('all_candidates', config.table_id)
 
+    def test_deactivate_noop(self):
+        with override_settings(STATIC_DATA_SOURCES=[self.get_path('sample_static_data_source', 'json')]):
+            example = list(StaticDataSourceConfiguration.all())[0]
+            # since this is a SimpleTest, this should fail if the call actually hits the DB
+            example.deactivate()
+
     def test_production_config(self):
         for data_source in StaticDataSourceConfiguration.all():
             data_source.validate()
