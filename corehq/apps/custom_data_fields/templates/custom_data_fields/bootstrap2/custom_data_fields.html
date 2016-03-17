@@ -10,12 +10,8 @@
     <script type="text/javascript" src="{% static 'style/ko/knockout_bindings.ko.js' %}"></script>
     <script type="text/javascript" src="{% static 'custom_data_fields/js/custom_data_fields.js' %}"></script>
     <script>
-        $('#Location-add-choice').click(function() {
-            ga_track_event('Organization Structure', 'Edit Location Fields', 'Add Choice');
-        });
-        $('#Location-add-field').click(function() {
-            ga_track_event('Organization Structure', 'Edit Location Fields', 'Add Field');
-        });
+        gaTrackLink($('#Location-add-choice'), 'Organization Structure', 'Edit Location Fields', 'Add Choice');
+        gaTrackLink($('#Location-add-field'), 'Organization Structure', 'Edit Location Fields', 'Add Field');
     </script>
 {% endblock %}
 

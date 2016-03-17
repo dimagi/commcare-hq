@@ -5,12 +5,8 @@
     <script src="{% new_static 'commtrack/ko/location_bulk_upload_file.js' %}"></script>
     <script type="text/javascript">
         $(function() {
-            $('#download_link').click(function() {
-                ga_track_event('Organization Structure', 'Bulk Import', 'Download');
-            });
-            $("button[type='submit']").click(function() {
-                ga_track_event('Organization Structure', 'Bulk Import', 'Upload');
-            })
+            gaTrackLink($('#download_link'), 'Organization Structure', 'Bulk Import', 'Download');
+            gaTrackLink($("button[type='submit']"), 'Organization Structure', 'Bulk Import', 'Upload');
         });
     </script>
 {% endblock %}

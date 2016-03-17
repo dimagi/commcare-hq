@@ -150,13 +150,9 @@
         model.load(locs, selected_loc);
     });
 
-    $('#edit-org-levels').click(function () {
-        ga_track_event('Organization Structure', 'Edit Organization Levels');
-    });
+    gaTrackLink($('#edit-org-levels'), 'Organization Structure', 'Edit Organization Levels');
 
-    $('#edit-loc-fields').click(function () {
-        ga_track_event('Organization Structure', 'Edit Location Fields');
-    });
+    gaTrackLink($('#edit-loc-fields'), 'Organization Structure', 'Edit Location Fields');
 </script>
 {% endblock %}
 
