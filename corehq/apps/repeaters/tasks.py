@@ -49,7 +49,7 @@ def check_repeaters():
         # Short circuit task creation if we already know the URL is failing
         result = simple_post_cache_value(record.url)
         if result:
-            record.update_failure(result)
+            record.update_failure(unicode(result))
             record.save()
             continue
 
