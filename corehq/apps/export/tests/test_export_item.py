@@ -24,6 +24,22 @@ class TestExportItemGeneration(SimpleTestCase):
         self.assertEqual(column.label, 'Question One')
         self.assertEqual(column.selected, True)
 
+    def test_create_default_from_system_export_item(self):
+        column = ExportColumn.create_default_from_export_item(
+            MAIN_TABLE,
+            SystemExportItem(
+                path=['form', 'meta', 'userID'],
+                label='userID',
+                is_advanced=True,
+                last_occurrences={self.app_id: 3},
+            ),
+            {self.app_id: 3}
+        )
+
+        self.assertEqual(column.is_advanced, True)
+        self.assertEqual(column.label, 'userID')
+        self.assertEqual(column.selected, False)
+
     def test_create_default_from_export_item_deleted(self):
         column = ExportColumn.create_default_from_export_item(MAIN_TABLE, self.item, {self.app_id: 4})
 
