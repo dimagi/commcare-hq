@@ -48,7 +48,10 @@ def _build_indicators(indicator_config_id, relevant_ids):
             # save is a noop if the filter doesn't match
             adapter.save(doc)
             last_id = doc.get('_id')
-            redis_client.lrem(redis_key, 1, last_id)
+            try:
+                redis_client.lrem(redis_key, 1, last_id)
+            except:
+                redis_client.srem(redis_key, last_id)
         except Exception as e:
             logging.exception('problem saving document {} to table. {}'.format(doc['_id'], e))
 
