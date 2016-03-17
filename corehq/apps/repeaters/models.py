@@ -69,7 +69,7 @@ def simple_post_with_cached_timeout(data, url, expiry=60 * 60, force_send=False,
         raise RequestConnectionError(e.message)
 
     if not 200 <= resp.status_code < 300:
-        message = 'HTTP response not a 200 or 300'
+        message = u'{}: {}'.format(resp.status_code, resp.reason)
         cache.set(key, message, expiry)
         raise RequestConnectionError(message)
     return resp
