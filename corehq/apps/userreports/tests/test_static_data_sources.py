@@ -1,8 +1,9 @@
 import os
+import uuid
 from django.test import SimpleTestCase
 from django.test.utils import override_settings
 from corehq.util.test_utils import TestFileMixin
-from corehq.apps.userreports.models import StaticDataSourceConfiguration
+from corehq.apps.userreports.models import StaticDataSourceConfiguration, DataSourceConfiguration
 
 
 class TestStaticDataSource(SimpleTestCase, TestFileMixin):
@@ -23,6 +24,15 @@ class TestStaticDataSource(SimpleTestCase, TestFileMixin):
             self.assertEqual('dimagi', dimagi.domain)
             for config in all:
                 self.assertEqual('all_candidates', config.table_id)
+
+    def test_is_static_positive(self):
+        with override_settings(STATIC_DATA_SOURCES=[self.get_path('sample_static_data_source', 'json')]):
+            example = list(StaticDataSourceConfiguration.all())[0]
+            self.assertTrue(example.is_static)
+
+    def test_is_static_negative(self):
+        self.assertFalse(DataSourceConfiguration().is_static)
+        self.assertFalse(DataSourceConfiguration(_id=uuid.uuid4().hex).is_static)
 
     def test_deactivate_noop(self):
         with override_settings(STATIC_DATA_SOURCES=[self.get_path('sample_static_data_source', 'json')]):
