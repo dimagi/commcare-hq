@@ -1,61 +1,73 @@
-from couchdbkit import ResourceConflict, ResourceNotFound
+import HTMLParser
+import json
+from xml.etree import ElementTree
+
+from django.conf import settings
+from django.contrib import messages
+from django.core.urlresolvers import reverse
+from django.http import HttpResponseRedirect, HttpResponse, HttpResponseBadRequest, Http404
+from django.shortcuts import get_object_or_404
+from django.shortcuts import render
+from django.template.loader import render_to_string
 from django.utils.decorators import method_decorator
+from django.utils.translation import ugettext as _, ugettext_noop
+from django.views.decorators.cache import cache_page
+from django.views.generic import View
+
+from couchdbkit import ResourceConflict, ResourceNotFound
+
+from casexml.apps.case.models import CommCareCase, CASE_STATUS_OPEN
+from casexml.apps.case.xml import V2
+from casexml.apps.phone.fixtures import generator
 from casexml.apps.stock.models import StockTransaction
 from casexml.apps.stock.utils import get_current_ledger_transactions
-from corehq.apps.accounting.decorators import requires_privilege_for_commcare_user, requires_privilege_with_fallback
-from corehq.apps.app_manager.exceptions import FormNotFoundException, ModuleNotFoundException
-from corehq.apps.app_manager.suite_xml.sections.details import get_instances_for_module
-from corehq.apps.app_manager.suite_xml.sections.entries import EntriesHelper
-from corehq.apps.app_manager.util import get_cloudcare_session_data
-from corehq.apps.cloudcare.dbaccessors import get_cloudcare_apps
-from corehq.util.couch import get_document_or_404
-from corehq.util.quickcache import skippable_quickcache
-from corehq.util.xml_utils import indent_xml
 from couchforms.const import ATTACHMENT_NAME
 from couchforms.models import XFormInstance
 from dimagi.utils.couch.database import iter_docs
-from django.views.decorators.cache import cache_page
-from casexml.apps.case.models import CommCareCase
-from corehq import toggles, privileges
-from corehq.apps.cloudcare.exceptions import RemoteAppError
-from corehq.apps.cloudcare.models import ApplicationAccess
-from corehq.apps.cloudcare.touchforms_api import SessionDataHelper
-from corehq.apps.domain.decorators import login_and_domain_required, login_or_digest_ex, domain_admin_required
-from corehq.apps.groups.models import Group
-from corehq.apps.users.models import CouchUser, CommCareUser
-from corehq.apps.users.views import BaseUserSettingsView
-from dimagi.utils.web import json_response, get_url_base, json_handler
-from django.http import HttpResponseRedirect, HttpResponse, HttpResponseBadRequest, Http404
-from django.shortcuts import render
-from django.template.loader import render_to_string
-from corehq.apps.app_manager.dbaccessors import get_app, get_latest_build_doc, \
-    get_brief_apps_in_domain
-from corehq.apps.app_manager.models import Application, ApplicationBase
-import json
-from corehq.apps.cloudcare.api import look_up_app_json, get_filtered_cases, get_filters_from_request,\
-    api_closed_to_status, CaseAPIResult, CASE_STATUS_OPEN, get_app_json, get_open_form_sessions
-from dimagi.utils.parsing import string_to_boolean
 from dimagi.utils.logging import notify_exception
-from django.conf import settings
+from dimagi.utils.parsing import string_to_boolean
+from dimagi.utils.web import json_response, get_url_base, json_handler
 from touchforms.formplayer.api import DjangoAuth, get_raw_instance, sync_db
-from django.core.urlresolvers import reverse
-from casexml.apps.phone.fixtures import generator
-from casexml.apps.case.xml import V2
-from xml.etree import ElementTree
-from corehq.apps.cloudcare.decorators import require_cloudcare_access
-import HTMLParser
-from django.contrib import messages
-from django.utils.translation import ugettext as _, ugettext_noop
-from django.views.generic import View
 from touchforms.formplayer.models import EntrySession
 from xml2json.lib import xml2json
+
+from corehq import toggles, privileges
+from corehq.apps.accounting.decorators import requires_privilege_for_commcare_user, requires_privilege_with_fallback
+from corehq.apps.app_manager.dbaccessors import get_app, get_latest_build_doc, \
+    get_brief_apps_in_domain
+from corehq.apps.app_manager.exceptions import FormNotFoundException, ModuleNotFoundException
+from corehq.apps.app_manager.models import Application, ApplicationBase
+from corehq.apps.app_manager.suite_xml.sections.details import get_instances_for_module
+from corehq.apps.app_manager.suite_xml.sections.entries import EntriesHelper
+from corehq.apps.app_manager.util import get_cloudcare_session_data
+from corehq.apps.cloudcare.api import (
+    api_closed_to_status,
+    CaseAPIResult,
+    get_app_json,
+    get_filtered_cases,
+    get_filters_from_request_params,
+    get_open_form_sessions,
+    look_up_app_json,
+)
+from corehq.apps.cloudcare.dbaccessors import get_cloudcare_apps
+from corehq.apps.cloudcare.decorators import require_cloudcare_access
+from corehq.apps.cloudcare.exceptions import RemoteAppError
+from corehq.apps.cloudcare.models import ApplicationAccess
+from corehq.apps.cloudcare.touchforms_api import BaseSessionDataHelper, CaseSessionDataHelper
+from corehq.apps.domain.decorators import login_and_domain_required, login_or_digest_ex, domain_admin_required
+from corehq.apps.groups.models import Group
 from corehq.apps.reports.formdetails import readable
 from corehq.apps.style.decorators import (
     use_datatables,
     use_bootstrap3,
     use_jquery_ui,
 )
-from django.shortcuts import get_object_or_404
+from corehq.apps.users.models import CouchUser, CommCareUser
+from corehq.apps.users.views import BaseUserSettingsView
+from corehq.util.couch import get_document_or_404
+from corehq.util.quickcache import skippable_quickcache
+from corehq.util.view_utils import expect_GET
+from corehq.util.xml_utils import indent_xml
 
 
 @require_cloudcare_access
@@ -82,7 +94,7 @@ class CloudcareMain(View):
 
     def get(self, request, domain, urlPath):
         try:
-            preview = string_to_boolean(request.REQUEST.get("preview", "false"))
+            preview = string_to_boolean(request.GET.get("preview", "false"))
         except ValueError:
             # this is typically only set at all if it's intended to be true so this
             # is a reasonable default for "something went wrong"
@@ -214,8 +226,10 @@ def form_context(request, domain, app_id, module_id, form_id):
         app=app.name,
         form=form_name,
     )
+    case = None
     if case_id:
-        session_name = u'{0} - {1}'.format(session_name, CommCareCase.get(case_id).name)
+        case = CommCareCase.get(case_id)
+        session_name = u'{0} - {1}'.format(session_name, case.name)
 
     root_context = {
         'form_url': form_url,
@@ -228,13 +242,11 @@ def form_context(request, domain, app_id, module_id, form_id):
         except ResourceNotFound:
             raise Http404()
 
-
     session_extras = {'session_name': session_name, 'app_id': app._id}
     session_extras.update(get_cloudcare_session_data(domain, form, request.couch_user))
 
     delegation = request.GET.get('task-list') == 'true'
-    offline = request.GET.get('offline') == 'true'
-    session_helper = SessionDataHelper(domain, request.couch_user, case_id, delegation=delegation, offline=offline)
+    session_helper = CaseSessionDataHelper(domain, request.couch_user, case_id, app, form, delegation=delegation)
     return json_response(session_helper.get_full_context(
         root_context,
         session_extras
@@ -245,14 +257,16 @@ cloudcare_api = login_or_digest_ex(allow_cc_users=True)
 
 
 def get_cases_vary_on(request, domain):
+    request_params = expect_GET(request)
+
     return [
         request.couch_user.get_id
-        if request.couch_user.is_commcare_user() else request.REQUEST.get('user_id', ''),
-        request.REQUEST.get('ids_only', 'false'),
-        request.REQUEST.get('case_id', ''),
-        request.REQUEST.get('footprint', 'false'),
-        request.REQUEST.get('closed', 'false'),
-        json.dumps(get_filters_from_request(request)),
+        if request.couch_user.is_commcare_user() else request_params.get('user_id', ''),
+        request_params.get('ids_only', 'false'),
+        request_params.get('case_id', ''),
+        request_params.get('footprint', 'false'),
+        request_params.get('closed', 'false'),
+        json.dumps(get_filters_from_request_params(request_params)),
         domain,
     ]
 
@@ -268,27 +282,30 @@ def get_cases_skip_arg(request, domain):
     """
     if not toggles.CLOUDCARE_CACHE.enabled(domain):
         return True
-    return (not string_to_boolean(request.REQUEST.get('use_cache', 'false')) or
-        not string_to_boolean(request.REQUEST.get('ids_only', 'false')))
+    request_params = expect_GET(request)
+    return (not string_to_boolean(request_params.get('use_cache', 'false')) or
+        not string_to_boolean(request_params.get('ids_only', 'false')))
 
 
 @cloudcare_api
 @skippable_quickcache(get_cases_vary_on, get_cases_skip_arg, timeout=240 * 60)
 def get_cases(request, domain):
+    request_params = expect_GET(request)
+
     if request.couch_user.is_commcare_user():
         user_id = request.couch_user.get_id
     else:
-        user_id = request.REQUEST.get("user_id", "")
+        user_id = request_params.get("user_id", "")
 
     if not user_id and not request.couch_user.is_web_user():
         return HttpResponseBadRequest("Must specify user_id!")
 
-    ids_only = string_to_boolean(request.REQUEST.get("ids_only", "false"))
-    case_id = request.REQUEST.get("case_id", "")
-    footprint = string_to_boolean(request.REQUEST.get("footprint", "false"))
+    ids_only = string_to_boolean(request_params.get("ids_only", "false"))
+    case_id = request_params.get("case_id", "")
+    footprint = string_to_boolean(request_params.get("footprint", "false"))
 
     if toggles.HSPH_HACK.enabled(domain):
-        hsph_case_id = request.REQUEST.get('hsph_hack', None)
+        hsph_case_id = request_params.get('hsph_hack', None)
         if hsph_case_id != 'None' and hsph_case_id and user_id:
             case = CommCareCase.get(hsph_case_id)
             usercase_id = CommCareUser.get_by_user_id(user_id).get_usercase_id()
@@ -309,8 +326,8 @@ def get_cases(request, domain):
         assert case.domain == domain
         cases = [CaseAPIResult(id=case_id, couch_doc=case, id_only=ids_only)]
     else:
-        filters = get_filters_from_request(request)
-        status = api_closed_to_status(request.REQUEST.get('closed', 'false'))
+        filters = get_filters_from_request_params(request_params)
+        status = api_closed_to_status(request_params.get('closed', 'false'))
         case_type = filters.get('properties/case_type', None)
         cases = get_filtered_cases(domain, status=status, case_type=case_type,
                                    user_id=user_id, filters=filters,
@@ -341,7 +358,7 @@ def filter_cases(request, domain, app_id, module_id, parent_id=None):
             "footprint": True
         }
 
-        helper = SessionDataHelper(domain, request.couch_user)
+        helper = BaseSessionDataHelper(domain, request.couch_user)
         result = helper.filter_cases(xpath, additional_filters, DjangoAuth(auth_cookie),
                                      extra_instances=extra_instances, use_formplayer=use_formplayer)
         if result.get('status', None) == 'error':
@@ -436,24 +453,6 @@ def get_sessions(request, domain):
 
 
 @cloudcare_api
-def get_session_context(request, domain, session_id):
-    try:
-        session = EntrySession.objects.get(session_id=session_id)
-    except EntrySession.DoesNotExist:
-        session = None
-    if request.method == 'DELETE':
-        if session:
-            session.delete()
-        return json_response({'status': 'success'})
-    else:
-        helper = SessionDataHelper(domain, request.couch_user)
-        return json_response(helper.get_full_context({
-            'session_id': session_id,
-            'app_id': session.app_id if session else None
-        }))
-
-
-@cloudcare_api
 def get_ledgers(request, domain):
     """
     Returns ledgers associated with a case in the format:
@@ -466,7 +465,8 @@ def get_ledgers(request, domain):
         ...
     }
     """
-    case_id = request.REQUEST.get('case_id')
+    request_params = expect_GET(request)
+    case_id = request_params.get('case_id')
     if not case_id:
         return json_response(
             {'message': 'You must specify a case id to make this query.'},

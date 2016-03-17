@@ -180,7 +180,8 @@ APP_BUILDER_CAREPLAN = StaticToggle(
 APP_BUILDER_ADVANCED = StaticToggle(
     'advanced-app-builder',
     'Advanced Module in App-Builder',
-    TAG_EXPERIMENTAL
+    TAG_EXPERIMENTAL,
+    [NAMESPACE_DOMAIN],
 )
 
 APP_BUILDER_SHADOW_MODULES = StaticToggle(
@@ -327,13 +328,6 @@ REPORT_BUILDER_MAP_REPORTS = StaticToggle(
     'report_builder_map_reports',
     'Report Builder map reports',
     TAG_PRODUCT_PATH,
-    [NAMESPACE_DOMAIN]
-)
-
-KAFKA_UCRS = StaticToggle(
-    'kafka-ucrs',
-    'Use new kafka-based UCR processing',
-    TAG_EXPERIMENTAL,
     [NAMESPACE_DOMAIN]
 )
 
@@ -523,13 +517,6 @@ BULK_SMS_VERIFICATION = StaticToggle(
     TAG_ONE_OFF,
     [NAMESPACE_USER, NAMESPACE_DOMAIN],
 )
-
-BULK_PAYMENTS = StaticToggle(
-    'bulk_payments',
-    'Enable payment of invoices by bulk credit payments and invoice generation for wire transfers',
-    TAG_PRODUCT_CORE
-)
-
 
 ENABLE_LOADTEST_USERS = StaticToggle(
     'enable_loadtest_users',

@@ -38,7 +38,7 @@ var CustomExportView = {
                         '#': translations.cases,
                         'actions': translations.case_history,
                         'actions > indices': translations.history_to_parents,
-                        'indices': translations.parent_cases,
+                        'indices': translations.parent_cases
                     }[stripped] || stripped;
                 }
             },
@@ -400,6 +400,12 @@ var CustomExportView = {
 
         self.save_preview = function() {
             self.save(true);
+        };
+
+        self.cancel = function() {
+            self.save.state('canceling');
+            // Return true so the cancel button can further redirect to it's href
+            return true;
         };
 
         self.row_label_classes = function(row) {

@@ -42,16 +42,18 @@ def _build_indicators(indicator_config_id, relevant_ids):
     redis_client = get_redis_client().client.get_client()
     redis_key = _get_redis_key_for_config(config)
 
+    last_id = None
     for doc in iter_docs(couchdb, relevant_ids, chunksize=500):
         try:
             # save is a noop if the filter doesn't match
             adapter.save(doc)
-            redis_client.srem(redis_key, doc.get('_id'))
+            last_id = doc.get('_id')
+            redis_client.srem(redis_key, last_id)
         except Exception as e:
             logging.exception('problem saving document {} to table. {}'.format(doc['_id'], e))
 
-    if not is_static(indicator_config_id):
-        redis_client.delete(redis_key)
+    if last_id:
+        redis_client.sadd(redis_key, last_id)
 
 
 @task(queue='ucr_queue', ignore_result=True)
@@ -70,7 +72,7 @@ def rebuild_indicators(indicator_config_id):
     _iteratively_build_table(config)
 
 
-@task(queue='ucr_queue', ignore_result=True)
+@task(queue='ucr_queue', ignore_result=True, acks_late=True)
 def resume_building_indicators(indicator_config_id):
     config = _get_config_by_id(indicator_config_id)
     redis_client = get_redis_client().client.get_client()
@@ -109,6 +111,7 @@ def _iteratively_build_table(config, last_id=None):
         _build_indicators(indicator_config_id, relevant_ids)
 
     if not is_static(indicator_config_id):
+        redis_client.delete(redis_key)
         config.meta.build.finished = True
         try:
             config.save()

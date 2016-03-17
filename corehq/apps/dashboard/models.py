@@ -375,7 +375,8 @@ class DataPaginatedContext(BasePaginatedTileContextProcessor, ExportsPermissions
 
     @property
     def paginated_items(self):
-        for export in self.form_exports + self.case_exports:
+        exports = (self.form_exports + self.case_exports)[self.skip:self.skip + self.limit]
+        for export in exports:
             urlname = 'export_download_forms' if isinstance(export, FormExportSchema) else 'export_download_cases'
             yield self._fmt_item(
                 export.name,

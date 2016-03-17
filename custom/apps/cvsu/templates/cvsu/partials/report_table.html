@@ -5,7 +5,7 @@
     <div class="row">
         {% for chart in charts %}
             {% if chart.title %}<h4 style="text-align: center;">{{ chart.title }}</h4>{% endif %}
-            <div id='chart_{{ report.slug }}_{{ forloop.parentloop.counter }}{{ forloop.counter }}' class="span{{ chart_span }} hide">
+            <div id='chart_{{ report.slug }}_{{ forloop.parentloop.counter }}{{ forloop.counter }}' class="col-sm-{{ chart_span }} hide">
             <svg style='height: {{ chart.height }}px'> </svg>
         </div>
         {% endfor %}

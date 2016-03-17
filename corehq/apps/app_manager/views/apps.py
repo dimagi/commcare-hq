@@ -258,7 +258,7 @@ def get_apps_base_context(request, domain, app):
             'show_advanced': (
                 v2_app
                 and (
-                    toggles.APP_BUILDER_ADVANCED.enabled(request.user.username)
+                    toggles.APP_BUILDER_ADVANCED.enabled(domain)
                     or getattr(app, 'commtrack_enabled', False)
                 )
             ),
@@ -761,9 +761,9 @@ def drop_user_case(request, domain, app_id):
                 for action in list(form.actions.load_update_cases):
                     if action.auto_select and action.auto_select.mode == AUTO_SELECT_USERCASE:
                         form.actions.load_update_cases.remove(action)
-            app.save()
-            messages.success(
-                request,
-                _('You have successfully removed User Case properties from this application.')
-            )
+    app.save()
+    messages.success(
+        request,
+        _('You have successfully removed User Case properties from this application.')
+    )
     return back_to_main(request, domain, app_id=app_id)

@@ -205,7 +205,7 @@ def rebuild_export_async(config, schema, output_dir):
     rebuild_export(config, schema, output_dir)
 
 
-@periodic_task(run_every=crontab(hour="12, 22", minute="0", day_of_week="*"), queue=getattr(settings, 'CELERY_PERIODIC_QUEUE','celery'))
+@periodic_task(run_every=crontab(hour="22", minute="0", day_of_week="*"), queue='background_queue')
 def update_calculated_properties():
     results = DomainES().is_snapshot(False).fields(["name", "_id"]).run().hits
     all_stats = _all_domain_stats()
@@ -261,7 +261,7 @@ def is_app_active(app_id, domain):
     return app_has_been_submitted_to_in_last_30_days(domain, app_id)
 
 
-@periodic_task(run_every=crontab(hour="12, 22", minute="0", day_of_week="*"), queue=getattr(settings, 'CELERY_PERIODIC_QUEUE','celery'))
+@periodic_task(run_every=crontab(hour="2", minute="0", day_of_week="*"), queue='background_queue')
 def apps_update_calculated_properties():
     es = get_es_new()
     q = {"filter": {"and": [{"missing": {"field": "copy_of"}}]}}

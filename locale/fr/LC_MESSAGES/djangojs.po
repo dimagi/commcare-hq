@@ -8,31 +8,31 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2016-03-04 20:04+0000\n"
+"POT-Creation-Date: 2016-03-15 18:51+0000\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
-"Language: \n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
+"Language: \n"
 "Plural-Forms: nplurals=2; plural=(n > 1);\n"
 
 #: corehq/apps/app_manager/static/app_manager/js/app_manager.js:78
 msgid "You have unsaved changes"
 msgstr ""
 
-#: corehq/apps/app_manager/static/app_manager/js/commcaresettings.js:152
+#: corehq/apps/app_manager/static/app_manager/js/commcaresettings.js:153
 #, c-format
 msgid "Upgrade to CommCare %s for this option!"
 msgstr ""
 
-#: corehq/apps/app_manager/static/app_manager/js/commcaresettings.js:154
+#: corehq/apps/app_manager/static/app_manager/js/commcaresettings.js:155
 #, c-format
 msgid "Upgrade to CommCare %s!"
 msgstr ""
 
-#: corehq/apps/app_manager/static/app_manager/js/commcaresettings.js:165
+#: corehq/apps/app_manager/static/app_manager/js/commcaresettings.js:166
 msgid "Auto-set by "
 msgstr ""
 
@@ -58,6 +58,7 @@ msgid "Create"
 msgstr ""
 
 #: corehq/apps/export/static/export/js/models.js:31
+#: corehq/apps/style/static/style/js/bootstrap3/main.js:226
 msgid "Save"
 msgstr ""
 
@@ -115,4 +116,37 @@ msgstr ""
 
 #: corehq/apps/reports_core/templates/reports_core/filters/datespan_filter/datespan_filter.js:18
 msgid "Show All Dates"
+msgstr ""
+
+#: corehq/apps/style/static/style/js/bootstrap3/main.js:227
+msgid "Saving..."
+msgstr ""
+
+#: corehq/apps/style/static/style/js/bootstrap3/main.js:228
+msgid "Saved"
+msgstr ""
+
+#: corehq/apps/style/static/style/js/bootstrap3/main.js:229
+#: corehq/apps/style/static/style/js/bootstrap3/main.js:237
+msgid "Try Again"
+msgstr ""
+
+#: corehq/apps/style/static/style/js/bootstrap3/main.js:230
+msgid "There was an error saving"
+msgstr ""
+
+#: corehq/apps/style/static/style/js/bootstrap3/main.js:234
+msgid "Delete"
+msgstr ""
+
+#: corehq/apps/style/static/style/js/bootstrap3/main.js:235
+msgid "Deleting..."
+msgstr ""
+
+#: corehq/apps/style/static/style/js/bootstrap3/main.js:236
+msgid "Deleted"
+msgstr ""
+
+#: corehq/apps/style/static/style/js/bootstrap3/main.js:238
+msgid "There was an error deleting"
 msgstr ""

@@ -72,8 +72,16 @@ class Command(BaseCommand):
             datadog_api.Event.create(
                 title="Deploy Success",
                 text=deploy_notification_text.format(diff_link=link),
-                tags=tags
+                tags=tags,
+                alert_type="success"
             )
+
+            print "\n=============================================================\n" \
+                  "Congratulations! Deploy Complete.\n\n" \
+                  "Don't forget to keep an eye on the deploy dashboard to " \
+                  "make sure everything is running smoothly.\n\n" \
+                  "https://p.datadoghq.com/sb/5c4af2ac8-1f739e93ef" \
+                  "\n=============================================================\n"
 
         if options['mail_admins']:
             message_body = get_deploy_email_message_body(

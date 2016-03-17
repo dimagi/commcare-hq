@@ -134,8 +134,8 @@ class PillowError(models.Model):
                 (models.Q(total_attempts__lte=multi_attempts_cutoff) & models.Q(current_attempt__lte=max_attempts))
             )
 
-        # temporarily disable queuing of ConfigurableIndicatorPillow errors
-        query = query.filter(~models.Q(pillow='corehq.apps.userreports.pillow.ConfigurableIndicatorPillow'))
+        # temporarily disable queuing of ConfigurableReportKafkaPillow errors
+        query = query.filter(~models.Q(pillow='corehq.apps.userreports.pillow.ConfigurableReportKafkaPillow'))
 
         if not fetch_full:
             query = query.values('id', 'date_next_attempt')

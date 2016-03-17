@@ -38,6 +38,7 @@ class GSIDSQLReport(SummingSqlTabularReport, CustomProjectReport, DatespanMixin)
     exportable = True
     emailable = True
     default_aggregation = "clinic"
+    is_bootstrap3 = True
 
     def __init__(self, request, base_context=None, domain=None, **kwargs):
         self.is_map = kwargs.pop('map', False)
@@ -704,6 +705,7 @@ class GSIDSQLByAgeReport(GSIDSQLReport):
 class PatientMapReport(GenericMapReport, CustomProjectReport):
     name = "Patient Summary (Map)"
     slug = "patient_summary_map"
+    is_bootstrap3 = True
 
     fields = ['custom.apps.gsid.reports.TestField', 
               'corehq.apps.reports.filters.dates.DatespanFilter', 

@@ -24,6 +24,7 @@ def get_stock_payload(project, stock_settings, case_stub_list):
 
     def consumption_entry(case_id, product_id, section_id):
         consumption_value = compute_consumption_or_default(
+            project.name,
             case_id,
             product_id,
             datetime.utcnow(),
