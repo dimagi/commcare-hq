@@ -131,6 +131,7 @@ class ConstructedPillow(PillowBase):
         self._processor = processor
         self._change_processed_event_handler = change_processed_event_handler
 
+    @property
     def pillow_id(self):
         return self._name
 
