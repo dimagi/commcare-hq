@@ -1,6 +1,8 @@
 from datetime import datetime
 from itertools import groupby
-from collections import defaultdict, OrderedDict
+from collections import defaultdict, OrderedDict, namedtuple
+
+from couchdbkit.ext.django.schema import IntegerProperty
 from django.utils.translation import ugettext as _
 from couchdbkit import SchemaListProperty, SchemaProperty, BooleanProperty, DictProperty
 
@@ -13,6 +15,8 @@ from corehq.apps.app_manager.dbaccessors import (
 from corehq.apps.app_manager.models import Application
 from corehq.apps.app_manager.util import get_case_properties
 from corehq.apps.reports.display import xmlns_to_name
+from corehq.blobs.mixin import BlobMixin
+from couchexport.models import Format
 from couchexport.transforms import couch_to_excel_datetime
 from dimagi.utils.couch.database import iter_docs
 from dimagi.ext.couchdbkit import (
@@ -40,6 +44,9 @@ from corehq.apps.export.dbaccessors import (
     get_latest_case_export_schema,
     get_latest_form_export_schema,
 )
+
+
+DAILY_SAVED_EXPORT_ATTACHMENT_NAME = "payload"
 
 
 class ExportItem(DocumentSchema):
@@ -84,7 +91,7 @@ class ExportColumn(DocumentSchema):
     # A list of constants that map to functions to transform the column value
     transforms = ListProperty(validators=is_valid_transform)
 
-    def get_value(self, doc, base_path, transform_dates=False):
+    def get_value(self, doc, base_path, transform_dates=False, row_index=None):
         """
         Get the value of self.item of the given doc.
         When base_path is [], doc is a form submission or case,
@@ -159,7 +166,6 @@ class ExportColumn(DocumentSchema):
 
     @property
     def is_deidentifed(self):
-        # TODO: Might be better if we set an is_deidentified flag on the model instead?
         return bool(set(self.transforms) & set(DEID_TRANSFORM_FUNCTIONS))
 
     def get_headers(self):
@@ -169,6 +175,18 @@ class ExportColumn(DocumentSchema):
             return [u"{} {}".format(self.label, "[sensitive]")]
         else:
             return [self.label]
+
+
+class DocRow(namedtuple("DocRow", ["doc", "row"])):
+    """
+    DocRow represents a document and its row index.
+    doc - doc is a dictionary representing a form or a subset of a form (like
+          a particular iteration of a repeat group)
+    row - row is a tuple representing the relationship between this doc and the
+          rows in other sheets. For example, if this doc represents the 3rd
+          iteration of a repeat group in the 1st form of the export, then this
+          DocRow would have a row of (0, 2).
+    """
 
 
 class TableConfiguration(DocumentSchema):
@@ -195,20 +213,21 @@ class TableConfiguration(DocumentSchema):
             headers.extend(column.get_headers())
         return headers
 
-    def get_rows(self, document):
+    def get_rows(self, document, row_number):
         """
         Return a list of ExportRows generated for the given document.
         :param document: dictionary representation of a form submission or case
+        :param row_number: number indicating this documents index in the sequence of all documents in the export
         :return: List of ExportRows
         """
-        # Note that sub_documents will be [document] if self.path is []
-        sub_documents = self._get_sub_documents(self.path, [document])
+        sub_documents = self._get_sub_documents(document, row_number)
         rows = []
-        for doc in sub_documents:
+        for doc_row in sub_documents:
+            doc, row_index = doc_row.doc, doc_row.row
 
             row_data = []
             for col in self.selected_columns:
-                val = col.get_value(doc, self.path)
+                val = col.get_value(doc, self.path, row_index=row_index)
                 if isinstance(val, list):
                     row_data.extend(val)
                 else:
@@ -222,40 +241,47 @@ class TableConfiguration(DocumentSchema):
                 return column
         return None
 
-    def _get_sub_documents(self, path, docs):
+    def _get_sub_documents(self, document, row_number):
+        return self._get_sub_documents_helper(self.path, [DocRow(row=(row_number,), doc=document)])
+
+    @staticmethod
+    def _get_sub_documents_helper(path, row_docs):
         """
         Return each instance of a repeat group at the path from the given docs.
         If path is [], just return the docs
 
-        >>> TableConfiguration()._get_sub_documents(['foo'], [{'foo': {'bar': 'a'}}, {'foo': {'bar': 'b'}}])
-        [{'bar': 'a'}, {'bar': 'b'}]
-        >>> TableConfiguration()._get_sub_documents(['foo', 'bar'], [{'foo': [{'bar': {'baz': 'a'}}, {'bar': {'baz': 'b'}},]}]
-        [{'baz': 'a'}, {'baz': 'b'}]
+        See corehq.apps.export.tests.test_table_configuration.TableConfigurationGetRowsTest.test_get_sub_documents
+        for examples
 
         :param path: A list of a strings
         :param docs: A list of dicts representing form submissions
         :return:
         """
         if len(path) == 0:
-            return docs
+            return row_docs
 
         new_docs = []
-        for doc in docs:
+        for row_doc in row_docs:
+            doc = row_doc.doc
+            row_index = row_doc.row
+
             next_doc = doc.get(path[0], {})
             if type(next_doc) == list:
-                new_docs.extend(next_doc)
+                new_docs.extend([
+                    DocRow(row=row_index + (new_doc_index,), doc=new_doc)
+                    for new_doc_index, new_doc in enumerate(next_doc)
+                ])
             else:
-                new_docs.append(next_doc)
-        return self._get_sub_documents(path[1:], new_docs)
+                new_docs.append(DocRow(row=row_index, doc=next_doc))
+        return TableConfiguration._get_sub_documents_helper(path[1:], new_docs)
 
 
-class ExportInstance(Document):
+class ExportInstance(BlobMixin, Document):
     name = StringProperty()
     type = StringProperty()
     domain = StringProperty()
     tables = ListProperty(TableConfiguration)
     export_format = StringProperty(default='csv')
-    last_built = DateTimeProperty()
 
     # Whether to split multiselects into multiple columns
     split_multiselects = BooleanProperty(default=False)
@@ -268,10 +294,14 @@ class ExportInstance(Document):
 
     # Whether the export is de-identified
     is_deidentified = BooleanProperty(default=False)
-    is_daily_saved_export = BooleanProperty(default=False)
 
     # Keep reference to old schema id if we have converted it from the legacy infrastructure
     legacy_saved_export_schema_id = StringProperty()
+
+    is_daily_saved_export = BooleanProperty(default=False)
+    # daily saved export fields:
+    last_updated = DateTimeProperty()
+    last_accessed = DateTimeProperty()
 
     class Meta:
         app_label = 'export'
@@ -282,18 +312,6 @@ class ExportInstance(Document):
         return self.is_deidentified
 
     @property
-    def file_id(self):
-        return 'placeholder'
-
-    @property
-    def export_size(self):
-        return 'placeholder'
-
-    @property
-    def download_url(self):
-        return 'placeholder'
-
-    @property
     def defaults(self):
         return FormExportInstanceDefaults if self.type == FORM_EXPORT else CaseExportInstanceDefaults
 
@@ -302,15 +320,6 @@ class ExportInstance(Document):
             if table.path == path:
                 return table
         return None
-
-    def daily_saved_export_metadata(self):
-        return {
-            'fileId': self.file_id,
-            'size': self.export_size,
-            'lastUpdated': self.last_built,
-            'showExpiredWarning': False,
-            'downloadUrl': self.download_url,
-        }
 
     @classmethod
     def _new_from_schema(cls, schema):
@@ -356,6 +365,42 @@ class ExportInstance(Document):
                 instance.tables.append(table)
 
         return instance
+
+    @property
+    def file_size(self):
+        """
+        Return the size of the pre-computed export.
+        Only daily saved exports could have a pre-computed export.
+        """
+        try:
+            return self.blobs[DAILY_SAVED_EXPORT_ATTACHMENT_NAME].content_length
+        except KeyError:
+            return 0
+
+    @property
+    def filename(self):
+        return "%s.%s" % (self.name, Format.from_format(self.export_format).extension)
+
+    def has_file(self):
+        """
+        Return True if there is a pre-computed export saved for this instance.
+        Only daily saved exports could have a pre-computed export.
+        """
+        return DAILY_SAVED_EXPORT_ATTACHMENT_NAME in self.blobs
+
+    def set_payload(self, payload):
+        """
+        Set the pre-computed export for this instance.
+        Only daily saved exports could have a pre-computed export.
+        """
+        self.put_attachment(payload, DAILY_SAVED_EXPORT_ATTACHMENT_NAME)
+
+    def get_payload(self, stream=False):
+        """
+        Get the pre-computed export for this instance.
+        Only daily saved exports could have a pre-computed export.
+        """
+        return self.fetch_attachment(DAILY_SAVED_EXPORT_ATTACHMENT_NAME, stream=stream)
 
 
 class CaseExportInstance(ExportInstance):
@@ -919,7 +964,7 @@ class SplitExportColumn(ExportColumn):
     item = SchemaProperty(MultipleChoiceItem)
     ignore_unspecified_options = BooleanProperty()
 
-    def get_value(self, doc, base_path):
+    def get_value(self, doc, base_path, row_index=None):
         """
         Get the value of self.item of the given doc.
         When base_path is [], doc is a form submission or case,
@@ -956,3 +1001,16 @@ class SplitExportColumn(ExportColumn):
                 )
             )
         return headers
+
+
+class RowNumberColumn(ExportColumn):
+    nesting_level = IntegerProperty()
+
+    def get_headers(self):
+        headers = [self.label]
+        if self.nesting_level > 1:
+            headers += ["{}__{}".format(self.label, i) for i in range(self.nesting_level)]
+        return headers
+
+    def get_value(self, doc, base_path, transform_dates=False, row_index=None):
+        return [".".join([unicode(i) for i in row_index])] + list(row_index)

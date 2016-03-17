@@ -1,4 +1,22 @@
+from corehq.apps.commtrack.const import COMMTRACK_USERNAME
+from corehq.apps.users.models import CouchUser
+from corehq.apps.users.util import SYSTEM_USER_ID, DEMO_USER_ID
+from corehq.util.quickcache import quickcache
 
+SYSTEM_USER_TYPE = "system"
+DEMO_USER_TYPE = "demo"
+COMMCARE_SUPPLY_USER_TYPE = "supply"
+WEB_USER_TYPE = "web"
+MOBILE_USER_TYPE = "mobile"
+UNKNOWN_USER_TYPE = "unknown"
+USER_TYPES = (
+    SYSTEM_USER_TYPE,
+    DEMO_USER_TYPE,
+    COMMCARE_SUPPLY_USER_TYPE,
+    WEB_USER_TYPE,
+    MOBILE_USER_TYPE,
+    UNKNOWN_USER_TYPE,
+)
 
 DELETED_DOC_TYPES = {
     'CommCareCase': [
@@ -21,3 +39,29 @@ def get_deleted_doc_types(doc_type):
     the data from a report/index.
     """
     return DELETED_DOC_TYPES.get(doc_type, [])
+
+
+ONE_DAY = 60 * 60 * 24
+
+
+@quickcache(['user_id'], timeout=ONE_DAY)
+def get_user_type(user_id):
+    if user_id == SYSTEM_USER_ID:
+        # Every form with user_id == system also has username == system.
+        # But there are some forms where username == system but the user_id is different.
+        # Any chance those should be included?
+        return SYSTEM_USER_TYPE
+    elif user_id == DEMO_USER_ID:
+        return DEMO_USER_TYPE
+    elif user_id == COMMTRACK_USERNAME:
+        return COMMCARE_SUPPLY_USER_TYPE
+    else:
+        try:
+            user = CouchUser.get(user_id)
+            if user.is_web_user():
+                return WEB_USER_TYPE
+            elif user.is_commcare_user():
+                return MOBILE_USER_TYPE
+        except:
+            pass
+    return UNKNOWN_USER_TYPE
