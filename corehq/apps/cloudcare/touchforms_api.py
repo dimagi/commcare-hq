@@ -1,12 +1,10 @@
 from casexml.apps.case.models import CommCareCase
 from corehq.apps.app_manager.suite_xml.sections.entries import EntriesHelper
-from dimagi.utils.decorators.memoized import memoized
 from touchforms.formplayer.api import post_data
 import json
-from django.conf import settings
 from corehq.apps.cloudcare import CLOUDCARE_DEVICE_ID
 from django.core.urlresolvers import reverse
-from corehq.apps.users.models import CommCareUser, CouchUser
+from corehq.apps.users.models import CouchUser
 
 DELEGATION_STUB_CASE_TYPE = "cc_delegation_stub"
 
