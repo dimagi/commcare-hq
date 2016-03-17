@@ -56,7 +56,7 @@ class CaseSessionDataHelper(BaseSessionDataHelper):
         super(CaseSessionDataHelper, self).__init__(domain, couch_user)
         self.form = form
         self.app = app
-        if isinstance(case_id_or_case, basestring):
+        if case_id_or_case is None or isinstance(case_id_or_case, basestring):
             self.case_id = case_id_or_case
             self._case = None
         else:
