@@ -23,6 +23,13 @@ class PillowBase(object):
     __metaclass__ = ABCMeta
 
     @abstractproperty
+    def pillow_id(self):
+        """
+        A unique ID for this pillow
+        """
+        pass
+
+    @abstractproperty
     def document_store(self):
         """
         Returns a DocumentStore instance for retreiving documents.
@@ -123,6 +130,9 @@ class ConstructedPillow(PillowBase):
         self._change_feed = change_feed
         self._processor = processor
         self._change_processed_event_handler = change_processed_event_handler
+
+    def pillow_id(self):
+        return self._name
 
     def get_name(self):
         return self._name
