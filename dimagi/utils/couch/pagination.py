@@ -12,7 +12,7 @@ try:
 except ImportError:
     def expect_GET(request):
         assert request.method == 'GET'
-        request.GET if request.method == 'GET' else request.POST
+        return request.GET
 
 DEFAULT_DISPLAY_LENGTH = "10"
 DEFAULT_START = "0"
