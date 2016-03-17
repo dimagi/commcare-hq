@@ -74,7 +74,7 @@ def transform_case_for_elasticsearch(doc_dict):
     return doc_ret
 
 
-def get_sql_case_to_elasticsearch_pillow(pillow_id):
+def get_sql_case_to_elasticsearch_pillow(pillow_id='SqlCaseToElasticsearchPillow'):
     checkpoint = PillowCheckpoint(
         'sql-cases-to-elasticsearch',
     )

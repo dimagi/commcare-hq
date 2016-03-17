@@ -122,7 +122,7 @@ def _get_doc_type_from_state(state):
     return {v: k for k, v in doc_type_to_state.items()}.get(state, 'XFormInstance')
 
 
-def get_sql_xform_to_elasticsearch_pillow(pillow_id):
+def get_sql_xform_to_elasticsearch_pillow(pillow_id='SqlXFormToElasticsearchPillow'):
     checkpoint = PillowCheckpoint(
         'sql-xforms-to-elasticsearch',
     )
