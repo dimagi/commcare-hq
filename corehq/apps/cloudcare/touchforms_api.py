@@ -1,12 +1,10 @@
 from casexml.apps.case.models import CommCareCase
 from corehq.apps.app_manager.suite_xml.sections.entries import EntriesHelper
-from dimagi.utils.decorators.memoized import memoized
 from touchforms.formplayer.api import post_data
 import json
-from django.conf import settings
 from corehq.apps.cloudcare import CLOUDCARE_DEVICE_ID
 from django.core.urlresolvers import reverse
-from corehq.apps.users.models import CommCareUser, CouchUser
+from corehq.apps.users.models import CouchUser
 
 DELEGATION_STUB_CASE_TYPE = "cc_delegation_stub"
 
@@ -56,7 +54,7 @@ class CaseSessionDataHelper(BaseSessionDataHelper):
         super(CaseSessionDataHelper, self).__init__(domain, couch_user)
         self.form = form
         self.app = app
-        if isinstance(case_id_or_case, basestring):
+        if case_id_or_case is None or isinstance(case_id_or_case, basestring):
             self.case_id = case_id_or_case
             self._case = None
         else:
