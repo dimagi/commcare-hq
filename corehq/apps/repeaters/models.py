@@ -39,7 +39,6 @@ from .const import (
     RECORD_SUCCESS_STATE,
     RECORD_PENDING_STATE,
     POST_TIMEOUT,
-    SIMPLE_POST_CACHED_PREFIX,
 )
 from .exceptions import RequestConnectionError
 
@@ -52,17 +51,13 @@ def register_repeater_type(cls):
     return cls
 
 
-def _simple_post_cache_key(url):
-    return hashlib.md5('{}{}'.format(SIMPLE_POST_CACHED_PREFIX, url)).hexdigest()
-
-
-def simple_post_cache_value(url):
-    return cache.get(_simple_post_cache_key(url))
-
-
-def simple_post_with_cached_timeout(data, url, expiry=60 * 60 * 2, force_send=False, *args, **kwargs):
+def simple_post_with_cached_timeout(data, url, expiry=60 * 60, force_send=False, *args, **kwargs):
     # no control characters (e.g. '/') in keys
-    cache_value = simple_post_cache_value(url)
+    key = hashlib.md5(
+        '{0} timeout {1}'.format(__name__, url)
+    ).hexdigest()
+
+    cache_value = cache.get(key)
 
     if cache_value and not force_send:
         raise RequestConnectionError(cache_value)
@@ -70,12 +65,12 @@ def simple_post_with_cached_timeout(data, url, expiry=60 * 60 * 2, force_send=Fa
     try:
         resp = simple_post(data, url, *args, **kwargs)
     except (Timeout, ConnectionError), e:
-        cache.set(_simple_post_cache_key(url), e.message, expiry)
+        cache.set(key, e.message, expiry)
         raise RequestConnectionError(e.message)
 
     if not 200 <= resp.status_code < 300:
         message = 'HTTP response not a 200 or 300'
-        cache.set(_simple_post_cache_key(url), message, expiry)
+        cache.set(key, message, expiry)
         raise RequestConnectionError(message)
     return resp
 
