@@ -15,7 +15,7 @@ def to_function(function_path, failhard=False):
         module = importlib.import_module(module)
         actual_func = getattr(module, func)
         return actual_func
-    except ImportError:
+    except (AttributeError, ImportError):
         if failhard:
             raise
 
