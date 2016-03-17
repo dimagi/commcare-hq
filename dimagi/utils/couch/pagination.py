@@ -5,6 +5,15 @@ import json
 from restkit.errors import RequestFailed
 import itertools
 
+try:
+    # this isn't actually part of dimagi-utils
+    # but this is temporary and don't want to do a bigger reorg
+    from corehq.util.view_utils import expect_GET
+except ImportError:
+    def expect_GET(request):
+        assert request.method == 'GET'
+        return request.GET
+
 DEFAULT_DISPLAY_LENGTH = "10"
 DEFAULT_START = "0"
 DEFAULT_ECHO = "0"
@@ -77,11 +86,11 @@ class CouchPaginator(object):
         From a datatables generated ajax request, return the appropriate
         httpresponse containing the appropriate objects objects.
 
-        Extras allows you to override any individual paramater that gets
+        Extras allows you to override any individual parameter that gets
         returned
         """
         extras = extras or {}
-        query = request.REQUEST
+        query = expect_GET(request)
         params = DatatablesParams.from_request_dict(query)
 
         # search
