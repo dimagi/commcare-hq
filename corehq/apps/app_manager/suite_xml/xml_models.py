@@ -408,6 +408,82 @@ class Entry(OrderedXmlObject, XmlObject):
             self.instances = sorted_instances
 
 
+class QueryData(XmlObject):
+    ROOT_NAME = 'data'
+
+    key = StringField('@key')
+    ref = XPathField('@ref')
+
+
+class QueryPrompt(XmlObject):
+    ROOT_NAME = 'prompt'
+
+    key = StringField('@key')
+    display = StringField('display')
+
+
+class SyncRequestPost(XmlObject):
+    ROOT_NAME = 'post'
+
+    url = StringField('@url')
+    data = NodeListField('data', QueryData)
+
+
+class SyncRequestQuery(OrderedXmlObject, XmlObject):
+    ROOT_NAME = 'query'
+    ORDER = ('data', 'prompt')
+
+    url = StringField('@url')
+    storage_instance = StringField('@storage-instance')
+    data = NodeListField('data', QueryData)
+    prompts = NodeListField('prompt', QueryPrompt)
+
+
+class SyncRequestSession(OrderedXmlObject, XmlObject):
+    ROOT_NAME = 'session'
+    ORDER = ('query', 'datum')
+
+    queries = NodeListField('query', SyncRequestQuery)
+    data = NodeListField('datum', SessionDatum)
+
+
+class SyncRequest(OrderedXmlObject, XmlObject):
+    """
+    Used to set the URL and query details for synchronous search.
+
+    A node looks like this::
+
+        <sync-request>
+            <post url="">
+                <data key="" ref="some session based xpath expr"/>
+            </post>
+            <instance/>
+            <command id="...">
+                <display/>
+            </command>
+            <session>
+                <query url="some url" storage-instance="some_easy_to_reference_id">
+                    <data key="some_key" ref="session-based xpath ref"/>
+                    <prompt key="some_key">
+                       <display/>
+                    </prompt>
+                </query>
+                <datum/>
+            </session>
+            <stack/>
+        </sync-request>
+
+    """
+    ROOT_NAME = 'sync-request'
+    ORDER = ('post', 'instance', 'command', 'session', 'stack')
+
+    post = NodeField('post', SyncRequestPost)
+    instances = NodeListField('instance', Instance)
+    command = NodeField('command', Command)
+    session = NodeField('session', SyncRequestSession)
+    stacks = NodeListField('stack', Stack)  # Spec says plural but in practice we never have more than one.
+
+
 class MenuMixin(XmlObject):
     ROOT_NAME = 'menu'
 
@@ -677,5 +753,6 @@ class Suite(OrderedXmlObject):
     details = NodeListField('detail', Detail)
     entries = NodeListField('entry', Entry)
     menus = NodeListField('menu', Menu)
+    sync_requests = NodeListField('sync-request', SyncRequest)
 
     fixtures = NodeListField('fixture', Fixture)
