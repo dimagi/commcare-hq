@@ -174,9 +174,9 @@ class AddAutomaticCaseUpdateRuleForm(forms.Form):
         we allow updates to happen without closing the case.
         """
         self.fields['action'].choices = (
-            (ACTION_CLOSE, _("No")),
-            (ACTION_UPDATE_AND_CLOSE, _("Yes, and close the case")),
-            (ACTION_UPDATE, _("Yes, and do not close the case")),
+            (self.ACTION_CLOSE, _("No")),
+            (self.ACTION_UPDATE_AND_CLOSE, _("Yes, and close the case")),
+            (self.ACTION_UPDATE, _("Yes, and do not close the case")),
         )
 
     def __init__(self, *args, **kwargs):
