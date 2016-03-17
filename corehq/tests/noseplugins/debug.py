@@ -14,7 +14,7 @@ Tips:
 - Plugin interface:
     https://nose.readthedocs.org/en/latest/plugins/interface.html
 """
-import inspect
+import sys
 from nose.plugins import Plugin
 
 
@@ -50,6 +50,7 @@ class DebugPlugin(Plugin):
 
 #    def wantFunction(self, func):
 #        """Do not want 'test' functions with required args"""
+#        import inspect
 #        if "test" in func.__name__ and getattr(func, '__test__', True):
 #            spec = inspect.getargspec(func)
 #            return len(spec.args) <= len(spec.defaults or [])
