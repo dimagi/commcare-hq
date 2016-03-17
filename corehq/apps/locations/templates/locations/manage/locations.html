@@ -188,14 +188,23 @@
 <div class="row">
     <div class="col-sm-12">
         <div class="btn-toolbar">
-            <a class="btn btn-primary"
+            <a class="btn btn-info"
+               {% if not has_location_types or not can_edit_any_location %}
+                   disabled
+               {% else %}
+                   href="{% url "location_export" domain %}"
+               {% endif %}
+            >
+                <i class="fa fa-cloud-download"></i> {% trans 'Download Orgainzation Structure' %}
+            </a>
+            <a class="btn btn-default"
                {% if not has_location_types or not can_edit_any_location %}
                    disabled
                {% else %}
                    href="{% url "location_import" domain %}"
                {% endif %}
             >
-                <i class="fa fa-upload"></i> {% trans 'Bulk Import/Export' %}
+                <i class="fa fa-cloud-upload"></i> {% trans 'Bulk Upload' %}
             </a>
             <a class="btn btn-default" href="{% url "location_types" domain %}">
                 {% trans "Edit Organization Levels" %}
@@ -281,7 +290,6 @@
                         </a>
                     <!-- /ko -->
                 {% endif %}
-
             </div>
         </div>
 
