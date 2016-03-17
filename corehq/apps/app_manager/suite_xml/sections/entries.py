@@ -18,11 +18,7 @@ from corehq.apps.app_manager.xpath import CaseIDXPath, session_var, \
 from corehq.apps.app_manager.suite_xml.xml_models import *
 
 
-class FormDatumMeta(namedtuple('FormDatumMeta', 'datum case_type requires_selection action')):
-    def __repr__(self):
-        return 'FormDataumMeta(datum=<SessionDatum(id={})>, case_type={}, requires_selection={}, action={})'.format(
-            self.datum.id, self.case_type, self.requires_selection, self.action
-        )
+FormDatumMeta = namedtuple('FormDatumMeta', 'datum case_type requires_selection action')
 
 
 class EntriesContributor(SuiteContributorByModule):
