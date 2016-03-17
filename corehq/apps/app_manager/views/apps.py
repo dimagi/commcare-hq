@@ -258,7 +258,7 @@ def get_apps_base_context(request, domain, app):
             'show_advanced': (
                 v2_app
                 and (
-                    toggles.APP_BUILDER_ADVANCED.enabled(request.user.username)
+                    toggles.APP_BUILDER_ADVANCED.enabled(domain)
                     or getattr(app, 'commtrack_enabled', False)
                 )
             ),
