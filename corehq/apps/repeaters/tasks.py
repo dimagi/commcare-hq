@@ -12,6 +12,7 @@ from corehq.apps.repeaters.const import (
     CHECK_REPEATERS_INTERVAL,
     CHECK_REPEATERS_KEY,
 )
+from corehq.apps.repeaters.models import simple_post_cache_value
 
 logging = get_task_logger(__name__)
 
@@ -43,6 +44,13 @@ def check_repeaters():
 
         lock = redis_client.lock(lock_key, timeout=60 * 60 * 48)
         if not lock.acquire(blocking=False):
+            continue
+
+        # Short circuit task creation if we already know the URL is failing
+        result = simple_post_cache_value(record.url)
+        if result:
+            record.update_failure(result)
+            record.save()
             continue
 
         process_repeat_record.delay(record)
