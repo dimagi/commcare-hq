@@ -41,7 +41,7 @@ class Command(LabelCommand):
             operation, and may take a long time, and cause extraneous updates to the requisite
             consumers of the _changes feeds  Are you sure you want to do this?
 
-Type 'yes' to continue, or 'no' to cancel: """  % pillow_name)
+Type 'yes' to continue, or 'no' to cancel: """ % pillow_name)
         else:
             confirm = 'yes'
 
