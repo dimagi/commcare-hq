@@ -86,8 +86,7 @@ submodules:
   submodules/django-digest-src:
     branches: []
   submodules/dimagi-utils-src:
-    branches:
-      - request-params # Nick P 3/15
+    branches: []
   submodules/django-prbac-src:
     branches: []
   corehq/apps/prelogin:
