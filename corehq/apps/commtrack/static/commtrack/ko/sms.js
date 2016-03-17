@@ -1,4 +1,6 @@
+/*globals hqDefine, ko, $ */
 hqDefine('commtrack/ko/sms.js', function () {
+    'use strict';
     function CommtrackSettingsViewModel(other_sms_codes) {
         this.keyword = ko.observable();
         this.actions = ko.observableArray();
@@ -16,9 +18,9 @@ hqDefine('commtrack/ko/sms.js', function () {
             {label: 'Stock out', value: 'stockout'},
         ];
 
-        this.load = function(data) {
+        this.load = function (data) {
             this.keyword(data.keyword);
-            this.actions($.map(data.actions, function(e) {
+            this.actions($.map(data.actions, function (e) {
                 return new ActionModel(e);
             }));
             this.requisition_config(new RequisitionConfigModel(data.requisition_config));
@@ -26,15 +28,15 @@ hqDefine('commtrack/ko/sms.js', function () {
 
         var settings = this;
 
-        this.remove_action = function(action) {
+        this.remove_action = function (action) {
             settings.actions.remove(action);
         };
 
-        this.new_action = function() {
+        this.new_action = function () {
             settings.actions.push(new ActionModel({}));
         };
 
-        this.validate = function() {
+        this.validate = function () {
             this.keyword_error(null);
 
             var that = this;
@@ -48,52 +50,52 @@ hqDefine('commtrack/ko/sms.js', function () {
                 valid = false;
             }
 
-            $.each(this.actions(), function(i, e) {
-                    if (!e.validate(that)) {
-                        valid = false;
-                    }
-                });
+            $.each(this.actions(), function (i, e) {
+                if (!e.validate(that)) {
+                    valid = false;
+                }
+            });
 
             return valid;
         };
 
-        this.presubmit = function() {
+        this.presubmit = function () {
             if (!this.validate()) {
                 return false;
             }
 
-            payload = this.to_json();
+            var payload = this.to_json();
             this.json_payload(JSON.stringify(payload));
         };
 
-        this.all_sms_codes = function() {
-            keywords = [];
+        this.all_sms_codes = function () {
+            var keywords = [];
 
-            $.each(other_sms_codes, function(k, v) {
-                    keywords.push({keyword: k, type: v[0], name: 'product "' + v[1] + '"', id: null});
-                });
+            $.each(other_sms_codes, function (k, v) {
+                keywords.push({keyword: k, type: v[0], name: 'product "' + v[1] + '"', id: null});
+            });
 
             keywords.push({keyword: this.keyword(), type: 'command', name: 'stock report', id: 'stock_report'});
 
-            $.each(this.actions(), function(i, e) {
-                    keywords.push({keyword: e.keyword(), type: 'action', name: e.caption(), id: i});
-                });
+            $.each(this.actions(), function (i, e) {
+                keywords.push({keyword: e.keyword(), type: 'action', name: e.caption(), id: i});
+            });
 
             return keywords;
         };
 
-        this.sms_code_uniqueness = function(keyword, type, id) {
+        this.sms_code_uniqueness = function (keyword, type, id) {
             var conflict = null;
-            $.each(this.all_sms_codes(), function(i, e) {
-                    if (keyword == e.keyword && !(type == e.type && id == e.id)) {
-                        conflict = e;
-                        return false;
-                    }
-                });
+            $.each(this.all_sms_codes(), function (i, e) {
+                if (keyword === e.keyword && !(type === e.type && id === e.id)) {
+                    conflict = e;
+                    return false;
+                }
+            });
             return conflict;
         };
 
-        this.validate_sms = function(model, attr, type, id) {
+        this.validate_sms = function (model, attr, type, id) {
             var conflict = this.sms_code_uniqueness(model[attr](), type, id);
             if (conflict) {
                 model[attr + '_error']('conficts with ' + conflict.name);
@@ -102,10 +104,10 @@ hqDefine('commtrack/ko/sms.js', function () {
             return true;
         };
 
-        this.to_json = function() {
+        this.to_json = function () {
             return {
                 keyword: this.keyword(),
-                actions: $.map(this.actions(), function(e) { return e.to_json(); }),
+                actions: $.map(this.actions(), function (e) { return e.to_json(); }),
                 requisition_config: this.requisition_config().to_json(),
             };
         };
@@ -120,11 +122,11 @@ hqDefine('commtrack/ko/sms.js', function () {
         this.keyword_error = ko.observable();
         this.caption_error = ko.observable();
 
-        this.validate = function(root) {
+        this.validate = function (root) {
             this.keyword_error(null);
             this.caption_error(null);
 
-            valid = true;
+            var valid = true;
 
             if (!this.keyword()) {
                 this.keyword_error('required');
@@ -142,7 +144,7 @@ hqDefine('commtrack/ko/sms.js', function () {
             return valid;
         };
 
-        this.to_json = function() {
+        this.to_json = function () {
             return {
                 keyword: this.keyword(),
                 caption: this.caption(),
@@ -162,30 +164,30 @@ hqDefine('commtrack/ko/sms.js', function () {
         ];
 
         this.enabled = ko.observable(data.enabled);
-        this.actions = ko.observableArray($.map(data.actions, function(item) {
+        this.actions = ko.observableArray($.map(data.actions, function (item) {
             return new ActionModel(item);
         }));
 
         var that = this;
-        this.remove_action = function(action) {
+        this.remove_action = function (action) {
             that.actions.remove(action);
         };
 
-        this.new_action = function() {
+        this.new_action = function () {
             that.actions.push(new ActionModel({}));
         };
 
-        this.to_json = function() {
+        this.to_json = function () {
             return {
                 enabled: this.enabled(),
-                actions: $.map(this.actions(), function(e) { return e.to_json(); })
+                actions: $.map(this.actions(), function (e) { return e.to_json(); })
             };
         };
     }
     return {
-        initCommtrackSettingsView: function($element, settings, other_sms_codes) {
+        initCommtrackSettingsView: function ($element, settings, other_sms_codes) {
             var model = new CommtrackSettingsViewModel(other_sms_codes);
-            $element.submit(function() {
+            $element.submit(function () {
                 return model.presubmit();
             });
 
@@ -195,17 +197,19 @@ hqDefine('commtrack/ko/sms.js', function () {
     };
 });
 
-// TODO move to shared library
-ko.bindingHandlers.bind_element = {
-    init: function(element, valueAccessor, allBindingsAccessor, viewModel, bindingContext) {
-        var field = valueAccessor() || '$e';
-        if (viewModel[field]) {
-            console.log('warning: element already bound');
-            return;
+(function () {
+    'use strict';
+    ko.bindingHandlers.bind_element = {
+        init: function (element, valueAccessor, allBindingsAccessor, viewModel, bindingContext) {
+            var field = valueAccessor() || '$e';
+            if (viewModel[field]) {
+                console.log('warning: element already bound');
+                return;
+            }
+            viewModel[field] = element;
+            if (viewModel.onBind) {
+                viewModel.onBind(bindingContext);
+            }
         }
-        viewModel[field] = element;
-        if (viewModel.onBind) {
-            viewModel.onBind(bindingContext);
-        }
-    }
-};
+    };
+}());
