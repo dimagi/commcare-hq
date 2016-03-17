@@ -11,6 +11,8 @@ OTHER_FIELDS = {
     "external_id": "1234",
     "metadata": {"foo": "bar"},
     "is_archived": False,
+    "latitude": 42.381830,
+    "longitude": -71.093874,
 }
 
 
@@ -47,11 +49,14 @@ class TestLocationSync(TestCase):
 
     def assertLocationsEqual(self, loc1, loc2):
         fields = ["domain", "name", "location_id", "location_type_name",
-                  "site_code", "external_id", "metadata", "is_archived",
-                  "latitude", "longitude"]
+                  "site_code", "external_id", "metadata", "is_archived"]
         for field in fields:
             msg = "The locations have different values for '{}'".format(field)
             self.assertEqual(getattr(loc1, field), getattr(loc2, field), msg)
+
+        # <type 'Decimal'> != <type 'float'>
+        self.assertEqual(float(loc1.latitude), float(loc2.latitude))
+        self.assertEqual(float(loc1.longitude), float(loc2.longitude))
 
         def get_parent(loc):
             return loc.parent.location_id if loc.parent else None

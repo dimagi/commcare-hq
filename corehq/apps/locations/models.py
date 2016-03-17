@@ -247,7 +247,7 @@ class SQLLocation(SyncSQLToCouchMixin, MPTTModel):
     @classmethod
     def _migration_get_fields(cls):
         return ["domain", "name", "lineage", "site_code", "external_id",
-                "metadata", "is_archived", "latitude", "longitude"]
+                "metadata", "is_archived"]
 
     @classmethod
     def _migration_get_couch_model_class(cls):
@@ -256,6 +256,8 @@ class SQLLocation(SyncSQLToCouchMixin, MPTTModel):
     def _migration_do_sync(self):
         couch_obj = self._migration_get_or_create_couch_object()
         couch_obj._sql_location_type = self.location_type
+        couch_obj.latitude = float(self.latitude) if self.latitude else None
+        couch_obj.longitude = float(self.longitude) if self.longitude else None
         self._migration_sync_to_couch(couch_obj)
 
     @transaction.atomic()
