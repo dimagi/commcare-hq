@@ -143,7 +143,7 @@ production:
       email_queue:
         concurrency: 2
       repeat_record_queue:
-        concurrency: 3
+        concurrency: 6
     hqcelery1:
       reminder_queue:
         concurrency: 8
