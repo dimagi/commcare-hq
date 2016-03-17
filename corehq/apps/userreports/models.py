@@ -283,6 +283,10 @@ class DataSourceConfiguration(UnicodeMixIn, CachedCouchDocumentMixin, Document):
         for result in iter_docs(cls.get_db(), cls.all_ids()):
             yield cls.wrap(result)
 
+    @property
+    def is_static(self):
+        return _id_is_static(self._id)
+
     def deactivate(self):
         self.is_deactivated = True
         self.save()
@@ -554,7 +558,7 @@ def get_datasource_config(config_id, domain):
             'The data source referenced by this report could not be found.'
         ))
 
-    is_static = config_id.startswith(StaticDataSourceConfiguration._datasource_id_prefix)
+    is_static = _id_is_static(config_id)
     if is_static:
         config = StaticDataSourceConfiguration.by_id(config_id)
         if config.domain != domain:
@@ -565,6 +569,10 @@ def get_datasource_config(config_id, domain):
         except DocumentNotFound:
             _raise_not_found()
     return config, is_static
+
+
+def _id_is_static(data_source_id):
+    return data_source_id.startswith(StaticDataSourceConfiguration._datasource_id_prefix)
 
 
 def get_report_config(config_id, domain):
