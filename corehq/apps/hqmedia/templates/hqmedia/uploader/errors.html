@@ -1,6 +1,6 @@
 {% load i18n %}
 <% if (errors.length > 0) { %>
-    <div class="alert alert-error">
+    <div class="alert alert-danger">
         <h5>{% trans 'Errors found' %}</h5>
         <% for (var e = 0; e < errors.length; e++) {
             var error = errors[e]; %>
