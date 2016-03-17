@@ -1,0 +1,20 @@
+<!doctype html>
+<html>
+<head>
+    <title>CommCare HQ - Branches Currently Deployed</title>
+</head>
+<body>
+
+    <h1>Branches Currently Deployed</h1>
+    <p>This page only means something on staging.</p>
+    <ul>
+    {% for branch in branches %}
+        <li>
+            <a href="https://github.com/dimagi/commcare-hq/compare/{{ branch.branch }}" target="_blank">{{ branch.branch }}</a>
+            (<a href="https://github.com/dimagi/commcare-hq/commit/{{ branch.commit }}" target="_blank">{{ branch.commit }}</a>)
+        </li>
+    {% endfor %}
+    </ul>
+
+</body>
+</html>

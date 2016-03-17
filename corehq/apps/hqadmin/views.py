@@ -2,7 +2,7 @@ import HTMLParser
 import json
 import socket
 from datetime import timedelta, date
-from collections import defaultdict
+from collections import defaultdict, namedtuple
 from StringIO import StringIO
 
 import dateutil
@@ -726,3 +726,28 @@ def _malt_csv_response(month, year):
     query_month = "{year}-{month}-01".format(year=year, month=month)
     queryset = MALTRow.objects.filter(month=query_month)
     return export_as_csv_action(exclude=['id'])(MALTRowAdmin, None, queryset)
+
+
+@require_superuser
+def branches_on_staging(request, template='hqadmin/branches_on_staging.html'):
+    branches = _get_branches_merged_into_autostaging()
+    return render(request, template, {'branches': branches})
+
+
+def _get_branches_merged_into_autostaging():
+    import sh
+    git = sh.git.bake(_tty_out=False)
+    # %p %s is parent hashes + subject of commit message, which will look like:
+    # <merge base> <merge head> Merge <stuff> into autostaging
+    pipe = git.log('origin/master...', grep='Merge .* into autostaging', format='%p %s')
+    CommitBranchPair = namedtuple('CommitBranchPair', ['commit', 'branch'])
+    return sorted(
+        (CommitBranchPair(
+            *line.strip()
+            .replace("Merge remote-tracking branch 'origin/", '')
+            .replace("Merge branch '", '')
+            .replace("' into autostaging", '')
+            .split(' ')[1:]
+        ) for line in pipe),
+        key=lambda pair: pair.branch
+    )
