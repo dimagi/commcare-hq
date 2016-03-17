@@ -43,10 +43,10 @@ class FakeConstructedPillow(ConstructedPillow):
     pass
 
 
-def make_fake_constructed_pillow():
+def make_fake_constructed_pillow(pillow_id):
     fake_dao = MockDocumentStore()
     pillow = FakeConstructedPillow(
-        name='FakeConstructedPillowName',
+        name=pillow_id,
         document_store=fake_dao,
         checkpoint=PillowCheckpoint('fake-constructed-pillow'),
         change_feed=RandomChangeFeed(10),
@@ -98,7 +98,7 @@ class PillowFactoryFunctionTestCase(SimpleTestCase):
 class PillowTestCase(TestCase):
 
     def test_pillow_reset_checkpoint(self):
-        pillow = make_fake_constructed_pillow()
+        pillow = make_fake_constructed_pillow('FakeConstructedPillowName')
         seq_id = '456'
         pillow.set_checkpoint(Change('123', seq_id))
         self.assertEqual(pillow.checkpoint.get_or_create_wrapped().document.sequence, seq_id)
