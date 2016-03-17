@@ -59,6 +59,7 @@ if __name__ == "__main__":
         'ptop_preindex',
         'sync_prepare_couchdb_multi',
         'sync_couch_views',
+        'celery',
     )
     if len(sys.argv) > 1 and sys.argv[1] in GEVENT_COMMANDS:
         from restkit.session import set_session; set_session("gevent")
