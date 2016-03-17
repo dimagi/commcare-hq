@@ -10,8 +10,8 @@ from corehq.form_processor.exceptions import (
     CaseNotFound,
     AttachmentNotFound,
     CaseSaveError,
-    LedgerSaveError
-)
+    LedgerSaveError,
+    LedgerValueNotFound)
 from corehq.form_processor.interfaces.dbaccessors import (
     AbstractCaseAccessor,
     AbstractFormAccessor,
@@ -666,7 +666,7 @@ class LedgerAccessorSQL(AbstractLedgerAccessor):
                 [case_id, section_id, entry_id]
             )[0]
         except IndexError:
-            raise LedgerValue.DoesNotExist
+            raise LedgerValueNotFound
 
     @staticmethod
     def save_ledger_values(ledger_values):

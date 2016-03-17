@@ -1,5 +1,6 @@
 from corehq.apps.commtrack.processing import compute_ledger_values
 from corehq.form_processor.backends.sql.dbaccessors import LedgerAccessorSQL
+from corehq.form_processor.exceptions import LedgerValueNotFound
 from corehq.form_processor.interfaces.ledger_processor import LedgerProcessorInterface, StockModelUpdateResult, \
     LedgerDBInterface
 from corehq.form_processor.models import LedgerValue, LedgerTransaction
@@ -12,7 +13,7 @@ class LedgerDBSQL(LedgerDBInterface):
     def _get_ledger(self, unique_ledger_reference):
         try:
             return LedgerAccessorSQL.get_ledger_value(**unique_ledger_reference._asdict())
-        except LedgerValue.DoesNotExist:
+        except LedgerValueNotFound:
             return None
 
     def get_current_ledger_value(self, unique_ledger_reference):
