@@ -4,61 +4,6 @@ try {
     var USE_BOOTSTRAP_3 = false;
 }
 
-var generateEditableHandler = function (spec) {
-    return {
-        init: function (element, valueAccessor, allBindingsAccessor, viewModel) {
-            var input = spec.getEdit().appendTo(element);
-            var span = spec.getNonEdit().appendTo(element);
-            var editing = allBindingsAccessor().editing;
-            var inputHandlers = allBindingsAccessor().inputHandlers;
-            spec.editHandler.init(input.get(0), valueAccessor, allBindingsAccessor, viewModel);
-            (spec.nonEditHandler.init || function () {})(span.get(0), valueAccessor, allBindingsAccessor, viewModel);
-            for (var name in inputHandlers) {
-                if (inputHandlers.hasOwnProperty(name)) {
-                    ko.bindingHandlers[name].init(input.get(0), (function (name) {
-                        return function () {
-                            return inputHandlers[name];
-                        };
-                    }(name)), allBindingsAccessor, viewModel);
-                }
-            }
-
-            if (editing) {
-                editing.subscribe(function () {
-                    ko.bindingHandlers.editableString.update(element, valueAccessor, allBindingsAccessor, viewModel);
-                });
-            }
-        },
-        update: function (element, valueAccessor, allBindingsAccessor, viewModel) {
-            var input = spec.getEdit(element);
-            var span = spec.getNonEdit(element);
-            var editing = allBindingsAccessor().editing || function () { return true; };
-            var inputHandlers = allBindingsAccessor().inputHandlers;
-
-            spec.editHandler.update(input.get(0), valueAccessor, allBindingsAccessor, viewModel);
-            spec.nonEditHandler.update(span.get(0), valueAccessor, allBindingsAccessor, viewModel);
-
-            for (var name in inputHandlers) {
-                if (inputHandlers.hasOwnProperty(name)) {
-                    ko.bindingHandlers[name].update(input.get(0), (function (name) {
-                        return function () {
-                            return inputHandlers[name];
-                        };
-                    }(name)), allBindingsAccessor, viewModel);
-                }
-            }
-
-            if (editing()) {
-                input.show();
-                span.hide();
-            } else {
-                input.hide();
-                span.show();
-            }
-        }
-    };
-};
-
 ko.bindingHandlers.staticChecked = {
     init: function (element) {
         $('<span class="icon"></span>').appendTo(element);
@@ -79,59 +24,35 @@ ko.bindingHandlers.staticChecked = {
     }
 };
 
-ko.bindingHandlers.editableString = generateEditableHandler({
-    editHandler: ko.bindingHandlers.value,
-    nonEditHandler: ko.bindingHandlers.text,
-    getEdit: function (element) {
-        if (element) {
-            return $('input', element);
-        } else {
-            return $('<input type="text"/>');
-        }
-    },
-    getNonEdit: function (element) {
-        if (element) {
-            return $('span', element);
-        } else {
-            return $('<span/>');
-        }
-    }
-});
-
-ko.bindingHandlers.editableBool = generateEditableHandler({
-    editHandler: ko.bindingHandlers.checked,
-    nonEditHandler: ko.bindingHandlers.staticChecked,
-    getEdit: function (element) {
-        if (element) {
-            return $('input', element);
-        } else {
-            return $('<input type="checkbox"/>');
-        }
-    },
-    getNonEdit: function (element) {
-        if (element) {
-            return $('span', element);
-        } else {
-            return $('<span/>');
-        }
-    }
-});
-
 ko.bindingHandlers.langcode = {
-    init: function (element, valueAccessor, allBindingsAccessor) {
-        ko.bindingHandlers.editableString.init(element, valueAccessor, function () {
-            var b = allBindingsAccessor();
-            b.valueUpdate = b.valueUpdate || [];
-            if (typeof b.valueUpdate === 'string') {
-                b.valueUpdate = [b.valueUpdate];
+    init: function (element, valueAccessor, allBindings) {
+        ko.bindingHandlers.value.init(element, valueAccessor, (function () {
+            var valueUpdate = allBindings.get('valueUpdate') || [];
+            if (typeof valueUpdate === 'string') {
+                valueUpdate = [valueUpdate];
             }
-            b.valueUpdate.push('autocompletechange');
-            b.valueUpdate.push('autocompleteclose');
-            return b;
-        });
-        $('input', element).addClass('short code form-control').langcodes();
+            valueUpdate.push('autocompletechange');
+            valueUpdate.push('autocompleteclose');
+            return {
+                get: function (key) {
+                    if (key === 'valueUpdate') {
+                        return valueUpdate;
+                    } else {
+                        return allBindings.get(key);
+                    }
+                },
+                has: function (key) {
+                    if (key === 'valueUpdate') {
+                        return true;
+                    } else {
+                        return allBindings.has(key);
+                    }
+                }
+            };
+        }()));
+        $(element).langcodes();
     },
-    update: ko.bindingHandlers.editableString.update
+    update: ko.bindingHandlers.value.update
 };
 
 ko.bindingHandlers.sortable = {
@@ -495,15 +416,14 @@ ko.bindingHandlers.optstr = {
         optstrText: 'label' (default)
         value: (ko.observable)
      */
-    update: function (element, valueAccessor, allBindingsAccessor) {
+    update: function (element, valueAccessor, allBindings) {
         var optionObjects = ko.utils.unwrapObservable(valueAccessor());
-        var allBindings = allBindingsAccessor();
-        var optstrValue = allBindings.optstrValue || 'value';
-        var optstrText = allBindings.optstrText || 'label';
+        var optstrValue = allBindings.get('optstrValue') || 'value';
+        var optstrText = allBindings.get('optstrText') || 'label';
         var optionStrings = ko.utils.arrayMap(optionObjects, function (o) {
             return o[optstrValue];
         });
-        allBindings.optionsText = function (optionString) {
+        var optionsText = function (optionString) {
             for (var i = 0; i < optionObjects.length; i++) {
                 if (optionObjects[i][optstrValue] === optionString) {
                     if (typeof optstrText === 'string') {
@@ -517,8 +437,21 @@ ko.bindingHandlers.optstr = {
 
         return ko.bindingHandlers.options.update(element, function () {
             return optionStrings;
-        }, function () {
-            return allBindings;
+        }, {
+            get: function (key) {
+                if (key === 'optionsText') {
+                    return optionsText;
+                } else {
+                    return allBindings.get(key);
+                }
+            },
+            has: function (key) {
+                if (key === 'optionsText') {
+                    return true;
+                } else {
+                    return allBindings.has(key);
+                }
+            }
         });
     }
 };
