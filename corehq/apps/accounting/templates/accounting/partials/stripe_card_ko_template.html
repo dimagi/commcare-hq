@@ -3,52 +3,62 @@
 <script type="text/html" id="select-stripe-card-template">
     <fieldset>
         <legend>{% trans 'Select Payment Method' %}</legend>
-        <div class="control-group">
-            <label class="control-label">
+        <div class="form-group">
+            <label class="control-label col-sm-3">
                 {% trans 'Card' %}
             </label>
-            <div class="controls">
-                <label class="radio">
-                    <input type="radio"
-                           name="selectedCardType"
-                           data-bind="checked: selectedCardType"
-                           value="saved">
-                    {% trans 'Use a saved card' %}<br />
-                    <p data-bind="visible: isSavedCard">
-                        <select class="input-xlarge"
+            <div class="col-sm-9">
+                <div class="radio">
+                    <label>
+                        <input type="radio"
+                               name="selectedCardType"
+                               data-bind="checked: selectedCardType"
+                               value="saved">
+                        {% trans 'Use a saved card' %}
+                    </label>
+                </div>
+                <div data-bind="visible: isSavedCard" class="row">
+                    <div class="col-sm-8">
+                        <select class="form-control"
                                 data-bind="options: savedCards,
                                            optionsText: 'cardName',
                                            value: selectedSavedCard"></select>
+                    </div>
+                    <div class="col-sm-3">
                         <button type="button"
                                 class="btn btn-danger"
                                 data-bind="event: {click: confirmRemoveSavedCard}">
-                            <i class="icon-remove"></i>
-                        </button>
-                    </p>
-                    <div class="alert" data-bind="visible: showConfirmRemoveCard">
-                        <p>{% trans 'Actually remove this card?' %}</p>
-                        <button type="button"
-                                class="btn btn-danger"
-                                data-bind="event: {click: removeSavedCard}">
-                            <i class="icon-remove"></i> {% trans 'Yes, Remove' %}
-                        </button>
-                        <button type="button"
-                                class="btn"
-                                data-bind="event: {click: cancelRemoveSavedCard}">
-                            {% trans 'Cancel' %}
+                            <i class="fa fa-remove"></i>
                         </button>
                     </div>
-                    <div class="alert" data-bind="visible: isRemovingCard">
-                        {% trans 'Removing card...' %}
-                    </div>
-                </label>
-                <label class="radio">
-                    <input type="radio"
-                           name="selectedCardType"
-                           data-bind="checked: selectedCardType"
-                           value="new">
-                    {% trans 'Use a different card' %}
-                </label>
+                </div>
+                <div class="alert alert-warning"
+                     style="margin-top:10px;"
+                     data-bind="visible: showConfirmRemoveCard">
+                    <p>{% trans 'Actually remove this card?' %}</p>
+                    <button type="button"
+                            class="btn btn-danger"
+                            data-bind="event: {click: removeSavedCard}">
+                        <i class="fa fa-remove"></i> {% trans 'Yes, Remove' %}
+                    </button>
+                    <button type="button"
+                            class="btn btn-default"
+                            data-bind="event: {click: cancelRemoveSavedCard}">
+                        {% trans 'Cancel' %}
+                    </button>
+                </div>
+                <div class="alert alert-info" data-bind="visible: isRemovingCard">
+                    {% trans 'Removing card...' %}
+                </div>
+                <div class="radio">
+                    <label>
+                        <input type="radio"
+                               name="selectedCardType"
+                               data-bind="checked: selectedCardType"
+                               value="new">
+                        {% trans 'Use a different card' %}
+                    </label>
+                </div>
             </div>
         </div>
         <div data-bind="template: {
@@ -88,7 +98,7 @@
 
 <script type="text/html" id="new-stripe-card-ko-template">
     <p class="alert alert-error" data-bind="visible: showErrors">
-        <i class="icon-warning-sign"></i>
+        <i class="fa fa-exclamation-triangle"></i>
         <span data-bind="text: errorMsg"></span>
     </p>
 
@@ -97,52 +107,58 @@
            data-bind="value: token" />
 
     <div data-bind="visible: showCardData">
-        <div class="control-group">
-            <label class="control-label">
+        <div class="form-group">
+            <label class="control-label col-sm-3">
                 {% trans 'Card Number' %}
             </label>
-            <div class="controls">
+            <div class="col-sm-9">
                 <input type="text"
                        data-bind="value: number"
                        size="20"
+                       class="form-control"
                        placeholder="xxxx-xxxx-xxxx-xxxx" />
             </div>
         </div>
 
-        <div class="control-group">
-            <label class="control-label">
+        <div class="form-group">
+            <label class="control-label col-sm-3">
                 {% trans 'CVC' %}
             </label>
-            <div class="controls">
+
+            <div class="col-sm-2">
                 <input type="text"
                        data-bind="value: cvc"
                        size="4"
-                       class="input-small"
+                       class="form-control"
                        placeholder="xxxx"/>
             </div>
         </div>
 
-        <div class="control-group">
-            <label class="control-label">
+        <div class="form-group">
+            <label class="control-label col-sm-3">
                 {% trans 'Expiration' %}
             </label>
-            <div class="controls">
-                <div class="control-row">
-                    <input type="text"
-                           data-bind="value: expMonth"
-                           size="2"
-                           class="span1"
-                           placeholder="MM" />
-                    <input type="text"
-                           data-bind="value: expYear"
-                           size="4"
-                           class="span2"
-                           placeholder="YYYY" />
+            <div class="col-sm-9">
+                <div class="row">
+                    <div class="col-sm-2">
+                        <input type="text"
+                               data-bind="value: expMonth"
+                               size="2"
+                               class="form-control"
+                               placeholder="MM" />
+                    </div>
+                    <div class="col-sm-4">
+                        <input type="text"
+                               data-bind="value: expYear"
+                               size="4"
+                               class="form-control"
+                               placeholder="YYYY" />
+                    </div>
                 </div>
             </div>
         </div>
-        <div class="control-group">
-            <div class="controls">
+        <div class="form-group">
+            <div class="col-sm-9 col-sm-offset-3">
                 <label class="checkbox">
                     <input type="checkbox"
                            data-bind="checked: agreedToPrivacyPolicy" />
@@ -160,7 +176,7 @@
                     {% trans 'Use this card to autopay' %}
                 </label>
                 <span class="help-block">
-                    <i class="icon-info-sign"></i>
+                    <i class="fa fa-info-circle"></i>
                     {% blocktrans %}
                         We use <a href="http://www.stripe.com/" target="_blank">Stripe</a>
                         to process this transaction.
@@ -178,7 +194,7 @@
     </p>
 
     <p class="alert alert-info" data-bind="visible: isTestMode">
-        <i class="icon-info-sign"></i>
+        <i class="fa fa-info-circle"></i>
         {% trans "Using Stripe's TEST API." %}
     </p>
 </script>
