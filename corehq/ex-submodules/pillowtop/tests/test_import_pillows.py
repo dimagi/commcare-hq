@@ -18,12 +18,12 @@ class FakePillow(BasicPillow):
 @override_settings(PILLOWTOPS={'test': ['pillowtop.tests.FakePillow']})
 class PillowImportTestCase(SimpleTestCase):
 
-    def test_get_pillow_classes(self):
+    def test_get_all_pillow_classes(self):
         pillows = get_all_pillow_classes()
         self.assertEquals(len(pillows), 1)
         self.assertTrue(isclass(pillows[0]))
 
-    def test_get_pillow_instances(self):
+    def test_get_all_pillow_instances(self):
         pillows = get_all_pillow_instances()
         self.assertEquals(len(pillows), 1)
         self.assertFalse(isclass(pillows[0]))
