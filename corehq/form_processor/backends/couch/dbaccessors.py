@@ -199,8 +199,7 @@ class LedgerAccessorCouch(AbstractLedgerAccessor):
     @staticmethod
     def get_ledger_value(case_id, section_id, entry_id):
         try:
-            return StockState.objects.values_list('stock_on_hand', flat=True).\
-                get(case_id=case_id, section_id=section_id, product_id=entry_id)
+            return StockState.objects.get(case_id=case_id, section_id=section_id, product_id=entry_id)
         except StockState.DoesNotExist:
             raise LedgerValueNotFound
 
