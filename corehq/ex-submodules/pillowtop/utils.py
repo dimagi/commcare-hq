@@ -9,6 +9,7 @@ import simplejson
 from django.conf import settings
 
 from dimagi.utils.chunked import chunked
+from dimagi.utils.modules import to_function
 from dimagi.utils.parsing import string_to_utc_datetime
 
 from pillowtop.exceptions import PillowNotFoundError
@@ -20,14 +21,7 @@ def get_pillow_instance(full_class_str):
 
 
 def _import_class_or_function(full_class_str):
-    mod_path, pillow_class_name = full_class_str.rsplit('.', 1)
-    try:
-        mod = importlib.import_module(mod_path)
-        return getattr(mod, pillow_class_name)
-    except (AttributeError, ImportError):
-        if settings.DEBUG:
-            raise
-        raise ValueError("Could not find class or function: '%s'" % full_class_str)
+    return to_function(full_class_str, failhard=settings.DEBUG)
 
 
 def get_all_pillow_classes():
