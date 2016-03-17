@@ -42,6 +42,7 @@ from corehq.apps.export.const import (
     PROPERTY_TAG_ROW,
     MAIN_CASE_TABLE_PROPERTIES,
     PARENT_CASE_TABLE_PROPERTIES,
+    PROPERTY_TAG_CASE,
 )
 from corehq.apps.export.dbaccessors import (
     get_latest_case_export_schema,
@@ -756,9 +757,11 @@ class FormExportDataSchema(ExportDataSchema):
             xform = app.get_form_by_xmlns(form_xmlns, log_missing=False)
             if not xform:
                 continue
+            case_updates = xform.get_case_updates(xform.get_module().case_type)
             xform = xform.wrapped_xform()
             xform_schema = FormExportDataSchema._generate_schema_from_xform(
                 xform,
+                case_updates,
                 app.langs,
                 app.copy_of,
                 app.version,
@@ -777,7 +780,7 @@ class FormExportDataSchema(ExportDataSchema):
         return current_xform_schema
 
     @staticmethod
-    def _generate_schema_from_xform(xform, langs, app_id, app_version):
+    def _generate_schema_from_xform(xform, case_updates, langs, app_id, app_version):
         questions = xform.get_questions(langs)
         repeats = [r['value'] for r in xform.get_questions(langs, include_groups=True) if r['tag'] == 'repeat']
         schema = FormExportDataSchema()
@@ -824,6 +827,16 @@ class FormExportDataSchema(ExportDataSchema):
                     group_schema.items.append(
                         FormExportDataSchema._generate_export_item_from_system_prop(
                             system_prop, app_id, app_version
+                        )
+                    )
+                for case_update_field in case_updates:
+                    group_schema.items.append(
+                        SystemExportItem(
+                            path=['form', 'case', 'update', case_update_field],
+                            label="case.update.{}".format(case_update_field),
+                            tag=PROPERTY_TAG_CASE,
+                            is_advanced=True,
+                            last_occurrences={app_id: app_version},
                         )
                     )
 
