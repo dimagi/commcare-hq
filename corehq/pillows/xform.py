@@ -122,7 +122,7 @@ def _get_doc_type_from_state(state):
     return {v: k for k, v in doc_type_to_state.items()}.get(state, 'XFormInstance')
 
 
-def get_sql_xform_to_elasticsearch_pillow():
+def get_sql_xform_to_elasticsearch_pillow(pillow_id):
     checkpoint = PillowCheckpoint(
         'sql-xforms-to-elasticsearch',
     )
@@ -132,7 +132,7 @@ def get_sql_xform_to_elasticsearch_pillow():
         doc_prep_fn=prepare_sql_form_json_for_elasticsearch
     )
     return ConstructedPillow(
-        name='SqlXFormToElasticsearchPillow',
+        name=pillow_id,
         document_store=None,
         checkpoint=checkpoint,
         change_feed=KafkaChangeFeed(topics=[topics.FORM_SQL], group_id='sql-forms-to-es'),
