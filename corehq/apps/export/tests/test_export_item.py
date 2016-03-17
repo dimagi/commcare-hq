@@ -1,10 +1,11 @@
 from django.test import SimpleTestCase
 
+from corehq.apps.export.const import CASE_NAME_TRANSFORM
 from corehq.apps.export.models import (
     ExportItem,
     ExportColumn,
 )
-from corehq.apps.export.models.new import MAIN_TABLE
+from corehq.apps.export.models.new import MAIN_TABLE, SystemExportItem
 
 
 class TestExportItemGeneration(SimpleTestCase):
@@ -53,3 +54,19 @@ class TestExportItemGeneration(SimpleTestCase):
         self.assertEqual(column.is_advanced, False)
         self.assertEqual(column.label, 'Question One')
         self.assertEqual(column.selected, False)
+
+    def test_wrap_export_item(self):
+        path = ["foo", "bar"]
+        item = ExportItem(path=path)
+        wrapped = ExportItem.wrap(item.to_json())
+        self.assertEqual(type(wrapped), type(item))
+        self.assertEqual(wrapped.to_json(), item.to_json())
+
+    def test_wrap_export_item_child(self):
+        path = ["foo", "bar"]
+        is_advanced = True
+        transform = CASE_NAME_TRANSFORM
+        item = SystemExportItem(path=path, is_advanced=is_advanced, transform=transform)
+        wrapped = ExportItem.wrap(item.to_json())
+        self.assertEqual(type(wrapped), type(item))
+        self.assertEqual(wrapped.to_json(), item.to_json())
