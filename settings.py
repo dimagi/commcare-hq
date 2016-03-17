@@ -112,6 +112,8 @@ ACCOUNTING_LOG_FILE = "%s/%s" % (FILEPATH, "commcarehq.accounting.log")
 ANALYTICS_LOG_FILE = "%s/%s" % (FILEPATH, "commcarehq.analytics.log")
 DATADOG_LOG_FILE = "%s/%s" % (FILEPATH, "commcarehq.datadog.log")
 
+LOCAL_LOGGING_HANDLERS = {}
+LOCAL_LOGGING_LOGGERS = {}
 
 # URL prefix for admin media -- CSS, JavaScript and images. Make sure to use a
 # trailing slash.
@@ -1046,6 +1048,9 @@ LOGGING = {
         },
     }
 }
+
+LOGGING['handlers'].update(LOCAL_LOGGING_HANDLERS)
+LOGGING['loggers'].update(LOCAL_LOGGING_LOGGERS)
 
 fix_logger_obfuscation_ = globals().get("FIX_LOGGER_ERROR_OBFUSCATION")
 helper.fix_logger_obfuscation(fix_logger_obfuscation_, LOGGING)
