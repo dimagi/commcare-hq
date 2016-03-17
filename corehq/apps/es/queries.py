@@ -12,13 +12,33 @@ are available, and put 'em here if you end up using any of 'em.
 """
 import re
 
+MUST = "must"
+MUST_NOT = "must_not"
+SHOULD = "should"
+BOOL = "bool"
 
-def BOOL(query):
-    return {"bool": query}
+
+def BOOL_CLAUSE(query):
+    return {BOOL: query}
 
 
-def MUST(query):
-    return {"must": query}
+def MUST_CLAUSE(query):
+    return {MUST: query}
+
+
+def MUST_NOT_CLAUSE(query):
+    return {MUST_NOT: query}
+
+
+def SHOULD_CLAUSE(query):
+    return {SHOULD: query}
+
+CLAUSES = {
+    MUST: MUST_CLAUSE,
+    MUST_NOT: MUST_NOT_CLAUSE,
+    SHOULD: SHOULD_CLAUSE,
+    BOOL: BOOL_CLAUSE
+}
 
 
 def match_all():

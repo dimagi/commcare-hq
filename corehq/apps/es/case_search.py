@@ -35,10 +35,20 @@ class CaseSearchES(HQESQuery):
         except (KeyError, TypeError):
             return []
 
-    def case_property_query(self, key, value):
+    def case_property_query(self, key, value, clause=queries.SHOULD):
         """
-        Search for a case property. Will overwrite other queries set with set_query unless they are 'must's
+        Search for a case property.
+        Usage: (CaseSearchES()
+                .domain('swashbucklers')
+                .case_property_query("name", "redbeard", "must")
+                .case_property_query("age", "15", "must")
+                .case_property_query("has_parrot", "yes", "should")
+                .case_property_query("is_pirate", "yes", "must_not"))
+
+        Can be chained with regular filters . Running a set_query after this will destroy it.
+        Clauses can be any of SHOULD, MUST, or MUST_NOT
         """
+
         # Filter by case_properties.key and do a text search in case_properties.value
         new_query = queries.nested(
             PATH,
@@ -47,13 +57,20 @@ class CaseSearchES(HQESQuery):
                 filters.term("{}.key".format(PATH), key)
             )
         )
-        return self.set_query(
-            queries.BOOL(
-                queries.MUST(
-                    [new_query] + self._case_property_queries
+        current_query = self._query.get(queries.BOOL)
+        if current_query is None:
+            return self.set_query(
+                queries.BOOL_CLAUSE(
+                    queries.CLAUSES[clause]([new_query])
                 )
             )
-        )
+        elif current_query.get(clause) and isinstance(current_query[clause], list):
+            current_query[clause] += [new_query]
+        else:
+            current_query.update(
+                queries.CLAUSES[clause]([new_query])
+            )
+        return self
 
 
 def case_property_filter(key, value):
