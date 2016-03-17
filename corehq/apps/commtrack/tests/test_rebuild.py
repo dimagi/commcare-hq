@@ -1,13 +1,13 @@
 from django.test import TestCase
 from casexml.apps.case.cleanup import rebuild_case_from_forms
 from casexml.apps.case.models import CommCareCase
-from casexml.apps.stock.models import StockTransaction
 from corehq.apps.commtrack.helpers import make_product
-from corehq.apps.commtrack.models import StockState
 from corehq.apps.commtrack.processing import rebuild_stock_state
 from corehq.apps.commtrack.tests.util import get_single_balance_block
 from corehq.apps.hqcase.utils import submit_case_blocks
+from corehq.form_processor.interfaces.dbaccessors import LedgerAccessors
 from corehq.form_processor.models import RebuildWithReason
+from corehq.form_processor.parsers.ledgers.helpers import UniqueLedgerReference
 
 LEDGER_BLOCKS_SIMPLE = """
 <transfer xmlns="http://commcarehq.org/ledger/v1" dest="{case_id}" date="2000-01-02" section-id="stock">
@@ -38,17 +38,19 @@ class RebuildStockStateTest(TestCase):
         self.product = make_product(self.domain, 'Product Name', 'prodcode')
         self._stock_state_key = dict(
             section_id='stock',
-            case_id=self.case.get_id,
+            case_id=self.case.case_id,
             product_id=self.product.get_id
+        )
+        self.unique_reference = UniqueLedgerReference(
+            case_id=self.case.case_id, section_id='stock', entry_id=self.product.get_id
         )
 
     def _assert_stats(self, epxected_tx_count, expected_stock_state_balance, expected_tx_balance):
-        stock_state = StockState.objects.get(**self._stock_state_key)
-        latest_txn = StockTransaction.latest(**self._stock_state_key)
-        all_txns = StockTransaction.get_ordered_transactions_for_stock(
-            **self._stock_state_key)
-        self.assertEqual(epxected_tx_count, all_txns.count())
-        self.assertEqual(expected_stock_state_balance, stock_state.stock_on_hand)
+        stock_on_hand = LedgerAccessors(self.domain).get_ledger_value(**self.unique_reference._asdict())
+        latest_txn = LedgerAccessors(self.domain).get_latest_transaction(**self.unique_reference._asdict())
+        all_txns = LedgerAccessors(self.domain).get_ledger_transactions_for_case(**self.unique_reference._asdict())
+        self.assertEqual(epxected_tx_count, len(all_txns))
+        self.assertEqual(expected_stock_state_balance, stock_on_hand)
         self.assertEqual(expected_tx_balance, latest_txn.stock_on_hand)
 
     def _submit_ledgers(self, ledger_blocks):

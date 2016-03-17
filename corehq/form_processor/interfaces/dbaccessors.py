@@ -317,6 +317,21 @@ class AbstractLedgerAccessor(six.with_metaclass(ABCMeta)):
     def get_transactions_for_consumption(domain, case_id, product_id, section_id, window_start, window_end):
         raise NotImplementedError
 
+    @abstractmethod
+    def get_ledger_value(case_id, section_id, entry_id):
+        raise NotImplementedError
+
+    @abstractmethod
+    def get_ledger_transactions_for_case(case_id, section_id=None, entry_id=None):
+        """
+        :return: List of transactions orderd by date ascending
+        """
+        raise NotImplementedError
+
+    @abstractmethod
+    def get_latest_transaction(case_id, section_id, entry_id):
+        raise NotImplementedError
+
 
 class LedgerAccessors(object):
     """
@@ -339,3 +354,12 @@ class LedgerAccessors(object):
         return self.db_accessor.get_transactions_for_consumption(
             self.domain, case_id, product_id, section_id, window_start, window_end
         )
+
+    def get_ledger_value(self, case_id, section_id, entry_id):
+        return self.db_accessor.get_ledger_value(case_id, section_id, entry_id)
+
+    def get_ledger_transactions_for_case(self, case_id, section_id=None, entry_id=None):
+        return self.db_accessor.get_ledger_transactions_for_case(case_id, section_id, entry_id)
+
+    def get_latest_transaction(self, case_id, section_id, entry_id):
+        return self.db_accessor.get_latest_transaction(case_id, section_id, entry_id)
