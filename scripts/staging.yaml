@@ -50,7 +50,6 @@ branches:
   - calculatedIcons # Sravan 3/2
   - vellum-staging # J$ 11/13
 #  - java-tf-deploy # Ben/Will 1/21/16
-  - finish-two-factor # Cal 1/21
   - show-form-case-refs-in-summary # j$ 1/29
 #  - revamp-multimedia # Jenny 2/16
   - analytics-retry # Cal 2/18
