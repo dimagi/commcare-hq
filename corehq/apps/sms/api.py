@@ -216,6 +216,7 @@ def queue_outgoing_sms(msg):
     else:
         msg.processed = True
         msg_sent = send_message_via_backend(msg)
+        msg.publish_change()
         if msg_sent:
             create_billable_for_sms(msg)
         return msg_sent

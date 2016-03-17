@@ -30,6 +30,7 @@ from corehq.util.view_utils import absolute_reverse
 from dimagi.utils.couch.undo import DELETED_SUFFIX
 from dimagi.utils.couch import CouchDocLockableMixIn
 from dimagi.utils.load_balance import load_balance
+from dimagi.utils.logging import notify_exception
 from django.utils.translation import ugettext_noop, ugettext_lazy
 
 
@@ -511,6 +512,16 @@ class SMS(SMSBase):
 
         return result
 
+    def publish_change(self):
+        try:
+            publish_sms_saved(self)
+        except:
+            notify_exception(
+                None,
+                message='Could not publish change for SMS',
+                details={'pk': self.pk}
+            )
+
     def save(self, *args, **kwargs):
         from corehq.apps.sms.tasks import sync_sms_to_couch
 
@@ -519,8 +530,6 @@ class SMS(SMSBase):
 
         if sync_to_couch:
             sync_sms_to_couch.delay(self)
-
-        publish_sms_saved(self)
 
 
 class QueuedSMS(SMSBase):
