@@ -1,10 +1,12 @@
 import inspect
 import re
+from copy import deepcopy
 
 from casexml.apps.case.models import CommCareCase
 from corehq.pillows.case import CasePillow
 from corehq.pillows.const import CASE_SEARCH_ALIAS
-from corehq.pillows.mappings.case_search_mapping import CASE_SEARCH_MAPPING, CASE_SEARCH_INDEX
+from corehq.pillows.mappings.case_search_mapping import CASE_SEARCH_INDEX, \
+    CASE_SEARCH_MAPPING
 
 
 class CaseSearchPillow(CasePillow):
@@ -17,12 +19,14 @@ class CaseSearchPillow(CasePillow):
     default_mapping = CASE_SEARCH_MAPPING()
 
     def change_transform(self, doc_dict):
-        return {
-            '_id': doc_dict.get('_id'),
-            'doc_type': doc_dict.get('doc_type'),
-            'domain': doc_dict.get('domain'),
-            'case_properties': _get_case_properties(doc_dict),
+        doc = {
+            desired_property: doc_dict.get(desired_property)
+            for desired_property in self.default_mapping['properties'].keys()
+            if desired_property != 'case_properties'
         }
+        doc['_id'] = doc_dict.get('_id')
+        doc['case_properties'] = _get_case_properties(doc_dict)
+        return doc
 
 
 def _get_case_properties(doc_dict):

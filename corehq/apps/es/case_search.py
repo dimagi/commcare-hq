@@ -10,15 +10,15 @@ from corehq.apps.es import case_search as case_search_es
          .domain('testproject')
 """
 from . import filters, queries
-from .es_query import HQESQuery
 
+from corehq.apps.es.cases import CaseES
 from corehq.pillows.const import CASE_SEARCH_ALIAS
 
 
 PATH = "case_properties"
 
 
-class CaseSearchES(HQESQuery):
+class CaseSearchES(CaseES):
     index = CASE_SEARCH_ALIAS
 
     @property
