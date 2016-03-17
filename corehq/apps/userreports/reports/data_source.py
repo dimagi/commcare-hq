@@ -150,6 +150,7 @@ class ConfigurableReportDataSource(SqlData):
         except (
             ColumnNotFoundException,
             ProgrammingError,
+            InvalidQueryColumn,
         ) as e:
             _soft_assert(False, unicode(e))
             raise UserReportsError(unicode(e))
@@ -176,6 +177,7 @@ class ConfigurableReportDataSource(SqlData):
         except (
             ColumnNotFoundException,
             ProgrammingError,
+            InvalidQueryColumn,
         ) as e:
             _soft_assert(False, unicode(e))
             raise UserReportsError(unicode(e))
