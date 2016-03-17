@@ -703,6 +703,13 @@ TELERIVET_SETUP_WALKTHROUGH = StaticToggle(
     [NAMESPACE_DOMAIN],
 )
 
+AUTO_CASE_UPDATES = StaticToggle(
+    'auto_case_updates',
+    'Ability to perform automatic case updates without closing the case.',
+    TAG_ONE_OFF,
+    [NAMESPACE_DOMAIN],
+)
+
 EWS_BROADCAST_BY_ROLE = StaticToggle(
     'ews_broadcast_by_role',
     'EWS: Filter broadcast recipients by role',
