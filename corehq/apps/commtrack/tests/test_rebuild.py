@@ -7,9 +7,10 @@ from corehq.apps.commtrack.processing import rebuild_stock_state
 from corehq.apps.commtrack.tests.util import get_single_balance_block
 from corehq.apps.hqcase.utils import submit_case_blocks
 from corehq.form_processor.interfaces.dbaccessors import LedgerAccessors, CaseAccessors
+from corehq.form_processor.interfaces.processor import FormProcessorInterface
 from corehq.form_processor.models import RebuildWithReason
 from corehq.form_processor.parsers.ledgers.helpers import UniqueLedgerReference
-from corehq.form_processor.tests import run_with_all_backends
+from corehq.form_processor.tests.utils import run_with_all_backends
 
 LEDGER_BLOCKS_SIMPLE = """
 <transfer xmlns="http://commcarehq.org/ledger/v1" dest="{case_id}" date="2000-01-02" section-id="stock">
@@ -46,6 +47,8 @@ class RebuildStockStateTest(TestCase):
             case_id=self.case.case_id, section_id='stock', entry_id=self.product.get_id
         )
 
+        self.ledger_processor = FormProcessorInterface(self.domain).ledger_processor
+
     def _assert_stats(self, epxected_tx_count, expected_stock_state_balance, expected_tx_balance):
         ledger_value = LedgerAccessors(self.domain).get_ledger_value(**self.unique_reference._asdict())
         latest_txn = LedgerAccessors(self.domain).get_latest_transaction(**self.unique_reference._asdict())
@@ -63,7 +66,7 @@ class RebuildStockStateTest(TestCase):
         self._submit_ledgers(LEDGER_BLOCKS_SIMPLE)
         self._assert_stats(2, 100, 100)
 
-        rebuild_stock_state(**self._stock_state_key)
+        self.ledger_processor.rebuild_ledger_state(**self.unique_reference._asdict())
 
         self._assert_stats(2, 200, 200)
 
@@ -106,7 +109,7 @@ class RebuildStockStateTest(TestCase):
 
         case = CaseAccessors(self.domain).get_case(self.case.case_id)
         self.assertEqual(2, len(case.actions))
-        self.assertEqual([form_id], case.xform_ids)
+        self.assertEqual([form_id], case.xform_ids[1:])
 
         # change the value to 50
         edit_quantity = 50
@@ -116,6 +119,6 @@ class RebuildStockStateTest(TestCase):
             form_id=form_id,
         )
         case = CommCareCase.get(id=self.case.case_id)
-        self.assertEqual(1, len(case.actions))
+        self.assertEqual(2, len(case.actions))
         self._assert_stats(1, edit_quantity, edit_quantity)
         self.assertEqual([form_id], case.xform_ids[1:])

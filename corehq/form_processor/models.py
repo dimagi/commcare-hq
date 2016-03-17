@@ -1133,6 +1133,10 @@ class LedgerValue(DisabledDbMixin, models.Model, TrackRelatedChanges):
     balance = models.IntegerField(default=0)  # todo: confirm we aren't ever intending to support decimals
     last_modified = models.DateTimeField(auto_now=True)
 
+    @property
+    def stock_on_hand(self):
+        return self.balance
+
     class Meta:
         app_label = "form_processor"
         db_table = LedgerValue_DB_TABLE
@@ -1197,6 +1201,17 @@ class LedgerTransaction(DisabledDbMixin, models.Model):
         for type_, type_slug in self.TYPE_CHOICES:
             if self.type == type_:
                 return type_slug
+
+    @property
+    def ledger_reference(self):
+        from corehq.form_processor.parsers.ledgers.helpers import UniqueLedgerReference
+        return UniqueLedgerReference(
+            case_id=self.case_id, section_id=self.section_id, entry_id=self.entry_id
+        )
+
+    @property
+    def stock_on_hand(self):
+        return self.updated_balance
 
     def __unicode__(self):
         return (

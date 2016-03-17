@@ -674,7 +674,7 @@ class LedgerAccessorSQL(AbstractLedgerAccessor):
             return
 
         for ledger_value in ledger_values:
-            transactions = ledger_value.get_tracked_models_to_create(LedgerTransaction)
+            transactions = ledger_value.get_live_tracked_models(LedgerTransaction)
 
             ledger_value.last_modified = datetime.utcnow()
 
@@ -717,6 +717,16 @@ class LedgerAccessorSQL(AbstractLedgerAccessor):
             transaction.get_consumption_transactions(exclude_inferred_receipts)
             for transaction in transactions
         ])
+
+    @staticmethod
+    def get_latest_transaction(case_id, section_id, entry_id):
+        try:
+            return LedgerTransaction.objects.raw(
+                "SELECT * FROM get_latest_ledger_transaction(%s, %s, %s)",
+                [case_id, section_id, entry_id]
+            )[0]
+        except IndexError:
+            return None
 
 
 def _order_list(id_list, object_list, id_property):
