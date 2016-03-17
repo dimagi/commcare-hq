@@ -41,7 +41,7 @@ def check_repeaters():
         if now > cutoff:
             break
 
-        lock = redis_client.lock(lock_key, timeout=60 * 60 * 24)
+        lock = redis_client.lock(lock_key, timeout=60 * 60 * 48)
         if not lock.acquire(blocking=False):
             continue
 
