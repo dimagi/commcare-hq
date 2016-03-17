@@ -573,6 +573,8 @@ def get_datasource_config(config_id, domain):
 
 
 def _id_is_static(data_source_id):
+    if data_source_id is None:
+        return False
     return data_source_id.startswith(StaticDataSourceConfiguration._datasource_id_prefix)
 
 
