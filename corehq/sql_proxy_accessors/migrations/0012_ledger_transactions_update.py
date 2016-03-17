@@ -14,14 +14,9 @@ migrator = RawSQLMigration(('corehq', 'sql_proxy_accessors', 'sql_templates'), {
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('sql_proxy_accessors', '0010_merge'),
+        ('sql_proxy_accessors', '0011_ledger_transactions'),
     ]
 
     operations = [
-        HqRunSQL(
-            "DROP FUNCTION IF EXISTS save_ledger_values(TEXT[], form_processor_ledgervalue[]);",
-            "SELECT 1"
-        ),
-        migrator.get_migration('save_ledger_values.sql'),
         migrator.get_migration('get_ledger_transactions_for_case.sql'),
     ]

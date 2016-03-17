@@ -693,24 +693,24 @@ class LedgerAccessorSQL(AbstractLedgerAccessor):
             ledger_value.clear_tracked_models()
 
     @staticmethod
-    def get_ledger_transactions_for_case(case_id, entry_id=None, section_id=None):
+    def get_ledger_transactions_for_case(case_id, section_id=None, entry_id=None):
         return RawQuerySetWrapper(LedgerTransaction.objects.raw(
             "SELECT * FROM get_ledger_transactions_for_case(%s, %s, %s)",
-            [case_id, entry_id, section_id]
+            [case_id, section_id, entry_id]
         ))
 
     @staticmethod
-    def get_ledger_transactions_in_window(case_id, entry_id, section_id, window_start, window_end):
+    def get_ledger_transactions_in_window(case_id, section_id, entry_id, window_start, window_end):
         return RawQuerySetWrapper(LedgerTransaction.objects.raw(
             "SELECT * FROM get_ledger_transactions_for_case(%s, %s, %s, %s, %s)",
-            [case_id, entry_id, section_id, window_start, window_end]
+            [case_id, section_id, entry_id, window_start, window_end]
         ))
 
     @staticmethod
     def get_transactions_for_consumption(domain, case_id, product_id, section_id, window_start, window_end):
         from corehq.apps.commtrack.consumption import should_exclude_invalid_periods
         transactions = LedgerAccessorSQL.get_ledger_transactions_in_window(
-            case_id, product_id, section_id, window_start, window_end
+            case_id, section_id, product_id, window_start, window_end
         )
         exclude_inferred_receipts = should_exclude_invalid_periods(domain)
         return itertools.chain.from_iterable([
