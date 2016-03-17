@@ -50,7 +50,7 @@ ko.bindingHandlers.langcode = {
                 }
             };
         }()));
-        $('input', element).addClass('short code form-control').langcodes();
+        $(element).langcodes();
     },
     update: ko.bindingHandlers.value.update
 };

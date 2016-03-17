@@ -36,8 +36,9 @@
                 {% endif %}
             </td>
             <td class="col-sm-1">
-                <span class="form-inline"
-                      data-bind="langcode: langcode, valueUpdate: 'textchange', inputHandlers: {hasfocus: $root.seen}">
+                <span class="form-inline">
+                      <input class="short form-control"
+                             data-bind="langcode: langcode, valueUpdate: 'textchange', inputHandlers: {hasfocus: $root.seen}"/>
                 </span>
             </td>
             <td class="col-sm-1">
