@@ -766,7 +766,7 @@ class PrivacySecurityForm(forms.Form):
             self.helper.layout.pop(5)
         if not HIPAA_COMPLIANCE_CHECKBOX.enabled(user_name):
             self.helper.layout.pop(4)
-        if not SECURE_SESSIONS_CHECKBOX.enabled(domain):
+        if not domain_has_privilege(domain, privileges.ADVANCED_DOMAIN_SECURITY):
             self.helper.layout.pop(2)
         self.helper.all().wrap_together(crispy.Fieldset, 'Edit Privacy Settings')
         self.helper.layout.append(
