@@ -135,6 +135,16 @@ INDICATOR_DATA = {
         "histogram_type": "forms",
         "xaxis_label": "# forms",
     },
+    "forms_j2me": {
+        "ajax_view": "admin_reports_stats_data",
+        "chart_name": "forms_j2me",
+        "chart_title": "J2ME Forms Submitted",
+        "get_request_params": {
+            "j2me_only": True,
+        },
+        "histogram_type": "forms",
+        "xaxis_label": "# forms",
+    },
     "users": {
         "ajax_view": "admin_reports_stats_data",
         "chart_name": "users",
@@ -1039,6 +1049,7 @@ class RealProjectSpacesReport(GlobalAdminReports):
         'forms',
         'forms_mobile',
         'forms_web',
+        'forms_j2me',
         'subscriptions',
     ]
 
