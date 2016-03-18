@@ -1,7 +1,7 @@
 from corehq.util.elastic import es_index
 
-DOMAIN_INDEX = es_index("hqdomains_20160308_1304")
-DOMAIN_MAPPING = {'_meta': {'comment': 'Lukasz Wyszomirski modified on 2016/03/08',
+DOMAIN_INDEX = es_index("hqdomains_20160318_1721")
+DOMAIN_MAPPING = {'_meta': {'comment': 'frener modified on 2016/03/18',
                             'created': None},
  'date_detection': False,
  'date_formats': ['yyyy-MM-dd',
@@ -42,6 +42,7 @@ DOMAIN_MAPPING = {'_meta': {'comment': 'Lukasz Wyszomirski modified on 2016/03/0
                                                                  'type': 'object'}},
                                  'type': 'object'},
                 'case_sharing': {'type': 'boolean'},
+                'case_search_enabled': {'type': 'boolean'},
                 'cda': {'dynamic': False,
                         'properties': {'date': {'format': "yyyy-MM-dd||yyyy-MM-dd'T'HH:mm:ssZZ||yyyy-MM-dd'T'HH:mm:ss.SSSSSS||yyyy-MM-dd'T'HH:mm:ss.SSSSSS'Z'||yyyy-MM-dd'T'HH:mm:ss'Z'||yyyy-MM-dd'T'HH:mm:ssZ||yyyy-MM-dd'T'HH:mm:ssZZ'Z'||yyyy-MM-dd'T'HH:mm:ss.SSSZZ||yyyy-MM-dd'T'HH:mm:ss||yyyy-MM-dd' 'HH:mm:ss||yyyy-MM-dd' 'HH:mm:ss.SSSSSS||mm/dd/yy' 'HH:mm:ss",
                                                 'type': 'date'},

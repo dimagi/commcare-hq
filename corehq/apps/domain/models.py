@@ -333,6 +333,9 @@ class Domain(QuickCachedDocumentMixin, Document, SnapshotMixin):
 
     two_factor_auth = BooleanProperty(default=False)
 
+    # enables case_search pillows to index this domains cases
+    case_search_enabled = BooleanProperty(default=False)
+
     @property
     def domain_type(self):
         """
