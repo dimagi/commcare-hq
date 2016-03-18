@@ -51,6 +51,10 @@ class OdmExportReportView(GenericReportView):
             'protocol_name': get_study_constant(domain, 'protocol_name'),
             'study_oid': get_study_constant(domain, 'study_oid'),
             'audit_logs': AUDIT_LOGS,
+            # The template accepts XML strings in params "study_xml" and
+            # "admin_data_xml" which come from the study metadata.
+            'study_xml': get_study_constant(domain, 'study_xml'),
+            'admin_data_xml': get_study_constant(domain, 'admin_data_xml'),
         }
 
     @property
@@ -129,9 +133,10 @@ class OdmExportReport(OdmExportReportView, CustomProjectReport, CaseListMixin):
             subject.enrollment_date = getattr(case, CC_ENROLLMENT_DATE, None)
             subject.sex = getattr(case, CC_SEX, None)
             subject.dob = getattr(case, CC_DOB, None)
-            for form in originals_first(case.get_forms()):
-                # Pass audit log ID by reference to increment it for each audit log
-                subject.add_data(form.form, form, audit_log_id_ref)
+            for event in case.get_subcases():
+                for form in originals_first(event.get_forms()):
+                    # Pass audit log ID by reference to increment it for each audit log
+                    subject.add_data(form.form, form, event, audit_log_id_ref)
             yield subject
 
     def subject_export_rows(self):

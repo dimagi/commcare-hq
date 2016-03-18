@@ -12,6 +12,7 @@
           <weight/>
           <time/>
           <now/>
+          <mothers_name/>
         </data>
       </instance>
       <itext>
@@ -42,10 +43,12 @@
       <bind nodeset="/data/name" type="xsd:string"/>
       <bind nodeset="/data/dob" type="xsd:date"/>
       <bind nodeset="/data/with_mother" type="xsd:boolean"/>
+      <setvalue event="xforms-ready" ref="/data/with_mother" value="true" />
       <bind nodeset="/data/height" type="xsd:int"/>
       <bind nodeset="/data/weight" type="xsd:decimal"/>
       <bind nodeset="/data/time" type="xsd:time"/>
       <bind nodeset="/data/now" type="xsd:dateTime"/>
+      <bind nodeset="/data/mothers_name" calculate="concat('Jane', ' ', 'Smith')"/>
     </model>
   </h:head>
   <h:body>

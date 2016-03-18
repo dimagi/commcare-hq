@@ -1161,6 +1161,7 @@ COUCHDB_APPS = [
     'grapevine',
     'uth',
     'dhis2',
+    'openclinica',
 
     # custom reports
     'penn_state',

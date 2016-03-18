@@ -93,11 +93,14 @@ class XFormBuilderTests(SimpleTestCase, TestXmlMixin):
     def test_data_types(self):
         self.xform.new_question('name', 'Child name')
         self.xform.new_question('dob', 'Child date of birth', 'date')
-        self.xform.new_question('with_mother', 'Does child live with mother?', 'boolean')
+        self.xform.new_question('with_mother', 'Does child live with mother?', 'boolean',
+                                value='true')
         self.xform.new_question('height', 'Child height (cm)', 'int')
         self.xform.new_question('weight', 'Child weight (metric tonnes)', 'decimal')
         self.xform.new_question('time', 'Arrival time', 'time')
         self.xform.new_question('now', 'Current timestamp', 'dateTime')
+        self.xform.new_question('mothers_name', None, None,  # Hidden values have no data type
+                                calculate="concat('Jane', ' ', 'Smith')")
         self.assertXmlEqual(
             self.replace_xmlns(self.get_xml('data_types'), self.xform.xmlns),
             self.xform.tostring(pretty_print=True, encoding='utf-8', xml_declaration=True)
