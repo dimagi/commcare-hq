@@ -265,7 +265,7 @@ class AddAutomaticCaseUpdateRuleForm(forms.Form):
                 StrictButton(
                     _("Save"),
                     type='submit',
-                    css_class='btn btn-primary col-sm-offset-1'
+                    css_class='btn btn-primary col-sm-offset-1',
                 ),
             ),
         )
