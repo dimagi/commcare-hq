@@ -298,3 +298,39 @@ class TestReportAggregation(ConfigurableReportTestMixin, TestCase):
                 ]
             ]]
         )
+
+    def test_total_row(self):
+        report_config = self._create_report(
+            aggregation_columns=['indicator_col_id_first_name'],
+            columns=[
+                {
+                    "type": "field",
+                    "display": "report_column_display_first_name",
+                    "field": 'indicator_col_id_first_name',
+                    'column_id': 'report_column_col_id_first_name',
+                    'aggregation': 'simple',
+                },
+                {
+                    "type": "field",
+                    "display": "report_column_display_number",
+                    "field": 'indicator_col_id_number',
+                    'column_id': 'report_column_col_id_number',
+                    'aggregation': 'sum',
+                    'calculate_total': True,
+                },
+            ]
+        )
+        view = self._create_view(report_config)
+
+        self.assertEqual(
+            view.export_table,
+            [[
+                u'foo',
+                [
+                    [u'report_column_display_first_name', u'report_column_display_number'],
+                    [u'Ada', 3],
+                    [u'Alan', 6],
+                    [u'Total', 9],
+                ]
+            ]]
+        )
