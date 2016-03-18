@@ -65,7 +65,6 @@ if __name__ == "__main__":
     # ('module' object has no attribute 'poll' which has to do with
     # gevent-patching subprocess)
     GEVENT_COMMANDS = (
-        GeventCommand('bihar_run_calcs', None),
         GeventCommand('mvp_force_update', None),
         GeventCommand('run_gunicorn', None),
         GeventCommand('preindex_everything', None),
