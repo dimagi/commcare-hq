@@ -89,6 +89,7 @@ def register_user(request):
 
         context.update({
             'form': form,
+            'current_page':{'page_name':'Create an Account'},
         })
         return render(request, 'registration/create_new_user.html', context)
 
