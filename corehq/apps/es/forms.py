@@ -74,6 +74,7 @@ def user_ids_handle_unknown(user_ids):
         user_filter = filters.missing('form.meta.userID')
     return user_filter
 
+
 def j2me_submissions(gt=None, gte=None, lt=None, lte=None):
     return filters.AND(
         filters.regexp("form.meta.appVersion", "v2+.[0-9]+.*"),
