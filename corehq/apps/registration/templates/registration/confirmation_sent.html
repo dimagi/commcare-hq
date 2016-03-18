@@ -14,7 +14,6 @@
 {% block title %}{% trans "Confirmation Email Sent" %}{% endblock title %}
 
 {% block registration-content %}
-    {% if alert_message %}<div class="alert alert-info">{{ alert_message }}</div>{% endif %}
     <div class="alert alert-info">
         <strong>{% blocktrans with request.user.username as username %}
             An email was just sent to {{ username }}.

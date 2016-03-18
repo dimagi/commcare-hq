@@ -76,7 +76,6 @@ def register_user(request):
                         return render(request, 'error.html', context)
 
                 context.update({
-                    'alert_message': _("An email has been sent to %s.") % request.user.username,
                     'requested_domain': requested_domain,
                     'track_domain_registration': True,
                 })
@@ -151,7 +150,6 @@ class RegisterDomainView(TemplateView):
 
             if self.is_new_user:
                 context.update({
-                    'alert_message': _("An email has been sent to %s.") % request.user.username,
                     'requested_domain': domain_name,
                     'track_domain_registration': True,
                     'current_page':{'page_name':'Confirm Account'},
@@ -212,11 +210,7 @@ def resend_confirmation(request):
             })
             return render(request, 'error.html', context)
         else:
-            context.update({
-                'alert_message': _(
-                    "An email has been sent to %s.") % dom_req.new_user_username,
-                'requested_domain': dom_req.domain
-            })
+            context.update({'requested_domain': dom_req.domain})
             return render(request, 'registration/confirmation_sent.html',
                 context)
 
