@@ -3,9 +3,6 @@ from datetime import datetime, timedelta, date
 import itertools
 import json
 from corehq.apps.domain.views import BaseDomainView
-from corehq.apps.export.dbaccessors import (
-    get_properly_wrapped_export_instance
-)
 from corehq.apps.hqwebapp.view_permissions import user_can_view_reports
 from corehq.apps.users.permissions import FORM_EXPORT_PERMISSION, CASE_EXPORT_PERMISSION, \
     DEID_EXPORT_PERMISSION

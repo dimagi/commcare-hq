@@ -8,8 +8,7 @@ from corehq.apps.export.models.new import SystemExportItem, MAIN_TABLE, \
 from dimagi.utils.couch.database import safe_delete
 from corehq.apps.app_manager.tests.util import TestXmlMixin
 from corehq.apps.app_manager.models import XForm, Application
-from corehq.apps.export.models import FormExportDataSchema, CaseExportDataSchema, ExportDataSchema, \
-    MultipleChoiceItem
+from corehq.apps.export.models import FormExportDataSchema, CaseExportDataSchema, ExportDataSchema
 from corehq.apps.export.const import CASE_HISTORY_PROPERTIES, PROPERTY_TAG_UPDATE, MAIN_FORM_TABLE_PROPERTIES, \
     MAIN_CASE_TABLE_PROPERTIES
 

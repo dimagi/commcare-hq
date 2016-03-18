@@ -239,7 +239,7 @@ class DocRow(namedtuple("DocRow", ["doc", "row"])):
 class PathNode(DocumentSchema):
 
     name = StringProperty(required=True)
-    is_repeat=BooleanProperty(default=False)
+    is_repeat = BooleanProperty(default=False)
 
     def __eq__(self, other):
         return (
@@ -1077,6 +1077,7 @@ def _list_path_to_string(path, separator='.'):
     if not path or (len(path) == 1 and path[0] is None):
         return ''
     return separator.join(path)
+
 
 def _path_nodes_to_string(path, separator=' '):
     if not path or (len(path) == 1 and path[0] is None):
