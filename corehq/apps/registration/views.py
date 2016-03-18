@@ -108,7 +108,10 @@ class RegisterDomainView(TemplateView):
             pending_domains = Domain.active_for_user(request.user, is_active=False)
             if len(pending_domains) > 0:
                 context = get_domain_context()
-                context['requested_domain'] = pending_domains[0]
+                context.update({
+                    'requested_domain': pending_domains[0],
+                    'current_page':{'page_name':'Confirm Account'},
+                })
                 return render(request, 'registration/confirmation_waiting.html', context)
         return super(RegisterDomainView, self).get(request, *args, **kwargs)
 
@@ -151,6 +154,7 @@ class RegisterDomainView(TemplateView):
                     'alert_message': _("An email has been sent to %s.") % request.user.username,
                     'requested_domain': domain_name,
                     'track_domain_registration': True,
+                    'current_page':{'page_name':'Confirm Account'},
                 })
                 return render(request, 'registration/confirmation_sent.html', context)
             else:
