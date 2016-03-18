@@ -7,6 +7,8 @@ from corehq.pillows.case import CasePillow
 from corehq.pillows.const import CASE_SEARCH_ALIAS
 from corehq.pillows.mappings.case_search_mapping import CASE_SEARCH_INDEX, \
     CASE_SEARCH_MAPPING
+from pillowtop.reindexer.change_providers.couch import CouchViewChangeProvider
+from pillowtop.reindexer.reindexer import PillowReindexer
 
 
 class CaseSearchPillow(CasePillow):
@@ -48,3 +50,20 @@ def _is_dynamic_case_property(prop):
     Finds whether {prop} is a dynamic property of CommCareCase. If so, it is likely a case property.
     """
     return not inspect.isdatadescriptor(getattr(CommCareCase, prop, None)) and re.search(r'^[a-zA-Z]', prop)
+
+
+def get_couch_case_search_reindexer(domain=None):
+    # TODO: Figure out how to not fetch every single case from the DB when running a full reindex
+
+    if domain is not None:
+        startkey = [domain]
+        endkey = [domain, {}, {}]
+    else:
+        startkey = []
+        endkey = [{}, {}, {}]
+
+    return PillowReindexer(CaseSearchPillow(), CouchViewChangeProvider(
+        document_class=CommCareCase,
+        view_name='cases_by_owner/view',
+        view_kwargs={startkey: startkey, endkey: endkey}
+    ))
