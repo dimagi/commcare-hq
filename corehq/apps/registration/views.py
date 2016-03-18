@@ -215,7 +215,8 @@ def resend_confirmation(request):
                 context)
 
     context.update({
-        'requested_domain': dom_req.domain
+        'requested_domain': dom_req.domain,
+        'current_page':{'page_name':'Resend Confirmation Email'},
     })
     return render(request, 'registration/confirmation_resend.html', context)
 
