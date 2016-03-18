@@ -156,7 +156,8 @@ hqDefine('app_manager/js/report-module.js', function () {
                     'date_number',
                     'date_number2',
                     'start_of_month',
-                    'period'
+                    'period',
+                    'ancestor_location_type_name'
                 ];
                 for(var filterFieldsIndex = 0; filterFieldsIndex < filterFields.length; filterFieldsIndex++) {
                     startVal = filter.selectedValue[filterFields[filterFieldsIndex]];
