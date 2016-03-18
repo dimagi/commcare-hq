@@ -1,4 +1,7 @@
 import datetime
+
+from corehq.apps.es import FormES
+from corehq.apps.es.aggregations import TermsAggregation
 from corehq.util.quickcache import quickcache
 
 from dimagi.utils.parsing import json_format_datetime
@@ -277,17 +280,24 @@ def get_exports_by_form(domain):
 
 
 def get_form_count_breakdown_for_domain(domain):
-    rows = XFormInstance.get_db().view(
-        'exports_forms_by_xform/view',
-        startkey=[domain],
-        endkey=[domain, {}],
-        group=True,
-    )
-    result = {}
-    for row in rows:
-        domain, app_id, xmlns = row['key']
-        result[(domain, app_id, xmlns)] = row['value']
-    return result
+    query = (
+        FormES()
+            .domain(domain)
+            .aggregation(
+                TermsAggregation("app_id", "app_id").aggregation(
+                    TermsAggregation("xmlns", "xmlns.exact")))
+            .remove_default_filter("has_xmlns")
+            .remove_default_filter("has_user")
+            .size(0))
+    query_result = query.run()
+    buckets = query_result.aggregations.app_id.normalized_buckets
+    form_counts = {}
+    for bucket in buckets:
+        app_id = bucket['key']
+        for sub_bucket in bucket['xmlns']['buckets']:
+            xmlns = sub_bucket['key']
+            form_counts[(domain, app_id, xmlns)] = sub_bucket['doc_count']
+    return form_counts
 
 
 def get_form_count_for_domain_app_xmlns(domain, app_id, xmlns):
