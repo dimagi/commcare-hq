@@ -52,6 +52,7 @@ def parse_report(val):
 class SohFormatter(Formatter):
 
     def format(self, text):
+        text = text.replace('\r', ' ').replace('\n', ' ').strip()
         split_text = text.split(' ', 1)
         keyword = split_text[0].lower()
         content = ' '.join('{} {}'.format(code, amount) for code, amount in parse_report(split_text[1]))
