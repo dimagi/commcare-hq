@@ -25,3 +25,11 @@ class IteratorJSONReaderTest(SimpleTestCase):
             [[('A', '1'), ('data', {'key': '2'}), ('is-ok', True),
               ('user', ['3', '4'])]]
         )
+
+    def test_basic(self):
+        self.assertEquals(
+            self.normalize([['A', 'data: key', 'user', 'user 2', 'is-ok?'],
+                       ['1', '2', '3', '4', 'yes']]),
+            [[('A', '1'), ('data', {'key': '2'}), ('is-ok', True),
+              ('user', ['3', '4'])]]
+        )
