@@ -3,6 +3,8 @@ import random
 import string
 from django.conf import settings
 from django.core.exceptions import ValidationError
+
+from corehq.apps.smsbillables.utils import log_smsbillables_error
 from corehq.apps.users.models import CommCareUser, CouchUser, WebUser
 from django.forms import forms
 from corehq.apps.users.util import format_username
@@ -10,7 +12,7 @@ from corehq.apps.users.util import format_username
 from dimagi.utils.modules import to_function
 from dimagi.utils.logging import notify_exception
 from corehq import privileges
-from corehq.apps.accounting.utils import domain_has_privilege, log_accounting_error
+from corehq.apps.accounting.utils import domain_has_privilege
 from corehq.apps.sms.util import (clean_phone_number, clean_text,
     get_backend_classes)
 from corehq.apps.sms.models import (OUTGOING, INCOMING,
@@ -571,4 +573,4 @@ def create_billable_for_sms(msg, delay=True):
         else:
             store_billable(msg)
     except Exception as e:
-        log_accounting_error("Errors Creating SMS Billable: %s" % e)
+        log_smsbillables_error("Errors Creating SMS Billable: %s" % e)
