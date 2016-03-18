@@ -16,7 +16,6 @@ Additions to this file should be added to the ``builtin_filters`` method on
 either ESQuery or HQESQuery, as appropriate (is it an HQ thing?).
 """
 
-
 def match_all():
     return {"match_all": {}}
 
