@@ -1,4 +1,6 @@
-from couchdbkit import ResourceNotFound
+import mock
+from couchdbkit.exceptions import ResourceConflict, ResourceNotFound
+from django.db import DatabaseError
 from django.test import TestCase
 from corehq.apps.domain.shortcuts import create_domain
 from corehq.dbaccessors.couchapps.all_docs import get_doc_count_by_type
@@ -68,8 +70,8 @@ class TestLocationSync(TestCase):
 
     def test_sync_couch_to_sql(self):
         mass = couch_loc("Massachusetts", self.state)
-        suffolk = couch_loc("Suffolk", self.state, mass)
-        boston = couch_loc("Boston", self.state, suffolk)
+        suffolk = couch_loc("Suffolk", self.county, mass)
+        boston = couch_loc("Boston", self.city, suffolk)
         self.assertNumLocations(3)
 
         for loc in [boston, suffolk, mass]:
@@ -86,8 +88,8 @@ class TestLocationSync(TestCase):
 
     def test_sync_sql_to_couch(self):
         mass = sql_loc("Massachusetts", self.state)
-        suffolk = sql_loc("Suffolk", self.state, mass)
-        boston = sql_loc("Boston", self.state, suffolk)
+        suffolk = sql_loc("Suffolk", self.county, mass)
+        boston = sql_loc("Boston", self.city, suffolk)
         self.assertNumLocations(3)
 
         for loc in [boston, suffolk, mass]:
@@ -98,21 +100,109 @@ class TestLocationSync(TestCase):
         self.assertNumLocations(0)
 
     def test_edit_sql(self):
-        loc_id = sql_loc("Massachusetts", self.state).location_id
+        mass_id = sql_loc("Massachusetts", self.state).location_id
 
-        sql_location = SQLLocation.objects.get(location_id=loc_id)
+        sql_location = SQLLocation.objects.get(location_id=mass_id)
         sql_location.name = "New Massachusetts"
         sql_location.save()
+        self.assertNumLocations(1)
 
-        couch_location = Location.get(loc_id)
+        couch_location = Location.get(mass_id)
         self.assertEqual(couch_location.name, "New Massachusetts")
 
     def test_edit_couch(self):
-        loc_id = couch_loc("Massachusetts", self.state).location_id
+        mass_id = couch_loc("Massachusetts", self.state).location_id
 
-        couch_location = Location.get(loc_id)
+        couch_location = Location.get(mass_id)
         couch_location.name = "New Massachusetts"
         couch_location.save()
 
-        sql_location = SQLLocation.objects.get(location_id=loc_id)
+        sql_location = SQLLocation.objects.get(location_id=mass_id)
         self.assertEqual(sql_location.name, "New Massachusetts")
+        self.assertNumLocations(1)
+
+    # Test various failures on various creates
+    def _failure_on_create(self, class_to_create, failure):
+        """
+        Create a new location using `class_to_edit` model and trigger a failure
+        on the `failure` model. Make sure the new location doesn't exist in
+        either db
+        """
+        if failure == "couch":
+            path_to_patch = "corehq.apps.locations.models.Document.save"
+            exception = ResourceConflict
+        else:
+            path_to_patch = "corehq.apps.locations.models.MPTTModel.save"
+            exception = DatabaseError
+
+        loc_constructor = couch_loc if class_to_create == "couch" else sql_loc
+
+        loc_constructor("Massachusetts", self.state)
+        self.assertNumLocations(1)
+
+        with mock.patch(path_to_patch, side_effect=exception):
+            with self.assertRaises(exception):
+                loc_constructor("Suffolk", self.county)
+            # Make sure the location doesn't exist in either DB
+            self.assertNumLocations(1)
+
+    def test_couch_failure_on_couch_create(self):
+        self._failure_on_create(class_to_create="couch", failure="couch")
+
+    def test_sql_failure_on_couch_create(self):
+        self._failure_on_create(class_to_create="couch", failure="sql")
+
+    def test_couch_failure_on_sql_create(self):
+        self._failure_on_create(class_to_create="sql", failure="couch")
+
+    def test_sql_failure_on_sql_create(self):
+        self._failure_on_create(class_to_create="sql", failure="sql")
+
+    # Test various failures on various edits
+    def _failure_on_edit(self, class_to_edit, failure):
+        """
+        Save a location using `class_to_edit` model and trigger a failure on
+        the `failure` model.  Make sure everything rolls back appropriately.
+        """
+        if failure == "couch":
+            path_to_patch = "corehq.apps.locations.models.Document.save"
+            exception = ResourceConflict
+        else:
+            path_to_patch = "corehq.apps.locations.models.MPTTModel.save"
+            exception = DatabaseError
+
+        if class_to_edit == "couch":
+            loc_constructor = couch_loc
+            loc_getter = lambda loc_id: SQLLocation.objects.get(location_id=loc_id)
+        else:
+            loc_constructor = sql_loc
+            loc_getter = Location.get
+
+        loc_constructor("Massachusetts", self.state)
+        suffolk_id = loc_constructor("Suffolk", self.county).location_id
+        self.assertNumLocations(2)
+
+        with mock.patch(path_to_patch, side_effect=exception):
+            suffolk = loc_getter(suffolk_id)
+            suffolk.name = "New Suffolk"
+            with self.assertRaises(exception):
+                suffolk.save()
+
+        # Suffolk should still be there, and its name should be unchanged
+        self.assertNumLocations(2)
+        couch_suffolk = Location.get(suffolk_id)
+        sql_suffolk = SQLLocation.objects.get(location_id=suffolk_id)
+        self.assertLocationsEqual(couch_suffolk, sql_suffolk)
+        self.assertEqual(sql_suffolk.name, "Suffolk")
+
+    def test_couch_failure_on_couch_edit(self):
+        self._failure_on_edit(class_to_edit="couch", failure="couch")
+
+    def test_sql_failure_on_couch_edit(self):
+        self._failure_on_edit(class_to_edit="couch", failure="sql")
+
+    def test_couch_failure_on_sql_edit(self):
+        self._failure_on_edit(class_to_edit="sql", failure="couch")
+
+    def test_sql_failure_on_sql_edit(self):
+        self._failure_on_edit(class_to_edit="sql", failure="sql")
