@@ -139,6 +139,7 @@ MIDDLEWARE_CLASSES = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.common.BrokenLinkEmailsMiddleware',
+    'django_otp.middleware.OTPMiddleware',
     'corehq.middleware.OpenRosaMiddleware',
     'corehq.util.global_request.middleware.GlobalRequestMiddleware',
     'corehq.apps.users.middleware.UsersMiddleware',
@@ -186,7 +187,10 @@ TEMPLATE_CONTEXT_PROCESSORS = [
     'django.core.context_processors.i18n',
 ]
 
-TEMPLATE_DIRS = []
+_location = lambda x: os.path.join(FILEPATH, x)
+TEMPLATE_DIRS = (
+    _location('corehq/apps/domain/templates/login_and_password'),
+)
 
 DEFAULT_APPS = (
     'corehq.apps.userhack',  # this has to be above auth
@@ -207,6 +211,10 @@ DEFAULT_APPS = (
     'compressor',
     'mptt',
     'tastypie',
+    'django_otp',
+    'django_otp.plugins.otp_static',
+    'django_otp.plugins.otp_totp',
+    'two_factor',
     'ws4redis',
     'statici18n',
 )
@@ -391,10 +399,16 @@ APPS_TO_EXCLUDE_FROM_TESTS = (
     'crispy_forms',
     'django_extensions',
     'django_prbac',
+    'django_otp',
+    'django_otp.plugins.otp_static',
+    'django_otp.plugins.otp_totp',
     'djcelery',
     'djtables',
     'gunicorn',
     'langcodes',
+    'raven.contrib.django.raven_compat',
+    'rosetta',
+    'two_factor',
     'custom.apps.crs_reports',
     'custom.m4change',
 
@@ -1570,10 +1584,6 @@ DOMAIN_MODULE_MAP = {
 
     'm4change': 'custom.m4change',
     'succeed': 'custom.succeed',
-    'ilsgateway-test-1': 'custom.ilsgateway',
-    'ilsgateway-test-2': 'custom.ilsgateway',
-    'ewsghana-test-1': 'custom.ewsghana',
-    'ewsghana-test-2': 'custom.ewsghana',
     'test-pathfinder': 'custom.m4change',
     'wvindia2': 'custom.world_vision',
     'pathways-india-mis': 'custom.care_pathways',

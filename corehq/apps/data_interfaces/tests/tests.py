@@ -27,53 +27,46 @@ MALFORM_XLSX = 'malformatted_forms_bulk.xlsx'
 WRONG_FILETYPE = 'wrong_file.xyz'
 
 
-def setup():
-    # http://nose.readthedocs.org/en/latest/writing_tests.html#test-modules
-    create_domain(DOMAIN_NAME)
-
-
-def teardown():
-    # http://nose.readthedocs.org/en/latest/writing_tests.html#test-modules
-    Domain.get_by_name(DOMAIN_NAME, strict=True).delete()
-
-
 class BulkArchiveForms(TestCase):
-    def setUp(self):
-        self.password = "password"
-
+    @classmethod
+    def setUpClass(cls):
+        create_domain(DOMAIN_NAME)
+        cls.password = "password"
         username = "ben"
         email = "ben@domain.com"
+        cls.user = WebUser.create(DOMAIN_NAME, username, cls.password, email, is_admin=True)
 
-        self.client = Client()
-        self.user = WebUser.create(DOMAIN_NAME, username, self.password, email, is_admin=True)
-        self.url = '/a/{}/data/edit/archive_forms/'.format(DOMAIN_NAME)
-
-        django_user = self.user.get_django_user()
+        django_user = cls.user.get_django_user()
         try:
-            self.user_role = UserRole.objects.get(user=django_user)
+            cls.user_role = UserRole.objects.get(user=django_user)
         except UserRole.DoesNotExist:
             user_privs = Role.objects.get_or_create(
                 name="Privileges for %s" % django_user.username,
                 slug="%s_privileges" % django_user.username,
             )[0]
-            self.user_role = UserRole.objects.create(
+            cls.user_role = UserRole.objects.create(
                 user=django_user,
                 role=user_privs,
             )
 
-        # Setup default roles and plans
-        generator.instantiate_accounting_for_tests()
+        cls.bulk_role = Role.objects.filter(slug=privileges.BULK_CASE_MANAGEMENT)[0]
 
-        self.bulk_role = Role.objects.filter(slug=privileges.BULK_CASE_MANAGEMENT)[0]
-        Grant.objects.create(from_role=self.user_role.role, to_role=self.bulk_role)
+        toggles.BULK_ARCHIVE_FORMS.set(username, True)
+
+    @classmethod
+    def tearDownClass(cls):
+        cls.user.delete()
+        Domain.get_by_name(DOMAIN_NAME, strict=True).delete()
+        toggles.BULK_ARCHIVE_FORMS.set(cls.user.username, False)
+
+    def setUp(self):
+        self.client = Client()
+        self.url = '/a/{}/data/edit/archive_forms/'.format(DOMAIN_NAME)
+
+        Grant.objects.get_or_create(from_role=self.user_role.role, to_role=self.bulk_role)
         Role.get_cache().clear()
 
         self.client.login(username=self.user.username, password=self.password)
-
-        toggles.BULK_ARCHIVE_FORMS.set(self.user.username, True)
-
-    def tearDown(self):
-        self.user.delete()
 
     def test_bulk_archive_get_form(self):
 

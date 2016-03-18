@@ -74,7 +74,7 @@
             return condition.property_match_type == 'HAS_VALUE';
         };
         $scope.showUpdateProperty = function() {
-            return $scope.action == 'UPDATE_AND_CLOSE';
+            return $scope.action == 'UPDATE_AND_CLOSE' || $scope.action == 'UPDATE';
         };
 
         angular.element(document).ready(function() {

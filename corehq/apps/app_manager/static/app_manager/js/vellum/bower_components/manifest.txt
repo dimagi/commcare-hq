@@ -3,13 +3,13 @@
 │ │ └── jquery#1.11.3
 │ └── jquery#1.11.3 (3.0.0-beta1 available)
 ├── Caret.js#0.2.2 (latest is 0.3.1)
-├── MediaUploader#06e78218ed
+├── MediaUploader#51a6085bfa
 ├── XMLWriter#ab8760d6e0
 ├── chai#3.5.0
 ├── equivalent-xml-js#7de21be295
-├── fuse.js#2.0.2
+├── fuse.js#2.0.2 (latest is 2.2.0)
 ├── jquery#1.11.3 (latest is 3.0.0-beta1)
-├── jsdiff#2.2.1
+├── jsdiff#2.2.2
 ├─┬ jstree#3.2.1
 │ └── jquery#1.11.3 (3.0.0-beta1 available)
 ├── langcodes#dd833883b5
@@ -23,4 +23,4 @@
 ├── underscore#1.6.0 (latest is 1.8.3)
 ├── when#2.8.0 (latest is 3.7.7)
 ├── xpath#0.0.2
-└── xrayquire#2a0861abd7
+└── xrayquire#396ae6569b

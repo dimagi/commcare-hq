@@ -3,7 +3,7 @@ from datetime import datetime
 from casexml.apps.stock.models import StockTransaction
 from corehq.apps.commtrack.models import StockState
 from corehq.util.translation import localize
-from custom.ilsgateway.tanzania.reminders import SOH_CONFIRM, STOCKOUT_CONFIRM
+from custom.ilsgateway.tanzania.reminders import SOH_CONFIRM, STOCKOUT_CONFIRM, STOCKOUT_HELP
 from custom.ilsgateway.tests.handlers.utils import ILSTestScript
 
 
@@ -13,6 +13,7 @@ class TestStockout(ILSTestScript):
         with localize('sw'):
             response1 = unicode(SOH_CONFIRM)
             response2 = unicode(STOCKOUT_CONFIRM)
+            response3 = unicode(STOCKOUT_HELP)
 
         supply_point_id = self.loc1.sql_location.supply_point_id
 
@@ -23,6 +24,12 @@ class TestStockout(ILSTestScript):
         self.run_script(script)
         self.assertEqual(StockTransaction.objects.filter(case_id=self.facility_sp_id).count(), 3)
         self.assertEqual(StockState.objects.filter(case_id=self.facility_sp_id).count(), 3)
+
+        script = """
+            5551234 > hakuna
+            5551234 < {}
+        """.format(response3)
+        self.run_script(script)
 
         quantities = [400, 569, 678]
         for (idx, stock_transaction) in enumerate(StockTransaction.objects.all().order_by('pk')):

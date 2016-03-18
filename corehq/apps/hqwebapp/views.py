@@ -1,68 +1,74 @@
-from urlparse import urlparse
-from datetime import datetime
-import logging
 import json
+import logging
 import os
 import re
 import sys
 import traceback
 import uuid
-from django.utils.decorators import method_decorator
-import httpagentparser
+from datetime import datetime
+from urlparse import urlparse
 
 from django.conf import settings
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
-from django.core import cache
-from django.core.cache import InvalidCacheBackendError
-from django.template.loader import render_to_string
-from django.views.decorators.http import require_POST
 from django.contrib.auth.forms import AdminPasswordChangeForm
 from django.contrib.auth.models import User
-from django.contrib.auth.views import login as django_login
 from django.contrib.auth.views import logout as django_logout
+from django.core import cache
+from django.core.cache import InvalidCacheBackendError
+from django.core.mail.message import EmailMessage
+from django.core.urlresolvers import reverse
 from django.http import HttpResponseRedirect, HttpResponse, Http404,\
     HttpResponseServerError, HttpResponseNotFound, HttpResponseBadRequest,\
     HttpResponseForbidden
 from django.shortcuts import redirect, render
-from django.views.generic import TemplateView
-from couchdbkit import ResourceNotFound
-from django.utils.translation import ugettext as _, ugettext_noop
-from django.core.urlresolvers import reverse
-from django.core.mail.message import EmailMessage
 from django.template import loader
 from django.template.context import RequestContext
+from django.template.loader import render_to_string
+from django.template.response import TemplateResponse
+from django.utils.decorators import method_decorator
+from django.utils.translation import ugettext as _, ugettext_noop
+from django.views.decorators.http import require_POST
+from django.views.generic import TemplateView
+
+import httpagentparser
+from couchdbkit import ResourceNotFound
 from restkit import Resource
+from two_factor.views import LoginView
+from two_factor.forms import AuthenticationTokenForm, BackupTokenForm
+
+
+from dimagi.utils.couch.cache.cache_core import get_redis_default_cache
+from dimagi.utils.couch.database import get_db
+from dimagi.utils.decorators.memoized import memoized
+from dimagi.utils.logging import notify_exception
+from dimagi.utils.web import get_url_base, json_response, get_site_domain
+from soil import heartbeat, DownloadBase
+from soil import views as soil_views
 
 from corehq import toggles, feature_previews
 from corehq.apps.accounting.models import Subscription
 from corehq.apps.app_manager.models import Application
 from corehq.apps.domain.decorators import require_superuser, login_and_domain_required
+from corehq.apps.domain.models import Domain
 from corehq.apps.domain.utils import normalize_domain_name, get_domain_from_url
 from corehq.apps.dropbox.decorators import require_dropbox_session
+from corehq.apps.dropbox.exceptions import DropboxUploadAlreadyInProgress
 from corehq.apps.dropbox.models import DropboxUploadHelper
 from corehq.apps.dropbox.views import DROPBOX_ACCESS_TOKEN
-from corehq.apps.dropbox.exceptions import DropboxUploadAlreadyInProgress
+from corehq.apps.hqadmin.management.commands.deploy_in_progress import DEPLOY_IN_PROGRESS_FLAG
+from corehq.apps.hqwebapp.doc_info import get_doc_info
 from corehq.apps.hqwebapp.encoders import LazyEncoder
 from corehq.apps.hqwebapp.forms import EmailAuthenticationForm, CloudCareAuthenticationForm
 from corehq.apps.reports.util import is_mobile_worker_with_report_access
 from corehq.apps.style.decorators import use_bootstrap3
 from corehq.apps.users.models import CouchUser
 from corehq.apps.users.util import format_username
-from corehq.apps.hqwebapp.doc_info import get_doc_info
 from corehq.middleware import always_allow_browser_caching
-from corehq.util.datadog.utils import create_datadog_event, log_counter, sanitize_url
-from corehq.util.datadog.metrics import JSERROR_COUNT
 from corehq.util.datadog.const import DATADOG_UNKNOWN
-from dimagi.utils.couch.database import get_db
-from dimagi.utils.decorators.memoized import memoized
-from dimagi.utils.logging import notify_exception
-from dimagi.utils.web import get_url_base, json_response, get_site_domain
-from dimagi.utils.couch.cache.cache_core import get_redis_default_cache
-from corehq.apps.hqadmin.management.commands.deploy_in_progress import DEPLOY_IN_PROGRESS_FLAG
-from corehq.apps.domain.models import Domain
-from soil import heartbeat, DownloadBase
-from soil import views as soil_views
+from corehq.util.datadog.metrics import JSERROR_COUNT
+from corehq.util.datadog.utils import create_datadog_event, log_counter, sanitize_url
+from corehq.util.view_utils import expect_GET
 
 
 def pg_check():
@@ -194,6 +200,12 @@ def redirect_to_default(req, domain=None):
                     url = reverse('landing_page')
             else:
                 url = reverse('landing_page')
+    elif domain and _two_factor_needed(domain, req):
+        return TemplateResponse(
+            request=req,
+            template='two_factor/core/otp_required.html',
+            status=403,
+        )
     else:
         if domain:
             domain = normalize_domain_name(domain)
@@ -221,6 +233,13 @@ def redirect_to_default(req, domain=None):
     return HttpResponseRedirect(url)
 
 
+def _two_factor_needed(domain_name, request):
+    domain_name = normalize_domain_name(domain_name)
+    domain = Domain.get_by_name(domain_name)
+    if domain:
+        return domain.two_factor_auth and not request.user.is_verified()
+
+
 def landing_page(req, template_name="home.html"):
     # this view, and the one below, is overridden because
     # we need to set the base template to use somewhere
@@ -228,7 +247,7 @@ def landing_page(req, template_name="home.html"):
     if req.user.is_authenticated():
         return HttpResponseRedirect(reverse('homepage'))
     req.base_template = settings.BASE_TEMPLATE
-    return django_login(req, template_name=template_name, authentication_form=EmailAuthenticationForm)
+    return HQLoginView.as_view()(req)
 
 
 def yui_crossdomain(req):
@@ -336,8 +355,8 @@ def csrf_failure(request, reason=None, template_name="csrf_failure.html"):
 
 def _login(req, domain_name, template_name):
 
-    if req.user.is_authenticated() and req.method != "POST":
-        redirect_to = req.REQUEST.get('next', '')
+    if req.user.is_authenticated() and req.method == "GET":
+        redirect_to = req.GET.get('next', '')
         if redirect_to:
             return HttpResponseRedirect(redirect_to)
         if not domain_name:
@@ -345,9 +364,9 @@ def _login(req, domain_name, template_name):
         else:
             return HttpResponseRedirect(reverse('domain_homepage', args=[domain_name]))
 
-    if req.method == 'POST' and domain_name and '@' not in req.POST.get('username', '@'):
+    if req.method == 'POST' and domain_name and '@' not in req.POST.get('auth-username', '@'):
         req.POST._mutable = True
-        req.POST['username'] = format_username(req.POST['username'], domain_name)
+        req.POST['auth-username'] = format_username(req.POST['auth-username'], domain_name)
         req.POST._mutable = False
 
     req.base_template = settings.BASE_TEMPLATE
@@ -355,24 +374,24 @@ def _login(req, domain_name, template_name):
     context = {}
     if domain_name:
         domain = Domain.get_by_name(domain_name)
+        req_params = expect_GET(req)
         context.update({
             'domain': domain_name,
             'hr_name': domain.display_name() if domain else domain_name,
-            'next': req.REQUEST.get('next', '/a/%s/' % domain),
+            'next': req_params.get('next', '/a/%s/' % domain),
             'allow_domain_requests': domain.allow_domain_requests,
         })
 
-    authentication_form = EmailAuthenticationForm if not domain_name else CloudCareAuthenticationForm
-    return django_login(req, template_name=template_name,
-                        authentication_form=authentication_form,
-                        extra_context=context)
+    auth_view = HQLoginView if not domain_name else CloudCareLoginView
+    return auth_view.as_view(template_name=template_name, extra_context=context)(req)
 
 
 def login(req, domain_type='commcare'):
     # this view, and the one below, is overridden because
     # we need to set the base template to use somewhere
     # somewhere that the login page can access it.
-    domain = req.REQUEST.get('domain', None)
+    req_params = expect_GET(req)
+    domain = req_params.get('domain', None)
 
     from corehq.apps.domain.utils import get_dummy_domain
     # For showing different logos based on CommTrack, CommConnect, CommCare...
@@ -392,6 +411,28 @@ def domain_login(req, domain, template_name="login_and_password/login.html"):
     req.project = project
 
     return _login(req, domain, template_name)
+
+
+class HQLoginView(LoginView):
+    form_list = [
+        ('auth', EmailAuthenticationForm),
+        ('token', AuthenticationTokenForm),
+        ('backup', BackupTokenForm),
+    ]
+    extra_context = {}
+
+    def get_context_data(self, **kwargs):
+        context = super(HQLoginView, self).get_context_data(**kwargs)
+        context.update(self.extra_context)
+        return context
+
+
+class CloudCareLoginView(HQLoginView):
+    form_list = [
+        ('auth', CloudCareAuthenticationForm),
+        ('token', AuthenticationTokenForm),
+        ('backup', BackupTokenForm),
+    ]
 
 
 def is_mobile_url(url):

@@ -1,0 +1,63 @@
+<?xml version='1.0' encoding='UTF-8' ?>
+<device_report xmlns="http://code.javarosa.org/devicereport">
+  <device_id>353626073782406</device_id>
+  <report_date>2016-03-15T13:37:04.578+05:45</report_date>
+  <app_version>CommCare Android, version "2.27"(1). App v15. CommCare Version 2.27. Build 1, built on: 2016-03-15</app_version>
+  <user_subreport>
+    <user>
+      <username>fp</username>
+      <user_id>441bdbb17001bade54aa23dcb7313950</user_id>
+      <sync_token>8c90b95749dd18c336209d4de55ea554</sync_token>
+    </user>
+  </user_subreport>
+  <force_close_subreport>
+    <force_close date="2016-03-15T13:37:04.573+05:45">
+      <type>forceclose</type>
+      <msg>java.lang.Exception: exception_text
+    at org.commcare.activities.CommCareHomeActivity.onResume(CommCareHomeActivity.java:1070)
+    at android.app.Instrumentation.callActivityOnResume(Instrumentation.java:1258)
+    at android.app.Activity.performResume(Activity.java:6327)
+    at android.app.ActivityThread.performResumeActivity(ActivityThread.java:3092)
+    at android.app.ActivityThread.handleResumeActivity(ActivityThread.java:3134)
+    at android.app.ActivityThread.handleLaunchActivity(ActivityThread.java:2481)
+    at android.app.ActivityThread.-wrap11(ActivityThread.java)
+    at android.app.ActivityThread$H.handleMessage(ActivityThread.java:1344)
+    at android.os.Handler.dispatchMessage(Handler.java:102)
+    at android.os.Looper.loop(Looper.java:148)
+    at android.app.ActivityThread.main(ActivityThread.java:5422)
+    at java.lang.reflect.Method.invoke(Native Method)
+    at com.android.internal.os.ZygoteInit$MethodAndArgsCaller.run(ZygoteInit.java:726)
+    at com.android.internal.os.ZygoteInit.main(ZygoteInit.java:616)
+      </msg>
+      <build_number>15</build_number>
+      <android_version>6.0.1</android_version>
+      <device_model>Nexus 5X</device_model>
+      <session_readable></session_readable>
+      <session_serialized>AAAAAA==
+</session_serialized>
+    </force_close>
+  </force_close_subreport>
+  <log_subreport>
+    <log date="2016-03-15T13:37:04.573+05:45">
+      <type>forceclose</type>
+      <msg>java.lang.Exception: exception_text
+    at org.commcare.activities.CommCareHomeActivity.onResume(CommCareHomeActivity.java:1070)
+    at android.app.Instrumentation.callActivityOnResume(Instrumentation.java:1258)
+    at android.app.Activity.performResume(Activity.java:6327)
+    at android.app.ActivityThread.performResumeActivity(ActivityThread.java:3092)
+    at android.app.ActivityThread.handleResumeActivity(ActivityThread.java:3134)
+    at android.app.ActivityThread.handleLaunchActivity(ActivityThread.java:2481)
+    at android.app.ActivityThread.-wrap11(ActivityThread.java)
+    at android.app.ActivityThread$H.handleMessage(ActivityThread.java:1344)
+    at android.os.Handler.dispatchMessage(Handler.java:102)
+    at android.os.Looper.loop(Looper.java:148)
+    at android.app.ActivityThread.main(ActivityThread.java:5422)
+    at java.lang.reflect.Method.invoke(Native Method)
+    at com.android.internal.os.ZygoteInit$MethodAndArgsCaller.run(ZygoteInit.java:726)
+    at com.android.internal.os.ZygoteInit.main(ZygoteInit.java:616)
+      </msg>
+    </log>
+  </log_subreport>
+  <log_subreport></log_subreport>
+  <log_subreport> </log_subreport>
+</device_report>

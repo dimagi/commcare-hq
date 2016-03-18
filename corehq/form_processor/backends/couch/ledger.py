@@ -2,8 +2,33 @@ from casexml.apps.stock import const
 from casexml.apps.stock.models import StockReport, StockTransaction
 from corehq.apps.commtrack.processing import compute_ledger_values
 from corehq.form_processor.interfaces.ledger_processor import LedgerProcessorInterface, StockModelUpdateResult, \
-    LedgerDB
+    LedgerDBInterface
 from corehq.form_processor.parsers.ledgers.helpers import UniqueLedgerReference
+
+
+class LedgerDBCouch(LedgerDBInterface):
+    def get_ledgers_for_case(self, case_id):
+        from corehq.apps.commtrack.models import StockState
+        return StockState.objects.filter(case_id=case_id)
+
+    def _get_ledger(self, unique_ledger_reference):
+        from corehq.apps.commtrack.models import StockState
+        try:
+            return StockState.objects.get(
+                case_id=unique_ledger_reference.case_id,
+                section_id=unique_ledger_reference.section_id,
+                product_id=unique_ledger_reference.entry_id,
+            )
+        except StockState.DoesNotExist:
+            return None
+
+    def get_current_ledger_value(self, unique_ledger_reference):
+        latest_txn = StockTransaction.latest(
+            case_id=unique_ledger_reference.case_id,
+            section_id=unique_ledger_reference.section_id,
+            product_id=unique_ledger_reference.entry_id,
+        )
+        return latest_txn.stock_on_hand if latest_txn else 0
 
 
 class LedgerProcessorCouch(LedgerProcessorInterface):
@@ -15,7 +40,7 @@ class LedgerProcessorCouch(LedgerProcessorInterface):
     """
 
     def get_models_to_update(self, stock_report_helper, ledger_db=None):
-        ledger_db = ledger_db or LedgerDB(self)
+        ledger_db = ledger_db or LedgerDBCouch()
         assert stock_report_helper.domain == self.domain
         if stock_report_helper.deprecated:
             return StockModelUpdateResult(
@@ -28,18 +53,6 @@ class LedgerProcessorCouch(LedgerProcessorInterface):
         for transaction_helper in stock_report_helper.transactions:
             to_save.append(_get_model_for_stock_transaction(report_model, transaction_helper, ledger_db))
         return StockModelUpdateResult(to_save=to_save)
-
-    def get_ledgers_for_case(self, case_id):
-        from corehq.apps.commtrack.models import StockState
-        return StockState.objects.filter(case_id=case_id)
-
-    def get_current_ledger_value(self, unique_ledger_reference):
-        latest_txn = StockTransaction.latest(
-            case_id=unique_ledger_reference.case_id,
-            section_id=unique_ledger_reference.section_id,
-            product_id=unique_ledger_reference.entry_id,
-        )
-        return latest_txn.stock_on_hand if latest_txn else 0
 
 
 def _get_model_for_stock_report(domain, stock_report_helper):
