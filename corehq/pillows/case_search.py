@@ -1,8 +1,8 @@
 import inspect
 import re
-from copy import deepcopy
 
 from casexml.apps.case.models import CommCareCase
+from corehq.apps.es import DomainES
 from corehq.pillows.case import CasePillow
 from corehq.pillows.const import CASE_SEARCH_ALIAS
 from corehq.pillows.mappings.case_search_mapping import CASE_SEARCH_INDEX, \
@@ -18,17 +18,50 @@ class CaseSearchPillow(CasePillow):
     es_alias = CASE_SEARCH_ALIAS
 
     es_index = CASE_SEARCH_INDEX
-    default_mapping = CASE_SEARCH_MAPPING()
+    default_mapping = CASE_SEARCH_MAPPING
+
+    # TODO: Do this so that it isn't dependent on ES, because otherwise a full
+    # reindex of this is dependent on having the DomainES index already
+    # available. (i.e. running `ptop_fast_reindex` fails)
+    # 1) Make an SQL table
+    # 2) Just use the Toggle
+
+    enabled_domains = [enabled_domain.get('name')
+                       for enabled_domain
+                       in DomainES().term('case_search_enabled', True).values()]
+
+    def change_trigger(self, changes_dict):
+        if self._is_new_style(changes_dict):
+            domain = changes_dict.get('key')[0]
+        else:
+            domain = changes_dict.get('doc', {}).get('domain')
+
+        if domain not in self.enabled_domains:
+            return None
+
+        return super(CaseSearchPillow, self).change_trigger(changes_dict)
+
+    def _is_new_style(self, changes_dict):
+        return (
+            hasattr(changes_dict, 'id') and
+            hasattr(changes_dict, 'value') and
+            hasattr(changes_dict, 'key') and
+            len(changes_dict) == 3
+        )
 
     def change_transform(self, doc_dict):
-        doc = {
-            desired_property: doc_dict.get(desired_property)
-            for desired_property in self.default_mapping['properties'].keys()
-            if desired_property != 'case_properties'
-        }
-        doc['_id'] = doc_dict.get('_id')
-        doc['case_properties'] = _get_case_properties(doc_dict)
-        return doc
+        return transform_case_for_elasticsearch(doc_dict)
+
+
+def transform_case_for_elasticsearch(doc_dict):
+    doc = {
+        desired_property: doc_dict.get(desired_property)
+        for desired_property in CASE_SEARCH_MAPPING['properties'].keys()
+        if desired_property != 'case_properties'
+    }
+    doc['_id'] = doc_dict.get('_id')
+    doc['case_properties'] = _get_case_properties(doc_dict)
+    return doc
 
 
 def _get_case_properties(doc_dict):
