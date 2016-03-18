@@ -374,7 +374,7 @@ def _login(req, domain_name, template_name):
     context = {}
     if domain_name:
         domain = Domain.get_by_name(domain_name)
-        req_params = expect_GET(req)
+        req_params = req.GET if req.method == 'GET' else req.POST
         context.update({
             'domain': domain_name,
             'hr_name': domain.display_name() if domain else domain_name,
@@ -390,7 +390,7 @@ def login(req, domain_type='commcare'):
     # this view, and the one below, is overridden because
     # we need to set the base template to use somewhere
     # somewhere that the login page can access it.
-    req_params = expect_GET(req)
+    req_params = req.GET if req.method == 'GET' else req.POST
     domain = req_params.get('domain', None)
 
     from corehq.apps.domain.utils import get_dummy_domain
