@@ -500,17 +500,9 @@ class SMSBase(SyncSQLToCouchMixin, Log):
 
 class SMS(SMSBase):
     def to_json(self):
-        result = {}
-        for field in self._meta.fields:
-            field_name = field.name
-            if field_name == 'couch_id':
-                result['_id'] = self.couch_id
-            elif field_name == 'messaging_subevent':
-                result['messaging_subevent_id'] = self.messaging_subevent_id
-            else:
-                result[field_name] = getattr(self, field_name)
-
-        return result
+        from corehq.apps.sms.serializers import SMSSerializer
+        data = SMSSerializer(self).data
+        return data
 
     def publish_change(self):
         try:
