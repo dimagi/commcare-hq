@@ -745,7 +745,14 @@ def _get_branches_merged_into_autostaging(cwd=None):
     git = sh.git.bake(_tty_out=False, _cwd=cwd)
     # %p %s is parent hashes + subject of commit message, which will look like:
     # <merge base> <merge head> Merge <stuff> into autostaging
-    pipe = git.log('origin/master...', grep='Merge .* into autostaging', format='%p %s')
+    try:
+        pipe = git.log('origin/master...', grep='Merge .* into autostaging', format='%p %s')
+    except sh.ErrorReturnCode_128:
+        # when origin/master isn't fetched, you'll get
+        #   fatal: ambiguous argument 'origin/master...': \
+        #   unknown revision or path not in the working tree.
+        git.fetch()
+        return _get_branches_merged_into_autostaging(cwd=cwd)
     CommitBranchPair = namedtuple('CommitBranchPair', ['commit', 'branch'])
     return sorted(
         (CommitBranchPair(
