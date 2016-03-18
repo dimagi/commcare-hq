@@ -19,7 +19,9 @@ from dimagi.utils.decorators.memoized import memoized
 
 
 class EmailAuthenticationForm(AuthenticationForm):
-    username = forms.EmailField(label=_("E-mail"), max_length=75)
+    username = forms.EmailField(label=_("E-mail"), max_length=75,
+                                widget=forms.TextInput(attrs={'class':'form-control'}))
+    password = forms.CharField(label=_("Password"), widget=forms.PasswordInput(attrs={'class':'form-control'}))
 
     def clean_username(self):
         username = self.cleaned_data['username'].lower()
@@ -46,7 +48,8 @@ class EmailAuthenticationForm(AuthenticationForm):
 
 
 class CloudCareAuthenticationForm(EmailAuthenticationForm):
-    username = forms.CharField(label=_("Username"), max_length=75)
+    username = forms.CharField(label=_("Username"), max_length=75,
+                                widget=forms.TextInput(attrs={'class':'form-control'}))
 
 
 class BulkUploadForm(forms.Form):
