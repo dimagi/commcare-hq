@@ -327,9 +327,9 @@ hqDefine('app_manager/js/report-module.js', function () {
         self.multimedia = function () {
             var multimedia = {};
             multimedia.mediaImage = {};
-            multimedia.mediaImage[self.lang] = self.menuImage.currentPath();
+            multimedia.mediaImage[self.lang] = self.menuImage.savedPath();
             multimedia.mediaAudio = {};
-            multimedia.mediaAudio[self.lang] = self.menuAudio.currentPath();
+            multimedia.mediaAudio[self.lang] = self.menuAudio.savedPath();
             return multimedia;
         };
 

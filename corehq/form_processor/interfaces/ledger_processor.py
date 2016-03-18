@@ -23,26 +23,45 @@ class StockModelUpdateResult(namedtuple('StockModelUpdate', ['to_save', 'to_dele
             to_delete.delete()
 
 
-class LedgerDB(object):
+class LedgerDBInterface(object):
     """
     A very lightweight in-memory processing DB for ledgers, modeled after the CaseDb.
 
     This allows you to do multiple in-memory transactional updates on a single form
     without committing them to the database.
     """
+    __metaclass__ = ABCMeta
 
-    def __init__(self, processor):
+    def __init__(self):
         self._balances = {}
-        self._processor = processor
+        self._ledgers = {}
 
     def get_current_balance(self, unique_ledger_reference):
         if unique_ledger_reference not in self._balances:
-            current_balance = self._processor.get_current_ledger_value(unique_ledger_reference)
+            current_balance = self.get_current_ledger_value(unique_ledger_reference)
             self._balances[unique_ledger_reference] = current_balance
         return self._balances[unique_ledger_reference]
 
     def set_current_balance(self, unique_ledger_reference, balance):
         self._balances[unique_ledger_reference] = balance
+
+    def get_ledger(self, unique_ledger_reference):
+        if unique_ledger_reference not in self._ledgers:
+            ledger = self._get_ledger(unique_ledger_reference)
+            self._ledgers[unique_ledger_reference] = ledger
+        return self._ledgers[unique_ledger_reference]
+
+    @abstractmethod
+    def get_ledgers_for_case(self, case_id):
+        pass
+
+    @abstractmethod
+    def get_current_ledger_value(self, unique_ledger_reference):
+        pass
+
+    @abstractmethod
+    def _get_ledger(self, unique_ledger_reference):
+        pass
 
 
 class LedgerProcessorInterface(object):
@@ -56,12 +75,4 @@ class LedgerProcessorInterface(object):
         """
         Returns a list of StockModelUpdate object containing everything that needs to be updated.
         """
-        pass
-
-    @abstractmethod
-    def get_ledgers_for_case(self, case_id):
-        pass
-
-    @abstractmethod
-    def get_current_ledger_value(self, unique_ledger_reference):
         pass

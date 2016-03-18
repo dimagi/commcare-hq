@@ -39,7 +39,8 @@ def parse_report(val):
     return [
         (x[0], int(x[1].translate(maketrans("lLO", "110"))))
         for x in findall(
-            "\s*(?P<code>[A-Za-z]{%(minchars)d,%(maxchars)d})\s*(?P<quantity>[\-?0-9%(numeric_letters)s]+)\s*" %
+            "\s*(?P<code>[A-Za-z]{%(minchars)d,%(maxchars)d})\s*"
+            "(?P<quantity>[+-]?[ ]*[0-9%(numeric_letters)s]+)\s*" %
             {
                 "minchars": 2,
                 "maxchars": 4,

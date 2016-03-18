@@ -310,3 +310,32 @@ def get_cached_case_attachment(domain, case_id, attachment_id, is_image=False):
         cobject.cache_put(stream, metadata)
 
     return cobject
+
+
+class AbstractLedgerAccessor(six.with_metaclass(ABCMeta)):
+    @abstractmethod
+    def get_transactions_for_consumption(domain, case_id, product_id, section_id, window_start, window_end):
+        raise NotImplementedError
+
+
+class LedgerAccessors(object):
+    """
+    Facade for Ledger DB access that proxies method calls to SQL or Couch version
+    """
+    def __init__(self, domain=None):
+        self.domain = domain
+
+    @property
+    @memoized
+    def db_accessor(self):
+        from corehq.form_processor.backends.sql.dbaccessors import LedgerAccessorSQL
+        from corehq.form_processor.backends.couch.dbaccessors import LedgerAccessorCouch
+        if should_use_sql_backend(self.domain):
+            return LedgerAccessorSQL
+        else:
+            return LedgerAccessorCouch
+
+    def get_transactions_for_consumption(self, case_id, product_id, section_id, window_start, window_end):
+        return self.db_accessor.get_transactions_for_consumption(
+            self.domain, case_id, product_id, section_id, window_start, window_end
+        )

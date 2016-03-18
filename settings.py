@@ -106,11 +106,14 @@ if os.path.exists(_formdesigner_path):
     STATICFILES_DIRS += (('formdesigner', _formdesigner_path),)
 del _formdesigner_path
 
+COUCH_LOG_FILE = "%s/%s" % (FILEPATH, "commcarehq.django.log")
 DJANGO_LOG_FILE = "%s/%s" % (FILEPATH, "commcarehq.django.log")
 ACCOUNTING_LOG_FILE = "%s/%s" % (FILEPATH, "commcarehq.accounting.log")
 ANALYTICS_LOG_FILE = "%s/%s" % (FILEPATH, "commcarehq.analytics.log")
 DATADOG_LOG_FILE = "%s/%s" % (FILEPATH, "commcarehq.datadog.log")
 
+LOCAL_LOGGING_HANDLERS = {}
+LOCAL_LOGGING_LOGGERS = {}
 
 # URL prefix for admin media -- CSS, JavaScript and images. Make sure to use a
 # trailing slash.
@@ -139,6 +142,7 @@ MIDDLEWARE_CLASSES = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.common.BrokenLinkEmailsMiddleware',
+    'django_otp.middleware.OTPMiddleware',
     'corehq.middleware.OpenRosaMiddleware',
     'corehq.util.global_request.middleware.GlobalRequestMiddleware',
     'corehq.apps.users.middleware.UsersMiddleware',
@@ -186,7 +190,10 @@ TEMPLATE_CONTEXT_PROCESSORS = [
     'django.core.context_processors.i18n',
 ]
 
-TEMPLATE_DIRS = []
+_location = lambda x: os.path.join(FILEPATH, x)
+TEMPLATE_DIRS = (
+    _location('corehq/apps/domain/templates/login_and_password'),
+)
 
 DEFAULT_APPS = (
     'corehq.apps.userhack',  # this has to be above auth
@@ -207,6 +214,10 @@ DEFAULT_APPS = (
     'compressor',
     'mptt',
     'tastypie',
+    'django_otp',
+    'django_otp.plugins.otp_static',
+    'django_otp.plugins.otp_totp',
+    'two_factor',
     'ws4redis',
     'statici18n',
 )
@@ -391,10 +402,16 @@ APPS_TO_EXCLUDE_FROM_TESTS = (
     'crispy_forms',
     'django_extensions',
     'django_prbac',
+    'django_otp',
+    'django_otp.plugins.otp_static',
+    'django_otp.plugins.otp_totp',
     'djcelery',
     'djtables',
     'gunicorn',
     'langcodes',
+    'raven.contrib.django.raven_compat',
+    'rosetta',
+    'two_factor',
     'custom.apps.crs_reports',
     'custom.m4change',
 
@@ -552,6 +569,11 @@ CELERY_REMINDER_RULE_QUEUE = CELERY_MAIN_QUEUE
 # on its own queue.
 CELERY_REMINDER_CASE_UPDATE_QUEUE = CELERY_MAIN_QUEUE
 
+
+# This is the celery queue to use for sending repeat records.
+# It's set to the main queue here and can be overridden to put it
+# on its own queue.
+CELERY_REPEAT_RECORD_QUEUE = CELERY_MAIN_QUEUE
 
 # websockets config
 WEBSOCKET_URL = '/ws/'
@@ -790,139 +812,6 @@ MESSAGE_STORAGE = 'django.contrib.messages.storage.session.SessionStorage'
 
 DIGEST_LOGIN_FACTORY = 'django_digest.NoEmailLoginFactory'
 
-LOGGING = {
-    'version': 1,
-    'disable_existing_loggers': True,
-    'formatters': {
-        'verbose': {
-            'format': '%(levelname)s %(asctime)s %(module)s %(process)d %(thread)d %(message)s'
-        },
-        'simple': {
-            'format': '%(asctime)s %(levelname)s %(message)s'
-        },
-        'pillowtop': {
-            'format': '%(asctime)s %(levelname)s %(module)s %(message)s'
-        },
-        'datadog': {
-            'format': '%(metric)s %(created)s %(value)s metric_type=%(metric_type)s %(message)s'
-        }
-    },
-    'filters': {
-        'require_debug_false': {
-            '()': 'django.utils.log.RequireDebugFalse'
-        }
-    },
-    'handlers': {
-        'pillowtop': {
-            'level': 'INFO',
-            'class': 'logging.StreamHandler',
-            'formatter': 'pillowtop'
-        },
-        'console': {
-            'level': 'INFO',
-            'class': 'logging.StreamHandler',
-            'formatter': 'simple'
-        },
-        'file': {
-            'level': 'INFO',
-            'class': 'logging.FileHandler',
-            'formatter': 'verbose',
-            'filename': DJANGO_LOG_FILE
-        },
-        'accountinglog': {
-            'level': 'INFO',
-            'class': 'logging.FileHandler',
-            'formatter': 'verbose',
-            'filename': ACCOUNTING_LOG_FILE
-        },
-        'analytics': {
-            'level': 'DEBUG',
-            'class': 'logging.FileHandler',
-            'formatter': 'simple',
-            'filename': ANALYTICS_LOG_FILE
-        },
-        'datadog': {
-            'level': 'INFO',
-            'class': 'logging.FileHandler',
-            'formatter': 'datadog',
-            'filename': DATADOG_LOG_FILE
-        },
-        'couchlog': {
-            'level': 'WARNING',
-            'class': 'couchlog.handlers.CouchHandler',
-        },
-        'mail_admins': {
-            'level': 'ERROR',
-            'filters': ['require_debug_false'],
-            'class': 'corehq.util.log.HqAdminEmailHandler',
-        },
-        'notify_exception': {
-            'level': 'ERROR',
-            'filters': ['require_debug_false'],
-            'class': 'corehq.util.log.NotifyExceptionEmailer',
-        },
-        'null': {
-            'class': 'django.utils.log.NullHandler',
-        },
-    },
-    'loggers': {
-        '': {
-            'handlers': ['console', 'file', 'couchlog'],
-            'propagate': True,
-            'level': 'INFO',
-        },
-        'django.request': {
-            'handlers': ['mail_admins'],
-            'level': 'ERROR',
-            'propagate': True,
-        },
-        'django.security.DisallowedHost': {
-            'handlers': ['null'],
-            'propagate': False,
-        },
-        'notify': {
-            'handlers': ['notify_exception'],
-            'level': 'ERROR',
-            'propagate': True,
-        },
-        'celery.task': {
-            'handlers': ['console', 'file', 'couchlog'],
-            'level': 'INFO',
-            'propagate': True
-        },
-        'pillowtop': {
-            'handlers': ['pillowtop'],
-            'level': 'ERROR',
-            'propagate': False,
-        },
-        'smsbillables': {
-            'handlers': ['file'],
-            'level': 'ERROR',
-            'propagate': False,
-        },
-        'currency_update': {
-            'handlers': ['file'],
-            'level': 'INFO',
-            'propagate': False,
-        },
-        'accounting': {
-            'handlers': ['accountinglog', 'console', 'couchlog', 'mail_admins'],
-            'level': 'INFO',
-            'propagate': False,
-        },
-        'analytics': {
-            'handlers': ['analytics'],
-            'level': 'DEBUG',
-            'propagate': True,
-        },
-        'datadog-metrics': {
-            'handler': ['datadog'],
-            'level': 'INFO',
-            'propogate': False,
-        },
-    }
-}
-
 # Django Compressor
 COMPRESS_PRECOMPILERS = (
     ('text/less', 'corehq.apps.style.precompilers.LessFilter'),
@@ -1017,6 +906,165 @@ try:
 except ImportError:
     # fallback in case nothing else is found - used for readthedocs
     from dev_settings import *
+
+LOGGING = {
+    'version': 1,
+    'disable_existing_loggers': True,
+    'formatters': {
+        'verbose': {
+            'format': '%(levelname)s %(asctime)s %(module)s %(process)d %(thread)d %(message)s'
+        },
+        'simple': {
+            'format': '%(asctime)s %(levelname)s %(message)s'
+        },
+        'pillowtop': {
+            'format': '%(asctime)s %(levelname)s %(module)s %(message)s'
+        },
+        'couch-request-formatter': {
+            'format': '%(asctime)s [%(username)s:%(domain)s] %(hq_url)s %(method)s %(error_status)s %(path)s %(duration)s'
+        },
+        'datadog': {
+            'format': '%(metric)s %(created)s %(value)s metric_type=%(metric_type)s %(message)s'
+        },
+    },
+    'filters': {
+        'hqcontext': {
+            '()': 'corehq.util.log.HQRequestFilter',
+        },
+    },
+    'handlers': {
+        'pillowtop': {
+            'level': 'INFO',
+            'class': 'logging.StreamHandler',
+            'formatter': 'pillowtop'
+        },
+        'console': {
+            'level': 'INFO',
+            'class': 'logging.StreamHandler',
+            'formatter': 'simple'
+        },
+        'file': {
+            'level': 'INFO',
+            'class': 'logging.handlers.RotatingFileHandler',
+            'formatter': 'verbose',
+            'filename': DJANGO_LOG_FILE,
+            'maxBytes': 10 * 1024 * 1024,  # 10 MB
+            'backupCount': 20  # Backup 200 MB of logs
+        },
+        'couch-request-handler': {
+            'level': 'DEBUG',
+            'class': 'logging.handlers.RotatingFileHandler',
+            'formatter': 'couch-request-formatter',
+            'filters': ['hqcontext'],
+            'filename': COUCH_LOG_FILE,
+            'maxBytes': 10 * 1024 * 1024,  # 10 MB
+            'backupCount': 20  # Backup 200 MB of logs
+        },
+        'accountinglog': {
+            'level': 'INFO',
+            'class': 'logging.handlers.RotatingFileHandler',
+            'formatter': 'verbose',
+            'filename': ACCOUNTING_LOG_FILE,
+            'maxBytes': 10 * 1024 * 1024,  # 10 MB
+            'backupCount': 20  # Backup 200 MB of logs
+        },
+        'analyticslog': {
+            'level': 'DEBUG',
+            'class': 'logging.handlers.RotatingFileHandler',
+            'formatter': 'verbose',
+            'filename': ANALYTICS_LOG_FILE,
+            'maxBytes': 10 * 1024 * 1024,  # 10 MB
+            'backupCount': 20  # Backup 200 MB of logs
+        },
+        'datadog': {
+            'level': 'INFO',
+            'class': 'logging.handlers.RotatingFileHandler',
+            'formatter': 'datadog',
+            'filename': DATADOG_LOG_FILE,
+            'maxBytes': 10 * 1024 * 1024,  # 10 MB
+            'backupCount': 20  # Backup 200 MB of logs
+        },
+        'couchlog': {
+            'level': 'WARNING',
+            'class': 'couchlog.handlers.CouchHandler',
+        },
+        'mail_admins': {
+            'level': 'ERROR',
+            'class': 'corehq.util.log.HqAdminEmailHandler',
+        },
+        'notify_exception': {
+            'level': 'ERROR',
+            'class': 'corehq.util.log.NotifyExceptionEmailer',
+        },
+        'null': {
+            'class': 'django.utils.log.NullHandler',
+        },
+    },
+    'loggers': {
+        '': {
+            'handlers': ['console', 'file', 'couchlog'],
+            'propagate': True,
+            'level': 'INFO',
+        },
+        'couchdbkit.request': {
+            'handlers': ['couch-request-handler'],
+            'level': 'DEBUG',
+            'propagate': False,
+        },
+        'django.request': {
+            'handlers': ['mail_admins'],
+            'level': 'ERROR',
+            'propagate': True,
+        },
+        'django.security.DisallowedHost': {
+            'handlers': ['null'],
+            'propagate': False,
+        },
+        'notify': {
+            'handlers': ['notify_exception'],
+            'level': 'ERROR',
+            'propagate': True,
+        },
+        'celery.task': {
+            'handlers': ['console', 'file', 'couchlog'],
+            'level': 'INFO',
+            'propagate': True
+        },
+        'pillowtop': {
+            'handlers': ['pillowtop'],
+            'level': 'ERROR',
+            'propagate': False,
+        },
+        'smsbillables': {
+            'handlers': ['file'],
+            'level': 'ERROR',
+            'propagate': False,
+        },
+        'accounting': {
+            'handlers': ['accountinglog', 'console', 'couchlog', 'mail_admins'],
+            'level': 'INFO',
+            'propagate': False,
+        },
+        'analytics': {
+            'handlers': ['analyticslog'],
+            'level': 'DEBUG',
+            'propagate': False
+        },
+        'elasticsearch': {
+            'handlers': ['file'],
+            'level': 'ERROR',
+            'propagate': True,
+        },
+        'datadog-metrics': {
+            'handlers': ['datadog'],
+            'level': 'INFO',
+            'propogate': False,
+        },
+    }
+}
+
+LOGGING['handlers'].update(LOCAL_LOGGING_HANDLERS)
+LOGGING['loggers'].update(LOCAL_LOGGING_LOGGERS)
 
 fix_logger_obfuscation_ = globals().get("FIX_LOGGER_ERROR_OBFUSCATION")
 helper.fix_logger_obfuscation(fix_logger_obfuscation_, LOGGING)
@@ -1565,10 +1613,6 @@ DOMAIN_MODULE_MAP = {
 
     'm4change': 'custom.m4change',
     'succeed': 'custom.succeed',
-    'ilsgateway-test-1': 'custom.ilsgateway',
-    'ilsgateway-test-2': 'custom.ilsgateway',
-    'ewsghana-test-1': 'custom.ewsghana',
-    'ewsghana-test-2': 'custom.ewsghana',
     'test-pathfinder': 'custom.m4change',
     'wvindia2': 'custom.world_vision',
     'pathways-india-mis': 'custom.care_pathways',

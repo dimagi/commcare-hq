@@ -180,7 +180,8 @@ APP_BUILDER_CAREPLAN = StaticToggle(
 APP_BUILDER_ADVANCED = StaticToggle(
     'advanced-app-builder',
     'Advanced Module in App-Builder',
-    TAG_EXPERIMENTAL
+    TAG_EXPERIMENTAL,
+    [NAMESPACE_DOMAIN],
 )
 
 APP_BUILDER_SHADOW_MODULES = StaticToggle(
@@ -517,13 +518,6 @@ BULK_SMS_VERIFICATION = StaticToggle(
     [NAMESPACE_USER, NAMESPACE_DOMAIN],
 )
 
-BULK_PAYMENTS = StaticToggle(
-    'bulk_payments',
-    'Enable payment of invoices by bulk credit payments and invoice generation for wire transfers',
-    TAG_PRODUCT_CORE
-)
-
-
 ENABLE_LOADTEST_USERS = StaticToggle(
     'enable_loadtest_users',
     'Enable creating loadtest users on HQ',
@@ -709,6 +703,13 @@ TELERIVET_SETUP_WALKTHROUGH = StaticToggle(
     [NAMESPACE_DOMAIN],
 )
 
+AUTO_CASE_UPDATES = StaticToggle(
+    'auto_case_updates',
+    'Ability to perform automatic case updates without closing the case.',
+    TAG_ONE_OFF,
+    [NAMESPACE_DOMAIN],
+)
+
 EWS_BROADCAST_BY_ROLE = StaticToggle(
     'ews_broadcast_by_role',
     'EWS: Filter broadcast recipients by role',
@@ -743,6 +744,7 @@ USE_SQL_BACKEND = StaticToggle(
     TAG_EXPERIMENTAL,
     [NAMESPACE_DOMAIN]
 )
+
 
 EWS_WEB_USER_EXTENSION = StaticToggle(
     'ews_web_user_extension',

@@ -64,3 +64,8 @@ class DeviceLogTest(TestCase, TestFileMixin):
         self.assertEqual(user_error.version_number, 604)
         self.assertEqual(user_error.app_id, '36c0bdd028d14a52cbff95bb1bfd0962')
         self.assertEqual(user_error.expr, '/data/fake')
+
+    @run_with_all_backends
+    def test_subreports_that_shouldnt_fail(self):
+        xml = self.get_xml('subreports_that_shouldnt_fail')
+        submit_form_locally(xml, 'test-domain')

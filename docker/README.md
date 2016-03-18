@@ -9,6 +9,7 @@ Initial setup
 * OS X
    * Install [Docker Toolbox](https://docs.docker.com/mac/step_one/). Go through the full tutorial, which will create a default machine.
    * If not using the Quick Start terminal, run `eval $(docker-machine env default)` to set up Docker's environment variables.
+* If you have any HQ services currently running (couch, postgres, redis, etc.), you should stop them now. 
 * Bootstrap the setup:
 
     ```

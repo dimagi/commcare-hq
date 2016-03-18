@@ -28,6 +28,7 @@ def recalculate_domain_consumption(domain):
 def should_exclude_invalid_periods(domain):
     """
     Whether the domain's consumption calculation should exclude invalid periods
+    i.e. periods where the stock went up without a receipt being reported
     """
     from corehq.apps.commtrack.models import CommtrackConfig
     if domain:

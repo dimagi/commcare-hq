@@ -641,7 +641,7 @@ class ConfirmExtraUserChargesForm(EditBillingAccountInfoForm):
                 'company_name',
                 'first_name',
                 'last_name',
-                crispy.Field('emails', css_class='input-xxlarge'),
+                crispy.Field('email_list', css_class='input-xxlarge'),
                 'phone_number',
             ),
             crispy.Fieldset(
