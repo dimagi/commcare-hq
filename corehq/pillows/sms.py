@@ -57,7 +57,7 @@ class SMSPillow(AliasedElasticPillow):
         return cls.calc_mapping_hash({"es_meta": cls.es_meta, "mapping": cls.default_mapping})
 
 
-def get_sql_sms_pillow():
+def get_sql_sms_pillow(pillow_id):
     checkpoint = PillowCheckpoint(SMS_PILLOW_CHECKPOINT_ID)
     processor = ElasticProcessor(
         elasticseach=get_es_new(),
@@ -65,7 +65,7 @@ def get_sql_sms_pillow():
         doc_prep_fn=lambda x: x
     )
     return ConstructedPillow(
-        name='SqlSMSPillow',
+        name=pillow_id,
         document_store=None,
         checkpoint=checkpoint,
         change_feed=KafkaChangeFeed(topics=[topics.SMS], group_id=SMS_PILLOW_KAFKA_CONSUMER_GROUP_ID),
