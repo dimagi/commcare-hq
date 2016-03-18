@@ -48,12 +48,15 @@ def _build_indicators(indicator_config_id, relevant_ids):
             # save is a noop if the filter doesn't match
             adapter.save(doc)
             last_id = doc.get('_id')
-            redis_client.srem(redis_key, last_id)
+            try:
+                redis_client.lrem(redis_key, 1, last_id)
+            except:
+                redis_client.srem(redis_key, last_id)
         except Exception as e:
             logging.exception('problem saving document {} to table. {}'.format(doc['_id'], e))
 
     if last_id:
-        redis_client.sadd(redis_key, last_id)
+        redis_client.rpush(redis_key, last_id)
 
 
 @task(queue='ucr_queue', ignore_result=True)
@@ -78,9 +81,13 @@ def resume_building_indicators(indicator_config_id):
     redis_client = get_redis_client().client.get_client()
     redis_key = _get_redis_key_for_config(config)
 
-    if len(redis_client.smembers(redis_key)) > 0:
-        # redis returns a set, which we cant pull a last member from
+    # maintaining support for existing sets in redis while the
+    # transition to lists occurs
+    try:
+        relevant_ids = redis_client.lrange(redis_key, 0, -1)
+    except:
         relevant_ids = tuple(redis_client.smembers(redis_key))
+    if len(relevant_ids) > 0:
         _build_indicators(indicator_config_id, relevant_ids)
         last_id = relevant_ids[-1]
 
@@ -102,12 +109,12 @@ def _iteratively_build_table(config, last_id=None):
             startkey_docid=last_id):
         relevant_ids.append(relevant_id)
         if len(relevant_ids) >= CHUNK_SIZE:
-            redis_client.sadd(redis_key, *relevant_ids)
+            redis_client.rpush(redis_key, *relevant_ids)
             _build_indicators(indicator_config_id, relevant_ids)
             relevant_ids = []
 
     if relevant_ids:
-        redis_client.sadd(redis_key, *relevant_ids)
+        redis_client.rpush(redis_key, *relevant_ids)
         _build_indicators(indicator_config_id, relevant_ids)
 
     if not is_static(indicator_config_id):

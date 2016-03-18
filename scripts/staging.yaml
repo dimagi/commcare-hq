@@ -45,7 +45,7 @@
 trunk: master
 name: autostaging
 branches:
-  - add-branches-on-staging-page  # Danny 3/17
+  - submodule-staging-branches  # Danny 3/18
   - ko3-app-manager  # Danny 3/7
   - flip_apps_db  # Danny 3/1
   - calculatedIcons # Sravan 3/2
@@ -70,6 +70,7 @@ branches:
   - sql-saved-exports-2 # Noah 3/9  includes ES reindex
   - certificate-validation # Cal 3/10
   - move-services-dir # Ben 3/15
+  - total-row-sqlagg # Nick P 3/18
 submodules:
   submodules/touchforms-src:
     # let's leave this here even when empty

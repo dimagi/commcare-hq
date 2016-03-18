@@ -28,6 +28,7 @@ from django.template.loader import render_to_string
 from django.template.response import TemplateResponse
 from django.utils.decorators import method_decorator
 from django.utils.translation import ugettext as _, ugettext_noop
+from django.views.decorators.debug import sensitive_post_parameters
 from django.views.decorators.http import require_POST
 from django.views.generic import TemplateView
 
@@ -354,6 +355,7 @@ def csrf_failure(request, reason=None, template_name="csrf_failure.html"):
              })))
 
 
+@sensitive_post_parameters('auth-password')
 def _login(req, domain_name, template_name):
 
     if req.user.is_authenticated() and req.method == "GET":
@@ -376,7 +378,7 @@ def _login(req, domain_name, template_name):
     welcome_name = None
     if domain_name:
         domain = Domain.get_by_name(domain_name)
-        req_params = expect_GET(req)
+        req_params = req.GET if req.method == 'GET' else req.POST
         welcome_name = domain.display_name()
         context.update({
             'domain': domain_name,
@@ -394,11 +396,12 @@ def _login(req, domain_name, template_name):
     return auth_view.as_view(template_name=template_name, extra_context=context)(req)
 
 
+@sensitive_post_parameters('auth-password')
 def login(req, domain_type='commcare'):
     # this view, and the one below, is overridden because
     # we need to set the base template to use somewhere
     # somewhere that the login page can access it.
-    req_params = expect_GET(req)
+    req_params = req.GET if req.method == 'GET' else req.POST
     domain = req_params.get('domain', None)
 
     from corehq.apps.domain.utils import get_dummy_domain
