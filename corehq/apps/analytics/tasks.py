@@ -308,13 +308,10 @@ def track_periodic_data():
             continue
         max_forms = 0
         max_workers = 0
-        forms_300 = False
 
         for domain in user['domains']:
             if domain in domains_to_forms and domains_to_forms[domain] > max_forms:
                 max_forms = domains_to_forms[domain]
-                if max_forms > 300:
-                    forms_300 = True
             if domain in domains_to_mobile_users and domains_to_mobile_users[domain] > max_workers:
                 max_workers = domains_to_mobile_users[domain]
 
@@ -337,7 +334,7 @@ def track_periodic_data():
                 },
                 {
                     'property': 'over_300_form_submissions',
-                    'value': forms_300
+                    'value': max_forms > 300
                 }
             ]
         }
