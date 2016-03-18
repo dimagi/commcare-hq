@@ -26,7 +26,7 @@ class IteratorJSONReaderTest(SimpleTestCase):
               ('user', ['3', '4'])]]
         )
 
-    def test_basic(self):
+    def test_list_headers_without_number(self):
         self.assertEquals(
             self.normalize([['A', 'data: key', 'user', 'user 2', 'is-ok?'],
                        ['1', '2', '3', '4', 'yes']]),
