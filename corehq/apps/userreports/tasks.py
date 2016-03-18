@@ -81,9 +81,13 @@ def resume_building_indicators(indicator_config_id):
     redis_client = get_redis_client().client.get_client()
     redis_key = _get_redis_key_for_config(config)
 
-    if len(redis_client.lrange(redis_key, 0, -1)) > 0:
-        # redis returns a set, which we cant pull a last member from
+    # maintaining support for existing sets in redis while the
+    # transition to lists occurs
+    try:
         relevant_ids = redis_client.lrange(redis_key, 0, -1)
+    except:
+        relevant_ids = tuple(redis_client.smembers(redis_key))
+    if len(relevant_ids) > 0:
         _build_indicators(indicator_config_id, relevant_ids)
         last_id = relevant_ids[-1]
 
