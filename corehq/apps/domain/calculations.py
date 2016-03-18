@@ -134,6 +134,10 @@ def j2me_forms_in_last(domain, days):
     return FormES().domain(domain).j2me_submissions(gte=then).size(0).run().total
 
 
+def j2me_forms_in_last_bool(domain, days):
+    return j2me_forms_in_last(domain, days) > 0
+
+
 def _sms_helper(domain, direction=None, days=None):
     query = SMSES().domain(domain).size(0)
 
@@ -218,7 +222,7 @@ CALC_ORDER = [
     'uses_reminders', 'sms--I', 'sms--O', 'sms_in_last', 'sms_in_last--30',
     'sms_in_last_bool', 'sms_in_last_bool--30', 'sms_in_in_last--30',
     'sms_out_in_last--30', 'j2me_forms_in_last--30', 'j2me_forms_in_last--60',
-    'j2me_forms_in_last--90',
+    'j2me_forms_in_last--90', 'j2me_forms_in_last_bool--90',
 ]
 
 CALCS = {
@@ -251,6 +255,7 @@ CALCS = {
     'j2me_forms_in_last--30': "# j2me forms in last 30 days",
     'j2me_forms_in_last--60': "# j2me forms in last 60 days",
     'j2me_forms_in_last--90': "# j2me forms in last 90 days",
+    'j2me_forms_in_last_bool--90': "j2me forms in last 90 days",
 }
 
 CALC_FNS = {
@@ -275,7 +280,8 @@ CALC_FNS = {
     "web_users": not_implemented,
     "active_apps": app_list,
     'uses_reminders': uses_reminders,
-    'j2me_forms_in_last': j2me_forms_in_last
+    'j2me_forms_in_last': j2me_forms_in_last,
+    'j2me_forms_in_last_bool': j2me_forms_in_last_bool
 }
 
 
