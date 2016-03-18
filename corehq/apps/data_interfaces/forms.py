@@ -4,6 +4,7 @@ from corehq.apps.style import crispy as hqcrispy
 from couchdbkit import ResourceNotFound
 
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
+from corehq.toggles import AUTO_CASE_UPDATES
 from crispy_forms.bootstrap import StrictButton, InlineField, FormActions, FieldWithButtons
 from django import forms
 from crispy_forms.helper import FormHelper
@@ -105,6 +106,7 @@ class AddCaseToGroupForm(forms.Form):
 class AddAutomaticCaseUpdateRuleForm(forms.Form):
     ACTION_CLOSE = 'CLOSE'
     ACTION_UPDATE_AND_CLOSE = 'UPDATE_AND_CLOSE'
+    ACTION_UPDATE = 'UPDATE'
 
     name = TrimmedCharField(
         label=ugettext_lazy("Rule Name"),
@@ -166,6 +168,17 @@ class AddAutomaticCaseUpdateRuleForm(forms.Form):
             (case_type, case_type) for case_type in case_types
         )
 
+    def allow_updates_without_closing(self):
+        """
+        If the AUTO_CASE_UPDATES toggle is enabled for the domain, then
+        we allow updates to happen without closing the case.
+        """
+        self.fields['action'].choices = (
+            (self.ACTION_CLOSE, _("No")),
+            (self.ACTION_UPDATE_AND_CLOSE, _("Yes, and close the case")),
+            (self.ACTION_UPDATE, _("Yes, and do not close the case")),
+        )
+
     def __init__(self, *args, **kwargs):
         if 'domain' not in kwargs:
             raise Exception("Expected domain in kwargs")
@@ -178,6 +191,9 @@ class AddAutomaticCaseUpdateRuleForm(forms.Form):
         # when they are displayed they are required.
         self.fields['update_property_name'].label = _("Property") + '<span class="asteriskField">*</span>'
         self.fields['update_property_value'].label = _("Value") + '<span class="asteriskField">*</span>'
+
+        if AUTO_CASE_UPDATES.enabled(self.domain):
+            self.allow_updates_without_closing()
 
         self.set_case_type_choices(self.initial.get('case_type'))
         self.helper = FormHelper()
@@ -311,8 +327,17 @@ class AddAutomaticCaseUpdateRuleForm(forms.Form):
             ))
         return result
 
+    def _closes_case(self):
+        return self.cleaned_data.get('action') in [
+            self.ACTION_UPDATE_AND_CLOSE,
+            self.ACTION_CLOSE,
+        ]
+
     def _updates_case(self):
-        return self.cleaned_data.get('action') == self.ACTION_UPDATE_AND_CLOSE
+        return self.cleaned_data.get('action') in [
+            self.ACTION_UPDATE_AND_CLOSE,
+            self.ACTION_UPDATE,
+        ]
 
     def clean_update_property_name(self):
         value = None
