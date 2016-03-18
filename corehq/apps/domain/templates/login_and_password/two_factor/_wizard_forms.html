@@ -3,7 +3,7 @@
 {% for field in wizard.form %}
 <div class="form-group">
   <label class="col-sm-4 control-label">{{ field.label }}</label>
-  <div class="col-sm-8">{{ field }}
+  <div class="col-sm-4">{{ field }}
   {% if field.name == "password" %}
     <p class="help-block">
       <a href="{% url "password_reset_email" %}"><i class="fa fa-question-circle"></i> {% trans "Forgot your password?" %}</a>
