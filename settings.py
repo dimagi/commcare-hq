@@ -1037,7 +1037,7 @@ LOGGING = {
         },
         'smsbillables': {
             'handlers': ['file', 'console', 'mail_admins'],
-            'level': 'ERROR',
+            'level': 'INFO',
             'propagate': False,
         },
         'accounting': {
