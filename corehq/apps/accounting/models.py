@@ -63,6 +63,7 @@ from corehq.const import USER_DATE_FORMAT
 from corehq.util.dates import get_first_last_days
 from corehq.util.quickcache import quickcache
 from corehq.util.view_utils import absolute_reverse
+from corehq.apps.analytics.tasks import track_workflow
 
 integer_field_validators = [MaxValueValidator(2147483647), MinValueValidator(-2147483648)]
 
@@ -1307,6 +1308,13 @@ class Subscription(models.Model):
             self, method=adjustment_method, note=note, web_user=web_user,
             reason=change_status_result.adjustment_reason, related_subscription=new_subscription
         )
+
+        upgrade_reasons = [SubscriptionAdjustmentReason.UPGRADE, SubscriptionAdjustmentReason.CREATE]
+        if web_user and adjustment_method == SubscriptionAdjustmentMethod.USER:
+            if change_status_result.adjustment_reason in upgrade_reasons:
+                track_workflow(web_user, 'Changed Plan: Upgrade')
+            if change_status_result.adjustment_reason == SubscriptionAdjustmentReason.DOWNGRADE:
+                track_workflow(web_user, 'Changed Plan: Downgrade')
 
         return new_subscription
 
