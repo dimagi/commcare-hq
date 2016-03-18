@@ -1,12 +1,22 @@
-{% extends "style/bootstrap2/two_column.html" %}
+{% extends "style/bootstrap3/two_column.html" %}
 {% load report_tags %}
 {% load i18n %}
 
-{% block head %}
-    {{ block.super }}
+{% block page_breadcrumbs %}
+    <ol id="hq-breadcrumbs" class="breadcrumb breadcrumb-hq-section">
+        <li>
+            <a href="{% url "data_interfaces_default" domain %}"><strong>{% trans "Data" %}</strong></a>
+        </li>
+        <li>
+            {% trans "Import Cases from Excel" %}
+        </li>
+        <li class="active">
+            {% trans "Importing Cases..." %}
+        </li>
+    </ol>
 {% endblock %}
 
-{% block main_column %}
+{% block page_content %}
     {% block extrahead %}
         <script type="text/javascript">
             var autoRefresh = '';
