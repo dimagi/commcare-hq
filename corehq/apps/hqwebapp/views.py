@@ -373,17 +373,19 @@ def _login(req, domain_name, template_name):
     req.base_template = settings.BASE_TEMPLATE
 
     context = {}
+    welcome_name = None
     if domain_name:
         domain = Domain.get_by_name(domain_name)
         req_params = expect_GET(req)
+        welcome_name = domain.display_name()
         context.update({
             'domain': domain_name,
             'hr_name': domain.display_name() if domain else domain_name,
             'next': req_params.get('next', '/a/%s/' % domain),
             'allow_domain_requests': domain.allow_domain_requests,
         })
-
-    welcome_name = domain_name if domain_name else get_per_domain_context(Domain())['SITE_NAME']
+    if welcome_name is None:
+        welcome_name = get_per_domain_context(Domain())['SITE_NAME']
     context.update({
         'current_page': {'page_name': 'Welcome back to %s!' % welcome_name}
     })
