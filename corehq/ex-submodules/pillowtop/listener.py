@@ -90,6 +90,11 @@ class BasicPillow(PillowBase):
             # document_class must be a CouchDocLockableMixIn
             assert hasattr(self.document_class, 'get_obj_lock_by_id')
 
+    @property
+    def pillow_id(self):
+        # for legacy reasons, by default a Pillow's ID is just it's class name
+        return self.__class__.__name__
+
     def get_couch_db(self):
         if self._couch_db is None:
             self._couch_db = self.get_default_couch_db()

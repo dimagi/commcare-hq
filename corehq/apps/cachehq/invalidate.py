@@ -4,7 +4,7 @@ from dimagi.utils.decorators.memoized import memoized
 
 @memoized
 def get_cache_pillow(couch_db):
-    return cacheinvalidate.CacheInvalidatePillow(couch_db=couch_db)
+    return cacheinvalidate.CacheInvalidatePillow(pillow_id='CacheInvalidatePillow', couch_db=couch_db)
 
 
 def invalidate_document(document, couch_db, deleted=False):
