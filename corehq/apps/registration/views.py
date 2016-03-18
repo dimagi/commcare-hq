@@ -78,6 +78,7 @@ def register_user(request):
                 context.update({
                     'requested_domain': requested_domain,
                     'track_domain_registration': True,
+                    'current_page':{'page_name':'Confirmation Email Sent'},
                 })
                 return render(request, 'registration/confirmation_sent.html', context)
             context.update({'create_domain': form.cleaned_data['create_domain']})
@@ -210,7 +211,10 @@ def resend_confirmation(request):
             })
             return render(request, 'error.html', context)
         else:
-            context.update({'requested_domain': dom_req.domain})
+            context.update({
+                'requested_domain': dom_req.domain,
+                'current_page':{'page_name':'Confirmation Email Sent'},
+            })
             return render(request, 'registration/confirmation_sent.html',
                 context)
 
