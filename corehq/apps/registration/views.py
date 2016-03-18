@@ -243,9 +243,8 @@ def confirm_domain(request, guid=None):
 
     if error is not None:
         context = {
-            'message_title': _('Account not activated'),
-            'message_subtitle': _('Email not yet confirmed'),
             'message_body': error,
+            'current_page':{'page_name':'Account Not Activated'},
         }
         return render(request, 'registration/confirmation_error.html', context)
 
