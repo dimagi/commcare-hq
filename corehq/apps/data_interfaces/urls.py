@@ -7,7 +7,8 @@ from corehq.apps.data_interfaces.views import (CaseGroupListView,
                                                XFormManagementStatusView,
                                                AutomaticUpdateRuleListView,
                                                AddAutomaticUpdateRuleView,
-                                               EditAutomaticUpdateRuleView)
+                                               EditAutomaticUpdateRuleView,
+                                               CaseSearchView,)
 from .interfaces import FormManagementMode
 
 
@@ -42,6 +43,7 @@ edit_data_urls = patterns(
 urlpatterns = patterns(
     'corehq.apps.data_interfaces.views',
     url(r'^$', "default", name="data_interfaces_default"),
+    url(r'^cases/search/$', CaseSearchView.as_view(), name=CaseSearchView.urlname),
     (r'^edit/', include(edit_data_urls)),
     (r'^export/', include('corehq.apps.export.urls')),
     DataInterfaceDispatcher.url_pattern(),

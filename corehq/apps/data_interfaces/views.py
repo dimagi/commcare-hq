@@ -5,6 +5,7 @@ import uuid
 from couchdbkit import ResourceNotFound
 from django.contrib import messages
 from django.core.cache import cache
+from dimagi.utils.web import json_response
 from corehq import privileges, toggles
 from corehq.apps.accounting.decorators import requires_privilege_with_fallback
 from corehq.apps.app_manager.util import all_case_properties_by_domain
@@ -869,3 +870,26 @@ class EditAutomaticUpdateRuleView(AddAutomaticUpdateRuleView):
             self.update_rule(self.rule)
             return HttpResponseRedirect(reverse(AutomaticUpdateRuleListView.urlname, args=[self.domain]))
         return super(JSONResponseMixin, self).get(request, *args, **kwargs)
+
+
+class CaseSearchView(DataInterfaceSection):
+    template_name = 'data_interfaces/case_search.html'
+    urlname = 'case_search'
+    page_title = ugettext_lazy("Search Cases")
+
+    def get(self, request, *args, **kwargs):
+        return self.render_to_response(self.get_context_data())
+
+    def post(self, request, *args, **kwargs):
+        from corehq.apps.es.case_search import CaseSearchES
+        query = json.loads(request.POST.get('q'))
+        case_type = query.get('type')
+        search_params = query.get('parameters')
+        search = CaseSearchES()
+        search = search.domain(self.domain)
+        if case_type:
+            search = search.case_type(case_type)
+        for param in search_params:
+            search = search.case_property_query(**param)
+        search_results = search.values()
+        return json_response({'values': search_results})
