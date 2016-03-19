@@ -54,10 +54,10 @@ class DividedWeRunPlugin(Plugin):
 
     def skip_out_of_range_tests(self, test, depth=0):
         if isinstance(test, ContextSuite):
-            if depth > self.divide_depth \
-                    and test.implementsAnyFixture(test.context, None):
+            if depth >= self.divide_depth:
                 return self.maybe_skip(test)
-            test._tests = [self.skip_out_of_range_tests(case, depth + 1)
+            depth += 1 if test.implementsAnyFixture(test.context, None) else 0
+            test._tests = [self.skip_out_of_range_tests(case, depth)
                            for case in test]
         else:
             test = self.maybe_skip(test)
@@ -88,7 +88,7 @@ def name_of(test):
         return context.__module__ + ":" + context.__name__
     if isinstance(context, types.ModuleType):
         return context.__name__
-    raise str(context)
+    return str(context)
 
 
 def get_score(test):
