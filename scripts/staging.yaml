@@ -45,12 +45,12 @@
 trunk: master
 name: autostaging
 branches:
+  - submodule-staging-branches  # Danny 3/18
   - ko3-app-manager  # Danny 3/7
   - flip_apps_db  # Danny 3/1
   - calculatedIcons # Sravan 3/2
   - vellum-staging # J$ 11/13
 #  - java-tf-deploy # Ben/Will 1/21/16
-  - finish-two-factor # Cal 1/21
   - show-form-case-refs-in-summary # j$ 1/29
   - revamp-multimedia # Jenny 2/16
   - analytics-retry # Cal 2/18
@@ -69,8 +69,8 @@ branches:
   - report-builder-text # Cal 3/1
   - sql-saved-exports-2 # Noah 3/9  includes ES reindex
   - certificate-validation # Cal 3/10
-  - multi-db-deploy  # SK 3/15
   - move-services-dir # Ben 3/15
+  - total-row-sqlagg # Nick P 3/18
 submodules:
   submodules/touchforms-src:
     # let's leave this here even when empty
@@ -87,9 +87,10 @@ submodules:
   submodules/django-digest-src:
     branches: []
   submodules/dimagi-utils-src:
-    branches:
-      - request-params # Nick P 3/15
+    branches: []
   submodules/django-prbac-src:
     branches: []
   corehq/apps/prelogin:
+    branches: []
+  corehq/apps/hqmedia/static/hqmedia/MediaUploader:
     branches: []

@@ -160,21 +160,21 @@ class ConfigurableReportKafkaPillow(ConstructedPillow):
         self._processor.rebuild_table(sql_adapter)
 
 
-def get_kafka_ucr_pillow():
+def get_kafka_ucr_pillow(pillow_id='kafka-ucr-main'):
     return ConfigurableReportKafkaPillow(
         processor=ConfigurableReportPillowProcessor(
             data_source_provider=DynamicDataSourceProvider(),
             auto_repopulate_tables=False,
         ),
-        pillow_name='kafka-ucr-main',
+        pillow_name=pillow_id,
     )
 
 
-def get_kafka_ucr_static_pillow():
+def get_kafka_ucr_static_pillow(pillow_id='kafka-ucr-static'):
     return ConfigurableReportKafkaPillow(
         processor=ConfigurableReportPillowProcessor(
             data_source_provider=StaticDataSourceProvider(),
             auto_repopulate_tables=True,
         ),
-        pillow_name='kafka-ucr-static',
+        pillow_name=pillow_id,
     )

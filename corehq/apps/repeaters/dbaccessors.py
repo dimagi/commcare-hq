@@ -30,6 +30,8 @@ def get_repeat_record_count(domain, repeater_id=None, state=None):
         endkey = [domain, repeater_id, state]
     elif not repeater_id and state:
         ids = sorted(_get_repeater_ids_by_domain(domain))
+        if not ids:
+            return 0
         startkey = [domain, ids[0], state]
         endkey = [domain, ids[-1], state]
 
