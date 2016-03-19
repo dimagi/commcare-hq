@@ -259,6 +259,10 @@ class ConfigurableReport(JSONResponseMixin, BaseDomainView):
                 data_source.set_order_by(
                     [(data_source.column_configs[int(sort_column)].column_id, sort_order.upper())]
                 )
+
+            datatables_params = DatatablesParams.from_request_dict(request.GET)
+            page = list(data_source.get_data(start=datatables_params.start, limit=datatables_params.count))
+
             total_records = data_source.get_total_records()
         except UserReportsError as e:
             if settings.DEBUG:
@@ -283,9 +287,6 @@ class ConfigurableReport(JSONResponseMixin, BaseDomainView):
             return self.render_json_response({
                 'warning': msg
             })
-
-        datatables_params = DatatablesParams.from_request_dict(request.GET)
-        page = list(data_source.get_data(start=datatables_params.start, limit=datatables_params.count))
 
         json_response = {
             'aaData': page,
