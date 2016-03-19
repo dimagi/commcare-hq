@@ -7,7 +7,9 @@ env:
   matrix:
     - MATRIX_TYPE=javascript BOWER=yes NODE=yes
     # need node installs for app_manager.XpathValidatorTest
-    - MATRIX_TYPE=python BOWER=yes NODE=yes
+    # NOSE_DIVIDE_DEPTH=1 to descend into django-nose database contexts
+    - MATRIX_TYPE=python BOWER=yes NODE=yes NOSE_DIVIDED_WE_RUN=07 NOSE_DIVIDE_DEPTH=1
+    - MATRIX_TYPE=python BOWER=yes NODE=yes NOSE_DIVIDED_WE_RUN=8f NOSE_DIVIDE_DEPTH=1
     - MATRIX_TYPE=python-sharded
 before_install:
   - "cp .travis/localsettings.py localsettings.py"

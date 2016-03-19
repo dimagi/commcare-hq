@@ -26,8 +26,7 @@ run_tests() {
 
 }
 if [ "${MATRIX_TYPE}" = "python" ]; then
-    TESTS="--testrunner=$TESTRUNNER"
-    run_tests "$TESTS"
+    run_tests
 
 elif [ "${MATRIX_TYPE}" = "python-sharded" ]; then
 
