@@ -1,44 +1,45 @@
 import copy
-import logging
-from urlparse import urlparse, parse_qs
 import datetime
-import dateutil
-from dateutil.relativedelta import relativedelta
-import re
 import io
-from PIL import Image
+import logging
+import re
 import uuid
+from urlparse import urlparse, parse_qs
+
+import dateutil
+import django
+from corehq.toggles import CALL_CENTER_LOCATION_OWNERS, HIPAA_COMPLIANCE_CHECKBOX
+from crispy_forms import bootstrap as twbscrispy
+from crispy_forms import layout as crispy
+from crispy_forms.bootstrap import FormActions, StrictButton
+from crispy_forms.helper import FormHelper
+from dateutil.relativedelta import relativedelta
+from django import forms
+from django.conf import settings
+from django.contrib.auth import get_user_model
 from django.contrib.auth.forms import SetPasswordForm
 from django.contrib.auth.tokens import default_token_generator
 from django.contrib.sites.models import get_current_site
-from django.utils.http import urlsafe_base64_encode
-from corehq.toggles import CALL_CENTER_LOCATION_OWNERS, HIPAA_COMPLIANCE_CHECKBOX
-from dimagi.utils.decorators.memoized import memoized
-from django.conf import settings
-from django.contrib.auth import get_user_model
-from django.db import transaction
-from corehq import privileges
-from corehq.apps.accounting.exceptions import SubscriptionRenewalError
-from corehq.apps.accounting.utils import domain_has_privilege, log_accounting_error
-from corehq.apps.sms.phonenumbers_helper import parse_phone_number
-from corehq.feature_previews import CALLCENTER
-
-from django import forms
-from crispy_forms.bootstrap import FormActions, StrictButton
-from crispy_forms.helper import FormHelper
-from crispy_forms import layout as crispy
-from crispy_forms import bootstrap as twbscrispy
-from corehq.apps.style import crispy as hqcrispy
-from crispy_forms import bootstrap as twbscrispy
-
 from django.core.urlresolvers import reverse
-
+from django.db import transaction
 from django.forms.fields import (ChoiceField, CharField, BooleanField,
     ImageField)
 from django.forms.widgets import  Select
+from django.template.loader import render_to_string
 from django.utils.encoding import smart_str, force_bytes
+from django.utils.http import urlsafe_base64_encode
 from django.utils.safestring import mark_safe
+from django.utils.translation import ugettext_noop, ugettext as _, ugettext_lazy
 from django_countries.data import COUNTRIES
+from PIL import Image
+from pyzxcvbn import zxcvbn
+
+if django.VERSION < (1, 6):
+    from django.contrib.auth.hashers import UNUSABLE_PASSWORD as UNUSABLE_PASSWORD_PREFIX
+else:
+    from django.contrib.auth.hashers import UNUSABLE_PASSWORD_PREFIX
+
+from corehq import privileges
 from corehq.apps.accounting.models import (
     BillingAccount,
     BillingAccountType,
@@ -59,29 +60,24 @@ from corehq.apps.accounting.models import (
     EntryPoint,
     FundingSource
 )
+from corehq.apps.accounting.exceptions import SubscriptionRenewalError
+from corehq.apps.accounting.utils import domain_has_privilege, log_accounting_error
 from corehq.apps.app_manager.dbaccessors import get_apps_in_domain
 from corehq.apps.app_manager.models import Application, FormBase, RemoteApp
-
 from corehq.apps.domain.models import (LOGO_ATTACHMENT, LICENSES, DATA_DICT,
     AREA_CHOICES, SUB_AREA_CHOICES, BUSINESS_UNITS, Domain, TransferDomainRequest)
-from corehq.apps.reminders.models import CaseReminderHandler
-
-from corehq.apps.users.models import WebUser, CommCareUser, CouchUser
 from corehq.apps.groups.models import Group
 from corehq.apps.hqwebapp.crispy import TextField
 from corehq.apps.hqwebapp.tasks import send_mail_async, send_html_email_async
+from corehq.apps.reminders.models import CaseReminderHandler
+from corehq.apps.sms.phonenumbers_helper import parse_phone_number
+from corehq.apps.style import crispy as hqcrispy
+from corehq.apps.style.forms.widgets import BootstrapCheckboxInput, BootstrapDisabledInput
+from corehq.apps.users.models import WebUser, CommCareUser, CouchUser
+from corehq.feature_previews import CALLCENTER
 from corehq.util.timezones.fields import TimeZoneField
 from corehq.util.timezones.forms import TimeZoneChoiceField
-from django.template.loader import render_to_string
-from django.utils.translation import ugettext_noop, ugettext as _, ugettext_lazy
-from corehq.apps.style.forms.widgets import BootstrapCheckboxInput, BootstrapDisabledInput
-import django
-from pyzxcvbn import zxcvbn
-
-if django.VERSION < (1, 6):
-    from django.contrib.auth.hashers import UNUSABLE_PASSWORD as UNUSABLE_PASSWORD_PREFIX
-else:
-    from django.contrib.auth.hashers import UNUSABLE_PASSWORD_PREFIX
+from dimagi.utils.decorators.memoized import memoized
 
 # used to resize uploaded custom logos, aspect ratio is preserved
 LOGO_SIZE = (211, 32)
