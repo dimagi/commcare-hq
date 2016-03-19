@@ -781,12 +781,6 @@ TF_USES_SQLITE_BACKEND = StaticToggle(
     [NAMESPACE_DOMAIN]
 )
 
-SECURE_SESSIONS_CHECKBOX = StaticToggle(
-    'secure_sessions_checkbox',
-    'Show secure sessions checkbox',
-    TAG_PRODUCT_PATH,
-    [NAMESPACE_DOMAIN]
-)
 
 CUSTOM_APP_BASE_URL = StaticToggle(
     'custom_app_base_url',
