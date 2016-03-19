@@ -264,6 +264,7 @@ class ConfigurableReport(JSONResponseMixin, BaseDomainView):
             page = list(data_source.get_data(start=datatables_params.start, limit=datatables_params.count))
 
             total_records = data_source.get_total_records()
+            total_row = data_source.get_total_row() if data_source.has_total_row else None
         except UserReportsError as e:
             if settings.DEBUG:
                 raise
@@ -294,10 +295,9 @@ class ConfigurableReport(JSONResponseMixin, BaseDomainView):
             "iTotalRecords": total_records,
             "iTotalDisplayRecords": total_records,
         }
-        if data_source.has_total_row:
-            # TODO - use sqlagg to get total_row
+        if total_row is not None:
             json_response.update({
-                "total_row": data_source.get_total_row(),
+                "total_row": total_row,
             })
         return self.render_json_response(json_response)
 
