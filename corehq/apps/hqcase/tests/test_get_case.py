@@ -8,12 +8,16 @@ from corehq.apps.users.models import CommCareUser
 
 
 class GetCaseTest(TestCase):
-    
+
     @classmethod
     def setUpClass(cls):
         cls.domain = Domain(name='foo')
         cls.domain.save()
         cls.user = CommCareUser.create(cls.domain.name, 'username', 's3cr3t')
+
+    @classmethod
+    def tearDownClass(cls):
+        cls.user.delete()
 
     def setUp(self):
         factory = CaseFactory(domain='foo')
