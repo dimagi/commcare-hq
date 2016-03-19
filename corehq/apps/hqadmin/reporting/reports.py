@@ -33,6 +33,7 @@ from django.db.models import Q, Count, Sum
 from django.utils.translation import ugettext as _
 
 from corehq.apps.accounting.models import Subscription, SoftwarePlanEdition
+from corehq.apps.commtrack.const import SUPPLY_POINT_CASE_TYPE
 from corehq.apps.products.models import SQLProduct
 from corehq.apps.domain.models import Domain
 from corehq.apps.es.cases import CaseES
@@ -350,6 +351,25 @@ def get_countries_stats_data(domains, datespan, interval,
         c = len(countries.run().aggregations.countries.keys)
         if c > 0:
             histo_data.append(get_data_point(c, timestamp))
+
+    return format_return_data(histo_data, 0, datespan)
+
+
+def get_active_supply_points_data(domains, datespan, interval):
+    """
+    Returns list of timestamps and active supply points have been modified during
+    each interval
+    """
+    histo_data = []
+    for start_date, end_date in intervals(interval, datespan.startdate, datespan.enddate):
+        num_active_supply_points = (CaseES()
+                .domain(domains)
+                .case_type(SUPPLY_POINT_CASE_TYPE)
+                .active_in_range(gte=start_date, lte=end_date)
+                .size(0)).run().hits
+
+        if num_active_supply_points > 0:
+            histo_data.append(get_data_point(num_active_supply_points, end_date))
 
     return format_return_data(histo_data, 0, datespan)
 
@@ -1019,6 +1039,7 @@ HISTO_TYPE_TO_FUNC = {
     "active_dimagi_gateways": get_active_dimagi_owned_gateway_projects,
     "active_domains": get_active_domain_stats_data,
     "active_mobile_users": get_active_users_data,
+    "active_supply_points": get_active_supply_points_data,
     "cases": get_case_stats,
     "commtrack_forms": commtrack_form_submissions,
     "countries": get_countries_stats_data,

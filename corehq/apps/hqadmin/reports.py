@@ -390,15 +390,12 @@ INDICATOR_DATA = {
     },
     "active_supply_points": {
         "ajax_view": "admin_reports_stats_data",
-        "chart_name": "active_cases",
+        "chart_name": "active_supply_points",
         "chart_title": "Active Supply Points (last 90 days)",
         "hide_cumulative_charts": True,
-        "get_request_params": {
-            "supply_points": True
-        },
-        "histogram_type": "active_cases",
+        "histogram_type": "active_supply_points",
         "is_cumulative": False,
-        "xaxis_label": "# cases",
+        "xaxis_label": "# supply points",
     },
     "total_products": {
         "ajax_view": "admin_reports_stats_data",
