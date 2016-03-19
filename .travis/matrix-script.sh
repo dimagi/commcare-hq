@@ -26,7 +26,7 @@ run_tests() {
 
 }
 if [ "${MATRIX_TYPE}" = "python" ]; then
-    run_tests
+    run_tests --divided-we-run=$NOSE_DIVIDED_WE_RUN
 
 elif [ "${MATRIX_TYPE}" = "python-sharded" ]; then
 
