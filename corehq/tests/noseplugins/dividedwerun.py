@@ -1,5 +1,4 @@
 import logging
-import sys
 import types
 from hashlib import md5
 from unittest import SkipTest
