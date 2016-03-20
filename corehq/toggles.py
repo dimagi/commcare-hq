@@ -820,3 +820,11 @@ UNLIMITED_REPORT_BUILDER_REPORTS = StaticToggle(
     TAG_PRODUCT_PATH,
     [NAMESPACE_DOMAIN]
 )
+
+
+ALLOW_BROKEN_MULITIMEDIA_SUBMISSIONS = StaticToggle(
+    'allow_broken_multimedia_submissions',
+    "Explicitly bypass HQ's protection from the 2.26 multimedia submission bug. NOT RECOMMENDED",
+    TAG_ONE_OFF,
+    [NAMESPACE_DOMAIN]
+)
