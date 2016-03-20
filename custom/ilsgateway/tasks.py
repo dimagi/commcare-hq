@@ -351,6 +351,10 @@ def soh_thank_you_task():
     Last business day before the 20th at 4:00 PM Tanzania time
     """
     now = datetime.utcnow()
+    business_day = get_business_day_of_month_before(month=now.month, year=now.year, day=20)
+    if now.day != business_day.day:
+        return
+
     last_month = datetime(now.year, now.month, 1) - timedelta(days=1)
     for domain in ILSGatewayConfig.get_all_enabled_domains():
         SOHThankYouReminder(domain=domain, date=last_month).send()
