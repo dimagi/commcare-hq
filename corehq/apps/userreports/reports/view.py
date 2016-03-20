@@ -1,7 +1,9 @@
 import json
 import os
 import tempfile
+from multiprocessing.pool import ThreadPool
 from StringIO import StringIO
+
 from corehq.apps.domain.views import BaseDomainView
 from corehq.apps.style.decorators import use_bootstrap3, \
     use_select2, use_daterangepicker, use_jquery_ui, use_nvd3, use_datatables
@@ -261,10 +263,19 @@ class ConfigurableReport(JSONResponseMixin, BaseDomainView):
                 )
 
             datatables_params = DatatablesParams.from_request_dict(request.GET)
-            page = list(data_source.get_data(start=datatables_params.start, limit=datatables_params.count))
 
-            total_records = data_source.get_total_records()
-            total_row = data_source.get_total_row() if data_source.has_total_row else None
+            pool = ThreadPool(processes=3)
+
+            async_page = pool.apply_async(data_source.get_data, (datatables_params.start, datatables_params.count))
+            async_total_records = pool.apply_async(data_source.get_total_records)
+            async_total_row = pool.apply_async(data_source.get_total_row) if data_source.has_total_row else None
+
+            page = list(async_page.get())
+            total_records = async_total_records.get()
+            if async_total_row is not None:
+                total_row = async_total_row.get()
+            else:
+                total_row = None
         except UserReportsError as e:
             if settings.DEBUG:
                 raise
