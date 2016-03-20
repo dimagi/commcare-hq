@@ -1,7 +1,7 @@
 import json
 import os
 import tempfile
-from multiprocessing.pool import ThreadPool
+from multiprocessing import Pool
 from StringIO import StringIO
 
 from corehq.apps.domain.views import BaseDomainView
@@ -264,7 +264,7 @@ class ConfigurableReport(JSONResponseMixin, BaseDomainView):
 
             datatables_params = DatatablesParams.from_request_dict(request.GET)
 
-            pool = ThreadPool(processes=3)
+            pool = Pool(processes=3)
 
             async_page = pool.apply_async(data_source.get_data, **{
                 'start': datatables_params.start,
