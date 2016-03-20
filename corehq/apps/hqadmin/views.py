@@ -731,15 +731,28 @@ def _malt_csv_response(month, year):
 @require_superuser
 def branches_on_staging(request, template='hqadmin/branches_on_staging.html'):
     branches = _get_branches_merged_into_autostaging()
-    return render(request, template, {'branches': branches})
+    branches_by_submodule = [(None, branches)] + [
+        (cwd, _get_branches_merged_into_autostaging(cwd))
+        for cwd in _get_submodules()
+    ]
+    return render(request, template, {
+        'branches_by_submodule': branches_by_submodule,
+    })
 
 
-def _get_branches_merged_into_autostaging():
+def _get_branches_merged_into_autostaging(cwd=None):
     import sh
-    git = sh.git.bake(_tty_out=False)
+    git = sh.git.bake(_tty_out=False, _cwd=cwd)
     # %p %s is parent hashes + subject of commit message, which will look like:
     # <merge base> <merge head> Merge <stuff> into autostaging
-    pipe = git.log('origin/master...', grep='Merge .* into autostaging', format='%p %s')
+    try:
+        pipe = git.log('origin/master...', grep='Merge .* into autostaging', format='%p %s')
+    except sh.ErrorReturnCode_128:
+        # when origin/master isn't fetched, you'll get
+        #   fatal: ambiguous argument 'origin/master...': \
+        #   unknown revision or path not in the working tree.
+        git.fetch()
+        return _get_branches_merged_into_autostaging(cwd=cwd)
     CommitBranchPair = namedtuple('CommitBranchPair', ['commit', 'branch'])
     return sorted(
         (CommitBranchPair(
@@ -751,3 +764,19 @@ def _get_branches_merged_into_autostaging():
         ) for line in pipe),
         key=lambda pair: pair.branch
     )
+
+
+def _get_submodules():
+    """
+    returns something like
+    ['corehq/apps/hqmedia/static/hqmedia/MediaUploader',
+     'corehq/apps/prelogin',
+     'submodules/auditcare-src',
+     ...]
+    """
+    import sh
+    git = sh.git.bake(_tty_out=False)
+    return [
+        line.strip()[1:].split()[1]
+        for line in git.submodule()
+    ]
