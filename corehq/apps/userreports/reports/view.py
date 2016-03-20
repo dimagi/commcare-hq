@@ -266,7 +266,10 @@ class ConfigurableReport(JSONResponseMixin, BaseDomainView):
 
             pool = ThreadPool(processes=3)
 
-            async_page = pool.apply_async(data_source.get_data, (datatables_params.start, datatables_params.count))
+            async_page = pool.apply_async(data_source.get_data, **{
+                'start': datatables_params.start,
+                'limit': datatables_params.count,
+            })
             async_total_records = pool.apply_async(data_source.get_total_records)
             async_total_row = pool.apply_async(data_source.get_total_row) if data_source.has_total_row else None
 
