@@ -822,7 +822,7 @@ UNLIMITED_REPORT_BUILDER_REPORTS = StaticToggle(
 )
 
 
-ALLOW_BROKEN_MULITIMEDIA_SUBMISSIONS = StaticToggle(
+ALLOW_BROKEN_MULTIMEDIA_SUBMISSIONS = StaticToggle(
     'allow_broken_multimedia_submissions',
     "Explicitly bypass HQ's protection from the 2.26 multimedia submission bug. NOT RECOMMENDED",
     TAG_ONE_OFF,
