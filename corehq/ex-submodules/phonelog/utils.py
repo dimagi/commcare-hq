@@ -15,11 +15,27 @@ def _force_list(obj_or_list):
     return obj_or_list if isinstance(obj_or_list, list) else [obj_or_list]
 
 
+def _get_log_entries(report, report_slug):
+    for subreport in report:
+        # subreport should be {"log": <one or more entry models>}
+        if isinstance(subreport, dict) and report_slug in subreport:
+            entry_or_entries = subreport.get(report_slug)
+            if isinstance(entry_or_entries, list):
+                for entry in entry_or_entries:
+                    yield entry
+            else:
+                yield entry_or_entries
+
+
 def _get_logs(form, report_name, report_slug):
+    """
+    Returns a list of log entries matching report_name.report_slug
+    These entries are 1-to-1 with the phonelog models (DeviceReportEntry,
+    UserErrorEntry, UserEntry).
+    """
     report = form.get(report_name, {}) or {}
     if isinstance(report, list):
-        return [log.get(report_slug) for log in report
-                if isinstance(log, dict) and report_slug in log]
+        return list(_get_log_entries(report, report_slug))
     return report.get(report_slug, [])
 
 
