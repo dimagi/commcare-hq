@@ -150,7 +150,9 @@
                 <td class="text-nowrap" data-bind="text: built_on_date"></td>
                 <td class="text-nowrap" data-bind="text: built_on_time"></td>
                 <td class="text-nowrap">
-                    <span data-bind="if: menu_item_label(), text: menu_item_label()"></span>
+                    <!--ko if: menu_item_label() -->
+                    <span data-bind="text: menu_item_label()"></span>
+                    <!--/ko-->
                     <h6 data-bind="if: !built_with.signed()">{% trans "Unsigned Jar" %}</h6>
                 </td>
                 <td class="text-nowrap">
