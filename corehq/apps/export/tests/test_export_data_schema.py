@@ -4,13 +4,14 @@ from mock import patch
 from django.test import SimpleTestCase, TestCase
 
 from corehq.apps.export.models.new import SystemExportItem, MAIN_TABLE, \
-    PathNode, _question_path_to_path_nodes
+    PathNode, _question_path_to_path_nodes, ExportGroupSchema
 from dimagi.utils.couch.database import safe_delete
 from corehq.apps.app_manager.tests.util import TestXmlMixin
 from corehq.apps.app_manager.models import XForm, Application
-from corehq.apps.export.models import FormExportDataSchema, CaseExportDataSchema, ExportDataSchema
+from corehq.apps.export.models import FormExportDataSchema, CaseExportDataSchema, ExportDataSchema, \
+    ExportItem
 from corehq.apps.export.const import CASE_HISTORY_PROPERTIES, PROPERTY_TAG_UPDATE, MAIN_FORM_TABLE_PROPERTIES, \
-    MAIN_CASE_TABLE_PROPERTIES
+    MAIN_CASE_TABLE_PROPERTIES, CASE_NAME_TRANSFORM
 
 
 class TestFormExportDataSchema(SimpleTestCase, TestXmlMixin):
@@ -293,6 +294,29 @@ class TestMergingFormExportDataSchema(SimpleTestCase, TestXmlMixin):
 
         self.assertEqual(group_schema2.last_occurrences[self.app_id], 1)
         self.assertEqual(len(group_schema2.items), 2)  # One item is the row number system property
+
+    def test_merge_items_with_transforms(self):
+        """
+        Verify that two system export items that are the same in all but their
+        transform function are not merged together.
+        """
+        schema_1 = ExportDataSchema(
+            group_schemas=[
+                ExportGroupSchema(
+                    path=MAIN_TABLE,
+                    items=[
+                        SystemExportItem(
+                            path=['foo', 'bar'],
+                            label='baz',
+                        )
+                    ]
+                )
+            ]
+        )
+        schema_2 = ExportDataSchema(schema_1.to_json())
+        schema_2.group_schemas[0].items[0].transform = CASE_NAME_TRANSFORM
+        merged = ExportDataSchema._merge_schemas(schema_1, schema_2)
+        self.assertEqual(len(merged.group_schemas[0].items), 2)
 
 
 class TestMergingCaseExportDataSchema(SimpleTestCase, TestXmlMixin):
