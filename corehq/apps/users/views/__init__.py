@@ -638,7 +638,18 @@ class UserInvitationView(object):
         if invitation.is_expired:
             return HttpResponseRedirect(reverse("no_permissions"))
 
-        context = self.added_context()
+        # Add zero-width space to username for better line breaking
+        username = self.request.user.username.replace("@", "&#x200b;@")
+        context = {
+            'create_domain': False,
+            'formatted_username': username,
+            'domain': self.domain,
+            'invite_type': _('Project'),
+        }
+        if request.user.is_authenticated:
+            context['current_page'] = {'page_name':_('Project Invitation')}
+        else:
+            context['current_page'] = {'page_name':_('Project Invitation, Account Required')}
         if request.user.is_authenticated():
             is_invited_user = request.couch_user.username.lower() == invitation.email.lower()
             if self.is_invited(invitation, request.couch_user) and not request.couch_user.is_superuser:
@@ -718,18 +729,6 @@ class UserInvitationView(object):
         invitation.save()
         messages.success(self.request, self.success_msg)
         send_confirmation_email(invitation)
-
-    def added_context(self):
-        username = self.request.user.username
-        # Add zero-width space for better line breaking
-        username = username.replace("@", "&#x200b;@")
-
-        return {
-            'create_domain': False,
-            'formatted_username': username,
-            'domain': self.domain,
-            'invite_type': _('Project'),
-        }
 
     def validate_invitation(self, invitation):
         assert invitation.domain == self.domain
