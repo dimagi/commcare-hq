@@ -45,7 +45,8 @@ def convert_saved_export_to_export_instance(saved_export):
 
         for column in old_table.columns:
             index = column.index
-            if _is_repeat(table.index):
+            transform = column.transform
+            if _is_repeat(old_table.index):
                 index = '{table_index}.{column_index}'.format(
                     table_index=_strip_repeat_index(old_table.index),
                     column_index=column.index,
@@ -57,7 +58,7 @@ def convert_saved_export_to_export_instance(saved_export):
 
             new_column = new_table.get_column(
                 column_path,
-                _convert_serializable_function_to_transform(column.transform)
+                transform,
             )
             if not new_column:
                 continue
@@ -80,7 +81,9 @@ def _is_repeat(index):
 
 
 def _strip_repeat_index(index):
-    return index.strip('#.')
+    index = index.strip('#.')
+    index = index.replace('#.', '')  # For nested repeats
+    return index
 
 
 def _convert_index_to_path_nodes(index):
@@ -89,10 +92,16 @@ def _convert_index_to_path_nodes(index):
     if index == '#':
         return MAIN_TABLE
     elif _is_repeat(index):
-        return [PathNode(name='data')] + [
-            PathNode(name=n, is_repeat=True)
-            for n in _strip_repeat_index(index).split('.')[1:]
-        ]
+        split_index = index.split('.')[1:]  # Remove first "#"
+        path = []
+
+        for part in split_index:
+            # If the part is "#" we know the previous piece in the path is a repeat group
+            if part == '#':
+                path[-1].is_repeat = True
+            else:
+                path.append(PathNode(name=part, is_repeat=False))
+        return path
     else:
         return [PathNode(name=n) for n in index.split('.')]
 
