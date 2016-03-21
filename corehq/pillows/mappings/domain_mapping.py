@@ -1,7 +1,7 @@
 from corehq.util.elastic import es_index
 
-DOMAIN_INDEX = es_index("hqdomains_20160308_1304")
-DOMAIN_MAPPING = {'_meta': {'comment': 'Lukasz Wyszomirski modified on 2016/03/08',
+DOMAIN_INDEX = es_index("hqdomains_20160318_1339")
+DOMAIN_MAPPING = {'_meta': {'comment': 'j$ modified on 2016/03/18',
                             'created': None},
  'date_detection': False,
  'date_formats': ['yyyy-MM-dd',
@@ -74,6 +74,10 @@ DOMAIN_MAPPING = {'_meta': {'comment': 'Lukasz Wyszomirski modified on 2016/03/0
                 'cp_n_forms_30_d': {'type': 'long'},
                 'cp_n_forms_60_d': {'type': 'long'},
                 'cp_n_forms_90_d': {'type': 'long'},
+                'cp_n_j2me_30_d': {'type': 'long'},
+                'cp_n_j2me_60_d': {'type': 'long'},
+                'cp_n_j2me_90_d': {'type': 'long'},
+                'cp_j2me_90_d_bool': {'type': 'boolean'},
                 'cp_n_inactive_cases': {'type': 'long'},
                 'cp_n_users_submitted_form': {'type': 'long'},
                 'cp_n_web_users': {'type': 'long'},

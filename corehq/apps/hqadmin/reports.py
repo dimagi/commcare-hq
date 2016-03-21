@@ -135,6 +135,16 @@ INDICATOR_DATA = {
         "histogram_type": "forms",
         "xaxis_label": "# forms",
     },
+    "forms_j2me": {
+        "ajax_view": "admin_reports_stats_data",
+        "chart_name": "forms_j2me",
+        "chart_title": "J2ME Forms Submitted",
+        "get_request_params": {
+            "j2me_only": True,
+        },
+        "histogram_type": "forms",
+        "xaxis_label": "# forms",
+    },
     "users": {
         "ajax_view": "admin_reports_stats_data",
         "chart_name": "users",
@@ -719,6 +729,7 @@ class AdminDomainStatsReport(AdminFacetedReport, DomainStatsReport):
                 prop_name="cp_n_sms_out_30_d"),
             DataTablesColumn(_("Custom EULA?"), prop_name="internal.custom_eula"),
             DataTablesColumn(_("HIPAA Compliant"), prop_name="hipaa_compliant"),
+            DataTablesColumn(_("Has J2ME submission in past 90 days"), prop_name="cp_j2me_90_d_bool"),
         )
         return headers
 
@@ -745,6 +756,7 @@ class AdminDomainStatsReport(AdminFacetedReport, DomainStatsReport):
             31: "cp_n_sms_ever",
             32: "cp_n_sms_in_30_d",
             33: "cp_n_sms_out_30_d",
+            36: "cp_j2me_90_d_bool",
         }
 
         def stat_row(name, what_to_get, type='float'):
@@ -1036,6 +1048,7 @@ class RealProjectSpacesReport(GlobalAdminReports):
         'forms',
         'forms_mobile',
         'forms_web',
+        'forms_j2me',
         'subscriptions',
     ]
 

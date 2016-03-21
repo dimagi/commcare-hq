@@ -703,7 +703,7 @@ def get_users_all_stats(domains, datespan, interval,
 
 def get_other_stats(histo_type, domains, datespan, interval,
         individual_domain_limit=16, is_cumulative="True",
-        user_type_mobile=None, supply_points=False):
+        user_type_mobile=None, supply_points=False, j2me_only=False):
     """
     A catch all for graphs that are not complex.
 
@@ -734,6 +734,7 @@ def get_other_stats(histo_type, domains, datespan, interval,
         user_type_mobile=user_type_mobile,
         is_cumulative=is_cumulative == "True",
         supply_points=supply_points,
+        j2me_only=j2me_only
     )
     if not stats_data['histo_data']:
         stats_data['histo_data'][''] = []
@@ -907,14 +908,22 @@ def _total_until_date(histogram_type, datespan, filters=[], domain_list=None):
 
 
 def get_general_stats_data(domains, histo_type, datespan, interval="day",
-        user_type_mobile=None, is_cumulative=True, supply_points=False):
+        user_type_mobile=None, is_cumulative=True, supply_points=False,
+        j2me_only=False):
     additional_filters = []
-    if histo_type == 'forms' and user_type_mobile is not None:
-        additional_filters.append({
-            'terms': {
-                'form.meta.userID': list(get_user_ids(user_type_mobile))
-            }
-        })
+    if histo_type == 'forms':
+        if user_type_mobile is not None:
+            additional_filters.append({
+                'terms': {
+                    'form.meta.userID': list(get_user_ids(user_type_mobile))
+                }
+            })
+        if j2me_only:
+            additional_filters.append({
+                'regexp': {
+                    'form.meta.appVersion': "v2+.[0-9]+.*"
+                }
+            })
     if histo_type == 'active_cases' and not supply_points:
         additional_filters.append(get_case_owner_filters())
     if supply_points:
