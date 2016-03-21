@@ -15,8 +15,4 @@ class Migration(migrations.Migration):
             old_name='PhoneNumber',
             new_name='PhoneBlacklist',
         ),
-        migrations.AlterModelTable(
-            name='PhoneBlacklist',
-            table='messaging_phoneblacklist',
-        ),
     ]

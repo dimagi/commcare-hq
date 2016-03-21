@@ -901,8 +901,6 @@ class PhoneBlacklist(models.Model):
     Each entry represents a single phone number and whether we can send SMS
     to that number or make calls to that number.
     """
-    class Meta:
-        db_table = 'messaging_phoneblacklist'
 
     phone_number = models.CharField(max_length=30, unique=True, null=False, db_index=True)
 
