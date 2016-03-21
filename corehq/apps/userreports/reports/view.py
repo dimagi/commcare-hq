@@ -296,9 +296,7 @@ class ConfigurableReport(JSONResponseMixin, BaseDomainView):
             "iTotalDisplayRecords": total_records,
         }
         if total_row is not None:
-            json_response.update({
-                "total_row": total_row,
-            })
+            json_response["total_row"] = total_row
         return self.render_json_response(json_response)
 
     def _get_initial(self, request, **kwargs):
