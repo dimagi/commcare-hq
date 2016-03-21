@@ -945,7 +945,7 @@ LOGGING = {
         },
         'file': {
             'level': 'INFO',
-            'class': 'logging.handlers.RotatingFileHandler',
+            'class': 'cloghandler.ConcurrentRotatingFileHandler',
             'formatter': 'verbose',
             'filename': DJANGO_LOG_FILE,
             'maxBytes': 10 * 1024 * 1024,  # 10 MB
@@ -953,7 +953,7 @@ LOGGING = {
         },
         'couch-request-handler': {
             'level': 'DEBUG',
-            'class': 'logging.handlers.RotatingFileHandler',
+            'class': 'cloghandler.ConcurrentRotatingFileHandler',
             'formatter': 'couch-request-formatter',
             'filters': ['hqcontext'],
             'filename': COUCH_LOG_FILE,
@@ -962,7 +962,7 @@ LOGGING = {
         },
         'accountinglog': {
             'level': 'INFO',
-            'class': 'logging.handlers.RotatingFileHandler',
+            'class': 'cloghandler.ConcurrentRotatingFileHandler',
             'formatter': 'verbose',
             'filename': ACCOUNTING_LOG_FILE,
             'maxBytes': 10 * 1024 * 1024,  # 10 MB
@@ -970,7 +970,7 @@ LOGGING = {
         },
         'analyticslog': {
             'level': 'DEBUG',
-            'class': 'logging.handlers.RotatingFileHandler',
+            'class': 'cloghandler.ConcurrentRotatingFileHandler',
             'formatter': 'verbose',
             'filename': ANALYTICS_LOG_FILE,
             'maxBytes': 10 * 1024 * 1024,  # 10 MB
@@ -978,7 +978,7 @@ LOGGING = {
         },
         'datadog': {
             'level': 'INFO',
-            'class': 'logging.handlers.RotatingFileHandler',
+            'class': 'cloghandler.ConcurrentRotatingFileHandler',
             'formatter': 'datadog',
             'filename': DATADOG_LOG_FILE,
             'maxBytes': 10 * 1024 * 1024,  # 10 MB
