@@ -647,13 +647,13 @@ class PhoneNumberMigrationTestCase(BaseMigrationTestCase):
 
     def setRandomSQLObjectValues(self, obj):
         obj.domain = self.domain
-        owner_doc_type = self.randomString()
-        owner_id = self.randomString()
-        phone_number = self.randomString()
-        backend_id = self.randomString()
-        ivr_backend_id = self.randomString()
-        verified = self.randomBoolean()
-        contact_last_modified = self.randomDateTime()
+        obj.owner_doc_type = self.randomString()
+        obj.owner_id = self.randomString()
+        obj.phone_number = self.randomString()
+        obj.backend_id = self.randomString()
+        obj.ivr_backend_id = self.randomString()
+        obj.verified = self.randomBoolean()
+        obj.contact_last_modified = self.randomDateTime()
 
     def testCouchSyncToSQL(self):
         self.deleteAllLogs()
