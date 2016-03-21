@@ -1,4 +1,6 @@
 from django.test import TestCase
+
+from corehq.apps.userreports.exceptions import UserReportsError
 from corehq.apps.userreports.models import DataSourceConfiguration, \
     ReportConfiguration
 from corehq.apps.userreports.reports.view import ConfigurableReport
@@ -312,11 +314,19 @@ class TestReportAggregation(ConfigurableReportTestMixin, TestCase):
                 },
                 {
                     "type": "field",
-                    "display": "report_column_display_number",
+                    "display": "sum_report_column_display_number",
                     "field": 'indicator_col_id_number',
-                    'column_id': 'report_column_col_id_number',
+                    'column_id': 'sum_report_column_display_number',
                     'aggregation': 'sum',
                     'calculate_total': True,
+                },
+                {
+                    "type": "field",
+                    "display": "min_report_column_display_number",
+                    "field": 'indicator_col_id_number',
+                    'column_id': 'min_report_column_display_number',
+                    'aggregation': 'min',
+                    'calculate_total': False,
                 },
             ]
         )
@@ -327,10 +337,109 @@ class TestReportAggregation(ConfigurableReportTestMixin, TestCase):
             [[
                 u'foo',
                 [
-                    [u'report_column_display_first_name', u'report_column_display_number'],
-                    [u'Ada', 3],
-                    [u'Alan', 6],
-                    [u'Total', 9],
+                    [
+                        u'report_column_display_first_name',
+                        u'sum_report_column_display_number',
+                        u'min_report_column_display_number',
+                    ],
+                    [u'Ada', 3, 3],
+                    [u'Alan', 6, 2],
+                    [u'Total', 9, ''],
+                ]
+            ]]
+        )
+
+    def test_no_total_row(self):
+        report_config = self._create_report(
+            aggregation_columns=['indicator_col_id_first_name'],
+            columns=[
+                {
+                    "type": "field",
+                    "display": "report_column_display_first_name",
+                    "field": 'indicator_col_id_first_name',
+                    'column_id': 'report_column_col_id_first_name',
+                    'aggregation': 'simple',
+                },
+                {
+                    "type": "field",
+                    "display": "sum_report_column_display_number",
+                    "field": 'indicator_col_id_number',
+                    'column_id': 'sum_report_column_display_number',
+                    'aggregation': 'sum',
+                    'calculate_total': False,
+                },
+                {
+                    "type": "field",
+                    "display": "min_report_column_display_number",
+                    "field": 'indicator_col_id_number',
+                    'column_id': 'min_report_column_display_number',
+                    'aggregation': 'min',
+                    'calculate_total': False,
+                },
+            ]
+        )
+        view = self._create_view(report_config)
+
+        self.assertEqual(
+            view.export_table,
+            [[
+                u'foo',
+                [
+                    [
+                        u'report_column_display_first_name',
+                        u'sum_report_column_display_number',
+                        u'min_report_column_display_number',
+                    ],
+                    [u'Ada', 3, 3],
+                    [u'Alan', 6, 2],
+                ]
+            ]]
+        )
+
+    def test_total_row_first_column_value(self):
+        report_config = self._create_report(
+            aggregation_columns=['indicator_col_id_first_name'],
+            columns=[
+                {
+                    "type": "field",
+                    "display": "sum_report_column_display_number",
+                    "field": 'indicator_col_id_number',
+                    'column_id': 'sum_report_column_display_number',
+                    'aggregation': 'sum',
+                    'calculate_total': True,
+                },
+                {
+                    "type": "field",
+                    "display": "report_column_display_first_name",
+                    "field": 'indicator_col_id_first_name',
+                    'column_id': 'report_column_col_id_first_name',
+                    'aggregation': 'simple',
+                },
+                {
+                    "type": "field",
+                    "display": "min_report_column_display_number",
+                    "field": 'indicator_col_id_number',
+                    'column_id': 'min_report_column_display_number',
+                    'aggregation': 'min',
+                    'calculate_total': False,
+                },
+            ]
+        )
+        view = self._create_view(report_config)
+
+        self.assertEqual(
+            view.export_table,
+            [[
+                u'foo',
+                [
+                    [
+                        u'sum_report_column_display_number',
+                        u'report_column_display_first_name',
+                        u'min_report_column_display_number',
+                    ],
+                    [3, u'Ada', 3],
+                    [6, u'Alan', 2],
+                    [9, '', ''],
                 ]
             ]]
         )
