@@ -85,4 +85,4 @@ django-statici18n==1.1.5
 httpagentparser==1.7.8
 boto3==1.2.3
 simpleeval==0.8.7
-ConcurrentLogHandler==0.9.1
+ConcurrentLogHandler==0.8.4
