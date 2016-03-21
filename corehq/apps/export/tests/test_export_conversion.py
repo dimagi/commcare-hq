@@ -166,7 +166,6 @@ class TestConvertSavedExportSchemaToFormExportInstance(TestCase, TestFileMixin):
 
         table = instance.get_table(MAIN_TABLE)
 
-        import ipdb; ipdb.set_trace()
         column = table.get_column(['form', 'deid_id'], DEID_ID_TRANSFORM)
         self.assertEqual(column.transform, DEID_ID_TRANSFORM)
 
