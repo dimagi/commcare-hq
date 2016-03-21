@@ -512,4 +512,4 @@ class TestBuildingCaseSchemaFromApplication(TestCase, TestXmlMixin):
 
         self.assertEqual(new_schema._id, schema._id)
         self.assertEqual(new_schema.last_app_versions[app._id], 6)
-        self.assertEqual(len(new_schema.group_schemas), 2)
+        self.assertEqual(len(new_schema.group_schemas), 3)
