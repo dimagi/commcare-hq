@@ -967,12 +967,15 @@ pwd_pattern = re.compile( r"([-\w]){"  + str(min_pwd) + ',' + str(max_pwd) + '}'
 def clean_password(txt):
     if getattr(settings, "ENABLE_DRACONIAN_SECURITY_FEATURES", False):
         strength = legacy_get_password_strength(txt)
+        message = _('Password is not strong enough. Requirements: 1 special character, '
+                    '1 number, 1 capital letter, minimum length of 8 characters.')
     else:
         # TODO: waiting on upstream PR to fix TypeError https://github.com/taxpon/pyzxcvbn/pull/1
         # until then, we are using a dimagi hosted fork
         strength = zxcvbn(txt, user_inputs=['commcare', 'hq', 'dimagi', 'commcarehq'])
+        message = _('Password is not strong enough. Try making your password more complex.')
     if strength['score'] < 2:
-        raise forms.ValidationError(_('Password is not strong enough. Try making your password more complex.'))
+        raise forms.ValidationError(message)
     return txt
 
 
