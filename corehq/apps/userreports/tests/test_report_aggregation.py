@@ -462,3 +462,52 @@ class TestReportAggregation(ConfigurableReportTestMixin, TestCase):
 
         with self.assertRaises(UserReportsError):
             view.export_table
+
+    def test_total_row_with_expanded_column(self):
+        report_config = self._create_report(
+            aggregation_columns=['indicator_col_id_first_name'],
+            columns=[
+                {
+                    "type": "field",
+                    "display": "sum_report_column_display_number",
+                    "field": 'indicator_col_id_number',
+                    'column_id': 'sum_report_column_display_number',
+                    'aggregation': 'sum',
+                    'calculate_total': True,
+                },
+                {
+                    "type": "expanded",
+                    "display": "report_column_display_first_name",
+                    "field": 'indicator_col_id_first_name',
+                    'column_id': 'report_column_col_id_first_name',
+                    'calculate_total': True,
+                },
+                {
+                    "type": "field",
+                    "display": "min_report_column_display_number",
+                    "field": 'indicator_col_id_number',
+                    'column_id': 'min_report_column_display_number',
+                    'aggregation': 'min',
+                    'calculate_total': True,
+                },
+            ]
+        )
+        view = self._create_view(report_config)
+
+        self.assertEqual(
+            view.export_table,
+            [[
+                u'foo',
+                [
+                    [
+                        u'sum_report_column_display_number',
+                        u'report_column_display_first_name-Ada',
+                        u'report_column_display_first_name-Alan',
+                        u'min_report_column_display_number',
+                    ],
+                    [3, 1, 0, 3],
+                    [6, 0, 2, 2],
+                    [9, 1, 2, 5],
+                ]
+            ]]
+        )
