@@ -16,7 +16,9 @@
 
     var utils = {
         getTemplate: function (config, filename) {
-            return config.staticRoot + 'dashboard/ng_partials/' + filename;
+            // half-hearted caching: bust each week
+            var cacheBust = parseInt((new Date()).getTime() / (1000 * 60 * 60 * 24 * 7));
+            return config.staticRoot + 'dashboard/ng_partials/' + filename + '?' + cacheBust;
         }
     };
 
