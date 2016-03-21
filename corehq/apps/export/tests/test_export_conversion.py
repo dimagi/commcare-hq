@@ -39,7 +39,7 @@ class TestConvertSavedExportSchemaToFormExportInstance(TestCase, TestFileMixin):
                     last_occurrences={cls.app_id: 3},
                 ),
                 ExportGroupSchema(
-                    path=[PathNode(name='data'), PathNode(name='repeat', is_repeat=True)],
+                    path=[PathNode(name='form'), PathNode(name='repeat', is_repeat=True)],
                     items=[
                         ExportItem(
                             path=[
@@ -101,7 +101,7 @@ class TestConvertSavedExportSchemaToFormExportInstance(TestCase, TestFileMixin):
             instance = convert_saved_export_to_export_instance(saved_export_schema)
 
         self.assertEqual(instance.name, 'Repeat Tester')
-        table = instance.get_table([PathNode(name='data'), PathNode(name='repeat', is_repeat=True)])
+        table = instance.get_table([PathNode(name='form'), PathNode(name='repeat', is_repeat=True)])
         self.assertEqual(table.label, 'Repeat: question1')
 
         column = table.get_column(

@@ -94,7 +94,7 @@ def _convert_index_to_path_nodes(index):
             for n in _strip_repeat_index(index).split('.')[1:]
         ]
     else:
-        return [PathNode(name='data')] + [PathNode(name=n) for n in index.split('.')[1:]]
+        return [PathNode(name=n) for n in index.split('.')]
 
 
 def _convert_serializable_function_to_transform(serializable_function):
