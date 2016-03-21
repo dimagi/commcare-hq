@@ -116,10 +116,10 @@ class TestLocationSync(TestCase):
         couch_location = Location.get(mass_id)
         couch_location.name = "New Massachusetts"
         couch_location.save()
+        self.assertNumLocations(1)
 
         sql_location = SQLLocation.objects.get(location_id=mass_id)
         self.assertEqual(sql_location.name, "New Massachusetts")
-        self.assertNumLocations(1)
 
     # Test various failures on various creates
     def _failure_on_create(self, class_to_create, failure):
@@ -173,10 +173,10 @@ class TestLocationSync(TestCase):
 
         if class_to_edit == "couch":
             loc_constructor = couch_loc
-            loc_getter = lambda loc_id: SQLLocation.objects.get(location_id=loc_id)
+            loc_getter = Location.get
         else:
             loc_constructor = sql_loc
-            loc_getter = Location.get
+            loc_getter = lambda loc_id: SQLLocation.objects.get(location_id=loc_id)
 
         loc_constructor("Massachusetts", self.state)
         suffolk_id = loc_constructor("Suffolk", self.county).location_id
