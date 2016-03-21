@@ -980,7 +980,7 @@ class PhoneBlacklist(models.Model):
         return False
 
 
-class PhoneNumber(SyncSQLToCouchMixin, models.Model)
+class PhoneNumber(SyncSQLToCouchMixin, models.Model):
     couch_id = models.CharField(max_length=126, db_index=True, null=True)
     domain = models.CharField(max_length=126, db_index=True, null=True)
     owner_doc_type = models.CharField(max_length=126, null=True)
