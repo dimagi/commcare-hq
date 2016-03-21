@@ -134,11 +134,3 @@ def _convert_index_to_path_nodes(index):
         return path
     else:
         return [PathNode(name=n) for n in index.split('.')]
-
-
-def _convert_serializable_function_to_transform(serializable_function):
-    if serializable_function is None:
-        return []
-    else:
-        # TODO: Write this
-        raise NotImplementedError
