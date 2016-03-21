@@ -101,7 +101,10 @@ def _iteratively_build_table(config, last_id=None):
     redis_key = _get_redis_key_for_config(config)
     indicator_config_id = config._id
 
-    last_doc = XFormInstance.get('last_id')
+    start_key = None
+    if last_id:
+        last_doc = XFormInstance.get(last_id)
+        start_key=[config.domain, config.referenced_doc_type, json_format_datetime(last_doc.recieved_on)]
 
     relevant_ids = []
     for relevant_id in iterate_doc_ids_in_domain_by_type(
@@ -109,7 +112,7 @@ def _iteratively_build_table(config, last_id=None):
             config.referenced_doc_type,
             chunk_size=CHUNK_SIZE,
             database=couchdb,
-            startkey=[config.domain, config.referenced_doc_type, json_format_datetime(last_doc.recieved_on)],
+            startkey=start_key,
             startkey_docid=last_id):
         relevant_ids.append(relevant_id)
         if len(relevant_ids) >= CHUNK_SIZE:
