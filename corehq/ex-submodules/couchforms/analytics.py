@@ -290,13 +290,11 @@ def get_form_count_breakdown_for_domain(domain):
             .remove_default_filter("has_user")
             .size(0))
     query_result = query.run()
-    buckets = query_result.aggregations.app_id.normalized_buckets
     form_counts = {}
-    for bucket in buckets:
-        app_id = bucket['key']
-        for sub_bucket in bucket['xmlns']['buckets']:
-            xmlns = sub_bucket['key']
-            form_counts[(domain, app_id, xmlns)] = sub_bucket['doc_count']
+    for app_id, bucket in query_result.aggregations.app_id.buckets_dict.iteritems():
+        for sub_bucket in bucket.xmlns.buckets_list:
+            xmlns = sub_bucket.key
+            form_counts[(domain, app_id, xmlns)] = sub_bucket.doc_count
     return form_counts
 
 
