@@ -78,7 +78,7 @@ def register_user(request):
                 context.update({
                     'requested_domain': requested_domain,
                     'track_domain_registration': True,
-                    'current_page':{'page_name':'Confirmation Email Sent'},
+                    'current_page': {'page_name': 'Confirmation Email Sent'},
                 })
                 return render(request, 'registration/confirmation_sent.html', context)
             context.update({'create_domain': form.cleaned_data['create_domain']})
@@ -89,7 +89,7 @@ def register_user(request):
 
         context.update({
             'form': form,
-            'current_page':{'page_name':'Create an Account'},
+            'current_page': {'page_name': 'Create an Account'},
         })
         return render(request, 'registration/create_new_user.html', context)
 
@@ -110,7 +110,7 @@ class RegisterDomainView(TemplateView):
                 context = get_domain_context()
                 context.update({
                     'requested_domain': pending_domains[0],
-                    'current_page':{'page_name':'Confirm Account'},
+                    'current_page': {'page_name': 'Confirm Account'},
                 })
                 return render(request, 'registration/confirmation_waiting.html', context)
         return super(RegisterDomainView, self).get(request, *args, **kwargs)
@@ -153,7 +153,7 @@ class RegisterDomainView(TemplateView):
                 context.update({
                     'requested_domain': domain_name,
                     'track_domain_registration': True,
-                    'current_page':{'page_name':'Confirm Account'},
+                    'current_page': {'page_name': 'Confirm Account'},
                 })
                 return render(request, 'registration/confirmation_sent.html', context)
             else:
@@ -213,14 +213,14 @@ def resend_confirmation(request):
         else:
             context.update({
                 'requested_domain': dom_req.domain,
-                'current_page':{'page_name':'Confirmation Email Sent'},
+                'current_page': {'page_name': 'Confirmation Email Sent'},
             })
             return render(request, 'registration/confirmation_sent.html',
                 context)
 
     context.update({
         'requested_domain': dom_req.domain,
-        'current_page':{'page_name':'Resend Confirmation Email'},
+        'current_page': {'page_name': 'Resend Confirmation Email'},
     })
     return render(request, 'registration/confirmation_resend.html', context)
 
@@ -244,7 +244,7 @@ def confirm_domain(request, guid=None):
     if error is not None:
         context = {
             'message_body': error,
-            'current_page':{'page_name':'Account Not Activated'},
+            'current_page': {'page_name': 'Account Not Activated'},
         }
         return render(request, 'registration/confirmation_error.html', context)
 

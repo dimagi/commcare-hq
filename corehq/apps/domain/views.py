@@ -144,7 +144,7 @@ def select(request, domain_select_template='domain/select.html', do_not_redirect
     additional_context = {
         'domains_for_user': domains_for_user,
         'open_invitations': open_invitations,
-        'current_page':{'page_name':'Select A Project'},
+        'current_page': {'page_name': 'Select A Project'},
     }
 
     last_visited_domain = request.session.get('last_visited_domain')

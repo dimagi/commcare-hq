@@ -647,9 +647,9 @@ class UserInvitationView(object):
             'invite_type': _('Project'),
         }
         if request.user.is_authenticated:
-            context['current_page'] = {'page_name':_('Project Invitation')}
+            context['current_page'] = {'page_name': _('Project Invitation')}
         else:
-            context['current_page'] = {'page_name':_('Project Invitation, Account Required')}
+            context['current_page'] = {'page_name': _('Project Invitation, Account Required')}
         if request.user.is_authenticated():
             is_invited_user = request.couch_user.username.lower() == invitation.email.lower()
             if self.is_invited(invitation, request.couch_user) and not request.couch_user.is_superuser:
