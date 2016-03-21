@@ -72,7 +72,7 @@ from corehq.apps.hqwebapp.tasks import send_mail_async, send_html_email_async
 from corehq.apps.reminders.models import CaseReminderHandler
 from corehq.apps.sms.phonenumbers_helper import parse_phone_number
 from corehq.apps.style import crispy as hqcrispy
-from corehq.apps.style.forms.widgets import BootstrapCheckboxInput, BootstrapDisabledInput
+from corehq.apps.style.forms.widgets import BootstrapCheckboxInput
 from corehq.apps.users.models import WebUser, CommCareUser, CouchUser
 from corehq.feature_previews import CALLCENTER
 from corehq.toggles import CALL_CENTER_LOCATION_OWNERS, HIPAA_COMPLIANCE_CHECKBOX
