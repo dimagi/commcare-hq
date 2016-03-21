@@ -1,6 +1,8 @@
 from django.conf import settings
 from django.conf.urls import patterns, url, include
+from django.shortcuts import render
 from django.views.generic import TemplateView, RedirectView
+from corehq.apps.domain.decorators import login_and_domain_required
 from corehq.apps.domain.utils import legacy_domain_re
 
 from django.contrib import admin
@@ -67,6 +69,9 @@ domain_specific = patterns('',
     (r'^configurable_reports/', include('corehq.apps.userreports.urls')),
     (r'^performance_messaging/', include('corehq.apps.performance_sms.urls')),
     (r'^', include('custom.icds.urls')),
+    (r'^_base_template/$', login_and_domain_required(
+        lambda request, domain: render(request, 'style/bootstrap3/base.html', {'domain': domain})
+    ))
 )
 
 urlpatterns = patterns('',
