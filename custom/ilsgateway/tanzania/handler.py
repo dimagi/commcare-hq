@@ -28,6 +28,7 @@ def handle(verified_contact, text, msg=None):
     if domain and not ILSGatewayConfig.for_domain(domain):
         return False
 
+    text = text.replace('\r', ' ').replace('\n', ' ').strip()
     args = text.split()
     if not args:
         return False
