@@ -30,11 +30,11 @@ def convert_saved_export_to_export_instance(saved_export):
     instance.legacy_saved_export_schema_id = saved_export._id
 
     # With new export instance, copy over preferences from previous export
-    for table in saved_export.tables:
-        table_path = _convert_index_to_path_nodes(table.index)
-        new_table = instance.get_table(table_path)
+    for old_table in saved_export.tables:
+        table_path = _convert_index_to_path_nodes(old_table.index)
+        new_table = instance.get_table(_convert_index_to_path_nodes(old_table.index))
         if new_table:
-            new_table.label = table.display
+            new_table.label = old_table.display
         else:
             continue
 
@@ -43,11 +43,11 @@ def convert_saved_export_to_export_instance(saved_export):
         for new_column in new_table.columns:
             new_column.selected = False
 
-        for column in table.columns:
+        for column in old_table.columns:
             index = column.index
             if _is_repeat(table.index):
                 index = '{table_index}.{column_index}'.format(
-                    table_index=_strip_repeat_index(table.index),
+                    table_index=_strip_repeat_index(old_table.index),
                     column_index=column.index,
                 )
             column_path = _convert_index_to_path_nodes(index)
