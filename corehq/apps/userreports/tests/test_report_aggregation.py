@@ -443,3 +443,22 @@ class TestReportAggregation(ConfigurableReportTestMixin, TestCase):
                 ]
             ]]
         )
+
+    def test_totaling_noninteger_column(self):
+        report_config = self._create_report(
+            aggregation_columns=['indicator_col_id_first_name'],
+            columns=[
+                {
+                    "type": "field",
+                    "display": "report_column_display_first_name",
+                    "field": 'indicator_col_id_first_name',
+                    'column_id': 'report_column_col_id_first_name',
+                    'aggregation': 'simple',
+                    'calculate_total': True,
+                },
+            ]
+        )
+        view = self._create_view(report_config)
+
+        with self.assertRaises(UserReportsError):
+            view.export_table

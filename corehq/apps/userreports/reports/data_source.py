@@ -1,6 +1,7 @@
 import numbers
 from collections import OrderedDict
 
+from django.conf import settings
 from django.utils.translation import ugettext
 
 from sqlalchemy.exc import ProgrammingError
@@ -222,7 +223,8 @@ class ConfigurableReportDataSource(SqlData):
             ProgrammingError,
             InvalidQueryColumn,
         ) as e:
-            _soft_assert(False, unicode(e))
+            if not settings.UNIT_TESTING:
+                _soft_assert(False, unicode(e))
             raise UserReportsError(unicode(e))
         except TableNotFoundException:
             raise TableNotFoundWarning
