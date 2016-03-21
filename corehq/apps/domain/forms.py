@@ -3,6 +3,7 @@ import datetime
 import io
 import logging
 import re
+import sys
 import uuid
 from urlparse import urlparse, parse_qs
 
@@ -964,12 +965,47 @@ max_pwd = 20
 pwd_pattern = re.compile( r"([-\w]){"  + str(min_pwd) + ',' + str(max_pwd) + '}' )
 
 def clean_password(txt):
-    # TODO: waiting on upstream PR to fix TypeError https://github.com/taxpon/pyzxcvbn/pull/1
-    # until then, we are using a dimagi hosted fork
-    strength = zxcvbn(txt, user_inputs=['commcare', 'hq', 'dimagi', 'commcarehq'])
+    if getattr(settings, "ENABLE_DRACONIAN_SECURITY_FEATURES", False):
+        strength = legacy_get_password_strength(txt)
+    else:
+        # TODO: waiting on upstream PR to fix TypeError https://github.com/taxpon/pyzxcvbn/pull/1
+        # until then, we are using a dimagi hosted fork
+        strength = zxcvbn(txt, user_inputs=['commcare', 'hq', 'dimagi', 'commcarehq'])
     if strength['score'] < 2:
         raise forms.ValidationError(_('Password is not strong enough. Try making your password more complex.'))
     return txt
+
+
+def legacy_get_password_strength(value):
+    # 1 Special Character, 1 Number, 1 Capital Letter with the length of Minimum 8
+    # initial score rigged to reach 2 when all requirementss are met
+    score = -2
+    if SPECIAL.search(value):
+        score += 1
+    if NUMBER.search(value):
+        score += 1
+    if UPPERCASE.search(value):
+        score += 1
+    if len(value) >= 8:
+        score += 1
+    return {"score": score}
+
+
+def _get_uppercase_unicode_regexp():
+    # rather than add another dependency (regex library)
+    # http://stackoverflow.com/a/17065040/10840
+    uppers = [u'[']
+    for i in xrange(sys.maxunicode):
+        c = unichr(i)
+        if c.isupper():
+            uppers.append(c)
+    uppers.append(u']')
+    upper_group = u"".join(uppers)
+    return re.compile(upper_group, re.UNICODE)
+
+SPECIAL = re.compile(ur"\W", re.UNICODE)
+NUMBER = re.compile(ur"\d", re.UNICODE)  # are there other unicode numerals?
+UPPERCASE = _get_uppercase_unicode_regexp()
 
 
 class NoAutocompleteMixin(object):
