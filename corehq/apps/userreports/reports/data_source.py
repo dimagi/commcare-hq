@@ -195,10 +195,10 @@ class ConfigurableReportDataSource(SqlData):
                 return 0
             return ''
 
-        expanded_columns = get_expanded_columns(self.column_configs, self.config)
+        def _get_relevant_column_ids(col, column_id_to_expanded_column_ids):
+            return column_id_to_expanded_column_ids.get(col.column_id, [col.column_id])
 
-        def _get_relevant_column_ids(col):
-            return expanded_columns.get(col.column_id, [col.column_id])
+        expanded_columns = get_expanded_columns(self.column_configs, self.config)
 
         qc = self.query_context()
         for c in self.columns:
@@ -210,7 +210,9 @@ class ConfigurableReportDataSource(SqlData):
                 session.connection(),
                 [
                     column_id
-                    for col in self.column_configs for column_id in _get_relevant_column_ids(col)
+                    for col in self.column_configs for column_id in _get_relevant_column_ids(
+                        col, expanded_columns
+                    )
                     if col.calculate_total
                 ],
                 self.filter_values
@@ -227,7 +229,9 @@ class ConfigurableReportDataSource(SqlData):
 
         total_row = [
             _clean_total_row(totals.get(column_id), col)
-            for col in self.column_configs for column_id in _get_relevant_column_ids(col)
+            for col in self.column_configs for column_id in _get_relevant_column_ids(
+                col, expanded_columns
+            )
         ]
         if total_row and total_row[0] is '':
             total_row[0] = ugettext('Total')
