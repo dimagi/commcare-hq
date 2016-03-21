@@ -15,6 +15,9 @@ from corehq.apps.export.utils import (
     convert_saved_export_to_export_instance,
     _convert_index_to_path_nodes,
 )
+from corehq.apps.export.const import (
+    FORM_PROPERTY_MAPPING
+)
 from corehq.apps.export.models.new import MAIN_TABLE, PathNode
 
 
@@ -142,6 +145,24 @@ class TestConvertSavedExportSchemaToFormExportInstance(TestCase, TestFileMixin):
         self.assertEqual(column.label, 'Modified Nested')
         self.assertEqual(column.selected, True)
 
+#    def test_system_property_conversion(self):
+#        saved_export_schema = SavedExportSchema.wrap(self.get_json('system_properties'))
+#        with mock.patch(
+#                'corehq.apps.export.models.new.FormExportDataSchema.generate_schema_from_builds',
+#                return_value=self.schema):
+#            instance = convert_saved_export_to_export_instance(saved_export_schema)
+#
+#        self.assertEqual(instance.name, 'System Properties')
+#
+#        # Check for first repeat table
+#        table = instance.get_table(MAIN_TABLE)
+#        self.assertEqual(table.label, 'Forms')
+#
+#        string_path = FORM_PROPERTY_MAPPING[("form.meta.@xmlns", None)][0]
+#        column = table.get_column(string_path.split('.'), None)
+#        self.assertEqual(column.label, 'Custom XMLNS')
+#        self.assertEqual(column.selected, True)
+#
 
 class TestConvertIndexToPath(SimpleTestCase):
     """Test the conversion of old style index to new style path"""

@@ -1,6 +1,6 @@
 from dimagi.utils.couch.undo import DELETED_SUFFIX
 
-from .const import TRANSFORM_FUNCTIONS
+from .const import TRANSFORM_FUNCTIONS, FORM_PROPERTY_MAPPING
 from .exceptions import ExportInvalidTransform
 
 
@@ -56,6 +56,9 @@ def convert_saved_export_to_export_instance(saved_export):
             # so replace that parts that could be repeats with the table path
             column_path = table_path + column_path[len(table_path):]
 
+            if _get_system_property(column.index, column.transform):
+                index, transform = _get_system_property(column.index, column.transform)
+
             new_column = new_table.get_column(
                 column_path,
                 transform,
@@ -84,6 +87,20 @@ def _strip_repeat_index(index):
     index = index.strip('#.')
     index = index.replace('#.', '')  # For nested repeats
     return index
+
+
+def _convert_index_to_path(index):
+    from corehq.apps.export.models.new import MAIN_TABLE
+    if index == '#':
+        return MAIN_TABLE
+    elif _is_repeat(index):
+        return _strip_repeat_index(index).split('.')
+    else:
+        return index.split('.')
+
+
+def _get_system_property(index, transform):
+    return FORM_PROPERTY_MAPPING.get((index, transform))
 
 
 def _convert_index_to_path_nodes(index):
