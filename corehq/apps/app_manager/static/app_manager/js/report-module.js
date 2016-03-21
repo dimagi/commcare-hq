@@ -159,7 +159,7 @@ hqDefine('app_manager/js/report-module.js', function () {
                     'period'
                 ];
                 for(var filterFieldsIndex = 0; filterFieldsIndex < filterFields.length; filterFieldsIndex++) {
-                    startVal = filter.selectedValue[filterFields[filterFieldsIndex]]
+                    startVal = filter.selectedValue[filterFields[filterFieldsIndex]];
                     if (startVal === 0) {
                         filter.selectedValue[filterFields[filterFieldsIndex]] = ko.observable(0);
                     } else {
