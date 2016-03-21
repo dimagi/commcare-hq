@@ -13,7 +13,7 @@
               </p>
             {% endif %}
               <p>{% blocktrans %}Don't have a {{ SITE_NAME }} account? Sign up for free and get started today!{% endblocktrans %}</p>
-              <a class="btn btn-success btn-large pull-right"
+              <a class="btn btn-success btn-lg pull-right"
                  {% if allow_domain_requests %}
                    href="{% url "domain_request" domain %}"
                  {% else %}
