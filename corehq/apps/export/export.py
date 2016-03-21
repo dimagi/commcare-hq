@@ -2,6 +2,10 @@ import contextlib
 import os
 import tempfile
 
+import datetime
+
+from couchdbkit import ResourceConflict
+
 from soil import DownloadBase
 
 from couchexport.export import FormattedRow, get_writer
@@ -119,7 +123,7 @@ def get_export_download(export_instances, filters, filename=None):
     return download
 
 
-def get_export_file(export_instances, filters):
+def get_export_file(export_instances, filters, progress_tracker=None):
     """
     Return an export file for the given ExportInstance and list of filters
     # TODO: Add a note about cleaning up the file?
@@ -130,7 +134,7 @@ def get_export_file(export_instances, filters):
         for export_instance in export_instances:
             # TODO: Don't get the docs multiple times if you don't have to
             docs = _get_export_documents(export_instance, filters)
-            _write_export_instance(writer, export_instance, docs)
+            _write_export_instance(writer, export_instance, docs, progress_tracker)
 
     return ExportFile(writer.path, writer.format)
 
@@ -139,27 +143,33 @@ def _get_export_documents(export_instance, filters):
     query = _get_base_query(export_instance)
     for filter in filters:
         query = query.filter(filter.to_es_filter())
-    return query.scroll()
+    # size here limits each scroll request, not the total number of results
+    return query.size(100).scroll()
 
 
-def _write_export_instance(writer, export_instance, documents):
+def _write_export_instance(writer, export_instance, documents, progress_tracker=None):
     """
     Write rows to the given open _Writer.
     Rows will be written to each table in the export instance for each of
     the given documents.
     :param writer: An open _Writer
     :param export_instance: An ExportInstance
-    :param documents: A list of documents
+    :param documents: A ScanResult, or if progress_tracker is None, any iterable yielding documents
+    :param progress_tracker: A task for soil to track progress against
     :return: None
     """
+    if progress_tracker:
+        DownloadBase.set_progress(progress_tracker, 0, documents.count)
 
-    for doc in documents:
+    for row_number, doc in enumerate(documents):
         for table in export_instance.tables:
-            rows = table.get_rows(doc)
+            rows = table.get_rows(doc, row_number)
             for row in rows:
                 # It might be bad to write one row at a time when you can do more (from a performance perspective)
                 # Regardless, we should handle the batching of rows in the _Writer class, not here.
                 writer.write(table, row)
+        if progress_tracker:
+            DownloadBase.set_progress(progress_tracker, row_number + 1, documents.count)
 
 
 def _get_base_query(export_instance):
@@ -182,3 +192,41 @@ def _get_base_query(export_instance):
         raise Exception(
             "Unknown base query for export instance type {}".format(type(export_instance))
         )
+
+
+def rebuild_export(export_instance, last_access_cutoff=None, filters=None):
+    """
+    Rebuild the given daily saved ExportInstance
+    """
+    if _should_not_rebuild_export(export_instance, last_access_cutoff):
+        return
+
+    file = get_export_file([export_instance], filters or [])
+    with file as payload:
+        _save_export_payload(export_instance, payload)
+
+
+def _should_not_rebuild_export(export, last_access_cutoff):
+    # Don't rebuild exports that haven't been accessed since last_access_cutoff
+    return (
+        last_access_cutoff
+        and export.last_accessed
+        and export.last_accessed < last_access_cutoff
+    )
+
+
+def _save_export_payload(export, payload):
+    """
+    Save the contents of an export file to disk for later retrieval.
+    """
+    if export.last_accessed is None:
+        export.last_accessed = datetime.datetime.utcnow()
+    export.last_updated = datetime.datetime.utcnow()
+
+    try:
+        export.save()
+    except ResourceConflict:
+        # task was executed concurrently, so let first to finish win and abort the rest
+        pass
+    else:
+        export.set_payload(payload)
