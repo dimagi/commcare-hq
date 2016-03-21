@@ -3,7 +3,7 @@ from __future__ import print_function, unicode_literals
 from bs4 import BeautifulSoup
 from django.core.urlresolvers import reverse
 from django.core.files.uploadedfile import SimpleUploadedFile
-from django.test import TestCase, SimpleTestCase
+from django.test import TestCase
 from django.test.client import Client
 from mock import patch
 
@@ -126,7 +126,7 @@ class TestDomainViews(TestCase):
         self.assertEqual(snapshots[1].documentation_file_path, filename)
 
 
-class BaseAutocompleteTest(SimpleTestCase):
+class BaseAutocompleteTest(TestCase):
 
     def verify(self, autocomplete_enabled, view_path, *fields):
         flag = not autocomplete_enabled
