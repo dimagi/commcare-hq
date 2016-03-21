@@ -33,7 +33,7 @@ def convert_saved_export_to_export_instance(saved_export):
     for table in saved_export.tables:
         new_table = instance.get_table(_convert_index_to_path(table.index))
         if new_table:
-            new_table.display_name = table.display
+            new_table.label = table.display
         else:
             continue
 
