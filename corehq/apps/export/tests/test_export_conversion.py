@@ -16,7 +16,9 @@ from corehq.apps.export.utils import (
     _convert_index_to_path_nodes,
 )
 from corehq.apps.export.const import (
-    FORM_PROPERTY_MAPPING
+    FORM_PROPERTY_MAPPING,
+    DEID_ID_TRANSFORM,
+    DEID_DATE_TRANSFORM,
 )
 from corehq.apps.export.models.new import MAIN_TABLE, PathNode
 
@@ -37,7 +39,17 @@ class TestConvertSavedExportSchemaToFormExportInstance(TestCase, TestFileMixin):
                             path=[PathNode(name='data'), PathNode(name='question1')],
                             label='Question 1',
                             last_occurrences={cls.app_id: 3},
-                        )
+                        ),
+                        ExportItem(
+                            path=['form', 'deid_id'],
+                            label='Question 1',
+                            last_occurrences={cls.app_id: 3},
+                        ),
+                        ExportItem(
+                            path=['form', 'deid_date'],
+                            label='Question 1',
+                            last_occurrences={cls.app_id: 3},
+                        ),
                     ],
                     last_occurrences={cls.app_id: 3},
                 ),
@@ -144,6 +156,22 @@ class TestConvertSavedExportSchemaToFormExportInstance(TestCase, TestFileMixin):
         column = table.get_column(['form', 'repeat', 'repeat_nested', 'nested'], None)
         self.assertEqual(column.label, 'Modified Nested')
         self.assertEqual(column.selected, True)
+
+    def test_transform_conversion(self):
+        saved_export_schema = SavedExportSchema.wrap(self.get_json('deid_transforms'))
+        with mock.patch(
+                'corehq.apps.export.models.new.FormExportDataSchema.generate_schema_from_builds',
+                return_value=self.schema):
+            instance = convert_saved_export_to_export_instance(saved_export_schema)
+
+        table = instance.get_table(MAIN_TABLE)
+
+        import ipdb; ipdb.set_trace()
+        column = table.get_column(['form', 'deid_id'], DEID_ID_TRANSFORM)
+        self.assertEqual(column.transform, DEID_ID_TRANSFORM)
+
+        column = table.get_column(['form', 'deid_date'], DEID_DATE_TRANSFORM)
+        self.assertEqual(column.transform, DEID_DATE_TRANSFORM)
 
 #    def test_system_property_conversion(self):
 #        saved_export_schema = SavedExportSchema.wrap(self.get_json('system_properties'))

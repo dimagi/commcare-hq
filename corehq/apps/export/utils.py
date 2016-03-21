@@ -1,4 +1,5 @@
 from dimagi.utils.couch.undo import DELETED_SUFFIX
+from dimagi.utils.modules import to_function
 
 from .const import TRANSFORM_FUNCTIONS, FORM_PROPERTY_MAPPING
 from .exceptions import ExportInvalidTransform
@@ -45,7 +46,7 @@ def convert_saved_export_to_export_instance(saved_export):
 
         for column in old_table.columns:
             index = column.index
-            transform = column.transform
+            transform = _convert_transform(column.transform)
             if _is_repeat(old_table.index):
                 index = '{table_index}.{column_index}'.format(
                     table_index=_strip_repeat_index(old_table.index),
@@ -67,6 +68,8 @@ def convert_saved_export_to_export_instance(saved_export):
                 continue
             new_column.label = column.display
             new_column.selected = True
+            if transform:
+                new_column.transforms = [transform]
 
     saved_export.doc_type += DELETED_SUFFIX
     saved_export.save()
@@ -87,6 +90,16 @@ def _strip_repeat_index(index):
     index = index.strip('#.')
     index = index.replace('#.', '')  # For nested repeats
     return index
+
+
+def _convert_transform(serializable_transform):
+    transform_fn = to_function(serializable_transform.dumps_simple())
+    if not transform_fn:
+        return None
+    for slug, fn in TRANSFORM_FUNCTIONS.iteritems():
+        if fn == transform_fn:
+            return slug
+    return None
 
 
 def _convert_index_to_path(index):
