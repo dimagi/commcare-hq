@@ -10,7 +10,7 @@ from corehq.apps.dashboard.models import (
     TileConfiguration,
     AppsPaginatedContext,
     IconContext,
-    ReportsPaginatedContext, Tile)
+    ReportsPaginatedContext, Tile, DataPaginatedContext)
 from corehq.apps.domain.decorators import login_and_domain_required
 from corehq.apps.domain.views import DomainViewMixin, LoginAndDomainMixin, \
     DefaultProjectSettingsView
@@ -211,7 +211,7 @@ def _get_default_tile_configurations():
             title=_('Data'),
             slug='data',
             icon='fcc fcc-data',
-            context_processor_class=IconContext,
+            context_processor_class=DataPaginatedContext,
             urlname="data_interfaces_default",
             visibility_check=can_edit_data,
             help_text=_('Export and manage data'),

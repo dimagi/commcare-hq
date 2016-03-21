@@ -16,6 +16,10 @@ class Migration(migrations.Migration):
     NOOP_REVERSE = 'SELECT 1'
     operations = [
         HqRunSQL(
+            'DROP INDEX IF EXISTS form_processor_caseattach_attachment_uuid_4c1d2c3ea75567cc_like',
+            NOOP_REVERSE
+        ),
+        HqRunSQL(
             'DROP INDEX IF EXISTS form_processor_xforminstancesql_form_uuid_12662b9ceadeeecc_like',
             NOOP_REVERSE
         ),

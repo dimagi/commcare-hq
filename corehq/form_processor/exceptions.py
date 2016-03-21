@@ -20,6 +20,10 @@ class AttachmentNotFound(UnicodeMixIn, ResourceNotFound, ObjectDoesNotExist):
         return "Attachment '{}' not found".format(self.attachment_name)
 
 
+class CouchSaveAborted(Exception):
+    pass
+
+
 class CaseSaveError(Exception):
     pass
 
@@ -34,3 +38,7 @@ class AccessRestricted(Exception):
 
 class InvalidAttachment(Exception):
     pass
+
+
+class UnknownActionType(Exception):
+    """Thrown when an unknown action type is set on a CaseTransaction"""

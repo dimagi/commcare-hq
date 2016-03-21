@@ -12,7 +12,7 @@ from django.contrib.auth.forms import SetPasswordForm
 from django.contrib.auth.tokens import default_token_generator
 from django.contrib.sites.models import get_current_site
 from django.utils.http import urlsafe_base64_encode
-from corehq.toggles import CALL_CENTER_LOCATION_OWNERS, HIPAA_COMPLIANCE_CHECKBOX, SECURE_SESSIONS_CHECKBOX
+from corehq.toggles import CALL_CENTER_LOCATION_OWNERS, HIPAA_COMPLIANCE_CHECKBOX
 from dimagi.utils.decorators.memoized import memoized
 from django.conf import settings
 from django.contrib.auth import get_user_model
@@ -742,6 +742,11 @@ class PrivacySecurityForm(forms.Form):
         label=ugettext_lazy("HIPAA compliant"),
         required=False,
     )
+    two_factor_auth = BooleanField(
+        label=ugettext_lazy("Two Factor Authentication"),
+        required=False,
+        help_text=ugettext_lazy("All web users on this project will be required to enable two factor authentication")
+    )
 
     def __init__(self, *args, **kwargs):
         user_name = kwargs.pop('user_name')
@@ -756,9 +761,12 @@ class PrivacySecurityForm(forms.Form):
         self.helper[2] = twbscrispy.PrependedText('secure_sessions', '')
         self.helper[3] = twbscrispy.PrependedText('allow_domain_requests', '')
         self.helper[4] = twbscrispy.PrependedText('hipaa_compliant', '')
+        self.helper[5] = twbscrispy.PrependedText('two_factor_auth', '')
+        if not domain_has_privilege(domain, privileges.ADVANCED_DOMAIN_SECURITY):
+            self.helper.layout.pop(5)
         if not HIPAA_COMPLIANCE_CHECKBOX.enabled(user_name):
             self.helper.layout.pop(4)
-        if not SECURE_SESSIONS_CHECKBOX.enabled(domain):
+        if not domain_has_privilege(domain, privileges.ADVANCED_DOMAIN_SECURITY):
             self.helper.layout.pop(2)
         self.helper.all().wrap_together(crispy.Fieldset, 'Edit Privacy Settings')
         self.helper.layout.append(
@@ -775,6 +783,7 @@ class PrivacySecurityForm(forms.Form):
         domain.restrict_superusers = self.cleaned_data.get('restrict_superusers', False)
         domain.allow_domain_requests = self.cleaned_data.get('allow_domain_requests', False)
         domain.secure_sessions = self.cleaned_data.get('secure_sessions', False)
+        domain.two_factor_auth = self.cleaned_data.get('two_factor_auth', False)
         secure_submissions = self.cleaned_data.get(
             'secure_submissions', False)
         apps_to_save = []
@@ -967,7 +976,16 @@ def clean_password(txt):
     return txt
 
 
-class HQPasswordResetForm(forms.Form):
+class NoAutocompleteMixin(object):
+
+    def __init__(self, *args, **kwargs):
+        super(NoAutocompleteMixin, self).__init__(*args, **kwargs)
+        if getattr(settings, "ENABLE_DRACONIAN_SECURITY_FEATURES", False):
+            for field in self.fields.values():
+                field.widget.attrs.update({'autocomplete': 'off'})
+
+
+class HQPasswordResetForm(NoAutocompleteMixin, forms.Form):
     """
     Only finds users and emails forms where the USERNAME is equal to the
     email specified (preventing Mobile Workers from using this form to submit).

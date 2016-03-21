@@ -55,6 +55,6 @@ class IncomingPostTest(TestCase):
 
 def post(data):
     client = Client()
-    response = client.post('/unicel/in/', data)
+    response = client.get('/unicel/in/', data)
     message_id = json.loads(response.content)['message_id']
     return response, SMS.objects.get(couch_id=message_id)

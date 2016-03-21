@@ -76,6 +76,7 @@ from corehq.apps.app_manager.dbaccessors import (
     get_app,
     get_latest_build_doc,
     get_latest_released_app_doc,
+    domain_has_apps,
 )
 from corehq.apps.app_manager.util import (
     split_path,
@@ -1531,6 +1532,7 @@ class GraphAnnotations(IndexedSchema):
 
 class GraphSeries(DocumentSchema):
     config = DictProperty()
+    locale_specific_config = DictProperty()
     data_path = StringProperty()
     x_function = StringProperty()
     y_function = StringProperty()
@@ -4272,8 +4274,9 @@ class ApplicationBase(VersionedDoc, SnapshotMixin,
                     name: (contents if isinstance(contents, str) else contents.encode('utf-8'))
                     for name, contents in all_files.items()
                 }
+                release_date = self.built_with.datetime or datetime.datetime.utcnow()
                 jad_settings = {
-                    'Released-on': self.built_with.datetime.strftime("%Y-%b-%d %H:%M"),
+                    'Released-on': release_date.strftime("%Y-%b-%d %H:%M"),
                 }
                 jad_settings.update(self.jad_settings)
                 jadjar = self.get_jadjar().pack(all_files, jad_settings)
@@ -4411,6 +4414,7 @@ class ApplicationBase(VersionedDoc, SnapshotMixin,
         return copy
 
     def delete_app(self):
+        domain_has_apps.clear(self.domain)
         self.doc_type += '-Deleted'
         record = DeleteApplicationRecord(
             domain=self.domain,
@@ -4419,6 +4423,12 @@ class ApplicationBase(VersionedDoc, SnapshotMixin,
         )
         record.save()
         return record
+
+    def save(self, response_json=None, increment_version=None, **params):
+        if not self._id and not domain_has_apps(self.domain):
+            domain_has_apps.clear(self.domain)
+        super(ApplicationBase, self).save(
+            response_json=response_json, increment_version=increment_version, **params)
 
     def set_form_versions(self, previous_version):
         # by default doing nothing here is fine.

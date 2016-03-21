@@ -12,7 +12,7 @@ from corehq.form_processor.models import (
     CommCareCaseSQL_DB_TABLE, CaseAttachmentSQL_DB_TABLE,
     CommCareCaseIndexSQL_DB_TABLE, CaseTransaction_DB_TABLE,
     XFormAttachmentSQL_DB_TABLE, XFormInstanceSQL_DB_TABLE,
-    LedgerValue_DB_TABLE)
+    LedgerValue_DB_TABLE, LedgerTransaction_DB_TABLE)
 
 
 def fetchall_as_namedtuple(cursor):
@@ -55,6 +55,8 @@ def form_adapter(form):
         adapt(form.problem).getquoted(),
         adapt(form.user_id).getquoted(),
         adapt(form.initial_processing_complete).getquoted(),
+        adapt(form.deleted_on).getquoted(),
+        adapt(form.deletion_id).getquoted(),
     ]
     return _adapt_fields(fields, XFormInstanceSQL_DB_TABLE)
 
@@ -94,6 +96,8 @@ def case_adapter(case):
         adapt(json.dumps(case.case_json, cls=JSONEncoder)).getquoted(),
         adapt(case.name).getquoted(),
         adapt(case.location_id).getquoted(),
+        adapt(case.deleted_on).getquoted(),
+        adapt(case.deletion_id).getquoted(),
     ]
     return _adapt_fields(fields, CommCareCaseSQL_DB_TABLE)
 
@@ -153,6 +157,23 @@ def ledger_value_adapter(ledger_value):
         adapt(ledger_value.case_id).getquoted(),
     ]
     return _adapt_fields(fields, LedgerValue_DB_TABLE)
+
+
+def ledger_transaction_adapter(ledger_transaction):
+    fields = [
+        adapt(ledger_transaction.id).getquoted(),
+        adapt(ledger_transaction.form_id).getquoted(),
+        adapt(ledger_transaction.server_date).getquoted(),
+        adapt(ledger_transaction.report_date).getquoted(),
+        adapt(ledger_transaction.type).getquoted(),
+        adapt(ledger_transaction.case_id).getquoted(),
+        adapt(ledger_transaction.entry_id).getquoted(),
+        adapt(ledger_transaction.section_id).getquoted(),
+        adapt(ledger_transaction.user_defined_type).getquoted(),
+        adapt(ledger_transaction.delta).getquoted(),
+        adapt(ledger_transaction.updated_balance).getquoted(),
+    ]
+    return _adapt_fields(fields, LedgerTransaction_DB_TABLE)
 
 
 def _adapt_fields(fields, table_name):

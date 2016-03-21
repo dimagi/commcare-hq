@@ -102,7 +102,8 @@ class CareCustomColumn(CustomQueryColumn):
         table_name = self.table_name or default_table_name
         filters = self.filters or default_filters
         group_by = self.group_by or default_group_by
-        return self.query_cls(table_name, filters, group_by, [], self.key)
+        order_by = self.order_by or default_order_by
+        return self.query_cls(table_name, filters, group_by, order_by, self.key)
 
 
 class GeographySqlData(SqlData):

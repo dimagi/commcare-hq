@@ -19,6 +19,7 @@ from dimagi.utils.chunked import chunked
 from dimagi.utils.couch.bulk import soft_delete_docs
 from dimagi.utils.couch.cache.cache_core import get_redis_client
 from dimagi.utils.couch import release_lock, CriticalSection
+from dimagi.utils.logging import notify_exception
 from dimagi.utils.rate_limit import rate_limit
 from threading import Thread
 
@@ -31,6 +32,8 @@ def remove_from_queue(queued_sms):
                 setattr(sms, field.name, getattr(queued_sms, field.name))
         queued_sms.delete(sync_to_couch=False)  # Remove sync_to_couch when SMSLog is removed
         sms.save()
+
+    sms.publish_change()
 
     if sms.direction == OUTGOING and sms.processed and not sms.error:
         create_billable_for_sms(sms)
@@ -323,3 +326,12 @@ def _sync_case_phone_number(contact_case):
         else:
             if phone_number:
                 phone_number.delete()
+
+
+@task(queue='background_queue', ignore_result=True)
+def sync_sms_to_couch(sms):
+    try:
+        sms._migration_do_sync()
+    except:
+        message = 'Could not sync SMSLog from SMS %s' % sms.pk
+        notify_exception(None, message=message)

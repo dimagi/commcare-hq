@@ -25,6 +25,7 @@ class CaseFromXFormTest(TestCase):
 
         if settings.TESTS_SHOULD_USE_SQL_BACKEND:
             self._check_transactions(case, [xform])
+            self.assertTrue(case.transactions[0].is_case_create)
         else:
             self.assertEqual(1, len(case.actions))
             create_action = case.actions[0]
@@ -49,6 +50,7 @@ class CaseFromXFormTest(TestCase):
 
         if settings.TESTS_SHOULD_USE_SQL_BACKEND:
             self._check_transactions(case, [xform1, xform2])
+            self.assertTrue(case.transactions[0].is_case_create)
         else:
             self.assertEqual(3, len(case.actions))
             new_update_action = case.actions[2]
@@ -92,6 +94,8 @@ class CaseFromXFormTest(TestCase):
 
         if settings.TESTS_SHOULD_USE_SQL_BACKEND:
             self._check_transactions(case, [xform1, xform2])
+            self.assertTrue(case.transactions[0].is_case_create)
+            self.assertTrue(case.transactions[1].is_case_close)
         else:
             self.assertEqual(3, len(case.actions))
             update_action = case.actions[1]
@@ -125,6 +129,6 @@ class CaseFromXFormTest(TestCase):
         self.assertEqual(len(xforms), len(case.transactions))
         for index, xform in enumerate(xforms):
             transaction = case.transactions[index]
-            self.assertEqual(CaseTransaction.TYPE_FORM, transaction.type)
+            self.assertTrue(CaseTransaction.is_form_transaction)
             self.assertEqual(xform.form_id, transaction.form_id)
             self.assertFalse(transaction.revoked)

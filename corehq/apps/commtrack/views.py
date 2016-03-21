@@ -342,8 +342,9 @@ class RebuildStockStateView(BaseCommTrackManageView):
         query = StockTransaction.objects.filter(report__domain=self.domain)
         if self.location_id:
             try:
-                case_id = (SQLLocation.objects.get(domain=self.domain, pk=self.location_id)
-                           .values_list('supply_point_id', flat=True))
+                case_id = (SQLLocation.objects
+                           .get(domain=self.domain, location_id=self.location_id)
+                           .supply_point_id)
             except SQLLocation.DoesNotExist:
                 messages.error(self.request, 'Your location id did not match a location')
             else:

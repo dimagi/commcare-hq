@@ -1,3 +1,5 @@
+import logging
+
 from django.core.exceptions import ValidationError
 from django.core.validators import validate_email
 from django.db import transaction
@@ -67,7 +69,11 @@ class BalanceMigration(UserMigrationMixin):
                 elif vn and vn.domain != self.domain:
                     description += "Phone number already assigned on domain {}, ".format(vn.domain)
                 elif not vn or not vn.verified:
-                    description += "Phone number not verified, "
+                    try:
+                        user.save_verified_number(self.domain, phone_number, verified=True)
+                    except Exception, e:
+                        logging.error(e)
+                        description += "Phone number not verified, "
                 else:
                     backend = phone_to_backend.get(phone_number)
                     if backend != 'push_backend' and vn.backend_id != 'MOBILE_BACKEND_TEST' \

@@ -201,6 +201,10 @@ class XFormInstance(SafeSaveDocument, UnicodeMixIn, ComputedDocumentMixin,
         return self.doc_type == 'XFormInstance'
 
     @property
+    def deletion_id(self):
+        return getattr(self, '-deletion_id', None)
+
+    @property
     def metadata(self):
         if const.TAG_META in self.form:
             return Metadata.wrap(clean_metadata(self.to_json()[const.TAG_FORM][const.TAG_META]))

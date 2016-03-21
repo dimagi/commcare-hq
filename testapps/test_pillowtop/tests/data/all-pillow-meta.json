@@ -114,19 +114,6 @@
         "name": "CasePillow",
         "unique_id": "d94ad23a98ddd2e9c36a9dc73bb58bac"
     },
-    "ConfigurableIndicatorPillow": {
-        "advertised_name": "corehq.apps.userreports.pillow.ConfigurableIndicatorPillow.testhq",
-        "change_feed_type": "CouchChangeFeed",
-        "checkpoint_id": "pillow-checkpoint-ucr-main",
-        "couch_filter": null,
-        "couchdb_type": "CachedCouchDB",
-        "couchdb_uri": "http://{COUCH_SERVER_ROOT}/test_commcarehq",
-        "document_class": null,
-        "extra_args": {},
-        "full_class_name": "corehq.apps.userreports.pillow.ConfigurableIndicatorPillow",
-        "include_docs": false,
-        "name": "ConfigurableIndicatorPillow"
-    },
     "CouvertureFluffPillow": {
         "advertised_name": "fluff.CouvertureFluffPillow.testhq",
         "change_feed_type": "KafkaChangeFeed",
@@ -157,21 +144,21 @@
         "name": "DefaultChangeFeedPillow"
     },
     "DomainPillow": {
-        "advertised_name": "corehq.pillows.domain.DomainPillow.test_hqdomains_20160128_1552.testhq",
+        "advertised_name": "corehq.pillows.domain.DomainPillow.test_hqdomains_20160318_1339.testhq",
         "change_feed_type": "CouchChangeFeed",
-        "checkpoint_id": "corehq.pillows.domain.DomainPillow.test_hqdomains_20160128_1552.testhq",
+        "checkpoint_id": "corehq.pillows.domain.DomainPillow.test_hqdomains_20160318_1339.testhq",
         "couch_filter": "domain/domains_inclusive",
         "couchdb_type": "Database",
         "couchdb_uri": "http://{COUCH_SERVER_ROOT}/test_commcarehq__domains",
         "document_class": "Domain",
         "es_alias": "hqdomains",
-        "es_index": "test_hqdomains_20160128_1552",
+        "es_index": "test_hqdomains_20160318_1339",
         "es_type": "hqdomain",
         "extra_args": {},
         "full_class_name": "corehq.pillows.domain.DomainPillow",
         "include_docs": true,
         "name": "DomainPillow",
-        "unique_id": "test_hqdomains_20160128_1552"
+        "unique_id": "test_hqdomains_20160318_1339"
     },
     "FarmerRecordFluffPillow": {
         "advertised_name": "fluff.FarmerRecordFluffPillow.testhq",
@@ -491,6 +478,13 @@
         "name": "SMSPillow",
         "unique_id": "708c77f8e5fe00286fa5791e9fa7d45f"
     },
+    "SqlSMSPillow": {
+        "advertised_name": "SqlSMSPillow",
+        "change_feed_type": "KafkaChangeFeed",
+        "checkpoint_id": "sql-sms-to-es",
+        "full_class_name": "pillowtop.pillow.interface.ConstructedPillow",
+        "name": "SqlSMSPillow"
+    },
     "SqlCaseToElasticsearchPillow": {
         "advertised_name": "SqlCaseToElasticsearchPillow",
         "change_feed_type": "KafkaChangeFeed",
@@ -504,19 +498,6 @@
         "checkpoint_id": "sql-xforms-to-elasticsearch",
         "full_class_name": "pillowtop.pillow.interface.ConstructedPillow",
         "name": "SqlXFormToElasticsearchPillow"
-    },
-    "StaticDataSourcePillow": {
-        "advertised_name": "corehq.apps.userreports.pillow.StaticDataSourcePillow.testhq",
-        "change_feed_type": "CouchChangeFeed",
-        "checkpoint_id": "pillow-checkpoint-ucr-static",
-        "couch_filter": null,
-        "couchdb_type": "CachedCouchDB",
-        "couchdb_uri": "http://{COUCH_SERVER_ROOT}/test_commcarehq",
-        "document_class": null,
-        "extra_args": {},
-        "full_class_name": "corehq.apps.userreports.pillow.StaticDataSourcePillow",
-        "include_docs": false,
-        "name": "StaticDataSourcePillow"
     },
     "TauxDeRuptureFluffPillow": {
         "advertised_name": "fluff.TauxDeRuptureFluffPillow.testhq",
@@ -687,5 +668,12 @@
         "checkpoint_id": "kafka-ucr-main",
         "full_class_name": "corehq.apps.userreports.pillow.ConfigurableReportKafkaPillow",
         "name": "kafka-ucr-main"
+    },
+    "kafka-ucr-static": {
+        "advertised_name": "kafka-ucr-static",
+        "change_feed_type": "KafkaChangeFeed",
+        "checkpoint_id": "kafka-ucr-static",
+        "full_class_name": "corehq.apps.userreports.pillow.ConfigurableReportKafkaPillow",
+        "name": "kafka-ucr-static"
     }
 }

@@ -42,19 +42,24 @@ def _build_indicators(indicator_config_id, relevant_ids):
     redis_client = get_redis_client().client.get_client()
     redis_key = _get_redis_key_for_config(config)
 
+    last_id = None
     for doc in iter_docs(couchdb, relevant_ids, chunksize=500):
         try:
             # save is a noop if the filter doesn't match
             adapter.save(doc)
-            redis_client.srem(redis_key, doc.get('_id'))
+            last_id = doc.get('_id')
+            try:
+                redis_client.lrem(redis_key, 1, last_id)
+            except:
+                redis_client.srem(redis_key, last_id)
         except Exception as e:
             logging.exception('problem saving document {} to table. {}'.format(doc['_id'], e))
 
-    if not is_static(indicator_config_id):
-        redis_client.delete(redis_key)
+    if last_id:
+        redis_client.rpush(redis_key, last_id)
 
 
-@task(queue='ucr_queue', ignore_result=True, acks_late=True)
+@task(queue='ucr_queue', ignore_result=True)
 def rebuild_indicators(indicator_config_id):
     config = _get_config_by_id(indicator_config_id)
     adapter = IndicatorSqlAdapter(config)
@@ -76,8 +81,13 @@ def resume_building_indicators(indicator_config_id):
     redis_client = get_redis_client().client.get_client()
     redis_key = _get_redis_key_for_config(config)
 
-    if len(redis_client.smembers(redis_key)) > 0:
-        relevant_ids = redis_client.smembers(redis_key)
+    # maintaining support for existing sets in redis while the
+    # transition to lists occurs
+    try:
+        relevant_ids = redis_client.lrange(redis_key, 0, -1)
+    except:
+        relevant_ids = tuple(redis_client.smembers(redis_key))
+    if len(relevant_ids) > 0:
         _build_indicators(indicator_config_id, relevant_ids)
         last_id = relevant_ids[-1]
 
@@ -99,15 +109,16 @@ def _iteratively_build_table(config, last_id=None):
             startkey_docid=last_id):
         relevant_ids.append(relevant_id)
         if len(relevant_ids) >= CHUNK_SIZE:
-            redis_client.sadd(redis_key, *relevant_ids)
+            redis_client.rpush(redis_key, *relevant_ids)
             _build_indicators(indicator_config_id, relevant_ids)
             relevant_ids = []
 
     if relevant_ids:
-        redis_client.sadd(redis_key, *relevant_ids)
+        redis_client.rpush(redis_key, *relevant_ids)
         _build_indicators(indicator_config_id, relevant_ids)
 
     if not is_static(indicator_config_id):
+        redis_client.delete(redis_key)
         config.meta.build.finished = True
         try:
             config.save()

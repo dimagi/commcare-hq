@@ -160,6 +160,7 @@ class ComposeMessageView(BaseMessagingSectionView):
         return super(BaseMessagingSectionView, self).dispatch(*args, **kwargs)
 
 
+@csrf_exempt
 def post(request, domain):
     """
     I don't know of anywhere this is being invoked from. If the soft asserts

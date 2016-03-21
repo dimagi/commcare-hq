@@ -7,7 +7,9 @@
     "airsrwanda",
     "airszambia",
     "airszimbabwe",
-    "airstanzania"
+    "airstanzania",
+    "airsghana",
+    "airsbenin"
   ],
   "data_source_table": "supervisory-005",
   "report_id": "incident-report",

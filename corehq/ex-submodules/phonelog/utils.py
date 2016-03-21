@@ -18,7 +18,8 @@ def _force_list(obj_or_list):
 def _get_logs(form, report_name, report_slug):
     report = form.get(report_name, {}) or {}
     if isinstance(report, list):
-        return filter(None, [log.get(report_slug) for log in report])
+        return [log.get(report_slug) for log in report
+                if isinstance(log, dict) and report_slug in log]
     return report.get(report_slug, [])
 
 

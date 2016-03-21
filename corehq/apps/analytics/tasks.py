@@ -331,6 +331,10 @@ def track_periodic_data():
                 {
                     'property': 'project_spaces_created_by_user',
                     'value': project_spaces_created,
+                },
+                {
+                    'property': 'over_300_form_submissions',
+                    'value': max_forms > 300
                 }
             ]
         }
