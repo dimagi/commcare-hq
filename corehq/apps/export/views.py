@@ -1641,7 +1641,14 @@ def download_daily_saved_export(req, domain, export_instance_id):
             from corehq.apps.export.tasks import rebuild_export_task
             rebuild_export_task.delay(export_instance)
         except Exception:
-            notify_exception(req, 'Failed to rebuild export during download')
+            notify_exception(
+                req,
+                'Failed to rebuild export during download',
+                {
+                    'export_instance_id': export_instance_id,
+                    'domain': domain,
+                },
+            )
     export_instance.last_accessed = datetime.utcnow()
     export_instance.save()
     payload = export_instance.get_payload(stream=True)
