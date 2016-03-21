@@ -679,7 +679,7 @@ class Location(SyncCouchToSQLMixin, CachedCouchDocumentMixin, Document):
             self.site_code = generate_code(self.name, all_codes)
 
         # Set the UUID here so we can save to SQL first (easier to rollback)
-        if not self.location_id:
+        if not self._id:
             self._id = self.get_db().server.next_uuid()
 
         sync_to_sql = kwargs.pop('sync_to_sql', True)
