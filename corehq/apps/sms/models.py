@@ -17,6 +17,7 @@ from dimagi.utils.couch.migration import (SyncCouchToSQLMixin,
     SyncSQLToCouchMixin)
 from dimagi.utils.mixins import UnicodeMixIn
 from dimagi.utils.parsing import json_format_datetime
+from corehq.apps.sms.change_publishers import publish_sms_saved
 from corehq.apps.sms.mixin import (CommCareMobileContactMixin,
     PhoneNumberInUseException, InvalidFormatException, VerifiedNumber,
     apply_leniency, BadSMSConfigException)
@@ -29,6 +30,7 @@ from corehq.util.view_utils import absolute_reverse
 from dimagi.utils.couch.undo import DELETED_SUFFIX
 from dimagi.utils.couch import CouchDocLockableMixIn
 from dimagi.utils.load_balance import load_balance
+from dimagi.utils.logging import notify_exception
 from django.utils.translation import ugettext_noop, ugettext_lazy
 
 
@@ -497,11 +499,27 @@ class SMSBase(SyncSQLToCouchMixin, Log):
 
 
 class SMS(SMSBase):
+    def to_json(self):
+        from corehq.apps.sms.serializers import SMSSerializer
+        data = SMSSerializer(self).data
+        return data
+
+    def publish_change(self):
+        try:
+            publish_sms_saved(self)
+        except:
+            notify_exception(
+                None,
+                message='Could not publish change for SMS',
+                details={'pk': self.pk}
+            )
+
     def save(self, *args, **kwargs):
         from corehq.apps.sms.tasks import sync_sms_to_couch
 
         sync_to_couch = kwargs.pop('sync_to_couch', True)
         super(SyncSQLToCouchMixin, self).save(*args, **kwargs)
+
         if sync_to_couch:
             sync_sms_to_couch.delay(self)
 

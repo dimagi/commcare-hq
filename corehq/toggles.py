@@ -710,6 +710,13 @@ AUTO_CASE_UPDATES = StaticToggle(
     [NAMESPACE_DOMAIN],
 )
 
+SQL_SMS_PILLOW = StaticToggle(
+    'sql_sms_pillow',
+    'Enable processing SMS changes through Kafka and the Postgres SMS model.',
+    TAG_PRODUCT_PATH,
+    [NAMESPACE_DOMAIN],
+)
+
 EWS_BROADCAST_BY_ROLE = StaticToggle(
     'ews_broadcast_by_role',
     'EWS: Filter broadcast recipients by role',

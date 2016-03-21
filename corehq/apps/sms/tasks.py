@@ -33,6 +33,8 @@ def remove_from_queue(queued_sms):
         queued_sms.delete(sync_to_couch=False)  # Remove sync_to_couch when SMSLog is removed
         sms.save()
 
+    sms.publish_change()
+
     if sms.direction == OUTGOING and sms.processed and not sms.error:
         create_billable_for_sms(sms)
     elif sms.direction == INCOMING and sms.domain and domain_has_privilege(sms.domain, privileges.INBOUND_SMS):
