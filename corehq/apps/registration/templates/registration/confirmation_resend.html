@@ -10,13 +10,13 @@
         <div class="form-group">
             <label class="col-sm-4 control-label">{% trans "Email" %}</label>
             <div class="col-sm-4">
-                <span class="form-control input-xlarge uneditable-input">{{ request.user.username }}</span>
+                <span class="form-control">{{ request.user.username }}</span>
             </div>
         </div>
         <div class="form-group">
             <label class="col-sm-4 control-label">{% trans "Pending Project Name" %}</label>
             <div class="col-sm-4">
-                <span class="form-control input-xlarge uneditable-input">{{ requested_domain }}</span>
+                <span class="form-control">{{ requested_domain }}</span>
             </div>
         </div>
     </fieldset>
