@@ -5,7 +5,8 @@ from corehq.apps.export.models import (
     ExportItem,
     ExportColumn,
 )
-from corehq.apps.export.models.new import MAIN_TABLE, SystemExportItem
+from corehq.apps.export.models.new import MAIN_TABLE, SystemExportItem, \
+    PathNode
 
 
 class TestExportItemGeneration(SimpleTestCase):
@@ -13,7 +14,7 @@ class TestExportItemGeneration(SimpleTestCase):
 
     def setUp(self):
         self.item = ExportItem(
-            path=['data', 'question1'],
+            path=[PathNode(name='data'), PathNode(name='question1')],
             label='Question One',
             last_occurrences={self.app_id: 3},
         )
@@ -29,7 +30,7 @@ class TestExportItemGeneration(SimpleTestCase):
         column = ExportColumn.create_default_from_export_item(
             MAIN_TABLE,
             SystemExportItem(
-                path=['form', 'meta', 'userID'],
+                path=[PathNode(name='form'), PathNode(name='meta'), PathNode(name='userID')],
                 label='userID',
                 is_advanced=True,
                 last_occurrences={self.app_id: 3},
@@ -56,14 +57,14 @@ class TestExportItemGeneration(SimpleTestCase):
         self.assertEqual(column.selected, False)
 
     def test_wrap_export_item(self):
-        path = ["foo", "bar"]
+        path = [PathNode(name="foo"), PathNode(name="bar")]
         item = ExportItem(path=path)
         wrapped = ExportItem.wrap(item.to_json())
         self.assertEqual(type(wrapped), type(item))
         self.assertEqual(wrapped.to_json(), item.to_json())
 
     def test_wrap_export_item_child(self):
-        path = ["foo", "bar"]
+        path = [PathNode(name="foo"), PathNode(name="bar")]
         is_advanced = True
         transform = CASE_NAME_TRANSFORM
         item = SystemExportItem(path=path, is_advanced=is_advanced, transform=transform)

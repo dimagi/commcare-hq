@@ -31,7 +31,8 @@ def convert_saved_export_to_export_instance(saved_export):
 
     # With new export instance, copy over preferences from previous export
     for table in saved_export.tables:
-        new_table = instance.get_table(_convert_index_to_path_nodes(table.index))
+        table_path = _convert_index_to_path_nodes(table.index)
+        new_table = instance.get_table(table_path)
         if new_table:
             new_table.label = table.display
         else:
@@ -49,9 +50,13 @@ def convert_saved_export_to_export_instance(saved_export):
                     table_index=_strip_repeat_index(table.index),
                     column_index=column.index,
                 )
+            column_path = _convert_index_to_path_nodes(index)
+            # The old style column indexes always look like they contains no repeats,
+            # so replace that parts that could be repeats with the table path
+            column_path = table_path + column_path[len(table_path):]
 
             new_column = new_table.get_column(
-                _convert_index_to_path(index),
+                column_path,
                 _convert_serializable_function_to_transform(column.transform)
             )
             if not new_column:
@@ -76,16 +81,6 @@ def _is_repeat(index):
 
 def _strip_repeat_index(index):
     return index.strip('#.')
-
-
-def _convert_index_to_path(index):
-    from corehq.apps.export.models.new import MAIN_TABLE
-    if index == '#':
-        return MAIN_TABLE
-    elif _is_repeat(index):
-        return ['data'] + _strip_repeat_index(index).split('.')[1:]
-    else:
-        return ['data'] + index.split('.')[1:]
 
 
 def _convert_index_to_path_nodes(index):

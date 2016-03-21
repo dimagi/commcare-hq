@@ -28,7 +28,7 @@ class TestConvertSavedExportSchemaToFormExportInstance(TestCase, TestFileMixin):
                     path=MAIN_TABLE,
                     items=[
                         ExportItem(
-                            path=['data', 'question1'],
+                            path=[PathNode(name='data'), PathNode(name='question1')],
                             label='Question 1',
                             last_occurrences={cls.app_id: 3},
                         )
@@ -39,7 +39,11 @@ class TestConvertSavedExportSchemaToFormExportInstance(TestCase, TestFileMixin):
                     path=[PathNode(name='data'), PathNode(name='repeat', is_repeat=True)],
                     items=[
                         ExportItem(
-                            path=['data', 'repeat', 'question2'],
+                            path=[
+                                PathNode(name='data'),
+                                PathNode(name='repeat', is_repeat=True),
+                                PathNode(name='question2')
+                            ],
                             label='Question 2',
                             last_occurrences={cls.app_id: 2},
                         )
@@ -67,7 +71,7 @@ class TestConvertSavedExportSchemaToFormExportInstance(TestCase, TestFileMixin):
         table = instance.get_table(MAIN_TABLE)
         self.assertEqual(table.label, 'My Forms')
 
-        column = table.get_column(['data', 'question1'], None)
+        column = table.get_column([PathNode(name='data'), PathNode(name='question1')], None)
         self.assertEqual(column.label, 'Question One')
         self.assertEqual(column.selected, True)
 
@@ -82,7 +86,12 @@ class TestConvertSavedExportSchemaToFormExportInstance(TestCase, TestFileMixin):
         table = instance.get_table([PathNode(name='data'), PathNode(name='repeat', is_repeat=True)])
         self.assertEqual(table.label, 'Repeat: question1')
 
-        column = table.get_column(['data', 'repeat', 'question2'], None)
+        column = table.get_column(
+            [PathNode(name='data'),
+             PathNode(name='repeat', is_repeat=True),
+             PathNode(name='question2')],
+            None
+        )
         self.assertEqual(column.label, 'Question Two')
         self.assertEqual(column.selected, True)
 
@@ -92,9 +101,9 @@ class TestConvertIndexToPath(SimpleTestCase):
 
 
 @generate_cases([
-    ('form.question1', ['data', 'question1']),
+    ('form.question1', [PathNode(name='data'), PathNode(name='question1')]),
     ('#', MAIN_TABLE),
-    ('#.form.question1.#', ['data', 'question1']),  # Repeat group
+    ('#.form.question1.#', [PathNode(name='data'), PathNode(name='question1', is_repeat=True)]),  # Repeat group
 ], TestConvertIndexToPath)
-def test_convert_index_to_path(self, index, path):
-    self.assertEqual(_convert_index_to_path(index), path)
+def test_convert_index_to_path_nodes(self, index, path):
+    self.assertEqual(_convert_index_to_path_nodes(index), path)

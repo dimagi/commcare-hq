@@ -53,18 +53,30 @@ from corehq.apps.export.dbaccessors import (
 DAILY_SAVED_EXPORT_ATTACHMENT_NAME = "payload"
 
 
+class PathNode(DocumentSchema):
+
+    name = StringProperty(required=True)
+    is_repeat = BooleanProperty(default=False)
+
+    def __eq__(self, other):
+        return (
+            type(self) == type(other) and
+            self.doc_type == other.doc_type and
+            self.name == other.name and
+            self.is_repeat == other.is_repeat
+        )
+
+
 class ExportItem(DocumentSchema):
     """
     An item for export.
-
-    path: A question path like ["my_group", "q1"] or a case property name
-        like ["date_of_birth"].
-
+    path: A question path like [PathNode(name=("my_group"), PathNode(name="q1")]
+        or a case property name like [PathNode(name="date_of_birth")].
     label: The label of the corresponding form question, or the case property name
     tag: Denotes whether the property is a system, meta, etc
     last_occurrences: A dictionary that maps an app_id to the last version the export item was present
     """
-    path = ListProperty()
+    path = SchemaListProperty(PathNode)
     label = StringProperty()
     tag = StringProperty()
     last_occurrences = DictProperty()
@@ -89,7 +101,8 @@ class ExportItem(DocumentSchema):
     @classmethod
     def create_from_question(cls, question, app_id, app_version):
         return cls(
-            path=_question_path_to_doc_path(question['value']),
+            # TODO: It doesn't actually matter what the repeats are, but for correctness we should probably pass them in
+            path=_question_path_to_path_nodes(question['value'], []),
             label=question['label'],
             last_occurrences={app_id: app_version},
         )
@@ -124,7 +137,7 @@ class ExportColumn(DocumentSchema):
         # Confirm the ExportItem's path starts with the base_path
         assert base_path == self.item.path[:len(base_path)]
         # Get the path from the doc root to the desired ExportItem
-        path = self.item.path[len(base_path):]
+        path = [x.name for x in self.item.path[len(base_path):]]
         return self._transform(NestedDictGetter(path)(doc), transform_dates)
 
     def _transform(self, value, transform_dates):
@@ -236,20 +249,6 @@ class DocRow(namedtuple("DocRow", ["doc", "row"])):
     """
 
 
-class PathNode(DocumentSchema):
-
-    name = StringProperty(required=True)
-    is_repeat = BooleanProperty(default=False)
-
-    def __eq__(self, other):
-        return (
-            type(self) == type(other) and
-            self.doc_type == other.doc_type and
-            self.name == other.name and
-            self.is_repeat == other.is_repeat
-        )
-
-
 class TableConfiguration(DocumentSchema):
     # label saves the user's decision for the table name
     label = StringProperty()
@@ -288,7 +287,7 @@ class TableConfiguration(DocumentSchema):
 
             row_data = []
             for col in self.selected_columns:
-                val = col.get_value(doc, [node.name for node in self.path], row_index=row_index)
+                val = col.get_value(doc, self.path, row_index=row_index)
                 if isinstance(val, list):
                     row_data.extend(val)
                 else:
@@ -665,7 +664,7 @@ class ExportDataSchema(Document):
 
             def keyfn(export_item):
                 return'{}:{}:{}'.format(
-                    _list_path_to_string(export_item.path),
+                    _path_nodes_to_string(export_item.path),
                     export_item.doc_type,
                     export_item.transform if isinstance(export_item, SystemExportItem) else "",
                 )
@@ -712,7 +711,7 @@ class ExportDataSchema(Document):
     @staticmethod
     def _generate_export_item_from_system_prop(system_property, app_id, app_version):
         return SystemExportItem(
-            path=system_property.path.split("."),
+            path=[PathNode(name=n) for n in system_property.path.split(".")],
             label=system_property.name,
             tag=system_property.tag,
             is_advanced=system_property.is_advanced,
@@ -832,7 +831,12 @@ class FormExportDataSchema(ExportDataSchema):
                 for case_update_field in case_updates:
                     group_schema.items.append(
                         SystemExportItem(
-                            path=['form', 'case', 'update', case_update_field],
+                            path=[
+                                PathNode(name='form'),
+                                PathNode(name='case'),
+                                PathNode(name='update'),
+                                PathNode(name=case_update_field)
+                            ],
                             label="case.update.{}".format(case_update_field),
                             tag=PROPERTY_TAG_CASE,
                             is_advanced=True,
@@ -952,7 +956,7 @@ class CaseExportDataSchema(ExportDataSchema):
 
             for prop in case_properties:
                 group_schema.items.append(ScalarItem(
-                    path=[prop],
+                    path=[PathNode(name=prop)],
                     label=prop,
                     last_occurrences={app_id: app_version},
                 ))
@@ -990,12 +994,12 @@ class CaseExportDataSchema(ExportDataSchema):
                 # Yeah... let's not hard code this list everywhere
                 # This list comes from casexml.apps.case.xml.parser.CaseActionBase.from_v2
                 if prop in ["type", "name", "external_id", "user_id", "owner_id", "opened_on"]:
-                    path_start = "updated_known_properties"
+                    path_start = PathNode(name="updated_known_properties")
                 else:
-                    path_start = "updated_unknown_properties"
+                    path_start = PathNode(name="updated_unknown_properties")
 
                 group_schema.items.append(ScalarItem(
-                    path=[node.name for node in CASE_HISTORY_TABLE] + [path_start, prop],
+                    path=CASE_HISTORY_TABLE + [path_start, PathNode(name=prop)],
                     label=prop,
                     tag=PROPERTY_TAG_UPDATE,
                     last_occurrences={app_id: app_version},
@@ -1029,24 +1033,6 @@ def _string_path_to_list(path):
     return path if path is None else path[1:].split('/')
 
 
-def _question_path_to_doc_path(string_path):
-    """
-    Convert a question path into the format expected by the export code,
-    specifically the logic in ExportColumn.get_value().
-    The export code will use this path to traverse the JSON representation of
-    the form that is stored in ElasticSearch.
-
-    E.g. "/data/question1/" is converted to ["form", "question1"]
-    """
-    path = _string_path_to_list(string_path)
-    if path is None:
-        path = []
-    else:
-        assert path[0] == "data"
-        path[0] = "form"
-    return path
-
-
 def _question_path_to_path_nodes(string_path, repeats):
     """
     Return a list of PathNodes suitable for a TableConfiguration or ExportGroupSchema
@@ -1071,12 +1057,6 @@ def _question_path_to_path_nodes(string_path, repeats):
     assert path[0] == PathNode(name="data")
     path[0].name = "form"
     return path
-
-
-def _list_path_to_string(path, separator='.'):
-    if not path or (len(path) == 1 and path[0] is None):
-        return ''
-    return separator.join(path)
 
 
 def _path_nodes_to_string(path, separator=' '):

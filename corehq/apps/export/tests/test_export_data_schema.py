@@ -37,8 +37,8 @@ class TestFormExportDataSchema(SimpleTestCase, TestXmlMixin):
         self.assertEqual(len(group_schema.items), 2 + len(MAIN_FORM_TABLE_PROPERTIES))
 
         form_items = filter(lambda item: item.tag is None, group_schema.items)
-        self.assertEqual(form_items[0].path, ['form', 'question1'])
-        self.assertEqual(form_items[1].path, ['form', 'question2'])
+        self.assertEqual(form_items[0].path, [PathNode(name='form'), PathNode(name='question1')])
+        self.assertEqual(form_items[1].path, [PathNode(name='form'), PathNode(name='question2')])
 
     def test_xform_parsing_with_repeat_group(self):
         form_xml = self.get_xml('repeat_group_form')
@@ -58,13 +58,13 @@ class TestFormExportDataSchema(SimpleTestCase, TestXmlMixin):
         self.assertEqual(group_schema.path, MAIN_TABLE)
 
         form_items = filter(lambda item: item.tag is None, group_schema.items)
-        self.assertEqual(form_items[0].path, ['form', 'question1'])
+        self.assertEqual(form_items[0].path, [PathNode(name='form'), PathNode(name='question1')])
 
         group_schema = schema.group_schemas[1]
         self.assertEqual(len(group_schema.items), 2)  # one item is the row number system property
         self.assertEqual(group_schema.path, [PathNode(name='form'), PathNode(name='question3', is_repeat=True)])
         # items[0] is the row number system property
-        self.assertEqual(group_schema.items[1].path, ['form', 'question3', 'question4'])
+        self.assertEqual(group_schema.items[1].path, [PathNode(name='form'), PathNode(name='question3'), PathNode(name='question4')])
 
     def test_xform_parsing_with_multiple_choice(self):
         form_xml = self.get_xml('multiple_choice_form')
@@ -81,9 +81,9 @@ class TestFormExportDataSchema(SimpleTestCase, TestXmlMixin):
 
         self.assertEqual(len(group_schema.items), 2 + len(MAIN_FORM_TABLE_PROPERTIES))
         form_items = filter(lambda item: item.tag is None, group_schema.items)
-        self.assertEqual(form_items[0].path, ['form', 'question1'])
+        self.assertEqual(form_items[0].path, [PathNode(name='form'), PathNode(name='question1')])
 
-        self.assertEqual(form_items[1].path, ['form', 'question2'])
+        self.assertEqual(form_items[1].path, [PathNode(name='form'), PathNode(name='question2')])
         self.assertEqual(form_items[1].options[0].value, 'choice1')
         self.assertEqual(form_items[1].options[1].value, 'choice2')
 
@@ -152,9 +152,9 @@ class TestCaseExportDataSchema(SimpleTestCase, TestXmlMixin):
         dynamic_properties_start_index = len(MAIN_CASE_TABLE_PROPERTIES[0])
         my_case_property_item = group_schema.items[dynamic_properties_start_index]
         my_second_case_property_item = group_schema.items[dynamic_properties_start_index + 1]
-        self.assertEqual(my_case_property_item.path, ['my_case_property'])
+        self.assertEqual(my_case_property_item.path, [PathNode(name='my_case_property')])
         self.assertEqual(my_case_property_item.last_occurrences[self.app_id], 1)
-        self.assertEqual(my_second_case_property_item.path, ['my_second_case_property'])
+        self.assertEqual(my_second_case_property_item.path, [PathNode(name='my_second_case_property')])
         self.assertEqual(my_second_case_property_item.last_occurrences[self.app_id], 1)
 
     def test_case_history_parsing(self):
@@ -166,7 +166,7 @@ class TestCaseExportDataSchema(SimpleTestCase, TestXmlMixin):
         group_schema = schema.group_schemas[0]
 
         for idx, prop in enumerate(CASE_HISTORY_PROPERTIES):
-            self.assertEqual(group_schema.items[idx].path, prop.path.split("."))
+            self.assertEqual(group_schema.items[idx].path, [PathNode(name=n) for n in prop.path.split(".")])
             self.assertEqual(group_schema.items[idx].tag, prop.tag)
 
         update_items = filter(lambda item: item.tag == PROPERTY_TAG_UPDATE, group_schema.items)
@@ -269,7 +269,10 @@ class TestMergingFormExportDataSchema(SimpleTestCase, TestXmlMixin):
             2 + len(MAIN_FORM_TABLE_PROPERTIES),
         )
 
-        multichoice = filter(lambda item: item.path == ['form', 'question2'], group_schema.items)[0]
+        multichoice = filter(
+            lambda item: item.path == [PathNode(name='form'), PathNode(name='question2')],
+            group_schema.items
+        )[0]
         self.assertEqual(len(multichoice.options), 3)
         self.assertEqual(
             len(filter(lambda o: o.last_occurrences[self.app_id] == 2, multichoice.options)),
@@ -306,7 +309,7 @@ class TestMergingFormExportDataSchema(SimpleTestCase, TestXmlMixin):
                     path=MAIN_TABLE,
                     items=[
                         SystemExportItem(
-                            path=['foo', 'bar'],
+                            path=[PathNode(name='foo'), PathNode(name='bar')],
                             label='baz',
                         )
                     ]

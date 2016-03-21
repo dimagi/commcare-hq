@@ -99,19 +99,19 @@ class TableConfigurationGetRowsTest(SimpleTestCase):
             columns=[
                 ExportColumn(
                     item=ScalarItem(
-                        path=['form', 'q3'],
+                        path=[PathNode(name='form'), PathNode(name='q3')],
                     ),
                     selected=True,
                 ),
                 ExportColumn(
                     item=ScalarItem(
-                        path=['form', 'q1'],
+                        path=[PathNode(name='form'), PathNode(name='q1')],
                     ),
                     selected=True,
                 ),
                 ExportColumn(
                     item=ScalarItem(
-                        path=['form', 'q2'],
+                        path=[PathNode(name='form'), PathNode(name='q2')],
                     ),
                     selected=False,
                 ),
@@ -135,7 +135,11 @@ class TableConfigurationGetRowsTest(SimpleTestCase):
             columns=[
                 ExportColumn(
                     item=ScalarItem(
-                        path=['form', 'repeat1', 'q1'],
+                        path=[
+                            PathNode(name="form"),
+                            PathNode(name="repeat1", is_repeat=True),
+                            PathNode(name="q1")
+                        ],
                     ),
                     selected=True,
                 ),
@@ -168,7 +172,13 @@ class TableConfigurationGetRowsTest(SimpleTestCase):
                 ),
                 ExportColumn(
                     item=ScalarItem(
-                        path=['form', 'repeat1', 'group1', 'repeat2', 'q1'],
+                        path=[
+                            PathNode(name='form'),
+                            PathNode(name='repeat1', is_repeat=True),
+                            PathNode(name='group1'),
+                            PathNode(name='repeat2', is_repeat=True),
+                            PathNode(name='q1')
+                        ],
                     ),
                     selected=True,
                 ),
@@ -212,24 +222,24 @@ class SplitColumnTest(SimpleTestCase):
     def test_get_value(self):
         column = SplitExportColumn(
             item=MultipleChoiceItem(
-                path=['form', 'q1'],
+                path=[PathNode(name='form'), PathNode(name='q1')],
                 options=[Option(value='a'), Option(value='c')]
             ),
             ignore_unspecified_options=False
         )
         doc = {"q1": "a b d"}
-        self.assertEqual(column.get_value(doc, ['form']), [1, None, "b d"])
+        self.assertEqual(column.get_value(doc, [PathNode(name='form')]), [1, None, "b d"])
 
     def test_ignore_extas(self):
         column = SplitExportColumn(
             item=MultipleChoiceItem(
-                path=['form', 'q1'],
+                path=[PathNode(name='form'), PathNode(name='q1')],
                 options=[Option(value='a'), Option(value='c')]
             ),
             ignore_unspecified_options=True
         )
         doc = {"q1": "a b d"}
-        self.assertEqual(column.get_value(doc, ["form"]), [1, None])
+        self.assertEqual(column.get_value(doc, [PathNode(name="form")]), [1, None])
 
     def test_basic_get_headers(self):
         column = SplitExportColumn(
@@ -267,19 +277,48 @@ class SplitColumnTest(SimpleTestCase):
             columns=[
                 ExportColumn(
                     item=ScalarItem(
-                        path=['form', 'repeat1', 'q1'],
+                        path=[
+                            PathNode(name='form'),
+                            PathNode(name='repeat1', is_repeat=True),
+                            PathNode(name='q1')
+                        ],
                     )
                 ),
                 ExportColumn(
                     item=ScalarItem(
-                        path=['form', 'repeat1', 'q2'],
+                        path=[
+                            PathNode(name='form'),
+                            PathNode(name='repeat1', is_repeat=True),
+                            PathNode(name='q2')
+                        ],
                     )
                 ),
             ]
         )
 
-        column = table_configuration.get_column(['form', 'repeat1', 'q1'], None)
-        self.assertEqual(column.item.path, ['form', 'repeat1', 'q1'])
+        column = table_configuration.get_column(
+            [
+                PathNode(name='form'),
+                PathNode(name='repeat1', is_repeat=True),
+                PathNode(name='q1')
+            ],
+            None
+        )
+        self.assertEqual(
+            column.item.path,
+            [
+                PathNode(name='form'),
+                PathNode(name='repeat1', is_repeat=True),
+                PathNode(name='q1')
+            ]
+        )
 
-        column = table_configuration.get_column(['form', 'repeat1', 'DoesNotExist'], None)
+        column = table_configuration.get_column(
+            [
+                PathNode(name='form'),
+                PathNode(name='repeat1', is_repeat=True),
+                PathNode(name='DoesNotExist')
+            ],
+            None
+        )
         self.assertIsNone(column)

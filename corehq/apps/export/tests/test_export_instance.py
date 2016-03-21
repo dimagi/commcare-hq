@@ -30,7 +30,7 @@ class TestExportInstanceGeneration(SimpleTestCase):
                     path=MAIN_TABLE,
                     items=[
                         ExportItem(
-                            path=['data', 'question1'],
+                            path=[PathNode(name='data'), PathNode(name='question1')],
                             label='Question 1',
                             last_occurrences={cls.app_id: 3},
                         )
@@ -41,7 +41,7 @@ class TestExportInstanceGeneration(SimpleTestCase):
                     path=[PathNode(name='data'), PathNode(name='repeat', is_repeat=True)],
                     items=[
                         ExportItem(
-                            path=['data', 'repeat', 'q2'],
+                            path=[PathNode(name='data'), PathNode(name='repeat', is_repeat=True), PathNode(name='q2')],
                             label='Question 2',
                             last_occurrences={cls.app_id: 2},
                         )
@@ -126,7 +126,7 @@ class TestExportInstanceGenerationMultipleApps(SimpleTestCase):
                     path=MAIN_TABLE,
                     items=[
                         ExportItem(
-                            path=['data', 'question1'],
+                            path=[PathNode(name='data'), PathNode(name='question1')],
                             label='Question 1',
                             last_occurrences={
                                 cls.app_id: 2,
@@ -143,7 +143,7 @@ class TestExportInstanceGenerationMultipleApps(SimpleTestCase):
                     path=[PathNode(name='data'), PathNode(name='repeat', is_repeat=True)],
                     items=[
                         ExportItem(
-                            path=['data', 'repeat', 'q2'],
+                            path=[PathNode(name='data'), PathNode(name='repeat', is_repeat=True), PathNode(name='q2')],
                             label='Question 2',
                             last_occurrences={
                                 cls.app_id: 3,
@@ -249,7 +249,7 @@ class TestExportInstanceFromSavedInstance(TestCase):
                     path=MAIN_TABLE,
                     items=[
                         ExportItem(
-                            path=['data', 'question1'],
+                            path=[PathNode(name='data'), PathNode(name='question1')],
                             label='Question 1',
                             last_occurrences={
                                 cls.app_id: 3,
@@ -268,14 +268,14 @@ class TestExportInstanceFromSavedInstance(TestCase):
                     path=MAIN_TABLE,
                     items=[
                         ExportItem(
-                            path=['data', 'question1'],
+                            path=[PathNode(name='data'), PathNode(name='question1')],
                             label='Question 1',
                             last_occurrences={
                                 cls.app_id: 3,
                             },
                         ),
                         ExportItem(
-                            path=['data', 'question3'],
+                            path=[PathNode(name='data'), PathNode(name='question3')],
                             label='Question 3',
                             last_occurrences={
                                 cls.app_id: 3,
@@ -290,7 +290,7 @@ class TestExportInstanceFromSavedInstance(TestCase):
                     path=[PathNode(name='data'), PathNode(name='repeat', is_repeat=True)],
                     items=[
                         ExportItem(
-                            path=['data', 'repeat', 'q2'],
+                            path=[PathNode(name='data'), PathNode(name='repeat', is_repeat=True), PathNode(name='q2')],
                             label='Question 2',
                             last_occurrences={
                                 cls.app_id: 3,

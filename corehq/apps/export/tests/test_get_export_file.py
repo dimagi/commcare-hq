@@ -76,14 +76,14 @@ class WriterTest(SimpleTestCase):
                         ExportColumn(
                             label="Q3",
                             item=ScalarItem(
-                                path=['form', 'q3'],
+                                path=[PathNode(name='form'), PathNode(name='q3')],
                             ),
                             selected=True
                         ),
                         ExportColumn(
                             label="Q1",
                             item=ScalarItem(
-                                path=['form', 'q1'],
+                                path=[PathNode(name='form'), PathNode(name='q1')],
                             ),
                             selected=True
                         ),
@@ -119,7 +119,7 @@ class WriterTest(SimpleTestCase):
                         ExportColumn(
                             label="Q3",
                             item=ScalarItem(
-                                path=['form', 'q3'],
+                                path=[PathNode(name='form'), PathNode(name='q3')],
                             ),
                             selected=True,
                         ),
@@ -132,7 +132,7 @@ class WriterTest(SimpleTestCase):
                         ExportColumn(
                             label="Q4",
                             item=ScalarItem(
-                                path=['form', 'q2', 'q4'],
+                                path=[PathNode(name='form'), PathNode(name='q2'), PathNode(name='q4')],
                             ),
                             selected=True,
                         ),
@@ -175,7 +175,7 @@ class WriterTest(SimpleTestCase):
                             ExportColumn(
                                 label="Q3",
                                 item=ScalarItem(
-                                    path=['form', 'q3'],
+                                    path=[PathNode(name='form'), PathNode(name='q3')],
                                 ),
                                 selected=True,
                             ),
@@ -193,7 +193,7 @@ class WriterTest(SimpleTestCase):
                             ExportColumn(
                                 label="Q4",
                                 item=ScalarItem(
-                                    path=['form', 'q2', 'q4'],
+                                    path=[PathNode(name='form'), PathNode(name='q2'), PathNode(name='q4')],
                                 ),
                                 selected=True,
                             ),
@@ -267,14 +267,14 @@ class ExportTest(SimpleTestCase):
                             ExportColumn(
                                 label="Foo column",
                                 item=ExportItem(
-                                    path=["foo"]
+                                    path=[PathNode(name="foo")]
                                 ),
                                 selected=True,
                             ),
                             ExportColumn(
                                 label="Bar column",
                                 item=ExportItem(
-                                    path=["bar"]
+                                    path=[PathNode(name="bar")]
                                 ),
                                 selected=True,
                             )
@@ -316,7 +316,7 @@ class ExportTest(SimpleTestCase):
                             ExportColumn(
                                 label="Foo column",
                                 item=ExportItem(
-                                    path=["foo"]
+                                    path=[PathNode(name="foo")]
                                 ),
                                 selected=True,
                             ),
@@ -334,7 +334,7 @@ class ExportTest(SimpleTestCase):
                             ExportColumn(
                                 label="Bar column",
                                 item=ExportItem(
-                                    path=["bar"]
+                                    path=[PathNode(name="bar")]
                                 ),
                                 selected=True,
                             )

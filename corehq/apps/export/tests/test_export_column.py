@@ -82,7 +82,7 @@ class TestRowNumberColumn(SimpleTestCase):
             col = ExportColumn.create_default_from_export_item(
                 table_path,
                 SystemExportItem(
-                    path=['number'],
+                    path=[PathNode(name='number')],
                     label='number',
                     tag=PROPERTY_TAG_ROW,
                     is_advanced=False,
