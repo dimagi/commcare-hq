@@ -53,6 +53,21 @@ class TestConvertSavedExportSchemaToFormExportInstance(TestCase, TestFileMixin):
                     ],
                     last_occurrences={cls.app_id: 2},
                 ),
+                ExportGroupSchema(
+                    path=[
+                        PathNode(name='form'),
+                        PathNode(name='repeat', is_repeat=True),
+                        PathNode(name='repeat_nested', is_repeat=True),
+                    ],
+                    items=[
+                        ExportItem(
+                            path=['form', 'repeat', 'repeat_nested', 'nested'],
+                            label='Nested Repeat',
+                            last_occurrences={cls.app_id: 2},
+                        )
+                    ],
+                    last_occurrences={cls.app_id: 2},
+                ),
             ],
         )
 
@@ -96,6 +111,35 @@ class TestConvertSavedExportSchemaToFormExportInstance(TestCase, TestFileMixin):
             []
         )
         self.assertEqual(column.label, 'Question Two')
+        self.assertEqual(column.selected, True)
+
+    def test_nested_repeat_conversion(self):
+        saved_export_schema = SavedExportSchema.wrap(self.get_json('repeat_nested'))
+        with mock.patch(
+                'corehq.apps.export.models.new.FormExportDataSchema.generate_schema_from_builds',
+                return_value=self.schema):
+            instance = convert_saved_export_to_export_instance(saved_export_schema)
+
+        self.assertEqual(instance.name, 'Nested Repeat')
+
+        # Check for first repeat table
+        table = instance.get_table([PathNode(name='form'), PathNode(name='repeat', is_repeat=True)])
+        self.assertEqual(table.label, 'Repeat: One')
+
+        column = table.get_column(['form', 'repeat', 'question2'], None)
+        self.assertEqual(column.label, 'Modified Question Two')
+        self.assertEqual(column.selected, True)
+
+        # Check for second repeat table
+        table = instance.get_table([
+            PathNode(name='form'),
+            PathNode(name='repeat', is_repeat=True),
+            PathNode(name='repeat_nested', is_repeat=True)],
+        )
+        self.assertEqual(table.label, 'Repeat: One.#.Two')
+
+        column = table.get_column(['form', 'repeat', 'repeat_nested', 'nested'], None)
+        self.assertEqual(column.label, 'Modified Nested')
         self.assertEqual(column.selected, True)
 
 
