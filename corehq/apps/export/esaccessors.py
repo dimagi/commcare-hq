@@ -7,7 +7,8 @@ def get_form_export_base_query(domain, app_id, xmlns, include_errors):
             .domain(domain)
             .app(app_id)
             .xmlns(xmlns)
-            .sort("received_on"))
+            .sort("received_on")
+            .remove_default_filter('has_user'))
     if include_errors:
         query = query.remove_default_filter("is_xform_instance")
         query = query.doc_type(["xforminstance", "xformarchived", "xformdeprecated", "xformduplicate"])

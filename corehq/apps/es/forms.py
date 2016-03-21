@@ -2,6 +2,7 @@
 FormES
 --------
 """
+from corehq.pillows.mappings.xform_mapping import NULL_VALUE
 from .es_query import HQESQuery
 from . import filters
 
@@ -21,6 +22,7 @@ class FormES(HQESQuery):
             submitted,
             completed,
             user_id,
+            user_type,
             user_ids_handle_unknown,
             j2me_submissions,
         ] + super(FormES, self).builtin_filters
@@ -55,7 +57,16 @@ def completed(gt=None, gte=None, lt=None, lte=None):
 
 
 def user_id(user_ids):
-    return filters.term('form.meta.userID', list(user_ids))
+    if not isinstance(user_ids, (list, set)):
+        user_ids = [user_ids]
+    return filters.term(
+        'form.meta.userID',
+        [x if x is not None else NULL_VALUE for x in user_ids]
+    )
+
+
+def user_type(user_types):
+    return filters.term("user_type", user_types)
 
 
 def user_ids_handle_unknown(user_ids):
