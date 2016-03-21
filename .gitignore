@@ -55,3 +55,4 @@ celerybeat-schedule
 node_modules/
 /sharedfiles/
 docker/data
+*.lock
