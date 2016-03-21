@@ -30,3 +30,38 @@ PROPERTY_TAG_APP = "app"
 
 FORM_EXPORT = 'form'
 CASE_EXPORT = 'case'
+
+# Mapping from old properties to new. Can delete once all exports have been migrated
+FORM_PROPERTY_MAPPING = {
+    ("form.case.@date_modified", None): ("", None),
+    ("form.case.@user_id", None): ("form.meta.userID", None),
+    ("form.case.@xmlns", None): ("xmlns", None),
+    ("form.case.create.case_name", None): ('form.case.create.case_name', None),
+    ("form.case.create.case_type", None): ('form.case.create.case_type', None),
+    ("form.case.create.owner_id", None): ('form.case.create.owner_id', None),
+    ("form.meta.@xmlns", None): ('xmlns', None),
+    ("form.meta.appVersion.#text", None): ('form.meta.appVersion', None),
+    ("form.meta.appVersion.@xmlns", None): ('xmlns', None),
+    ("form.case.@case_id", None): ("form.case.@case_id", "corehq.apps.export.transforms.case_id_to_case_name"),
+    ("form.case.@case_id", None): ("form.case.@case_id", None),
+    ("form.meta.timeEnd", None): ("form.meta.timeEnd", None),
+    ("form.meta.deviceID", None): ("form.meta.deviceID", None),
+    ("form.meta.instanceID", None): ("form.meta.instanceID", None),
+    ("_id", None): ("form.meta.instanceID", None),
+    ("form.meta.timeStart", None): ("form.meta.timeStart", None),
+    ("form.meta.userID", None): ("form.meta.userID", None),
+    ("form.meta.username", None): ("form.meta.username", None),
+    ("app_id", None): ("app_id", None),
+    ("build_id", None): ("build_id", None),
+    ("doc_type", None): ("doc_type", None),
+    ("domain", None): ("domain", None),
+    ("edited_on", None): ("edited_on", None),
+    ("last_sync_token", None): ("last_sync_token", None),
+    ("partial_submission", None): ("partial_submission", None),
+    ("problem", None): ("problem", None),
+    ("received_on", None): ("received_on", None),
+    ("submit_ip", None): ("submit_ip", None),
+    ("xmlns", None): ("xmlns", None),
+    ("form.@name", None): ("form.@name", None),
+    ("form.@xmlns", None): ("xmlns", None),
+}
