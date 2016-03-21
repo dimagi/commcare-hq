@@ -629,7 +629,7 @@ class ExportGroupSchema(DocumentSchema):
     """
     path = SchemaListProperty(PathNode)
     items = SchemaListProperty(ExportItem)
-    last_occurrence = DictProperty()
+    last_occurrences = DictProperty()
 
 
 class ExportDataSchema(Document):
