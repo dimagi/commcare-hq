@@ -31,7 +31,7 @@ def convert_saved_export_to_export_instance(saved_export):
 
     # With new export instance, copy over preferences from previous export
     for table in saved_export.tables:
-        new_table = instance.get_table(_convert_index_to_path(table.index))
+        new_table = instance.get_table(_convert_index_to_path_nodes(table.index))
         if new_table:
             new_table.label = table.display
         else:
@@ -86,6 +86,20 @@ def _convert_index_to_path(index):
         return ['data'] + _strip_repeat_index(index).split('.')[1:]
     else:
         return ['data'] + index.split('.')[1:]
+
+
+def _convert_index_to_path_nodes(index):
+    from corehq.apps.export.models.new import MAIN_TABLE
+    from corehq.apps.export.models.new import PathNode
+    if index == '#':
+        return MAIN_TABLE
+    elif _is_repeat(index):
+        return [PathNode(name='data')] + [
+            PathNode(name=n, is_repeat=True)
+            for n in _strip_repeat_index(index).split('.')[1:]
+        ]
+    else:
+        return [PathNode(name='data')] + [PathNode(name=n) for n in index.split('.')[1:]]
 
 
 def _convert_serializable_function_to_transform(serializable_function):
