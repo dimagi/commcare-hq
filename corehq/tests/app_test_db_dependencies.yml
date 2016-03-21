@@ -48,6 +48,9 @@ casexml.apps.phone:
   - django_digest
   - corehq.apps.groups
   - django.contrib.admin
+  - two_factor
+  - django_otp.plugins.otp_static
+  - django_otp.plugins.otp_totp
   - django_prbac
   - tastypie
   - corehq.apps.dropbox

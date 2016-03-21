@@ -7,7 +7,7 @@ from django.utils.translation import ugettext_lazy as _
 from corehq.apps.programs.models import Program
 from corehq.apps.users.models import CouchUser
 from corehq.apps.users.forms import RoleForm, SupplyPointSelectWidget
-from corehq.apps.domain.forms import clean_password, max_pwd
+from corehq.apps.domain.forms import clean_password, max_pwd, NoAutocompleteMixin
 from corehq.apps.domain.models import Domain
 
 
@@ -58,7 +58,7 @@ class DomainRegistrationForm(forms.Form):
         return self.cleaned_data
 
 
-class NewWebUserRegistrationForm(DomainRegistrationForm):
+class NewWebUserRegistrationForm(NoAutocompleteMixin, DomainRegistrationForm):
     """
     Form for a brand new user, before they've created a domain or done anything on CommCare HQ.
     """
@@ -93,7 +93,7 @@ class NewWebUserRegistrationForm(DomainRegistrationForm):
                                                </a>.""")))
 
     def __init__(self, *args, **kwargs):
-        super(DomainRegistrationForm, self).__init__(*args, **kwargs)
+        super(NewWebUserRegistrationForm, self).__init__(*args, **kwargs)
         initial_create_domain = kwargs.get('initial', {}).get('create_domain', True)
         data_create_domain = self.data.get('create_domain', "True")
         if not initial_create_domain or data_create_domain == "False":

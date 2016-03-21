@@ -710,6 +710,13 @@ AUTO_CASE_UPDATES = StaticToggle(
     [NAMESPACE_DOMAIN],
 )
 
+SQL_SMS_PILLOW = StaticToggle(
+    'sql_sms_pillow',
+    'Enable processing SMS changes through Kafka and the Postgres SMS model.',
+    TAG_PRODUCT_PATH,
+    [NAMESPACE_DOMAIN],
+)
+
 EWS_BROADCAST_BY_ROLE = StaticToggle(
     'ews_broadcast_by_role',
     'EWS: Filter broadcast recipients by role',
@@ -781,12 +788,6 @@ TF_USES_SQLITE_BACKEND = StaticToggle(
     [NAMESPACE_DOMAIN]
 )
 
-SECURE_SESSIONS_CHECKBOX = StaticToggle(
-    'secure_sessions_checkbox',
-    'Show secure sessions checkbox',
-    TAG_PRODUCT_PATH,
-    [NAMESPACE_DOMAIN]
-)
 
 CUSTOM_APP_BASE_URL = StaticToggle(
     'custom_app_base_url',
@@ -824,5 +825,13 @@ UNLIMITED_REPORT_BUILDER_REPORTS = StaticToggle(
     'unlimited_report_builder_reports',
     'Allow unlimited reports created in report builder',
     TAG_PRODUCT_PATH,
+    [NAMESPACE_DOMAIN]
+)
+
+
+ALLOW_BROKEN_MULTIMEDIA_SUBMISSIONS = StaticToggle(
+    'allow_broken_multimedia_submissions',
+    "Explicitly bypass HQ's protection from the 2.26 multimedia submission bug. NOT RECOMMENDED",
+    TAG_ONE_OFF,
     [NAMESPACE_DOMAIN]
 )

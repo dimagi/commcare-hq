@@ -629,15 +629,15 @@ class CommCareCaseSQL(DisabledDbMixin, models.Model, RedisLockableMixIn,
 
     def get_transaction_by_form_id(self, form_id):
         from corehq.form_processor.backends.sql.dbaccessors import CaseAccessorSQL
-        transaction = CaseAccessorSQL.get_transaction_by_form_id(self.case_id, form_id)
+        transactions = filter(
+            lambda t: t.form_id == form_id,
+            self.get_tracked_models_to_create(CaseTransaction)
+        )
+        assert len(transactions) <= 1
+        transaction = transactions[0] if transactions else None
 
         if not transaction:
-            transactions = filter(
-                lambda t: t.form_id == form_id,
-                self.get_tracked_models_to_create(CaseTransaction)
-            )
-            assert len(transactions) <= 1
-            transaction = transactions[0] if transactions else None
+            transaction = CaseAccessorSQL.get_transaction_by_form_id(self.case_id, form_id)
         return transaction
 
     @property
