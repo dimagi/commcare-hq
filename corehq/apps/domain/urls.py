@@ -3,7 +3,7 @@ from django.conf.urls import *
 from django.contrib.auth.views import password_reset
 from django.shortcuts import render_to_response
 from django.template import RequestContext
-from django.utils.translation import ugettext_lazy as _
+from django.utils.translation import ugettext as _
 from django.conf import settings
 from django.views.generic import RedirectView
 
