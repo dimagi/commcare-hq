@@ -1,8 +1,10 @@
 from corehq.apps.ivr.models import Call
+from corehq.apps.sms.mixin import VerifiedNumber
 from corehq.apps.sms.models import (SMSLog, SMS, INCOMING, OUTGOING,
     MessagingEvent, MessagingSubEvent, CallLog, LastReadMessage,
     SQLLastReadMessage, ExpectedCallbackEventLog, ExpectedCallback,
-    CALLBACK_PENDING, CALLBACK_RECEIVED, CALLBACK_MISSED)
+    CALLBACK_PENDING, CALLBACK_RECEIVED, CALLBACK_MISSED, PhoneNumber)
+from couchdbkit import ResourceNotFound
 from custom.fri.models import FRISMSLog, PROFILES
 from datetime import datetime, timedelta
 from django.test import TestCase
@@ -14,6 +16,7 @@ from time import sleep
 class BaseMigrationTestCase(TestCase):
     def setUp(self):
         self.domain = 'test-sms-sql-migration'
+        self.deleteAllLogs()
 
     def deleteAllLogs(self):
         for smslog in SMSLog.view(
@@ -50,12 +53,22 @@ class BaseMigrationTestCase(TestCase):
         ).all():
             obj.delete()
 
+        for obj in VerifiedNumber.view(
+            'phone_numbers/verified_number_by_domain',
+            startkey=[self.domain],
+            endkey=[self.domain, {}],
+            include_docs=True,
+            reduce=False
+        ).all():
+            obj.delete()
+
         SMS.objects.filter(domain=self.domain).delete()
         Call.objects.filter(domain=self.domain).delete()
         MessagingSubEvent.objects.filter(parent__domain=self.domain).delete()
         MessagingEvent.objects.filter(domain=self.domain).delete()
         SQLLastReadMessage.objects.filter(domain=self.domain).delete()
         ExpectedCallback.objects.filter(domain=self.domain).delete()
+        PhoneNumber.objects.filter(domain=self.domain).delete()
 
     def tearDown(self):
         self.deleteAllLogs()
@@ -203,7 +216,6 @@ class SMSMigrationTestCase(BaseMigrationTestCase):
         sms.messaging_subevent_id = self.randomMessagingSubEventId()
 
     def testSMSLogSync(self):
-        self.deleteAllLogs()
         self.assertEqual(self.getSMSLogCount(), 0)
         self.assertEqual(self.getSMSCount(), 0)
 
@@ -232,7 +244,6 @@ class SMSMigrationTestCase(BaseMigrationTestCase):
         self.assertTrue(SMSLog.get_db().get_rev(smslog._id).startswith('2-'))
 
     def testFRISMSLogSync(self):
-        self.deleteAllLogs()
         self.assertEqual(self.getSMSLogCount(), 0)
         self.assertEqual(self.getSMSCount(), 0)
 
@@ -267,7 +278,6 @@ class SMSMigrationTestCase(BaseMigrationTestCase):
         self.assertTrue(SMSLog.get_db().get_rev(smslog._id).startswith('3-'))
 
     def testSMSSync(self):
-        self.deleteAllLogs()
         self.assertEqual(self.getSMSLogCount(), 0)
         self.assertEqual(self.getSMSCount(), 0)
 
@@ -379,7 +389,6 @@ class CallMigrationTestCase(BaseMigrationTestCase):
         call.form_unique_id = self.randomString()
 
     def testCallLogSync(self):
-        self.deleteAllLogs()
         self.assertEqual(self.getCallLogCount(), 0)
         self.assertEqual(self.getCallCount(), 0)
 
@@ -408,7 +417,6 @@ class CallMigrationTestCase(BaseMigrationTestCase):
         self.assertTrue(CallLog.get_db().get_rev(calllog._id).startswith('2-'))
 
     def testCallSync(self):
-        self.deleteAllLogs()
         self.assertEqual(self.getCallLogCount(), 0)
         self.assertEqual(self.getCallCount(), 0)
 
@@ -465,7 +473,6 @@ class LastReadMessageMigrationTestCase(BaseMigrationTestCase):
         obj.message_timestamp = self.randomDateTime()
 
     def testCouchSyncToSQL(self):
-        self.deleteAllLogs()
         self.assertEqual(self.getCouchCount(), 0)
         self.assertEqual(self.getSQLCount(), 0)
 
@@ -494,7 +501,6 @@ class LastReadMessageMigrationTestCase(BaseMigrationTestCase):
         self.assertTrue(LastReadMessage.get_db().get_rev(couch_obj._id).startswith('2-'))
 
     def testSQLSyncToCouch(self):
-        self.deleteAllLogs()
         self.assertEqual(self.getCouchCount(), 0)
         self.assertEqual(self.getSQLCount(), 0)
 
@@ -551,7 +557,6 @@ class ExpectedCallbackMigrationTestCase(BaseMigrationTestCase):
         obj.status = self.randomCallbackStatus()
 
     def testCouchSyncToSQL(self):
-        self.deleteAllLogs()
         self.assertEqual(self.getCouchCount(), 0)
         self.assertEqual(self.getSQLCount(), 0)
 
@@ -580,7 +585,6 @@ class ExpectedCallbackMigrationTestCase(BaseMigrationTestCase):
         self.assertTrue(ExpectedCallbackEventLog.get_db().get_rev(couch_obj._id).startswith('2-'))
 
     def testSQLSyncToCouch(self):
-        self.deleteAllLogs()
         self.assertEqual(self.getCouchCount(), 0)
         self.assertEqual(self.getSQLCount(), 0)
 
@@ -607,3 +611,133 @@ class ExpectedCallbackMigrationTestCase(BaseMigrationTestCase):
         couch_obj = ExpectedCallbackEventLog.get(sql_obj.couch_id)
         self.checkFieldValues(couch_obj, sql_obj, ExpectedCallback._migration_get_fields())
         self.assertTrue(ExpectedCallbackEventLog.get_db().get_rev(couch_obj._id).startswith('3-'))
+
+
+class PhoneNumberMigrationTestCase(BaseMigrationTestCase):
+    def getCouchCount(self):
+        result = VerifiedNumber.view(
+            'phone_numbers/verified_number_by_domain',
+            startkey=[self.domain],
+            endkey=[self.domain, {}],
+            include_docs=False,
+            reduce=True
+        ).all()
+        return result[0]['value'] if result else 0
+
+    def getSQLCount(self):
+        return PhoneNumber.objects.filter(domain=self.domain).count()
+
+    def setRandomCouchObjectValues(self, obj):
+        obj.domain = self.domain
+        obj.owner_doc_type = self.randomString()
+        obj.owner_id = self.randomString()
+        obj.phone_number = self.randomString()
+        obj.backend_id = self.randomString()
+        obj.ivr_backend_id = self.randomString()
+        obj.verified = self.randomBoolean()
+        obj.contact_last_modified = self.randomDateTime()
+
+    def setRandomSQLObjectValues(self, obj):
+        obj.domain = self.domain
+        obj.owner_doc_type = self.randomString()
+        obj.owner_id = self.randomString()
+        obj.phone_number = self.randomString()
+        obj.backend_id = self.randomString()
+        obj.ivr_backend_id = self.randomString()
+        obj.verified = self.randomBoolean()
+        obj.contact_last_modified = self.randomDateTime()
+
+    def testCouchSyncToSQL(self):
+        self.assertEqual(self.getCouchCount(), 0)
+        self.assertEqual(self.getSQLCount(), 0)
+
+        # Test Create
+        couch_obj = VerifiedNumber()
+        self.setRandomCouchObjectValues(couch_obj)
+        couch_obj.save()
+
+        sleep(1)
+        self.assertEqual(self.getCouchCount(), 1)
+        self.assertEqual(self.getSQLCount(), 1)
+
+        sql_obj = PhoneNumber.objects.get(couch_id=couch_obj._id)
+        self.checkFieldValues(couch_obj, sql_obj, PhoneNumber._migration_get_fields())
+        self.assertTrue(VerifiedNumber.get_db().get_rev(couch_obj._id).startswith('1-'))
+
+        # Test Update
+        self.setRandomCouchObjectValues(couch_obj)
+        couch_obj.save()
+
+        sleep(1)
+        self.assertEqual(self.getCouchCount(), 1)
+        self.assertEqual(self.getSQLCount(), 1)
+        sql_obj = PhoneNumber.objects.get(couch_id=couch_obj._id)
+        self.checkFieldValues(couch_obj, sql_obj, PhoneNumber._migration_get_fields())
+        self.assertTrue(VerifiedNumber.get_db().get_rev(couch_obj._id).startswith('2-'))
+
+        # Test Delete
+        couch_id = couch_obj._id
+        couch_obj.delete()
+        with self.assertRaises(ResourceNotFound):
+            VerifiedNumber.get(couch_id)
+        self.assertEqual(self.getCouchCount(), 0)
+        self.assertEqual(self.getSQLCount(), 0)
+
+    def testSQLSyncToCouch(self):
+        self.assertEqual(self.getCouchCount(), 0)
+        self.assertEqual(self.getSQLCount(), 0)
+
+        # Test Create
+        sql_obj = PhoneNumber()
+        self.setRandomSQLObjectValues(sql_obj)
+        sql_obj.save()
+
+        sleep(1)
+        self.assertEqual(self.getCouchCount(), 1)
+        self.assertEqual(self.getSQLCount(), 1)
+
+        couch_obj = VerifiedNumber.get(sql_obj.couch_id)
+        self.checkFieldValues(couch_obj, sql_obj, PhoneNumber._migration_get_fields())
+        self.assertTrue(VerifiedNumber.get_db().get_rev(couch_obj._id).startswith('2-'))
+
+        # Test Update
+        self.setRandomSQLObjectValues(sql_obj)
+        sql_obj.save()
+
+        sleep(1)
+        self.assertEqual(self.getCouchCount(), 1)
+        self.assertEqual(self.getSQLCount(), 1)
+        couch_obj = VerifiedNumber.get(sql_obj.couch_id)
+        self.checkFieldValues(couch_obj, sql_obj, PhoneNumber._migration_get_fields())
+        self.assertTrue(VerifiedNumber.get_db().get_rev(couch_obj._id).startswith('3-'))
+
+        # Test Delete
+        couch_id = couch_obj._id
+        sql_obj.delete()
+        with self.assertRaises(ResourceNotFound):
+            VerifiedNumber.get(couch_id)
+        self.assertEqual(self.getCouchCount(), 0)
+        self.assertEqual(self.getSQLCount(), 0)
+
+    def testCouchRetire(self):
+        self.assertEqual(self.getCouchCount(), 0)
+        self.assertEqual(self.getSQLCount(), 0)
+
+        # Create
+        couch_obj = VerifiedNumber()
+        self.setRandomCouchObjectValues(couch_obj)
+        couch_obj.save()
+
+        sleep(1)
+        self.assertEqual(self.getCouchCount(), 1)
+        self.assertEqual(self.getSQLCount(), 1)
+
+        sql_obj = PhoneNumber.objects.get(couch_id=couch_obj._id)
+        self.checkFieldValues(couch_obj, sql_obj, PhoneNumber._migration_get_fields())
+        self.assertTrue(VerifiedNumber.get_db().get_rev(couch_obj._id).startswith('1-'))
+
+        # Test retire()
+        couch_obj.retire()
+        self.assertTrue(VerifiedNumber.get(couch_obj._id).doc_type.endswith('-Deleted'))
+        self.assertEqual(self.getCouchCount(), 0)
+        self.assertEqual(self.getSQLCount(), 0)
