@@ -65,12 +65,12 @@ class DashboardConfig(object):
             )x
         GROUP BY status;
         """
-        cursor = connection.cursor()
-        cursor.execute(query, [
-            on_time_date, self.domain, pm_last_business_day,
-            cm_last_business_day - timedelta(microseconds=1), self.case_ids
-        ])
-        rows = cursor.fetchall()
+        with connection.cursor() as cursor:
+            cursor.execute(query, [
+                on_time_date, self.domain, pm_last_business_day,
+                cm_last_business_day - timedelta(microseconds=1), self.case_ids
+            ])
+            rows = cursor.fetchall()
         return dict(rows)
 
     @property
@@ -94,9 +94,9 @@ class DashboardConfig(object):
             GROUP BY status, status_value;
 
         """
-        cursor = connection.cursor()
-        cursor.execute(query, [on_time_date, self.start_date, self.end_date, location_ids])
-        rows = cursor.fetchall()
+        with connection.cursor() as cursor:
+            cursor.execute(query, [on_time_date, self.start_date, self.end_date, location_ids])
+            rows = cursor.fetchall()
         rows = [((status, status_value), count) for status, status_value, count in rows]
         rows.append(('total', len(location_ids)))
         return dict(rows)
@@ -120,8 +120,8 @@ class DashboardConfig(object):
             GROUP BY status_value;
 
         """
-        cursor = connection.cursor()
-        cursor.execute(query, [self.start_date, self.end_date, location_ids])
-        rows = cursor.fetchall()
+        with connection.cursor() as cursor:
+            cursor.execute(query, [self.start_date, self.end_date, location_ids])
+            rows = cursor.fetchall()
         rows.append(('total', len(location_ids)))
         return dict(rows)
