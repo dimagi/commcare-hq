@@ -36,7 +36,7 @@ hqdb0-staging.internal.commcarehq.org
 hqdb0-staging.internal.commcarehq.org
 
 [elasticsearch]
-hqdjango2-staging.internal.commcarehq.org elasticsearch_node_name=hqdjango2-staging
+hqes1-staging.internal.commcarehq.org
 
 [shared_dir_host]
 hqdb0-staging.internal.commcarehq.org
