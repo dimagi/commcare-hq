@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 from __future__ import unicode_literals
-
+from corehq.sql_db.operations import rename_table_indexes
 from django.db import models, migrations
 
 
@@ -11,6 +11,7 @@ class Migration(migrations.Migration):
     ]
 
     operations = [
+        rename_table_indexes('sms_phonenumber', 'sms_phoneblacklist'),
         migrations.RenameModel(
             old_name='PhoneNumber',
             new_name='PhoneBlacklist',
