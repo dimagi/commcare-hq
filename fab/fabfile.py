@@ -993,7 +993,7 @@ def clear_services_dir(current=False):
     """
     code_root = env.code_current if current else env.code_root
     venv_root = env.virtualenv_current if current else env.virtualenv_root
-    services_dir = posixpath.join(env.services, u'supervisor')
+    services_dir = posixpath.join(env.services_old, u'supervisor')
     with cd(code_root):
         sudo((
             '%(virtualenv_root)s/bin/python manage.py '
