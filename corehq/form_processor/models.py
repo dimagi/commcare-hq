@@ -948,6 +948,12 @@ class CaseTransaction(DisabledDbMixin, models.Model):
         return relevant
 
     @property
+    def user_id(self):
+        if self.form:
+            return self.form.user_id
+        return None
+
+    @property
     def form(self):
         from corehq.form_processor.backends.sql.dbaccessors import FormAccessorSQL
         if not self.form_id:
