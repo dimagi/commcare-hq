@@ -32,21 +32,21 @@
         "name": "AncHmisCaseFluffPillow"
     },
     "AppPillow": {
-        "advertised_name": "corehq.pillows.application.AppPillow.test_hqapps_2016-03-01_2128.testhq",
+        "advertised_name": "corehq.pillows.application.AppPillow.test_hqapps_2016-02-12_1300.testhq",
         "change_feed_type": "CouchChangeFeed",
-        "checkpoint_id": "corehq.pillows.application.AppPillow.test_hqapps_2016-03-01_2128.testhq",
+        "checkpoint_id": "corehq.pillows.application.AppPillow.test_hqapps_2016-02-12_1300.testhq",
         "couch_filter": "app_manager/all_apps",
         "couchdb_type": "Database",
-        "couchdb_uri": "http://{COUCH_SERVER_ROOT}/test_commcarehq__apps",
+        "couchdb_uri": "http://{COUCH_SERVER_ROOT}/test_commcarehq",
         "document_class": "ApplicationBase",
         "es_alias": "hqapps",
-        "es_index": "test_hqapps_2016-03-01_2128",
+        "es_index": "test_hqapps_2016-02-12_1300",
         "es_type": "app",
         "extra_args": {},
         "full_class_name": "corehq.pillows.application.AppPillow",
         "include_docs": true,
         "name": "AppPillow",
-        "unique_id": "test_hqapps_2016-03-01_2128"
+        "unique_id": "test_hqapps_2016-02-12_1300"
     },
     "BlobDeletionPillow": {
         "advertised_name": "BlobDeletionPillow",

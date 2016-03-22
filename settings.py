@@ -1139,7 +1139,7 @@ NEW_DOMAINS_DB = 'domains'
 DOMAINS_DB = NEW_DOMAINS_DB
 
 NEW_APPS_DB = 'apps'
-APPS_DB = NEW_APPS_DB
+APPS_DB = None
 
 SYNCLOGS_DB = 'synclogs'
 
