@@ -19,7 +19,7 @@ from corehq.dbaccessors.couchapps.cases_by_server_date.by_owner_server_modified_
     get_case_ids_modified_with_owner_since
 from corehq.dbaccessors.couchapps.cases_by_server_date.by_server_modified_on import \
     get_last_modified_dates
-from corehq.form_processor.exceptions import AttachmentNotFound, CaseNotFound
+from corehq.form_processor.exceptions import AttachmentNotFound
 from corehq.form_processor.interfaces.dbaccessors import (
     AbstractCaseAccessor, AbstractFormAccessor, AttachmentContent,
     AbstractLedgerAccessor)
@@ -96,11 +96,7 @@ class CaseAccessorCouch(AbstractCaseAccessor):
 
     @staticmethod
     def get_case(case_id):
-        case = CommCareCase.get(case_id)
-        if 'Deleted' in case.doc_type:
-            raise CaseNotFound
-        else:
-            return case
+        return CommCareCase.get(case_id)
 
     @staticmethod
     def get_cases(case_ids, ordered=False):
