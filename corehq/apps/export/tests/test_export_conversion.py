@@ -11,7 +11,10 @@ from corehq.apps.export.models import (
     ExportGroupSchema,
     ExportItem,
 )
-from corehq.apps.export.utils import convert_saved_export_to_export_instance, _convert_index_to_path
+from corehq.apps.export.utils import (
+    convert_saved_export_to_export_instance,
+    _convert_index_to_path_nodes,
+)
 from corehq.apps.export.models.new import MAIN_TABLE, PathNode
 
 
@@ -71,7 +74,7 @@ class TestConvertSavedExportSchemaToFormExportInstance(TestCase, TestFileMixin):
         table = instance.get_table(MAIN_TABLE)
         self.assertEqual(table.label, 'My Forms')
 
-        column = table.get_column([PathNode(name='data'), PathNode(name='question1')], None)
+        column = table.get_column([PathNode(name='data'), PathNode(name='question1')], [])
         self.assertEqual(column.label, 'Question One')
         self.assertEqual(column.selected, True)
 
@@ -90,7 +93,7 @@ class TestConvertSavedExportSchemaToFormExportInstance(TestCase, TestFileMixin):
             [PathNode(name='data'),
              PathNode(name='repeat', is_repeat=True),
              PathNode(name='question2')],
-            None
+            []
         )
         self.assertEqual(column.label, 'Question Two')
         self.assertEqual(column.selected, True)

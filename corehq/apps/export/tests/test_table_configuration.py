@@ -302,7 +302,7 @@ class SplitColumnTest(SimpleTestCase):
                 PathNode(name='repeat1', is_repeat=True),
                 PathNode(name='q1')
             ],
-            None
+            []
         )
         self.assertEqual(
             column.item.path,

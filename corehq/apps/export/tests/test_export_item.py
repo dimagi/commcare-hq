@@ -4,9 +4,11 @@ from corehq.apps.export.const import CASE_NAME_TRANSFORM
 from corehq.apps.export.models import (
     ExportItem,
     ExportColumn,
+    Option, MultipleChoiceItem)
+from corehq.apps.export.models.new import (
+    MAIN_TABLE,
+    PathNode,
 )
-from corehq.apps.export.models.new import MAIN_TABLE, SystemExportItem, \
-    PathNode
 
 
 class TestExportItemGeneration(SimpleTestCase):
@@ -25,22 +27,6 @@ class TestExportItemGeneration(SimpleTestCase):
         self.assertEqual(column.is_advanced, False)
         self.assertEqual(column.label, 'Question One')
         self.assertEqual(column.selected, True)
-
-    def test_create_default_from_system_export_item(self):
-        column = ExportColumn.create_default_from_export_item(
-            MAIN_TABLE,
-            SystemExportItem(
-                path=[PathNode(name='form'), PathNode(name='meta'), PathNode(name='userID')],
-                label='userID',
-                is_advanced=True,
-                last_occurrences={self.app_id: 3},
-            ),
-            {self.app_id: 3}
-        )
-
-        self.assertEqual(column.is_advanced, True)
-        self.assertEqual(column.label, 'userID')
-        self.assertEqual(column.selected, False)
 
     def test_create_default_from_export_item_deleted(self):
         column = ExportColumn.create_default_from_export_item(MAIN_TABLE, self.item, {self.app_id: 4})
@@ -67,7 +53,7 @@ class TestExportItemGeneration(SimpleTestCase):
         path = [PathNode(name="foo"), PathNode(name="bar")]
         is_advanced = True
         transform = CASE_NAME_TRANSFORM
-        item = SystemExportItem(path=path, is_advanced=is_advanced, transform=transform)
+        item = MultipleChoiceItem(path=path, options=[Option(value="foo")])
         wrapped = ExportItem.wrap(item.to_json())
         self.assertEqual(type(wrapped), type(item))
         self.assertEqual(wrapped.to_json(), item.to_json())

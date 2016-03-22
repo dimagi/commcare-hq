@@ -32,16 +32,11 @@ from corehq.apps.export.utils import (
 from corehq.apps.export.const import (
     PROPERTY_TAG_UPDATE,
     PROPERTY_TAG_DELETED,
-    CASE_HISTORY_PROPERTIES,
     FORM_EXPORT,
     CASE_EXPORT,
     TRANSFORM_FUNCTIONS,
     DEID_TRANSFORM_FUNCTIONS,
-    TOP_MAIN_FORM_TABLE_PROPERTIES,
-    BOTTOM_MAIN_FORM_TABLE_PROPERTIES,
     PROPERTY_TAG_ROW,
-    MAIN_CASE_TABLE_PROPERTIES,
-    PARENT_CASE_TABLE_PROPERTIES,
     PROPERTY_TAG_CASE,
 )
 from corehq.apps.export.dbaccessors import (
@@ -96,6 +91,10 @@ class ExportItem(DocumentSchema):
             else:
                 raise ValueError('Unexpected doc_type for export item', doc_type)
         else:
+            # Don't commit this. Just for local backwards compatibility
+            if "path" in data and len(data['path']):
+                if type(data['path'][0]) != dict:
+                    data["path"] = [PathNode(name=s).to_json() for s in data['path']]
             return super(ExportItem, cls).wrap(data)
 
     @classmethod
@@ -120,7 +119,7 @@ class ExportColumn(DocumentSchema):
     # Determines whether or not to show the column in the UI Config without clicking advanced
     is_advanced = BooleanProperty(default=False)
     selected = BooleanProperty(default=False)
-    tags = ListProperty()
+    tags = ListProperty()  # TODO: I think this is moving to SystemExportColumn?
 
     # A list of constants that map to functions to transform the column value
     transforms = ListProperty(validators=is_valid_transform)
@@ -162,17 +161,15 @@ class ExportColumn(DocumentSchema):
         :param app_ids_and_versions: A dictionary of app ids that map to latest build version
         :returns: An ExportColumn instance
         """
+        is_case_update = item.tag == PROPERTY_TAG_CASE
+        # TODO: Do special shit actually for the case update system export items
 
         is_main_table = table_path == MAIN_TABLE
-        is_system_property = isinstance(item, SystemExportItem)
-        is_advanced = is_system_property and item.is_advanced
-        transform = item.transform if is_system_property else None
-
         constructor_args = {
             "item": item,
             "label": item.label,
-            "is_advanced": is_advanced,
-            "transforms": [transform] if transform else [],
+            "is_advanced": is_case_update or False,
+            "transforms": [],
         }
 
         if item.tag == PROPERTY_TAG_ROW:
@@ -183,7 +180,7 @@ class ExportColumn(DocumentSchema):
 
         column = column_class(**constructor_args)
         column.update_properties_from_app_ids_and_versions(app_ids_and_versions)
-        column.selected = not column._is_deleted(app_ids_and_versions) and is_main_table and not is_advanced
+        column.selected = not column._is_deleted(app_ids_and_versions) and is_main_table and not is_case_update
         return column
 
     def _is_deleted(self, app_ids_and_versions):
@@ -295,13 +292,12 @@ class TableConfiguration(DocumentSchema):
             rows.append(ExportRow(data=row_data))
         return rows
 
-    def get_column(self, item_path, item_transform):
+    def get_column(self, item_path, column_transforms):
         # Columns should be unique by item path and item transform
+        # TODO: Actually, Column should be unique by item path and column.transforms minus any deid transforms?
         for column in self.columns:
-            if column.item.path == item_path:
-                transform = column.item.transform if isinstance(column.item, SystemExportItem) else None
-                if transform == item_transform:
-                    return column
+            if column.item.path == item_path and column.transforms == column_transforms:
+                return column
         return None
 
     def _get_sub_documents(self, document, row_number):
@@ -414,7 +410,7 @@ class ExportInstance(BlobMixin, Document):
             columns = []
             for item in group_schema.items:
                 column = table.get_column(
-                    item.path, item.transform if isinstance(item, SystemExportItem) else None
+                    item.path, []
                 ) or ExportColumn.create_default_from_export_item(
                     table.path,
                     item,
@@ -427,12 +423,113 @@ class ExportInstance(BlobMixin, Document):
                 # Need to rebuild tags and other flags based on new build ids
                 column.update_properties_from_app_ids_and_versions(latest_app_ids_and_versions)
                 columns.append(column)
+
+            cls._insert_system_properties(schema, table, columns)
             table.columns = columns
 
             if not instance.get_table(group_schema.path):
                 instance.tables.append(table)
 
+        # Insert the parent case table
+        if isinstance(schema, CaseExportDataSchema):
+            # TODO: Would a case type without parents still have this table?
+            cls._insert_parent_case_table(instance)
+
         return instance
+
+    @classmethod
+    def _insert_system_properties(cls, schema, table, columns):
+        if isinstance(schema, FormExportDataSchema):
+            if table.path == MAIN_TABLE:
+                cls._insert_form_system_properties(table, columns)
+            else:
+                cls._insert_form_repeat_system_properties(table, columns)
+        elif isinstance(schema, CaseExportDataSchema):
+            if table.path == MAIN_TABLE:
+                cls._insert_case_system_properties(table, columns)
+            elif table.path == CASE_HISTORY_TABLE:
+                cls._insert_case_history_system_properties(table, columns)
+
+    @classmethod
+    def _insert_form_repeat_system_properties(cls, table, columns):
+        from corehq.apps.export.system_properties import ROW_NUMBER_COLUMN
+        existing_column = table.get_column(
+            ROW_NUMBER_COLUMN.item.path, ROW_NUMBER_COLUMN.transforms
+
+        )
+        columns.insert(0, existing_column or ROW_NUMBER_COLUMN)
+
+    @classmethod
+    def _insert_parent_case_table(cls, instance):
+        from corehq.apps.export.system_properties import PARENT_CASE_TABLE_PROPERTIES
+
+        table = instance.get_table(PARENT_CASE_TABLE) or TableConfiguration(
+            path=PARENT_CASE_TABLE,
+            label=instance.defaults.get_default_table_name(PARENT_CASE_TABLE),
+            selected=instance.defaults.default_is_table_selected(PARENT_CASE_TABLE),
+            columns=[],
+        )
+        for static_column in PARENT_CASE_TABLE_PROPERTIES:
+            column = table.get_column(static_column.item.path, static_column.transforms)
+            table.columns.append(column or static_column)
+
+        if not instance.get_table(PARENT_CASE_TABLE):
+            instance.tables.append(table)
+
+    @classmethod
+    def _insert_case_history_system_properties(cls, table, columns):
+        from corehq.apps.export.system_properties import CASE_HISTORY_PROPERTIES
+
+        # insert columns for system properties
+        for static_column in reversed(CASE_HISTORY_PROPERTIES):
+            existing_column = table.get_column(
+                static_column.item.path,
+                static_column.transforms
+            )
+            columns.insert(0, existing_column or static_column)
+
+    @classmethod
+    def _insert_case_system_properties(cls, table, columns):
+        from corehq.apps.export.system_properties import TOP_MAIN_CASE_TABLE_PROPERTIES, BOTTOM_MAIN_CASE_TABLE_PROPERTIES
+
+        # insert columns for system properties
+        for static_column in reversed(TOP_MAIN_CASE_TABLE_PROPERTIES):
+            existing_column = table.get_column(
+                static_column.item.path,
+                static_column.transforms
+            )
+            columns.insert(0, existing_column or static_column)
+
+        for static_column in BOTTOM_MAIN_CASE_TABLE_PROPERTIES:
+            existing_column = table.get_column(
+                static_column.item.path,
+                static_column.transforms
+            )
+            columns.append(existing_column or static_column)
+
+    @classmethod
+    def _insert_form_system_properties(cls, table, columns):
+        from corehq.apps.export.system_properties import TOP_MAIN_FORM_TABLE_PROPERTIES, BOTTOM_MAIN_FORM_TABLE_PROPERTIES
+
+        first_case_update_index = len(columns)
+        for i in range(len(columns)):
+            col = columns[i]
+            if col.tags == [PROPERTY_TAG_CASE]:
+                first_case_update_index = i
+                break
+
+        # insert columns for system properties
+        for insertion_index, static_props in [
+            (first_case_update_index, BOTTOM_MAIN_FORM_TABLE_PROPERTIES),
+            (0, TOP_MAIN_FORM_TABLE_PROPERTIES),
+
+        ]:
+            for static_column in reversed(static_props):
+                existing_column = table.get_column(
+                    static_column.item.path,
+                    static_column.transforms
+                )
+                columns.insert(insertion_index, existing_column or static_column)
 
     @property
     def file_size(self):
@@ -570,11 +667,6 @@ class ScalarItem(ExportItem):
     """
 
 
-class SystemExportItem(ScalarItem):
-    is_advanced = BooleanProperty(default=False)
-    transform = StringProperty()
-
-
 class Option(DocumentSchema):
     """
     This object represents a multiple choice question option.
@@ -663,10 +755,9 @@ class ExportDataSchema(Document):
         def resolvefn(group_schema1, group_schema2):
 
             def keyfn(export_item):
-                return'{}:{}:{}'.format(
+                return'{}:{}'.format(
                     _path_nodes_to_string(export_item.path),
                     export_item.doc_type,
-                    export_item.transform if isinstance(export_item, SystemExportItem) else "",
                 )
 
             group_schema = ExportGroupSchema(
@@ -707,18 +798,6 @@ class ExportDataSchema(Document):
             self.last_app_versions.get(app_id, 0),
             app_version,
         )
-
-    @staticmethod
-    def _generate_export_item_from_system_prop(system_property, app_id, app_version):
-        return SystemExportItem(
-            path=[PathNode(name=n) for n in system_property.path.split(".")],
-            label=system_property.name,
-            tag=system_property.tag,
-            is_advanced=system_property.is_advanced,
-            transform=system_property.transform,
-            last_occurrences={app_id: app_version},
-        )
-
 
 class FormExportDataSchema(ExportDataSchema):
 
@@ -797,21 +876,6 @@ class FormExportDataSchema(ExportDataSchema):
                 path=_question_path_to_path_nodes(group_path, repeats),
                 last_occurrences={app_id: app_version},
             )
-            if group_path is None:
-                for system_prop in TOP_MAIN_FORM_TABLE_PROPERTIES:
-                    group_schema.items.append(
-                        FormExportDataSchema._generate_export_item_from_system_prop(
-                            system_prop, app_id, app_version
-                        )
-                    )
-            else:
-                # Add a row number column
-                group_schema.items.append(
-                    FormExportDataSchema._generate_export_item_from_system_prop(
-                        TOP_MAIN_FORM_TABLE_PROPERTIES[0], app_id, app_version
-                    )
-                )
-
             for question in group_questions:
                 # Create ExportItem based on the question type
                 item = FormExportDataSchema.datatype_mapping[question['type']].create_from_question(
@@ -822,15 +886,9 @@ class FormExportDataSchema(ExportDataSchema):
                 group_schema.items.append(item)
 
             if group_path is None:
-                for system_prop in BOTTOM_MAIN_FORM_TABLE_PROPERTIES:
-                    group_schema.items.append(
-                        FormExportDataSchema._generate_export_item_from_system_prop(
-                            system_prop, app_id, app_version
-                        )
-                    )
                 for case_update_field in case_updates:
                     group_schema.items.append(
-                        SystemExportItem(
+                        ExportItem(
                             path=[
                                 PathNode(name='form'),
                                 PathNode(name='case'),
@@ -839,7 +897,7 @@ class FormExportDataSchema(ExportDataSchema):
                             ],
                             label="case.update.{}".format(case_update_field),
                             tag=PROPERTY_TAG_CASE,
-                            is_advanced=True,
+                            # TODO: Make this advanced or whatever when we convert the schema to columns
                             last_occurrences={app_id: app_version},
                         )
                     )
@@ -909,16 +967,11 @@ class CaseExportDataSchema(ExportDataSchema):
                 app.copy_of,
                 app.version,
             )
-            parent_case_schema = CaseExportDataSchema._generate_schema_for_parent_case_table(
-                app.copy_of,
-                app.version
-            )
 
             current_case_schema = CaseExportDataSchema._merge_schemas(
                 case_schema,
                 case_history_schema,
                 current_case_schema,
-                parent_case_schema,
             )
 
             current_case_schema.record_update(app.copy_of, app.version)
@@ -947,26 +1000,12 @@ class CaseExportDataSchema(ExportDataSchema):
                 last_occurrences={app_id: app_version},
             )
 
-            for system_prop in MAIN_CASE_TABLE_PROPERTIES[0]:
-                group_schema.items.append(
-                    CaseExportDataSchema._generate_export_item_from_system_prop(
-                        system_prop, app_id, app_version
-                    )
-                )
-
             for prop in case_properties:
                 group_schema.items.append(ScalarItem(
                     path=[PathNode(name=prop)],
                     label=prop,
                     last_occurrences={app_id: app_version},
                 ))
-
-            for system_prop in MAIN_CASE_TABLE_PROPERTIES[1]:
-                group_schema.items.append(
-                    CaseExportDataSchema._generate_export_item_from_system_prop(
-                        system_prop, app_id, app_version
-                    )
-                )
 
             schema.group_schemas.append(group_schema)
 
@@ -982,12 +1021,6 @@ class CaseExportDataSchema(ExportDataSchema):
             path=CASE_HISTORY_TABLE,
             last_occurrences={app_id: app_version},
         )
-        for system_prop in CASE_HISTORY_PROPERTIES:
-            group_schema.items.append(
-                CaseExportDataSchema._generate_export_item_from_system_prop(
-                    system_prop, app_id, app_version
-                )
-            )
 
         for case_type, case_properties in case_property_mapping.iteritems():
             for prop in case_properties:
@@ -1007,26 +1040,6 @@ class CaseExportDataSchema(ExportDataSchema):
 
         schema.group_schemas.append(group_schema)
         return schema
-
-    @staticmethod
-    def _generate_schema_for_parent_case_table(app_id, app_version):
-        """
-        Generates the schema for the parent cases tab on the case export page
-        """
-        return CaseExportDataSchema(
-            group_schemas=[
-                ExportGroupSchema(
-                    path=PARENT_CASE_TABLE,
-                    last_occurrences={app_id: app_version},
-                    items=[
-                        CaseExportDataSchema._generate_export_item_from_system_prop(
-                            system_prop, app_id, app_version
-                        )
-                        for system_prop in PARENT_CASE_TABLE_PROPERTIES
-                    ]
-                ),
-            ]
-        )
 
 
 def _string_path_to_list(path):

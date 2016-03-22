@@ -154,8 +154,10 @@ Exports.ViewModels.ExportColumn = function(columnJSON) {
 };
 
 Exports.ViewModels.ExportColumn.prototype.formatProperty = function() {
-    if (this.item.doc_type() === "SystemExportItem"){
-        return this.item.label();
+    debugger;
+    if (this.tags().length !== 0){
+    //if (this.item.doc_type() === "SystemExportItem"){
+        return this.label();
     } else {
         return this.item.path().join('.');
     }

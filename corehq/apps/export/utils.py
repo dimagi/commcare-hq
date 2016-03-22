@@ -99,7 +99,7 @@ def _convert_index_to_path_nodes(index):
 
 def _convert_serializable_function_to_transform(serializable_function):
     if serializable_function is None:
-        return None
+        return []
     else:
         # TODO: Write this
         raise NotImplementedError
