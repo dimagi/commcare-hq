@@ -4,8 +4,7 @@ hqproxy5.internal.commcarehq.org
 [webworkers]
 hqdjango12.internal.commcarehq.org
 hqdjango13.internal.commcarehq.org
-hqdjango14.internal.commcarehq.org
-
+hqdjango14.internal.commcarehq.org 
 [webworkers:vars]
 newrelic_app_name=django
 
@@ -65,3 +64,6 @@ datavol_device=/dev/xvdb
 
 [stanchion]
 hqriak0.internal.commcarehq.org
+
+[rackspace_cloud_backup]
+hqdb0.internal.commcarehq.org
