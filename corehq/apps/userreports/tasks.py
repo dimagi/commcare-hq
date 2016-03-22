@@ -104,11 +104,9 @@ def _iteratively_build_table(config, last_id=None):
     start_key = None
     if last_id:
         last_doc = _DOC_TYPE_MAPPING[config.referenced_doc_type].get(last_id)
-        date = None
+        start_key = [config.domain, config.referenced_doc_type]
         if config.referenced_doc_type in _DATE_MAP.keys():
             date = json_format_datetime(last_doc[_DATE_MAP[config.referenced_doc_type]])
-        start_key = [config.domain, config.referenced_doc_type]
-        if date:
             start_key.append(date)
 
     relevant_ids = []
