@@ -896,7 +896,7 @@ def force_update_static():
     execute(_do_collectstatic, use_current_release=True)
     execute(_do_compress, use_current_release=True)
     execute(update_manifest, use_current_release=True)
-    silent_services_restart()
+    silent_services_restart(use_current_release=True)
 
 
 @task
