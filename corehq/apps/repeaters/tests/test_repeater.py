@@ -1,19 +1,16 @@
 from collections import namedtuple
-from StringIO import StringIO
 from datetime import datetime, timedelta
 from mock import patch
 
-from casexml.apps.case.models import CommCareCase
 from casexml.apps.case.mock import CaseBlock, CaseFactory
-from casexml.apps.case.xml import V1
 
-from django.core.urlresolvers import reverse
 from django.test import TestCase
 from django.test.client import Client
 
 from corehq.apps.app_manager.tests.util import TestXmlMixin
 from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.receiverwrapper.exceptions import DuplicateFormatException, IgnoreDocument
+from corehq.apps.receiverwrapper import submit_form_locally
 from corehq.apps.repeaters.tasks import check_repeaters
 from corehq.apps.repeaters.models import (
     CaseRepeater,
@@ -22,7 +19,7 @@ from corehq.apps.repeaters.models import (
     RegisterGenerator)
 from corehq.apps.repeaters.repeater_generators import BasePayloadGenerator
 from corehq.apps.repeaters.const import MIN_RETRY_WAIT, POST_TIMEOUT
-from couchforms.models import XFormInstance
+from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 from couchforms.const import DEVICE_LOG_XMLNS
 
 MockResponse = namedtuple('MockResponse', 'status_code')
@@ -95,6 +92,10 @@ class BaseRepeaterTest(TestCase):
         )
 
     @classmethod
+    def post_xml(cls, xml, domain_name):
+        submit_form_locally(xml, domain_name)
+
+    @classmethod
     def repeat_records(cls, domain_name):
         return RepeatRecord.all(domain=domain_name, due_before=datetime.utcnow())
 
@@ -121,7 +122,7 @@ class RepeaterTest(BaseRepeaterTest):
     def tearDown(self):
         self.case_repeater.delete()
         self.form_repeater.delete()
-        XFormInstance.get(instance_id).delete()
+        FormProcessorTestUtils.delete_all_xforms(self.domain)
         repeat_records = RepeatRecord.all()
         for repeat_record in repeat_records:
             repeat_record.delete()
@@ -260,11 +261,7 @@ class CaseRepeaterTest(BaseRepeaterTest, TestXmlMixin):
         cls.repeater.delete()
 
     def tearDown(self):
-        try:
-            # delete case, so that post of xform_xml creates new case as expected multiple-times
-            CommCareCase.get(case_id).delete()
-        except:
-            pass
+        FormProcessorTestUtils.delete_all_cases(self.domain_name)
         for repeat_record in self.repeat_records(self.domain_name):
             repeat_record.delete()
 
@@ -362,7 +359,7 @@ class RepeaterFailureTest(BaseRepeaterTest):
             format='other_format'
         )
         self.repeater.save()
-        self.post_xml(xform_xml, self.domain)
+        self.post_xml(xform_xml, self.domain_name)
 
     def tearDown(self):
         self.domain.delete()
@@ -379,7 +376,7 @@ class RepeaterFailureTest(BaseRepeaterTest):
             def get_payload(self, repeat_record, payload_doc):
                 return payload
 
-        repeat_record = self.repeater.register(CommCareCase.get(case_id))
+        repeat_record = self.repeater.register(CaseAccessors(self.domain_name).get_case(CASE_ID))
         with patch('corehq.apps.repeaters.models.simple_post_with_cached_timeout', side_effect=Exception('Boom!')):
             repeat_record.fire()
 
@@ -449,7 +446,7 @@ class TestRepeaterFormat(BaseRepeaterTest):
 
     def tearDown(self):
         self.repeater.delete()
-        XFormInstance.get(instance_id).delete()
+        FormProcessorTestUtils.delete_all_xforms(self.domain)
         repeat_records = RepeatRecord.all()
         for repeat_record in repeat_records:
             repeat_record.delete()
@@ -476,7 +473,7 @@ class TestRepeaterFormat(BaseRepeaterTest):
             def get_payload(self, repeat_record, payload_doc):
                 return payload
 
-        repeat_record = self.repeater.register(CommCareCase.get(case_id))
+        repeat_record = self.repeater.register(CaseAccessors(self.domain).get_case(CASE_ID))
         with patch('corehq.apps.repeaters.models.simple_post_with_cached_timeout') as mock_post:
             repeat_record.fire()
             headers = self.repeater.get_headers(repeat_record)
