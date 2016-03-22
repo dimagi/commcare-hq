@@ -2,7 +2,7 @@
 {% load i18n %}{% load hq_shared_tags %}
 
 {% block title %}{% trans "Create an Account" %}{% endblock title %}
-{% block step-title %}{% trans "Create an Account" %}{% endblock %}
+
 {% block js-inline  %}{{ block.super }}
     {% url "eula_basic" as eula_url %}
     {% include 'hqstyle/partials/load_into_modal.html' with modal_id="eulaModal" load_from=eula_url %}
@@ -35,9 +35,11 @@
             {% endfor %}
         </fieldset>
         <div class="form-actions">
-            <button type="submit" class="btn btn-primary btn-large disable-on-submit">
-                {% trans "Create Account" %}
-            </button>
+            <div class="col-sm-offset-4 col-sm-8">
+                <button type="submit" class="btn btn-primary btn-large disable-on-submit">
+                    {% trans "Create Account" %}
+                </button>
+            </div>
         </div>
     </form>
 {% endblock %}
