@@ -4,7 +4,8 @@ hqproxy5.internal.commcarehq.org
 [webworkers]
 hqdjango12.internal.commcarehq.org
 hqdjango13.internal.commcarehq.org
-hqdjango14.internal.commcarehq.org 
+hqdjango14.internal.commcarehq.org
+
 [webworkers:vars]
 newrelic_app_name=django
 
