@@ -1,6 +1,6 @@
 import functools
 from django.utils.translation import ugettext as _
-from django.utils.translation import ugettext_noop
+from django.utils.translation import ugettext_noop, get_language
 
 from corehq.apps.reports import util
 from corehq.apps.reports.filters.users import ExpandedMobileWorkerFilter
@@ -209,13 +209,14 @@ class SubmitHistory(SubmitHistoryMixin, ProjectReport):
         submissions = [res['_source'] for res in self.es_results.get('hits', {}).get('hits', [])]
 
         for form in submissions:
-            display = FormDisplay(form, self)
+            display = FormDisplay(form, self, lang=get_language())
             row = [
                 display.form_data_link,
                 display.username,
                 display.submission_or_completion_time,
                 display.readable_form_name,
             ]
+
             if self.show_extra_columns:
                 row.append(form.get('last_sync_token', ''))
             yield row + display.other_columns
