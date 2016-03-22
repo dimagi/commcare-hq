@@ -3,7 +3,7 @@
 │ │ └── jquery#1.11.3
 │ └── jquery#1.11.3 (3.0.0-beta1 available)
 ├── Caret.js#0.2.2 (latest is 0.3.1)
-├── MediaUploader#5f733c05c2
+├── MediaUploader#174523b3f3
 ├── XMLWriter#ab8760d6e0
 ├── chai#3.5.0
 ├── equivalent-xml-js#7de21be295
