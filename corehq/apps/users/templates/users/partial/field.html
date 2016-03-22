@@ -1,6 +1,6 @@
 {% load field_tags %}
 
-<div class="form-group{% if field.errors %} error{% endif %}">
+<div class="form-group{% if field.errors %} has-error{% endif %}">
     <label class="col-sm-4 control-label" for="{{ field.id }}">{{ field.label }}</label>
     <div class="col-sm-4{% if field|is_checkbox %} checkbox{% endif %}">
         {% if field|is_checkbox %}
