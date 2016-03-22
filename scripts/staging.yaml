@@ -45,6 +45,7 @@
 trunk: master
 name: autostaging
 branches:
+  - fix-deploy-email-diff  # Danny 3/22
   - ko3-app-manager  # Danny 3/7
   - flip_apps_db  # Danny 3/1
   - calculatedIcons # Sravan 3/2
