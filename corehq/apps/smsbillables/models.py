@@ -305,17 +305,30 @@ class SmsBillable(models.Model):
             date_sent=message_log.date,
             domain=message_log.domain,
         )
+        cls._assign_gateway_fee(message_log, phone_number, billable)
+        cls._assign_usage_fee(message_log, direction, billable)
 
-        # Fetch gateway_fee
+        if api_response is not None:
+            billable.api_response = api_response
+
+        if message_log.backend_api == SQLTestSMSBackend.get_api_id():
+            billable.is_valid = False
+
+        billable.save()
+
+        return billable
+
+    @classmethod
+    def _assign_gateway_fee(cls, message_log, phone_number, billable):
         backend_api_id = message_log.backend_api
         backend_instance = message_log.backend_id
-
         country_code, national_number = get_country_code_and_national_number(phone_number)
+        is_gateway_billable = backend_instance is None or _sms_backend_is_global(backend_instance)
 
-        if backend_instance is None or _sms_backend_is_global(backend_instance):
+        if is_gateway_billable:
             billable.gateway_fee = SmsGatewayFee.get_by_criteria(
                 backend_api_id,
-                direction,
+                message_log.direction,
                 backend_instance=backend_instance,
                 country_code=country_code,
                 national_number=national_number,
@@ -334,6 +347,8 @@ class SmsBillable(models.Model):
                     "No matching gateway fee criteria for SMS %s" % message_log.couch_id
                 )
 
+    @classmethod
+    def _assign_usage_fee(cls, message_log, direction, billable):
         domain = message_log.domain
         billable.usage_fee = SmsUsageFee.get_by_criteria(
             direction, domain=domain
@@ -344,13 +359,3 @@ class SmsBillable(models.Model):
                 "Did not find usage fee for direction %s and domain %s"
                 % (direction, domain)
             )
-
-        if api_response is not None:
-            billable.api_response = api_response
-
-        if backend_api_id == SQLTestSMSBackend.get_api_id():
-            billable.is_valid = False
-
-        billable.save()
-
-        return billable
