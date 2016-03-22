@@ -23,7 +23,7 @@ from corehq.form_processor.tests.utils import run_with_all_backends, FormProcess
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 from couchforms.const import DEVICE_LOG_XMLNS
 
-MockResponse = namedtuple('MockResponse', 'status_code')
+MockResponse = namedtuple('MockResponse', 'status_code reason')
 CASE_ID = "ABC123CASEID"
 INSTANCE_ID = "XKVB636DFYL38FNX3D38WV5EH"
 UPDATE_INSTANCE_ID = "ZYXKVB636DFYL38FNX3D38WV5"
@@ -135,7 +135,7 @@ class RepeaterTest(BaseRepeaterTest):
         for repeat_record in repeat_records:
             with patch(
                     'corehq.apps.repeaters.models.simple_post_with_cached_timeout',
-                    return_value=MockResponse(status_code=404)) as mock_post:
+                    return_value=MockResponse(status_code=404, reason='Not Found')) as mock_post:
                 repeat_record.fire()
                 self.assertEqual(mock_post.call_count, 3)
             repeat_record.save()
@@ -166,7 +166,10 @@ class RepeaterTest(BaseRepeaterTest):
     def test_repeater_successful_send(self):
 
         repeat_records = RepeatRecord.all(domain=self.domain, due_before=datetime.utcnow())
-        mocked_responses = [MockResponse(status_code=404), MockResponse(status_code=200)]
+        mocked_responses = [
+            MockResponse(status_code=404, reason='Not Found'),
+            MockResponse(status_code=200, reason='No Reason')
+        ]
         for repeat_record in repeat_records:
             with patch(
                     'corehq.apps.repeaters.models.simple_post_with_cached_timeout',
