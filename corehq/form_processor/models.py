@@ -220,6 +220,10 @@ class XFormInstanceSQL(DisabledDbMixin, models.Model, RedisLockableMixIn, Attach
         return FormAccessorSQL.get_form(form_id)
 
     @property
+    def get_id(self):
+        return self.form_id
+
+    @property
     def is_normal(self):
         return self.state == self.NORMAL
 
@@ -528,6 +532,10 @@ class CommCareCaseSQL(DisabledDbMixin, models.Model, RedisLockableMixIn,
         if self.is_deleted:
             dt += DELETED_SUFFIX
         return dt
+
+    @property
+    def get_id(self):
+        return self.case_id
 
     @property
     @memoized

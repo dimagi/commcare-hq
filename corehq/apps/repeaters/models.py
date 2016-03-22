@@ -377,13 +377,12 @@ class CaseRepeater(Repeater):
 
     def allowed_to_forward(self, payload):
         allowed_case_type = not self.white_listed_case_types or payload.type in self.white_listed_case_types
-        allowed_user = self.payload_user(payload) not in self.black_listed_users
+        allowed_user = self.payload_user_id(payload) not in self.black_listed_users
         return allowed_case_type and allowed_user
 
-    @classmethod
-    def payload_user(cls, payload):
+    def payload_user_id(self, payload):
         # get the user_id who submitted the payload, note, it's not the owner_id
-        return payload.actions[-1].user_id
+        return payload.transactions[-1].user_id
 
     @memoized
     def payload_doc(self, repeat_record):
