@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2016-03-22 20:11+0000\n"
+"POT-Creation-Date: 2016-03-22 20:41+0000\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -1346,8 +1346,7 @@ msgstr ""
 #: corehq/messaging/smsbackends/apposit/forms.py:12
 #: corehq/messaging/smsbackends/unicel/forms.py:10
 #: custom/_legacy/pact/templates/pact/chw/pact_chw_profile_info.html:8
-#: custom/dhis2/forms.py:20
-#: custom/logistics/templates/logistics/config.html:86
+#: custom/dhis2/forms.py:20 custom/logistics/templates/logistics/config.html:86
 msgid "Username"
 msgstr ""
 
@@ -2907,8 +2906,7 @@ msgstr ""
 #: corehq/apps/domain/templates/domain/create_snapshot.html:90
 #: corehq/apps/hqmedia/templates/hqmedia/bulk_upload.html:9
 #: corehq/apps/hqmedia/templates/hqmedia/references.html:49
-#: corehq/apps/hqwebapp/doc_info.py:89
-#: corehq/apps/reports/filters/forms.py:109
+#: corehq/apps/hqwebapp/doc_info.py:89 corehq/apps/reports/filters/forms.py:109
 #: corehq/apps/reports/filters/forms.py:541
 #: corehq/apps/reports/filters/select.py:97
 #: corehq/apps/reports/templates/reports/reportdata/excel_export_data.html:204
@@ -9006,16 +9004,16 @@ msgstr ""
 
 #: corehq/apps/domain/templates/domain/admin/global_sms_rates.html:71
 #: corehq/apps/reports/standard/ivr.py:81
-#: corehq/apps/reports/standard/sms.py:141
-#: corehq/apps/smsbillables/forms.py:44 custom/fri/reports/reports.py:229
+#: corehq/apps/reports/standard/sms.py:141 corehq/apps/smsbillables/forms.py:44
+#: custom/fri/reports/reports.py:229
 #: custom/ilsgateway/tanzania/reports/unrecognized_sms.py:137
 msgid "Incoming"
 msgstr ""
 
 #: corehq/apps/domain/templates/domain/admin/global_sms_rates.html:74
 #: corehq/apps/reports/standard/ivr.py:82
-#: corehq/apps/reports/standard/sms.py:142
-#: corehq/apps/smsbillables/forms.py:43 custom/fri/reports/reports.py:230
+#: corehq/apps/reports/standard/sms.py:142 corehq/apps/smsbillables/forms.py:43
+#: custom/fri/reports/reports.py:230
 #: custom/ilsgateway/tanzania/reports/unrecognized_sms.py:138
 msgid "Outgoing"
 msgstr ""

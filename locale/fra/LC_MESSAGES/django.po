@@ -10,7 +10,7 @@
 # Claire_Cravero <ccravero@dimagi.com>, 2014
 # Claire_Cravero <ccravero@dimagi.com>, 2014
 # Derek Hans <dhans@dimagi.com>, 2015
-# Dimagi Dev <devops@dimagi.com>, 2015
+# Dimagi Dev <devops@dimagi.com>, 2015-2016
 # djindag <djindalaure@gmail.com>, 2015
 # fatim thiam <fthiam@dimagi.com>, 2015
 # Fiorenzo Conte <fconte@dimagi.com>, 2015
@@ -30,8 +30,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: CommCare HQ\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2016-03-22 20:11+0000\n"
-"PO-Revision-Date: 2016-03-15 18:12+0000\n"
+"POT-Creation-Date: 2016-03-22 20:41+0000\n"
+"PO-Revision-Date: 2016-03-22 20:33+0000\n"
 "Last-Translator: Dimagi Dev <devops@dimagi.com>\n"
 "Language-Team: French (http://www.transifex.com/dimagi/commcare-hq/language/"
 "fr/)\n"
@@ -1464,8 +1464,7 @@ msgstr ""
 #: corehq/messaging/smsbackends/apposit/forms.py:12
 #: corehq/messaging/smsbackends/unicel/forms.py:10
 #: custom/_legacy/pact/templates/pact/chw/pact_chw_profile_info.html:8
-#: custom/dhis2/forms.py:20
-#: custom/logistics/templates/logistics/config.html:86
+#: custom/dhis2/forms.py:20 custom/logistics/templates/logistics/config.html:86
 msgid "Username"
 msgstr "Nom d'utilisateur"
 
@@ -3147,8 +3146,7 @@ msgstr "Formulaire"
 #: corehq/apps/domain/templates/domain/create_snapshot.html:90
 #: corehq/apps/hqmedia/templates/hqmedia/bulk_upload.html:9
 #: corehq/apps/hqmedia/templates/hqmedia/references.html:49
-#: corehq/apps/hqwebapp/doc_info.py:89
-#: corehq/apps/reports/filters/forms.py:109
+#: corehq/apps/hqwebapp/doc_info.py:89 corehq/apps/reports/filters/forms.py:109
 #: corehq/apps/reports/filters/forms.py:541
 #: corehq/apps/reports/filters/select.py:97
 #: corehq/apps/reports/templates/reports/reportdata/excel_export_data.html:204
@@ -9321,7 +9319,7 @@ msgstr "Plus d'Informations "
 #: corehq/apps/prelogin/templates/prelogin/_sections/software_services/pricing.html:79
 #: corehq/apps/prelogin/templates/prelogin/base.html:127
 msgid "Pricing"
-msgstr "Prix"
+msgstr "Tarifs"
 
 #: corehq/apps/domain/templates/domain/admin/global_sms_rates.html:42
 msgid ""
@@ -9355,16 +9353,16 @@ msgstr "Connexion"
 
 #: corehq/apps/domain/templates/domain/admin/global_sms_rates.html:71
 #: corehq/apps/reports/standard/ivr.py:81
-#: corehq/apps/reports/standard/sms.py:141
-#: corehq/apps/smsbillables/forms.py:44 custom/fri/reports/reports.py:229
+#: corehq/apps/reports/standard/sms.py:141 corehq/apps/smsbillables/forms.py:44
+#: custom/fri/reports/reports.py:229
 #: custom/ilsgateway/tanzania/reports/unrecognized_sms.py:137
 msgid "Incoming"
 msgstr "Entrant"
 
 #: corehq/apps/domain/templates/domain/admin/global_sms_rates.html:74
 #: corehq/apps/reports/standard/ivr.py:82
-#: corehq/apps/reports/standard/sms.py:142
-#: corehq/apps/smsbillables/forms.py:43 custom/fri/reports/reports.py:230
+#: corehq/apps/reports/standard/sms.py:142 corehq/apps/smsbillables/forms.py:43
+#: custom/fri/reports/reports.py:230
 #: custom/ilsgateway/tanzania/reports/unrecognized_sms.py:138
 msgid "Outgoing"
 msgstr "Sortant"
