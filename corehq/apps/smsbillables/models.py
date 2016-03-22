@@ -1,7 +1,10 @@
+from collections import namedtuple
 from decimal import Decimal
 
 from django.core.exceptions import ObjectDoesNotExist
 from django.db import models
+
+from twilio.rest import TwilioRestClient
 
 from corehq.apps.accounting import models as accounting
 from corehq.apps.accounting.models import Currency
@@ -12,6 +15,7 @@ from corehq.apps.smsbillables.utils import log_smsbillables_error
 from corehq.messaging.smsbackends.test.models import SQLTestSMSBackend
 from corehq.apps.sms.util import clean_phone_number
 from corehq.apps.smsbillables.exceptions import AmbiguousPrefixException
+from corehq.messaging.smsbackends.twilio.models import SQLTwilioBackend
 from corehq.util.quickcache import quickcache
 
 
@@ -330,13 +334,19 @@ class SmsBillable(models.Model):
         is_gateway_billable = backend_instance is None or _sms_backend_is_global(backend_instance)
 
         if is_gateway_billable:
-            billable.gateway_fee = SmsGatewayFee.get_by_criteria(
-                backend_api_id,
-                message_log.direction,
-                backend_instance=backend_instance,
-                country_code=country_code,
-                national_number=national_number,
-            )
+            is_twilio_message = backend_api_id == SQLTwilioBackend.get_api_id()
+            if is_twilio_message:
+                billable.direct_gateway_fee, billable.gateway_fee = cls._get_twilio_charges(
+                    billable, message_log, backend_instance
+                )
+            else:
+                billable.gateway_fee = SmsGatewayFee.get_by_criteria(
+                    backend_api_id,
+                    message_log.direction,
+                    backend_instance=backend_instance,
+                    country_code=country_code,
+                    national_number=national_number,
+                )
             if billable.gateway_fee is not None:
                 conversion_rate = billable.gateway_fee.currency.rate_to_default
                 if conversion_rate != 0:
@@ -363,3 +373,39 @@ class SmsBillable(models.Model):
                 "Did not find usage fee for direction %s and domain %s"
                 % (direction, domain)
             )
+
+    @classmethod
+    def _get_twilio_charges(cls, billable, message_log, backend_instance):
+        def _get_twilio_client(twilio_backend_id):
+            twilio_backend = SQLMobileBackend.get(twilio_backend_id)
+            account_sid = twilio_backend.account_sid
+            auth_token = twilio_backend.auth_token
+            return TwilioRestClient(account_sid, auth_token)
+
+        try:
+            if message_log.backend_message_id:
+                twilio_message = _get_twilio_client(
+                    backend_instance
+                ).messages.get(message_log.backend_message_id)
+                return _TwilioCharges(
+                    Decimal(twilio_message.price) * -1,
+                    SmsGatewayFee.get_by_criteria(
+                        SQLTwilioBackend.get_api_id(),
+                        message_log.direction,
+                    )
+                )
+            else:
+                log_smsbillables_error(
+                    "Could not create gateway fee for Twilio message %s: no backend_message_id" % (
+                        message_log._id,
+                    )
+                )
+        except Exception as e:
+            log_smsbillables_error(
+                "Error looking up Twilio gateway fee for SMSLog %s: %s" % (
+                    message_log._id, e.message
+                )
+            )
+        return _TwilioCharges(None, None)
+
+_TwilioCharges = namedtuple('_TwilioCharges', ['twilio_gateway_fee', 'gateway_fee'])
