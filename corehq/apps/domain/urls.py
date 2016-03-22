@@ -3,6 +3,7 @@ from django.conf.urls import *
 from django.contrib.auth.views import password_reset
 from django.shortcuts import render_to_response
 from django.template import RequestContext
+from django.utils.translation import ugettext_lazy as _
 from django.conf import settings
 from django.views.generic import RedirectView
 
@@ -81,29 +82,29 @@ urlpatterns =\
         url(r'^accounts/password_change/$', 'password_change', auth_pages_path('password_change_form.html'), name='password_change'),
         url(r'^accounts/password_change_done/$', 'password_change_done',
             extend(auth_pages_path('password_change_done.html'),
-                   {'extra_context': {'current_page': {'page_name': 'Password Change Complete'}}}),
+                   {'extra_context': {'current_page': {'page_name': _('Password Change Complete')}}}),
             name='password_change_done'),
 
         url(r'^accounts/password_reset_email/$', exception_safe_password_reset,
             extend(auth_pages_path('password_reset_form.html'),
                    {'password_reset_form': ConfidentialPasswordResetForm,
                     'from_email': settings.DEFAULT_FROM_EMAIL,
-                    'extra_context': {'current_page': {'page_name': 'Password Reset'}}}),
+                    'extra_context': {'current_page': {'page_name': _('Password Reset')}}}),
             name='password_reset_email'),
         url(r'^accounts/password_reset_email/done/$', 'password_reset_done',
             extend(auth_pages_path('password_reset_done.html'),
-                   {'extra_context': {'current_page': {'page_name': 'Reset My Password'}}}),
+                   {'extra_context': {'current_page': {'page_name': _('Reset My Password')}}}),
             name='password_reset_done'),
 
         url(r'^accounts/password_reset_confirm/(?P<uidb64>[0-9A-Za-z_\-]+)/(?P<token>.+)/$',
             PasswordResetView.as_view(),  extend(auth_pages_path('password_reset_confirm.html'),
                                                     {'set_password_form': HQSetPasswordForm,
                                                     'extra_context': {'current_page':
-                                                        {'page_name': 'Password Reset Confirmation'}}}),
+                                                        {'page_name': _('Password Reset Confirmation')}}}),
             name=PasswordResetView.urlname),
         url(r'^accounts/password_reset_confirm/done/$', 'password_reset_complete',
             extend(auth_pages_path('password_reset_complete.html'),
-                   {'extra_context': {'current_page': {'page_name': 'Password Reset Complete'}}}),
+                   {'extra_context': {'current_page': {'page_name': _('Password Reset Complete')}}}),
             name='password_reset_complete')
     )
 

@@ -389,7 +389,7 @@ def _login(req, domain_name, template_name):
     if welcome_name is None:
         welcome_name = get_per_domain_context(Domain())['SITE_NAME']
     context.update({
-        'current_page': {'page_name': 'Welcome back to %s!' % welcome_name}
+        'current_page': {'page_name': _('Welcome back to %s!') % welcome_name}
     })
 
     auth_view = HQLoginView if not domain_name else CloudCareLoginView
