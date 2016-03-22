@@ -256,7 +256,7 @@ class VerifiedNumber(SyncCouchToSQLMixin, Document):
 
     def _migration_sync_to_sql(self, sql_object):
         if self.doc_type and self.doc_type.endswith(DELETED_SUFFIX):
-            sql_object.delete()
+            sql_object.delete(sync_to_couch=False)
             return
 
         super(VerifiedNumber, self)._migration_sync_to_sql(sql_object)

@@ -16,6 +16,7 @@ from time import sleep
 class BaseMigrationTestCase(TestCase):
     def setUp(self):
         self.domain = 'test-sms-sql-migration'
+        self.deleteAllLogs()
 
     def deleteAllLogs(self):
         for smslog in SMSLog.view(
@@ -215,7 +216,6 @@ class SMSMigrationTestCase(BaseMigrationTestCase):
         sms.messaging_subevent_id = self.randomMessagingSubEventId()
 
     def testSMSLogSync(self):
-        self.deleteAllLogs()
         self.assertEqual(self.getSMSLogCount(), 0)
         self.assertEqual(self.getSMSCount(), 0)
 
@@ -244,7 +244,6 @@ class SMSMigrationTestCase(BaseMigrationTestCase):
         self.assertTrue(SMSLog.get_db().get_rev(smslog._id).startswith('2-'))
 
     def testFRISMSLogSync(self):
-        self.deleteAllLogs()
         self.assertEqual(self.getSMSLogCount(), 0)
         self.assertEqual(self.getSMSCount(), 0)
 
@@ -279,7 +278,6 @@ class SMSMigrationTestCase(BaseMigrationTestCase):
         self.assertTrue(SMSLog.get_db().get_rev(smslog._id).startswith('3-'))
 
     def testSMSSync(self):
-        self.deleteAllLogs()
         self.assertEqual(self.getSMSLogCount(), 0)
         self.assertEqual(self.getSMSCount(), 0)
 
@@ -391,7 +389,6 @@ class CallMigrationTestCase(BaseMigrationTestCase):
         call.form_unique_id = self.randomString()
 
     def testCallLogSync(self):
-        self.deleteAllLogs()
         self.assertEqual(self.getCallLogCount(), 0)
         self.assertEqual(self.getCallCount(), 0)
 
@@ -420,7 +417,6 @@ class CallMigrationTestCase(BaseMigrationTestCase):
         self.assertTrue(CallLog.get_db().get_rev(calllog._id).startswith('2-'))
 
     def testCallSync(self):
-        self.deleteAllLogs()
         self.assertEqual(self.getCallLogCount(), 0)
         self.assertEqual(self.getCallCount(), 0)
 
@@ -477,7 +473,6 @@ class LastReadMessageMigrationTestCase(BaseMigrationTestCase):
         obj.message_timestamp = self.randomDateTime()
 
     def testCouchSyncToSQL(self):
-        self.deleteAllLogs()
         self.assertEqual(self.getCouchCount(), 0)
         self.assertEqual(self.getSQLCount(), 0)
 
@@ -506,7 +501,6 @@ class LastReadMessageMigrationTestCase(BaseMigrationTestCase):
         self.assertTrue(LastReadMessage.get_db().get_rev(couch_obj._id).startswith('2-'))
 
     def testSQLSyncToCouch(self):
-        self.deleteAllLogs()
         self.assertEqual(self.getCouchCount(), 0)
         self.assertEqual(self.getSQLCount(), 0)
 
@@ -563,7 +557,6 @@ class ExpectedCallbackMigrationTestCase(BaseMigrationTestCase):
         obj.status = self.randomCallbackStatus()
 
     def testCouchSyncToSQL(self):
-        self.deleteAllLogs()
         self.assertEqual(self.getCouchCount(), 0)
         self.assertEqual(self.getSQLCount(), 0)
 
@@ -592,7 +585,6 @@ class ExpectedCallbackMigrationTestCase(BaseMigrationTestCase):
         self.assertTrue(ExpectedCallbackEventLog.get_db().get_rev(couch_obj._id).startswith('2-'))
 
     def testSQLSyncToCouch(self):
-        self.deleteAllLogs()
         self.assertEqual(self.getCouchCount(), 0)
         self.assertEqual(self.getSQLCount(), 0)
 
@@ -624,7 +616,7 @@ class ExpectedCallbackMigrationTestCase(BaseMigrationTestCase):
 class PhoneNumberMigrationTestCase(BaseMigrationTestCase):
     def getCouchCount(self):
         result = VerifiedNumber.view(
-            'sms/verified_number_by_domain',
+            'phone_numbers/verified_number_by_domain',
             startkey=[self.domain],
             endkey=[self.domain, {}],
             include_docs=False,
@@ -656,7 +648,6 @@ class PhoneNumberMigrationTestCase(BaseMigrationTestCase):
         obj.contact_last_modified = self.randomDateTime()
 
     def testCouchSyncToSQL(self):
-        self.deleteAllLogs()
         self.assertEqual(self.getCouchCount(), 0)
         self.assertEqual(self.getSQLCount(), 0)
 
@@ -685,14 +676,14 @@ class PhoneNumberMigrationTestCase(BaseMigrationTestCase):
         self.assertTrue(VerifiedNumber.get_db().get_rev(couch_obj._id).startswith('2-'))
 
         # Test Delete
+        couch_id = couch_obj._id
         couch_obj.delete()
         with self.assertRaises(ResourceNotFound):
-            VerifiedNumber.get(couch_obj._id)
+            VerifiedNumber.get(couch_id)
         self.assertEqual(self.getCouchCount(), 0)
         self.assertEqual(self.getSQLCount(), 0)
 
     def testSQLSyncToCouch(self):
-        self.deleteAllLogs()
         self.assertEqual(self.getCouchCount(), 0)
         self.assertEqual(self.getSQLCount(), 0)
 
@@ -721,14 +712,14 @@ class PhoneNumberMigrationTestCase(BaseMigrationTestCase):
         self.assertTrue(VerifiedNumber.get_db().get_rev(couch_obj._id).startswith('3-'))
 
         # Test Delete
+        couch_id = couch_obj._id
         sql_obj.delete()
         with self.assertRaises(ResourceNotFound):
-            VerifiedNumber.get(couch_obj._id)
+            VerifiedNumber.get(couch_id)
         self.assertEqual(self.getCouchCount(), 0)
         self.assertEqual(self.getSQLCount(), 0)
 
     def testCouchRetire(self):
-        self.deleteAllLogs()
         self.assertEqual(self.getCouchCount(), 0)
         self.assertEqual(self.getSQLCount(), 0)
 
