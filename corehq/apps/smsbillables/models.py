@@ -256,6 +256,7 @@ class SmsBillable(models.Model):
     the monthly Invoice.
     """
     gateway_fee = models.ForeignKey(SmsGatewayFee, null=True, on_delete=models.PROTECT)
+    direct_gateway_fee = models.DecimalField(null=True, max_digits=10, decimal_places=4)
     gateway_fee_conversion_rate = models.DecimalField(default=Decimal('1.0'), null=True, max_digits=20,
                                                       decimal_places=EXCHANGE_RATE_DECIMAL_PLACES)
     usage_fee = models.ForeignKey(SmsUsageFee, null=True, on_delete=models.PROTECT)
@@ -273,15 +274,18 @@ class SmsBillable(models.Model):
 
     @property
     def gateway_charge(self):
+        amount = None
         if self.gateway_fee is not None:
             try:
-                charge = SmsGatewayFee.objects.get(id=self.gateway_fee.id)
-                if self.gateway_fee_conversion_rate is not None:
-                    return charge.amount / self.gateway_fee_conversion_rate
-                return charge.amount
-            except ObjectDoesNotExist:
+                amount = SmsGatewayFee.objects.get(id=self.gateway_fee.id).amount
+            except SmsGatewayFee.DoesNotExist:
                 pass
-        return Decimal('0.0')
+        if amount is None:
+            amount = self.direct_gateway_fee or Decimal('0.0')
+
+        if self.gateway_fee_conversion_rate is not None:
+            return amount / self.gateway_fee_conversion_rate
+        return amount
 
     @property
     def usage_charge(self):
