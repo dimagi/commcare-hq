@@ -7,6 +7,7 @@ from corehq.elastic import get_es_new
 from corehq.form_processor.backends.sql.dbaccessors import doc_type_to_state
 from corehq.form_processor.change_providers import SqlFormChangeProvider
 from corehq.pillows.mappings.xform_mapping import XFORM_MAPPING, XFORM_INDEX
+from corehq.pillows.utils import get_user_type
 from .base import HQPillow
 from couchforms.const import RESERVED_WORDS
 from couchforms.models import XFormInstance
@@ -87,6 +88,12 @@ def transform_xform_for_elasticsearch(doc_dict, include_props=True):
             # Some docs have their @xmlns and #text here
             if isinstance(doc_ret['form']['meta'].get('appVersion'), dict):
                 doc_ret['form']['meta']['appVersion'] = doc_ret['form']['meta']['appVersion'].get('#text')
+
+        try:
+            user_id = doc_ret['form']['meta']['userID']
+        except KeyError:
+            user_id = None
+        doc_ret['user_type'] = get_user_type(user_id)
 
         case_blocks = extract_case_blocks(doc_ret)
         for case_dict in case_blocks:

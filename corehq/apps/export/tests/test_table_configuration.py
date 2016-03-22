@@ -3,7 +3,7 @@ from django.test import SimpleTestCase
 from corehq.apps.export.models import TableConfiguration, ExportColumn, \
     ScalarItem, ExportRow
 from corehq.apps.export.models.new import SplitExportColumn, MultipleChoiceItem, \
-    Option
+    Option, DocRow, RowNumberColumn
 
 
 class TableConfigurationGetRowsTest(SimpleTestCase):
@@ -40,8 +40,65 @@ class TableConfigurationGetRowsTest(SimpleTestCase):
             }
         }
         self.assertEqual(
-            [row.data for row in table_configuration.get_rows(submission)],
+            [row.data for row in table_configuration.get_rows(submission, 0)],
             [['baz', 'foo']]
+        )
+
+    def test_get_sub_documents(self):
+
+        table = TableConfiguration(path=[])
+        self.assertEqual(
+            table._get_sub_documents(
+                {'foo': 'a'},
+                0
+            ),
+            [
+                DocRow(row=(0,), doc={'foo': 'a'})
+            ]
+        )
+
+        table = TableConfiguration(path=['foo'])
+        self.assertEqual(
+            table._get_sub_documents(
+                {
+                    'foo': [
+                        {'bar': 'a'},
+                        {'bar': 'b'},
+                    ]
+                },
+                0
+            ),
+            [
+                DocRow(row=(0, 0), doc={'bar': 'a'}),
+                DocRow(row=(0, 1), doc={'bar': 'b'})
+            ]
+        )
+
+        table = TableConfiguration(path=['foo', 'bar'])
+        self.assertEqual(
+            table._get_sub_documents(
+                {
+                    'foo': [
+                        {
+                            'bar': [
+                                {'baz': 'a'},
+                                {'baz': 'b'}
+                            ],
+                        },
+                        {
+                            'bar': [
+                                {'baz': 'c'}
+                            ],
+                        },
+                    ],
+                },
+                0
+            ),
+            [
+                DocRow(row=(0, 0, 0), doc={'baz': 'a'}),
+                DocRow(row=(0, 0, 1), doc={'baz': 'b'}),
+                DocRow(row=(0, 1, 0), doc={'baz': 'c'}),
+            ]
         )
 
     def test_repeat(self):
@@ -65,7 +122,7 @@ class TableConfigurationGetRowsTest(SimpleTestCase):
             }
         }
         self.assertEqual(
-            [row.data for row in table_configuration.get_rows(submission)],
+            [row.data for row in table_configuration.get_rows(submission, 0)],
             [ExportRow(['foo']).data, ExportRow(['bar']).data]
         )
 
@@ -73,6 +130,9 @@ class TableConfigurationGetRowsTest(SimpleTestCase):
         table_configuration = TableConfiguration(
             path=['form', 'repeat1', 'group1', 'repeat2'],
             columns=[
+                RowNumberColumn(
+                    selected=True
+                ),
                 ExportColumn(
                     item=ScalarItem(
                         path=['form', 'repeat1', 'group1', 'repeat2', 'q1'],
@@ -104,8 +164,13 @@ class TableConfigurationGetRowsTest(SimpleTestCase):
             }
         }
         self.assertEqual(
-            [row.data for row in table_configuration.get_rows(submission)],
-            [['foo'], ['bar'], ['beep'], ['boop']]
+            [row.data for row in table_configuration.get_rows(submission, 0)],
+            [
+                ["0.0.0", 0, 0, 0, 'foo'],
+                ["0.0.1", 0, 0, 1, 'bar'],
+                ["0.1.0", 0, 1, 0, 'beep'],
+                ["0.1.1", 0, 1, 1, 'boop']
+            ]
         )
 
 
