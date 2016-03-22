@@ -8,6 +8,7 @@ from gevent.pool import Pool
 def get_deploy_email_message_body(environment, user, compare_url):
     import sh
     git = sh.git.bake(_tty_out=False)
+    git.fetch('origin', 'refs/tags/*:refs/tags/*')
     current_deploy, last_deploy = _get_last_two_deploys(environment)
     pr_merges = git(
         'log', '{}...{}'.format(last_deploy, current_deploy),
