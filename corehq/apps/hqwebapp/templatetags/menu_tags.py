@@ -1,4 +1,3 @@
-import logging
 from django import template
 from django.conf import settings
 from django.core.urlresolvers import reverse

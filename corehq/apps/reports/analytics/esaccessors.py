@@ -12,7 +12,6 @@ from corehq.apps.es.aggregations import (
 from corehq.apps.es.forms import (
     submitted as submitted_filter,
     completed as completed_filter,
-    user_id as user_id_filter
 )
 from corehq.apps.es.cases import closed_range
 from corehq.util.quickcache import quickcache

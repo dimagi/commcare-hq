@@ -29,7 +29,7 @@ Common Output:
 """
 import datetime
 from dateutil.relativedelta import relativedelta
-from django.db.models import Q, Count, Sum
+from django.db.models import Q, Count
 from django.utils.translation import ugettext as _
 
 from corehq.apps.accounting.models import Subscription, SoftwarePlanEdition
