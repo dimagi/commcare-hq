@@ -123,7 +123,7 @@ def form_designer(request, domain, app_id, module_id=None, form_id=None):
 
 @require_GET
 @require_can_edit_apps
-def get_data_schema(request, domain, app_id=None, form_unique_id=None):
+def get_form_data_schema(request, domain, app_id=None, form_unique_id=None):
     """Get data schema
 
     One of `app_id` or `form_unique_id` is required. `app_id` is ignored
