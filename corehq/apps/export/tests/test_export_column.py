@@ -1,15 +1,9 @@
 from django.test import SimpleTestCase
 
-from corehq.apps.export.const import PROPERTY_TAG_ROW
 from corehq.apps.export.models import ExportColumn
 from corehq.apps.export.exceptions import ExportInvalidTransform
 from corehq.apps.export.models.new import (
     RowNumberColumn,
-    TableConfiguration,
-    PathNode,
-    CASE_HISTORY_TABLE,
-    PARENT_CASE_TABLE,
-    MAIN_TABLE,
 )
 
 

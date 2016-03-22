@@ -51,8 +51,6 @@ class TestExportItemGeneration(SimpleTestCase):
 
     def test_wrap_export_item_child(self):
         path = [PathNode(name="foo"), PathNode(name="bar")]
-        is_advanced = True
-        transform = CASE_NAME_TRANSFORM
         item = MultipleChoiceItem(path=path, options=[Option(value="foo")])
         wrapped = ExportItem.wrap(item.to_json())
         self.assertEqual(type(wrapped), type(item))

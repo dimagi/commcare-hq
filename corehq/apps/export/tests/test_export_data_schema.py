@@ -4,15 +4,12 @@ from mock import patch
 from django.test import SimpleTestCase, TestCase
 
 from corehq.apps.export.models.new import MAIN_TABLE, \
-    PathNode, _question_path_to_path_nodes, ExportGroupSchema, ExportItem
-from corehq.apps.export.system_properties import (
-    MAIN_CASE_TABLE_PROPERTIES, MAIN_FORM_TABLE_PROPERTIES
-)
+    PathNode, _question_path_to_path_nodes
 from dimagi.utils.couch.database import safe_delete
 from corehq.apps.app_manager.tests.util import TestXmlMixin
 from corehq.apps.app_manager.models import XForm, Application
 from corehq.apps.export.models import FormExportDataSchema, CaseExportDataSchema, ExportDataSchema
-from corehq.apps.export.const import PROPERTY_TAG_UPDATE, CASE_NAME_TRANSFORM
+from corehq.apps.export.const import PROPERTY_TAG_UPDATE
 
 
 class TestFormExportDataSchema(SimpleTestCase, TestXmlMixin):
