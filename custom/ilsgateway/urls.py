@@ -1,5 +1,6 @@
 from django.conf.urls import patterns, url
 
+from custom.ilsgateway.slab.views import SLABConfigurationView, SLABEditLocationView
 from custom.ilsgateway.views import SupervisionDocumentListView, SupervisionDocumentDeleteView, \
     SupervisionDocumentView, ReportRunListView, ReportRunDeleteView, DashboardPageRedirect, GlobalStats
 from custom.ilsgateway.views import ILSConfigView
@@ -17,4 +18,6 @@ urlpatterns = patterns('custom.ilsgateway.views',
     url(r'^save_ils_note/$', 'save_ils_note', name='save_ils_note'),
     url(r'^report_runs/(?P<pk>\d+)/delete/$', ReportRunDeleteView.as_view(), name='delete_report_run'),
     url(r'^report_runs/$', ReportRunListView.as_view(), name='report_run_list'),
+    url(r'^slab_configuration/$', SLABConfigurationView.as_view(), name='slab_configuration'),
+    url(r'^slab_edit_location/(?P<location_id>[\w-]+)', SLABEditLocationView.as_view(), name='slab_edit_location')
 )
