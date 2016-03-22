@@ -1,4 +1,8 @@
+import numbers
 from collections import OrderedDict
+
+from django.conf import settings
+from django.utils.translation import ugettext
 
 from sqlalchemy.exc import ProgrammingError
 
@@ -16,7 +20,7 @@ from corehq.apps.userreports.exceptions import (
     InvalidQueryColumn)
 from corehq.apps.userreports.models import DataSourceConfiguration, get_datasource_config
 from corehq.apps.userreports.reports.sorting import ASCENDING
-from corehq.apps.userreports.reports.util import get_expanded_columns, get_total_row
+from corehq.apps.userreports.reports.util import get_expanded_columns
 from corehq.apps.userreports.sql import get_table_name
 from corehq.apps.userreports.sql.connection import get_engine_id
 from corehq.sql_db.connections import connection_manager
@@ -185,10 +189,55 @@ class ConfigurableReportDataSource(SqlData):
             raise TableNotFoundWarning
 
     def get_total_row(self):
-        return get_total_row(
-            self.get_data(), self.aggregation_columns, self.column_configs,
-            get_expanded_columns(self.column_configs, self.config)
-        )
+        def _clean_total_row(val, col):
+            if isinstance(val, numbers.Number):
+                return val
+            elif col.calculate_total:
+                return 0
+            return ''
+
+        def _get_relevant_column_ids(col, column_id_to_expanded_column_ids):
+            return column_id_to_expanded_column_ids.get(col.column_id, [col.column_id])
+
+        expanded_columns = get_expanded_columns(self.column_configs, self.config)
+
+        qc = self.query_context()
+        for c in self.columns:
+            qc.append_column(c.view)
+
+        session = connection_manager.get_scoped_session(self.engine_id)
+        try:
+            totals = qc.totals(
+                session.connection(),
+                [
+                    column_id
+                    for col in self.column_configs for column_id in _get_relevant_column_ids(
+                        col, expanded_columns
+                    )
+                    if col.calculate_total
+                ],
+                self.filter_values
+            )
+        except (
+            ColumnNotFoundException,
+            ProgrammingError,
+            InvalidQueryColumn,
+        ) as e:
+            if not settings.UNIT_TESTING:
+                _soft_assert(False, unicode(e))
+            raise UserReportsError(unicode(e))
+        except TableNotFoundException:
+            raise TableNotFoundWarning
+
+        total_row = [
+            _clean_total_row(totals.get(column_id), col)
+            for col in self.column_configs for column_id in _get_relevant_column_ids(
+                col, expanded_columns
+            )
+        ]
+        if total_row and total_row[0] is '':
+            total_row[0] = ugettext('Total')
+        return total_row
 
     def _get_db_column_ids(self, column_id):
         # for columns that end up being complex queries (e.g. aggregate dates)
