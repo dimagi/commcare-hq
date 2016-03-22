@@ -1,5 +1,7 @@
 from datetime import datetime
 import logging
+
+from corehq.apps.api.serializers import XFormInstanceSerializer
 from corehq.apps.domain.models import Domain
 from corehq.apps.accounting.models import Subscription
 from corehq.apps.api.resources import HqBaseResource, CouchResourceMixin
@@ -116,3 +118,4 @@ class DomainMetadataResource(CouchResourceMixin, HqBaseResource):
         detail_allowed_methods = ['get']
         object_class = Domain
         resource_name = 'project_space_metadata'
+        serializer = XFormInstanceSerializer(formats=['json'])
