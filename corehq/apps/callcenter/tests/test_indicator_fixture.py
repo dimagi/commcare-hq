@@ -1,7 +1,6 @@
 from collections import OrderedDict
 from datetime import datetime, date, time, timedelta
 from xml.etree import ElementTree
-import pytz
 from casexml.apps.case.tests.util import check_xml_line_by_line
 from casexml.apps.phone.models import SyncLog
 from corehq.apps.callcenter.fixturegenerators import gen_fixture, should_sync

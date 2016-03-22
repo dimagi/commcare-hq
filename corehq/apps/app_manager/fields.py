@@ -1,5 +1,4 @@
 import logging
-from django.conf import settings
 from django.core.urlresolvers import reverse
 from django.http import Http404
 import collections
@@ -8,10 +7,8 @@ from django import forms
 from django.utils.translation import ugettext as _
 from corehq.apps.app_manager.analytics import get_exports_by_application
 from corehq.apps.app_manager.dbaccessors import get_apps_in_domain, get_app
-from corehq.apps.app_manager.models import Application
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 from couchforms.analytics import get_exports_by_form
-from couchforms.models import XFormInstance
 from dimagi.utils.decorators.memoized import memoized
 
 
