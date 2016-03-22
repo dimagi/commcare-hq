@@ -43,7 +43,11 @@ class TestExportInstanceGeneration(SimpleTestCase):
                     path=[PathNode(name='data'), PathNode(name='repeat', is_repeat=True)],
                     items=[
                         ExportItem(
-                            path=[PathNode(name='data'), PathNode(name='repeat', is_repeat=True), PathNode(name='q2')],
+                            path=[
+                                PathNode(name='data'),
+                                PathNode(name='repeat', is_repeat=True),
+                                PathNode(name='q2')
+                            ],
                             label='Question 2',
                             last_occurrences={cls.app_id: 2},
                         )
@@ -147,7 +151,11 @@ class TestExportInstanceGenerationMultipleApps(SimpleTestCase):
                     path=[PathNode(name='data'), PathNode(name='repeat', is_repeat=True)],
                     items=[
                         ExportItem(
-                            path=[PathNode(name='data'), PathNode(name='repeat', is_repeat=True), PathNode(name='q2')],
+                            path=[
+                                PathNode(name='data'),
+                                PathNode(name='repeat', is_repeat=True),
+                                PathNode(name='q2')
+                            ],
                             label='Question 2',
                             last_occurrences={
                                 cls.app_id: 3,
@@ -297,7 +305,11 @@ class TestExportInstanceFromSavedInstance(TestCase):
                     path=[PathNode(name='data'), PathNode(name='repeat', is_repeat=True)],
                     items=[
                         ExportItem(
-                            path=[PathNode(name='data'), PathNode(name='repeat', is_repeat=True), PathNode(name='q2')],
+                            path=[
+                                PathNode(name='data'),
+                                PathNode(name='repeat', is_repeat=True),
+                                PathNode(name='q2')
+                            ],
                             label='Question 2',
                             last_occurrences={
                                 cls.app_id: 3,

@@ -84,8 +84,6 @@ class ExportItem(DocumentSchema):
                 return super(ExportItem, cls).wrap(data)
             elif doc_type == 'ScalarItem':
                 return ScalarItem.wrap(data)
-            elif doc_type == 'SystemExportItem':
-                return SystemExportItem.wrap(data)
             elif doc_type == 'MultipleChoiceItem':
                 return MultipleChoiceItem.wrap(data)
             else:
@@ -100,7 +98,8 @@ class ExportItem(DocumentSchema):
     @classmethod
     def create_from_question(cls, question, app_id, app_version):
         return cls(
-            # TODO: It doesn't actually matter what the repeats are, but for correctness we should probably pass them in
+            # TODO: It doesn't actually matter what the repeats are, but for
+            # correctness we should probably pass them in
             path=_question_path_to_path_nodes(question['value'], []),
             label=question['label'],
             last_occurrences={app_id: app_version},
@@ -490,7 +489,10 @@ class ExportInstance(BlobMixin, Document):
 
     @classmethod
     def _insert_case_system_properties(cls, table, columns):
-        from corehq.apps.export.system_properties import TOP_MAIN_CASE_TABLE_PROPERTIES, BOTTOM_MAIN_CASE_TABLE_PROPERTIES
+        from corehq.apps.export.system_properties import (
+            TOP_MAIN_CASE_TABLE_PROPERTIES,
+            BOTTOM_MAIN_CASE_TABLE_PROPERTIES
+        )
 
         # insert columns for system properties
         for static_column in reversed(TOP_MAIN_CASE_TABLE_PROPERTIES):

@@ -13,18 +13,9 @@ from corehq.apps.export.const import (
     USERNAME_TRANSFORM,
     PROPERTY_TAG_NONE)
 from corehq.apps.export.models import ExportColumn, ExportItem
-
-# item
-    # label
-    # is_advanced
-    # selected
-    # tags
-    # transforms
-
-
-# System properties to be displayed above the form questions
 from corehq.apps.export.models.new import PathNode
 
+# System properties to be displayed above the form questions
 TOP_MAIN_FORM_TABLE_PROPERTIES = [
     ExportColumn(
         tags=[PROPERTY_TAG_ROW],

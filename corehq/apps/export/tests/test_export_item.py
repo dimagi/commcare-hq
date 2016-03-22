@@ -1,6 +1,5 @@
 from django.test import SimpleTestCase
 
-from corehq.apps.export.const import CASE_NAME_TRANSFORM
 from corehq.apps.export.models import (
     ExportItem,
     ExportColumn,

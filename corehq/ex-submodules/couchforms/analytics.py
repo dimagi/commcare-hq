@@ -280,15 +280,14 @@ def get_exports_by_form(domain):
 
 
 def get_form_count_breakdown_for_domain(domain):
-    query = (
-        FormES()
-            .domain(domain)
-            .aggregation(
+    query = (FormES()
+             .domain(domain)
+             .aggregation(
                 TermsAggregation("app_id", "app_id").aggregation(
                     TermsAggregation("xmlns", "xmlns.exact")))
-            .remove_default_filter("has_xmlns")
-            .remove_default_filter("has_user")
-            .size(0))
+             .remove_default_filter("has_xmlns")
+             .remove_default_filter("has_user")
+             .size(0))
     query_result = query.run()
     form_counts = {}
     for app_id, bucket in query_result.aggregations.app_id.buckets_dict.iteritems():
