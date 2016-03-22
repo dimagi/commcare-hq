@@ -105,10 +105,16 @@ class RepeaterTest(BaseRepeaterTest):
         self.case_repeater.delete()
         self.form_repeater.delete()
         FormProcessorTestUtils.delete_all_xforms(self.domain)
-        repeat_records = RepeatRecord.all()
-        for repeat_record in repeat_records:
-            repeat_record.delete()
+        results = RepeatRecord.get_db().view('receiverwrapper/repeat_records_by_next_check', reduce=False).all()
+        for result in results:
+            try:
+                repeat_record = RepeatRecord.get(result['id'])
+            except Exception:
+                pass
+            else:
+                repeat_record.delete()
 
+    @run_with_all_backends
     def test_skip_device_logs(self):
         devicelog_xml = XFORM_XML_TEMPLATE.format(DEVICE_LOG_XMLNS, '1234', '')
         self.post_xml(devicelog_xml, self.domain)
