@@ -11,3 +11,6 @@ class HelpHandler(KeywordHandler):
             self.respond(HELP_UNREGISTERED)
 
         return True
+
+    def handle(self):
+        return self.help()
