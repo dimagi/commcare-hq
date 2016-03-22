@@ -8,6 +8,7 @@ from casexml.apps.case.models import CommCareCase
 from couchforms.models import XFormInstance
 from dimagi.utils.couch.database import iter_docs
 from dimagi.utils.couch.cache.cache_core import get_redis_client
+from dimagi.utils.parsing import json_format_datetime
 
 from corehq.apps.domain.dbaccessors import iterate_doc_ids_in_domain_by_type
 from corehq.apps.userreports.models import DataSourceConfiguration, StaticDataSourceConfiguration
@@ -100,12 +101,18 @@ def _iteratively_build_table(config, last_id=None):
     redis_key = _get_redis_key_for_config(config)
     indicator_config_id = config._id
 
+    start_key = None
+    if last_id:
+        last_doc = _DOC_TYPE_MAPPING[config.referenced_doc_type].get(last_id)
+        start_key = [config.domain, config.referenced_doc_type, json_format_datetime(last_doc.recieved_on)]
+
     relevant_ids = []
     for relevant_id in iterate_doc_ids_in_domain_by_type(
             config.domain,
             config.referenced_doc_type,
             chunk_size=CHUNK_SIZE,
             database=couchdb,
+            startkey=start_key,
             startkey_docid=last_id):
         relevant_ids.append(relevant_id)
         if len(relevant_ids) >= CHUNK_SIZE:
