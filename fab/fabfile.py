@@ -2,15 +2,6 @@
 # -*- coding: utf-8 -*-
 """
 Server layout:
-    ~/services/
-        This contains two subfolders
-            /apache/
-            /supervisor/
-        which hold the configurations for these applications
-        for each environment (staging, production, etc) running on the server.
-        Theses folders are included in the global /etc/apache2 and
-        /etc/supervisor configurations.
-
     ~/www/
         This folder contains the code, python environment, and logs
         for each environment (staging, production, etc) running on the server.
@@ -24,6 +15,15 @@ Server layout:
     ~/www/<environment>/current
         This path is a symlink to the release that is being run
         (~/www/<environment>/releases<YYYY-MM-DD-HH.SS>).
+
+    ~/www/<environment>/current/services/
+        This contains two subfolders
+            /supervisor/
+        which hold the configurations for these applications
+        for each environment (staging, production, etc) running on the server.
+        Theses folders are included in the global /etc/apache2 and
+        /etc/supervisor configurations.
+
 """
 import datetime
 import json
@@ -229,7 +229,8 @@ def _setup_path():
     env.project_media = posixpath.join(env.code_root, 'media')
     env.virtualenv_current = posixpath.join(env.code_current, 'python_env')
     env.virtualenv_root = posixpath.join(env.code_root, 'python_env')
-    env.services = posixpath.join(env.home, 'services')
+    env.services = posixpath.join(env.code_root, 'services')
+    env.services_old = posixpath.join(env.home, 'services')
     env.jython_home = '/usr/local/lib/jython'
     env.db = '%s_%s' % (env.project, env.environment)
 
@@ -993,11 +994,10 @@ def clear_services_dir(current=False):
     remove old confs from directory first
     the clear_supervisor_confs management command will scan the directory and find prefixed conf files of the supervisord files
     and delete them matching the prefix of the current server environment
-
     """
     code_root = env.code_current if current else env.code_root
     venv_root = env.virtualenv_current if current else env.virtualenv_root
-    services_dir = posixpath.join(env.services, u'supervisor')
+    services_dir = posixpath.join(env.services_old, u'supervisor')
     with cd(code_root):
         sudo((
             '%(virtualenv_root)s/bin/python manage.py '
@@ -1182,6 +1182,8 @@ def version_static():
 
 
 def _rebuild_supervisor_conf_file(conf_command, filename, params=None):
+    sudo('mkdir -p {}'.format(posixpath.join(env.services, 'supervisor')))
+
     with cd(env.code_root):
         sudo((
             '%(virtualenv_root)s/bin/python manage.py '
@@ -1195,6 +1197,20 @@ def _rebuild_supervisor_conf_file(conf_command, filename, params=None):
             'destination': posixpath.join(env.services, 'supervisor'),
             'params': format_env(env, params)
         })
+
+        sudo((
+            '%(virtualenv_root)s/bin/python manage.py '
+            '%(conf_command)s --traceback --conf_file "%(filename)s" '
+            '--conf_destination "%(destination)s" --params \'%(params)s\''
+        ) % {
+
+            'conf_command': conf_command,
+            'virtualenv_root': env.virtualenv_root,
+            'filename': filename,
+            'destination': posixpath.join(env.services_old, 'supervisor'),
+            'params': format_env(env, params)
+        })
+
 
 
 def get_celery_queues():
