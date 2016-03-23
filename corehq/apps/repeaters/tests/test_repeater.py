@@ -5,7 +5,6 @@ from mock import patch
 from casexml.apps.case.mock import CaseBlock, CaseFactory
 
 from django.test import TestCase
-from django.conf import settings
 
 from corehq.apps.app_manager.tests.util import TestXmlMixin
 from corehq.apps.domain.shortcuts import create_domain
