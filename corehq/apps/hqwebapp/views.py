@@ -66,6 +66,7 @@ from corehq.apps.style.decorators import use_bootstrap3
 from corehq.apps.users.models import CouchUser
 from corehq.apps.users.util import format_username
 from corehq.middleware import always_allow_browser_caching
+from corehq.util.context_processors import get_per_domain_context
 from corehq.util.datadog.const import DATADOG_UNKNOWN
 from corehq.util.datadog.metrics import JSERROR_COUNT
 from corehq.util.datadog.utils import create_datadog_event, log_counter, sanitize_url
@@ -374,15 +375,22 @@ def _login(req, domain_name, template_name):
     req.base_template = settings.BASE_TEMPLATE
 
     context = {}
+    welcome_name = None
     if domain_name:
         domain = Domain.get_by_name(domain_name)
         req_params = req.GET if req.method == 'GET' else req.POST
+        welcome_name = domain.display_name()
         context.update({
             'domain': domain_name,
             'hr_name': domain.display_name() if domain else domain_name,
             'next': req_params.get('next', '/a/%s/' % domain),
             'allow_domain_requests': domain.allow_domain_requests,
         })
+    if welcome_name is None:
+        welcome_name = get_per_domain_context(Domain())['SITE_NAME']
+    context.update({
+        'current_page': {'page_name': _('Welcome back to %s!') % welcome_name}
+    })
 
     auth_view = HQLoginView if not domain_name else CloudCareLoginView
     return auth_view.as_view(template_name=template_name, extra_context=context)(req)

@@ -144,6 +144,7 @@ def select(request, domain_select_template='domain/select.html', do_not_redirect
     additional_context = {
         'domains_for_user': domains_for_user,
         'open_invitations': open_invitations,
+        'current_page': {'page_name': _('Select A Project')},
     }
 
     last_visited_domain = request.session.get('last_visited_domain')
@@ -168,20 +169,6 @@ def select(request, domain_select_template='domain/select.html', do_not_redirect
 
         del request.session['last_visited_domain']
         return render(request, domain_select_template, additional_context)
-
-
-@require_superuser
-def incomplete_email(request,
-                     incomplete_email_template='domain/incomplete_email.html'):
-    from corehq.apps.domain.tasks import (
-        incomplete_self_started_domains,
-        incomplete_domains_to_email
-    )
-    context = {
-        'self_started': incomplete_self_started_domains,
-        'dimagi_owned': incomplete_domains_to_email,
-    }
-    return render(request, incomplete_email_template, context)
 
 
 class DomainViewMixin(object):
