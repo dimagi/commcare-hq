@@ -391,7 +391,7 @@ class Domain(QuickCachedDocumentMixin, Document, SnapshotMixin):
         return pytz.timezone(self.default_timezone)
 
     @staticmethod
-    @quickcache(['name'], timeout=24*60*60)
+    @quickcache(['name'], timeout=24 * 60 * 60)
     def is_secure_session_required(name):
         domain = Domain.get_by_name(name)
         return domain and domain.secure_sessions
