@@ -10,15 +10,15 @@ msgid ""
 msgstr ""
 "Project-Id-Version: CommCare HQ\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2016-03-22 20:41+0000\n"
-"PO-Revision-Date: 2016-03-15 18:12+0000\n"
+"POT-Creation-Date: 2016-03-23 21:00+0000\n"
+"PO-Revision-Date: 2016-03-22 20:43+0000\n"
 "Last-Translator: Dimagi Dev <devops@dimagi.com>\n"
 "Language-Team: Hindi (http://www.transifex.com/dimagi/commcare-hq/language/"
 "hi/)\n"
-"Language: hi\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
+"Language: hi\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
 
 #: corehq/apps/accounting/filters.py:32
@@ -328,8 +328,8 @@ msgstr ""
 #, python-format
 msgid ""
 "Please update 'Client Contact Emails' <strong><a href=%(link)s target="
-"\"_blank\">here</a></strong> before using Billing Account <strong>"
-"%(account)s</strong>."
+"\"_blank\">here</a></strong> before using Billing Account <strong>%(account)"
+"s</strong>."
 msgstr ""
 
 #: corehq/apps/accounting/forms.py:648
@@ -410,7 +410,7 @@ msgstr ""
 #: corehq/apps/domain/templates/domain/admin/commtrack_action_table.html:6
 #: corehq/apps/export/templates/export/partial/export_list_controller.html:85
 #: corehq/apps/fixtures/templates/fixtures/partials/edit_table_modal.html:21
-#: corehq/apps/hqadmin/reports.py:981 corehq/apps/locations/forms.py:51
+#: corehq/apps/hqadmin/reports.py:981 corehq/apps/locations/forms.py:52
 #: corehq/apps/reminders/forms.py:293
 #: corehq/apps/reminders/templates/reminders/keyword.html:29
 #: corehq/apps/reminders/templates/reminders/keyword.html:38
@@ -521,12 +521,10 @@ msgid "Messages"
 msgstr ""
 
 #: corehq/apps/accounting/models.py:450
-#, python-brace-format
 msgid "Your card is no longer being used to auto-pay for {billing_account}"
 msgstr ""
 
 #: corehq/apps/accounting/models.py:475
-#, python-brace-format
 msgid "Your card is being used to auto-pay for {billing_account}"
 msgstr ""
 
@@ -611,8 +609,8 @@ msgstr ""
 #: corehq/apps/accounting/models.py:1464
 #, python-format
 msgid ""
-"%(product)s Alert: %(domain)s's subscription to %(plan_name)s ends "
-"%(ending_on)s"
+"%(product)s Alert: %(domain)s's subscription to %(plan_name)s ends %"
+"(ending_on)s"
 msgstr ""
 
 #: corehq/apps/accounting/models.py:1616
@@ -626,8 +624,8 @@ msgstr ""
 #, python-format
 msgid ""
 "There is already a subscription '%(sub)s' that has an end date that "
-"conflicts with the start and end dates of this subscription %(start)s - "
-"%(end)s."
+"conflicts with the start and end dates of this subscription %(start)s - %"
+"(end)s."
 msgstr ""
 
 #: corehq/apps/accounting/models.py:2049 corehq/apps/accounting/models.py:2207
@@ -672,7 +670,6 @@ msgid "Bulk Payment for project space %s"
 msgstr ""
 
 #: corehq/apps/accounting/payment_handlers.py:321
-#, python-brace-format
 msgid "Credits: {credit_types} for {sub_or_account}"
 msgstr ""
 
@@ -737,15 +734,15 @@ msgstr[1] ""
 #: corehq/apps/accounting/subscription_changes.py:419
 #, python-format
 msgid ""
-"You have %(num_users)d Mobile Worker over the monthly limit of "
-"%(monthly_limit)d for this new plan. There will be an additional monthly "
-"charge of USD %(excess_fee)s per Mobile Worker, totalling USD "
-"%(monthly_total)s per month, if you select this plan."
+"You have %(num_users)d Mobile Worker over the monthly limit of %"
+"(monthly_limit)d for this new plan. There will be an additional monthly "
+"charge of USD %(excess_fee)s per Mobile Worker, totalling USD %"
+"(monthly_total)s per month, if you select this plan."
 msgid_plural ""
-"You have %(num_users)d Mobile Workers over the monthly limit of "
-"%(monthly_limit)d for this new plan. There will be an additional monthly "
-"charge of USD %(excess_fee)s per Mobile Worker, totalling USD "
-"%(monthly_total)s per month, if you select this plan."
+"You have %(num_users)d Mobile Workers over the monthly limit of %"
+"(monthly_limit)d for this new plan. There will be an additional monthly "
+"charge of USD %(excess_fee)s per Mobile Worker, totalling USD %"
+"(monthly_total)s per month, if you select this plan."
 msgstr[0] ""
 msgstr[1] ""
 
@@ -963,17 +960,17 @@ msgid ""
 "    Hello %(old_user_name)s,\n"
 "</p>\n"
 "<p>\n"
-"    Your card is no longer being used for autopayment on the account "
-"%(billing_account_name)s.\n"
+"    Your card is no longer being used for autopayment on the account %"
+"(billing_account_name)s.\n"
 "</p>\n"
 "<p>\n"
-"    A card belonging to <strong><a href=\"mailto:%(new_user)s\">"
-"%(new_user)s</a></strong> is being used instead. If this is expected, you do "
-"not have to take any further action, and this card will be used to pay "
-"monthly invoices and will be charged on the invoice due date. If this change "
-"is unexpected, you can view and alter the credit card information at any "
-"time by navigating to your <a href=\"%(billing_info_url)s\">Billing "
-"Information</a> page.\n"
+"    A card belonging to <strong><a href=\"mailto:%(new_user)s\">%(new_user)"
+"s</a></strong> is being used instead. If this is expected, you do not have "
+"to take any further action, and this card will be used to pay monthly "
+"invoices and will be charged on the invoice due date. If this change is "
+"unexpected, you can view and alter the credit card information at any time "
+"by navigating to your <a href=\"%(billing_info_url)s\">Billing Information</"
+"a> page.\n"
 "</p>\n"
 "<p>\n"
 "    Thank you for using CommCare. If you have any questions, please don't "
@@ -1017,8 +1014,8 @@ msgstr ""
 #, python-format
 msgid ""
 "\n"
-"    Invoices for project space %(domain)s are now marked as paid as of "
-"%(date_paid)s.\n"
+"    Invoices for project space %(domain)s are now marked as paid as of %"
+"(date_paid)s.\n"
 "    "
 msgstr ""
 
@@ -1090,16 +1087,16 @@ msgstr ""
 msgid ""
 "Dear %(name)s,\n"
 "\n"
-"This email is a receipt for your payment of %(amount)s toward your project "
-"%(project)s."
+"This email is a receipt for your payment of %(amount)s toward your project %"
+"(project)s."
 msgstr ""
 
 #: corehq/apps/accounting/templates/accounting/bulk_payment_receipt_email_plaintext.txt:5
 #, python-format
 msgid ""
 "\n"
-"Invoices for project space %(domain)s are now marked as paid as of "
-"%(date_paid)s.\n"
+"Invoices for project space %(domain)s are now marked as paid as of %"
+"(date_paid)s.\n"
 "\n"
 "Project Space: %(domain)s\n"
 "Amount Paid: %(amount)s\n"
@@ -1340,7 +1337,8 @@ msgstr ""
 #: corehq/messaging/smsbackends/apposit/forms.py:12
 #: corehq/messaging/smsbackends/unicel/forms.py:10
 #: custom/_legacy/pact/templates/pact/chw/pact_chw_profile_info.html:8
-#: custom/dhis2/forms.py:20 custom/logistics/templates/logistics/config.html:86
+#: custom/dhis2/forms.py:20
+#: custom/logistics/templates/logistics/config.html:86
 msgid "Username"
 msgstr ""
 
@@ -1394,8 +1392,8 @@ msgstr ""
 #, python-format
 msgid ""
 "\n"
-"    Your %(plan_name)s Billing Statement is now available for "
-"%(month_name)s.\n"
+"    Your %(plan_name)s Billing Statement is now available for %(month_name)"
+"s.\n"
 "    "
 msgstr ""
 
@@ -1626,8 +1624,8 @@ msgstr ""
 #, python-format
 msgid ""
 "\n"
-"        Your %(plan_name)s Billing Statement is now available for "
-"%(month_name)s.\n"
+"        Your %(plan_name)s Billing Statement is now available for %"
+"(month_name)s.\n"
 "    "
 msgstr ""
 
@@ -1678,8 +1676,8 @@ msgstr ""
 #, python-format
 msgid ""
 "\n"
-"    Your %(plan_name)s Billing Statement is now available for "
-"%(month_name)s.\n"
+"    Your %(plan_name)s Billing Statement is now available for %(month_name)"
+"s.\n"
 msgstr ""
 
 #: corehq/apps/accounting/templates/accounting/invoice_email_autopayment.txt:15
@@ -2134,8 +2132,8 @@ msgstr ""
 #, python-format
 msgid ""
 "\n"
-"    If you have any questions, please don’t hesitate to contact "
-"%(invoicing_contact_email)s.\n"
+"    If you have any questions, please don’t hesitate to contact %"
+"(invoicing_contact_email)s.\n"
 "    Thank you for your use and support of %(product)s.\n"
 "    "
 msgstr ""
@@ -2169,8 +2167,8 @@ msgid ""
 "%(product)s HQ and and navigate to the subscription page in your project\n"
 "settings: %(subscription_url)s\n"
 "\n"
-"If you have any questions, please don’t hesitate to contact "
-"%(invoicing_contact_email)s.\n"
+"If you have any questions, please don’t hesitate to contact %"
+"(invoicing_contact_email)s.\n"
 "Thank you for your use and support of %(product)s.\n"
 "\n"
 "Best regards,\n"
@@ -2222,6 +2220,7 @@ msgstr ""
 #: corehq/apps/sms/templates/sms/list_forwarding_rules.html:32
 #: corehq/apps/toggle_ui/templates/toggle/flags.html:107
 #: corehq/ex-submodules/casexml/apps/case/templates/case/partials/case_hierarchy.html:111
+#: custom/ilsgateway/templates/ilsgateway/slab/slab_configuration.html:56
 #: submodules/ctable-src/ctable_view/templates/ctable/edit_mapping.html:233
 #: submodules/ctable-src/ctable_view/templates/ctable/list_mappings.html:117
 #: submodules/ctable-src/ctable_view/templates/ctable/test_mapping.html:126
@@ -2800,8 +2799,8 @@ msgstr ""
 msgid ""
 "*Local taxes and other country-specific fees not included. Dimagi provides "
 "pro-bono software plans on a needs basis. To learn more about this "
-"opportunity or see if your program qualifies, please fill out our <a href="
-"\"%(url)s\">pro-bono form</a>."
+"opportunity or see if your program qualifies, please fill out our <a href=\"%"
+"(url)s\">pro-bono form</a>."
 msgstr ""
 
 #: corehq/apps/accounting/user_text.py:342
@@ -2868,6 +2867,15 @@ msgstr ""
 msgid "Could not find %(doc_type)s with id %(id)s"
 msgstr ""
 
+#: corehq/apps/app_manager/commcare_settings.py:28
+msgid "name"
+msgstr "Relatorio Semanal aos Coordinadores do Distrito e os NEDs"
+
+#: corehq/apps/app_manager/commcare_settings.py:43
+#: custom/bihar/reports/due_list.py:124 custom/bihar/reports/due_list.py:174
+msgid "title"
+msgstr ""
+
 #: corehq/apps/app_manager/fields.py:67 corehq/apps/hqwebapp/doc_info.py:110
 #: corehq/apps/reminders/forms.py:375 corehq/apps/sms/models.py:1111
 #: corehq/apps/sms/models.py:1504 corehq/apps/sms/views.py:689
@@ -2893,7 +2901,8 @@ msgstr ""
 #: corehq/apps/domain/templates/domain/create_snapshot.html:90
 #: corehq/apps/hqmedia/templates/hqmedia/bulk_upload.html:9
 #: corehq/apps/hqmedia/templates/hqmedia/references.html:49
-#: corehq/apps/hqwebapp/doc_info.py:89 corehq/apps/reports/filters/forms.py:109
+#: corehq/apps/hqwebapp/doc_info.py:89
+#: corehq/apps/reports/filters/forms.py:109
 #: corehq/apps/reports/filters/forms.py:541
 #: corehq/apps/reports/filters/select.py:97
 #: corehq/apps/reports/templates/reports/reportdata/excel_export_data.html:204
@@ -3045,7 +3054,6 @@ msgid "Product"
 msgstr ""
 
 #: corehq/apps/app_manager/models.py:2927
-#, python-brace-format
 msgid ""
 "You can't delete phases with anchors {phase_anchors} because they have forms "
 "attached to them"
@@ -3140,12 +3148,15 @@ msgid ""
 "Please upgrade your subscription before using this feature."
 msgstr ""
 
+#: corehq/apps/app_manager/models.py:4225
+msgid "value_names"
+msgstr ""
+
 #: corehq/apps/app_manager/models.py:4800
 msgid "Error in form \"{}\": {}"
 msgstr ""
 
 #: corehq/apps/app_manager/models.py:4971
-#, python-brace-format
 msgid "Copy of {name}"
 msgstr ""
 
@@ -3166,17 +3177,14 @@ msgid ""
 msgstr ""
 
 #: corehq/apps/app_manager/suite_xml/features/scheduler.py:31
-#, python-brace-format
 msgid "There is no schedule for form {form_id}"
 msgstr ""
 
 #: corehq/apps/app_manager/suite_xml/features/scheduler.py:63
-#, python-brace-format
 msgid "Schedule Phase in module '{module_name}' is missing an anchor"
 msgstr ""
 
 #: corehq/apps/app_manager/suite_xml/features/scheduler.py:76
-#, python-brace-format
 msgid "Form '{form_name}' in module '{module_name}' is missing an abbreviation"
 msgstr ""
 
@@ -3185,7 +3193,6 @@ msgid "Your app has multiple forms with the same schedule abbreviation"
 msgstr ""
 
 #: corehq/apps/app_manager/suite_xml/sections/details.py:210
-#, python-brace-format
 msgid ""
 "The '{form}' form selected as the case list registration form for the "
 "'{module}' module requires a '{case_type}' case. The '{module}' must load a "
@@ -3833,10 +3840,10 @@ msgstr ""
 #, python-format
 msgid ""
 "\n"
-"                            You have selected the <a href=\"%(form_url)s\">"
-"%(form_name)s</a> form\n"
-"                            as the case registration form for the <a href="
-"\"%(module_url)s\">%(module_name)s</a> module.\n"
+"                            You have selected the <a href=\"%(form_url)s\">%"
+"(form_name)s</a> form\n"
+"                            as the case registration form for the <a href=\"%"
+"(module_url)s\">%(module_name)s</a> module.\n"
 "                            This form is not a registration form. You need "
 "to select a form which opens a case and\n"
 "                            does not update an existing case. Please select "
@@ -3885,8 +3892,8 @@ msgid ""
 "                            Display Condition has syntax errors\n"
 "                            in the <a href=\"%(form_url)s\">%(form_name)s</"
 "a> form\n"
-"                            in the <a href=\"%(module_url)s\">"
-"%(module_name)s</a> module.\n"
+"                            in the <a href=\"%(module_url)s\">%(module_name)"
+"s</a> module.\n"
 "                            "
 msgstr ""
 
@@ -5479,11 +5486,11 @@ msgstr ""
 msgid ""
 "\n"
 "                                View\n"
-"                                <a data-bind=\"attr: {href: $root."
-"url('summary', id)}\">app summary</a>\n"
+"                                <a data-bind=\"attr: {href: $root.url"
+"('summary', id)}\">app summary</a>\n"
 "                                or\n"
-"                                <a data-bind=\"attr: {href: $root."
-"url('source', id)}\" class=\"view-source-files-link\">source files</a>\n"
+"                                <a data-bind=\"attr: {href: $root.url"
+"('source', id)}\" class=\"view-source-files-link\">source files</a>\n"
 "                                <br />\n"
 "                                <a href=\"#\" class=\"hide\" data-bind="
 "\"click: function() {\n"
@@ -5494,10 +5501,10 @@ msgid ""
 "                                    Compare with another version\n"
 "                                </a>\n"
 "                                <a href=\"#\" class=\"hide\" data-bind=\"\n"
-"                                    visible: $root.selectingVersion() === "
-"id(),\n"
-"                                    click: function() {$root."
-"selectingVersion('')},\n"
+"                                    visible: $root.selectingVersion() === id"
+"(),\n"
+"                                    click: function() {$root.selectingVersion"
+"('')},\n"
 "                                    css: {hide: false}\n"
 "                                \">\n"
 "                                    Cancel\n"
@@ -5906,7 +5913,6 @@ msgid "There was a problem processing your request."
 msgstr ""
 
 #: corehq/apps/app_manager/views/modules.py:723
-#, python-brace-format
 msgid "Please set the case type for the target module '{name}'."
 msgstr ""
 
@@ -5947,7 +5953,6 @@ msgid "Error parsing XML: {}"
 msgstr ""
 
 #: corehq/apps/app_manager/xform.py:211
-#, python-brace-format
 msgid "Group already has node for lang: {0}"
 msgstr ""
 
@@ -5964,7 +5969,6 @@ msgid "Form does not contain any translations for any of the build languages"
 msgstr ""
 
 #: corehq/apps/app_manager/xform.py:773
-#, python-brace-format
 msgid "<translation lang=\"{lang}\"><text id=\"{id}\"> node has no <value>"
 msgstr ""
 
@@ -5998,12 +6002,10 @@ msgid ""
 msgstr ""
 
 #: corehq/apps/app_manager/xpath.py:237
-#, python-brace-format
 msgid "Type {type} must be in list of domain types: {list}"
 msgstr ""
 
 #: corehq/apps/app_manager/xpath.py:245
-#, python-brace-format
 msgid "Reference type {ref} cannot be a child of primary type {main}."
 msgstr ""
 
@@ -6607,9 +6609,7 @@ msgid "Sync consumption fixtures"
 msgstr ""
 
 #: corehq/apps/commtrack/forms.py:55
-msgid ""
-"You must use automatic consumption calculation or  specify a value for all "
-"consumption settings."
+msgid "You must use automatic consumption calculation or "
 msgstr ""
 
 #: corehq/apps/commtrack/forms.py:71 corehq/apps/commtrack/forms.py:76
@@ -6636,7 +6636,6 @@ msgid "Submit"
 msgstr ""
 
 #: corehq/apps/commtrack/forms.py:109
-#, python-brace-format
 msgid ""
 "This is configured by <a href='{url}'>bulk importing your organization "
 "structure</a>."
@@ -6845,14 +6844,12 @@ msgid "Field names may not begin with \"{}\""
 msgstr ""
 
 #: corehq/apps/custom_data_fields/models.py:81
-#, python-brace-format
 msgid ""
 "'{value}' is not a valid choice for {slug}, the available options are: "
 "{options}."
 msgstr ""
 
 #: corehq/apps/custom_data_fields/models.py:92
-#, python-brace-format
 msgid "Cannot create or update a {entity} without the required field: {field}."
 msgstr ""
 
@@ -7023,8 +7020,8 @@ msgid ""
 "\n"
 "                                                  A value for this field "
 "must be provided when creating or\n"
-"                                                  editing a "
-"%(entity_string)s.  Bulk import will fail\n"
+"                                                  editing a %(entity_string)"
+"s.  Bulk import will fail\n"
 "                                                  unless this field is "
 "provided.\n"
 "                                              "
@@ -7772,37 +7769,30 @@ msgid "Case with identifier '%s' has been added to this group."
 msgstr ""
 
 #: corehq/apps/data_interfaces/utils.py:66
-#, python-brace-format
 msgid "XFORM {form_id} does not belong to domain {domain}"
 msgstr ""
 
 #: corehq/apps/data_interfaces/utils.py:70
-#, python-brace-format
 msgid "XFORM {form_id} for domain {domain} by user '{username}'"
 msgstr ""
 
 #: corehq/apps/data_interfaces/utils.py:78
-#, python-brace-format
 msgid "Successfully archived {form}"
 msgstr ""
 
 #: corehq/apps/data_interfaces/utils.py:81
-#, python-brace-format
 msgid "Successfully unarchived {form}"
 msgstr ""
 
 #: corehq/apps/data_interfaces/utils.py:85
-#, python-brace-format
 msgid "Could not archive {form}: {error}"
 msgstr ""
 
 #: corehq/apps/data_interfaces/utils.py:93
-#, python-brace-format
 msgid "Could not find XForm {form_id}"
 msgstr ""
 
 #: corehq/apps/data_interfaces/utils.py:98
-#, python-brace-format
 msgid "{success_msg} {count} form(s)"
 msgstr ""
 
@@ -7862,7 +7852,6 @@ msgid "forms"
 msgstr ""
 
 #: corehq/apps/data_interfaces/views.py:225
-#, python-brace-format
 msgid "File size too large. Please upload file less than {size} Megabytes"
 msgstr ""
 
@@ -8286,11 +8275,7 @@ msgid "Restrict Dimagi Staff Access"
 msgstr ""
 
 #: corehq/apps/domain/forms.py:717
-msgid ""
-"Dimagi staff sometimes require access to projects to provide support. "
-"Checking this box may restrict your ability to receive this support in the "
-"event you report an issue. You may also miss out on important communications "
-"and updates."
+msgid "Dimagi staff sometimes require access to projects to provide support. "
 msgstr ""
 
 #: corehq/apps/domain/forms.py:722
@@ -8618,8 +8603,8 @@ msgstr ""
 #: corehq/apps/domain/forms.py:1902
 #, python-format
 msgid ""
-"This contract is too long to be managed in this interface.  Please contact "
-"%(email)s to manage a contract greater than 5 years."
+"This contract is too long to be managed in this interface.  Please contact %"
+"(email)s to manage a contract greater than 5 years."
 msgstr ""
 
 #: corehq/apps/domain/forms.py:1914
@@ -8650,7 +8635,6 @@ msgid "Transfer of ownership for CommCare project space."
 msgstr ""
 
 #: corehq/apps/domain/models.py:1200
-#, python-brace-format
 msgid "There has been a transfer of ownership of {domain}"
 msgstr ""
 
@@ -8871,16 +8855,16 @@ msgstr ""
 
 #: corehq/apps/domain/templates/domain/admin/global_sms_rates.html:71
 #: corehq/apps/reports/standard/ivr.py:81
-#: corehq/apps/reports/standard/sms.py:141 corehq/apps/smsbillables/forms.py:44
-#: custom/fri/reports/reports.py:229
+#: corehq/apps/reports/standard/sms.py:141
+#: corehq/apps/smsbillables/forms.py:44 custom/fri/reports/reports.py:229
 #: custom/ilsgateway/tanzania/reports/unrecognized_sms.py:137
 msgid "Incoming"
 msgstr ""
 
 #: corehq/apps/domain/templates/domain/admin/global_sms_rates.html:74
 #: corehq/apps/reports/standard/ivr.py:82
-#: corehq/apps/reports/standard/sms.py:142 corehq/apps/smsbillables/forms.py:43
-#: custom/fri/reports/reports.py:230
+#: corehq/apps/reports/standard/sms.py:142
+#: corehq/apps/smsbillables/forms.py:43 custom/fri/reports/reports.py:230
 #: custom/ilsgateway/tanzania/reports/unrecognized_sms.py:138
 msgid "Outgoing"
 msgstr ""
@@ -9599,8 +9583,8 @@ msgstr ""
 #, python-format
 msgid ""
 "\n"
-"    A transfer of project space has been initiated by %(from_username)s to "
-"%(to_username)s.  If you believe this is an error, please contact Dimagi "
+"    A transfer of project space has been initiated by %(from_username)s to %"
+"(to_username)s.  If you believe this is an error, please contact Dimagi "
 "immediately at support@dimagi.com and follow <a href=\"%(settings_url)s"
 "\">this link</a> to deactivate the transfer: %(settings_url)s\n"
 "    "
@@ -9625,8 +9609,8 @@ msgstr ""
 #, python-format
 msgid ""
 "\n"
-"A transfer of project space has been initiated by %(from_username)s to "
-"%(to_username)s.  If you believe this is an error, please contact Dimagi "
+"A transfer of project space has been initiated by %(from_username)s to %"
+"(to_username)s.  If you believe this is an error, please contact Dimagi "
 "immediately at support@dimagi.com and follow this link to deactivate the "
 "transfer: %(settings_url)s\n"
 msgstr ""
@@ -10349,10 +10333,8 @@ msgid "Disable"
 msgstr ""
 
 #: corehq/apps/domain/templates/login_and_password/two_factor/profile/profile.html:17
-#, fuzzy
-#| msgid "AWW phone number"
 msgid "Backup Phone Numbers"
-msgstr "आँगनवाड़ी सेविका की दूरभाष संख्या"
+msgstr ""
 
 #: corehq/apps/domain/templates/login_and_password/two_factor/profile/profile.html:18
 msgid ""
@@ -10614,7 +10596,6 @@ msgid "Renew or Change Plan"
 msgstr ""
 
 #: corehq/apps/domain/views.py:1622
-#, python-brace-format
 msgid ""
 "Based on your current usage we recommend you use the <strong>{plan}</strong> "
 "plan"
@@ -10739,17 +10720,14 @@ msgid "Feature Flags"
 msgstr ""
 
 #: corehq/apps/domain/views.py:2712
-#, python-brace-format
 msgid "Resent transfer request for project '{domain}'"
 msgstr ""
 
 #: corehq/apps/domain/views.py:2782
-#, python-brace-format
 msgid "Successfully transferred ownership of project '{domain}'"
 msgstr ""
 
 #: corehq/apps/domain/views.py:2814
-#, python-brace-format
 msgid "Declined ownership of project '{domain}'"
 msgstr ""
 
@@ -10982,7 +10960,7 @@ msgstr ""
 
 #: corehq/apps/export/templates/export/customize_export.html:120
 #: corehq/apps/export/templates/export/new_customize_export.html:97
-msgid "Expand Multiple Answer Questions"
+msgid "Expand Checkbox Questions"
 msgstr ""
 
 #: corehq/apps/export/templates/export/customize_export.html:144
@@ -11954,54 +11932,46 @@ msgid "Fetching additional data, please wait..."
 msgstr ""
 
 #: corehq/apps/fixtures/upload.py:22
-#, python-brace-format
 msgid "Workbook 'types' has no column '{column_name}'."
 msgstr ""
 
 #: corehq/apps/fixtures/upload.py:25
-#, python-brace-format
 msgid ""
 "Lookup-tables can not have empty fields and empty properties on items. "
 "table_id '{tag}' has no fields and no properties"
 msgstr ""
 
 #: corehq/apps/fixtures/upload.py:28
-#, python-brace-format
 msgid ""
 "Lookup-tables should have unique 'table_id'. There are two rows with "
 "table_id '{tag}' in 'types' sheet."
 msgstr ""
 
 #: corehq/apps/fixtures/upload.py:31
-#, python-brace-format
 msgid ""
 "Excel-sheet '{tag}' does not contain the column '{field}' as specified in "
 "its 'types' definition"
 msgstr ""
 
 #: corehq/apps/fixtures/upload.py:35
-#, python-brace-format
 msgid ""
 "Excel-sheet '{tag}' has an extra column'{field}' that's not defined in its "
 "'types' definition"
 msgstr ""
 
 #: corehq/apps/fixtures/upload.py:39
-#, python-brace-format
 msgid ""
 "Properties should be specified as 'field 1: property 1'. In 'types' sheet, "
 "'{prop_key}' is not correctly formatted"
 msgstr ""
 
 #: corehq/apps/fixtures/upload.py:43
-#, python-brace-format
 msgid ""
 "Excel-sheet '{tag}' does not contain property '{property}' of the field "
 "'{field}' as specified in its 'types' definition"
 msgstr ""
 
 #: corehq/apps/fixtures/upload.py:47
-#, python-brace-format
 msgid ""
 "Excel-sheet '{tag}'' has an extra property '{property}' for the field "
 "'{field}' that's not defined in its 'types' definition. Re-check the "
@@ -12009,26 +11979,34 @@ msgid ""
 msgstr ""
 
 #: corehq/apps/fixtures/upload.py:52
-#, python-brace-format
 msgid "Fields with attributes should be numbered as 'field: {field} integer"
 msgstr ""
 
 #: corehq/apps/fixtures/upload.py:55
-#, python-brace-format
 msgid "Attribute should be written as '{field}: {prop} interger'"
 msgstr ""
 
 #: corehq/apps/fixtures/upload.py:58
-#, python-brace-format
 msgid ""
 "Number of values for field '{field}' and attribute '{prop}' should be same"
 msgstr ""
 
 #: corehq/apps/fixtures/upload.py:61
-#, python-brace-format
 msgid ""
 "Rows shouldn't contain UIDs while using replace option. Excel sheet '{tag}' "
 "contains UID in a row."
+msgstr ""
+
+#: corehq/apps/fixtures/upload.py:93
+msgid "has_no_column"
+msgstr ""
+
+#: corehq/apps/fixtures/upload.py:99
+msgid "neither_fields_nor_attributes"
+msgstr ""
+
+#: corehq/apps/fixtures/upload.py:110
+msgid "wrong_property_syntax"
 msgstr ""
 
 #: corehq/apps/fixtures/upload.py:145
@@ -12042,6 +12020,10 @@ msgstr ""
 #: corehq/apps/fixtures/upload.py:153 corehq/apps/fixtures/upload.py:190
 #, python-format
 msgid "Workbook does not contain a sheet called '%(title)s'"
+msgstr ""
+
+#: corehq/apps/fixtures/upload.py:165
+msgid "duplicate_tag"
 msgstr ""
 
 #: corehq/apps/fixtures/upload.py:192
@@ -12070,6 +12052,34 @@ msgstr ""
 #: corehq/apps/fixtures/upload.py:293
 #, python-format
 msgid "'%(UID)s' is not a valid UID. But the new type is created."
+msgstr ""
+
+#: corehq/apps/fixtures/upload.py:309 corehq/apps/fixtures/upload.py:319
+msgid "has_no_field_column"
+msgstr ""
+
+#: corehq/apps/fixtures/upload.py:312 corehq/apps/fixtures/upload.py:322
+msgid "has_extra_column"
+msgstr ""
+
+#: corehq/apps/fixtures/upload.py:333
+msgid "sheet_has_no_property"
+msgstr ""
+
+#: corehq/apps/fixtures/upload.py:340
+msgid "sheet_has_extra_property"
+msgstr ""
+
+#: corehq/apps/fixtures/upload.py:348
+msgid "invalid_field_with_property"
+msgstr ""
+
+#: corehq/apps/fixtures/upload.py:353
+msgid "invalid_property"
+msgstr ""
+
+#: corehq/apps/fixtures/upload.py:359
+msgid "wrong_field_property_combos"
 msgstr ""
 
 #: corehq/apps/fixtures/upload.py:411
@@ -12309,8 +12319,8 @@ msgstr ""
 #, python-format
 msgid ""
 "\n"
-"                    Are you sure you want to delete the group "
-"\"%(group_name)s\"?\n"
+"                    Are you sure you want to delete the group \"%(group_name)"
+"s\"?\n"
 "                "
 msgstr ""
 
@@ -12325,13 +12335,11 @@ msgid ""
 msgstr ""
 
 #: corehq/apps/groups/views.py:50
-#, python-brace-format
 msgid ""
 "You have deleted a group. <a href=\"{url}\" class=\"post-link\">Undo</a>"
 msgstr ""
 
 #: corehq/apps/groups/views.py:74
-#, python-brace-format
 msgid "The \"{0}\" group has been restored."
 msgstr ""
 
@@ -13412,12 +13420,10 @@ msgid "Not a valid %s file."
 msgstr ""
 
 #: corehq/apps/hqmedia/views.py:298
-#, python-brace-format
 msgid "File {name} has an incorrect file type {ext}."
 msgstr ""
 
 #: corehq/apps/hqmedia/views.py:305
-#, python-brace-format
 msgid ""
 "The file type of {name} of '{ext}' does not match the file type of the "
 "original media file '{orig_ext}'. To change file types, please upload "
@@ -14136,7 +14142,6 @@ msgid "en"
 msgstr ""
 
 #: corehq/apps/hqwebapp/views.py:507
-#, python-brace-format
 msgid ""
 "Apps/{app}/{dest} is queued to sync to dropbox! You will receive an email "
 "when it completes."
@@ -14588,14 +14593,12 @@ msgid "Failed up import any indicators. Check your file."
 msgstr ""
 
 #: corehq/apps/locations/bulk.py:67
-#, python-brace-format
 msgid ""
 "Location with type {location_type} not found, this worksheet                 "
 "will not be imported"
 msgstr ""
 
 #: corehq/apps/locations/bulk.py:82
-#, python-brace-format
 msgid ""
 "Location {name} with site code {site_code} could not                         "
 "be imported due to duplicated site codes in the "
@@ -14603,57 +14606,53 @@ msgid ""
 msgstr ""
 
 #: corehq/apps/locations/bulk.py:119
-#, python-brace-format
 msgid "Unable to import location {0}: {1}"
 msgstr ""
 
 #: corehq/apps/locations/bulk.py:132
-#, python-brace-format
 msgid "Existing location type error, type of {0} is not {1}"
 msgstr ""
 
 #: corehq/apps/locations/bulk.py:171
-#, python-brace-format
 msgid "Invalid parent type of {0} for child type {1}"
 msgstr ""
 
 #: corehq/apps/locations/bulk.py:180
-#, python-brace-format
 msgid "Parent with site code {0} does not exist in this project"
 msgstr ""
 
-#: corehq/apps/locations/forms.py:46
+#: corehq/apps/locations/forms.py:47
 msgid "Parent"
 msgstr ""
 
-#: corehq/apps/locations/forms.py:55
+#: corehq/apps/locations/forms.py:56
 #: corehq/apps/locations/templates/locations/location_types.html:89
 msgid "Organization Level"
 msgstr ""
 
-#: corehq/apps/locations/forms.py:60
+#: corehq/apps/locations/forms.py:61
 msgid "Coordinates"
 msgstr ""
 
-#: corehq/apps/locations/forms.py:63
+#: corehq/apps/locations/forms.py:64
 msgid "enter as 'lat lon' or 'lat, lon' (e.g., '42.3652 -71.1029')"
 msgstr ""
 
-#: corehq/apps/locations/forms.py:69
+#: corehq/apps/locations/forms.py:70
 msgid ""
 "A unique system code for this location. Leave this blank to have it auto "
 "generated"
 msgstr ""
 
-#: corehq/apps/locations/forms.py:75
+#: corehq/apps/locations/forms.py:76
 msgid "A number referencing this location on an external system"
 msgstr ""
 
-#: corehq/apps/locations/forms.py:124 corehq/apps/locations/forms.py:130
+#: corehq/apps/locations/forms.py:125 corehq/apps/locations/forms.py:131
 msgid "Location Information"
 msgstr ""
 
-#: corehq/apps/locations/forms.py:355
+#: corehq/apps/locations/forms.py:356
 msgid ""
 "The following users already have locations assigned,  you must unassign them "
 "before they can be added here:  "
@@ -15016,6 +15015,7 @@ msgid "Archive"
 msgstr ""
 
 #: corehq/apps/locations/templates/locations/manage/locations.html:308
+#: custom/ilsgateway/templates/ilsgateway/slab/slab_configuration.html:99
 #, python-format
 msgid ""
 "\n"
@@ -15093,7 +15093,6 @@ msgstr ""
 
 #: corehq/apps/locations/views.py:358 corehq/apps/locations/views.py:374
 #: corehq/apps/locations/views.py:402
-#, python-brace-format
 msgid "Location '{location_name}' has successfully been {action}."
 msgstr ""
 
@@ -15124,7 +15123,6 @@ msgid "Update Users at this Location"
 msgstr ""
 
 #: corehq/apps/locations/views.py:511
-#, python-brace-format
 msgid "Edit {name} <small>{type}</small>"
 msgstr ""
 
@@ -15748,8 +15746,8 @@ msgstr ""
 msgid ""
 "\n"
 "                    <!--HubSpot Call-to-Action Code -->\n"
-"                    <span class=\"hs-cta-wrapper\" id=\"hs-cta-"
-"wrapper-071f4a7d-237d-49d8-b12d-c28fe204927d\">\n"
+"                    <span class=\"hs-cta-wrapper\" id=\"hs-cta-wrapper-"
+"071f4a7d-237d-49d8-b12d-c28fe204927d\">\n"
 "                        <span class=\"hs-cta-node hs-cta-071f4a7d-237d-49d8-"
 "b12d-c28fe204927d\" id=\"hs-cta-071f4a7d-237d-49d8-b12d-c28fe204927d\">\n"
 "                            <!--[if lte IE 8]><div id=\"hs-cta-ie-element"
@@ -15757,9 +15755,8 @@ msgid ""
 "                            <a href=\"http://cta-redirect.hubspot.com/cta/"
 "redirect/503070/071f4a7d-237d-49d8-b12d-c28fe204927d\" ><img class=\"hs-cta-"
 "img\" id=\"hs-cta-img-071f4a7d-237d-49d8-b12d-c28fe204927d\" style=\"border-"
-"width:0px;\" src=\"https://no-cache.hubspot.com/cta/"
-"default/503070/071f4a7d-237d-49d8-b12d-c28fe204927d.png\"  alt=\"View All "
-"Case Studies\"/></a>\n"
+"width:0px;\" src=\"https://no-cache.hubspot.com/cta/default/503070/071f4a7d-"
+"237d-49d8-b12d-c28fe204927d.png\"  alt=\"View All Case Studies\"/></a>\n"
 "                        </span>\n"
 "                        <script type=\"text/javascript\">\n"
 "                            hbspt.cta.load(503070, '071f4a7d-237d-49d8-b12d-"
@@ -15819,21 +15816,20 @@ msgid ""
 "                    <!--HubSpot Call-to-Action Code -->\n"
 "                    <span class=\"hs-cta-wrapper\" id=\"hs-cta-wrapper-"
 "c34ae48e-2f1a-48ac-9170-31fc7c9e845b\">\n"
-"                        <span class=\"hs-cta-node hs-cta-"
-"c34ae48e-2f1a-48ac-9170-31fc7c9e845b\" id=\"hs-cta-"
-"c34ae48e-2f1a-48ac-9170-31fc7c9e845b\">\n"
+"                        <span class=\"hs-cta-node hs-cta-c34ae48e-2f1a-48ac-"
+"9170-31fc7c9e845b\" id=\"hs-cta-c34ae48e-2f1a-48ac-9170-31fc7c9e845b\">\n"
 "                            <!--[if lte IE 8]><div id=\"hs-cta-ie-element"
 "\"></div><![endif]-->\n"
 "                            <a href=\"http://cta-redirect.hubspot.com/cta/"
 "redirect/503070/c34ae48e-2f1a-48ac-9170-31fc7c9e845b\"  target=\"_blank\" "
-"><img class=\"hs-cta-img\" id=\"hs-cta-img-"
-"c34ae48e-2f1a-48ac-9170-31fc7c9e845b\" style=\"border-width:0px;\" src="
-"\"https://no-cache.hubspot.com/cta/default/503070/"
-"c34ae48e-2f1a-48ac-9170-31fc7c9e845b.png\"  alt=\"See All Partners\"/></a>\n"
+"><img class=\"hs-cta-img\" id=\"hs-cta-img-c34ae48e-2f1a-48ac-9170-"
+"31fc7c9e845b\" style=\"border-width:0px;\" src=\"https://no-cache.hubspot."
+"com/cta/default/503070/c34ae48e-2f1a-48ac-9170-31fc7c9e845b.png\"  alt=\"See "
+"All Partners\"/></a>\n"
 "                        </span>\n"
 "                        <script type=\"text/javascript\">\n"
-"                            hbspt.cta.load(503070, "
-"'c34ae48e-2f1a-48ac-9170-31fc7c9e845b');\n"
+"                            hbspt.cta.load(503070, 'c34ae48e-2f1a-48ac-9170-"
+"31fc7c9e845b');\n"
 "                        </script>\n"
 "                    </span>\n"
 "                    <!-- end HubSpot Call-to-Action Code -->\n"
@@ -15859,11 +15855,10 @@ msgstr ""
 msgid ""
 "\n"
 "                    <!--HubSpot Call-to-Action Code -->\n"
-"                    <span class=\"hs-cta-wrapper\" id=\"hs-cta-"
-"wrapper-23da92fd-b671-481f-9aee-bbc8a94b1f8b\">\n"
-"                        <span class=\"hs-cta-node hs-cta-23da92fd-"
-"b671-481f-9aee-bbc8a94b1f8b\" id=\"hs-cta-23da92fd-b671-481f-9aee-"
-"bbc8a94b1f8b\">\n"
+"                    <span class=\"hs-cta-wrapper\" id=\"hs-cta-wrapper-"
+"23da92fd-b671-481f-9aee-bbc8a94b1f8b\">\n"
+"                        <span class=\"hs-cta-node hs-cta-23da92fd-b671-481f-"
+"9aee-bbc8a94b1f8b\" id=\"hs-cta-23da92fd-b671-481f-9aee-bbc8a94b1f8b\">\n"
 "                            <!--[if lte IE 8]><div id=\"hs-cta-ie-element"
 "\"></div><![endif]-->\n"
 "                            <a href=\"http://cta-redirect.hubspot.com/cta/"
@@ -15904,9 +15899,8 @@ msgid ""
 "                    <!--HubSpot Call-to-Action Code -->\n"
 "                    <span class=\"hs-cta-wrapper\" id=\"hs-cta-wrapper-"
 "c21c3aed-90ee-4106-98d0-dbe846e8ca28\">\n"
-"                        <span class=\"hs-cta-node hs-cta-"
-"c21c3aed-90ee-4106-98d0-dbe846e8ca28\" id=\"hs-cta-c21c3aed-90ee-4106-98d0-"
-"dbe846e8ca28\">\n"
+"                        <span class=\"hs-cta-node hs-cta-c21c3aed-90ee-4106-"
+"98d0-dbe846e8ca28\" id=\"hs-cta-c21c3aed-90ee-4106-98d0-dbe846e8ca28\">\n"
 "                            <!--[if lte IE 8]><div id=\"hs-cta-ie-element"
 "\"></div><![endif]-->\n"
 "                            <a href=\"http://cta-redirect.hubspot.com/cta/"
@@ -16196,10 +16190,8 @@ msgid "Two-factor Authentication"
 msgstr ""
 
 #: corehq/apps/prelogin/templates/prelogin/_sections/pricing/05_data_security.html:33
-#, fuzzy
-#| msgid "Identified in %s days"
 msgid "Deidentified data"
-msgstr "%s दिन में पहचान कर लिया गया"
+msgstr ""
 
 #: corehq/apps/prelogin/templates/prelogin/_sections/pricing/05_data_security.html:38
 msgid "Security Policy Control and Enforcement"
@@ -16379,8 +16371,8 @@ msgid ""
 "                    <a class=\"lead-link\"\n"
 "                       href=\"https://confluence.dimagi.com/display/"
 "commcarepublic/CommCare+Pricing+FAQs?__hstc=187943799."
-"ba674a1a3cdef13c5d09b2a54d65c2b8.1431286503613.1435340206977.1435342587932.124&__hssc=187943799.6.1435342587932&__hsfp=312587752\">FAQs</"
-"a>.\n"
+"ba674a1a3cdef13c5d09b2a54d65c2b8.1431286503613.1435340206977.1435342587932.124&__hssc=187943799.6.1435342587932&__hsfp=312587752"
+"\">FAQs</a>.\n"
 "                    "
 msgstr ""
 
@@ -17537,30 +17529,25 @@ msgid ""
 msgstr ""
 
 #: corehq/apps/products/bulk.py:26
-#, python-brace-format
 msgid "Failed to import product {name}: {ex}"
 msgstr ""
 
 #: corehq/apps/products/bulk.py:43
-#, python-brace-format
 msgid "Product {product_name} belongs to another domain and was not updated"
 msgstr ""
 
 #: corehq/apps/products/bulk.py:52
-#, python-brace-format
 msgid ""
 "Product {product_name} could not be imported                     since its "
 "product ID is already assigned to another product"
 msgstr ""
 
 #: corehq/apps/products/bulk.py:64
-#, python-brace-format
 msgid ""
 "Product {product_name} references a program that doesn't exist: {program_id}"
 msgstr ""
 
 #: corehq/apps/products/bulk.py:88
-#, python-brace-format
 msgid ""
 "Successfully updated {number_of_products} products with {errors} errors."
 msgstr ""
@@ -17577,7 +17564,6 @@ msgid "Units"
 msgstr ""
 
 #: corehq/apps/products/models.py:233
-#, python-brace-format
 msgid "Product with ID '{product_id}' could not be found!"
 msgstr ""
 
@@ -17686,12 +17672,10 @@ msgid "Archived Products"
 msgstr ""
 
 #: corehq/apps/products/views.py:48 corehq/apps/products/views.py:71
-#, python-brace-format
 msgid "Product '{product_name}' has successfully been {action}."
 msgstr ""
 
 #: corehq/apps/products/views.py:66
-#, python-brace-format
 msgid "Another product is already using the Product ID '{product_id}'"
 msgstr ""
 
@@ -17848,7 +17832,6 @@ msgid "Deleting Program..."
 msgstr ""
 
 #: corehq/apps/programs/views.py:25
-#, python-brace-format
 msgid "Program '{program_name}' has successfully been deleted."
 msgstr ""
 
@@ -18005,8 +17988,8 @@ msgstr ""
 #: corehq/apps/registration/templates/registration/email/confirm_account.html:68
 #, python-format
 msgid ""
-"Please click the button below to activate your CommCare project <strong>"
-"%(domain)s</strong>."
+"Please click the button below to activate your CommCare project <strong>%"
+"(domain)s</strong>."
 msgstr ""
 
 #: corehq/apps/registration/templates/registration/email/confirm_account.html:74
@@ -19692,8 +19675,8 @@ msgid ""
 "We are sorry, but your saved report '%(config_name)s' is no longer "
 "accessible because your subscription does not allow Custom Reporting. Please "
 "talk to your Project Administrator about enabling Custom Reports. If you "
-"want CommCare HQ to stop sending this message, please visit "
-"%(saved_reports_url)s to remove this Emailed Report."
+"want CommCare HQ to stop sending this message, please visit %"
+"(saved_reports_url)s to remove this Emailed Report."
 msgstr ""
 
 #: corehq/apps/reports/models.py:535
@@ -20252,7 +20235,6 @@ msgid "Sun"
 msgstr ""
 
 #: corehq/apps/reports/standard/monitoring.py:1110
-#, python-brace-format
 msgid "Time ({timezone})"
 msgstr ""
 
@@ -20889,8 +20871,8 @@ msgstr ""
 #, python-format
 msgid ""
 "\n"
-"    This form has been edited. The latest version can be viewed <a href="
-"\"%(latest_version_url)s\">here</a>.\n"
+"    This form has been edited. The latest version can be viewed <a href=\"%"
+"(latest_version_url)s\">here</a>.\n"
 "    "
 msgstr ""
 
@@ -21132,8 +21114,8 @@ msgstr ""
 msgid ""
 "The information contained in this transmission may contain privileged and "
 "confidential information, including personal information protected by "
-"federal and state privacy laws. It is intended only for the use of the "
-"person(s) named above. If you are not the intended recipient, you are hereby "
+"federal and state privacy laws. It is intended only for the use of the person"
+"(s) named above. If you are not the intended recipient, you are hereby "
 "notified that any review, dissemination, distribution, or duplication of "
 "this communication is strictly prohibited. If you are not the intended "
 "recipient, please contact the sender by reply email and destroy all copies "
@@ -21249,8 +21231,8 @@ msgstr ""
 #, python-format
 msgid ""
 "\n"
-"            These are people who used CommCare last month but didn't submit "
-"%(threshold)s forms.\n"
+"            These are people who used CommCare last month but didn't submit %"
+"(threshold)s forms.\n"
 "            They could use a boost!\n"
 "        "
 msgstr ""
@@ -21593,7 +21575,6 @@ msgid ""
 msgstr ""
 
 #: corehq/apps/reports/views.py:1161
-#, python-brace-format
 msgid ""
 "Case {name} has been closed.\n"
 "            <a href=\"javascript:document.getElementById('{html_form_id}')."
@@ -21616,7 +21597,8 @@ msgstr ""
 msgid "case name"
 msgstr ""
 
-#: corehq/apps/reports/views.py:1205
+#: corehq/apps/reports/views.py:1205 custom/reports/mc/reports/old_sql.py:153
+#: custom/reports/mc/reports/sql.py:206
 msgid "section"
 msgstr ""
 
@@ -21712,7 +21694,6 @@ msgid "Numeric Filter"
 msgstr ""
 
 #: corehq/apps/reports_core/filters.py:192
-#, python-brace-format
 msgid "Choice \"{choice}\" not found in choices: {choices}"
 msgstr ""
 
@@ -22392,32 +22373,26 @@ msgid "Invalid time format: expected HHMM (24-hour)."
 msgstr ""
 
 #: corehq/apps/sms/messages.py:57
-#, python-brace-format
 msgid "Keyword not found: '{0}'"
 msgstr ""
 
 #: corehq/apps/sms/messages.py:58
-#, python-brace-format
 msgid "Usage: {0} <keyword>"
 msgstr ""
 
 #: corehq/apps/sms/messages.py:59
-#, python-brace-format
 msgid "Unknown command: '{0}'"
 msgstr ""
 
 #: corehq/apps/sms/messages.py:61
-#, python-brace-format
 msgid "Expected name and value to be joined by '{0}'."
 msgstr ""
 
 #: corehq/apps/sms/messages.py:62
-#, python-brace-format
 msgid "More than one answer found for '{0}'"
 msgstr ""
 
 #: corehq/apps/sms/messages.py:63
-#, python-brace-format
 msgid "More than one question matches '{0}'"
 msgstr ""
 
@@ -22434,7 +22409,6 @@ msgid "More than one case was found with the given external id."
 msgstr ""
 
 #: corehq/apps/sms/messages.py:67
-#, python-brace-format
 msgid "Field '{0}': "
 msgstr ""
 
@@ -22449,38 +22423,32 @@ msgid ""
 msgstr ""
 
 #: corehq/apps/sms/messages.py:71
-#, python-brace-format
 msgid ""
 "You have opted-in to receive messages from CommCareHQ. To opt-out, reply to "
 "this number with {0}"
 msgstr ""
 
 #: corehq/apps/sms/messages.py:73
-#, python-brace-format
 msgid ""
 "You have opted-out from receiving messages from CommCareHQ. To opt-in, reply "
 "to this number with {0}"
 msgstr ""
 
 #: corehq/apps/sms/messages.py:75
-#, python-brace-format
 msgid "CommCare user {0} already exists"
 msgstr ""
 
 #: corehq/apps/sms/messages.py:76
-#, python-brace-format
 msgid "Username {0} is too long.  Must be under {1} characters."
 msgstr ""
 
 #: corehq/apps/sms/messages.py:77
-#, python-brace-format
 msgid ""
 "Welcome to CommCareHQ! Is this phone used by {0}? If yes, reply '123' to {1} "
 "to start using SMS with CommCareHQ."
 msgstr ""
 
 #: corehq/apps/sms/messages.py:79
-#, python-brace-format
 msgid ""
 "Welcome to CommCareHQ! Is this phone used by {0}? If yes, reply '123' to "
 "start using SMS with CommCareHQ."
@@ -22497,12 +22465,10 @@ msgid ""
 msgstr ""
 
 #: corehq/apps/sms/messages.py:85
-#, python-brace-format
 msgid "Please register here: {0}"
 msgstr ""
 
 #: corehq/apps/sms/messages.py:86
-#, python-brace-format
 msgid ""
 "Please reply with an SMS saying 'join {0} worker [username]', entering your "
 "requested username in place of [username]"
@@ -22521,7 +22487,6 @@ msgid "Usage: #update <keyword>"
 msgstr ""
 
 #: corehq/apps/sms/messages.py:92
-#, python-brace-format
 msgid "Location with site code {0} was not found."
 msgstr ""
 
@@ -23528,8 +23493,8 @@ msgid ""
 "\n"
 "                            <strong>%(feat_name)s</strong> is only available "
 "for the %(req_plan)s\n"
-"                            Plan and higher. Your subscription to "
-"%(current_plan)s Plan is under a\n"
+"                            Plan and higher. Your subscription to %"
+"(current_plan)s Plan is under a\n"
 "                            trial period.\n"
 "                        "
 msgstr ""
@@ -23735,8 +23700,8 @@ msgstr ""
 #, python-format
 msgid ""
 "\n"
-"                            And <strong>%(percent)s%%</strong> of all other "
-"%(namespace)ss.\n"
+"                            And <strong>%(percent)s%%</strong> of all other %"
+"(namespace)ss.\n"
 "                            "
 msgstr ""
 
@@ -23796,12 +23761,10 @@ msgid "Problem creating getter: {}. Message is: {}"
 msgstr ""
 
 #: corehq/apps/userreports/filters/factory.py:19
-#, python-brace-format
 msgid "Complex filter type {0} must be one of the following choices ({1})"
 msgstr ""
 
 #: corehq/apps/userreports/filters/factory.py:24
-#, python-brace-format
 msgid "{0} filter type must include a \"filters\" list"
 msgstr ""
 
@@ -23810,7 +23773,6 @@ msgid "Problem creating filter from spec: {}, message is {}"
 msgstr ""
 
 #: corehq/apps/userreports/filters/factory.py:87
-#, python-brace-format
 msgid ""
 "Illegal or missing filter type: \"{0}\", must be one of the following "
 "choice: ({1})"
@@ -23825,7 +23787,6 @@ msgid "Indicator specification must include a root level type field."
 msgstr ""
 
 #: corehq/apps/userreports/indicators/factory.py:154
-#, python-brace-format
 msgid ""
 "Illegal indicator type: \"{0}\", must be one of the following choice: ({1})"
 msgstr ""
@@ -23990,7 +23951,6 @@ msgid "Problem creating column from spec: {}, message is: {}"
 msgstr ""
 
 #: corehq/apps/userreports/reports/factory.py:69
-#, python-brace-format
 msgid "Illegal chart type: {0}, must be one of the following choice: ({1})"
 msgstr ""
 
@@ -24012,7 +23972,6 @@ msgid "Problem creating report filter from spec: {}, message is: {}"
 msgstr ""
 
 #: corehq/apps/userreports/reports/filters/factory.py:91
-#, python-brace-format
 msgid ""
 "Illegal report filter type: {0}, must be one of the following choice: ({1})"
 msgstr ""
@@ -24046,7 +24005,6 @@ msgid ""
 msgstr ""
 
 #: corehq/apps/userreports/sql/columns.py:58
-#, python-brace-format
 msgid ""
 "The \"{header}\" column had too many values to expand! Expansion limited to "
 "{max} distinct values."
@@ -24512,7 +24470,6 @@ msgid "Filter {} not found!"
 msgstr ""
 
 #: corehq/apps/users/bulkupload.py:52
-#, python-brace-format
 msgid "The following are {label} column headers: {headers}."
 msgstr ""
 
@@ -24532,7 +24489,6 @@ msgid "Username must be a valid email address: %s"
 msgstr ""
 
 #: corehq/apps/users/bulkupload.py:269
-#, python-brace-format
 msgid "Unable to update locations for {user} because {message}"
 msgstr ""
 
@@ -24933,8 +24889,8 @@ msgstr ""
 #, python-format
 msgid ""
 "\n"
-"                    Are you sure you want to permanently delete <strong>"
-"%(friendly_name)s</strong>?\n"
+"                    Are you sure you want to permanently delete <strong>%"
+"(friendly_name)s</strong>?\n"
 "                    "
 msgstr ""
 
@@ -24951,8 +24907,8 @@ msgstr ""
 #, python-format
 msgid ""
 "\n"
-"                        Will delete <strong>all</strong> of "
-"%(friendly_name)s's form submissions.\n"
+"                        Will delete <strong>all</strong> of %(friendly_name)"
+"s's form submissions.\n"
 "                    "
 msgstr ""
 
@@ -24976,8 +24932,8 @@ msgid ""
 "\n"
 "                    If even after reading this you decide that you really "
 "want\n"
-"                    to delete this user and all of their data, type <strong>"
-"%(username)s</strong> into the box below.\n"
+"                    to delete this user and all of their data, type <strong>%"
+"(username)s</strong> into the box below.\n"
 "                    "
 msgstr ""
 
@@ -25438,8 +25394,8 @@ msgstr ""
 #, python-format
 msgid ""
 "\n"
-"                    Are you sure you want to delete the phone number: \"+"
-"%(number)s\"?\n"
+"                    Are you sure you want to delete the phone number: \"+%"
+"(number)s\"?\n"
 "                "
 msgstr ""
 
@@ -25745,12 +25701,10 @@ msgid ""
 msgstr ""
 
 #: corehq/apps/users/views/__init__.py:647
-#, python-brace-format
 msgid "You are already a member of {entity}."
 msgstr ""
 
 #: corehq/apps/users/views/__init__.py:652
-#, python-brace-format
 msgid ""
 "It looks like you are trying to accept an invitation for {invited} but you "
 "are already a member of {entity} with the account {current}. Please sign out "
@@ -25758,7 +25712,6 @@ msgid ""
 msgstr ""
 
 #: corehq/apps/users/views/__init__.py:663
-#, python-brace-format
 msgid "The invited user {invited} and your user {current} do not match!"
 msgstr ""
 
@@ -25804,11 +25757,11 @@ msgstr ""
 #: corehq/apps/users/views/mobile/groups.py:94
 #, python-format
 msgid ""
-"%(users)s user(s) and %(phone_numbers)s phone number(s) processed. "
-"%(phone_numbers_already_verified)s already verified, "
-"%(phone_numbers_in_use)s already in use by other contact(s), "
-"%(phone_numbers_pending_verification)s already pending verification, and "
-"%(workflows_started)s verification workflow(s) started."
+"%(users)s user(s) and %(phone_numbers)s phone number(s) processed. %"
+"(phone_numbers_already_verified)s already verified, %(phone_numbers_in_use)s "
+"already in use by other contact(s), %(phone_numbers_pending_verification)s "
+"already pending verification, and %(workflows_started)s verification workflow"
+"(s) started."
 msgstr ""
 
 #: corehq/apps/users/views/mobile/groups.py:103
@@ -25851,7 +25804,6 @@ msgid "You are not allowed to add additional mobile workers"
 msgstr ""
 
 #: corehq/apps/users/views/mobile/users.py:331
-#, python-brace-format
 msgid "User '{user}' has successfully been {action}."
 msgstr ""
 
@@ -26076,7 +26028,6 @@ msgid "Empty Case"
 msgstr ""
 
 #: corehq/ex-submodules/couchexport/shortcuts.py:23
-#, python-brace-format
 msgid "No previous export with id \"{id}\" found"
 msgstr ""
 
@@ -28207,16 +28158,16 @@ msgstr ""
 #: custom/ewsghana/alerts/__init__.py:6
 #, python-format
 msgid ""
-"URGENT STOCKOUT: More than half of the facilities reporting to EWS in "
-"%(location)s are experiencing stockouts of one or more of: %(products)s."
+"URGENT STOCKOUT: More than half of the facilities reporting to EWS in %"
+"(location)s are experiencing stockouts of one or more of: %(products)s."
 msgstr ""
 
 #: custom/ewsghana/alerts/__init__.py:8
 #, python-format
 msgid ""
-"URGENT NON-REPORTING: More than half of the facilities registered to EWS in "
-"%s have not reported for the past month. Please log in to http://ewsghana."
-"com for details."
+"URGENT NON-REPORTING: More than half of the facilities registered to EWS in %"
+"s have not reported for the past month. Please log in to http://ewsghana.com "
+"for details."
 msgstr ""
 
 #: custom/ewsghana/alerts/__init__.py:10
@@ -28330,8 +28281,8 @@ msgstr ""
 #: custom/ewsghana/handlers/__init__.py:13
 #, python-format
 msgid ""
-"The following commodities %(products_names)s are now available at the "
-"%(ms_type)s. Please place your order now."
+"The following commodities %(products_names)s are now available at the %"
+"(ms_type)s. Please place your order now."
 msgstr ""
 
 #: custom/ewsghana/handlers/__init__.py:16
@@ -28583,7 +28534,7 @@ msgstr ""
 msgid "Update EWS Settings"
 msgstr ""
 
-#: custom/ewsghana/views.py:54
+#: custom/ewsghana/views.py:49
 msgid "EWS Ghana"
 msgstr ""
 
@@ -28770,6 +28721,32 @@ msgstr ""
 msgid "Upload a file"
 msgstr ""
 
+#: custom/ilsgateway/slab/messages.py:3
+msgid ""
+"Did you receive or transfer stock to another facility last month? Please "
+"reply either 'trans no' or 'trans yes'"
+msgstr ""
+
+#: custom/ilsgateway/slab/messages.py:5
+msgid ""
+"You can respond 'trans yes' if you have received or transfered stock last "
+"month or 'trans no' if you have not"
+msgstr ""
+
+#: custom/ilsgateway/slab/messages.py:7
+#, python-format
+msgid ""
+"You are overstocked for %(overstocked_list)s that you can redistribute to "
+"other facilities. Keep %(products_list)s."
+msgstr ""
+
+#: custom/ilsgateway/slab/messages.py:9
+#, python-format
+msgid ""
+"You are stocked out of %(products_list)s. The following facilities are "
+"overstocked: %(overstocked_list)s"
+msgstr ""
+
 #: custom/ilsgateway/tanzania/reminders/__init__.py:5
 msgid ""
 "Sorry, I could not understand your message. Please contact your supervisor "
@@ -28870,8 +28847,8 @@ msgstr ""
 #: custom/ilsgateway/tanzania/reminders/__init__.py:50
 #, python-format
 msgid ""
-"Thank you %(contact_name)s for reporting your stock on hand for "
-"%(facility_name)s.  Still missing %(product_list)s."
+"Thank you %(contact_name)s for reporting your stock on hand for %"
+"(facility_name)s.  Still missing %(product_list)s."
 msgstr ""
 
 #: custom/ilsgateway/tanzania/reminders/__init__.py:53
@@ -28921,8 +28898,8 @@ msgstr ""
 #: custom/ilsgateway/tanzania/reminders/__init__.py:88
 #, python-format
 msgid ""
-"Facility deliveries for group %(group_name)s (out of %(group_total)d): "
-"%(not_responded_count)d haven't responded and %(not_received_count)d have "
+"Facility deliveries for group %(group_name)s (out of %(group_total)d): %"
+"(not_responded_count)d haven't responded and %(not_received_count)d have "
 "reported not receiving. See ilsgateway.com"
 msgstr ""
 
@@ -29032,8 +29009,8 @@ msgstr ""
 #: custom/ilsgateway/tanzania/reminders/__init__.py:144
 #, python-format
 msgid ""
-"Thank you %(contact_name)s for reporting stockouts of %(product_names)s for "
-"%(facility_name)s."
+"Thank you %(contact_name)s for reporting stockouts of %(product_names)s for %"
+"(facility_name)s."
 msgstr ""
 
 #: custom/ilsgateway/tanzania/reminders/__init__.py:146
@@ -29067,7 +29044,6 @@ msgid ""
 msgstr ""
 
 #: custom/ilsgateway/tanzania/reports/dashboard_report.py:21
-#, python-brace-format
 msgid "Dashboard report {0}"
 msgstr ""
 
@@ -29108,7 +29084,6 @@ msgid "Not Received"
 msgstr ""
 
 #: custom/ilsgateway/tanzania/reports/delivery.py:185
-#, python-brace-format
 msgid "Delivery Report {0}"
 msgstr ""
 
@@ -29148,7 +29123,6 @@ msgid "R&R Status"
 msgstr ""
 
 #: custom/ilsgateway/tanzania/reports/randr.py:187
-#, python-brace-format
 msgid "R & R {0}"
 msgstr ""
 
@@ -29195,7 +29169,6 @@ msgid "Hist. Resp. Rate"
 msgstr ""
 
 #: custom/ilsgateway/tanzania/reports/stock_on_hand.py:426
-#, python-brace-format
 msgid "Stock On Hand {0}"
 msgstr ""
 
@@ -29216,7 +29189,6 @@ msgid "Supervision This Quarter"
 msgstr ""
 
 #: custom/ilsgateway/tanzania/reports/supervision.py:183
-#, python-brace-format
 msgid "Supervision {0}"
 msgstr ""
 
@@ -29228,7 +29200,7 @@ msgstr ""
 msgid "No Data"
 msgstr ""
 
-#: custom/ilsgateway/templates/ilsgateway/base_template.html:9
+#: custom/ilsgateway/templates/ilsgateway/base_template.html:19
 msgid "Export to:"
 msgstr ""
 
@@ -29236,7 +29208,7 @@ msgstr ""
 msgid "Run reports generation"
 msgstr ""
 
-#: custom/ilsgateway/templates/ilsgateway/multi_report.html:59
+#: custom/ilsgateway/templates/ilsgateway/multi_report.html:52
 #: custom/ilsgateway/templates/ilsgateway/partials/report_table.html:40
 msgid "No facilities are due to submit data in this month"
 msgstr ""
@@ -29307,6 +29279,10 @@ msgstr ""
 
 #: custom/ilsgateway/templates/ilsgateway/partials/tabs.html:19
 msgid "Supervision"
+msgstr ""
+
+#: custom/ilsgateway/templates/ilsgateway/slab/edit_location.html:33
+msgid "SLAB Pilot Program"
 msgstr ""
 
 #: custom/ilsgateway/views.py:105
@@ -31601,7 +31577,6 @@ msgstr ""
 
 #: custom/reports/mc/reports/definitions.py:175
 #: custom/reports/mc/reports/old_definitions.py:198
-#, python-brace-format
 msgid ""
 "Congratulations! This APE has visited {number} children this week. Call and "
 "congratulate them! Please help other supervisors learn from your success."
@@ -31609,7 +31584,6 @@ msgstr ""
 
 #: custom/reports/mc/reports/definitions.py:176
 #: custom/reports/mc/reports/old_definitions.py:199
-#, python-brace-format
 msgid ""
 "This APE has treated {number} of patients with the incorrect medicine for "
 "pneumonia.  Please contact him/her and find out why and provide supportive "
@@ -31618,7 +31592,6 @@ msgstr ""
 
 #: custom/reports/mc/reports/definitions.py:177
 #: custom/reports/mc/reports/old_definitions.py:200
-#, python-brace-format
 msgid ""
 "This APE has treated {number} of patients with the incorrect medicine for "
 "diarrhoea.  Please contact them and find out why and provide supportive "
@@ -31627,7 +31600,6 @@ msgstr ""
 
 #: custom/reports/mc/reports/definitions.py:178
 #: custom/reports/mc/reports/old_definitions.py:201
-#, python-brace-format
 msgid ""
 "This APE has treated {number} of patients with the incorrect medicine for "
 "malaria.  Please contact them and find out why and provide supportive "
@@ -31644,7 +31616,6 @@ msgstr ""
 
 #: custom/reports/mc/reports/definitions.py:180
 #: custom/reports/mc/reports/old_definitions.py:203
-#, python-brace-format
 msgid ""
 "This APE incorrectly referred {number} patients they visited this week. "
 "Please contact them and find out why and provide supportive supervision on "
@@ -31653,7 +31624,6 @@ msgstr ""
 
 #: custom/reports/mc/reports/definitions.py:181
 #: custom/reports/mc/reports/old_definitions.py:204
-#, python-brace-format
 msgid ""
 "This APE did not perform a RDT on {number} patients with fever this week. "
 "Please contact them and find out why and provide supportive supervision on "
@@ -31732,6 +31702,10 @@ msgstr ""
 msgid "form/stock/stock_gloves"
 msgstr ""
 
+#: custom/reports/mc/reports/old_sql.py:64
+msgid "slug"
+msgstr ""
+
 #: custom/reports/mc/reports/old_sql.py:354
 msgid "mc_header_indicator"
 msgstr ""
@@ -31747,6 +31721,43 @@ msgstr ""
 #: custom/reports/mc/reports/old_sql.py:441
 msgid "mc_report_dist_weekly"
 msgstr ""
+
+#: custom/reports/mc/reports/old_sql.py:460
+#: custom/reports/mc/reports/sql.py:43
+msgid "msg_children"
+msgstr "Crianças (2 - 59 meses)"
+
+#: custom/reports/mc/reports/old_sql.py:464
+#: custom/reports/mc/reports/sql.py:47
+msgid "msg_pneumonia"
+msgstr ""
+
+#: custom/reports/mc/reports/old_sql.py:468
+#: custom/reports/mc/reports/sql.py:51
+msgid "msg_diarrhoea"
+msgstr "Total Diarreia"
+
+#: custom/reports/mc/reports/old_sql.py:472
+#: custom/reports/mc/reports/sql.py:55
+msgid "msg_malaria"
+msgstr "Total casos malária tratados"
+
+#: custom/reports/mc/reports/old_sql.py:476
+#: custom/reports/mc/reports/sql.py:59
+msgid "msg_good_referrals"
+msgstr ""
+
+#: custom/reports/mc/reports/old_sql.py:478
+#: custom/reports/mc/reports/sql.py:61
+#, fuzzy
+#| msgid "Referrals"
+msgid "msg_bad_referrals"
+msgstr "रेफेरल"
+
+#: custom/reports/mc/reports/old_sql.py:482
+#: custom/reports/mc/reports/sql.py:65
+msgid "msg_rdt"
+msgstr "TDR"
 
 #: custom/reports/mc/reports/old_sql.py:508
 msgid "mc_report_hf_weekly"
@@ -31817,21 +31828,18 @@ msgid "received_by"
 msgstr ""
 
 #: custom/requisitions/utils.py:36
-#, python-brace-format
 msgid ""
 "{name} has requested the following supplies: {summary}. please respond "
 "\"{keyword} {loc}\" to approve."
 msgstr ""
 
 #: custom/requisitions/utils.py:37
-#, python-brace-format
 msgid ""
 "{name} should be supplied with the following supplies: {summary}. please "
 "respond \"{keyword} {loc}\" to confirm the order."
 msgstr ""
 
 #: custom/requisitions/utils.py:38
-#, python-brace-format
 msgid ""
 "your order of {summary} is ready to be picked up. please respond with a "
 "\"{keyword}\" message to report receipts."
@@ -32371,32 +32379,26 @@ msgid "ASHA Sangini Reports"
 msgstr "आशा संगिनी रिपोर्ट"
 
 #: custom/up_nrhm/reports/asha_reports.py:54
-#, python-brace-format
 msgid "Report: {0}"
 msgstr "रिपोर्ट : {0}"
 
 #: custom/up_nrhm/reports/asha_reports.py:55
-#, python-brace-format
 msgid "District: {0}"
 msgstr "जिला : {0}"
 
 #: custom/up_nrhm/reports/asha_reports.py:59
-#, python-brace-format
 msgid "Block: {0}"
 msgstr "ब्लॉक : {0}"
 
 #: custom/up_nrhm/reports/asha_reports.py:63
-#, python-brace-format
 msgid "AF: {0} {1}"
 msgstr "आशा संगिनी : {0} {1}"
 
 #: custom/up_nrhm/reports/asha_reports.py:67
-#, python-brace-format
 msgid "Last Reporting Month of the Quarter: {0} {1}"
 msgstr "त्रैमास का आखिरी महिना : {0} {1} "
 
 #: custom/up_nrhm/reports/asha_reports.py:74
-#, python-brace-format
 msgid "For Date: {0} to {1}"
 msgstr "तारीख : {0} to {1}"
 
@@ -32460,8 +32462,8 @@ msgstr "उन आशाओं की संख्या जिनकी क्�
 
 #: custom/up_nrhm/sql_data.py:158
 msgid ""
-"Set of home visits for newborn care as specified in the HBNC guidelines<br/"
-">(six visits in case of Institutional delivery and seven in case of a home "
+"Set of home visits for newborn care as specified in the HBNC guidelines<br/>"
+"(six visits in case of Institutional delivery and seven in case of a home "
 "delivery)"
 msgstr ""
 "नवजात देखभाल के लिए किये गए घर के दौरे- जैसा एचबीएनसी दिशा-निर्देशों में निर्दिष्ट है "
@@ -32864,7 +32866,6 @@ msgid "You have to specify both dates!"
 msgstr ""
 
 #: submodules/dimagi-utils-src/dimagi/utils/dates.py:319
-#, python-brace-format
 msgid "You can't have an end date of {end} after start date of {start}"
 msgstr ""
 
@@ -32873,7 +32874,6 @@ msgid "You can't use dates earlier than the year 1900"
 msgstr ""
 
 #: submodules/dimagi-utils-src/dimagi/utils/dates.py:326
-#, python-brace-format
 msgid ""
 "You are limited to a span of {max} days, but this date range spans {total} "
 "days"
@@ -32932,6 +32932,24 @@ msgid ""
 "An error occurred while trying to connect to the CloudCare service. If you "
 "have problems filling in the rest of your form please report an issue."
 msgstr ""
+
+#~ msgid "Bulk Import"
+#~ msgstr "Manejo de Casos"
+
+#~ msgid "Sync stock data"
+#~ msgstr "Balanço do Stock"
+
+#~ msgid "Fix Groups in locations"
+#~ msgstr "Casos IRA Tratados"
+
+#~ msgid "Delete reports runs"
+#~ msgstr "Manejo de Casos"
+
+#~ msgid "Fix stock data"
+#~ msgstr "Balanço do Stock"
+
+#~ msgid "Started"
+#~ msgstr "Casos IRA Tratados"
 
 #~ msgid "All Applications"
 #~ msgstr "Casos IRA Tratados"
