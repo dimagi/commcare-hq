@@ -65,3 +65,6 @@ datavol_device=/dev/xvdb
 
 [stanchion]
 hqriak0.internal.commcarehq.org
+
+[rackspace_cloud_backup]
+hqdb0.internal.commcarehq.org
