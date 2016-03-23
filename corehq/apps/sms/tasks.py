@@ -30,7 +30,7 @@ def remove_from_queue(queued_sms):
         for field in sms._meta.fields:
             if field.name != 'id':
                 setattr(sms, field.name, getattr(queued_sms, field.name))
-        queued_sms.delete(sync_to_couch=False)  # Remove sync_to_couch when SMSLog is removed
+        queued_sms.delete()
         sms.save()
 
     sms.publish_change()
@@ -326,12 +326,3 @@ def _sync_case_phone_number(contact_case):
         else:
             if phone_number:
                 phone_number.delete()
-
-
-@task(queue='background_queue', ignore_result=True)
-def sync_sms_to_couch(sms):
-    try:
-        sms._migration_do_sync()
-    except:
-        message = 'Could not sync SMSLog from SMS %s' % sms.pk
-        notify_exception(None, message=message)

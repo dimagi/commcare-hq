@@ -1,3 +1,5 @@
+import uuid
+
 from collections import namedtuple
 from urllib import urlencode
 from corehq.apps.hqwebapp.view_permissions import user_can_view_reports
@@ -51,6 +53,10 @@ from corehq.apps.reports.models import ReportConfig
 from django.db import models
 
 
+class UUIDGeneratorException(Exception):
+    pass
+
+
 def format_submenu_context(title, url=None, html=None,
                            is_header=False, is_divider=False, data_id=None):
     return {
@@ -79,6 +85,32 @@ class GaTracker(namedtuple('GaTracking', 'category action label')):
     """
     def __new__(cls, category, action, label=None):
         return super(GaTracker, cls).__new__(cls, category, action, label)
+
+
+class UUIDGeneratorMixin(object):
+    """
+    Automatically generates uuids on __init__ if not generated yet.
+
+    To use: Add this mixin to your model as the left-most class being inherited from
+    and list all field names in UUIDS_TO_GENERATE to generate uuids for.
+
+    NOTE: Where possible, a UUIDField should be used instead of this mixin. But
+    this is needed in cases where migrating a char field to a UUIDField is
+    not possible because some of the existing uuids don't match the
+    UUIDField format constraints.
+    """
+
+    def __init__(self, *args, **kwargs):
+        super(UUIDGenerator, self).__init__(*args, **kwargs)
+
+        field_names = getattr(self, 'UUIDS_TO_GENERATE', [])
+        if not field_names:
+            raise UUIDGeneratorException("Expected UUIDS_TO_GENERATE to not be empty")
+
+        for field_name in field_names:
+            value = getattr(self, field_name)
+            if not value:
+                setattr(self, field_name, uuid.uuid4().hex)
 
 
 class UITab(object):
