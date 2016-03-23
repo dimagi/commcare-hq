@@ -1395,6 +1395,11 @@ PILLOWTOPS = {
         'corehq.pillows.user.UnknownUsersPillow',
         'corehq.pillows.sofabed.FormDataPillow',
         'corehq.pillows.sofabed.CaseDataPillow',
+        {
+            'name': 'SqlSMSPillow',
+            'class': 'pillowtop.pillow.interface.ConstructedPillow',
+            'instance': 'corehq.pillows.sms.get_sql_sms_pillow',
+        },
     ],
     'core_ext': [
         'corehq.pillows.reportcase.ReportCasePillow',
@@ -1475,11 +1480,6 @@ PILLOWTOPS = {
             'name': 'SqlCaseToElasticsearchPillow',
             'class': 'pillowtop.pillow.interface.ConstructedPillow',
             'instance': 'corehq.pillows.case.get_sql_case_to_elasticsearch_pillow',
-        },
-        {
-            'name': 'SqlSMSPillow',
-            'class': 'pillowtop.pillow.interface.ConstructedPillow',
-            'instance': 'corehq.pillows.sms.get_sql_sms_pillow',
         },
     ]
 }
