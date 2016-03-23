@@ -24,29 +24,42 @@ def navigation_event_ids_by_user(user):
 def request_was_made_to_domain(domain, request_path):
     return request_path.startswith('/a/' + domain + '/')
 
-def get_users(domain, no_superuser=False):
-    users = [u.username for u in WebUser.by_domain(domain)]
-    if not no_superuser:
-        super_users = [u['username'] for u in User.objects.filter(is_superuser=True).values('username')]
-    return set(users + super_users)
+def log_events(writer, domain, user, override_user=""):
+    for event in iter_docs(NavigationEventAudit.get_db(), navigation_event_ids_by_user(user)):
+        doc = NavigationEventAudit.wrap(event)
+        if request_was_made_to_domain(domain, doc.request_path):
+            log_event(writer, doc, override_user)
+
+def log_event(writer, event, override_user=""):
+    if override_user:
+        event.user = override_user
+    writer.writerow([event.user, event.event_date, event.ip_address, event.request_path])
+
 
 class Command(LabelCommand):
     args = 'domain filename'
     help = """Generate request report"""
     option_list = LabelCommand.option_list +\
-                  (make_option('--no-superuser', action='store_true', dest='no_superuser', default=False,
-                      help="Include superusers in report"),)
+                  (make_option('--display-superuser', action='store_true',
+                      dest='display_superuser', default=False,
+                      help="Include superusers in report, otherwise 'Dimagi User'"),)
 
     def handle(self, *args, **options):
         domain, filename = args
-        no_superuser = options["no_superuser"]
+        display_superuser = options["display_superuser"]
+        dimagi_username = ""
 
-        users = get_users(domain, no_superuser)
+        if not display_superuser:
+            dimagi_username = "Dimagi Support"
+
+        users = {u.username for u in WebUser.by_domain(domain)}
+        super_users = {u['username'] for u in User.objects.filter(is_superuser=True).values('username')}
+        super_users = super_users - users
 
         with open(filename, 'wb') as csvfile:
             writer = csv.writer(csvfile)
             for user in users:
-                for event in iter_docs(NavigationEventAudit.get_db(), navigation_event_ids_by_user(user)):
-                    doc = NavigationEventAudit.wrap(event)
-                    if request_was_made_to_domain(domain, doc.request_path):
-                        writer.writerow([doc.user, doc.event_date, doc.ip_address, doc.request_path])
+                log_events(writer, domain, user)
+
+            for user in super_users:
+                log_events(writer, domain, user, dimagi_username)
