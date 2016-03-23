@@ -46,7 +46,11 @@ def convert_saved_export_to_export_instance(saved_export):
 
         for column in old_table.columns:
             index = column.index
-            transform = _convert_transform(column.transform)
+            transforms = []
+
+            if column.transform:
+                transforms = [_convert_transform(column.transform)]
+
             if _is_repeat(old_table.index):
                 index = '{table_index}.{column_index}'.format(
                     table_index=_strip_repeat_index(old_table.index),
@@ -59,17 +63,18 @@ def convert_saved_export_to_export_instance(saved_export):
 
             if _get_system_property(column.index, column.transform):
                 index, transform = _get_system_property(column.index, column.transform)
+                transforms = [transform]
 
             new_column = new_table.get_column(
                 column_path,
-                transform,
+                transforms,
             )
             if not new_column:
                 continue
             new_column.label = column.display
             new_column.selected = True
-            if transform:
-                new_column.transforms = [transform]
+            if transforms:
+                new_column.transforms = transforms
 
     saved_export.doc_type += DELETED_SUFFIX
     saved_export.save()
