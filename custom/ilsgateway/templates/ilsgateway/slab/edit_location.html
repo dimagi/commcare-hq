@@ -19,7 +19,6 @@
         });
 
         var LocationModelView = function() {
-            console.log($('#id_is_pilot').get(0).checked);
             this.isPilot = ko.observable($('#id_is_pilot').get(0).checked);
         };
         ko.applyBindings(new LocationModelView(), document.getElementById('edit_locations'));
