@@ -186,7 +186,7 @@ class ConfigurableReportDataSource(SqlData):
             session.connection(),
             [
                 column_id
-                for col in self.column_configs for column_id in _get_relevant_column_ids(col)
+                for col in self.column_configs for column_id in _get_relevant_column_ids(col, expanded_columns)
                 if col.calculate_total
             ],
             self.filter_values
