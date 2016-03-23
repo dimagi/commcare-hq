@@ -1,6 +1,5 @@
 from optparse import make_option
 from traceback import print_stack
-from corehq.preindex import get_preindex_plugins
 from django.core.management.base import BaseCommand
 from django.core.mail import send_mail
 from datetime import datetime

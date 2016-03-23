@@ -10,7 +10,7 @@ from pillowtop.es_utils import ElasticsearchIndexMeta
 from pillowtop.listener import AliasedElasticPillow
 from pillowtop.pillow.interface import ConstructedPillow
 from pillowtop.processors.elastic import ElasticProcessor
-from django.conf import settings
+
 
 SMS_PILLOW_CHECKPOINT_ID = 'sql-sms-to-es'
 SMS_PILLOW_KAFKA_CONSUMER_GROUP_ID = 'sql-sms-to-es'

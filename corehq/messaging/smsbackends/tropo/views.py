@@ -1,7 +1,6 @@
 import json
 from .models import SQLTropoBackend
 from tropo import Tropo
-from corehq.apps.ivr.api import incoming as incoming_call
 from corehq.apps.sms.api import incoming as incoming_sms
 from django.http import HttpResponse, HttpResponseBadRequest
 from django.views.decorators.csrf import csrf_exempt

@@ -2,7 +2,6 @@ import requests
 from corehq.apps.sms.models import SMS, SQLSMSBackend
 from corehq.apps.sms.util import strip_plus
 from corehq.messaging.smsbackends.apposit.forms import AppositBackendForm
-from dimagi.ext.couchdbkit import StringProperty
 
 
 ETHIOPIA_COUNTRY_CODE = '251'
