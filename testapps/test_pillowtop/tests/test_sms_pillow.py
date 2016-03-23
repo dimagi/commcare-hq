@@ -4,7 +4,6 @@ from corehq.apps.es.sms import SMSES
 from corehq.apps.sms.models import MessagingEvent, MessagingSubEvent, SMS
 from corehq.elastic import get_es_new
 from corehq.pillows.sms import get_sql_sms_pillow, ES_SMS_INDEX
-from corehq.toggles import SQL_SMS_PILLOW
 from corehq.util.decorators import temporarily_enable_toggle
 from corehq.util.elastic import ensure_index_deleted
 from datetime import datetime
@@ -107,33 +106,32 @@ class SqlSMSPillowTest(TestCase):
         return result
 
     def test_sql_sms_pillow(self):
-        with temporarily_enable_toggle(SQL_SMS_PILLOW, self.domain):
-            consumer = get_test_kafka_consumer(topics.SMS)
+        consumer = get_test_kafka_consumer(topics.SMS)
 
-            # get the seq id before the change is published
-            kafka_seq = consumer.offsets()['fetch'][(topics.SMS, 0)]
+        # get the seq id before the change is published
+        kafka_seq = consumer.offsets()['fetch'][(topics.SMS, 0)]
 
-            # create an sms
-            self._create_sms()
-            sms_json = self._to_json(self.sms_dict, self.sms)
+        # create an sms
+        self._create_sms()
+        sms_json = self._to_json(self.sms_dict, self.sms)
 
-            # test serialization
-            self.assertEqual(self.sms.to_json(), sms_json)
+        # test serialization
+        self.assertEqual(self.sms.to_json(), sms_json)
 
-            # publish the change and confirm it gets to kafka
-            self.sms.publish_change()
-            message = consumer.next()
-            change_meta = change_meta_from_kafka_message(message.value)
-            self.assertEqual(self.sms.couch_id, change_meta.document_id)
-            self.assertEqual(self.domain, change_meta.domain)
+        # publish the change and confirm it gets to kafka
+        self.sms.publish_change()
+        message = consumer.next()
+        change_meta = change_meta_from_kafka_message(message.value)
+        self.assertEqual(self.sms.couch_id, change_meta.document_id)
+        self.assertEqual(self.domain, change_meta.domain)
 
-            # send to elasticsearch
-            sms_pillow = get_sql_sms_pillow('SqlSMSPillow')
-            sms_pillow.process_changes(since=kafka_seq, forever=False)
-            self.elasticsearch.indices.refresh(ES_SMS_INDEX)
+        # send to elasticsearch
+        sms_pillow = get_sql_sms_pillow('SqlSMSPillow')
+        sms_pillow.process_changes(since=kafka_seq, forever=False)
+        self.elasticsearch.indices.refresh(ES_SMS_INDEX)
 
-            # confirm change made it to elasticserach
-            results = SMSES().run()
-            self.assertEqual(1, results.total)
-            sms_doc = results.hits[0]
-            self.assertEqual(sms_doc, sms_json)
+        # confirm change made it to elasticserach
+        results = SMSES().run()
+        self.assertEqual(1, results.total)
+        sms_doc = results.hits[0]
+        self.assertEqual(sms_doc, sms_json)
