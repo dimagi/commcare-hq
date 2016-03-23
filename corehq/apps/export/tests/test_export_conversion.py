@@ -146,7 +146,12 @@ class TestConvertSavedExportSchemaToFormExportInstance(TestCase, TestFileMixin):
         table = instance.get_table([PathNode(name='form'), PathNode(name='repeat', is_repeat=True)])
         self.assertEqual(table.label, 'Repeat: One')
 
-        column = table.get_column( [PathNode(name='form'), PathNode(name='repeat', is_repeat=True), PathNode(name='question2')], [])
+        column = table.get_column(
+            [PathNode(name='form'),
+             PathNode(name='repeat', is_repeat=True),
+             PathNode(name='question2')],
+            []
+        )
         self.assertEqual(column.label, 'Modified Question Two')
         self.assertEqual(column.selected, True)
 
