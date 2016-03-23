@@ -19,7 +19,7 @@ class UUIDGeneratorMixin(object):
     """
 
     def __init__(self, *args, **kwargs):
-        super(UUIDGenerator, self).__init__(*args, **kwargs)
+        super(UUIDGeneratorMixin, self).__init__(*args, **kwargs)
 
         field_names = getattr(self, 'UUIDS_TO_GENERATE', [])
         if not field_names:
