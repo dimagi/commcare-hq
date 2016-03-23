@@ -292,10 +292,10 @@ class TableConfiguration(DocumentSchema):
         return rows
 
     def get_column(self, item_path, column_transforms):
-        # Columns should be unique by item path and item transform
-        # TODO: Actually, Column should be unique by item path and column.transforms minus any deid transforms?
+        # Columns should be unique by item path and column.transforms minus any deid transforms
         for column in self.columns:
-            if column.item.path == item_path and column.transforms == column_transforms:
+            transforms = [t for t in column.transforms if t not in DEID_TRANSFORM_FUNCTIONS.keys()]
+            if column.item.path == item_path and transforms == column_transforms:
                 return column
         return None
 

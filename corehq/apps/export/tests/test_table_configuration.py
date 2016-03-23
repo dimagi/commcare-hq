@@ -1,10 +1,80 @@
 from django.test import SimpleTestCase
 
+from corehq.apps.export.const import USERNAME_TRANSFORM
 from corehq.apps.export.models import TableConfiguration, ExportColumn, \
     ScalarItem, ExportRow
 from corehq.apps.export.models.new import SplitExportColumn, MultipleChoiceItem, \
     Option, DocRow, RowNumberColumn, PathNode
 
+
+class TableConfigurationTest(SimpleTestCase):
+    def test_get_column(self):
+        table_configuration = TableConfiguration(
+            path=[PathNode(name='form', is_repeat=False), PathNode(name="repeat1", is_repeat=True)],
+            columns=[
+                ExportColumn(
+                    item=ScalarItem(
+                        path=[
+                            PathNode(name='form'),
+                            PathNode(name='repeat1', is_repeat=True),
+                            PathNode(name='q1')
+                        ],
+                    )
+                ),
+                ExportColumn(
+                    transforms=[USERNAME_TRANSFORM, "deid_id"],
+                    item=ScalarItem(
+                        path=[
+                            PathNode(name="form"),
+                            PathNode(name="user_id"),
+                        ]
+                    )
+                ),
+                ExportColumn(
+                    item=ScalarItem(
+                        path=[
+                            PathNode(name='form'),
+                            PathNode(name='repeat1', is_repeat=True),
+                            PathNode(name='q2')
+                        ],
+                    )
+                ),
+            ]
+        )
+
+        column = table_configuration.get_column(
+            [
+                PathNode(name='form'),
+                PathNode(name='repeat1', is_repeat=True),
+                PathNode(name='q1')
+            ],
+            []
+        )
+        self.assertEqual(
+            column.item.path,
+            [
+                PathNode(name='form'),
+                PathNode(name='repeat1', is_repeat=True),
+                PathNode(name='q1')
+            ]
+        )
+
+        column = table_configuration.get_column(
+            [
+                PathNode(name='form'),
+                PathNode(name='repeat1', is_repeat=True),
+                PathNode(name='DoesNotExist')
+            ],
+            None
+        )
+        self.assertIsNone(column)
+
+        # Verify that get_column ignores deid transforms
+        column = table_configuration.get_column(
+            [PathNode(name="form"), PathNode(name="user_id")],
+            [USERNAME_TRANSFORM]
+        )
+        self.assertIsNotNone(column)
 
 class TableConfigurationGetSubDocumentsTest(SimpleTestCase):
     def test_basic(self):
@@ -270,55 +340,3 @@ class SplitColumnTest(SimpleTestCase):
             ignore_unspecified_options=False
         )
         self.assertEqual(column.get_headers(), ["Fruit - Apple", "Fruit - Banana", "Fruit - extra"])
-
-    def test_get_column(self):
-        table_configuration = TableConfiguration(
-            path=[PathNode(name='form', is_repeat=False), PathNode(name="repeat1", is_repeat=True)],
-            columns=[
-                ExportColumn(
-                    item=ScalarItem(
-                        path=[
-                            PathNode(name='form'),
-                            PathNode(name='repeat1', is_repeat=True),
-                            PathNode(name='q1')
-                        ],
-                    )
-                ),
-                ExportColumn(
-                    item=ScalarItem(
-                        path=[
-                            PathNode(name='form'),
-                            PathNode(name='repeat1', is_repeat=True),
-                            PathNode(name='q2')
-                        ],
-                    )
-                ),
-            ]
-        )
-
-        column = table_configuration.get_column(
-            [
-                PathNode(name='form'),
-                PathNode(name='repeat1', is_repeat=True),
-                PathNode(name='q1')
-            ],
-            []
-        )
-        self.assertEqual(
-            column.item.path,
-            [
-                PathNode(name='form'),
-                PathNode(name='repeat1', is_repeat=True),
-                PathNode(name='q1')
-            ]
-        )
-
-        column = table_configuration.get_column(
-            [
-                PathNode(name='form'),
-                PathNode(name='repeat1', is_repeat=True),
-                PathNode(name='DoesNotExist')
-            ],
-            None
-        )
-        self.assertIsNone(column)
