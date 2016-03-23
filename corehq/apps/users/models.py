@@ -2,12 +2,15 @@
 couch models go here
 """
 from __future__ import absolute_import
+from dimagi.ext.couchdbkit import *
 import copy
 from datetime import datetime
 from dateutil.relativedelta import relativedelta
 import logging
+import re
 
 from restkit.errors import NoMoreData
+from django.conf import settings
 from django.contrib.auth.models import User
 from django.core.urlresolvers import reverse
 from django.core.exceptions import ValidationError
@@ -19,7 +22,6 @@ from corehq.apps.domain.dbaccessors import get_docs_in_domain_by_class
 from corehq.form_processor.interfaces.supply import SupplyInterface
 from corehq.form_processor.interfaces.dbaccessors import FormAccessors
 from corehq.util.soft_assert import soft_assert
-from dimagi.ext.couchdbkit import *
 from couchdbkit.resource import ResourceNotFound
 from corehq.util.view_utils import absolute_reverse
 from dimagi.utils.chunked import chunked

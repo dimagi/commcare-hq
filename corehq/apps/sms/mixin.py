@@ -1,5 +1,6 @@
-from decimal import Decimal
 from dimagi.ext.couchdbkit import *
+import re
+from decimal import Decimal
 from couchdbkit.exceptions import MultipleResultsFound
 from dimagi.utils.couch.migration import SyncCouchToSQLMixin
 from dimagi.utils.couch.undo import DELETED_SUFFIX
