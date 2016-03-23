@@ -20,7 +20,7 @@ def navigation_event_ids_by_user(user):
         include_docs=False,
     )}
 
-def filter_non_domain_request(domain, request_path):
+def request_was_made_to_domain(domain, request_path):
     return request_path.startswith('/a/' + domain)
 
 def get_users(domain):
@@ -41,5 +41,5 @@ class Command(LabelCommand):
             for user in users:
                 for event in iter_docs(NavigationEventAudit.get_db(), navigation_event_ids_by_user(user)):
                     doc = NavigationEventAudit.wrap(event)
-                    if filter_non_domain_request(domain, doc.request_path):
+                    if request_was_made_to_domain(domain, doc.request_path):
                         writer.writerow([doc.user, doc.event_date, doc.ip_address, doc.request_path])
