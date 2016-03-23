@@ -21,7 +21,7 @@ def navigation_event_ids_by_user(user):
     )}
 
 def request_was_made_to_domain(domain, request_path):
-    return request_path.startswith('/a/' + domain)
+    return request_path.startswith('/a/' + domain + '/')
 
 def get_users(domain):
     users = [u.username for u in WebUser.by_domain(domain)]
