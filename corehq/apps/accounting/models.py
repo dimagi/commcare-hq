@@ -1434,6 +1434,8 @@ class Subscription(models.Model):
         Sends a reminder email to the emails specified in the accounting
         contacts that the subscription will end on the specified end date.
         """
+        if self.do_not_email:
+            return
         if self.date_end is None:
             raise SubscriptionReminderError(
                 "This subscription has no end date."
@@ -1512,6 +1514,8 @@ class Subscription(models.Model):
             )
 
     def send_dimagi_ending_reminder_email(self):
+        if self.do_not_email:
+            return
         if self.date_end is None:
             raise SubscriptionReminderError(
                 "This subscription has no end date."
