@@ -26,6 +26,7 @@ MockResponse = namedtuple('MockResponse', 'status_code reason')
 CASE_ID = "ABC123CASEID"
 INSTANCE_ID = "XKVB636DFYL38FNX3D38WV5EH"
 UPDATE_INSTANCE_ID = "ZYXKVB636DFYL38FNX3D38WV5"
+USER_ID = 'mojo-jojo'
 
 XFORM_XML_TEMPLATE = """<?xml version='1.0' ?>
 <data xmlns:jrm="http://dev.commcarehq.org/jr/xforms" xmlns="{}">
@@ -36,7 +37,7 @@ XFORM_XML_TEMPLATE = """<?xml version='1.0' ?>
         <timeStart>2011-10-01T15:25:18.404-04</timeStart>
         <timeEnd>2011-10-01T15:26:29.551-04</timeEnd>
         <username>admin</username>
-        <userID>O2XLT0WZW97W1A91E2W1Y0NJG</userID>
+        <userID>{}</userID>
         <instanceID>{}</instanceID>
     </meta>
 {}
@@ -63,11 +64,13 @@ class BaseRepeaterTest(TestCase):
 
         cls.xform_xml = XFORM_XML_TEMPLATE.format(
             "https://www.commcarehq.org/test/repeater/",
+            USER_ID,
             INSTANCE_ID,
             case_block
         )
         cls.update_xform_xml = XFORM_XML_TEMPLATE.format(
             "https://www.commcarehq.org/test/repeater/",
+            USER_ID,
             UPDATE_INSTANCE_ID,
             update_case_block,
         )
@@ -113,7 +116,7 @@ class RepeaterTest(BaseRepeaterTest):
 
     @run_with_all_backends
     def test_skip_device_logs(self):
-        devicelog_xml = XFORM_XML_TEMPLATE.format(DEVICE_LOG_XMLNS, '1234', '')
+        devicelog_xml = XFORM_XML_TEMPLATE.format(DEVICE_LOG_XMLNS, USER_ID, '1234', '')
         self.post_xml(devicelog_xml, self.domain)
         repeat_records = RepeatRecord.all(domain=self.domain)
         for repeat_record in repeat_records:
@@ -295,10 +298,12 @@ class CaseRepeaterTest(BaseRepeaterTest, TestXmlMixin):
         CaseFactory(self.domain_name).post_case_blocks([non_white_listed_case])
         self.assertEqual(1, len(self.repeat_records(self.domain_name).all()))
 
-    # @run_with_all_backends
+    @run_with_all_backends
     def test_black_listed_user_cases_do_not_forward(self):
         self.repeater.black_listed_users = ['black_listed_user']
         self.repeater.save()
+        black_list_user_id = 'black_listed_user'
+
 
         # case-creations by black-listed users shouldn't be forwarded
         black_listed_user_case = CaseBlock(
@@ -306,9 +311,16 @@ class CaseRepeaterTest(BaseRepeaterTest, TestXmlMixin):
             create=True,
             case_type="planet",
             owner_id="owner",
-            user_id="black_listed_user"
-        ).as_xml()
-        CaseFactory(self.domain_name).post_case_blocks([black_listed_user_case])
+            user_id=black_list_user_id
+        ).as_string()
+        xform_xml = XFORM_XML_TEMPLATE.format(
+            "https://www.commcarehq.org/test/repeater/",
+            black_list_user_id,
+            '1234',
+            black_listed_user_case,
+        )
+        self.post_xml(xform_xml, self.domain_name)
+
         self.assertEqual(0, len(self.repeat_records(self.domain_name).all()))
 
         # case-creations by normal users should be forwarded
@@ -318,8 +330,15 @@ class CaseRepeaterTest(BaseRepeaterTest, TestXmlMixin):
             case_type="planet",
             owner_id="owner",
             user_id="normal_user"
-        ).as_xml()
-        CaseFactory(self.domain_name).post_case_blocks([normal_user_case])
+        ).as_string()
+        xform_xml = XFORM_XML_TEMPLATE.format(
+            "https://www.commcarehq.org/test/repeater/",
+            USER_ID,
+            '6789',
+            normal_user_case,
+        )
+        self.post_xml(xform_xml, self.domain_name)
+
         self.assertEqual(1, len(self.repeat_records(self.domain_name).all()))
 
         # case-updates by black-listed users shouldn't be forwarded
@@ -327,9 +346,15 @@ class CaseRepeaterTest(BaseRepeaterTest, TestXmlMixin):
             case_id="b_case_id",
             case_type="planet",
             owner_id="owner",
-            user_id="black_listed_user",
-        ).as_xml()
-        CaseFactory(self.domain_name).post_case_blocks([black_listed_user_case])
+            user_id=black_list_user_id,
+        ).as_string()
+        xform_xml = XFORM_XML_TEMPLATE.format(
+            "https://www.commcarehq.org/test/repeater/",
+            black_list_user_id,
+            '2345',
+            black_listed_user_case,
+        )
+        self.post_xml(xform_xml, self.domain_name)
         self.assertEqual(1, len(self.repeat_records(self.domain_name).all()))
 
         # case-updates by normal users should be forwarded
@@ -338,8 +363,14 @@ class CaseRepeaterTest(BaseRepeaterTest, TestXmlMixin):
             case_type="planet",
             owner_id="owner",
             user_id="normal_user",
-        ).as_xml()
-        CaseFactory(self.domain_name).post_case_blocks([normal_user_case])
+        ).as_string()
+        xform_xml = XFORM_XML_TEMPLATE.format(
+            "https://www.commcarehq.org/test/repeater/",
+            USER_ID,
+            '3456',
+            normal_user_case,
+        )
+        self.post_xml(xform_xml, self.domain_name)
         self.assertEqual(2, len(self.repeat_records(self.domain_name).all()))
 
 
