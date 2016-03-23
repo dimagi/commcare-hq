@@ -423,27 +423,27 @@ class ExportInstance(BlobMixin, Document):
                 column.update_properties_from_app_ids_and_versions(latest_app_ids_and_versions)
                 columns.append(column)
 
-            cls._insert_system_properties(schema, table, columns)
+            cls._insert_system_properties(schema.type, table, columns)
             table.columns = columns
 
             if not instance.get_table(group_schema.path):
                 instance.tables.append(table)
 
         # Insert the parent case table
-        if isinstance(schema, CaseExportDataSchema):
+        if schema.type == CASE_EXPORT:
             # TODO: Would a case type without parents still have this table?
             cls._insert_parent_case_table(instance)
 
         return instance
 
     @classmethod
-    def _insert_system_properties(cls, schema, table, columns):
-        if isinstance(schema, FormExportDataSchema):
+    def _insert_system_properties(cls, export_type, table, columns):
+        if export_type == FORM_EXPORT:
             if table.path == MAIN_TABLE:
                 cls._insert_form_system_properties(table, columns)
             else:
                 cls._insert_form_repeat_system_properties(table, columns)
-        elif isinstance(schema, CaseExportDataSchema):
+        elif export_type == CASE_EXPORT:
             if table.path == MAIN_TABLE:
                 cls._insert_case_system_properties(table, columns)
             elif table.path == CASE_HISTORY_TABLE:
