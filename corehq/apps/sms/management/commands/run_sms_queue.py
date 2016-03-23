@@ -1,5 +1,3 @@
-from optparse import make_option
-from django.core.management.base import CommandError
 from django.conf import settings
 from dimagi.utils.parsing import json_format_datetime
 from corehq.apps.sms.models import QueuedSMS

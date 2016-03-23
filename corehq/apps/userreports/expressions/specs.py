@@ -9,7 +9,8 @@ from corehq.apps.userreports.expressions.getters import (
     DictGetter,
     NestedDictGetter,
     TransformedGetter,
-    transform_from_datatype, transform_date, transform_int)
+    transform_from_datatype,
+)
 from corehq.apps.userreports.indicators.specs import DataTypeProperty
 from corehq.apps.userreports.specs import TypeProperty, EvaluationContext
 from .utils import eval_statements

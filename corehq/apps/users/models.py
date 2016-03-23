@@ -6,10 +6,8 @@ import copy
 from datetime import datetime
 from dateutil.relativedelta import relativedelta
 import logging
-import re
 
 from restkit.errors import NoMoreData
-from django.conf import settings
 from django.contrib.auth.models import User
 from django.core.urlresolvers import reverse
 from django.core.exceptions import ValidationError
@@ -18,7 +16,6 @@ from django.template.loader import render_to_string
 from django.utils.translation import ugettext as _
 from corehq.apps.app_manager.const import USERCASE_TYPE
 from corehq.apps.domain.dbaccessors import get_docs_in_domain_by_class
-from corehq.apps.hqcase.dbaccessors import get_case_ids_in_domain_by_owner
 from corehq.form_processor.interfaces.supply import SupplyInterface
 from corehq.form_processor.interfaces.dbaccessors import FormAccessors
 from corehq.util.soft_assert import soft_assert
@@ -36,7 +33,6 @@ from dimagi.utils.make_uuid import random_hex
 from dimagi.utils.modules import to_function
 from corehq.util.quickcache import skippable_quickcache
 from casexml.apps.case.mock import CaseBlock
-from casexml.apps.case.models import CommCareCase
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 from corehq.form_processor.exceptions import CaseNotFound
 from corehq.apps.commtrack.const import USER_LOCATION_OWNER_MAP_TYPE
@@ -59,7 +55,6 @@ from corehq.apps.sms.mixin import (
     PhoneNumberInUseException,
     VerifiedNumber,
 )
-from couchforms.models import XFormInstance
 from dimagi.utils.couch.undo import DeleteRecord, DELETED_SUFFIX
 from corehq.apps.hqwebapp.tasks import send_html_email_async
 from dimagi.utils.mixins import UnicodeMixIn
@@ -68,7 +63,7 @@ from dimagi.utils.django.database import get_unique_value
 from xml.etree import ElementTree
 
 from couchdbkit.exceptions import ResourceConflict, NoResultFound, BadValueError
-from dimagi.utils.parsing import json_format_datetime
+
 
 COUCH_USER_AUTOCREATED_STATUS = 'autocreated'
 
