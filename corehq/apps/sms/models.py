@@ -17,7 +17,6 @@ from casexml.apps.case.models import CommCareCase
 from dimagi.utils.couch.migration import SyncSQLToCouchMixin
 from dimagi.utils.mixins import UnicodeMixIn
 from dimagi.utils.parsing import json_format_datetime
-from corehq.apps.sms.change_publishers import publish_sms_saved
 from corehq.apps.sms.mixin import (CommCareMobileContactMixin,
     PhoneNumberInUseException, InvalidFormatException, VerifiedNumber,
     apply_leniency, BadSMSConfigException)
@@ -454,14 +453,8 @@ class SMS(SMSBase):
         return data
 
     def publish_change(self):
-        try:
-            publish_sms_saved(self)
-        except:
-            notify_exception(
-                None,
-                message='Could not publish change for SMS',
-                details={'pk': self.pk}
-            )
+        from corehq.apps.sms.tasks import publish_sms_change
+        publish_sms_change.delay(self)
 
 
 class QueuedSMS(SMSBase):

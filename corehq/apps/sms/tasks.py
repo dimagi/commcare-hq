@@ -14,6 +14,7 @@ from corehq import privileges
 from corehq.apps.accounting.utils import domain_has_privilege
 from corehq.apps.domain.models import Domain
 from corehq.apps.smsbillables.models import SmsBillable
+from corehq.apps.sms.change_publishers import publish_sms_saved
 from corehq.util.timezones.conversions import ServerTime
 from dimagi.utils.chunked import chunked
 from dimagi.utils.couch.bulk import soft_delete_docs
@@ -326,3 +327,12 @@ def _sync_case_phone_number(contact_case):
         else:
             if phone_number:
                 phone_number.delete()
+
+
+@task(queue='background_queue', ignore_result=True, acks_late=True,
+      default_retry_delay=5 * 60, max_retries=10, bind=True)
+def publish_sms_change(self, sms):
+    try:
+        publish_sms_saved(sms)
+    except Exception as e:
+        self.retry(exc=e)
