@@ -2,7 +2,7 @@
 from __future__ import unicode_literals
 
 from django.conf import settings
-from django.db import models, migrations
+from django.db import migrations
 
 from corehq.sql_db.config import PartitionConfig
 from corehq.sql_db.management.commands.configure_pl_proxy_cluster import get_drop_server_sql, \
