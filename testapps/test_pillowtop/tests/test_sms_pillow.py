@@ -9,9 +9,11 @@ from corehq.util.elastic import ensure_index_deleted
 from datetime import datetime
 from dimagi.utils.parsing import json_format_datetime
 from django.test import TestCase
+from mock import patch
 from testapps.test_pillowtop.utils import get_test_kafka_consumer
 
 
+@patch('corehq.apps.sms.change_publishers.do_publish')
 class SqlSMSPillowTest(TestCase):
 
     domain = 'sms-pillow-test-domain'
@@ -105,7 +107,8 @@ class SqlSMSPillowTest(TestCase):
 
         return result
 
-    def test_sql_sms_pillow(self):
+    def test_sql_sms_pillow(self, mock_do_publish):
+        mock_do_publish.return_value = True
         consumer = get_test_kafka_consumer(topics.SMS)
 
         # get the seq id before the change is published
