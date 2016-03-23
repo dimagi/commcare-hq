@@ -9,7 +9,6 @@ from django.template.loader import render_to_string
 from django.utils.translation import ugettext_lazy as _
 from django.utils.safestring import mark_safe
 
-from corehq.apps.domain.forms import NoAutocompleteMixin
 from corehq.apps.users.models import CouchUser
 
 from crispy_forms import layout as crispy
@@ -19,7 +18,7 @@ from crispy_forms.helper import FormHelper
 from dimagi.utils.decorators.memoized import memoized
 
 
-class EmailAuthenticationForm(NoAutocompleteMixin, AuthenticationForm):
+class EmailAuthenticationForm(AuthenticationForm):
     username = forms.EmailField(label=_("E-mail"), max_length=75)
 
     def clean_username(self):

@@ -976,16 +976,7 @@ def clean_password(txt):
     return txt
 
 
-class NoAutocompleteMixin(object):
-
-    def __init__(self, *args, **kwargs):
-        super(NoAutocompleteMixin, self).__init__(*args, **kwargs)
-        if getattr(settings, "ENABLE_DRACONIAN_SECURITY_FEATURES", False):
-            for field in self.fields.values():
-                field.widget.attrs.update({'autocomplete': 'off'})
-
-
-class HQPasswordResetForm(NoAutocompleteMixin, forms.Form):
+class HQPasswordResetForm(forms.Form):
     """
     Only finds users and emails forms where the USERNAME is equal to the
     email specified (preventing Mobile Workers from using this form to submit).

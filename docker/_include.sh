@@ -1,6 +1,6 @@
 DOCKER_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 
-if [ `uname` == 'Linux' -o `uname` == 'Darwin' ]; then
+if [ `uname` == 'Linux' ]; then
     XDG_DATA_HOME=${XDG_DATA_HOME:-$HOME/.local/share}
     DOCKER_DATA_HOME=$XDG_DATA_HOME/dockerhq
 else

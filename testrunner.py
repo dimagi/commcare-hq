@@ -4,7 +4,6 @@ from functools import wraps
 from unittest.util import strclass
 from urlparse import urlparse
 
-import couchlog.signals
 from couchdbkit import Database, ResourceNotFound
 from couchdbkit.ext.django import loading
 from couchdbkit.ext.django.testrunner import CouchDbKitTestSuiteRunner
@@ -225,15 +224,10 @@ class TwoStageTestRunner(HqTestSuiteRunner):
             for name, cls in value.items():
                 cls.set_db(mock_couch)
 
-        couchlog.signals.got_request_exception.disconnect(
-            couchlog.signals.log_request_exception)
-
     def teardown_mock_database(self):
         """
         Remove cursor patch.
         """
-        couchlog.signals.got_request_exception.connect(
-            couchlog.signals.log_request_exception)
         self._db_patch.stop()
 
     @set_db_enabled(False)
