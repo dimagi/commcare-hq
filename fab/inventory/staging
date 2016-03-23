@@ -45,8 +45,8 @@ hqdb0-staging.internal.commcarehq.org
 hqdb0-staging.internal.commcarehq.org
 
 [riakcs]
-hqdjango2-staging.internal.commcarehq.org
-hqdjango3-staging.internal.commcarehq.org
+hqdjango4-staging.internal.commcarehq.org
+hqdjango5-staging.internal.commcarehq.org
 
 [rackspace_cloud_backup]
 hqdb0-staging.internal.commcarehq.org
