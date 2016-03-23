@@ -896,13 +896,12 @@ class CommConnectCase(CommCareCase, CommCareMobileContactMixin):
         app_label = "sms"
 
 
-class PhoneNumber(models.Model):
+class PhoneBlacklist(models.Model):
     """
-    Represents a single phone number. This is not intended to be a
-    comprehensive list of phone numbers in the system (yet). For
-    now, it's only used to prevent sending SMS/IVR to phone numbers who
-    have opted out.
+    Each entry represents a single phone number and whether we can send SMS
+    to that number or make calls to that number.
     """
+
     phone_number = models.CharField(max_length=30, unique=True, null=False, db_index=True)
 
     # True if it's ok to send SMS to this phone number, False if not
@@ -977,6 +976,45 @@ class PhoneNumber(models.Model):
             phone_obj.save()
             return True
         return False
+
+
+class PhoneNumber(SyncSQLToCouchMixin, models.Model):
+    couch_id = models.CharField(max_length=126, db_index=True, null=True)
+    domain = models.CharField(max_length=126, db_index=True, null=True)
+    owner_doc_type = models.CharField(max_length=126, null=True)
+    owner_id = models.CharField(max_length=126, db_index=True, null=True)
+    phone_number = models.CharField(max_length=126, db_index=True, null=True)
+
+    # Points to the name of a SQLMobileBackend (can be domain-level
+    # or system-level) which represents the backend that will be used
+    # when sending SMS to this number. Can be None to use domain/system
+    # defaults.
+    backend_id = models.CharField(max_length=126, null=True)
+
+    # Points to the name of a SQLMobileBackend (can be domain-level
+    # or system-level) which represents the backend that will be used
+    # when making calls to this number. Can be None to use domain/system
+    # defaults.
+    ivr_backend_id = models.CharField(max_length=126, null=True)
+    verified = models.NullBooleanField(default=False)
+    contact_last_modified = models.DateTimeField(null=True)
+
+    @classmethod
+    def _migration_get_fields(cls):
+        return [
+            'domain',
+            'owner_doc_type',
+            'owner_id',
+            'phone_number',
+            'backend_id',
+            'ivr_backend_id',
+            'verified',
+            'contact_last_modified'
+        ]
+
+    @classmethod
+    def _migration_get_couch_model_class(cls):
+        return VerifiedNumber
 
 
 class MessagingStatusMixin(object):

@@ -32,21 +32,21 @@
         "name": "AncHmisCaseFluffPillow"
     },
     "AppPillow": {
-        "advertised_name": "corehq.pillows.application.AppPillow.test_hqapps_2016-02-12_1300.testhq",
+        "advertised_name": "corehq.pillows.application.AppPillow.test_hqapps_2016-03-01_2128.testhq",
         "change_feed_type": "CouchChangeFeed",
-        "checkpoint_id": "corehq.pillows.application.AppPillow.test_hqapps_2016-02-12_1300.testhq",
+        "checkpoint_id": "corehq.pillows.application.AppPillow.test_hqapps_2016-03-01_2128.testhq",
         "couch_filter": "app_manager/all_apps",
         "couchdb_type": "Database",
-        "couchdb_uri": "http://{COUCH_SERVER_ROOT}/test_commcarehq",
+        "couchdb_uri": "http://{COUCH_SERVER_ROOT}/test_commcarehq__apps",
         "document_class": "ApplicationBase",
         "es_alias": "hqapps",
-        "es_index": "test_hqapps_2016-02-12_1300",
+        "es_index": "test_hqapps_2016-03-01_2128",
         "es_type": "app",
         "extra_args": {},
         "full_class_name": "corehq.pillows.application.AppPillow",
         "include_docs": true,
         "name": "AppPillow",
-        "unique_id": "test_hqapps_2016-02-12_1300"
+        "unique_id": "test_hqapps_2016-03-01_2128"
     },
     "BlobDeletionPillow": {
         "advertised_name": "BlobDeletionPillow",
@@ -144,21 +144,21 @@
         "name": "DefaultChangeFeedPillow"
     },
     "DomainPillow": {
-        "advertised_name": "corehq.pillows.domain.DomainPillow.test_hqdomains_20160308_1304.testhq",
+        "advertised_name": "corehq.pillows.domain.DomainPillow.test_hqdomains_20160318_1339.testhq",
         "change_feed_type": "CouchChangeFeed",
-        "checkpoint_id": "corehq.pillows.domain.DomainPillow.test_hqdomains_20160308_1304.testhq",
+        "checkpoint_id": "corehq.pillows.domain.DomainPillow.test_hqdomains_20160318_1339.testhq",
         "couch_filter": "domain/domains_inclusive",
         "couchdb_type": "Database",
         "couchdb_uri": "http://{COUCH_SERVER_ROOT}/test_commcarehq__domains",
         "document_class": "Domain",
         "es_alias": "hqdomains",
-        "es_index": "test_hqdomains_20160308_1304",
+        "es_index": "test_hqdomains_20160318_1339",
         "es_type": "hqdomain",
         "extra_args": {},
         "full_class_name": "corehq.pillows.domain.DomainPillow",
         "include_docs": true,
         "name": "DomainPillow",
-        "unique_id": "test_hqdomains_20160308_1304"
+        "unique_id": "test_hqdomains_20160318_1339"
     },
     "FarmerRecordFluffPillow": {
         "advertised_name": "fluff.FarmerRecordFluffPillow.testhq",

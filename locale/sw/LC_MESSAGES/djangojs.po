@@ -8,14 +8,14 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2016-03-15 18:51+0000\n"
+"POT-Creation-Date: 2016-03-22 20:42+0000\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
+"Language: \n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"Language: \n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
 
 #: corehq/apps/app_manager/static/app_manager/js/app_manager.js:78
@@ -58,7 +58,7 @@ msgid "Create"
 msgstr ""
 
 #: corehq/apps/export/static/export/js/models.js:31
-#: corehq/apps/style/static/style/js/bootstrap3/main.js:226
+#: corehq/apps/style/static/style/js/bootstrap3/main.js:227
 msgid "Save"
 msgstr ""
 
@@ -118,35 +118,35 @@ msgstr ""
 msgid "Show All Dates"
 msgstr ""
 
-#: corehq/apps/style/static/style/js/bootstrap3/main.js:227
+#: corehq/apps/style/static/style/js/bootstrap3/main.js:228
 msgid "Saving..."
 msgstr ""
 
-#: corehq/apps/style/static/style/js/bootstrap3/main.js:228
+#: corehq/apps/style/static/style/js/bootstrap3/main.js:229
 msgid "Saved"
 msgstr ""
 
-#: corehq/apps/style/static/style/js/bootstrap3/main.js:229
-#: corehq/apps/style/static/style/js/bootstrap3/main.js:237
+#: corehq/apps/style/static/style/js/bootstrap3/main.js:230
+#: corehq/apps/style/static/style/js/bootstrap3/main.js:238
 msgid "Try Again"
 msgstr ""
 
-#: corehq/apps/style/static/style/js/bootstrap3/main.js:230
+#: corehq/apps/style/static/style/js/bootstrap3/main.js:231
 msgid "There was an error saving"
 msgstr ""
 
-#: corehq/apps/style/static/style/js/bootstrap3/main.js:234
+#: corehq/apps/style/static/style/js/bootstrap3/main.js:235
 msgid "Delete"
 msgstr ""
 
-#: corehq/apps/style/static/style/js/bootstrap3/main.js:235
+#: corehq/apps/style/static/style/js/bootstrap3/main.js:236
 msgid "Deleting..."
 msgstr ""
 
-#: corehq/apps/style/static/style/js/bootstrap3/main.js:236
+#: corehq/apps/style/static/style/js/bootstrap3/main.js:237
 msgid "Deleted"
 msgstr ""
 
-#: corehq/apps/style/static/style/js/bootstrap3/main.js:238
+#: corehq/apps/style/static/style/js/bootstrap3/main.js:239
 msgid "There was an error deleting"
 msgstr ""

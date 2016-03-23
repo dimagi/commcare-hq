@@ -45,7 +45,7 @@
 trunk: master
 name: autostaging
 branches:
-  - submodule-staging-branches  # Danny 3/18
+  - fix-deploy-email-diff  # Danny 3/22
   - ko3-app-manager  # Danny 3/7
   - flip_apps_db  # Danny 3/1
   - calculatedIcons # Sravan 3/2
@@ -70,7 +70,8 @@ branches:
   - sql-saved-exports-2 # Noah 3/9  includes ES reindex
   - certificate-validation # Cal 3/10
   - move-services-dir # Ben 3/15
-  - total-row-sqlagg # Nick P 3/18
+  - login-b3 # Jenny 3/21
+  - add-new-es-machine  # Ethan 3/22
 submodules:
   submodules/touchforms-src:
     # let's leave this here even when empty
@@ -93,4 +94,5 @@ submodules:
   corehq/apps/prelogin:
     branches: []
   corehq/apps/hqmedia/static/hqmedia/MediaUploader:
-    branches: []
+    branches:
+     - retry-html5 # jenny 3/22

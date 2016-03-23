@@ -903,7 +903,9 @@ try:
                 globals()[attr] = getattr(custom_settings_module, attr)
     else:
         from localsettings import *
-except ImportError:
+except ImportError as error:
+    if error.message != 'No module named localsettings':
+        raise error
     # fallback in case nothing else is found - used for readthedocs
     from dev_settings import *
 
@@ -945,7 +947,7 @@ LOGGING = {
         },
         'file': {
             'level': 'INFO',
-            'class': 'logging.handlers.RotatingFileHandler',
+            'class': 'cloghandler.ConcurrentRotatingFileHandler',
             'formatter': 'verbose',
             'filename': DJANGO_LOG_FILE,
             'maxBytes': 10 * 1024 * 1024,  # 10 MB
@@ -953,7 +955,7 @@ LOGGING = {
         },
         'couch-request-handler': {
             'level': 'DEBUG',
-            'class': 'logging.handlers.RotatingFileHandler',
+            'class': 'cloghandler.ConcurrentRotatingFileHandler',
             'formatter': 'couch-request-formatter',
             'filters': ['hqcontext'],
             'filename': COUCH_LOG_FILE,
@@ -962,7 +964,7 @@ LOGGING = {
         },
         'accountinglog': {
             'level': 'INFO',
-            'class': 'logging.handlers.RotatingFileHandler',
+            'class': 'cloghandler.ConcurrentRotatingFileHandler',
             'formatter': 'verbose',
             'filename': ACCOUNTING_LOG_FILE,
             'maxBytes': 10 * 1024 * 1024,  # 10 MB
@@ -970,7 +972,7 @@ LOGGING = {
         },
         'analyticslog': {
             'level': 'DEBUG',
-            'class': 'logging.handlers.RotatingFileHandler',
+            'class': 'cloghandler.ConcurrentRotatingFileHandler',
             'formatter': 'verbose',
             'filename': ANALYTICS_LOG_FILE,
             'maxBytes': 10 * 1024 * 1024,  # 10 MB
@@ -978,7 +980,7 @@ LOGGING = {
         },
         'datadog': {
             'level': 'INFO',
-            'class': 'logging.handlers.RotatingFileHandler',
+            'class': 'cloghandler.ConcurrentRotatingFileHandler',
             'formatter': 'datadog',
             'filename': DATADOG_LOG_FILE,
             'maxBytes': 10 * 1024 * 1024,  # 10 MB
@@ -1036,8 +1038,8 @@ LOGGING = {
             'propagate': False,
         },
         'smsbillables': {
-            'handlers': ['file'],
-            'level': 'ERROR',
+            'handlers': ['file', 'console', 'mail_admins'],
+            'level': 'INFO',
             'propagate': False,
         },
         'accounting': {
@@ -1139,7 +1141,7 @@ NEW_DOMAINS_DB = 'domains'
 DOMAINS_DB = NEW_DOMAINS_DB
 
 NEW_APPS_DB = 'apps'
-APPS_DB = None
+APPS_DB = NEW_APPS_DB
 
 SYNCLOGS_DB = 'synclogs'
 

@@ -33,7 +33,6 @@
         function get_report_url() {
             return base_url;
         }
-
     $(function() {
         var chartSpecs = {{ report.spec.charts|JSON }};
         var updateCharts = function (data) {
@@ -102,6 +101,9 @@
             event.preventDefault();
             reportTables.render();
         });
+        // after we've registered the event that prevents the default form submission
+        // we can enable the submit button
+        $("#apply-filters").prop('disabled', false);
 
         $(function() {
             $('.header-popover').popover({
