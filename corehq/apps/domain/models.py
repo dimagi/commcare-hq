@@ -21,7 +21,7 @@ from django.core.urlresolvers import reverse
 from django.db import models, connection
 from django.utils.translation import ugettext_lazy as _
 from corehq.apps.appstore.models import SnapshotMixin
-from corehq.util.quickcache import skippable_quickcache
+from corehq.util.quickcache import quickcache, skippable_quickcache
 from dimagi.utils.couch import CriticalSection
 from dimagi.utils.couch.database import (
     iter_docs, get_safe_write_kwargs, apply_update, iter_bulk_delete
@@ -328,7 +328,7 @@ class Domain(QuickCachedDocumentMixin, Document, SnapshotMixin):
     default_mobile_worker_redirect = StringProperty(default=None)
     last_modified = DateTimeProperty(default=datetime(2015, 1, 1))
 
-    # when turned on, users who enter the domain are logged out after 30 minutes of inactivity
+    # when turned on, use SECURE_TIMEOUT for sessions of users who are members of this domain
     secure_sessions = BooleanProperty(default=False)
 
     two_factor_auth = BooleanProperty(default=False)
@@ -389,6 +389,12 @@ class Domain(QuickCachedDocumentMixin, Document, SnapshotMixin):
         """return a timezone object from self.default_timezone"""
         import pytz
         return pytz.timezone(self.default_timezone)
+
+    @staticmethod
+    @quickcache(['name'], timeout=24*60*60)
+    def is_secure_session_required(name):
+        domain = Domain.get_by_name(name)
+        return domain and domain.secure_sessions
 
     @staticmethod
     @skippable_quickcache(['couch_user._id', 'is_active'],
@@ -1061,6 +1067,7 @@ class Domain(QuickCachedDocumentMixin, Document, SnapshotMixin):
         from .utils import domain_restricts_superusers
         super(Domain, self).clear_caches()
         self.get_by_name.clear(self.__class__, self.name)
+        self.is_secure_session_required.clear(self.name)
         domain_restricts_superusers.clear(self.name)
 
 
