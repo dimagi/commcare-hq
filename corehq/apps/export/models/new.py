@@ -514,8 +514,7 @@ class ExportInstance(BlobMixin, Document):
         from corehq.apps.export.system_properties import TOP_MAIN_FORM_TABLE_PROPERTIES, BOTTOM_MAIN_FORM_TABLE_PROPERTIES
 
         first_case_update_index = len(columns)
-        for i in range(len(columns)):
-            col = columns[i]
+        for i, col in enumerate(columns):
             if col.tags == [PROPERTY_TAG_CASE]:
                 first_case_update_index = i
                 break
