@@ -1,6 +1,7 @@
 import re
 from corehq.apps.sms.api import send_sms_to_verified_number
 from corehq.util.translation import localize
+from custom.ilsgateway.slab.handlers.transfer import TransferHandler
 
 from custom.ilsgateway.tanzania.handlers.arrived import ArrivedHandler
 from custom.ilsgateway.tanzania.handlers.delivered import DeliveredHandler
@@ -69,7 +70,8 @@ def handle(verified_contact, text, msg=None):
         ('stockout', 'hakuna'): StockoutHandler,
         ('register', 'reg', 'join', 'sajili'): RegisterHandler,
         ('test',): MessageInitiatior,
-        ('not',): not_function(args[0]) if args else None
+        ('not',): not_function(args[0]) if args else None,
+        ('trans',): TransferHandler
     }
 
     def choose_handler(keyword):

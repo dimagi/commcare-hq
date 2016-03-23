@@ -9,6 +9,7 @@ from django.db import transaction
 from psycopg2._psycopg import DatabaseError
 
 from corehq.apps.locations.models import SQLLocation
+from custom.ilsgateway.slab.reminders.stockout import StockoutReminder
 from custom.ilsgateway.tanzania.reminders import REMINDER_MONTHLY_SOH_SUMMARY, REMINDER_MONTHLY_DELIVERY_SUMMARY, \
     REMINDER_MONTHLY_RANDR_SUMMARY
 from custom.ilsgateway.tanzania.reminders.delivery import DeliveryReminder
@@ -358,6 +359,20 @@ def soh_thank_you_task():
     last_month = datetime(now.year, now.month, 1) - timedelta(days=1)
     for domain in ILSGatewayConfig.get_all_enabled_domains():
         SOHThankYouReminder(domain=domain, date=last_month).send()
+
+
+@periodic_task(run_every=crontab(day_of_month="6-10", hour=8, minute=0),
+               queue="logistics_reminder_queue")
+def stockout_reminder_task():
+    """
+        6th business day of month
+    """
+    now = datetime.utcnow()
+    last_business_day = get_business_day_of_month(month=now.month, year=now.year, count=6)
+    if now.day != last_business_day.day:
+        return
+
+    send_for_all_domains(last_business_day, StockoutReminder)
 
 
 def recalculate_on_group_change(location, last_run):
