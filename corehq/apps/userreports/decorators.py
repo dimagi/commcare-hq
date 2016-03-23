@@ -2,12 +2,11 @@ from functools import wraps
 
 from django.conf import settings
 
-from psycopg2._psycopg import ProgrammingError
-
 from sqlagg import (
     ColumnNotFoundException,
     TableNotFoundException,
 )
+from sqlalchemy.exc import ProgrammingError
 
 from corehq.apps.userreports.exceptions import (
     InvalidQueryColumn,
