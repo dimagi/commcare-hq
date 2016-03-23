@@ -411,6 +411,14 @@ def recalculation_on_location_change(domain, last_run):
         # Thanks to this we avoid recalculations when in fact group/parent wasn't changed.
         # E.g Group is changed from A -> B and later from B -> A.
         # In this situation there is no need to recalculate data.
+
+        if not OrganizationSummary.objects.filter(location_id=sql_location.location_id).exists():
+            # There are no data for that location so there is no need to recalculate
+            PendingReportingDataRecalculation.objects.filter(
+                sql_location=sql_location, type=recalculation_type, domain=domain
+            ).delete()
+            continue
+
         if recalculation_type == 'group_change'\
                 and data_list[0]['previous_group'] != data_list[-1]['current_group']:
             recalculate_on_group_change(sql_location.couch_location, last_run)
