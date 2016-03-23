@@ -11,6 +11,7 @@ from corehq.apps.reports.standard import CustomProjectReport
 from corehq.apps.style.decorators import use_jquery_ui, use_bootstrap3
 from custom.ilsgateway.models import SLABConfig
 from custom.ilsgateway.slab.forms import SLABEditLocationForm
+from dimagi.utils.couch import CriticalSection
 from dimagi.utils.decorators.memoized import memoized
 
 
@@ -82,13 +83,14 @@ class SLABEditLocationView(BaseDomainView):
         is_pilot = cleaned_data['is_pilot']
         selected_ids = cleaned_data['selected_ids']
         if is_pilot:
-            slab_config, _ = SLABConfig.objects.get_or_create(sql_location=self.sql_location)
-            slab_config.is_pilot = is_pilot
-            slab_config.closest_supply_points.clear()
-            slab_config.closest_supply_points.add(
-                *[SQLLocation.objects.get(pk=pk) for pk in selected_ids]
-            )
-            slab_config.save()
+            with CriticalSection(['update-slab-config-for-location-%s' % self.sql_location.location_id]):
+                slab_config, _ = SLABConfig.objects.get_or_create(sql_location=self.sql_location)
+                slab_config.is_pilot = is_pilot
+                slab_config.closest_supply_points.clear()
+                slab_config.closest_supply_points.add(
+                    *[SQLLocation.objects.get(pk=pk) for pk in selected_ids]
+                )
+                slab_config.save()
         else:
             SLABConfig.objects.filter(sql_location=self.sql_location).delete()
 

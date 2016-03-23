@@ -51,7 +51,7 @@
         <div class="loc_section">
             <!-- header bar -->
             <div class="loc_header" data-bind="if: name() != '_root'">
-                <div style="float:right;" data-bind="if: can_edit() & type() === 'FACILITY'">
+                <div style="float:right;" data-bind="if: can_edit() && type() === 'FACILITY'">
                     <a class="btn btn-primary" data-bind="attr: { href: loc_edit_url(uuid()) }">
                         {% trans "Edit" %}
                     </a>

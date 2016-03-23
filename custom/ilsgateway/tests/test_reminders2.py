@@ -3,6 +3,7 @@ from datetime import datetime
 from corehq.apps.commtrack.models import CommtrackConfig, ConsumptionConfig
 from corehq.apps.consumption.shortcuts import set_default_consumption_for_supply_point
 from corehq.apps.sms.tests import setup_default_sms_test_backend, delete_domain_phone_numbers
+from corehq.util.translation import localize
 from custom.ilsgateway.models import SupplyPointStatus, DeliveryGroups, SupplyPointStatusTypes, \
     SupplyPointStatusValues, SLABConfig
 from custom.ilsgateway.slab.messages import REMINDER_STOCKOUT
@@ -274,10 +275,13 @@ class TestStockOut(RemindersTest):
         """
         self.run_script(script)
 
+        with localize('sw'):
+            reminder_stockout = unicode(REMINDER_STOCKOUT)
+
         StockoutReminder(TEST_DOMAIN, now).send()
         script = """
             5551235 < %s
-        """ % unicode(REMINDER_STOCKOUT) % {
+        """ % reminder_stockout % {
             'products_list': 'dp, id, ip',
             'overstocked_list': 'Test Facility 1 (dp, ip)'
         }
