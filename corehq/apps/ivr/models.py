@@ -1,4 +1,4 @@
-from corehq.apps.hqwebapp.models import UUIDGeneratorMixin
+from corehq.util.mixin import UUIDGeneratorMixin
 from corehq.apps.sms.mixin import UnrecognizedBackendException
 from corehq.apps.sms.models import SQLMobileBackend, Log, CallLog, OUTGOING
 from django.db import models
