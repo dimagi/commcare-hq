@@ -20,7 +20,7 @@ CUSTOM_REPORTS = (
         CMSRMSReport,
         StockSummaryReport,
         StockTransactionReport
-    ))
+    )),
 )
 
 ROOT_SITE_CODE = 'ghana'
