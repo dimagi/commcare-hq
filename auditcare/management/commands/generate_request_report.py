@@ -1,5 +1,6 @@
 import csv
 import re
+from optparse import make_option
 
 from django.contrib.auth.models import User
 from django.core.management.base import LabelCommand
@@ -23,18 +24,24 @@ def navigation_event_ids_by_user(user):
 def request_was_made_to_domain(domain, request_path):
     return request_path.startswith('/a/' + domain + '/')
 
-def get_users(domain):
+def get_users(domain, no_superuser=False):
     users = [u.username for u in WebUser.by_domain(domain)]
-    super_users = [u['username'] for u in User.objects.filter(is_superuser=True).values('username')]
+    if not no_superuser:
+        super_users = [u['username'] for u in User.objects.filter(is_superuser=True).values('username')]
     return set(users + super_users)
 
 class Command(LabelCommand):
     args = 'domain filename'
     help = """Generate request report"""
+    option_list = LabelCommand.option_list +\
+                  (make_option('--no-superuser', action='store_true', dest='no_superuser', default=False,
+                      help="Include superusers in report"),)
 
     def handle(self, *args, **options):
         domain, filename = args
-        users = get_users(domain)
+        no_superuser = options["no_superuser"]
+
+        users = get_users(domain, no_superuser)
 
         with open(filename, 'wb') as csvfile:
             writer = csv.writer(csvfile)
