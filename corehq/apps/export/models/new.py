@@ -118,7 +118,7 @@ class ExportColumn(DocumentSchema):
     # Determines whether or not to show the column in the UI Config without clicking advanced
     is_advanced = BooleanProperty(default=False)
     selected = BooleanProperty(default=False)
-    tags = ListProperty()  # TODO: I think this is moving to SystemExportColumn?
+    tags = ListProperty()
 
     # A list of constants that map to functions to transform the column value
     transforms = ListProperty(validators=is_valid_transform)
@@ -161,7 +161,6 @@ class ExportColumn(DocumentSchema):
         :returns: An ExportColumn instance
         """
         is_case_update = item.tag == PROPERTY_TAG_CASE
-        # TODO: Do special shit actually for the case update system export items
 
         is_main_table = table_path == MAIN_TABLE
         constructor_args = {
