@@ -28,7 +28,7 @@ TOP_MAIN_FORM_TABLE_PROPERTIES = [
         item=ExportItem(path=[
             PathNode(name='form'),
             PathNode(name='meta'),
-            PathNode(name='instnaceID')
+            PathNode(name='instanceID')
         ]),
         help_text=_('Unique identifier of the form submission'),
         selected=True,
