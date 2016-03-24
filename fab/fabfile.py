@@ -116,15 +116,12 @@ class DeployMetadata(object):
 
     def tag_commit(self):
         self._git.fetch("origin", "--tags")
-        deploy_commit = self.deploy_ref
-        self._check_deploy_commit(deploy_commit, self.env.code_branch)
         pattern = "*{}*".format(self.env.environment)
         self.last_tag = sh.tail(self._git.tag("-l", pattern), "-1").strip()
 
         tag_name = "{}-{}-deploy".format(self.timestamp, self.env.environment)
-        # turn whatever `code_branch` is into a commit
         msg = "{} deploy at {}".format(self.env.environment, self.timestamp)
-        self._git.tag(tag_name, "-m", msg, deploy_commit)
+        self._git.tag(tag_name, "-m", msg, self.deploy_ref)
         self._git.push("origin", tag_name)
         self._deploy_tag = tag_name
 
@@ -160,7 +157,10 @@ class DeployMetadata(object):
     @property
     def deploy_ref(self):
         if self._deploy_ref is None:
-            self._deploy_ref = self._git("rev-parse", self.env.code_branch).strip()
+            # turn whatever `code_branch` is into a commit hash
+            deploy_commit = self._git("rev-parse", self.env.code_branch).strip()
+            self._check_deploy_commit(deploy_commit, self.env.code_branch)
+            self._deploy_ref = deploy_commit
         return self._deploy_ref
 
 
@@ -623,8 +623,9 @@ def _confirm_translated():
 
 @task
 def setup_release():
+    deploy_ref = deploy_metadata.deploy_ref  # Make sure we have a valid commit
     _execute_with_timing(create_code_dir)
-    _execute_with_timing(update_code, deploy_metadata.deploy_ref)
+    _execute_with_timing(update_code, deploy_ref)
     _execute_with_timing(update_virtualenv)
 
     _execute_with_timing(copy_release_files)
