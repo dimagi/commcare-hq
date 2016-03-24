@@ -1,7 +1,6 @@
 from datetime import date, datetime
 import os
 import pytz
-import uuid
 from django.test import TestCase
 
 from casexml.apps.case.tests.util import delete_all_xforms

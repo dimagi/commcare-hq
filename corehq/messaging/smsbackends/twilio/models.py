@@ -1,8 +1,5 @@
-import logging
 from corehq.apps.sms.models import SQLSMSBackend, PhoneLoadBalancingMixin
-from corehq.apps.sms.util import clean_phone_number
 from corehq.messaging.smsbackends.twilio.forms import TwilioBackendForm
-from dimagi.ext.couchdbkit import *
 from twilio.rest import TwilioRestClient
 from django.conf import settings
 

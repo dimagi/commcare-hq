@@ -6,7 +6,7 @@ from django.contrib.humanize.templatetags.humanize import naturaltime
 from django.core.urlresolvers import reverse
 from django.utils.html import format_html
 from django.utils.safestring import mark_safe
-from casexml.apps.phone.models import SyncLog, properly_wrap_sync_log, SyncLogAssertionError
+from casexml.apps.phone.models import SyncLog, SyncLogAssertionError
 from corehq.apps.receiverwrapper.util import get_meta_appversion_text, BuildVersionSource, get_app_version_info
 from couchdbkit import ResourceNotFound
 from couchexport.export import SCALAR_NEVER_WAS
@@ -22,7 +22,6 @@ from corehq.util.couch import get_document_or_404
 from corehq.apps.reports.analytics.esaccessors import get_last_form_submissions_by_user
 from django.utils.translation import ugettext_noop
 from django.utils.translation import ugettext as _
-from dimagi.utils.couch.database import iter_docs
 from dimagi.utils.dates import safe_strftime
 from dimagi.utils.parsing import string_to_utc_datetime
 

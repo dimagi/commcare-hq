@@ -3,7 +3,6 @@ from celery.schedules import crontab
 from celery.task.base import periodic_task
 from couchdbkit.exceptions import ResourceNotFound
 from couchlog.models import ExceptionRecord
-from django.conf import settings
 
 
 def get_results(key):

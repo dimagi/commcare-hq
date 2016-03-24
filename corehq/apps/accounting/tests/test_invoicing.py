@@ -3,7 +3,6 @@ import random
 import datetime
 
 from django.core.exceptions import ObjectDoesNotExist
-from django.core.management import call_command
 from corehq.apps.accounting.tests.base_tests import BaseAccountingTest
 
 from dimagi.utils.dates import add_months_to_date
@@ -18,7 +17,7 @@ from corehq.apps.accounting.models import (
     Invoice, FeatureType, LineItem, Subscriber, DefaultProductPlan,
     CreditAdjustment, CreditLine, SubscriptionAdjustment, SoftwareProductType,
     SoftwarePlanEdition, BillingRecord, BillingAccount, SubscriptionType,
-    InvoiceBaseManager, SMALL_INVOICE_THRESHOLD, Subscription
+    SMALL_INVOICE_THRESHOLD, Subscription
 )
 
 

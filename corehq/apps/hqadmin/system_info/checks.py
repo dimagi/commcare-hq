@@ -3,7 +3,6 @@ from django.conf import settings
 from django.utils.safestring import mark_safe
 from restkit import Resource
 import json
-from corehq.apps.hqadmin.system_info.utils import human_bytes
 from soil import heartbeat
 
 

@@ -18,7 +18,7 @@ from dimagi.ext.couchdbkit import (
     StringListProperty, SchemaListProperty, TimeProperty, DecimalProperty
 )
 from django.core.urlresolvers import reverse
-from django.db import models, connection
+from django.db import models
 from django.utils.translation import ugettext_lazy as _
 from corehq.apps.appstore.models import SnapshotMixin
 from corehq.util.quickcache import skippable_quickcache

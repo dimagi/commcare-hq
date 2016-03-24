@@ -1,4 +1,3 @@
-import copy
 import logging
 from urlparse import urlparse, parse_qs
 import datetime
@@ -74,7 +73,7 @@ from corehq.util.timezones.fields import TimeZoneField
 from corehq.util.timezones.forms import TimeZoneChoiceField
 from django.template.loader import render_to_string
 from django.utils.translation import ugettext_noop, ugettext as _, ugettext_lazy
-from corehq.apps.style.forms.widgets import BootstrapCheckboxInput, BootstrapDisabledInput
+from corehq.apps.style.forms.widgets import BootstrapCheckboxInput
 import django
 from pyzxcvbn import zxcvbn
 

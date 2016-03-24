@@ -1,4 +1,3 @@
-from django.utils.translation import ugettext
 from corehq.apps.userreports.sql import get_expanded_column_config
 
 

@@ -21,7 +21,6 @@ from corehq.apps.users.models import CouchUser
 from corehq.apps.receiverwrapper import submit_form_locally
 from xml.etree import ElementTree
 from casexml.apps.case.mock import CaseBlock
-from casexml.apps.case.xml import V2
 from corehq.apps.commtrack.exceptions import (
     NoDefaultLocationException,
     NotAUserClassError)
