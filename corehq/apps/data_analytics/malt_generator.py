@@ -2,14 +2,14 @@ import logging
 
 from corehq.apps.app_manager.const import AMPLIFIES_NOT_SET
 from corehq.apps.app_manager.dbaccessors import get_app
+from corehq.apps.data_analytics.analytics import get_app_submission_breakdown
 from corehq.apps.data_analytics.models import MALTRow
 from corehq.apps.domain.models import Domain
-from corehq.apps.sofabed.models import FormData, MISSING_APP_ID
+from corehq.apps.sofabed.models import MISSING_APP_ID
 from corehq.apps.users.util import DEMO_USER_ID, JAVA_ADMIN_USERNAME
 from corehq.util.quickcache import quickcache
 
 from django.db import IntegrityError
-from django.db.models import Count
 from django.http.response import Http404
 
 
@@ -44,11 +44,7 @@ class MALTTableGenerator(object):
 
     def _get_malt_row_dicts(self, domain_name, monthspan, all_users_by_id):
         malt_row_dicts = []
-        forms_query = self._get_forms_queryset(domain_name, monthspan)
-        apps_submitted_for = forms_query.values('app_id', 'device_id', 'user_id', 'username').annotate(
-            num_of_forms=Count('instance_id')
-        )
-
+        apps_submitted_for = get_app_submission_breakdown(domain_name, monthspan)
         for app_row_dict in apps_submitted_for:
             app_id = app_row_dict['app_id']
             num_of_forms = app_row_dict['num_of_forms']
@@ -122,15 +118,6 @@ class MALTTableGenerator(object):
                 str(malt_dict),
                 str(ex)
             ), exc_info=True)
-
-    def _get_forms_queryset(self, domain_name, monthspan):
-        start_date = monthspan.computed_startdate
-        end_date = monthspan.computed_enddate
-
-        return FormData.objects.filter(
-            domain=domain_name,
-            received_on__range=(start_date, end_date)
-        )
 
     @classmethod
     @quickcache(['domain', 'app_id'])
