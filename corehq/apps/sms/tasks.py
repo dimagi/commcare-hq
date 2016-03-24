@@ -14,6 +14,7 @@ from corehq import privileges
 from corehq.apps.accounting.utils import domain_has_privilege
 from corehq.apps.domain.models import Domain
 from corehq.apps.smsbillables.models import SmsBillable
+from corehq.apps.sms.change_publishers import publish_sms_saved
 from corehq.util.timezones.conversions import ServerTime
 from dimagi.utils.chunked import chunked
 from dimagi.utils.couch.bulk import soft_delete_docs
@@ -30,7 +31,7 @@ def remove_from_queue(queued_sms):
         for field in sms._meta.fields:
             if field.name != 'id':
                 setattr(sms, field.name, getattr(queued_sms, field.name))
-        queued_sms.delete(sync_to_couch=False)  # Remove sync_to_couch when SMSLog is removed
+        queued_sms.delete()
         sms.save()
 
     sms.publish_change()
@@ -328,10 +329,10 @@ def _sync_case_phone_number(contact_case):
                 phone_number.delete()
 
 
-@task(queue='background_queue', ignore_result=True)
-def sync_sms_to_couch(sms):
+@task(queue='background_queue', ignore_result=True, acks_late=True,
+      default_retry_delay=5 * 60, max_retries=10, bind=True)
+def publish_sms_change(self, sms):
     try:
-        sms._migration_do_sync()
-    except:
-        message = 'Could not sync SMSLog from SMS %s' % sms.pk
-        notify_exception(None, message=message)
+        publish_sms_saved(sms)
+    except Exception as e:
+        self.retry(exc=e)
