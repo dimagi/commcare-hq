@@ -3,7 +3,9 @@ from abc import ABCMeta, abstractmethod, abstractproperty
 
 import six as six
 from couchdbkit import ResourceNotFound
+
 from dimagi.utils.decorators.memoized import memoized
+from couchforms import const
 
 
 class AbstractXFormInstance(object):
@@ -98,6 +100,22 @@ class AbstractXFormInstance(object):
     @classmethod
     def get(self, xform_id):
         raise NotImplementedError()
+
+    @property
+    def xml_md5(self):
+        raise NotImplementedError()
+
+    @property
+    def version(self):
+        return self.form_data.get(const.TAG_VERSION, "")
+
+    @property
+    def uiversion(self):
+        return self.form_data.get(const.TAG_UIVERSION, "")
+
+    @property
+    def type(self):
+        return self.form_data.get(const.TAG_TYPE, "")
 
     @memoized
     def get_sync_token(self):
