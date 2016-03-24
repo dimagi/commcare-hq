@@ -226,11 +226,6 @@ class LocationGroupTest(LocationTestBase):
         self.domain.save()
         self.loc.delete()
 
-        state = make_loc(
-            'teststate1',
-            type='state',
-            domain=self.domain.name
-        )
         fixture = location_fixture_generator(self.user, '2.0')
         try:
             fixture[0]
@@ -246,11 +241,6 @@ class LocationGroupTest(LocationTestBase):
         self.domain.save()
         self.loc.delete()
 
-        state = make_loc(
-            'teststate1',
-            type='state',
-            domain=self.domain.name
-        )
         fixture = location_fixture_generator(self.user, '2.0')
         try:
             fixture[0]
