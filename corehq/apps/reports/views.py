@@ -18,6 +18,7 @@ from urllib2 import URLError
 from django.conf import settings
 from django.contrib import messages
 from django.contrib.auth.decorators import permission_required
+from django.core.cache import cache
 from django.core.exceptions import PermissionDenied
 from django.core.files.base import ContentFile
 from django.core.servers.basehttp import FileWrapper
@@ -70,7 +71,7 @@ from couchexport.shortcuts import (export_data_shared, export_raw_data,
 from couchexport.tasks import rebuild_schemas
 from couchexport.util import SerializableFunction
 from couchforms.filters import instances
-from couchforms.models import XFormInstance, XFormDeprecated
+from couchforms.models import XFormInstance, doc_types, XFormDeprecated
 from dimagi.utils.chunked import chunked
 from dimagi.utils.couch.bulk import wrapped_docs
 from dimagi.utils.couch.cache.cache_core import get_redis_client
@@ -103,6 +104,7 @@ from corehq.apps.export.exceptions import BadExportConfiguration
 from corehq.apps.groups.models import Group
 from corehq.apps.hqcase.dbaccessors import get_case_ids_in_domain
 from corehq.apps.hqcase.export import export_cases
+from corehq.apps.hqcase.utils import submit_case_blocks
 from corehq.apps.hqwebapp.models import ReportsTab
 from corehq.apps.hqwebapp.utils import csrf_inline
 from corehq.apps.locations.permissions import can_edit_form_location
@@ -138,7 +140,8 @@ from .models import (
     HQGroupExportConfiguration
 )
 
-from .standard import inspect, ProjectReport
+from .standard import inspect, export, ProjectReport
+from corehq.apps.style.decorators import use_bootstrap3
 from .standard.cases.basic import CaseListReport
 from .tasks import (
     build_form_multimedia_zip,
@@ -155,7 +158,12 @@ from .util import (
     group_filter,
     users_matching_filter,
 )
-from corehq.apps.style.decorators import use_bootstrap3
+from corehq.apps.style.decorators import (
+    use_bootstrap3,
+    use_jquery_ui,
+    use_jquery_ui_multiselect,
+    use_select2,
+)
 
 
 datespan_default = datespan_in_request(

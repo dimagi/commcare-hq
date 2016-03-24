@@ -1,3 +1,4 @@
+from django.conf import settings
 from django.test import TestCase
 from corehq.apps.accounting.generator import init_default_currency
 

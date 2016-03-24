@@ -1,3 +1,5 @@
+import hashlib
+
 import datetime
 
 from corehq.form_processor.interfaces.dbaccessors import FormAccessors

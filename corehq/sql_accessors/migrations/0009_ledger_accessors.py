@@ -1,9 +1,9 @@
 # -*- coding: utf-8 -*-
 from __future__ import unicode_literals
 
-from django.db import migrations
+from django.db import models, migrations
 
-from corehq.sql_db.operations import RawSQLMigration
+from corehq.sql_db.operations import RawSQLMigration, HqRunSQL
 
 migrator = RawSQLMigration(('corehq', 'sql_accessors', 'sql_templates'), {})
 

@@ -9,6 +9,7 @@ import mock
 from django.conf import settings
 from django.core.management import call_command
 
+from dimagi.utils.dates import add_months
 from dimagi.utils.data import generator as data_gen
 
 from corehq.apps.accounting.models import (

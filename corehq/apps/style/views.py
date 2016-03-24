@@ -1,3 +1,4 @@
+from django.utils.decorators import method_decorator
 from corehq.apps.hqwebapp.views import BaseSectionPageView
 from corehq.apps.style.decorators import use_bootstrap3
 

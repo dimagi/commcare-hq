@@ -42,7 +42,7 @@ from corehq.apps.export.models import (
     CaseExportDataSchema,
     FormExportInstance,
     CaseExportInstance,
-)
+    ExportInstance)
 from corehq.apps.export.const import (
     FORM_EXPORT,
     CASE_EXPORT,

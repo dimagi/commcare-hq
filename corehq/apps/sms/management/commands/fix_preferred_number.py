@@ -1,4 +1,4 @@
-from django.core.management.base import BaseCommand
+from django.core.management.base import BaseCommand, CommandError
 from optparse import make_option
 from corehq.apps.sms.mixin import VerifiedNumber
 from corehq.apps.users.models import CouchUser

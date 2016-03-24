@@ -20,6 +20,7 @@ from couchexport.models import Format
 from dimagi.utils.couch.database import iter_docs
 from dimagi.utils.django.email import send_HTML_email
 
+from corehq.apps.accounting import utils
 from corehq.apps.accounting.exceptions import (
     CreditLineError,
     InvoiceAlreadyCreatedError,
@@ -29,6 +30,7 @@ from corehq.apps.accounting.invoicing import DomainInvoiceFactory
 from corehq.apps.accounting.models import (
     BillingAccount,
     Currency,
+    Invoice,
     StripePaymentMethod,
     Subscription,
     SubscriptionAdjustment,

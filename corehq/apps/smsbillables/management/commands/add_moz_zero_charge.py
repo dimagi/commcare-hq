@@ -1,4 +1,6 @@
 from decimal import Decimal
+import logging
+from couchdbkit import ResourceNotFound
 
 from django.core.management.base import LabelCommand
 
