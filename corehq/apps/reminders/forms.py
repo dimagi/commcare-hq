@@ -1,6 +1,8 @@
+from django.forms.fields import *
 import copy
 import json
 import re
+from crispy_forms.bootstrap import InlineField
 from crispy_forms.helper import FormHelper
 from crispy_forms import layout as crispy
 from crispy_forms import bootstrap as twbscrispy
@@ -10,7 +12,6 @@ from django.template.loader import render_to_string
 from datetime import timedelta, datetime, time, date
 from django.conf import settings
 from django.core.exceptions import ValidationError
-from django.forms.fields import *
 from django.forms.forms import Form
 from django import forms
 from django.forms import Field, Widget
