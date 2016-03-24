@@ -41,7 +41,6 @@ def test_app_submission_breakdown(self, combination_count_list):
     """
     The breakdown of this report is (app, device, userid, username): count
     """
-    print combination_count_list
     domain = 'test-data-analytics'
     received = datetime(2016, 3, 24)
     month = DateSpan.from_month(3, 2016)
