@@ -65,13 +65,9 @@ class SMSPillow(AliasedElasticPillow):
         return
 
 
-class SMSPillowProcessor(ElasticProcessor):
-    pass
-
-
 def get_sql_sms_pillow(pillow_id):
     checkpoint = PillowCheckpoint(SMS_PILLOW_CHECKPOINT_ID)
-    processor = SMSPillowProcessor(
+    processor = ElasticProcessor(
         elasticseach=get_es_new(),
         index_meta=ElasticsearchIndexMeta(index=ES_SMS_INDEX, type=ES_SMS_TYPE),
         doc_prep_fn=lambda x: x
