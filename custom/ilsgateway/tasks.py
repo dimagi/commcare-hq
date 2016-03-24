@@ -123,7 +123,6 @@ def report_run_periodic_task():
 @task(queue='logistics_background_queue', ignore_result=True)
 def report_run(domain, locations=None, strict=True):
     last_successful_run = ReportRun.last_success(domain)
-    recalculation_on_location_change(domain, last_successful_run)
 
     last_run = ReportRun.last_run(domain)
     start_date = (datetime.min if not last_successful_run else last_successful_run.end)
@@ -164,6 +163,8 @@ def report_run(domain, locations=None, strict=True):
         run.complete = True
         run.save()
         logging.info("ILSGateway report runner end time: %s" % datetime.utcnow())
+        if not has_error:
+            recalculation_on_location_change.delay(domain, last_successful_run)
 
 facility_delivery_partial = partial(send_for_day, cutoff=15, reminder_class=DeliveryReminder)
 district_delivery_partial = partial(send_for_day, cutoff=13, reminder_class=DeliveryReminder,
@@ -404,6 +405,7 @@ def recalculate_on_parent_change(location, previous_parent_id, last_run):
     return type_location_map
 
 
+@task(queue='logistics_background_queue', ignore_result=True)
 def recalculation_on_location_change(domain, last_run):
     if not last_run:
         PendingReportingDataRecalculation.objects.filter(domain=domain).delete()
