@@ -324,8 +324,9 @@ class SmsBillable(models.Model):
     @classmethod
     def _get_gateway_fee(cls, backend_api_id, backend_instance, phone_number, direction, couch_id):
         country_code, national_number = get_country_code_and_national_number(phone_number)
+        is_gateway_billable = backend_instance is None or _sms_backend_is_global(backend_instance)
 
-        if backend_instance is None or _sms_backend_is_global(backend_instance):
+        if is_gateway_billable:
             gateway_fee = SmsGatewayFee.get_by_criteria(
                 backend_api_id,
                 direction,
