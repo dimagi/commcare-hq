@@ -7,7 +7,9 @@
     <script type="text/javascript">
         $(function() {
             gaTrackLink($('#download_link'), 'Organization Structure', 'Bulk Import', 'Download');
-            gaTrackLink($("button[type='submit']"), 'Organization Structure', 'Bulk Import', 'Upload');
+            $("button[type='submit']").click(function() {
+               ga_track_event('Organization Structure', 'Bulk Import', 'Upload');
+            });
         });
     </script>
 {% endblock %}
