@@ -1,4 +1,5 @@
 import json
+import uuid
 from datetime import datetime
 
 import dateutil.parser
@@ -6,6 +7,9 @@ import dateutil.parser
 from django.utils.http import urlencode
 from django.test import TestCase
 from django.core.urlresolvers import reverse
+from casexml.apps.case.mock import CaseBlock
+from corehq.apps.hqcase.utils import submit_case_blocks
+from corehq.form_processor.tests import run_with_all_backends
 from django_prbac.models import Role
 from tastypie.models import ApiKey
 from tastypie.resources import Resource
@@ -263,6 +267,29 @@ class TestXFormInstanceResource(APIResourceTest):
             {'term': {'domain.exact': 'qwerty'}},
         ]
         self._test_es_query({'include_archived': 'true'}, expected)
+
+    @run_with_all_backends
+    def test_fetching_xform_cases(self):
+        # Create an xform that touches a case
+        case_id = uuid.uuid4().hex
+        form_id = submit_case_blocks(
+            CaseBlock(
+                case_id=case_id,
+                create=True,
+            ).as_string(),
+            self.domain.name
+        )
+
+        # Fetch the xform through the API
+        self.client.login(username=self.username, password=self.password)
+        response = self.client.get(self.single_endpoint(form_id) + "?cases__full=true")
+        self.assertEqual(response.status_code, 200)
+        cases = json.loads(response.content)['cases']
+
+        # Confirm that the case appears in the resource
+        self.assertEqual(len(cases), 1)
+        self.assertEqual(cases[0]['id'], case_id)
+
 
 class TestCommCareCaseResource(APIResourceTest):
     """

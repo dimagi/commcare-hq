@@ -456,6 +456,11 @@ corehq.apps.api:
   - corehq.apps.app_manager
   - django_otp.plugins.otp_static
   - django_otp.plugins.otp_totp
+  - corehq.apps.hqcase
+  - couchforms
+  - corehq.form_processor
+  - corehq.sql_accessors
+  - corehq.sql_proxy_accessors
 # At least one of the following items is required, I don't know which ones
   - corehq.couchapps
   - corehq.apps.sms
