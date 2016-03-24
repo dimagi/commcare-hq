@@ -463,7 +463,7 @@ def get_session_context(request, domain, session_id):
             session.delete()
         return json_response({'status': 'success'})
     else:
-        helper = SessionDataHelper(domain, request.couch_user)
+        helper = BaseSessionDataHelper(domain, request.couch_user)
         return json_response(helper.get_full_context({
             'session_id': session_id,
             'app_id': session.app_id if session else None

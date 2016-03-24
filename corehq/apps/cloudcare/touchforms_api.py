@@ -48,6 +48,24 @@ class BaseSessionDataHelper(object):
 
         return json.loads(response)
 
+    def get_full_context(self, root_extras=None, session_extras=None):
+        """
+        Get the entire touchforms context for a given user/app/module/form/case
+        """
+        root_extras = root_extras or {}
+        session_extras = session_extras or {}
+        session_data = self.get_session_data()
+        # always tell touchforms to include footprinted cases in its case db
+        session_data["additional_filters"] = {"footprint": True}
+        session_data.update(session_extras)
+        online_url = reverse("xform_player_proxy")
+        ret = {
+            "session_data": session_data,
+            "xform_url": online_url,
+        }
+        ret.update(root_extras)
+        return ret
+
 
 class CaseSessionDataHelper(BaseSessionDataHelper):
     def __init__(self, domain, couch_user, case_id_or_case, app, form, delegation=False):
@@ -104,24 +122,6 @@ class CaseSessionDataHelper(BaseSessionDataHelper):
         if len(datums) == 1:
             session_var = datums[0].datum.id
         return session_var
-
-    def get_full_context(self, root_extras=None, session_extras=None):
-        """
-        Get the entire touchforms context for a given user/app/module/form/case
-        """
-        root_extras = root_extras or {}
-        session_extras = session_extras or {}
-        session_data = self.get_session_data()
-        # always tell touchforms to include footprinted cases in its case db
-        session_data["additional_filters"] = {"footprint": True}
-        session_data.update(session_extras)
-        online_url = reverse("xform_player_proxy")
-        ret = {
-            "session_data": session_data,
-            "xform_url": online_url,
-        }
-        ret.update(root_extras)
-        return ret
 
 
 def get_user_contributions_to_touchforms_session(couch_user_or_commconnect_case):
