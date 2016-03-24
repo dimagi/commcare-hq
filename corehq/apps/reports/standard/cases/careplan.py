@@ -5,7 +5,7 @@ from corehq.apps.reports.generic import GenericReportView
 from corehq.apps.reports.standard import ProjectReportParametersMixin, ProjectReport
 from corehq.apps.reports.standard.cases.basic import CaseListReport
 from corehq.apps.reports.standard.cases.data_sources import CaseDisplay
-from django.core.urlresolvers import NoReverseMatch
+from django.core.urlresolvers import reverse, NoReverseMatch
 from django.utils import html
 from corehq.util.view_utils import absolute_reverse
 from dimagi.utils.decorators.memoized import memoized

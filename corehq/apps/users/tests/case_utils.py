@@ -3,6 +3,7 @@ import uuid
 from casexml.apps.case.mock import CaseBlock
 from casexml.apps.case.models import CommCareCase
 from casexml.apps.case.util import post_case_blocks
+from casexml.apps.case.xml import V2
 from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.groups.models import Group
 from corehq.apps.users.cases import get_wrapped_owner, get_owning_users, reconcile_ownership, get_owner_id

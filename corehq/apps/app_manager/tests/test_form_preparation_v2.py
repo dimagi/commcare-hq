@@ -8,6 +8,7 @@ from corehq.apps.app_manager.models import (
     Application,
     FormAction,
     FormActionCondition,
+    FormSchedule,
     LoadUpdateAction,
     Module,
     OpenCaseAction,

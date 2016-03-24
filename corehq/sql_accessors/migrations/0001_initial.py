@@ -1,10 +1,10 @@
 # -*- coding: utf-8 -*-
 from __future__ import unicode_literals
 
-from django.db import migrations
+from django.db import models, migrations
 
 from corehq.form_processor.models import XFormInstanceSQL, XFormOperationSQL, CaseTransaction
-from corehq.sql_db.operations import HqRunSQL, RawSQLMigration
+from corehq.sql_db.operations import HqRunSQL, RawSQLMigration, noop_migration
 
 migrator = RawSQLMigration(('corehq', 'sql_accessors', 'sql_templates'), {
     'FORM_STATE_ARCHIVED': XFormInstanceSQL.ARCHIVED,

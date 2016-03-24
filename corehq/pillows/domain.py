@@ -3,6 +3,8 @@ from corehq.apps.accounting.models import Subscription
 from corehq.apps.domain.models import Domain
 from corehq.pillows.base import HQPillow
 from corehq.pillows.mappings.domain_mapping import DOMAIN_MAPPING, DOMAIN_INDEX
+from dimagi.utils.decorators.memoized import memoized
+from django.conf import settings
 from django_countries.data import COUNTRIES
 from pillowtop.es_utils import doc_exists
 

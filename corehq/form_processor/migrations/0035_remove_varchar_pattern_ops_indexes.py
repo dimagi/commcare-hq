@@ -1,7 +1,8 @@
 # -*- coding: utf-8 -*-
 from __future__ import unicode_literals
 
-from django.db import migrations
+from django.db import models, migrations
+import uuidfield.fields
 
 from corehq.sql_db.operations import HqRunSQL
 

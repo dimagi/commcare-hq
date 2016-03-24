@@ -7,6 +7,7 @@ from corehq.apps.app_manager.models import (
     Application,
     DetailColumn,
     FormActionCondition,
+    FormSchedule,
     MappingItem,
     Module,
     OpenCaseAction,
@@ -14,6 +15,7 @@ from corehq.apps.app_manager.models import (
     PreloadAction,
     ReportAppConfig,
     ReportModule,
+    ScheduleVisit,
     SortElement,
     UpdateCaseAction,
 )

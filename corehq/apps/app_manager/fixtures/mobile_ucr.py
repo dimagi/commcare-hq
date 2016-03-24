@@ -6,7 +6,10 @@ from lxml.builder import E
 from django.conf import settings
 
 from corehq import toggles
-from corehq.apps.app_manager.models import ReportModule
+from corehq.apps.app_manager.models import (
+    Application,
+    ReportModule,
+)
 from corehq.util.xml_utils import serialize
 
 from corehq.apps.userreports.exceptions import UserReportsError, BadReportConfigurationError

@@ -1,4 +1,5 @@
 from decimal import Decimal
+import logging
 from django.core.management.base import LabelCommand
 from corehq.apps.accounting.models import Currency
 from corehq.apps.smsbillables.utils import log_smsbillables_info

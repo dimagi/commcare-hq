@@ -1,7 +1,8 @@
 import copy
 from datetime import datetime
 import json
-from corehq.apps.style.decorators import use_nvd3
+from corehq.apps.style.decorators import use_bootstrap3, use_datatables, \
+    use_nvd3, use_jquery_ui
 from dimagi.utils.decorators.memoized import memoized
 from corehq.apps.accounting.models import (
     SoftwarePlanEdition,

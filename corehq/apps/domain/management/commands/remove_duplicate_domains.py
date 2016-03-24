@@ -1,3 +1,4 @@
+from collections import defaultdict
 from django.core.management import BaseCommand
 from corehq.apps.domain.models import Domain
 
