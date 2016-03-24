@@ -2408,8 +2408,7 @@ class BillingRecord(BillingRecordBase):
 
     def email_subject(self):
         month_name = self.invoice.date_start.strftime("%B")
-        return "Your %(month)s %(product)s Billing Statement for Project Space %(domain)s" % {
-            'product': self.invoice.subscription.plan_version.core_product,
+        return "Your %(month)s CommCare Billing Statement for Project Space %(domain)s" % {
             'month': month_name,
             'domain': self.invoice.subscription.subscriber.domain,
         }
