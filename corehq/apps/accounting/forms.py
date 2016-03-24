@@ -166,7 +166,21 @@ class BillingAccountBasicForm(forms.Form):
             crispy.Fieldset(
                 'Basic Information',
                 'name',
-                crispy.Field('email_list', css_class='input-xxlarge'),
+                crispy.Div(
+                    crispy.HTML("<!-- Target -->"),
+                    crispy.Field('email_list', css_class='input-xxlarge'),
+                    # crispy.HTML(id='clipboard-value', value='emails'),
+                    crispy.HTML("""
+                    <!-- Trigger -->
+                        <button
+                         class="btn"
+                         data-clipboard-text="some text"
+                         data-clipboard-action="copy"
+                         >
+                            Copy!
+                        </button>
+                    """),
+                ),
                 'dimagi_contact',
                 'salesforce_account_id',
                 'currency',
