@@ -827,7 +827,8 @@ class AdminDomainStatsReport(AdminFacetedReport, DomainStatsReport):
                     dom.get('cp_n_sms_in_30_d', _("Not yet calculated")),
                     dom.get('cp_n_sms_out_30_d', _("Not yet calculated")),
                     format_bool(dom.get('internal', {}).get('custom_eula')),
-                    dom.get('hipaa_compliant', _('false'))
+                    dom.get('hipaa_compliant', _('false')),
+                    dom.get('cp_j2me_90_d_bool', _('Not yet calculated')),
                 ]
 
 
