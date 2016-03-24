@@ -417,7 +417,7 @@ class SQLLocation(SyncSQLToCouchMixin, MPTTModel):
 
     @property
     def path(self):
-        return reversed(self.lineage)
+        return list(reversed(self.lineage))
 
     @classmethod
     def by_location_id(cls, location_id):
