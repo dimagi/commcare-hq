@@ -382,7 +382,7 @@ class CaseRepeater(Repeater):
 
     def payload_user_id(self, payload):
         # get the user_id who submitted the payload, note, it's not the owner_id
-        return payload.transactions[-1].user_id
+        return payload.actions[-1].user_id
 
     @memoized
     def payload_doc(self, repeat_record):

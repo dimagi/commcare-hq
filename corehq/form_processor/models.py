@@ -635,6 +635,11 @@ class CommCareCaseSQL(DisabledDbMixin, models.Model, RedisLockableMixIn,
         transactions += self.get_tracked_models_to_create(CaseTransaction)
         return transactions
 
+    @property
+    def actions(self):
+        """For compatability with CommCareCase. Please use transactions when possible"""
+        return self.transactions
+
     def get_transaction_by_form_id(self, form_id):
         from corehq.form_processor.backends.sql.dbaccessors import CaseAccessorSQL
         transactions = filter(

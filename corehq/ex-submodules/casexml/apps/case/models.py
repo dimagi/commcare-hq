@@ -229,10 +229,6 @@ class CommCareCase(SafeSaveDocument, IndexHoldingMixIn, ComputedDocumentMixin,
         return filter(lambda action: action.action_type == const.CASE_ACTION_CLOSE, self.actions)
 
     @property
-    def transactions(self):
-        return self.actions
-
-    @property
     def deletion_id(self):
         return getattr(self, '-deletion_id', None)
 
