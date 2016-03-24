@@ -453,6 +453,24 @@ def get_sessions(request, domain):
 
 
 @cloudcare_api
+def get_session_context(request, domain, session_id):
+    try:
+        session = EntrySession.objects.get(session_id=session_id)
+    except EntrySession.DoesNotExist:
+        session = None
+    if request.method == 'DELETE':
+        if session:
+            session.delete()
+        return json_response({'status': 'success'})
+    else:
+        helper = SessionDataHelper(domain, request.couch_user)
+        return json_response(helper.get_full_context({
+            'session_id': session_id,
+            'app_id': session.app_id if session else None
+        }))
+
+
+@cloudcare_api
 def get_ledgers(request, domain):
     """
     Returns ledgers associated with a case in the format:
