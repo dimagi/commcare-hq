@@ -1,8 +1,7 @@
 from datetime import datetime
-import uuid
 from django.test import TestCase
 from corehq.apps.data_analytics.analytics import get_app_submission_breakdown
-from corehq.apps.sofabed.models import FormData
+from corehq.apps.data_analytics.tests.utils import save_to_analytics_db
 from corehq.util.test_utils import generate_cases
 from dimagi.utils.dates import DateSpan
 
@@ -48,29 +47,11 @@ def test_app_submission_breakdown(self, combination_count_list):
     month = DateSpan.from_month(3, 2016)
     for app, device, userid, username, count in combination_count_list:
         for i in range(count):
-            _save_to_analytics_db(domain, received, app, device, userid, username)
+            save_to_analytics_db(domain, received, app, device, userid, username)
 
     data_back = get_app_submission_breakdown(domain, month)
     normalized_data_back = set([_breakdown_dict_to_tuple(bdd) for bdd in data_back])
     self.assertEqual(set(combination_count_list), normalized_data_back)
-
-
-def _save_to_analytics_db(domain, received, app, device, user_id, username):
-    unused_args = {
-        'time_start': received,
-        'time_end': received,
-        'duration': 1
-    }
-    FormData.objects.create(
-        domain=domain,
-        received_on=received,
-        instance_id=uuid.uuid4().hex,
-        app_id=app,
-        device_id=device,
-        user_id=user_id,
-        username=username,
-        **unused_args
-    )
 
 
 def _breakdown_dict_to_tuple(breakdown_dict):
