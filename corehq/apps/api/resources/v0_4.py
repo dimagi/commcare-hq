@@ -61,8 +61,12 @@ class XFormInstanceResource(SimpleSortableResourceMixin, v0_3.XFormInstanceResou
         attribute='initial_processing_complete', null=True)
     problem = fields.CharField(attribute='problem', null=True)
 
-    cases = UseIfRequested(ToManyDocumentsField('corehq.apps.api.resources.v0_4.CommCareCaseResource',
-                                                attribute=lambda xform: casexml_xform.cases_referenced_by_xform(xform)))
+    cases = UseIfRequested(
+        ToManyDocumentsField(
+            'corehq.apps.api.resources.v0_4.CommCareCaseResource',
+            attribute=lambda xform: casexml_xform.cases_referenced_by_xform(xform)
+        )
+    )
 
     attachments = fields.DictField(readonly=True, null=True)
 

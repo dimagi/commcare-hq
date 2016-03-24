@@ -7,6 +7,8 @@ import json
 import datetime
 from corehq.apps.api.couch import UserQuerySetAdapter
 from corehq.apps.domain.auth import determine_authtype_from_header
+from corehq.form_processor.exceptions import XFormNotFound
+from corehq.form_processor.interfaces.dbaccessors import FormAccessors
 from dimagi.utils.couch.database import iter_docs
 from django.core.exceptions import PermissionDenied
 from django.http import Http404, HttpResponse, HttpResponseForbidden
@@ -38,7 +40,8 @@ from corehq.apps.users.models import CommCareUser, WebUser, Permissions
 
 # API imports
 from corehq.apps.api.serializers import CustomXMLSerializer, XFormInstanceSerializer
-from corehq.apps.api.util import get_object_or_not_exist
+from corehq.apps.api.util import get_object_or_not_exist, object_does_not_exist, \
+    get_obj
 from corehq.apps.api.resources import (
     CouchResourceMixin,
     DomainSpecificResourceMixin,
@@ -327,17 +330,22 @@ class CommCareCaseResource(HqBaseResource, DomainSpecificResourceMixin):
         resource_name = 'case'
 
 
-class XFormInstanceResource(CouchResourceMixin, HqBaseResource, DomainSpecificResourceMixin):
+class XFormInstanceResource(HqBaseResource, DomainSpecificResourceMixin):
     type = "form"
-    id = fields.CharField(attribute='get_id', readonly=True, unique=True)
+    id = fields.CharField(attribute='form_id', readonly=True, unique=True)
 
-    form = fields.DictField(attribute='form')
+    form = fields.DictField(attribute='form_data')
     type = fields.CharField(attribute='type')
     version = fields.CharField(attribute='version')
     uiversion = fields.CharField(attribute='uiversion')
     metadata = fields.DictField(attribute='metadata', null=True)
     received_on = fields.DateTimeField(attribute="received_on")
     md5 = fields.CharField(attribute='xml_md5')
+
+    def detail_uri_kwargs(self, bundle_or_obj):
+        return {
+            'pk': get_obj(bundle_or_obj).form_id
+        }
 
     def obj_get(self, bundle, **kwargs):
         return get_object_or_not_exist(XFormInstance, kwargs['pk'], kwargs['domain'])
