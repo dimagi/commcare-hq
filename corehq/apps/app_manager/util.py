@@ -2,7 +2,6 @@ from collections import defaultdict
 from copy import deepcopy
 import functools
 import json
-import itertools
 import os
 import uuid
 import yaml

@@ -5,9 +5,7 @@ from django.conf import settings
 from django.core.exceptions import ValidationError
 
 from corehq.apps.smsbillables.utils import log_smsbillables_error
-from corehq.apps.users.models import CommCareUser, CouchUser, WebUser
-from django.forms import forms
-from corehq.apps.users.util import format_username
+from corehq.apps.users.models import CommCareUser, WebUser
 
 from dimagi.utils.modules import to_function
 from dimagi.utils.logging import notify_exception

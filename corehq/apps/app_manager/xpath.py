@@ -7,7 +7,6 @@ from corehq.apps.app_manager.const import (
     SCHEDULE_TERMINATED,
     SCHEDULE_MAX_DATE,
     SCHEDULE_DATE_CASE_OPENED,
-    SCHEDULE_NEXT_DUE,
     SCHEDULE_GLOBAL_NEXT_VISIT_DATE,
 )
 from corehq.apps.app_manager.exceptions import (

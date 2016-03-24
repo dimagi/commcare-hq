@@ -10,7 +10,6 @@ from corehq.apps.importer import util as importer_util
 from corehq.apps.locations.models import SQLLocation
 from corehq.apps.users.models import CouchUser
 from soil import DownloadBase
-from casexml.apps.case.xml import V2
 from dimagi.utils.prime_views import prime_views
 from couchdbkit.exceptions import ResourceNotFound
 import uuid

@@ -2,14 +2,12 @@
 from __future__ import absolute_import, print_function, unicode_literals
 
 # Standard library imports
-import sys
 import logging
 from optparse import make_option
 
 # Django imports
 from django.core.management import call_command
 from django.core.management.base import BaseCommand
-from django.core.mail import mail_admins
 
 # External imports
 from corehq import privileges

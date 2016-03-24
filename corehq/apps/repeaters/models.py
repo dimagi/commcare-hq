@@ -1,5 +1,5 @@
 import base64
-from collections import defaultdict, namedtuple
+from collections import namedtuple
 from datetime import datetime, timedelta
 import logging
 import urllib

@@ -1,4 +1,4 @@
-from django.core.management.base import BaseCommand, CommandError
+from django.core.management.base import BaseCommand
 from django.db.models import Q
 from corehq.apps.smsforms.models import SQLXFormsSession, XFORMS_SESSION_SMS
 from touchforms.formplayer.api import (

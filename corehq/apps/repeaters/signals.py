@@ -1,6 +1,5 @@
 from casexml.apps.case.models import CommCareCase
 from casexml.apps.case.signals import case_post_save
-from casexml.apps.case.xform import is_device_report
 from couchforms.signals import successful_form_received
 
 

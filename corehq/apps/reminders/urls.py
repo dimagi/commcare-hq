@@ -1,5 +1,4 @@
 from django.conf.urls import *
-from corehq.apps.reminders.models import REMINDER_TYPE_ONE_TIME
 from corehq.apps.reminders.views import (
     CreateScheduledReminderView,
     EditScheduledReminderView,

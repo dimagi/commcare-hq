@@ -1,4 +1,4 @@
-from datetime import datetime, timedelta
+from datetime import datetime
 from optparse import make_option
 from dateutil import parser
 

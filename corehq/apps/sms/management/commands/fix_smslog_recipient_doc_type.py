@@ -1,8 +1,6 @@
 from django.core.management.base import BaseCommand, CommandError
-from optparse import make_option
 from corehq.apps.sms.models import SMS
 from corehq.apps.users.models import CouchUser
-from django.conf import settings
 
 
 class Command(BaseCommand):

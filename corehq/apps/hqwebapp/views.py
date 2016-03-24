@@ -69,7 +69,6 @@ from corehq.middleware import always_allow_browser_caching
 from corehq.util.datadog.const import DATADOG_UNKNOWN
 from corehq.util.datadog.metrics import JSERROR_COUNT
 from corehq.util.datadog.utils import create_datadog_event, log_counter, sanitize_url
-from corehq.util.view_utils import expect_GET
 
 
 def pg_check():

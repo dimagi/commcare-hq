@@ -1,5 +1,4 @@
-from django.conf.urls import patterns, url, include
-from corehq.apps.hqmedia.urls import download_urls as media_download_urls
+from django.conf.urls import patterns, url
 
 urlpatterns = patterns('corehq.apps.app_manager.views',
     url(r'^$', 'download_index', {}, 'download_index'),

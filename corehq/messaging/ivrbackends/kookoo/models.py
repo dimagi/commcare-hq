@@ -2,7 +2,6 @@ from corehq.apps.ivr.api import log_error, GatewayConnectionError
 from corehq.apps.ivr.models import SQLIVRBackend
 from corehq.apps.sms.models import MessagingEvent
 from corehq.apps.sms.util import strip_plus
-from dimagi.ext.couchdbkit import StringProperty
 from dimagi.utils.logging import notify_exception
 from dimagi.utils.web import get_url_base
 from django.conf import settings
