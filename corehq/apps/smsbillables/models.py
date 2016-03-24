@@ -334,7 +334,7 @@ class SmsBillable(models.Model):
                 country_code=country_code,
                 national_number=national_number,
             )
-            if gateway_fee is not None:
+            if gateway_fee:
                 conversion_rate = gateway_fee.currency.rate_to_default
                 if conversion_rate != 0:
                     return gateway_fee, conversion_rate
@@ -355,7 +355,7 @@ class SmsBillable(models.Model):
         usage_fee = SmsUsageFee.get_by_criteria(
             direction, domain=domain
         )
-        if usage_fee is None:
+        if not usage_fee:
             log_smsbillables_error(
                 "Did not find usage fee for direction %s and domain %s"
                 % (direction, domain)
