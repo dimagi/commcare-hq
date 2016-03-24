@@ -8,6 +8,7 @@ from tastypie.authentication import Authentication
 from tastypie.exceptions import BadRequest
 from corehq.apps.api.resources.v0_1 import CustomResourceMeta, RequirePermissionAuthentication, \
     _safe_bool
+from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 
 from couchforms.models import doc_types
 from casexml.apps.case.models import CommCareCase
@@ -203,8 +204,20 @@ def group_by_dict(objs, fn):
     return result
 
 
-class CommCareCaseResource(SimpleSortableResourceMixin, v0_3.CommCareCaseResource, DomainSpecificResourceMixin):
+def _child_cases_attribute(case):
+    return {
+        index.identifier: CaseAccessors(case.domain).get_case(index.referenced_id)
+        for index in case.reverse_indices
+    }
 
+def _parent_cases_attribute(case):
+    return {
+        index.identifier: CaseAccessors(case.domain).get_case(index.referenced_id)
+        for index in case.indices
+    }
+
+
+class CommCareCaseResource(SimpleSortableResourceMixin, v0_3.CommCareCaseResource, DomainSpecificResourceMixin):
     xforms_by_name = UseIfRequested(ToManyListDictField(
         'corehq.apps.api.resources.v0_4.XFormInstanceResource',
         attribute=lambda case: group_by_dict(case.get_forms(), lambda form: form.name)
@@ -215,11 +228,19 @@ class CommCareCaseResource(SimpleSortableResourceMixin, v0_3.CommCareCaseResourc
         attribute=lambda case: group_by_dict(case.get_forms(), lambda form: form.xmlns)
     ))
 
-    child_cases = UseIfRequested(ToManyDictField('corehq.apps.api.resources.v0_4.CommCareCaseResource',
-                                                 attribute=lambda case: dict([ (index.identifier, CommCareCase.get(index.referenced_id)) for index in case.reverse_indicies])))
+    child_cases = UseIfRequested(
+        ToManyDictField(
+            'corehq.apps.api.resources.v0_4.CommCareCaseResource',
+            attribute=_child_cases_attribute
+        )
+    )
 
-    parent_cases = UseIfRequested(ToManyDictField('corehq.apps.api.resources.v0_4.CommCareCaseResource',
-                                                  attribute=lambda case: dict([ (index.identifier, CommCareCase.get(index.referenced_id)) for index in case.indices])))
+    parent_cases = UseIfRequested(
+        ToManyDictField(
+            'corehq.apps.api.resources.v0_4.CommCareCaseResource',
+            attribute=_parent_cases_attribute
+        )
+    )
 
     domain = fields.CharField(attribute='domain')
 

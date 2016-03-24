@@ -9,6 +9,8 @@ from corehq.apps.api.resources import v0_2, v0_1
 from corehq.apps.api.resources import DomainSpecificResourceMixin
 from corehq.apps.api.util import object_does_not_exist
 import couchforms
+from corehq.form_processor.exceptions import CaseNotFound
+from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 from couchforms.models import XFormArchived
 
 
@@ -51,7 +53,11 @@ class CommCareCaseResource(v0_2.CommCareCaseResource, DomainSpecificResourceMixi
         return bundle.obj.get_json(lite=True)['indices']
 
     def obj_get(self, bundle, **kwargs):
-        return get_object_or_not_exist(CommCareCase, kwargs['pk'], kwargs['domain'])
+        case_id = kwargs['pk']
+        try:
+            return CaseAccessors(kwargs['domain']).get_case(case_id)
+        except CaseNotFound:
+            raise object_does_not_exist("CommCareCase", case_id)
     
     def obj_get_list(self, bundle, domain, **kwargs):
         filters = CaseListFilters(bundle.request.GET)

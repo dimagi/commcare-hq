@@ -22,7 +22,7 @@ from corehq.apps.users.models import Permissions
 from corehq.util.view_utils import expect_GET
 
 
-class CommCareCaseResource(CouchResourceMixin, HqBaseResource, DomainSpecificResourceMixin):
+class CommCareCaseResource(HqBaseResource, DomainSpecificResourceMixin):
     type = "case"
     id = fields.CharField(attribute='case_id', readonly=True, unique=True)
     case_id = id
@@ -43,6 +43,11 @@ class CommCareCaseResource(CouchResourceMixin, HqBaseResource, DomainSpecificRes
     indices = fields.DictField()
     def dehydrate_indices(self, bundle):
         return bundle.obj.indices
+
+    def detail_uri_kwargs(self, bundle_or_obj):
+        return {
+            'pk': get_obj(bundle_or_obj).case_id
+        }
 
     def obj_get(self, bundle, **kwargs):
         case = get_object_or_not_exist(CommCareCase, kwargs['pk'], kwargs['domain'])
