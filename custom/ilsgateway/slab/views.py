@@ -107,7 +107,7 @@ class SLABConfigurationReport(CustomProjectReport):
 
     @classmethod
     def show_in_navigation(cls, domain=None, project=None, user=None):
-        if user.is_superuser or user.is_domain_admin(domain):
+        if user and (user.is_superuser or user.is_domain_admin(domain)):
             return True
         else:
             return False
