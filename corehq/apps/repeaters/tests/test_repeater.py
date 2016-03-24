@@ -18,6 +18,7 @@ from corehq.apps.repeaters.models import (
     RegisterGenerator)
 from corehq.apps.repeaters.repeater_generators import BasePayloadGenerator
 from corehq.apps.repeaters.const import MIN_RETRY_WAIT, POST_TIMEOUT
+from corehq.apps.repeaters.dbaccessors import delete_all_repeat_records
 from corehq.form_processor.tests.utils import run_with_all_backends, FormProcessorTestUtils
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 from couchforms.const import DEVICE_LOG_XMLNS
@@ -105,14 +106,7 @@ class RepeaterTest(BaseRepeaterTest):
         self.case_repeater.delete()
         self.form_repeater.delete()
         FormProcessorTestUtils.delete_all_xforms(self.domain)
-        results = RepeatRecord.get_db().view('receiverwrapper/repeat_records_by_next_check', reduce=False).all()
-        for result in results:
-            try:
-                repeat_record = RepeatRecord.get(result['id'])
-            except Exception:
-                pass
-            else:
-                repeat_record.delete()
+        delete_all_repeat_records()
 
     @run_with_all_backends
     def test_skip_device_logs(self):
@@ -260,8 +254,7 @@ class CaseRepeaterTest(BaseRepeaterTest, TestXmlMixin):
 
     def tearDown(self):
         FormProcessorTestUtils.delete_all_cases(self.domain_name)
-        for repeat_record in self.repeat_records(self.domain_name):
-            repeat_record.delete()
+        delete_all_repeat_records()
 
     @run_with_all_backends
     def test_case_close_format(self):
@@ -390,9 +383,7 @@ class RepeaterFailureTest(BaseRepeaterTest):
     def tearDown(self):
         self.domain.delete()
         self.repeater.delete()
-        repeat_records = RepeatRecord.all()
-        for repeat_record in repeat_records:
-            repeat_record.delete()
+        delete_all_repeat_records()
 
     @run_with_all_backends
     def test_failure(self):
@@ -434,9 +425,7 @@ class IgnoreDocumentTest(BaseRepeaterTest):
 
     def tearDown(self):
         self.repeater.delete()
-        repeat_records = RepeatRecord.all()
-        for repeat_record in repeat_records:
-            repeat_record.delete()
+        delete_all_repeat_records()
 
     @run_with_all_backends
     def test_ignore_document(self):
@@ -480,9 +469,7 @@ class TestRepeaterFormat(BaseRepeaterTest):
     def tearDown(self):
         self.repeater.delete()
         FormProcessorTestUtils.delete_all_xforms(self.domain)
-        repeat_records = RepeatRecord.all()
-        for repeat_record in repeat_records:
-            repeat_record.delete()
+        delete_all_repeat_records()
 
     def test_new_format_same_name(self):
         with self.assertRaises(DuplicateFormatException):
