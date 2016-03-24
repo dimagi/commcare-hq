@@ -5,6 +5,7 @@ from corehq.apps.app_manager.const import APP_V2, AMPLIFIES_YES
 from corehq.apps.app_manager.models import Application
 from corehq.apps.data_analytics.malt_generator import MALTTableGenerator
 from corehq.apps.data_analytics.models import MALTRow
+from corehq.apps.data_analytics.tests import save_to_analytics_db
 from corehq.apps.domain.models import Domain
 from corehq.apps.users.models import CommCareUser
 from corehq.apps.smsforms.app import COMMCONNECT_DEVICE_ID
@@ -62,33 +63,20 @@ class MaltGeneratorTest(TestCase):
 
     @classmethod
     def _setup_sofabed_forms(cls):
-        form_data_rows = []
-        common_args = {  # values don't matter
-            'time_start': cls.correct_date,
-            'time_end': cls.correct_date,
-            'duration': 10,
-        }
-
-        def _form_data(instance_id,
-                       app_id,
-                       received_on=cls.correct_date,
-                       device_id=cls.DEVICE_ID):
-            return FormData(
+        def _save_form_data(instance_id, app_id, received_on=cls.correct_date, device_id=cls.DEVICE_ID):
+            save_to_analytics_db(
                 domain=cls.DOMAIN_NAME,
                 received_on=received_on,
                 instance_id=instance_id,
                 device_id=device_id,
                 user_id=cls.user_id,
                 app_id=app_id,
-                **common_args
             )
 
-        def _append_forms(forms, received_on):
+        def _save_multiple_forms(forms, received_on):
             for form in forms:
                 instance_id, app_id = form
-                form_data_rows.append(
-                    _form_data(instance_id, app_id, received_on=received_on)
-                )
+                _save_form_data(instance_id, app_id, received_on=received_on)
 
         out_of_range_forms = [
             ("out_of_range_1", cls.non_wam_app_id),
@@ -105,14 +93,12 @@ class MaltGeneratorTest(TestCase):
             ('missing_app_form', MISSING_APP_ID),
         ]
 
-        _append_forms(out_of_range_forms, cls.out_of_range_date)
-        _append_forms(in_range_forms, cls.correct_date)
+        _save_multiple_forms(out_of_range_forms, cls.out_of_range_date)
+        _save_multiple_forms(in_range_forms, cls.correct_date)
 
         # should be included in MALT
-        sms_form = _form_data('sms_form', cls.non_wam_app_id, device_id=COMMCONNECT_DEVICE_ID)
-        form_data_rows.append(sms_form)
+        _save_form_data('sms_form', cls.non_wam_app_id, device_id=COMMCONNECT_DEVICE_ID)
 
-        FormData.objects.bulk_create(form_data_rows)
 
     @classmethod
     def run_malt_generation(cls):
