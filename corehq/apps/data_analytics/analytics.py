@@ -22,26 +22,35 @@ def get_app_submission_breakdown(domain_name, monthspan):
 
 
 def get_app_submission_breakdown_es(domain_name, monthspan):
+    terms = [
+        AggregationTerm('app_id', 'app_id'),
+        AggregationTerm('device_id', 'form.meta.deviceID'),
+        AggregationTerm('user_id', 'form.meta.userID'),
+        AggregationTerm('username', 'form.meta.username'),
+    ]
     query = FormES().domain(domain_name).submitted(
         gte=monthspan.startdate,
         lt=monthspan.computed_enddate,
-    ).aggregation(
-        TermsAggregation('app_id', 'app_id').aggregation(
-            TermsAggregation('device_id', 'form.meta.deviceID').aggregation(
-                TermsAggregation('user_id', 'form.meta.userID').aggregation(
-                    TermsAggregation('username', 'form.meta.username')
-                )
-            )
-        )
     )
-    aggregations = query.run().aggregations
+    previous_term = None
+    for name, field in reversed(terms):
+        term = TermsAggregation(name, field)
+        if previous_term is not None:
+            term = term.aggregation(previous_term)
+        previous_term = term
+    query = query.aggregation(term)
+
+    def _add_terms(aggregation_bucket, term, remaining_terms, current_counts, current_key=None):
+        for bucket in getattr(aggregation_bucket, term.name).buckets_list:
+            key = (bucket.key,) if current_key is None else current_key + (bucket.key,)
+            if remaining_terms:
+                _add_terms(bucket, remaining_terms[0], remaining_terms[1:], current_counts, current_key=key)
+            else:
+                # base case
+                current_counts[key] += bucket.doc_count
+
     counts = defaultdict(lambda: 0)
-    for app_bucket in aggregations.app_id.buckets_list:
-        for device_bucket in app_bucket.device_id.buckets_list:
-            for userid_bucket in device_bucket.user_id.buckets_list:
-                for username_bucket in userid_bucket.username.buckets_list:
-                    key = (app_bucket.key, device_bucket.key, userid_bucket.key, username_bucket.key)
-                    counts[key] += username_bucket.doc_count
+    _add_terms(query.run().aggregations, terms[0], terms[1:], current_counts=counts)
     return counts
 
 
