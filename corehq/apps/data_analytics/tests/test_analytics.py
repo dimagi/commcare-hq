@@ -1,9 +1,12 @@
 from datetime import datetime
 from django.test import TestCase
-from corehq.apps.data_analytics.analytics import get_app_submission_breakdown
-from corehq.apps.data_analytics.tests.utils import save_to_analytics_db
+from corehq.apps.data_analytics.analytics import get_app_submission_breakdown_es
+from corehq.apps.data_analytics.tests.utils import save_to_es_analytics_db
+from corehq.pillows.xform import XFormPillow
+from corehq.util.elastic import ensure_index_deleted
 from corehq.util.test_utils import generate_cases
 from dimagi.utils.dates import DateSpan
+from pillowtop.es_utils import completely_initialize_pillow_index
 
 
 class MaltAnalyticsTest(TestCase):
@@ -13,7 +16,12 @@ class MaltAnalyticsTest(TestCase):
 
     @classmethod
     def setUpClass(cls):
-        pass
+        cls.pillow = XFormPillow()
+
+    def setUp(self):
+        ensure_index_deleted(self.pillow.es_index)
+        completely_initialize_pillow_index(self.pillow)
+
 
 @generate_cases([
     ([
@@ -46,9 +54,10 @@ def test_app_submission_breakdown(self, combination_count_list):
     month = DateSpan.from_month(3, 2016)
     for app, device, userid, username, count in combination_count_list:
         for i in range(count):
-            save_to_analytics_db(domain, received, app, device, userid, username)
+            save_to_es_analytics_db(domain, received, app, device, userid, username)
 
-    data_back = get_app_submission_breakdown(domain, month)
+    self.pillow.get_es_new().indices.refresh(self.pillow.es_index)
+    data_back = get_app_submission_breakdown_es(domain, month)
     normalized_data_back = set([_breakdown_dict_to_tuple(bdd) for bdd in data_back])
     self.assertEqual(set(combination_count_list), normalized_data_back)
 
@@ -56,9 +65,9 @@ def test_app_submission_breakdown(self, combination_count_list):
 def _breakdown_dict_to_tuple(breakdown_dict):
     # convert the analytics response to the test's input format
     return (
-        breakdown_dict['app_id'],
-        breakdown_dict['device_id'],
-        breakdown_dict['user_id'],
-        breakdown_dict['username'],
-        breakdown_dict['num_of_forms'],
+        breakdown_dict.app_id,
+        breakdown_dict.device_id,
+        breakdown_dict.user_id,
+        breakdown_dict.username,
+        breakdown_dict.doc_count,
     )
