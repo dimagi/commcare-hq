@@ -1,6 +1,6 @@
 import sqlalchemy
 from sqlalchemy.exc import IntegrityError, ProgrammingError
-from corehq.apps.userreports.exceptions import TableRebuildError
+from corehq.apps.userreports.exceptions import TableRebuildError, BadSaveError
 from corehq.apps.userreports.sql.columns import column_to_sql
 from corehq.apps.userreports.sql.connection import get_engine_id
 from corehq.apps.userreports.sql.util import get_table_name
@@ -48,20 +48,26 @@ class IndicatorSqlAdapter(object):
         indicator_rows = self.config.get_all_values(doc)
         if indicator_rows:
             table = self.get_table()
-            with self.engine.begin() as connection:
-                # delete all existing rows for this doc to ensure we aren't left with stale data
-                delete = table.delete(table.c.doc_id == doc['_id'])
-                connection.execute(delete)
-                for indicator_row in indicator_rows:
-                    all_values = {i.column.database_column_name: i.value for i in indicator_row}
-                    insert = table.insert().values(**all_values)
-                    try:
-                        connection.execute(insert)
-                    except IntegrityError:
-                        # Someone beat us to it. Concurrent inserts can happen
-                        # when a doc is processed by the celery rebuild task
-                        # at the same time as the pillow.
-                        pass
+            try:
+                with self.engine.begin() as connection:
+                    # delete all existing rows for this doc to ensure we aren't left with stale data
+                    delete = table.delete(table.c.doc_id == doc['_id'])
+                    connection.execute(delete)
+                    bad_saves = False
+                    for indicator_row in indicator_rows:
+                        all_values = {i.column.database_column_name: i.value for i in indicator_row}
+                        insert = table.insert().values(**all_values)
+                        try:
+                            connection.execute(insert)
+                        except IntegrityError:
+                            bad_saves = True
+                    if bad_saves:
+                        raise BadSaveError()
+            except BadSaveError:
+                # swallow BadSaveErrors silently
+                # once we have a better strategy for showing these to users we can revisit whether
+                # we should log something here.
+                pass
 
     def delete(self, doc):
         table = self.get_table()

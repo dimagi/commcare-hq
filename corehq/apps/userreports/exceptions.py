@@ -60,3 +60,7 @@ class InvalidQueryColumn(UserReportsError):
 
 class BadReportConfigurationError(UserReportsError):
     pass
+
+
+class BadSaveError(Exception):
+    pass
