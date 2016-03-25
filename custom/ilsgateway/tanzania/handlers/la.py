@@ -28,7 +28,7 @@ class LossAndAdjustment(KeywordHandler):
         parsed_report = parse_report(content.replace('+', ''))
         if not parsed_report:
             self.respond(LOSS_ADJUST_BAD_FORMAT)
-            return
+            return True
 
         report = StockReport.objects.create(
             form_id='ilsgateway-xform',
@@ -39,7 +39,7 @@ class LossAndAdjustment(KeywordHandler):
         error = False
         for product_code, quantity in parsed_report:
             try:
-                product_id = SQLProduct.objects.get(domain=self.domain, code=product_code).product_id
+                product_id = SQLProduct.objects.get(domain=self.domain, code__iexact=product_code).product_id
                 self._create_stock_transaction(report, product_id, quantity)
             except SQLProduct.DoesNotExist:
                 error = True
@@ -47,6 +47,8 @@ class LossAndAdjustment(KeywordHandler):
             self.respond(LOSS_ADJUST_CONFIRM)
         else:
             self.respond(LOSS_ADJUST_BAD_FORMAT)
+        return True
 
     def help(self):
         self.respond(LOSS_ADJUST_HELP)
+        return True

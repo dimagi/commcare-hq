@@ -4,6 +4,17 @@
 {% load tzmigration %}
 
 {% if request.couch_user %}
+    <script type="text/javascript">
+        gaTrackLink($('#settingsmenu-projectSettings'), 'Nav Bar', 'Click Gear Icon');
+        gaTrackLink($('#settingsmenu-help'), 'Nav Bar', 'Click Question Mark');
+        gaTrackLink($('#menuitem-projectsettings'), 'Nav Bar', 'Gear Icon', 'Update Project Settings');
+        gaTrackLink($('#menuitem-currentsubscription'), 'Nav Bar', 'Gear Icon', 'Current Subscription');
+        gaTrackLink($('#menuitem-accountsettings'), 'Nav Bar', 'Gear Icon', 'My Account Settings');
+        gaTrackLink($('#menuitem-signout'), 'Nav Bar', 'Gear Icon', 'Sign Out');
+        gaTrackLink($('#menuitem-helpsite'), 'Nav Bar', 'Question Mark', 'Visit the Help Site');
+        gaTrackLink($('#menuitem-userforum'), 'Nav Bar', 'Question Mark', 'User Forum');
+        gaTrackLink($('#menuitem-issue'), 'Nav Bar', 'Question Mark', 'Report an Issue');
+    </script>
 <ul class="nav navbar-nav" role="menu">
     <li id="settingsmenu-projectSettings" class="dropdown">
         <a href="#" class="dropdown-toggle dropdown-toggle-with-icon" data-toggle="dropdown">
@@ -34,12 +45,12 @@
             <li class="nav-divider divider"></li>
             <li class="dropdown-header nav-header">{% trans 'Manage Project' %}</li>
             <li>
-                <a href="{% url "domain_settings_default" domain %}">
+                <a href="{% url "domain_settings_default" domain %}" id="menuitem-projectsettings">
                     <i class="fa fa-cogs icon-cogs dropdown-icon"></i> {% trans "Update Project Settings" %}
                 </a>
             </li>
             <li>
-                <a href="{% url "domain_subscription_view" domain %}">
+                <a href="{% url "domain_subscription_view" domain %}" id="menuitem-currentsubscription">
                     <i class="fa fa-dashboard icon-dashboard dropdown-icon"></i> {% trans "Current Subscription" %}
                 </a>
             </li>
@@ -47,12 +58,12 @@
             <li class="nav-divider divider"></li>
             <li class="dropdown-header nav-header">{% trans 'Manage Account' %}</li>
             <li>
-                <a href="{% url "my_account_settings" %}">
+                <a href="{% url "my_account_settings" %}" id="menuitem-accountsettings">
                     <i class="fa fa-user icon-user dropdown-icon"></i> {% trans 'My Account Settings' %}
                 </a>
             </li>
             <li>
-                <a href="{% url "logout" %}">
+                <a href="{% url "logout" %}" id="menuitem-signout">
                     <i class="icon-signout fa fa-sign-out"></i>
                     {% trans 'Sign Out' %}
                 </a>
@@ -66,17 +77,17 @@
         <ul class="dropdown-menu dropdown-menu-right" role="menu">
             <li class="dropdown-header nav-header">{% trans 'CommCare Help' %}</li>
             <li>
-                <a href="{% trans 'https://wiki.commcarehq.org/display/commcarepublic/Home' %}" target="_blank">
+                <a href="{% trans 'https://wiki.commcarehq.org/display/commcarepublic/Home' %}" id="menuitem-helpsite" target="_blank">
                     <i class="fa fa-question-circle icon-question-sign dropdown-icon"></i> {% trans "Visit the Help Site" %}
                 </a>
             </li>
             <li>
-                <a href="{% trans 'http://groups.google.com/group/commcare-users/subscribe' %}" target="_blank">
+                <a href="{% trans 'http://groups.google.com/group/commcare-users/subscribe' %}" id="menuitem-userforum" target="_blank">
                     <i class="fa fa-comments icon-comments dropdown-icon"></i> {% trans "User Forum" %}
                 </a>
             </li>
             <li>
-                <a href="#modalReportIssue" data-toggle="modal">
+                <a href="#modalReportIssue" data-toggle="modal" id="menuitem-issue">
                     <i class="fa fa-exclamation-triangle icon-warning-sign dropdown-icon"></i> {% trans "Report an Issue" %}
                 </a>
             </li>

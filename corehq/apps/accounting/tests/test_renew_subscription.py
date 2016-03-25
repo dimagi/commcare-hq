@@ -6,7 +6,8 @@ from corehq.apps.accounting.models import (
     Subscription,
     BillingAccount,
     DefaultProductPlan,
-    SoftwarePlanEdition
+    SoftwarePlanEdition,
+    SubscriptionAdjustment,
 )
 
 
@@ -45,22 +46,35 @@ class TestRenewSubscriptions(BaseAccountingTest):
 
         self.subscription.save()
 
+    def tearDown(self):
+        self.renewed_subscription.delete()
+        SubscriptionAdjustment.objects.filter(subscription=self.subscription).delete()
+        self.subscription.delete()
+
     def test_simple_renewal(self):
-        today = datetime.date.today()
+        self.renewed_subscription = self.subscription.renew_subscription()
 
-        renewed_subscription = self.subscription.renew_subscription()
-
-        self.assertEqual(renewed_subscription.date_end, None)
-        self.assertEqual(renewed_subscription.date_start, self.subscription.date_end)
-        self.assertEqual(renewed_subscription.plan_version, self.subscription.plan_version)
+        self.assertEqual(self.renewed_subscription.date_end, None)
+        self.assertEqual(self.renewed_subscription.date_start, self.subscription.date_end)
+        self.assertEqual(self.renewed_subscription.plan_version, self.subscription.plan_version)
 
     def test_change_plan_on_renewal(self):
-        today = datetime.date.today()
         new_edition = SoftwarePlanEdition.ADVANCED
         new_plan = DefaultProductPlan.get_default_plan_by_domain(self.domain.name, new_edition)
 
-        renewed_subscription = self.subscription.renew_subscription(
+        self.renewed_subscription = self.subscription.renew_subscription(
             new_version=new_plan
         )
 
-        self.assertEqual(renewed_subscription.plan_version, new_plan)
+        self.assertEqual(self.renewed_subscription.plan_version, new_plan)
+
+    def test_next_subscription_filter(self):
+        """
+        If subscription.next_subscription is None then subscription.is_renewed should be False
+        """
+        self.renewed_subscription = self.subscription.renew_subscription()
+        self.renewed_subscription.date_end = self.renewed_subscription.date_start  # Not a valid subscription
+        self.renewed_subscription.save()
+
+        self.assertIsNone(self.subscription.next_subscription)
+        self.assertFalse(self.subscription.is_renewed)

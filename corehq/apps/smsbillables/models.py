@@ -1,5 +1,5 @@
-import logging
 from decimal import Decimal
+
 from django.core.exceptions import ObjectDoesNotExist
 from django.db import models
 
@@ -8,13 +8,11 @@ from corehq.apps.accounting.models import Currency
 from corehq.apps.accounting.utils import EXCHANGE_RATE_DECIMAL_PLACES
 from corehq.apps.sms.models import DIRECTION_CHOICES, SQLMobileBackend
 from corehq.apps.sms.phonenumbers_helper import get_country_code_and_national_number
+from corehq.apps.smsbillables.utils import log_smsbillables_error
 from corehq.messaging.smsbackends.test.models import SQLTestSMSBackend
 from corehq.apps.sms.util import clean_phone_number
 from corehq.apps.smsbillables.exceptions import AmbiguousPrefixException
 from corehq.util.quickcache import quickcache
-
-
-smsbillables_logging = logging.getLogger("smsbillables")
 
 
 class SmsGatewayFeeCriteria(models.Model):
@@ -327,10 +325,12 @@ class SmsBillable(models.Model):
                 if conversion_rate != 0:
                     billable.gateway_fee_conversion_rate = conversion_rate
                 else:
-                    smsbillables_logging.error("Gateway fee conversion rate for currency %s is 0",
-                                               billable.gateway_fee.currency.code)
+                    log_smsbillables_error(
+                        "Gateway fee conversion rate for currency %s is 0"
+                        % billable.gateway_fee.currency.code
+                    )
             else:
-                smsbillables_logging.error(
+                log_smsbillables_error(
                     "No matching gateway fee criteria for SMS %s" % message_log.couch_id
                 )
 
@@ -341,8 +341,10 @@ class SmsBillable(models.Model):
         )
 
         if billable.usage_fee is None:
-            smsbillables_logging.error("Did not find usage fee for direction %s and domain %s"
-                                       % (direction, domain))
+            log_smsbillables_error(
+                "Did not find usage fee for direction %s and domain %s"
+                % (direction, domain)
+            )
 
         if api_response is not None:
             billable.api_response = api_response
