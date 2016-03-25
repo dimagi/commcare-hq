@@ -63,41 +63,39 @@ class MaltGeneratorTest(TestCase):
 
     @classmethod
     def _setup_sofabed_forms(cls):
-        def _save_form_data(instance_id, app_id, received_on=cls.correct_date, device_id=cls.DEVICE_ID):
+        def _save_form_data(app_id, received_on=cls.correct_date, device_id=cls.DEVICE_ID):
             save_to_analytics_db(
                 domain=cls.DOMAIN_NAME,
                 received_on=received_on,
-                instance_id=instance_id,
                 device_id=device_id,
                 user_id=cls.user_id,
                 app_id=app_id,
             )
 
-        def _save_multiple_forms(forms, received_on):
-            for form in forms:
-                instance_id, app_id = form
-                _save_form_data(instance_id, app_id, received_on=received_on)
+        def _save_multiple_forms(app_ids, received_on):
+            for app_id in app_ids:
+                _save_form_data(app_id, received_on=received_on)
 
-        out_of_range_forms = [
-            ("out_of_range_1", cls.non_wam_app_id),
-            ("out_of_range_2", cls.wam_app_id),
+        out_of_range_form_apps = [
+            cls.non_wam_app_id,
+            cls.wam_app_id,
         ]
-        in_range_forms = [
+        in_range_form_apps = [
             # should be included in MALT
-            ('non_wam_app_form1', cls.non_wam_app_id),
-            ('non_wam_app_form2', cls.non_wam_app_id),
-            ('non_wam_app_form3', cls.non_wam_app_id),
-            ('wam_app_form1', cls.wam_app_id),
-            ('wam_app_form2', cls.wam_app_id),
+            cls.non_wam_app_id,
+            cls.non_wam_app_id,
+            cls.non_wam_app_id,
+            cls.wam_app_id,
+            cls.wam_app_id,
             # should be included in MALT
-            ('missing_app_form', MISSING_APP_ID),
+            MISSING_APP_ID,
         ]
 
-        _save_multiple_forms(out_of_range_forms, cls.out_of_range_date)
-        _save_multiple_forms(in_range_forms, cls.correct_date)
+        _save_multiple_forms(out_of_range_form_apps, cls.out_of_range_date)
+        _save_multiple_forms(in_range_form_apps, cls.correct_date)
 
         # should be included in MALT
-        _save_form_data('sms_form', cls.non_wam_app_id, device_id=COMMCONNECT_DEVICE_ID)
+        _save_form_data(cls.non_wam_app_id, device_id=COMMCONNECT_DEVICE_ID)
 
 
     @classmethod
