@@ -1,5 +1,5 @@
 import sqlalchemy
-from sqlalchemy.exc import IntegrityError, ProgrammingError
+from sqlalchemy.exc import IntegrityError, ProgrammingError, InternalError
 from corehq.apps.userreports.exceptions import TableRebuildError, BadSaveError
 from corehq.apps.userreports.sql.columns import column_to_sql
 from corehq.apps.userreports.sql.connection import get_engine_id
@@ -59,7 +59,7 @@ class IndicatorSqlAdapter(object):
                         insert = table.insert().values(**all_values)
                         try:
                             connection.execute(insert)
-                        except IntegrityError:
+                        except (IntegrityError, InternalError):
                             bad_saves = True
                     if bad_saves:
                         raise BadSaveError()
