@@ -2,7 +2,7 @@ import logging
 
 from corehq.apps.app_manager.const import AMPLIFIES_NOT_SET
 from corehq.apps.app_manager.dbaccessors import get_app
-from corehq.apps.data_analytics.analytics import get_app_submission_breakdown
+from corehq.apps.data_analytics.analytics import get_app_submission_breakdown_es
 from corehq.apps.data_analytics.models import MALTRow
 from corehq.apps.domain.models import Domain
 from corehq.apps.sofabed.models import MISSING_APP_ID
@@ -43,16 +43,15 @@ class MALTTableGenerator(object):
 
     def _get_malt_row_dicts(self, domain_name, monthspan, all_users_by_id):
         malt_row_dicts = []
-        apps_submitted_for = get_app_submission_breakdown(domain_name, monthspan)
-        for app_row_dict in apps_submitted_for:
-            app_id = app_row_dict['app_id']
-            num_of_forms = app_row_dict['num_of_forms']
-
+        apps_submitted_for = get_app_submission_breakdown_es(domain_name, monthspan)
+        for app_row in apps_submitted_for:
+            app_id = app_row.app_id
+            num_of_forms = app_row.doc_count
             try:
                 wam, pam, threshold, is_app_deleted = self._app_data(domain_name, app_id)
                 user_id, username, user_type, email = self._user_data(
-                    app_row_dict['user_id'],
-                    app_row_dict['username'],
+                    app_row.user_id,
+                    app_row.username,
                     all_users_by_id
                 )
             except Exception as ex:
@@ -69,7 +68,7 @@ class MALTTableGenerator(object):
                 'domain_name': domain_name,
                 'num_of_forms': num_of_forms,
                 'app_id': app_id,
-                'device_id': app_row_dict['device_id'],
+                'device_id': app_row.device_id,
                 'wam': MALTRow.AMPLIFY_COUCH_TO_SQL_MAP.get(wam, MALTRow.NOT_SET),
                 'pam': MALTRow.AMPLIFY_COUCH_TO_SQL_MAP.get(pam, MALTRow.NOT_SET),
                 'threshold': threshold,
