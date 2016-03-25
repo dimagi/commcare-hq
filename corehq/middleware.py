@@ -114,9 +114,12 @@ class TimeoutMiddleware(object):
             return
 
         secure_session = request.session.get('secure_session')
+        domain = getattr(request, "domain", None)
         now = datetime.datetime.utcnow()
 
-        if not secure_session and self._user_requires_secure_session(request.couch_user):
+        if not secure_session and (
+                (domain and Domain.is_secure_session_required(domain)) or
+                self._user_requires_secure_session(request.couch_user)):
             if self._session_expired(settings.SECURE_TIMEOUT, request.user.last_login, now):
                 django_logout(request, template_name=settings.BASE_TEMPLATE)
                 # this must be after logout so it is attached to the new session
