@@ -304,6 +304,9 @@ corehq.apps.repeaters:
   - couchforms
   - phonelog
   - django_prbac
+  - corehq.form_processor
+  - corehq.sql_accessors
+  - corehq.sql_proxy_accessors
   # unfortunately domain.delete() needs all of these - otherwise they could be removed
   - custom.logistics
   - custom.ilsgateway
@@ -312,6 +315,7 @@ corehq.apps.repeaters:
   - corehq.apps.accounting
   - corehq.apps.smsforms
   - casexml.apps.phone
+  - corehq.apps.reminders
 corehq.sql_db: []
 corehq.apps.accounting:
   - corehq.apps.accounting
