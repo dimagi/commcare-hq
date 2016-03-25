@@ -1,5 +1,5 @@
 from collections import defaultdict, namedtuple
-from corehq.apps.es.aggregations import MultiTermAggregation, AggregationTerm, TermsAggregation
+from corehq.apps.es.aggregations import AggregationTerm, TermsAggregation
 from corehq.apps.es.forms import FormES
 
 
@@ -51,19 +51,3 @@ def get_app_submission_breakdown_es(domain_name, monthspan):
         lt=monthspan.computed_enddate,
     )
     return NestedQueryHelper(base_query=query, terms=terms).get_data()
-
-
-def _get_app_submission_breakdown_es(domain_name, monthspan):
-    query = FormES().domain(domain_name).submitted(
-        gte=monthspan.startdate,
-        lt=monthspan.computed_enddate,
-    ).aggregation(MultiTermAggregation(
-        name='breakdown',
-        terms=[
-            AggregationTerm('app_id', 'app_id'),
-            AggregationTerm('device_id', 'form.meta.deviceID'),
-            AggregationTerm('user_id', 'form.meta.userID'),
-            AggregationTerm('username', 'form.meta.username'),
-        ]
-    ))
-    return query.run().aggregations.breakdown.get_buckets()
