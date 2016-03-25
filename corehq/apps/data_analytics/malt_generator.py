@@ -39,7 +39,6 @@ class MALTTableGenerator(object):
                 except Exception as ex:
                     logger.error("Failed to get rows for domain {name}. Exception is {ex}".format
                                  (name=domain.name, ex=str(ex)), exc_info=True)
-            print malt_rows_to_save
             self._save_to_db(malt_rows_to_save, domain._id)
 
     def _get_malt_row_dicts(self, domain_name, monthspan, all_users_by_id):
