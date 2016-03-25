@@ -82,11 +82,27 @@ class Aggregation(object):
         return self.result_class(result, self)
 
 
-class BucketResult(AggregationResult):
+class BucketResultBase(AggregationResult):
+    """
+    Base class for bucket results
+    """
     @property
     def keys(self):
         return [b['key'] for b in self.normalized_buckets]
 
+    @property
+    def raw_buckets(self):
+        return self.result['buckets']
+
+    @property
+    def normalized_buckets(self):
+        return self.raw_buckets
+
+    def counts_by_bucket(self):
+        return {b['key']: b['doc_count'] for b in self.normalized_buckets}
+
+
+class BucketResult(BucketResultBase):
     @property
     def buckets(self):
         n_buckets = self.normalized_buckets
@@ -100,17 +116,6 @@ class BucketResult(AggregationResult):
     @property
     def buckets_list(self):
         return {Bucket(b, self._aggregations) for b in self.normalized_buckets}
-
-    @property
-    def raw_buckets(self):
-        return self.result['buckets']
-
-    @property
-    def normalized_buckets(self):
-        return self.raw_buckets
-
-    def counts_by_bucket(self):
-        return {b['key']: b['doc_count'] for b in self.normalized_buckets}
 
 
 class MissingResult(AggregationResult):
