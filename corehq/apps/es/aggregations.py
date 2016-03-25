@@ -118,20 +118,6 @@ class BucketResult(BucketResultBase):
         return {Bucket(b, self._aggregations) for b in self.normalized_buckets}
 
 
-class MultiBucketResult(BucketResultBase):
-
-    def get_buckets(self):
-        """
-        Returns a list of namedtuples for buckets. The names are the field names chosen in the
-        MultiTermAggregation, and a special one called `doc_count`.
-        """
-        # use this function instead of the buckets property since it returns a
-        # different datatype from BucketResult.buckets
-        n_buckets = self.normalized_buckets
-        buckets = namedtuple('buckets', [term.name for term in self.aggregation.terms] + ['doc_count'])
-        return [buckets(*(b['key'].split(self.aggregation.delimiter) + [b['doc_count']])) for b in n_buckets]
-
-
 class MissingResult(AggregationResult):
 
     @property
@@ -209,6 +195,9 @@ class Bucket(object):
         return "Bucket(key='{}', doc_count='{}')".format(self.key, self.doc_count)
 
 
+AggregationTerm = namedtuple('AggregationTerm', ['name', 'field'])
+
+
 class TermsAggregation(Aggregation):
     """
     Bucket aggregation that aggregates by field
@@ -226,48 +215,6 @@ class TermsAggregation(Aggregation):
         self.name = name
         self.body = {
             "field": field,
-            "size": size if size is not None else SIZE_LIMIT,
-        }
-
-
-AggregationTerm = namedtuple('AggregationTerm', ['name', 'field'])
-
-
-class MultiTermAggregation(Aggregation):
-    """
-    Bucket aggregation that aggregates by multiple fields.
-    Results are returned in delimiter separated strings ("|" by default).
-    This uses the "script" tag, which is not super performant or recommended
-
-    :param name: aggregation name
-    :param terms: list of `AggregationTerm`s to bucket on
-    :param size:
-    """
-    type = "terms"
-    result_class = MultiBucketResult
-
-    def __init__(self, name, terms, delimiter='|', size=None):
-        def _check_format(value):
-            assert re.match(r'\w+$', value), \
-                "Names must be valid python variable names, was {}".format(value)
-
-        _check_format(name)
-        [_check_format(term.name) for term in terms]
-        self.name = name
-        self.terms = terms
-        self.delimiter = delimiter
-
-        # we want the script to ultimately look something like this:
-        # doc['app_id'].value + '|' + doc['form.meta.deviceID'].value
-
-        script_delim = " + '{delim}' + ".format(delim=delimiter)
-
-        def _script_term(term):
-            return "doc['{term.field}'].value".format(term=term)
-
-        script = script_delim.join([_script_term(term) for term in terms])
-        self.body = {
-            "script": script,
             "size": size if size is not None else SIZE_LIMIT,
         }
 

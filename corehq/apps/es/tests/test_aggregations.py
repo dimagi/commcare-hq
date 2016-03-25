@@ -13,7 +13,7 @@ from corehq.apps.es.aggregations import (
     ExtendedStatsAggregation,
     TopHitsAggregation,
     MissingAggregation,
-    MultiTermAggregation, AggregationTerm)
+)
 from corehq.apps.es.es_query import HQESQuery, ESQuerySet
 from corehq.apps.es.tests.utils import ElasticTestMixin
 from corehq.elastic import SIZE_LIMIT
@@ -72,39 +72,6 @@ class TestAggregations(ElasticTestMixin, SimpleTestCase):
                 .add_filter('closed', filters.term('closed', True))
                 .add_filter('open', filters.term('closed', False))
         ])
-        self.checkQuery(query, json_output)
-
-    def test_multi_term_aggregation(self):
-        json_output = {
-            "query": {
-                "filtered": {
-                    "filter": {
-                        "and": [
-                            {"match_all": {}}
-                        ]
-                    },
-                    "query": {"match_all": {}}
-                }
-            },
-            "aggs": {
-                "users": {
-                    "terms": {
-                        "script": "doc['user_id'].value + '|' + doc['closed'].value",
-                        "size": SIZE_LIMIT
-                    },
-                },
-            },
-            "size": SIZE_LIMIT
-        }
-        query = HQESQuery('cases').aggregation(
-            MultiTermAggregation(
-                "users",
-                terms=[
-                    AggregationTerm('user', 'user_id'),
-                    AggregationTerm('closed', 'closed'),
-                ]
-            )
-        )
         self.checkQuery(query, json_output)
 
     def test_result_parsing_basic(self):
