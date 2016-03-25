@@ -227,10 +227,7 @@ class LocationGroupTest(LocationTestBase):
         self.loc.delete()
 
         fixture = location_fixture_generator(self.user, '2.0')
-        try:
-            fixture[0]
-        except IndexError:
-            self.fail("There are no locations in the restore")
+        self.assertEqual(len(fixture), 1)
         self.assertEquals(len(fixture[0].findall('.//state')), 0)
 
     def test_location_fixture_generator_domain_no_locations(self):
