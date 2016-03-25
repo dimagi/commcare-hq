@@ -1,8 +1,10 @@
 from datetime import datetime
 import logging
+
+from corehq.apps.api.serializers import XFormInstanceSerializer
 from corehq.apps.domain.models import Domain
 from corehq.apps.accounting.models import Subscription
-from corehq.apps.api.resources import HqBaseResource
+from corehq.apps.api.resources import HqBaseResource, CouchResourceMixin
 from corehq.apps.api.resources.v0_1 import (
     CustomResourceMeta,
     AdminAuthentication,
@@ -46,7 +48,7 @@ class DomainQuerySetAdapter(object):
         raise ValueError('Invalid type of argument. Item should be an instance of slice class.')
 
 
-class DomainMetadataResource(HqBaseResource):
+class DomainMetadataResource(CouchResourceMixin, HqBaseResource):
     billing_properties = fields.DictField()
     calculated_properties = fields.DictField()
     domain_properties = fields.DictField()
@@ -116,3 +118,4 @@ class DomainMetadataResource(HqBaseResource):
         detail_allowed_methods = ['get']
         object_class = Domain
         resource_name = 'project_space_metadata'
+        serializer = XFormInstanceSerializer(formats=['json'])

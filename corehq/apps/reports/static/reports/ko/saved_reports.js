@@ -239,22 +239,24 @@ var ReportConfigsViewModel = function (options) {
         var editedConfig = self.configBeingViewed();
         if (editedConfig.isNew()) {
             var daterangepicker = $("#filter_range").data('daterangepicker');
-            switch(daterangepicker.chosenLabel) {
-                case "Last 7 Days":
-                    editedConfig.date_range("last7");
-                    break;
-                case "Last 30 Days":
-                    editedConfig.date_range("last30");
-                    break;
-                case "Last Month":
-                    editedConfig.date_range("lastmonth");
-                    break;
-                case "Custom Range":
-                    editedConfig.start_date = daterangepicker.startDate.format("YYYY-MM-DD");
-                    editedConfig.end_date = daterangepicker.endDate.format("YYYY-MM-DD");
-                    editedConfig.date_range("range");
-                    break;
-                default:
+            if (daterangepicker) {
+                switch (daterangepicker.chosenLabel) {
+                    case "Last 7 Days":
+                        editedConfig.date_range("last7");
+                        break;
+                    case "Last 30 Days":
+                        editedConfig.date_range("last30");
+                        break;
+                    case "Last Month":
+                        editedConfig.date_range("lastmonth");
+                        break;
+                    case "Custom Range":
+                        editedConfig.start_date = daterangepicker.startDate.format("YYYY-MM-DD");
+                        editedConfig.end_date = daterangepicker.endDate.format("YYYY-MM-DD");
+                        editedConfig.date_range("range");
+                        break;
+                    default:
+                }
             }
         }
         self.configBeingEdited(self.configBeingViewed());

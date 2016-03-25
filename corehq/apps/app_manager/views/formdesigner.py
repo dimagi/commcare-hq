@@ -194,3 +194,8 @@ def get_data_schema(request, domain, app_id=None, form_unique_id=None):
     if "pretty" in request.GET:
         kw["indent"] = 2
     return HttpResponse(json.dumps(data, **kw))
+
+
+@require_GET
+def ping(request):
+    return HttpResponse("pong")

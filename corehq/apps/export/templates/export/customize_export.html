@@ -19,7 +19,7 @@
                 cases: "{% trans 'Cases'|escapejs %}",
                 case_history: "{% trans 'Case History'|escapejs %}",
                 history_to_parents: "{% trans 'Case History > Parent Cases'|escapejs %}",
-                parent_cases: "{% trans 'Parent Cases'|escapejs %}",
+                parent_cases: "{% trans 'Parent Cases'|escapejs %}"
             };
             var customExportView = CustomExportView.wrap({
                 export_type: {{ custom_export.type|JSON }},
@@ -37,7 +37,19 @@
                 minimal: {{ minimal|JSON }}
             }, translations);
 
-            $('#customize-export').koApplyBindings(customExportView);
+            var $export = $('#customize-export');
+            $export.koApplyBindings(customExportView);
+
+            $export.find('form').on("change input", function() {
+                if (customExportView.custom_export.type() === 'form') {
+                    window.onbeforeunload = function() {
+                        var state = customExportView.save.state();
+                        if (state !== 'saving' && state !== 'saving-preview' && state !== 'canceling') {
+                           return gettext("You have unsaved changes");
+                        }
+                    }
+                }
+            });
         });
     </script>
 {% endblock %}
@@ -105,7 +117,7 @@
                     </label>
                     <label class="checkbox">
                         <input type="checkbox" id="split-multiselects-checkbox" data-bind="checked: custom_export.split_multiselects" />
-                        {% trans "Expand Multiple Answer Questions" %}
+                        {% trans "Expand Checkbox Questions" %}
                     </label>
                 {% endif %}
                 </div>
@@ -290,7 +302,7 @@
                 click: save_no_preview,
                 disable: (save.state() === 'saving') || (save.state() === 'saving-preview')
             ">
-                <span data-bind="visible: (save.state() === 'save') || (save.state() === 'saving-preview')">
+                <span data-bind="visible: (save.state() !== 'saving') && (save.state() !== 'error')">
                     <span data-bind="visible: custom_export._id && custom_export._id()">{% trans "Save" %}</span>
                     <span data-bind="visible: !custom_export._id || !custom_export._id()">{% trans "Create" %}</span>
                 </span>
@@ -302,7 +314,7 @@
                     {% trans "Try Again" %}
                 </span>
             </button>
-            <a class="btn btn-large" href="{{ export_home_url }}">{% trans "Cancel" %}</a>
+            <a class="btn btn-large" href="{{ export_home_url }}" data-bind="click: cancel">{% trans "Cancel" %}</a>
             {% if custom_export.get_id %}
             <a class="btn btn-large btn-danger pull-right" data-toggle="modal" href="#delete-export-modal-{{ custom_export.get_id }}">
                 <i class="icon-remove icon-white"></i>
@@ -318,6 +330,11 @@
     {% if custom_export.get_id %}
         {% with custom_export as export %}
             {% include "export/dialogs/delete_custom_export_dialog.html" %}
+            <script>
+                $('#delete-export-modal-{{ export.get_id }}').find('form').submit(function() {
+                    window.onbeforeunload = undefined;
+                });
+            </script>
         {% endwith %}
     {% endif %}
 {% endblock %}

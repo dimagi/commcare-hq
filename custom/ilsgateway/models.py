@@ -93,6 +93,7 @@ class SupplyPointStatusTypes(object):
     SUPERVISION_FACILITY = "super_fac"
     LOSS_ADJUSTMENT_FACILITY = "la_fac"
     DELINQUENT_DELIVERIES = "del_del"
+    TRANS_FACILITY = "trans_fac"
 
     CHOICE_MAP = {
         DELIVERY_FACILITY: {SupplyPointStatusValues.REMINDER_SENT: "Waiting Delivery Confirmation",
@@ -117,6 +118,11 @@ class SupplyPointStatusTypes(object):
         DELINQUENT_DELIVERIES: {
             SupplyPointStatusValues.ALERT_SENT: "Delinquent deliveries summary sent to District"
         },
+        TRANS_FACILITY: {
+            SupplyPointStatusValues.SUBMITTED: "Transfer Stock Submitted",
+            SupplyPointStatusValues.NOT_SUBMITTED: "Transfer Stock Not Submitted",
+            SupplyPointStatusValues.REMINDER_SENT: "Transfer Reminder Sent"
+        }
     }
 
     @classmethod
@@ -562,6 +568,15 @@ class PendingReportingDataRecalculation(models.Model):
     sql_location = models.ForeignKey(SQLLocation)
     type = models.CharField(max_length=128)
     data = json_field.JSONField()
+
+    class Meta:
+        app_label = 'ilsgateway'
+
+
+class SLABConfig(models.Model):
+    is_pilot = models.BooleanField(default=False)
+    sql_location = models.ForeignKey(SQLLocation, null=False, unique=True)
+    closest_supply_points = models.ManyToManyField(SQLLocation, related_name='+')
 
     class Meta:
         app_label = 'ilsgateway'

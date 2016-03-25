@@ -1,6 +1,8 @@
 from django.conf import settings
 from django.conf.urls import patterns, url, include
+from django.shortcuts import render
 from django.views.generic import TemplateView, RedirectView
+from corehq.apps.domain.decorators import login_and_domain_required
 from corehq.apps.domain.utils import legacy_domain_re
 
 from django.contrib import admin
@@ -59,7 +61,6 @@ domain_specific = patterns('',
     (r'^sqlextract/', include('ctable_view.urls')),
     (r'^fri/', include('custom.fri.urls')),
     (r'^ilsgateway/', include('custom.ilsgateway.urls')),
-    (r'^dhis2/', include('custom.dhis2.urls')),
     (r'^ewsghana/', include('custom.ewsghana.urls')),
     (r'^up_nrhm/', include('custom.up_nrhm.urls')),
     (r'^', include('custom.m4change.urls')),
@@ -68,6 +69,9 @@ domain_specific = patterns('',
     (r'^configurable_reports/', include('corehq.apps.userreports.urls')),
     (r'^performance_messaging/', include('corehq.apps.performance_sms.urls')),
     (r'^', include('custom.icds.urls')),
+    (r'^_base_template/$', login_and_domain_required(
+        lambda request, domain: render(request, 'style/bootstrap3/base.html', {'domain': domain})
+    ))
 )
 
 urlpatterns = patterns('',
@@ -133,6 +137,7 @@ urlpatterns = patterns('',
     url(r'^pro_bono/$', ProBonoStaticView.as_view(),
         name=ProBonoStaticView.urlname),
     url(r'^loadtest/', include('corehq.apps.loadtestendpoints.urls')),
+    url(r'^ping/$', 'corehq.apps.app_manager.views.formdesigner.ping', name='ping'),
     url(r'^robots.txt$', TemplateView.as_view(template_name='robots.txt', content_type='text/plain')),
     url(r'^software-plans/$', RedirectView.as_view(url=PRICING_LINK), name='go_to_pricing'),
 ) + patterns('', *LOCAL_APP_URLS)

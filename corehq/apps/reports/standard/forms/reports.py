@@ -106,7 +106,7 @@ class SubmissionErrorReport(DeploymentsReport):
                     xform_dict.get('xmlns'),
                     app_id=xform_dict.get('app_id'),
                 )
-                form_username = xform_dict['form']['meta']['username']
+                form_username = xform_dict['form']['meta'].get('username', EMPTY_USER)
             else:
                 form_name = EMPTY_FORM
                 form_username = EMPTY_USER

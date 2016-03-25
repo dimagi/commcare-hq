@@ -159,7 +159,12 @@ hqDefine('app_manager/js/report-module.js', function () {
                     'period'
                 ];
                 for(var filterFieldsIndex = 0; filterFieldsIndex < filterFields.length; filterFieldsIndex++) {
-                    filter.selectedValue[filterFields[filterFieldsIndex]] = ko.observable(filter.selectedValue[filterFields[filterFieldsIndex]] || '');
+                    startVal = filter.selectedValue[filterFields[filterFieldsIndex]];
+                    if (startVal === 0) {
+                        filter.selectedValue[filterFields[filterFieldsIndex]] = ko.observable(0);
+                    } else {
+                        filter.selectedValue[filterFields[filterFieldsIndex]] = ko.observable(startVal || '');
+                    }
                 }
                 filter.selectedValue.value = ko.observable(filter.selectedValue.value ? filter.selectedValue.value.join(select2Separator) : '');
 
@@ -327,9 +332,9 @@ hqDefine('app_manager/js/report-module.js', function () {
         self.multimedia = function () {
             var multimedia = {};
             multimedia.mediaImage = {};
-            multimedia.mediaImage[self.lang] = self.menuImage.currentPath();
+            multimedia.mediaImage[self.lang] = self.menuImage.savedPath();
             multimedia.mediaAudio = {};
-            multimedia.mediaAudio[self.lang] = self.menuAudio.currentPath();
+            multimedia.mediaAudio[self.lang] = self.menuAudio.savedPath();
             return multimedia;
         };
 

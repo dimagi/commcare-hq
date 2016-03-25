@@ -2,7 +2,7 @@ import json
 from datadog import api as datadog_api
 import requests
 from django.core.management import call_command
-from django.template.loader import render_to_string
+from corehq.apps.hqadmin.management.utils import get_deploy_email_message_body
 from dimagi.utils import gitinfo
 from django.core.management.base import BaseCommand
 from corehq.apps.hqadmin.models import HqDeploy
@@ -37,7 +37,7 @@ class Command(BaseCommand):
 
         root_dir = settings.FILEPATH
         git_snapshot = gitinfo.get_project_snapshot(root_dir, submodules=True)
-        git_snapshot['diff_url'] = options.get('url', None)
+        compare_url = git_snapshot['diff_url'] = options.get('url', None)
         deploy = HqDeploy(
             date=datetime.utcnow(),
             user=options['user'],
@@ -60,7 +60,7 @@ class Command(BaseCommand):
             )
         )
         if hasattr(settings, 'MIA_THE_DEPLOY_BOT_API'):
-            link = diff_link(STYLE_SLACK, git_snapshot['diff_url'])
+            link = diff_link(STYLE_SLACK, compare_url)
             requests.post(settings.MIA_THE_DEPLOY_BOT_API, data=json.dumps({
                 "username": "Igor the Iguana",
                 "text": deploy_notification_text.format(diff_link=link),
@@ -68,17 +68,23 @@ class Command(BaseCommand):
 
         if settings.DATADOG_API_KEY:
             tags = ['environment:{}'.format(options['environment'])]
-            link = diff_link(STYLE_MARKDOWN, git_snapshot['diff_url'])
+            link = diff_link(STYLE_MARKDOWN, compare_url)
             datadog_api.Event.create(
                 title="Deploy Success",
                 text=deploy_notification_text.format(diff_link=link),
-                tags=tags
+                tags=tags,
+                alert_type="success"
             )
 
+            print "\n=============================================================\n" \
+                  "Congratulations! Deploy Complete.\n\n" \
+                  "Don't forget to keep an eye on the deploy dashboard to " \
+                  "make sure everything is running smoothly.\n\n" \
+                  "https://p.datadoghq.com/sb/5c4af2ac8-1f739e93ef" \
+                  "\n=============================================================\n"
+
         if options['mail_admins']:
-            snapshot_table = render_to_string('hqadmin/partials/project_snapshot.html', dictionary={'snapshot': git_snapshot})
-            message = "Deployed by %s, cheers!" % options['user']
-            snapshot_body = "<html><head><title>Deploy Snapshot</title></head><body><h2>%s</h2>%s</body></html>" % (message, snapshot_table)
-
-            call_command('mail_admins', snapshot_body, **{'subject': 'Deploy successful', 'html': True})
-
+            message_body = get_deploy_email_message_body(
+                environment=options['environment'], user=options['user'],
+                compare_url=compare_url)
+            call_command('mail_admins', message_body, **{'subject': 'Deploy successful', 'html': True})

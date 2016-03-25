@@ -191,7 +191,7 @@ def view_generic(request, domain, app_id=None, module_id=None, form_id=None,
     })
 
     # Pass form for Copy Application to template
-    domain_names = [d.name for d in Domain.active_for_user(request.user)]
+    domain_names = [d.name for d in Domain.active_for_user(request.couch_user)]
     domain_names.sort()
     context.update({
         'copy_app_form': copy_app_form if copy_app_form is not None else CopyApplicationForm(app_id),

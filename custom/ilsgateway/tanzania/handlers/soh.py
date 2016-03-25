@@ -1,13 +1,14 @@
-from datetime import datetime, timedelta
+from datetime import datetime
 from re import findall
 from strop import maketrans
-from corehq.apps.commtrack.models import StockState
-from corehq.apps.products.models import SQLProduct
+
+from custom.ilsgateway.slab.messages import REMINDER_TRANS, SOH_OVERSTOCKED
 from custom.ilsgateway.tanzania.handlers.generic_stock_report_handler import GenericStockReportHandler
 from custom.ilsgateway.tanzania.handlers.ils_stock_report_parser import Formatter
 
-from custom.ilsgateway.models import SupplyPointStatusTypes, SupplyPointStatusValues, SupplyPointStatus
-from custom.ilsgateway.tanzania.reminders import SOH_HELP_MESSAGE, SOH_CONFIRM, SOH_PARTIAL_CONFIRM, SOH_BAD_FORMAT
+from custom.ilsgateway.models import SupplyPointStatusTypes, SupplyPointStatusValues, SupplyPointStatus, SLABConfig
+from custom.ilsgateway.tanzania.reminders import SOH_HELP_MESSAGE, SOH_CONFIRM, SOH_BAD_FORMAT
+from custom.ilsgateway.slab.utils import overstocked_products
 
 
 def parse_report(val):
@@ -41,7 +42,8 @@ def parse_report(val):
     return [
         (x[0], int(x[1].translate(maketrans("lLO", "110"))))
         for x in findall(
-            "\s*(?P<code>[A-Za-z]{%(minchars)d,%(maxchars)d})\s*(?P<quantity>[\-?0-9%(numeric_letters)s]+)\s*" %
+            "\s*(?P<code>[A-Za-z]{%(minchars)d,%(maxchars)d})\s*"
+            "(?P<quantity>[+-]?[ ]*[0-9%(numeric_letters)s]+)\s*" %
             {
                 "minchars": 2,
                 "maxchars": 4,
@@ -65,31 +67,28 @@ class SOHHandler(GenericStockReportHandler):
 
     formatter = SohFormatter
 
-    def get_message(self, data):
-        if data['error']:
-            return SOH_BAD_FORMAT
-        reported_earlier = StockState.objects.filter(
-            case_id=self.sql_location.couch_location.linked_supply_point().get_id,
-            last_modified_date__gte=datetime.utcnow() - timedelta(days=7)
-        ).values_list('product_id', flat=True)
-        expected_products = set(
-            self.location_products.exclude(product_id__in=reported_earlier).values_list('product_id', flat=True)
-        )
+    def _is_pilot_location(self):
+        try:
+            slab_config = SLABConfig.objects.get(sql_location=self.sql_location)
+            return slab_config.is_pilot
+        except SLABConfig.DoesNotExist:
+            return False
 
-        reported_now = {
-            tx.product_id
-            for tx in data['transactions']
-        }
-        diff = expected_products - reported_now
-        if diff:
-            return SOH_PARTIAL_CONFIRM % {
-                'contact_name': self.verified_contact.owner.full_name,
-                'facility_name': self.sql_location.name,
-                'product_list': ' '.join(
-                    sorted([SQLProduct.objects.get(product_id=product_id).code for product_id in diff])
+    def get_message(self, data):
+        if not self._is_pilot_location():
+            return SOH_CONFIRM
+        else:
+            overstocked_msg = ""
+            products_msg = ""
+            for product_code, stock_on_hand, six_month_consumption in overstocked_products(self.sql_location):
+                overstocked_msg += "%s: %s " % (product_code, stock_on_hand)
+                products_msg += "%s: %s " % (product_code, six_month_consumption)
+
+            if overstocked_msg and products_msg:
+                self.respond(
+                    SOH_OVERSTOCKED, overstocked_list=overstocked_msg.strip(), products_list=products_msg.strip()
                 )
-            }
-        return SOH_CONFIRM
+            return REMINDER_TRANS
 
     def on_success(self):
         SupplyPointStatus.objects.create(location_id=self.location_id,
@@ -100,6 +99,9 @@ class SOHHandler(GenericStockReportHandler):
                                          status_type=SupplyPointStatusTypes.LOSS_ADJUSTMENT_FACILITY,
                                          status_value=SupplyPointStatusValues.REMINDER_SENT,
                                          status_date=datetime.utcnow())
+
+    def on_error(self, data):
+        self.respond(SOH_BAD_FORMAT)
 
     def help(self):
         self.respond(SOH_HELP_MESSAGE)

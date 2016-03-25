@@ -1,3 +1,7 @@
+from dimagi.utils.parsing import json_format_datetime
+
+from corehq.util.couch_helpers import paginate_view
+
 from .const import RECORD_PENDING_STATE, RECORD_FAILURE_STATE, RECORD_SUCCESS_STATE
 
 
@@ -26,6 +30,8 @@ def get_repeat_record_count(domain, repeater_id=None, state=None):
         endkey = [domain, repeater_id, state]
     elif not repeater_id and state:
         ids = sorted(_get_repeater_ids_by_domain(domain))
+        if not ids:
+            return 0
         startkey = [domain, ids[0], state]
         endkey = [domain, ids[-1], state]
 
@@ -91,3 +97,21 @@ def _get_repeater_ids_by_domain(domain):
     ).all()
 
     return [result['id'] for result in results]
+
+
+def iterate_repeat_records(due_before, chunk_size=10000, database=None):
+    from .models import RepeatRecord
+    json_now = json_format_datetime(due_before)
+
+    view_kwargs = {
+        'reduce': False,
+        'startkey': [None],
+        'endkey': [None, json_now, {}],
+        'include_docs': True
+    }
+    for doc in paginate_view(
+            RepeatRecord.get_db(),
+            'receiverwrapper/repeat_records_by_next_check',
+            chunk_size,
+            **view_kwargs):
+        yield RepeatRecord.wrap(doc['doc'])

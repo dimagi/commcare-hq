@@ -1152,28 +1152,6 @@ def resave_case(request, domain, case_id):
 @require_case_view_permission
 @require_permission(Permissions.edit_data)
 @require_POST
-def bootstrap_ledgers(request, domain, case_id):
-    # todo: this is just to fix a mobile issue that requires ledgers to be initialized
-    # this view and code can be removed when that bug is released (likely anytime after
-    # october 2015 if you are reading this after then)
-    case = _get_case_or_404(domain, case_id)
-    if (not StockTransaction.objects.filter(case_id=case_id).exists() and
-            SQLProduct.objects.filter(domain=domain).exists()):
-        submit_case_blocks([
-            '''<balance xmlns="http://commcarehq.org/ledger/v1" entity-id="{case_id}" date="{date}" section-id="stock">
-           <entry id="{product_id}" quantity="0" />
-        </balance>'''.format(
-            date=json_format_datetime(datetime.utcnow()),
-            case_id=case_id,
-            product_id=SQLProduct.objects.filter(domain=domain).values_list('product_id', flat=True)[0]
-        )], domain=domain)
-        messages.success(request, _(u'An empty ledger was added to Case %s.' % case.name),)
-    return HttpResponseRedirect(reverse('case_details', args=[domain, case_id]))
-
-
-@require_case_view_permission
-@require_permission(Permissions.edit_data)
-@require_POST
 def close_case_view(request, domain, case_id):
     case = _get_case_or_404(domain, case_id)
     if case.closed:
@@ -1390,7 +1368,7 @@ def _get_form_or_404(domain, id):
 def _get_case_or_404(domain, case_id):
     try:
         case = CaseAccessors(domain).get_case(case_id)
-        if case.domain != domain:
+        if case.domain != domain or case.is_deleted:
             raise Http404()
         return case
     except CaseNotFound:

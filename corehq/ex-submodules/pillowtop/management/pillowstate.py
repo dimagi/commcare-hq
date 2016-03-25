@@ -34,7 +34,7 @@ class ElasticPillowStatus(object):
 
 def get_pillow_states(pillows):
     """
-    return tuple: (mapped_masters, unmapped_masters, stale_indices)
+    return ElasticPillowStatus containing three main properties:
 
     mapped masters: ES indices as known in the current running code state that
     correctly have the alias applied to them

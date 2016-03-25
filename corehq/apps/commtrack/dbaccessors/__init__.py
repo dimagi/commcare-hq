@@ -15,11 +15,3 @@ def get_supply_point_ids_in_domain_by_location(domain):
             endkey=[domain, {}],
         )
     }
-
-
-def get_supply_point_by_location_id(domain, location_id):
-    """
-    This also returns closed supply points.
-    Please use location.linked_supply_point() instead.
-    """
-    return SupplyInterface(domain).get_closed_and_open_by_location_id_and_domain(domain, location_id)

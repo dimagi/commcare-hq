@@ -52,3 +52,11 @@ class StaticDataSourceConfigurationNotFoundError(DataSourceConfigurationNotFound
 
 class ReportConfigurationNotFoundError(UserReportsError):
     pass
+
+
+class InvalidQueryColumn(UserReportsError):
+    pass
+
+
+class BadReportConfigurationError(UserReportsError):
+    pass
