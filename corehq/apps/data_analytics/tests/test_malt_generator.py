@@ -5,7 +5,7 @@ from corehq.apps.app_manager.const import APP_V2, AMPLIFIES_YES
 from corehq.apps.app_manager.models import Application
 from corehq.apps.data_analytics.malt_generator import MALTTableGenerator
 from corehq.apps.data_analytics.models import MALTRow
-from corehq.apps.data_analytics.tests import save_to_analytics_db
+from corehq.apps.data_analytics.tests.utils import save_to_analytics_db
 from corehq.apps.domain.models import Domain
 from corehq.apps.users.models import CommCareUser
 from corehq.apps.smsforms.app import COMMCONNECT_DEVICE_ID
