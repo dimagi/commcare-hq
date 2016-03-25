@@ -206,6 +206,9 @@ corehq.apps.locations:
   - corehq.apps.dropbox
   - touchforms.formplayer
   - corehq.apps.tour
+  - two_factor
+  - django_otp.plugins.otp_static
+  - django_otp.plugins.otp_totp
 corehq.apps.userreports:
   - casexml.apps.case
   - casexml.apps.phone
