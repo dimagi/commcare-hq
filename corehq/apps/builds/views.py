@@ -5,7 +5,6 @@ from django.http import HttpResponseBadRequest, HttpResponse, Http404
 from django.utils.translation import ugettext_lazy
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_GET, require_POST
-from django.views.generic import TemplateView
 from django.shortcuts import render
 from django.utils.decorators import method_decorator
 from corehq.apps.hqwebapp.views import BasePageView

@@ -2,7 +2,6 @@ import pytz
 from django.template.loader import render_to_string
 from dimagi.utils.decorators.memoized import memoized
 # For translations
-from django.utils.translation import ugettext as _
 from django.utils.translation import ugettext_noop
 from corehq.apps.reports.util import (
     DEFAULT_CSS_FIELD_CLASS_REPORT_FILTER,

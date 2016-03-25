@@ -10,7 +10,6 @@ from couchforms.models import XFormInstance, all_known_formlike_doc_types
 from dimagi.utils.decorators.memoized import memoized
 from pillowtop.checkpoints.manager import get_default_django_checkpoint_for_legacy_pillow_class
 from pillowtop.listener import AliasedElasticPillow, PythonPillow
-from django.conf import settings
 
 
 class UserPillow(AliasedElasticPillow):

@@ -9,7 +9,6 @@ from corehq.apps.reminders.models import (CaseReminderHandler,
     EVENT_AS_SCHEDULE, MATCH_EXACT, RECIPIENT_OWNER)
 from corehq.messaging.ivrbackends.kookoo.models import SQLKooKooBackend
 from mock import patch
-from time import sleep
 from datetime import datetime, time
 import hashlib
 import os

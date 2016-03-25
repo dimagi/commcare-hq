@@ -23,7 +23,6 @@ from corehq.apps.app_manager.models import import_app
 from corehq.apps.users.models import CommCareUser, WebUser
 from django.contrib.sites.models import Site
 from couchforms.dbaccessors import get_forms_by_type
-from time import sleep
 from dateutil.parser import parse
 import uuid
 from casexml.apps.case.mock import CaseBlock

@@ -4,7 +4,6 @@ from xml.etree import ElementTree
 import xml.etree.ElementTree as ET
 import re
 
-from couchdbkit import ResourceNotFound
 from django.core.files.uploadedfile import UploadedFile
 from django.template.loader import render_to_string
 
@@ -14,7 +13,6 @@ from casexml.apps.case.models import CommCareCase
 from corehq.form_processor.exceptions import CaseNotFound
 from corehq.form_processor.interfaces.dbaccessors import get_cached_case_attachment, CaseAccessors
 from dimagi.utils.parsing import json_format_datetime
-from casexml.apps.case.xml import V2
 from casexml.apps.phone.caselogic import get_related_cases
 from corehq.apps.hqcase.exceptions import CaseAssignmentError
 from corehq.apps.receiverwrapper import submit_form_locally

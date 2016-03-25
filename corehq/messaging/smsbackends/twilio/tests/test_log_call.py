@@ -1,5 +1,4 @@
 import corehq.apps.ivr.tests.util as util
-from corehq.apps.ivr.tests.util import LogCallTestCase
 from corehq.apps.ivr.models import Call
 from corehq.messaging.smsbackends.twilio.models import SQLTwilioBackend
 from corehq.messaging.smsbackends.twilio.views import IVR_RESPONSE

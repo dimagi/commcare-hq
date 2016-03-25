@@ -12,6 +12,7 @@ from django.template import RequestContext
 from django.template.loader import render_to_string
 from django.utils.translation import ugettext_noop, ugettext as _
 from sqlagg.filters import IN
+from casexml.apps.case.models import CommCareCase
 from corehq.const import SERVER_DATETIME_FORMAT
 from couchexport.models import Format
 from couchforms.models import XFormInstance
@@ -34,7 +35,7 @@ from corehq.apps.reports.util import (
     get_INFilter_bindparams,
     make_form_couch_key,
 )
-from corehq.apps.users.models import CommCareCase, CouchUser
+from corehq.apps.users.models import CouchUser
 from corehq.util.translation import localize
 from dimagi.utils.couch import get_redis_client
 

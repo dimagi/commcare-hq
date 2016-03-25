@@ -7,7 +7,7 @@ from dimagi.utils.django.fields import TrimmedCharField
 from django import forms
 from django.core.validators import EmailValidator, validate_email
 from django.core.urlresolvers import reverse
-from django.forms.widgets import PasswordInput, HiddenInput
+from django.forms.widgets import PasswordInput
 from django.utils.safestring import mark_safe
 from django.utils.translation import ugettext as _, ugettext_lazy, ugettext_noop
 from django.template.loader import get_template

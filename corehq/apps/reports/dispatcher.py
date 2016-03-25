@@ -11,7 +11,7 @@ from django_prbac.utils import has_privilege
 
 from corehq.apps.domain.models import Domain
 from corehq.apps.reports.exceptions import BadRequestError
-from corehq import privileges, toggles
+from corehq import privileges
 from corehq.apps.accounting.decorators import requires_privilege_with_fallback
 from corehq.apps.hqwebapp.templatetags.hq_shared_tags import toggle_enabled
 

@@ -1,5 +1,4 @@
 from optparse import make_option
-from couchdbkit import Database
 from django.core.management.base import LabelCommand, CommandError
 from casexml.apps.case.dbaccessors import get_reverse_indices
 from casexml.apps.case.models import CommCareCase

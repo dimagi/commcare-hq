@@ -5,22 +5,16 @@ from celery.task import task
 from celery.task.base import periodic_task
 from celery.utils.log import get_task_logger
 from couchdbkit import ResourceConflict, BulkSaveError
-from casexml.apps.case.dbaccessors import get_all_reverse_indices_info
 from casexml.apps.case.mock import CaseBlock
-from casexml.apps.case.models import CommCareCase
-from casexml.apps.case.xml import V2
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors, FormAccessors
 from corehq.form_processor.models import UserArchivedRebuild
 from corehq.util.log import SensitiveErrorMail
 from couchforms.exceptions import UnexpectedDeletedXForm
 from corehq.apps.domain.models import Domain
-from dimagi.utils.couch.bulk import get_docs
-from dimagi.utils.couch.undo import DELETED_SUFFIX, is_deleted
 from dimagi.utils.logging import notify_exception
 from dimagi.utils.parsing import json_format_datetime
 from soil import DownloadBase
 from casexml.apps.case.xform import get_case_ids_from_form
-from couchforms.models import XFormInstance
 
 logger = get_task_logger(__name__)
 
