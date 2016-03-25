@@ -242,8 +242,4 @@ class LocationGroupTest(LocationTestBase):
         self.loc.delete()
 
         fixture = location_fixture_generator(self.user, '2.0')
-        try:
-            fixture[0]
-            self.fail("There are locations in the restore")
-        except IndexError:
-            pass
+        self.assertEqual(len(fixture), 0)
