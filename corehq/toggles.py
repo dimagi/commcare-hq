@@ -703,6 +703,13 @@ TELERIVET_SETUP_WALKTHROUGH = StaticToggle(
     [NAMESPACE_DOMAIN],
 )
 
+ABT_REMINDER_RECIPIENT = StaticToggle(
+    'abt_reminder_recipient',
+    "Ability to send a reminder to the case owner's location's parent location",
+    TAG_ONE_OFF,
+    [NAMESPACE_DOMAIN],
+)
+
 AUTO_CASE_UPDATES = StaticToggle(
     'auto_case_updates',
     'Ability to perform automatic case updates without closing the case.',
