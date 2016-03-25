@@ -8,7 +8,7 @@ from dimagi.ext.couchdbkit import *
 from casexml.apps.case.models import CommCareCase
 from corehq.apps.sms.models import (CommConnectCase, MessagingEvent)
 from corehq.apps.users.cases import get_owner_id, get_wrapped_owner
-from corehq.apps.users.models import CouchUser
+from corehq.apps.users.models import CouchUser, CommCareUser
 from corehq.apps.groups.models import Group
 from corehq.apps.locations.dbaccessors import get_all_users_by_location
 from corehq.apps.locations.models import SQLLocation
@@ -90,10 +90,11 @@ RECIPIENT_SUBCASE = "SUBCASE"
 RECIPIENT_SURVEY_SAMPLE = "SURVEY_SAMPLE"
 RECIPIENT_USER_GROUP = "USER_GROUP"
 RECIPIENT_LOCATION = "LOCATION"
+RECIPIENT_CASE_OWNER_LOCATION_PARENT = "CASE_OWNER_LOCATION_PARENT"
 RECIPIENT_CHOICES = [
     RECIPIENT_USER, RECIPIENT_OWNER, RECIPIENT_CASE, RECIPIENT_SURVEY_SAMPLE,
     RECIPIENT_PARENT_CASE, RECIPIENT_SUBCASE, RECIPIENT_USER_GROUP,
-    RECIPIENT_LOCATION,
+    RECIPIENT_LOCATION, RECIPIENT_CASE_OWNER_LOCATION_PARENT,
 ]
 
 KEYWORD_RECIPIENT_CHOICES = [RECIPIENT_SENDER, RECIPIENT_OWNER, RECIPIENT_USER_GROUP]
@@ -1557,9 +1558,42 @@ class CaseReminder(SafeSaveDocument, LockableMixIn):
             return Group.get(handler.user_group_id)
         elif handler.recipient == RECIPIENT_LOCATION:
             return handler.locations
+        elif handler.recipient == RECIPIENT_CASE_OWNER_LOCATION_PARENT:
+            """
+            This is pretty specific right now which is why it's behind a one-off
+            feature flag. When I move reminders to postgres I'm planning on
+            expanding the model to make this kind of recipient choice configurable.
+            """
+
+            # Get the case
+            case = self.case
+            if not case:
+                return None
+
+            # Get the case owner, which we always expect to be a mobile worker in
+            # this one-off feature
+            owner_id = get_owner_id(self.case)
+            try:
+                owner = CommCareUser.get_by_user_id(owner_id, domain=self.domain)
+            except CouchUser.AccountTypeError:
+                owner = None
+            if not owner:
+                return None
+
+            # Get the case owner's location
+            owner_location = owner.sql_location
+            if not owner_location:
+                return None
+
+            # Get that location's parent location
+            parent_location = owner_location.parent
+            if not parent_location:
+                return None
+
+            return [parent_location]
         else:
             return None
-    
+
     @property
     def retired(self):
         return self.doc_type.endswith("-Deleted")
