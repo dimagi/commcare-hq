@@ -1,4 +1,4 @@
-from collections import defaultdict
+from collections import defaultdict, namedtuple
 from django.db.models import Count
 from corehq.apps.es.aggregations import MultiTermAggregation, AggregationTerm, TermsAggregation
 from corehq.apps.es.forms import FormES
@@ -47,7 +47,12 @@ class NestedQueryHelper(object):
 
         counts = defaultdict(lambda: 0)
         _add_terms(query.run().aggregations, self.terms[0], self.terms[1:], current_counts=counts)
-        return counts
+        return self._format_counts(counts)
+
+    def _format_counts(self, counts):
+        row_class = namedtuple('NestedQueryRow', [term.name for term in self.terms] + ['doc_count'])
+        for combined_key, count in counts.items():
+            yield row_class(*(combined_key + (count,)))
 
 
 def get_app_submission_breakdown_es(domain_name, monthspan):

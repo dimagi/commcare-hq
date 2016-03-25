@@ -58,21 +58,5 @@ def test_app_submission_breakdown(self, combination_count_list):
 
     self.pillow.get_es_new().indices.refresh(self.pillow.es_index)
     data_back = get_app_submission_breakdown_es(domain, month)
-    normalized_data_back = set([_breakdown_dict_to_tuple_nested(key, count) for key, count in data_back.items()])
+    normalized_data_back = set(data_back)
     self.assertEqual(set(combination_count_list), normalized_data_back)
-
-
-def _breakdown_dict_to_tuple(breakdown_dict):
-    # convert the analytics response to the test's input format
-    return (
-        breakdown_dict.app_id,
-        breakdown_dict.device_id,
-        breakdown_dict.user_id,
-        breakdown_dict.username,
-        breakdown_dict.doc_count,
-    )
-
-
-def _breakdown_dict_to_tuple_nested(key, count):
-    # convert the analytics response to the test's input format
-    return key + (count, )
