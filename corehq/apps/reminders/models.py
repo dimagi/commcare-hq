@@ -1507,6 +1507,16 @@ class CaseReminder(SafeSaveDocument, LockableMixIn):
             return None
 
     @property
+    def case_owner(self):
+        owner_id = get_owner_id(self.case)
+
+        location = SQLLocation.by_location_id(owner_id)
+        if location:
+            return [location]
+
+        return get_wrapped_owner(owner_id)
+
+    @property
     def user(self):
         if self.handler.recipient == RECIPIENT_USER:
             return CouchUser.get_by_user_id(self.user_id)
@@ -1530,13 +1540,7 @@ class CaseReminder(SafeSaveDocument, LockableMixIn):
         elif handler.recipient == RECIPIENT_SURVEY_SAMPLE:
             return CommCareCaseGroup.get(handler.sample_id)
         elif handler.recipient == RECIPIENT_OWNER:
-            owner_id = get_owner_id(self.case)
-
-            location = SQLLocation.by_location_id(owner_id)
-            if location:
-                return [location]
-
-            return get_wrapped_owner(owner_id)
+            return self.case_owner
         elif handler.recipient == RECIPIENT_PARENT_CASE:
             parent_case = None
             case = self.case
@@ -1572,12 +1576,8 @@ class CaseReminder(SafeSaveDocument, LockableMixIn):
 
             # Get the case owner, which we always expect to be a mobile worker in
             # this one-off feature
-            owner_id = get_owner_id(self.case)
-            try:
-                owner = CommCareUser.get_by_user_id(owner_id, domain=self.domain)
-            except CouchUser.AccountTypeError:
-                owner = None
-            if not owner:
+            owner = self.case_owner
+            if not isinstance(owner, CommCareUser):
                 return None
 
             # Get the case owner's location
