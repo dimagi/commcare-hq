@@ -1,5 +1,5 @@
 from datetime import datetime
-from django.test import TestCase
+from django.test import SimpleTestCase
 from corehq.apps.data_analytics.analytics import get_app_submission_breakdown_es
 from corehq.apps.data_analytics.tests.utils import save_to_es_analytics_db
 from corehq.pillows.xform import XFormPillow
@@ -9,10 +9,7 @@ from dimagi.utils.dates import DateSpan
 from pillowtop.es_utils import completely_initialize_pillow_index
 
 
-class MaltAnalyticsTest(TestCase):
-    dependent_apps = [
-        'corehq.apps.sofabed'
-    ]
+class MaltAnalyticsTest(SimpleTestCase):
 
     @classmethod
     def setUpClass(cls):
