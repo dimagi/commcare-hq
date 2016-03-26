@@ -67,7 +67,7 @@ class MALTTableGenerator(object):
                 'user_type': user_type,
                 'domain_name': domain_name,
                 'num_of_forms': num_of_forms,
-                'app_id': app_id,
+                'app_id': app_id or MISSING_APP_ID,
                 'device_id': app_row.device_id,
                 'wam': MALTRow.AMPLIFY_COUCH_TO_SQL_MAP.get(wam, MALTRow.NOT_SET),
                 'pam': MALTRow.AMPLIFY_COUCH_TO_SQL_MAP.get(pam, MALTRow.NOT_SET),
@@ -120,12 +120,14 @@ class MALTTableGenerator(object):
     @classmethod
     @quickcache(['domain', 'app_id'])
     def _app_data(cls, domain, app_id):
+        defaults = (AMPLIFIES_NOT_SET, AMPLIFIES_NOT_SET, 15, False)
+        if not app_id:
+            return defaults
         try:
             app = get_app(domain, app_id)
         except Http404:
-            if app_id is not MISSING_APP_ID:
-                logger.debug("App not found %s" % app_id)
-            return (AMPLIFIES_NOT_SET, AMPLIFIES_NOT_SET, 15, False)
+            logger.debug("App not found %s" % app_id)
+            return defaults
         return (getattr(app, 'amplifies_workers', AMPLIFIES_NOT_SET),
                 getattr(app, 'amplifies_project', AMPLIFIES_NOT_SET),
                 getattr(app, 'minimum_use_threshold', 15),

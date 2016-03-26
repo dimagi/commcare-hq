@@ -98,7 +98,7 @@ class MaltGeneratorTest(TestCase):
             cls.wam_app_id,
             cls.wam_app_id,
             # should be included in MALT
-            MISSING_APP_ID,
+            '',
         ]
 
         _save_multiple_forms(out_of_range_form_apps, cls.out_of_range_date)
