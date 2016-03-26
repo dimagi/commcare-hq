@@ -1,3 +1,4 @@
+import gevent
 from optparse import make_option
 
 from django.conf import settings
@@ -19,12 +20,15 @@ class Command(BaseCommand):
     )
 
     def handle(self, *args, **options):
+        jobs = []
         for db_alias in settings.DATABASES.keys():
             print '\n======================= Migrating DB: {} ======================='.format(db_alias)
-            call_command(
+            jobs.append(gevent.spawn(
+                call_command,
                 'migrate',
                 database=db_alias,
                 interactive=options['interactive'],
                 fake=options['fake'],
                 list=options['list'],
-            )
+            ))
+        gevent.joinall(jobs)
