@@ -1,6 +1,6 @@
 from datetime import datetime
 from django.test import SimpleTestCase
-from corehq.apps.data_analytics.analytics import get_app_submission_breakdown_es
+from corehq.apps.data_analytics.esaccessors import get_app_submission_breakdown_es
 from corehq.apps.data_analytics.tests.utils import save_to_es_analytics_db
 from corehq.pillows.xform import XFormPillow
 from corehq.util.elastic import ensure_index_deleted

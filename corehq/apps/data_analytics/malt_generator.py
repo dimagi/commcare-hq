@@ -2,7 +2,7 @@ import logging
 
 from corehq.apps.app_manager.const import AMPLIFIES_NOT_SET
 from corehq.apps.app_manager.dbaccessors import get_app
-from corehq.apps.data_analytics.analytics import get_app_submission_breakdown_es
+from corehq.apps.data_analytics.esaccessors import get_app_submission_breakdown_es
 from corehq.apps.data_analytics.models import MALTRow
 from corehq.apps.domain.models import Domain
 from corehq.apps.sofabed.models import MISSING_APP_ID
