@@ -1,3 +1,4 @@
+import sys
 import gevent
 from optparse import make_option
 
@@ -32,3 +33,13 @@ class Command(BaseCommand):
                 list=options['list'],
             ))
         gevent.joinall(jobs)
+
+        success = True
+        for job in jobs:
+            if not job.successful():
+                print 'Failed to migrate'
+                print job.exception
+                success = False
+
+        if not success:
+            sys.exit(1)
