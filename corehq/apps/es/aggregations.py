@@ -454,7 +454,7 @@ AggregationTerm = namedtuple('AggregationTerm', ['name', 'field'])
 
 class NestedAggregationHelper(object):
     """
-    Helepr to run nested term-based queries (equivalent to SQL group-by clauses)
+    Helper to run nested term-based queries (equivalent to SQL group-by clauses)
     """
     def __init__(self, base_query, terms):
         self.base_query = base_query
