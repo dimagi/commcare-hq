@@ -193,15 +193,6 @@ def load_form_template(filename):
         return f.read()
 
 
-def partial_escape(xpath):
-    """
-    Copied from http://stackoverflow.com/questions/275174/how-do-i-perform-html-decoding-encoding-using-python-django
-    but without replacing the single quote
-
-    """
-    return mark_safe(force_unicode(xpath).replace('&', '&amp;').replace('<', '&lt;').replace('>', '&gt;').replace('"', '&quot;'))
-
-
 class IndexedSchema(DocumentSchema):
     """
     Abstract class.
