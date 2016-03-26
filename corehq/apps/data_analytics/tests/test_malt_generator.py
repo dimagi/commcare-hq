@@ -20,7 +20,7 @@ from pillowtop.es_utils import completely_initialize_pillow_index
 class MaltGeneratorTest(TestCase):
     dependent_apps = [
         'corehq.apps.tzmigration', 'django_digest', 'auditcare', 'corehq.apps.users',
-        'corehq.couchapps', 'corehq.apps.sofabed', 'corehq.apps.domain',
+        'corehq.couchapps', 'corehq.apps.domain',
         'corehq.apps.app_manager',
     ]
 
