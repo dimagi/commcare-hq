@@ -23,7 +23,7 @@ def explode_cases(user_id, domain, factor, task=None):
     child_cases = list()
     accessor = CaseAccessors(domain)
 
-    case_ids = accessor.get_case_ids_by_owners(user.get_owner_ids())  # TODO closed
+    case_ids = accessor.get_case_ids_by_owners(user.get_owner_ids(), closed=False)
     cases = accessor.iter_cases(case_ids)
 
     # copy parents
