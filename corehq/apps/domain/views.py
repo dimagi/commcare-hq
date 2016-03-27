@@ -2200,13 +2200,13 @@ class DomainForwardingRepeatRecords(GenericTabularReport):
     @property
     def headers(self):
         return DataTablesHeader(
-            DataTablesColumn('Status'),
-            DataTablesColumn('URL'),
-            DataTablesColumn('Last sent date'),
-            DataTablesColumn('Retry Date'),
-            DataTablesColumn('Failure Reason'),
-            DataTablesColumn('View payload'),
-            DataTablesColumn('Resend'),
+            DataTablesColumn(_('Status')),
+            DataTablesColumn(_('URL')),
+            DataTablesColumn(_('Last sent date')),
+            DataTablesColumn(_('Retry Date')),
+            DataTablesColumn(_('Failure Reason')),
+            DataTablesColumn(_('View payload')),
+            DataTablesColumn(_('Resend')),
         )
 
 
