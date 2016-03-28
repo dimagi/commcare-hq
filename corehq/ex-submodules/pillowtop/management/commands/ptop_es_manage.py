@@ -29,11 +29,6 @@ class Command(LabelCommand):
                     dest='list_pillows',
                     default=False,
                     help="Print AliasedElasticPillows that can be operated on"),
-        make_option('--info',
-                    action='store_true',
-                    dest='show_info',
-                    default=True,
-                    help="Debug printout of ES indices and aliases"),
         make_option('--code_red',
                     action='store_true',
                     dest='code_red',
@@ -43,7 +38,6 @@ class Command(LabelCommand):
 
     def handle(self, *args, **options):
         if len(args) != 0: raise CommandError("This command doesn't expect arguments!")
-        show_info = options['show_info']
         list_pillows = options['list_pillows']
         flip_all = options['flip_all']
         flip_single = options['pillow_class']
