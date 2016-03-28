@@ -103,14 +103,20 @@ def assume_alias_for_pillow(pillow):
 
     This operation removes the alias from any other indices it might be assigned to
     """
-    es = pillow.get_es_new()
-    if es.indices.exists_alias(None, pillow.es_alias):
-        # this part removes the conflicting aliases
-        alias_indices = es.indices.get_alias(pillow.es_alias).keys()
-        for aliased_index in alias_indices:
-            es.indices.delete_alias(aliased_index, pillow.es_alias)
+    assume_alias(pillow.get_es_new(), pillow.es_index, pillow.es_alias)
 
-    es.indices.put_alias(pillow.es_index, pillow.es_alias)
+
+def assume_alias(es, index, alias):
+    """
+    This operation assigns the alias to the index and removes the alias
+    from any other indices it might be assigned to.
+    """
+    if es.indices.exists_alias(None, alias):
+        # this part removes the conflicting aliases
+        alias_indices = es.indices.get_alias(alias).keys()
+        for aliased_index in alias_indices:
+            es.indices.delete_alias(aliased_index, alias)
+    es.indices.put_alias(index, alias)
 
 
 def doc_exists(pillow, doc_id_or_dict):
