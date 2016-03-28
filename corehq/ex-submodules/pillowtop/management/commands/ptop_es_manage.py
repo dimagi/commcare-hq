@@ -5,7 +5,6 @@ import simplejson
 from corehq.elastic import get_es_new
 from pillowtop.es_utils import assume_alias_for_pillow
 from pillowtop.listener import AliasedElasticPillow
-from pillowtop.management.pillowstate import get_pillow_states
 from pillowtop import get_all_pillow_instances
 
 
@@ -74,8 +73,6 @@ class Command(LabelCommand):
                 print 'Safety first!'
             return
 
-        if show_info:
-            get_pillow_states().dump_info()
         if list_pillows:
             print aliased_pillows
         if flip_all:
