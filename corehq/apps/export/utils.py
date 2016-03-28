@@ -107,16 +107,6 @@ def _convert_transform(serializable_transform):
     return None
 
 
-def _convert_index_to_path(index):
-    from corehq.apps.export.models.new import MAIN_TABLE
-    if index == '#':
-        return MAIN_TABLE
-    elif _is_repeat(index):
-        return _strip_repeat_index(index).split('.')
-    else:
-        return index.split('.')
-
-
 def _get_system_property(index, transform):
     return FORM_PROPERTY_MAPPING.get((index, transform))
 
