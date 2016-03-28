@@ -1,7 +1,15 @@
 from dimagi.utils.couch.undo import DELETED_SUFFIX
 from dimagi.utils.modules import to_function
 
-from .const import TRANSFORM_FUNCTIONS, FORM_PROPERTY_MAPPING
+from .const import (
+    TRANSFORM_FUNCTIONS,
+    CASE_EXPORT,
+    FORM_EXPORT,
+    FORM_PROPERTY_MAPPING,
+    CASE_PROPERTY_MAPPING,
+    CASE_HISTORY_PROPERTY_MAPPING,
+    PARENT_CASE_PROPERTY_MAPPING
+)
 from .exceptions import ExportInvalidTransform
 
 
@@ -12,23 +20,40 @@ def is_valid_transform(value):
 
 
 def convert_saved_export_to_export_instance(saved_export):
-    from .models import FormExportDataSchema, FormExportInstance
-
-    # Build a new schema and instance
-    schema = FormExportDataSchema.generate_schema_from_builds(
-        saved_export.domain,
-        saved_export.app_id,
-        _extract_xmlns_from_index(saved_export.index),
+    from .models import (
+        FormExportDataSchema,
+        FormExportInstance,
+        CaseExportDataSchema,
+        CaseExportInstance,
     )
 
-    instance = FormExportInstance.generate_instance_from_schema(schema)
+    # Build a new schema and instance
+    schema = None
+    instance_cls = None
+    export_type = saved_export.type
+    if export_type == FORM_EXPORT:
+        instance_cls = FormExportInstance
+        schema = FormExportDataSchema.generate_schema_from_builds(
+            saved_export.domain,
+            saved_export.app_id,
+            _extract_xmlns_from_index(saved_export.index),
+        )
+    elif export_type == CASE_EXPORT:
+        instance_cls = CaseExportInstance
+        schema = CaseExportDataSchema.generate_schema_from_builds(
+            saved_export.domain,
+            _extract_casetype_from_index(saved_export.index),
+        )
+
+    instance = instance_cls.generate_instance_from_schema(schema)
     instance.name = saved_export.name
     instance.is_deidentified = saved_export.is_safe
     instance.export_format = saved_export.default_format
     instance.transform_dates = saved_export.transform_dates
-    instance.split_multiselects = saved_export.split_multiselects
-    instance.include_errors = saved_export.include_errors
     instance.legacy_saved_export_schema_id = saved_export._id
+    if saved_export.type == FORM_EXPORT:
+        instance.split_multiselects = saved_export.split_multiselects
+        instance.include_errors = saved_export.include_errors
 
     # With new export instance, copy over preferences from previous export
     for old_table in saved_export.tables:
@@ -84,6 +109,10 @@ def convert_saved_export_to_export_instance(saved_export):
 
 
 def _extract_xmlns_from_index(index):
+    return index[1]
+
+
+def _extract_casetype_from_index(index):
     return index[1]
 
 
