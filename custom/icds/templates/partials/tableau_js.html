@@ -52,7 +52,10 @@
 
         $(".nav-link").click(function (){
             var link = $(this);
-            workbook.activateSheetAsync(link[0].textContent);
+            var sheetName = link[0].textContent;
+            var params = history.state.params;
+            switchVisualization(sheetName, workbook, params);
+            e.preventDefault();
         });
 
         viz.addEventListener(tableau.TableauEventName.MARKS_SELECTION, onMarksSelection);
