@@ -80,7 +80,10 @@ def activate_subscriptions(based_on_date=None):
         starting_subscriptions
     )
     for subscription in starting_subscriptions:
-        _activate_subscription(subscription)
+        try:
+            _activate_subscription(subscription)
+        except Exception as e:
+            log_accounting_error(e.message)
 
 
 @transaction.atomic
@@ -118,7 +121,10 @@ def deactivate_subscriptions(based_on_date=None):
         is_active=True,
     )
     for subscription in ending_subscriptions:
-        _deactivate_subscription(subscription, ending_date)
+        try:
+            _deactivate_subscription(subscription, ending_date)
+        except Exception as e:
+            log_accounting_error(e.message)
 
 
 def warn_subscriptions_still_active(based_on_date=None):
