@@ -1,0 +1,24 @@
+{% extends 'style/bootstrap2/two_column.html' %}
+
+{% block main_column %}
+    <table id="recalculations" class="table table-bordered">
+        <thead>
+            <tr>
+               <th>Location</th>
+               <th>Type</th>
+               <th>Data</th>
+            </tr>
+        </thead>
+        {% for recalculation in recalculations %}
+            <tr>
+                <td>{{ recalculation.sql_location.name }}</td>
+                <td>{{ recalculation.type }}</td>
+                <td>{{ recalculation.data }}</td>
+            </tr>
+        {% endfor %}
+    </table>
+    {% include 'imports/datatables.html' %}
+    <script>
+        $('#recalculations').dataTable();
+    </script>
+{% endblock %}

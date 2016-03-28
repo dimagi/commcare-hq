@@ -611,14 +611,6 @@ CUSTOM_MENU_BAR = StaticToggle(
     namespaces=[NAMESPACE_DOMAIN],
 )
 
-LINK_SUPPLY_POINT = StaticToggle(
-    'link_supply_point',
-    'Add a "Supply Point" tab to location pages.  This is feature flagged '
-    'because this is not a great way to display additional information.',
-    TAG_EXPERIMENTAL,
-    namespaces=[NAMESPACE_DOMAIN],
-)
-
 ICDS_REPORTS = StaticToggle(
     'icds_reports',
     'Enable access to the Tableau dashboard for ICDS',
@@ -707,13 +699,6 @@ AUTO_CASE_UPDATES = StaticToggle(
     'auto_case_updates',
     'Ability to perform automatic case updates without closing the case.',
     TAG_ONE_OFF,
-    [NAMESPACE_DOMAIN],
-)
-
-SQL_SMS_PILLOW = StaticToggle(
-    'sql_sms_pillow',
-    'Enable processing SMS changes through Kafka and the Postgres SMS model.',
-    TAG_PRODUCT_PATH,
     [NAMESPACE_DOMAIN],
 )
 

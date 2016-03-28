@@ -453,6 +453,28 @@ def get_sessions(request, domain):
 
 
 @cloudcare_api
+def get_session_context(request, domain, session_id):
+    # NOTE: although this view does not appeared to be called from anywhere it is, and cannot be deleted.
+    # The javascript routing in cloudcare depends on it, though constructs it manually in a hardcoded way.
+    # see getSessionContextUrl in cloudcare/util.js
+    # Adding 'cloudcare_get_session_context' to this comment so that the url name passes a grep test
+    try:
+        session = EntrySession.objects.get(session_id=session_id)
+    except EntrySession.DoesNotExist:
+        session = None
+    if request.method == 'DELETE':
+        if session:
+            session.delete()
+        return json_response({'status': 'success'})
+    else:
+        helper = BaseSessionDataHelper(domain, request.couch_user)
+        return json_response(helper.get_full_context({
+            'session_id': session_id,
+            'app_id': session.app_id if session else None
+        }))
+
+
+@cloudcare_api
 def get_ledgers(request, domain):
     """
     Returns ledgers associated with a case in the format:

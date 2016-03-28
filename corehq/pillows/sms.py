@@ -3,7 +3,6 @@ from corehq.apps.change_feed.consumer.feed import KafkaChangeFeed
 from corehq.elastic import get_es_new
 from corehq.apps.sms.models import SMSLog
 from corehq.pillows.mappings.sms_mapping import SMS_MAPPING, SMS_INDEX
-from corehq.toggles import SQL_SMS_PILLOW
 from dimagi.utils.decorators.memoized import memoized
 from pillowtop.checkpoints.manager import PillowCheckpoint, PillowCheckpointEventHandler
 from pillowtop.es_utils import ElasticsearchIndexMeta
@@ -58,23 +57,17 @@ class SMSPillow(AliasedElasticPillow):
         return cls.calc_mapping_hash({"es_meta": cls.es_meta, "mapping": cls.default_mapping})
 
     def change_transport(self, doc_dict):
-        domain = doc_dict.get('domain')
-        if domain and SQL_SMS_PILLOW.enabled(domain):
-            return
-
-        super(SMSPillow, self).change_transport(doc_dict)
-
-
-class SMSPillowProcessor(ElasticProcessor):
-    def process_change(self, pillow_instance, change, do_set_checkpoint):
-        domain = change.metadata.domain
-        if domain and SQL_SMS_PILLOW.enabled(domain):
-            super(SMSPillowProcessor, self).process_change(pillow_instance, change, do_set_checkpoint)
+        # SMS changes don't go to couch anymore. Let the SqlSMSPillow process
+        # changes from now on.
+        # Also, we explicitly need this to be a no-op because we're going to
+        # delete all sms from couch and don't want them to be deleted from
+        # elasticsearch.
+        return
 
 
 def get_sql_sms_pillow(pillow_id):
     checkpoint = PillowCheckpoint(SMS_PILLOW_CHECKPOINT_ID)
-    processor = SMSPillowProcessor(
+    processor = ElasticProcessor(
         elasticseach=get_es_new(),
         index_meta=ElasticsearchIndexMeta(index=ES_SMS_INDEX, type=ES_SMS_TYPE),
         doc_prep_fn=lambda x: x

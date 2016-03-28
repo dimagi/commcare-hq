@@ -8,6 +8,7 @@ from casexml.apps.case.models import CommCareCase
 from couchforms.models import XFormInstance
 from dimagi.utils.couch.database import iter_docs
 from dimagi.utils.couch.cache.cache_core import get_redis_client
+from dimagi.utils.parsing import json_format_datetime
 
 from corehq.apps.domain.dbaccessors import iterate_doc_ids_in_domain_by_type
 from corehq.apps.userreports.models import DataSourceConfiguration, StaticDataSourceConfiguration
@@ -44,16 +45,13 @@ def _build_indicators(indicator_config_id, relevant_ids):
 
     last_id = None
     for doc in iter_docs(couchdb, relevant_ids, chunksize=500):
+        # save is a noop if the filter doesn't match
+        adapter.best_effort_save(doc)
+        last_id = doc.get('_id')
         try:
-            # save is a noop if the filter doesn't match
-            adapter.save(doc)
-            last_id = doc.get('_id')
-            try:
-                redis_client.lrem(redis_key, 1, last_id)
-            except:
-                redis_client.srem(redis_key, last_id)
-        except Exception as e:
-            logging.exception('problem saving document {} to table. {}'.format(doc['_id'], e))
+            redis_client.lrem(redis_key, 1, last_id)
+        except:
+            redis_client.srem(redis_key, last_id)
 
     if last_id:
         redis_client.rpush(redis_key, last_id)
@@ -100,12 +98,21 @@ def _iteratively_build_table(config, last_id=None):
     redis_key = _get_redis_key_for_config(config)
     indicator_config_id = config._id
 
+    start_key = None
+    if last_id:
+        last_doc = _DOC_TYPE_MAPPING[config.referenced_doc_type].get(last_id)
+        start_key = [config.domain, config.referenced_doc_type]
+        if config.referenced_doc_type in _DATE_MAP.keys():
+            date = json_format_datetime(last_doc[_DATE_MAP[config.referenced_doc_type]])
+            start_key.append(date)
+
     relevant_ids = []
     for relevant_id in iterate_doc_ids_in_domain_by_type(
             config.domain,
             config.referenced_doc_type,
             chunk_size=CHUNK_SIZE,
             database=couchdb,
+            startkey=start_key,
             startkey_docid=last_id):
         relevant_ids.append(relevant_id)
         if len(relevant_ids) >= CHUNK_SIZE:
@@ -140,4 +147,9 @@ _DOC_TYPE_MAPPING = {
     'XFormInstance': XFormInstance,
     'CommCareCase': CommCareCase,
     'Location': Location
+}
+
+_DATE_MAP = {
+    'XFormInstance': 'received_on',
+    'CommCareCase': 'opened_on',
 }

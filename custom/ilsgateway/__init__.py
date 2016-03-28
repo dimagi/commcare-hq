@@ -1,3 +1,4 @@
+from custom.ilsgateway.slab.views import SLABConfigurationReport
 from custom.ilsgateway.tanzania.reports.alerts import AlertReport
 from custom.ilsgateway.tanzania.reports.dashboard_report import DashboardReport, NewDashboardReport
 from custom.ilsgateway.tanzania.reports.delivery import DeliveryReport
@@ -20,6 +21,9 @@ CUSTOM_REPORTS = (
         SupervisionReport,
         UnrecognizedSMSReport
     )),
+    ('Slab', (
+        SLABConfigurationReport,
+    ))
 )
 
 LOCATION_TYPES = ["MOHSW", "MSDZONE", "REGION", "DISTRICT", "FACILITY"]

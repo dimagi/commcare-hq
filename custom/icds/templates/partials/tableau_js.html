@@ -131,7 +131,7 @@
 
     function getSheetName(pair, sheetName) {
         // Find the sheet we are navigating to
-        if(pair.fieldName === 'js_sheet' || pair.fieldName === 'ATTR(js_sheet)') && pair.formattedValue != 'CURRENT' {
+        if((pair.fieldName === 'js_sheet' || pair.fieldName === 'ATTR(js_sheet)') && pair.formattedValue != 'CURRENT') {
             return pair.formattedValue;
         }
         return sheetName;
