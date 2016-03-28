@@ -1,6 +1,6 @@
 from django.conf import settings
 from django.test import SimpleTestCase
-from corehq.apps.es.index_management import get_all_expected_es_indices
+from pillowtop.es_utils import get_all_expected_es_indices
 
 
 class IndexManagementTest(SimpleTestCase):
