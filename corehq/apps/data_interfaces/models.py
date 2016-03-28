@@ -142,7 +142,7 @@ class AutomaticUpdateRuleCriteria(models.Model):
         app_label = "data_interfaces"
 
     def _get_case_value(self, case, property_name):
-        if self.property_name.lower().startswith('parent/'):
+        if property_name.lower().startswith('parent/'):
             parent = case.parent
             if not parent:
                 return None

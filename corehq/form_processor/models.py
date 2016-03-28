@@ -732,7 +732,7 @@ class CommCareCaseSQL(DisabledDbMixin, models.Model, RedisLockableMixIn,
         please write/use a different property.
         """
         for index in self.indices:
-            if index.identifier == CommCareCaseIndexSQL.INDEX_ID_PARENT:
+            if index.identifier == CommCareCaseIndexSQL.PARENT_IDENTIFIER:
                 try:
                     return index.referenced_case
                 except CaseNotFound:
@@ -853,7 +853,7 @@ class CommCareCaseIndexSQL(DisabledDbMixin, models.Model, SaveStateMixin):
     RELATIONSHIP_INVERSE_MAP = dict(RELATIONSHIP_CHOICES)
     RELATIONSHIP_MAP = {v: k for k, v in RELATIONSHIP_CHOICES}
 
-    INDEX_ID_PARENT = 'parent'
+    PARENT_IDENTIFIER = 'parent'
 
     case = models.ForeignKey(
         'CommCareCaseSQL', to_field='case_id', db_index=True,

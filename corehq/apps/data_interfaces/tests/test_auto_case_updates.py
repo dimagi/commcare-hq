@@ -1,7 +1,8 @@
 from contextlib import contextmanager
 
 from casexml.apps.case.mock import CaseFactory
-from casexml.apps.case.models import CommCareCase
+from casexml.apps.case.models import CommCareCase, INDEX_ID_PARENT
+from casexml.apps.case.sharedmodels import CommCareCaseIndex
 from casexml.apps.case.signals import case_post_save
 from corehq.apps.data_interfaces.models import (AutomaticUpdateRule,
     AutomaticUpdateRuleCriteria, AutomaticUpdateAction)
@@ -10,6 +11,7 @@ from datetime import datetime, date
 
 from corehq.form_processor.backends.sql.dbaccessors import CaseAccessorSQL
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
+from corehq.form_processor.models import CommCareCaseIndexSQL
 from corehq.form_processor.tests.utils import run_with_all_backends, FormProcessorTestUtils, set_case_property_directly
 from corehq.form_processor.utils.general import should_use_sql_backend
 from django.test import TestCase
@@ -334,6 +336,48 @@ class AutomaticCaseUpdateTest(TestCase):
             rules_by_case_type['test-case-type-2'], datetime(2016, 1, 1))
         self.assertEqual(boundary_date, datetime(2015, 12, 2))
 
+    @run_with_all_backends
+    def test_parent_case_lookup(self):
+        with _with_case(self.domain, 'test-child-case-type', datetime(2016, 1, 1)) as child, \
+                _with_case(self.domain, 'test-parent-case-type', datetime(2016, 1, 1)) as parent:
+
+            # Set the parent case relationship
+            parent.name = 'abc'
+            parent.save()
+            set_parent_case(self.domain, child, parent)
+
+            # Create a rule that references parent/name which should match
+            rule = AutomaticUpdateRule(
+                domain=self.domain,
+                name='test-parent-rule',
+                case_type='test-child-case-type',
+                active=True,
+                server_modified_boundary=30,
+            )
+            rule.save()
+            self.addCleanup(rule.delete)
+            rule.automaticupdaterulecriteria_set = [
+                AutomaticUpdateRuleCriteria(
+                    property_name='parent/name',
+                    property_value='abc',
+                    match_type=AutomaticUpdateRuleCriteria.MATCH_EQUAL,
+                ),
+            ]
+
+            self.assertTrue(rule.rule_matches_case(child, datetime(2016, 3, 1)))
+
+            # Update the rule to match on a different name and now it shouldn't match
+            rule.automaticupdaterulecriteria_set.all().delete()
+            rule.automaticupdaterulecriteria_set = [
+                AutomaticUpdateRuleCriteria(
+                    property_name='parent/name',
+                    property_value='def',
+                    match_type=AutomaticUpdateRuleCriteria.MATCH_EQUAL,
+                ),
+            ]
+
+            self.assertFalse(rule.rule_matches_case(child, datetime(2016, 3, 1)))
+
 
 @contextmanager
 def _with_case(domain, case_type, last_modified):
@@ -363,3 +407,24 @@ def _update_case(domain, case_id, server_modified_on, last_visit_date=None):
     else:
         # can't call case.save() since it overrides the server_modified_on property
         CommCareCase.get_db().save_doc(case.to_json())
+
+
+def set_parent_case(domain, child_case, parent_case):
+    if should_use_sql_backend(domain):
+        CommCareCaseIndexSQL.objects.create(
+            case=child_case,
+            domain=domain,
+            identifier=CommCareCaseIndexSQL.PARENT_IDENTIFIER,
+            referenced_id=parent_case.case_id,
+            relationship_id=CommCareCaseIndexSQL.CHILD
+        )
+    else:
+        child_case.indices = [
+            CommCareCaseIndex(
+                identifier=INDEX_ID_PARENT,
+                referenced_id=parent_case.case_id,
+                relationship='child'
+            )
+        ]
+        # Don't change server_modified_on when saving
+        CommCareCase.get_db().save_doc(child_case.to_json())
