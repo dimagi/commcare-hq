@@ -49,6 +49,7 @@ CASE_MAPPING = {
                                   'type': 'date'},
         'doc_type': {'index': 'not_analyzed',
                      'type': 'string'},
+        'inserted_at': {"type": "date", "format": DATE_FORMATS_STRING},
         'domain': {'fields': {'domain': {'index': 'analyzed',
                                          'type': 'string'},
                               'exact': {'index': 'not_analyzed',

@@ -1,5 +1,8 @@
 import collections
 import copy
+import datetime
+import pytz
+
 from casexml.apps.case.xform import extract_case_blocks, get_case_ids_from_form
 from corehq.apps.change_feed import topics
 from corehq.apps.change_feed.consumer.feed import KafkaChangeFeed
@@ -94,6 +97,7 @@ def transform_xform_for_elasticsearch(doc_dict, include_props=True):
         except KeyError:
             user_id = None
         doc_ret['user_type'] = get_user_type(user_id)
+        doc_ret['inserted_at'] = datetime.datetime.now(pytz.utc).isoformat()
 
         case_blocks = extract_case_blocks(doc_ret)
         for case_dict in case_blocks:

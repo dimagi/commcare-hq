@@ -15,6 +15,7 @@ XFORM_MAPPING = {
     },
     "properties": {
         'doc_type': {'type': 'string'},
+        'inserted_at': {"type": "date", "format": DATE_FORMATS_STRING},
         'user_type': {'type': 'string', "index": "not_analyzed", "null_value": NULL_VALUE},
         "domain": {
             "type": "multi_field",
