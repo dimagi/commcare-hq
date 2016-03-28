@@ -3,7 +3,7 @@ from django.test import SimpleTestCase
 from pillowtop.es_utils import get_all_expected_es_indices
 
 
-class IndexManagementTest(SimpleTestCase):
+class ProdIndexManagementTest(SimpleTestCase):
     @classmethod
     def setUpClass(cls):
         cls._PILLOWTOPS = settings.PILLOWTOPS
