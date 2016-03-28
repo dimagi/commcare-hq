@@ -14,4 +14,7 @@ from .new import (
     ScalarItem,
     Option,
     MultipleChoiceItem,
+    MAIN_TABLE,
+    CASE_HISTORY_TABLE,
+    PARENT_CASE_TABLE,
 )
