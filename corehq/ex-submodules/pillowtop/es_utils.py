@@ -2,6 +2,7 @@ from collections import namedtuple
 from copy import copy
 from datetime import datetime
 from elasticsearch import TransportError
+from pillowtop import get_all_pillow_classes
 from pillowtop.logger import pillow_logging
 
 INDEX_REINDEX_SETTINGS = {
@@ -121,3 +122,8 @@ def doc_exists(pillow, doc_id_or_dict):
         assert isinstance(doc_id_or_dict, dict)
         doc_id = doc_id_or_dict['_id']
     return pillow.get_es_new().exists(pillow.es_index, pillow.es_type, doc_id)
+
+
+def get_all_elasticsearch_pillows():
+    from pillowtop.listener import AliasedElasticPillow
+    return filter(lambda x: issubclass(x, AliasedElasticPillow), get_all_pillow_classes())

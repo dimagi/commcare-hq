@@ -1,15 +1,13 @@
 from gevent import monkey; monkey.patch_all()
-from pillowtop.es_utils import pillow_index_exists
+from pillowtop.es_utils import pillow_index_exists, get_all_elasticsearch_pillows
 
 from cStringIO import StringIO
 import traceback
 from datetime import datetime
 from optparse import make_option
 from django.core.mail import mail_admins
-from pillowtop import get_all_pillow_classes
 from corehq.pillows.user import add_demo_user_to_user_index
 import gevent
-from pillowtop.listener import AliasedElasticPillow
 from pillowtop.management.pillowstate import get_pillow_states
 from django.core.management.base import NoArgsCommand, BaseCommand
 from django.core.management import call_command
@@ -65,11 +63,8 @@ class Command(BaseCommand):
 
     def handle(self, *args, **options):
         runs = []
-        pillow_classes = get_all_pillow_classes()
-        aliased_classes = filter(lambda x: issubclass(x, AliasedElasticPillow),
-                                 pillow_classes)
+        aliased_classes = get_all_elasticsearch_pillows()
         aliasable_pillows = [p(online=False) for p in aliased_classes]
-
         reindex_all = options['replace']
 
         pillow_state_results = get_pillow_states(aliasable_pillows)
