@@ -45,16 +45,13 @@ def _build_indicators(indicator_config_id, relevant_ids):
 
     last_id = None
     for doc in iter_docs(couchdb, relevant_ids, chunksize=500):
+        # save is a noop if the filter doesn't match
+        adapter.best_effort_save(doc)
+        last_id = doc.get('_id')
         try:
-            # save is a noop if the filter doesn't match
-            adapter.save(doc)
-            last_id = doc.get('_id')
-            try:
-                redis_client.lrem(redis_key, 1, last_id)
-            except:
-                redis_client.srem(redis_key, last_id)
-        except Exception as e:
-            logging.exception('problem saving document {} to table. {}'.format(doc['_id'], e))
+            redis_client.lrem(redis_key, 1, last_id)
+        except:
+            redis_client.srem(redis_key, last_id)
 
     if last_id:
         redis_client.rpush(redis_key, last_id)
