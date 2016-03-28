@@ -151,3 +151,17 @@ def get_all_expected_es_indices():
         assert pillow.es_index not in seen_indices
         yield ElasticsearchIndexInfo(index=pillow.es_index, alias=pillow.es_alias)
         seen_indices.add(pillow.es_index)
+
+
+def needs_reindex(es, index_info):
+    """
+    Returns true if the index needs to be reindexed - either because
+    it does not exist or because the alias isn't properly setup.
+    """
+    if not es.indices.exists(index_info.index) or not has_alias(es, index_info):
+        return True
+
+
+def has_alias(es, index_info):
+    alias_indices = es.indices.get_alias(index_info.alias).keys()
+    return index_info.index in alias_indices
