@@ -98,9 +98,9 @@
         "name": "CaseDataPillow"
     },
     "CasePillow": {
-        "advertised_name": "corehq.pillows.case.CasePillow.541950e09fe4d25d4d6dc10346ac73a2.testhq",
+        "advertised_name": "corehq.pillows.case.CasePillow.85e1a25ff57c5892b6fa95caf949ae4c.testhq",
         "change_feed_type": "CouchChangeFeed",
-        "checkpoint_id": "corehq.pillows.case.CasePillow.541950e09fe4d25d4d6dc10346ac73a2.testhq",
+        "checkpoint_id": "corehq.pillows.case.CasePillow.85e1a25ff57c5892b6fa95caf949ae4c.testhq",
         "couch_filter": "case/casedocs",
         "couchdb_type": "Database",
         "couchdb_uri": "http://{COUCH_SERVER_ROOT}/test_commcarehq",
@@ -112,7 +112,7 @@
         "full_class_name": "corehq.pillows.case.CasePillow",
         "include_docs": true,
         "name": "CasePillow",
-        "unique_id": "541950e09fe4d25d4d6dc10346ac73a2"
+        "unique_id": "85e1a25ff57c5892b6fa95caf949ae4c"
     },
     "CouvertureFluffPillow": {
         "advertised_name": "fluff.CouvertureFluffPillow.testhq",
