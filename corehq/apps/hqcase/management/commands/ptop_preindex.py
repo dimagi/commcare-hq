@@ -1,5 +1,9 @@
 from gevent import monkey; monkey.patch_all()
-from pillowtop.es_utils import pillow_index_exists, get_all_elasticsearch_pillow_classes
+from corehq.elastic import get_es_new
+
+
+from pillowtop.es_utils import pillow_index_exists, get_all_elasticsearch_pillow_classes, \
+    get_all_expected_es_indices, needs_reindex
 
 from cStringIO import StringIO
 import traceback
@@ -8,7 +12,6 @@ from optparse import make_option
 from django.core.mail import mail_admins
 from corehq.pillows.user import add_demo_user_to_user_index
 import gevent
-from pillowtop.management.pillowstate import get_pillow_states
 from django.core.management.base import NoArgsCommand, BaseCommand
 from django.core.management import call_command
 from django.conf import settings
@@ -64,13 +67,14 @@ class Command(BaseCommand):
     def handle(self, *args, **options):
         runs = []
         aliased_classes = get_all_elasticsearch_pillow_classes()
+        all_es_indices = get_all_expected_es_indices()
+        es = get_es_new()
+        indices_needing_reindex = [info for info in all_es_indices if needs_reindex(es, info)]
         aliasable_pillows = [p(online=False) for p in aliased_classes]
         reindex_all = options['replace']
 
-        pillow_state_results = get_pillow_states()
-
         print "Master indices missing aliases:"
-        unmapped_indices = [x[0] for x in pillow_state_results.unmapped_masters]
+        unmapped_indices = [info.index for info in indices_needing_reindex]
         print unmapped_indices
 
         if reindex_all:
