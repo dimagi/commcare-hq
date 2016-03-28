@@ -6,6 +6,9 @@ from django.core.urlresolvers import reverse
 from dimagi.utils.web import get_url_base
 
 
+DROPBOX_CSRF_TOKEN = 'dropbox-auth-csrf-token'
+
+
 def get_dropbox_auth_flow(session):
     from .views import DropboxAuthCallback
 
@@ -14,4 +17,4 @@ def get_dropbox_auth_flow(session):
         reverse(DropboxAuthCallback.slug),
     )
     return DropboxOAuth2Flow(settings.DROPBOX_KEY, settings.DROPBOX_SECRET, redirect_uri,
-         session, "dropbox-auth-csrf-token")
+         session, DROPBOX_CSRF_TOKEN)

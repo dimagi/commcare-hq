@@ -3,7 +3,7 @@ from pillowtop.run_pillowtop import start_pillows, start_pillow
 from optparse import make_option
 import sys
 from django.conf import settings
-from pillowtop.utils import get_all_pillow_instances, get_pillow_instance, get_all_pillow_configs, \
+from pillowtop.utils import get_all_pillow_instances, get_all_pillow_configs, \
     get_pillow_config_from_setting, get_pillow_by_name
 from django.core.management.base import NoArgsCommand
 

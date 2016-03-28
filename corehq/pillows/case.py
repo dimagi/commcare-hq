@@ -78,7 +78,7 @@ def transform_case_for_elasticsearch(doc_dict):
     return doc_ret
 
 
-def get_sql_case_to_elasticsearch_pillow():
+def get_sql_case_to_elasticsearch_pillow(pillow_id='SqlCaseToElasticsearchPillow'):
     checkpoint = PillowCheckpoint(
         'sql-cases-to-elasticsearch',
     )
@@ -88,7 +88,7 @@ def get_sql_case_to_elasticsearch_pillow():
         doc_prep_fn=transform_case_for_elasticsearch
     )
     return ConstructedPillow(
-        name='SqlCaseToElasticsearchPillow',
+        name=pillow_id,
         document_store=None,
         checkpoint=checkpoint,
         change_feed=KafkaChangeFeed(topics=[topics.CASE_SQL], group_id='sql-cases-to-es'),

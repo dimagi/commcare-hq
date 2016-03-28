@@ -38,28 +38,30 @@ class ILSTestScript(TestScript):
         region = make_loc(code="reg1", name="Test Region 1", type="REGION",
                           domain=domain.name, parent=msdzone)
 
-        district = make_loc(code="dis1", name="Test District 1", type="DISTRICT",
+        cls.district = make_loc(code="dis1", name="Test District 1", type="DISTRICT",
                             domain=domain.name, parent=region)
         cls.district2 = make_loc(code="d10101", name="Test District 2", type="DISTRICT",
-                             domain=domain.name, parent=region)
-        facility = make_loc(code="loc1", name="Test Facility 1", type="FACILITY",
-                            domain=domain.name, parent=district, metadata={'group': 'A'})
-        cls.facility_sp_id = facility.sql_location.supply_point_id
+                                 domain=domain.name, parent=region)
+        cls.district3 = make_loc(code="d10102", name="TESTDISTRICT", type="DISTRICT",
+                                 domain=domain.name, parent=region)
+        cls.facility = make_loc(code="loc1", name="Test Facility 1", type="FACILITY",
+                            domain=domain.name, parent=cls.district, metadata={'group': 'A'})
+        cls.facility_sp_id = cls.facility.sql_location.supply_point_id
         facility2 = make_loc(code="loc2", name="Test Facility 2", type="FACILITY",
-                             domain=domain.name, parent=district, metadata={'group': 'B'})
+                             domain=domain.name, parent=cls.district, metadata={'group': 'B'})
         cls.facility3 = make_loc(
-            code="d31049", name="Test Facility 3", type="FACILITY", domain=domain.name, parent=district,
+            code="d31049", name="Test Facility 3", type="FACILITY", domain=domain.name, parent=cls.district,
             metadata={'group': 'C'}
         )
         cls.user1 = bootstrap_user(
-            facility, username='stella', domain=domain.name, home_loc='loc1', phone_number='5551234',
+            cls.facility, username='stella', domain=domain.name, home_loc='loc1', phone_number='5551234',
             first_name='stella', last_name='Test', language='sw'
         )
         bootstrap_user(facility2, username='bella', domain=domain.name, home_loc='loc2', phone_number='5555678',
                        first_name='bella', last_name='Test', language='sw')
-        bootstrap_user(district, username='trella', domain=domain.name, home_loc='dis1', phone_number='555',
+        bootstrap_user(cls.district, username='trella', domain=domain.name, home_loc='dis1', phone_number='555',
                        first_name='trella', last_name='Test', language='sw')
-        bootstrap_user(district, username='msd_person', domain=domain.name, phone_number='111',
+        bootstrap_user(cls.district, username='msd_person', domain=domain.name, phone_number='111',
                        first_name='MSD', last_name='Person', user_data={'role': 'MSD'}, language='sw')
 
         for x in xrange(1, 4):

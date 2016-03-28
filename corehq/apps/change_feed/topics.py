@@ -8,9 +8,11 @@ META = 'meta'
 # new models
 CASE_SQL = 'case-sql'
 FORM_SQL = 'form-sql'
+SMS = 'sms'
+
 
 ALL = (
-    CASE, FORM, META, CASE_SQL, FORM_SQL
+    CASE, FORM, META, CASE_SQL, FORM_SQL, SMS
 )
 
 

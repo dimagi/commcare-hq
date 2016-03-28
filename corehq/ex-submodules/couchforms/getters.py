@@ -1,4 +1,6 @@
 from django.utils.datastructures import MultiValueDictKeyError
+from corehq.toggles import ALLOW_BROKEN_MULTIMEDIA_SUBMISSIONS
+from corehq.util.global_request import get_request_domain
 from couchforms.const import (
     EMPTY_PAYLOAD_ERROR,
     MAGIC_PROPERTY,
@@ -9,7 +11,6 @@ import logging
 from datetime import datetime
 from django.conf import settings
 
-from dimagi.utils.logging import notify_error
 from dimagi.utils.parsing import string_to_utc_datetime
 from dimagi.utils.web import get_ip, get_site_domain
 
@@ -36,8 +37,7 @@ def get_instance_and_attachment(request):
     if request.META['CONTENT_TYPE'].startswith('multipart/form-data'):
         # ODK submission; of the form
         # $ curl --form 'xml_submission_file=@form.xml' $URL
-
-        if request.POST.keys():
+        if request.POST.keys() and not ALLOW_BROKEN_MULTIMEDIA_SUBMISSIONS.enabled(get_request_domain()):
             raise MultimediaBug("Received a submission with POST.keys()")
 
         try:

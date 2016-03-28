@@ -349,7 +349,7 @@ class XFormInstanceResource(CouchResourceMixin, HqBaseResource, DomainSpecificRe
         detail_allowed_methods = ['get']
         resource_name = 'form'
         ordering = ['received_on']
-        serializer = XFormInstanceSerializer()
+        serializer = XFormInstanceSerializer(formats=['json'])
 
 def _safe_bool(bundle, param, default=False):
     try:

@@ -193,15 +193,6 @@ def load_form_template(filename):
         return f.read()
 
 
-def partial_escape(xpath):
-    """
-    Copied from http://stackoverflow.com/questions/275174/how-do-i-perform-html-decoding-encoding-using-python-django
-    but without replacing the single quote
-
-    """
-    return mark_safe(force_unicode(xpath).replace('&', '&amp;').replace('<', '&lt;').replace('>', '&gt;').replace('"', '&quot;'))
-
-
 class IndexedSchema(DocumentSchema):
     """
     Abstract class.
@@ -1532,6 +1523,7 @@ class GraphAnnotations(IndexedSchema):
 
 class GraphSeries(DocumentSchema):
     config = DictProperty()
+    locale_specific_config = DictProperty()
     data_path = StringProperty()
     x_function = StringProperty()
     y_function = StringProperty()
@@ -4083,14 +4075,6 @@ class ApplicationBase(VersionedDoc, SnapshotMixin,
         if self.build_spec.version:
             return LooseVersion(self.build_spec.version)
 
-    def get_preview_build(self):
-        preview = self.get_build()
-
-        for path in getattr(preview, '_attachments', {}):
-            if path.startswith('Generic/WebDemo'):
-                return preview
-        return CommCareBuildConfig.fetch().preview.get_build()
-
     @property
     def commcare_minor_release(self):
         """This is mostly just for views"""
@@ -4273,8 +4257,9 @@ class ApplicationBase(VersionedDoc, SnapshotMixin,
                     name: (contents if isinstance(contents, str) else contents.encode('utf-8'))
                     for name, contents in all_files.items()
                 }
+                release_date = self.built_with.datetime or datetime.datetime.utcnow()
                 jad_settings = {
-                    'Released-on': self.built_with.datetime.strftime("%Y-%b-%d %H:%M"),
+                    'Released-on': release_date.strftime("%Y-%b-%d %H:%M"),
                 }
                 jad_settings.update(self.jad_settings)
                 jadjar = self.get_jadjar().pack(all_files, jad_settings)
@@ -4973,42 +4958,6 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
 
         if from_module['case_type'] != to_module['case_type']:
             raise ConflictingCaseTypeError()
-
-    def convert_module_to_advanced(self, module_id):
-        from_module = self.get_module(module_id)
-
-        name = {lang: u'{} (advanced)'.format(name) for lang, name in from_module.name.items()}
-
-        case_details = deepcopy(from_module.case_details.to_json())
-        to_module = AdvancedModule(
-            name=name,
-            forms=[],
-            case_type=from_module.case_type,
-            case_label=from_module.case_label,
-            put_in_root=from_module.put_in_root,
-            case_list=from_module.case_list,
-            case_details=DetailPair.wrap(case_details),
-            product_details=DetailPair(
-                short=Detail(
-                    columns=[
-                        DetailColumn(
-                            format='plain',
-                            header={'en': ugettext("Product")},
-                            field='name',
-                            model='product',
-                        ),
-                    ],
-                ),
-                long=Detail(),
-            ),
-        )
-        to_module.get_or_create_unique_id()
-        to_module = self.add_module(to_module)
-
-        for form in from_module.get_forms():
-            self._copy_form(from_module, form, to_module)
-
-        return to_module
 
     @cached_property
     def has_case_management(self):

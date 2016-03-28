@@ -10,47 +10,10 @@ from pillowtop.es_utils import INDEX_REINDEX_SETTINGS, INDEX_STANDARD_SETTINGS, 
     set_index_reindex_settings, set_index_normal_settings, create_index_for_pillow, assume_alias_for_pillow, \
     pillow_index_exists, pillow_mapping_exists, completely_initialize_pillow_index
 from pillowtop.feed.interface import Change
-from pillowtop.listener import AliasedElasticPillow, send_to_elasticsearch, PillowtopIndexingError
+from pillowtop.listener import send_to_elasticsearch, PillowtopIndexingError
 from pillowtop.pillow.interface import PillowRuntimeContext
 from django.conf import settings
-from .utils import get_doc_count, get_index_mapping
-
-
-class TestElasticPillow(AliasedElasticPillow):
-    es_alias = 'pillowtop_tests'
-    es_type = 'test_doc'
-    es_index = 'test_pillowtop_index'
-    # just for the sake of something being here
-    es_meta = {
-        "settings": {
-            "analysis": {
-                "analyzer": {
-                    "default": {
-                        "type": "custom",
-                        "tokenizer": "whitespace",
-                        "filter": ["lowercase"]
-                    },
-                }
-            }
-        }
-    }
-    default_mapping = {
-        '_meta': {
-            'comment': 'You know, for tests',
-            'created': '2015-10-07 @czue'
-        },
-        "properties": {
-            "doc_type": {
-                "index": "not_analyzed",
-                "type": "string"
-            },
-        }
-    }
-
-    @classmethod
-    def calc_meta(cls):
-        # must be overridden by subclasses of AliasedElasticPillow
-        return cls.es_index
+from .utils import get_doc_count, get_index_mapping, TestElasticPillow
 
 
 class ElasticPillowTest(SimpleTestCase):

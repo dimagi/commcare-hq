@@ -167,6 +167,7 @@ class ESQuery(object):
             filters.non_null,
             filters.doc_id,
             filters.nested,
+            filters.regexp,
         ]
 
     def __getattr__(self, attr):

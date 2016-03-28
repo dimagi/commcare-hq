@@ -32,21 +32,21 @@
         "name": "AncHmisCaseFluffPillow"
     },
     "AppPillow": {
-        "advertised_name": "corehq.pillows.application.AppPillow.test_hqapps_2016-02-12_1300.testhq",
+        "advertised_name": "corehq.pillows.application.AppPillow.test_hqapps_2016-03-01_2128.testhq",
         "change_feed_type": "CouchChangeFeed",
-        "checkpoint_id": "corehq.pillows.application.AppPillow.test_hqapps_2016-02-12_1300.testhq",
+        "checkpoint_id": "corehq.pillows.application.AppPillow.test_hqapps_2016-03-01_2128.testhq",
         "couch_filter": "app_manager/all_apps",
         "couchdb_type": "Database",
-        "couchdb_uri": "http://{COUCH_SERVER_ROOT}/test_commcarehq",
+        "couchdb_uri": "http://{COUCH_SERVER_ROOT}/test_commcarehq__apps",
         "document_class": "ApplicationBase",
         "es_alias": "hqapps",
-        "es_index": "test_hqapps_2016-02-12_1300",
+        "es_index": "test_hqapps_2016-03-01_2128",
         "es_type": "app",
         "extra_args": {},
         "full_class_name": "corehq.pillows.application.AppPillow",
         "include_docs": true,
         "name": "AppPillow",
-        "unique_id": "test_hqapps_2016-02-12_1300"
+        "unique_id": "test_hqapps_2016-03-01_2128"
     },
     "BlobDeletionPillow": {
         "advertised_name": "BlobDeletionPillow",
@@ -98,21 +98,21 @@
         "name": "CaseDataPillow"
     },
     "CasePillow": {
-        "advertised_name": "corehq.pillows.case.CasePillow.541950e09fe4d25d4d6dc10346ac73a2.testhq",
+        "advertised_name": "corehq.pillows.case.CasePillow.d94ad23a98ddd2e9c36a9dc73bb58bac.testhq",
         "change_feed_type": "CouchChangeFeed",
-        "checkpoint_id": "corehq.pillows.case.CasePillow.541950e09fe4d25d4d6dc10346ac73a2.testhq",
+        "checkpoint_id": "corehq.pillows.case.CasePillow.d94ad23a98ddd2e9c36a9dc73bb58bac.testhq",
         "couch_filter": "case/casedocs",
         "couchdb_type": "Database",
         "couchdb_uri": "http://{COUCH_SERVER_ROOT}/test_commcarehq",
         "document_class": "CommCareCase",
         "es_alias": "hqcases",
-        "es_index": "test_hqcases_2016-03-04",
+        "es_index": "test_hqcases_7a8d2b81335e0a8cef1de718313a23b9",
         "es_type": "case",
         "extra_args": {},
         "full_class_name": "corehq.pillows.case.CasePillow",
         "include_docs": true,
         "name": "CasePillow",
-        "unique_id": "541950e09fe4d25d4d6dc10346ac73a2"
+        "unique_id": "d94ad23a98ddd2e9c36a9dc73bb58bac"
     },
     "CouvertureFluffPillow": {
         "advertised_name": "fluff.CouvertureFluffPillow.testhq",
@@ -144,21 +144,21 @@
         "name": "DefaultChangeFeedPillow"
     },
     "DomainPillow": {
-        "advertised_name": "corehq.pillows.domain.DomainPillow.test_hqdomains_20160308_1304.testhq",
+        "advertised_name": "corehq.pillows.domain.DomainPillow.test_hqdomains_20160318_1339.testhq",
         "change_feed_type": "CouchChangeFeed",
-        "checkpoint_id": "corehq.pillows.domain.DomainPillow.test_hqdomains_20160308_1304.testhq",
+        "checkpoint_id": "corehq.pillows.domain.DomainPillow.test_hqdomains_20160318_1339.testhq",
         "couch_filter": "domain/domains_inclusive",
         "couchdb_type": "Database",
         "couchdb_uri": "http://{COUCH_SERVER_ROOT}/test_commcarehq__domains",
         "document_class": "Domain",
         "es_alias": "hqdomains",
-        "es_index": "test_hqdomains_20160308_1304",
+        "es_index": "test_hqdomains_20160318_1339",
         "es_type": "hqdomain",
         "extra_args": {},
         "full_class_name": "corehq.pillows.domain.DomainPillow",
         "include_docs": true,
         "name": "DomainPillow",
-        "unique_id": "test_hqdomains_20160308_1304"
+        "unique_id": "test_hqdomains_20160318_1339"
     },
     "FarmerRecordFluffPillow": {
         "advertised_name": "fluff.FarmerRecordFluffPillow.testhq",
@@ -478,6 +478,13 @@
         "name": "SMSPillow",
         "unique_id": "708c77f8e5fe00286fa5791e9fa7d45f"
     },
+    "SqlSMSPillow": {
+        "advertised_name": "SqlSMSPillow",
+        "change_feed_type": "KafkaChangeFeed",
+        "checkpoint_id": "sql-sms-to-es",
+        "full_class_name": "pillowtop.pillow.interface.ConstructedPillow",
+        "name": "SqlSMSPillow"
+    },
     "SqlCaseToElasticsearchPillow": {
         "advertised_name": "SqlCaseToElasticsearchPillow",
         "change_feed_type": "KafkaChangeFeed",
@@ -639,21 +646,21 @@
         "name": "WorldVisionMotherFluffPillow"
     },
     "XFormPillow": {
-        "advertised_name": "corehq.pillows.xform.XFormPillow.test_xforms_2016-03-02.testhq",
+        "advertised_name": "corehq.pillows.xform.XFormPillow.test_xforms_20150403-1728.testhq",
         "change_feed_type": "CouchChangeFeed",
-        "checkpoint_id": "corehq.pillows.xform.XFormPillow.test_xforms_2016-03-02.testhq",
+        "checkpoint_id": "corehq.pillows.xform.XFormPillow.test_xforms_20150403-1728.testhq",
         "couch_filter": "couchforms/xforms",
         "couchdb_type": "Database",
         "couchdb_uri": "http://{COUCH_SERVER_ROOT}/test_commcarehq",
         "document_class": "XFormInstance",
         "es_alias": "xforms",
-        "es_index": "test_xforms_2016-03-02",
+        "es_index": "test_xforms_20150403-1728",
         "es_type": "xform",
         "extra_args": {},
         "full_class_name": "corehq.pillows.xform.XFormPillow",
         "include_docs": false,
         "name": "XFormPillow",
-        "unique_id": "test_xforms_2016-03-02"
+        "unique_id": "test_xforms_20150403-1728"
     },
     "kafka-ucr-main": {
         "advertised_name": "kafka-ucr-main",

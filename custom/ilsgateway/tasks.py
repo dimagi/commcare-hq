@@ -8,12 +8,8 @@ from celery.task import task, periodic_task
 from django.db import transaction
 from psycopg2._psycopg import DatabaseError
 
-from casexml.apps.stock.models import StockReport, StockTransaction
-from corehq.apps.commtrack.models import StockState
-from corehq.apps.locations.models import SQLLocation, Location
-from corehq.apps.products.models import Product
-from custom.ilsgateway.api import ILSGatewayEndpoint, ILSGatewayAPI
-from custom.ilsgateway.balance import BalanceMigration
+from corehq.apps.locations.models import SQLLocation
+from custom.ilsgateway.slab.reminders.stockout import StockoutReminder
 from custom.ilsgateway.tanzania.reminders import REMINDER_MONTHLY_SOH_SUMMARY, REMINDER_MONTHLY_DELIVERY_SUMMARY, \
     REMINDER_MONTHLY_RANDR_SUMMARY
 from custom.ilsgateway.tanzania.reminders.delivery import DeliveryReminder
@@ -24,64 +20,12 @@ from custom.ilsgateway.tanzania.reminders.soh_thank_you import SOHThankYouRemind
 from custom.ilsgateway.tanzania.reminders.stockonhand import SOHReminder
 from custom.ilsgateway.tanzania.reminders.supervision import SupervisionReminder
 from custom.ilsgateway.tanzania.warehouse.updater import populate_report_data, default_start_date, \
-    process_facility_warehouse_data, process_non_facility_warehouse_data, process_facility_statuses, \
-    process_facility_product_reports
-from custom.ilsgateway.temporary import fix_stock_data
+    process_facility_warehouse_data, process_non_facility_warehouse_data
 from custom.ilsgateway.utils import send_for_day, send_for_all_domains, send_translated_message
-from custom.logistics.commtrack import bootstrap_domain as ils_bootstrap_domain, save_stock_data_checkpoint
+from custom.logistics.commtrack import save_stock_data_checkpoint
 from custom.ilsgateway.models import ILSGatewayConfig, SupplyPointStatus, DeliveryGroupReport, ReportRun, \
-    GroupSummary, OrganizationSummary, ProductAvailabilityData, Alert, PendingReportingDataRecalculation, \
-    SupplyPointStatusTypes
-from custom.logistics.models import StockDataCheckpoint
-from custom.logistics.tasks import stock_data_task
+    OrganizationSummary, PendingReportingDataRecalculation
 from dimagi.utils.dates import get_business_day_of_month, get_business_day_of_month_before
-
-
-@periodic_task(run_every=crontab(hour="4", minute="00", day_of_week="*"),
-               queue='logistics_background_queue')
-def migration_task():
-    from custom.ilsgateway.stock_data import ILSStockDataSynchronization
-    for config in ILSGatewayConfig.get_all_steady_sync_configs():
-        if config.enabled:
-            endpoint = ILSGatewayEndpoint.from_config(config)
-            ils_bootstrap_domain(ILSGatewayAPI(config.domain, endpoint))
-            stock_data_task(ILSStockDataSynchronization(config.domain, endpoint))
-            report_run.delay(config.domain)
-
-
-@task(queue='logistics_background_queue')
-def ils_bootstrap_domain_task(domain):
-    ils_config = ILSGatewayConfig.for_domain(domain)
-    return ils_bootstrap_domain(ILSGatewayAPI(domain, ILSGatewayEndpoint.from_config(ils_config)))
-
-
-@task(queue='logistics_background_queue', ignore_result=True, acks_late=True)
-def balance_migration_task(domain, endpoint):
-    BalanceMigration(domain, endpoint).balance_migration()
-
-
-# Region KILIMANJARO
-ILS_FACILITIES = [948, 998, 974, 1116, 971, 1122, 921, 658, 995, 1057,
-                  652, 765, 1010, 657, 1173, 1037, 965, 749, 1171, 980,
-                  1180, 1033, 975, 1056, 970, 742, 985, 2194, 935, 1128,
-                  1172, 773, 916, 1194, 4862, 1003, 994, 1034, 1113, 1167,
-                  949, 987, 986, 960, 1046, 942, 972, 21, 952, 930,
-                  1170, 1067, 1006, 752, 747, 1176, 746, 755, 1102, 924,
-                  744, 1109, 760, 922, 945, 988, 927, 1045, 1060, 938,
-                  1041, 1101, 1107, 939, 910, 934, 929, 1111, 1174, 1044,
-                  1008, 914, 1040, 1035, 1126, 1203, 912, 990, 908, 654,
-                  1051, 1110, 983, 771, 1068, 756, 4807, 973, 1013, 911,
-                  1048, 1196, 917, 1127, 963, 1032, 1164, 951, 918, 999,
-                  923, 1049, 1000, 1165, 915, 1036, 1121, 758, 1054, 1042,
-                  4861, 1007, 1053, 954, 761, 1002, 748, 919, 976, 1177,
-                  1179, 1001, 743, 762, 741, 959, 1119, 772, 941, 956, 964,
-                  1014, 953, 754, 1202, 1166, 977, 757, 961, 759, 997, 947, 1112, 978, 1124,
-                  768, 937, 1195, 913, 906, 1043, 1178, 992, 1038, 957, 1106, 767, 979, 1012,
-                  926, 1120, 933, 1066, 1105, 943, 1047, 1063, 1004, 958, 751, 763, 1011, 936,
-                  1114, 932, 984, 656, 653, 946, 1058, 931, 770, 1108, 909, 1118, 1062, 745, 1065,
-                  955, 1052, 753, 944, 1061, 1069, 1104, 996, 4860, 950, 993, 1064, 1175, 1059, 1050,
-                  968, 928, 989, 967, 966, 750, 981, 1055, 766, 1123, 1039, 1103, 655, 1125, 774, 991,
-                  1117, 920, 769, 1005, 1009, 925, 1115, 907, 4996]
 
 
 def get_locations(api_object, facilities):
@@ -170,80 +114,6 @@ def sync_delivery_group_report(domain, endpoint, facility, checkpoint, date, lim
             next_url = meta['next'].split('?')[1]
 
 
-@task(queue='background_queue', ignore_result=True)
-def ils_clear_stock_data_task(domain):
-    assert ILSGatewayConfig.for_domain(domain)
-    locations = SQLLocation.objects.filter(domain=domain)
-    SupplyPointStatus.objects.filter(location_id__in=locations.values_list('location_id', flat=True)).delete()
-    DeliveryGroupReport.objects.filter(location_id__in=locations.values_list('location_id', flat=True)).delete()
-    products = Product.ids_by_domain(domain)
-    StockState.objects.filter(product_id__in=products).delete()
-    StockTransaction.objects.filter(
-        case_id__in=locations.exclude(supply_point_id__isnull=True).values_list('supply_point_id', flat=True)
-    ).delete()
-    StockReport.objects.filter(domain=domain).delete()
-    StockDataCheckpoint.objects.filter(domain=domain).delete()
-
-
-@task(queue='background_queue', ignore_result=True)
-def clear_report_data(domain):
-    locations_ids = SQLLocation.objects.filter(domain=domain).values_list('location_id', flat=True)
-    GroupSummary.objects.filter(org_summary__location_id__in=locations_ids).delete()
-    OrganizationSummary.objects.filter(location_id__in=locations_ids).delete()
-    ProductAvailabilityData.objects.filter(location_id__in=locations_ids).delete()
-    Alert.objects.filter(location_id__in=locations_ids).delete()
-    ReportRun.objects.filter(domain=domain).delete()
-
-
-@task(queue='background_queue', ignore_result=True)
-def fix_stock_data_task(domain):
-    fix_stock_data(domain)
-
-
-@task(queue='logistics_background_queue', ignore_result=True)
-def recalculate_march_reporting_data_task(domain):
-    stock_data_checkpoint = StockDataCheckpoint.objects.get(domain=domain)
-    end_date = stock_data_checkpoint.date
-
-    statuses = SupplyPointStatus.objects.filter(
-        status_date__gte=datetime(2016, 2, 29),
-        status_date__lt=datetime(2016, 3, 1),
-        location_id__in=SQLLocation.active_objects.filter(
-            location_type__administrative=False, domain=domain
-        ).values_list('location_id', flat=True),
-        status_type__in=[SupplyPointStatusTypes.SOH_FACILITY, SupplyPointStatusTypes.SUPERVISION_FACILITY]
-    ).order_by('status_date')
-
-    location_to_statuses = defaultdict(list)
-
-    for status in statuses:
-        location_to_statuses[status.location_id].append(status)
-
-    for location_id, statuses in location_to_statuses.iteritems():
-        process_facility_statuses(location_id, statuses)
-
-    sql_locations = SQLLocation.active_objects.filter(
-        location_type__administrative=False, domain=domain
-    )
-    for sql_location in sql_locations:
-        reports = StockReport.objects.filter(
-            domain=domain,
-            date__gte=datetime(2016, 2, 29),
-            date__lt=datetime(2016, 3, 1),
-            stocktransaction__case_id=sql_location.supply_point_id,
-            stocktransaction__type='stockonhand'
-        ).distinct()
-        process_facility_product_reports(sql_location.location_id, reports)
-
-    non_facilities = list(Location.filter_by_type(domain, 'DISTRICT'))
-    non_facilities += list(Location.filter_by_type(domain, 'REGION'))
-    non_facilities += list(Location.filter_by_type(domain, 'MSDZONE'))
-    non_facilities += list(Location.filter_by_type(domain, 'MOHSW'))
-
-    for non_facility in non_facilities:
-        process_non_facility_warehouse_data(non_facility, datetime(2016, 3, 1), end_date, strict=False)
-
-
 @periodic_task(run_every=crontab(hour="4", minute="00", day_of_week="*"),
                queue='logistics_background_queue')
 def report_run_periodic_task():
@@ -253,7 +123,6 @@ def report_run_periodic_task():
 @task(queue='logistics_background_queue', ignore_result=True)
 def report_run(domain, locations=None, strict=True):
     last_successful_run = ReportRun.last_success(domain)
-    recalculation_on_location_change(domain, last_successful_run)
 
     last_run = ReportRun.last_run(domain)
     start_date = (datetime.min if not last_successful_run else last_successful_run.end)
@@ -294,6 +163,8 @@ def report_run(domain, locations=None, strict=True):
         run.complete = True
         run.save()
         logging.info("ILSGateway report runner end time: %s" % datetime.utcnow())
+        if not has_error:
+            recalculation_on_location_change.delay(domain, last_successful_run)
 
 facility_delivery_partial = partial(send_for_day, cutoff=15, reminder_class=DeliveryReminder)
 district_delivery_partial = partial(send_for_day, cutoff=13, reminder_class=DeliveryReminder,
@@ -482,18 +353,35 @@ def soh_thank_you_task():
     Last business day before the 20th at 4:00 PM Tanzania time
     """
     now = datetime.utcnow()
+    business_day = get_business_day_of_month_before(month=now.month, year=now.year, day=20)
+    if now.day != business_day.day:
+        return
+
     last_month = datetime(now.year, now.month, 1) - timedelta(days=1)
     for domain in ILSGatewayConfig.get_all_enabled_domains():
         SOHThankYouReminder(domain=domain, date=last_month).send()
 
 
+@periodic_task(run_every=crontab(day_of_month="6-10", hour=8, minute=0),
+               queue="logistics_reminder_queue")
+def stockout_reminder_task():
+    """
+        6th business day of month
+    """
+    now = datetime.utcnow()
+    last_business_day = get_business_day_of_month(month=now.month, year=now.year, count=6)
+    if now.day != last_business_day.day:
+        return
+
+    send_for_all_domains(last_business_day, StockoutReminder)
+
+
 def recalculate_on_group_change(location, last_run):
     OrganizationSummary.objects.filter(location_id=location.get_id).delete()
     process_facility_warehouse_data(location, default_start_date(), last_run.end)
-
-    for parent in location.sql_location.get_ancestors(ascending=True):
-        process_non_facility_warehouse_data(parent.couch_location,
-                                            default_start_date(), last_run.end, strict=False)
+    return {
+        ancestor.location_type.name: {ancestor} for ancestor in location.sql_location.get_ancestors(ascending=True)
+    }
 
 
 def recalculate_on_parent_change(location, previous_parent_id, last_run):
@@ -514,13 +402,10 @@ def recalculate_on_parent_change(location, previous_parent_id, last_run):
     for sql_location in locations_to_recalculate:
         type_location_map[sql_location.location_type.name].add(sql_location)
 
-    for location_type in ["DISTRICT", "REGION", "MSDZONE"]:
-        for sql_location in type_location_map[location_type]:
-            process_non_facility_warehouse_data(
-                sql_location.couch_location, default_start_date(), last_run.end, strict=False
-            )
+    return type_location_map
 
 
+@task(queue='logistics_background_queue', ignore_result=True)
 def recalculation_on_location_change(domain, last_run):
     if not last_run:
         PendingReportingDataRecalculation.objects.filter(domain=domain).delete()
@@ -533,19 +418,42 @@ def recalculation_on_location_change(domain, last_run):
         key = (pending_recalculation.sql_location, pending_recalculation.type)
         recalcs_dict[key].append(pending_recalculation.data)
 
+    non_facilities_to_recalculate = defaultdict(set)
+    recalculated = set()
     for (sql_location, recalculation_type), data_list in recalcs_dict.iteritems():
         # If there are more changes, consider earliest and latest change.
         # Thanks to this we avoid recalculations when in fact group/parent wasn't changed.
         # E.g Group is changed from A -> B and later from B -> A.
         # In this situation there is no need to recalculate data.
+
+        if not OrganizationSummary.objects.filter(location_id=sql_location.location_id).exists():
+            # There are no data for that location so there is no need to recalculate
+            PendingReportingDataRecalculation.objects.filter(
+                sql_location=sql_location, type=recalculation_type, domain=domain
+            ).delete()
+            continue
+
         if recalculation_type == 'group_change'\
                 and data_list[0]['previous_group'] != data_list[-1]['current_group']:
-            recalculate_on_group_change(sql_location.couch_location, last_run)
+            to_recalculate = recalculate_on_group_change(sql_location.couch_location, last_run)
         elif recalculation_type == 'parent_change' \
                 and data_list[0]['previous_parent'] != data_list[-1]['current_parent']:
-            recalculate_on_parent_change(
+            to_recalculate = recalculate_on_parent_change(
                 sql_location.couch_location, data_list[0]['previous_parent'], last_run
             )
-        PendingReportingDataRecalculation.objects.filter(
-            sql_location=sql_location, type=recalculation_type, domain=domain
-        ).delete()
+        else:
+            to_recalculate = {}
+        recalculated.add(sql_location)
+
+        for location_type, sql_locations_to_recalculate in to_recalculate.iteritems():
+            for sql_location_to_recalculate in sql_locations_to_recalculate:
+                non_facilities_to_recalculate[location_type].add(sql_location_to_recalculate)
+
+    for location_type in ["DISTRICT", "REGION", "MSDZONE", "MOHSW"]:
+        for sql_location in non_facilities_to_recalculate.get(location_type, []):
+            process_non_facility_warehouse_data(
+                sql_location.couch_location, default_start_date(), last_run.end, strict=False
+            )
+    PendingReportingDataRecalculation.objects.filter(
+        sql_location__in=recalculated, domain=domain
+    ).delete()

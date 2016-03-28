@@ -190,9 +190,6 @@ class CaseXPath(XPath):
     def property(self, property):
         return self.slash(property)
 
-    def status_open(self):
-        return self.select('@status', 'open')
-
 
 class LocationXpath(XPath):
 
