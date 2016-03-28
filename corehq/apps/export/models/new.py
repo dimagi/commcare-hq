@@ -105,6 +105,10 @@ class ExportItem(DocumentSchema):
         item.last_occurrences = _merge_dicts(one.last_occurrences, two.last_occurrences, max)
         return item
 
+    @property
+    def readable_path(self):
+        return '.'.join(map(lambda node: node.name, self.path))
+
 
 class ExportColumn(DocumentSchema):
     item = SchemaProperty(ExportItem)
