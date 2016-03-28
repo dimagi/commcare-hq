@@ -63,7 +63,7 @@ def convert_saved_export_to_export_instance(saved_export):
 
             if _get_system_property(column.index, column.transform):
                 index, transform = _get_system_property(column.index, column.transform)
-                transforms = [transform]
+                transforms = [transform] if transform else []
 
             new_column = new_table.get_column(
                 column_path,

@@ -407,7 +407,7 @@
                    "transform": null,
                    "doc_type": "ExportColumn",
                    "tag": null,
-                   "display": "server.xmlns"
+                   "display": "Custom XMLNS"
                },
                {
                    "index": "form.#type",
