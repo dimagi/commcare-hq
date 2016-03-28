@@ -13,6 +13,7 @@ from corehq.apps.consumption.shortcuts import set_default_monthly_consumption_fo
 class StockStateTest(CommTrackTest):
     def report(self, amount, days_ago):
         return _stock_report(
+            self.domain.name,
             self.sp.case_id,
             self.products[0]._id,
             amount,

@@ -1402,7 +1402,7 @@ def _get_form_or_404(domain, id):
 def _get_case_or_404(domain, case_id):
     try:
         case = CaseAccessors(domain).get_case(case_id)
-        if case.domain != domain:
+        if case.domain != domain or case.is_deleted:
             raise Http404()
         return case
     except CaseNotFound:

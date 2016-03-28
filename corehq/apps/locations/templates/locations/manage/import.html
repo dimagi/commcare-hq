@@ -1,8 +1,17 @@
 {% extends "style/bootstrap3/base_section.html" %}
 {% load hq_shared_tags %}
-
 {% block js %} {{ block.super }}
     <script src="{% new_static 'commtrack/ko/location_bulk_upload_file.js' %}"></script>
+{% endblock %}
+{% block js-inline %} {{ block.super }}
+    <script type="text/javascript">
+        $(function() {
+            gaTrackLink($('#download_link'), 'Organization Structure', 'Bulk Import', 'Download');
+            $("button[type='submit']").click(function() {
+               ga_track_event('Organization Structure', 'Bulk Import', 'Upload');
+            });
+        });
+    </script>
 {% endblock %}
 
 {% block page_content %}

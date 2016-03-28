@@ -75,6 +75,9 @@
                 rule.action_error = '{% trans "Issue communicating with server. Try again."|escapejs %}';
             });
         },
+        trackNewRule: function () {
+            ga_track_event('Automatic Case Closure', 'Rules', 'Set Rule');
+        },
     });
 }(window.angular));
 </script>
@@ -84,7 +87,7 @@
 <div ng-app="autoUpdateRuleApp" ng-controller="PaginatedListController as paginationController">
     <div class="btn-toolbar" style="margin-bottom: 20px;">
         <a href="{% url "add_automatic_update_rule" domain %}">
-            <button type="button" class="btn btn-success">
+            <button type="button" class="btn btn-success" ng-click="trackNewRule();">
                 <i class="fa fa-plus"></i> {% trans "Add Automatic Case Close Rule" %}
             </button>
         </a>

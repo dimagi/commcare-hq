@@ -253,6 +253,10 @@ def update_calculated_properties():
                 "cp_n_sms_out_30_d": int(CALC_FNS["sms_out_in_last"](dom, 30)),
                 "cp_n_sms_out_60_d": int(CALC_FNS["sms_out_in_last"](dom, 60)),
                 "cp_n_sms_out_90_d": int(CALC_FNS["sms_out_in_last"](dom, 90)),
+                "cp_n_j2me_30_d": int(CALC_FNS["j2me_forms_in_last"](dom, 30)),
+                "cp_n_j2me_60_d": int(CALC_FNS["j2me_forms_in_last"](dom, 60)),
+                "cp_n_j2me_90_d": int(CALC_FNS["j2me_forms_in_last"](dom, 90)),
+                "cp_j2me_90_d_bool": int(CALC_FNS["j2me_forms_in_last_bool"](dom, 90)),
             }
             if calced_props['cp_first_form'] is None:
                 del calced_props['cp_first_form']

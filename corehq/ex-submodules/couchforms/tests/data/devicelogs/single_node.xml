@@ -1,0 +1,13 @@
+<?xml version='1.0' encoding='UTF-8' ?>
+<device_report xmlns="http://code.javarosa.org/devicereport">
+    <log_subreport>
+        <log date="2016-03-20T20:46:08.664+05:30">
+            <type>maintenance</type>
+            <msg>Logging out service login</msg>
+        </log>
+        <log date="2016-03-20T20:46:08.988+05:30">
+            <type>user</type>
+            <msg>login|user.test|gxpg40k9lh9w7853w3gc91o1g7zu1wi8</msg>
+        </log>
+    </log_subreport>
+</device_report>

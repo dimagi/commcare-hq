@@ -74,17 +74,16 @@ class PillowError(models.Model):
 
     @classmethod
     def get_or_create(cls, change, pillow, change_meta=None):
-        pillow_path = path_from_object(pillow)
         change = force_to_change(change)
         change.document
         doc_id = change.id
         try:
-            error = cls.objects.get(doc_id=doc_id, pillow=pillow_path)
+            error = cls.objects.get(doc_id=doc_id, pillow=pillow.pillow_id)
         except cls.DoesNotExist:
             now = datetime.utcnow()
             error = PillowError(
                 doc_id=doc_id,
-                pillow=pillow_path,
+                pillow=pillow.pillow_id,
                 date_created=now,
                 date_last_attempt=now,
                 date_next_attempt=now,

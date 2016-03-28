@@ -118,3 +118,7 @@ def nested(path, filter_):
             "filter": filter_
         }
     }
+
+
+def regexp(field, regex):
+    return {"regexp": {field: regex}}

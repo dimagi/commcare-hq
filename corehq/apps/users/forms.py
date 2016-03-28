@@ -224,6 +224,7 @@ class UpdateMyAccountInfoForm(BaseUpdateUserForm, BaseUserInfoForm):
                     _('Generate API Key'),
                     type="button",
                     id='generate-api-key',
+                    css_class='btn-default',
                 ),
                 css_class="form-group"
             ),
@@ -641,7 +642,7 @@ class ConfirmExtraUserChargesForm(EditBillingAccountInfoForm):
                 'company_name',
                 'first_name',
                 'last_name',
-                crispy.Field('emails', css_class='input-xxlarge'),
+                crispy.Field('email_list', css_class='input-xxlarge'),
                 'phone_number',
             ),
             crispy.Fieldset(

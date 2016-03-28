@@ -1,44 +1,45 @@
 import copy
-import logging
-from urlparse import urlparse, parse_qs
 import datetime
-import dateutil
-from dateutil.relativedelta import relativedelta
-import re
 import io
-from PIL import Image
+import logging
+import re
+import sys
 import uuid
+from urlparse import urlparse, parse_qs
+
+import dateutil
+import django
+from crispy_forms import bootstrap as twbscrispy
+from crispy_forms import layout as crispy
+from crispy_forms.bootstrap import FormActions, StrictButton
+from crispy_forms.helper import FormHelper
+from dateutil.relativedelta import relativedelta
+from django import forms
+from django.conf import settings
+from django.contrib.auth import get_user_model
 from django.contrib.auth.forms import SetPasswordForm
 from django.contrib.auth.tokens import default_token_generator
 from django.contrib.sites.models import get_current_site
-from django.utils.http import urlsafe_base64_encode
-from corehq.toggles import CALL_CENTER_LOCATION_OWNERS, HIPAA_COMPLIANCE_CHECKBOX, SECURE_SESSIONS_CHECKBOX
-from dimagi.utils.decorators.memoized import memoized
-from django.conf import settings
-from django.contrib.auth import get_user_model
-from django.db import transaction
-from corehq import privileges
-from corehq.apps.accounting.exceptions import SubscriptionRenewalError
-from corehq.apps.accounting.utils import domain_has_privilege, log_accounting_error
-from corehq.apps.sms.phonenumbers_helper import parse_phone_number
-from corehq.feature_previews import CALLCENTER
-
-from django import forms
-from crispy_forms.bootstrap import FormActions, StrictButton
-from crispy_forms.helper import FormHelper
-from crispy_forms import layout as crispy
-from crispy_forms import bootstrap as twbscrispy
-from corehq.apps.style import crispy as hqcrispy
-from crispy_forms import bootstrap as twbscrispy
-
 from django.core.urlresolvers import reverse
-
+from django.db import transaction
 from django.forms.fields import (ChoiceField, CharField, BooleanField,
     ImageField)
 from django.forms.widgets import  Select
+from django.template.loader import render_to_string
 from django.utils.encoding import smart_str, force_bytes
+from django.utils.http import urlsafe_base64_encode
 from django.utils.safestring import mark_safe
+from django.utils.translation import ugettext_noop, ugettext as _, ugettext_lazy
 from django_countries.data import COUNTRIES
+from PIL import Image
+from pyzxcvbn import zxcvbn
+
+if django.VERSION < (1, 6):
+    from django.contrib.auth.hashers import UNUSABLE_PASSWORD as UNUSABLE_PASSWORD_PREFIX
+else:
+    from django.contrib.auth.hashers import UNUSABLE_PASSWORD_PREFIX
+
+from corehq import privileges
 from corehq.apps.accounting.models import (
     BillingAccount,
     BillingAccountType,
@@ -59,29 +60,25 @@ from corehq.apps.accounting.models import (
     EntryPoint,
     FundingSource
 )
+from corehq.apps.accounting.exceptions import SubscriptionRenewalError
+from corehq.apps.accounting.utils import domain_has_privilege, log_accounting_error
 from corehq.apps.app_manager.dbaccessors import get_apps_in_domain
 from corehq.apps.app_manager.models import Application, FormBase, RemoteApp
-
 from corehq.apps.domain.models import (LOGO_ATTACHMENT, LICENSES, DATA_DICT,
     AREA_CHOICES, SUB_AREA_CHOICES, BUSINESS_UNITS, Domain, TransferDomainRequest)
-from corehq.apps.reminders.models import CaseReminderHandler
-
-from corehq.apps.users.models import WebUser, CommCareUser, CouchUser
 from corehq.apps.groups.models import Group
 from corehq.apps.hqwebapp.crispy import TextField
 from corehq.apps.hqwebapp.tasks import send_mail_async, send_html_email_async
+from corehq.apps.reminders.models import CaseReminderHandler
+from corehq.apps.sms.phonenumbers_helper import parse_phone_number
+from corehq.apps.style import crispy as hqcrispy
+from corehq.apps.style.forms.widgets import BootstrapCheckboxInput
+from corehq.apps.users.models import WebUser, CommCareUser, CouchUser
+from corehq.feature_previews import CALLCENTER
+from corehq.toggles import CALL_CENTER_LOCATION_OWNERS, HIPAA_COMPLIANCE_CHECKBOX
 from corehq.util.timezones.fields import TimeZoneField
 from corehq.util.timezones.forms import TimeZoneChoiceField
-from django.template.loader import render_to_string
-from django.utils.translation import ugettext_noop, ugettext as _, ugettext_lazy
-from corehq.apps.style.forms.widgets import BootstrapCheckboxInput, BootstrapDisabledInput
-import django
-from pyzxcvbn import zxcvbn
-
-if django.VERSION < (1, 6):
-    from django.contrib.auth.hashers import UNUSABLE_PASSWORD as UNUSABLE_PASSWORD_PREFIX
-else:
-    from django.contrib.auth.hashers import UNUSABLE_PASSWORD_PREFIX
+from dimagi.utils.decorators.memoized import memoized
 
 # used to resize uploaded custom logos, aspect ratio is preserved
 LOGO_SIZE = (211, 32)
@@ -742,6 +739,11 @@ class PrivacySecurityForm(forms.Form):
         label=ugettext_lazy("HIPAA compliant"),
         required=False,
     )
+    two_factor_auth = BooleanField(
+        label=ugettext_lazy("Two Factor Authentication"),
+        required=False,
+        help_text=ugettext_lazy("All web users on this project will be required to enable two factor authentication")
+    )
 
     def __init__(self, *args, **kwargs):
         user_name = kwargs.pop('user_name')
@@ -756,9 +758,12 @@ class PrivacySecurityForm(forms.Form):
         self.helper[2] = twbscrispy.PrependedText('secure_sessions', '')
         self.helper[3] = twbscrispy.PrependedText('allow_domain_requests', '')
         self.helper[4] = twbscrispy.PrependedText('hipaa_compliant', '')
+        self.helper[5] = twbscrispy.PrependedText('two_factor_auth', '')
+        if not domain_has_privilege(domain, privileges.ADVANCED_DOMAIN_SECURITY):
+            self.helper.layout.pop(5)
         if not HIPAA_COMPLIANCE_CHECKBOX.enabled(user_name):
             self.helper.layout.pop(4)
-        if not SECURE_SESSIONS_CHECKBOX.enabled(domain):
+        if not domain_has_privilege(domain, privileges.ADVANCED_DOMAIN_SECURITY):
             self.helper.layout.pop(2)
         self.helper.all().wrap_together(crispy.Fieldset, 'Edit Privacy Settings')
         self.helper.layout.append(
@@ -775,6 +780,7 @@ class PrivacySecurityForm(forms.Form):
         domain.restrict_superusers = self.cleaned_data.get('restrict_superusers', False)
         domain.allow_domain_requests = self.cleaned_data.get('allow_domain_requests', False)
         domain.secure_sessions = self.cleaned_data.get('secure_sessions', False)
+        domain.two_factor_auth = self.cleaned_data.get('two_factor_auth', False)
         secure_submissions = self.cleaned_data.get(
             'secure_submissions', False)
         apps_to_save = []
@@ -959,15 +965,62 @@ max_pwd = 20
 pwd_pattern = re.compile( r"([-\w]){"  + str(min_pwd) + ',' + str(max_pwd) + '}' )
 
 def clean_password(txt):
-    # TODO: waiting on upstream PR to fix TypeError https://github.com/taxpon/pyzxcvbn/pull/1
-    # until then, we are using a dimagi hosted fork
-    strength = zxcvbn(txt, user_inputs=['commcare', 'hq', 'dimagi', 'commcarehq'])
+    if getattr(settings, "ENABLE_DRACONIAN_SECURITY_FEATURES", False):
+        strength = legacy_get_password_strength(txt)
+        message = _('Password is not strong enough. Requirements: 1 special character, '
+                    '1 number, 1 capital letter, minimum length of 8 characters.')
+    else:
+        # TODO: waiting on upstream PR to fix TypeError https://github.com/taxpon/pyzxcvbn/pull/1
+        # until then, we are using a dimagi hosted fork
+        strength = zxcvbn(txt, user_inputs=['commcare', 'hq', 'dimagi', 'commcarehq'])
+        message = _('Password is not strong enough. Try making your password more complex.')
     if strength['score'] < 2:
-        raise forms.ValidationError(_('Password is not strong enough. Try making your password more complex.'))
+        raise forms.ValidationError(message)
     return txt
 
 
-class HQPasswordResetForm(forms.Form):
+def legacy_get_password_strength(value):
+    # 1 Special Character, 1 Number, 1 Capital Letter with the length of Minimum 8
+    # initial score rigged to reach 2 when all requirementss are met
+    score = -2
+    if SPECIAL.search(value):
+        score += 1
+    if NUMBER.search(value):
+        score += 1
+    if UPPERCASE.search(value):
+        score += 1
+    if len(value) >= 8:
+        score += 1
+    return {"score": score}
+
+
+def _get_uppercase_unicode_regexp():
+    # rather than add another dependency (regex library)
+    # http://stackoverflow.com/a/17065040/10840
+    uppers = [u'[']
+    for i in xrange(sys.maxunicode):
+        c = unichr(i)
+        if c.isupper():
+            uppers.append(c)
+    uppers.append(u']')
+    upper_group = u"".join(uppers)
+    return re.compile(upper_group, re.UNICODE)
+
+SPECIAL = re.compile(ur"\W", re.UNICODE)
+NUMBER = re.compile(ur"\d", re.UNICODE)  # are there other unicode numerals?
+UPPERCASE = _get_uppercase_unicode_regexp()
+
+
+class NoAutocompleteMixin(object):
+
+    def __init__(self, *args, **kwargs):
+        super(NoAutocompleteMixin, self).__init__(*args, **kwargs)
+        if getattr(settings, "ENABLE_DRACONIAN_SECURITY_FEATURES", False):
+            for field in self.fields.values():
+                field.widget.attrs.update({'autocomplete': 'off'})
+
+
+class HQPasswordResetForm(NoAutocompleteMixin, forms.Form):
     """
     Only finds users and emails forms where the USERNAME is equal to the
     email specified (preventing Mobile Workers from using this form to submit).

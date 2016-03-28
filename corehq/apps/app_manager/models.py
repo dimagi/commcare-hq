@@ -1532,6 +1532,7 @@ class GraphAnnotations(IndexedSchema):
 
 class GraphSeries(DocumentSchema):
     config = DictProperty()
+    locale_specific_config = DictProperty()
     data_path = StringProperty()
     x_function = StringProperty()
     y_function = StringProperty()
@@ -4273,8 +4274,9 @@ class ApplicationBase(VersionedDoc, SnapshotMixin,
                     name: (contents if isinstance(contents, str) else contents.encode('utf-8'))
                     for name, contents in all_files.items()
                 }
+                release_date = self.built_with.datetime or datetime.datetime.utcnow()
                 jad_settings = {
-                    'Released-on': self.built_with.datetime.strftime("%Y-%b-%d %H:%M"),
+                    'Released-on': release_date.strftime("%Y-%b-%d %H:%M"),
                 }
                 jad_settings.update(self.jad_settings)
                 jadjar = self.get_jadjar().pack(all_files, jad_settings)

@@ -54,5 +54,13 @@ class ReportConfigurationNotFoundError(UserReportsError):
     pass
 
 
-class InvalidQueryColumn(Exception):
+class InvalidQueryColumn(UserReportsError):
+    pass
+
+
+class BadReportConfigurationError(UserReportsError):
+    pass
+
+
+class BadSaveError(Exception):
     pass
