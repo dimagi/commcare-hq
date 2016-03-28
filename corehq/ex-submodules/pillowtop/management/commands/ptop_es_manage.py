@@ -75,7 +75,7 @@ class Command(LabelCommand):
             return
 
         if show_info:
-            get_pillow_states(aliased_pillows).dump_info()
+            get_pillow_states().dump_info()
         if list_pillows:
             print aliased_pillows
         if flip_all:

@@ -1,4 +1,5 @@
 from corehq.elastic import get_es_new
+from pillowtop.es_utils import get_all_expected_es_indices
 from pillowtop.listener import AliasedElasticPillow
 
 
@@ -32,7 +33,7 @@ class ElasticPillowStatus(object):
         print "done"
 
 
-def get_pillow_states(pillows):
+def get_pillow_states():
     """
     return ElasticPillowStatus containing three main properties:
 
@@ -46,11 +47,10 @@ def get_pillow_states(pillows):
     source control.
 
     """
-    aliased_pillows = filter(lambda x: isinstance(x, AliasedElasticPillow), pillows)
     # make tuples of (index, alias)
     # this maybe problematic in the future if we have multiple pillows
     # pointing to the same alias or indices
-    master_aliases = dict((x.es_index, x.es_alias) for x in aliased_pillows)
+    master_aliases = dict((x.index, x.alias) for x in get_all_expected_es_indices())
 
     es = get_es_new()
     active_aliases = es.indices.get_aliases()
