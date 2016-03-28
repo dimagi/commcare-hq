@@ -141,8 +141,17 @@ class AutomaticUpdateRuleCriteria(models.Model):
     class Meta:
         app_label = "data_interfaces"
 
+    def _get_case_value(self, case, property_name):
+        if self.property_name.lower().startswith('parent/'):
+            parent = case.parent
+            if not parent:
+                return None
+            return self._get_case_value(parent, property_name[7:])
+
+        return case.to_json().get(property_name)
+
     def get_case_value(self, case):
-        return case.to_json().get(self.property_name)
+        return self._get_case_value(case, self.property_name)
 
     def check_days_since(self, case, now):
         date_to_check = self.get_case_value(case)

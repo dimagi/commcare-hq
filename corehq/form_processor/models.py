@@ -21,7 +21,7 @@ from uuidfield import UUIDField
 
 from corehq.blobs import get_blob_db
 from corehq.blobs.exceptions import NotFound, BadName
-from corehq.form_processor.exceptions import InvalidAttachment, UnknownActionType
+from corehq.form_processor.exceptions import InvalidAttachment, UnknownActionType, CaseNotFound
 from corehq.form_processor.track_related import TrackRelatedChanges
 from corehq.sql_db.routers import db_for_read_write
 from couchforms import const
@@ -722,6 +722,23 @@ class CommCareCaseSQL(DisabledDbMixin, models.Model, RedisLockableMixIn,
         from corehq.form_processor.backends.sql.dbaccessors import CaseAccessorSQL
         return CaseAccessorSQL.get_case(case_id)
 
+    @property
+    @memoized
+    def parent(self):
+        """
+        Returns the parent case if one exists, else None.
+        NOTE: This property should only return the first parent in the list
+        of indices. If for some reason your use case creates more than one,
+        please write/use a different property.
+        """
+        for index in self.indices:
+            if index.identifier == CommCareCaseIndexSQL.INDEX_ID_PARENT:
+                try:
+                    return index.referenced_case
+                except CaseNotFound:
+                    return None
+        return None
+
     def __unicode__(self):
         return (
             "CommCareCase("
@@ -835,6 +852,8 @@ class CommCareCaseIndexSQL(DisabledDbMixin, models.Model, SaveStateMixin):
     )
     RELATIONSHIP_INVERSE_MAP = dict(RELATIONSHIP_CHOICES)
     RELATIONSHIP_MAP = {v: k for k, v in RELATIONSHIP_CHOICES}
+
+    INDEX_ID_PARENT = 'parent'
 
     case = models.ForeignKey(
         'CommCareCaseSQL', to_field='case_id', db_index=True,
