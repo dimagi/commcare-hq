@@ -173,27 +173,27 @@ class TestConvertSavedExportSchemaToFormExportInstance(TestCase, TestFileMixin):
         self.assertEqual(column.label, 'Modified Nested')
         self.assertEqual(column.selected, True)
 
-#    def test_transform_conversion(self):
-#        saved_export_schema = SavedExportSchema.wrap(self.get_json('deid_transforms'))
-#        with mock.patch(
-#                'corehq.apps.export.models.new.FormExportDataSchema.generate_schema_from_builds',
-#                return_value=self.schema):
-#            instance = convert_saved_export_to_export_instance(saved_export_schema)
-#
-#        table = instance.get_table(MAIN_TABLE)
-#
-#        column = table.get_column(
-#            [PathNode(name='form'), PathNode(name='deid_id')],
-#            [DEID_ID_TRANSFORM]
-#        )
-#        self.assertEqual(column.transform, DEID_ID_TRANSFORM)
-#
-#        column = table.get_column(
-#            [PathNode(name='form'), PathNode(name='deid_date')],
-#            [DEID_DATE_TRANSFORM]
-#        )
-#        self.assertEqual(column.transform, DEID_DATE_TRANSFORM)
-#
+    def test_transform_conversion(self):
+        saved_export_schema = SavedExportSchema.wrap(self.get_json('deid_transforms'))
+        with mock.patch(
+                'corehq.apps.export.models.new.FormExportDataSchema.generate_schema_from_builds',
+                return_value=self.schema):
+            instance = convert_saved_export_to_export_instance(saved_export_schema)
+
+        table = instance.get_table(MAIN_TABLE)
+
+        column = table.get_column(
+            [PathNode(name='form'), PathNode(name='deid_id')],
+            []
+        )
+        self.assertEqual(column.transforms, [DEID_ID_TRANSFORM])
+
+        column = table.get_column(
+            [PathNode(name='form'), PathNode(name='deid_date')],
+            []
+        )
+        self.assertEqual(column.transforms, [DEID_DATE_TRANSFORM])
+
 #    def test_system_property_conversion(self):
 #        saved_export_schema = SavedExportSchema.wrap(self.get_json('system_properties'))
 #        with mock.patch(
