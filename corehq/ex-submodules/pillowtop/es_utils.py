@@ -124,6 +124,6 @@ def doc_exists(pillow, doc_id_or_dict):
     return pillow.get_es_new().exists(pillow.es_index, pillow.es_type, doc_id)
 
 
-def get_all_elasticsearch_pillows():
+def get_all_elasticsearch_pillow_classes():
     from pillowtop.listener import AliasedElasticPillow
     return filter(lambda x: issubclass(x, AliasedElasticPillow), get_all_pillow_classes())

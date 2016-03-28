@@ -1,5 +1,5 @@
 from gevent import monkey; monkey.patch_all()
-from pillowtop.es_utils import pillow_index_exists, get_all_elasticsearch_pillows
+from pillowtop.es_utils import pillow_index_exists, get_all_elasticsearch_pillow_classes
 
 from cStringIO import StringIO
 import traceback
@@ -63,7 +63,7 @@ class Command(BaseCommand):
 
     def handle(self, *args, **options):
         runs = []
-        aliased_classes = get_all_elasticsearch_pillows()
+        aliased_classes = get_all_elasticsearch_pillow_classes()
         aliasable_pillows = [p(online=False) for p in aliased_classes]
         reindex_all = options['replace']
 
