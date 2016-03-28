@@ -94,7 +94,8 @@ from corehq.apps.es.utils import values_list, flatten_field_dict
 
 from dimagi.utils.decorators.memoized import memoized
 
-from corehq.elastic import ES_META, ESError, run_query, scroll_query, SIZE_LIMIT
+from corehq.elastic import ES_META, ESError, run_query, scroll_query, SIZE_LIMIT, \
+    ScanResult
 
 from . import filters
 from . import queries
@@ -190,8 +191,11 @@ class ESQuery(object):
         Run the query against the scroll api. Returns an iterator yielding each
         document that matches the query.
         """
-        for r in scroll_query(self.index, self.raw_query):
-            yield ESQuerySet.normalize_result(deepcopy(self), r)
+        result = scroll_query(self.index, self.raw_query)
+        return ScanResult(
+            result.count,
+            (ESQuerySet.normalize_result(deepcopy(self), r) for r in result)
+        )
 
     @property
     def _filters(self):
