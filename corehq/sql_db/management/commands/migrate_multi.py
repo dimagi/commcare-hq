@@ -24,14 +24,27 @@ class Command(BaseCommand):
         jobs = []
         for db_alias in settings.DATABASES.keys():
             print '\n======================= Migrating DB: {} ======================='.format(db_alias)
-            jobs.append(gevent.spawn(
-                call_command,
-                'migrate',
-                database=db_alias,
-                interactive=options['interactive'],
-                fake=options['fake'],
-                list=options['list'],
-            ))
+
+            if options['interactive']:
+                # run synchronously
+                call_command(
+                    'migrate',
+                    database=db_alias,
+                    interactive=options['interactive'],
+                    fake=options['fake'],
+                    list=options['list'],
+                )
+            else:
+                # run asynchonously
+                jobs.append(gevent.spawn(
+                    call_command,
+                    'migrate',
+                    database=db_alias,
+                    interactive=options['interactive'],
+                    fake=options['fake'],
+                    list=options['list'],
+                ))
+
         gevent.joinall(jobs)
 
         success = True
