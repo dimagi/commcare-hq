@@ -1290,7 +1290,20 @@ Field should refer to report column IDs, not database fields.
 ]
 ```
 
-## Custom Calendar Month
+# Mobile UCR
+
+Mobile UCR is a beta feature that enables you to make application modules and charts linked to UCRs on mobile.
+It also allows you to send down UCR data from a report as a fixture which can be used in standard case lists and forms throughout the mobile application.
+
+The documentation for Mobile UCR is very sparse right now.
+
+## Filters
+
+On mobile UCR, filters can be automatically applied to the mobile reports based on hardcoded or user-specific data, or can be displayed to the user.
+
+The documentation of mobile UCR filters is incomplete. However some are documented below.
+
+### Custom Calendar Month
 
 When configuring a report within a module, you can filter a date field by the 'CustomMonthFilter'.  The choice includes the following options:
 - Start of Month (a number between 1 and 28)
