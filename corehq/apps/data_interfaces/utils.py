@@ -2,8 +2,7 @@ from django.utils.translation import ugettext as _
 from couchdbkit import ResourceNotFound
 from corehq.apps.casegroups.models import CommCareCaseGroup
 from corehq.apps.hqcase.utils import get_case_by_identifier
-from couchforms.models import XFormInstance
-from dimagi.utils.couch.database import iter_docs
+from corehq.form_processor.interfaces.dbaccessors import FormAccessors
 
 from soil import DownloadBase
 
@@ -31,7 +30,7 @@ def add_cases_to_case_group(domain, case_group_id, uploaded_data):
         elif case._id in case_group.cases:
             response['errors'].append(_("A case with identifier %s already exists in this group." % identifier))
         else:
-            case_group.cases.append(case._id)
+            case_group.cases.append(case.case_id)
             response['success'].append(_("Case with identifier '%s' has been added to this group." % identifier))
 
     if response['success']:
@@ -40,15 +39,15 @@ def add_cases_to_case_group(domain, case_group_id, uploaded_data):
     return response
 
 
-def archive_forms_old(domain, user, uploaded_data):
+def archive_forms_old(domain, user_id, username, uploaded_data):
     # used by excel archive forms
     form_ids = [row.get('form_id') for row in uploaded_data]
     from .interfaces import FormManagementMode
     mode = FormManagementMode(FormManagementMode.ARCHIVE_MODE)
-    return archive_or_restore_forms(domain, user, form_ids, mode, from_excel=True)
+    return archive_or_restore_forms(domain, user_id, username, form_ids, mode, from_excel=True)
 
 
-def archive_or_restore_forms(domain, user, form_ids, archive_or_restore, task=None, from_excel=False):
+def archive_or_restore_forms(domain, user_id, username, form_ids, archive_or_restore, task=None, from_excel=False):
     response = {
         'errors': [],
         'success': [],
@@ -60,26 +59,25 @@ def archive_or_restore_forms(domain, user, form_ids, archive_or_restore, task=No
     if task:
         DownloadBase.set_progress(task, 0, len(form_ids))
 
-    for xform_doc in iter_docs(XFormInstance.get_db(), form_ids):
-        xform = XFormInstance.wrap(xform_doc)
-        missing_forms.discard(xform['_id'])
+    for xform in FormAccessors(domain).iter_forms(form_ids):
+        missing_forms.discard(xform.form_id)
 
-        if xform['domain'] != domain:
+        if xform.domain != domain:
             response['errors'].append(_(u"XFORM {form_id} does not belong to domain {domain}").format(
-                form_id=xform['_id'], domain=xform['domain']))
+                form_id=xform.form_id, domain=domain))
             continue
 
         xform_string = _(u"XFORM {form_id} for domain {domain} by user '{username}'").format(
-            form_id=xform['_id'],
-            domain=xform['domain'],
-            username=user.username)
+            form_id=xform.form_id,
+            domain=xform.domain,
+            username=username)
 
         try:
             if archive_or_restore.is_archive_mode():
-                xform.archive(user_id=user.username)
+                xform.archive(user_id=user_id)
                 message = _(u"Successfully archived {form}").format(form=xform_string)
             else:
-                xform.unarchive(user_id=user.username)
+                xform.unarchive(user_id=user_id)
                 message = _(u"Successfully unarchived {form}").format(form=xform_string)
             response['success'].append(message)
             success_count = success_count + 1

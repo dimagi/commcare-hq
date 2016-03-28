@@ -1,12 +1,11 @@
 .navbar-hq-main-menu {
   border: 1px solid #d5d5d5;
   font-size: 13px;
-  z-index: @zindexNavBarMainMenu;
   #gradient > .vertical(#fdfdfd, #f4f4f4);
   margin-bottom: 0px;
 
   .navbar-brand {
-    padding: 15px 20px;
+    padding: 11px;
   }
 
   .nav > li:not(.active) > a:focus,
@@ -30,16 +29,14 @@
   }
 }
 
-.navbar-hq-footer {
+.navbar.navbar-hq-footer {
   margin-bottom: 0px;
   border-radius: 0px;
+  height: @navbar-footer-height;
   min-height: @navbar-footer-height;
   color: #ffffff;
-
-  .container-fluid > .navbar-header {
-    margin-top: 2px;
-    margin-right: 20px;
-  }
+  text-align: center;
+  line-height: @navbar-footer-height - 1px;
 
   a, a:link, a:visited {
     color: @navbar-footer-link-color;
@@ -50,8 +47,35 @@
     color: @navbar-footer-link-color-hover;
     &.btn { color: #ffffff; }
   }
-
-  .btn-toolbar {
-    margin-top: 6px;
+  a.footer-link-img {
+    &:hover {
+      text-decoration: none;
+    }
   }
+}
+
+.nav-settings-bar > .navbar-nav {
+  padding-right: 10px;
+}
+
+@navbar-mobile-height: 40px;
+
+.navbar-mobile.navbar {
+  min-height: @navbar-mobile-height;
+  height: @navbar-mobile-height;
+
+  .navbar-brand {
+    padding: 3px 10px;
+    height: @navbar-mobile-height - 6;
+  }
+  .navbar-one {
+    float: right;
+  }
+  a, a:link, a:visited {
+    color: @cc-neutral-mid;
+  }
+}
+
+.mobile-nav {
+  padding: 3px 10px;
 }

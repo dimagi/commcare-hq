@@ -261,7 +261,7 @@ def get_xform_location(xform):
     Returns the sql location associated with the user who submitted an xform
     """
     from corehq.apps.users.models import CouchUser
-    user_id = getattr(xform.metadata, 'userID', None)
+    user_id = xform.user_id
     if not user_id:
         return None
 

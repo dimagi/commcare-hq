@@ -1,3 +1,5 @@
+import logging
+
 from django.core.exceptions import ValidationError
 from django.core.validators import validate_email
 from django.db import transaction
@@ -22,7 +24,7 @@ class BalanceMigration(UserMigrationMixin):
 
     @transaction.atomic
     def validate_sms_users(self):
-        for sms_user in iterate_over_api_objects(self.endpoint.get_smsusers):
+        for sms_user in iterate_over_api_objects(self.endpoint.get_smsusers, {'is_active': True}):
             description = ""
             user = CommCareUser.get_by_username(self.get_username(sms_user)[0])
             if not user:
@@ -61,8 +63,17 @@ class BalanceMigration(UserMigrationMixin):
 
             for phone_number in user.phone_numbers:
                 vn = VerifiedNumber.by_phone(phone_number)
-                if not vn or vn.owner_id != user.get_id or vn.domain != self.domain or not vn.verified:
-                    description += "Phone number not verified, "
+                if vn and vn.owner_id != user.get_id and vn.domain == self.domain:
+                    description += "Phone number already assigned to user({}) from this domain, "\
+                        .format(vn.owner_id)
+                elif vn and vn.domain != self.domain:
+                    description += "Phone number already assigned on domain {}, ".format(vn.domain)
+                elif not vn or not vn.verified:
+                    try:
+                        user.save_verified_number(self.domain, phone_number, verified=True)
+                    except Exception, e:
+                        logging.error(e)
+                        description += "Phone number not verified, "
                 else:
                     backend = phone_to_backend.get(phone_number)
                     if backend != 'push_backend' and vn.backend_id != 'MOBILE_BACKEND_TEST' \
@@ -90,6 +101,8 @@ class BalanceMigration(UserMigrationMixin):
         unique_usernames = set()
         read_only_role_id = UserRole.get_read_only_role_by_domain(self.domain).get_id
         for web_user in iterate_over_api_objects(self.endpoint.get_webusers):
+            if not web_user.is_active:
+                continue
             description = ''
             if web_user.email:
                 username = web_user.email.lower()
@@ -113,22 +126,22 @@ class BalanceMigration(UserMigrationMixin):
                 )
                 continue
 
-            if not web_user.location:
-                continue
+            if not couch_web_user.is_active:
+                description += "user is migrated but not active in HQ, "
 
             dm = couch_web_user.get_domain_membership(self.domain)
-            try:
-                sql_location = SQLLocation.objects.get(external_id=web_user.location, domain=self.domain)
-
-                if dm.location_id != sql_location.location_id:
-                    description += 'Location not assigned'
-            except SQLLocation.DoesNotExist:
-                # Location is inactive in v1 or it's an error in location migration
-                pass
+            if web_user.location:
+                try:
+                    sql_location = SQLLocation.objects.get(external_id=web_user.location, domain=self.domain)
+                    if dm.location_id != sql_location.location_id:
+                        description += 'location not assigned, '
+                except SQLLocation.DoesNotExist:
+                    # Location is inactive in v1 or it's an error in location migration
+                    if dm.location_id:
+                        description += "location is assigned but shouldn't be "
 
             if dm.role_id != read_only_role_id:
-                description += 'Invalid role'
-
+                description += 'invalid role, '
             if not description:
                 ILSMigrationProblem.objects.filter(
                     domain=self.domain,
@@ -152,9 +165,9 @@ class BalanceMigration(UserMigrationMixin):
         products_count = self._get_total_counts(self.endpoint.get_products)
         locations_count = self._get_total_counts(
             self.endpoint.get_locations,
-            filters=dict(is_active=True)
+            filters=dict(supplypoint__active=True)
         )
-        sms_users_count = self._get_total_counts(self.endpoint.get_smsusers)
+        sms_users_count = self._get_total_counts(self.endpoint.get_smsusers, filters={'is_active': True})
 
         stats, _ = ILSMigrationStats.objects.get_or_create(domain=self.domain)
         stats.products_count = products_count

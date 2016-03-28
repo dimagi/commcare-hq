@@ -1,0 +1,35 @@
+{% load i18n %}
+<ul class="dropdown-menu dropdown-menu-right" role="menu">
+    {% if is_public %}
+    <li>
+        <a href="{% url 'domain_select' %}">{% trans 'Back to My Projects' %}...</a>
+    </li>
+    <li class="divider"></li>
+    {% endif %}
+
+    {% if domain_list %}
+    <li class="dropdown-header nav-header">{% trans 'Change Project' %}</li>
+    {% for d in domain_list %}
+        <li><a href="{{ d.url }}">{{ d.name }}</a></li>
+    {% endfor %}
+     <li class="divider"></li>
+    {% endif %}
+
+    <li>
+        <a href="{% url 'registration_domain' %}">
+            <i class="fa fa-plus icon-plus dropdown-icon"></i> {% trans 'Add Project' %}
+        </a>
+    </li>
+    <li>
+        <a href="{% url 'appstore' %}">
+            <i class="fa fa-exchange icon-exchange dropdown-icon"></i> {% trans 'CommCare Exchange' %}
+        </a>
+    </li>
+    {% if can_publish_to_exchange %}
+    <li>
+        <a href="{% url 'domain_snapshot_settings' current_domain %}">
+            <i class="fa fa-upload icon icon-upload-alt dropdown-icon"></i> {% trans "Publish this Project" %}
+        </a>
+    </li>
+    {% endif %}
+</ul>

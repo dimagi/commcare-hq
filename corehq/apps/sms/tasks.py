@@ -2,19 +2,44 @@ import math
 from datetime import datetime, timedelta
 from celery.task import task
 from time import sleep
-from corehq.apps.sms.mixin import SMSLoadBalancingMixin, VerifiedNumber
-from corehq.apps.sms.models import (SMSLog, OUTGOING, INCOMING, SMS)
+from corehq.apps.sms.mixin import (VerifiedNumber, InvalidFormatException,
+    PhoneNumberInUseException)
+from corehq.apps.sms.models import (OUTGOING, INCOMING, SMS,
+    PhoneLoadBalancingMixin, CommConnectCase, QueuedSMS)
 from corehq.apps.sms.api import (send_message_via_backend, process_incoming,
-    log_sms_exception)
+    log_sms_exception, create_billable_for_sms, get_utcnow)
+from django.db import transaction
 from django.conf import settings
+from corehq import privileges
+from corehq.apps.accounting.utils import domain_has_privilege
 from corehq.apps.domain.models import Domain
 from corehq.apps.smsbillables.models import SmsBillable
+from corehq.apps.sms.change_publishers import publish_sms_saved
 from corehq.util.timezones.conversions import ServerTime
 from dimagi.utils.chunked import chunked
 from dimagi.utils.couch.bulk import soft_delete_docs
 from dimagi.utils.couch.cache.cache_core import get_redis_client
-from dimagi.utils.couch import release_lock
+from dimagi.utils.couch import release_lock, CriticalSection
+from dimagi.utils.logging import notify_exception
+from dimagi.utils.rate_limit import rate_limit
 from threading import Thread
+
+
+def remove_from_queue(queued_sms):
+    with transaction.atomic():
+        sms = SMS()
+        for field in sms._meta.fields:
+            if field.name != 'id':
+                setattr(sms, field.name, getattr(queued_sms, field.name))
+        queued_sms.delete()
+        sms.save()
+
+    sms.publish_change()
+
+    if sms.direction == OUTGOING and sms.processed and not sms.error:
+        create_billable_for_sms(sms)
+    elif sms.direction == INCOMING and sms.domain and domain_has_privilege(sms.domain, privileges.INBOUND_SMS):
+        create_billable_for_sms(sms)
 
 
 def handle_unsuccessful_processing_attempt(msg):
@@ -23,22 +48,28 @@ def handle_unsuccessful_processing_attempt(msg):
         delay_processing(msg, settings.SMS_QUEUE_REPROCESS_INTERVAL)
     else:
         msg.set_system_error(SMS.ERROR_TOO_MANY_UNSUCCESSFUL_ATTEMPTS)
+        remove_from_queue(msg)
+
 
 def handle_successful_processing_attempt(msg):
-    utcnow = datetime.utcnow()
+    utcnow = get_utcnow()
     msg.num_processing_attempts += 1
     msg.processed = True
     msg.processed_timestamp = utcnow
     if msg.direction == OUTGOING:
         msg.date = utcnow
     msg.save()
+    remove_from_queue(msg)
+
 
 def delay_processing(msg, minutes):
     msg.datetime_to_process += timedelta(minutes=minutes)
     msg.save()
 
+
 def get_lock(client, key):
     return client.lock(key, timeout=settings.SMS_QUEUE_PROCESSING_LOCK_TIMEOUT*60)
+
 
 def time_within_windows(domain_now, windows):
     weekday = domain_now.weekday()
@@ -51,6 +82,7 @@ def time_within_windows(domain_now, windows):
             return True
 
     return False
+
 
 def handle_domain_specific_delays(msg, domain_object, utcnow):
     """
@@ -71,14 +103,17 @@ def handle_domain_specific_delays(msg, domain_object, utcnow):
         if time_within_windows(domain_now, domain_object.sms_conversation_times):
             sms_conversation_length = domain_object.sms_conversation_length
             conversation_start_timestamp = utcnow - timedelta(minutes=sms_conversation_length)
-            if SMSLog.inbound_entry_exists(msg.couch_recipient_doc_type,
-                                           msg.couch_recipient,
-                                           conversation_start_timestamp,
-                                           utcnow):
+            if SMS.inbound_entry_exists(
+                msg.couch_recipient_doc_type,
+                msg.couch_recipient,
+                conversation_start_timestamp,
+                to_timestamp=utcnow
+            ):
                 delay_processing(msg, 1)
                 return True
 
     return False
+
 
 def message_is_stale(msg, utcnow):
     oldest_allowable_datetime = \
@@ -88,16 +123,6 @@ def message_is_stale(msg, utcnow):
     else:
         return True
 
-def _wait_and_release_lock(lock, timeout, start_timestamp):
-    while (datetime.utcnow() - start_timestamp) < timedelta(seconds=timeout):
-        sleep(0.1)
-    release_lock(lock, True)
-
-
-def wait_and_release_lock(lock, timeout):
-    timestamp = datetime.utcnow()
-    t = Thread(target=_wait_and_release_lock, args=(lock, timeout, timestamp))
-    t.start()
 
 def handle_outgoing(msg):
     """
@@ -106,56 +131,41 @@ def handle_outgoing(msg):
     not be queued again.
     """
     backend = msg.outbound_backend
-    sms_interval = backend.get_sms_interval()
-    use_rate_limit = sms_interval is not None
-    use_load_balancing = (isinstance(backend, SMSLoadBalancingMixin) and
-        len(backend.phone_numbers) > 1)
-
-    if use_rate_limit or use_load_balancing:
-        client = get_redis_client()
-
-    lbi = None
+    sms_rate_limit = backend.get_sms_rate_limit()
+    use_rate_limit = sms_rate_limit is not None
+    use_load_balancing = isinstance(backend, PhoneLoadBalancingMixin)
     orig_phone_number = None
+
     if use_load_balancing:
-        lbi = backend.get_next_phone_number(client)
-        orig_phone_number = lbi.phone_number
-    elif (isinstance(backend, SMSLoadBalancingMixin) and 
-        len(backend.phone_numbers) == 1):
-        # If there's only one phone number, we don't need to go through the
-        # load balancing algorithm. But we should always pass an
-        # orig_phone_number if it's an instance of SMSLoadBalancingMixin.
-        orig_phone_number = backend.phone_numbers[0]
+        orig_phone_number = backend.get_next_phone_number()
 
     if use_rate_limit:
         if use_load_balancing:
-            lock_key = "sms-backend-%s-rate-limit-phone-%s" % (backend._id,
-                lbi.phone_number)
+            redis_key = 'sms-rate-limit-backend-%s-phone-%s' % (backend.pk, orig_phone_number)
         else:
-            lock_key = "sms-backend-%s-rate-limit" % backend._id
-        lock = client.lock(lock_key, timeout=30)
+            redis_key = 'sms-rate-limit-backend-%s' % backend.pk
 
-    if not use_rate_limit or (use_rate_limit and lock.acquire(blocking=False)):
-        if use_load_balancing:
-            lbi.finish(save_stats=True)
-        result = send_message_via_backend(msg, backend=backend, 
-            orig_phone_number=orig_phone_number)
-        if use_rate_limit:
-            wait_and_release_lock(lock, sms_interval)
+        if not rate_limit(redis_key, actions_allowed=sms_rate_limit, how_often=60):
+            # Requeue the message and try it again shortly
+            return True
 
-        # Only do the following if an unrecoverable error did not happen
-        if not msg.error:
-            if result:
-                handle_successful_processing_attempt(msg)
-            else:
-                handle_unsuccessful_processing_attempt(msg)
-        return False
+    result = send_message_via_backend(
+        msg,
+        backend=backend,
+        orig_phone_number=orig_phone_number
+    )
+
+    if msg.error:
+        remove_from_queue(msg)
     else:
-        # We're using rate limiting, but couldn't acquire the lock, so
-        # another thread is sending sms with this backend. Rather than wait,
-        # we'll just put this message at the back of the queue.
-        if use_load_balancing:
-            lbi.finish(save_stats=False)
-        return True
+        # Only do the following if an unrecoverable error did not happen
+        if result:
+            handle_successful_processing_attempt(msg)
+        else:
+            handle_unsuccessful_processing_attempt(msg)
+
+    return False
+
 
 def handle_incoming(msg):
     try:
@@ -167,27 +177,33 @@ def handle_incoming(msg):
 
 
 @task(queue="sms_queue", ignore_result=True, acks_late=True)
-def process_sms(message_id):
+def process_sms(queued_sms_pk):
     """
-    message_id - _id of an SMSLog entry
+    queued_sms_pk - pk of a QueuedSMS entry
     """
     client = get_redis_client()
-    utcnow = datetime.utcnow()
+    utcnow = get_utcnow()
     # Prevent more than one task from processing this SMS, just in case
     # the message got enqueued twice.
-    message_lock = get_lock(client, "sms-queue-processing-%s" % message_id)
+    message_lock = get_lock(client, "sms-queue-processing-%s" % queued_sms_pk)
 
     if message_lock.acquire(blocking=False):
-        msg = SMSLog.get(message_id)
+        try:
+            msg = QueuedSMS.objects.get(pk=queued_sms_pk)
+        except QueuedSMS.DoesNotExist:
+            # The message was already processed and removed from the queue
+            release_lock(message_lock, True)
+            return
 
         if message_is_stale(msg, utcnow):
             msg.set_system_error(SMS.ERROR_MESSAGE_IS_STALE)
+            remove_from_queue(msg)
             release_lock(message_lock, True)
             return
 
         if msg.direction == OUTGOING:
             if msg.domain:
-                domain_object = Domain.get_by_name(msg.domain, strict=True)
+                domain_object = Domain.get_by_name(msg.domain)
             else:
                 domain_object = None
             if domain_object and handle_domain_specific_delays(msg, domain_object, utcnow):
@@ -212,18 +228,22 @@ def process_sms(message_id):
                 handle_incoming(msg)
             else:
                 msg.set_system_error(SMS.ERROR_INVALID_DIRECTION)
+                remove_from_queue(msg)
 
             if recipient_block:
                 release_lock(recipient_lock, True)
 
         release_lock(message_lock, True)
         if requeue:
-            process_sms.delay(message_id)
+            process_sms.delay(queued_sms_pk)
 
 
 @task(ignore_result=True)
 def store_billable(msg):
-    if msg._id and not SmsBillable.objects.filter(log_id=msg._id).exists():
+    if not isinstance(msg, SMS):
+        raise Exception("Expected msg to be an SMS")
+
+    if msg.couch_id and not SmsBillable.objects.filter(log_id=msg.couch_id).exists():
         try:
             msg.text.encode('iso-8859-1')
             msg_length = 160
@@ -239,8 +259,80 @@ def store_billable(msg):
 def delete_phone_numbers_for_owners(owner_ids):
     for ids in chunked(owner_ids, 50):
         results = VerifiedNumber.get_db().view(
-            'sms/verified_number_by_owner_id',
+            'phone_numbers/verified_number_by_owner_id',
             keys=ids,
             include_docs=True
         )
         soft_delete_docs([row['doc'] for row in results], VerifiedNumber)
+
+
+@task(queue=settings.CELERY_REMINDER_CASE_UPDATE_QUEUE, ignore_result=True, acks_late=True,
+      default_retry_delay=5 * 60, max_retries=10, bind=True)
+def sync_case_phone_number(self, case):
+    try:
+        contact = CommConnectCase.wrap_as_commconnect_case(case)
+        _sync_case_phone_number(contact)
+    except Exception as e:
+        self.retry(exc=e)
+
+
+def _phone_number_is_same(phone_number, phone_info):
+    return (
+        phone_number.phone_number == phone_info.phone_number and
+        phone_number.backend_id == phone_info.sms_backend_id and
+        phone_number.ivr_backend_id == phone_info.ivr_backend_id and
+        phone_number.verified
+    )
+
+
+def _sync_case_phone_number(contact_case):
+    phone_info = contact_case.get_phone_info()
+
+    lock_keys = ['sync-case-phone-number-for-%s' % contact_case._id]
+    if phone_info.phone_number:
+        lock_keys.append('verifying-phone-number-%s' % phone_info.phone_number)
+
+    with CriticalSection(lock_keys):
+        phone_number = contact_case.get_verified_number()
+        if (
+            phone_number and
+            phone_number.contact_last_modified and
+            phone_number.contact_last_modified >= contact_case.server_modified_on
+        ):
+            return
+
+        if phone_info.requires_entry:
+            try:
+                contact_case.verify_unique_number(phone_info.phone_number)
+            except (InvalidFormatException, PhoneNumberInUseException):
+                if phone_number:
+                    phone_number.delete()
+                return
+
+            if not phone_number:
+                phone_number = VerifiedNumber(
+                    domain=contact_case.domain,
+                    owner_doc_type=contact_case.doc_type,
+                    owner_id=contact_case._id,
+                )
+            elif _phone_number_is_same(phone_number, phone_info):
+                return
+
+            phone_number.phone_number = phone_info.phone_number
+            phone_number.backend_id = phone_info.sms_backend_id
+            phone_number.ivr_backend_id = phone_info.ivr_backend_id
+            phone_number.verified = True
+            phone_number.contact_last_modified = contact_case.server_modified_on
+            phone_number.save()
+        else:
+            if phone_number:
+                phone_number.delete()
+
+
+@task(queue='background_queue', ignore_result=True, acks_late=True,
+      default_retry_delay=5 * 60, max_retries=10, bind=True)
+def publish_sms_change(self, sms):
+    try:
+        publish_sms_saved(sms)
+    except Exception as e:
+        self.retry(exc=e)

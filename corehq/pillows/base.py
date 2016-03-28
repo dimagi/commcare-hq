@@ -58,8 +58,6 @@ def restore_property_dict(report_dict_item):
 
 
 class HQPillow(AliasedElasticPillow):
-    es_host = settings.ELASTICSEARCH_HOST
-    es_port = settings.ELASTICSEARCH_PORT
     es_timeout = 60
     es_meta = {
         "settings": {
@@ -88,9 +86,3 @@ class HQPillow(AliasedElasticPillow):
         so we just do a hash of the "prototype" instead to determind md5
         """
         return cls.calc_mapping_hash(cls.default_mapping)
-
-    def get_domain(self, doc_dict):
-        """
-        A cache/buffer for the _changes feed situation for xforms.
-        """
-        return doc_dict.get('domain', None)

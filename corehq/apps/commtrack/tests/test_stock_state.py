@@ -13,6 +13,7 @@ from corehq.apps.consumption.shortcuts import set_default_monthly_consumption_fo
 class StockStateTest(CommTrackTest):
     def report(self, amount, days_ago):
         return _stock_report(
+            self.domain.name,
             self.sp.case_id,
             self.products[0]._id,
             amount,
@@ -92,6 +93,27 @@ class StockStateBehaviorTest(StockStateTest):
             ).product_id,
             self.products[0]._id
         )
+
+    def test_stock_state_for_deleted_locations(self):
+        self.sp.location.save()
+        self.report(10, 0)
+
+        # make sure that this StockState existed before delete
+        StockState.objects.get(
+            section_id='stock',
+            case_id=self.sp.case_id,
+            product_id=self.products[0]._id,
+        )
+
+        self.sp.location.full_delete()
+
+        with self.assertRaises(StockState.DoesNotExist):
+            StockState.objects.get(
+                section_id='stock',
+                case_id=self.sp.case_id,
+                product_id=self.products[0]._id,
+            )
+
 
     def test_domain_mapping(self):
         # make sure there's a fake case setup for this

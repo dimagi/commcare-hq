@@ -23,7 +23,7 @@ class DashboardReport(MultiReport):
     @property
     def report_config(self):
         report_config = super(DashboardReport, self).report_config
-        startdate, enddate = calculate_last_period(datetime.utcnow())
+        startdate, enddate = calculate_last_period()
         report_config.update(dict(
             startdate=startdate,
             enddate=enddate,
@@ -39,7 +39,10 @@ class DashboardReport(MultiReport):
             'case_id', 'product_id', 'report__date', 'stock_on_hand'
         )
         grouped_by_case = defaultdict(set)
-        all_locations_count = self.location.get_descendants().count()
+        all_locations_count = self.location.get_descendants().filter(
+            location_type__administrative=False,
+            is_archived=False
+        ).count()
 
         product_case_with_stock = defaultdict(set)
         product_case_without_stock = defaultdict(set)

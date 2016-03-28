@@ -90,12 +90,11 @@ class FacilityReportData(EWSData):
         ).order_by('-last_modified_date')
 
         for state in stock_states:
-            if state.daily_consumption:
-                monthly_consumption = round(state.get_monthly_consumption())
+            monthly_consumption = state.get_monthly_consumption()
+            max_level = 0
+            if monthly_consumption:
+                monthly_consumption = round(monthly_consumption)
                 max_level = round(monthly_consumption * float(loc.location_type.overstock_threshold))
-            else:
-                monthly_consumption = None
-                max_level = 0
 
             state_grouping[state.product_id] = {
                 'commodity': state.sql_product.name,
@@ -206,7 +205,7 @@ class InventoryManagementData(EWSData):
             sql_product__in=loc.products,
         )
 
-        consumptions = {ss.product_id: ss.daily_consumption for ss in stoke_states}
+        consumptions = {ss.product_id: ss.get_daily_consumption() for ss in stoke_states}
         st = StockTransaction.objects.filter(
             case_id=loc.supply_point_id,
             sql_product__in=loc.products,

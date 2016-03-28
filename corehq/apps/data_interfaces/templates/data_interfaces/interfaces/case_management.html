@@ -3,21 +3,21 @@
 {% load report_tags %}
 {% load i18n %}
 
-{% block js %} {{ block.super }}
-    <script type="text/javascript" src="{% static 'case/js/cheapxml.js' %}"></script>
-    <script type="text/javascript" src="{% static 'case/js/casexml.js' %}"></script>
-    <script type="text/javascript" src="{% static 'data_interfaces/ko/case_management.js' %}"></script>
-{% endblock %}
-
 {% block js-inline %} {{ block.super }}
     <script type="text/javascript">
-    (function () {
+    $.when(
+        $.getScript("{% static 'case/js/cheapxml.js' %}"),
+        $.getScript("{% static 'case/js/casexml.js' %}"),
+        $.getScript("{% static 'data_interfaces/ko/case_management.js' %}")
+    ).done(function () {
         var OPTIONS = {
             users: {{ users|JSON }},
             groups: {{ groups|JSON }},
             receiverUrl: '{% url "receiver_secure_post" domain %}',
             enddate: '{{ datespan.enddate_param_utc }}',
-            webUserID: '{{ request.couch_user.userID }}'
+            webUserID: '{{ request.couch_user.userID }}',
+            webUserName: '{{ request.couch_user.username }}',
+            form_name: '{%  trans "Case Reassignment (via HQ)" %}'
         };
 
         var caseManagementModel = new CaseManagement(OPTIONS);
@@ -53,7 +53,7 @@
                 window.reportTables.fnDrawCallback = applyCheckboxListeners;
             }
         }, 1000);
-    }());
+    });
     </script>
 {% endblock %}
 

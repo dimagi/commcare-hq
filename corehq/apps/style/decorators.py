@@ -59,20 +59,20 @@ def use_select2_v4(view_func):
     return _wrapped
 
 
-def use_knockout_js(view_func):
+def use_angular_js(view_func):
     """Use this decorator on the dispatch method of a TemplateView subclass
-    to enable the inclusion of the knockout_js library at the base template
+    to enable the inclusion of the angularjs library at the base template
     level.
 
     Example:
 
-    @use_knockout_js
+    @use_angular_js
     def dispatch(self, request, *args, **kwargs):
         return super(MyView, self).dispatch(request, *args, **kwargs)
     """
     @wraps(view_func)
     def _wrapped(class_based_view, request, *args, **kwargs):
-        request.use_knockout_js = True
+        request.use_angular_js = True
         return view_func(class_based_view, request, *args, **kwargs)
     return _wrapped
 
@@ -163,6 +163,24 @@ def use_nvd3(view_func):
     @wraps(view_func)
     def _wrapped(class_based_view, request, *args, **kwargs):
         request.use_nvd3 = True
+        return view_func(class_based_view, request, *args, **kwargs)
+    return _wrapped
+
+
+def use_nvd3_v3(view_func):
+    """Use this decorator on the dispatch method of a TemplateView subclass
+    to enable the inclusion of the nvd3 library at the base template
+    level. nvd3 Version 3 is a library of charts for d3.
+
+    Example:
+
+    @use_nvd3
+    def dispatch(self, request, *args, **kwargs):
+        return super(MyView, self).dispatch(request, *args, **kwargs)
+    """
+    @wraps(view_func)
+    def _wrapped(class_based_view, request, *args, **kwargs):
+        request.use_nvd3_v3 = True
         return view_func(class_based_view, request, *args, **kwargs)
     return _wrapped
 

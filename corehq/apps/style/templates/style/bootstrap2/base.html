@@ -48,12 +48,9 @@
         {% block head %}
         {% endblock %}
 
-        {# hubspot tracking events must be defined BEFORE the hubspot js is loaded #}
-        {% block hubspot %}{% endblock %}
-
         {% include 'style/includes/analytics_all.html' %}
         {% if less_debug %}
-            <script src="{% static 'style/lib/lessjs/less-1.3.1.min.js' %}"></script>
+            <script src="{% static 'less/dist/less-1.3.1.min.js' %}"></script>
             {% if less_watch %}<script>less.watch();</script>{% endif %}
         {% endif %}
     </head>
@@ -72,7 +69,7 @@
                             {% block tabs %}
                                 {% format_main_menu %}
                             {% endblock %}
-                            <div class="btn-toolbar pull-right">
+                            <div class="nav-settings-bar pull-right">
                                 {% include 'style/includes/global_navigation_bar.html' %}
                             </div>
                         </nav>
@@ -133,32 +130,32 @@
         <footer>
             <div class="row-fluid">
                 <div class="span12">
-                    <div class="pull-left" style="margin-right: 20px;">
-                        <a href="http://www.commcarehq.org/"><img src="{% static 'hqwebapp/img/commcare-flower-footer.png' %}" class="powered-by"  alt="CommCare" /></a>
-                        <a href="http://www.dimagi.com/"><img src="{% static 'hqwebapp/img/dimagi-footer.png' %}" class="powered-by"  alt="Powered by Dimagi, Inc." /></a>
-                    </div>
-                    {% if request.user.is_authenticated %}
-                    <div class="btn-toolbar pull-right">
-                        <a data-toggle="modal" data-target="#modalReportIssue" href="#modalReportIssue" data-backdrop="static" class="btn btn-footer-highlight"><i class="icon-comment"></i> {% trans 'Report an Issue' %}</a>
-                        <a href="{% trans 'https://wiki.commcarehq.org/display/commcarepublic/Home' %}" target="_blank" class="btn btn-footer"><i class="icon-info-sign"></i> {% trans 'CommCare Help Site' %}</a>
-                        <a href="{% trans 'http://groups.google.com/group/commcare-users/subscribe' %}" target="_blank" class="btn btn-footer"><i class="icon-envelope"></i> {% trans 'Mailing List' %}</a>
-                    </div>
+                    <a href="http://www.commcarehq.org/" class="footer-link-img">
+                        <img src="{% new_static 'hqwebapp/img/commcare-flower-footer.png' %}"
+                             alt="CommCare"
+                             height="30"  />
+                    </a>
+                    <a href="http://www.dimagi.com/" class="footer-link-img">
+                        <img src="{% static 'hqwebapp/img/dimagi-footer.png' %}"
+                             alt="Powered by Dimagi, Inc."
+                             height="20"/>
+                    </a>
+                &nbsp;
+                    {% blocktrans %}
+                        <a href="http://www.commcarehq.org/">CommCare HQ</a>
+                        is copyright &copy;
+                    {% endblocktrans %}{% now "Y" %}
+                    <a href="http://www.dimagi.com/">Dimagi, Inc.</a>
+                    {% if user.is_authenticated %}
+                        &nbsp;|&nbsp;
+                        <a href="{% trans 'http://www.commcarehq.org/home' %}">{% trans 'Learn more about CommCare HQ' %}</a>
                     {% endif %}
-                    <div>
-                        <p style="padding-top: 7px;">
-                            <a href="http://www.commcarehq.org/">CommCare HQ</a> {% trans 'is copyright' %} &copy; {% now "Y" %} <a href="http://www.dimagi.com/">Dimagi, Inc.</a>
-                            {% if request.user.is_authenticated %}
-                                &nbsp;|&nbsp;
-                                <a href="{% trans 'http://www.commcarehq.org/home' %}">{% trans 'Learn more about CommCare HQ' %}</a>.
-                            {% endif %}
-                            <br />
-                            <a href="{% url "eula" %}">{% trans "Read CommCare HQ's End User License Agreement" %}</a>
-                            &nbsp;|&nbsp;
-                            <a href="{% trans 'http://www.dimagi.com/policy' %}">{% trans 'Privacy' %}</a>
-                            &nbsp;|&nbsp;
-                            <a href="{% url 'product_agreement' %}">{% trans 'Product Subscription Agreement' %}</a>
-                        </p>
-                    </div>
+                    &nbsp;|&nbsp;
+                    <a href="{% url "eula" %}">{% trans "Read CommCare HQ's End User License Agreement" %}</a>
+                    &nbsp;|&nbsp;
+                    <a href="{% trans 'http://www.dimagi.com/policy' %}">{% trans 'Privacy' %}</a>
+                    &nbsp;|&nbsp;
+                    <a href="{% url 'product_agreement' %}">{% trans 'Product Subscription Agreement' %}</a>
                 </div>
             </div>
         </footer>
@@ -233,7 +230,8 @@
                     <div class="modal-footer">
                         <button type="submit" class="btn btn-primary"
                                 data-loading-text="{% trans "Submitting Report..." %}"
-                                data-complete-text="{% trans "Back to CommCare HQ" %}">
+                                data-error-text="{% trans "Failed. Retry Issue Submission" %}"
+                                data-success-text="{% trans "Success! Back to CommCare HQ" %}">
                             {% trans "Submit Report" %}
                         </button>
                         <button id="bug-report-cancel" class="btn" data-dismiss="modal"
@@ -267,51 +265,6 @@
                     </div>
                 </div>
             {% endif %}
-            <div class="modal hide fade" id="keyboard-shortcuts-config">
-                <div class="modal-header">
-                    <a class="close" data-dismiss="modal">&times;</a>
-                    <h4>{% trans "Keyboard Shortcuts Configuration" %}</h4>
-                </div>
-                <div class="modal-body">
-                    <form id="keyboard-shortcuts-config-form" method="POST" action="{% url "keyboard_config" %}?next={{ request.get_full_path|urlencode }}">
-                        {% csrf_token %}
-                        <div class="control-group">
-                            <div class="controls">
-                                <label class="checkbox">
-                                    <input data-bind="checked: $data.enabled" name="enable" type="checkbox"> {% trans "Enable Keyboard Shortcuts" %}
-                                </label>
-                            </div>
-                        </div>
-                        <div data-bind="visible: $data.enabled" class="control-group">
-                            <label class="control-label" for="main-key">{% trans "Choose Shortcut Key" %}</label>
-                            <div class="controls">
-                                <select name="main-key">
-                                    <option value="option" {% if request.couch_user.keyboard_shortcuts.main_key == 'option' %} selected{% endif %}>option / alt</option>
-                                    <option {% if request.couch_user.keyboard_shortcuts.main_key == 'ctrl' %} selected{% endif %}>ctrl</option>
-                                    <option {% if request.couch_user.keyboard_shortcuts.main_key == 'command' %} selected{% endif %}>command</option>
-                                    <option {% if request.couch_user.keyboard_shortcuts.main_key == 'shift' %} selected{% endif %}>shift</option>
-                                </select>
-                            </div>
-                        </div>
-                        <div class="control-group">
-                            <div class="controls"><button class="btn btn-primary" type="submit">Update</button></div>
-                        </div>
-                    </form>
-                    <hr />
-                    <div>
-                        {% trans "For more information visit: " %}
-                        <a href="https://help.commcarehq.org/display/commcarepublic/CommCareHQ+Keyboard+Shortcuts">{% trans "CommCare HQ Keyboard Shortcuts Wiki" %}</a>
-                    </div>
-                    <hr />
-                    <ul class="unstyled" id="keyboard-shortcuts-lookup"></ul>
-                    <strong>{% trans "While navigating menus or the sidebar" %}:</strong>
-                    <ul class="unstyled">
-                        <li>{% trans "Move up" %}: <code>{{ request.couch_user.keyboard_shortcuts.main_key|default:"*shortcut key*" }}+k</code> {% trans "or" %} <code>{{ request.couch_user.keyboard_shortcuts.main_key|default:"*shortcut key*" }}+up</code></li>
-                        <li>{% trans "Move down" %}: <code>{{ request.couch_user.keyboard_shortcuts.main_key|default:"*shortcut key*" }}+j</code> {% trans "or" %} <code>{{ request.couch_user.keyboard_shortcuts.main_key|default:"*shortcut key*" }}+down</code></li>
-                        <li>{% trans "Do action (e.g. browsing to a page)" %}: <code>{{ request.couch_user.keyboard_shortcuts.main_key|default:"*shortcut key*" }}+enter</code> {% trans "or" %} <code>{{ request.couch_user.keyboard_shortcuts.main_key|default:"*shortcut key*" }}+spacebar</code></li>
-                    </ul>
-                </div>
-            </div>
             {% if request.show_trial_notice %}
             <div class="modal hide fade" id="trial-notice">
                 <div class="modal-header">
@@ -371,7 +324,7 @@
         </div>
         <!--Begin javascript -->
         {% include 'style/bootstrap2/partials/bootstrap2_js.html' %}
-        <script src="{% static 'hqstyle/js/jquery/plugins/jquery.form.js' %}"></script>
+        <script src="{% static 'jquery-form-2.94-legacy/jquery.form.js' %}"></script>
 
         {% if request.guided_tour %}
             <script src="{% static 'tour/js/tour.utils.js' %}"></script>
@@ -385,15 +338,17 @@
         <script src="{% static 'jquery.cookie/jquery.cookie.js' %}"></script>
         <script src="{% static 'jquery-timeago/jquery.timeago.js' %}"></script>
 
-        <script src="{% static 'hqwebapp/js/lib/keymaster.min.js' %}"></script>
-        <script>
-            var KEY = key.noConflict();  // Make global key function capital to adhere to globals convention
-                                         // and to avoid conflicts in other places where "key" is used as variable name
-        </script>
-        {% if request.couch_user.keyboard_shortcuts.enabled %}
-            <script src="{% static 'hqwebapp/js/keyboard_navigator.js' %}"></script>
-        {% endif %}
+        <script src="{% static 'hqwebapp/js/hqModules.js' %}"></script>
         {% endblock %}
+
+        {% if request.couch_user and request|toggle_enabled:"NOTIFICATIONS" %}
+        <script type="text/javascript" src="{% new_static '/notifications/js/NotificationsService.ko.js' %}"></script>
+        <script type="text/javascript">
+            $(function () {
+                $('#js-settingsmenu-notifications').startNotificationsService('{% url 'notifications_service' %}');
+            });
+        </script>
+        {% endif %}
 
         {% block js-inline %}
         <script>
@@ -413,155 +368,6 @@
                 </script>
             {% endif %}
 
-        <script>
-            var KS = {
-                gen_click_fn: function(selector) {
-                    return function() {
-                        $(selector).click();
-                        return false;
-                    };
-                }
-            };
-
-            function configure_keyboard_shortcuts() {
-                $('#keyboard-shortcuts-config').modal('toggle');
-            }
-
-            var KEYBOARD_SHORTCUTS = [
-                {
-                    shortcut: "option+space, ctrl+space, command+space",
-                    handler: configure_keyboard_shortcuts,
-                    desc: "Open Keyboard Configuration"
-                }
-            ];
-
-            function KBConfigFormModel() {
-                this.enabled = ko.observable({{ request.couch_user.keyboard_shortcuts.enabled|JSON }});
-            }
-
-            $(function() {
-                var $lookup = $('#keyboard-shortcuts-lookup');
-                _(KEYBOARD_SHORTCUTS).each(function(s) {
-                    KEY(s.shortcut, s.handler);
-                    var $shortcut = $('<li>').append($('<span>').text(s.desc), ': ', $('<code>').text(s.shortcut));
-                    $lookup.append($shortcut);
-                });
-                var element = $('#keyboard-shortcuts-config-form').get(0);
-                ko.cleanNode(element);
-                $(element).koApplyBindings(new KBConfigFormModel());
-            });
-        </script>
-
-        {% if request.couch_user.keyboard_shortcuts.enabled %}
-        <script>
-            var nav_key = {{ request.couch_user.keyboard_shortcuts.main_key|JSON }};
-
-            function gen_apps_menu_elements() {
-                return $("#mainmenu-ApplicationsTab li a[data-id]");
-            }
-            var apps_menu_navigator = new KeyboardNavigator();
-            apps_menu_navigator.init({
-                name: 'apps menu',
-                ready_scope: 'am-ready',
-                nav_key: nav_key,
-                action_key: 'enter',
-                forward_keys: ['j', 'down'],
-                back_keys: ['k', 'up'],
-                element_list_generator: gen_apps_menu_elements,
-                focus_in_fn: function($ele) {
-                    $("#mainmenu-ApplicationsTab").addClass('open');
-                    keyboard_navigator_utils.focus_in_fn($ele);
-                },
-                stop_fn: function() { $("#mainmenu-ApplicationsTab").removeClass('open') },
-                reset_index: true,
-                regen_list_on_leave: true
-            });
-
-            function gen_admin_menu_elements() {
-                return $("#mainmenu-AdminTab li a");
-            }
-            var admin_menu_navigator = new KeyboardNavigator();
-            admin_menu_navigator.init({
-                name: 'admin menu',
-                ready_scope: 'adm-ready',
-                nav_key: nav_key,
-                action_key: 'enter',
-                forward_keys: ['j', 'down'],
-                back_keys: ['k', 'up'],
-                element_list_generator: gen_admin_menu_elements,
-                focus_in_fn: function($ele) {
-                    $("#mainmenu-AdminTab").addClass('open');
-                    keyboard_navigator_utils.focus_in_fn($ele);
-                },
-                stop_fn: function() { $("#mainmenu-AdminTab").removeClass('open') },
-                reset_index: true,
-                regen_list_on_leave: true
-            });
-
-            function gen_projects_menu_elements() {
-                return $("#nav-projects-menu li a");
-            }
-            var projects_menu_navigator = new KeyboardNavigator();
-            projects_menu_navigator.init({
-                name: 'projects menu',
-                ready_scope: 'pm-ready',
-                nav_key: nav_key,
-                action_key: 'enter',
-                forward_keys: ['j', 'down'],
-                back_keys: ['k', 'up'],
-                element_list_generator: gen_projects_menu_elements,
-                start_fn: function() { $('#nav-projects-menu').addClass('open') },
-                stop_fn: function() { $('#nav-projects-menu').removeClass('open') },
-                reset_index: true,
-                regen_list_on_leave: true
-            });
-
-            function gen_user_menu_elements() {
-                return $("#nav-user-menu li a");
-            }
-            var user_menu_navigator = new KeyboardNavigator();
-            user_menu_navigator.init({
-                name: 'user menu',
-                ready_scope: 'um-ready',
-                nav_key: nav_key,
-                action_key: 'enter',
-                forward_keys: ['j', 'down'],
-                back_keys: ['k', 'up'],
-                element_list_generator: gen_user_menu_elements,
-                start_fn: function() { $('#nav-user-menu').addClass('open') },
-                stop_fn: function() { $('#nav-user-menu').removeClass('open') },
-                reset_index: true,
-                regen_list_on_leave: true
-            });
-
-            KEYBOARD_SHORTCUTS = KEYBOARD_SHORTCUTS.concat([
-                {
-                    shortcut: nav_key + "+a",
-                    handler: apps_menu_navigator.activate,
-                    desc: "Access Applications Menu"
-                },
-                {
-                    shortcut: nav_key + "+p",
-                    handler: projects_menu_navigator.activate,
-                    desc: "Access Projects Menu"
-                },
-                {
-                    shortcut: nav_key + "+u",
-                    handler: user_menu_navigator.activate,
-                    desc: "Access Web User Settings Menu"
-                }
-            ]);
-            {% if request.couch_user.is_superuser %}
-                KEYBOARD_SHORTCUTS.push({
-                    shortcut: nav_key + "+o",
-                    handler: admin_menu_navigator.activate,
-                    desc: "Access Admin Menu"
-                });
-            {% endif %}
-        </script>
-        {% block keyboard_shortcuts %}
-        {% endblock %}
-        {% endif %}
         {% endblock %}
 
         {% if request.show_trial_notice %}

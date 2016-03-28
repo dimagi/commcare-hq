@@ -75,6 +75,16 @@ class FormProcessorInterface(object):
         else:
             return LedgerProcessorCouch(domain=self.domain)
 
+    @property
+    @memoized
+    def ledger_db(self):
+        from corehq.form_processor.backends.couch.ledger import LedgerDBCouch
+        from corehq.form_processor.backends.sql.ledger import LedgerDBSQL
+        if should_use_sql_backend(self.domain):
+            return LedgerDBSQL()
+        else:
+            return LedgerDBCouch()
+
     def save_xform(self, xform):
         return self.processor.save_xform(xform)
 
@@ -102,8 +112,8 @@ class FormProcessorInterface(object):
         """
         return self.processor.is_duplicate(xform_id, domain=domain)
 
-    def new_xform(self, instance_xml):
-        return self.processor.new_xform(instance_xml)
+    def new_xform(self, form_json):
+        return self.processor.new_xform(form_json)
 
     def xformerror_from_xform_instance(self, instance, error_message, with_new_id=False):
         return self.processor.xformerror_from_xform_instance(instance, error_message, with_new_id=with_new_id)

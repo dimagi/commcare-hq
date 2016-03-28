@@ -86,6 +86,8 @@ class FormattedDetailColumn(object):
     template_width = None
     template_form = None
 
+    SORT_TYPE = 'string'
+
     def __init__(self, app, module, detail, column, sort_element=None,
                  order=None, detail_type=None):
         self.app = app
@@ -141,21 +143,24 @@ class FormattedDetailColumn(object):
         if self.sort_xpath_function:
             sort = sx.Sort(
                 text=sx.Text(xpath_function=self.sort_xpath_function),
-                type='string',
+                type=self.SORT_TYPE,
             )
 
         if self.sort_element:
             if not sort:
-                # these have to be distinguished for the UI to be able to give
-                # user friendly choices
-                if self.sort_element.type in ('date', 'plain'):
-                    sort_type = 'string'
-                else:
-                    sort_type = self.sort_element.type
+                sort_type = {
+                    'date': 'string',
+                    'plain': 'string',
+                    'distance': 'double'
+                }.get(self.sort_element.type, self.sort_element.type)
+
                 sort = sx.Sort(
                     text=sx.Text(xpath_function=self.xpath_function),
                     type=sort_type,
                 )
+
+            if self.sort_element.type == 'distance':
+                sort.text.xpath_function = self.evaluate_template(Distance.SORT_XPATH_FUNCTION)
 
             sort.order = self.order
             sort.direction = self.sort_element.direction
@@ -273,6 +278,13 @@ class Date(FormattedDetailColumn):
 class TimeAgo(FormattedDetailColumn):
     XPATH_FUNCTION = u"if({xpath} = '', '', string(int((today() - date({xpath})) div {column.time_ago_interval})))"
     SORT_XPATH_FUNCTION = u"{xpath}"
+
+
+@register_format_type('distance')
+class Distance(FormattedDetailColumn):
+    XPATH_FUNCTION = u"if(here() = '', '', if({xpath} = '', '', concat(round(distance({xpath}, here()) div 1000), ' km')))"
+    SORT_XPATH_FUNCTION = u'round(distance({xpath}, here()))'
+    SORT_TYPE = 'double'
 
 
 @register_format_type('phone')
@@ -423,17 +435,32 @@ class Graph(FormattedDetailColumn):
                         y_function=s.y_function,
                         radius_function=s.radius_function,
                         configuration=sx.ConfigurationGroup(
-                            configs=[
-                                # TODO: It might be worth wrapping
-                                #       these values in quotes (as appropriate)
-                                #       to prevent the user from having to
-                                #       figure out why their unquoted colors
-                                #       aren't working.
-                                sx.ConfigurationItem(id=k, xpath_function=v)
-                                for k, v in s.config.iteritems()]
+                            configs=(
+                                [
+                                    # TODO: It might be worth wrapping
+                                    #       these values in quotes (as appropriate)
+                                    #       to prevent the user from having to
+                                    #       figure out why their unquoted colors
+                                    #       aren't working.
+                                    sx.ConfigurationItem(id=k, xpath_function=v)
+                                    for k, v in s.config.iteritems()
+                                ] + [
+                                    sx.ConfigurationItem(
+                                        id=k,
+                                        locale_id=self.id_strings.graph_series_configuration(
+                                            self.module,
+                                            self.detail_type,
+                                            self.column,
+                                            index,
+                                            k
+                                        )
+                                    )
+                                    for k, v in s.locale_specific_config.iteritems()
+                                ]
+                            )
                         )
                     )
-                    for s in self.column.graph_configuration.series],
+                    for index, s in enumerate(self.column.graph_configuration.series)],
                 configuration=sx.ConfigurationGroup(
                     configs=(
                         [

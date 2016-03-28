@@ -8,6 +8,7 @@ from corehq.apps.userreports.exceptions import ColumnNotFoundError
 from corehq.apps.userreports.sql import IndicatorSqlAdapter
 from corehq.apps.users.analytics import get_search_users_in_domain_es_query
 from corehq.apps.users.util import raw_username
+from corehq.util.spreadsheets.excel import alphanumeric_sort_key
 
 DATA_SOURCE_COLUMN = 'data_source_column'
 LOCATION = 'location'
@@ -44,6 +45,12 @@ class ChoiceProvider(object):
         self.report = report
         self.filter_slug = filter_slug
 
+    def configure(self, spec):
+        """
+        Custom configuration for the choice provider can live here
+        """
+        pass
+
     @property
     def report_filter(self):
         return self.report.get_ui_filter(self.filter_slug)
@@ -56,12 +63,16 @@ class ChoiceProvider(object):
     def query(self, query_context):
         pass
 
+    def get_sorted_choices_for_values(self, values):
+        return sorted(self.get_choices_for_values(values),
+                      key=lambda choice: alphanumeric_sort_key(choice.display))
+
     def get_choices_for_values(self, values):
         choices = set(self.get_choices_for_known_values(values))
         used_values = {value for value, _ in choices}
         for value in values:
             if value not in used_values:
-                choices.add(Choice(value, value))
+                choices.add(Choice(value, unicode(value) if value is not None else ''))
                 used_values.add(value)
         return choices
 
@@ -128,6 +139,13 @@ class DataSourceColumnChoiceProvider(ChoiceProvider):
 
 class LocationChoiceProvider(ChainableChoiceProvider):
 
+    def __init__(self, report, filter_slug):
+        super(LocationChoiceProvider, self).__init__(report, filter_slug)
+        self.include_descendants = False
+
+    def configure(self, spec):
+        self.include_descendants = spec.get('include_descendants', self.include_descendants)
+
     def _locations_query(self, query_text):
         if query_text:
             return SQLLocation.active_objects.filter_path_by_user_input(
@@ -151,9 +169,13 @@ class LocationChoiceProvider(ChainableChoiceProvider):
         return self._locations_query(query).count()
 
     def get_choices_for_known_values(self, values):
-        return [
-            Choice(loc.location_id, loc.display_name) for loc in
-            SQLLocation.active_objects.filter(location_id__in=values)]
+        selected_locations = SQLLocation.active_objects.filter(location_id__in=values)
+        if self.include_descendants:
+            selected_locations = SQLLocation.objects.get_queryset_descendants(
+                selected_locations, include_self=True
+            )
+
+        return [Choice(loc.location_id, loc.display_name) for loc in selected_locations]
 
 
 class UserChoiceProvider(ChainableChoiceProvider):

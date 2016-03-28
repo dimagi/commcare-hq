@@ -2,12 +2,11 @@ from decimal import Decimal
 import logging
 from django.core.management.base import LabelCommand
 from corehq.apps.accounting.models import Currency
+from corehq.apps.smsbillables.utils import log_smsbillables_info
 
-from corehq.messaging.smsbackends.grapevine.models import GrapevineBackend
+from corehq.messaging.smsbackends.grapevine.models import SQLGrapevineBackend
 from corehq.apps.sms.models import INCOMING, OUTGOING
 from corehq.apps.smsbillables.models import SmsGatewayFee, SmsGatewayFeeCriteria
-
-logger = logging.getLogger('accounting')
 
 
 def bootstrap_grapevine_gateway_update(apps):
@@ -19,7 +18,7 @@ def bootstrap_grapevine_gateway_update(apps):
 
     # Incoming message to South Africa
     SmsGatewayFee.create_new(
-        GrapevineBackend.get_api_id(), INCOMING, Decimal('0.65'),
+        SQLGrapevineBackend.get_api_id(), INCOMING, Decimal('0.65'),
         country_code='27',
         currency=currency,
         fee_class=sms_gateway_fee_class,
@@ -27,7 +26,7 @@ def bootstrap_grapevine_gateway_update(apps):
     )
     # Outgoing message from South Africa
     SmsGatewayFee.create_new(
-        GrapevineBackend.get_api_id(), OUTGOING, Decimal('0.22'),
+        SQLGrapevineBackend.get_api_id(), OUTGOING, Decimal('0.22'),
         country_code='27',
         currency=currency,
         fee_class=sms_gateway_fee_class,
@@ -37,7 +36,7 @@ def bootstrap_grapevine_gateway_update(apps):
     # Explicitly include Lesotho fees for pricing table UI.
     # Incoming message to Lesotho
     SmsGatewayFee.create_new(
-        GrapevineBackend.get_api_id(), INCOMING, Decimal('0.90'),
+        SQLGrapevineBackend.get_api_id(), INCOMING, Decimal('0.90'),
         country_code='266',
         currency=currency,
         fee_class=sms_gateway_fee_class,
@@ -45,7 +44,7 @@ def bootstrap_grapevine_gateway_update(apps):
     )
     # Outgoing message from Lesotho
     SmsGatewayFee.create_new(
-        GrapevineBackend.get_api_id(), OUTGOING, Decimal('0.90'),
+        SQLGrapevineBackend.get_api_id(), OUTGOING, Decimal('0.90'),
         country_code='266',
         currency=currency,
         fee_class=sms_gateway_fee_class,
@@ -54,19 +53,19 @@ def bootstrap_grapevine_gateway_update(apps):
 
     # Incoming message to arbitrary country
     SmsGatewayFee.create_new(
-        GrapevineBackend.get_api_id(), INCOMING, Decimal('0.90'),
+        SQLGrapevineBackend.get_api_id(), INCOMING, Decimal('0.90'),
         currency=currency,
         fee_class=sms_gateway_fee_class,
         criteria_class=sms_gateway_fee_criteria_class,
     )
     # Outgoing message from arbitrary country
     SmsGatewayFee.create_new(
-        GrapevineBackend.get_api_id(), OUTGOING, Decimal('0.90'),
+        SQLGrapevineBackend.get_api_id(), OUTGOING, Decimal('0.90'),
         currency=currency,
         fee_class=sms_gateway_fee_class,
         criteria_class=sms_gateway_fee_criteria_class,
     )
-    logger.info("Updated Global Grapevine gateway fees.")
+    log_smsbillables_info("Updated Global Grapevine gateway fees.")
 
 
 class Command(LabelCommand):

@@ -1,9 +1,13 @@
 from datetime import datetime
+
 from django.test.testcases import TestCase
-from corehq.apps.commtrack.tests.util import TEST_BACKEND, make_loc
+
+from corehq.apps.accounting import generator
+from corehq.apps.commtrack.tests.util import make_loc
 from corehq.apps.domain.models import Domain
 from corehq.apps.sms.models import SMS
-from corehq.messaging.smsbackends.test.models import TestSMSBackend
+from corehq.apps.sms.tests.util import setup_default_sms_test_backend
+
 from custom.ilsgateway.models import SupplyPointStatus, SupplyPointStatusTypes
 from custom.ilsgateway.tanzania.reminders import REMINDER_R_AND_R_FACILITY, REMINDER_R_AND_R_DISTRICT, \
     DELIVERY_REMINDER_FACILITY, DELIVERY_REMINDER_DISTRICT, REMINDER_STOCKONHAND, SUPERVISION_REMINDER
@@ -21,6 +25,7 @@ class TestReminders(TestCase):
 
     @classmethod
     def setUpClass(cls):
+        cls.sms_backend, cls.sms_backend_mapping = setup_default_sms_test_backend()
         domain = prepare_domain(TEST_DOMAIN)
         mohsw = make_loc(code="moh1", name="Test MOHSW 1", type="MOHSW", domain=domain.name)
 
@@ -30,7 +35,7 @@ class TestReminders(TestCase):
         region = make_loc(code="reg1", name="Test Region 1", type="REGION",
                           domain=domain.name, parent=msdzone)
         cls.district = make_loc(code="dis1", name="Test District 1", type="DISTRICT",
-                            domain=domain.name, parent=region)
+                                domain=domain.name, parent=region)
         cls.facility = make_loc(code="loc1", name="Test Facility 1", type="FACILITY",
                                 domain=domain.name, parent=cls.district)
         cls.facility.metadata['group'] = 'B'
@@ -40,8 +45,6 @@ class TestReminders(TestCase):
         cls.facility.save()
         cls.facility2.save()
 
-        cls.sms_backend = TestSMSBackend(name=TEST_BACKEND.upper(), is_global=True)
-        cls.sms_backend.save()
         cls.user1 = bootstrap_user(
             cls.facility, username='test', domain=domain.name, home_loc='loc1', phone_number='5551234',
             first_name='test', last_name='Test'
@@ -55,8 +58,10 @@ class TestReminders(TestCase):
 
     @classmethod
     def tearDownClass(cls):
+        cls.sms_backend_mapping.delete()
         cls.sms_backend.delete()
         Domain.get_by_name(TEST_DOMAIN).delete()
+        generator.delete_all_subscriptions()
 
     def tearDown(self):
         SMS.objects.all().delete()

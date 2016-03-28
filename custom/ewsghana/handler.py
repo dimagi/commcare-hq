@@ -4,7 +4,7 @@ from custom.ewsghana.handlers import INVALID_MESSAGE
 from custom.ewsghana.handlers.help import HelpHandler
 from custom.ewsghana.handlers.receipts import ReceiptsHandler
 from custom.ewsghana.handlers.requisition import RequisitionHandler
-from custom.ewsghana.handlers.alerts import AlertsHandler
+from custom.ewsghana.handlers.soh import SOHHandler
 from custom.ewsghana.handlers.start import StartHandler
 from custom.ewsghana.handlers.stop import StopHandler
 from custom.ewsghana.handlers.undo import UndoHandler
@@ -51,7 +51,7 @@ def handle(verified_contact, text, msg=None):
         ('language', 'lang', 'lugha'): LanguageHandler,
         ('yes', 'no', 'y', 'n'): RequisitionHandler,
         ('undo', 'replace', 'revoke'): UndoHandler,
-        ('soh',): AlertsHandler,
+        ('soh',): SOHHandler,
         ('not',): not_function(args[0]) if args else None,
         ('rec', 'receipts', 'received'): ReceiptsHandler
     }
@@ -72,4 +72,4 @@ def handle(verified_contact, text, msg=None):
             handler.help()
             return True
     else:
-        return AlertsHandler(**params).handle()
+        return SOHHandler(**params).handle()

@@ -6,7 +6,10 @@
         "airsmadagascar",
         "airsrwanda",
         "airszambia",
-        "airszimbabwe"
+        "airszimbabwe",
+        "airstanzania",
+        "airsghana",
+        "airsbenin"
     ],
     "data_source_table":"static-sms-indicators-001",
     "report_id":"spray-progress-report-level-2",

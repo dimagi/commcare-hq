@@ -2,6 +2,7 @@ import datetime
 
 from django.test.testcases import TestCase
 
+from corehq.apps.accounting import generator
 from corehq.apps.accounting.models import (
     BillingAccount,
     DefaultProductPlan,
@@ -11,15 +12,16 @@ from corehq.apps.accounting.models import (
     ProBonoStatus,
     SubscriptionType
 )
-from corehq.apps.analytics.signals import _get_subscription_properties_by_user
+from corehq.apps.analytics.signals import get_subscription_properties_by_user
 from corehq.apps.domain.models import Domain
 from corehq.apps.users.models import WebUser
-from corehq.apps.accounting import generator
 
 
 class TestSubscriptionProperties(TestCase):
     @classmethod
     def setUpClass(cls):
+        generator.instantiate_accounting_for_tests()
+
         cls.base_domain = Domain(name="base", is_active=True)
         cls.base_domain.save()
         cls.user = WebUser.create(cls.base_domain.name, "tarso", "*****")
@@ -39,8 +41,6 @@ class TestSubscriptionProperties(TestCase):
 
     @classmethod
     def _setup_subscription(cls, domain_name, software_plan):
-        generator.instantiate_accounting_for_tests()
-
         plan = DefaultProductPlan.get_default_plan_by_domain(
             domain_name, edition=software_plan
         )
@@ -58,38 +58,38 @@ class TestSubscriptionProperties(TestCase):
         cls._to_delete.append(subscription)
 
     @classmethod
-    def tesrDownClass(cls):
+    def tearDownClass(cls):
         SubscriptionAdjustment.objects.all().delete()
         for obj in [cls.base_domain, cls.community, cls.enterprise] + cls._to_delete:
             obj.delete()
         cls.user.delete()
 
     def test_properties(self):
-        properties = _get_subscription_properties_by_user(self.user)
+        properties = get_subscription_properties_by_user(self.user)
         self.assertEqual(properties['is_on_community_plan'], 'yes')
         self.assertEqual(properties['is_on_standard_plan'], 'no')
         self.assertEqual(properties['is_on_pro_plan'], 'no')
         self.assertEqual(properties['max_edition_of_paying_plan'], SoftwarePlanEdition.ENTERPRISE)
 
     def test_probono_properties(self):
-        properties = _get_subscription_properties_by_user(self.user)
+        properties = get_subscription_properties_by_user(self.user)
 
         self.assertEqual(properties['is_on_pro_bono_plan'], 'no')
         self._change_to_probono(self.community.name, ProBonoStatus.YES)
-        properties = _get_subscription_properties_by_user(self.user)
+        properties = get_subscription_properties_by_user(self.user)
         self.assertEqual(properties['is_on_pro_bono_plan'], 'yes')
 
         self.assertEqual(properties['is_on_discounted_plan'], 'no')
         self._change_to_probono(self.community.name, ProBonoStatus.DISCOUNTED)
-        properties = _get_subscription_properties_by_user(self.user)
+        properties = get_subscription_properties_by_user(self.user)
         self.assertEqual(properties['is_on_discounted_plan'], 'yes')
 
     def test_extended_trial(self):
-        properties = _get_subscription_properties_by_user(self.user)
+        properties = get_subscription_properties_by_user(self.user)
 
         self.assertEqual(properties['is_on_extended_trial_plan'], 'no')
         self._change_to_extended_trial(self.community.name)
-        properties = _get_subscription_properties_by_user(self.user)
+        properties = get_subscription_properties_by_user(self.user)
         self.assertEqual(properties['is_on_extended_trial_plan'], 'yes')
 
     def _change_to_probono(self, domain_name, pro_bono_status):

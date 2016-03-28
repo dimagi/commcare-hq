@@ -2,7 +2,6 @@
 Fluff IndicatorDocument definitions for the OPM reports.
 """
 from corehq.apps.change_feed import topics
-from corehq.apps.change_feed.consumer.feed import KafkaChangeFeed
 from fluff.filters import CustomFilter
 from corehq.apps.users.models import CommCareUser
 import fluff
@@ -42,6 +41,7 @@ class OpmUserFluff(fluff.IndicatorDocument):
     document_filter = CustomFilter(is_valid_user)
 
     save_direct_to_sql = True
+    kafka_topic = topics.META
 
     name = flat_field(lambda user: user.name)
 
@@ -61,10 +61,3 @@ class OpmUserFluff(fluff.IndicatorDocument):
 
 
 OpmUserFluffPillow = OpmUserFluff.pillow()
-
-
-def get_pillow():
-    return OpmUserFluffPillow(
-        change_feed=KafkaChangeFeed(topic=topics.META, group_id='opm-user-fluff'),
-        preload_docs=False,
-    )

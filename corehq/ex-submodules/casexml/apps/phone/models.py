@@ -6,7 +6,7 @@ import itertools
 from couchdbkit.exceptions import ResourceConflict, ResourceNotFound
 from casexml.apps.phone.exceptions import IncompatibleSyncLogType
 from corehq.toggles import LEGACY_SYNC_SUPPORT
-from corehq.util.global_request import get_request
+from corehq.util.global_request import get_request_domain
 from corehq.util.soft_assert import soft_assert
 from dimagi.ext.couchdbkit import *
 from django.db import models
@@ -722,7 +722,7 @@ class SimplifiedSyncLog(AbstractSyncLog):
         incoming_extensions = _reverse_index_map(self.extension_index_tree.indices)
         available = {case for case in relevant
                      if case not in self.closed_cases
-                     and not self.extension_index_tree.indices.get(case) or self.index_tree.indices.get(case)}
+                     and (not self.extension_index_tree.indices.get(case) or self.index_tree.indices.get(case))}
         new_available = set() | available
         while new_available:
             case_to_check = new_available.pop()
@@ -1071,8 +1071,7 @@ class SimplifiedSyncLog(AbstractSyncLog):
 def _domain_has_legacy_toggle_set():
     # old versions of commcare (< 2.10ish) didn't purge on form completion
     # so can still modify cases that should no longer be on the phone.
-    request = get_request()
-    domain = getattr(request, 'domain', None)
+    domain = get_request_domain()
     return LEGACY_SYNC_SUPPORT.enabled(domain) if domain else False
 
 

@@ -1,5 +1,6 @@
 from datetime import date, datetime
 from decimal import Decimal, InvalidOperation
+from six import string_types
 from corehq.util.dates import iso_string_to_date, iso_string_to_datetime
 
 
@@ -78,7 +79,7 @@ def recursive_lookup(dict_object, keys):
 def transform_date(item):
     # postgres crashes on empty strings, but is happy to take null dates
     if item:
-        if isinstance(item, basestring):
+        if isinstance(item, string_types):
             try:
                 return iso_string_to_date(item)
             except ValueError:
@@ -86,16 +87,16 @@ def transform_date(item):
                     return iso_string_to_datetime(item, strict=True).date()
                 except ValueError:
                     return None
-        elif isinstance(item, date):
-            return item
         elif isinstance(item, datetime):
             return item.date()
+        elif isinstance(item, date):
+            return item
     return None
 
 
 def transform_datetime(item):
     if item:
-        if isinstance(item, basestring):
+        if isinstance(item, string_types):
             try:
                 return iso_string_to_datetime(item, strict=True)
             except ValueError:

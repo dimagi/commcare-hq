@@ -12,9 +12,11 @@ testapps.test_elasticsearch: []
 testapps.test_pillowtop:
   - auditcare
   - django_digest
+  - casexml.apps.case
   - corehq.apps.domain
   - corehq.apps.hqadmin
   - corehq.apps.users
+  - corehq.apps.tzmigration
   - corehq.couchapps
   - corehq.form_processor
   - corehq.sql_accessors
@@ -46,6 +48,9 @@ casexml.apps.phone:
   - django_digest
   - corehq.apps.groups
   - django.contrib.admin
+  - two_factor
+  - django_otp.plugins.otp_static
+  - django_otp.plugins.otp_totp
   - django_prbac
   - tastypie
   - corehq.apps.dropbox
@@ -82,12 +87,14 @@ casexml.apps.stock:
   - corehq.sql_accessors
   - corehq.sql_proxy_accessors
   - corehq.apps.commtrack
+  - corehq.apps.domain
   - corehq.apps.hqcase
   - corehq.apps.locations
   - corehq.apps.products
   - corehq.apps.reminders
   - corehq.apps.sms
   - corehq.apps.smsforms
+  - corehq.apps.users
   - corehq.apps.tzmigration
   - couchforms
   - phonelog
@@ -105,6 +112,7 @@ corehq.apps.app_manager:
   - corehq.apps.builds
   - corehq.apps.custom_data_fields
   - corehq.apps.domain
+  - corehq.apps.groups
   - corehq.apps.hqmedia
   - corehq.apps.hqwebapp
   - corehq.apps.locations
@@ -115,6 +123,7 @@ corehq.apps.app_manager:
   - corehq.apps.style
   - corehq.apps.tzmigration
   - corehq.apps.users
+  - statici18n
   - tastypie
   # user.delete() needs these ones
   - corehq.apps.dropbox
@@ -125,6 +134,9 @@ corehq.apps.app_manager:
   - custom.ilsgateway
   - custom.ewsghana
   - corehq.apps.smsforms
+  - corehq.apps.commtrack
+corehq.apps.change_feed:
+  - pillowtop
 corehq.apps.commtrack:
   - auditcare
   - couchforms
@@ -194,8 +206,12 @@ corehq.apps.locations:
   - corehq.apps.dropbox
   - touchforms.formplayer
   - corehq.apps.tour
+  - two_factor
+  - django_otp.plugins.otp_static
+  - django_otp.plugins.otp_totp
 corehq.apps.userreports:
   - casexml.apps.case
+  - casexml.apps.phone
   - casexml.apps.stock
   - corehq.couchapps
   - corehq.form_processor
@@ -212,11 +228,13 @@ corehq.apps.userreports:
   - corehq.apps.users
   - couchforms
   - corehq.apps.smsforms
+  - pillowtop
 couchforms:
   - casexml.apps.case
   - casexml.apps.phone
   - casexml.apps.stock
   - corehq.apps.hqcase
+  - corehq.apps.hqadmin
   - corehq.apps.products
   - corehq.apps.reminders
   - corehq.apps.sms
@@ -232,6 +250,7 @@ corehq.apps.receiverwrapper:
   - casexml.apps.case
   - casexml.apps.phone
   - corehq.apps.accounting
+  - corehq.apps.app_manager
   - corehq.apps.domain
   - corehq.apps.dropbox
   - corehq.apps.locations
@@ -251,6 +270,7 @@ corehq.apps.receiverwrapper:
   - django_prbac
   - phonelog
   - tastypie
+  - corehq.apps.userhack
   # required by user.delete()
   - touchforms.formplayer
   - corehq.apps.tour
@@ -285,7 +305,11 @@ corehq.apps.repeaters:
   - corehq.apps.users
   - corehq.couchapps
   - couchforms
+  - phonelog
   - django_prbac
+  - corehq.form_processor
+  - corehq.sql_accessors
+  - corehq.sql_proxy_accessors
   # unfortunately domain.delete() needs all of these - otherwise they could be removed
   - custom.logistics
   - custom.ilsgateway
@@ -293,4 +317,131 @@ corehq.apps.repeaters:
   - django_prbac
   - corehq.apps.accounting
   - corehq.apps.smsforms
+  - casexml.apps.phone
+  - corehq.apps.reminders
 corehq.sql_db: []
+corehq.apps.accounting:
+  - corehq.apps.accounting
+  - django_prbac
+  - corehq.apps.tzmigration
+  - corehq.apps.domain
+  - corehq.apps.userhack
+  - corehq.apps.users
+  - corehq.couchapps
+  - corehq.apps.sms
+  - corehq.apps.smsforms
+  - auditcare
+  - django_digest
+  - django.contrib.admin
+  - tastypie
+  - corehq.apps.dropbox
+  - corehq.apps.tour
+  - touchforms.formplayer
+  - corehq.apps.smsbillables
+  - corehq.apps.app_manager
+  - corehq.apps.reminders
+  - corehq.apps.data_interfaces
+corehq.apps.export:
+  - corehq.apps.export
+  - corehq.couchapps
+  - corehq.apps.app_manager
+corehq.apps.callcenter:
+  - auditcare
+  - casexml.apps.case
+  - casexml.apps.phone
+  - casexml.apps.stock
+  - corehq.apps.commtrack
+  - corehq.apps.domain
+  - corehq.apps.hqcase
+  - corehq.apps.locations
+  - corehq.apps.products
+  - corehq.apps.reminders
+  - corehq.apps.tzmigration
+  - corehq.apps.users
+  - corehq.couchapps
+  - corehq.form_processor
+  - corehq.sql_accessors
+  - corehq.sql_proxy_accessors
+  - couchforms
+  - django_digest
+corehq.apps.hqcase:
+  - auditcare
+  - casexml.apps.case
+  - casexml.apps.phone
+  - corehq.apps.tzmigration
+  - corehq.apps.domain
+  - corehq.apps.dropbox
+  - corehq.apps.groups
+  - corehq.apps.reminders
+  - corehq.apps.tour
+  - corehq.apps.userhack
+  - corehq.apps.users
+  - corehq.couchapps
+  - corehq.form_processor
+  - corehq.sql_accessors
+  - couchforms
+  - django.contrib.admin
+  - django_digest
+  - django_prbac
+  - django_otp
+  - django_otp.plugins.otp_static
+  - django_otp.plugins.otp_totp
+  - two_factor
+  - tastypie
+  - touchforms.formplayer
+corehq.couchapps:
+  - casexml.apps.case
+  - casexml.apps.phone
+  - corehq.apps.tzmigration
+  - corehq.apps.domain
+  - corehq.form_processor
+  - corehq.sql_accessors
+  - couchforms
+corehq.apps.data_interfaces:
+  - auditcare
+  - casexml.apps.case
+  - casexml.apps.phone
+  - corehq.apps.accounting
+  - corehq.apps.app_manager
+  - corehq.apps.domain
+  - corehq.apps.dropbox
+  - corehq.apps.hqcase
+  - corehq.apps.hqwebapp
+  - corehq.apps.style
+  - corehq.apps.tour
+  - corehq.apps.tzmigration
+  - corehq.apps.users
+  - corehq.couchapps
+  - corehq.form_processor
+  - corehq.sql_accessors
+  - compressor
+  - couchforms
+  - crispy_forms
+  - django.contrib.admin
+  - django_digest
+  - django_prbac
+  - statici18n
+  - tastypie
+  - touchforms.formplayer
+corehq.apps.users:
+  - auditcare
+  - casexml.apps.case
+  - casexml.apps.phone
+  - corehq.apps.domain
+  - corehq.apps.dropbox
+  - corehq.apps.hqcase
+  - corehq.apps.reminders
+  - corehq.apps.sms
+  - corehq.apps.smsforms
+  - corehq.apps.tour
+  - corehq.apps.tzmigration
+  - corehq.apps.userhack
+  - corehq.couchapps
+  - corehq.form_processor
+  - corehq.sql_accessors
+  - couchforms
+  - django.contrib.admin
+  - django_digest
+  - django_prbac
+  - tastypie
+  - touchforms.formplayer

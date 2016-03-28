@@ -23,10 +23,12 @@ from pillowtop.couchdb import CachedCouchDB
 
 from django import db
 from pillowtop.dao.couch import CouchDocumentStore
-from pillowtop.es_utils import completely_initialize_pillow_index
+from pillowtop.es_utils import completely_initialize_pillow_index, doc_exists
 from pillowtop.feed.couch import CouchChangeFeed
 from pillowtop.logger import pillow_logging
 from pillowtop.pillow.interface import PillowBase
+from pillowtop.utils import prepare_bulk_payloads
+
 try:
     from corehq.util.soft_assert import soft_assert
     _assert = soft_assert(to='@'.join(['czue', 'dimagi.com']), fail_if_debug=True)
@@ -88,6 +90,11 @@ class BasicPillow(PillowBase):
             # document_class must be a CouchDocLockableMixIn
             assert hasattr(self.document_class, 'get_obj_lock_by_id')
 
+    @property
+    def pillow_id(self):
+        # for legacy reasons, by default a Pillow's ID is just it's class name
+        return self.__class__.__name__
+
     def get_couch_db(self):
         if self._couch_db is None:
             self._couch_db = self.get_default_couch_db()
@@ -121,7 +128,6 @@ class BasicPillow(PillowBase):
 
     def _get_default_checkpoint(self):
         return PillowCheckpoint(
-            self.document_store,
             construct_checkpoint_doc_id_from_name(self.get_name()),
         )
 
@@ -340,16 +346,14 @@ class PythonPillow(BasicPillow):
                 self.process_chunk()
         elif self.python_filter(change) or (change.get('deleted', None) and self.process_deletions):
             self.process_change(change)
+
+    def fire_change_processed_event(self, change, context):
         if context.changes_seen % self.checkpoint_frequency == 0 and context.do_set_checkpoint:
             # if using chunking make sure we never allow the checkpoint to get in
             # front of the chunks
             if self.use_chunking:
                 self.process_chunk()
             self.set_checkpoint(change)
-
-    def fire_change_processed_event(self, change, context):
-        # todo: should fix this so that the checkpointing happens here.
-        pass
 
     def run(self):
         self.change_queue = []
@@ -390,7 +394,7 @@ def send_to_elasticsearch(index, doc_type, doc_id, es_getter, name, data=None, r
         except RequestError as ex:
             error_message = "Pillowtop put_robust error [%s]:\n%s\n\tpath: %s/%s/%s\n\t%s" % (
                 name,
-                ex.message or "No error message",
+                ex.error or "No error message",
                 index, doc_type, doc_id,
                 data.keys())
 
@@ -421,8 +425,6 @@ class AliasedElasticPillow(BasicPillow):
     pillow will create a new Index with a new md5sum as its suffix. Once it's finished indexing,
     you will need to flip the alias over to it.
     """
-    es_host = ""
-    es_port = ""
     es_index = ""
     es_type = ""
     es_alias = ''
@@ -451,19 +453,14 @@ class AliasedElasticPillow(BasicPillow):
 
     @memoized
     def get_es_new(self):
-        return Elasticsearch(
-            [{
-                'host': self.es_host,
-                'port': self.es_port,
-            }],
-            timeout=self.es_timeout,
-        )
+        from corehq.elastic import get_es_new
+        return get_es_new(timeout=self.es_timeout)
 
     def change_trigger(self, changes_dict):
         id = changes_dict['id']
         if changes_dict.get('deleted', False):
             try:
-                if self.doc_exists(id):
+                if doc_exists(self, id):
                     self.get_es_new().delete(self.es_index, self.es_type, id)
             except Exception, ex:
                 pillow_logging.error(
@@ -490,20 +487,19 @@ class AliasedElasticPillow(BasicPillow):
 
     def change_transport(self, doc_dict):
         """
-        Override the elastic transport to go to the index + the type being a string between the
-        domain and case type
+        Save the document to ElasticSearch
         """
         try:
             if not self.bulk:
-                doc_exists = self.doc_exists(doc_dict)
+                doc_exists_val = doc_exists(self, doc_dict)
 
                 if self.allow_updates:
                     can_put = True
                 else:
-                    can_put = not doc_exists
+                    can_put = not doc_exists_val
 
                 if can_put and not self.bulk:
-                    self.send_robust(doc_dict, update=doc_exists)
+                    self.send_robust(doc_dict, update=doc_exists_val)
         except Exception, ex:
             tb = traceback.format_exc()
             pillow_logging.error(
@@ -523,11 +519,18 @@ class AliasedElasticPillow(BasicPillow):
         self.allow_updates = False
         self.bulk = True
         bstart = datetime.utcnow()
-        bulk_payload = '\n'.join(map(simplejson.dumps, self.bulk_builder(changes))) + "\n"
+        bulk_changes = self.bulk_builder(changes)
+
+        max_payload_size = pow(10, 8)  # ~ 100Mb
+        payloads = prepare_bulk_payloads(bulk_changes, max_payload_size)
+        if len(payloads) > 1:
+            pillow_logging.info("%s,payload split into %s parts" % (self.get_name(), len(payloads)))
+
         pillow_logging.info(
             "%s,prepare_bulk,%s" % (self.get_name(), str(ms_from_timedelta(datetime.utcnow() - bstart) / 1000.0)))
         send_start = datetime.utcnow()
-        self.send_bulk(bulk_payload)
+        for payload in payloads:
+            self.send_bulk(payload)
         pillow_logging.info(
             "%s,send_bulk,%s" % (self.get_name(), str(ms_from_timedelta(datetime.utcnow() - send_start) / 1000.0)))
 
@@ -578,17 +581,6 @@ class AliasedElasticPillow(BasicPillow):
                 pillow_logging.error(
                     "Error on change: %s, %s" % (change['id'], ex)
                 )
-
-    def doc_exists(self, doc_id_or_dict):
-        """
-        Check if a document exists, by ID or the whole document.
-        """
-        if isinstance(doc_id_or_dict, basestring):
-            doc_id = doc_id_or_dict
-        else:
-            assert isinstance(doc_id_or_dict, dict)
-            doc_id = doc_id_or_dict['_id']
-        return self.get_es_new().exists(self.es_index, doc_id, self.es_type)
 
     @memoized
     def get_name(self):

@@ -1,0 +1,8 @@
+{% extends "domain/admin/add_form_repeater.html" %}
+
+{% block js-inline %} {{ block.super }}
+    <script type="text/javascript">
+        $("#id_white_listed_case_types").select2();
+        $("#id_black_listed_users").select2();
+    </script>
+{% endblock %}

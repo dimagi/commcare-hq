@@ -1,5 +1,6 @@
 import json
 from couchdbkit.exceptions import ResourceNotFound
+from simpleeval import InvalidExpression
 from corehq.apps.userreports.exceptions import BadSpecError
 from corehq.util.couch import get_db_by_doc_type
 from dimagi.ext.jsonobject import JsonObject, StringProperty, ListProperty, DictProperty
@@ -8,9 +9,10 @@ from corehq.apps.userreports.expressions.getters import (
     DictGetter,
     NestedDictGetter,
     TransformedGetter,
-    transform_from_datatype)
+    transform_from_datatype, transform_date, transform_int)
 from corehq.apps.userreports.indicators.specs import DataTypeProperty
 from corehq.apps.userreports.specs import TypeProperty, EvaluationContext
+from .utils import eval_statements
 from corehq.util.quickcache import quickcache
 
 
@@ -122,9 +124,9 @@ class ArrayIndexExpressionSpec(JsonObject):
 
 class SwitchExpressionSpec(JsonObject):
     type = TypeProperty('switch')
-    switch_on = DictProperty(required=True)
-    cases = DictProperty(required=True)
-    default = DictProperty(required=True)
+    switch_on = DefaultProperty(required=True)
+    cases = DefaultProperty(required=True)
+    default = DefaultProperty(required=True)
 
     def configure(self, switch_on_expression, case_expressions, default_expression):
         self._switch_on_expression = switch_on_expression
@@ -238,3 +240,26 @@ class DictExpressionSpec(JsonObject):
         for property_name, expression in self._compiled_properties.items():
             ret[property_name] = expression(item, context)
         return ret
+
+
+class EvalExpressionSpec(JsonObject):
+    type = TypeProperty('evaluator')
+    statement = StringProperty(required=True)
+    context_variables = DictProperty(required=True)
+
+    def configure(self, context_variables):
+        self._context_variables = context_variables
+
+    def __call__(self, item, context=None):
+        var_dict = self.get_variables(item, context)
+        try:
+            return eval_statements(self.statement, var_dict)
+        except (InvalidExpression, SyntaxError):
+            return None
+
+    def get_variables(self, item, context):
+        var_dict = {
+            slug: variable_expression(item, context)
+            for slug, variable_expression in self._context_variables.items()
+        }
+        return var_dict

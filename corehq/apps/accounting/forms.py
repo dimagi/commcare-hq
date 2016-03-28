@@ -1,47 +1,40 @@
 import datetime
-import json
 from decimal import Decimal
-from django.conf import settings
+import json
 
+from django import forms
+from django.conf import settings
 from django.contrib import messages
 from django.contrib.auth.models import User
 from django.core.exceptions import ValidationError
-from django.core.validators import MinLengthValidator, validate_slug
-from django import forms
 from django.core.urlresolvers import reverse
+from django.core.validators import MinLengthValidator, validate_slug
 from django.db import transaction
-from django.db.models import ProtectedError
 from django.forms.util import ErrorList
 from django.template.loader import render_to_string
 from django.utils.dates import MONTHS
 from django.utils.safestring import mark_safe
 from django.utils.translation import ugettext_noop, ugettext as _, ugettext_lazy
 
+from crispy_forms import layout as crispy
 from crispy_forms.bootstrap import FormActions, StrictButton, InlineField
 from crispy_forms.helper import FormHelper
-from crispy_forms import layout as crispy
+from corehq.apps.style import crispy as hqcrispy
 from django_countries.data import COUNTRIES
-from corehq import privileges, toggles
-from corehq.apps.accounting.exceptions import CreateAccountingAdminError, \
-    InvoiceError
-from corehq.apps.accounting.invoicing import DomainInvoiceFactory
-from corehq.apps.accounting.tasks import send_subscription_reminder_emails
-from corehq.apps.users.models import WebUser
 
 from dimagi.utils.decorators.memoized import memoized
 from django_prbac.models import Role, Grant, UserRole
 
-from corehq.apps.hqwebapp.tasks import send_html_email_async
+from corehq import privileges
 from corehq.apps.accounting.async_handlers import (
     FeatureRateAsyncHandler,
     SoftwareProductRateAsyncHandler,
 )
-from corehq.apps.accounting.utils import (
-    is_active_subscription, has_subscription_already_ended, get_money_str,
-    get_first_last_days, make_anchor_tag
+from corehq.apps.accounting.exceptions import (
+    CreateAccountingAdminError,
+    InvoiceError,
 )
-from corehq.apps.hqwebapp.crispy import BootstrapMultiField, TextField
-from corehq.apps.domain.models import Domain
+from corehq.apps.accounting.invoicing import DomainInvoiceFactory
 from corehq.apps.accounting.models import (
     BillingAccount,
     BillingContactInfo,
@@ -70,6 +63,16 @@ from corehq.apps.accounting.models import (
     SubscriptionType,
     WireBillingRecord,
 )
+from corehq.apps.accounting.tasks import send_subscription_reminder_emails
+from corehq.apps.accounting.utils import (
+    get_money_str,
+    has_subscription_already_ended,
+    make_anchor_tag,
+)
+from corehq.apps.domain.models import Domain
+from corehq.apps.hqwebapp.tasks import send_html_email_async
+from corehq.apps.users.models import WebUser
+from corehq.util.dates import get_first_last_days
 
 
 class BillingAccountBasicForm(forms.Form):
@@ -140,11 +143,15 @@ class BillingAccountBasicForm(forms.Form):
         self.helper = FormHelper()
         self.helper.form_id = "account-form"
         self.helper.form_class = "form-horizontal"
+        self.helper.label_class = 'col-sm-3 col-md-2'
+        self.helper.field_class = 'col-sm-9 col-md-8 col-lg-6'
+
         additional_fields = []
         if account is not None:
-            additional_fields.append(crispy.Field(
-                'is_active',
-                data_bind="checked: is_active",
+            additional_fields.append(hqcrispy.B3MultiField(
+                "Active Status",
+                crispy.Field('is_active',
+                    data_bind="checked: is_active"),
             ))
             if account.subscription_set.count() > 0:
                 additional_fields.append(crispy.Div(
@@ -169,14 +176,12 @@ class BillingAccountBasicForm(forms.Form):
                 'account_basic',
                 crispy.Div(*additional_fields),
             ),
-            FormActions(
-                crispy.ButtonHolder(
-                    crispy.Submit(
-                        'account_basic',
-                        'Update Basic Information'
-                        if account is not None else 'Add New Account',
-                        css_class='disable-on-submit',
-                    )
+            hqcrispy.FormActions(
+                crispy.Submit(
+                    'account_basic',
+                    'Update Basic Information'
+                    if account is not None else 'Add New Account',
+                    css_class='disable-on-submit',
                 )
             )
         )
@@ -291,6 +296,8 @@ class BillingAccountContactForm(forms.ModelForm):
                                                         *args, **kwargs)
         self.helper = FormHelper()
         self.helper.form_class = "form-horizontal"
+        self.helper.label_class = 'col-sm-3 col-md-2'
+        self.helper.field_class = 'col-sm-9 col-md-8 col-lg-6'
         self.helper.layout = crispy.Layout(
             crispy.Fieldset(
                 'Contact Information',
@@ -313,7 +320,7 @@ class BillingAccountContactForm(forms.ModelForm):
                     )
                 ),
             ),
-            FormActions(
+            hqcrispy.FormActions(
                 crispy.ButtonHolder(
                     crispy.Submit(
                         'account_contact',
@@ -339,7 +346,7 @@ class SubscriptionForm(forms.Form):
     )
     plan_product = forms.ChoiceField(
         label=ugettext_lazy("Core Product"), initial=SoftwareProductType.COMMCARE,
-        choices=SoftwareProductType.CHOICES,
+        choices=[(SoftwareProductType.COMMCARE, SoftwareProductType.COMMCARE)],
     )
     plan_edition = forms.ChoiceField(
         label=ugettext_lazy("Edition"), initial=SoftwarePlanEdition.ENTERPRISE,
@@ -385,7 +392,7 @@ class SubscriptionForm(forms.Form):
         # account_id is not referenced if subscription is not None
         super(SubscriptionForm, self).__init__(*args, **kwargs)
         self.subscription = subscription
-        self.is_existing = subscription is not None
+        is_existing = subscription is not None
         self.web_user = web_user
         today = datetime.date.today()
 
@@ -394,14 +401,14 @@ class SubscriptionForm(forms.Form):
         delay_invoice_until_field = crispy.Field('delay_invoice_until',
                                                  css_class="date-picker")
 
-        if self.is_existing:
+        if is_existing:
             # circular import
             from corehq.apps.accounting.views import (
                 ViewSoftwarePlanVersionView, ManageBillingAccountView
             )
             from corehq.apps.domain.views import DefaultProjectSettingsView
             self.fields['account'].initial = subscription.account.id
-            account_field = TextField(
+            account_field = hqcrispy.B3TextField(
                 'account',
                 '<a href="%(account_url)s">%(account_name)s</a>' % {
                     'account_url': reverse(ManageBillingAccountView.urlname,
@@ -411,7 +418,7 @@ class SubscriptionForm(forms.Form):
             )
 
             self.fields['plan_version'].initial = subscription.plan_version.id
-            plan_version_field = TextField(
+            plan_version_field = hqcrispy.B3TextField(
                 'plan_version',
                 '<a href="%(plan_version_url)s">%(plan_name)s</a>' % {
                 'plan_version_url': reverse(
@@ -420,19 +427,19 @@ class SubscriptionForm(forms.Form):
                 'plan_name': subscription.plan_version,
             })
             try:
-                plan_product = subscription.plan_version.get_product_rate().product.product_type
+                plan_product = subscription.plan_version.product_rate.product.product_type
                 self.fields['plan_product'].initial = plan_product
             except (IndexError, SoftwarePlanVersion.DoesNotExist):
                 plan_product = (
-                    '<i class="icon-alert-sign"></i> No Product Exists for '
+                    '<i class="fa fa-exclamation-triangle"></i> No Product Exists for '
                     'the Plan (update required)'
                 )
-            plan_product_field = TextField(
+            plan_product_field = hqcrispy.B3TextField(
                 'plan_product',
                 plan_product,
             )
             self.fields['plan_edition'].initial = subscription.plan_version.plan.edition
-            plan_edition_field = TextField(
+            plan_edition_field = hqcrispy.B3TextField(
                 'plan_edition',
                 self.fields['plan_edition'].initial
             )
@@ -442,7 +449,7 @@ class SubscriptionForm(forms.Form):
             ]
             self.fields['domain'].initial = subscription.subscriber.domain
 
-            domain_field = TextField(
+            domain_field = hqcrispy.B3TextField(
                 'domain',
                 '<a href="%(project_url)s">%(project_name)s</a>' % {
                 'project_url': reverse(DefaultProjectSettingsView.urlname,
@@ -468,20 +475,12 @@ class SubscriptionForm(forms.Form):
 
             if (subscription.date_start is not None
                 and subscription.date_start <= today):
-                start_date_field = TextField(
-                    'start_date',
-                    "%(start_date)s (already started)" % {
-                    'start_date': self.fields['start_date'].initial,
-                })
+                self.fields['start_date'].help_text = '(already started)'
             if has_subscription_already_ended(subscription):
-                end_date_field = TextField(
-                    'end_date',
-                    "%(end_date)s (already ended)" % {
-                    'end_date': self.fields['end_date'].initial,
-                })
+                self.fields['end_date'].help_text = '(already ended)'
             if (subscription.date_delay_invoicing is not None
                 and subscription.date_delay_invoicing <= today):
-                delay_invoice_until_field = TextField(
+                delay_invoice_until_field = hqcrispy.B3TextField(
                     'delay_invoice_until',
                     "%(delay_date)s (date has already passed)" % {
                     'delay_date': self.fields['delay_invoice_until'].initial,
@@ -510,9 +509,11 @@ class SubscriptionForm(forms.Form):
             )
 
         self.helper = FormHelper()
+        self.helper.label_class = 'col-sm-3 col-md-2'
+        self.helper.field_class = 'col-sm-9 col-md-8 col-lg-6'
         self.helper.form_text_inline = True
         transfer_fields = []
-        if self.is_existing:
+        if is_existing:
             transfer_fields.extend([
                 crispy.Field(
                     'active_accounts',
@@ -522,8 +523,7 @@ class SubscriptionForm(forms.Form):
             ])
         self.helper.layout = crispy.Layout(
             crispy.Fieldset(
-                '%s Subscription' % ('Edit' if self.is_existing
-                                     else 'New'),
+                '%s Subscription' % ('Edit' if is_existing else 'New'),
                 account_field,
                 crispy.Div(*transfer_fields),
                 start_date_field,
@@ -534,23 +534,26 @@ class SubscriptionForm(forms.Form):
                 plan_version_field,
                 domain_field,
                 'salesforce_contract_id',
-                crispy.Field('do_not_invoice', data_bind="checked: noInvoice"),
+                hqcrispy.B3MultiField(
+                    "Invoice Options",
+                    crispy.Field('do_not_invoice', data_bind="checked: noInvoice"),
+                ),
                 crispy.Div(
                     crispy.Field(
                         'no_invoice_reason', data_bind="attr: {required: noInvoice}"),
                     data_bind="visible: noInvoice"),
-                'do_not_email',
-                'auto_generate_credits',
+                hqcrispy.B3MultiField("Email Options", 'do_not_email'),
+                hqcrispy.B3MultiField("Credit Options", 'auto_generate_credits'),
                 'service_type',
                 'pro_bono_status',
                 'funding_source',
                 'set_subscription'
             ),
-            FormActions(
+            hqcrispy.FormActions(
                 crispy.ButtonHolder(
                     crispy.Submit(
                         'set_subscription',
-                        '%s Subscription' % ('Update' if self.is_existing else 'Create'),
+                        '%s Subscription' % ('Update' if is_existing else 'Create'),
                         css_class='disable-on-submit',
                     )
                 )
@@ -617,7 +620,7 @@ class SubscriptionForm(forms.Form):
         if not self.cleaned_data.get('active_accounts') and not self.cleaned_data.get('account'):
             raise ValidationError(_("Account must be specified"))
 
-        account_id = self.cleaned_data['active_accounts'] or self.cleaned_data['account']
+        account_id = self.cleaned_data.get('active_accounts') or self.cleaned_data.get('account')
         if account_id:
             account = BillingAccount.objects.get(id=account_id)
             if (
@@ -696,6 +699,8 @@ class ChangeSubscriptionForm(forms.Form):
 
         self.helper = FormHelper()
         self.helper.form_class = "form-horizontal"
+        self.helper.label_class = 'col-sm-3 col-md-2'
+        self.helper.field_class = 'col-sm-9 col-md-8 col-lg-6'
         self.helper.layout = crispy.Layout(
             crispy.Fieldset(
                 "Change Subscription",
@@ -711,7 +716,7 @@ class ChangeSubscriptionForm(forms.Form):
                 'funding_source',
                 'subscription_change_note',
             ),
-            FormActions(
+            hqcrispy.FormActions(
                 StrictButton(
                     "Change Subscription",
                     type="submit",
@@ -760,6 +765,8 @@ class CreditForm(forms.Form):
         self.fields['feature_type'].choices = FeatureType.CHOICES
 
         self.helper = FormHelper()
+        self.helper.label_class = 'col-sm-3 col-md-2'
+        self.helper.field_class = 'col-sm-9 col-md-8 col-lg-6'
         self.helper.layout = crispy.Layout(
             crispy.Fieldset(
                 'Add Credit',
@@ -770,7 +777,7 @@ class CreditForm(forms.Form):
                 crispy.Div('feature_type', data_bind="visible: showFeature"),
                 'adjust'
             ),
-            FormActions(
+            hqcrispy.FormActions(
                 crispy.ButtonHolder(
                     crispy.Submit(
                         'adjust_credit',
@@ -826,13 +833,15 @@ class CancelForm(forms.Form):
         can_cancel = has_subscription_already_ended(subscription)
 
         self.helper = FormHelper()
+        self.helper.label_class = 'col-sm-3 col-md-2'
+        self.helper.field_class = 'col-sm-9 col-md-8 col-lg-6'
         self.helper.layout = crispy.Layout(
             crispy.Fieldset(
                 'Cancel Subscription',
                 crispy.Field('note', **({'readonly': True} if can_cancel else {})),
                 'cancel_subscription'
             ),
-            FormActions(
+            hqcrispy.FormActions(
                 StrictButton(
                     'CANCEL SUBSCRIPTION',
                     css_class='btn-danger disable-on-submit',
@@ -853,12 +862,14 @@ class SuppressSubscriptionForm(forms.Form):
         super(SuppressSubscriptionForm, self).__init__(*args, **kwargs)
 
         self.helper = FormHelper()
+        self.helper.label_class = 'col-sm-3 col-md-2'
+        self.helper.field_class = 'col-sm-9 col-md-8 col-lg-6'
         self.helper.form_class = 'form-horizontal'
 
         fields = [
             crispy.Div(
                 crispy.HTML('Warning: this can only be undone by a developer.'),
-                css_class='alert alert-error',
+                css_class='alert alert-danger',
             ),
             'suppress_subscription'
         ]
@@ -873,7 +884,7 @@ class SuppressSubscriptionForm(forms.Form):
                 'Suppress subscription from subscription report, invoice generation, and from being activated',
                 *fields
             ),
-            FormActions(
+            hqcrispy.FormActions(
                 StrictButton(
                     'Suppress Subscription',
                     css_class='btn-danger disable-on-submit',
@@ -907,6 +918,8 @@ class PlanInformationForm(forms.Form):
             }
         super(PlanInformationForm, self).__init__(*args, **kwargs)
         self.helper = FormHelper()
+        self.helper.label_class = 'col-sm-3 col-md-2'
+        self.helper.field_class = 'col-sm-9 col-md-8 col-lg-6'
         self.helper.layout = crispy.Layout(
             crispy.Fieldset(
             'Plan Information',
@@ -915,7 +928,7 @@ class PlanInformationForm(forms.Form):
                 'edition',
                 'visibility',
             ),
-            FormActions(
+            hqcrispy.FormActions(
                 crispy.ButtonHolder(
                     crispy.Submit(
                         'plan_information',
@@ -1035,13 +1048,15 @@ class SoftwarePlanVersionForm(forms.Form):
         self.fields['role_slug'].choices = [(r['slug'], "%s (%s)" % (r['name'], r['slug'])) for r in self.existing_roles]
 
         self.helper = FormHelper()
+        self.helper.label_class = 'col-sm-3 col-md-2'
+        self.helper.field_class = 'col-sm-9 col-md-8 col-lg-6'
         self.helper.form_class = 'form form-horizontal'
         self.helper.form_method = 'POST'
         self.helper.layout = crispy.Layout(
             'update_version',
             crispy.Fieldset(
                 "Permissions",
-                BootstrapMultiField(
+                hqcrispy.B3MultiField(
                     "Role Type",
                     crispy.Div(
                         data_bind="template: {"
@@ -1051,7 +1066,7 @@ class SoftwarePlanVersionForm(forms.Form):
                     ),
                 ),
                 crispy.Div(
-                    BootstrapMultiField(
+                    hqcrispy.B3MultiField(
                         'Role',
                         InlineField('role_slug',
                                     data_bind="value: role.existing.roleSlug",
@@ -1069,7 +1084,7 @@ class SoftwarePlanVersionForm(forms.Form):
                     ),
                 ),
                 crispy.Div(
-                    BootstrapMultiField(
+                    hqcrispy.B3MultiField(
                         "Privileges",
                         InlineField('privileges', data_bind="selectedOptions: role.new.privileges"),
                         crispy.Div(
@@ -1096,7 +1111,7 @@ class SoftwarePlanVersionForm(forms.Form):
             crispy.Fieldset(
                 "Features",
                 InlineField('feature_rates', data_bind="value: featureRates.ratesString"),
-                BootstrapMultiField(
+                hqcrispy.B3MultiField(
                     "Add Feature",
                     InlineField('feature_id', css_class="input-xxlarge",
                                 data_bind="value: featureRates.select2.value"),
@@ -1109,10 +1124,10 @@ class SoftwarePlanVersionForm(forms.Form):
                     ),
                 ),
                 crispy.Div(
-                    css_class="alert alert-error",
+                    css_class="alert alert-danger",
                     data_bind="text: featureRates.error, visible: featureRates.showError"
                 ),
-                BootstrapMultiField(
+                hqcrispy.B3MultiField(
                     "Feature Type",
                     InlineField(
                         'new_feature_type',
@@ -1138,7 +1153,7 @@ class SoftwarePlanVersionForm(forms.Form):
             crispy.Fieldset(
                 "Products",
                 InlineField('product_rates', data_bind="value: productRates.ratesString"),
-                BootstrapMultiField(
+                hqcrispy.B3MultiField(
                     "Add Product",
                     InlineField('product_id', css_class="input-xxlarge",
                                 data_bind="value: productRates.select2.value"),
@@ -1151,10 +1166,10 @@ class SoftwarePlanVersionForm(forms.Form):
                     ),
                 ),
                 crispy.Div(
-                    css_class="alert alert-error",
+                    css_class="alert alert-danger",
                     data_bind="text: productRates.error, visible: productRates.showError",
                 ),
-                BootstrapMultiField(
+                hqcrispy.B3MultiField(
                     "Product Type",
                     InlineField(
                         'new_product_type',
@@ -1176,7 +1191,7 @@ class SoftwarePlanVersionForm(forms.Form):
                               "}",
                 ),
             ),
-            FormActions(
+            hqcrispy.FormActions(
                 StrictButton(
                     'Update Plan Version',
                     css_class='btn-primary disable-on-submit',
@@ -1249,7 +1264,10 @@ class SoftwarePlanVersionForm(forms.Form):
     @memoized
     def current_products_to_rates(self):
         if self.plan_version is not None:
-            return dict([(r.product.id, r) for r in self.plan_version.product_rates.all()])
+            product_rate = self.plan_version.product_rate
+            return {
+                product_rate.product.id: product_rate
+            }
         else:
             return {}
 
@@ -1365,7 +1383,7 @@ class SoftwarePlanVersionForm(forms.Form):
         rate_ids = lambda x: set([r.id for r in x])
         if (not self.is_update
             and (self.plan_version is None
-                 or rate_ids(rate_instances).symmetric_difference(rate_ids(self.plan_version.product_rates.all())))):
+                 or rate_ids(rate_instances).symmetric_difference(rate_ids([self.plan_version.product_rate])))):
             self.is_update = True
         return original_data
 
@@ -1420,17 +1438,17 @@ class SoftwarePlanVersionForm(forms.Form):
             plan=self.plan,
             role=role
         )
+
+        product_rate = self.new_product_rates[0]  # always contains one item
+        product_rate.save()
+        new_version.product_rate = product_rate
         new_version.save()
 
         for feature_rate in self.new_feature_rates:
             feature_rate.save()
             new_version.feature_rates.add(feature_rate)
-
-        for product_rate in self.new_product_rates:
-            product_rate.save()
-            new_version.product_rates.add(product_rate)
-
         new_version.save()
+
         messages.success(request, 'The version for %s Software Plan was successfully updated.' % new_version.plan.name)
 
 
@@ -1455,11 +1473,13 @@ class FeatureRateForm(forms.ModelForm):
     def __init__(self, data=None, *args, **kwargs):
         super(FeatureRateForm, self).__init__(data, *args, **kwargs)
         self.helper = FormHelper()
+        self.helper.label_class = 'col-sm-3 col-md-2'
+        self.helper.field_class = 'col-sm-9 col-md-8 col-lg-6'
         self.helper.form_tag = False
         self.helper.layout = crispy.Layout(
             crispy.HTML("""
                         <h4><span data-bind="text: name"></span>
-                        <span class="label"
+                        <span class="label label-default"
                             style="display: inline-block; margin: 0 10px;"
                             data-bind="text: feature_type"></span></h4>
                         <hr />
@@ -1505,11 +1525,13 @@ class ProductRateForm(forms.ModelForm):
     def __init__(self, data=None, *args, **kwargs):
         super(ProductRateForm, self).__init__(data, *args, **kwargs)
         self.helper = FormHelper()
+        self.helper.label_class = 'col-sm-3 col-md-2'
+        self.helper.field_class = 'col-sm-9 col-md-8 col-lg-6'
         self.helper.form_tag = False
         self.helper.layout = crispy.Layout(
             crispy.HTML("""
                         <h4><span data-bind="text: name"></span>
-                        <span class="label"
+                        <span class="label label-default"
                             style="display: inline-block; margin: 0 10px;"
                             data-bind="text: product_type"></span></h4>
                         <hr />
@@ -1557,7 +1579,7 @@ class EnterprisePlanContactForm(forms.Form):
                     type="submit",
                     css_class="btn-primary",
                 ),
-                crispy.HTML('<a href="%(url)s" class="btn">%(title)s</a>' % {
+                crispy.HTML('<a href="%(url)s" class="btn btn-default">%(title)s</a>' % {
                             'url': reverse(SelectPlanView.urlname, args=[self.domain]),
                             'title': _("Select different plan"),
                 }),
@@ -1604,6 +1626,8 @@ class TriggerInvoiceForm(forms.Form):
         ]
 
         self.helper = FormHelper()
+        self.helper.label_class = 'col-sm-3 col-md-2'
+        self.helper.field_class = 'col-sm-9 col-md-8 col-lg-6'
         self.helper.form_class = 'form form-horizontal'
         self.helper.layout = crispy.Layout(
             crispy.Fieldset(
@@ -1613,7 +1637,7 @@ class TriggerInvoiceForm(forms.Form):
                 crispy.Field('domain', css_class="input-xxlarge",
                              placeholder="Search for Project")
             ),
-            FormActions(
+            hqcrispy.FormActions(
                 StrictButton(
                     "Trigger Invoice",
                     css_class="btn-primary disable-on-submit",
@@ -1674,6 +1698,8 @@ class TriggerBookkeeperEmailForm(forms.Form):
         ]
 
         self.helper = FormHelper()
+        self.helper.label_class = 'col-sm-3 col-md-2'
+        self.helper.field_class = 'col-sm-9 col-md-8 col-lg-6'
         self.helper.form_class = 'form form-horizontal'
         self.helper.layout = crispy.Layout(
             crispy.Fieldset(
@@ -1682,7 +1708,7 @@ class TriggerBookkeeperEmailForm(forms.Form):
                 crispy.Field('month', css_class="input-large"),
                 crispy.Field('year', css_class="input-large"),
             ),
-            FormActions(
+            hqcrispy.FormActions(
                 StrictButton(
                     "Trigger Bookkeeper Email",
                     css_class="btn-primary disable-on-submit",
@@ -1714,6 +1740,8 @@ class TestReminderEmailFrom(forms.Form):
         super(TestReminderEmailFrom, self).__init__(*args, **kwargs)
 
         self.helper = FormHelper()
+        self.helper.label_class = 'col-sm-3 col-md-2'
+        self.helper.field_class = 'col-sm-9 col-md-8 col-lg-6'
         self.helper.form_class = 'form form-horizontal'
         self.helper.layout = crispy.Layout(
             crispy.Fieldset(
@@ -1728,7 +1756,7 @@ class TestReminderEmailFrom(forms.Form):
                 ),
                 css_class="alert alert-info"
             ),
-            FormActions(
+            hqcrispy.FormActions(
                 StrictButton(
                     "Send Reminder Emails",
                     type="submit",
@@ -1780,6 +1808,8 @@ class AdjustBalanceForm(forms.Form):
         self.fields['invoice_id'].initial = invoice.id
         self.helper = FormHelper()
         self.helper.form_class = "form-horizontal"
+        self.helper.label_class = 'col-sm-4 col-md-3'
+        self.helper.field_class = 'col-sm-8 col-md-9'
         self.helper.form_action = reverse('invoice_summary', args=[self.invoice.id])
         self.helper.layout = crispy.Layout(
             crispy.Div(
@@ -1788,13 +1818,13 @@ class AdjustBalanceForm(forms.Form):
                     data_bind="checked: adjustmentType",
                 ),
                 crispy.HTML('''
-                    <div id="div_id_custom_amount" class="control-group"
+                    <div id="div_id_custom_amount" class="form-group"
                      data-bind="visible: showCustomAmount">
-                        <label for="id_custom_amount" class="control-label">
+                        <label for="id_custom_amount" class="control-label col-sm-4 col-md-3">
                             Custom amount
                         </label>
-                        <div class="controls">
-                            <input class="textinput textInput"
+                        <div class="col-sm-8 col-md-9">
+                            <input class="textinput textInput form-control"
                              id="id_custom_amount" name="custom_amount"
                              type="number" step="any">
                         </div>
@@ -1807,7 +1837,7 @@ class AdjustBalanceForm(forms.Form):
                 css_class='modal-body',
                 css_id="adjust-balance-form-%d" % invoice.id
             ),
-            FormActions(
+            hqcrispy.FormActions(
                 crispy.ButtonHolder(
                     crispy.Submit(
                         'adjust_balance',
@@ -1818,7 +1848,7 @@ class AdjustBalanceForm(forms.Form):
                     crispy.Button(
                         'close',
                         'Close',
-                        css_class='disable-on-submit',
+                        css_class='disable-on-submit btn-default',
                         data_dismiss='modal',
                     ),
                 ),
@@ -1892,6 +1922,8 @@ class InvoiceInfoForm(forms.Form):
         subscription = invoice.subscription if not invoice.is_wire else None
         super(InvoiceInfoForm, self).__init__(*args, **kwargs)
         self.helper = FormHelper()
+        self.helper.label_class = 'col-sm-3 col-md-2'
+        self.helper.field_class = 'col-sm-9 col-md-8 col-lg-6'
         self.helper.form_class = 'form-horizontal'
         from corehq.apps.accounting.views import (
             EditSubscriptionView,
@@ -1912,15 +1944,15 @@ class InvoiceInfoForm(forms.Form):
         self.helper.layout = crispy.Layout(
             crispy.Fieldset(
                 '{} Invoice #{}'.format('Wire' if invoice.is_wire else '', invoice.invoice_number),
-                TextField(
+                hqcrispy.B3TextField(
                     'subscription',
                     subscription_link
                 ),
-                TextField(
+                hqcrispy.B3TextField(
                     'project',
                     invoice.get_domain(),
                 ),
-                TextField(
+                hqcrispy.B3TextField(
                     'account',
                     mark_safe(
                         '<a href="%(account_link)s">'
@@ -1934,17 +1966,20 @@ class InvoiceInfoForm(forms.Form):
                         }
                     ),
                 ),
-                TextField(
+                hqcrispy.B3TextField(
                     'current_balance',
                     get_money_str(invoice.balance),
                 ),
-                crispy.ButtonHolder(
+                hqcrispy.B3MultiField(
+                    'Balance Adjustments',
                     crispy.Button(
                         'submit',
                         'Adjust Balance',
                         data_toggle='modal',
                         data_target='#adjustBalanceModal-%d' % invoice.id,
-                        css_class=('disabled' if invoice.is_wire else '') + ' disable-on-submit',
+                        css_class=('btn-default disabled'
+                                   if invoice.is_wire
+                                   else 'btn-default') + ' disable-on-submit',
                     ),
                 ),
             ),
@@ -1963,6 +1998,8 @@ class ResendEmailForm(forms.Form):
         self.invoice = invoice
         super(ResendEmailForm, self).__init__(*args, **kwargs)
         self.helper = FormHelper()
+        self.helper.label_class = 'col-sm-3 col-md-2'
+        self.helper.field_class = 'col-sm-9 col-md-8 col-lg-6'
         self.helper.form_class = 'form-horizontal'
         self.helper.layout = crispy.Layout(
             crispy.Div(
@@ -1974,7 +2011,7 @@ class ResendEmailForm(forms.Form):
                 'resend',
                 css_class='modal-body',
             ),
-            FormActions(
+            hqcrispy.FormActions(
                 crispy.ButtonHolder(
                     crispy.Submit(
                         'resend_email',
@@ -2017,17 +2054,19 @@ class SuppressInvoiceForm(forms.Form):
         super(SuppressInvoiceForm, self).__init__(*args, **kwargs)
 
         self.helper = FormHelper()
+        self.helper.label_class = 'col-sm-3 col-md-2'
+        self.helper.field_class = 'col-sm-9 col-md-8 col-lg-6'
         self.helper.form_class = 'form-horizontal'
         self.helper.layout = crispy.Layout(
             crispy.Fieldset(
                 'Suppress invoice from all reports and user-facing statements',
                 crispy.Div(
                     crispy.HTML('Warning: this can only be undone by a developer.'),
-                    css_class='alert alert-error',
+                    css_class='alert alert-danger',
                 ),
                 'suppress',
             ),
-            FormActions(
+            hqcrispy.FormActions(
                 StrictButton(
                     'Suppress Invoice',
                     css_class='btn-danger disable-on-submit',
@@ -2051,6 +2090,8 @@ class CreateAdminForm(forms.Form):
         super(CreateAdminForm, self).__init__(*args, **kwargs)
 
         self.helper = FormHelper()
+        self.helper.label_class = 'col-sm-3 col-md-2'
+        self.helper.field_class = 'col-sm-9 col-md-8 col-lg-6'
         self.helper.form_show_labels= False
         self.helper.form_style = 'inline'
         self.helper.layout = crispy.Layout(
@@ -2059,7 +2100,7 @@ class CreateAdminForm(forms.Form):
                 css_id="select-admin-username",
             ),
             StrictButton(
-                mark_safe('<i class="icon-plus"></i> %s' % "Add Admin"),
+                mark_safe('<i class="fa fa-plus"></i> %s' % "Add Admin"),
                 css_class="btn-success disable-on-submit",
                 type="submit",
             )

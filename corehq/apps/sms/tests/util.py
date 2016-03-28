@@ -2,17 +2,19 @@ import os
 import json
 from django.test import LiveServerTestCase
 from django.conf import settings
+from nose.tools import nottest
 
 from casexml.apps.case.util import post_case_blocks
 from corehq.apps.accounting.models import SoftwarePlanEdition
 from corehq.apps.accounting.tests.utils import DomainSubscriptionMixin
 from corehq.apps.accounting.tests import BaseAccountingTest
 from corehq.apps.domain.models import Domain
-from corehq.apps.hqcase.dbaccessors import \
-    get_one_case_in_domain_by_external_id
-from corehq.messaging.smsbackends.test.models import TestSMSBackend
-from corehq.apps.sms.mixin import BackendMapping
-from corehq.apps.sms.models import SMSLog, CallLog
+from corehq.apps.ivr.models import Call
+from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
+from corehq.messaging.smsbackends.test.models import SQLTestSMSBackend
+from corehq.apps.sms.mixin import VerifiedNumber
+from corehq.apps.sms.models import (SMS, SQLMobileBackend, OUTGOING,
+    SQLMobileBackendMapping)
 from corehq.apps.smsforms.models import SQLXFormsSession
 from corehq.apps.groups.models import Group
 from corehq.apps.reminders.models import (SurveyKeyword, SurveyKeywordAction,
@@ -29,6 +31,30 @@ from casexml.apps.case.mock import CaseBlock
 
 def time_parser(value):
     return parse(value).time()
+
+
+def delete_domain_phone_numbers(domain):
+    for v in VerifiedNumber.by_domain(domain):
+        # Ensure cache is cleared for all phone lookups
+        v.delete()
+
+
+@nottest
+def setup_default_sms_test_backend():
+    backend = SQLTestSMSBackend.objects.create(
+        name='MOBILE_BACKEND_TEST',
+        is_global=True,
+        hq_api_id=SQLTestSMSBackend.get_api_id()
+    )
+
+    backend_mapping = SQLMobileBackendMapping.objects.create(
+        is_global=True,
+        backend_type=SQLMobileBackend.SMS,
+        prefix='*',
+        backend=backend,
+    )
+
+    return (backend, backend_mapping)
 
 
 class BaseSMSTest(BaseAccountingTest, DomainSubscriptionMixin):
@@ -218,7 +244,8 @@ class TouchformsTestCase(LiveServerTestCase, DomainSubscriptionMixin):
         return site
 
     def get_case(self, external_id):
-        return get_one_case_in_domain_by_external_id(self.domain, external_id)
+        [case] = CaseAccessors(self.domain).get_cases_by_external_id(external_id)
+        return case
 
     def assertCasePropertyEquals(self, case, prop, value):
         self.assertEquals(case.get_case_property(prop), value)
@@ -240,30 +267,18 @@ class TouchformsTestCase(LiveServerTestCase, DomainSubscriptionMixin):
         self.assertEquals(form_value, value)
 
     def get_last_outbound_sms(self, contact):
-        # Not clear why this should be necessary, but without it the latest
-        # sms may not be returned
-        sleep(0.25)
-        sms = SMSLog.view("sms/by_recipient",
-            startkey=[contact.doc_type, contact._id, "SMSLog", "O", {}],
-            endkey=[contact.doc_type, contact._id, "SMSLog", "O"],
-            descending=True,
-            include_docs=True,
-            reduce=False,
-        ).first()
-        return sms
+        return SMS.get_last_log_for_recipient(
+            contact.doc_type,
+            contact.get_id,
+            direction=OUTGOING
+        )
 
     def get_last_outbound_call(self, contact):
-        # Not clear why this should be necessary, but without it the latest
-        # call may not be returned
-        sleep(0.25)
-        call = CallLog.view("sms/by_recipient",
-            startkey=[contact.doc_type, contact._id, "CallLog", "O", {}],
-            endkey=[contact.doc_type, contact._id, "CallLog", "O"],
-            descending=True,
-            include_docs=True,
-            reduce=False,
-        ).first()
-        return call
+        return Call.get_last_log_for_recipient(
+            contact.doc_type,
+            contact.get_id,
+            direction=OUTGOING
+        )
 
     def get_open_session(self, contact):
         return SQLXFormsSession.get_open_sms_session(self.domain, contact._id)
@@ -290,15 +305,12 @@ class TouchformsTestCase(LiveServerTestCase, DomainSubscriptionMixin):
         self.domain_obj = self.create_domain(self.domain)
         self.create_web_user("touchforms_user", "123")
 
-        self.backend = TestSMSBackend(name="TEST", is_global=True)
-        self.backend.save()
-        self.backend_mapping = BackendMapping(is_global=True, prefix="*",
-            backend_id=self.backend._id)
-        self.backend_mapping.save()
+        self.backend, self.backend_mapping = setup_default_sms_test_backend()
 
         settings.DEBUG = True
 
     def tearDown(self):
+        delete_domain_phone_numbers(self.domain)
         for user in self.users:
             user.delete_verified_number()
             user.delete()
@@ -310,6 +322,6 @@ class TouchformsTestCase(LiveServerTestCase, DomainSubscriptionMixin):
             group.delete()
         self.domain_obj.delete()
         self.site.delete()
-        self.backend.delete()
         self.backend_mapping.delete()
+        self.backend.delete()
         self.teardown_subscription()

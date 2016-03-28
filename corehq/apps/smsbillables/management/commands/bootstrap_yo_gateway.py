@@ -1,14 +1,12 @@
 from decimal import Decimal
-import logging
 
 from django.core.management.base import LabelCommand
 
 from corehq.apps.accounting.models import Currency
 from corehq.apps.sms.models import INCOMING, OUTGOING
 from corehq.apps.smsbillables.models import SmsGatewayFee, SmsGatewayFeeCriteria
-
-
-logger = logging.getLogger('accounting')
+from corehq.apps.smsbillables.utils import log_smsbillables_info
+from corehq.messaging.smsbackends.yo.models import SQLYoBackend
 
 
 def bootstrap_yo_gateway(apps):
@@ -17,7 +15,7 @@ def bootstrap_yo_gateway(apps):
     sms_gateway_fee_criteria_class = apps.get_model('smsbillables', 'SmsGatewayFeeCriteria') if apps else SmsGatewayFeeCriteria
 
     SmsGatewayFee.create_new(
-        'YO',
+        SQLYoBackend.get_api_id(),
         INCOMING,
         Decimal('110.0'),
         currency=ugx,
@@ -26,16 +24,15 @@ def bootstrap_yo_gateway(apps):
     )
 
     SmsGatewayFee.create_new(
-        'HTTP',
+        SQLYoBackend.get_api_id(),
         OUTGOING,
         Decimal('55.0'),
-        backend_instance='95a4f0929cddb966e292e70a634da716',
         currency=ugx,
         fee_class=sms_gateway_fee_class,
         criteria_class=sms_gateway_fee_criteria_class,
     )
 
-    logger.info("Updated Yo gateway fees.")
+    log_smsbillables_info("Updated Yo gateway fees.")
 
 
 class Command(LabelCommand):

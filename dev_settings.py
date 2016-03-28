@@ -26,6 +26,7 @@ TEST_NON_SERIALIZED_APPS = ['corehq.form_processor']
 # These things will be imported when you run ./manage.py shell_plus
 SHELL_PLUS_POST_IMPORTS = (
     # Models
+    ('corehq.apps.app_manager.models', 'Application'),
     ('corehq.apps.domain.models', 'Domain'),
     ('corehq.apps.groups.models', 'Group'),
     ('corehq.apps.locations.models', 'Location'),
@@ -55,6 +56,8 @@ DATABASES = {
 
 CACHES = {'default': {'BACKEND': 'django.core.cache.backends.dummy.DummyCache'}}
 
+# Use faster compressor that doesn't do source maps
+COMPRESS_JS_COMPRESSOR = 'compressor.js.JsCompressor'
 
 PILLOWTOP_MACHINE_ID = 'testhq'  # for tests
 
@@ -67,3 +70,13 @@ CELERY_EAGER_PROPAGATES_EXCEPTIONS = True
 INACTIVITY_TIMEOUT = 60 * 24 * 365
 
 CACHE_REPORTS = False
+
+# Fail hard on csrf failures during dev
+CSRF_SOFT_MODE = False
+
+# Make a dir to use for storing attachments as blobs on the filesystem
+shared_dirname = os.path.join(os.path.dirname(os.path.realpath(__file__)),
+                              'sharedfiles')
+if not os.path.exists(shared_dirname):
+    os.mkdir(shared_dirname)
+SHARED_DRIVE_ROOT = shared_dirname

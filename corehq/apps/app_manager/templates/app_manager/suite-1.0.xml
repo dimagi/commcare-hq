@@ -13,14 +13,6 @@
     </xform>
   {% endfor %}
  {% endfor %}
- {% if app.show_user_registration %}
-    <xform>
-        <resource id="{{ app.user_registration.unique_id }}" version="{{ app.version }}">
-           <location authority="local">./user_registration.xml</location>
-           <location authority="remote">./user_registration.xml</location>
-        </resource>
-    </xform>
- {% endif %}
  {% for lang in langs %}
     <!-- Read and locally store the translation strings-->
     <locale language="{{ lang }}">

@@ -3,6 +3,8 @@ import random
 import string
 from django.conf import settings
 from django.core.exceptions import ValidationError
+
+from corehq.apps.smsbillables.utils import log_smsbillables_error
 from corehq.apps.users.models import CommCareUser, CouchUser, WebUser
 from django.forms import forms
 from corehq.apps.users.util import format_username
@@ -10,15 +12,16 @@ from corehq.apps.users.util import format_username
 from dimagi.utils.modules import to_function
 from dimagi.utils.logging import notify_exception
 from corehq import privileges
-from corehq.apps.accounting.utils import domain_has_privilege, log_accounting_error
+from corehq.apps.accounting.utils import domain_has_privilege
 from corehq.apps.sms.util import (clean_phone_number, clean_text,
-    get_available_backends)
-from corehq.apps.sms.models import (SMSLog, OUTGOING, INCOMING,
-    PhoneNumber, SMS, SelfRegistrationInvitation, MessagingEvent)
+    get_backend_classes)
+from corehq.apps.sms.models import (OUTGOING, INCOMING,
+    PhoneBlacklist, SMS, SelfRegistrationInvitation, MessagingEvent,
+    SQLMobileBackend, SQLSMSBackend, QueuedSMS)
 from corehq.apps.sms.messages import (get_message, MSG_OPTED_IN,
     MSG_OPTED_OUT, MSG_DUPLICATE_USERNAME, MSG_USERNAME_TOO_LONG,
     MSG_REGISTRATION_WELCOME_CASE, MSG_REGISTRATION_WELCOME_MOBILE_WORKER)
-from corehq.apps.sms.mixin import (MobileBackend, VerifiedNumber, SMSBackend,
+from corehq.apps.sms.mixin import (VerifiedNumber,
     BadSMSConfigException)
 from corehq.apps.domain.models import Domain
 from datetime import datetime
@@ -38,6 +41,13 @@ class DomainScopeValidationError(Exception):
 
 class BackendAuthorizationException(Exception):
     pass
+
+
+def get_utcnow():
+    """
+    Used to make it easier to mock utcnow() in the tests.
+    """
+    return datetime.utcnow()
 
 
 class MessageMetadata(object):
@@ -68,7 +78,7 @@ def log_sms_exception(msg):
     notify_exception(None, message=message, details={
         'domain': msg.domain,
         'date': msg.date,
-        'message_id': msg._id,
+        'message_id': msg.couch_id,
     })
 
 
@@ -85,6 +95,10 @@ def get_location_id_by_verified_number(v):
     return get_location_id_by_contact(v.domain, v.owner)
 
 
+def get_sms_class():
+    return QueuedSMS if settings.SMS_QUEUE_ENABLED else SMS
+
+
 def send_sms(domain, contact, phone_number, text, metadata=None):
     """
     Sends an outbound SMS. Returns false if it fails.
@@ -95,11 +109,11 @@ def send_sms(domain, contact, phone_number, text, metadata=None):
         phone_number = str(phone_number)
     phone_number = clean_phone_number(phone_number)
 
-    msg = SMSLog(
+    msg = get_sms_class()(
         domain=domain,
         phone_number=phone_number,
         direction=OUTGOING,
-        date = datetime.utcnow(),
+        date=get_utcnow(),
         backend_id=None,
         location_id=get_location_id_by_contact(domain, contact),
         text = text
@@ -131,14 +145,14 @@ def send_sms_to_verified_number(verified_number, text, metadata=None,
             return False
         raise
 
-    msg = SMSLog(
+    msg = get_sms_class()(
         couch_recipient_doc_type = verified_number.owner_doc_type,
         couch_recipient = verified_number.owner_id,
         phone_number = "+" + str(verified_number.phone_number),
         direction = OUTGOING,
-        date = datetime.utcnow(),
+        date=get_utcnow(),
         domain = verified_number.domain,
-        backend_id = backend._id,
+        backend_id=backend.couch_id,
         location_id=get_location_id_by_verified_number(verified_number),
         text = text
     )
@@ -149,11 +163,11 @@ def send_sms_to_verified_number(verified_number, text, metadata=None,
 
 def send_sms_with_backend(domain, phone_number, text, backend_id, metadata=None):
     phone_number = clean_phone_number(phone_number)
-    msg = SMSLog(
+    msg = get_sms_class()(
         domain=domain,
         phone_number=phone_number,
         direction=OUTGOING,
-        date=datetime.utcnow(),
+        date=get_utcnow(),
         backend_id=backend_id,
         text=text
     )
@@ -164,13 +178,13 @@ def send_sms_with_backend(domain, phone_number, text, backend_id, metadata=None)
 
 def send_sms_with_backend_name(domain, phone_number, text, backend_name, metadata=None):
     phone_number = clean_phone_number(phone_number)
-    backend = MobileBackend.load_by_name(domain, backend_name)
-    msg = SMSLog(
+    backend = SQLMobileBackend.load_by_name(SQLMobileBackend.SMS, domain, backend_name)
+    msg = get_sms_class()(
         domain=domain,
         phone_number=phone_number,
         direction=OUTGOING,
-        date=datetime.utcnow(),
-        backend_id=backend._id,
+        date=get_utcnow(),
+        backend_id=backend.couch_id,
         text=text
     )
     add_msg_tags(msg, metadata)
@@ -193,7 +207,7 @@ def queue_outgoing_sms(msg):
         try:
             msg.processed = False
             msg.datetime_to_process = msg.date
-            msg.queued_timestamp = datetime.utcnow()
+            msg.queued_timestamp = get_utcnow()
             msg.save()
         except:
             log_sms_exception(msg)
@@ -204,6 +218,9 @@ def queue_outgoing_sms(msg):
     else:
         msg.processed = True
         msg_sent = send_message_via_backend(msg)
+        msg.publish_change()
+        if msg_sent:
+            create_billable_for_sms(msg)
         return msg_sent
 
 
@@ -211,8 +228,7 @@ def send_message_via_backend(msg, backend=None, orig_phone_number=None):
     """send sms using a specific backend
 
     msg - outbound message object
-    backend - MobileBackend object to use for sending; if None, use
-      msg.outbound_backend
+    backend - backend to use for sending; if None, msg.outbound_backend is used
     orig_phone_number - the originating phone number to use when sending; this
       is sent in if the backend supports load balancing
     """
@@ -227,7 +243,7 @@ def send_message_via_backend(msg, backend=None, orig_phone_number=None):
                  "  Please investigate why this function was called.") % msg.domain
             )
 
-        phone_obj = PhoneNumber.get_by_phone_number_or_none(msg.phone_number)
+        phone_obj = PhoneBlacklist.get_by_phone_number_or_none(msg.phone_number)
         if phone_obj and not phone_obj.send_sms:
             if msg.ignore_opt_out and phone_obj.can_opt_in:
                 # If ignore_opt_out is True on the message, then we'll still
@@ -242,24 +258,17 @@ def send_message_via_backend(msg, backend=None, orig_phone_number=None):
 
         if not backend:
             backend = msg.outbound_backend
-            # note: this will handle "verified" contacts that are still pending
-            # verification, thus the backend is None. it's best to only call
-            # send_sms_to_verified_number on truly verified contacts, though
-
-        if not msg.backend_id:
-            msg.backend_id = backend._id
 
         if backend.domain_is_authorized(msg.domain):
             backend.send(msg, orig_phone_number=orig_phone_number)
         else:
-            raise BackendAuthorizationException("Domain '%s' is not authorized to use backend '%s'" % (msg.domain, backend._id))
+            raise BackendAuthorizationException(
+                "Domain '%s' is not authorized to use backend '%s'" % (msg.domain, backend.pk)
+            )
 
-        try:
-            msg.backend_api = backend.__class__.get_api_id()
-        except Exception:
-            pass
+        msg.backend_api = backend.hq_api_id
+        msg.backend_id = backend.couch_id
         msg.save()
-        create_billable_for_sms(msg)
         return True
     except Exception:
         log_sms_exception(msg)
@@ -423,8 +432,8 @@ def process_sms_registration(msg):
 
 
 def incoming(phone_number, text, backend_api, timestamp=None,
-             domain_scope=None, backend_message_id=None, delay=True,
-             backend_attributes=None, raw_text=None):
+             domain_scope=None, backend_message_id=None,
+             raw_text=None, backend_id=None):
     """
     entry point for incoming sms
 
@@ -440,29 +449,27 @@ def incoming(phone_number, text, backend_api, timestamp=None,
     if text is None:
         text = ""
     phone_number = clean_phone_number(phone_number)
-    msg = SMSLog(
+    msg = get_sms_class()(
         phone_number=phone_number,
         direction=INCOMING,
-        date=timestamp or datetime.utcnow(),
+        date=timestamp or get_utcnow(),
         text=text,
         domain_scope=domain_scope,
         backend_api=backend_api,
+        backend_id=backend_id,
         backend_message_id=backend_message_id,
         raw_text=raw_text,
     )
-    if backend_attributes:
-        for k, v in backend_attributes.items():
-            setattr(msg, k, v)
     if settings.SMS_QUEUE_ENABLED:
         msg.processed = False
-        msg.datetime_to_process = datetime.utcnow()
+        msg.datetime_to_process = get_utcnow()
         msg.queued_timestamp = msg.datetime_to_process
         msg.save()
         enqueue_directly(msg)
     else:
         msg.processed = True
         msg.save()
-        process_incoming(msg, delay=delay)
+        process_incoming(msg)
     return msg
 
 
@@ -475,13 +482,14 @@ def is_opt_message(text, keyword_list):
 
 
 def get_opt_keywords(msg):
-    backend_classes = get_available_backends(index_by_api_id=True)
-    backend_class = backend_classes.get(msg.backend_api, SMSBackend)
-    return (backend_class.get_opt_in_keywords(),
-        backend_class.get_opt_out_keywords())
+    backend_class = get_backend_classes().get(msg.backend_api, SQLSMSBackend)
+    return (
+        backend_class.get_opt_in_keywords(),
+        backend_class.get_opt_out_keywords()
+    )
 
 
-def process_incoming(msg, delay=True):
+def process_incoming(msg):
     v = VerifiedNumber.by_phone(msg.phone_number, include_pending=True)
 
     if v is not None and v.verified:
@@ -499,10 +507,10 @@ def process_incoming(msg, delay=True):
                 'verified with this domain'
             )
 
-    can_receive_sms = PhoneNumber.can_receive_sms(msg.phone_number)
+    can_receive_sms = PhoneBlacklist.can_receive_sms(msg.phone_number)
     opt_in_keywords, opt_out_keywords = get_opt_keywords(msg)
     if is_opt_message(msg.text, opt_out_keywords) and can_receive_sms:
-        if PhoneNumber.opt_out_sms(msg.phone_number):
+        if PhoneBlacklist.opt_out_sms(msg.phone_number):
             metadata = MessageMetadata(ignore_opt_out=True)
             text = get_message(MSG_OPTED_OUT, v, context=(opt_in_keywords[0],))
             if v:
@@ -510,7 +518,7 @@ def process_incoming(msg, delay=True):
             else:
                 send_sms(msg.domain, None, msg.phone_number, text, metadata=metadata)
     elif is_opt_message(msg.text, opt_in_keywords) and not can_receive_sms:
-        if PhoneNumber.opt_in_sms(msg.phone_number):
+        if PhoneBlacklist.opt_in_sms(msg.phone_number):
             text = get_message(MSG_OPTED_IN, v, context=(opt_out_keywords[0],))
             if v:
                 send_sms_to_verified_number(v, text)
@@ -543,13 +551,22 @@ def process_incoming(msg, delay=True):
             import verify
             verify.process_verification(v, msg)
 
-    if msg.domain and domain_has_privilege(msg.domain, privileges.INBOUND_SMS):
+    # If the sms queue is enabled, then the billable gets created in remove_from_queue()
+    if (
+        not settings.SMS_QUEUE_ENABLED and
+        msg.domain and
+        domain_has_privilege(msg.domain, privileges.INBOUND_SMS)
+    ):
         create_billable_for_sms(msg)
 
 
 def create_billable_for_sms(msg, delay=True):
+    if not isinstance(msg, SMS):
+        raise Exception("Expected msg to be an SMS")
+
     if not msg.domain:
         return
+
     try:
         from corehq.apps.sms.tasks import store_billable
         if delay:
@@ -557,4 +574,4 @@ def create_billable_for_sms(msg, delay=True):
         else:
             store_billable(msg)
     except Exception as e:
-        log_accounting_error("Errors Creating SMS Billable: %s" % e)
+        log_smsbillables_error("Errors Creating SMS Billable: %s" % e)

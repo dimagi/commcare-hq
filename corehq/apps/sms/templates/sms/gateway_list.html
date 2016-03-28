@@ -41,11 +41,11 @@
                         <div class="modal-header">
                             <button type="button" class="close" data-dismiss="modal"><span aria-hidden="true">&times;</span></button>
                             <h4 class="modal-title">
-                                Delete the SMS Connection '<span data-bind="text: name"></span>'.
+                                {% blocktrans %}Delete the SMS Gateway '<span data-bind="text: name"></span>'{% endblocktrans %}
                             </h4>
                         </div>
                         <div class="modal-body">
-                            <p>Are you sure you want to delete the SMS Connection '<span data-bind="text: name"></span>'?</p>
+                            <p>{% blocktrans %}Are you sure you want to delete the SMS Gateway '<span data-bind="text: name"></span>'?</p>{% endblocktrans %}
                         </div>
                         <div class="modal-footer">
                             <a href="#" class="btn btn-danger delete-item-confirm">
@@ -57,8 +57,8 @@
                 </div>
             </div>
             <!-- /ko -->
-            <!-- ko if: isGlobal --><span class="label label-default"><i class="fa fa-info-circle"></i> {% trans 'Global Connection' %}</span><!-- /ko -->
-            <!-- ko if: isShared --><span class="label label-default"><i class="fa fa-info-circle"></i> {% trans 'Shared Connection' %}</span><!-- /ko -->
+            <!-- ko if: isGlobal --><span class="label label-default"><i class="fa fa-info-circle"></i> {% trans 'Global Gateway' %}</span><!-- /ko -->
+            <!-- ko if: isShared --><span class="label label-default"><i class="fa fa-info-circle"></i> {% trans 'Shared Gateway' %}</span><!-- /ko -->
         </td>
     </script>
 
@@ -78,7 +78,7 @@
         </td>
         <td class="col-sm-4" data-bind="text: description"></td>
         <td class="col-sm-4" data-bind="text: supported_countries"></td>
-        <td class="col-sm-2"><span class="label label-info">{% trans 'DEFAULT CONNECTION' %}</span></td>
+        <td class="col-sm-2"><span class="label label-info">{% trans 'DEFAULT GATEWAY' %}</span></td>
         <td class="col-sm-2">
             <button type="button"
                     class="btn btn-danger refresh-list-confirm"
@@ -88,7 +88,7 @@
 
     <script type="text/html" id="gateway-automatic-template">
         <td class="col-sm-8" colspan="3"><em data-bind="text: name"></em></td>
-        <td class="col-sm-4" colspan="2"><span class="label label-info">{% trans 'DEFAULT CONNECTION' %}</span></td>
+        <td class="col-sm-4" colspan="2"><span class="label label-info">{% trans 'DEFAULT GATEWAY' %}</span></td>
     </script>
 {% endblock %}
 

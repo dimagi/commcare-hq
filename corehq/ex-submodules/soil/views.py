@@ -39,8 +39,10 @@ def heartbeat_status(request):
     
 
 @login_required
-def ajax_job_poll(request, download_id, template="soil/partials/dl_status.html"):
+def ajax_job_poll(request, download_id, template="soil/partials/bootstrap2/dl_status.html"):
     message = request.GET['message'] if 'message' in request.GET else None
+    is_bootstrap3 = request.GET.get('is_bootstrap3', 'false') == 'true'
+    template = 'soil/partials/bootstrap3/dl_status.html' if is_bootstrap3 else template
     try:
         context = get_download_context(download_id, check_state=True, message=message)
     except TaskFailedError as e:
@@ -50,20 +52,21 @@ def ajax_job_poll(request, download_id, template="soil/partials/dl_status.html")
 
 
 @login_required
-def retrieve_download(request, download_id, template="soil/file_download.html"):
+def retrieve_download(request, download_id, template="soil/file_download.html", extra_context=None):
     """
     Retrieve a download that's waiting to be generated. If it is the get_file, 
     then download it, else, let the ajax on the page poll.
     """
     context = RequestContext(request)
+    if extra_context:
+        context.update(extra_context)
     context['download_id'] = download_id
-    do_download = request.GET.has_key('get_file')
-    if do_download:
+
+    if 'get_file' in request.GET:
         download = DownloadBase.get(download_id)
         if download is None:
             logging.error("Download file request for expired/nonexistent file requested")
             raise Http404
-        else:
-            return download.toHttpResponse()
+        return download.toHttpResponse()
 
     return render_to_response(template, context_instance=context)

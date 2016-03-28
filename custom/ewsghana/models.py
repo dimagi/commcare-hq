@@ -76,10 +76,13 @@ class EWSGhanaConfig(Document):
         if self.enabled:
             STOCK_AND_RECEIPT_SMS_HANDLER.set(self.domain, True, NAMESPACE_DOMAIN)
 
+    class Meta:
+        app_label = 'ewsghana'
+
 
 class FacilityInCharge(models.Model):
     user_id = models.CharField(max_length=128, db_index=True)
-    location = models.ForeignKey(SQLLocation)
+    location = models.ForeignKey(SQLLocation, on_delete=models.PROTECT)
 
     class Meta:
         app_label = 'ewsghana'
@@ -109,6 +112,9 @@ class EWSExtension(models.Model):
     def domain_object(self):
         return Domain.get_by_name(self.domain)
 
+    class Meta:
+        app_label = 'ewsghana'
+
 
 class EWSMigrationStats(models.Model):
     products_count = models.IntegerField(default=0)
@@ -118,6 +124,9 @@ class EWSMigrationStats(models.Model):
     web_users_count = models.IntegerField(default=0)
     domain = models.CharField(max_length=128, db_index=True)
     last_modified = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        app_label = 'ewsghana'
 
 
 class EWSMigrationProblem(models.Model):
@@ -144,6 +153,9 @@ class EWSMigrationProblem(models.Model):
             return reverse(EditLocationView.urlname, kwargs={'domain': self.domain, 'loc_id': self.object_id})
         return
 
+    class Meta:
+        app_label = 'ewsghana'
+
 
 class SQLNotification(models.Model):
     domain = models.CharField(max_length=128)
@@ -151,6 +163,9 @@ class SQLNotification(models.Model):
     type = models.CharField(max_length=128)
     week = models.IntegerField()
     year = models.IntegerField()
+
+    class Meta:
+        app_label = 'ewsghana'
 
 
 @receiver(commcare_domain_pre_delete)

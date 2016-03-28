@@ -3,6 +3,7 @@ from collections import namedtuple
 import os
 from xml.sax.saxutils import escape
 
+from django.utils.translation import ugettext_lazy as _
 from eulxml.xmlmap.core import load_xmlobject_from_string
 
 from corehq.apps.app_manager.const import RETURN_TO
@@ -34,7 +35,7 @@ from corehq.apps.app_manager.suite_xml.xml_models import (
 from corehq.apps.app_manager.suite_xml.features.scheduler import schedule_detail_variables
 from corehq.apps.app_manager.util import create_temp_sort_column
 from corehq.apps.app_manager import id_strings
-from corehq.apps.app_manager.exceptions import SuiteError
+from corehq.apps.app_manager.exceptions import SuiteError, SuiteValidationError
 from corehq.apps.app_manager.xpath import session_var, XPath
 from dimagi.utils.decorators.memoized import memoized
 
@@ -205,8 +206,15 @@ class DetailContributor(SectionContributor):
                         if source_meta.case_type == target_meta.case_type
                     ]
                 except ValueError:
-                    raise SuiteError("Form selected as case list form requires a case "
-                                     "but no matching case could be found: {}".format(form.unique_id))
+                    message = _(
+                        "The '{form}' form selected as the case list registration form "
+                        "for the '{module}' module requires a '{case_type}' case. "
+                        "The '{module}' must load a case of this type.").format(
+                        form=form.default_name(),
+                        module=module.default_name(),
+                        case_type=target_meta.case_type
+                    )
+                    raise SuiteValidationError(message)
                 else:
                     frame.add_datum(StackDatum(
                         id=target_meta.datum.id,
@@ -341,34 +349,34 @@ def get_detail_column_infos(detail, include_sort):
                        key=lambda (field, (sort_element, order)): order)
 
     for field, (sort_element, order) in sort_only:
-        column = create_temp_sort_column(field, len(columns))
+        column = create_temp_sort_column(field)
         columns.append(DetailColumnInfo(column, sort_element, order))
     return columns
 
 
 def get_instances_for_module(app, module, additional_xpaths=None):
-        """
-        This method is used by CloudCare when filtering cases.
-        """
-        modules = list(app.get_modules())
-        helper = DetailsHelper(app, modules)
-        details = DetailContributor(None, app, modules).get_section_elements()
-        detail_mapping = {detail.id: detail for detail in details}
-        details_by_id = detail_mapping
-        detail_ids = [helper.get_detail_id_safe(module, detail_type)
-                      for detail_type, detail, enabled in module.get_details()
-                      if enabled]
-        detail_ids = filter(None, detail_ids)
-        xpaths = set()
+    """
+    This method is used by CloudCare when filtering cases.
+    """
+    modules = list(app.get_modules())
+    helper = DetailsHelper(app, modules)
+    details = DetailContributor(None, app, modules).get_section_elements()
+    detail_mapping = {detail.id: detail for detail in details}
+    details_by_id = detail_mapping
+    detail_ids = [helper.get_detail_id_safe(module, detail_type)
+                  for detail_type, detail, enabled in module.get_details()
+                  if enabled]
+    detail_ids = filter(None, detail_ids)
+    xpaths = set()
 
-        if additional_xpaths:
-            xpaths.update(additional_xpaths)
+    if additional_xpaths:
+        xpaths.update(additional_xpaths)
 
-        for detail_id in detail_ids:
-            xpaths.update(details_by_id[detail_id].get_all_xpaths())
+    for detail_id in detail_ids:
+        xpaths.update(details_by_id[detail_id].get_all_xpaths())
 
-        instances, _ = EntryInstances.get_required_instances(xpaths)
-        return instances
+    instances, _ = EntryInstances.get_required_instances(xpaths)
+    return instances
 
 
 class CaseTileHelper(object):

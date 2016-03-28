@@ -1,7 +1,7 @@
 from datetime import datetime, time
 from corehq import privileges
-from corehq.apps.app_manager.dbaccessors import get_app
-from corehq.apps.app_manager.models import ApplicationBase, Form
+from corehq.apps.app_manager.dbaccessors import get_app, get_app_ids_in_domain
+from corehq.apps.app_manager.models import Form
 from couchdbkit.resource import ResourceNotFound
 from django.utils.translation import ugettext as _
 from corehq.apps.casegroups.dbaccessors import get_case_groups_in_domain
@@ -55,8 +55,8 @@ class DotExpandedDict(dict):
 
 def get_form_list(domain):
     form_list = []
-    for app in ApplicationBase.view("app_manager/applications_brief", startkey=[domain], endkey=[domain, {}]):
-        latest_app = get_app(domain, app._id, latest=True)
+    for app_id in get_app_ids_in_domain(domain):
+        latest_app = get_app(domain, app_id, latest=True)
         if latest_app.doc_type == "Application":
             for m in latest_app.get_modules():
                 for f in m.get_forms():

@@ -385,6 +385,13 @@
                                        "radius_function": null,
                                        "x_function": "x_num",
                                        "config": {
+                                       },
+                                       "locale_specific_config": {
+                                            "name": {
+                                                "en": "englishName",
+                                                "fra": "frenchName"
+                                            },
+                                            "x-name": {}
                                        }
                                    }
                                ],

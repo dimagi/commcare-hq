@@ -20,14 +20,16 @@ reminder_rate_limiter = DomainRateLimiter(
 
 # In minutes
 CASE_CHANGED_RETRY_INTERVAL = 5
-CASE_CHANGED_RETRY_MAX = 3
+CASE_CHANGED_RETRY_MAX = 10
 CELERY_REMINDERS_QUEUE = "reminder_queue"
+
 
 if not settings.REMINDERS_QUEUE_ENABLED:
     @periodic_task(run_every=timedelta(minutes=1),
         queue=settings.CELERY_PERIODIC_QUEUE)
     def fire_reminders():
         CaseReminderHandler.fire_reminders()
+
 
 def get_subcases(case):
     indices = case.reverse_indices
@@ -37,23 +39,20 @@ def get_subcases(case):
             subcases.append(CommCareCase.get(index.referenced_id))
     return subcases
 
-@task(queue=settings.CELERY_REMINDER_CASE_UPDATE_QUEUE, ignore_result=True, acks_late=True)
-def case_changed(case_id, handler_ids, retry_num=0):
+
+@task(queue=settings.CELERY_REMINDER_CASE_UPDATE_QUEUE, ignore_result=True, acks_late=True,
+      default_retry_delay=CASE_CHANGED_RETRY_INTERVAL * 60, max_retries=CASE_CHANGED_RETRY_MAX,
+      bind=True)
+def case_changed(self, domain, case_id):
     try:
-        _case_changed(case_id, handler_ids)
-    except Exception:
-        if retry_num <= CASE_CHANGED_RETRY_MAX:
-            try:
-                # Try running the rule update again
-                case_changed.apply_async(args=[case_id, handler_ids],
-                    kwargs={"retry_num": retry_num + 1},
-                    countdown=(60*CASE_CHANGED_RETRY_INTERVAL))
-            except Exception:
-                notify_exception(None,
-                    message="Error processing reminder rule updates for case %s" %
-                    case_id)
-        else:
-            notify_exception(None, message="Error processing reminder rule updates for case %s" % case_id)
+        handler_ids = CaseReminderHandler.get_handler_ids(
+            domain,
+            reminder_type_filter=REMINDER_TYPE_DEFAULT
+        )
+        if handler_ids:
+            _case_changed(case_id, handler_ids)
+    except Exception as e:
+        self.retry(exc=e)
 
 
 def _case_changed(case_id, handler_ids):
@@ -73,6 +72,7 @@ def _case_changed(case_id, handler_ids):
                     subcases = get_subcases(case)
                 for subcase in subcases:
                     handler.case_changed(subcase, **kwargs)
+
 
 @task(queue=settings.CELERY_REMINDER_RULE_QUEUE, ignore_result=True, acks_late=True)
 def process_reminder_rule(handler, schedule_changed, prev_definition,
@@ -100,6 +100,7 @@ def fire_reminder(reminder_id, domain):
 def reminder_is_stale(reminder, utcnow):
     delta = timedelta(hours=settings.REMINDERS_QUEUE_STALE_REMINDER_DURATION)
     return (utcnow - delta) > reminder.next_fire
+
 
 def _fire_reminder(reminder_id):
     utcnow = datetime.utcnow()

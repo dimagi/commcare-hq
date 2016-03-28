@@ -1,0 +1,128 @@
+{% extends "reports_core/base_template_new.html" %}
+{% load hq_shared_tags %}
+{% load i18n %}
+{% block head %}
+    <style>
+        #chart svg {
+            height: 300px;
+        }
+    </style>
+{% endblock %}
+{% block js-inline %}
+<script type="text/javascript">
+    $(function() {
+        // setup chart
+        var data = {{ rows|JSON }};
+        var performingSeries = {
+            'key': 'performing',
+            values: _.map(data, function(item) {
+                return {
+                    'x': item.month,
+                    'y': item.performing
+                };
+            })
+        };
+        var activeNonPerformingSeries = {
+            'key': 'active',
+            values: _.map(data, function(item) {
+                return {
+                    'x': item.month,
+                    'y': item.active - item.performing
+                };
+            })
+        };
+        nv.addGraph(function() {
+            var chart = nv.models.multiBarChart()
+              .showControls(false)
+              .stacked(true)
+            ;
+            chart.yAxis.tickFormat(d3.format(',.0f'));
+            d3.select('#chart svg')
+                .datum([performingSeries, activeNonPerformingSeries])
+                .call(chart);
+            nv.utils.windowResize(chart.update);
+            return chart;
+        });
+    });
+</script>
+{% endblock %}
+{% block main_column_content %}
+    <h1>{% trans "Project Health Dashboard" %}</h1>
+    <p class="lead">
+        {% blocktrans %}
+        A summary of the overall health of your project based on how your users are doing over time.
+        {% endblocktrans %}
+    </p>
+    <h2>{% trans "Last Month Stats" %}</h2>
+<table class="table lead">
+    <thead>
+        <tr>
+            <th>{% trans "Category" %}</th>
+            <th>{{ last_month.month|date:"F 'y" }}</th>
+            <th>
+                {% blocktrans with prev_month=last_month.previous_month|date:"F" %}
+                    Change from {{ prev_month }}
+                {% endblocktrans %}</th>
+        </tr>
+    </thead>
+    <tr>
+        <td>{% trans "Performing users" %}
+            <p class="text-muted"><small>{% blocktrans %}Users who submitted {{ threshold }} or more forms last month.{% endblocktrans %}</small></p>
+        </td>
+        <td>{{ last_month.performing }}</td>
+        <td>
+            {% chevron last_month.delta_performing_pct %}
+            {{ last_month.delta_performing_pct|floatformat }} %
+        </td>
+    </tr>
+    <tr>
+        <td>
+            {% trans "All active users" %}
+            <p class="text-muted"><small>{% blocktrans %}Users who submitted any forms last month.{% endblocktrans %}</small></p>
+        </td>
+        <td>{{ last_month.active }}</td>
+        <td>
+            {% chevron last_month.delta_active_pct %}
+            {{ last_month.delta_active_pct|floatformat }} %
+        </td>
+    </tr>
+</table>
+<h2>{% trans "Performing / Active User Trends" %}</h2>
+    <p class="lead">
+        {% trans "How the counts of performing and active users have changed in the last six months." %}
+    </p>
+<div id="chart"><svg></svg></div>
+<div class="col-md-4">
+    <h2>{% trans "Active, Non-Performing Users" %}</h2>
+    <p class="lead">
+        {% blocktrans %}
+            These are people who used CommCare last month but didn't submit {{ threshold }} forms.
+            They could use a boost!
+        {% endblocktrans %}
+    </p>
+    {% with last_month.get_unhealthy_users as user_list %}
+        {% include "reports/project_health/partials/user_list.html" %}
+    {% endwith %}
+</div>
+<div class="col-md-4">
+    <h2>{% trans "Newly Inactive Users" %}</h2>
+    <p class="lead">
+        {% trans "These are people who stopped using CommCare last month. They could use a follow up!" %}
+    </p>
+    {% with last_month.get_dropouts as user_list %}
+        {% include "reports/project_health/partials/user_list.html" %}
+    {% endwith %}
+</div>
+<div class="col-md-4">
+    <h2>{% trans "Newly Performing Users" %}</h2>
+    <p class="lead">
+        {% blocktrans %}
+            These are people who submitted at least {{ threshold }} forms this month and didn't last month.
+            Give them a high five!
+        {% endblocktrans %}
+    </p>
+    {% with last_month.get_newly_performing as user_list %}
+        {% include "reports/project_health/partials/user_list.html" %}
+    {% endwith %}
+</div>
+{% endblock %}

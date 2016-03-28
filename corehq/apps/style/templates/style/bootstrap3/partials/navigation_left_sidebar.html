@@ -3,14 +3,13 @@
     <h2 class="text-hq-nav-header">{{ section_title }}</h2>
     <ul class="nav nav-hq-sidebar">
         {% for nav in navs %}
-            <li {% if nav.is_active and not nav.subpage %}class="active"{% endif %}>
-                <a href="{{ nav.url }}">
+            <li class="{% if nav.is_active and not nav.subpage %}active{% endif %}{% if nav.description %} has-description{% endif %}">
+                <a href="{{ nav.url }}" {% if nav.description %}class="js-report-description-popover popover-report" data-title="{{ nav.title }}" data-content="{{ nav.description }}"{% endif %}>
                     {% if nav.warning %}
                         <span class="label label-warning pull-right">
                             <i class="fa fa-warning"></i> {{ nav.warning }}
                         </span>
                     {% endif %}
-                    {# todo handle report descriptions #}
                     {% if nav.icon %}<i class="{{ nav.icon }}"></i>{% endif %}
                     {{ nav.title }}
                 </a>

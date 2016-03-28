@@ -4,7 +4,6 @@ from casexml.apps.stock.models import DocDomainMapping, StockReport, StockTransa
 from corehq.apps.domain.models import Domain
 from corehq.apps.locations.models import Location, LocationType, SQLLocation
 from corehq.apps.products.models import Product, SQLProduct
-from corehq.form_processor.interfaces.supply import SupplyInterface
 
 
 class TestDeleteDomain(TestCase):
@@ -20,7 +19,6 @@ class TestDeleteDomain(TestCase):
             location_type='facility'
         )
         location.save()
-        SupplyInterface.create_from_location(domain_name, location)
         report = StockReport.objects.create(
             type='balance',
             domain=domain_name,
@@ -41,8 +39,10 @@ class TestDeleteDomain(TestCase):
     def setUp(self):
         self.domain = Domain(name="test", is_active=True)
         self.domain.save()
+        self.domain.convert_to_commtrack()
         self.domain2 = Domain(name="test2", is_active=True)
         self.domain2.save()
+        self.domain2.convert_to_commtrack()
         LocationType.objects.create(
             domain='test',
             name='facility',

@@ -1,6 +1,7 @@
 from collections import namedtuple
 import re
 from couchdbkit import ResourceNotFound
+from corehq.apps.app_manager.dbaccessors import get_app
 from corehq.apps.app_manager.models import ApplicationBase
 from corehq.apps.domain.auth import determine_authtype_from_request
 from corehq.apps.receiverwrapper.exceptions import LocalSubmissionError
@@ -32,10 +33,9 @@ def submit_form_locally(instance, domain, **kwargs):
     return response, xform, cases
 
 
-def get_meta_appversion_text(xform):
-    form_data = xform.form_data
+def get_meta_appversion_text(form_metadata):
     try:
-        text = form_data['meta']['appVersion']['#text']
+        text = form_metadata['appVersion']
     except KeyError:
         return None
 
@@ -58,7 +58,7 @@ def get_version_from_build_id(domain, build_id):
         return None
 
     try:
-        build = ApplicationBase.get(build_id)
+        build = get_app(domain, build_id)
     except ResourceNotFound:
         return None
     if not build.copy_of:
@@ -135,25 +135,22 @@ class BuildVersionSource:
 AppVersionInfo = namedtuple('AppInfo', ['build_version', 'commcare_version', 'source'])
 
 
-def get_app_version_info(xform):
+def get_app_version_info(domain, build_id, xform_version, xform_metadata):
     """
     there are a bunch of unreliable places to look for a build version
     this abstracts that out
 
     """
-    appversion_text = get_meta_appversion_text(xform)
+    appversion_text = get_meta_appversion_text(xform_metadata)
     commcare_version = get_commcare_version_from_appversion_text(appversion_text)
-    build_version = get_version_from_build_id(xform.domain, xform.build_id)
+    build_version = get_version_from_build_id(domain, build_id)
     if build_version:
         return AppVersionInfo(build_version, commcare_version, BuildVersionSource.BUILD_ID)
 
-    build_version = get_version_from_appversion_text(
-        get_meta_appversion_text(xform)
-    )
+    build_version = get_version_from_appversion_text(appversion_text)
     if build_version:
         return AppVersionInfo(build_version, commcare_version, BuildVersionSource.APPVERSION_TEXT)
 
-    xform_version = xform.version
     if xform_version and xform_version != '1':
         return AppVersionInfo(int(xform_version), commcare_version, BuildVersionSource.XFORM_VERSION)
 

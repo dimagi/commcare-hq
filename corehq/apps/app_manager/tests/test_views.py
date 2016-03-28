@@ -161,17 +161,6 @@ class TestViews(TestCase):
         kwargs['form_id'] = form.id
         self._test_status_codes(['view_form', 'form_source'], kwargs)
 
-    def test_user_registration(self):
-        self.app.show_user_registration = True
-        self.app.save()
-        self._test_status_codes([
-            'view_user_registration',
-            'user_registration_source',
-        ], {
-            'domain': self.domain.name,
-            'app_id': self.app.id,
-        })
-
     def test_advanced_module(self):
         module = self.app.add_module(AdvancedModule.new_module("Module0", "en"))
         self.app.save()
@@ -237,14 +226,22 @@ class TestTemplateAppViews(TestCase):
         self.assertEqual(response.status_code, 302)
         redirect_location = response['Location']
         [app_id] = re.compile(r'[a-fA-F0-9]{32}').findall(redirect_location)
-        expected = '{}/modules-0/forms-0/source/'.format(app_id)
+        expected = '{}/modules-0/forms-0/'.format(app_id)
         self.assertTrue(redirect_location.endswith(expected))
         self.addCleanup(lambda: Application.get_db().delete_doc(app_id))
 
-    def test_app_from_template(self):
+    def test_case_management_app_from_template(self):
         response = self.client.get(reverse('app_from_template', kwargs={
             'domain': self.domain.name,
             'slug': 'case_management'
+        }), follow=False)
+
+        self._check_response(response)
+
+    def test_survey_app_from_template(self):
+        response = self.client.get(reverse('app_from_template', kwargs={
+            'domain': self.domain.name,
+            'slug': 'survey'
         }), follow=False)
 
         self._check_response(response)

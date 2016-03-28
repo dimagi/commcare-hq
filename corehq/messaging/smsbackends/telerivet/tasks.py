@@ -1,4 +1,4 @@
-from corehq.messaging.smsbackends.telerivet.models import TelerivetBackend, IncomingRequest
+from corehq.messaging.smsbackends.telerivet.models import SQLTelerivetBackend, IncomingRequest
 from corehq.apps.sms.api import incoming as incoming_sms
 from corehq.apps.sms.util import strip_plus
 from corehq.apps.ivr.api import incoming as incoming_ivr
@@ -26,7 +26,7 @@ def process_incoming_message(*args, **kwargs):
         notify_exception(None, "Could not save Telerivet log entry")
         pass
 
-    backend = TelerivetBackend.by_webhook_secret(kwargs["secret"])
+    backend = SQLTelerivetBackend.by_webhook_secret(kwargs["secret"])
     if backend is None:
         # Ignore the message if the webhook secret is not recognized
         return
@@ -38,6 +38,6 @@ def process_incoming_message(*args, **kwargs):
 
     if kwargs["event"] == EVENT_INCOMING:
         if kwargs["message_type"] == MESSAGE_TYPE_SMS:
-            incoming_sms(from_number, kwargs["content"], TelerivetBackend.get_api_id())
+            incoming_sms(from_number, kwargs["content"], SQLTelerivetBackend.get_api_id())
         elif kwargs["message_type"] == MESSAGE_TYPE_CALL:
             incoming_ivr(from_number, "TELERIVET-%s" % kwargs["message_id"], None)

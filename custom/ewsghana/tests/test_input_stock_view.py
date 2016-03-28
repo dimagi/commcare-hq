@@ -11,14 +11,16 @@ from corehq.apps.commtrack.tests.util import bootstrap_domain as initial_bootstr
 from corehq.apps.domain.utils import DOMAIN_MODULE_KEY
 from corehq.apps.locations.models import SQLLocation
 from corehq.apps.products.models import SQLProduct
+from corehq.apps.sms.models import SMS
+from corehq.apps.sms.tests.util import setup_default_sms_test_backend
 from corehq.apps.users.models import WebUser, UserRole
 from django.test.client import Client
-from custom.ewsghana import StockLevelsReport
 from custom.ewsghana.api import EWSApi, Product, Location
 from custom.ewsghana.models import EWSExtension
 from custom.ewsghana.reports.specific_reports.stock_status_report import StockStatus
 from custom.ewsghana.tests.mock_endpoint import MockEndpoint
 from custom.ewsghana.utils import make_url
+from custom.ewsghana.tests.test_utils import create_test_locations
 from dimagi.utils.couch.database import get_db
 
 TEST_DOMAIN = 'ewsghana-test-input-stock'
@@ -61,9 +63,7 @@ class TestInputStockView(TestCase, DomainSubscriptionMixin):
             for p in json.loads(f.read()):
                 cls.api_object.product_sync(Product(p))
 
-        with open(os.path.join(cls.datapath, 'sample_locations.json')) as f:
-            for loc in json.loads(f.read()):
-                cls.api_object.location_sync(Location(loc))
+        create_test_locations(TEST_DOMAIN)
 
         cls.test_facility3 = SQLLocation.objects.get(domain=TEST_DOMAIN, site_code='tsactive')
         cls.testregion2 = SQLLocation.objects.get(domain=TEST_DOMAIN, site_code='testregion2')
@@ -103,7 +103,10 @@ class TestInputStockView(TestCase, DomainSubscriptionMixin):
 
         cls.username5 = 'ews_user5'
         cls.password5 = 'dummy'
-        cls.web_user5 = WebUser.create(TEST_DOMAIN, cls.username5, cls.password5)
+        cls.web_user5 = WebUser.create(TEST_DOMAIN, cls.username5, cls.password5, first_name='test',
+                                       last_name='test2')
+        cls.web_user5.set_default_phone_number('1111')
+        cls.web_user5.save()
         domain_membership = cls.web_user5.get_domain_membership(TEST_DOMAIN)
         domain_membership.location_id = cls.test_district.location_id
         domain_membership.role_id = UserRole.get_read_only_role_by_domain(cls.domain.name).get_id
@@ -138,6 +141,7 @@ class TestInputStockView(TestCase, DomainSubscriptionMixin):
         cls.ad = SQLProduct.objects.get(domain=TEST_DOMAIN, code='ad')
         cls.al = SQLProduct.objects.get(domain=TEST_DOMAIN, code='al')
 
+        cls.backend, cls.mapping = setup_default_sms_test_backend()
         cls.client = Client()
 
     def setUp(self):
@@ -243,6 +247,12 @@ class TestInputStockView(TestCase, DomainSubscriptionMixin):
             (tsactive.location_id, )
         )
         self.assertRedirects(response, url)
+        messages = SMS.objects.filter(domain=TEST_DOMAIN)
+        self.assertEqual(messages.count(), 1)
+        self.assertEqual(
+            messages[0].text,
+            'Dear test test2, thank you for reporting the commodities you have. You received ad 30 al 17.'
+        )
 
         stock_states = StockState.objects.filter(case_id=tsactive.supply_point_id)
         stock_transactions = StockTransaction.objects.filter(case_id=tsactive.supply_point_id)
@@ -314,6 +324,8 @@ class TestInputStockView(TestCase, DomainSubscriptionMixin):
 
     @classmethod
     def tearDownClass(cls):
+        cls.mapping.delete()
+        cls.backend.delete()
         cls.web_user1.delete()
         cls.domain.delete()
         cls.teardown_subscription()

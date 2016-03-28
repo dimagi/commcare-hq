@@ -19,9 +19,11 @@ from django.utils.translation import ugettext as _, ugettext_noop, ugettext_lazy
 from django.views.decorators.debug import sensitive_post_parameters
 from django.views.decorators.http import require_POST
 
+from django_otp.plugins.otp_static.models import StaticToken
 from djangular.views.mixins import allow_remote_invocation, JSONResponseMixin
 
 from couchdbkit.exceptions import ResourceNotFound
+from corehq.util.view_utils import json_error
 from dimagi.utils.couch import CriticalSection
 from dimagi.utils.decorators.memoized import memoized
 from dimagi.utils.web import json_response
@@ -31,11 +33,15 @@ from no_exceptions.exceptions import Http403
 
 from corehq import privileges
 from corehq.apps.accounting.utils import domain_has_privilege
-from corehq.apps.analytics.tasks import track_workflow
-from corehq.apps.app_manager.models import Application
+from corehq.apps.analytics.tasks import (
+    track_workflow, track_sent_invite_on_hubspot, track_new_user_accepted_invite_on_hubspot,
+    track_existing_user_accepted_invite_on_hubspot,
+)
+from corehq.apps.analytics.utils import get_meta
 from corehq.apps.domain.decorators import (login_and_domain_required, require_superuser, domain_admin_required)
 from corehq.apps.domain.models import Domain, toggles
 from corehq.apps.domain.views import BaseDomainView
+from corehq.apps.es import AppES
 from corehq.apps.es.queries import search_string_query
 from corehq.apps.hqwebapp.utils import send_confirmation_email
 from corehq.apps.hqwebapp.views import BasePageView, logout
@@ -52,7 +58,7 @@ from corehq.apps.sms.verify import (
 )
 from corehq.apps.style.decorators import (
     use_bootstrap3,
-    use_knockout_js,
+    use_angular_js,
 )
 from corehq.apps.translations.models import StandaloneTranslationDoc
 from corehq.apps.users.decorators import require_can_edit_web_users, require_permission_to_edit_user
@@ -192,6 +198,17 @@ class BaseEditUserView(BaseUserSettingsView):
         return context
 
     @property
+    def backup_token(self):
+        if Domain.get_by_name(self.request.domain).two_factor_auth:
+            device = self.editable_user.get_django_user().staticdevice_set.get_or_create(name='backup')[0]
+            token = device.token_set.first()
+            if token:
+                return device.token_set.first().token
+            else:
+                return device.token_set.create(token=StaticToken.random_token()).token
+        return None
+
+    @property
     @memoized
     def commtrack_form(self):
         if self.request.method == "POST" and self.request.POST['form_type'] == "commtrack":
@@ -273,6 +290,8 @@ class EditWebUserView(BaseEditUserView):
         if self.request.couch_user.is_superuser:
             ctx.update({'update_permissions': True})
 
+        ctx.update({'token': self.backup_token})
+
         return ctx
 
     @method_decorator(require_can_edit_web_users)
@@ -292,12 +311,11 @@ class EditWebUserView(BaseEditUserView):
 
 
 def get_domain_languages(domain):
-    app_languages = [res['key'][1] for res in Application.get_db().view(
-        'languages/list',
-        startkey=[domain],
-        endkey=[domain, {}],
-        group='true'
-    ).all()]
+    query = (AppES()
+             .domain(domain)
+             .terms_aggregation('langs', 'languages')
+             .size(0))
+    app_languages = query.run().aggregations.languages.keys
 
     translation_doc = StandaloneTranslationDoc.get_obj(domain, 'sms')
     sms_languages = translation_doc.langs if translation_doc else []
@@ -389,7 +407,7 @@ class ListWebUsersView(JSONResponseMixin, BaseUserSettingsView):
     urlname = 'web_users'
 
     @use_bootstrap3
-    @use_knockout_js
+    @use_angular_js
     @method_decorator(require_can_edit_web_users)
     def dispatch(self, request, *args, **kwargs):
         return super(ListWebUsersView, self).dispatch(request, *args, **kwargs)
@@ -547,6 +565,7 @@ def undo_remove_web_user(request, domain, record_id):
 # If any permission less than domain admin were allowed here, having that permission would give you the permission
 # to change the permissions of your own role such that you could do anything, and would thus be equivalent to having
 # domain admin permissions.
+@json_error
 @domain_admin_required
 @require_POST
 def post_user_role(request, domain):
@@ -587,7 +606,7 @@ class UserInvitationView(object):
     template = "users/accept_invite.html"
 
     def __call__(self, request, invitation_id, **kwargs):
-        logging.warning("Don't use this view in more apps until it gets cleaned up.")
+        logging.info("Don't use this view in more apps until it gets cleaned up.")
         # add the correct parameters to this instance
         self.request = request
         self.inv_id = invitation_id
@@ -650,6 +669,8 @@ class UserInvitationView(object):
                 track_workflow(request.couch_user.get_email(),
                                "Current user accepted a project invitation",
                                {"Current user accepted a project invitation": "yes"})
+                meta = get_meta(request)
+                track_existing_user_accepted_invite_on_hubspot.delay(request.couch_user, request.COOKIES, meta)
                 return HttpResponseRedirect(self.redirect_to_on_success)
             else:
                 mobile_user = CouchUser.from_django_user(request.user).is_commcare_user()
@@ -674,6 +695,8 @@ class UserInvitationView(object):
                     track_workflow(request.POST['email'],
                                    "New User Accepted a project invitation",
                                    {"New User Accepted a project invitation": "yes"})
+                    meta = get_meta(request)
+                    track_new_user_accepted_invite_on_hubspot.delay(user, request.COOKIES, meta)
                     return HttpResponseRedirect(reverse("domain_homepage", args=[invitation.domain]))
             else:
                 if CouchUser.get_by_username(invitation.email):
@@ -843,6 +866,8 @@ class InviteWebUserView(BaseManageWebUserView):
                 track_workflow(request.couch_user.get_email(),
                                "Sent a project invitation",
                                {"Sent a project invitation": "yes"})
+                meta = get_meta(request)
+                track_sent_invite_on_hubspot.delay(request.couch_user, request.COOKIES, meta)
                 messages.success(request, "Invitation sent to %s" % data["email"])
 
             if create_invitation:

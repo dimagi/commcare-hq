@@ -1,5 +1,6 @@
 from django.test.testcases import SimpleTestCase
-from custom.ewsghana.handlers.alerts import EWSFormatter
+
+from custom.ewsghana.handlers.helpers.formatter import EWSFormatter
 
 
 class TestFormatter(SimpleTestCase):

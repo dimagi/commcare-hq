@@ -2,15 +2,6 @@
 # -*- coding: utf-8 -*-
 """
 Server layout:
-    ~/services/
-        This contains two subfolders
-            /apache/
-            /supervisor/
-        which hold the configurations for these applications
-        for each environment (staging, production, etc) running on the server.
-        Theses folders are included in the global /etc/apache2 and
-        /etc/supervisor configurations.
-
     ~/www/
         This folder contains the code, python environment, and logs
         for each environment (staging, production, etc) running on the server.
@@ -18,30 +9,37 @@ Server layout:
         (i.e. ~/www/staging/log and ~/www/production/log).
 
     ~/www/<environment>/releases/<YYYY-MM-DD-HH.SS>
-        This folder contains a release of commcarehq. Each release has its own virtual environment that can be
-        found in `python_env`.
+        This folder contains a release of commcarehq. Each release has its own
+        virtual environment that can be found in `python_env`.
 
     ~/www/<environment>/current
         This path is a symlink to the release that is being run
         (~/www/<environment>/releases<YYYY-MM-DD-HH.SS>).
+
+    ~/www/<environment>/current/services/
+        This contains two subfolders
+            /supervisor/
+        which hold the configurations for these applications
+        for each environment (staging, production, etc) running on the server.
+        Theses folders are included in the global /etc/apache2 and
+        /etc/supervisor configurations.
+
 """
 import datetime
 import json
 import os
 import posixpath
 import sh
-import sys
 import time
 import yaml
-from collections import defaultdict
 from distutils.util import strtobool
 
 from fabric import utils
 from fabric.api import run, roles, execute, task, sudo, env, parallel
-from fabric.colors import blue, red
-from fabric.context_managers import settings, cd, shell_env
+from fabric.colors import blue, red, yellow
+from fabric.context_managers import settings, cd
 from fabric.contrib import files, console
-from fabric.operations import require, local, prompt
+from fabric.operations import require
 
 
 ROLES_ALL_SRC = ['pg', 'django_monolith', 'django_app', 'django_celery', 'django_pillowtop', 'formsplayer', 'staticfiles']
@@ -108,6 +106,67 @@ def _require_target():
             provided_by=('staging', 'preview', 'production', 'old_india', 'softlayer', 'zambia'))
 
 
+class DeployMetadata(object):
+    def __init__(self, env):
+        self.env = env
+        self.timestamp = datetime.datetime.utcnow().strftime('%Y-%m-%d_%H.%M')
+        self._deploy_ref = None
+        self._deploy_tag = None
+        self._git = sh.git.bake(_tty_out=False)
+
+    def tag_commit(self):
+        self._git.fetch("origin", "--tags")
+        pattern = "*{}*".format(self.env.environment)
+        self.last_tag = sh.tail(self._git.tag("-l", pattern), "-1").strip()
+
+        tag_name = "{}-{}-deploy".format(self.timestamp, self.env.environment)
+        msg = "{} deploy at {}".format(self.env.environment, self.timestamp)
+        self._git.tag(tag_name, "-m", msg, self.deploy_ref)
+        self._git.push("origin", tag_name)
+        self._deploy_tag = tag_name
+
+    def _check_deploy_commit(self, deploy_commit, code_branch):
+        try:
+            origin_commit = self._git("rev-parse", "origin/{}".format(code_branch)).strip()
+        except sh.ErrorReturnCode:
+            print yellow("Branch '{}' was not found on origin".format(code_branch))
+            if not console.confirm("Do you want to deploy it anyways?", default=False):
+                utils.abort('Aborting.')
+        else:
+            if deploy_commit != origin_commit:
+                print yellow("\n*********\n*WARNING*\n*********")
+                print ("Your local copy of '{}' differs from the version on "
+                       "'origin'.\n".format(code_branch))
+                print "Here's the latest local commit:",
+                print self._git.show(deploy_commit, "--quiet")
+                print "Here's the latest commit on 'origin':",
+                print self._git.show(origin_commit, "--quiet")
+                if not console.confirm("Are you sure you want to deploy the "
+                                       "local commit?", default=False):
+                    utils.abort('Check yourself before you wreck yourself.')
+
+    @property
+    def diff_url(self):
+        if self._deploy_tag is None:
+            raise Exception("You haven't tagged anything yet.")
+        return "https://github.com/dimagi/commcare-hq/compare/{}...{}".format(
+            self.last_tag,
+            self._deploy_tag,
+        )
+
+    @property
+    def deploy_ref(self):
+        if self._deploy_ref is None:
+            # turn whatever `code_branch` is into a commit hash
+            deploy_commit = self._git("rev-parse", self.env.code_branch).strip()
+            self._check_deploy_commit(deploy_commit, self.env.code_branch)
+            self._deploy_ref = deploy_commit
+        return self._deploy_ref
+
+
+deploy_metadata = DeployMetadata(env)
+
+
 def format_env(current_env, extra=None):
     """
     formats the current env to be a foo=bar,sna=fu type paring
@@ -165,12 +224,13 @@ def _setup_path():
     env.log_dir = posixpath.join(env.home, 'www', env.environment, 'log')
     env.releases = posixpath.join(env.root, 'releases')
     env.code_current = posixpath.join(env.root, 'current')
-    env.code_root = posixpath.join(env.releases, time.strftime('%Y-%m-%d_%H.%M', time.gmtime(time.time())))
+    env.code_root = posixpath.join(env.releases, deploy_metadata.timestamp)
     env.project_root = posixpath.join(env.code_root, env.project)
     env.project_media = posixpath.join(env.code_root, 'media')
     env.virtualenv_current = posixpath.join(env.code_current, 'python_env')
     env.virtualenv_root = posixpath.join(env.code_root, 'python_env')
-    env.services = posixpath.join(env.home, 'services')
+    env.services = posixpath.join(env.code_root, 'services')
+    env.services_old = posixpath.join(env.home, 'services')
     env.jython_home = '/usr/local/lib/jython'
     env.db = '%s_%s' % (env.project, env.environment)
 
@@ -220,6 +280,7 @@ def swiss():
 @task
 def india():
     softlayer()
+
 
 @task
 def softlayer():
@@ -277,7 +338,8 @@ def staging():
     """staging.commcarehq.org"""
     if env.code_branch == 'master':
         env.code_branch = 'autostaging'
-        print ("using default branch of autostaging. you can override this with --set code_branch=<branch>")
+        print ("using default branch of autostaging. you can override this "
+               "with --set code_branch=<branch>")
 
     env.inventory = os.path.join('fab', 'inventory', 'staging')
     load_env('staging')
@@ -378,6 +440,11 @@ def webworkers():
 
 
 @task
+def pillowtop():
+    env.supervisor_roles = ROLES_PILLOWTOP
+
+
+@task
 def remove_submodule_source(path):
     """
     Remove submodule source folder.
@@ -408,7 +475,8 @@ def _remove_submodule_source_main(path, use_current_release=False):
 @roles(ROLES_DB_ONLY)
 def preindex_views():
     """
-    Creates a new release that runs preindex_everything. Clones code from `current` release and updates it.
+    Creates a new release that runs preindex_everything. Clones code from
+    `current` release and updates it.
     """
     setup_release()
     _preindex_views()
@@ -430,10 +498,9 @@ def _preindex_views():
         version_static()
 
 
-
 @roles(ROLES_ALL_SRC)
 @parallel
-def update_code(use_current_release=False):
+def update_code(git_tag, use_current_release=False):
     # If not updating current release,  we are making a new release and thus have to do cloning
     # we should only ever not make a new release when doing a hotfix deploy
     if not use_current_release:
@@ -463,9 +530,9 @@ def update_code(use_current_release=False):
 
     with cd(env.code_root if not use_current_release else env.code_current):
         sudo('git remote prune origin')
-        sudo('git fetch origin {}'.format(env.code_branch))
-        sudo('git checkout %(code_branch)s' % env)
-        sudo('git reset --hard origin/%(code_branch)s' % env)
+        sudo('git fetch origin --tags')
+        sudo('git checkout {}'.format(git_tag))
+        sudo('git reset --hard {}'.format(git_tag))
         sudo('git submodule sync')
         sudo('git submodule update --init --recursive')
         # remove all untracked files, including submodules
@@ -488,8 +555,9 @@ def mail_admins(subject, message):
 
 
 @roles(ROLES_DB_ONLY)
-def record_successful_deploy(url):
+def record_successful_deploy(deploy_metadata):
     with cd(env.code_current):
+        deploy_metadata.tag_commit()
         sudo((
             '%(virtualenv_current)s/bin/python manage.py '
             'record_deploy_success --user "%(user)s" --environment '
@@ -498,15 +566,15 @@ def record_successful_deploy(url):
             'virtualenv_current': env.virtualenv_current,
             'user': env.user,
             'environment': env.environment,
-            'url': url,
+            'url': deploy_metadata.diff_url,
         })
 
 
-@task
 @roles(ROLES_DB_ONLY)
-def set_in_progress_flag():
-    with cd(env.code_root):
-        sudo('%(virtualenv_root)s/bin/python manage.py celery_deploy_in_progress' % env)
+def set_in_progress_flag(use_current_release=False):
+    venv = env.virtualenv_root if not use_current_release else env.virtualenv_current
+    with cd(env.code_root if not use_current_release else env.code_current):
+        sudo('{}/bin/python manage.py deploy_in_progress'.format(venv))
 
 
 @roles(ROLES_ALL_SRC)
@@ -532,16 +600,16 @@ def hotfix_deploy():
     _require_target()
     run('echo ping!')  # workaround for delayed console response
     try:
-        execute(update_code, True)
+        execute(update_code, deploy_metadata.deploy_ref, True)
     except Exception:
         execute(mail_admins, "Deploy failed", "You had better check the logs.")
         # hopefully bring the server back to life
-        execute(services_restart)
+        silent_services_restart()
         raise
     else:
         execute(services_restart)
-        url = _tag_commit()
-        execute(record_successful_deploy, url)
+        silent_services_restart()
+        execute(record_successful_deploy, deploy_metadata)
 
 
 def _confirm_translated():
@@ -555,8 +623,9 @@ def _confirm_translated():
 
 @task
 def setup_release():
+    deploy_ref = deploy_metadata.deploy_ref  # Make sure we have a valid commit
     _execute_with_timing(create_code_dir)
-    _execute_with_timing(update_code)
+    _execute_with_timing(update_code, deploy_ref)
     _execute_with_timing(update_virtualenv)
 
     _execute_with_timing(copy_release_files)
@@ -595,6 +664,7 @@ def _deploy_without_asking():
         # handle static files
         _execute_with_timing(version_static)
         _execute_with_timing(_bower_install)
+        _execute_with_timing(_npm_install)
         _execute_with_timing(_do_collectstatic)
         _execute_with_timing(_do_compress)
 
@@ -605,12 +675,12 @@ def _deploy_without_asking():
         if do_migrate:
 
             if all(execute(_migrations_exist).values()):
-                _execute_with_timing(stop_pillows)
+                _execute_with_timing(_stop_pillows)
                 execute(set_in_progress_flag)
                 _execute_with_timing(stop_celery_tasks)
             _execute_with_timing(_migrate)
         else:
-            print(blue("No migration required, skipping."))
+            print blue("No migration required, skipping.")
         _execute_with_timing(do_update_translations)
         if do_migrate:
             _execute_with_timing(flip_es_aliases)
@@ -629,14 +699,13 @@ def _deploy_without_asking():
     except Exception:
         _execute_with_timing(mail_admins, "Deploy failed", "You had better check the logs.")
         # hopefully bring the server back to life
-        _execute_with_timing(services_restart)
+        silent_services_restart()
         raise
     else:
         _execute_with_timing(update_current)
-        _execute_with_timing(services_restart)
+        silent_services_restart()
         _execute_with_timing(record_successful_release)
-        url = _tag_commit()
-        _execute_with_timing(record_successful_deploy, url)
+        _execute_with_timing(record_successful_deploy, deploy_metadata)
 
 
 @task
@@ -701,17 +770,27 @@ def copy_components():
         sudo('mkdir {}/bower_components'.format(env.code_root))
 
 
+@parallel
+@roles(ROLES_ALL_SRC)
+def copy_node_modules():
+    if files.exists('{}/node_modules'.format(env.code_current)):
+        sudo('cp -r {}/node_modules {}/node_modules'.format(env.code_current, env.code_root))
+    else:
+        sudo('mkdir {}/node_modules'.format(env.code_root))
+
+
 def copy_release_files():
     execute(copy_localsettings)
     execute(copy_tf_localsettings)
     execute(copy_components)
+    execute(copy_node_modules)
 
 
 @task
 def rollback():
     """
-    Rolls back the servers to the previous release if it exists and is same across servers. Note this will not
-    rollback the supervisor services.
+    Rolls back the servers to the previous release if it exists and is same
+    across servers. Note this will not rollback the supervisor services.
     """
     number_of_releases = execute(get_number_of_releases)
     if not all(map(lambda n: n > 1, number_of_releases)):
@@ -729,7 +808,7 @@ def rollback():
 
     if not unique_release:
         print red('Aborting because release path is empty. '
-            'This probably means there are no releases to rollback to.')
+                  'This probably means there are no releases to rollback to.')
         exit()
 
     if not console.confirm('Do you wish to rollback to release: {}'.format(unique_release), default=False):
@@ -741,7 +820,7 @@ def rollback():
     if all(exists.values()):
         print blue('Updating current and restarting services')
         execute(update_current, unique_release)
-        execute(services_restart)
+        silent_services_restart()
         execute(mark_last_release_unsuccessful)
     else:
         print red('Aborting because not all hosts have release')
@@ -819,26 +898,7 @@ def force_update_static():
     execute(_do_collectstatic, use_current_release=True)
     execute(_do_compress, use_current_release=True)
     execute(update_manifest, use_current_release=True)
-    execute(services_restart)
-
-
-def _tag_commit():
-    sh.git.fetch("origin", env.code_branch)
-    deploy_time = datetime.datetime.utcnow()
-    tag_name = "{:%Y-%m-%d_%H.%M}-{}-deploy".format(deploy_time, env.environment)
-    pattern = "*{}*".format(env.environment)
-    last_tag = sh.tail(sh.git.tag("-l", pattern), "-1").strip()
-    branch = "origin/{}".format(env.code_branch)
-    msg = getattr(env, "message", "")
-    msg += "\n{} deploy at {}".format(env.environment, deploy_time.isoformat())
-    sh.git.tag(tag_name, "-m", msg, branch)
-    sh.git.push("origin", tag_name)
-    diff_url = "https://github.com/dimagi/commcare-hq/compare/{}...{}".format(
-        last_tag,
-        tag_name
-    )
-    print "Here's a link to the changes you just deployed:\n{}".format(diff_url)
-    return diff_url
+    silent_services_restart(use_current_release=True)
 
 
 @task
@@ -935,11 +995,10 @@ def clear_services_dir(current=False):
     remove old confs from directory first
     the clear_supervisor_confs management command will scan the directory and find prefixed conf files of the supervisord files
     and delete them matching the prefix of the current server environment
-
     """
     code_root = env.code_current if current else env.code_root
     venv_root = env.virtualenv_current if current else env.virtualenv_root
-    services_dir = posixpath.join(env.services, u'supervisor')
+    services_dir = posixpath.join(env.services_old, u'supervisor')
     with cd(code_root):
         sudo((
             '%(virtualenv_root)s/bin/python manage.py '
@@ -976,6 +1035,18 @@ def restart_services():
                            '{env.environment}?'.format(env=env), default=False):
         utils.abort('Task aborted.')
 
+    @roles(env.supervisor_roles)
+    def _inner():
+        silent_services_restart(use_current_release=True)
+
+    execute(_inner)
+
+
+def silent_services_restart(use_current_release=False):
+    """
+    Restarts services and sets the in progress flag so that pingdom doesn't yell falsely
+    """
+    execute(set_in_progress_flag, use_current_release)
     execute(services_restart)
 
 
@@ -989,7 +1060,7 @@ def services_restart():
     _supervisor_command('update')
     _supervisor_command('reload')
     time.sleep(5)
-    _supervisor_command('start  all')
+    _supervisor_command('start all')
 
 
 @roles(ROLES_DB_ONLY)
@@ -998,7 +1069,7 @@ def _migrate():
     _require_target()
     with cd(env.code_root):
         sudo('%(virtualenv_root)s/bin/python manage.py sync_finish_couchdb_hq' % env)
-        sudo('%(virtualenv_root)s/bin/python manage.py migrate --noinput' % env)
+        sudo('%(virtualenv_root)s/bin/python manage.py migrate_multi --noinput' % env)
 
 
 @roles(ROLES_DB_ONLY)
@@ -1057,6 +1128,15 @@ def _bower_install(use_current_release=False):
         sudo('bower update --production --config.interactive=false')
 
 
+@parallel
+@roles(ROLES_DJANGO)
+def _npm_install():
+    with cd(env.code_root):
+        sudo('npm prune --production')
+        sudo('npm install --production')
+        sudo('npm update --production')
+
+
 @roles(ROLES_DJANGO)
 @parallel
 def update_manifest(save=False, soft=False, use_current_release=False):
@@ -1083,7 +1163,7 @@ def update_manifest(save=False, soft=False, use_current_release=False):
         )
 
 
-@roles(ROLES_DJANGO)
+@roles(set(ROLES_STATIC + ROLES_DJANGO))
 @parallel
 def version_static():
     """
@@ -1103,6 +1183,8 @@ def version_static():
 
 
 def _rebuild_supervisor_conf_file(conf_command, filename, params=None):
+    sudo('mkdir -p {}'.format(posixpath.join(env.services, 'supervisor')))
+
     with cd(env.code_root):
         sudo((
             '%(virtualenv_root)s/bin/python manage.py '
@@ -1117,6 +1199,20 @@ def _rebuild_supervisor_conf_file(conf_command, filename, params=None):
             'params': format_env(env, params)
         })
 
+        sudo((
+            '%(virtualenv_root)s/bin/python manage.py '
+            '%(conf_command)s --traceback --conf_file "%(filename)s" '
+            '--conf_destination "%(destination)s" --params \'%(params)s\''
+        ) % {
+
+            'conf_command': conf_command,
+            'virtualenv_root': env.virtualenv_root,
+            'filename': filename,
+            'destination': posixpath.join(env.services_old, 'supervisor'),
+            'params': format_env(env, params)
+        })
+
+
 
 def get_celery_queues():
     host = env.get('host_string')
@@ -1130,6 +1226,7 @@ def get_celery_queues():
     return queues
 
 @roles(ROLES_CELERY)
+@parallel
 def set_celery_supervisorconf():
 
     conf_files = {
@@ -1144,6 +1241,7 @@ def set_celery_supervisorconf():
         'saved_exports_queue':          ['supervisor_celery_saved_exports_queue.conf'],
         'ucr_queue':                    ['supervisor_celery_ucr_queue.conf'],
         'email_queue':                  ['supervisor_celery_email_queue.conf'],
+        'repeat_record_queue':          ['supervisor_celery_repeat_record_queue.conf'],
         'logistics_reminder_queue':     ['supervisor_celery_logistics_reminder_queue.conf'],
         'logistics_background_queue':   ['supervisor_celery_logistics_background_queue.conf'],
         'flower':                       ['supervisor_celery_flower.conf'],
@@ -1156,6 +1254,7 @@ def set_celery_supervisorconf():
 
 
 @roles(ROLES_PILLOWTOP)
+@parallel
 def set_pillowtop_supervisorconf():
     # Don't run for preview,
     # and also don't run if there are no hosts for the 'django_pillowtop' role.
@@ -1170,36 +1269,43 @@ def set_pillowtop_supervisorconf():
 
 
 @roles(ROLES_DJANGO)
+@parallel
 def set_djangoapp_supervisorconf():
     _rebuild_supervisor_conf_file('make_supervisor_conf', 'supervisor_django.conf')
 
 
 @roles(ROLES_DJANGO)
+@parallel
 def set_errand_boy_supervisorconf():
     _rebuild_supervisor_conf_file('make_supervisor_conf', 'supervisor_errand_boy.conf')
 
 
 @roles(ROLES_TOUCHFORMS)
+@parallel
 def set_formsplayer_supervisorconf():
     _rebuild_supervisor_conf_file('make_supervisor_conf', 'supervisor_formsplayer.conf')
 
 @roles(ROLES_SMS_QUEUE)
+@parallel
 def set_sms_queue_supervisorconf():
     if 'sms_queue' in get_celery_queues():
         _rebuild_supervisor_conf_file('make_supervisor_conf', 'supervisor_sms_queue.conf')
 
 @roles(ROLES_REMINDER_QUEUE)
+@parallel
 def set_reminder_queue_supervisorconf():
     if 'reminder_queue' in get_celery_queues():
         _rebuild_supervisor_conf_file('make_supervisor_conf', 'supervisor_reminder_queue.conf')
 
 @roles(ROLES_PILLOW_RETRY_QUEUE)
+@parallel
 def set_pillow_retry_queue_supervisorconf():
     if 'pillow_retry_queue' in get_celery_queues():
         _rebuild_supervisor_conf_file('make_supervisor_conf', 'supervisor_pillow_retry_queue.conf')
 
 
 @roles(ROLES_STATIC)
+@parallel
 def set_websocket_supervisorconf():
     _rebuild_supervisor_conf_file('make_supervisor_conf', 'supervisor_websockets.conf')
 
@@ -1232,10 +1338,24 @@ def _supervisor_command(command):
     sudo('supervisorctl %s' % (command), shell=False, user='root')
 
 
-@roles(ROLES_PILLOWTOP)
+@task
 def stop_pillows():
+    execute(_stop_pillows, True)
+
+
+@task
+@roles(ROLES_PILLOWTOP)
+def start_pillows():
     _require_target()
-    with cd(env.code_root):
+    with cd(env.code_current):
+        sudo('scripts/supervisor-group-ctl start pillowtop')
+
+
+@roles(ROLES_PILLOWTOP)
+def _stop_pillows(current=False):
+    code_root = env.code_current if current else env.code_root
+    _require_target()
+    with cd(code_root):
         sudo('scripts/supervisor-group-ctl stop pillowtop')
 
 

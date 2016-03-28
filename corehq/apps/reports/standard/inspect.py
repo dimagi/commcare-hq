@@ -1,6 +1,6 @@
 import functools
 from django.utils.translation import ugettext as _
-from django.utils.translation import ugettext_noop
+from django.utils.translation import ugettext_noop, get_language
 
 from corehq.apps.reports import util
 from corehq.apps.reports.filters.users import ExpandedMobileWorkerFilter
@@ -30,6 +30,14 @@ class ProjectInspectionReport(ProjectInspectionReportParamsMixin, GenericTabular
     ajax_pagination = True
     fields = ['corehq.apps.reports.filters.users.UserTypeFilter',
               'corehq.apps.reports.filters.users.SelectMobileWorkerFilter']
+    is_bootstrap3 = True
+
+    def get_user_link(self, user):
+        user_link = self.get_raw_user_link(user)
+        return self.table_cell(user.raw_username, user_link)
+
+    def get_raw_user_link(self, user):
+        raise NotImplementedError
 
 
 class SubmitHistoryMixin(ElasticProjectInspectionReport,
@@ -113,7 +121,7 @@ class SubmitHistoryMixin(ElasticProjectInspectionReport,
         props = truthy_only(self.request.GET.get('form_data', '').split(','))
         for prop in props:
             yield {
-                'term': {'__props_for_querying': prop.lower()}
+                'term': {'__props_for_querying': prop}
             }
 
     def _es_xform_filter(self):
@@ -165,6 +173,7 @@ class SubmitHistoryMixin(ElasticProjectInspectionReport,
 
 
 class SubmitHistory(SubmitHistoryMixin, ProjectReport):
+    is_bootstrap3 = True
 
     @property
     def show_extra_columns(self):
@@ -200,13 +209,14 @@ class SubmitHistory(SubmitHistoryMixin, ProjectReport):
         submissions = [res['_source'] for res in self.es_results.get('hits', {}).get('hits', [])]
 
         for form in submissions:
-            display = FormDisplay(form, self)
+            display = FormDisplay(form, self, lang=get_language())
             row = [
                 display.form_data_link,
                 display.username,
                 display.submission_or_completion_time,
                 display.readable_form_name,
             ]
+
             if self.show_extra_columns:
                 row.append(form.get('last_sync_token', ''))
             yield row + display.other_columns

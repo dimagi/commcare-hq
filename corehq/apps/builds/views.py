@@ -1,10 +1,15 @@
 from cStringIO import StringIO
 from couchdbkit import ResourceNotFound, BadValueError
+from django.core.urlresolvers import reverse
 from django.http import HttpResponseBadRequest, HttpResponse, Http404
+from django.utils.translation import ugettext_lazy
+from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_GET, require_POST
 from django.views.generic import TemplateView
 from django.shortcuts import render
 from django.utils.decorators import method_decorator
+from corehq.apps.hqwebapp.views import BasePageView
+from corehq.apps.style.decorators import use_bootstrap3, use_jquery_ui
 from corehq.util.view_utils import json_error
 from dimagi.utils.web import json_request, json_response
 from dimagi.utils.couch.database import get_db
@@ -19,6 +24,7 @@ import requests
 import requests.exceptions
 
 
+@csrf_exempt  # is used by an API
 @json_error
 @require_api_user
 def post(request):
@@ -58,11 +64,15 @@ def get_all(request):
     return render(request, 'builds/all.html', {'builds': builds})
 
 
-class EditMenuView(TemplateView):
+class EditMenuView(BasePageView):
     template_name = "builds/edit_menu.html"
+    urlname = 'edit_menu'
     doc_id = "config--commcare-builds"
+    page_title = ugettext_lazy("Edit CommCare Builds")
 
     @method_decorator(require_superuser)
+    @use_bootstrap3
+    @use_jquery_ui
     def dispatch(self, *args, **kwargs):
         # different local caches on different workers
         # but this at least makes it so your changes take effect immediately
@@ -75,14 +85,17 @@ class EditMenuView(TemplateView):
         db = get_db()
         return db.save_doc(self.doc)
 
-    def get_context_data(self, **kwargs):
-        context = {
+    @property
+    def page_context(self):
+        return {
             'doc': self.doc,
             'all_versions': get_all_versions(
                 [v['build']['version'] for v in self.doc['menu']])
         }
-        context.update(kwargs)
-        return context
+
+    @property
+    def page_url(self):
+        return reverse(self.urlname)
 
     def post(self, request, *args, **kwargs):
         request_json = json_request(request.POST)

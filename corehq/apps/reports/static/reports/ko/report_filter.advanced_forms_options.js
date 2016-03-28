@@ -19,13 +19,21 @@ $.fn.advanceFormsOptions = function (options) {
 
     viewModel.show.subscribe(function(newValue) {
         if (newValue) {
-            $('#' + viewModel.css_id + '_status').closest('.control-group').show();
+            if (options.useBootstrap3) {
+                $('#' + viewModel.css_id + '_status').closest('.form-group').show();
+            } else {
+                $('#' + viewModel.css_id + '_status').closest('.control-group').show();
+            }
         } else {
             var $app_type_select = $('#' + viewModel.css_id + '_status');
             if ($app_type_select.val() == 'active') {
-                $('#' + viewModel.css_id + '_status').closest('.control-group').hide();
+                if (options.useBootstrap3) {
+                    $('#' + viewModel.css_id + '_status').closest('.form-group').hide();
+                } else {
+                    $('#' + viewModel.css_id + '_status').closest('.control-group').hide();
+                }
             }
-            viewModel.is_unknown_shown(false);
+            viewModel.is_unknown_shown('');
         }
     });
     viewModel.show(options.show);

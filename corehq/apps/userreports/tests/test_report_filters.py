@@ -274,15 +274,15 @@ class DynamicChoiceListFilterTestCase(SimpleTestCase):
         self.filter_spec['datatype'] = 'integer'
         filter = ReportFilterFactory.from_spec(self.filter_spec)
         tests = (
-            ('1', 1),
-            ('1.2', 1),
-            ('hello', None),
+            ('1', 1, '1'),
+            ('1.2', 1, '1'),
+            ('hello', None, ''),
         )
-        for input, expected in tests:
+        for input, expected_value, expected_display in tests:
             choices = filter.value(dynoslug=input)
             self.assertEqual(len(choices), 1)
-            self.assertEqual(expected, choices[0].value)
-            self.assertEqual(input, choices[0].display)
+            self.assertEqual(expected_value, choices[0].value)
+            self.assertEqual(expected_display, choices[0].display)
 
     def test_multiple_selections(self):
         self.filter_spec["datatype"] = "string"

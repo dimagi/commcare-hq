@@ -131,11 +131,11 @@ class AWCHealthStatus(object):
         ('incidence_of_diarrhea',
          _("Incidence of diarrhea"),
          _("Incidence of diarrhea"),
-         'beneficiaries'),
+         'children'),
         ('ors_received',
          _("Received ORS and Zinc treatment for diarrhoea"),
          _("Registered children who received ORS and Zinc treatment if he/she contracts diarrhoea"),
-         'has_diarhea'),
+         'incidence_of_diarrhea'),
         ('child_breastfed',
          _("Exclusively breastfed for first 6 months"),
          _("Registered children (6 months old) who have been exclusively breastfed for first 6 months"),
@@ -195,7 +195,7 @@ class AWCHealthStatus(object):
         ('birth_spacing_bonus',
          _("Eligilble for Birth Spacing bonus"),
          _("Registered beneficiaries eligible for birth spacing bonus for the month"),
-         'beneficiaries'),
+         'birth_spacing_bonus_denominator'),
         ('nutritional_status_sam',
          _("Severely underweight"),
          _("Registered children severely underweight (very low weight for age) for the month"),
@@ -211,7 +211,7 @@ class AWCHealthStatus(object):
         ('nutritional_bonus',
          _("Eligilble for Nutritional status bonus"),
          _("Registered beneficiaries eligible for nutritonal status bonus for the month"),
-         'children'),
+         'nutritional_bonus_denominator'),
         ('closed_pregnants',
          _("Pregnant women cases closed"),
          _("Registered pregnant women cases closed for the month"),
@@ -495,10 +495,22 @@ class AWCHealthStatus(object):
         return len([c for c in self.all_cases if c.birth_spacing_years])
 
     @property
+    def birth_spacing_bonus_denominator(self):
+        if self.block is not None and self.block == 'Khijarsarai':
+            return 'NA'
+        return len([c for c in self.all_cases if self.block == "wazirganj" and c.child_age in [24, 36]])
+
+    @property
     def nutritional_bonus(self):
         if self.block is not None and self.block == 'Khijarsarai':
             return 'NA'
         return len([c for c in self.all_cases if c.weight_grade_normal])
+
+    @property
+    def nutritional_bonus_denominator(self):
+        if self.block is not None and self.block == 'Khijarsarai':
+            return 'NA'
+        return len([c for c in self.all_cases if self.block == "atri" and c.child_age in [24, 36]])
 
     @property
     def nutritional_status_sam(self):

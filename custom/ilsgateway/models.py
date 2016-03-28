@@ -1,6 +1,6 @@
-from collections import defaultdict
 from datetime import datetime
 
+import json_field
 from django.core.urlresolvers import reverse
 from django.dispatch.dispatcher import receiver
 from corehq.apps.domain.signals import commcare_domain_pre_delete
@@ -93,6 +93,7 @@ class SupplyPointStatusTypes(object):
     SUPERVISION_FACILITY = "super_fac"
     LOSS_ADJUSTMENT_FACILITY = "la_fac"
     DELINQUENT_DELIVERIES = "del_del"
+    TRANS_FACILITY = "trans_fac"
 
     CHOICE_MAP = {
         DELIVERY_FACILITY: {SupplyPointStatusValues.REMINDER_SENT: "Waiting Delivery Confirmation",
@@ -117,6 +118,11 @@ class SupplyPointStatusTypes(object):
         DELINQUENT_DELIVERIES: {
             SupplyPointStatusValues.ALERT_SENT: "Delinquent deliveries summary sent to District"
         },
+        TRANS_FACILITY: {
+            SupplyPointStatusValues.SUBMITTED: "Transfer Stock Submitted",
+            SupplyPointStatusValues.NOT_SUBMITTED: "Transfer Stock Not Submitted",
+            SupplyPointStatusValues.REMINDER_SENT: "Transfer Reminder Sent"
+        }
     }
 
     @classmethod
@@ -219,19 +225,6 @@ class ReportingModel(models.Model):
 
     class Meta:
         abstract = True
-
-
-# Ported from: https://github.com/dimagi/rapidsms-logistics/blob/master/logistics/warehouse_models.py#L44
-class SupplyPointWarehouseRecord(models.Model):
-    """
-    When something gets updated in the warehouse, create a record of having
-    done that.
-    """
-    supply_point = models.CharField(max_length=100, db_index=True)
-    create_date = models.DateTimeField()
-
-    class Meta:
-        app_label = 'ilsgateway'
 
 
 # Ported from:
@@ -458,7 +451,7 @@ class ReportRun(models.Model):
     complete = models.BooleanField(default=False)
     has_error = models.BooleanField(default=False)
     domain = models.CharField(max_length=60)
-    location = models.ForeignKey(SQLLocation, null=True)
+    location = models.ForeignKey(SQLLocation, null=True, on_delete=models.PROTECT)
 
     class Meta:
         app_label = 'ilsgateway'
@@ -478,7 +471,7 @@ class ReportRun(models.Model):
 
 
 class HistoricalLocationGroup(models.Model):
-    location_id = models.ForeignKey(SQLLocation)
+    location_id = models.ForeignKey(SQLLocation, on_delete=models.PROTECT)
     date = models.DateField()
     group = models.CharField(max_length=1)
 
@@ -507,7 +500,7 @@ class SupervisionDocument(models.Model):
 
 
 class ILSNotes(models.Model):
-    location = models.ForeignKey(SQLLocation)
+    location = models.ForeignKey(SQLLocation, on_delete=models.PROTECT)
     domain = models.CharField(max_length=100, null=False)
     user_name = models.CharField(max_length=128, null=False)
     user_role = models.CharField(max_length=100, null=True)
@@ -526,6 +519,9 @@ class ILSMigrationStats(models.Model):
     web_users_count = models.IntegerField(default=0)
     domain = models.CharField(max_length=128, db_index=True)
     last_modified = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        app_label = 'ilsgateway'
 
 
 class ILSMigrationProblem(models.Model):
@@ -554,11 +550,36 @@ class ILSMigrationProblem(models.Model):
         elif self.object_type == 'location':
             return reverse(EditLocationView.urlname, kwargs={'domain': self.domain, 'loc_id': self.object_id})
 
+    class Meta:
+        app_label = 'ilsgateway'
+
 
 class ILSGatewayWebUser(models.Model):
     # To remove after switchover
     external_id = models.IntegerField(db_index=True)
     email = models.CharField(max_length=128)
+
+    class Meta:
+        app_label = 'ilsgateway'
+
+
+class PendingReportingDataRecalculation(models.Model):
+    domain = models.CharField(max_length=128)
+    sql_location = models.ForeignKey(SQLLocation)
+    type = models.CharField(max_length=128)
+    data = json_field.JSONField()
+
+    class Meta:
+        app_label = 'ilsgateway'
+
+
+class SLABConfig(models.Model):
+    is_pilot = models.BooleanField(default=False)
+    sql_location = models.ForeignKey(SQLLocation, null=False, unique=True)
+    closest_supply_points = models.ManyToManyField(SQLLocation, related_name='+')
+
+    class Meta:
+        app_label = 'ilsgateway'
 
 
 @receiver(commcare_domain_pre_delete)
@@ -571,7 +592,6 @@ def domain_pre_delete_receiver(domain, **kwargs):
             return
 
         DeliveryGroupReport.objects.filter(location_id__in=locations_ids).delete()
-        SupplyPointWarehouseRecord.objects.filter(supply_point__in=locations_ids).delete()
 
         with connection.cursor() as cursor:
             cursor.execute(
@@ -614,28 +634,28 @@ def domain_pre_delete_receiver(domain, **kwargs):
 
 @receiver(location_edited)
 def location_edited_receiver(sender, loc, moved, **kwargs):
-    from custom.ilsgateway.tanzania.warehouse.updater import default_start_date, \
-        process_non_facility_warehouse_data
-
+    from custom.ilsgateway.utils import last_location_group
     config = ILSGatewayConfig.for_domain(loc.domain)
-    if not config or not config.enabled or not moved or not loc.previous_parents:
+    if not config or not config.enabled:
         return
 
     last_run = ReportRun.last_success(loc.domain)
     if not last_run:
         return
 
-    previous_parent = SQLLocation.objects.get(location_id=loc.previous_parents[-1])
-    type_location_map = defaultdict(set)
+    if moved:
+        PendingReportingDataRecalculation.objects.create(
+            domain=loc.domain,
+            type='parent_change',
+            sql_location=loc.sql_location,
+            data={'previous_parent': loc.previous_parents[-1], 'current_parent': loc.parent_id}
+        )
 
-    previous_ancestors = list(previous_parent.get_ancestors(include_self=True))
-    actual_ancestors = list(loc.sql_location.get_ancestors())
-
-    for sql_location in previous_ancestors + actual_ancestors:
-        type_location_map[sql_location.location_type.name].add(sql_location)
-
-    for location_type in ["DISTRICT", "REGION", "MSDZONE"]:
-        for sql_location in type_location_map[location_type]:
-            process_non_facility_warehouse_data.delay(
-                sql_location.couch_location, default_start_date(), last_run.end, last_run, strict=False
-            )
+    group = last_location_group(loc)
+    if group != loc.metadata['group']:
+        PendingReportingDataRecalculation.objects.create(
+            domain=loc.domain,
+            type='group_change',
+            sql_location=loc.sql_location,
+            data={'previous_group': group, 'current_group': loc.metadata['group']}
+        )

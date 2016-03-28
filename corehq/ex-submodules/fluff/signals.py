@@ -1,12 +1,11 @@
 from functools import partial
-import pprint
 import sqlalchemy
 import logging
+
+from django.db import DEFAULT_DB_ALIAS
 from django.dispatch import Signal
 from django.conf import settings
-from itertools import chain
-from django.db.models import signals
-from pillowtop.utils import get_pillow_class, get_all_pillow_configs
+from pillowtop.utils import get_all_pillow_configs
 from alembic.migration import MigrationContext
 from alembic.autogenerate import compare_metadata
 from fluff.util import metadata as fluff_metadata
@@ -24,7 +23,7 @@ class RebuildTableException(Exception):
 
 
 def catch_signal(sender, **kwargs):
-    if settings.UNIT_TESTING:
+    if settings.UNIT_TESTING or kwargs['using'] != DEFAULT_DB_ALIAS:
         return
 
     from fluff.pillow import FluffPillow
@@ -76,7 +75,7 @@ def get_tables_to_rebuild(diffs, table_names):
             else:
                 yield check_diff(diff)
 
-    return [table for table in yield_diffs(diffs) if table]
+    return set([table for table in yield_diffs(diffs) if table])
 
 
 def rebuild_table(engine, pillow_class, indicator_doc):

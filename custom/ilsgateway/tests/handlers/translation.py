@@ -1,20 +1,21 @@
 from corehq.apps.commtrack.models import StockState
 from corehq.util.translation import localize
-from custom.ilsgateway.tanzania.reminders import SOH_THANK_YOU, LANGUAGE_CONFIRM
+from custom.ilsgateway.tanzania.reminders import LANGUAGE_CONFIRM, SOH_CONFIRM
 from custom.ilsgateway.tests.handlers.utils import ILSTestScript
 
 
-class ILSSoHTest(ILSTestScript):
+class TranslationTest(ILSTestScript):
 
     def setUp(self):
-        super(ILSSoHTest, self).setUp()
+        super(TranslationTest, self).setUp()
 
     def test_soh(self):
-
+        with localize('sw'):
+            response1 = unicode(SOH_CONFIRM)
         script = """
             5551234 > soh jd 400 mc 569
             5551234 < {0}
-        """.format(unicode(SOH_THANK_YOU))
+        """.format(response1)
         self.run_script(script)
 
         self.run_script(script)
@@ -27,14 +28,17 @@ class ILSSoHTest(ILSTestScript):
         self.user_fac1.language = 'en'
         self.user_fac1.save()
         with localize('sw'):
-            language_message = """
-                5551234 > language sw
-                5551234 < {0}
-            """.format(unicode(LANGUAGE_CONFIRM % dict(language='Swahili')))
-            self.run_script(language_message)
+            response1 = unicode(LANGUAGE_CONFIRM)
+            response2 = unicode(SOH_CONFIRM)
 
-            soh_script = """
-                5551234 > hmk jd 400 mc 569
-                5551234 < {0}
-            """.format(unicode(SOH_THANK_YOU))
-            self.run_script(soh_script)
+        language_message = """
+            5551234 > language sw
+            5551234 < {0}
+        """.format(response1 % dict(language='Swahili'))
+        self.run_script(language_message)
+
+        soh_script = """
+            5551234 > hmk jd 400 mc 569
+            5551234 < {0}
+        """.format(response2)
+        self.run_script(soh_script)

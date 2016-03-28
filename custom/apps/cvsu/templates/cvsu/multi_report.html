@@ -1,25 +1,19 @@
-{% extends "reports/async/bootstrap2/tabular.html" %}
+{% extends "reports/async/bootstrap3/tabular.html" %}
 {% load hq_shared_tags %}
 {% load report_tags %}
 {% load i18n %}
-
-{% block js %}{{ block.super }}
-    <link href="{% static 'hqwebapp/js/lib/nvd3/nv.d3.css' %}" rel="stylesheet">
-    <script src="{% static 'hqwebapp/js/lib/nvd3/lib/d3.v3.js' %}"></script>
-    <script src="{% static 'hqwebapp/js/lib/nvd3/nv.d3.min.js' %}"></script>
-{% endblock %}
 
 {% block reportcontent %}
 {% block pretable %}
     {% if not report.needs_filters %}
         {% if rendered_as == 'print' %}
         <div class="row">
-            <div class="span10">{% now "d M Y" %}</div>
+            <div class="col-sm-10">{% now "d M Y" %}</div>
             <div class="pull-right"><img class="media-object pull-right" src="{% static "cvsu/logo.png" %}" width="64" ></div>
         </div>
         <div class="row">
-            <div class="span10">
-                <h3 class="media-heading">{{ title }}<br/></h3>
+            <div class="col-sm-10">
+                <h4 class="media-heading">{{ title }}<br/></h4>
             </div>
         </div>
         {% else %}
@@ -28,7 +22,7 @@
             <img class="media-object pull-right" src="{% static "cvsu/logo.png" %}" width="64" >
           </a>
           <div class="media-body" style="height: 64px">
-            <h3 class="media-heading">{{ title }}<br/></h3>
+            <h4 class="media-heading">{{ title }}<br/></h4>
           </div>
         </div>
         {% endif %}
@@ -37,7 +31,7 @@
 
 {% block reporttable %}
 {% if report.needs_filters %}
-    {% include 'reports/standard/partials/description.html' %}
+    {% include 'reports/bootstrap3/partials/description.html' %}
 {% else %}
     {% for thisreport in reports %}
         <br/>
@@ -58,9 +52,10 @@
     {% endfor %}
 
         $(function() {
-            $('.header-popover').popout({
+            $('.header-popover').popover({
                 trigger: 'hover',
-                placement: 'bottom'
+                placement: 'bottom',
+                container: 'body'
             });
         });
     </script>

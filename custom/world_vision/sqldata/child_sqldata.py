@@ -213,7 +213,6 @@ class ChildrenDeaths(BaseSqlData):
         return clean_IN_filter_value(super(ChildrenDeaths, self).filter_values, 'mother_ids')
 
 
-
 class ChildrenDeathDetails(BaseSqlData):
     table_name = "fluff_WorldVisionChildFluff"
     slug = 'children_death_details'
@@ -403,7 +402,7 @@ class NutritionBirthWeightDetails(BaseSqlData):
 
     @property
     def filter_values(self):
-        return clean_IN_filter_value(super(ChildrenDeaths, self).filter_values, 'mother_ids')
+        return clean_IN_filter_value(super(NutritionBirthWeightDetails, self).filter_values, 'mother_ids')
 
 
 class NutritionFeedingDetails(BaseSqlData):

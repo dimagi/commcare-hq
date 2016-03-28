@@ -11,8 +11,9 @@ from corehq.apps.commtrack.const import SUPPLY_POINT_CASE_TYPE
 from corehq.apps.commtrack.processing import plan_rebuild_stock_state, \
     rebuild_stock_state
 from corehq.apps.hqwebapp.doc_info import get_doc_info_by_id
-from corehq.apps.sofabed.models import FormData
-from corehq.apps.style.decorators import use_knockout_js, use_bootstrap3, use_jquery_ui
+from corehq.form_processor.interfaces.dbaccessors import FormAccessors
+from corehq.form_processor.exceptions import XFormNotFound
+from corehq.apps.style.decorators import use_bootstrap3, use_jquery_ui
 from corehq.util.timezones.conversions import ServerTime
 
 from dimagi.utils.decorators.memoized import memoized
@@ -21,7 +22,7 @@ from corehq.apps.domain.decorators import (
     domain_admin_required,
 )
 from corehq.apps.domain.views import BaseDomainView
-from corehq.apps.locations.models import LocationType
+from corehq.apps.locations.models import LocationType, SQLLocation
 
 from .forms import ConsumptionForm, StockLevelsForm, CommTrackSettingsForm
 from .models import CommtrackActionConfig, StockRestoreConfig
@@ -151,7 +152,6 @@ class CommTrackSettingsView(BaseCommTrackManageView):
         return self.get(request, *args, **kwargs)
 
     @use_bootstrap3
-    @use_knockout_js
     def dispatch(self, request, *args, **kwargs):
         return super(BaseCommTrackManageView, self).dispatch(request, *args, **kwargs)
 
@@ -184,7 +184,6 @@ class DefaultConsumptionView(BaseCommTrackManageView):
         return self.get(request, *args, **kwargs)
 
     @use_bootstrap3
-    @use_knockout_js
     def dispatch(self, request, *args, **kwargs):
         return super(DefaultConsumptionView, self).dispatch(request, *args, **kwargs)
 
@@ -250,7 +249,6 @@ class SMSSettingsView(BaseCommTrackManageView):
         return self.get(request, *args, **kwargs)
 
     @use_bootstrap3
-    @use_knockout_js
     @use_jquery_ui
     def dispatch(self, request, *args, **kwargs):
         return super(SMSSettingsView, self).dispatch(request, *args, **kwargs)
@@ -306,7 +304,7 @@ class StockLevelsView(BaseCommTrackManageView):
             data = self.request.POST
         else:
             data = self.get_existing_stock_levels()
-        return StockLevelsForm(data)
+        return StockLevelsForm(data, request=self.request)
 
     def post(self, request, *args, **kwargs):
         if self.stock_levels_form.is_valid():
@@ -316,7 +314,6 @@ class StockLevelsView(BaseCommTrackManageView):
         return self.get(request, *args, **kwargs)
 
     @use_bootstrap3
-    @use_knockout_js
     def dispatch(self, request, *args, **kwargs):
         return super(StockLevelsView, self).dispatch(request, *args, **kwargs)
 
@@ -328,13 +325,12 @@ class RebuildStockStateView(BaseCommTrackManageView):
 
     @memoized
     def get_server_date_by_form_id(self, form_id):
-        server_dates = (FormData.objects.filter(instance_id=form_id)
-                        .values_list('received_on'))
-        if server_dates:
-            (server_date,), = server_dates
-            return ServerTime(server_date).ui_string()
-        else:
+        try:
+            server_date = FormAccessors(self.domain).get_form(form_id).received_on
+        except XFormNotFound:
             return None
+        else:
+            return ServerTime(server_date).ui_string()
 
     @property
     def page_context(self, **kwargs):
@@ -343,10 +339,20 @@ class RebuildStockStateView(BaseCommTrackManageView):
         stock_state_limit_exceeded = False
         stock_transaction_limit_exceeded = False
 
+        query = StockTransaction.objects.filter(report__domain=self.domain)
+        if self.location_id:
+            try:
+                case_id = (SQLLocation.objects
+                           .get(domain=self.domain, location_id=self.location_id)
+                           .supply_point_id)
+            except SQLLocation.DoesNotExist:
+                messages.error(self.request, 'Your location id did not match a location')
+            else:
+                query = query.filter(case_id=case_id)
+
         stock_state_keys = [
             (txn.case_id, txn.section_id, txn.product_id)
-            for txn in
-            StockTransaction.objects.filter(report__domain=self.domain)
+            for txn in query
             .order_by('case_id', 'section_id', 'product_id')
             .distinct('case_id', 'section_id', 'product_id')
             [:stock_state_limit]
@@ -386,6 +392,10 @@ class RebuildStockStateView(BaseCommTrackManageView):
             'stock_transaction_limit_exceeded': stock_transaction_limit_exceeded,
             'stock_transaction_limit': stock_transaction_limit,
         }
+
+    def get(self, *args, **kwargs):
+        self.location_id = self.request.GET.get('location_id')
+        return super(RebuildStockStateView, self).get(*args, **kwargs)
 
     def post(self, request, *args, **kwargs):
         case_id = request.POST.get('case_id')

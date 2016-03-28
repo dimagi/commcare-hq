@@ -74,9 +74,14 @@ class RebuildStockStateTest(TestCase):
         # it just doesn't process the second one
         # even though knowing yesterday's certainly changes the meaning
         # of today's transfer
+
+        # UPDATE SK 2016-03-14: this happens because the transactions are received out of order
+        # (they appear out of order in the form XML) and hence saved out of order.
+        # When the older transaction is saved it will only look back in time
+        # to create inferred transactions and not ahead.
         self.assertEqual(stock_state.stock_on_hand, 50)
         self.assertEqual(latest_txn.stock_on_hand, 50)
-        self.assertEqual(all_txns.count(), 3)
+        self.assertEqual(all_txns.count(), 2)
 
         rebuild_stock_state(**self._stock_state_key)
 

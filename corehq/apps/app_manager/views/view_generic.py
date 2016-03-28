@@ -30,6 +30,7 @@ from corehq.apps.app_manager.util import (
     get_commcare_versions,
     get_usercase_properties,
 )
+from corehq.apps.style.decorators import use_bootstrap3
 from dimagi.utils.couch.resource_conflict import retry_resource
 from corehq.apps.app_manager.dbaccessors import get_app
 from corehq.apps.app_manager.models import (
@@ -39,9 +40,10 @@ from corehq.apps.app_manager.models import (
 from django_prbac.utils import has_privilege
 
 
+@use_bootstrap3
 @retry_resource(3)
 def view_generic(request, domain, app_id=None, module_id=None, form_id=None,
-                 is_user_registration=False, copy_app_form=None):
+                 copy_app_form=None):
     """
     This is the main view for the app. All other views redirect to here.
 
@@ -53,10 +55,6 @@ def view_generic(request, domain, app_id=None, module_id=None, form_id=None,
     try:
         if app_id:
             app = get_app(domain, app_id)
-        if is_user_registration:
-            if not app.show_user_registration:
-                raise Http404()
-            form = app.get_user_registration()
         if module_id:
             try:
                 module = app.get_module(module_id)
@@ -100,7 +98,7 @@ def view_generic(request, domain, app_id=None, module_id=None, form_id=None,
 
     if form:
         template, form_context = get_form_view_context_and_template(
-            request, domain, form, context['langs'], is_user_registration
+            request, domain, form, context['langs']
         )
         context.update({
             'case_properties': get_all_case_properties(app),
@@ -119,10 +117,6 @@ def view_generic(request, domain, app_id=None, module_id=None, form_id=None,
         context.update(get_app_view_context(request, app))
     else:
         from corehq.apps.dashboard.views import NewUserDashboardView
-        from corehq.apps.style.utils import set_bootstrap_version3
-        from crispy_forms.utils import set_template_pack
-        set_bootstrap_version3()
-        set_template_pack('bootstrap3')
         template = NewUserDashboardView.template_name
         context.update({'templates': NewUserDashboardView.templates(domain)})
 
@@ -196,7 +190,7 @@ def view_generic(request, domain, app_id=None, module_id=None, form_id=None,
     })
 
     # Pass form for Copy Application to template
-    domain_names = [d.name for d in Domain.active_for_user(request.user)]
+    domain_names = [d.name for d in Domain.active_for_user(request.couch_user)]
     domain_names.sort()
     context.update({
         'copy_app_form': copy_app_form if copy_app_form is not None else CopyApplicationForm(app_id),

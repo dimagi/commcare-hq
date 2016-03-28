@@ -62,7 +62,7 @@ class CaseObjectCacheTest(BaseCaseMultimediaTest):
         """
         attachments = ['dimagi_logo_file', 'commcare_logo_file']
 
-        _, _, [case] = self._doCreateCaseWithMultimedia(attachments=attachments)
+        _, case = self._doCreateCaseWithMultimedia(attachments=attachments)
         self.assertEqual(2, len(case.case_attachments))
         client = Client()
         client.login(username=TEST_USER, password=TEST_PASSWORD)

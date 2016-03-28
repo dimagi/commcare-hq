@@ -2,6 +2,7 @@
 {% load i18n %}
 {% block main_column %}
 <form method='post' >
+	{% csrf_token %}
     <div>
         <label for="report_spec" class="control-label requiredField">{% trans "Report spec" %}<span class="asteriskField">*</span></label>
         <textarea cols="100" name="report_spec" rows="30">{{ spec }}</textarea>

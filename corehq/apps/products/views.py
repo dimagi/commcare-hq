@@ -1,7 +1,7 @@
 import json
 from django.http.response import HttpResponseServerError
 from corehq.apps.commtrack.exceptions import DuplicateProductCodeException
-from corehq.apps.style.decorators import use_bootstrap3, use_knockout_js, use_jquery_ui
+from corehq.apps.style.decorators import use_bootstrap3, use_jquery_ui
 from corehq.util.files import file_extention_from_filename
 from couchexport.writers import Excel2007ExportWriter
 from couchexport.models import Format
@@ -130,7 +130,6 @@ class ProductListView(BaseCommTrackManageView):
         }
 
     @use_bootstrap3
-    @use_knockout_js
     def dispatch(self, request, *args, **kwargs):
         return super(ProductListView, self).dispatch(request, *args, **kwargs)
 
@@ -261,7 +260,6 @@ class NewProductView(BaseCommTrackManageView):
         return self.get(request, *args, **kwargs)
 
     @use_bootstrap3
-    @use_knockout_js
     def dispatch(self, request, *args, **kwargs):
         return super(NewProductView, self).dispatch(request, *args, **kwargs)
 
@@ -321,7 +319,6 @@ class UploadProductView(BaseCommTrackManageView):
         )
 
     @use_bootstrap3
-    @use_knockout_js
     def dispatch(self, request, *args, **kwargs):
         return super(UploadProductView, self).dispatch(request, *args, **kwargs)
 
@@ -490,7 +487,6 @@ class ProductFieldsView(CustomDataModelMixin, BaseCommTrackManageView):
     template_name = "custom_data_fields/bootstrap3/custom_data_fields.html"
 
     @use_bootstrap3
-    @use_knockout_js
     @use_jquery_ui
     def dispatch(self, request, *args, **kwargs):
         return super(ProductFieldsView, self).dispatch(request, *args, **kwargs)

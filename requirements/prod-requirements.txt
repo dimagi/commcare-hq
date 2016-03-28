@@ -1,4 +1,4 @@
-flower==0.8.3
+flower==0.8.4
 newrelic
 errand-boy==0.3.8
 setproctitle==1.1.9

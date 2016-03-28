@@ -30,10 +30,9 @@ from corehq.apps.domain.decorators import login_and_domain_required
 from corehq.apps.domain.views import BaseDomainView
 from corehq.apps.hqcase.utils import get_case_by_identifier
 from corehq.apps.hqwebapp.views import CRUDPaginatedViewMixin, PaginatedItemException
-from corehq.apps.reports.standard.export import ExcelExportReport
 from corehq.apps.data_interfaces.dispatcher import (DataInterfaceDispatcher, EditDataInterfaceDispatcher,
                                                     require_can_edit_data)
-from corehq.apps.style.decorators import use_bootstrap3, use_typeahead
+from corehq.apps.style.decorators import use_bootstrap3, use_typeahead, use_angular_js
 from corehq.const import SERVER_DATETIME_FORMAT
 from .dispatcher import require_form_management_privilege
 from .interfaces import FormManagementMode, BulkFormManagementInterface, CaseReassignmentInterface
@@ -177,6 +176,10 @@ class CaseGroupListView(DataInterfaceSection, CRUDPaginatedViewMixin):
             'template': 'deleted-group-template',
         }
 
+    @use_bootstrap3
+    def dispatch(self, request, *args, **kwargs):
+        return super(CaseGroupListView, self).dispatch(request, *args, **kwargs)
+
 
 class ArchiveFormView(DataInterfaceSection):
     template_name = 'data_interfaces/interfaces/import_forms.html'
@@ -243,7 +246,7 @@ class ArchiveFormView(DataInterfaceSection):
         try:
             bulk_archive_forms.delay(
                 self.domain,
-                self.request.user,
+                self.request.couch_user,
                 list(self.uploaded_file.get_worksheet())
             )
             messages.success(self.request, _("We received your file and are processing it. "
@@ -438,13 +441,13 @@ class CaseGroupCaseManagementView(DataInterfaceSection, CRUDPaginatedViewMixin):
                 'template': 'case-message-template',
             }
         item_data = self._get_item_data(case)
-        if case._id in self.case_group.cases:
+        if case.case_id in self.case_group.cases:
             message = '<span class="label label-important">%s</span>' % _("Case already in group")
         elif case.doc_type != 'CommCareCase':
             message = '<span class="label label-important">%s</span>' % _("It looks like this case was deleted.")
         else:
             message = '<span class="label label-success">%s</span>' % _("Case added")
-            self.case_group.cases.append(case._id)
+            self.case_group.cases.append(case.case_id)
             self.case_group.save()
         item_data['message'] = message
         return {
@@ -469,6 +472,10 @@ class CaseGroupCaseManagementView(DataInterfaceSection, CRUDPaginatedViewMixin):
                 return HttpResponseRedirect(self.page_url)
             return self.get(request, *args, **kwargs)
         return self.paginate_crud_response
+
+    @use_bootstrap3
+    def dispatch(self, request, *args, **kwargs):
+        return super(CaseGroupCaseManagementView, self).dispatch(request, *args, **kwargs)
 
 
 class XFormManagementView(DataInterfaceSection):
@@ -567,6 +574,7 @@ class AutomaticUpdateRuleListView(JSONResponseMixin, DataInterfaceSection):
         return get_timezone_for_user(None, self.domain)
 
     @use_bootstrap3
+    @use_angular_js
     @method_decorator(requires_privilege_with_fallback(privileges.DATA_CLEANUP))
     def dispatch(self, *args, **kwargs):
         return super(AutomaticUpdateRuleListView, self).dispatch(*args, **kwargs)
@@ -717,6 +725,7 @@ class AddAutomaticUpdateRuleView(JSONResponseMixin, DataInterfaceSection):
         }
 
     @use_bootstrap3
+    @use_angular_js
     @use_typeahead
     @method_decorator(requires_privilege_with_fallback(privileges.DATA_CLEANUP))
     def dispatch(self, *args, **kwargs):
@@ -732,10 +741,11 @@ class AddAutomaticUpdateRuleView(JSONResponseMixin, DataInterfaceSection):
             )
 
     def create_actions(self, rule):
-        AutomaticUpdateAction.objects.create(
-            rule=rule,
-            action=AutomaticUpdateAction.ACTION_CLOSE,
-        )
+        if self.rule_form._closes_case():
+            AutomaticUpdateAction.objects.create(
+                rule=rule,
+                action=AutomaticUpdateAction.ACTION_CLOSE,
+            )
         if self.rule_form._updates_case():
             AutomaticUpdateAction.objects.create(
                 rule=rule,

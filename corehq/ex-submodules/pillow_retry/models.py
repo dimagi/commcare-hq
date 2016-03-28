@@ -74,17 +74,16 @@ class PillowError(models.Model):
 
     @classmethod
     def get_or_create(cls, change, pillow, change_meta=None):
-        pillow_path = path_from_object(pillow)
         change = force_to_change(change)
         change.document
         doc_id = change.id
         try:
-            error = cls.objects.get(doc_id=doc_id, pillow=pillow_path)
+            error = cls.objects.get(doc_id=doc_id, pillow=pillow.pillow_id)
         except cls.DoesNotExist:
             now = datetime.utcnow()
             error = PillowError(
                 doc_id=doc_id,
-                pillow=pillow_path,
+                pillow=pillow.pillow_id,
                 date_created=now,
                 date_last_attempt=now,
                 date_next_attempt=now,
@@ -134,8 +133,8 @@ class PillowError(models.Model):
                 (models.Q(total_attempts__lte=multi_attempts_cutoff) & models.Q(current_attempt__lte=max_attempts))
             )
 
-        # temporarily disable queuing of ConfigurableIndicatorPillow errors
-        query = query.filter(~models.Q(pillow='corehq.apps.userreports.pillow.ConfigurableIndicatorPillow'))
+        # temporarily disable queuing of ConfigurableReportKafkaPillow errors
+        query = query.filter(~models.Q(pillow='corehq.apps.userreports.pillow.ConfigurableReportKafkaPillow'))
 
         if not fetch_full:
             query = query.values('id', 'date_next_attempt')

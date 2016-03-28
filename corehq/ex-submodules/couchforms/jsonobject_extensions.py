@@ -61,7 +61,7 @@ class GeoPointProperty(JsonProperty):
     def wrap(self, obj):
         try:
             latitude, longitude, altitude, accuracy = obj.split(' ')
-        except TypeError:
+        except (TypeError, AttributeError, ValueError):
             raise BadValueError("GeoPoint format expects 4 decimals: {!r}"
                                 .format(obj))
         try:

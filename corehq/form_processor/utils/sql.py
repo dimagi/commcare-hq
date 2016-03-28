@@ -1,3 +1,7 @@
+"""
+Note that the adapters must return the fields in the same order as they appear
+in the table DSL
+"""
 import json
 from collections import namedtuple
 
@@ -7,8 +11,8 @@ from psycopg2.extensions import adapt, AsIs
 from corehq.form_processor.models import (
     CommCareCaseSQL_DB_TABLE, CaseAttachmentSQL_DB_TABLE,
     CommCareCaseIndexSQL_DB_TABLE, CaseTransaction_DB_TABLE,
-    XFormAttachmentSQL_DB_TABLE, XFormInstanceSQL_DB_TABLE
-)
+    XFormAttachmentSQL_DB_TABLE, XFormInstanceSQL_DB_TABLE,
+    LedgerValue_DB_TABLE, LedgerTransaction_DB_TABLE)
 
 
 def fetchall_as_namedtuple(cursor):
@@ -51,6 +55,8 @@ def form_adapter(form):
         adapt(form.problem).getquoted(),
         adapt(form.user_id).getquoted(),
         adapt(form.initial_processing_complete).getquoted(),
+        adapt(form.deleted_on).getquoted(),
+        adapt(form.deletion_id).getquoted(),
     ]
     return _adapt_fields(fields, XFormInstanceSQL_DB_TABLE)
 
@@ -63,6 +69,9 @@ def form_attachment_adapter(attachment):
         adapt(attachment.content_type).getquoted(),
         adapt(attachment.md5).getquoted(),
         adapt(attachment.form_id).getquoted(),
+        adapt(attachment.blob_id).getquoted(),
+        adapt(attachment.content_length).getquoted(),
+        adapt(json.dumps(attachment.properties, cls=JSONEncoder)).getquoted(),
     ]
     return _adapt_fields(fields, XFormAttachmentSQL_DB_TABLE)
 
@@ -87,6 +96,8 @@ def case_adapter(case):
         adapt(json.dumps(case.case_json, cls=JSONEncoder)).getquoted(),
         adapt(case.name).getquoted(),
         adapt(case.location_id).getquoted(),
+        adapt(case.deleted_on).getquoted(),
+        adapt(case.deletion_id).getquoted(),
     ]
     return _adapt_fields(fields, CommCareCaseSQL_DB_TABLE)
 
@@ -99,6 +110,12 @@ def case_attachment_adapter(attachment):
         adapt(attachment.content_type).getquoted(),
         adapt(attachment.md5).getquoted(),
         adapt(attachment.case_id).getquoted(),
+        adapt(attachment.blob_id).getquoted(),
+        adapt(attachment.content_length).getquoted(),
+        adapt(attachment.attachment_from).getquoted(),
+        adapt(json.dumps(attachment.properties, cls=JSONEncoder)).getquoted(),
+        adapt(attachment.attachment_src).getquoted(),
+        adapt(attachment.identifier).getquoted(),
     ]
     return _adapt_fields(fields, CaseAttachmentSQL_DB_TABLE)
 
@@ -128,6 +145,35 @@ def case_transaction_adapter(transaction):
         adapt(transaction.sync_log_id).getquoted(),
     ]
     return _adapt_fields(fields, CaseTransaction_DB_TABLE)
+
+
+def ledger_value_adapter(ledger_value):
+    fields = [
+        adapt(ledger_value.id).getquoted(),
+        adapt(ledger_value.entry_id).getquoted(),
+        adapt(ledger_value.section_id).getquoted(),
+        adapt(ledger_value.balance).getquoted(),
+        adapt(ledger_value.last_modified).getquoted(),
+        adapt(ledger_value.case_id).getquoted(),
+    ]
+    return _adapt_fields(fields, LedgerValue_DB_TABLE)
+
+
+def ledger_transaction_adapter(ledger_transaction):
+    fields = [
+        adapt(ledger_transaction.id).getquoted(),
+        adapt(ledger_transaction.form_id).getquoted(),
+        adapt(ledger_transaction.server_date).getquoted(),
+        adapt(ledger_transaction.report_date).getquoted(),
+        adapt(ledger_transaction.type).getquoted(),
+        adapt(ledger_transaction.case_id).getquoted(),
+        adapt(ledger_transaction.entry_id).getquoted(),
+        adapt(ledger_transaction.section_id).getquoted(),
+        adapt(ledger_transaction.user_defined_type).getquoted(),
+        adapt(ledger_transaction.delta).getquoted(),
+        adapt(ledger_transaction.updated_balance).getquoted(),
+    ]
+    return _adapt_fields(fields, LedgerTransaction_DB_TABLE)
 
 
 def _adapt_fields(fields, table_name):

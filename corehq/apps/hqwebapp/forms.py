@@ -3,11 +3,13 @@ import json
 from django import forms
 from django.contrib.auth.forms import AuthenticationForm
 from django.core.exceptions import ValidationError
+from django.middleware.csrf import get_token
 from django.http import QueryDict
 from django.template.loader import render_to_string
 from django.utils.translation import ugettext_lazy as _
 from django.utils.safestring import mark_safe
 
+from corehq.apps.domain.forms import NoAutocompleteMixin
 from corehq.apps.users.models import CouchUser
 
 from crispy_forms import layout as crispy
@@ -17,7 +19,7 @@ from crispy_forms.helper import FormHelper
 from dimagi.utils.decorators.memoized import memoized
 
 
-class EmailAuthenticationForm(AuthenticationForm):
+class EmailAuthenticationForm(NoAutocompleteMixin, AuthenticationForm):
     username = forms.EmailField(label=_("E-mail"), max_length=75)
 
     def clean_username(self):
@@ -26,7 +28,9 @@ class EmailAuthenticationForm(AuthenticationForm):
 
     def clean(self):
         lockout_message = mark_safe(_('Sorry - you have attempted to login with an incorrect password too many times. Please <a href="/accounts/password_reset_email/">click here</a> to reset your password.'))
-        username = self.cleaned_data['username']
+        username = self.cleaned_data.get('username')
+        if username is None:
+            raise ValidationError(_('Please enter a valid email address.'))
         try:
             cleaned_data = super(EmailAuthenticationForm, self).clean()
         except ValidationError:
@@ -140,7 +144,9 @@ class FormListForm(object):
     child_form_data = forms.CharField(widget=forms.HiddenInput)
     template = "style/bootstrap2/partials/form_list_form.html"
 
-    def __init__(self, data=None, *args, **kwargs):
+    def __init__(self, data=None, request=None, *args, **kwargs):
+        self.request = request
+
         if self.child_form_class is None:
             raise NotImplementedError("You must specify a child form to use"
                                       "for each row")
@@ -237,6 +243,7 @@ class FormListForm(object):
             'row_spec': self.get_row_spec(),
             'rows': map(self.form_to_json, self.child_forms),
             'errors': getattr(self, 'errors', False),
+            'csrf_token': get_token(self.request),
         }
 
     def as_table(self):

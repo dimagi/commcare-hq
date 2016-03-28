@@ -1,25 +1,33 @@
 from datetime import datetime
-from django.test.testcases import TestCase
+
 from casexml.apps.stock.models import StockReport
+
 from corehq.apps.commtrack.models import StockState
 from corehq.apps.products.models import Product
 from corehq.apps.sms.mixin import VerifiedNumber
 from corehq.apps.sms.models import SMS
+from corehq.apps.sms.tests.util import setup_default_sms_test_backend
+
 from custom.ewsghana.alerts import URGENT_STOCKOUT, URGENT_NON_REPORTING
 from custom.ewsghana.alerts.urgent_alerts import UrgentStockoutAlert, UrgentNonReporting
+from custom.ewsghana.tests.handlers.utils import EWSTestCase
 from custom.ewsghana.tests.test_reminders import create_stock_report
-from custom.ewsghana.utils import prepare_domain, make_loc, bootstrap_web_user, create_backend, \
-    set_sms_notifications
+from custom.ewsghana.utils import (
+    bootstrap_web_user,
+    make_loc,
+    prepare_domain,
+    set_sms_notifications,
+)
 
 TEST_DOMAIN = 'ewsghana-urgent-alerts'
 
 
-class TestUrgentAlerts(TestCase):
+class TestUrgentAlerts(EWSTestCase):
 
     @classmethod
     def setUpClass(cls):
+        cls.backend, cls.sms_backend_mapping = setup_default_sms_test_backend()
         cls.domain = prepare_domain(TEST_DOMAIN)
-        cls.sms_backend_mapping, cls.backend = create_backend()
         cls.district = make_loc(code="district", name="Test District", type="district", domain=TEST_DOMAIN)
         cls.loc1 = make_loc(code="tf", name="Test Facility", type="Hospital", domain=TEST_DOMAIN,
                             parent=cls.district)
@@ -77,7 +85,10 @@ class TestUrgentAlerts(TestCase):
 
         urgent_stockout_alert.send()
         self.assertEqual(SMS.objects.count(), 1)
-        self.assertEqual(SMS.objects.all().first().text, URGENT_STOCKOUT % (self.district.name, "Test Product2"))
+        self.assertEqual(SMS.objects.all().first().text, URGENT_STOCKOUT % {
+            'location': self.district.name,
+            'products': "Test Product2",
+        })
 
         create_stock_report(self.loc1, {'tp': 0})
         create_stock_report(self.loc2, {'tp': 0})
@@ -87,7 +98,10 @@ class TestUrgentAlerts(TestCase):
         urgent_stockout_alert.send()
         smses = SMS.objects.filter(date__gte=now)
         self.assertEqual(smses.count(), 1)
-        self.assertEqual(smses.first().text, URGENT_STOCKOUT % (self.district.name, "Test Product, Test Product2"))
+        self.assertEqual(smses.first().text, URGENT_STOCKOUT % {
+            'location': self.district.name,
+            'products': "Test Product, Test Product2",
+        })
 
     def test_urgent_non_reporting_alert(self):
         urgent_non_reporting = UrgentNonReporting(TEST_DOMAIN)
@@ -105,5 +119,4 @@ class TestUrgentAlerts(TestCase):
         cls.user1.delete()
         for vn in VerifiedNumber.by_domain(TEST_DOMAIN):
             vn.delete()
-        cls.sms_backend_mapping.delete()
-        cls.backend.delete()
+        super(TestUrgentAlerts, cls).tearDownClass()

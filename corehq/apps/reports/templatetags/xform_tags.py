@@ -5,6 +5,7 @@ from django.template.loader import render_to_string
 from django.core.urlresolvers import reverse
 from django import template
 import pytz
+from django.utils.datastructures import SortedDict
 from django.utils.html import escape
 from django.utils.translation import ugettext as _
 from couchdbkit.exceptions import ResourceNotFound
@@ -17,10 +18,10 @@ from corehq.apps.hqwebapp.doc_info import get_doc_info_by_id, DocInfo
 from corehq.apps.locations.permissions import can_edit_form_location
 from corehq.apps.reports.formdetails.readable import get_readable_data_for_submission
 from corehq import toggles
+from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 from corehq.util.timezones.conversions import ServerTime
 from corehq.util.timezones.utils import get_timezone_for_request
 from corehq.util.xml_utils import indent_xml
-from couchforms.models import XFormInstance
 from casexml.apps.case.xform import extract_case_blocks
 from casexml.apps.case import const
 from casexml.apps.case.models import CommCareCase
@@ -36,23 +37,11 @@ register = template.Library()
 @register.simple_tag
 def render_form_xml(form):
     xml = form.get_xml()
+    if isinstance(xml, unicode):
+        xml.encode('utf-8', errors='replace')
     formatted_xml = indent_xml(xml) if xml else ''
     return '<pre class="fancy-code prettyprint linenums"><code class="language-xml">%s</code></pre>' \
            % escape(formatted_xml)
-
-
-
-@register.simple_tag
-def form_inline_display(form_id, timezone=pytz.utc):
-    if form_id:
-        try:
-            form = XFormInstance.get(form_id)
-            if form:
-                return "%s: %s" % (ServerTime(form.received_on).user_time(timezone).done().date(), form.xmlns)
-        except ResourceNotFound:
-            pass
-        return "%s: %s" % (_("missing form"), form_id)
-    return _("empty form id found")
 
 
 def sorted_case_update_keys(keys):
@@ -110,14 +99,14 @@ def render_form(form, domain, options):
     for b in case_blocks:
         this_case_id = b.get(const.CASE_ATTR_ID)
         try:
-            this_case = CommCareCase.get(this_case_id) if this_case_id else None
+            this_case = CaseAccessors(domain).get_case(this_case_id) if this_case_id else None
             valid_case = True
         except ResourceNotFound:
             this_case = None
             valid_case = False
 
-        if this_case and this_case._id:
-            url = reverse('case_details', args=[domain, this_case._id])
+        if this_case and this_case.case_id:
+            url = reverse('case_details', args=[domain, this_case.case_id])
         else:
             url = "#"
 
@@ -135,13 +124,13 @@ def render_form(form, domain, options):
         })
 
     # Form Metadata tab
-    meta = form.top_level_tags().get('meta', None) or {}
+    meta = _top_level_tags(form).get('meta', None) or {}
     if support_enabled:
         meta['last_sync_token'] = form.last_sync_token
 
     definition = get_default_definition(sorted_form_metadata_keys(meta.keys()))
     form_meta_data = _get_tables_as_columns(meta, definition)
-    if 'auth_context' in form:
+    if getattr(form, 'auth_context', None):
         auth_context = AuthContext(form.auth_context)
         auth_context_user_id = auth_context.user_id
         auth_user_info = get_doc_info_by_id(domain, auth_context_user_id)
@@ -178,7 +167,7 @@ def render_form(form, domain, options):
     show_edit_submission = (
         user_can_edit
         and has_privilege(request, privileges.DATA_CLEANUP)
-        and form.doc_type != 'XFormDeprecated'
+        and not form.is_deprecated
     )
 
     show_resave = (
@@ -189,7 +178,7 @@ def render_form(form, domain, options):
             'was_edited': False,
             'is_edit': False,
         }
-        if instance.doc_type == "XFormDeprecated":
+        if instance.is_deprecated:
             info.update({
                 'was_edited': True,
                 'latest_version': instance.orig_id,
@@ -205,7 +194,7 @@ def render_form(form, domain, options):
     return render_to_string("reports/form/partials/single_form.html", {
         "context_case_id": case_id,
         "instance": form,
-        "is_archived": form.doc_type == "XFormArchived",
+        "is_archived": form.is_archived,
         "edit_info": _get_edit_info(form),
         "domain": domain,
         'question_list_not_found': question_list_not_found,
@@ -224,3 +213,24 @@ def render_form(form, domain, options):
         "show_edit_submission": show_edit_submission,
         "show_resave": show_resave,
     }, RequestContext(request))
+
+
+def _top_level_tags(form):
+        """
+        Returns a SortedDict of the top level tags found in the xml, in the
+        order they are found.
+
+        """
+        to_return = SortedDict()
+
+        element = form.get_xml_element()
+        if not element:
+            return SortedDict(sorted(form.form_data.items()))
+
+        for child in element:
+            # fix {namespace}tag format forced by ElementTree in certain cases (eg, <reg> instead of <n0:reg>)
+            key = child.tag.split('}')[1] if child.tag.startswith("{") else child.tag
+            if key == "Meta":
+                key = "meta"
+            to_return[key] = form.get_data('form/' + key)
+        return to_return

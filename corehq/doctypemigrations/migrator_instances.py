@@ -36,6 +36,23 @@ domains_migration = Migrator(
     doc_types=('Domain',)
 )
 
+apps_migration = Migrator(
+    slug='apps',
+    source_db_name=None,
+    target_db_name=settings.NEW_APPS_DB,
+    doc_types=(
+        'Application',
+        'ApplicationBase',
+        'CareplanConfig',
+        'DeleteApplicationRecord',
+        'DeleteFormRecord',
+        'DeleteModuleRecord',
+        'RemoteApp',
+        'SavedAppBuild',
+        'VersionedDoc',
+    )
+)
+
 
 def get_migrator_by_slug(slug):
     return Migrator.instances[slug]

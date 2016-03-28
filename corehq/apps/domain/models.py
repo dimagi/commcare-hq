@@ -4,6 +4,8 @@ import uuid
 from django.conf import settings
 from django.contrib.auth.models import AnonymousUser
 from django.template.loader import render_to_string
+from corehq.apps.app_manager.dbaccessors import get_brief_apps_in_domain
+from corehq.apps.cachehq.mixins import QuickCachedDocumentMixin
 from corehq.apps.domain.exceptions import DomainDeleteException
 from corehq.apps.tzmigration import set_migration_complete
 from corehq.dbaccessors.couchapps.all_docs import \
@@ -19,7 +21,7 @@ from django.core.urlresolvers import reverse
 from django.db import models, connection
 from django.utils.translation import ugettext_lazy as _
 from corehq.apps.appstore.models import SnapshotMixin
-from corehq.util.quickcache import skippable_quickcache
+from corehq.util.quickcache import quickcache, skippable_quickcache
 from dimagi.utils.couch import CriticalSection
 from dimagi.utils.couch.database import (
     iter_docs, get_safe_write_kwargs, apply_update, iter_bulk_delete
@@ -200,7 +202,7 @@ class DayTimeWindow(DocumentSchema):
     end_time = TimeProperty()
 
 
-class Domain(Document, SnapshotMixin):
+class Domain(QuickCachedDocumentMixin, Document, SnapshotMixin):
     """Domain is the highest level collection of people/stuff
        in the system.  Pretty much everything happens at the
        domain-level, including user membership, permission to
@@ -249,7 +251,6 @@ class Domain(Document, SnapshotMixin):
     sms_case_registration_user_id = StringProperty()
     # Whether or not a mobile worker can register via sms
     sms_mobile_worker_registration_enabled = BooleanProperty(default=False)
-    default_sms_backend_id = StringProperty()
     use_default_sms_response = BooleanProperty(default=False)
     default_sms_response = StringProperty()
     chat_message_count_threshold = IntegerProperty()
@@ -327,8 +328,10 @@ class Domain(Document, SnapshotMixin):
     default_mobile_worker_redirect = StringProperty(default=None)
     last_modified = DateTimeProperty(default=datetime(2015, 1, 1))
 
-    # when turned on, users who enter the domain are logged out after 30 minutes of inactivity
+    # when turned on, use SECURE_TIMEOUT for sessions of users who are members of this domain
     secure_sessions = BooleanProperty(default=False)
+
+    two_factor_auth = BooleanProperty(default=False)
 
     @property
     def domain_type(self):
@@ -388,6 +391,12 @@ class Domain(Document, SnapshotMixin):
         return pytz.timezone(self.default_timezone)
 
     @staticmethod
+    @quickcache(['name'], timeout=24 * 60 * 60)
+    def is_secure_session_required(name):
+        domain = Domain.get_by_name(name)
+        return domain and domain.secure_sessions
+
+    @staticmethod
     @skippable_quickcache(['couch_user._id', 'is_active'],
                           skip_arg='strict', timeout=5*60, memoize_timeout=10)
     def active_for_couch_user(couch_user, is_active=True, strict=False):
@@ -437,10 +446,7 @@ class Domain(Document, SnapshotMixin):
         couch_user.save()
 
     def applications(self):
-        from corehq.apps.app_manager.models import ApplicationBase
-        return ApplicationBase.view('app_manager/applications_brief',
-                                    startkey=[self.name],
-                                    endkey=[self.name, {}]).all()
+        return get_brief_apps_in_domain(self.name)
 
     def full_applications(self, include_builds=True):
         from corehq.apps.app_manager.models import Application, RemoteApp
@@ -516,15 +522,12 @@ class Domain(Document, SnapshotMixin):
             # but in order not to break anything in the wild,
             # I'm opting to notify by email if/when this happens
             # but fall back to the previous behavior of returning None
-            try:
+            if settings.DEBUG:
                 raise ValueError('%r is not a valid domain name' % name)
-            except ValueError:
-                if settings.DEBUG:
-                    raise
-                else:
-                    _assert = soft_assert(notify_admins=True, exponential_backoff=False)
-                    _assert(False, '%r is not a valid domain name' % name)
-                    return None
+            else:
+                _assert = soft_assert(notify_admins=True, exponential_backoff=False)
+                _assert(False, '%r is not a valid domain name' % name)
+                return None
 
         def _get_by_name(stale=False):
             extra_args = {'stale': settings.COUCH_STALE_QUERY} if stale else {}
@@ -614,7 +617,6 @@ class Domain(Document, SnapshotMixin):
             # mark any new domain as timezone migration complete
             set_migration_complete(self.name)
         super(Domain, self).save(**params)
-        Domain.get_by_name.clear(Domain, self.name)  # clear the domain cache
 
         from corehq.apps.domain.signals import commcare_domain_post_save
         results = commcare_domain_post_save.send_robust(sender='domain', domain=self)
@@ -633,7 +635,7 @@ class Domain(Document, SnapshotMixin):
         from corehq.apps.app_manager.dbaccessors import get_app
         from corehq.apps.reminders.models import CaseReminderHandler
         from corehq.apps.fixtures.models import FixtureDataItem
-        from corehq.apps.app_manager.dbaccessors import get_apps_in_domain
+        from corehq.apps.app_manager.dbaccessors import get_brief_apps_in_domain
         from corehq.apps.domain.dbaccessors import get_doc_ids_in_domain_by_class
         from corehq.apps.fixtures.models import FixtureDataType
         from corehq.apps.users.models import UserRole
@@ -681,7 +683,7 @@ class Domain(Document, SnapshotMixin):
                 if app:
                     return app._id, app.doc_type
 
-            for app in get_apps_in_domain(self.name):
+            for app in get_brief_apps_in_domain(self.name):
                 doc_id, doc_type = app.get_id, app.doc_type
                 original_doc_id = doc_id
                 if copy_by_id and doc_id not in copy_by_id:
@@ -878,7 +880,6 @@ class Domain(Document, SnapshotMixin):
     def delete(self):
         self._pre_delete()
         super(Domain, self).delete()
-        Domain.get_by_name.clear(Domain, self.name)  # clear the domain cache
 
     def _pre_delete(self):
         from corehq.apps.domain.signals import commcare_domain_pre_delete
@@ -1053,7 +1054,7 @@ class Domain(Document, SnapshotMixin):
         left around for special applications, and not a feature
         flag that should be set normally.
         """
-        return toggles.MULTIPLE_LOCATIONS_PER_USER.enabled(self)
+        return toggles.MULTIPLE_LOCATIONS_PER_USER.enabled(self.name)
 
     def convert_to_commtrack(self):
         """
@@ -1061,6 +1062,13 @@ class Domain(Document, SnapshotMixin):
         """
         from corehq.apps.commtrack.util import make_domain_commtrack
         make_domain_commtrack(self)
+
+    def clear_caches(self):
+        from .utils import domain_restricts_superusers
+        super(Domain, self).clear_caches()
+        self.get_by_name.clear(self.__class__, self.name)
+        self.is_secure_session_required.clear(self.name)
+        domain_restricts_superusers.clear(self.name)
 
 
 class TransferDomainRequest(models.Model):

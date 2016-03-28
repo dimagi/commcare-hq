@@ -8,7 +8,6 @@ from corehq.apps.app_manager.models import Application
 from corehq.apps.domain.models import Domain
 
 
-
 class TestSubscriptionPermissionsChanges(BaseAccountingTest):
 
     def setUp(self):

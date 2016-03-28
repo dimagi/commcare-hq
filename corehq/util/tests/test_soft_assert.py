@@ -1,8 +1,11 @@
 import math
-from django.test import SimpleTestCase
+from django.test import SimpleTestCase, RequestFactory
+from django.test.utils import override_settings
+from corehq.util.log import get_sanitized_request_repr
 from corehq.util.soft_assert.core import SoftAssert
 from corehq.util.soft_assert.api import _send_message
 from corehq.util.cache_utils import ExponentialBackoff
+from corehq.util.test_utils import softer_assert
 
 
 class SoftAssertTest(SimpleTestCase):
@@ -30,6 +33,7 @@ class SoftAssertTest(SimpleTestCase):
             x = float(x)
         return x * x
 
+    @softer_assert
     def test_soft_assert(self):
         self.assertEqual(self.hypotenuse('3.0', 4), 5.0)
         self.assertEqual(len(self.infos), 2)
@@ -54,6 +58,10 @@ class SoftAssertTest(SimpleTestCase):
         self.assertEqual(self.infos[3].line,
                          'if not self.soft_assert(isinstance(x, float)):')
 
+    @softer_assert
+    def test_message_newlines(self):
+        self.soft_assert(False, "don't\ncrash")
+
 
 class SoftAssertHelpersTest(SimpleTestCase):
     def test_number_is_power_of_two(self):
@@ -64,6 +72,22 @@ class SoftAssertHelpersTest(SimpleTestCase):
             self.assertEqual(actual, expected,
                              '_number_is_power_of_two: {}'.format(actual))
 
+    @softer_assert
+    @override_settings(DEBUG=False)
+    def test_request_sanitization(self):
+        raw_request = RequestFactory().post('/accounts/login/', {'username': 'sreddy', 'password': 'mypass'})
+        # Django setting to mark request sensitive
+        raw_request.sensitive_post_parameters = '__ALL__'
+        santized_request = get_sanitized_request_repr(raw_request)
+
+        # raw request exposes password
+        self.assertTrue('mypass' in str(raw_request))
+
+        # sanitized_request should't expose password
+        self.assertFalse('mypass' in santized_request)
+        self.assertTrue('*******' in santized_request)
+
+    @softer_assert
     def test_send_message(self):
 
         def test1(subject, message):

@@ -36,7 +36,7 @@ SUBSCRIBABLE_EDITIONS = [
 
 def instantiate_accounting_for_tests():
     call_command('cchq_prbac_bootstrap', testing=True)
-    call_command('cchq_software_plan_bootstrap', testing=True)
+    call_command('cchq_software_plan_bootstrap', testing=True, fresh_start=True)
 
 
 def init_default_currency():
@@ -110,7 +110,7 @@ def delete_all_accounts():
     Currency.objects.all().delete()
 
 
-def subscribable_plan(edition=SoftwarePlanEdition.ADVANCED):
+def subscribable_plan(edition=SoftwarePlanEdition.STANDARD):
     return DefaultProductPlan.objects.get(
         edition=edition,
         product_type=SoftwareProductType.COMMCARE,
@@ -118,37 +118,19 @@ def subscribable_plan(edition=SoftwarePlanEdition.ADVANCED):
     ).plan.get_version()
 
 
-def generate_domain_subscription_from_date(date_start, billing_account, domain,
-                                           min_num_months=None, is_immediately_active=False,
-                                           delay_invoicing_until=None, save=True,
-                                           service_type=SubscriptionType.NOT_SET,
-                                           subscription_length=None,
-                                           plan_version=None,):
-    # make sure the first month is never a full month (for testing)
-    date_start = date_start.replace(day=max(2, date_start.day))
-
-    subscription_length = subscription_length or random.randint(min_num_months or 3, 25)
-    date_end_year, date_end_month = add_months(date_start.year, date_start.month, subscription_length)
-    date_end_last_day = calendar.monthrange(date_end_year, date_end_month)[1]
-
-    # make sure that the last month is never a full month (for testing)
-    date_end = datetime.date(date_end_year, date_end_month, min(date_end_last_day - 1, date_start.day + 1))
-
-    subscriber, _ = Subscriber.objects.get_or_create(domain=domain)
+def generate_domain_subscription(account, domain, date_start, date_end,
+                                 plan_version=None, service_type=SubscriptionType.NOT_SET):
+    subscriber, _ = Subscriber.objects.get_or_create(domain=domain.name)
     subscription = Subscription(
-        account=billing_account,
+        account=account,
         plan_version=plan_version or subscribable_plan(),
         subscriber=subscriber,
-        salesforce_contract_id=data_gen.arbitrary_unique_name("SFC")[:80],
         date_start=date_start,
         date_end=date_end,
-        is_active=is_immediately_active,
-        date_delay_invoicing=delay_invoicing_until,
         service_type=service_type,
     )
-    if save:
-        subscription.save()
-    return subscription, subscription_length
+    subscription.save()
+    return subscription
 
 
 def delete_all_subscriptions():

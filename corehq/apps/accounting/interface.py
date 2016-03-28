@@ -87,6 +87,7 @@ def invoice_column_cell(invoice):
 class AddItemInterface(GenericTabularReport):
     base_template = 'accounting/add_new_item_button.html'
     exportable = True
+    is_bootstrap3 = True
 
     item_name = None
     new_item_view = None
@@ -351,7 +352,7 @@ class SubscriptionInterface(AddItemInterface):
                 subscription.pro_bono_status,
             ]
             if not self.is_rendered_as_email:
-                columns.append(mark_safe('<a href="./%d" class="btn">Edit</a>' % subscription.id))
+                columns.append(mark_safe('<a href="./%d" class="btn btn-default">Edit</a>' % subscription.id))
             rows.append(columns)
 
         return rows
@@ -477,6 +478,7 @@ class InvoiceInterfaceBase(GenericTabularReport):
     dispatcher = AccountingAdminInterfaceDispatcher
     exportable = True
     export_format_override = Format.CSV
+    is_bootstrap3 = True
 
 
 class WireInvoiceInterface(InvoiceInterfaceBase):
@@ -518,10 +520,6 @@ class WireInvoiceInterface(InvoiceInterfaceBase):
             DataTablesColumn("Payment Status"),
             DataTablesColumn("Do Not Invoice"),
         )
-
-        if not self.is_rendered_as_email:
-            header.add_column(DataTablesColumn("View Invoice"))
-        return header
 
     @property
     def rows(self):
@@ -570,10 +568,6 @@ class WireInvoiceInterface(InvoiceInterfaceBase):
                 "YES" if invoice.is_hidden else "no",
             ]
 
-            if not self.is_rendered_as_email:
-                columns.extend([
-                    mark_safe(make_anchor_tag(invoice_url, 'Go to Invoice'))
-                ])
             rows.append(columns)
         return rows
 
@@ -784,7 +778,7 @@ class InvoiceInterface(InvoiceInterfaceBase):
                 adjust_attrs = {
                     "data-toggle": "modal",
                     "data-target": adjust_href,
-                    "class": "btn",
+                    "class": "btn btn-default",
                 }
                 columns.append(
                     mark_safe(make_anchor_tag(adjust_href, adjust_name, adjust_attrs)),
@@ -951,6 +945,7 @@ class PaymentRecordInterface(GenericTabularReport):
     base_template = 'accounting/report_filter_actions.html'
     asynchronous = True
     exportable = True
+    is_bootstrap3 = True
 
     fields = [
         'corehq.apps.accounting.interface.DateCreatedFilter',
@@ -1048,6 +1043,7 @@ class SubscriptionAdjustmentInterface(GenericTabularReport):
     base_template = 'accounting/report_filter_actions.html'
     asynchronous = True
     exportable = True
+    is_bootstrap3 = True
 
     fields = [
         'corehq.apps.accounting.interface.DomainFilter',
@@ -1121,6 +1117,7 @@ class CreditAdjustmentInterface(GenericTabularReport):
     base_template = 'accounting/report_filter_actions.html'
     asynchronous = True
     exportable = True
+    is_bootstrap3 = True
 
     fields = [
         'corehq.apps.accounting.interface.NameFilter',
@@ -1144,6 +1141,12 @@ class CreditAdjustmentInterface(GenericTabularReport):
             DataTablesColumn("Note"),
             DataTablesColumn("Amount"),
             DataTablesColumn("By User"),
+            DataTablesColumnGroup(
+                "Related Credit Line",
+                DataTablesColumn("Account"),
+                DataTablesColumn("Subscription"),
+                DataTablesColumn("Product/Feature Type")
+            ),
         )
 
     @property
@@ -1152,32 +1155,38 @@ class CreditAdjustmentInterface(GenericTabularReport):
             EditSubscriptionView,
             ManageBillingAccountView,
         )
-        return [
-            map(lambda x: x or '', [
-                credit_adj.date_created,
+
+        def _get_credit_line_columns_from_credit_line(credit_line):
+            return [
                 format_datatables_data(
                     text=mark_safe(
                         make_anchor_tag(
-                            reverse(ManageBillingAccountView.urlname, args=[credit_adj.credit_line.account.id]),
-                            credit_adj.credit_line.account.name
+                            reverse(ManageBillingAccountView.urlname, args=[credit_line.account.id]),
+                            credit_line.account.name
                         )
                     ),
-                    sort_key=credit_adj.credit_line.account.name,
+                    sort_key=credit_line.account.name,
                 ),
                 format_datatables_data(
                     mark_safe(make_anchor_tag(
-                        reverse(EditSubscriptionView.urlname, args=(credit_adj.credit_line.subscription.id,)),
-                        credit_adj.credit_line.subscription
+                        reverse(EditSubscriptionView.urlname, args=(credit_line.subscription.id,)),
+                        credit_line.subscription
                     )),
-                    credit_adj.credit_line.subscription.id,
-                ) if credit_adj.credit_line.subscription else '',
+                    credit_line.subscription.id,
+                ) if credit_line.subscription else '',
                 dict(FeatureType.CHOICES).get(
-                    credit_adj.credit_line.feature_type,
+                    credit_line.feature_type,
                     dict(SoftwareProductType.CHOICES).get(
-                        credit_adj.credit_line.product_type,
+                        credit_line.product_type,
                         "Any"
                     ),
                 ),
+            ]
+
+        return [
+            map(lambda x: x or '', [
+                credit_adj.date_created,
+            ] + _get_credit_line_columns_from_credit_line(credit_adj.credit_line) + [
                 (
                     credit_adj.credit_line.subscription.subscriber.domain
                     if credit_adj.credit_line.subscription is not None else (
@@ -1190,7 +1199,10 @@ class CreditAdjustmentInterface(GenericTabularReport):
                 credit_adj.note,
                 quantize_accounting_decimal(credit_adj.amount),
                 credit_adj.web_user,
-            ])
+            ] + (
+                _get_credit_line_columns_from_credit_line(credit_adj.related_credit)
+                if credit_adj.related_credit else ['', '', '']
+            ))
             for credit_adj in self.filtered_credit_adjustments
         ]
 
@@ -1205,8 +1217,13 @@ class CreditAdjustmentInterface(GenericTabularReport):
         domain = DomainFilter.get_value(self.request, self.domain)
         if domain is not None:
             query = query.filter(
-                Q(credit_line__subscription__subscriber__domain=domain)
-                | Q(invoice__subscription__subscriber__domain=domain)
+                Q(credit_line__subscription__subscriber__domain=domain) |
+                Q(invoice__subscription__subscriber__domain=domain) |
+                Q(
+                    credit_line__subscription__isnull=True,
+                    invoice__isnull=True,
+                    credit_line__account__created_by_domain=domain,
+                )
             )
 
         if DateFilter.use_filter(self.request):

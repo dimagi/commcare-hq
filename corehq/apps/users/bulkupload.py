@@ -433,7 +433,7 @@ def create_or_update_users_and_groups(domain, user_specs, group_specs, location_
                     if phone_number:
                         user.add_phone_number(_fmt_phone(phone_number), default=True)
                     if name:
-                        user.set_full_name(name)
+                        user.set_full_name(unicode(name))
                     if data:
                         error = custom_data_validator(data)
                         if error:

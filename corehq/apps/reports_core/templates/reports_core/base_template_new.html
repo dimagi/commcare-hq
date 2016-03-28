@@ -1,11 +1,30 @@
 {% extends "style/bootstrap3/base_section.html" %}
 {% load hq_shared_tags %}
 {% load i18n %}
+{% load compress %}
+
+{% block stylesheets %}{{ block.super }}
+    {% compress css %}
+        <link type="text/css" rel="stylesheet" media="all" href="{% new_static 'leaflet/dist/leaflet.css' %}" />
+        <link rel="stylesheet" href="{% new_static 'reports/css/maps.css' %}" />
+    {% endcompress %}
+{% endblock stylesheets %}
 
 {% block js %}{{ block.super }}
     <script src="{% new_static 'reports/javascripts/config.dataTables.bootstrap.js' %}"></script>
     <script src="{% new_static 'reports_core/js/choice-list-api.js' %}"></script>
     <script src="{% new_static 'reports_core/js/charts.js' %}"></script>
+    <script src="{% new_static 'reports_core/js/maps.js' %}"></script>
+    <script src="{% new_static 'leaflet/dist/leaflet.js' %}"></script>
+    <script src="{% new_static 'reports/javascripts/maps_utils.js' %}"></script>
+{% endblock %}
+
+{% block head %}{{ block.super }}
+    <style>
+        #map-container {
+            height: 500px;
+        }
+    </style>
 {% endblock %}
 
 {% block js-inline %}{{ block.super }}
@@ -14,7 +33,6 @@
         function get_report_url() {
             return base_url;
         }
-
     $(function() {
         var chartSpecs = {{ report.spec.charts|JSON }};
         var updateCharts = function (data) {
@@ -23,6 +41,36 @@
                 charts.render(chartSpecs, data.aaData, $("#chart-container"));
             }
         };
+
+        var mapSpec = {{ report.spec.map_config|JSON }};
+        var updateMap = function (data) {
+            if (mapSpec) {
+                mapSpec.mapboxAccessToken = '{{ MAPBOX_ACCESS_TOKEN }}';
+                var render_map = hqImport('reports_core/js/maps.js').render;
+                render_map(mapSpec, data.aaData, $("#map-container"));
+            }
+        };
+
+        var errorCallback = function (jqXHR, textStatus, errorThrown) {
+            $('#error-message').html(errorThrown);
+            $('#report-error').removeClass('hide');
+        };
+
+        var successCallback = function(data) {
+            if(data.error) {
+                $('#error-message').html(data.error);
+                $('#report-error').removeClass('hide');
+            } else {
+                $('#report-error').addClass('hide');
+            }
+            if (data.warning) {
+                $('#warning-message').html(data.warning);
+                $('#report-warning').removeClass('hide');
+            } else {
+                $('#report-warning').addClass('hide');
+            }
+        };
+
         var reportTables = new HQReportDataTables({
             dataTableElem: '#report_table_{{ report.slug }}',
             paginationType: 'bs_normal',
@@ -44,40 +92,18 @@
                 fixColsNumLeft: {{ report_table.left_col.fixed.num }},
                 fixColsWidth: {{ report_table.left_col.fixed.width }},
             {% endif %}
-            extraCallbacks: [updateCharts]
+            successCallbacks: [successCallback, updateCharts, updateMap],
+            errorCallbacks: [errorCallback]
         });
         $('#report-filters').submit(function(event) {
             $('#reportHint').remove();
             $('#reportContent').removeClass('hide');
-            var postData = $(this).serialize();
-            $.ajax({
-                url: $(this).attr("action"),
-                type: $(this).attr("method"),
-                data: postData,
-                headers: {'HTTP_X_REQUESTED_WITH': 'XMLHttpRequest'},
-                success: function(data, textStatus, jqXHR) {
-                    if(data.error) {
-                        $('#error-message').html(data.error);
-                        $('#report-error').removeClass('hide');
-                    } else {
-                        updateCharts(data);
-                        $('#report-error').addClass('hide');
-                    }
-                    if (data.warning) {
-                        $('#warning-message').html(data.warning);
-                        $('#report-warning').removeClass('hide');
-                    } else {
-                        $('#report-warning').addClass('hide');
-                    }
-                },
-                error: function(jqXHR, textStatus, errorThrown) {
-                    $('#error-message').html(errorThrown);
-                    $('#report-error').removeClass('hide');
-                }
-            });
             event.preventDefault();
             reportTables.render();
         });
+        // after we've registered the event that prevents the default form submission
+        // we can enable the submit button
+        $("#apply-filters").prop('disabled', false);
 
         $(function() {
             $('.header-popover').popover({
@@ -178,6 +204,11 @@
         {% block reportcharts %}
         <section id="chart-container" style="display: none;">
         </section>
+        <section id="map-container" style="display: none;" >
+        </section>
+        <div id="zoomtofit" class="leaflet-control-layers" style="display: none;">
+            <div id="zoomtofit-target" class="zoomtofit leaflet-control-layers-toggle" title="{% trans "Fit all data into view" %}"></div>
+        </div>
         {% endblock %}
         {% block reporttable %}
         <div class="panel panel-default">

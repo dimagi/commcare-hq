@@ -1,3 +1,4 @@
+import sys
 from collections import defaultdict
 from itertools import islice
 from logging import Filter
@@ -10,6 +11,7 @@ from pygments.formatters import HtmlFormatter
 
 from celery.utils.mail import ErrorMail
 from django.core import mail
+from django.http import HttpRequest
 from django.utils.log import AdminEmailHandler
 from django.views.debug import SafeExceptionReporterFilter, get_exception_reporter_filter
 from django.template.loader import render_to_string
@@ -40,6 +42,18 @@ def clean_exception(exception):
     return exception
 
 
+def get_sanitized_request_repr(request):
+    """
+    Santizes sensitive data inside request object, if request has been marked sensitive
+    via Django decorator, django.views.decorators.debug.sensitive_post_parameters
+    """
+    if isinstance(request, HttpRequest):
+        filter = get_exception_reporter_filter(request)
+        return filter.get_request_repr(request)
+
+    return request
+
+
 class HqAdminEmailHandler(AdminEmailHandler):
     """
     Custom AdminEmailHandler to include additional details which can be supplied as follows:
@@ -51,13 +65,12 @@ class HqAdminEmailHandler(AdminEmailHandler):
     )
     """
     def get_context(self, record):
-        request = None
         try:
             request = record.request
-            filter = get_exception_reporter_filter(request)
-            request_repr = filter.get_request_repr(request)
         except Exception:
-            request_repr = "Request repr() unavailable."
+            request = None
+
+        request_repr = get_sanitized_request_repr(request)
 
         tb_list = []
         code = None
@@ -220,3 +233,25 @@ class SlowRequestFilter(Filter):
             return record.duration > self.duration_cutoff
         except (TypeError, AttributeError):
             return False
+
+
+def with_progress_bar(iterable, length=None):
+    """Turns 'iterable' into a generator which prints a progress bar"""
+    if hasattr(iterable, "__len__"):
+        length = len(iterable)
+    elif length is None:
+        raise AttributeError(
+            "'{}' object has no len(), you must pass in the 'length' parameter"
+            .format(type(iterable))
+        )
+    granularity = 40
+    checkpoints = {length*i/granularity for i in range(length)}
+    print 'Processing [' + ' '*granularity + ']',
+    print '\b' * (granularity + 2),
+    sys.stdout.flush()
+    for i, x in enumerate(iterable):
+        yield x
+        if i in checkpoints:
+            print '\b.',
+            sys.stdout.flush()
+    print '\b] Done!'

@@ -1,14 +1,15 @@
 from corehq.apps.accounting import generator
 from corehq.apps.accounting.models import BillingAccount, DefaultProductPlan, SoftwarePlanEdition, Subscription
 from corehq.apps.commtrack.models import CommtrackActionConfig
+from corehq.apps.custom_data_fields import CustomDataFieldsDefinition
+from corehq.apps.custom_data_fields.models import CustomDataField
 from corehq.apps.domain.models import Domain
 from corehq.apps.locations.models import Location, SQLLocation, LocationType
 from corehq.apps.products.models import Product, SQLProduct
-from corehq.apps.sms.mixin import MobileBackend
+from corehq.apps.sms.tests.util import setup_default_sms_test_backend, delete_domain_phone_numbers
 from corehq.apps.users.models import CommCareUser
-from corehq.messaging.smsbackends.test.models import TestSMSBackend
+from custom.ilsgateway.utils import make_loc
 from custom.logistics.tests.test_script import TestScript
-from corehq.apps.commtrack.tests.util import make_loc, TEST_BACKEND
 from custom.ilsgateway.models import ILSGatewayConfig
 from custom.logistics.tests.utils import bootstrap_user
 from casexml.apps.stock.models import DocDomainMapping
@@ -27,49 +28,54 @@ class ILSTestScript(TestScript):
 
     @classmethod
     def setUpClass(cls):
+        cls.sms_backend, cls.sms_backend_mapping = setup_default_sms_test_backend()
         domain = prepare_domain(TEST_DOMAIN)
         mohsw = make_loc(code="moh1", name="Test MOHSW 1", type="MOHSW", domain=domain.name)
 
         msdzone = make_loc(code="msd1", name="MSD Zone 1", type="MSDZONE",
-                          domain=domain.name, parent=mohsw)
+                           domain=domain.name, parent=mohsw)
 
         region = make_loc(code="reg1", name="Test Region 1", type="REGION",
                           domain=domain.name, parent=msdzone)
 
-        district = make_loc(code="dis1", name="Test District 1", type="DISTRICT",
+        cls.district = make_loc(code="dis1", name="Test District 1", type="DISTRICT",
                             domain=domain.name, parent=region)
-        district2 = make_loc(code="d10101", name="Test District 2", type="DISTRICT",
-                             domain=domain.name, parent=region)
-        facility = make_loc(code="loc1", name="Test Facility 1", type="FACILITY",
-                            domain=domain.name, parent=district)
+        cls.district2 = make_loc(code="d10101", name="Test District 2", type="DISTRICT",
+                                 domain=domain.name, parent=region)
+        cls.district3 = make_loc(code="d10102", name="TESTDISTRICT", type="DISTRICT",
+                                 domain=domain.name, parent=region)
+        cls.facility = make_loc(code="loc1", name="Test Facility 1", type="FACILITY",
+                            domain=domain.name, parent=cls.district, metadata={'group': 'A'})
+        cls.facility_sp_id = cls.facility.sql_location.supply_point_id
         facility2 = make_loc(code="loc2", name="Test Facility 2", type="FACILITY",
-                             domain=domain.name, parent=district)
-        facility3 = make_loc(
-            code="d31049", name="Test Facility 3", type="FACILITY", domain=domain.name, parent=district
+                             domain=domain.name, parent=cls.district, metadata={'group': 'B'})
+        cls.facility3 = make_loc(
+            code="d31049", name="Test Facility 3", type="FACILITY", domain=domain.name, parent=cls.district,
+            metadata={'group': 'C'}
         )
-        cls.sms_backend = TestSMSBackend(name=TEST_BACKEND.upper(), is_global=True)
-        cls.sms_backend.save()
         cls.user1 = bootstrap_user(
-            facility, username='stella', domain=domain.name, home_loc='loc1', phone_number='5551234',
-            first_name='stella', last_name='Test'
+            cls.facility, username='stella', domain=domain.name, home_loc='loc1', phone_number='5551234',
+            first_name='stella', last_name='Test', language='sw'
         )
         bootstrap_user(facility2, username='bella', domain=domain.name, home_loc='loc2', phone_number='5555678',
-                       first_name='bella', last_name='Test')
-        bootstrap_user(district, username='trella', domain=domain.name, home_loc='dis1', phone_number='555',
-                       first_name='trella', last_name='Test')
-        bootstrap_user(district, username='msd_person', domain=domain.name, phone_number='111',
-                       first_name='MSD', last_name='Person', user_data={'role': 'MSD'})
+                       first_name='bella', last_name='Test', language='sw')
+        bootstrap_user(cls.district, username='trella', domain=domain.name, home_loc='dis1', phone_number='555',
+                       first_name='trella', last_name='Test', language='sw')
+        bootstrap_user(cls.district, username='msd_person', domain=domain.name, phone_number='111',
+                       first_name='MSD', last_name='Person', user_data={'role': 'MSD'}, language='sw')
 
         for x in xrange(1, 4):
             bootstrap_user(
-                facility3,
+                cls.facility3,
                 username='person{}'.format(x), domain=domain.name, phone_number=str(32346 + x),
-                first_name='Person {}'.format(x), last_name='Person {}'. format(x), home_loc='d31049'
+                first_name='Person {}'.format(x), last_name='Person {}'. format(x), home_loc='d31049',
+                language='sw'
             )
             bootstrap_user(
-                district2,
+                cls.district2,
                 username='dperson{}'.format(x), domain=domain.name, phone_number=str(32349 + x),
-                first_name='dPerson {}'.format(x), last_name='dPerson {}'. format(x), home_loc='d10101'
+                first_name='dPerson {}'.format(x), last_name='dPerson {}'. format(x), home_loc='d10101',
+                language='sw'
             )
 
         create_products(cls, domain.name, ["id", "dp", "fs", "md", "ff", "dx", "bp", "pc", "qi", "jd", "mc", "ip"])
@@ -86,6 +92,8 @@ class ILSTestScript(TestScript):
 
     @classmethod
     def tearDownClass(cls):
+        delete_domain_phone_numbers(TEST_DOMAIN)
+        cls.sms_backend_mapping.delete()
         cls.sms_backend.delete()
         CommCareUser.get_by_username('stella').delete()
         CommCareUser.get_by_username('bella').delete()
@@ -148,6 +156,15 @@ def prepare_domain(domain_name):
     subscription.save()
     ils_config = ILSGatewayConfig(enabled=True, domain=domain.name, all_stock_data=True)
     ils_config.save()
+    fields_definition = CustomDataFieldsDefinition.get_or_create(domain.name, 'LocationFields')
+    fields_definition.fields.append(CustomDataField(
+        slug='group',
+        label='Group',
+        is_required=False,
+        choices=['A', 'B', 'C'],
+        is_multiple_choice=False
+    ))
+    fields_definition.save()
     return domain
 
 

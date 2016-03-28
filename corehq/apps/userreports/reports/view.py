@@ -3,7 +3,7 @@ import os
 import tempfile
 from StringIO import StringIO
 from corehq.apps.domain.views import BaseDomainView
-from corehq.apps.style.decorators import use_bootstrap3, use_knockout_js, \
+from corehq.apps.style.decorators import use_bootstrap3, \
     use_select2, use_daterangepicker, use_jquery_ui, use_nvd3, use_datatables
 from dimagi.utils.modules import to_function
 from django.conf import settings
@@ -32,7 +32,6 @@ from corehq.apps.userreports.models import (
 from corehq.apps.userreports.reports.factory import ReportFactory
 from corehq.apps.userreports.reports.util import (
     get_expanded_columns,
-    get_total_row,
 )
 from corehq.apps.userreports.util import default_language, localize
 from corehq.util.couch import get_document_or_404, get_document_or_not_found, \
@@ -64,7 +63,6 @@ class ConfigurableReport(JSONResponseMixin, BaseDomainView):
         return super(ConfigurableReport, self).domain
 
     @use_bootstrap3
-    @use_knockout_js
     @use_select2
     @use_daterangepicker
     @use_jquery_ui
@@ -261,7 +259,12 @@ class ConfigurableReport(JSONResponseMixin, BaseDomainView):
                 data_source.set_order_by(
                     [(data_source.column_configs[int(sort_column)].column_id, sort_order.upper())]
                 )
+
+            datatables_params = DatatablesParams.from_request_dict(request.GET)
+            page = list(data_source.get_data(start=datatables_params.start, limit=datatables_params.count))
+
             total_records = data_source.get_total_records()
+            total_row = data_source.get_total_row() if data_source.has_total_row else None
         except UserReportsError as e:
             if settings.DEBUG:
                 raise
@@ -286,25 +289,14 @@ class ConfigurableReport(JSONResponseMixin, BaseDomainView):
                 'warning': msg
             })
 
-        # todo: this is ghetto pagination - still doing a lot of work in the database
-        datatables_params = DatatablesParams.from_request_dict(request.GET)
-        end = min(datatables_params.start + datatables_params.count, total_records)
-        data = list(data_source.get_data())
-        page = data[datatables_params.start:end]
-
         json_response = {
             'aaData': page,
             "sEcho": self.request_dict.get('sEcho', 0),
             "iTotalRecords": total_records,
             "iTotalDisplayRecords": total_records,
         }
-        if data_source.has_total_row:
-            json_response.update({
-                "total_row": get_total_row(
-                    data, data_source.aggregation_columns, data_source.column_configs,
-                    get_expanded_columns(data_source.column_configs, data_source.config)
-                ),
-            })
+        if total_row is not None:
+            json_response["total_row"] = total_row
         return self.render_json_response(json_response)
 
     def _get_initial(self, request, **kwargs):
@@ -365,13 +357,7 @@ class ConfigurableReport(JSONResponseMixin, BaseDomainView):
             column_ids.extend(column_id_to_expanded_column_ids.get(column.column_id, [column.column_id]))
 
         rows = [[raw_row[column_id] for column_id in column_ids] for raw_row in raw_rows]
-        total_rows = (
-            [get_total_row(
-                raw_rows, data.aggregation_columns, data.column_configs,
-                column_id_to_expanded_column_ids
-            )]
-            if data.has_total_row else []
-        )
+        total_rows = [data.get_total_row()] if data.has_total_row else []
         return [
             [
                 self.title,

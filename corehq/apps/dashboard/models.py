@@ -1,6 +1,7 @@
+from corehq.apps.export.views import ExportsPermissionsMixin
 from django.core.urlresolvers import reverse
-from corehq.apps.app_manager.models import Application
-from corehq.apps.reports.models import ReportConfig
+from corehq.apps.app_manager.dbaccessors import get_brief_apps_in_domain
+from corehq.apps.reports.models import ReportConfig, FormExportSchema, CaseExportSchema
 from dimagi.utils.decorators.memoized import memoized
 
 
@@ -34,7 +35,7 @@ class Tile(object):
         """Whether or not the tile is visible on the dashboard (permissions).
         :return: Boolean
         """
-        return self.tile_config.visibility_check(self.request)
+        return bool(self.tile_config.visibility_check(self.request))
 
     @property
     @memoized
@@ -317,13 +318,7 @@ class AppsPaginatedContext(BasePaginatedTileContextProcessor):
     @property
     @memoized
     def applications(self):
-        key = [self.request.domain]
-        return Application.get_db().view(
-            'app_manager/applications_brief',
-            reduce=False,
-            startkey=key,
-            endkey=key+[{}],
-        ).all()
+        return get_brief_apps_in_domain(self.request.domain)
 
     @property
     def paginated_items(self):
@@ -335,19 +330,55 @@ class AppsPaginatedContext(BasePaginatedTileContextProcessor):
             )
 
         def _get_view_app_url(app):
-            return reverse('view_app', args=[self.request.domain, app['id']])
+            return reverse('view_app', args=[self.request.domain, app.get_id])
 
         def _get_release_manager_url(app):
-            return reverse('release_manager', args=[self.request.domain, app['id']])
-
-        def _get_app_name(app):
-            return app['key'][1]
+            return reverse('release_manager', args=[self.request.domain, app.get_id])
 
         apps = self.applications[self.skip:self.skip + self.limit]
 
-        return [self._fmt_item(_get_app_name(a),
+        return [self._fmt_item(a.name,
                                _get_app_url(a),
                                None,  # description
                                None,  # full_name
                                _get_release_manager_url(a),
                                self.secondary_url_icon) for a in apps]
+
+
+class DataPaginatedContext(BasePaginatedTileContextProcessor, ExportsPermissionsMixin):
+    """Generates the Paginated context for the Data Tile."""
+    domain = None
+
+    def __init__(self, tile_config, request, in_data):
+        self.domain = request.domain
+        super(DataPaginatedContext, self).__init__(tile_config, request, in_data)
+
+    @property
+    def total(self):
+        return len(self.form_exports) + len(self.case_exports)
+
+    @property
+    @memoized
+    def form_exports(self):
+        exports = []
+        if self.has_edit_permissions:
+            exports = FormExportSchema.get_stale_exports(self.request.domain)
+        return exports
+
+    @property
+    @memoized
+    def case_exports(self):
+        exports = []
+        if self.has_edit_permissions:
+            exports = CaseExportSchema.get_stale_exports(self.domain)
+        return exports
+
+    @property
+    def paginated_items(self):
+        exports = (self.form_exports + self.case_exports)[self.skip:self.skip + self.limit]
+        for export in exports:
+            urlname = 'export_download_forms' if isinstance(export, FormExportSchema) else 'export_download_cases'
+            yield self._fmt_item(
+                export.name,
+                reverse(urlname, args=(self.request.domain, export.get_id))
+            )

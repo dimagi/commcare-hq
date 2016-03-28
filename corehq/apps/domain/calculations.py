@@ -4,6 +4,7 @@ from dateutil.relativedelta import relativedelta
 
 from django.template.loader import render_to_string
 from django.utils.translation import ugettext as _
+from corehq.apps.app_manager.dbaccessors import domain_has_apps
 from corehq.apps.hqcase.dbaccessors import get_number_of_cases_in_domain, \
     get_number_of_cases_per_domain
 from corehq.util.dates import iso_string_to_datetime
@@ -12,7 +13,6 @@ from corehq.apps.users.util import WEIRD_USER_IDS
 from corehq.apps.es.sms import SMSES
 from corehq.apps.es.forms import FormES
 from corehq.apps.hqadmin.reporting.reports import (
-    USER_COUNT_UPPER_BOUND,
     get_mobile_users,
 )
 from couchforms.analytics import get_number_of_forms_per_domain, \
@@ -48,28 +48,28 @@ def active_mobile_users(domain, *args):
 
     user_ids = get_mobile_users(domain)
 
-    form_users = {q['term'] for q in (
+    form_users = set(
         FormES()
         .domain(domain)
-        .user_facet(size=USER_COUNT_UPPER_BOUND)
+        .user_aggregation()
         .submitted(gte=then)
         .user_id(user_ids)
         .size(0)
         .run()
-        .facets.user.result
-    )}
+        .aggregations.user.keys
+    )
 
-    sms_users = {q['term'] for q in (
+    sms_users = set(
         SMSES()
         .incoming_messages()
-        .user_facet(size=USER_COUNT_UPPER_BOUND)
+        .user_aggregation()
         .to_commcare_user()
         .domain(domain)
         .received(gte=then)
         .size(0)
         .run()
-        .facets.user.result
-    )}
+        .aggregations.user.keys
+    )
 
     num_users = len(form_users | sms_users)
     return num_users if 'inactive' not in args else len(user_ids) - num_users
@@ -116,6 +116,26 @@ def inactive_cases_in_last(domain, days):
 
 def forms(domain, *args):
     return get_number_of_forms_in_domain(domain)
+
+
+def forms_in_last(domain, days):
+    """
+    Returns the number of forms submitted in the last given number of days
+    """
+    then = datetime.utcnow() - timedelta(days=int(days))
+    return FormES().domain(domain).submitted(gte=then).size(0).run().total
+
+
+def j2me_forms_in_last(domain, days):
+    """
+    Returns the number of forms submitted by j2me in the last given number of days
+    """
+    then = datetime.utcnow() - timedelta(days=int(days))
+    return FormES().domain(domain).j2me_submissions(gte=then).size(0).run().total
+
+
+def j2me_forms_in_last_bool(domain, days):
+    return j2me_forms_in_last(domain, days) > 0
 
 
 def _sms_helper(domain, direction=None, days=None):
@@ -178,12 +198,7 @@ def last_form_submission(domain, display=True):
 
 
 def has_app(domain, *args):
-    return bool(ApplicationBase.get_db().view(
-        'app_manager/applications_brief',
-        startkey=[domain],
-        endkey=[domain, {}],
-        limit=1
-    ).first())
+    return domain_has_apps(domain)
 
 
 def app_list(domain, *args):
@@ -206,7 +221,8 @@ CALC_ORDER = [
     'last_form_submission', 'has_app', 'web_users', 'active_apps',
     'uses_reminders', 'sms--I', 'sms--O', 'sms_in_last', 'sms_in_last--30',
     'sms_in_last_bool', 'sms_in_last_bool--30', 'sms_in_in_last--30',
-    'sms_out_in_last--30',
+    'sms_out_in_last--30', 'j2me_forms_in_last--30', 'j2me_forms_in_last--60',
+    'j2me_forms_in_last--90', 'j2me_forms_in_last_bool--90',
 ]
 
 CALCS = {
@@ -236,12 +252,17 @@ CALCS = {
     'web_users': "list of web users",
     'active_apps': "list of active apps",
     'uses_reminders': "uses reminders",
+    'j2me_forms_in_last--30': "# j2me forms in last 30 days",
+    'j2me_forms_in_last--60': "# j2me forms in last 60 days",
+    'j2me_forms_in_last--90': "# j2me forms in last 90 days",
+    'j2me_forms_in_last_bool--90': "j2me forms in last 90 days",
 }
 
 CALC_FNS = {
     'num_web_users': num_web_users,
     "num_mobile_users": num_mobile_users,
     "forms": forms,
+    "forms_in_last": forms_in_last,
     "sms": sms,
     "sms_in_last": sms_in_last,
     "sms_in_last_bool": sms_in_last_bool,
@@ -259,6 +280,8 @@ CALC_FNS = {
     "web_users": not_implemented,
     "active_apps": app_list,
     'uses_reminders': uses_reminders,
+    'j2me_forms_in_last': j2me_forms_in_last,
+    'j2me_forms_in_last_bool': j2me_forms_in_last_bool
 }
 
 
@@ -291,14 +314,6 @@ def _all_domain_stats():
             "commcare_users": commcare_counts,
             "forms": form_counts,
             "cases": case_counts}
-
-ES_CALCED_PROPS = ["cp_n_web_users", "cp_n_active_cc_users", "cp_n_cc_users",
-                   "cp_n_active_cases", "cp_n_cases", "cp_n_forms",
-                   "cp_first_form", "cp_last_form", "cp_is_active",
-                   'cp_has_app', "cp_n_in_sms", "cp_n_out_sms", "cp_n_sms_ever",
-                   "cp_n_sms_30_d", "cp_sms_ever", "cp_sms_30_d", "cp_n_sms_in_30_d",
-                   "cp_n_sms_out_30_d"]
-
 
 def total_distinct_users(domains=None):
     """

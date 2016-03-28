@@ -1,6 +1,6 @@
-
-var CareplanConfig = (function () {
+hqDefine('app_manager/js/careplan-config-ui.js', function () {
     'use strict';
+    var caseConfigUtils = hqImport('app_manager/js/case-config-utils.js');
     var PropertyBase = {
         mapping: {
             include: ['key', 'path']
@@ -216,11 +216,11 @@ var CareplanConfig = (function () {
                         return p.indexOf('/') === -1;
                     });
                 }
-                properties.save = CC_UTILS.filteredSuggestedProperties(
+                properties.save = caseConfigUtils.filteredSuggestedProperties(
                     properties.save,
                     self.case_properties()
                 );
-                properties.preload = CC_UTILS.filteredSuggestedProperties(
+                properties.preload = caseConfigUtils.filteredSuggestedProperties(
                     properties.preload,
                     self.case_preload()
                 );
@@ -360,7 +360,7 @@ var CareplanConfig = (function () {
         };
 
         self.getQuestions = function (filter, excludeHidden, includeRepeat) {
-            return CC_UTILS.getQuestions(self.questions, filter, excludeHidden, includeRepeat);
+            return caseConfigUtils.getQuestions(self.questions, filter, excludeHidden, includeRepeat);
         };
 
         self.saveButton = COMMCAREHQ.SaveButton.init({
@@ -375,7 +375,8 @@ var CareplanConfig = (function () {
                     },
                     dataType: 'json',
                     success: function (data) {
-                        COMMCAREHQ.app_manager.updateDOM(data.update);
+                        var app_manager = hqImport('app_manager/js/app_manager.js');
+                        app_manager.updateDOM(data.update);
                     }
                 });
             }
@@ -416,4 +417,4 @@ var CareplanConfig = (function () {
     return {
         Careplan: Careplan
     };
-}());
+});

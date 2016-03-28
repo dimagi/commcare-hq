@@ -1,10 +1,19 @@
 {% load hq_shared_tags %}
 
 {% include "app_manager/partials/nav_menu_media_js_common.html" %}
-{% include "app_manager/partials/nav_menu_media_js.html" with item=multimedia.menu %}
 
 <script>
-    $(function() {
+    $(function () {
+        var initNavMenuMedia = hqImport('app_manager/js/app_manager_media.js').initNavMenuMedia;
+        var select2Separator = hqImport('app_manager/js/report-module.js').select2Separator;
+        var ReportModule = hqImport('app_manager/js/report-module.js').ReportModule;
+        var navMenuMedia = initNavMenuMedia(
+                "",
+                {{ multimedia.menu.menu_refs.image|JSON }},
+                {{ multimedia.menu.menu_refs.audio|JSON }},
+                {{ multimedia.object_map|JSON }},
+                {{ multimedia.menu.default_file_name|JSON }}
+        );
         var saveURL = "{% url "corehq.apps.app_manager.views.edit_report_module" domain app.id module.id %}";
         var reportModule = new ReportModule({
             moduleName: {{ module.name|JSON }},
@@ -13,8 +22,8 @@
             currentReports: {{ current_reports|JSON }}, // config data for app reports
             saveURL: saveURL,
             lang: {{ lang|JSON }},
-            menuImage: menuImage,
-            menuAudio: menuAudio,
+            menuImage: navMenuMedia.menuImage,
+            menuAudio: navMenuMedia.menuAudio,
             containerId: "#settings"
         });
         _([
@@ -29,16 +38,17 @@
                 $element.koApplyBindings(reportModule);
             }
         });
-        menuImage.ref.subscribe(function() {
+        navMenuMedia.menuImage.ref.subscribe(function() {
             reportModule.changeSaveButton();
         });
-        menuAudio.ref.subscribe(function() {
+        navMenuMedia.menuAudio.ref.subscribe(function() {
             reportModule.changeSaveButton();
         });
 
         var select2s = $('.choice_filter');
         for(var i = 0; i < select2s.length; i++) {
             var element = select2s.eq(i);
+
             var separator = select2Separator;
             var initialValues = element.val() !== "" ? element.val().split(separator) : [];
             element.select2({

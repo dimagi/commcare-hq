@@ -1,6 +1,5 @@
 from datetime import timedelta
 from corehq.apps.change_feed import topics
-from corehq.apps.change_feed.consumer.feed import KafkaChangeFeed
 from corehq.fluff.calculators.xform import IntegerPropertyReference, FormPropertyFilter
 from couchforms.models import XFormInstance
 import fluff
@@ -49,6 +48,7 @@ def _and_alias(calculators):
 
 class MalariaConsortiumFluff(fluff.IndicatorDocument):
     document_class = XFormInstance
+    kafka_topic = topics.FORM
 
     domains = ('mc-inscale',)
     group_by = ('domain', fluff.AttributeGetter('user_id', get_user_id))
@@ -628,10 +628,3 @@ class MalariaConsortiumFluff(fluff.IndicatorDocument):
 
 
 MalariaConsortiumFluffPillow = MalariaConsortiumFluff.pillow()
-
-
-def get_pillow():
-    return MalariaConsortiumFluffPillow(
-        change_feed=KafkaChangeFeed(topic=topics.FORM, group_id='mc-fluff'),
-        preload_docs=False,
-    )

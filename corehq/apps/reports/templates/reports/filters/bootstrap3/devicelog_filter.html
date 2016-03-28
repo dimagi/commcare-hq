@@ -12,7 +12,10 @@
             });
         </script>
     {% endif %}
-    <select multiple="multiple" name="{{ slug }}" id="{{ css_id }}">
+    <select multiple="multiple"
+            name="{{ slug }}"
+            id="{{ css_id }}"
+            class="form-control">
         {% for f in filters %}
             <option{% if f.show %} selected="selected"{% endif %}>{{ f.name }}</option>
         {% endfor %}

@@ -309,7 +309,8 @@ def _create_intermediate_tables(docs, schema):
         id = []
         for k in path:
             if isinstance(k, basestring):
-                column.append(k)
+                if k:
+                    column.append(k)
             else:
                 table.extend(column)
                 table.append(INT)

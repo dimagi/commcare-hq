@@ -16,11 +16,11 @@ from corehq.apps.reports.util import format_datatables_data
 from corehq.const import SERVER_DATETIME_FORMAT
 from corehq.form_processor.interfaces.processor import FormProcessorInterface
 from corehq.util.timezones.conversions import ServerTime, UserTime
-from custom.fri.models import FRISMSLog, PROFILE_DESC
+from custom.fri.models import PROFILE_DESC
 from custom.fri.reports.filters import (InteractiveParticipantFilter,
     RiskProfileFilter, SurveyDateSelector)
 from custom.fri.api import get_message_bank, add_metadata, get_date
-from corehq.apps.sms.models import INCOMING, OUTGOING
+from corehq.apps.sms.models import INCOMING, OUTGOING, SMS
 from dimagi.utils.parsing import json_format_datetime
 from casexml.apps.case.models import CommCareCase
 from corehq.apps.users.models import CouchUser, UserCache
@@ -114,12 +114,12 @@ class MessageBankReport(FRIReport):
         return result
 
     def get_participant_messages(self, case):
-        result = FRISMSLog.view("sms/by_recipient",
-                                startkey=["CommCareCase", case._id, "SMSLog", OUTGOING],
-                                endkey=["CommCareCase", case._id, "SMSLog", OUTGOING, {}],
-                                reduce=False,
-                                include_docs=True).all()
-        return result
+        return SMS.by_recipient(
+            'CommCareCase',
+            case.get_id
+        ).filter(
+            direction=OUTGOING
+        )
 
     def get_participant_message_counts(self, message_bank_messages, case):
         result = {}
@@ -210,13 +210,20 @@ class MessageReport(FRIReport, DatespanMixin):
 
     @property
     def rows(self):
-        startdate = json_format_datetime(self.datespan.startdate_utc)
-        enddate = json_format_datetime(self.datespan.enddate_utc)
-        data = FRISMSLog.view("sms/by_domain",
-                              startkey=[self.domain, "SMSLog", startdate],
-                              endkey=[self.domain, "SMSLog", enddate],
-                              include_docs=True,
-                              reduce=False).all()
+        data = SMS.by_domain(
+            self.domain,
+            start_date=self.datespan.startdate_utc,
+            end_date=self.datespan.enddate_utc
+        ).exclude(
+            direction=OUTGOING,
+            processed=False
+        ).order_by('date')
+
+        if self.show_only_survey_traffic():
+            data = data.filter(
+                xforms_session_couch_id__isnull=False
+            )
+
         result = []
         direction_map = {
             INCOMING: _("Incoming"),
@@ -229,13 +236,7 @@ class MessageReport(FRIReport, DatespanMixin):
         )
         user_cache = UserCache()
 
-        show_only_survey_traffic = self.show_only_survey_traffic()
-
         for message in data:
-            if message.direction == OUTGOING and not message.processed:
-                continue
-            if show_only_survey_traffic and message.xforms_session_couch_id is None:
-                continue
             # Add metadata from the message bank if it has not been added already
             if (message.direction == OUTGOING) and (not message.fri_message_bank_lookup_completed):
                 add_metadata(message, message_bank_messages)
@@ -417,28 +418,27 @@ class SurveyResponsesReport(FRIReport):
         timestamp_start = datetime.combine(dt, time(20, 45))
         timestamp_start = UserTime(
             timestamp_start, self.timezone).server_time().done()
-        timestamp_start = json_format_datetime(timestamp_start)
 
         timestamp_end = datetime.combine(dt + timedelta(days=1), time(11, 45))
         timestamp_end = UserTime(
             timestamp_end, self.timezone).server_time().done()
         if timestamp_end > datetime.utcnow():
             return RESPONSE_NOT_APPLICABLE
-        timestamp_end = json_format_datetime(timestamp_end)
 
-        all_inbound = FRISMSLog.view(
-            "sms/by_recipient",
-            startkey=["CommCareCase", case._id, "SMSLog", INCOMING, timestamp_start],
-            endkey=["CommCareCase", case._id, "SMSLog", INCOMING, timestamp_end],
-            reduce=False,
-            include_docs=True
-        ).all()
+        survey_responses = SMS.by_recipient(
+            'CommCareCase',
+            case.get_id
+        ).filter(
+            direction=INCOMING,
+            xforms_session_couch_id__isnull=False,
+            date__gte=timestamp_start,
+            date__lte=timestamp_end
+        ).order_by('date')[:1]
 
-        survey_responses = filter(lambda s: s.xforms_session_couch_id is not None, all_inbound)
-        if len(survey_responses) > 0:
+        if survey_responses:
             return survey_responses[0]
-        else:
-            return NO_RESPONSE
+
+        return NO_RESPONSE
 
     def _fmt(self, val):
         return format_datatables_data(val, val)

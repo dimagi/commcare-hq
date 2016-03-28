@@ -1,3 +1,4 @@
+from decimal import Decimal
 from dimagi.ext.jsonobject import JsonObject, StringProperty
 from corehq.apps.userreports.specs import TypeProperty
 from corehq.apps.userreports.transforms.custom.date import get_month_display, days_elapsed_from_date
@@ -53,7 +54,24 @@ class DateFormatTransform(Transform):
         def transform_function(value):
             try:
                 return value.strftime(self.format)
-            except:
+            except Exception:
+                return value
+
+        return transform_function
+
+
+class NumberFormatTransform(Transform):
+    type = TypeProperty('number_format')
+    format_string = StringProperty(required=True)
+
+    def get_transform_function(self):
+
+        def transform_function(value):
+            try:
+                if isinstance(value, basestring):
+                    value = Decimal(value)
+                return self.format_string.format(value)
+            except Exception:
                 return value
 
         return transform_function

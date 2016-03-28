@@ -26,11 +26,18 @@ class PillowtopSettingsTest(TestCase, TestFileMixin):
 
     def test_instantiate_all(self):
         all_pillow_configs = list(get_all_pillow_configs())
-        expected_meta = self.get_json('all-pillow-meta')
+        expected_meta = self.get_expected_meta()
 
         self.assertEqual(len(all_pillow_configs), len(expected_meta))
         for pillow_config in all_pillow_configs:
             self.assertEqual(expected_meta[pillow_config.name], _pillow_meta_from_config(pillow_config))
+
+    def get_expected_meta(self):
+        expected_meta = self.get_json('all-pillow-meta')
+        for pillow, meta in expected_meta.items():
+            if 'couchdb_uri' in meta:
+                meta['couchdb_uri'] = meta['couchdb_uri'].format(COUCH_SERVER_ROOT=settings.COUCH_SERVER_ROOT)
+        return expected_meta
 
     def _rewrite_file(self, pillow_configs):
         # utility that should only be called manually
@@ -44,14 +51,14 @@ class PillowtopSettingsTest(TestCase, TestFileMixin):
 def _pillow_meta_from_config(pillow_config):
     pillow_class = pillow_config.get_class()
     is_elastic = issubclass(pillow_class, AliasedElasticPillow)
-    if pillow_config.instance_generator == pillow_config.class_name:
+    if pillow_config.instance_generator is None:
         kwargs = {'online': False} if is_elastic else {}
         pillow_instance = pillow_class(**kwargs)
     else:
         # if we have a custom instance generator just use it
         pillow_instance = pillow_config.get_instance()
     props = {
-        'name': pillow_config.name,
+        'name': pillow_instance.pillow_id,
         'advertised_name': pillow_instance.get_name(),
         'full_class_name': pillow_config.class_name,
         'checkpoint_id': pillow_instance.checkpoint.checkpoint_id,

@@ -1,3 +1,4 @@
+from collections import namedtuple
 from copy import copy
 from datetime import datetime
 from elasticsearch import TransportError
@@ -22,6 +23,9 @@ INDEX_STANDARD_SETTINGS = {
         "number_of_replicas": "0"
     }
 }
+
+
+ElasticsearchIndexMeta = namedtuple('ElasticsearchIndexMeta', ['index', 'type'])
 
 
 def update_settings(es, index, settings_dict):
@@ -83,7 +87,7 @@ def initialize_mapping_if_necessary(pillow):
         pillow_logging.info("Initializing elasticsearch mapping for [%s]" % pillow.es_type)
         mapping = copy(pillow.default_mapping)
         mapping['_meta']['created'] = datetime.isoformat(datetime.utcnow())
-        mapping_res = es.indices.put_mapping(pillow.es_index, pillow.es_type, {pillow.es_type: mapping})
+        mapping_res = es.indices.put_mapping(pillow.es_type, {pillow.es_type: mapping}, index=pillow.es_index)
         if mapping_res.get('ok', False) and mapping_res.get('acknowledged', False):
             # API confirms OK, trust it.
             pillow_logging.info("Mapping set: [%s] %s" % (pillow.es_type, mapping_res))
@@ -98,10 +102,22 @@ def assume_alias_for_pillow(pillow):
     This operation removes the alias from any other indices it might be assigned to
     """
     es_new = pillow.get_es_new()
-    if es_new.indices.exists_alias(pillow.es_alias):
+    if es_new.indices.exists_alias(None, pillow.es_alias):
         # this part removes the conflicting aliases
         alias_indices = es_new.indices.get_alias(pillow.es_alias).keys()
         for aliased_index in alias_indices:
             es_new.indices.delete_alias(aliased_index, pillow.es_alias)
 
     es_new.indices.put_alias(pillow.es_index, pillow.es_alias)
+
+
+def doc_exists(pillow, doc_id_or_dict):
+    """
+    Check if a document exists, by ID or the whole document.
+    """
+    if isinstance(doc_id_or_dict, basestring):
+        doc_id = doc_id_or_dict
+    else:
+        assert isinstance(doc_id_or_dict, dict)
+        doc_id = doc_id_or_dict['_id']
+    return pillow.get_es_new().exists(pillow.es_index, pillow.es_type, doc_id)

@@ -23,12 +23,12 @@ def transform_loadtest_update(update, factor):
     case IDs and names mapped to have the factor appended.
     """
     def _map_id(id, count):
-        return '{}-{}'.format(id, count)
+        return u'{}-{}'.format(id, count)
     case = CommCareCase.wrap(deepcopy(update.case._doc))
     case._id = _map_id(case._id, factor)
     for index in case.indices:
         index.referenced_id = _map_id(index.referenced_id, factor)
-    case.name = '{} ({})'.format(case.name, factor)
+    case.name = u'{} ({})'.format(case.name, factor)
     return CaseSyncUpdate(case, update.sync_token, required_updates=update.required_updates)
 
 

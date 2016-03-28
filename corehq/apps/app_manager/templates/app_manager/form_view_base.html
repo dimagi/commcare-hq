@@ -1,114 +1,54 @@
 {% extends "app_manager/managed_app.html" %}
 {% load xforms_extras %}
 {% load hq_shared_tags %}
+{% load compress %}
 {% load i18n %}
 
 {% block title %}{{ form.name|clean_trans:langs }}{% endblock %}
 
-{% block head %}
-    {{ block.super }}
-    <link href="{% static 'hqwebapp/js/lib/select2/select2.css' %}" rel="stylesheet"/>
-    <link rel="stylesheet" href="{% static 'syntaxhighlighter/styles/shCoreDefault.css' %}"/>
-    <script src="{% static 'syntaxhighlighter/scripts/shCore.js' %}"></script>
-    <script src="{% static 'syntaxhighlighter/scripts/shBrushXml.js' %}"></script>
-    <style>
-        .casexml ul {
-            margin-left: 15px;
-        }
-        input[type="radio"]{
-            margin: 3px 5px 5px 0px;
-        }
-        #xform-links ul {
-            display: block;
-        }
-        #xform-links li {
-            display: inline-block;
-            border-left: 1px solid #DDD;
-            padding: 0 5px;
-        }
-        #xform-links li:first-child {
-            border-left: none;
-            padding-left: 0;
-        }
-        #xform-links a {
-            display: inline-block;
-            border: 1px solid transparent;
-            padding: 5px 10px;
-            vertical-align: middle;
-
-            border-radius: 15px;
-            -moz-border-radius: 15px;
-        }
-        #xform-links a:hover {
-            border: 1px solid #BBB;
-            background: #EEE;
-            text-decoration: none;
-        }
-        #xform-links a:active {
-            border: 1px solid #BBB;
-            background: #DDD;
-            text-decoration: none;
-        }
-        #xform-links a.disabled {
-            pointer-events: none;
-            cursor: default;
-            color: #888;
-        }
-        .bigdrop {
-            width: 600px !important;
-        }
-        .nested-fieldset{
-            margin-left: 50px;
-        }
-        .nested-fieldset .controls{
-            margin-left: 50px;
-        }
-        .nested-fieldset legend{
-            font-size: 1rem;
-        }
-    </style>
-    {% if app.application_version == '2.0' %}
-    <style>
-        #open-referral-action,
-        #update-referral-action,
-        #close-referral-action,
-        #referral-preload-action {
-            display: none;
-        }
-        .indent {
-            margin-left: 15px;
-        }
-    </style>
-    {% endif %}
+{% block stylesheets %}{{ block.super }}
+    <link rel="stylesheet" href="{% new_static 'syntaxhighlighter/styles/shCoreDefault.css' %}"/>
 {% endblock %}
 
 {% block js %}{{ block.super }}
-    <script src="{% static 'select2-3.4.5-legacy/select2.min.js' %}"></script>
-    <script src="{% static 'style/lib/knockout_plugins/knockout_mapping.ko.min.js' %}"></script>
-    <script src="{% static 'style/ko/knockout_bindings.ko.js' %}"></script>
-    <script src="{% static 'style/ko/knockout_subscribables.ko.js' %}"></script>
-    <script src="{% static 'jquery.caret/dist/jquery.caret-1.5.2.min.js' %}"></script>
-
-    {% if app.application_version == '2.0' %}
-        <script src="{% static 'app_manager/js/case-knockout-bindings.js' %}"></script>
-        <script src="{% static 'app_manager/js/case-config-utils.js' %}"></script>
-        {% block js_extra %}
-            <script src="{% static 'app_manager/js/case-config-ui-2.js' %}"></script>
-        {% endblock %}
-    {% else %}
-        <script src="{% static 'app_manager/js/ejs.min.js' %}"></script>
-        <script src="{% static 'app_manager/js/case-config-ui-1.js' %}"></script>
-    {% endif %}
+    {% compress js %}
+    <script src="{% new_static 'syntaxhighlighter/scripts/XRegExp.js' %}"></script>
+    <script src="{% new_static 'syntaxhighlighter/scripts/shCore.js' %}"></script>
+    <script src="{% new_static 'syntaxhighlighter/scripts/shBrushXml.js' %}"></script>
+    {% endcompress %}
+    <script src="{% new_static 'style/ko/knockout_subscribables.ko.js' %}"></script>
+    <script src="{% new_static 'jquery.caret/dist/jquery.caret-1.5.2.min.js' %}"></script>
 {% endblock %}
 
 {% block js-inline %}{{ block.super }}
-    {% include "style/bootstrap2/ko/value-or-none-ui.html" %}
-    {% if not is_user_registration %}
-        {% include "app_manager/partials/nav_menu_media_js_common.html" %}
-        {% include "app_manager/partials/nav_menu_media_js.html" with item=multimedia.menu %}
+    {% if app.application_version == '2.0' %}
+        <script src="{% new_static 'app_manager/js/case-knockout-bindings.js' %}"></script>
+        <script src="{% new_static 'app_manager/js/case-config-utils.js' %}"></script>
+        {% block js_extra %}
+            <script src="{% new_static 'app_manager/js/case-config-ui-2.js' %}"></script>
+        {% endblock %}
+        <style>
+            #open-referral-action,
+            #update-referral-action,
+            #close-referral-action,
+            #referral-preload-action {
+                display: none;
+            }
+            .indent {
+                margin-left: 15px;
+            }
+        </style>
+    {% else %}
+        <script src="{% new_static 'app_manager/js/ejs.min.js' %}"></script>
+        <script src="{% new_static 'app_manager/js/case-config-ui-1.js' %}"></script>
     {% endif %}
+
+    {% include "app_manager/partials/form_filter/value-or-none-ui.html" %}
+    {% include "app_manager/partials/xpathValidator.html" %}
+    {% include "app_manager/partials/nav_menu_media_js_common.html" %}
+    {% include "app_manager/partials/nav_menu_media_js.html" with item=multimedia.menu %}
     {% if allow_form_workflow %}
-        <script src="{% static 'app_manager/js/form_workflow.js' %}"></script>
+        <script src="{% new_static 'app_manager/js/form_workflow.js' %}"></script>
     {% endif %}
     <script>
         $(function(){
@@ -150,143 +90,136 @@
                 });
             }());
 
-        {% if not is_user_registration %}
-            {% block case_management_js %}
-                /* form_requires needs to be a knockout observable so that
-                its value can be read by another UI (form filtering) */
-                var form_requires = ko.observable({{ form.requires|JSON }});
-            {% endblock %}
+        {% block case_management_js %}
+            /* form_requires needs to be a knockout observable so that
+            its value can be read by another UI (form filtering) */
+            var form_requires = ko.observable({{ form.requires|JSON }});
+        {% endblock %}
 
-            {% if app.application_version == '2.0' %}
-                {% if allow_form_filtering %}
-                var putInRoot = {{ module.put_in_root|BOOL }};
-                var isUserCaseInUse = {{ is_usercase_in_use|BOOL }};
-                var formFilter = {{ form.form_filter|JSON }};
-                var allOtherFormsRequireACase = {{ form.all_other_forms_require_a_case|BOOL }};
-                var formFilterAllowed = ko.computed(function () {
-                    return ((allOtherFormsRequireACase &&
-                             form_requires() === 'case') ||
-                            isUserCaseInUse) && !putInRoot;
-                });
-                $('#form-filter').koApplyBindings({
-                        formFilter: ko.observable(formFilter),
-                        formFilterAllowed: formFilterAllowed,
-                });
-                {% endif %}
-
-                {% if allow_form_workflow %}
-                    var labels = {};
-                    labels[FormWorkflow.Values.DEFAULT] = "{% trans "Home Screen" %}";
-                    labels[FormWorkflow.Values.ROOT] = "{% trans "Module Menu" %}";
-                    labels[FormWorkflow.Values.MODULE] = "{% trans "Module:" %} {{ module.name|trans:langs }}";
-                    {% if module.root_module_id %}
-                    labels[FormWorkflow.Values.PARENT_MODULE] = "{% trans "Parent Module:" %} {{ module.root_module.name|trans:langs }}";
-                    {% endif %}
-                    labels[FormWorkflow.Values.PREVIOUS_SCREEN] = "{% trans "Previous Screen" %}";
-
-                    var options = {
-                        labels: labels,
-                        workflow: '{{ form.post_form_workflow }}',
-                    };
-
-                    {% if request|toggle_enabled:"FORM_LINK_WORKFLOW"%}
-                    labels[FormWorkflow.Values.FORM] = "{% trans "Link to other form" %}";
-                    options.forms = {{ linkable_forms|JSON}}
-                    options.formLinks = {{ form.form_links|JSON }}
-                    options.formDatumsUrl = '{% url 'get_form_datums' domain app.id %}'
-                    {% endif %}
-
-                    $('#form-workflow').koApplyBindings(new FormWorkflow(options))
-                {% endif %}
-
-                $('#auto-gps-capture').koApplyBindings({
-                    auto_gps_capture: ko.observable({{ form.auto_gps_capture|JSON }})
-                });
-                {% if request|toggle_enabled:'NO_VELLUM' %}
-                $('#no-vellum').koApplyBindings({
-                    no_vellum: ko.observable({{ form.no_vellum|JSON }})
-                });
-                {% endif %}
-
-                gaTrackLink($('.breadcrumb .view-form'), 'App Builder', 'View Form', 'Breadcrumb');
-
+        {% if app.application_version == '2.0' %}
+            {% if allow_form_filtering %}
+            var putInRoot = {{ module.put_in_root|BOOL }};
+            var isUserCaseInUse = {{ is_usercase_in_use|BOOL }};
+            var isModuleFilterEnabled = {{ is_module_filter_enabled|BOOL }};
+            var formFilter = {{ form.form_filter|JSON }};
+            var allOtherFormsRequireACase = {{ form.all_other_forms_require_a_case|BOOL }};
+            var formFilterAllowed = ko.computed(function () {
+                return ((allOtherFormsRequireACase && form_requires() === 'case' && !putInRoot) ||
+                        isUserCaseInUse || isModuleFilterEnabled);
+            });
+            $('#form-filter').koApplyBindings({
+                    formFilter: ko.observable(formFilter),
+                    formFilterAllowed: formFilterAllowed,
+            });
             {% endif %}
 
-            {% if allow_cloudcare %}
-                // tag the 'preview in cloudcare' button with the right url
-                // unfortunately, has to be done in javascript
-                var getCloudCareUrl = function(urlRoot, appId, moduleId, formId, caseId) {
-                    var url = urlRoot;
-                    if (appId !== undefined) {
-                        url = url + "view/" + appId;
-                        if (moduleId !== undefined) {
-                            url = url + "/" + moduleId;
-                            if (formId !== undefined) {
-                                url = url + "/" + formId;
-                                if (caseId !== undefined) {
-                                    url = url + "/" + caseId;
-                                }
+            {% if allow_form_workflow %}
+                var FormWorkflow = hqImport('app_manager/js/form_workflow.js').FormWorkflow;
+                var labels = {};
+                labels[FormWorkflow.Values.DEFAULT] = "{% trans "Home Screen" %}";
+                labels[FormWorkflow.Values.ROOT] = "{% trans "Module Menu" %}";
+                labels[FormWorkflow.Values.MODULE] = "{% trans "Module:" %} {{ module.name|trans:langs }}";
+                {% if module.root_module_id %}
+                labels[FormWorkflow.Values.PARENT_MODULE] = "{% trans "Parent Module:" %} {{ module.root_module.name|trans:langs }}";
+                {% endif %}
+                labels[FormWorkflow.Values.PREVIOUS_SCREEN] = "{% trans "Previous Screen" %}";
+
+                var options = {
+                    labels: labels,
+                    workflow: '{{ form.post_form_workflow }}',
+                };
+
+                {% if request|toggle_enabled:"FORM_LINK_WORKFLOW"%}
+                labels[FormWorkflow.Values.FORM] = "{% trans "Link to other form" %}";
+                options.forms = {{ linkable_forms|JSON}}
+                options.formLinks = {{ form.form_links|JSON }}
+                options.formDatumsUrl = '{% url 'get_form_datums' domain app.id %}'
+                {% endif %}
+
+                $('#form-workflow').koApplyBindings(new FormWorkflow(options))
+            {% endif %}
+
+            $('#auto-gps-capture').koApplyBindings({
+                auto_gps_capture: ko.observable({{ form.auto_gps_capture|JSON }})
+            });
+            {% if request|toggle_enabled:'NO_VELLUM' %}
+            $('#no-vellum').koApplyBindings({
+                no_vellum: ko.observable({{ form.no_vellum|JSON }})
+            });
+            {% endif %}
+
+            gaTrackLink($('.breadcrumb .view-form'), 'App Builder', 'View Form', 'Breadcrumb');
+
+        {% endif %}
+
+        {% if allow_cloudcare %}
+            // tag the 'preview in cloudcare' button with the right url
+            // unfortunately, has to be done in javascript
+            var getCloudCareUrl = function(urlRoot, appId, moduleId, formId, caseId) {
+                var url = urlRoot;
+                if (appId !== undefined) {
+                    url = url + "view/" + appId;
+                    if (moduleId !== undefined) {
+                        url = url + "/" + moduleId;
+                        if (formId !== undefined) {
+                            url = url + "/" + formId;
+                            if (caseId !== undefined) {
+                                url = url + "/" + caseId;
                             }
                         }
                     }
-                    return url;
-                };
-                var cloudCareUrl = getCloudCareUrl("{% url "cloudcare_main" domain '' %}", "{{ app.id }}", "{{ module.id }}", "{{ nav_form.id }}") + "?preview=true";
-                $("#cloudcare-preview-url").attr("href", cloudCareUrl);
-                $('#cloudcare-preview-url').click(function(e) {
-                    ga_track_event('CloudCare', 'Click "Preview Form"');
-                    analytics.workflow("Clicked Preview Form");
-                });
-            {% endif %}
+                }
+                return url;
+            };
+            var cloudCareUrl = getCloudCareUrl("{% url "cloudcare_main" domain '' %}", "{{ app.id }}", "{{ module.id }}", "{{ nav_form.id }}") + "?preview=true";
+            $("#cloudcare-preview-url").attr("href", cloudCareUrl);
+            $('#cloudcare-preview-url').click(function(e) {
+                ga_track_event('CloudCare', 'Click "Preview Form"');
+                analytics.workflow("Clicked Preview Form");
+            });
         {% endif %}
         });
     </script>
     <script>
         $(function () {
-            COMMCAREHQ.app_manager.setupValidation(
-                '{% url "validate_form_for_build" domain app.id form.unique_id %}');
+            var setupValidation = hqImport('app_manager/js/app_manager.js').setupValidation;
+            setupValidation('{% url "validate_form_for_build" domain app.id form.unique_id %}');
         });
     </script>
 {% endblock %}
 
 {% block form-view %}
     <div id="build_errors"></div>
-    <div id="form_short_comment" class="app-comment">{{ form.short_comment }}</div>
-    {% if not is_user_registration %}
-        <div class="delete-me">
-            <form action="{% url "delete_form" domain app.id module.unique_id form.unique_id %}" method="post">
-                {% csrf_token %}
-                <button type="submit" class="disable-on-submit btn btn-danger">
-                    <i class="icon-trash"></i>
-                    {% trans "Delete Form" %}
-                </button>
-            </form>
-        </div>
+    {% if form.short_comment %}
+        <div id="form_short_comment" class="app-comment well">{{ form.short_comment }}</div>
     {% endif %}
+    <div class="pull-right">
+        <form action="{% url "delete_form" domain app.id module.unique_id form.unique_id %}" method="post">
+            {% csrf_token %}
+            <button type="submit" class="disable-on-submit btn btn-danger">
+                <i class="fa fa-trash"></i>
+                {% trans "Delete Form" %}
+            </button>
+        </form>
+    </div>
 
     <div class="btn-group">
         {% if not form.no_vellum %}
-        <a id="edit_label" href="{% if is_user_registration %}
-                                    {% url "user_registration_source" domain app.id %}
-                                 {% else %}
-                                    {% url "form_source" domain app.id module.id form.id %}
-                                 {% endif %}
-                                 "
-                                 class="btn btn-primary">
-            <i class="icon-pencil"></i>
+        <a id="edit_label" href="{% url "form_source" domain app.id module.id form.id %}" class="btn btn-primary">
+            <i class="fa fa-pencil"></i>
             {% trans "Edit" %}
         </a>
         {% else %}
         <button class="btn btn-primary disabled" disabled="disabled"
                 title="{% trans "Your administrator has locked this form from edits through the form builder"|force_escape %}">
-            <i class="icon-pencil"></i>
+            <i class="fa fa-pencil"></i>
             {% trans "Edit" %}
         </button>
         {% endif %}
         {% if allow_cloudcare %}
-            {% if form.source and not is_user_registration %}
-            <a id="cloudcare-preview-url" href="#" target="_blank" class="btn">
-                <i class="icon-play"></i>
+            {% if form.source %}
+            <a id="cloudcare-preview-url" href="#" target="_blank" class="btn btn-default">
+                <i class="fa fa-play"></i>
                 {% trans "Preview Form" %}
             </a>
             {% endif %}
@@ -294,11 +227,6 @@
     </div>
 
     <br/><br/><br/>
-
-    {% if is_user_registration %}
-    <h4>{% trans "User Registration Properties" %}</h4>
-    <div id="user_reg_home" class="config"></div>
-    {% else %}
 
     <div class="tabbable">
         <ul class="nav nav-tabs">
@@ -328,6 +256,7 @@
                 <a href="#advanced" data-toggle="tab">{% trans "Advanced" %}</a>
             </li>
         </ul>
+        <br>
         <div class="tab-content">
             {% if nav_form %}
                 {% include "app_manager/partials/form_tab_settings.html" %}
@@ -339,30 +268,17 @@
                         {% trans "There are errors in your form. Fix your form in order to view and edit Case Management." %}
                     </p>
                 {% elif form.source %}
-                    {% if app.application_version == '1.0' %}
-                        <header class="clearfix">
-                            <h4 class="pull-left">{% trans "Cases and Referrals" %}</h4>
-                            <span class="hq-help-template"
-                                  data-title="{% trans "Cases and Referrals" %}"
-                                  data-content="{% trans "Cases give you a way to track patients, farms, etc. over time.  You can choose to save data from a form to the case, which will store the data locally on the phone to use later." %}"
-                            ></span>
-                        </header>
-                        <div class="casexml" id="casexml_home">
-                        </div>
-                    {% else %}
-                        <header class="clearfix">
-                            <h4 class="pull-left">{% trans "Case Management" %}</h4>
-                            <span class="hq-help-template"
-                                data-title="{% trans "Case Management" %}"
-                                data-content="{% trans "Cases give you a way to track patients, farms, etc. over time.  You can choose to save data from a form to the case, which will store the data locally on the phone to use later." %}"
-                            ></span>
-                        </header>
-                        <div class="casexml" id="casexml_home">
-                            {% block case_management_content %}
-                                {% include 'app_manager/partials/case_config.html' %}
-                            {% endblock %}
-                        </div>
+                    <div class="help-block">
+                        Cases give you a way to track patients, farms, etc. over time. You can choose to save 
+                        data from a form to the case, which will store the data locally on the phone to use later.
+                    </div>
+                    <div class="casexml" id="casexml_home">
+                    {% if app.application_version != '1.0' %}
+                        {% block case_management_content %}
+                            {% include 'app_manager/partials/case_config.html' %}
+                        {% endblock %}
                     {% endif %}
+                    </div>
                 {% else %}
                     <p class="alert alert-warning">
                         {% trans "You have not created a form yet. Create a form in order to view and edit Case Management." %}
@@ -386,7 +302,7 @@
                     <div class="casexml" id="usercasexml_home">
                         {% block usercase_management_content %}
                             {%  if form.uses_usercase and not allow_usercase %}
-                                <div class="container-fluid span6">
+                                <div class="container-fluid col-sm-6">
                                 <p>{% blocktrans %}
                                     The User Case feature is no longer available because of the change in your
                                     CommCare subscription. Although currently-deployed applications will still
@@ -402,10 +318,10 @@
                                 {% endblocktrans %}</p>
 
                                 <p>
-                                    <a href="{% url 'domain_select_plan' domain %}" class="btn btn-primary span6">
+                                    <a href="{% url 'domain_select_plan' domain %}" class="btn btn-primary">
                                         {% trans "Change your subscription" %}
                                     </a>
-                                    <a href="{% url 'drop_user_case' domain app.id %}" class="btn btn-danger span6">
+                                    <a href="{% url 'drop_user_case' domain app.id %}" class="btn btn-danger">
                                         {% trans "Remove User Case Properties" %}
                                     </a>
                                 </p>
@@ -427,7 +343,6 @@
             {% include "app_manager/partials/form_tab_advanced.html" %}
         </div>
     </div>
-    {% endif %}
     <div id="questions"></div>
 {% endblock %}
 
@@ -439,13 +354,8 @@
     {{ block.super }}
     {% include 'app_manager/partials/module_view_breadcrumbs.html' %}
     <li>
-        <span class="divider">&gt;</span>
-        {% if is_user_registration %}
-            <span class="app-manager-title">{% trans "User Registration" %}</span>
-        {% else %}
         <a class="view-form" href="{% url "view_form" domain app.id module.id form.id %}">
             <span class="app-manager-title variable-form_name">{{ form.name|html_trans:langs|safe }}</span>
         </a>
-        {% endif %}
     </li>
 {% endblock %}

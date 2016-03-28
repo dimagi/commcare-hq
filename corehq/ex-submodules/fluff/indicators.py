@@ -82,6 +82,7 @@ class IndicatorDocument(schema.Document):
     document_filter = None
     group_by = ()
     save_direct_to_sql = None
+    kafka_topic = None  # if set, this will use a kafka feed instead of couch for the pillow
 
     # A list of doc types to delete from fluff (in case a previously matching document no
     # longer is relevant)
@@ -374,7 +375,8 @@ class IndicatorDocument(schema.Document):
             'domains': cls.domains,
             'doc_type': doc_type,
             'save_direct_to_sql': cls().save_direct_to_sql,
-            'deleted_types': cls.deleted_types
+            'deleted_types': cls.deleted_types,
+            'kafka_topic': cls().kafka_topic,
         })
 
     @classmethod

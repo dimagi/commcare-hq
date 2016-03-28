@@ -1,8 +1,8 @@
-/*globals $, COMMCAREHQ, _, ko, CC_UTILS, console*/
-
-var VisitScheduler = (function () {
+/*globals $, COMMCAREHQ, _, ko, console*/
+hqDefine('app_manager/js/visit-scheduler.js', function () {
     'use strict';
-
+    var app_manager = hqImport('app_manager/js/app_manager.js');
+    var caseConfigUtils = hqImport('app_manager/js/case-config-utils.js');
     var ModuleScheduler = function(params){
         // Edits the schedule phases on the module setting page
         var self = this;
@@ -39,7 +39,7 @@ var VisitScheduler = (function () {
                     },
                     dataType: 'json',
                     success: function (data) {
-                        COMMCAREHQ.app_manager.updateDOM(data.update);
+                        app_manager.updateDOM(data.update);
                     }
                 });
             }
@@ -53,6 +53,7 @@ var VisitScheduler = (function () {
             self.anchor.on("change", function(){
                 self.anchor.observableVal(self.anchor.val());
             });
+            var CC_DETAIL_SCREEN = hqImport('app_manager/js/detail-screen-config.js').CC_DETAIL_SCREEN;
             CC_DETAIL_SCREEN.setUpAutocomplete(self.anchor, params.caseProperties);
             self.forms = ko.observable(forms);
             self.form_abbreviations = ko.computed(function(){
@@ -116,7 +117,7 @@ var VisitScheduler = (function () {
                         },
                         dataType: 'json',
                         success: function (data) {
-                            COMMCAREHQ.app_manager.updateDOM(data.update);
+                            app_manager.updateDOM(data.update);
                         }
                     });
                 }
@@ -124,10 +125,10 @@ var VisitScheduler = (function () {
         });
 
         self.getQuestions = function (filter, excludeHidden, includeRepeat) {
-            return CC_UTILS.getQuestions(self.questions, filter, excludeHidden, includeRepeat);
+            return caseConfigUtils.getQuestions(self.questions, filter, excludeHidden, includeRepeat);
         };
         self.getAnswers = function (condition) {
-            return CC_UTILS.getAnswers(self.questions, condition);
+            return caseConfigUtils.getAnswers(self.questions, condition);
         };
 
         self.change = function () {
@@ -139,11 +140,11 @@ var VisitScheduler = (function () {
             var $add_visit_button = self.home.find("#add-visit");
 
             if (self.formSchedule.visits().length === 0){
-                $add_visit_button.closest(".control-group").addClass("error");
+                $add_visit_button.closest(".form-group").addClass("has-error");
                 $add_visit_button.siblings(".error-text").show();
                 errors += 1;
             } else {
-                $add_visit_button.closest(".control-group").removeClass("error");
+                $add_visit_button.closest(".form-group").removeClass("has-error");
                 $add_visit_button.siblings(".error-text").hide();
             }
 
@@ -151,12 +152,12 @@ var VisitScheduler = (function () {
             required.each(function(i, req){
                 var $req = $(req);
                 if ($req.val().trim().length === 0){
-                    $req.closest(".control-group").addClass("error");
+                    $req.closest(".form-group").addClass("has-error");
                     $req.siblings(".error-text").show();
                     errors += 1;
                 }
                 else{
-                    $req.closest(".control-group").removeClass("error");
+                    $req.closest(".form-group").removeClass("has-error");
                     $req.siblings(".error-text").hide();
                 }
             });
@@ -393,7 +394,7 @@ var VisitScheduler = (function () {
         Scheduler: Scheduler,
         ModuleScheduler: ModuleScheduler
     };
-}());
+});
 
 // Verbatim from http://www.knockmeout.net/2011/05/dragging-dropping-and-sorting-with.html
 //connect items with observableArrays

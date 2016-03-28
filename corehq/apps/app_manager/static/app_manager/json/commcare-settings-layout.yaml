@@ -32,12 +32,13 @@
   settings:
     - hq.platform  # J2ME Platform
     - hq.admin_password  # Admin Password
-    - hq.show_user_registration  # Allow User Registration from Phone
     - properties.cc-send-procedure  # Send Data
     - properties.server-tether  # Sync Mode
     - properties.cc-autosync-freq  # Auto-Sync Frequency
     - properties.unsent-time-limit  # Unsynced Time Limit
     - properties.password_format  # Password Format
+    - properties.logenabled  # Logging Enabled
+
 
 - title: 'Java Phone User Interface Settings'
   id: app-settings-j2me-ui
@@ -67,12 +68,12 @@
     - properties.cc-log-entity-detail-enabled
     - properties.cc-inflation-target-density
     - hq.use_grid_menus
+    - properties.cc-grid-menus
 
 - title: 'Advanced'
   id: app-settings-advanced
   collapse: true
   settings:
-    - properties.logenabled  # Logging Enabled
     - properties.log_prop_weekly  # Weekly Log Sending Frequency
     - properties.log_prop_daily  # Daily Log Sending Frequency
     - hq.secure_submissions

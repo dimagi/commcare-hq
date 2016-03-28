@@ -5,17 +5,19 @@
 {% block reportcontent %}
     {% if report.show %}
         {% if report.slug %}
-            <div class="hq-loading">
-                <h4>{% trans "Loading Report" %}</h4>
-                <i class="fa fa-spinner fa-spin js-loading-spinner"></i>
-                <h6>{% trans report.title %}</h6>
+            <div class="report-loading-container">
+                <div class="report-loading">
+                    <h4>{% trans "Loading Report" %}</h4>
+                    <i class="fa fa-spin fa-spinner js-loading-spinner"></i>
+                    <h6>{% trans report.title %}</h6>
+                </div>
             </div>
         {% else %}
             <h6 style="text-align: center; margin-top: 200px;">{{ report.title }}</h6>
         {% endif %}
     {% else %}
-        <h6 style="text-align: center; margin-top: 100px;">
-            <i class="icon-info-sign" id="no-viewable-reports"></i>
+        <h6>
+            <i class="fa fa-info-circle" id="no-viewable-reports"></i>
             {% trans 'You are not registered to see reports' %}
         </h6>
         <script>

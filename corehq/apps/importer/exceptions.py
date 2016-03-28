@@ -28,3 +28,16 @@ class ImporterExcelError(ImporterError, xlrd.XLRDError):
 
 class ImporterExcelFileEncrypted(ImporterExcelError):
     """Raised when a file cannot be open because it is encrypted (password-protected)"""
+
+
+class InvalidImportValueException(Exception):
+    def __init__(self, column=None):
+        self.column = column
+
+
+class InvalidDateException(InvalidImportValueException):
+    pass
+
+
+class InvalidIntegerException(InvalidImportValueException):
+    pass

@@ -1,12 +1,13 @@
 import json
-from .models import TropoBackend
+from .models import SQLTropoBackend
 from tropo import Tropo
 from corehq.apps.ivr.api import incoming as incoming_call
 from corehq.apps.sms.api import incoming as incoming_sms
 from django.http import HttpResponse, HttpResponseBadRequest
 from django.views.decorators.csrf import csrf_exempt
+from corehq.apps.ivr.models import Call
 from corehq.apps.sms.mixin import VerifiedNumber
-from corehq.apps.sms.models import CallLog, INCOMING, OUTGOING
+from corehq.apps.sms.models import INCOMING
 from datetime import datetime
 from corehq.apps.sms.util import strip_plus
 
@@ -39,7 +40,7 @@ def sms_in(request):
         if phone_number is not None and len(phone_number) > 1:
             if phone_number[0] == "+":
                 phone_number = phone_number[1:]
-        incoming_sms(phone_number, text, TropoBackend.get_api_id())
+        incoming_sms(phone_number, text, SQLTropoBackend.get_api_id())
         t = Tropo()
         t.hangup()
         return HttpResponse(t.RenderJson())
@@ -64,11 +65,11 @@ def ivr_in(request):
             v = None
 
         # Save the call entry
-        msg = CallLog(
-            phone_number = cleaned_number,
-            direction = INCOMING,
-            date = datetime.utcnow(),
-            backend_api = TropoBackend.get_api_id(),
+        msg = Call(
+            phone_number=cleaned_number,
+            direction=INCOMING,
+            date=datetime.utcnow(),
+            backend_api=SQLTropoBackend.get_api_id(),
         )
         if v is not None:
             msg.domain = v.domain

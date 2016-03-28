@@ -1,7 +1,21 @@
 from rest_framework import serializers
-from corehq.form_processor.models import CommCareCaseIndexSQL, CommCareCaseSQL
+from corehq.form_processor.models import (
+    CommCareCaseIndexSQL, CommCareCaseSQL, CaseTransaction,
+    XFormInstanceSQL, XFormOperationSQL
+)
 
-from .models import XFormInstanceSQL, XFormOperationSQL
+
+class DeletableModelSerializer(serializers.ModelSerializer):
+    """
+    A ModelSerializer that takes an additional `fields` argument that
+    controls which fields should be displayed.
+    """
+
+    def __init__(self, instance=None, *args, **kwargs):
+        super(DeletableModelSerializer, self).__init__(instance=instance, *args, **kwargs)
+        if not instance.is_deleted:
+            self.fields.pop('deletion_id')
+            self.fields.pop('deleted_on')
 
 
 class XFormOperationSQLSerializer(serializers.ModelSerializer):
@@ -10,7 +24,7 @@ class XFormOperationSQLSerializer(serializers.ModelSerializer):
         model = XFormOperationSQL
 
 
-class XFormInstanceSQLSerializer(serializers.ModelSerializer):
+class XFormInstanceSQLSerializer(DeletableModelSerializer):
     history = XFormOperationSQLSerializer(many=True, read_only=True)
     form = serializers.JSONField(source='form_data')
     auth_context = serializers.DictField()
@@ -27,8 +41,23 @@ class CommCareCaseIndexSQLSerializer(serializers.ModelSerializer):
         model = CommCareCaseIndexSQL
 
 
-class CommCareCaseSQLSerializer(serializers.ModelSerializer):
+class CaseTransactionActionSerializer(serializers.ModelSerializer):
+    xform_id = serializers.CharField(source='form_id')
+    date = serializers.CharField(source='server_date')
+
+    class Meta:
+        model = CaseTransaction
+        fields = ('xform_id', 'server_date', 'date', 'sync_log_id')
+
+
+class CommCareCaseSQLSerializer(DeletableModelSerializer):
+    _id = serializers.CharField(source='case_id')
+    doc_type = serializers.CharField()
+    user_id = serializers.CharField(source='modified_by')
     indices = CommCareCaseIndexSQLSerializer(many=True, read_only=True)
+    actions = CaseTransactionActionSerializer(many=True, read_only=True, source='non_revoked_transactions')
+    case_json = serializers.JSONField()
 
     class Meta:
         model = CommCareCaseSQL
+        exclude = ('case_json',)

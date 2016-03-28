@@ -1,12 +1,8 @@
-{% extends 'reports/filters/bootstrap2/datespan.html' %}
+{% extends 'reports/filters/bootstrap3/datespan.html' %}
 {% load staticfiles %}
 {% load i18n %}
 {% block filter_js %}
 {% ifequal slug 'datespan'  %}
-    <link rel="stylesheet" type="text/css" href="{% static "reports/css/daterangepicker-bs2.css" %}">
-    <script type="text/javascript" src="{% static 'reports/javascripts/bootstrap-daterangepicker/moment.min.js' %}"></script>
-    <script type="text/javascript" src="{% static 'reports/javascripts/bootstrap-daterangepicker/daterangepicker.min.js' %}"></script>
-    <script type="text/javascript" src="{% static 'reports/javascripts/daterangepicker.js' %}"></script>
     <script type="text/javascript">
         $(function () {
             var separator = '{{ separator }}';

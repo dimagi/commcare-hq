@@ -50,6 +50,8 @@ from corehq.apps.userreports.sql import get_column_name
 from corehq.apps.userreports.ui.fields import JsonField
 from dimagi.utils.decorators.memoized import memoized
 
+from corehq.toggles import UNLIMITED_REPORT_BUILDER_REPORTS
+
 
 class FilterField(JsonField):
     """
@@ -190,9 +192,7 @@ class DataSourceBuilder(object):
         if self.source_type == "form":
             return make_form_data_source_filter(self.source_xform.data_node.tag_xmlns)
 
-    @property
-    @memoized
-    def indicators(self):
+    def indicators(self, number_columns=None):
         """
         Return all the dict data source indicator configurations that could be
         used by a report that uses the same case type/form as this DataSourceConfiguration.
@@ -212,9 +212,13 @@ class DataSourceBuilder(object):
             elif prop.type == 'case_property' and prop.source == 'computed/user_name':
                 ret.append(make_user_name_indicator(prop.column_id))
             elif prop.type == 'case_property':
-                ret.append(make_case_property_indicator(
+                indicator = make_case_property_indicator(
                     prop.source, prop.column_id
-                ))
+                )
+                if number_columns:
+                    if indicator['column_id'] in number_columns:
+                        indicator['datatype'] = 'decimal'
+                ret.append(indicator)
         ret.append({
             "display_name": "Count",
             "type": "count",
@@ -262,7 +266,7 @@ class DataSourceBuilder(object):
             return self._get_data_source_properties_from_case(self.case_properties)
 
         if self.source_type == 'form':
-            return self._get_data_source_properties_from_form(self.source_xform)
+            return self._get_data_source_properties_from_form(self.source_form, self.source_xform)
 
     @classmethod
     def _get_data_source_properties_from_case(cls, case_properties):
@@ -306,9 +310,9 @@ class DataSourceBuilder(object):
         )
 
     @staticmethod
-    def _get_data_source_properties_from_form(xform):
+    def _get_data_source_properties_from_form(form, form_xml):
         properties = OrderedDict()
-        questions = xform.get_questions([])
+        questions = form_xml.get_questions([])
         for question in questions:
             properties[question['value']] = DataSourceProperty(
                 type="question",
@@ -324,6 +328,14 @@ class DataSourceBuilder(object):
                 column_id=get_column_name(prop[0].strip("/")),
                 text=prop[0],
                 source=prop,
+            )
+        if form.get_app().auto_gps_capture:
+            properties['location'] = DataSourceProperty(
+                type="meta",
+                id='location',
+                column_id=get_column_name('location'),
+                text='location',
+                source=(['location', '#text'], 'Text'),
             )
         return properties
 
@@ -345,6 +357,7 @@ class DataSourceBuilder(object):
                 self.app._id,
                 self.app.version
             ],
+            include_docs=True,
             reduce=False
         ).one()
 
@@ -441,32 +454,23 @@ class DataSourceForm(forms.Form):
         report won't be able to use one of the existing ones.
         """
         cleaned_data = super(DataSourceForm, self).clean()
-        source_type = cleaned_data.get('source_type')
-        report_source = cleaned_data.get('report_source')
-        app_id = cleaned_data.get('application')
 
-        if report_source and source_type and app_id:
-
-            app = Application.get(app_id)
-            ds_builder = DataSourceBuilder(self.domain, app, source_type, report_source)
-
-            existing_sources = DataSourceConfiguration.by_domain(self.domain)
-            if len(existing_sources) >= 5:
-                if not ds_builder.get_existing_match():
-                    raise forms.ValidationError(_(
-                        "Too many data sources!\n"
-                        "Creating this report would cause you to go over the maximum "
-                        "number of data sources allowed in this domain. The current "
-                        "limit is 5. "
-                        "To continue, delete all of the reports using a particular "
-                        "data source (or the data source itself) and try again. "
-                    ))
+        existing_reports = ReportConfiguration.by_domain(self.domain)
+        builder_reports = filter(lambda report: report.report_meta.created_by_builder, existing_reports)
+        if len(builder_reports) >= 5 and not UNLIMITED_REPORT_BUILDER_REPORTS.enabled(self.domain):
+            raise forms.ValidationError(_(
+                "Too many reports!\n"
+                "Creating this report would cause you to go over the maximum "
+                "number of report builder reports allowed in this domain. The current "
+                "limit is 5. "
+                "To continue, delete another report and try again. "
+            ))
 
         return cleaned_data
 
 _shared_properties = ['exists_in_current_version', 'display_text', 'property', 'data_source_field']
 FilterViewModel = namedtuple("FilterViewModel", _shared_properties + ['format'])
-ColumnViewModel = namedtuple("ColumnViewModel", _shared_properties)
+ColumnViewModel = namedtuple("ColumnViewModel", _shared_properties + ['calculation'])
 
 
 class ConfigureNewReportBase(forms.Form):
@@ -610,7 +614,7 @@ class ConfigureNewReportBase(forms.Form):
             # The uuid gets truncated, so it's not really universally unique.
             table_id=_clean_table_name(self.domain, str(uuid.uuid4().hex)),
             configured_filter=self.ds_builder.filter,
-            configured_indicators=self.ds_builder.indicators,
+            configured_indicators=self.ds_builder.indicators(self._number_columns),
             meta=DataSourceMeta(build=DataSourceBuildInformation(
                 source_id=self.report_source_id,
                 app_id=self.app._id,
@@ -627,31 +631,31 @@ class ConfigureNewReportBase(forms.Form):
 
         matching_data_source = self.ds_builder.get_existing_match()
         if matching_data_source:
-            if matching_data_source['id'] != self.existing_report.config_id:
+            reactivated = False
+            if matching_data_source._id != self.existing_report.config_id:
 
                 # If no one else is using the current data source, delete it.
                 data_source = DataSourceConfiguration.get(self.existing_report.config_id)
                 if data_source.get_report_count() <= 1:
                     data_source.deactivate()
 
-                self.existing_report.config_id = matching_data_source['id']
-
+                self.existing_report.config_id = matching_data_source._id
+            elif matching_data_source.is_deactivated:
+                matching_data_source.is_deactivated = False
+                reactivated = True
+            changed = False
+            indicators = self.ds_builder.indicators(self._number_columns)
+            if matching_data_source.configured_indicators != indicators:
+                matching_data_source.configured_indicators = indicators
+                changed = True
+            if changed or reactivated:
+                matching_data_source.save()
+                tasks.rebuild_indicators.delay(matching_data_source._id)
         else:
-            # We need to create a new data source
-            existing_sources = DataSourceConfiguration.by_domain(self.domain)
-
             # Delete the old one if no other reports use it
             old_data_source = DataSourceConfiguration.get(self.existing_report.config_id)
             if old_data_source.get_report_count() <= 1:
                 old_data_source.deactivate()
-
-            # Make sure the user can create more data sources
-            elif len(existing_sources) >= 5:
-                raise forms.ValidationError(_(
-                    "Editing this report would require a new data source. The limit is 5. "
-                    "To continue, first delete all of the reports using a particular "
-                    "data source (or the data source itself) and try again. "
-                ))
 
             data_source_config_id = self._build_data_source()
             self.existing_report.config_id = data_source_config_id
@@ -670,7 +674,19 @@ class ConfigureNewReportBase(forms.Form):
         """
         matching_data_source = self.ds_builder.get_existing_match()
         if matching_data_source:
-            data_source_config_id = matching_data_source['id']
+            data_source_config_id = matching_data_source._id
+            reactivated = False
+            if matching_data_source.is_deactivated:
+                matching_data_source.is_deactivated = False
+                reactivated = True
+            changed = False
+            indicators = self.ds_builder.indicators(self._number_columns)
+            if matching_data_source.configured_indicators != indicators:
+                matching_data_source.configured_indicators = indicators
+                changed = True
+            if changed or reactivated:
+                matching_data_source.save()
+                tasks.rebuild_indicators.delay(matching_data_source._id)
         else:
             data_source_config_id = self._build_data_source()
 
@@ -758,7 +774,9 @@ class ConfigureNewReportBase(forms.Form):
         )
 
     def _get_property_from_column(self, col):
-        return self._properties_by_column[col].id
+        column = self._properties_by_column.get(col)
+        if column:
+            return column.id
 
     def _column_exists(self, column_id):
         """
@@ -779,6 +797,11 @@ class ConfigureNewReportBase(forms.Form):
     @property
     def _report_columns(self):
         return []
+
+    @property
+    @memoized
+    def _number_columns(self):
+        return [col["field"] for col in self._report_columns if col.get("aggregation", None) in ["avg", "sum"]]
 
     @property
     def _report_filters(self):
@@ -980,6 +1003,11 @@ class ConfigureListReportForm(ConfigureNewReportBase):
     @memoized
     def initial_columns(self):
         if self.existing_report:
+            reverse_agg_map = {
+                'avg': 'Average',
+                'sum': 'Sum',
+                'simple': 'Count per Choice'
+            }
             cols = []
             for c in self.existing_report.columns:
                 exists = self._column_exists(c['field'])
@@ -989,6 +1017,7 @@ class ConfigureListReportForm(ConfigureNewReportBase):
                         exists_in_current_version=exists,
                         property=self._get_property_from_column(c['field']) if exists else None,
                         data_source_field=c['field'] if not exists else None,
+                        calculation=reverse_agg_map.get(c.get('aggregation'), 'None')
                     )
                 )
             return cols
@@ -1041,7 +1070,21 @@ class ConfigureTableReportForm(ConfigureListReportForm, ConfigureBarChartReportF
         agg_field_id = self.data_source_properties[self.aggregation_field].column_id
         agg_field_text = self.data_source_properties[self.aggregation_field].text
 
-        columns = super(ConfigureTableReportForm, self)._report_columns
+        def _make_column(conf, index):
+            aggregation_map = {'Count per Choice': 'simple',
+                                'Sum': 'sum',
+                                'Average': 'avg'}
+            return {
+                "format": "default",
+                "aggregation": aggregation_map[conf['calculation']],
+                "field": self.data_source_properties[conf['property']].column_id,
+                "column_id": "column_{}".format(index),
+                "type": "field",
+                "display": conf['display_text'],
+                "transform": {'type': 'custom', 'custom_type': 'short_decimal_display'}
+            }
+
+        columns = [_make_column(conf, i) for i, conf in enumerate(self.cleaned_data['columns'])]
 
         # Add the aggregation indicator to the columns if it's not already present.
         displaying_agg_column = bool([c for c in columns if c['field'] == agg_field_id])
@@ -1056,7 +1099,7 @@ class ConfigureTableReportForm(ConfigureListReportForm, ConfigureBarChartReportF
 
         # Expand all columns except for the column being used for aggregation.
         for c in columns:
-            if c['field'] != agg_field_id:
+            if c['field'] != agg_field_id and c['aggregation'] == 'simple':
                 c['aggregation'] = "expand"
         return columns
 
@@ -1128,3 +1171,79 @@ class ConfigureWorkerReportForm(ConfigureTableReportForm):
             self.column_fieldset,
             self.filter_fieldset
         )
+
+
+class ConfigureMapReportForm(ConfigureListReportForm):
+    report_type = 'map'
+    location = forms.ChoiceField(label="Location field")
+
+    def __init__(self, report_name, app_id, source_type, report_source_id, existing_report=None, *args, **kwargs):
+        super(ConfigureMapReportForm, self).__init__(
+            report_name, app_id, source_type, report_source_id, existing_report, *args, **kwargs
+        )
+        if self.source_type == "form":
+            self.fields['location'].widget = QuestionSelect(attrs={'class': 'input-large'})
+        else:
+            self.fields['location'].widget = Select2(attrs={'class': 'input-large'})
+        self.fields['location'].choices = self._location_choices
+
+        # Set initial value of location
+        if self.existing_report and existing_report.location_column_id:
+            existing_loc_col = existing_report.location_column_id
+            self.fields['location'].initial = self._get_property_from_column(existing_loc_col)
+
+    @property
+    def _location_choices(self):
+        return [(p.id, p.text) for p in self.data_source_properties.values()]
+
+    @property
+    def container_fieldset(self):
+        return crispy.Fieldset(
+            "",
+            self.column_fieldset,
+            crispy.Fieldset(
+                _legend(
+                    _("Location"),
+                    _('Choose which property represents the location.'),
+                ),
+                'location',
+            ),
+            self.filter_fieldset
+        )
+
+    @property
+    @memoized
+    def initial_columns(self):
+        columns = super(ConfigureMapReportForm, self).initial_columns
+
+        # Remove the location indicator from the columns.
+        # It gets removed because we want it to be a column in the report,
+        # but we don't want it to appear in the builder.
+        if self.existing_report and self.existing_report.location_column_id:
+            col_id = self.existing_report.location_column_id
+            location_property = self._get_property_from_column(col_id)
+            return [c for c in columns if c.property != location_property]
+        return columns
+
+    @property
+    def location_field(self):
+        return self.cleaned_data["location"]
+
+    @property
+    def _report_columns(self):
+        loc_field_id = self.data_source_properties[self.location_field].column_id
+        loc_field_text = self.data_source_properties[self.location_field].text
+
+        columns = super(ConfigureMapReportForm, self)._report_columns
+
+        # Add the location indicator to the columns if it's not already present.
+        displaying_loc_column = bool([c for c in columns if c['field'] == loc_field_id])
+        if not displaying_loc_column:
+            columns = columns + [{
+                "column_id": loc_field_id,
+                "type": "location",
+                'field': loc_field_id,
+                'display': loc_field_text
+            }]
+
+        return columns

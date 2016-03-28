@@ -3,17 +3,19 @@ from django.core.validators import validate_email
 from django.db import transaction
 from corehq.apps.hqcase.dbaccessors import \
     get_supply_point_case_in_domain_by_id
+from corehq.apps.locations.util import get_lineage_from_location_id
 from corehq.apps.sms.mixin import PhoneNumberInUseException, InvalidFormatException, apply_leniency, VerifiedNumber
 from corehq.form_processor.interfaces.supply import SupplyInterface
 from dimagi.ext.jsonobject import JsonObject, StringProperty, BooleanProperty, DecimalProperty, ListProperty, IntegerProperty,\
     FloatProperty, DictProperty
 from corehq.apps.commtrack.models import CommtrackConfig, CommtrackActionConfig
+from corehq.apps.commtrack.helpers import update_supply_point_from_location
 from corehq.apps.locations.models import SQLLocation, LocationType
 from corehq.apps.programs.models import Program
 from corehq.apps.users.models import UserRole, WebUser
 from custom.api.utils import apply_updates
 from custom.ilsgateway.models import SupplyPointStatus, DeliveryGroupReport, HistoricalLocationGroup, \
-    ILSGatewayWebUser, ILSGatewayConfig
+    ILSGatewayWebUser, ILSGatewayConfig, location_edited_receiver
 from custom.logistics.api import LogisticsEndpoint, APISynchronization, ApiSyncObject
 from corehq.apps.locations.models import Location as Loc
 
@@ -68,7 +70,7 @@ class SMSUser(JsonObject):
     id = IntegerProperty()
     name = StringProperty()
     role = StringProperty()
-    is_active = StringProperty()
+    is_active = BooleanProperty()
     supply_point = DecimalProperty()
     email = StringProperty()
     phone_numbers = ListProperty(item_type=Connection)
@@ -87,6 +89,7 @@ class Location(JsonObject):
     code = StringProperty()
     groups = ListProperty()
     historical_groups = DictProperty()
+    is_active = BooleanProperty()
 
 
 class ProductStock(JsonObject):
@@ -263,7 +266,7 @@ class ILSGatewayAPI(APISynchronization):
                 'date_updated',
                 filters={
                     'type': 'facility',
-                    'is_active': True
+                    'supplypoint__active': True
                 }
             ),
             ApiSyncObject(
@@ -382,16 +385,14 @@ class ILSGatewayAPI(APISynchronization):
                 # if user exists in db it means he was already migrated but he changed email in v1
                 old_email = ils_sql_web_user.email
                 user = WebUser.get_by_username(old_email)
-                ils_domains = ILSGatewayConfig.get_all_enabled_domains()
-                # make sure it's user migrated from ILS and username is available
-                if all([domain in ils_domains for domain in user.domains])\
-                        and not WebUser.get_by_username(email):
+                if user:
                     user.delete_domain_membership(self.domain)
                     user.save()
-                    user = self._create_web_user(email, ilsgateway_webuser, location_id, user_dict)
-                    ils_sql_web_user.email = email
-                    ils_sql_web_user.save()
-                    return user
+                user = self._create_web_user(email, ilsgateway_webuser, location_id, user_dict)
+                ils_sql_web_user.email = email
+                ils_sql_web_user.save()
+                return user
+
             else:
                 user = self._create_web_user(email, ilsgateway_webuser, location_id, user_dict)
         else:
@@ -405,8 +406,10 @@ class ILSGatewayAPI(APISynchronization):
         return user
 
     def _reassign_number(self, user, connection):
+        from custom.ilsgateway import SLAB_DOMAIN
+
         v = VerifiedNumber.by_phone(apply_leniency(connection.phone_number), include_pending=True)
-        if v.domain in self._get_logistics_domains():
+        if v.domain in self._get_logistics_domains() or v.domain == SLAB_DOMAIN:
             v.domain = self.domain
             v.owner_doc_type = user.doc_type
             v.owner_id = user.get_id
@@ -473,6 +476,12 @@ class ILSGatewayAPI(APISynchronization):
         if not sms_user:
             return None
 
+        if not sms_user.is_active:
+            verified_numbers = VerifiedNumber.by_owner_id(sms_user.get_id)
+            for vn in verified_numbers:
+                vn.delete()
+            return sms_user
+
         sms_user.save()
         if ilsgateway_smsuser.supply_point:
             try:
@@ -525,8 +534,8 @@ class ILSGatewayAPI(APISynchronization):
                     )
                     loc_parent = sql_loc_parent.couch_location
                 except SQLLocation.DoesNotExist:
-                    parent = self.endpoint.get_location(ilsgateway_location.parent_id)
-                    loc_parent = self.location_sync(Location(parent))
+                    new_parent = self.endpoint.get_location(ilsgateway_location.parent_id)
+                    loc_parent = self.location_sync(Location(new_parent))
                     if not loc_parent:
                         return
 
@@ -551,9 +560,14 @@ class ILSGatewayAPI(APISynchronization):
             location.save()
 
             interface = SupplyInterface(self.domain)
-            if ilsgateway_location.type == 'FACILITY' and not interface.get_by_location(location):
-                interface.create_from_location(self.domain, location)
-                location.save()
+            if ilsgateway_location.type == 'FACILITY':
+                if not interface.get_by_location(location):
+                    interface.create_from_location(self.domain, location)
+                    location.save()
+                else:
+                    sql_location = location.sql_location
+                    if not sql_location.supply_point_id:
+                        location.save()
         else:
             location_dict = {
                 'name': ilsgateway_location.name,
@@ -570,9 +584,18 @@ class ILSGatewayAPI(APISynchronization):
             if apply_updates(location, location_dict):
                 location.save()
                 if case:
-                    case.update_from_location(location)
+                    update_supply_point_from_location(case, location)
                 else:
                     SupplyInterface.create_from_location(self.domain, location)
+            location_parent = location.parent
+            if ilsgateway_location.type == 'FACILITY' and ilsgateway_location.parent_id and location_parent \
+                    and location_parent.external_id != str(ilsgateway_location.parent_id):
+                new_parent = self.endpoint.get_location(ilsgateway_location.parent_id)
+                new_parent = self.location_sync(Location(new_parent))
+                location.lineage = get_lineage_from_location_id(new_parent.get_id)
+                location.save()
+                location.previous_parents = [location_parent.get_id]
+                location_edited_receiver(None, location, moved=True)
         return location
 
     def location_groups_sync(self, location_groups):

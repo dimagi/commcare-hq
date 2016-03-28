@@ -1,5 +1,5 @@
 from custom.ewsghana.handlers import START_MESSAGE
-from custom.ilsgateway.tanzania.handlers.keyword import KeywordHandler
+from custom.ewsghana.handlers.keyword import KeywordHandler
 
 
 class StartHandler(KeywordHandler):

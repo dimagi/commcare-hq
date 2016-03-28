@@ -15,6 +15,15 @@ from corehq.apps.reports.tasks import export_all_rows_task
 from corehq.apps.reports.models import ReportConfig
 from corehq.apps.reports.datatables import DataTablesHeader
 from corehq.apps.reports.filters.dates import DatespanFilter
+from corehq.apps.reports.util import \
+    DEFAULT_CSS_FORM_ACTIONS_CLASS_REPORT_FILTER
+from corehq.apps.style.decorators import (
+    use_bootstrap3,
+    use_jquery_ui,
+    use_datatables,
+    use_select2,
+    use_daterangepicker,
+)
 from corehq.apps.users.models import CouchUser
 from corehq.util.timezones.utils import get_timezone_for_user
 from corehq.util.view_utils import absolute_reverse
@@ -114,6 +123,8 @@ class GenericReportView(object):
 
     report_title = None
     report_subtitles = []
+
+    is_bootstrap3 = False
 
     def __init__(self, request, base_context=None, domain=None, **kwargs):
         if not self.name or not self.section_name or self.slug is None or not self.dispatcher:
@@ -247,36 +258,44 @@ class GenericReportView(object):
     @property
     @memoized
     def template_base(self):
-        return self.base_template
+        return self._select_bootstrap_template(self.base_template)
 
     @property
     @memoized
     def mobile_template_base(self):
-        return self.base_template_mobile or "reports/mobile/mobile_report_base.html"
+        return self._select_bootstrap_template(
+            self.base_template_mobile or "reports/mobile/mobile_report_base.html"
+        )
 
     @property
     @memoized
     def template_async_base(self):
-        return ((self.base_template_async or "reports/async/bootstrap2/default.html")
-                                        if self.asynchronous else self.template_base)
+        return self._select_bootstrap_template(
+            (self.base_template_async or "reports/async/bootstrap2/default.html")
+            if self.asynchronous else self.template_base
+        )
+
+
     @property
     @memoized
     def template_report(self):
-        original_template = self.report_template_path or "reports/async/basic.html"
+        original_template = self.report_template_path or "reports/async/bootstrap2/basic.html"
         if self.is_rendered_as_email:
             self.context.update(original_template=original_template)
-            return self.override_template
-        return original_template
+            return self._select_bootstrap_template(self.override_template)
+        return self._select_bootstrap_template(original_template)
 
     @property
     @memoized
     def template_report_partial(self):
-        return self.report_partial_path
+        return self._select_bootstrap_template(self.report_partial_path)
 
     @property
     @memoized
     def template_filters(self):
-        return self.base_template_filters or "reports/async/bootstrap2/filters.html"
+        return self._select_bootstrap_template(
+            self.base_template_filters or "reports/async/bootstrap2/filters.html"
+        )
 
     @property
     @memoized
@@ -293,7 +312,9 @@ class GenericReportView(object):
                 klass = to_function(field, failhard=True)
             else:
                 klass = field
-            filters.append(klass(self.request, self.domain, self.timezone))
+            filters.append(
+                klass(self.request, self.domain, self.timezone, is_bootstrap3=self.is_bootstrap3)
+            )
         return filters
 
     @property
@@ -465,9 +486,11 @@ class GenericReportView(object):
             Intention: This probably does not need to be overridden in general.
             Updates the context with filter information.
         """
-        self.context.update(report_filters=[dict(
-            field=f.render(),
-            slug=f.slug) for f in self.filter_classes])
+        self.context.update({
+            'report_filters': [
+                dict(field=f.render(), slug=f.slug) for f in self.filter_classes
+            ],
+        })
 
     def update_template_context(self):
         """
@@ -475,6 +498,9 @@ class GenericReportView(object):
             Please override template_context instead.
         """
         self.context.update(rendered_as=self.rendered_as)
+        self.context.update({
+            'report_filter_form_action_css_class': DEFAULT_CSS_FORM_ACTIONS_CLASS_REPORT_FILTER,
+        })
         self.context['report'].update(
             show_filters=self.fields or not self.hide_filters,
             breadcrumbs=self.breadcrumbs,
@@ -674,14 +700,33 @@ class GenericReportView(object):
         """
         return []
 
-    def set_bootstrap3_status(self, request, *args, **kwargs):
+    @use_bootstrap3
+    @use_jquery_ui
+    @use_select2
+    @use_datatables
+    @use_daterangepicker
+    def bootstrap3_dispatcher(self, request, *args, **kwargs):
         """
-        Use this function to apply the bootstrap 3 decorators found in
-        style/decorators.py to a report. We're using this in the interim until
-        we overhaul the reports framework, but still want to migrate some
-        reports to bootstrap 3.
+        Decorate this method in your report subclass and call super to make sure
+        appropriate decorators are used to render the page and its javascript
+        libraries.
+
+        example:
+
+        class MyNewReport(GenericReport):
+            ...
+
+            @use_nvd3
+            def bootstrap3_dispatcher(self, request, *args, **kwargs):
+                super(MyNewReport, self).bootstrap3_dispatcher(request, *args, **kwargs)
+
         """
-        self.is_bootstrap3 = False
+        pass
+
+    def _select_bootstrap_template(self, template_path):
+        if self.is_bootstrap3 and template_path is not None:
+            template_path = template_path.replace('/bootstrap2/', '/bootstrap3/')
+        return template_path
 
 
 class GenericTabularReport(GenericReportView):
@@ -734,6 +779,9 @@ class GenericTabularReport(GenericReportView):
     use_datatables = True
     charts_per_row = 1
     bad_request_error_text = None
+
+    # Sets bSort in the datatables instance to true/false (config.dataTables.bootstrap.js)
+    sortable = True
 
     # override old class properties
     report_template_path = "reports/async/bootstrap2/tabular.html"
@@ -809,8 +857,10 @@ class GenericTabularReport(GenericReportView):
     _pagination = None
     @property
     def pagination(self):
-        if self._pagination is None and hasattr(self.request, 'REQUEST'):
-            self._pagination = DatatablesParams.from_request_dict(self.request.REQUEST)
+        if self._pagination is None:
+            self._pagination = DatatablesParams.from_request_dict(
+                self.request.POST if self.request.method == 'POST' else self.request.GET
+            )
         return self._pagination
 
     @property
@@ -977,7 +1027,8 @@ class GenericTabularReport(GenericReportView):
                 pagination=pagination_spec,
                 left_col=left_col,
                 datatables=self.use_datatables,
-                bad_request_error_text=self.bad_request_error_text
+                bad_request_error_text=self.bad_request_error_text,
+                sortable=self.sortable,
             ),
             charts=charts,
             chart_span=CHART_SPAN_MAP[self.charts_per_row]
@@ -1000,7 +1051,7 @@ def summary_context(report):
     return {"summary_values": report.summary_values}
 
 class SummaryTablularReport(GenericTabularReport):
-    report_template_path = "reports/async/summary_tabular.html"
+    report_template_path = "reports/async/bootstrap2/summary_tabular.html"
     extra_context_providers = [summary_context]
 
     @property

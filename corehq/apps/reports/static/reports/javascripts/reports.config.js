@@ -6,7 +6,8 @@ var HQReport = function (options) {
     self.filterSet = options.filterSet || false;
     self.needsFilters = options.needsFilters || false;
     self.filterAccordion = options.filterAccordion || "#reportFilters";
-    self.filterSubmitButton = options.filterSubmitButton || $('#paramSelectorForm button[type="submit"]');
+    self.filterSubmitSelector = options.filterSubmitSelector || '#paramSelectorForm button[type="submit"]';
+    self.filterSubmitButton = $(self.filterSubmitSelector);
     self.toggleFiltersButton = options.toggleFiltersButton || "#toggle-report-filters";
     self.exportReportButton = options.exportReportButton || "#export-report-excel";
     self.emailReportButton = options.emailReportButton || "#email-report";
@@ -23,7 +24,6 @@ var HQReport = function (options) {
     self.subReportSlug = options.subReportSlug;
     self.type = options.type;
 
-    self.toggleFiltersCookie = self.domain+'.hqreport.toggleFilterState';
     self.datespanCookie = self.domain+".hqreport.filterSetting.test.datespan";
 
     self.initialLoad = true;
@@ -112,35 +112,24 @@ var HQReport = function (options) {
     };
 
     var checkFilterAccordionToggleState = function () {
-        var _setShowFilterCookie = function (show) {
-            var showStr = show ? 'in' : '';
-            $.cookie(self.toggleFiltersCookie, showStr, {path: self.urlRoot, expires: 1});
-        };
-        
-        if (!$.cookie(self.toggleFiltersCookie) && $.cookie(self.toggleFiltersCookie) !== '') {
-            // default to showing filters
-            // (When filters should be hidden, $.cookie(self.toggleFiltersCookie) === '')
-            _setShowFilterCookie(true);
-        }
-        $(self.filterAccordion).addClass($.cookie(self.toggleFiltersCookie));
+        $(self.filterAccordion).addClass('in');
+        $(self.toggleFiltersButton).button('close');
 
-        if ($.cookie(self.toggleFiltersCookie) == 'in') {
-            $(self.toggleFiltersButton).button('close');
-        } else {
-            $(self.toggleFiltersButton).button('open');
-        }
-
-        $(self.filterAccordion).on('hidden', function (data) {
+        var hiddenFilterButtonStatus = function (data) {
             if (!(data.target && $(data.target).hasClass('modal'))) {
-                _setShowFilterCookie(false);
                 $(self.toggleFiltersButton).button('open');
             }
-        });
+        };
 
-        $(self.filterAccordion).on('show', function () {
-            _setShowFilterCookie(true);
+        $(self.filterAccordion).on('hidden', hiddenFilterButtonStatus);  // B2 event
+        $(self.filterAccordion).on('hidden.bs.collapse', hiddenFilterButtonStatus);  // B3 event
+
+        var showFilterButtonStatus = function () {
             $(self.toggleFiltersButton).button('close');
-        });
+        };
+
+        $(self.filterAccordion).on('show', showFilterButtonStatus);  // B2 event
+        $(self.filterAccordion).on('show.bs.collapse', showFilterButtonStatus);  // B3 event
 
     };
 
@@ -154,14 +143,14 @@ var HQReport = function (options) {
 
     self.resetFilterState = function () {
         $('#paramSelectorForm fieldset button, #paramSelectorForm fieldset span[data-dropdown="dropdown"]').click(function() {
-            $('#paramSelectorForm button[type="submit"]')
+            $(self.filterSubmitSelector)
                 .button('reset')
                 .addClass('btn-primary')
                 .removeClass('disabled')
                 .removeProp('disabled');
         });
         $('#paramSelectorForm fieldset').on('change apply', function () {
-            $('#paramSelectorForm button[type="submit"]')
+            $(self.filterSubmitSelector)
                 .button('reset')
                 .addClass('btn-primary')
                 .removeClass('disabled')

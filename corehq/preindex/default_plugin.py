@@ -9,16 +9,17 @@ from dimagi.utils.couch.sync_docs import DesignInfo
 class DefaultPreindexPlugin(PreindexPlugin):
     def __init__(self, app_label):
         self.app_label = app_label
+        self.app_config = apps.get_app_config(self.app_label)
+        self.dir = os.path.join(self.app_config.path, '_design')
 
     def _get_designs(self):
-        app_config = apps.get_app_config(self.app_label)
         # Instantiate here to make sure that it's instantiated after the dbs settings
         # are patched for tests
         couch_config = CouchConfig()
         db = Database(
-            couch_config.get_db_uri_for_app_label(app_config.label), create=True)
+            couch_config.get_db_uri_for_app_label(self.app_config.label), create=True)
         return [
-            DesignInfo(app_label=app_config.label,
+            DesignInfo(app_label=self.app_config.label,
                        db=db,
-                       design_path=os.path.join(app_config.path, '_design'))
+                       design_path=self.dir)
         ]

@@ -11,7 +11,8 @@ class FirstSOHReminder(Reminder):
         if not roles:
             return False
         needs_reminders = string_to_boolean(user.user_data.get('needs_reminders', "False"))
-        return any([role != IN_CHARGE_ROLE for role in user.user_data.get('role', [])]) and needs_reminders
+        return any([role != IN_CHARGE_ROLE for role in user.user_data.get('role', [])]) and \
+            needs_reminders and user.location_id
 
     def get_message(self, recipient):
         return STOCK_ON_HAND_REMINDER % {'name': recipient.owner.name}

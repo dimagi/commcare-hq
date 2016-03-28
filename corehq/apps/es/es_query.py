@@ -24,7 +24,7 @@ SQLAlchemy. Here's an example usage:
          .sort('received_on', desc=False)
          .size(self.pagination.count)
          .start(self.pagination.start)
-         .terms_facet('babies.count', 'babies_saved', size=10))
+         .terms_aggregation('babies.count', 'babies_saved'))
     result = q.run()
     total_docs = result.total
     hits = result.hits
@@ -88,13 +88,14 @@ Language
 from collections import namedtuple
 from copy import deepcopy
 import json
-from corehq.apps.es.utils import values_list
+
+from corehq.apps.es import aggregations
+from corehq.apps.es.utils import values_list, flatten_field_dict
 
 from dimagi.utils.decorators.memoized import memoized
 
-from corehq.elastic import ES_META, ESError, run_query, SIZE_LIMIT
+from corehq.elastic import ES_META, ESError, run_query, scroll_query, SIZE_LIMIT
 
-from . import facets
 from . import filters
 from . import queries
 
@@ -118,10 +119,12 @@ class ESQuery(object):
         }
     """
     index = None
-    _fields = None
+    _exclude_source = None
+    _legacy_fields = False
     _start = None
     _size = None
-    _facets = None
+    _aggregations = None
+    _source = None
     default_filters = {
         "match_all": filters.match_all()
     }
@@ -134,6 +137,8 @@ class ESQuery(object):
             raise IndexError(msg)
         self._default_filters = deepcopy(self.default_filters)
         self._facets = []
+        self._aggregations = []
+        self._source = None
         self.es_query = {"query": {
             "filtered": {
                 "filter": {"and": []},
@@ -161,6 +166,7 @@ class ESQuery(object):
             filters.non_null,
             filters.doc_id,
             filters.nested,
+            filters.regexp,
         ]
 
     def __getattr__(self, attr):
@@ -179,9 +185,24 @@ class ESQuery(object):
         raw = run_query(self.index, self.raw_query)
         return ESQuerySet(raw, deepcopy(self))
 
+    def scroll(self):
+        """
+        Run the query against the scroll api. Returns an iterator yielding each
+        document that matches the query.
+        """
+        for r in scroll_query(self.index, self.raw_query):
+            yield ESQuerySet.normalize_result(deepcopy(self), r)
+
     @property
     def _filters(self):
         return self.es_query['query']['filtered']['filter']['and']
+
+    def exclude_source(self):
+        """
+        Turn off _source retrieval. Mostly useful if you just want the doc_ids
+        """
+        self._exclude_source = True
+        return self
 
     def filter(self, filter):
         """
@@ -200,17 +221,24 @@ class ESQuery(object):
         """
         return self._default_filters.values() + self._filters
 
-    def facet(self, _facet):
-        """Add a facet to the query."""
+    def aggregation(self, aggregation):
+        """
+        Add the passed-in aggregation to the query
+        """
         query = deepcopy(self)
-        query._facets.append(_facet)
+        query._aggregations.append(aggregation)
         return query
 
-    def terms_facet(self, term, name, size=None):
-        return self.facet(facets.TermsFacet(term, name, size))
+    def aggregations(self, aggregations):
+        query = deepcopy(self)
+        query._aggregations.extend(aggregations)
+        return query
+
+    def terms_aggregation(self, term, name, size=None):
+        return self.aggregation(aggregations.TermsAggregation(name, term, size=size))
 
     def date_histogram(self, name, datefield, interval, timezone=None):
-        return self.facet(facets.DateHistogram(name, datefield, interval, timezone=None))
+        return self.aggregation(aggregations.DateHistogram(name, datefield, interval, timezone=timezone))
 
     @property
     def _query(self):
@@ -234,21 +262,40 @@ class ESQuery(object):
     def _assemble(self):
         """Build out the es_query dict"""
         self._filters.extend(self._default_filters.values())
-        if self._fields is not None:
-            self.es_query['fields'] = self._fields
         if self._start is not None:
             self.es_query['from'] = self._start
         self.es_query['size'] = self._size if self._size is not None else SIZE_LIMIT
-        if self._facets:
-            self.es_query['facets'] = {
-                facet.name: {facet.type: facet.params}
-                for facet in self._facets
+        if self._source:
+            self.es_query['_source'] = self._source
+        if self._aggregations:
+            self.es_query['aggs'] = {
+                agg.name: agg.assemble()
+                for agg in self._aggregations
             }
 
     def fields(self, fields):
-        """Restrict the fields returned from elasticsearch"""
+        """
+            Restrict the fields returned from elasticsearch
+
+            Deprecated. Use `source` instead.
+            """
+        self._legacy_fields = True
+        return self.source(fields)
+
+    def source(self, include, exclude=None):
+        """
+            Restrict the output of _source in the queryset. This can be used to return an object in a queryset
+        """
+        self._exclude_source = False
+
+        source = include
+        if exclude:
+            source = {
+                'include': include,
+                'exclude': exclude
+            }
         query = deepcopy(self)
-        query._fields = fields
+        query._source = source
         return query
 
     def start(self, start):
@@ -334,6 +381,16 @@ class ESQuerySet(object):
         self.raw = raw
         self.query = query
 
+    @staticmethod
+    def normalize_result(query, result):
+        """Return the doc from an item in the query response."""
+        if query._exclude_source:
+            return result['_id']
+        if query._legacy_fields:
+            return flatten_field_dict(result, fields_property='_source')
+        else:
+            return result['_source']
+
     @property
     def raw_hits(self):
         return self.raw['hits']['hits']
@@ -346,58 +403,23 @@ class ESQuerySet(object):
     @property
     def hits(self):
         """Return the docs from the response."""
-        if self.query._fields == []:
-            return self.ids
-        elif self.query._fields is not None:
-            return [self._flatten_field_dict(r['fields']) for r in self.raw_hits]
-        else:
-            return [r['_source'] for r in self.raw_hits]
-
-    @staticmethod
-    def _flatten_field_dict(field_dict):
-        """
-        In ElasticSearch 1.3, the return format was changed such that field
-        values are always returned as lists, where as previously they would
-        be returned as scalars if the field had a single value, and returned
-        as lists if the field had multiple values.
-        This method restores the behavior of 0.90 .
-        
-        https://www.elastic.co/guide/en/elasticsearch/reference/1.3/_return_values.html
-        """
-        for key, val in field_dict.iteritems():
-            new_val = val
-            if type(val) == list and len(val) == 1:
-                new_val = val[0]
-            field_dict[key] = new_val
-        return field_dict
+        return [self.normalize_result(self.query, r) for r in self.raw_hits]
 
     @property
     def total(self):
         """Return the total number of docs matching the query."""
         return self.raw['hits']['total']
 
-    @property
-    def ids(self):
-        return [r['_id'] for r in self.raw_hits]
-
-    @property
-    def raw_facets(self):
-        return self.raw['facets']
-
-    def facet(self, name, _type):
-        return self.raw['facets'][name][_type]
+    def aggregation(self, name):
+        return self.raw['aggregations'][name]
 
     @property
     @memoized
-    def facets(self):
-        """
-        Namedtuple of the facets defined in the query.
-        See the facet docs for more specifics.
-        """
-        facets = self.query._facets
-        raw = self.raw.get('facets', {})
-        results = namedtuple('facet_results', [f.name for f in facets])
-        return results(**{f.name: f.parse_result(raw) for f in facets})
+    def aggregations(self):
+        aggregations = self.query._aggregations
+        raw = self.raw.get('aggregations', {})
+        results = namedtuple('aggregation_results', [a.name for a in aggregations])
+        return results(**{a.name: a.parse_result(raw) for a in aggregations})
 
     def __repr__(self):
         return '{}({!r}, {!r})'.format(self.__class__.__name__, self.raw, self.query)

@@ -138,9 +138,10 @@ def get_message_bank(domain, risk_profile=None, for_comparing=False):
     else:
         return messages
 
+
 def add_metadata(sms, message_bank_messages):
     """
-    sms - an instance of FRISMSLog
+    sms - an instance of SMS
     message_bank_messages - the result from calling get_message_bank(for_comparing=True)
     """
     text = letters_only(sms.text)
@@ -153,10 +154,12 @@ def add_metadata(sms, message_bank_messages):
     sms.fri_message_bank_lookup_completed = True
     try:
         sms.save()
+        sms.publish_change()
     except Exception:
         # No big deal, we'll just perform the lookup again the next time it's needed, and
         # try to save it again then.
         pass
+
 
 def randomize_messages(case):
     """
@@ -210,6 +213,7 @@ def already_randomized(case):
     ).first()
     return any_message is not None
 
+
 def get_randomized_message(case, order):
     if order >= 0 and order <= 279:
         client = get_redis_client()
@@ -229,6 +233,7 @@ def get_randomized_message(case, order):
     else:
         return None
 
+
 def get_date(case, prop):
     value = case.get_case_property(prop)
     # A datetime is a date, but a date is not a datetime
@@ -244,6 +249,7 @@ def get_date(case, prop):
         return value
     else:
         return None
+
 
 def get_message_offset(case):
     previous_sunday = get_date(case, "previous_sunday")
@@ -286,6 +292,7 @@ def get_num_missed_windows(case):
 def get_message_number(reminder):
     return ((reminder.schedule_iteration_num - 1) * 35) + reminder.current_event_sequence_num
 
+
 def custom_content_handler(reminder, handler, recipient, catch_up=False):
     """
     This method is invoked from the reminder event-handling thread to retrieve
@@ -317,11 +324,13 @@ def custom_content_handler(reminder, handler, recipient, catch_up=False):
     else:
         return None
 
+
 def catchup_custom_content_handler(reminder, handler, recipient):
     """
     Used to send content that was missed to due registering late in the day.
     """
     return custom_content_handler(reminder, handler, recipient, catch_up=True)
+
 
 def get_valid_date_range(case):
     start_date = get_date(case, "start_date")
@@ -329,6 +338,7 @@ def get_valid_date_range(case):
         return (start_date, start_date + timedelta(days=55))
     else:
         return (None, None)
+
 
 def shift_custom_content_handler(reminder, handler, recipient):
     # This is a bit complex / coupled with the reminder schedule, but is
@@ -389,6 +399,7 @@ def shift_custom_content_handler(reminder, handler, recipient):
 
     return message
 
+
 def format_day(day):
     suffixes = {
         1: "st",
@@ -400,6 +411,7 @@ def format_day(day):
     else:
         suffix = suffixes.get(day % 10, "th")
     return "%s%s" % (day, suffix)
+
 
 def off_day_custom_content_handler(reminder, handler, recipient):
     case = reminder.case
@@ -418,4 +430,3 @@ def off_day_custom_content_handler(reminder, handler, recipient):
             return message
 
     return None
-

@@ -1,17 +1,17 @@
 {% load i18n %}
 {% if app.application_version == '2.0' %}
-    <div class="control-group">
-        <label class="control-label">
-            {% trans "End of form Navigation" %}
+    <div class="form-group">
+        <label class="control-label col-sm-2">
+            {% trans "End of Form Navigation" %}
             <span class="hq-help-template"
-                  data-title="{% trans "End of form Navigation" %}"
+                  data-title="{% trans "End of Form Navigation" %}"
                   data-content="{% blocktrans %}After the user completes a form, your application automatically returns to the home screen.
                   Here you can set the application to navigate automatically to a different location in the app.{% endblocktrans %}"
             ></span>
         </label>
-        <div id="form-workflow" class="controls commcare-feature" data-since-version="2.10">
-            <div class="control-group">
-                <select name="post_form_workflow" data-bind="
+        <div id="form-workflow" class="col-sm-4 commcare-feature" data-since-version="2.10">
+            <div class="form-group">
+                <select name="post_form_workflow" class="form-control" data-bind="
                     optstr: workflowOptions(),
                     value: workflow
                     "></select>
@@ -31,53 +31,63 @@
                     }
                     ">
                 </div>
-                <button class="btn btn-primary" data-bind="
-                    click: onAddFormLink
-                    ">
-                    {% trans "Add link" %}
-                </button>
-                <input type="hidden" class="workflow-change-trigger" />
+                <div class="row">
+                    <button class="btn btn-primary" data-bind="click: onAddFormLink">
+                        <i class="fa fa-plus"></i>
+                        {% trans "Add link" %}
+                    </button>
+                    <input type="hidden" class="workflow-change-trigger" />
+                </div>
             </div>
         </div>
     </div>
 
     <script type="text/html" id="form-link-template">
-        <div class="control-group">
-            <textarea name="form_links_xpath_expressions"
-                      placeholder="XPath Expression"
-                      rows="1"
-                      data-bind="
-                        text: formLink.xpath,
-                        value: formLink.xpath
-            "></textarea>
-            &nbsp;
-            <i class="icon-arrow-right"></i>
-            &nbsp;
-            <select class="input-xlarge" name="form_links_form_ids" data-bind="
-                options: $parent.forms,
-                optionsText: 'name',
-                optionsValue: 'uniqueId',
-                optionsCaption: $parent.displayUnknownForm.call($parent, formLink),
-                value: formLink.formId
-                "></select>
-            <button class="btn btn-danger" data-bind="
-                click: $parent.onDestroyFormLink.bind($parent)
-                ">
-                <i class="icon-trash"></i>
-            </button>
-            <input type="hidden" name="datums_json" data-bind="value: formLink.serializedDatums"/>
-            <div class="alert alert-wraning" data-bind="visible: !formLink.autoLink()">
+        <div class="form-group">
+            <div class="row">
+                <div class="col-sm-5">
+                    <textarea name="form_links_xpath_expressions"
+                              placeholder="XPath Expression"
+                              rows="1"
+                              class="form-control"
+                              data-bind="
+                                text: formLink.xpath,
+                                value: formLink.xpath
+                    "></textarea>
+                </div>
+                <div class="col-sm-1">
+                    <i class="fa fa-arrow-right"></i>
+                </div>
+                <div class="col-sm-5">
+                    <select class="form-control" name="form_links_form_ids" data-bind="
+                        options: $parent.forms,
+                        optionsText: 'name',
+                        optionsValue: 'uniqueId',
+                        optionsCaption: $parent.displayUnknownForm.call($parent, formLink),
+                        value: formLink.formId
+                        "></select>
+                </div>
+                <div class="col-sm-1">
+                    <button class="btn btn-danger" data-bind="
+                        click: $parent.onDestroyFormLink.bind($parent)
+                        ">
+                        <i class="fa fa-trash"></i>
+                    </button>
+                    <input type="hidden" name="datums_json" data-bind="value: formLink.serializedDatums"/>
+                </div>
+            </div>
+            <div class="help-block" data-bind="visible: !formLink.autoLink()">
                 <p>
                     {% trans "This form requires manual linking." %}
-                    <button class="btn btn-small" data-bind="click: formLink.fetchDatums, visible: !formLink.datumsFetched()">
-                        {% trans "Continue" %}<i class="icon-tick"></i>
+                    <button class="btn btn-default btn-sm" data-bind="click: formLink.fetchDatums, visible: !formLink.datumsFetched()">
+                        {% trans "Continue" %}
                     </button>
                 </p>
                 <p data-bind="visible: formLink.datumsFetched() && formLink.datums().length === 0">
                     {% trans "No additional linking required." %}
                 </p>
                 <div data-bind="foreach: formLink.datums, visible: formLink.datumsFetched() && formLink.datums().length">
-                    <div class="control-group">
+                    <div class="form-group">
                         <label class="control-label">
                             <span data-bind="text: name"></span><br/>
                             <small>{% trans "Case Type: " %}</small><small data-bind="text: caseType"></small>
@@ -90,8 +100,7 @@
                 </div>
             </div>
 
-
-            <div class="alert alert-error" data-bind="
+            <div class="alert alert-danger" data-bind="
                 visible: formLink.errors().length
                 ">
                 <ul data-bind="

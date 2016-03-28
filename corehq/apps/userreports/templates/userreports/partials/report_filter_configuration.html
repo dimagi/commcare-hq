@@ -46,6 +46,17 @@ TODO:
                         <!--/ko-->
                     </th>
                     <!--/ko-->
+                    <!--ko if: $data.hasCalculationCol -->
+                    <th>
+                        {% trans "Format" %}
+                        <!--ko if: $data.calcHelpText -->
+                        <span class="hq-help-template" data-bind="
+                            if: calcHelpText,
+                            attr: {'data-content': calcHelpText}
+                        "></span>
+                        <!--/ko-->
+                    </th>
+                    <!--/ko-->
                     <th></th>
                 </tr>
             </thead>
@@ -106,7 +117,15 @@ TODO:
                     "></select>
                 </td>
                 <!--/ko-->
-
+                <!--ko if: $parent.hasCalculationCol -->
+                <td>
+                    <select class="form-control" data-bind="
+                        options: $parent.calculationOptions,
+                        value: calculation,
+                        attr: {disabled: !existsInCurrentVersion()}
+                    "></select>
+                </td>
+                <!--/ko-->
                 <td class="span1">
                     <i style="cursor: pointer;" title="Delete" data-bind="
                         click: function(){$parent.columns.remove($data)},

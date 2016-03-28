@@ -1,8 +1,8 @@
 from corehq.apps.locations.models import SQLLocation
+from custom.ewsghana.handlers.keyword import KeywordHandler
 from custom.ewsghana.reminders import NO_SUPPLY_POINT_MESSAGE, REQ_SUBMITTED, \
     REQ_NOT_SUBMITTED
 from custom.ilsgateway.models import RequisitionReport
-from custom.ilsgateway.tanzania.handlers.keyword import KeywordHandler
 
 
 class RequisitionHandler(KeywordHandler):

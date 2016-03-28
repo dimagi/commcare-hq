@@ -1,7 +1,9 @@
+import calendar
 import datetime
 import time
 
 from corehq.util.soft_assert import soft_assert
+from dimagi.utils.dates import add_months
 from dimagi.utils.parsing import ISO_DATE_FORMAT, ISO_DATETIME_FORMAT
 
 
@@ -66,3 +68,23 @@ def iso_string_to_date(iso_string):
 
     """
     return datetime.datetime.strptime(iso_string, ISO_DATE_FORMAT).date()
+
+
+def get_first_last_days(year, month):
+    last_day = calendar.monthrange(year, month)[1]
+    date_start = datetime.date(year, month, 1)
+    date_end = datetime.date(year, month, last_day)
+    return date_start, date_end
+
+
+def get_current_month_date_range(reference_date=None):
+    reference_date = reference_date or datetime.date.today()
+    date_start = datetime.date(reference_date.year, reference_date.month, 1)
+    return date_start, reference_date
+
+
+def get_previous_month_date_range(reference_date=None):
+    reference_date = reference_date or datetime.date.today()
+
+    last_month_year, last_month = add_months(reference_date.year, reference_date.month, -1)
+    return get_first_last_days(last_month_year, last_month)

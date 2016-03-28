@@ -39,25 +39,21 @@ logger = logging.getLogger(__name__)
 
 
 @require_can_edit_apps
-def form_designer(request, domain, app_id, module_id=None, form_id=None,
-                  is_user_registration=False):
+def form_designer(request, domain, app_id, module_id=None, form_id=None):
     meta = get_meta(request)
     track_entered_form_builder_on_hubspot.delay(request.couch_user, request.COOKIES, meta)
 
     app = get_app(domain, app_id)
     module = None
 
-    if is_user_registration:
-        form = app.get_user_registration()
-    else:
-        try:
-            module = app.get_module(module_id)
-        except ModuleNotFoundException:
-            return bail(request, domain, app_id, not_found="module")
-        try:
-            form = module.get_form(form_id)
-        except IndexError:
-            return bail(request, domain, app_id, not_found="form")
+    try:
+        module = app.get_module(module_id)
+    except ModuleNotFoundException:
+        return bail(request, domain, app_id, not_found="module")
+    try:
+        form = module.get_form(form_id)
+    except IndexError:
+        return bail(request, domain, app_id, not_found="form")
 
     if form.no_vellum:
         messages.warning(request, _(
@@ -112,7 +108,7 @@ def form_designer(request, domain, app_id, module_id=None, form_id=None,
     context.update(locals())
     context.update({
         'vellum_debug': settings.VELLUM_DEBUG,
-        'nav_form': form if not is_user_registration else '',
+        'nav_form': form,
         'formdesigner': True,
         'multimedia_object_map': app.get_object_map(),
         'sessionid': request.COOKIES.get('sessionid'),
@@ -127,7 +123,7 @@ def form_designer(request, domain, app_id, module_id=None, form_id=None,
 
 @require_GET
 @require_can_edit_apps
-def get_data_schema(request, domain, app_id=None, form_unique_id=None):
+def get_form_data_schema(request, domain, form_unique_id):
     """Get data schema
 
     One of `app_id` or `form_unique_id` is required. `app_id` is ignored
@@ -179,18 +175,17 @@ def get_data_schema(request, domain, app_id=None, form_unique_id=None):
     structure item may have a human readable "name".
     """
     data = []
-    if form_unique_id is None:
-        app = get_app(domain, app_id)
-        form = None
-    else:
-        try:
-            form, app = Form.get_form(form_unique_id, and_app=True)
-        except ResourceConflict:
-            raise Http404()
-        data.append(get_session_schema(form))
+
+    try:
+        form, app = Form.get_form(form_unique_id, and_app=True)
+    except ResourceConflict:
+        raise Http404()
+    data.append(get_session_schema(form))
+
     if app.domain != domain:
         raise Http404()
-    data.append(get_casedb_schema(app))  # TODO use domain instead of app
+    if form and form.requires_case():
+        data.append(get_casedb_schema(app))  # TODO use domain instead of app
     data.extend(
         sorted(item_lists_by_domain(domain), key=lambda x: x['name'].lower())
     )
@@ -200,6 +195,6 @@ def get_data_schema(request, domain, app_id=None, form_unique_id=None):
     return HttpResponse(json.dumps(data, **kw))
 
 
-@require_can_edit_apps
-def user_registration_source(request, domain, app_id):
-    return form_designer(request, domain, app_id, is_user_registration=True)
+@require_GET
+def ping(request):
+    return HttpResponse("pong")

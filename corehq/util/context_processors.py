@@ -33,26 +33,19 @@ def is_commtrack(project, request):
         return False
 
 
-def get_domain_type(project, request):
-    if is_commtrack(project, request):
-        return COMMTRACK
-    else:
-        return COMMCARE
-
-
 def get_per_domain_context(project, request=None):
-    domain_type = get_domain_type(project, request)
-    if domain_type == COMMTRACK:
-        logo_url = static('hqstyle/img/commcaresupply-logo.png')
+    if is_commtrack(project, request):
+        domain_type = COMMTRACK
         site_name = "CommCare Supply"
         public_site = "http://www.commtrack.org"
         can_be_your = _("mobile logistics solution")
     else:
-        logo_url = static('hqstyle/img/commcare-logo.png')
+        domain_type = COMMCARE
         site_name = "CommCare HQ"
         public_site = "http://www.commcarehq.org"
         can_be_your = _("mobile solution for your frontline workforce")
 
+    logo_url = static('hqstyle/img/commcare-flower.png')
     if (project and project.has_custom_logo
         and domain_has_privilege(project.name, privileges.CUSTOM_BRANDING)
     ):
@@ -78,23 +71,23 @@ def current_url_name(request):
     """
     Adds the name for the matched url pattern for the current request to the
     request context.
-    
     """
     try:
         match = resolve(request.path)
         url_name = match.url_name
     except Http404:
         url_name = None
-    
+
     return {
         'current_url_name': url_name
     }
 
 
-def analytics_js(request):
+def js_api_keys(request):
     d = {}
     d.update(settings.ANALYTICS_IDS)
     d.update({"ANALYTICS_CONFIG": settings.ANALYTICS_CONFIG})
+    d['MAPBOX_ACCESS_TOKEN'] = settings.MAPBOX_ACCESS_TOKEN
     return d
 
 

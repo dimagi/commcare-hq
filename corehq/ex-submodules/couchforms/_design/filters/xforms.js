@@ -11,10 +11,12 @@ function(doc, req)
     switch (doc_type) {
         case "XFormInstance":
         case "XFormArchived":
+        case "XFormError":
         case "XFormDeprecated":
         case "XFormDuplicate":
         case "XFormInstance-Deleted":
         case "HQSubmission":
+        case "SubmissionErrorLog":
             return true;
         default:
             return false;

@@ -2,31 +2,13 @@
 <script>
     var menuImage, menuAudio;
     $(function () {
-        var $mediaImage = $('#{{ qualifier|default_if_none:"" }}media_image'),
-            $mediaAudio = $('#{{ qualifier|default_if_none:"" }}media_audio');
-
-        menuImage = new AppMenuMediaManager({
-            ref: {{ item.menu_refs.image|JSON }},
-            objectMap: {{ multimedia.object_map|JSON }},
-            uploadController: iconUploader,
-            defaultPath: 'jr://file/commcare/image/' + '{{ item.default_file_name }}' + '.png',
-            inputElement: $mediaImage
-        });
-
-        menuAudio = new AppMenuMediaManager({
-            ref: {{ item.menu_refs.audio|JSON }},
-            objectMap: {{ multimedia.object_map|JSON }},
-            uploadController: audioUploader,
-            defaultPath: 'jr://file/commcare/audio/' + '{{ item.default_file_name }}' + '.mp3',
-            inputElement: $mediaAudio
-        });
-
-        if ($mediaImage.length) {
-            $mediaImage.koApplyBindings(menuImage);
-        }
-        if ($mediaAudio.length) {
-          $mediaAudio.koApplyBindings(menuAudio);
-        }
-
+        var initNavMenuMedia = hqImport('app_manager/js/app_manager_media.js').initNavMenuMedia;
+        initNavMenuMedia(
+                {{ qualifier|default_if_none:""|JSON }},
+                {{ item.menu_refs.image|JSON }},
+                {{ item.menu_refs.audio|JSON }},
+                {{ multimedia.object_map|JSON }},
+                {{ item.default_file_name|JSON }}
+        );
     });
 </script>

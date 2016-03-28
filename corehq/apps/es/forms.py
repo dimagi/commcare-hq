@@ -21,10 +21,12 @@ class FormES(HQESQuery):
             submitted,
             completed,
             user_id,
+            user_ids_handle_unknown,
+            j2me_submissions,
         ] + super(FormES, self).builtin_filters
 
-    def user_facet(self, size=None):
-        return self.terms_facet('form.meta.userID', 'user', size=size)
+    def user_aggregation(self):
+        return self.terms_aggregation('form.meta.userID', 'user')
 
     def completed_histogram(self, timezone=None):
         return self.date_histogram('date_histogram', 'form.meta.timeEnd', 'day', timezone=timezone)
@@ -32,16 +34,16 @@ class FormES(HQESQuery):
     def submitted_histogram(self, timezone=None):
         return self.date_histogram('date_histogram', 'received_on', 'day', timezone=timezone)
 
-    def domain_facet(self):
-        return self.terms_facet('domain', 'domain', 1000000)
+    def domain_aggregation(self):
+        return self.terms_aggregation('domain', 'domain')
 
 
-def xmlns(xmlns):
-    return filters.term('xmlns.exact', xmlns)
+def xmlns(xmlnss):
+    return filters.term('xmlns.exact', xmlnss)
 
 
-def app(app_id):
-    return filters.term('app_id', app_id)
+def app(app_ids):
+    return filters.term('app_id', app_ids)
 
 
 def submitted(gt=None, gte=None, lt=None, lte=None):
@@ -54,3 +56,27 @@ def completed(gt=None, gte=None, lt=None, lte=None):
 
 def user_id(user_ids):
     return filters.term('form.meta.userID', list(user_ids))
+
+
+def user_ids_handle_unknown(user_ids):
+    missing_users = None in user_ids
+
+    user_ids = filter(None, user_ids)
+
+    if not missing_users:
+        user_filter = user_id(user_ids)
+    elif user_ids and missing_users:
+        user_filter = filters.OR(
+            user_id(user_ids),
+            filters.missing('form.meta.userID'),
+        )
+    else:
+        user_filter = filters.missing('form.meta.userID')
+    return user_filter
+
+
+def j2me_submissions(gt=None, gte=None, lt=None, lte=None):
+    return filters.AND(
+        filters.regexp("form.meta.appVersion", "v2+.[0-9]+.*"),
+        submitted(gt, gte, lt, lte)
+    )

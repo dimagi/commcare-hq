@@ -136,21 +136,13 @@ $(function() {
         return output
 
 
-class Select2Widget(forms.Select):
-    class Media:
-        css = {
-            'all': ('hqwebapp/js/lib/select2/select2.css',)
-        }
-        js = ('hqwebapp/js/lib/select2/select2.js',)
-
-
 class Select2MultipleChoiceWidget(forms.SelectMultiple):
 
     class Media:
         css = {
-            'all': ('hqwebapp/js/lib/select2/select2.css',)
+            'all': ('select2-3.4.5-legacy/select2.css',)
         }
-        js = ('hqwebapp/js/lib/select2/select2.js',)
+        js = ('select2-3.4.5-legacy/select2.js',)
 
     def render(self, name, value, attrs=None, choices=()):
         final_attrs = self.build_attrs(attrs)

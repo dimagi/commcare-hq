@@ -36,15 +36,6 @@ from dimagi.utils.make_uuid import random_hex
 logger = logging.getLogger(__name__)
 
 
-def get_app_id(form):
-    """
-    Given an XForm instance, try to grab the app id, returning
-    None if not available. This is just a shortcut since the app_id
-    might not always be set.
-    """
-    return getattr(form, "app_id", None)
-
-
 def split_path(path):
     path_parts = path.split('/')
     name = path_parts.pop(-1)
@@ -265,7 +256,7 @@ def get_casedb_schema(app):
     """
     case_types = app.get_case_types()
     per_type_defaults = get_per_type_defaults(app.domain, case_types)
-    builder = ParentCasePropertyBuilder(app, ['name'], per_type_defaults)
+    builder = ParentCasePropertyBuilder(app, ['case_name'], per_type_defaults)
     related = builder.get_parent_type_map(case_types)
     map = builder.get_case_property_map(case_types, include_parent_properties=False)
     return {
@@ -355,7 +346,7 @@ def add_odk_profile_after_build(app_build):
     app_build.odk_profile_created_after_build = True
 
 
-def create_temp_sort_column(field, index):
+def create_temp_sort_column(field):
     """
     Used to create a column for the sort only properties to
     add the field to the list of properties and app strings but
@@ -565,7 +556,11 @@ def update_unique_ids(app_source):
             app_source['_attachments']["%s.xml" % new_unique_id] = app_source['_attachments'].pop("%s.xml" % unique_id)
         return new_unique_id
 
-    change_form_unique_id(app_source['user_registration'])
+    # once Application.wrap includes deleting user_registration
+    # we can remove this
+    if 'user_registration' in app_source:
+        del app_source['user_registration']
+
     id_changes = {}
     for m, module in enumerate(app_source['modules']):
         for f, form in enumerate(module['forms']):

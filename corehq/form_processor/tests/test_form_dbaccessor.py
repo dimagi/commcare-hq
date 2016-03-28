@@ -1,4 +1,6 @@
 import uuid
+from datetime import datetime
+import time
 
 from django.core.files.uploadedfile import UploadedFile
 from django.test import TestCase
@@ -6,10 +8,13 @@ from django.test import TestCase
 from corehq.form_processor.backends.sql.dbaccessors import FormAccessorSQL, CaseAccessorSQL
 from corehq.form_processor.backends.sql.processor import FormProcessorSQL
 from corehq.form_processor.exceptions import XFormNotFound, AttachmentNotFound
+from corehq.form_processor.interfaces.dbaccessors import FormAccessors
 from corehq.form_processor.interfaces.processor import ProcessedForms
 from corehq.form_processor.models import XFormInstanceSQL, XFormOperationSQL, XFormAttachmentSQL
 from corehq.form_processor.parsers.form import apply_deprecation
-from corehq.form_processor.tests.utils import create_form_for_test, get_simple_form_xml, FormProcessorTestUtils
+from corehq.form_processor.tests.utils import create_form_for_test, FormProcessorTestUtils, run_with_all_backends
+from corehq.form_processor.utils import get_simple_form_xml, get_simple_wrapped_form
+from corehq.form_processor.utils.xform import TestFormMetadata
 from corehq.sql_db.routers import db_for_read_write
 from crispy_forms.tests.utils import override_settings
 
@@ -112,7 +117,9 @@ class FormAccessorTestsSQL(TestCase):
         form_with_pic = create_form_for_test(DOMAIN, attachments=attachments)
         plain_form = create_form_for_test(DOMAIN)
 
-        forms = FormAccessorSQL.get_forms_with_attachments_meta([form_with_pic.form_id, plain_form.form_id])
+        forms = FormAccessorSQL.get_forms_with_attachments_meta(
+            [form_with_pic.form_id, plain_form.form_id], ordered=True
+        )
         self.assertEqual(2, len(forms))
         self.assertEqual(form_with_pic.form_id, forms[0].form_id)
         with self.assertNumQueries(0, using=db_for_read_write(XFormAttachmentSQL)):
@@ -144,7 +151,7 @@ class FormAccessorTestsSQL(TestCase):
         # check reverse ordering
         forms = FormAccessorSQL.get_forms_by_type(DOMAIN, 'XFormInstance', 5, recent_first=True)
         self.assertEqual(2, len(forms))
-        self.assertEqual({form2.form_id, form1.form_id}, {f.form_id for f in forms})
+        self.assertEqual([form2.form_id, form1.form_id], [f.form_id for f in forms])
 
         # check limit
         forms = FormAccessorSQL.get_forms_by_type(DOMAIN, 'XFormInstance', 1)
@@ -166,10 +173,10 @@ class FormAccessorTestsSQL(TestCase):
     def test_form_with_id_exists(self):
         form = create_form_for_test(DOMAIN)
 
-        self.assertFalse(FormAccessorSQL.form_with_id_exists('not a form'))
-        self.assertFalse(FormAccessorSQL.form_with_id_exists(form.form_id, 'wrong domain'))
-        self.assertTrue(FormAccessorSQL.form_with_id_exists(form.form_id))
-        self.assertTrue(FormAccessorSQL.form_with_id_exists(form.form_id, DOMAIN))
+        self.assertFalse(FormAccessorSQL.form_exists('not a form'))
+        self.assertFalse(FormAccessorSQL.form_exists(form.form_id, 'wrong domain'))
+        self.assertTrue(FormAccessorSQL.form_exists(form.form_id))
+        self.assertTrue(FormAccessorSQL.form_exists(form.form_id, DOMAIN))
 
     def test_hard_delete_forms(self):
         forms = [create_form_for_test(DOMAIN) for i in range(3)]
@@ -258,6 +265,32 @@ class FormAccessorTestsSQL(TestCase):
         self.assertEqual(problem, saved_form.problem)
         self.assertEqual(original_domain, saved_form.domain)
 
+    def test_get_forms_received_since(self):
+        # since this test depends on the global form list just wipe everything
+        FormProcessorTestUtils.delete_all_sql_forms()
+
+        form1 = create_form_for_test(DOMAIN)
+        form2 = create_form_for_test(DOMAIN)
+        middle = datetime.utcnow()
+        time.sleep(.01)
+        form3 = create_form_for_test(DOMAIN)
+        form4 = create_form_for_test(DOMAIN)
+        time.sleep(.01)
+        end = datetime.utcnow()
+
+        forms_back = list(FormAccessorSQL.get_all_forms_received_since())
+        self.assertEqual(4, len(forms_back))
+        self.assertEqual(set(form.form_id for form in forms_back),
+                         set([form1.form_id, form2.form_id, form3.form_id, form4.form_id]))
+
+        forms_back = list(FormAccessorSQL.get_all_forms_received_since(middle))
+        self.assertEqual(2, len(forms_back))
+        self.assertEqual(set(form.form_id for form in forms_back),
+                         set([form3.form_id, form4.form_id]))
+
+        self.assertEqual(0, len(list(FormAccessorSQL.get_all_forms_received_since(end))))
+        self.assertEqual(1, len(list(FormAccessorSQL.get_forms_received_since(limit=1))))
+
     def _validate_deprecation(self, existing_form, new_form):
         saved_new_form = FormAccessorSQL.get_form(new_form.form_id)
         deprecated_form = FormAccessorSQL.get_form(existing_form.form_id)
@@ -272,6 +305,34 @@ class FormAccessorTestsSQL(TestCase):
         self.assertEqual(DOMAIN, form.domain)
         self.assertEqual('user1', form.user_id)
         return form
+
+
+class FormAccessorsTests(TestCase):
+
+    def tearDown(self):
+        FormProcessorTestUtils.delete_all_xforms(DOMAIN)
+
+    @run_with_all_backends
+    def test_soft_delete(self):
+        meta = TestFormMetadata(domain=DOMAIN)
+        get_simple_wrapped_form('f1', metadata=meta)
+        f2 = get_simple_wrapped_form('f2', metadata=meta)
+        f2.archive()
+        get_simple_wrapped_form('f3', metadata=meta)
+
+        accessors = FormAccessors(DOMAIN)
+
+        # delete
+        num = accessors.soft_delete_forms(['f1', 'f2'], deletion_id='123')
+        self.assertEqual(num, 2)
+
+        for form_id in ['f1', 'f2']:
+            form = accessors.get_form(form_id)
+            self.assertTrue(form.is_deleted)
+            self.assertEqual(form.deletion_id, '123')
+
+        form = accessors.get_form('f3')
+        self.assertFalse(form.is_deleted)
 
 
 def _simulate_form_edit():

@@ -1,7 +1,11 @@
 import json
 from django.utils.translation import ugettext as _
+from jsonobject.exceptions import BadValueError
+from corehq.apps.userreports.exceptions import InvalidQueryColumn
+
 from corehq.apps.userreports.reports.sorting import ASCENDING, DESCENDING
 from corehq.apps.userreports.sql.columns import DEFAULT_MAXIMUM_EXPANSION
+from couchforms.jsonobject_extensions import GeoPointProperty
 from dimagi.ext.jsonobject import (
     BooleanProperty,
     DictProperty,
@@ -69,8 +73,13 @@ class ReportColumn(JsonObject):
             return TransformFactory.get_transform(self.transform).get_transform_function()
         return None
 
-    def get_group_by_columns(self):
-        raise NotImplementedError(_("You can't group by columns of type {}".format(self.type)))
+    def get_query_column_ids(self):
+        """
+        Gets column IDs associated with a query. These could be different from
+        the normal column_ids if the same column ends up in multiple columns in
+        the query (e.g. an aggregate date splitting into year and month)
+        """
+        raise InvalidQueryColumn(_("You can't query on columns of type {}".format(self.type)))
 
     def get_header(self, lang):
         return localize(self.display, lang)
@@ -131,8 +140,36 @@ class FieldColumn(ReportColumn):
             )
         ])
 
-    def get_group_by_columns(self):
+    def get_query_column_ids(self):
         return [self.column_id]
+
+
+class LocationColumn(ReportColumn):
+    type = TypeProperty('location')
+    field = StringProperty(required=True)
+    sortable = BooleanProperty(default=False)
+
+    def format_data(self, data):
+        column_name = self.column_id
+        for row in data:
+            try:
+                row[column_name] = '{g.latitude} {g.longitude} {g.altitude} {g.accuracy}'.format(
+                    g=GeoPointProperty().wrap(row[column_name])
+                )
+            except BadValueError:
+                row[column_name] = '{} ({})'.format(row[column_name], _('Invalid Location'))
+
+    def get_sql_column_config(self, data_source_config, lang):
+        return SqlColumnConfig(columns=[
+            DatabaseColumn(
+                header=self.get_header(lang),
+                agg_column=SimpleColumn(self.field, alias=self.column_id),
+                sortable=self.sortable,
+                data_slug=self.column_id,
+                format_fn=self.get_format_fn(),
+                help_text=self.description
+            )
+        ])
 
 
 class ExpandedColumn(ReportColumn):
@@ -187,7 +224,7 @@ class AggregateDateColumn(ReportColumn):
             return '{}-{:02d}'.format(int(data['year']), int(data['month']))
         return _format
 
-    def get_group_by_columns(self):
+    def get_query_column_ids(self):
         return [self._year_column_alias(), self._month_column_alias()]
 
 

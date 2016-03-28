@@ -1,18 +1,18 @@
-from corehq.apps.ivr.tests.util import LogCallTestCase
-from corehq.messaging.smsbackends.telerivet.models import TelerivetBackend
+import corehq.apps.ivr.tests.util as util
+from corehq.messaging.smsbackends.telerivet.models import SQLTelerivetBackend
 from corehq.messaging.smsbackends.telerivet.tasks import EVENT_INCOMING, MESSAGE_TYPE_CALL
 from django.test import Client
 
 
-class TelerivetLogCallTestCase(LogCallTestCase):
+class TelerivetLogCallTestCase(util.LogCallTestCase):
     def setUp(self):
         super(TelerivetLogCallTestCase, self).setUp()
-        self.backend = TelerivetBackend(
-            _id='MOBILE_BACKEND_TELERIVET',
+        self.backend = SQLTelerivetBackend(
             name='MOBILE_BACKEND_TELERIVET',
-            webhook_secret='abc',
-            is_global=True
+            is_global=True,
+            hq_api_id=SQLTelerivetBackend.get_api_id()
         )
+        self.backend.set_extra_fields(webhook_secret='abc')
         self.backend.save()
 
     def tearDown(self):

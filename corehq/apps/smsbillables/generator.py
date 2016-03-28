@@ -1,13 +1,13 @@
 import random
 import datetime
 import string
+from collections import namedtuple
 from decimal import Decimal
-from corehq.apps.sms.mixin import SMSBackend
 
 from dimagi.utils.data import generator as data_gen
 from corehq.apps.accounting.models import Currency
-from corehq.apps.sms.models import INCOMING, OUTGOING, SMSLog
-from corehq.apps.sms.util import get_available_backends
+from corehq.apps.sms.models import INCOMING, OUTGOING, SMS
+from corehq.apps.sms.util import get_sms_backend_classes
 
 
 # arbitrarily generated once from http://www.generatedata.com/
@@ -27,10 +27,12 @@ SMS_MESSAGE_CONTENT = [
 TEST_DOMAIN = "test"
 TEST_NUMBER = "16175005454"
 
-TEST_COUNTRY_CODES = [1, 20, 30, 220, 501]
-OTHER_COUNTRY_CODES = [31, 40, 245, 502]
+TEST_COUNTRY_CODES = (1, 20, 30, 220, 501)
+OTHER_COUNTRY_CODES = (31, 40, 245, 502)
 
 DIRECTIONS = [INCOMING, OUTGOING]
+
+CountryPrefixPair = namedtuple('CountryPrefixPair', ['country_code', 'prefix'])
 
 
 def arbitrary_message():
@@ -41,27 +43,36 @@ def arbitrary_fee():
     return Decimal(str(round(random.uniform(0.0, 1.0), 4)))
 
 
-def arbitrary_country_code_and_prefixes(country_codes=TEST_COUNTRY_CODES):
-    country_codes_and_prefixes = []
-    for country_code in country_codes:
-        prefixes = [""]
-        for _ in range(8):
-            for i in range(4):
-                while True:
-                    prefix = prefixes[-1 - i] + str(random.randint(0 if country_code != 1 else 2, 9))
-                    if prefix not in prefixes:
-                        prefixes.append(prefix)
-                        break
-        for prefix in prefixes:
-            country_codes_and_prefixes.append((str(country_code), prefix))
-    return country_codes_and_prefixes
+def _generate_prefixes(country_code, max_prefix_length, num_prefixes_per_size):
+    def _generate_prefix(cc, existing_prefixes, i):
+        while True:
+            prefix = existing_prefixes[-1 - i] + str(random.randint(0 if cc != 1 else 2, 9))
+            if prefix not in existing_prefixes:
+                return prefix
+
+    prefixes = [""]
+    for _ in range(max_prefix_length):
+        for i in range(num_prefixes_per_size):
+            prefixes.append(_generate_prefix(country_code, prefixes, i))
+    return prefixes
+
+
+def arbitrary_country_code_and_prefixes(
+    max_prefix_length, num_prefixes_per_size,
+    country_codes=TEST_COUNTRY_CODES
+):
+    return [
+        CountryPrefixPair(str(country_code), prefix)
+        for country_code in country_codes
+        for prefix in _generate_prefixes(country_code, max_prefix_length, num_prefixes_per_size)
+    ]
 
 
 def arbitrary_fees_by_prefix(backend_ids, country_codes_and_prefixes):
     fees = {}
     for direction in DIRECTIONS:
         fees_by_backend = {}
-        for backend in get_available_backends().values():
+        for backend in get_sms_backend_classes().values():
             fees_by_country_code = {}
             for country_code, _ in country_codes_and_prefixes:
                 fees_by_country_code[country_code] = {}
@@ -106,7 +117,7 @@ def arbitrary_fees_by_direction_and_backend():
     fees = {}
     for direction in DIRECTIONS:
         fees_by_backend = {}
-        for backend in get_available_backends().values():
+        for backend in get_sms_backend_classes().values():
             fees_by_backend[backend.get_api_id()] = arbitrary_fee()
         fees[direction] = fees_by_backend
     return fees
@@ -116,7 +127,7 @@ def arbitrary_fees_by_country():
     fees = {}
     for direction in DIRECTIONS:
         fees_by_backend = {}
-        for backend in get_available_backends().values():
+        for backend in get_sms_backend_classes().values():
             fees_by_country = {}
             for country in TEST_COUNTRY_CODES:
                 fees_by_country[country] = arbitrary_fee()
@@ -129,7 +140,7 @@ def arbitrary_fees_by_backend_instance(backend_ids):
     fees = {}
     for direction in DIRECTIONS:
         fees_by_backend = {}
-        for backend in get_available_backends().values():
+        for backend in get_sms_backend_classes().values():
             fees_by_backend[backend.get_api_id()] = (backend_ids[backend.get_api_id()], arbitrary_fee())
         fees[direction] = fees_by_backend
     return fees
@@ -139,7 +150,7 @@ def arbitrary_fees_by_all(backend_ids):
     fees = {}
     for direction in DIRECTIONS:
         fees_by_backend = {}
-        for backend in get_available_backends().values():
+        for backend in get_sms_backend_classes().values():
             fees_by_country = {}
             for country in TEST_COUNTRY_CODES:
                 fees_by_country[country] = (backend_ids[backend.get_api_id()], arbitrary_fee())
@@ -150,11 +161,12 @@ def arbitrary_fees_by_all(backend_ids):
 
 def arbitrary_backend_ids():
     backend_ids = {}
-    for backend in get_available_backends().values():
+    for backend in get_sms_backend_classes().values():
         backend_instance = data_gen.arbitrary_unique_name("back")
         backend_ids[backend.get_api_id()] = backend_instance
         sms_backend = backend()
-        sms_backend._id = backend_instance
+        sms_backend.hq_api_id = backend.get_api_id()
+        sms_backend.couch_id = backend_instance
         sms_backend.name = backend_instance
         sms_backend.is_global = True
         sms_backend.save()
@@ -170,7 +182,7 @@ def arbitrary_messages_by_backend_and_direction(backend_ids,
     messages = []
     for api_id, instance_id in backend_ids.items():
         for direction in directions:
-            sms_log = SMSLog(
+            sms_log = SMS(
                 direction=direction,
                 phone_number=phone_number,
                 domain=domain,

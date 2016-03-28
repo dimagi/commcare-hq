@@ -26,6 +26,7 @@
 
 {% if update_form %}
 <form id="commtrack_form" class="form form-horizontal" name="" method="post">
+    {% csrf_token %}
     <input type="hidden" name="form_type" value="commtrack" />
     <fieldset>
         {% if commtrack_enabled %}

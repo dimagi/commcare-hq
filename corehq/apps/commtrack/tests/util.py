@@ -6,9 +6,9 @@ from casexml.apps.case.tests.util import delete_all_cases, delete_all_xforms
 from casexml.apps.case.tests.util import delete_all_sync_logs
 from casexml.apps.case.xml import V2
 from casexml.apps.phone.tests.utils import generate_restore_payload
+from corehq.apps.sms.tests.util import setup_default_sms_test_backend
 from casexml.apps.stock.const import SECTION_TYPE_STOCK
 from casexml.apps.stock.models import StockReport, StockTransaction
-from corehq.form_processor.interfaces.supply import SupplyInterface
 from dimagi.utils.couch.database import get_safe_write_kwargs
 
 from corehq.apps.domain.models import Domain
@@ -19,12 +19,10 @@ from corehq.apps.products.models import Product, SQLProduct
 from corehq.apps.receiverwrapper import submit_form_locally
 from corehq.apps.users.models import CommCareUser
 from corehq.form_processor.parsers.ledgers.helpers import StockTransactionHelper
-from corehq.messaging.smsbackends.test.models import TestSMSBackend
 from corehq.util.decorators import require_debug_true
-from dimagi.utils.parsing import json_format_date
+from dimagi.utils.parsing import json_format_datetime
 
 from ..const import StockActions
-from ..helpers import make_supply_point
 from ..models import CommtrackConfig, ConsumptionConfig
 from ..sms import to_instance
 from ..util import (get_default_requisition_config,
@@ -37,7 +35,7 @@ TEST_LOCATION_TYPE = 'outlet'
 TEST_USER = 'commtrack-user'
 TEST_NUMBER = '5551234'
 TEST_PASSWORD = 'secret'
-TEST_BACKEND = 'test-backend'
+TEST_BACKEND = 'MOBILE_BACKEND_TEST'
 
 ROAMING_USER = {
     'username': TEST_USER + '-roaming',
@@ -82,9 +80,6 @@ def bootstrap_user(setup, username=TEST_USER, domain=TEST_DOMAIN,
         last_name=last_name
     )
     if home_loc == setup.loc.site_code:
-        if not SupplyInterface(domain).get_by_location(setup.loc):
-            make_supply_point(domain, setup.loc)
-
         user.set_location(setup.loc)
 
     user.save_verified_number(domain, phone_number, verified=True, backend_id=backend)
@@ -129,8 +124,11 @@ def bootstrap_products(domain):
 
 
 def make_loc(code, name=None, domain=TEST_DOMAIN, type=TEST_LOCATION_TYPE, parent=None):
+    if not Domain.get_by_name(domain):
+        raise AssertionError("You can't make a location on a fake domain")
     name = name or code
-    LocationType.objects.get_or_create(domain=domain, name=type)
+    LocationType.objects.get_or_create(domain=domain, name=type,
+                                       defaults={'administrative': False})
     loc = Location(site_code=code, name=name, domain=domain, location_type=type, parent=parent)
     loc.save()
     return loc
@@ -149,8 +147,7 @@ class CommTrackTest(TestCase):
         StockReport.objects.all().delete()
         StockTransaction.objects.all().delete()
 
-        self.backend = TestSMSBackend(name=TEST_BACKEND.upper(), is_global=True)
-        self.backend.save()
+        self.backend, self.backend_mapping = setup_default_sms_test_backend()
 
         self.domain = bootstrap_domain()
         bootstrap_location_types(self.domain.name)
@@ -170,21 +167,21 @@ class CommTrackTest(TestCase):
         self.domain = Domain.get(self.domain._id)
 
         self.loc = make_loc('loc1')
-        self.sp = make_supply_point(self.domain.name, self.loc)
+        self.sp = self.loc.linked_supply_point()
         self.users = [bootstrap_user(self, **user_def) for user_def in self.user_definitions]
 
         # everyone should be in a group.
         self.group = Group(domain=TEST_DOMAIN, name='commtrack-folks',
                            users=[u._id for u in self.users],
                            case_sharing=True)
+        self.group._id = self.sp.owner_id
         self.group.save()
-        self.sp.owner_id = self.group._id
-        self.sp.save()
         self.products = sorted(Product.by_domain(self.domain.name), key=lambda p: p._id)
         self.assertEqual(3, len(self.products))
 
     def tearDown(self):
         SQLLocation.objects.all().delete()
+        self.backend_mapping.delete()
         self.backend.delete()
         for u in self.users:
             u.delete()
@@ -204,7 +201,7 @@ def extract_balance_xml(xml_payload):
 
 
 def get_single_balance_block(case_id, product_id, quantity, date_string=None, section_id='stock'):
-    date_string = date_string or json_format_date(datetime.utcnow())
+    date_string = date_string or json_format_datetime(datetime.utcnow())
     return """
 <balance xmlns="http://commcarehq.org/ledger/v1" entity-id="{case_id}" date="{date}" section-id="{section_id}">
     <entry id="{product_id}" quantity="{quantity}" />
@@ -214,12 +211,14 @@ def get_single_balance_block(case_id, product_id, quantity, date_string=None, se
 
 
 def get_single_transfer_block(src_id, dest_id, product_id, quantity, date_string=None, section_id='stock'):
-    date_string = date_string or json_format_date(datetime.utcnow())
+    date_string = date_string or json_format_datetime(datetime.utcnow())
     return """
-<transfer xmlns="http://commcarehq.org/ledger/v1" src="{src_id}" dest="{dest_id}" date="{date}" section-id="{section_id}">
+<transfer xmlns="http://commcarehq.org/ledger/v1" {src} {dest} date="{date}" section-id="{section_id}">
     <entry id="{product_id}" quantity="{quantity}" />
 </transfer >""".format(
-        src_id=src_id, dest_id=dest_id, product_id=product_id, quantity=quantity,
+        src='src="{}"'.format(src_id) if src_id is not None else '',
+        dest='dest="{}"'.format(dest_id) if dest_id is not None else '',
+        product_id=product_id, quantity=quantity,
         date=date_string, section_id=section_id,
     ).strip()
 

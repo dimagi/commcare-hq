@@ -103,6 +103,7 @@ class BaseHNBCReport(CustomProjectReport, CaseListReport):
     include_inactive = True
     module_name = 'crs_reports'
     report_template_name = None
+    is_bootstrap3 = True
 
     @property
     @memoized
@@ -149,7 +150,7 @@ class BaseHNBCReport(CustomProjectReport, CaseListReport):
             DataTablesColumn(_("CHW Name"), prop_name="owner_display", sortable=False),
             DataTablesColumn(_("Date of Delivery"),  prop_name="date_birth.#value"),
             DataTablesColumn(_("PNC Visit Completion"), sortable=False),
-            DataTablesColumn(_("Delivery"), prop_name="place_birth"),
+            DataTablesColumn(_("Delivery"), prop_name="place_birth.#value"),
         )
         return headers
 

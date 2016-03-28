@@ -28,7 +28,8 @@ if USE_PARTITIONED_DATABASE:
             'main': ['default'],
             'proxy': ['proxy'],
             'form_processing': ['p1', 'p2'],
-        }
+        },
+        'host_map': {}  # allows mapping HOST in DATABASE settings to a different value for plproxy
     }
 
     DATABASES.update({
@@ -306,3 +307,7 @@ INTERNAL_DATA = {
                 "United Arab Emirates", "United Kingdom", "United States", "Uruguay", "Uzbekistan", "Vanuatu",
                 "Vatican City", "Venezuela", "Vietnam", "Yemen", "Zambia", "Zimbabwe"]
 }
+
+# The passcodes will print out on the console
+# TWO_FACTOR_CALL_GATEWAY = 'two_factor.gateways.fake.Fake'
+# TWO_FACTOR_SMS_GATEWAY = 'two_factor.gateways.fake.Fake'

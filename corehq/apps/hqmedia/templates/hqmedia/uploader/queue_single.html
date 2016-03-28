@@ -1,11 +1,12 @@
 {% load i18n %}
-<div id="<%= unique_id %>" style="clear: both;">
+<div id="<%= unique_id %>" class="clearfix">
     <div class="alert alert-success" style="margin-bottom: 2px; margin-top: 10px;">
-        <i class="icon-ok"></i> <%= file_name %> <strong>[<%= file_size %> MB]</strong>
+        <i class="icon-ok fa fa-check"></i> <%= file_name %> <strong>[<%= file_size %> MB]</strong>
     </div>
     <div class="hqm-progress">
         <div class="progress progress-striped active" style="margin-bottom: 5px;">
-            <div class="bar" style="width: 0%;"></div>
+            <!-- .bar include for Bootstrap 2 compatibility -->
+            <div class="bar progress-bar" style="width: 0%;"></div>
         </div>
         <p class="text-success hqm-begin">
             {% blocktrans %}Ready to upload. Click <strong>Begin Upload</strong> below to start.{% endblocktrans %}
@@ -13,11 +14,11 @@
         <p class="text-error hqm-error hide">
             <span class="label label-important">{% trans 'There were errors' %}</span>
         </p>
-        <a href="#" class="btn btn-inverse btn-mini pull-right hqm-remove">
-            <i class="icon-remove"></i> {% trans 'Select another file' %}
+        <a href="#" class="btn btn-default btn-mini pull-right hqm-remove">
+            <i class="icon-remove fa fa-remove"></i> {% trans 'Select another file' %}
         </a>
         <a href="#" class="btn btn-danger btn-mini pull-right hqm-cancel hide">
-            <i class="icon-remove"></i> {% trans 'Cancel Upload' %}
+            <i class="icon-remove fa fa-remove"></i> {% trans 'Cancel Upload' %}
         </a>
     </div>
     <div class="hqm-status"></div>

@@ -14,7 +14,7 @@ faceted query), filtered by a provided list of domains and a report date range.
                           .created(gte=datespan.startdate, lte=datespan.enddate)
                           .date_histogram('date', 'date_created', interval)
                           .size(0))
-    histo_data = domains_after_date.run().facet('date', 'entries')
+    histo_data = domains_after_date.run().aggregations.date.buckets_list
 """
 from .es_query import HQESQuery
 from . import filters

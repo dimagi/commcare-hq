@@ -1,14 +1,12 @@
 import HTMLParser
 import json
 import socket
-from datetime import timedelta, datetime, date
-from collections import defaultdict
+from datetime import timedelta, date
+from collections import defaultdict, namedtuple
 from StringIO import StringIO
 
 import dateutil
-from django.core.mail import EmailMessage
 from django.utils.datastructures import SortedDict
-from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_POST, require_GET
 from django.conf import settings
 from django.contrib import messages
@@ -17,17 +15,14 @@ from django.contrib.auth import login
 from django.core import management, cache
 from django.core.urlresolvers import reverse
 from django.shortcuts import render
-from django.views.decorators.cache import cache_page
 from django.views.generic import FormView
 from django.utils.decorators import method_decorator
 from django.utils.translation import ugettext as _, ugettext_lazy
-from django.template.loader import render_to_string
 from django.http import (
     HttpResponseRedirect,
     HttpResponse,
     HttpResponseBadRequest,
     HttpResponseNotFound,
-    Http404,
 )
 from restkit import Resource
 from restkit.errors import Unauthorized
@@ -36,8 +31,9 @@ from couchdbkit import ResourceNotFound
 from casexml.apps.case.models import CommCareCase
 from corehq.apps.callcenter.indicator_sets import CallCenterIndicators
 from corehq.apps.hqcase.utils import get_case_by_domain_hq_user_id
-from corehq.apps.style.decorators import use_datatables, use_knockout_js, \
-    use_jquery_ui
+from corehq.apps.style.decorators import use_datatables, use_jquery_ui, \
+    use_bootstrap3
+from corehq.apps.style.utils import set_bootstrap_version3
 from corehq.apps.style.views import BaseB3SectionPageView
 from corehq.toggles import any_toggle_enabled, SUPPORT
 from corehq.util.couchdb_management import couch_config
@@ -47,13 +43,11 @@ from couchforms.models import XFormInstance
 from pillowtop.exceptions import PillowNotFoundError
 from pillowtop.utils import get_all_pillows_json, get_pillow_json, get_pillow_config_by_name
 from corehq.apps.app_manager.models import ApplicationBase
-from corehq.apps.app_manager.util import get_settings_values
 from corehq.apps.data_analytics.models import MALTRow
 from corehq.apps.data_analytics.admin import MALTRowAdmin
 from corehq.apps.hqadmin.history import get_recent_changes, download_changes
 from corehq.apps.hqadmin.models import HqDeploy
-from corehq.apps.hqadmin.forms import EmailForm, BrokenBuildsForm
-from corehq.apps.hqwebapp.views import BasePageView
+from corehq.apps.hqadmin.forms import BrokenBuildsForm
 from corehq.apps.domain.decorators import require_superuser, require_superuser_or_developer
 from corehq.apps.domain.models import Domain
 from corehq.apps.hqadmin.escheck import (
@@ -70,7 +64,6 @@ from corehq.apps.hqadmin.reporting.reports import (
 )
 from corehq.apps.ota.views import get_restore_response, get_restore_params
 from corehq.apps.reports.graph_models import Axis, LineChart
-from corehq.apps.sofabed.models import FormData, CaseData
 from corehq.apps.users.models import CommCareUser, WebUser
 from corehq.apps.users.util import format_username
 from corehq.sql_db.connections import Session
@@ -79,8 +72,7 @@ from dimagi.utils.couch.database import get_db, is_bigcouch
 from dimagi.utils.django.management import export_as_csv_action
 from dimagi.utils.decorators.datespan import datespan_in_request
 from dimagi.utils.parsing import json_format_date
-from dimagi.utils.web import json_response, get_url_base
-from corehq.apps.hqwebapp.tasks import send_html_email_async
+from dimagi.utils.web import json_response
 from .multimech import GlobalConfig
 from .forms import AuthenticateAsForm
 
@@ -111,25 +103,6 @@ def get_hqadmin_base_context(request):
     }
 
 
-@require_POST
-@csrf_exempt
-def contact_email(request):
-    message = render_to_string('hqadmin/email/contact_template.txt', request.POST)
-    EmailMessage(
-        subject="Incoming Contact CommCare Request",
-        body=message,
-        from_email="",
-        to=[settings.CONTACT_EMAIL],
-        headers={'Reply-To': request.POST['email']},
-    ).send()
-    response = HttpResponse('success')
-    response["Access-Control-Allow-Origin"] = "http://www.commcarehq.org"
-    response["Access-Control-Allow-Methods"] = "POST"
-    response["Access-Control-Max-Age"] = "1000"
-    response["Access-Control-Allow-Headers"] = "*"
-    return response
-
-
 class BaseAdminSectionView(BaseB3SectionPageView):
     section_name = ugettext_lazy("Admin Reports")
 
@@ -142,26 +115,22 @@ class BaseAdminSectionView(BaseB3SectionPageView):
         return reverse(self.urlname)
 
 
-class AuthenticateAs(BasePageView):
+class AuthenticateAs(BaseAdminSectionView):
     urlname = 'authenticate_as'
-    page_title = _("Login as other user")
+    page_title = _("Login as Other User")
     template_name = 'hqadmin/authenticate_as.html'
 
     @method_decorator(require_superuser)
+    @use_bootstrap3
     def dispatch(self, *args, **kwargs):
         return super(AuthenticateAs, self).dispatch(*args, **kwargs)
 
-    def page_url(self):
-        return reverse(self.urlname)
-
-    def get_context_data(self, **kwargs):
-        context = super(AuthenticateAs, self).get_context_data(**kwargs)
-        context.update({
+    @property
+    def page_context(self):
+        return {
             'hide_filters': True,
-            'page_url': self.page_url(),
-            'form': AuthenticateAsForm(initial=kwargs)
-        })
-        return context
+            'form': AuthenticateAsForm(initial=self.kwargs)
+        }
 
     def post(self, request, *args, **kwargs):
         form = AuthenticateAsForm(self.request.POST)
@@ -175,51 +144,6 @@ class AuthenticateAs(BasePageView):
             login(request, request.user)
             return HttpResponseRedirect('/')
         return self.get(request, *args, **kwargs)
-
-
-@require_superuser
-def mass_email(request):
-    if not request.couch_user.is_staff:
-        raise Http404()
-
-    if request.method == "POST":
-        form = EmailForm(request.POST)
-        if form.is_valid():
-            subject = form.cleaned_data['email_subject']
-            body = form.cleaned_data['email_body']
-            real_email = form.cleaned_data['real_email']
-
-            if real_email:
-                recipients = WebUser.view(
-                    'users/mailing_list_emails',
-                    reduce=False,
-                    include_docs=True,
-                ).all()
-            else:
-                recipients = [request.couch_user]
-
-            for recipient in recipients:
-                params = {
-                    'email_body': body,
-                    'user_id': recipient.get_id,
-                    'unsub_url': get_url_base() +
-                                 reverse('unsubscribe', args=[recipient.get_id])
-                }
-                text_content = render_to_string("hqadmin/email/mass_email_base.txt", params)
-                html_content = render_to_string("hqadmin/email/mass_email_base.html", params)
-
-                send_html_email_async.delay(subject, recipient.email, html_content, text_content,
-                                email_from=settings.DEFAULT_FROM_EMAIL)
-
-            messages.success(request, 'Your email(s) were sent successfully.')
-
-    else:
-        form = EmailForm()
-
-    context = get_hqadmin_base_context(request)
-    context['hide_filters'] = True
-    context['form'] = form
-    return render(request, "hqadmin/mass_email.html", context)
 
 
 @require_superuser_or_developer
@@ -337,7 +261,6 @@ class SystemInfoView(BaseAdminSectionView):
     template_name = "hqadmin/system_info.html"
 
     @use_datatables
-    @use_knockout_js
     @use_jquery_ui
     @method_decorator(require_superuser_or_developer)
     def dispatch(self, request, *args, **kwargs):
@@ -438,30 +361,8 @@ def pillow_operation_api(request):
 
 
 @require_superuser
-@cache_page(60*5)
-def all_commcare_settings(request):
-    apps = ApplicationBase.view('app_manager/applications_brief',
-                                include_docs=True)
-    filters = set()
-    for param in request.GET:
-        s_type, name = param.split('.')
-        value = request.GET.get(param)
-        filters.add((s_type, name, value))
-
-    def app_filter(settings):
-        for s_type, name, value in filters:
-            if settings[s_type].get(name) != value:
-                return False
-        return True
-
-    settings_list = [s for s in (get_settings_values(app) for app in apps)
-                     if app_filter(s)]
-    return json_response(settings_list)
-
-
-@require_superuser
 @require_GET
-def admin_restore(request):
+def admin_restore(request, app_id=None):
     full_username = request.GET.get('as', '')
     if not full_username or '@' not in full_username:
         return HttpResponseBadRequest('Please specify a user using ?as=user@domain')
@@ -475,7 +376,8 @@ def admin_restore(request):
         return HttpResponseNotFound('User %s not found.' % full_username)
 
     overwrite_cache = request.GET.get('ignore_cache') == 'true'
-    return get_restore_response(user.domain, user, overwrite_cache=overwrite_cache, **get_restore_params(request))
+    return get_restore_response(user.domain, user, overwrite_cache=overwrite_cache, app_id=app_id,
+                                **get_restore_params(request))
 
 @require_superuser
 def management_commands(request, template="hqadmin/management_commands.html"):
@@ -659,6 +561,24 @@ def _lookup_id_in_couch(doc_id, db_name=None):
 
 
 @require_superuser
+def web_user_lookup(request):
+    template = "hqadmin/web_user_lookup.html"
+    set_bootstrap_version3()
+    web_user_email = request.GET.get("q")
+    if not web_user_email:
+        return render(request, template, {})
+
+    web_user = WebUser.get_by_username(web_user_email)
+    if web_user is None:
+        messages.error(
+            request, "Sorry, no user found with email {}. Did you enter it correctly?".format(web_user_email)
+        )
+    return render(request, template, {
+        'web_user': web_user
+    })
+
+
+@require_superuser
 def doc_in_es(request):
     doc_id = request.GET.get("id")
     if not doc_id:
@@ -777,23 +697,86 @@ def callcenter_test(request):
     return render(request, "hqadmin/callcenter_test.html", context)
 
 
-@require_superuser
-def malt_as_csv(request):
-    from django.core.exceptions import ValidationError
+class DownloadMALTView(BaseAdminSectionView):
+    urlname = 'download_malt'
+    page_title = ugettext_lazy("Download MALT")
+    template_name = "hqadmin/malt_downloader.html"
 
-    if 'year_month' in request.GET:
-        try:
-            year, month = request.GET['year_month'].split('-')
-            year, month = int(year), int(month)
-            return _malt_csv_response(month, year)
-        except (ValueError, ValidationError):
-            messages.error(request, "Enter a valid year-month. e.g. 2015-09 (for December 2015)")
-            return render(request, "hqadmin/malt_downloader.html")
-    else:
-        return render(request, "hqadmin/malt_downloader.html")
+    @method_decorator(require_superuser)
+    @use_bootstrap3
+    def dispatch(self, request, *args, **kwargs):
+        return super(DownloadMALTView, self).dispatch(request, *args, **kwargs)
+
+    def get(self, request, *args, **kwargs):
+        from django.core.exceptions import ValidationError
+        if 'year_month' in request.GET:
+            try:
+                year, month = request.GET['year_month'].split('-')
+                year, month = int(year), int(month)
+                return _malt_csv_response(month, year)
+            except (ValueError, ValidationError):
+                messages.error(
+                    request,
+                    _("Enter a valid year-month. e.g. 2015-09 (for December 2015)")
+                )
+        return super(DownloadMALTView, self).get(request, *args, **kwargs)
 
 
 def _malt_csv_response(month, year):
     query_month = "{year}-{month}-01".format(year=year, month=month)
     queryset = MALTRow.objects.filter(month=query_month)
     return export_as_csv_action(exclude=['id'])(MALTRowAdmin, None, queryset)
+
+
+@require_superuser
+def branches_on_staging(request, template='hqadmin/branches_on_staging.html'):
+    branches = _get_branches_merged_into_autostaging()
+    branches_by_submodule = [(None, branches)] + [
+        (cwd, _get_branches_merged_into_autostaging(cwd))
+        for cwd in _get_submodules()
+    ]
+    return render(request, template, {
+        'branches_by_submodule': branches_by_submodule,
+    })
+
+
+def _get_branches_merged_into_autostaging(cwd=None):
+    import sh
+    git = sh.git.bake(_tty_out=False, _cwd=cwd)
+    # %p %s is parent hashes + subject of commit message, which will look like:
+    # <merge base> <merge head> Merge <stuff> into autostaging
+    try:
+        pipe = git.log('origin/master...', grep='Merge .* into autostaging', format='%p %s')
+    except sh.ErrorReturnCode_128:
+        # when origin/master isn't fetched, you'll get
+        #   fatal: ambiguous argument 'origin/master...': \
+        #   unknown revision or path not in the working tree.
+        git.fetch()
+        return _get_branches_merged_into_autostaging(cwd=cwd)
+    CommitBranchPair = namedtuple('CommitBranchPair', ['commit', 'branch'])
+    return sorted(
+        (CommitBranchPair(
+            *line.strip()
+            .replace("Merge remote-tracking branch 'origin/", '')
+            .replace("Merge branch '", '')
+            .replace("' into autostaging", '')
+            .split(' ')[1:]
+        ) for line in pipe),
+        key=lambda pair: pair.branch
+    )
+
+
+def _get_submodules():
+    """
+    returns something like
+    ['corehq/apps/hqmedia/static/hqmedia/MediaUploader',
+     'corehq/apps/prelogin',
+     'submodules/auditcare-src',
+     ...]
+    """
+    import sh
+    git = sh.git.bake(_tty_out=False)
+    return [
+        line.strip()[1:].split()[1]
+        for line in git.submodule()
+    ]

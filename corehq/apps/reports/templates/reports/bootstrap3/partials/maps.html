@@ -1,0 +1,17 @@
+{% extends 'reports/bootstrap3/partials/base_maps.html' %}
+{% load hq_shared_tags %}
+
+{% block js-libs %}
+    {{ block.super }}
+    <script style="text/javascript">
+        window.USE_BOOTSTRAP_3 = true;
+    </script>
+    <script src="{% new_static 'reports/javascripts/maps.js' %}"></script>
+    <script src="{% new_static 'reports/javascripts/maps_utils.js' %}"></script>
+{% endblock js-libs %}
+
+{% block content %}
+    <table class="table table-striped datatable dataTable" id="tabular"></table>
+    <div class="row dataTables_control" style="height: 20px"></div>
+{% endblock content %}
+

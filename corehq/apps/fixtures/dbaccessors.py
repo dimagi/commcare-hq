@@ -1,3 +1,6 @@
+from corehq.util.quickcache import quickcache
+
+
 def get_number_of_fixture_data_types_in_domain(domain):
     from corehq.apps.fixtures.models import FixtureDataType
     num_fixtures = FixtureDataType.get_db().view(
@@ -10,16 +13,21 @@ def get_number_of_fixture_data_types_in_domain(domain):
     return num_fixtures['value'] if num_fixtures is not None else 0
 
 
+@quickcache(['domain'], timeout=30 * 60)
 def get_fixture_data_types_in_domain(domain):
+    # We're getting an odd error from cloudant where deleted docs are being
+    # returned in the view.  Until that's resolved, we can manually filter out
+    # deleted docs here.  See ticket for updates:
+    # http://manage.dimagi.com/default.asp?216573
     from corehq.apps.fixtures.models import FixtureDataType
-    return FixtureDataType.view(
+    return [row for row in FixtureDataType.view(
         'by_domain_doc_type_date/view',
         endkey=[domain, 'FixtureDataType'],
         startkey=[domain, 'FixtureDataType', {}],
         reduce=False,
         include_docs=True,
         descending=True,
-    )
+    ) if isinstance(row, FixtureDataType)]
 
 
 def get_owner_ids_by_type(domain, owner_type, data_item_id):

@@ -8,7 +8,7 @@ from casexml.apps.case.exceptions import UsesReferrals, VersionNotSupported
 from casexml.apps.case.xform import get_case_updates
 from casexml.apps.case.xml import V2
 from casexml.apps.case.xml.parser import KNOWN_PROPERTIES
-from corehq.form_processor.models import CommCareCaseSQL, CommCareCaseIndexSQL, CaseTransaction
+from corehq.form_processor.models import CommCareCaseSQL, CommCareCaseIndexSQL, CaseTransaction, CaseAttachmentSQL
 from corehq.form_processor.update_strategy_base import UpdateStrategy
 from django.utils.translation import ugettext as _
 
@@ -35,7 +35,8 @@ class SqlCaseUpdateStrategy(UpdateStrategy):
     def update_from_case_update(self, case_update, xformdoc, other_forms=None):
         self._apply_case_update(case_update, xformdoc)
 
-        transaction = CaseTransaction.form_transaction(self.case, xformdoc)
+        types = [CaseTransaction.type_from_action_type_slug(a.action_type_slug) for a in case_update.actions]
+        transaction = CaseTransaction.form_transaction(self.case, xformdoc, types)
         if transaction not in self.case.get_tracked_models_to_create(CaseTransaction):
             # don't add multiple transactions for the same form
             self.case.track_create(transaction)
@@ -106,6 +107,10 @@ class SqlCaseUpdateStrategy(UpdateStrategy):
             elif key not in const.CASE_TAGS:
                 self.case.case_json[key] = value
 
+            if key == 'hq_user_id':
+                # also save hq_user_id to external_id
+                self.case.external_id = value
+
     def _apply_index_action(self, action):
         if not action.indices:
             return
@@ -135,8 +140,26 @@ class SqlCaseUpdateStrategy(UpdateStrategy):
                     )
                     self.case.track_create(index)
 
-    def _apply_attachments_action(self, attachment_action, xform=None):
-        raise NotImplementedError()
+    def _apply_attachments_action(self, attachment_action, xform):
+        current_attachments = self.case.case_attachments
+        for identifier, att in attachment_action.attachments.items():
+            new_attachment = CaseAttachmentSQL.from_case_update(att)
+            if new_attachment.is_present:
+                form_attachment = xform.get_attachment_meta(att.attachment_src)
+                new_attachment.update_from_attachment(form_attachment)
+
+                if identifier in current_attachments:
+                    existing_attachment = current_attachments[identifier]
+                    existing_attachment.update_from_attachment(new_attachment)
+                    existing_attachment.copy_content(form_attachment)
+                    self.case.track_update(existing_attachment)
+                else:
+                    new_attachment.copy_content(form_attachment)
+                    new_attachment.case = self.case
+                    self.case.track_create(new_attachment)
+            elif identifier in current_attachments:
+                existing_attachment = current_attachments[identifier]
+                self.case.track_delete(existing_attachment)
 
     def _apply_close_action(self, case_update):
         self.case.closed = True
@@ -146,6 +169,9 @@ class SqlCaseUpdateStrategy(UpdateStrategy):
     def _reset_case_state(self):
         """
         Clear known case properties, and all dynamic properties
+        Note: does not alter case indices or attachments. For indices this isn't an issue
+        since we only allow creating indices at case creation (via the app builder) and also
+        don't support optionally creating indices.
         """
         self.case.case_json = {}
         self.case.deleted = False
@@ -161,14 +187,13 @@ class SqlCaseUpdateStrategy(UpdateStrategy):
         self.case.opened_by = None
 
     def rebuild_from_transactions(self, transactions, rebuild_transaction):
-        # TODO: handle case indices
         self._reset_case_state()
 
         real_transactions = []
         for transaction in transactions:
             if not transaction.is_relevant:
                 continue
-            elif transaction.type == CaseTransaction.TYPE_FORM:
+            elif transaction.is_form_transaction:
                 self._apply_form_transaction(transaction)
                 real_transactions.append(transaction)
 

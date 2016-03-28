@@ -4,40 +4,47 @@ import functools
 import json
 import os
 import tempfile
-from django.conf import settings
 
+from django.conf import settings
 from django.contrib import messages
 from django.core.exceptions import ValidationError
 from django.core.urlresolvers import reverse
 from django.http import HttpResponseRedirect, HttpResponse
 from django.http.response import Http404
 from django.shortcuts import render
+from django.utils.decorators import method_decorator
 from django.utils.http import urlencode
-from django.utils.translation import ugettext as _, ugettext_noop, ugettext_lazy
+from django.utils.translation import ugettext as _, ugettext_lazy
 from django.views.decorators.http import require_POST
 from django.views.generic import View
-from corehq.apps.analytics.tasks import track_workflow
+
+
 from djangular.views.mixins import JSONResponseMixin, allow_remote_invocation
-
-from corehq.apps.app_manager.dbaccessors import get_apps_in_domain
-from corehq.apps.app_manager.models import Application, Form
-
 from sqlalchemy import types, exc
 from sqlalchemy.exc import ProgrammingError
 
+from couchexport.export import export_from_tables
+from couchexport.files import Temp
+from couchexport.models import Format
+from couchexport.shortcuts import export_response
+from dimagi.utils.decorators.memoized import memoized
+from dimagi.utils.web import json_response
+
+from corehq import toggles
+from corehq.apps.analytics.tasks import track_workflow
+from corehq.apps.app_manager.dbaccessors import domain_has_apps
+from corehq.apps.app_manager.models import Application, Form
 from corehq.apps.dashboard.models import IconContext, TileConfiguration, Tile
+from corehq.apps.domain.decorators import login_and_domain_required, login_or_basic
 from corehq.apps.domain.views import BaseDomainView
 from corehq.apps.reports.dispatcher import cls_to_view_login_and_domain
-from corehq import toggles
-from corehq.apps.domain.decorators import login_and_domain_required, login_or_basic
 from corehq.apps.style.decorators import (
     use_bootstrap3,
-    use_knockout_js,
     use_select2,
     use_daterangepicker,
     use_datatables,
     use_jquery_ui,
-)
+    use_angular_js)
 from corehq.apps.userreports.app_manager import get_case_data_source, get_form_data_source
 from corehq.apps.userreports.exceptions import (
     BadBuilderConfigError,
@@ -45,14 +52,6 @@ from corehq.apps.userreports.exceptions import (
     DataSourceConfigurationNotFoundError,
     ReportConfigurationNotFoundError,
     UserQueryError,
-)
-from corehq.apps.userreports.reports.builder.forms import (
-    ConfigurePieChartReportForm,
-    ConfigureTableReportForm,
-    DataSourceForm,
-    ConfigureBarChartReportForm,
-    ConfigureListReportForm,
-    ConfigureWorkerReportForm
 )
 from corehq.apps.userreports.models import (
     ReportConfiguration,
@@ -62,10 +61,18 @@ from corehq.apps.userreports.models import (
     get_datasource_config,
     get_report_config,
 )
+from corehq.apps.userreports.reports.builder.forms import (
+    ConfigurePieChartReportForm,
+    ConfigureTableReportForm,
+    DataSourceForm,
+    ConfigureBarChartReportForm,
+    ConfigureListReportForm,
+    ConfigureWorkerReportForm,
+    ConfigureMapReportForm)
 from corehq.apps.userreports.reports.filters.choice_providers import ChoiceQueryContext
 from corehq.apps.userreports.reports.view import ConfigurableReport
 from corehq.apps.userreports.sql import IndicatorSqlAdapter
-from corehq.apps.userreports.tasks import rebuild_indicators
+from corehq.apps.userreports.tasks import rebuild_indicators, resume_building_indicators
 from corehq.apps.userreports.ui.forms import (
     ConfigurableReportEditForm,
     ConfigurableDataSourceEditForm,
@@ -74,15 +81,8 @@ from corehq.apps.userreports.ui.forms import (
 from corehq.apps.userreports.util import has_report_builder_access
 from corehq.apps.users.decorators import require_permission
 from corehq.apps.users.models import Permissions
+from corehq.toggles import REPORT_BUILDER_MAP_REPORTS
 from corehq.util.couch import get_document_or_404
-
-from couchexport.export import export_from_tables
-from couchexport.files import Temp
-from couchexport.models import Format
-from couchexport.shortcuts import export_response
-
-from dimagi.utils.web import json_response
-from dimagi.utils.decorators.memoized import memoized
 
 
 def get_datasource_config_or_404(config_id, domain):
@@ -139,15 +139,20 @@ def create_report(request, domain):
 
 class ReportBuilderView(BaseDomainView):
 
+    @method_decorator(require_permission(Permissions.edit_data))
     @cls_to_view_login_and_domain
     @use_bootstrap3
-    @use_knockout_js
     @use_select2
     @use_daterangepicker
     @use_datatables
     def dispatch(self, request, *args, **kwargs):
         if has_report_builder_access(request):
-            return super(ReportBuilderView, self).dispatch(request, *args, **kwargs)
+            report_type = kwargs.get('report_type', None)
+            domain = kwargs.get('domain', None)
+            if report_type != 'map' or REPORT_BUILDER_MAP_REPORTS.enabled(domain):
+                return super(ReportBuilderView, self).dispatch(request, *args, **kwargs)
+            else:
+                raise Http404
         else:
             raise Http404
 
@@ -165,6 +170,10 @@ class ReportBuilderTypeSelect(JSONResponseMixin, ReportBuilderView):
     urlname = 'report_builder_select_type'
     page_title = ugettext_lazy('Select Report Type')
 
+    @use_angular_js
+    def dispatch(self, request, *args, **kwargs):
+        return super(ReportBuilderTypeSelect, self).dispatch(request, *args, **kwargs)
+
     @property
     def page_url(self):
         return "#"
@@ -172,7 +181,7 @@ class ReportBuilderTypeSelect(JSONResponseMixin, ReportBuilderView):
     @property
     def page_context(self):
         return {
-            "has_apps": len(get_apps_in_domain(self.domain)) > 0,
+            "has_apps": domain_has_apps(self.domain),
             "report": {
                 "title": _("Create New Report")
             },
@@ -201,12 +210,13 @@ class ReportBuilderTypeSelect(JSONResponseMixin, ReportBuilderView):
 
     @property
     def tiles(self):
-        return [
+        analytics_workflow_label = "Clicked on Report Builder Tile"
+        tiles = [
             TileConfiguration(
                 title=_('Chart'),
                 slug='chart',
                 analytics_usage_label="Chart",
-                analytics_workflow_label="Clicked on Report Builder Tile",
+                analytics_workflow_label=analytics_workflow_label,
                 icon='fcc fcc-piegraph-report',
                 context_processor_class=IconContext,
                 url=reverse('report_builder_select_source', args=[self.domain, 'chart']),
@@ -217,7 +227,7 @@ class ReportBuilderTypeSelect(JSONResponseMixin, ReportBuilderView):
                 title=_('Form or Case List'),
                 slug='form-or-case-list',
                 analytics_usage_label="List",
-                analytics_workflow_label="Clicked on Report Builder Tile",
+                analytics_workflow_label=analytics_workflow_label,
                 icon='fcc fcc-form-report',
                 context_processor_class=IconContext,
                 url=reverse('report_builder_select_source', args=[self.domain, 'list']),
@@ -228,7 +238,7 @@ class ReportBuilderTypeSelect(JSONResponseMixin, ReportBuilderView):
                 title=_('Worker Report'),
                 slug='worker-report',
                 analytics_usage_label="Worker",
-                analytics_workflow_label="Clicked on Report Builder Tile",
+                analytics_workflow_label=analytics_workflow_label,
                 icon='fcc fcc-user-report',
                 context_processor_class=IconContext,
                 url=reverse('report_builder_select_source', args=[self.domain, 'worker']),
@@ -239,7 +249,7 @@ class ReportBuilderTypeSelect(JSONResponseMixin, ReportBuilderView):
                 title=_('Data Table'),
                 slug='data-table',
                 analytics_usage_label="Table",
-                analytics_workflow_label="Clicked on Report Builder Tile",
+                analytics_workflow_label=analytics_workflow_label,
                 icon='fcc fcc-datatable-report',
                 context_processor_class=IconContext,
                 url=reverse('report_builder_select_source', args=[self.domain, 'table']),
@@ -247,6 +257,19 @@ class ReportBuilderTypeSelect(JSONResponseMixin, ReportBuilderView):
                             ' You choose the columns and rows.'),
             ),
         ]
+        if REPORT_BUILDER_MAP_REPORTS.enabled(self.domain):
+            tiles.append(TileConfiguration(
+                title=_('Map'),
+                slug='map',
+                analytics_usage_label="Map",
+                analytics_workflow_label=analytics_workflow_label,
+                icon='fa fa-globe',
+                context_processor_class=IconContext,
+                url=reverse('report_builder_select_source', args=[self.domain, 'map']),
+                help_text=_('A map to show data from your cases or forms.'
+                            ' You choose the property to map.'),
+            ))
+        return tiles
 
 
 class ReportBuilderDataSourceSelect(ReportBuilderView):
@@ -282,6 +305,7 @@ class ReportBuilderDataSourceSelect(ReportBuilderView):
                 'chart': 'configure_chart_report',
                 'table': 'configure_table_report',
                 'worker': 'configure_worker_report',
+                'map': 'configure_map_report',
             }
             url_name = url_names_map[self.report_type]
             get_params = {
@@ -313,7 +337,8 @@ class EditReportInBuilder(View):
                 'chart': ConfigureChartReport,
                 'list': ConfigureListReport,
                 'worker': ConfigureWorkerReport,
-                'table': ConfigureTableReport
+                'table': ConfigureTableReport,
+                'map': ConfigureMapReport,
             }[report.report_meta.builder_report_type]
             try:
                 return view_class.as_view(existing_report=report)(request, *args, **kwargs)
@@ -327,7 +352,7 @@ class ConfigureChartReport(ReportBuilderView):
     page_title = ugettext_lazy("Configure Report")
     template_name = "userreports/partials/report_builder_configure_report.html"
     url_args = ['report_name', 'application', 'source_type', 'source']
-    report_title = ugettext_noop("Chart Report: {}")
+    report_title = ugettext_lazy("Chart Report: {}")
     report_type = 'chart'
     existing_report = None
 
@@ -358,6 +383,7 @@ class ConfigureChartReport(ReportBuilderView):
             'filter_property_help_text': _('Choose the property you would like to add as a filter to this report.'),
             'filter_display_help_text': _('Web users viewing the report will see this display text instead of the property name. Name your filter something easy for users to understand.'),
             'filter_format_help_text': _('What type of property is this filter?<br/><br/><strong>Date</strong>: select this if the property is a date.<br/><strong>Choice</strong>: select this if the property is text or multiple choice.'),
+            'calculation_help_text': _("Column format selection will determine how each row's value is calculated.")
         }
 
     @property
@@ -402,7 +428,7 @@ class ConfigureChartReport(ReportBuilderView):
 
 
 class ConfigureListReport(ConfigureChartReport):
-    report_title = ugettext_noop("List Report: {}")
+    report_title = ugettext_lazy("List Report: {}")
     report_type = 'list'
 
     @property
@@ -412,7 +438,7 @@ class ConfigureListReport(ConfigureChartReport):
 
 
 class ConfigureTableReport(ConfigureChartReport):
-    report_title = ugettext_noop("Table Report: {}")
+    report_title = ugettext_lazy("Table Report: {}")
     report_type = 'table'
 
     @property
@@ -422,13 +448,23 @@ class ConfigureTableReport(ConfigureChartReport):
 
 
 class ConfigureWorkerReport(ConfigureChartReport):
-    report_title = ugettext_noop("Worker Report: {}")
+    report_title = ugettext_lazy("Worker Report: {}")
     report_type = 'worker'
 
     @property
     @memoized
     def configuration_form_class(self):
         return ConfigureWorkerReportForm
+
+
+class ConfigureMapReport(ConfigureChartReport):
+    report_title = ugettext_lazy("Map Report: {}")
+    report_type = 'map'
+
+    @property
+    @memoized
+    def configuration_form_class(self):
+        return ConfigureMapReportForm
 
 
 def _edit_report_shared(request, domain, config, read_only=False):
@@ -513,7 +549,7 @@ def edit_data_source(request, domain, config_id):
 @login_and_domain_required
 @toggles.USER_CONFIGURABLE_REPORTS.required_decorator()
 def create_data_source(request, domain):
-    return _edit_data_source_shared(request, domain, DataSourceConfiguration(domain=domain))
+    return _edit_data_source_shared(request, domain, DataSourceConfiguration(domain=domain), create=True)
 
 
 @login_and_domain_required
@@ -545,12 +581,15 @@ def create_data_source_from_app(request, domain):
     return render(request, 'userreports/data_source_from_app.html', context)
 
 
-def _edit_data_source_shared(request, domain, config, read_only=False):
+def _edit_data_source_shared(request, domain, config, read_only=False, create=False):
     if request.method == 'POST':
         form = ConfigurableDataSourceEditForm(domain, config, read_only, data=request.POST)
         if form.is_valid():
             config = form.save(commit=True)
             messages.success(request, _(u'Data source "{}" saved!').format(config.display_name))
+            if create:
+                # if we just created a data source, redirect to the edit view to avoid creating a new one
+                return HttpResponseRedirect(reverse('edit_configurable_data_source', args=[domain, config._id]))
     else:
         form = ConfigurableDataSourceEditForm(domain, config, read_only)
     context = _shared_context(domain)
@@ -604,6 +643,26 @@ def rebuild_data_source(request, domain, config_id):
     )
 
     rebuild_indicators.delay(config_id)
+    return HttpResponseRedirect(reverse('edit_configurable_data_source', args=[domain, config._id]))
+
+
+@toggles.USER_CONFIGURABLE_REPORTS.required_decorator()
+@require_POST
+def resume_building_data_source(request, domain, config_id):
+    config, is_static = get_datasource_config_or_404(config_id, domain)
+    if not is_static and config.meta.build.finished:
+        messages.warning(
+            request,
+            _('Table "{}" has already finished building. Rebuild table to start over.').format(
+                config.display_name
+            )
+        )
+    else:
+        messages.success(
+            request,
+            _('Resuming rebuilding table "{}".').format(config.display_name)
+        )
+        resume_building_indicators.delay(config_id)
     return HttpResponseRedirect(reverse('edit_configurable_data_source', args=[domain, config._id]))
 
 
@@ -703,6 +762,15 @@ def export_data_source(request, domain, config_id):
 
     try:
         params = process_url_params(request.GET, table.columns)
+        allowed_formats = [
+            Format.CSV,
+            Format.HTML,
+            Format.XLS,
+            Format.XLS_2007,
+        ]
+        if params.format not in allowed_formats:
+            msg = ugettext_lazy('format must be one of the following: {}').format(', '.join(allowed_formats))
+            return HttpResponse(msg, status=400)
     except UserQueryError as e:
         return HttpResponse(e.message, status=400)
 
@@ -736,8 +804,10 @@ def export_data_source(request, domain, config_id):
             tables = [[config.table_id, get_table(q)]]
             export_from_tables(tables, tmpfile, params.format)
         except exc.DataError:
-            msg = _("There was a problem executing your query, please make "
-                    "sure your parameters are valid.")
+            msg = ugettext_lazy(
+                "There was a problem executing your query, "
+                "please make sure your parameters are valid."
+            )
             return HttpResponse(msg, status=400)
         return export_response(Temp(path), params.format, config.display_name)
 

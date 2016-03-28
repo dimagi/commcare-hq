@@ -722,5 +722,39 @@
             "d",
             "e"
         ]
+    },
+    {
+        "name": "icds_structure_closed_person",
+        "owned": [
+            "a",
+            "b",
+            "c"
+        ],
+        "closed": [
+            "b"
+        ],
+        "extensions": [
+            [
+                "c",
+                "b"
+            ],
+            [
+                "d",
+                "b"
+            ],
+            [
+                "b",
+                "a"
+            ]
+        ],
+        "subcases": [
+            [
+                "b",
+                "a"
+            ]
+        ],
+        "outcome": [
+            "a"
+        ]
     }
 ]

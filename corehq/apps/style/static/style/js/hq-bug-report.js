@@ -47,7 +47,7 @@ $(function () {
             return false;
         }
         var $submitButton = $(this).find("button[type='submit']");
-        if(!isBugReportSubmitting && $submitButton.text() == $submitButton.data("complete-text")) {
+        if(!isBugReportSubmitting && $submitButton.text() == $submitButton.data("success-text")) {
             $hqwebappBugReportModal.modal("hide");
         }else if(!isBugReportSubmitting) {
             $submitButton.bootstrapButton('loading');
@@ -57,7 +57,8 @@ $(function () {
                 url: $(this).attr('action'),
                 beforeSerialize: hqwebappBugReportBeforeSerialize,
                 beforeSubmit: hqwebappBugReportBeforeSubmit,
-                success: hqwebappBugReportSucccess
+                success: hqwebappBugReportSucccess,
+                error: hqwebappBugReportError,
             });
         }
         return false;
@@ -77,7 +78,12 @@ $(function () {
 
     function hqwebappBugReportSucccess(data) {
         isBugReportSubmitting = false;
-        $hqwebappBugReportForm.find("button[type='submit']").bootstrapButton('complete');
+        $hqwebappBugReportForm.find("button[type='submit']").bootstrapButton('success').removeClass('btn-primary btn-danger').addClass('btn-success');
+    }
+
+    function hqwebappBugReportError(data) {
+        isBugReportSubmitting = false;
+        $hqwebappBugReportForm.find("button[type='submit']").bootstrapButton('error').removeClass('btn-primary btn-success').addClass('btn-danger');
     }
 
     function highlightInvalidField($element) {

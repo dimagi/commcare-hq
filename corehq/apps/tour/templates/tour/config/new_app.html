@@ -8,7 +8,10 @@
                     element: '#mainmenu-ApplicationsTab',
                     title: gettext("Welcome to the App Builder"),
                     content: gettext("Click 'Next' for a quick introduction to this page."),
-                    placement: 'bottom'
+                    placement: 'bottom',
+                    onShown: function () {
+                        analytics.workflow('Initiated a guided tour');
+                    }
                 },
                 {
                     element: '#edit_label',
@@ -16,6 +19,7 @@
                     content: gettext("Build and edit form questions and logic in our easy Form Builder."),
                     onShown: function () {
                         $('#edit_label').addClass('btn-success').removeClass('btn-primary');
+                        analytics.workflow('Saw the "Edit Form" step of the guided tour')
                     },
                     onHide: function () {
                         $('#edit_label').removeClass('btn-success').addClass('btn-primary');
@@ -27,6 +31,7 @@
                     content: gettext("Check out what your form looks like in a web preview"),
                     onShown: function () {
                         $('#cloudcare-preview-url').addClass('btn-success');
+                        analytics.workflow('Saw the "Preview Form" step of the guided tour')
                     },
                     onHide: function () {
                         $('#cloudcare-preview-url').removeClass('btn-success');
@@ -39,6 +44,7 @@
                     content: gettext("Click here to install your app on a mobile device."),
                     onShown: function () {
                         $('#tour-deploy-link').parent().addClass('active');
+                        analytics.workflow('Saw the "Deploy your App" step of the guided tour')
                     },
                     onHide: function () {
                         $('#tour-deploy-link').parent().removeClass('active');
@@ -48,6 +54,9 @@
                     element: '',
                     title: gettext("Happy App Building!"),
                     content: gettext('For more advice, tutorials, and answers to questions, please checkout our <a href="http://help.commcarehq.org/">Help Site</a>.'),
+                    onShown: function () {
+                        analytics.workflow('Saw the "Happy App Building" step of the guided tour')
+                    },
                     html: true,
                     placement: 'bottom'
                 }

@@ -24,8 +24,7 @@ You can follow the quick start guide above, or you can use brew to install kafka
 ```
 brew install kafka
 cd /usr/local/opt/kafka/libexec
-./bin/zookeeper-server-start.sh config/zookeeper.properties
-./bin/kafka-server-start.sh config/server.properties
+./bin/zookeeper-server-start.sh config/zookeeper.properties & ./bin/kafka-server-start.sh config/server.properties
 ```
 
 # Configuration

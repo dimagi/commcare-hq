@@ -4,18 +4,22 @@
 {% load i18n %}
 {% load crispy_forms_tags %}
 {% block js %}{{ block.super }}
-    <script src="{% static 'app_manager/js/commcaresettings.js' %}"></script>
-    {% if app.get_doc_type == "Application" %}
-        <script src="{% static 'translations/js/translations.js' %}"></script>
-    {% endif %}
-    <script src="{% static 'style/ko/knockout_bindings.ko.js' %}"></script>
-    <script src="{% static 'style/lib/knockout_plugins/knockout_mapping.ko.min.js' %}"></script>
-    <script src="{% static 'hqwebapp/ko/bulk_upload_file.js' %}"></script>
-    <script src="{% static 'app_manager/js/supported-languages.js' %}"></script>
-    <script type="text/javascript" src="{% static 'hqmedia/js/hqmedia.reference_controller.js' %}"></script>
+    <script src="{% new_static 'app_manager/js/commcaresettings.js' %}"></script>
+    <script src="{% new_static 'hqwebapp/ko/bulk_upload_file.js' %}"></script>
+    <script src="{% new_static 'app_manager/js/supported-languages.js' %}"></script>
+    <script src="{% new_static 'app_manager/js/password_setter.jquery.js' %}"></script>
+    <script type="text/javascript" src="{% new_static 'hqmedia/js/hqmedia.reference_controller.js' %}"></script>
+
+    {# these scripts are for releases.html, but including them there causes hard-to-reproduce problems #}
+    <script src="{% new_static 'app_manager/js/app_manager_utils.js' %}"></script>
+    <script src="{% new_static 'app_manager/js/download_async_modal.js' %}"></script>
+    <script src="{% new_static 'app_manager/js/releases.js' %}"></script>
 {% endblock %}
 {% block js-inline %}
     {{ block.super }}
+    {% if app.get_doc_type == "Application" %}
+        <script src="{% new_static 'translations/js/translations.js' %}"></script>
+    {% endif %}
     {% if app %}
     <script>
         COMMCAREHQ.appView = {
@@ -37,9 +41,14 @@
                 warning: '{% trans "This is not an allowed value for this field" %}'
             }
         };
+
         $(function () {
+            var CommcareSettings = hqImport('app_manager/js/commcaresettings.js').CommcareSettings;
             COMMCAREHQ.appView.settings = new CommcareSettings(COMMCAREHQ.appView.settings);
             $('#commcare-settings').koApplyBindings(COMMCAREHQ.appView.settings);
+        });
+
+        $(function () {
             var multimedia_tab = (function () {
                 var self = {};
                 self.load_state = ko.observable(null);
@@ -61,10 +70,45 @@
                 return self;
             }());
             $("#multimedia").koApplyBindings(multimedia_tab);
-            $('#multimedia-shower').on('show', function () {
+            $('#demand-multimedia').on('show.bs.tab', function () {
                 if (multimedia_tab.load_state() === null) {
                     multimedia_tab.load_if_necessary();
                 }
+            });
+        });
+
+        $(function () {
+            var state = "",
+                $main = $("#releases"),
+                $loading = $main.find(".hq-loading").remove(),
+                $loadingError = $main.find(".hq-loading-error").remove();
+
+            $('#demand-releases').on('show.bs.tab', function () {
+                if (state === "loading" || state === "loaded") {
+                    return;
+                }
+                state = "loading";
+
+                // If the content takes a noticeable amount of time to load, show a spinner
+                var showSpinner = true;
+                _.delay(function() {
+                    if (showSpinner) {
+                        $main.html($loading.html());
+                    }
+                }, 100);
+
+                // Load the content
+                $.ajax({
+                    url: "{% url 'release_manager_ajax' domain app.get_id %}",
+                }).success(function(content) {
+                    state = "loaded";
+                    showSpinner = false;
+                    $main.html(content);
+                }).error(function() {
+                    state = "error";
+                    showSpinner = false;
+                    $main.html($loadingError.html());
+                });
             });
         });
 
@@ -118,6 +162,7 @@
             var buildLangs = {{ app.build_langs|JSON }};
             var saveURL = "{% url "edit_app_langs" domain app.id %}";
             var validate = !{{ app.is_remote_app|BOOL }};
+            var SupportedLanguages = hqImport('app_manager/js/supported-languages.js').SupportedLanguages;
             $("#supported-languages").koApplyBindings(new SupportedLanguages({
                 langs: langs,
                 buildLangs: buildLangs,
@@ -127,90 +172,6 @@
         });
     </script>
     {% endif %}
-    <script>
-        $.fn.password_setter = function (options) {
-            var that = this,
-                options = options || {},
-                title = options.title || "Set Password",
-                randID = Math.floor(Math.random() * 1000),
-                password1ID = 'password-' + randID + '-1',
-                password2ID = 'password-' + randID + '-2',
-                message = {
-                    RESET: "Reset",
-                    LABEL1: "Password",
-                    LABEL2: "Repeat Password",
-                    OK: "OK",
-                    CANCEL: "Cancel",
-                    PASSWORD_EMPTY: "You must enter a password.",
-                    PASSWORD_MISMATCH: "Try again. The passwords don't match"
-                },
-                label1 = $('<label/>').attr({'for': password1ID}).text(message.LABEL1),
-                label2 = $('<label/>').attr({'for': password2ID}).text(message.LABEL2),
-                password1 = $('<input/>').attr({type: 'password', id: password1ID}),
-                password2 = $('<input/>').attr({type: 'password', id: password2ID}),
-                popupLink = $('<a/>').attr({href: '#'}).text(message.RESET),
-                popup = $('<section/>').addClass('password-setter-popup'),
-                popupOK = $('<input/>').attr({type: 'submit'}).val(message.OK).button(),
-                popupCancel = $('<a/>').attr({href: '#'}).text(message.CANCEL).button(),
-                passwordMismatch = $('<p/>').text(message.PASSWORD_MISMATCH),
-                passwordEmpty = $('<p/>').text(message.PASSWORD_EMPTY),
-                form = $('<form/>').attr({action: ''}),
-                undefined = undefined;
-            this.hide();
-            this.after(popupLink);
-            popup.append(
-                $('<h1/>').text(title),
-                form.append(
-                    passwordMismatch,
-                    $('<table/>').append(
-                        $('<tr/>').append(
-                            $('<td/>').append(label1),
-                            $('<td/>').append(passwordEmpty, password1)
-                        ),
-                        $('<tr/>').append(
-                            $('<td/>').append(label2),
-                            $('<td/>').append(password2)
-                        )
-                    ),
-                    popupOK,
-                    popupCancel
-                )
-            );
-            passwordEmpty.hide();
-            passwordMismatch.hide();
-            popupLink.click(function (e) {
-                var position = popupLink.offset();
-                e.preventDefault();
-                popup.css({
-                    display: 'block',
-                    position: 'absolute',
-                    top: position.top,
-                    left: position.left,
-                }).addClass('ui-corner-tr ui-corner-br ui-corner-bl shadow');
-                $('body').append(popup);
-                password1.focus();
-            });
-
-            popupCancel.click(function (e) {
-                e.preventDefault();
-                popup.detach();
-            });
-
-            form.submit(function (e) {
-                e.preventDefault();
-                passwordEmpty.hide();
-                passwordMismatch.hide();
-                if (password1.val() && password1.val() === password2.val()) {
-                    popup.detach();
-                    that.val(password1.val()).trigger('textchange');
-                } else if (!password1.val()) {
-                    passwordEmpty.show();
-                } else {
-                    passwordMismatch.show();
-                }
-            });
-        };
-    </script>
     {% if app.doc_type == "Application" %}
         <script>
             $(function () {
@@ -253,70 +214,23 @@
     {% endif %}
 {% endblock %}
 
-{% block head %}{{ block.super }}
-    <style>
-        .sortable-handle {
-            cursor: move;
-        }
-        #custom-keys-help {
-            width: 400px;
-            font-size: .9em;
-        }
-        #custom-keys-help p {
-            color: #888;
-            vertical-align: bottom;
-        }
-        #custom-keys-example {
-            margin-top: 1em;
-        }
-        #custom-keys-help ul {
-            margin-left: 2em;
-        }
-        #custom-keys-help li span {
-            display: inline-block;
-            border: 1px solid #CCC;
-            padding: 2px;
-            margin: 1px;
-        }
-        #supported-languages .light {
-            color: #BBB;
-        }
-        #supported-languages td {
-            vertical-align: baseline;
-        }
-        #default-language-help {
-            position: absolute;
-            /*width: 100%;*/
-            border: 1px solid #CCC;
-            padding: .5em 1em;
-            padding-left: 150px;
-            left: 35px;
-            background-color: #FFF;
-            border-radius: 40px;
-        }
-        .password-setter-popup {
-            background-color: white;
-            border: 1px solid #CCC;
-            padding: 1em;
-        }
-        .password-setter-popup h1 {
-            text-align: center;
-            font-size: 1.2em;
-        }
-        .password-setter-popup table {
-            margin: 0;
-        }
-        .password-setter-popup .ui-button {
-            float: right;
-            margin: 5px;
-        }
-        .password-setter-popup input[type='password'] {
-            width: 40px;
-        }
-    </style>
-{% endblock %}
 {% block form-view %}
     <div class="tab-content">
+        <div class="tab-pane" id="releases">
+            <!-- templates only; will be populated asynchronously -->
+            <script type="text/html" class="hq-loading">
+                <img src="{% new_static 'hqwebapp/img/ajax-loader.gif' %}" alt="loading indicator" />
+                {% trans "Loading..." %}
+            </script>
+            <script type="text/html" class="hq-loading-error">
+                <div class="alert alert-danger">
+                    {% trans "Oops, there was a problem loading this section. Please try again." %}
+                </div>
+                <button class="btn btn-primary reload">
+                    {% trans "Try again" %}
+                </button>
+            </script>
+        </div>
         <div class="tab-pane{% if not copy_app_form.is_bound %} active{% endif %}" id="app-settings">
             {% include "app_manager/partials/app-settings.html" %}
         </div>
@@ -325,11 +239,12 @@
         {% if app.get_doc_type == "Application" %}
             <div class="tab-pane multimedia" id="multimedia">
                 <div data-bind="if: load_state() === 'loading'">
-                    <i class="icon-large icon-refresh icon-spin" style="margin: 70px 0 0 200px;"></i>
+                    <img src="{% new_static 'hqwebapp/img/ajax-loader.gif' %}" alt="loading indicator" />
+                    {% trans "Loading ..." %}
                 </div>
                 <div data-bind="html: multimedia_page_html"></div>
                 <div data-bind="if: load_state() === 'error'">
-                    <button class="btn" data-bind="click: load_if_necessary">{% trans "Try again" %}</button>
+                    <button class="btn btn-default" data-bind="click: load_if_necessary">{% trans "Try again" %}</button>
                 </div>
             </div>
 
@@ -346,7 +261,7 @@
             <form action="{% url "corehq.apps.app_manager.views.delete_app" domain app.id %}" method="POST">
                 {% csrf_token %}
                 <button type="submit" class="btn btn-danger disable-on-submit">
-                    <i class="icon-trash"></i>
+                    <i class="fa fa-trash"></i>
                     {% trans "Delete this application" %}
                 </button>
             </form>
@@ -356,6 +271,7 @@
 
 {% block modals %}{{ block.super }}
 {% for uploader in uploaders %}
-{% include 'hqmedia/partials/multimedia_uploader.html' %}
+{% include 'hqmedia/bootstrap3/partials/multimedia_uploader.html' %}
 {% endfor %}
+{% include 'app_manager/partials/password_setter_modal.html' %}
 {% endblock %}

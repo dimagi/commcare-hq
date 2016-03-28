@@ -36,6 +36,14 @@ def get_doc_count_by_type(db, doc_type):
 
 
 def get_all_docs_with_doc_types(db, doc_types):
+    """
+    doc_types must be a sequence of doc_types
+
+    returns doc JSON (not wrapped)
+    """
+    if isinstance(doc_types, unicode):
+        raise TypeError('get_all_docs_with_doc_types requires doc_types '
+                        'to be a sequence of strings, not {!r}'.format(doc_types))
     for doc_type in doc_types:
         results = paginate_view(
             db, 'all_docs/by_doc_type',

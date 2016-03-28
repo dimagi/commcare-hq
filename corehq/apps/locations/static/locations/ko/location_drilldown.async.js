@@ -1,8 +1,8 @@
 function api_get_children(loc_uuid, callback) {
   var params = (loc_uuid ? {parent_id: loc_uuid} : {});
-  $('#loc_ajax').show();
+  $('#loc_ajax').show().removeClass('hide');
   $.getJSON(LOAD_LOCS_URL, params, function(allData) {
-      $('#loc_ajax').hide();
+      $('#loc_ajax').hide().addClass('hide');
       callback(allData.objects);
     });
 }
@@ -143,7 +143,11 @@ function LocationModel(data, root, depth, func, withAllOption) {
 
   // helpers to account for the 'all' meta-entry
   this.num_children = ko.computed(function() {
-      return (this.children().length === 0 ? 0 : this.children().length - 1);
+      var length = this.children().length;
+      if (this.withAllOption && length !== 0) {
+          length -= 1;
+      }
+      return length;
     }, this);
   this.get_child = function(i) {
     return this.children()[i + 1];

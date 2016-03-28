@@ -1,6 +1,5 @@
 import logging
 from django.dispatch import Signal
-from corehq.apps.commtrack.helpers import make_supply_point
 from corehq.apps.hqcase.dbaccessors import \
     get_supply_point_case_in_domain_by_id
 from corehq.apps.programs.models import Program
@@ -61,7 +60,7 @@ def sync_facility_to_supply_point(domain, facility):
 
         facility_loc = Location(**facility_dict)
         facility_loc.save()
-        return make_supply_point(domain, facility_loc)
+        return facility_loc.linked_supply_point()
     else:
         facility_loc = supply_point.location
         if parent_sp and facility_loc.parent_id != parent_sp.location.location_id:

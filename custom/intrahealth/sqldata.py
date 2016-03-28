@@ -1,7 +1,7 @@
 # coding=utf-8
+import sqlalchemy
 from sqlagg.base import AliasColumn, QueryMeta, CustomQueryColumn, TableNotFoundException
 from sqlagg.columns import SumColumn, MaxColumn, SimpleColumn, CountColumn, CountUniqueColumn, MeanColumn
-from sqlalchemy.sql.expression import alias
 from corehq.apps.locations.models import SQLLocation
 from corehq.apps.products.models import SQLProduct
 
@@ -14,6 +14,7 @@ from django.utils.translation import ugettext as _
 from sqlalchemy import select
 from corehq.apps.reports.util import get_INFilter_bindparams
 from custom.utils.utils import clean_IN_filter_value
+from dimagi.utils.decorators.memoized import memoized
 from dimagi.utils.parsing import json_format_date
 
 PRODUCT_NAMES = {
@@ -183,58 +184,50 @@ class DispDesProducts(BaseSqlData):
         return group_by
 
     @property
+    @memoized
+    def products(self):
+        return list(SQLProduct.objects.filter(domain=self.config['domain'], is_archived=False).order_by('name'))
+
+    @property
     def rows(self):
+        products = self.products
+        values = {
+            product.product_id: [0, 0, 0]
+            for product in products
+        }
 
-        def row_in_names(row, names):
-            if row in names:
-                return True, names.index(row)+1
-            else:
-                for idx, val in enumerate(names):
-                    if unicode(row).lower() in PRODUCT_NAMES.get(val, []):
-                        return True, idx+1
-            return False, 0
-
-        commandes = ['Comanndes']
-        raux = ['Recu']
-        taux = ['Taux']
-        products = SQLProduct.objects.filter(domain=self.config['domain'], is_archived=False)
-        for product in products:
-            commandes.append(0)
-            raux.append(0)
-            taux.append(0)
-        names = []
-
-        for product in products:
-            names.append(unicode(product.name).lower())
-        rows = super(DispDesProducts, self).rows
+        rows = self.get_data()
         for row in rows:
-            exits, index = row_in_names(row[0], names)
-            if exits:
-                commandes[index] = row[1]
-                raux[index] = row[2]
-                taux[index] = "%d%%" % (100*row[2]['html']/(row[1]['html'] or 1))
+            product_id = row['product_id']
+            values[product_id] = [
+                row['commandes_total'],
+                row['recus_total'],
+                "%d%%" % (100 * row['recus_total']['html'] / (row['commandes_total']['html'] or 1))
+            ]
+
+        commandes = ['Commandes']
+        raux = ['Raux']
+        taux = ['Taux']
+
+        for product in products:
+            values_for_product = values[product.product_id]
+            commandes.append(values_for_product[0])
+            raux.append(values_for_product[1])
+            taux.append(values_for_product[2])
+
         return [commandes, raux, taux]
 
     @property
     def headers(self):
-        headers = DataTablesHeader(*[DataTablesColumn('Quantity')])
-        for product in SQLProduct.objects.filter(domain=self.config['domain'], is_archived=False):
+        headers = DataTablesHeader(DataTablesColumn('Quantity'))
+        for product in self.products:
             headers.add_column(DataTablesColumn(product.name))
         return headers
 
-
-
     @property
     def columns(self):
-        def get_prd_name(id):
-            try:
-                return SQLProduct.objects.get(product_id=id, domain=self.config['domain'],
-                                              is_archived=False).name
-            except SQLProduct.DoesNotExist:
-                pass
         return [
-            DatabaseColumn('Product Name', SimpleColumn('product_id'),
-                           format_fn=lambda id: get_prd_name(id)),
+            DatabaseColumn('Product Name', SimpleColumn('product_id')),
             DatabaseColumn("Commandes", SumColumn('commandes_total')),
             DatabaseColumn("Recu", SumColumn('recus_total'))
         ]
@@ -729,7 +722,7 @@ class IntraHealthQueryMeta(QueryMeta):
 
     def __init__(self, table_name, filters, group_by, key):
         self.key = key
-        super(IntraHealthQueryMeta, self).__init__(table_name, filters, group_by)
+        super(IntraHealthQueryMeta, self).__init__(table_name, filters, group_by, [])
 
     def execute(self, metadata, connection, filter_values):
         try:
@@ -745,36 +738,43 @@ class IntraHealthQueryMeta(QueryMeta):
 class SumAndAvgQueryMeta(IntraHealthQueryMeta):
 
     def _build_query(self, table, filter_values):
+        key_column = table.c[self.key]
+        sum_query = sqlalchemy.alias(
+            sqlalchemy.select(
+                self.group_by + [sqlalchemy.func.sum(key_column).label('sum_col')] + [table.c.month],
+                group_by=self.group_by + [table.c.month],
+                whereclause=AND(self.filters).build_expression(table),
+            ), name='s')
 
-        sum_query = alias(select(self.group_by + ["SUM(%s) AS sum_col" % self.key] + ['month'],
-                                 group_by=self.group_by + ['month'],
-                                 whereclause=AND(self.filters).build_expression(table),
-                                 ), name='s')
-
-        return select(self.group_by + ['AVG(s.sum_col) AS %s' % self.key],
-                      group_by=self.group_by,
-                      from_obj=sum_query
-                      ).params(filter_values)
+        return select(
+            self.group_by + [sqlalchemy.func.avg(sum_query.c.sum_col).label(self.key)],
+            group_by=self.group_by,
+            from_obj=sum_query
+        ).params(filter_values)
 
 
 class CountUniqueAndSumQueryMeta(IntraHealthQueryMeta):
 
     def _build_query(self, table, filter_values):
+        key_column = table.c[self.key]
+        subquery = sqlalchemy.alias(
+            sqlalchemy.select(
+                self.group_by + [sqlalchemy.func.count(sqlalchemy.distinct(key_column)).label('count_unique')],
+                group_by=self.group_by + [table.c.month],
+                whereclause=AND(self.filters).build_expression(table),
+            ),
+            name='cq')
 
-        count_uniq = alias(select(self.group_by + ["COUNT(DISTINCT(%s)) AS count_unique" % self.key],
-                                  group_by=self.group_by + ['month'],
-                                  whereclause=AND(self.filters).build_expression(table),
-                                  ), name='cq')
-
-        return select(self.group_by + ['SUM(cq.count_unique) AS %s' % self.key],
-                      group_by=self.group_by,
-                      from_obj=count_uniq
-                      ).params(filter_values)
+        return sqlalchemy.select(
+            self.group_by + [sqlalchemy.func.sum(subquery.c.count_unique).label(self.key)],
+            group_by=self.group_by,
+            from_obj=subquery
+        ).params(filter_values)
 
 
 class IntraHealthCustomColumn(CustomQueryColumn):
 
-    def get_query_meta(self, default_table_name, default_filters, default_group_by):
+    def get_query_meta(self, default_table_name, default_filters, default_group_by, default_order_by):
         table_name = self.table_name or default_table_name
         filters = self.filters or default_filters
         group_by = self.group_by or default_group_by

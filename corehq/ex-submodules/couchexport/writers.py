@@ -9,6 +9,8 @@ from django.template import Context
 from django.template.loader import render_to_string, get_template
 import xlwt
 
+from couchexport.models import Format
+
 
 class UniqueHeaderGenerator(object):
     def __init__(self, max_column_size=None):
@@ -295,13 +297,14 @@ class CsvExportWriter(ZippedExportWriter):
     """
     CSV writer that creates a zip file containing a csv for each table.
     """
-    pass
+    format = Format.CSV
 
 
 class UnzippedCsvExportWriter(OnDiskExportWriter):
     """
     Serve the first table as a csv
     """
+    format = Format.UNZIPPED_CSV
 
     def _write_final_result(self):
 
@@ -312,6 +315,7 @@ class UnzippedCsvExportWriter(OnDiskExportWriter):
 
 
 class Excel2007ExportWriter(ExportWriter):
+    format = Format.XLS_2007
     max_table_name_size = 31
 
     def _init(self):
@@ -366,6 +370,7 @@ class Excel2007ExportWriter(ExportWriter):
 
 
 class Excel2003ExportWriter(ExportWriter):
+    format = Format.XLS
     max_table_name_size = 31
 
     def _init(self):
@@ -414,6 +419,7 @@ class JsonExportWriter(InMemoryExportWriter):
     """
     Write tables to JSON
     """
+    format = Format.JSON
 
     class ConstantEncoder(json.JSONEncoder):
 
@@ -434,6 +440,7 @@ class JsonExportWriter(InMemoryExportWriter):
 
 
 class PythonDictWriter(InMemoryExportWriter):
+    format = Format.PYTHON_DICT
 
     class ConstantEncoder(json.JSONEncoder):
 
@@ -462,6 +469,7 @@ class HtmlExportWriter(OnDiskExportWriter):
     """
     Write tables to a single HTML file.
     """
+    format = Format.HTML
     writer_class = PartialHtmlFileWriter
 
     def _write_final_result(self):
@@ -491,12 +499,14 @@ class ZippedHtmlExportWriter(ZippedExportWriter):
     """
     writer_class = HtmlFileWriter
     table_file_extension = ".html"
+    format = Format.ZIPPED_HTML
 
 
 class CdiscOdmExportWriter(InMemoryExportWriter):
     """
     Write tables to a single CDISC ODM-formatted XML file.
     """
+    format = Format.CDISC_ODM
     target_app = 'OpenClinica'  # Export button to say "Export to OpenClinica"
 
     def _init(self):

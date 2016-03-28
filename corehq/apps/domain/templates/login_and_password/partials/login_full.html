@@ -1,7 +1,7 @@
 {% load i18n %}
 <div class="row">
     <div class="span8">
-        {% include "login_and_password/partials/login_form.html" %}
+        {% include "login_and_password/two_factor/core/login.html" %}
     </div>
     <div class="span4">
         <aside class="well clearfix">
@@ -17,7 +17,7 @@
                  {% if allow_domain_requests %}
                    href="{% url "domain_request" domain %}"
                  {% else %}
-                   href="{% url "register_user" DOMAIN_TYPE %}"
+                   href="{% url "register_user" %}"
                  {% endif %}
               >
                 {% if allow_domain_requests %}

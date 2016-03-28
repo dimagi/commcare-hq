@@ -2,6 +2,10 @@ from copy import copy
 from datetime import datetime, timedelta, date
 import itertools
 import json
+from corehq.apps.domain.views import BaseDomainView
+from corehq.apps.hqwebapp.view_permissions import user_can_view_reports
+from corehq.apps.users.permissions import FORM_EXPORT_PERMISSION, CASE_EXPORT_PERMISSION, \
+    DEID_EXPORT_PERMISSION
 import langcodes
 import os
 import pytz
@@ -32,7 +36,8 @@ from django.http.response import (
 from django.shortcuts import render
 from django.utils.decorators import method_decorator
 from django.utils.safestring import mark_safe
-from django.utils.translation import ugettext as _
+from django.utils.translation import ugettext as _, ugettext_lazy
+from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import (
     require_GET,
     require_http_methods,
@@ -51,7 +56,10 @@ from casexml.apps.case.xml import V2
 from casexml.apps.stock.models import StockTransaction
 from couchdbkit.exceptions import ResourceNotFound
 import couchexport
+from corehq.form_processor.exceptions import XFormNotFound, CaseNotFound, AttachmentNotFound
+from corehq.form_processor.interfaces.dbaccessors import FormAccessors, CaseAccessors
 from corehq.form_processor.models import UserRequestedRebuild
+from corehq.form_processor.utils import should_use_sql_backend
 from couchexport.exceptions import (
     CouchExportException,
     SchemaMismatchException
@@ -102,7 +110,6 @@ from corehq.apps.hqwebapp.utils import csrf_inline
 from corehq.apps.locations.permissions import can_edit_form_location
 from corehq.apps.products.models import SQLProduct
 from corehq.apps.receiverwrapper import submit_form_locally
-from corehq.apps.sofabed.models import CaseData
 from corehq.apps.userreports.util import default_language as ucr_default_language
 from corehq.apps.users.decorators import require_permission
 from corehq.apps.users.export import export_users
@@ -134,7 +141,7 @@ from .models import (
 )
 
 from .standard import inspect, export, ProjectReport
-from corehq.apps.style.decorators import use_knockout_js, use_bootstrap3
+from corehq.apps.style.decorators import use_bootstrap3
 from .standard.cases.basic import CaseListReport
 from .tasks import (
     build_form_multimedia_zip,
@@ -151,6 +158,12 @@ from .util import (
     group_filter,
     users_matching_filter,
 )
+from corehq.apps.style.decorators import (
+    use_bootstrap3,
+    use_jquery_ui,
+    use_jquery_ui_multiselect,
+    use_select2,
+)
 
 
 datespan_default = datespan_in_request(
@@ -159,8 +172,10 @@ datespan_default = datespan_in_request(
     default_days=7,
 )
 
-require_form_export_permission = require_permission(Permissions.view_report, 'corehq.apps.reports.standard.export.ExcelExportReport', login_decorator=None)
-require_case_export_permission = require_permission(Permissions.view_report, 'corehq.apps.reports.standard.export.CaseExportReport', login_decorator=None)
+require_form_export_permission = require_permission(
+    Permissions.view_report, FORM_EXPORT_PERMISSION, login_decorator=None)
+require_case_export_permission = require_permission(
+    Permissions.view_report, CASE_EXPORT_PERMISSION, login_decorator=None)
 
 require_form_view_permission = require_permission(Permissions.view_report, 'corehq.apps.reports.standard.inspect.SubmitHistory', login_decorator=None)
 require_case_view_permission = require_permission(Permissions.view_report, 'corehq.apps.reports.standard.cases.basic.CaseListReport', login_decorator=None)
@@ -192,11 +207,25 @@ def old_saved_reports(request, domain):
     return default(request, domain)
 
 
+class BaseProjectReportSectionView(BaseDomainView):
+    section_name = ugettext_lazy("Project Reports")
+
+    @use_bootstrap3
+    def dispatch(self, request, *args, **kwargs):
+        request.project = Domain.get_by_name(self.domain)
+        if not user_can_view_reports(request.project, request.couch_user):
+            raise Http404()
+        return super(BaseProjectReportSectionView, self).dispatch(request, *args, **kwargs)
+
+    @property
+    def section_url(self):
+        return reverse('reports_home', args=(self.domain, ))
+
+
 @login_and_domain_required
 def saved_reports(request, domain, template="reports/reports_home.html"):
     user = request.couch_user
-    if not (request.couch_user.can_view_reports()
-            or request.couch_user.get_viewable_reports()):
+    if not user_can_view_reports(request.project, user):
         raise Http404
 
     lang = request.couch_user.language or ucr_default_language()
@@ -230,13 +259,12 @@ def saved_reports(request, domain, template="reports/reports_home.html"):
         scheduled_reports=scheduled_reports,
         report=dict(
             title=_("My Saved Reports"),
-            show=user.can_view_reports() or user.get_viewable_reports(),
+            show=True,
             slug=None,
             is_async=True,
             section_name=ProjectReport.section_name,
         ),
     )
-
     return render(request, template, context)
 
 
@@ -292,10 +320,7 @@ def export_data(req, domain):
         return resp
     else:
         messages.error(req, "Sorry, there was no data found for the tag '%s'." % export_tag)
-        next = req.GET.get("next", "")
-        if not next:
-            next = export.ExcelExportReport.get_url(domain=domain)
-        return HttpResponseRedirect(next)
+        raise Http404()
 
 
 @require_form_export_permission
@@ -354,7 +379,7 @@ def export_default_or_custom_data(request, domain, export_id=None, bulk_export=F
         return _export_no_deid(request, domain, export_id, bulk_export=bulk_export)
 
 
-@require_permission('view_report', 'corehq.apps.reports.standard.export.DeidExportReport', login_decorator=None)
+@require_permission('view_report', DEID_EXPORT_PERMISSION, login_decorator=None)
 def _export_deid(request, domain, export_id=None, bulk_export=False):
     return _export_default_or_custom_data(request, domain, export_id, bulk_export=bulk_export, safe_only=True)
 
@@ -367,7 +392,6 @@ def _export_no_deid(request, domain, export_id=None, bulk_export=False):
 def _export_default_or_custom_data(request, domain, export_id=None, bulk_export=False, safe_only=False):
     req = request.POST if request.method == 'POST' else request.GET
     async = req.get('async') == 'true'
-    next = req.get("next", "")
     format = req.get("format", "")
     export_type = req.get("type", "form")
     previous_export_id = req.get("previous_export", None)
@@ -426,7 +450,6 @@ def _export_default_or_custom_data(request, domain, export_id=None, bulk_export=
 
         export_object = export_class(index=export_tag)
 
-
     if export_type == 'form':
         _filter = filter
         filter = SerializableFunction(default_form_filter, filter=_filter)
@@ -444,8 +467,6 @@ def _export_default_or_custom_data(request, domain, export_id=None, bulk_export=
             max_column_size=max_column_size,
         )
     else:
-        if not next:
-            next = export.ExcelExportReport.get_url(domain=domain)
         try:
             resp = export_object.download_data(format, filter=filter, limit=limit)
         except SchemaMismatchException, e:
@@ -455,14 +476,15 @@ def _export_default_or_custom_data(request, domain, export_id=None, bulk_export=
                 "Sorry, the export failed for %s, please try again later" \
                     % export_object.name
             )
-            return HttpResponseRedirect(next)
+            raise Http404()
         if resp:
             return resp
         else:
             messages.error(request, "Sorry, there was no data found for the tag '%s'." % export_object.name)
-            return HttpResponseRedirect(next)
+            raise Http404()
 
 
+@csrf_exempt
 @login_or_digest_or_basic_or_apikey(default='digest')
 @require_form_export_permission
 @require_GET
@@ -582,7 +604,8 @@ class AddSavedReportConfigView(View):
         self.domain = domain
 
         if not self.saved_report_config_form.is_valid():
-            return HttpResponseBadRequest()
+            errors = self.saved_report_config_form.errors.get('__all__', [])
+            return HttpResponseBadRequest(', '.join(errors))
 
         update_config_data = copy(self.saved_report_config_form.cleaned_data)
         del update_config_data['_id']
@@ -783,7 +806,7 @@ def edit_scheduled_report(request, domain, scheduled_report_id=None,
         'form': None,
         'domain': domain,
         'report': {
-            'show': request.couch_user.can_view_reports() or request.couch_user.get_viewable_reports(),
+            'show': user_can_view_reports(request.project, request.couch_user),
             'slug': None,
             'default_url': reverse('reports_home', args=(domain,)),
             'is_async': False,
@@ -1012,19 +1035,21 @@ def view_scheduled_report(request, domain, scheduled_report_id):
 @require_GET
 def case_details(request, domain, case_id):
     try:
-        case = get_document_or_404(CommCareCase, domain, case_id)
+        case = _get_case_or_404(domain, case_id)
     except Http404:
         messages.info(request, "Sorry, we couldn't find that case. If you think this is a mistake please report an issue.")
         return HttpResponseRedirect(CaseListReport.get_url(domain=domain))
 
-    create_actions = filter(lambda a: a.action_type == CASE_ACTION_CREATE, case.actions)
-    if not create_actions:
-        messages.error(request, _(
-            "The case creation form could not be found. "
-            "Usually this happens if the form that created the case is archived "
-            "but there are other forms that updated the case. "
-            "To fix this you can archive the other forms listed here."
-        ))
+    if not should_use_sql_backend(domain):
+        # TODO: make this work for SQL
+        create_actions = filter(lambda a: a.action_type == CASE_ACTION_CREATE, case.actions)
+        if not create_actions:
+            messages.error(request, _(
+                "The case creation form could not be found. "
+                "Usually this happens if the form that created the case is archived "
+                "but there are other forms that updated the case. "
+                "To fix this you can archive the other forms listed here."
+            ))
 
     return render(request, "reports/reportdata/case_details.html", {
         "domain": domain,
@@ -1050,7 +1075,7 @@ def case_details(request, domain, case_id):
 @login_and_domain_required
 @require_GET
 def case_forms(request, domain, case_id):
-    case = get_document_or_404(CommCareCase, domain, case_id)
+    case = _get_case_or_404(domain, case_id)
     try:
         start_range = int(request.GET['start_range'])
         end_range = int(request.GET['end_range'])
@@ -1059,18 +1084,19 @@ def case_forms(request, domain, case_id):
 
     def form_to_json(form):
         return {
-            'id': form._id,
+            'id': form.form_id,
             'received_on': json_format_datetime(form.received_on),
             'user': {
-                "id": form.metadata.userID if form.metadata else '',
+                "id": form.user_id or '',
                 "username": form.metadata.username if form.metadata else '',
             },
-            'readable_name': form.form.get('@name') or _('unknown'),
+            'readable_name': form.form_data.get('@name') or _('unknown'),
         }
 
     slice = list(reversed(case.xform_ids))[start_range:end_range]
+    forms = FormAccessors(domain).get_forms(slice)
     return json_response([
-        form_to_json(XFormInstance.get(form_id)) for form_id in slice
+        form_to_json(form) for form in forms
     ])
 
 
@@ -1080,7 +1106,7 @@ def case_attachments(request, domain, case_id):
     if not can_view_attachments(request):
         return HttpResponseForbidden(_("You don't have permission to access this page."))
 
-    case = get_document_or_404(CommCareCase, domain, case_id)
+    case = _get_case_or_404(domain, case_id)
     return render(request, 'reports/reportdata/case_attachments.html',
                   {'domain': domain, 'case': case})
 
@@ -1089,7 +1115,7 @@ def case_attachments(request, domain, case_id):
 @login_and_domain_required
 @require_GET
 def case_xml(request, domain, case_id):
-    case = get_document_or_404(CommCareCase, domain, case_id)
+    case = _get_case_or_404(domain, case_id)
     version = request.GET.get('version', V2)
     return HttpResponse(case.to_xml(version), content_type='text/xml')
 
@@ -1098,7 +1124,7 @@ def case_xml(request, domain, case_id):
 @require_permission(Permissions.edit_data)
 @require_POST
 def rebuild_case_view(request, domain, case_id):
-    case = get_document_or_404(CommCareCase, domain, case_id)
+    case = _get_case_or_404(domain, case_id)
     rebuild_case_from_forms(domain, case_id, UserRequestedRebuild(user_id=request.couch_user.user_id))
     messages.success(request, _(u'Case %s was rebuilt from its forms.' % case.name))
     return HttpResponseRedirect(reverse('case_details', args=[domain, case_id]))
@@ -1110,8 +1136,12 @@ def rebuild_case_view(request, domain, case_id):
 def resave_case(request, domain, case_id):
     """Re-save the case to have it re-processed by pillows
     """
-    case = get_document_or_404(CommCareCase, domain, case_id)
-    CommCareCase.get_db().save_doc(case._doc)  # don't just call save to avoid signals
+    from corehq.form_processor.change_publishers import publish_case_saved
+    case = _get_case_or_404(domain, case_id)
+    if should_use_sql_backend(domain):
+        publish_case_saved(case)
+    else:
+        CommCareCase.get_db().save_doc(case._doc)  # don't just call save to avoid signals
     messages.success(
         request,
         _(u'Case %s was successfully saved. Hopefully it will show up in all reports momentarily.' % case.name),
@@ -1122,30 +1152,8 @@ def resave_case(request, domain, case_id):
 @require_case_view_permission
 @require_permission(Permissions.edit_data)
 @require_POST
-def bootstrap_ledgers(request, domain, case_id):
-    # todo: this is just to fix a mobile issue that requires ledgers to be initialized
-    # this view and code can be removed when that bug is released (likely anytime after
-    # october 2015 if you are reading this after then)
-    case = get_document_or_404(CommCareCase, domain, case_id)
-    if (not StockTransaction.objects.filter(case_id=case_id).exists() and
-            SQLProduct.objects.filter(domain=domain).exists()):
-        submit_case_blocks([
-            '''<balance xmlns="http://commcarehq.org/ledger/v1" entity-id="{case_id}" date="{date}" section-id="stock">
-           <entry id="{product_id}" quantity="0" />
-        </balance>'''.format(
-            date=json_format_datetime(datetime.utcnow()),
-            case_id=case_id,
-            product_id=SQLProduct.objects.filter(domain=domain).values_list('product_id', flat=True)[0]
-        )], domain=domain)
-        messages.success(request, _(u'An empty ledger was added to Case %s.' % case.name),)
-    return HttpResponseRedirect(reverse('case_details', args=[domain, case_id]))
-
-
-@require_case_view_permission
-@require_permission(Permissions.edit_data)
-@require_POST
 def close_case_view(request, domain, case_id):
-    case = get_document_or_404(CommCareCase, domain, case_id)
+    case = _get_case_or_404(domain, case_id)
     if case.closed:
         messages.info(request, u'Case {} is already closed.'.format(case.name))
     else:
@@ -1172,13 +1180,13 @@ def close_case_view(request, domain, case_id):
 @require_permission(Permissions.edit_data)
 @require_POST
 def undo_close_case_view(request, domain, case_id):
-    case = get_document_or_404(CommCareCase, domain, case_id)
+    case = _get_case_or_404(domain, case_id)
     if not case.closed:
         messages.info(request, u'Case {} is not closed.'.format(case.name))
     else:
         closing_form_id = request.POST['closing_form']
         assert closing_form_id in case.xform_ids
-        form = XFormInstance.get(closing_form_id)
+        form = FormAccessors(domain).get_form(closing_form_id)
         form.archive(user_id=request.couch_user._id)
         messages.success(request, u'Case {} has been reopened.'.format(case.name))
     return HttpResponseRedirect(reverse('case_details', args=[domain, case_id]))
@@ -1188,7 +1196,7 @@ def undo_close_case_view(request, domain, case_id):
 @login_and_domain_required
 @require_GET
 def export_case_transactions(request, domain, case_id):
-    case = get_document_or_404(CommCareCase, domain, case_id)
+    case = _get_case_or_404(domain, case_id)
     products_by_id = dict(SQLProduct.objects.filter(domain=domain).values_list('product_id', 'name'))
 
     headers = [
@@ -1350,22 +1358,25 @@ def _get_form_context(request, domain, instance):
     return context
 
 
-def _get_form_or_404(id):
-    # maybe this should be a more general utility a-la-django's get_object_or_404
+def _get_form_or_404(domain, id):
     try:
-        xform_json = XFormInstance.get_db().get(id)
-    except ResourceNotFound:
+        return FormAccessors(domain).get_form(id)
+    except XFormNotFound:
         raise Http404()
 
-    doc_type = doc_types().get(xform_json.get('doc_type'))
-    if not doc_type:
-        raise Http404()
 
-    return doc_type.wrap(xform_json)
+def _get_case_or_404(domain, case_id):
+    try:
+        case = CaseAccessors(domain).get_case(case_id)
+        if case.domain != domain or case.is_deleted:
+            raise Http404()
+        return case
+    except CaseNotFound:
+        raise Http404()
 
 
 def _get_form_to_edit(domain, user, instance_id):
-    form = _get_form_or_404(instance_id)
+    form = _get_form_or_404(domain, instance_id)
     if not can_edit_form_location(domain, user, form):
         raise PermissionDenied()
     return form
@@ -1375,10 +1386,10 @@ def _get_form_to_edit(domain, user, instance_id):
 @login_and_domain_required
 @require_GET
 def form_data(request, domain, instance_id):
-    instance = _get_form_or_404(instance_id)
+    instance = _get_form_or_404(domain, instance_id)
     context = _get_form_context(request, domain, instance)
     try:
-        form_name = instance.form["@name"]
+        form_name = instance.form_data["@name"]
     except KeyError:
         form_name = "Untitled Form"
 
@@ -1395,7 +1406,7 @@ def form_data(request, domain, instance_id):
 @login_and_domain_required
 @require_GET
 def case_form_data(request, domain, case_id, xform_id):
-    instance = _get_form_or_404(xform_id)
+    instance = _get_form_or_404(domain, xform_id)
     context = _get_form_context(request, domain, instance)
     context['case_id'] = case_id
     context['side_pane'] = True
@@ -1406,7 +1417,7 @@ def case_form_data(request, domain, case_id, xform_id):
 @login_and_domain_required
 @require_GET
 def download_form(request, domain, instance_id):
-    instance = _get_form_or_404(instance_id)
+    instance = _get_form_or_404(domain, instance_id)
     assert(domain == instance.domain)
 
     instance = XFormInstance.get(instance_id)
@@ -1418,7 +1429,6 @@ def download_form(request, domain, instance_id):
 class EditFormInstance(View):
 
     @use_bootstrap3
-    @use_knockout_js
     @method_decorator(require_form_view_permission)
     @method_decorator(require_permission(Permissions.edit_data))
     def dispatch(self, request, *args, **kwargs):
@@ -1472,9 +1482,8 @@ class EditFormInstance(View):
 
         # add usercase to session
         if self._form_uses_usercase(self._get_form_from_instance(instance)):
-            try:
-                usercase_id = CaseData.objects.get(user_id=user._id, type=USERCASE_TYPE).case_id
-            except CaseData.DoesNotExist:
+            usercase_id = user.get_usercase_id()
+            if not usercase_id:
                 return _error(_('Could not find the user-case for this form'))
             edit_session_data[USERCASE_ID] = usercase_id
 
@@ -1534,17 +1543,15 @@ def download_attachment(request, domain, instance_id):
     attachment = request.GET.get('attachment', False)
     if not attachment:
         return HttpResponseBadRequest("Invalid attachment.")
-    instance = _get_form_or_404(instance_id)
+    instance = _get_form_or_404(domain, instance_id)
     assert(domain == instance.domain)
 
-    instance = XFormInstance.get(instance_id)
     try:
-        attach = instance._attachments[attachment]
-    except KeyError:
+        attach = FormAccessors(domain).get_attachment_content(instance_id, attachment)
+    except AttachmentNotFound:
         raise Http404()
-    response = HttpResponse(content_type=attach["content_type"])
-    response.write(instance.fetch_attachment(attachment))
-    return response
+
+    return StreamingHttpResponse(streaming_content=attach.content_stream, content_type=attach.content_type)
 
 
 @require_form_view_permission
@@ -1553,10 +1560,10 @@ def download_attachment(request, domain, instance_id):
 def archive_form(request, domain, instance_id):
     instance = _get_form_to_edit(domain, request.couch_user, instance_id)
     assert instance.domain == domain
-    if instance.doc_type == "XFormInstance":
+    if instance.is_normal:
         instance.archive(user_id=request.couch_user._id)
         notif_msg = _("Form was successfully archived.")
-    elif instance.doc_type == "XFormArchived":
+    elif instance.is_archived:
         notif_msg = _("Form was already archived.")
     else:
         notif_msg = _("Can't archive documents of type %s. How did you get here??") % instance.doc_type
@@ -1571,7 +1578,7 @@ def archive_form(request, domain, instance_id):
 
     msg_template = u"""{notif} <a href="javascript:document.getElementById('{id}').submit();">{undo}</a>
         <form id="{id}" action="{url}" method="POST">{csrf_inline}</form>""" \
-        if instance.doc_type == "XFormArchived" else u'{notif}'
+        if instance.is_archived else u'{notif}'
     msg = msg_template.format(**params)
     messages.success(request, mark_safe(msg), extra_tags='html')
 
@@ -1586,10 +1593,10 @@ def archive_form(request, domain, instance_id):
     case_id = re.findall(template, redirect)
     if case_id:
         try:
-            case = CommCareCase.get(case_id[0])
-            if case._doc['doc_type'] == 'CommCareCase-Deleted':
-                raise ResourceNotFound
-        except ResourceNotFound:
+            case = CaseAccessors(domain).get_case(case_id[0])
+            if case.is_deleted:
+                raise CaseNotFound
+        except CaseNotFound:
             redirect = reverse('project_report_dispatcher', args=[domain, 'case_list'])
 
     return HttpResponseRedirect(redirect)
@@ -1600,10 +1607,10 @@ def archive_form(request, domain, instance_id):
 def unarchive_form(request, domain, instance_id):
     instance = _get_form_to_edit(domain, request.couch_user, instance_id)
     assert instance.domain == domain
-    if instance.doc_type == "XFormArchived":
+    if instance.is_archived:
         instance.unarchive(user_id=request.couch_user._id)
     else:
-        assert instance.doc_type == "XFormInstance"
+        assert instance.is_normal
     messages.success(request, _("Form was successfully restored."))
 
     redirect = request.META.get('HTTP_REFERER')
@@ -1618,9 +1625,13 @@ def unarchive_form(request, domain, instance_id):
 def resave_form(request, domain, instance_id):
     """Re-save the form to have it re-processed by pillows
     """
+    from corehq.form_processor.change_publishers import publish_form_saved
     instance = _get_form_to_edit(domain, request.couch_user, instance_id)
     assert instance.domain == domain
-    XFormInstance.get_db().save_doc(instance.to_json())
+    if should_use_sql_backend(domain):
+        publish_form_saved(instance)
+    else:
+        XFormInstance.get_db().save_doc(instance.to_json())
     messages.success(request, _("Form was successfully resaved. It should reappear in reports shortly."))
     return HttpResponseRedirect(reverse('render_form_data', args=[domain, instance_id]))
 
@@ -1639,14 +1650,6 @@ def mk_date_range(start=None, end=None, ago=timedelta(days=7), iso=False):
         return json_format_datetime(start), json_format_datetime(end)
     else:
         return start, end
-
-
-@login_and_domain_required
-@permission_required("is_superuser")
-def clear_report_caches(request, domain):
-    print "CLEARING CACHE FOR DOMAIN", domain
-    print "ALL CACHES", cache.all()
-    return HttpResponse("TESTING")
 
 
 @require_case_view_permission

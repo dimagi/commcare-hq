@@ -8,6 +8,7 @@ from corehq.apps.users.models import WebUser
 
 class MockReport(object):
     is_cacheable = False
+    is_bootstrap3 = False
 
     def __init__(self, request, is_cacheable=True):
         self.request = request
@@ -42,13 +43,14 @@ class ReportCacheTest(TestCase):
     domain = 'cache-test'
 
     def setUp(self):
-        create_domain(self.domain)
+        self.test_domain = create_domain(self.domain)
         self.web_user1 = WebUser.create(self.domain, 'w1', 'secret')
         self.web_user2 = WebUser.create(self.domain, 'w2', 'secret')
 
     def tearDown(self):
         self.web_user1.delete()
         self.web_user2.delete()
+        self.test_domain.delete()
 
     def testBasicFunctionality(self):
         report = MockReport(_make_request('/a/{domain}/reports/foobar'.format(domain=self.domain),

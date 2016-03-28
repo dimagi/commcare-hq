@@ -1,5 +1,12 @@
-from django.conf.urls import *
+from corehq.messaging.smsbackends.telerivet.views import TelerivetSetupView
+from django.conf.urls import patterns, url
+
 
 urlpatterns = patterns('corehq.messaging.smsbackends.telerivet.views',
-    url(r'^in/?$', 'incoming_message', name='incoming_message'),
+    url(r'^in/?$', 'incoming_message', name='telerivet_in'),
+)
+
+
+domain_specific = patterns('corehq.messaging.smsbackends.telerivet.views',
+    url(r'^setup/$', TelerivetSetupView.as_view(), name=TelerivetSetupView.urlname),
 )

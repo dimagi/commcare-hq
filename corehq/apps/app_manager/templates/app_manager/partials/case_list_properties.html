@@ -5,14 +5,18 @@
     <table class="table table-condensed">
         <thead data-bind="visible: columns().length > 0">
             <tr tabindex="999" data-bind="paste: function (data) { pasteCallback(data, 0); }">
-                <th></th>
-                <th data-bind="text: DetailScreenConfig.message.FIELD"></th>
-                <th data-bind="text: DetailScreenConfig.message.HEADER"></th>
-                <th data-bind="text: DetailScreenConfig.message.FORMAT"></th>
+                <th class="col-sm-1"></th>
+                <th class="col-sm-3" data-bind="text: hqImport('app_manager/js/detail-screen-config.js').DetailScreenConfig.message.FIELD"></th>
                 <!-- ko if: useCaseTiles() == "yes" && {{request|toggle_enabled:'CASE_LIST_TILE'|BOOL }}-->
-                <th>{% trans "Case Tile Mapping" %}</th>
+                <th class="col-sm-2" data-bind="text: hqImport('app_manager/js/detail-screen-config.js').DetailScreenConfig.message.HEADER"></th>
+                <th class="col-sm-3" data-bind="text: hqImport('app_manager/js/detail-screen-config.js').DetailScreenConfig.message.FORMAT"></th>
+                <th class="col-sm-2">{% trans "Case Tile Mapping" %}</th>
+                <!--/ko-->
+                <!-- ko ifnot: useCaseTiles() == "yes" && {{request|toggle_enabled:'CASE_LIST_TILE'|BOOL }}-->
+                <th class="col-sm-3" data-bind="text: hqImport('app_manager/js/detail-screen-config.js').DetailScreenConfig.message.HEADER"></th>
+                <th class="col-sm-4" data-bind="text: hqImport('app_manager/js/detail-screen-config.js').DetailScreenConfig.message.FORMAT"></th>
                 <!-- /ko -->
-                <th></th>
+                <th class="col-sm-1"></th>
             </tr>
         </thead>
         <tbody data-bind="sortable: {
@@ -28,7 +32,7 @@
                 copy: function () { return copyCallback(); },
                 paste: function (data) { $parent.pasteCallback(data, $index() + 1); }
             ">
-                <td>
+                <td class="text-center">
                     <span class="sort-disabled" data-bind="ifnot: grip"></span>
                     <i class="grip sortable-handle" data-bind="
                         if: grip,
@@ -38,13 +42,12 @@
                     "></i>
                 </td>
                 <!--ko if: !isTab -->
-                    <td class="control-group"
-                        data-bind="css: {error: showWarning}">
-                        <div data-bind="html: CC_DETAIL_SCREEN.getFieldHtml(field.val()), visible: !field.edit"></div>
+                    <td data-bind="css: {'has-error': showWarning}">
+                        <div data-bind="html: hqImport('app_manager/js/detail-screen-config.js').CC_DETAIL_SCREEN.getFieldHtml(field.val()), visible: !field.edit"></div>
                         <div data-bind="jqueryElement: field.ui, visible: field.edit"></div>
                         <div data-bind="visible: showWarning">
-                            <span class="help-inline" data-bind="
-                                text: DetailScreenConfig.field_format_warning_message
+                            <span class="help-block" data-bind="
+                                text: hqImport('app_manager/js/detail-screen-config.js').DetailScreenConfig.field_format_warning_message
                             ">
                             </span>
                         </div>
@@ -55,9 +58,10 @@
                 <!--ko if: isTab -->
                     <!--ko if: $data.hasNodeset -->
                         <td data-bind="jqueryElement: header.ui"></td>
-                        <td class="control-group" colspan="2" data-bind="css: {error: showWarning}">
+                        <td class="form-group" colspan="2" data-bind="css: {'has-error': showWarning}">
                             <div data-bind="jqueryElement: nodeset.ui"></div>
-                            <span class="help-inline" data-bind="text: 'A nodeset must be specified.', visible: showWarning"></span>
+                            <span class="help-block"
+                                  data-bind="text: 'A nodeset must be specified.', visible: showWarning"></span>
                         </td>
                     <!--/ko-->
                     <!--ko ifnot: $data.hasNodeset -->
@@ -66,7 +70,7 @@
                 <!--/ko-->
                 <!-- ko if: $parent.useCaseTiles() == "yes" && {{request|toggle_enabled:'CASE_LIST_TILE'|BOOL }}-->
                 <td>
-                    <select data-bind="value: case_tile_field">
+                    <select class="form-control" data-bind="value: case_tile_field">
                         <option value=""></option>
                         <option value="header">header</option>
                         <option value="top_left">top_left</option>
@@ -76,13 +80,13 @@
                     </select>
                 </td>
                 <!-- /ko -->
-                <td>
+                <td class="text-center">
                     <i style="cursor: pointer;"
                        data-bind="
                         visible: ($parent.columns().length > 1 || $parent.allowsEmptyColumns),
                         click: function(){screen.columns.remove($data);},
                         css: COMMCAREHQ.icons.DELETE,
-                        attr: {title: DetailScreenConfig.message.DELETE_COLUMN}
+                        attr: {title: hqImport('app_manager/js/detail-screen-config.js').DetailScreenConfig.message.DELETE_COLUMN}
                     "></i>
                 </td>
             {# there must be no whitespace between <tbody> and <tr> #}

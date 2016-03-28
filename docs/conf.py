@@ -16,11 +16,9 @@ from mock import MagicMock
 import sphinx_rtd_theme
 
 sys.path.insert(0, os.path.abspath('..'))
-from ..manage import _set_source_root, _set_source_root_parent
+from ..manage import init_hq_python_path
 
-_set_source_root_parent('submodules')
-_set_source_root(os.path.join('corehq', 'ex-submodules'))
-_set_source_root(os.path.join('custom', '_legacy'))
+init_hq_python_path()
 os.environ.setdefault("DJANGO_SETTINGS_MODULE", "settings")
 
 # -- Custom configuration -----------------------------------------------------

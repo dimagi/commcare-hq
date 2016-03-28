@@ -4,13 +4,14 @@
 {% load i18n %}
 
 {% block js_extra %}
-    <script src="{% static 'app_manager/js/case-config-ui-advanced.js' %}"></script>
-    <script src="{% static 'app_manager/js/visit-scheduler.js' %}"></script>
+    <script src="{% new_static 'app_manager/js/case-config-ui-advanced.js' %}"></script>
+    <script src="{% new_static 'app_manager/js/visit-scheduler.js' %}"></script>
 {% endblock %}
 
 {% block case_management_js %}{{ block.super }}
     {% if form.source %}
-    var caseConfig = new AdvancedCase.CaseConfig({
+    var CaseConfig = hqImport('app_manager/js/case-config-ui-advanced.js').CaseConfig;
+    var caseConfig = new CaseConfig({
         home: $('#casexml_home'),
         actions: {{ form.actions|JSON }},
         questions: {{ xform_questions|JSON }},
@@ -28,6 +29,7 @@
 
 
     {% if module.has_schedule  %}
+    var VisitScheduler = hqImport('app_manager/js/visit-scheduler.js');
     var visitScheduler = new VisitScheduler.Scheduler({
         home: $('#visit-scheduler'),
         questions: {{ xform_questions|JSON }},

@@ -1,3 +1,4 @@
+from .test_change_administrative_status import *
 from .test_dbaccessors import *
 from .test_location_expressions import *
 from .test_location_fixtures import *
@@ -5,6 +6,7 @@ from .test_location_groups import *
 from .test_location_import import *
 from .test_location_queries import *
 from .test_location_set import *
+from .test_location_sync import *
 from .test_location_types import *
 from .test_location_utils import *
 from .test_locations import *

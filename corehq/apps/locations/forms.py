@@ -4,6 +4,7 @@ from django import forms
 from django.template import Context
 from django.template.loader import get_template
 from django.utils.translation import ugettext as _
+from django.utils.translation import ugettext_lazy
 
 from crispy_forms.helper import FormHelper
 from crispy_forms import layout as crispy
@@ -17,7 +18,7 @@ from corehq.apps.users.models import CommCareUser
 from corehq.apps.users.util import raw_username, user_display_string
 
 from .models import Location, SQLLocation
-from .signals import location_created, location_edited
+from .signals import location_edited
 from .util import allowed_child_types, get_lineage_from_location_id
 
 
@@ -43,36 +44,36 @@ class LocTypeWidget(forms.Widget):
 
 class LocationForm(forms.Form):
     parent_id = forms.CharField(
-        label=_('Parent'),
+        label=ugettext_lazy('Parent'),
         required=False,
         widget=ParentLocWidget(),
     )
     name = forms.CharField(
-        label=_('Name'),
+        label=ugettext_lazy('Name'),
         max_length=100,
     )
     location_type = forms.CharField(
-        label=_('Organization Level'),
+        label=ugettext_lazy('Organization Level'),
         required=False,
         widget=LocTypeWidget(),
     )
     coordinates = forms.CharField(
-        label=_('Coordinates'),
+        label=ugettext_lazy('Coordinates'),
         max_length=30,
         required=False,
-        help_text=_("enter as 'lat lon' or 'lat, lon' "
-                    "(e.g., '42.3652 -71.1029')"),
+        help_text=ugettext_lazy("enter as 'lat lon' or 'lat, lon' "
+                                "(e.g., '42.3652 -71.1029')"),
     )
     site_code = forms.CharField(
         label='Site Code',
         required=False,
-        help_text=_("A unique system code for this location. "
-                    "Leave this blank to have it auto generated"),
+        help_text=ugettext_lazy("A unique system code for this location. "
+                                "Leave this blank to have it auto generated"),
     )
     external_id = forms.CharField(
         label='External ID',
         required=False,
-        help_text=_("A number referencing this location on an external system")
+        help_text=ugettext_lazy("A number referencing this location on an external system")
     )
     external_id.widget.attrs['readonly'] = True
 
@@ -96,6 +97,9 @@ class LocationForm(forms.Form):
 
         self.custom_data = self.get_custom_data(bound_data, is_new)
 
+        self.custom_data.form.helper.label_class = 'col-sm-3 col-md-4 col-lg-2'
+        self.custom_data.form.helper.field_class = 'col-sm-4 col-md-5 col-lg-3'
+
         super(LocationForm, self).__init__(bound_data, *args, **kwargs)
         self.fields['parent_id'].widget.domain = self.location.domain
         self.fields['parent_id'].widget.user = user
@@ -105,6 +109,9 @@ class LocationForm(forms.Form):
 
         self.helper = FormHelper()
         self.helper.form_tag = False
+        self.helper.label_class = 'col-sm-3 col-md-4 col-lg-2'
+        self.helper.field_class = 'col-sm-4 col-md-5 col-lg-3'
+
         self.helper.layout = crispy.Layout(
             crispy.Fieldset(*self.get_fields(is_new))
         )
@@ -278,12 +285,8 @@ class LocationForm(forms.Form):
         if commit:
             location.save()
 
-        if is_new:
-            location_created.send(sender='loc_mgmt', loc=location)
-        else:
-            location_edited.send(sender='loc_mgmt',
-                                 loc=location,
-                                 moved=reparented)
+        if not is_new:
+            location_edited.send(sender='loc_mgmt', loc=location, moved=reparented)
 
         return location
 

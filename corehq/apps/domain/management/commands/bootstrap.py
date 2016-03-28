@@ -14,8 +14,20 @@ class Command(LabelCommand):
             raise CommandError('Usage: manage.py bootstrap <domain> <email> <password>')
         domain_name, username, passwd = args
         domain = Domain.get_or_create_with_name(domain_name, is_active=True)
-        couch_user = WebUser.create(domain_name, username, passwd)
-        couch_user.add_domain_membership(domain_name, is_admin=True)
+
+        couch_user = WebUser.get_by_username(username)
+        membership = None
+        if couch_user:
+            if not isinstance(couch_user, WebUser):
+                raise CommandError('Username already in use by a non-web user')
+
+            membership = couch_user.get_domain_membership(domain_name)
+        else:
+            couch_user = WebUser.create(domain_name, username, passwd)
+
+        if not membership:
+            couch_user.add_domain_membership(domain_name, is_admin=True)
+
         couch_user.is_superuser = True
         couch_user.is_staff = True
         couch_user.save()

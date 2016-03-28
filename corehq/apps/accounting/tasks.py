@@ -1,9 +1,9 @@
-from urllib import urlencode
-from StringIO import StringIO
-from celery.schedules import crontab
-from celery.task import periodic_task, task
 import datetime
-from couchdbkit import ResourceNotFound
+import json
+import urllib2
+from StringIO import StringIO
+from urllib import urlencode
+
 from django.conf import settings
 from django.db import transaction
 from django.db.models import Q
@@ -11,36 +11,59 @@ from django.http import HttpRequest, QueryDict
 from django.template.loader import render_to_string
 from django.utils.translation import ugettext
 
-from corehq.apps.domain.models import Domain
-from corehq.apps.accounting import utils
-from corehq.apps.accounting.exceptions import (
-    InvoiceError, CreditLineError,
-    BillingContactInfoError,
-    InvoiceAlreadyCreatedError
-)
-from corehq.apps.accounting.invoicing import DomainInvoiceFactory
+from celery.schedules import crontab
+from celery.task import periodic_task, task
+from couchdbkit import ResourceNotFound
 
-from corehq.apps.accounting.models import (
-    Subscription, Invoice,
-    SubscriptionAdjustment, SubscriptionAdjustmentReason,
-    SubscriptionAdjustmentMethod,
-    BillingAccount, WirePrepaymentInvoice, WirePrepaymentBillingRecord
-)
-from corehq.apps.accounting.utils import (
-    has_subscription_already_ended, get_dimagi_from_email_by_product,
-    fmt_dollar_amount,
-    get_change_status,
-    log_accounting_error,
-    log_accounting_info,
-)
-from corehq.apps.accounting.payment_handlers import AutoPayInvoicePaymentHandler
-from corehq.apps.users.models import FakeUser, WebUser
-from corehq.const import USER_DATE_FORMAT, USER_MONTH_FORMAT
 from couchexport.export import export_from_tables
 from couchexport.models import Format
 from dimagi.utils.couch.database import iter_docs
 from dimagi.utils.django.email import send_HTML_email
-import corehq.apps.accounting.filters as filters
+
+from corehq.apps.accounting import utils
+from corehq.apps.accounting.exceptions import (
+    CreditLineError,
+    InvoiceAlreadyCreatedError,
+    InvoiceError,
+)
+from corehq.apps.accounting.invoicing import DomainInvoiceFactory
+from corehq.apps.accounting.models import (
+    BillingAccount,
+    Currency,
+    Invoice,
+    StripePaymentMethod,
+    Subscription,
+    SubscriptionAdjustment,
+    SubscriptionAdjustmentMethod,
+    SubscriptionAdjustmentReason,
+    WirePrepaymentBillingRecord,
+    WirePrepaymentInvoice,
+)
+from corehq.apps.accounting.payment_handlers import AutoPayInvoicePaymentHandler
+from corehq.apps.accounting.utils import (
+    fmt_dollar_amount,
+    get_change_status,
+    get_dimagi_from_email_by_product,
+    has_subscription_already_ended,
+    log_accounting_error,
+    log_accounting_info,
+)
+from corehq.apps.domain.models import Domain
+from corehq.apps.users.models import FakeUser, WebUser
+from corehq.const import USER_DATE_FORMAT, USER_MONTH_FORMAT
+from corehq.util.view_utils import absolute_reverse
+from corehq.util.dates import get_previous_month_date_range
+
+
+@transaction.atomic
+def _activate_subscription(subscription):
+    subscription.is_active = True
+    subscription.save()
+    upgraded_privs = get_change_status(None, subscription.plan_version).upgraded_privs
+    subscription.subscriber.activate_subscription(
+        upgraded_privileges=upgraded_privs,
+        subscription=subscription,
+    )
 
 
 def activate_subscriptions(based_on_date=None):
@@ -52,16 +75,37 @@ def activate_subscriptions(based_on_date=None):
         date_start=starting_date,
         is_active=False,
     )
+    starting_subscriptions = filter(
+        lambda subscription: not has_subscription_already_ended(subscription),
+        starting_subscriptions
+    )
     for subscription in starting_subscriptions:
-        if not has_subscription_already_ended(subscription):
-            with transaction.atomic():
-                subscription.is_active = True
-                subscription.save()
-                upgraded_privs = get_change_status(None, subscription.plan_version).upgraded_privs
-                subscription.subscriber.activate_subscription(
-                    upgraded_privileges=upgraded_privs,
-                    subscription=subscription,
-                )
+        _activate_subscription(subscription)
+
+
+@transaction.atomic
+def _deactivate_subscription(subscription, ending_date):
+    subscription.is_active = False
+    subscription.save()
+    next_subscription = subscription.next_subscription
+    activate_next_subscription = next_subscription and next_subscription.date_start == ending_date
+    if activate_next_subscription:
+        new_plan_version = next_subscription.plan_version
+        next_subscription.is_active = True
+        next_subscription.save()
+    else:
+        new_plan_version = None
+    _, downgraded_privs, upgraded_privs = get_change_status(subscription.plan_version, new_plan_version)
+    if next_subscription and subscription.account == next_subscription.account:
+        subscription.transfer_credits(subscription=next_subscription)
+    else:
+        subscription.transfer_credits()
+    subscription.subscriber.deactivate_subscription(
+        downgraded_privileges=downgraded_privs,
+        upgraded_privileges=upgraded_privs,
+        old_subscription=subscription,
+        new_subscription=next_subscription if activate_next_subscription else None,
+    )
 
 
 def deactivate_subscriptions(based_on_date=None):
@@ -74,28 +118,7 @@ def deactivate_subscriptions(based_on_date=None):
         is_active=True,
     )
     for subscription in ending_subscriptions:
-        with transaction.atomic():
-            subscription.is_active = False
-            subscription.save()
-            next_subscription = subscription.next_subscription
-            activate_next_subscription = next_subscription and next_subscription.date_start == ending_date
-            if activate_next_subscription:
-                new_plan_version = next_subscription.plan_version
-                next_subscription.is_active = True
-                next_subscription.save()
-            else:
-                new_plan_version = None
-            _, downgraded_privs, upgraded_privs = get_change_status(subscription.plan_version, new_plan_version)
-            if next_subscription and subscription.account == next_subscription.account:
-                subscription.transfer_credits(subscription=next_subscription)
-            else:
-                subscription.transfer_credits()
-            subscription.subscriber.deactivate_subscription(
-                downgraded_privileges=downgraded_privs,
-                upgraded_privileges=upgraded_privs,
-                old_subscription=subscription,
-                new_subscription=next_subscription if activate_next_subscription else None,
-            )
+        _deactivate_subscription(subscription, ending_date)
 
 
 def warn_subscriptions_still_active(based_on_date=None):
@@ -124,15 +147,16 @@ def update_subscriptions():
     deactivate_subscriptions()
     activate_subscriptions()
     warn_subscriptions_still_active()
+    warn_subscriptions_not_active()
 
 
 @periodic_task(run_every=crontab(hour=13, minute=0, day_of_month='1'))
-def generate_invoices(based_on_date=None, check_existing=False, is_test=False):
+def generate_invoices(based_on_date=None):
     """
     Generates all invoices for the past month.
     """
     today = based_on_date or datetime.date.today()
-    invoice_start, invoice_end = utils.get_previous_month_date_range(today)
+    invoice_start, invoice_end = get_previous_month_date_range(today)
     log_accounting_info("Starting up invoices for %(start)s - %(end)s" % {
         'start': invoice_start.strftime(USER_DATE_FORMAT),
         'end': invoice_end.strftime(USER_DATE_FORMAT),
@@ -140,41 +164,29 @@ def generate_invoices(based_on_date=None, check_existing=False, is_test=False):
     all_domain_ids = [d['id'] for d in Domain.get_all(include_docs=False)]
     for domain_doc in iter_docs(Domain.get_db(), all_domain_ids):
         domain = Domain.wrap(domain_doc)
-        if (check_existing and
-            Invoice.objects.filter(
-                subscription__subscriber__domain=domain,
-                date_created__gte=today).count() != 0):
-            pass
-        elif is_test:
-            log_accounting_info("Ready to create invoice for domain %s" % domain.name)
-        else:
-            try:
-                invoice_factory = DomainInvoiceFactory(
-                    invoice_start, invoice_end, domain)
-                invoice_factory.create_invoices()
-                log_accounting_info("Sent invoices for domain %s" % domain.name)
-            except CreditLineError as e:
-                log_accounting_error(
-                    "There was an error utilizing credits for "
-                    "domain %s: %s" % (domain.name, e)
-                )
-            except BillingContactInfoError as e:
-                log_accounting_error("BillingContactInfoError: %s" % e)
-            except InvoiceError as e:
-                log_accounting_error(
-                    "Could not create invoice for domain %s: %s" % (
-                    domain.name, e
-                ))
-            except InvoiceAlreadyCreatedError as e:
-                log_accounting_error(
-                    "Invoice already existed for domain %s: %s" % (
-                    domain.name, e
-                ))
-            except Exception as e:
-                log_accounting_error(
-                    "Error occurred while creating invoice for "
-                    "domain %s: %s" % (domain.name, e)
-                )
+        try:
+            invoice_factory = DomainInvoiceFactory(
+                invoice_start, invoice_end, domain)
+            invoice_factory.create_invoices()
+            log_accounting_info("Sent invoices for domain %s" % domain.name)
+        except CreditLineError as e:
+            log_accounting_error(
+                "There was an error utilizing credits for "
+                "domain %s: %s" % (domain.name, e)
+            )
+        except InvoiceError as e:
+            log_accounting_error(
+                "Could not create invoice for domain %s: %s" % (domain.name, e)
+            )
+        except InvoiceAlreadyCreatedError as e:
+            log_accounting_error(
+                "Invoice already existed for domain %s: %s" % (domain.name, e)
+            )
+        except Exception as e:
+            log_accounting_error(
+                "Error occurred while creating invoice for "
+                "domain %s: %s" % (domain.name, e)
+            )
 
 
 def send_bookkeeper_email(month=None, year=None, emails=None):
@@ -182,7 +194,7 @@ def send_bookkeeper_email(month=None, year=None, emails=None):
 
     # now, make sure that we send out LAST month's invoices if we did
     # not specify a month or year.
-    today = utils.get_previous_month_date_range(today)[0]
+    today = get_previous_month_date_range(today)[0]
 
     month = month or today.month
     year = year or today.year
@@ -260,7 +272,7 @@ def remind_dimagi_contact_subscription_ending_40_days():
 def send_subscription_reminder_emails(num_days, exclude_trials=True):
     today = datetime.date.today()
     date_in_n_days = today + datetime.timedelta(days=num_days)
-    ending_subscriptions = Subscription.objects.filter(date_end=date_in_n_days)
+    ending_subscriptions = Subscription.objects.filter(date_end=date_in_n_days, do_not_email=False)
     if exclude_trials:
         ending_subscriptions = ending_subscriptions.filter(is_trial=False)
     for subscription in ending_subscriptions:
@@ -278,6 +290,7 @@ def send_subscription_reminder_emails_dimagi_contact(num_days):
     ending_subscriptions = (Subscription.objects
                             .filter(is_active=True)
                             .filter(date_end=date_in_n_days)
+                            .filter(do_not_email=False)
                             .filter(account__dimagi_contact__isnull=False))
     for subscription in ending_subscriptions:
         # only send reminder emails if the subscription isn't renewed
@@ -319,17 +332,18 @@ def create_wire_credits_invoice(domain_name,
 def send_purchase_receipt(payment_record, core_product, domain,
                           template_html, template_plaintext,
                           additional_context):
-    email = payment_record.payment_method.web_user
+    username = payment_record.payment_method.web_user
 
     try:
-        web_user = WebUser.get_by_username(email)
+        web_user = WebUser.get_by_username(username)
+        email = web_user.get_email()
         name = web_user.first_name
     except ResourceNotFound:
         log_accounting_error(
             "Strange. A payment attempt was made by a user that "
-            "we can't seem to find! %s" % email
+            "we can't seem to find! %s" % username
         )
-        name = email
+        name = email = username
 
     context = {
         'name': name,
@@ -348,6 +362,41 @@ def send_purchase_receipt(payment_record, core_product, domain,
         ugettext("Payment Received - Thank You!"), email, email_html,
         text_content=email_plaintext,
         email_from=get_dimagi_from_email_by_product(core_product),
+    )
+
+
+@task(queue='background_queue', ignore_result=True)
+def send_autopay_failed(invoice, payment_method):
+    subscription = invoice.subscription
+    auto_payer = subscription.account.auto_pay_user
+    payment_method = StripePaymentMethod.objects.get(web_user=auto_payer)
+    autopay_card = payment_method.get_autopay_card(subscription.account)
+    try:
+        recipient = WebUser.get_by_username(auto_payer).get_email()
+    except ResourceNotFound:
+        recipient = auto_payer
+    domain = invoice.get_domain()
+
+    context = {
+        'domain': domain,
+        'subscription_plan': subscription.plan_version.plan.name,
+        'billing_date': datetime.date.today(),
+        'invoice_number': invoice.invoice_number,
+        'autopay_card': autopay_card,
+        'domain_url': absolute_reverse('dashboard_default', args=[domain]),
+        'billing_info_url': absolute_reverse('domain_update_billing_info', args=[domain]),
+        'support_email': settings.INVOICING_CONTACT_EMAIL,
+    }
+
+    template_html = 'accounting/autopay_failed_email.html'
+    template_plaintext = 'accounting/autopay_failed_email.txt'
+
+    send_HTML_email(
+        subject="Subscription Payment for CommCare Invoice %s was declined" % invoice.invoice_number,
+        recipient=recipient,
+        html_content=render_to_string(template_html, context),
+        text_content=render_to_string(template_plaintext, context),
+        email_from=get_dimagi_from_email_by_product(subscription.plan_version.product_rate.product.product_type),
     )
 
 
@@ -452,3 +501,22 @@ def weekly_digest():
 def pay_autopay_invoices():
     """ Check for autopayable invoices every day and pay them """
     AutoPayInvoicePaymentHandler().pay_autopayable_invoices(datetime.datetime.today())
+
+
+@periodic_task(run_every=crontab(minute=0, hour=0), queue='background_queue')
+def update_exchange_rates(app_id=settings.OPEN_EXCHANGE_RATES_API_ID):
+    try:
+        log_accounting_info("Updating exchange rates...")
+        rates = json.load(urllib2.urlopen(
+            'https://openexchangerates.org/api/latest.json?app_id=%s' % app_id))['rates']
+        default_rate = float(rates[Currency.get_default().code])
+        for code, rate in rates.items():
+            currency, _ = Currency.objects.get_or_create(code=code)
+            currency.rate_to_default = float(rate) / default_rate
+            currency.save()
+            log_accounting_info("Exchange rate for %(code)s updated %(rate)f." % {
+                'code': currency.code,
+                'rate': currency.rate_to_default,
+            })
+    except Exception as e:
+        log_accounting_error(e.message)

@@ -4,7 +4,7 @@
 {% block filter_content %}
     <div id="{{ css_id }}" class="btn-group" data-toggle="buttons-checkbox">
     {% for type in submission_types %}
-        <button class="btn{% if type.show %} btn-success{% else %} active{% endif %}" data-checkfilter="submission-filter-{{ forloop.counter }}">{{ type.name }}</button>
+        <button class="btn btn-default{% if type.show %} btn-success{% else %} active{% endif %}" data-checkfilter="submission-filter-{{ forloop.counter }}">{{ type.name }}</button>
     {% endfor %}
     </div>
     {% for type in submission_types %}

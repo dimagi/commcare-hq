@@ -4,12 +4,14 @@ from couchdbkit.exceptions import ResourceNotFound
 from django.core.urlresolvers import reverse
 from django.http.response import Http404, HttpResponse
 from django.utils.decorators import method_decorator
+from corehq.apps.hqwebapp.templatetags.hq_shared_tags import toggle_js_domain_cachebuster, \
+    toggle_js_user_cachebuster
 from couchforms.analytics import get_last_form_submission_received
 from corehq.apps.domain.models import Domain
 from corehq.apps.domain.decorators import require_superuser_or_developer
 from corehq.apps.hqwebapp.views import BasePageView
 from corehq.apps.users.models import CouchUser
-from corehq.apps.style.decorators import use_bootstrap3, use_knockout_js
+from corehq.apps.style.decorators import use_bootstrap3, use_datatables
 from corehq.toggles import all_toggles, ALL_TAGS, NAMESPACE_USER, NAMESPACE_DOMAIN
 from toggle.models import Toggle
 from toggle.shortcuts import clear_toggle_cache
@@ -20,6 +22,7 @@ NOT_FOUND = "Not Found"
 class ToggleBaseView(BasePageView):
 
     @method_decorator(require_superuser_or_developer)
+    @use_bootstrap3
     def dispatch(self, request, *args, **kwargs):
         return super(ToggleBaseView, self).dispatch(request, *args, **kwargs)
 
@@ -31,6 +34,10 @@ class ToggleListView(ToggleBaseView):
     urlname = 'toggle_list'
     page_title = "Feature Flags"
     template_name = 'toggle/flags.html'
+
+    @use_datatables
+    def dispatch(self, request, *args, **kwargs):
+        return super(ToggleListView, self).dispatch(request, *args, **kwargs)
 
     @property
     def page_url(self):
@@ -84,8 +91,6 @@ class ToggleEditView(ToggleBaseView):
     urlname = 'edit_toggle'
     template_name = 'toggle/edit_flag.html'
 
-    @use_bootstrap3
-    @use_knockout_js
     @method_decorator(require_superuser_or_developer)
     def dispatch(self, request, *args, **kwargs):
         return super(ToggleEditView, self).dispatch(request, *args, **kwargs)
@@ -154,12 +159,17 @@ class ToggleEditView(ToggleBaseView):
         return context
 
     def call_save_fn(self, changed_entries, currently_enabled):
-        if self.static_toggle.save_fn is None:
-            return
         for entry in changed_entries:
             if entry.startswith(NAMESPACE_DOMAIN):
                 domain = entry.split(":")[-1]
-                self.static_toggle.save_fn(domain, entry in currently_enabled)
+                if self.static_toggle.save_fn is not None:
+                    self.static_toggle.save_fn(domain, entry in currently_enabled)
+                toggle_js_domain_cachebuster.clear(domain)
+            else:
+                # these are sent down with no namespace
+                assert ':' not in entry, entry
+                username = entry
+                toggle_js_user_cachebuster.clear(username)
 
     def post(self, request, *args, **kwargs):
         toggle = self.get_toggle()

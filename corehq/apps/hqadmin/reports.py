@@ -135,6 +135,16 @@ INDICATOR_DATA = {
         "histogram_type": "forms",
         "xaxis_label": "# forms",
     },
+    "forms_j2me": {
+        "ajax_view": "admin_reports_stats_data",
+        "chart_name": "forms_j2me",
+        "chart_title": "J2ME Forms Submitted",
+        "get_request_params": {
+            "j2me_only": True,
+        },
+        "histogram_type": "forms",
+        "xaxis_label": "# forms",
+    },
     "users": {
         "ajax_view": "admin_reports_stats_data",
         "chart_name": "users",
@@ -390,15 +400,12 @@ INDICATOR_DATA = {
     },
     "active_supply_points": {
         "ajax_view": "admin_reports_stats_data",
-        "chart_name": "active_cases",
+        "chart_name": "active_supply_points",
         "chart_title": "Active Supply Points (last 90 days)",
         "hide_cumulative_charts": True,
-        "get_request_params": {
-            "supply_points": True
-        },
-        "histogram_type": "active_cases",
+        "histogram_type": "active_supply_points",
         "is_cumulative": False,
-        "xaxis_label": "# cases",
+        "xaxis_label": "# supply points",
     },
     "total_products": {
         "ajax_view": "admin_reports_stats_data",
@@ -534,14 +541,10 @@ FACET_MAPPING = [
 
 class AdminReport(GenericTabularReport):
     dispatcher = AdminReportDispatcher
+    is_bootstrap3 = True
+
     base_template = "hqadmin/bootstrap3/faceted_report.html"
     report_template_path = "reports/async/bootstrap3/tabular.html"
-
-    @use_jquery_ui
-    @use_bootstrap3
-    @use_datatables
-    def set_bootstrap3_status(self, request, *args, **kwargs):
-        self.is_bootstrap3 = True
 
 
 class AdminFacetedReport(AdminReport, ElasticTabularReport):
@@ -646,8 +649,8 @@ class AdminDomainStatsReport(AdminFacetedReport, DomainStatsReport):
     base_template = "hqadmin/domain_faceted_report.html"
 
     @use_nvd3
-    def set_bootstrap3_status(self, request, *args, **kwargs):
-        super(AdminDomainStatsReport, self).set_bootstrap3_status(request, *args, **kwargs)
+    def bootstrap3_dispatcher(self, request, *args, **kwargs):
+        super(AdminDomainStatsReport, self).bootstrap3_dispatcher(request, *args, **kwargs)
 
     @property
     def template_context(self):
@@ -677,8 +680,8 @@ class AdminDomainStatsReport(AdminFacetedReport, DomainStatsReport):
             DataTablesColumn(_("Deployment Country"), prop_name="deployment.countries.exact"),
             DataTablesColumn(_("# Active Mobile Workers"), sort_type=DTSortType.NUMERIC,
                 prop_name="cp_n_active_cc_users",
-                help_text=_("the number of mobile workers who have submitted a form or sent or received an SMS "
-                            "in the last 30 days.  Includes deactivated workers.")),
+                help_text=_("the number of mobile workers who have submitted a form or an SMS in the last 30 days. "
+                            "Includes deactivated workers.")),
             DataTablesColumn(_("# Mobile Workers"), sort_type=DTSortType.NUMERIC,
                              prop_name="cp_n_cc_users",
                              help_text=_("Does not include deactivated users.")),
@@ -693,6 +696,8 @@ class AdminDomainStatsReport(AdminFacetedReport, DomainStatsReport):
                 help_text=_("The number of open cases not created or updated in the last 120 days")),
             DataTablesColumn(_("# Cases"), sort_type=DTSortType.NUMERIC, prop_name="cp_n_cases"),
             DataTablesColumn(_("# Form Submissions"), sort_type=DTSortType.NUMERIC, prop_name="cp_n_forms"),
+            DataTablesColumn(_("# Form Submissions in last 30 days"), sort_type=DTSortType.NUMERIC,
+                             prop_name="cp_n_forms_30_d"),
             DataTablesColumn(_("First Form Submission"), prop_name="cp_first_form"),
             DataTablesColumn(_("Last Form Submission"), prop_name="cp_last_form"),
             DataTablesColumn(_("# Web Users"), sort_type=DTSortType.NUMERIC,
@@ -724,6 +729,7 @@ class AdminDomainStatsReport(AdminFacetedReport, DomainStatsReport):
                 prop_name="cp_n_sms_out_30_d"),
             DataTablesColumn(_("Custom EULA?"), prop_name="internal.custom_eula"),
             DataTablesColumn(_("HIPAA Compliant"), prop_name="hipaa_compliant"),
+            DataTablesColumn(_("Has J2ME submission in past 90 days"), prop_name="cp_j2me_90_d_bool"),
         )
         return headers
 
@@ -743,12 +749,14 @@ class AdminDomainStatsReport(AdminFacetedReport, DomainStatsReport):
             10: "cp_n_inactive_cases",
             11: "cp_n_cases",
             12: "cp_n_forms",
-            15: "cp_n_web_users",
-            28: "cp_n_out_sms",
-            29: "cp_n_in_sms",
-            30: "cp_n_sms_ever",
-            31: "cp_n_sms_in_30_d",
-            32: "cp_n_sms_out_30_d",
+            13: "cp_n_forms_30_d",
+            16: "cp_n_web_users",
+            29: "cp_n_out_sms",
+            30: "cp_n_in_sms",
+            31: "cp_n_sms_ever",
+            32: "cp_n_sms_in_30_d",
+            33: "cp_n_sms_out_30_d",
+            36: "cp_j2me_90_d_bool",
         }
 
         def stat_row(name, what_to_get, type='float'):
@@ -796,6 +804,7 @@ class AdminDomainStatsReport(AdminFacetedReport, DomainStatsReport):
                     dom.get("cp_n_inactive_cases", _("Not yet calculated")),
                     dom.get("cp_n_cases", _("Not yet calculated")),
                     dom.get("cp_n_forms", _("Not yet calculated")),
+                    dom.get("cp_n_forms_30_d", _("Not yet calculated")),
                     format_date(dom.get("cp_first_form"), first_form_default_message),
                     format_date(dom.get("cp_last_form"), _("No forms")),
                     dom.get("cp_n_web_users", _("Not yet calculated")),
@@ -818,7 +827,46 @@ class AdminDomainStatsReport(AdminFacetedReport, DomainStatsReport):
                     dom.get('cp_n_sms_in_30_d', _("Not yet calculated")),
                     dom.get('cp_n_sms_out_30_d', _("Not yet calculated")),
                     format_bool(dom.get('internal', {}).get('custom_eula')),
-                    dom.get('hipaa_compliant', _('false'))
+                    dom.get('hipaa_compliant', _('false')),
+                    dom.get('cp_j2me_90_d_bool', _('Not yet calculated')),
+                ]
+
+
+class AdminDomainMapReport(AdminDomainStatsReport):
+    slug = "project_map"
+    name = ugettext_noop('Project Map')
+    facet_title = ugettext_noop("Project Facets")
+    search_for = ugettext_noop("projects...")
+    base_template = "hqadmin/project_map.html"
+
+    exportable = False
+
+    # a modified version of AdminDomainStatsReport.rows
+    @property
+    def rows(self):
+        domains = [res['_source'] for res in self.es_results.get('hits', {}).get('hits', [])]
+
+        def format_date(dstr, default):
+            # use [:19] so that only only the 'YYYY-MM-DDTHH:MM:SS' part of the string is parsed
+            return datetime.strptime(dstr[:19], '%Y-%m-%dT%H:%M:%S').strftime('%Y/%m/%d %H:%M:%S') \
+                   if dstr else default
+
+        for dom in domains:
+            # for some reason when using the statistical facet, ES adds an empty dict to hits
+            if 'name' in dom:
+                yield [
+                    dom.get("hr_name") or dom.get("name"),
+                    self.get_name_or_link(dom, internal_settings=True),
+                    format_date((dom.get("date_created")), _('No date')),
+                    dom.get("internal", {}).get('organization_name') or _('No org'),
+                    format_date((dom.get('deployment') or {}).get('date'), _('No date')),
+                    (dom.get("deployment") or {}).get('countries') or _('No countries'),
+                    dom.get("cp_n_active_cc_users", _("Not yet calculated")),
+                    dom.get("cp_n_forms", _("Not yet calculated")),
+                    dom.get("cp_n_forms_30_d", _("Not yet calculated")),
+                    dom.get('internal', {}).get('notes') or _('No notes'),
+                    dom.get('internal', {}).get('area') or _('No info'),
+                    dom.get('internal', {}).get('sub_area') or _('No info')
                 ]
 
 
@@ -1001,6 +1049,7 @@ class RealProjectSpacesReport(GlobalAdminReports):
         'forms',
         'forms_mobile',
         'forms_web',
+        'forms_j2me',
         'subscriptions',
     ]
 

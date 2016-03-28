@@ -97,7 +97,7 @@ $.fn.hqHelp = function () {
 };
 
 $.showMessage = function (message, level) {
-    $notice = $('<div />').addClass("alert fade in alert-block alert-full page-level-alert")
+    var $notice = $('<div />').addClass("alert fade in alert-block alert-full page-level-alert")
         .addClass("alert-" + level);
     var $closeIcon = $('<a />').addClass("close").attr("data-dismiss", "alert");
     $closeIcon.attr("href", "#").html("&times;");

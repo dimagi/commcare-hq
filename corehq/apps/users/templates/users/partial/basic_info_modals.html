@@ -39,6 +39,7 @@
                   name="reverify_phone_number"
                   action="{% url "verify_phone_number" domain couch_user.couch_id %}?phone_number={{phone_number.number|urlencode}}"
                   method="post">
+                {% csrf_token %}
                 <div class="modal-body">
                     <p>
                     {% blocktrans %}

@@ -21,6 +21,14 @@ TEST_PARTITION_CONFIG = _get_partition_config({
     'db2': [2, 3],
 })
 
+TEST_PARTITION_CONFIG_HOST_MAP = _get_partition_config({
+    'db1': [0, 0],
+    'db2': [1, 1],
+})
+TEST_PARTITION_CONFIG_HOST_MAP['host_map'] = {
+    'hqdb1': 'localhost'
+}
+
 INVALID_SHARD_RANGE_START = _get_partition_config({
     'db1': [1, 2],
     'db2': [3, 4],
@@ -40,8 +48,8 @@ db_dict = {'NAME': 'commcarehq', 'USER': 'commcarehq', 'HOST': 'hqdb0', 'PORT': 
 TEST_DATABASES = {
     'default': db_dict,
     'proxy': db_dict,
-    'db1': {'NAME': 'db1', 'USER': 'commcarehq', 'HOST': 'hqdb0', 'PORT': 5432},
-    'db2': {'NAME': 'db2', 'USER': 'commcarehq', 'HOST': 'hqdb0', 'PORT': 5432},
+    'db1': {'NAME': 'db1', 'USER': 'commcarehq', 'HOST': 'hqdb1', 'PORT': 5432},
+    'db2': {'NAME': 'db2', 'USER': 'commcarehq', 'HOST': 'hqdb2', 'PORT': 5432},
 }
 
 
@@ -60,10 +68,19 @@ class TestPartitionConfig(SimpleTestCase):
         config = PartitionConfig()
         shards = config.get_shards()
         self.assertEquals(shards, [
-            ShardMeta(id=0, dbname='test_db1', host='hqdb0', port=5432),
-            ShardMeta(id=1, dbname='test_db1', host='hqdb0', port=5432),
-            ShardMeta(id=2, dbname='test_db2', host='hqdb0', port=5432),
-            ShardMeta(id=3, dbname='test_db2', host='hqdb0', port=5432),
+            ShardMeta(id=0, dbname='test_db1', host='hqdb1', port=5432),
+            ShardMeta(id=1, dbname='test_db1', host='hqdb1', port=5432),
+            ShardMeta(id=2, dbname='test_db2', host='hqdb2', port=5432),
+            ShardMeta(id=3, dbname='test_db2', host='hqdb2', port=5432),
+        ])
+
+    @override_settings(PARTITION_DATABASE_CONFIG=TEST_PARTITION_CONFIG_HOST_MAP)
+    def test_host_map(self):
+        config = PartitionConfig()
+        shards = config.get_shards()
+        self.assertEquals(shards, [
+            ShardMeta(id=0, dbname='test_db1', host='localhost', port=5432),
+            ShardMeta(id=1, dbname='test_db2', host='hqdb2', port=5432),
         ])
 
     @override_settings(PARTITION_DATABASE_CONFIG=INVALID_SHARD_RANGE_START)

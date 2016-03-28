@@ -38,7 +38,7 @@ var CustomExportView = {
                         '#': translations.cases,
                         'actions': translations.case_history,
                         'actions > indices': translations.history_to_parents,
-                        'indices': translations.parent_cases,
+                        'indices': translations.parent_cases
                     }[stripped] || stripped;
                 }
             },
@@ -51,6 +51,7 @@ var CustomExportView = {
                     _rev: 0,
                     doc_type: 0,
                     '-deletion_id': 0,
+                    '-deletion_date': 0,
                     initial_processing_complete: 0
                 };
                 if (field in server) {
@@ -399,6 +400,12 @@ var CustomExportView = {
 
         self.save_preview = function() {
             self.save(true);
+        };
+
+        self.cancel = function() {
+            self.save.state('canceling');
+            // Return true so the cancel button can further redirect to it's href
+            return true;
         };
 
         self.row_label_classes = function(row) {

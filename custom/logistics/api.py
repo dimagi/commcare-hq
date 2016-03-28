@@ -5,6 +5,7 @@ from corehq.apps.custom_data_fields.models import CustomDataField
 from corehq.apps.locations.models import SQLLocation
 
 from corehq.apps.products.models import Product
+from corehq.apps.sms.util import set_domain_default_backend_to_test_backend
 from custom.ilsgateway.models import ILSGatewayConfig
 from custom.logistics.mixin import UserMigrationMixin
 from dimagi.utils.dates import force_to_datetime
@@ -13,8 +14,7 @@ from django.core.exceptions import ValidationError
 from django.core.validators import validate_email
 from django.conf import settings
 import requests
-from corehq.apps.sms.mixin import PhoneNumberInUseException, VerifiedNumber, apply_leniency, InvalidFormatException, \
-    MobileBackend
+from corehq.apps.sms.mixin import PhoneNumberInUseException, VerifiedNumber, apply_leniency, InvalidFormatException
 from corehq.apps.users.models import CouchUser, CommCareUser, WebUser
 from custom.api.utils import EndpointMixin, apply_updates
 from dimagi.utils.decorators.memoized import memoized
@@ -178,9 +178,7 @@ class APISynchronization(UserMigrationMixin):
         return ILSGatewayConfig.get_all_enabled_domains()
 
     def set_default_backend(self):
-        domain_object = Domain.get_by_name(self.domain)
-        domain_object.default_sms_backend_id = MobileBackend.load_by_name(None, 'MOBILE_BACKEND_TEST').get_id
-        domain_object.save()
+        set_domain_default_backend_to_test_backend(self.domain)
 
     def create_or_edit_roles(self):
         raise NotImplemented("Not implemented yet")
@@ -272,7 +270,6 @@ class APISynchronization(UserMigrationMixin):
         elif phone_number:
             user.phone_numbers = []
             user.delete_verified_number(phone_number)
-        user.save()
 
     def add_phone_numbers(self, ilsgateway_smsuser, user):
         if ilsgateway_smsuser.phone_numbers:
@@ -289,6 +286,7 @@ class APISynchronization(UserMigrationMixin):
         # sanity check
         assert len(username) <= 128
         user = CouchUser.get_by_username(username)
+
         splitted_value = ilsgateway_smsuser.name.split(' ', 1)
         if not first_name:
             first_name = splitted_value[0][:30] if splitted_value else ''
@@ -301,7 +299,7 @@ class APISynchronization(UserMigrationMixin):
         user_dict = {
             'first_name': first_name,
             'last_name': last_name,
-            'is_active': bool(ilsgateway_smsuser.is_active),
+            'is_active': ilsgateway_smsuser.is_active,
             'email': ilsgateway_smsuser.email,
             'user_data': {}
         }
@@ -310,6 +308,8 @@ class APISynchronization(UserMigrationMixin):
             user_dict['user_data']['role'] = ilsgateway_smsuser.role
 
         if user is None and username_part:
+            if not ilsgateway_smsuser.is_active:
+                return
             try:
                 user_password = password or User.objects.make_random_password()
                 user = CommCareUser.create(domain=self.domain, username=username, password=user_password,
@@ -324,7 +324,9 @@ class APISynchronization(UserMigrationMixin):
             except Exception as e:
                 logging.error(e)
         else:
+            user.is_active = ilsgateway_smsuser.is_active
             self.edit_phone_numbers(ilsgateway_smsuser, user)
+            user.save()
         return user
 
     def save_verified_number(self, user, phone_number):

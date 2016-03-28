@@ -3,7 +3,6 @@
     vertical-align: top;
     position: relative;
     overflow: visible;
-    width: 0px;
     line-height: 25px;
     margin: 0 3px;
     i {
@@ -30,3 +29,9 @@
   }
 }
 
+// Make accordion icons display down/left depending on collapsed status
+a[data-toggle="collapse"].collapsed {
+  .fa-angle-double-down::before {
+    content: "\f101" !important;
+  }
+}

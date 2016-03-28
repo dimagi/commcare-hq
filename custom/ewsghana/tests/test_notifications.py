@@ -1,27 +1,35 @@
 from datetime import datetime, timedelta
-from django.test.testcases import TestCase
 import mock
+
 from corehq.apps.locations.models import Location
 from corehq.apps.products.models import Product
 from corehq.apps.programs.models import Program
 from corehq.apps.sms.mixin import VerifiedNumber
+from corehq.apps.sms.tests.util import setup_default_sms_test_backend
 from corehq.apps.users.models import WebUser
+
 from custom.ewsghana.alerts.alert import Notification
 from custom.ewsghana.alerts.ongoing_non_reporting import OnGoingNonReporting
 from custom.ewsghana.alerts.ongoing_stockouts import OnGoingStockouts
 from custom.ewsghana.alerts.urgent_alerts import UrgentStockoutAlert, UrgentNonReporting
+from custom.ewsghana.tests.handlers.utils import EWSTestCase
 from custom.ewsghana.tests.test_reminders import create_stock_report
-from custom.ewsghana.utils import prepare_domain, make_loc, assign_products_to_location, \
-    bootstrap_web_user, create_backend, set_sms_notifications
+from custom.ewsghana.utils import (
+    assign_products_to_location,
+    bootstrap_web_user,
+    make_loc,
+    prepare_domain,
+    set_sms_notifications,
+)
 
 
-class MissingReportNotificationTestCase(TestCase):
+class MissingReportNotificationTestCase(EWSTestCase):
     TEST_DOMAIN = 'notifications-test-ews'
 
     @classmethod
     def setUpClass(cls):
+        cls.backend, cls.sms_backend_mapping = setup_default_sms_test_backend()
         cls.domain = prepare_domain(cls.TEST_DOMAIN)
-        cls.sms_backend_mapping, cls.backend = create_backend()
 
         cls.program = Program(domain=cls.TEST_DOMAIN, name='Test Program')
         cls.program.save()
@@ -51,11 +59,6 @@ class MissingReportNotificationTestCase(TestCase):
 
         for product in Product.by_domain(self.TEST_DOMAIN):
             product.delete()
-
-    @classmethod
-    def tearDownClass(cls):
-        cls.sms_backend_mapping.delete()
-        cls.backend.delete()
 
     def test_all_facilities_reported(self):
         """No notifications generated if all have reported."""
@@ -162,13 +165,13 @@ class MissingReportNotificationTestCase(TestCase):
         self.assertEqual(len(generated), 0)
 
 
-class StockoutReportNotificationTestCase(TestCase):
+class StockoutReportNotificationTestCase(EWSTestCase):
     TEST_DOMAIN = 'notifications-test-ews2'
 
     @classmethod
     def setUpClass(cls):
+        cls.backend, cls.sms_backend_mapping = setup_default_sms_test_backend()
         cls.domain = prepare_domain(cls.TEST_DOMAIN)
-        cls.sms_backend_mapping, cls.backend = create_backend()
         cls.program = Program(domain=cls.TEST_DOMAIN, name='Test Program')
         cls.program.save()
 
@@ -194,11 +197,6 @@ class StockoutReportNotificationTestCase(TestCase):
 
         for product in Product.by_domain(self.TEST_DOMAIN):
             product.delete()
-
-    @classmethod
-    def tearDownClass(cls):
-        cls.sms_backend_mapping.delete()
-        cls.backend.delete()
 
     def test_missing_notification(self):
         """No notification if there were no reports. Covered by missing report."""
@@ -281,14 +279,14 @@ class StockoutReportNotificationTestCase(TestCase):
         self.assertEqual(len(generated), 1)
 
 
-class UrgentStockoutNotificationTestCase(TestCase):
+class UrgentStockoutNotificationTestCase(EWSTestCase):
 
     TEST_DOMAIN = 'notifications-test-ews3'
 
     @classmethod
     def setUpClass(cls):
+        cls.backend, cls.sms_backend_mapping = setup_default_sms_test_backend()
         cls.domain = prepare_domain(cls.TEST_DOMAIN)
-        cls.sms_backend_mapping, cls.backend = create_backend()
         cls.program = Program(domain=cls.TEST_DOMAIN, name='Test Program')
         cls.program.save()
 
@@ -324,11 +322,6 @@ class UrgentStockoutNotificationTestCase(TestCase):
 
         for product in Product.by_domain(self.TEST_DOMAIN):
             product.delete()
-
-    @classmethod
-    def tearDownClass(cls):
-        cls.sms_backend_mapping.delete()
-        cls.backend.delete()
 
     def test_all_facility_stockout(self):
         """Send a notification because all facilities are stocked out of a product."""
@@ -451,14 +444,14 @@ class UrgentStockoutNotificationTestCase(TestCase):
         self.assertEqual(generated[0].user.get_id, self.user.get_id)
 
 
-class UrgentNonReportingNotificationTestCase(TestCase):
+class UrgentNonReportingNotificationTestCase(EWSTestCase):
     """Trigger notifications for regions with urgent stockouts."""
     TEST_DOMAIN = 'notifications-test-ews4'
 
     @classmethod
     def setUpClass(cls):
+        cls.backend, cls.sms_backend_mapping = setup_default_sms_test_backend()
         cls.domain = prepare_domain(cls.TEST_DOMAIN)
-        cls.sms_backend_mapping, cls.backend = create_backend()
         cls.program = Program(domain=cls.TEST_DOMAIN, name='Test Program')
         cls.program.save()
 
@@ -481,11 +474,6 @@ class UrgentNonReportingNotificationTestCase(TestCase):
             username='test', domain=self.TEST_DOMAIN, phone_number='+4444', location=self.region,
             email='test@example.com', password='dummy', user_data={}
         )
-
-    @classmethod
-    def tearDownClass(cls):
-        cls.sms_backend_mapping.delete()
-        cls.backend.delete()
 
     def tearDown(self):
         for location in Location.by_domain(self.TEST_DOMAIN):
@@ -593,19 +581,14 @@ class UrgentNonReportingNotificationTestCase(TestCase):
                          {self.user.get_id, other_user.get_id})
 
 
-class SMSNotificationTestCase(TestCase):
+class SMSNotificationTestCase(EWSTestCase):
     """Saved notifications should trigger SMS to users with associated contacts."""
     TEST_DOMAIN = 'notifications-test-ews5'
 
     @classmethod
     def setUpClass(cls):
+        cls.backend, cls.sms_backend_mapping = setup_default_sms_test_backend()
         cls.domain = prepare_domain(cls.TEST_DOMAIN)
-        cls.sms_backend_mapping, cls.backend = create_backend()
-
-    @classmethod
-    def tearDownClass(cls):
-        cls.sms_backend_mapping.delete()
-        cls.backend.delete()
 
     def setUp(self):
         self.district = make_loc('test-district', 'Test District', self.TEST_DOMAIN, 'district')

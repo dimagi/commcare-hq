@@ -10,6 +10,7 @@
                     <th>Current Stock On Hand</th>
                     <th>Receipts</th>
                     <th>Units</th>
+                    <th>Average Monthly Consumption (Manual)</th>
                     <th>Average Monthly Consumption (Calculated)</th>
                 </tr>
             </thead>
@@ -30,6 +31,10 @@
                     </td>
                     <td>
                         {{ form.units.value }}
+                    </td>
+                    <td>
+                        {{ form.default_consumption.errors }}
+                        {{ form.default_consumption }}
                     </td>
                     <td>
                         {{ form.monthly_consumption }}

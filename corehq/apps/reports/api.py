@@ -28,7 +28,7 @@ class ReportDataSource(object):
         """
         return []
 
-    def get_data(self):
+    def get_data(self, start=None, limit=None):
         """
         Intention: Override
 

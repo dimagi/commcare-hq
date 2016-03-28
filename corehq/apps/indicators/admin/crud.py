@@ -116,7 +116,7 @@ class CouchIndicatorCRUDManager(BaseDynamicIndicatorCRUDManager):
                 "fixed_datespan_months": self.document_instance.fixed_datespan_months,
             }))
         if key == "indicator_key":
-            return property or '<span class="label">None</span>'
+            return property or '<span class="label label-default">None</span>'
         return super(CouchIndicatorCRUDManager, self).format_property(key, property)
 
 

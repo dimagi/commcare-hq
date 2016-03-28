@@ -1,0 +1,15 @@
+web:
+  extends:
+    file: docker-compose-base.yml
+    service: web
+  volumes:
+    - ${DOCKER_DATA_HOME}/sharedfiles:/sharedfiles
+  environment:
+    DEPENDENT_SERVICES: "COUCH POSTGRES REDIS ELASTICSEARCH"
+  ports:
+    - "8000:8000"
+  external_links:
+    - hqservice_postgres_1:postgres
+    - hqservice_couch_1:couch
+    - hqservice_redis_1:redis
+    - hqservice_elasticsearch_1:elasticsearch

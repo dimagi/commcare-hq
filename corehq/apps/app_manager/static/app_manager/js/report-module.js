@@ -1,8 +1,7 @@
-// TODO: Ideally the separator would be defined in one place. Right now it is
-//       also defined corehq.apps.userreports.reports.filters.CHOICE_DELIMITER
-var select2Separator = "\u001F";
-
-var ReportModule = (function () {
+hqDefine('app_manager/js/report-module.js', function () {
+    // TODO: Ideally the separator would be defined in one place. Right now it is
+    //       also defined corehq.apps.userreports.reports.filters.CHOICE_DELIMITER
+    var select2Separator = "\u001F";
 
     function KeyValuePair(key, value, config) {
         var self = this;
@@ -155,10 +154,17 @@ var ReportModule = (function () {
                     'select_value',
                     'operator',
                     'date_number',
-                    'date_number2'
+                    'date_number2',
+                    'start_of_month',
+                    'period'
                 ];
                 for(var filterFieldsIndex = 0; filterFieldsIndex < filterFields.length; filterFieldsIndex++) {
-                    filter.selectedValue[filterFields[filterFieldsIndex]] = ko.observable(filter.selectedValue[filterFields[filterFieldsIndex]] || '');
+                    startVal = filter.selectedValue[filterFields[filterFieldsIndex]];
+                    if (startVal === 0) {
+                        filter.selectedValue[filterFields[filterFieldsIndex]] = ko.observable(0);
+                    } else {
+                        filter.selectedValue[filterFields[filterFieldsIndex]] = ko.observable(startVal || '');
+                    }
                 }
                 filter.selectedValue.value = ko.observable(filter.selectedValue.value ? filter.selectedValue.value.join(select2Separator) : '');
 
@@ -190,7 +196,8 @@ var ReportModule = (function () {
                         CustomDataAutoFilter: ['custom_data_property'],
                         StaticChoiceFilter: ['select_value'],
                         StaticDatespanFilter: ['date_range'],
-                        CustomDatespanFilter: ['operator', 'date_number', 'date_number2']
+                        CustomDatespanFilter: ['operator', 'date_number', 'date_number2'],
+                        CustomMonthFilter: ['start_of_month', 'period']
                     };
                     _.each(docTypeToField, function(field, docType) {
                         if(filter.selectedValue.doc_type() === docType) {
@@ -220,9 +227,26 @@ var ReportModule = (function () {
         };
 
         // TODO - add user-friendly text
-        this.filterDocTypes = [null, 'AutoFilter', 'StaticDatespanFilter', 'CustomDatespanFilter', 'CustomDataAutoFilter', 'StaticChoiceListFilter', 'StaticChoiceFilter', 'MobileSelectFilter'];
-        this.autoFilterTypes = ['case_sharing_group', 'location_id', 'username', 'user_id'];
-        this.date_range_options = ['last7', 'last30', 'lastmonth', 'lastyear'];
+        this.filterDocTypes = [
+            null,
+            'AutoFilter',
+            'StaticDatespanFilter',
+            'CustomDatespanFilter',
+            'CustomMonthFilter',
+            'CustomDataAutoFilter',
+            'StaticChoiceListFilter',
+            'StaticChoiceFilter',
+            'MobileSelectFilter'
+        ];
+        this.autoFilterTypes = [
+            'case_sharing_group',
+            'location_id',
+            'parent_location_id',
+            'ancestor_location_type_id',
+            'username',
+            'user_id'
+        ];
+        this.date_range_options = ['last7', 'last30', 'thismonth', 'lastmonth', 'lastyear'];
         this.date_operators = ['=', '<', '<=', '>', '>=', 'between'];
     }
 
@@ -308,9 +332,9 @@ var ReportModule = (function () {
         self.multimedia = function () {
             var multimedia = {};
             multimedia.mediaImage = {};
-            multimedia.mediaImage[self.lang] = self.menuImage.ref().path;
+            multimedia.mediaImage[self.lang] = self.menuImage.savedPath();
             multimedia.mediaAudio = {};
-            multimedia.mediaAudio[self.lang] = self.menuAudio.ref().path;
+            multimedia.mediaAudio[self.lang] = self.menuAudio.savedPath();
             return multimedia;
         };
 
@@ -322,6 +346,7 @@ var ReportModule = (function () {
                 for (var i = 0; i < reports.length; i++) {
                     if (!reports[i].reportId() || !reports[i].display()) {
                         alert('Reports must have all properties set!');
+                        break;
                     }
                 }
                 self.moduleName[self.lang] = self.currentModuleName();
@@ -392,5 +417,8 @@ var ReportModule = (function () {
         }
     }
 
-    return ReportModule;
-}());
+    return {
+        ReportModule: ReportModule,
+        select2Separator: select2Separator
+    };
+});

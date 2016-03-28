@@ -2,14 +2,27 @@ from tastypie import fields
 
 from casexml.apps.case.models import CommCareCase
 
-from corehq.apps.cloudcare.api import get_filtered_cases, get_filters_from_request, api_closed_to_status
-from corehq.apps.api.resources.v0_1 import CustomResourceMeta, RequirePermissionAuthentication
+from corehq.apps.api.resources import (
+    CouchResourceMixin,
+    dict_object,
+    DomainSpecificResourceMixin,
+    HqBaseResource,
+)
+from corehq.apps.api.resources.v0_1 import (
+    CustomResourceMeta,
+    RequirePermissionAuthentication,
+)
 from corehq.apps.api.util import get_object_or_not_exist
-from corehq.apps.api.resources import HqBaseResource, DomainSpecificResourceMixin, dict_object
+from corehq.apps.cloudcare.api import (
+    api_closed_to_status,
+    get_filtered_cases,
+    get_filters_from_request_params,
+)
 from corehq.apps.users.models import Permissions
+from corehq.util.view_utils import expect_GET
 
 
-class CommCareCaseResource(HqBaseResource, DomainSpecificResourceMixin):
+class CommCareCaseResource(CouchResourceMixin, HqBaseResource, DomainSpecificResourceMixin):
     type = "case"
     id = fields.CharField(attribute='case_id', readonly=True, unique=True)
     case_id = id
@@ -37,8 +50,9 @@ class CommCareCaseResource(HqBaseResource, DomainSpecificResourceMixin):
 
     def obj_get_list(self, bundle, domain, **kwargs):
         user_id = bundle.request.GET.get('user_id')
-        status = api_closed_to_status(bundle.request.REQUEST.get('closed', 'false'))
-        filters = get_filters_from_request(bundle.request, limit_top_level=self.fields)
+        request_params = expect_GET(bundle.request)
+        status = api_closed_to_status(request_params.get('closed', 'false'))
+        filters = get_filters_from_request_params(request_params, limit_top_level=self.fields)
         case_type = filters.get('properties/case_type', None)
         return map(dict_object, get_filtered_cases(domain, status=status,
                                   case_type=case_type,

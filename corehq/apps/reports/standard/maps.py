@@ -22,7 +22,7 @@ class GenericMapReport(ProjectReport, ProjectReportParametersMixin):
     consult docs/maps.html for instructions
     """
 
-    report_partial_path = "reports/partials/maps.html"
+    report_partial_path = "reports/bootstrap2/partials/maps.html"
     flush_layout = True
     #asynchronous = False
 
@@ -290,6 +290,7 @@ class DemoMapReport(GenericMapReport):
     """this report is a demonstration of the maps report's capabilities
     it uses a static dataset
     """
+    is_bootstrap3 = True
 
     name = ugettext_noop("Maps: Highest Mountains")
     slug = "maps_demo"
@@ -487,6 +488,7 @@ class DemoMapReport2(GenericMapReport):
     """this report is a demonstration of the maps report's capabilities
     it uses a static dataset
     """
+    is_bootstrap3 = True
 
     name = ugettext_noop("Maps: States of India")
     slug = "maps_demo2"
@@ -632,6 +634,7 @@ class GenericCaseListMap(GenericMapReport):
 class DemoMapCaseList(GenericCaseListMap):
     name = ugettext_noop("Maps: Case List")
     slug = "maps_demo_caselist"
+    is_bootstrap3 = True
 
     case_config = {
         "supply-point": "_random",

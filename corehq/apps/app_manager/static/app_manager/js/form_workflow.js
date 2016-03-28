@@ -1,9 +1,9 @@
 /* global ko, _, $ */
 
-(function() {
+hqDefine('app_manager/js/form_workflow.js', function() {
     'use strict';
 
-    window.FormWorkflow = function(options) {
+    var FormWorkflow = function (options) {
         var self = this;
 
         self.formDatumsUrl = options.formDatumsUrl;
@@ -31,7 +31,11 @@
         self.forms = _.map(options.forms, function(f) {
             return new FormWorkflow.Form(f);
         });
-        self.formLinks = ko.observableArray(_.map(options.formLinks, function(link) {
+
+        var formIds = _.pluck(self.forms,  'uniqueId');
+        self.formLinks = ko.observableArray(_.map(_.filter(options.formLinks, function(link) {
+            return _.contains(formIds, link.form_id);
+        }), function(link) {
             return new FormWorkflow.FormLink(link.xpath, link.form_id, self, link.datums);
         }));
     };
@@ -166,4 +170,5 @@
             return errors;
         });
     };
-})();
+    return {FormWorkflow: FormWorkflow};
+});

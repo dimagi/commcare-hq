@@ -1,218 +1,236 @@
-{% extends "settings/bootstrap2/base_template.html" %}
+{% extends "style/bootstrap3/base_section.html" %}
 {% load i18n %}
 {% load hq_shared_tags %}
 {% load hqstyle_tags %}
 {% load crispy_forms_tags %}
 
-{% block head %} {{ block.super }}
-    <link rel="stylesheet" href="{% static 'hqwebapp/js/lib/jquery-ui-datepicker/datepicker-theme/jquery-ui-1.8.17.custom.css' %}" />
-    <link rel="stylesheet" href="{% static 'hqwebapp/js/lib/jquery-ui/multiselect/ui.multiselect.css' %}" />
+{% block stylesheets %} {{ block.super }}
+    <link rel="stylesheet" href="{% new_static 'hqwebapp/js/lib/jquery-ui-datepicker/datepicker-theme/jquery-ui-1.8.17.custom.css' %}" />
+    <link rel="stylesheet" href="{% new_static 'hqwebapp/js/lib/jquery-ui/multiselect/ui.multiselect.css' %}" />
 {% endblock %}
 
 {% block js %}{{ block.super }}
-    <script type="text/javascript" src="{% static 'locations/ko/location_drilldown.async.js' %}"></script>
-    <script type="text/javascript" src="{% static 'locations/ko/location.js' %}"></script>
-    <script src="{% static 'hqwebapp/js/ui-element.js' %}"></script>
-    <script src="{% static 'hqwebapp/js/lib/jquery-ui/jquery-ui-1.9.2.multiselect-deps.custom.min.js' %}"></script>
-    <script src="{% static 'hqwebapp/js/lib/jquery-ui/multiselect/ui.multiselect.js' %}"></script>
+    <script type="text/javascript" src="{% new_static 'locations/ko/location_drilldown.async.js' %}"></script>
+    <script type="text/javascript" src="{% new_static 'locations/ko/location.js' %}"></script>
+    <script type="text/javascript" src="{% new_static 'hqwebapp/js/ui-element.js' %}"></script>
+    <script type="text/javascript" src="{% new_static 'hqwebapp/js/lib/jquery-ui/jquery-ui-1.9.2.multiselect-deps.custom.min.js' %}"></script>
+    <script type="text/javascript" src="{% new_static 'hqwebapp/js/lib/jquery-ui/multiselect/ui.multiselect.js' %}"></script>
 {% endblock %}
 
 {% block js-inline %}{{ block.super }}
     <script type="text/javascript">
         var LOAD_LOCS_URL = '{{ api_root }}';
     </script>
-
 {% endblock %}
 
-{% block main_column %}
-<div>
+{% block page_content %}
+    <div>
+      {# can't go in js-inline, because needs to initialize stuff that the field templates reference #}
+      <script>
+        var TEMPLATE_STRINGS = {
+            new_user_success: _.template('{% trans "User <%= name %> added successfully.  A validation message has been sent to the phone number provided." %}')
+        };
+        $(function() {
 
-  {# can't go in js-inline, because needs to initialize stuff that the field templates reference #}
-  <script>
-    var TEMPLATE_STRINGS = {
-        new_user_success: _.template('{% trans "User <%= name %> added successfully.  A validation message has been sent to the phone number provided." %}')
-    };
-    $(function() {
+          var loc_id = {{ location.get_id|JSON }};
+          var hierarchy = {{ hierarchy|JSON }};
+          model = new LocationSelectViewModel(hierarchy, '\u2026', false, function(loc) {
+              return loc.uuid() != loc_id && loc.can_have_children();
+          });
 
-      var loc_id = {{ location.get_id|JSON }};
-      var hierarchy = {{ hierarchy|JSON }};
-      model = new LocationSelectViewModel(hierarchy, '\u2026', false, function(loc) {
-          return loc.uuid() != loc_id && loc.can_have_children();
-      });
-
-      model.editing = ko.observable(false);
-      model.allowed_child_types = ko.computed(function() {
-          var active_loc = (this.selected_location() || this.root());
-          return (active_loc ? active_loc.allowed_child_types() : []);
-      }, model);
-      model.loc_type = ko.observable();
-      model.loc_type.subscribe(function(val) {
-          var subforms = $('.custom_subform');
-          $.each(subforms, function(i, e) {
-              var $e = $(e);
-              var loc_type = $e.attr('loctype');
-              $e[loc_type == val ? 'show' : 'hide']();
+          model.editing = ko.observable(false);
+          model.allowed_child_types = ko.computed(function() {
+              var active_loc = (this.selected_location() || this.root());
+              return (active_loc ? active_loc.allowed_child_types() : []);
+          }, model);
+          model.loc_type = ko.observable();
+          model.loc_type.subscribe(function(val) {
+              var subforms = $('.custom_subform');
+              $.each(subforms, function(i, e) {
+                  var $e = $(e);
+                  var loc_type = $e.attr('loctype');
+                  $e[loc_type == val ? 'show' : 'hide']();
+                });
             });
-        });
 
-      var locs = {{ locations|JSON }};
-      var selected_parent = '{{ location.parent.get_id }}';
-      model.load(locs, selected_parent);
-      model.orig_parent_id = model.selected_locid();
+          var locs = {{ locations|JSON }};
+          var selected_parent = '{{ location.parent.get_id }}';
+          model.load(locs, selected_parent);
+          model.orig_parent_id = model.selected_locid();
 
-      $("#loc_form :button[type='submit']").click(function(e) {
-          if (loc_id != null && model.selected_locid() != model.orig_parent_id) {
+          $("#loc_form :button[type='submit']").click(function(e) {
+              if (loc_id != null && model.selected_locid() != model.orig_parent_id) {
+                  e.preventDefault();
+                  $('#reparenting').modal();
+              }
+              if (this.name === 'update-loc') {
+                  ga_track_event('Organization Structure', 'Edit', 'Update Location');
+              } else {
+                  ga_track_event('Organization Structure', 'Edit', 'Create Child Location');
+              }
+          });
+            
+          gaTrackLink($("#edit_users :button[type='submit']"), 'Organization Structure', 'Edit', 'Update Users at this Location')
+            
+          $('#move_confirm').click(function(e) {
               e.preventDefault();
-              $('#reparenting').modal();
-          }
-      });
-      $('#move_confirm').click(function(e) {
-          e.preventDefault();
-          document.forms['loc_form'].submit();
-      });
+              document.forms['loc_form'].submit();
+          });
 
-      $('#loc_form').koApplyBindings(model);
+          $('#loc_form').koApplyBindings(model);
 
-    });
-  </script>
+        });
+      </script>
 
-  {% if not form.is_new_location %}
-  <ul class="nav nav-tabs">
-    <li class="{% if form_tab == "basic" %}active{% endif %}">
-      <a href="#basic-info" data-toggle="tab">{% trans "Basic" %}</a>
-    </li>
+      {% if not form.is_new_location %}
+      <ul class="nav nav-tabs">
+        <li class="{% if form_tab == "basic" %}active{% endif %}">
+          <a href="#basic-info" data-toggle="tab">{% trans "Basic" %}</a>
+        </li>
 
-    {% if users_per_location_form %}
-      <li class="{% if form_tab == "users" %}active{% endif %}">
-        <a href="#users" data-toggle="tab">{% trans "Users" %}</a>
-      </li>
-    {% endif %}
-
-    {% if products_per_location_form %}
-      <li><a href="#products" data-toggle="tab">{% trans "Products" %}</a></li>
-    {% endif %}
-
-    {% if location.get_id and location.location_type_object.can_have_children %}
-    <li>
-      <a href="{% url "create_location" domain %}?parent={{ location.get_id }}">
-        {% trans "New Child Location" %}
-      </a>
-    </li>
-    {% endif %}
-
-    {% if request|toggle_enabled:'LINK_SUPPLY_POINT' and location.sql_location.supply_point_id %}
-    <li>
-      <a href="{% url "case_details" domain location.sql_location.supply_point_id %}">
-        {% trans "View Location Case" %}
-      </a>
-    </li>
-    {% endif %}
-
-  </ul>
-  {% endif %}
-
-  <div class="tab-content">
-    <div class="tab-pane {% if form_tab == "basic" %}active{% endif %}" id="basic-info">
-      <form id="loc_form" class="form form-horizontal" name="product" method="post">
-        {% bootstrap_form_errors form %}
-        {% crispy form %}
-
-        {% crispy form.custom_data.form %}
-        <input type="hidden" name="form_type" value="location-settings" />
-
-        {% if consumption %}
-          <legend>{% trans "Default monthly consumption values" %}</legend>
-          {% for code, amount in consumption %}
-            <div class="control-group">
-              <label class="control-label">{{ code }}</label>
-              <div class="controls">
-                <span class="uneditable-input">
-                  {{ amount }}
-                </span>
-              </div>
-            </div>
-          {% endfor %}
+        {% if users_per_location_form %}
+          <li class="{% if form_tab == "users" %}active{% endif %}">
+            <a href="#users" data-toggle="tab">{% trans "Users" %}</a>
+          </li>
         {% endif %}
 
-        <div class="form-actions">
-          <button type="submit" class="btn btn-primary">
-            {% if location.get_id %}
-              {% trans 'Update' %}
-            {% else %}
-              {% trans 'Create' %}
-            {% endif %}
-            {% trans 'Location' %}
-          </button>
-        </div>
-      </form>
-    </div>
+        {% if products_per_location_form %}
+          <li><a href="#products" data-toggle="tab">{% trans "Products" %}</a></li>
+        {% endif %}
 
-    {% if users_per_location_form %}
-      <div class="tab-pane {% if form_tab == "users" %}active{% endif %}" id="users">
-        <div class="row-fluid">
-          <form class="form disable-on-submit" id="edit_users" action="" method='post'>
-            <legend>{% trans 'Specify Users At This Location' %}</legend>
-            {% if request|toggle_enabled:'ADD_USERS_FROM_LOCATION' %}
-            <div class="btn-toolbar">
-              <a href="#new_user" role="button" class="btn btn-info" data-toggle="modal">
-                {% trans "Create new user at this location" %}
-              </a>
+        {% if location.get_id and location.location_type_object.can_have_children %}
+        <li>
+          <a href="{% url "create_location" domain %}?parent={{ location.get_id }}">
+            {% trans "New Child Location" %}
+          </a>
+        </li>
+        {% endif %}
+
+        {% if request|toggle_enabled:'LINK_SUPPLY_POINT' and location.sql_location.supply_point_id %}
+        <li>
+          <a href="{% url "case_details" domain location.sql_location.supply_point_id %}">
+            {% trans "View Location Case" %}
+          </a>
+        </li>
+        {% endif %}
+
+      </ul>
+      <br />
+      {% endif %}
+
+      <div class="tab-content">
+        <div class="tab-pane {% if form_tab == "basic" %}active{% endif %}" id="basic-info">
+          <form id="loc_form" class="form form-horizontal" name="product" method="post">
+            {% bootstrap_form_errors form %}
+            {% crispy form %}
+
+            {% crispy form.custom_data.form %}
+            <input type="hidden" name="form_type" value="location-settings" />
+
+            {% if consumption %}
+              <legend>{% trans "Default monthly consumption values" %}</legend>
+              {% for code, amount in consumption %}
+                <div class="form-group">
+                  <label class="col-sm-3 col-md-4 col-lg-2 control-label">{{ code }}</label>
+                  <div class="col-sm-4 col-md-5 col-lg-3 controls">
+                    <span class="form-control uneditable-input">
+                      {{ amount }}
+                    </span>
+                  </div>
+                </div>
+              {% endfor %}
+            {% endif %}
+
+            <div class="form-actions">
+              <div class="col-sm-offset-3 col-md-offset-4 col-lg-offset-2">
+                <button type="submit" class="btn btn-primary">
+                  {% if location.get_id %}
+                    {% trans 'Update' %}
+                  {% else %}
+                    {% trans 'Create' %}
+                  {% endif %}
+                  {% trans 'Location' %}
+                </button>
+              </div>
             </div>
-            {% endif %}
-            {% crispy users_per_location_form %}
-            <input type="hidden" name="form_type" value="location-users" />
           </form>
         </div>
-      </div>
-    {% endif %}
 
-    {% if products_per_location_form %}
-      <div class="tab-pane" id="products">
-        <div class="row-fluid">
-          <form class="form disable-on-submit" id="edit_products" action="" method='post'>
-            <legend>{% trans 'Specify Products Per Location' %}</legend>
-            {% crispy products_per_location_form %}
-            <input type="hidden" name="form_type" value="location-products" />
-          </form>
+        {% if users_per_location_form %}
+          <div class="tab-pane {% if form_tab == "users" %}active{% endif %}" id="users">
+            <div class="row">
+              <div class="col-sm-12">
+                <form class="form disable-on-submit" id="edit_users" action="" method='post'>
+                  <legend>{% trans 'Specify Users At This Location' %}</legend>
+                  {% if request|toggle_enabled:'ADD_USERS_FROM_LOCATION' %}
+                  <div class="btn-toolbar">
+                    <a href="#new_user" role="button" class="btn btn-info" data-toggle="modal">
+                      {% trans "Create new user at this location" %}
+                    </a>
+                  </div>
+                  {% endif %}
+                  {% crispy users_per_location_form %}
+                  <input type="hidden" name="form_type" value="location-users" />
+                </form>
+              </div>
+            </div>
+          </div>
+        {% endif %}
+
+        {% if products_per_location_form %}
+          <div class="tab-pane" id="products">
+            <div class="row">
+              <form class="form disable-on-submit" id="edit_products" action="" method='post'>
+                <legend>{% trans 'Specify Products Per Location' %}</legend>
+                {% crispy products_per_location_form %}
+                <input type="hidden" name="form_type" value="location-products" />
+              </form>
+            </div>
+          </div>
+        {% endif %}
+      </div>
+
+    </div>
+    {% endblock %}
+
+    {% block modals %}{{ block.super }}
+
+    <div id="reparenting" class="modal fade">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <button type="button" class="close" data-dismiss="modal"><span aria-hidden="true">&times;</span></button>
+                    <h3 class="modal-title">{% trans 'Move Location?' %}</h3>
+                </div>
+                <form class="form form-horizontal hq-form" name="verify_move_location" action="" method="post">
+                    {% csrf_token %}
+                    <div class="modal-body">
+                        <p>{% blocktrans %}You've changed this location's parent.{% endblocktrans %}</p>
+                        <p>{% blocktrans %}If you move this location, all the data submitted for this location must be updated as well.
+                        This will take some time. Reports will not show the correct figures for this location until
+                        this process is complete.{% endblocktrans %}</p>
+                    </div>
+                    <div class="modal-footer">
+                        <a href="#" data-dismiss="modal" class="btn btn-default">{% trans 'Cancel' %}</a>
+                        <button id="move_confirm" type="submit" class="btn btn-primary">{% trans 'Move' %}</button>
+                    </div>
+                </form>
+            </div>
         </div>
-      </div>
-    {% endif %}
-  </div>
-
-</div>
-{% endblock %}
-
-{% block modals %}{{ block.super }}
-
-<div id="reparenting" class="modal hide fade">
-  <div class="modal-header">
-    <a class="close" data-dismiss="modal">&times;</a>
-    <h3>{% trans 'Move Location?' %}</h3>
-  </div>
-  <form class="form form-horizontal hq-form" name="verify_move_location" action="" method="post">
-    {% csrf_token %}
-    <div class="modal-body">
-      <p>{% blocktrans %}You've changed this location's parent.{% endblocktrans %}</p>
-      <p>{% blocktrans %}If you move this location, all the data submitted for this location must be updated as well.
-          This will take some time. Reports will not show the correct figures for this location until
-          this process is complete.{% endblocktrans %}</p>
     </div>
-    <div class="modal-footer">
-      <a href="#" data-dismiss="modal" class="btn">{% trans 'Cancel' %}</a>
-      <button id="move_confirm" type="submit" class="btn btn-primary">{% trans 'Move' %}</button>
+
+    <div id="new_user" class="modal fade">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h3 class="modal-title">{% trans "New User" %}</h3>
+                </div>
+                <div class="modal-body">
+                    <form class="form form-horizontal" method="post" id="add_commcare_account_form"
+                          action="{% url "new_mobile_worker_modal" domain %}?location_id={{ location.get_id }}">
+                    </form>
+                </div>
+            </div>
+        </div>
     </div>
-  </form>
-</div>
-
-<div id="new_user" class="modal hide fade">
-  <div class="modal-header">
-    <h3>{% trans "New User" %}</h3>
-  </div>
-  <div class="modal-body">
-    <form class="form form-horizontal" method="post" id="add_commcare_account_form"
-          action="{% url "new_mobile_worker_modal" domain %}?location_id={{ location.get_id }}">
-    </form>
-  </div>
-</div>
-
 {% endblock %}

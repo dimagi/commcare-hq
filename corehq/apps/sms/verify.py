@@ -4,11 +4,11 @@ from corehq import privileges
 from corehq.apps.accounting.utils import domain_has_privilege
 from corehq.apps.sms.api import (send_sms, send_sms_to_verified_number,
     MessageMetadata)
-from corehq.apps.sms.mixin import VerifiedNumber, MobileBackend
+from corehq.apps.sms.mixin import VerifiedNumber
 from corehq.apps.users.models import CommCareUser
 from corehq.apps.sms import messages
 from corehq.apps.sms import util
-from corehq.apps.sms.models import MessagingEvent
+from corehq.apps.sms.models import MessagingEvent, SQLMobileBackend
 from corehq.util.translation import localize
 
 
@@ -51,7 +51,11 @@ def initiate_sms_verification_workflow(contact, phone_number):
 
 
 def send_verification(domain, user, phone_number, logged_event):
-    backend = MobileBackend.auto_load(phone_number, domain)
+    backend = SQLMobileBackend.load_default_by_phone_and_domain(
+        SQLMobileBackend.SMS,
+        phone_number,
+        domain=domain
+    )
     reply_phone = backend.reply_to_phone_number
 
     subevent = logged_event.create_subevent_for_single_sms(

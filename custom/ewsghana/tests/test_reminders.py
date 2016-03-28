@@ -1,22 +1,23 @@
 from datetime import datetime, timedelta
 from decimal import Decimal
-from django.test.testcases import TestCase
+
 from casexml.apps.stock.models import StockTransaction, StockReport
+
 from corehq.apps.commtrack.models import StockState
 from corehq.apps.locations.tests.util import make_loc
 from corehq.apps.products.models import SQLProduct, Product
-from corehq.apps.sms.mixin import VerifiedNumber
 from corehq.apps.sms.models import SMS
+from corehq.apps.sms.tests.util import setup_default_sms_test_backend, delete_domain_phone_numbers
+
 from custom.ewsghana.models import FacilityInCharge, EWSExtension
 from custom.ewsghana.reminders import STOCK_ON_HAND_REMINDER, SECOND_STOCK_ON_HAND_REMINDER, \
     SECOND_INCOMPLETE_SOH_REMINDER, STOCKOUT_REPORT, THIRD_STOCK_ON_HAND_REMINDER, INCOMPLETE_SOH_TO_SUPER
 from custom.ewsghana.reminders.second_soh_reminder import SecondSOHReminder
-
 from custom.ewsghana.tasks import first_soh_reminder, second_soh_reminder, third_soh_to_super, \
     stockout_notification_to_web_supers, reminder_to_visit_website, reminder_to_submit_rrirv
-from custom.ewsghana.utils import prepare_domain, bootstrap_user, bootstrap_web_user, create_backend, \
+from custom.ewsghana.tests.handlers.utils import EWSTestCase
+from custom.ewsghana.utils import prepare_domain, bootstrap_user, bootstrap_web_user, \
     set_sms_notifications
-
 
 TEST_DOMAIN = 'ews-reminders-test-domain'
 
@@ -40,12 +41,12 @@ def create_stock_report(location, products_quantities, date=datetime.utcnow()):
         ).save()
 
 
-class TestReminders(TestCase):
+class TestReminders(EWSTestCase):
 
     @classmethod
     def setUpClass(cls):
+        cls.backend, cls.sms_backend_mapping = setup_default_sms_test_backend()
         cls.domain = prepare_domain(TEST_DOMAIN)
-        cls.sms_backend_mapping, cls.backend = create_backend()
         cls.loc1 = make_loc(code="garms", name="Test RMS", type="Regional Medical Store", domain=TEST_DOMAIN)
         cls.loc2 = make_loc(code="tf", name="Test Facility", type="Hospital", domain=TEST_DOMAIN)
         cls.region = make_loc(code="region", name="Test Region", type="region", domain=TEST_DOMAIN)
@@ -142,9 +143,6 @@ class TestReminders(TestCase):
         sql_location1.save()
         sql_location2.save()
 
-        cls.loc1.save()
-        cls.loc2.save()
-
     def tearDown(self):
         SMS.objects.all().delete()
         StockState.objects.all().delete()
@@ -152,14 +150,14 @@ class TestReminders(TestCase):
 
     @classmethod
     def tearDownClass(cls):
+        delete_domain_phone_numbers(TEST_DOMAIN)
         cls.user1.delete()
         cls.user2.delete()
         cls.user3.delete()
-        for vn in VerifiedNumber.by_domain(TEST_DOMAIN):
-            vn.delete()
+        cls.domain.delete()
+        FacilityInCharge.objects.all().delete()
 
-        cls.sms_backend_mapping.delete()
-        cls.backend.delete()
+        super(TestReminders, cls).tearDownClass()
 
     def test_first_soh_reminder(self):
         first_soh_reminder()

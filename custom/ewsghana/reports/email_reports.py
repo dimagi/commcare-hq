@@ -42,7 +42,7 @@ class StockSummaryReportData(EmailReportData):
             return "%d%% <small>(%d)</small>" % (x * 100 / (y or 1), x)
 
         def _stock_status(status, loc):
-            daily = status.daily_consumption or 0
+            daily = status.get_daily_consumption() or 0
             state = status.stock_on_hand / ((daily * 30) or 1)
             if state == 0.0:
                 return "stockout"

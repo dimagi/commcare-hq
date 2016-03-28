@@ -1,5 +1,5 @@
 - name: "Auto Update Frequency"
-  description: "How often the application should attempt to check for form updates. Note that this does not apply to the CommCare binary: if you want to update from CommCare 2.0 to 2.1 you will have to reinstall the application from scratch."
+  description: "How often CommCare mobile should attempt to check for a new, released application version."
   id: "cc-autoup-freq"
   values: ["freq-never", "freq-daily", "freq-weekly"]
   value_names: ["Never", "Daily", "Weekly"]
@@ -17,7 +17,7 @@
   values_txt: "Any positive integer. Represents period of purging in days."
 
 - name: "Days for Review"
-  description: "How long the phone will retain completed forms for review."
+  description: "Amount of time previously submitted forms remain accessible in the CommCare app."
   id: "cc-days-form-retain"
   values: ["1", "7",  "31", "92", "365", "-1"]
   value_names: ["Just One Day", "One Week", "One Month", "Three Months", "One Year", "Forms are Never Removed"]
@@ -66,14 +66,14 @@
   "//value_names": ["Save to the File System"]
 
 - name: "Password Format"
-  description: "What format user's passwords take"
+  description: "Determines whether phone keys will type letters or numbers by default when typing in the password field."
   id: "password_format"
   values: ["a", "n"]
   value_names: ["Alphanumeric", "Numeric"]
   default: "n"
 
 - name: "CommCare Home Screen Logo"
-  description: "Upload a file to serve as a CommCare home screen logo on Android phones"
+  description: "Choose an image to replace the default CommCare Home Screen logo"
   id: "logo_android_home"
   widget: "image_uploader"
   privilege: "commcare_logo_uploader"
@@ -94,7 +94,7 @@
   default: "required"
 
 - name: "Sync Mode"
-  description: "Whether the server attempts to synchronize data with the phone, or only attempt to return data on demand."
+  description: "Determines if the server automatically attempts to send data to the phone (Two-Way), or only attempt to send data on demand (Push Only); projects using Case Sharing should choose Two-Way."
   id: "server-tether"
   values: ["push-only", "sync"]
   value_names: ["Push Only", "Two-Way Sync"]
@@ -246,11 +246,12 @@
   since: "2.8"
 
 - name: "Saved Forms"
-  description: "Choose whether or not to display the 'Saved' button on the ODK home screen"
+  description: "Choose whether or not mobile workers can view previously submitted forms."
   id: "cc-show-saved"
   values: ["yes", "no"]
   value_names: ["Enable", "Disable"]
-  default: "yes"
+  default: "no"
+  commcare_default: "yes"
   contingent_default: [{"condition": "{features.sense}='true'", "value": "no"}]
   values_txt: "This will show or hide the 'Saved' button on the CommCare ODK home screen. Turning this off will prevent users from saving forms locally."
   since: "2.11"
@@ -261,7 +262,8 @@
   id: "cc-show-incomplete"
   values: ["yes", "no"]
   value_names: ["Enable", "Disable"]
-  default: "yes"
+  default: "no"
+  commcare_default: "yes"
   contingent_default: [{"condition": "{features.sense}='true'", "value": "no"}]
   values_txt: "This will show or hide the 'Incomplete' button on the CommCare ODK home screen. Turning this off will prevent users from saving incomplete forms."
   since: "2.11"
@@ -316,3 +318,13 @@
   default: "none"
   since: "2.24"
   force: true
+
+- name: "Grid Menus"
+  description: "If enabled module and form menus will display in a grid view instead of a list."
+  id: "cc-grid-menus"
+  values: ["yes", "no"]
+  value_names: ["Yes", "No"]
+  default: "no"
+  disabled_default: "no"
+  values_txt: "Whether to enable or disable Grid View for menus."
+  since: "2.27"

@@ -4,7 +4,9 @@ from datetime import datetime, timedelta
 import logging
 import urllib
 import urlparse
+from requests.exceptions import Timeout, ConnectionError
 from corehq.apps.cachehq.mixins import QuickCachedDocumentMixin
+from corehq.form_processor.exceptions import XFormNotFound
 from corehq.util.datadog.metrics import REPEATER_ERROR_COUNT
 from corehq.util.datadog.utils import log_counter
 from corehq.util.quickcache import quickcache
@@ -12,19 +14,32 @@ from corehq.util.quickcache import quickcache
 from dimagi.ext.couchdbkit import *
 from couchdbkit.exceptions import ResourceNotFound
 from django.core.cache import cache
-import socket
 import hashlib
 
-from casexml.apps.case.models import CommCareCase
 from casexml.apps.case.xml import V2, LEGAL_VERSIONS
 from corehq.apps.receiverwrapper.exceptions import DuplicateFormatException, IgnoreDocument
+from corehq.form_processor.interfaces.dbaccessors import FormAccessors, CaseAccessors
 
-from couchforms.models import XFormInstance
+from couchforms.const import DEVICE_LOG_XMLNS
 from dimagi.utils.decorators.memoized import memoized
 from dimagi.utils.parsing import json_format_datetime
 from dimagi.utils.mixins import UnicodeMixIn
 from dimagi.utils.post import simple_post
-from dimagi.utils.couch import LockableMixIn
+
+from .dbaccessors import (
+    get_pending_repeat_record_count,
+    get_failure_repeat_record_count,
+    get_success_repeat_record_count,
+)
+from .const import (
+    MAX_RETRY_WAIT,
+    MIN_RETRY_WAIT,
+    RECORD_FAILURE_STATE,
+    RECORD_SUCCESS_STATE,
+    RECORD_PENDING_STATE,
+    POST_TIMEOUT,
+)
+from .exceptions import RequestConnectionError
 
 
 repeater_types = {}
@@ -35,7 +50,7 @@ def register_repeater_type(cls):
     return cls
 
 
-def simple_post_with_cached_timeout(data, url, expiry=60 * 60, *args, **kwargs):
+def simple_post_with_cached_timeout(data, url, expiry=60 * 60, force_send=False, *args, **kwargs):
     # no control characters (e.g. '/') in keys
     key = hashlib.md5(
         '{0} timeout {1}'.format(__name__, url)
@@ -43,19 +58,19 @@ def simple_post_with_cached_timeout(data, url, expiry=60 * 60, *args, **kwargs):
 
     cache_value = cache.get(key)
 
-    if cache_value == 'timeout':
-        raise socket.timeout('recently timed out, not retrying')
-    elif cache_value == 'error':
-        raise socket.timeout('recently errored, not retrying')
+    if cache_value and not force_send:
+        raise RequestConnectionError(cache_value)
 
     try:
         resp = simple_post(data, url, *args, **kwargs)
-    except socket.timeout:
-        cache.set(key, 'timeout', expiry)
-        raise
+    except (Timeout, ConnectionError), e:
+        cache.set(key, e.message, expiry)
+        raise RequestConnectionError(e.message)
 
     if not 200 <= resp.status_code < 300:
-        cache.set(key, 'error', expiry)
+        message = u'Status Code {}: {}'.format(resp.status_code, resp.reason)
+        cache.set(key, message, expiry)
+        raise RequestConnectionError(message)
     return resp
 
 
@@ -175,6 +190,10 @@ class RegisterGenerator(object):
 
 
 class Repeater(QuickCachedDocumentMixin, Document, UnicodeMixIn):
+    """
+    Represents the configuration of a repeater. Will specify the URL to forward to and
+    other properties of the configuration.
+    """
     base_doc = 'Repeater'
 
     domain = StringProperty()
@@ -184,6 +203,15 @@ class Repeater(QuickCachedDocumentMixin, Document, UnicodeMixIn):
     use_basic_auth = BooleanProperty(default=False)
     username = StringProperty()
     password = StringProperty()
+
+    def get_pending_record_count(self):
+        return get_pending_repeat_record_count(self.domain, self._id)
+
+    def get_failure_record_count(self):
+        return get_failure_repeat_record_count(self.domain, self._id)
+
+    def get_success_record_count(self):
+        return get_success_repeat_record_count(self.domain, self._id)
 
     def format_or_default_format(self):
         return self.format or RegisterGenerator.default_format_by_repeater(self.__class__)
@@ -200,19 +228,24 @@ class Repeater(QuickCachedDocumentMixin, Document, UnicodeMixIn):
         return generator.get_payload(repeat_record, self.payload_doc(repeat_record))
 
     def register(self, payload, next_check=None):
-        try:
-            payload_id = payload.get_id
-        except Exception:
-            payload_id = payload
+        if not self.allowed_to_forward(payload):
+            return
+
         repeat_record = RepeatRecord(
             repeater_id=self.get_id,
             repeater_type=self.doc_type,
             domain=self.domain,
             next_check=next_check or datetime.utcnow(),
-            payload_id=payload_id
+            payload_id=payload.get_id
         )
         repeat_record.save()
         return repeat_record
+
+    def allowed_to_forward(self, payload):
+        """
+        Return True/False depending on whether the payload meets forawrding criteria or not
+        """
+        return True
 
     def clear_caches(self):
         if self.__class__ == Repeater:
@@ -303,7 +336,10 @@ class FormRepeater(Repeater):
 
     @memoized
     def payload_doc(self, repeat_record):
-        return XFormInstance.get(repeat_record.payload_id)
+        return FormAccessors(repeat_record.domain).get_form(repeat_record.payload_id)
+
+    def allowed_to_forward(self, payload):
+        return payload.xmlns != DEVICE_LOG_XMLNS
 
     def get_url(self, repeat_record):
         url = super(FormRepeater, self).get_url(repeat_record)
@@ -336,10 +372,21 @@ class CaseRepeater(Repeater):
     """
 
     version = StringProperty(default=V2, choices=LEGAL_VERSIONS)
+    white_listed_case_types = StringListProperty(default=[])  # empty value means all case-types are accepted
+    black_listed_users = StringListProperty(default=[])  # users who caseblock submissions should be ignored
+
+    def allowed_to_forward(self, payload):
+        allowed_case_type = not self.white_listed_case_types or payload.type in self.white_listed_case_types
+        allowed_user = self.payload_user_id(payload) not in self.black_listed_users
+        return allowed_case_type and allowed_user
+
+    def payload_user_id(self, payload):
+        # get the user_id who submitted the payload, note, it's not the owner_id
+        return payload.actions[-1].user_id
 
     @memoized
     def payload_doc(self, repeat_record):
-        return CommCareCase.get(repeat_record.payload_id)
+        return CaseAccessors(repeat_record.domain).get_case(repeat_record.payload_id)
 
     def get_headers(self, repeat_record):
         headers = super(CaseRepeater, self).get_headers(repeat_record)
@@ -363,7 +410,10 @@ class ShortFormRepeater(Repeater):
 
     @memoized
     def payload_doc(self, repeat_record):
-        return XFormInstance.get(repeat_record.payload_id)
+        return FormAccessors(repeat_record.domain).get_form(repeat_record.payload_id)
+
+    def allowed_to_forward(self, payload):
+        return payload.xmlns != DEVICE_LOG_XMLNS
 
     def get_headers(self, repeat_record):
         headers = super(ShortFormRepeater, self).get_headers(repeat_record)
@@ -382,7 +432,7 @@ class AppStructureRepeater(Repeater):
         return None
 
 
-class RepeatRecord(Document, LockableMixIn):
+class RepeatRecord(Document):
     """
     An record of a particular instance of something that needs to be forwarded
     with a link to the proper repeater object
@@ -406,7 +456,19 @@ class RepeatRecord(Document, LockableMixIn):
 
     @property
     def url(self):
-        return self.repeater.get_url(self)
+        try:
+            return self.repeater.get_url(self)
+        except XFormNotFound:
+            return None
+
+    @property
+    def state(self):
+        state = RECORD_PENDING_STATE
+        if self.succeeded:
+            state = RECORD_SUCCESS_STATE
+        elif self.failure_reason:
+            state = RECORD_FAILURE_STATE
+        return state
 
     @classmethod
     def all(cls, domain=None, due_before=None, limit=None):
@@ -444,8 +506,10 @@ class RepeatRecord(Document, LockableMixIn):
         if self.last_checked:
             window = self.next_check - self.last_checked
             window += (window // 2)  # window *= 1.5
-        if window < timedelta(minutes=60):
-            window = timedelta(minutes=60)
+        if window < MIN_RETRY_WAIT:
+            window = MIN_RETRY_WAIT
+        elif window > MAX_RETRY_WAIT:
+            window = MAX_RETRY_WAIT
 
         self.last_checked = now
         self.next_check = self.last_checked + window
@@ -459,37 +523,44 @@ class RepeatRecord(Document, LockableMixIn):
     def get_payload(self):
         return self.repeater.get_payload(self)
 
-    def fire(self, max_tries=3, post_fn=None):
+    def fire(self, max_tries=3, force_send=False):
         try:
             payload = self.get_payload()
         except ResourceNotFound:
             # this repeater is pointing at a missing document
             # quarantine it and tell it to stop trying.
-            logging.exception('Repeater {} in domain {} references a missing or deleted document!'.format(
+            logging.exception(u'Repeater {} in domain {} references a missing or deleted document!'.format(
                 self._id, self.domain,
             ))
             self.doc_type = self.doc_type + '-Failed'
             self.save()
         except IgnoreDocument:
             # this repeater is pointing at a document with no payload
-            logging.info('Repeater {} in domain {} references a document with no payload'.format(
+            logging.info(u'Repeater {} in domain {} references a document with no payload'.format(
                 self._id, self.domain,
             ))
             # Mark it succeeded so that we don't try again
             self.update_success()
         else:
-            post_fn = post_fn or simple_post_with_cached_timeout
             headers = self.repeater.get_headers(self)
-            if self.try_now():
+            if self.try_now() or force_send:
                 # we don't use celery's version of retry because
                 # we want to override the success/fail each try
                 failure_reason = None
                 for i in range(max_tries):
                     try:
-                        resp = post_fn(payload, self.url, headers=headers)
+                        resp = simple_post_with_cached_timeout(
+                            payload,
+                            self.url,
+                            headers=headers,
+                            force_send=force_send,
+                            timeout=POST_TIMEOUT,
+                        )
                         if 200 <= resp.status_code < 300:
                             self.update_success()
                             break
+                        else:
+                            failure_reason = u'{}: {}'.format(resp.status_code, resp.reason)
                     except Exception, e:
                         failure_reason = unicode(e)
 

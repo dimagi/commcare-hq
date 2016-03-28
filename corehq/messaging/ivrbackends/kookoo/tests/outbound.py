@@ -1,14 +1,13 @@
 from casexml.apps.case.models import CommCareCase
 from corehq.apps.domain.models import Domain
+from corehq.apps.ivr.models import Call
 from corehq.apps.sms.tests.util import TouchformsTestCase
-from corehq.apps.sms.mixin import MobileBackend
-from corehq.apps.sms.models import CallLog
 from corehq.apps.sms.util import register_sms_contact
 from corehq.apps.reminders.models import (CaseReminderHandler,
     METHOD_IVR_SURVEY, RECIPIENT_CASE, REMINDER_TYPE_DEFAULT,
     CASE_CRITERIA, CaseReminderEvent, FIRE_TIME_DEFAULT,
     EVENT_AS_SCHEDULE, MATCH_EXACT, RECIPIENT_OWNER)
-from corehq.messaging.ivrbackends.kookoo.models import KooKooBackend
+from corehq.messaging.ivrbackends.kookoo.models import SQLKooKooBackend
 from mock import patch
 from time import sleep
 from datetime import datetime, time
@@ -23,7 +22,7 @@ def mock_kookoo_outbound_api(*args, **kwargs):
     return "<request><status>queued</status><message>%s</message></request>" % session_id
 
 
-@patch('corehq.messaging.ivrbackends.kookoo.models.KooKooBackend.invoke_kookoo_outbound_api',
+@patch('corehq.messaging.ivrbackends.kookoo.models.SQLKooKooBackend.invoke_kookoo_outbound_api',
     new=mock_kookoo_outbound_api)
 class KooKooTestCase(TouchformsTestCase):
     """
@@ -32,12 +31,13 @@ class KooKooTestCase(TouchformsTestCase):
 
     def setUp(self):
         super(KooKooTestCase, self).setUp()
-        self.ivr_backend = KooKooBackend(
-            _id="MOBILE_BACKEND_KOOKOO",
+        self.ivr_backend = SQLKooKooBackend(
+            backend_type=SQLKooKooBackend.IVR,
             name="MOBILE_BACKEND_KOOKOO",
             is_global=True,
-            api_key="xyz",
+            hq_api_id=SQLKooKooBackend.get_api_id()
         )
+        self.ivr_backend.set_extra_fields(api_key="xyz")
         self.ivr_backend.save()
 
         self.user1 = self.create_mobile_worker("user1", "123", "91001", save_vn=False)
@@ -202,7 +202,7 @@ class KooKooTestCase(TouchformsTestCase):
             "duration": "20",
         })
 
-        call = CallLog.get(call._id)
+        call = Call.objects.get(pk=call.pk)
         self.assertTrue(call.answered)
         self.assertEqual(call.duration, 20)
 
@@ -220,7 +220,7 @@ class KooKooTestCase(TouchformsTestCase):
         self.assertEquals(reminder.next_fire, datetime(2014, 6, 23, 13, 0))
 
         last_call = self.get_last_outbound_call(self.case)
-        self.assertEqual(call._id, last_call._id)
+        self.assertEqual(call.pk, last_call.pk)
 
         # Move on to the second event which now uses an all-label form and
         # should not precache the first ivr response
@@ -249,7 +249,7 @@ class KooKooTestCase(TouchformsTestCase):
             "duration": "5",
         })
 
-        call = CallLog.get(call._id)
+        call = Call.objects.get(pk=call.pk)
         self.assertTrue(call.answered)
         self.assertEqual(call.duration, 5)
 
@@ -263,7 +263,7 @@ class KooKooTestCase(TouchformsTestCase):
         self.assertEquals(reminder.next_fire, datetime(2014, 6, 24, 12, 0))
 
         last_call = self.get_last_outbound_call(self.case)
-        self.assertEqual(call._id, last_call._id)
+        self.assertEqual(call.pk, last_call.pk)
 
         # Now test sending outbound calls to a group of users (the owners
         # of the case)
@@ -308,12 +308,12 @@ class KooKooTestCase(TouchformsTestCase):
 
         call1 = self.get_last_outbound_call(self.user1)
         self.assertTrue(call1.use_precached_first_response)
-        self.assertNotEqual(call1._id, old_call1._id)
+        self.assertNotEqual(call1.pk, old_call1.pk)
 
         call2 = self.get_last_outbound_call(self.user2)
         self.assertTrue(call2.use_precached_first_response)
         self.assertFalse(call2.answered)
-        self.assertNotEqual(call2._id, old_call2._id)
+        self.assertNotEqual(call2.pk, old_call2.pk)
 
         kookoo_session_id = call1.gateway_session_id[7:]
         resp = self.kookoo_in({
@@ -348,7 +348,7 @@ class KooKooTestCase(TouchformsTestCase):
             "status": "answered",
             "duration": "20",
         })
-        call1 = CallLog.get(call1._id)
+        call1 = Call.objects.get(pk=call1.pk)
         self.assertTrue(call1.answered)
         self.assertEqual(call1.duration, 20)
 
@@ -371,11 +371,11 @@ class KooKooTestCase(TouchformsTestCase):
 
         call1 = self.get_last_outbound_call(self.user1)
         # No new call for user1 since it was already answered
-        self.assertEqual(call1._id, old_call1._id)
+        self.assertEqual(call1.pk, old_call1.pk)
 
         call2 = self.get_last_outbound_call(self.user2)
         self.assertTrue(call2.use_precached_first_response)
-        self.assertNotEqual(call2._id, old_call2._id)
+        self.assertNotEqual(call2.pk, old_call2.pk)
 
         kookoo_session_id = call2.gateway_session_id[7:]
         resp = self.kookoo_in({
@@ -410,7 +410,7 @@ class KooKooTestCase(TouchformsTestCase):
             "status": "answered",
             "duration": "20",
         })
-        call2 = CallLog.get(call2._id)
+        call2 = Call.objects.get(pk=call2.pk)
         self.assertTrue(call2.answered)
         self.assertEqual(call2.duration, 20)
 
@@ -426,5 +426,3 @@ class KooKooTestCase(TouchformsTestCase):
     def tearDown(self):
         self.ivr_backend.delete()
         super(KooKooTestCase, self).tearDown()
-
-

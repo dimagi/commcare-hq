@@ -47,7 +47,8 @@ var CaseConfig = (function () {
             this.saveButton = COMMCAREHQ.SaveButton.initForm($form, {
                 unsavedMessage: "You have unchanged case and referral settings",
                 success: function (data) {
-                    COMMCAREHQ.app_manager.updateDOM(data.update);
+                    var app_manager = hqImport('app_manager/js/app_manager.js');
+                    app_manager.updateDOM(data.update);
                 }
             });
             this.saveButton.ui.appendTo(this.home);

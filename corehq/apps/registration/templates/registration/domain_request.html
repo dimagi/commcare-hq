@@ -9,7 +9,7 @@
     <div class="container">
         <div class="page-header">
             <h1>
-                {% if is_new %}
+                {% if is_new_user %}
                     {% blocktrans %}Welcome to {{ SITE_NAME }}!
                         <small>It's time to create your first project.</small>{% endblocktrans %}
                 {% else %}
@@ -20,7 +20,7 @@
 
         {% block registration-content %}
             <div>
-                {% if is_new %}
+                {% if is_new_user %}
                     <p>
                         {% blocktrans with request.couch_user.first_name as first_name %}
                             Congratulations, {{ first_name }}&mdash;you've successfully joined {{ SITE_NAME }}.

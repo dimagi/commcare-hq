@@ -26,7 +26,7 @@ class Command(BaseCommand):
     def handle(self, *args, **options):
         # This is ok, there's only like 50k of these and we're only querying ids
         vns = VerifiedNumber.view(
-            'sms/verified_number_by_owner_id',
+            'phone_numbers/verified_number_by_owner_id',
             include_docs=False
         ).all()
 
@@ -45,7 +45,7 @@ class Command(BaseCommand):
         for owner_id, count in owners.iteritems():
             if count > 1:
                 owner_vns = VerifiedNumber.view(
-                    'sms/verified_number_by_owner_id',
+                    'phone_numbers/verified_number_by_owner_id',
                     key=owner_id,
                     include_docs=True
                 ).all()

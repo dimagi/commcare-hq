@@ -14,6 +14,7 @@ from corehq.apps.app_manager.models import (
     Module,
 )
 from corehq.apps.app_manager.tests.util import SuiteMixin, TestXmlMixin, commtrack_enabled
+from corehq.apps.app_manager.tests.app_factory import AppFactory
 
 
 class AdvancedSuiteTest(SimpleTestCase, TestXmlMixin, SuiteMixin):
@@ -157,3 +158,23 @@ class AdvancedSuiteTest(SimpleTestCase, TestXmlMixin, SuiteMixin):
         child_form.requires = 'case'
 
         self.assertXmlPartialEqual(self.get_xml('advanced_module_parent'), app.create_suite(), "./entry[1]")
+
+    def test_tiered_select_with_advanced_module_as_parent_with_filters(self):
+        factory = AppFactory(build_version='2.25')
+        parent_module, parent_form = factory.new_advanced_module('parent', 'parent')
+        parent_module.case_details.short.filter = 'parent_filter = 1'
+
+        child_module, child_form = factory.new_basic_module('child', 'child')
+        child_form.xmlns = 'http://id_m1-f0'
+        child_module.case_details.short.filter = 'child_filter = 1'
+        factory.form_requires_case(child_form)
+
+        # make child module point to advanced module as parent
+        child_module.parent_select.active = True
+        child_module.parent_select.module_id = parent_module.unique_id
+
+        self.assertXmlPartialEqual(
+            self.get_xml('advanced_module_parent_filters'),
+            factory.app.create_suite(),
+            "./entry[2]"
+        )

@@ -3,6 +3,7 @@ from corehq.apps.reminders.models import (Message, METHOD_SMS,
     METHOD_SMS_CALLBACK, METHOD_SMS_SURVEY, METHOD_IVR_SURVEY,
     METHOD_EMAIL, CaseReminderHandler, EmailUsage)
 from corehq.apps.hqwebapp.tasks import send_mail_async
+from corehq.apps.ivr.models import Call
 from corehq.apps.reminders.util import get_unverified_number_for_recipient
 from corehq.apps.smsforms.app import submit_unfinished_form
 from corehq.apps.smsforms.models import get_session_by_session_id, SQLXFormsSession
@@ -17,7 +18,7 @@ from corehq.apps.sms.util import format_message_list, touchforms_error_is_config
 from corehq.apps.users.models import CouchUser
 from corehq.apps.domain.models import Domain
 from corehq.apps.sms.models import (
-    CallLog, ExpectedCallbackEventLog, CALLBACK_PENDING, CALLBACK_RECEIVED,
+    ExpectedCallback, CALLBACK_PENDING, CALLBACK_RECEIVED,
     CALLBACK_MISSED, WORKFLOW_REMINDER, WORKFLOW_KEYWORD, WORKFLOW_BROADCAST,
     WORKFLOW_CALLBACK, MessagingEvent,
 )
@@ -189,18 +190,20 @@ def fire_sms_callback_event(reminder, handler, recipients, verified_numbers, log
         send_message = False
         if reminder.callback_try_count > 0:
             if reminder.event_initiation_timestamp:
-                event = ExpectedCallbackEventLog.view("sms/expected_callback_event",
-                    key=[reminder.domain,
-                         json_format_datetime(reminder.event_initiation_timestamp),
-                         recipient.get_id],
-                    include_docs=True,
-                    limit=1).one()
+                event = ExpectedCallback.by_domain_recipient_date(
+                    reminder.domain,
+                    recipient.get_id,
+                    reminder.event_initiation_timestamp
+                )
                 if not event:
                     continue
                 if event.status == CALLBACK_RECEIVED:
                     continue
-                if CallLog.inbound_entry_exists(recipient.doc_type,
-                    recipient.get_id, reminder.event_initiation_timestamp):
+                if Call.inbound_entry_exists(
+                    recipient.doc_type,
+                    recipient.get_id,
+                    reminder.event_initiation_timestamp
+                ):
                     event.status = CALLBACK_RECEIVED
                     event.save()
                     continue
@@ -220,14 +223,13 @@ def fire_sms_callback_event(reminder, handler, recipients, verified_numbers, log
             # It's the first time sending the sms, so create an expected
             # callback event
             send_message = True
-            event = ExpectedCallbackEventLog(
+            event = ExpectedCallback.objects.create(
                 domain=reminder.domain,
                 date=reminder.event_initiation_timestamp,
                 couch_recipient_doc_type=recipient.doc_type,
                 couch_recipient=recipient.get_id,
                 status=CALLBACK_PENDING,
             )
-            event.save()
 
         if send_message:
             fire_sms_event(reminder, handler, [recipient], verified_numbers,
@@ -246,7 +248,7 @@ def fire_sms_survey_event(reminder, handler, recipients, verified_numbers, logge
             for session_id in reminder.xforms_session_ids:
                 session = get_session_by_session_id(session_id)
                 if session.end_time is None:
-                    vn = VerifiedNumber.view("sms/verified_number_by_owner_id",
+                    vn = VerifiedNumber.view("phone_numbers/verified_number_by_owner_id",
                                              key=session.connection_id,
                                              include_docs=True).first()
                     if vn is not None:
@@ -357,10 +359,11 @@ def fire_ivr_survey_event(reminder, handler, recipients, verified_numbers, logge
     for recipient in recipients:
         initiate_call = True
         if reminder.callback_try_count > 0 and reminder.event_initiation_timestamp:
-            initiate_call = not CallLog.answered_call_exists(
-                recipient.doc_type, recipient.get_id,
-                reminder.event_initiation_timestamp,
-                CaseReminderHandler.get_now())
+            initiate_call = not Call.answered_call_exists(
+                recipient.doc_type,
+                recipient.get_id,
+                reminder.event_initiation_timestamp
+            )
 
         if initiate_call:
             if (isinstance(recipient, CommCareCase) and

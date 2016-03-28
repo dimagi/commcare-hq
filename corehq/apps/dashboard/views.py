@@ -10,14 +10,15 @@ from corehq.apps.dashboard.models import (
     TileConfiguration,
     AppsPaginatedContext,
     IconContext,
-    ReportsPaginatedContext, Tile)
+    ReportsPaginatedContext, Tile, DataPaginatedContext)
 from corehq.apps.domain.decorators import login_and_domain_required
 from corehq.apps.domain.views import DomainViewMixin, LoginAndDomainMixin, \
     DefaultProjectSettingsView
 from corehq.apps.domain.utils import user_has_custom_top_menu
+from corehq.apps.hqwebapp.view_permissions import user_can_view_reports
 from corehq.apps.hqwebapp.views import BasePageView
 from corehq.apps.users.views import DefaultProjectUserSettingsView
-from corehq.apps.style.decorators import use_bootstrap3
+from corehq.apps.style.decorators import use_bootstrap3, use_angular_js
 from django_prbac.utils import has_privilege
 from django.conf import settings
 
@@ -45,6 +46,7 @@ def default_dashboard_url(request, domain):
 class BaseDashboardView(LoginAndDomainMixin, BasePageView, DomainViewMixin):
 
     @use_bootstrap3
+    @use_angular_js
     def dispatch(self, request, *args, **kwargs):
         return super(BaseDashboardView, self).dispatch(request, *args, **kwargs)
 
@@ -156,8 +158,7 @@ def _get_default_tile_configurations():
                                      or request.couch_user.can_export_data())
     can_edit_apps = lambda request: (request.couch_user.is_web_user()
                                      or request.couch_user.can_edit_apps())
-    can_view_reports = lambda request: (request.couch_user.can_view_reports()
-                                        or request.couch_user.get_viewable_reports())
+    can_view_reports = lambda request: user_can_view_reports(request.project, request.couch_user)
     can_edit_users = lambda request: (request.couch_user.can_edit_commcare_users()
                                       or request.couch_user.can_edit_web_users())
 
@@ -210,7 +211,7 @@ def _get_default_tile_configurations():
             title=_('Data'),
             slug='data',
             icon='fcc fcc-data',
-            context_processor_class=IconContext,
+            context_processor_class=DataPaginatedContext,
             urlname="data_interfaces_default",
             visibility_check=can_edit_data,
             help_text=_('Export and manage data'),

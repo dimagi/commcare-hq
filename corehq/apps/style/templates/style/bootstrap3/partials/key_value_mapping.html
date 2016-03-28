@@ -1,0 +1,99 @@
+<div id="key_value_mapping_editable_template" class="hide">
+    <form class="form-horizontal hq-enum-editor" action="">
+        <fieldset data-bind="sortable: items">
+            <div class="form-group hq-input-map container-fluid"
+                 data-bind="css: {'has-error': $parent.isItemDuplicated(ko.utils.unwrapObservable(key))}">
+                <div class="row">
+                    <div class="col-sm-1">
+                        <i class="sortable-handle fa fa-arrows-v"></i>
+                    </div>
+                    <div class="col-sm-4">
+                        <input type="text"
+                               class="enum-key form-control"
+                               placeholder="key"
+                               data-bind="value: key"/>
+                        <div class="help-block" data-bind='visible: $parent.isItemDuplicated(ko.utils.unwrapObservable(key))'>
+                            Key is duplicated.
+                        </div>
+                    </div>
+                    <div class="col-sm-1 text-center">
+                        &rarr;
+                    </div>
+                    <div class="col-sm-4">
+                        <input type="text" class="form-control enum-value" data-bind="
+                            attr: {placeholder: $parent.backup(value).value},
+                            value: value[$parent.lang]
+                        "/>
+                    </div>
+                    <div class="col-sm-1">
+                        <a href="#" class="btn btn-info btn-xs lang-text"
+                           data-bind="
+                            text: $parent.backup(value).lang,
+                            visible: !_([$parent.lang, null]).contains($parent.backup(value).lang)
+                        "></a>
+                    </div>
+                    <div class="col-sm-1">
+                        <a href="#" data-bind="click: $parent.removeItem" class="btn btn-danger">
+                            <i class="icon-white fa fa-remove"></i>
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </fieldset>
+
+        <div class="col-sm-offset-1">
+            <a href="#" class="btn btn-success"
+               data-bind="click: addItem">
+                <i class="icon-white fa fa-plus"></i>
+                Add Key &rarr; Value Mapping
+            </a>
+        </div>
+    </form>
+</div>
+
+<div id="key_value_mapping_modal" class="hide">
+    <div class="modal fade hq-enum-modal">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <button type="button" class="close" data-dismiss="modal">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                    <h4 class="modal-title" data-bind="text: $data.modalTitle"></h4>
+                </div>
+                <div class="modal-body" style="max-height:372px; overflow-y: scroll;"
+                     data-bind="template: {name: 'key_value_mapping_editable_template', data: mapList}"></div>
+                <div class="modal-footer">
+                    <button class="btn btn-default" data-dismiss="modal">Cancel</button>
+                    <button class="btn btn-primary" data-dismiss="modal"
+                            data-bind="disable: ko.utils.unwrapObservable($data.mapList.duplicatedItems).length > 0,
+                            text: (ko.utils.unwrapObservable($data.mapList.duplicatedItems).length > 0) ? 'Fix errors' : 'OK',
+                            click: save"></button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Single read-only key/value pair -->
+<div id="key_value_mapping_display_template" class="hide">
+    <div data-bind="foreach: items">
+        <div>
+            <strong data-bind="text: key"></strong>
+            &rarr;
+            <span data-bind="visible: value[$parent.lang], text: value[$parent.lang]"></span>
+            <span data-bind="visible: !ko.utils.unwrapObservable(value[$parent.lang])">
+                <i class="fa fa-times-circle"></i>
+            </span>
+        </div>
+    </div>
+</div>
+
+<<!-- Read-only version of keys and values, displayed alongside button to pop up modal -->
+<div id="key_value_mapping_template" class="hide">
+    <div data-bind="template: 'key_value_mapping_display_template'"></div>
+    <button class="btn btn-default" data-bind="click: openModal, visible: $data.edit">
+        <i class="fa fa-pencil"></i>
+        <span data-bind="text: $data.buttonText"></span>
+    </button>
+</div>

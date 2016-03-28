@@ -63,13 +63,12 @@ class LockedFormProcessingResult(FormProcessingResult):
 
 def process_xform_xml(domain, instance, attachments=None):
     """
-    Create a new xform to ready to be saved to couchdb in a thread-safe manner
-    Returns a LockManager containing the new XFormInstance and its lock,
+    Create a new xform to ready to be saved to a database in a thread-safe manner
+    Returns a LockManager containing the new XFormInstance(SQL) and its lock,
     or raises an exception if anything goes wrong.
 
     attachments is a dictionary of the request.FILES that are not the xform;
     key is parameter name, value is django MemoryFile object stream
-
     """
     attachments = attachments or {}
 
@@ -170,7 +169,7 @@ def _handle_duplicate(new_doc, instance):
     existing_doc = FormAccessors(new_doc.domain).get_with_attachments(conflict_id)
 
     existing_md5 = existing_doc.xml_md5()
-    new_md5 = hashlib.md5(instance).hexdigest()
+    new_md5 = new_doc.xml_md5()
 
     if existing_md5 != new_md5:
         # if the form contents are not the same:

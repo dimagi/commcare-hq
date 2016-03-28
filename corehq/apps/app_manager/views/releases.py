@@ -24,7 +24,7 @@ from corehq.apps.app_manager.exceptions import (
 from corehq.apps.domain.views import LoginAndDomainMixin, DomainViewMixin
 from corehq.apps.hqwebapp.views import BasePageView
 from corehq.apps.sms.views import get_sms_autocomplete_context
-from corehq.apps.style.decorators import use_bootstrap3
+from corehq.apps.style.decorators import use_bootstrap3, use_angular_js
 from dimagi.utils.web import json_response
 from corehq.util.timezones.utils import get_timezone_for_user
 from corehq.apps.domain.dbaccessors import get_doc_count_in_domain_by_class
@@ -69,7 +69,7 @@ def paginate_releases(request, domain, app_id):
 
 
 @require_deploy_apps
-def release_manager(request, domain, app_id, template='app_manager/releases.html'):
+def releases_ajax(request, domain, app_id, template='app_manager/partials/releases.html'):
     app = get_app(domain, app_id)
     context = get_apps_base_context(request, domain, app)
     can_send_sms = domain_has_privilege(domain, privileges.OUTBOUND_SMS)
@@ -304,6 +304,7 @@ class AppDiffView(LoginAndDomainMixin, BasePageView, DomainViewMixin):
     template_name = 'app_manager/app_diff.html'
 
     @use_bootstrap3
+    @use_angular_js
     def dispatch(self, request, *args, **kwargs):
         try:
             self.first_app_id = self.kwargs["first_app_id"]

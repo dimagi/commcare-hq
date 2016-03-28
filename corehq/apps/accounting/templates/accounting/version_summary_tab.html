@@ -16,13 +16,11 @@
                     </tr>
                 </thead>
                 <tbody>
-                    {% for product_rate in plan_version.product_rates.all %}
-                        <tr>
-                            <td>{{ product_rate.product.name }}</td>
-                            <td>{{ product_rate.product.product_type }}</td>
-                            <td>{{ product_rate.monthly_fee }}</td>
-                        </tr>
-                    {% endfor %}
+                    <tr>
+                        <td>{{ plan_version.product_rate.product.name }}</td>
+                        <td>{{ plan_version.product_rate.product.product_type }}</td>
+                        <td>{{ plan_version.product_rate.monthly_fee }}</td>
+                    </tr>
                 </tbody>
             </table>
         </p>

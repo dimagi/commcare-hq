@@ -9,7 +9,7 @@ from mock import Mock
 from corehq.util.exceptions import DocumentClassNotFound
 
 from ..couch import (get_document_or_404, IterDB, iter_update, IterUpdateError,
-        DocUpdate, get_document_class_by_doc_type)
+        DocUpdate, get_document_class_by_doc_type, get_document_or_404_lite)
 
 
 class MockDb(object):
@@ -47,7 +47,7 @@ def mock_wrap_context():
         MockModel.wrap = func
 
 
-class GetDocMockTestCase(TestCase):
+class GetDocMockTestCase(SimpleTestCase):
     """
     Tests get_document_or_404 with mocking
     """
@@ -80,6 +80,15 @@ class GetDocMockTestCase(TestCase):
         get_document_or_404 should return a wrapped model on success
         """
         doc = get_document_or_404(MockModel, 'ham', '123')
+        self.assertEqual(doc, {'wrapped': {'_id': '123', 'domain': 'ham', 'doc_type': 'MockModel'}})
+
+    def test_get_document_or_404_lite_not_found(self):
+        with mock_get_context():
+            with self.assertRaises(Http404):
+                get_document_or_404_lite(MockModel, '123')
+
+    def test_get_document_or_404_lite_success(self):
+        doc = get_document_or_404_lite(MockModel, '123')
         self.assertEqual(doc, {'wrapped': {'_id': '123', 'domain': 'ham', 'doc_type': 'MockModel'}})
 
 

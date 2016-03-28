@@ -50,7 +50,7 @@ def _build_boolean_expression_filter(spec, context):
     return SinglePropertyValueFilter(
         expression=ExpressionFactory.from_spec(wrapped.expression, context),
         operator=get_operator(wrapped.operator),
-        reference_expression=ExpressionFactory.from_spec(wrapped.property_value),
+        reference_expression=ExpressionFactory.from_spec(wrapped.property_value, context),
     )
 
 

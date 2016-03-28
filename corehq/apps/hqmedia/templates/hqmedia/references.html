@@ -18,11 +18,11 @@
 {% endblock %}
 
 {% block js %} {{ block.super }}
-    <script src="{% static 'hqwebapp/js/ajax_csrf_setup.js' %}"></script>
-    <script src="{% static 'hqwebapp/js/main.js' %}"></script>
+    <script src="{% static 'style/js/bootstrap2/main.js' %}"></script>
     <!-- todo add the media player back in -->
     <script type="text/javascript" src="{% static 'hqmedia/js/jquery.jplayer.min.js' %}"></script>
     <script type="text/javascript" src="{% static 'hqmedia/js/hqmedia.reference_controller.js' %}"></script>
+    <script type="text/javascript" src="{% new_static 'app_manager/js/download_async_modal.js' %}"></script>
 {% endblock %}
 
 {% block js-inline %} {{ block.super }}
@@ -165,7 +165,7 @@
     </script>
 
     {% for uploader in uploaders %}
-        {% include 'hqmedia/partials/multimedia_uploader.html' %}
+        {% include 'hqmedia/bootstrap2/partials/multimedia_uploader.html' %}
     {% endfor %}
 
     <div id="jquery_jplayer"></div>

@@ -17,7 +17,6 @@ xmlns:vellum="http://commcarehq.org/xforms/vellum">
                     <question7/>
                     <question6/>
                     <add_markdown/>
-                    <remove_markdown/>
                     <update_markdown/>
                     <vetoed_markdown/>
                     <blank_value_node />
@@ -41,7 +40,6 @@ xmlns:vellum="http://commcarehq.org/xforms/vellum">
             <bind nodeset="/data/question7" type="xsd:date"/>
             <bind nodeset="/data/question6"/>
             <bind nodeset="/data/add_markdown" type="xsd:string"/>
-            <bind nodeset="/data/remove_markdown" type="xsd:string"/>
             <bind nodeset="/data/update_markdown" type="xsd:string"/>
             <bind nodeset="/data/vetoed_markdown" type="xsd:string"/>
             <bind nodeset="/data/blank_value_node" type="xsd:string" />
@@ -74,9 +72,6 @@ xmlns:vellum="http://commcarehq.org/xforms/vellum">
                     <text id="add_markdown-label">
                         <value>add_markdown: ~~new \u0939\u093f markdown~~</value>
                         <value form="markdown">add_markdown: ~~new \u0939\u093f markdown~~</value>
-                    </text>
-                    <text id="remove_markdown-label">
-                        <value>remove_markdown</value>
                     </text>
                     <text id="update_markdown-label">
                         <value>## smaller_markdown</value>
@@ -118,9 +113,6 @@ xmlns:vellum="http://commcarehq.org/xforms/vellum">
                     <text id="add_markdown-label">
                         <value>add_markdown: ~~new \u0939\u093f markdown~~</value>
                         <value form="markdown">add_markdown: ~~new \u0939\u093f markdown~~</value>
-                    </text>
-                    <text id="remove_markdown-label">
-                        <value>remove_markdown</value>
                     </text>
                     <text id="update_markdown-label">
                         <value>## smaller_markdown</value>
@@ -175,9 +167,6 @@ xmlns:vellum="http://commcarehq.org/xforms/vellum">
         </input>
         <input ref="/data/add_markdown">
             <label ref="jr:itext('add_markdown-label')"/>
-        </input>
-        <input ref="/data/remove_markdown">
-            <label ref="jr:itext('remove_markdown-label')"/>
         </input>
         <input ref="/data/update_markdown">
             <label ref="jr:itext('update_markdown-label')"/>

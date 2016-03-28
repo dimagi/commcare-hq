@@ -1,14 +1,12 @@
-import logging
 import xlrd
 
 from django.core.management.base import LabelCommand
 
 from corehq.apps.accounting.models import Currency
-from corehq.messaging.smsbackends.mach.models import MachBackend
+from corehq.apps.smsbillables.utils import log_smsbillables_info
+from corehq.messaging.smsbackends.mach.models import SQLMachBackend
 from corehq.apps.sms.models import OUTGOING
 from corehq.apps.smsbillables.models import SmsGatewayFee, SmsGatewayFeeCriteria
-
-logger = logging.getLogger('accounting')
 
 
 def bootstrap_mach_gateway(apps):
@@ -33,7 +31,7 @@ def bootstrap_mach_gateway(apps):
                     data[country_code].append(
                         (table.cell_value(row, 9), int(subscribers)))
                 except ValueError:
-                    logger.info('Incomplete data for country code %d' % country_code)
+                    log_smsbillables_info('Incomplete data for country code %d' % country_code)
             row += 1
     except IndexError:
         pass
@@ -46,7 +44,7 @@ def bootstrap_mach_gateway(apps):
             weighted_price += price * subscribers
         weighted_price = weighted_price / total_subscribers
         SmsGatewayFee.create_new(
-            MachBackend.get_api_id(),
+            SQLMachBackend.get_api_id(),
             OUTGOING,
             weighted_price,
             country_code=country_code,
@@ -57,7 +55,7 @@ def bootstrap_mach_gateway(apps):
 
     # Fee for invalid phonenumber
     SmsGatewayFee.create_new(
-        MachBackend.get_api_id(),
+        SQLMachBackend.get_api_id(),
         OUTGOING,
         0.0225,
         country_code=None,
@@ -66,7 +64,7 @@ def bootstrap_mach_gateway(apps):
         criteria_class=sms_gateway_fee_criteria_class,
     )
 
-    logger.info("Updated MACH/Syniverse gateway fees.")
+    log_smsbillables_info("Updated MACH/Syniverse gateway fees.")
 
 
 class Command(LabelCommand):

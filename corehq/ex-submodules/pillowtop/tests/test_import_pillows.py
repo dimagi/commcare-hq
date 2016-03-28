@@ -1,4 +1,4 @@
-from django.test import override_settings, SimpleTestCase
+from django.test import override_settings, SimpleTestCase, TestCase
 from pillowtop import get_all_pillow_instances, get_all_pillow_classes, get_pillow_by_name
 from pillowtop.checkpoints.manager import PillowCheckpoint
 from pillowtop.dao.mock import MockDocumentStore
@@ -8,7 +8,7 @@ from pillowtop.feed.interface import Change
 from pillowtop.listener import BasicPillow
 from inspect import isclass
 from pillowtop.pillow.interface import ConstructedPillow
-from pillowtop.processor import LoggingProcessor
+from pillowtop.processors import LoggingProcessor
 
 
 class FakePillow(BasicPillow):
@@ -18,12 +18,12 @@ class FakePillow(BasicPillow):
 @override_settings(PILLOWTOPS={'test': ['pillowtop.tests.FakePillow']})
 class PillowImportTestCase(SimpleTestCase):
 
-    def test_get_pillow_classes(self):
+    def test_get_all_pillow_classes(self):
         pillows = get_all_pillow_classes()
         self.assertEquals(len(pillows), 1)
         self.assertTrue(isclass(pillows[0]))
 
-    def test_get_pillow_instances(self):
+    def test_get_all_pillow_instances(self):
         pillows = get_all_pillow_instances()
         self.assertEquals(len(pillows), 1)
         self.assertFalse(isclass(pillows[0]))
@@ -43,12 +43,12 @@ class FakeConstructedPillow(ConstructedPillow):
     pass
 
 
-def make_fake_constructed_pillow():
+def make_fake_constructed_pillow(pillow_id):
     fake_dao = MockDocumentStore()
     pillow = FakeConstructedPillow(
-        name='FakeConstructedPillowName',
+        name=pillow_id,
         document_store=fake_dao,
-        checkpoint=PillowCheckpoint(fake_dao, 'fake-constructed-pillow'),
+        checkpoint=PillowCheckpoint('fake-constructed-pillow'),
         change_feed=RandomChangeFeed(10),
         processor=LoggingProcessor(),
     )
@@ -95,12 +95,12 @@ class PillowFactoryFunctionTestCase(SimpleTestCase):
 
 
 @override_settings(PILLOWTOPS=PILLOWTOPS_OVERRIDE)
-class PillowTestCase(SimpleTestCase):
+class PillowTestCase(TestCase):
 
     def test_pillow_reset_checkpoint(self):
-        pillow = make_fake_constructed_pillow()
+        pillow = make_fake_constructed_pillow('FakeConstructedPillowName')
         seq_id = '456'
         pillow.set_checkpoint(Change('123', seq_id))
-        self.assertEqual(pillow.checkpoint.get_or_create().document['seq'], seq_id)
+        self.assertEqual(pillow.checkpoint.get_or_create_wrapped().document.sequence, seq_id)
         pillow.reset_checkpoint()
-        self.assertEqual(pillow.checkpoint.get_or_create().document['seq'], '0')
+        self.assertEqual(pillow.checkpoint.get_or_create_wrapped().document.sequence, '0')

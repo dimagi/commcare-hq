@@ -22,7 +22,7 @@ from corehq.apps.app_manager.views.schedules import get_schedule_context
 from corehq.apps.app_manager.views.utils import back_to_main, \
     CASE_TYPE_CONFLICT_MSG
 
-from corehq import toggles, privileges
+from corehq import toggles, privileges, feature_previews
 from corehq.apps.accounting.utils import domain_has_privilege
 from corehq.apps.app_manager.exceptions import (
     BlankXFormError,
@@ -221,15 +221,6 @@ def edit_form_attr(request, domain, app_id, unique_form_id, attr):
         else:
             return False
 
-    if should_edit("user_reg_data"):
-        # should be user_registrations only
-        data = json.loads(request.POST['user_reg_data'])
-        data_paths = data['data_paths']
-        data_paths_dict = {}
-        for path in data_paths:
-            data_paths_dict[path.split('/')[-1]] = path
-        form.data_paths = data_paths_dict
-
     if should_edit("name"):
         name = request.POST['name']
         form.name[lang] = name
@@ -365,13 +356,7 @@ def get_xform_source(request, domain, app_id, module_id, form_id):
     return _get_xform_source(request, app, form)
 
 
-@require_can_edit_apps
-def view_user_registration(request, domain, app_id):
-    from corehq.apps.app_manager.views.view_generic import view_generic
-    return view_generic(request, domain, app_id, is_user_registration=True)
-
-
-def get_form_view_context_and_template(request, domain, form, langs, is_user_registration, messages=messages):
+def get_form_view_context_and_template(request, domain, form, langs, messages=messages):
     xform_questions = []
     xform = None
     form_errors = []
@@ -445,17 +430,14 @@ def get_form_view_context_and_template(request, domain, form, langs, is_user_reg
     module_case_types = []
     app = form.get_app()
     all_modules = list(app.get_modules())
-    if is_user_registration:
-        module_case_types = None
-    else:
-        for module in all_modules:
-            for case_type in module.get_case_types():
-                module_case_types.append({
-                    'id': module.unique_id,
-                    'module_name': trans(module.name, langs),
-                    'case_type': case_type,
-                    'module_type': module.doc_type
-                })
+    for module in all_modules:
+        for case_type in module.get_case_types():
+            module_case_types.append({
+                'id': module.unique_id,
+                'module_name': trans(module.name, langs),
+                'case_type': case_type,
+                'module_type': module.doc_type
+            })
 
     if not form.unique_id:
         form.get_unique_id()
@@ -463,8 +445,7 @@ def get_form_view_context_and_template(request, domain, form, langs, is_user_reg
 
     form_has_schedule = isinstance(form, AdvancedForm) and form.get_module().has_schedule
     context = {
-        'is_user_registration': is_user_registration,
-        'nav_form': form if not is_user_registration else '',
+        'nav_form': form,
         'xform_languages': languages,
         "xform_questions": xform_questions,
         'case_reserved_words_json': load_case_reserved_words(),
@@ -474,17 +455,15 @@ def get_form_view_context_and_template(request, domain, form, langs, is_user_reg
         'allow_cloudcare': app.application_version == APP_V2 and isinstance(form, Form),
         'allow_form_copy': isinstance(form, Form),
         'allow_form_filtering': not isinstance(form, CareplanForm) and not form_has_schedule,
-        'allow_form_workflow': not is_user_registration and not isinstance(form, CareplanForm),
+        'allow_form_workflow': not isinstance(form, CareplanForm),
         'allow_usercase': domain_has_privilege(request.domain, privileges.USER_CASE),
         'is_usercase_in_use': is_usercase_in_use(request.domain),
+        'is_module_filter_enabled': (feature_previews.MODULE_FILTER.enabled(request.domain) and
+                                     app.enable_module_filtering),
     }
 
-    if toggles.GUIDED_TOUR.enabled(domain):
-        is_template_app = context['allow_cloudcare'] and form.source and not context['is_user_registration']
-        if is_template_app and tours.NEW_APP.is_enabled(request.user):
-            request.guided_tour = tours.NEW_APP.get_tour_data()
-        elif tours.NEW_APP.is_enabled(request.user):
-            request.guided_tour = tours.NEW_APP.get_tour_data()
+    if tours.NEW_APP.is_enabled(request.user):
+        request.guided_tour = tours.NEW_APP.get_tour_data()
 
     if context['allow_form_workflow'] and toggles.FORM_LINK_WORKFLOW.enabled(domain):
         module = form.get_module()
@@ -578,13 +557,6 @@ def get_form_datums(request, domain, app_id):
 def view_form(request, domain, app_id, module_id, form_id):
     from corehq.apps.app_manager.views.view_generic import view_generic
     return view_generic(request, domain, app_id, module_id, form_id)
-
-
-@require_can_edit_apps
-def get_user_registration_source(request, domain, app_id):
-    app = get_app(domain, app_id)
-    form = app.get_user_registration()
-    return _get_xform_source(request, app, form, filename="User Registration.xml")
 
 
 def _get_xform_source(request, app, form, filename="form.xml"):

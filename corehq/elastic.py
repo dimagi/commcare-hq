@@ -3,8 +3,10 @@ from collections import namedtuple
 from urllib import unquote
 from elasticsearch import Elasticsearch
 from django.conf import settings
-from elasticsearch.exceptions import ElasticsearchException
+from elasticsearch.exceptions import ElasticsearchException, RequestError
+from elasticsearch.helpers import scan
 
+from corehq.apps.es.utils import flatten_field_dict
 from corehq.pillows.mappings.reportxform_mapping import REPORT_XFORM_INDEX
 from pillowtop.listener import send_to_elasticsearch as send_to_es
 from corehq.pillows.mappings.app_mapping import APP_INDEX
@@ -17,20 +19,28 @@ from corehq.pillows.mappings.user_mapping import USER_INDEX
 from corehq.pillows.mappings.xform_mapping import XFORM_INDEX
 
 
-def get_es_new():
+def get_es_new(**kwargs):
     """
     Get a handle to the configured elastic search DB.
     Returns an elasticsearch.Elasticsearch instance.
     """
-    return Elasticsearch([{
-        'host': settings.ELASTICSEARCH_HOST,
-        'port': settings.ELASTICSEARCH_PORT,
-    }])
+    es_hosts = getattr(settings, 'ELASTICSEARCH_HOSTS', None)
+    if not es_hosts:
+        es_hosts = [settings.ELASTICSEARCH_HOST]
+
+    hosts = [
+        {
+            'host': host,
+            'port': settings.ELASTICSEARCH_PORT,
+        }
+        for host in es_hosts
+    ]
+    return Elasticsearch(hosts, **kwargs)
 
 
 def doc_exists_in_es(index, doc_id):
     es_meta = ES_META[index]
-    return get_es_new().exists(es_meta.index, doc_id, doc_type=es_meta.type)
+    return get_es_new().exists(es_meta.index, es_meta.type, doc_id)
 
 
 def send_to_elasticsearch(index, doc, delete=False):
@@ -118,7 +128,24 @@ class ESError(Exception):
 
 def run_query(index_name, q):
     es_meta = ES_META[index_name]
-    return get_es_new().search(es_meta.index, es_meta.type, body=q)
+    try:
+        return get_es_new().search(es_meta.index, es_meta.type, body=q)
+    except RequestError as e:
+        raise ESError(e)
+
+
+def scroll_query(index_name, q):
+    es_meta = ES_META[index_name]
+    try:
+        return scan(
+            get_es_new(),
+            index=es_meta.index,
+            doc_type=es_meta.type,
+            query=q,
+            preserve_order=True  # This makes it a scroll query, not a scan
+        )
+    except RequestError as e:
+        raise ESError(e)
 
 
 def es_histogram(histo_type, domains=None, startdate=None, enddate=None,
@@ -224,6 +251,10 @@ def es_query(params=None, facets=None, terms=None, q=None, es_index=None, start_
         result = es.search(meta.index, meta.type, body=q)
     except ElasticsearchException as e:
         raise ESError(e)
+
+    if fields is not None:
+        for res in result['hits']['hits']:
+            flatten_field_dict(res)
 
     return result
 

@@ -29,11 +29,10 @@ def get_reindex_commands(pillow_class_name):
             'ptop_fast_reindex_users',
             add_demo_user_to_user_index,
             'ptop_fast_reindex_groupstousers',
-            'ptop_fast_reindex_unknownusers',
+            # 'ptop_fast_reindex_unknownusers',  removed until we have a better workflow for this
         ],
         'AppPillow': ['ptop_fast_reindex_apps'],
         'GroupPillow': ['ptop_fast_reindex_groups'],
-        'SMSPillow': ['ptop_fast_reindex_smslogs'],
         'ReportXFormPillow': ['ptop_fast_reindex_reportxforms'],
         'ReportCasePillow': ['ptop_fast_reindex_reportcases'],
     }

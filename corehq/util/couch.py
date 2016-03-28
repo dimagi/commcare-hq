@@ -19,20 +19,32 @@ class DocumentNotFound(Exception):
     pass
 
 
-def get_document_or_not_found(cls, domain, doc_id, additional_doc_types=None):
-    allowed_doc_types = (additional_doc_types or []) + [cls.__name__]
+def get_document_or_not_found_lite(cls, doc_id):
+    """
+    Like `get_document_or_not_found` but without domain/doc_type checks.
+    """
+    return cls.wrap(_get_document_or_not_found_lite(cls, doc_id))
+
+
+def _get_document_or_not_found_lite(cls, doc_id):
+    """
+    Returns an unwrapped document if it exists, or raises `DocumentNotFound` if not
+    """
     try:
-        unwrapped = cls.get_db().get(doc_id)
+        return cls.get_db().get(doc_id)
     except ResourceNotFound:
         raise DocumentNotFound("Document {} of class {} not found!".format(
             doc_id,
             cls.__name__
         ))
 
+
+def get_document_or_not_found(cls, domain, doc_id, additional_doc_types=None):
+    allowed_doc_types = (additional_doc_types or []) + [cls.__name__]
+    unwrapped = _get_document_or_not_found_lite(cls, doc_id)
     if ((unwrapped.get('domain', None) != domain and
          domain not in unwrapped.get('domains', [])) or
         unwrapped['doc_type'] not in allowed_doc_types):
-
         raise DocumentNotFound("Document {} of class {} not in domain {}!".format(
             doc_id,
             cls.__name__,
@@ -57,8 +69,17 @@ def get_document_or_404(cls, domain, doc_id, additional_doc_types=None):
         return get_document_or_not_found(
             cls, domain, doc_id, additional_doc_types=additional_doc_types)
     except DocumentNotFound as e:
-        tb = traceback.format_exc()
-        raise Http404("{}\n\n{}".format(e, tb))
+        raise Http404(u"{}\n\n{}".format(e, traceback.format_exc()))
+
+
+def get_document_or_404_lite(cls, doc_id):
+    """
+    Like `get_document_or_404` but without the domain and doc_type checks.
+    """
+    try:
+        return get_document_or_not_found_lite(cls, doc_id)
+    except DocumentNotFound as e:
+        raise Http404(u"{}\n\n{}".format(e, traceback.format_exc()))
 
 
 @memoized

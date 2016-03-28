@@ -11,8 +11,10 @@ from __future__ import absolute_import
 import logging
 import os
 import sys
+import threading
 from unittest.case import TestCase
 
+import couchlog.signals
 from couchdbkit import ResourceNotFound
 from couchdbkit.ext.django import loading
 from mock import patch, Mock
@@ -89,7 +91,7 @@ class DisableMigrations(object):
 
 
 class ErrorOnDbAccessContext(object):
-    """Ensure that touching a database raises and error."""
+    """Ensure that touching a database raises an error."""
 
     def __init__(self, tests, runner):
         pass
@@ -99,6 +101,10 @@ class ErrorOnDbAccessContext(object):
         from django.conf import settings
         self.original_db_enabled = settings.DB_ENABLED
         settings.DB_ENABLED = False
+
+        # do not log request exceptions to couch for non-database tests
+        couchlog.signals.got_request_exception.disconnect(
+            couchlog.signals.log_request_exception)
 
         self.db_patch = patch('django.db.backends.util.CursorWrapper')
         db_mock = self.db_patch.start()
@@ -113,15 +119,21 @@ class ErrorOnDbAccessContext(object):
         mock_couch = Mock(side_effect=error, spec=[])
 
         # register our dbs with the extension document classes
-        old_handler = loading.couchdbkit_handler
-        for app, value in old_handler.app_schema.items():
-            for name, cls in value.items():
+        self.db_classes = db_classes = []
+        for app, value in loading.couchdbkit_handler.app_schema.items():
+            for cls in value.values():
+                db_classes.append(cls)
                 cls.set_db(mock_couch)
 
     def teardown(self):
         """Enable database access"""
         from django.conf import settings
         settings.DB_ENABLED = self.original_db_enabled
+        for cls in self.db_classes:
+            db = loading.get_db(cls._meta.app_label)
+            cls.set_db(db)
+        couchlog.signals.got_request_exception.connect(
+            couchlog.signals.log_request_exception)
         self.db_patch.stop()
 
 
@@ -139,7 +151,7 @@ class HqdbContext(DatabaseContext):
     def verify_test_db(cls, app, uri):
         if '/test_' not in uri:
             raise ValueError("not a test db url: app=%s url=%r" % (app, uri))
-        return app
+        return app, uri
 
     def should_skip_test_setup(self):
         # FRAGILE look in sys.argv; can't get nose config from here
@@ -171,24 +183,49 @@ class HqdbContext(DatabaseContext):
 
         # delete couch databases
         deleted_databases = []
-        skipcount = 0
-        for app in self.apps:
+        for app, uri in self.apps:
+            if uri in deleted_databases:
+                continue
             app_label = app.split('.')[-1]
             db = loading.get_db(app_label)
-            if db.dbname in deleted_databases:
-                skipcount += 1
-                continue
             try:
                 db.server.delete_db(db.dbname)
-                deleted_databases.append(db.dbname)
+                deleted_databases.append(uri)
                 log.info("deleted database %s for %s", db.dbname, app_label)
             except ResourceNotFound:
-                log.info("database %s not found for %s! it was probably already deleted.", db.dbname, app_label)
-        if skipcount:
-            log.info("skipped deleting %s app databases that were already deleted", skipcount)
+                log.info("database %s not found for %s! it was probably already deleted.",
+                         db.dbname, app_label)
 
         # HACK clean up leaked database connections
         from corehq.sql_db.connections import connection_manager
         connection_manager.dispose_all()
 
         super(HqdbContext, self).teardown()
+
+
+def print_imports_until_thread_change():
+    """Print imports until the current thread changes
+
+    This is useful for troubleshooting premature test runner exit
+    (often caused by an import when running tests --with-doctest).
+    """
+    main = threading.current_thread()
+    sys.__stdout__.write("setting up import hook on %s\n" % main)
+
+    class InfoImporter(object):
+
+        def find_module(self, name, path=None):
+            thread = threading.current_thread()
+            # add code here to check for other things happening on import
+            #if name == 'gevent':
+            #    sys.exit()
+            sys.__stdout__.write("%s %s\n" % (thread, name))
+            if thread is not main:
+                sys.exit()
+            return None
+
+    # Register the import hook. See https://www.python.org/dev/peps/pep-0302/
+    sys.meta_path.append(InfoImporter())
+
+if os.environ.get("HQ_TESTS_PRINT_IMPORTS"):
+    print_imports_until_thread_change()

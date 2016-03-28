@@ -1,18 +1,31 @@
 {% extends 'reports/filters/bootstrap3/base.html' %}
 {% load hq_shared_tags %}
 {% block filter_content %}
-<input id="{{ css_id }}" name="{{ slug }}" type="text" class="{% block input_css_class %}span6{% endblock %}" value="{{ search_query }}">
-    {% if search_help_inline %}
-    <p class="help-block">
-        <i class="icon icon-info-sign"></i>
-        {{ search_help_inline }}
-    </p>
-    {% endif %}
     {% if search_help_title and search_help_content %}
-        <span class="hq-help-template"
-           data-title="{{ search_help_title }}"
-           data-content="{{ search_help_content }}"
-        ></span>
+    <div class="row">
+        <div class="col-xs-11">
+    {% endif %}
+            <input id="{{ css_id }}"
+                   name="{{ slug }}"
+                   type="text"
+                   class="form-control {% block input_css_class %}{% endblock %}" value="{{ search_query }}">
+            {% if search_help_inline %}
+            <p class="help-block">
+                <i class="fa fa-info-circle"></i>
+                {{ search_help_inline }}
+            </p>
+            {% endif %}
+    {% if search_help_title and search_help_content %}
+        </div>
+        <div class="col-xs-1">
+            <span class="hq-help-template"
+               data-title="{{ search_help_title }}"
+               data-content="{{ search_help_content }}"
+               data-placement="left"
+               data-bootstrap3="true"
+            ></span>
+        </div>
+    </div>
     {% endif %}
 {% endblock %}
 

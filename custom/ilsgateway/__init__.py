@@ -1,7 +1,6 @@
-from custom.ilsgateway.comparison_reports import ProductsCompareReport, LocationsCompareReport, \
-    WebUsersCompareReport, SMSUsersCompareReport, ProductAvailabilityReport, SupplyPointStatusReport
+from custom.ilsgateway.slab.views import SLABConfigurationReport
 from custom.ilsgateway.tanzania.reports.alerts import AlertReport
-from custom.ilsgateway.tanzania.reports.dashboard_report import DashboardReport
+from custom.ilsgateway.tanzania.reports.dashboard_report import DashboardReport, NewDashboardReport
 from custom.ilsgateway.tanzania.reports.delivery import DeliveryReport
 from custom.ilsgateway.tanzania.reports.randr import RRreport
 from custom.ilsgateway.tanzania.reports.facility_details import FacilityDetailsReport
@@ -13,20 +12,18 @@ from custom.ilsgateway.tanzania.reports.unrecognized_sms import UnrecognizedSMSR
 CUSTOM_REPORTS = (
     ('Custom reports', (
         DashboardReport,
+        NewDashboardReport,
         AlertReport,
         StockOnHandReport,
         RRreport,
         FacilityDetailsReport,
         DeliveryReport,
         SupervisionReport,
-        UnrecognizedSMSReport,
-        ProductsCompareReport,
-        LocationsCompareReport,
-        WebUsersCompareReport,
-        SMSUsersCompareReport,
-        ProductAvailabilityReport,
-        SupplyPointStatusReport
+        UnrecognizedSMSReport
     )),
+    ('Slab', (
+        SLABConfigurationReport,
+    ))
 )
 
 LOCATION_TYPES = ["MOHSW", "MSDZONE", "REGION", "DISTRICT", "FACILITY"]
@@ -45,3 +42,7 @@ LOGISTICS_PRODUCT_ALIASES = {
     'coc': 'cc',
     'pop': 'pp'
 }
+
+ROOT_LOCATION_TYPE = 'MOHSW'
+
+SLAB_DOMAIN = 'slab-tanzania'

@@ -1,8 +1,7 @@
 from corehq.apps.app_manager.models import ApplicationBase
+from corehq.apps.app_manager.util import get_correct_app_class
 from corehq.pillows.mappings.app_mapping import APP_INDEX, APP_MAPPING
-from dimagi.utils.decorators.memoized import memoized
 from pillowtop.listener import AliasedElasticPillow
-from django.conf import settings
 
 
 class AppPillow(AliasedElasticPillow):
@@ -12,8 +11,6 @@ class AppPillow(AliasedElasticPillow):
 
     document_class = ApplicationBase
     couch_filter = "app_manager/all_apps"
-    es_host = settings.ELASTICSEARCH_HOST
-    es_port = settings.ELASTICSEARCH_PORT
     es_timeout = 60
     es_alias = "hqapps"
     es_type = "app"
@@ -36,3 +33,8 @@ class AppPillow(AliasedElasticPillow):
     @classmethod
     def get_unique_id(cls):
         return APP_INDEX
+
+    def change_transform(self, doc_dict):
+        # perform any lazy migrations
+        doc = get_correct_app_class(doc_dict).wrap(doc_dict)
+        return doc.to_json()

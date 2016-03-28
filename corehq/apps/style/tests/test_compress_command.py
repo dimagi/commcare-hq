@@ -37,15 +37,10 @@ class TestDjangoCompressOffline(SimpleTestCase):
             return
         for tag in DISALLOWED_TAGS:
             self.assertNotRegexpMatches(tag[0], line.strip(), tag[1])
-        if 'src' not in line and 'href' not in line:
-            return
-        self.assertIn(
-            'new_static', line, msg='new_static not found in %s in file %s' % (safe_repr(line), filename)
-        )
 
     def _is_b3(self, filename):
         if filename in IGNORED_FILES:
-            return  False
+            return False
 
         if filename.endswith(B3_BASE):
             return True
@@ -69,6 +64,8 @@ class TestDjangoCompressOffline(SimpleTestCase):
 
     @attr("slow")
     def test_compress_offline(self):
+        call_command('collectstatic', verbosity=0, interactive=False)
+        call_command('fix_less_imports_collectstatic', verbosity=0, interactive=False)
         with patch('sys.stdout', new_callable=StringIO) as mock_stdout:
             call_command('compress', force=True)
 

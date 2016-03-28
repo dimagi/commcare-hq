@@ -2,12 +2,12 @@ from datetime import datetime
 from decimal import Decimal
 from casexml.apps.stock.models import StockReport, StockTransaction
 from corehq.apps.commtrack.models import SupplyPointCase
-from corehq.apps.locations.models import LocationType, Location
+from corehq.apps.locations.models import LocationType, Location, SQLLocation
 from corehq.apps.products.models import SQLProduct
 from corehq.apps.sms.api import send_sms_to_verified_number
-from corehq.form_processor.interfaces.supply import SupplyInterface
 from corehq.util.translation import localize
-from custom.ilsgateway.models import SupplyPointStatus, ILSGatewayConfig
+from custom.ilsgateway.models import SupplyPointStatus, ILSGatewayConfig, GroupSummary, SupplyPointStatusTypes, \
+    DeliveryGroups
 from dimagi.utils.dates import get_business_day_of_month_before
 from django.db.models.aggregates import Max
 
@@ -52,7 +52,7 @@ def supply_points_with_latest_status_by_datespan(locations, status_type, status_
     ids = SupplyPointStatus.objects.filter(
         id__in=inner.values('pk').query,
         status_type=status_type,
-        status_value=status_value).distinct().values_list("supply_point", flat=True)
+        status_value=status_value).distinct().values_list("location_id", flat=True)
     return [SupplyPointCase.get(id) for id in ids]
 
 
@@ -67,13 +67,10 @@ def send_translated_message(user, message, **kwargs):
 
 def make_loc(code, name, domain, type, metadata=None, parent=None):
     name = name or code
-    location_type, _ = LocationType.objects.get_or_create(domain=domain, name=type)
+    LocationType.objects.get(domain=domain, name=type)
     loc = Location(site_code=code, name=name, domain=domain, location_type=type, parent=parent)
     loc.metadata = metadata or {}
     loc.save()
-    if not location_type.administrative:
-        SupplyInterface.create_from_location(domain, loc)
-        loc.save()
     return loc
 
 
@@ -94,3 +91,21 @@ def create_stock_report(location, products_quantities, date=datetime.utcnow()):
             case_id=sql_location.supply_point_id,
             product_id=SQLProduct.objects.get(domain=sql_location.domain, code=product_code).product_id
         ).save()
+
+
+def last_location_group(location):
+    try:
+        gs = GroupSummary.objects.filter(
+            total=1, org_summary__location_id=location.get_id, title=SupplyPointStatusTypes.DELIVERY_FACILITY
+        ).latest('org_summary__date')
+    except GroupSummary.DoesNotExist:
+        return
+
+    delivery_groups = DeliveryGroups(gs.org_summary.date.month)
+    return delivery_groups.current_delivering_group()
+
+
+def get_sql_locations_by_domain_and_group(domain, group):
+    for sql_location in SQLLocation.objects.filter(domain=domain):
+        if sql_location.metadata.get('group') == group:
+            yield sql_location

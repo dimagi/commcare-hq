@@ -387,7 +387,7 @@ class CaseReportMixin(object):
             return [case]
 
         query = case_es.CaseES().domain(self.domain)\
-                .fields([])\
+                .exclude_source()\
                 .opened_range(lte=self.datespan.enddate_utc)\
                 .case_type(self.default_case_type)
         query.index = 'report_cases'
@@ -406,7 +406,7 @@ class CaseReportMixin(object):
 
         return [
             CommCareCase.wrap(doc)
-            for doc in iter_docs(CommCareCase.get_db(), result.ids)
+            for doc in iter_docs(CommCareCase.get_db(), result.doc_ids)
         ]
 
     @property
@@ -500,7 +500,7 @@ class BeneficiaryPaymentReport(CaseReportMixin, BaseReport):
         if len(rows) == 1:
             return rows[0]
         def zip_fn((i, values)):
-            if i == self.column_index('num_children'):
+            if i == self.column_index('num_children') or i == self.column_index('year_end_bonus_cash'):
                 return values[0]
             elif isinstance(values[0], int):
                 return sum(values)

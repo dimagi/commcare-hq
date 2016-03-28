@@ -3,14 +3,19 @@ import calendar
 
 from django.conf import settings
 from django.utils.translation import ugettext_lazy, ugettext as _
+from corehq.apps.app_manager.dbaccessors import get_brief_apps_in_domain
 from corehq.apps.casegroups.dbaccessors import get_case_group_meta_in_domain
 from corehq.apps.commtrack.const import USER_LOCATION_OWNER_MAP_TYPE
 
-from corehq.apps.hqcase.dbaccessors import get_case_types_for_domain
-
-from corehq.apps.app_manager.models import Application
 from corehq.apps.groups.models import Group
 from corehq.apps.reports.filters.base import BaseSingleOptionFilter, BaseMultipleOptionFilter
+from corehq.apps.repeaters.dbaccessors import get_repeaters_by_domain
+from corehq.apps.repeaters.const import (
+    RECORD_FAILURE_STATE,
+    RECORD_SUCCESS_STATE,
+    RECORD_PENDING_STATE,
+)
+from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 
 
 class GroupFilterMixin(object):
@@ -61,7 +66,7 @@ class CaseTypeMixin(object):
 
     @property
     def options(self):
-        case_types = get_case_types_for_domain(self.domain)
+        case_types = CaseAccessors(self.domain).get_case_types()
         return [(case, "%s" % case) for case in case_types
                 if case != USER_LOCATION_OWNER_MAP_TYPE]
 
@@ -94,15 +99,10 @@ class SelectApplicationFilter(BaseSingleOptionFilter):
 
     @property
     def options(self):
-        apps_for_domain = Application.get_db().view(
-            "app_manager/applications_brief",
-            startkey=[self.domain],
-            endkey=[self.domain, {}],
-            include_docs=True
-        ).all()
-        return [(app['value']['_id'], _("%(name)s [up to build %(version)s]") % {
-            'name': app['value']['name'],
-            'version': app['value']['version']}) for app in apps_for_domain]
+        apps_for_domain = get_brief_apps_in_domain(self.domain)
+        return [(app.get_id, _("%(name)s [up to build %(version)s]") % {
+            'name': app.name,
+            'version': app.version}) for app in apps_for_domain]
 
 
 class MultiCaseGroupFilter(BaseMultipleOptionFilter):
@@ -114,3 +114,35 @@ class MultiCaseGroupFilter(BaseMultipleOptionFilter):
     @property
     def options(self):
         return get_case_group_meta_in_domain(self.domain)
+
+
+class RepeaterFilter(BaseSingleOptionFilter):
+    slug = 'repeater'
+    label = ugettext_lazy('Repeater')
+    default_text = ugettext_lazy("All Repeaters")
+    placeholder = ugettext_lazy('Click to select repeaters')
+
+    @property
+    def options(self):
+        repeaters = get_repeaters_by_domain(self.domain)
+        return map(
+            lambda repeater: (repeater.get_id, u'{}: {}'.format(
+                repeater.doc_type,
+                repeater.url,
+            )),
+            repeaters,
+        )
+
+
+class RepeatRecordStateFilter(BaseSingleOptionFilter):
+    slug = "record_state"
+    label = ugettext_lazy("Record Status")
+    default_text = ugettext_lazy("Show All")
+
+    @property
+    def options(self):
+        return [
+            (RECORD_SUCCESS_STATE, _("Successful")),
+            (RECORD_PENDING_STATE, _("Pending")),
+            (RECORD_FAILURE_STATE, _("Failed")),
+        ]

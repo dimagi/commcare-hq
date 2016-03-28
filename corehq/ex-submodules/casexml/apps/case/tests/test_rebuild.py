@@ -10,7 +10,7 @@ from datetime import datetime, timedelta
 from copy import deepcopy
 from casexml.apps.case.tests.util import delete_all_cases
 from casexml.apps.case.util import primary_actions, post_case_blocks
-from corehq.form_processor.backends.couch.update_strategy import ActionsUpdateStrategy, _action_sort_key_function
+from corehq.form_processor.backends.couch.update_strategy import CouchCaseUpdateStrategy, _action_sort_key_function
 from corehq.form_processor.models import RebuildWithReason
 from couchforms.models import XFormInstance
 
@@ -110,7 +110,7 @@ class CaseRebuildTest(TestCase):
         # rebuild by flipping the actions
         case.actions = [case.actions[0], a2, a1]
         case.xform_ids = [case.xform_ids[0], case.xform_ids[2], case.xform_ids[1]]
-        ActionsUpdateStrategy(case).soft_rebuild_case()
+        CouchCaseUpdateStrategy(case).soft_rebuild_case()
         self.assertEqual(case.p1, 'p1-1') # original
         self.assertEqual(case.p2, 'p2-1') # updated (back!)
         self.assertEqual(case.p3, 'p3-2') # new
@@ -138,7 +138,7 @@ class CaseRebuildTest(TestCase):
         _confirm_action_order(case, [a1, a2, a3])
 
         # test initial rebuild does nothing
-        update_strategy = ActionsUpdateStrategy(case)
+        update_strategy = CouchCaseUpdateStrategy(case)
         update_strategy.soft_rebuild_case()
         _confirm_action_order(case, [a1, a2, a3])
 
@@ -151,7 +151,7 @@ class CaseRebuildTest(TestCase):
         case = CommCareCase.get(case_id)
         _confirm_action_order(case, [a1, a2, a3])
         case.actions[2].date = case.actions[3].date + timedelta(minutes=1)
-        ActionsUpdateStrategy(case).soft_rebuild_case()
+        CouchCaseUpdateStrategy(case).soft_rebuild_case()
         _confirm_action_order(case, [a1, a3, a2])
 
         # test original form order
@@ -159,13 +159,13 @@ class CaseRebuildTest(TestCase):
         case.actions[3].server_date = case.actions[2].server_date
         case.actions[3].date = case.actions[2].date
         case.xform_ids = [a1.xform_id, a3.xform_id, a2.xform_id]
-        ActionsUpdateStrategy(case).soft_rebuild_case()
+        CouchCaseUpdateStrategy(case).soft_rebuild_case()
         _confirm_action_order(case, [a1, a3, a2])
 
         # test create comes before update
         case = CommCareCase.get(case_id)
         case.actions = [a1, create, a2, a3]
-        ActionsUpdateStrategy(case).soft_rebuild_case()
+        CouchCaseUpdateStrategy(case).soft_rebuild_case()
         _confirm_action_order(case, [a1, a2, a3])
 
     def testRebuildEmpty(self):
@@ -197,7 +197,7 @@ class CaseRebuildTest(TestCase):
         _post_util(case_id=case_id, p1='p1-1', p2='p2-1', form_extras={'received_on': now + timedelta(seconds=1)})
         _post_util(case_id=case_id, p2='p2-2', p3='p3-2', form_extras={'received_on': now + timedelta(seconds=2)})
         case = CommCareCase.get(case_id)
-        update_strategy = ActionsUpdateStrategy(case)
+        update_strategy = CouchCaseUpdateStrategy(case)
 
         original_actions = [deepcopy(a) for a in case.actions]
         original_form_ids = [id for id in case.xform_ids]
@@ -416,7 +416,7 @@ class TestCheckActionOrder(SimpleTestCase):
             CommCareCaseAction(server_date=datetime(2001, 1, 2, 0, 0, 0)),
             CommCareCaseAction(server_date=datetime(2001, 1, 3, 0, 0, 0)),
         ])
-        self.assertTrue(ActionsUpdateStrategy(case).check_action_order())
+        self.assertTrue(CouchCaseUpdateStrategy(case).check_action_order())
 
     def test_out_of_order(self):
         case = CommCareCase(actions=[
@@ -424,7 +424,7 @@ class TestCheckActionOrder(SimpleTestCase):
             CommCareCaseAction(server_date=datetime(2001, 1, 3, 0, 0, 0)),
             CommCareCaseAction(server_date=datetime(2001, 1, 2, 0, 0, 0)),
         ])
-        self.assertFalse(ActionsUpdateStrategy(case).check_action_order())
+        self.assertFalse(CouchCaseUpdateStrategy(case).check_action_order())
 
     def test_sorted_with_none(self):
         case = CommCareCase(actions=[
@@ -433,7 +433,7 @@ class TestCheckActionOrder(SimpleTestCase):
             CommCareCaseAction(server_date=datetime(2001, 1, 2, 0, 0, 0)),
             CommCareCaseAction(server_date=datetime(2001, 1, 3, 0, 0, 0)),
         ])
-        self.assertTrue(ActionsUpdateStrategy(case).check_action_order())
+        self.assertTrue(CouchCaseUpdateStrategy(case).check_action_order())
 
     def test_out_of_order_with_none(self):
         case = CommCareCase(actions=[
@@ -442,7 +442,7 @@ class TestCheckActionOrder(SimpleTestCase):
             CommCareCaseAction(server_date=None),
             CommCareCaseAction(server_date=datetime(2001, 1, 2, 0, 0, 0)),
         ])
-        self.assertFalse(ActionsUpdateStrategy(case).check_action_order())
+        self.assertFalse(CouchCaseUpdateStrategy(case).check_action_order())
 
 
 class TestActionSortKey(SimpleTestCase):

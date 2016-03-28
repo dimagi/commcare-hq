@@ -78,7 +78,7 @@ class Translation(object):
     def get_translations(cls, lang, key=None, one=False):
         if key:
             translations = []
-            r = TranslationDoc.get_db().view('translations/popularity',
+            r = TranslationDoc.get_db().view('app_translations_by_popularity/view',
                 startkey=[lang, key],
                 endkey=[lang, key, {}],
                 group=True
@@ -92,7 +92,7 @@ class Translation(object):
             return translations
         else:
             translations = defaultdict(list)
-            r = TranslationDoc.get_db().view('translations/popularity',
+            r = TranslationDoc.get_db().view('app_translations_by_popularity/view',
                 startkey=[lang],
                 endkey=[lang, {}],
                 group=True

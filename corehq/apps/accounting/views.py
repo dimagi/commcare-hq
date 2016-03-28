@@ -18,6 +18,8 @@ from django.utils.translation import ugettext as _, ugettext_noop
 from django.views.generic import View
 from corehq.apps.hqwebapp.async_handler import AsyncHandlerMixin
 from corehq.apps.hqwebapp.encoders import LazyEncoder
+from corehq.apps.style.decorators import use_bootstrap3, use_select2, \
+    use_jquery_ui, use_jquery_ui_multiselect
 from corehq.util.translation import localize
 
 from dimagi.utils.decorators.memoized import memoized
@@ -85,11 +87,16 @@ class AccountingSectionView(BaseSectionPageView):
         return reverse('accounting_default')
 
     @method_decorator(requires_privilege_raise404(privileges.ACCOUNTING_ADMIN))
+    @use_bootstrap3
+    @use_jquery_ui
+    @use_select2
+    @use_jquery_ui_multiselect
     def dispatch(self, request, *args, **kwargs):
         return super(AccountingSectionView, self).dispatch(request, *args, **kwargs)
 
 
 class BillingAccountsSectionView(AccountingSectionView):
+
     @property
     def parent_pages(self):
         return [{
@@ -516,8 +523,10 @@ class EditSoftwarePlanView(AccountingSectionView, AsyncHandlerMixin):
         initial = {
             'feature_rates': json.dumps([fmt_feature_rate_dict(r.feature, r)
                                          for r in plan_version.feature_rates.all()] if plan_version else []),
-            'product_rates': json.dumps([fmt_product_rate_dict(r.product, r)
-                                         for r in plan_version.product_rates.all()] if plan_version else []),
+            'product_rates': json.dumps(
+                [fmt_product_rate_dict(plan_version.product_rate.product, plan_version.product_rate)]
+                if plan_version else []
+            ),
             'role_slug': plan_version.role.slug if plan_version else None,
         }
         if self.request.method == 'POST' and 'update_version' in self.request.POST:
@@ -730,7 +739,15 @@ class InvoiceSummaryViewBase(AccountingSectionView):
     @property
     def page_context(self):
         return {
-            'billing_records': self.billing_records,
+            'billing_records': [
+                {
+                    'date_created': billing_record.date_created,
+                    'email_recipients': ', '.join(billing_record.recipients),
+                    'invoice': billing_record.invoice,
+                    'pdf_data_id': billing_record.pdf_data_id,
+                }
+                for billing_record in self.billing_records if not billing_record.skipped_email
+            ],
             'can_send_email': self.can_send_email,
             'invoice_info_form': self.invoice_info_form,
             'resend_email_form': self.resend_email_form,

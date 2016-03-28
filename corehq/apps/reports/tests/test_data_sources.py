@@ -1,11 +1,10 @@
 from datetime import datetime
-from django import test as unittest
 from corehq.apps.commtrack.models import StockState
 from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.reports.commtrack.data_sources import StockStatusDataSource
 from corehq.apps.users.models import WebUser
 from dimagi.utils.couch.loosechange import map_reduce
-from corehq.apps.commtrack.helpers import make_supply_point, make_product
+from corehq.apps.commtrack.helpers import make_product
 from corehq.apps.commtrack.tests.util import make_loc
 
 
@@ -61,7 +60,7 @@ class DataSourceTest(object):
                 for site_name, products in sites.items():
                     site = make_loc(site_name, type='site', parent=district, domain=TEST_DOMAIN)
                     cls.sites[site_name] = (site, products)
-                    supply_point = make_supply_point(TEST_DOMAIN, site)
+                    supply_point = site.linked_supply_point()
                     for p_code, stock in products.items():
                         prod = cls.products[p_code]
                         StockState.objects.create(

@@ -2,9 +2,9 @@ import copy
 import datetime
 from decimal import Decimal
 import logging
-import uuid
 import json
 import cStringIO
+import pytz
 
 from couchdbkit import ResourceNotFound
 import dateutil
@@ -23,22 +23,23 @@ from django.contrib import messages
 from django.contrib.auth.views import password_reset_confirm
 from django.views.decorators.http import require_POST
 from PIL import Image
-from django.utils.translation import ugettext as _, ugettext_noop, ugettext_lazy
+from django.utils.translation import ugettext as _, ugettext_lazy
 from django.contrib.auth.models import User
+from corehq.apps.hqwebapp.templatetags.hq_shared_tags import toggle_js_domain_cachebuster
 
 from corehq.const import USER_DATE_FORMAT
 from custom.dhis2.forms import Dhis2SettingsForm
 from custom.dhis2.models import Dhis2Settings
-from casexml.apps.case.mock import CaseBlock
-from casexml.apps.case.xml import V2
 from corehq.apps.accounting.async_handlers import Select2BillingInfoHandler
 from corehq.apps.accounting.invoicing import DomainWireInvoiceFactory
-from corehq.apps.accounting.decorators import (
-    requires_privilege_with_fallback,
-)
 from corehq.apps.hqwebapp.tasks import send_mail_async
-from corehq.apps.style.decorators import use_bootstrap3, use_jquery_ui, \
-    use_jquery_ui_multiselect, use_knockout_js, use_select2
+from corehq.apps.hqwebapp.models import ProjectSettingsTab
+from corehq.apps.style.decorators import (
+    use_bootstrap3,
+    use_jquery_ui,
+    use_jquery_ui_multiselect,
+    use_select2,
+)
 from corehq.apps.accounting.exceptions import (
     NewSubscriptionError,
     PaymentRequestError,
@@ -61,7 +62,6 @@ from corehq.apps.smsbillables.forms import SMSRateCalculatorForm
 from corehq.apps.users.models import Invitation, CouchUser
 from corehq.apps.fixtures.models import FixtureDataType
 from corehq.toggles import NAMESPACE_DOMAIN, all_toggles, CAN_EDIT_EULA, TRANSFER_DOMAIN
-from corehq.util.context_processors import get_domain_type
 from dimagi.utils.couch.resource_conflict import retry_resource
 from corehq import privileges, feature_previews
 from django_prbac.utils import has_privilege
@@ -70,7 +70,7 @@ from corehq.apps.accounting.models import (
     DefaultProductPlan, SoftwarePlanEdition, BillingAccount,
     BillingAccountType,
     Invoice, BillingRecord, InvoicePdf, PaymentMethodType,
-    PaymentMethod, EntryPoint, WireInvoice, SoftwarePlanVisibility, FeatureType,
+    EntryPoint, WireInvoice, SoftwarePlanVisibility, FeatureType,
     StripePaymentMethod, LastPayment,
     UNLIMITED_FEATURE_USAGE,
 )
@@ -103,6 +103,18 @@ from corehq.apps.users.decorators import require_can_edit_web_users
 from corehq.apps.repeaters.forms import GenericRepeaterForm, FormRepeaterForm
 from corehq.apps.repeaters.models import FormRepeater, CaseRepeater, ShortFormRepeater, AppStructureRepeater, \
     RepeatRecord, repeater_types, RegisterGenerator
+from corehq.apps.repeaters.dbaccessors import (
+    get_paged_repeat_records,
+    get_repeat_record_count,
+)
+from corehq.apps.repeaters.const import (
+    RECORD_FAILURE_STATE,
+    RECORD_PENDING_STATE,
+    RECORD_SUCCESS_STATE,
+)
+from corehq.apps.reports.generic import GenericTabularReport
+from corehq.apps.reports.dispatcher import DomainReportDispatcher
+from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn
 from dimagi.utils.post import simple_post
 from toggle.models import Toggle
 from corehq.apps.hqwebapp.tasks import send_html_email_async
@@ -124,7 +136,7 @@ PAYMENT_ERROR_MESSAGES = {
 def select(request, domain_select_template='domain/select.html', do_not_redirect=False):
     domains_for_user = Domain.active_for_user(request.user)
     if not domains_for_user:
-        return redirect('registration_domain', domain_type=get_domain_type(None, request))
+        return redirect('registration_domain')
 
     email = request.couch_user.get_email()
     open_invitations = [e for e in Invitation.by_email(email) if not e.is_expired]
@@ -448,7 +460,6 @@ class EditMyProjectSettingsView(BaseProjectSettingsView):
 
     @method_decorator(login_and_domain_required)
     @use_bootstrap3
-    @use_knockout_js
     def dispatch(self, *args, **kwargs):
         return super(LoginAndDomainMixin, self).dispatch(*args, **kwargs)
 
@@ -696,7 +707,7 @@ class DomainSubscriptionView(DomainAccountingSettings):
         return sum([c.balance for c in credit_lines]) if credit_lines else Decimal('0.00')
 
     def get_product_summary(self, plan_version, account, subscription):
-        product_rate = plan_version.get_product_rate()
+        product_rate = plan_version.product_rate
         product_type = product_rate.product.product_type
         return {
             'name': product_type,
@@ -1462,7 +1473,6 @@ class ConfirmSelectedPlanView(SelectPlanView):
         downgrades = get_change_status(current_plan_version, self.selected_plan_version)[1]
         downgrade_handler = DomainDowngradeStatusHandler(
             self.domain_object, self.selected_plan_version, downgrades,
-            web_user=self.request.user.username
         )
         return downgrade_handler.get_response()
 
@@ -1641,6 +1651,10 @@ class ConfirmSubscriptionRenewalView(DomainAccountingSettings, AsyncHandlerMixin
     async_handlers = [
         Select2BillingInfoHandler,
     ]
+
+    @method_decorator(require_POST)
+    def dispatch(self, request, *args, **kwargs):
+        return super(ConfirmSubscriptionRenewalView, self).dispatch(request, *args, **kwargs)
 
     @property
     @memoized
@@ -1943,7 +1957,6 @@ class CreateNewExchangeSnapshotView(BaseAdminProjectSettingsView):
             elif request.POST.get('old_image', False):
                 new_domain.image_path = old.image_path
                 new_domain.image_type = old.image_type
-            new_domain.save()
 
             documentation_file = self.snapshot_settings_form.cleaned_data['documentation_file']
             if documentation_file:
@@ -1952,9 +1965,9 @@ class CreateNewExchangeSnapshotView(BaseAdminProjectSettingsView):
             elif request.POST.get('old_documentation_file', False):
                 new_domain.documentation_file_path = old.documentation_file_path
                 new_domain.documentation_file_type = old.documentation_file_type
-            new_domain.save()
 
             if publish_on_submit:
+                new_domain.save()
                 _publish_snapshot(request, self.domain_object, published_snapshot=new_domain)
             else:
                 new_domain.published = False
@@ -1976,7 +1989,11 @@ class CreateNewExchangeSnapshotView(BaseAdminProjectSettingsView):
                                           name=new_domain.documentation_file_path)
 
             for application in new_domain.full_applications():
-                original_id = application.copied_from._id
+                # Note that application is a build. If the original app has a build then application.copied_from
+                # will be a build and application.copied_from.copy_of will be the original app ID, otherwise
+                # application.copied_from will be the original app. (FB 190587) See also self.published_apps()
+                original_id = application.copied_from.copy_of if application.copied_from.copy_of \
+                    else application.copied_from._id
                 name_field = "%s-name" % original_id
                 if name_field not in request.POST:
                     continue
@@ -2004,13 +2021,10 @@ class CreateNewExchangeSnapshotView(BaseAdminProjectSettingsView):
                 fixture.description = request.POST["%s-description" % old_id]
                 fixture.save()
 
-            if new_domain is None:
-                messages.error(request, _("Version creation failed; please try again"))
-            else:
-                messages.success(request, (_("Created a new version of your app. This version will be posted to "
-                                             "CommCare Exchange pending approval by admins.") if publish_on_submit
-                                           else _("Created a new version of your app.")))
-                return redirect(ExchangeSnapshotsView.urlname, self.domain)
+            messages.success(request, (_("Created a new version of your app. This version will be posted to "
+                                         "CommCare Exchange pending approval by admins.") if publish_on_submit
+                                       else _("Created a new version of your app.")))
+            return redirect(ExchangeSnapshotsView.urlname, self.domain)
         return self.get(request, *args, **kwargs)
 
 
@@ -2021,7 +2035,6 @@ class ManageProjectMediaView(BaseAdminProjectSettingsView):
 
     @method_decorator(domain_admin_required)
     @use_bootstrap3
-    @use_knockout_js
     def dispatch(self, request, *args, **kwargs):
         return super(BaseProjectSettingsView, self).dispatch(request, *args, **kwargs)
 
@@ -2073,6 +2086,128 @@ class RepeaterMixin(object):
             'ShortFormRepeater': _("Form Stubs"),
             'AppStructureRepeater': _("App Schema Changes"),
         }
+
+
+class DomainForwardingRepeatRecords(GenericTabularReport):
+    name = 'Repeat Records'
+    base_template = 'domain/repeat_record_report.html'
+    section_name = 'Project Settings'
+    slug = 'repeat_record_report'
+    dispatcher = DomainReportDispatcher
+    ajax_pagination = True
+    asynchronous = False
+    is_bootstrap3 = True
+    sortable = False
+
+    fields = [
+        'corehq.apps.reports.filters.select.RepeaterFilter',
+        'corehq.apps.reports.filters.select.RepeatRecordStateFilter',
+    ]
+
+    def _make_view_payload_button(self, record_id):
+        return '''
+        <a
+            class="btn btn-default"
+            role="button"
+            data-record-id={}
+            data-toggle="modal"
+            data-target="#view-record-payload-modal">
+            View Payload
+        </a>
+        '''.format(record_id)
+
+    def _make_resend_payload_button(self, record_id):
+        return '''
+        <button
+            class="btn btn-default resend-record-payload"
+            data-record-id={}>
+            Resend Payload
+        </button>
+        '''.format(record_id)
+
+    def _make_state_label(self, record):
+        label_cls = ''
+        label_text = ''
+
+        if record.state == RECORD_SUCCESS_STATE:
+            label_cls = 'success'
+            label_text = _('Success')
+        elif record.state == RECORD_PENDING_STATE:
+            label_cls = 'warning'
+            label_text = _('Pending')
+        elif record.state == RECORD_FAILURE_STATE:
+            label_cls = 'danger'
+            label_text = _('Failed')
+
+        return '''
+        <span class="label label-{}">
+            {}
+        </span>
+        '''.format(label_cls, label_text)
+
+    @property
+    def report_context(self):
+        context = super(DomainForwardingRepeatRecords, self).report_context
+        context.update({
+            'active_tab': ProjectSettingsTab(
+                self.request,
+                self.slug,
+                domain=self.domain,
+                couch_user=self.request.couch_user,
+            )
+        })
+        return context
+
+    @property
+    def total_records(self):
+        return get_repeat_record_count(self.domain, self.repeater_id, self.state)
+
+    @property
+    def shared_pagination_GET_params(self):
+        return [
+            {'name': 'repeater', 'value': self.request.GET.get('repeater')},
+            {'name': 'record_state', 'value': self.request.GET.get('record_state')},
+        ]
+
+    def _format_date(self, date):
+        tz_utc_aware_date = pytz.utc.localize(date)
+        return tz_utc_aware_date.astimezone(self.timezone).strftime('%b %d, %Y %H:%M %Z')
+
+    @property
+    def rows(self):
+        self.repeater_id = self.request.GET.get('repeater', None)
+        self.state = self.request.GET.get('record_state', None)
+        records = get_paged_repeat_records(
+            self.domain,
+            self.pagination.start,
+            self.pagination.count,
+            repeater_id=self.repeater_id,
+            state=self.state
+        )
+        return map(
+            lambda record: [
+                self._make_state_label(record),
+                record.url if record.url else _(u'Unable to generate url for record'),
+                self._format_date(record.last_checked) if record.last_checked else None,
+                self._format_date(record.next_check) if record.next_check else None,
+                record.failure_reason if not record.succeeded else None,
+                self._make_view_payload_button(record.get_id),
+                self._make_resend_payload_button(record.get_id),
+            ],
+            records
+        )
+
+    @property
+    def headers(self):
+        return DataTablesHeader(
+            DataTablesColumn(_('Status')),
+            DataTablesColumn(_('URL')),
+            DataTablesColumn(_('Last sent date')),
+            DataTablesColumn(_('Retry Date')),
+            DataTablesColumn(_('Failure Reason')),
+            DataTablesColumn(_('View payload')),
+            DataTablesColumn(_('Resend')),
+        )
 
 
 class DomainForwardingOptionsView(BaseAdminProjectSettingsView, RepeaterMixin):
@@ -2517,6 +2652,7 @@ class FeaturePreviewsView(BaseAdminProjectSettingsView):
 
     def update_feature(self, feature, current_state, new_state):
         if current_state != new_state:
+            toggle_js_domain_cachebuster.clear(self.domain)
             feature.set(self.domain, new_state, NAMESPACE_DOMAIN)
             if feature.save_fn is not None:
                 feature.save_fn(self.domain, new_state)
@@ -2696,6 +2832,11 @@ class PublicSMSRatesView(BasePageView, AsyncHandlerMixin):
     page_title = ugettext_lazy("SMS Rate Calculator")
     template_name = 'domain/admin/global_sms_rates.html'
     async_handlers = [PublicSMSRatesAsyncHandler]
+
+    @use_bootstrap3
+    @use_select2
+    def dispatch(self, request, *args, **kwargs):
+        return super(PublicSMSRatesView, self).dispatch(request, *args, **kwargs)
 
     @property
     def page_url(self):

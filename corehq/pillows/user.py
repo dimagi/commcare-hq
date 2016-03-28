@@ -21,8 +21,6 @@ class UserPillow(AliasedElasticPillow):
     document_class = CommCareUser   # while this index includes all users,
                                     # I assume we don't care about querying on properties specific to WebUsers
     couch_filter = "users/all_users"
-    es_host = settings.ELASTICSEARCH_HOST
-    es_port = settings.ELASTICSEARCH_PORT
     es_timeout = 60
     es_alias = "hqusers"
     es_type = "user"
@@ -46,25 +44,6 @@ class UserPillow(AliasedElasticPillow):
     def get_unique_id(self):
         return USER_INDEX
 
-    def change_transform(self, doc_dict):
-        super(UserPillow, self).change_transform(doc_dict)
-        doc_dict = self._cast_user_data_to_string(doc_dict)
-        return doc_dict
-
-    def _cast_user_data_to_string(self, doc_dict):
-        """
-        Make all user_data strings
-        ES doesn't allow dynamic dicts with the same key name to have different types, so coerce everything
-        """
-        user_data = doc_dict.get('user_data', {})
-        if user_data and type(user_data) is dict:
-            for k, v in user_data.iteritems():
-                try:
-                    doc_dict['user_data'][k] = unicode(v)
-                except UnicodeDecodeError:
-                    doc_dict['user_data'][k] = v  # If we can't decode it, let elastic deal with it
-        return doc_dict
-
 
 class GroupToUserPillow(PythonPillow):
     document_class = CommCareUser
@@ -79,16 +58,25 @@ class GroupToUserPillow(PythonPillow):
         return change.document.get('doc_type', None) in ('Group', 'Group-Deleted')
 
     def change_transport(self, doc_dict):
-        user_ids = doc_dict.get("users", [])
-        q = {"filter": {"and": [{"terms": {"_id": user_ids}}]}}
-        for user_source in stream_es_query(es_index='users', q=q, fields=["__group_ids", "__group_names"]):
-            group_ids = set(user_source.get('fields', {}).get("__group_ids", []))
-            group_names = set(user_source.get('fields', {}).get("__group_names", []))
-            if doc_dict["name"] not in group_names or doc_dict["_id"] not in group_ids:
-                group_ids.add(doc_dict["_id"])
-                group_names.add(doc_dict["name"])
-                doc = {"__group_ids": list(group_ids), "__group_names": list(group_names)}
-                self.es.update(USER_INDEX, self.es_type, user_source["_id"], body={"doc": doc})
+        update_es_user_with_groups(doc_dict, self.es)
+
+
+def update_es_user_with_groups(group_doc, es_client=None):
+    if not es_client:
+        es_client = get_es_new()
+
+    user_ids = group_doc.get("users", [])
+    q = {"filter": {"and": [{"terms": {"_id": user_ids}}]}}
+    for user_source in stream_es_query(es_index='users', q=q, fields=["__group_ids", "__group_names"]):
+        group_ids = user_source.get('fields', {}).get("__group_ids", [])
+        group_ids = set(group_ids) if isinstance(group_ids, list) else {group_ids}
+        group_names = user_source.get('fields', {}).get("__group_names", [])
+        group_names = set(group_names) if isinstance(group_names, list) else {group_names}
+        if group_doc["name"] not in group_names or group_doc["_id"] not in group_ids:
+            group_ids.add(group_doc["_id"])
+            group_names.add(group_doc["name"])
+            doc = {"__group_ids": list(group_ids), "__group_names": list(group_names)}
+            es_client.update(USER_INDEX, ES_META['users'].type, user_source["_id"], body={"doc": doc})
 
 
 class UnknownUsersPillow(PythonPillow):
@@ -150,6 +138,6 @@ class UnknownUsersPillow(PythonPillow):
 
 def add_demo_user_to_user_index():
     send_to_elasticsearch(
-        USER_INDEX,
+        'users',
         {"_id": "demo_user", "username": "demo_user", "doc_type": "DemoUser"}
     )

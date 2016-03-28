@@ -5,15 +5,24 @@ from corehq.apps.app_manager.const import APP_V2, AMPLIFIES_YES
 from corehq.apps.app_manager.models import Application
 from corehq.apps.data_analytics.malt_generator import MALTTableGenerator
 from corehq.apps.data_analytics.models import MALTRow
+from corehq.apps.data_analytics.tests.utils import save_to_es_analytics_db
 from corehq.apps.domain.models import Domain
 from corehq.apps.users.models import CommCareUser
 from corehq.apps.smsforms.app import COMMCONNECT_DEVICE_ID
-from corehq.apps.sofabed.models import FormData, MISSING_APP_ID
+from corehq.apps.sofabed.models import MISSING_APP_ID
+from corehq.pillows.xform import XFormPillow
+from corehq.util.elastic import ensure_index_deleted
 
 from dimagi.utils.dates import DateSpan
+from pillowtop.es_utils import completely_initialize_pillow_index
 
 
 class MaltGeneratorTest(TestCase):
+    dependent_apps = [
+        'corehq.apps.tzmigration', 'django_digest', 'auditcare', 'corehq.apps.users',
+        'corehq.couchapps', 'corehq.apps.domain',
+        'corehq.apps.app_manager',
+    ]
 
     DOMAIN_NAME = "test"
     USERNAME = "malt-user"
@@ -26,15 +35,22 @@ class MaltGeneratorTest(TestCase):
 
     @classmethod
     def setUpClass(cls):
+        cls.pillow = pillow = XFormPillow()
+        ensure_index_deleted(pillow.es_index)
+        completely_initialize_pillow_index(pillow)
         cls._setup_domain_user()
         cls._setup_apps()
-        cls._setup_sofabed_forms()
+        cls._setup_forms()
+        pillow.get_es_new().indices.refresh(pillow.es_index)
         cls.run_malt_generation()
+
+    def setUp(self):
+        ensure_index_deleted(self.pillow.es_index)
+        completely_initialize_pillow_index(self.pillow)
 
     @classmethod
     def tearDownClass(cls):
         cls.domain.delete()
-        FormData.objects.all().delete()
         MALTRow.objects.all().delete()
 
     @classmethod
@@ -47,86 +63,89 @@ class MaltGeneratorTest(TestCase):
 
     @classmethod
     def _setup_apps(cls):
-        cls.app = Application.new_app(cls.DOMAIN_NAME, "app 1", APP_V2)
+        cls.non_wam_app = Application.new_app(cls.DOMAIN_NAME, "app 1", APP_V2)
         cls.wam_app = Application.new_app(cls.DOMAIN_NAME, "app 2", APP_V2)
         cls.wam_app.amplifies_workers = AMPLIFIES_YES
-        cls.app.save()
+        cls.non_wam_app.save()
         cls.wam_app.save()
-        cls.app_id = cls.app._id
+        cls.non_wam_app_id = cls.non_wam_app._id
         cls.wam_app_id = cls.wam_app._id
 
     @classmethod
-    def _setup_sofabed_forms(cls):
-        form_data_rows = []
-        common_args = {  # values don't matter
-            'time_start': cls.correct_date,
-            'time_end': cls.correct_date,
-            'duration': 10,
-        }
-
-        def _form_data(instance_id,
-                       app_id,
-                       received_on=cls.correct_date,
-                       device_id=cls.DEVICE_ID):
-            return FormData(
+    def _setup_forms(cls):
+        def _save_form_data(app_id, received_on=cls.correct_date, device_id=cls.DEVICE_ID):
+            save_to_es_analytics_db(
                 domain=cls.DOMAIN_NAME,
                 received_on=received_on,
-                instance_id=instance_id,
                 device_id=device_id,
                 user_id=cls.user_id,
                 app_id=app_id,
-                **common_args
             )
 
-        def _append_forms(forms, received_on):
-            for form in forms:
-                instance_id, app_id = form
-                form_data_rows.append(
-                    _form_data(instance_id, app_id, received_on=received_on)
-                )
+        def _save_multiple_forms(app_ids, received_on):
+            for app_id in app_ids:
+                _save_form_data(app_id, received_on=received_on)
 
-        out_of_range_forms = [
-            ("out_of_range_1", cls.app_id),
-            ("out_of_range_2", cls.wam_app_id),
+        out_of_range_form_apps = [
+            cls.non_wam_app_id,
+            cls.wam_app_id,
         ]
-        in_range_forms = [
+        in_range_form_apps = [
             # should be included in MALT
-            ('app_form1', cls.app_id),
-            ('app_form2', cls.app_id),
-            ('app_form3', cls.app_id),
-            ('wam_app_form1', cls.wam_app_id),
-            ('wam_app_form2', cls.wam_app_id),
-            ('missing_app_form', MISSING_APP_ID),
+            cls.non_wam_app_id,
+            cls.non_wam_app_id,
+            cls.non_wam_app_id,
+            cls.wam_app_id,
+            cls.wam_app_id,
+            # should be included in MALT
+            '',
         ]
 
-        _append_forms(out_of_range_forms, cls.out_of_range_date)
-        _append_forms(in_range_forms, cls.correct_date)
+        _save_multiple_forms(out_of_range_form_apps, cls.out_of_range_date)
+        _save_multiple_forms(in_range_form_apps, cls.correct_date)
 
-        sms_form = _form_data('sms_form', cls.app_id, device_id=COMMCONNECT_DEVICE_ID)
-        form_data_rows.append(sms_form)
+        # should be included in MALT
+        _save_form_data(cls.non_wam_app_id, device_id=COMMCONNECT_DEVICE_ID)
 
-        FormData.objects.bulk_create(form_data_rows)
 
     @classmethod
     def run_malt_generation(cls):
         generator = MALTTableGenerator([cls.malt_month])
         generator.build_table()
 
-    def _check_malt_rows(self, app_id, num_forms=None, wam_value=None, malt_row_count=1):
-        app_rows = MALTRow.objects.filter(
-            username=self.USERNAME,
-            app_id=app_id,
-        )
-        self.assertEqual(app_rows.count(), malt_row_count)  # 1 row per app
-        row = app_rows.all()[0]
-        self.assertEqual(int(row.num_of_forms), num_forms)
-        self.assertEqual(row.wam, wam_value)
+    def _assert_malt_row_exists(self, query_filters):
+        rows = MALTRow.objects.filter(username=self.USERNAME, **query_filters)
+        self.assertEqual(rows.count(), 1)
 
-    def test_two_wam_yes_apps(self):
-        self._check_malt_rows(self.wam_app_id, 2, MALTRow.YES)
+    def test_wam_yes_malt_counts(self):
+        # 2 forms for WAM.YES app
+        self._assert_malt_row_exists({
+            'app_id': self.wam_app_id,
+            'num_of_forms': 2,
+            'wam': MALTRow.YES,
+        })
 
-    def test_three_wam_not_set_apps(self):
-        self._check_malt_rows(self.app_id, 3, MALTRow.NOT_SET)
+    def test_wam_not_set_malt_counts(self):
+        # 3 forms from self.DEVICE_ID for WAM not-set app
+        self._assert_malt_row_exists({
+            'app_id': self.non_wam_app_id,
+            'num_of_forms': 3,
+            'wam': MALTRow.NOT_SET,
+            'device_id': self.DEVICE_ID,
+        })
+
+        # 1 form from COMMONCONNECT_DEVICE_ID for WAM not-set app
+        self._assert_malt_row_exists({
+            'app_id': self.non_wam_app_id,
+            'num_of_forms': 1,
+            'wam': MALTRow.NOT_SET,
+            'device_id': COMMCONNECT_DEVICE_ID,
+        })
 
     def test_missing_app_id_is_included(self):
-        self._check_malt_rows(MISSING_APP_ID, 1, MALTRow.NOT_SET)
+        # apps with MISSING_APP_ID should be included in MALT
+        self._assert_malt_row_exists({
+            'app_id': MISSING_APP_ID,
+            'num_of_forms': 1,
+            'wam': MALTRow.NOT_SET,
+        })

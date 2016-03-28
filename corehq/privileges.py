@@ -8,7 +8,6 @@ CLOUDCARE = 'cloudcare'
 ACTIVE_DATA_MANAGEMENT = 'active_data_management'
 CUSTOM_BRANDING = 'custom_branding'
 
-CROSS_PROJECT_REPORTS = 'cross_project_reports'
 CUSTOM_REPORTS = 'custom_reports'
 REPORT_BUILDER = 'user_configurable_report_builder'
 
@@ -38,13 +37,14 @@ DATA_CLEANUP = 'data_cleanup'  # bulk archive cases, edit submissions, auto upda
 TEMPLATED_INTENTS = 'templated_intents'
 CUSTOM_INTENTS = 'custom_intents'
 
+ADVANCED_DOMAIN_SECURITY = 'advanced_domain_security'
+
 MAX_PRIVILEGES = [
     LOOKUP_TABLES,
     API_ACCESS,
     CLOUDCARE,
     ACTIVE_DATA_MANAGEMENT,
     CUSTOM_BRANDING,
-    CROSS_PROJECT_REPORTS,
     CUSTOM_REPORTS,
     ROLE_BASED_ACCESS,
     OUTBOUND_SMS,
@@ -83,7 +83,6 @@ class Titles(object):
             CLOUDCARE: _("Web-Based Apps (CloudCare)"),
             ACTIVE_DATA_MANAGEMENT: _("Active Data Management"),
             CUSTOM_BRANDING: _("Custom Branding"),
-            CROSS_PROJECT_REPORTS: _("Cross-Project Reports"),
             ROLE_BASED_ACCESS: _("Advanced Role-Based Access"),
             OUTBOUND_SMS: _("Outgoing Messaging"),
             INBOUND_SMS: _("Incoming Messaging"),
@@ -100,4 +99,5 @@ class Titles(object):
             TEMPLATED_INTENTS: _('Built-in Integration'),
             CUSTOM_INTENTS: _('External Integration Framework'),
             DATA_CLEANUP: _('Data Management'),
+            ADVANCED_DOMAIN_SECURITY: _('Domain Level Security Features')
         }.get(privilege, privilege)

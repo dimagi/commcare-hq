@@ -1,0 +1,31 @@
+FROM dimagi/commcarehq_base:latest
+
+RUN mkdir requirements
+COPY scripts/uninstall-requirements.sh requirements/uninstall-requirements.sh
+COPY requirements/uninstall-requirements.txt requirements/uninstall-requirements.txt
+
+RUN requirements/uninstall-requirements.sh
+
+COPY requirements/requirements.txt requirements/requirements.txt
+COPY requirements/dev-requirements.txt requirements/dev-requirements.txt
+COPY requirements/test-requirements.txt requirements/test-requirements.txt
+
+RUN pip install \
+    -r requirements/requirements.txt \
+    -r requirements/dev-requirements.txt \
+    coveralls \
+
+    --user \
+    && rm -rf /root/.cache/pip
+
+WORKDIR /mnt
+
+RUN mkdir /moto-s3
+RUN cd /moto-s3 && virtualenv env
+RUN cd /moto-s3 && git clone https://github.com/spulec/moto.git
+RUN cd /moto-s3 && env/bin/pip install -e ./moto
+
+ADD docker/entrypoint.sh /mnt/docker/entrypoint.sh
+
+ENTRYPOINT ["/mnt/docker/entrypoint.sh"]
+CMD ["help"]

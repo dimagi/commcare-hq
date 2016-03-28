@@ -1,0 +1,176 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<h:html xmlns:h="http://www.w3.org/1999/xhtml" xmlns:orx="http://openrosa.org/jr/xforms" xmlns="http://www.w3.org/2002/xforms" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:jr="http://openrosa.org/javarosa" xmlns:vellum="http://commcarehq.org/xforms/vellum">
+	<h:head>
+		<h:title>Untitled Form</h:title>
+		<model>
+			<instance>
+				<custom_instance xmlns:jrm="http://dev.commcarehq.org/jr/xforms" xmlns="http://openrosa.org/formdesigner/284D3F7C-9C10-48E6-97AC-C37927CBA89A" uiVersion="1" version="1" name="Untitled Form">
+					<question1 />
+					<question2 />
+					<multi_root />
+					<new_multi />
+					<group1>
+						<multi_level1 />
+						<question6>
+							<multi_level_2 />
+						</question6>
+					</group1>
+					<repeat_1 jr:template="">
+						<multi_level_1_repeat />
+					</repeat_1>
+				</custom_instance>
+			</instance>
+			<bind nodeset="/custom_instance/question1" type="xsd:string" />
+			<bind nodeset="/custom_instance/question2" />
+			<bind nodeset="/custom_instance/multi_root" />
+			<bind nodeset="/custom_instance/new_multi" />
+			<bind nodeset="/custom_instance/group1" />
+			<bind nodeset="/custom_instance/group1/multi_level1" />
+			<bind nodeset="/custom_instance/group1/question6" />
+			<bind nodeset="/custom_instance/group1/question6/multi_level_2" />
+			<bind nodeset="/custom_instance/repeat_1" />
+			<bind nodeset="/custom_instance/repeat_1/multi_level_1_repeat" />
+			<itext>
+				<translation lang="en" default="">
+					<text id="question1-label">
+						<value>question1</value>
+					</text>
+					<text id="question2-label">
+						<value>question2</value>
+					</text>
+					<text id="question2-item1-label">
+						<value>item1</value>
+					</text>
+					<text id="question2-item2-label">
+						<value>item2</value>
+					</text>
+					<text id="multi_root-label">
+						<value>Multi in root</value>
+					</text>
+					<text id="new_multi-item1-label">
+						<value>new item1</value>
+					</text>
+					<text id="new_multi-item2-label">
+						<value>new item2</value>
+					</text>
+					<text id="group1-label">
+						<value>Group 1</value>
+					</text>
+					<text id="group1/multi_level1-label">
+						<value>Multi level 1</value>
+					</text>
+					<text id="group1/multi_level1-item1-label">
+						<value>item1</value>
+					</text>
+					<text id="group1/multi_level1-item2-label">
+						<value>item2</value>
+					</text>
+					<text id="group1/multi_level1-1_item-label">
+						<value>item3</value>
+					</text>
+					<text id="group1/question6-label">
+						<value>question6</value>
+					</text>
+					<text id="group1/question6/multi_level_2-label">
+						<value>Multi level 2</value>
+					</text>
+					<text id="group1/question6/multi_level_2-item1-label">
+						<value>item1</value>
+					</text>
+					<text id="group1/question6/multi_level_2-item2-label">
+						<value>item2</value>
+					</text>
+					<text id="repeat_1-label">
+						<value>Repeat 1</value>
+					</text>
+					<text id="repeat_1/multi_level_1_repeat-label">
+						<value>Multi level 1 repeat</value>
+					</text>
+					<text id="repeat_1/multi_level_1_repeat-item1-label">
+						<value>item1</value>
+					</text>
+					<text id="repeat_1/multi_level_1_repeat-item2-label">
+						<value>item2</value>
+					</text>
+				</translation>
+			</itext>
+		</model>
+	</h:head>
+	<h:body>
+		<input ref="/custom_instance/question1">
+			<label ref="jr:itext('question1-label')" />
+		</input>
+		<select1 ref="/custom_instance/question2">
+			<label ref="jr:itext('question2-label')" />
+			<item>
+				<label ref="jr:itext('question2-item1-label')" />
+				<value>item1</value>
+			</item>
+			<item>
+				<label ref="jr:itext('question2-item2-label')" />
+				<value>item2</value>
+			</item>
+		</select1>
+		<input ref="/custom_instance/multi_root">
+			<label ref="jr:itext('multi_root')" />
+		</input>
+		<select ref="/custom_instance/new_multi">
+			<item>
+				<label ref="jr:itext('new_multi-item1-label')" />
+				<value>z_first</value>
+			</item>
+			<item>
+				<label ref="jr:itext('new_multi-item2-label')" />
+				<value>a_last</value>
+			</item>
+		</select>
+		<group ref="/custom_instance/group1">
+			<label ref="jr:itext('group1-label')" />
+			<select ref="/custom_instance/group1/multi_level1">
+				<label ref="jr:itext('group1/multi_level1-label')" />
+				<item>
+					<label ref="jr:itext('group1/multi_level1-item1-label')" />
+					<value>item1</value>
+				</item>
+				<item>
+					<label ref="jr:itext('group1/multi_level1-item2-label')" />
+					<value>item2</value>
+				</item>
+				<item>
+					<label ref="jr:itext('group1/multi_level1-1_item-label')" />
+					<value>1_item</value>
+				</item>
+			</select>
+			<group ref="/custom_instance/group1/question6">
+				<label ref="jr:itext('group1/question6-label')" />
+				<select ref="/custom_instance/group1/question6/multi_level_2">
+					<label ref="jr:itext('group1/question6/multi_level_2-label')" />
+					<item>
+						<label ref="jr:itext('group1/question6/multi_level_2-item1-label')" />
+						<value>item1</value>
+					</item>
+					<item>
+						<label ref="jr:itext('group1/question6/multi_level_2-item2-label')" />
+						<value>item2</value>
+					</item>
+				</select>
+			</group>
+		</group>
+		<group>
+			<label ref="jr:itext('repeat_1-label')" />
+			<repeat nodeset="/custom_instance/repeat_1">
+				<select ref="/custom_instance/repeat_1/multi_level_1_repeat">
+					<label ref="jr:itext('repeat_1/multi_level_1_repeat-label')" />
+					<item>
+						<label ref="jr:itext('repeat_1/multi_level_1_repeat-item1-label')" />
+						<value>item1</value>
+					</item>
+					<item>
+						<label ref="jr:itext('repeat_1/multi_level_1_repeat-item2-label')" />
+						<value>item2</value>
+					</item>
+				</select>
+			</repeat>
+		</group>
+	</h:body>
+</h:html>

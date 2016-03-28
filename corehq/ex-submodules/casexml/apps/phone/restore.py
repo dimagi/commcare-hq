@@ -300,10 +300,11 @@ class RestoreState(object):
     restore_class = FileRestoreResponse
 
     def __init__(self, project, user, params):
+        if not project or not project.name:
+            raise Exception('you are not allowed to make a RestoreState without a domain!')
+
         self.project = project
-        self.domain = project.name if project else ''
-        _assert = soft_assert(to=['czue' + '@' + 'dimagi.com'], fail_if_debug=True)
-        _assert(self.domain, 'Restore for {} missing a domain!'.format(user.username))
+        self.domain = project.name
 
         self.user = user
         self.params = params
@@ -326,23 +327,11 @@ class RestoreState(object):
                     self.last_sync_log.error_hash = str(parsed_hash)
                     self.last_sync_log.save()
 
-                    exception = BadStateException(
+                    raise BadStateException(
                         server_hash=computed_hash,
                         phone_hash=parsed_hash,
                         case_ids=self.last_sync_log.get_footprint_of_cases_on_phone()
                     )
-                    if self.last_sync_log.log_format == LOG_FORMAT_SIMPLIFIED:
-                        from corehq.apps.reports.standard.deployments import SyncHistoryReport
-                        last_bugfix_date = datetime(2015, 10, 20)
-                        _assert = soft_assert(to=['czue' + '@' + 'dimagi.com'])
-                        sync_history_url = '{}?individual={}'.format(
-                            SyncHistoryReport.get_url(self.domain),
-                            self.user.user_id
-                        )
-                        _assert(self.last_sync_log.date < last_bugfix_date, '{}, sync history report: {}'.format(
-                            exception, sync_history_url
-                        ))
-                    raise exception
 
     @property
     @memoized
