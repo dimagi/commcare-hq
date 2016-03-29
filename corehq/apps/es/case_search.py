@@ -7,7 +7,7 @@ CaseSearchES
 from corehq.apps.es import case_search as case_search_es
 
     q = (case_search_es.CaseSearchES()
-         .domain('testproject')
+         .domain('testproject'))
 """
 from . import filters, queries
 
