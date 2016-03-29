@@ -9,7 +9,6 @@ import mock
 from django.conf import settings
 from django.core.management import call_command
 
-from dimagi.utils.dates import add_months
 from dimagi.utils.data import generator as data_gen
 
 from corehq.apps.accounting.models import (
@@ -153,20 +152,6 @@ def arbitrary_domain():
     )
     domain.save()
     return domain
-
-
-def arbitrary_domains_by_product_type():
-    domains = {}
-    for product_type, _ in SoftwareProductType.CHOICES:
-        domain = arbitrary_domain()
-        if product_type == SoftwareProductType.COMMTRACK:
-            domain.commtrack_enabled = True
-            domain.save()
-        if product_type == SoftwareProductType.COMMCONNECT:
-            domain.commconnect_enabled = True
-            domain.save()
-        domains[product_type] = domain
-    return domains
 
 
 def arbitrary_commcare_user(domain, is_active=True):
