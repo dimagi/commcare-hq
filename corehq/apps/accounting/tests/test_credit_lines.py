@@ -5,6 +5,8 @@ import datetime
 
 from dateutil.relativedelta import relativedelta
 
+from django.core.exceptions import ValidationError
+
 from dimagi.utils.dates import add_months_to_date
 
 from corehq.apps.accounting import tasks, utils
@@ -274,6 +276,12 @@ class TestCreditLines(BaseInvoiceTestCase):
         self.assertEqual(CreditAdjustment.objects.filter(credit_line=account_credit).count(), 2)
         current_account_credit = CreditLine.objects.get(id=account_credit.id)
         self.assertEqual(current_account_credit.balance, self.product_rate.monthly_fee + self.monthly_user_fee)
+
+    def test_nonnegative_balance(self):
+        with self.assertRaises(ValidationError):
+            CreditLine.add_credit(-1, account=self.account)
+        with self.assertRaises(ValidationError):
+            CreditLine.add_credit(-1, subscription=self.subscription)
 
 
 class TestCreditTransfers(BaseAccountingTest):
