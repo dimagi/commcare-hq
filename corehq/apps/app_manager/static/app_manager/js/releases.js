@@ -83,8 +83,8 @@ hqDefine('app_manager/js/releases.js', function () {
             if (short_odk_url) {
                 self.app_code(self.parse_bitly_url(short_odk_url));
             }
-            ga_track_event('App Manager', 'Initiate Install', 'Get App Code')
-            analytics.workflow('Initiate Installation Method')
+            ga_track_event('App Manager', 'Initiate Install', 'Get App Code');
+            analytics.workflow('Initiate Installation Method');
         };
 
         self.allow_media_install = ko.computed(function(){
