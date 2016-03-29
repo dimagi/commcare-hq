@@ -23,6 +23,7 @@ testapps.test_pillowtop:
   - corehq.sql_proxy_accessors
   - couchforms
   - pillowtop
+  - corehq.apps.case_search
 casexml.apps.phone:
   - auditcare
   - django_digest

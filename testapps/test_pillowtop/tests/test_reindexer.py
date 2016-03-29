@@ -6,7 +6,7 @@ from django.test import TestCase
 from elasticsearch.exceptions import ConnectionError
 from mock import MagicMock, patch
 
-from corehq.apps.es import CaseSearchES, ESQuery, FormES, UserES
+from corehq.apps.es import CaseSearchES, ESQuery, FormES, UserES, CaseES
 from corehq.apps.users.dbaccessors.all_commcare_users import delete_all_users
 from corehq.apps.users.models import CommCareUser
 from corehq.form_processor.interfaces.processor import FormProcessorInterface
@@ -34,6 +34,11 @@ class PillowtopReindexerTest(TestCase):
     def setUpClass(cls):
         with trap_extra_setup(ConnectionError):
             CasePillow()  # verify connection to elasticsearch
+
+    @classmethod
+    def tearDownClass(cls):
+        for index in [CASE_SEARCH_INDEX, USER_INDEX, CASE_INDEX, XFORM_INDEX]:
+            ensure_index_deleted(index)
 
     def test_user_reindexer(self):
         delete_all_users()
@@ -65,6 +70,28 @@ class PillowtopReindexerTest(TestCase):
         CasePillow().get_es_new().indices.refresh(CASE_INDEX)  # as well as refresh the index
 
         self._assert_case_is_in_es(case)
+
+    def test_case_search_reindexer(self):
+        # TODO: make this work with SQL backend
+        FormProcessorTestUtils.delete_all_cases()
+        case = _create_and_save_a_case()
+
+        ensure_index_deleted(CASE_SEARCH_INDEX)
+
+        # With case search not enabled, case should not make it to ES
+        with patch('corehq.pillows.case_search.case_search_enabled_for_domain',
+                   new=MagicMock(return_value=False)):
+            call_command('ptop_reindexer_v2', 'case-search')
+        CaseSearchPillow().get_es_new().indices.refresh(CASE_SEARCH_INDEX)  # as well as refresh the index
+        self._assert_es_empty(esquery=CaseSearchES())
+
+        # With case search enabled, it should get indexed
+        with patch('corehq.pillows.case_search.case_search_enabled_for_domain',
+                   new=MagicMock(return_value=True)):
+            call_command('ptop_reindexer_v2', 'case-search')
+
+        CaseSearchPillow().get_es_new().indices.refresh(CASE_SEARCH_INDEX)  # as well as refresh the index
+        self._assert_case_is_in_es(case, esquery=CaseSearchES())
 
     def test_xform_reindexer(self):
         FormProcessorTestUtils.delete_all_xforms()
@@ -111,8 +138,12 @@ class PillowtopReindexerTest(TestCase):
         form.delete()
         delete_es_index(USER_INDEX)
 
-    def _assert_case_is_in_es(self, case):
-        results = CaseES().run()
+    def _assert_es_empty(self, esquery=CaseES()):
+        results = esquery.run()
+        self.assertEqual(0, results.total)
+
+    def _assert_case_is_in_es(self, case, esquery=CaseES()):
+        results = esquery.run()
         self.assertEqual(1, results.total)
         case_doc = results.hits[0]
         self.assertEqual(case.case_id, case_doc['_id'])
@@ -127,6 +158,10 @@ class PillowtopReindexerTest(TestCase):
         self.assertEqual(self.domain, form_doc['domain'])
         self.assertEqual(form.xmlns, form_doc['xmlns'])
         self.assertEqual('XFormInstance', form_doc['doc_type'])
+
+    def _assert_index_empty(self, esquery=CaseES()):
+        results = esquery.run()
+        self.assertEqual(0, results.total)
 
 
 def _create_and_save_a_form():
