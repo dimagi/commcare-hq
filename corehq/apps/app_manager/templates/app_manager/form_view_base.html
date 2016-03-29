@@ -105,7 +105,7 @@
             var allOtherFormsRequireACase = {{ form.all_other_forms_require_a_case|BOOL }};
             var formFilterReferencesCase = {{ form_filter_references_case|BOOL }};
             var formFilterAllowed = ko.computed(function () {
-                if (!putInRoot) {
+                if(putInRoot) {
                     return false;
                 }
 
