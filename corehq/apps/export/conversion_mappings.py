@@ -80,3 +80,7 @@ PARENT_CASE_PROPERTY_MAPPING = {
     ('relationship', None): ([PathNode(name='indices', is_repeat=True), PathNode(name='relationship')], None),
     ('doc_type', None): ([PathNode(name='indices', is_repeat=True), PathNode(name='doc_type')], None),
 }
+
+REPEAT_GROUP_PROPERTY_MAPPING = {
+    ('id', None): ([PathNode(name='number')], None),
+}

@@ -235,6 +235,12 @@ class TestConvertSavedExportSchemaToFormExportInstance(TestCase, TestFileMixin):
         self.assertEqual(column.label, 'Question Two')
         self.assertEqual(column.selected, True)
 
+        column = table.get_column(
+            [PathNode(name='number')],
+            []
+        )
+        self.assertEqual(column.selected, True)
+
     def test_nested_repeat_conversion(self):
         saved_export_schema = SavedExportSchema.wrap(self.get_json('repeat_nested'))
         with mock.patch(

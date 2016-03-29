@@ -149,13 +149,16 @@ def _get_system_property(index, transform, export_type, table_path):
         FORM_PROPERTY_MAPPING,
         CASE_PROPERTY_MAPPING,
         CASE_HISTORY_PROPERTY_MAPPING,
-        PARENT_CASE_PROPERTY_MAPPING
+        PARENT_CASE_PROPERTY_MAPPING,
+        REPEAT_GROUP_PROPERTY_MAPPING,
     )
 
     system_property = None
     if export_type == FORM_EXPORT:
         if table_path == MAIN_TABLE:
             system_property = FORM_PROPERTY_MAPPING.get((index, transform))
+        elif table_path[-1].is_repeat:
+            system_property = REPEAT_GROUP_PROPERTY_MAPPING.get((index, transform))
     elif export_type == CASE_EXPORT:
         if table_path == MAIN_TABLE:
             system_property = CASE_PROPERTY_MAPPING.get((index, transform))
