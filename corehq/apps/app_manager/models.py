@@ -3499,7 +3499,7 @@ class AncestorLocationTypeFilter(ReportAppFilter):
         try:
             ancestor = user.sql_location.get_ancestors(include_self=True).\
                 get(location_type__name=self.ancestor_location_type_name)
-        except AttributeError, SQLLocation.DoesNotExist:
+        except (AttributeError, SQLLocation.DoesNotExist):
             # user.sql_location is None, or location does not have an ancestor of that type
             return None
         return ancestor.location_id
