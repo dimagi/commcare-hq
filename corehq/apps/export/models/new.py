@@ -92,11 +92,9 @@ class ExportItem(DocumentSchema):
             return super(ExportItem, cls).wrap(data)
 
     @classmethod
-    def create_from_question(cls, question, app_id, app_version):
+    def create_from_question(cls, question, app_id, app_version, repeats):
         return cls(
-            # TODO: It doesn't actually matter what the repeats are, but for
-            # correctness we should probably pass them in
-            path=_question_path_to_path_nodes(question['value'], []),
+            path=_question_path_to_path_nodes(question['value'], repeats),
             label=question['label'],
             last_occurrences={app_id: app_version},
         )
@@ -682,8 +680,8 @@ class MultipleChoiceItem(ExportItem):
     options = SchemaListProperty(Option)
 
     @classmethod
-    def create_from_question(cls, question, app_id, app_version):
-        item = super(MultipleChoiceItem, cls).create_from_question(question, app_id, app_version)
+    def create_from_question(cls, question, app_id, app_version, repeats):
+        item = super(MultipleChoiceItem, cls).create_from_question(question, app_id, app_version, repeats)
 
         for option in question['options']:
             item.options.append(Option(
@@ -878,6 +876,7 @@ class FormExportDataSchema(ExportDataSchema):
                     question,
                     app_id,
                     app_version,
+                    repeats,
                 )
                 group_schema.items.append(item)
 
