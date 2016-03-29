@@ -4,6 +4,7 @@ from contextlib import contextmanager
 from django.test import SimpleTestCase, TestCase
 from mock import Mock, patch
 from corehq.apps.app_manager.models import (
+    AncestorLocationTypeFilter,
     CustomMonthFilter,
     _filter_by_case_sharing_group_id,
     _filter_by_location_id,
@@ -277,3 +278,9 @@ class AutoFilterTests(TestCase):
     def test_filter_by_user_id(self):
         result = _filter_by_user_id(self.sheel, None)
         self.assertEqual(result, Choice(value=self.sheel._id, display=None))
+
+    # AncestorLocationTypeFilter is not an AutoFilter, but we'll hitch a ride here to reuse setup and teardown
+    def test_ancestor_location_type_filter(self):
+        filt = AncestorLocationTypeFilter(ancestor_location_type_name='state')
+        nate_state = filt.get_filter_value(self.nate, None)
+        self.assertEqual(nate_state, self.massachusetts.location_id)
