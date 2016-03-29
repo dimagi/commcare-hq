@@ -333,6 +333,9 @@ corehq.apps.accounting:
   - auditcare
   - django_digest
   - django.contrib.admin
+  - django_otp.plugins.otp_static
+  - django_otp.plugins.otp_totp
+  - two_factor
   - tastypie
   - corehq.apps.dropbox
   - corehq.apps.tour
