@@ -70,6 +70,7 @@ class TestConvertSavedExportSchemaToCaseExportInstance(TestCase, TestFileMixin):
 
         table = instance.get_table(MAIN_TABLE)
         self.assertEqual(table.label, 'Cases')
+        self.assertTrue(table.selected)
 
         column = table.get_column([PathNode(name='DOB')], [])
         self.assertEqual(column.label, 'DOB Saved')
@@ -84,6 +85,7 @@ class TestConvertSavedExportSchemaToCaseExportInstance(TestCase, TestFileMixin):
 
         table = instance.get_table(PARENT_CASE_TABLE)
         self.assertEqual(table.label, 'Parent Cases')
+        self.assertTrue(table.selected)
 
         expected_paths = [
             ([PathNode(name='indices', is_repeat=True), PathNode(name='referenced_id')], True),
@@ -218,6 +220,7 @@ class TestConvertSavedExportSchemaToFormExportInstance(TestCase, TestFileMixin):
         self.assertEqual(instance.name, 'Repeat Tester')
         table = instance.get_table([PathNode(name='form'), PathNode(name='repeat', is_repeat=True)])
         self.assertEqual(table.label, 'Repeat: question1')
+        self.assertTrue(table.selected)
 
         column = table.get_column(
             [PathNode(name='form'),
@@ -239,6 +242,7 @@ class TestConvertSavedExportSchemaToFormExportInstance(TestCase, TestFileMixin):
 
         # Check for first repeat table
         table = instance.get_table([PathNode(name='form'), PathNode(name='repeat', is_repeat=True)])
+        self.assertTrue(table.selected)
         self.assertEqual(table.label, 'Repeat: One')
 
         column = table.get_column(
@@ -257,6 +261,7 @@ class TestConvertSavedExportSchemaToFormExportInstance(TestCase, TestFileMixin):
             PathNode(name='repeat_nested', is_repeat=True)],
         )
         self.assertEqual(table.label, 'Repeat: One.#.Two')
+        self.assertTrue(table.selected)
 
         column = table.get_column(
             [PathNode(name='form'),

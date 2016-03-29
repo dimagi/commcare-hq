@@ -57,6 +57,7 @@ def convert_saved_export_to_export_instance(saved_export):
         new_table = instance.get_table(_convert_index_to_path_nodes(old_table.index))
         if new_table:
             new_table.label = old_table.display
+            new_table.selected = True
         else:
             continue
 
