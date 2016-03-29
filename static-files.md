@@ -134,4 +134,20 @@ Notice that `COMPRESS_MINT_DELAY`, `COMPRESS_MTIME_DELAY`, and
 
 ## CDN
 
-`#todo`
+A content delivery network or content distribution network (CDN) is a globally distributed network of proxy servers deployed in multiple data centers. The goal of a CDN is to serve content to end-users with high availability and high performance. CDNs serve a large fraction of the Internet content today, including web objects (text, graphics and scripts), downloadable objects (media files, software, documents), applications (e-commerce, portals).
+
+### CDN for HQ
+
+CommCareHQ uses a CloudFront as CDN to deliver its staticfiles. CloudFront is configured in the [Amazon Console](https://us-west-2.console.aws.amazon.com/console/home). You can find credentials in the dimagi shared keypass under AWS Dev Account. CloudFront provides us with two URLs. A CDN URL for staging and one for production. On compilation of the static files, we prefix the static file with the CloudFront URL. For example:
+
+```
+# Path to static file
+<script src="/static/js/awesome.js"/>
+# This gets converted to
+<script src="<some hash>.cloudfront.net/static/js/awesome.js"/>
+```
+When a request gets made to the cloudfront URL, amazon serves the page from the nearest edge node if it has the file cached. If it doesn't have the file, it will go to our server and fetch the file. By default the file will live on the server for 24 hours.
+
+### Cache Busting
+
+In order to ensure that the CDN has the most up to date version, we append a version number to the end of the javascript file that is a sha of the file. This infrastructure was already in place for cache busting. This means that awesome.js will actually be rendered as awesome.js?version=<some hash>. The CDN recognizes this as a different static file and then goes to our nginx server to fetch the file.
