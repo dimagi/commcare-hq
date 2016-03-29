@@ -252,14 +252,6 @@ class XFormInstance(SafeSaveDocument, UnicodeMixIn, ComputedDocumentMixin,
         """
         return safe_index(self, path.split("/"))
 
-    def found_in_multiselect_node(self, xpath, option):
-        """
-        Whether a particular value was found in a multiselect node, referenced
-        by path.
-        """
-        node = self.get_data(xpath)
-        return node and option in node.split(" ")
-
     def soft_delete(self):
         self.doc_type += DELETED_SUFFIX
         self.save()
