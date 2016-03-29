@@ -332,6 +332,58 @@ class TestCommCareCaseResource(APIResourceTest):
 
         backend_case.delete()
 
+    @run_with_all_backends
+    def test_parent_and_child_cases(self):
+
+        # Create cases
+        parent_case_id = uuid.uuid4().hex
+        parent_type = 'parent_case_type'
+        submit_case_blocks(
+            CaseBlock(
+                case_id=parent_case_id,
+                create=True,
+                case_type=parent_type,
+            ).as_string(),
+            self.domain.name
+        )
+        child_case_id = uuid.uuid4().hex
+        submit_case_blocks(
+            CaseBlock(
+                case_id=child_case_id,
+                create=True,
+                index={'parent': (parent_type, parent_case_id)}
+            ).as_string(),
+            self.domain.name
+        )
+
+        # Fetch the child case through the API
+        self.client.login(username=self.username, password=self.password)
+        response = self.client.get(self.single_endpoint(child_case_id) + "?parent_cases__full=true")
+        self.assertEqual(
+            response.status_code,
+            200,
+            "Status code was not 200. Response content was {}".format(response.content)
+        )
+        parent_cases = json.loads(response.content)['parent_cases'].values()
+
+        # Confirm that the case appears in the resource
+        self.assertEqual(len(parent_cases), 1)
+        self.assertEqual(parent_cases[0]['id'], parent_case_id)
+
+        # Fetch the parent case through the API
+        self.client.login(username=self.username, password=self.password)
+        response = self.client.get(self.single_endpoint(parent_case_id) + "?child_cases__full=true")
+        self.assertEqual(
+            response.status_code,
+            200,
+            "Status code was not 200. Response content was {}".format(response.content)
+        )
+        child_cases = json.loads(response.content)['child_cases'].values()
+
+        # Confirm that the case appears in the resource
+        self.assertEqual(len(child_cases), 1)
+        self.assertEqual(child_cases[0]['id'], child_case_id)
+
     def test_no_subscription(self):
         """
         Tests authorization function properly blocks domains without proper subscription
