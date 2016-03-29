@@ -391,13 +391,20 @@ class ExportTable(DocumentSchema):
                 return i
 
     def get_items_in_order(self, row):
+        from couchexport.export import SCALAR_NEVER_WAS
         row_data = list(row.get_data())
         for column in self.columns:
+            # If, for example, column.index references a question in a form
+            # export and there are no forms that have a value for that question,
+            # then that question does not show up in the schema for the export
+            # and so column.index won't be found in self.row_positions_by_index.
+            # In those cases we want to give a value of '---' to be consistent
+            # with other "not applicable" export values.
             try:
                 i = self.row_positions_by_index[column.index]
                 val = row_data[i]
             except KeyError:
-                val = ''
+                val = SCALAR_NEVER_WAS
 
             if issubclass(type(column), ComplexExportColumn):
                 for value in column.get_data(val):
