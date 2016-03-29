@@ -1026,7 +1026,8 @@ class HQPasswordResetForm(NoAutocompleteMixin, forms.Form):
 
     This small change is why we can't use the default PasswordReset form.
     """
-    email = forms.EmailField(label=ugettext_lazy("Username"), max_length=254)
+    email = forms.EmailField(label=ugettext_lazy("Username"), max_length=254,
+                             widget=forms.TextInput(attrs={'class': 'form-control'}))
     error_messages = {
         'unknown': ugettext_lazy("That email address doesn't have an associated "
                      "user account. Are you sure you've registered?"),
