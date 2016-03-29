@@ -89,10 +89,6 @@ class ExportItem(DocumentSchema):
             else:
                 raise ValueError('Unexpected doc_type for export item', doc_type)
         else:
-            # Don't commit this. Just for local backwards compatibility
-            if "path" in data and len(data['path']):
-                if type(data['path'][0]) != dict:
-                    data["path"] = [PathNode(name=s).to_json() for s in data['path']]
             return super(ExportItem, cls).wrap(data)
 
     @classmethod
@@ -897,7 +893,6 @@ class FormExportDataSchema(ExportDataSchema):
                             ],
                             label="case.update.{}".format(case_update_field),
                             tag=PROPERTY_TAG_CASE,
-                            # TODO: Make this advanced or whatever when we convert the schema to columns
                             last_occurrences={app_id: app_version},
                         )
                     )

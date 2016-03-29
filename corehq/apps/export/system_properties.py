@@ -342,7 +342,6 @@ BOTTOM_MAIN_CASE_TABLE_PROPERTIES = [
         transforms=[USERNAME_TRANSFORM],
         is_advanced=True,
     ),
-    # TODO: Make sure state gets converted to a doc_type or whatever in the form es index
     ExportColumn(
         tags=[PROPERTY_TAG_SERVER],
         label='state',
