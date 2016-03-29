@@ -449,3 +449,4 @@ corehq.apps.users:
   - django_prbac
   - tastypie
   - touchforms.formplayer
+corehq.apps.case_search: []

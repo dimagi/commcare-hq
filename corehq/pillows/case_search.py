@@ -136,9 +136,8 @@ def get_couch_case_search_reindexer(domain=None):
 
 
 def delete_case_search_cases(domain):
-    assert domain is not None
-    # calling this with {} would delete all domain data, make sure we aren't doing that
-    assert not isinstance(domain, dict)
+    if domain is None or isinstance(domain, dict):
+        raise TypeError("Domain attribute is required")
 
     startkey = [domain]
     endkey = [domain, {}, {}]

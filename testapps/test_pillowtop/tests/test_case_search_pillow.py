@@ -1,7 +1,7 @@
 import uuid
 
-from corehq.apps.case_search.models import CaseSearchConfig
 from corehq.apps.case_search.exceptions import CaseSearchNotEnabledException
+from corehq.apps.case_search.models import CaseSearchConfig
 from corehq.apps.change_feed import topics
 from corehq.apps.change_feed.consumer.feed import \
     change_meta_from_kafka_message
@@ -11,7 +11,8 @@ from corehq.apps.userreports.tests.utils import doc_to_change
 from corehq.elastic import get_es_new
 from corehq.form_processor.tests.utils import FormProcessorTestUtils
 from corehq.pillows.case_search import CaseSearchPillow, \
-    get_case_search_to_elasticsearch_pillow, get_couch_case_search_reindexer
+    delete_case_search_cases, get_case_search_to_elasticsearch_pillow, \
+    get_couch_case_search_reindexer
 from corehq.pillows.mappings.case_search_mapping import CASE_SEARCH_INDEX
 from corehq.util.elastic import ensure_index_deleted
 from django.test import TestCase
@@ -35,6 +36,7 @@ class CaseSearchPillowTest(TestCase):
 
     def tearDown(self):
         ensure_index_deleted(CASE_SEARCH_INDEX)
+        CaseSearchConfig.objects.all().delete()
 
     def test_case_search_pillow(self):
         consumer = get_test_kafka_consumer(topics.CASE)
@@ -74,6 +76,31 @@ class CaseSearchPillowTest(TestCase):
         get_couch_case_search_reindexer(domain=other_domain).reindex()
         self._assert_case_in_es(other_domain, desired_case)
 
+    def test_delete_case_search_cases(self):
+        """
+        Tests that cases are correctly removed from the es index
+        """
+        other_domain = "braavos"
+        self._bootstrap_cases_in_es_for_domain(self.domain)
+        case = self._bootstrap_cases_in_es_for_domain(other_domain)
+
+        with self.assertRaises(TypeError):
+            delete_case_search_cases(None)
+        with self.assertRaises(TypeError):
+            delete_case_search_cases({})
+
+        # delete cases from one domain
+        delete_case_search_cases(self.domain)
+
+        # make sure the other domain's cases are still there
+        self._assert_case_in_es(other_domain, case)
+
+        # delete other domains cases
+        delete_case_search_cases(other_domain)
+
+        # make sure nothing is left
+        self._assert_index_empty()
+
     def _make_case(self, domain=None):
         # make a case
         case_id = uuid.uuid4().hex
@@ -99,3 +126,14 @@ class CaseSearchPillowTest(TestCase):
             if case_property['key'] == 'name':
                 self.assertEqual(case.name, case_property['value'])
                 break
+
+    def _assert_index_empty(self):
+        self.elasticsearch.indices.refresh(CASE_SEARCH_INDEX)
+        results = CaseSearchES().run()
+        self.assertEqual(0, results.total)
+
+    def _bootstrap_cases_in_es_for_domain(self, domain):
+        case = self._make_case(domain)
+        CaseSearchConfig.objects.get_or_create(pk=domain, enabled=True)
+        get_couch_case_search_reindexer(domain).reindex()
+        return case

@@ -15,8 +15,7 @@ def disable_case_search(domain):
         config = CaseSearchConfig.objects.get(pk=domain)
     except CaseSearchConfig.DoesNotExist:
         # CaseSearch was never enabled
-        pass
-
+        return
     if config.enabled:
         config.enabled = False
         config.save()
