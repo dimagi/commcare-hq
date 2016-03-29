@@ -57,21 +57,6 @@ def get_number_of_forms_in_domain(domain):
     return row["value"] if row else 0
 
 
-def get_number_of_forms_by_type(domain, type_):
-    # todo: this is only used to display totals in the "raw forms" report and can probably be removed
-    assert type_ in doc_types()
-    startkey = [domain, type_]
-    endkey = startkey + [{}]
-    submissions = XFormInstance.view(
-        "couchforms/all_submissions_by_domain",
-        startkey=startkey,
-        endkey=endkey,
-        reduce=True,
-        stale=stale_ok(),
-    ).one()
-    return submissions['value'] if submissions else 0
-
-
 def get_first_form_submission_received(domain):
     from corehq.apps.reports.util import make_form_couch_key
     key = make_form_couch_key(domain)
