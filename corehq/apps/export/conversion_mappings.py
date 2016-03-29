@@ -77,7 +77,7 @@ PARENT_CASE_PROPERTY_MAPPING = {
     ('id', None): ([PathNode(name='number')], None),
     ('referenced_id', None): ([PathNode(name='indices', is_repeat=True), PathNode(name='referenced_id')], None),
     ('referenced_type', None): ([PathNode(name='indices', is_repeat=True), PathNode(name='referenced_type')], None),
-    ('relationship', None): ([PathNode(name='indices', is_repeat=True), PathNode(name='relationship')], None),
+    ('identifier', None): ([PathNode(name='indices', is_repeat=True), PathNode(name='relationship')], None),
     ('doc_type', None): ([PathNode(name='indices', is_repeat=True), PathNode(name='doc_type')], None),
 }
 
