@@ -50,7 +50,7 @@
             addNavigationLink(sheet.getName(), sheet.getIsActive())
         });
 
-        $(".nav-link").click(function (){
+        $(".nav-link").click(function (e){
             var link = $(this);
             var sheetName = link[0].textContent;
             var params = history.state.params;
