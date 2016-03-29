@@ -15,10 +15,20 @@ from corehq.apps.app_manager.exceptions import (
     LocationXpathValidationError,
     ScheduleError,
 )
-from django.utils.translation import ugettext as _
+from django.utils.translation import ugettext as _, ugettext_lazy
 
 
 DOT_INTERPOLATE_PATTERN = r'(\D|^)\.(\D|$)'
+
+CASE_REFERENCE_VALIDATION_ERROR = ugettext_lazy(
+    'Your filter refers to a case, but the case is not available. Either refer to the user case, or make '
+    'sure all the forms in this module update or close a case, which means registration forms must go in '
+    'a different module.'
+)
+
+
+def matches_dot_interpolate_pattern(string):
+    return re.search(DOT_INTERPOLATE_PATTERN, string)
 
 
 def dot_interpolate(string, replacement):
@@ -33,14 +43,10 @@ def interpolate_xpath(string, case_xpath=None, fixture_xpath=None):
     """
     Replace xpath shortcuts with full value.
     """
-    if case_xpath is None and ('#case' in string or re.search(DOT_INTERPOLATE_PATTERN, string)):
+    if case_xpath is None and ('#case' in string or matches_dot_interpolate_pattern(string)):
         # At the moment this function is only used by module and form filters.
         # If that changes, amend the error message accordingly.
-        raise CaseXPathValidationError(_(
-            'Your filter refers to a case, but the case is not available. Either refer to the user case, or make '
-            'sure all the forms in this module update or close a case, which means registration forms must go in '
-            'a different module.'
-        ))
+        raise CaseXPathValidationError(CASE_REFERENCE_VALIDATION_ERROR)
     replacements = {
         '#user': UserCaseXPath().case(),
         '#session/': session_var('', path=''),

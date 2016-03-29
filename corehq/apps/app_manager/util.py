@@ -8,6 +8,7 @@ import uuid
 import yaml
 from corehq import toggles
 from corehq.apps.app_manager.exceptions import SuiteError
+from corehq.apps.app_manager.xpath import matches_dot_interpolate_pattern
 from corehq.apps.builds.models import CommCareBuildConfig
 from corehq.apps.app_manager.tasks import create_user_cases
 from corehq.util.quickcache import quickcache
@@ -607,3 +608,42 @@ def use_app_aware_sync(app):
     Determines whether OTA restore should sync only cases/ledgers/fixtures of the given app where possible
     """
     return toggles.APP_AWARE_SYNC.enabled(app.domain)
+
+
+def _prepare_xpath_for_validation(xpath):
+    prepared_xpath = xpath.lower()
+    prepared_xpath = prepared_xpath.replace('"', "'")
+    prepared_xpath = re.compile('\s').sub('', prepared_xpath)
+    return prepared_xpath
+
+
+def xpath_references_case(xpath):
+    if not isinstance(xpath, basestring):
+        return False
+
+    prepared_xpath = _prepare_xpath_for_validation(xpath)
+
+    return any([
+        case_reference in prepared_xpath for case_reference in [
+            "instance('casedb')",
+            "session/data/case_id",
+        ]
+    ])
+
+
+def form_filter_references_case(xpath):
+    if not isinstance(xpath, basestring):
+        return False
+
+    prepared_xpath = _prepare_xpath_for_validation(xpath)
+
+    return any([
+        case_reference in prepared_xpath for case_reference in [
+            "#case",
+            "#parent",
+            "#host",
+        ]
+    ] + [
+        matches_dot_interpolate_pattern(xpath),
+        xpath_references_case(xpath),
+    ])
