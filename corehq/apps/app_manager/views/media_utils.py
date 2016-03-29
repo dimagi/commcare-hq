@@ -1,18 +1,27 @@
 def process_media_attribute(attribute, resp, val):
     if val:
-        if val.startswith('jr://'):
-            pass
-        elif val.startswith('/file/'):
-            val = 'jr:/' + val
-        elif val.startswith('file/'):
-            val = 'jr://' + val
-        elif val.startswith('/'):
-            val = 'jr://file' + val
-        else:
-            val = 'jr://file/' + val
+        val = interpolate_media_path(val)
         resp['corrections'][attribute] = val
     else:
         val = None
+    return val
+
+
+def interpolate_media_path(val):
+    if not val:
+        return val
+
+    if val.startswith('jr://'):
+        pass
+    elif val.startswith('/file/'):
+        val = 'jr:/' + val
+    elif val.startswith('file/'):
+        val = 'jr://' + val
+    elif val.startswith('/'):
+        val = 'jr://file' + val
+    else:
+        val = 'jr://file/' + val
+
     return val
 
 
