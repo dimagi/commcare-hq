@@ -1,0 +1,145 @@
+{% extends 'style/bootstrap3/base_section.html' %}
+{% load hq_shared_tags %}
+{% load compress %}
+{% load i18n %}
+{% block stylesheets %}
+    <link rel="stylesheet" href="{% new_static 'codemirror/lib/codemirror.css' %}"/>
+    <link rel="stylesheet" href="{% static 'codemirror/addon/fold/foldgutter.css' %}"/>
+{% endblock stylesheets %}
+{% compress js %}
+{% block js %}{{ block.super }}
+    <script src="{% new_static 'codemirror/lib/codemirror.js' %}"></script>
+    <script src="{% new_static 'codemirror/mode/javascript/javascript.js' %}"></script>
+    <script src="{% new_static 'codemirror/addon/fold/foldcode.js' %}"></script>
+    <script src="{% new_static 'codemirror/addon/fold/foldgutter.js' %}"></script>
+    <script src="{% new_static 'codemirror/addon/fold/brace-fold.js' %}"></script>
+{% endblock js %}
+{% endcompress %}
+{% block js-inline %}
+    <script>
+     var CaseSearchModel = function(){
+         var self = this;
+         self.codeMirror = null;
+         self.type = ko.observable();
+         self.results = ko.observableArray();
+         self.case_data_url = "{% url 'case_details' request.domain '___' %}"
+         self.parameters = ko.observableArray([{
+             key: "",
+             value: "",
+             clause: "must"
+         }]);
+
+         self.addParameter = function(){
+             self.parameters.push({
+                 key: "",
+                 value: "",
+                 clause: "must"
+             });
+         };
+         self.removeParameter = function(){
+             self.parameters.remove(this);
+         }
+
+         self.submit = function(){
+             self.results([]);
+             $.post(
+                 window.location.href,
+                 {q: JSON.stringify({type: self.type(), parameters: self.parameters()})}
+             ).success(function(data){
+                 self.results(data.values);
+                 var values = JSON.stringify(data.values, null, '    ');
+                 if (self.codeMirror === null){
+                     self.codeMirror = CodeMirror( $("#raw-results").get(0), {
+                         value: values,
+                         mode: { name: 'javascript', json: true },
+                         readOnly: true,
+                         lineNumbers: true,
+                         lineWrapping: true,
+                         viewportMargin: Infinity,
+                         foldGutter: true,
+                         gutters: ["CodeMirror-linenumbers", "CodeMirror-foldgutter"]
+                     });
+                 } else {
+                     self.codeMirror.setValue(values);
+                 }
+             })
+         }
+     }
+     ko.applyBindings(new CaseSearchModel(), $("#case-search").get(0))
+    </script>
+{% endblock %}
+{% block page_content %}
+    <div id="case-search">
+        <p>{% trans "Search for a case by case property below" %}</p>
+        <div class="row">
+            <div class="col-sm-12">
+                <div class="controls">
+                    <form class="form-horizontal" data-bind="submit: submit" id="case-search-form">
+                        {% csrf_token %}
+                        <div class="form-group">
+                            <label>Case Type:
+                                <input name="type" type="text" placeholder="case type" data-bind="value: type"/>
+                            </label>
+                        </div>
+                        <!-- ko foreach: parameters -->
+                        <div class="form-group">
+                            <input name="key" type="text" placeholder="property" data-bind="value: key"/>
+                            <input name="value" type="text"  placeholder="value" data-bind="value: value"/>
+                            <select name="clause" data-bind="value: clause">
+                                <option value="must">must</option>
+                                <option value="should">should</option>
+                                <option value="must_not">must_not</option>
+                            </select>
+                            <span class='btn btn-danger' data-bind="click: $parent.removeParameter">x</span>
+                        </div>
+                        <!-- /ko -->
+                        <span class="btn btn-primary" id="add-input" data-bind="click: addParameter">+ Add input</span>
+                        <input type="submit" class="btn btn-primary" />
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <div class="row">
+            <div class="col-sm-12">
+                <h3>Results</h3>
+            </div>
+            <div class="col-sm-12">
+                <table class="table table-striped">
+                    <thead>
+                        <tr>
+                            <th>Name</th>
+                            <th>Case Type</th>
+                            <th>Closed</th>
+                            <th>Properties</th>
+                        </tr>
+                    </thead>
+                    <tbody data-bind="foreach: results">
+                        <tr>
+                            <td>
+                                <a data-bind="attr: {href: $parent.case_data_url.replace('___', $data._id)}, text: name"></a>
+                            </td>
+                            <td data-bind="text: type"></td>
+                            <td data-bind="text: closed"></td>
+                            <td>
+                                <div data-bind="foreach: case_properties">
+                                    <small data-bind="text:$data['key']"></small>:
+                                    <strong data-bind="text:$data['value']"></strong><br />
+                                </div>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+        <hr />
+        <div class="row">
+            <div class="col-sm-12">
+                <h3>Raw</h3>
+            </div>
+            <div class="col-sm-12">
+                <div id="raw-results"></div>
+            </div>
+        </div>
+    </div>
+{% endblock %}
