@@ -863,8 +863,11 @@ class FormExportDataSchema(ExportDataSchema):
         questions = xform.get_questions(langs)
         repeats = [r['value'] for r in xform.get_questions(langs, include_groups=True) if r['tag'] == 'repeat']
         schema = FormExportDataSchema()
+        question_keyfn = lambda q: q['repeat']
 
-        question_groups = [(x, list(y)) for x, y in groupby(questions, lambda q: q['repeat'])]
+        question_groups = [(x, list(y)) for x, y in groupby(
+            sorted(questions, key=question_keyfn), question_keyfn
+        )]
         if None not in [x[0] for x in question_groups]:
             # If there aren't any questions in the main table, a group for
             # it anyways.
