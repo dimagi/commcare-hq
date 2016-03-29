@@ -84,7 +84,10 @@
 
       {% if not form.is_new_location %}
 
-        <p class="lead">{{ location.name }} <small>{{ location.location_type_name }}</small></p>
+        <p class="lead">
+          {{ location.name }}
+          <span class="text-muted">({{ location.location_type_name }})</span>
+        </p>
 
         <div class="btn-toolbar" style="margin-bottom: 20px;">
 
