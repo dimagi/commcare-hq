@@ -1726,6 +1726,7 @@ class AdminTab(UITab):
             dropdown_dict(_("SMS Connectivity & Billing"), url=reverse("default_sms_admin_interface")),
             dropdown_dict(_("Feature Flags"), url=reverse("toggle_list")),
             dropdown_dict(_("CommCare Builds"), url="/builds/edit_menu"),
+            dropdown_dict(_("AB Test Setup"), url=reverse("ab_test_list")),
             dropdown_dict(None, is_divider=True),
             dropdown_dict(_("Django Admin"), url="/admin")
         ])

@@ -1,0 +1,12 @@
+{% extends 'style/bootstrap3/base_page.html' %}
+{% load crispy_forms_tags %}
+
+{% block page_content %}
+    {% if success %}
+        <div class="alert alert-success" role="alert">
+            <p class="">AB Test {{ success }} successfully created</p>
+        </div>
+    {% endif %}
+    {% crispy form %}
+
+{% endblock %}

@@ -1,0 +1,21 @@
+{% extends 'style/bootstrap3/base_page.html' %}
+
+{% block page_content %}
+    <table class="table table-striped table-bordered">
+        <thead>
+            <tr>
+                <th>Slug</th>
+                <th>Partition</th>
+                <th>Description</th>
+            </tr>
+        </thead>
+        {% for test in tests %}
+            <tr>
+                <td>{{ test.slug }}</td>
+                <td>{{ test.partition }}</td>
+                <td>{{ test.description }}</td>
+            </tr>
+        {% endfor %}
+    </table>
+    <a class="btn btn-success" href="{% url "ab_test_setup" %}">Set up a new AB test</a>
+{% endblock %}
