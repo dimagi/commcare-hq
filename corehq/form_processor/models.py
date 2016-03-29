@@ -572,6 +572,15 @@ class CommCareCaseSQL(DisabledDbMixin, models.Model, RedisLockableMixIn,
                 ret[key] = self.case_json[key]
         return ret
 
+
+    @property
+    def server_opened_on(self):
+        try:
+            open_action = self.transactions[0]
+            return open_action.server_date
+        except Exception:
+            pass
+
     def dumps(self, pretty=False):
         indent = 4 if pretty else None
         return json.dumps(self.to_json(), indent=indent)
