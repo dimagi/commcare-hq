@@ -42,12 +42,7 @@ class CaseSearchPillow(CasePillow):
         return super(CaseSearchPillow, self).change_trigger(changes_dict)
 
     def _is_new_style(self, changes_dict):
-        return (
-            hasattr(changes_dict, 'id') and
-            hasattr(changes_dict, 'value') and
-            hasattr(changes_dict, 'key') and
-            len(changes_dict) == 3
-        )
+        return set(changes_dict.keys()) == {'id', 'key', 'value'}
 
     def change_transform(self, doc_dict):
         return transform_case_for_elasticsearch(doc_dict)
