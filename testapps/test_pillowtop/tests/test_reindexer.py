@@ -1,23 +1,28 @@
 import uuid
+
 from django.conf import settings
 from django.core.management import call_command
 from django.test import TestCase
-from corehq.apps.es import UserES, CaseES, FormES, ESQuery
+from elasticsearch.exceptions import ConnectionError
+from mock import MagicMock, patch
+
+from corehq.apps.es import CaseSearchES, ESQuery, FormES, UserES
 from corehq.apps.users.dbaccessors.all_commcare_users import delete_all_users
 from corehq.apps.users.models import CommCareUser
 from corehq.form_processor.interfaces.processor import FormProcessorInterface
+from corehq.form_processor.tests.utils import FormProcessorTestUtils, \
+    run_with_all_backends
 from corehq.form_processor.utils import TestFormMetadata
-from corehq.form_processor.tests.utils import FormProcessorTestUtils, run_with_all_backends
 from corehq.pillows.case import CasePillow
+from corehq.pillows.case_search import CaseSearchPillow
 from corehq.pillows.mappings.case_mapping import CASE_INDEX
+from corehq.pillows.mappings.case_search_mapping import CASE_SEARCH_INDEX
 from corehq.pillows.mappings.user_mapping import USER_INDEX
 from corehq.pillows.mappings.xform_mapping import XFORM_INDEX
 from corehq.pillows.xform import XFormPillow
 from corehq.util.elastic import delete_es_index, ensure_index_deleted
 from corehq.util.test_utils import get_form_ready_to_save, trap_extra_setup
-from elasticsearch.exceptions import ConnectionError
 from testapps.test_pillowtop.utils import make_a_case
-
 
 DOMAIN = 'reindex-test-domain'
 
