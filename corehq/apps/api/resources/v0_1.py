@@ -7,8 +7,6 @@ import json
 import datetime
 from corehq.apps.api.couch import UserQuerySetAdapter
 from corehq.apps.domain.auth import determine_authtype_from_header
-from corehq.form_processor.exceptions import XFormNotFound
-from corehq.form_processor.interfaces.dbaccessors import FormAccessors
 from dimagi.utils.couch.database import iter_docs
 from django.core.exceptions import PermissionDenied
 from django.http import Http404, HttpResponse, HttpResponseForbidden
@@ -40,8 +38,7 @@ from corehq.apps.users.models import CommCareUser, WebUser, Permissions
 
 # API imports
 from corehq.apps.api.serializers import CustomXMLSerializer, XFormInstanceSerializer
-from corehq.apps.api.util import get_object_or_not_exist, object_does_not_exist, \
-    get_obj
+from corehq.apps.api.util import get_object_or_not_exist, get_obj
 from corehq.apps.api.resources import (
     CouchResourceMixin,
     DomainSpecificResourceMixin,

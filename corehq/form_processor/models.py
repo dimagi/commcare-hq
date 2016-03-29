@@ -572,7 +572,6 @@ class CommCareCaseSQL(DisabledDbMixin, models.Model, RedisLockableMixIn,
                 ret[key] = self.case_json[key]
         return ret
 
-
     @property
     def server_opened_on(self):
         try:

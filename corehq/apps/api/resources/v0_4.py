@@ -214,6 +214,7 @@ def _child_cases_attribute(case):
         for index in case.reverse_indices
     }
 
+
 def _parent_cases_attribute(case):
     return {
         index.identifier: CaseAccessors(case.domain).get_case(index.referenced_id)
