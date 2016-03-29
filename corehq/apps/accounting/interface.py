@@ -449,13 +449,6 @@ def get_exportable_column(amount):
     )
 
 
-def get_column_formatted_str(subtotal, deduction):
-    return mark_safe('%s<br />(%s)') % (
-        get_money_str(subtotal),
-        get_money_str(deduction)
-    )
-
-
 def get_subtotal_and_deduction(line_items):
     subtotal = 0
     deduction = 0
