@@ -5,6 +5,7 @@ from corehq.apps.analytics.tasks import (
     HUBSPOT_COOKIE,
     update_hubspot_properties,
 )
+from corehq.apps.analytics.models import HubspotAB
 from corehq.apps.analytics.utils import get_meta
 from corehq.util.decorators import handle_uncaught_exceptions
 from .tasks import identify
@@ -31,6 +32,7 @@ def user_save_callback(sender, **kwargs):
         properties.update(get_subscription_properties_by_user(couch_user))
         properties.update(get_domain_membership_properties(couch_user))
         identify.delay(couch_user.username, properties)
+        properties.update(HubspotAB.get_properties_for_user(couch_user))
         update_hubspot_properties(couch_user, properties)
 
 
