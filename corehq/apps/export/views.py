@@ -7,8 +7,12 @@ from django.core.exceptions import SuspiciousOperation
 from django.core.urlresolvers import reverse
 from django.http import HttpResponseRedirect, HttpResponseBadRequest, Http404
 from django.template.defaultfilters import filesizeformat
+from django.views.decorators.csrf import csrf_exempt
+from django.views.decorators.http import require_GET
 
 from corehq.apps.export.export import get_export_download
+from corehq.apps.reports.views import should_update_export, \
+    build_download_saved_export_response, require_form_export_permission
 from corehq.form_processor.interfaces.dbaccessors import FormAccessors
 from django_prbac.utils import has_privilege
 from django.utils.decorators import method_decorator
@@ -22,7 +26,8 @@ from corehq import toggles
 from corehq.apps.accounting.utils import domain_has_privilege
 from corehq.apps.app_manager.fields import ApplicationDataRMIHelper
 from corehq.apps.data_interfaces.dispatcher import require_can_edit_data
-from corehq.apps.domain.decorators import login_and_domain_required
+from corehq.apps.domain.decorators import login_and_domain_required, \
+    login_or_digest_or_basic_or_apikey
 from corehq.apps.export.utils import convert_saved_export_to_export_instance
 from corehq.apps.export.custom_export_helpers import make_custom_export_helper
 from corehq.apps.export.exceptions import (
@@ -1055,7 +1060,7 @@ class BaseExportListView(ExportsPermissionsMixin, JSONResponseMixin, BaseProject
             last_updated=export.last_updated,
             last_accessed=export.last_accessed,
             download_url=reverse(
-                'hq_download_new_saved_export', args=[self.domain, export._id]
+                'download_daily_saved_export', args=[self.domain, export._id]
             ),
         )
 
@@ -1622,3 +1627,31 @@ class DownloadNewCaseExportView(GenericDownloadNewExportMixin, DownloadCaseExpor
         filter_form = self._get_filter_form(filter_form_data)
         form_filters = filter_form.get_case_filter()
         return form_filters
+
+
+@csrf_exempt
+@login_or_digest_or_basic_or_apikey(default='digest')
+@require_form_export_permission
+@require_GET
+def download_daily_saved_export(req, domain, export_instance_id):
+    export_instance = get_properly_wrapped_export_instance(export_instance_id)
+    assert domain == export_instance.domain
+    if should_update_export(export_instance.last_accessed):
+        try:
+            from corehq.apps.export.tasks import rebuild_export_task
+            rebuild_export_task.delay(export_instance)
+        except Exception:
+            notify_exception(
+                req,
+                'Failed to rebuild export during download',
+                {
+                    'export_instance_id': export_instance_id,
+                    'domain': domain,
+                },
+            )
+    export_instance.last_accessed = datetime.utcnow()
+    export_instance.save()
+    payload = export_instance.get_payload(stream=True)
+    return build_download_saved_export_response(
+        payload, export_instance.export_format, export_instance.filename
+    )
