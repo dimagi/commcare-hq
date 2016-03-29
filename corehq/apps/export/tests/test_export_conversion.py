@@ -8,6 +8,7 @@ from couchexport.models import SavedExportSchema
 from corehq.util.test_utils import TestFileMixin, generate_cases
 from corehq.apps.export.models import (
     FormExportDataSchema,
+    CaseExportDataSchema,
     ExportGroupSchema,
     ExportItem,
 )
@@ -16,11 +17,105 @@ from corehq.apps.export.utils import (
     _convert_index_to_path_nodes,
 )
 from corehq.apps.export.const import (
-    FORM_PROPERTY_MAPPING,
     DEID_ID_TRANSFORM,
     DEID_DATE_TRANSFORM,
+    CASE_NAME_TRANSFORM,
 )
-from corehq.apps.export.models.new import MAIN_TABLE, PathNode
+from corehq.apps.export.models import (
+    MAIN_TABLE,
+    PARENT_CASE_TABLE,
+    PathNode,
+    CASE_HISTORY_TABLE,
+)
+
+
+class TestConvertSavedExportSchemaToCaseExportInstance(TestCase, TestFileMixin):
+    file_path = ('data', 'saved_export_schemas')
+    root = os.path.dirname(__file__)
+    app_id = '58b0156dc3a8420669efb286bc81e048'
+
+    @classmethod
+    def setUpClass(cls):
+        cls.schema = CaseExportDataSchema(
+            group_schemas=[
+                ExportGroupSchema(
+                    path=MAIN_TABLE,
+                    items=[
+                        ExportItem(
+                            path=[PathNode(name='DOB')],
+                            label='Case Propery DOB',
+                            last_occurrences={cls.app_id: 3},
+                        ),
+                    ],
+                    last_occurrences={cls.app_id: 3},
+                ),
+                ExportGroupSchema(
+                    path=CASE_HISTORY_TABLE,
+                    last_occurrences={cls.app_id: 3},
+                ),
+            ],
+        )
+
+    def test_basic_conversion(self):
+        saved_export_schema = SavedExportSchema.wrap(self.get_json('case'))
+        with mock.patch(
+                'corehq.apps.export.models.new.CaseExportDataSchema.generate_schema_from_builds',
+                return_value=self.schema):
+            instance = convert_saved_export_to_export_instance(saved_export_schema)
+
+        self.assertEqual(instance.transform_dates, True)
+        self.assertEqual(instance.name, 'Case Example')
+        self.assertEqual(instance.export_format, 'csv')
+        self.assertEqual(instance.is_deidentified, False)
+
+        table = instance.get_table(MAIN_TABLE)
+        self.assertEqual(table.label, 'Cases')
+
+        column = table.get_column([PathNode(name='DOB')], [])
+        self.assertEqual(column.label, 'DOB Saved')
+        self.assertEqual(column.selected, True)
+
+    def test_parent_case_conversion(self):
+        saved_export_schema = SavedExportSchema.wrap(self.get_json('parent_case'))
+        with mock.patch(
+                'corehq.apps.export.models.new.CaseExportDataSchema.generate_schema_from_builds',
+                return_value=self.schema):
+            instance = convert_saved_export_to_export_instance(saved_export_schema)
+
+        table = instance.get_table(PARENT_CASE_TABLE)
+        self.assertEqual(table.label, 'Parent Cases')
+
+        expected_paths = [
+            ([PathNode(name='indices', is_repeat=True), PathNode(name='referenced_id')], True),
+            ([PathNode(name='indices', is_repeat=True), PathNode(name='referenced_type')], False),
+            ([PathNode(name='indices', is_repeat=True), PathNode(name='relationship')], True),
+            ([PathNode(name='indices', is_repeat=True), PathNode(name='doc_type')], True),
+        ]
+
+        for path, selected in expected_paths:
+            column = table.get_column(path, [])
+            self.assertEqual(column.selected, selected, '{} selected is not {}'.format(path, selected))
+
+    def test_case_history_conversion(self):
+        saved_export_schema = SavedExportSchema.wrap(self.get_json('case_history'))
+        with mock.patch(
+                'corehq.apps.export.models.new.CaseExportDataSchema.generate_schema_from_builds',
+                return_value=self.schema):
+            instance = convert_saved_export_to_export_instance(saved_export_schema)
+
+        table = instance.get_table(CASE_HISTORY_TABLE)
+        self.assertEqual(table.label, 'Case History')
+
+        expected_paths = [
+            ([PathNode(name='actions', is_repeat=True), PathNode(name='action_type')], True),
+            ([PathNode(name='number')], True),
+            ([PathNode(name='actions', is_repeat=True), PathNode(name='server_date')], True),
+            ([PathNode(name='actions', is_repeat=True), PathNode(name='xform_name')], True),
+        ]
+
+        for path, selected in expected_paths:
+            column = table.get_column(path, [])
+            self.assertEqual(column.selected, selected, '{} selected is not {}'.format(path, selected))
 
 
 class TestConvertSavedExportSchemaToFormExportInstance(TestCase, TestFileMixin):
@@ -207,13 +302,19 @@ class TestConvertSavedExportSchemaToFormExportInstance(TestCase, TestFileMixin):
         table = instance.get_table(MAIN_TABLE)
         self.assertEqual(table.label, 'Forms')
 
-        string_path = FORM_PROPERTY_MAPPING[("form.meta.@xmlns", None)][0]
-        column = table.get_column(
-            map(lambda name: PathNode(name=name), string_path.split('.')),
-            [],
-        )
-        self.assertEqual(column.label, 'Custom XMLNS')
-        self.assertEqual(column.selected, True)
+        expected_paths = [
+            ([PathNode(name='xmlns')], [], True),
+            ([PathNode(name='form'), PathNode(name='meta'), PathNode(name='userID')], [], True),
+            ([PathNode(name='form'), PathNode(name='case'), PathNode(name='@case_id')], [], True),
+            (
+                [PathNode(name='form'), PathNode(name='case'), PathNode(name='@case_id')],
+                [CASE_NAME_TRANSFORM],
+                True
+            ),
+        ]
+        for path, transforms, selected in expected_paths:
+            column = table.get_column(path, transforms)
+            self.assertEqual(column.selected, selected, '{} selected is not {}'.format(path, selected))
 
 
 class TestConvertIndexToPath(SimpleTestCase):

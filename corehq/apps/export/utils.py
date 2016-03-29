@@ -5,10 +5,6 @@ from .const import (
     TRANSFORM_FUNCTIONS,
     CASE_EXPORT,
     FORM_EXPORT,
-    FORM_PROPERTY_MAPPING,
-    CASE_PROPERTY_MAPPING,
-    CASE_HISTORY_PROPERTY_MAPPING,
-    PARENT_CASE_PROPERTY_MAPPING
 )
 from .exceptions import ExportInvalidTransform
 
@@ -86,8 +82,14 @@ def convert_saved_export_to_export_instance(saved_export):
             # so replace that parts that could be repeats with the table path
             column_path = table_path + column_path[len(table_path):]
 
-            if _get_system_property(column.index, column.transform):
-                index, transform = _get_system_property(column.index, column.transform)
+            system_property = _get_system_property(
+                column.index,
+                _convert_transform(column.transform) if column.transform else None,
+                export_type,
+                new_table.path
+            )
+            if system_property:
+                column_path, transform = system_property
                 transforms = [transform] if transform else []
 
             new_column = new_table.get_column(
@@ -136,8 +138,32 @@ def _convert_transform(serializable_transform):
     return None
 
 
-def _get_system_property(index, transform):
-    return FORM_PROPERTY_MAPPING.get((index, transform))
+def _get_system_property(index, transform, export_type, table_path):
+    from .models import (
+        MAIN_TABLE,
+        CASE_HISTORY_TABLE,
+        PARENT_CASE_TABLE,
+    )
+    from .conversion_mappings import (
+        FORM_PROPERTY_MAPPING,
+        CASE_PROPERTY_MAPPING,
+        CASE_HISTORY_PROPERTY_MAPPING,
+        PARENT_CASE_PROPERTY_MAPPING
+    )
+
+    system_property = None
+    if export_type == FORM_EXPORT:
+        if table_path == MAIN_TABLE:
+            system_property = FORM_PROPERTY_MAPPING.get((index, transform))
+    elif export_type == CASE_EXPORT:
+        if table_path == MAIN_TABLE:
+            system_property = CASE_PROPERTY_MAPPING.get((index, transform))
+        elif table_path == CASE_HISTORY_TABLE:
+            system_property = CASE_HISTORY_PROPERTY_MAPPING.get((index, transform))
+        elif table_path == PARENT_CASE_TABLE:
+            system_property = PARENT_CASE_PROPERTY_MAPPING.get((index, transform))
+
+    return system_property
 
 
 def _convert_index_to_path_nodes(index):
