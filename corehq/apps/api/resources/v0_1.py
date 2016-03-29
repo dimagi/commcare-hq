@@ -273,7 +273,7 @@ class WebUserResource(UserResource):
         return list(WebUser.by_domain(domain))
 
 
-class CommCareCaseResource(HqBaseResource, DomainSpecificResourceMixin):
+class CommCareCaseResource(CouchResourceMixin, HqBaseResource, DomainSpecificResourceMixin):
     type = "case"
     id = fields.CharField(attribute='get_id', readonly=True, unique=True)
     user_id = fields.CharField(attribute='user_id')
