@@ -1,4 +1,3 @@
-from datetime import datetime
 import logging
 
 from corehq.apps.api.serializers import XFormInstanceSerializer
@@ -14,24 +13,11 @@ from corehq.apps.es.domains import DomainES
 from tastypie import fields
 from tastypie.exceptions import NotFound
 from tastypie.resources import Resource
-import operator
 from dimagi.utils.dates import force_to_datetime
 
 
 def _get_domain(bundle):
     return bundle.obj
-
-
-def get_truth(inp, relate, cut):
-    ops = {'gt': operator.gt,
-           'lt': operator.lt,
-           'gte': operator.ge,
-           'lte': operator.le}
-    if relate not in ops:
-        return True
-    else:
-        cut_datetime = datetime.strptime(cut, '%Y-%m-%d')
-        return ops[relate](inp, cut_datetime)
 
 
 class DomainQuerySetAdapter(object):

@@ -408,19 +408,6 @@ class ApplicationResource(CouchResourceMixin, HqBaseResource, DomainSpecificReso
         resource_name = 'application'
 
 
-def bool_to_yesno(value):
-    if value is None:
-        return None
-    elif value:
-        return 'yes'
-    else:
-        return 'no'
-
-
-def get_yesno(attribute):
-    return lambda obj: bool_to_yesno(getattr(obj, attribute, None))
-
-
 class HOPECaseResource(CommCareCaseResource):
     """
     Custom API endpoint for custom case wrapper
