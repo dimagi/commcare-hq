@@ -27,7 +27,7 @@ manage.py compilejsi18n
 
 ## Compression
 
-[Django Compressor](#) is the library we use to handle compilation of `less` files and the minification of `js` and compiled `css` files.
+[Django Compressor](https://django-compressor.readthedocs.org/en/latest/) is the library we use to handle compilation of `less` files and the minification of `js` and compiled `css` files.
 
 Compressor blocks are defined inside the `{% compress 'css' %}{% endcompress %}` or `{% compress 'js' %}{% endcompress %}` blocks in Django templates. Each block will be processed as one unit during the different steps of compression.
 
@@ -100,7 +100,7 @@ COMPRESS_JS_COMPRESSOR = 'compressor.js.JsCompressor'
 
 #### How to install multiple LESS compilers to run compressor on `less` files
 
-NOTE: This is only relevant while we are running two versions of Bootstrap. See the main [Commcare-hq readme](#) for instructions.
+NOTE: This is only relevant while we are running two versions of Bootstrap. See the main [Commcare-hq readme](https://github.com/dimagi/commcare-hq/blob/master/README.md#install-less) for instructions.
 
 ### 3. Compress Offline
 
