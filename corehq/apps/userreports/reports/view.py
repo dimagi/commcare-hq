@@ -182,7 +182,15 @@ class ConfigurableReport(JSONResponseMixin, BaseDomainView):
             elif request.is_ajax() or request.GET.get('format', None) == 'json':
                 return self.get_ajax(self.request)
             self.content_type = None
-            self.add_warnings(self.request)
+            try:
+                self.add_warnings(self.request)
+            except UserReportsError as e:
+                messages.warning(
+                    request,
+                    _('It looks like there may be a problem with your report. '
+                      'Please edit the report to fix this problem or report an issue. '
+                      'Technical details: {}.').format(e)
+                )
             return super(ConfigurableReport, self).get(request, *args, **kwargs)
         else:
             raise Http403()
