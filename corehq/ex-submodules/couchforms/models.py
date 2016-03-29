@@ -480,12 +480,3 @@ class UnfinishedSubmissionStub(models.Model):
 
     class Meta:
         app_label = 'couchforms'
-
-    @classmethod
-    def form_has_saved(cls, stub):
-        stub.saved = True
-        stub.save()
-
-    @classmethod
-    def form_process_completed(cls, stub):
-        stub.delete()
