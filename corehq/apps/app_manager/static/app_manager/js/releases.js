@@ -84,6 +84,7 @@ hqDefine('app_manager/js/releases.js', function () {
                 self.app_code(self.parse_bitly_url(short_odk_url));
             }
             ga_track_event('App Manager', 'Initiate Install', 'Get App Code')
+            analytics.workflow('Initiate Installation Method')
         };
 
         self.allow_media_install = ko.computed(function(){
@@ -152,6 +153,7 @@ hqDefine('app_manager/js/releases.js', function () {
 
         self.clickScan = function() {
             ga_track_event('App Manager', 'Initiate Install', 'Show Bar Code');
+            analytics.workflow('Initiate Installation Method');
 
             // Hide the main deploy modal, then re-open
             // it when the scan barcode modal is closed
