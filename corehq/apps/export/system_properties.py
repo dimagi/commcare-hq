@@ -11,15 +11,16 @@ from corehq.apps.export.const import (
     PROPERTY_TAG_CASE,
     CASE_NAME_TRANSFORM,
     USERNAME_TRANSFORM,
+    OWNER_ID_TRANSFORM,
     PROPERTY_TAG_NONE)
-from corehq.apps.export.models import ExportColumn, ExportItem
-from corehq.apps.export.models.new import PathNode
+from corehq.apps.export.models import ExportColumn, ExportItem, PathNode
 
 # System properties to be displayed above the form questions
 TOP_MAIN_FORM_TABLE_PROPERTIES = [
     ExportColumn(
         tags=[PROPERTY_TAG_ROW],
         label="number",
+        item=ExportItem(path=[PathNode(name='number')]),
         selected=True,
     ),
     ExportColumn(
@@ -331,7 +332,7 @@ BOTTOM_MAIN_CASE_TABLE_PROPERTIES = [
         label='owner_name',
         item=ExportItem(path=[PathNode(name='owner_id')]),
         help_text=_("The username of the user who owns the case"),
-        transforms=[USERNAME_TRANSFORM],
+        transforms=[OWNER_ID_TRANSFORM],
         selected=True
     ),
     ExportColumn(
