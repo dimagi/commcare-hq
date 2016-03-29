@@ -1,6 +1,6 @@
 {
     "date_detection": false,
-    "date_formats": "__DATE_FORMATS_ARR__",
+    "date_formats": $DATE_FORMATS_ARR,
     "dynamic": false,
     "_meta": {
         "comment": "",
@@ -26,7 +26,7 @@
             "type": "string"
         },
         "closed_on": {
-            "format": "__DATE_FORMATS_STRING__",
+            "format": $DATE_FORMATS_STRING,
             "type": "date"
         },
         "doc_type": {
@@ -88,7 +88,7 @@
             "type": "string"
         },
         "modified_on": {
-            "format": "__DATE_FORMATS_STRING__",
+            "format": $DATE_FORMATS_STRING,
             "type": "date"
         },
         "name": {
@@ -108,7 +108,7 @@
             "type": "string"
         },
         "opened_on": {
-            "format": "__DATE_FORMATS_STRING__",
+            "format": $DATE_FORMATS_STRING,
             "type": "date"
         },
         "owner_id": {
@@ -119,7 +119,7 @@
             "type": "object"
         },
         "server_modified_on": {
-            "format": "__DATE_FORMATS_STRING__",
+            "format": $DATE_FORMATS_STRING,
             "type": "date"
         },
         "type": {
