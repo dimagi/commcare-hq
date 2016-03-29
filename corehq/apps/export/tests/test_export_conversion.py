@@ -53,6 +53,10 @@ class TestConvertSavedExportSchemaToCaseExportInstance(TestCase, TestFileMixin):
                     path=CASE_HISTORY_TABLE,
                     last_occurrences={cls.app_id: 3},
                 ),
+                ExportGroupSchema(
+                    path=PARENT_CASE_TABLE,
+                    last_occurrences={cls.app_id: 3},
+                ),
             ],
         )
 

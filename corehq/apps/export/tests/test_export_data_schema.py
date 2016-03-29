@@ -52,11 +52,12 @@ class TestFormExportDataSchema(SimpleTestCase, TestXmlMixin):
         self.assertEqual(len(schema.group_schemas), 2)
 
         group_schema = schema.group_schemas[0]
-        self.assertEqual(len(group_schema.items), 1)
+        self.assertEqual(len(group_schema.items), 2)
         self.assertEqual(group_schema.path, MAIN_TABLE)
 
         form_items = filter(lambda item: item.tag is None, group_schema.items)
         self.assertEqual(form_items[0].path, [PathNode(name='form'), PathNode(name='question1')])
+        self.assertEqual(form_items[1].path, [PathNode(name='form'), PathNode(name='zendquestion')])
 
         group_schema = schema.group_schemas[1]
         self.assertEqual(len(group_schema.items), 1)
@@ -66,7 +67,7 @@ class TestFormExportDataSchema(SimpleTestCase, TestXmlMixin):
         )
         self.assertEqual(
             group_schema.items[0].path,
-            [PathNode(name='form'), PathNode(name='question3'), PathNode(name='question4')]
+            [PathNode(name='form'), PathNode(name='question3', is_repeat=True), PathNode(name='question4')]
         )
 
     def test_xform_parsing_with_multiple_choice(self):
@@ -287,7 +288,7 @@ class TestMergingFormExportDataSchema(SimpleTestCase, TestXmlMixin):
         group_schema2 = merged.group_schemas[1]
 
         self.assertEqual(group_schema1.last_occurrences[self.app_id], 2)
-        self.assertEqual(len(group_schema1.items), 2)
+        self.assertEqual(len(group_schema1.items), 3)
 
         self.assertEqual(group_schema2.last_occurrences[self.app_id], 1)
         self.assertEqual(len(group_schema2.items), 1)
@@ -448,8 +449,8 @@ class TestBuildingCaseSchemaFromApplication(TestCase, TestXmlMixin):
     def test_basic_application_schema(self):
         schema = CaseExportDataSchema.generate_schema_from_builds(self.domain, self.case_type)
 
-        # One for case, one for case history.
-        self.assertEqual(len(schema.group_schemas), 2)
+        # One for case, one for case history, one for parent cases.
+        self.assertEqual(len(schema.group_schemas), 3)
 
         group_schema = schema.group_schemas[0]
         self.assertEqual(group_schema.last_occurrences[self.current_app._id], 3)
@@ -464,7 +465,8 @@ class TestBuildingCaseSchemaFromApplication(TestCase, TestXmlMixin):
         )
 
         self.assertEqual(schema.last_app_versions[app._id], 3)
-        self.assertEqual(len(schema.group_schemas), 2)
+        # One for case, one for case history, one for parent cases.
+        self.assertEqual(len(schema.group_schemas), 3)
 
         # After the first schema has been saved let's add a second app to process
         second_build = Application.wrap(self.get_json('basic_case_application'))
@@ -481,4 +483,5 @@ class TestBuildingCaseSchemaFromApplication(TestCase, TestXmlMixin):
 
         self.assertEqual(new_schema._id, schema._id)
         self.assertEqual(new_schema.last_app_versions[app._id], 6)
-        self.assertEqual(len(new_schema.group_schemas), 2)
+        # One for case, one for case history, one for parent cases.
+        self.assertEqual(len(new_schema.group_schemas), 3)

@@ -429,11 +429,6 @@ class ExportInstance(BlobMixin, Document):
             if not instance.get_table(group_schema.path):
                 instance.tables.append(table)
 
-        # Insert the parent case table
-        if schema.type == CASE_EXPORT:
-            # TODO: Would a case type without parents still have this table?
-            cls._insert_parent_case_table(instance)
-
         return instance
 
     @classmethod
@@ -448,6 +443,8 @@ class ExportInstance(BlobMixin, Document):
                 cls._insert_case_system_properties(table, columns)
             elif table.path == CASE_HISTORY_TABLE:
                 cls._insert_case_history_system_properties(table, columns)
+            elif table.path == PARENT_CASE_TABLE:
+                cls._insert_parent_case_table(table, columns)
 
     @classmethod
     def _insert_form_repeat_system_properties(cls, table, columns):
@@ -459,21 +456,12 @@ class ExportInstance(BlobMixin, Document):
         columns.insert(0, existing_column or ROW_NUMBER_COLUMN)
 
     @classmethod
-    def _insert_parent_case_table(cls, instance):
+    def _insert_parent_case_table(cls, table, columns):
         from corehq.apps.export.system_properties import PARENT_CASE_TABLE_PROPERTIES
 
-        table = instance.get_table(PARENT_CASE_TABLE) or TableConfiguration(
-            path=PARENT_CASE_TABLE,
-            label=instance.defaults.get_default_table_name(PARENT_CASE_TABLE),
-            selected=instance.defaults.default_is_table_selected(PARENT_CASE_TABLE),
-            columns=[],
-        )
         for static_column in PARENT_CASE_TABLE_PROPERTIES:
-            column = table.get_column(static_column.item.path, static_column.transforms)
-            table.columns.append(column or static_column)
-
-        if not instance.get_table(PARENT_CASE_TABLE):
-            instance.tables.append(table)
+            existing_column = table.get_column(static_column.item.path, static_column.transforms)
+            columns.insert(0, existing_column or static_column)
 
     @classmethod
     def _insert_case_history_system_properties(cls, table, columns):
@@ -971,10 +959,15 @@ class CaseExportDataSchema(ExportDataSchema):
                 app.copy_of,
                 app.version,
             )
+            case_parent_schema = CaseExportDataSchema._generate_schema_for_parent_case(
+                app.copy_of,
+                app.version,
+            )
 
             current_case_schema = CaseExportDataSchema._merge_schemas(
                 case_schema,
                 case_history_schema,
+                case_parent_schema,
                 current_case_schema,
             )
 
@@ -1013,6 +1006,15 @@ class CaseExportDataSchema(ExportDataSchema):
 
             schema.group_schemas.append(group_schema)
 
+        return schema
+
+    @staticmethod
+    def _generate_schema_for_parent_case(app_id, app_version):
+        schema = CaseExportDataSchema()
+        schema.group_schemas.append(ExportGroupSchema(
+            path=PARENT_CASE_TABLE,
+            last_occurrences={app_id: app_version},
+        ))
         return schema
 
     @staticmethod

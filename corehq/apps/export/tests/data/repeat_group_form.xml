@@ -45,7 +45,7 @@
 				</input>
 			</repeat>
 		</group>
-		<input ref="/data/question1">
+		<input ref="/data/zendquestion">
 			<label ref="jr:itext('zendquestion-label')" />
 		</input>
 	</h:body>
