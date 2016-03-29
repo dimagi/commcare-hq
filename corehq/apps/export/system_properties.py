@@ -13,8 +13,7 @@ from corehq.apps.export.const import (
     USERNAME_TRANSFORM,
     OWNER_ID_TRANSFORM,
     PROPERTY_TAG_NONE)
-from corehq.apps.export.models import ExportColumn, ExportItem
-from corehq.apps.export.models.new import PathNode
+from corehq.apps.export.models import ExportColumn, ExportItem, PathNode
 
 # System properties to be displayed above the form questions
 TOP_MAIN_FORM_TABLE_PROPERTIES = [
