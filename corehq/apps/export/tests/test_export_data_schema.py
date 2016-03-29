@@ -66,7 +66,7 @@ class TestFormExportDataSchema(SimpleTestCase, TestXmlMixin):
         )
         self.assertEqual(
             group_schema.items[0].path,
-            [PathNode(name='form'), PathNode(name='question3'), PathNode(name='question4')]
+            [PathNode(name='form'), PathNode(name='question3', is_repeat=True), PathNode(name='question4')]
         )
 
     def test_xform_parsing_with_multiple_choice(self):
