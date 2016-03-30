@@ -258,6 +258,7 @@ hqDefine('cloudcare/js/backbone/cases.js', function () {
             return _.any(_.map(columns, function(d) { return d.field; }), isParentField);
         },
         appendItem: function (item) {
+            var cloudCare = hqDefine('cloudcare/js/backbone/apps.js');
             var self = this;
             item.set('casedb', self.caseList.casedb);
             var caseView = new cloudCareCases.CaseView({
