@@ -20,14 +20,14 @@
                                 <ul class="dropdown-menu">
                                 {% for second_sub in sub.submenu %}
                                     {% with second_sub as submenu %}
-                                        {% include 'style/includes/menu_submenu.html' %}
+                                        {% include 'tabs/menu_submenu.html' %}
                                     {% endwith %}
                                 {% endfor %}
                                 </ul>
                             </li>
                         {% else %}
                             {% with sub as submenu %}
-                            {% include 'style/includes/menu_submenu.html' %}
+                            {% include 'tabs/menu_submenu.html' %}
                             {% endwith %}
                         {% endif %}
                     {% endfor %}
@@ -38,4 +38,4 @@
     {% endcache %}
     {% endfor %}
 </ul>
-{% include 'style/includes/menu_main_js.html' %}
+{% include 'tabs/menu_main_js.html' %}

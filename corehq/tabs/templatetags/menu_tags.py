@@ -42,7 +42,7 @@ class MainMenuNode(template.Node):
         # other blocks
         context.dicts[0]['active_tab'] = _get_active_tab(
             visible_tabs, request.get_full_path())
-        return mark_safe(render_to_string('style/includes/menu_main.html', {
+        return mark_safe(render_to_string('tabs/menu_main.html', {
             'tabs': visible_tabs,
         }))
 
