@@ -1,3 +1,10 @@
+var showError = hqImport('cloudcare/js/util.js').showError;
+var showSuccess = hqImport('cloudcare/js/util.js').showSuccess;
+var showLoading = hqImport('cloudcare/js/util.js').showLoading;
+var tfLoading = hqImport('cloudcare/js/util.js').tfLoading;
+var tfLoadingComplete = hqImport('cloudcare/js/util.js').tfLoadingComplete;
+var tfSyncComplete = hqImport('cloudcare/js/util.js').tfSyncComplete;
+var hideLoading = hqImport('cloudcare/js/util.js').hideLoading;
 
 if (typeof cloudCare === 'undefined') {
     var cloudCare = {};
@@ -543,6 +550,8 @@ cloudCare.AppView = Backbone.View.extend({
     },
     selectCase: function (caseModel) {
         var self = this,
+            getFormEntryUrl = hqImport('cloudcare/js/util.js').getFormEntryUrl,
+            getChildSelectUrl = hqImport('cloudcare/js/util.js').getChildSelectUrl,
             buttonUrl;
         self.formListView.caseView.selectCase(caseModel);
         if (caseModel) {
@@ -602,6 +611,7 @@ cloudCare.AppView = Backbone.View.extend({
     },
     getFormUrl: function (module, form, caseModel) {
         var self = this;
+        var getFormUrl = hqImport('cloudcare/js/util.js').getFormUrl;
         var referencedForm = form, url;
         if (form.get('index') === 'task-list') {
             referencedForm = module.getFormByUniqueId(caseModel.getProperty('form_id'));
@@ -633,6 +643,7 @@ cloudCare.AppView = Backbone.View.extend({
     playSession: function (session) {
         var self = this;
         var session_id = session.get('id');
+        var getSessionContextUrl = hqImport('cloudcare/js/util.js').getSessionContextUrl;
 
         var resp = $.ajax({
             url: getSessionContextUrl(self.options.sessionUrlRoot, session_id),
@@ -771,6 +782,7 @@ cloudCare.AppView = Backbone.View.extend({
     selectForm: function (form) {
         var self = this;
         var formListView = self.formListView;
+        var getCaseFilterUrl = hqImport('cloudcare/js/util.js').getCaseFilterUrl;
         self.selectedForm = form;
         self._clearFormPlayer();
 
@@ -1257,6 +1269,7 @@ cloudCare.AppMainView = Backbone.View.extend({
             self.updateTitle(module ? module.get('name')[self.options.language] : null);
         });
         cloudCare.dispatch.on("form:enter", function (form, caseModel) {
+            var getFormEntryPath = hqImport('cloudcare/js/util.js').getFormEntryPath;
             var caseId;
             if (typeof caseModel !== 'undefined') {
                 caseId = caseModel.id;

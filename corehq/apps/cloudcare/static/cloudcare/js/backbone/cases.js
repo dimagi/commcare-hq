@@ -1,3 +1,9 @@
+var localize = hqImport('cloudcare/js/util.js').localize;
+var showError = hqImport('cloudcare/js/util.js').showError;
+var showLoading = hqImport('cloudcare/js/util.js').showLoading;
+var hideLoadingCallback = hqImport('cloudcare/js/util.js').hideLoadingCallback;
+var isParentField = hqImport('cloudcare/js/util.js').isParentField;
+
 if (typeof cloudCare === 'undefined') {
     var cloudCare = {};
 }
@@ -81,6 +87,7 @@ cloudCare.Case = Backbone.Model.extend({
     },
 
     childCaseUrl: function() {
+        var getChildSelectUrl = hqImport('cloudcare/js/util.js').getChildSelectUrl;
         var parentConfig = this.get("appConfig");
         if (!parentConfig) {
             throw "not a parent case";

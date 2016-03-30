@@ -3,7 +3,7 @@
 /*
  * A localizable model, with a method "getLocalized"
  */
-
+var getLocalizedString = hqImport('cloudcare/js/util.js').getLocalizedString;
 var LocalizableModel = Backbone.Model.extend({
     initialize: function () {
         _.bindAll(this, 'getLocalized');

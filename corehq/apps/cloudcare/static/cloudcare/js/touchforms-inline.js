@@ -62,6 +62,8 @@
     };
 
     $("body").on('click', '.touchforms-link', function () {
+        var getFormUrl = hqImport('cloudcare/js/util.js').getFormUrl;
+        var getSubmitUrl = hqImport('cloudcare/js/util.js').getSubmitUrl;
         var $this = $(this),
             $target = $($this.data('target')),
             appId = $this.data('app-id'),
