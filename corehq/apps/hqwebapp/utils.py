@@ -5,6 +5,7 @@ from django.template.loader import render_to_string
 from Crypto.PublicKey import RSA
 from Crypto.Hash import SHA256
 from Crypto.Signature import PKCS1_PSS
+from django.templatetags.i18n import language_name
 
 from dimagi.utils.decorators.memoized import memoized
 from corehq.apps.hqwebapp.forms import BulkUploadForm
@@ -67,3 +68,16 @@ def csrf_inline(request):
     from django.template import Template, RequestContext
     node = "{% csrf_token %}"
     return Template(node).render(RequestContext(request))
+
+
+def aliased_language_name(lang_code):
+    """
+    This is needed since we use non-standard language codes as alias, for e.g. 'fra' instead of 'fr' for French
+    """
+    try:
+        return language_name(lang_code)
+    except KeyError:
+        for code, name in settings.LANGUAGES:
+            if code == lang_code:
+                return name
+        raise KeyError('Unknown language code %s' % lang_code)
