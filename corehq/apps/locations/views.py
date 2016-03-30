@@ -6,7 +6,7 @@ from django.http.response import HttpResponseServerError
 from django.shortcuts import render
 from django.utils.decorators import method_decorator
 from django.utils.safestring import mark_safe
-from django.utils.translation import ugettext as _, ugettext_noop
+from django.utils.translation import ugettext as _, ugettext_noop, ugettext_lazy
 from django.views.decorators.http import require_POST, require_http_methods
 
 from couchdbkit import ResourceNotFound
@@ -106,7 +106,7 @@ class LocationsListView(BaseLocationView):
 class LocationFieldsView(CustomDataModelMixin, BaseLocationView):
     urlname = 'location_fields_view'
     field_type = 'LocationFields'
-    entity_string = _("Location")
+    entity_string = ugettext_lazy("Location")
     template_name = "custom_data_fields/bootstrap3/custom_data_fields.html"
 
     @method_decorator(is_locations_admin)

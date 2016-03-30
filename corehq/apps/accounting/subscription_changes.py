@@ -79,6 +79,7 @@ class DomainDowngradeActionHandler(BaseModifySubscriptionActionHandler):
             privileges.ROLE_BASED_ACCESS: cls.response_role_based_access,
             privileges.DATA_CLEANUP: cls.response_data_cleanup,
             privileges.COMMCARE_LOGO_UPLOADER: cls.response_commcare_logo_uploader,
+            privileges.ADVANCED_DOMAIN_SECURITY: cls.response_domain_security
         }
 
     @staticmethod
@@ -113,7 +114,7 @@ class DomainDowngradeActionHandler(BaseModifySubscriptionActionHandler):
                 survey.save()
         except Exception:
             log_accounting_error(
-                "Failed to downgrade outbound sms for domain %s."
+                "Failed to downgrade inbound sms for domain %s."
                 % domain.name
             )
             return False
@@ -181,6 +182,13 @@ class DomainDowngradeActionHandler(BaseModifySubscriptionActionHandler):
                 % domain.name
             )
             return False
+
+    @staticmethod
+    def response_domain_security(domain):
+        if domain.two_factor_auth or domain.secure_sessions:
+            domain.two_factor_auth = False
+            domain.secure_sessions = False
+            domain.save()
 
 
 class DomainUpgradeActionHandler(BaseModifySubscriptionActionHandler):
@@ -258,6 +266,7 @@ class DomainDowngradeStatusHandler(BaseModifySubscriptionHandler):
             privileges.DEIDENTIFIED_DATA: cls.response_deidentified_data,
             privileges.ROLE_BASED_ACCESS: cls.response_role_based_access,
             privileges.DATA_CLEANUP: cls.response_data_cleanup,
+            privileges.ADVANCED_DOMAIN_SECURITY: cls.response_domain_security,
         }
 
     def get_response(self):
@@ -500,4 +509,28 @@ class DomainDowngradeStatusHandler(BaseModifySubscriptionHandler):
                 ) % {
                     'rule_count': rule_count,
                 }
+            )
+
+    @staticmethod
+    def response_domain_security(domain):
+        """
+        turn off any domain enforced security features and alert user of deactivated features
+        """
+        two_factor = domain.two_factor_auth
+        secure_sessions = domain.secure_sessions
+        msgs = []
+        if secure_sessions:
+            msgs.append(_("Your project has enabled a 30 minute session timeout setting. "
+                          "By changing to a different plan, you will lose the ability to "
+                          "enforce this shorter timeout policy."))
+        if two_factor:
+            msgs.append(_("Two factor authentication is currently required of all of your "
+                          "web users for this project space.  By changing to a different "
+                          "plan you will lose the ability to enforce this requirement. "
+                          "However, any web user who still wants to use two factor "
+                          "authentication will be able to continue using it."))
+        if msgs:
+            return _fmt_alert(
+                _("The following security features will be affected if you select this plan:"),
+                msgs
             )

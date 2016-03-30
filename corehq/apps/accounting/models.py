@@ -63,6 +63,7 @@ from corehq.const import USER_DATE_FORMAT
 from corehq.util.dates import get_first_last_days
 from corehq.util.quickcache import quickcache
 from corehq.util.view_utils import absolute_reverse
+from corehq.apps.analytics.tasks import track_workflow
 
 integer_field_validators = [MaxValueValidator(2147483647), MinValueValidator(-2147483648)]
 
@@ -1308,6 +1309,13 @@ class Subscription(models.Model):
             reason=change_status_result.adjustment_reason, related_subscription=new_subscription
         )
 
+        upgrade_reasons = [SubscriptionAdjustmentReason.UPGRADE, SubscriptionAdjustmentReason.CREATE]
+        if web_user and adjustment_method == SubscriptionAdjustmentMethod.USER:
+            if change_status_result.adjustment_reason in upgrade_reasons:
+                track_workflow(web_user, 'Changed Plan: Upgrade')
+            if change_status_result.adjustment_reason == SubscriptionAdjustmentReason.DOWNGRADE:
+                track_workflow(web_user, 'Changed Plan: Downgrade')
+
         return new_subscription
 
     def reactivate_subscription(self, date_end=None, note=None, web_user=None,
@@ -2400,8 +2408,7 @@ class BillingRecord(BillingRecordBase):
 
     def email_subject(self):
         month_name = self.invoice.date_start.strftime("%B")
-        return "Your %(month)s %(product)s Billing Statement for Project Space %(domain)s" % {
-            'product': self.invoice.subscription.plan_version.core_product,
+        return "Your %(month)s CommCare Billing Statement for Project Space %(domain)s" % {
             'month': month_name,
             'domain': self.invoice.subscription.subscriber.domain,
         }
@@ -2745,11 +2752,6 @@ class CreditLine(models.Model):
                 credit_line.adjust_credit_balance(-adjustment_amount, **kwargs)
                 balance -= adjustment_amount
         return balance
-
-    @staticmethod
-    def _validate_add_amount(amount):
-        if not isinstance(amount, Decimal):
-            raise ValueError("Amount must be a Decimal.")
 
     @classmethod
     def make_payment_towards_invoice(cls, invoice, payment_record):

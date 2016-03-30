@@ -346,7 +346,7 @@ class SubscriptionForm(forms.Form):
     )
     plan_product = forms.ChoiceField(
         label=ugettext_lazy("Core Product"), initial=SoftwareProductType.COMMCARE,
-        choices=SoftwareProductType.CHOICES,
+        choices=[(SoftwareProductType.COMMCARE, SoftwareProductType.COMMCARE)],
     )
     plan_edition = forms.ChoiceField(
         label=ugettext_lazy("Edition"), initial=SoftwarePlanEdition.ENTERPRISE,

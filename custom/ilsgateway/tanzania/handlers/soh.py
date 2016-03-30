@@ -1,11 +1,14 @@
 from datetime import datetime
 from re import findall
 from strop import maketrans
+
+from custom.ilsgateway.slab.messages import REMINDER_TRANS, SOH_OVERSTOCKED
 from custom.ilsgateway.tanzania.handlers.generic_stock_report_handler import GenericStockReportHandler
 from custom.ilsgateway.tanzania.handlers.ils_stock_report_parser import Formatter
 
-from custom.ilsgateway.models import SupplyPointStatusTypes, SupplyPointStatusValues, SupplyPointStatus
+from custom.ilsgateway.models import SupplyPointStatusTypes, SupplyPointStatusValues, SupplyPointStatus, SLABConfig
 from custom.ilsgateway.tanzania.reminders import SOH_HELP_MESSAGE, SOH_CONFIRM, SOH_BAD_FORMAT
+from custom.ilsgateway.slab.utils import overstocked_products
 
 
 def parse_report(val):
@@ -64,8 +67,28 @@ class SOHHandler(GenericStockReportHandler):
 
     formatter = SohFormatter
 
+    def _is_pilot_location(self):
+        try:
+            slab_config = SLABConfig.objects.get(sql_location=self.sql_location)
+            return slab_config.is_pilot
+        except SLABConfig.DoesNotExist:
+            return False
+
     def get_message(self, data):
-        return SOH_CONFIRM
+        if not self._is_pilot_location():
+            return SOH_CONFIRM
+        else:
+            overstocked_msg = ""
+            products_msg = ""
+            for product_code, stock_on_hand, six_month_consumption in overstocked_products(self.sql_location):
+                overstocked_msg += "%s: %s " % (product_code, stock_on_hand)
+                products_msg += "%s: %s " % (product_code, six_month_consumption)
+
+            if overstocked_msg and products_msg:
+                self.respond(
+                    SOH_OVERSTOCKED, overstocked_list=overstocked_msg.strip(), products_list=products_msg.strip()
+                )
+            return REMINDER_TRANS
 
     def on_success(self):
         SupplyPointStatus.objects.create(location_id=self.location_id,

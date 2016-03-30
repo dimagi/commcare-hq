@@ -480,9 +480,12 @@ class CaseAccessorSQL(AbstractCaseAccessor):
             return [result.case_id for result in results]
 
     @staticmethod
-    def get_case_ids_in_domain_by_owners(domain, owner_ids):
+    def get_case_ids_in_domain_by_owners(domain, owner_ids, closed=None):
         with get_cursor(CommCareCaseSQL) as cursor:
-            cursor.execute('SELECT case_id FROM get_case_ids_in_domain_by_owners(%s, %s)', [domain, owner_ids])
+            cursor.execute(
+                'SELECT case_id FROM get_case_ids_in_domain_by_owners(%s, %s, %s)',
+                [domain, owner_ids, closed]
+            )
             results = fetchall_as_namedtuple(cursor)
             return [result.case_id for result in results]
 

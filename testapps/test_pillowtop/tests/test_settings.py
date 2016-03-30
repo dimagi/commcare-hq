@@ -51,14 +51,14 @@ class PillowtopSettingsTest(TestCase, TestFileMixin):
 def _pillow_meta_from_config(pillow_config):
     pillow_class = pillow_config.get_class()
     is_elastic = issubclass(pillow_class, AliasedElasticPillow)
-    if pillow_config.instance_generator == pillow_config.class_name:
+    if pillow_config.instance_generator is None:
         kwargs = {'online': False} if is_elastic else {}
         pillow_instance = pillow_class(**kwargs)
     else:
         # if we have a custom instance generator just use it
         pillow_instance = pillow_config.get_instance()
     props = {
-        'name': pillow_config.name,
+        'name': pillow_instance.pillow_id,
         'advertised_name': pillow_instance.get_name(),
         'full_class_name': pillow_config.class_name,
         'checkpoint_id': pillow_instance.checkpoint.checkpoint_id,

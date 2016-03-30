@@ -5,6 +5,7 @@ from corehq.apps.repeaters.dbaccessors import (
     get_pending_repeat_record_count,
     get_success_repeat_record_count,
     get_failure_repeat_record_count,
+    get_repeat_record_count,
     get_repeaters_by_domain,
     get_paged_repeat_records,
     iterate_repeat_records,
@@ -74,6 +75,10 @@ class TestRepeatRecordDBAccessors(TestCase):
     def test_get_failure_repeat_record_count(self):
         count = get_failure_repeat_record_count(self.domain, self.repeater_id)
         self.assertEqual(count, 1)
+
+    def test_get_paged_repeat_records_with_state_and_no_records(self):
+        count = get_repeat_record_count('wrong-domain', state=RECORD_PENDING_STATE)
+        self.assertEqual(count, 0)
 
     def test_get_paged_repeat_records(self):
         records = get_paged_repeat_records(self.domain, 0, 2)

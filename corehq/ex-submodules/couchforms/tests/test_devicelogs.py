@@ -1,11 +1,13 @@
 import os
-from django.test import TestCase
+from django.test import SimpleTestCase, TestCase
 
 from corehq.apps.receiverwrapper import submit_form_locally
 from corehq.util.test_utils import TestFileMixin
 from corehq.form_processor.interfaces.processor import FormProcessorInterface
 from corehq.form_processor.tests.utils import run_with_all_backends
+from corehq.form_processor.utils import convert_xform_to_json
 from phonelog.models import UserEntry, DeviceReportEntry, UserErrorEntry
+from phonelog.utils import _get_logs
 
 
 class DeviceLogTest(TestCase, TestFileMixin):
@@ -69,3 +71,54 @@ class DeviceLogTest(TestCase, TestFileMixin):
     def test_subreports_that_shouldnt_fail(self):
         xml = self.get_xml('subreports_that_shouldnt_fail')
         submit_form_locally(xml, 'test-domain')
+
+
+class TestDeviceLogUtils(SimpleTestCase, TestFileMixin):
+    file_path = ('data', 'devicelogs')
+    root = os.path.dirname(__file__)
+
+    def test_single_node(self):
+        form_data = convert_xform_to_json(self.get_xml('single_node'))
+        self.assertEqual(
+            _get_logs(form_data, 'log_subreport', 'log'),
+            [{u'@date': u'2016-03-20T20:46:08.664+05:30',
+              u'msg': u'Logging out service login',
+              u'type': u'maintenance'},
+             {u'@date': u'2016-03-20T20:46:08.988+05:30',
+              u'msg': u'login|user.test|gxpg40k9lh9w7853w3gc91o1g7zu1wi8',
+              u'type': u'user'}]
+        )
+
+    def test_single_entry(self):
+        form_data = convert_xform_to_json(self.get_xml('single_entry'))
+        self.assertEqual(
+            _get_logs(form_data, 'user_error_subreport', 'user_error'),
+            [{"session": "frame: (COMMAND_ID m1)",
+              "user_id": "65t2l8ga654k93z92j236e2h30jt048b",
+              "expr": "",
+              "app_id": "skj94l95tw0k6v8esdj9s2g4chfpup83",
+              "version": "89",
+              "msg": ("XPath evaluation: type mismatch It looks like this "
+                      "question contains a reference to path number which "
+                      "evaluated to instance(item-list:numbers)/numbers_list"
+                      "/numbers[1]/number which was not found. This often "
+                      "means you forgot to include the full path to the "
+                      "question -- e.g. /data/[node]"),
+              "@date": "2016-03-23T12:27:33.681-04",
+              "type": "error-config"}]
+        )
+
+    def test_multiple_nodes(self):
+        form_data = convert_xform_to_json(self.get_xml('multiple_nodes'))
+        self.assertEqual(
+            _get_logs(form_data, 'log_subreport', 'log'),
+            [{u'@date': u'2016-03-20T20:46:08.664+05:30',
+              u'msg': u'Logging out service login',
+              u'type': u'maintenance'},
+             {u'@date': u'2016-03-20T20:46:08.988+05:30',
+              u'msg': u'login|user.test|gxpg40k9lh9w7853w3gc91o1g7zu1wi8',
+              u'type': u'user'},
+             {u'@date': u'2016-03-19T23:50:11.219+05:30',
+              u'msg': u'Staging Sandbox: 7t3iyx01dxnn49a5xqt32916q5u7epn0',
+              u'type': u'resources'}]
+        )

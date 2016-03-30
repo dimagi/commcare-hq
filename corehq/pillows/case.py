@@ -5,6 +5,7 @@ from corehq.apps.change_feed.consumer.feed import KafkaChangeFeed
 from corehq.elastic import get_es_new
 from corehq.form_processor.change_providers import SqlCaseChangeProvider
 from corehq.pillows.mappings.case_mapping import CASE_MAPPING, CASE_INDEX
+from corehq.pillows.utils import get_user_type
 from dimagi.utils.couch import LockManager
 from dimagi.utils.decorators.memoized import memoized
 from .base import HQPillow
@@ -71,10 +72,13 @@ def transform_case_for_elasticsearch(doc_dict):
     if not doc_ret.get("owner_id"):
         if doc_ret.get("user_id"):
             doc_ret["owner_id"] = doc_ret["user_id"]
+
+    doc_ret['owner_type'] = get_user_type(doc_ret.get("owner_id", None))
+
     return doc_ret
 
 
-def get_sql_case_to_elasticsearch_pillow():
+def get_sql_case_to_elasticsearch_pillow(pillow_id='SqlCaseToElasticsearchPillow'):
     checkpoint = PillowCheckpoint(
         'sql-cases-to-elasticsearch',
     )
@@ -84,7 +88,7 @@ def get_sql_case_to_elasticsearch_pillow():
         doc_prep_fn=transform_case_for_elasticsearch
     )
     return ConstructedPillow(
-        name='SqlCaseToElasticsearchPillow',
+        name=pillow_id,
         document_store=None,
         checkpoint=checkpoint,
         change_feed=KafkaChangeFeed(topics=[topics.CASE_SQL], group_id='sql-cases-to-es'),
