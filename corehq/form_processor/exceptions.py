@@ -12,7 +12,7 @@ class XFormNotFound(ResourceNotFound, ObjectDoesNotExist):
     pass
 
 
-class AttachmentNotFound(ResourceNotFound, ObjectDoesNotExist, UnicodeMixIn):
+class AttachmentNotFound(UnicodeMixIn, ResourceNotFound, ObjectDoesNotExist):
     def __init__(self, attachment_name):
         self.attachment_name = attachment_name
 
@@ -20,7 +20,15 @@ class AttachmentNotFound(ResourceNotFound, ObjectDoesNotExist, UnicodeMixIn):
         return "Attachment '{}' not found".format(self.attachment_name)
 
 
+class CouchSaveAborted(Exception):
+    pass
+
+
 class CaseSaveError(Exception):
+    pass
+
+
+class LedgerSaveError(Exception):
     pass
 
 
@@ -30,3 +38,7 @@ class AccessRestricted(Exception):
 
 class InvalidAttachment(Exception):
     pass
+
+
+class UnknownActionType(Exception):
+    """Thrown when an unknown action type is set on a CaseTransaction"""

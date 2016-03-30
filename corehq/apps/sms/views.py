@@ -34,16 +34,24 @@ from corehq.apps.sms.api import (
 from corehq.apps.domain.views import BaseDomainView, DomainViewMixin
 from corehq.apps.hqwebapp.views import CRUDPaginatedViewMixin
 from corehq.apps.sms.dbaccessors import get_forwarding_rules_for_domain
-from corehq.apps.style.decorators import use_bootstrap3, use_timepicker, use_typeahead, use_select2, use_jquery_ui, \
-    upgrade_knockout_js
+from corehq.apps.style.decorators import (
+    use_bootstrap3,
+    use_timepicker,
+    use_typeahead,
+    use_select2,
+    use_jquery_ui,
+    upgrade_knockout_js,
+    use_datatables,
+)
 from corehq.apps.users.decorators import require_permission
 from corehq.apps.users.models import CouchUser, Permissions, CommCareUser
 from corehq.apps.users import models as user_models
 from corehq.apps.users.views.mobile.users import EditCommCareUserView
 from corehq.apps.sms.models import (
-    SMSLog, INCOMING, OUTGOING, ForwardingRule,
-    LastReadMessage, MessagingEvent, SelfRegistrationInvitation,
-    SQLMobileBackend, SQLMobileBackendMapping, PhoneLoadBalancingMixin
+    SMS, INCOMING, OUTGOING, ForwardingRule,
+    MessagingEvent, SelfRegistrationInvitation,
+    SQLMobileBackend, SQLMobileBackendMapping, PhoneLoadBalancingMixin,
+    SQLLastReadMessage
 )
 from corehq.apps.sms.mixin import VerifiedNumber, BadSMSConfigException
 from corehq.apps.sms.forms import (ForwardingRuleForm, BackendMapForm,
@@ -67,7 +75,10 @@ from corehq.apps.translations.models import StandaloneTranslationDoc
 from corehq.util.dates import iso_string_to_datetime
 from corehq.util.spreadsheets.excel import WorkbookJSONReader
 from corehq.util.timezones.conversions import ServerTime, UserTime
+from corehq.util.quickcache import quickcache
 from django.contrib import messages
+from django.db.models import Q
+from corehq.util.soft_assert import soft_assert
 from corehq.util.timezones.utils import get_timezone_for_user
 from django.views.decorators.csrf import csrf_exempt
 from django.views.generic import View
@@ -79,7 +90,7 @@ from dimagi.utils.decorators.memoized import memoized
 from dimagi.utils.decorators.view import get_file
 from dimagi.utils.logging import notify_exception
 from dimagi.utils.web import json_response
-from dimagi.utils.couch import release_lock
+from dimagi.utils.couch import CriticalSection
 from dimagi.utils.couch.database import iter_docs
 from dimagi.utils.couch.cache import cache_core
 from django.conf import settings
@@ -123,20 +134,6 @@ class BaseAdvancedMessagingSectionView(BaseMessagingSectionView):
         return super(BaseAdvancedMessagingSectionView, self).dispatch(*args, **kwargs)
 
 
-@login_and_domain_required
-@requires_privilege_with_fallback(privileges.OUTBOUND_SMS)
-def messaging(request, domain, template="sms/default.html"):
-    context = get_sms_autocomplete_context(request, domain)
-    context['domain'] = domain
-    context['messagelog'] = SMSLog.by_domain_dsc(domain)
-    context['now'] = datetime.utcnow()
-    tz = get_timezone_for_user(request.couch_user, domain)
-    context['timezone'] = tz
-    context['timezone_now'] = datetime.now(tz=tz)
-    context['layout_flush_content'] = True
-    return render(request, template, context)
-
-
 class ComposeMessageView(BaseMessagingSectionView):
     template_name = 'sms/compose.html'
     urlname = 'sms_compose_message'
@@ -163,34 +160,14 @@ class ComposeMessageView(BaseMessagingSectionView):
         return super(BaseMessagingSectionView, self).dispatch(*args, **kwargs)
 
 
+@csrf_exempt
 def post(request, domain):
-    # TODO: Figure out if this is being used anywhere and remove it if not
     """
-    We assume sms sent to HQ will come in the form
-    http://hqurl.com?username=%(username)s&password=%(password)s&id=%(phone_number)s&text=%(message)s
+    I don't know of anywhere this is being invoked from. If the soft asserts
+    don't produce any results then I'll remove it.
     """
-    text = request.REQUEST.get('text', '')
-    to = request.REQUEST.get('id', '')
-    username = request.REQUEST.get('username', '')
-    # ah, plaintext passwords....  
-    # this seems to be the most common API that a lot of SMS gateways expose
-    password = request.REQUEST.get('password', '')
-    if not text or not to or not username or not password:
-        error_msg = 'ERROR missing parameters. Received: %(1)s, %(2)s, %(3)s, %(4)s' % \
-                     ( text, to, username, password )
-        logging.error(error_msg)
-        return HttpResponseBadRequest(error_msg)
-    user = authenticate(username=username, password=password)
-    if user is None or not user.is_active:
-        return HttpResponseBadRequest("Authentication fail")
-    msg = SMSLog(domain=domain,
-                 # TODO: how to map phone numbers to recipients, when phone numbers are shared?
-                 #couch_recipient=id, 
-                 phone_number=to,
-                 direction=INCOMING,
-                 date = datetime.utcnow(),
-                 text = text)
-    msg.save()
+    _assert = soft_assert('@'.join(['gcapalbo', 'dimagi.com']), exponential_backoff=False)
+    _assert(False, "sms post invoked")
     return HttpResponse('OK')
 
 
@@ -391,11 +368,6 @@ def message_test(request, domain, phone_number):
 
     context = get_sms_autocomplete_context(request, domain)
     context['domain'] = domain
-    context['messagelog'] = SMSLog.by_domain_dsc(domain)
-    context['now'] = datetime.utcnow()
-    tz = get_timezone_for_user(request.couch_user, domain)
-    context['timezone'] = tz
-    context['timezone_now'] = datetime.now(tz=tz)
     context['layout_flush_content'] = True
     context['phone_number'] = phone_number
     return render(request, "sms/message_tester.html", context)
@@ -625,13 +597,16 @@ class GlobalBackendMap(BaseAdminSectionView):
         return self.get(request, *args, **kwargs)
 
 
-@require_permission(Permissions.edit_data)
-@requires_privilege_with_fallback(privileges.OUTBOUND_SMS)
-def chat_contacts(request, domain):
-    context = {
-        "domain" : domain,
-    }
-    return render(request, "sms/chat_contacts.html", context)
+class ChatOverSMSView(BaseMessagingSectionView):
+    urlname = 'chat_contacts'
+    template_name = 'sms/chat_contacts.html'
+    page_title = _("Chat over SMS")
+
+    @method_decorator(require_permission(Permissions.edit_data))
+    @use_bootstrap3
+    @use_datatables
+    def dispatch(self, *args, **kwargs):
+        return super(ChatOverSMSView, self).dispatch(*args, **kwargs)
 
 
 def get_case_contact_info(domain_obj, case_ids):
@@ -787,129 +762,183 @@ def chat(request, domain, contact_id, vn_id=None):
     template = settings.CUSTOM_CHAT_TEMPLATES.get(domain_obj.custom_chat_template) or "sms/chat.html"
     return render(request, template, context)
 
-@require_permission(Permissions.edit_data)
-@requires_privilege_with_fallback(privileges.OUTBOUND_SMS)
-def api_history(request, domain):
-    result = []
-    contact_id = request.GET.get("contact_id", None)
-    start_date = request.GET.get("start_date", None)
-    timezone = get_timezone_for_user(None, domain)
-    domain_obj = Domain.get_by_name(domain, strict=True)
 
-    try:
-        assert contact_id is not None
-        doc = get_contact(contact_id)
-        assert doc is not None
-        assert doc.domain == domain
-    except Exception:
-        return HttpResponse("[]")
+class ChatMessageHistory(View, DomainViewMixin):
+    urlname = 'api_history'
 
-    query_start_date_str = None
-    if start_date is not None:
-        try:
-            query_start_date = iso_string_to_datetime(start_date)
-            query_start_date += timedelta(seconds=1)
-            query_start_date_str = json_format_datetime(query_start_date)
-        except Exception:
-            pass
+    @method_decorator(require_permission(Permissions.edit_data))
+    @method_decorator(requires_privilege_with_fallback(privileges.OUTBOUND_SMS))
+    def dispatch(self, request, *args, **kwargs):
+        return super(ChatMessageHistory, self).dispatch(request, *args, **kwargs)
 
-    if query_start_date_str is not None:
-        data = SMSLog.view("sms/by_recipient",
-                           startkey=[doc.doc_type, contact_id, "SMSLog", INCOMING, query_start_date_str],
-                           endkey=[doc.doc_type, contact_id, "SMSLog", INCOMING, {}],
-                           include_docs=True,
-                           reduce=False).all()
-        data += SMSLog.view("sms/by_recipient",
-                            startkey=[doc.doc_type, contact_id, "SMSLog", OUTGOING, query_start_date_str],
-                            endkey=[doc.doc_type, contact_id, "SMSLog", OUTGOING, {}],
-                            include_docs=True,
-                            reduce=False).all()
-    else:
-        data = SMSLog.view("sms/by_recipient",
-                           startkey=[doc.doc_type, contact_id, "SMSLog"],
-                           endkey=[doc.doc_type, contact_id, "SMSLog", {}],
-                           include_docs=True,
-                           reduce=False).all()
-    data.sort(key=lambda x : x.date)
-    username_map = {}
-    last_sms = None
-    for sms in data:
-        # Don't show outgoing SMS that haven't been processed yet
-        if sms.direction == OUTGOING and not sms.processed:
-            continue
-        # Filter SMS that are tied to surveys if necessary
-        if ((domain_obj.filter_surveys_from_chat and 
-             sms.xforms_session_couch_id)
-            and not
-            (domain_obj.show_invalid_survey_responses_in_chat and
-             sms.direction == INCOMING and
-             sms.invalid_survey_response)):
-            continue
-        if sms.direction == INCOMING:
-            if doc.doc_type == "CommCareCase" and domain_obj.custom_case_username:
-                sender = doc.get_case_property(domain_obj.custom_case_username)
-            elif doc.doc_type == "CommCareCase":
-                sender = doc.name
+    @property
+    @memoized
+    def contact_id(self):
+        return self.request.GET.get('contact_id')
+
+    @property
+    @memoized
+    def contact(self):
+        if not self.contact_id:
+            return None
+
+        contact = get_contact(self.contact_id)
+        if not contact or contact.domain != self.domain:
+            return None
+
+        return contact
+
+    @property
+    @memoized
+    def contact_name(self):
+        if self.contact.doc_type == 'CommCareCase':
+            if self.domain_object.custom_case_username:
+                return self.contact.get_case_property(self.domain_object.custom_case_username)
             else:
-                sender = doc.first_name or doc.raw_username
-        elif sms.chat_user_id is not None:
-            if sms.chat_user_id in username_map:
-                sender = username_map[sms.chat_user_id]
-            else:
-                try:
-                    user = CouchUser.get_by_user_id(sms.chat_user_id)
-                    sender = user.first_name or user.raw_username
-                except Exception:
-                    sender = _("Unknown")
-                username_map[sms.chat_user_id] = sender
+                return self.contact.name
         else:
-            sender = _("System")
-        last_sms = sms
-        result.append({
-            "sender": sender,
-            "text": sms.text,
-            "timestamp": (
-                ServerTime(sms.date).user_time(timezone)
-                .ui_string("%I:%M%p %m/%d/%y").lower()
-            ),
-            "utc_timestamp": json_format_datetime(sms.date),
-            "sent_by_requester": (sms.chat_user_id == request.couch_user.get_id),
-        })
-    if last_sms:
-        try:
-            entry, lock = LastReadMessage.get_locked_obj(
-                sms.domain,
-                request.couch_user._id,
-                sms.couch_recipient,
-                create=True
-            )
-            if (not entry.message_timestamp or
-                entry.message_timestamp < last_sms.date):
-                entry.message_id = last_sms._id
-                entry.message_timestamp = last_sms.date
-                entry.save()
-            release_lock(lock, True)
-        except:
-            logging.exception("Could not create/save LastReadMessage for message %s" % last_sms._id)
-            # Don't let this block returning of the data
-            pass
-    return HttpResponse(json.dumps(result))
+            return self.contact.first_name or self.contact.raw_username
 
-@require_permission(Permissions.edit_data)
-@requires_privilege_with_fallback(privileges.OUTBOUND_SMS)
-def api_last_read_message(request, domain):
-    contact_id = request.GET.get("contact_id", None)
-    domain_obj = Domain.get_by_name(domain, strict=True)
-    if domain_obj.count_messages_as_read_by_anyone:
-        lrm = LastReadMessage.by_anyone(domain, contact_id)
-    else:
-        lrm = LastReadMessage.by_user(domain, request.couch_user._id, contact_id)
-    result = {
-        "message_timestamp" : None,
-    }
-    if lrm:
-        result["message_timestamp"] = json_format_datetime(lrm.message_timestamp)
-    return HttpResponse(json.dumps(result))
+    @quickcache(['user_id'], timeout=60 * 60, memoize_timeout=5 * 60)
+    def get_chat_user_name(self, user_id):
+        if not user_id:
+            return _("System")
+
+        try:
+            user = CouchUser.get_by_user_id(user_id)
+            return user.first_name or user.raw_username
+        except:
+            return _("Unknown")
+
+    @property
+    @memoized
+    def start_date_str(self):
+        return self.request.GET.get('start_date')
+
+    @property
+    @memoized
+    def start_date(self):
+        if not self.start_date_str:
+            return None
+
+        try:
+            return iso_string_to_datetime(self.start_date_str)
+        except (TypeError, ValueError):
+            return None
+
+    def get_raw_data(self):
+        result = SMS.objects.filter(
+            domain=self.domain,
+            couch_recipient_doc_type=self.contact.doc_type,
+            couch_recipient=self.contact_id
+        ).exclude(
+            direction=OUTGOING,
+            processed=False
+        )
+        if self.start_date:
+            result = result.filter(date__gt=self.start_date)
+        result = self.filter_survey_data(result)
+        return result.order_by('date')
+
+    def filter_survey_data(self, queryset):
+        if not self.domain_object.filter_surveys_from_chat:
+            return queryset
+
+        if self.domain_object.show_invalid_survey_responses_in_chat:
+            return queryset.exclude(
+                Q(xforms_session_couch_id__isnull=False) &
+                ~Q(direction=INCOMING, invalid_survey_response=True)
+            )
+        else:
+            return queryset.exclude(
+                xforms_session_couch_id__isnull=False
+            )
+
+    def get_response_data(self, requesting_user_id):
+        timezone = get_timezone_for_user(None, self.domain)
+        result = []
+        last_sms = None
+        for sms in self.get_raw_data():
+            last_sms = sms
+            if sms.direction == INCOMING:
+                sender = self.contact_name
+            else:
+                sender = self.get_chat_user_name(sms.chat_user_id)
+            result.append({
+                'sender': sender,
+                'text': sms.text,
+                'timestamp': (
+                    ServerTime(sms.date).user_time(timezone)
+                    .ui_string("%I:%M%p %m/%d/%y").lower()
+                ),
+                'utc_timestamp': json_format_datetime(sms.date),
+                'sent_by_requester': (sms.chat_user_id == requesting_user_id),
+            })
+        return result, last_sms
+
+    def update_last_read_message(self, requesting_user_id, sms):
+        domain = self.domain
+        contact_id = self.contact_id
+
+        key = 'update-last-read-message-%s-%s-%s' % (domain, requesting_user_id, contact_id)
+        with CriticalSection([key]):
+            try:
+                entry = SQLLastReadMessage.objects.get(
+                    domain=domain,
+                    read_by=requesting_user_id,
+                    contact_id=contact_id
+                )
+            except SQLLastReadMessage.DoesNotExist:
+                entry = SQLLastReadMessage(
+                    domain=domain,
+                    read_by=requesting_user_id,
+                    contact_id=contact_id
+                )
+            if not entry.message_timestamp or entry.message_timestamp < sms.date:
+                entry.message_id = sms.couch_id
+                entry.message_timestamp = sms.date
+                entry.save()
+
+    def get(self, request, *args, **kwargs):
+        if not self.contact:
+            return HttpResponse('[]')
+
+        data, last_sms = self.get_response_data(request.couch_user.get_id)
+        if last_sms:
+            try:
+                self.update_last_read_message(request.couch_user.get_id, last_sms)
+            except:
+                notify_exception(request, "Error updating last read message for %s" % last_sms.pk)
+
+        return HttpResponse(json.dumps(data))
+
+
+class ChatLastReadMessage(View, DomainViewMixin):
+    urlname = 'api_last_read_message'
+
+    @method_decorator(require_permission(Permissions.edit_data))
+    @method_decorator(requires_privilege_with_fallback(privileges.OUTBOUND_SMS))
+    def dispatch(self, request, *args, **kwargs):
+        return super(ChatLastReadMessage, self).dispatch(request, *args, **kwargs)
+
+    @property
+    @memoized
+    def contact_id(self):
+        return self.request.GET.get('contact_id')
+
+    def get(self, request, *args, **kwargs):
+        lrm_timestamp = None
+        if self.contact_id:
+            if self.domain_object.count_messages_as_read_by_anyone:
+                lrm = SQLLastReadMessage.by_anyone(self.domain, self.contact_id)
+            else:
+                lrm = SQLLastReadMessage.by_user(self.domain, request.couch_user.get_id, self.contact_id)
+
+            if lrm:
+                lrm_timestamp = json_format_datetime(lrm.message_timestamp)
+        return HttpResponse(json.dumps({
+            'message_timestamp': lrm_timestamp,
+        }))
 
 
 class DomainSmsGatewayListView(CRUDPaginatedViewMixin, BaseMessagingSectionView):

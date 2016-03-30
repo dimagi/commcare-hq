@@ -26,7 +26,9 @@ class ChangeFeedPillowTest(SimpleTestCase):
                 bootstrap_servers=[settings.KAFKA_URL],
                 consumer_timeout_ms=100,
             )
-        self.pillow = ChangeFeedPillow(self._fake_couch, kafka=get_kafka_client(), checkpoint=None)
+        self.pillow = ChangeFeedPillow(
+            'fake-changefeed-pillow-id', self._fake_couch, kafka=get_kafka_client(), checkpoint=None
+        )
 
     def test_process_change(self):
         document = {

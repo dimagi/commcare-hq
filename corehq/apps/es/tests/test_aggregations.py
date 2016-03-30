@@ -3,8 +3,17 @@ from copy import deepcopy
 from django.test.testcases import SimpleTestCase
 
 from corehq.apps.es import filters
-from corehq.apps.es.aggregations import TermsAggregation, FilterAggregation, FiltersAggregation, RangeAggregation, \
-    AggregationRange
+from corehq.apps.es.aggregations import (
+    TermsAggregation,
+    FilterAggregation,
+    FiltersAggregation,
+    RangeAggregation,
+    AggregationRange,
+    StatsAggregation,
+    ExtendedStatsAggregation,
+    TopHitsAggregation,
+    MissingAggregation,
+)
 from corehq.apps.es.es_query import HQESQuery, ESQuerySet
 from corehq.apps.es.tests.utils import ElasticTestMixin
 from corehq.elastic import SIZE_LIMIT
@@ -187,6 +196,130 @@ class TestAggregations(ElasticTestMixin, SimpleTestCase):
             ])
         )
 
+        self.checkQuery(query, json_output)
+
+    def test_stats_aggregation(self):
+        json_output = {
+            "query": {
+                "filtered": {
+                    "filter": {
+                        "and": [
+                            {"match_all": {}}
+                        ]
+                    },
+                    "query": {"match_all": {}}
+                }
+            },
+            "aggs": {
+                "name_stats": {
+                    "stats": {
+                        "field": "name",
+                        "script": "MY weird script"
+                    }
+                },
+            },
+            "size": SIZE_LIMIT
+        }
+        query = HQESQuery('cases').aggregation(
+            StatsAggregation('name_stats', 'name', script='MY weird script')
+        )
+        self.checkQuery(query, json_output)
+
+    def test_extended_stats_aggregation(self):
+        json_output = {
+            "query": {
+                "filtered": {
+                    "filter": {
+                        "and": [
+                            {"match_all": {}}
+                        ]
+                    },
+                    "query": {"match_all": {}}
+                }
+            },
+            "aggs": {
+                "name_stats": {
+                    "extended_stats": {
+                        "field": "name",
+                        "script": "MY weird script"
+                    }
+                },
+            },
+            "size": SIZE_LIMIT
+        }
+        query = HQESQuery('cases').aggregation(
+            ExtendedStatsAggregation('name_stats', 'name', script='MY weird script')
+        )
+        self.checkQuery(query, json_output)
+
+    def test_top_hits_aggregation(self):
+        json_output = {
+            "query": {
+                "filtered": {
+                    "filter": {
+                        "and": [
+                            {"match_all": {}}
+                        ]
+                    },
+                    "query": {"match_all": {}}
+                }
+            },
+            "aggs": {
+                "name_top_hits": {
+                    "top_hits": {
+                        "sort": [{
+                            "my_awesome_field": {
+                                "order": "desc"
+                            }
+                        }],
+                        "_source": {
+                            "include": [
+                                "title"
+                            ]
+                        },
+                        "size": 2
+                    },
+                },
+            },
+            "size": SIZE_LIMIT
+        }
+        query = HQESQuery('cases').aggregation(
+            TopHitsAggregation(
+                'name_top_hits',
+                field='my_awesome_field',
+                is_ascending=False,
+                size=2,
+                include=['title'])
+        )
+        self.checkQuery(query, json_output)
+
+    def test_missing_aggregation(self):
+        json_output = {
+            "query": {
+                "filtered": {
+                    "filter": {
+                        "and": [
+                            {"match_all": {}}
+                        ]
+                    },
+                    "query": {"match_all": {}}
+                }
+            },
+            "aggs": {
+                "missing_user_id": {
+                    "missing": {
+                        "field": "user_id"
+                    }
+                },
+            },
+            "size": SIZE_LIMIT
+        }
+        query = HQESQuery('cases').aggregation(
+            MissingAggregation(
+                'missing_user_id',
+                'user_id',
+            )
+        )
         self.checkQuery(query, json_output)
 
     def test_date_histogram(self):

@@ -16,7 +16,7 @@ from django.utils.html import strip_tags
 from django.utils.translation import ugettext_lazy as _
 from django_prbac.models import Role
 
-import json_field
+import jsonfield
 import stripe
 
 from couchdbkit import ResourceNotFound
@@ -27,20 +27,30 @@ from dimagi.utils.web import get_site_domain
 
 from corehq.apps.accounting.emails import send_subscription_change_alert
 from corehq.apps.accounting.exceptions import (
-    CreditLineError, AccountingError, SubscriptionAdjustmentError,
-    SubscriptionChangeError, NewSubscriptionError, InvoiceEmailThrottledError,
-    SubscriptionReminderError, SubscriptionRenewalError, ProductPlanNotFoundError,
+    AccountingError,
+    CreditLineError,
+    InvoiceEmailThrottledError,
+    NewSubscriptionError,
+    ProductPlanNotFoundError,
+    SubscriptionAdjustmentError,
+    SubscriptionChangeError,
+    SubscriptionReminderError,
+    SubscriptionRenewalError,
 )
 from corehq.apps.accounting.invoice_pdf import InvoiceTemplate
 from corehq.apps.accounting.signals import subscription_upgrade_or_downgrade
 from corehq.apps.accounting.subscription_changes import (
-    DomainDowngradeActionHandler, DomainUpgradeActionHandler,
+    DomainDowngradeActionHandler,
+    DomainUpgradeActionHandler,
 )
 from corehq.apps.accounting.utils import (
-    get_privileges, get_first_last_days,
-    get_address_from_invoice, get_dimagi_from_email_by_product,
-    fmt_dollar_amount, EXCHANGE_RATE_DECIMAL_PLACES,
-    ensure_domain_instance, get_change_status,
+    ensure_domain_instance,
+    EXCHANGE_RATE_DECIMAL_PLACES,
+    fmt_dollar_amount,
+    get_address_from_invoice,
+    get_change_status,
+    get_dimagi_from_email_by_product,
+    get_privileges,
     is_active_subscription,
     log_accounting_error,
     log_accounting_info,
@@ -50,8 +60,10 @@ from corehq.apps.domain.models import Domain
 from corehq.apps.hqwebapp.tasks import send_html_email_async
 from corehq.apps.users.models import WebUser
 from corehq.const import USER_DATE_FORMAT
+from corehq.util.dates import get_first_last_days
 from corehq.util.quickcache import quickcache
 from corehq.util.view_utils import absolute_reverse
+from corehq.apps.analytics.tasks import track_workflow
 
 integer_field_validators = [MaxValueValidator(2147483647), MinValueValidator(-2147483648)]
 
@@ -498,7 +510,7 @@ class BillingContactInfo(models.Model):
         max_length=50, null=True, blank=True, verbose_name=_("Last Name")
     )
     # TODO - replace with models.ArrayField once django >= 1.9
-    email_list = json_field.JSONField(
+    email_list = jsonfield.JSONField(
         default=[],
         verbose_name=_("Contact Emails"),
         help_text=_("We will email communications regarding your account "
@@ -1070,25 +1082,24 @@ class Subscription(models.Model):
         return ['do_not_invoice', 'no_invoice_reason', 'salesforce_contract_id']
 
     @property
+    def next_subscription_filter(self):
+        return (Subscription.objects.
+                filter(subscriber=self.subscriber, date_start__gt=self.date_start).
+                exclude(pk=self.pk).
+                exclude(date_start=F('date_end')))
+
+    @property
     def is_renewed(self):
         """
         Checks to see if there's another Subscription for this subscriber
         that starts after this subscription.
         """
-        return Subscription.objects.filter(
-            subscriber=self.subscriber, date_start__gt=self.date_start
-        ).exclude(pk=self.pk).exists()
+        return self.next_subscription_filter.exists()
 
     @property
     def next_subscription(self):
         try:
-            return Subscription.objects.filter(
-                subscriber=self.subscriber, date_start__gt=self.date_start
-            ).exclude(
-                pk=self.pk
-            ).exclude(
-                date_start=F('date_end')
-            ).order_by('date_start')[0]
+            return self.next_subscription_filter.order_by('date_start')[0]
         except (Subscription.DoesNotExist, IndexError):
             return None
 
@@ -1298,6 +1309,13 @@ class Subscription(models.Model):
             reason=change_status_result.adjustment_reason, related_subscription=new_subscription
         )
 
+        upgrade_reasons = [SubscriptionAdjustmentReason.UPGRADE, SubscriptionAdjustmentReason.CREATE]
+        if web_user and adjustment_method == SubscriptionAdjustmentMethod.USER:
+            if change_status_result.adjustment_reason in upgrade_reasons:
+                track_workflow(web_user, 'Changed Plan: Upgrade')
+            if change_status_result.adjustment_reason == SubscriptionAdjustmentReason.DOWNGRADE:
+                track_workflow(web_user, 'Changed Plan: Downgrade')
+
         return new_subscription
 
     def reactivate_subscription(self, date_end=None, note=None, web_user=None,
@@ -1420,10 +1438,6 @@ class Subscription(models.Model):
             raise SubscriptionReminderError(
                 "This subscription has no end date."
             )
-        if self.is_renewed:
-            # no need to send a reminder email if the subscription
-            # is already renewed
-            return
         today = datetime.date.today()
         num_days_left = (self.date_end - today).days
         if num_days_left == 1:
@@ -1518,7 +1532,7 @@ class Subscription(models.Model):
         context = {
             'domain': domain,
             'end_date': end_date,
-            'contacts': self.account.billingcontactinfo.email_list,
+            'contacts': ', '.join(self.account.billingcontactinfo.email_list),
             'dimagi_contact': email,
         }
         email_html = render_to_string(template, context)
@@ -1759,7 +1773,7 @@ class WireInvoice(InvoiceBase):
     def email_recipients(self):
         try:
             original_record = WireBillingRecord.objects.filter(invoice=self).order_by('-date_created')[0]
-            return original_record.emailed_to.split(',') if original_record.emailed_to else []
+            return original_record.recipients
         except IndexError:
             log_accounting_error(
                 "Strange that WireInvoice %d has no associated WireBillingRecord. "
@@ -1964,6 +1978,14 @@ class BillingRecordBase(models.Model):
     _pdf = None
 
     @property
+    def recipients(self):
+        return self.emailed_to.split(',') if self.emailed_to else []
+
+    @recipients.setter
+    def recipients(self, emails):
+        self.emailed_to = ','.join(emails)
+
+    @property
     def pdf(self):
         if self._pdf is None:
             return InvoicePdf.get(self.pdf_data_id)
@@ -2063,7 +2085,8 @@ class BillingRecordBase(models.Model):
             try:
                 web_user = WebUser.get_by_username(email)
                 if web_user is not None:
-                    greeting = _("Dear %s,") % web_user.first_name
+                    if web_user.first_name:
+                        greeting = _("Dear %s,") % web_user.first_name
                     can_view_statement = web_user.is_domain_admin(domain)
             except ResourceNotFound:
                 pass
@@ -2077,7 +2100,7 @@ class BillingRecordBase(models.Model):
                 email_from=email_from,
                 file_attachments=[pdf_attachment]
             )
-        self.emailed_to = ",".join(contact_emails)
+        self.recipients = contact_emails
         self.save()
         log_accounting_info(
             "Sent billing statements for domain %(domain)s to %(emails)s." % {
@@ -2385,8 +2408,7 @@ class BillingRecord(BillingRecordBase):
 
     def email_subject(self):
         month_name = self.invoice.date_start.strftime("%B")
-        return "Your %(month)s %(product)s Billing Statement for Project Space %(domain)s" % {
-            'product': self.invoice.subscription.plan_version.core_product,
+        return "Your %(month)s CommCare Billing Statement for Project Space %(domain)s" % {
             'month': month_name,
             'domain': self.invoice.subscription.subscriber.domain,
         }
@@ -2490,13 +2512,13 @@ class InvoicePdf(SafeSaveDocument):
 
 class LineItemManager(models.Manager):
     def get_products(self):
-        return self.get_query_set().filter(feature_rate__exact=None)
+        return self.get_queryset().filter(feature_rate__exact=None)
 
     def get_features(self):
-        return self.get_query_set().filter(product_rate__exact=None)
+        return self.get_queryset().filter(product_rate__exact=None)
 
     def get_feature_by_type(self, feature_type):
-        return self.get_query_set().filter(feature_rate__feature__feature_type=feature_type)
+        return self.get_queryset().filter(feature_rate__feature__feature_type=feature_type)
 
 
 class LineItem(models.Model):
@@ -2730,11 +2752,6 @@ class CreditLine(models.Model):
                 credit_line.adjust_credit_balance(-adjustment_amount, **kwargs)
                 balance -= adjustment_amount
         return balance
-
-    @staticmethod
-    def _validate_add_amount(amount):
-        if not isinstance(amount, Decimal):
-            raise ValueError("Amount must be a Decimal.")
 
     @classmethod
     def make_payment_towards_invoice(cls, invoice, payment_record):

@@ -1,61 +1,62 @@
-from decimal import Decimal
 import functools
 import uuid
 from django.test import TestCase
-from casexml.apps.stock import const
+
+from casexml.apps.case.mock import CaseFactory
 from casexml.apps.stock.consumption import compute_daily_consumption, ConsumptionConfiguration
-from casexml.apps.stock.models import StockReport, StockTransaction
 from casexml.apps.stock.tests.mock_consumption import ago, now
-from casexml.apps.case.models import CommCareCase
+from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.products.models import SQLProduct
 
 
 class StockTestBase(TestCase):
 
+    @classmethod
+    def setUpClass(cls):
+        cls.domain = create_domain("stock-report-test")
+
+    @classmethod
+    def tearDownClass(cls):
+        cls.domain.delete()
+
     def setUp(self):
         # create case
-        self.case_id = uuid.uuid4().hex
-        CommCareCase(
-            _id=self.case_id,
-            domain='fakedomain',
-        ).save()
+        case = CaseFactory(domain=self.domain.name).create_case()
+        self.case_id = case.case_id
 
         self.product_id = uuid.uuid4().hex
-        SQLProduct(product_id=self.product_id).save()
-        self._stock_report = functools.partial(_stock_report, self.case_id, self.product_id)
-        self._receipt_report = functools.partial(_receipt_report, self.case_id, self.product_id)
+        SQLProduct(product_id=self.product_id, domain=self.domain.name).save()
+        self._stock_report = functools.partial(_stock_report, self.domain.name, self.case_id, self.product_id)
+        self._receipt_report = functools.partial(_receipt_report, self.domain.name, self.case_id, self.product_id)
         self._test_config = ConsumptionConfiguration.test_config()
-        self._compute_consumption = functools.partial(compute_daily_consumption, self.case_id,
-                                                      self.product_id, now, configuration=self._test_config)
+        self._compute_consumption = functools.partial(
+            compute_daily_consumption, self.domain.name, self.case_id,
+            self.product_id, now, configuration=self._test_config
+        )
+
+    def tearDown(self):
+        from corehq.form_processor.tests import FormProcessorTestUtils
+        FormProcessorTestUtils.delete_all_xforms(self.domain.name)
+        FormProcessorTestUtils.delete_all_cases(self.domain.name)
 
 
-def _stock_report(case_id, product_id, amount, days_ago):
-    report = StockReport.objects.create(form_id=uuid.uuid4().hex, date=ago(days_ago),
-                                        type=const.REPORT_TYPE_BALANCE)
-    txn = StockTransaction(
-        report=report,
-        section_id=const.SECTION_TYPE_STOCK,
-        type=const.TRANSACTION_TYPE_STOCKONHAND,
-        case_id=case_id,
-        product_id=product_id,
-        stock_on_hand=Decimal(amount),
+def _stock_report(domain, case_id, product_id, amount, days_ago):
+    from corehq.apps.commtrack.tests import get_single_balance_block
+    from corehq.apps.hqcase.utils import submit_case_blocks
+    from dimagi.utils.parsing import json_format_date
+    date_string = json_format_date(ago(days_ago))
+    stock_block = get_single_balance_block(
+        case_id=case_id, product_id=product_id, quantity=amount, date_string=date_string
     )
-    txn._test_config = ConsumptionConfiguration.test_config()
-    txn.quantity = 0
-    txn.save()
+    submit_case_blocks(stock_block, domain=domain)
 
 
-def _receipt_report(case_id, product_id, amount, days_ago):
-    report = StockReport.objects.create(form_id=uuid.uuid4().hex, date=ago(days_ago),
-                                        type=const.REPORT_TYPE_TRANSFER)
-    txn = StockTransaction(
-        report=report,
-        section_id=const.SECTION_TYPE_STOCK,
-        type=const.TRANSACTION_TYPE_RECEIPTS,
-        case_id=case_id,
-        product_id=product_id,
-        quantity=amount,
+def _receipt_report(domain, case_id, product_id, amount, days_ago):
+    from corehq.apps.commtrack.tests import get_single_transfer_block
+    from dimagi.utils.parsing import json_format_date
+    from corehq.apps.hqcase.utils import submit_case_blocks
+    date_string = json_format_date(ago(days_ago))
+    stock_block = get_single_transfer_block(
+        src_id=None, dest_id=case_id, product_id=product_id, quantity=amount, date_string=date_string
     )
-    previous_transaction = txn.get_previous_transaction()
-    txn.stock_on_hand = (previous_transaction.stock_on_hand if previous_transaction else 0) + txn.quantity
-    txn.save()
+    submit_case_blocks(stock_block, domain=domain)

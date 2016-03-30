@@ -3,8 +3,11 @@ import logging
 import itertools
 from celery.canvas import chain
 from celery.task import task
-from django.db import transaction
+from django.db import transaction, connection
 from django.db.models import Q
+from django.db.models.aggregates import Avg, Sum
+
+from corehq.apps.locations.dbaccessors import get_users_by_location_id
 from corehq.apps.products.models import SQLProduct
 from corehq.apps.locations.models import Location, SQLLocation
 from custom.ilsgateway.tanzania.warehouse import const
@@ -13,11 +16,10 @@ from custom.ilsgateway.tanzania.warehouse.alerts import populate_no_primary_aler
 from dimagi.utils.chunked import chunked
 from dimagi.utils.couch.bulk import get_docs
 from dimagi.utils.dates import get_business_day_of_month, add_months, months_between
-from casexml.apps.stock.models import StockReport, StockTransaction
+from casexml.apps.stock.models import StockReport
 from custom.ilsgateway.models import SupplyPointStatus, SupplyPointStatusTypes, DeliveryGroups, \
     OrganizationSummary, GroupSummary, SupplyPointStatusValues, Alert, ProductAvailabilityData, \
-    HistoricalLocationGroup, ILSGatewayConfig
-
+    ILSGatewayConfig
 
 """
 These functions and variables are ported from:
@@ -28,32 +30,15 @@ https://github.com/dimagi/logistics/blob/tz-master/logistics_project/apps/tanzan
 def _is_valid_status(facility, date, status_type):
     if status_type not in const.NEEDED_STATUS_TYPES:
         return False
-    groups = HistoricalLocationGroup.objects.filter(
-        date__month=date.month,
-        date__year=date.year,
-        location_id=facility.sql_location
-    )
-    if (not facility.metadata.get('group', None)) and (groups.count() == 0):
-        return False
 
-    if groups.count() > 0:
-        codes = [group.group for group in groups]
-    else:
-        try:
-            latest_group = HistoricalLocationGroup.objects.filter(
-                location_id=facility.sql_location
-            ).latest('date')
-            if date.date() < latest_group.date:
-                return False
-            else:
-                codes = [facility.metadata['group']]
-        except HistoricalLocationGroup.DoesNotExist:
-            codes = [facility.metadata['group']]
+    code = facility.metadata.get('group')
+    if not code:
+        return False
     dg = DeliveryGroups(date.month)
     if status_type == SupplyPointStatusTypes.R_AND_R_FACILITY:
-        return dg.current_submitting_group() in codes
+        return dg.current_submitting_group() == code
     elif status_type == SupplyPointStatusTypes.DELIVERY_FACILITY:
-        return dg.current_delivering_group() in codes
+        return dg.current_delivering_group() == code
     return True
 
 
@@ -153,30 +138,55 @@ def not_responding_facility(org_summary):
 
 
 @transaction.atomic
-def update_product_availability_facility_data(org_summary):
+def update_product_availability_facility_data(facility, products, start_date, end_date):
     # product availability
 
-    facility = Location.get(org_summary.location_id)
-    assert facility.location_type == "FACILITY"
-    prods = SQLProduct.objects.filter(domain=facility.domain, is_archived=False)
-    for p in prods:
-        product_data, created = ProductAvailabilityData.objects.get_or_create(
-            product=p.product_id,
-            location_id=facility._id,
-            date=org_summary.date
-        )
+    existing_data = ProductAvailabilityData.objects.filter(
+        date__range=(
+            datetime(start_date.year, start_date.month, 1),
+            datetime(end_date.year, end_date.month, 1)
+        ),
+        location_id=facility.get_id
+    )
 
-        if created:
+    product_data_dict = {
+        (pa.date, pa.location_id, pa.product): pa for pa in existing_data
+    }
+
+    product_data_list = []
+    previous_month = {}
+    for year, month in months_between(start_date, end_date):
+        window_date = datetime(year, month, 1)
+        for p in products:
+            now = datetime.utcnow()
+            if (window_date, facility.get_id, p.product_id) in product_data_dict:
+                previous_month[p.product_id] = product_data_dict[window_date, facility.get_id, p.product_id]
+                continue
+            else:
+                product_data = ProductAvailabilityData(
+                    date=window_date,
+                    location_id=facility.get_id,
+                    product=p.product_id,
+                    create_date=now,
+                    update_date=now
+                )
+
             # set defaults
             product_data.total = 1
-            previous_reports = ProductAvailabilityData.objects.filter(
-                product=p.product_id,
-                location_id=facility._id,
-                date__lt=org_summary.date,
-                total=1
-            )
-            if previous_reports.count():
-                prev = previous_reports.latest('date')
+            prev = None
+            if p.product_id in previous_month:
+                prev = previous_month[p.product_id]
+            if not prev:
+                previous_reports = ProductAvailabilityData.objects.filter(
+                    product=p.product_id,
+                    location_id=facility._id,
+                    date__lt=window_date,
+                    total=1
+                )
+                if previous_reports.count():
+                    prev = previous_reports.latest('date')
+
+            if prev:
                 product_data.with_stock = prev.with_stock
                 product_data.without_stock = prev.without_stock
                 product_data.without_data = prev.without_data
@@ -185,9 +195,14 @@ def update_product_availability_facility_data(org_summary):
                 product_data.with_stock = 0
                 product_data.without_stock = 0
                 product_data.without_data = 1
-            product_data.save()
-        assert (product_data.with_stock + product_data.without_stock + product_data.without_data) == 1, \
-            "bad product data config for %s" % product_data
+            if product_data.pk is not None:
+                product_data.save()
+            else:
+                product_data_list.append(product_data)
+            assert (product_data.with_stock + product_data.without_stock + product_data.without_data) == 1, \
+                "bad product data config for %s" % product_data
+            previous_month[p.product_id] = product_data
+    ProductAvailabilityData.objects.bulk_create(product_data_list)
 
 
 def default_start_date():
@@ -266,8 +281,9 @@ def process_facility_warehouse_data(facility, start_date, end_date, runner=None)
     """
     logging.info("processing facility %s (%s)" % (facility.name, str(facility._id)))
 
+    sql_location = facility.sql_location
     if runner:
-        runner.location = facility.sql_location
+        runner.location = sql_location
         runner.save()
 
     for alert_type in [const.SOH_NOT_RESPONDING, const.RR_NOT_RESPONDED, const.DELIVERY_NOT_RESPONDING]:
@@ -275,7 +291,7 @@ def process_facility_warehouse_data(facility, start_date, end_date, runner=None)
                                      type=alert_type)
         alert.delete()
 
-    supply_point_id = facility.linked_supply_point()._id
+    supply_point_id = sql_location.supply_point_id
     location_id = facility._id
     new_statuses = SupplyPointStatus.objects.filter(
         location_id=facility._id,
@@ -289,18 +305,17 @@ def process_facility_warehouse_data(facility, start_date, end_date, runner=None)
         date__gte=start_date,
         date__lt=end_date,
         stocktransaction__type='stockonhand'
-    ).order_by('date').iterator()
+    ).distinct().order_by('date').iterator()
     process_facility_product_reports(location_id, new_reports)
 
-    new_trans = StockTransaction.objects.filter(
-        case_id=supply_point_id,
-        report__date__gte=start_date,
-        report__date__lt=end_date,
-    ).exclude(type='consumption').order_by('report__date').iterator()
-    process_facility_transactions(location_id, new_trans)
+    new_trans = get_latest_transaction_from_each_month(supply_point_id, start_date, end_date)
+    process_facility_transactions(location_id, new_trans, start_date, end_date)
+
+    products = SQLProduct.objects.filter(domain=facility.domain, is_archived=False)
+    users = get_users_by_location_id(facility.domain, facility.get_id)
 
     # go through all the possible values in the date ranges
-    # and make sure there are warehouse tables there
+    # # and make sure there are warehouse tables there
     for year, month in months_between(start_date, end_date):
         window_date = datetime(year, month, 1)
         # create org_summary for every fac/date combo
@@ -322,15 +337,12 @@ def process_facility_warehouse_data(facility, start_date, end_date, runner=None)
                                                title=title)
         # update all the non-response data
         not_responding_facility(org_summary)
-
-        # update product availability data
-        update_product_availability_facility_data(org_summary)
-
         # alerts
         with transaction.atomic():
-            populate_no_primary_alerts(facility, window_date)
+            populate_no_primary_alerts(facility, window_date, users)
             populate_facility_stockout_alerts(facility, window_date)
 
+    update_product_availability_facility_data(facility, products, start_date, end_date)
     update_historical_data_for_location(facility)
 
 
@@ -420,25 +432,52 @@ def process_facility_product_reports(facility_id, reports):
         months_updated[warehouse_date] = None  # update the cache of stuff we've dealt with
 
 
+def get_latest_transaction_from_each_month(case_id, start_date, end_date):
+    query = '''
+        SELECT DISTINCT ON (year, month, st.product_id) date_part('year', sr.date) as year,
+         date_part('month', sr.date) as month, st.product_id, st.stock_on_hand
+        FROM stock_stocktransaction st JOIN stock_stockreport sr ON st.report_id=sr.id
+         WHERE case_id=%s AND sr.date BETWEEN %s AND %s ORDER BY year DESC,
+          month DESC, st.product_id, sr.date DESC;
+
+    '''
+    cursor = connection.cursor()
+    cursor.execute(query, [case_id, start_date, end_date])
+    return cursor.fetchall()
+
+
 @transaction.atomic
-def process_facility_transactions(facility_id, transactions):
+def process_facility_transactions(facility_id, transactions, start_date, end_date):
     """
     For a given facility and list of transactions, update the appropriate
     data warehouse tables. This should only be called on supply points
     that are facilities.
 
     """
-    for trans in transactions:
-        date = trans.report.date
-        product_data = ProductAvailabilityData.objects.get_or_create(
-            product=trans.product_id,
-            location_id=facility_id,
-            date=datetime(date.year, date.month, 1)
-        )[0]
+    existing_data = ProductAvailabilityData.objects.filter(
+        date__range=(
+            datetime(start_date.year, start_date.month, 1),
+            datetime(end_date.year, end_date.month, 1)
+        ),
+        location_id=facility_id
+    )
 
+    product_data_dict = {
+        (pa.date, pa.location_id, pa.product): pa for pa in existing_data
+    }
+    for year, month, product_id, stock_on_hand in transactions:
+        date = datetime(int(year), int(month), 1)
+        if (date, facility_id, product_id) in product_data_dict:
+            product_data = product_data_dict[(date, facility_id, product_id)]
+        else:
+            product_data = ProductAvailabilityData(
+                product=product_id,
+                location_id=facility_id,
+                date=date
+            )
         product_data.total = 1
         product_data.without_data = 0
-        if trans.stock_on_hand <= 0:
+        if stock_on_hand <= 0:
             product_data.without_stock = 1
             product_data.with_stock = 0
         else:
@@ -457,6 +496,9 @@ def get_non_archived_facilities_below(location):
 
 @task(queue='logistics_background_queue')
 def process_non_facility_warehouse_data(location, start_date, end_date, runner=None, strict=True):
+    start_date = datetime(start_date.year, start_date.month, 1)
+    end_date = datetime(end_date.year, end_date.month, 1)
+
     if runner:
         runner.location = location.sql_location
         runner.save()
@@ -464,56 +506,88 @@ def process_non_facility_warehouse_data(location, start_date, end_date, runner=N
     fac_ids = [f._id for f in facs]
     logging.info("processing non-facility %s (%s), %s children"
                  % (location.name, str(location.location_id), len(facs)))
+    prods = SQLProduct.objects.filter(domain=location.domain, is_archived=False)
+
+    sub_summaries = OrganizationSummary.objects.filter(
+        location_id__in=fac_ids, date__range=(start_date, end_date), average_lead_time_in_days__gt=0
+    ).values('date').annotate(average_time=Avg('average_lead_time_in_days'))
+
+    sub_summaries = {
+        (subsummary['date'].year, subsummary['date'].month): subsummary
+        for subsummary in sub_summaries
+    }
+
+    sub_prods = ProductAvailabilityData.objects.filter(
+        location_id__in=fac_ids, date__range=(start_date, end_date)
+    ).values('product', 'date').annotate(
+        total_sum=Sum('total'),
+        with_stock_sum=Sum('with_stock'),
+        without_stock_sum=Sum('without_stock'),
+    )
+
+    sub_prods = {
+        ((sub_prod['date'].year, sub_prod['date'].month), sub_prod['product']): sub_prod for sub_prod in sub_prods
+    }
+
+    sub_group_summaries = GroupSummary.objects.filter(
+        org_summary__location_id__in=fac_ids,
+        org_summary__date__range=(start_date, end_date)
+    ).values('title', 'org_summary__date').annotate(
+        total_sum=Sum('total'),
+        responded_sum=Sum('responded'),
+        on_time_sum=Sum('on_time'),
+        complete_sum=Sum('complete')
+    )
+
+    sub_group_summaries = {
+        ((sub_group_summary['org_summary__date'].year, sub_group_summary['org_summary__date'].month), sub_group_summary['title']): sub_group_summary
+        for sub_group_summary in sub_group_summaries
+    }
+
+    total_orgs = len(facs)
     for year, month in months_between(start_date, end_date):
         window_date = datetime(year, month, 1)
         org_summary = OrganizationSummary.objects.get_or_create(
             location_id=location.location_id, date=window_date
         )[0]
 
-        org_summary.total_orgs = len(facs)
-        sub_summaries = OrganizationSummary.objects.filter(date=window_date, location_id__in=fac_ids)
+        org_summary.total_orgs = total_orgs
 
-        subs_with_lead_time = [s for s in sub_summaries if s.average_lead_time_in_days]
         # lead times
-        if subs_with_lead_time:
-            days_sum = sum([s.average_lead_time_in_days for s in subs_with_lead_time])
-            org_summary.average_lead_time_in_days = days_sum / len(subs_with_lead_time)
+        if (year, month) in sub_summaries:
+            sub_summary = sub_summaries[year, month]
+            org_summary.average_lead_time_in_days = sub_summary['average_time']
         else:
             org_summary.average_lead_time_in_days = 0
 
         org_summary.save()
         # product availability
-        prods = SQLProduct.objects.filter(domain=location.domain, is_archived=False)
         for p in prods:
             product_data = ProductAvailabilityData.objects.get_or_create(product=p.product_id,
                                                                          location_id=location.location_id,
                                                                          date=window_date)[0]
 
-            sub_prods = ProductAvailabilityData.objects.filter(product=p.product_id,
-                                                               location_id__in=fac_ids,
-                                                               date=window_date)
+            sub_prod = sub_prods.get(((year, month), p.product_id), {})
 
-            product_data.total = sum([p.total for p in sub_prods])
+            product_data.total = sub_prod.get('total_sum', 0)
             if strict:
-                assert product_data.total == len(facs), \
+                assert product_data.total == total_orgs, \
                     "total should match number of sub facilities"
-            product_data.with_stock = sum([p.with_stock for p in sub_prods])
-            product_data.without_stock = sum([p.without_stock for p in sub_prods])
+            product_data.with_stock = sub_prod.get('with_stock_sum', 0)
+            product_data.without_stock = sub_prod.get('without_stock_sum', 0)
             product_data.without_data = product_data.total - product_data.with_stock - product_data.without_stock
             product_data.save()
 
         dg = DeliveryGroups(month=month, facs=facs)
         for status_type in const.NEEDED_STATUS_TYPES:
             gsum = GroupSummary.objects.get_or_create(org_summary=org_summary, title=status_type)[0]
-            sub_sums = GroupSummary.objects.filter(title=status_type, org_summary__in=sub_summaries).all()
 
-            # TODO: see if moving the aggregation to the db makes it
-            # faster, if this is slow
-            gsum.total = sum([s.total for s in sub_sums])
-            gsum.responded = sum([s.responded for s in sub_sums])
-            gsum.on_time = sum([s.on_time for s in sub_sums])
-            gsum.complete = sum([s.complete for s in sub_sums])
-            # gsum.missed_response = sum([s.missed_response for s in sub_sums])
+            sub_sum = sub_group_summaries.get(((year, month), status_type), {})
+
+            gsum.total = sub_sum.get('total_sum', 0)
+            gsum.responded = sub_sum.get('responded_sum', 0)
+            gsum.on_time = sub_sum.get('on_time_sum', 0)
+            gsum.complete = sub_sum.get('complete_sum', 0)
             gsum.save()
 
             if status_type == SupplyPointStatusTypes.DELIVERY_FACILITY:

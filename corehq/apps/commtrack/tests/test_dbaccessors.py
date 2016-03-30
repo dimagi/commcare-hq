@@ -1,50 +1,45 @@
 from django.test import TestCase
-from casexml.apps.case.models import CommCareCase
-from corehq.apps.commtrack.dbaccessors import \
-    get_supply_point_ids_in_domain_by_location, get_supply_point_by_location_id
-from corehq.apps.commtrack.models import SupplyPointCase
-from corehq.apps.locations.models import Location
+
+from corehq.form_processor.tests.utils import run_with_all_backends
+from corehq.form_processor.interfaces.supply import SupplyInterface
+from casexml.apps.case.tests.util import delete_all_cases
+from corehq.apps.commtrack.dbaccessors import get_supply_point_ids_in_domain_by_location
+from corehq.apps.commtrack.tests.util import make_loc, bootstrap_domain
 
 
 class SupplyPointDBAccessorsTest(TestCase):
-    @classmethod
-    def setUpClass(cls):
-        cls.domain = 'supply-point-dbaccessors'
-        cls.locations = [
-            Location(domain=cls.domain),
-            Location(domain=cls.domain),
-            Location(domain=cls.domain),
-        ]
-        Location.get_db().bulk_save(cls.locations)
-        cls.supply_points = [
-            CommCareCase(domain=cls.domain, type='supply-point',
-                         location_id=cls.locations[0]._id),
-            CommCareCase(domain=cls.domain, type='supply-point',
-                         location_id=cls.locations[1]._id),
-            CommCareCase(domain=cls.domain, type='supply-point',
-                         location_id=cls.locations[2]._id),
-        ]
-        locations_by_id = {location.location_id: location
-                           for location in cls.locations}
-        cls.location_supply_point_pairs = [
-            (locations_by_id[supply_point.location_id], supply_point)
-            for supply_point in cls.supply_points
-        ]
-        CommCareCase.get_db().bulk_save(cls.supply_points)
 
-    @classmethod
-    def tearDownClass(cls):
-        pass
+    def setUp(self):
+        self.domain = 'supply-point-dbaccessors'
+        self.project = bootstrap_domain(self.domain)
+        self.interface = SupplyInterface(self.domain)
+
+        self.locations = [
+            make_loc('1234', name='ben', domain=self.domain),
+            make_loc('1235', name='ben', domain=self.domain),
+            make_loc('1236', name='ben', domain=self.domain),
+        ]
+
+    def tearDown(self):
+        for location in self.locations:
+            location.delete()
+        delete_all_cases()
+        self.project.delete()
 
     def test_get_supply_point_ids_in_domain_by_location(self):
-        self.assertEqual(
-            get_supply_point_ids_in_domain_by_location(self.domain),
-            {location.location_id: supply_point.case_id
-             for location, supply_point in self.location_supply_point_pairs}
-        )
+        actual = get_supply_point_ids_in_domain_by_location(self.domain)
+        expected = {
+            location.location_id: location.linked_supply_point().case_id
+            for location in self.locations
+        }
+        self.assertEqual(actual, expected)
 
+    @run_with_all_backends
     def test_get_supply_point_by_location_id(self):
-        actual = get_supply_point_by_location_id(self.domain, self.locations[0]._id)
-        expected = SupplyPointCase.wrap(self.supply_points[0].to_json())
+        actual = self.interface.get_closed_and_open_by_location_id_and_domain(
+            self.domain,
+            self.locations[0]._id
+        )
+        expected = self.locations[0].linked_supply_point()
         self.assertEqual(type(actual), type(expected))
         self.assertEqual(actual.to_json(), expected.to_json())

@@ -1,8 +1,11 @@
+import json
+
 from django.core.urlresolvers import reverse
 from django.views.generic import View
 
 from dimagi.utils.web import json_response
 
+from corehq.form_processor.exceptions import XFormNotFound
 from corehq.apps.domain.views import AddRepeaterView
 from corehq.apps.style.decorators import use_select2
 from corehq.apps.repeaters.models import RepeatRecord
@@ -40,9 +43,17 @@ class RepeatRecordView(View):
         content_type = record.repeater.get_payload_generator(
             record.repeater.format_or_default_format()
         ).content_type
-        payload = record.get_payload()
+        try:
+            payload = record.get_payload()
+        except XFormNotFound:
+            return json_response({
+                'error': u'Odd, could not find payload for: {}'.format(record.payload_id)
+            }, status_code=404)
+
         if content_type == 'text/xml':
             payload = indent_xml(payload)
+        elif content_type == 'application/json':
+            payload = json.dumps(json.loads(payload), indent=4)
 
         return json_response({
             'payload': payload,

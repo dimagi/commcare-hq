@@ -7,7 +7,7 @@
       name="exportFiltersForm"
       ng-submit="prepareExport()"
       novalidate="novalidate">
-    <div class="form-notice-container{% if show_date_range %} form-notice-container-tall{% endif %}">
+    <div class="form-notice-container">
         {% crispy download_export_form %}
         <div class="form-notice"
              ng-show="downloadInProgress">

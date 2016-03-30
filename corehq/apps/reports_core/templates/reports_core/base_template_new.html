@@ -33,7 +33,6 @@
         function get_report_url() {
             return base_url;
         }
-
     $(function() {
         var chartSpecs = {{ report.spec.charts|JSON }};
         var updateCharts = function (data) {
@@ -47,7 +46,28 @@
         var updateMap = function (data) {
             if (mapSpec) {
                 mapSpec.mapboxAccessToken = '{{ MAPBOX_ACCESS_TOKEN }}';
-                maps.render(mapSpec, data.aaData, $("#map-container"));
+                var render_map = hqImport('reports_core/js/maps.js').render;
+                render_map(mapSpec, data.aaData, $("#map-container"));
+            }
+        };
+
+        var errorCallback = function (jqXHR, textStatus, errorThrown) {
+            $('#error-message').html(errorThrown);
+            $('#report-error').removeClass('hide');
+        };
+
+        var successCallback = function(data) {
+            if(data.error) {
+                $('#error-message').html(data.error);
+                $('#report-error').removeClass('hide');
+            } else {
+                $('#report-error').addClass('hide');
+            }
+            if (data.warning) {
+                $('#warning-message').html(data.warning);
+                $('#report-warning').removeClass('hide');
+            } else {
+                $('#report-warning').addClass('hide');
             }
         };
 
@@ -72,40 +92,18 @@
                 fixColsNumLeft: {{ report_table.left_col.fixed.num }},
                 fixColsWidth: {{ report_table.left_col.fixed.width }},
             {% endif %}
-            extraCallbacks: [updateCharts, updateMap]
+            successCallbacks: [successCallback, updateCharts, updateMap],
+            errorCallbacks: [errorCallback]
         });
         $('#report-filters').submit(function(event) {
             $('#reportHint').remove();
             $('#reportContent').removeClass('hide');
-            var postData = $(this).serialize();
-            $.ajax({
-                url: $(this).attr("action"),
-                type: $(this).attr("method"),
-                data: postData,
-                headers: {'HTTP_X_REQUESTED_WITH': 'XMLHttpRequest'},
-                success: function(data, textStatus, jqXHR) {
-                    if(data.error) {
-                        $('#error-message').html(data.error);
-                        $('#report-error').removeClass('hide');
-                    } else {
-                        updateCharts(data);
-                        $('#report-error').addClass('hide');
-                    }
-                    if (data.warning) {
-                        $('#warning-message').html(data.warning);
-                        $('#report-warning').removeClass('hide');
-                    } else {
-                        $('#report-warning').addClass('hide');
-                    }
-                },
-                error: function(jqXHR, textStatus, errorThrown) {
-                    $('#error-message').html(errorThrown);
-                    $('#report-error').removeClass('hide');
-                }
-            });
             event.preventDefault();
             reportTables.render();
         });
+        // after we've registered the event that prevents the default form submission
+        // we can enable the submit button
+        $("#apply-filters").prop('disabled', false);
 
         $(function() {
             $('.header-popover').popover({

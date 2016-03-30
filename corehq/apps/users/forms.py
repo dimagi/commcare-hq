@@ -224,6 +224,7 @@ class UpdateMyAccountInfoForm(BaseUpdateUserForm, BaseUserInfoForm):
                     _('Generate API Key'),
                     type="button",
                     id='generate-api-key',
+                    css_class='btn-default',
                 ),
                 css_class="form-group"
             ),
@@ -519,11 +520,20 @@ class MultipleSelectionForm(forms.Form):
     )
 
     def __init__(self, *args, **kwargs):
+        submit_label = kwargs.pop('submit_label', "Update")
+
+        super(MultipleSelectionForm, self).__init__(*args, **kwargs)
         self.helper = FormHelper()
         self.helper.form_tag = False
-        submit_label = kwargs.pop('submit_label', "Update")
-        self.helper.add_input(Submit('submit', submit_label))
-        super(MultipleSelectionForm, self).__init__(*args, **kwargs)
+
+        self.helper.layout = crispy.Layout(
+            'selected_ids',
+            hqcrispy.FormActions(
+                crispy.ButtonHolder(
+                    Submit('submit', submit_label)
+                )
+            )
+        )
 
 
 class SupplyPointSelectWidget(forms.Widget):
@@ -632,7 +642,7 @@ class ConfirmExtraUserChargesForm(EditBillingAccountInfoForm):
                 'company_name',
                 'first_name',
                 'last_name',
-                crispy.Field('emails', css_class='input-xxlarge'),
+                crispy.Field('email_list', css_class='input-xxlarge'),
                 'phone_number',
             ),
             crispy.Fieldset(
@@ -686,8 +696,9 @@ class SelfRegistrationForm(forms.Form):
         super(SelfRegistrationForm, self).__init__(*args, **kwargs)
 
         self.helper = FormHelper()
-        self.helper.form_class = 'form form-horizontal'
-
+        self.helper.form_class = 'form-horizontal'
+        self.helper.label_class = 'col-xs-4'
+        self.helper.field_class = 'col-xs-8'
         layout_fields = [
             crispy.Fieldset(
                 _('Register'),
@@ -695,7 +706,7 @@ class SelfRegistrationForm(forms.Form):
                 crispy.Field('password'),
                 crispy.Field('password2'),
             ),
-            FormActions(
+            hqcrispy.FormActions(
                 StrictButton(
                     _('Register'),
                     css_class='btn-primary',

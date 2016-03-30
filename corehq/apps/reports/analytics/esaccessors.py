@@ -1,11 +1,24 @@
-from collections import defaultdict
+from collections import defaultdict, namedtuple
 from datetime import datetime
 
 from corehq.apps.es import FormES, UserES, GroupES, CaseES, filters
-from corehq.apps.es.aggregations import TermsAggregation
-from corehq.apps.es.forms import submitted as submitted_filter, completed as completed_filter
+from corehq.apps.es.aggregations import (
+    TermsAggregation,
+    ExtendedStatsAggregation,
+    TopHitsAggregation,
+    MissingAggregation,
+    MISSING_KEY,
+)
+from corehq.apps.es.forms import (
+    submitted as submitted_filter,
+    completed as completed_filter,
+    user_id as user_id_filter
+)
 from corehq.apps.es.cases import closed_range
+from corehq.util.quickcache import quickcache
 from dimagi.utils.parsing import string_to_datetime
+
+PagedResult = namedtuple('PagedResult', 'total hits')
 
 
 def get_last_submission_time_for_user(domain, user_id, datespan):
@@ -51,6 +64,25 @@ def _get_case_case_counts_by_owner(domain, datespan, case_types, is_total=False)
     return case_query.run().aggregations.owner_id.counts_by_bucket()
 
 
+def get_active_case_count(domain, datespan, case_types, is_total=False):
+    case_query = (CaseES()
+         .domain(domain)
+         .opened_range(lte=datespan.enddate)
+         .NOT(closed_range(lt=datespan.startdate))
+         .size(0))
+
+    if case_types:
+        case_query = case_query.filter({"terms": {"type.exact": case_types}})
+
+    if not is_total:
+        case_query = case_query.active_in_range(
+            gte=datespan.startdate,
+            lte=datespan.enddate
+        )
+
+    return case_query.run()
+
+
 def get_case_counts_closed_by_user(domain, datespan, case_types=None):
     return _get_case_counts_by_user(domain, datespan, case_types, False)
 
@@ -79,6 +111,89 @@ def _get_case_counts_by_user(domain, datespan, case_types=None, is_opened=True):
         case_query = case_query.filter({"terms": {"type.exact": case_types}})
 
     return case_query.run().aggregations.by_user.counts_by_bucket()
+
+
+def get_paged_forms_by_type(domain, doc_types, start=0, size=10):
+    query = (
+        FormES()
+        .domain(domain)
+        .remove_default_filter('is_xform_instance')
+        .remove_default_filter('has_user')
+        .doc_type(map(lambda doc_type: doc_type.lower(), doc_types))
+        .sort("received_on", desc=True)
+        .start(start)
+        .size(size)
+    )
+    result = query.run()
+    return PagedResult(total=result.total, hits=result.hits)
+
+
+@quickcache(['domain', 'xmlns'], timeout=5 * 60)
+def guess_form_name_from_submissions_using_xmlns(domain, xmlns):
+    last_form = get_last_form_submission_for_xmlns(domain, xmlns)
+    return last_form['form'].get('@name') if last_form else None
+
+
+def get_last_form_submission_for_xmlns(domain, xmlns):
+    query = (
+        FormES()
+        .domain(domain)
+        .xmlns(xmlns)
+        .sort('received_on', desc=True)
+        .size(1)
+    )
+
+    if query.run().hits:
+        return query.run().hits[0]
+    return None
+
+
+def get_last_form_submissions_by_user(domain, user_ids, app_id=None):
+
+    missing_users = None in user_ids
+
+    query = (
+        FormES()
+        .domain(domain)
+        .user_ids_handle_unknown(user_ids)
+        .remove_default_filter('has_user')
+        .aggregation(
+            TermsAggregation('user_id', 'form.meta.userID').aggregation(
+                TopHitsAggregation(
+                    'top_hits_last_form_submissions',
+                    'received_on',
+                    is_ascending=False,
+                )
+            )
+        )
+        .size(0)
+    )
+
+    if app_id:
+        query = query.app(app_id)
+
+    result = {}
+    if missing_users:
+        query = query.aggregation(
+            MissingAggregation('missing_user_id', 'form.meta.userID').aggregation(
+                TopHitsAggregation(
+                    'top_hits_last_form_submissions',
+                    'received_on',
+                    is_ascending=False,
+                )
+            )
+        )
+
+    aggregations = query.run().aggregations
+
+    if missing_users:
+        result[MISSING_KEY] = aggregations.missing_user_id.bucket.top_hits_last_form_submissions.hits
+
+    buckets_dict = aggregations.user_id.buckets_dict
+    for user_id, bucket in buckets_dict.iteritems():
+        result[user_id] = bucket.top_hits_last_form_submissions.hits
+
+    return result
 
 
 def get_submission_counts_by_user(domain, datespan):
@@ -158,8 +273,31 @@ def get_user_stubs(user_ids):
         .values('_id', 'username', 'first_name', 'last_name', 'doc_type', 'is_active'))
 
 
+def get_forms(domain, startdate, enddate, user_ids=None, app_ids=None, xmlnss=None, by_submission_time=True):
+
+    date_filter_fn = submitted_filter if by_submission_time else completed_filter
+    query = (
+        FormES()
+        .domain(domain)
+        .filter(date_filter_fn(gte=startdate, lte=enddate))
+        .app(app_ids)
+        .xmlns(xmlnss)
+        .size(5000)
+    )
+
+    if user_ids:
+        query = (query
+            .user_ids_handle_unknown(user_ids)
+            .remove_default_filter('has_user'))
+
+    result = query.run()
+    return PagedResult(total=result.total, hits=result.hits)
+
+
 def get_form_counts_by_user_xmlns(domain, startdate, enddate, user_ids=None,
                                   xmlnss=None, by_submission_time=True):
+
+    missing_users = False
 
     date_filter_fn = submitted_filter if by_submission_time else completed_filter
     query = (
@@ -177,13 +315,28 @@ def get_form_counts_by_user_xmlns(domain, startdate, enddate, user_ids=None,
     )
 
     if user_ids:
-        query = query.user_id(user_ids)
+        query = (query
+            .user_ids_handle_unknown(user_ids)
+            .remove_default_filter('has_user'))
+        missing_users = None in user_ids
+        if missing_users:
+            query = query.aggregation(
+                MissingAggregation('missing_user_id', 'form.meta.userID').aggregation(
+                    TermsAggregation('app_id', 'app_id').aggregation(
+                        TermsAggregation('xmlns', 'xmlns')
+                    )
+                )
+            )
 
     if xmlnss:
         query = query.xmlns(xmlnss)
 
     counts = defaultdict(lambda: 0)
-    user_buckets = query.run().aggregations.user_id.buckets_list
+    aggregations = query.run().aggregations
+    user_buckets = aggregations.user_id.buckets_list
+    if missing_users:
+        user_buckets.add(aggregations.missing_user_id.bucket)
+
     for user_bucket in user_buckets:
         app_buckets = user_bucket.app_id.buckets_list
         for app_bucket in app_buckets:
@@ -193,3 +346,90 @@ def get_form_counts_by_user_xmlns(domain, startdate, enddate, user_ids=None,
                 counts[key] = xmlns_bucket.doc_count
 
     return counts
+
+
+def get_form_duration_stats_by_user(
+        domain,
+        app_id,
+        xmlns,
+        user_ids,
+        startdate,
+        enddate,
+        by_submission_time=True):
+    """Gets stats on the duration of a selected form grouped by users"""
+    date_filter_fn = submitted_filter if by_submission_time else completed_filter
+
+    missing_users = None in user_ids
+
+    query = (
+        FormES()
+        .domain(domain)
+        .app(app_id)
+        .user_ids_handle_unknown(user_ids)
+        .remove_default_filter('has_user')
+        .xmlns(xmlns)
+        .filter(date_filter_fn(gte=startdate, lt=enddate))
+        .aggregation(
+            TermsAggregation('user_id', 'form.meta.userID').aggregation(
+                ExtendedStatsAggregation(
+                    'duration_stats',
+                    'form.meta.timeStart',
+                    script="doc['form.meta.timeEnd'].value - doc['form.meta.timeStart'].value",
+                )
+            )
+        )
+        .size(0)
+    )
+
+    if missing_users:
+        query = query.aggregation(
+            MissingAggregation('missing_user_id', 'form.meta.userID').aggregation(
+                ExtendedStatsAggregation(
+                    'duration_stats',
+                    'form.meta.timeStart',
+                    script="doc['form.meta.timeEnd'].value - doc['form.meta.timeStart'].value",
+                )
+            )
+        )
+
+    result = {}
+    aggregations = query.run().aggregations
+
+    if missing_users:
+        result[MISSING_KEY] = aggregations.missing_user_id.bucket.duration_stats.result
+
+    buckets_dict = aggregations.user_id.buckets_dict
+    for user_id, bucket in buckets_dict.iteritems():
+        result[user_id] = bucket.duration_stats.result
+    return result
+
+
+def get_form_duration_stats_for_users(
+        domain,
+        app_id,
+        xmlns,
+        user_ids,
+        startdate,
+        enddate,
+        by_submission_time=True):
+    """Gets the form duration stats for a group of users"""
+    date_filter_fn = submitted_filter if by_submission_time else completed_filter
+
+    query = (
+        FormES()
+        .domain(domain)
+        .app(app_id)
+        .user_ids_handle_unknown(user_ids)
+        .remove_default_filter('has_user')
+        .xmlns(xmlns)
+        .filter(date_filter_fn(gte=startdate, lt=enddate))
+        .aggregation(
+            ExtendedStatsAggregation(
+                'duration_stats',
+                'form.meta.timeStart',
+                script="doc['form.meta.timeEnd'].value - doc['form.meta.timeStart'].value",
+            )
+        )
+        .size(0)
+    )
+    return query.run().aggregations.duration_stats.result

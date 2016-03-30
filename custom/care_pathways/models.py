@@ -77,7 +77,7 @@ def case_property(property):
 class GeographyFluff(fluff.IndicatorDocument):
     document_class = CommCareCase
     document_filter = CasePropertyFilter(type='farmer_record')
-    domains = ('pathways-india-mis', 'pathways-tanzania',)
+    domains = ('pathways-india-mis', 'pathways-tanzania', 'care-macf-malawi', 'care-macf-bangladesh',)
     group_by = ('domain',)
 
     save_direct_to_sql = True
@@ -94,7 +94,7 @@ class GeographyFluff(fluff.IndicatorDocument):
 class FarmerRecordFluff(fluff.IndicatorDocument):
     document_class = CommCareCase
     document_filter = CasePropertyFilter(type='farmer_record')
-    domains = ('pathways-india-mis', 'pathways-tanzania',)
+    domains = ('pathways-india-mis', 'pathways-tanzania', 'care-macf-malawi', 'care-macf-bangladesh')
     group_by = ('domain',
                 fluff.AttributeGetter('value_chain', lambda c: get_mapping(c)),
                 fluff.AttributeGetter('domains', lambda c: get_domains(c)),

@@ -52,6 +52,22 @@
                             </div>
                         </div>
                     </div>
+                    <div data-bind="visible: filter.selectedValue.doc_type() === 'CustomMonthFilter'">
+                        <div class="form-inline">
+                            <div class="form-group">
+                                <label>Start of month</label>
+                                <input class="form-control"
+                                       type="number"
+                                       data-bind="value: filter.selectedValue.start_of_month"/>
+                            </div>
+                            <div class="form-group">
+                                <label>Period</label>
+                                <input class="form-control"
+                                       type="number"
+                                       data-bind="value: filter.selectedValue.period"/>
+                            </div>
+                        </div>
+                    </div>
                     <div data-bind="visible: filter.selectedValue.doc_type() === 'CustomDataAutoFilter'">
                         <input class="form-control" type="text" data-bind="value: filter.selectedValue.custom_data_property"/>
                     </div>
@@ -69,6 +85,11 @@
                             optionsValue: 'value',
                             value: filter.selectedValue.select_value
                         "></select>
+                    </div>
+                    <div data-bind="visible: filter.selectedValue.doc_type() === 'AncestorLocationTypeFilter'">
+                        <input class="form-control"
+                               type="text"
+                               data-bind="value: filter.selectedValue.ancestor_location_type_name"/>
                     </div>
                 </div>
             </th>

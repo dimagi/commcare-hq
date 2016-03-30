@@ -17,6 +17,7 @@
 {% block js-inline %}{{ block.super }}
 <script>
     $(document).ready(function() {
+        var codeMirror = null;
         $('#view-record-payload-modal').on('shown.bs.modal', function(event) {
             var recordData = $(event.relatedTarget).data(),
                 $modal = $(this);
@@ -24,7 +25,6 @@
             $.get("{% url 'repeat_record' domain %}", { record_id: recordData.recordId })
                 .success(function(data) {
                     var $payload = $modal.find('.payload'),
-                        codeMirror,
                         contentType = data.content_type,
                         mode = 'xml';
 
@@ -34,20 +34,33 @@
                         mode = { name: 'javascript', json: true };
                     }
 
-                    codeMirror = CodeMirror($payload[0], {
-                        value: data.payload,
-                        mode: mode,
-                        readOnly: true,
-                        lineNumbers: true,
-                        lineWrapping: true
-                    });
-                    codeMirror.refresh();
+                    if (codeMirror === null) {
+                        codeMirror = CodeMirror($payload[0], {
+                            value: data.payload,
+                            mode: mode,
+                            readOnly: true,
+                            lineNumbers: true,
+                            lineWrapping: true
+                        });
+                        codeMirror.refresh();
+                    } else {
+                        codeMirror.setValue(data.payload);
+                    }
 
                 })
                 .fail(function(data) {
-                    $modal.find('.modal-body').html('fail')
+                    var defaultText = gettext('Failed to fetch payload'),
+                        errorMessage = data.responseJSON ? data.responseJSON.error : null;
+
+                    $modal.find('.modal-body').text(errorMessage || defaultText)
                 });
-        })
+        });
+
+        $('#view-record-payload-modal').on('hide.bs.modal', function(event) {
+            if (codeMirror) {
+                codeMirror.setValue('');
+            }
+        });
 
         $('#report-content').on('click', '.resend-record-payload', function() {
               var $btn = $(this),

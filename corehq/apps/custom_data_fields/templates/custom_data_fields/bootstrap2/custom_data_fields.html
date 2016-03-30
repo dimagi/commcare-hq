@@ -9,6 +9,10 @@
     <script type="text/javascript" src="{% static 'jquery-ui-1.8.23-legacy/jquery-ui.min.js' %}"></script>
     <script type="text/javascript" src="{% static 'style/ko/knockout_bindings.ko.js' %}"></script>
     <script type="text/javascript" src="{% static 'custom_data_fields/js/custom_data_fields.js' %}"></script>
+    <script>
+        gaTrackLink($('#Location-add-choice'), 'Organization Structure', 'Edit Location Fields', 'Add Choice');
+        gaTrackLink($('#Location-add-field'), 'Organization Structure', 'Edit Location Fields', 'Add Field');
+    </script>
 {% endblock %}
 
 {% block js-inline %}
@@ -71,7 +75,8 @@
                     <p>
                         <button class="btn btn-success"
                                 data-bind="click: addField"
-                                type="button">
+                                type="button"
+                                id="{{ view.entity_string }}-add-field">
                             <i class="icon-plus"></i>
                             Add a Field
                         </button>
@@ -145,7 +150,7 @@
                                     <input type="checkbox" data-bind="checked: is_required"/>
                                 </td>
                                 <td>
-                                    <a data-bind="click: addChoice" type="button" class="btn btn-primary" >
+                                    <a data-bind="click: addChoice" type="button" class="btn btn-primary" id="{{ view.entity_string }}-add-choice">
                                         <i class="icon-plus"></i> {% trans "Add Choice" %}
                                     </a>
                                     <ul data-bind="sortable: choices" class="unstyled choices-list">

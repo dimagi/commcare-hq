@@ -169,6 +169,10 @@ class XFormInstance(SafeSaveDocument, UnicodeMixIn, ComputedDocumentMixin,
         return self.form.get(const.TAG_UIVERSION, "")
 
     @property
+    def user_id(self):
+        return getattr(self.metadata, 'userID', None)
+
+    @property
     def is_error(self):
         return self.doc_type != 'XFormInstance'
 
@@ -195,6 +199,10 @@ class XFormInstance(SafeSaveDocument, UnicodeMixIn, ComputedDocumentMixin,
     @property
     def is_normal(self):
         return self.doc_type == 'XFormInstance'
+
+    @property
+    def deletion_id(self):
+        return getattr(self, '-deletion_id', None)
 
     @property
     def metadata(self):
@@ -243,14 +251,6 @@ class XFormInstance(SafeSaveDocument, UnicodeMixIn, ComputedDocumentMixin,
         of that element, or None if there is no value.
         """
         return safe_index(self, path.split("/"))
-
-    def found_in_multiselect_node(self, xpath, option):
-        """
-        Whether a particular value was found in a multiselect node, referenced
-        by path.
-        """
-        node = self.get_data(xpath)
-        return node and option in node.split(" ")
 
     def soft_delete(self):
         self.doc_type += DELETED_SUFFIX
@@ -309,28 +309,6 @@ class XFormInstance(SafeSaveDocument, UnicodeMixIn, ComputedDocumentMixin,
     def xml_md5(self):
         return hashlib.md5(self.get_xml().encode('utf-8')).hexdigest()
     
-    def top_level_tags(self):
-        """
-        Returns a SortedDict of the top level tags found in the xml, in the
-        order they are found.
-        
-        """
-        to_return = SortedDict()
-
-        xml_payload = self.get_xml()
-        if not xml_payload:
-            return SortedDict(sorted(self.form.items()))
-
-        element = self._xml_string_to_element(xml_payload)
-
-        for child in element:
-            # fix {namespace}tag format forced by ElementTree in certain cases (eg, <reg> instead of <n0:reg>)
-            key = child.tag.split('}')[1] if child.tag.startswith("{") else child.tag 
-            if key == "Meta":
-                key = "meta"
-            to_return[key] = self.get_data('form/' + key)
-        return to_return
-
     def archive(self, user_id=None):
         if self.is_archived:
             return
@@ -502,12 +480,3 @@ class UnfinishedSubmissionStub(models.Model):
 
     class Meta:
         app_label = 'couchforms'
-
-    @classmethod
-    def form_has_saved(cls, stub):
-        stub.saved = True
-        stub.save()
-
-    @classmethod
-    def form_process_completed(cls, stub):
-        stub.delete()

@@ -7,11 +7,11 @@ def get_form_export_base_query(domain, app_id, xmlns, include_errors):
             .domain(domain)
             .app(app_id)
             .xmlns(xmlns)
-            .sort("received_on"))
+            .sort("received_on")
+            .remove_default_filter('has_user'))
     if include_errors:
         query = query.remove_default_filter("is_xform_instance")
-        # Assuming that the only other things in the FormES index are form errors,
-        # but perhaps I should filter on those types explicitly.
+        query = query.doc_type(["xforminstance", "xformarchived", "xformdeprecated", "xformduplicate"])
     return query
 
 

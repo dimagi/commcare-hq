@@ -8,7 +8,7 @@ from dimagi.ext.couchdbkit import *
 from casexml.apps.case.models import CommCareCase
 from corehq.apps.sms.models import (CommConnectCase, MessagingEvent)
 from corehq.apps.users.cases import get_owner_id, get_wrapped_owner
-from corehq.apps.users.models import CouchUser
+from corehq.apps.users.models import CouchUser, CommCareUser
 from corehq.apps.groups.models import Group
 from corehq.apps.locations.dbaccessors import get_all_users_by_location
 from corehq.apps.locations.models import SQLLocation
@@ -90,10 +90,11 @@ RECIPIENT_SUBCASE = "SUBCASE"
 RECIPIENT_SURVEY_SAMPLE = "SURVEY_SAMPLE"
 RECIPIENT_USER_GROUP = "USER_GROUP"
 RECIPIENT_LOCATION = "LOCATION"
+RECIPIENT_CASE_OWNER_LOCATION_PARENT = "CASE_OWNER_LOCATION_PARENT"
 RECIPIENT_CHOICES = [
     RECIPIENT_USER, RECIPIENT_OWNER, RECIPIENT_CASE, RECIPIENT_SURVEY_SAMPLE,
     RECIPIENT_PARENT_CASE, RECIPIENT_SUBCASE, RECIPIENT_USER_GROUP,
-    RECIPIENT_LOCATION,
+    RECIPIENT_LOCATION, RECIPIENT_CASE_OWNER_LOCATION_PARENT,
 ]
 
 KEYWORD_RECIPIENT_CHOICES = [RECIPIENT_SENDER, RECIPIENT_OWNER, RECIPIENT_USER_GROUP]
@@ -1506,6 +1507,16 @@ class CaseReminder(SafeSaveDocument, LockableMixIn):
             return None
 
     @property
+    def case_owner(self):
+        owner_id = get_owner_id(self.case)
+
+        location = SQLLocation.by_location_id(owner_id)
+        if location:
+            return [location]
+
+        return get_wrapped_owner(owner_id)
+
+    @property
     def user(self):
         if self.handler.recipient == RECIPIENT_USER:
             return CouchUser.get_by_user_id(self.user_id)
@@ -1529,13 +1540,7 @@ class CaseReminder(SafeSaveDocument, LockableMixIn):
         elif handler.recipient == RECIPIENT_SURVEY_SAMPLE:
             return CommCareCaseGroup.get(handler.sample_id)
         elif handler.recipient == RECIPIENT_OWNER:
-            owner_id = get_owner_id(self.case)
-
-            location = SQLLocation.by_location_id(owner_id)
-            if location:
-                return [location]
-
-            return get_wrapped_owner(owner_id)
+            return self.case_owner
         elif handler.recipient == RECIPIENT_PARENT_CASE:
             parent_case = None
             case = self.case
@@ -1557,9 +1562,38 @@ class CaseReminder(SafeSaveDocument, LockableMixIn):
             return Group.get(handler.user_group_id)
         elif handler.recipient == RECIPIENT_LOCATION:
             return handler.locations
+        elif handler.recipient == RECIPIENT_CASE_OWNER_LOCATION_PARENT:
+            """
+            This is pretty specific right now which is why it's behind a one-off
+            feature flag. When I move reminders to postgres I'm planning on
+            expanding the model to make this kind of recipient choice configurable.
+            """
+
+            # Get the case
+            case = self.case
+            if not case:
+                return None
+
+            # Get the case owner, which we always expect to be a mobile worker in
+            # this one-off feature
+            owner = self.case_owner
+            if not isinstance(owner, CommCareUser):
+                return None
+
+            # Get the case owner's location
+            owner_location = owner.sql_location
+            if not owner_location:
+                return None
+
+            # Get that location's parent location
+            parent_location = owner_location.parent
+            if not parent_location:
+                return None
+
+            return [parent_location]
         else:
             return None
-    
+
     @property
     def retired(self):
         return self.doc_type.endswith("-Deleted")
@@ -1661,6 +1695,7 @@ class EmailUsage(models.Model):
 
     class Meta:
         unique_together = ('domain', 'year', 'month')
+        app_label = "reminders"
 
     @classmethod
     def get_or_create_usage_record(cls, domain):

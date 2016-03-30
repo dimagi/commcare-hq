@@ -1,8 +1,10 @@
 {% load i18n %}
 {% load xforms_extras %}
 <div id="build_errors"></div>
-<div id="module_short_comment" class="app-comment">{{ module.short_comment }}</div>
-<div class="delete-me">
+{% if module.short_comment %}
+    <div id="module_short_comment" class="app-comment well">{{ module.short_comment }}</div>
+{% endif %}
+<div class="pull-right">
     <form action="{% url "delete_module" domain app.id module.unique_id %}" method="post">
         {% csrf_token %}
         <button type="submit" class="disable-on-submit btn btn-danger">

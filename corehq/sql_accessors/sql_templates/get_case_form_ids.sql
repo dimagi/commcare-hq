@@ -6,11 +6,17 @@ DECLARE
     type_ledger INTEGER := {{ TRANSACTION_TYPE_LEDGER }};
 BEGIN
     RETURN QUERY
-    SELECT form_processor_casetransaction.form_id FROM form_processor_casetransaction
-    WHERE form_processor_casetransaction.case_id = p_case_id
-    AND form_processor_casetransaction.revoked = FALSE
-    AND form_processor_casetransaction.form_id IS NOT NULL
-    AND form_processor_casetransaction.type in (type_form, type_ledger)
-    ORDER BY form_processor_casetransaction.server_date;
+    SELECT transactions.form_id FROM (
+        SELECT
+            DISTINCT on (form_id) form_processor_casetransaction.form_id,
+            form_processor_casetransaction.server_date
+        FROM form_processor_casetransaction
+        WHERE form_processor_casetransaction.case_id = p_case_id
+        AND form_processor_casetransaction.revoked = FALSE
+        AND form_processor_casetransaction.form_id IS NOT NULL
+        AND ((form_processor_casetransaction.type & type_form) = type_form
+        OR form_processor_casetransaction.type = type_ledger)
+    ) transactions
+    ORDER BY transactions.server_date;
 END;
 $$ LANGUAGE plpgsql;

@@ -25,7 +25,7 @@ def _is_override(xform):
     return bool(getattr(xform, 'deprecated_form_id', None))
 
 
-class ActionsUpdateStrategy(UpdateStrategy):
+class CouchCaseUpdateStrategy(UpdateStrategy):
     case_implementation_class = CommCareCase
 
     def apply_action_intent(self, case_action_intent):

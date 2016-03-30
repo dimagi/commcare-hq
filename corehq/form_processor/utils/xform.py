@@ -17,10 +17,10 @@ SIMPLE_FORM = """<?xml version='1.0' ?>
     xmlns="{xmlns}">
     <dalmation_count>yes</dalmation_count>
     <n1:meta xmlns:n1="http://openrosa.org/jr/xforms">
-        <n1:deviceID>DEV IL</n1:deviceID>
-        <n1:timeStart>2013-04-19T16:52:41.000-04</n1:timeStart>
+        <n1:deviceID>{device_id}</n1:deviceID>
+        <n1:timeStart>{time_start}</n1:timeStart>
         <n1:timeEnd>{time_end}</n1:timeEnd>
-        <n1:username>eve</n1:username>
+        <n1:username>{username}</n1:username>
         <n1:userID>{user_id}</n1:userID>
         <n1:instanceID>{uuid}</n1:instanceID>
         <n2:appVersion xmlns:n2="http://commcarehq.org/xforms"></n2:appVersion>
@@ -34,8 +34,11 @@ class TestFormMetadata(jsonobject.JsonObject):
     xmlns = jsonobject.StringProperty(default='http://openrosa.org/formdesigner/form-processor')
     app_id = jsonobject.StringProperty(default='123')
     form_name = jsonobject.StringProperty(default='New Form')
+    device_id = jsonobject.StringProperty(default='DEV IL')
     user_id = jsonobject.StringProperty(default='cruella_deville')
-    time_end = jsonobject.DateTimeProperty(default=datetime(2013, 4, 19, 16, 53, 2))
+    username = jsonobject.StringProperty(default='eve')
+    time_end = jsonobject.DateTimeProperty(default=datetime(2013, 4, 19, 16, 52, 2))
+    time_start = jsonobject.DateTimeProperty(default=datetime(2013, 4, 19, 16, 53, 2))
     # Set this property to fake the submission time
     received_on = jsonobject.DateTimeProperty(default=datetime.utcnow)
 
@@ -48,6 +51,10 @@ def get_simple_form_xml(form_id, case_id=None, metadata=None):
     if case_id:
         case_block = CaseBlock(create=True, case_id=case_id).as_string()
     form_xml = SIMPLE_FORM.format(uuid=form_id, case_block=case_block, **metadata.to_json())
+
+    if not metadata.user_id:
+        form_xml = form_xml.replace('<n1:userID>{}</n1:userID>'.format(metadata.user_id), '')
+
     return form_xml
 
 

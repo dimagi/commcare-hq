@@ -30,9 +30,9 @@ def _get_grouping(prop_dict):
 
 class CareQueryMeta(QueryMeta):
 
-    def __init__(self, table_name, filters, group_by, key):
+    def __init__(self, table_name, filters, group_by, order_by, key):
         self.key = key
-        super(CareQueryMeta, self).__init__(table_name, filters, group_by)
+        super(CareQueryMeta, self).__init__(table_name, filters, group_by, order_by)
 
     def execute(self, metadata, connection, filter_values):
         try:
@@ -98,11 +98,12 @@ class CareCustomColumn(CustomQueryColumn):
     query_cls = CareQueryMeta
     name = 'custom_care'
 
-    def get_query_meta(self, default_table_name, default_filters, default_group_by):
+    def get_query_meta(self, default_table_name, default_filters, default_group_by, default_order_by):
         table_name = self.table_name or default_table_name
         filters = self.filters or default_filters
         group_by = self.group_by or default_group_by
-        return self.query_cls(table_name, filters, group_by, self.key)
+        order_by = self.order_by or default_order_by
+        return self.query_cls(table_name, filters, group_by, order_by, self.key)
 
 
 class GeographySqlData(SqlData):

@@ -143,9 +143,6 @@ class TestReminders(EWSTestCase):
         sql_location1.save()
         sql_location2.save()
 
-        cls.loc1.save()
-        cls.loc2.save()
-
     def tearDown(self):
         SMS.objects.all().delete()
         StockState.objects.all().delete()
@@ -157,6 +154,8 @@ class TestReminders(EWSTestCase):
         cls.user1.delete()
         cls.user2.delete()
         cls.user3.delete()
+        cls.domain.delete()
+        FacilityInCharge.objects.all().delete()
 
         super(TestReminders, cls).tearDownClass()
 

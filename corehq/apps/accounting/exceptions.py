@@ -50,10 +50,6 @@ class PaymentHandlerError(Exception):
     pass
 
 
-class BillingContactInfoError(Exception):
-    pass
-
-
 class CreateAccountingAdminError(Exception):
     pass
 

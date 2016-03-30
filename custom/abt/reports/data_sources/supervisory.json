@@ -7,7 +7,9 @@
         "airsrwanda",
         "airszambia",
         "airszimbabwe",
-        "airstanzania"
+        "airstanzania",
+        "airsghana",
+        "airsbenin"
     ],
     "config": {
         "engine_id": "default",
@@ -203,10 +205,10 @@
                     "type": "conditional",
                     "test": {
                         "type": "boolean_expression",
-                        "operator": "not_eq",
+                        "operator": "eq",
                         "expression": {
                             "expression": {
-                                "datatype": null,
+                                "datatype": "string",
                                 "property_path": [
                                     "form",
                                     "location_data",
@@ -216,7 +218,7 @@
                             },
                             "type": "root_doc"
                         },
-                        "property_value": null
+                        "property_value": ""
                     },
                     "expression_if_true": {
                         "expression": {
@@ -224,7 +226,7 @@
                             "property_path": [
                                 "form",
                                 "location_data",
-                                "level_4_name"
+                                "level_3_name"
                             ],
                             "type": "property_path"
                         },
@@ -236,7 +238,7 @@
                             "property_path": [
                                 "form",
                                 "location_data",
-                                "level_3_name"
+                                "level_4_name"
                             ],
                             "type": "property_path"
                         },
@@ -350,6 +352,6 @@
         "display_name": "Supervisory Indicators",
         "named_filters": {},
         "referenced_doc_type": "XFormInstance",
-        "table_id": "supervisory-004"
+        "table_id": "supervisory-005"
     }
 }

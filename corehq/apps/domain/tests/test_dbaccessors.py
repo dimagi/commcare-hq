@@ -11,7 +11,7 @@ from corehq.apps.domain.models import Domain
 from corehq.apps.groups.models import Group
 from corehq.apps.users.models import UserRole
 from couchforms.models import XFormInstance
-from corehq.apps.domain.dbaccessors import get_doc_ids_in_domain_by_type
+from corehq.apps.domain.dbaccessors import get_doc_ids_in_domain_by_type, iterate_doc_ids_in_domain_by_type
 from dimagi.utils.couch.database import get_db
 
 
@@ -85,6 +85,40 @@ class DBAccessorsTest(TestCase):
         ids = get_doc_ids_in_domain_by_type('match-domain', 'match-type', self.db)
         self.assertEqual(0, len(ids))
         self.db.delete_doc(doc)
+
+    def test_iterate_doc_ids_in_domain_by_type(self):
+        id1 = uuid.uuid4().hex
+        id2 = uuid.uuid4().hex
+        id3 = uuid.uuid4().hex
+        doc1 = {
+            '_id': id1,
+            'domain': 'match-domain',
+            'doc_type': 'match-type',
+        }
+        doc2 = {
+            '_id': id2,
+            'domain': 'match-domain',
+            'doc_type': 'match-type',
+        }
+        doc3 = {
+            '_id': id3,
+            'domain': 'match-domain',
+            'doc_type': 'nomatch-type',
+        }
+        self.db.save_doc(doc1)
+        self.db.save_doc(doc2)
+        self.db.save_doc(doc3)
+
+        self.addCleanup(self.db.delete_doc, doc1)
+        self.addCleanup(self.db.delete_doc, doc2)
+        self.addCleanup(self.db.delete_doc, doc3)
+
+        ids = list(iterate_doc_ids_in_domain_by_type(
+            'match-domain',
+            'match-type',
+            database=self.db,
+            chunk_size=1))
+        self.assertEqual(sorted(ids), sorted([id1, id2]))
 
     def test_get_domain_ids_by_names(self):
         def _create_domain(name):

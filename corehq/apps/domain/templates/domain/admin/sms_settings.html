@@ -1,4 +1,4 @@
-{% extends "settings/bootstrap3/base_template.html" %}
+{% extends "style/bootstrap3/base_section.html" %}
 {% load hqstyle_tags %}
 {% load hq_shared_tags %}
 {% load i18n %}
@@ -10,8 +10,12 @@
 
 {% block js-inline %} {{ block.super }}
     <script type="text/javascript">
+    $(function () {
         var settings = {{ settings|JSON }};
         var other_sms_codes = {{ other_sms_codes|JSON }};
+        var initCommtrackSettingsView = hqImport('commtrack/ko/sms.js').initCommtrackSettingsView;
+        initCommtrackSettingsView($('#settings'), settings, other_sms_codes);
+    });
     </script>
 {% endblock %}
 

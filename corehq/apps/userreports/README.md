@@ -87,6 +87,11 @@ root_doc        | A way to reference the root document explicitly (only needed w
 nested          | A way to chain any two expressions together | `f1(f2(doc))`
 dict            | A way to emit a dictionary of key/value pairs | `{"name": "test", "value": f(doc)}`
 add_days        | A way to add days to a date | `my_date + timedelta(days=15)`
+add_months      | A way to add months to a date | `my_date + relativedelta(months=15)`
+month_start_date| First day in the month of a date | `2015-01-20` -> `2015-01-01`
+month_end_date  | Last day in the month of a date | `2015-01-20` -> `2015-01-31`
+diff_days       | A way to get duration in days between two dates | `(to_date - from-date).days`
+evaluator       | A way to do arithmetic operations | `a + b*c / d`
 
 
 ### JSON snippets for expressions
@@ -322,6 +327,80 @@ The date_expression and count_expression can be any valid expressions, or simply
 }
 ```
 
+#### "Add Months" expressions
+
+`add_months` offsets given date by given number of calendar months.
+If offset results in an invalid day (for e.g. Feb 30, April 31), the day of resulting date will be adjusted to last day of the resulting calendar month.
+
+The date_expression and months_expression can be any valid expressions, or simply constants, including nagative numbers.
+
+```json
+{
+    "type": "add_months",
+    "date_expression": {
+        "type": "property_name",
+        "property_name": "dob",
+    },
+    "months_expression": 28
+}
+```
+
+
+#### "Diff Days" expressions
+
+`diff_days` returns number of days between dates specified by `from_date_expression` and `to_date_expression`.
+The from_date_expression and to_date_expression can be any valid expressions, or simply constants.
+
+```json
+{
+    "type": "diff_days",
+    "from_date_expression": {
+        "type": "property_name",
+        "property_name": "dob",
+    },
+    "to_date_expression": "2016-02-01"
+}
+```
+
+#### "Evaluator" expression
+`evaluator` expression can be used to evaluate statements that contain arithmetic (and simple python like statements). It evaluates the statement specified by `statement` which can contain variables as defined in `context_variables`.
+
+```json
+{
+    "type": "evaluator",
+    "statement": "a + b - c + 6",
+    "context_variables": {
+        "a": 1,
+        "b": 20,
+        "c": 2
+    }
+}
+```
+This returns 25 (1 + 20 - 2 + 6).
+
+`statement` can be any statement that returns a valid number. All python math [operators](https://en.wikibooks.org/wiki/Python_Programming/Basic_Math#Mathematical_Operators) except power opertor are available for use.
+
+`context_variables` is a dictionary of Expressions where keys are names of variables used in the `statement` and values are expressions to generate those variables.
+Variables can be any valid numbers (Python datatypes `int`, `float`, and `long` are considered valid numbers.) or also expressions that return numbers.
+
+More examples can be found on practical [examples page](examples/examples.md#evaluator-examples).
+
+#### "Month Start Date" and "Month End Date" expressions
+
+`month_start_date` returns date of first day in the month of given date and `month_end_date` returns date of last day in the month of given date.
+
+The `date_expression` can be any valid expression, or simply constant
+
+```json
+{
+    "type": "month_start_date",
+    "date_expression": {
+        "type": "property_name",
+        "property_name": "dob",
+    },
+}
+```
+
 #### Named Expressions
 
 Last, but certainly not least, are named expressions.
@@ -469,7 +548,7 @@ The following filter represents the statement: `!(doc["nationality"] == "europea
 
 ### Practical Examples
 
-See [examples.md](https://github.com/dimagi/commcare-hq/blob/master/corehq/apps/userreports/examples/examples.md) for some practical examples showing various filter types.
+See [examples.md](examples/examples.md) for some practical examples showing various filter types.
 
 
 ## Indicators
@@ -622,7 +701,7 @@ You can save multiple rows per case/form by specifying a root level `base_item_e
 You can also use the `root_doc` expression type to reference parent properties.
 This can be combined with the `iterator` expression type to do complex data source transforms.
 This is not described in detail, but the following sample (which creates a table off of a repeat element called "time_logs" can be used as a guide).
-There are also additional examples in the [examples](https://github.com/dimagi/commcare-hq/blob/master/corehq/apps/userreports/examples/examples.md):
+There are also additional examples in the [examples](examples/examples.md):
 
 ```
 {
@@ -1211,6 +1290,43 @@ Field should refer to report column IDs, not database fields.
 ]
 ```
 
+# Mobile UCR
+
+Mobile UCR is a beta feature that enables you to make application modules and charts linked to UCRs on mobile.
+It also allows you to send down UCR data from a report as a fixture which can be used in standard case lists and forms throughout the mobile application.
+
+The documentation for Mobile UCR is very sparse right now.
+
+## Filters
+
+On mobile UCR, filters can be automatically applied to the mobile reports based on hardcoded or user-specific data, or can be displayed to the user.
+
+The documentation of mobile UCR filters is incomplete. However some are documented below.
+
+### Custom Calendar Month
+
+When configuring a report within a module, you can filter a date field by the 'CustomMonthFilter'.  The choice includes the following options:
+- Start of Month (a number between 1 and 28)
+- Period (a number between 0 and n with 0 representing the current month). 
+
+Each custom calendar month will be "Start of the Month" to ("Start of the Month" - 1).  For example, if the start of the month is set to 21, then the period will be the 21th of the month -> 20th of the next month. 
+
+Examples:
+Assume it was May 15:
+Period 0, day 21, you would sync April 21-May 15th
+Period 1, day 21, you would sync March 21-April 20th
+Period 2, day 21, you would sync February 21 -March 20th
+
+Assume it was May 20:
+Period 0, day 21, you would sync April 21-May 20th
+Period 1, day 21, you would sync March 21-April 20th
+Period 2, day 21, you would sync February 21-March 20th
+
+Assume it was May 21:
+Period 0, day 21, you would sync May 21-May 21th
+Period 1, day 21, you would sync April 21-May 20th
+Period 2, day 21, you would sync March 21-April 20th
+
 # Export
 
 A UCR data source can be exported, to back an excel dashboard, for instance.
@@ -1292,7 +1408,7 @@ They conform to a slightly different style:
 ```
 
 Having defined the data source you need to add the path to the data source file to the `STATIC_DATA_SOURCES`
-setting in `settings.py`. Now when the `StaticDataSourcePillow` is run it will pick up the data source
+setting in `settings.py`. Now when the static data source pillow is run it will pick up the data source
 and rebuild it.
 
 Changes to the data source require restarting the pillow which will rebuild the SQL table. Alternately you
@@ -1345,7 +1461,7 @@ Following are some custom expressions that are currently available.
 - `location_type_name`:  A way to get location type from a location document id.
 - `location_parent_id`:  A shortcut to get a location's parent ID a location id.
 
-You can find examples of these in [practical examples](https://github.com/dimagi/commcare-hq/blob/master/corehq/apps/userreports/examples/examples.md).
+You can find examples of these in [practical examples](examples/examples.md).
 
 ## Inspecting database tables
 

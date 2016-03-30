@@ -24,8 +24,14 @@ from corehq.apps.cloudcare.api import ElasticCaseQuery
 from corehq.apps.users.util import format_username
 from corehq.apps.users.models import CouchUser, Permissions
 
-from corehq.apps.api.resources import v0_1, v0_3, HqBaseResource, DomainSpecificResourceMixin, \
-    SimpleSortableResourceMixin
+from corehq.apps.api.resources import (
+    CouchResourceMixin,
+    DomainSpecificResourceMixin,
+    HqBaseResource,
+    SimpleSortableResourceMixin,
+    v0_1,
+    v0_3,
+)
 from corehq.apps.api.es import XFormES, CaseES, ElasticAPIQuerySet, es_search
 from corehq.apps.api.fields import ToManyDocumentsField, UseIfRequested, ToManyDictField, ToManyListDictField
 from corehq.apps.api.serializers import CommCareCaseSerializer
@@ -125,7 +131,7 @@ class XFormInstanceResource(SimpleSortableResourceMixin, v0_3.XFormInstanceResou
         list_allowed_methods = ['get']
 
 
-class RepeaterResource(HqBaseResource, DomainSpecificResourceMixin):
+class RepeaterResource(CouchResourceMixin, HqBaseResource, DomainSpecificResourceMixin):
 
     id = fields.CharField(attribute='_id', readonly=True, unique=True)
     type = fields.CharField(attribute='doc_type')
@@ -250,7 +256,7 @@ class CommCareCaseResource(SimpleSortableResourceMixin, v0_3.CommCareCaseResourc
         ordering = ['server_date_modified', 'date_modified']
 
 
-class GroupResource(HqBaseResource, DomainSpecificResourceMixin):
+class GroupResource(CouchResourceMixin, HqBaseResource, DomainSpecificResourceMixin):
     id = fields.CharField(attribute='get_id', unique=True, readonly=True)
     domain = fields.CharField(attribute='domain')
     name = fields.CharField(attribute='name')
@@ -330,7 +336,7 @@ class SingleSignOnResource(HqBaseResource, DomainSpecificResourceMixin):
         list_allowed_methods = ['post']
 
 
-class ApplicationResource(HqBaseResource, DomainSpecificResourceMixin):
+class ApplicationResource(CouchResourceMixin, HqBaseResource, DomainSpecificResourceMixin):
 
     id = fields.CharField(attribute='_id')
     name = fields.CharField(attribute='name')
@@ -400,19 +406,6 @@ class ApplicationResource(HqBaseResource, DomainSpecificResourceMixin):
         list_allowed_methods = ['get']
         detail_allowed_methods = ['get']
         resource_name = 'application'
-
-
-def bool_to_yesno(value):
-    if value is None:
-        return None
-    elif value:
-        return 'yes'
-    else:
-        return 'no'
-
-
-def get_yesno(attribute):
-    return lambda obj: bool_to_yesno(getattr(obj, attribute, None))
 
 
 class HOPECaseResource(CommCareCaseResource):

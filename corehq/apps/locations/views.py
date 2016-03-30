@@ -6,7 +6,7 @@ from django.http.response import HttpResponseServerError
 from django.shortcuts import render
 from django.utils.decorators import method_decorator
 from django.utils.safestring import mark_safe
-from django.utils.translation import ugettext as _, ugettext_noop
+from django.utils.translation import ugettext as _, ugettext_noop, ugettext_lazy
 from django.views.decorators.http import require_POST, require_http_methods
 
 from couchdbkit import ResourceNotFound
@@ -78,6 +78,11 @@ class LocationsListView(BaseLocationView):
     page_title = ugettext_noop("Organization Structure")
     template_name = 'locations/manage/locations.html'
 
+    @use_bootstrap3
+    @use_jquery_ui
+    def dispatch(self, request, *args, **kwargs):
+        return super(LocationsListView, self).dispatch(request, *args, **kwargs)
+
     @property
     def show_inactive(self):
         return json.loads(self.request.GET.get('show_inactive', 'false'))
@@ -89,13 +94,11 @@ class LocationsListView(BaseLocationView):
         loc_restricted = self.request.project.location_restriction_for_users
         return {
             'selected_id': selected_id,
-            'locations': load_locs_json(
-                self.domain, selected_id, self.show_inactive, self.request.couch_user
-            ),
+            'locations': load_locs_json(self.domain, selected_id, self.show_inactive, self.request.couch_user),
             'show_inactive': self.show_inactive,
             'has_location_types': has_location_types,
-            'can_edit_root': (not loc_restricted or
-                (loc_restricted and not self.request.couch_user.get_location(self.domain))),
+            'can_edit_root': (
+                not loc_restricted or (loc_restricted and not self.request.couch_user.get_location(self.domain))),
             'can_edit_any_location': user_can_edit_any_location(self.request.couch_user, self.request.project),
         }
 
@@ -103,9 +106,12 @@ class LocationsListView(BaseLocationView):
 class LocationFieldsView(CustomDataModelMixin, BaseLocationView):
     urlname = 'location_fields_view'
     field_type = 'LocationFields'
-    entity_string = _("Location")
+    entity_string = ugettext_lazy("Location")
+    template_name = "custom_data_fields/bootstrap3/custom_data_fields.html"
 
     @method_decorator(is_locations_admin)
+    @use_bootstrap3
+    @use_jquery_ui
     def dispatch(self, request, *args, **kwargs):
         return super(LocationFieldsView, self).dispatch(request, *args, **kwargs)
 
@@ -261,6 +267,11 @@ class NewLocationView(BaseLocationView):
     template_name = 'locations/manage/location.html'
     creates_new_location = True
     form_tab = 'basic'
+
+    @use_bootstrap3
+    @use_jquery_ui
+    def dispatch(self, request, *args, **kwargs):
+        return super(NewLocationView, self).dispatch(request, *args, **kwargs)
 
     @property
     def parent_pages(self):
@@ -530,7 +541,7 @@ class EditLocationView(NewLocationView):
     def post(self, request, *args, **kwargs):
         if self.request.POST['form_type'] == "location-settings":
             return self.settings_form_post(request, *args, **kwargs)
-        elif (self.request.POST['form_type'] == "location-users"):
+        elif self.request.POST['form_type'] == "location-users":
             return self.users_form_post(request, *args, **kwargs)
         elif (self.request.POST['form_type'] == "location-products"
               and toggles.PRODUCTS_PER_LOCATION.enabled(request.domain)):
@@ -591,7 +602,11 @@ class FacilitySyncView(BaseSyncView):
 class LocationImportStatusView(BaseLocationView):
     urlname = 'location_import_status'
     page_title = ugettext_noop('Organization Structure Import Status')
-    template_name = 'style/bootstrap2/soil_status_full.html'
+    template_name = 'style/bootstrap3/soil_status_full.html'
+
+    @use_bootstrap3
+    def dispatch(self, request, *args, **kwargs):
+        return super(LocationImportStatusView, self).dispatch(request, *args, **kwargs)
 
     def get(self, request, *args, **kwargs):
         context = super(LocationImportStatusView, self).main_context
@@ -615,6 +630,7 @@ class LocationImportView(BaseLocationView):
     template_name = 'locations/manage/import.html'
 
     @method_decorator(can_edit_any_location)
+    @use_bootstrap3
     def dispatch(self, request, *args, **kwargs):
         return super(LocationImportView, self).dispatch(request, *args, **kwargs)
 

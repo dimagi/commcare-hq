@@ -1,17 +1,16 @@
-from casexml.apps.case.models import CommCareCase
 from celery.schedules import crontab
 from celery.task import task, periodic_task
 from celery.utils.log import get_task_logger
 from corehq.apps.data_interfaces.models import AutomaticUpdateRule
 from datetime import datetime
-from dimagi.utils.couch.database import iter_docs
+
+from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 from django.conf import settings
 from django.core.cache import cache
 from django.template.loader import render_to_string
 from django.utils.translation import ugettext as _
 
 from corehq.apps.data_interfaces.utils import add_cases_to_case_group, archive_forms_old, archive_or_restore_forms
-from corehq.util.soft_assert.api import soft_assert
 from .interfaces import FormManagementMode, BulkFormManagementInterface
 from .dispatcher import EditDataInterfaceDispatcher
 from dimagi.utils.django.email import send_HTML_email
@@ -27,9 +26,9 @@ def bulk_upload_cases_to_group(download_id, domain, case_group_id, cases):
 
 
 @task(ignore_result=True)
-def bulk_archive_forms(domain, user, uploaded_data):
+def bulk_archive_forms(domain, couch_user, uploaded_data):
     # archive using Excel-data
-    response = archive_forms_old(domain, user, uploaded_data)
+    response = archive_forms_old(domain, couch_user.user_id, couch_user.username, uploaded_data)
 
     for msg in response['success']:
         logger.info("[Data interfaces] %s", msg)
@@ -37,7 +36,7 @@ def bulk_archive_forms(domain, user, uploaded_data):
         logger.info("[Data interfaces] %s", msg)
 
     html_content = render_to_string('data_interfaces/archive_email.html', response)
-    send_HTML_email(_('Your archived forms'), user.email, html_content)
+    send_HTML_email(_('Your archived forms'), couch_user.email, html_content)
 
 
 @task
@@ -73,7 +72,7 @@ def bulk_form_management_async(archive_or_restore, domain, couch_user, form_ids_
     if not xform_ids:
         return {'messages': {'errors': [_('No Forms are supplied')]}}
 
-    response = archive_or_restore_forms(domain, couch_user, xform_ids, mode, task)
+    response = archive_or_restore_forms(domain, couch_user.user_id, couch_user.username, xform_ids, mode, task)
     return response
 
 
@@ -103,8 +102,7 @@ def run_case_update_rules_for_domain(domain, now=None):
         boundary_date = AutomaticUpdateRule.get_boundary_date(rules, now)
         case_ids = AutomaticUpdateRule.get_case_ids(domain, boundary_date, case_type)
 
-        for doc in iter_docs(CommCareCase.get_db(), case_ids):
-            case = CommCareCase.wrap(doc)
+        for case in CaseAccessors(domain).iter_cases(case_ids):
             for rule in rules:
                 closed = rule.apply_rule(case, now)
                 if closed:

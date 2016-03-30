@@ -32,21 +32,21 @@
         "name": "AncHmisCaseFluffPillow"
     },
     "AppPillow": {
-        "advertised_name": "corehq.pillows.application.AppPillow.test_hqapps_2016-02-12_1300.testhq",
+        "advertised_name": "corehq.pillows.application.AppPillow.test_hqapps_2016-03-01_2128.testhq",
         "change_feed_type": "CouchChangeFeed",
-        "checkpoint_id": "corehq.pillows.application.AppPillow.test_hqapps_2016-02-12_1300.testhq",
+        "checkpoint_id": "corehq.pillows.application.AppPillow.test_hqapps_2016-03-01_2128.testhq",
         "couch_filter": "app_manager/all_apps",
         "couchdb_type": "Database",
-        "couchdb_uri": "http://{COUCH_SERVER_ROOT}/test_commcarehq",
+        "couchdb_uri": "http://{COUCH_SERVER_ROOT}/test_commcarehq__apps",
         "document_class": "ApplicationBase",
         "es_alias": "hqapps",
-        "es_index": "test_hqapps_2016-02-12_1300",
+        "es_index": "test_hqapps_2016-03-01_2128",
         "es_type": "app",
         "extra_args": {},
         "full_class_name": "corehq.pillows.application.AppPillow",
         "include_docs": true,
         "name": "AppPillow",
-        "unique_id": "test_hqapps_2016-02-12_1300"
+        "unique_id": "test_hqapps_2016-03-01_2128"
     },
     "BlobDeletionPillow": {
         "advertised_name": "BlobDeletionPillow",
@@ -114,19 +114,6 @@
         "name": "CasePillow",
         "unique_id": "d94ad23a98ddd2e9c36a9dc73bb58bac"
     },
-    "ConfigurableIndicatorPillow": {
-        "advertised_name": "corehq.apps.userreports.pillow.ConfigurableIndicatorPillow.testhq",
-        "change_feed_type": "CouchChangeFeed",
-        "checkpoint_id": "pillow-checkpoint-ucr-main",
-        "couch_filter": null,
-        "couchdb_type": "CachedCouchDB",
-        "couchdb_uri": "http://{COUCH_SERVER_ROOT}/test_commcarehq",
-        "document_class": null,
-        "extra_args": {},
-        "full_class_name": "corehq.apps.userreports.pillow.ConfigurableIndicatorPillow",
-        "include_docs": false,
-        "name": "ConfigurableIndicatorPillow"
-    },
     "CouvertureFluffPillow": {
         "advertised_name": "fluff.CouvertureFluffPillow.testhq",
         "change_feed_type": "KafkaChangeFeed",
@@ -157,21 +144,21 @@
         "name": "DefaultChangeFeedPillow"
     },
     "DomainPillow": {
-        "advertised_name": "corehq.pillows.domain.DomainPillow.test_hqdomains_20160128_1552.testhq",
+        "advertised_name": "corehq.pillows.domain.DomainPillow.test_hqdomains_20160318_1339.testhq",
         "change_feed_type": "CouchChangeFeed",
-        "checkpoint_id": "corehq.pillows.domain.DomainPillow.test_hqdomains_20160128_1552.testhq",
+        "checkpoint_id": "corehq.pillows.domain.DomainPillow.test_hqdomains_20160318_1339.testhq",
         "couch_filter": "domain/domains_inclusive",
         "couchdb_type": "Database",
         "couchdb_uri": "http://{COUCH_SERVER_ROOT}/test_commcarehq__domains",
         "document_class": "Domain",
         "es_alias": "hqdomains",
-        "es_index": "test_hqdomains_20160128_1552",
+        "es_index": "test_hqdomains_20160318_1339",
         "es_type": "hqdomain",
         "extra_args": {},
         "full_class_name": "corehq.pillows.domain.DomainPillow",
         "include_docs": true,
         "name": "DomainPillow",
-        "unique_id": "test_hqdomains_20160128_1552"
+        "unique_id": "test_hqdomains_20160318_1339"
     },
     "FarmerRecordFluffPillow": {
         "advertised_name": "fluff.FarmerRecordFluffPillow.testhq",
@@ -183,7 +170,7 @@
         "document_class": "CommCareCase",
         "extra_args": {
             "doc_type": "CommCareCase",
-            "domains": "pathways-india-mis pathways-tanzania"
+            "domains": "pathways-india-mis pathways-tanzania care-macf-malawi care-macf-bangladesh"
         },
         "full_class_name": "custom.care_pathways.models.FarmerRecordFluffPillow",
         "include_docs": false,
@@ -212,7 +199,7 @@
         "document_class": "CommCareCase",
         "extra_args": {
             "doc_type": "CommCareCase",
-            "domains": "pathways-india-mis pathways-tanzania"
+            "domains": "pathways-india-mis pathways-tanzania care-macf-malawi care-macf-bangladesh"
         },
         "full_class_name": "custom.care_pathways.models.GeographyFluffPillow",
         "include_docs": false,
@@ -491,6 +478,13 @@
         "name": "SMSPillow",
         "unique_id": "708c77f8e5fe00286fa5791e9fa7d45f"
     },
+    "SqlSMSPillow": {
+        "advertised_name": "SqlSMSPillow",
+        "change_feed_type": "KafkaChangeFeed",
+        "checkpoint_id": "sql-sms-to-es",
+        "full_class_name": "pillowtop.pillow.interface.ConstructedPillow",
+        "name": "SqlSMSPillow"
+    },
     "SqlCaseToElasticsearchPillow": {
         "advertised_name": "SqlCaseToElasticsearchPillow",
         "change_feed_type": "KafkaChangeFeed",
@@ -504,19 +498,6 @@
         "checkpoint_id": "sql-xforms-to-elasticsearch",
         "full_class_name": "pillowtop.pillow.interface.ConstructedPillow",
         "name": "SqlXFormToElasticsearchPillow"
-    },
-    "StaticDataSourcePillow": {
-        "advertised_name": "corehq.apps.userreports.pillow.StaticDataSourcePillow.testhq",
-        "change_feed_type": "CouchChangeFeed",
-        "checkpoint_id": "pillow-checkpoint-ucr-static",
-        "couch_filter": null,
-        "couchdb_type": "CachedCouchDB",
-        "couchdb_uri": "http://{COUCH_SERVER_ROOT}/test_commcarehq",
-        "document_class": null,
-        "extra_args": {},
-        "full_class_name": "corehq.apps.userreports.pillow.StaticDataSourcePillow",
-        "include_docs": false,
-        "name": "StaticDataSourcePillow"
     },
     "TauxDeRuptureFluffPillow": {
         "advertised_name": "fluff.TauxDeRuptureFluffPillow.testhq",
@@ -680,5 +661,19 @@
         "include_docs": false,
         "name": "XFormPillow",
         "unique_id": "test_xforms_20150403-1728"
+    },
+    "kafka-ucr-main": {
+        "advertised_name": "kafka-ucr-main",
+        "change_feed_type": "KafkaChangeFeed",
+        "checkpoint_id": "kafka-ucr-main",
+        "full_class_name": "corehq.apps.userreports.pillow.ConfigurableReportKafkaPillow",
+        "name": "kafka-ucr-main"
+    },
+    "kafka-ucr-static": {
+        "advertised_name": "kafka-ucr-static",
+        "change_feed_type": "KafkaChangeFeed",
+        "checkpoint_id": "kafka-ucr-static",
+        "full_class_name": "corehq.apps.userreports.pillow.ConfigurableReportKafkaPillow",
+        "name": "kafka-ucr-static"
     }
 }

@@ -38,7 +38,7 @@ class FeatureResource(ModelResource):
         resource_name = 'accounting_features'
 
 
-class FutureRateResource(ModelResource):
+class FeatureRateResource(ModelResource):
     feature = fields.IntegerField('feature_id', null=True)
 
     class Meta(AccountingResourceMeta):
@@ -110,7 +110,7 @@ class SoftwareProductRateResource(ModelResource):
 
 class SoftwarePlanVersionResource(ModelResource):
     plan = fields.IntegerField('plan_id', null=True)
-    feature_rates = AccToManyField(FutureRateResource, 'feature_rates', full=True, null=True)
+    feature_rates = AccToManyField(FeatureRateResource, 'feature_rates', full=True, null=True)
     role = fields.IntegerField('role_id', null=True)
 
     class Meta(AccountingResourceMeta):

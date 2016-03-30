@@ -1,4 +1,5 @@
 # coding=utf-8
+import calendar
 from distutils.version import LooseVersion
 from itertools import chain
 import tempfile
@@ -75,6 +76,7 @@ from corehq.apps.app_manager.dbaccessors import (
     get_app,
     get_latest_build_doc,
     get_latest_released_app_doc,
+    domain_has_apps,
 )
 from corehq.apps.app_manager.util import (
     split_path,
@@ -189,15 +191,6 @@ def load_case_reserved_words():
 def load_form_template(filename):
     with open(os.path.join(os.path.dirname(__file__), 'data', filename)) as f:
         return f.read()
-
-
-def partial_escape(xpath):
-    """
-    Copied from http://stackoverflow.com/questions/275174/how-do-i-perform-html-decoding-encoding-using-python-django
-    but without replacing the single quote
-
-    """
-    return mark_safe(force_unicode(xpath).replace('&', '&amp;').replace('<', '&lt;').replace('>', '&gt;').replace('"', '&quot;'))
 
 
 class IndexedSchema(DocumentSchema):
@@ -1530,6 +1523,7 @@ class GraphAnnotations(IndexedSchema):
 
 class GraphSeries(DocumentSchema):
     config = DictProperty()
+    locale_specific_config = DictProperty()
     data_path = StringProperty()
     x_function = StringProperty()
     y_function = StringProperty()
@@ -3278,7 +3272,9 @@ class ReportAppFilter(DocumentSchema):
                 'StaticChoiceListFilter': StaticChoiceListFilter,
                 'StaticDatespanFilter': StaticDatespanFilter,
                 'CustomDatespanFilter': CustomDatespanFilter,
+                'CustomMonthFilter': CustomMonthFilter,
                 'MobileSelectFilter': MobileSelectFilter,
+                'AncestorLocationTypeFilter': AncestorLocationTypeFilter,
             }
             try:
                 klass = doc_type_to_filter_class[doc_type]
@@ -3315,9 +3311,16 @@ def _filter_by_user_id(user, ui_filter):
     return Choice(value=user._id, display=None)
 
 
+def _filter_by_parent_location_id(user, ui_filter):
+    location = user.sql_location
+    location_parent = location.parent.location_id if location and location.parent else None
+    return ui_filter.value(**{ui_filter.name: location_parent})
+
+
 _filter_type_to_func = {
     'case_sharing_group': _filter_by_case_sharing_group_id,
     'location_id': _filter_by_location_id,
+    'parent_location_id': _filter_by_parent_location_id,
     'username': _filter_by_username,
     'user_id': _filter_by_user_id,
 }
@@ -3359,6 +3362,7 @@ class StaticDatespanFilter(ReportAppFilter):
         choices=[
             'last7',
             'last30',
+            'thismonth',
             'lastmonth',
             'lastyear',
         ],
@@ -3417,9 +3421,88 @@ class CustomDatespanFilter(ReportAppFilter):
         return DateSpan(startdate=start_date, enddate=end_date)
 
 
+def is_lte(integer):
+    def validate(x):
+        if not x <= integer:
+            raise BadValueError('Value must be less than or equal to {}'.format(integer))
+    return validate
+
+
+def is_gte(integer):
+    def validate(x):
+        if not x >= integer:
+            raise BadValueError('Value must be greater than or equal to {}'.format(integer))
+    return validate
+
+
+class CustomMonthFilter(ReportAppFilter):
+    """
+    Filter by months that start on a day number other than 1
+
+    See [FB 215656](http://manage.dimagi.com/default.asp?215656)
+    """
+    # Values for start_of_month < 1 specify the number of days from the end of the month. Values capped at
+    # len(February).
+    start_of_month = IntegerProperty(
+        required=True,
+        validators=(is_gte(-27), is_lte(28))
+    )
+    # DateSpan to return i.t.o. number of months to go back
+    period = IntegerProperty(
+        default=DEFAULT_MONTH_FILTER_PERIOD_LENGTH,
+        validators=(is_gte(0),)
+    )
+
+    @classmethod
+    def wrap(cls, doc):
+        doc['start_of_month'] = int(doc['start_of_month'])
+        if 'period' in doc:
+            doc['period'] = int(doc['period'] or DEFAULT_MONTH_FILTER_PERIOD_LENGTH)
+        return super(CustomMonthFilter, cls).wrap(doc)
+
+    def get_filter_value(self, user, ui_filter):
+        def get_last_month(this_month):
+            return datetime.date(this_month.year, this_month.month, 1) - datetime.timedelta(days=1)
+
+        def get_last_day(date):
+            _, last_day = calendar.monthrange(date.year, date.month)
+            return last_day
+
+        # Find the start and end dates of period 0
+        start_of_month = int(self.start_of_month)
+        end_date = datetime.date.today()
+        start_day = start_of_month if start_of_month > 0 else get_last_day(end_date) + start_of_month
+        end_of_month = end_date if end_date.day >= start_day else get_last_month(end_date)
+        start_date = datetime.date(end_of_month.year, end_of_month.month, start_day)
+
+        # Loop over months backwards for period > 0
+        for i in range(int(self.period)):
+            end_of_month = get_last_month(end_of_month)
+            end_date = start_date - datetime.timedelta(days=1)
+            start_day = start_of_month if start_of_month > 0 else get_last_day(end_of_month) + start_of_month
+            start_date = datetime.date(end_of_month.year, end_of_month.month, start_day)
+
+        return DateSpan(startdate=start_date, enddate=end_date)
+
+
 class MobileSelectFilter(ReportAppFilter):
     def get_filter_value(self, user, ui_filter):
         return None
+
+
+class AncestorLocationTypeFilter(ReportAppFilter):
+    ancestor_location_type_name = StringProperty()
+
+    def get_filter_value(self, user, ui_filter):
+        from corehq.apps.locations.models import SQLLocation
+
+        try:
+            ancestor = user.sql_location.get_ancestors(include_self=True).\
+                get(location_type__name=self.ancestor_location_type_name)
+        except (AttributeError, SQLLocation.DoesNotExist):
+            # user.sql_location is None, or location does not have an ancestor of that type
+            return None
+        return ancestor.location_id
 
 
 class ReportAppConfig(DocumentSchema):
@@ -3998,24 +4081,10 @@ class ApplicationBase(VersionedDoc, SnapshotMixin,
         if self.build_spec.version:
             return LooseVersion(self.build_spec.version)
 
-    def get_preview_build(self):
-        preview = self.get_build()
-
-        for path in getattr(preview, '_attachments', {}):
-            if path.startswith('Generic/WebDemo'):
-                return preview
-        return CommCareBuildConfig.fetch().preview.get_build()
-
     @property
     def commcare_minor_release(self):
         """This is mostly just for views"""
         return '%d.%d' % self.build_spec.minor_release()
-
-    def get_build_label(self):
-        for item in CommCareBuildConfig.fetch().menu:
-            if item['build'].to_string() == self.build_spec.to_string():
-                return item['label']
-        return self.build_spec.get_label()
 
     @property
     def short_name(self):
@@ -4190,8 +4259,13 @@ class ApplicationBase(VersionedDoc, SnapshotMixin,
                     filename[len('files/'):]: self.lazy_fetch_attachment(filename)
                     for filename in self._attachments if filename.startswith('files/')
                 }
+                all_files = {
+                    name: (contents if isinstance(contents, str) else contents.encode('utf-8'))
+                    for name, contents in all_files.items()
+                }
+                release_date = self.built_with.datetime or datetime.datetime.utcnow()
                 jad_settings = {
-                    'Released-on': self.built_with.datetime.strftime("%Y-%b-%d %H:%M"),
+                    'Released-on': release_date.strftime("%Y-%b-%d %H:%M"),
                 }
                 jad_settings.update(self.jad_settings)
                 jadjar = self.get_jadjar().pack(all_files, jad_settings)
@@ -4329,6 +4403,7 @@ class ApplicationBase(VersionedDoc, SnapshotMixin,
         return copy
 
     def delete_app(self):
+        domain_has_apps.clear(self.domain)
         self.doc_type += '-Deleted'
         record = DeleteApplicationRecord(
             domain=self.domain,
@@ -4337,6 +4412,12 @@ class ApplicationBase(VersionedDoc, SnapshotMixin,
         )
         record.save()
         return record
+
+    def save(self, response_json=None, increment_version=None, **params):
+        if not self._id and not domain_has_apps(self.domain):
+            domain_has_apps.clear(self.domain)
+        super(ApplicationBase, self).save(
+            response_json=response_json, increment_version=increment_version, **params)
 
     def set_form_versions(self, previous_version):
         # by default doing nothing here is fine.
@@ -4388,7 +4469,6 @@ class SavedAppBuild(ApplicationBase):
             'id': self.id,
             'built_on_date': built_on_user_time.ui_string(USER_DATE_FORMAT),
             'built_on_time': built_on_user_time.ui_string(USER_TIME_FORMAT),
-            'build_label': self.built_with.get_label(),
             'menu_item_label': self.built_with.get_menu_item_label(),
             'jar_path': self.get_jar_path(),
             'short_name': self.short_name,
@@ -4884,42 +4964,6 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
 
         if from_module['case_type'] != to_module['case_type']:
             raise ConflictingCaseTypeError()
-
-    def convert_module_to_advanced(self, module_id):
-        from_module = self.get_module(module_id)
-
-        name = {lang: u'{} (advanced)'.format(name) for lang, name in from_module.name.items()}
-
-        case_details = deepcopy(from_module.case_details.to_json())
-        to_module = AdvancedModule(
-            name=name,
-            forms=[],
-            case_type=from_module.case_type,
-            case_label=from_module.case_label,
-            put_in_root=from_module.put_in_root,
-            case_list=from_module.case_list,
-            case_details=DetailPair.wrap(case_details),
-            product_details=DetailPair(
-                short=Detail(
-                    columns=[
-                        DetailColumn(
-                            format='plain',
-                            header={'en': ugettext("Product")},
-                            field='name',
-                            model='product',
-                        ),
-                    ],
-                ),
-                long=Detail(),
-            ),
-        )
-        to_module.get_or_create_unique_id()
-        to_module = self.add_module(to_module)
-
-        for form in from_module.get_forms():
-            self._copy_form(from_module, form, to_module)
-
-        return to_module
 
     @cached_property
     def has_case_management(self):

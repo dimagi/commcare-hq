@@ -1,24 +1,24 @@
-import calendar
 from collections import namedtuple
 import datetime
-from decimal import Decimal
 import logging
 
 from django.conf import settings
 from django.template.loader import render_to_string
-from corehq.util.view_utils import absolute_reverse
 from django.utils.translation import ugettext_lazy as _
-from corehq import privileges
 
-from corehq.apps.domain.models import Domain
-from corehq.util.quickcache import quickcache
+from django_prbac.models import Role, UserRole
+from dimagi.utils.couch.database import iter_docs
+from dimagi.utils.dates import add_months
+
+from corehq import privileges
 from corehq.apps.accounting.exceptions import (
     AccountingError,
     ProductPlanNotFoundError,
 )
-from dimagi.utils.couch.database import iter_docs
-from dimagi.utils.dates import add_months
-from django_prbac.models import Role, UserRole
+from corehq.apps.domain.models import Domain
+from corehq.util.quickcache import quickcache
+from corehq.util.view_utils import absolute_reverse
+
 
 logger = logging.getLogger('accounting')
 
@@ -31,20 +31,6 @@ def log_accounting_error(message):
 
 def log_accounting_info(message):
     logger.info("[BILLING] %s" % message)
-
-
-def get_first_last_days(year, month):
-    last_day = calendar.monthrange(year, month)[1]
-    date_start = datetime.date(year, month, 1)
-    date_end = datetime.date(year, month, last_day)
-    return date_start, date_end
-
-
-def get_previous_month_date_range(reference_date=None):
-    reference_date = reference_date or datetime.date.today()
-
-    last_month_year, last_month = add_months(reference_date.year, reference_date.month, -1)
-    return get_first_last_days(last_month_year, last_month)
 
 
 def months_from_date(reference_date, months_from_date):

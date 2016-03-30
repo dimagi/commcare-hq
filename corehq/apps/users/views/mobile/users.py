@@ -1,78 +1,77 @@
-from collections import defaultdict
-import json
 import csv
-from datetime import datetime
 import io
+import json
+from collections import defaultdict
+from datetime import datetime
+from zipfile import BadZipfile
 
-from couchdbkit import ResourceNotFound
-
+from django.contrib import messages
 from django.contrib.auth.forms import SetPasswordForm
+from django.core.urlresolvers import reverse
+from django.http import HttpResponseRedirect, HttpResponse,\
+    HttpResponseForbidden, HttpResponseBadRequest, Http404
 from django.http.response import HttpResponseServerError
 from django.shortcuts import render
 from django.template import RequestContext
 from django.template.loader import render_to_string
-from django.utils.safestring import mark_safe
-
-from braces.views import JsonRequestResponseMixin
-from openpyxl.utils.exceptions import InvalidFileException
-from django.core.urlresolvers import reverse
-from django.http import HttpResponseRedirect, HttpResponse,\
-    HttpResponseForbidden, HttpResponseBadRequest, Http404
 from django.utils.decorators import method_decorator
+from django.utils.safestring import mark_safe
 from django.utils.translation import ugettext as _, ugettext_noop
 from django.views.decorators.http import require_POST
 from django.views.generic import View, TemplateView
-from django.contrib import messages
+
+from braces.views import JsonRequestResponseMixin
+from couchdbkit import ResourceNotFound
 from djangular.views.mixins import JSONResponseMixin, allow_remote_invocation
-from corehq import privileges
-from corehq.apps.accounting.async_handlers import Select2BillingInfoHandler
-from corehq.apps.accounting.decorators import requires_privilege_with_fallback
-from corehq.apps.custom_data_fields.models import CUSTOM_DATA_FIELD_PREFIX
-from corehq.apps.domain.decorators import domain_admin_required
-from corehq.apps.accounting.models import (
-    BillingAccount,
-    BillingAccountType,
-    EntryPoint,
-)
-from corehq.apps.accounting.utils import domain_has_privilege
-from corehq.apps.es import UserES
-from corehq.apps.hqwebapp.async_handler import AsyncHandlerMixin
-from corehq.apps.hqwebapp.utils import get_bulk_upload_form
-from corehq.apps.locations.models import Location
-from corehq.apps.locations.analytics import users_have_locations
-from corehq.apps.users.analytics import get_search_users_in_domain_es_query
-from corehq.apps.users.util import can_add_extra_mobile_workers, format_username
-from corehq.apps.custom_data_fields import CustomDataEditor
-from corehq.const import USER_DATE_FORMAT
-from corehq.util.couch import get_document_or_404
-from corehq.util.spreadsheets.excel import JSONReaderError, HeaderValueError, \
-    WorksheetNotFound, WorkbookJSONReader
+from openpyxl.utils.exceptions import InvalidFileException
 
 from couchexport.models import Format
-from corehq.apps.users.forms import (
-    CommCareAccountForm, UpdateCommCareUserInfoForm, CommtrackUserForm,
-    MultipleSelectionForm, ConfirmExtraUserChargesForm, NewMobileWorkerForm,
-    SelfRegistrationForm
-)
-from corehq.apps.users.models import CommCareUser, UserRole, CouchUser
-from corehq.apps.groups.models import Group
-from corehq.apps.domain.models import Domain
-from corehq.apps.domain.views import DomainViewMixin
-from corehq.apps.sms.models import SelfRegistrationInvitation
-from corehq.apps.sms.verify import initiate_sms_verification_workflow
-from corehq.apps.style.decorators import use_bootstrap3, use_select2, \
-    use_angular_js
-from corehq.apps.users.bulkupload import check_headers, dump_users_and_groups, GroupNameError, UserUploadError
-from corehq.apps.users.tasks import bulk_upload_async
-from corehq.apps.users.decorators import require_can_edit_commcare_users
-from corehq.apps.users.views import BaseFullEditUserView, BaseUserSettingsView
 from dimagi.utils.decorators.memoized import memoized
 from dimagi.utils.html import format_html
 from django_prbac.exceptions import PermissionDenied
 from django_prbac.utils import has_privilege
 from soil.exceptions import TaskFailedError
 from soil.util import get_download_context, expose_cached_download
-from zipfile import BadZipfile
+
+from corehq import privileges
+from corehq.apps.accounting.async_handlers import Select2BillingInfoHandler
+from corehq.apps.accounting.decorators import requires_privilege_with_fallback
+from corehq.apps.accounting.models import (
+    BillingAccount,
+    BillingAccountType,
+    EntryPoint,
+)
+from corehq.apps.accounting.utils import domain_has_privilege
+from corehq.apps.custom_data_fields import CustomDataEditor
+from corehq.apps.custom_data_fields.models import CUSTOM_DATA_FIELD_PREFIX
+from corehq.apps.domain.decorators import domain_admin_required
+from corehq.apps.domain.models import Domain
+from corehq.apps.domain.views import DomainViewMixin
+from corehq.apps.groups.models import Group
+from corehq.apps.hqwebapp.async_handler import AsyncHandlerMixin
+from corehq.apps.hqwebapp.utils import get_bulk_upload_form
+from corehq.apps.locations.analytics import users_have_locations
+from corehq.apps.locations.models import Location
+from corehq.apps.sms.models import SelfRegistrationInvitation
+from corehq.apps.sms.verify import initiate_sms_verification_workflow
+from corehq.apps.style.decorators import use_bootstrap3, use_select2, \
+    use_angular_js
+from corehq.apps.users.analytics import get_search_users_in_domain_es_query
+from corehq.apps.users.bulkupload import check_headers, dump_users_and_groups, GroupNameError, UserUploadError
+from corehq.apps.users.decorators import require_can_edit_commcare_users
+from corehq.apps.users.forms import (
+    CommCareAccountForm, UpdateCommCareUserInfoForm, CommtrackUserForm,
+    MultipleSelectionForm, ConfirmExtraUserChargesForm, NewMobileWorkerForm,
+    SelfRegistrationForm
+)
+from corehq.apps.users.models import CommCareUser, UserRole, CouchUser
+from corehq.apps.users.tasks import bulk_upload_async
+from corehq.apps.users.util import can_add_extra_mobile_workers, format_username
+from corehq.apps.users.views import BaseFullEditUserView, BaseUserSettingsView
+from corehq.const import USER_DATE_FORMAT
+from corehq.util.couch import get_document_or_404
+from corehq.util.spreadsheets.excel import JSONReaderError, HeaderValueError, \
+    WorksheetNotFound, WorkbookJSONReader
 from .custom_data_fields import UserFieldsView
 
 BULK_MOBILE_HELP_SITE = ("https://confluence.dimagi.com/display/commcarepublic"
@@ -108,10 +107,8 @@ class EditCommCareUserView(BaseFullEditUserView):
     def editable_user(self):
         try:
             user = CommCareUser.get_by_user_id(self.editable_user_id, self.domain)
-            if not user:
+            if not user or user.is_deleted():
                 raise Http404()
-            if user.is_deleted():
-                self.template_name = "users/deleted_account.html"
             return user
         except (ResourceNotFound, CouchUser.AccountTypeError, KeyError):
             raise Http404()
@@ -344,13 +341,6 @@ def delete_commcare_user(request, domain, user_id):
     messages.success(request, "User %s has been deleted. All their submissions and cases will be permanently deleted in the next few minutes" % user.username)
     return HttpResponseRedirect(reverse(MobileWorkerListView.urlname, args=[domain]))
 
-@require_can_edit_commcare_users
-@require_POST
-def restore_commcare_user(request, domain, user_id):
-    user = CommCareUser.get_by_user_id(user_id, domain)
-    user.unretire()
-    messages.success(request, "User %s and all their submissions have been restored" % user.username)
-    return HttpResponseRedirect(reverse(EditCommCareUserView.urlname, args=[domain, user_id]))
 
 @require_can_edit_commcare_users
 @require_POST
@@ -706,6 +696,7 @@ class UploadCommCareUsers(BaseManageCommCareUserView):
 
     @property
     def page_context(self):
+        request_params = self.request.GET if self.request.method == 'GET' else self.request.POST
         context = {
             'bulk_upload': {
                 "help_site": {
@@ -717,7 +708,7 @@ class UploadCommCareUsers(BaseManageCommCareUserView):
                 "adjective": _("mobile worker"),
                 "plural_noun": _("mobile workers"),
             },
-            'show_secret_settings': self.request.REQUEST.get("secret", False),
+            'show_secret_settings': request_params.get("secret", False),
         }
         context.update({
             'bulk_upload_form': get_bulk_upload_form(context),
@@ -896,6 +887,10 @@ class CommCareUserSelfRegistrationView(TemplateView, DomainViewMixin):
     template_name = "users/mobile/commcare_user_self_register.html"
     urlname = "commcare_user_self_register"
     strict_domain_fetching = True
+
+    @use_bootstrap3
+    def dispatch(self, request, *args, **kwargs):
+        return super(CommCareUserSelfRegistrationView, self).dispatch(request, *args, **kwargs)
 
     @property
     @memoized

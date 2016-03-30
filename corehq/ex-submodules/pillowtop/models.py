@@ -1,4 +1,11 @@
+import json
 from django.db import models
+
+
+SEQUENCE_FORMATS = (
+    ('text', 'text'),
+    ('json', 'json'),
+)
 
 
 class DjangoPillowCheckpoint(models.Model):
@@ -7,6 +14,17 @@ class DjangoPillowCheckpoint(models.Model):
     sequence = models.TextField()
     timestamp = models.DateTimeField(auto_now=True)
     old_sequence = models.TextField(null=True, blank=True)
+    sequence_format = models.CharField(max_length=20, choices=SEQUENCE_FORMATS, default='text')
+
+    @property
+    def wrapped_sequence(self):
+        if self.sequence_format == 'json':
+            return json.loads(self.sequence)
+        else:
+            return self.sequence
+
+    class Meta:
+        app_label = "pillowtop"
 
     @staticmethod
     def to_dict(instance):

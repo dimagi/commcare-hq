@@ -3,7 +3,6 @@
 {% load hq_shared_tags %}
 
 {% block js %}{{ block.super }}
-    <script src="{% new_static 'hqwebapp/js-custom/hq.legacy.js' %}"></script>
     <script src="{% new_static 'reports/javascripts/reports.config.js' %}"></script>
     <script src="{% new_static 'reports/ko/saved_reports.js' %}"></script>
 {% endblock %}
@@ -19,7 +18,6 @@
             $applyFiltersButton.click(function(){
                 window.analytics.usage("Report Viewer", "Apply Filters", '{{ report.spec.report_meta.builder_report_type }}');
             });
-
             gaTrackLink($editReportButton, 'Report Builder', 'Edit Report', '{{ report.spec.report_meta.builder_report_type }}');
             window.analytics.trackWorkflowLink($editReportButton, "Clicked Edit to enter the Report Builder");
             window.analytics.usage("Report Viewer", "View Report", '{{ report.spec.report_meta.builder_report_type }}');
@@ -148,8 +146,9 @@
             <button id="apply-filters"
                     type="submit"
                     class="filters btn btn-primary"
-                data-loading-text="{% trans 'Generating Report...' %}"
-                data-standard-text="{% trans 'Apply' %}">
+                    data-loading-text="{% trans 'Generating Report...' %}"
+                    data-standard-text="{% trans 'Apply' %}"
+                    disabled >
                 {% trans 'Apply' %}
             </button>
         </div>

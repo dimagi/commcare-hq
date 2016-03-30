@@ -1,4 +1,5 @@
 import re
+from corehq.apps.style.crispy import FormActions
 from crispy_forms.helper import FormHelper
 from crispy_forms import layout as crispy
 from django import forms
@@ -50,12 +51,17 @@ class AuthenticateAsForm(forms.Form):
         super(AuthenticateAsForm, self).__init__(*args, **kwargs)
 
         self.helper = FormHelper()
+        self.helper.form_class = "form-horizontal"
         self.helper.form_id = 'auth-as-form'
+        self.helper.label_class = 'col-sm-3 col-md-2'
+        self.helper.field_class = 'col-sm-9 col-md-8 col-lg-6'
         self.helper.layout = crispy.Layout(
             'username',
             'domain',
-            crispy.Submit(
-                'authenticate_as',
-                'Authenticate As'
+            FormActions(
+                crispy.Submit(
+                    'authenticate_as',
+                    'Authenticate As'
+                )
             )
         )

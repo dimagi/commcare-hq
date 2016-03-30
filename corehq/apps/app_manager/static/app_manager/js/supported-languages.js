@@ -1,4 +1,4 @@
-var SupportedLanguages = (function () {
+hqDefine('app_manager/js/supported-languages.js', function () {
     function Language(langcode, deploy, languages) {
         var self = this;
         this.langcode = ko.observable(deploy === undefined ? '' : langcode);
@@ -183,5 +183,5 @@ var SupportedLanguages = (function () {
             return message;
         };
     }
-    return SupportedLanguages;
-}());
+    return {SupportedLanguages: SupportedLanguages};
+});

@@ -4,11 +4,12 @@ CommCare HQ docker
 Initial setup
 -------------
 * Linux
-   * Install [Docker](http://docs.docker.com/installation)
-   * Install [Docker Compose](https://docs.docker.com/compose/install/)
+   * Install [Docker](https://docs.docker.com/engine/installation/)
+   * Install [Docker Compose](https://docs.docker.com/compose/install/) (Note you can also install in a virtualenv with `$ pip install docker-compose`)
 * OS X
    * Install [Docker Toolbox](https://docs.docker.com/mac/step_one/). Go through the full tutorial, which will create a default machine.
    * If not using the Quick Start terminal, run `eval $(docker-machine env default)` to set up Docker's environment variables.
+* If you have any HQ services currently running (couch, postgres, redis, etc.), you should stop them now. 
 * Bootstrap the setup:
 
     ```
@@ -28,6 +29,8 @@ Initial setup
 
     If all goes according to plan you should be able to log into CommCare: http://localhost:8000 using
     the login details above.
+    
+    You can create another user and domain with `$ ./manage.py bootstrap DOMAIN EMAIL PASSWORD`
     
     On Mac, run `docker-machine ip` to get the VM's IP address, which replaces `localhost` in the URL.
 
@@ -66,7 +69,7 @@ General usage
 The following services are included. Their ports are mapped to the local host so you can connect to them
 directly.
 
-* Easticsearch (9200 & 9300)
+* Elasticsearch (9200 & 9300)
 * PostgreSQL (5432)
 * CouchDB (5984)
 * Redis (6397)
@@ -89,6 +92,9 @@ After changing any of the python requirements the `web` image will need to be re
 ```
   $ ./dockerhq.sh rebuild
 ```
+
+**copying old data**
+If you don't want to start fresh, Farid wrote up some notes on copying data from an old dev environment [here](https://gist.github.com/proteusvacuum/a3884ce8b65681ebaf95).
 
 Caveats
 -------

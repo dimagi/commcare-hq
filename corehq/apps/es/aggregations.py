@@ -35,11 +35,13 @@ As of this writing, there's not much else developed, but it's pretty easy to
 add support for other aggregation types and more results processing
 """
 import re
-from collections import namedtuple
+from collections import namedtuple, defaultdict
 
 import datetime
 
 from corehq.elastic import SIZE_LIMIT
+
+MISSING_KEY = None
 
 
 class AggregationResult(object):
@@ -111,6 +113,61 @@ class BucketResult(AggregationResult):
         return {b['key']: b['doc_count'] for b in self.normalized_buckets}
 
 
+class MissingResult(AggregationResult):
+
+    @property
+    def bucket(self):
+        return Bucket(self.result, self._aggregations)
+
+
+class TopHitsResult(AggregationResult):
+
+    @property
+    def raw_hits(self):
+        return self.result['hits']['hits']
+
+    @property
+    def doc_ids(self):
+        """Return just the docs ids from the response."""
+        return [r['_id'] for r in self.raw_hits]
+
+    @property
+    def hits(self):
+        """Return the docs from the response."""
+        return [r['_source'] for r in self.raw_hits]
+
+    @property
+    def total(self):
+        """Return the total number of docs matching the query."""
+        return self.result['hits']['total']
+
+
+class StatsResult(AggregationResult):
+
+    @property
+    def count(self):
+        return self.result['count']
+
+    @property
+    def max(self):
+        return self.result['max']
+
+    @property
+    def min(self):
+        return self.result['min']
+
+    @property
+    def avg(self):
+        return self.result['avg']
+
+
+class ExtendedStatsResult(StatsResult):
+
+    @property
+    def std_dev(self):
+        return self.result['std_deviation']
+
+
 class Bucket(object):
     def __init__(self, result, aggregations):
         self.result = result
@@ -118,7 +175,7 @@ class Bucket(object):
 
     @property
     def key(self):
-        return self.result['key']
+        return self.result.get('key', MISSING_KEY)
 
     @property
     def doc_count(self):
@@ -130,7 +187,7 @@ class Bucket(object):
             return sub_aggregation.parse_result(self.result)
 
     def __repr__(self):
-        return "Bucket(key='{}', doc_count='{})".format(self.key, self.doc_count)
+        return "Bucket(key='{}', doc_count='{}')".format(self.key, self.doc_count)
 
 
 class TermsAggregation(Aggregation):
@@ -152,6 +209,86 @@ class TermsAggregation(Aggregation):
             "field": field,
             "size": size if size is not None else SIZE_LIMIT,
         }
+
+
+class MissingAggregation(Aggregation):
+    """
+    A field data based single bucket aggregation, that creates a bucket of all
+    documents in the current document set context that are missing a field value
+    (effectively, missing a field or having the configured NULL value set).
+
+    :param name: aggregation name
+    :param field: name of the field to bucket on
+    """
+    type = "missing"
+    result_class = MissingResult
+
+    def __init__(self, name, field):
+        assert re.match(r'\w+$', name), \
+            "Names must be valid python variable names, was {}".format(name)
+        self.name = name
+        self.body = {"field": field}
+
+
+class StatsAggregation(Aggregation):
+    """
+    Stats aggregation that computes a stats aggregation by field
+
+    :param name: aggregation name
+    :param field: name of the field to collect stats on
+    :param script: an optional field to allow you to script the computed field
+    """
+    type = "stats"
+    result_class = StatsResult
+
+    def __init__(self, name, field, script=None):
+        assert re.match(r'\w+$', name), \
+            "Names must be valid python variable names, was {}".format(name)
+        self.name = name
+        self.body = {"field": field}
+        if script:
+            self.body.update({'script': script})
+
+
+class ExtendedStatsAggregation(StatsAggregation):
+    """
+    Extended stats aggregation that computes an extended stats aggregation by field
+    """
+    type = "extended_stats"
+    result_class = ExtendedStatsResult
+
+
+class TopHitsAggregation(Aggregation):
+    """
+    A top_hits metric aggregator keeps track of the most relevant document being aggregated
+    This aggregator is intended to be used as a sub aggregator, so that the top matching
+    documents can be aggregated per bucket.
+
+    :param name: Aggregation name
+    :param field: This is the field to sort the top hits by. If None, defaults to sorting
+        by score.
+    :param is_ascending: Whether to sort the hits in ascending or descending order.
+    :param size: The number of hits to include. Defaults to 1.
+    :param include: An array of fields to include in the hit. Defaults to returning the whole document.
+    """
+    type = "top_hits"
+    result_class = TopHitsResult
+
+    def __init__(self, name, field=None, is_ascending=True, size=1, include=None):
+        assert re.match(r'\w+$', name), \
+            "Names must be valid python variable names, was {}".format(name)
+        self.name = name
+        self.body = {
+            'size': size,
+        }
+        if field:
+            self.body["sort"] = [{
+                field: {
+                    "order": 'asc' if is_ascending else 'desc'
+                },
+            }]
+        if include:
+            self.body["_source"] = {"include": include}
 
 
 class FilterResult(AggregationResult):
@@ -310,3 +447,42 @@ class DateHistogram(Aggregation):
 
         if timezone:
             self.body['time_zone'] = timezone
+
+
+AggregationTerm = namedtuple('AggregationTerm', ['name', 'field'])
+
+
+class NestedAggregationHelper(object):
+    """
+    Helper to run nested term-based queries (equivalent to SQL group-by clauses)
+    """
+    def __init__(self, base_query, terms):
+        self.base_query = base_query
+        self.terms = terms
+
+    def get_data(self):
+        previous_term = None
+        for name, field in reversed(self.terms):
+            term = TermsAggregation(name, field)
+            if previous_term is not None:
+                term = term.aggregation(previous_term)
+            previous_term = term
+        query = self.base_query.aggregation(term)
+
+        def _add_terms(aggregation_bucket, term, remaining_terms, current_counts, current_key=None):
+            for bucket in getattr(aggregation_bucket, term.name).buckets_list:
+                key = (bucket.key,) if current_key is None else current_key + (bucket.key,)
+                if remaining_terms:
+                    _add_terms(bucket, remaining_terms[0], remaining_terms[1:], current_counts, current_key=key)
+                else:
+                    # base case
+                    current_counts[key] += bucket.doc_count
+
+        counts = defaultdict(lambda: 0)
+        _add_terms(query.run().aggregations, self.terms[0], self.terms[1:], current_counts=counts)
+        return self._format_counts(counts)
+
+    def _format_counts(self, counts):
+        row_class = namedtuple('NestedQueryRow', [term.name for term in self.terms] + ['doc_count'])
+        for combined_key, count in counts.items():
+            yield row_class(*(combined_key + (count,)))

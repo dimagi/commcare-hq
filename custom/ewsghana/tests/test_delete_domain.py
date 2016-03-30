@@ -57,4 +57,5 @@ class TestDeleteDomain(TestCase):
         self.assertEqual(FacilityInCharge.objects.filter(location=self.locations['test2']).count(), 1)
 
     def tearDown(self):
+        FacilityInCharge.objects.all().delete()
         self.domain2.delete()

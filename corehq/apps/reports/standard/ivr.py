@@ -9,14 +9,14 @@ from corehq.const import SERVER_DATETIME_FORMAT
 from corehq.util.timezones.conversions import ServerTime
 from corehq.util.view_utils import absolute_reverse
 from dimagi.utils.parsing import json_format_datetime
+from corehq.apps.ivr.models import Call
 from corehq.apps.sms.models import (
     CALLBACK_MISSED,
     CALLBACK_PENDING,
     CALLBACK_RECEIVED,
     INCOMING,
     OUTGOING,
-    CallLog,
-    ExpectedCallbackEventLog,
+    ExpectedCallback,
 )
 from corehq.apps.smsforms.models import SQLXFormsSession
 from corehq.apps.reports.util import format_datatables_data
@@ -28,7 +28,9 @@ from corehq.apps.reminders.util import get_form_name
 import pytz
 from math import ceil
 
-class CallLogReport(BaseCommConnectLogReport):
+
+
+class CallReport(BaseCommConnectLogReport):
     """
     Displays all calls for the given domain and date range.
     """
@@ -63,9 +65,11 @@ class CallLogReport(BaseCommConnectLogReport):
 
     @property
     def rows(self):
-        startdate = json_format_datetime(self.datespan.startdate_utc)
-        enddate = json_format_datetime(self.datespan.enddate_utc)
-        data = CallLog.by_domain_date(self.domain, startdate, enddate)
+        data = Call.by_domain(
+            self.domain,
+            start_date=self.datespan.startdate_utc,
+            end_date=self.datespan.enddate_utc
+        ).order_by('date')
         result = []
         
         # Store the results of lookups for faster loading
@@ -158,6 +162,7 @@ class CallLogReport(BaseCommConnectLogReport):
         ret['raw'] = submission_id
         return ret
 
+
 class ExpectedCallbackReport(ProjectReport, ProjectReportParametersMixin, GenericTabularReport, DatespanMixin):
     """
     Displays all expected callbacks for the given time period.
@@ -166,6 +171,7 @@ class ExpectedCallbackReport(ProjectReport, ProjectReportParametersMixin, Generi
     slug = 'expected_callbacks'
     fields = ['corehq.apps.reports.filters.dates.DatespanFilter']
     exportable = True
+    is_bootstrap3 = True
     
     @property
     def headers(self):
@@ -179,9 +185,11 @@ class ExpectedCallbackReport(ProjectReport, ProjectReportParametersMixin, Generi
     
     @property
     def rows(self):
-        startdate = json_format_datetime(self.datespan.startdate_utc)
-        enddate = json_format_datetime(self.datespan.enddate_utc)
-        data = ExpectedCallbackEventLog.by_domain(self.domain, startdate, enddate)
+        data = ExpectedCallback.by_domain(
+            self.domain,
+            start_date=self.datespan.startdate_utc,
+            end_date=self.datespan.enddate_utc
+        ).order_by('date')
         result = []
         
         status_descriptions = {
@@ -234,4 +242,3 @@ class ExpectedCallbackReport(ProjectReport, ProjectReportParametersMixin, Generi
             timestamp,
             timestamp.strftime(SERVER_DATETIME_FORMAT),
         )
-

@@ -1,4 +1,6 @@
 import mimetypes
+
+from corehq.form_processor.abstract_models import CaseAttachmentMixin
 from dimagi.ext.couchdbkit import StringProperty, IntegerProperty, DictProperty
 
 from dimagi.utils.mixins import UnicodeMixIn
@@ -23,11 +25,18 @@ class CommCareCaseIndex(LooselyEqualDocumentSchema, UnicodeMixIn):
 
     @property
     def referenced_case(self):
+        """
+        For a 'forward' index this is the case that the the index points to.
+        For a 'reverse' index this is the case that owns the index.
+        See ``corehq/couchapps/case_indices/views/related/map.js``
+
+        :return: referenced case
+        """
         if not hasattr(self, "_case"):
             from casexml.apps.case.models import CommCareCase
             self._case = CommCareCase.get(self.referenced_id)
         return self._case
-    
+
     @classmethod
     def from_case_index_update(cls, index):
         return cls(identifier=index.identifier,
@@ -48,7 +57,7 @@ class CommCareCaseIndex(LooselyEqualDocumentSchema, UnicodeMixIn):
         return str(self)
 
 
-class CommCareCaseAttachment(LooselyEqualDocumentSchema, UnicodeMixIn):
+class CommCareCaseAttachment(LooselyEqualDocumentSchema, CaseAttachmentMixin, UnicodeMixIn):
     identifier = StringProperty()
     attachment_src = StringProperty()
     attachment_from = StringProperty()
@@ -60,24 +69,8 @@ class CommCareCaseAttachment(LooselyEqualDocumentSchema, UnicodeMixIn):
     attachment_properties = DictProperty()  # width, height, other relevant metadata
 
     @property
-    def is_image(self):
-        if self.server_mime is None:
-            return None
-        return True if self.server_mime.startswith('image/') else False
-
-    @property
-    def is_present(self):
-        """
-        Helper method to see if this is a delete vs. update
-        """
-        if self.identifier and (self.attachment_src == self.attachment_from is None):
-            return False
-        else:
-            return True
-
-    @property
-    def attachment_key(self):
-        return self.identifier
+    def content_type(self):
+        return self.server_mime
 
     @classmethod
     def from_case_index_update(cls, attachment):

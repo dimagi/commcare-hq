@@ -130,7 +130,7 @@ class TauxCalculator(fluff.Calculator):
                 yield {
                     'date': received_month_inner,
                     'value': amount_ordered,
-                    'group_by': [product_name, get_product_id(product_name, get_domain(form))]
+                    'group_by': [product_name, product.get('product_id')]
                 }
 
     @fluff.date_emitter
@@ -259,7 +259,10 @@ class RecapPassage(fluff.Calculator):
 
     @fluff.date_emitter
     def total_stock(self, form):
-        return self._process_field(form, lambda x: get_value_from_path(x, 'question1/total_stock', 0))
+        field_name = 'total_stock'
+        if form.xmlns == OPERATEUR_XMLNSES[1]:
+            field_name = 'question1/' + field_name
+        return self._process_field(form, lambda x: get_value_from_path(x, field_name, 0))
 
     @fluff.date_emitter
     def livraison(self, form):
@@ -282,7 +285,10 @@ class RecapPassage(fluff.Calculator):
 
     @fluff.date_emitter
     def outside_receipts_amount(self, form):
-        return self._process_field(form, lambda x: get_value_from_path(x, 'question1/outside_receipts_amt', 0))
+        field_name = 'outside_receipts_amt'
+        if form.xmlns == OPERATEUR_XMLNSES[1]:
+            field_name = 'question1/' + field_name
+        return self._process_field(form, lambda x: get_value_from_path(x, field_name, 0))
 
     @fluff.date_emitter
     def actual_consumption(self, form):
@@ -298,7 +304,10 @@ class RecapPassage(fluff.Calculator):
 
     @fluff.date_emitter
     def loss_amt(self, form):
-        return self._process_field(form, lambda x: get_value_from_path(x, 'question1/loss_amt', 0))
+        field_name = 'loss_amt'
+        if form.xmlns == OPERATEUR_XMLNSES[1]:
+            field_name = 'question1/' + field_name
+        return self._process_field(form, lambda x: get_value_from_path(x, field_name, 0))
 
 
 class DureeMoyenneLivraison(fluff.Calculator):

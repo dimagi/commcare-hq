@@ -87,6 +87,7 @@ def invoice_column_cell(invoice):
 class AddItemInterface(GenericTabularReport):
     base_template = 'accounting/add_new_item_button.html'
     exportable = True
+    is_bootstrap3 = True
 
     item_name = None
     new_item_view = None
@@ -351,7 +352,7 @@ class SubscriptionInterface(AddItemInterface):
                 subscription.pro_bono_status,
             ]
             if not self.is_rendered_as_email:
-                columns.append(mark_safe('<a href="./%d" class="btn">Edit</a>' % subscription.id))
+                columns.append(mark_safe('<a href="./%d" class="btn btn-default">Edit</a>' % subscription.id))
             rows.append(columns)
 
         return rows
@@ -448,20 +449,6 @@ def get_exportable_column(amount):
     )
 
 
-def get_exportable_column_cost(subtotal, deduction):
-    return format_datatables_data(
-        text=get_column_formatted_str(subtotal, deduction),
-        sort_key=subtotal,
-    )
-
-
-def get_column_formatted_str(subtotal, deduction):
-    return mark_safe('%s<br />(%s)') % (
-        get_money_str(subtotal),
-        get_money_str(deduction)
-    )
-
-
 def get_subtotal_and_deduction(line_items):
     subtotal = 0
     deduction = 0
@@ -477,6 +464,7 @@ class InvoiceInterfaceBase(GenericTabularReport):
     dispatcher = AccountingAdminInterfaceDispatcher
     exportable = True
     export_format_override = Format.CSV
+    is_bootstrap3 = True
 
 
 class WireInvoiceInterface(InvoiceInterfaceBase):
@@ -493,7 +481,7 @@ class WireInvoiceInterface(InvoiceInterfaceBase):
 
     @property
     def headers(self):
-        header = DataTablesHeader(
+        return DataTablesHeader(
             DataTablesColumn("Invoice #"),
             DataTablesColumn("Account Name (Fogbugz Client Name)"),
             DataTablesColumn("Project Space"),
@@ -518,10 +506,6 @@ class WireInvoiceInterface(InvoiceInterfaceBase):
             DataTablesColumn("Payment Status"),
             DataTablesColumn("Do Not Invoice"),
         )
-
-        if not self.is_rendered_as_email:
-            header.add_column(DataTablesColumn("View Invoice"))
-        return header
 
     @property
     def rows(self):
@@ -570,10 +554,6 @@ class WireInvoiceInterface(InvoiceInterfaceBase):
                 "YES" if invoice.is_hidden else "no",
             ]
 
-            if not self.is_rendered_as_email:
-                columns.extend([
-                    mark_safe(make_anchor_tag(invoice_url, 'Go to Invoice'))
-                ])
             rows.append(columns)
         return rows
 
@@ -784,7 +764,7 @@ class InvoiceInterface(InvoiceInterfaceBase):
                 adjust_attrs = {
                     "data-toggle": "modal",
                     "data-target": adjust_href,
-                    "class": "btn",
+                    "class": "btn btn-default",
                 }
                 columns.append(
                     mark_safe(make_anchor_tag(adjust_href, adjust_name, adjust_attrs)),
@@ -951,6 +931,7 @@ class PaymentRecordInterface(GenericTabularReport):
     base_template = 'accounting/report_filter_actions.html'
     asynchronous = True
     exportable = True
+    is_bootstrap3 = True
 
     fields = [
         'corehq.apps.accounting.interface.DateCreatedFilter',
@@ -1048,6 +1029,7 @@ class SubscriptionAdjustmentInterface(GenericTabularReport):
     base_template = 'accounting/report_filter_actions.html'
     asynchronous = True
     exportable = True
+    is_bootstrap3 = True
 
     fields = [
         'corehq.apps.accounting.interface.DomainFilter',
@@ -1121,6 +1103,7 @@ class CreditAdjustmentInterface(GenericTabularReport):
     base_template = 'accounting/report_filter_actions.html'
     asynchronous = True
     exportable = True
+    is_bootstrap3 = True
 
     fields = [
         'corehq.apps.accounting.interface.NameFilter',

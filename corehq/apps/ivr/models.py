@@ -1,6 +1,6 @@
+from corehq.util.mixin import UUIDGeneratorMixin
 from corehq.apps.sms.mixin import UnrecognizedBackendException
-from corehq.apps.sms.models import SQLMobileBackend, Log, CallLog
-from dimagi.utils.couch.migration import SyncSQLToCouchMixin
+from corehq.apps.sms.models import SQLMobileBackend, Log, OUTGOING
 from django.db import models
 
 
@@ -44,7 +44,9 @@ class SQLIVRBackend(SQLMobileBackend):
         )
 
 
-class Call(SyncSQLToCouchMixin, Log):
+class Call(UUIDGeneratorMixin, Log):
+    UUIDS_TO_GENERATE = ['couch_id']
+
     couch_id = models.CharField(max_length=126, null=True, db_index=True)
 
     """ Call Metadata """
@@ -98,42 +100,34 @@ class Call(SyncSQLToCouchMixin, Log):
     # The form unique id of the form that plays the survey for the call
     form_unique_id = models.CharField(max_length=126, null=True)
 
-    @classmethod
-    def _migration_get_fields(cls):
-        return [
-            'answered',
-            'duration',
-            'gateway_session_id',
-            'submit_partial_form',
-            'include_case_side_effects',
-            'max_question_retries',
-            'current_question_retry_count',
-            'xforms_session_id',
-            'error_message',
-            'use_precached_first_response',
-            'first_response',
-            'case_id',
-            'case_for_case_submission',
-            'form_unique_id',
-            'domain',
-            'date',
-            'couch_recipient_doc_type',
-            'couch_recipient',
-            'phone_number',
-            'direction',
-            'error',
-            'system_error_message',
-            'system_phone_number',
-            'backend_api',
-            'backend_id',
-            'billed',
-            'workflow',
-            'xforms_session_couch_id',
-            'reminder_id',
-            'location_id',
-            'messaging_subevent_id',
-        ]
+    class Meta:
+        app_label = 'ivr'
 
     @classmethod
-    def _migration_get_couch_model_class(cls):
-        return CallLog
+    def by_gateway_session_id(cls, gateway_session_id):
+        result = cls.objects.filter(
+            gateway_session_id=gateway_session_id
+        ).order_by('-date')[:1]
+
+        if result:
+            return result[0]
+
+        return None
+
+    @classmethod
+    def answered_call_exists(cls, contact_doc_type, contact_id, from_timestamp, to_timestamp=None):
+        qs = cls.by_recipient(
+            contact_doc_type,
+            contact_id
+        ).filter(
+            direction=OUTGOING,
+            date__gte=from_timestamp,
+            answered=True
+        )
+
+        if to_timestamp:
+            qs = qs.filter(
+                date__lte=to_timestamp
+            )
+
+        return qs.count() > 0

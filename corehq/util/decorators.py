@@ -2,10 +2,13 @@ from celery.task import task
 from functools import wraps
 import logging
 import requests
+from corehq.toggles import NAMESPACE_DOMAIN
+>>>>>>> master
 from corehq.util.global_request import get_request
 from dimagi.utils.couch.cache.cache_core import get_redis_client
 from dimagi.utils.logging import notify_exception
 from django.conf import settings
+from toggle.shortcuts import update_toggle_cache, clear_toggle_cache
 
 
 class ContextDecorator(object):
@@ -152,3 +155,18 @@ def analytics_task(default_retry_delay=10, max_retries=3, queue='background_queu
                     self.retry(exc=e)
         return _inner
     return decorator
+
+
+class temporarily_enable_toggle(ContextDecorator):
+
+    def __init__(self, toggle, item, namespace=NAMESPACE_DOMAIN):
+        self.toggle_slug = toggle.slug
+        self.item = item
+        self.namespace = namespace
+
+    def __enter__(self):
+        update_toggle_cache(self.toggle_slug, self.item, True, namespace=self.namespace)
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        clear_toggle_cache(self.toggle_slug, self.item, self.namespace)
+>>>>>>> master

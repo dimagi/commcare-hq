@@ -7,6 +7,13 @@ from django.core.exceptions import SuspiciousOperation
 from django.core.urlresolvers import reverse
 from django.http import HttpResponseRedirect, HttpResponseBadRequest, Http404
 from django.template.defaultfilters import filesizeformat
+from django.views.decorators.csrf import csrf_exempt
+from django.views.decorators.http import require_GET
+
+from corehq.apps.export.export import get_export_download
+from corehq.apps.reports.views import should_update_export, \
+    build_download_saved_export_response, require_form_export_permission
+from corehq.form_processor.interfaces.dbaccessors import FormAccessors
 from django_prbac.utils import has_privilege
 from django.utils.decorators import method_decorator
 import json
@@ -19,7 +26,8 @@ from corehq import toggles
 from corehq.apps.accounting.utils import domain_has_privilege
 from corehq.apps.app_manager.fields import ApplicationDataRMIHelper
 from corehq.apps.data_interfaces.dispatcher import require_can_edit_data
-from corehq.apps.domain.decorators import login_and_domain_required
+from corehq.apps.domain.decorators import login_and_domain_required, \
+    login_or_digest_or_basic_or_apikey
 from corehq.apps.export.utils import convert_saved_export_to_export_instance
 from corehq.apps.export.custom_export_helpers import make_custom_export_helper
 from corehq.apps.export.exceptions import (
@@ -31,8 +39,10 @@ from corehq.apps.export.exceptions import (
 from corehq.apps.export.forms import (
     CreateFormExportTagForm,
     CreateCaseExportTagForm,
-    FilterFormExportDownloadForm,
-    FilterCaseExportDownloadForm,
+    FilterFormCouchExportDownloadForm,
+    FilterCaseCouchExportDownloadForm,
+    FilterFormESExportDownloadForm,
+    FilterCaseESExportDownloadForm,
 )
 from corehq.apps.export.models import (
     FormExportDataSchema,
@@ -47,6 +57,7 @@ from corehq.apps.export.const import (
 from corehq.apps.export.dbaccessors import (
     get_form_export_instances,
     get_case_export_instances,
+    get_properly_wrapped_export_instance,
 )
 from corehq.apps.groups.models import Group
 from corehq.apps.reports.dbaccessors import touch_exports
@@ -69,8 +80,6 @@ from corehq.apps.users.decorators import get_permission_name
 from corehq.apps.users.models import Permissions
 from corehq.apps.users.permissions import FORM_EXPORT_PERMISSION, CASE_EXPORT_PERMISSION, \
     DEID_EXPORT_PERMISSION
-from corehq.couchapps.dbaccessors import \
-    get_attachment_size_by_domain_app_id_xmlns
 from corehq.util.couch import get_document_or_404_lite
 from corehq.util.timezones.utils import get_timezone_for_user
 from couchexport.models import SavedExportSchema, ExportSchema
@@ -425,6 +434,7 @@ class BaseDownloadExportView(ExportsPermissionsMixin, JSONResponseMixin, BasePro
     show_sync_to_dropbox = False  # remove when DBox issue is resolved.
     show_date_range = False
     check_for_multimedia = False
+    filter_form_class = None
 
     @use_daterangepicker
     @use_bootstrap3
@@ -530,10 +540,9 @@ class BaseDownloadExportView(ExportsPermissionsMixin, JSONResponseMixin, BasePro
             and not self.request.is_ajax()
         ):
             raw_export_list = json.loads(self.request.POST['export_list'])
-            exports = map(lambda e: self.get_export_schema(self.domain, e['id']),
-                          raw_export_list)
+            exports = [self._get_export(self.domain, e['id']) for e in raw_export_list]
         elif self.export_id:
-            exports = [self.get_export_schema(self.domain, self.export_id)]
+            exports = [self._get_export(self.domain, self.export_id)]
 
         if not self.has_view_permissions:
             if self.has_deid_view_permissions:
@@ -550,6 +559,9 @@ class BaseDownloadExportView(ExportsPermissionsMixin, JSONResponseMixin, BasePro
             exports
         )
         return exports
+
+    def _get_export(self, domain, export_id):
+        return self.get_export_schema(self.domain, export_id)
 
     @property
     def max_column_size(self):
@@ -615,19 +627,32 @@ class BaseDownloadExportView(ExportsPermissionsMixin, JSONResponseMixin, BasePro
         context['is_poll_successful'] = True
         return context
 
+    def _get_download_task(self, in_data):
+        export_filter, export_specs = self._process_filters_and_specs(in_data)
+        if len(export_specs) > 1:
+            download = self._get_bulk_download_task(export_specs, export_filter)
+        else:
+            max_column_size = int(in_data.get('max_column_size', 2000))
+            download = self._get_single_export_download_task(
+                export_specs[0], export_filter, max_column_size
+            )
+        return download
+
+    def _get_and_rebuild_export_schema(self, export_id):
+        export_object = self.get_export_schema(self.domain, export_id)
+        export_object.update_schema()
+        return export_object
+
     def _get_bulk_download_task(self, export_specs, export_filter):
+        for export_spec in export_specs:
+            export_id = export_spec['export_id']
+            self._get_and_rebuild_export_schema(export_id)
         export_helper = CustomBulkExportHelper(domain=self.domain)
         return export_helper.get_download_task(export_specs, export_filter)
 
-    def _get_download_task(self, export_specs, export_filter, max_column_size=2000):
-        try:
-            export_data = export_specs[0]
-            export_object = self.get_export_schema(self.domain, export_data['export_id'])
-        except (KeyError, IndexError):
-            raise ExportAsyncException(
-                _("You need to pass a list of at least one export schema.")
-            )
-        export_object.update_schema()
+    def _get_single_export_download_task(self, export_spec, export_filter, max_column_size=2000):
+        export_id = export_spec['export_id']
+        export_object = self._get_and_rebuild_export_schema(export_id)
 
         # if the export is de-identified (is_safe), check that
         # the requesting domain has access to the deid feature.
@@ -685,14 +710,7 @@ class BaseDownloadExportView(ExportsPermissionsMixin, JSONResponseMixin, BasePro
         }
         """
         try:
-            export_filter, export_specs = self._process_filters_and_specs(in_data)
-            if len(export_specs) > 1:
-                download = self._get_bulk_download_task(export_specs, export_filter)
-            else:
-                max_column_size = int(in_data.get('max_column_size', 2000))
-                download = self._get_download_task(
-                    export_specs, export_filter, max_column_size
-                )
+            download = self._get_download_task(in_data)
         except ExportAsyncException as e:
             return format_angular_error(e.message)
         except Exception as e:
@@ -714,6 +732,7 @@ class DownloadFormExportView(BaseDownloadExportView):
     page_title = ugettext_noop("Download Form Export")
     check_for_multimedia = True
     form_or_case = 'form'
+    filter_form_class = FilterFormCouchExportDownloadForm
 
     @staticmethod
     def get_export_schema(domain, export_id):
@@ -729,7 +748,7 @@ class DownloadFormExportView(BaseDownloadExportView):
     @property
     @memoized
     def download_export_form(self):
-        return FilterFormExportDownloadForm(
+        return self.filter_form_class(
             self.domain_object,
             self.timezone,
             initial={
@@ -750,10 +769,7 @@ class DownloadFormExportView(BaseDownloadExportView):
         }]
 
     def get_filters(self, filter_form_data):
-        filter_form = FilterFormExportDownloadForm(
-            self.domain_object, self.timezone, filter_form_data)
-        if not filter_form.is_valid():
-            raise ExportFormValidationException()
+        filter_form = self._get_filter_form(filter_form_data)
         form_filter = filter_form.get_form_filter()
         export_filter = SerializableFunction(default_form_filter,
                                              filter=form_filter)
@@ -764,11 +780,11 @@ class DownloadFormExportView(BaseDownloadExportView):
         """Checks to see if this form export has multimedia available to export
         """
         try:
-            size_hash = get_attachment_size_by_domain_app_id_xmlns(self.domain)
             export_object = self.get_export_schema(self.domain, self.export_id)
-            hash_key = (export_object.app_id, export_object.xmlns
-                        if hasattr(export_object, 'xmlns') else '')
-            has_multimedia = hash_key in size_hash
+            has_multimedia = FormAccessors(self.domain).forms_have_multimedia(
+                export_object.app_id,
+                getattr(export_object, 'xmlns', '')
+            )
         except Exception as e:
             return format_angular_error(e.message)
         return format_angular_success({
@@ -783,7 +799,7 @@ class DownloadFormExportView(BaseDownloadExportView):
         """
         try:
             filter_form_data, export_specs = self._get_form_data_and_specs(in_data)
-            filter_form = FilterFormExportDownloadForm(
+            filter_form = FilterFormCouchExportDownloadForm(
                 self.domain_object, self.timezone, filter_form_data
             )
             if not filter_form.is_valid():
@@ -802,6 +818,14 @@ class DownloadFormExportView(BaseDownloadExportView):
         return format_angular_success({
             'download_id': download.download_id,
         })
+
+    def _get_filter_form(self, filter_form_data):
+        filter_form = self.filter_form_class(
+            self.domain_object, self.timezone, filter_form_data
+        )
+        if not filter_form.is_valid():
+            raise ExportFormValidationException()
+        return filter_form
 
 
 class BulkDownloadFormExportView(DownloadFormExportView):
@@ -822,6 +846,7 @@ class DownloadCaseExportView(BaseDownloadExportView):
     urlname = 'export_download_cases'
     page_title = ugettext_noop("Download Case Export")
     form_or_case = 'case'
+    filter_form_class = FilterCaseCouchExportDownloadForm
 
     @staticmethod
     def get_export_schema(domain, export_id):
@@ -837,7 +862,7 @@ class DownloadCaseExportView(BaseDownloadExportView):
     @property
     @memoized
     def download_export_form(self):
-        return FilterCaseExportDownloadForm(
+        return self.filter_form_class(
             self.domain_object,
             initial={
                 'type_or_group': 'type',
@@ -852,12 +877,16 @@ class DownloadCaseExportView(BaseDownloadExportView):
         }]
 
     def get_filters(self, filter_form_data):
-        filter_form = FilterCaseExportDownloadForm(
+        filter_form = self._get_filter_form(filter_form_data)
+        return filter_form.get_case_filter()
+
+    def _get_filter_form(self, filter_form_data):
+        filter_form = self.filter_form_class(
             self.domain_object, filter_form_data
         )
         if not filter_form.is_valid():
             raise ExportFormValidationException()
-        return filter_form.get_case_filter()
+        return filter_form
 
 
 class BaseExportListView(ExportsPermissionsMixin, JSONResponseMixin, BaseProjectDataView):
@@ -880,11 +909,20 @@ class BaseExportListView(ExportsPermissionsMixin, JSONResponseMixin, BaseProject
         return {
             'create_export_form': self.create_export_form if not self.is_deid else None,
             'create_export_form_title': self.create_export_form_title if not self.is_deid else None,
+            'legacy_bulk_download_url': self.legacy_bulk_download_url if not self.is_deid else None,
             'bulk_download_url': self.bulk_download_url if not self.is_deid else None,
             'allow_bulk_export': self.allow_bulk_export if not self.is_deid else False,
             'has_edit_permissions': self.has_edit_permissions,
             'is_deid': self.is_deid,
         }
+
+    @property
+    def legacy_bulk_download_url(self):
+        """Returns url for legacy bulk download
+        """
+        if not self.allow_bulk_export:
+            return None
+        raise NotImplementedError('must implement legacy_bulk_download_url')
 
     @property
     def bulk_download_url(self):
@@ -924,39 +962,107 @@ class BaseExportListView(ExportsPermissionsMixin, JSONResponseMixin, BaseProject
         """
         raise NotImplementedError("must implement fmt_export_data")
 
-    def fmt_emailed_export_data(self, component):
+    def fmt_emailed_export_data(self, group_id=None, index=None,
+                                has_file=False, file_id=None, size=0,
+                                last_updated=None, last_accessed=None,
+                                download_url=None):
+        """
+        Return a dictionary containing details about an emailed export.
+        This will eventually be passed to an Angular controller.
+        """
         file_data = {}
-        has_file = component.saved_version is not None and component.saved_version.has_file()
         if has_file:
-            file_data = {
-                'fileId': component.saved_version.get_id,
-                'size': filesizeformat(component.saved_version.size),
-                'lastUpdated': naturaltime(component.saved_version.last_updated),
-                'showExpiredWarning': (
-                    component.saved_version.last_accessed and
-                    component.saved_version.last_accessed <
-                    (datetime.utcnow() - timedelta(days=settings.SAVED_EXPORT_ACCESS_CUTOFF))
-                ),
-                'downloadUrl': '{}?group_export_id={}'.format(
-                    reverse('hq_download_saved_export', args=[
-                        self.domain, component.saved_version.get_id
-                    ]),
-                    component.group_id
-                ),
-            }
+            file_data = self._fmt_emailed_export_fileData(
+                has_file, file_id, size, last_updated, last_accessed, download_url
+            )
+
         return {
-            'groupId': component.group_id,
+            'groupId': group_id,  # This can be removed when we're off legacy exports
             'hasFile': has_file,
-            'index': component.config.index,
+            'index': index,  # This can be removed when we're off legacy exports
             'fileData': file_data,
         }
 
-    def get_formatted_emailed_exports(self, export):
+    def fmt_legacy_emailed_export_data(self, group_id=None, index=None,
+                                has_file=False, saved_basic_export=None):
+        """
+        Return a dictionary containing details about an emailed export.
+        This will eventually be passed to an Angular controller.
+        """
+        file_data = {}
+        if has_file:
+            file_data = self._fmt_emailed_export_fileData(
+                has_file,
+                saved_basic_export.get_id,
+                saved_basic_export.size,
+                saved_basic_export.last_updated,
+                saved_basic_export.last_accessed,
+                '{}?group_export_id={}'.format(
+                    reverse('hq_download_saved_export', args=[
+                        self.domain, saved_basic_export.get_id
+                    ]),
+                    group_id
+                )
+            )
+
+        return {
+            'groupId': group_id,  # This can be removed when we're off legacy exports
+            'hasFile': has_file,
+            'index': index,  # This can be removed when we're off legacy exports
+            'fileData': file_data,
+        }
+
+    def _fmt_emailed_export_fileData(self, has_file, fileId, size, last_updated,
+                                     last_accessed, download_url):
+        """
+        Return a dictionary containing details about an emailed export file.
+        This will eventually be passed to an Angular controller.
+        """
+        if has_file:
+            return {
+                'fileId': fileId,
+                'size': filesizeformat(size),
+                'lastUpdated': naturaltime(last_updated),
+                'showExpiredWarning': (
+                    last_accessed and
+                    last_accessed <
+                    (datetime.utcnow() - timedelta(days=settings.SAVED_EXPORT_ACCESS_CUTOFF))
+                ),
+                'downloadUrl': download_url,
+            }
+        return {}
+
+    def get_formatted_emailed_export(self, export):
+
         emailed_exports = filter(
             lambda x: x.config.index[-1] == export.get_id,
             self.daily_emailed_exports
         )
-        return map(lambda x: self.fmt_emailed_export_data(x), emailed_exports)
+
+        if not emailed_exports:
+            return None
+        assert len(emailed_exports) == 1
+        emailed_export = emailed_exports[0]
+
+        return self.fmt_legacy_emailed_export_data(
+            group_id=emailed_export.group_id,
+            index=emailed_export.config.index,
+            has_file=emailed_export.saved_version is not None and emailed_export.saved_version.has_file(),
+            saved_basic_export=emailed_export.saved_version
+        )
+
+    def _get_daily_saved_export_metadata(self, export):
+
+        return self.fmt_emailed_export_data(
+            has_file=export.has_file(),
+            file_id=export._id,
+            size=export.file_size,
+            last_updated=export.last_updated,
+            last_accessed=export.last_accessed,
+            download_url=reverse(
+                'download_daily_saved_export', args=[self.domain, export._id]
+            ),
+        )
 
     @allow_remote_invocation
     def get_exports_list(self, in_data):
@@ -1023,8 +1129,18 @@ class BaseExportListView(ExportsPermissionsMixin, JSONResponseMixin, BaseProject
         ExportConfiguration list"""
         raise NotImplementedError("must implement get_emailed_indexes")
 
+    def update_emailed_es_export_data(self, in_data):
+        from corehq.apps.export.tasks import rebuild_export_task
+        export_instance_id = in_data['export']['id']
+        export_instance = get_properly_wrapped_export_instance(export_instance_id)
+        rebuild_export_task.delay(export_instance)
+        return format_angular_success({})
+
     @allow_remote_invocation
     def update_emailed_export_data(self, in_data):
+        if not in_data['export']['isLegacy']:
+            return self.update_emailed_es_export_data(in_data)
+
         group_id = in_data['component']['groupId']
         relevant_group = filter(lambda g: g.get_id, self.emailed_export_groups)[0]
         indexes = map(lambda x: x[0].index, relevant_group.all_exports)
@@ -1063,8 +1179,12 @@ class FormExportListView(BaseExportListView):
     form_or_case = 'form'
 
     @property
-    def bulk_download_url(self):
+    def legacy_bulk_download_url(self):
         return reverse(BulkDownloadFormExportView.urlname, args=(self.domain,))
+
+    @property
+    def bulk_download_url(self):
+        return reverse(BulkDownloadNewFormExportView.urlname, args=(self.domain,))
 
     @memoized
     def get_saved_exports(self):
@@ -1093,24 +1213,39 @@ class FormExportListView(BaseExportListView):
         return _("Select a Form to Export")
 
     def fmt_export_data(self, export):
-        emailed_exports = self.get_formatted_emailed_exports(export)
         if toggles.NEW_EXPORTS.enabled(self.domain):
             edit_view = EditNewCustomFormExportView
         else:
             edit_view = EditCustomFormExportView
+
+        if isinstance(export, FormExportSchema):
+            emailed_export = self.get_formatted_emailed_export(export)
+        else:
+            # New export
+            emailed_export = None
+            if export.is_daily_saved_export:
+                emailed_export = self._get_daily_saved_export_metadata(export)
         return {
             'id': export.get_id,
+            'isLegacy': isinstance(export, FormExportSchema),
             'isDeid': export.is_safe,
             'name': export.name,
             'formname': export.formname,
             'addedToBulk': False,
             'exportType': export.type,
-            'emailedExports': emailed_exports,
+            'emailedExport': emailed_export,
             'editUrl': reverse(edit_view.urlname,
                                args=(self.domain, export.get_id)),
-            'downloadUrl': reverse(DownloadFormExportView.urlname,
-                                   args=(self.domain, export.get_id)),
+            'downloadUrl': self._get_download_url(export.get_id, isinstance(export, FormExportSchema)),
         }
+
+    def _get_download_url(self, export_id, is_legacy):
+        if is_legacy:
+            view_cls = DownloadFormExportView
+        else:
+            view_cls = DownloadNewFormExportView
+        return reverse(view_cls.urlname, args=(self.domain, export_id))
+
 
     @allow_remote_invocation
     def get_app_data_drilldown_values(self, in_data):
@@ -1193,23 +1328,37 @@ class CaseExportListView(BaseExportListView):
         return _("Select a Case Type to Export")
 
     def fmt_export_data(self, export):
-        emailed_exports = self.get_formatted_emailed_exports(export)
         if toggles.NEW_EXPORTS.enabled(self.domain):
             edit_view = EditNewCustomCaseExportView
         else:
             edit_view = EditCustomCaseExportView
+
+        if isinstance(export, CaseExportSchema):
+            emailed_export = self.get_formatted_emailed_export(export)
+        else:
+            # New export
+            emailed_export = None
+            if export.is_daily_saved_export:
+                emailed_export = self._get_daily_saved_export_metadata(export)
+
         return {
             'id': export.get_id,
             'isDeid': export.is_safe,
+            'isLegacy': isinstance(export, CaseExportSchema),
             'name': export.name,
             'addedToBulk': False,
             'exportType': export.type,
-            'emailedExports': emailed_exports,
-            'editUrl': reverse(edit_view.urlname,
-                               args=(self.domain, export.get_id)),
-            'downloadUrl': reverse(DownloadCaseExportView.urlname,
-                                   args=(self.domain, export.get_id)),
+            'emailedExport': emailed_export,
+            'editUrl': reverse(edit_view.urlname, args=(self.domain, export.get_id)),
+            'downloadUrl': self._get_download_url(export._id, isinstance(export, CaseExportSchema)),
         }
+
+    def _get_download_url(self, export_id, is_legacy):
+        if is_legacy:
+            view_cls = DownloadCaseExportView
+        else:
+            view_cls = DownloadNewCaseExportView
+        return reverse(view_cls.urlname, args=(self.domain, export_id))
 
     @allow_remote_invocation
     def get_app_data_drilldown_values(self, in_data):
@@ -1277,7 +1426,7 @@ class BaseModifyNewCustomView(BaseNewExportView):
 
     @method_decorator(require_can_edit_data)
     def dispatch(self, request, *args, **kwargs):
-        return super(BaseEditNewCustomExportView, self).dispatch(request, *args, **kwargs)
+        return super(BaseModifyNewCustomView, self).dispatch(request, *args, **kwargs)
 
 
 class CreateNewCustomFormExportView(BaseModifyNewCustomView):
@@ -1293,6 +1442,7 @@ class CreateNewCustomFormExportView(BaseModifyNewCustomView):
             self.domain,
             app_id,
             xmlns,
+            force_rebuild=True,
         )
         self.export_instance = self.export_instance_cls.generate_instance_from_schema(schema)
 
@@ -1310,6 +1460,7 @@ class CreateNewCustomCaseExportView(BaseModifyNewCustomView):
         schema = CaseExportDataSchema.generate_schema_from_builds(
             self.domain,
             case_type,
+            force_rebuild=True,
         )
         self.export_instance = self.export_instance_cls.generate_instance_from_schema(schema)
 
@@ -1405,3 +1556,102 @@ class DeleteNewCustomExportView(BaseModifyNewCustomView):
             )
         )
         return export._id
+
+
+class GenericDownloadNewExportMixin(object):
+    """
+    Supporting class for new style export download views
+    """
+
+    def _get_download_task(self, in_data):
+        export_filters, export_specs = self._process_filters_and_specs(in_data)
+        export_instances = [self._get_export(self.domain, spec['export_id']) for spec in export_specs]
+        self._check_deid_permissions(export_instances)
+
+        return get_export_download(
+            export_instances=export_instances,
+            filters=export_filters,
+            filename=self._get_filename(export_instances)
+        )
+
+    def _get_filename(self, export_instances):
+        if len(export_instances) > 1:
+            return u"{}_custom_bulk_export_{}".format(
+                self.domain,
+                date.today().isoformat()
+            )
+        else:
+            return u"{} {}".format(
+                export_instances[0].name,
+                date.today().isoformat()
+            )
+
+    def _check_deid_permissions(self, export_instances):
+        # if any export is de-identified, check that
+        # the requesting domain has access to the deid feature.
+        if not self.has_deid_view_permissions:
+            for instance in export_instances:
+                if instance.is_deidentified:
+                    raise ExportAsyncException(
+                        _("You do not have permission to export this "
+                        "De-Identified export.")
+                    )
+
+
+class DownloadNewFormExportView(GenericDownloadNewExportMixin, DownloadFormExportView):
+    urlname = 'new_export_download_forms'
+    filter_form_class = FilterFormESExportDownloadForm
+
+    def _get_export(self, domain, export_id):
+        return FormExportInstance.get(export_id)
+
+    def get_filters(self, filter_form_data):
+        filter_form = self._get_filter_form(filter_form_data)
+        form_filters = filter_form.get_form_filter()
+        return form_filters
+
+
+class BulkDownloadNewFormExportView(DownloadNewFormExportView):
+    urlname = 'new_bulk_download_forms'
+    page_title = ugettext_noop("Download Form Exports")
+
+
+class DownloadNewCaseExportView(GenericDownloadNewExportMixin, DownloadCaseExportView):
+    urlname = 'new_export_download_cases'
+    filter_form_class = FilterCaseESExportDownloadForm
+
+    def _get_export(self, domain, export_id):
+        return CaseExportInstance.get(export_id)
+
+    def get_filters(self, filter_form_data):
+        filter_form = self._get_filter_form(filter_form_data)
+        form_filters = filter_form.get_case_filter()
+        return form_filters
+
+
+@csrf_exempt
+@login_or_digest_or_basic_or_apikey(default='digest')
+@require_form_export_permission
+@require_GET
+def download_daily_saved_export(req, domain, export_instance_id):
+    export_instance = get_properly_wrapped_export_instance(export_instance_id)
+    assert domain == export_instance.domain
+    if should_update_export(export_instance.last_accessed):
+        try:
+            from corehq.apps.export.tasks import rebuild_export_task
+            rebuild_export_task.delay(export_instance)
+        except Exception:
+            notify_exception(
+                req,
+                'Failed to rebuild export during download',
+                {
+                    'export_instance_id': export_instance_id,
+                    'domain': domain,
+                },
+            )
+    export_instance.last_accessed = datetime.utcnow()
+    export_instance.save()
+    payload = export_instance.get_payload(stream=True)
+    return build_download_saved_export_response(
+        payload, export_instance.export_format, export_instance.filename
+    )

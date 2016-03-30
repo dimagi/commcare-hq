@@ -30,6 +30,7 @@ function LocationSettingsViewModel(loc_types, commtrack_enabled) {
             setTimeout(function() { $inp.select(); }, 0);
         };
         settings.loc_types.push(new_loctype);
+        ga_track_event('Organization Levels', 'New Organization Level');
     };
 
     this.validate = function() {
@@ -98,7 +99,7 @@ function LocationSettingsViewModel(loc_types, commtrack_enabled) {
 
     this.to_json = function() {
         return {
-            loc_types: $.map(this.loc_types(), function(e) { return e.to_json(); }),
+            loc_types: $.map(this.loc_types(), function(e) { return e.to_json(); })
         };
     };
 }

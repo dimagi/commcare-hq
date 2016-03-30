@@ -1,9 +1,9 @@
-from corehq.apps.ivr.tests.util import LogCallTestCase
+import corehq.apps.ivr.tests.util as util
 from django.test import Client
 import json
 
 
-class TropoLogCallTestCase(LogCallTestCase):
+class TropoLogCallTestCase(util.LogCallTestCase):
     def simulate_inbound_call(self, phone_number):
         return Client().post(
             '/tropo/ivr/',

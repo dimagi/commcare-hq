@@ -1,6 +1,9 @@
 from decimal import Decimal
 import random
 import datetime
+
+from dimagi.utils.dates import add_months_to_date
+
 from corehq.apps.accounting import tasks, utils, generator
 from corehq.apps.accounting.models import (
     CreditLine, CreditAdjustment, FeatureType, SoftwareProductType,
@@ -140,9 +143,14 @@ class TestCreditLines(BaseInvoiceTestCase):
         other_domain = generator.arbitrary_domain()
         # so that the other subscription doesn't draw from the same account credits, have it start 4 months later
         new_subscription_start = utils.months_from_date(self.subscription.date_start, 4)
-        other_subscription, _ = generator.generate_domain_subscription_from_date(
-            new_subscription_start, self.account, other_domain.name, min_num_months=self.min_subscription_length,
+
+        other_subscription = generator.generate_domain_subscription(
+            self.account,
+            self.domain,
+            date_start=new_subscription_start,
+            date_end=add_months_to_date(new_subscription_start, self.min_subscription_length),
         )
+
         # other account credit that shouldn't count toward this invoice
         other_account = generator.billing_account(self.dimagi_user, generator.arbitrary_web_user())
 

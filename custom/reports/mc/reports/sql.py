@@ -139,7 +139,7 @@ class BaseReport(McMixin, SqlTabularReport, DatespanMixin, CustomProjectReport, 
 
     @classmethod
     def show_in_navigation(cls, domain=None, project=None, user=None):
-        return USER_CONFIGURABLE_REPORTS.enabled(user.username)
+        return user and USER_CONFIGURABLE_REPORTS.enabled(user.username)
 
     @property
     def config(self):

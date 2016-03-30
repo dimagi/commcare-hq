@@ -16,6 +16,9 @@ from corehq.apps.export.views import (
     CaseExportListView,
     BulkDownloadFormExportView,
     DeIdFormExportListView,
+    DownloadNewFormExportView,
+    BulkDownloadNewFormExportView,
+    DownloadNewCaseExportView,
 )
 
 urlpatterns = patterns(
@@ -44,9 +47,15 @@ urlpatterns = patterns(
     url(r"^custom/form/download/bulk/$",
         BulkDownloadFormExportView.as_view(),
         name=BulkDownloadFormExportView.urlname),
+    url(r"^custom/new/form/download/bulk/$",
+        BulkDownloadNewFormExportView.as_view(),
+        name=BulkDownloadNewFormExportView.urlname),
     url(r"^custom/form/download/(?P<export_id>[\w\-]+)/$",
         DownloadFormExportView.as_view(),
         name=DownloadFormExportView.urlname),
+    url(r"^custom/new/form/download/(?P<export_id>[\w\-]+)/$",
+        DownloadNewFormExportView.as_view(),
+        name=DownloadNewFormExportView.urlname),
     url(r"^custom/new/form/edit/(?P<export_id>[\w\-]+)/$",
         EditNewCustomFormExportView.as_view(),
         name=EditNewCustomFormExportView.urlname),
@@ -59,6 +68,9 @@ urlpatterns = patterns(
     url(r"^custom/case/download/(?P<export_id>[\w\-]+)/$",
         DownloadCaseExportView.as_view(),
         name=DownloadCaseExportView.urlname),
+    url(r"^custom/new/case/download/(?P<export_id>[\w\-]+)/$",
+        DownloadNewCaseExportView.as_view(),
+        name=DownloadNewCaseExportView.urlname),
     url(r"^custom/case/edit/(?P<export_id>[\w\-]+)/$",
         EditCustomCaseExportView.as_view(),
         name=EditCustomCaseExportView.urlname),
@@ -68,4 +80,7 @@ urlpatterns = patterns(
     url(r"^custom/new/(?P<export_type>[\w\-]+)/delete/(?P<export_id>[\w\-]+)/$",
         DeleteNewCustomExportView.as_view(),
         name=DeleteNewCustomExportView.urlname),
+    url(r"^custom/dailysaved/download/(?P<export_instance_id>[\w\-]+)/$",
+        "download_daily_saved_export",
+        name="download_daily_saved_export"),
 )

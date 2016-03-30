@@ -140,7 +140,7 @@ def _get_client_ip(meta):
     return ip
 
 
-def _send_form_to_hubspot(form_id, webuser, cookies, meta):
+def _send_form_to_hubspot(form_id, webuser, cookies, meta, extra_fields=None):
     """
     This sends hubspot the user's first and last names and tracks everything they did
     up until the point they signed up.
@@ -158,6 +158,8 @@ def _send_form_to_hubspot(form_id, webuser, cookies, meta):
             'lastname': webuser.last_name,
             'hs_context': json.dumps({"hutk": hubspot_cookie, "ipAddress": _get_client_ip(meta)}),
         }
+        if extra_fields:
+            data.update(extra_fields)
 
         response = requests.post(
             url,
@@ -223,7 +225,10 @@ def track_app_from_template_on_hubspot(webuser, cookies, meta):
 
 @analytics_task
 def track_clicked_deploy_on_hubspot(webuser, cookies, meta):
-    _send_form_to_hubspot(HUBSPOT_CLICKED_DEPLOY_FORM_ID, webuser, cookies, meta)
+    ab = {
+        'a_b_variable_deploy': 'A' if deterministic_random(webuser.username + 'a_b_variable_deploy') > 0.5 else 'B',
+    }
+    _send_form_to_hubspot(HUBSPOT_CLICKED_DEPLOY_FORM_ID, webuser, cookies, meta, extra_fields=ab)
 
 
 @analytics_task
@@ -310,7 +315,7 @@ def track_periodic_data():
     # max number of mobile workers
     submit = []
     for user in users_to_domains:
-        email = user.get('username')
+        email = user.get('email')
         if not email:
             continue
         max_forms = 0
@@ -338,6 +343,10 @@ def track_periodic_data():
                 {
                     'property': 'project_spaces_created_by_user',
                     'value': project_spaces_created,
+                },
+                {
+                    'property': 'over_300_form_submissions',
+                    'value': max_forms > 300
                 }
             ]
         }

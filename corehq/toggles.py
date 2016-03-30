@@ -6,12 +6,12 @@ import math
 from toggle.shortcuts import toggle_enabled, set_toggle
 
 Tag = namedtuple('Tag', 'name css_class')
-TAG_ONE_OFF = Tag(name='One-Off', css_class='important')
+TAG_ONE_OFF = Tag(name='One-Off', css_class='danger')
 TAG_EXPERIMENTAL = Tag(name='Experimental', css_class='warning')
 TAG_PRODUCT_PATH = Tag(name='Product Path', css_class='info')
 TAG_PRODUCT_CORE = Tag(name='Core Product', css_class='success')
 TAG_PREVIEW = Tag(name='Preview', css_class='default')
-TAG_UNKNOWN = Tag(name='Unknown', css_class='inverse')
+TAG_UNKNOWN = Tag(name='Unknown', css_class='default')
 ALL_TAGS = [TAG_ONE_OFF, TAG_EXPERIMENTAL, TAG_PRODUCT_PATH, TAG_PRODUCT_CORE, TAG_PREVIEW, TAG_UNKNOWN]
 
 
@@ -127,20 +127,42 @@ def all_toggles():
     """
     Loads all toggles
     """
+    return all_toggles_by_name_in_scope(globals()).values()
+
+
+def all_toggles_by_name():
     # trick for listing the attributes of the current module.
     # http://stackoverflow.com/a/990450/8207
-    for toggle_name, toggle in globals().items():
+    return all_toggles_by_name_in_scope(globals())
+
+
+def all_toggles_by_name_in_scope(scope_dict):
+    result = {}
+    for toggle_name, toggle in scope_dict.items():
         if not toggle_name.startswith('__'):
             if isinstance(toggle, StaticToggle):
-                yield toggle
+                result[toggle_name] = toggle
+    return result
 
 
 def toggles_dict(username=None, domain=None):
     """
     Loads all toggles into a dictionary for use in JS
+
+    (only enabled toggles are included)
     """
     return {t.slug: True for t in all_toggles() if (t.enabled(username) or
                                                     t.enabled(domain))}
+
+
+def toggle_values_by_name(username=None, domain=None):
+    """
+    Loads all toggles into a dictionary for use in JS
+
+    all toggles (including those not enabled) are included
+    """
+    return {toggle_name: (toggle.enabled(username) or toggle.enabled(domain))
+            for toggle_name, toggle in all_toggles_by_name().items()}
 
 
 APP_BUILDER_CUSTOM_PARENT_REF = StaticToggle(
@@ -158,7 +180,8 @@ APP_BUILDER_CAREPLAN = StaticToggle(
 APP_BUILDER_ADVANCED = StaticToggle(
     'advanced-app-builder',
     'Advanced Module in App-Builder',
-    TAG_EXPERIMENTAL
+    TAG_EXPERIMENTAL,
+    [NAMESPACE_DOMAIN],
 )
 
 APP_BUILDER_SHADOW_MODULES = StaticToggle(
@@ -174,13 +197,6 @@ APP_AWARE_SYNC = StaticToggle(
     'App-aware Sync',
     TAG_PRODUCT_PATH,
     [NAMESPACE_DOMAIN]
-)
-
-BOOTSTRAP3_PREVIEW = StaticToggle(
-    'bootstrap3_preview',
-    'Bootstrap 3 Preview',
-    TAG_PRODUCT_PATH,
-    [NAMESPACE_USER]
 )
 
 CASE_LIST_CUSTOM_XML = StaticToggle(
@@ -502,13 +518,6 @@ BULK_SMS_VERIFICATION = StaticToggle(
     [NAMESPACE_USER, NAMESPACE_DOMAIN],
 )
 
-BULK_PAYMENTS = StaticToggle(
-    'bulk_payments',
-    'Enable payment of invoices by bulk credit payments and invoice generation for wire transfers',
-    TAG_PRODUCT_CORE
-)
-
-
 ENABLE_LOADTEST_USERS = StaticToggle(
     'enable_loadtest_users',
     'Enable creating loadtest users on HQ',
@@ -602,14 +611,6 @@ CUSTOM_MENU_BAR = StaticToggle(
     namespaces=[NAMESPACE_DOMAIN],
 )
 
-LINK_SUPPLY_POINT = StaticToggle(
-    'link_supply_point',
-    'Add a "Supply Point" tab to location pages.  This is feature flagged '
-    'because this is not a great way to display additional information.',
-    TAG_EXPERIMENTAL,
-    namespaces=[NAMESPACE_DOMAIN],
-)
-
 ICDS_REPORTS = StaticToggle(
     'icds_reports',
     'Enable access to the Tableau dashboard for ICDS',
@@ -694,6 +695,20 @@ TELERIVET_SETUP_WALKTHROUGH = StaticToggle(
     [NAMESPACE_DOMAIN],
 )
 
+ABT_REMINDER_RECIPIENT = StaticToggle(
+    'abt_reminder_recipient',
+    "Ability to send a reminder to the case owner's location's parent location",
+    TAG_ONE_OFF,
+    [NAMESPACE_DOMAIN],
+)
+
+AUTO_CASE_UPDATES = StaticToggle(
+    'auto_case_updates',
+    'Ability to perform automatic case updates without closing the case.',
+    TAG_ONE_OFF,
+    [NAMESPACE_DOMAIN],
+)
+
 EWS_BROADCAST_BY_ROLE = StaticToggle(
     'ews_broadcast_by_role',
     'EWS: Filter broadcast recipients by role',
@@ -728,6 +743,7 @@ USE_SQL_BACKEND = StaticToggle(
     TAG_EXPERIMENTAL,
     [NAMESPACE_DOMAIN]
 )
+
 
 EWS_WEB_USER_EXTENSION = StaticToggle(
     'ews_web_user_extension',
@@ -764,12 +780,6 @@ TF_USES_SQLITE_BACKEND = StaticToggle(
     [NAMESPACE_DOMAIN]
 )
 
-SECURE_SESSIONS_CHECKBOX = StaticToggle(
-    'secure_sessions_checkbox',
-    'Show secure sessions checkbox',
-    TAG_PRODUCT_PATH,
-    [NAMESPACE_DOMAIN]
-)
 
 CUSTOM_APP_BASE_URL = StaticToggle(
     'custom_app_base_url',
@@ -799,5 +809,21 @@ PROJECT_HEALTH_DASHBOARD = StaticToggle(
     'project_health_dashboard',
     'Shows the project health dashboard in the reports navigation',
     TAG_PRODUCT_PATH,
+    [NAMESPACE_DOMAIN]
+)
+
+
+UNLIMITED_REPORT_BUILDER_REPORTS = StaticToggle(
+    'unlimited_report_builder_reports',
+    'Allow unlimited reports created in report builder',
+    TAG_PRODUCT_PATH,
+    [NAMESPACE_DOMAIN]
+)
+
+
+ALLOW_BROKEN_MULTIMEDIA_SUBMISSIONS = StaticToggle(
+    'allow_broken_multimedia_submissions',
+    "Explicitly bypass HQ's protection from the 2.26 multimedia submission bug. NOT RECOMMENDED",
+    TAG_ONE_OFF,
     [NAMESPACE_DOMAIN]
 )

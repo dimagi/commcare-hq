@@ -4,6 +4,11 @@ from django import forms
 from django.core.urlresolvers import reverse
 from django.utils.translation import ugettext as _, ugettext_lazy
 from unidecode import unidecode
+
+from corehq.apps.export.filters import (
+    ReceivedOnRangeFilter,
+    GroupFormSubmittedByFilter,
+    OR, OwnerFilter, LastModifiedByFilter, UserTypeFilter, OwnerTypeFilter)
 from corehq.apps.groups.models import Group
 from corehq.apps.reports.models import HQUserType
 from corehq.apps.reports.util import (
@@ -21,6 +26,7 @@ from corehq.apps.style.forms.widgets import (
     Select2MultipleChoiceWidget,
     DateRangePickerWidget,
 )
+from corehq.pillows import utils
 from couchexport.util import SerializableFunction
 
 from crispy_forms.bootstrap import InlineField
@@ -127,19 +133,17 @@ class CreateCaseExportTagForm(forms.Form):
         )
 
 
-class FilterExportDownloadForm(forms.Form):
+class BaseFilterExportDownloadForm(forms.Form):
     _export_type = 'all'  # should be form or case
 
     _USER_MOBILE = 'mobile'
     _USER_DEMO = 'demo_user'
-    _USER_ADMIN = 'admin'
     _USER_UNKNOWN = 'unknown'
     _USER_SUPPLY = 'supply'
 
     _USER_TYPES_CHOICES = [
         (_USER_MOBILE, ugettext_lazy("All Mobile Workers")),
         (_USER_DEMO, ugettext_lazy("Demo User")),
-        (_USER_ADMIN, ugettext_lazy("Admin User")),
         (_USER_UNKNOWN, ugettext_lazy("Unknown Users")),
         (_USER_SUPPLY, ugettext_lazy("CommCare Supply")),
     ]
@@ -164,7 +168,7 @@ class FilterExportDownloadForm(forms.Form):
 
     def __init__(self, domain_object, *args, **kwargs):
         self.domain_object = domain_object
-        super(FilterExportDownloadForm, self).__init__(*args, **kwargs)
+        super(BaseFilterExportDownloadForm, self).__init__(*args, **kwargs)
 
         if not self.domain_object.uses_locations:
             # don't use CommCare Supply as a user_types choice if the domain
@@ -225,7 +229,10 @@ class FilterExportDownloadForm(forms.Form):
         user_filter_toggles = [
             self._USER_MOBILE in user_types,
             self._USER_DEMO in user_types,
-            self._USER_ADMIN in user_types,
+            # The following line results in all users who match the
+            # HQUserType.ADMIN filter to be included if the unknown users
+            # filter is selected.
+            self._USER_UNKNOWN in user_types,
             self._USER_UNKNOWN in user_types,
             self._USER_SUPPLY in user_types
         ]
@@ -235,6 +242,26 @@ class FilterExportDownloadForm(forms.Form):
             user_filter_toggles
         )
         return users_matching_filter(self.domain_object.name, user_filters)
+
+    def _get_es_user_types(self):
+        """
+        Return a list of elastic search user types (each item in the return list
+        is in corehq.pillows.utils.USER_TYPES) corresponding to the selected
+        export user types.
+        """
+        es_user_types = []
+        export_user_types = self.cleaned_data['user_types']
+        export_to_es_user_types_map = {
+            self._USER_MOBILE: [utils.MOBILE_USER_TYPE],
+            self._USER_DEMO: [utils.DEMO_USER_TYPE],
+            self._USER_UNKNOWN: [
+                utils.UNKNOWN_USER_TYPE, utils.SYSTEM_USER_TYPE, utils.WEB_USER_TYPE
+            ],
+            self._USER_SUPPLY: [utils.COMMCARE_SUPPLY_USER_TYPE]
+        }
+        for type_ in export_user_types:
+            es_user_types.extend(export_to_es_user_types_map[type_])
+        return es_user_types
 
     def _get_group(self):
         group = self.cleaned_data['group']
@@ -259,7 +286,7 @@ class FilterExportDownloadForm(forms.Form):
         }
 
 
-class FilterFormExportDownloadForm(FilterExportDownloadForm):
+class GenericFilterFormExportDownloadForm(BaseFilterExportDownloadForm):
     """The filters for Form Export Download
     """
     _export_type = 'form'
@@ -272,7 +299,7 @@ class FilterFormExportDownloadForm(FilterExportDownloadForm):
 
     def __init__(self, domain_object, timezone, *args, **kwargs):
         self.timezone = timezone
-        super(FilterFormExportDownloadForm, self).__init__(domain_object, *args, **kwargs)
+        super(GenericFilterFormExportDownloadForm, self).__init__(domain_object, *args, **kwargs)
 
         self.fields['date_range'].help_text = _(
             "The timezone for this export is %(timezone)s."
@@ -297,22 +324,6 @@ class FilterFormExportDownloadForm(FilterExportDownloadForm):
             ),
         ]
 
-    def _get_user_or_group_filter(self):
-        group = self._get_group()
-        if group:
-            # filter by groups
-            return SerializableFunction(group_filter, group=group)
-        # filter by users
-        return SerializableFunction(users_filter,
-                                    users=self._get_filtered_users())
-
-    def _get_datespan_filter(self):
-        datespan = self._get_datespan()
-        if datespan.is_valid():
-            datespan.set_timezone(self.timezone)
-            return SerializableFunction(datespan_export_filter,
-                                        datespan=datespan)
-
     def _get_datespan(self):
         date_range = self.cleaned_data['date_range']
         dates = date_range.split(DateRangePickerWidget.separator)
@@ -321,17 +332,7 @@ class FilterFormExportDownloadForm(FilterExportDownloadForm):
         return DateSpan(startdate, enddate)
 
     def get_form_filter(self):
-        form_filter = SerializableFunction(app_export_filter, app_id=None)
-        datespan_filter = self._get_datespan_filter()
-        if datespan_filter:
-            form_filter &= datespan_filter
-        form_filter &= self._get_user_or_group_filter()
-        return form_filter
-
-    def get_edit_url(self, export):
-        from corehq.apps.export.views import EditCustomFormExportView
-        return reverse(EditCustomFormExportView.urlname,
-                       args=(self.domain_object.name, export.get_id))
+        raise NotImplementedError
 
     def get_multimedia_task_kwargs(self, export, download_id):
         """These are the kwargs for the Multimedia Download task,
@@ -350,15 +351,88 @@ class FilterFormExportDownloadForm(FilterExportDownloadForm):
         }
 
     def format_export_data(self, export):
-        export_data = super(FilterFormExportDownloadForm, self).format_export_data(export)
+        export_data = super(GenericFilterFormExportDownloadForm, self).format_export_data(export)
         export_data.update({
             'xmlns': export.xmlns if hasattr(export, 'xmlns') else '',
         })
         return export_data
 
 
-class FilterCaseExportDownloadForm(FilterExportDownloadForm):
+class FilterFormCouchExportDownloadForm(GenericFilterFormExportDownloadForm):
+    # This class will be removed when the switch over to ES exports is complete
+
+    def get_edit_url(self, export):
+        from corehq.apps.export.views import EditCustomFormExportView
+        return reverse(EditCustomFormExportView.urlname,
+                       args=(self.domain_object.name, export.get_id))
+
+    def get_form_filter(self):
+        form_filter = SerializableFunction(app_export_filter, app_id=None)
+        datespan_filter = self._get_datespan_filter()
+        if datespan_filter:
+            form_filter &= datespan_filter
+        form_filter &= self._get_user_or_group_filter()
+        return form_filter
+
+    def _get_user_or_group_filter(self):
+        group = self._get_group()
+        if group:
+            # filter by groups
+            return SerializableFunction(group_filter, group=group)
+        # filter by users
+        return SerializableFunction(users_filter,
+                                    users=self._get_filtered_users())
+
+    def _get_datespan_filter(self):
+        datespan = self._get_datespan()
+        if datespan.is_valid():
+            datespan.set_timezone(self.timezone)
+            return SerializableFunction(datespan_export_filter,
+                                        datespan=datespan)
+
+
+class FilterFormESExportDownloadForm(GenericFilterFormExportDownloadForm):
+
+    def get_edit_url(self, export):
+        from corehq.apps.export.views import EditNewCustomFormExportView
+        return reverse(EditNewCustomFormExportView.urlname,
+                       args=(self.domain_object.name, export._id))
+
+    def get_form_filter(self):
+        return filter(None, [
+            self._get_datespan_filter(),
+            self._get_group_filter(),
+            self._get_user_filter()
+        ])
+
+    def _get_datespan_filter(self):
+        datespan = self._get_datespan()
+        if datespan.is_valid():
+            datespan.set_timezone(self.timezone)
+            return ReceivedOnRangeFilter(gte=datespan.startdate, lt=datespan.enddate + timedelta(days=1))
+
+    def _get_group_filter(self):
+        group = self.cleaned_data['group']
+        if group:
+            return GroupFormSubmittedByFilter(group)
+
+    def _get_user_filter(self):
+        group = self.cleaned_data['group']
+        if not group:
+            return UserTypeFilter(self._get_es_user_types())
+
+
+class GenericFilterCaseExportDownloadForm(BaseFilterExportDownloadForm):
     _export_type = 'case'
+
+    def get_edit_url(self, export):
+        from corehq.apps.export.views import EditCustomCaseExportView
+        return reverse(EditCustomCaseExportView.urlname,
+                       args=(self.domain_object.name, export.get_id))
+
+
+class FilterCaseCouchExportDownloadForm(GenericFilterCaseExportDownloadForm):
+    # This class will be removed when the switch over to ES exports is complete
 
     def get_case_filter(self):
         group = self._get_group()
@@ -370,7 +444,24 @@ class FilterCaseExportDownloadForm(FilterExportDownloadForm):
                                     users=self._get_filtered_users(),
                                     groups=case_sharing_groups)
 
-    def get_edit_url(self, export):
-        from corehq.apps.export.views import EditCustomCaseExportView
-        return reverse(EditCustomCaseExportView.urlname,
-                       args=(self.domain_object.name, export.get_id))
+
+class FilterCaseESExportDownloadForm(GenericFilterCaseExportDownloadForm):
+
+    def get_case_filter(self):
+        group = self._get_group()
+        if group:
+            user_ids = set(group.get_static_user_ids())
+            case_filter = [OR(
+                OwnerFilter(group._id),
+                OwnerFilter(user_ids),
+                LastModifiedByFilter(user_ids)
+            )]
+        else:
+            case_sharing_groups = [g.get_id for g in
+                                   Group.get_case_sharing_groups(self.domain_object.name)]
+            case_filter = [OR(
+                OwnerTypeFilter(self._get_es_user_types()),
+                OwnerFilter(case_sharing_groups),
+                LastModifiedByFilter(case_sharing_groups)
+            )]
+        return case_filter

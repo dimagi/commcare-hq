@@ -6,6 +6,7 @@ from corehq.toggles import OPENLMIS
 
 from django.utils.safestring import mark_safe, mark_for_escaping
 from django.core.urlresolvers import reverse
+from corehq.util.view_utils import absolute_reverse
 from django.http import Http404
 from django.utils.translation import ugettext as _, get_language
 from django.utils.translation import ugettext_noop, ugettext_lazy
@@ -158,14 +159,14 @@ class UITab(object):
     def url(self):
         try:
             if self.domain:
-                return reverse(self.view, args=[self.domain])
+                return absolute_reverse(self.view, args=[self.domain])
             if self.org:
-                return reverse(self.view, args=[self.org.name])
+                return absolute_reverse(self.view, args=[self.org.name])
         except Exception:
             pass
 
         try:
-            return reverse(self.view)
+            return absolute_reverse(self.view)
         except Exception:
             return None
 
@@ -649,8 +650,11 @@ class ProjectDataTab(UITab):
                 CreateNewCustomFormExportView,
                 CreateNewCustomCaseExportView,
                 DownloadFormExportView,
+                DownloadNewFormExportView,
                 DownloadCaseExportView,
+                DownloadNewCaseExportView,
                 BulkDownloadFormExportView,
+                BulkDownloadNewFormExportView,
                 EditCustomFormExportView,
                 EditCustomCaseExportView,
                 EditNewCustomFormExportView,
@@ -684,8 +688,16 @@ class ProjectDataTab(UITab):
                             'urlname': BulkDownloadFormExportView.urlname,
                         },
                         {
+                            'title': BulkDownloadNewFormExportView.page_title,
+                            'urlname': BulkDownloadNewFormExportView.urlname,
+                        },
+                        {
                             'title': DownloadFormExportView.page_title,
                             'urlname': DownloadFormExportView.urlname,
+                        },
+                        {
+                            'title': DownloadNewFormExportView.page_title,
+                            'urlname': DownloadNewFormExportView.urlname,
                         },
                         {
                             'title': edit_form_cls.page_title,
@@ -707,6 +719,10 @@ class ProjectDataTab(UITab):
                         {
                             'title': DownloadCaseExportView.page_title,
                             'urlname': DownloadCaseExportView.urlname,
+                        },
+                        {
+                            'title': DownloadNewCaseExportView.page_title,
+                            'urlname': DownloadNewCaseExportView.urlname,
                         },
                         {
                             'title': edit_case_cls.page_title,
@@ -929,13 +945,6 @@ class MessagingTab(UITab):
                         'urlname': EditStructuredKeywordView.urlname,
                     },
                 ],
-            })
-
-        if self.can_access_reminders:
-            reminders_urls.append({
-                'title': _("Reminders in Error"),
-                'url': reverse('reminders_in_error', args=[self.domain]),
-                'show_in_dropdown': True,
             })
 
         return reminders_urls
@@ -1496,7 +1505,7 @@ class MySettingsTab(UITab):
     @property
     def sidebar_items(self):
         from corehq.apps.settings.views import MyAccountSettingsView, \
-            MyProjectsList, ChangeMyPasswordView
+            MyProjectsList, ChangeMyPasswordView, TwoFactorProfileView
         items = [
             (_("Manage My Settings"), (
                 {
@@ -1511,6 +1520,10 @@ class MySettingsTab(UITab):
                     'title': _(ChangeMyPasswordView.page_title),
                     'url': reverse(ChangeMyPasswordView.urlname),
                 },
+                {
+                    'title': _(TwoFactorProfileView.page_title),
+                    'url': reverse(TwoFactorProfileView.urlname),
+                }
             ))
         ]
         return items
@@ -1542,6 +1555,8 @@ class AdminReportsTab(UITab):
                                 args=('pillow_errors',))},
                 {'title': _('Login as another user'),
                  'url': reverse(AuthenticateAs.urlname)},
+                {'title': _('Look up user by email'),
+                 'url': reverse('web_user_lookup')},
             ])
         return [
             (_('Administrative Reports'), [

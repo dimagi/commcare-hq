@@ -4,7 +4,7 @@ from __future__ import unicode_literals
 from django.db import models, migrations
 
 from corehq.form_processor.models import XFormInstanceSQL, XFormOperationSQL, CaseTransaction
-from corehq.sql_db.operations import HqRunSQL, RawSQLMigration
+from corehq.sql_db.operations import HqRunSQL, RawSQLMigration, noop_migration
 
 migrator = RawSQLMigration(('corehq', 'sql_accessors', 'sql_templates'), {
     'FORM_STATE_ARCHIVED': XFormInstanceSQL.ARCHIVED,
@@ -70,7 +70,6 @@ class Migration(migrations.Migration):
         migrator.get_migration('archive_unarchive_form.sql'),
         migrator.get_migration('case_modified_since.sql'),
         migrator.get_migration('check_form_exists.sql'),
-        migrator.get_migration('get_case_attachment_by_name.sql'),
         migrator.get_migration('get_case_attachments.sql'),
         migrator.get_migration('get_case_by_id.sql'),
         migrator.get_migration('get_case_by_location_id.sql'),
@@ -79,7 +78,6 @@ class Migration(migrations.Migration):
         migrator.get_migration('get_case_indices.sql'),
         migrator.get_migration('get_case_indices_reverse.sql'),
         migrator.get_migration('get_case_transactions.sql'),
-        migrator.get_migration('get_case_transactions_for_rebuild.sql'),
         migrator.get_migration('get_cases_by_id.sql'),
         migrator.get_migration('get_form_attachment_by_name.sql'),
         migrator.get_migration('get_form_attachments.sql'),

@@ -1,7 +1,7 @@
 import pytz
 import uuid
 
-from datetime import datetime
+from datetime import datetime, timedelta
 from django.test import SimpleTestCase
 from django.test.utils import override_settings
 
@@ -12,6 +12,7 @@ from corehq.pillows.mappings.group_mapping import GROUP_INDEX
 from corehq.pillows.mappings.user_mapping import USER_INDEX
 from corehq.pillows.mappings.xform_mapping import XFORM_INDEX
 from dimagi.utils.dates import DateSpan
+from dimagi.utils.parsing import string_to_utc_datetime
 from elasticsearch.exceptions import ConnectionError
 
 from corehq.util.elastic import ensure_index_deleted
@@ -32,9 +33,19 @@ from corehq.apps.reports.analytics.esaccessors import (
     get_total_case_counts_by_owner,
     get_case_counts_closed_by_user,
     get_case_counts_opened_by_user,
+    get_paged_forms_by_type,
+    get_last_form_submissions_by_user,
     get_user_stubs,
     get_group_stubs,
-    get_form_counts_by_user_xmlns)
+    get_forms,
+    get_form_counts_by_user_xmlns,
+    get_form_duration_stats_by_user,
+    get_form_duration_stats_for_users,
+    get_last_form_submission_for_xmlns,
+    guess_form_name_from_submissions_using_xmlns,
+    get_active_case_count
+)
+from corehq.apps.es.aggregations import MISSING_KEY
 from corehq.util.test_utils import make_es_ready_form, trap_extra_setup
 from pillowtop.feed.interface import Change
 
@@ -44,9 +55,9 @@ class BaseESAccessorsTest(SimpleTestCase):
     es_index = None
 
     def setUp(self):
-        ensure_index_deleted(self.es_index)
-        self.domain = 'esdomain'
         with trap_extra_setup(ConnectionError):
+            ensure_index_deleted(self.es_index)
+            self.domain = 'esdomain'
             self.pillow = self.get_pillow()
 
     def get_pillow(self):
@@ -78,6 +89,99 @@ class TestFormESAccessors(BaseESAccessorsTest):
 
     def _pillow_process_form(self, form_pair):
         self.pillow.change_transport(form_pair.json_form)
+
+    def test_get_forms(self):
+        start = datetime(2013, 7, 1)
+        end = datetime(2013, 7, 30)
+        xmlns = 'http://a.b.org'
+        app_id = '1234'
+        user_id = 'abc'
+
+        self._send_form_to_es(
+            app_id=app_id,
+            xmlns=xmlns,
+            received_on=datetime(2013, 7, 2),
+            user_id=user_id,
+        )
+
+        paged_result = get_forms(
+            self.domain,
+            start,
+            end,
+            user_ids=[user_id],
+            app_ids=app_id,
+            xmlnss=xmlns,
+        )
+        self.assertEqual(paged_result.total, 1)
+        self.assertEqual(paged_result.hits[0]['xmlns'], xmlns)
+        self.assertEqual(paged_result.hits[0]['form']['meta']['userID'], user_id)
+        self.assertEqual(paged_result.hits[0]['received_on'], '2013-07-02T00:00:00.000000Z')
+
+    def test_get_forms_multiple_apps_xmlnss(self):
+        start = datetime(2013, 7, 1)
+        end = datetime(2013, 7, 30)
+        xmlns1, xmlns2 = 'http://a.b.org', 'http://b.c.org'
+        app_id1, app_id2 = '1234', '4567'
+        user_id = 'abc'
+
+        self._send_form_to_es(
+            app_id=app_id1,
+            xmlns=xmlns1,
+            received_on=datetime(2013, 7, 2),
+            user_id=user_id,
+        )
+        self._send_form_to_es(
+            app_id=app_id2,
+            xmlns=xmlns2,
+            received_on=datetime(2013, 7, 2),
+            user_id=user_id,
+        )
+        self._send_form_to_es(
+            app_id=app_id1,
+            xmlns=xmlns1,
+            received_on=datetime(2013, 7, 2),
+            user_id=None,
+        )
+
+        paged_result = get_forms(
+            self.domain,
+            start,
+            end,
+            user_ids=[user_id],
+            app_ids=[app_id1, app_id2],
+            xmlnss=[xmlns1, xmlns2],
+        )
+        self.assertEqual(paged_result.total, 2)
+
+        paged_result = get_forms(
+            self.domain,
+            start,
+            end,
+            user_ids=[user_id],
+            app_ids=[app_id1, app_id2],
+            xmlnss=[xmlns1],
+        )
+        self.assertEqual(paged_result.total, 1)
+
+        paged_result = get_forms(
+            self.domain,
+            start,
+            end,
+            user_ids=[user_id],
+            app_ids=[app_id1],
+            xmlnss=[xmlns2],
+        )
+        self.assertEqual(paged_result.total, 0)
+
+        paged_result = get_forms(
+            self.domain,
+            start,
+            end,
+            user_ids=[None],
+            app_ids=[app_id1],
+            xmlnss=[xmlns1],
+        )
+        self.assertEqual(paged_result.total, 1)
 
     def test_basic_completed_by_user(self):
         start = datetime(2013, 7, 1)
@@ -118,6 +222,40 @@ class TestFormESAccessors(BaseESAccessorsTest):
         results = get_submission_counts_by_user(self.domain, DateSpan(start, end))
         self.assertEquals(results['cruella_deville'], 1)
 
+    def test_get_last_form_submission_by_xmlns(self):
+        xmlns = 'http://a.b.org'
+        kwargs = {
+            'user_id': 'u1',
+            'app_id': '1234',
+            'domain': self.domain,
+        }
+
+        first = datetime(2013, 7, 15, 0, 0, 0)
+        second = datetime(2013, 7, 16, 0, 0, 0)
+        third = datetime(2013, 7, 17, 0, 0, 0)
+
+        self._send_form_to_es(received_on=second, xmlns=xmlns, **kwargs)
+        self._send_form_to_es(received_on=third, xmlns=xmlns, **kwargs)
+        self._send_form_to_es(received_on=first, xmlns=xmlns, **kwargs)
+
+        form = get_last_form_submission_for_xmlns(self.domain, xmlns)
+        self.assertEqual(string_to_utc_datetime(form['received_on']), third)
+
+        form = get_last_form_submission_for_xmlns(self.domain, 'missing')
+        self.assertIsNone(form)
+
+    def test_guess_form_name_from_xmlns_not_found(self):
+        self.assertEqual(None, guess_form_name_from_submissions_using_xmlns('missing', 'missing'))
+
+    def test_guess_form_name_from_xmlns(self):
+        form_name = 'my cool form'
+        xmlns = 'http://a.b.org'
+        self._send_form_to_es(
+            xmlns=xmlns,
+            form_name=form_name,
+        )
+        self.assertEqual(form_name, guess_form_name_from_submissions_using_xmlns(self.domain, xmlns))
+
     def test_submission_out_of_range_by_user(self):
         start = datetime(2013, 7, 1)
         end = datetime(2013, 7, 30)
@@ -155,6 +293,14 @@ class TestFormESAccessors(BaseESAccessorsTest):
         )
         self.assertEquals(results['2013-07-15'], 1)
 
+    def test_get_paged_forms_by_type(self):
+        self._send_form_to_es()
+        self._send_form_to_es()
+
+        paged_result = get_paged_forms_by_type(self.domain, ['xforminstance'], size=1)
+        self.assertEqual(len(paged_result.hits), 1)
+        self.assertEqual(paged_result.total, 2)
+
     def test_timezone_differences(self):
         """
         Our received_on dates are always in UTC, so if we submit a form right at midnight UTC, then the report
@@ -175,6 +321,50 @@ class TestFormESAccessors(BaseESAccessorsTest):
         )
         self.assertEquals(results['2013-07-14'], 1)
 
+    def test_get_last_form_submission_for_user_for_app(self):
+        kwargs_u1 = {
+            'user_id': 'u1',
+            'app_id': '1234',
+            'domain': self.domain,
+        }
+        kwargs_u2 = {
+            'user_id': 'u2',
+            'app_id': '1234',
+            'domain': self.domain,
+        }
+        kwargs_u3 = {
+            'user_id': None,
+            'app_id': '1234',
+            'domain': self.domain,
+        }
+
+        first = datetime(2013, 7, 15, 0, 0, 0)
+        second = datetime(2013, 7, 16, 0, 0, 0)
+        third = datetime(2013, 7, 17, 0, 0, 0)
+
+        self._send_form_to_es(received_on=second, xmlns='second', **kwargs_u1)
+        self._send_form_to_es(received_on=third, xmlns='third', **kwargs_u1)
+        self._send_form_to_es(received_on=first, xmlns='first', **kwargs_u1)
+
+        self._send_form_to_es(received_on=second, xmlns='second', **kwargs_u2)
+        self._send_form_to_es(received_on=third, xmlns='third', **kwargs_u2)
+        self._send_form_to_es(received_on=first, xmlns='first', **kwargs_u2)
+
+        self._send_form_to_es(received_on=second, xmlns='second', **kwargs_u3)
+        self._send_form_to_es(received_on=third, xmlns='third', **kwargs_u3)
+        self._send_form_to_es(received_on=first, xmlns='first', **kwargs_u3)
+
+        result = get_last_form_submissions_by_user(self.domain, ['u1', 'u2', 'missing'])
+        self.assertEqual(result['u1'][0]['xmlns'], 'third')
+        self.assertEqual(result['u2'][0]['xmlns'], 'third')
+
+        result = get_last_form_submissions_by_user(self.domain, ['u1'], '1234')
+        self.assertEqual(result['u1'][0]['xmlns'], 'third')
+
+        result = get_last_form_submissions_by_user(self.domain, ['u1', None], '1234')
+        self.assertEqual(result['u1'][0]['xmlns'], 'third')
+        self.assertEqual(result[None][0]['xmlns'], 'third')
+
     def test_get_form_counts_by_user_xmlns(self):
         user1, user2 = 'u1', 'u2'
         app1, app2 = '123', '567'
@@ -190,6 +380,7 @@ class TestFormESAccessors(BaseESAccessorsTest):
         self._send_form_to_es(received_on=received_on, user_id=user1, app_id=app1, xmlns=xmlns1)
         self._send_form_to_es(received_on=received_on, user_id=user1, app_id=app2, xmlns=xmlns2)
         self._send_form_to_es(received_on=received_on, user_id=user2, app_id=app2, xmlns=xmlns2)
+        self._send_form_to_es(received_on=received_on, user_id=None, app_id=app2, xmlns=xmlns2)
 
         counts = get_form_counts_by_user_xmlns(self.domain, start, end)
         self.assertEqual(counts, {
@@ -214,6 +405,253 @@ class TestFormESAccessors(BaseESAccessorsTest):
         self.assertEqual(by_completion, {
             (user1, app1, xmlns1): 1
         })
+
+        counts_missing_user = get_form_counts_by_user_xmlns(self.domain, start, end, user_ids=[None])
+        self.assertEqual(counts_missing_user, {
+            (None, app2, xmlns2): 1,
+        })
+
+    def test_get_form_duration_stats_by_user(self):
+        """
+        Tests the get_form_duration_stats_by_user basic ability to get duration stats
+        grouped by user
+        """
+        user1, user2 = 'u1', 'u2'
+        app1 = '123'
+        xmlns1 = 'abc'
+
+        start = datetime(2013, 7, 1)
+        end = datetime(2013, 7, 30)
+
+        time_start = datetime(2013, 6, 15, 0, 0, 0)
+        completion_time = datetime(2013, 7, 15, 0, 0, 0)
+
+        self._send_form_to_es(
+            completion_time=completion_time,
+            user_id=user1,
+            app_id=app1,
+            xmlns=xmlns1,
+            time_start=time_start,
+        )
+        self._send_form_to_es(
+            completion_time=completion_time,
+            user_id=user2,
+            app_id=app1,
+            xmlns=xmlns1,
+            time_start=time_start,
+        )
+        self._send_form_to_es(
+            completion_time=completion_time,
+            user_id=None,
+            app_id=app1,
+            xmlns=xmlns1,
+            time_start=time_start,
+        )
+
+        results = get_form_duration_stats_by_user(
+            self.domain,
+            app1,
+            xmlns1,
+            [user1, user2, None],
+            start,
+            end,
+            by_submission_time=False
+        )
+
+        self.assertEqual(results[user1]['count'], 1)
+        self.assertEqual(timedelta(milliseconds=results[user1]['max']), completion_time - time_start)
+        self.assertEqual(results[user2]['count'], 1)
+        self.assertEqual(timedelta(milliseconds=results[user2]['max']), completion_time - time_start)
+        self.assertEqual(results[MISSING_KEY]['count'], 1)
+        self.assertEqual(timedelta(milliseconds=results[MISSING_KEY]['max']), completion_time - time_start)
+
+    def test_get_form_duration_stats_by_user_decoys(self):
+        """
+        Tests the get_form_duration_stats_by_user ability to filter out forms that
+        do not fit within the filters specified
+        """
+        user1, user2 = 'u1', 'u2'
+        app1, app2 = '123', '456'
+        xmlns1, xmlns2 = 'abc', 'def'
+
+        start = datetime(2013, 7, 1)
+        end = datetime(2013, 7, 30)
+
+        time_start = datetime(2013, 7, 2, 0, 0, 0)
+        completion_time = datetime(2013, 7, 15, 0, 0, 0)
+        received_on = datetime(2013, 7, 20, 0, 0, 0)
+        received_on_late = datetime(2013, 7, 20, 0, 0, 0)
+
+        self._send_form_to_es(
+            completion_time=completion_time,
+            user_id=user1,
+            app_id=app1,
+            xmlns=xmlns1,
+            time_start=time_start,
+            received_on=received_on,
+        )
+
+        # different app
+        self._send_form_to_es(
+            completion_time=completion_time,
+            user_id=user1,
+            app_id=app2,
+            xmlns=xmlns1,
+            time_start=time_start,
+            received_on=received_on,
+        )
+
+        # different xmlns
+        self._send_form_to_es(
+            completion_time=completion_time,
+            user_id=user1,
+            app_id=app1,
+            xmlns=xmlns2,
+            time_start=time_start,
+            received_on=received_on,
+        )
+
+        # out of time range
+        self._send_form_to_es(
+            completion_time=completion_time,
+            user_id=user2,
+            app_id=app1,
+            xmlns=xmlns1,
+            time_start=time_start,
+            received_on=received_on_late,
+        )
+
+        results = get_form_duration_stats_by_user(
+            self.domain,
+            app1,
+            xmlns1,
+            [user1, user2],
+            start,
+            end,
+            by_submission_time=True
+        )
+
+        self.assertEqual(results[user1]['count'], 1)
+        self.assertEqual(timedelta(milliseconds=results[user1]['max']), completion_time - time_start)
+        self.assertIsNone(results.get('user2'))
+
+    def test_get_form_duration_stats_for_users(self):
+        """
+        Tests the get_form_duration_stats_for_users basic ability to get duration stats
+        """
+        user1, user2 = 'u1', 'u2'
+        app1 = '123'
+        xmlns1 = 'abc'
+
+        start = datetime(2013, 7, 1)
+        end = datetime(2013, 7, 30)
+
+        time_start = datetime(2013, 6, 15, 0, 0, 0)
+        completion_time = datetime(2013, 7, 15, 0, 0, 0)
+
+        self._send_form_to_es(
+            completion_time=completion_time,
+            user_id=user1,
+            app_id=app1,
+            xmlns=xmlns1,
+            time_start=time_start,
+        )
+        self._send_form_to_es(
+            completion_time=completion_time,
+            user_id=user2,
+            app_id=app1,
+            xmlns=xmlns1,
+            time_start=time_start,
+        )
+        self._send_form_to_es(
+            completion_time=completion_time,
+            user_id=None,
+            app_id=app1,
+            xmlns=xmlns1,
+            time_start=time_start,
+        )
+
+        results = get_form_duration_stats_for_users(
+            self.domain,
+            app1,
+            xmlns1,
+            [user1, user2, None],
+            start,
+            end,
+            by_submission_time=False
+        )
+
+        self.assertEqual(results['count'], 3)
+        self.assertEqual(timedelta(milliseconds=results['max']), completion_time - time_start)
+
+    def test_get_form_duration_stats_for_users_decoys(self):
+        """
+        Tests the get_form_duration_stats_for_users ability to filter out forms that
+        do not fit within the filters specified
+        """
+        user1, user2 = 'u1', 'u2'
+        app1, app2 = '123', '456'
+        xmlns1, xmlns2 = 'abc', 'def'
+
+        start = datetime(2013, 7, 1)
+        end = datetime(2013, 7, 30)
+
+        time_start = datetime(2013, 7, 2, 0, 0, 0)
+        completion_time = datetime(2013, 7, 15, 0, 0, 0)
+        received_on = datetime(2013, 7, 20, 0, 0, 0)
+        received_on_late = datetime(2013, 8, 20, 0, 0, 0)
+
+        self._send_form_to_es(
+            completion_time=completion_time,
+            user_id=user1,
+            app_id=app1,
+            xmlns=xmlns1,
+            time_start=time_start,
+            received_on=received_on,
+        )
+
+        # different app
+        self._send_form_to_es(
+            completion_time=completion_time,
+            user_id=user1,
+            app_id=app2,
+            xmlns=xmlns1,
+            time_start=time_start,
+            received_on=received_on,
+        )
+
+        # different xmlns
+        self._send_form_to_es(
+            completion_time=completion_time,
+            user_id=user1,
+            app_id=app1,
+            xmlns=xmlns2,
+            time_start=time_start,
+            received_on=received_on,
+        )
+
+        # out of time range
+        self._send_form_to_es(
+            completion_time=completion_time,
+            user_id=user2,
+            app_id=app1,
+            xmlns=xmlns1,
+            time_start=time_start,
+            received_on=received_on_late,
+        )
+
+        results = get_form_duration_stats_for_users(
+            self.domain,
+            app1,
+            xmlns1,
+            [user1, user2],
+            start,
+            end,
+            by_submission_time=True
+        )
+
+        self.assertEqual(results['count'], 1)
+        self.assertEqual(timedelta(milliseconds=results['max']), completion_time - time_start)
 
 
 @override_settings(TESTS_SHOULD_USE_SQL_BACKEND=True)
@@ -471,6 +909,29 @@ class TestCaseESAccessors(BaseESAccessorsTest):
         results = get_case_counts_opened_by_user(self.domain, datespan, case_types=['not-here'])
         self.assertEqual(results, {})
 
+    def test_get_all_active_cases(self):
+        datespan = DateSpan(datetime(2013, 7, 1), datetime(2013, 7, 30))
+        opened_on = datetime(2013, 7, 15)
+        opened_before = datetime(2013, 6, 25)
+
+        self._send_case_to_es(opened_on=opened_on)
+        self._send_case_to_es(opened_on=opened_before)
+
+        results = get_active_case_count(self.domain, datespan, []).total
+
+        self.assertEqual(results, 1)
+
+    def test_get_total_active_cases(self):
+        datespan = DateSpan(datetime(2013, 7, 1), datetime(2013, 7, 30))
+        opened_on = datetime(2013, 7, 15)
+        opened_before = datetime(2013, 6, 25)
+
+        self._send_case_to_es(opened_on=opened_on)
+        self._send_case_to_es(opened_on=opened_before)
+
+        results = get_active_case_count(self.domain, datespan, [], True).total
+
+        self.assertEqual(results, 2)
 
 @override_settings(TESTS_SHOULD_USE_SQL_BACKEND=True)
 class TestCaseESAccessorsSQL(TestCaseESAccessors):

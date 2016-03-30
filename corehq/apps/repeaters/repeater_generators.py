@@ -63,10 +63,6 @@ class CaseRepeaterXMLPayloadGenerator(BasePayloadGenerator):
     def get_payload(self, repeat_record, payload_doc):
         return payload_doc.to_xml(self.repeater.version or V2, include_case_on_closed=True)
 
-    @property
-    def content_type(self):
-        return 'application/json'
-
     def get_test_payload(self):
         from casexml.apps.case.mock import CaseBlock
         return CaseBlock(

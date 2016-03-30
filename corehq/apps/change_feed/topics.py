@@ -8,6 +8,12 @@ META = 'meta'
 # new models
 CASE_SQL = 'case-sql'
 FORM_SQL = 'form-sql'
+SMS = 'sms'
+
+
+ALL = (
+    CASE, FORM, META, CASE_SQL, FORM_SQL, SMS
+)
 
 
 def get_topic(document_type):

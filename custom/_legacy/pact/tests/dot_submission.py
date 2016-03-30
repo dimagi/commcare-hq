@@ -5,7 +5,6 @@ from django.test import TestCase
 import json
 from casexml.apps.case.models import CommCareCase
 from corehq.apps.domain.models import Domain
-from corehq.apps.hqadmin.dbaccessors import get_all_forms_in_all_domains
 from corehq.apps.users.models import CommCareUser
 from corehq.util.timezones.conversions import ServerTime
 from couchforms.models import XFormInstance
@@ -14,6 +13,7 @@ from pact.enums import PACT_DOTS_DATA_PROPERTY, PACT_DOMAIN, XMLNS_DOTS_FORM, XM
     PACT_TIMEZONE
 from pact.models import PactPatientCase
 from pact.regimen import regimen_dict_from_choice
+from pact.tests.utils import get_all_forms_in_all_domains
 from pact.utils import submit_xform
 
 NO_PILLBOX_ID = "83bfe01c-9f96-4e25-a1ad-f8164defa5d1"

@@ -12,25 +12,6 @@
     {% include "app_manager/partials/nav_menu_media_js_common.html" %}
     {% include "app_manager/partials/nav_menu_media_js.html" with item=multimedia.menu %}
     {% include "app_manager/partials/nav_menu_media_js.html" with item=multimedia.case_list_menu_item qualifier='case_list-menu_item_' %}
-
-    <script>
-        if (window.toggles === undefined) {
-            window.toggles = {};
-        }
-        if (window.feature_previews === undefined) {
-            window.feature_previews = {};
-        }
-        window.feature_previews.ENUM_IMAGE = {{ request|feature_preview_enabled:"ENUM_IMAGE"|BOOL }};
-        window.feature_previews.CALC_XPATHS = {{ request|feature_preview_enabled:"CALC_XPATHS"|BOOL }};
-        window.toggles.MM_CASE_PROPERTIES = {{ request|toggle_enabled:"MM_CASE_PROPERTIES"|BOOL }};
-        window.toggles.CASE_LIST_DISTANCE_SORT = {{ request|toggle_enabled:"CASE_LIST_DISTANCE_SORT"|BOOL }};
-        window.toggles.GRAPH_CREATION = {{ request|toggle_enabled:"GRAPH_CREATION"|BOOL }};
-        window.toggles.CASE_LIST_CUSTOM_XML = {{ request|toggle_enabled:"CASE_LIST_CUSTOM_XML"|BOOL }};
-        window.toggles.CASE_LIST_TILE = {{ request|toggle_enabled:"CASE_LIST_TILE"|BOOL }};
-        window.toggles.CASE_LIST_LOOKUP = {{ request|toggle_enabled:"CASE_LIST_LOOKUP"|BOOL }}
-        window.toggles.FIXTURE_CASE_SELECTION = {{ request|toggle_enabled:"FIXTURE_CASE_SELECTION"|BOOL }}
-    </script>
-    <!-- detail-screen-config.js depends on the previews & toggles defined above. -->
     <script src="{% new_static 'app_manager/js/detail-screen-config.js' %}"></script>
 
     {% if request|toggle_enabled:"CASE_LIST_LOOKUP" %}
@@ -51,10 +32,9 @@
 
     <script>
         $(function () {
-            COMMCAREHQ.app_manager.module_view = {
-                /* for sharing variables between essentially separate parts of the ui */
-                requires_case_details: ko.observable({{ module.requires_case_details|BOOL }})
-            };
+            var state = hqImport('app_manager/js/detail-screen-config.js').state;
+            var DetailScreenConfig = hqImport('app_manager/js/detail-screen-config.js').DetailScreenConfig;
+            state.requires_case_details({{ module.requires_case_details|BOOL }});
 
             var details = {{ details|JSON }};
             var lang = {{ lang|JSON }};
@@ -82,7 +62,7 @@
                     fixtures: fixtures,
                     parentSelect: detail.parent_select,
                     fixtureSelect: detail.fixture_select,
-                    contextVariables: COMMCAREHQ.app_manager.module_view
+                    contextVariables: state
                 });
                 var $list_home = $("#" + detail.type + "-detail-screen-config-tab");
                 $list_home.koApplyBindings(detailScreenConfig);
@@ -94,6 +74,14 @@
             }
         });
         $(function () {
+            var showCaseTypeError = function(message) {
+                var $caseTypeError = $('#case_type_error')
+                $caseTypeError.css('display', 'block');
+                $caseTypeError.text(message);
+            }
+            var hideCaseTypeError = function() {
+                $('#case_type_error').css('display', 'none');
+            }
             $('#case_type').on('textchange', function () {
                 var value = $(this).val();
                 var valueNoSpaces = value.replace(/ /g, '_');
@@ -102,10 +90,18 @@
                 }
                 if (!valueNoSpaces.match(/^[\w-]+$/g)) {
                     $(this).closest('.form-group').addClass('has-error');
-                    $('#case_type_error').css('display', 'block');
+                    showCaseTypeError(
+                        gettext("Case types can only include the characters a-z, 0-9, '-' and '_'")
+                    );
+                } else if (valueNoSpaces === 'commcare-user') {
+                    $(this).closest('.form-group').addClass('has-error');
+                    showCaseTypeError(
+                        gettext("'commcare-user' is a reserved case type. Please change the case type")
+                    );
+
                 } else {
                     $(this).closest('.form-group').removeClass('has-error');
-                    $('#case_type_error').css('display', 'none');
+                    hideCaseTypeError();
                 }
             });
 
@@ -178,8 +174,8 @@
             }
         });
         $(function () {
-            COMMCAREHQ.app_manager.setupValidation(
-                '{% url "validate_module_for_build" domain app.id module.id %}');
+            var setupValidation = hqImport('app_manager/js/app_manager.js').setupValidation;
+            setupValidation('{% url "validate_module_for_build" domain app.id module.id %}');
         });
     </script>
 {% endblock %}
@@ -293,7 +289,8 @@
                         {% trans "Case Type" %}
                         <span class="hq-help-template"
                               data-title="{% trans "Case Type" %}"
-                              data-content="{% trans "e.g. &quot;pregnancy&quot;. The name for the type of case you are tracking. All cases you register in this module will have this case type, and only cases of this type will show in the case list. Modules with the same case type will have the same cases in their case lists." %}"
+
+                              data-content="{% trans "The name for the type of case you are tracking (e.g. &quot;pregnancy&quot;, &quot;farm&quot;, &quot;household&quot;, etc.). All cases you register in this module will be this type of case, and only cases of this type will show in the case list. Other modules with the same case type will use the same set of cases." %}"
                                 ></span>
                     </label>
                     <div class="col-sm-4">

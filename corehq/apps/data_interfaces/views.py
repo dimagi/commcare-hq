@@ -246,7 +246,7 @@ class ArchiveFormView(DataInterfaceSection):
         try:
             bulk_archive_forms.delay(
                 self.domain,
-                self.request.user,
+                self.request.couch_user,
                 list(self.uploaded_file.get_worksheet())
             )
             messages.success(self.request, _("We received your file and are processing it. "
@@ -441,13 +441,13 @@ class CaseGroupCaseManagementView(DataInterfaceSection, CRUDPaginatedViewMixin):
                 'template': 'case-message-template',
             }
         item_data = self._get_item_data(case)
-        if case._id in self.case_group.cases:
+        if case.case_id in self.case_group.cases:
             message = '<span class="label label-important">%s</span>' % _("Case already in group")
         elif case.doc_type != 'CommCareCase':
             message = '<span class="label label-important">%s</span>' % _("It looks like this case was deleted.")
         else:
             message = '<span class="label label-success">%s</span>' % _("Case added")
-            self.case_group.cases.append(case._id)
+            self.case_group.cases.append(case.case_id)
             self.case_group.save()
         item_data['message'] = message
         return {
@@ -741,10 +741,11 @@ class AddAutomaticUpdateRuleView(JSONResponseMixin, DataInterfaceSection):
             )
 
     def create_actions(self, rule):
-        AutomaticUpdateAction.objects.create(
-            rule=rule,
-            action=AutomaticUpdateAction.ACTION_CLOSE,
-        )
+        if self.rule_form._closes_case():
+            AutomaticUpdateAction.objects.create(
+                rule=rule,
+                action=AutomaticUpdateAction.ACTION_CLOSE,
+            )
         if self.rule_form._updates_case():
             AutomaticUpdateAction.objects.create(
                 rule=rule,

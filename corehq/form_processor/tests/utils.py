@@ -11,6 +11,7 @@ from corehq.form_processor.backends.sql.dbaccessors import CaseAccessorSQL, Form
 from corehq.form_processor.backends.sql.processor import FormProcessorSQL
 from corehq.form_processor.interfaces.processor import FormProcessorInterface, ProcessedForms
 from corehq.form_processor.parsers.form import process_xform_xml
+from corehq.form_processor.utils.general import should_use_sql_backend
 from couchforms.models import XFormInstance
 from dimagi.utils.couch.database import safe_delete
 from corehq.util.test_utils import unit_testing_only, run_with_multiple_configs, RunConfig
@@ -36,11 +37,6 @@ class FormProcessorTestUtils(object):
             'cases_by_server_date/by_server_modified_on',
             **view_kwargs
         )
-
-        def _sql_delete(query, domain_filter):
-            if domain is not None:
-                query.filter(domain_filter)
-            query.all().delete()
 
         FormProcessorTestUtils.delete_all_sql_cases(domain)
 
@@ -185,3 +181,11 @@ def create_form_for_test(domain, case_id=None, attachments=None, save=True):
     if save:
         FormProcessorSQL.save_processed_models(ProcessedForms(form, None), cases)
     return form
+
+
+@unit_testing_only
+def set_case_property_directly(case, property_name, value):
+    if should_use_sql_backend(case.domain):
+        case.case_json[property_name] = value
+    else:
+        setattr(case, property_name, value)

@@ -1,4 +1,7 @@
 import datetime
+
+from corehq.apps.es import FormES
+from corehq.apps.es.aggregations import TermsAggregation
 from corehq.util.quickcache import quickcache
 
 from dimagi.utils.parsing import json_format_datetime
@@ -57,39 +60,6 @@ def get_number_of_forms_in_domain(domain):
     return row["value"] if row else 0
 
 
-def get_number_of_forms_of_all_types(domain):
-    """
-    Gets a count of all form-like things in a domain (including errors and duplicates)
-    """
-    # todo: this is only used to display the "filtered from __ entries" in the "raw forms" report
-    # and can probably be removed
-    startkey = [domain]
-    endkey = startkey + [{}]
-    submissions = XFormInstance.view(
-        "couchforms/all_submissions_by_domain",
-        startkey=startkey,
-        endkey=endkey,
-        reduce=True,
-        stale=stale_ok(),
-    ).one()
-    return submissions['value'] if submissions else 0
-
-
-def get_number_of_forms_by_type(domain, type_):
-    # todo: this is only used to display totals in the "raw forms" report and can probably be removed
-    assert type_ in doc_types()
-    startkey = [domain, type_]
-    endkey = startkey + [{}]
-    submissions = XFormInstance.view(
-        "couchforms/all_submissions_by_domain",
-        startkey=startkey,
-        endkey=endkey,
-        reduce=True,
-        stale=stale_ok(),
-    ).one()
-    return submissions['value'] if submissions else 0
-
-
 def get_first_form_submission_received(domain):
     from corehq.apps.reports.util import make_form_couch_key
     key = make_form_couch_key(domain)
@@ -125,38 +95,6 @@ def get_last_form_submission_received(domain):
     else:
         submission_time = None
     return submission_time
-
-
-def get_last_form_submission_by_xmlns(domain, xmlns):
-    from corehq.apps.reports.util import make_form_couch_key
-    key = make_form_couch_key(domain, xmlns=xmlns)
-    return XFormInstance.view(
-        "all_forms/view",
-        reduce=False,
-        endkey=key,
-        startkey=key + [{}],
-        descending=True,
-        limit=1,
-        include_docs=True,
-        stale=stale_ok(),
-    ).first()
-
-
-def get_last_form_submission_for_user_for_app(domain, user_id, app_id=None):
-    if app_id:
-        key = ['submission app user', domain, app_id, user_id]
-    else:
-        key = ['submission user', domain, user_id]
-    xform = XFormInstance.view(
-        "all_forms/view",
-        startkey=key + [{}],
-        endkey=key,
-        include_docs=True,
-        descending=True,
-        reduce=False,
-        limit=1,
-    ).first()
-    return xform
 
 
 def app_has_been_submitted_to_in_last_30_days(domain, app_id):
@@ -213,22 +151,6 @@ def get_all_xmlns_app_id_pairs_submitted_to_in_domain(domain):
         group_level=4,
     ).all()
     return {(result['key'][-2], result['key'][-1]) for result in results}
-
-
-def get_number_of_submissions(domain, user_id, xmlns, app_id, start, end,
-                              by_submission_time=True):
-    from corehq.apps.reports.util import make_form_couch_key
-    key = make_form_couch_key(domain, user_id=user_id, xmlns=xmlns,
-                              by_submission_time=by_submission_time,
-                              app_id=app_id)
-    data = XFormInstance.get_db().view(
-        'all_forms/view',
-        reduce=True,
-        startkey=key + [json_format_datetime(start)],
-        endkey=key + [json_format_datetime(end)],
-        stale=stale_ok(),
-    ).first()
-    return data['value'] if data else 0
 
 
 @quickcache(['domain', 'app_id', 'xmlns'], memoize_timeout=0, timeout=5 * 60)
@@ -309,17 +231,21 @@ def get_exports_by_form(domain):
 
 
 def get_form_count_breakdown_for_domain(domain):
-    rows = XFormInstance.get_db().view(
-        'exports_forms_by_xform/view',
-        startkey=[domain],
-        endkey=[domain, {}],
-        group=True,
-    )
-    result = {}
-    for row in rows:
-        domain, app_id, xmlns = row['key']
-        result[(domain, app_id, xmlns)] = row['value']
-    return result
+    query = (FormES()
+             .domain(domain)
+             .aggregation(
+                TermsAggregation("app_id", "app_id").aggregation(
+                    TermsAggregation("xmlns", "xmlns.exact")))
+             .remove_default_filter("has_xmlns")
+             .remove_default_filter("has_user")
+             .size(0))
+    query_result = query.run()
+    form_counts = {}
+    for app_id, bucket in query_result.aggregations.app_id.buckets_dict.iteritems():
+        for sub_bucket in bucket.xmlns.buckets_list:
+            xmlns = sub_bucket.key
+            form_counts[(domain, app_id, xmlns)] = sub_bucket.doc_count
+    return form_counts
 
 
 def get_form_count_for_domain_app_xmlns(domain, app_id, xmlns):

@@ -23,6 +23,13 @@ class PillowBase(object):
     __metaclass__ = ABCMeta
 
     @abstractproperty
+    def pillow_id(self):
+        """
+        A unique ID for this pillow
+        """
+        pass
+
+    @abstractproperty
     def document_store(self):
         """
         Returns a DocumentStore instance for retreiving documents.
@@ -48,10 +55,10 @@ class PillowBase(object):
         pass
 
     def get_last_checkpoint_sequence(self):
-        return self.checkpoint.get_or_create().document['seq']
+        return self.checkpoint.get_or_create_wrapped().document.wrapped_sequence
 
     def get_checkpoint(self, verify_unchanged=False):
-        return self.checkpoint.get_or_create(verify_unchanged=verify_unchanged).document
+        return self.checkpoint.get_or_create_wrapped(verify_unchanged=verify_unchanged).document
 
     def set_checkpoint(self, change):
         self.checkpoint.update_to(change['seq'])
@@ -123,6 +130,10 @@ class ConstructedPillow(PillowBase):
         self._change_feed = change_feed
         self._processor = processor
         self._change_processed_event_handler = change_processed_event_handler
+
+    @property
+    def pillow_id(self):
+        return self._name
 
     def get_name(self):
         return self._name

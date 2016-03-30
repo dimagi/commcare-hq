@@ -4,6 +4,7 @@ from decimal import Decimal
 import logging
 import json
 import cStringIO
+import pytz
 
 from couchdbkit import ResourceNotFound
 import dateutil
@@ -24,6 +25,7 @@ from django.views.decorators.http import require_POST
 from PIL import Image
 from django.utils.translation import ugettext as _, ugettext_lazy
 from django.contrib.auth.models import User
+from corehq.apps.hqwebapp.templatetags.hq_shared_tags import toggle_js_domain_cachebuster
 
 from corehq.const import USER_DATE_FORMAT
 from custom.dhis2.forms import Dhis2SettingsForm
@@ -1373,6 +1375,7 @@ class EditPrivacySecurityView(BaseAdminProjectSettingsView):
             "allow_domain_requests": self.domain_object.allow_domain_requests,
             "hipaa_compliant": self.domain_object.hipaa_compliant,
             "secure_sessions": self.domain_object.secure_sessions,
+            "two_factor_auth": self.domain_object.two_factor_auth,
         }
         if self.request.method == 'POST':
             return PrivacySecurityForm(self.request.POST, initial=initial,
@@ -2095,6 +2098,7 @@ class DomainForwardingRepeatRecords(GenericTabularReport):
     ajax_pagination = True
     asynchronous = False
     is_bootstrap3 = True
+    sortable = False
 
     fields = [
         'corehq.apps.reports.filters.select.RepeaterFilter',
@@ -2166,6 +2170,10 @@ class DomainForwardingRepeatRecords(GenericTabularReport):
             {'name': 'record_state', 'value': self.request.GET.get('record_state')},
         ]
 
+    def _format_date(self, date):
+        tz_utc_aware_date = pytz.utc.localize(date)
+        return tz_utc_aware_date.astimezone(self.timezone).strftime('%b %d, %Y %H:%M %Z')
+
     @property
     def rows(self):
         self.repeater_id = self.request.GET.get('repeater', None)
@@ -2180,8 +2188,10 @@ class DomainForwardingRepeatRecords(GenericTabularReport):
         return map(
             lambda record: [
                 self._make_state_label(record),
-                record.url,
-                record.next_check.strftime('%b %m, %Y %H:%M') if record.next_check else None,
+                record.url if record.url else _(u'Unable to generate url for record'),
+                self._format_date(record.last_checked) if record.last_checked else None,
+                self._format_date(record.next_check) if record.next_check else None,
+                record.failure_reason if not record.succeeded else None,
                 self._make_view_payload_button(record.get_id),
                 self._make_resend_payload_button(record.get_id),
             ],
@@ -2191,11 +2201,13 @@ class DomainForwardingRepeatRecords(GenericTabularReport):
     @property
     def headers(self):
         return DataTablesHeader(
-            DataTablesColumn('Status'),
-            DataTablesColumn('URL'),
-            DataTablesColumn('Retry Date'),
-            DataTablesColumn('View payload'),
-            DataTablesColumn('Resend'),
+            DataTablesColumn(_('Status')),
+            DataTablesColumn(_('URL')),
+            DataTablesColumn(_('Last sent date')),
+            DataTablesColumn(_('Retry Date')),
+            DataTablesColumn(_('Failure Reason')),
+            DataTablesColumn(_('View payload')),
+            DataTablesColumn(_('Resend')),
         )
 
 
@@ -2641,6 +2653,7 @@ class FeaturePreviewsView(BaseAdminProjectSettingsView):
 
     def update_feature(self, feature, current_state, new_state):
         if current_state != new_state:
+            toggle_js_domain_cachebuster.clear(self.domain)
             feature.set(self.domain, new_state, NAMESPACE_DOMAIN)
             if feature.save_fn is not None:
                 feature.save_fn(self.domain, new_state)
@@ -2820,6 +2833,11 @@ class PublicSMSRatesView(BasePageView, AsyncHandlerMixin):
     page_title = ugettext_lazy("SMS Rate Calculator")
     template_name = 'domain/admin/global_sms_rates.html'
     async_handlers = [PublicSMSRatesAsyncHandler]
+
+    @use_bootstrap3
+    @use_select2
+    def dispatch(self, request, *args, **kwargs):
+        return super(PublicSMSRatesView, self).dispatch(request, *args, **kwargs)
 
     @property
     def page_url(self):

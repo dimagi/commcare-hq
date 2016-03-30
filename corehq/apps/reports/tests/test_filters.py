@@ -100,17 +100,6 @@ class FormsByApplicationFilterDbTest(SetupSimpleAppMixin, TestCase):
             details = results[0]
             self._assert_form_details_match(i, details)
 
-    def test_get_filtered_data_by_module_id_bad(self):
-        params = FormsByApplicationFilterParams([
-            _make_filter(PARAM_SLUG_STATUS, PARAM_VALUE_STATUS_ACTIVE),
-            _make_filter(PARAM_SLUG_APP_ID, self.app.id),
-            _make_filter(PARAM_SLUG_MODULE, 'illegal'),
-        ])
-        results = FormsByApplicationFilter.get_filtered_data_for_parsed_params(self.domain, params)
-        self.assertEqual(2, len(results))
-        for i, details in enumerate(results):
-            self._assert_form_details_match(i, details)
-
 
 def _make_filter(slug, value):
     return {'slug': slug, 'value': value}

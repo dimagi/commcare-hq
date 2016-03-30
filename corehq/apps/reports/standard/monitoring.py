@@ -2,15 +2,19 @@ from collections import defaultdict, namedtuple
 import datetime
 from urllib import urlencode
 import math
-from django.db.models.aggregates import Max, Min, Avg, StdDev, Count
 import operator
 from pygooglechart import ScatterChart
 import pytz
 
 from corehq.apps.es import filters
 from corehq.apps.es import cases as case_es
-from corehq.apps.es.aggregations import TermsAggregation, RangeAggregation, AggregationRange, \
-    FilterAggregation
+from corehq.apps.es.aggregations import (
+    TermsAggregation,
+    RangeAggregation,
+    AggregationRange,
+    FilterAggregation,
+    MissingAggregation,
+)
 from corehq.apps.reports import util
 from corehq.apps.reports.analytics.esaccessors import (
     get_last_submission_time_for_user,
@@ -22,7 +26,10 @@ from corehq.apps.reports.analytics.esaccessors import (
     get_case_counts_opened_by_user,
     get_active_case_counts_by_owner,
     get_total_case_counts_by_owner,
-)
+    get_forms,
+    get_form_duration_stats_by_user,
+    get_form_duration_stats_for_users,
+    get_active_case_count)
 from corehq.apps.reports.exceptions import TooMuchDataError
 from corehq.apps.reports.filters.users import ExpandedMobileWorkerFilter as EMWF
 from corehq.apps.reports.standard import ProjectReportParametersMixin, \
@@ -31,18 +38,15 @@ from corehq.apps.reports.filters.forms import CompletionOrSubmissionTimeFilter, 
 from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn, DTSortType, DataTablesColumnGroup
 from corehq.apps.reports.generic import GenericTabularReport
 from corehq.apps.reports.models import HQUserType
-from corehq.apps.reports.util import make_form_couch_key, friendly_timedelta, format_datatables_data
+from corehq.apps.reports.util import friendly_timedelta, format_datatables_data
 from corehq.apps.reports.analytics.esaccessors import get_form_counts_by_user_xmlns
-from corehq.apps.sofabed.models import FormData
 from corehq.apps.users.models import CommCareUser
 from corehq.const import SERVER_DATETIME_FORMAT
-from corehq.util.dates import iso_string_to_datetime
 from corehq.util.timezones.conversions import ServerTime, PhoneTime
 from corehq.util.view_utils import absolute_reverse
-from couchforms.models import XFormInstance
 from dimagi.utils.dates import DateSpan, today_or_tomorrow
 from dimagi.utils.decorators.memoized import memoized
-from dimagi.utils.parsing import json_format_date
+from dimagi.utils.parsing import json_format_date, string_to_utc_datetime
 from django.utils.translation import ugettext as _
 from django.utils.translation import ugettext_noop
 
@@ -63,6 +67,7 @@ WorkerActivityReportData = namedtuple('WorkerActivityReportData', [
 
 class WorkerMonitoringReportTableBase(GenericTabularReport, ProjectReport, ProjectReportParametersMixin):
     exportable = True
+    is_bootstrap3 = True
 
     def get_user_link(self, user):
         user_link = self.get_raw_user_link(user)
@@ -249,6 +254,8 @@ class CaseActivityReport(WorkerMonitoringCaseReportTableBase):
 
         es_results = self.es_queryset(users_by_id)
         buckets = {user_id: bucket for user_id, bucket in es_results.aggregations.users.buckets_dict.items()}
+        if None in users_by_id.keys():
+            buckets[None] = es_results.aggregations.missing_users.bucket
         rows = []
         for user_id, user in users_by_id.items():
             bucket = buckets.get(user_id, None)
@@ -325,8 +332,23 @@ class CaseActivityReport(WorkerMonitoringCaseReportTableBase):
             .aggregation(active_total_aggregation)\
             .aggregation(inactive_total_aggregation)
 
-        query = case_es.CaseES().domain(self.domain).user(users_by_id.keys())
+        query = (
+            case_es.CaseES()
+            .domain(self.domain)
+            .user_ids_handle_unknown(users_by_id.keys())
+        )
         query = query.aggregation(top_level_aggregation)
+        missing_users = None in users_by_id.keys()
+
+        if missing_users:
+            query = query.aggregation(
+                MissingAggregation('missing_users', 'user_id')
+                .aggregation(landmarks_aggregation)
+                .aggregation(touched_total_aggregation)
+                .aggregation(active_total_aggregation)
+                .aggregation(inactive_total_aggregation)
+            )
+
         return query.run()
 
     def _landmarks_aggregation(self, end_date):
@@ -757,7 +779,7 @@ class FormCompletionTimeReport(WorkerMonitoringFormReportTableBase, DatespanMixi
 
         def to_duration(val_in_s):
             assert val_in_s is not None
-            return datetime.timedelta(seconds=val_in_s)
+            return datetime.timedelta(milliseconds=val_in_s)
 
         def to_minutes(val_in_s):
             if val_in_s is None:
@@ -779,42 +801,8 @@ class FormCompletionTimeReport(WorkerMonitoringFormReportTableBase, DatespanMixi
                 s=seconds,
             )
 
-        def _fmt(pretty_fn, val):
-            return format_datatables_data(pretty_fn(val), val)
-
         def _fmt_ts(timestamp):
             return format_datatables_data(to_minutes(timestamp), timestamp, to_minutes_raw(timestamp))
-
-        def get_data(users, group_by_user=True):
-            query = FormData.objects.filter(xmlns=self.selected_form_data['xmlns'])
-
-            date_field = 'received_on' if self.by_submission_time else 'time_end'
-            date_filter = {
-                '{}__range'.format(date_field): (self.datespan.startdate_utc, self.datespan.enddate_utc)
-            }
-            query = query.filter(**date_filter)
-
-            if users:
-                query = query.filter(user_id__in=users)
-
-            if self.selected_form_data['app_id'] is not None:
-                query = query.filter(app_id=self.selected_form_data['app_id'])
-
-            if group_by_user:
-                query = query.values('user_id')
-                return query.annotate(Max('duration')) \
-                    .annotate(Min('duration')) \
-                    .annotate(Avg('duration')) \
-                    .annotate(StdDev('duration')) \
-                    .annotate(Count('duration'))
-            else:
-                return query.aggregate(
-                    Max('duration'),
-                    Min('duration'),
-                    Avg('duration'),
-                    StdDev('duration'),
-                    Count('duration')
-                )
 
         mobile_user_and_group_slugs = self.request.GET.getlist(EMWF.slug)
         users_data = EMWF.pull_users_and_groups(
@@ -822,26 +810,45 @@ class FormCompletionTimeReport(WorkerMonitoringFormReportTableBase, DatespanMixi
             mobile_user_and_group_slugs,
         )
         user_ids = [user.user_id for user in users_data.combined_users]
+        app_id = self.selected_form_data['app_id']
+        xmlns = self.selected_form_data['xmlns']
 
-        data_map = dict([(row['user_id'], row) for row in get_data(user_ids)])
+        data_map = get_form_duration_stats_by_user(
+            self.domain,
+            app_id,
+            xmlns,
+            user_ids,
+            self.datespan.startdate_utc,
+            self.datespan.enddate_utc,
+            by_submission_time=self.by_submission_time,
+        )
 
         for user in users_data.combined_users:
             stats = data_map.get(user.user_id, {})
-            rows.append([self.get_user_link(user),
-                         _fmt_ts(stats.get('duration__avg')),
-                         _fmt_ts(stats.get('duration__stddev')),
-                         _fmt_ts(stats.get("duration__min")),
-                         _fmt_ts(stats.get("duration__max")),
-                         _fmt(lambda x: x, stats.get("duration__count", 0)),
+            rows.append([
+                self.get_user_link(user),
+                _fmt_ts(stats.get('avg')),
+                _fmt_ts(stats.get('std_deviation')),
+                _fmt_ts(stats.get('min')),
+                _fmt_ts(stats.get('max')),
+                stats.get('count', 0),
             ])
 
-        total_data = get_data(user_ids, group_by_user=False)
+        total_data = get_form_duration_stats_for_users(
+            self.domain,
+            app_id,
+            xmlns,
+            user_ids,
+            self.datespan.startdate_utc,
+            self.datespan.enddate_utc,
+            by_submission_time=self.by_submission_time,
+        )
         self.total_row = ["All Users",
-                          _fmt_ts(total_data.get('duration__avg')),
-                          _fmt_ts(total_data.get('duration__stddev')),
-                          _fmt_ts(total_data.get('duration__min')),
-                          _fmt_ts(total_data.get('duration__max')),
-                          total_data.get('duration__count', 0)]
+                          _fmt_ts(total_data.get('avg')),
+                          _fmt_ts(total_data.get('std_deviation')),
+                          _fmt_ts(total_data.get('min')),
+                          _fmt_ts(total_data.get('max')),
+                          total_data.get('count', 0)]
         return rows
 
 
@@ -873,7 +880,7 @@ class FormCompletionVsSubmissionTrendsReport(WorkerMonitoringFormReportTableBase
         try:
             return self._get_rows()
         except TooMuchDataError as e:
-            return [['<span class="label label-important">{}</span>'.format(e)] + ['--'] * 5]
+            return [['<span class="label label-danger">{}</span>'.format(e)] + ['--'] * 5]
 
     def _get_rows(self):
         rows = []
@@ -886,40 +893,43 @@ class FormCompletionVsSubmissionTrendsReport(WorkerMonitoringFormReportTableBase
                 mobile_user_and_group_slugs,
             )
 
-            placeholders = []
-            params = []
             user_map = {user.user_id: user
                         for user in users_data.combined_users if user.user_id}
-            form_map = {}
-            for form in self.all_relevant_forms.values():
-                placeholders.append('(%s,%s)')
-                params.extend([form['app_id'], form['xmlns']])
-                form_map[form['xmlns']] = form
+            user_ids = [user.user_id for user in users_data.combined_users if user.user_id]
 
-            where = '(app_id, xmlns) in (%s)' % (','.join(placeholders))
-            results = FormData.objects \
-                .filter(received_on__range=(self.datespan.startdate_utc, self.datespan.enddate_utc)) \
-                .filter(user_id__in=user_map.keys()) \
-                .values('instance_id', 'user_id', 'time_end', 'received_on', 'xmlns')\
-                .extra(
-                    where=[where], params=params
-                )
-            if results.count() > 5000:
-                raise TooMuchDataError(_(TOO_MUCH_DATA))
-            for row in results:
-                completion_time = (PhoneTime(row['time_end'], self.timezone)
-                                   .server_time().done())
-                submission_time = row['received_on']
+            xmlnss = []
+            app_ids = []
+            form_map = {}
+
+            for form in self.all_relevant_forms.values():
+                xmlnss.append(form['xmlns'])
+                app_ids.append(form['app_id'])
+                form_map[form['xmlns']] = form['name']
+
+            paged_result = get_forms(
+                self.domain,
+                self.datespan.startdate_utc.date(),
+                self.datespan.enddate_utc.date(),
+                user_ids=user_ids,
+                app_ids=app_ids,
+                xmlnss=xmlnss,
+            )
+            for row in paged_result.hits:
+                completion_time = (PhoneTime(
+                    string_to_utc_datetime(row['form']['meta']['timeEnd']),
+                    self.timezone,
+                ).server_time().done())
+                submission_time = string_to_utc_datetime(row['received_on'])
                 td = submission_time - completion_time
                 td_total = (td.seconds + td.days * 24 * 3600)
                 rows.append([
-                            self.get_user_link(user_map.get(row['user_id'])),
-                            self._format_date(completion_time),
-                            self._format_date(submission_time),
-                            form_map[row['xmlns']]['name'],
-                            self._view_form_link(row['instance_id']),
-                            self.table_cell(td_total, self._format_td_status(td))
-                        ])
+                    self.get_user_link(user_map.get(row['form']['meta']['userID'])),
+                    self._format_date(completion_time),
+                    self._format_date(submission_time),
+                    form_map[row['xmlns']],
+                    self._view_form_link(row['_id']),
+                    self.table_cell(td_total, self._format_td_status(td))
+                ])
 
                 if td_total >= 0:
                     total_seconds += td_total
@@ -943,7 +953,7 @@ class FormCompletionVsSubmissionTrendsReport(WorkerMonitoringFormReportTableBase
     def _format_td_status(self, td, use_label=True):
         status = list()
         template = '<span class="label %(klass)s">%(status)s</span>'
-        klass = ""
+        klass = "label-default"
         if isinstance(td, int):
             td = datetime.timedelta(seconds=td)
         if isinstance(td, datetime.timedelta):
@@ -954,17 +964,17 @@ class FormCompletionVsSubmissionTrendsReport(WorkerMonitoringFormReportTableBase
             status = ["%s %s%s" % (val, names[i], "s" if val != 1 else "") for (i, val) in enumerate(vals) if val > 0]
 
             if td.days > 1:
-                klass = "label-important"
+                klass = "label-danger"
             elif td.days == 1:
                 klass = "label-warning"
             elif hours > 5:
-                klass = "label-info"
+                klass = "label-primary"
             if not status:
                 status.append("same")
             elif td.days < 0:
                 if abs(td).seconds > 15*60:
                     status = [_("submitted before completed [strange]")]
-                    klass = "label-inverse"
+                    klass = "label-info"
                 else:
                     status = [_("same")]
 
@@ -980,7 +990,8 @@ class FormCompletionVsSubmissionTrendsReport(WorkerMonitoringFormReportTableBase
 
 class WorkerMonitoringChartBase(ProjectReport, ProjectReportParametersMixin):
     flush_layout = True
-    report_template_path = "reports/async/basic.html"
+    report_template_path = "reports/async/bootstrap2/basic.html"
+    is_bootstrap3 = True
 
 
 class WorkerActivityTimes(WorkerMonitoringChartBase,
@@ -1009,30 +1020,38 @@ class WorkerActivityTimes(WorkerMonitoringChartBase,
             self.domain,
             mobile_user_and_group_slugs,
         )
-        for user in users_data.combined_users:
-            for form, info in self.all_relevant_forms.items():
-                key = make_form_couch_key(
-                    self.domain,
-                    user_id=user.user_id,
-                    xmlns=info['xmlns'],
-                    app_id=info['app_id'],
-                    by_submission_time=self.by_submission_time,
+        user_ids = map(lambda user: user.user_id, users_data.combined_users)
+        xmlnss = map(lambda form: form['xmlns'], self.all_relevant_forms.values())
+        app_ids = map(lambda form: form['app_id'], self.all_relevant_forms.values())
+
+        paged_result = get_forms(
+            self.domain,
+            self.datespan.startdate_utc,
+            self.datespan.enddate_utc,
+            user_ids=user_ids,
+            app_ids=app_ids,
+            xmlnss=xmlnss,
+            by_submission_time=self.by_submission_time,
+        )
+        if paged_result.total > 5000:
+            raise TooMuchDataError()
+
+        all_times = []
+
+        for form in paged_result.hits:
+            if self.by_submission_time:
+                all_times.append(
+                    ServerTime(string_to_utc_datetime(form['received_on'])).user_time(self.timezone).done()
                 )
-                data = XFormInstance.get_db().view("all_forms/view",
-                    reduce=False,
-                    startkey=key+[self.datespan.startdate_param_utc],
-                    endkey=key+[self.datespan.enddate_param_utc],
-                ).all()
-                all_times.extend([iso_string_to_datetime(d['key'][-1])
-                                  for d in data])
-                if len(all_times) > 5000:
-                    raise TooMuchDataError()
-        if self.by_submission_time:
-            all_times = [ServerTime(t).user_time(self.timezone).done()
-                         for t in all_times]
-        else:
-            all_times = [PhoneTime(t, self.timezone).user_time(self.timezone).done()
-                         for t in all_times]
+            else:
+                all_times.append(
+                    PhoneTime(
+                        string_to_utc_datetime(form['received_on']),
+                        self.timezone,
+                    )
+                    .user_time(self.timezone)
+                    .done()
+                )
 
         aggregated_times = defaultdict(int)
         for t in all_times:
@@ -1478,7 +1497,7 @@ class WorkerActivityReport(WorkerMonitoringCaseReportTableBase, DatespanMixin):
             cases_opened_by_user=get_case_counts_opened_by_user(self.domain, self.datespan, self.case_types),
         )
 
-    def _total_row(self, rows):
+    def _total_row(self, rows, report_data):
         total_row = [_("Total")]
         summing_cols = [1, 2, 4, 5, 6, 7]
 
@@ -1491,21 +1510,19 @@ class WorkerActivityReport(WorkerMonitoringCaseReportTableBase, DatespanMixin):
                 total_row.append('---')
 
         if self.view_by_groups:
-            def parse(str):
-                num, denom = tuple(str.split('/'))
-                num = int(num.strip())
-                denom = int(denom.strip())
-                return num, denom
-
-            def add(result_tuple, str):
-                num, denom = parse(str)
-                return num + result_tuple[0], denom + result_tuple[1]
-
-            total_row[3] = '%s / %s' % reduce(add, [row[3]["html"] for row in rows], (0, 0))
+            active_users = set()
+            all_users = set()
+            for users in self.users_by_group.values():
+                for user in users:
+                    if report_data.submissions_by_user.get(user['user_id'], False):
+                        active_users.add(user['user_id'])
+                    all_users.add(user['user_id'])
+            total_row[3] = '%s / %s' % (len(active_users), len(all_users))
         else:
             num = len(filter(lambda row: row[3] != _(self.NO_FORMS_TEXT), rows))
             total_row[3] = '%s / %s' % (num, len(rows))
-
+            total_row[6] = get_active_case_count(self.domain, self.datespan, self.case_types).total
+            total_row[7] = get_active_case_count(self.domain, self.datespan, self.case_types, True).total
         return total_row
 
     @property
@@ -1518,5 +1535,5 @@ class WorkerActivityReport(WorkerMonitoringCaseReportTableBase, DatespanMixin):
         else:
             rows = self._rows_by_user(report_data)
 
-        self.total_row = self._total_row(rows)
+        self.total_row = self._total_row(rows, report_data)
         return rows

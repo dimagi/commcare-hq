@@ -5,8 +5,9 @@ from corehq.apps.ivr.api import incoming as incoming_call
 from corehq.apps.sms.api import incoming as incoming_sms
 from django.http import HttpResponse, HttpResponseBadRequest
 from django.views.decorators.csrf import csrf_exempt
+from corehq.apps.ivr.models import Call
 from corehq.apps.sms.mixin import VerifiedNumber
-from corehq.apps.sms.models import CallLog, INCOMING, OUTGOING
+from corehq.apps.sms.models import INCOMING
 from datetime import datetime
 from corehq.apps.sms.util import strip_plus
 
@@ -64,7 +65,7 @@ def ivr_in(request):
             v = None
 
         # Save the call entry
-        msg = CallLog(
+        msg = Call(
             phone_number=cleaned_number,
             direction=INCOMING,
             date=datetime.utcnow(),

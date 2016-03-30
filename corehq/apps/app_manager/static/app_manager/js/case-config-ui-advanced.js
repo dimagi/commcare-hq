@@ -1,7 +1,7 @@
-/*globals $, COMMCAREHQ, _, ko, CC_UTILS, console*/
-var AdvancedCase = (function () {
+/*globals $, COMMCAREHQ, _, ko, console*/
+hqDefine('app_manager/js/case-config-ui-advanced.js', function () {
     'use strict';
-
+    var caseConfigUtils = hqImport('app_manager/js/case-config-utils.js');
     var DEFAULT_CONDITION = function (type) {
         return {
             type: type,
@@ -43,7 +43,8 @@ var AdvancedCase = (function () {
                     },
                     dataType: 'json',
                     success: function (data) {
-                        COMMCAREHQ.app_manager.updateDOM(data.update);
+                        var app_manager = hqImport('app_manager/js/app_manager.js');
+                        app_manager.updateDOM(data.update);
                         self.caseConfigViewModel.ensureBlankProperties();
                         self.setPropertiesMap(data.propertiesMap);
                         self.requires(self.caseConfigViewModel.load_update_cases().length > 0 ? 'case' : 'none');
@@ -138,10 +139,10 @@ var AdvancedCase = (function () {
         };
 
         self.getQuestions = function (filter, excludeHidden, includeRepeat) {
-            return CC_UTILS.getQuestions(self.questions, filter, excludeHidden, includeRepeat);
+            return caseConfigUtils.getQuestions(self.questions, filter, excludeHidden, includeRepeat);
         };
         self.getAnswers = function (condition) {
-            return CC_UTILS.getAnswers(self.questions, condition);
+            return caseConfigUtils.getAnswers(self.questions, condition);
         };
 
         self.change = function () {
@@ -152,16 +153,19 @@ var AdvancedCase = (function () {
         self.caseConfigViewModel = new CaseConfigViewModel(self, params);
 
         self.applyAccordion = function (type, index) {
-            var options = {header: '> div > h3', heightStyle: 'content', collapsible: true, autoFill: true};
-            if (index) {
-                options.active = index;
-            }
-            if (!type || type === 'open') {
-                $('#case-open-accordion').accordion("destroy").accordion(options);
-            }
-            if (!type || type === 'load') {
-                $('#case-load-accordion').accordion("destroy").accordion(options);
-            }
+            _.each(type ? [type] : ['open', 'load'], function(t) {
+                var selector = "#case-" + t + "-accordion";
+
+                // Make sure all parents are set correctly so panels behave like an accordion
+                $(selector + ' > .panel > .panel-collapse').collapse({
+                    parent: selector,
+                    toggle: false,
+                });
+
+                // Hide all panels, then show the requested one
+                $(selector + ' .panel-collapse.in').collapse('hide')
+                $(selector + ' > .panel:nth-child(' + (index + 1) + ') .panel-collapse').collapse('show');
+            });
         };
 
         self.init = function () {
@@ -179,8 +183,14 @@ var AdvancedCase = (function () {
 
                 self.ensureBlankProperties();
                 $('#case-configuration-tab').on('click', function () {
-                    // re-apply accordion settings
-                    self.applyAccordion();
+                    // Leave all the actions, collapsed, unless there's just
+                    // one in the section, and then open it
+                    if ($('#case-load-accordion > .panel').length === 1) {
+                        self.applyAccordion('load', 0);
+                    }
+                    if ($('#case-open-accordion > .panel').length === 1) {
+                        self.applyAccordion('open', 0);
+                    }
                 });
             });
         };
@@ -240,8 +250,8 @@ var AdvancedCase = (function () {
         };
 
         self.load_update_cases = ko.observableArray(_(params.actions.load_update_cases).map(function (a) {
-            var preload = CC_UTILS.propertyDictToArray([], a.preload, config, true);
-            var case_properties = CC_UTILS.propertyDictToArray([], a.case_properties, config);
+            var preload = caseConfigUtils.propertyDictToArray([], a.preload, config, true);
+            var case_properties = caseConfigUtils.propertyDictToArray([], a.case_properties, config);
             a.preload = [];
             a.case_properties = [];
             var action = LoadUpdateAction.wrap(a, config);
@@ -262,7 +272,7 @@ var AdvancedCase = (function () {
                 path: a.name_path,
                 required: true
             }];
-            var case_properties = CC_UTILS.propertyDictToArray(required_properties, a.case_properties, config);
+            var case_properties = caseConfigUtils.propertyDictToArray(required_properties, a.case_properties, config);
             a.case_properties = [];
             var action = OpenCaseAction.wrap(a, config);
             // add these after to avoid errors caused by 'action.suggestedProperties' being accessed
@@ -350,7 +360,6 @@ var AdvancedCase = (function () {
 
         self.addFormAction = function (action) {
             if (action.value === 'load' || action.value === 'auto_select') {
-                $('#case-open-accordion').accordion({active: false});
                 var index = self.load_update_cases().length;
                 var tag_prefix = action.value === 'auto_select'? 'auto' : '';
                 var action_data = {
@@ -380,7 +389,6 @@ var AdvancedCase = (function () {
                 self.load_update_cases.push(LoadUpdateAction.wrap(action_data, self.config));
                 self.config.applyAccordion('load', index);
             } else if (action.value === 'open') {
-                $('#case-load-accordion').accordion({active: false});
                 var index = self.open_cases().length;
                 self.open_cases.push(OpenCaseAction.wrap({
                     case_type: config.caseType,
@@ -595,20 +603,7 @@ var AdvancedCase = (function () {
                 return config.getModulesForCaseType(self.case_type(), self.show_product_stock());
             });
 
-            self.case_type.subscribe(function (value) {
-                // fix for resizing of accordion when content changes
-                if (!value) {
-                    var index = self.config.caseConfigViewModel.load_update_cases.indexOf(self);
-                    self.config.applyAccordion('load', index);
-                }
-            }, null, 'beforeChange');
-
             if (self.auto_select) {
-                self.auto_select.mode.subscribe(function (value) {
-                    // fix for resizing of accordion when content changes
-                    var index = self.config.caseConfigViewModel.load_update_cases.indexOf(self);
-                    self.config.applyAccordion('load', index);
-                }, null, 'beforeChange');
                 self.auto_select.mode.subscribe(function (value) {
                     // suggestedProperties need to be those of case type "commcare-user"
                     if (value === 'usercase') {
@@ -800,8 +795,8 @@ var AdvancedCase = (function () {
             self.show_product_stock(self.disable_tag());
             var action = ko.mapping.toJS(self, LoadUpdateAction.mapping(self));
 
-            action.preload = CC_UTILS.preloadArrayToDict(action.preload);
-            action.case_properties = CC_UTILS.propertyArrayToDict([], action.case_properties)[0];
+            action.preload = caseConfigUtils.preloadArrayToDict(action.preload);
+            action.case_properties = caseConfigUtils.propertyArrayToDict([], action.case_properties)[0];
             return action;
         }
     };
@@ -843,19 +838,12 @@ var AdvancedCase = (function () {
                 }
             };
 
-            self.case_type.subscribe(function (value) {
-                if (!value) {
-                    var index = self.config.caseConfigViewModel.open_cases.indexOf(self);
-                    self.config.applyAccordion('open', index);
-                }
-            }, null, 'beforeChange');
-
             self.disable_tag = ko.computed(function () {
                 return false;
             });
 
             self.suggestedProperties = ko.computed(function () {
-                return CC_UTILS.filteredSuggestedProperties(
+                return caseConfigUtils.filteredSuggestedProperties(
                     ActionBase.suggestedProperties(self, false),
                     self.case_properties()
                 );
@@ -1001,7 +989,7 @@ var AdvancedCase = (function () {
             ActionBase.clean_condition(self.open_condition);
             ActionBase.clean_condition(self.close_condition);
             var action = ko.mapping.toJS(self, OpenCaseAction.mapping(self));
-            var x = CC_UTILS.propertyArrayToDict(['name'], action.case_properties);
+            var x = caseConfigUtils.propertyArrayToDict(['name'], action.case_properties);
             action.case_properties = x[0];
             action.name_path = x[1].name;
             action.repeat_context = self.repeat_context();
@@ -1057,7 +1045,7 @@ var AdvancedCase = (function () {
                 },
                 // template: case-config:case-transaction:case-properties
                 suggestedSaveProperties: ko.computed(function () {
-                    return CC_UTILS.filteredSuggestedProperties(
+                    return caseConfigUtils.filteredSuggestedProperties(
                         self.action.suggestedProperties(),
                         self.action.case_properties()
                     );
@@ -1106,7 +1094,7 @@ var AdvancedCase = (function () {
                 },
                 // template: case-config:case-transaction:case-preload
                 suggestedPreloadProperties: ko.computed(function () {
-                    return CC_UTILS.filteredSuggestedProperties(
+                    return caseConfigUtils.filteredSuggestedProperties(
                         self.action.suggestedProperties(),
                         self.action.preload()
                     );
@@ -1141,4 +1129,4 @@ var AdvancedCase = (function () {
     return {
         CaseConfig: CaseConfig
     };
-}());
+});

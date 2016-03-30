@@ -2,7 +2,7 @@ import HTMLParser
 import json
 import socket
 from datetime import timedelta, date
-from collections import defaultdict
+from collections import defaultdict, namedtuple
 from StringIO import StringIO
 
 import dateutil
@@ -33,6 +33,7 @@ from corehq.apps.callcenter.indicator_sets import CallCenterIndicators
 from corehq.apps.hqcase.utils import get_case_by_domain_hq_user_id
 from corehq.apps.style.decorators import use_datatables, use_jquery_ui, \
     use_bootstrap3
+from corehq.apps.style.utils import set_bootstrap_version3
 from corehq.apps.style.views import BaseB3SectionPageView
 from corehq.toggles import any_toggle_enabled, SUPPORT
 from corehq.util.couchdb_management import couch_config
@@ -47,7 +48,6 @@ from corehq.apps.data_analytics.admin import MALTRowAdmin
 from corehq.apps.hqadmin.history import get_recent_changes, download_changes
 from corehq.apps.hqadmin.models import HqDeploy
 from corehq.apps.hqadmin.forms import BrokenBuildsForm
-from corehq.apps.hqwebapp.views import BasePageView
 from corehq.apps.domain.decorators import require_superuser, require_superuser_or_developer
 from corehq.apps.domain.models import Domain
 from corehq.apps.hqadmin.escheck import (
@@ -64,7 +64,7 @@ from corehq.apps.hqadmin.reporting.reports import (
 )
 from corehq.apps.ota.views import get_restore_response, get_restore_params
 from corehq.apps.reports.graph_models import Axis, LineChart
-from corehq.apps.users.models import CommCareUser
+from corehq.apps.users.models import CommCareUser, WebUser
 from corehq.apps.users.util import format_username
 from corehq.sql_db.connections import Session
 from corehq.elastic import parse_args_for_es, run_query, ES_META
@@ -115,26 +115,22 @@ class BaseAdminSectionView(BaseB3SectionPageView):
         return reverse(self.urlname)
 
 
-class AuthenticateAs(BasePageView):
+class AuthenticateAs(BaseAdminSectionView):
     urlname = 'authenticate_as'
-    page_title = _("Login as other user")
+    page_title = _("Login as Other User")
     template_name = 'hqadmin/authenticate_as.html'
 
     @method_decorator(require_superuser)
+    @use_bootstrap3
     def dispatch(self, *args, **kwargs):
         return super(AuthenticateAs, self).dispatch(*args, **kwargs)
 
-    def page_url(self):
-        return reverse(self.urlname)
-
-    def get_context_data(self, **kwargs):
-        context = super(AuthenticateAs, self).get_context_data(**kwargs)
-        context.update({
+    @property
+    def page_context(self):
+        return {
             'hide_filters': True,
-            'page_url': self.page_url(),
-            'form': AuthenticateAsForm(initial=kwargs)
-        })
-        return context
+            'form': AuthenticateAsForm(initial=self.kwargs)
+        }
 
     def post(self, request, *args, **kwargs):
         form = AuthenticateAsForm(self.request.POST)
@@ -565,6 +561,24 @@ def _lookup_id_in_couch(doc_id, db_name=None):
 
 
 @require_superuser
+def web_user_lookup(request):
+    template = "hqadmin/web_user_lookup.html"
+    set_bootstrap_version3()
+    web_user_email = request.GET.get("q")
+    if not web_user_email:
+        return render(request, template, {})
+
+    web_user = WebUser.get_by_username(web_user_email)
+    if web_user is None:
+        messages.error(
+            request, "Sorry, no user found with email {}. Did you enter it correctly?".format(web_user_email)
+        )
+    return render(request, template, {
+        'web_user': web_user
+    })
+
+
+@require_superuser
 def doc_in_es(request):
     doc_id = request.GET.get("id")
     if not doc_id:
@@ -712,3 +726,57 @@ def _malt_csv_response(month, year):
     query_month = "{year}-{month}-01".format(year=year, month=month)
     queryset = MALTRow.objects.filter(month=query_month)
     return export_as_csv_action(exclude=['id'])(MALTRowAdmin, None, queryset)
+
+
+@require_superuser
+def branches_on_staging(request, template='hqadmin/branches_on_staging.html'):
+    branches = _get_branches_merged_into_autostaging()
+    branches_by_submodule = [(None, branches)] + [
+        (cwd, _get_branches_merged_into_autostaging(cwd))
+        for cwd in _get_submodules()
+    ]
+    return render(request, template, {
+        'branches_by_submodule': branches_by_submodule,
+    })
+
+
+def _get_branches_merged_into_autostaging(cwd=None):
+    import sh
+    git = sh.git.bake(_tty_out=False, _cwd=cwd)
+    # %p %s is parent hashes + subject of commit message, which will look like:
+    # <merge base> <merge head> Merge <stuff> into autostaging
+    try:
+        pipe = git.log('origin/master...', grep='Merge .* into autostaging', format='%p %s')
+    except sh.ErrorReturnCode_128:
+        # when origin/master isn't fetched, you'll get
+        #   fatal: ambiguous argument 'origin/master...': \
+        #   unknown revision or path not in the working tree.
+        git.fetch()
+        return _get_branches_merged_into_autostaging(cwd=cwd)
+    CommitBranchPair = namedtuple('CommitBranchPair', ['commit', 'branch'])
+    return sorted(
+        (CommitBranchPair(
+            *line.strip()
+            .replace("Merge remote-tracking branch 'origin/", '')
+            .replace("Merge branch '", '')
+            .replace("' into autostaging", '')
+            .split(' ')[1:]
+        ) for line in pipe),
+        key=lambda pair: pair.branch
+    )
+
+
+def _get_submodules():
+    """
+    returns something like
+    ['corehq/apps/hqmedia/static/hqmedia/MediaUploader',
+     'corehq/apps/prelogin',
+     'submodules/auditcare-src',
+     ...]
+    """
+    import sh
+    git = sh.git.bake(_tty_out=False)
+    return [
+        line.strip()[1:].split()[1]
+        for line in git.submodule()
+    ]

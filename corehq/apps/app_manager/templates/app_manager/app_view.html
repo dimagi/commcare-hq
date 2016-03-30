@@ -7,7 +7,13 @@
     <script src="{% new_static 'app_manager/js/commcaresettings.js' %}"></script>
     <script src="{% new_static 'hqwebapp/ko/bulk_upload_file.js' %}"></script>
     <script src="{% new_static 'app_manager/js/supported-languages.js' %}"></script>
+    <script src="{% new_static 'app_manager/js/password_setter.jquery.js' %}"></script>
     <script type="text/javascript" src="{% new_static 'hqmedia/js/hqmedia.reference_controller.js' %}"></script>
+
+    {# these scripts are for releases.html, but including them there causes hard-to-reproduce problems #}
+    <script src="{% new_static 'app_manager/js/app_manager_utils.js' %}"></script>
+    <script src="{% new_static 'app_manager/js/download_async_modal.js' %}"></script>
+    <script src="{% new_static 'app_manager/js/releases.js' %}"></script>
 {% endblock %}
 {% block js-inline %}
     {{ block.super }}
@@ -35,9 +41,14 @@
                 warning: '{% trans "This is not an allowed value for this field" %}'
             }
         };
+
         $(function () {
+            var CommcareSettings = hqImport('app_manager/js/commcaresettings.js').CommcareSettings;
             COMMCAREHQ.appView.settings = new CommcareSettings(COMMCAREHQ.appView.settings);
             $('#commcare-settings').koApplyBindings(COMMCAREHQ.appView.settings);
+        });
+
+        $(function () {
             var multimedia_tab = (function () {
                 var self = {};
                 self.load_state = ko.observable(null);
@@ -59,10 +70,45 @@
                 return self;
             }());
             $("#multimedia").koApplyBindings(multimedia_tab);
-            $('#multimedia-shower').on('show.bs.tab', function () {
+            $('#demand-multimedia').on('show.bs.tab', function () {
                 if (multimedia_tab.load_state() === null) {
                     multimedia_tab.load_if_necessary();
                 }
+            });
+        });
+
+        $(function () {
+            var state = "",
+                $main = $("#releases"),
+                $loading = $main.find(".hq-loading").remove(),
+                $loadingError = $main.find(".hq-loading-error").remove();
+
+            $('#demand-releases').on('show.bs.tab', function () {
+                if (state === "loading" || state === "loaded") {
+                    return;
+                }
+                state = "loading";
+
+                // If the content takes a noticeable amount of time to load, show a spinner
+                var showSpinner = true;
+                _.delay(function() {
+                    if (showSpinner) {
+                        $main.html($loading.html());
+                    }
+                }, 100);
+
+                // Load the content
+                $.ajax({
+                    url: "{% url 'release_manager_ajax' domain app.get_id %}",
+                }).success(function(content) {
+                    state = "loaded";
+                    showSpinner = false;
+                    $main.html(content);
+                }).error(function() {
+                    state = "error";
+                    showSpinner = false;
+                    $main.html($loadingError.html());
+                });
             });
         });
 
@@ -116,6 +162,7 @@
             var buildLangs = {{ app.build_langs|JSON }};
             var saveURL = "{% url "edit_app_langs" domain app.id %}";
             var validate = !{{ app.is_remote_app|BOOL }};
+            var SupportedLanguages = hqImport('app_manager/js/supported-languages.js').SupportedLanguages;
             $("#supported-languages").koApplyBindings(new SupportedLanguages({
                 langs: langs,
                 buildLangs: buildLangs,
@@ -125,48 +172,6 @@
         });
     </script>
     {% endif %}
-    <script>
-        $.fn.password_setter = function () {
-            var that = this,
-                randID = Math.floor(Math.random() * 1000),
-                password1ID = 'password-' + randID + '-1',
-                password2ID = 'password-' + randID + '-2',
-                $popupLink = $('<a/>').attr({href: '#'}).text("{% trans "Reset" %}"),
-                $modal = $("#password-setter"),
-                $passwordRow = $modal.find(".password"),
-                $passwordInput = $passwordRow.find("input"),
-                $repeatRow = $modal.find(".repeat-password"),
-                $repeatInput = $repeatRow.find("input"),
-                $errorMismatch = $modal.find(".password-mismatch"),
-                $errorEmpty = $modal.find(".password-empty");
-
-            that.hide();
-            that.after($popupLink);
-            $popupLink.click(function() {
-                $modal.modal('show');
-                $passwordRow.find("input").focus();
-            });
-
-            $passwordRow.find("label").attr("for", password1ID);
-            $passwordInput.attr("id", password1ID);
-            $repeatRow.find("label").attr("for", password2ID);
-            $repeatInput.find("input").attr("id", password2ID);
-            
-            $modal.find("button.save").click(function (e) {
-                $errorMismatch.addClass("hide");
-                $errorEmpty.addClass("hide");
-                if ($passwordInput.val() !== $repeatInput.val()) {
-                    $errorMismatch.removeClass("hide");
-                } else if (!$passwordInput.val()) {
-                    $errorEmpty.removeClass("hide");
-                }
-                else {
-                    $modal.modal('hide');
-                    that.val($passwordInput.val()).trigger('textchange');
-                }
-            });
-        };
-    </script>
     {% if app.doc_type == "Application" %}
         <script>
             $(function () {
@@ -209,45 +214,23 @@
     {% endif %}
 {% endblock %}
 
-{% block stylesheets %}{{ block.super }}
-    <style>
-        .sortable-handle {
-            cursor: move;
-        }
-        #custom-keys-help {
-            width: 400px;
-            font-size: .9em;
-        }
-        #custom-keys-help p {
-            color: #888;
-            vertical-align: bottom;
-        }
-        #custom-keys-example {
-            margin-top: 1em;
-        }
-        #custom-keys-help ul {
-            margin-left: 2em;
-        }
-        #custom-keys-help li span {
-            display: inline-block;
-            border: 1px solid #CCC;
-            padding: 2px;
-            margin: 1px;
-        }
-        #default-language-help {
-            position: absolute;
-            /*width: 100%;*/
-            border: 1px solid #CCC;
-            padding: .5em 1em;
-            padding-left: 150px;
-            left: 35px;
-            background-color: #FFF;
-            border-radius: 40px;
-        }
-    </style>
-{% endblock %}
 {% block form-view %}
     <div class="tab-content">
+        <div class="tab-pane" id="releases">
+            <!-- templates only; will be populated asynchronously -->
+            <script type="text/html" class="hq-loading">
+                <img src="{% new_static 'hqwebapp/img/ajax-loader.gif' %}" alt="loading indicator" />
+                {% trans "Loading..." %}
+            </script>
+            <script type="text/html" class="hq-loading-error">
+                <div class="alert alert-danger">
+                    {% trans "Oops, there was a problem loading this section. Please try again." %}
+                </div>
+                <button class="btn btn-primary reload">
+                    {% trans "Try again" %}
+                </button>
+            </script>
+        </div>
         <div class="tab-pane{% if not copy_app_form.is_bound %} active{% endif %}" id="app-settings">
             {% include "app_manager/partials/app-settings.html" %}
         </div>
@@ -290,40 +273,5 @@
 {% for uploader in uploaders %}
 {% include 'hqmedia/bootstrap3/partials/multimedia_uploader.html' %}
 {% endfor %}
-<div class="modal fade" id="password-setter">
-    <div class="modal-dialog">
-        <div class="modal-content">
-            <div class="modal-header">
-                <button type="button" class="close" data-dismiss="modal">
-                    <span aria-hidden="true">&times;</span>
-                </button>
-                <h4 class="modal-title">{% trans "Set Password" %}</h4>
-            </div>
-            <div class="modal-body form-horizontal">
-                <div class="alert alert-danger password-mismatch hide">
-                    {% trans "The passwords don't match. Please try again." %}
-                </div>
-                <div class="alert alert-danger password-empty hide">
-                    {% trans "Please enter a password or cancel." %}
-                </div>
-                <div class="form-group password">
-                    <label class="col-sm-4 control-label">{% trans "Password" %}</label>
-                    <div class="col-sm-8">
-                        <input type="password" class="form-control" />
-                    </div>
-                </div>
-                <div class="form-group repeat-password">
-                    <label class="col-sm-4 control-label">{% trans "Repeat Password" %}</label>
-                    <div class="col-sm-8">
-                        <input type="password" class="form-control" />
-                    </div>
-                </div>
-            </div>
-            <div class="modal-footer">
-                <button class="btn btn-default" data-dismiss="modal">{% trans "Cancel" %}</button>
-                <button class="btn btn-primary save">{% trans "Save" %}</button>
-            </div>
-        </div>
-    </div>
-</div>
+{% include 'app_manager/partials/password_setter_modal.html' %}
 {% endblock %}

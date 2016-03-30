@@ -1,5 +1,6 @@
 describe('Form Workflow', function() {
     var workflow;
+    var FormWorkflow = hqImport('app_manager/js/form_workflow.js').FormWorkflow;
 
     describe('#workflowOptions', function() {
         beforeEach(function() {

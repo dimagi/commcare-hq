@@ -1,0 +1,41 @@
+@import "bootstrap3/includes/variables.less";
+@import "bootstrap3/includes/mixins.less";
+
+// Other variables to override specifically for docs
+@navbar-height: 40px;
+
+body, .docs-content {
+  position: relative;
+}
+
+.navbar-docs {
+  min-height: @navbar-height;
+  .navbar-brand {
+    line-height: @navbar-height;
+  }
+  .navbar-nav > li > a {
+    line-height: @navbar-height;
+    color: #ffffff;
+    &:hover {
+      background-color: lighten(@cc-text, 20%);
+    }
+  }
+}
+
+.docs-footer {
+  margin-top: 30px;
+  padding-top: 20px;
+  border-top: 1px solid #cccccc;
+  text-align: center;
+}
+
+.styleguide-icon-panel {
+  i {
+    font-size: 1.5em;
+    line-height: 1.8em;
+    vertical-align: middle;
+  }
+}
+
+@import "styleguide/palette.less";
+

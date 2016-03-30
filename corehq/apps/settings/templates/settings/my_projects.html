@@ -1,4 +1,4 @@
-{% extends 'settings/bootstrap3/base_template.html' %}
+{% extends "style/bootstrap3/base_section.html" %}
 
 {% load hq_shared_tags %}
 {% load i18n %}
@@ -73,6 +73,8 @@
         </table>
     </div>
     <p>
-        <a class="btn btn-success" href="{% url "registration_domain" %}?referer={{ request.path }}"><i class="fa fa-plus"></i> {% trans 'Create a New Project' %}</a>
+        {% if web_user %}
+            <a class="btn btn-success" href="{% url "registration_domain" %}?referer={{ request.path }}"><i class="fa fa-plus"></i> {% trans 'Create a New Project' %}</a>
+        {% endif %}
     </p>
 {% endblock %}

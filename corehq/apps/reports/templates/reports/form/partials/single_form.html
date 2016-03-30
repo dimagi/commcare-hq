@@ -206,18 +206,18 @@ requires imports/proptable.html to be included in the main template
         <div class="btn-toolbar row" id='form-actions-toolbar'>
             {% if context_case_id %}
                 <a class="btn"
-                    href="{% url "render_form_data" instance.domain instance.get_id %}">
+                    href="{% url "render_form_data" instance.domain instance.form_id %}">
                     {% trans "View standalone form" %}
                 </a>
             {% endif %}
             {% if show_edit_options %}
                 {% if show_edit_submission %}
-                        <a href="{% url 'edit_form_instance' domain instance.get_id %}" target="_blank" class="btn btn-primary" id="edit-form">
+                        <a href="{% url 'edit_form_instance' domain instance.form_id %}" target="_blank" class="btn btn-primary" id="edit-form">
                             <i class="icon-edit"></i> {% trans "Edit this form" %}
                         </a>
                 {% endif %}
                 {% if not is_archived and not edit_info.was_edited %}
-                <form action="{% url "archive_form" domain instance.get_id %}" method="POST" id="archive-form">{% csrf_token %}
+                <form action="{% url "archive_form" domain instance.form_id %}" method="POST" id="archive-form">{% csrf_token %}
                     <span class="hq-help-template"
                         data-title="{% trans "Archiving Forms" %}"
                         data-content="{% trans "Archived forms will no longer show up in reports and they will be removed from any relevant case histories. " %}"
@@ -229,7 +229,7 @@ requires imports/proptable.html to be included in the main template
                     </button>
                 </form>
                 {% elif edit_info.was_edited %}
-                <form action="{% url "restore_edit" domain instance.get_id %}" method="POST" id="archive-form">{% csrf_token %}
+                <form action="{% url "restore_edit" domain instance.form_id %}" method="POST" id="archive-form">{% csrf_token %}
                     <span class="hq-help-template"
                         data-title="{% trans "Restoring Edited Forms" %}"
                         data-content="{% trans "Restoring an edited form will undo any later edits made. This operation is reversible." %}"
@@ -242,7 +242,7 @@ requires imports/proptable.html to be included in the main template
                 </form>
                 {% endif %}
                 {% if is_archived %}
-                <form action="{% url "unarchive_form" domain instance.get_id %}" method="POST"
+                <form action="{% url "unarchive_form" domain instance.form_id %}" method="POST"
                       id="unarchive-form">{% csrf_token %}
                     <span class="hq-help-template"
                         data-title="{% trans "Restoring Forms" %}"
@@ -256,7 +256,7 @@ requires imports/proptable.html to be included in the main template
                 </form>
                 {% endif %}
                 {% if show_resave %}
-                <form action="{% url "resave_form" domain instance.get_id %}" method="POST"
+                <form action="{% url "resave_form" domain instance.form_id %}" method="POST"
                       id="resave-form">{% csrf_token %}
                     <span class="hq-help-template"
                         data-title="{% trans "Resaving Forms" %}"
@@ -328,7 +328,7 @@ requires imports/proptable.html to be included in the main template
         <ul>
             {% for key, val in instance.attachments.items %}
             <li>
-                <a href="{% url "download_attachment" domain instance.get_id %}?attachment={{ key }}"
+                <a href="{% url "download_attachment" domain instance.form_id %}?attachment={{ key }}"
                    download="{{ key }}">
                   {{ key }}
                 </a>
@@ -339,7 +339,7 @@ requires imports/proptable.html to be included in the main template
     {% endif %}
     <div class="tab-pane" id="form-xml">
         <p>
-            <a class="btn" href="{% url "download_form" domain instance.get_id %}" target="_blank">
+            <a class="btn" href="{% url "download_form" domain instance.form_id %}" target="_blank">
                 {% trans "Open XML in New Window" %}
             </a>
         </p>
