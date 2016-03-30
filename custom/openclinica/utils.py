@@ -192,7 +192,13 @@ def get_study_metadata_string(domain):
     if oc_settings.study.is_ws_enabled:
         raise NotImplementedError('Fetching study metadata using web services is not yet available')
     else:
-        return oc_settings.study.metadata
+        string = oc_settings.study.metadata
+    # If the XML is Unicode but it says that it's UTF-8, then make it UTF-8.
+    if isinstance(string, unicode):
+        match = re.match(r'<\?xml .*?encoding="([\w-]+)".*?\?>', string)  # Assumes no whitespace up front
+        if match:
+            string = string.encode(match.group(1))
+    return string
 
 
 def get_study_metadata(domain):
