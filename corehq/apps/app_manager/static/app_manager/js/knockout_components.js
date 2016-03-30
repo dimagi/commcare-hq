@@ -34,26 +34,28 @@ ko.components.register('inline-edit', {
                 <span data-bind="text: value"></span>\
                 <i class="fa fa-pencil"></i>\
             </div>\
-            <div class="read-write" data-bind="visible: !editing()">\
-<div class="col-sm-6">\
-                <textarea class="form-control" data-bind="\
-                    attr: {name: name, rows: rows},\
-                    value: value, hasFocus: editing(),\
-                    event: {blur: blur},\
-                "></textarea>\
-</div>\
-<div class="col-sm-6">\
-                <button class="btn btn-success" data-bind="click: save">\
-                    <i class="fa fa-check"></i>\
-                </button>\
-                <button class="btn btn-danger" data-bind="click: cancel">\
-                    <i class="fa fa-remove"></i>\
-                </button>\
+            <div class="read-write" data-bind="visible: editing()">\
+                <div class="form-group">\
+                    <textarea class="form-control" data-bind="\
+                        attr: {name: name, rows: rows},\
+                        value: value, hasFocus: editing(),\
+                        event: {blur: blur},\
+                    "></textarea>\
+                </div>\
+                <div class="form-group">\
+                    <button class="btn btn-success" data-bind="click: save">\
+                        <i class="fa fa-check"></i>\
+                    </button>\
+                    <button class="btn btn-danger" data-bind="click: cancel">\
+                        <i class="fa fa-remove"></i>\
+                    </button>\
+                </div>\
             </div>\
-</div>\
         </div>',
 });
 
 $(document).ready(function() {
-    $("inline-edit").koApplyBindings();
+    _.each($("inline-edit"), function(widget) {
+        $(widget).koApplyBindings();
+    });
 });
