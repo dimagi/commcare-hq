@@ -42,7 +42,7 @@ class TableConfigurationTest(SimpleTestCase):
             ]
         )
 
-        column = table_configuration.get_column(
+        index, column = table_configuration.get_column(
             [
                 PathNode(name='form'),
                 PathNode(name='repeat1', is_repeat=True),
@@ -58,8 +58,9 @@ class TableConfigurationTest(SimpleTestCase):
                 PathNode(name='q1')
             ]
         )
+        self.assertEqual(index, 0)
 
-        column = table_configuration.get_column(
+        index, column = table_configuration.get_column(
             [
                 PathNode(name='form'),
                 PathNode(name='repeat1', is_repeat=True),
@@ -70,11 +71,12 @@ class TableConfigurationTest(SimpleTestCase):
         self.assertIsNone(column)
 
         # Verify that get_column ignores deid transforms
-        column = table_configuration.get_column(
+        index, column = table_configuration.get_column(
             [PathNode(name="form"), PathNode(name="user_id")],
             [USERNAME_TRANSFORM]
         )
         self.assertIsNotNone(column)
+        self.assertEqual(index, 1)
 
 
 class TableConfigurationGetSubDocumentsTest(SimpleTestCase):
