@@ -76,7 +76,7 @@ class TestConvertSavedExportSchemaToCaseExportInstance(TestCase, TestFileMixin):
         self.assertEqual(table.label, 'Cases')
         self.assertTrue(table.selected)
 
-        column = table.get_column([PathNode(name='DOB')], [])
+        index, column = table.get_column([PathNode(name='DOB')], [])
         self.assertEqual(column.label, 'DOB Saved')
         self.assertEqual(column.selected, True)
 
@@ -99,7 +99,7 @@ class TestConvertSavedExportSchemaToCaseExportInstance(TestCase, TestFileMixin):
         ]
 
         for path, selected in expected_paths:
-            column = table.get_column(path, [])
+            index, column = table.get_column(path, [])
             self.assertEqual(column.selected, selected, '{} selected is not {}'.format(path, selected))
 
     def test_case_history_conversion(self):
@@ -120,7 +120,7 @@ class TestConvertSavedExportSchemaToCaseExportInstance(TestCase, TestFileMixin):
         ]
 
         for path, selected in expected_paths:
-            column = table.get_column(path, [])
+            index, column = table.get_column(path, [])
             self.assertEqual(column.selected, selected, '{} selected is not {}'.format(path, selected))
 
 
@@ -210,7 +210,7 @@ class TestConvertSavedExportSchemaToFormExportInstance(TestCase, TestFileMixin):
         table = instance.get_table(MAIN_TABLE)
         self.assertEqual(table.label, 'My Forms')
 
-        column = table.get_column([PathNode(name='form'), PathNode(name='question1')], [])
+        index, column = table.get_column([PathNode(name='form'), PathNode(name='question1')], [])
         self.assertEqual(column.label, 'Question One')
         self.assertEqual(column.selected, True)
 
@@ -226,7 +226,7 @@ class TestConvertSavedExportSchemaToFormExportInstance(TestCase, TestFileMixin):
         self.assertEqual(table.label, 'Repeat: question1')
         self.assertTrue(table.selected)
 
-        column = table.get_column(
+        index, column = table.get_column(
             [PathNode(name='form'),
              PathNode(name='repeat', is_repeat=True),
              PathNode(name='question2')],
@@ -235,7 +235,7 @@ class TestConvertSavedExportSchemaToFormExportInstance(TestCase, TestFileMixin):
         self.assertEqual(column.label, 'Question Two')
         self.assertEqual(column.selected, True)
 
-        column = table.get_column(
+        index, column = table.get_column(
             [PathNode(name='number')],
             []
         )
@@ -255,7 +255,7 @@ class TestConvertSavedExportSchemaToFormExportInstance(TestCase, TestFileMixin):
         self.assertTrue(table.selected)
         self.assertEqual(table.label, 'Repeat: One')
 
-        column = table.get_column(
+        index, column = table.get_column(
             [PathNode(name='form'),
              PathNode(name='repeat', is_repeat=True),
              PathNode(name='question2')],
@@ -273,7 +273,7 @@ class TestConvertSavedExportSchemaToFormExportInstance(TestCase, TestFileMixin):
         self.assertEqual(table.label, 'Repeat: One.#.Two')
         self.assertTrue(table.selected)
 
-        column = table.get_column(
+        index, column = table.get_column(
             [PathNode(name='form'),
              PathNode(name='repeat', is_repeat=True),
              PathNode(name='repeat_nested', is_repeat=True),
@@ -292,13 +292,13 @@ class TestConvertSavedExportSchemaToFormExportInstance(TestCase, TestFileMixin):
 
         table = instance.get_table(MAIN_TABLE)
 
-        column = table.get_column(
+        index, column = table.get_column(
             [PathNode(name='form'), PathNode(name='deid_id')],
             []
         )
         self.assertEqual(column.transforms, [DEID_ID_TRANSFORM])
 
-        column = table.get_column(
+        index, column = table.get_column(
             [PathNode(name='form'), PathNode(name='deid_date')],
             []
         )
@@ -328,7 +328,7 @@ class TestConvertSavedExportSchemaToFormExportInstance(TestCase, TestFileMixin):
             ),
         ]
         for path, transforms, selected in expected_paths:
-            column = table.get_column(path, transforms)
+            index, column = table.get_column(path, transforms)
             self.assertEqual(column.selected, selected, '{} selected is not {}'.format(path, selected))
 
 

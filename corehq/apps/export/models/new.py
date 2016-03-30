@@ -1,5 +1,6 @@
 from datetime import datetime
 from itertools import groupby
+from functools import partial
 from collections import defaultdict, OrderedDict, namedtuple
 
 from couchdbkit.ext.django.schema import IntegerProperty
@@ -289,15 +290,23 @@ class TableConfiguration(DocumentSchema):
         return rows
 
     def get_column(self, item_path, column_transforms):
+        """
+        Given a path and transform, will return the column and its index. If not found, will
+        return None, None
+
+        :param item_path: A list of path nodes that identify a column
+        :param column_transforms: The list of transforms that are done on the column
+        :returns index, column: The index of the column in the list and an ExportColumn
+        """
         # Columns should be unique by item path and column.transforms minus any deid transforms
         filtered_column_transforms = [
             t for t in column_transforms if t not in DEID_TRANSFORM_FUNCTIONS.keys()
         ]
-        for column in self.columns:
+        for index, column in enumerate(self.columns):
             transforms = [t for t in column.transforms if t not in DEID_TRANSFORM_FUNCTIONS.keys()]
             if column.item.path == item_path and transforms == filtered_column_transforms:
-                return column
-        return None
+                return index, column
+        return None, None
 
     def _get_sub_documents(self, document, row_number):
         return self._get_sub_documents_helper(self.path, [DocRow(row=(row_number,), doc=document)])
@@ -406,25 +415,32 @@ class ExportInstance(BlobMixin, Document):
                 label=instance.defaults.get_default_table_name(group_schema.path),
                 selected=instance.defaults.default_is_table_selected(group_schema.path),
             )
-            columns = []
+            prev_index = 0
             for item in group_schema.items:
-                column = table.get_column(
+                index, column = table.get_column(
                     item.path, []
-                ) or ExportColumn.create_default_from_export_item(
-                    table.path,
-                    item,
-                    latest_app_ids_and_versions,
                 )
+                if not column:
+                    column = ExportColumn.create_default_from_export_item(
+                        table.path,
+                        item,
+                        latest_app_ids_and_versions,
+                    )
+                    if prev_index:
+                        # if it's a new column, insert it right after the previous column
+                        index = prev_index + 1
+                        table.columns.insert(index, column)
+                    else:
+                        table.columns.append(column)
 
                 # Ensure that the item is up to date
                 column.item = item
 
                 # Need to rebuild tags and other flags based on new build ids
                 column.update_properties_from_app_ids_and_versions(latest_app_ids_and_versions)
-                columns.append(column)
+                prev_index = index
 
-            cls._insert_system_properties(schema.type, table, columns)
-            table.columns = columns
+            cls._insert_system_properties(schema.type, table)
 
             if not instance.get_table(group_schema.path):
                 instance.tables.append(table)
@@ -432,93 +448,43 @@ class ExportInstance(BlobMixin, Document):
         return instance
 
     @classmethod
-    def _insert_system_properties(cls, export_type, table, columns):
+    def _insert_system_properties(cls, export_type, table):
+        from corehq.apps.export.system_properties import (
+            ROW_NUMBER_COLUMN,
+            TOP_MAIN_FORM_TABLE_PROPERTIES,
+            BOTTOM_MAIN_FORM_TABLE_PROPERTIES,
+            TOP_MAIN_CASE_TABLE_PROPERTIES,
+            BOTTOM_MAIN_CASE_TABLE_PROPERTIES,
+            CASE_HISTORY_PROPERTIES,
+            PARENT_CASE_TABLE_PROPERTIES,
+        )
         if export_type == FORM_EXPORT:
             if table.path == MAIN_TABLE:
-                cls._insert_form_system_properties(table, columns)
+                cls.__insert_system_properties(table, TOP_MAIN_FORM_TABLE_PROPERTIES)
+                cls.__insert_system_properties(table, BOTTOM_MAIN_FORM_TABLE_PROPERTIES, top=False)
             else:
-                cls._insert_form_repeat_system_properties(table, columns)
+                cls.__insert_system_properties(table, [ROW_NUMBER_COLUMN])
         elif export_type == CASE_EXPORT:
             if table.path == MAIN_TABLE:
-                cls._insert_case_system_properties(table, columns)
+                cls.__insert_system_properties(table, TOP_MAIN_CASE_TABLE_PROPERTIES)
+                cls.__insert_system_properties(table, BOTTOM_MAIN_CASE_TABLE_PROPERTIES, top=False)
             elif table.path == CASE_HISTORY_TABLE:
-                cls._insert_case_history_system_properties(table, columns)
+                cls.__insert_system_properties(table, CASE_HISTORY_PROPERTIES)
             elif table.path == PARENT_CASE_TABLE:
-                cls._insert_parent_case_system_properties(table, columns)
+                cls.__insert_system_properties(table, PARENT_CASE_TABLE_PROPERTIES)
 
     @classmethod
-    def _insert_form_repeat_system_properties(cls, table, columns):
-        from corehq.apps.export.system_properties import ROW_NUMBER_COLUMN
-        existing_column = table.get_column(
-            ROW_NUMBER_COLUMN.item.path, ROW_NUMBER_COLUMN.transforms
+    def __insert_system_properties(cls, table, properties, top=True):
+        if top:
+            insert_fn = partial(table.columns.insert, 0)
+            properties = reversed(properties)
+        else:
+            insert_fn = table.columns.append
 
-        )
-        columns.insert(0, existing_column or ROW_NUMBER_COLUMN)
-
-    @classmethod
-    def _insert_parent_case_system_properties(cls, table, columns):
-        from corehq.apps.export.system_properties import PARENT_CASE_TABLE_PROPERTIES
-
-        for static_column in reversed(PARENT_CASE_TABLE_PROPERTIES):
-            existing_column = table.get_column(static_column.item.path, static_column.transforms)
-            columns.insert(0, existing_column or static_column)
-
-    @classmethod
-    def _insert_case_history_system_properties(cls, table, columns):
-        from corehq.apps.export.system_properties import CASE_HISTORY_PROPERTIES
-
-        # insert columns for system properties
-        for static_column in reversed(CASE_HISTORY_PROPERTIES):
-            existing_column = table.get_column(
-                static_column.item.path,
-                static_column.transforms
-            )
-            columns.insert(0, existing_column or static_column)
-
-    @classmethod
-    def _insert_case_system_properties(cls, table, columns):
-        from corehq.apps.export.system_properties import (
-            TOP_MAIN_CASE_TABLE_PROPERTIES,
-            BOTTOM_MAIN_CASE_TABLE_PROPERTIES
-        )
-
-        # insert columns for system properties
-        for static_column in reversed(TOP_MAIN_CASE_TABLE_PROPERTIES):
-            existing_column = table.get_column(
-                static_column.item.path,
-                static_column.transforms
-            )
-            columns.insert(0, existing_column or static_column)
-
-        for static_column in BOTTOM_MAIN_CASE_TABLE_PROPERTIES:
-            existing_column = table.get_column(
-                static_column.item.path,
-                static_column.transforms
-            )
-            columns.append(existing_column or static_column)
-
-    @classmethod
-    def _insert_form_system_properties(cls, table, columns):
-        from corehq.apps.export.system_properties import TOP_MAIN_FORM_TABLE_PROPERTIES, BOTTOM_MAIN_FORM_TABLE_PROPERTIES
-
-        first_case_update_index = len(columns)
-        for i, col in enumerate(columns):
-            if col.tags == [PROPERTY_TAG_CASE]:
-                first_case_update_index = i
-                break
-
-        # insert columns for system properties
-        for insertion_index, static_props in [
-            (first_case_update_index, BOTTOM_MAIN_FORM_TABLE_PROPERTIES),
-            (0, TOP_MAIN_FORM_TABLE_PROPERTIES),
-
-        ]:
-            for static_column in reversed(static_props):
-                existing_column = table.get_column(
-                    static_column.item.path,
-                    static_column.transforms
-                )
-                columns.insert(insertion_index, existing_column or static_column)
+        for static_column in properties:
+            index, existing_column = table.get_column(static_column.item.path, static_column.transforms)
+            if not existing_column:
+                insert_fn(static_column)
 
     @property
     def file_size(self):
