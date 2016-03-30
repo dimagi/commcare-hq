@@ -168,4 +168,3 @@ class temporarily_enable_toggle(ContextDecorator):
 
     def __exit__(self, exc_type, exc_val, exc_tb):
         clear_toggle_cache(self.toggle_slug, self.item, self.namespace)
->>>>>>> master
