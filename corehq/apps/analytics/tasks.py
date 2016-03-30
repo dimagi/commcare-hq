@@ -20,6 +20,7 @@ from django.conf import settings
 from django.core.urlresolvers import reverse
 from corehq.util.soft_assert import soft_assert
 from corehq.toggles import deterministic_random
+from corehq.util.decorators import analytics_task
 
 from dimagi.utils.logging import notify_exception
 
@@ -37,20 +38,6 @@ HUBSPOT_INVITATION_SENT_FORM = "5aa8f696-4aab-4533-b026-bd64c7e06942"
 HUBSPOT_NEW_USER_INVITE_FORM = "3e275361-72be-4e1d-9c68-893c259ed8ff"
 HUBSPOT_EXISTING_USER_INVITE_FORM = "7533717e-3095-4072-85ff-96b139bcb147"
 HUBSPOT_COOKIE = 'hubspotutk'
-
-
-@task(bind=True, queue='background_queue', acks_late=True, ignore_result=True, default_retry_delay=10)
-def _persistent_analytics_post(self, func):
-    try:
-        return func()
-    except requests.exceptions.HTTPError as e:
-        # if its a bad request, raise the exception because it is our fault
-        res = e.response
-        status_code = res.status_code if isinstance(res, requests.models.Response) else res.status
-        if status_code == 400:
-            raise
-        else:
-            self.retry(exc=e)
 
 
 def _raise_for_urllib3_response(response):
@@ -117,34 +104,30 @@ def _hubspot_post(url, data):
         headers = {
             'content-type': 'application/json'
         }
-        def _post_func():
-            response = requests.post(
-                url,
-                params={'hapikey': api_key},
-                data=data,
-                headers=headers
-            )
-            _log_response('HS', data, response)
-            response.raise_for_status()
-        _persistent_analytics_post.delay(_post_func)
+        response = requests.post(
+            url,
+            params={'hapikey': api_key},
+            data=data,
+            headers=headers
+        )
+        _log_response('HS', data, response)
+        response.raise_for_status()
 
 
 
 def _get_user_hubspot_id(webuser):
     api_key = settings.ANALYTICS_IDS.get('HUBSPOT_API_KEY', None)
     if api_key:
-        def _post_func():
-            req = requests.get(
-                u"https://api.hubapi.com/contacts/v1/contact/email/{}/profile".format(
-                    urllib.quote(webuser.username)
-                ),
-                params={'hapikey': api_key},
-            )
-            if req.status_code == 404:
-                return None
-            req.raise_for_status()
-            return req.json().get("vid", None)
-        return _persistent_analytics_post.delay(_post_func)
+        req = requests.get(
+            u"https://api.hubapi.com/contacts/v1/contact/email/{}/profile".format(
+                urllib.quote(webuser.username)
+            ),
+            params={'hapikey': api_key},
+        )
+        if req.status_code == 404:
+            return None
+        req.raise_for_status()
+        return req.json().get("vid", None)
     return None
 
 
@@ -176,24 +159,22 @@ def _send_form_to_hubspot(form_id, webuser, cookies, meta):
             'hs_context': json.dumps({"hutk": hubspot_cookie, "ipAddress": _get_client_ip(meta)}),
         }
 
-        def _post_func():
-            response = requests.post(
-                url,
-                data=data
-            )
-            _log_response('HS', data, response)
-            response.raise_for_status()
-        _persistent_analytics_post.delay(_post_func)
+        response = requests.post(
+            url,
+            data=data
+        )
+        _log_response('HS', data, response)
+        response.raise_for_status()
 
 
-@task(queue='background_queue', acks_late=True, ignore_result=True)
+@analytics_task
 def update_hubspot_properties(webuser, properties):
     vid = _get_user_hubspot_id(webuser)
     if vid:
         _track_on_hubspot(webuser, properties)
 
 
-@task(queue='background_queue', acks_late=True, ignore_result=True)
+@analytics_task
 def track_user_sign_in_on_hubspot(webuser, cookies, meta, path):
     if path.startswith(reverse("register_user")):
         tracking_dict = {
@@ -206,7 +187,7 @@ def track_user_sign_in_on_hubspot(webuser, cookies, meta, path):
     _send_form_to_hubspot(HUBSPOT_SIGNIN_FORM_ID, webuser, cookies, meta)
 
 
-@task(queue='background_queue', acks_late=True, ignore_result=True)
+@analytics_task
 def track_built_app_on_hubspot(webuser):
     vid = _get_user_hubspot_id(webuser)
     if vid:
@@ -214,7 +195,7 @@ def track_built_app_on_hubspot(webuser):
         _track_on_hubspot(webuser, {'built_app': True})
 
 
-@task(queue='background_queue', acks_late=True, ignore_result=True)
+@analytics_task
 def track_confirmed_account_on_hubspot(webuser):
     vid = _get_user_hubspot_id(webuser)
     if vid:
@@ -230,37 +211,37 @@ def track_confirmed_account_on_hubspot(webuser):
         })
 
 
-@task(queue="background_queue", acks_late=True, ignore_result=True)
+@analytics_task
 def track_entered_form_builder_on_hubspot(webuser, cookies, meta):
     _send_form_to_hubspot(HUBSPOT_FORM_BUILDER_FORM_ID, webuser, cookies, meta)
 
 
-@task(queue="background_queue", acks_late=True, ignore_result=True)
+@analytics_task
 def track_app_from_template_on_hubspot(webuser, cookies, meta):
     _send_form_to_hubspot(HUBSPOT_APP_TEMPLATE_FORM_ID, webuser, cookies, meta)
 
 
-@task(queue="background_queue", acks_late=True, ignore_result=True)
+@analytics_task
 def track_clicked_deploy_on_hubspot(webuser, cookies, meta):
     _send_form_to_hubspot(HUBSPOT_CLICKED_DEPLOY_FORM_ID, webuser, cookies, meta)
 
 
-@task(queue="background_queue", acks_late=True, ignore_result=True)
+@analytics_task
 def track_created_new_project_space_on_hubspot(webuser, cookies, meta):
     _send_form_to_hubspot(HUBSPOT_CREATED_NEW_PROJECT_SPACE_FORM_ID, webuser, cookies, meta)
 
 
-@task(queue="background_queue", acks_late=True, ignore_result=True)
+@analytics_task
 def track_sent_invite_on_hubspot(webuser, cookies, meta):
     _send_form_to_hubspot(HUBSPOT_INVITATION_SENT_FORM, webuser, cookies, meta)
 
 
-@task(queue="background_queue", acks_late=True, ignore_result=True)
+@analytics_task
 def track_existing_user_accepted_invite_on_hubspot(webuser, cookies, meta):
     _send_form_to_hubspot(HUBSPOT_INVITATION_SENT_FORM, webuser, cookies, meta)
 
 
-@task(queue="background_queue", acks_late=True, ignore_result=True)
+@analytics_task
 def track_new_user_accepted_invite_on_hubspot(webuser, cookies, meta):
     _send_form_to_hubspot(HUBSPOT_NEW_USER_INVITE_FORM, webuser, cookies, meta)
 
@@ -277,21 +258,18 @@ def track_workflow(email, event, properties=None):
     _track_workflow_task.delay(email, event, properties, timestamp)
 
 
-@task(queue='background_queue', acks_late=True, ignore_result=True)
+@analytics_task
 def _track_workflow_task(email, event, properties=None, timestamp=0):
     api_key = settings.ANALYTICS_IDS.get("KISSMETRICS_KEY", None)
     if api_key:
         km = KISSmetrics.Client(key=api_key)
-
-        def _post_func():
-            res = km.record(email, event, properties if properties else {}, timestamp)
-            _log_response("KM", {'email': email, 'event': event, 'properties': properties, 'timestamp': timestamp}, res)
-            # TODO: Consider adding some better error handling for bad/failed requests.
-            _raise_for_urllib3_response(res)
-        _persistent_analytics_post.delay(_post_func)
+        res = km.record(email, event, properties if properties else {}, timestamp)
+        _log_response("KM", {'email': email, 'event': event, 'properties': properties, 'timestamp': timestamp}, res)
+        # TODO: Consider adding some better error handling for bad/failed requests.
+        _raise_for_urllib3_response(res)
 
 
-@task(queue='background_queue', ignore_result=True)
+@analytics_task
 def identify(email, properties):
     """
     Set the given properties on a KISSmetrics user.
@@ -302,13 +280,10 @@ def identify(email, properties):
     api_key = settings.ANALYTICS_IDS.get("KISSMETRICS_KEY", None)
     if api_key:
         km = KISSmetrics.Client(key=api_key)
-
-        def _post_func():
-            res = km.set(email, properties)
-            _log_response("KM", {'email': email, 'properties': properties}, res)
-            # TODO: Consider adding some better error handling for bad/failed requests.
-            _raise_for_urllib3_response(res)
-        _persistent_analytics_post.delay(_post_func)
+        res = km.set(email, properties)
+        _log_response("KM", {'email': email, 'properties': properties}, res)
+        # TODO: Consider adding some better error handling for bad/failed requests.
+        _raise_for_urllib3_response(res)
 
 
 @periodic_task(run_every=crontab(minute="0", hour="0"), queue='background_queue')

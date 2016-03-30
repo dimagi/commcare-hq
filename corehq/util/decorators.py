@@ -1,6 +1,7 @@
 from celery.task import task
 from functools import wraps
 import logging
+import requests
 from corehq.util.global_request import get_request
 from dimagi.utils.couch.cache.cache_core import get_redis_client
 from dimagi.utils.logging import notify_exception
@@ -130,5 +131,24 @@ def serial_task(unique_key, default_retry_delay=30, timeout=5*60, max_retries=3,
                 msg = "Could not aquire lock '{}' for task '{}'.".format(
                     key, fn.__name__)
                 self.retry(exc=CouldNotAqcuireLock(msg))
+        return _inner
+    return decorator
+
+
+def analytics_task(default_retry_delay=10, max_retries=3, queue='background_queue'):
+    def decorator(func):
+        @task(bind=True, queue=queue, ignore_result=True, acks_late=True,
+              default_retry_delay=default_retry_delay, max_retries=max_retries)
+        def _inner(self, *args, **kwargs):
+            try:
+                return func()
+            except requests.exceptions.HTTPError as e:
+                # if its a bad request, raise the exception because it is our fault
+                res = e.response
+                status_code = res.status_code if isinstance(res, requests.models.Response) else res.status
+                if status_code == 400:
+                    raise
+                else:
+                    self.retry(exc=e)
         return _inner
     return decorator
