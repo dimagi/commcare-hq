@@ -22,96 +22,9 @@ from custom.ilsgateway.tanzania.reminders.supervision import SupervisionReminder
 from custom.ilsgateway.tanzania.warehouse.updater import populate_report_data, default_start_date, \
     process_facility_warehouse_data, process_non_facility_warehouse_data
 from custom.ilsgateway.utils import send_for_day, send_for_all_domains, send_translated_message
-from custom.logistics.commtrack import save_stock_data_checkpoint
-from custom.ilsgateway.models import ILSGatewayConfig, SupplyPointStatus, DeliveryGroupReport, ReportRun, \
+from custom.ilsgateway.models import ILSGatewayConfig, ReportRun, \
     OrganizationSummary, PendingReportingDataRecalculation
 from dimagi.utils.dates import get_business_day_of_month, get_business_day_of_month_before
-
-
-def get_locations(api_object, facilities):
-    for facility in facilities:
-        location = api_object.endpoint.get_location(facility, params=dict(with_historical_groups=1))
-        api_object.location_sync(api_object.endpoint.models_map['location'](location))
-
-
-def process_supply_point_status(supply_point_status, domain, location_id=None):
-    location_id = location_id or supply_point_status.location_id
-    try:
-        SupplyPointStatus.objects.get(
-            external_id=int(supply_point_status.external_id),
-            location_id=location_id
-        )
-    except SupplyPointStatus.DoesNotExist:
-        supply_point_status.save()
-
-
-def sync_supply_point_status(domain, endpoint, facility, checkpoint, date, limit=100, offset=0):
-    has_next = True
-    next_url = ""
-
-    while has_next:
-        meta, supply_point_statuses = endpoint.get_supplypointstatuses(
-            domain,
-            limit=limit,
-            offset=offset,
-            next_url_params=next_url,
-            filters=dict(supply_point=facility, status_date__gte=date),
-            facility=facility
-        )
-        # set the checkpoint right before the data we are about to process
-        if not supply_point_statuses:
-            return None
-        location_id = SQLLocation.objects.get(domain=domain, external_id=facility).location_id
-        save_stock_data_checkpoint(checkpoint,
-                                   'supply_point_status',
-                                   meta.get('limit') or limit,
-                                   meta.get('offset') or offset, date, location_id, True)
-        for supply_point_status in supply_point_statuses:
-            process_supply_point_status(supply_point_status, domain, location_id)
-
-        if not meta.get('next', False):
-            has_next = False
-        else:
-            next_url = meta['next'].split('?')[1]
-
-
-def process_delivery_group_report(dgr, domain, location_id=None):
-    location_id = location_id or dgr.location_id
-    try:
-        DeliveryGroupReport.objects.get(external_id=dgr.external_id, location_id=location_id)
-    except DeliveryGroupReport.DoesNotExist:
-        dgr.save()
-
-
-def sync_delivery_group_report(domain, endpoint, facility, checkpoint, date, limit=100, offset=0):
-    has_next = True
-    next_url = ""
-    while has_next:
-        meta, delivery_group_reports = endpoint.get_deliverygroupreports(
-            domain,
-            limit=limit,
-            offset=offset,
-            next_url_params=next_url,
-            filters=dict(supply_point=facility, report_date__gte=date),
-            facility=facility
-        )
-        location_id = SQLLocation.objects.get(domain=domain, external_id=facility).location_id
-        # set the checkpoint right before the data we are about to process
-        save_stock_data_checkpoint(checkpoint,
-                                   'delivery_group',
-                                   meta.get('limit') or limit,
-                                   meta.get('offset') or offset,
-                                   date, location_id, True)
-        for dgr in delivery_group_reports:
-            try:
-                DeliveryGroupReport.objects.get(external_id=dgr.external_id, location_id=location_id)
-            except DeliveryGroupReport.DoesNotExist:
-                dgr.save()
-
-        if not meta.get('next', False):
-            has_next = False
-        else:
-            next_url = meta['next'].split('?')[1]
 
 
 @periodic_task(run_every=crontab(hour="4", minute="00", day_of_week="*"),
