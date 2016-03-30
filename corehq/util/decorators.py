@@ -3,7 +3,6 @@ from functools import wraps
 import logging
 import requests
 from corehq.toggles import NAMESPACE_DOMAIN
->>>>>>> master
 from corehq.util.global_request import get_request
 from dimagi.utils.couch.cache.cache_core import get_redis_client
 from dimagi.utils.logging import notify_exception
