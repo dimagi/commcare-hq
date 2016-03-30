@@ -1,9 +1,11 @@
 import copy
+import uuid
 from datetime import date, datetime
 from decimal import Decimal
-from django.test import SimpleTestCase
+from django.test import SimpleTestCase, TestCase
 from fakecouch import FakeCouchDb
 from simpleeval import InvalidExpression
+from casexml.apps.case.mock import CaseStructure, CaseFactory
 from casexml.apps.case.models import CommCareCase
 from corehq.apps.userreports.exceptions import BadSpecError
 from corehq.apps.userreports.expressions.factory import ExpressionFactory
@@ -13,6 +15,7 @@ from corehq.apps.userreports.expressions.specs import (
 )
 from corehq.apps.userreports.expressions.specs import eval_statements
 from corehq.apps.userreports.specs import EvaluationContext
+from corehq.form_processor.interfaces.dbaccessors import FormAccessors
 from corehq.util.test_utils import generate_cases
 
 
@@ -807,3 +810,33 @@ def test_unsupported_evluator_statements(self, eq, context):
         "context_variables": context
     })
     self.assertEqual(expression({}), None)
+
+
+class TestFormsExpressionSpec(TestCase):
+
+    @classmethod
+    def setUpClass(cls):
+        cls.domain = uuid.uuid4().hex
+        factory = CaseFactory(domain=cls.domain)
+        [cls.case] = factory.create_or_update_case(CaseStructure())
+        cls.forms = [f.to_json() for f in FormAccessors(cls.domain).get_forms(cls.case.xform_ids)]
+
+        cls.expression = ExpressionFactory.from_spec({
+            "type": "get_case_forms",
+            "case_id_expression": {
+                "type": "property_name",
+                "property_name": "_id"
+            },
+        })
+
+    def test_evaluation(self):
+        context = EvaluationContext({"domain": self.domain}, 0)
+        forms = self.expression(self.case.to_json(), context)
+
+        self.assertEqual(len(forms), 1)
+        self.assertEqual(forms, self.forms)
+
+    def test_wrong_domain(self):
+        context = EvaluationContext({"domain": "wrong-domain"}, 0)
+        forms = self.expression(self.case.to_json(), context)
+        self.assertEqual(forms, [])

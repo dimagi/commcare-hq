@@ -12,6 +12,8 @@ from corehq.apps.userreports.expressions.getters import (
     transform_from_datatype, transform_date, transform_int)
 from corehq.apps.userreports.indicators.specs import DataTypeProperty
 from corehq.apps.userreports.specs import TypeProperty, EvaluationContext
+from corehq.form_processor.exceptions import CaseNotFound
+from corehq.form_processor.interfaces.dbaccessors import CaseAccessors, FormAccessors
 from .utils import eval_statements
 from corehq.util.quickcache import quickcache
 
@@ -263,3 +265,31 @@ class EvalExpressionSpec(JsonObject):
             for slug, variable_expression in self._context_variables.items()
         }
         return var_dict
+
+
+class FormsExpressionSpec(JsonObject):
+    type = TypeProperty('get_case_forms')
+    case_id_expression = DictProperty(required=True)
+
+    def configure(self, case_id_expression):
+        self._case_id_expression = case_id_expression
+
+    def __call__(self, item, context=None):
+        case_id = self._case_id_expression(item, context)
+
+        if not case_id:
+            return []
+
+        assert context.root_doc['domain']
+        return self._get_forms(case_id, context.root_doc['domain'])
+
+    def _get_forms(self, case_id, domain):
+        # todo, cahcing
+        try:
+            case = CaseAccessors(domain).get_case(case_id)
+            assert case.domain == domain
+        except (CaseNotFound, AssertionError):
+            return []
+
+        xforms = FormAccessors(domain).get_forms(case.xform_ids)
+        return [f.to_json() for f in xforms]
