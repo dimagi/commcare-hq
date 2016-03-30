@@ -78,13 +78,17 @@ hqDefine('app_manager/js/releases.js', function () {
             return null;
         };
 
+        self.click_app_code = function() {
+            self.get_app_code();
+            ga_track_event('App Manager', 'Initiate Install', 'Get App Code');
+            analytics.workflow('Initiate Installation Method');
+        };
+        
         self.get_app_code = function() {
             var short_odk_url = self.get_short_odk_url();
             if (short_odk_url) {
                 self.app_code(self.parse_bitly_url(short_odk_url));
             }
-            ga_track_event('App Manager', 'Initiate Install', 'Get App Code');
-            analytics.workflow('Initiate Installation Method');
         };
 
         self.allow_media_install = ko.computed(function(){
@@ -152,8 +156,11 @@ hqDefine('app_manager/js/releases.js', function () {
         };
 
         self.clickScan = function() {
-            ga_track_event('App Manager', 'Initiate Install', 'Show Bar Code');
-            analytics.workflow('Initiate Installation Method');
+            self.handleScanModal();
+            self.trackScan();
+        };
+
+        self.handleScanModal = function() {
 
             // Hide the main deploy modal, then re-open
             // it when the scan barcode modal is closed
@@ -162,6 +169,11 @@ hqDefine('app_manager/js/releases.js', function () {
             $('body').one("hide.bs.modal", function() {
                 $deployModal.modal({ show: true });
             });
+        };
+
+        self.trackScan = function() {
+            ga_track_event('App Manager', 'Initiate Install', 'Show Bar Code');
+            analytics.workflow('Initiate Installation Method');
         };
 
         return self;
