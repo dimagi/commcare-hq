@@ -444,7 +444,7 @@ class ExportInstance(BlobMixin, Document):
             elif table.path == CASE_HISTORY_TABLE:
                 cls._insert_case_history_system_properties(table, columns)
             elif table.path == PARENT_CASE_TABLE:
-                cls._insert_parent_case_table(table, columns)
+                cls._insert_parent_case_system_properties(table, columns)
 
     @classmethod
     def _insert_form_repeat_system_properties(cls, table, columns):
@@ -456,7 +456,7 @@ class ExportInstance(BlobMixin, Document):
         columns.insert(0, existing_column or ROW_NUMBER_COLUMN)
 
     @classmethod
-    def _insert_parent_case_table(cls, table, columns):
+    def _insert_parent_case_system_properties(cls, table, columns):
         from corehq.apps.export.system_properties import PARENT_CASE_TABLE_PROPERTIES
 
         for static_column in PARENT_CASE_TABLE_PROPERTIES:
