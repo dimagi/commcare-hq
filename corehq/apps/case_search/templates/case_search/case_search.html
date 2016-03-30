@@ -26,14 +26,16 @@
          self.parameters = ko.observableArray([{
              key: "",
              value: "",
-             clause: "must"
+             clause: "must",
+             fuzzy: false,
          }]);
 
          self.addParameter = function(){
              self.parameters.push({
                  key: "",
                  value: "",
-                 clause: "must"
+                 clause: "must",
+                 fuzzy: false,
              });
          };
          self.removeParameter = function(){
@@ -70,31 +72,70 @@
 {% endblock %}
 {% block page_content %}
     <div id="case-search">
-        <p>{% trans "Search for a case by case property below" %}</p>
+        <h3>Search Parameters</h3>
         <div class="row">
-            <div class="col-sm-12">
+            <div class="col-sm-8">
                 <div class="controls">
-                    <form class="form-horizontal" data-bind="submit: submit" id="case-search-form">
+                    <form class="form-inline" data-bind="submit: submit" id="case-search-form">
                         {% csrf_token %}
-                        <div class="form-group">
-                            <label>Case Type:
-                                <input name="type" type="text" placeholder="case type" data-bind="value: type"/>
-                            </label>
+                        <div class="panel panel-default">
+                            <div class="panel-heading">
+                                <strong>Case Type</strong>
+                            </div>
+                            <div class="panel-body">
+                                <input name="type" type="text" placeholder="Case Type (optional)" data-bind="value: type"/>
+                            </div>
                         </div>
-                        <!-- ko foreach: parameters -->
-                        <div class="form-group">
-                            <input name="key" type="text" placeholder="property" data-bind="value: key"/>
-                            <input name="value" type="text"  placeholder="value" data-bind="value: value"/>
-                            <select name="clause" data-bind="value: clause">
-                                <option value="must">must</option>
-                                <option value="should">should</option>
-                                <option value="must_not">must_not</option>
-                            </select>
-                            <span class='btn btn-danger' data-bind="click: $parent.removeParameter">x</span>
+                        <div class="panel panel-default">
+                            <div class="panel-heading">
+                                <strong>Case Properties</strong>
+                            </div>
+                            <div class="panel-body">
+                                <!-- ko foreach: parameters -->
+                                <div class="panel panel-default">
+                                    <div class="panel-body">
+                                        <div class="form-inline">
+                                            <div class="form-group">
+                                                <label>
+                                                    Property name
+                                                    <input name="key" type="text" placeholder="e.g. name" data-bind="value: key"/>
+                                                </label>
+                                            </div>
+                                            <div class="form-group">
+                                                <label>
+                                                    Property value
+                                                    <input name="value" type="text"  placeholder="e.g. redbeard" data-bind="value: value"/>
+                                                </label>
+                                            </div>
+                                            <div class="form-group">
+                                                <label>
+                                                    Clause
+                                                    <select name="clause" data-bind="value: clause">
+                                                        <option value="must">must</option>
+                                                        <option value="should">should</option>
+                                                        <option value="must_not">must_not</option>
+                                                    </select>
+                                                </label>
+                                            </div>
+                                            <div class="form-group">
+                                                <label class="checkbox-inline">
+                                                    <input name="fuzzy" type="checkbox" data-bind="checked: fuzzy">
+                                                    <strong>Fuzzy</strong>
+                                                </label>
+                                            </div>
+                                            <div class="form-group pull-right">
+                                                <span class='btn btn-danger' data-bind="click: $parent.removeParameter">
+                                                    <i class="fa fa-trash"></i> Delete
+                                                </span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <!-- /ko -->
+                                <span class="btn btn-primary" id="add-input" data-bind="click: addParameter"><i class="fa fa-plus"></i> Add input</span>
+                            </div>
                         </div>
-                        <!-- /ko -->
-                        <span class="btn btn-primary" id="add-input" data-bind="click: addParameter">+ Add input</span>
-                        <input type="submit" class="btn btn-primary" />
+                        <button type="submit" class="btn btn-success"><i class="fa fa-search"></i> Search</button>
                     </form>
                 </div>
             </div>
