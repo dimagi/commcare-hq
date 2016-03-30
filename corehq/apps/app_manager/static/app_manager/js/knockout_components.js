@@ -6,6 +6,8 @@ ko.components.register('inline-edit', {
         self.rows = params.rows || 2;
         self.value = ko.observable(self.original);
         self.editing = ko.observable(false);
+        self.saveHasFocus = ko.observable(false);
+        self.cancelHasFocus = ko.observable(false);
 
         self.edit = function() {
             self.editing(true);
@@ -23,8 +25,10 @@ ko.components.register('inline-edit', {
 
         self.blur = function() {
             setTimeout(function() {
-                self.editing(false);
-                self.cancel();
+                if (!self.saveHasFocus() && !self.cancelHasFocus()) {
+                    self.editing(false);
+                    self.cancel();
+                }
             }, 200);
         };
     },
@@ -43,10 +47,10 @@ ko.components.register('inline-edit', {
                     "></textarea>\
                 </div>\
                 <div class="form-group">\
-                    <button class="btn btn-success" data-bind="click: save">\
+                    <button class="btn btn-success" data-bind="click: save, hasFocus: saveHasFocus">\
                         <i class="fa fa-check"></i>\
                     </button>\
-                    <button class="btn btn-danger" data-bind="click: cancel">\
+                    <button class="btn btn-danger" data-bind="click: cancel, hasFocus: cancelHasFocus">\
                         <i class="fa fa-remove"></i>\
                     </button>\
                 </div>\
