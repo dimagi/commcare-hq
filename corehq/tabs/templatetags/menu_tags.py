@@ -9,7 +9,7 @@ from corehq.tabs import MENU_TABS
 register = template.Library()
 
 
-def get_active_tab(visible_tabs, request_path):
+def _get_active_tab(visible_tabs, request_path):
     for is_active_tab_fn in [
         lambda t: t.is_active_fast,
         lambda t: t.is_active,
@@ -40,11 +40,12 @@ class MainMenuNode(template.Node):
 
         # set the context variable in the highest scope so it can be used in
         # other blocks
-        context.dicts[0]['active_tab'] = get_active_tab(visible_tabs,
-                                                        request.get_full_path())
+        context.dicts[0]['active_tab'] = _get_active_tab(
+            visible_tabs, request.get_full_path())
         return mark_safe(render_to_string('style/includes/menu_main.html', {
             'tabs': visible_tabs,
         }))
+
 
 @register.tag(name="format_main_menu")
 def format_main_menu(parser, token):
