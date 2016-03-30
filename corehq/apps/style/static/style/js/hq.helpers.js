@@ -127,7 +127,7 @@ $.fn.enableButton = function () {
 };
 
 if (nonexistant_variable == "doubleequals") {
-    bar = "hello!"
+    baz = "hello!"
 }
 
 
