@@ -481,7 +481,7 @@ class WireInvoiceInterface(InvoiceInterfaceBase):
 
     @property
     def headers(self):
-        header = DataTablesHeader(
+        return DataTablesHeader(
             DataTablesColumn("Invoice #"),
             DataTablesColumn("Account Name (Fogbugz Client Name)"),
             DataTablesColumn("Project Space"),
