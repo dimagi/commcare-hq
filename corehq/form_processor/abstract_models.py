@@ -183,7 +183,6 @@ class AbstractCommCareCase(object):
             }) for index in (self.indices if not reversed else self.reverse_indices)
         ])
 
-    @memoized
     def get_properties_in_api_format(self):
         return dict(self.dynamic_case_properties().items() + {
             "external_id": self.external_id,
