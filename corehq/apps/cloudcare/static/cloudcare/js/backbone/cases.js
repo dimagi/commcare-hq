@@ -4,11 +4,11 @@ var showLoading = hqImport('cloudcare/js/util.js').showLoading;
 var hideLoadingCallback = hqImport('cloudcare/js/util.js').hideLoadingCallback;
 var isParentField = hqImport('cloudcare/js/util.js').isParentField;
 
-if (typeof cloudCare === 'undefined') {
-    var cloudCare = {};
+if (typeof cloudCareCases === 'undefined') {
+    var cloudCareCases = {};
 }
 
-cloudCare.EMPTY = '---';
+cloudCareCases.EMPTY = '---';
 
 var _caseListLoadError = function (model, response) {
     var errorMessage = translatedStrings.caseListError;
@@ -21,7 +21,7 @@ var _caseListLoadError = function (model, response) {
     showError(errorMessage, $("#cloudcare-notifications"));
 };
 
-cloudCare.CASE_PROPERTY_MAP = {
+cloudCareCases.CASE_PROPERTY_MAP = {
     // IMPORTANT: if you edit this you probably want to also edit
     // the corresponding map in the app_manager
     // (corehq/apps/app_manager/models.py)
@@ -32,7 +32,7 @@ cloudCare.CASE_PROPERTY_MAP = {
     'owner_id': '@owner_id'
 };
 
-cloudCare.Case = Backbone.Model.extend({
+cloudCareCases.Case = Backbone.Model.extend({
     
     initialize: function () {
         _.bindAll(this, 'getProperty', 'status'); 
@@ -40,8 +40,8 @@ cloudCare.Case = Backbone.Model.extend({
     idAttribute: "case_id",
     
     getProperty: function (property) {
-        if (cloudCare.CASE_PROPERTY_MAP[property] !== undefined) {
-            property = cloudCare.CASE_PROPERTY_MAP[property];
+        if (cloudCareCases.CASE_PROPERTY_MAP[property] !== undefined) {
+            property = cloudCareCases.CASE_PROPERTY_MAP[property];
         }
         if (property.indexOf("@") == 0) {
             // we use @ signs to denote function references, since the phone
@@ -68,7 +68,7 @@ cloudCare.Case = Backbone.Model.extend({
         return _.map(raw_columns, function(col){
             return {
                 key: localize(col.header, language),
-                value: this.getProperty(col.field) ? this.getProperty(col.field) : cloudCare.EMPTY
+                value: this.getProperty(col.field) ? this.getProperty(col.field) : cloudCareCases.EMPTY
             };
         }, this);
     },
@@ -103,11 +103,11 @@ cloudCare.Case = Backbone.Model.extend({
     },
 });
 
-cloudCare.Details = Backbone.Model.extend({
+cloudCareCases.Details = Backbone.Model.extend({
     // nothing here yet
 });
 
-cloudCare.caseViewMixin = {
+cloudCareCases.caseViewMixin = {
     lookupField: function (field) {
         var parentCase;
         if (isParentField(field) && this.model.get('casedb')) {
@@ -150,7 +150,7 @@ cloudCare.caseViewMixin = {
             return td.text(text);
         } else {
             return td.append(
-                $('<small/>').text(cloudCare.EMPTY)
+                $('<small/>').text(cloudCareCases.EMPTY)
             );
         }
     }
@@ -159,7 +159,7 @@ cloudCare.caseViewMixin = {
 // Though this is called the CaseView, it actually displays the case
 // summary as a line in the CaseListView. Not to be confused with the
 // CaseDetailsView
-cloudCare.CaseView = Selectable.extend(cloudCare.caseViewMixin).extend({
+cloudCareCases.CaseView = Selectable.extend(cloudCareCases.caseViewMixin).extend({
     tagName: 'tr', // name of (orphan) root tag in this.el
     initialize: function () {
         var self = this;
@@ -178,13 +178,13 @@ cloudCare.CaseView = Selectable.extend(cloudCare.caseViewMixin).extend({
     }
 });
 
-cloudCare.CaseList = Backbone.Collection.extend({
+cloudCareCases.CaseList = Backbone.Collection.extend({
     initialize: function () {
         var self = this;
         _.bindAll(self, 'url', 'setUrl');
         self.casedb = null;
     },
-    model: cloudCare.Case,
+    model: cloudCareCases.Case,
     url: function () {
         return this.caseUrl;
     },
@@ -193,23 +193,23 @@ cloudCare.CaseList = Backbone.Collection.extend({
     },
     parse: function(response) {
         if (response.parents) {
-            this.casedb = new cloudCare.CaseList(response.cases.concat(response.parents));
+            this.casedb = new cloudCareCases.CaseList(response.cases.concat(response.parents));
         }
         return response.cases;
-    },
+    }
 });
 
-cloudCare.CaseListView = Backbone.View.extend({
+cloudCareCases.CaseListView = Backbone.View.extend({
     
     initialize: function () {
         _.bindAll(this, 'render', 'appendItem', 'appendAll'); 
       
         this.caseMap = {};
       
-        this.detailsShort = new cloudCare.Details();
+        this.detailsShort = new cloudCareCases.Details();
         this.detailsShort.set(this.options.details);
 
-        this.caseList = new cloudCare.CaseList();
+        this.caseList = new cloudCareCases.CaseList();
         this.caseList.bind('add', this.appendItem);
         this.caseList.bind('reset', this.appendAll);
         if (this.options.cases) {
@@ -262,7 +262,7 @@ cloudCare.CaseListView = Backbone.View.extend({
     appendItem: function (item) {
         var self = this;
         item.set('casedb', self.caseList.casedb);
-        var caseView = new cloudCare.CaseView({
+        var caseView = new cloudCareCases.CaseView({
             model: item,
             columns: self.detailsShort.get("columns"),
             delegation: self.options.delegation,
@@ -322,10 +322,10 @@ cloudCare.CaseListView = Backbone.View.extend({
     }
 });
 
-cloudCare.CaseDetailsView = Backbone.View.extend(cloudCare.caseViewMixin).extend({
+cloudCareCases.CaseDetailsView = Backbone.View.extend(cloudCareCases.caseViewMixin).extend({
     initialize: function () {
         _.bindAll(this, 'render');
-        this.details = new cloudCare.Details();
+        this.details = new cloudCareCases.Details();
         this.details.set(this.options.details);
         this.render();
     },
@@ -364,7 +364,7 @@ cloudCare.CaseDetailsView = Backbone.View.extend(cloudCare.caseViewMixin).extend
     }
 });
 
-cloudCare.CaseMainView = Backbone.View.extend({
+cloudCareCases.CaseMainView = Backbone.View.extend({
     initialize: function () {
         var self = this;
         _.bindAll(this, 'render', 'selectCase', 'fetchCaseList');
@@ -374,7 +374,7 @@ cloudCare.CaseMainView = Backbone.View.extend({
         self.section.appendTo(self.el);
         // this is copy-pasted
         self.delegation = self.options.appConfig.form_index === 'task-list';
-        self.listView = new cloudCare.CaseListView({
+        self.listView = new cloudCareCases.CaseListView({
             details: self.options.listDetails,
             cases: self.options.cases,
             case_type: self.options.case_type,
@@ -384,7 +384,7 @@ cloudCare.CaseMainView = Backbone.View.extend({
             delegation: self.delegation
         });
         $(self.listView.render().el).appendTo($(self.section));
-        self.detailsView = new cloudCare.CaseDetailsView({
+        self.detailsView = new cloudCareCases.CaseDetailsView({
             details: self.options.summaryDetails,
             language: self.options.language,
             appConfig: self.options.appConfig,
@@ -416,16 +416,16 @@ cloudCare.CaseMainView = Backbone.View.extend({
     }
 });
 
-cloudCare.CaseSelectionModel = Backbone.Model.extend({
+cloudCareCases.CaseSelectionModel = Backbone.Model.extend({
 });
 
-cloudCare.CaseSelectionView = Backbone.View.extend({
+cloudCareCases.CaseSelectionView = Backbone.View.extend({
     el: $("#case-crumbs"),
     template: _.template($("#template-crumbs").html()),
 
     initialize: function (){
         var self = this;
-        self.model = new cloudCare.CaseSelectionModel();
+        self.model = new cloudCareCases.CaseSelectionModel();
         self.language = this.options.language;
         self.model.on("change", self.render, this);
     },

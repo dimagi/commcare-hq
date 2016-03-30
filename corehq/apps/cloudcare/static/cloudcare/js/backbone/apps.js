@@ -502,7 +502,7 @@ cloudCare.AppView = Backbone.View.extend({
         self.formListView = new cloudCare.FormListView({
             language: self.options.language
         });
-        self.caseSelectionView = new cloudCare.CaseSelectionView({
+        self.caseSelectionView = new cloudCareCase.CaseSelectionView({
             language: self.options.language
         });
 
@@ -826,7 +826,7 @@ cloudCare.AppView = Backbone.View.extend({
                 parentId = self.selectedParent ? self.selectedParent.id : null
 	            var listDetails = module.get("case_details").short;
 	            var summaryDetails = module.get("case_details").long;
-	            formListView.caseView = new cloudCare.CaseMainView({
+	            formListView.caseView = new cloudCareCases.CaseMainView({
 	                el: $("#cases"),
 	                listDetails: listDetails,
 	                summaryDetails: summaryDetails,
@@ -946,10 +946,10 @@ cloudCare.AppMainView = Backbone.View.extend({
             self._appCache[self.initialApp.id] = self.initialApp;
         }
         if (self.options.initialCase) {
-            self.initialCase = new cloudCare.Case(self.options.initialCase);
+            self.initialCase = new cloudCareCases.Case(self.options.initialCase);
         }
         if (self.options.initialParent) {
-            self.initialParent = new cloudCare.Case(self.options.initialParent);
+            self.initialParent = new cloudCareCases.Case(self.options.initialParent);
         }
 
         self.appListView = new cloudCare.AppListView({
@@ -1150,7 +1150,7 @@ cloudCare.AppMainView = Backbone.View.extend({
                 var module = app.modules[moduleIndex];
                 var form = module.forms[formIndex];
                 // Why make a new instance of this object?
-                var caseModel = new cloudCare.Case(self.initialCase);
+                var caseModel = new cloudCareCases.Case(self.initialCase);
 
                 if (module.get("parent_select").active) {
                     if (self.initialParent){
