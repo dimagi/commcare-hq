@@ -340,8 +340,7 @@ class TestConvertSavedExportSchemaToFormExportInstance(TestCase, TestFileMixin):
 
 class TestRevertNewExports(TestCase):
 
-    @classmethod
-    def setUpClass(cls):
+    def setUp(cls):
         cls.new_exports = [
             FormExportInstance(),
             CaseExportInstance(),
@@ -349,8 +348,7 @@ class TestRevertNewExports(TestCase):
         for export in cls.new_exports:
             export.save()
 
-    @classmethod
-    def tearDownClass(cls):
+    def tearDown(cls):
         for export in cls.new_exports:
             export.delete()
 
