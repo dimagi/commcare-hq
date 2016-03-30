@@ -1,6 +1,10 @@
 from dimagi.utils.couch.undo import DELETED_SUFFIX
 from dimagi.utils.modules import to_function
 
+from corehq.apps.reports.models import (
+    FormExportSchema,
+    CaseExportSchema,
+)
 from .const import (
     TRANSFORM_FUNCTIONS,
     CASE_EXPORT,
@@ -188,3 +192,17 @@ def _convert_index_to_path_nodes(index):
         return path
     else:
         return [PathNode(name=n) for n in index.split('.')]
+
+
+def revert_new_exports(new_exports):
+    reverted_exports = []
+    for new_export in new_exports:
+        if new_export.legacy_saved_export_schema_id:
+            schema_cls = FormExportSchema if new_export.type == FORM_EXPORT else CaseExportSchema
+            old_export = schema_cls.get(new_export.legacy_saved_export_schema_id)
+            old_export.doc_type = old_export.doc_type.rstrip(DELETED_SUFFIX)
+            old_export.save()
+            reverted_exports.append(old_export)
+        new_export.doc_type += DELETED_SUFFIX
+        new_export.save()
+    return reverted_exports
