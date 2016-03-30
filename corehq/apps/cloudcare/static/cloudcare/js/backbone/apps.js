@@ -1,4 +1,6 @@
 hqDefine('cloudcare/js/backbone/apps.js', function () {
+    var LocalizableModel = hqImport('cloudcare/js/backbone/shared.js').LocalizableModel;
+    var Selectable = hqImport('cloudcare/js/backbone/shared.js').Selectable;
     var showError = hqImport('cloudcare/js/util.js').showError;
     var showSuccess = hqImport('cloudcare/js/util.js').showSuccess;
     var showLoading = hqImport('cloudcare/js/util.js').showLoading;
