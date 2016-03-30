@@ -47,11 +47,11 @@ A version can be any of these things:
 
 | Type | Example |
 |---|---|
-| semver | #1.2.3 |
-| version range | #~1.2.3 |
-| Git tag | #<git tag> |
-| Git commit | #<commit sha> |
-| Git branch | #<branch> |
+| semver | `#1.2.3` |
+| version range | `#~1.2.3` |
+| Git tag | `#<git tag>` |
+| Git commit | `#<commit sha>` |
+| Git branch | `#<branch>` |
 
 ### Using bower packages in HQ
 
