@@ -1,3 +1,4 @@
+var cloudCareCases = hqImport('cloudcare/js/backbone/cases.js');
 var showError = hqImport('cloudcare/js/util.js').showError;
 var showSuccess = hqImport('cloudcare/js/util.js').showSuccess;
 var showLoading = hqImport('cloudcare/js/util.js').showLoading;
