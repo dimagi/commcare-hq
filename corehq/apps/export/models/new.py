@@ -459,7 +459,7 @@ class ExportInstance(BlobMixin, Document):
     def _insert_parent_case_system_properties(cls, table, columns):
         from corehq.apps.export.system_properties import PARENT_CASE_TABLE_PROPERTIES
 
-        for static_column in PARENT_CASE_TABLE_PROPERTIES:
+        for static_column in reversed(PARENT_CASE_TABLE_PROPERTIES):
             existing_column = table.get_column(static_column.item.path, static_column.transforms)
             columns.insert(0, existing_column or static_column)
 
