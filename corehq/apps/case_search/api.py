@@ -7,7 +7,7 @@ def enable_case_search(domain):
     if not config.enabled:
         config.enabled = True
         config.save()
-    reindex_case_search_for_domain(domain)
+        reindex_case_search_for_domain.delay(domain)
 
 
 def disable_case_search(domain):
@@ -19,4 +19,4 @@ def disable_case_search(domain):
     if config.enabled:
         config.enabled = False
         config.save()
-        delete_case_search_cases_for_domain(domain)
+        delete_case_search_cases_for_domain.delay(domain)
