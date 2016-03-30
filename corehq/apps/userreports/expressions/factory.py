@@ -10,7 +10,8 @@ from corehq.apps.userreports.expressions.specs import PropertyNameGetterSpec, Pr
     NestedExpressionSpec, DictExpressionSpec, NamedExpressionSpec, EvalExpressionSpec, FormsExpressionSpec
 from corehq.apps.userreports.expressions.date_specs import AddDaysExpressionSpec, AddMonthsExpressionSpec, \
     MonthStartDateExpressionSpec, MonthEndDateExpressionSpec, DiffDaysExpressionSpec
-from corehq.apps.userreports.expressions.json_query_specs import FilterItemsExpressionSpec
+from corehq.apps.userreports.expressions.json_query_specs import FilterItemsExpressionSpec, \
+    MapItemsExpressionSpec, ReduceItemsExpressionSpec, FlattenExpressionSpec
 from dimagi.utils.parsing import json_format_datetime, json_format_date
 from dimagi.utils.web import json_handler
 
@@ -178,6 +179,31 @@ def _filter_items_expression(spec, context):
     return wrapped
 
 
+def _map_items_expression(spec, context):
+    wrapped = MapItemsExpressionSpec.wrap(spec)
+    wrapped.configure(
+        items_expression=ExpressionFactory.from_spec(wrapped.items_expression),
+        map_expression=ExpressionFactory.from_spec(wrapped.map_expression)
+    )
+    return wrapped
+
+
+def _reduce_items_expression(spec, context):
+    wrapped = ReduceItemsExpressionSpec.wrap(spec)
+    wrapped.configure(
+        items_expression=ExpressionFactory.from_spec(wrapped.items_expression)
+    )
+    return wrapped
+
+
+def _flatten_expression(spec, context):
+    wrapped = FlattenExpressionSpec.wrap(spec)
+    wrapped.configure(
+        items_expression=ExpressionFactory.from_spec(wrapped.items_expression)
+    )
+    return wrapped
+
+
 class ExpressionFactory(object):
     spec_map = {
         'identity': _identity_expression,
@@ -201,6 +227,9 @@ class ExpressionFactory(object):
         'evaluator': _evaluator_expression,
         'get_case_forms': _get_forms_expression,
         'filter_items': _filter_items_expression,
+        'map_items': _map_items_expression,
+        'reduce_items': _reduce_items_expression,
+        'flatten': _flatten_expression,
     }
     # Additional items are added to the spec_map by use of the `register` method.
 

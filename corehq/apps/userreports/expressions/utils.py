@@ -24,3 +24,34 @@ def eval_statements(statement, variable_context):
 
     evaluator = SimpleEval(operators=SAFE_OPERATORS, names=variable_context)
     return evaluator.eval(statement)
+
+
+SUM = 'sum'
+COUNT = 'count'
+SUPPORTED_UCR_AGGREGATIONS = [SUM, COUNT]
+
+
+def aggregate_items(items, fn_name):
+
+    aggregation_fn_map = {
+        SUM: _sum,
+        COUNT: _count,
+    }
+
+    assert fn_name in SUPPORTED_UCR_AGGREGATIONS
+    aggregation_fn = aggregation_fn_map[fn_name]
+    return aggregation_fn(items)
+
+
+def _sum(items):
+    for item in items:
+        if not isinstance(item, (int, long, float)):
+            return None
+
+    return reduce(lambda x, y: x + y, items)
+
+
+def _count(items):
+    if not isinstance(items, list):
+        return None
+    return len(items)
