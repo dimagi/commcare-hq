@@ -391,7 +391,7 @@ class ExportTable(DocumentSchema):
                 return i
 
     def get_items_in_order(self, row):
-        from couchexport.export import SCALAR_NEVER_WAS
+        from couchexport.export import scalar_never_was
         row_data = list(row.get_data())
         for column in self.columns:
             # If, for example, column.index references a question in a form
@@ -404,7 +404,7 @@ class ExportTable(DocumentSchema):
                 i = self.row_positions_by_index[column.index]
                 val = row_data[i]
             except KeyError:
-                val = SCALAR_NEVER_WAS
+                val = scalar_never_was
 
             if issubclass(type(column), ComplexExportColumn):
                 for value in column.get_data(val):
