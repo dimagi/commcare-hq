@@ -6,6 +6,7 @@ from corehq.apps.app_manager.util import is_usercase_in_use, xpath_references_ca
 from corehq.apps.app_manager.xpath import (interpolate_xpath, CaseIDXPath, session_var,
     QualifiedScheduleFormXPath, CASE_REFERENCE_VALIDATION_ERROR)
 from corehq.feature_previews import MODULE_FILTER
+from dimagi.utils.decorators.memoized import memoized
 
 
 def disallow_xpath_case_references(xpath):
@@ -16,7 +17,10 @@ def disallow_xpath_case_references(xpath):
 class MenuContributor(SuiteContributorByModule):
     def get_module_contributions(self, module):
         def get_commands():
-            module_uses_case = module.all_forms_require_a_case() or is_usercase_in_use(self.app.domain)
+            @memoized
+            def module_uses_case():
+                return module.all_forms_require_a_case() or is_usercase_in_use(self.app.domain)
+
             for form in module.get_suite_forms():
                 command = Command(id=id_strings.form_command(form, module))
 
@@ -40,7 +44,7 @@ class MenuContributor(SuiteContributorByModule):
                     )
                     interpolated_xpath = interpolate_xpath(form.form_filter, case, fixture_xpath)
 
-                    if not module_uses_case:
+                    if not module_uses_case():
                         disallow_xpath_case_references(interpolated_xpath)
 
                     command.relevant = interpolated_xpath
