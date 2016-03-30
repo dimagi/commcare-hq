@@ -35,7 +35,7 @@ class CaseSearchES(CaseES):
         except (KeyError, TypeError):
             return []
 
-    def case_property_query(self, key, value, clause=queries.SHOULD):
+    def case_property_query(self, key, value, clause=queries.MUST):
         """
         Search for a case property.
         Usage: (CaseSearchES()
