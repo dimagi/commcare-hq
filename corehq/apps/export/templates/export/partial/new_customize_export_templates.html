@@ -135,16 +135,11 @@
                                 {% if allow_deid %}
                                 <td class="deid-column" data-bind="visible: $root.isDeidColumnVisible()">
                                     <select data-bind="
-                                        value: deidTransform,
+                                        value: deid_transform,
                                         options: getDeidOptions(),
-                                        optionsText: getDeidOptionText,
-                                        visible: isDeidSelectVisible()
+                                        optionsText: getDeidOptionText
                                     ">
                                     </select>
-                                    <span class="label label-info"
-                                          data-bind="visible: !isDeidSelectVisible()">
-                                        {% trans "Cannot be published in De-Identified Export." %}
-                                    </span>
                                 </td>
                                 {% endif %}
                             </tr>

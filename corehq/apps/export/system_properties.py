@@ -173,9 +173,8 @@ BOTTOM_MAIN_FORM_TABLE_PROPERTIES = [
         label='case_name',
         item=ExportItem(path=[
             PathNode(name='form'), PathNode(name='case'), PathNode(name='@case_id')
-        ]),
+        ], transform=CASE_NAME_TRANSFORM),
         selected=True,
-        transforms=[CASE_NAME_TRANSFORM],
         help_text=_("The name of the case that this form operated on")
     ),
     ExportColumn(
@@ -257,9 +256,8 @@ BOTTOM_MAIN_CASE_TABLE_PROPERTIES = [
     ExportColumn(
         tags=[PROPERTY_TAG_INFO],
         label='closed_by_username',
-        item=ExportItem(path=[PathNode(name='closed_by')]),
+        item=ExportItem(path=[PathNode(name='closed_by')], transform=USERNAME_TRANSFORM),
         help_text=_("The username of the user who closed the case"),
-        transforms=[USERNAME_TRANSFORM],
         selected=True,
     ),
     ExportColumn(
@@ -286,9 +284,8 @@ BOTTOM_MAIN_CASE_TABLE_PROPERTIES = [
     ExportColumn(
         tags=[PROPERTY_TAG_INFO],
         label='last_modified_by_user_username',
-        item=ExportItem(path=[PathNode(name='user_id')]),
+        item=ExportItem(path=[PathNode(name='user_id')], transform=USERNAME_TRANSFORM),
         help_text=_("The username of the user who last modified this case"),
-        transforms=[USERNAME_TRANSFORM],
         selected=True
     ),
     ExportColumn(
@@ -308,9 +305,8 @@ BOTTOM_MAIN_CASE_TABLE_PROPERTIES = [
     ExportColumn(
         tags=[PROPERTY_TAG_INFO],
         label='opened_by_username',
-        item=ExportItem(path=[PathNode(name='opened_by')]),
+        item=ExportItem(path=[PathNode(name='opened_by')], transform=USERNAME_TRANSFORM),
         help_text=_("The username of the user who opened the case"),
-        transforms=[USERNAME_TRANSFORM],
         selected=True,
     ),
     ExportColumn(
@@ -330,17 +326,15 @@ BOTTOM_MAIN_CASE_TABLE_PROPERTIES = [
     ExportColumn(
         tags=[PROPERTY_TAG_INFO],
         label='owner_name',
-        item=ExportItem(path=[PathNode(name='owner_id')]),
+        item=ExportItem(path=[PathNode(name='owner_id')], transform=OWNER_ID_TRANSFORM),
         help_text=_("The username of the user who owns the case"),
-        transforms=[OWNER_ID_TRANSFORM],
         selected=True
     ),
     ExportColumn(
         tags=[PROPERTY_TAG_INFO],
         label='server_last_modified_date',
-        item=ExportItem(path=[PathNode(name='server_modified_on')]),
+        item=ExportItem(path=[PathNode(name='server_modified_on')], transform=USERNAME_TRANSFORM),
         help_text=_("The date and time at which the server received the form that last modified the case"),
-        transforms=[USERNAME_TRANSFORM],
         is_advanced=True,
     ),
     ExportColumn(
