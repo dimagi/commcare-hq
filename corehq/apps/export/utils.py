@@ -195,6 +195,13 @@ def _convert_index_to_path_nodes(index):
 
 
 def revert_new_exports(new_exports):
+    """
+    Takes a list of new style ExportInstance and marks them as deleted as well as restoring
+    the old export it was converted from (if it was converted from an old export)
+
+    :param new_exports: List of ExportInstance
+    :returns: Any old exports that were restored when decommissioning the new exports
+    """
     reverted_exports = []
     for new_export in new_exports:
         if new_export.legacy_saved_export_schema_id:
