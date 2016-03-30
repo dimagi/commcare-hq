@@ -356,7 +356,7 @@ class TestExportInstanceFromSavedInstance(TestCase):
             )
 
         self.assertEqual(len(instance.tables), 2)
-        self.assertEqual(len(instance.tables[0].columns), 2 + len(MAIN_FORM_TABLE_PROPERTIES))
+        self.assertEqual(len(instance.tables[0].columns), 3 + len(MAIN_FORM_TABLE_PROPERTIES))
         # Selection from previous instance should hold the same and not revert to defaults
         self.assertFalse(instance.tables[0].columns[first_non_system_property].selected)
 
@@ -391,7 +391,7 @@ class TestExportInstanceFromSavedInstance(TestCase):
             )
 
         self.assertEqual(len(instance.tables), 2)
-        self.assertEqual(len(instance.tables[0].columns), 2 + len(MAIN_FORM_TABLE_PROPERTIES))
+        self.assertEqual(len(instance.tables[0].columns), 3 + len(MAIN_FORM_TABLE_PROPERTIES))
         self.assertEqual(
             len(filter(lambda c: c.is_advanced, instance.tables[0].columns)),
             2 + len([x for x in MAIN_FORM_TABLE_PROPERTIES if x.is_advanced])

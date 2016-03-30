@@ -94,9 +94,9 @@ def convert_saved_export_to_export_instance(saved_export):
                 continue
             new_column.label = column.display
             new_column.selected = True
-            if column.transform and not _strip_deid_transform(column.transform):
+            if transform and not _strip_deid_transform(transform):
                 # Must be deid transform
-                new_column.deid_transform = column.transform
+                new_column.deid_transform = transform
 
     saved_export.doc_type += DELETED_SUFFIX
     saved_export.save()
@@ -131,7 +131,7 @@ def _convert_transform(serializable_transform):
     transform_fn = to_function(serializable_transform.dumps_simple())
     if not transform_fn:
         return None
-    for slug, fn in TRANSFORM_FUNCTIONS.iteritems():
+    for slug, fn in list(TRANSFORM_FUNCTIONS.iteritems()) + list(DEID_TRANSFORM_FUNCTIONS.iteritems()):
         if fn == transform_fn:
             return slug
     return None
