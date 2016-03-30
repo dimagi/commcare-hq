@@ -4,8 +4,8 @@
 {% load i18n %}
 
 {% block js %} {{ block.super }}
-    <script type="text/javascript" src="{% new_static 'hqstyle/js/jquery/plugins/jquery.ba-jqmq.min.js' %}"></script>
-    <script type="text/javascript" src="{% new_static 'mvp/ko/mvp.async_indicators.js' %}"></script>
+    <script type="text/javascript" src="{% static 'hqstyle/js/jquery/plugins/jquery.ba-jqmq.min.js' %}"></script>
+    <script type="text/javascript" src="{% static 'mvp/ko/mvp.async_indicators.js' %}"></script>
 {% endblock %}
 
 {% block js-inline %} {{ block.super }}

@@ -12,8 +12,8 @@
     {% endfor %}
 {% endblock %}
 {% block js %} {{ block.super }}
-    <script type="text/javascript" src="{% new_static 'hqstyle/js/jquery/plugins/jquery.ba-jqmq.min.js' %}"></script>
-    <script type="text/javascript" src="{% new_static 'mvp/ko/mvp.async_table.js' %}"></script>
+    <script type="text/javascript" src="{% static 'hqstyle/js/jquery/plugins/jquery.ba-jqmq.min.js' %}"></script>
+    <script type="text/javascript" src="{% static 'mvp/ko/mvp.async_table.js' %}"></script>
 {% endblock %}
 {% block js-inline %} {{ block.super }}
 {% if not report.needs_filters %}
