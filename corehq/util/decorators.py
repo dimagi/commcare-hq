@@ -111,6 +111,7 @@ def serial_task(unique_key, default_retry_delay=30, timeout=5*60, max_retries=3,
         # register task with celery.  Note that this still happens on import
         @task(bind=True, queue=queue, ignore_result=True,
               default_retry_delay=default_retry_delay, max_retries=max_retries)
+        @wraps(fn)
         def _inner(self, *args, **kwargs):
             if settings.UNIT_TESTING:  # Don't depend on redis
                 fn(*args, **kwargs)
