@@ -60,39 +60,6 @@ def get_number_of_forms_in_domain(domain):
     return row["value"] if row else 0
 
 
-def get_number_of_forms_of_all_types(domain):
-    """
-    Gets a count of all form-like things in a domain (including errors and duplicates)
-    """
-    # todo: this is only used to display the "filtered from __ entries" in the "raw forms" report
-    # and can probably be removed
-    startkey = [domain]
-    endkey = startkey + [{}]
-    submissions = XFormInstance.view(
-        "couchforms/all_submissions_by_domain",
-        startkey=startkey,
-        endkey=endkey,
-        reduce=True,
-        stale=stale_ok(),
-    ).one()
-    return submissions['value'] if submissions else 0
-
-
-def get_number_of_forms_by_type(domain, type_):
-    # todo: this is only used to display totals in the "raw forms" report and can probably be removed
-    assert type_ in doc_types()
-    startkey = [domain, type_]
-    endkey = startkey + [{}]
-    submissions = XFormInstance.view(
-        "couchforms/all_submissions_by_domain",
-        startkey=startkey,
-        endkey=endkey,
-        reduce=True,
-        stale=stale_ok(),
-    ).one()
-    return submissions['value'] if submissions else 0
-
-
 def get_first_form_submission_received(domain):
     from corehq.apps.reports.util import make_form_couch_key
     key = make_form_couch_key(domain)
@@ -184,22 +151,6 @@ def get_all_xmlns_app_id_pairs_submitted_to_in_domain(domain):
         group_level=4,
     ).all()
     return {(result['key'][-2], result['key'][-1]) for result in results}
-
-
-def get_number_of_submissions(domain, user_id, xmlns, app_id, start, end,
-                              by_submission_time=True):
-    from corehq.apps.reports.util import make_form_couch_key
-    key = make_form_couch_key(domain, user_id=user_id, xmlns=xmlns,
-                              by_submission_time=by_submission_time,
-                              app_id=app_id)
-    data = XFormInstance.get_db().view(
-        'all_forms/view',
-        reduce=True,
-        startkey=key + [json_format_datetime(start)],
-        endkey=key + [json_format_datetime(end)],
-        stale=stale_ok(),
-    ).first()
-    return data['value'] if data else 0
 
 
 @quickcache(['domain', 'app_id', 'xmlns'], memoize_timeout=0, timeout=5 * 60)
