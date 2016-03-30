@@ -35,8 +35,8 @@ ko.components.register('inline-edit', {
     template:
         '<div class="ko-inline-edit">\
             <div class="read-only" data-bind="visible: !editing(), click: edit">\
-                <span data-bind="text: value"></span>\
-                <i class="fa fa-pencil"></i>\
+                <i class="fa fa-pencil pull-right"></i>\
+                <span class="text" data-bind="text: value"></span>\
             </div>\
             <div class="read-write" data-bind="visible: editing()">\
                 <div class="form-group">\
