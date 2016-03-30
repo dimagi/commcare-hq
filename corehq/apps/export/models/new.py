@@ -146,6 +146,8 @@ class ExportColumn(DocumentSchema):
             value = couch_to_excel_datetime(value, None)
         if self.item.transform:
             value = TRANSFORM_FUNCTIONS[self.item.transform](value, None)
+        if self.deid_transform:
+            value = TRANSFORM_FUNCTIONS[self.deid_transform](value, None)
         return value
 
     @staticmethod
