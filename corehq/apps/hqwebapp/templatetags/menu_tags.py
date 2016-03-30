@@ -35,15 +35,8 @@ class MainMenuNode(template.Node):
         project = getattr(request, 'project', None)
         domain = context.get('domain')
         org = context.get('org')
-
-        try:
-            module = Domain.get_module_by_name(domain)
-        except (ValueError, AttributeError):
-            module = None
-
-        tabs = getattr(module, 'TABS', MENU_TABS)
         visible_tabs = []
-        for tab_class in tabs:
+        for tab_class in MENU_TABS:
             t = tab_class(
                     request, current_url_name, domain=domain,
                     couch_user=couch_user, project=project, org=org)
