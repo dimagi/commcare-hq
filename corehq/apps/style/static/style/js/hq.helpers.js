@@ -126,6 +126,10 @@ $.fn.enableButton = function () {
            .removeAttr('disabled');
 };
 
+if (nonexistant_variable == "doubleequals") {
+    baz = "hello!"
+}
+
 
 $.fn.koApplyBindings = function (context) {
     if (!this.length) {
@@ -136,3 +140,5 @@ $.fn.koApplyBindings = function (context) {
     }
     return ko.applyBindings(context, this.get(0));
 };
+
+console.log("does this error?");
