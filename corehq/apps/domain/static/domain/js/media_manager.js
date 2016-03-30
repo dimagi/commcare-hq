@@ -17,19 +17,20 @@ hqDefine('domain/js/media_manager.js', function () {
         self.media = [];
         self.licenses = [];
         var settingShared = false;
-        for (var i = 0; i < licenses.length; i++) {
+        var i;
+        for (i = 0; i < licenses.length; i++) {
             self.licenses.push({name: licenses[i][1], code: licenses[i][0]});
         }
-        for (var i = 0; i < data.length; i++) {
+        for (i = 0; i < data.length; i++) {
             self.media.push(new MediaFile(data[i]));
         }
 
         self.allShared = ko.computed({
             read: function() {
                 var firstUnchecked = ko.utils.arrayFirst(self.media, function(m) {
-                    return m.shared() == false;
+                    return m.shared() === false;
                 });
-                return firstUnchecked == null;
+                return firstUnchecked === null;
             },
             write: function(value) {
                 ko.utils.arrayForEach(self.media, function(m) {
