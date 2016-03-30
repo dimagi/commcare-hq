@@ -35,12 +35,12 @@ class CaseSearchES(CaseES):
         except (KeyError, TypeError):
             return []
 
-    def case_property_query(self, key, value, clause=queries.MUST):
+    def case_property_query(self, key, value, clause=queries.MUST, fuzzy=False):
         """
         Search for a case property.
         Usage: (CaseSearchES()
                 .domain('swashbucklers')
-                .case_property_query("name", "redbeard", "must")
+                .case_property_query("name", "rebdeard", "must", fuzzy=True)
                 .case_property_query("age", "15", "must")
                 .case_property_query("has_parrot", "yes", "should")
                 .case_property_query("is_pirate", "yes", "must_not"))
@@ -48,15 +48,18 @@ class CaseSearchES(CaseES):
         Can be chained with regular filters . Running a set_query after this will destroy it.
         Clauses can be any of SHOULD, MUST, or MUST_NOT
         """
-
+        fuzziness = "AUTO" if fuzzy else "0"
         # Filter by case_properties.key and do a text search in case_properties.value
         new_query = queries.nested(
             PATH,
             queries.filtered(
-                queries.search_string_query(value, default_fields=["{}.value".format(PATH)]),
+                queries.match(value, "{}.value".format(PATH), fuzziness),
                 filters.term("{}.key".format(PATH), key)
             )
         )
+        return self._add_query(new_query, clause)
+
+    def _add_query(self, new_query, clause):
         current_query = self._query.get(queries.BOOL)
         if current_query is None:
             return self.set_query(

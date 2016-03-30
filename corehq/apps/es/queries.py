@@ -78,6 +78,17 @@ def search_string_query(search_string, default_fields=None):
     }
 
 
+def match(search_string, field, fuzziness="AUTO"):
+    return {
+        "match": {
+            field: {
+                "query": search_string,
+                "fuzziness": fuzziness,
+            }
+        }
+    }
+
+
 def nested(path, query, *args, **kwargs):
     """
     Creates a nested query for use with nested documents
