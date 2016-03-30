@@ -1,5 +1,4 @@
 hqDefine('cloudcare/js/backbone/apps.js', function () {
-    var cloudCareCases = hqImport('cloudcare/js/backbone/cases.js');
     var showError = hqImport('cloudcare/js/util.js').showError;
     var showSuccess = hqImport('cloudcare/js/util.js').showSuccess;
     var showLoading = hqImport('cloudcare/js/util.js').showLoading;
@@ -494,6 +493,7 @@ hqDefine('cloudcare/js/backbone/apps.js', function () {
     cloudCare.AppView = Backbone.View.extend({
 
         initialize: function(){
+            var cloudCareCases = hqImport('cloudcare/js/backbone/cases.js');
             var self = this;
             _.bindAll(self, 'render', 'setModel', 'showModule', "_clearCaseView",
                       "_clearFormPlayer", "_clearMainPane", "selectParent");
@@ -504,7 +504,7 @@ hqDefine('cloudcare/js/backbone/apps.js', function () {
             self.formListView = new cloudCare.FormListView({
                 language: self.options.language
             });
-            self.caseSelectionView = new cloudCareCase.CaseSelectionView({
+            self.caseSelectionView = new cloudCareCases.CaseSelectionView({
                 language: self.options.language
             });
 
@@ -828,6 +828,7 @@ hqDefine('cloudcare/js/backbone/apps.js', function () {
                     parentId = self.selectedParent ? self.selectedParent.id : null
                     var listDetails = module.get("case_details").short;
                     var summaryDetails = module.get("case_details").long;
+                    var cloudCareCases = hqImport('cloudcare/js/backbone/cases.js');
                     formListView.caseView = new cloudCareCases.CaseMainView({
                         el: $("#cases"),
                         listDetails: listDetails,
@@ -914,6 +915,7 @@ hqDefine('cloudcare/js/backbone/apps.js', function () {
         TITLE_DEFAULT: 'Cloudcare',
 
         initialize: function () {
+            var cloudCareCases = hqImport('cloudcare/js/backbone/cases.js');
             var self = this;
             _.bindAll(self, "render", 'selectApp', "clearCases", "clearForms",
                       "clearModules", "clearAll", "navigate", "updateTitle");
@@ -947,6 +949,7 @@ hqDefine('cloudcare/js/backbone/apps.js', function () {
                 self.initialApp = new cloudCare.App(self.options.initialApp);
                 self._appCache[self.initialApp.id] = self.initialApp;
             }
+
             if (self.options.initialCase) {
                 self.initialCase = new cloudCareCases.Case(self.options.initialCase);
             }
