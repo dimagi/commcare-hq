@@ -23,6 +23,10 @@ class ProdIndexManagementTest(SimpleTestCase):
 
 EXPECTED_PROD_INDICES = [
     {
+        "alias": "case_search",
+        "index": "test_case_search_2016-03-15"
+    },
+    {
         "alias": "hqapps",
         "index": "test_hqapps_2016-03-01_2128"
     },
