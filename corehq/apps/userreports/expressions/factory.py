@@ -10,6 +10,7 @@ from corehq.apps.userreports.expressions.specs import PropertyNameGetterSpec, Pr
     NestedExpressionSpec, DictExpressionSpec, NamedExpressionSpec, EvalExpressionSpec, FormsExpressionSpec
 from corehq.apps.userreports.expressions.date_specs import AddDaysExpressionSpec, AddMonthsExpressionSpec, \
     MonthStartDateExpressionSpec, MonthEndDateExpressionSpec, DiffDaysExpressionSpec
+from corehq.apps.userreports.expressions.json_query_specs import FilterItemsExpressionSpec
 from dimagi.utils.parsing import json_format_datetime, json_format_date
 from dimagi.utils.web import json_handler
 
@@ -168,6 +169,15 @@ def _get_forms_expression(spec, context):
     return wrapped
 
 
+def _filter_items_expression(spec, context):
+    wrapped = FilterItemsExpressionSpec.wrap(spec)
+    wrapped.configure(
+        items_expression=ExpressionFactory.from_spec(wrapped.items_expression),
+        filter_expression=_make_filter(wrapped.filter_expression, context)
+    )
+    return wrapped
+
+
 class ExpressionFactory(object):
     spec_map = {
         'identity': _identity_expression,
@@ -190,6 +200,7 @@ class ExpressionFactory(object):
         'diff_days': _diff_days_expression,
         'evaluator': _evaluator_expression,
         'get_case_forms': _get_forms_expression,
+        'filter_items': _filter_items_expression,
     }
     # Additional items are added to the spec_map by use of the `register` method.
 

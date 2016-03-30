@@ -23,6 +23,7 @@ from .test_view import *
 from .test_dbaccessors import *
 from .test_report_aggregation import *
 from .test_choice_provider import *
+from .test_json_query_expressions import *
 
 from corehq.apps.userreports.expressions.getters import recursive_lookup
 
