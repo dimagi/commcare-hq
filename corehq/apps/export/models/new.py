@@ -1010,6 +1010,7 @@ class CaseExportDataSchema(ExportDataSchema):
 
     @staticmethod
     def _generate_schema_for_parent_case(app_id, app_version):
+        # TODO: conditionally add this table only if there's a parent case
         schema = CaseExportDataSchema()
         schema.group_schemas.append(ExportGroupSchema(
             path=PARENT_CASE_TABLE,
