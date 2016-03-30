@@ -75,7 +75,9 @@ class CaseSearchPillowProcessor(ElasticProcessor):
         domain = self._get_domain(change)
         change_object = self._get_change_object(change)
         if domain and case_search_enabled_for_domain(domain):
-            super(CaseSearchPillowProcessor, self).process_change(pillow_instance, change_object, do_set_checkpoint)
+            super(CaseSearchPillowProcessor, self).process_change(
+                pillow_instance, change_object, do_set_checkpoint
+            )
 
     def _get_domain(self, change):
         if isinstance(change, dict):

@@ -32,7 +32,7 @@ class CaseSearchPillowTest(TestCase):
         ensure_index_deleted(CASE_SEARCH_INDEX)
 
         # Bootstrap ES
-        case_pillow = CaseSearchPillow()
+        CaseSearchPillow()
 
     def tearDown(self):
         ensure_index_deleted(CASE_SEARCH_INDEX)
@@ -53,7 +53,7 @@ class CaseSearchPillowTest(TestCase):
 
         # enable case search for domain
         with patch('corehq.pillows.case_search.case_search_enabled_for_domain',
-                        new=MagicMock(return_value=True)) as fake_case_search_enabled_for_domain:
+                   new=MagicMock(return_value=True)) as fake_case_search_enabled_for_domain:
             # send to elasticsearch
             self.pillow.process_changes(since=kafka_seq, forever=False)
             fake_case_search_enabled_for_domain.assert_called_with(self.domain)
@@ -68,7 +68,7 @@ class CaseSearchPillowTest(TestCase):
         CaseSearchConfig.objects.get_or_create(pk=other_domain, enabled=True)
 
         desired_case = self._make_case(domain=other_domain)
-        undesired_case = self._make_case(domain=self.domain)
+        undesired_case = self._make_case(domain=self.domain)  # noqa
 
         with self.assertRaises(CaseSearchNotEnabledException):
             get_couch_case_search_reindexer(domain=self.domain).reindex()
