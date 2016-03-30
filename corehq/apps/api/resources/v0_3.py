@@ -48,10 +48,10 @@ class CommCareCaseResource(v0_2.CommCareCaseResource, DomainSpecificResourceMixi
     # in v2 the bundle.obj is not actually a CommCareCase object but just a dict_object around a CaseAPIResult
     # so there is no 'get_json'
     def dehydrate_properties(self, bundle):
-        return bundle.obj.get_json(lite=True)['properties']
+        return bundle.obj.get_properties_in_api_format()
 
     def dehydrate_indices(self, bundle):
-        return bundle.obj.get_json(lite=True)['indices']
+        return bundle.obj.get_index_map()
 
     def obj_get(self, bundle, **kwargs):
         case_id = kwargs['pk']

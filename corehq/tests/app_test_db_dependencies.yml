@@ -461,6 +461,7 @@ corehq.apps.api:
   - corehq.form_processor
   - corehq.sql_accessors
   - corehq.sql_proxy_accessors
+  - two_factor
 # At least one of the following items is required, I don't know which ones
   - corehq.couchapps
   - corehq.apps.sms

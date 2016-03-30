@@ -173,46 +173,6 @@ class AbstractCommCareCase(object):
     def get_case_property(self, property):
         raise NotImplementedError
 
-    def get_json(self, lite=False):
-        ret = {
-            # actions excluded here
-            "domain": self.domain,
-            "case_id": self.case_id,
-            "user_id": self.user_id,
-            "closed": self.closed,
-            "date_closed": self.closed_on,
-            "xform_ids": self.xform_ids,
-            # renamed
-            "date_modified": self.modified_on,
-            # renamed
-            "server_date_modified": self.server_modified_on,
-            # renamed
-            "server_date_opened": self.server_opened_on,
-            "properties": dict(self.dynamic_case_properties().items() + {
-                "external_id": self.external_id,
-                "owner_id": self.owner_id,
-                # renamed
-                "case_name": self.name,
-                # renamed
-                "case_type": self.type,
-                # renamed
-                "date_opened": self.opened_on,
-                # all custom properties go here
-            }.items()),
-            #reorganized
-            "indices": self.get_index_map(),
-            "attachments": self.get_attachment_map(),
-        }
-        try:
-            ret['version'] = self.version
-        except AttributeError:
-            pass
-        if not lite:
-            ret.update({
-                "reverse_indices": self.get_index_map(True),
-            })
-        return ret
-
     @memoized
     def get_index_map(self, reversed=False):
         return dict([
@@ -224,13 +184,18 @@ class AbstractCommCareCase(object):
         ])
 
     @memoized
-    def get_attachment_map(self):
-        return dict([
-            (name, {
-                'url': self.get_attachment_server_url(att.attachment_key),
-                'mime': att.attachment_from
-            }) for name, att in self.case_attachments.items()
-        ])
+    def get_properties_in_api_format(self):
+        return dict(self.dynamic_case_properties().items() + {
+            "external_id": self.external_id,
+            "owner_id": self.owner_id,
+            # renamed
+            "case_name": self.name,
+            # renamed
+            "case_type": self.type,
+            # renamed
+            "date_opened": self.opened_on,
+            # all custom properties go here
+        }.items())
 
     def to_xml(self, version, include_case_on_closed=False):
         from xml.etree import ElementTree
