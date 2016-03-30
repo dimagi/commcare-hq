@@ -9,9 +9,8 @@ docker_run() {
 }
 
 get_container_id() {
-    label_name=$1
-    value=$2
-    sudo docker ps -qf label=$label_name=$value -f status=running
+    name=$1
+    sudo docker ps -qf name=$name -f status=running
 }
 
 get_container_ip() {
@@ -31,6 +30,6 @@ create_topics() {
 
 create_kafka_topics() {
     kafka_topics=$(docker_run kafka find /opt -name kafka-topics.sh | tr -d '\n' | tr -d '\r')
-    zookeeper_ip=$(get_container_ip "commcare.name" "kafka")
+    zookeeper_ip=$(get_container_ip "travis_kafka_1")
     create_topics $kafka_topics $zookeeper_ip "case form meta case-sql form-sql sms"
 }
