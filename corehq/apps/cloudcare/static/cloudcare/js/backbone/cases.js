@@ -42,7 +42,7 @@ hqDefine('cloudcare/js/backbone/cases.js', function () {
             if (cloudCareCases.CASE_PROPERTY_MAP[property] !== undefined) {
                 property = cloudCareCases.CASE_PROPERTY_MAP[property];
             }
-            if (property.indexOf("@") == 0) {
+            if (property.indexOf("@") === 0) {
                 // we use @ signs to denote function references, since the phone
                 // does some magic with them that we need to reproduce here.
                 var f = this[property.substring(1)];
@@ -123,7 +123,7 @@ hqDefine('cloudcare/js/backbone/cases.js', function () {
                 var form = module.getFormByUniqueId(formId);
                 return localize(form.get('name'), self.options.language);
             } else {
-                throw "not in delegation mode"
+                throw "not in delegation mode";
             }
         },
         makeDelegationFormTd: function () {

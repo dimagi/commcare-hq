@@ -36,7 +36,7 @@ hqDefine('cloudcare/js/util.js', function () {
         if (instanceId) {
             url += '?instance_id=' + instanceId;
         }
-        return url
+        return url;
     };
 
     var getFormEntryUrl = function (urlRoot, appId, moduleId, formId, caseId) {
@@ -53,7 +53,7 @@ hqDefine('cloudcare/js/util.js', function () {
         // TODO: make this cleaner
         var url = "view/" + appId + "/" + moduleId + "/" + formId;
         if (caseId) {
-            url = url + '/case/' + caseId
+            url = url + '/case/' + caseId;
         }
         url += "/enter/";
         return url;
@@ -76,7 +76,7 @@ hqDefine('cloudcare/js/util.js', function () {
         if (special === 'task-list') {
             url += '?task-list=true';
         }
-        return url
+        return url;
     };
 
     var getSessionContextUrl = function(sessionUrlRoot, session_id) {
