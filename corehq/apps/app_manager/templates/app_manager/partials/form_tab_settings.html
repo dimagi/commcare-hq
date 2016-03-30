@@ -12,7 +12,7 @@
             </div>
         </div>
         <div class="form-group">
-            <label class="control-label col-sm-2" for="comment-id">
+            <label class="control-label col-sm-2">
                 {% trans "Comment" %}
                 <span class="hq-help-template"
                       data-title="{% trans "Comment" %}"
@@ -20,7 +20,8 @@
                 ></span>
             </label>
             <div id="form-comment" class="col-sm-4">
-                <textarea id="comment-id" name="comment" class="form-control">{{ form.comment }}</textarea>
+                <inline-edit params="name: 'comment', value: '{{ form.comment|escapejs }}'">
+                </inline-edit>
             </div>
         </div>
 
