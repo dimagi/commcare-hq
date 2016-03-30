@@ -1,23 +1,11 @@
-from collections import defaultdict
-import re
-import json
-from dateutil.parser import parse
-from datetime import datetime, timedelta
-from decimal import Decimal
 from dimagi.ext.couchdbkit import *
+import re
+from decimal import Decimal
 from couchdbkit.exceptions import MultipleResultsFound
-from dimagi.utils.couch import release_lock
 from dimagi.utils.couch.migration import SyncCouchToSQLMixin
 from dimagi.utils.couch.undo import DELETED_SUFFIX
-from dimagi.utils.decorators.memoized import memoized
-from django.conf import settings
 from dimagi.utils.couch.database import get_safe_write_kwargs
-from dimagi.utils.modules import try_import
-from dimagi.utils.parsing import json_format_datetime
-from django.db import transaction
-from corehq.apps.domain.models import Domain
 from corehq.util.quickcache import quickcache
-from couchdbkit import ResourceNotFound
 
 
 phone_number_re = re.compile("^\d+$")
