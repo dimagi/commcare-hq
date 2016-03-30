@@ -138,12 +138,18 @@ def serial_task(unique_key, default_retry_delay=30, timeout=5*60, max_retries=3,
 
 
 def analytics_task(default_retry_delay=10, max_retries=3, queue='background_queue'):
+    '''
+        defines a task that posts data to one of our analytics endpoints. It retries the task
+        up to 3 times if the post returns with a status code indicating an error with the post
+        that is not our fault.
+    '''
     def decorator(func):
         @task(bind=True, queue=queue, ignore_result=True, acks_late=True,
               default_retry_delay=default_retry_delay, max_retries=max_retries)
+        @wraps(func)
         def _inner(self, *args, **kwargs):
             try:
-                return func()
+                return func(*args, **kwargs)
             except requests.exceptions.HTTPError as e:
                 # if its a bad request, raise the exception because it is our fault
                 res = e.response

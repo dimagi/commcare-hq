@@ -169,14 +169,14 @@ def _send_form_to_hubspot(form_id, webuser, cookies, meta, extra_fields=None):
         response.raise_for_status()
 
 
-@analytics_task
+@analytics_task()
 def update_hubspot_properties(webuser, properties):
     vid = _get_user_hubspot_id(webuser)
     if vid:
         _track_on_hubspot(webuser, properties)
 
 
-@analytics_task
+@analytics_task()
 def track_user_sign_in_on_hubspot(webuser, cookies, meta, path):
     if path.startswith(reverse("register_user")):
         tracking_dict = {
@@ -189,7 +189,7 @@ def track_user_sign_in_on_hubspot(webuser, cookies, meta, path):
     _send_form_to_hubspot(HUBSPOT_SIGNIN_FORM_ID, webuser, cookies, meta)
 
 
-@analytics_task
+@analytics_task()
 def track_built_app_on_hubspot(webuser):
     vid = _get_user_hubspot_id(webuser)
     if vid:
@@ -197,7 +197,7 @@ def track_built_app_on_hubspot(webuser):
         _track_on_hubspot(webuser, {'built_app': True})
 
 
-@analytics_task
+@analytics_task()
 def track_confirmed_account_on_hubspot(webuser):
     vid = _get_user_hubspot_id(webuser)
     if vid:
@@ -213,17 +213,17 @@ def track_confirmed_account_on_hubspot(webuser):
         })
 
 
-@analytics_task
+@analytics_task()
 def track_entered_form_builder_on_hubspot(webuser, cookies, meta):
     _send_form_to_hubspot(HUBSPOT_FORM_BUILDER_FORM_ID, webuser, cookies, meta)
 
 
-@analytics_task
+@analytics_task()
 def track_app_from_template_on_hubspot(webuser, cookies, meta):
     _send_form_to_hubspot(HUBSPOT_APP_TEMPLATE_FORM_ID, webuser, cookies, meta)
 
 
-@analytics_task
+@analytics_task()
 def track_clicked_deploy_on_hubspot(webuser, cookies, meta):
     ab = {
         'a_b_variable_deploy': 'A' if deterministic_random(webuser.username + 'a_b_variable_deploy') > 0.5 else 'B',
@@ -231,22 +231,22 @@ def track_clicked_deploy_on_hubspot(webuser, cookies, meta):
     _send_form_to_hubspot(HUBSPOT_CLICKED_DEPLOY_FORM_ID, webuser, cookies, meta, extra_fields=ab)
 
 
-@analytics_task
+@analytics_task()
 def track_created_new_project_space_on_hubspot(webuser, cookies, meta):
     _send_form_to_hubspot(HUBSPOT_CREATED_NEW_PROJECT_SPACE_FORM_ID, webuser, cookies, meta)
 
 
-@analytics_task
+@analytics_task()
 def track_sent_invite_on_hubspot(webuser, cookies, meta):
     _send_form_to_hubspot(HUBSPOT_INVITATION_SENT_FORM, webuser, cookies, meta)
 
 
-@analytics_task
+@analytics_task()
 def track_existing_user_accepted_invite_on_hubspot(webuser, cookies, meta):
     _send_form_to_hubspot(HUBSPOT_INVITATION_SENT_FORM, webuser, cookies, meta)
 
 
-@analytics_task
+@analytics_task()
 def track_new_user_accepted_invite_on_hubspot(webuser, cookies, meta):
     _send_form_to_hubspot(HUBSPOT_NEW_USER_INVITE_FORM, webuser, cookies, meta)
 
@@ -263,7 +263,7 @@ def track_workflow(email, event, properties=None):
     _track_workflow_task.delay(email, event, properties, timestamp)
 
 
-@analytics_task
+@analytics_task()
 def _track_workflow_task(email, event, properties=None, timestamp=0):
     api_key = settings.ANALYTICS_IDS.get("KISSMETRICS_KEY", None)
     if api_key:
@@ -274,7 +274,7 @@ def _track_workflow_task(email, event, properties=None, timestamp=0):
         _raise_for_urllib3_response(res)
 
 
-@analytics_task
+@analytics_task()
 def identify(email, properties):
     """
     Set the given properties on a KISSmetrics user.
