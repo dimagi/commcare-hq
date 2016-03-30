@@ -110,7 +110,7 @@ class SavedSchemaTest(TestCase):
 
     def test_split_column_missing(self):
         self.post_it()
-        self._test_split_column([[None, None, None, None, None]])
+        self._test_split_column([[None, None, None, None, SCALAR_NEVER_WAS]])
 
     def test_split_column_missing_ignore_extras(self):
         self.post_it()
