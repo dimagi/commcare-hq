@@ -1,6 +1,7 @@
-from mock import call, patch
 from corehq.apps.case_search.api import disable_case_search, enable_case_search
+from corehq.apps.case_search.models import CaseSearchConfig
 from django.test import TestCase
+from mock import call, patch
 
 
 class TestCaseSearch(TestCase):
@@ -25,3 +26,21 @@ class TestCaseSearch(TestCase):
 
         disable_case_search(self.domain)
         self.assertEqual(fake_deleter.call_args, call(self.domain))
+
+    def test_fuzzy_search_parameters(self):
+        config = CaseSearchConfig(domain=self.domain)
+
+        self.assertItemsEqual(config.fuzzy_properties_for_case_type('mermaids'), [])
+
+        config.add_fuzzy_properties(case_type="pirates", properties=["name", "age"])
+        config.add_fuzzy_properties(case_type="pirates", properties=["smells_bad"])
+        config.add_fuzzy_properties(case_type="swashbucklers", properties=["has_parrot"])
+
+        self.assertItemsEqual(config.fuzzy_properties_for_case_type('pirates'), ['name', 'age', 'smells_bad'])
+        self.assertItemsEqual(config.fuzzy_properties_for_case_type('swashbucklers'), ['has_parrot'])
+
+        config.remove_fuzzy_property(case_type="pirates", property="smells_bad")
+        self.assertItemsEqual(config.fuzzy_properties_for_case_type('pirates'), ['name', 'age'])
+
+        with self.assertRaises(AttributeError):
+            config.remove_fuzzy_property(case_type="pirates", property="smells_bad")
