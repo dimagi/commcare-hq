@@ -92,11 +92,10 @@ class UITab(object):
     ga_tracker = None
 
     def __init__(self, request, current_url_name, domain=None, couch_user=None,
-                 project=None, org=None):
+                 project=None):
         if self.subtab_classes:
             self.subtabs = [cls(request, current_url_name, domain=domain,
-                                couch_user=couch_user, project=project,
-                                org=org)
+                                couch_user=couch_user, project=project)
                             for cls in self.subtab_classes]
         else:
             self.subtabs = None
@@ -104,7 +103,6 @@ class UITab(object):
         self.domain = domain
         self.couch_user = couch_user
         self.project = project
-        self.org = org
 
         # This should not be considered as part of the subclass API unless it
         # is necessary. Try to add new explicit parameters instead.
@@ -160,8 +158,6 @@ class UITab(object):
         try:
             if self.domain:
                 return absolute_reverse(self.view, args=[self.domain])
-            if self.org:
-                return absolute_reverse(self.view, args=[self.org.name])
         except Exception:
             pass
 

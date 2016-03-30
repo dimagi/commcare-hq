@@ -34,12 +34,11 @@ class MainMenuNode(template.Node):
         couch_user = getattr(request, 'couch_user', None)
         project = getattr(request, 'project', None)
         domain = context.get('domain')
-        org = context.get('org')
         visible_tabs = []
         for tab_class in MENU_TABS:
             t = tab_class(
-                    request, current_url_name, domain=domain,
-                    couch_user=couch_user, project=project, org=org)
+                request, current_url_name, domain=domain,
+                couch_user=couch_user, project=project)
 
             t.is_active_tab = False
             if t.real_is_viewable:
