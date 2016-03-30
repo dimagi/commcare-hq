@@ -1,5 +1,6 @@
 from datetime import datetime
 from itertools import groupby
+from functools import partial
 from collections import defaultdict, OrderedDict, namedtuple
 
 from couchdbkit.ext.django.schema import IntegerProperty
@@ -448,99 +449,42 @@ class ExportInstance(BlobMixin, Document):
 
     @classmethod
     def _insert_system_properties(cls, export_type, table):
-        if export_type == FORM_EXPORT:
-            if table.path == MAIN_TABLE:
-                cls._insert_form_system_properties(table)
-            else:
-                cls._insert_form_repeat_system_properties(table)
-        elif export_type == CASE_EXPORT:
-            if table.path == MAIN_TABLE:
-                cls._insert_case_system_properties(table)
-            elif table.path == CASE_HISTORY_TABLE:
-                cls._insert_case_history_system_properties(table)
-            elif table.path == PARENT_CASE_TABLE:
-                cls._insert_parent_case_system_properties(table, columns)
-
-    @classmethod
-    def _insert_form_repeat_system_properties(cls, table):
-        from corehq.apps.export.system_properties import ROW_NUMBER_COLUMN
-        index, existing_column = table.get_column(
-            ROW_NUMBER_COLUMN.item.path, ROW_NUMBER_COLUMN.transforms
-
-        )
-        if not existing_column:
-            table.columns.insert(0, ROW_NUMBER_COLUMN)
-
-    @classmethod
-    def _insert_parent_case_system_properties(cls, table, columns):
-        from corehq.apps.export.system_properties import PARENT_CASE_TABLE_PROPERTIES
-
-        for static_column in reversed(PARENT_CASE_TABLE_PROPERTIES):
-            existing_column = table.get_column(static_column.item.path, static_column.transforms)
-            columns.insert(0, existing_column or static_column)
-
-    @classmethod
-    def _insert_case_history_system_properties(cls, table):
-        from corehq.apps.export.system_properties import CASE_HISTORY_PROPERTIES
-
-        # insert columns for system properties
-        for static_column in reversed(CASE_HISTORY_PROPERTIES):
-            index, existing_column = table.get_column(
-                static_column.item.path,
-                static_column.transforms
-            )
-            if not existing_column:
-                # either insert right after previously found, or at the beginning
-                table.columns.insert(index - 1 if index else 0, static_column)
-
-    @classmethod
-    def _insert_case_system_properties(cls, table):
         from corehq.apps.export.system_properties import (
-            TOP_MAIN_CASE_TABLE_PROPERTIES,
-            BOTTOM_MAIN_CASE_TABLE_PROPERTIES
-        )
-
-        # insert columns for system properties
-        for static_column in reversed(TOP_MAIN_CASE_TABLE_PROPERTIES):
-            index, existing_column = table.get_column(
-                static_column.item.path,
-                static_column.transforms
-            )
-            if not existing_column:
-                # either insert right after previously found, or at the beginning
-                table.columns.insert(index - 1 if index else 0, static_column)
-
-        for static_column in BOTTOM_MAIN_CASE_TABLE_PROPERTIES:
-            index, existing_column = table.get_column(
-                static_column.item.path,
-                static_column.transforms
-            )
-            if not existing_column:
-                table.columns.append(static_column)
-
-    @classmethod
-    def _insert_form_system_properties(cls, table):
-        from corehq.apps.export.system_properties import (
+            ROW_NUMBER_COLUMN,
             TOP_MAIN_FORM_TABLE_PROPERTIES,
             BOTTOM_MAIN_FORM_TABLE_PROPERTIES,
+            TOP_MAIN_CASE_TABLE_PROPERTIES,
+            BOTTOM_MAIN_CASE_TABLE_PROPERTIES,
+            CASE_HISTORY_PROPERTIES,
+            PARENT_CASE_TABLE_PROPERTIES,
         )
+        if export_type == FORM_EXPORT:
+            if table.path == MAIN_TABLE:
+                cls.__insert_system_properties(table, TOP_MAIN_FORM_TABLE_PROPERTIES)
+                cls.__insert_system_properties(table, BOTTOM_MAIN_FORM_TABLE_PROPERTIES, top=False)
+            else:
+                cls.__insert_system_properties(table, [ROW_NUMBER_COLUMN])
+        elif export_type == CASE_EXPORT:
+            if table.path == MAIN_TABLE:
+                cls.__insert_system_properties(table, TOP_MAIN_CASE_TABLE_PROPERTIES)
+                cls.__insert_system_properties(table, BOTTOM_MAIN_CASE_TABLE_PROPERTIES, top=False)
+            elif table.path == CASE_HISTORY_TABLE:
+                cls.__insert_system_properties(table, CASE_HISTORY_PROPERTIES)
+            elif table.path == PARENT_CASE_TABLE:
+                cls.__insert_system_properties(table, PARENT_CASE_TABLE_PROPERTIES)
 
-        for static_column in reversed(TOP_MAIN_FORM_TABLE_PROPERTIES):
-            index, existing_column = table.get_column(
-                static_column.item.path,
-                static_column.transforms
-            )
-            if not existing_column:
-                # either insert right after previously found, or at the beginning
-                table.columns.insert(index - 1 if index else 0, static_column)
+    @classmethod
+    def __insert_system_properties(cls, table, properties, top=True):
+        if top:
+            insert_fn = partial(table.columns.insert, 0)
+            properties = reversed(properties)
+        else:
+            insert_fn = table.columns.append
 
-        for static_column in BOTTOM_MAIN_FORM_TABLE_PROPERTIES:
-            index, existing_column = table.get_column(
-                static_column.item.path,
-                static_column.transforms
-            )
+        for static_column in properties:
+            index, existing_column = table.get_column(static_column.item.path, static_column.transforms)
             if not existing_column:
-                table.columns.append(static_column)
+                insert_fn(static_column)
 
     @property
     def file_size(self):
