@@ -45,7 +45,7 @@ class CaseSearchConfig(models.Model):
             ]
         }
         """
-        self.set_fuzzy_properties(case_type, [property])
+        self.add_fuzzy_properties(case_type, [property])
 
     def add_fuzzy_properties(self, case_type, properties):
         """

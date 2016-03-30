@@ -39,6 +39,9 @@ class TestCaseSearch(TestCase):
         self.assertItemsEqual(config.fuzzy_properties_for_case_type('pirates'), ['name', 'age', 'smells_bad'])
         self.assertItemsEqual(config.fuzzy_properties_for_case_type('swashbucklers'), ['has_parrot'])
 
+        config.add_fuzzy_property(case_type="swashbucklers", property="has_sword")
+        self.assertItemsEqual(config.fuzzy_properties_for_case_type('swashbucklers'), ['has_parrot', 'has_sword'])
+
         config.remove_fuzzy_property(case_type="pirates", property="smells_bad")
         self.assertItemsEqual(config.fuzzy_properties_for_case_type('pirates'), ['name', 'age'])
 
