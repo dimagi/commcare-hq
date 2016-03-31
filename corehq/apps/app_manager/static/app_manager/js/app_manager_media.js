@@ -189,6 +189,8 @@ hqDefine('app_manager/js/app_manager_media.js', function () {
     };
 
     function interpolatePath(path){
+        // app media attributes are interpolated on server side, media uploads should also be interpolated
+        // See corehq.apps.app_manager.views.media_utils.process_media_attribute
         if (!path){
             return path;
         }
@@ -208,7 +210,6 @@ hqDefine('app_manager/js/app_manager_media.js', function () {
         else {
             path = 'jr://file/' + path;
         }
-
         return path;
     }
 });
