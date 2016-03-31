@@ -9,6 +9,7 @@ from django.db import transaction
 from psycopg2._psycopg import DatabaseError
 
 from corehq.apps.locations.models import SQLLocation
+from corehq.util.decorators import serial_task
 from custom.ilsgateway.slab.reminders.stockout import StockoutReminder
 from custom.ilsgateway.tanzania.reminders import REMINDER_MONTHLY_SOH_SUMMARY, REMINDER_MONTHLY_DELIVERY_SUMMARY, \
     REMINDER_MONTHLY_RANDR_SUMMARY
@@ -30,20 +31,16 @@ from dimagi.utils.dates import get_business_day_of_month, get_business_day_of_mo
 @periodic_task(run_every=crontab(hour="4", minute="00", day_of_week="*"),
                queue='logistics_background_queue')
 def report_run_periodic_task():
-    report_run('ils-gateway')
+    report_run.delay('ils-gateway')
 
 
-@task(queue='logistics_background_queue', ignore_result=True)
+@serial_task('{domain}', queue='logistics_background_queue', max_retries=0, timeout=60 * 60 * 12)
 def report_run(domain, locations=None, strict=True):
     last_successful_run = ReportRun.last_success(domain)
 
     last_run = ReportRun.last_run(domain)
     start_date = (datetime.min if not last_successful_run else last_successful_run.end)
     end_date = datetime.utcnow()
-
-    running = ReportRun.objects.filter(complete=False, domain=domain)
-    if running.count() > 0:
-        raise Exception("Warehouse already running, will do nothing...")
 
     if last_run and last_run.has_error:
         run = last_run
