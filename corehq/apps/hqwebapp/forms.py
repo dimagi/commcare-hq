@@ -28,9 +28,15 @@ class EmailAuthenticationForm(NoAutocompleteMixin, AuthenticationForm):
 
     def clean(self):
         lockout_message = mark_safe(_('Sorry - you have attempted to login with an incorrect password too many times. Please <a href="/accounts/password_reset_email/">click here</a> to reset your password.'))
+
         username = self.cleaned_data.get('username')
         if username is None:
             raise ValidationError(_('Please enter a valid email address.'))
+
+        password = self.cleaned_data.get('password')
+        if not password:
+            raise ValidationError(_("Please enter a password."))
+
         try:
             cleaned_data = super(EmailAuthenticationForm, self).clean()
         except ValidationError:
