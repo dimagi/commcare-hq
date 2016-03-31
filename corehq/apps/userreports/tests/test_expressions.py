@@ -16,6 +16,7 @@ from corehq.apps.userreports.expressions.specs import (
 from corehq.apps.userreports.expressions.specs import eval_statements
 from corehq.apps.userreports.specs import EvaluationContext
 from corehq.form_processor.interfaces.dbaccessors import FormAccessors
+from corehq.form_processor.tests import run_with_all_backends
 from corehq.util.test_utils import generate_cases
 
 
@@ -829,6 +830,7 @@ class TestFormsExpressionSpec(TestCase):
             },
         })
 
+    @run_with_all_backends
     def test_evaluation(self):
         context = EvaluationContext({"domain": self.domain}, 0)
         forms = self.expression(self.case.to_json(), context)
@@ -836,6 +838,7 @@ class TestFormsExpressionSpec(TestCase):
         self.assertEqual(len(forms), 1)
         self.assertEqual(forms, self.forms)
 
+    @run_with_all_backends
     def test_wrong_domain(self):
         context = EvaluationContext({"domain": "wrong-domain"}, 0)
         forms = self.expression(self.case.to_json(), context)
