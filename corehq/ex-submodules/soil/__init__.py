@@ -148,6 +148,9 @@ class DownloadBase(object):
         try:
             if task:
                 task.update_state(state='PROGRESS', meta={'current': current, 'total': total})
+                if current == total and getattr(settings, 'CELERY_ALWAYS_EAGER', False):
+                    task.update_state(state='SUCCESS')
+
         except (TypeError, NotImplementedError):
             pass
         except IntegrityError:
