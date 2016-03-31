@@ -18,8 +18,8 @@ class TestCaseDBElement(TestXmlMixin, SimpleTestCase):
     def setUp(self):
         self.case = CommCareCase(
             domain=self.domain,
-            opened_on=datetime.datetime(2016, 05, 31),
-            modified_on=datetime.datetime(2016, 05, 31),
+            opened_on=datetime.datetime(2016, 5, 31),
+            modified_on=datetime.datetime(2016, 5, 31),
             type='priestess',
             closed=False,
             name='melisandre',
