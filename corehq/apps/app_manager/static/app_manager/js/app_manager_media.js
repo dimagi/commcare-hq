@@ -96,7 +96,7 @@ hqDefine('app_manager/js/app_manager_media.js', function () {
 
         self.getUploadParams = function () {
             return {
-                path: self.currentPath(),
+                path: interpolatePath(self.currentPath()),
                 media_type: self.ref().mediaType,
                 replace_attachment: true
             };
@@ -187,4 +187,28 @@ hqDefine('app_manager/js/app_manager_media.js', function () {
         initNavMenuMedia: initNavMenuMedia,
         AppMenuMediaManager: AppMenuMediaManager
     };
+
+    function interpolatePath(path){
+        if (!path){
+            return path;
+        }
+
+        if (path.startsWith('jr://')){
+            return path;
+        }
+        else if (path.startsWith('/file/')){
+            path = 'jr:/' + path;
+        }
+        else if (path.startsWith('file/')){
+            path = 'jr://' + path;
+        }
+        else if (path.startsWith('/')){
+            path = 'jr://file' + path;
+        }
+        else {
+            path = 'jr://file/' + path;
+        }
+
+        return path;
+    }
 });
