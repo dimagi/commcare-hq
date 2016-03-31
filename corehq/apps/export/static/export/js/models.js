@@ -182,8 +182,7 @@ Exports.ViewModels.ExportColumn.prototype.isCaseName = function() {
 };
 
 Exports.ViewModels.ExportColumn.mapping = {
-    include: ['item', 'label', 'is_advanced', 'selected', 'tags', 'deid_transform'],
-    exclude: ['deidTransform'],
+    include: ['item', 'label', 'is_advanced', 'selected', 'tags', 'deid_transform', 'help_text'],
     item: {
         create: function(options) {
             return new Exports.ViewModels.ExportItem(options.data);
