@@ -6,6 +6,7 @@ from corehq.apps.userreports.sql.connection import get_engine_id
 from corehq.apps.userreports.sql.util import get_table_name
 from corehq.sql_db.connections import connection_manager
 from dimagi.utils.decorators.memoized import memoized
+from dimagi.utils.logging import notify_exception
 
 
 metadata = sqlalchemy.MetaData()
@@ -44,7 +45,29 @@ class IndicatorSqlAdapter(object):
         """
         return self.session_helper.Session.query(self.get_table())
 
+    def best_effort_save(self, doc):
+        """
+        Does a best-effort save of the document. Will fail silently if the save is not successful.
+
+        For certain known, expected errors this will do no additional logging.
+        For unexpected errors it will log them.
+        """
+        try:
+            self.save(doc)
+        except IntegrityError:
+            pass  # can be do to users messing up their tables/data so don't bother logging
+        except Exception as e:
+            notify_exception(None, u'unexpected error saving UCR doc: {}. domain: {}, doc: {}, table {}'.format(
+                e,
+                self.config.domain,
+                doc.get('_id', '<unknown>'),
+                '{} ({})'.format(self.config.display_name, self.config._id)
+            ))
+
     def save(self, doc):
+        """
+        Saves the document. Should bubble up known errors.
+        """
         indicator_rows = self.config.get_all_values(doc)
         if indicator_rows:
             table = self.get_table()
@@ -55,13 +78,7 @@ class IndicatorSqlAdapter(object):
                 for indicator_row in indicator_rows:
                     all_values = {i.column.database_column_name: i.value for i in indicator_row}
                     insert = table.insert().values(**all_values)
-                    try:
-                        connection.execute(insert)
-                    except IntegrityError:
-                        # Someone beat us to it. Concurrent inserts can happen
-                        # when a doc is processed by the celery rebuild task
-                        # at the same time as the pillow.
-                        pass
+                    connection.execute(insert)
 
     def delete(self, doc):
         table = self.get_table()

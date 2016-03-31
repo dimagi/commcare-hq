@@ -123,7 +123,6 @@ def report_run_periodic_task():
 @task(queue='logistics_background_queue', ignore_result=True)
 def report_run(domain, locations=None, strict=True):
     last_successful_run = ReportRun.last_success(domain)
-    recalculation_on_location_change(domain, last_successful_run)
 
     last_run = ReportRun.last_run(domain)
     start_date = (datetime.min if not last_successful_run else last_successful_run.end)
@@ -164,6 +163,8 @@ def report_run(domain, locations=None, strict=True):
         run.complete = True
         run.save()
         logging.info("ILSGateway report runner end time: %s" % datetime.utcnow())
+        if not has_error:
+            recalculation_on_location_change.delay(domain, last_successful_run)
 
 facility_delivery_partial = partial(send_for_day, cutoff=15, reminder_class=DeliveryReminder)
 district_delivery_partial = partial(send_for_day, cutoff=13, reminder_class=DeliveryReminder,
@@ -378,10 +379,9 @@ def stockout_reminder_task():
 def recalculate_on_group_change(location, last_run):
     OrganizationSummary.objects.filter(location_id=location.get_id).delete()
     process_facility_warehouse_data(location, default_start_date(), last_run.end)
-
-    for parent in location.sql_location.get_ancestors(ascending=True):
-        process_non_facility_warehouse_data(parent.couch_location,
-                                            default_start_date(), last_run.end, strict=False)
+    return {
+        ancestor.location_type.name: {ancestor} for ancestor in location.sql_location.get_ancestors(ascending=True)
+    }
 
 
 def recalculate_on_parent_change(location, previous_parent_id, last_run):
@@ -402,13 +402,10 @@ def recalculate_on_parent_change(location, previous_parent_id, last_run):
     for sql_location in locations_to_recalculate:
         type_location_map[sql_location.location_type.name].add(sql_location)
 
-    for location_type in ["DISTRICT", "REGION", "MSDZONE"]:
-        for sql_location in type_location_map[location_type]:
-            process_non_facility_warehouse_data(
-                sql_location.couch_location, default_start_date(), last_run.end, strict=False
-            )
+    return type_location_map
 
 
+@task(queue='logistics_background_queue', ignore_result=True)
 def recalculation_on_location_change(domain, last_run):
     if not last_run:
         PendingReportingDataRecalculation.objects.filter(domain=domain).delete()
@@ -421,6 +418,8 @@ def recalculation_on_location_change(domain, last_run):
         key = (pending_recalculation.sql_location, pending_recalculation.type)
         recalcs_dict[key].append(pending_recalculation.data)
 
+    non_facilities_to_recalculate = defaultdict(set)
+    recalculated = set()
     for (sql_location, recalculation_type), data_list in recalcs_dict.iteritems():
         # If there are more changes, consider earliest and latest change.
         # Thanks to this we avoid recalculations when in fact group/parent wasn't changed.
@@ -436,12 +435,25 @@ def recalculation_on_location_change(domain, last_run):
 
         if recalculation_type == 'group_change'\
                 and data_list[0]['previous_group'] != data_list[-1]['current_group']:
-            recalculate_on_group_change(sql_location.couch_location, last_run)
+            to_recalculate = recalculate_on_group_change(sql_location.couch_location, last_run)
         elif recalculation_type == 'parent_change' \
                 and data_list[0]['previous_parent'] != data_list[-1]['current_parent']:
-            recalculate_on_parent_change(
+            to_recalculate = recalculate_on_parent_change(
                 sql_location.couch_location, data_list[0]['previous_parent'], last_run
             )
-        PendingReportingDataRecalculation.objects.filter(
-            sql_location=sql_location, type=recalculation_type, domain=domain
-        ).delete()
+        else:
+            to_recalculate = {}
+        recalculated.add(sql_location)
+
+        for location_type, sql_locations_to_recalculate in to_recalculate.iteritems():
+            for sql_location_to_recalculate in sql_locations_to_recalculate:
+                non_facilities_to_recalculate[location_type].add(sql_location_to_recalculate)
+
+    for location_type in ["DISTRICT", "REGION", "MSDZONE", "MOHSW"]:
+        for sql_location in non_facilities_to_recalculate.get(location_type, []):
+            process_non_facility_warehouse_data(
+                sql_location.couch_location, default_start_date(), last_run.end, strict=False
+            )
+    PendingReportingDataRecalculation.objects.filter(
+        sql_location__in=recalculated, domain=domain
+    ).delete()

@@ -611,14 +611,6 @@ CUSTOM_MENU_BAR = StaticToggle(
     namespaces=[NAMESPACE_DOMAIN],
 )
 
-LINK_SUPPLY_POINT = StaticToggle(
-    'link_supply_point',
-    'Add a "Supply Point" tab to location pages.  This is feature flagged '
-    'because this is not a great way to display additional information.',
-    TAG_EXPERIMENTAL,
-    namespaces=[NAMESPACE_DOMAIN],
-)
-
 ICDS_REPORTS = StaticToggle(
     'icds_reports',
     'Enable access to the Tableau dashboard for ICDS',
@@ -700,6 +692,13 @@ TELERIVET_SETUP_WALKTHROUGH = StaticToggle(
     'telerivet_setup_walkthrough',
     'Use the new Telerivet setup walkthrough for creating Telerivet backends.',
     TAG_PRODUCT_PATH,
+    [NAMESPACE_DOMAIN],
+)
+
+ABT_REMINDER_RECIPIENT = StaticToggle(
+    'abt_reminder_recipient',
+    "Ability to send a reminder to the case owner's location's parent location",
+    TAG_ONE_OFF,
     [NAMESPACE_DOMAIN],
 )
 

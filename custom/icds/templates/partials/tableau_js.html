@@ -50,9 +50,12 @@
             addNavigationLink(sheet.getName(), sheet.getIsActive())
         });
 
-        $(".nav-link").click(function (){
+        $(".nav-link").click(function (e){
             var link = $(this);
-            workbook.activateSheetAsync(link[0].textContent);
+            var sheetName = link[0].textContent;
+            var params = history.state.params;
+            switchVisualization(sheetName, workbook, params);
+            e.preventDefault();
         });
 
         viz.addEventListener(tableau.TableauEventName.MARKS_SELECTION, onMarksSelection);
@@ -131,7 +134,7 @@
 
     function getSheetName(pair, sheetName) {
         // Find the sheet we are navigating to
-        if(pair.fieldName === 'js_sheet' || pair.fieldName === 'ATTR(js_sheet)') && pair.formattedValue != 'CURRENT' {
+        if((pair.fieldName === 'js_sheet' || pair.fieldName === 'ATTR(js_sheet)') && pair.formattedValue != 'CURRENT') {
             return pair.formattedValue;
         }
         return sheetName;

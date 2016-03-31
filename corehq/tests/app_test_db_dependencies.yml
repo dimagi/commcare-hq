@@ -206,6 +206,9 @@ corehq.apps.locations:
   - corehq.apps.dropbox
   - touchforms.formplayer
   - corehq.apps.tour
+  - two_factor
+  - django_otp.plugins.otp_static
+  - django_otp.plugins.otp_totp
 corehq.apps.userreports:
   - casexml.apps.case
   - casexml.apps.phone
@@ -304,6 +307,9 @@ corehq.apps.repeaters:
   - couchforms
   - phonelog
   - django_prbac
+  - corehq.form_processor
+  - corehq.sql_accessors
+  - corehq.sql_proxy_accessors
   # unfortunately domain.delete() needs all of these - otherwise they could be removed
   - custom.logistics
   - custom.ilsgateway
@@ -312,6 +318,7 @@ corehq.apps.repeaters:
   - corehq.apps.accounting
   - corehq.apps.smsforms
   - casexml.apps.phone
+  - corehq.apps.reminders
 corehq.sql_db: []
 corehq.apps.accounting:
   - corehq.apps.accounting
@@ -326,6 +333,9 @@ corehq.apps.accounting:
   - auditcare
   - django_digest
   - django.contrib.admin
+  - django_otp.plugins.otp_static
+  - django_otp.plugins.otp_totp
+  - two_factor
   - tastypie
   - corehq.apps.dropbox
   - corehq.apps.tour
@@ -376,6 +386,10 @@ corehq.apps.hqcase:
   - django.contrib.admin
   - django_digest
   - django_prbac
+  - django_otp
+  - django_otp.plugins.otp_static
+  - django_otp.plugins.otp_totp
+  - two_factor
   - tastypie
   - touchforms.formplayer
 corehq.couchapps:

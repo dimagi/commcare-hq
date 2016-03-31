@@ -154,7 +154,11 @@ Exports.ViewModels.ExportColumn = function(columnJSON) {
 };
 
 Exports.ViewModels.ExportColumn.prototype.formatProperty = function() {
-    return this.item.path().join('.');
+    if (this.tags().length !== 0){
+        return this.label();
+    } else {
+        return this.item.path().join('.');
+    }
 };
 
 Exports.ViewModels.ExportColumn.prototype.isDeidSelectVisible = function() {
@@ -195,7 +199,7 @@ Exports.ViewModels.ExportColumn.mapping = {
 
 Exports.ViewModels.ExportItem = function(itemJSON) {
     var self = this;
-    ko.mapping.fromJS(itemJSON, Exports.ViewModels.ExportColumn.mapping, self);
+    ko.mapping.fromJS(itemJSON, Exports.ViewModels.ExportItem.mapping, self);
 };
 
 Exports.ViewModels.ExportItem.prototype.isCaseName = function() {
@@ -204,4 +208,9 @@ Exports.ViewModels.ExportItem.prototype.isCaseName = function() {
 
 Exports.ViewModels.ExportItem.mapping = {
     include: ['path', 'label', 'tag'],
+    path: {
+        create: function(options) {
+            return options.data.name;
+        }
+    }
 };

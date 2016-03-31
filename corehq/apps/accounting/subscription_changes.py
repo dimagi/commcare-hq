@@ -114,7 +114,7 @@ class DomainDowngradeActionHandler(BaseModifySubscriptionActionHandler):
                 survey.save()
         except Exception:
             log_accounting_error(
-                "Failed to downgrade outbound sms for domain %s."
+                "Failed to downgrade inbound sms for domain %s."
                 % domain.name
             )
             return False
