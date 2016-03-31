@@ -69,3 +69,27 @@ have to include
 <script src="{% new_static 'hqwebapp/js/toggles.js' %}"></script>
 <script src="{% new_static 'style/js/bootstrap3/main.js' %}"></script>
 ```
+
+## Remote Method Invocation
+
+We use our own `dimagi/jquery.rmi` library to post ajax calls to methods in Django Views that have been tagged to allow remote method invocation. Each RMI request creates a Promise for handling the server response.
+
+`dimagi/jquery.rmi` was modeled after [Djangular's RMI](http://django-angular.readthedocs.org/en/latest/remote-method-invocation.html)), and currently relies on a portion of that library to handle server responses.
+
+The [README for dimagi/jquery.rmi](http://github.com/dimagi/jquery.rmi) has excellent instructions for usage.
+
+The `notifications` app is a good example resource to study how to use this library:
+
+- `NotificationsServiceRMIView` is an example of the type of view that can accept RMI posts.
+- `NotificationsService.ko.js` is an example of the client-side invocation and handling.
+- `style/bootstrap3/base.html` has a good example for usage of `NotificationsService`.
+```
+<script type="text/javascript" src="{% new_static '/notifications/js/NotificationsService.ko.js' %}"></script>
+<script type="text/javascript">
+    $(function () {
+        $('#js-settingsmenu-notifications').startNotificationsService('{% url 'notifications_service' %}');
+    });
+</script>
+```
+
+NOTE: It is not always the case that the RMI view is a separate view from the one hosting the client-side requests and responses. More often it's the same view, but the current examples are using Angular.js as of this writing.
