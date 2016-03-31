@@ -2,18 +2,29 @@
 Some of these constants correspond to constants set in corehq/apps/export/static/export/js/const.js
 so if changing a value, ensure that both places reflect the change
 """
-from corehq.apps.export.transforms import case_id_to_case_name, \
-    user_id_to_username
+from couchexport.deid import (
+    deid_ID,
+    deid_date
+)
+from corehq.apps.export.transforms import (
+    case_id_to_case_name,
+    user_id_to_username,
+    owner_id_to_display,
+)
 
+DEID_ID_TRANSFORM = "deid_id"
+DEID_DATE_TRANSFORM = "deid_date"
 DEID_TRANSFORM_FUNCTIONS = {
-    'deid_id': lambda x: x,  # TODO: map these to actual deid functions
-    'deid_date': lambda x: x,
+    DEID_ID_TRANSFORM: deid_ID,
+    DEID_DATE_TRANSFORM: deid_date,
 }
 CASE_NAME_TRANSFORM = "case_name_transform"
 USERNAME_TRANSFORM = "username_transform"
+OWNER_ID_TRANSFORM = "owner_id_transform"
 TRANSFORM_FUNCTIONS = {
     CASE_NAME_TRANSFORM: case_id_to_case_name,
     USERNAME_TRANSFORM: user_id_to_username,
+    OWNER_ID_TRANSFORM: owner_id_to_display,
 }
 TRANSFORM_FUNCTIONS.update(DEID_TRANSFORM_FUNCTIONS)
 

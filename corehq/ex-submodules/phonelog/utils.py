@@ -36,7 +36,7 @@ def _get_logs(form, report_name, report_slug):
     report = form.get(report_name, {}) or {}
     if isinstance(report, list):
         return list(_get_log_entries(report, report_slug))
-    return report.get(report_slug, [])
+    return _force_list(report.get(report_slug, []))
 
 
 @transaction.atomic
@@ -51,7 +51,7 @@ def _process_user_subreport(xform):
     UserEntry.objects.filter(xform_id=xform.form_id).delete()
     DeviceReportEntry.objects.filter(xform_id=xform.form_id).delete()
     to_save = []
-    for i, log in enumerate(_force_list(userlogs)):
+    for i, log in enumerate(userlogs):
         to_save.append(UserEntry(
             xform_id=xform.form_id,
             i=i,
@@ -68,7 +68,7 @@ def _process_log_subreport(domain, xform):
     logged_in_username = None
     logged_in_user_id = None
     to_save = []
-    for i, log in enumerate(_force_list(logs)):
+    for i, log in enumerate(logs):
         if not log:
             continue
         if log["type"] == 'login':

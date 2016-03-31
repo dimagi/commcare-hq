@@ -46,7 +46,6 @@ trunk: master
 name: autostaging
 branches:
   - delete-cloudcare-cloudcare-apps  # Danny 3/29
-  - ko3-app-manager  # Danny 3/7
   - flip_apps_db  # Danny 3/1
   - calculatedIcons # Sravan 3/2
   - vellum-staging # J$ 11/13
@@ -71,6 +70,7 @@ branches:
   - certificate-validation # Cal 3/10
   - move-services-dir # Ben 3/15
   - login-b3 # Jenny 3/21
+  - knockout-3-3 # Jenny 3/30
 submodules:
   submodules/touchforms-src:
     # let's leave this here even when empty

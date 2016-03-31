@@ -34,6 +34,7 @@ $(function () {
             raw_fields = self.fields();
             self.original_tag = self.tag();
             self.original_visibility = self.is_global();
+            self.isVisible = ko.observable(true);
         self.fields = ko.observableArray([]);
         makeEditable(self);
         if (!o._id) {
@@ -111,7 +112,7 @@ $(function () {
                         error_message = somethingWentWrong;
                     }
                     $("#FailText").text(error_message);
-                    $("#editFailure").show();
+                    $("#editFailure").removeClass('hide');
                     self.cancel();
                     self.saveState('saved');
                     },
@@ -126,7 +127,7 @@ $(function () {
                             .text('')
                             .append($failMsg)
                             .append($failList);
-                        $("#editFailure").show();
+                        $("#editFailure").removeClass('hide');
                         self.cancel();
                         self.saveState('saved');
                         return;
@@ -147,7 +148,7 @@ $(function () {
                         }
                     }
                     for (var j = 0; j < indicesToRemoveAt.length; j += 1){
-                        var index = indicesToRemoveAt[j]
+                        var index = indicesToRemoveAt[j];
                         self.fields.remove(self.fields()[index]);
                     }
                 }
@@ -159,23 +160,24 @@ $(function () {
             self.tag(self.original_tag);
             self.is_global(self.original_visibility);
             if (!self._id()) {
-                app.data_types.remove(self);
-                return;
-            }
-            for (var i = 0; i < self.fields().length; i += 1) {
-                var field = self.fields()[i];
-                if (field.is_new() == true){
-                    indicesToRemoveAt.push(i);
-                    continue;
+                self.isVisible(false);
+                app.removeBadDataType(self);
+            } else {
+                for (var i = 0; i < self.fields().length; i += 1) {
+                    var field = self.fields()[i];
+                    if (field.is_new() === true){
+                        indicesToRemoveAt.push(i);
+                        continue;
+                    }
+                    field.tag(field.original_tag());
+                    field.remove(false);
                 }
-                field.tag(field.original_tag());
-                field.remove(false);
+                for (var j = 0; j < indicesToRemoveAt.length; j += 1){
+                    var index = indicesToRemoveAt[j];
+                    self.fields.remove(self.fields()[index]);
+                }
             }
-            for (var j = 0; j < indicesToRemoveAt.length; j += 1){
-                var index = indicesToRemoveAt[j]
-                self.fields.remove(self.fields()[index]);
-            }
-        }
+        };
         self.serialize = function () {
             return log({
                 _id: self._id(),
@@ -218,6 +220,15 @@ $(function () {
         self.file = ko.observable();
         self.selectedTables = ko.observableArray([]);
 
+        self.removeBadDataType = function (dataType) {
+            setTimeout(function () {
+                // This needs to be here otherwise if you remove the dataType
+                // directly from the dataType, the DOM freezes and the page
+                // can't scroll.
+                self.data_types.remove(dataType);
+            }, 1000);
+        };
+
         self.updateSelectedTables = function(element, event) {
             var $elem = $(event.srcElement || event.currentTarget);
             var $checkboxes = $(".select-bulk");
@@ -225,13 +236,13 @@ $(function () {
                 self.selectedTables.removeAll();
                 if ($elem.data("all")) {
                     $.each($checkboxes, function() {
-                        $(this).attr("checked", true);
+                        $(this).prop("checked", true);
                         self.selectedTables.push(this.value); 
                     });
                 }
                 else {
                     $.each($checkboxes, function() {
-                        $(this).attr("checked", false);
+                        $(this).removeProp("checked");
                     });
                 }
             }
@@ -276,13 +287,13 @@ $(function () {
             function poll() {
                 if (keep_polling) {
                     $.ajax({
-                        url: response.download_url,
+                        url: response.download_url+"?is_bootstrap3=true",
                         dataType: 'text',
                         success: function (resp) {
                             var progress = $("#download-progress");
                             if (resp.replace(/[ \t\n]/g, '')) {
-                                $("#downloading").hide();
-                                progress.show().html(resp);
+                                $("#downloading").addClass('hide');
+                                progress.removeClass('hide').html(resp);
                                 if (progress.find(".alert-success").length) {
                                     keep_polling = false;
                                 }
@@ -298,12 +309,12 @@ $(function () {
                     });
                 }
             }
-            $("#fixture-download").one("hidden", function() {
+            $("#fixture-download").on("hide.bs.modal", function() {
                 // stop polling if dialog is closed
                 keep_polling = false;
             });
-            $("#download-progress").hide();
-            $("#downloading").show();
+            $("#download-progress").addClass('hide');
+            $("#downloading").removeClass('hide');
             poll();
         };
 
@@ -311,7 +322,7 @@ $(function () {
             var error_message = "Sorry, something went wrong with the download. If you see this repeatedly please report an issue."
             $("#fixture-download").modal("hide");
             $("#FailText").text(error_message);
-            $("#editFailure").show();
+            $("#editFailure").removeClass('hide');
         };
 
         self.addDataType = function () {
@@ -351,15 +362,15 @@ $(function () {
     var el = $('#fixtures-ui');
     var app = new App();
     el.koApplyBindings(app);
-    el.show();
+    el.removeClass('hide');
     app.loadData();
     $('#fixture-upload').koApplyBindings(app);
-    $("#fixture-download").on("hidden", function(){
-                    $("#downloading").show();
-                    $("#download-progress").hide();
-                    $("#download-complete").hide();
+    $("#fixture-download").on("hidden.bs.modal", function(){
+                    $("#downloading").removeClass('hide');
+                    $("#download-progress").addClass('hide');
+                    $("#download-complete").addClass('hide');
     });
-    $('.alert .close').live("click", function(e) {
-        $(this).parent().hide();
+    $('.alert .close').on("click", function(e) {
+        $(this).parent().addClass('hide');
     });
 });

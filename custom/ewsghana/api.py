@@ -133,14 +133,11 @@ class MonthlyReport(DailyReport):
 
 
 class GhanaEndpoint(LogisticsEndpoint):
-    from custom.ilsgateway.api import ProductStock, StockTransaction
     models_map = {
         'product': Product,
         'webuser': EWSUser,
         'smsuser': SMSUser,
         'location': Location,
-        'product_stock': ProductStock,
-        'stock_transaction': StockTransaction,
         'daily_report': DailyReport,
         'weekly_report': WeeklyReport,
         'monthly_report': MonthlyReport,

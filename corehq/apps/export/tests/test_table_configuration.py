@@ -65,7 +65,7 @@ class TableConfigurationTest(SimpleTestCase):
                 PathNode(name='repeat1', is_repeat=True),
                 PathNode(name='DoesNotExist')
             ],
-            None
+            []
         )
         self.assertIsNone(column)
 
@@ -75,6 +75,7 @@ class TableConfigurationTest(SimpleTestCase):
             [USERNAME_TRANSFORM]
         )
         self.assertIsNotNone(column)
+
 
 class TableConfigurationGetSubDocumentsTest(SimpleTestCase):
     def test_basic(self):

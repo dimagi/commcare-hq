@@ -12,8 +12,7 @@ from couchforms.analytics import domain_has_submission_in_last_30_days, \
     app_has_been_submitted_to_in_last_30_days, update_analytics_indexes, \
     get_username_in_last_form_user_id_submitted, get_all_user_ids_submitted, \
     get_all_xmlns_app_id_pairs_submitted_to_in_domain, \
-    get_number_of_submissions, get_form_analytics_metadata, \
-    get_number_of_forms_of_all_types, get_number_of_forms_by_type, get_exports_by_form
+    get_form_analytics_metadata, get_exports_by_form
 from couchforms.models import XFormInstance, XFormError
 from pillowtop.es_utils import completely_initialize_pillow_index
 
@@ -91,30 +90,6 @@ class CouchformsAnalyticsTest(TestCase, DocTestMixin):
         self.assertEqual(
             get_all_xmlns_app_id_pairs_submitted_to_in_domain(self.domain),
             {(self.xmlns, self.app_id)})
-
-    def test_get_number_of_submissions(self):
-        self.assertEqual(
-            get_number_of_submissions(
-                self.domain, self.user_id, self.xmlns, self.app_id,
-                end=self.now, start=self.now - datetime.timedelta(days=100)), 2)
-
-    def test_get_number_of_forms_of_all_types(self):
-        self.assertEqual(
-            get_number_of_forms_of_all_types(self.domain),
-            len(self.all_forms)
-        )
-
-    def test_get_number_of_forms_by_type_xforminstance(self):
-        self.assertEqual(
-            get_number_of_forms_by_type(self.domain, 'XFormInstance'),
-            len(self.forms)
-        )
-
-    def test_get_number_of_forms_by_type_xformerror(self):
-        self.assertEqual(
-            get_number_of_forms_by_type(self.domain, 'XFormError'),
-            len(self.error_forms)
-        )
 
 
 class ExportsFormsAnalyticsTest(TestCase, DocTestMixin):
