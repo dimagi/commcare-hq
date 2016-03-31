@@ -38,20 +38,20 @@ def aggregate_items(items, fn_name):
         COUNT: _count,
     }
 
+    if not isinstance(items, list):
+        return None
+
     assert fn_name in SUPPORTED_UCR_AGGREGATIONS
     aggregation_fn = aggregation_fn_map[fn_name]
     return aggregation_fn(items)
 
 
 def _sum(items):
-    for item in items:
-        if not isinstance(item, (int, long, float)):
-            return None
-
-    return reduce(lambda x, y: x + y, items)
+    try:
+        return sum(items)
+    except TypeError:
+        return None
 
 
 def _count(items):
-    if not isinstance(items, list):
-        return None
     return len(items)
