@@ -1,9 +1,164 @@
 from django.test import SimpleTestCase
 
+from corehq.apps.export.const import USERNAME_TRANSFORM
 from corehq.apps.export.models import TableConfiguration, ExportColumn, \
     ScalarItem, ExportRow
 from corehq.apps.export.models.new import SplitExportColumn, MultipleChoiceItem, \
-    Option
+    Option, DocRow, RowNumberColumn, PathNode
+
+
+class TableConfigurationTest(SimpleTestCase):
+    def test_get_column(self):
+        table_configuration = TableConfiguration(
+            path=[PathNode(name='form', is_repeat=False), PathNode(name="repeat1", is_repeat=True)],
+            columns=[
+                ExportColumn(
+                    item=ScalarItem(
+                        path=[
+                            PathNode(name='form'),
+                            PathNode(name='repeat1', is_repeat=True),
+                            PathNode(name='q1')
+                        ],
+                    )
+                ),
+                ExportColumn(
+                    transforms=[USERNAME_TRANSFORM, "deid_id"],
+                    item=ScalarItem(
+                        path=[
+                            PathNode(name="form"),
+                            PathNode(name="user_id"),
+                        ]
+                    )
+                ),
+                ExportColumn(
+                    item=ScalarItem(
+                        path=[
+                            PathNode(name='form'),
+                            PathNode(name='repeat1', is_repeat=True),
+                            PathNode(name='q2')
+                        ],
+                    )
+                ),
+            ]
+        )
+
+        column = table_configuration.get_column(
+            [
+                PathNode(name='form'),
+                PathNode(name='repeat1', is_repeat=True),
+                PathNode(name='q1')
+            ],
+            []
+        )
+        self.assertEqual(
+            column.item.path,
+            [
+                PathNode(name='form'),
+                PathNode(name='repeat1', is_repeat=True),
+                PathNode(name='q1')
+            ]
+        )
+
+        column = table_configuration.get_column(
+            [
+                PathNode(name='form'),
+                PathNode(name='repeat1', is_repeat=True),
+                PathNode(name='DoesNotExist')
+            ],
+            None
+        )
+        self.assertIsNone(column)
+
+        # Verify that get_column ignores deid transforms
+        column = table_configuration.get_column(
+            [PathNode(name="form"), PathNode(name="user_id")],
+            [USERNAME_TRANSFORM]
+        )
+        self.assertIsNotNone(column)
+
+class TableConfigurationGetSubDocumentsTest(SimpleTestCase):
+    def test_basic(self):
+
+        table = TableConfiguration(path=[])
+        self.assertEqual(
+            table._get_sub_documents(
+                {'foo': 'a'},
+                0
+            ),
+            [
+                DocRow(row=(0,), doc={'foo': 'a'})
+            ]
+        )
+
+    def test_simple_repeat(self):
+        table = TableConfiguration(
+            path=[PathNode(name="foo", is_repeat=True)]
+        )
+        self.assertEqual(
+            table._get_sub_documents(
+                {
+                    'foo': [
+                        {'bar': 'a'},
+                        {'bar': 'b'},
+                    ]
+                },
+                0
+            ),
+            [
+                DocRow(row=(0, 0), doc={'bar': 'a'}),
+                DocRow(row=(0, 1), doc={'bar': 'b'})
+            ]
+        )
+
+    def test_nested_repeat(self):
+        table = TableConfiguration(
+            path=[PathNode(name='foo', is_repeat=True), PathNode(name='bar', is_repeat=True)],
+        )
+        self.assertEqual(
+            table._get_sub_documents(
+                {
+                    'foo': [
+                        {
+                            'bar': [
+                                {'baz': 'a'},
+                                {'baz': 'b'}
+                            ],
+                        },
+                        {
+                            'bar': [
+                                {'baz': 'c'}
+                            ],
+                        },
+                    ],
+                },
+                0
+            ),
+            [
+                DocRow(row=(0, 0, 0), doc={'baz': 'a'}),
+                DocRow(row=(0, 0, 1), doc={'baz': 'b'}),
+                DocRow(row=(0, 1, 0), doc={'baz': 'c'}),
+            ]
+        )
+
+    def test_single_iteration_repeat(self):
+        table = TableConfiguration(
+            path=[PathNode(name='group1', is_repeat=False), PathNode(name='repeat1', is_repeat=True)],
+        )
+        self.assertEqual(
+            table._get_sub_documents(
+                {
+                    'group1': {
+                        'repeat1': {
+                            'baz': 'a'
+                        },
+                    }
+                },
+                0
+            ),
+            [
+                DocRow(row=(0, 0), doc={'baz': 'a'}),
+            ]
+        )
 
 
 class TableConfigurationGetRowsTest(SimpleTestCase):
@@ -14,19 +169,19 @@ class TableConfigurationGetRowsTest(SimpleTestCase):
             columns=[
                 ExportColumn(
                     item=ScalarItem(
-                        path=['form', 'q3'],
+                        path=[PathNode(name='form'), PathNode(name='q3')],
                     ),
                     selected=True,
                 ),
                 ExportColumn(
                     item=ScalarItem(
-                        path=['form', 'q1'],
+                        path=[PathNode(name='form'), PathNode(name='q1')],
                     ),
                     selected=True,
                 ),
                 ExportColumn(
                     item=ScalarItem(
-                        path=['form', 'q2'],
+                        path=[PathNode(name='form'), PathNode(name='q2')],
                     ),
                     selected=False,
                 ),
@@ -40,17 +195,21 @@ class TableConfigurationGetRowsTest(SimpleTestCase):
             }
         }
         self.assertEqual(
-            [row.data for row in table_configuration.get_rows(submission)],
+            [row.data for row in table_configuration.get_rows(submission, 0)],
             [['baz', 'foo']]
         )
 
     def test_repeat(self):
         table_configuration = TableConfiguration(
-            path=['form', 'repeat1'],
+            path=[PathNode(name="form", is_repeat=False), PathNode(name="repeat1", is_repeat=True)],
             columns=[
                 ExportColumn(
                     item=ScalarItem(
-                        path=['form', 'repeat1', 'q1'],
+                        path=[
+                            PathNode(name="form"),
+                            PathNode(name="repeat1", is_repeat=True),
+                            PathNode(name="q1")
+                        ],
                     ),
                     selected=True,
                 ),
@@ -65,17 +224,31 @@ class TableConfigurationGetRowsTest(SimpleTestCase):
             }
         }
         self.assertEqual(
-            [row.data for row in table_configuration.get_rows(submission)],
+            [row.data for row in table_configuration.get_rows(submission, 0)],
             [ExportRow(['foo']).data, ExportRow(['bar']).data]
         )
 
     def test_double_repeat(self):
         table_configuration = TableConfiguration(
-            path=['form', 'repeat1', 'group1', 'repeat2'],
+            path=[
+                PathNode(name="form", is_repeat=False),
+                PathNode(name="repeat1", is_repeat=True),
+                PathNode(name="group1", is_repeat=False),
+                PathNode(name="repeat2", is_repeat=True),
+            ],
             columns=[
+                RowNumberColumn(
+                    selected=True
+                ),
                 ExportColumn(
                     item=ScalarItem(
-                        path=['form', 'repeat1', 'group1', 'repeat2', 'q1'],
+                        path=[
+                            PathNode(name='form'),
+                            PathNode(name='repeat1', is_repeat=True),
+                            PathNode(name='group1'),
+                            PathNode(name='repeat2', is_repeat=True),
+                            PathNode(name='q1')
+                        ],
                     ),
                     selected=True,
                 ),
@@ -104,8 +277,13 @@ class TableConfigurationGetRowsTest(SimpleTestCase):
             }
         }
         self.assertEqual(
-            [row.data for row in table_configuration.get_rows(submission)],
-            [['foo'], ['bar'], ['beep'], ['boop']]
+            [row.data for row in table_configuration.get_rows(submission, 0)],
+            [
+                ["0.0.0", 0, 0, 0, 'foo'],
+                ["0.0.1", 0, 0, 1, 'bar'],
+                ["0.1.0", 0, 1, 0, 'beep'],
+                ["0.1.1", 0, 1, 1, 'boop']
+            ]
         )
 
 
@@ -114,24 +292,24 @@ class SplitColumnTest(SimpleTestCase):
     def test_get_value(self):
         column = SplitExportColumn(
             item=MultipleChoiceItem(
-                path=['form', 'q1'],
+                path=[PathNode(name='form'), PathNode(name='q1')],
                 options=[Option(value='a'), Option(value='c')]
             ),
             ignore_unspecified_options=False
         )
         doc = {"q1": "a b d"}
-        self.assertEqual(column.get_value(doc, ['form']), [1, None, "b d"])
+        self.assertEqual(column.get_value(doc, [PathNode(name='form')]), [1, None, "b d"])
 
     def test_ignore_extas(self):
         column = SplitExportColumn(
             item=MultipleChoiceItem(
-                path=['form', 'q1'],
+                path=[PathNode(name='form'), PathNode(name='q1')],
                 options=[Option(value='a'), Option(value='c')]
             ),
             ignore_unspecified_options=True
         )
         doc = {"q1": "a b d"}
-        self.assertEqual(column.get_value(doc, ["form"]), [1, None])
+        self.assertEqual(column.get_value(doc, [PathNode(name="form")]), [1, None])
 
     def test_basic_get_headers(self):
         column = SplitExportColumn(
@@ -162,26 +340,3 @@ class SplitColumnTest(SimpleTestCase):
             ignore_unspecified_options=False
         )
         self.assertEqual(column.get_headers(), ["Fruit - Apple", "Fruit - Banana", "Fruit - extra"])
-
-    def test_get_column(self):
-        table_configuration = TableConfiguration(
-            path=['form', 'repeat1'],
-            columns=[
-                ExportColumn(
-                    item=ScalarItem(
-                        path=['form', 'repeat1', 'q1'],
-                    )
-                ),
-                ExportColumn(
-                    item=ScalarItem(
-                        path=['form', 'repeat1', 'q2'],
-                    )
-                ),
-            ]
-        )
-
-        column = table_configuration.get_column(['form', 'repeat1', 'q1'])
-        self.assertEqual(column.item.path, ['form', 'repeat1', 'q1'])
-
-        column = table_configuration.get_column(['form', 'repeat1', 'DoesNotExist'])
-        self.assertIsNone(column)

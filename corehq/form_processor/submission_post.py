@@ -133,7 +133,14 @@ class SubmissionPost(object):
         with result.get_locked_forms() as xforms:
             instance = xforms[0]
             if instance.xmlns == DEVICE_LOG_XMLNS:
-                process_device_log(self.domain, instance)
+                try:
+                    process_device_log(self.domain, instance)
+                except Exception:
+                    notify_exception(None, "Error processing device log", details={
+                        'xml': self.instance,
+                        'domain': self.domain
+                    })
+                    raise
 
             elif instance.is_duplicate:
                 self.formdb.save_new_form(instance)

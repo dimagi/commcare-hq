@@ -9,7 +9,7 @@ class PillowConfigTest(SimpleTestCase):
         config = get_pillow_config_from_setting('my-section', class_name)
         self.assertEqual('my-section', config.section)
         self.assertEqual(class_name, config.class_name)
-        self.assertEqual(class_name, config.instance_generator)
+        self.assertEqual(None, config.instance_generator)
 
     def test_from_dict(self):
         pillow_config = {

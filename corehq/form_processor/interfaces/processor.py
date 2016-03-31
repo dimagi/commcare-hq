@@ -75,6 +75,16 @@ class FormProcessorInterface(object):
         else:
             return LedgerProcessorCouch(domain=self.domain)
 
+    @property
+    @memoized
+    def ledger_db(self):
+        from corehq.form_processor.backends.couch.ledger import LedgerDBCouch
+        from corehq.form_processor.backends.sql.ledger import LedgerDBSQL
+        if should_use_sql_backend(self.domain):
+            return LedgerDBSQL()
+        else:
+            return LedgerDBCouch()
+
     def save_xform(self, xform):
         return self.processor.save_xform(xform)
 

@@ -22,7 +22,6 @@ from corehq.apps.app_manager.views.utils import back_to_main, get_langs, \
 from corehq import toggles, privileges
 from corehq.apps.app_manager.forms import CopyApplicationForm
 from corehq.apps.app_manager import id_strings
-from corehq.apps.hqwebapp.models import ApplicationsTab
 from corehq.apps.hqwebapp.templatetags.hq_shared_tags import toggle_enabled
 from corehq.apps.hqwebapp.utils import get_bulk_upload_form
 from corehq.apps.tour import tours
@@ -37,6 +36,7 @@ from corehq.apps.app_manager.util import (
     get_settings_values,
 )
 from corehq.apps.domain.models import Domain
+from corehq.tabs.tabclasses import ApplicationsTab
 from corehq.util.compression import decompress
 from corehq.apps.app_manager.xform import (
     XFormException, XForm)
@@ -258,7 +258,7 @@ def get_apps_base_context(request, domain, app):
             'show_advanced': (
                 v2_app
                 and (
-                    toggles.APP_BUILDER_ADVANCED.enabled(request.user.username)
+                    toggles.APP_BUILDER_ADVANCED.enabled(domain)
                     or getattr(app, 'commtrack_enabled', False)
                 )
             ),

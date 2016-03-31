@@ -28,12 +28,12 @@ from django.contrib.auth.models import User
 from corehq.apps.hqwebapp.templatetags.hq_shared_tags import toggle_js_domain_cachebuster
 
 from corehq.const import USER_DATE_FORMAT
+from corehq.tabs.tabclasses import ProjectSettingsTab
 from custom.dhis2.forms import Dhis2SettingsForm
 from custom.dhis2.models import Dhis2Settings
 from corehq.apps.accounting.async_handlers import Select2BillingInfoHandler
 from corehq.apps.accounting.invoicing import DomainWireInvoiceFactory
 from corehq.apps.hqwebapp.tasks import send_mail_async
-from corehq.apps.hqwebapp.models import ProjectSettingsTab
 from corehq.apps.style.decorators import (
     use_bootstrap3,
     use_jquery_ui,
@@ -81,7 +81,6 @@ from corehq.apps.accounting.user_text import (
     DESC_BY_EDITION,
     get_feature_recurring_interval,
 )
-from corehq.apps.hqwebapp.models import ProjectSettingsTab
 from corehq.apps.domain.calculations import CALCS, CALC_FNS, CALC_ORDER, dom_calc
 from corehq.apps.domain.decorators import (
     domain_admin_required, login_required, require_superuser, login_and_domain_required
@@ -1375,6 +1374,7 @@ class EditPrivacySecurityView(BaseAdminProjectSettingsView):
             "allow_domain_requests": self.domain_object.allow_domain_requests,
             "hipaa_compliant": self.domain_object.hipaa_compliant,
             "secure_sessions": self.domain_object.secure_sessions,
+            "two_factor_auth": self.domain_object.two_factor_auth,
         }
         if self.request.method == 'POST':
             return PrivacySecurityForm(self.request.POST, initial=initial,
@@ -2188,6 +2188,7 @@ class DomainForwardingRepeatRecords(GenericTabularReport):
             lambda record: [
                 self._make_state_label(record),
                 record.url if record.url else _(u'Unable to generate url for record'),
+                self._format_date(record.last_checked) if record.last_checked else None,
                 self._format_date(record.next_check) if record.next_check else None,
                 record.failure_reason if not record.succeeded else None,
                 self._make_view_payload_button(record.get_id),
@@ -2199,12 +2200,13 @@ class DomainForwardingRepeatRecords(GenericTabularReport):
     @property
     def headers(self):
         return DataTablesHeader(
-            DataTablesColumn('Status'),
-            DataTablesColumn('URL'),
-            DataTablesColumn('Retry Date'),
-            DataTablesColumn('Failure Reason'),
-            DataTablesColumn('View payload'),
-            DataTablesColumn('Resend'),
+            DataTablesColumn(_('Status')),
+            DataTablesColumn(_('URL')),
+            DataTablesColumn(_('Last sent date')),
+            DataTablesColumn(_('Retry Date')),
+            DataTablesColumn(_('Failure Reason')),
+            DataTablesColumn(_('View payload')),
+            DataTablesColumn(_('Resend')),
         )
 
 

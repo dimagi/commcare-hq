@@ -249,8 +249,7 @@ var COMMCAREHQ = (function () {
             $('select[data-value]', $elem).each(function () {
                 var val = $(this).attr('data-value');
                 if (val) {
-                    $(this).find('option').removeAttr('selected');
-                    $(this).find('option[value="' + val + '"]').attr('selected', 'true');
+                    $(this).val(val);
                 }
             });
 

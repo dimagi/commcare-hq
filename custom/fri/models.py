@@ -60,7 +60,3 @@ class FRISMSLog(SMSLog):
     fri_message_bank_message_id = StringProperty()
     fri_id = StringProperty()
     fri_risk_profile = StringProperty(choices=PROFILES)
-
-    @classmethod
-    def _migration_get_fields(cls):
-        return SMS._migration_get_fields()

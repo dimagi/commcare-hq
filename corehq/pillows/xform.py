@@ -7,6 +7,7 @@ from corehq.elastic import get_es_new
 from corehq.form_processor.backends.sql.dbaccessors import doc_type_to_state
 from corehq.form_processor.change_providers import SqlFormChangeProvider
 from corehq.pillows.mappings.xform_mapping import XFORM_MAPPING, XFORM_INDEX
+from corehq.pillows.utils import get_user_type
 from .base import HQPillow
 from couchforms.const import RESERVED_WORDS
 from couchforms.models import XFormInstance
@@ -88,6 +89,12 @@ def transform_xform_for_elasticsearch(doc_dict, include_props=True):
             if isinstance(doc_ret['form']['meta'].get('appVersion'), dict):
                 doc_ret['form']['meta']['appVersion'] = doc_ret['form']['meta']['appVersion'].get('#text')
 
+        try:
+            user_id = doc_ret['form']['meta']['userID']
+        except KeyError:
+            user_id = None
+        doc_ret['user_type'] = get_user_type(user_id)
+
         case_blocks = extract_case_blocks(doc_ret)
         for case_dict in case_blocks:
             for date_modified_key in ['date_modified', '@date_modified']:
@@ -122,7 +129,7 @@ def _get_doc_type_from_state(state):
     return {v: k for k, v in doc_type_to_state.items()}.get(state, 'XFormInstance')
 
 
-def get_sql_xform_to_elasticsearch_pillow():
+def get_sql_xform_to_elasticsearch_pillow(pillow_id='SqlXFormToElasticsearchPillow'):
     checkpoint = PillowCheckpoint(
         'sql-xforms-to-elasticsearch',
     )
@@ -132,7 +139,7 @@ def get_sql_xform_to_elasticsearch_pillow():
         doc_prep_fn=prepare_sql_form_json_for_elasticsearch
     )
     return ConstructedPillow(
-        name='SqlXFormToElasticsearchPillow',
+        name=pillow_id,
         document_store=None,
         checkpoint=checkpoint,
         change_feed=KafkaChangeFeed(topics=[topics.FORM_SQL], group_id='sql-forms-to-es'),

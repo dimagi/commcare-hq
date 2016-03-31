@@ -86,6 +86,8 @@ class IteratorJSONReader(object):
 
             if field not in obj:
                 obj[field] = []
+            elif not isinstance(obj[field], list):
+                obj[field] = [obj[field]]
             if value not in (None, ''):
                 obj[field].append(value)
             return
