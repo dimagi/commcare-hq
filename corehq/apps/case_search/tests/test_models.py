@@ -1,5 +1,4 @@
-from corehq.apps.case_search.api import disable_case_search, enable_case_search
-from corehq.apps.case_search.models import CaseSearchConfig
+from corehq.apps.case_search.models import CaseSearchConfig, disable_case_search, enable_case_search
 from django.test import TestCase
 from mock import call, patch
 
