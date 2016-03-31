@@ -28,7 +28,10 @@ from corehq.apps.app_manager.fields import ApplicationDataRMIHelper
 from corehq.apps.data_interfaces.dispatcher import require_can_edit_data
 from corehq.apps.domain.decorators import login_and_domain_required, \
     login_or_digest_or_basic_or_apikey
-from corehq.apps.export.utils import convert_saved_export_to_export_instance
+from corehq.apps.export.utils import (
+    convert_saved_export_to_export_instance,
+    revert_new_exports,
+)
 from corehq.apps.export.custom_export_helpers import make_custom_export_helper
 from corehq.apps.export.exceptions import (
     ExportNotFound,
@@ -82,6 +85,7 @@ from corehq.apps.users.permissions import FORM_EXPORT_PERMISSION, CASE_EXPORT_PE
     DEID_EXPORT_PERMISSION
 from corehq.util.couch import get_document_or_404_lite
 from corehq.util.timezones.utils import get_timezone_for_user
+from corehq.util.soft_assert import soft_assert
 from couchexport.models import SavedExportSchema, ExportSchema
 from couchexport.schema import build_latest_schema
 from couchexport.util import SerializableFunction
@@ -1190,7 +1194,10 @@ class FormExportListView(BaseExportListView):
     def get_saved_exports(self):
         exports = FormExportSchema.get_stale_exports(self.domain)
         new_exports = get_form_export_instances(self.domain)
-        exports += new_exports
+        if toggles.NEW_EXPORTS.enabled(self.domain):
+            exports += new_exports
+        else:
+            exports += revert_new_exports(new_exports)
         if not self.has_deid_view_permissions:
             exports = filter(lambda x: not x.is_safe, exports)
         return sorted(exports, key=lambda x: x.name)
@@ -1313,7 +1320,10 @@ class CaseExportListView(BaseExportListView):
     def get_saved_exports(self):
         exports = CaseExportSchema.get_stale_exports(self.domain)
         new_exports = get_case_export_instances(self.domain)
-        exports += new_exports
+        if toggles.NEW_EXPORTS.enabled(self.domain):
+            exports += new_exports
+        else:
+            exports += revert_new_exports(new_exports)
         if not self.has_deid_view_permissions:
             exports = filter(lambda x: not x.is_safe, exports)
         return sorted(exports, key=lambda x: x.name)
@@ -1494,8 +1504,19 @@ class BaseEditNewCustomExportView(BaseModifyNewCustomView):
                 )
 
                 export_instance = convert_saved_export_to_export_instance(export_helper.custom_export)
+
             except ResourceNotFound:
                 raise Http404()
+            except Exception, e:
+                _soft_assert = soft_assert('{}@{}'.format('brudolph', 'dimagi.com'))
+                _soft_assert(False, 'Failed to convert export {}. {}'.format(self.export_id, e))
+                messages.error(
+                    request,
+                    mark_safe(
+                        _("Export failed to convert to new version. Try creating another export")
+                    )
+                )
+                return HttpResponseRedirect(self.export_home_url)
 
         schema = self.get_export_schema(export_instance)
         self.export_instance = self.export_instance_cls.generate_instance_from_schema(
