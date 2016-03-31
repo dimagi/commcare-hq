@@ -1,7 +1,6 @@
 {
   "domains": [
-    "airs-testing",
-    "airsbenin"
+    "airs-testing"
   ],
   "config": {
     "engine_id": "default",
@@ -27,7 +26,7 @@
         "expression": {
           "value_expression": {
             "type": "property_path",
-            "property_name": [
+            "property_path": [
               "user_data",
               "country"
             ]
@@ -36,7 +35,7 @@
           "related_doc_type": "CommCareUser",
           "doc_id_expression": {
             "type": "property_name",
-            "property_path": "owner_id"
+            "property_name": "owner_id"
           }
         }
       },
@@ -51,7 +50,7 @@
         "expression": {
           "value_expression": {
             "type": "property_path",
-            "property_name": [
+            "property_path": [
               "user_data",
               "level_1_name"
             ]
@@ -60,7 +59,7 @@
           "related_doc_type": "CommCareUser",
           "doc_id_expression": {
             "type": "property_name",
-            "property_path": "owner_id"
+            "property_name": "owner_id"
           }
         }
       },
@@ -75,7 +74,7 @@
         "expression": {
           "value_expression": {
             "type": "property_path",
-            "property_name": [
+            "property_path": [
               "user_data",
               "level_2_name"
             ]
@@ -84,7 +83,7 @@
           "related_doc_type": "CommCareUser",
           "doc_id_expression": {
             "type": "property_name",
-            "property_path": "owner_id"
+            "property_name": "owner_id"
           }
         }
       },
@@ -99,7 +98,7 @@
         "expression": {
           "value_expression": {
             "type": "property_path",
-            "property_name": [
+            "property_path": [
               "user_data",
               "level_3_name"
             ]
@@ -108,7 +107,7 @@
           "related_doc_type": "CommCareUser",
           "doc_id_expression": {
             "type": "property_name",
-            "property_path": "owner_id"
+            "property_name": "owner_id"
           }
         }
       },
@@ -123,7 +122,7 @@
         "expression": {
           "value_expression": {
             "type": "property_path",
-            "property_name": [
+            "property_path": [
               "user_data",
               "level_4_name"
             ]
@@ -132,7 +131,7 @@
           "related_doc_type": "CommCareUser",
           "doc_id_expression": {
             "type": "property_name",
-            "property_path": "owner_id"
+            "property_name": "owner_id"
           }
         }
       },
@@ -147,7 +146,7 @@
         "expression": {
           "value_expression": {
             "type": "property_path",
-            "property_name": [
+            "property_path": [
               "user_data",
               "worker_code"
             ]
@@ -156,7 +155,7 @@
           "related_doc_type": "CommCareUser",
           "doc_id_expression": {
             "type": "property_name",
-            "property_path": "owner_id"
+            "property_name": "owner_id"
           }
         }
       },
@@ -279,7 +278,7 @@
               "switch_on": {
                 "value_expression": {
                   "type": "property_path",
-                  "property_name": [
+                  "property_path": [
                     "user_data",
                     "level_1_name"
                   ]
@@ -288,7 +287,7 @@
                 "related_doc_type": "CommCareUser",
                 "doc_id_expression": {
                   "type": "property_name",
-                  "property_path": "owner_id"
+                  "property_name": "owner_id"
                 }
               }
             },
@@ -302,7 +301,7 @@
               "switch_on": {
                 "value_expression": {
                   "type": "property_path",
-                  "property_name": [
+                  "property_path": [
                     "user_data",
                     "level_1_name"
                   ]
@@ -311,7 +310,7 @@
                 "related_doc_type": "CommCareUser",
                 "doc_id_expression": {
                   "type": "property_name",
-                  "property_path": "owner_id"
+                  "property_name": "owner_id"
                 }
               }
             },
@@ -328,7 +327,7 @@
               "switch_on": {
                 "value_expression": {
                   "type": "property_path",
-                  "property_name": [
+                  "property_path": [
                     "user_data",
                     "level_1_data"
                   ]
@@ -337,7 +336,7 @@
                 "related_doc_type": "CommCareUser",
                 "doc_id_expression": {
                   "type": "property_name",
-                  "property_path": "owner_id"
+                  "property_name": "owner_id"
                 }
               }
             },
@@ -360,7 +359,7 @@
               "switch_on": {
                 "value_expression": {
                   "type": "property_path",
-                  "property_name": [
+                  "property_path": [
                     "user_data",
                     "level_1_name"
                   ]
@@ -369,7 +368,7 @@
                 "related_doc_type": "CommCareUser",
                 "doc_id_expression": {
                   "type": "property_name",
-                  "property_path": "owner_id"
+                  "property_name": "owner_id"
                 }
               }
             }
@@ -378,7 +377,7 @@
           "switch_on": {
             "value_expression": {
               "type": "property_path",
-              "property_name": [
+              "property_path": [
                 "user_data",
                 "country"
               ]
@@ -387,7 +386,7 @@
             "related_doc_type": "CommCareUser",
             "doc_id_expression": {
               "type": "property_name",
-              "property_path": "owner_id"
+              "property_name": "owner_id"
             }
           }
         },
@@ -412,7 +411,7 @@
               "switch_on": {
                 "value_expression": {
                   "type": "property_path",
-                  "property_name": [
+                  "property_path": [
                     "user_data",
                     "level_2_name"
                   ]
@@ -421,7 +420,7 @@
                 "related_doc_type": "CommCareUser",
                 "doc_id_expression": {
                   "type": "property_name",
-                  "property_path": "owner_id"
+                  "property_name": "owner_id"
                 }
               }
             },
@@ -456,7 +455,7 @@
               "switch_on": {
                 "value_expression": {
                   "type": "property_path",
-                  "property_name": [
+                  "property_path": [
                     "user_data",
                     "level_2_name"
                   ]
@@ -465,7 +464,7 @@
                 "related_doc_type": "CommCareUser",
                 "doc_id_expression": {
                   "type": "property_name",
-                  "property_path": "owner_id"
+                  "property_name": "owner_id"
                 }
               }
             },
@@ -516,7 +515,7 @@
               "switch_on": {
                 "value_expression": {
                   "type": "property_path",
-                  "property_name": [
+                  "property_path": [
                     "user_data",
                     "level_2_data"
                   ]
@@ -525,7 +524,7 @@
                 "related_doc_type": "CommCareUser",
                 "doc_id_expression": {
                   "type": "property_name",
-                  "property_path": "owner_id"
+                  "property_name": "owner_id"
                 }
               }
             },
@@ -539,7 +538,7 @@
               "switch_on": {
                 "value_expression": {
                   "type": "property_path",
-                  "property_name": [
+                  "property_path": [
                     "user_data",
                     "level_2_data"
                   ]
@@ -548,7 +547,7 @@
                 "related_doc_type": "CommCareUser",
                 "doc_id_expression": {
                   "type": "property_name",
-                  "property_path": "owner_id"
+                  "property_name": "owner_id"
                 }
               }
             },
@@ -579,7 +578,7 @@
               "switch_on": {
                 "value_expression": {
                   "type": "property_path",
-                  "property_name": [
+                  "property_path": [
                     "user_data",
                     "level_2_name"
                   ]
@@ -588,7 +587,7 @@
                 "related_doc_type": "CommCareUser",
                 "doc_id_expression": {
                   "type": "property_name",
-                  "property_path": "owner_id"
+                  "property_name": "owner_id"
                 }
               }
             }
@@ -597,7 +596,7 @@
           "switch_on": {
             "value_expression": {
               "type": "property_path",
-              "property_name": [
+              "property_path": [
                 "user_data",
                 "country"
               ]
@@ -606,7 +605,7 @@
             "related_doc_type": "CommCareUser",
             "doc_id_expression": {
               "type": "property_name",
-              "property_path": "owner_id"
+              "property_name": "owner_id"
             }
           }
         },
@@ -636,7 +635,7 @@
               "switch_on": {
                 "value_expression": {
                   "type": "property_path",
-                  "property_name": [
+                  "property_path": [
                     "user_data",
                     "level_3_name"
                   ]
@@ -645,7 +644,7 @@
                 "related_doc_type": "CommCareUser",
                 "doc_id_expression": {
                   "type": "property_name",
-                  "property_path": "owner_id"
+                  "property_name": "owner_id"
                 }
               }
             },
@@ -693,7 +692,7 @@
               "switch_on": {
                 "value_expression": {
                   "type": "property_path",
-                  "property_name": [
+                  "property_path": [
                     "user_data",
                     "level_3_name"
                   ]
@@ -702,7 +701,7 @@
                 "related_doc_type": "CommCareUser",
                 "doc_id_expression": {
                   "type": "property_name",
-                  "property_path": "owner_id"
+                  "property_name": "owner_id"
                 }
               }
             },
@@ -778,7 +777,7 @@
               "switch_on": {
                 "value_expression": {
                   "type": "property_path",
-                  "property_name": [
+                  "property_path": [
                     "user_data",
                     "level_3_name"
                   ]
@@ -787,7 +786,7 @@
                 "related_doc_type": "CommCareUser",
                 "doc_id_expression": {
                   "type": "property_name",
-                  "property_path": "owner_id"
+                  "property_name": "owner_id"
                 }
               }
             },
@@ -832,7 +831,7 @@
                   "switch_on": {
                     "value_expression": {
                       "type": "property_path",
-                      "property_name": [
+                      "property_path": [
                         "user_data",
                         "level_2_name"
                       ]
@@ -841,7 +840,7 @@
                     "related_doc_type": "CommCareUser",
                     "doc_id_expression": {
                       "type": "property_name",
-                      "property_path": "owner_id"
+                      "property_name": "owner_id"
                     }
                   }
                 },
@@ -930,7 +929,7 @@
               "switch_on": {
                 "value_expression": {
                   "type": "property_path",
-                  "property_name": [
+                  "property_path": [
                     "user_data",
                     "level_3_name"
                   ]
@@ -939,7 +938,7 @@
                 "related_doc_type": "CommCareUser",
                 "doc_id_expression": {
                   "type": "property_name",
-                  "property_path": "owner_id"
+                  "property_name": "owner_id"
                 }
               }
             }
@@ -948,7 +947,7 @@
           "switch_on": {
             "value_expression": {
               "type": "property_path",
-              "property_name": [
+              "property_path": [
                 "user_data",
                 "country"
               ]
@@ -957,7 +956,7 @@
             "related_doc_type": "CommCareUser",
             "doc_id_expression": {
               "type": "property_name",
-              "property_path": "owner_id"
+              "property_name": "owner_id"
             }
           }
         },
@@ -985,7 +984,7 @@
           "switch_on": {
             "value_expression": {
               "type": "property_path",
-              "property_name": [
+              "property_path": [
                 "user_data",
                 "country"
               ]
@@ -994,7 +993,7 @@
             "related_doc_type": "CommCareUser",
             "doc_id_expression": {
               "type": "property_name",
-              "property_path": "owner_id"
+              "property_name": "owner_id"
             }
           }
         },
