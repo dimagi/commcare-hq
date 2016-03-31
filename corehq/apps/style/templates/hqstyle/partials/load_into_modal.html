@@ -1,6 +1,6 @@
 <script type="text/javascript">
     $(function() {
-        $("#{{ modal_id }}").on("show", function() {
+        $("#{{ modal_id }}").on("show show.bs.modal", function() {
             $(this).find(".modal-body").load("{{ load_from }}");
         });
     });
