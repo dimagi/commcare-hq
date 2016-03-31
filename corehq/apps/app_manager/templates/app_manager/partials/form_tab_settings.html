@@ -19,9 +19,8 @@
                       data-content="{% blocktrans %}Comments to document or explain this form for other app builders or maintainers.{% endblocktrans %}"
                 ></span>
             </label>
-            <div id="form-comment" class="col-sm-4">
-                <inline-edit params="name: 'comment', value: '{{ form.comment|escapejs }}'">
-                </inline-edit>
+            <div id="form-comment" class="col-sm-4" for="comment-id">
+                <inline-edit params="name: 'comment', id:'comment-id', value: '{{ form.comment|escapejs }}'"></inline-edit>
             </div>
         </div>
 
