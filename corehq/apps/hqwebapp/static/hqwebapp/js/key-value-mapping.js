@@ -96,7 +96,7 @@ function MapList(o) {
                 return {lang: lang, value: backup()};
             }
         }
-        return {lang: null, value: null};
+        return {lang: null, value: 'icon path'};
     };
     self.removeItem = function (item) {
         self.items.remove(item);

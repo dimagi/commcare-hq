@@ -113,7 +113,9 @@
                           attr: {placeholder: $parents[1].backup($parent.value()).value}">
     </div>
     <div class="col-sm-2" id="$parent.cssId()">
-        <button type="button" class="btn btn-default" data-toggle="modal" data-target="#hqimage" data-bind="attr: { 'data-hqmediapath': currentPath },
+        <button type="button" class="btn btn-default" data-toggle="modal" data-target="#hqimage" data-bind="
+                           enable: customPath,
+                           attr: { 'data-hqmediapath': currentPath },
                            event: {
                                 mediaUploadComplete: uploadComplete,
                                 click: passToUploadController
