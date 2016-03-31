@@ -17,10 +17,10 @@ hqdb0-staging.internal.commcarehq.org
 hqdb0-staging.internal.commcarehq.org
 
 [zookeeper]
-hqdjango2-staging.internal.commcarehq.org
+hqkafka0-staging.internal.commcarehq.org
 
 [kafka]
-hqdjango2-staging.internal.commcarehq.org kafka_broker_id=0
+hqkafka0-staging.internal.commcarehq.org kafka_broker_id=1
 
 [celery]
 hqdb0-staging.internal.commcarehq.org
