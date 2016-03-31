@@ -78,3 +78,14 @@ class TestRenewSubscriptions(BaseAccountingTest):
 
         self.assertIsNone(self.subscription.next_subscription)
         self.assertFalse(self.subscription.is_renewed)
+
+    def test_next_subscription_filter_no_end_date(self):
+        next_subscription = Subscription(
+            account=self.subscription.account,
+            plan_version=self.subscription.plan_version,
+            subscriber=self.subscription.subscriber,
+            date_start=self.subscription.date_end,
+            date_end=None,
+        )
+        next_subscription.save()
+        self.assertEqual(next_subscription, self.subscription.next_subscription)
