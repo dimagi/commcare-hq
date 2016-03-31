@@ -558,8 +558,13 @@ def update_form_translations(sheet, rows, missing_cols, app):
         return text_node_.find("./{f}value[@form='markdown']")
 
     def get_value_node(text_node_):
-        return next(n for n in text_node_.findall("./{f}value")
-                    if 'form' not in n.attrib or n.get('form') == 'default')
+        try:
+            return next(
+                n for n in text_node_.findall("./{f}value")
+                if 'form' not in n.attrib or n.get('form') == 'default'
+            )
+        except StopIteration:
+            return WrappedNode(None)
 
     def had_markdown(text_node_):
         """
@@ -575,6 +580,8 @@ def update_form_translations(sheet, rows, missing_cols, app):
         builder that the value isn't Markdown.
         """
         value_node_ = get_value_node(text_node_)
+        if not value_node_.exists():
+            return False
         old_trans = etree.tostring(value_node_.xml, method="text", encoding="unicode").strip()
         return _looks_like_markdown(old_trans) and not had_markdown(text_node_)
 

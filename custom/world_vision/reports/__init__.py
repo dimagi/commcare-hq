@@ -2,7 +2,6 @@ import datetime
 from corehq.apps.reports.graph_models import MultiBarChart, Axis, PieChart
 from corehq.apps.reports.sqlreport import calculate_total_row
 from corehq.apps.reports.standard import ProjectReportParametersMixin, CustomProjectReport
-from corehq.apps.style.decorators import use_nvd3_v3
 from custom.world_vision.sqldata import LOCATION_HIERARCHY
 from custom.world_vision.sqldata.child_sqldata import NutritionBirthWeightDetails,  ChildrenDeathsByMonth
 from custom.world_vision.sqldata.main_sqldata import ImmunizationOverview
@@ -19,11 +18,6 @@ class TTCReport(ProjectReportParametersMixin, CustomProjectReport):
     flush_layout = True
     export_format_override = 'csv'
     printable = True
-    is_bootstrap3 = True
-
-    @use_nvd3_v3
-    def bootstrap3_dispatcher(self, request, *args, **kwargs):
-        super(TTCReport, self).bootstrap3_dispatcher(request, *args, **kwargs)
 
     @property
     @memoized

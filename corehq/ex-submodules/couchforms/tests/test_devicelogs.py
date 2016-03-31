@@ -89,6 +89,25 @@ class TestDeviceLogUtils(SimpleTestCase, TestFileMixin):
               u'type': u'user'}]
         )
 
+    def test_single_entry(self):
+        form_data = convert_xform_to_json(self.get_xml('single_entry'))
+        self.assertEqual(
+            _get_logs(form_data, 'user_error_subreport', 'user_error'),
+            [{"session": "frame: (COMMAND_ID m1)",
+              "user_id": "65t2l8ga654k93z92j236e2h30jt048b",
+              "expr": "",
+              "app_id": "skj94l95tw0k6v8esdj9s2g4chfpup83",
+              "version": "89",
+              "msg": ("XPath evaluation: type mismatch It looks like this "
+                      "question contains a reference to path number which "
+                      "evaluated to instance(item-list:numbers)/numbers_list"
+                      "/numbers[1]/number which was not found. This often "
+                      "means you forgot to include the full path to the "
+                      "question -- e.g. /data/[node]"),
+              "@date": "2016-03-23T12:27:33.681-04",
+              "type": "error-config"}]
+        )
+
     def test_multiple_nodes(self):
         form_data = convert_xform_to_json(self.get_xml('multiple_nodes'))
         self.assertEqual(

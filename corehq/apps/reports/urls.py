@@ -22,7 +22,13 @@ from corehq.apps.userreports.views import (
     ReportBuilderTypeSelect,
 )
 from .filters import urls as filter_urls
-from .views import EditFormInstance, AddSavedReportConfigView
+from .views import (
+    EditFormInstance,
+    AddSavedReportConfigView,
+    FormDataView,
+    CaseDetailsView,
+    CaseAttachmentsView,
+)
 
 
 custom_report_urls = patterns('',
@@ -46,9 +52,10 @@ urlpatterns = patterns('corehq.apps.reports.views',
     url(r'^saved/', "saved_reports", name="saved_reports"),
     url(r'^saved_reports', 'old_saved_reports'),
 
-    url(r'^case_data/(?P<case_id>[\w\-]+)/$', 'case_details', name="case_details"),
+    url(r'^case_data/(?P<case_id>[\w\-]+)/$', CaseDetailsView.as_view(), name=CaseDetailsView.urlname),
     url(r'^case_data/(?P<case_id>[\w\-]+)/forms/$', 'case_forms', name="single_case_forms"),
-    url(r'^case_data/(?P<case_id>[\w\-]+)/attachments/$', 'case_attachments', name="single_case_attachments"),
+    url(r'^case_data/(?P<case_id>[\w\-]+)/attachments/$',
+        CaseAttachmentsView.as_view(), name=CaseAttachmentsView.urlname),
     url(r'^case_data/(?P<case_id>[\w\-]+)/view/xml/$', 'case_xml', name="single_case_xml"),
     url(r'^case_data/(?P<case_id>[\w\-]+)/rebuild/$', 'rebuild_case_view', name="rebuild_case"),
     url(r'^case_data/(?P<case_id>[\w\-]+)/resave/$', 'resave_case', name="resave_case"),
@@ -59,7 +66,7 @@ urlpatterns = patterns('corehq.apps.reports.views',
     url(r'^case_data/(?P<case_id>[\w\-]+)/(?P<xform_id>[\w\-:]+)/$', 'case_form_data', name="case_form_data"),
 
     # Download and view form data
-    url(r'^form_data/(?P<instance_id>[\w\-:]+)/$', 'form_data', name='render_form_data'),
+    url(r'^form_data/(?P<instance_id>[\w\-:]+)/$', FormDataView.as_view(), name=FormDataView.urlname),
     url(r'^form_data/(?P<instance_id>[\w\-:]+)/download/$', 'download_form', name='download_form'),
     url(r'^form_data/(?P<instance_id>[\w\-:]+)/edit/$', EditFormInstance.as_view(), name='edit_form_instance'),
     url(r'^form_data/(?P<instance_id>[\w\-:]+)/restore_version/$', 'restore_edit', name='restore_edit'),
@@ -84,7 +91,6 @@ urlpatterns = patterns('corehq.apps.reports.views',
     url(r"^export/bulk/download/$", "export_default_or_custom_data", name="export_bulk_download", kwargs=dict(bulk_export=True)),
     # saved
     url(r"^export/saved/download/(?P<export_id>[\w\-]+)/$", "hq_download_saved_export", name="hq_download_saved_export"),
-    url(r"^export/new/saved/download/(?P<export_instance_id>[\w\-]+)/$", "hq_download_new_saved_export", name="hq_download_new_saved_export"),
     url(r"^export/saved/update/$", "hq_update_saved_export", name="hq_update_saved_export"),
 
     # Full Excel export

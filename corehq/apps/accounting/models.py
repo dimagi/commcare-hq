@@ -2753,11 +2753,6 @@ class CreditLine(models.Model):
                 balance -= adjustment_amount
         return balance
 
-    @staticmethod
-    def _validate_add_amount(amount):
-        if not isinstance(amount, Decimal):
-            raise ValueError("Amount must be a Decimal.")
-
     @classmethod
     def make_payment_towards_invoice(cls, invoice, payment_record):
         """ Make a payment for a billing account towards an invoice """

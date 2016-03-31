@@ -1392,7 +1392,7 @@ class ConfirmSubscriptionRenewalForm(EditBillingAccountInfoForm):
                     SubscriptionAdjustment.record_adjustment(
                         later_subscription,
                         reason=SubscriptionAdjustmentReason.CANCEL,
-                        web_user=self.web_user,
+                        web_user=self.creating_user,
                         note="Cancelled due to changing subscription",
                     )
 

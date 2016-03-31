@@ -86,6 +86,11 @@
                             value: filter.selectedValue.select_value
                         "></select>
                     </div>
+                    <div data-bind="visible: filter.selectedValue.doc_type() === 'AncestorLocationTypeFilter'">
+                        <input class="form-control"
+                               type="text"
+                               data-bind="value: filter.selectedValue.ancestor_location_type_name"/>
+                    </div>
                 </div>
             </th>
         </tr>
