@@ -5,7 +5,6 @@ from django.test import SimpleTestCase
 from elasticsearch.exceptions import ConnectionError
 from openpyxl import load_workbook
 
-from corehq.apps.export.const import MAIN_TABLE
 from corehq.apps.export.export import (
     _get_tables,
     _get_writer,
@@ -23,6 +22,8 @@ from corehq.apps.export.models.new import (
     ExportInstance,
     ExportItem,
     CaseExportInstance,
+    PathNode,
+    MAIN_TABLE
 )
 from corehq.apps.export.tests.util import (
     new_case,
@@ -75,14 +76,14 @@ class WriterTest(SimpleTestCase):
                         ExportColumn(
                             label="Q3",
                             item=ScalarItem(
-                                path=['form', 'q3'],
+                                path=[PathNode(name='form'), PathNode(name='q3')],
                             ),
                             selected=True
                         ),
                         ExportColumn(
                             label="Q1",
                             item=ScalarItem(
-                                path=['form', 'q1'],
+                                path=[PathNode(name='form'), PathNode(name='q1')],
                             ),
                             selected=True
                         ),
@@ -118,7 +119,7 @@ class WriterTest(SimpleTestCase):
                         ExportColumn(
                             label="Q3",
                             item=ScalarItem(
-                                path=['form', 'q3'],
+                                path=[PathNode(name='form'), PathNode(name='q3')],
                             ),
                             selected=True,
                         ),
@@ -126,12 +127,12 @@ class WriterTest(SimpleTestCase):
                 ),
                 TableConfiguration(
                     label="My other table",
-                    path=['form', 'q2'],
+                    path=[PathNode(name='form', is_repeat=False), PathNode(name="q2", is_repeat=False)],
                     columns=[
                         ExportColumn(
                             label="Q4",
                             item=ScalarItem(
-                                path=['form', 'q2', 'q4'],
+                                path=[PathNode(name='form'), PathNode(name='q2'), PathNode(name='q4')],
                             ),
                             selected=True,
                         ),
@@ -174,7 +175,7 @@ class WriterTest(SimpleTestCase):
                             ExportColumn(
                                 label="Q3",
                                 item=ScalarItem(
-                                    path=['form', 'q3'],
+                                    path=[PathNode(name='form'), PathNode(name='q3')],
                                 ),
                                 selected=True,
                             ),
@@ -187,12 +188,12 @@ class WriterTest(SimpleTestCase):
                 tables=[
                     TableConfiguration(
                         label="My other table",
-                        path=['form', 'q2'],
+                        path=[PathNode(name="form", is_repeat=False), PathNode(name="q2", is_repeat=False)],
                         columns=[
                             ExportColumn(
                                 label="Q4",
                                 item=ScalarItem(
-                                    path=['form', 'q2', 'q4'],
+                                    path=[PathNode(name='form'), PathNode(name='q2'), PathNode(name='q4')],
                                 ),
                                 selected=True,
                             ),
@@ -266,14 +267,14 @@ class ExportTest(SimpleTestCase):
                             ExportColumn(
                                 label="Foo column",
                                 item=ExportItem(
-                                    path=["foo"]
+                                    path=[PathNode(name="foo")]
                                 ),
                                 selected=True,
                             ),
                             ExportColumn(
                                 label="Bar column",
                                 item=ExportItem(
-                                    path=["bar"]
+                                    path=[PathNode(name="bar")]
                                 ),
                                 selected=True,
                             )
@@ -315,7 +316,7 @@ class ExportTest(SimpleTestCase):
                             ExportColumn(
                                 label="Foo column",
                                 item=ExportItem(
-                                    path=["foo"]
+                                    path=[PathNode(name="foo")]
                                 ),
                                 selected=True,
                             ),
@@ -333,7 +334,7 @@ class ExportTest(SimpleTestCase):
                             ExportColumn(
                                 label="Bar column",
                                 item=ExportItem(
-                                    path=["bar"]
+                                    path=[PathNode(name="bar")]
                                 ),
                                 selected=True,
                             )

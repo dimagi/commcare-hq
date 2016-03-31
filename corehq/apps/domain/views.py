@@ -1375,6 +1375,7 @@ class EditPrivacySecurityView(BaseAdminProjectSettingsView):
             "allow_domain_requests": self.domain_object.allow_domain_requests,
             "hipaa_compliant": self.domain_object.hipaa_compliant,
             "secure_sessions": self.domain_object.secure_sessions,
+            "two_factor_auth": self.domain_object.two_factor_auth,
         }
         if self.request.method == 'POST':
             return PrivacySecurityForm(self.request.POST, initial=initial,

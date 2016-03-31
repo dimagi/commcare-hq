@@ -271,12 +271,6 @@ class OptionalDateRangeFilter(DateRangeFilter, OptionalFilterMixin):
         })
         return context
 
-    @classmethod
-    def date_passes_filter(cls, request, date):
-        return (date is None or not cls.use_filter(request) or
-            (super(OptionalDateRangeFilter, cls).get_start_date(request).date() <= date
-                and super(OptionalDateRangeFilter, cls).get_end_date(request).date() >= date))
-
 
 class DateFilter(OptionalDateRangeFilter):
     slug = 'date'

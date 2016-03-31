@@ -450,3 +450,31 @@ corehq.apps.users:
   - tastypie
   - touchforms.formplayer
 corehq.apps.case_search: []
+corehq.apps.api:
+  - django_prbac
+  - corehq.apps.accounting
+  - corehq.apps.domain
+  - corehq.apps.tzmigration
+  - corehq.apps.users
+  - django_digest
+  - corehq.apps.groups
+  - corehq.apps.app_manager
+  - django_otp.plugins.otp_static
+  - django_otp.plugins.otp_totp
+  - corehq.apps.hqcase
+  - couchforms
+  - corehq.form_processor
+  - corehq.sql_accessors
+  - corehq.sql_proxy_accessors
+  - two_factor
+# At least one of the following items is required, I don't know which ones
+  - corehq.couchapps
+  - corehq.apps.sms
+  - corehq.apps.smsforms
+  - auditcare
+  - django.contrib.admin
+  - tastypie
+  - corehq.apps.dropbox
+  - corehq.apps.tour
+  - touchforms.formplayer
+  - corehq.apps.smsbillables
