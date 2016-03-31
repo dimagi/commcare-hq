@@ -7,7 +7,6 @@ from corehq.apps.accounting.models import (
     BillingAccount,
     DefaultProductPlan,
     SoftwarePlanEdition,
-    SubscriptionAdjustment,
 )
 
 
@@ -47,9 +46,10 @@ class TestRenewSubscriptions(BaseAccountingTest):
         self.subscription.save()
 
     def tearDown(self):
-        self.renewed_subscription.delete()
-        SubscriptionAdjustment.objects.filter(subscription=self.subscription).delete()
-        self.subscription.delete()
+        generator.delete_all_subscriptions()
+        generator.delete_all_accounts()
+        super(TestRenewSubscriptions, self).tearDown()
+        self.admin_user.delete()
 
     def test_simple_renewal(self):
         self.renewed_subscription = self.subscription.renew_subscription()
