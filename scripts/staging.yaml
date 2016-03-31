@@ -45,6 +45,7 @@
 trunk: master
 name: autostaging
 branches:
+  - b3-reports-case-form+b3-reports-home
   - TABS  # Danny 3/31
   - delete-cloudcare-cloudcare-apps  # Danny 3/29
   - calculatedIcons # Sravan 3/2
@@ -58,7 +59,6 @@ branches:
   - b3-reports-data  # BB 2/23
   - b3-data-import-cases  # BB 2/23
   - b3-data-lookup-tables  # BB 2/23
-  - b3-reports-case-form+b3-reports-home
   - b3-reports-home  # BB 2/23
   - b3-reports-case-form  # BB 2/24
   # B3 Report Migration branches
