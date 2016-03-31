@@ -208,6 +208,7 @@ DEFAULT_APPS = (
     'djtables',
     'django_prbac',
     'djangular',
+    'captcha',
     'couchdbkit.ext.django',
     'crispy_forms',
     'gunicorn',
@@ -222,6 +223,7 @@ DEFAULT_APPS = (
     'statici18n',
 )
 
+CAPTCHA_FIELD_TEMPLATE = 'hq-captcha-field.html'
 CRISPY_TEMPLATE_PACK = 'bootstrap'
 CRISPY_ALLOWED_TEMPLATE_PACKS = (
     'bootstrap',
@@ -379,7 +381,6 @@ HQ_APPS = (
 
     'custom.dhis2',
     'custom.openclinica',
-
 )
 
 TEST_APPS = ()

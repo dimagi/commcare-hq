@@ -1,3 +1,4 @@
+from captcha.fields import CaptchaField
 from django import forms
 from django.contrib.auth.models import User
 from django.core.validators import validate_email
@@ -74,6 +75,7 @@ class NewWebUserRegistrationForm(NoAutocompleteMixin, DomainRegistrationForm):
                                help_text=mark_safe("""
                                <span data-bind="text: passwordHelp, css: color">
                                """))
+    captcha = CaptchaField(_("Type the letters in the box"))
     create_domain = forms.BooleanField(widget=forms.HiddenInput(), required=False, initial=False)
     # Must be set to False to have the clean_*() routine called
     eula_confirmed = forms.BooleanField(required=False,

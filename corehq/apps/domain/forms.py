@@ -9,6 +9,7 @@ from urlparse import urlparse, parse_qs
 
 import dateutil
 import django
+from captcha.fields import CaptchaField
 from crispy_forms import bootstrap as twbscrispy
 from crispy_forms import layout as crispy
 from crispy_forms.bootstrap import FormActions, StrictButton
@@ -1028,6 +1029,7 @@ class HQPasswordResetForm(NoAutocompleteMixin, forms.Form):
     This small change is why we can't use the default PasswordReset form.
     """
     email = forms.EmailField(label=ugettext_lazy("Username"), max_length=254)
+    captcha = CaptchaField(label=ugettext_lazy("Type the letters in the box"))
     error_messages = {
         'unknown': ugettext_lazy("That email address doesn't have an associated "
                      "user account. Are you sure you've registered?"),
