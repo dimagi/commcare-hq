@@ -11,11 +11,6 @@ from corehq.feature_previews import MODULE_FILTER
 from dimagi.utils.decorators.memoized import memoized
 
 
-def disallow_xpath_case_references(xpath):
-    if xpath_references_case(xpath):
-        raise CaseXPathValidationError(CASE_REFERENCE_VALIDATION_ERROR)
-
-
 class MenuContributor(SuiteContributorByModule):
     def get_module_contributions(self, module):
         def get_commands():
