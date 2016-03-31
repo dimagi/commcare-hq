@@ -288,7 +288,7 @@ class TableConfiguration(DocumentSchema):
             rows.append(ExportRow(data=row_data))
         return rows
 
-    def get_column(self, item_path, column_transform=None):
+    def get_column(self, item_path, column_transform):
         """
         Given a path and transform, will return the column and its index. If not found, will
         return None, None

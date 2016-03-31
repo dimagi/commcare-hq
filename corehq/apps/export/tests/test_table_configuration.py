@@ -48,6 +48,7 @@ class TableConfigurationTest(SimpleTestCase):
                 PathNode(name='repeat1', is_repeat=True),
                 PathNode(name='q1')
             ],
+            None,
         )
         self.assertEqual(
             column.item.path,
@@ -65,6 +66,7 @@ class TableConfigurationTest(SimpleTestCase):
                 PathNode(name='repeat1', is_repeat=True),
                 PathNode(name='DoesNotExist')
             ],
+            None,
         )
         self.assertIsNone(column)
 
