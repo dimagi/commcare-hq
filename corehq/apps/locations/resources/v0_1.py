@@ -50,13 +50,8 @@ class LocationResource(HqBaseResource):
         location_id = kwargs['pk']
         return get_object_or_not_exist(Location, location_id, domain)
 
-    def child_queryset(self, domain, include_inactive, parent_id):
-        if not parent_id:
-            locs = SQLLocation.root_locations(domain, include_inactive)
-        else:
-            parent = get_object_or_not_exist(Location, parent_id, domain)
-            locs = parent.sql_location.child_locations(include_inactive)
-        return locs
+    def child_queryset(self, domain, include_inactive, parent):
+        return parent.sql_location.child_locations(include_inactive)
 
     def obj_get_list(self, bundle, **kwargs):
         domain = kwargs['domain']
@@ -65,7 +60,12 @@ class LocationResource(HqBaseResource):
         include_inactive = json.loads(bundle.request.GET.get('include_inactive', 'false'))
         user = bundle.request.couch_user
         viewable = _user_locations_ids(user, project, only_editable=False)
-        locs = self.child_queryset(domain, include_inactive, parent_id)
+
+        if not parent_id:
+            locs = SQLLocation.root_locations(domain, include_inactive)
+        else:
+            parent = get_object_or_not_exist(Location, parent_id, domain)
+            locs = self.child_queryset(domain, include_inactive, parent)
         return [child for child in locs if child.location_id in viewable]
 
     def dehydrate_can_edit(self, bundle):
