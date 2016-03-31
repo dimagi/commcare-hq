@@ -1,4 +1,6 @@
 from smtplib import SMTPSenderRefused
+import uuid
+import requests
 from django.conf import settings
 from django.core.mail import get_connection
 from django.core.mail.message import EmailMultiAlternatives
@@ -16,7 +18,7 @@ in HTML, or use an email client that supports HTML emails.
 
 def send_HTML_email(subject, recipient, html_content, text_content=None,
                     cc=None, email_from=settings.DEFAULT_FROM_EMAIL,
-                    file_attachments=None, bcc=None):
+                    file_attachments=None, bcc=None, ga_track=False):
 
     recipient = list(recipient) if not isinstance(recipient, basestring) else [recipient]
 
@@ -30,6 +32,12 @@ def send_HTML_email(subject, recipient, html_content, text_content=None,
                          "\n {}".format(html_content)
             )
 
+    if ga_track:
+        url = "https://www.google-analytics.com/collect?v=1&tid={ga_tid}&cid={ga_cid}&t=event&ec=email".format(
+            ga_tid=settings.ANALYTICS_IDS['GOOGLE_ANALYTICS_ID'],
+            ga_cid=uuid.uuid4().hex)
+        new_content = '<img src="{url}&ea=open"/>\n</body>'.format(url=url)
+        html_content = html_content.replace('</body>', new_content)
 
     from_header = {'From': email_from}  # From-header
     connection = get_connection()
@@ -70,3 +78,6 @@ def send_HTML_email(subject, recipient, html_content, text_content=None,
             bcc=bcc,
         )
         error_msg.send()
+
+    if ga_track:
+        requests.get(url+"&ea=send")
