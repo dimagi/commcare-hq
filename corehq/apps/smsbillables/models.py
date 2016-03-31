@@ -1,5 +1,5 @@
-import logging
 from decimal import Decimal
+
 from django.core.exceptions import ObjectDoesNotExist
 from django.db import models
 
@@ -8,13 +8,11 @@ from corehq.apps.accounting.models import Currency
 from corehq.apps.accounting.utils import EXCHANGE_RATE_DECIMAL_PLACES
 from corehq.apps.sms.models import DIRECTION_CHOICES, SQLMobileBackend
 from corehq.apps.sms.phonenumbers_helper import get_country_code_and_national_number
+from corehq.apps.smsbillables.utils import log_smsbillables_error
 from corehq.messaging.smsbackends.test.models import SQLTestSMSBackend
 from corehq.apps.sms.util import clean_phone_number
 from corehq.apps.smsbillables.exceptions import AmbiguousPrefixException
 from corehq.util.quickcache import quickcache
-
-
-smsbillables_logging = logging.getLogger("smsbillables")
 
 
 class SmsGatewayFeeCriteria(models.Model):
@@ -299,57 +297,67 @@ class SmsBillable(models.Model):
     def create(cls, message_log, api_response=None):
         phone_number = clean_phone_number(message_log.phone_number)
         direction = message_log.direction
+        domain = message_log.domain
+        log_id = message_log.couch_id
 
         billable = cls(
-            log_id=message_log.couch_id,
+            log_id=log_id,
             phone_number=phone_number,
             direction=direction,
             date_sent=message_log.date,
-            domain=message_log.domain,
+            domain=domain,
         )
+        billable.gateway_fee, billable.gateway_fee_conversion_rate = cls._get_gateway_fee(
+            message_log.backend_api, message_log.backend_id, phone_number, direction, log_id
+        )
+        billable.usage_fee = cls._get_usage_fee(domain, direction)
 
-        # Fetch gateway_fee
-        backend_api_id = message_log.backend_api
-        backend_instance = message_log.backend_id
+        if api_response is not None:
+            billable.api_response = api_response
 
+        if message_log.backend_api == SQLTestSMSBackend.get_api_id():
+            billable.is_valid = False
+
+        billable.save()
+        return billable
+
+    @classmethod
+    def _get_gateway_fee(cls, backend_api_id, backend_instance, phone_number, direction, couch_id):
         country_code, national_number = get_country_code_and_national_number(phone_number)
+        is_gateway_billable = backend_instance is None or _sms_backend_is_global(backend_instance)
 
-        if backend_instance is None or _sms_backend_is_global(backend_instance):
-            billable.gateway_fee = SmsGatewayFee.get_by_criteria(
+        if is_gateway_billable:
+            gateway_fee = SmsGatewayFee.get_by_criteria(
                 backend_api_id,
                 direction,
                 backend_instance=backend_instance,
                 country_code=country_code,
                 national_number=national_number,
             )
-            if billable.gateway_fee is not None:
-                conversion_rate = billable.gateway_fee.currency.rate_to_default
+            if gateway_fee:
+                conversion_rate = gateway_fee.currency.rate_to_default
                 if conversion_rate != 0:
-                    billable.gateway_fee_conversion_rate = conversion_rate
+                    return gateway_fee, conversion_rate
                 else:
-                    smsbillables_logging.error("Gateway fee conversion rate for currency %s is 0",
-                                               billable.gateway_fee.currency.code)
+                    log_smsbillables_error(
+                        "Gateway fee conversion rate for currency %s is 0"
+                        % gateway_fee.currency.code
+                    )
+                    return gateway_fee, None
             else:
-                smsbillables_logging.error(
-                    "No matching gateway fee criteria for SMS %s" % message_log.couch_id
+                log_smsbillables_error(
+                    "No matching gateway fee criteria for SMS %s" % couch_id
                 )
+        return None, None
 
-        # Fetch usage_fee todo
-        domain = message_log.domain
-        billable.usage_fee = SmsUsageFee.get_by_criteria(
+    @classmethod
+    def _get_usage_fee(cls, domain, direction):
+        usage_fee = SmsUsageFee.get_by_criteria(
             direction, domain=domain
         )
-
-        if billable.usage_fee is None:
-            smsbillables_logging.error("Did not find usage fee for direction %s and domain %s"
-                                       % (direction, domain))
-
-        if api_response is not None:
-            billable.api_response = api_response
-
-        if backend_api_id == SQLTestSMSBackend.get_api_id():
-            billable.is_valid = False
-
-        billable.save()
-
-        return billable
+        if not usage_fee:
+            log_smsbillables_error(
+                "Did not find usage fee for direction %s and domain %s"
+                % (direction, domain)
+            )
+        return usage_fee

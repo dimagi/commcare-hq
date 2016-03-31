@@ -1375,6 +1375,7 @@ class EditPrivacySecurityView(BaseAdminProjectSettingsView):
             "allow_domain_requests": self.domain_object.allow_domain_requests,
             "hipaa_compliant": self.domain_object.hipaa_compliant,
             "secure_sessions": self.domain_object.secure_sessions,
+            "two_factor_auth": self.domain_object.two_factor_auth,
         }
         if self.request.method == 'POST':
             return PrivacySecurityForm(self.request.POST, initial=initial,
@@ -2188,6 +2189,7 @@ class DomainForwardingRepeatRecords(GenericTabularReport):
             lambda record: [
                 self._make_state_label(record),
                 record.url if record.url else _(u'Unable to generate url for record'),
+                self._format_date(record.last_checked) if record.last_checked else None,
                 self._format_date(record.next_check) if record.next_check else None,
                 record.failure_reason if not record.succeeded else None,
                 self._make_view_payload_button(record.get_id),
@@ -2199,12 +2201,13 @@ class DomainForwardingRepeatRecords(GenericTabularReport):
     @property
     def headers(self):
         return DataTablesHeader(
-            DataTablesColumn('Status'),
-            DataTablesColumn('URL'),
-            DataTablesColumn('Retry Date'),
-            DataTablesColumn('Failure Reason'),
-            DataTablesColumn('View payload'),
-            DataTablesColumn('Resend'),
+            DataTablesColumn(_('Status')),
+            DataTablesColumn(_('URL')),
+            DataTablesColumn(_('Last sent date')),
+            DataTablesColumn(_('Retry Date')),
+            DataTablesColumn(_('Failure Reason')),
+            DataTablesColumn(_('View payload')),
+            DataTablesColumn(_('Resend')),
         )
 
 

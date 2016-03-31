@@ -1,7 +1,9 @@
+from dimagi.ext import jsonobject
 from collections import namedtuple
 from copy import copy
 from datetime import datetime
 from elasticsearch import TransportError
+from pillowtop import get_all_pillow_classes
 from pillowtop.logger import pillow_logging
 
 INDEX_REINDEX_SETTINGS = {
@@ -101,14 +103,20 @@ def assume_alias_for_pillow(pillow):
 
     This operation removes the alias from any other indices it might be assigned to
     """
-    es_new = pillow.get_es_new()
-    if es_new.indices.exists_alias(None, pillow.es_alias):
-        # this part removes the conflicting aliases
-        alias_indices = es_new.indices.get_alias(pillow.es_alias).keys()
-        for aliased_index in alias_indices:
-            es_new.indices.delete_alias(aliased_index, pillow.es_alias)
+    assume_alias(pillow.get_es_new(), pillow.es_index, pillow.es_alias)
 
-    es_new.indices.put_alias(pillow.es_index, pillow.es_alias)
+
+def assume_alias(es, index, alias):
+    """
+    This operation assigns the alias to the index and removes the alias
+    from any other indices it might be assigned to.
+    """
+    if es.indices.exists_alias(None, alias):
+        # this part removes the conflicting aliases
+        alias_indices = es.indices.get_alias(alias).keys()
+        for aliased_index in alias_indices:
+            es.indices.delete_alias(aliased_index, alias)
+    es.indices.put_alias(index, alias)
 
 
 def doc_exists(pillow, doc_id_or_dict):
@@ -121,3 +129,39 @@ def doc_exists(pillow, doc_id_or_dict):
         assert isinstance(doc_id_or_dict, dict)
         doc_id = doc_id_or_dict['_id']
     return pillow.get_es_new().exists(pillow.es_index, pillow.es_type, doc_id)
+
+
+def get_all_elasticsearch_pillow_classes():
+    from pillowtop.listener import AliasedElasticPillow
+    return filter(lambda x: issubclass(x, AliasedElasticPillow), get_all_pillow_classes())
+
+
+class ElasticsearchIndexInfo(jsonobject.JsonObject):
+    index = jsonobject.StringProperty(required=True)
+    alias = jsonobject.StringProperty()
+
+
+def get_all_expected_es_indices():
+    """
+    Get all expected elasticsearch indices according to the currently running code
+    """
+    seen_indices = set()
+    pillows = get_all_elasticsearch_pillow_classes()
+    for pillow in pillows:
+        assert pillow.es_index not in seen_indices
+        yield ElasticsearchIndexInfo(index=pillow.es_index, alias=pillow.es_alias)
+        seen_indices.add(pillow.es_index)
+
+
+def needs_reindex(es, index_info):
+    """
+    Returns true if the index needs to be reindexed - either because
+    it does not exist or because the alias isn't properly setup.
+    """
+    if not es.indices.exists(index_info.index) or not has_alias(es, index_info):
+        return True
+
+
+def has_alias(es, index_info):
+    alias_indices = es.indices.get_alias(index_info.alias).keys()
+    return index_info.index in alias_indices

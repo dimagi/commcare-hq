@@ -31,7 +31,9 @@ def _is_valid_status(facility, date, status_type):
     if status_type not in const.NEEDED_STATUS_TYPES:
         return False
 
-    code = facility.metadata['group']
+    code = facility.metadata.get('group')
+    if not code:
+        return False
     dg = DeliveryGroups(date.month)
     if status_type == SupplyPointStatusTypes.R_AND_R_FACILITY:
         return dg.current_submitting_group() == code

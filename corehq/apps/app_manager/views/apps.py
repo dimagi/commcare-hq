@@ -69,7 +69,7 @@ from corehq.apps.app_manager.models import import_app as import_app_util
 from corehq.apps.app_manager.decorators import no_conflict_require_POST, \
     require_can_edit_apps, require_deploy_apps
 from django_prbac.utils import has_privilege
-from corehq.apps.analytics.tasks import track_app_from_template_on_hubspot, update_kissmetrics_properties
+from corehq.apps.analytics.tasks import track_app_from_template_on_hubspot, identify
 from corehq.apps.analytics.utils import get_meta
 
 
@@ -115,7 +115,7 @@ def default_new_app(request, domain):
     meta = get_meta(request)
     track_app_from_template_on_hubspot.delay(request.couch_user, request.COOKIES, meta)
     if tours.NEW_APP.is_enabled(request.user):
-        update_kissmetrics_properties.delay(request.couch_user.username, {'First Template App Chosen': 'blank'})
+        identify.delay(request.couch_user.username, {'First Template App Chosen': 'blank'})
     lang = 'en'
     app = Application.new_app(
         domain, _("Untitled Application"), lang=lang,
@@ -258,7 +258,7 @@ def get_apps_base_context(request, domain, app):
             'show_advanced': (
                 v2_app
                 and (
-                    toggles.APP_BUILDER_ADVANCED.enabled(request.user.username)
+                    toggles.APP_BUILDER_ADVANCED.enabled(domain)
                     or getattr(app, 'commtrack_enabled', False)
                 )
             ),
@@ -300,7 +300,7 @@ def app_from_template(request, domain, slug):
     meta = get_meta(request)
     track_app_from_template_on_hubspot.delay(request.couch_user, request.COOKIES, meta)
     if tours.NEW_APP.is_enabled(request.user):
-        update_kissmetrics_properties.delay(request.couch_user.username, {'First Template App Chosen': '%s' % slug})
+        identify.delay(request.couch_user.username, {'First Template App Chosen': '%s' % slug})
     clear_app_cache(request, domain)
     template = load_app_template(slug)
     app = import_app_util(template, domain, {

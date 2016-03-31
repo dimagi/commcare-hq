@@ -9,7 +9,7 @@ class FormProcessorAppConfig(AppConfig):
         from corehq.form_processor.utils.sql import (
             form_adapter, form_attachment_adapter,
             case_adapter, case_attachment_adapter, case_index_adapter, case_transaction_adapter,
-            ledger_value_adapter
+            ledger_value_adapter, ledger_transaction_adapter
         )
 
         XFormInstanceSQL = self.get_model('XFormInstanceSQL')
@@ -27,4 +27,6 @@ class FormProcessorAppConfig(AppConfig):
         register_adapter(CaseAttachmentSQL, case_attachment_adapter)
 
         LedgerValue = self.get_model('LedgerValue')
+        LedgerTransaction = self.get_model('LedgerTransaction')
         register_adapter(LedgerValue, ledger_value_adapter)
+        register_adapter(LedgerTransaction, ledger_transaction_adapter)

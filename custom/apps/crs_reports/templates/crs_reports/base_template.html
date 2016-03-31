@@ -1,4 +1,4 @@
-{% extends "reports/bootstrap2/base_template.html" %}
+{% extends "reports/bootstrap3/base_template.html" %}
 {% load i18n %}
 {% load case_tags %}
 {% load hq_shared_tags %}
@@ -24,23 +24,22 @@
     </script>
 {% endblock %}
 
-{% block page-title %}
-    <ul class="breadcrumb">
+{% block page_breadcrumbs %}
+     <ol id="hq-breadcrumbs" class="breadcrumb breadcrumb-hq-section">
         <li>
-            <a href="{% url "reports_home" domain %}"><strong>Reports</strong></a> <span class="divider">&gt;</span>
+            <a href="{% url "reports_home" domain %}"><strong>Reports</strong></a>
         </li>
         <li>
-            <a href="{% url "custom_project_report_dispatcher" domain report.slug %}">Case List</a> <span class="divider">&gt;</span>
+            <a href="{% url "custom_project_report_dispatcher" domain report.slug %}">Case List</a>
         </li>
         <li class="active">
             <a href="#">{{ report.name }}</a>
         </li>
-    </ul>
+    </ol>
 {% endblock %}
 
-{% block main_column %}
+{% block page_content %}
 <div class="hq-generic-report">
-
     <div>
         <a href="{{ report.slug }}/to_pdf" >{% trans "Print to PDF" %}</a>
     </div>

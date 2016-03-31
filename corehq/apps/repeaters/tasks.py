@@ -3,6 +3,7 @@ from datetime import datetime
 from django.conf import settings
 from celery.task import periodic_task, task
 from celery.utils.log import get_task_logger
+from redis.exceptions import LockError
 from dimagi.utils.couch.cache.cache_core import get_redis_client
 from dimagi.utils.couch.undo import DELETED_SUFFIX
 
@@ -40,13 +41,17 @@ def check_repeaters():
         if now > cutoff:
             break
 
-        lock = redis_client.lock(lock_key, timeout=60 * 60 * 24)
+        lock = redis_client.lock(lock_key, timeout=60 * 60 * 48)
         if not lock.acquire(blocking=False):
             continue
 
         process_repeat_record.delay(record)
 
-    check_repeater_lock.release()
+    try:
+        check_repeater_lock.release()
+    except LockError:
+        # Ignore if already released
+        pass
 
 
 @task(queue=settings.CELERY_REPEAT_RECORD_QUEUE)

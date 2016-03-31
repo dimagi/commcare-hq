@@ -651,8 +651,11 @@ class ProjectDataTab(UITab):
                 CreateNewCustomFormExportView,
                 CreateNewCustomCaseExportView,
                 DownloadFormExportView,
+                DownloadNewFormExportView,
                 DownloadCaseExportView,
+                DownloadNewCaseExportView,
                 BulkDownloadFormExportView,
+                BulkDownloadNewFormExportView,
                 EditCustomFormExportView,
                 EditCustomCaseExportView,
                 EditNewCustomFormExportView,
@@ -686,8 +689,16 @@ class ProjectDataTab(UITab):
                             'urlname': BulkDownloadFormExportView.urlname,
                         },
                         {
+                            'title': BulkDownloadNewFormExportView.page_title,
+                            'urlname': BulkDownloadNewFormExportView.urlname,
+                        },
+                        {
                             'title': DownloadFormExportView.page_title,
                             'urlname': DownloadFormExportView.urlname,
+                        },
+                        {
+                            'title': DownloadNewFormExportView.page_title,
+                            'urlname': DownloadNewFormExportView.urlname,
                         },
                         {
                             'title': edit_form_cls.page_title,
@@ -709,6 +720,10 @@ class ProjectDataTab(UITab):
                         {
                             'title': DownloadCaseExportView.page_title,
                             'urlname': DownloadCaseExportView.urlname,
+                        },
+                        {
+                            'title': DownloadNewCaseExportView.page_title,
+                            'urlname': DownloadNewCaseExportView.urlname,
                         },
                         {
                             'title': edit_case_cls.page_title,
@@ -1491,7 +1506,7 @@ class MySettingsTab(UITab):
     @property
     def sidebar_items(self):
         from corehq.apps.settings.views import MyAccountSettingsView, \
-            MyProjectsList, ChangeMyPasswordView
+            MyProjectsList, ChangeMyPasswordView, TwoFactorProfileView
         items = [
             (_("Manage My Settings"), (
                 {
@@ -1506,6 +1521,10 @@ class MySettingsTab(UITab):
                     'title': _(ChangeMyPasswordView.page_title),
                     'url': reverse(ChangeMyPasswordView.urlname),
                 },
+                {
+                    'title': _(TwoFactorProfileView.page_title),
+                    'url': reverse(TwoFactorProfileView.urlname),
+                }
             ))
         ]
         return items

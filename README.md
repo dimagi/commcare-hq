@@ -75,6 +75,8 @@ individual project sites when necessary.
 
         $ sudo apt-get install jython=2.5.3
         $ sudo apt-mark hold jython
+        
+   If the package is not in apt you will need to install manually: https://wiki.python.org/jython/InstallationInstructions
 
 + For additional requirements necessary only if you want to modify the default
   JavaScript or CSS styling, see [CommCare HQ Style](https://github.com/dimagi/hqstyle-src).

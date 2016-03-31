@@ -135,6 +135,16 @@ INDICATOR_DATA = {
         "histogram_type": "forms",
         "xaxis_label": "# forms",
     },
+    "forms_j2me": {
+        "ajax_view": "admin_reports_stats_data",
+        "chart_name": "forms_j2me",
+        "chart_title": "J2ME Forms Submitted",
+        "get_request_params": {
+            "j2me_only": True,
+        },
+        "histogram_type": "forms",
+        "xaxis_label": "# forms",
+    },
     "users": {
         "ajax_view": "admin_reports_stats_data",
         "chart_name": "users",
@@ -390,15 +400,12 @@ INDICATOR_DATA = {
     },
     "active_supply_points": {
         "ajax_view": "admin_reports_stats_data",
-        "chart_name": "active_cases",
+        "chart_name": "active_supply_points",
         "chart_title": "Active Supply Points (last 90 days)",
         "hide_cumulative_charts": True,
-        "get_request_params": {
-            "supply_points": True
-        },
-        "histogram_type": "active_cases",
+        "histogram_type": "active_supply_points",
         "is_cumulative": False,
-        "xaxis_label": "# cases",
+        "xaxis_label": "# supply points",
     },
     "total_products": {
         "ajax_view": "admin_reports_stats_data",
@@ -722,6 +729,7 @@ class AdminDomainStatsReport(AdminFacetedReport, DomainStatsReport):
                 prop_name="cp_n_sms_out_30_d"),
             DataTablesColumn(_("Custom EULA?"), prop_name="internal.custom_eula"),
             DataTablesColumn(_("HIPAA Compliant"), prop_name="hipaa_compliant"),
+            DataTablesColumn(_("Has J2ME submission in past 90 days"), prop_name="cp_j2me_90_d_bool"),
         )
         return headers
 
@@ -748,6 +756,7 @@ class AdminDomainStatsReport(AdminFacetedReport, DomainStatsReport):
             31: "cp_n_sms_ever",
             32: "cp_n_sms_in_30_d",
             33: "cp_n_sms_out_30_d",
+            36: "cp_j2me_90_d_bool",
         }
 
         def stat_row(name, what_to_get, type='float'):
@@ -818,7 +827,8 @@ class AdminDomainStatsReport(AdminFacetedReport, DomainStatsReport):
                     dom.get('cp_n_sms_in_30_d', _("Not yet calculated")),
                     dom.get('cp_n_sms_out_30_d', _("Not yet calculated")),
                     format_bool(dom.get('internal', {}).get('custom_eula')),
-                    dom.get('hipaa_compliant', _('false'))
+                    dom.get('hipaa_compliant', _('false')),
+                    dom.get('cp_j2me_90_d_bool', _('Not yet calculated')),
                 ]
 
 
@@ -1039,6 +1049,7 @@ class RealProjectSpacesReport(GlobalAdminReports):
         'forms',
         'forms_mobile',
         'forms_web',
+        'forms_j2me',
         'subscriptions',
     ]
 

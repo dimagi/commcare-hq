@@ -143,6 +143,7 @@ LOSS_ADJUST_CONFIRM = _("Thank you. Have you received supervision this month? "
 
 STOCKOUT_CONFIRM = _('Thank you %(contact_name)s '
                      'for reporting stockouts of %(product_names)s for %(facility_name)s.')
+STOCKOUT_HELP = _("Please send in stockout reports in the form 'so <product>'")
 
 INVALID_PRODUCT_CODE = _("Sorry, invalid product code %(product_code)s")
 
@@ -171,10 +172,10 @@ class Roles(object):
     """
     HSA = HSA
     SENIOR_HSA = "sh"
-    IN_CHARGE = "ic"
+    IN_CHARGE = "Facility in-charge"
     CLUSTER_SUPERVISOR = "cs"
-    DISTRICT_SUPERVISOR = "ds"
-    DISTRICT_PHARMACIST = "dp"
+    DISTRICT_SUPERVISOR = "district supervisor"
+    DISTRICT_PHARMACIST = "District Pharmacist"
     IMCI_COORDINATOR = "im"
     ALL_ROLES = {
         HSA: "hsa",
