@@ -22,12 +22,12 @@ class TableConfigurationTest(SimpleTestCase):
                     )
                 ),
                 ExportColumn(
-                    transforms=[USERNAME_TRANSFORM, "deid_id"],
                     item=ScalarItem(
                         path=[
                             PathNode(name="form"),
                             PathNode(name="user_id"),
-                        ]
+                        ],
+                        transform=USERNAME_TRANSFORM
                     )
                 ),
                 ExportColumn(
@@ -48,7 +48,7 @@ class TableConfigurationTest(SimpleTestCase):
                 PathNode(name='repeat1', is_repeat=True),
                 PathNode(name='q1')
             ],
-            []
+            None,
         )
         self.assertEqual(
             column.item.path,
@@ -66,14 +66,14 @@ class TableConfigurationTest(SimpleTestCase):
                 PathNode(name='repeat1', is_repeat=True),
                 PathNode(name='DoesNotExist')
             ],
-            []
+            None,
         )
         self.assertIsNone(column)
 
         # Verify that get_column ignores deid transforms
         index, column = table_configuration.get_column(
             [PathNode(name="form"), PathNode(name="user_id")],
-            [USERNAME_TRANSFORM]
+            USERNAME_TRANSFORM
         )
         self.assertIsNotNone(column)
         self.assertEqual(index, 1)

@@ -27,9 +27,6 @@ from dimagi.ext.couchdbkit import (
     StringProperty,
     DateTimeProperty,
 )
-from corehq.apps.export.utils import (
-    is_valid_transform
-)
 from corehq.apps.export.const import (
     PROPERTY_TAG_UPDATE,
     PROPERTY_TAG_DELETED,
@@ -76,6 +73,7 @@ class ExportItem(DocumentSchema):
     label = StringProperty()
     tag = StringProperty()
     last_occurrences = DictProperty()
+    transform = StringProperty(choices=TRANSFORM_FUNCTIONS.keys())
 
     @classmethod
     def wrap(cls, data):
@@ -119,8 +117,8 @@ class ExportColumn(DocumentSchema):
     selected = BooleanProperty(default=False)
     tags = ListProperty()
 
-    # A list of constants that map to functions to transform the column value
-    transforms = ListProperty(validators=is_valid_transform)
+    # A tranforms that deidentifies the value
+    deid_transform = StringProperty(choices=DEID_TRANSFORM_FUNCTIONS.keys())
 
     def get_value(self, doc, base_path, transform_dates=False, row_index=None):
         """
@@ -139,15 +137,17 @@ class ExportColumn(DocumentSchema):
 
     def _transform(self, value, transform_dates):
         """
-        Transform the given value with the transforms specified in self.transforms.
+        Transform the given value with the transform specified in self.item.transform.
         Also transform dates if the transform_dates flag is true.
         """
-        # TODO: The functions in self.transforms might expect docs, not values, in which case this needs to move.
+        # TODO: The functions in self.item.transform might expect docs, not values, in which case this needs to move.
 
         if transform_dates:
             value = couch_to_excel_datetime(value, None)
-        for transform in self.transforms:
-            value = TRANSFORM_FUNCTIONS[transform](value, None)
+        if self.item.transform:
+            value = TRANSFORM_FUNCTIONS[self.item.transform](value, None)
+        if self.deid_transform:
+            value = TRANSFORM_FUNCTIONS[self.deid_transform](value, None)
         return value
 
     @staticmethod
@@ -166,7 +166,6 @@ class ExportColumn(DocumentSchema):
             "item": item,
             "label": item.label,
             "is_advanced": is_case_update or False,
-            "transforms": [],
         }
 
         if item.tag == PROPERTY_TAG_ROW:
@@ -207,7 +206,7 @@ class ExportColumn(DocumentSchema):
 
     @property
     def is_deidentifed(self):
-        return bool(set(self.transforms) & set(DEID_TRANSFORM_FUNCTIONS))
+        return bool(self.deid_transform)
 
     def get_headers(self):
         if self.is_deidentifed:
@@ -289,22 +288,17 @@ class TableConfiguration(DocumentSchema):
             rows.append(ExportRow(data=row_data))
         return rows
 
-    def get_column(self, item_path, column_transforms):
+    def get_column(self, item_path, column_transform):
         """
         Given a path and transform, will return the column and its index. If not found, will
         return None, None
 
         :param item_path: A list of path nodes that identify a column
-        :param column_transforms: The list of transforms that are done on the column
+        :param column_transform: A transform that is applied on the column
         :returns index, column: The index of the column in the list and an ExportColumn
         """
-        # Columns should be unique by item path and column.transforms minus any deid transforms
-        filtered_column_transforms = [
-            t for t in column_transforms if t not in DEID_TRANSFORM_FUNCTIONS.keys()
-        ]
         for index, column in enumerate(self.columns):
-            transforms = [t for t in column.transforms if t not in DEID_TRANSFORM_FUNCTIONS.keys()]
-            if column.item.path == item_path and transforms == filtered_column_transforms:
+            if column.item.path == item_path and column.item.transform == column_transform:
                 return index, column
         return None, None
 
@@ -418,7 +412,7 @@ class ExportInstance(BlobMixin, Document):
             prev_index = 0
             for item in group_schema.items:
                 index, column = table.get_column(
-                    item.path, []
+                    item.path, None
                 )
                 if not column:
                     column = ExportColumn.create_default_from_export_item(
@@ -482,7 +476,7 @@ class ExportInstance(BlobMixin, Document):
             insert_fn = table.columns.append
 
         for static_column in properties:
-            index, existing_column = table.get_column(static_column.item.path, static_column.transforms)
+            index, existing_column = table.get_column(static_column.item.path, static_column.item.transform)
             if not existing_column:
                 insert_fn(static_column)
 
@@ -710,9 +704,10 @@ class ExportDataSchema(Document):
         def resolvefn(group_schema1, group_schema2):
 
             def keyfn(export_item):
-                return'{}:{}'.format(
+                return'{}:{}:{}'.format(
                     _path_nodes_to_string(export_item.path),
                     export_item.doc_type,
+                    export_item.transform,
                 )
 
             group_schema = ExportGroupSchema(
