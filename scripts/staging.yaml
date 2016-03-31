@@ -45,6 +45,7 @@
 trunk: master
 name: autostaging
 branches:
+  - TABS  # Danny 3/31
   - delete-cloudcare-cloudcare-apps  # Danny 3/29
   - calculatedIcons # Sravan 3/2
   - vellum-staging # J$ 11/13
@@ -89,6 +90,7 @@ submodules:
   submodules/django-prbac-src:
     branches: []
   corehq/apps/prelogin:
-    branches: []
+    branches: #[]
+      - TABS  # Danny 3/31
   corehq/apps/hqmedia/static/hqmedia/MediaUploader:
     branches: []
