@@ -495,9 +495,6 @@ class Domain(QuickCachedDocumentMixin, Document, SnapshotMixin):
         from corehq.apps.users.models import CouchUser
         return CouchUser.by_domain(self.name)
 
-    def has_shared_media(self):
-        return False
-
     def recent_submissions(self):
         return domain_has_submission_in_last_30_days(self.name)
 
