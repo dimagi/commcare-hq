@@ -735,6 +735,8 @@ class OPMCaseRow(object):
                 2: TWO_YEAR_AMT,
                 3: THREE_YEAR_AMT,
             }.get(year_value, 0)
+        else:
+            return 0
 
     @property
     def cash_amt(self):
