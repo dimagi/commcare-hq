@@ -8,7 +8,7 @@ import uuid
 import yaml
 from corehq import toggles
 from corehq.apps.app_manager.exceptions import SuiteError
-from corehq.apps.app_manager.xpath import matches_dot_interpolate_pattern, UserCaseXPath
+from corehq.apps.app_manager.xpath import DOT_INTERPOLATE_PATTERN, UserCaseXPath
 from corehq.apps.builds.models import CommCareBuildConfig
 from corehq.apps.app_manager.tasks import create_user_cases
 from corehq.util.quickcache import quickcache
@@ -35,6 +35,62 @@ import logging
 from dimagi.utils.make_uuid import random_hex
 
 logger = logging.getLogger(__name__)
+
+CASE_XPATH_PATTERN_MATCHES = [
+    DOT_INTERPOLATE_PATTERN
+]
+
+CASE_XPATH_SUBSTRING_MATCHES = [
+    "instance('casedb')",
+    'session/data/case_id',
+    "#case",
+    "#parent",
+    "#host",
+]
+
+
+USER_CASE_XPATH_PATTERN_MATCHES = []
+
+USER_CASE_XPATH_SUBSTRING_MATCHES = [
+    "#user",
+    UserCaseXPath().case(),
+]
+
+
+def _prepare_xpath_for_validation(xpath):
+    prepared_xpath = xpath.lower()
+    prepared_xpath = prepared_xpath.replace('"', "'")
+    prepared_xpath = re.compile('\s').sub('', prepared_xpath)
+    return prepared_xpath
+
+
+def _check_xpath_for_matches(xpath, substring_matches=None, pattern_matches=None):
+    prepared_xpath = _prepare_xpath_for_validation(xpath)
+
+    substring_matches = substring_matches or []
+    pattern_matches = pattern_matches or []
+
+    return any([
+        re.compile(pattern).search(prepared_xpath) for pattern in pattern_matches
+    ] + [
+        substring in prepared_xpath for substring in substring_matches
+    ])
+
+
+def xpath_references_case(xpath):
+    return _check_xpath_for_matches(
+        xpath,
+        substring_matches=CASE_XPATH_SUBSTRING_MATCHES,
+        pattern_matches=CASE_XPATH_PATTERNS
+    )
+
+
+def xpath_references_user_case(xpath):
+    return _check_xpath_for_matches(
+        xpath,
+        substring_matches=USER_CASE_XPATH_SUBSTRING_MATCHES,
+        pattern_matches=USER_CASE_XPATH_PATTERN_MATCHES,
+    )
 
 
 def split_path(path):
@@ -608,63 +664,3 @@ def use_app_aware_sync(app):
     Determines whether OTA restore should sync only cases/ledgers/fixtures of the given app where possible
     """
     return toggles.APP_AWARE_SYNC.enabled(app.domain)
-
-
-def _prepare_xpath_for_validation(xpath):
-    prepared_xpath = xpath.lower()
-    prepared_xpath = prepared_xpath.replace('"', "'")
-    prepared_xpath = re.compile('\s').sub('', prepared_xpath)
-    return prepared_xpath
-
-
-def xpath_references_case(xpath):
-    if not isinstance(xpath, basestring):
-        return False
-
-    prepared_xpath = _prepare_xpath_for_validation(xpath)
-
-    return any([
-        case_reference in prepared_xpath for case_reference in [
-            "instance('casedb')",
-            "session/data/case_id",
-        ]
-    ])
-
-
-def filter_references_case(xpath):
-    if not isinstance(xpath, basestring):
-        return False
-
-    prepared_xpath = _prepare_xpath_for_validation(xpath)
-
-    return any([
-        case_reference in prepared_xpath for case_reference in [
-            "#case",
-            "#parent",
-            "#host",
-        ]
-    ] + [
-        matches_dot_interpolate_pattern(xpath),
-        xpath_references_case(xpath),
-    ])
-
-
-def xpath_references_usercase(xpath):
-    if not isinstance(xpath, basestring):
-        return False
-
-    prepared_xpath = _prepare_xpath_for_validation(xpath)
-
-    return UserCaseXPath().case() in xpath
-
-
-def filter_references_usercase(xpath):
-    if not isinstance(xpath, basestring):
-        return False
-
-    prepared_xpath = _prepare_xpath_for_validation(xpath)
-
-    return any([
-        "#user" in prepared_xpath,
-        xpath_references_usercase(xpath),
-    ])

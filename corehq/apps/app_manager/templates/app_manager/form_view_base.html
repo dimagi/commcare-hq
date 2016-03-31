@@ -98,31 +98,60 @@
 
         {% if app.application_version == '2.0' %}
             {% if allow_form_filtering %}
+
+            function formFilterMatches(filter, pattern_matches, substring_matches) {
+                if(typeof(filter) != 'string') {
+                    return false;
+                }
+
+                var result = false;
+                $.each(pattern_matches, function(index, pattern) {
+                    result = result || filter.match(pattern);
+                });
+
+                $.each(substring_matches, function(index, sub) {
+                    result = result || filter.indexOf(sub) != -1;
+                });
+
+                return result;
+            }
+
             var putInRoot = {{ module.put_in_root|BOOL }};
             var isUserCaseInUse = {{ is_usercase_in_use|BOOL }};
             var isModuleFilterEnabled = {{ is_module_filter_enabled|BOOL }};
-            var formFilter = {{ form.form_filter|JSON }};
+            var formFilter = ko.observable({{ form.form_filter|JSON }});
             var allOtherFormsRequireACase = {{ form.all_other_forms_require_a_case|BOOL }};
-            var formFilterReferencesCase = {{ form_filter_references_case|BOOL }};
-            var formFilterReferencesUserCase = {{ form_filter_references_user_case|BOOL }};
+
+            var formFilterReferencesCase = ko.computed(function() {
+                var pattern_matches = {{ case_xpath_pattern_matches|JSON }};
+                var substring_matches = {{ case_xpath_substring_matches|JSON }};
+                return formFilterMatches(formFilter(), pattern_matches, substring_matches);
+            });
+
+            var formFilterReferencesUserCase = ko.computed(function() {
+                var pattern_matches = {{ user_case_xpath_pattern_matches|JSON }};
+                var substring_matches = {{ user_case_xpath_substring_matches|JSON }};
+                return formFilterMatches(formFilter(), pattern_matches, substring_matches);
+            });
+
             var formFilterAllowed = ko.computed(function () {
-                if(!formFilter) {
+                if(!formFilter()) {
                     return true;
                 }
 
                 moduleUsesCase = (allOtherFormsRequireACase && form_requires() === 'case');
-                if(formFilterReferencesCase && (!moduleUsesCase || putInRoot)) {
+                if(formFilterReferencesCase() && (!moduleUsesCase || putInRoot)) {
                     return false;
                 }
 
-                if(formFilterReferencesUserCase && !isUserCaseInUse) {
+                if(formFilterReferencesUserCase() && !isUserCaseInUse) {
                     return false;
                 }
 
                 return true;
             });
             $('#form-filter').koApplyBindings({
-                    formFilter: ko.observable(formFilter),
+                    formFilter: formFilter,
                     formFilterAllowed: formFilterAllowed,
             });
             {% endif %}

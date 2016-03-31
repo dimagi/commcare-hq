@@ -3,7 +3,8 @@ from corehq.apps.app_manager.exceptions import (ScheduleError, CaseXPathValidati
     UserCaseXPathValidationError)
 from corehq.apps.app_manager.suite_xml.contributors import SuiteContributorByModule
 from corehq.apps.app_manager.suite_xml.xml_models import Menu, Command, LocalizedMenu
-from corehq.apps.app_manager.util import is_usercase_in_use, xpath_references_case
+from corehq.apps.app_manager.util import (is_usercase_in_use, xpath_references_case,
+    xpath_references_user_case)
 from corehq.apps.app_manager.xpath import (interpolate_xpath, CaseIDXPath, session_var,
     QualifiedScheduleFormXPath, CASE_REFERENCE_VALIDATION_ERROR, USERCASE_REFERENCE_VALIDATION_ERROR)
 from corehq.feature_previews import MODULE_FILTER
@@ -50,7 +51,7 @@ class MenuContributor(SuiteContributorByModule):
                             (not module_uses_case() or module.put_in_root):
                         raise CaseXPathValidationError(CASE_REFERENCE_VALIDATION_ERROR)
 
-                    if xpath_references_usercase(interpolated_xpath) and not domain_uses_usercase():
+                    if xpath_references_user_case(interpolated_xpath) and not domain_uses_usercase():
                         raise UserCaseXPathValidationError(USERCASE_REFERENCE_VALIDATION_ERROR)
 
                     command.relevant = interpolated_xpath
