@@ -810,9 +810,6 @@ class Domain(QuickCachedDocumentMixin, Document, SnapshotMixin):
             copy.save()
             return copy
 
-    def from_snapshot(self):
-        return not self.is_snapshot and self.original_doc is not None
-
     def snapshots(self):
         return Domain.view('domain/snapshots',
             startkey=[self._id, {}],
