@@ -71,6 +71,7 @@ branches:
   - move-services-dir # Ben 3/15
   - login-b3 # Jenny 3/21
   - knockout-3-3 # Jenny 3/30
+  - minify-css # Ben 3/31
 submodules:
   submodules/touchforms-src:
     # let's leave this here even when empty
