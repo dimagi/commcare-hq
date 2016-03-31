@@ -412,7 +412,7 @@ class ExportInstance(BlobMixin, Document):
             prev_index = 0
             for item in group_schema.items:
                 index, column = table.get_column(
-                    item.path, []
+                    item.path, None
                 )
                 if not column:
                     column = ExportColumn.create_default_from_export_item(
