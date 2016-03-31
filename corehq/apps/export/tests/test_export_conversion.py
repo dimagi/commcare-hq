@@ -3,6 +3,7 @@ import mock
 
 from django.test import TestCase, SimpleTestCase
 
+from dimagi.utils.couch.undo import DELETED_SUFFIX
 from couchexport.models import SavedExportSchema
 
 from corehq.util.test_utils import TestFileMixin, generate_cases
@@ -11,10 +12,13 @@ from corehq.apps.export.models import (
     CaseExportDataSchema,
     ExportGroupSchema,
     ExportItem,
+    FormExportInstance,
+    CaseExportInstance,
 )
 from corehq.apps.export.utils import (
     convert_saved_export_to_export_instance,
     _convert_index_to_path_nodes,
+    revert_new_exports,
 )
 from corehq.apps.export.const import (
     DEID_ID_TRANSFORM,
@@ -59,6 +63,7 @@ class TestConvertSavedExportSchemaToCaseExportInstance(TestCase, TestFileMixin):
                 ),
             ],
         )
+
 
     def test_basic_conversion(self):
         saved_export_schema = SavedExportSchema.wrap(self.get_json('case'))
@@ -191,6 +196,7 @@ class TestConvertSavedExportSchemaToFormExportInstance(TestCase, TestFileMixin):
                 ),
             ],
         )
+
 
     def test_basic_conversion(self):
 
@@ -330,6 +336,38 @@ class TestConvertSavedExportSchemaToFormExportInstance(TestCase, TestFileMixin):
         for path, transforms, selected in expected_paths:
             column = table.get_column(path, transforms)
             self.assertEqual(column.selected, selected, '{} selected is not {}'.format(path, selected))
+
+
+class TestRevertNewExports(TestCase):
+
+    def setUp(cls):
+        cls.new_exports = [
+            FormExportInstance(),
+            CaseExportInstance(),
+        ]
+        for export in cls.new_exports:
+            export.save()
+
+    def tearDown(cls):
+        for export in cls.new_exports:
+            export.delete()
+
+    def test_revert_new_exports(self):
+        reverted = revert_new_exports(self.new_exports)
+        self.assertListEqual(reverted, [])
+        for export in self.new_exports:
+            self.assertTrue(export.doc_type.endswith(DELETED_SUFFIX))
+
+    def test_revert_new_exports_restore_old(self):
+        saved_export_schema = SavedExportSchema(index=['my-domain', 'xmlns'])
+        saved_export_schema.doc_type += DELETED_SUFFIX
+        saved_export_schema.save()
+        self.new_exports[0].legacy_saved_export_schema_id = saved_export_schema._id
+
+        reverted = revert_new_exports(self.new_exports)
+        self.assertEqual(len(reverted), 1)
+        self.assertFalse(reverted[0].doc_type.endswith(DELETED_SUFFIX))
+        saved_export_schema.delete()
 
 
 class TestConvertIndexToPath(SimpleTestCase):

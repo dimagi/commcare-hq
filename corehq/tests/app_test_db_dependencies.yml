@@ -348,6 +348,7 @@ corehq.apps.export:
   - corehq.apps.export
   - corehq.couchapps
   - corehq.apps.app_manager
+  - couchexport
 corehq.apps.callcenter:
   - auditcare
   - casexml.apps.case
