@@ -827,18 +827,6 @@ class Domain(QuickCachedDocumentMixin, Document, SnapshotMixin):
                 return snapshot
         return None
 
-    @classmethod
-    def published_snapshots(cls, include_unapproved=False, page=None, per_page=10):
-        skip = None
-        limit = None
-        if page:
-            skip = (page - 1) * per_page
-            limit = per_page
-        if include_unapproved:
-            return cls.view('domain/published_snapshots', startkey=[False, {}], include_docs=True, descending=True, limit=limit, skip=skip)
-        else:
-            return cls.view('domain/published_snapshots', endkey=[True], include_docs=True, descending=True, limit=limit, skip=skip)
-
     def update_deployment(self, **kwargs):
         self.deployment.update(kwargs)
         self.save()
