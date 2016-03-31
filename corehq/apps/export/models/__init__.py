@@ -2,6 +2,7 @@ from .deprecated import QuestionMeta, FormQuestionSchema
 from .new import (
     ExportItem,
     ExportColumn,
+    RowNumberColumn,
     ExportRow,
     ExportInstance,
     FormExportInstance,

@@ -168,13 +168,7 @@ class ExportColumn(DocumentSchema):
             "is_advanced": is_case_update or False,
         }
 
-        if item.tag == PROPERTY_TAG_ROW:
-            column_class = RowNumberColumn
-            constructor_args["repeat"] = len([node for node in table_path if node.is_repeat])
-        else:
-            column_class = ExportColumn
-
-        column = column_class(**constructor_args)
+        column = ExportColumn(**constructor_args)
         column.update_properties_from_app_ids_and_versions(app_ids_and_versions)
         column.selected = not column._is_deleted(app_ids_and_versions) and is_main_table and not is_case_update
         return column
@@ -203,6 +197,12 @@ class ExportColumn(DocumentSchema):
             tags.append(self.item.tag)
         self.is_advanced = is_deleted or self.is_advanced
         self.tags = tags
+
+    def extra_data(self, **data):
+        """
+        Configures the column given extra parameters. Often a NOOP.
+        """
+        return
 
     @property
     def is_deidentifed(self):
@@ -366,6 +366,9 @@ class ExportInstance(BlobMixin, Document):
     last_updated = DateTimeProperty()
     last_accessed = DateTimeProperty()
 
+    # Whether to add stock columns to the export
+    export_stock = BooleanProperty(default=False)
+
     class Meta:
         app_label = 'export'
 
@@ -433,7 +436,7 @@ class ExportInstance(BlobMixin, Document):
                 column.update_properties_from_app_ids_and_versions(latest_app_ids_and_versions)
                 prev_index = index
 
-            cls._insert_system_properties(schema.type, table)
+            cls._insert_system_properties(instance.domain, schema.type, table)
 
             if not instance.get_table(group_schema.path):
                 instance.tables.append(table)
@@ -441,7 +444,7 @@ class ExportInstance(BlobMixin, Document):
         return instance
 
     @classmethod
-    def _insert_system_properties(cls, export_type, table):
+    def _insert_system_properties(cls, domain, export_type, table):
         from corehq.apps.export.system_properties import (
             ROW_NUMBER_COLUMN,
             TOP_MAIN_FORM_TABLE_PROPERTIES,
@@ -451,23 +454,47 @@ class ExportInstance(BlobMixin, Document):
             CASE_HISTORY_PROPERTIES,
             PARENT_CASE_TABLE_PROPERTIES,
         )
+
+        nested_repeat_count = len([node for node in table.path if node.is_repeat])
+        extra_args = {
+            'repeat': nested_repeat_count,  # Used for determining the proper row column
+            'domain': domain,  # Used for the StockExportColumn
+        }
         if export_type == FORM_EXPORT:
             if table.path == MAIN_TABLE:
-                cls.__insert_system_properties(table, TOP_MAIN_FORM_TABLE_PROPERTIES)
-                cls.__insert_system_properties(table, BOTTOM_MAIN_FORM_TABLE_PROPERTIES, top=False)
+                cls.__insert_system_properties(table, TOP_MAIN_FORM_TABLE_PROPERTIES, **extra_args)
+                cls.__insert_system_properties(
+                    table,
+                    BOTTOM_MAIN_FORM_TABLE_PROPERTIES,
+                    top=False,
+                    **extra_args
+                )
             else:
-                cls.__insert_system_properties(table, [ROW_NUMBER_COLUMN])
+                cls.__insert_system_properties(table, [ROW_NUMBER_COLUMN], **extra_args)
         elif export_type == CASE_EXPORT:
             if table.path == MAIN_TABLE:
-                cls.__insert_system_properties(table, TOP_MAIN_CASE_TABLE_PROPERTIES)
-                cls.__insert_system_properties(table, BOTTOM_MAIN_CASE_TABLE_PROPERTIES, top=False)
+                cls.__insert_system_properties(table, TOP_MAIN_CASE_TABLE_PROPERTIES, **extra_args)
+                cls.__insert_system_properties(
+                    table,
+                    BOTTOM_MAIN_CASE_TABLE_PROPERTIES,
+                    top=False,
+                    **extra_args
+                )
             elif table.path == CASE_HISTORY_TABLE:
-                cls.__insert_system_properties(table, CASE_HISTORY_PROPERTIES)
+                cls.__insert_system_properties(table, CASE_HISTORY_PROPERTIES, **extra_args)
             elif table.path == PARENT_CASE_TABLE:
-                cls.__insert_system_properties(table, PARENT_CASE_TABLE_PROPERTIES)
+                cls.__insert_system_properties(table, PARENT_CASE_TABLE_PROPERTIES, **extra_args)
 
     @classmethod
-    def __insert_system_properties(cls, table, properties, top=True):
+    def __insert_system_properties(cls, table, properties, top=True, **data):
+        """
+        Inserts system properties into the table configuration
+
+        :param table: A TableConfiguration instance
+        :param properties: A list of ExportColumn that represent system properties to be added to the table
+        :param top: When True inserts the columns at the top, when false at the bottom
+        :param data: Extra data to be passed to the column if needed
+        """
         if top:
             insert_fn = partial(table.columns.insert, 0)
             properties = reversed(properties)
@@ -476,6 +503,7 @@ class ExportInstance(BlobMixin, Document):
 
         for static_column in properties:
             index, existing_column = table.get_column(static_column.item.path, static_column.item.transform)
+            (existing_column or static_column).extra_data(**data)
             if not existing_column:
                 insert_fn(static_column)
 
@@ -1188,6 +1216,8 @@ class RowNumberColumn(ExportColumn):
             + (list(row_index) if len(row_index) > 1 else [])
         )
 
+    def extra_data(self, **data):
+        self.repeat = data.get('repeat')
 
 # These must match the constants in corehq/apps/export/static/export/js/const.js
 MAIN_TABLE = []
