@@ -28,12 +28,12 @@ from django.contrib.auth.models import User
 from corehq.apps.hqwebapp.templatetags.hq_shared_tags import toggle_js_domain_cachebuster
 
 from corehq.const import USER_DATE_FORMAT
+from corehq.tabs.tabclasses import ProjectSettingsTab
 from custom.dhis2.forms import Dhis2SettingsForm
 from custom.dhis2.models import Dhis2Settings
 from corehq.apps.accounting.async_handlers import Select2BillingInfoHandler
 from corehq.apps.accounting.invoicing import DomainWireInvoiceFactory
 from corehq.apps.hqwebapp.tasks import send_mail_async
-from corehq.apps.hqwebapp.models import ProjectSettingsTab
 from corehq.apps.style.decorators import (
     use_bootstrap3,
     use_jquery_ui,
@@ -81,7 +81,6 @@ from corehq.apps.accounting.user_text import (
     DESC_BY_EDITION,
     get_feature_recurring_interval,
 )
-from corehq.apps.hqwebapp.models import ProjectSettingsTab
 from corehq.apps.domain.calculations import CALCS, CALC_FNS, CALC_ORDER, dom_calc
 from corehq.apps.domain.decorators import (
     domain_admin_required, login_required, require_superuser, login_and_domain_required

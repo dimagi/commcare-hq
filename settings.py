@@ -323,6 +323,7 @@ HQ_APPS = (
     'corehq.apps.hqpillow_retry',
     'corehq.couchapps',
     'corehq.preindex',
+    'corehq.tabs',
     'custom.apps.wisepill',
     'custom.fri',
     'fluff',
