@@ -14,4 +14,4 @@ max-line-length = 115
 ignore = E128,E265,F403
 
 [tool_eslint]
-config = .eslintrc.js
+config = ./.eslintrc.js
