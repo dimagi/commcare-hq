@@ -6,7 +6,7 @@
   <div class="col-sm-4">{{ field }}
   {% if field.name == "password" %}
     <p class="help-block">
-      <a href="{% url "password_reset_email" %}"><i class="fa fa-question-circle"></i> {% trans "Forgot your password?" %}</a>
+      <a href="{% url "password_reset_email" %}">{% trans "Forgot your password?" %}</a>
     </p>
   {% endif %}
   </div>
