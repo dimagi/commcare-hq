@@ -76,9 +76,9 @@ def register_user(request):
                         return render(request, 'error.html', context)
 
                 context.update({
-                    'alert_message': _("An email has been sent to %s.") % request.user.username,
                     'requested_domain': requested_domain,
                     'track_domain_registration': True,
+                    'current_page': {'page_name': _('Confirmation Email Sent')},
                 })
                 return render(request, 'registration/confirmation_sent.html', context)
             context.update({'create_domain': form.cleaned_data['create_domain']})
@@ -89,6 +89,7 @@ def register_user(request):
 
         context.update({
             'form': form,
+            'current_page': {'page_name': _('Create an Account')},
             'legacy_password': getattr(settings, 'ENABLE_DRACONIAN_SECURITY_FEATURES', False),
         })
         return render(request, 'registration/create_new_user.html', context)
@@ -108,7 +109,10 @@ class RegisterDomainView(TemplateView):
             pending_domains = Domain.active_for_user(request.user, is_active=False)
             if len(pending_domains) > 0:
                 context = get_domain_context()
-                context['requested_domain'] = pending_domains[0]
+                context.update({
+                    'requested_domain': pending_domains[0],
+                    'current_page': {'page_name': _('Confirm Account')},
+                })
                 return render(request, 'registration/confirmation_waiting.html', context)
         return super(RegisterDomainView, self).get(request, *args, **kwargs)
 
@@ -148,9 +152,9 @@ class RegisterDomainView(TemplateView):
 
             if self.is_new_user:
                 context.update({
-                    'alert_message': _("An email has been sent to %s.") % request.user.username,
                     'requested_domain': domain_name,
                     'track_domain_registration': True,
+                    'current_page': {'page_name': _('Confirm Account')},
                 })
                 return render(request, 'registration/confirmation_sent.html', context)
             else:
@@ -209,15 +213,15 @@ def resend_confirmation(request):
             return render(request, 'error.html', context)
         else:
             context.update({
-                'alert_message': _(
-                    "An email has been sent to %s.") % dom_req.new_user_username,
-                'requested_domain': dom_req.domain
+                'requested_domain': dom_req.domain,
+                'current_page': {'page_name': ('Confirmation Email Sent')},
             })
             return render(request, 'registration/confirmation_sent.html',
                 context)
 
     context.update({
-        'requested_domain': dom_req.domain
+        'requested_domain': dom_req.domain,
+        'current_page': {'page_name': _('Resend Confirmation Email')},
     })
     return render(request, 'registration/confirmation_resend.html', context)
 
@@ -240,9 +244,8 @@ def confirm_domain(request, guid=None):
 
     if error is not None:
         context = {
-            'message_title': _('Account not activated'),
-            'message_subtitle': _('Email not yet confirmed'),
             'message_body': error,
+            'current_page': {'page_name': 'Account Not Activated'},
         }
         return render(request, 'registration/confirmation_error.html', context)
 
