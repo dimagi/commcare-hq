@@ -1,27 +1,31 @@
-import json
 from datetime import datetime
+import json
 import urllib
 
-from couchdbkit.exceptions import ResourceNotFound
 from django.contrib.humanize.templatetags.humanize import naturaltime
-from django.utils.translation import ugettext as _
 from django.core.urlresolvers import reverse
+from django.utils.translation import ugettext as _
+
+from couchdbkit.exceptions import ResourceNotFound
 
 from casexml.apps.case.dbaccessors import get_open_case_ids_in_domain
-from casexml.apps.case.util import iter_cases
-from corehq.apps.cloudcare.dbaccessors import get_cloudcare_apps
-from corehq.apps.cloudcare.exceptions import RemoteAppError
-from corehq.apps.hqcase.dbaccessors import get_case_ids_in_domain, \
-    get_case_ids_in_domain_by_owner
-from corehq.apps.users.models import CouchUser
 from casexml.apps.case.models import CommCareCase, CASE_STATUS_ALL, CASE_STATUS_CLOSED, CASE_STATUS_OPEN
-from corehq.apps.app_manager.dbaccessors import get_app
-from corehq.util.soft_assert import soft_assert
-from dimagi.utils.couch.safe_index import safe_index
+from casexml.apps.case.util import iter_cases
 from casexml.apps.phone.caselogic import get_footprint
-from corehq.elastic import get_es_new, ES_META
+from dimagi.utils.couch.safe_index import safe_index
 from dimagi.utils.parsing import json_format_date
 from touchforms.formplayer.models import EntrySession
+
+from corehq.apps.app_manager.dbaccessors import get_app
+from corehq.apps.cloudcare.dbaccessors import get_cloudcare_apps
+from corehq.apps.cloudcare.exceptions import RemoteAppError
+from corehq.apps.hqcase.dbaccessors import (
+    get_case_ids_in_domain,
+    get_case_ids_in_domain_by_owner,
+)
+from corehq.apps.users.models import CouchUser
+from corehq.elastic import get_es_new, ES_META
+from corehq.util.soft_assert import soft_assert
 
 
 CLOUDCARE_API_DATETIME_FORMAT = '%Y-%m-%dT%H:%M:%S'  # todo: add '.%fZ'?
@@ -91,7 +95,7 @@ class CaseAPIResult(object):
                     elif isinstance(val, dict):
                         props[key] = _sanitize(val)
                 return props
-            json = _sanitize(json)
+            json = _sanitize(dict(json))
         return json
 
     def to_json(self):
@@ -327,7 +331,7 @@ def es_filter_cases(domain, filters=None):
     return [CommCareCase.wrap(r["_source"]) for r in res['hits']['hits'] if r["_source"]]
 
 
-def get_filters_from_request(request, limit_top_level=None):
+def get_filters_from_request_params(request_params, limit_top_level=None):
     """
     limit_top_level lets you specify a whitelist of top-level properties you can include in the filters,
     properties with a / in them are always included in the filters
@@ -340,7 +344,7 @@ def get_filters_from_request(request, limit_top_level=None):
     
     # super weird hack: force decoding keys because sometimes (only seen in 
     # production) django doesn't do this for us.
-    filters = dict((_decode(k), v) for k, v in request.REQUEST.items())
+    filters = dict((_decode(k), v) for k, v in request_params.items())
     if limit_top_level is not None:
         filters = dict([(key, val) for key, val in filters.items() if '/' in key or key in limit_top_level])
 

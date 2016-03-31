@@ -39,6 +39,7 @@ class CareGroupReport(BasicTabularReport, CustomProjectReport, ProjectReportPara
     field_classes = (DatespanFilter,)
     datespan_default_days = 30
     exportable = True
+    is_bootstrap3 = True
 
     @property
     def start_and_end_keys(self):
@@ -325,6 +326,7 @@ class Relais(BasicTabularReport, CustomProjectReport, ProjectReportParametersMix
     datespan_default_days = 30
     exportable = True
     filter_group_name = RELAIS_GROUP
+    is_bootstrap3 = True
 
     couch_view = "care_benin/by_village_case"
 
@@ -357,6 +359,7 @@ class Nurse(BasicTabularReport, CustomProjectReport, ProjectReportParametersMixi
     datespan_default_days = 30
     exportable = True
     filter_group_name = AGENTS_DE_SANTE_GROUP
+    is_bootstrap3 = True
 
     couch_view = "care_benin/by_user_form"
 
@@ -523,6 +526,7 @@ class Outcomes(GenericTabularReport, CustomProjectReport, ProjectReportParameter
     fields = ('corehq.apps.reports.filters.dates.DatespanFilter',)
     datespan_default_days = 30
     exportable = True
+    is_bootstrap3 = True
 
     couch_view = "care_benin/outcomes"
 
@@ -607,6 +611,7 @@ class DangerSigns(GenericTabularReport, CustomProjectReport, ProjectReportParame
     fields = ('corehq.apps.reports.filters.dates.DatespanFilter',)
     datespan_default_days = 30
     exportable = True
+    is_bootstrap3 = True
 
     @property
     def start_and_end_keys(self):
@@ -680,6 +685,7 @@ class HealthCenter(BasicTabularReport, CustomProjectReport, ProjectReportParamet
     datespan_default_days = 30
     exportable = True
     filter_group_name = AGENTS_DE_SANTE_GROUP
+    is_bootstrap3 = True
 
     couch_view = "care_benin/by_user_form"
 

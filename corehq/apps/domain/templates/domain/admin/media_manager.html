@@ -9,7 +9,10 @@
 
 {% block js-inline %}{{ block.super }}
 <script type="text/javascript">
+(function () {
+    var MediaManager = hqImport('domain/js/media_manager.js').MediaManager;
     $('body').koApplyBindings(new MediaManager({{ media|JSON }}, {{ licenses|JSON }}));
+}());
 </script>
 {% endblock %}
 

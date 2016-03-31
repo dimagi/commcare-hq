@@ -1290,6 +1290,43 @@ Field should refer to report column IDs, not database fields.
 ]
 ```
 
+# Mobile UCR
+
+Mobile UCR is a beta feature that enables you to make application modules and charts linked to UCRs on mobile.
+It also allows you to send down UCR data from a report as a fixture which can be used in standard case lists and forms throughout the mobile application.
+
+The documentation for Mobile UCR is very sparse right now.
+
+## Filters
+
+On mobile UCR, filters can be automatically applied to the mobile reports based on hardcoded or user-specific data, or can be displayed to the user.
+
+The documentation of mobile UCR filters is incomplete. However some are documented below.
+
+### Custom Calendar Month
+
+When configuring a report within a module, you can filter a date field by the 'CustomMonthFilter'.  The choice includes the following options:
+- Start of Month (a number between 1 and 28)
+- Period (a number between 0 and n with 0 representing the current month). 
+
+Each custom calendar month will be "Start of the Month" to ("Start of the Month" - 1).  For example, if the start of the month is set to 21, then the period will be the 21th of the month -> 20th of the next month. 
+
+Examples:
+Assume it was May 15:
+Period 0, day 21, you would sync April 21-May 15th
+Period 1, day 21, you would sync March 21-April 20th
+Period 2, day 21, you would sync February 21 -March 20th
+
+Assume it was May 20:
+Period 0, day 21, you would sync April 21-May 20th
+Period 1, day 21, you would sync March 21-April 20th
+Period 2, day 21, you would sync February 21-March 20th
+
+Assume it was May 21:
+Period 0, day 21, you would sync May 21-May 21th
+Period 1, day 21, you would sync April 21-May 20th
+Period 2, day 21, you would sync March 21-April 20th
+
 # Export
 
 A UCR data source can be exported, to back an excel dashboard, for instance.

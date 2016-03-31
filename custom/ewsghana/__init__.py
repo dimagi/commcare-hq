@@ -1,5 +1,3 @@
-from custom.ewsghana.comparison_report import ProductsCompareReport, LocationsCompareReport,\
-    SMSUsersCompareReport, WebUsersCompareReport, SupplyPointsCompareReport
 from custom.ewsghana.reports.email_reports import CMSRMSReport, StockSummaryReport
 from custom.ewsghana.reports.maps import EWSMapReport
 from custom.ewsghana.reports.stock_levels_report import StockLevelsReport
@@ -23,13 +21,6 @@ CUSTOM_REPORTS = (
         StockSummaryReport,
         StockTransactionReport
     )),
-    ('Compare reports', (
-        ProductsCompareReport,
-        LocationsCompareReport,
-        SupplyPointsCompareReport,
-        WebUsersCompareReport,
-        SMSUsersCompareReport,
-    ))
 )
 
 ROOT_SITE_CODE = 'ghana'

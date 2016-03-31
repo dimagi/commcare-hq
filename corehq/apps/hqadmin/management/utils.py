@@ -5,9 +5,10 @@ import requests
 from gevent.pool import Pool
 
 
-def get_deploy_email_message_body(environment, user):
+def get_deploy_email_message_body(environment, user, compare_url):
     import sh
     git = sh.git.bake(_tty_out=False)
+    git.fetch('origin', 'refs/tags/*:refs/tags/*')
     current_deploy, last_deploy = _get_last_two_deploys(environment)
     pr_merges = git(
         'log', '{}...{}'.format(last_deploy, current_deploy),
@@ -24,7 +25,8 @@ def get_deploy_email_message_body(environment, user):
         'current_deploy': current_deploy,
         'user': user,
         'compare_url': ('https://github.com/dimagi/commcare-hq/compare/{}...{}'
-                        .format(last_deploy, current_deploy))
+                        .format(last_deploy, current_deploy)),
+        'compare_url_check': compare_url,
     })
 
 
@@ -70,4 +72,4 @@ if __name__ == '__main__':
     import sys
     if sys.argv[1] == 'get_deploy_email_message_body':
         setup_fake_django()
-        print(get_deploy_email_message_body(*sys.argv[2:4]).encode('utf-8'))
+        print(get_deploy_email_message_body(*sys.argv[2:5]).encode('utf-8'))

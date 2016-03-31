@@ -182,7 +182,15 @@ class ConfigurableReport(JSONResponseMixin, BaseDomainView):
             elif request.is_ajax() or request.GET.get('format', None) == 'json':
                 return self.get_ajax(self.request)
             self.content_type = None
-            self.add_warnings(self.request)
+            try:
+                self.add_warnings(self.request)
+            except UserReportsError as e:
+                messages.warning(
+                    request,
+                    _('It looks like there may be a problem with your report. '
+                      'Please edit the report to fix this problem or report an issue. '
+                      'Technical details: {}.').format(e)
+                )
             return super(ConfigurableReport, self).get(request, *args, **kwargs)
         else:
             raise Http403()
@@ -259,7 +267,12 @@ class ConfigurableReport(JSONResponseMixin, BaseDomainView):
                 data_source.set_order_by(
                     [(data_source.column_configs[int(sort_column)].column_id, sort_order.upper())]
                 )
+
+            datatables_params = DatatablesParams.from_request_dict(request.GET)
+            page = list(data_source.get_data(start=datatables_params.start, limit=datatables_params.count))
+
             total_records = data_source.get_total_records()
+            total_row = data_source.get_total_row() if data_source.has_total_row else None
         except UserReportsError as e:
             if settings.DEBUG:
                 raise
@@ -284,20 +297,14 @@ class ConfigurableReport(JSONResponseMixin, BaseDomainView):
                 'warning': msg
             })
 
-        datatables_params = DatatablesParams.from_request_dict(request.GET)
-        page = list(data_source.get_data(start=datatables_params.start, limit=datatables_params.count))
-
         json_response = {
             'aaData': page,
             "sEcho": self.request_dict.get('sEcho', 0),
             "iTotalRecords": total_records,
             "iTotalDisplayRecords": total_records,
         }
-        if data_source.has_total_row:
-            # TODO - use sqlagg to get total_row
-            json_response.update({
-                "total_row": data_source.get_total_row(),
-            })
+        if total_row is not None:
+            json_response["total_row"] = total_row
         return self.render_json_response(json_response)
 
     def _get_initial(self, request, **kwargs):

@@ -520,8 +520,7 @@ def hq_download_saved_export(req, domain, export_id):
     # quasi-security hack: the first key of the index is always assumed
     # to be the domain
     assert domain == export.configuration.index[0]
-    cutoff = datetime.utcnow() - timedelta(days=settings.SAVED_EXPORT_ACCESS_CUTOFF)
-    if not export.last_accessed or export.last_accessed < cutoff:
+    if should_update_export(export.last_accessed):
         group_id = req.GET.get('group_export_id')
         if group_id:
             try:
@@ -532,23 +531,34 @@ def hq_download_saved_export(req, domain, export_id):
                 schema = next(itertools.islice(group_config.all_export_schemas,
                                                list_index,
                                                list_index+1))
-                rebuild_export_async.delay(export.configuration, schema, 'couch')
+                rebuild_export_async.delay(export.configuration, schema)
             except Exception:
                 notify_exception(req, 'Failed to rebuild export during download')
 
     export.last_accessed = datetime.utcnow()
     export.save()
-    export = SavedBasicExport.get(export_id)
-    content_type = Format.from_format(export.configuration.format).mimetype
+
     payload = export.get_payload(stream=True)
+    return build_download_saved_export_response(
+        payload, export.configuration.format, export.configuration.filename
+    )
+
+
+def build_download_saved_export_response(payload, format, filename):
+    content_type = Format.from_format(format).mimetype
     response = StreamingHttpResponse(FileWrapper(payload), content_type=content_type)
-    if export.configuration.format != 'html':
+    if format != 'html':
         # ht: http://stackoverflow.com/questions/1207457/convert-unicode-to-string-in-python-containing-extra-symbols
         normalized_filename = unicodedata.normalize(
-            'NFKD', unicode(export.configuration.filename),
+            'NFKD', unicode(filename),
         ).encode('ascii', 'ignore')
         response['Content-Disposition'] = 'attachment; filename="%s"' % normalized_filename
     return response
+
+
+def should_update_export(last_accessed):
+    cutoff = datetime.utcnow() - timedelta(days=settings.SAVED_EXPORT_ACCESS_CUTOFF)
+    return not last_accessed or last_accessed < cutoff
 
 
 @login_or_digest
@@ -1471,7 +1481,7 @@ def _get_form_or_404(domain, id):
 def _get_case_or_404(domain, case_id):
     try:
         case = CaseAccessors(domain).get_case(case_id)
-        if case.domain != domain:
+        if case.domain != domain or case.is_deleted:
             raise Http404()
         return case
     except CaseNotFound:

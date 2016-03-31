@@ -23,11 +23,11 @@ from corehq.apps.userreports.views import (
 )
 from .filters import urls as filter_urls
 from .views import (
-    EditFormInstance,
     AddSavedReportConfigView,
-    FormDataView,
-    CaseDetailsView,
     CaseAttachmentsView,
+    CaseDetailsView,
+    EditFormInstance,
+    FormDataView,
     MySavedReportsView,
     ScheduledReportsView,
 )

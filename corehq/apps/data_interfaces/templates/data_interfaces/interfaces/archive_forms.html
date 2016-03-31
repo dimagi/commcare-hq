@@ -69,6 +69,14 @@
                 }
             })
 
+            $('#submitForms').click(function() {
+                if ($allFormsButton[0].checked) {
+                    ga_track_event('Bulk Archive', 'All', 'Checkbox');
+                } else {
+                    ga_track_event('Bulk Archive', 'All', 'Selected Forms');
+                }
+            })
+
             $XFormManagement.find('.dataTables_paginate a').mouseup(selectNone);
             $XFormManagement.find('.dataTables_length select').change(selectNone);
         }

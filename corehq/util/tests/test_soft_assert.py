@@ -58,6 +58,10 @@ class SoftAssertTest(SimpleTestCase):
         self.assertEqual(self.infos[3].line,
                          'if not self.soft_assert(isinstance(x, float)):')
 
+    @softer_assert
+    def test_message_newlines(self):
+        self.soft_assert(False, "don't\ncrash")
+
 
 class SoftAssertHelpersTest(SimpleTestCase):
     def test_number_is_power_of_two(self):

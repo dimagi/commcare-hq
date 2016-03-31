@@ -224,6 +224,7 @@ class UpdateMyAccountInfoForm(BaseUpdateUserForm, BaseUserInfoForm):
                     _('Generate API Key'),
                     type="button",
                     id='generate-api-key',
+                    css_class='btn-default',
                 ),
                 css_class="form-group"
             ),

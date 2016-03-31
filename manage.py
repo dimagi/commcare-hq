@@ -3,7 +3,9 @@
 import sys
 import os
 import mimetypes
+from collections import namedtuple
 
+GeventCommand = namedtuple('GeventCommand', 'command contains')
 
 def _set_source_root_parent(source_root_parent):
     """
@@ -42,6 +44,18 @@ def init_hq_python_path():
     _set_source_root(os.path.join('corehq', 'ex-submodules'))
     _set_source_root(os.path.join('custom', '_legacy'))
 
+
+def _should_patch_gevent(args, gevent_commands):
+    should_patch = False
+    for gevent_command in gevent_commands:
+        should_patch = args[1] == gevent_command.command
+        if gevent_command.contains:
+            should_patch = should_patch and gevent_command.contains in ' '.join(args)
+        if should_patch:
+            break
+    return should_patch
+
+
 if __name__ == "__main__":
     init_hq_python_path()
 
@@ -51,16 +65,17 @@ if __name__ == "__main__":
     # ('module' object has no attribute 'poll' which has to do with
     # gevent-patching subprocess)
     GEVENT_COMMANDS = (
-        'bihar_run_calcs',
-        'mvp_force_update',
-        'run_gunicorn',
-        'preindex_everything',
-        'prime_views',
-        'ptop_preindex',
-        'sync_prepare_couchdb_multi',
-        'sync_couch_views',
+        GeventCommand('mvp_force_update', None),
+        GeventCommand('run_gunicorn', None),
+        GeventCommand('preindex_everything', None),
+        GeventCommand('prime_views', None),
+        GeventCommand('ptop_preindex', None),
+        GeventCommand('sync_prepare_couchdb_multi', None),
+        GeventCommand('sync_couch_views', None),
+        GeventCommand('migrate_multi', 'noinput'),
+        GeventCommand('celery', '-P gevent'),
     )
-    if len(sys.argv) > 1 and sys.argv[1] in GEVENT_COMMANDS:
+    if len(sys.argv) > 1 and _should_patch_gevent(sys.argv, GEVENT_COMMANDS):
         from restkit.session import set_session; set_session("gevent")
         from gevent.monkey import patch_all; patch_all(subprocess=True)
         from psycogreen.gevent import patch_psycopg; patch_psycopg()

@@ -12,6 +12,7 @@ from django.core.urlresolvers import reverse
 from django.http import HttpResponseRedirect, HttpResponse
 from django.http.response import Http404
 from django.shortcuts import render
+from django.utils.decorators import method_decorator
 from django.utils.http import urlencode
 from django.utils.translation import ugettext as _, ugettext_lazy
 from django.views.decorators.http import require_POST
@@ -138,6 +139,7 @@ def create_report(request, domain):
 
 class ReportBuilderView(BaseDomainView):
 
+    @method_decorator(require_permission(Permissions.edit_data))
     @cls_to_view_login_and_domain
     @use_bootstrap3
     @use_select2

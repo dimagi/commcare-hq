@@ -449,20 +449,6 @@ def get_exportable_column(amount):
     )
 
 
-def get_exportable_column_cost(subtotal, deduction):
-    return format_datatables_data(
-        text=get_column_formatted_str(subtotal, deduction),
-        sort_key=subtotal,
-    )
-
-
-def get_column_formatted_str(subtotal, deduction):
-    return mark_safe('%s<br />(%s)') % (
-        get_money_str(subtotal),
-        get_money_str(deduction)
-    )
-
-
 def get_subtotal_and_deduction(line_items):
     subtotal = 0
     deduction = 0
@@ -495,7 +481,7 @@ class WireInvoiceInterface(InvoiceInterfaceBase):
 
     @property
     def headers(self):
-        header = DataTablesHeader(
+        return DataTablesHeader(
             DataTablesColumn("Invoice #"),
             DataTablesColumn("Account Name (Fogbugz Client Name)"),
             DataTablesColumn("Project Space"),
@@ -520,10 +506,6 @@ class WireInvoiceInterface(InvoiceInterfaceBase):
             DataTablesColumn("Payment Status"),
             DataTablesColumn("Do Not Invoice"),
         )
-
-        if not self.is_rendered_as_email:
-            header.add_column(DataTablesColumn("View Invoice"))
-        return header
 
     @property
     def rows(self):
@@ -572,10 +554,6 @@ class WireInvoiceInterface(InvoiceInterfaceBase):
                 "YES" if invoice.is_hidden else "no",
             ]
 
-            if not self.is_rendered_as_email:
-                columns.extend([
-                    mark_safe(make_anchor_tag(invoice_url, 'Go to Invoice'))
-                ])
             rows.append(columns)
         return rows
 
