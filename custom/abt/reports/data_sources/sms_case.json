@@ -1,6 +1,7 @@
 {
   "domains": [
-    "airs-testing"
+    "airs-testing",
+    "airsbenin"
   ],
   "config": {
     "engine_id": "default",
