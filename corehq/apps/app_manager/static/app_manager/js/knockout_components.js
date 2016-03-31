@@ -1,10 +1,11 @@
 ko.components.register('inline-edit', {
     viewModel: function(params) {
         var self = this;
-        self.name = params.name;
-        self.original = params.value;
+        self.name = params.name || '';
+        self.original = (ko.isObservable(params.value) ? params.value() : params.value) || '';
+        self.id = params.id || '';
         self.rows = params.rows || 2;
-        self.value = ko.observable(self.original);
+        self.value = ko.isObservable(params.value) ? params.value : ko.observable(self.original);
         self.editing = ko.observable(false);
         self.saveHasFocus = ko.observable(false);
         self.cancelHasFocus = ko.observable(false);
@@ -41,7 +42,7 @@ ko.components.register('inline-edit', {
             <div class="read-write" data-bind="visible: editing()">\
                 <div class="form-group">\
                     <textarea class="form-control" data-bind="\
-                        attr: {name: name, rows: rows},\
+                        attr: {name: name, id: id, rows: rows},\
                         value: value, hasFocus: editing(),\
                         event: {blur: blur},\
                     "></textarea>\

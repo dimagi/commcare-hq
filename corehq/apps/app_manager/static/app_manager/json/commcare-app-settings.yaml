@@ -196,4 +196,4 @@
   description: >
     A comment to document or explain this application for other app builders or maintainers.
   default: ''
-  widget: textarea
+  widget: inline_edit
