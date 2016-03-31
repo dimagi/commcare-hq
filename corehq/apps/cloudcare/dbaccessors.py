@@ -19,6 +19,8 @@ def get_application_access_for_domain(domain):
 
 
 def get_cloudcare_apps(domain):
-    return map(lambda app: app._doc,
-               ApplicationBase.view('cloudcare/cloudcare_apps',
-                                    startkey=[domain], endkey=[domain, {}]))
+    return [
+        app for app in ApplicationBase.get_db().view(
+            'app_manager/applications_brief', startkey=[domain], endkey=[domain, {}])
+        if app['doc_type'] == 'Application' and app['cloudcare_enabled']
+    ]
