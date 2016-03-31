@@ -91,7 +91,7 @@ submodules:
   submodules/django-prbac-src:
     branches: []
   corehq/apps/prelogin:
-    branches: #[]
-      - TABS  # Danny 3/31
+    branches: []
+#      - TABS  # Danny 3/31
   corehq/apps/hqmedia/static/hqmedia/MediaUploader:
     branches: []
