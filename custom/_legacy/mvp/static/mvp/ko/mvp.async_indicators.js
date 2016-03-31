@@ -106,7 +106,7 @@ var MVISIndicator = function (indicator) {
             self.is_loaded(true);
             $('.mvp-table').trigger('mvp.loaded');
         } else {
-            console.log("Retrying, ERROR: ", error);
+            console.log("ERROR: ", data.error);
         }
     };
 

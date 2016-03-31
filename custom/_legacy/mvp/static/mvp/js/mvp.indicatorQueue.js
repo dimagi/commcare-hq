@@ -9,9 +9,6 @@ mvp.MVPIndicatorQueue = function (queueLength, fnProcessNextCallback) {
 
     self.start = function () {
         self.d = $.Deferred();
-        self.d.done(function () {
-            console.log("complete");
-        });
         self.next();
     };
 
