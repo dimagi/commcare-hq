@@ -498,26 +498,36 @@ class BeneficiaryPaymentReport(CaseReportMixin, BaseReport):
 
     def join_rows(self, rows):
         if len(rows) == 1:
-            return rows[0]
-        def zip_fn((i, values)):
-            if i == self.column_index('num_children') or i == self.column_index('year_end_bonus_cash'):
-                return values[0]
-            elif isinstance(values[0], int):
-                return sum(values)
-            elif i == self.column_index('case_id'):
-                unique_values = set(v for v in values if v is not None)
-                if self.show_html:
-                    return ''.join('<p>{}</p>'.format(v) for v in unique_values)
+            for cel in rows[0]:
+                yield cel
+        else:
+            has_bonus_cash = 0
+            share_account = False
+            for i, values in enumerate(zip(*rows)):
+                if i == self.column_index('num_children'):
+                    yield values[0]
+                elif i == self.column_index('year_end_bonus_cash'):
+                    has_bonus_cash = values[0]
+                    yield has_bonus_cash
+                elif isinstance(values[0], int):
+                    yield sum(values)
+                elif i == self.column_index('case_id'):
+                    unique_values = set(v for v in values if v is not None)
+                    share_account = len(unique_values) > 1
+                    if self.show_html:
+                        yield ''.join('<p>{}</p>'.format(v) for v in unique_values)
+                    else:
+                        yield ','.join(unique_values)
+                elif i == self.column_index('issues'):
+                    sep = ', '
+                    if share_account and (has_bonus_cash == 2000 or has_bonus_cash == 3000):
+                        msg = _("Check for multiple pregnancies")
+                    else:
+                        msg = _("Duplicate account number")
+                    all_issues = sep.join(filter(None, values + (msg,)))
+                    yield sep.join(set(all_issues.split(sep)))
                 else:
-                    return ','.join(unique_values)
-            elif i == self.column_index('issues'):
-                sep = ', '
-                msg = _("Duplicate account number")
-                all_issues = sep.join(filter(None, values + (msg,)))
-                return sep.join(set(all_issues.split(sep)))
-            else:
-                return sorted(values)[-1]
-        return map(zip_fn, enumerate(zip(*rows)))
+                    yield sorted(values)[-1]
 
 
 class MetReport(CaseReportMixin, BaseReport):
