@@ -104,13 +104,18 @@
             var formFilter = {{ form.form_filter|JSON }};
             var allOtherFormsRequireACase = {{ form.all_other_forms_require_a_case|BOOL }};
             var formFilterReferencesCase = {{ form_filter_references_case|BOOL }};
+            var formFilterReferencesUserCase = {{ form_filter_references_user_case|BOOL }};
             var formFilterAllowed = ko.computed(function () {
-                if(putInRoot) {
+                if(!formFilter) {
+                    return true;
+                }
+
+                moduleUsesCase = (allOtherFormsRequireACase && form_requires() === 'case');
+                if(formFilterReferencesCase && (!moduleUsesCase || putInRoot)) {
                     return false;
                 }
 
-                moduleUsesCase = (allOtherFormsRequireACase && form_requires() === 'case') || isUserCaseInUse;
-                if(!moduleUsesCase && formFilterReferencesCase) {
+                if(formFilterReferencesUserCase && !isUserCaseInUse) {
                     return false;
                 }
 

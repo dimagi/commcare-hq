@@ -8,7 +8,7 @@ import uuid
 import yaml
 from corehq import toggles
 from corehq.apps.app_manager.exceptions import SuiteError
-from corehq.apps.app_manager.xpath import matches_dot_interpolate_pattern
+from corehq.apps.app_manager.xpath import matches_dot_interpolate_pattern, UserCaseXPath
 from corehq.apps.builds.models import CommCareBuildConfig
 from corehq.apps.app_manager.tasks import create_user_cases
 from corehq.util.quickcache import quickcache
@@ -631,7 +631,7 @@ def xpath_references_case(xpath):
     ])
 
 
-def form_filter_references_case(xpath):
+def filter_references_case(xpath):
     if not isinstance(xpath, basestring):
         return False
 
@@ -646,4 +646,25 @@ def form_filter_references_case(xpath):
     ] + [
         matches_dot_interpolate_pattern(xpath),
         xpath_references_case(xpath),
+    ])
+
+
+def xpath_references_usercase(xpath):
+    if not isinstance(xpath, basestring):
+        return False
+
+    prepared_xpath = _prepare_xpath_for_validation(xpath)
+
+    return UserCaseXPath().case() in xpath
+
+
+def filter_references_usercase(xpath):
+    if not isinstance(xpath, basestring):
+        return False
+
+    prepared_xpath = _prepare_xpath_for_validation(xpath)
+
+    return any([
+        "#user" in prepared_xpath,
+        xpath_references_usercase(xpath),
     ])

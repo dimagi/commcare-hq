@@ -130,3 +130,7 @@ class NoMatchingFilterException(ConfigurableReportException):
 
 class CaseXPathValidationError(SuiteValidationError):
     pass
+
+
+class UserCaseXPathValidationError(SuiteValidationError):
+    pass

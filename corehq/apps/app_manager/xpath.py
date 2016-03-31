@@ -26,6 +26,11 @@ CASE_REFERENCE_VALIDATION_ERROR = ugettext_lazy(
     'a different module.'
 )
 
+USERCASE_REFERENCE_VALIDATION_ERROR = ugettext_lazy(
+    'Your filter refers to a user case, but your project does not use user cases. Please either remove '
+    'the user case reference in your filter or enable user case for your project.'
+)
+
 
 def matches_dot_interpolate_pattern(string):
     return re.search(DOT_INTERPOLATE_PATTERN, string)
