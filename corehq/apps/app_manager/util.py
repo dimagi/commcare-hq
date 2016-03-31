@@ -81,7 +81,7 @@ def xpath_references_case(xpath):
     return _check_xpath_for_matches(
         xpath,
         substring_matches=CASE_XPATH_SUBSTRING_MATCHES,
-        pattern_matches=CASE_XPATH_PATTERNS
+        pattern_matches=CASE_XPATH_PATTERN_MATCHES
     )
 
 
