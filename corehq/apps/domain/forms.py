@@ -1367,9 +1367,9 @@ class ConfirmSubscriptionRenewalForm(EditBillingAccountInfoForm):
             ),
             hqcrispy.FormActions(
                 hqcrispy.LinkButton(
-                     _("Cancel"),
-                     reverse(DomainSubscriptionView.urlname, args=[self.domain]),
-                     css_class="btn btn-default"
+                    _("Cancel"),
+                    reverse(DomainSubscriptionView.urlname, args=[self.domain]),
+                    css_class="btn btn-default"
                 ),
                 StrictButton(
                     _("Renew Plan"),
