@@ -95,7 +95,7 @@ class CaseAPIResult(object):
                     elif isinstance(val, dict):
                         props[key] = _sanitize(val)
                 return props
-            json = _sanitize(json)
+            json = _sanitize(dict(json))
         return json
 
     def to_json(self):

@@ -729,11 +729,14 @@ class OPMCaseRow(object):
 
     @property
     def year_end_bonus_cash(self):
-        year_value = self.birth_spacing_years or self.weight_grade_normal
-        return {
-            2: TWO_YEAR_AMT,
-            3: THREE_YEAR_AMT,
-        }.get(year_value, 0)
+        if self.child_index == 1:
+            year_value = self.birth_spacing_years or self.weight_grade_normal
+            return {
+                2: TWO_YEAR_AMT,
+                3: THREE_YEAR_AMT,
+            }.get(year_value, 0)
+        else:
+            return 0
 
     @property
     def cash_amt(self):
@@ -803,6 +806,14 @@ class OPMCaseRow(object):
         if len(self.ifs_code) != 11:
             return _("IFSC {} incorrect").format(self.ifs_code)
 
+    def two_year_bonus(self):
+        if self.year_end_bonus_cash == TWO_YEAR_AMT:
+            return _("Pregnancy Bonus due for 2 years")
+
+    def three_year_bonus(self):
+        if self.year_end_bonus_cash == THREE_YEAR_AMT:
+            return _("Pregnancy Bonus due for 3 years")
+
     @property
     def issues(self):
         return ", ".join(filter(None, [
@@ -811,6 +822,8 @@ class OPMCaseRow(object):
             self.bad_lmp(),
             self.bad_account_num(),
             self.bad_ifsc(),
+            self.two_year_bonus(),
+            self.three_year_bonus(),
         ]))
 
     @property
