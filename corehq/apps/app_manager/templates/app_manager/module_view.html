@@ -275,9 +275,9 @@
                 </div>
                 {% endif %}
                 <div class="form-group">
-                    <label class="col-sm-2 control-label" for="comment-id">{% trans "Comment" %}</label>
+                    <label class="col-sm-2 control-label">{% trans "Comment" %}</label>
                     <div class="col-sm-4">
-                        <textarea id="comment-id" name="comment" class="form-control">{{ module.comment }}</textarea>
+                        <inline-edit params="name: 'comment', value: '{{ module.comment|escapejs }}'"></inline-edit>
                     </div>
                 </div>
                 {% endblock %}
