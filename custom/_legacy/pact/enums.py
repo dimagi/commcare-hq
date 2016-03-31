@@ -1,10 +1,8 @@
-from django.conf import settings
 import itertools
 import pytz
 
 PACT_DOMAIN = "pact"
 PACT_HP_GROUPNAME = "PACT-HPS"
-PACT_HP_GROUP_ID = getattr(settings, 'PACT_HP_GROUP_ID', "")
 PACT_CASE_TYPE = 'cc_path_client'
 PACT_SCHEDULES_NAMESPACE = 'pact_weekly_schedule'
 
@@ -21,17 +19,6 @@ XMLNS_PATIENT_PROVIDER_UPDATE="http://dev.commcarehq.org/pact/patient_provider"
 PACT_PROVIDER_FIXTURE_TAG = 'provider'
 
 PACT_TIMEZONE = pytz.timezone('America/New_York')
-
-
-#Deprecated static sequence of time labels. needed to support legacy data pre labeling
-TIME_LABEL_LOOKUP = (
-    (),
-    ('Dose',), #dose is the legacy code for old single doses - here as a placeholder
-    ('Morning', 'Evening'),
-    ('Morning', 'Noon', 'Evening'),
-    ('Morning', 'Noon', 'Evening', 'Bedtime'),
-    ('Dose', 'Morning', 'Noon', 'Evening', 'Bedtime'),
-)
 
 DOT_NONART = "NONART"
 DOT_NONART_IDX = 0

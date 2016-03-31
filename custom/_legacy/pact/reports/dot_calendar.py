@@ -1,7 +1,6 @@
 from calendar import HTMLCalendar
 from calendar import month_name
 from datetime import date, timedelta, datetime
-from itertools import groupby
 import logging
 from corehq.apps.hqwebapp.templatetags.hq_shared_tags import static
 from dimagi.utils.decorators.memoized import memoized
@@ -34,9 +33,6 @@ class DOTCalendarReporter(object):
     patient_casedoc = None
     start_date = None
     end_date = None
-
-    observe_start_date = None
-    observe_end_date = None
 
     def unique_xforms(self):
         obs = self.dot_observation_range()
@@ -253,12 +249,6 @@ class DOTCalendar(HTMLCalendar):
         a('</table>')
         a('\n')
         return ''.join(v)
-
-    def group_by_day(self, submissions):
-        def field(submission):
-            datetime_string = submission.form['author']['time']['@value'][0:8]
-            return datetime.strptime(datetime_string, '%Y%m%d').day
-        return {day: list(items) for day, items in groupby(submissions, field)}
 
     def day_cell(self, cssclass, body):
         return '<td class="%s">%s</td>' % (cssclass, body)
