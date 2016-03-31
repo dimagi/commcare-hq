@@ -23,7 +23,7 @@ mvp.MVPIndicatorQueue = function (queueLength, fnProcessNextCallback) {
         } else {
             self.d.resolve();
         }
-    }
+    };
 };
 
 mvp.MVPIndicatorUpdater = function (updateUrl, fnCallbackData, fnCallbackError) {
@@ -66,6 +66,6 @@ mvp.MVPIndicatorUpdater = function (updateUrl, fnCallbackData, fnCallbackError) 
             self.fnCallbackError();
             self.d.fail();
         }
-    }
+    };
 
 };
