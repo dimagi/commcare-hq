@@ -1230,8 +1230,8 @@ class InternalSubscriptionManagementView(BaseAdminProjectSettingsView):
     @use_bootstrap3
     @use_jquery_ui
     @use_select2
-    def get(self, request, *args, **kwargs):
-        return super(InternalSubscriptionManagementView, self).get(request, *args, **kwargs)
+    def dispatch(self, request, *args, **kwargs):
+        return super(InternalSubscriptionManagementView, self).dispatch(request, *args, **kwargs)
 
     @method_decorator(require_superuser)
     def post(self, request, *args, **kwargs):
