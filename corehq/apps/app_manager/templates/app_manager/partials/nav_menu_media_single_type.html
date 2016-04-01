@@ -31,7 +31,7 @@
             </button>
             <button type="button" class="btn btn-danger"
                     data-bind="
-                        visible: isMediaMatched,
+                        visible: refHasPath,
                         event: {
                             click: removeMedia
                         }
@@ -71,7 +71,7 @@
                    name="{{ qualifier|default_if_none:"" }}media_{{ type }}"
                    data-bind="value: savedPath" />
         </div>
-        <div class="col-sm-2">
+        <div class="col-sm-1">
             <button type="button" class="btn btn-default"
                     data-bind="
                         visible: showCustomPath,
@@ -79,15 +79,6 @@
                     ">
                 <i class="fa fa-remove"></i>
                 {% trans 'Use Default Path' %}
-            </button>
-            <button type="button" class="btn btn-danger"
-                    data-bind="
-                        visible: showCustomPath,
-                        event: {
-                            click: removeMedia
-                        }
-                    ">
-                <i class="fa fa-remove"></i>
             </button>
         </div>
     </div>
