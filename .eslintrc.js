@@ -12,6 +12,7 @@ module.exports = {
         // false means it shouldn't be overwritten
         "hqDefine": false,
         "hqImport": false,
+        "gettext": false,
         "$": false,
         "ko": false,
         "_": false,
