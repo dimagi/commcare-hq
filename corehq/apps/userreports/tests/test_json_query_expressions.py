@@ -1,116 +1,178 @@
 import itertools
 from corehq.apps.userreports.exceptions import BadSpecError
 from corehq.apps.userreports.expressions.factory import ExpressionFactory
+from corehq.util.test_utils import generate_cases
 from django.test import SimpleTestCase
 
 
-class FilterItemsExpressionTest(SimpleTestCase):
+def _make_filter_expression(items_expression=None, filter_expression=None):
+    expression = {
+        'type': 'filter_items',
+    }
+    if items_expression is not None:
+        expression['items_expression'] = items_expression
 
-    def _make_expression(self, items_expression=None, filter_expression=None):
-        expression = {
-            'type': 'filter_items',
-        }
-        if items_expression is not None:
-            expression['items_expression'] = items_expression
+    if filter_expression is not None:
+        expression['filter_expression'] = filter_expression
 
-        if filter_expression is not None:
-            expression['filter_expression'] = filter_expression
-
-        return ExpressionFactory.from_spec(expression)
-
-    @classmethod
-    def setUpClass(cls):
-        cls.gmp_forms = [
-            {'type': 'gmp', 'form_id': 'gmp_form_1', 'weight': 1},
-            {'type': 'gmp', 'form_id': 'gmp_form_2', 'weight': 2},
-            {'type': 'gmp', 'form_id': 'gmp_form_3', 'weight': 3},
-        ]
-        cls.thr_forms = [
-            {'type': 'thr', 'form_id': 'thr_form_1', 'num_thr': 1},
-        ]
-        cls.case_doc = {
-            'forms': cls.gmp_forms + cls.thr_forms
-        }
-
-    def setUp(self):
-        self.filter_expression = {
-            'type': 'boolean_expression',
-            'operator': 'eq',
-            'expression': {
-                'type': 'property_name',
-                'property_name': 'type',
-            },
-            'property_value': 'gmp',
-        }
-        self.items_expression = {
-            'type': 'property_name',
-            'property_name': 'forms'
-        }
-
-    def test_empty_expressions(self):
-        expressions = [
-            (self.items_expression, None),
-            (None, self.filter_expression),
-            (self.items_expression, {}),
-            ({}, self.filter_expression)
-        ]
-        for expression in expressions:
-            with self.assertRaises(BadSpecError):
-                self._make_expression(*expression)
-
-    def test_basic(self):
-        expression = self._make_expression(self.items_expression, self.filter_expression)
-        self.assertEqual(expression(self.case_doc), self.gmp_forms)
-
-    def test_no_filter_match(self):
-        self.filter_expression['property_value'] = 'unknown_type'
-        expression = self._make_expression(self.items_expression, self.filter_expression)
-        self.assertEqual(expression(self.case_doc), [])
+    return ExpressionFactory.from_spec(expression)
 
 
-class MapItemsExpressionTest(SimpleTestCase):
-    # todo - more test coverage
-    def test_basic(self):
-        doc = {
-            'items': [
-                {'a': 1, 'b': 'b1'},
-                {'a': 2, 'b': 'b2'},
-                {'a': 3, 'b': 'b3'},
-            ]
-        }
-        expression = ExpressionFactory.from_spec({
-            'type': 'map_items',
-            'items_expression': {
-                'type': 'property_name',
-                'property_name': 'items'
-            },
-            'map_expression': {
-                'type': 'property_name',
-                'property_name': 'a'
-            }
-        })
-        self.assertEqual(expression(doc), map(lambda x: x['a'], doc['items']))
+def _make_map_expression(items_expression=None, map_expression=None):
+    expression = {
+        'type': 'map_items',
+    }
+    if items_expression is not None:
+        expression['items_expression'] = items_expression
+
+    if map_expression is not None:
+        expression['map_expression'] = map_expression
+
+    return ExpressionFactory.from_spec(expression)
 
 
-class ReduceItemsExpressionTest(SimpleTestCase):
-    # todo - more test coverage
-    def test_basic(self):
-        doc = {
-            'items': [
-                {'a': 1, 'b': 'b1'},
-                {'a': 2, 'b': 'b2'},
-                {'a': 3, 'b': 'b3'},
-            ]
-        }
-        expression = ExpressionFactory.from_spec({
-            'type': 'reduce_items',
-            'items_expression': {
-                'type': 'property_name',
-                'property_name': 'items'
-            },
-            'aggregation_fn': 'count'
-        })
-        self.assertEqual(expression(doc), len(doc['items']))
+def _make_reduce_expression(items_expression=None, agg_fn=None):
+    expression = {
+        'type': 'reduce_items',
+    }
+    if items_expression is not None:
+        expression['items_expression'] = items_expression
+
+    if agg_fn is not None:
+        expression['aggregation_fn'] = agg_fn
+
+    return ExpressionFactory.from_spec(expression)
+
+_filter_v1 = {
+    'type': 'boolean_expression',
+    'operator': 'eq',
+    'expression': {
+        'type': 'property_name',
+        'property_name': 'key',
+    },
+    'property_value': 'v1',
+}
+
+
+@generate_cases([
+    ([{'key': 'v1'}, {'key': 'v2'}], None),
+    ([{'key': 'v1'}, {'key': 'v2'}], {}),
+    (None, _filter_v1),
+    ({}, _filter_v1),
+    ([], _filter_v1),
+])
+def test_filter_items_bad_spec(self, items_ex, filter_ex):
+    with self.assertRaises(BadSpecError):
+        _make_filter_expression(items_ex, filter_ex)
+
+
+@generate_cases([
+    (
+        [{'key': 'v1'}, {'key': 'v2'}],
+        {'type': 'identity'},
+        _filter_v1,
+        [{'key': 'v1'}]
+    ),
+    (   # literal
+        [],
+        [{'key': 'v1'}, {'key': 'v2'}],
+        _filter_v1,
+        [{'key': 'v1'}]
+    ),
+    (
+        {'items': [{'key': 'v1'}, {'key': 'v2'}]},
+        {'type': 'property_name', 'property_name': 'items'},
+        _filter_v1,
+        [{'key': 'v1'}]
+    ),
+])
+def test_filter_items_basic(self, doc, items_ex, filter_ex, expected):
+    expression = _make_filter_expression(items_ex, filter_ex)
+    self.assertEqual(expression(doc), expected)
+
+
+@generate_cases([
+    ([{'key': 'v1'}, {'key': 'v2'}], None),
+    ([{'key': 'v1'}, {'key': 'v2'}], {}),
+    (None, {'type': 'identity'}),
+    ({}, {'type': 'identity'}),
+    ([], {'type': 'identity'}),
+])
+def test_map_items_bad_spec(self, items_ex, map_ex):
+    with self.assertRaises(BadSpecError):
+        _make_map_expression(items_ex, map_ex)
+
+
+@generate_cases([
+    (
+        [{'key': 'v1'}, {'key': 'v2'}],
+        {'type': 'identity'},
+        {'type': 'identity'},
+        [{'key': 'v1'}, {'key': 'v2'}],
+    ),
+    (   # literal
+        [],
+        [{'key': 'v1'}, {'key': 'v2'}],
+        {'type': 'identity'},
+        [{'key': 'v1'}, {'key': 'v2'}],
+    ),
+    (
+        [{'key': 'v1'}, {'key': 'v2'}],
+        {'type': 'identity'},
+        {'type': 'property_name', 'property_name': 'key'},
+        ['v1', 'v2']
+    ),
+    (
+        {'items': [{'key': 'v1'}, {'key': 'v2'}]},
+        {'type': 'property_name', 'property_name': 'items'},
+        {'type': 'property_name', 'property_name': 'key'},
+        ['v1', 'v2']
+    ),
+])
+def test_map_items_basic(self, doc, items_ex, map_ex, expected):
+    expression = _make_map_expression(items_ex, map_ex)
+    self.assertEqual(expression(doc), expected)
+
+
+@generate_cases([
+    ([{'key': 'v1'}, {'key': 'v2'}], None),
+    ({'type': 'identity'}, {}),
+    ({'type': 'identity'}, 'invalid_agg_fn'),
+])
+def test_reduce_items_bad_spec(self, items_ex, reduce_ex):
+    with self.assertRaises(BadSpecError):
+        _make_reduce_expression(items_ex, reduce_ex)
+
+
+@generate_cases([
+    (
+        ['a', 'b']
+        {'type': 'identity'},
+        'count',
+        2,
+    ),
+    (
+        {'items': ['a', 'b']},
+        {'type': 'property_name', 'property_name': 'items'},
+        'count',
+        2,
+    ),
+    (   # literal
+        [],
+        {'type': 'identity'},
+        'count',
+        0,
+    ),
+    (
+        [1, 2]
+        {'type': 'identity'},
+        'sum',
+        ['v1', 'v2']
+    ),
+])
+def test_reduce_items_basic(self, doc, items_ex, reduce_ex, expected):
+    expression = _make_reduce_expression(items_ex, reduce_ex)
+    self.assertEqual(expression(doc), expected)
 
 
 class FlattenExpressionTest(SimpleTestCase):

@@ -2,12 +2,13 @@ import itertools
 from dimagi.ext.jsonobject import JsonObject, DictProperty, StringProperty
 from corehq.apps.userreports.exceptions import BadSpecError
 from corehq.apps.userreports.specs import TypeProperty
+from jsonobject.base_properties import DefaultProperty
 from .utils import SUPPORTED_UCR_AGGREGATIONS, aggregate_items
 
 
 class FilterItemsExpressionSpec(JsonObject):
     type = TypeProperty('filter_items')
-    items_expression = DictProperty(required=True)
+    items_expression = DefaultProperty(required=True)
     filter_expression = DictProperty(required=True)
 
     def configure(self, items_expression, filter_expression):
@@ -27,7 +28,7 @@ class FilterItemsExpressionSpec(JsonObject):
 
 class MapItemsExpressionSpec(JsonObject):
     type = TypeProperty('map_items')
-    items_expression = DictProperty(required=True)
+    items_expression = DefaultProperty(required=True)
     map_expression = DictProperty(required=True)
 
     def configure(self, items_expression, map_expression):
@@ -45,7 +46,7 @@ class MapItemsExpressionSpec(JsonObject):
 
 class ReduceItemsExpressionSpec(JsonObject):
     type = TypeProperty('reduce_items')
-    items_expression = DictProperty(required=True)
+    items_expression = DefaultProperty(required=True)
     aggregation_fn = StringProperty(required=True)
 
     def configure(self, items_expression):
@@ -63,7 +64,7 @@ class ReduceItemsExpressionSpec(JsonObject):
 
 class FlattenExpressionSpec(JsonObject):
     type = TypeProperty('flatten')
-    items_expression = DictProperty(required=True)
+    items_expression = DefaultProperty(required=True)
 
     def configure(self, items_expression):
         self._items_expression = items_expression
