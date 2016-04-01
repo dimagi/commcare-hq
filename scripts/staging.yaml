@@ -45,9 +45,9 @@
 trunk: master
 name: autostaging
 branches:
+  - b3-reports-home+TABS
+  - TABS  # Danny 3/31
   - delete-cloudcare-cloudcare-apps  # Danny 3/29
-  - ko3-app-manager  # Danny 3/7
-  - flip_apps_db  # Danny 3/1
   - calculatedIcons # Sravan 3/2
   - vellum-staging # J$ 11/13
 #  - java-tf-deploy # Ben/Will 1/21/16
@@ -59,18 +59,17 @@ branches:
   - b3-reports-data  # BB 2/23
   - b3-data-import-cases  # BB 2/23
   - b3-data-lookup-tables  # BB 2/23
-  - b3-reports-case-form+b3-reports-home
   - b3-reports-home  # BB 2/23
-  - b3-reports-case-form  # BB 2/24
   # B3 Report Migration branches
   - import_build-anchor-tag # Nick P 2/29
   - b3-project-settings-accounting  # Biyeun 3/1
   - b3-commcare-exchange # biyeun 3/10
   - report-builder-text # Cal 3/1
-  - sql-saved-exports-2 # Noah 3/9  includes ES reindex
   - certificate-validation # Cal 3/10
-  - move-services-dir # Ben 3/15
   - login-b3 # Jenny 3/21
+  - knockout-3-3 # Jenny 3/30
+  - minify-css # Ben 3/31
+  - fixtures-mobile-fix # GC 3/31
 submodules:
   submodules/touchforms-src:
     # let's leave this here even when empty
@@ -80,8 +79,7 @@ submodules:
   submodules/formtranslate-src:
     # let's leave this here even when empty
     # just so we always get latest master
-    branches:
-      - 2.26_jar  # wsp 2.23
+    branches: []
   submodules/ctable-src:
     branches: []
   submodules/django-digest-src:
@@ -91,6 +89,7 @@ submodules:
   submodules/django-prbac-src:
     branches: []
   corehq/apps/prelogin:
-    branches: []
+    branches: #[]
+      - TABS  # Danny 3/31
   corehq/apps/hqmedia/static/hqmedia/MediaUploader:
     branches: []
