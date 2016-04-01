@@ -7,8 +7,12 @@ from django.core.exceptions import SuspiciousOperation
 from django.core.urlresolvers import reverse
 from django.http import HttpResponseRedirect, HttpResponseBadRequest, Http404
 from django.template.defaultfilters import filesizeformat
+from django.views.decorators.csrf import csrf_exempt
+from django.views.decorators.http import require_GET
 
 from corehq.apps.export.export import get_export_download
+from corehq.apps.reports.views import should_update_export, \
+    build_download_saved_export_response, require_form_export_permission
 from corehq.form_processor.interfaces.dbaccessors import FormAccessors
 from django_prbac.utils import has_privilege
 from django.utils.decorators import method_decorator
@@ -22,8 +26,12 @@ from corehq import toggles
 from corehq.apps.accounting.utils import domain_has_privilege
 from corehq.apps.app_manager.fields import ApplicationDataRMIHelper
 from corehq.apps.data_interfaces.dispatcher import require_can_edit_data
-from corehq.apps.domain.decorators import login_and_domain_required
-from corehq.apps.export.utils import convert_saved_export_to_export_instance
+from corehq.apps.domain.decorators import login_and_domain_required, \
+    login_or_digest_or_basic_or_apikey
+from corehq.apps.export.utils import (
+    convert_saved_export_to_export_instance,
+    revert_new_exports,
+)
 from corehq.apps.export.custom_export_helpers import make_custom_export_helper
 from corehq.apps.export.exceptions import (
     ExportNotFound,
@@ -77,6 +85,7 @@ from corehq.apps.users.permissions import FORM_EXPORT_PERMISSION, CASE_EXPORT_PE
     DEID_EXPORT_PERMISSION
 from corehq.util.couch import get_document_or_404_lite
 from corehq.util.timezones.utils import get_timezone_for_user
+from corehq.util.soft_assert import soft_assert
 from couchexport.models import SavedExportSchema, ExportSchema
 from couchexport.schema import build_latest_schema
 from couchexport.util import SerializableFunction
@@ -1055,7 +1064,7 @@ class BaseExportListView(ExportsPermissionsMixin, JSONResponseMixin, BaseProject
             last_updated=export.last_updated,
             last_accessed=export.last_accessed,
             download_url=reverse(
-                'hq_download_new_saved_export', args=[self.domain, export._id]
+                'download_daily_saved_export', args=[self.domain, export._id]
             ),
         )
 
@@ -1185,7 +1194,10 @@ class FormExportListView(BaseExportListView):
     def get_saved_exports(self):
         exports = FormExportSchema.get_stale_exports(self.domain)
         new_exports = get_form_export_instances(self.domain)
-        exports += new_exports
+        if toggles.NEW_EXPORTS.enabled(self.domain):
+            exports += new_exports
+        else:
+            exports += revert_new_exports(new_exports)
         if not self.has_deid_view_permissions:
             exports = filter(lambda x: not x.is_safe, exports)
         return sorted(exports, key=lambda x: x.name)
@@ -1308,7 +1320,10 @@ class CaseExportListView(BaseExportListView):
     def get_saved_exports(self):
         exports = CaseExportSchema.get_stale_exports(self.domain)
         new_exports = get_case_export_instances(self.domain)
-        exports += new_exports
+        if toggles.NEW_EXPORTS.enabled(self.domain):
+            exports += new_exports
+        else:
+            exports += revert_new_exports(new_exports)
         if not self.has_deid_view_permissions:
             exports = filter(lambda x: not x.is_safe, exports)
         return sorted(exports, key=lambda x: x.name)
@@ -1489,8 +1504,19 @@ class BaseEditNewCustomExportView(BaseModifyNewCustomView):
                 )
 
                 export_instance = convert_saved_export_to_export_instance(export_helper.custom_export)
+
             except ResourceNotFound:
                 raise Http404()
+            except Exception, e:
+                _soft_assert = soft_assert('{}@{}'.format('brudolph', 'dimagi.com'))
+                _soft_assert(False, 'Failed to convert export {}. {}'.format(self.export_id, e))
+                messages.error(
+                    request,
+                    mark_safe(
+                        _("Export failed to convert to new version. Try creating another export")
+                    )
+                )
+                return HttpResponseRedirect(self.export_home_url)
 
         schema = self.get_export_schema(export_instance)
         self.export_instance = self.export_instance_cls.generate_instance_from_schema(
@@ -1622,3 +1648,31 @@ class DownloadNewCaseExportView(GenericDownloadNewExportMixin, DownloadCaseExpor
         filter_form = self._get_filter_form(filter_form_data)
         form_filters = filter_form.get_case_filter()
         return form_filters
+
+
+@csrf_exempt
+@login_or_digest_or_basic_or_apikey(default='digest')
+@require_form_export_permission
+@require_GET
+def download_daily_saved_export(req, domain, export_instance_id):
+    export_instance = get_properly_wrapped_export_instance(export_instance_id)
+    assert domain == export_instance.domain
+    if should_update_export(export_instance.last_accessed):
+        try:
+            from corehq.apps.export.tasks import rebuild_export_task
+            rebuild_export_task.delay(export_instance)
+        except Exception:
+            notify_exception(
+                req,
+                'Failed to rebuild export during download',
+                {
+                    'export_instance_id': export_instance_id,
+                    'domain': domain,
+                },
+            )
+    export_instance.last_accessed = datetime.utcnow()
+    export_instance.save()
+    payload = export_instance.get_payload(stream=True)
+    return build_download_saved_export_response(
+        payload, export_instance.export_format, export_instance.filename
+    )

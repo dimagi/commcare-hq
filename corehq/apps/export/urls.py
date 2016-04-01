@@ -80,4 +80,7 @@ urlpatterns = patterns(
     url(r"^custom/new/(?P<export_type>[\w\-]+)/delete/(?P<export_id>[\w\-]+)/$",
         DeleteNewCustomExportView.as_view(),
         name=DeleteNewCustomExportView.urlname),
+    url(r"^custom/dailysaved/download/(?P<export_instance_id>[\w\-]+)/$",
+        "download_daily_saved_export",
+        name="download_daily_saved_export"),
 )

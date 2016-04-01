@@ -75,10 +75,3 @@ def input_trans(name, langs=None, input_name='name', cssClass=''):
 @register.filter
 def clean_trans(name, langs=["default"]):
     return trans(name, langs, False)
-
-@register.filter
-def format_enum(enum, langs):
-    if enum:
-        return ', '.join(('='.join((key, trans(val, langs))) for key, val in enum.items()))
-    else:
-        return ""

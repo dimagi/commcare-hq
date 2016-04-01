@@ -72,7 +72,6 @@ from corehq.const import USER_DATE_FORMAT
 from corehq.util.couch import get_document_or_404
 from corehq.util.spreadsheets.excel import JSONReaderError, HeaderValueError, \
     WorksheetNotFound, WorkbookJSONReader
-from corehq.util.view_utils import expect_GET
 from .custom_data_fields import UserFieldsView
 
 BULK_MOBILE_HELP_SITE = ("https://confluence.dimagi.com/display/commcarepublic"
@@ -697,7 +696,7 @@ class UploadCommCareUsers(BaseManageCommCareUserView):
 
     @property
     def page_context(self):
-        request_params = expect_GET(self.request)
+        request_params = self.request.GET if self.request.method == 'GET' else self.request.POST
         context = {
             'bulk_upload': {
                 "help_site": {

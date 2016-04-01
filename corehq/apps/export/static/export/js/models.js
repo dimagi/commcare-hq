@@ -138,6 +138,11 @@ Exports.ViewModels.TableConfiguration.mapping = {
         create: function(options) {
             return new Exports.ViewModels.ExportColumn(options.data);
         }
+    },
+    path: {
+        create: function(options) {
+            return new Exports.ViewModels.PathNode(options.data);
+        }
     }
 };
 
@@ -154,11 +159,16 @@ Exports.ViewModels.ExportColumn = function(columnJSON) {
 };
 
 Exports.ViewModels.ExportColumn.prototype.formatProperty = function() {
-    return this.item.path().join('.');
+    if (this.tags().length !== 0){
+        return this.label();
+    } else {
+        return _.map(this.item.path(), function(node) { return node.name(); }).join('.');
+    }
 };
 
 Exports.ViewModels.ExportColumn.prototype.isDeidSelectVisible = function() {
-    return (this.item.path()[this.item.path().length - 1] !== '_id' || this.transforms()) && !this.isCaseName();
+    var nodes = this.item.path();
+    return (nodes[nodes.length - 1].name !== '_id' || this.transforms()) && !this.isCaseName();
 };
 
 Exports.ViewModels.ExportColumn.prototype.getDeidOptions = function() {
@@ -195,13 +205,26 @@ Exports.ViewModels.ExportColumn.mapping = {
 
 Exports.ViewModels.ExportItem = function(itemJSON) {
     var self = this;
-    ko.mapping.fromJS(itemJSON, Exports.ViewModels.ExportColumn.mapping, self);
+    ko.mapping.fromJS(itemJSON, Exports.ViewModels.ExportItem.mapping, self);
 };
 
 Exports.ViewModels.ExportItem.prototype.isCaseName = function() {
-    return this.path()[this.path().length - 1] === 'name';
+    return this.path()[this.path().length - 1].name === 'name';
 };
 
 Exports.ViewModels.ExportItem.mapping = {
     include: ['path', 'label', 'tag'],
+    path: {
+        create: function(options) {
+            return new Exports.ViewModels.PathNode(options.data);
+        }
+    }
+};
+
+Exports.ViewModels.PathNode = function(pathNodeJSON) {
+    ko.mapping.fromJS(pathNodeJSON, Exports.ViewModels.PathNode.mapping, this);
+};
+
+Exports.ViewModels.PathNode.mapping = {
+    include: ['name', 'is_repeat']
 };

@@ -95,6 +95,6 @@ class TestPillowTopFiltering(SimpleTestCase):
             'custom.opm.models.OpmUserFluffPillow',
         ]
 
-        pillows = [c.name for c in get_pillows_for_env('india', self.pillowtops)]
+        pillows = [c.name for c in get_pillows_for_env('softlayer', self.pillowtops)]
         self.assertNotIn('OpmUserFluffPillow', pillows)
         self.assertIn('CareBiharFluffPillow', pillows)
