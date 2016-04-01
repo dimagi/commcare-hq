@@ -97,7 +97,7 @@ def get_case_search_to_elasticsearch_pillow(pillow_id='CaseSearchToElasticsearch
         'case-search-to-elasticsearch',
     )
     case_processor = CaseSearchPillowProcessor(
-        elasticseach=get_es_new(),
+        elasticsearch=get_es_new(),
         index_meta=ElasticsearchIndexMeta(index=CASE_SEARCH_INDEX, type=CASE_ES_TYPE),
         doc_prep_fn=transform_case_for_elasticsearch
     )
