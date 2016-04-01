@@ -225,8 +225,12 @@
                 <div class="container-fluid">
                     <div class="navbar-header">
                         <a href="{% url "homepage" %}" class="navbar-brand">
-                            <!--img src="{{ LOGO_URL }}" alt="{{ SITE_NAME }} Logo" /-->
-                            <div></div>
+                            {% if CUSTOM_LOGO_URL %}
+                                <img src="{{ CUSTOM_LOGO_URL }}" alt="{{ SITE_NAME }} Logo" />
+                            {% else %}
+                                <!-- navbar.less supplies the default logo -->
+                                <div></div>
+                            {% endif %}
                         </a>
                     </div>
                     <nav class="collapse navbar-collapse" role="navigation">

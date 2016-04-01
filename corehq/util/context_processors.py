@@ -45,15 +45,15 @@ def get_per_domain_context(project, request=None):
         public_site = "http://www.commcarehq.org"
         can_be_your = _("mobile solution for your frontline workforce")
 
-    logo_url = static('hqstyle/img/commcare-flower.png')
+    custom_logo_url = None
     if (project and project.has_custom_logo
         and domain_has_privilege(project.name, privileges.CUSTOM_BRANDING)
     ):
-        logo_url = reverse('logo', args=[project.name])
+        custom_logo_url = reverse('logo', args=[project.name])
 
     return {
         'DOMAIN_TYPE': domain_type,
-        'LOGO_URL': logo_url,
+        'CUSTOM_LOGO_URL': custom_logo_url,
         'SITE_NAME': site_name,
         'CAN_BE_YOUR': can_be_your,
         'PUBLIC_SITE': public_site,
