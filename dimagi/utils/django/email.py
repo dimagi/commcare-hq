@@ -1,6 +1,7 @@
 from smtplib import SMTPSenderRefused
 import uuid
 import requests
+import re
 from django.conf import settings
 from django.core.mail import get_connection
 from django.core.mail.message import EmailMultiAlternatives
@@ -37,7 +38,7 @@ def send_HTML_email(subject, recipient, html_content, text_content=None,
             ga_tid=settings.ANALYTICS_IDS['GOOGLE_ANALYTICS_ID'],
             ga_cid=uuid.uuid4().hex)
         new_content = '<img src="{url}&ea=open"/>\n</body>'.format(url=url)
-        html_content = html_content.replace('</body>', new_content)
+        html_content = re.sub(r'(.*)</body>', new_content+r'\1', html_content)
 
     from_header = {'From': email_from}  # From-header
     connection = get_connection()
