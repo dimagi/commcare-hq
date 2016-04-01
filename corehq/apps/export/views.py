@@ -1503,7 +1503,10 @@ class BaseEditNewCustomExportView(BaseModifyNewCustomView):
                     self.export_id
                 )
 
-                export_instance = convert_saved_export_to_export_instance(export_helper.custom_export)
+                export_instance = convert_saved_export_to_export_instance(
+                    self.domain,
+                    export_helper.custom_export,
+                )
 
             except ResourceNotFound:
                 raise Http404()

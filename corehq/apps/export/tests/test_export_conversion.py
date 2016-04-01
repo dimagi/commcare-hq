@@ -7,6 +7,7 @@ from dimagi.utils.couch.undo import DELETED_SUFFIX
 from couchexport.models import SavedExportSchema
 
 from corehq.util.test_utils import TestFileMixin, generate_cases
+from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.export.models import (
     FormExportDataSchema,
     CaseExportDataSchema,
@@ -37,10 +38,13 @@ class TestConvertSavedExportSchemaToCaseExportInstance(TestCase, TestFileMixin):
     file_path = ('data', 'saved_export_schemas')
     root = os.path.dirname(__file__)
     app_id = '58b0156dc3a8420669efb286bc81e048'
+    domain = 'convert-domain'
 
     @classmethod
     def setUpClass(cls):
+        cls.project = create_domain(cls.domain)
         cls.schema = CaseExportDataSchema(
+            domain=cls.domain,
             group_schemas=[
                 ExportGroupSchema(
                     path=MAIN_TABLE,
@@ -70,7 +74,7 @@ class TestConvertSavedExportSchemaToCaseExportInstance(TestCase, TestFileMixin):
         with mock.patch(
                 'corehq.apps.export.models.new.CaseExportDataSchema.generate_schema_from_builds',
                 return_value=self.schema):
-            instance = convert_saved_export_to_export_instance(saved_export_schema)
+            instance = convert_saved_export_to_export_instance(self.domain, saved_export_schema)
 
         self.assertEqual(instance.transform_dates, True)
         self.assertEqual(instance.name, 'Case Example')
@@ -90,7 +94,7 @@ class TestConvertSavedExportSchemaToCaseExportInstance(TestCase, TestFileMixin):
         with mock.patch(
                 'corehq.apps.export.models.new.CaseExportDataSchema.generate_schema_from_builds',
                 return_value=self.schema):
-            instance = convert_saved_export_to_export_instance(saved_export_schema)
+            instance = convert_saved_export_to_export_instance(self.domain, saved_export_schema)
 
         table = instance.get_table(PARENT_CASE_TABLE)
         self.assertEqual(table.label, 'Parent Cases')
@@ -112,7 +116,7 @@ class TestConvertSavedExportSchemaToCaseExportInstance(TestCase, TestFileMixin):
         with mock.patch(
                 'corehq.apps.export.models.new.CaseExportDataSchema.generate_schema_from_builds',
                 return_value=self.schema):
-            instance = convert_saved_export_to_export_instance(saved_export_schema)
+            instance = convert_saved_export_to_export_instance(self.domain, saved_export_schema)
 
         table = instance.get_table(CASE_HISTORY_TABLE)
         self.assertEqual(table.label, 'Case History')
@@ -133,10 +137,12 @@ class TestConvertSavedExportSchemaToFormExportInstance(TestCase, TestFileMixin):
     file_path = ('data', 'saved_export_schemas')
     root = os.path.dirname(__file__)
     app_id = '58b0156dc3a8420669efb286bc81e048'
+    domain = 'convert-domain'
 
     @classmethod
     def setUpClass(cls):
         cls.schema = FormExportDataSchema(
+            domain=cls.domain,
             group_schemas=[
                 ExportGroupSchema(
                     path=MAIN_TABLE,
@@ -197,14 +203,13 @@ class TestConvertSavedExportSchemaToFormExportInstance(TestCase, TestFileMixin):
             ],
         )
 
-
     def test_basic_conversion(self):
 
         saved_export_schema = SavedExportSchema.wrap(self.get_json('basic'))
         with mock.patch(
                 'corehq.apps.export.models.new.FormExportDataSchema.generate_schema_from_builds',
                 return_value=self.schema):
-            instance = convert_saved_export_to_export_instance(saved_export_schema)
+            instance = convert_saved_export_to_export_instance(self.domain, saved_export_schema)
 
         self.assertEqual(instance.split_multiselects, False)
         self.assertEqual(instance.transform_dates, True)
@@ -225,7 +230,7 @@ class TestConvertSavedExportSchemaToFormExportInstance(TestCase, TestFileMixin):
         with mock.patch(
                 'corehq.apps.export.models.new.FormExportDataSchema.generate_schema_from_builds',
                 return_value=self.schema):
-            instance = convert_saved_export_to_export_instance(saved_export_schema)
+            instance = convert_saved_export_to_export_instance(self.domain, saved_export_schema)
 
         self.assertEqual(instance.name, 'Repeat Tester')
         table = instance.get_table([PathNode(name='form'), PathNode(name='repeat', is_repeat=True)])
@@ -251,7 +256,7 @@ class TestConvertSavedExportSchemaToFormExportInstance(TestCase, TestFileMixin):
         with mock.patch(
                 'corehq.apps.export.models.new.FormExportDataSchema.generate_schema_from_builds',
                 return_value=self.schema):
-            instance = convert_saved_export_to_export_instance(saved_export_schema)
+            instance = convert_saved_export_to_export_instance(self.domain, saved_export_schema)
 
         self.assertEqual(instance.name, 'Nested Repeat')
 
@@ -293,7 +298,7 @@ class TestConvertSavedExportSchemaToFormExportInstance(TestCase, TestFileMixin):
         with mock.patch(
                 'corehq.apps.export.models.new.FormExportDataSchema.generate_schema_from_builds',
                 return_value=self.schema):
-            instance = convert_saved_export_to_export_instance(saved_export_schema)
+            instance = convert_saved_export_to_export_instance(self.domain, saved_export_schema)
 
         table = instance.get_table(MAIN_TABLE)
 
@@ -312,7 +317,7 @@ class TestConvertSavedExportSchemaToFormExportInstance(TestCase, TestFileMixin):
         with mock.patch(
                 'corehq.apps.export.models.new.FormExportDataSchema.generate_schema_from_builds',
                 return_value=self.schema):
-            instance = convert_saved_export_to_export_instance(saved_export_schema)
+            instance = convert_saved_export_to_export_instance(self.domain, saved_export_schema)
 
         self.assertEqual(instance.name, 'System Properties')
 
