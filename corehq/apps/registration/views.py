@@ -70,6 +70,7 @@ def register_user(request):
                             request, form, is_new_user=True)
                     except NameUnavailableException:
                         context.update({
+                            'current_page': {'page_name': _('Oops!')},
                             'error_msg': _('Project name already taken - please try another'),
                             'show_homepage_link': 1
                         })
@@ -133,6 +134,7 @@ class RegisterDomainView(TemplateView):
             max_req = settings.DOMAIN_MAX_REGISTRATION_REQUESTS_PER_DAY
             if reqs_today >= max_req:
                 context.update({
+                    'current_page': {'page_name': _('Oops!')},
                     'error_msg': _(
                         'Number of domains requested today exceeds limit (%d) - contact Dimagi'
                     ) % max_req,
@@ -145,6 +147,7 @@ class RegisterDomainView(TemplateView):
                     request, form, is_new_user=self.is_new_user)
             except NameUnavailableException:
                 context.update({
+                    'current_page': {'page_name': _('Oops!')},
                     'error_msg': _('Project name already taken - please try another'),
                     'show_homepage_link': 1
                 })
@@ -206,6 +209,7 @@ def resend_confirmation(request):
                     request.user.get_full_name())
         except Exception:
             context.update({
+                'current_page': {'page_name': _('Oops!')},
                 'error_msg': _('There was a problem with your request'),
                 'error_details': sys.exc_info(),
                 'show_homepage_link': 1,
