@@ -3274,6 +3274,7 @@ class ReportAppFilter(DocumentSchema):
                 'CustomDatespanFilter': CustomDatespanFilter,
                 'CustomMonthFilter': CustomMonthFilter,
                 'MobileSelectFilter': MobileSelectFilter,
+                'AncestorLocationTypeFilter': AncestorLocationTypeFilter,
             }
             try:
                 klass = doc_type_to_filter_class[doc_type]
@@ -3316,20 +3317,10 @@ def _filter_by_parent_location_id(user, ui_filter):
     return ui_filter.value(**{ui_filter.name: location_parent})
 
 
-def _filter_by_ancestor_location_type_id(user, ui_filter):
-    from corehq.apps.reports_core.filters import Choice
-    location = user.sql_location
-    return [
-        Choice(value=loc.location_type.id, display=loc.location_type.name)
-        for loc in location.get_ancestors()
-    ] if location else []
-
-
 _filter_type_to_func = {
     'case_sharing_group': _filter_by_case_sharing_group_id,
     'location_id': _filter_by_location_id,
     'parent_location_id': _filter_by_parent_location_id,
-    'ancestor_location_type_id': _filter_by_ancestor_location_type_id,
     'username': _filter_by_username,
     'user_id': _filter_by_user_id,
 }
@@ -3497,6 +3488,21 @@ class CustomMonthFilter(ReportAppFilter):
 class MobileSelectFilter(ReportAppFilter):
     def get_filter_value(self, user, ui_filter):
         return None
+
+
+class AncestorLocationTypeFilter(ReportAppFilter):
+    ancestor_location_type_name = StringProperty()
+
+    def get_filter_value(self, user, ui_filter):
+        from corehq.apps.locations.models import SQLLocation
+
+        try:
+            ancestor = user.sql_location.get_ancestors(include_self=True).\
+                get(location_type__name=self.ancestor_location_type_name)
+        except (AttributeError, SQLLocation.DoesNotExist):
+            # user.sql_location is None, or location does not have an ancestor of that type
+            return None
+        return ancestor.location_id
 
 
 class ReportAppConfig(DocumentSchema):

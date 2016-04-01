@@ -28,7 +28,10 @@ from corehq.apps.app_manager.fields import ApplicationDataRMIHelper
 from corehq.apps.data_interfaces.dispatcher import require_can_edit_data
 from corehq.apps.domain.decorators import login_and_domain_required, \
     login_or_digest_or_basic_or_apikey
-from corehq.apps.export.utils import convert_saved_export_to_export_instance
+from corehq.apps.export.utils import (
+    convert_saved_export_to_export_instance,
+    revert_new_exports,
+)
 from corehq.apps.export.custom_export_helpers import make_custom_export_helper
 from corehq.apps.export.exceptions import (
     ExportNotFound,
@@ -1191,7 +1194,10 @@ class FormExportListView(BaseExportListView):
     def get_saved_exports(self):
         exports = FormExportSchema.get_stale_exports(self.domain)
         new_exports = get_form_export_instances(self.domain)
-        exports += new_exports
+        if toggles.NEW_EXPORTS.enabled(self.domain):
+            exports += new_exports
+        else:
+            exports += revert_new_exports(new_exports)
         if not self.has_deid_view_permissions:
             exports = filter(lambda x: not x.is_safe, exports)
         return sorted(exports, key=lambda x: x.name)
@@ -1314,7 +1320,10 @@ class CaseExportListView(BaseExportListView):
     def get_saved_exports(self):
         exports = CaseExportSchema.get_stale_exports(self.domain)
         new_exports = get_case_export_instances(self.domain)
-        exports += new_exports
+        if toggles.NEW_EXPORTS.enabled(self.domain):
+            exports += new_exports
+        else:
+            exports += revert_new_exports(new_exports)
         if not self.has_deid_view_permissions:
             exports = filter(lambda x: not x.is_safe, exports)
         return sorted(exports, key=lambda x: x.name)

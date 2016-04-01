@@ -342,7 +342,6 @@ class TableConfiguration(DocumentSchema):
 
 class ExportInstance(BlobMixin, Document):
     name = StringProperty()
-    type = StringProperty()
     domain = StringProperty()
     tables = ListProperty(TableConfiguration)
     export_format = StringProperty(default='csv')
@@ -519,11 +518,11 @@ class ExportInstance(BlobMixin, Document):
 
 class CaseExportInstance(ExportInstance):
     case_type = StringProperty()
+    type = CASE_EXPORT
 
     @classmethod
     def _new_from_schema(cls, schema):
         return cls(
-            type=schema.type,
             domain=schema.domain,
             case_type=schema.case_type,
         )
@@ -532,6 +531,7 @@ class CaseExportInstance(ExportInstance):
 class FormExportInstance(ExportInstance):
     xmlns = StringProperty()
     app_id = StringProperty()
+    type = FORM_EXPORT
 
     # Whether to include duplicates and other error'd forms in export
     include_errors = BooleanProperty(default=False)
@@ -543,7 +543,6 @@ class FormExportInstance(ExportInstance):
     @classmethod
     def _new_from_schema(cls, schema):
         return cls(
-            type=schema.type,
             domain=schema.domain,
             xmlns=schema.xmlns,
             app_id=schema.app_id,

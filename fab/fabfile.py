@@ -103,7 +103,7 @@ env.roledefs = {
 
 def _require_target():
     require('root', 'code_root', 'hosts', 'environment',
-            provided_by=('staging', 'preview', 'production', 'old_india', 'softlayer', 'zambia'))
+            provided_by=('staging', 'preview', 'production', 'softlayer', 'zambia'))
 
 
 class DeployMetadata(object):
@@ -261,13 +261,6 @@ def load_env(env_name):
     env_dict = get_env_dict(os.path.join('fab', 'environments.yml'))
     env.update(env_dict['base'])
     env.update(env_dict[env_name])
-
-
-@task
-def old_india():
-    env.inventory = os.path.join('fab', 'inventory', 'india')
-    load_env('india')
-    execute(env_common)
 
 
 @task
@@ -820,7 +813,7 @@ def rollback():
     if all(exists.values()):
         print blue('Updating current and restarting services')
         execute(update_current, unique_release)
-        silent_services_restart()
+        silent_services_restart(use_current_release=True)
         execute(mark_last_release_unsuccessful)
     else:
         print red('Aborting because not all hosts have release')
@@ -1012,7 +1005,7 @@ def clear_services_dir(current=False):
 @task
 def supervisorctl(command):
     require('supervisor_roles',
-            provided_by=('staging', 'preview', 'production', 'old_india', 'softlayer', 'zambia'))
+            provided_by=('staging', 'preview', 'production', 'softlayer', 'zambia'))
 
     @roles(env.supervisor_roles)
     def _inner():

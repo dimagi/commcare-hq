@@ -5,9 +5,8 @@ from django.template.defaultfilters import floatformat
 from corehq.apps.commtrack.models import SQLProduct, StockState
 from corehq.apps.locations.models import SQLLocation
 from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn
-from corehq.apps.reports.filters.fixtures import AsyncLocationFilter
 from django.utils import html
-from custom.ilsgateway.filters import ProgramFilter, ILSDateFilter
+from custom.ilsgateway.filters import ProgramFilter, ILSDateFilter, ILSAsyncLocationFilter
 from custom.ilsgateway.models import ProductAvailabilityData, \
     OrganizationSummary
 from custom.ilsgateway.tanzania.reports.facility_details import FacilityDetailsReport, InventoryHistoryData, \
@@ -432,7 +431,7 @@ class StockOnHandReport(DetailsReport):
 
     @property
     def fields(self):
-        fields = [AsyncLocationFilter, ILSDateFilter, ProgramFilter]
+        fields = [ILSAsyncLocationFilter, ILSDateFilter, ProgramFilter]
         if self.location and self.location.location_type.name.upper() == 'FACILITY':
             fields = []
         return fields
