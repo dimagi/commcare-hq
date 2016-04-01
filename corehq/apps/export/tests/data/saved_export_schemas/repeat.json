@@ -78,6 +78,15 @@
            "display": "Repeat: question1",
            "columns": [
                {
+                   "index": "id",
+                   "show": false,
+                   "is_sensitive": false,
+                   "transform": null,
+                   "doc_type": "ExportColumn",
+                   "tag": null,
+                   "display": "row.number"
+               },
+               {
                    "index": "question2",
                    "show": false,
                    "is_sensitive": false,

@@ -1,10 +1,12 @@
 import calendar
 from datetime import datetime
 from django.conf import settings
+from django.core.urlresolvers import reverse
 from django.utils.translation import ugettext_noop
 from corehq.apps.products.models import SQLProduct
 from corehq.apps.programs.models import Program
 from corehq.apps.reports.filters.base import BaseDrilldownOptionFilter, BaseSingleOptionFilter, BaseReportFilter
+from corehq.apps.reports.filters.fixtures import AsyncLocationFilter
 from custom.common import ALL_OPTION
 
 
@@ -116,3 +118,12 @@ class ILSDateFilter(BaseReportFilter):
             selected_first=self.selected('first') if self.selected('first') else datetime.utcnow().month,
             selected_second=self.selected('second') if self.selected('second') else datetime.utcnow().year
         )
+
+
+class ILSAsyncLocationFilter(AsyncLocationFilter):
+
+    @property
+    def api_root(self):
+        return reverse('api_dispatch_list', kwargs={'domain': self.domain,
+                                                    'resource_name': 'ils_location',
+                                                    'api_name': 'v0.3'})
