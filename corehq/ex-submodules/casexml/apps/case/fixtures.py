@@ -38,6 +38,9 @@ class CaseDBFixture(object):
             ...
             </case>
         </fixture>
+
+        https://github.com/dimagi/commcare/wiki/casedb
+        https://github.com/dimagi/commcare/wiki/fixtures
         """
         element = safe_element("fixture")
         element.attrib = {'id': self.id}
