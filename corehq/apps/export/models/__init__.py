@@ -3,6 +3,7 @@ from .new import (
     ExportItem,
     ExportColumn,
     RowNumberColumn,
+    StockExportColumn,
     ExportRow,
     ExportInstance,
     FormExportInstance,

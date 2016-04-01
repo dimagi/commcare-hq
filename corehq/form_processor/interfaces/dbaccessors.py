@@ -349,3 +349,9 @@ class LedgerAccessors(object):
         return self.db_accessor.get_transactions_for_consumption(
             self.domain, case_id, product_id, section_id, window_start, window_end
         )
+
+    def get_ledger_values_for_case(self, case_id):
+        return self.db_accessor.get_ledger_values_for_case(case_id)
+
+    def get_ledger_values_for_product_ids(self, product_ids):
+        return self.db_accessor.get_ledger_values_for_product_ids(product_ids)

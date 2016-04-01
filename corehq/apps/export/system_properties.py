@@ -9,6 +9,7 @@ from corehq.apps.export.const import (
     PROPERTY_TAG_APP,
     PROPERTY_TAG_SERVER,
     PROPERTY_TAG_CASE,
+    PROPERTY_TAG_STOCK,
     CASE_NAME_TRANSFORM,
     USERNAME_TRANSFORM,
     OWNER_ID_TRANSFORM,
@@ -216,6 +217,13 @@ ROW_NUMBER_COLUMN = RowNumberColumn(
     tags=[PROPERTY_TAG_ROW],
     label='number',
     item=ExportItem(path=[PathNode(name='number')]),
+)
+
+STOCK_COLUMN = StockExportColumn(
+    tags=[PROPERTY_TAG_STOCK],
+    label='data',
+    item=ExportItem(path=[PathNode(name='stock')]),
+    help_text=_('Add stock data columns to the export'),
 )
 
 TOP_MAIN_CASE_TABLE_PROPERTIES = [

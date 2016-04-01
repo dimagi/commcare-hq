@@ -5,6 +5,7 @@ from collections import defaultdict, OrderedDict, namedtuple
 
 from couchdbkit.ext.django.schema import IntegerProperty
 from django.utils.translation import ugettext as _
+from dimagi.utils.decorators.memoized import memoized
 from couchdbkit import SchemaListProperty, SchemaProperty, BooleanProperty, DictProperty
 
 from corehq.apps.userreports.expressions.getters import NestedDictGetter
@@ -15,8 +16,11 @@ from corehq.apps.app_manager.dbaccessors import (
 )
 from corehq.apps.app_manager.models import Application
 from corehq.apps.app_manager.util import get_case_properties
+from corehq.apps.commtrack.models import StockState
+from corehq.apps.products.models import Product
 from corehq.apps.reports.display import xmlns_to_name
 from corehq.blobs.mixin import BlobMixin
+from corehq.form_processor.interfaces.dbaccessors import LedgerAccessors
 from couchexport.models import Format
 from couchexport.transforms import couch_to_excel_datetime
 from dimagi.utils.couch.database import iter_docs
@@ -1218,6 +1222,56 @@ class RowNumberColumn(ExportColumn):
 
     def extra_initialization_data(self, **data):
         self.repeat = data.get('repeat')
+
+
+class StockExportColumn(ExportColumn):
+    """
+    A special column type for case exports. This will export a column
+    for each product/section combo on the provided domain. (A lot of this code is taken
+    from corehq/apps/commtrack/models.py#StockExportColumn
+    """
+    domain = StringProperty()
+
+    @property
+    def accessor(self):
+        return LedgerAccessors(self.domain)
+
+    def extra_initialization_data(self, **data):
+        self.domain = data.get('domain')
+
+    @property
+    @memoized
+    def _column_tuples(self):
+        product_ids = [p.get_id for p in Product.by_domain(self.domain)]
+        ledger_values = self.accessor.get_ledger_values_for_product_ids(product_ids)
+        section_and_product_ids = sorted(set(map(lambda v: (v.product_id, v.section_id), ledger_values)))
+        return section_and_product_ids
+
+    def _get_product_name(product_id):
+        return Product.get(product_id).name
+
+    def get_headers(self):
+        for product_id, section in self._column_tuples:
+            yield u"{product} ({section})".format(
+                product=self._get_product_name(product_id),
+                section=section
+            )
+
+    def get_value(self, doc, base_path, **kwargs):
+        case_id = doc.get('_id')
+
+        states = self.accessor.get_ledger_values_for_case(case_id)
+
+        # use a list to make sure the stock states end up
+        # in the same order as the headers
+        values = [None] * len(self._column_tuples)
+
+        for state in states:
+            column_tuple = (state.product_id, state.section_id)
+            if column_tuple in self._column_tuples:
+                state_index = self._column_tuples.index(column_tuple)
+                values[state_index] = state.stock_on_hand
+        return values
 
 # These must match the constants in corehq/apps/export/static/export/js/const.js
 MAIN_TABLE = []

@@ -36,6 +36,7 @@ PROPERTY_TAG_SERVER = 'server'
 PROPERTY_TAG_DELETED = 'deleted'
 PROPERTY_TAG_ROW = 'row'
 PROPERTY_TAG_APP = "app"
+PROPERTY_TAG_STOCK = 'stock'
 
 
 FORM_EXPORT = 'form'
