@@ -34,11 +34,6 @@ def is_commtrack(project, request):
 
 
 def get_per_domain_context(project, request=None):
-    if is_commtrack(project, request):
-        site_name = "CommCare Supply"
-    else:
-        site_name = "CommCare HQ"
-
     logo_url = static('hqstyle/img/commcare-flower.png')
     if (project and project.has_custom_logo
         and domain_has_privilege(project.name, privileges.CUSTOM_BRANDING)
@@ -47,7 +42,6 @@ def get_per_domain_context(project, request=None):
 
     return {
         'LOGO_URL': logo_url,
-        'SITE_NAME': site_name,
     }
 
 
