@@ -38,7 +38,6 @@ def send_HTML_email(subject, recipient, html_content, text_content=None,
             ga_tid=settings.ANALYTICS_IDS['GOOGLE_ANALYTICS_ID'],
             ga_cid=uuid.uuid4().hex)
         new_content = '<img src="{url}&ea=open"/>\n</body>'.format(url=url)
-        import ipdb; ipdb.set_trace()
         html_content = re.sub(r'(.*)</body>', r'\1'+new_content, html_content)
 
     from_header = {'From': email_from}  # From-header
