@@ -34,7 +34,7 @@ class CaseSearchPillow(CasePillow):
     es_index = CASE_SEARCH_INDEX
     default_mapping = CASE_SEARCH_MAPPING
 
-    def change_trigger(self, changes_dict):
+    def run(self, changes_dict):
         return
 
 
