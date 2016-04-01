@@ -185,12 +185,15 @@ class ConfigurableReport(JSONResponseMixin, BaseDomainView):
             try:
                 self.add_warnings(self.request)
             except UserReportsError as e:
-                messages.warning(
-                    request,
-                    _('It looks like there may be a problem with your report. '
-                      'Please edit the report to fix this problem or report an issue. '
-                      'Technical details: {}.').format(e)
-                )
+                self.template_name = 'userreports/report_error.html'
+                context = {
+                    'report': self,
+                    'error_message': _('It looks like there may be a problem with your report. '
+                                       'Please edit the report to fix this problem or report an issue. '),
+                    'details': unicode(e)
+                }
+                context.update(self.main_context)
+                return self.render_to_response(context)
             return super(ConfigurableReport, self).get(request, *args, **kwargs)
         else:
             raise Http403()
