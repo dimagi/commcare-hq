@@ -1827,7 +1827,7 @@ class ContractedPartnerForm(InternalSubscriptionManagementForm):
                 hqcrispy.B3TextField('software_plan_edition', plan_edition),
                 crispy.Field('software_plan_edition'),
                 crispy.Field('fogbugz_client_name'),
-                crispy.Field('emails', css_class='input-xxlarge'),
+                crispy.Field('emails'),
                 crispy.Field('start_date', css_class='date-picker'),
                 crispy.Field('end_date', css_class='date-picker'),
                 crispy.Field('sms_credits'),
@@ -1854,7 +1854,7 @@ class ContractedPartnerForm(InternalSubscriptionManagementForm):
             self.helper.layout = crispy.Layout(
                 crispy.Field('software_plan_edition'),
                 crispy.Field('fogbugz_client_name'),
-                crispy.Field('emails', css_class='input-xxlarge'),
+                crispy.Field('emails'),
                 hqcrispy.B3TextField('start_date', self.current_subscription.date_start),
                 crispy.Hidden('start_date', self.current_subscription.date_start),
                 crispy.Field('end_date', css_class='date-picker'),
