@@ -156,30 +156,9 @@ class PactFormAPI(DomainAPI):
                     logging.error("for downloader: error fetching attachment: %s" % ex)
             yield "</restoredata>"
 
-        def return_tmpfile():
-            temp_xml = tempfile.TemporaryFile()
-            length = temp_xml.tell()
-            temp_xml.seek(0)
-            wrapper = FileWrapper(temp_xml)
-            response = HttpResponse(wrapper, content_type='text/xml')
-            response['Content-Length'] = length
-
         response = HttpResponse(return_iterator(), content_type='text/xml')
         return response
 
-
-
-html_escape_table = {
-    "&": "&amp;",
-    '"': "&quot;",
-    "'": "&apos;",
-    ">": "&gt;",
-    "<": "&lt;",
-    }
-
-def html_escape(text):
-    """Produce entities within text."""
-    return "".join(html_escape_table.get(c,c) for c in text)
 
 def sub_element(root, tag, val):
     sube = etree.SubElement(root, tag)
