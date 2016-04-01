@@ -181,6 +181,10 @@ Exports.ViewModels.ExportColumn.prototype.isCaseName = function() {
     return this.item.isCaseName();
 };
 
+Exports.ViewModels.ExportColumn.prototype.translatedHelp = function() {
+    return gettext(this.help_text);
+};
+
 Exports.ViewModels.ExportColumn.mapping = {
     include: ['item', 'label', 'is_advanced', 'selected', 'tags', 'deid_transform', 'help_text'],
     item: {

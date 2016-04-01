@@ -1,7 +1,4 @@
-# TODO: Can't store a translation like this on the dataschema. Translate it somewhere else instead.
-#from django.utils.translation import ugettext_lazy as _
-def _(s):
-    return s
+from django.utils.translation import ugettext_noop as _
 
 from corehq.apps.export.const import (
     PROPERTY_TAG_ROW,
