@@ -135,8 +135,9 @@ class ExportColumn(DocumentSchema):
         :param base_path:
         :return:
         """
-        # Confirm the ExportItem's path starts with the base_path
-        assert base_path == self.item.path[:len(base_path)]
+        if base_path != self.item.path[:len(base_path)]:
+            import ipdb; ipdb.set_trace()
+        assert base_path == self.item.path[:len(base_path)], "ExportItem's path starts with the base_path"
         # Get the path from the doc root to the desired ExportItem
         path = [x.name for x in self.item.path[len(base_path):]]
         return self._transform(NestedDictGetter(path)(doc), transform_dates)
@@ -153,7 +154,7 @@ class ExportColumn(DocumentSchema):
         if self.item.transform:
             value = TRANSFORM_FUNCTIONS[self.item.transform](value, None)
         if self.deid_transform:
-            value = TRANSFORM_FUNCTIONS[self.deid_transform](value, None)
+            value = DEID_TRANSFORM_FUNCTIONS[self.deid_transform](value, None)
         return value
 
     @staticmethod
@@ -230,6 +231,8 @@ class ExportColumn(DocumentSchema):
                 return SplitExportColumn.wrap(data)
             elif doc_type == 'RowNumberColumn':
                 return RowNumberColumn.wrap(data)
+            elif doc_type == 'StockExportColumn':
+                return StockExportColumn.wrap(data)
             else:
                 raise ValueError('Unexpected doc_type for export column', doc_type)
         else:
@@ -1062,7 +1065,7 @@ def _question_path_to_path_nodes(string_path, repeats):
         return []
 
     parts = string_path.split("/")
-    assert parts[0] == ""
+    assert parts[0] == "", 'First part of path should be ""'
     parts = parts[1:]
 
     repeat_test_string = ""
@@ -1071,7 +1074,7 @@ def _question_path_to_path_nodes(string_path, repeats):
         repeat_test_string += "/" + part
         path.append(PathNode(name=part, is_repeat=repeat_test_string in repeats))
 
-    assert path[0] == PathNode(name="data")
+    assert path[0] == PathNode(name="data"), 'First node should be "data"'
     path[0].name = "form"
     return path
 
@@ -1219,7 +1222,7 @@ class RowNumberColumn(ExportColumn):
         return headers
 
     def get_value(self, doc, base_path, transform_dates=False, row_index=None):
-        assert row_index
+        assert row_index, 'There must be a row_index for number column'
         return (
             [".".join([unicode(i) for i in row_index])]
             + (list(row_index) if len(row_index) > 1 else [])
@@ -1252,7 +1255,7 @@ class StockExportColumn(ExportColumn):
         section_and_product_ids = sorted(set(map(lambda v: (v.product_id, v.section_id), ledger_values)))
         return section_and_product_ids
 
-    def _get_product_name(product_id):
+    def _get_product_name(self, product_id):
         return Product.get(product_id).name
 
     def get_headers(self):
