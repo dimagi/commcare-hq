@@ -1778,7 +1778,7 @@ class CaseSearch(DocumentSchema):
     Properties and search command label
     """
     command_label = DictProperty(default={'en': 'Search All Cases'})
-    properties = SchemaProperty(CaseSearchProperty)
+    properties = SchemaListProperty(CaseSearchProperty)
 
 
 class ParentSelect(DocumentSchema):
