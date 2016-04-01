@@ -1,5 +1,8 @@
+#!/usr/bin/env python
 """
 Utilities for administering elasticsearch
+
+These can be run locally when connected to the VPN
 """
 from argparse import ArgumentParser, RawDescriptionHelpFormatter
 from collections import namedtuple
