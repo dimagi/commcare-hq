@@ -122,16 +122,28 @@
             var formFilter = ko.observable({{ form.form_filter|JSON }});
             var allOtherFormsRequireACase = {{ form.all_other_forms_require_a_case|BOOL }};
 
+            var caseXpathPatternMatches = {{ case_xpath_pattern_matches|JSON }};
+            var caseXpathSubstringMatches = {{ case_xpath_substring_matches|JSON }};
+            var userCaseXpathPatternMatches = {{ user_case_xpath_pattern_matches|JSON }};
+            var userCaseXpathSubstringMatches = {{ user_case_xpath_substring_matches|JSON }};
+
             var formFilterReferencesCase = ko.computed(function() {
-                var pattern_matches = {{ case_xpath_pattern_matches|JSON }};
-                var substring_matches = {{ case_xpath_substring_matches|JSON }};
-                return formFilterMatches(formFilter(), pattern_matches, substring_matches);
+                // We want to determine here if the filter expression references
+                // any case but the user case.
+                var filter = formFilter();
+                if(typeof(filter) != 'string') {
+                    return false;
+                }
+
+                $.each(userCaseXpathSubstringMatches, function(index, sub) {
+                    filter = filter.replace(sub, '');
+                });
+
+                return formFilterMatches(filter, caseXpathPatternMatches, caseXpathSubstringMatches);
             });
 
             var formFilterReferencesUserCase = ko.computed(function() {
-                var pattern_matches = {{ user_case_xpath_pattern_matches|JSON }};
-                var substring_matches = {{ user_case_xpath_substring_matches|JSON }};
-                return formFilterMatches(formFilter(), pattern_matches, substring_matches);
+                return formFilterMatches(formFilter(), userCaseXpathPatternMatches, userCaseXpathSubstringMatches);
             });
 
             var formFilterAllowed = ko.computed(function () {
