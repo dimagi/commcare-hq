@@ -1,5 +1,6 @@
 import json
 
+from corehq.apps.domain.decorators import require_superuser
 from corehq.apps.domain.views import DomainViewMixin
 from dimagi.utils.web import json_response
 from django.views.generic import TemplateView
@@ -10,9 +11,11 @@ class CaseSearchView(DomainViewMixin, TemplateView):
     template_name = 'case_search/case_search.html'
     urlname = 'case_search'
 
+    @require_superuser
     def get(self, request, *args, **kwargs):
         return self.render_to_response(self.get_context_data())
 
+    @require_superuser
     def post(self, request, *args, **kwargs):
         from corehq.apps.es.case_search import CaseSearchES
         query = json.loads(request.POST.get('q'))
