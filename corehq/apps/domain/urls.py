@@ -56,8 +56,8 @@ def exception_safe_password_reset(request, *args, **kwargs):
     except None:
         vals = {
             'current_page': {'page_name': _('Oops!')},
-            'error_msg':'There was a problem with your request',
-            'error_details':sys.exc_info(),
+            'error_msg': 'There was a problem with your request',
+            'error_details': sys.exc_info(),
             'show_homepage_link': 1,
         }
         return render_to_response('error.html', vals, context_instance=RequestContext(request))
