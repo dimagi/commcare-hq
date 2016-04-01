@@ -440,9 +440,7 @@ DOMAIN_MAX_REGISTRATION_REQUESTS_PER_DAY = 99
 DOMAIN_SELECT_URL = "/domain/select/"
 
 # This is not used by anything in CommCare HQ, leaving it here in case anything
-# in Django unexpectedly breaks without it.  When you need the login url, you
-# should use reverse('login', kwargs={'domain_type': domain_type}) in order to
-# maintain CommCare HQ/CommCare Supply distinction.
+# in Django unexpectedly breaks without it.
 LOGIN_URL = "/accounts/login/"
 # If a user tries to access domain admin pages but isn't a domain
 # administrator, here's where he/she is redirected
@@ -1507,6 +1505,7 @@ STATIC_DATA_SOURCES = [
     os.path.join('custom', 'succeed', 'data_sources', 'patient_task_list.json'),
     os.path.join('custom', 'apps', 'gsid', 'data_sources', 'patient_summary.json'),
     os.path.join('custom', 'abt', 'reports', 'data_sources', 'sms.json'),
+    os.path.join('custom', 'abt', 'reports', 'data_sources', 'sms_case.json'),
     os.path.join('custom', 'abt', 'reports', 'data_sources', 'supervisory.json'),
     os.path.join('custom', '_legacy', 'mvp', 'ucr', 'reports', 'data_sources', 'va_datasource.json'),
     os.path.join('custom', 'reports', 'mc', 'data_sources', 'malaria_consortium.json'),

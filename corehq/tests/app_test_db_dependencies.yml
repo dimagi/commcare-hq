@@ -477,3 +477,5 @@ corehq.apps.api:
   - corehq.apps.tour
   - touchforms.formplayer
   - corehq.apps.smsbillables
+corehq.apps.performance_sms:
+  - corehq.couchapps

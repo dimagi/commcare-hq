@@ -17,6 +17,12 @@ from custom.ilsgateway.tanzania.reports.utils import make_url
 from dimagi.utils.parsing import ISO_DATE_FORMAT
 
 
+class ILSPieChart(PieChart):
+    def __init__(self, title, key, values, color=None):
+        super(ILSPieChart, self).__init__(title, key, values, color)
+        self.data = values
+
+
 class ILSData(object):
     show_table = False
     show_chart = True
@@ -105,7 +111,7 @@ class ILSData(object):
                     entry['description'] = "%.1f%% (%d) %s (%s)" % params
 
                     ret.append(entry)
-        chart = PieChart('', '', ret, color=colors)
+        chart = ILSPieChart('', '', ret, color=colors)
         chart.marginLeft = 10
         chart.marginRight = 10
         chart.height = 500

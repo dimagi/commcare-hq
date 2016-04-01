@@ -62,13 +62,6 @@ def domain_restricts_superusers(domain):
     return domain.restrict_superusers
 
 
-def get_dummy_domain(domain_type=None):
-    domain_type = domain_type or 'commcare'
-    dummy_domain = Domain()
-    dummy_domain.commtrack_enabled = (domain_type == 'commtrack')
-    return dummy_domain
-
-
 def user_has_custom_top_menu(domain_name, couch_user):
     """
     This is currently used for a one-off custom case (ewsghana, ilsgateway)

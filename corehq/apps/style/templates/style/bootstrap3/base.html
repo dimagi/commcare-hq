@@ -4,7 +4,7 @@
     <head>
         {% captureas title_block %}{% block title %}{% endblock title %}{% endcaptureas %}
         <title>
-            {% if title_block %}{{ title_block }} - {% endif %}{{ SITE_NAME }}
+            {% if title_block %}{{ title_block }} - {% endif %}CommCare HQ
         </title>
 
         <meta charset="utf-8">
@@ -226,7 +226,7 @@
                     <div class="navbar-header">
                         <a href="{% url "homepage" %}" class="navbar-brand">
                             {% if CUSTOM_LOGO_URL %}
-                                <img src="{{ CUSTOM_LOGO_URL }}" alt="{{ SITE_NAME }} Logo" />
+                                <img src="{{ CUSTOM_LOGO_URL }}" alt="CommCare HQ Logo" />
                             {% else %}
                                 <!-- navbar.less supplies the default logo -->
                                 <div></div>
@@ -241,7 +241,7 @@
                         {% if request.user.is_authenticated %}
                             {% include 'style/includes/global_navigation_bar.html' %}
                         {% else %}
-                            <a href="{% url "login" DOMAIN_TYPE %}" class="btn btn-primary">{% trans 'Sign In' %}</a>
+                            <a href="{% url "login" %}" class="btn btn-primary">{% trans 'Sign In' %}</a>
                         {% endif %}
                         </div>
                     </nav>
