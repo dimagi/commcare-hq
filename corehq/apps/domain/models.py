@@ -333,17 +333,6 @@ class Domain(QuickCachedDocumentMixin, Document, SnapshotMixin):
 
     two_factor_auth = BooleanProperty(default=False)
 
-    @property
-    def domain_type(self):
-        """
-        The primary type of this domain.  Used to determine site-specific
-        branding.
-        """
-        if self.commtrack_enabled:
-            return 'commtrack'
-        else:
-            return 'commcare'
-
     @classmethod
     def wrap(cls, data):
         # for domains that still use original_doc

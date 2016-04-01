@@ -35,10 +35,8 @@ def is_commtrack(project, request):
 
 def get_per_domain_context(project, request=None):
     if is_commtrack(project, request):
-        domain_type = COMMTRACK
         site_name = "CommCare Supply"
     else:
-        domain_type = COMMCARE
         site_name = "CommCare HQ"
 
     logo_url = static('hqstyle/img/commcare-flower.png')
@@ -48,7 +46,6 @@ def get_per_domain_context(project, request=None):
         logo_url = reverse('logo', args=[project.name])
 
     return {
-        'DOMAIN_TYPE': domain_type,
         'LOGO_URL': logo_url,
         'SITE_NAME': site_name,
     }
