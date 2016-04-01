@@ -10,7 +10,7 @@
 {% block js-inline %}
     <script>
         Stripe.setPublishableKey('{{ stripe_public_key }}');
-        var paginatedListModel = new B3CRUDPaginatedListModel(
+        var paginatedListModel = new CRUDPaginatedListModel(
             {{ pagination.total }},
             {{ pagination.limit }},
             {{ pagination.page }},
