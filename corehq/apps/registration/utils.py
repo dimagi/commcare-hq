@@ -188,7 +188,7 @@ def send_domain_registration_email(recipient, domain_name, guid, full_name):
     try:
         send_html_email_async.delay(subject, recipient, message_html,
                                     text_content=message_plaintext,
-                                    email_from=settings.DEFAULT_FROM_EMAIL)
+                                    email_from=settings.DEFAULT_FROM_EMAIL, ga_track=True)
     except Exception:
         logging.warning("Can't send email, but the message was:\n%s" % message_plaintext)
 
