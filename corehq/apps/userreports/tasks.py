@@ -93,27 +93,12 @@ def resume_building_indicators(indicator_config_id):
 
 
 def _iteratively_build_table(config, last_id=None):
-    couchdb = _get_db(config.referenced_doc_type)
     redis_client = get_redis_client().client.get_client()
     redis_key = _get_redis_key_for_config(config)
     indicator_config_id = config._id
 
-    start_key = None
-    if last_id:
-        last_doc = _DOC_TYPE_MAPPING[config.referenced_doc_type].get(last_id)
-        start_key = [config.domain, config.referenced_doc_type]
-        if config.referenced_doc_type in _DATE_MAP.keys():
-            date = json_format_datetime(last_doc[_DATE_MAP[config.referenced_doc_type]])
-            start_key.append(date)
-
     relevant_ids = []
-    for relevant_id in iterate_doc_ids_in_domain_by_type(
-            config.domain,
-            config.referenced_doc_type,
-            chunk_size=CHUNK_SIZE,
-            database=couchdb,
-            startkey=start_key,
-            startkey_docid=last_id):
+    for relevant_id in _iterate_base_ucr_doc_ids(config, last_id):
         relevant_ids.append(relevant_id)
         if len(relevant_ids) >= CHUNK_SIZE:
             redis_client.rpush(redis_key, *relevant_ids)
@@ -135,6 +120,26 @@ def _iteratively_build_table(config, last_id=None):
             if config.meta.build.initiated == current_config.meta.build.initiated:
                 current_config.meta.build.finished = True
                 current_config.save()
+
+
+def _iterate_base_ucr_doc_ids(config, last_id):
+    start_key = None
+    if last_id:
+        last_doc = _DOC_TYPE_MAPPING[config.referenced_doc_type].get(last_id)
+        start_key = [config.domain, config.referenced_doc_type]
+        if config.referenced_doc_type in _DATE_MAP.keys():
+            date = json_format_datetime(last_doc[_DATE_MAP[config.referenced_doc_type]])
+            start_key.append(date)
+
+    couchdb = _get_db(config.referenced_doc_type)
+    return iterate_doc_ids_in_domain_by_type(
+        config.domain,
+        config.referenced_doc_type,
+        chunk_size=CHUNK_SIZE,
+        database=couchdb,
+        startkey=start_key,
+        startkey_docid=last_id
+    )
 
 
 def _get_db(doc_type):
