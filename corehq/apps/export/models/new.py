@@ -372,9 +372,6 @@ class ExportInstance(BlobMixin, Document):
     last_updated = DateTimeProperty()
     last_accessed = DateTimeProperty()
 
-    # Whether to add stock columns to the export
-    export_stock = BooleanProperty(default=False)
-
     class Meta:
         app_label = 'export'
 
