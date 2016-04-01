@@ -77,14 +77,14 @@ You'd probably get an error like:
 The rule then is `no-dupe-keys`.  You can look it up on the [rules
 page](http://eslint.org/docs/rules/) for a description.
 
-|**Disabling the rule globally**
-|Disable the rule by adding an entry to the config like
+#### Disabling the rule globally
+Disable the rule by adding an entry to the config like
 ```javascript
     "no-dupe-keys": ["off"]
 ```
 
-|**Adding an exception**
-|A foolish consistency is the hobgoblin of simple minds.  Sometimes it IS okay
+#### Adding an exception
+A foolish consistency is the hobgoblin of simple minds.  Sometimes it IS okay
 to use `console.log`.  Here are a couple ways to say "yes, this IS okay".
 ```javascript
 console.log('foo'); // eslint-disable-line no-console
