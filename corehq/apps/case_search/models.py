@@ -19,7 +19,7 @@ class CaseSearchConfig(models.Model):
         primary_key=True
     )
     enabled = models.BooleanField(blank=False, null=False, default=False)
-    config = JSONField(default={})
+    config = JSONField(default=dict())
 
     @classmethod
     def enabled_domains(cls):
