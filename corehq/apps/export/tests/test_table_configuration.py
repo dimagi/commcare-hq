@@ -2,8 +2,6 @@ from collections import namedtuple
 from mock import patch
 from django.test import SimpleTestCase
 
-from corehq.apps.commtrack.helpers import make_product
-from corehq.apps.products.models import Product
 from corehq.apps.export.const import USERNAME_TRANSFORM
 from corehq.apps.export.models import TableConfiguration, ExportColumn, \
     ScalarItem, ExportRow

@@ -18,7 +18,6 @@ from corehq.apps.app_manager.dbaccessors import (
 from corehq.apps.app_manager.models import Application
 from corehq.apps.app_manager.util import get_case_properties
 from corehq.apps.domain.models import Domain
-from corehq.apps.commtrack.models import StockState
 from corehq.apps.products.models import Product
 from corehq.apps.reports.display import xmlns_to_name
 from corehq.blobs.mixin import BlobMixin
@@ -135,8 +134,6 @@ class ExportColumn(DocumentSchema):
         :param base_path:
         :return:
         """
-        if base_path != self.item.path[:len(base_path)]:
-            import ipdb; ipdb.set_trace()
         assert base_path == self.item.path[:len(base_path)], "ExportItem's path starts with the base_path"
         # Get the path from the doc root to the desired ExportItem
         path = [x.name for x in self.item.path[len(base_path):]]
