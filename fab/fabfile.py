@@ -813,7 +813,7 @@ def rollback():
     if all(exists.values()):
         print blue('Updating current and restarting services')
         execute(update_current, unique_release)
-        silent_services_restart()
+        silent_services_restart(use_current_release=True)
         execute(mark_last_release_unsuccessful)
     else:
         print red('Aborting because not all hosts have release')
