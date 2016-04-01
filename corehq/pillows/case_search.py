@@ -124,7 +124,7 @@ def get_case_search_to_elasticsearch_pillow(pillow_id='CaseSearchToElasticsearch
         name=pillow_id,
         document_store=None,
         checkpoint=checkpoint,
-        change_feed=KafkaChangeFeed(topics=[topics.CASE], group_id='cases-to-es'),
+        change_feed=KafkaChangeFeed(topics=[topics.CASE, topics.CASE_SQL], group_id='cases-to-es'),
         processor=case_processor,
         change_processed_event_handler=PillowCheckpointEventHandler(
             checkpoint=checkpoint, checkpoint_frequency=100,

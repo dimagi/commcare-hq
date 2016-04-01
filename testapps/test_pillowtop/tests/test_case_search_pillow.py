@@ -15,7 +15,7 @@ from corehq.pillows.case_search import CaseSearchPillow, \
     get_couch_case_search_reindexer
 from corehq.pillows.mappings.case_search_mapping import CASE_SEARCH_INDEX
 from corehq.util.elastic import ensure_index_deleted
-from django.test import TestCase
+from django.test import TestCase, override_settings
 from mock import MagicMock, patch
 from testapps.test_pillowtop.utils import get_current_kafka_seq, \
     get_test_kafka_consumer, make_a_case
@@ -40,8 +40,7 @@ class CaseSearchPillowTest(TestCase):
 
     def test_case_search_pillow(self):
         consumer = get_test_kafka_consumer(topics.CASE)
-        # have to get the seq id before the change is processed
-        kafka_seq = get_current_kafka_seq(topics.CASE)
+        kafka_seq = self._get_kafka_seq()
 
         case = self._make_case()
         producer.send_change(topics.CASE, doc_to_change(case).metadata)
@@ -100,6 +99,36 @@ class CaseSearchPillowTest(TestCase):
 
         # make sure nothing is left
         self._assert_index_empty()
+
+    @override_settings(TESTS_SHOULD_USE_SQL_BACKEND=True)
+    def test_sql_case_search_pillow(self):
+        consumer = get_test_kafka_consumer(topics.CASE_SQL)
+        # have to get the seq id before the change is processed
+        kafka_seq = self._get_kafka_seq()
+        case = self._make_case()
+
+        # confirm change made it to kafka
+        message = consumer.next()
+        change_meta = change_meta_from_kafka_message(message.value)
+        self.assertEqual(case.case_id, change_meta.document_id)
+        self.assertEqual(self.domain, change_meta.domain)
+
+        # enable case search for domain
+        with patch('corehq.pillows.case_search.case_search_enabled_for_domain',
+                   new=MagicMock(return_value=True)) as fake_case_search_enabled_for_domain:
+            # send to elasticsearch
+            self.pillow.process_changes(since=kafka_seq, forever=False)
+            fake_case_search_enabled_for_domain.assert_called_with(self.domain)
+
+        self._assert_case_in_es(self.domain, case)
+
+    def _get_kafka_seq(self):
+        # KafkaChangeFeed listens for multiple topics (case, case-sql) in the case search pillow,
+        # so we need to provide a dict of seqs to kafka
+        return {
+            topics.CASE_SQL: get_current_kafka_seq(topics.CASE_SQL),
+            topics.CASE: get_current_kafka_seq(topics.CASE)
+        }
 
     def _make_case(self, domain=None):
         # make a case
