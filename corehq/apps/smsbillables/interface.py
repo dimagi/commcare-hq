@@ -133,8 +133,7 @@ class SMSBillablesInterface(GenericTabularReport):
                 }.get(sms_billable.direction, ""),
                 sms_billable.gateway_fee.criteria.backend_api_id if sms_billable.gateway_fee else "",
                 sms_billable.gateway_charge,
-                (sms_billable.usage_fee.amount
-                 if sms_billable.usage_fee is not None else ""),
+                sms_billable.usage_charge,
                 sms_billable.log_id,
                 sms_billable.is_valid,
                 sms_billable.date_created,
