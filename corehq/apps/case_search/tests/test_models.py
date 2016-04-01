@@ -29,20 +29,20 @@ class TestCaseSearch(TestCase):
     def test_fuzzy_search_parameters(self):
         config = CaseSearchConfig(domain=self.domain)
 
-        self.assertItemsEqual(config.fuzzy_properties_for_case_type('mermaids'), [])
+        self.assertItemsEqual(config.get_fuzzy_properties_for_case_type('mermaids'), [])
 
         config.add_fuzzy_properties(case_type="pirates", properties=["name", "age"])
         config.add_fuzzy_properties(case_type="pirates", properties=["smells_bad"])
         config.add_fuzzy_properties(case_type="swashbucklers", properties=["has_parrot"])
 
-        self.assertItemsEqual(config.fuzzy_properties_for_case_type('pirates'), ['name', 'age', 'smells_bad'])
-        self.assertItemsEqual(config.fuzzy_properties_for_case_type('swashbucklers'), ['has_parrot'])
+        self.assertItemsEqual(config.get_fuzzy_properties_for_case_type('pirates'), ['name', 'age', 'smells_bad'])
+        self.assertItemsEqual(config.get_fuzzy_properties_for_case_type('swashbucklers'), ['has_parrot'])
 
         config.add_fuzzy_property(case_type="swashbucklers", property="has_sword")
-        self.assertItemsEqual(config.fuzzy_properties_for_case_type('swashbucklers'), ['has_parrot', 'has_sword'])
+        self.assertItemsEqual(config.get_fuzzy_properties_for_case_type('swashbucklers'), ['has_parrot', 'has_sword'])
 
         config.remove_fuzzy_property(case_type="pirates", property="smells_bad")
-        self.assertItemsEqual(config.fuzzy_properties_for_case_type('pirates'), ['name', 'age'])
+        self.assertItemsEqual(config.get_fuzzy_properties_for_case_type('pirates'), ['name', 'age'])
 
         with self.assertRaises(AttributeError):
             config.remove_fuzzy_property(case_type="pirates", property="smells_bad")

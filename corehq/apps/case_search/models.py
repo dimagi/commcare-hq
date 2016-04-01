@@ -73,7 +73,7 @@ class CaseSearchConfig(models.Model):
 
         raise AttributeError("{} is not a fuzzy property for {}".format(property, case_type))
 
-    def fuzzy_properties_for_case_type(self, case_type):
+    def get_fuzzy_properties_for_case_type(self, case_type):
         """
         Returns a list of search properties to be fuzzy searched
         """
