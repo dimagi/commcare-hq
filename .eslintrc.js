@@ -10,6 +10,8 @@ module.exports = {
     // http://eslint.org/docs/user-guide/configuring#specifying-globals
     "globals": {
         // false means it shouldn't be overwritten
+        "hqDefine": false,
+        "hqImport": false,
         "$": false,
         "ko": false,
         "_": false,
