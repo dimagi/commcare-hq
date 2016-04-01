@@ -1,10 +1,10 @@
 from collections import namedtuple, defaultdict
 from django.utils.translation import ugettext as _
 from corehq.apps.app_manager.models import Form
+from corehq.apps.es import FormES
 from corehq.apps.performance_sms.exceptions import QueryResolutionError, MissingTemplateError
 from corehq.apps.performance_sms.parser import GLOBAL_NAMESPACE, USER_NAMESPACE, GROUP_NAMESPACE
 from corehq.apps.reports.daterange import get_daterange_start_end_dates
-from corehq.apps.sofabed.models import FormData
 from dimagi.utils.decorators.memoized import memoized
 
 
@@ -90,9 +90,7 @@ class QueryEngine(object):
         assert template.type == 'form'
         startdate, enddate = get_daterange_start_end_dates(template.time_range)
         xmlns = Form.get_form(template.source_id).xmlns
-        return FormData.objects.filter(
-            user_id=query_context.user._id,
-            xmlns=xmlns,
-            received_on__gte=startdate,
-            received_on__lt=enddate,
-        ).count()
+        return FormES().user_id(query_context.user._id).xmlns([xmlns]).submitted(
+            gte=startdate,
+            lt=enddate,
+        ).size(0).count()
