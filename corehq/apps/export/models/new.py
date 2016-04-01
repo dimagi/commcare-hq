@@ -198,7 +198,7 @@ class ExportColumn(DocumentSchema):
         self.is_advanced = is_deleted or self.is_advanced
         self.tags = tags
 
-    def extra_data(self, **data):
+    def extra_initialization_data(self, **data):
         """
         Configures the column given extra parameters. Often a NOOP.
         """
@@ -503,7 +503,7 @@ class ExportInstance(BlobMixin, Document):
 
         for static_column in properties:
             index, existing_column = table.get_column(static_column.item.path, static_column.item.transform)
-            (existing_column or static_column).extra_data(**data)
+            (existing_column or static_column).extra_initialization_data(**data)
             if not existing_column:
                 insert_fn(static_column)
 
@@ -1216,7 +1216,7 @@ class RowNumberColumn(ExportColumn):
             + (list(row_index) if len(row_index) > 1 else [])
         )
 
-    def extra_data(self, **data):
+    def extra_initialization_data(self, **data):
         self.repeat = data.get('repeat')
 
 # These must match the constants in corehq/apps/export/static/export/js/const.js
