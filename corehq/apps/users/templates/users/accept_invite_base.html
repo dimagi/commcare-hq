@@ -4,19 +4,18 @@
 {% load hq_shared_tags %}
 
 {% block title %}{% trans "Invitation to join the " %}{{ invite_to }} {{ invite_type }}{% endblock title %}
+
 {% block js-inline  %}{{ block.super }}
     {% url "eula_basic" as eula_url %}
     {% include 'hqstyle/partials/load_into_modal.html' with modal_id="eulaModal" load_from=eula_url %}
     <script src="{% static 'zxcvbn/dist/zxcvbn.js' %}"></script>
     <script src="{% static 'registration/js/password.js' %}"></script>
 {% endblock %}
+
 {% block login-content %}
     <div class="row">
         {% if request.user.is_authenticated %}
-            <div class="page-header">
-                <h1>{{ invite_type|capfirst }} {%  trans "Invitation" %} <small>{%  blocktrans %}You've been invited to join <strong>{{ invite_to }}{% endblocktrans %}</strong>.</small></h1>
-            </div>
-            <div class="span8">
+            <div class="col-sm-8">
                 {% if not mobile_user %}
                     <form name="form" method="post" action="" class="form-horizontal">
                         {% csrf_token %}
@@ -34,35 +33,35 @@
                             to accept the invitation to join the CommCare HQ {{ invite_type }} <strong>{{ invite_to }}</strong> as <strong>{{ username }}</strong>?</p>
                             {% endblocktrans %}
                         </fieldset>
-                        <button type="submit" class="btn btn-primary btn-large">Accept Invitation</button>
+                        <button type="submit" class="btn btn-primary btn-lg">Accept Invitation</button>
                     </form>
                 {% else %}
-                    <p><strong>{% trans 'Note' %}:</strong> {% trans "You are signed in as a mobile user, to accept this invitation, you must be a web user." %}</p>
-                    <p>{% trans 'Please' %} <a href="?switch=true" class="btn">{% trans 'switch accounts' %}</a> {% trans 'or' %} <a href="?create=true" class="btn">{% trans "create a web account" %}</a></p>
+                    <p><strong>{% trans 'Note' %}:</strong> {% trans "You are signed in as a mobile user, but to accept this invitation, you must be a web user." %}</p>
+                    <p>
+                        {% trans 'Please' %}
+                        <a href="?switch=true" class="btn btn-default">{% trans 'switch accounts' %}</a>
+                        {% trans 'or' %}
+                        <a href="?create=true" class="btn btn-default">{% trans "create a web account" %}</a>
+                    </p>
                 {% endif %}
             </div>
-            <div class="span4">
+            <div class="col-sm-4">
                 <aside class="well">
                     <h3>{% blocktrans with formatted_username|safe as username %}Not {{ username }}?{% endblocktrans %}</h3>
-                    <a href="?create=true" class="btn">{% trans "Create an Account" %}</a><br />
+                    <a href="?create=true" class="btn btn-info">{% trans "Create an Account" %}</a><br />
                     {% trans "or" %}<br />
-                    <a href="?switch=true" class="btn">{% trans "Switch Accounts" %}</a>
+                    <a href="?switch=true" class="btn btn-info">{% trans "Switch Accounts" %}</a>
                 </aside>
             </div>
         {% else %}
-            <div class="page-header">
-                <h1>
-                {% blocktrans with invite_type|capfirst as invite_type_title %}
-                    {{ invite_type_title }} Invitation, Account Required<br />
-                    <small>To accept this {{ invite_type }} invitation, you must create an account on CommCare HQ.</small>
-                {% endblocktrans %}
-                </h1>
-            </div>
-            <div class="span8">
+            {% blocktrans %}
+                <div class="help-block">To accept this {{ invite_type|lower }} invitation, you must create an account.</div>
+            {% endblocktrans %}
+            <div class="col-sm-8">
                 <form name="form" method="post" action="" class="form-horizontal">
                     {% csrf_token %}
                     {% for global_error in form.non_field_errors %}
-                        <div class="alert alert-error">
+                        <div class="alert alert-danger">
                             {{ global_error }}
                         </div>
                     {% endfor %}
@@ -83,14 +82,16 @@
                         {% endfor %}
                     </fieldset>
                     <div class="form-actions">
-                        <button type="submit" class="btn btn-primary btn-large">{% trans 'Create Account' %}</button>
+                        <div class="col-sm-offset-4 col-sm-4">
+                            <button type="submit" class="btn btn-primary">{% trans 'Create Account' %}</button>
+                        </div>
                     </div>
                 </form>
             </div>
-            <div class="span4">
+            <div class="col-sm-4">
                 <aside class="well">
                     <h3>{% trans 'Already have an account?' %}</h3>
-                    <a href="{% url "login" DOMAIN_TYPE %}?next={{ request.path }}" class="btn btn-primary btn-large">
+                    <a href="{% url "login" DOMAIN_TYPE %}?next={{ request.path }}" class="btn btn-primary btn-lg">
                         {% trans 'Sign In Now' %}
                     </a>
                 </aside>
