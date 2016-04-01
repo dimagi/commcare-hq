@@ -134,7 +134,7 @@ def get_sql_xform_to_elasticsearch_pillow(pillow_id='SqlXFormToElasticsearchPill
         'sql-xforms-to-elasticsearch',
     )
     form_processor = ElasticProcessor(
-        elasticseach=get_es_new(),
+        elasticsearch=get_es_new(),
         index_meta=ElasticsearchIndexMeta(index=XFORM_INDEX, type=XFORM_ES_TYPE),
         doc_prep_fn=prepare_sql_form_json_for_elasticsearch
     )
