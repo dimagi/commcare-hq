@@ -12,7 +12,7 @@ When you install a package, it will be installed in a directory called `bower_co
 
 ### Specifying packages in `bower.json`
 
-To ensure a package gets installed for a project, you must specify it in the `bower.json` file. This is equivalent to the `requirements.txt` file for `pip`. When specifying a bower package you can use many techniques. Here are a few examples:
+To ensure a package gets installed for a project, you must specify it in the `bower.json` file. This is equivalent to the `requirements.txt` file for `pip`. Similar to `pip install` for python, for bower, use `bower update` When specifying a bower package you can use many techniques. Here are a few examples:
 
 ```js
 // Installs the jquery package at version 1.11.1 to `bower_components/jquery`
@@ -29,7 +29,7 @@ To ensure a package gets installed for a project, you must specify it in the `bo
 
 To generalize, an install declaration looks like this:
 ```
-<name>=<package>#<version>
+<name>:<package>#<version>
 ```
 Where `<package>` is optional if `<name> == <package>`. A package can be any of these things:
 
