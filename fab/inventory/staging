@@ -2,8 +2,6 @@
 hqproxy4.internal.commcarehq.org
 
 [webworkers]
-hqdjango2-staging.internal.commcarehq.org
-hqdjango3-staging.internal.commcarehq.org
 hqdjango4-staging.internal.commcarehq.org
 hqdjango5-staging.internal.commcarehq.org
 
@@ -29,7 +27,6 @@ hqdb0-staging.internal.commcarehq.org
 hqdb0-staging.internal.commcarehq.org
 
 [touchforms]
-hqdjango3-staging.internal.commcarehq.org
 hqtouch0-staging.internal.commcarehq.org
 
 [redis]
