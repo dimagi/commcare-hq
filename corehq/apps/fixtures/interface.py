@@ -1,12 +1,12 @@
 from couchdbkit import ResourceNotFound
 from django.contrib import messages
 from django.http import HttpResponseRedirect
-from corehq.apps.hqwebapp.models import ProjectDataTab
 from corehq.apps.fixtures.views import fixtures_home, FixtureViewMixIn
 from corehq.apps.reports.generic import GenericReportView, GenericTabularReport
 from corehq.apps.reports.filters.base import BaseSingleOptionFilter
 from corehq.apps.fixtures.dispatcher import FixtureInterfaceDispatcher
 from corehq.apps.fixtures.models import FixtureDataType, _id_from_doc
+from corehq.tabs.tabclasses import ProjectDataTab
 from dimagi.utils.decorators.memoized import memoized
 from django.utils.translation import ugettext_noop, ugettext as _
 

@@ -1,21 +1,15 @@
-import logging
 from django import template
-from django.conf import settings
-from django.core.urlresolvers import reverse
 from django.template.loader import render_to_string
-from django.templatetags.i18n import language_name
-from django.utils.html import format_html
 from django.utils.safestring import mark_safe
 
-from corehq.apps.domain.models import Domain
 import corehq.apps.style.utils as style_utils
-from corehq.apps.hqwebapp.models import MaintenanceAlert
 from corehq.tabs import MENU_TABS
+
 
 register = template.Library()
 
 
-def get_active_tab(visible_tabs, request_path):
+def _get_active_tab(visible_tabs, request_path):
     for is_active_tab_fn in [
         lambda t: t.is_active_fast,
         lambda t: t.is_active,
@@ -34,19 +28,11 @@ class MainMenuNode(template.Node):
         couch_user = getattr(request, 'couch_user', None)
         project = getattr(request, 'project', None)
         domain = context.get('domain')
-        org = context.get('org')
-
-        try:
-            module = Domain.get_module_by_name(domain)
-        except (ValueError, AttributeError):
-            module = None
-
-        tabs = getattr(module, 'TABS', MENU_TABS)
         visible_tabs = []
-        for tab_class in tabs:
+        for tab_class in MENU_TABS:
             t = tab_class(
-                    request, current_url_name, domain=domain,
-                    couch_user=couch_user, project=project, org=org)
+                request, current_url_name, domain=domain,
+                couch_user=couch_user, project=project)
 
             t.is_active_tab = False
             if t.real_is_viewable:
@@ -54,11 +40,12 @@ class MainMenuNode(template.Node):
 
         # set the context variable in the highest scope so it can be used in
         # other blocks
-        context.dicts[0]['active_tab'] = get_active_tab(visible_tabs,
-                                                        request.get_full_path())
-        return mark_safe(render_to_string('style/includes/menu_main.html', {
+        context.dicts[0]['active_tab'] = _get_active_tab(
+            visible_tabs, request.get_full_path())
+        return mark_safe(render_to_string('tabs/menu_main.html', {
             'tabs': visible_tabs,
         }))
+
 
 @register.tag(name="format_main_menu")
 def format_main_menu(parser, token):
@@ -137,43 +124,3 @@ def format_sidebar(context):
     return mark_safe(render_to_string(template, {
         'sections': sections
     }))
-
-
-@register.simple_tag
-def maintenance_alert():
-    try:
-        alert = (MaintenanceAlert.objects
-                 .filter(active=True)
-                 .order_by('-modified'))[0]
-    except IndexError:
-        return ''
-    else:
-        return format_html(
-            '<div class="alert alert-warning" style="text-align: center; margin-bottom: 0;">{}</div>',
-            mark_safe(alert.html),
-        )
-
-
-@register.filter
-def aliased_language_name(lang_code):
-    """
-    This is needed since we use non-standard language codes as alias, for e.g. 'fra' instead of 'fr' for French
-    """
-    try:
-        return language_name(lang_code)
-    except KeyError:
-        for code, name in settings.LANGUAGES:
-            if code == lang_code:
-                return name
-        raise KeyError('Unknown language code %s' % lang_code)
-
-
-@register.simple_tag(takes_context=True)
-def prelogin_url(context, urlname):
-    """
-    A prefix aware url tag replacement for prelogin URLs
-    """
-    if context.get('url_uses_prefix', False) and context.get('LANGUAGE_CODE', False):
-        return reverse(urlname, args=[context['LANGUAGE_CODE']])
-    else:
-        return reverse(urlname)
