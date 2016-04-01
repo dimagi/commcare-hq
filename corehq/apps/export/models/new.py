@@ -1,3 +1,4 @@
+from copy import copy
 from datetime import datetime
 from itertools import groupby
 from functools import partial
@@ -16,6 +17,7 @@ from corehq.apps.app_manager.dbaccessors import (
 )
 from corehq.apps.app_manager.models import Application
 from corehq.apps.app_manager.util import get_case_properties
+from corehq.apps.domain.models import Domain
 from corehq.apps.commtrack.models import StockState
 from corehq.apps.products.models import Product
 from corehq.apps.reports.display import xmlns_to_name
@@ -457,6 +459,7 @@ class ExportInstance(BlobMixin, Document):
             BOTTOM_MAIN_CASE_TABLE_PROPERTIES,
             CASE_HISTORY_PROPERTIES,
             PARENT_CASE_TABLE_PROPERTIES,
+            STOCK_COLUMN,
         )
 
         nested_repeat_count = len([node for node in table.path if node.is_repeat])
@@ -477,7 +480,11 @@ class ExportInstance(BlobMixin, Document):
                 cls.__insert_system_properties(table, [ROW_NUMBER_COLUMN], **extra_args)
         elif export_type == CASE_EXPORT:
             if table.path == MAIN_TABLE:
-                cls.__insert_system_properties(table, TOP_MAIN_CASE_TABLE_PROPERTIES, **extra_args)
+                if Domain.get_by_name(domain).commtrack_enabled:
+                    top_properties = TOP_MAIN_CASE_TABLE_PROPERTIES + [STOCK_COLUMN]
+                else:
+                    top_properties = TOP_MAIN_CASE_TABLE_PROPERTIES
+                cls.__insert_system_properties(table, top_properties, **extra_args)
                 cls.__insert_system_properties(
                     table,
                     BOTTOM_MAIN_CASE_TABLE_PROPERTIES,
@@ -499,6 +506,7 @@ class ExportInstance(BlobMixin, Document):
         :param top: When True inserts the columns at the top, when false at the bottom
         :param data: Extra data to be passed to the column if needed
         """
+        properties = map(copy, properties)
         if top:
             insert_fn = partial(table.columns.insert, 0)
             properties = reversed(properties)

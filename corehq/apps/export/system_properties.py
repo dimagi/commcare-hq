@@ -221,7 +221,7 @@ ROW_NUMBER_COLUMN = RowNumberColumn(
 
 STOCK_COLUMN = StockExportColumn(
     tags=[PROPERTY_TAG_STOCK],
-    label='data',
+    label='stock',
     item=ExportItem(path=[PathNode(name='stock')]),
     help_text=_('Add stock data columns to the export'),
 )
