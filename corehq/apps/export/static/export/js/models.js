@@ -17,9 +17,9 @@ Exports.ViewModels.ExportInstance.prototype.getFormatOptionText = function(forma
     } else if (format === Exports.Constants.EXPORT_FORMATS.CSV) {
         return gettext('CSV (Zip file)');
     } else if (format === Exports.Constants.EXPORT_FORMATS.XLS) {
-        return gettext('Excel 2007');
+        return gettext('Excel (older versions)');
     } else if (format === Exports.Constants.EXPORT_FORMATS.XLSX) {
-        return gettext('Web Page (Excel Dashboards)');
+        return gettext('Excel 2007');
     }
 };
 
