@@ -525,4 +525,4 @@ def update_exchange_rates(app_id=settings.OPEN_EXCHANGE_RATES_API_ID):
                 'rate': currency.rate_to_default,
             })
     except Exception as e:
-        log_accounting_error(e.message)
+        log_accounting_error("Error updating exchange rates: %s" % e.message)
