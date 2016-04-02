@@ -172,7 +172,10 @@ class ExportColumn(DocumentSchema):
             "is_advanced": is_case_update or False,
         }
 
-        column = ExportColumn(**constructor_args)
+        if isinstance(item, MultipleChoiceItem):
+            column = SplitExportColumn(**constructor_args)
+        else:
+            column = ExportColumn(**constructor_args)
         column.update_properties_from_app_ids_and_versions(app_ids_and_versions)
         column.selected = not column._is_deleted(app_ids_and_versions) and is_main_table and not is_case_update
         return column
@@ -1168,7 +1171,7 @@ class SplitExportColumn(ExportColumn):
     output = [1, '', 'c d']
     """
     item = SchemaProperty(MultipleChoiceItem)
-    ignore_unspecified_options = BooleanProperty()
+    ignore_unspecified_options = BooleanProperty(default=False)
 
     def get_value(self, doc, base_path, row_index=None):
         """
