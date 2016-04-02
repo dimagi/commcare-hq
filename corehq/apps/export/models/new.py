@@ -359,7 +359,7 @@ class ExportInstance(BlobMixin, Document):
     split_multiselects = BooleanProperty(default=False)
 
     # Whether to automatically convert dates to excel dates
-    transform_dates = BooleanProperty(default=False)
+    transform_dates = BooleanProperty(default=True)
 
     # Whether to include duplicates and other error'd forms in export
     include_errors = BooleanProperty(default=False)
