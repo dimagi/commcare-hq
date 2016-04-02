@@ -387,6 +387,10 @@ class ExportInstance(BlobMixin, Document):
     def defaults(self):
         return FormExportInstanceDefaults if self.type == FORM_EXPORT else CaseExportInstanceDefaults
 
+    @property
+    def selected_tables(self):
+        return filter(lambda t: t.selected, self.tables)
+
     def get_table(self, path):
         for table in self.tables:
             if table.path == path:
