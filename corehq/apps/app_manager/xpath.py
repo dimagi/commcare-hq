@@ -22,14 +22,14 @@ DOT_INTERPOLATE_PATTERN = r'(\D|^)\.(\D|$)'
 
 CASE_REFERENCE_VALIDATION_ERROR = ugettext_lazy(
     'Your filter refers to a case, but the case is not available. Please either remove the case reference '
-    'or: (1) make sure that all the forms in this module update or close a case (which means registration '
-    'forms must go in a different module) and (2) make sure that the module is set to display the module '
-    'first and then forms.'
+    'or: (1) make sure that the module is set to display the module first and then forms, and (2) make sure '
+    'that all the forms in this module update or close a case (which means registration forms must go in a '
+    'different module).'
 )
 
 USERCASE_REFERENCE_VALIDATION_ERROR = ugettext_lazy(
-    'Your filter refers to a user case, but your project does not use user cases. Please either remove '
-    'the user case reference in your filter or enable user as a case for your project.'
+    'Your filter refers to a user case, but your project does not use user case management. Please either '
+    'remove the user case reference in your filter or enable user case management for your project.'
 )
 
 
