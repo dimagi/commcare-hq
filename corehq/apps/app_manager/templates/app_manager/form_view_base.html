@@ -146,6 +146,8 @@
                 return formFilterMatches(formFilter(), userCaseXpathPatternMatches, userCaseXpathSubstringMatches);
             });
 
+            var formFilterErrorMessage = ko.observable();
+
             var formFilterAllowed = ko.computed(function () {
                 if(!formFilter()) {
                     return true;
@@ -153,18 +155,22 @@
 
                 moduleUsesCase = (allOtherFormsRequireACase && form_requires() === 'case');
                 if(formFilterReferencesCase() && (!moduleUsesCase || putInRoot)) {
+                    formFilterErrorMessage($('#caseReferenceNotAllowed').html());
                     return false;
                 }
 
                 if(formFilterReferencesUserCase() && !isUserCaseInUse) {
+                    formFilterErrorMessage($('#userCaseReferenceNotAllowed').html());
                     return false;
                 }
 
                 return true;
             });
+
             $('#form-filter').koApplyBindings({
                     formFilter: formFilter,
                     formFilterAllowed: formFilterAllowed,
+                    errorMessages: {notAllowed: formFilterErrorMessage}
             });
             {% endif %}
 

@@ -12,6 +12,7 @@
             <div data-bind="valueOrNoneUI: {
                 value: formFilter,
                 allowed: formFilterAllowed,
+                messages: errorMessages,
                 inputName: 'form_filter'
             }">
                 <span data-slug="add">{% trans "Add Display Condition" %}</span>
@@ -25,7 +26,7 @@
                 {% endblocktrans %}
                 </span>
                 <span data-slug="notAllowedButExists">{% trans "Error in display condition!" %}</span>
-                <span data-slug="notAllowed">
+                <span id="caseReferenceNotAllowed" data-slug="caseReferenceNotAllowed">
                     {% blocktrans %}
                     To use display conditions in a module which reference a case, <br/>
                         (1) the module <strong>Menu</strong> setting must be set to <em>Display module and then
@@ -33,8 +34,10 @@
                         (2) all the forms in the module must update or close a case, which means registration
                             forms must go in a separate module, or if your project uses user case management, your
                             display condition may use the user case.
-
-                    <br /><br />
+                    {% endblocktrans %}
+                </span>
+                <span id="userCaseReferenceNotAllowed" data-slug="userCaseReferenceNotAllowed">
+                    {% blocktrans %}
                     To use display conditions in a module which reference a user case, user as a case must be enabled
                     for your project.
                     {% endblocktrans %}
