@@ -263,7 +263,10 @@
                             <p>Details: {{ error }}</p>
                         {% endcase %}
                         {# And then show the optional `message` regardless #}
-                        <span>{{ error.message }}</span>
+                        {% if error.type != 'error' %}
+                            {# Don't show the error message if we already did above #}
+                            <span>{{ error.message }}</span>
+                        {% endif %}
                     </span>
                 </li>
             {% endfor %}
