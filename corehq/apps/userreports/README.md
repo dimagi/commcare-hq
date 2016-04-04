@@ -514,6 +514,19 @@ Function Name  | Example
 ```
 This returns number of family members
 
+##### flatten_items expression
+
+`flatten_items` takes list of list of objects specified by `items_expression` and returns one list of all objects.
+
+`items_expression` is any valid expression that returns a list of lists.
+```json
+{
+    "type": "flatten_items",
+    "items_expression": {},  # returns [[1, 3], [5, 6]]
+}
+```
+This will return [1, 3, 5, 6]
+
 
 #### Named Expressions
 
