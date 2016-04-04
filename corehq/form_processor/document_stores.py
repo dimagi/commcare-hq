@@ -36,3 +36,7 @@ class ReadonlyCaseDocumentStore(ReadOnlyDocumentStore):
 
     def iter_document_ids(self, last_id=None):
         return iter(CaseAccessors(self.domain).get_case_ids_in_domain())
+
+    def iter_documents(self, ids):
+        for wrapped_case in self.case_accessors.iter_cases(ids):
+            yield wrapped_case.to_json()
