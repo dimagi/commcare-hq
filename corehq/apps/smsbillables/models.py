@@ -273,6 +273,14 @@ class SmsBillable(models.Model):
 
     @property
     def gateway_charge(self):
+        return (self.multipart_count if self.multipart_count is not None else 1) * self._single_gateway_charge
+
+    @property
+    def usage_charge(self):
+        return (self.multipart_count if self.multipart_count is not None else 1) * self._single_usage_charge
+
+    @property
+    def _single_gateway_charge(self):
         if self.gateway_fee is not None:
             try:
                 charge = SmsGatewayFee.objects.get(id=self.gateway_fee.id)
@@ -284,7 +292,7 @@ class SmsBillable(models.Model):
         return Decimal('0.0')
 
     @property
-    def usage_charge(self):
+    def _single_usage_charge(self):
         if self.usage_fee is not None:
             try:
                 charge = SmsUsageFee.objects.get(id=self.usage_fee.id)
