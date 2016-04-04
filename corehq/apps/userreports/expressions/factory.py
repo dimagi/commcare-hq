@@ -11,7 +11,7 @@ from corehq.apps.userreports.expressions.specs import PropertyNameGetterSpec, Pr
 from corehq.apps.userreports.expressions.date_specs import AddDaysExpressionSpec, AddMonthsExpressionSpec, \
     MonthStartDateExpressionSpec, MonthEndDateExpressionSpec, DiffDaysExpressionSpec
 from corehq.apps.userreports.expressions.json_query_specs import FilterItemsExpressionSpec, \
-    MapItemsExpressionSpec, ReduceItemsExpressionSpec, FlattenExpressionSpec
+    MapItemsExpressionSpec, ReduceItemsExpressionSpec, FlattenExpressionSpec, SortItemsExpressionSpec
 from dimagi.utils.parsing import json_format_datetime, json_format_date
 from dimagi.utils.web import json_handler
 
@@ -204,6 +204,15 @@ def _flatten_expression(spec, context):
     return wrapped
 
 
+def _sort_items_expression(spec, context):
+    wrapped = SortItemsExpressionSpec.wrap(spec)
+    wrapped.configure(
+        items_expression=ExpressionFactory.from_spec(wrapped.items_expression),
+        sort_expression=ExpressionFactory.from_spec(wrapped.sort_expression)
+    )
+    return wrapped
+
+
 class ExpressionFactory(object):
     spec_map = {
         'identity': _identity_expression,
@@ -230,6 +239,7 @@ class ExpressionFactory(object):
         'map_items': _map_items_expression,
         'reduce_items': _reduce_items_expression,
         'flatten': _flatten_expression,
+        'sort_items': _sort_items_expression,
     }
     # Additional items are added to the spec_map by use of the `register` method.
 

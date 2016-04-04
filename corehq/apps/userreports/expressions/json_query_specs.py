@@ -75,3 +75,21 @@ class FlattenExpressionSpec(JsonObject):
             return(list(itertools.chain(*items)))
         except TypeError:
             return []
+
+
+class SortItemsExpressionSpec(JsonObject):
+    type = TypeProperty('sort_items')
+    items_expression = DefaultProperty(required=True)
+    sort_expression = DictProperty(required=True)
+
+    def configure(self, items_expression, sort_expression):
+        self._items_expression = items_expression
+        self._sort_expression = sort_expression
+
+    def __call__(self, doc, context=None):
+        items = self._items_expression(doc, context) or []
+
+        return sorted(
+            items,
+            key=lambda i: self._sort_expression(i, context),
+        )
