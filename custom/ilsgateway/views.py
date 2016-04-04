@@ -264,6 +264,7 @@ class ReportRunListView(ListView, DomainViewMixin):
     context_object_name = 'runs'
     template_name = 'ilsgateway/report_run_list.html'
 
+    @use_bootstrap3
     def dispatch(self, request, *args, **kwargs):
         if not self.request.couch_user.is_domain_admin():
             raise Http404()
