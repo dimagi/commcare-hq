@@ -22,23 +22,10 @@ class TranslationMixin(Document):
     def set_translations(self, lang, translations):
         self.translations[lang] = translations
 
-    
-class TranslationDoc(TranslationMixin):
-    @classmethod
-    def create_from_txt(cls, lang, txt=None):
-        """
-        from corehq.apps.translations.models import *
-        TranslationDoc.create_from_txt("pt")
 
-        """
-        if txt:
-            dct = commcare_translations.loads(txt)
-        else:
-            dct = commcare_translations.load_translations(lang)
-        t = cls(translations={lang: dct})
-        t.save()
-        return t
-        
+class TranslationDoc(TranslationMixin):
+    pass
+
 
 class StandaloneTranslationDoc(TranslationDoc, CouchDocLockableMixIn):
     """
