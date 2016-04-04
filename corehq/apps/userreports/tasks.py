@@ -1,10 +1,11 @@
 import datetime
-import logging
 
 from celery.task import task
 from couchdbkit import ResourceConflict
 
 from casexml.apps.case.models import CommCareCase
+from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
+from corehq.form_processor.utils import should_use_sql_backend
 from couchforms.models import XFormInstance
 from dimagi.utils.couch.database import iter_docs
 from dimagi.utils.couch.cache.cache_core import get_redis_client
@@ -123,6 +124,24 @@ def _iteratively_build_table(config, last_id=None):
 
 
 def _iterate_base_ucr_doc_ids(config, last_id):
+    if should_use_sql_backend(config.domain):
+        return _iterate_docs_from_sql(config, last_id)
+    else:
+        return _iterate_docs_from_couch(config, last_id)
+
+
+def _iterate_docs_from_sql(config, last_id):
+    if config.referenced_doc_type == 'XFormInstance':
+        # todo: iterate over sql form IDs
+        raise NotImplementedError("You can't reindex SQL form data sources yet.")
+    elif config.referenced_doc_type == 'CommCareCase':
+        return iter(CaseAccessors(config.domain).get_case_ids_in_domain())
+    else:
+        # all other types still live in couchdb
+        return _iterate_docs_from_couch(config, last_id)
+
+
+def _iterate_docs_from_couch(config, last_id):
     start_key = None
     if last_id:
         last_doc = _DOC_TYPE_MAPPING[config.referenced_doc_type].get(last_id)
