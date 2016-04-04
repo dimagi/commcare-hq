@@ -19,8 +19,13 @@ def get_application_access_for_domain(domain):
 
 
 def get_cloudcare_apps(domain):
+    result = ApplicationBase.get_db().view(
+        'app_manager/applications_brief',
+        startkey=[domain],
+        endkey=[domain, {}]
+    )
+    app_docs = [row['value'] for row in result]
     return [
-        app for app in ApplicationBase.view(
-            'app_manager/applications_brief', startkey=[domain], endkey=[domain, {}])
+        app for app in app_docs
         if app['doc_type'] == 'Application' and app['cloudcare_enabled']
     ]
