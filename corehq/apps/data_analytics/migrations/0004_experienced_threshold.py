@@ -19,7 +19,7 @@ class Migration(migrations.Migration):
         migrations.AddField(
             model_name='maltrow',
             name='experienced_threshold',
-            field=models.PositiveSmallIntegerField(default=3, null=True),
+            field=models.PositiveSmallIntegerField(default=3),
             preserve_default=True,
         ),
     ]
