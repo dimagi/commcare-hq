@@ -74,6 +74,7 @@
             }
         });
         $(function () {
+            var moduleType = {{ module.module_type|JSON }};
             var showCaseTypeError = function(message) {
                 var $caseTypeError = $('#case_type_error')
                 $caseTypeError.css('display', 'block');
@@ -93,7 +94,7 @@
                     showCaseTypeError(
                         gettext("Case types can only include the characters a-z, 0-9, '-' and '_'")
                     );
-                } else if (valueNoSpaces === 'commcare-user') {
+                } else if (valueNoSpaces === 'commcare-user' && moduleType != 'advanced') {
                     $(this).closest('.form-group').addClass('has-error');
                     showCaseTypeError(
                         gettext("'commcare-user' is a reserved case type. Please change the case type")
