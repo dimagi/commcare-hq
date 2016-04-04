@@ -261,7 +261,6 @@ class SmsBillable(models.Model):
     usage_fee = models.ForeignKey(SmsUsageFee, null=True, on_delete=models.PROTECT)
     log_id = models.CharField(max_length=50, db_index=True)
     phone_number = models.CharField(max_length=50)
-    api_response = models.TextField(null=True, blank=True)
     is_valid = models.BooleanField(default=True, db_index=True)
     domain = models.CharField(max_length=25, db_index=True)
     direction = models.CharField(max_length=10, db_index=True, choices=DIRECTION_CHOICES)
