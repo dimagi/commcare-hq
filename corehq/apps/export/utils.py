@@ -6,17 +6,11 @@ from corehq.apps.reports.models import (
     CaseExportSchema,
 )
 from .const import (
-    TRANSFORM_FUNCTIONS,
     CASE_EXPORT,
     FORM_EXPORT,
+    DEID_TRANSFORM_FUNCTIONS,
+    TRANSFORM_FUNCTIONS,
 )
-from .exceptions import ExportInvalidTransform
-
-
-def is_valid_transform(value):
-    for transform in value:
-        if transform not in TRANSFORM_FUNCTIONS:
-            raise ExportInvalidTransform('{} is not a valid transform'.format(value))
 
 
 def convert_saved_export_to_export_instance(saved_export):
@@ -72,10 +66,10 @@ def convert_saved_export_to_export_instance(saved_export):
 
         for column in old_table.columns:
             index = column.index
-            transforms = []
+            transform = None  # can be either the deid_transform or the value transform on the ExportItem
 
             if column.transform:
-                transforms = [_convert_transform(column.transform)]
+                transform = _convert_transform(column.transform)
 
             if _is_repeat(old_table.index):
                 index = '{table_index}.{column_index}'.format(
@@ -89,24 +83,24 @@ def convert_saved_export_to_export_instance(saved_export):
 
             system_property = _get_system_property(
                 column.index,
-                _convert_transform(column.transform) if column.transform else None,
+                transform,
                 export_type,
                 new_table.path
             )
             if system_property:
                 column_path, transform = system_property
-                transforms = [transform] if transform else []
 
-            new_column = new_table.get_column(
+            index, new_column = new_table.get_column(
                 column_path,
-                transforms,
+                _strip_deid_transform(transform),
             )
             if not new_column:
                 continue
             new_column.label = column.display
             new_column.selected = True
-            if transforms:
-                new_column.transforms = transforms
+            if transform and not _strip_deid_transform(transform):
+                # Must be deid transform
+                new_column.deid_transform = transform
 
     saved_export.doc_type += DELETED_SUFFIX
     saved_export.save()
@@ -133,11 +127,15 @@ def _strip_repeat_index(index):
     return index
 
 
+def _strip_deid_transform(transform):
+    return None if transform in DEID_TRANSFORM_FUNCTIONS.keys() else transform
+
+
 def _convert_transform(serializable_transform):
     transform_fn = to_function(serializable_transform.dumps_simple())
     if not transform_fn:
         return None
-    for slug, fn in TRANSFORM_FUNCTIONS.iteritems():
+    for slug, fn in list(TRANSFORM_FUNCTIONS.iteritems()) + list(DEID_TRANSFORM_FUNCTIONS.iteritems()):
         if fn == transform_fn:
             return slug
     return None
@@ -158,6 +156,7 @@ def _get_system_property(index, transform, export_type, table_path):
     )
 
     system_property = None
+    transform = _strip_deid_transform(transform)
     if export_type == FORM_EXPORT:
         if table_path == MAIN_TABLE:
             system_property = FORM_PROPERTY_MAPPING.get((index, transform))

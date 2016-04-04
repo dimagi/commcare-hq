@@ -1492,7 +1492,7 @@ class BaseEditNewCustomExportView(BaseModifyNewCustomView):
 
     def get(self, request, *args, **kwargs):
         try:
-            export_instance = FormExportInstance.get(self.export_id)
+            export_instance = self.export_instance_cls.get(self.export_id)
         except ResourceNotFound:
             # If it's not found, try and see if it's on the legacy system before throwing a 404
             try:
