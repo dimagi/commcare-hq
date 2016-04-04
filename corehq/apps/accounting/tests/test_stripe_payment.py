@@ -1,16 +1,16 @@
 from mock import patch
 
+from django.test import TransactionTestCase
 from django.test.client import RequestFactory
 
 import stripe
 
 from corehq.apps.accounting.models import PaymentRecord, PaymentMethod, BillingAccount
 from corehq.apps.accounting.payment_handlers import CreditStripePaymentHandler
-from corehq.apps.accounting.tests import BaseAccountingTest
 from corehq.apps.domain.models import Domain
 
 
-class TestCreditStripePaymentHandler(BaseAccountingTest):
+class TestCreditStripePaymentHandler(TransactionTestCase):
 
     def setUp(self):
         self.domain = Domain(name='test-domain')
@@ -23,9 +23,16 @@ class TestCreditStripePaymentHandler(BaseAccountingTest):
 
     def tearDown(self):
         self.domain.delete()
+        PaymentRecord.objects.all().delete()
         self.payment_method.delete()
         self.account.delete()
-        super(TestCreditStripePaymentHandler, self).tearDown()
+
+    @patch.object(stripe.Charge, 'create')
+    def test_working_process_request(self, mock_create):
+        self._call_process_request()
+
+        self.assertEqual(PaymentRecord.objects.count(), 1)
+        self.assertEqual(mock_create.call_count, 1)
 
     @patch.object(stripe.Charge, 'create')
     def test_when_stripe_errors_no_payment_record_exists(self, mock_create):
