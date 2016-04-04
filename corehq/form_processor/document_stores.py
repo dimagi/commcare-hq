@@ -18,8 +18,7 @@ class ReadonlyFormDocumentStore(ReadOnlyDocumentStore):
             raise DocumentNotFoundError(e)
 
     def iter_document_ids(self, last_id=None):
-        # todo: iterate over sql form IDs
-        raise NotImplementedError("You can't do this for SQL form data sources yet.")
+        return iter(self.form_accessors.get_all_form_ids_in_domain())
 
     def iter_documents(self, ids):
         for wrapped_form in self.form_accessors.iter_forms(ids):
