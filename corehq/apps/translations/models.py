@@ -4,6 +4,7 @@ from dimagi.ext.couchdbkit import (Document, DictProperty,
 import commcare_translations
 from dimagi.utils.couch import CouchDocLockableMixIn
 
+
 class TranslationMixin(Document):
     translations = DictProperty()
 
@@ -76,9 +77,10 @@ class StandaloneTranslationDoc(TranslationDoc, CouchDocLockableMixIn):
 class Translation(object):
     @classmethod
     def get_translations(cls, lang, key=None, one=False):
+        from corehq.apps.app_manager.models import Application
         if key:
             translations = []
-            r = TranslationDoc.get_db().view('app_translations_by_popularity/view',
+            r = Application.get_db().view('app_translations_by_popularity/view',
                 startkey=[lang, key],
                 endkey=[lang, key, {}],
                 group=True
@@ -92,7 +94,7 @@ class Translation(object):
             return translations
         else:
             translations = defaultdict(list)
-            r = TranslationDoc.get_db().view('app_translations_by_popularity/view',
+            r = Application.get_db().view('app_translations_by_popularity/view',
                 startkey=[lang],
                 endkey=[lang, {}],
                 group=True
