@@ -102,10 +102,18 @@ class BaseStripePaymentHandler(object):
                     return {'success': True, 'removedCard': card, }
                 if save_card:
                     card = self.payment_method.create_card(card, billing_account, self.domain, autopay=autopay)
-            if save_card or is_saved_card:
-                customer = self.payment_method.customer
+                if save_card or is_saved_card:
+                    customer = self.payment_method.customer
 
-            charge = self.create_charge(amount, card=card, customer=customer)
+                payment_record = PaymentRecord.create_record(
+                    self.payment_method, None, amount
+                )
+                self.update_credits(payment_record)
+
+                charge = self.create_charge(amount, card=card, customer=customer)
+
+            payment_record.transaction_id = charge.id
+            payment_record.save()
             self.update_payment_information(billing_account)
         except stripe.error.CardError as e:
             # card was declined
@@ -133,12 +141,6 @@ class BaseStripePaymentHandler(object):
                 }
             )
             return generic_error
-
-        with transaction.atomic():
-            payment_record = PaymentRecord.create_record(
-                self.payment_method, charge.id, amount
-            )
-            self.update_credits(payment_record)
 
         try:
             self.send_email(payment_record)
