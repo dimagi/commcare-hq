@@ -144,4 +144,3 @@ _DOC_TYPE_MAPPING = {
     'CommCareCase': CommCareCase,
     'Location': Location
 }
-
