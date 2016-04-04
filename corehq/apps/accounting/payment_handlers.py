@@ -108,7 +108,7 @@ class BaseStripePaymentHandler(object):
                     customer = self.payment_method.customer
 
                 payment_record = PaymentRecord.create_record(
-                    self.payment_method, None, amount
+                    self.payment_method, 'temp', amount
                 )
                 self.update_credits(payment_record)
 
