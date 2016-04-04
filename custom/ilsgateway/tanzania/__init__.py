@@ -7,6 +7,7 @@ from corehq.apps.products.models import SQLProduct
 from corehq.apps.reports.generic import GenericTabularReport
 from corehq.apps.reports.sqlreport import SqlTabularReport
 from corehq.apps.reports.standard import CustomProjectReport, ProjectReportParametersMixin
+from corehq.apps.style.decorators import use_nvd3
 from couchexport.models import Format
 from custom.common import ALL_OPTION
 from custom.ilsgateway.models import SupplyPointStatusTypes, OrganizationSummary
@@ -216,6 +217,12 @@ class MultiReport(SqlTabularReport, ILSMixin, CustomProjectReport,
     exportable = False
     base_template = 'ilsgateway/base_template.html'
     emailable = False
+
+    is_bootstrap3 = True
+
+    @use_nvd3
+    def bootstrap3_dispatcher(self, request, *args, **kwargs):
+        super(MultiReport, self).bootstrap3_dispatcher(request, *args, **kwargs)
 
     @classmethod
     def get_url(cls, domain=None, render_as=None, **kwargs):
