@@ -440,6 +440,7 @@ It would be cool if we could do custom reduces (by defining a function that take
   "reduce_statement": "x + y"  # required to only use these two variables
 }
 ```
+Behind the scenes that could use the evaluator pretty easily.
 
 #### Lookup Expression
 ```json
@@ -449,8 +450,6 @@ It would be cool if we could do custom reduces (by defining a function that take
     "index": 0,  # index of the item to do calculation on
     "value_expression": {}  # value expression to evaluate on the indexed item
 }
-
-Behind the scenes that could use the evaluator pretty easily.
 
 #### Flatten Expression
 
