@@ -250,10 +250,10 @@ class SmsBillable(models.Model):
     """
     A record of matching a fee to a particular SMS.
 
-    If on closer inspection we determine a particular SmsBillable is invalid (whether something is
-    awry with the api_response, or we used the incorrect fee and want to recalculate) we can set
-    this billable to is_valid = False and it will not be used toward calculating the SmsLineItem in
-    the monthly Invoice.
+    If on closer inspection we determine a particular SmsBillable is invalid
+    (we used the incorrect fee and want to recalculate)
+    we can set this billable to is_valid = False and it will not be used toward
+    calculating the SmsLineItem in the monthly Invoice.
     """
     gateway_fee = models.ForeignKey(SmsGatewayFee, null=True, on_delete=models.PROTECT)
     gateway_fee_conversion_rate = models.DecimalField(default=Decimal('1.0'), null=True, max_digits=20,
@@ -294,7 +294,7 @@ class SmsBillable(models.Model):
         return Decimal('0.0')
 
     @classmethod
-    def create(cls, message_log, api_response=None):
+    def create(cls, message_log):
         phone_number = clean_phone_number(message_log.phone_number)
         direction = message_log.direction
         domain = message_log.domain
@@ -311,9 +311,6 @@ class SmsBillable(models.Model):
             message_log.backend_api, message_log.backend_id, phone_number, direction, log_id
         )
         billable.usage_fee = cls._get_usage_fee(domain, direction)
-
-        if api_response is not None:
-            billable.api_response = api_response
 
         if message_log.backend_api == SQLTestSMSBackend.get_api_id():
             billable.is_valid = False
