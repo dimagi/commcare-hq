@@ -164,17 +164,22 @@ legend .subtext {
 }
 
 .ko-inline-edit {
+    &.inline {
+        display: inline-block;
+    }
+
     .read-only {
         padding: 8px;
         .clearfix();
 
-        .text {
+        .text, .placeholder {
             white-space: pre;
         }
 
         &:hover {
             cursor: pointer;
             background-color: @cc-bg;
+            border-radius: 4px;
         }
 
         i {
