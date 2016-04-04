@@ -37,8 +37,7 @@ def _get_redis_key_for_config(config):
     return 'ucr_queue-{}:{}'.format(config._id, rev)
 
 
-def _build_indicators(indicator_config_id, relevant_ids):
-    config = _get_config_by_id(indicator_config_id)
+def _build_indicators(config, relevant_ids):
     adapter = IndicatorSqlAdapter(config)
     couchdb = _get_db(config.referenced_doc_type)
     redis_client = get_redis_client().client.get_client()
@@ -87,7 +86,7 @@ def resume_building_indicators(indicator_config_id):
     except:
         relevant_ids = tuple(redis_client.smembers(redis_key))
     if len(relevant_ids) > 0:
-        _build_indicators(indicator_config_id, relevant_ids)
+        _build_indicators(config, relevant_ids)
         last_id = relevant_ids[-1]
 
         _iteratively_build_table(config, last_id)
@@ -103,12 +102,12 @@ def _iteratively_build_table(config, last_id=None):
         relevant_ids.append(relevant_id)
         if len(relevant_ids) >= CHUNK_SIZE:
             redis_client.rpush(redis_key, *relevant_ids)
-            _build_indicators(indicator_config_id, relevant_ids)
+            _build_indicators(config, relevant_ids)
             relevant_ids = []
 
     if relevant_ids:
         redis_client.rpush(redis_key, *relevant_ids)
-        _build_indicators(indicator_config_id, relevant_ids)
+        _build_indicators(config, relevant_ids)
 
     if not is_static(indicator_config_id):
         redis_client.delete(redis_key)
