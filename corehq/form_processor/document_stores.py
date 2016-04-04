@@ -18,6 +18,7 @@ class ReadonlyFormDocumentStore(ReadOnlyDocumentStore):
             raise DocumentNotFoundError(e)
 
     def iter_document_ids(self, last_id=None):
+        # todo: support last_id
         return iter(self.form_accessors.get_all_form_ids_in_domain())
 
     def iter_documents(self, ids):
@@ -38,6 +39,7 @@ class ReadonlyCaseDocumentStore(ReadOnlyDocumentStore):
             raise DocumentNotFoundError(e)
 
     def iter_document_ids(self, last_id=None):
+        # todo: support last_id
         return iter(self.case_accessors.get_case_ids_in_domain())
 
     def iter_documents(self, ids):
