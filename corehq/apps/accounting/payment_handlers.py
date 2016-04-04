@@ -10,7 +10,6 @@ from corehq.apps.accounting.models import (
     PaymentRecord,
     SoftwareProductType,
     FeatureType,
-    PaymentMethod,
     PreOrPostPay,
     StripePaymentMethod,
     LastPayment
