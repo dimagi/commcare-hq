@@ -34,6 +34,7 @@ from dimagi.utils.parsing import json_format_datetime
 
 
 class FormAccessorCouch(AbstractFormAccessor):
+
     @staticmethod
     def form_exists(form_id, domain=None):
         if not domain:
@@ -53,6 +54,10 @@ class FormAccessorCouch(AbstractFormAccessor):
     @staticmethod
     def get_forms(form_ids):
         return get_forms_by_id(form_ids)
+
+    @staticmethod
+    def get_form_ids_in_domain_by_type(domain, type_):
+        pass
 
     @staticmethod
     def get_forms_by_type(domain, type_, limit, recent_first=False):
