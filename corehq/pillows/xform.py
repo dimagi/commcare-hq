@@ -1,7 +1,6 @@
 import collections
 import copy
 import datetime
-import pytz
 
 from casexml.apps.case.xform import extract_case_blocks, get_case_ids_from_form
 from corehq.apps.change_feed import topics

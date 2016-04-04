@@ -1,6 +1,5 @@
 import copy
 import datetime
-import pytz
 
 from casexml.apps.case.models import CommCareCase
 from corehq.apps.change_feed import topics
