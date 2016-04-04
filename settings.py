@@ -381,6 +381,7 @@ HQ_APPS = (
 
     'custom.dhis2',
     'custom.openclinica',
+    'custom.icds_reports',
 )
 
 TEST_APPS = ()
