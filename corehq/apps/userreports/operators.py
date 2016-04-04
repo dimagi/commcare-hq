@@ -2,26 +2,44 @@ from functools import wraps
 
 from corehq.apps.userreports.exceptions import BadSpecError
 
-EQUAL = lambda input, reference: input == reference
-NOT_EQUAL = lambda input, reference: input != reference
-IN_MULTISELECT = lambda input, reference: reference in (input or '').split(' ')
-ANY_IN_MULTISELECT = lambda input, reference: any([subval in (input or '').split(' ') for subval in reference])
-LESS_THAN = lambda input, reference: input < reference
-LESS_THAN_EQUAL = lambda input, reference: input <= reference
-GREATER_THAN = lambda input, reference: input > reference
-GREATER_THAN_EQUAL = lambda input, reference: input >= reference
-IN = lambda input, reference: input in reference
+
+def equal(input, reference): input == reference
+
+
+def not_equal(input, reference): input != reference
+
+
+def in_multiselect(input, reference): reference in (input or '').split(' ')
+
+
+def any_in_multiselect(input, reference): any([subval in (input or '').split(' ') for subval in reference])
+
+
+def less_than(input, reference): input < reference
+
+
+def less_than_equal(input, reference): input <= reference
+
+
+def greater_than(input, reference): input > reference
+
+
+def greater_than_equal(input, reference): input >= reference
+
+
+def in_(input, reference): input in reference
+
 
 OPERATORS = {
-    'eq': EQUAL,
-    'not_eq': NOT_EQUAL,
-    'in': IN,
-    'in_multi': IN_MULTISELECT,
-    'any_in_multi': ANY_IN_MULTISELECT,
-    'lt': LESS_THAN,
-    'lte': LESS_THAN_EQUAL,
-    'gt': GREATER_THAN,
-    'gte': GREATER_THAN_EQUAL,
+    'eq': equal,
+    'not_eq': not_equal,
+    'in': in_,
+    'in_multi': in_multiselect,
+    'any_in_multi': any_in_multiselect,
+    'lt': less_than,
+    'lte': less_than_equal,
+    'gt': greater_than,
+    'gte': greater_than_equal,
 }
 
 
