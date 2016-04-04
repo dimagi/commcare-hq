@@ -205,12 +205,6 @@ class ExportColumn(DocumentSchema):
         self.is_advanced = is_deleted or self.is_advanced
         self.tags = tags
 
-    def extra_initialization_data(self, **data):
-        """
-        Configures the column given extra parameters. Often a NOOP.
-        """
-        return
-
     @property
     def is_deidentifed(self):
         return bool(self.deid_transform)
@@ -467,48 +461,57 @@ class ExportInstance(BlobMixin, Document):
         )
 
         nested_repeat_count = len([node for node in table.path if node.is_repeat])
-        extra_args = {
+        column_initialization_data = {
             'repeat': nested_repeat_count,  # Used for determining the proper row column
             'domain': domain,  # Used for the StockExportColumn
         }
         if export_type == FORM_EXPORT:
             if table.path == MAIN_TABLE:
-                cls.__insert_system_properties(table, TOP_MAIN_FORM_TABLE_PROPERTIES, **extra_args)
+                cls.__insert_system_properties(
+                    table,
+                    TOP_MAIN_FORM_TABLE_PROPERTIES,
+                    **column_initialization_data
+                )
                 cls.__insert_system_properties(
                     table,
                     BOTTOM_MAIN_FORM_TABLE_PROPERTIES,
                     top=False,
-                    **extra_args
+                    **column_initialization_data
                 )
             else:
-                cls.__insert_system_properties(table, [ROW_NUMBER_COLUMN], **extra_args)
+                cls.__insert_system_properties(table, [ROW_NUMBER_COLUMN], **column_initialization_data)
         elif export_type == CASE_EXPORT:
             if table.path == MAIN_TABLE:
                 if Domain.get_by_name(domain).commtrack_enabled:
                     top_properties = TOP_MAIN_CASE_TABLE_PROPERTIES + [STOCK_COLUMN]
                 else:
                     top_properties = TOP_MAIN_CASE_TABLE_PROPERTIES
-                cls.__insert_system_properties(table, top_properties, **extra_args)
+                cls.__insert_system_properties(
+                    table,
+                    top_properties,
+                    **column_initialization_data
+                )
                 cls.__insert_system_properties(
                     table,
                     BOTTOM_MAIN_CASE_TABLE_PROPERTIES,
                     top=False,
-                    **extra_args
+                    **column_initialization_data
                 )
             elif table.path == CASE_HISTORY_TABLE:
-                cls.__insert_system_properties(table, CASE_HISTORY_PROPERTIES, **extra_args)
+                cls.__insert_system_properties(table, CASE_HISTORY_PROPERTIES, **column_initialization_data)
             elif table.path == PARENT_CASE_TABLE:
-                cls.__insert_system_properties(table, PARENT_CASE_TABLE_PROPERTIES, **extra_args)
+                cls.__insert_system_properties(table, PARENT_CASE_TABLE_PROPERTIES,
+                        **column_initialization_data)
 
     @classmethod
-    def __insert_system_properties(cls, table, properties, top=True, **data):
+    def __insert_system_properties(cls, table, properties, top=True, **column_initialization_data):
         """
         Inserts system properties into the table configuration
 
         :param table: A TableConfiguration instance
         :param properties: A list of ExportColumn that represent system properties to be added to the table
         :param top: When True inserts the columns at the top, when false at the bottom
-        :param data: Extra data to be passed to the column if needed
+        :param column_initialization_data: Extra data to be passed to the column if needed on initialization
         """
         properties = map(copy, properties)
         if top:
@@ -519,7 +522,12 @@ class ExportInstance(BlobMixin, Document):
 
         for static_column in properties:
             index, existing_column = table.get_column(static_column.item.path, static_column.item.transform)
-            (existing_column or static_column).extra_initialization_data(**data)
+            column = (existing_column or static_column)
+            if isinstance(column, RowNumberColumn):
+                column.update_nested_repeat_count(column_initialization_data.get('repeat'))
+            elif isinstance(column, StockExportColumn):
+                column.updated_domain(column_initialization_data.get('repeat'))
+
             if not existing_column:
                 insert_fn(static_column)
 
@@ -1232,8 +1240,8 @@ class RowNumberColumn(ExportColumn):
             + (list(row_index) if len(row_index) > 1 else [])
         )
 
-    def extra_initialization_data(self, **data):
-        self.repeat = data.get('repeat')
+    def update_nested_repeat_count(self, repeat):
+        self.repeat = repeat
 
 
 class StockExportColumn(ExportColumn):
@@ -1248,8 +1256,8 @@ class StockExportColumn(ExportColumn):
     def accessor(self):
         return LedgerAccessors(self.domain)
 
-    def extra_initialization_data(self, **data):
-        self.domain = data.get('domain')
+    def update_domain(self, domain):
+        self.domain = domain
 
     @property
     @memoized
