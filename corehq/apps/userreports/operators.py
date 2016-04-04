@@ -1,5 +1,7 @@
 # operators
 # todo: copy pasted from fluff.calculators.xforms
+from functools import wraps
+
 from corehq.apps.userreports.exceptions import BadSpecError
 
 EQUAL = lambda input, reference: input == reference
@@ -10,14 +12,7 @@ LESS_THAN = lambda input, reference: input < reference
 LESS_THAN_EQUAL = lambda input, reference: input <= reference
 GREATER_THAN = lambda input, reference: input > reference
 GREATER_THAN_EQUAL = lambda input, reference: input >= reference
-
-
-def IN(input, reference_list):
-    try:
-        return input in reference_list
-    except TypeError:
-        return False
-
+IN = lambda input, reference: input in reference
 
 OPERATORS = {
     'eq': EQUAL,
@@ -33,8 +28,16 @@ OPERATORS = {
 
 
 def get_operator(slug):
+    def _get_safe_operator(fn):
+        @wraps(fn)
+        def _safe_operator(input, reference):
+            try:
+                return fn(input, reference)
+            except TypeError:
+                return False
+        return _safe_operator
     try:
-        return OPERATORS[slug.lower()]
+        return _get_safe_operator(OPERATORS[slug.lower()])
     except KeyError:
         raise BadSpecError('{0} is not a valid operator. Choices are {1}'.format(
             slug,
