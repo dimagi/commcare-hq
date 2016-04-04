@@ -35,6 +35,19 @@ class TestCreditStripePaymentHandler(BaseAccountingTest):
 
         self.assertEqual(PaymentRecord.objects.count(), 0)
 
+    @patch.object(stripe.Charge, 'create')
+    @patch.object(PaymentRecord, 'create_record')
+    def test_when_create_record_fails_stripe_is_not_charged(self, mock_create_record, mock_create):
+        mock_create_record.side_effect = Exception
+
+        try:
+            self._call_process_request()
+        except:
+            pass
+
+        self.assertEqual(PaymentRecord.objects.count(), 0)
+        self.assertEqual(mock_create.call_count, 0)
+
     def _call_process_request(self):
         CreditStripePaymentHandler(
             self.payment_method, self.domain, self.account, post_data={}
