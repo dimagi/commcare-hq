@@ -77,7 +77,7 @@ def transform_case_for_elasticsearch(doc_dict):
             doc_ret["owner_id"] = doc_ret["user_id"]
 
     doc_ret['owner_type'] = get_user_type(doc_ret.get("owner_id", None))
-    doc_ret['inserted_at'] = datetime.datetime.now(pytz.utc).isoformat()
+    doc_ret['inserted_at'] = datetime.datetime.utcnow().isoformat()
 
     return doc_ret
 
