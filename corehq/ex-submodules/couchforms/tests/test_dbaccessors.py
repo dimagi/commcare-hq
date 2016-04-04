@@ -81,10 +81,6 @@ class TestDBAccessors(TestCase):
         for form in forms:
             self.assertIsInstance(form, XFormError)
 
-    def test_get_form_ids_by_type(self):
-        form_ids = get_form_ids_by_type(self.domain, 'XFormError')
-        self.assertEqual(form_ids, [form._id for form in self.xform_errors])
-
     def test_get_deleted_form_ids_for_user(self):
         ids = get_deleted_form_ids_for_user(self.user_id2)
         self.assertEqual(len(ids), 1)

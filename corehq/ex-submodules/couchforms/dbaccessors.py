@@ -30,20 +30,6 @@ def get_form_ids_by_type(domain, type_, start=None, end=None):
     )]
 
 
-def get_form_ids_by_type(domain, type_):
-    assert type_ in doc_types()
-    # no production code should be pulling all forms in one go!
-    startkey = [domain, type_]
-    endkey = startkey + [{}]
-    return [row['id'] for row in XFormInstance.get_db().view(
-        "couchforms/all_submissions_by_domain",
-        startkey=startkey,
-        endkey=endkey,
-        reduce=False,
-        include_docs=False,
-    )]
-
-
 def get_forms_by_type(domain, type_, recent_first=False,
                       limit=None):
     assert type_ in doc_types()
