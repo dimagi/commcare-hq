@@ -7,6 +7,8 @@ from corehq.apps.case_search.models import case_search_enabled_for_domain
 from corehq.apps.change_feed import topics
 from corehq.apps.change_feed.consumer.feed import KafkaChangeFeed
 from corehq.elastic import get_es_new
+from corehq.form_processor.models import CommCareCaseSQL
+from corehq.form_processor.utils.general import should_use_sql_backend
 from corehq.pillows.case import CASE_ES_TYPE, CasePillow
 from corehq.pillows.const import CASE_SEARCH_ALIAS
 from corehq.pillows.mappings.case_search_mapping import CASE_SEARCH_INDEX, \
@@ -50,24 +52,19 @@ def transform_case_for_elasticsearch(doc_dict):
 
 
 def _get_case_properties(doc_dict):
+    domain = doc_dict.get('domain')
+    assert domain
     base_case_properties = [
         {'key': 'name', 'value': doc_dict.get('name')},
         {'key': 'external_id', 'value': doc_dict.get('external_id')}
     ]
-    dynamic_case_properties = [
-        {'key': key, 'value': value}
-        for key, value in doc_dict.iteritems()
-        if _is_dynamic_case_property(key)
-    ]
+    if should_use_sql_backend(domain):
+        doc_dict.pop("_id")
+        dynamic_case_properties = CommCareCaseSQL(**doc_dict).dynamic_case_properties()
+    else:
+        dynamic_case_properties = CommCareCase.wrap(doc_dict).dynamic_case_properties()
 
-    return base_case_properties + dynamic_case_properties
-
-
-def _is_dynamic_case_property(prop):
-    """
-    Finds whether {prop} is a dynamic property of CommCareCase. If so, it is likely a case property.
-    """
-    return not inspect.isdatadescriptor(getattr(CommCareCase, prop, None)) and re.search(r'^[a-zA-Z]', prop)
+    return base_case_properties + list(dynamic_case_properties)
 
 
 class CaseSearchPillowProcessor(ElasticProcessor):
