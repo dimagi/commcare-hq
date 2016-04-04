@@ -57,12 +57,15 @@ class IndicatorSqlAdapter(object):
         except IntegrityError:
             pass  # can be do to users messing up their tables/data so don't bother logging
         except Exception as e:
-            notify_exception(None, u'unexpected error saving UCR doc: {}. domain: {}, doc: {}, table {}'.format(
-                e,
-                self.config.domain,
-                doc.get('_id', '<unknown>'),
-                '{} ({})'.format(self.config.display_name, self.config._id)
-            ))
+            notify_exception(
+                None,
+                u'unexpected error saving UCR doc: {}'.format(e),
+                details={
+                    'domain': self.config.domain,
+                    'doc_id': doc.get('_id', '<unknown>'),
+                    'table': '{} ({})'.format(self.config.display_name, self.config._id)
+                }
+            )
 
     def save(self, doc):
         """
