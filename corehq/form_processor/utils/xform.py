@@ -1,5 +1,6 @@
 import iso8601
 import pytz
+from corehq.form_processor.backends.sql.dbaccessors import doc_type_to_state
 import xml2json
 from datetime import datetime
 
@@ -151,3 +152,13 @@ def adjust_datetimes(data, parent=None, key=None):
     # return data, just for convenience in testing
     # this is the original input, modified, not a new data structure
     return data
+
+
+def add_couch_properties_to_sql_form_json(sql_form_json):
+    sql_form_json['doc_type'] = _get_doc_type_from_state(sql_form_json['state'])
+    sql_form_json['_id'] = sql_form_json['form_id']
+    return sql_form_json
+
+
+def _get_doc_type_from_state(state):
+    return {v: k for k, v in doc_type_to_state.items()}.get(state, 'XFormInstance')
