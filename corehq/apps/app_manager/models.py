@@ -3970,6 +3970,9 @@ class ApplicationBase(VersionedDoc, SnapshotMixin,
     minimum_use_threshold = StringProperty(
         default='15'
     )
+    experienced_threshold = StringProperty(
+        default='3'
+    )
 
     # exchange properties
     cached_properties = DictProperty()
