@@ -1,5 +1,3 @@
-# operators
-# todo: copy pasted from fluff.calculators.xforms
 from functools import wraps
 
 from corehq.apps.userreports.exceptions import BadSpecError
