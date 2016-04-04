@@ -38,7 +38,7 @@ class ReadonlyCaseDocumentStore(ReadOnlyDocumentStore):
             raise DocumentNotFoundError(e)
 
     def iter_document_ids(self, last_id=None):
-        return iter(CaseAccessors(self.domain).get_case_ids_in_domain())
+        return iter(self.case_accessors.get_case_ids_in_domain())
 
     def iter_documents(self, ids):
         for wrapped_case in self.case_accessors.iter_cases(ids):
