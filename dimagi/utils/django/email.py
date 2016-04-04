@@ -38,7 +38,9 @@ def send_HTML_email(subject, recipient, html_content, text_content=None,
             ga_tid=settings.ANALYTICS_IDS['GOOGLE_ANALYTICS_ID'],
             ga_cid=uuid.uuid4().hex)
         new_content = '<img src="{url}&ea=open"/>\n</body>'.format(url=url)
-        html_content = re.sub(r'(.*)</body>', r'\1'+new_content, html_content)
+        html_content, count = re.subn(r'(.*)</body>', r'\1'+new_content, html_content)
+        if count == 0:
+            raise Exception('Cannot add tracking to HTML Email with no closing body tag')
 
     from_header = {'From': email_from}  # From-header
     connection = get_connection()
