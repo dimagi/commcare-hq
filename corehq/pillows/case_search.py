@@ -1,9 +1,7 @@
-import inspect
-import re
-
 from casexml.apps.case.models import CommCareCase
 from corehq.apps.case_search.exceptions import CaseSearchNotEnabledException
-from corehq.apps.case_search.models import case_search_enabled_for_domain
+from corehq.apps.case_search.models import case_search_enabled_domains, \
+    case_search_enabled_for_domain
 from corehq.apps.change_feed import topics
 from corehq.apps.change_feed.consumer.feed import KafkaChangeFeed
 from corehq.elastic import get_es_new
@@ -21,7 +19,7 @@ from pillowtop.feed.couch import change_from_couch_row
 from pillowtop.feed.interface import Change
 from pillowtop.pillow.interface import ConstructedPillow
 from pillowtop.processors.elastic import ElasticProcessor
-from pillowtop.reindexer.change_providers.couch import CouchViewChangeProvider
+from pillowtop.reindexer.change_providers.case import DomainCaseChangeProvider
 from pillowtop.reindexer.reindexer import PillowReindexer
 
 
@@ -129,27 +127,21 @@ def get_case_search_to_elasticsearch_pillow(pillow_id='CaseSearchToElasticsearch
     )
 
 
-def get_couch_case_search_reindexer(domain=None):
-    # TODO: Figure out how to not fetch every single case from the DB when running a full reindex
-
-    # TODO: Remove this
-    # It initializes the es index if it doesn't exist
+def get_case_search_reindexer(domain=None):
+    """
+    Returns a reindexer that will either all domains with case search enabled, or a single domain
+    """
     CaseSearchPillow()
-
-    view_kwargs = {'include_docs': True}
-
     if domain is not None:
         if not case_search_enabled_for_domain(domain):
             raise CaseSearchNotEnabledException("{} does not have case search enabled".format(domain))
+        domains = [domain]
+    else:
+        # return changes for all enabled domains
+        domains = case_search_enabled_domains()
 
-        startkey = [domain]
-        endkey = [domain, {}, {}]
-        view_kwargs.update({'startkey': startkey, 'endkey': endkey})
-
-    return PillowReindexer(get_case_search_to_elasticsearch_pillow(), CouchViewChangeProvider(
-        document_class=CommCareCase,
-        view_name='cases_by_owner/view',
-        view_kwargs=view_kwargs,
+    return PillowReindexer(get_case_search_to_elasticsearch_pillow(), change_provider=DomainCaseChangeProvider(
+        domains=domains
     ))
 
 

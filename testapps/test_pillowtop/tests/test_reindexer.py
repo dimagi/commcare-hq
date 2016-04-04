@@ -4,9 +4,9 @@ from django.conf import settings
 from django.core.management import call_command
 from django.test import TestCase
 from elasticsearch.exceptions import ConnectionError
-from mock import MagicMock, patch
 
-from corehq.apps.es import CaseSearchES, ESQuery, FormES, UserES, CaseES
+from corehq.apps.case_search.models import CaseSearchConfig
+from corehq.apps.es import CaseES, CaseSearchES, ESQuery, FormES, UserES
 from corehq.apps.users.dbaccessors.all_commcare_users import delete_all_users
 from corehq.apps.users.models import CommCareUser
 from corehq.form_processor.interfaces.processor import FormProcessorInterface
@@ -71,24 +71,23 @@ class PillowtopReindexerTest(TestCase):
 
         self._assert_case_is_in_es(case)
 
+    @run_with_all_backends
     def test_case_search_reindexer(self):
-        # TODO: make this work with SQL backend
         FormProcessorTestUtils.delete_all_cases()
         case = _create_and_save_a_case()
 
         ensure_index_deleted(CASE_SEARCH_INDEX)
 
         # With case search not enabled, case should not make it to ES
-        with patch('corehq.pillows.case_search.case_search_enabled_for_domain',
-                   new=MagicMock(return_value=False)):
-            call_command('ptop_reindexer_v2', 'case-search')
+        CaseSearchConfig.objects.all().delete()
+        call_command('ptop_reindexer_v2', 'case-search')
         CaseSearchPillow().get_es_new().indices.refresh(CASE_SEARCH_INDEX)  # as well as refresh the index
         self._assert_es_empty(esquery=CaseSearchES())
 
         # With case search enabled, it should get indexed
-        with patch('corehq.pillows.case_search.case_search_enabled_for_domain',
-                   new=MagicMock(return_value=True)):
-            call_command('ptop_reindexer_v2', 'case-search')
+        CaseSearchConfig.objects.create(domain=self.domain, enabled=True)
+        self.addCleanup(CaseSearchConfig.objects.all().delete)
+        call_command('ptop_reindexer_v2', 'case-search')
 
         CaseSearchPillow().get_es_new().indices.refresh(CASE_SEARCH_INDEX)  # as well as refresh the index
         self._assert_case_is_in_es(case, esquery=CaseSearchES())

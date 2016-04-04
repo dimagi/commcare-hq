@@ -116,3 +116,9 @@ def disable_case_search(domain):
         config.enabled = False
         config.save()
         delete_case_search_cases_for_domain.delay(domain)
+
+
+def case_search_enabled_domains():
+    """Returns a list of all domains that have case search enabled
+    """
+    return CaseSearchConfig.objects.filter(enabled=True).values_list('domain', flat=True)

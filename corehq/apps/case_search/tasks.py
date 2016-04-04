@@ -1,11 +1,11 @@
 from celery.task import task
 from corehq.pillows.case_search import delete_case_search_cases, \
-    get_couch_case_search_reindexer
+    get_case_search_reindexer
 
 
 @task
 def reindex_case_search_for_domain(domain):
-    get_couch_case_search_reindexer(domain).reindex()
+    get_case_search_reindexer(domain).reindex()
 
 
 @task
