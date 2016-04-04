@@ -1,8 +1,6 @@
-import itertools
 from corehq.apps.userreports.exceptions import BadSpecError
 from corehq.apps.userreports.expressions.factory import ExpressionFactory
 from corehq.util.test_utils import generate_cases
-from django.test import SimpleTestCase
 
 
 def _make_filter_expression(items_expression=None, filter_expression=None):
@@ -59,7 +57,6 @@ _filter_v1 = {
     ([{'key': 'v1'}, {'key': 'v2'}], {}),
     (None, _filter_v1),
     ({}, _filter_v1),
-    ([], _filter_v1),
 ])
 def test_filter_items_bad_spec(self, items_ex, filter_ex):
     with self.assertRaises(BadSpecError):
@@ -96,7 +93,6 @@ def test_filter_items_basic(self, doc, items_ex, filter_ex, expected):
     ([{'key': 'v1'}, {'key': 'v2'}], {}),
     (None, {'type': 'identity'}),
     ({}, {'type': 'identity'}),
-    ([], {'type': 'identity'}),
 ])
 def test_map_items_bad_spec(self, items_ex, map_ex):
     with self.assertRaises(BadSpecError):
@@ -146,7 +142,7 @@ def test_reduce_items_bad_spec(self, items_ex, reduce_ex):
 
 @generate_cases([
     (
-        ['a', 'b']
+        ['a', 'b'],
         {'type': 'identity'},
         'count',
         2,
@@ -164,10 +160,10 @@ def test_reduce_items_bad_spec(self, items_ex, reduce_ex):
         0,
     ),
     (
-        [1, 2]
+        [1, 2],
         {'type': 'identity'},
         'sum',
-        ['v1', 'v2']
+        3
     ),
 ])
 def test_reduce_items_basic(self, doc, items_ex, reduce_ex, expected):
@@ -175,23 +171,52 @@ def test_reduce_items_basic(self, doc, items_ex, reduce_ex, expected):
     self.assertEqual(expression(doc), expected)
 
 
-class FlattenExpressionTest(SimpleTestCase):
-    # todo - more test coverage
-    def test_basic(self):
-        doc = {
-            'items': [
-                [{'repeat': 'repeat11'}, {'repeat': 'repeat12'}],
-                [{'repeat': 'repeat21'}],
-                [{'repeat': 'repeat31'}, {'repeat': 'repeat32'}],
-            ]
-        }
-
-        expression = ExpressionFactory.from_spec({
+@generate_cases([
+    ({}, ), (None, )
+])
+def test_flatten_bad_spec(self, items_ex):
+    with self.assertRaises(BadSpecError):
+        ExpressionFactory.from_spec({
             'type': 'flatten',
-            'items_expression': {
-                'type': 'property_name',
-                'property_name': 'items'
-            }
+            'items_expression': items_ex
         })
-        expected = list(itertools.chain(*doc['items']))
-        self.assertEqual(expression(doc), expected)
+
+
+@generate_cases([
+    (
+        {'k': [[1, 2], [4, 5]]},
+        {'type': 'property_name', 'property_name': 'k'},
+        [1, 2, 4, 5]
+    ),
+    (
+        {},
+        [[1, 2], [4, 5]],
+        [1, 2, 4, 5]
+    ),
+    (
+        [[1, 2], [4, 5]],
+        {'type': 'identity'},
+        [1, 2, 4, 5]
+    ),
+    (
+        [[1, 2], 4, 5],
+        {'type': 'identity'},
+        []
+    ),
+    (
+        ["a", "b"],
+        {'type': 'identity'},
+        ["a", "b"],
+    ),
+    (
+        [1, 2],
+        {'type': 'identity'},
+        [],
+    ),
+])
+def test_flatten_basic(self, doc, items_ex, expected):
+    expression = ExpressionFactory.from_spec({
+        'type': 'flatten',
+        'items_expression': items_ex
+    })
+    self.assertEqual(expression(doc), expected)
