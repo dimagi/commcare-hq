@@ -1,4 +1,5 @@
 import json
+from mock import patch
 
 from StringIO import StringIO
 from django.test import SimpleTestCase
@@ -17,13 +18,14 @@ from corehq.apps.export.models import (
     TableConfiguration,
     ExportColumn,
     ScalarItem,
-)
-from corehq.apps.export.models.new import (
     ExportInstance,
     ExportItem,
     CaseExportInstance,
     PathNode,
     MAIN_TABLE
+)
+from corehq.apps.export.const import (
+    DEID_DATE_TRANSFORM,
 )
 from corehq.apps.export.tests.util import (
     new_case,
@@ -231,7 +233,6 @@ class WriterTest(SimpleTestCase):
             )
 
 
-
 class ExportTest(SimpleTestCase):
 
     @classmethod
@@ -240,10 +241,10 @@ class ExportTest(SimpleTestCase):
         with trap_extra_setup(ConnectionError, msg="cannot connect to elasicsearch"):
             completely_initialize_pillow_index(cls.case_pillow)
 
-        case = new_case(foo="apple", bar="banana")
+        case = new_case(foo="apple", bar="banana", date='2016-4-24')
         cls.case_pillow.send_robust(case.to_json())
 
-        case = new_case(owner_id="some_other_owner", foo="apple", bar="banana")
+        case = new_case(owner_id="some_other_owner", foo="apple", bar="banana", date='2016-4-04')
         cls.case_pillow.send_robust(case.to_json())
 
         case = new_case(type="some_other_type", foo="apple", bar="banana")
@@ -306,6 +307,72 @@ class ExportTest(SimpleTestCase):
                     }
                 }
             )
+
+    @patch('couchexport.deid.DeidGenerator.random_number', return_value=3)
+    def test_export_transforms(self, _):
+        export_file = get_export_file(
+            [
+                CaseExportInstance(
+                    export_format=Format.JSON,
+                    domain=DOMAIN,
+                    case_type=DEFAULT_CASE_TYPE,
+                    tables=[TableConfiguration(
+                        label="My table",
+                        selected=True,
+                        path=[],
+                        columns=[
+                            ExportColumn(
+                                label="DEID Date Transform column",
+                                item=ExportItem(
+                                    path=[PathNode(name="date")]
+                                ),
+                                selected=True,
+                                deid_transform=DEID_DATE_TRANSFORM,
+                            )
+                        ]
+                    )]
+                ),
+            ],
+            []  # No filters
+        )
+        with export_file as export:
+            export_dict = json.loads(export)
+            export_dict['My table']['rows'].sort()
+            self.assertEqual(
+                export_dict,
+                {
+                    u'My table': {
+                        u'headers': [
+                            u'DEID Date Transform column [sensitive]',
+                        ],
+                        u'rows': [
+                            [None],
+                            [u'2016-04-07'],
+                            [u'2016-04-27'],  # offset by 3 since that's the mocked random offset
+                        ],
+                    }
+                }
+            )
+
+    def test_selected_false(self):
+        export_file = get_export_file(
+            [
+                CaseExportInstance(
+                    export_format=Format.JSON,
+                    domain=DOMAIN,
+                    case_type=DEFAULT_CASE_TYPE,
+                    tables=[TableConfiguration(
+                        label="My table",
+                        selected=False,
+                        path=[],
+                        columns=[]
+                    )]
+                ),
+            ],
+            []  # No filters
+        )
+        with export_file as export:
+            self.assertEqual(json.loads(export), {})
 
     def test_simple_bulk_export(self):
 
