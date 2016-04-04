@@ -1,4 +1,4 @@
-{% extends "reports/async/bootstrap2/tabular.html" %}
+{% extends "reports/async/bootstrap3/tabular.html" %}
 {% load hq_shared_tags %}
 {% load report_tags %}
 {% load i18n %}
@@ -40,7 +40,7 @@
 {% endblock %}
 {% block reporttable %}
 {% if report.needs_filters %}
-    {% include 'reports/bootstrap2/partials/description.html' %}
+    {% include 'reports/bootstrap3/partials/description.html' %}
 {% else %}
     <style>
         .nvd3.nv-pie path {

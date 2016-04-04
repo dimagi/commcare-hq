@@ -9,6 +9,7 @@ from corehq.apps.programs.models import Program
 from corehq.apps.reports.datatables import DataTablesHeader
 from corehq.apps.reports.generic import GenericTabularReport
 from corehq.apps.reports.graph_models import LineChart, MultiBarChart, PieChart
+from corehq.apps.style.decorators import use_nvd3
 from custom.ewsghana.filters import EWSRestrictionLocationFilter
 from corehq.apps.reports.standard import CustomProjectReport, ProjectReportParametersMixin, DatespanMixin
 from custom.common import ALL_OPTION
@@ -162,6 +163,12 @@ class MultiReport(DatespanMixin, CustomProjectReport, ProjectReportParametersMix
     base_template = 'ewsghana/base_template.html'
     is_rendered_as_email = False
     is_rendered_as_print = False
+
+    is_bootstrap3 = True
+
+    @use_nvd3
+    def bootstrap3_dispatcher(self, request, *args, **kwargs):
+        super(MultiReport, self).bootstrap3_dispatcher(request, *args, **kwargs)
 
     @property
     @memoized
