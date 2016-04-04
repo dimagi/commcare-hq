@@ -21,6 +21,10 @@ class ReadonlyFormDocumentStore(ReadOnlyDocumentStore):
         # todo: iterate over sql form IDs
         raise NotImplementedError("You can't do this for SQL form data sources yet.")
 
+    def iter_documents(self, ids):
+        for wrapped_form in self.form_accessors.iter_forms(ids):
+            yield wrapped_form.to_json()
+
 
 class ReadonlyCaseDocumentStore(ReadOnlyDocumentStore):
 
