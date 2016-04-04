@@ -316,7 +316,7 @@ class SplitColumnTest(SimpleTestCase):
             ignore_unspecified_options=False
         )
         doc = {"q1": "a b d"}
-        self.assertEqual(column.get_value(doc, [PathNode(name='form')]), [1, None, "b d"])
+        self.assertEqual(column.get_value(doc, [PathNode(name='form')], split_column=True), [1, None, "b d"])
 
     def test_ignore_extas(self):
         column = SplitExportColumn(
@@ -327,7 +327,7 @@ class SplitColumnTest(SimpleTestCase):
             ignore_unspecified_options=True
         )
         doc = {"q1": "a b d"}
-        self.assertEqual(column.get_value(doc, [PathNode(name="form")]), [1, None])
+        self.assertEqual(column.get_value(doc, [PathNode(name="form")], split_column=True), [1, None])
 
     def test_basic_get_headers(self):
         column = SplitExportColumn(
@@ -337,7 +337,7 @@ class SplitColumnTest(SimpleTestCase):
             ),
             ignore_unspecified_options=True
         )
-        self.assertEqual(column.get_headers(), ["Fruit | Apple", "Fruit | Banana"])
+        self.assertEqual(column.get_headers(split_column=True), ["Fruit | Apple", "Fruit | Banana"])
 
     def test_get_headers_with_template_string(self):
         column = SplitExportColumn(
@@ -347,7 +347,7 @@ class SplitColumnTest(SimpleTestCase):
             ),
             ignore_unspecified_options=True
         )
-        self.assertEqual(column.get_headers(), ["Fruit - Apple", "Fruit - Banana"])
+        self.assertEqual(column.get_headers(split_column=True), ["Fruit - Apple", "Fruit - Banana"])
 
     def test_get_headers_with_extras(self):
         column = SplitExportColumn(
@@ -357,7 +357,10 @@ class SplitColumnTest(SimpleTestCase):
             ),
             ignore_unspecified_options=False
         )
-        self.assertEqual(column.get_headers(), ["Fruit - Apple", "Fruit - Banana", "Fruit - extra"])
+        self.assertEqual(
+            column.get_headers(split_column=True),
+            ["Fruit - Apple", "Fruit - Banana", "Fruit - extra"]
+        )
 
 
 class StockExportColumnTest(SimpleTestCase):

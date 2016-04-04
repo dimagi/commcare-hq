@@ -125,13 +125,17 @@ class ExportColumn(DocumentSchema):
     # A tranforms that deidentifies the value
     deid_transform = StringProperty(choices=DEID_TRANSFORM_FUNCTIONS.keys())
 
-    def get_value(self, doc, base_path, transform_dates=False, row_index=None):
+    def get_value(self, doc, base_path, transform_dates=False, row_index=None, split_column=False):
         """
         Get the value of self.item of the given doc.
         When base_path is [], doc is a form submission or case,
         when base_path is non empty, doc is a repeat group from a form submission.
         :param doc: A form submission or instance of a repeat group in a submission or case
-        :param base_path:
+        :param base_path: The PathNode list to the column
+        :param transform_dates: If set to True, will convert dates to be compatible with Excel
+        :param row_index: This is used for the RowExportColumn to determine what index the row is on
+        :param split_column: When True will split SplitExportColumn into multiple columns, when False, it will
+            not split the column
         :return:
         """
         assert base_path == self.item.path[:len(base_path)], "ExportItem's path starts with the base_path"
@@ -207,7 +211,7 @@ class ExportColumn(DocumentSchema):
     def is_deidentifed(self):
         return bool(self.deid_transform)
 
-    def get_headers(self):
+    def get_headers(self, split_column=False):
         if self.is_deidentifed:
             return [u"{} {}".format(self.label, "[sensitive]")]
         else:
@@ -258,16 +262,16 @@ class TableConfiguration(DocumentSchema):
         """The columns that should be included in the export"""
         return [c for c in self.columns if c.selected]
 
-    def get_headers(self):
+    def get_headers(self, split_columns=False):
         """
         Return a list of column headers
         """
         headers = []
         for column in self.selected_columns:
-            headers.extend(column.get_headers())
+            headers.extend(column.get_headers(split_column=split_columns))
         return headers
 
-    def get_rows(self, document, row_number):
+    def get_rows(self, document, row_number, split_columns=False):
         """
         Return a list of ExportRows generated for the given document.
         :param document: dictionary representation of a form submission or case
@@ -281,7 +285,7 @@ class TableConfiguration(DocumentSchema):
 
             row_data = []
             for col in self.selected_columns:
-                val = col.get_value(doc, self.path, row_index=row_index)
+                val = col.get_value(doc, self.path, row_index=row_index, split_column=split_columns)
                 if isinstance(val, list):
                     row_data.extend(val)
                 else:
@@ -1186,11 +1190,14 @@ class SplitExportColumn(ExportColumn):
 
     data_val = 'a c d'
     output = [1, '', 'c d']
+
+    Note: when split_column is set to False, SplitExportColumn will behave like a
+    normal ExportColumn.
     """
     item = SchemaProperty(MultipleChoiceItem)
     ignore_unspecified_options = BooleanProperty(default=False)
 
-    def get_value(self, doc, base_path, row_index=None):
+    def get_value(self, doc, base_path, row_index=None, split_column=False):
         """
         Get the value of self.item of the given doc.
         When base_path is [], doc is a form submission or case,
@@ -1198,6 +1205,9 @@ class SplitExportColumn(ExportColumn):
         doc is a form submission or instance of a repeat group in a submission or case
         """
         value = super(SplitExportColumn, self).get_value(doc, base_path)
+        if not split_column:
+            return value
+
         if not isinstance(value, basestring):
             return [None] * len(self.item.options) + [] if self.ignore_unspecified_options else [value]
 
@@ -1209,7 +1219,10 @@ class SplitExportColumn(ExportColumn):
             row.append(" ".join(selected.keys()))
         return row
 
-    def get_headers(self):
+    def get_headers(self, split_column=False):
+        if not split_column:
+            return super(SplitExportColumn, self).get_headers()
+
         header_template = self.label if '{option}' in self.label else u"{name} | {option}"
         headers = []
         for option in self.item.options:
@@ -1232,13 +1245,13 @@ class SplitExportColumn(ExportColumn):
 class RowNumberColumn(ExportColumn):
     repeat = IntegerProperty(default=0)
 
-    def get_headers(self):
+    def get_headers(self, **kwargs):
         headers = [self.label]
         if self.repeat > 0:
             headers += ["{}__{}".format(self.label, i) for i in range(self.repeat + 1)]
         return headers
 
-    def get_value(self, doc, base_path, transform_dates=False, row_index=None):
+    def get_value(self, doc, base_path, transform_dates=False, row_index=None, **kwargs):
         assert row_index, 'There must be a row_index for number column'
         return (
             [".".join([unicode(i) for i in row_index])]
@@ -1275,7 +1288,7 @@ class StockExportColumn(ExportColumn):
     def _get_product_name(self, product_id):
         return Product.get(product_id).name
 
-    def get_headers(self):
+    def get_headers(self, **kwargs):
         for product_id, section in self._column_tuples:
             yield u"{product} ({section})".format(
                 product=self._get_product_name(product_id),

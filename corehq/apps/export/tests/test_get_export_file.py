@@ -7,7 +7,6 @@ from elasticsearch.exceptions import ConnectionError
 from openpyxl import load_workbook
 
 from corehq.apps.export.export import (
-    _get_tables,
     _get_writer,
     _Writer,
     _write_export_instance,
@@ -18,10 +17,13 @@ from corehq.apps.export.models import (
     TableConfiguration,
     ExportColumn,
     ScalarItem,
-    ExportInstance,
+    FormExportInstance,
     ExportItem,
+    MultipleChoiceItem,
+    SplitExportColumn,
     CaseExportInstance,
     PathNode,
+    Option,
     MAIN_TABLE
 )
 from corehq.apps.export.const import (
@@ -49,7 +51,8 @@ class WriterTest(SimpleTestCase):
                 "q2": {
                     "q4": "bar",
                 },
-                "q3": "baz"
+                "q3": "baz",
+                "mc": "two extra"
             }
         },
         {
@@ -58,18 +61,19 @@ class WriterTest(SimpleTestCase):
                 "q2": {
                     "q4": "boop",
                 },
-                "q3": "bop"
+                "q3": "bop",
+                "mc": "one two"
             }
         },
     ]
 
     def test_simple_table(self):
         """
-        Confirm that some simple documents and a simple ExportInstance
+        Confirm that some simple documents and a simple FormExportInstance
         are writtern with _write_export_file() correctly
         """
 
-        export_instance = ExportInstance(
+        export_instance = FormExportInstance(
             export_format=Format.JSON,
             tables=[
                 TableConfiguration(
@@ -96,7 +100,7 @@ class WriterTest(SimpleTestCase):
         )
 
         writer = _get_writer([export_instance])
-        with writer.open(export_instance.tables):
+        with writer.open([export_instance]):
             _write_export_instance(writer, export_instance, self.docs)
 
         with ExportFile(writer.path, writer.format) as export:
@@ -111,8 +115,92 @@ class WriterTest(SimpleTestCase):
                 }
             )
 
+    def test_split_questions(self):
+        """Ensure columns are split when `split_multiselects` is set to True"""
+        export_instance = FormExportInstance(
+            export_format=Format.JSON,
+            domain=DOMAIN,
+            case_type=DEFAULT_CASE_TYPE,
+            split_multiselects=True,
+            tables=[TableConfiguration(
+                label="My table",
+                selected=True,
+                path=[],
+                columns=[
+                    SplitExportColumn(
+                        label="MC",
+                        item=MultipleChoiceItem(
+                            path=[PathNode(name='form'), PathNode(name='mc')],
+                            options=[
+                                Option(value='one'),
+                                Option(value='two'),
+                            ]
+                        ),
+                        selected=True,
+                    )
+                ]
+            )]
+        )
+        writer = _get_writer([export_instance])
+        with writer.open([export_instance]):
+            _write_export_instance(writer, export_instance, self.docs)
+
+        with ExportFile(writer.path, writer.format) as export:
+            self.assertEqual(
+                json.loads(export),
+                {
+                    u'My table': {
+                        u'headers': [u'MC | one', u'MC | two', 'MC | extra'],
+                        u'rows': [[None, 1, 'extra'], [1, 1, '']],
+
+                    }
+                }
+            )
+
+    def test_split_questions_false(self):
+        """Ensure multiselects are not split when `split_multiselects` is set to False"""
+        export_instance = FormExportInstance(
+            export_format=Format.JSON,
+            domain=DOMAIN,
+            case_type=DEFAULT_CASE_TYPE,
+            split_multiselects=False,
+            tables=[TableConfiguration(
+                label="My table",
+                selected=True,
+                path=[],
+                columns=[
+                    SplitExportColumn(
+                        label="MC",
+                        item=MultipleChoiceItem(
+                            path=[PathNode(name='form'), PathNode(name='mc')],
+                            options=[
+                                Option(value='one'),
+                                Option(value='two'),
+                            ]
+                        ),
+                        selected=True,
+                    )
+                ]
+            )]
+        )
+        writer = _get_writer([export_instance])
+        with writer.open([export_instance]):
+            _write_export_instance(writer, export_instance, self.docs)
+
+        with ExportFile(writer.path, writer.format) as export:
+            self.assertEqual(
+                json.loads(export),
+                {
+                    u'My table': {
+                        u'headers': [u'MC'],
+                        u'rows': [['two extra'], ['one two']],
+
+                    }
+                }
+            )
+
     def test_multi_table(self):
-        export_instance = ExportInstance(
+        export_instance = FormExportInstance(
             export_format=Format.JSON,
             tables=[
                 TableConfiguration(
@@ -146,7 +234,7 @@ class WriterTest(SimpleTestCase):
             ]
         )
         writer = _get_writer([export_instance])
-        with writer.open(export_instance.tables):
+        with writer.open([export_instance]):
             _write_export_instance(writer, export_instance, self.docs)
         with ExportFile(writer.path, writer.format) as export:
             self.assertEqual(
@@ -170,7 +258,7 @@ class WriterTest(SimpleTestCase):
         (as part of a bulk export) works as expected.
         """
         export_instances = [
-            ExportInstance(
+            FormExportInstance(
                 # export_format=Format.JSON,
                 tables=[
                     TableConfiguration(
@@ -189,7 +277,7 @@ class WriterTest(SimpleTestCase):
                     ),
                 ]
             ),
-            ExportInstance(
+            FormExportInstance(
                 # export_format=Format.JSON,
                 tables=[
                     TableConfiguration(
@@ -212,7 +300,7 @@ class WriterTest(SimpleTestCase):
         ]
 
         writer = _Writer(get_writer(Format.JSON))
-        with writer.open(_get_tables(export_instances)):
+        with writer.open(export_instances):
             _write_export_instance(writer, export_instances[0], self.docs)
             _write_export_instance(writer, export_instances[1], self.docs)
 
