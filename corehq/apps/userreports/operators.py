@@ -3,31 +3,40 @@ from functools import wraps
 from corehq.apps.userreports.exceptions import BadSpecError
 
 
-def equal(input, reference): input == reference
+def equal(input, reference):
+    return input == reference
 
 
-def not_equal(input, reference): input != reference
+def not_equal(input, reference):
+    return input != reference
 
 
-def in_multiselect(input, reference): reference in (input or '').split(' ')
+def in_multiselect(input, reference):
+    return reference in (input or '').split(' ')
 
 
-def any_in_multiselect(input, reference): any([subval in (input or '').split(' ') for subval in reference])
+def any_in_multiselect(input, reference):
+    return any([subval in (input or '').split(' ') for subval in reference])
 
 
-def less_than(input, reference): input < reference
+def less_than(input, reference):
+    return input < reference
 
 
-def less_than_equal(input, reference): input <= reference
+def less_than_equal(input, reference):
+    return input <= reference
 
 
-def greater_than(input, reference): input > reference
+def greater_than(input, reference):
+    return input > reference
 
 
-def greater_than_equal(input, reference): input >= reference
+def greater_than_equal(input, reference):
+    return input >= reference
 
 
-def in_(input, reference): input in reference
+def in_(input, reference):
+    return input in reference
 
 
 OPERATORS = {
