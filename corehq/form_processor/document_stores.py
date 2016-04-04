@@ -1,6 +1,7 @@
 from corehq.blobs import Error as BlobError
 from corehq.form_processor.exceptions import CaseNotFound, XFormNotFound
 from corehq.form_processor.interfaces.dbaccessors import FormAccessors, CaseAccessors
+from corehq.form_processor.utils.xform import add_couch_properties_to_sql_form_json
 from pillowtop.dao.exceptions import DocumentNotFoundError
 from pillowtop.dao.interface import ReadOnlyDocumentStore
 
@@ -23,7 +24,7 @@ class ReadonlyFormDocumentStore(ReadOnlyDocumentStore):
 
     def iter_documents(self, ids):
         for wrapped_form in self.form_accessors.iter_forms(ids):
-            yield wrapped_form.to_json()
+            yield add_couch_properties_to_sql_form_json(wrapped_form.to_json())
 
 
 class ReadonlyCaseDocumentStore(ReadOnlyDocumentStore):
