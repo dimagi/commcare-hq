@@ -5,10 +5,8 @@ from couchdbkit import ResourceConflict
 
 from casexml.apps.case.models import CommCareCase
 from corehq.form_processor.document_stores import ReadonlyCaseDocumentStore, ReadonlyFormDocumentStore
-from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 from corehq.form_processor.utils import should_use_sql_backend
 from couchforms.models import XFormInstance
-from dimagi.utils.couch.database import iter_docs
 from dimagi.utils.couch.cache.cache_core import get_redis_client
 
 from corehq.apps.userreports.models import DataSourceConfiguration, StaticDataSourceConfiguration
@@ -35,14 +33,13 @@ def _get_redis_key_for_config(config):
     return 'ucr_queue-{}:{}'.format(config._id, rev)
 
 
-def _build_indicators(config, relevant_ids):
+def _build_indicators(config, document_store, relevant_ids):
     adapter = IndicatorSqlAdapter(config)
-    couchdb = _get_db(config.referenced_doc_type)
     redis_client = get_redis_client().client.get_client()
     redis_key = _get_redis_key_for_config(config)
 
     last_id = None
-    for doc in iter_docs(couchdb, relevant_ids, chunksize=500):
+    for doc in document_store.iter_documents(relevant_ids):
         # save is a noop if the filter doesn't match
         adapter.best_effort_save(doc)
         last_id = doc.get('_id')
@@ -84,7 +81,7 @@ def resume_building_indicators(indicator_config_id):
     except:
         relevant_ids = tuple(redis_client.smembers(redis_key))
     if len(relevant_ids) > 0:
-        _build_indicators(config, relevant_ids)
+        _build_indicators(config, _get_document_store(config), relevant_ids)
         last_id = relevant_ids[-1]
 
         _iteratively_build_table(config, last_id)
@@ -98,16 +95,15 @@ def _iteratively_build_table(config, last_id=None):
     relevant_ids = []
     document_store = _get_document_store(config)
     for relevant_id in document_store.iter_document_ids(last_id):
-        print relevant_id
         relevant_ids.append(relevant_id)
         if len(relevant_ids) >= ID_CHUNK_SIZE:
             redis_client.rpush(redis_key, *relevant_ids)
-            _build_indicators(config, relevant_ids)
+            _build_indicators(config, document_store, relevant_ids)
             relevant_ids = []
 
     if relevant_ids:
         redis_client.rpush(redis_key, *relevant_ids)
-        _build_indicators(config, relevant_ids)
+        _build_indicators(config, document_store, relevant_ids)
 
     if not is_static(indicator_config_id):
         redis_client.delete(redis_key)
