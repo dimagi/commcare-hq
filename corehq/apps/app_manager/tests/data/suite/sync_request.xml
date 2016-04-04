@@ -1,0 +1,19 @@
+<partial>
+  <sync-request>
+    <post url="https://www.example.com/a/test_domain/phone/claim-case/">
+      <data key="case_id" ref="session/datum/case[@id]"/>
+      <data key="case_type" ref="session/datum/case/type"/>
+    </post>
+    <session>
+      <query url="https://www.example.com/a/test_domain/phone/search/">
+        <prompt key="name">
+          <display>Name</display>
+        </prompt>
+        <prompt key="dob">
+          <display>Date of birth</display>
+        </prompt>
+        <data key="case_type" ref="'case'"/>
+      </query>
+    </session>
+  </sync-request>
+</partial>
