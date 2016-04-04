@@ -21,6 +21,8 @@ _filter_v1 = {
     ([{'key': 'v1'}, {'key': 'v2'}], {}),
     (None, _filter_v1),
     ({}, _filter_v1),
+    # non-boolean expressions are invalid
+    ([{'key': 'v1'}, {'key': 'v2'}], {'type': 'identity'}),
 ])
 def test_filter_items_bad_spec(self, items_ex, filter_ex):
     expression = {
@@ -349,6 +351,13 @@ def test_sort_items_bad_spec(self, items_ex, sort_ex):
         {'type': 'property_name', 'property_name': 'no_match'},
         {'type': 'property_name', 'property_name': 'key'},
         [],
+    ),
+    # if sort values of two items can't be compared, empty list is returned
+    (
+        [datetime.date(2013, 1, 2), 1, datetime.date(2013, 1, 3)],
+        {'type': 'identity'},
+        {'type': 'identity'},
+        []
     ),
 ])
 def test_sort_items_basic(self, doc, items_ex, sort_ex, expected):

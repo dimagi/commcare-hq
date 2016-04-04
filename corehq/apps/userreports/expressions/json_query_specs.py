@@ -89,7 +89,10 @@ class SortItemsExpressionSpec(JsonObject):
     def __call__(self, doc, context=None):
         items = self._items_expression(doc, context) or []
 
-        return sorted(
-            items,
-            key=lambda i: self._sort_expression(i, context),
-        )
+        try:
+            return sorted(
+                items,
+                key=lambda i: self._sort_expression(i, context),
+            )
+        except TypeError:
+            return []
