@@ -9,13 +9,10 @@ from corehq.form_processor.utils import should_use_sql_backend
 from couchforms.models import XFormInstance
 from dimagi.utils.couch.database import iter_docs
 from dimagi.utils.couch.cache.cache_core import get_redis_client
-from dimagi.utils.parsing import json_format_datetime
 
-from corehq.apps.domain.dbaccessors import iterate_doc_ids_in_domain_by_type
 from corehq.apps.userreports.models import DataSourceConfiguration, StaticDataSourceConfiguration
 from corehq.apps.userreports.sql import IndicatorSqlAdapter
-
-CHUNK_SIZE = 10000
+from pillowtop.dao.couch import ID_CHUNK_SIZE, CouchDocumentStore
 
 
 def is_static(config_id):
@@ -100,7 +97,7 @@ def _iteratively_build_table(config, last_id=None):
     relevant_ids = []
     for relevant_id in _iterate_base_ucr_doc_ids(config, last_id):
         relevant_ids.append(relevant_id)
-        if len(relevant_ids) >= CHUNK_SIZE:
+        if len(relevant_ids) >= ID_CHUNK_SIZE:
             redis_client.rpush(redis_key, *relevant_ids)
             _build_indicators(config, relevant_ids)
             relevant_ids = []
@@ -141,23 +138,11 @@ def _iterate_docs_from_sql(config, last_id):
 
 
 def _iterate_docs_from_couch(config, last_id):
-    start_key = None
-    if last_id:
-        last_doc = _DOC_TYPE_MAPPING[config.referenced_doc_type].get(last_id)
-        start_key = [config.domain, config.referenced_doc_type]
-        if config.referenced_doc_type in _DATE_MAP.keys():
-            date = json_format_datetime(last_doc[_DATE_MAP[config.referenced_doc_type]])
-            start_key.append(date)
-
-    couchdb = _get_db(config.referenced_doc_type)
-    return iterate_doc_ids_in_domain_by_type(
-        config.domain,
-        config.referenced_doc_type,
-        chunk_size=CHUNK_SIZE,
-        database=couchdb,
-        startkey=start_key,
-        startkey_docid=last_id
-    )
+    return CouchDocumentStore(
+        couch_db=_get_db(config.referenced_doc_type),
+        domain=config.domain,
+        doc_type=config.referenced_doc_type
+    ).iter_document_ids(last_id)
 
 
 def _get_db(doc_type):
@@ -172,7 +157,3 @@ _DOC_TYPE_MAPPING = {
     'Location': Location
 }
 
-_DATE_MAP = {
-    'XFormInstance': 'received_on',
-    'CommCareCase': 'opened_on',
-}
