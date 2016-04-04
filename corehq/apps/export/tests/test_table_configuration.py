@@ -60,6 +60,7 @@ class TableConfigurationTest(SimpleTestCase):
                 PathNode(name='repeat1', is_repeat=True),
                 PathNode(name='q1')
             ],
+            'ScalarItem',
             None,
         )
         self.assertEqual(
@@ -78,6 +79,7 @@ class TableConfigurationTest(SimpleTestCase):
                 PathNode(name='repeat1', is_repeat=True),
                 PathNode(name='DoesNotExist')
             ],
+            'ScalarItem',
             None,
         )
         self.assertIsNone(column)
@@ -85,6 +87,7 @@ class TableConfigurationTest(SimpleTestCase):
         # Verify that get_column ignores deid transforms
         index, column = table_configuration.get_column(
             [PathNode(name="form"), PathNode(name="user_id")],
+            'ScalarItem',
             USERNAME_TRANSFORM
         )
         self.assertIsNotNone(column)

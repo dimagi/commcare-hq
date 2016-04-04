@@ -90,10 +90,18 @@ def convert_saved_export_to_export_instance(domain, saved_export):
             if system_property:
                 column_path, transform = system_property
 
-            index, new_column = new_table.get_column(
-                column_path,
-                _strip_deid_transform(transform),
-            )
+            guess_types = ['ScalarItem', 'MultipleChoiceItem', 'ExportItem']
+            # Since old exports had no concept of item type, we just guess all
+            # the types and see if there are any matches.
+            for guess_type in guess_types:
+                index, new_column = new_table.get_column(
+                    column_path,
+                    guess_type,
+                    _strip_deid_transform(transform),
+                )
+                if new_column:
+                    break
+
             if not new_column:
                 continue
             new_column.label = column.display

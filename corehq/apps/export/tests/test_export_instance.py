@@ -70,6 +70,7 @@ class TestExportInstanceGeneration(SimpleTestCase):
 
         index, split_column = instance.tables[0].get_column(
             [PathNode(name='data'), PathNode(name='question1')],
+            'MultipleChoiceItem',
             None
         )
         self.assertTrue(isinstance(split_column, SplitExportColumn))

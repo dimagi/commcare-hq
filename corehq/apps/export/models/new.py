@@ -289,17 +289,20 @@ class TableConfiguration(DocumentSchema):
             rows.append(ExportRow(data=row_data))
         return rows
 
-    def get_column(self, item_path, column_transform):
+    def get_column(self, item_path, item_doc_type, column_transform):
         """
         Given a path and transform, will return the column and its index. If not found, will
         return None, None
 
         :param item_path: A list of path nodes that identify a column
+        :param item_doc_type: The doc type of the item (often just ExportItem)
         :param column_transform: A transform that is applied on the column
         :returns index, column: The index of the column in the list and an ExportColumn
         """
         for index, column in enumerate(self.columns):
-            if column.item.path == item_path and column.item.transform == column_transform:
+            if (column.item.path == item_path and
+                    column.item.transform == column_transform and
+                    column.item.doc_type == item_doc_type):
                 return index, column
         return None, None
 
@@ -416,7 +419,7 @@ class ExportInstance(BlobMixin, Document):
             prev_index = 0
             for item in group_schema.items:
                 index, column = table.get_column(
-                    item.path, None
+                    item.path, item.doc_type, None
                 )
                 if not column:
                     column = ExportColumn.create_default_from_export_item(
@@ -519,7 +522,11 @@ class ExportInstance(BlobMixin, Document):
             insert_fn = table.columns.append
 
         for static_column in properties:
-            index, existing_column = table.get_column(static_column.item.path, static_column.item.transform)
+            index, existing_column = table.get_column(
+                static_column.item.path,
+                static_column.item.doc_type,
+                static_column.item.transform,
+            )
             column = (existing_column or static_column)
             if isinstance(column, RowNumberColumn):
                 column.update_nested_repeat_count(column_initialization_data.get('repeat'))

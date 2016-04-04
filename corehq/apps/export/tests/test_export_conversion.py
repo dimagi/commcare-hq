@@ -68,7 +68,6 @@ class TestConvertSavedExportSchemaToCaseExportInstance(TestCase, TestFileMixin):
             ],
         )
 
-
     def test_basic_conversion(self):
         saved_export_schema = SavedExportSchema.wrap(self.get_json('case'))
         with mock.patch(
@@ -85,7 +84,7 @@ class TestConvertSavedExportSchemaToCaseExportInstance(TestCase, TestFileMixin):
         self.assertEqual(table.label, 'Cases')
         self.assertTrue(table.selected)
 
-        index, column = table.get_column([PathNode(name='DOB')], None)
+        index, column = table.get_column([PathNode(name='DOB')], 'ExportItem', None)
         self.assertEqual(column.label, 'DOB Saved')
         self.assertEqual(column.selected, True)
 
@@ -108,7 +107,7 @@ class TestConvertSavedExportSchemaToCaseExportInstance(TestCase, TestFileMixin):
         ]
 
         for path, selected in expected_paths:
-            index, column = table.get_column(path, None)
+            index, column = table.get_column(path, 'ExportItem', None)
             self.assertEqual(column.selected, selected, '{} selected is not {}'.format(path, selected))
 
     def test_case_history_conversion(self):
@@ -129,7 +128,7 @@ class TestConvertSavedExportSchemaToCaseExportInstance(TestCase, TestFileMixin):
         ]
 
         for path, selected in expected_paths:
-            index, column = table.get_column(path, None)
+            index, column = table.get_column(path, 'ExportItem', None)
             self.assertEqual(column.selected, selected, '{} selected is not {}'.format(path, selected))
 
 
@@ -221,7 +220,11 @@ class TestConvertSavedExportSchemaToFormExportInstance(TestCase, TestFileMixin):
         table = instance.get_table(MAIN_TABLE)
         self.assertEqual(table.label, 'My Forms')
 
-        index, column = table.get_column([PathNode(name='form'), PathNode(name='question1')], None)
+        index, column = table.get_column(
+            [PathNode(name='form'), PathNode(name='question1')],
+            'ExportItem',
+            None,
+        )
         self.assertEqual(column.label, 'Question One')
         self.assertEqual(column.selected, True)
 
@@ -241,13 +244,16 @@ class TestConvertSavedExportSchemaToFormExportInstance(TestCase, TestFileMixin):
             [PathNode(name='form'),
              PathNode(name='repeat', is_repeat=True),
              PathNode(name='question2')],
+            'ExportItem',
             None
         )
         self.assertEqual(column.label, 'Question Two')
         self.assertEqual(column.selected, True)
 
         index, column = table.get_column(
-            [PathNode(name='number')], None
+            [PathNode(name='number')],
+            'ExportItem',
+            None
         )
         self.assertEqual(column.selected, True)
 
@@ -269,6 +275,7 @@ class TestConvertSavedExportSchemaToFormExportInstance(TestCase, TestFileMixin):
             [PathNode(name='form'),
              PathNode(name='repeat', is_repeat=True),
              PathNode(name='question2')],
+            'ExportItem',
             None
         )
         self.assertEqual(column.label, 'Modified Question Two')
@@ -288,6 +295,7 @@ class TestConvertSavedExportSchemaToFormExportInstance(TestCase, TestFileMixin):
              PathNode(name='repeat', is_repeat=True),
              PathNode(name='repeat_nested', is_repeat=True),
              PathNode(name='nested')],
+            'ExportItem',
             None,
         )
         self.assertEqual(column.label, 'Modified Nested')
@@ -303,12 +311,12 @@ class TestConvertSavedExportSchemaToFormExportInstance(TestCase, TestFileMixin):
         table = instance.get_table(MAIN_TABLE)
 
         index, column = table.get_column(
-            [PathNode(name='form'), PathNode(name='deid_id')], None
+            [PathNode(name='form'), PathNode(name='deid_id')], 'ExportItem', None
         )
         self.assertEqual(column.deid_transform, DEID_ID_TRANSFORM)
 
         index, column = table.get_column(
-            [PathNode(name='form'), PathNode(name='deid_date')], None
+            [PathNode(name='form'), PathNode(name='deid_date')], 'ExportItem', None
         )
         self.assertEqual(column.deid_transform, DEID_DATE_TRANSFORM)
 
@@ -336,7 +344,7 @@ class TestConvertSavedExportSchemaToFormExportInstance(TestCase, TestFileMixin):
             ),
         ]
         for path, transform, selected in expected_paths:
-            index, column = table.get_column(path, transform)
+            index, column = table.get_column(path, 'ExportItem', transform)
             self.assertEqual(column.selected, selected, '{} selected is not {}'.format(path, selected))
 
 
