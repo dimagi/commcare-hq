@@ -531,7 +531,7 @@ class ExportInstance(BlobMixin, Document):
             if isinstance(column, RowNumberColumn):
                 column.update_nested_repeat_count(column_initialization_data.get('repeat'))
             elif isinstance(column, StockExportColumn):
-                column.updated_domain(column_initialization_data.get('repeat'))
+                column.update_domain(column_initialization_data.get('domain'))
 
             if not existing_column:
                 insert_fn(static_column)

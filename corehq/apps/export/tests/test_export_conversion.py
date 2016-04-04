@@ -43,6 +43,8 @@ class TestConvertSavedExportSchemaToCaseExportInstance(TestCase, TestFileMixin):
     @classmethod
     def setUpClass(cls):
         cls.project = create_domain(cls.domain)
+        cls.project.commtrack_enabled = True
+        cls.project.save()
         cls.schema = CaseExportDataSchema(
             domain=cls.domain,
             group_schemas=[
@@ -130,6 +132,17 @@ class TestConvertSavedExportSchemaToCaseExportInstance(TestCase, TestFileMixin):
         for path, selected in expected_paths:
             index, column = table.get_column(path, 'ExportItem', None)
             self.assertEqual(column.selected, selected, '{} selected is not {}'.format(path, selected))
+
+    def test_stock_conversion(self):
+        saved_export_schema = SavedExportSchema.wrap(self.get_json('stock'))
+        with mock.patch(
+                'corehq.apps.export.models.new.CaseExportDataSchema.generate_schema_from_builds',
+                return_value=self.schema):
+            instance = convert_saved_export_to_export_instance(self.domain, saved_export_schema)
+        table = instance.get_table(MAIN_TABLE)
+        path = [PathNode(name='stock')]
+        index, column = table.get_column(path, 'ExportItem', None)
+        self.assertTrue(column.selected)
 
 
 class TestConvertSavedExportSchemaToFormExportInstance(TestCase, TestFileMixin):

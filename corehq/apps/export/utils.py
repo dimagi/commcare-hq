@@ -19,6 +19,7 @@ def convert_saved_export_to_export_instance(domain, saved_export):
         FormExportInstance,
         CaseExportDataSchema,
         CaseExportInstance,
+        PathNode,
     )
 
     # Build a new schema and instance
@@ -67,6 +68,18 @@ def convert_saved_export_to_export_instance(domain, saved_export):
         for column in old_table.columns:
             index = column.index
             transform = None  # can be either the deid_transform or the value transform on the ExportItem
+
+            if column.doc_type == 'StockExportColumn':
+                # Handle stock export column separately because it's a messy edge since
+                # it doesn't have a unique index (_id).
+                index, new_column = new_table.get_column(
+                    [PathNode(name='stock')],
+                    'ExportItem',
+                    None,
+                )
+                new_column.selected = True
+                new_column.label = column.display
+                continue
 
             if column.transform:
                 transform = _convert_transform(column.transform)
