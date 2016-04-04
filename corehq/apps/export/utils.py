@@ -13,7 +13,7 @@ from .const import (
 )
 
 
-def convert_saved_export_to_export_instance(saved_export):
+def convert_saved_export_to_export_instance(domain, saved_export):
     from .models import (
         FormExportDataSchema,
         FormExportInstance,
@@ -28,14 +28,14 @@ def convert_saved_export_to_export_instance(saved_export):
     if export_type == FORM_EXPORT:
         instance_cls = FormExportInstance
         schema = FormExportDataSchema.generate_schema_from_builds(
-            saved_export.domain,
+            domain,
             saved_export.app_id,
             _extract_xmlns_from_index(saved_export.index),
         )
     elif export_type == CASE_EXPORT:
         instance_cls = CaseExportInstance
         schema = CaseExportDataSchema.generate_schema_from_builds(
-            saved_export.domain,
+            domain,
             _extract_casetype_from_index(saved_export.index),
         )
 

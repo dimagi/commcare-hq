@@ -106,7 +106,7 @@ def _get_tables(export_instances):
     """
     tables = []
     for export_instance in export_instances:
-        tables.extend(export_instance.tables)
+        tables.extend(export_instance.selected_tables)
     return tables
 
 
@@ -162,7 +162,7 @@ def _write_export_instance(writer, export_instance, documents, progress_tracker=
         DownloadBase.set_progress(progress_tracker, 0, documents.count)
 
     for row_number, doc in enumerate(documents):
-        for table in export_instance.tables:
+        for table in export_instance.selected_tables:
             rows = table.get_rows(doc, row_number)
             for row in rows:
                 # It might be bad to write one row at a time when you can do more (from a performance perspective)

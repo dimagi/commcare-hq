@@ -1,7 +1,4 @@
-# TODO: Can't store a translation like this on the dataschema. Translate it somewhere else instead.
-#from django.utils.translation import ugettext_lazy as _
-def _(s):
-    return s
+from django.utils.translation import ugettext_noop as _
 
 from corehq.apps.export.const import (
     PROPERTY_TAG_ROW,
@@ -9,15 +6,23 @@ from corehq.apps.export.const import (
     PROPERTY_TAG_APP,
     PROPERTY_TAG_SERVER,
     PROPERTY_TAG_CASE,
+    PROPERTY_TAG_STOCK,
     CASE_NAME_TRANSFORM,
     USERNAME_TRANSFORM,
     OWNER_ID_TRANSFORM,
-    PROPERTY_TAG_NONE)
-from corehq.apps.export.models import ExportColumn, ExportItem, PathNode
+    PROPERTY_TAG_NONE
+)
+from corehq.apps.export.models import (
+    ExportColumn,
+    ExportItem,
+    PathNode,
+    StockExportColumn,
+    RowNumberColumn,
+)
 
 # System properties to be displayed above the form questions
 TOP_MAIN_FORM_TABLE_PROPERTIES = [
-    ExportColumn(
+    RowNumberColumn(
         tags=[PROPERTY_TAG_ROW],
         label="number",
         item=ExportItem(path=[PathNode(name='number')]),
@@ -121,8 +126,6 @@ BOTTOM_MAIN_FORM_TABLE_PROPERTIES = [
         is_advanced=True,
         help_text=_("The app version number that this form is part of")
     ),
-
-
     ExportColumn(
         tags=[PROPERTY_TAG_SERVER],
         label="state",
@@ -207,15 +210,22 @@ BOTTOM_MAIN_FORM_TABLE_PROPERTIES = [
 ]
 MAIN_FORM_TABLE_PROPERTIES = TOP_MAIN_FORM_TABLE_PROPERTIES + BOTTOM_MAIN_FORM_TABLE_PROPERTIES
 
-ROW_NUMBER_COLUMN = ExportColumn(
+ROW_NUMBER_COLUMN = RowNumberColumn(
     tags=[PROPERTY_TAG_ROW],
     label='number',
     item=ExportItem(path=[PathNode(name='number')]),
 )
 
+STOCK_COLUMN = StockExportColumn(
+    tags=[PROPERTY_TAG_STOCK],
+    label='stock',
+    item=ExportItem(path=[PathNode(name='stock')]),
+    help_text=_('Add stock data columns to the export'),
+)
+
 TOP_MAIN_CASE_TABLE_PROPERTIES = [
     # This first list is displayed above the case properties
-    ExportColumn(
+    RowNumberColumn(
         tags=[PROPERTY_TAG_ROW],
         label='number',
         item=ExportItem(path=[PathNode(name='number')]),
@@ -347,7 +357,7 @@ BOTTOM_MAIN_CASE_TABLE_PROPERTIES = [
 MAIN_CASE_TABLE_PROPERTIES = TOP_MAIN_CASE_TABLE_PROPERTIES + BOTTOM_MAIN_FORM_TABLE_PROPERTIES
 
 CASE_HISTORY_PROPERTIES = [
-    ExportColumn(
+    RowNumberColumn(
         tags=[PROPERTY_TAG_ROW],
         label='number',
         item=ExportItem(path=[PathNode(name='number')]),
@@ -401,7 +411,7 @@ CASE_HISTORY_PROPERTIES = [
 ]
 
 PARENT_CASE_TABLE_PROPERTIES = [
-    ExportColumn(
+    RowNumberColumn(
         tags=[PROPERTY_TAG_ROW],
         label='number',
         item=ExportItem(path=[PathNode(name='number')]),

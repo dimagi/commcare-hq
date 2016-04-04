@@ -1,10 +1,22 @@
+from collections import namedtuple
+from mock import patch
 from django.test import SimpleTestCase
 
 from corehq.apps.export.const import USERNAME_TRANSFORM
 from corehq.apps.export.models import TableConfiguration, ExportColumn, \
     ScalarItem, ExportRow
-from corehq.apps.export.models.new import SplitExportColumn, MultipleChoiceItem, \
-    Option, DocRow, RowNumberColumn, PathNode
+from corehq.apps.export.models.new import (
+    SplitExportColumn,
+    MultipleChoiceItem,
+    Option,
+    DocRow,
+    RowNumberColumn,
+    PathNode,
+    StockExportColumn,
+    ExportItem,
+)
+
+MockLedgerValue = namedtuple('MockLedgerValue', ['product_id', 'section_id'])
 
 
 class TableConfigurationTest(SimpleTestCase):
@@ -343,3 +355,30 @@ class SplitColumnTest(SimpleTestCase):
             ignore_unspecified_options=False
         )
         self.assertEqual(column.get_headers(), ["Fruit - Apple", "Fruit - Banana", "Fruit - extra"])
+
+
+class StockExportColumnTest(SimpleTestCase):
+    domain = 'stock-domain'
+
+    def test_get_headers(self):
+        column = StockExportColumn(
+            domain=self.domain,
+            label="Stock",
+            item=ExportItem(),
+        )
+        get_ledger_path = 'corehq.form_processor.interfaces.dbaccessors.LedgerAccessors.get_ledger_values_for_product_ids'
+        get_product_path = 'corehq.apps.export.models.new.StockExportColumn._get_product_name'
+        with patch(
+                get_ledger_path,
+                return_value=[
+                    MockLedgerValue(section_id='abc', product_id='def'),
+                    MockLedgerValue(section_id='abc', product_id='def'),
+                    MockLedgerValue(section_id='123', product_id='456'),
+                ]):
+
+            with patch(
+                    get_product_path,
+                    return_value='water'):
+
+                headers = list(column.get_headers())
+                self.assertEqual(headers, ['water (123)', 'water (abc)'])
