@@ -76,7 +76,6 @@ class BaseStripePaymentHandler(object):
         account.pre_or_post_pay = PreOrPostPay.POSTPAY
         account.save()
 
-
     def process_request(self, request):
         customer = None
         amount = self.get_charge_amount(request)
