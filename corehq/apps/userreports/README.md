@@ -441,6 +441,15 @@ It would be cool if we could do custom reduces (by defining a function that take
 }
 ```
 
+#### Lookup Expression
+```json
+{
+    "type": "lookup",  # not sure on name
+    "items_expression": {},  # expression should return a list
+    "index": 0,  # index of the item to do calculation on
+    "value_expression": {}  # value expression to evaluate on the indexed item
+}
+
 Behind the scenes that could use the evaluator pretty easily.
 
 #### Flatten Expression
