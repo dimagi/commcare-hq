@@ -4,6 +4,7 @@ from corehq.apps.case_search.models import case_search_enabled_domains, \
     case_search_enabled_for_domain
 from corehq.apps.change_feed import topics
 from corehq.apps.change_feed.consumer.feed import KafkaChangeFeed
+from corehq.apps.es import CaseSearchES
 from corehq.elastic import get_es_new
 from corehq.form_processor.models import CommCareCaseSQL
 from corehq.form_processor.utils.general import should_use_sql_backend
@@ -149,11 +150,9 @@ def delete_case_search_cases(domain):
     if domain is None or isinstance(domain, dict):
         raise TypeError("Domain attribute is required")
 
-    startkey = [domain]
-    endkey = [domain, {}, {}]
-    es = get_es_new()
-    db = CommCareCase.get_db()
-
-    for item in paginate_view(db, 'cases_by_owner/view', 100, startkey=startkey, endkey=endkey, reduce=False):
-        if es.exists(CASE_SEARCH_INDEX, CASE_ES_TYPE, item['id']):
-            es.delete(CASE_SEARCH_INDEX, CASE_ES_TYPE, item['id'])
+    query = {'query': CaseSearchES().domain(domain).raw_query['query']}
+    get_es_new().delete_by_query(
+        index=CASE_SEARCH_INDEX,
+        doc_type=CASE_ES_TYPE,
+        body=query,
+    )
