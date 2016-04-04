@@ -15,7 +15,7 @@ from corehq.apps.products.models import SQLProduct
 from corehq.apps.domain.views import BaseDomainView, DomainViewMixin
 from corehq.apps.locations.models import SQLLocation
 from corehq.apps.sms.models import SMS, INCOMING, OUTGOING
-from corehq.apps.style.decorators import use_bootstrap3
+from corehq.apps.style.decorators import use_bootstrap3, use_datatables
 from corehq.apps.users.models import CommCareUser, WebUser, UserRole
 from django.http import HttpResponse
 from django.utils.translation import ugettext_noop
@@ -277,6 +277,8 @@ class PendingRecalculationsListView(ListView, DomainViewMixin):
     context_object_name = 'recalculations'
     template_name = 'ilsgateway/pending_recalculations.html'
 
+    @use_bootstrap3
+    @use_datatables
     def dispatch(self, request, *args, **kwargs):
         if not self.request.couch_user.is_domain_admin():
             raise Http404()
