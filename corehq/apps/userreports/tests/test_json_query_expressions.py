@@ -205,6 +205,18 @@ def test_reduce_items_bad_spec(self, items_ex, reduce_ex):
         'sum',
         3
     ),
+    (
+        [1, 2],
+        {'type': 'identity'},
+        'first_item',
+        1
+    ),
+    (
+        [1, 2],
+        {'type': 'identity'},
+        'last_item',
+        2
+    ),
 ])
 def test_reduce_items_basic(self, doc, items_ex, reduce_ex, expected):
     expression = ExpressionFactory.from_spec({

@@ -52,7 +52,7 @@ class ReduceItemsExpressionSpec(JsonObject):
     def configure(self, items_expression):
         self._items_expression = items_expression
         if self.aggregation_fn not in SUPPORTED_UCR_AGGREGATIONS:
-            raise BadSpecError("aggregation_fn '' is not valid. Valid options are: ".format(
+            raise BadSpecError("aggregation_fn '{}' is not valid. Valid options are: {} ".format(
                 self.aggregation_fn,
                 SUPPORTED_UCR_AGGREGATIONS
             ))
