@@ -72,6 +72,7 @@ class WriterTest(SimpleTestCase):
             tables=[
                 TableConfiguration(
                     label="My table",
+                    selected=True,
                     columns=[
                         ExportColumn(
                             label="Q3",
@@ -114,6 +115,7 @@ class WriterTest(SimpleTestCase):
             tables=[
                 TableConfiguration(
                     label="My table",
+                    selected=True,
                     path=[],
                     columns=[
                         ExportColumn(
@@ -127,6 +129,7 @@ class WriterTest(SimpleTestCase):
                 ),
                 TableConfiguration(
                     label="My other table",
+                    selected=True,
                     path=[PathNode(name='form', is_repeat=False), PathNode(name="q2", is_repeat=False)],
                     columns=[
                         ExportColumn(
@@ -170,6 +173,7 @@ class WriterTest(SimpleTestCase):
                 tables=[
                     TableConfiguration(
                         label="My table",
+                        selected=True,
                         path=[],
                         columns=[
                             ExportColumn(
@@ -188,6 +192,7 @@ class WriterTest(SimpleTestCase):
                 tables=[
                     TableConfiguration(
                         label="My other table",
+                        selected=True,
                         path=[PathNode(name="form", is_repeat=False), PathNode(name="q2", is_repeat=False)],
                         columns=[
                             ExportColumn(
@@ -262,6 +267,7 @@ class ExportTest(SimpleTestCase):
                     case_type=DEFAULT_CASE_TYPE,
                     tables=[TableConfiguration(
                         label="My table",
+                        selected=True,
                         path=[],
                         columns=[
                             ExportColumn(
@@ -310,6 +316,7 @@ class ExportTest(SimpleTestCase):
                     domain=DOMAIN,
                     case_type=DEFAULT_CASE_TYPE,
                     tables=[TableConfiguration(
+                        selected=True,
                         label="My table",
                         path=MAIN_TABLE,
                         columns=[
@@ -329,6 +336,7 @@ class ExportTest(SimpleTestCase):
                     case_type=DEFAULT_CASE_TYPE,
                     tables=[TableConfiguration(
                         label="My table",
+                        selected=True,
                         path=MAIN_TABLE,
                         columns=[
                             ExportColumn(
