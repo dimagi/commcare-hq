@@ -4,6 +4,7 @@ from celery.task import task
 from couchdbkit import ResourceConflict
 
 from casexml.apps.case.models import CommCareCase
+from corehq.form_processor.document_stores import ReadonlyCaseDocumentStore, ReadonlyFormDocumentStore
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 from corehq.form_processor.utils import should_use_sql_backend
 from couchforms.models import XFormInstance
@@ -95,7 +96,9 @@ def _iteratively_build_table(config, last_id=None):
     indicator_config_id = config._id
 
     relevant_ids = []
-    for relevant_id in _iterate_base_ucr_doc_ids(config, last_id):
+    document_store = _get_document_store(config)
+    for relevant_id in document_store.iter_document_ids(last_id):
+        print relevant_id
         relevant_ids.append(relevant_id)
         if len(relevant_ids) >= ID_CHUNK_SIZE:
             redis_client.rpush(redis_key, *relevant_ids)
@@ -119,30 +122,19 @@ def _iteratively_build_table(config, last_id=None):
                 current_config.save()
 
 
-def _iterate_base_ucr_doc_ids(config, last_id):
-    if should_use_sql_backend(config.domain):
-        return _iterate_docs_from_sql(config, last_id)
-    else:
-        return _iterate_docs_from_couch(config, last_id)
-
-
-def _iterate_docs_from_sql(config, last_id):
-    if config.referenced_doc_type == 'XFormInstance':
-        # todo: iterate over sql form IDs
-        raise NotImplementedError("You can't reindex SQL form data sources yet.")
-    elif config.referenced_doc_type == 'CommCareCase':
-        return iter(CaseAccessors(config.domain).get_case_ids_in_domain())
+def _get_document_store(config):
+    use_sql = should_use_sql_backend(config.domain)
+    if use_sql and config.referenced_doc_type == 'XFormInstance':
+        return ReadonlyFormDocumentStore(config.domain)
+    elif use_sql and config.referenced_doc_type == 'CommCareCase':
+        return ReadonlyCaseDocumentStore(config.domain)
     else:
         # all other types still live in couchdb
-        return _iterate_docs_from_couch(config, last_id)
-
-
-def _iterate_docs_from_couch(config, last_id):
-    return CouchDocumentStore(
-        couch_db=_get_db(config.referenced_doc_type),
-        domain=config.domain,
-        doc_type=config.referenced_doc_type
-    ).iter_document_ids(last_id)
+        return CouchDocumentStore(
+            couch_db=_get_db(config.referenced_doc_type),
+            domain=config.domain,
+            doc_type=config.referenced_doc_type
+        )
 
 
 def _get_db(doc_type):

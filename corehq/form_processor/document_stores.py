@@ -17,6 +17,10 @@ class ReadonlyFormDocumentStore(ReadOnlyDocumentStore):
         except (XFormNotFound, BlobError) as e:
             raise DocumentNotFoundError(e)
 
+    def iter_document_ids(self, last_id=None):
+        # todo: iterate over sql form IDs
+        raise NotImplementedError("You can't do this for SQL form data sources yet.")
+
 
 class ReadonlyCaseDocumentStore(ReadOnlyDocumentStore):
 
@@ -29,3 +33,6 @@ class ReadonlyCaseDocumentStore(ReadOnlyDocumentStore):
             return self.case_accessors.get_case(doc_id).to_json()
         except CaseNotFound as e:
             raise DocumentNotFoundError(e)
+
+    def iter_document_ids(self, last_id=None):
+        return iter(CaseAccessors(self.domain).get_case_ids_in_domain())
