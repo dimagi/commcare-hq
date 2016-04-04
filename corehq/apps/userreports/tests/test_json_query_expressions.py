@@ -3,44 +3,6 @@ from corehq.apps.userreports.expressions.factory import ExpressionFactory
 from corehq.util.test_utils import generate_cases
 
 
-def _make_filter_expression(items_expression=None, filter_expression=None):
-    expression = {
-        'type': 'filter_items',
-    }
-    if items_expression is not None:
-        expression['items_expression'] = items_expression
-
-    if filter_expression is not None:
-        expression['filter_expression'] = filter_expression
-
-    return ExpressionFactory.from_spec(expression)
-
-
-def _make_map_expression(items_expression=None, map_expression=None):
-    expression = {
-        'type': 'map_items',
-    }
-    if items_expression is not None:
-        expression['items_expression'] = items_expression
-
-    if map_expression is not None:
-        expression['map_expression'] = map_expression
-
-    return ExpressionFactory.from_spec(expression)
-
-
-def _make_reduce_expression(items_expression=None, agg_fn=None):
-    expression = {
-        'type': 'reduce_items',
-    }
-    if items_expression is not None:
-        expression['items_expression'] = items_expression
-
-    if agg_fn is not None:
-        expression['aggregation_fn'] = agg_fn
-
-    return ExpressionFactory.from_spec(expression)
-
 _filter_v1 = {
     'type': 'boolean_expression',
     'operator': 'eq',
@@ -59,8 +21,16 @@ _filter_v1 = {
     ({}, _filter_v1),
 ])
 def test_filter_items_bad_spec(self, items_ex, filter_ex):
+    expression = {
+        'type': 'filter_items',
+    }
+    if items_ex is not None:
+        expression['items_expression'] = items_ex
+    if filter_ex is not None:
+        expression['filter_expression'] = filter_ex
+
     with self.assertRaises(BadSpecError):
-        _make_filter_expression(items_ex, filter_ex)
+        ExpressionFactory.from_spec(expression)
 
 
 @generate_cases([
@@ -82,9 +52,33 @@ def test_filter_items_bad_spec(self, items_ex, filter_ex):
         _filter_v1,
         [{'key': 'v1'}]
     ),
+    (
+        {'items': [{'key': 'v1'}, {'key': 'v2'}]},
+        {'type': 'property_name', 'property_name': 'wrong_prop'},
+        _filter_v1,
+        []
+    ),
+    (
+        {'items': [{'key': 'v1'}, {'key': 'v2'}]},
+        {'type': 'property_name', 'property_name': 'items'},
+        {
+            'type': 'boolean_expression',
+            'operator': 'eq',
+            'expression': {
+                'type': 'property_name',
+                'property_name': 'key',
+            },
+            'property_value': 'no_match',
+        },
+        []
+    ),
 ])
 def test_filter_items_basic(self, doc, items_ex, filter_ex, expected):
-    expression = _make_filter_expression(items_ex, filter_ex)
+    expression = ExpressionFactory.from_spec({
+        'type': 'filter_items',
+        'items_expression': items_ex,
+        'filter_expression': filter_ex
+    })
     self.assertEqual(expression(doc), expected)
 
 
@@ -95,8 +89,16 @@ def test_filter_items_basic(self, doc, items_ex, filter_ex, expected):
     ({}, {'type': 'identity'}),
 ])
 def test_map_items_bad_spec(self, items_ex, map_ex):
+    expression = {
+        'type': 'map_items',
+    }
+    if items_ex is not None:
+        expression['items_expression'] = items_ex
+    if map_ex is not None:
+        expression['map_expression'] = map_ex
+
     with self.assertRaises(BadSpecError):
-        _make_map_expression(items_ex, map_ex)
+        ExpressionFactory.from_spec(expression)(items_ex, map_ex)
 
 
 @generate_cases([
@@ -126,7 +128,11 @@ def test_map_items_bad_spec(self, items_ex, map_ex):
     ),
 ])
 def test_map_items_basic(self, doc, items_ex, map_ex, expected):
-    expression = _make_map_expression(items_ex, map_ex)
+    expression = ExpressionFactory.from_spec({
+        'type': 'map_items',
+        'items_expression': items_ex,
+        'map_expression': map_ex
+    })
     self.assertEqual(expression(doc), expected)
 
 
@@ -136,8 +142,16 @@ def test_map_items_basic(self, doc, items_ex, map_ex, expected):
     ({'type': 'identity'}, 'invalid_agg_fn'),
 ])
 def test_reduce_items_bad_spec(self, items_ex, reduce_ex):
+    expression = {
+        'type': 'reduce_items',
+    }
+    if items_ex is not None:
+        expression['items_expression'] = items_ex
+    if reduce_ex is not None:
+        expression['aggregation_fn'] = reduce_ex
+
     with self.assertRaises(BadSpecError):
-        _make_reduce_expression(items_ex, reduce_ex)
+        ExpressionFactory.from_spec(expression)(items_ex, reduce_ex)
 
 
 @generate_cases([
@@ -167,7 +181,11 @@ def test_reduce_items_bad_spec(self, items_ex, reduce_ex):
     ),
 ])
 def test_reduce_items_basic(self, doc, items_ex, reduce_ex, expected):
-    expression = _make_reduce_expression(items_ex, reduce_ex)
+    expression = ExpressionFactory.from_spec({
+        'type': 'reduce_items',
+        'items_expression': items_ex,
+        'aggregation_fn': reduce_ex
+    })
     self.assertEqual(expression(doc), expected)
 
 
