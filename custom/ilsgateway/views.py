@@ -119,6 +119,7 @@ class SupervisionDocumentListView(BaseDomainView):
     template_name = "ilsgateway/supervision_docs.html"
     urlname = 'supervision'
 
+    @use_bootstrap3
     def dispatch(self, request, *args, **kwargs):
         if not self.request.couch_user.is_web_user():
             raise Http404()
