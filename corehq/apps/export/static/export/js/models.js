@@ -1,3 +1,5 @@
+/* globals Exports */
+
 Exports.ViewModels.ExportInstance = function(instanceJSON, options) {
     options = options || {};
     var self = this;

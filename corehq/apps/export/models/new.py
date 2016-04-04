@@ -138,7 +138,7 @@ class ExportColumn(DocumentSchema):
             not split the column
         :return:
         """
-        assert base_path == self.item.path[:len(base_path)], "ExportItem's path starts with the base_path"
+        assert base_path == self.item.path[:len(base_path)], "ExportItem's path doesn't start with the base_path"
         # Get the path from the doc root to the desired ExportItem
         path = [x.name for x in self.item.path[len(base_path):]]
         return self._transform(NestedDictGetter(path)(doc), doc, transform_dates)

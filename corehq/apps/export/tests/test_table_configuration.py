@@ -372,7 +372,10 @@ class StockExportColumnTest(SimpleTestCase):
             label="Stock",
             item=ExportItem(),
         )
-        get_ledger_path = 'corehq.form_processor.interfaces.dbaccessors.LedgerAccessors.get_ledger_values_for_product_ids'
+        get_ledger_path = (
+            'corehq.form_processor.interfaces.dbaccessors.'
+            'LedgerAccessors.get_ledger_values_for_product_ids'
+        )
         get_product_path = 'corehq.apps.export.models.new.StockExportColumn._get_product_name'
         with patch(
                 get_ledger_path,
