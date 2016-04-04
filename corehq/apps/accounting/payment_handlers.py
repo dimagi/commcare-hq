@@ -1,8 +1,13 @@
 from decimal import Decimal
-from django.db import transaction
-import stripe
+
 from django.conf import settings
+from django.db import transaction
 from django.utils.translation import ugettext as _
+
+import stripe
+
+from dimagi.utils.decorators.memoized import memoized
+
 from corehq.apps.accounting.models import (
     BillingAccount,
     CreditLine,
@@ -22,7 +27,6 @@ from corehq.apps.accounting.utils import (
 )
 from corehq.apps.domain.models import Domain
 from corehq.const import USER_DATE_FORMAT
-from dimagi.utils.decorators.memoized import memoized
 
 stripe.api_key = settings.STRIPE_PRIVATE_KEY
 
