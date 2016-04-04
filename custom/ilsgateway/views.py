@@ -43,6 +43,10 @@ class GlobalStats(BaseDomainView):
     show_supply_point_types = False
     root_name = 'MOHSW'
 
+    @use_bootstrap3
+    def dispatch(self, request, *args, **kwargs):
+        return super(GlobalStats, self).dispatch(request, *args, **kwargs)
+
     @property
     def main_context(self):
         contacts = CommCareUser.by_domain(self.domain, reduce=True)
