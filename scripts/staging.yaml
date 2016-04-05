@@ -63,7 +63,6 @@ branches:
   - b3-commcare-exchange # biyeun 3/10
   - report-builder-text # Cal 3/1
   - certificate-validation # Cal 3/10
-  - login-b3 # Jenny 3/21
   - knockout-3-3 # Jenny 3/30
 submodules:
   submodules/touchforms-src:
