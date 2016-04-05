@@ -49,7 +49,6 @@
                   setTimeout(function() {
                       $(element).select2(options);
                   }, 0);
-               //$(element).select2(valueAccessor());
 
                 ko.utils.domNodeDisposal.addDisposeCallback(element, function() {
                     $(element).select2('destroy');
