@@ -78,18 +78,14 @@ def inline_edit_trans(name, langs=None):
     if langs is None:
         langs = ["default"]
     template = '''
-        <inline-edit params="name: 'name', value: '%(value)s, placeholder: '%(placeholder)s', rows: 1"></inline-edit>
+        <inline-edit params="name: 'name', value: '%(value)s', placeholder: '%(placeholder)s', rows: 1, lang: '%(lang)s'"></inline-edit>
     '''
     for lang in langs:
         if lang in name:
             if langs and lang == langs[0]:
-                return template % {"value": name[lang], "placeholder": ""}
+                return template % {"value": name[lang], "placeholder": "", "lang": ""}
             else:
-                return template % {"value": "", "placeholder": name[lang]} + LANG_BUTTON % {
-                    "lang": lang,
-                    "extra_class": " langcode-input",
-                    "extra_style": "position: absolute; top: 6px; right: 15px"
-                }
+                return template % {"value": "", "placeholder": name[lang], "lang": lang}
     default = "Untitled"
     if 'en' in name:
         default = name['en']

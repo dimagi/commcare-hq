@@ -7,6 +7,7 @@
  *  - id: HTML id of textarea
  *  - placeholder: Text to display when in read-only mode if value is blank
  *  - inline: Whether or not to display widget in line with surrounding content. Defaults to false.
+ *  - lang: Display this language code in a badge next to the widget.
  *  - rows: Number of rows in textarea.
  *
  * By default, the widget is client-side only, and it is up to the calling code to actually save the value
@@ -31,6 +32,7 @@ hqDefine('style/ko/components/inline_edit.js', function() {
             self.placeholder = params.placeholder || '';
             self.original = (ko.isObservable(params.value) ? params.value() : params.value) || '';
             self.value = ko.isObservable(params.value) ? params.value : ko.observable(self.original);
+            self.lang = params.lang || '';
 
             // Styling
             self.inline = params.inline || false;
@@ -104,16 +106,24 @@ hqDefine('style/ko/components/inline_edit.js', function() {
         template: '<div class="ko-inline-edit" data-bind="css: {inline: inline, \'has-error\': hasError()}">\
             <div class="read-only" data-bind="visible: !editing() && !hasError(), click: edit">\
                 <i class="fa fa-pencil pull-right"></i>\
+                <span class="btn btn-xs btn-info btn-langcode-preprocessed langcode-input pull-right"\
+                      data-bind="text: lang, visible: lang"\
+                ></span>\
                 <span class="text" data-bind="text: value"></span>\
                 <span class="placeholder" data-bind="text: placeholder, visible: !value()"></span>\
             </div>\
             <div class="read-write" data-bind="visible: editing() || hasError(), css: {\'form-inline\': inline}">\
                 <div class="form-group">\
                     <textarea class="form-control" data-bind="\
-                        attr: {name: name, id: id, rows: rows},\
-                        value: value, hasFocus: editing(),\
+                        attr: {name: name, id: id, placeholder: placeholder, rows: rows},\
+                        value: value,\
+                        hasFocus: editing(),\
                         event: {blur: blur},\
-                    " style='position:relative;'></textarea>\
+                    " style="position:relative;"></textarea>\
+                    <span class="btn btn-xs btn-info btn-langcode-preprocessed langcode-input pull-right"\
+                          data-bind="text: lang, visible: lang"\
+                          style="position: absolute; top: 6px; right: 15px;"\
+                    ></span>\
                 </div>\
                 <div class="form-group">\
                     <button class="btn btn-success" data-bind="click: save, hasFocus: saveHasFocus, visible: !isSaving()">\
