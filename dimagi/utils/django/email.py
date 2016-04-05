@@ -34,10 +34,10 @@ def send_HTML_email(subject, recipient, html_content, text_content=None,
                          "\n {}".format(html_content)
             )
 
-    if ga_track:
+    if ga_track and settings.ANALYTICS_IDS.get('GOOGLE_ANALYTICS_API_ID'):
         url_subject = quote(subject)
         url = "https://www.google-analytics.com/collect?v=1&tid={ga_tid}&cid={ga_cid}&dt={subject}&t=event&ec=email" \
-            .format(ga_tid=settings.ANALYTICS_IDS['GOOGLE_ANALYTICS_ID'],
+            .format(ga_tid=settings.ANALYTICS_IDS.get('GOOGLE_ANALYTICS_API_ID'),
                     ga_cid=uuid.uuid4().hex,
                     subject=url_subject)
         new_content = '<img src="{url}&ea=open"/>\n</body>'.format(url=url)
@@ -84,5 +84,5 @@ def send_HTML_email(subject, recipient, html_content, text_content=None,
         )
         error_msg.send()
 
-    if ga_track:
+    if ga_track and settings.ANALYTICS_IDS.get('GOOGLE_ANALYTICS_API_ID'):
         requests.get(url+"&ea=send")
