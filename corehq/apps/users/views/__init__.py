@@ -731,7 +731,7 @@ class UserInvitationView(object):
             'domain': self.domain,
             'invite_to': self.domain,
             'invite_type': _('Project'),
-            'hide_password_feedback': getattr(settings, 'ENABLE_DRACONIAN_SECURITY_FEATURES', False),
+            'hide_password_feedback': settings.ENABLE_DRACONIAN_SECURITY_FEATURES,
         }
 
     def validate_invitation(self, invitation):

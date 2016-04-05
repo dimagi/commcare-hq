@@ -279,7 +279,7 @@ class ChangeMyPasswordView(BaseMyAccountView):
     def page_context(self):
         return {
             'form': self.password_change_form,
-            'hide_password_feedback': getattr(settings, 'ENABLE_DRACONIAN_SECURITY_FEATURES', False),
+            'hide_password_feedback': settings.ENABLE_DRACONIAN_SECURITY_FEATURES,
         }
 
     @method_decorator(sensitive_post_parameters())

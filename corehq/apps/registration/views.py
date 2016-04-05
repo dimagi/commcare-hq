@@ -89,7 +89,7 @@ def register_user(request):
 
         context.update({
             'form': form,
-            'hide_password_feedback': getattr(settings, 'ENABLE_DRACONIAN_SECURITY_FEATURES', False),
+            'hide_password_feedback': settings.ENABLE_DRACONIAN_SECURITY_FEATURES,
         })
         return render(request, 'registration/create_new_user.html', context)
 

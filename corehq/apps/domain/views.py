@@ -2965,14 +2965,12 @@ class PasswordResetView(View):
 
     def get(self, request, *args, **kwargs):
         extra_context = kwargs.setdefault('extra_context', {})
-        extra_context['hide_password_feedback'] = \
-            getattr(settings, 'ENABLE_DRACONIAN_SECURITY_FEATURES', False)
+        extra_context['hide_password_feedback'] = settings.ENABLE_DRACONIAN_SECURITY_FEATURES
         return password_reset_confirm(request, *args, **kwargs)
 
     def post(self, request, *args, **kwargs):
         extra_context = kwargs.setdefault('extra_context', {})
-        extra_context['hide_password_feedback'] = \
-            getattr(settings, 'ENABLE_DRACONIAN_SECURITY_FEATURES', False)
+        extra_context['hide_password_feedback'] = settings.ENABLE_DRACONIAN_SECURITY_FEATURES
         response = password_reset_confirm(request, *args, **kwargs)
         uidb64 = kwargs.get('uidb64')
         uid = urlsafe_base64_decode(uidb64)

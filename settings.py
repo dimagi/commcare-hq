@@ -159,6 +159,7 @@ SESSION_ENGINE = "django.contrib.sessions.backends.cached_db"
 # time in minutes before forced logout due to inactivity
 INACTIVITY_TIMEOUT = 60 * 24 * 14
 SECURE_TIMEOUT = 30
+ENABLE_DRACONIAN_SECURITY_FEATURES = False
 
 PASSWORD_HASHERS = (
     # this is the default list with SHA1 moved to the front
