@@ -33,6 +33,9 @@ var PricingTable = function (pricing_table, current_edition, isNonAccountingSupe
     self.isSuperuserNoticeVisible = ko.computed(function () {
         return !(self.selected_edition() === self.currentEdition) && !self.isEditionSelectable() && !! self.selected_edition();
     });
+    self.selectCurrentPlan = function () {
+        self.selected_edition(self.currentEdition);
+    };
 
     self.init = function () {
         $('.edition-heading').tooltip();
@@ -55,6 +58,21 @@ var PricingTableEdition = function (data, current_edition) {
     });
     self.col_css = ko.computed(function () {
        return 'col-edition col-edition-' + self.slug();
+    });
+    self.isCommunity = ko.computed(function () {
+        return self.slug() === 'community';
+    });
+    self.isStandard = ko.computed(function () {
+        return self.slug() === 'standard';
+    });
+    self.isPro = ko.computed(function () {
+        return self.slug() === 'pro';
+    });
+    self.isAdvanced = ko.computed(function () {
+        return self.slug() === 'advanced';
+    });
+    self.isEnterprise = ko.computed(function () {
+        return self.slug() === 'enterprise';
     });
 };
 
@@ -92,14 +110,6 @@ var PricingTableColumn = function (data) {
 
     self.edition = ko.observable(data[0]);
     self.content = ko.observable(data[1]);
-
-    self.content_html = ko.computed(function () {
-        if (_.isBoolean(self.content())) {
-            var icon_class = (self.content()) ? 'icon-ok' : 'icon-minus';
-            return '<i class="' + icon_class + '"></i>';
-        }
-        return self.content();
-    });
 
     self.col_css = ko.computed(function () {
         return 'col-edition col-edition-' + self.edition();

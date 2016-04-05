@@ -82,6 +82,7 @@ SQLAlchemy==1.0.9
 alembic==0.6.4
 git+git://github.com/dimagi/pyzxcvbn.git#egg=pyzxcvbn
 django-statici18n==1.1.5
+django-simple-captcha==0.5.1
 httpagentparser==1.7.8
 boto3==1.2.3
 simpleeval==0.8.7

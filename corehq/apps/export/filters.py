@@ -170,9 +170,6 @@ class GroupClosedByFilter(GroupFilter):
     base_filter = ClosedByFilter
 
 
-# TODO: owner/modifier/closer in location filters
-# TODO: Add form filters
-
 class ReceivedOnRangeFilter(RangeExportFilter):
     def to_es_filter(self):
         return submitted(self.gt, self.gte, self.lt, self.lte)

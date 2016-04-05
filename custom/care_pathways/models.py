@@ -66,8 +66,13 @@ def get_practices(case):
 
 
 def get_gender(case):
-    gender =case.get_case_property('farmer_gender')
+    gender = case.get_case_property('farmer_gender')
     return '1' if gender and gender[0].lower() == 'f' else '0'
+
+
+def get_ppt_year(case):
+    ppt_year = case.get_case_property('ppt_year')
+    return ppt_year.split('/')[0]
 
 
 def case_property(property):
@@ -111,13 +116,13 @@ class FarmerRecordFluff(fluff.IndicatorDocument):
     case_status = flat_field(lambda c: c.get_case_property('case_status'))
     group_id = flat_field(lambda c: c.get_case_property('group_id'))
     group_name = flat_field(lambda c: c.get_case_property('group_name'))
-    ppt_year = flat_field(lambda c: c.get_case_property('ppt_year'))
+    ppt_year = flat_field(lambda c: get_ppt_year(c))
     owner_id = flat_field(lambda c: c.get_case_property('owner_id'))
     gender = flat_field(lambda c: get_gender(c))
     group_leadership = flat_field(lambda c: c.get_case_property('farmer_is_leader'))
+    real_or_test = flat_field(lambda c: c.get_case_property('real_or_test'))
     schedule = flat_field(lambda c: (c.get_case_property('farmer_social_category') or '').lower())
     prop = Property()
-
 
 
 GeographyFluffPillow = GeographyFluff.pillow()

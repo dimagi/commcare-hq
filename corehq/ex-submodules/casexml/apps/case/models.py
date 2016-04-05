@@ -252,17 +252,7 @@ class CommCareCase(SafeSaveDocument, IndexHoldingMixIn, ComputedDocumentMixin,
             "server_date_modified": self.server_modified_on,
             # renamed
             "server_date_opened": self.server_opened_on,
-            "properties": dict(self.dynamic_case_properties().items() + {
-                "external_id": self.external_id,
-                "owner_id": self.owner_id,
-                # renamed
-                "case_name": self.name,
-                # renamed
-                "case_type": self.type,
-                # renamed
-                "date_opened": self.opened_on,
-                # all custom properties go here
-            }.items()),
+            "properties": self.get_properties_in_api_format(),
             #reorganized
             "indices": self.get_index_map(),
             "attachments": self.get_attachment_map(),
@@ -280,16 +270,6 @@ class CommCareCase(SafeSaveDocument, IndexHoldingMixIn, ComputedDocumentMixin,
                 'url': self.get_attachment_server_url(att.attachment_key),
                 'mime': att.attachment_from
             }) for name, att in self.case_attachments.items()
-        ])
-
-    @memoized
-    def get_index_map(self, reversed=False):
-        return dict([
-            (index.identifier, {
-                "case_type": index.referenced_type,
-                "case_id": index.referenced_id,
-                "relationship": index.relationship,
-            }) for index in (self.indices if not reversed else self.reverse_indices)
         ])
 
     @classmethod

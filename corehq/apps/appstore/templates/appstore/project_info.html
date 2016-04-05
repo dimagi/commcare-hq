@@ -326,7 +326,7 @@
                     </div>
                     {% endif %}
                 {% else %}
-                    {% url "login" DOMAIN_TYPE as login_url %}
+                    {% url "login" as login_url %}
                     {% url "register_user" %}
                     {% blocktrans %}
                         Please <a href="{{ login_url }}">sign in</a>

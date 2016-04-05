@@ -40,17 +40,6 @@ class EWSGlobalStats(GlobalStats):
     root_name = 'Country'
 
 
-class EWSConfigView(BaseConfigView):
-    config = EWSGhanaConfig
-    urlname = 'ews_config'
-    sync_urlname = 'sync_ewsghana'
-    sync_stock_url = 'ews_sync_stock_data'
-    clear_stock_url = 'ews_clear_stock_data'
-    page_title = ugettext_noop("EWS Ghana")
-    template_name = 'ewsghana/ewsconfig.html'
-    source = 'ewsghana'
-
-
 class InputStockView(BaseDomainView):
     section_name = 'Input stock data'
     section_url = ""
