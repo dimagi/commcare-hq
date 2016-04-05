@@ -51,11 +51,7 @@ class UITab(object):
     @memoized
     def sidebar_items(self):
         if self.dispatcher:
-            context = {
-                'request': self._request,
-                'domain': self.domain,
-            }
-            return self.dispatcher.navigation_sections(context)
+            return self.dispatcher.navigation_sections(request=self._request, domain=self.domain)
         else:
             return []
 

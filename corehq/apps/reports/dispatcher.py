@@ -174,16 +174,12 @@ class ReportDispatcher(View):
         return ['json', 'async', 'filters', 'export', 'mobile', 'email', 'partial', 'print']
 
     @classmethod
-    def navigation_sections(cls, context):
-        request = context.get('request')
-        domain = context.get('domain') or getattr(request, 'domain', None)
+    def navigation_sections(cls, request, domain):
         project = getattr(request, 'project', None)
         couch_user = getattr(request, 'couch_user', None)
-        
         nav_context = []
 
         dispatcher = cls()  # uhoh
-        current_slug = context.get('report',{}).get('slug','')
 
         reports = dispatcher.get_reports(domain)
         for section_name, report_group in reports:
@@ -197,7 +193,6 @@ class ReportDispatcher(View):
                     and report.show_in_navigation(domain=domain, project=project, user=couch_user)
                 ):
                     report_contexts.append({
-                        'is_active': report.slug == current_slug,
                         'url': report.get_url(domain=domain, request=request),
                         'description': _(report.description),
                         'icon': report.icon,

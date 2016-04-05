@@ -48,10 +48,6 @@ class ProjectReportsTab(UITab):
 
     @property
     def sidebar_items(self):
-        context = {
-            'request': self._request,
-            'domain': self.domain,
-        }
 
         tools = [(_("Tools"), [
             {'title': _('My Saved Reports'),
@@ -72,9 +68,10 @@ class ProjectReportsTab(UITab):
                 }]
             )]
 
-        project_reports = ProjectReportDispatcher.navigation_sections(context)
+        project_reports = ProjectReportDispatcher.navigation_sections(
+            request=self._request, domain=self.domain)
         custom_reports = CustomProjectReportDispatcher.navigation_sections(
-            context)
+            request=self._request, domain=self.domain)
 
         return tools + user_reports + project_reports + custom_reports
 
@@ -179,12 +176,9 @@ class ReportsTab(UITab):
         else:
             saved_reports_dropdown = []
 
-        context = {
-            'request': self._request,
-            'domain': self.domain,
-        }
         reports = sidebar_to_dropdown(
-            ProjectReportDispatcher.navigation_sections(context),
+            ProjectReportDispatcher.navigation_sections(
+                request=self._request, domain=self.domain),
             current_url_name=self.url)
         return saved_reports_dropdown + reports
 
@@ -386,11 +380,6 @@ class ProjectDataTab(UITab):
     def sidebar_items(self):
         items = []
 
-        context = {
-            'request': self._request,
-            'domain': self.domain,
-        }
-
         export_data_views = []
         if self.can_only_see_deid_exports:
             from corehq.apps.export.views import DeIdFormExportListView, DownloadFormExportView
@@ -502,7 +491,8 @@ class ProjectDataTab(UITab):
         if self.can_edit_commcare_data:
             from corehq.apps.data_interfaces.dispatcher \
                 import EditDataInterfaceDispatcher
-            edit_section = EditDataInterfaceDispatcher.navigation_sections(context)
+            edit_section = EditDataInterfaceDispatcher.navigation_sections(
+                request=self._request, domain=self.domain)
 
             from corehq.apps.data_interfaces.views \
                 import ArchiveFormView, AutomaticUpdateRuleListView
@@ -522,7 +512,8 @@ class ProjectDataTab(UITab):
 
         if self.can_use_lookup_tables:
             from corehq.apps.fixtures.dispatcher import FixtureInterfaceDispatcher
-            items.extend(FixtureInterfaceDispatcher.navigation_sections(context))
+            items.extend(FixtureInterfaceDispatcher.navigation_sections(
+                request=self._request, domain=self.domain))
 
         return items
 
