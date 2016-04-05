@@ -1,7 +1,3 @@
-[_test1]
-#10.162.36.196
-localhost ansible_connection=local
-
 [celery0]
 10.162.36.233
 
@@ -32,9 +28,6 @@ proxy0
 [webworkers:children]
 django0
 django1
-
-[couchdb:children]
-_test1
 
 [postgresql:children]
 db0
