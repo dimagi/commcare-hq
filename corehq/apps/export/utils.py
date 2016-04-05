@@ -13,12 +13,13 @@ from .const import (
 )
 
 
-def convert_saved_export_to_export_instance(saved_export):
+def convert_saved_export_to_export_instance(domain, saved_export):
     from .models import (
         FormExportDataSchema,
         FormExportInstance,
         CaseExportDataSchema,
         CaseExportInstance,
+        PathNode,
     )
 
     # Build a new schema and instance
@@ -28,14 +29,14 @@ def convert_saved_export_to_export_instance(saved_export):
     if export_type == FORM_EXPORT:
         instance_cls = FormExportInstance
         schema = FormExportDataSchema.generate_schema_from_builds(
-            saved_export.domain,
+            domain,
             saved_export.app_id,
             _extract_xmlns_from_index(saved_export.index),
         )
     elif export_type == CASE_EXPORT:
         instance_cls = CaseExportInstance
         schema = CaseExportDataSchema.generate_schema_from_builds(
-            saved_export.domain,
+            domain,
             _extract_casetype_from_index(saved_export.index),
         )
 
@@ -68,6 +69,18 @@ def convert_saved_export_to_export_instance(saved_export):
             index = column.index
             transform = None  # can be either the deid_transform or the value transform on the ExportItem
 
+            if column.doc_type == 'StockExportColumn':
+                # Handle stock export column separately because it's a messy edge since
+                # it doesn't have a unique index (_id).
+                index, new_column = new_table.get_column(
+                    [PathNode(name='stock')],
+                    'ExportItem',
+                    None,
+                )
+                new_column.selected = True
+                new_column.label = column.display
+                continue
+
             if column.transform:
                 transform = _convert_transform(column.transform)
 
@@ -90,10 +103,18 @@ def convert_saved_export_to_export_instance(saved_export):
             if system_property:
                 column_path, transform = system_property
 
-            index, new_column = new_table.get_column(
-                column_path,
-                _strip_deid_transform(transform),
-            )
+            guess_types = ['ScalarItem', 'MultipleChoiceItem', 'ExportItem']
+            # Since old exports had no concept of item type, we just guess all
+            # the types and see if there are any matches.
+            for guess_type in guess_types:
+                index, new_column = new_table.get_column(
+                    column_path,
+                    guess_type,
+                    _strip_deid_transform(transform),
+                )
+                if new_column:
+                    break
+
             if not new_column:
                 continue
             new_column.label = column.display

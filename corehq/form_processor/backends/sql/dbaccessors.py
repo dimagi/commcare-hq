@@ -707,6 +707,11 @@ class LedgerAccessorSQL(AbstractLedgerAccessor):
             ledger_value.clear_tracked_models()
 
     @staticmethod
+    def get_ledger_values_for_product_ids(product_ids):
+        # TODO: Actually return ledger values for product_ids
+        return []
+
+    @staticmethod
     def get_ledger_transactions_for_case(case_id, entry_id=None, section_id=None):
         return RawQuerySetWrapper(LedgerTransaction.objects.raw(
             "SELECT * FROM get_ledger_transactions_for_case(%s, %s, %s)",
