@@ -248,8 +248,8 @@ hqDefine('cloudcare/js/backbone/cases.js', function () {
                 $("<th />").append('<i class="icon-white"></i> ').append(localize(col.header, self.options.language)).appendTo(theadrow);
             });
             var tbody = $("<tbody />").appendTo(table);
-            _(self.caseList.models).each(function(item){
-                self.appendItem(item);
+            _(self.caseList.models).each(function(caseModel){
+                self.appendItem(caseModel);
             });
 
             return self;
@@ -258,12 +258,12 @@ hqDefine('cloudcare/js/backbone/cases.js', function () {
             var columns = details.get('columns');
             return _.any(_.map(columns, function(d) { return d.field; }), isParentField);
         },
-        appendItem: function (item) {
+        appendItem: function (caseModel) {
             var cloudCare = hqImport('cloudcare/js/backbone/apps.js');
             var self = this;
-            item.set('casedb', self.caseList.casedb);
+            caseModel.set('casedb', self.caseList.casedb);
             var caseView = new cloudCareCases.CaseView({
-                model: item,
+                model: caseModel,
                 columns: self.detailsShort.get("columns"),
                 delegation: self.options.delegation,
                 appConfig: self.options.appConfig,
@@ -271,7 +271,7 @@ hqDefine('cloudcare/js/backbone/cases.js', function () {
             });
             // set the app config on the case if it's there
             // so that other events can access it later
-            item.set("appConfig", self.options.appConfig);
+            caseModel.set("appConfig", self.options.appConfig);
             caseView.on("selected", function () {
                 if (self.selectedCaseView) {
                     self.selectedCaseView.deselect();
@@ -287,7 +287,7 @@ hqDefine('cloudcare/js/backbone/cases.js', function () {
             });
 
             $('table tbody', self.el).append(caseView.render().el);
-            self.caseMap[item.id] = caseView;
+            self.caseMap[caseModel.id] = caseView;
 
         },
         appendAll: function () {
