@@ -113,7 +113,7 @@ hqDefine('style/ko/components/inline_edit.js', function() {
                         attr: {name: name, id: id, rows: rows},\
                         value: value, hasFocus: editing(),\
                         event: {blur: blur},\
-                    "></textarea>\
+                    " style='position:relative;'></textarea>\
                 </div>\
                 <div class="form-group">\
                     <button class="btn btn-success" data-bind="click: save, hasFocus: saveHasFocus, visible: !isSaving()">\
