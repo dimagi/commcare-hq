@@ -37,12 +37,6 @@ class ProjectReportsTab(UITab):
     view = "corehq.apps.reports.views.default"
 
     @property
-    def is_active_shortcircuit(self):
-        # HACK. We need a more overarching way to avoid doing things this way
-        if 'reports/adm' in self.request_path:
-            return False
-
-    @property
     def is_viewable(self):
         return user_can_view_reports(self.project, self.couch_user)
 
@@ -882,23 +876,13 @@ class ProjectUsersTab(UITab):
                                 self.couch_user.can_edit_web_users())
 
     @property
-    def is_active_shortcircuit(self):
-        if not self.domain:
-            return False
-
-    @property
     @memoized
-    def is_active(self):
-        if super(ProjectUsersTab, self).is_active:
-            return True
-
-        if not self.domain:
-            return False
+    def urls(self):
+        urls = super(ProjectUsersTab, self).urls
 
         cloudcare_settings_url = reverse('cloudcare_app_settings',
                                          args=[self.domain])
-        full_path = self.request_path
-        return full_path.startswith(cloudcare_settings_url)
+        return urls + [cloudcare_settings_url]
 
     @property
     def can_view_cloudcare(self):

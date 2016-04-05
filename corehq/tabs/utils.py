@@ -1,3 +1,4 @@
+import urlparse
 from django.core.urlresolvers import reverse
 from django.utils.translation import ugettext as _
 
@@ -139,3 +140,16 @@ def subpages_as_dropdowns(subpages, level, domain=None):
             subpage['title'],
             url=reverse(subpage['urlname'], args=[domain]))
             for subpage in subpages if is_dropdown(subpage)]
+
+
+def path_starts_with_url(path, url):
+    """
+    >>> path_starts_with_url('/a/test/reports/saved/', 'https://www.commcarehq.org/a/test/reports/')
+    True
+    >>> path_starts_with_url('/a/test/reports/saved/', '/a/test/reports/')
+    True
+    >>> path_starts_with_url('/a/test/reports/', '/a/test/reports/saved/')
+    False
+    """
+    url = urlparse.urlparse(url).path
+    return path.startswith(url)

@@ -4,20 +4,25 @@ from django.utils.safestring import mark_safe
 
 import corehq.apps.style.utils as style_utils
 from corehq.tabs import MENU_TABS
+from corehq.tabs.utils import path_starts_with_url
 
 
 register = template.Library()
 
 
 def _get_active_tab(visible_tabs, request_path):
-    for is_active_tab_fn in [
-        lambda t: t.is_active_fast,
-        lambda t: t.is_active,
-        lambda t: t.url and request_path.startswith(t.url),
-    ]:
-        for tab in visible_tabs:
-            if is_active_tab_fn(tab):
-                tab.is_active_tab = True
+
+    matching_tabs = sorted(
+        (tab for tab in visible_tabs
+         if tab.url and path_starts_with_url(request_path, tab.url)), key=lambda tab: tab.url)
+
+    if matching_tabs:
+        return matching_tabs[-1]
+
+    for tab in visible_tabs:
+        if tab.urls:
+            if any(path_starts_with_url(url, tab.request_path) for url in tab.urls) or \
+                    tab._current_url_name in tab.subpage_url_names:
                 return tab
 
 
@@ -40,8 +45,10 @@ class MainMenuNode(template.Node):
 
         # set the context variable in the highest scope so it can be used in
         # other blocks
-        context.dicts[0]['active_tab'] = _get_active_tab(
+        active_tab = context.dicts[0]['active_tab'] = _get_active_tab(
             visible_tabs, request.get_full_path())
+        if active_tab:
+            active_tab.is_active_tab = True
         return mark_safe(render_to_string('tabs/menu_main.html', {
             'tabs': visible_tabs,
         }))
@@ -60,18 +67,13 @@ def format_sidebar(context):
 
     sections = active_tab.sidebar_items if active_tab else None
 
-    def _strip_scheme(uri):
-        return uri.lstrip('https')
-
     if sections:
         # set is_active on active sidebar item by modifying nav by reference
         # and see if the nav needs a subnav for the current contextual item
         for section_title, navs in sections:
             for nav in navs:
-                full_path = request.get_full_path()  # The path of the URL after the domain
-                absolute_uri = request.build_absolute_uri()  # The full uri {scheme}{host}{path}
-                if (full_path.startswith(nav['url']) or
-                   _strip_scheme(absolute_uri).startswith(_strip_scheme(nav['url']))):
+                full_path = request.get_full_path()
+                if path_starts_with_url(full_path, nav['url']):
                     nav['is_active'] = True
                 else:
                     nav['is_active'] = False

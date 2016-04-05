@@ -1,10 +1,9 @@
 from django.core.cache import cache
+from django.core.urlresolvers import reverse
 from django.utils.translation import get_language
-from corehq.tabs.utils import sidebar_to_dropdown
-from corehq.util.view_utils import absolute_reverse
+from corehq.tabs.utils import sidebar_to_dropdown, path_starts_with_url
 from dimagi.utils.decorators.memoized import memoized
 from dimagi.utils.django.cache import make_template_fragment_key
-from dimagi.utils.web import get_url_base
 
 
 class UITab(object):
@@ -72,45 +71,14 @@ class UITab(object):
     def url(self):
         try:
             if self.domain:
-                return absolute_reverse(self.view, args=[self.domain])
+                return reverse(self.view, args=[self.domain])
         except Exception:
             pass
 
         try:
-            return absolute_reverse(self.view)
+            return reverse(self.view)
         except Exception:
             return None
-
-    @property
-    def is_active_shortcircuit(self):
-        return None
-
-    @property
-    def is_active_fast(self):
-        shortcircuit = self.is_active_shortcircuit
-        if shortcircuit is not None:
-            return shortcircuit
-
-        return self.url and self.request_path.startswith(self.url)
-
-    @property
-    @memoized
-    def is_active(self):
-        shortcircuit = self.is_active_shortcircuit
-        if shortcircuit is not None:
-            return shortcircuit
-
-        url_base = get_url_base()
-
-        def url_matches(url, request_path):
-            if url.startswith(url_base):
-                return request_path.startswith(url[len(url_base):])
-            return request_path.startswith(url)
-
-        if self.urls:
-            if (any(url_matches(url, self.request_path) for url in self.urls) or
-                    self._current_url_name in self.subpage_url_names):
-                return True
 
     @property
     @memoized
