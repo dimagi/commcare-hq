@@ -33,7 +33,8 @@ class MALTRow(models.Model):
         AMPLIFIES_NO: NO,
         AMPLIFIES_NOT_SET: NOT_SET
     }
-    threshold = models.PositiveSmallIntegerField(default=15)
+    use_threshold = models.PositiveSmallIntegerField(default=15)
+    experienced_threshold = models.PositiveSmallIntegerField(default=3)
 
     class Meta:
         unique_together = ('month', 'domain_name', 'user_id', 'app_id', 'device_id')

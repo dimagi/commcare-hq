@@ -7,7 +7,7 @@
     {% url "eula_basic" as eula_url %}
     {% include 'hqstyle/partials/load_into_modal.html' with modal_id="eulaModal" load_from=eula_url %}
     <script src="{% static 'zxcvbn/dist/zxcvbn.js' %}"></script>
-    {% if legacy_password %}
+    {% if show_password_feedback %}
     <script src="{% static 'registration/js/password.js' %}"></script>
     {% endif %}
 {% endblock %}
@@ -28,6 +28,9 @@
             {% include "registration/partials/field.html" with field=form.email %}
             {% include "registration/partials/field.html" with field=form.password %}
             {% include "registration/partials/field.html" with field=form.eula_confirmed %}
+            {% if form.captcha %}
+                {% include "registration/partials/field.html" with field=form.captcha %}
+            {% endif %}
             {% if create_domain %}
                 <legend>{% trans "Create your first project" %}</legend>
                 {% include "registration/partials/field.html" with field=form.hr_name %}

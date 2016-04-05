@@ -3,8 +3,6 @@ from celery.task import task, periodic_task
 from custom.ewsghana.alerts.ongoing_non_reporting import OnGoingNonReporting
 from custom.ewsghana.alerts.ongoing_stockouts import OnGoingStockouts, OnGoingStockoutsRMS
 from custom.ewsghana.alerts.urgent_alerts import UrgentNonReporting, UrgentStockoutAlert
-from custom.ewsghana.extensions import ews_location_extension, ews_smsuser_extension, ews_webuser_extension, \
-    ews_product_extension
 from custom.ewsghana.models import EWSGhanaConfig
 from custom.ewsghana.reminders.first_soh_reminder import FirstSOHReminder
 from custom.ewsghana.reminders.rrirv_reminder import RRIRVReminder
@@ -12,15 +10,6 @@ from custom.ewsghana.reminders.second_soh_reminder import SecondSOHReminder
 from custom.ewsghana.reminders.stockout_reminder import StockoutReminder
 from custom.ewsghana.reminders.third_soh_reminder import ThirdSOHReminder
 from custom.ewsghana.reminders.visit_website_reminder import VisitWebsiteReminder
-
-EXTENSIONS = {
-    'product': ews_product_extension,
-    'location_facility': ews_location_extension,
-    'location_district': ews_location_extension,
-    'location_region': ews_location_extension,
-    'webuser': ews_webuser_extension,
-    'smsuser': ews_smsuser_extension
-}
 
 
 # Alert when facilities have not been reported continuously for 3 weeks

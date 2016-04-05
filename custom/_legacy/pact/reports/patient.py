@@ -28,6 +28,8 @@ class PactPatientInfoReport(PactDrilldownReportMixin, PactElasticTabularReportMi
 
     name = "Patient Info"
 
+    is_bootstrap3 = True
+
     @property
     def patient_id(self):
         return self.request.GET.get('patient_id')

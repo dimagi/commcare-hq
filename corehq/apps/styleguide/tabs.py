@@ -1,5 +1,7 @@
 from django.core.urlresolvers import reverse
 from django.utils.translation import ugettext_noop, ugettext as _
+from corehq.tabs.uitab import UITab
+from corehq.tabs.utils import dropdown_dict
 
 from dimagi.utils.decorators.memoized import memoized
 
@@ -7,7 +9,6 @@ from corehq.apps.styleguide.examples.controls_demo.views import (
     DefaultControlsDemoFormsView,
     SelectControlDemoView,
 )
-from corehq.apps.hqwebapp.models import UITab, dropdown_dict
 from corehq.apps.styleguide.examples.simple_crispy_form.views import (
     DefaultSimpleCrispyFormSectionView,
     SimpleCrispyFormView,

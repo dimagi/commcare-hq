@@ -139,6 +139,29 @@ class FormAccessorTestsSQL(TestCase):
             self.assertEqual(1, len(attachments))
             self.assertEqual(expected, {att.name: att.content_type for att in attachments})
 
+    def test_get_form_ids_in_domain(self):
+
+        form1 = create_form_for_test(DOMAIN)
+        form2 = create_form_for_test(DOMAIN)
+        create_form_for_test('bad-domain')
+
+        # basic check
+        form_ids = FormAccessorSQL.get_form_ids_in_domain_by_type(DOMAIN, 'XFormInstance')
+        self.assertEqual(2, len(form_ids))
+        self.assertEqual({form1.form_id, form2.form_id}, set(form_ids))
+
+        # change state of form1
+        FormAccessorSQL.archive_form(form1, 'user1')
+
+        # check filtering by state
+        form_ids = FormAccessorSQL.get_form_ids_in_domain_by_type(DOMAIN, 'XFormArchived')
+        self.assertEqual(1, len(form_ids))
+        self.assertEqual(form1.form_id, form_ids[0])
+
+        form_ids = FormAccessorSQL.get_form_ids_in_domain_by_type(DOMAIN, 'XFormInstance')
+        self.assertEqual(1, len(form_ids))
+        self.assertEqual(form2.form_id, form_ids[0])
+
     def test_get_forms_by_type(self):
         form1 = create_form_for_test(DOMAIN)
         form2 = create_form_for_test(DOMAIN)

@@ -346,6 +346,8 @@ corehq.apps.accounting:
   - corehq.apps.data_interfaces
 corehq.apps.export:
   - corehq.apps.export
+  - corehq.apps.domain
+  - corehq.apps.tzmigration
   - corehq.couchapps
   - corehq.apps.app_manager
   - couchexport
@@ -477,3 +479,5 @@ corehq.apps.api:
   - corehq.apps.tour
   - touchforms.formplayer
   - corehq.apps.smsbillables
+corehq.apps.performance_sms:
+  - corehq.couchapps

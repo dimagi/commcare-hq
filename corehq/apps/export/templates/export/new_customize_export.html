@@ -24,6 +24,7 @@
             );
 
             $('#customize-export').koApplyBindings(customExportView);
+            $('.export-tooltip').tooltip();
         });
     </script>
 {% endblock %}
@@ -70,12 +71,6 @@
             </div>
             <div class="control-group">
                 <div class="controls">
-                    {% if commtrack_domain %}
-                        <label class="checkbox">
-                            <input type="checkbox" id="stock-data-checkbox" data-bind="checked: export_stock" />
-                            {% trans "Export stock data columns" %}
-                        </label>
-                    {% endif %}
                     <label class="checkbox">
                         <input type="checkbox" id="transform-dates-checkbox" data-bind="checked: transform_dates" />
                         {% trans "Automatically convert dates for Excel" %}

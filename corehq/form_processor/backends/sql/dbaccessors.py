@@ -269,6 +269,17 @@ class FormAccessorSQL(AbstractFormAccessor):
         )
 
     @staticmethod
+    def get_form_ids_in_domain_by_type(domain, type_):
+        state = doc_type_to_state[type_]
+        with get_cursor(XFormInstanceSQL) as cursor:
+            cursor.execute(
+                'SELECT form_id from get_form_ids_in_domain_by_type(%s, %s)',
+                [domain, state]
+            )
+            results = fetchall_as_namedtuple(cursor)
+            return [result.form_id for result in results]
+
+    @staticmethod
     def get_form_ids_for_user(domain, user_id):
         return FormAccessorSQL._get_form_ids_for_user(
             domain,
@@ -694,6 +705,11 @@ class LedgerAccessorSQL(AbstractLedgerAccessor):
                     raise LedgerSaveError(e)
 
             ledger_value.clear_tracked_models()
+
+    @staticmethod
+    def get_ledger_values_for_product_ids(product_ids):
+        # TODO: Actually return ledger values for product_ids
+        return []
 
     @staticmethod
     def get_ledger_transactions_for_case(case_id, entry_id=None, section_id=None):

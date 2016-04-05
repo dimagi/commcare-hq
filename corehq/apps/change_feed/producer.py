@@ -34,7 +34,7 @@ def send_to_kafka(producer, topic, change_meta):
         time.sleep(15)
         raise
     except Exception as e:
-        _assert = soft_assert(to='@'.join(['czue', 'dimagi.com']))
+        _assert = soft_assert(notify_admins=True)
         _assert(False, 'Problem sending change to kafka {}: {} ({})'.format(
             change_meta.to_json(), e, type(e)
         ))

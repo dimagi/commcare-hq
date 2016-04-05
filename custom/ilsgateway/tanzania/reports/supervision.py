@@ -1,9 +1,7 @@
 from django.db.models.aggregates import Avg, Max
 from corehq.apps.locations.models import SQLLocation
 from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn
-from corehq.apps.reports.filters.fixtures import AsyncLocationFilter
-from custom.ilsgateway.filters import ProgramFilter, ILSDateFilter
-from corehq.apps.reports.filters.select import YearFilter
+from custom.ilsgateway.filters import ProgramFilter, ILSDateFilter, ILSAsyncLocationFilter
 from custom.ilsgateway.models import GroupSummary, SupplyPointStatusTypes, OrganizationSummary
 from custom.ilsgateway.tanzania import ILSData, DetailsReport
 from custom.ilsgateway.tanzania.reports.utils import make_url, format_percent, link_format, latest_status_or_none
@@ -189,7 +187,7 @@ class SupervisionReport(DetailsReport):
 
     @property
     def fields(self):
-        fields = [AsyncLocationFilter, ILSDateFilter, ProgramFilter]
+        fields = [ILSAsyncLocationFilter, ILSDateFilter, ProgramFilter]
         if self.location and self.location.location_type.name.upper() == 'FACILITY':
             fields = []
         return fields

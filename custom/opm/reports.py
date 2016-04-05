@@ -494,7 +494,7 @@ class BeneficiaryPaymentReport(CaseReportMixin, BaseReport):
             account_number = row[self.column_index('account_number')]
             existing_row = accounts.get(account_number, [])
             accounts[account_number] = existing_row + [row]
-        return map(self.join_rows, accounts.values())
+        return map(lambda x: list(self.join_rows(x)), accounts.values())
 
     def join_rows(self, rows):
         if len(rows) == 1:

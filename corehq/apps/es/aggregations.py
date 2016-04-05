@@ -479,7 +479,7 @@ class NestedAggregationHelper(object):
                     current_counts[key] += bucket.doc_count
 
         counts = defaultdict(lambda: 0)
-        _add_terms(query.run().aggregations, self.terms[0], self.terms[1:], current_counts=counts)
+        _add_terms(query.size(0).run().aggregations, self.terms[0], self.terms[1:], current_counts=counts)
         return self._format_counts(counts)
 
     def _format_counts(self, counts):

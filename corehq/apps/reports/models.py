@@ -783,7 +783,7 @@ class ReportNotification(CachedCouchDocumentMixin, Document):
             for email in emails:
                 send_html_email_async.delay(title, email, body.content,
                                             email_from=settings.DEFAULT_FROM_EMAIL,
-                                            file_attachments=excel_files)
+                                            file_attachments=excel_files, ga_track=True)
 
 
 class AppNotFound(Exception):
