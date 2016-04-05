@@ -16,7 +16,7 @@ class Migration(migrations.Migration):
             fields=[
                 ('domain', models.CharField(max_length=256, serialize=False, primary_key=True, db_index=True)),
                 ('enabled', models.BooleanField(default=False)),
-                ('config', jsonfield.fields.JSONField(default={})),
+                ('_config', jsonfield.fields.JSONField(default={})),
             ],
             options={
             },

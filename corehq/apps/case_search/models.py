@@ -1,7 +1,45 @@
+from dimagi.ext import jsonobject
 from django.db import models
 from jsonfield.fields import JSONField
 
-FUZZY_PROPERTIES = "fuzzy_properties"
+
+class FuzzyProperties(jsonobject.JsonObject):
+    case_type = jsonobject.StringProperty()
+    properties = jsonobject.ListProperty(unicode)
+
+
+class CaseSearchConfigJSON(jsonobject.JsonObject):
+    fuzzy_properties = jsonobject.ListProperty(FuzzyProperties)
+
+    def add_fuzzy_property(self, case_type, property):
+        self.add_fuzzy_properties(case_type, [property])
+
+    def add_fuzzy_properties(self, case_type, properties):
+        for prop in self.fuzzy_properties:
+            if prop.case_type == case_type:
+                prop.properties = list(set(prop.properties) | set(properties))
+                return
+
+        self.fuzzy_properties = self.fuzzy_properties + [
+            FuzzyProperties(case_type=case_type, properties=properties)
+        ]
+
+    def remove_fuzzy_property(self, case_type, property):
+        for prop in self.fuzzy_properties:
+            if prop.case_type == case_type and property in prop.properties:
+                prop.properties = list(set(prop.properties) - set([property]))
+                return
+
+        raise AttributeError("{} is not a fuzzy property for {}".format(property, case_type))
+
+    def get_fuzzy_properties_for_case_type(self, case_type):
+        """
+        Returns a list of search properties to be fuzzy searched
+        """
+        for prop in self.fuzzy_properties:
+            if prop.case_type == case_type:
+                return prop.properties
+        return []
 
 
 class CaseSearchConfig(models.Model):
@@ -19,72 +57,20 @@ class CaseSearchConfig(models.Model):
         primary_key=True
     )
     enabled = models.BooleanField(blank=False, null=False, default=False)
-    config = JSONField(default=dict())
+    _config = JSONField(default=dict())
 
     @classmethod
     def enabled_domains(cls):
         return cls.objects.filter(enabled=True).values_list('domain', flat=True)
 
-    def add_fuzzy_property(self, case_type, property):
-        """
-        Adds a case property to be fuzzy searched with CaseSearchES
+    @property
+    def config(self):
+        return CaseSearchConfigJSON.wrap(self._config)
 
-        Case Properties set as fuzzy will use a fuzzy search flag in ES.
-        Should only really be set for text properties.
-        Fuzzy properties add the following to the config JSON:
-        {
-            "fuzzy_properties":[
-                {
-                    "case_type": "pirates",
-                    "properties": ["name", "age"]
-                },
-                {
-                    "case_type": "swashbucklers",
-                    "properties": ["has_parrot"]
-                }
-            ]
-        }
-        """
-        self.add_fuzzy_properties(case_type, [property])
-
-    def add_fuzzy_properties(self, case_type, properties):
-        """
-        Adds a list of case-properties to be fuzzy searched
-        """
-        fuzzy_params = self.config.get(FUZZY_PROPERTIES, [])
-        for prop in fuzzy_params:
-            if prop['case_type'] == case_type:
-                prop['properties'] = list(set(prop['properties']) | set(properties))
-                return
-
-        fuzzy_params.append({'case_type': case_type, 'properties': properties})
-        self.config[FUZZY_PROPERTIES] = fuzzy_params
-
-    def remove_fuzzy_property(self, case_type, property):
-        """
-        Removes fuzzy search properties
-        """
-        fuzzy_params = self.config.get(FUZZY_PROPERTIES, [])
-        for prop in fuzzy_params:
-            if prop['case_type'] == case_type:
-                if property in prop['properties']:
-                    prop['properties'] = list(set(prop['properties']) - set([property]))
-                    return
-
-        raise AttributeError("{} is not a fuzzy property for {}".format(property, case_type))
-
-    def get_fuzzy_properties_for_case_type(self, case_type):
-        """
-        Returns a list of search properties to be fuzzy searched
-        """
-        try:
-            fuzzy_params = self.config[FUZZY_PROPERTIES]
-            for prop in fuzzy_params:
-                if prop['case_type'] == case_type:
-                    return prop['properties']
-        except KeyError:
-            return []
-        return []
+    @config.setter
+    def config(self, value):
+        assert isinstance(value, CaseSearchConfigJSON)
+        self._config = value.to_json()
 
 
 def case_search_enabled_for_domain(domain):

@@ -27,7 +27,7 @@ class TestCaseSearch(TestCase):
         self.assertEqual(fake_deleter.call_args, call(self.domain))
 
     def test_fuzzy_search_parameters(self):
-        config = CaseSearchConfig(domain=self.domain)
+        config = CaseSearchConfig(domain=self.domain).config
 
         self.assertItemsEqual(config.get_fuzzy_properties_for_case_type('mermaids'), [])
 
