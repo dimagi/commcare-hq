@@ -450,27 +450,10 @@ class SyncRequest(OrderedXmlObject, XmlObject):
     """
     Used to set the URL and query details for synchronous search.
 
-    A node looks like this::
+    See "sync-request" in the `CommCare 2.0 Suite Definition`_ for details.
 
-        <sync-request>
-            <post url="">
-                <data key="" ref="some session based xpath expr"/>
-            </post>
-            <instance/>
-            <command id="...">
-                <display/>
-            </command>
-            <session>
-                <query url="some url" storage-instance="some_easy_to_reference_id">
-                    <data key="some_key" ref="session-based xpath ref"/>
-                    <prompt key="some_key">
-                       <display/>
-                    </prompt>
-                </query>
-                <datum/>
-            </session>
-            <stack/>
-        </sync-request>
+
+    .. _CommCare 2.0 Suite Definition: https://github.com/dimagi/commcare/wiki/Suite20#sync-request
 
     """
     ROOT_NAME = 'sync-request'
