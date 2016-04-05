@@ -170,7 +170,7 @@ class ExportColumn(DocumentSchema):
         is_main_table = table_path == MAIN_TABLE
         constructor_args = {
             "item": item,
-            "label": item.label,
+            "label": item.readable_path,
             "is_advanced": is_case_update or False,
         }
 
