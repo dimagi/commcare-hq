@@ -6,7 +6,7 @@ from django.core.management.base import BaseCommand, CommandError
 
 class Command(BaseCommand):
     args = "domain"
-    help = "Fix location user data for mobile workers."
+    help = "Re-syncs location user data for all mobile workers in the domain."
 
     def process_user(self, user):
         if user.location_id:
@@ -16,7 +16,7 @@ class Command(BaseCommand):
 
     def handle(self, *args, **options):
         if len(args) == 0:
-            raise CommandError("Usage: python manage.py fix_location_user_data %s" % self.args)
+            raise CommandError("Usage: python manage.py resync_location_user_data %s" % self.args)
 
         domain = args[0]
         ids = (
