@@ -196,18 +196,15 @@ class ReportDispatcher(View):
                     and cls.toggles_enabled(report, request)
                     and report.show_in_navigation(domain=domain, project=project, user=couch_user)
                 ):
-                    if hasattr(report, 'override_navigation_list'):
-                        report_contexts.extend(report.override_navigation_list(context))
-                    else:
-                        report_contexts.append({
-                            'is_active': report.slug == current_slug,
-                            'url': report.get_url(domain=domain, request=request),
-                            'description': _(report.description),
-                            'icon': report.icon,
-                            'title': _(report.name),
-                            'subpages': report.get_subpages(),
-                            'show_in_dropdown': report.display_in_dropdown(project=project),
-                        })
+                    report_contexts.append({
+                        'is_active': report.slug == current_slug,
+                        'url': report.get_url(domain=domain, request=request),
+                        'description': _(report.description),
+                        'icon': report.icon,
+                        'title': _(report.name),
+                        'subpages': report.get_subpages(),
+                        'show_in_dropdown': report.display_in_dropdown(project=project),
+                    })
             if report_contexts:
                 if hasattr(section_name, '__call__'):
                     section_name = section_name(project, couch_user)
