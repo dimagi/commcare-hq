@@ -729,6 +729,7 @@ class UserInvitationView(object):
             'create_domain': False,
             'formatted_username': username,
             'domain': self.domain,
+            'invite_to': self.domain,
             'invite_type': _('Project'),
             'hide_password_feedback': getattr(settings, 'ENABLE_DRACONIAN_SECURITY_FEATURES', False),
         }
