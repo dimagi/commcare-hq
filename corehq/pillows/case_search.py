@@ -8,13 +8,11 @@ from corehq.apps.change_feed import topics
 from corehq.apps.change_feed.consumer.feed import KafkaChangeFeed
 from corehq.apps.es import CaseSearchES
 from corehq.elastic import get_es_new
-from corehq.form_processor.models import CommCareCaseSQL
 from corehq.form_processor.utils.general import should_use_sql_backend
 from corehq.pillows.case import CASE_ES_TYPE, CasePillow
 from corehq.pillows.const import CASE_SEARCH_ALIAS
 from corehq.pillows.mappings.case_search_mapping import CASE_SEARCH_INDEX, \
     CASE_SEARCH_MAPPING
-from corehq.util.couch_helpers import paginate_view
 from pillowtop.checkpoints.manager import PillowCheckpoint, \
     PillowCheckpointEventHandler
 from pillowtop.es_utils import ElasticsearchIndexMeta
