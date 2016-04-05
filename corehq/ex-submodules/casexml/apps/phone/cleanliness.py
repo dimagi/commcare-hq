@@ -115,8 +115,8 @@ def set_cleanliness_flags(domain, owner_id, force_full=False):
         # filter out docs where we expect this to be broken (currently just web users)
         if not _is_web_user(owner_id):
             _assert = soft_assert(to=['czue' + '@' + 'dimagi.com'], exponential_backoff=False, fail_if_debug=False)
-            _assert(False, 'Cleanliness flags out of sync for a {} with id {} in domain {}!'.format(
-                owner_doc_type, owner_id, domain
+            _assert(False, 'Cleanliness flags out of sync for user {} in domain {}!'.format(
+                owner_id, domain
             ))
 
     cleanliness_object.last_checked = datetime.utcnow()
