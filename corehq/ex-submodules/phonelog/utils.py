@@ -108,9 +108,7 @@ def _process_user_error_subreport(domain, xform):
             xform_id=xform.form_id,
             i=i,
             app_id=error['app_id'],
-            # beta versions have 'version', but the name should now be
-            # 'app_build'.  Probably fine to remove after June 2016.
-            version_number=int(error.get('version', error['app_build'])),
+            version_number=int(error['version']),
             date=error["@date"],
             server_date=xform.received_on,
             user_id=error['user_id'],
