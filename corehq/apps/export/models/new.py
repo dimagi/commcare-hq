@@ -16,7 +16,7 @@ from corehq.apps.app_manager.dbaccessors import (
     get_latest_built_app_ids_and_versions,
 )
 from corehq.apps.app_manager.models import Application
-from corehq.apps.app_manager.util import get_case_properties
+from corehq.apps.app_manager.util import get_case_properties, ParentCasePropertyBuilder
 from corehq.apps.domain.models import Domain
 from corehq.apps.products.models import Product
 from corehq.apps.reports.display import xmlns_to_name
@@ -970,27 +970,30 @@ class CaseExportDataSchema(ExportDataSchema):
                 [case_type],
                 include_parent_properties=False
             )
-            case_schema = CaseExportDataSchema._generate_schema_from_case_property_mapping(
+            parent_types, _ = (
+                ParentCasePropertyBuilder(app)
+                .get_parent_types_and_contributed_properties(case_type)
+            )
+            case_schemas = []
+            case_schemas.append(CaseExportDataSchema._generate_schema_from_case_property_mapping(
                 case_property_mapping,
                 app.copy_of,
                 app.version,
-            )
-            case_history_schema = CaseExportDataSchema._generate_schema_for_case_history(
-                case_property_mapping,
-                app.copy_of,
-                app.version,
-            )
-            case_parent_schema = CaseExportDataSchema._generate_schema_for_parent_case(
-                app.copy_of,
-                app.version,
-            )
+            ))
+            if any(map(lambda relationship_tuple: relationship_tuple[1] == 'parent', parent_types)):
+                case_schemas.append(CaseExportDataSchema._generate_schema_for_parent_case(
+                    app.copy_of,
+                    app.version,
+                ))
 
-            current_case_schema = CaseExportDataSchema._merge_schemas(
-                case_schema,
-                case_history_schema,
-                case_parent_schema,
-                current_case_schema,
-            )
+            case_schemas.append(CaseExportDataSchema._generate_schema_for_case_history(
+                case_property_mapping,
+                app.copy_of,
+                app.version,
+            ))
+            case_schemas.append(current_case_schema)
+
+            current_case_schema = CaseExportDataSchema._merge_schemas(*case_schemas)
 
             current_case_schema.record_update(app.copy_of, app.version)
 
