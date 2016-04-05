@@ -219,7 +219,7 @@
                 <div class="form-group">
                     <label class="col-sm-2 control-label">{% trans "Module Name" %}</label>
                     <div class="col-sm-4">
-                        {% input_trans module.name langs cssClass='form-control' %}
+                        {% inline_edit_trans module.name langs %}
                     </div>
                 </div>
                 {% block settings_fields %}

@@ -49,14 +49,37 @@ def html_name(name):
 
 
 @register.simple_tag
-def input_trans(name, langs=None, input_name='name', cssClass=''):
+def input_trans(name, langs=None, input_name='name'):
     if langs is None:
         langs = ["default"]
     template = '''
-        <input type="text" name="{}" class="{}" value="%(value)s"
+        <input type="text" name="{}" class="form-control" value="%(value)s"
                placeholder="%(placeholder)s"
                style="position: relative;" />
-    '''.format(input_name, cssClass)
+    '''.format(input_name)
+    for lang in langs:
+        if lang in name:
+            if langs and lang == langs[0]:
+                return template % {"value": name[lang], "placeholder": ""}
+            else:
+                return template % {"value": "", "placeholder": name[lang]} + LANG_BUTTON % {
+                    "lang": lang,
+                    "extra_class": " langcode-input",
+                    "extra_style": "position: absolute; top: 6px; right: 15px"
+                }
+    default = "Untitled"
+    if 'en' in name:
+        default = name['en']
+    return mark_safe(template % {"value": "", "placeholder": default})
+
+
+@register.simple_tag
+def inline_edit_trans(name, langs=None):
+    if langs is None:
+        langs = ["default"]
+    template = '''
+        <inline-edit params="name: 'name', value: '%(value)s, placeholder: '%(placeholder)s', rows: 1"></inline-edit>
+    '''
     for lang in langs:
         if lang in name:
             if langs and lang == langs[0]:
