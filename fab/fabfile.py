@@ -597,11 +597,10 @@ def hotfix_deploy():
     except Exception:
         execute(mail_admins, "Deploy failed", "You had better check the logs.")
         # hopefully bring the server back to life
-        silent_services_restart()
+        silent_services_restart(use_current_release=True)
         raise
     else:
-        execute(services_restart)
-        silent_services_restart()
+        silent_services_restart(use_current_release=True)
         execute(record_successful_deploy, deploy_metadata)
 
 
