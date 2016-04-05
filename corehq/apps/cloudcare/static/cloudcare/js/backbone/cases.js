@@ -1,3 +1,4 @@
+/* globals moment */
 hqDefine('cloudcare/js/backbone/cases.js', function () {
     var Selectable = hqImport('cloudcare/js/backbone/shared.js').Selectable;
     var localize = hqImport('cloudcare/js/util.js').localize;
