@@ -46,7 +46,6 @@ trunk: master
 name: autostaging
 branches:
   - b3-reports-home+TABS
-  - TABS  # Danny 3/31
   - delete-cloudcare-cloudcare-apps  # Danny 3/29
   - calculatedIcons # Sravan 3/2
   - vellum-staging # J$ 11/13
@@ -68,7 +67,6 @@ branches:
   - certificate-validation # Cal 3/10
   - login-b3 # Jenny 3/21
   - knockout-3-3 # Jenny 3/30
-  - fixtures-mobile-fix # GC 3/31
 submodules:
   submodules/touchforms-src:
     # let's leave this here even when empty
