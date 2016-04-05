@@ -34,7 +34,7 @@ def send_HTML_email(subject, recipient, html_content, text_content=None,
                          "\n {}".format(html_content)
             )
 
-    if ga_track:
+    if ga_track and settings.ANALYTICS_IDS.get('GOOGLE_ANALYTICS_API_ID'):
         url_subject = quote(subject)
         url = "https://www.google-analytics.com/collect?v=1&tid={ga_tid}&cid={ga_cid}&dt={subject}&t=event&ec=email" \
             .format(ga_tid=settings.ANALYTICS_IDS.get('GOOGLE_ANALYTICS_API_ID'),
@@ -84,5 +84,5 @@ def send_HTML_email(subject, recipient, html_content, text_content=None,
         )
         error_msg.send()
 
-    if ga_track:
+    if ga_track and settings.ANALYTICS_IDS.get('GOOGLE_ANALYTICS_API_ID'):
         requests.get(url+"&ea=send")
