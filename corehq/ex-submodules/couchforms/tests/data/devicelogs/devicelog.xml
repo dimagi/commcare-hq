@@ -59,7 +59,7 @@
           XPath evaluation: you messed up some types or something
       </msg>
       <session>frame: (COMMAND_ID m2) \ (COMMAND_ID m2-f1)</session>
-      <version>604</version>
+      <app_build>604</app_build>
       <app_id>36c0bdd028d14a52cbff95bb1bfd0962</app_id>
       <expr>/data/fake</expr>
     </user_error>
