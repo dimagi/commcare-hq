@@ -107,13 +107,40 @@ hqDefine('cloudcare/js/backbone/cases.js', function () {
     });
 
     cloudCareCases.caseViewMixin = {
-        lookupField: function (field) {
-            var parentCase;
+        lookupField: function (detailColumn) {
+            var parentCase,
+                field = detailColumn.field,
+                fieldValue;
             if (isParentField(field) && this.model.get('casedb')) {
                 parentCase = this.model.get('casedb').get(this.model.get('indices').parent.case_id);
-                return parentCase.getProperty(field.slice('parent/'.length));
+                fieldValue = parentCase.getProperty(field.slice('parent/'.length));
+            } else {
+                fieldValue = this.model.getProperty(field);
             }
-            return this.model.getProperty(field);
+            return this.formatDetailField(fieldValue, detailColumn);
+        },
+        formatDetailField: function(fieldValue, detailColumn) {
+            var agoInterval = detailColumn.time_ago_interval,
+                // See corehq/apps/app_manager/models#TimeAgoInterval
+                agoIntervalMap = {
+                    '1': 'days',
+                    '7': 'weeks',
+                    '30.4375': 'months',
+                    '365.25': 'years',
+                },
+                agoUnit; // The unit for time-ago (days, months, etc)
+
+            if (!fieldValue) return fieldValue;
+
+            if (detailColumn.format === 'time-ago') {
+                agoUnit = agoIntervalMap[Math.abs(agoInterval)];
+                if (agoInterval < 0) {
+                    fieldValue = moment(fieldValue).diff(new Date(), agoUnit) || 0;
+                } else {
+                    fieldValue = moment(new Date()).diff(fieldValue, agoUnit) || 0;
+                }
+            }
+            return fieldValue;
         },
         delegationFormName: function () {
             var self = this;
@@ -143,7 +170,7 @@ hqDefine('cloudcare/js/backbone/cases.js', function () {
         },
         makeTd: function (col) {
             var self = this,
-                text = self.lookupField(col.field),
+                text = self.lookupField(col),
                 td = $("<td/>");
             if (text) {
                 return td.text(text);
