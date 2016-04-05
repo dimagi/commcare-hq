@@ -2,6 +2,7 @@ from smtplib import SMTPSenderRefused
 import uuid
 import requests
 import re
+from urllib import quote
 from django.conf import settings
 from django.core.mail import get_connection
 from django.core.mail.message import EmailMultiAlternatives
@@ -34,9 +35,11 @@ def send_HTML_email(subject, recipient, html_content, text_content=None,
             )
 
     if ga_track:
-        url = "https://www.google-analytics.com/collect?v=1&tid={ga_tid}&cid={ga_cid}&t=event&ec=email".format(
-            ga_tid=settings.ANALYTICS_IDS['GOOGLE_ANALYTICS_ID'],
-            ga_cid=uuid.uuid4().hex)
+        url_subject = quote(subject)
+        url = "https://www.google-analytics.com/collect?v=1&tid={ga_tid}&cid={ga_cid}&dt={subject}&t=event&ec=email" \
+            .format(ga_tid=settings.ANALYTICS_IDS['GOOGLE_ANALYTICS_ID'],
+                    ga_cid=uuid.uuid4().hex,
+                    subject=url_subject)
         new_content = '<img src="{url}&ea=open"/>\n</body>'.format(url=url)
         html_content, count = re.subn(r'(.*)</body>', r'\1'+new_content, html_content)
         assert count != 0, 'Attempted to add tracking to HTML Email with no closing body tag'
