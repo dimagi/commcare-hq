@@ -199,6 +199,18 @@ class LedgerAccessorCouch(AbstractLedgerAccessor):
 
             yield db_tx
 
+    @staticmethod
+    def get_ledger_values_for_case(case_id):
+        from corehq.apps.commtrack.models import StockState
+
+        return StockState.objects.filter(case_id=case_id)
+
+    @staticmethod
+    def get_ledger_values_for_product_ids(product_ids):
+        from corehq.apps.commtrack.models import StockState
+
+        return StockState.objects.filter(product_id__in=product_ids)
+
 
 def _get_attachment_content(doc_class, doc_id, attachment_id):
     try:
