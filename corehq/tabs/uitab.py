@@ -36,6 +36,10 @@ class UITab(object):
         self._current_url_name = current_url_name
 
     @property
+    def request_path(self):
+        return self._request.get_full_path()
+
+    @property
     def dropdown_items(self):
         # todo: add default implementation which looks at sidebar_items and
         # sees which ones have is_dropdown_visible or something like that.
@@ -102,8 +106,7 @@ class UITab(object):
         if shortcircuit is not None:
             return shortcircuit
 
-        request_path = self._request.get_full_path()
-        return self.url and request_path.startswith(self.url)
+        return self.url and self.request_path.startswith(self.url)
 
     @property
     @memoized
@@ -112,7 +115,6 @@ class UITab(object):
         if shortcircuit is not None:
             return shortcircuit
 
-        request_path = self._request.get_full_path()
         url_base = get_url_base()
 
         def url_matches(url, request_path):
@@ -121,7 +123,7 @@ class UITab(object):
             return request_path.startswith(url)
 
         if self.urls:
-            if (any(url_matches(url, request_path) for url in self.urls) or
+            if (any(url_matches(url, self.request_path) for url in self.urls) or
                     self._current_url_name in self.subpage_url_names):
                 return True
         elif self.subtabs and any(st.is_active for st in self.subtabs):

@@ -29,9 +29,8 @@ class BaseSGTab(UITab):
 
     @property
     def is_viewable(self):
-        full_path = self._request.get_full_path()
         docs_url = reverse('sg_examples_default')
-        return full_path.startswith(docs_url)
+        return self.request_path.startswith(docs_url)
 
 
 class SimpleCrispyFormSGExample(BaseSGTab):

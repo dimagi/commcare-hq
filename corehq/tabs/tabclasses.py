@@ -39,7 +39,7 @@ class ProjectReportsTab(UITab):
     @property
     def is_active_shortcircuit(self):
         # HACK. We need a more overarching way to avoid doing things this way
-        if 'reports/adm' in self._request.get_full_path():
+        if 'reports/adm' in self.request_path:
             return False
 
     @property
@@ -907,7 +907,7 @@ class ProjectUsersTab(UITab):
 
         cloudcare_settings_url = reverse('cloudcare_app_settings',
                                          args=[self.domain])
-        full_path = self._request.get_full_path()
+        full_path = self.request_path
         return full_path.startswith(cloudcare_settings_url)
 
     @property
