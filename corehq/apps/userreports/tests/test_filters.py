@@ -205,6 +205,51 @@ class BooleanExpressionFilterTest(SimpleTestCase):
         self.assertFalse(filter_with_date({'visit_date': '2015-05-04'}))
         self.assertTrue(filter_with_date({'visit_date': '2015-05-06'}))
 
+    def test_ismailas_bug(self):
+        filter = FilterFactory.from_spec({
+            "type": "and",
+            "filters": [
+                {
+                    "operator": "eq",
+                    "type": "boolean_expression",
+                    "expression": {
+                        "datatype": None,
+                        "type": "property_name",
+                        "property_name": "type"
+                    },
+                    "property_value": "imci_visit"
+                },
+                {
+                    "operator": "in",
+                    "expression": {
+                        "datatype": None,
+                        "type": "property_name",
+                        "property_name": "mobile_username"
+                    },
+                    "type": "boolean_expression",
+                    "property_value": [
+                        "rectest"
+                    ]
+                },
+                {
+                    "operator": "gt",
+                    "expression": {
+                        "datatype": "date",
+                        "type": "property_name",
+                        "property_name": "visit_date"
+                    },
+                    "type": "boolean_expression",
+                    "property_value": "2016-01-01"
+                }
+            ]
+        })
+        doc = {
+            "mobile_username": "rectest",
+            "visit_date": "2016-03-25",
+            "type": "imci_visit",
+        }
+        self.assertTrue(filter(doc))
+
     def test_literal_in_expression(self):
         filter_with_literal = FilterFactory.from_spec({
             'type': 'boolean_expression',
