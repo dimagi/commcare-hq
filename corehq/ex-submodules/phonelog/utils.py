@@ -103,12 +103,15 @@ def _process_user_error_subreport(domain, xform):
     errors = _get_logs(xform.form_data, 'user_error_subreport', 'user_error')
     to_save = []
     for i, error in enumerate(errors):
+        # beta versions have 'version', but the name should now be 'app_build'.
+        # Probably fine to remove after June 2016.
+        version = error['app_build'] if 'app_build' in error else error['version']
         entry = UserErrorEntry(
             domain=domain,
             xform_id=xform.form_id,
             i=i,
             app_id=error['app_id'],
-            version_number=int(error['version']),
+            version_number=int(version),
             date=error["@date"],
             server_date=xform.received_on,
             user_id=error['user_id'],
