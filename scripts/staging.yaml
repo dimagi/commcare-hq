@@ -45,7 +45,6 @@
 trunk: master
 name: autostaging
 branches:
-  - b3-reports-home+TABS
   - delete-cloudcare-cloudcare-apps  # Danny 3/29
   - calculatedIcons # Sravan 3/2
   - vellum-staging # J$ 11/13
