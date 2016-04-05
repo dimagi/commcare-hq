@@ -75,23 +75,29 @@ def save_xform(app, form, xml):
 CASE_TYPE_REGEX = r'^[\w-]+$'
 _case_type_regex = re.compile(CASE_TYPE_REGEX)
 
-def is_valid_case_type(case_type):
-    """
-    >>> is_valid_case_type('foo')
-    True
-    >>> is_valid_case_type('foo-bar')
-    True
-    >>> is_valid_case_type('foo bar')
-    False
-    >>> is_valid_case_type('')
-    False
-    >>> is_valid_case_type(None)
-    False
-    >>> is_valid_case_type('commcare-user')
-    False
 
+def is_valid_case_type(case_type, module):
     """
-    return bool(_case_type_regex.match(case_type or '')) and case_type != USERCASE_TYPE
+    >>> from corehq.apps.app_manager.models import Module, AdvancedModule
+    >>> is_valid_case_type('foo', Module())
+    True
+    >>> is_valid_case_type('foo-bar', Module())
+    True
+    >>> is_valid_case_type('foo bar', Module())
+    False
+    >>> is_valid_case_type('', Module())
+    False
+    >>> is_valid_case_type(None, Module())
+    False
+    >>> is_valid_case_type('commcare-user', Module())
+    False
+    >>> is_valid_case_type('commcare-user', AdvancedModule())
+    True
+    """
+    from corehq.apps.app_manager.models import AdvancedModule
+    matches_regex = bool(_case_type_regex.match(case_type or ''))
+    prevent_usercase_type = (case_type != USERCASE_TYPE or isinstance(module, AdvancedModule))
+    return matches_regex and prevent_usercase_type
 
 
 class ParentCasePropertyBuilder(object):

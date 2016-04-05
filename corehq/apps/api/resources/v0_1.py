@@ -207,27 +207,28 @@ class CommCareUserResource(UserResource):
                 .domain(bundle.request.domain)
                 .user_id([bundle.obj._id])
             )
+
             extras['submitted_last_30'] = (form_es_base
                 .submitted(gte=now - datetime.timedelta(days=30),
                            lte=now)
-                .run()
+                .size(0).run()
             ).total
             extras['completed_last_30'] = (form_es_base
                 .completed(gte=now - datetime.timedelta(days=30),
                            lte=now)
-                .run()
+                .size(0).run()
             ).total
             first_of_this_month = datetime.datetime(now.year, now.month, 1)
             first_of_last_month = (first_of_this_month - datetime.timedelta(days=1)).replace(day=1)
             extras['submitted_last_month'] = (form_es_base
                 .submitted(gte=first_of_last_month,
                            lte=first_of_this_month)
-                .run()
+                .size(0).run()
             ).total
             extras['completed_last_month'] = (form_es_base
                 .completed(gte=first_of_last_month,
                            lte=first_of_this_month)
-                .run()
+                .size(0).run()
             ).total
             bundle.data['extras'] = extras
         return super(UserResource, self).dehydrate(bundle)

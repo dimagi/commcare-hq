@@ -158,6 +158,8 @@ class CareSqlData(SqlData):
             filters.append(EQ('group_leadership', 'group_leadership'))
         if 'cbt_name' in self.config and self.config['cbt_name']:
             filters.append(EQ('owner_id', 'cbt_name'))
+        if 'real_or_test' in self.config and self.config['real_or_test']:
+            filters.append(EQ('real_or_test', 'real_or_test'))
         for column_name in ['domains', 'practices', 'schedule']:
             if column_name in self.config and self.config[column_name] and self.config[column_name] != ('0',):
                 filters.append(IN(column_name, get_INFilter_bindparams(column_name, self.config[column_name])))

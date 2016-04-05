@@ -1,14 +1,13 @@
 from django.conf.urls import patterns, url, include
 from corehq.apps.api.urls import CommCareHqApi
 from custom.ewsghana.resources.v0_1 import EWSLocationResource
-from custom.ewsghana.views import EWSConfigView, EWSGlobalStats, InputStockView, EWSUserExtensionView,\
+from custom.ewsghana.views import EWSGlobalStats, InputStockView, EWSUserExtensionView,\
     DashboardPageView
 
 hq_api = CommCareHqApi(api_name='v0.3')
 hq_api.register(EWSLocationResource())
 
 urlpatterns = patterns('custom.ewsghana.views',
-    url(r'^ews_config/$', EWSConfigView.as_view(), name=EWSConfigView.urlname),
     url(r'^global_stats/$', EWSGlobalStats.as_view(), name=EWSGlobalStats.urlname),
     url(r'^configure_in_charge/$', 'configure_in_charge', name='configure_in_charge'),
     url(r'^inventory_managment/$', 'inventory_management', name='inventory_managment'),

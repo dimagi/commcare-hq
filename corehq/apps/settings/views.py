@@ -1,6 +1,5 @@
 import re
 from django.views.decorators.debug import sensitive_post_parameters
-from corehq.apps.hqwebapp.models import MySettingsTab
 from corehq.apps.settings.forms import (
     HQPasswordChangeForm, HQPhoneNumberMethodForm, HQDeviceValidationForm,
     HQTOTPDeviceForm, HQPhoneNumberForm, HQTwoFactorMethodForm, HQEmptyForm
@@ -9,6 +8,7 @@ from corehq.apps.style.decorators import use_bootstrap3, use_select2
 from corehq.apps.users.forms import AddPhoneNumberForm
 from django.contrib import messages
 from django.views.decorators.http import require_POST
+from corehq.tabs.tabclasses import MySettingsTab
 import langcodes
 
 from django.http import HttpResponseRedirect, HttpResponse

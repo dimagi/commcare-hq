@@ -1,5 +1,7 @@
 {% extends "style/bootstrap2/centered.html" %}
-{% block title %}Login to {{ SITE_NAME }}{% endblock title %}
+{% load i18n %}
+
+{% block title %}{% trans "Login to CommCare HQ" %}{% endblock title %}
 
 {% block centered-content %}
     {% block login-content %}
