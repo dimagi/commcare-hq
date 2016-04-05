@@ -7,7 +7,7 @@ _.each(components, function(moduleName, elementName) {
 });
 
 $(document).ready(function() {
-    _.keys(components, function(elementName) {
-        $(elementName).koApplyBindings();
+    _.each(_.keys(components), function(elementName) {
+        _.each($(elementName), function(el) { $(el).koApplyBindings() });
     });
 });
