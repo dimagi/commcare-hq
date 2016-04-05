@@ -1,6 +1,7 @@
 {% extends "cloudcare/base.html" %}
 {% load i18n %}
 {% load hq_shared_tags %}
+{% load compress %}
 
 {% block title %}
     {% if request.couch_user.is_web_user %}
@@ -20,6 +21,7 @@
 {% endblock %}
 
 {% block stylesheets %}
+    {% compress css %}
     <link rel="stylesheet" href="{% static 'nprogress/nprogress.css' %}">
     <link rel="stylesheet" href="{% static 'jquery-ui/themes/base/jquery-ui.min.css' %}">
     <link type="text/css"
@@ -29,9 +31,11 @@
     <link rel="stylesheet" href="{% static 'formplayer/style/webforms.css' %}">
     <link rel="stylesheet" href="{% static 'cloudcare/css/cloudcare.css' %}">
     <link rel="stylesheet" href="{% static 'codemirror/lib/codemirror.css' %}" />
+    {% endcompress %}
 {% endblock %}
 
 {% block js %} {{ block.super }}
+    {% compress js %}
     <script src="{% static 'hqwebapp/js/lib/jquery.textchange.min.js' %}"></script>
     <script src="{% static 'nprogress/nprogress.js' %}"></script>
 
@@ -56,6 +60,7 @@
 
     <script src="{% static 'codemirror/lib/codemirror.js' %}"></script>
     <script src="{% static 'codemirror/mode/xml/xml.js' %}"></script>
+    {% endcompress %}
 {% endblock %}
 
 {% block js-inline %} {{ block.super }}
