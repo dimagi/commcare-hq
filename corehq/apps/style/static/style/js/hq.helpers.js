@@ -136,3 +136,15 @@ $.fn.koApplyBindings = function (context) {
     }
     return ko.applyBindings(context, this.get(0));
 };
+
+var myobj = {
+    'test': 3,
+    'foo': 'bar'
+};
+
+var myobj2 = {
+    'test': 3,
+    'foo': 'bar',
+};
+
+var myobj3 = {'test': 3, 'foo': 'bar',};
