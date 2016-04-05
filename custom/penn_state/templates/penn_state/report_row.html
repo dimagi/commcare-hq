@@ -2,7 +2,7 @@
 
 <div class="row">
 	{% for day, amount in report.days %}
-	<div class="span2">
+	<div class="col-sm-2">
 		<h4>{{ day }}</h4>
 		{% if amount == -1 %}
 			<img src="{% static "penn_state/img/off_day.png" %}"/>
@@ -24,7 +24,7 @@
 		{% endif %}{% endif %}
 	</div>
 	{% endfor %}
-	<div class="span2">
+	<div class="col-sm-2">
 		<h4>Days Used</h4>
 		<div class="week-total">
 			{{ report.days_used }}/{{ report.days_on }}
