@@ -37,6 +37,8 @@ class ASHAReports(GenericTabularReport, NRHMDatespanMixin, CustomProjectReport, 
     extra_context_providers = [total_rows]
     no_value = '--'
 
+    is_bootstrap3 = True
+
     @property
     @memoized
     def rendered_report_title(self):
