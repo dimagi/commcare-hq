@@ -415,11 +415,10 @@ class QueryData(XmlObject):
     ref = XPathField('@ref')
 
 
-class QueryPrompt(XmlObject):
+class QueryPrompt(DisplayNode):
     ROOT_NAME = 'prompt'
 
     key = StringField('@key')
-    display = StringField('display')
 
 
 class SyncRequestPost(XmlObject):

@@ -1,16 +1,31 @@
 <partial>
   <sync-request>
     <post url="https://www.example.com/a/test_domain/phone/claim-case/">
-      <data key="case_id" ref="session/datum/case[@id]"/>
-      <data key="case_type" ref="session/datum/case/type"/>
+      <data key="case_id" ref="session/datum[0]/case[@id]"/>
+      <data key="case_type" ref="session/datum[0]/case/type"/>
     </post>
+    <command id="case_lists.m0.or_something">
+      <display>
+        <text>
+          <locale id="case_search.m0"/>
+        </text>
+      </display>
+    </command>
     <session>
       <query url="https://www.example.com/a/test_domain/phone/search/">
         <prompt key="name">
-          <display>Name</display>
+          <display>
+            <text>
+              <locale id="search_property.m0.name"/>
+            </text>
+          </display>
         </prompt>
         <prompt key="dob">
-          <display>Date of birth</display>
+          <display>
+            <text>
+              <locale id="search_property.m0.dob"/>
+            </text>
+          </display>
         </prompt>
         <data key="case_type" ref="'case'"/>
       </query>

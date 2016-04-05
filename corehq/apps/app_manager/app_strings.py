@@ -108,6 +108,12 @@ def _create_custom_app_strings(app, lang, for_default=False):
                 if audio:
                     yield id_strings.case_list_audio_locale(module), audio
 
+        if module.search_config:
+            yield id_strings.case_search_locale(module), 'Search All Cases'
+            # alternate label, icon and audio not yet available
+            for config in module.search_config:
+                yield id_strings.search_property_locale(module, config.property), config.label
+
         if hasattr(module, 'referral_list'):
             if module.referral_list.show:
                 yield id_strings.referral_list_locale(module), trans(module.referral_list.label)
