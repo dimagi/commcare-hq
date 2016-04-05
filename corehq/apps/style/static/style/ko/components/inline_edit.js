@@ -106,23 +106,22 @@ hqDefine('style/ko/components/inline_edit.js', function() {
         template: '<div class="ko-inline-edit" data-bind="css: {inline: inline, \'has-error\': hasError()}">\
             <div class="read-only" data-bind="visible: !editing() && !hasError(), click: edit">\
                 <i class="fa fa-pencil pull-right"></i>\
-                <span class="btn btn-xs btn-info btn-langcode-preprocessed langcode-input pull-right"\
-                      data-bind="text: lang, visible: lang"\
+                <span class="btn btn-xs btn-info btn-langcode-preprocessed pull-right"\
+                      data-bind="text: lang, visible: !value()"\
                 ></span>\
                 <span class="text" data-bind="text: value"></span>\
                 <span class="placeholder" data-bind="text: placeholder, visible: !value()"></span>\
             </div>\
             <div class="read-write" data-bind="visible: editing() || hasError(), css: {\'form-inline\': inline}">\
                 <div class="form-group">\
-                    <textarea class="form-control" data-bind="\
+                    <textarea class="form-control langcode-container" data-bind="\
                         attr: {name: name, id: id, placeholder: placeholder, rows: rows},\
                         value: value,\
                         hasFocus: editing(),\
                         event: {blur: blur},\
-                    " style="position:relative;"></textarea>\
+                    "></textarea>\
                     <span class="btn btn-xs btn-info btn-langcode-preprocessed langcode-input pull-right"\
-                          data-bind="text: lang, visible: lang"\
-                          style="position: absolute; top: 6px; right: 15px;"\
+                          data-bind="text: lang, visible: !value()"\
                     ></span>\
                 </div>\
                 <div class="form-group">\
