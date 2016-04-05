@@ -115,9 +115,9 @@
         "unique_id": "d94ad23a98ddd2e9c36a9dc73bb58bac"
     },
     "CaseSearchPillow": {
-        "advertised_name": "corehq.pillows.case_search.CaseSearchPillow.3723f7f242ae6a915ceabf428d2aae5e.testhq",
+        "advertised_name": "corehq.pillows.case_search.CaseSearchPillow.37eb28449299eb76faf589cba4eb2121.testhq",
         "change_feed_type": "CouchChangeFeed",
-        "checkpoint_id": "corehq.pillows.case_search.CaseSearchPillow.3723f7f242ae6a915ceabf428d2aae5e.testhq",
+        "checkpoint_id": "corehq.pillows.case_search.CaseSearchPillow.37eb28449299eb76faf589cba4eb2121.testhq",
         "couch_filter": "case/casedocs",
         "couchdb_type": "Database",
         "couchdb_uri": "http://{COUCH_SERVER_ROOT}/test_commcarehq",
@@ -129,7 +129,7 @@
         "full_class_name": "corehq.pillows.case_search.CaseSearchPillow",
         "include_docs": true,
         "name": "CaseSearchPillow",
-        "unique_id": "3723f7f242ae6a915ceabf428d2aae5e"
+        "unique_id": "37eb28449299eb76faf589cba4eb2121"
     },
     "CaseSearchToElasticsearchPillow": {
         "advertised_name": "CaseSearchToElasticsearchPillow",
