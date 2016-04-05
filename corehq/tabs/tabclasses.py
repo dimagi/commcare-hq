@@ -26,7 +26,7 @@ from corehq.apps.users.decorators import get_permission_name
 from corehq.apps.users.models import Permissions
 from corehq.apps.users.permissions import FORM_EXPORT_PERMISSION
 from corehq.tabs.uitab import UITab
-from corehq.tabs.utils import dropdown_dict, sidebar_to_dropdown
+from corehq.tabs.utils import dropdown_dict, sidebar_to_dropdown, path_starts_with_url
 from corehq.toggles import OPENLMIS
 from dimagi.utils.decorators.memoized import memoized
 from django_prbac.utils import has_privilege
@@ -1337,7 +1337,8 @@ class SMSAdminTab(UITab):
 
     @property
     def is_viewable(self):
-        return self.couch_user and self.couch_user.is_superuser
+        return path_starts_with_url(self.request_path, self.url) and \
+            self.couch_user and self.couch_user.is_superuser
 
 
 class FeatureFlagsTab(UITab):

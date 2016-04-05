@@ -2,7 +2,7 @@ from corehq.apps.styleguide.tabs import SGExampleTab, SimpleCrispyFormSGExample,
     ControlsDemoSGExample
 from corehq.tabs.tabclasses import DashboardTab, ProjectReportsTab, ProjectInfoTab, SetupTab, \
     ProjectDataTab, ApplicationsTab, CloudcareTab, MessagingTab, ProjectUsersTab, \
-    AdminTab, IndicatorAdminTab
+    AdminTab, IndicatorAdminTab, SMSAdminTab
 
 MENU_TABS = (
     DashboardTab,
@@ -15,7 +15,9 @@ MENU_TABS = (
     ApplicationsTab,
     CloudcareTab,
     MessagingTab,
+    # Admin
     AdminTab,
+    SMSAdminTab,
     # Styleguide
     SGExampleTab,
     SimpleCrispyFormSGExample,
