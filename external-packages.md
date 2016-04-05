@@ -6,7 +6,7 @@ Bower can manage components that contain HTML, CSS, JavaScript, fonts or even im
 
 ### Bower packages
 
-Bower packages can be installed from a variety of sources, including a registered bower package (a repo that has a `bower.json` file defined`), a Github shorthand (<user or org>/<repo_name>), a Github URL, or just a plain URL that points to a javascript file.
+Bower packages can be installed from a variety of sources, including a registered bower package (a repo that has a `bower.json` file defined), a Github shorthand (`<user or org>/<repo_name>`), a Github URL, or just a plain URL that points to a javascript file.
 
 When you install a package, it will be installed in a directory called `bower_components`. For example if you were to run `bower install jquery`, you would find a directory `bower_components/jquery`.
 
