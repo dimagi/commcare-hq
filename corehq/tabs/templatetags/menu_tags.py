@@ -53,41 +53,12 @@ def format_main_menu(parser, token):
 
 
 @register.simple_tag(takes_context=True)
-def format_subtab_menu(context):
-    active_tab = context.get('active_tab', None)
-    if active_tab and active_tab.subtabs:
-        subtabs = [t for t in active_tab.subtabs if t.is_viewable]
-    else:
-        subtabs = None
-
-    return mark_safe(render_to_string("style/bootstrap2/partials/subtab_menu.html", {
-        'subtabs': subtabs if subtabs and len(subtabs) > 1 else None
-    }))
-
-
-@register.simple_tag(takes_context=True)
 def format_sidebar(context):
     current_url_name = context['current_url_name']
     active_tab = context.get('active_tab', None)
     request = context['request']
 
-    sections = None
-
-    if active_tab and active_tab.subtabs:
-        # if active_tab is active then at least one of its subtabs should have
-        # is_active == True, but we guard against the possibility of this not
-        # being the case by setting sections = None above
-        for s in active_tab.subtabs:
-            if s.is_active:
-                sections = s.sidebar_items
-                break
-        if sections is None:
-            for s in active_tab.subtabs:
-                if s.url and request.get_full_path().startswith(s.url):
-                    sections = s.sidebar_items
-                    break
-    else:
-        sections = active_tab.sidebar_items if active_tab else None
+    sections = active_tab.sidebar_items if active_tab else None
 
     def _strip_scheme(uri):
         return uri.lstrip('https')

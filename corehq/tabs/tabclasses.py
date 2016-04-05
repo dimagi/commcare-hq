@@ -137,7 +137,6 @@ class DashboardTab(UITab):
 
 class ReportsTab(UITab):
     title = ugettext_noop("Reports")
-    subtab_classes = (ProjectReportsTab, IndicatorAdminTab)
 
     @property
     def view(self):
@@ -1437,12 +1436,6 @@ class FeatureFlagsTab(UITab):
 class AdminTab(UITab):
     title = ugettext_noop("Admin")
     view = "corehq.apps.hqadmin.views.default"
-    subtab_classes = (
-        AdminReportsTab,
-        SMSAdminTab,
-        AccountingTab,
-        FeatureFlagsTab
-    )
 
     @property
     def dropdown_items(self):

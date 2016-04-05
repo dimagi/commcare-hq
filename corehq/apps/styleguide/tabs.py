@@ -103,10 +103,6 @@ class ControlsDemoSGExample(BaseSGTab):
 class SGExampleTab(BaseSGTab):
     title = ugettext_noop("Style Guide")
     view = 'corehq.apps.styleguide.views.docs.default'
-    subtab_classes = (
-        SimpleCrispyFormSGExample,
-        ControlsDemoSGExample,
-    )
 
     @property
     def dropdown_items(self):

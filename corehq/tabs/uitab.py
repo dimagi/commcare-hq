@@ -10,7 +10,6 @@ from dimagi.utils.web import get_url_base
 class UITab(object):
     title = None
     view = None
-    subtab_classes = None
 
     dispatcher = None
 
@@ -19,12 +18,6 @@ class UITab(object):
 
     def __init__(self, request, current_url_name, domain=None, couch_user=None,
                  project=None):
-        if self.subtab_classes:
-            self.subtabs = [cls(request, current_url_name, domain=domain,
-                                couch_user=couch_user, project=project)
-                            for cls in self.subtab_classes]
-        else:
-            self.subtabs = None
 
         self.domain = domain
         self.couch_user = couch_user
@@ -43,7 +36,6 @@ class UITab(object):
     def dropdown_items(self):
         # todo: add default implementation which looks at sidebar_items and
         # sees which ones have is_dropdown_visible or something like that.
-        # Also make it work for tabs with subtabs.
         return sidebar_to_dropdown(sidebar_items=self.sidebar_items,
                                    domain=self.domain, current_url_name=self.url)
 
@@ -70,13 +62,10 @@ class UITab(object):
     @property
     @memoized
     def real_is_viewable(self):
-        if self.subtabs:
-            return any(st.real_is_viewable for st in self.subtabs)
-        else:
-            try:
-                return self.is_viewable
-            except AttributeError:
-                return False
+        try:
+            return self.is_viewable
+        except AttributeError:
+            return False
 
     @property
     @memoized
@@ -122,17 +111,11 @@ class UITab(object):
             if (any(url_matches(url, self.request_path) for url in self.urls) or
                     self._current_url_name in self.subpage_url_names):
                 return True
-        elif self.subtabs and any(st.is_active for st in self.subtabs):
-            return True
 
     @property
     @memoized
     def urls(self):
         urls = [self.url] if self.url else []
-        if self.subtabs:
-            for st in self.subtabs:
-                urls.extend(st.urls)
-
         try:
             for name, section in self.sidebar_items:
                 urls.extend(item['url'] for item in section)
@@ -151,9 +134,6 @@ class UITab(object):
         displayed only when you're on that subpage.
         """
         names = []
-        if self.subtabs:
-            for st in self.subtabs:
-                names.extend(st.subpage_url_names)
 
         try:
             for name, section in self.sidebar_items:
