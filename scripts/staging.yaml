@@ -60,7 +60,6 @@ branches:
   - b3-reports-home  # BB 2/23
   # B3 Report Migration branches
   - import_build-anchor-tag # Nick P 2/29
-  - b3-project-settings-accounting  # Biyeun 3/1
   - b3-commcare-exchange # biyeun 3/10
   - report-builder-text # Cal 3/1
   - certificate-validation # Cal 3/10
