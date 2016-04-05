@@ -42,7 +42,7 @@ class CaseSearchPillowTest(TestCase):
         consumer = get_test_kafka_consumer(topics.CASE)
         kafka_seq = self._get_kafka_seq()
 
-        case = self._make_case()
+        case = self._make_case(case_properties={'foo': 'bar'})
         producer.send_change(topics.CASE, doc_to_change(case).metadata)
         # confirm change made it to kafka
         message = consumer.next()
@@ -105,7 +105,7 @@ class CaseSearchPillowTest(TestCase):
         consumer = get_test_kafka_consumer(topics.CASE_SQL)
         # have to get the seq id before the change is processed
         kafka_seq = self._get_kafka_seq()
-        case = self._make_case()
+        case = self._make_case(case_properties={'something': 'something_else'})
 
         # confirm change made it to kafka
         message = consumer.next()
@@ -130,13 +130,13 @@ class CaseSearchPillowTest(TestCase):
             topics.CASE: get_current_kafka_seq(topics.CASE)
         }
 
-    def _make_case(self, domain=None):
+    def _make_case(self, domain=None, case_properties=None):
         # make a case
         case_id = uuid.uuid4().hex
         case_name = 'case-name-{}'.format(uuid.uuid4().hex)
         if domain is None:
             domain = self.domain
-        case = make_a_case(domain, case_id, case_name)
+        case = make_a_case(domain, case_id, case_name, case_properties)
         return case
 
     def _assert_case_in_es(self, domain, case):
@@ -152,9 +152,8 @@ class CaseSearchPillowTest(TestCase):
         # Confirm change contains case_properties
         self.assertItemsEqual(case_doc['case_properties'][0].keys(), ['key', 'value'])
         for case_property in case_doc['case_properties']:
-            if case_property['key'] == 'name':
-                self.assertEqual(case.name, case_property['value'])
-                break
+            key = case_property['key']
+            self.assertEqual(case.get_case_property(key), case_property['value'])
 
     def _assert_index_empty(self):
         self.elasticsearch.indices.refresh(CASE_SEARCH_INDEX)

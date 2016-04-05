@@ -1,3 +1,5 @@
+from collections import OrderedDict
+
 from casexml.apps.case.models import CommCareCase
 from corehq.apps.case_search.exceptions import CaseSearchNotEnabledException
 from corehq.apps.case_search.models import case_search_enabled_domains, \
@@ -58,12 +60,14 @@ def _get_case_properties(doc_dict):
         {'key': 'external_id', 'value': doc_dict.get('external_id')}
     ]
     if should_use_sql_backend(domain):
-        doc_dict.pop("_id")
-        dynamic_case_properties = CommCareCaseSQL(**doc_dict).dynamic_case_properties()
+        dynamic_case_properties = OrderedDict(doc_dict['case_json'])
     else:
         dynamic_case_properties = CommCareCase.wrap(doc_dict).dynamic_case_properties()
 
-    return base_case_properties + list(dynamic_case_properties)
+    return base_case_properties + [
+        {'key': key, 'value': value}
+        for key, value in dynamic_case_properties.iteritems()
+    ]
 
 
 class CaseSearchPillowProcessor(ElasticProcessor):
