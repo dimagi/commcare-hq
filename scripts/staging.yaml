@@ -64,7 +64,6 @@ branches:
   - report-builder-text # Cal 3/1
   - certificate-validation # Cal 3/10
   - knockout-3-3 # Jenny 3/30
-  - login-b3 # Jenny 4/5
 submodules:
   submodules/touchforms-src:
     # let's leave this here even when empty
