@@ -126,7 +126,7 @@ hqDefine('cloudcare/js/backbone/cases.js', function () {
                     '1': 'days',
                     '7': 'weeks',
                     '30.4375': 'months',
-                    '365.25': 'years',
+                    '365.25': 'years'
                 },
                 agoUnit; // The unit for time-ago (days, months, etc)
 
