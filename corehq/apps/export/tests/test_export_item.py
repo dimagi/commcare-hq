@@ -3,6 +3,7 @@ from django.test import SimpleTestCase
 from corehq.apps.export.models import (
     ExportItem,
     ExportColumn,
+    GeopointItem,
     Option, MultipleChoiceItem)
 from corehq.apps.export.models.new import (
     MAIN_TABLE,
@@ -54,3 +55,19 @@ class TestExportItemGeneration(SimpleTestCase):
         wrapped = ExportItem.wrap(item.to_json())
         self.assertEqual(type(wrapped), type(item))
         self.assertEqual(wrapped.to_json(), item.to_json())
+
+
+def TestGeopointItem(SimpleTestCase):
+
+    def test_split_value(self):
+        item = GeopointItem(path=[PathNode(name='form'), PathNode(name='geo')])
+        result = item.split_value('10 15', False)
+        self.assertEqual(result, ['10', '15', None, None])
+
+        result = item.split_value('10 15 2 2', False)
+        self.assertEqual(result, ['10', '15', '2', '2'])
+
+    def test_split_header(self):
+        item = GeopointItem(path=[PathNode(name='form'), PathNode(name='geo')])
+        headers = item.split_header('geo', False)
+        self.assertEqual(len(headers), 4)
