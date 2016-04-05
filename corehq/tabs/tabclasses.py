@@ -33,7 +33,7 @@ from django_prbac.utils import has_privilege
 
 
 class ProjectReportsTab(UITab):
-    title = ugettext_noop("Project Reports")
+    title = ugettext_noop("Reports")
     view = "corehq.apps.reports.views.default"
 
     @property
@@ -1283,74 +1283,6 @@ class MySettingsTab(UITab):
         return items
 
 
-class AdminReportsTab(UITab):
-    title = ugettext_noop("Admin Reports")
-    view = "corehq.apps.hqadmin.views.default"
-
-    @property
-    def sidebar_items(self):
-        # todo: convert these to dispatcher-style like other reports
-        if (self.couch_user and
-                (not self.couch_user.is_superuser and
-                 toggles.IS_DEVELOPER.enabled(self.couch_user.username))):
-            return [
-                (_('Administrative Reports'), [
-                    {'title': _('System Info'),
-                     'url': reverse('system_info')},
-                ])]
-
-        admin_operations = []
-
-        if self.couch_user and self.couch_user.is_staff:
-            from corehq.apps.hqadmin.views import AuthenticateAs
-            admin_operations.extend([
-                {'title': _('PillowTop Errors'),
-                 'url': reverse('admin_report_dispatcher',
-                                args=('pillow_errors',))},
-                {'title': _('Login as another user'),
-                 'url': reverse(AuthenticateAs.urlname)},
-                {'title': _('Look up user by email'),
-                 'url': reverse('web_user_lookup')},
-            ])
-        return [
-            (_('Administrative Reports'), [
-                {'title': _('Project Space List'),
-                 'url': reverse('admin_report_dispatcher', args=('domains',))},
-                {'title': _('Submission Map'),
-                 'url': reverse('dimagisphere')},
-                {'title': _('User List'),
-                 'url': reverse('admin_report_dispatcher', args=('user_list',))},
-                {'title': _('Application List'),
-                 'url': reverse('admin_report_dispatcher', args=('app_list',))},
-                {'title': _('System Info'),
-                 'url': reverse('system_info')},
-                {'title': _('Loadtest Report'),
-                 'url': reverse('loadtest_report')},
-                {'title': _('Download Malt table'),
-                 'url': reverse('download_malt')},
-            ]),
-            (_('Administrative Operations'), admin_operations),
-            (_('CommCare Reports'), [
-                {
-                    'title': report.name,
-                    'url': '%s?%s' % (reverse('admin_report_dispatcher',
-                                              args=(report.slug,)),
-                                      urlencode(report.default_params))
-                } for report in [
-                    RealProjectSpacesReport,
-                    CommConnectProjectSpacesReport,
-                    CommTrackProjectSpacesReport,
-                ]
-            ]),
-        ]
-
-    @property
-    def is_viewable(self):
-        return (self.couch_user and
-                (self.couch_user.is_superuser or
-                 toggles.IS_DEVELOPER.enabled(self.couch_user.username)))
-
-
 class AccountingTab(UITab):
     title = ugettext_noop("Accounting")
     view = "accounting_default"
@@ -1478,6 +1410,63 @@ class AdminTab(UITab):
             dropdown_dict(_("Django Admin"), url="/admin")
         ])
         return submenu_context
+
+    @property
+    def sidebar_items(self):
+        # todo: convert these to dispatcher-style like other reports
+        if (self.couch_user and
+                (not self.couch_user.is_superuser and
+                 toggles.IS_DEVELOPER.enabled(self.couch_user.username))):
+            return [
+                (_('Administrative Reports'), [
+                    {'title': _('System Info'),
+                     'url': reverse('system_info')},
+                ])]
+
+        admin_operations = []
+
+        if self.couch_user and self.couch_user.is_staff:
+            from corehq.apps.hqadmin.views import AuthenticateAs
+            admin_operations.extend([
+                {'title': _('PillowTop Errors'),
+                 'url': reverse('admin_report_dispatcher',
+                                args=('pillow_errors',))},
+                {'title': _('Login as another user'),
+                 'url': reverse(AuthenticateAs.urlname)},
+                {'title': _('Look up user by email'),
+                 'url': reverse('web_user_lookup')},
+            ])
+        return [
+            (_('Administrative Reports'), [
+                {'title': _('Project Space List'),
+                 'url': reverse('admin_report_dispatcher', args=('domains',))},
+                {'title': _('Submission Map'),
+                 'url': reverse('dimagisphere')},
+                {'title': _('User List'),
+                 'url': reverse('admin_report_dispatcher', args=('user_list',))},
+                {'title': _('Application List'),
+                 'url': reverse('admin_report_dispatcher', args=('app_list',))},
+                {'title': _('System Info'),
+                 'url': reverse('system_info')},
+                {'title': _('Loadtest Report'),
+                 'url': reverse('loadtest_report')},
+                {'title': _('Download Malt table'),
+                 'url': reverse('download_malt')},
+            ]),
+            (_('Administrative Operations'), admin_operations),
+            (_('CommCare Reports'), [
+                {
+                    'title': report.name,
+                    'url': '%s?%s' % (reverse('admin_report_dispatcher',
+                                              args=(report.slug,)),
+                                      urlencode(report.default_params))
+                } for report in [
+                    RealProjectSpacesReport,
+                    CommConnectProjectSpacesReport,
+                    CommTrackProjectSpacesReport,
+                ]
+            ]),
+        ]
 
     @property
     def is_viewable(self):
