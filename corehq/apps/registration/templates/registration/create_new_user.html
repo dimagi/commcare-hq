@@ -6,8 +6,8 @@
 {% block js-inline  %}{{ block.super }}
     {% url "eula_basic" as eula_url %}
     {% include 'hqstyle/partials/load_into_modal.html' with modal_id="eulaModal" load_from=eula_url %}
+    {% if not hide_password_feedback %}
     <script src="{% static 'zxcvbn/dist/zxcvbn.js' %}"></script>
-    {% if show_password_feedback %}
     <script src="{% static 'registration/js/password.js' %}"></script>
     {% endif %}
 {% endblock %}

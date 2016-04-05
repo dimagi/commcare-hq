@@ -6,6 +6,7 @@ import logging
 import re
 import urllib
 
+from django.conf import settings
 from django.contrib import messages
 from django.contrib.auth import authenticate, login
 from django.contrib.auth.forms import SetPasswordForm
@@ -729,6 +730,7 @@ class UserInvitationView(object):
             'formatted_username': username,
             'domain': self.domain,
             'invite_type': _('Project'),
+            'hide_password_feedback': getattr(settings, 'ENABLE_DRACONIAN_SECURITY_FEATURES', False),
         }
 
     def validate_invitation(self, invitation):
