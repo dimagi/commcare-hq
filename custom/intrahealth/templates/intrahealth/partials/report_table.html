@@ -6,7 +6,7 @@
     <div class="row">
         {% for chart in charts %}
             {% if chart.title %}<h4 style="text-align: center;">{{ chart.title }}</h4>{% endif %}
-            <div id='chart_{{ report.slug }}_{{ forloop.parentloop.counter }}{{ forloop.counter }}' class="span{{ chart_span }} hide">
+            <div id='chart_{{ report.slug }}_{{ forloop.parentloop.counter }}{{ forloop.counter }}' class="col-sm-{{ chart_span }} hide">
             <svg style='height: {{ chart.height }}px'> </svg>
         </div>
         {% endfor %}
@@ -21,10 +21,10 @@
             <tr>
                 {% for header in report_table.headers %}
                     <th {% if not report_table.pagination.is_on %}data-sort="{{ header.sort_type }}" data-sortdir="{{ header.sort_direction }}"{% endif %} {% if header.css_class %}class="{{ header.css_class }}"{% endif %}>
-                        <i class="icon-white"></i>
+                        <i class="icon-white fa dt-sort-icon"></i>
                         {% if header.html %}{{ header.html }}{% else %}{{ header|linebreaksbr }}{% endif %}
                         {% if header.help_text %}
-                            <i class="icon-white icon-question-sign header-tooltip" title="{{ header.help_text }}"></i>
+                            <i class="fa fa-question-circle header-tooltip" title="{{ header.help_text }}"></i>
                         {% endif %}
                     </th>
                 {% endfor %}
@@ -62,7 +62,7 @@
 
 <script type="text/javascript">
    {% if report_table and report_table.datatables %}
-        var dataTablesDom = "frt<'row-fluid dataTables_control'<'span5'il><'span7'p>>";
+        var dataTablesDom = "frt<'row-fluid dataTables_control'<'col-sm-5'il><'col-sm-7'p>>";
 
         var params = {
                 sDom: dataTablesDom,
