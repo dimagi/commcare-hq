@@ -102,6 +102,7 @@ filter_items    | Filter a list of items to make a new list | `[1, 2, 3, -1, -2,
 map_items       | Map one list to another list | `[{'name': 'a', gender: 'f'}, {'name': 'b, gender: 'm'}]` -> `['a', 'b']`  (list of names from list of child data)
 sort_items      | Sort a list based on an expression | `[{'name': 'a', age: 5}, {'name': 'b, age: 3}]` -> `[{'name': 'b, age: 3}, {'name': 'a', age: 5}]`  (sort child data by age)
 reduce_items    | Aggregate a list of items into one value | sum on `[1, 2, 3]` -> `6`
+flatten_items   | Flatten multiple lists of items into one list | `[[1, 2], [4, 5]]` -> `[1, 2, 4, 5]`
 
 
 
@@ -454,14 +455,14 @@ Above returns list of ages. Note that the `property_path` in `map_expression` is
         "type": "property_name",
         "property_name": "family_repeat"
     },
-    "filter_expression"': {
+    "filter_expression": {
        "type": "boolean_expression",
         "expression": {
             "type": "property_name",
             "property_name": "gender"
         },
         "operator": "eq",
-        "property_value": female
+        "property_value": "female"
     }
 }
 ```
@@ -497,10 +498,10 @@ Above returns list of ages. Note that the `property_path` in `map_expression` is
 
 Function Name  | Example
 -------------- | -----------
-`count`        | ['a', 'b'] -> 2
-`sum`          | [1, 2, 4] -> 7
-`first_item`   | ['a', 'b'] -> 'a'
-`last_item`    | ['a', 'b'] -> 'b'
+`count`        | `['a', 'b']` -> 2
+`sum`          | `[1, 2, 4]` -> 7
+`first_item`   | `['a', 'b']` -> 'a'
+`last_item`    | `['a', 'b']` -> 'b'
 
 ```json
 {
@@ -522,10 +523,9 @@ This returns number of family members
 ```json
 {
     "type": "flatten_items",
-    "items_expression": {},  # returns [[1, 3], [5, 6]]
+    "items_expression": {},  #  should return list of lists
 }
 ```
-This will return [1, 3, 5, 6]
 
 
 #### Named Expressions
