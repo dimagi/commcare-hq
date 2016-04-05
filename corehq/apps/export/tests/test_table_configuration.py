@@ -366,7 +366,9 @@ class SplitColumnTest(SimpleTestCase):
 class StockExportColumnTest(SimpleTestCase):
     domain = 'stock-domain'
 
-    def test_get_headers(self):
+    @patch('corehq.apps.export.models.new.StockExportColumn._get_product_name', return_value='water')
+    @patch('corehq.apps.export.models.new.Product.by_domain', return_value=[])
+    def test_get_headers(self, _, __):
         column = StockExportColumn(
             domain=self.domain,
             label="Stock",
@@ -376,7 +378,6 @@ class StockExportColumnTest(SimpleTestCase):
             'corehq.form_processor.interfaces.dbaccessors.'
             'LedgerAccessors.get_ledger_values_for_product_ids'
         )
-        get_product_path = 'corehq.apps.export.models.new.StockExportColumn._get_product_name'
         with patch(
                 get_ledger_path,
                 return_value=[
@@ -385,9 +386,5 @@ class StockExportColumnTest(SimpleTestCase):
                     MockLedgerValue(section_id='123', product_id='456'),
                 ]):
 
-            with patch(
-                    get_product_path,
-                    return_value='water'):
-
-                headers = list(column.get_headers())
-                self.assertEqual(headers, ['water (123)', 'water (abc)'])
+            headers = list(column.get_headers())
+            self.assertEqual(headers, ['water (123)', 'water (abc)'])
