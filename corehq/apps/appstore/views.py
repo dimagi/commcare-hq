@@ -503,7 +503,7 @@ class MediaFilesView(BaseCommCareExchangeSectionView):
     template_name = 'appstore/media_files.html'
 
     def dispatch(self, request, *args, **kwargs):
-        if not can_view_app(request, self.domain):
+        if not can_view_app(request, self.project):
             raise Http404()
         return super(MediaFilesView, self).dispatch(request, *args, **kwargs)
 
