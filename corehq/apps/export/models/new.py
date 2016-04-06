@@ -46,6 +46,7 @@ from corehq.apps.export.dbaccessors import (
     get_latest_case_export_schema,
     get_latest_form_export_schema,
 )
+from corehq.apps.export.utils import is_occurrence_deleted
 
 
 DAILY_SAVED_EXPORT_ATTACHMENT_NAME = "payload"
@@ -194,12 +195,7 @@ class ExportColumn(DocumentSchema):
         return column
 
     def _is_deleted(self, app_ids_and_versions):
-        is_deleted = True
-        for app_id, version in app_ids_and_versions.iteritems():
-            if self.item.last_occurrences.get(app_id) == version:
-                is_deleted = False
-                break
-        return is_deleted
+        return is_occurrence_deleted(self.item.last_occurrences, app_ids_and_versions)
 
     def update_properties_from_app_ids_and_versions(self, app_ids_and_versions):
         """
@@ -264,6 +260,7 @@ class TableConfiguration(DocumentSchema):
     path = ListProperty(PathNode)
     columns = ListProperty(ExportColumn)
     selected = BooleanProperty(default=False)
+    is_deleted = BooleanProperty(default=False)
 
     def __hash__(self):
         return hash(tuple(self.path))
@@ -430,6 +427,10 @@ class ExportInstance(BlobMixin, Document):
                 path=group_schema.path,
                 label=instance.defaults.get_default_table_name(group_schema.path),
                 selected=instance.defaults.default_is_table_selected(group_schema.path),
+            )
+            table.is_deleted = is_occurrence_deleted(
+                group_schema.last_occurrences,
+                latest_app_ids_and_versions,
             )
             prev_index = 0
             for item in group_schema.items:

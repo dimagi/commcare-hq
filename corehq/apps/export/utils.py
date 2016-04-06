@@ -13,6 +13,15 @@ from .const import (
 )
 
 
+def is_occurrence_deleted(last_occurrences, app_ids_and_versions):
+    is_deleted = True
+    for app_id, version in app_ids_and_versions.iteritems():
+        if last_occurrences.get(app_id) == version:
+            is_deleted = False
+            break
+    return is_deleted
+
+
 def convert_saved_export_to_export_instance(domain, saved_export):
     from .models import (
         FormExportDataSchema,
