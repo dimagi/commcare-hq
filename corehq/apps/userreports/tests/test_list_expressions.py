@@ -465,7 +465,7 @@ def test_sort_items_basic(self, doc, items_ex, sort_ex, expected):
     self.assertEqual(expression(doc), expected)
 
 
-class JsonQueryTest(SimpleTestCase):
+class ListExpressionTest(SimpleTestCase):
     """
     Test filter, map, reduce, sort and flatten together for few expected use cases
     """
