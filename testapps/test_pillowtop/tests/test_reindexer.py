@@ -14,9 +14,9 @@ from corehq.pillows.mappings.user_mapping import USER_INDEX
 from corehq.pillows.mappings.xform_mapping import XFORM_INDEX
 from corehq.pillows.xform import XFormPillow
 from corehq.util.elastic import delete_es_index, ensure_index_deleted
-from corehq.util.test_utils import get_form_ready_to_save, trap_extra_setup, create_and_save_a_form
+from corehq.util.test_utils import get_form_ready_to_save, trap_extra_setup, create_and_save_a_form, \
+    create_and_save_a_case
 from elasticsearch.exceptions import ConnectionError
-from testapps.test_pillowtop.utils import make_a_case
 
 
 DOMAIN = 'reindex-test-domain'
@@ -124,8 +124,7 @@ class PillowtopReindexerTest(TestCase):
         self.assertEqual('XFormInstance', form_doc['doc_type'])
 
 
-
 def _create_and_save_a_case():
     case_name = 'reindexer-test-case-{}'.format(uuid.uuid4().hex)
     case_id = uuid.uuid4().hex
-    return make_a_case(DOMAIN, case_id, case_name)
+    return create_and_save_a_case(DOMAIN, case_id, case_name)
