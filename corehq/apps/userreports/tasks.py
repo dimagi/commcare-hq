@@ -3,15 +3,12 @@ import datetime
 from celery.task import task
 from couchdbkit import ResourceConflict
 
-from casexml.apps.case.models import CommCareCase
-from corehq.form_processor.document_stores import ReadonlyCaseDocumentStore, ReadonlyFormDocumentStore
-from corehq.form_processor.utils import should_use_sql_backend
-from couchforms.models import XFormInstance
+from corehq.apps.userreports.document_stores import get_document_store
 from dimagi.utils.couch.cache.cache_core import get_redis_client
 
 from corehq.apps.userreports.models import DataSourceConfiguration, StaticDataSourceConfiguration
 from corehq.apps.userreports.sql import IndicatorSqlAdapter
-from pillowtop.dao.couch import ID_CHUNK_SIZE, CouchDocumentStore
+from pillowtop.dao.couch import ID_CHUNK_SIZE
 
 
 def is_static(config_id):
@@ -81,7 +78,7 @@ def resume_building_indicators(indicator_config_id):
     except:
         relevant_ids = tuple(redis_client.smembers(redis_key))
     if len(relevant_ids) > 0:
-        _build_indicators(config, _get_document_store(config.domain, config.referenced_doc_type), relevant_ids)
+        _build_indicators(config, get_document_store(config.domain, config.referenced_doc_type), relevant_ids)
         last_id = relevant_ids[-1]
 
         _iteratively_build_table(config, last_id)
@@ -93,7 +90,7 @@ def _iteratively_build_table(config, last_id=None):
     indicator_config_id = config._id
 
     relevant_ids = []
-    document_store = _get_document_store(config.domain, config.referenced_doc_type)
+    document_store = get_document_store(config.domain, config.referenced_doc_type)
     for relevant_id in document_store.iter_document_ids(last_id):
         relevant_ids.append(relevant_id)
         if len(relevant_ids) >= ID_CHUNK_SIZE:
@@ -116,31 +113,3 @@ def _iteratively_build_table(config, last_id=None):
             if config.meta.build.initiated == current_config.meta.build.initiated:
                 current_config.meta.build.finished = True
                 current_config.save()
-
-
-def _get_document_store(domain, doc_type):
-    use_sql = should_use_sql_backend(domain)
-    if use_sql and doc_type == 'XFormInstance':
-        return ReadonlyFormDocumentStore(domain)
-    elif use_sql and doc_type == 'CommCareCase':
-        return ReadonlyCaseDocumentStore(domain)
-    else:
-        # all other types still live in couchdb
-        return CouchDocumentStore(
-            couch_db=_get_db(doc_type),
-            domain=domain,
-            doc_type=doc_type
-        )
-
-
-def _get_db(doc_type):
-    return _DOC_TYPE_MAPPING.get(doc_type, CommCareCase).get_db()
-
-
-# This is intentionally not using magic to introspect the class from the name, though it could
-from corehq.apps.locations.models import Location
-_DOC_TYPE_MAPPING = {
-    'XFormInstance': XFormInstance,
-    'CommCareCase': CommCareCase,
-    'Location': Location
-}
