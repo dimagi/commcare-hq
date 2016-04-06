@@ -1,7 +1,7 @@
 from django.core.cache import cache
 from django.core.urlresolvers import reverse
 from django.utils.translation import get_language
-from corehq.tabs.utils import sidebar_to_dropdown, path_starts_with_url
+from corehq.tabs.utils import sidebar_to_dropdown
 from dimagi.utils.decorators.memoized import memoized
 from dimagi.utils.django.cache import make_template_fragment_key
 
@@ -11,6 +11,12 @@ class UITab(object):
     view = None
 
     dispatcher = None
+
+    # if a tab subclass has an expensive sidebar_items
+    # it should define its url_prefix_formats here explicitly
+    # e.g. ('/a/{domain}/reports/', '/a/{domain}/otherthing/')
+    # renderer can quickly tell which tab to highlight as active
+    url_prefix_formats = ()
 
     # must be instance of GaTracker
     ga_tracker = None
@@ -81,6 +87,14 @@ class UITab(object):
             return None
 
     @property
+    def url_prefixes(self):
+        if self.url_prefix_formats:
+            return [url_prefix_format.format(domain=self.domain)
+                    for url_prefix_format in self.url_prefix_formats]
+        else:
+            return self.urls
+
+    @property
     @memoized
     def urls(self):
         urls = [self.url] if self.url else []
@@ -93,25 +107,6 @@ class UITab(object):
             pass
 
         return urls
-
-    @property
-    @memoized
-    def subpage_url_names(self):
-        """
-        List of all url names of subpages of sidebar items that get
-        displayed only when you're on that subpage.
-        """
-        names = []
-
-        try:
-            for name, section in self.sidebar_items:
-                names.extend(subpage['urlname']
-                             for item in section
-                             for subpage in item.get('subpages', []))
-        except Exception:
-            pass
-
-        return names
 
     @classmethod
     def clear_dropdown_cache(cls, request, domain):
@@ -129,7 +124,6 @@ class UITab(object):
                 get_language(),
             ])
             cache.delete(key)
-
 
     @property
     def css_id(self):

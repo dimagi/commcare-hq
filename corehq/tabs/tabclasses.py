@@ -36,6 +36,8 @@ class ProjectReportsTab(UITab):
     title = ugettext_noop("Reports")
     view = "corehq.apps.reports.views.default"
 
+    url_prefix_formats = ('/a/{domain}/reports/',)
+
     @property
     def is_viewable(self):
         return user_can_view_reports(self.project, self.couch_user)
@@ -109,6 +111,8 @@ class IndicatorAdminTab(UITab):
 class DashboardTab(UITab):
     title = ugettext_noop("Dashboard")
     view = 'corehq.apps.dashboard.views.dashboard_default'
+
+    url_prefix_formats = ('/a/{domain}/dashboard/project/',)
 
     @property
     def is_viewable(self):
@@ -188,6 +192,12 @@ class ProjectInfoTab(UITab):
 class SetupTab(UITab):
     title = ugettext_noop("Setup")
     view = "corehq.apps.commtrack.views.default"
+
+    url_prefix_formats = (
+        '/a/{domain}/settings/products/',
+        '/a/{domain}/settings/programs/',
+        '/a/{domain}/settings/commtrack/',
+    )
 
     @property
     def dropdown_items(self):
@@ -322,6 +332,10 @@ class SetupTab(UITab):
 class ProjectDataTab(UITab):
     title = ugettext_noop("Data")
     view = "corehq.apps.data_interfaces.views.default"
+    url_prefix_formats = (
+        '/a/{domain}/data/',
+        '/a/{domain}/fixtures/',
+    )
 
     @property
     @memoized
@@ -535,6 +549,8 @@ class ProjectDataTab(UITab):
 class ApplicationsTab(UITab):
     view = "corehq.apps.app_manager.views.view_app"
 
+    url_prefix_formats = ('/a/{domain}/apps/',)
+
     @property
     def title(self):
         return _("Applications")
@@ -590,6 +606,8 @@ class CloudcareTab(UITab):
     title = ugettext_noop("CloudCare")
     view = "corehq.apps.cloudcare.views.default"
 
+    url_prefix_formats = ('/a/{domain}/cloudcare/',)
+
     ga_tracker = GaTracker('CloudCare', 'Click Cloud-Care top-level nav')
 
     @property
@@ -604,6 +622,13 @@ class CloudcareTab(UITab):
 class MessagingTab(UITab):
     title = ugettext_noop("Messaging")
     view = "corehq.apps.sms.views.default"
+
+    url_prefix_formats = (
+        '/a/{domain}/sms/',
+        '/a/{domain}/reminders/',
+        '/a/{domain}/reports/message_log/',
+        '/a/{domain}/data/edit/case_groups/',
+    )
 
     @property
     def is_viewable(self):
@@ -870,19 +895,16 @@ class ProjectUsersTab(UITab):
     title = ugettext_noop("Users")
     view = "users_default"
 
+    url_prefix_formats = (
+        '/a/{domain}/settings/users/',
+        '/a/{domain}/settings/cloudcare/',
+        '/a/{domain}/settings/locations/',
+    )
+
     @property
     def is_viewable(self):
         return self.domain and (self.couch_user.can_edit_commcare_users() or
                                 self.couch_user.can_edit_web_users())
-
-    @property
-    @memoized
-    def urls(self):
-        urls = super(ProjectUsersTab, self).urls
-
-        cloudcare_settings_url = reverse('cloudcare_app_settings',
-                                         args=[self.domain])
-        return urls + [cloudcare_settings_url]
 
     @property
     def can_view_cloudcare(self):
@@ -1353,6 +1375,8 @@ class FeatureFlagsTab(UITab):
 class AdminTab(UITab):
     title = ugettext_noop("Admin")
     view = "corehq.apps.hqadmin.views.default"
+
+    url_prefix_formats = ('/hq/admin/',)
 
     @property
     def dropdown_items(self):

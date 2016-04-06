@@ -20,9 +20,9 @@ def _get_active_tab(visible_tabs, request_path):
         return matching_tabs[-1]
 
     for tab in visible_tabs:
-        if tab.urls:
-            if any(path_starts_with_url(url, tab.request_path) for url in tab.urls) or \
-                    tab._current_url_name in tab.subpage_url_names:
+        url_prefixes = tab.url_prefixes
+        if url_prefixes:
+            if any(path_starts_with_url(url, tab.request_path) for url in url_prefixes):
                 return tab
 
 
