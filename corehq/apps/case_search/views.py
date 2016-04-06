@@ -29,7 +29,7 @@ class CaseSearchView(DomainViewMixin, TemplateView):
 
         query = json.loads(request.POST.get('q'))
         case_type = query.get('type')
-        search_params = query.get('parameters')
+        search_params = query.get('parameters', [])
         search = CaseSearchES()
         search = search.domain(self.domain)
         if case_type:
