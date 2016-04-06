@@ -538,7 +538,7 @@ class RootDocExpressionTest(SimpleTestCase):
         )
 
 
-class DocJoinExpressionTest(SimpleTestCase):
+class RelatedDocExpressionTest(SimpleTestCase):
 
     def setUp(self):
         # we have to set the fake database before any other calls
