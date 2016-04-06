@@ -287,18 +287,12 @@ class FormsExpressionSpec(JsonObject):
     def _get_forms(self, case_id, context):
         domain = context.root_doc['domain']
 
-        cache_key = (self.__class__.__name__, case_id, domain)
-
-        if context.get_value(cache_key) is not None:
-            return context.get_value(cache_key)
-
-        try:
-            case = CaseAccessors(domain).get_case(case_id)
-            assert case.domain == domain
-        except (CaseNotFound, AssertionError):
-            return []
+        cache_key = (self.__class__.__name__, case_id)
+        if context.get_cache_value(cache_key) is not None:
+            return context.get_cache_value(cache_key)
 
         xforms = FormProcessorInterface(domain).get_case_forms(case_id)
-        xforms = [f.to_json() for f in xforms]
-        context.set_value(cache_key, xforms)
+        xforms = [f.to_json() for f in xforms if f.domain == domain]
+
+        context.set_cache_value(cache_key, xforms)
         return xforms

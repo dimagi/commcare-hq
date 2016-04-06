@@ -30,8 +30,8 @@ class EvaluationContext(object):
         self.inserted_timestamp = datetime.utcnow()
         self.cache = {}
 
-    def get_value(self, key):
+    def get_cache_value(self, key):
         return self.cache.get(key, None)
 
-    def set_value(self, key, value):
+    def set_cache_value(self, key, value):
         self.cache[key] = value

@@ -843,3 +843,12 @@ class TestFormsExpressionSpec(TestCase):
         context = EvaluationContext({"domain": "wrong-domain"}, 0)
         forms = self.expression(self.case.to_json(), context)
         self.assertEqual(forms, [])
+
+
+class TestEvaluationContext(SimpleTestCase):
+
+    def test_cache(self):
+        context = EvaluationContext({})
+        context.set_cache_value(('k1', 'k2'), 'v1')
+        self.assertEqual(context.get_cache_value(('k1', 'k2')), 'v1')
+        self.assertEqual(context.get_cache_value(('k1',)), None)
