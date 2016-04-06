@@ -1,4 +1,5 @@
 import datetime
+from django.test import SimpleTestCase
 
 from corehq.apps.userreports.exceptions import BadSpecError
 from corehq.apps.userreports.expressions.factory import ExpressionFactory
@@ -367,3 +368,88 @@ def test_sort_items_basic(self, doc, items_ex, sort_ex, expected):
         'sort_expression': sort_ex
     })
     self.assertEqual(expression(doc), expected)
+
+
+class JsonQueryTest(SimpleTestCase):
+    """
+    Test filter, map, reduce, sort and flatten together for few expected use cases
+    """
+
+    def test_latest_property(self):
+        doc = {
+            "forms": [
+                {"received_on": datetime.date(2015, 4, 5), "weight": 21},
+                {"received_on": datetime.date(2015, 1, 5), "weight": 18},
+                {"received_on": datetime.date(2015, 3, 5), "weight": 20},
+            ]
+        }
+        # nested(weight) <- reduce(last_item) <- sort(by received_on) <- forms
+        expression = ExpressionFactory.from_spec({
+            "type": "nested",
+            "argument_expression": {
+                "type": "reduce_items",
+                "items_expression": {
+                    "type": "sort_items",
+                    "items_expression": {"type": "property_name", "property_name": "forms"},
+                    "sort_expression": {"type": "property_name", "property_name": "received_on"}
+                },
+                "aggregation_fn": "last_item"
+            },
+            "value_expression": {
+                "type": "property_name",
+                "property_name": "weight"
+            }
+        })
+        self.assertEqual(expression(doc), doc["forms"][0]["weight"])
+
+    def test_repeat_calculation(self):
+        _rations1, _rations2, _rations3 = 3, 4, 5
+        doc = {
+            "forms": [
+                {"id": "f1", "child_repeat": [
+                    {"name": "a", "rations": _rations1}, {"name": "b", "rations": 3}, {"name": "c", "rations": 3}
+                ]},
+                {"id": "f2", "child_repeat": [
+                    {"name": "c", "rations": 3}, {"name": "a", "rations": _rations2}, {"name": "b", "rations": 3}
+                ]},
+                {"id": "f3", "child_repeat": [
+                    {"name": "a", "rations": _rations3}, {"name": "b", "rations": 3}, {"name": "c", "rations": 3}
+                ]},
+            ]
+        }
+        #  reduce(to sum ) <- map(weight) <- filter(by name) <- flatten(child_repeat) <- map(child_repeat) <- forms
+        expression = ExpressionFactory.from_spec({
+            "type": "reduce_items",
+            "items_expression": {
+                "type": "map_items",
+                "items_expression": {
+                    "type": "filter_items",
+                    "items_expression": {
+                        "type": "flatten",
+                        "items_expression": {
+                            "type": "map_items",
+                            "items_expression": {
+                                "type": "property_name",
+                                "property_name": "forms"
+                            },
+                            "map_expression": {
+                                "type": "property_name",
+                                "property_name": "child_repeat"
+                            }
+                        }
+                    },
+                    "filter_expression": {
+                        "type": "boolean_expression",
+                        "operator": "eq",
+                        "expression": {"type": "property_name", "property_name": "name"},
+                        "property_value": "a"
+                    }
+                },
+                "map_expression": {
+                    "type": "property_name",
+                    "property_name": "rations"
+                }
+            },
+            "aggregation_fn": "sum"
+        })
+        self.assertEqual(expression(doc), _rations1 + _rations2 + _rations3)
