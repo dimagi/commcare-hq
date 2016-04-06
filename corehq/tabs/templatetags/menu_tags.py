@@ -4,6 +4,7 @@ from django.utils.safestring import mark_safe
 
 import corehq.apps.style.utils as style_utils
 from corehq.tabs import MENU_TABS
+from corehq.tabs.exceptions import TabClassError, TabClassErrorSummary
 from corehq.tabs.utils import path_starts_with_url
 
 
@@ -11,19 +12,59 @@ register = template.Library()
 
 
 def _get_active_tab(visible_tabs, request_path):
+    """
+    return the tab that claims the longest matching url_prefix
+
+    if one tab claims
+      '/a/{domain}/data/'
+    and another tab claims
+      '/a/{domain}/data/edit/case_groups/'
+    then the second tab wins because it's a longer match.
+
+    """
 
     matching_tabs = sorted(
-        (tab for tab in visible_tabs
-         if tab.url and path_starts_with_url(request_path, tab.url)), key=lambda tab: tab.url)
+        (url_prefix, tab)
+        for tab in visible_tabs
+        for url_prefix in tab.url_prefixes
+        if request_path.startswith(url_prefix)
+    )
 
     if matching_tabs:
-        return matching_tabs[-1]
+        _, tab = matching_tabs[-1]
+        return tab
 
-    for tab in visible_tabs:
-        url_prefixes = tab.url_prefixes
-        if url_prefixes:
-            if any(path_starts_with_url(url, tab.request_path) for url in url_prefixes):
-                return tab
+
+def get_all_tabs(request, current_url_name, domain, couch_user, project):
+    """
+    instantiate all UITabs, and aggregate all their TabClassErrors (if any)
+    into a single TabClassErrorSummary
+
+    this makes it easy to get a list of all configuration issues
+    and fix them in one cycle
+
+    """
+    all_tabs = []
+    instantiation_errors = []
+    for tab_class in MENU_TABS:
+        try:
+            tab = tab_class(
+                request, current_url_name, domain=domain,
+                couch_user=couch_user, project=project)
+        except TabClassError as e:
+            instantiation_errors.append(e)
+        else:
+            all_tabs.append(tab)
+
+    if instantiation_errors:
+        messages = (
+            '- {}: {}'.format(e.__class__.__name__, e.message)
+            for e in instantiation_errors
+        )
+        summary_message = 'Summary of Tab Class Errors:\n{}'.format('\n'.join(messages))
+        raise TabClassErrorSummary(summary_message)
+    else:
+        return all_tabs
 
 
 class MainMenuNode(template.Node):
@@ -34,14 +75,12 @@ class MainMenuNode(template.Node):
         project = getattr(request, 'project', None)
         domain = context.get('domain')
         visible_tabs = []
-        for tab_class in MENU_TABS:
-            t = tab_class(
-                request, current_url_name, domain=domain,
-                couch_user=couch_user, project=project)
 
-            t.is_active_tab = False
-            if t.real_is_viewable:
-                visible_tabs.append(t)
+        for tab in get_all_tabs(request, current_url_name, domain=domain,
+                                couch_user=couch_user, project=project):
+            tab.is_active_tab = False
+            if tab.real_is_viewable:
+                visible_tabs.append(tab)
 
         # set the context variable in the highest scope so it can be used in
         # other blocks

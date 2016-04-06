@@ -37,6 +37,8 @@ class SimpleCrispyFormSGExample(BaseSGTab):
     title = ugettext_noop("Simple Crispy Form")
     view = DefaultSimpleCrispyFormSectionView.urlname
 
+    url_prefix_formats = ('/styleguide/docs/simple_crispy/',)
+
     @property
     @memoized
     def sidebar_items(self):
@@ -69,6 +71,8 @@ class SimpleCrispyFormSGExample(BaseSGTab):
 class ControlsDemoSGExample(BaseSGTab):
     title = ugettext_noop("Form Controls")
     view = DefaultControlsDemoFormsView.urlname
+
+    url_prefix_formats = ('/styleguide/docs/controls_demo/',)
 
     @property
     @memoized
@@ -103,6 +107,8 @@ class ControlsDemoSGExample(BaseSGTab):
 class SGExampleTab(BaseSGTab):
     title = ugettext_noop("Style Guide")
     view = 'corehq.apps.styleguide.views.docs.default'
+
+    url_prefix_formats = ('/styleguide/docs/',)
 
     @property
     def dropdown_items(self):

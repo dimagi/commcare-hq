@@ -77,6 +77,8 @@ class IndicatorAdminTab(UITab):
     view = "corehq.apps.indicators.views.default_admin"
     dispatcher = IndicatorAdminInterfaceDispatcher
 
+    url_prefix_formats = ('/a/{domain}/indicators/',)
+
     @property
     def is_viewable(self):
         indicator_enabled_projects = get_indicator_domains()
@@ -183,6 +185,8 @@ class ReportsTab(UITab):
 class ProjectInfoTab(UITab):
     title = ugettext_noop("Project Info")
     view = "corehq.apps.appstore.views.project_info"
+
+    url_prefix_formats = ('/exchange/{domain}/info/',)
 
     @property
     def is_viewable(self):
@@ -1071,6 +1075,8 @@ class ProjectSettingsTab(UITab):
     title = ugettext_noop("Project Settings")
     view = 'domain_settings_default'
 
+    url_prefix_formats = ('/a/{domain}/settings/project/',)
+
     @property
     def is_viewable(self):
         return (self.domain and self.couch_user and
@@ -1336,6 +1342,8 @@ class SMSAdminTab(UITab):
     title = ugettext_noop("SMS Connectivity & Billing")
     view = "default_sms_admin_interface"
     dispatcher = SMSAdminInterfaceDispatcher
+
+    url_prefix_formats = ('/hq/sms/',)
 
     @property
     @memoized

@@ -1,9 +1,11 @@
 from django.core.cache import cache
 from django.core.urlresolvers import reverse
 from django.utils.translation import get_language
+from corehq.tabs.exceptions import UrlPrefixFormatError, UrlPrefixFormatsSuggestion
 from corehq.tabs.utils import sidebar_to_dropdown
 from dimagi.utils.decorators.memoized import memoized
 from dimagi.utils.django.cache import make_template_fragment_key
+from django.conf import settings
 
 
 class UITab(object):
@@ -32,6 +34,22 @@ class UITab(object):
         # is necessary. Try to add new explicit parameters instead.
         self._request = request
         self._current_url_name = current_url_name
+
+        # Do some preemptive checks on the subclass's configuration (if DEBUG)
+        if settings.DEBUG:
+            if not self.url_prefix_formats:
+                raise UrlPrefixFormatsSuggestion(
+                    'Class {} must define url_prefix_formats. Try\n'
+                    'url_prefix_formats = {}'
+                    .format(self.__class__.__name__,
+                            self.get_url_prefix_formats_suggestion()))
+            for url_prefix_formats in self.url_prefix_formats:
+                try:
+                    url_prefix_formats.format(domain='')
+                except (IndexError, KeyError):
+                    raise UrlPrefixFormatError(
+                        'Class {} has url_prefix_format has an issue: {}'
+                        .format(self.__class__.__name__, url_prefix_formats))
 
     @property
     def request_path(self):
@@ -88,23 +106,34 @@ class UITab(object):
 
     @property
     def url_prefixes(self):
-        if self.url_prefix_formats:
-            return [url_prefix_format.format(domain=self.domain)
-                    for url_prefix_format in self.url_prefix_formats]
-        else:
-            return self.urls
+        return [url_prefix_format.format(domain=self.domain)
+                for url_prefix_format in self.url_prefix_formats]
+
+    def get_url_prefix_formats_suggestion(self):
+        import urlparse
+        accepted_urls = []
+        # sorted shortest first
+        all_urls = sorted(
+            urlparse.urlparse(url).path
+            # replace the actual domain with {domain}
+            .replace('/a/{}'.format(self.domain), '/a/{domain}')
+            for url in self._get_inferred_urls
+        )
+        # accept only urls that don't start with an already-accepted prefix
+        for url in all_urls:
+            for prefix in accepted_urls:
+                if url.startswith(prefix):
+                    break
+            else:
+                accepted_urls.append(url)
+        return tuple(accepted_urls)
 
     @property
     @memoized
-    def urls(self):
+    def _get_inferred_urls(self):
         urls = [self.url] if self.url else []
-        try:
-            for name, section in self.sidebar_items:
-                urls.extend(item['url'] for item in section)
-        except Exception:
-            # tried to get urls for another tab on a page that doesn't provide
-            # the necessary couch_user, domain, project, etc. value
-            pass
+        for name, section in self.sidebar_items:
+            urls.extend(item['url'] for item in section)
 
         return urls
 
