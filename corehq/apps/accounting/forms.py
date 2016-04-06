@@ -1659,7 +1659,8 @@ class TriggerInvoiceForm(forms.Form):
         invoice_factory = DomainInvoiceFactory(invoice_start, invoice_end, domain)
         invoice_factory.create_invoices()
 
-    def clean_previous_invoices(self, invoice_start, invoice_end, domain_name):
+    @staticmethod
+    def clean_previous_invoices(invoice_start, invoice_end, domain_name):
         prev_invoices = Invoice.objects.filter(
             date_start__lte=invoice_end, date_end__gte=invoice_start,
             subscription__subscriber__domain=domain_name
