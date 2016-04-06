@@ -1,3 +1,5 @@
+from random import randint
+
 from django.conf import settings
 from django.test import TestCase
 from corehq.apps.accounting.generator import init_default_currency
@@ -55,6 +57,25 @@ class TestUsageFee(TestCase):
                     self.assertEqual(
                         billable.usage_fee.amount,
                         self.most_specific_fees[message.direction][domain]
+                    )
+
+    def test_multipart_usage_charge(self):
+        self.apply_direction_fee()
+        self.apply_direction_and_domain_fee()
+
+        for direction, domain_fee in self.most_specific_fees.items():
+            for domain in domain_fee:
+                messages = generator.arbitrary_messages_by_backend_and_direction(
+                    self.backend_ids,
+                    domain=domain,
+                )
+                for message in messages:
+                    multipart_count = randint(1, 10)
+                    billable = SmsBillable.create(message, multipart_count=multipart_count)
+                    self.assertIsNotNone(billable)
+                    self.assertEqual(
+                        billable.usage_charge,
+                        self.most_specific_fees[message.direction][domain] * multipart_count
                     )
 
     def test_log_no_usage_fee(self):
