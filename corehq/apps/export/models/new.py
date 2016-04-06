@@ -704,7 +704,7 @@ class GeopointItem(ExportItem, SplitableItemMixin):
     def split_value(self, value, ignore_unspecified_options):
         values = [None] * 4
         for index, coordinate in enumerate(value.split(' ')):
-            values.insert(index, coordinate)
+            values[index] = coordinate
         return values
 
 
