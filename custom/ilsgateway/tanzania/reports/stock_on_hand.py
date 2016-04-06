@@ -46,13 +46,13 @@ def product_format(ret, srs, month):
     if mos == NO_DATA:
         text = '<span style="color:grey">%s</span>'
     elif mos == STOCKOUT:
-        text = '<span class="icon-remove" style="color:red"/>%s'
+        text = '<span class="fa-remove" style="color:red"/>%s'
     elif mos < LOW:
-        text = '<span class="icon-warning-sign" style="color:orange"/>%s'
+        text = '<span class="fa fa-exclamation-triangle" style="color:orange"/>%s'
     elif mos <= ADEQUATE:
-        text = '<span class="icon-ok" style="color:green"/>%s'
+        text = '<span class="fa fa-ok" style="color:green"/>%s'
     elif mos > ADEQUATE:
-        text = '<span class="icon-arrow-up" style="color:purple"/>%s'
+        text = '<span class="fa fa-arrow-up" style="color:purple"/>%s'
 
     if month:
         if srs:
@@ -265,9 +265,9 @@ def _reported_on_time(reminder_date, last_report_date):
 
 def icon_format(status, val):
     if status == OnTimeStates.ON_TIME:
-        return '<span class="icon-ok" style="color:green"/>%s' % val
+        return '<span class="fa fa-ok" style="color:green"/>%s' % val
     elif status == OnTimeStates.LATE:
-        return '<span class="icon-warning-sign" style="color:orange"/>%s' % val
+        return '<span class="fa fa-exclamation-triangle" style="color:orange"/>%s' % val
     elif status == OnTimeStates.NO_DATA or OnTimeStates.INSUFFICIENT_DATA:
         return _('Waiting for reply')
 

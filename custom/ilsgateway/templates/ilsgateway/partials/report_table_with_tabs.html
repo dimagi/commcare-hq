@@ -4,7 +4,7 @@
 
 
 {% if report.needs_filters %}
-    {% include 'reports/bootstrap2/partials/description.html' %}
+    {% include 'reports/bootstrap3/partials/description.html' %}
 {% else %}
     <div style="float: left;" class="{{ thisreport.css_class }}">
         <div class="media">
@@ -31,10 +31,10 @@
                     <tr>
                         {% for header in report_table.headers %}
                             <th {% if not report_table.pagination.is_on %}data-sort="{{ header.sort_type }}" data-sortdir="{{ header.sort_direction }}"{% endif %} {% if header.css_class %}class="{{ header.css_class }}"{% endif %}>
-                                <i class="icon-white"></i>
+                                <i class="icon-white fa dt-sort-icon"></i>
                                 {% if header.html %}{{ header.html }}{% else %}{{ header|linebreaksbr }}{% endif %}
                                 {% if header.help_text %}
-                                    <i class="icon-white icon-question-sign header-tooltip" title="{{ header.help_text }}"></i>
+                                    <i class="fa fa-question-circle header-tooltip" title="{{ header.help_text }}"></i>
                                 {% endif %}
                             </th>
                         {% endfor %}
@@ -108,10 +108,10 @@
 
         {% if report_table and report_table.datatables and thisreport.show_table %}
             {% if report_table.slug != 'product_selection_pane'%}
-                var dataTablesDom = "frt<'row-fluid dataTables_control'<'span6'il><'span6'p>>";
+                var dataTablesDom = "frt<'row dataTables_control'<'col-sm-6'il><'col-sm-6'p>>";
                 var params = {
                     sDom: dataTablesDom,
-                    "sPaginationType": "bootstrap",
+                    "sPaginationType": "bs_normal",
                     iDisplayLength: {{ report_table.default_rows }},
                     iDisplayStart: 0,
                     sScrollX: "100%",
@@ -161,7 +161,7 @@
         {% endif %}
 
         $(function() {
-            $('.header-popover').popout({
+            $('.header-popover').popover({
                 trigger: 'hover',
                 placement: 'bottom'
             });
