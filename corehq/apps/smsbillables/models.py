@@ -302,7 +302,7 @@ class SmsBillable(models.Model):
         return Decimal('0.0')
 
     @classmethod
-    def create(cls, message_log):
+    def create(cls, message_log, multipart_count=1):
         phone_number = clean_phone_number(message_log.phone_number)
         direction = message_log.direction
         domain = message_log.domain
@@ -314,6 +314,7 @@ class SmsBillable(models.Model):
             direction=direction,
             date_sent=message_log.date,
             domain=domain,
+            multipart_count=multipart_count,
         )
         billable.gateway_fee, billable.gateway_fee_conversion_rate = cls._get_gateway_fee(
             message_log.backend_api, message_log.backend_id, phone_number, direction, log_id
