@@ -3,12 +3,12 @@ from django.test import TestCase, SimpleTestCase
 
 from corehq.apps.export.models import (
     ExportItem,
+    MultipleChoiceItem,
     FormExportDataSchema,
     ExportGroupSchema,
     FormExportInstance,
     TableConfiguration,
-)
-from corehq.apps.export.models.new import (
+    SplitExportColumn,
     PathNode,
     MAIN_TABLE,
     FormExportInstanceDefaults,
@@ -31,7 +31,7 @@ class TestExportInstanceGeneration(SimpleTestCase):
                 ExportGroupSchema(
                     path=MAIN_TABLE,
                     items=[
-                        ExportItem(
+                        MultipleChoiceItem(
                             path=[PathNode(name='data'), PathNode(name='question1')],
                             label='Question 1',
                             last_occurrences={cls.app_id: 3},
@@ -67,6 +67,13 @@ class TestExportInstanceGeneration(SimpleTestCase):
             instance = FormExportInstance.generate_instance_from_schema(self.schema)
 
         self.assertEqual(len(instance.tables), 2)
+
+        index, split_column = instance.tables[0].get_column(
+            [PathNode(name='data'), PathNode(name='question1')],
+            'MultipleChoiceItem',
+            None
+        )
+        self.assertTrue(isinstance(split_column, SplitExportColumn))
 
         selected = filter(
             lambda column: column.selected,

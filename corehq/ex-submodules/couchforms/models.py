@@ -139,10 +139,6 @@ class XFormInstance(SafeSaveDocument, UnicodeMixIn, ComputedDocumentMixin,
             return db.get(docid, rev=rev, wrapper=cls.wrap, **extras)
         except ResourceNotFound:
             raise XFormNotFound
-
-    @property
-    def type(self):
-        return self.form.get(const.TAG_TYPE, "")
         
     @property
     def form_id(self):
@@ -159,14 +155,6 @@ class XFormInstance(SafeSaveDocument, UnicodeMixIn, ComputedDocumentMixin,
     @property
     def name(self):
         return self.form.get(const.TAG_NAME, "")
-
-    @property
-    def version(self):
-        return self.form.get(const.TAG_VERSION, "")
-        
-    @property
-    def uiversion(self):
-        return self.form.get(const.TAG_UIVERSION, "")
 
     @property
     def user_id(self):

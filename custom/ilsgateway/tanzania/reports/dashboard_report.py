@@ -1,4 +1,4 @@
-from custom.ilsgateway.filters import ProgramFilter, ILSDateFilter
+from custom.ilsgateway.filters import ProgramFilter, ILSDateFilter, ILSAsyncLocationFilter
 from custom.ilsgateway.tanzania import MultiReport
 from custom.ilsgateway.tanzania.reports.configs.dashboard_config import DashboardConfig
 from custom.ilsgateway.tanzania.reports.facility_details import InventoryHistoryData, RegistrationData, \
@@ -7,7 +7,6 @@ from custom.ilsgateway.tanzania.reports.mixins import RandRSubmissionData, Distr
     SohSubmissionData, DeliverySubmissionData, ProductAvailabilitySummary
 from custom.ilsgateway.tanzania.reports.stock_on_hand import StockOnHandReport
 from custom.ilsgateway.tanzania.reports.utils import make_url
-from corehq.apps.reports.filters.fixtures import AsyncLocationFilter
 from dimagi.utils.decorators.memoized import memoized
 from django.utils.translation import ugettext as _
 
@@ -27,7 +26,7 @@ class DashboardReport(MultiReport):
 
     @property
     def fields(self):
-        fields = [AsyncLocationFilter, ILSDateFilter, ProgramFilter]
+        fields = [ILSAsyncLocationFilter, ILSDateFilter, ProgramFilter]
         if self.location and self.location.location_type.name.upper() == 'FACILITY':
             fields = []
         return fields

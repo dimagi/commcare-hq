@@ -11,6 +11,8 @@ class ASHAFacilitatorsReport(GenericTabularReport, DatespanMixin, CustomProjectR
     slug = "asha_facilitators_report"
     no_value = '--'
 
+    is_bootstrap3 = True
+
     @property
     def report_config(self):
         return {

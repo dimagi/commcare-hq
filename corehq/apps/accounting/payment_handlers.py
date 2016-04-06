@@ -1,8 +1,13 @@
 from decimal import Decimal
-from django.db import transaction
-import stripe
+
 from django.conf import settings
+from django.db import transaction
 from django.utils.translation import ugettext as _
+
+import stripe
+
+from dimagi.utils.decorators.memoized import memoized
+
 from corehq.apps.accounting.models import (
     BillingAccount,
     CreditLine,
@@ -10,7 +15,6 @@ from corehq.apps.accounting.models import (
     PaymentRecord,
     SoftwareProductType,
     FeatureType,
-    PaymentMethod,
     PreOrPostPay,
     StripePaymentMethod,
     LastPayment
@@ -23,7 +27,6 @@ from corehq.apps.accounting.utils import (
 )
 from corehq.apps.domain.models import Domain
 from corehq.const import USER_DATE_FORMAT
-from dimagi.utils.decorators.memoized import memoized
 
 stripe.api_key = settings.STRIPE_PRIVATE_KEY
 
@@ -76,7 +79,6 @@ class BaseStripePaymentHandler(object):
         account.pre_or_post_pay = PreOrPostPay.POSTPAY
         account.save()
 
-
     def process_request(self, request):
         customer = None
         amount = self.get_charge_amount(request)
@@ -102,10 +104,18 @@ class BaseStripePaymentHandler(object):
                     return {'success': True, 'removedCard': card, }
                 if save_card:
                     card = self.payment_method.create_card(card, billing_account, self.domain, autopay=autopay)
-            if save_card or is_saved_card:
-                customer = self.payment_method.customer
+                if save_card or is_saved_card:
+                    customer = self.payment_method.customer
 
-            charge = self.create_charge(amount, card=card, customer=customer)
+                payment_record = PaymentRecord.create_record(
+                    self.payment_method, 'temp', amount
+                )
+                self.update_credits(payment_record)
+
+                charge = self.create_charge(amount, card=card, customer=customer)
+
+            payment_record.transaction_id = charge.id
+            payment_record.save()
             self.update_payment_information(billing_account)
         except stripe.error.CardError as e:
             # card was declined
@@ -133,12 +143,6 @@ class BaseStripePaymentHandler(object):
                 }
             )
             return generic_error
-
-        with transaction.atomic():
-            payment_record = PaymentRecord.create_record(
-                self.payment_method, charge.id, amount
-            )
-            self.update_credits(payment_record)
 
         try:
             self.send_email(payment_record)

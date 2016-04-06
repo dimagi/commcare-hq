@@ -1,3 +1,5 @@
+/* globals Exports */
+
 Exports.ViewModels.ExportInstance = function(instanceJSON, options) {
     options = options || {};
     var self = this;
@@ -17,9 +19,9 @@ Exports.ViewModels.ExportInstance.prototype.getFormatOptionText = function(forma
     } else if (format === Exports.Constants.EXPORT_FORMATS.CSV) {
         return gettext('CSV (Zip file)');
     } else if (format === Exports.Constants.EXPORT_FORMATS.XLS) {
-        return gettext('Excel 2007');
+        return gettext('Excel (older versions)');
     } else if (format === Exports.Constants.EXPORT_FORMATS.XLSX) {
-        return gettext('Web Page (Excel Dashboards)');
+        return gettext('Excel 2007');
     }
 };
 
@@ -149,13 +151,6 @@ Exports.ViewModels.TableConfiguration.mapping = {
 Exports.ViewModels.ExportColumn = function(columnJSON) {
     var self = this;
     ko.mapping.fromJS(columnJSON, Exports.ViewModels.ExportColumn.mapping, self);
-    self.deidTransform = ko.observable(Exports.Constants.DEID_OPTIONS.NONE);
-    self.deidTransform.subscribe(function(newTransform) {
-        self.transforms(Exports.Utils.removeDeidTransforms(self.transforms()));
-        if (newTransform) {
-            self.transforms.push(newTransform);
-        }
-    });
 };
 
 Exports.ViewModels.ExportColumn.prototype.formatProperty = function() {
@@ -164,11 +159,6 @@ Exports.ViewModels.ExportColumn.prototype.formatProperty = function() {
     } else {
         return _.map(this.item.path(), function(node) { return node.name(); }).join('.');
     }
-};
-
-Exports.ViewModels.ExportColumn.prototype.isDeidSelectVisible = function() {
-    var nodes = this.item.path();
-    return (nodes[nodes.length - 1].name !== '_id' || this.transforms()) && !this.isCaseName();
 };
 
 Exports.ViewModels.ExportColumn.prototype.getDeidOptions = function() {
@@ -193,9 +183,12 @@ Exports.ViewModels.ExportColumn.prototype.isCaseName = function() {
     return this.item.isCaseName();
 };
 
+Exports.ViewModels.ExportColumn.prototype.translatedHelp = function() {
+    return gettext(this.help_text);
+};
+
 Exports.ViewModels.ExportColumn.mapping = {
-    include: ['item', 'label', 'is_advanced', 'selected', 'tags', 'transforms'],
-    exclude: ['deidTransform'],
+    include: ['item', 'label', 'is_advanced', 'selected', 'tags', 'deid_transform', 'help_text'],
     item: {
         create: function(options) {
             return new Exports.ViewModels.ExportItem(options.data);

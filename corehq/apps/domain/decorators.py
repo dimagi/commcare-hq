@@ -59,7 +59,7 @@ def _redirect_for_login_or_domain(request, redirect_field_name, login_url):
 
 def domain_specific_login_redirect(request, domain):
     project = Domain.get_by_name(domain)
-    login_url = reverse('login', kwargs={'domain_type': project.domain_type})
+    login_url = reverse('login')
     return _redirect_for_login_or_domain(request, 'next', login_url)
 
 

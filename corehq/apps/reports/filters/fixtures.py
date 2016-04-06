@@ -106,10 +106,14 @@ class AsyncLocationFilter(BaseReportFilter):
     make_optional = False
 
     @property
+    def api_root(self):
+        return reverse('api_dispatch_list', kwargs={'domain': self.domain,
+                                                    'resource_name': 'location_internal',
+                                                    'api_name': 'v0.3'})
+
+    @property
     def filter_context(self):
-        api_root = reverse('api_dispatch_list', kwargs={'domain': self.domain,
-                                                        'resource_name': 'location_internal',
-                                                        'api_name': 'v0.3'})
+        api_root = self.api_root
         user = self.request.couch_user
         loc_id = self.request.GET.get('location_id')
         if not loc_id:
