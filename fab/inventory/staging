@@ -5,9 +5,6 @@ hqproxy4.internal.commcarehq.org
 hqdjango4-staging.internal.commcarehq.org
 hqdjango5-staging.internal.commcarehq.org
 
-[couchdb]
-hqdb0-staging.internal.commcarehq.org
-
 [postgresql]
 hqdb0-staging.internal.commcarehq.org
 

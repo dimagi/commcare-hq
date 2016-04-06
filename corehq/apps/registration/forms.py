@@ -82,7 +82,7 @@ class NewWebUserRegistrationForm(NoAutocompleteMixin, DomainRegistrationForm):
                                help_text=mark_safe("""
                                <span data-bind="text: passwordHelp, css: color">
                                """))
-    if getattr(settings, "ENABLE_DRACONIAN_SECURITY_FEATURES", False):
+    if settings.ENABLE_DRACONIAN_SECURITY_FEATURES:
         captcha = CaptchaField(_("Type the letters in the box"))
     create_domain = forms.BooleanField(widget=forms.HiddenInput(), required=False, initial=False)
     # Must be set to False to have the clean_*() routine called

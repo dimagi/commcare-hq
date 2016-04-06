@@ -6,6 +6,7 @@ import logging
 import re
 import urllib
 
+from django.conf import settings
 from django.contrib import messages
 from django.contrib.auth import authenticate, login
 from django.contrib.auth.forms import SetPasswordForm
@@ -39,7 +40,7 @@ from corehq.apps.analytics.tasks import (
 )
 from corehq.apps.analytics.utils import get_meta
 from corehq.apps.domain.decorators import (login_and_domain_required, require_superuser, domain_admin_required)
-from corehq.apps.domain.models import Domain, toggles
+from corehq.apps.domain.models import Domain
 from corehq.apps.domain.views import BaseDomainView
 from corehq.apps.es import AppES
 from corehq.apps.es.queries import search_string_query
@@ -69,6 +70,7 @@ from corehq.apps.users.models import (CouchUser, CommCareUser, WebUser, DomainRe
                                       DomainMembershipError)
 from corehq.elastic import ADD_TO_ES_FILTER, es_query
 from corehq.util.couch import get_document_or_404
+from corehq import toggles
 
 
 def _users_context(request, domain):
@@ -280,6 +282,11 @@ class EditWebUserView(BaseEditUserView):
         return ctx
 
     @property
+    @memoized
+    def can_grant_superuser_access(self):
+        return self.request.couch_user.is_superuser and toggles.SUPPORT.enabled(self.request.couch_user.username)
+
+    @property
     def page_context(self):
         ctx = {
             'form_uneditable': BaseUserInfoForm(),
@@ -287,7 +294,7 @@ class EditWebUserView(BaseEditUserView):
         if (self.request.project.commtrack_enabled or
                 self.request.project.uses_locations):
             ctx.update({'update_form': self.commtrack_form})
-        if self.request.couch_user.is_superuser:
+        if self.can_grant_superuser_access:
             ctx.update({'update_permissions': True})
 
         ctx.update({'token': self.backup_token})
@@ -302,7 +309,7 @@ class EditWebUserView(BaseEditUserView):
         return super(EditWebUserView, self).get(request, *args, **kwargs)
 
     def post(self, request, *args, **kwargs):
-        if self.request.POST['form_type'] == "update-user-permissions" and request.couch_user.is_superuser:
+        if self.request.POST['form_type'] == "update-user-permissions" and self.can_grant_superuser_access:
             is_super_user = True if 'super_user' in self.request.POST and self.request.POST['super_user'] == 'on' else False
             if self.form_user_update_permissions.update_user_permission(couch_user=self.request.couch_user,
                                                                         editable_user=self.editable_user, is_super_user=is_super_user):
@@ -644,7 +651,9 @@ class UserInvitationView(object):
             'create_domain': False,
             'formatted_username': username,
             'domain': self.domain,
+            'invite_to': self.domain,
             'invite_type': _('Project'),
+            'hide_password_feedback': settings.ENABLE_DRACONIAN_SECURITY_FEATURES,
         }
         if request.user.is_authenticated:
             context['current_page'] = {'page_name': _('Project Invitation')}

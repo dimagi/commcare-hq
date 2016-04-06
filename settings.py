@@ -159,6 +159,7 @@ SESSION_ENGINE = "django.contrib.sessions.backends.cached_db"
 # time in minutes before forced logout due to inactivity
 INACTIVITY_TIMEOUT = 60 * 24 * 14
 SECURE_TIMEOUT = 30
+ENABLE_DRACONIAN_SECURITY_FEATURES = False
 
 PASSWORD_HASHERS = (
     # this is the default list with SHA1 moved to the front
@@ -348,7 +349,6 @@ HQ_APPS = (
     # custom reports
     'a5288',
     'custom.bihar',
-    'custom.penn_state',
     'custom.apps.gsid',
     'custom.icds',
     'hsph',
@@ -1202,7 +1202,6 @@ COUCHDB_APPS = [
     'dhis2',
 
     # custom reports
-    'penn_state',
     'care_benin',
     'gsid',
     'hsph',
@@ -1602,7 +1601,6 @@ DOMAIN_MODULE_MAP = {
     'hsph-dev': 'hsph',
     'hsph-betterbirth-pilot-2': 'hsph',
     'mc-inscale': 'custom.reports.mc',
-    'psu-legacy-together': 'custom.penn_state',
     'mvp-potou': 'mvp',
     'mvp-sauri': 'mvp',
     'mvp-bonsaaso': 'mvp',

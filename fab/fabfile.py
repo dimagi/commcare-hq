@@ -393,7 +393,6 @@ def env_common():
     proxy = servers['proxy']
     webworkers = servers['webworkers']
     postgresql = servers['postgresql']
-    couchdb = servers['couchdb']
     touchforms = servers['touchforms']
     elasticsearch = servers['elasticsearch']
     celery = servers['celery']
@@ -404,7 +403,6 @@ def env_common():
     deploy = servers.get('deploy', servers['postgresql'])[:1]
 
     env.roledefs = {
-        'couch': couchdb,
         'pg': postgresql,
         'rabbitmq': rabbitmq,
         'django_celery': celery,

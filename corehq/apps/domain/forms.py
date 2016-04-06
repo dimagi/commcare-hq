@@ -965,7 +965,7 @@ max_pwd = 20
 pwd_pattern = re.compile( r"([-\w]){"  + str(min_pwd) + ',' + str(max_pwd) + '}' )
 
 def clean_password(txt):
-    if getattr(settings, "ENABLE_DRACONIAN_SECURITY_FEATURES", False):
+    if settings.ENABLE_DRACONIAN_SECURITY_FEATURES:
         strength = legacy_get_password_strength(txt)
         message = _('Password is not strong enough. Requirements: 1 special character, '
                     '1 number, 1 capital letter, minimum length of 8 characters.')
@@ -1015,7 +1015,7 @@ class NoAutocompleteMixin(object):
 
     def __init__(self, *args, **kwargs):
         super(NoAutocompleteMixin, self).__init__(*args, **kwargs)
-        if getattr(settings, "ENABLE_DRACONIAN_SECURITY_FEATURES", False):
+        if settings.ENABLE_DRACONIAN_SECURITY_FEATURES:
             for field in self.fields.values():
                 field.widget.attrs.update({'autocomplete': 'off'})
 
@@ -1029,7 +1029,7 @@ class HQPasswordResetForm(NoAutocompleteMixin, forms.Form):
     """
     email = forms.EmailField(label=ugettext_lazy("Username"), max_length=254,
                              widget=forms.TextInput(attrs={'class': 'form-control'}))
-    if getattr(settings, "ENABLE_DRACONIAN_SECURITY_FEATURES", False):
+    if settings.ENABLE_DRACONIAN_SECURITY_FEATURES:
         captcha = CaptchaField(label=ugettext_lazy("Type the letters in the box"))
     error_messages = {
         'unknown': ugettext_lazy("That email address doesn't have an associated "

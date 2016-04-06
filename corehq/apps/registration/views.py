@@ -91,7 +91,7 @@ def register_user(request):
         context.update({
             'form': form,
             'current_page': {'page_name': _('Create an Account')},
-            'show_password_feedback': not getattr(settings, 'ENABLE_DRACONIAN_SECURITY_FEATURES', False),
+            'hide_password_feedback': settings.ENABLE_DRACONIAN_SECURITY_FEATURES,
         })
         return render(request, 'registration/create_new_user.html', context)
 
