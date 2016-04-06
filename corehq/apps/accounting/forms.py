@@ -1613,9 +1613,9 @@ class EnterprisePlanContactForm(forms.Form):
 
 
 class TriggerInvoiceForm(forms.Form):
-    month = forms.ChoiceField(label="Invoice Month")
-    year = forms.ChoiceField(label="Invoice Year")
-    domain = forms.CharField(label="Invoiced Project")
+    month = forms.ChoiceField(label="Statement Period Month")
+    year = forms.ChoiceField(label="Statement Period Year")
+    domain = forms.CharField(label="Project Space")
 
     def __init__(self, *args, **kwargs):
         super(TriggerInvoiceForm, self).__init__(*args, **kwargs)
