@@ -1,6 +1,6 @@
 import json
-from couchdbkit.exceptions import ResourceNotFound
 from simpleeval import InvalidExpression
+from corehq.apps.userreports.document_stores import get_document_store
 from corehq.apps.userreports.exceptions import BadSpecError
 from corehq.util.couch import get_db_by_doc_type
 from dimagi.ext.jsonobject import JsonObject, StringProperty, ListProperty, DictProperty
@@ -12,6 +12,7 @@ from corehq.apps.userreports.expressions.getters import (
     transform_from_datatype)
 from corehq.apps.userreports.indicators.specs import DataTypeProperty
 from corehq.apps.userreports.specs import TypeProperty, EvaluationContext
+from pillowtop.dao.exceptions import DocumentNotFoundError
 from .utils import eval_statements
 from corehq.util.quickcache import quickcache
 
@@ -201,14 +202,15 @@ class RelatedDocExpressionSpec(JsonObject):
     def get_value(self, doc_id, context):
 
         try:
-            doc = get_db_by_doc_type(self.related_doc_type).get(doc_id)
-            # ensure no cross-domain lookups of different documents
             assert context.root_doc['domain']
+            document_store = get_document_store(context.root_doc['domain'], self.related_doc_type)
+            doc = document_store.get_document(doc_id)
+            # ensure no cross-domain lookups of different documents
             if context.root_doc['domain'] != doc.get('domain'):
                 return None
             # explicitly use a new evaluation context since this is a new document
             return self._value_expression(doc, EvaluationContext(doc, 0))
-        except ResourceNotFound:
+        except DocumentNotFoundError:
             return None
 
 
