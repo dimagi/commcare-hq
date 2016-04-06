@@ -67,6 +67,9 @@ def sidebar_to_dropdown(sidebar_items, domain=None, current_url=None):
           'title': u'Project Users',
           'url': None},]
     """
+    if not sidebar_items:
+        # no need for "View All" if there aren't menu items
+        return []
     dropdown_items = []
     more_items_in_sidebar = False
     for side_header, side_list in sidebar_items:

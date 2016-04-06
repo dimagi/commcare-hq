@@ -73,20 +73,20 @@ class MainMenuNode(template.Node):
         couch_user = getattr(request, 'couch_user', None)
         project = getattr(request, 'project', None)
         domain = context.get('domain')
-        visible_tabs = []
 
-        for tab in get_all_tabs(request, domain=domain,
-                                couch_user=couch_user, project=project):
-            tab.is_active_tab = False
-            if tab.real_is_viewable:
-                visible_tabs.append(tab)
+        all_tabs = get_all_tabs(request, domain=domain, couch_user=couch_user,
+                                project=project)
+
+        active_tab = _get_active_tab(all_tabs, request.get_full_path())
+
+        if active_tab:
+            active_tab.is_active_tab = True
+
+        visible_tabs = [tab for tab in all_tabs if tab.real_is_viewable]
 
         # set the context variable in the highest scope so it can be used in
         # other blocks
-        active_tab = context.dicts[0]['active_tab'] = _get_active_tab(
-            visible_tabs, request.get_full_path())
-        if active_tab:
-            active_tab.is_active_tab = True
+        context.dicts[0]['active_tab'] = active_tab
         return mark_safe(render_to_string('tabs/menu_main.html', {
             'tabs': visible_tabs,
         }))

@@ -1300,6 +1300,9 @@ class AccountingTab(UITab):
     view = "accounting_default"
     dispatcher = AccountingAdminInterfaceDispatcher
 
+    url_prefix_formats = ('/hq/accounting/',)
+    show_by_default = False
+
     @property
     def is_viewable(self):
         return is_accounting_admin(self._request.user)
@@ -1344,6 +1347,7 @@ class SMSAdminTab(UITab):
     dispatcher = SMSAdminInterfaceDispatcher
 
     url_prefix_formats = ('/hq/sms/',)
+    show_by_default = False
 
     @property
     @memoized
@@ -1364,16 +1368,6 @@ class SMSAdminTab(UITab):
              'url': reverse('global_backend_map')},
         ]))
         return items
-
-    @property
-    def is_viewable(self):
-        return path_starts_with_url(self.request_path, self.url) and \
-            self.couch_user and self.couch_user.is_superuser
-
-
-class FeatureFlagsTab(UITab):
-    title = ugettext_noop("Feature Flags")
-    view = "toggle_list"
 
     @property
     def is_viewable(self):

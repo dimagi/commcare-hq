@@ -19,6 +19,7 @@ class UITab(object):
     # e.g. ('/a/{domain}/reports/', '/a/{domain}/otherthing/')
     # renderer can quickly tell which tab to highlight as active
     url_prefix_formats = ()
+    show_by_default = True
 
     # must be instance of GaTracker
     ga_tracker = None
@@ -32,6 +33,9 @@ class UITab(object):
         # This should not be considered as part of the subclass API unless it
         # is necessary. Try to add new explicit parameters instead.
         self._request = request
+
+        # must be set manually (i.e. `tab.is_active_tab = True`)
+        self.is_active_tab = False
 
         # Do some preemptive checks on the subclass's configuration (if DEBUG)
         if settings.DEBUG:
@@ -55,8 +59,6 @@ class UITab(object):
 
     @property
     def dropdown_items(self):
-        # todo: add default implementation which looks at sidebar_items and
-        # sees which ones have is_dropdown_visible or something like that.
         return sidebar_to_dropdown(sidebar_items=self.sidebar_items,
                                    domain=self.domain, current_url=self.url)
 
@@ -83,6 +85,9 @@ class UITab(object):
     @property
     @memoized
     def real_is_viewable(self):
+        if not self.show_by_default and not self.is_active_tab:
+            return False
+
         try:
             return self.is_viewable
         except AttributeError:
