@@ -53,15 +53,10 @@ branches:
 #  - revamp-multimedia # Jenny 2/16
   - analytics-retry # Cal 2/18
   - j2me # j$ 2/23
-  # B3 Changes round 2
-  - b3-reports-data  # BB 2/23
-  - b3-data-import-cases  # BB 2/23
-  - b3-data-lookup-tables  # BB 2/23
-  - b3-reports-home+b3-commcare-exchange # Nick P 4/6
-  - b3-reports-home  # BB 2/23
   # B3 Report Migration branches
+  - b3-data-import-cases  # BB 2/23
+  - b3-reports-home  # BB 2/23
   - import_build-anchor-tag # Nick P 2/29
-  - b3-commcare-exchange # biyeun 3/10
   - report-builder-text # Cal 3/1
   - certificate-validation # Cal 3/10
   - knockout-3-3 # Jenny 3/30
