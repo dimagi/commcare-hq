@@ -15,7 +15,7 @@ def dropdown_dict(title, url=None, html=None,
                                        data_id=data_id,)
 
 
-def sidebar_to_dropdown(sidebar_items, domain=None, current_url_name=None):
+def sidebar_to_dropdown(sidebar_items, domain=None, current_url=None):
     """
     Formats sidebar_items as dropdown items
     Sample input:
@@ -92,8 +92,8 @@ def sidebar_to_dropdown(sidebar_items, domain=None, current_url_name=None):
         if current_dropdown_items:
             dropdown_items.extend([dropdown_header] + current_dropdown_items)
 
-    if more_items_in_sidebar and current_url_name:
-        return dropdown_items + divider_and_more_menu(current_url_name)
+    if more_items_in_sidebar and current_url:
+        return dropdown_items + divider_and_more_menu(current_url)
     else:
         return dropdown_items
 

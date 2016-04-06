@@ -178,7 +178,7 @@ class ReportsTab(UITab):
         reports = sidebar_to_dropdown(
             ProjectReportDispatcher.navigation_sections(
                 request=self._request, domain=self.domain),
-            current_url_name=self.url)
+            current_url=self.url)
         return saved_reports_dropdown + reports
 
 

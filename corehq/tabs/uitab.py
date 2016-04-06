@@ -60,7 +60,7 @@ class UITab(object):
         # todo: add default implementation which looks at sidebar_items and
         # sees which ones have is_dropdown_visible or something like that.
         return sidebar_to_dropdown(sidebar_items=self.sidebar_items,
-                                   domain=self.domain, current_url_name=self.url)
+                                   domain=self.domain, current_url=self.url)
 
     @property
     @memoized
