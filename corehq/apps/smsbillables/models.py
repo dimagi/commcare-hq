@@ -273,11 +273,11 @@ class SmsBillable(models.Model):
 
     @property
     def gateway_charge(self):
-        return (self.multipart_count if self.multipart_count is not None else 1) * self._single_gateway_charge
+        return self.multipart_count * self._single_gateway_charge
 
     @property
     def usage_charge(self):
-        return (self.multipart_count if self.multipart_count is not None else 1) * self._single_usage_charge
+        return self.multipart_count * self._single_usage_charge
 
     @property
     def _single_gateway_charge(self):
