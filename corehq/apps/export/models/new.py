@@ -185,7 +185,7 @@ class ExportColumn(DocumentSchema):
             "is_advanced": is_case_update or False,
         }
 
-        if isinstance(item, MultipleChoiceItem) or isinstance(item, GeopointItem):
+        if isinstance(item, SplitableItemMixin):
             column = SplitExportColumn(**constructor_args)
         else:
             column = ExportColumn(**constructor_args)
@@ -704,7 +704,7 @@ class GeopointItem(ExportItem, SplitableItemMixin):
     def split_value(self, value, ignore_unspecified_options):
         values = [None] * 4
         for index, coordinate in enumerate(value.split(' ')):
-            values.insert(index, coordinate)
+            values[index] = coordinate
         return values
 
 
