@@ -371,9 +371,6 @@ class ExportInstance(BlobMixin, Document):
     # Whether to automatically convert dates to excel dates
     transform_dates = BooleanProperty(default=True)
 
-    # Whether to include duplicates and other error'd forms in export
-    include_errors = BooleanProperty(default=False)
-
     # Whether the export is de-identified
     is_deidentified = BooleanProperty(default=False)
 
