@@ -88,6 +88,9 @@ class ItemListsProvider(object):
                 user.user_id,
                 sorted(items_by_type[data_type.get_id], key=lambda x: x.sort_key)
             ))
+        for data_type_id, data_type in all_types.iteritems():
+            if data_type_id not in global_types and data_type_id not in data_types:
+                fixtures.append(self._get_fixture_element(data_type.tag, user.user_id, []))
         return fixtures
 
     def _get_fixture_element(self, tag, user_id, items):
