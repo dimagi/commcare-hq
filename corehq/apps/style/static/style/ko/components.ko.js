@@ -8,6 +8,6 @@ _.each(components, function(moduleName, elementName) {
 
 $(document).ready(function() {
     _.each(_.keys(components), function(elementName) {
-        _.each($(elementName), function(el) { $(el).koApplyBindings() });
+        _.each($(elementName), function(el) { $(el).koApplyBindings(); });
     });
 });
