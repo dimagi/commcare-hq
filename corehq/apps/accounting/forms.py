@@ -1683,6 +1683,14 @@ class TriggerInvoiceForm(forms.Form):
                 )
             )
 
+    def clean(self):
+        today = datetime.date.today()
+        year = int(self.cleaned_data['year'])
+        month = int(self.cleaned_data['month'])
+
+        if (year, month) >= (today.year, today.month):
+            raise ValidationError('Statement period must be in the past')
+
 
 class TriggerBookkeeperEmailForm(forms.Form):
     month = forms.ChoiceField(label="Invoice Month")
