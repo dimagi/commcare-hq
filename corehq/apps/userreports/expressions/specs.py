@@ -9,7 +9,7 @@ from corehq.apps.userreports.expressions.getters import (
     DictGetter,
     NestedDictGetter,
     TransformedGetter,
-    transform_from_datatype, transform_date, transform_int)
+    transform_from_datatype)
 from corehq.apps.userreports.indicators.specs import DataTypeProperty
 from corehq.apps.userreports.specs import TypeProperty, EvaluationContext
 from .utils import eval_statements
@@ -199,6 +199,7 @@ class RelatedDocExpressionSpec(JsonObject):
 
     @quickcache(['self._vary_on', 'doc_id'])
     def get_value(self, doc_id, context):
+
         try:
             doc = get_db_by_doc_type(self.related_doc_type).get(doc_id)
             # ensure no cross-domain lookups of different documents
