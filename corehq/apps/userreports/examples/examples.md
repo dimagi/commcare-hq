@@ -516,7 +516,7 @@ This will return value of `weight_at_1_year - weight_at_birth`
     "aggregation_fn": "count"
 }
 ```
-It can be read as `reduce(count) <- filter(by gmp_xmlns) <- get_case_forms`
+It can be read as `reduce(filter(get_case_forms))`
 
 ### Getting latest form property
 
@@ -550,7 +550,7 @@ It can be read as `reduce(count) <- filter(by gmp_xmlns) <- get_case_forms`
     }
 }
 ```
-This will return `weight` form-property on latest gmp form (xmlns is gmp_xmlns). It can be read as `nested(weight) <- reduce(last_item) <- sort(by received_on) <- filter(by gmp_xmlns) <- get_case_forms`.
+This will return `weight` form-property on latest gmp form (xmlns is gmp_xmlns).
 
 # Report examples
 

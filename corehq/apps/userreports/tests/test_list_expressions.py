@@ -80,6 +80,13 @@ def test_filter_items_bad_spec(self, items_ex, filter_ex):
         },
         []
     ),
+    # if items_expression returns non-iterable return empty list
+    (
+        34,
+        {'type': 'identity'},
+        _filter_v1,
+        []
+    ),
 ])
 def test_filter_items_basic(self, doc, items_ex, filter_ex, expected):
     expression = ExpressionFactory.from_spec({
@@ -149,6 +156,13 @@ def test_map_items_bad_spec(self, items_ex, map_ex):
         {'type': 'property_name', 'property_name': 'key'},
         []
     ),
+    # if items_expression returns non-iterable return empty list
+    (
+        34,
+        {'type': 'identity'},
+        {'type': 'identity'},
+        []
+    ),
 ])
 def test_map_items_basic(self, doc, items_ex, map_ex, expected):
     expression = ExpressionFactory.from_spec({
@@ -197,12 +211,6 @@ def test_reduce_items_bad_spec(self, items_ex, reduce_ex):
         0,
     ),
     (
-        [],
-        {'type': 'identity'},
-        'count',
-        0,
-    ),
-    (
         [1, 2],
         {'type': 'identity'},
         'sum',
@@ -220,6 +228,63 @@ def test_reduce_items_bad_spec(self, items_ex, reduce_ex):
         'last_item',
         2
     ),
+    # if items_expression returns non-iterable reduce(count) should return 0
+    (
+        34,
+        {'type': 'identity'},
+        'count',
+        0
+    ),
+    # if items_expression returns non-iterable reduce(sum) should return 0
+    (
+        34,
+        {'type': 'identity'},
+        'sum',
+        0
+    ),
+    # if items_expression returns non-iterable reduce(count) should return None
+    (
+        34,
+        {'type': 'identity'},
+        'last_item',
+        None
+    ),
+    # if items_expression returns non-iterable reduce(count) should return None
+    (
+        34,
+        {'type': 'identity'},
+        'first_item',
+        None
+    ),
+    # if items_expression returns [] reduce(count) should return 0
+    (
+        [],
+        {'type': 'identity'},
+        'count',
+        0
+    ),
+    # if items_expression returns [] reduce(sum) should return 0
+    (
+        [],
+        {'type': 'identity'},
+        'sum',
+        0
+    ),
+    # if items_expression returns [] reduce(count) should return None
+    (
+        [],
+        {'type': 'identity'},
+        'last_item',
+        None
+    ),
+    # if items_expression returns [] reduce(count) should return None
+    (
+        [],
+        {'type': 'identity'},
+        'first_item',
+        None
+    ),
+
 ])
 def test_reduce_items_basic(self, doc, items_ex, reduce_ex, expected):
     expression = ExpressionFactory.from_spec({
@@ -262,15 +327,23 @@ def test_flatten_bad_spec(self, items_ex):
         {'type': 'identity'},
         []
     ),
+    # if an iterm in the list is not a list, return empty
     (
         ["a", "b"],
         {'type': 'identity'},
-        ["a", "b"],
+        [],
     ),
+    # if an iterm in the list is not a list, return empty
     (
         [1, 2],
         {'type': 'identity'},
         [],
+    ),
+    # if items_expression returns non-iterable return empty list
+    (
+        34,
+        {'type': 'identity'},
+        []
     ),
 ])
 def test_flatten_basic(self, doc, items_ex, expected):

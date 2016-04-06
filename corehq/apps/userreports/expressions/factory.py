@@ -10,7 +10,7 @@ from corehq.apps.userreports.expressions.specs import PropertyNameGetterSpec, Pr
     NestedExpressionSpec, DictExpressionSpec, NamedExpressionSpec, EvalExpressionSpec, FormsExpressionSpec
 from corehq.apps.userreports.expressions.date_specs import AddDaysExpressionSpec, AddMonthsExpressionSpec, \
     MonthStartDateExpressionSpec, MonthEndDateExpressionSpec, DiffDaysExpressionSpec
-from corehq.apps.userreports.expressions.json_query_specs import FilterItemsExpressionSpec, \
+from corehq.apps.userreports.expressions.list_specs import FilterItemsExpressionSpec, \
     MapItemsExpressionSpec, ReduceItemsExpressionSpec, FlattenExpressionSpec, SortItemsExpressionSpec
 from dimagi.utils.parsing import json_format_datetime, json_format_date
 from dimagi.utils.web import json_handler

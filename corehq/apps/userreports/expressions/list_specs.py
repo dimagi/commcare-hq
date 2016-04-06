@@ -1,9 +1,18 @@
 import itertools
+from django.utils.translation import ugettext as _
 from dimagi.ext.jsonobject import JsonObject, DictProperty, StringProperty
 from corehq.apps.userreports.exceptions import BadSpecError
 from corehq.apps.userreports.specs import TypeProperty
 from jsonobject.base_properties import DefaultProperty
 from .utils import SUPPORTED_UCR_AGGREGATIONS, aggregate_items
+
+
+def _evaluate_items_expression(itemx_ex, doc, context):
+    result = itemx_ex(doc, context)
+    if not isinstance(result, list):
+        return []
+    else:
+        return result
 
 
 class FilterItemsExpressionSpec(JsonObject):
@@ -16,7 +25,7 @@ class FilterItemsExpressionSpec(JsonObject):
         self._filter_expression = filter_expression
 
     def __call__(self, doc, context=None):
-        items = self._items_expression(doc, context) or []
+        items = _evaluate_items_expression(self._items_expression, doc, context)
 
         values = []
         for item in items:
@@ -36,7 +45,7 @@ class MapItemsExpressionSpec(JsonObject):
         self._map_expression = map_expression
 
     def __call__(self, doc, context=None):
-        items = self._items_expression(doc, context) or []
+        items = _evaluate_items_expression(self._items_expression, doc, context)
 
         return map(
             lambda i: self._map_expression(i, context),
@@ -52,13 +61,13 @@ class ReduceItemsExpressionSpec(JsonObject):
     def configure(self, items_expression):
         self._items_expression = items_expression
         if self.aggregation_fn not in SUPPORTED_UCR_AGGREGATIONS:
-            raise BadSpecError("aggregation_fn '{}' is not valid. Valid options are: {} ".format(
+            raise BadSpecError(_("aggregation_fn '{}' is not valid. Valid options are: {} ").format(
                 self.aggregation_fn,
                 SUPPORTED_UCR_AGGREGATIONS
             ))
 
     def __call__(self, doc, context=None):
-        items = self._items_expression(doc, context) or []
+        items = _evaluate_items_expression(self._items_expression, doc, context)
         return aggregate_items(items, self.aggregation_fn)
 
 
@@ -70,7 +79,11 @@ class FlattenExpressionSpec(JsonObject):
         self._items_expression = items_expression
 
     def __call__(self, doc, context=None):
-        items = self._items_expression(doc, context) or []
+        items = _evaluate_items_expression(self._items_expression, doc, context)
+        #  all items should be iterable, if not return empty list
+        for item in items:
+            if not isinstance(item, list):
+                return []
         try:
             return(list(itertools.chain(*items)))
         except TypeError:
@@ -87,7 +100,7 @@ class SortItemsExpressionSpec(JsonObject):
         self._sort_expression = sort_expression
 
     def __call__(self, doc, context=None):
-        items = self._items_expression(doc, context) or []
+        items = _evaluate_items_expression(self._items_expression, doc, context)
 
         try:
             return sorted(

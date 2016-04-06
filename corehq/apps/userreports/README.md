@@ -416,18 +416,19 @@ The `date_expression` can be any valid expression, or simply constant
 
 #### Filter, Sort, Map and Reduce Expressions
 
-We have follwoing expressions that act on a list of objects or list of lists. The list to operate on is specified by `items_expression`. This can be any valid expression that returns a list. If the `items_expression` doesn't return a valid list, these might either fail or return one of empty list or `None` value.
+We have following expressions that act on a list of objects or list of lists. The list to operate on is specified by `items_expression`. This can be any valid expression that returns a list. If the `items_expression` doesn't return a valid list, these might either fail or return one of empty list or `None` value.
 
 ##### map_items Expression
 
 `map_items` performs a calculation specified by `map_expression` on each item of the list specified by `items_expression` and returns a list of the calculation results. The `map_expression` is evaluated relative to each item in the list and not relative to the parent document from which the list is specified. For e.g. if `items_expression` is a path to repeat-list of children in a form document, `map_expression` is a path relative to the repeat item.
 
-`items_expression` can be any valid expression that returns a list.
+`items_expression` can be any valid expression that returns a list. If this doesn't evaluate to a list an empty list is returned.
+
 `map_expression` can be any valid expression relative to the items in above list.
 
 ```json
 {
-    "type": "filter_items",
+    "type": "map_items",
     "items_expression": {
         "type": "property_path",
         "property_path": ["form", "child_repeat"]
@@ -438,14 +439,15 @@ We have follwoing expressions that act on a list of objects or list of lists. Th
     },
 }
 ```
-Above returns list of ages. Note that the `property_path` in `map_expression` is realtive to the repeat item rather than to the form.
+Above returns list of ages. Note that the `property_path` in `map_expression` is relative to the repeat item rather than to the form.
 
 
 ##### filter_items Expression
 
 `filter_items` performs filtering on given list and returns a new list. If the boolean expression specified by `filter_expression` evaluates to a `True` value, the item is included in the new list and if not, is not included in the new list.
 
-`items_expression` can be any valid expression that returns a list.
+`items_expression` can be any valid expression that returns a list. If this doesn't evaluate to a list an empty list is returned.
+
 `filter_expression` can be any valid boolean expression relative to the items in above list.
 
 ```json
@@ -471,7 +473,8 @@ Above returns list of ages. Note that the `property_path` in `map_expression` is
 
 `sort_items` returns a sorted list of items based on sort value of each item in ascending order. The sort value of an item is speicifed by `sort_expression`. If a sort-value of an item is `None`, the item will appear in the start of list. If sort-values of any two items can't be compared, an empty list is returned.
 
-`items_expression` can be any valid expression that returns a list.
+`items_expression` can be any valid expression that returns a list. If this doesn't evaluate to a list an empty list is returned.
+
 `sort_expression` can be any valid expression relative to the items in above list, that returns a value to be used as sort value.
 
 ```json
@@ -492,7 +495,8 @@ Above returns list of ages. Note that the `property_path` in `map_expression` is
 
 `reduce_items` returns aggregate value of the list specified by `aggregation_fn`.
 
-`items_expression` can be any valid expression that returns a list.
+`items_expression` can be any valid expression that returns a list. If this doesn't evaluate to a list, `aggregation_fn` will be applied on an empty list
+
 `aggregation_fn` is one of following supported functions names.
 
 
@@ -519,11 +523,11 @@ This returns number of family members
 
 `flatten_items` takes list of list of objects specified by `items_expression` and returns one list of all objects.
 
-`items_expression` is any valid expression that returns a list of lists.
+`items_expression` is any valid expression that returns a list of lists. It this doesn't evaluate to a list of lists an empty list is returned.
 ```json
 {
     "type": "flatten_items",
-    "items_expression": {},  #  should return list of lists
+    "items_expression": {},
 }
 ```
 

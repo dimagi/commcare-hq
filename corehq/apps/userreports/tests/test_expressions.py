@@ -819,8 +819,10 @@ class TestFormsExpressionSpec(TestCase):
     def setUpClass(cls):
         cls.domain = uuid.uuid4().hex
         factory = CaseFactory(domain=cls.domain)
-        [cls.case] = factory.create_or_update_case(CaseStructure())
+        [cls.case] = factory.create_or_update_case(CaseStructure(attrs={'create': True}))
         cls.forms = [f.to_json() for f in FormAccessors(cls.domain).get_forms(cls.case.xform_ids)]
+        #  redundant case to create extra forms that shouldn't be in the results for cls.case
+        [cls.case_b] = factory.create_or_update_case(CaseStructure(attrs={'create': True}))
 
         cls.expression = ExpressionFactory.from_spec({
             "type": "get_case_forms",
