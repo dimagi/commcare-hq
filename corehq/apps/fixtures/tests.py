@@ -143,12 +143,12 @@ class FixtureDataTest(TestCase):
             """
             <fixture id="item-list:district" user_id="{}">
                 <district_list />
-            </fixture>'
+            </fixture>
             """.format(self.user.user_id),
             ElementTree.tostring(fixtures[0])
         )
 
-        self.data_item.add_user(self.user)
+        self.fixture_ownership = self.data_item.add_user(self.user)
 
     def test_get_indexed_items(self):
         with self.assertRaises(FixtureVersionError):
