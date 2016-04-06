@@ -1,7 +1,8 @@
 import copy
 from datetime import date, datetime
 from decimal import Decimal
-from django.test import SimpleTestCase
+import uuid
+from django.test import SimpleTestCase, TestCase
 from fakecouch import FakeCouchDb
 from simpleeval import InvalidExpression
 from casexml.apps.case.models import CommCareCase
@@ -13,7 +14,9 @@ from corehq.apps.userreports.expressions.specs import (
 )
 from corehq.apps.userreports.expressions.specs import eval_statements
 from corehq.apps.userreports.specs import EvaluationContext
-from corehq.util.test_utils import generate_cases
+from corehq.apps.users.models import CommCareUser
+from corehq.form_processor.tests import run_with_all_backends
+from corehq.util.test_utils import generate_cases, create_and_save_a_form, create_and_save_a_case
 
 
 class ExpressionPluginTest(SimpleTestCase):
@@ -690,6 +693,56 @@ class RelatedDocExpressionTest(SimpleTestCase):
 
         same_expression = ExpressionFactory.from_spec(self.spec)
         self.assertEqual('foo', same_expression(my_doc, EvaluationContext(my_doc, 0)))
+
+
+class RelatedDocExpressionDbTest(TestCase):
+    domain = 'related-doc-db-test-domain'
+
+    @run_with_all_backends
+    def test_form_lookups(self):
+        form = create_and_save_a_form(domain=self.domain)
+        expression = self._get_expression('XFormInstance')
+        doc = self._get_doc(form.form_id)
+        self.assertEqual(form.form_id, expression(doc, EvaluationContext(doc, 0)))
+
+    @run_with_all_backends
+    def test_case_lookups(self):
+        case_id = uuid.uuid4().hex
+        create_and_save_a_case(domain=self.domain, case_id=case_id, case_name='related doc test case')
+        expression = self._get_expression('CommCareCase')
+        doc = self._get_doc(case_id)
+        self.assertEqual(case_id, expression(doc, EvaluationContext(doc, 0)))
+
+    @run_with_all_backends
+    def test_other_lookups(self):
+        user_id = uuid.uuid4().hex
+        user = CommCareUser.get_db().save_doc({'_id': user_id, 'domain': self.domain})
+        print user
+        expression = self._get_expression('CommCareUser')
+        doc = self._get_doc(user_id)
+        self.assertEqual(user_id, expression(doc, EvaluationContext(doc, 0)))
+
+    @staticmethod
+    def _get_expression(doc_type):
+        return ExpressionFactory.from_spec({
+            "type": "related_doc",
+            "related_doc_type": doc_type,
+            "doc_id_expression": {
+                "type": "property_name",
+                "property_name": "related_id"
+            },
+            "value_expression": {
+                "type": "property_name",
+                "property_name": "_id"
+            }
+        })
+
+    @classmethod
+    def _get_doc(cls, id):
+        return {
+            'related_id': id,
+            'domain': cls.domain,
+        }
 
 
 @generate_cases([
