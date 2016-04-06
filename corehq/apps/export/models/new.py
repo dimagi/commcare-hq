@@ -65,6 +65,15 @@ class PathNode(DocumentSchema):
         )
 
 
+class SplitableItemMixin(object):
+
+    def split_header(self, header, ignore_unspecified_options):
+        raise NotImplementedError()
+
+    def split_value(self, value, ignore_unspecified_options):
+        raise NotImplementedError()
+
+
 class ExportItem(DocumentSchema):
     """
     An item for export.
@@ -90,6 +99,8 @@ class ExportItem(DocumentSchema):
                 return ScalarItem.wrap(data)
             elif doc_type == 'MultipleChoiceItem':
                 return MultipleChoiceItem.wrap(data)
+            elif doc_type == 'GeopointItem':
+                return GeopointItem.wrap(data)
             else:
                 raise ValueError('Unexpected doc_type for export item', doc_type)
         else:
@@ -174,7 +185,7 @@ class ExportColumn(DocumentSchema):
             "is_advanced": is_case_update or False,
         }
 
-        if isinstance(item, MultipleChoiceItem):
+        if isinstance(item, MultipleChoiceItem) or isinstance(item, GeopointItem):
             column = SplitExportColumn(**constructor_args)
         else:
             column = ExportColumn(**constructor_args)
@@ -676,6 +687,27 @@ class ScalarItem(ExportItem):
     """
 
 
+class GeopointItem(ExportItem, SplitableItemMixin):
+    """
+    A GPS coordinate question
+    """
+
+    def split_header(self, header, ignore_unspecified_options):
+        header_templates = [
+            _('{}: latitude (meters)'),
+            _('{}: longitude (meters)'),
+            _('{}: altitude (meters)'),
+            _('{}: accuracy (meters)'),
+        ]
+        return map(lambda header_template: header_template.format(header), header_templates)
+
+    def split_value(self, value, ignore_unspecified_options):
+        values = [None] * 4
+        for index, coordinate in enumerate(value.split(' ')):
+            values.insert(index, coordinate)
+        return values
+
+
 class Option(DocumentSchema):
     """
     This object represents a multiple choice question option.
@@ -686,7 +718,7 @@ class Option(DocumentSchema):
     value = StringProperty()
 
 
-class MultipleChoiceItem(ExportItem):
+class MultipleChoiceItem(ExportItem, SplitableItemMixin):
     """
     A multiple choice question or case property
     Choices is the union of choices for the question in each of the builds with
@@ -721,6 +753,37 @@ class MultipleChoiceItem(ExportItem):
         item.options = options
         return item
 
+    def split_header(self, header, ignore_unspecified_options):
+        header_template = header if '{option}' in header else u"{name} | {option}"
+        headers = []
+        for option in self.options:
+            headers.append(
+                header_template.format(
+                    name=header,
+                    option=option.value
+                )
+            )
+        if not ignore_unspecified_options:
+            headers.append(
+                header_template.format(
+                    name=header,
+                    option='extra'
+                )
+            )
+        return headers
+
+    def split_value(self, value, ignore_unspecified_options):
+        if not isinstance(value, basestring):
+            return [None] * len(self.options) + [] if ignore_unspecified_options else [value]
+
+        selected = OrderedDict((x, 1) for x in value.split(" "))
+        row = []
+        for option in self.options:
+            row.append(selected.pop(option.value, None))
+        if not ignore_unspecified_options:
+            row.append(" ".join(selected.keys()))
+        return row
+
 
 class ExportGroupSchema(DocumentSchema):
     """
@@ -745,6 +808,7 @@ class ExportDataSchema(Document):
     last_app_versions = DictProperty()
     datatype_mapping = defaultdict(lambda: ScalarItem, {
         'MSelect': MultipleChoiceItem,
+        'Geopoint': GeopointItem,
     })
 
     class Meta:
@@ -808,6 +872,7 @@ class ExportDataSchema(Document):
             self.last_app_versions.get(app_id, 0),
             app_version,
         )
+
 
 class FormExportDataSchema(ExportDataSchema):
 
@@ -1197,7 +1262,7 @@ class SplitExportColumn(ExportColumn):
     Note: when split_column is set to False, SplitExportColumn will behave like a
     normal ExportColumn.
     """
-    item = SchemaProperty(MultipleChoiceItem)
+    item = SchemaProperty(ExportItem)
     ignore_unspecified_options = BooleanProperty(default=False)
 
     def get_value(self, doc, base_path, row_index=None, split_column=False):
@@ -1211,38 +1276,13 @@ class SplitExportColumn(ExportColumn):
         if not split_column:
             return value
 
-        if not isinstance(value, basestring):
-            return [None] * len(self.item.options) + [] if self.ignore_unspecified_options else [value]
-
-        selected = OrderedDict((x, 1) for x in value.split(" "))
-        row = []
-        for option in self.item.options:
-            row.append(selected.pop(option.value, None))
-        if not self.ignore_unspecified_options:
-            row.append(" ".join(selected.keys()))
-        return row
+        return self.item.split_value(value, self.ignore_unspecified_options)
 
     def get_headers(self, split_column=False):
         if not split_column:
             return super(SplitExportColumn, self).get_headers()
 
-        header_template = self.label if '{option}' in self.label else u"{name} | {option}"
-        headers = []
-        for option in self.item.options:
-            headers.append(
-                header_template.format(
-                    name=self.label,
-                    option=option.value
-                )
-            )
-        if not self.ignore_unspecified_options:
-            headers.append(
-                header_template.format(
-                    name=self.label,
-                    option='extra'
-                )
-            )
-        return headers
+        return self.item.split_header(self.label, self.ignore_unspecified_options)
 
 
 class RowNumberColumn(ExportColumn):

@@ -17,6 +17,7 @@ from .new import (
     ExportGroupSchema,
     TableConfiguration,
     ScalarItem,
+    GeopointItem,
     Option,
     MultipleChoiceItem,
     PathNode,
