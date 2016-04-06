@@ -40,7 +40,8 @@ class MenuContributor(SuiteContributorByModule):
                         session_var(id_strings.fixture_session_var(module)) if module.fixture_select.active
                         else None
                     )
-                    interpolated_xpath = interpolate_xpath(form.form_filter, case, fixture_xpath, module=module, form=form)
+                    interpolated_xpath = interpolate_xpath(form.form_filter, case, fixture_xpath,
+                        module=module, form=form)
 
                     if xpath_references_case(interpolated_xpath) and \
                             (not module_uses_case() or module.put_in_root):
