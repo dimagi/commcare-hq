@@ -342,3 +342,15 @@ def make_es_ready_form(metadata, is_db_test=False):
     json_form = wrapped_form.to_json()
     json_form['form']['meta'].pop('appVersion')  # hack - ES chokes on this
     return WrappedJsonFormPair(wrapped_form, json_form)
+
+
+def create_and_save_a_form(domain):
+    """
+    Very basic way to save a form, not caring at all about its contents
+    """
+    from corehq.form_processor.utils import TestFormMetadata
+    from corehq.form_processor.interfaces.processor import FormProcessorInterface
+    metadata = TestFormMetadata(domain=domain)
+    form = get_form_ready_to_save(metadata)
+    FormProcessorInterface(domain=domain).save_processed_models([form])
+    return form
