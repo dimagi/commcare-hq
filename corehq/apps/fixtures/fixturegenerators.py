@@ -81,8 +81,8 @@ class ItemListsProvider(object):
             _set_cached_type(item, data_types[item.data_type_id])
 
         fixtures = []
-        all_types = data_types.values() + global_types.values()
-        for data_type in all_types:
+        all_types_to_sync = data_types.values() + global_types.values()
+        for data_type in all_types_to_sync:
             xFixture = ElementTree.Element('fixture', attrib={'id': ':'.join((self.id, data_type.tag)),
                                                               'user_id': user.user_id})
             xItemList = ElementTree.Element('%s_list' % data_type.tag)
