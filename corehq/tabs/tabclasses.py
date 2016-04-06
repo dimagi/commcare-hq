@@ -1407,7 +1407,7 @@ class AdminTab(UITab):
             #                      url=reverse("default_announcement_admin")),
         ]
         try:
-            if AccountingTab(self._request, self._current_url_name).is_viewable:
+            if AccountingTab(self._request).is_viewable:
                 submenu_context.append(
                     dropdown_dict(AccountingTab.title, url=reverse('accounting_default'))
                 )

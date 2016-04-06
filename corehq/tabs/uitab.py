@@ -23,8 +23,7 @@ class UITab(object):
     # must be instance of GaTracker
     ga_tracker = None
 
-    def __init__(self, request, current_url_name, domain=None, couch_user=None,
-                 project=None):
+    def __init__(self, request, domain=None, couch_user=None, project=None):
 
         self.domain = domain
         self.couch_user = couch_user
@@ -33,7 +32,6 @@ class UITab(object):
         # This should not be considered as part of the subclass API unless it
         # is necessary. Try to add new explicit parameters instead.
         self._request = request
-        self._current_url_name = current_url_name
 
         # Do some preemptive checks on the subclass's configuration (if DEBUG)
         if settings.DEBUG:

@@ -35,7 +35,7 @@ def _get_active_tab(visible_tabs, request_path):
         return tab
 
 
-def get_all_tabs(request, current_url_name, domain, couch_user, project):
+def get_all_tabs(request, domain, couch_user, project):
     """
     instantiate all UITabs, and aggregate all their TabClassErrors (if any)
     into a single TabClassErrorSummary
@@ -49,7 +49,7 @@ def get_all_tabs(request, current_url_name, domain, couch_user, project):
     for tab_class in MENU_TABS:
         try:
             tab = tab_class(
-                request, current_url_name, domain=domain,
+                request, domain=domain,
                 couch_user=couch_user, project=project)
         except TabClassError as e:
             instantiation_errors.append(e)
@@ -70,13 +70,12 @@ def get_all_tabs(request, current_url_name, domain, couch_user, project):
 class MainMenuNode(template.Node):
     def render(self, context):
         request = context['request']
-        current_url_name = context['current_url_name']
         couch_user = getattr(request, 'couch_user', None)
         project = getattr(request, 'project', None)
         domain = context.get('domain')
         visible_tabs = []
 
-        for tab in get_all_tabs(request, current_url_name, domain=domain,
+        for tab in get_all_tabs(request, domain=domain,
                                 couch_user=couch_user, project=project):
             tab.is_active_tab = False
             if tab.real_is_viewable:
