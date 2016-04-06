@@ -504,7 +504,11 @@ EMAIL_SUBJECT_PREFIX = '[commcarehq] '
 
 SERVER_ENVIRONMENT = 'localdev'
 BASE_ADDRESS = 'localhost:8000'
-CLOUDCARE_BASE_ADDRESS = None  # If this is None, BASE_ADDRESS will be used
+
+# Set this if touchforms can't access HQ via the public URL e.g. if using a self signed cert
+# Should include the protocol.
+# If this is None, get_url_base() will be used
+CLOUDCARE_BASE_URL = None
 
 PAGINATOR_OBJECTS_PER_PAGE = 15
 PAGINATOR_MAX_PAGE_LINKS = 5
@@ -1121,8 +1125,6 @@ INDICATOR_CONFIG = {
 }
 
 COMPRESS_URL = STATIC_CDN + STATIC_URL
-
-CLOUDCARE_BASE_ADDRESS = CLOUDCARE_BASE_ADDRESS or BASE_ADDRESS
 
 ####### Couch Forms & Couch DB Kit Settings #######
 COUCH_DATABASE_NAME = helper.get_db_name(COUCH_DATABASE_NAME, UNIT_TESTING)
