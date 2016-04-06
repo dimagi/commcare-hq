@@ -29,19 +29,3 @@ def get_current_kafka_seq(topic):
     consumer = get_test_kafka_consumer(topic)
     # have to get the seq id before the change is processed
     return consumer.offsets()['fetch'][(topic, 0)]
-
-
-def make_a_case(domain, case_id, case_name, case_properties=None):
-    # this avoids having to deal with all the reminders code bootstrap
-    with drop_connected_signals(case_post_save):
-        form, cases = post_case_blocks(
-            [
-                CaseBlock(
-                    create=True,
-                    case_id=case_id,
-                    case_name=case_name,
-                    update=case_properties
-                ).as_xml()
-            ], domain=domain
-        )
-    return cases[0]

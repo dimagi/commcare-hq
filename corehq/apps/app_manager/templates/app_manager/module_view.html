@@ -76,13 +76,13 @@
         $(function () {
             var moduleType = {{ module.module_type|JSON }};
             var showCaseTypeError = function(message) {
-                var $caseTypeError = $('#case_type_error')
+                var $caseTypeError = $('#case_type_error');
                 $caseTypeError.css('display', 'block');
                 $caseTypeError.text(message);
-            }
+            };
             var hideCaseTypeError = function() {
                 $('#case_type_error').css('display', 'none');
-            }
+            };
             $('#case_type').on('textchange', function () {
                 var value = $(this).val();
                 var valueNoSpaces = value.replace(/ /g, '_');

@@ -18,7 +18,8 @@ from corehq.util.elastic import ensure_index_deleted
 from django.test import TestCase, override_settings
 from mock import MagicMock, patch
 from testapps.test_pillowtop.utils import get_current_kafka_seq, \
-    get_test_kafka_consumer, make_a_case
+    get_test_kafka_consumer
+from corehq.util.test_utils import create_and_save_a_case
 
 
 class CaseSearchPillowTest(TestCase):
@@ -136,7 +137,7 @@ class CaseSearchPillowTest(TestCase):
         case_name = 'case-name-{}'.format(uuid.uuid4().hex)
         if domain is None:
             domain = self.domain
-        case = make_a_case(domain, case_id, case_name, case_properties)
+        case = create_and_save_a_case(domain, case_id, case_name, case_properties)
         return case
 
     def _assert_case_in_es(self, domain, case):

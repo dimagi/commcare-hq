@@ -19,8 +19,14 @@ class Property(fluff.Calculator):
     @fluff.date_emitter
     def value(self, case):
         config = get_domain_configuration(case.domain).by_type_hierarchy
+        if 'crop_id' in case:
+            val = case['crop_id']
+        elif 'crop_name' in case:
+            val = case['crop_name']
+        else:
+            val = ''
         for chain in config:
-            if chain.val == (case['crop_id'] or '').lower():
+            if chain.val == val.lower():
                 for domain in chain.next:
                     for practice in domain.next:
                         ppt_prop = case.get_case_property(practice.val)
