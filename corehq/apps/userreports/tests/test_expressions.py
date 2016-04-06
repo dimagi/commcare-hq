@@ -602,7 +602,8 @@ class RelatedDocExpressionTest(SimpleTestCase):
         self.assertEqual('foo', self.expression(my_doc, EvaluationContext(my_doc, 0)))
 
     def test_related_doc_not_found(self):
-        self.assertEqual(None, self.expression({'parent_id': 'some-missing-id'}))
+        doc = {'parent_id': 'some-missing-id', 'domain': 'whatever'}
+        self.assertEqual(None, self.expression(doc, EvaluationContext(doc, 0)))
 
     def test_cross_domain_lookups(self):
         related_id = 'cross-domain-id'
