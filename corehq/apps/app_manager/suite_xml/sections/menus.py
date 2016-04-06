@@ -6,7 +6,7 @@ from corehq.apps.app_manager.suite_xml.xml_models import Menu, Command, Localize
 from corehq.apps.app_manager.util import (is_usercase_in_use, xpath_references_case,
     xpath_references_user_case)
 from corehq.apps.app_manager.xpath import (interpolate_xpath, CaseIDXPath, session_var,
-    QualifiedScheduleFormXPath, CASE_REFERENCE_VALIDATION_ERROR, USERCASE_REFERENCE_VALIDATION_ERROR)
+    QualifiedScheduleFormXPath)
 from corehq.feature_previews import MODULE_FILTER
 from dimagi.utils.decorators.memoized import memoized
 
@@ -40,14 +40,14 @@ class MenuContributor(SuiteContributorByModule):
                         session_var(id_strings.fixture_session_var(module)) if module.fixture_select.active
                         else None
                     )
-                    interpolated_xpath = interpolate_xpath(form.form_filter, case, fixture_xpath)
+                    interpolated_xpath = interpolate_xpath(form.form_filter, case, fixture_xpath, module=module, form=form)
 
                     if xpath_references_case(interpolated_xpath) and \
                             (not module_uses_case() or module.put_in_root):
-                        raise CaseXPathValidationError(CASE_REFERENCE_VALIDATION_ERROR)
+                        raise CaseXPathValidationError(module=module, form=form)
 
                     if xpath_references_user_case(interpolated_xpath) and not domain_uses_usercase():
-                        raise UserCaseXPathValidationError(USERCASE_REFERENCE_VALIDATION_ERROR)
+                        raise UserCaseXPathValidationError(module=module, form=form)
 
                     command.relevant = interpolated_xpath
 

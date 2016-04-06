@@ -128,9 +128,16 @@ class NoMatchingFilterException(ConfigurableReportException):
     pass
 
 
-class CaseXPathValidationError(SuiteValidationError):
+class XPathValidationError(SuiteValidationError):
+    def __init__(self, *args, **kwargs):
+        self.module = kwargs.pop('module', None)
+        self.form = kwargs.pop('form', None)
+        super(XPathValidationError, self).__init__(*args, **kwargs)
+
+
+class CaseXPathValidationError(XPathValidationError):
     pass
 
 
-class UserCaseXPathValidationError(SuiteValidationError):
+class UserCaseXPathValidationError(XPathValidationError):
     pass

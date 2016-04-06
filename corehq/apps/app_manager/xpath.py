@@ -21,15 +21,10 @@ from django.utils.translation import ugettext as _, ugettext_lazy
 DOT_INTERPOLATE_PATTERN = r'(\D|^)\.(\D|$)'
 
 CASE_REFERENCE_VALIDATION_ERROR = ugettext_lazy(
-    'Your filter refers to a case, but the case is not available. Please either remove the case reference '
-    'or: (1) make sure that the module is set to display the module first and then forms, and (2) make sure '
-    'that all the forms in this module update or close a case (which means registration forms must go in a '
-    'different module).'
-)
-
-USERCASE_REFERENCE_VALIDATION_ERROR = ugettext_lazy(
-    'Your filter refers to a user case, but your project does not use user case management. Please either '
-    'remove the user case reference in your filter or enable user case management for your project.'
+    "You have a display condition which refers to a case, but cases are not available. Please either remove "
+    "the case reference or (1) make sure that the module is set to display the module first and then form, "
+    "and (2) make sure that all forms in this module update or close a case (which means registration forms "
+    "must go in a different module)."
 )
 
 
@@ -41,7 +36,7 @@ def dot_interpolate(string, replacement):
     return re.sub(DOT_INTERPOLATE_PATTERN, repl, string)
 
 
-def interpolate_xpath(string, case_xpath=None, fixture_xpath=None):
+def interpolate_xpath(string, case_xpath=None, fixture_xpath=None, module=None, form=None):
     """
     Replace xpath shortcuts with full value.
     """
@@ -49,7 +44,7 @@ def interpolate_xpath(string, case_xpath=None, fixture_xpath=None):
     if case_xpath is None and xpath_references_case(string):
         # At the moment this function is only used by module and form filters.
         # If that changes, amend the error message accordingly.
-        raise CaseXPathValidationError(CASE_REFERENCE_VALIDATION_ERROR)
+        raise CaseXPathValidationError(CASE_REFERENCE_VALIDATION_ERROR, module=module, form=form)
     replacements = {
         '#user': UserCaseXPath().case(),
         '#session/': session_var('', path=''),

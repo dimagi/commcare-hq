@@ -107,6 +107,8 @@ from .exceptions import (
     XFormIdNotUnique,
     XFormValidationError,
     ScheduleError,
+    CaseXPathValidationError,
+    UserCaseXPathValidationError,
 )
 from corehq.apps.reports.daterange import get_daterange_start_end_dates
 from jsonpath_rw import jsonpath, parse
@@ -4287,6 +4289,18 @@ class ApplicationBase(VersionedDoc, SnapshotMixin,
             self.validate_intents()
             self.validate_jar_path()
             self.create_all_files()
+        except CaseXPathValidationError as cve:
+            errors.append({
+                'type': 'invalid case xpath reference',
+                'module': cve.module,
+                'form': cve.form,
+            })
+        except UserCaseXPathValidationError as ucve:
+            errors.append({
+                'type': 'invalid user case xpath reference',
+                'module': ucve.module,
+                'form': ucve.form,
+            })
         except (AppEditingError, XFormValidationError, XFormException,
                 PermissionDenied, SuiteValidationError) as e:
             errors.append({'type': 'error', 'message': unicode(e)})
