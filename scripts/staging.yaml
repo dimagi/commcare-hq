@@ -56,7 +56,6 @@ branches:
   # B3 Report Migration branches
   - b3-data-import-cases  # BB 2/23
   - b3-reports-home  # BB 2/23
-  - import_build-anchor-tag # Nick P 2/29
   - report-builder-text # Cal 3/1
   - certificate-validation # Cal 3/10
   - knockout-3-3 # Jenny 3/30
