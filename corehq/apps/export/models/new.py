@@ -185,7 +185,7 @@ class ExportColumn(DocumentSchema):
             "is_advanced": is_case_update or False,
         }
 
-        if isinstance(item, MultipleChoiceItem) or isinstance(item, GeopointItem):
+        if isinstance(item, SplitableItemMixin):
             column = SplitExportColumn(**constructor_args)
         else:
             column = ExportColumn(**constructor_args)
