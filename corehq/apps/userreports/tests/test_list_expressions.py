@@ -373,6 +373,28 @@ def test_sort_items_bad_spec(self, items_ex, sort_ex):
         ExpressionFactory.from_spec(expression)(items_ex, sort_ex)
 
 
+class TestSortOrderExpression(SimpleTestCase):
+
+    def test_bad_order_raises_badspec(self):
+        expression = {
+            'type': 'sort_items',
+            'items_expression': [1, 6, 2, 3],
+            'sort_expression': {'type': 'identity'},
+            'order': 'complex'
+        }
+        with self.assertRaises(BadSpecError):
+            ExpressionFactory.from_spec(expression)
+
+    def test_descending_order(self):
+        expression = {
+            'type': 'sort_items',
+            'items_expression': [1, 6, 2, 3],
+            'sort_expression': {'type': 'identity'},
+            'order': 'DESC'
+        }
+        self.assertEqual(ExpressionFactory.from_spec(expression)({}), [6, 3, 2, 1])
+
+
 @generate_cases([
     (
         {'items': [{'key': 2}, {'key': 1}]},

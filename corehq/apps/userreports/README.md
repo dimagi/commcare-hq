@@ -471,7 +471,7 @@ Above returns list of ages. Note that the `property_path` in `map_expression` is
 
 ##### sort_items Expression
 
-`sort_items` returns a sorted list of items based on sort value of each item in ascending order. The sort value of an item is speicifed by `sort_expression`. If a sort-value of an item is `None`, the item will appear in the start of list. If sort-values of any two items can't be compared, an empty list is returned.
+`sort_items` returns a sorted list of items based on sort value of each item.The sort value of an item is speicifed by `sort_expression`. By default, list will be in ascending order. Order can be changed by adding optional `order` expression with one of `DESC` (for descending) or `ASC` (for ascending) If a sort-value of an item is `None`, the item will appear in the start of list. If sort-values of any two items can't be compared, an empty list is returned.
 
 `items_expression` can be any valid expression that returns a list. If this doesn't evaluate to a list an empty list is returned.
 

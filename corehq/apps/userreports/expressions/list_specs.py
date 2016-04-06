@@ -91,9 +91,11 @@ class FlattenExpressionSpec(JsonObject):
 
 
 class SortItemsExpressionSpec(JsonObject):
+    ASC, DESC = "ASC", "DESC"
     type = TypeProperty('sort_items')
     items_expression = DefaultProperty(required=True)
     sort_expression = DictProperty(required=True)
+    order = StringProperty(choices=[ASC, DESC], default=ASC)
 
     def configure(self, items_expression, sort_expression):
         self._items_expression = items_expression
@@ -106,6 +108,7 @@ class SortItemsExpressionSpec(JsonObject):
             return sorted(
                 items,
                 key=lambda i: self._sort_expression(i, context),
+                reverse=True if self.order == self.DESC else False
             )
         except TypeError:
             return []
