@@ -132,6 +132,7 @@ class ExportColumn(DocumentSchema):
     is_advanced = BooleanProperty(default=False)
     selected = BooleanProperty(default=False)
     tags = ListProperty()
+    help_text = StringProperty()
 
     # A tranforms that deidentifies the value
     deid_transform = StringProperty(choices=DEID_TRANSFORM_FUNCTIONS.keys())
