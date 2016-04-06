@@ -37,7 +37,7 @@ class TestUsageFee(TestCase):
             billable = SmsBillable.create(message)
             self.assertIsNotNone(billable)
             self.assertEqual(
-                billable.usage_fee.amount,
+                billable.usage_charge,
                 self.least_specific_fees[message.direction]
             )
 
@@ -55,7 +55,7 @@ class TestUsageFee(TestCase):
                     billable = SmsBillable.create(message)
                     self.assertIsNotNone(billable)
                     self.assertEqual(
-                        billable.usage_fee.amount,
+                        billable.usage_charge,
                         self.most_specific_fees[message.direction][domain]
                     )
 
