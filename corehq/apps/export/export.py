@@ -157,7 +157,12 @@ def _write_export_instance(writer, export_instance, documents, progress_tracker=
 
     for row_number, doc in enumerate(documents):
         for table in export_instance.selected_tables:
-            rows = table.get_rows(doc, row_number, split_columns=export_instance.split_multiselects)
+            rows = table.get_rows(
+                doc,
+                row_number,
+                split_columns=export_instance.split_multiselects,
+                transform_dates=export_instance.transform_dates,
+            )
             for row in rows:
                 # It might be bad to write one row at a time when you can do more (from a performance perspective)
                 # Regardless, we should handle the batching of rows in the _Writer class, not here.

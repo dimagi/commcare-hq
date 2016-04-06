@@ -133,7 +133,7 @@ class ExportColumn(DocumentSchema):
     selected = BooleanProperty(default=False)
     tags = ListProperty()
 
-    # A tranforms that deidentifies the value
+    # A transforms that deidentifies the value
     deid_transform = StringProperty(choices=DEID_TRANSFORM_FUNCTIONS.keys())
 
     def get_value(self, doc, base_path, transform_dates=False, row_index=None, split_column=False):
@@ -282,7 +282,7 @@ class TableConfiguration(DocumentSchema):
             headers.extend(column.get_headers(split_column=split_columns))
         return headers
 
-    def get_rows(self, document, row_number, split_columns=False):
+    def get_rows(self, document, row_number, split_columns=False, transform_dates=False):
         """
         Return a list of ExportRows generated for the given document.
         :param document: dictionary representation of a form submission or case
@@ -296,7 +296,13 @@ class TableConfiguration(DocumentSchema):
 
             row_data = []
             for col in self.selected_columns:
-                val = col.get_value(doc, self.path, row_index=row_index, split_column=split_columns)
+                val = col.get_value(
+                    doc,
+                    self.path,
+                    row_index=row_index,
+                    split_column=split_columns,
+                    transform_dates=transform_dates,
+                )
                 if isinstance(val, list):
                     row_data.extend(val)
                 else:
@@ -1265,14 +1271,14 @@ class SplitExportColumn(ExportColumn):
     item = SchemaProperty(ExportItem)
     ignore_unspecified_options = BooleanProperty(default=False)
 
-    def get_value(self, doc, base_path, row_index=None, split_column=False):
+    def get_value(self, doc, base_path, row_index=None, split_column=False, transform_dates=False):
         """
         Get the value of self.item of the given doc.
         When base_path is [], doc is a form submission or case,
         when base_path is non empty, doc is a repeat group from a form submission.
         doc is a form submission or instance of a repeat group in a submission or case
         """
-        value = super(SplitExportColumn, self).get_value(doc, base_path)
+        value = super(SplitExportColumn, self).get_value(doc, base_path, transform_dates=transform_dates)
         if not split_column:
             return value
 
