@@ -12,7 +12,7 @@ hqDefine('case_search/js/case_search.js', function(){
             key: "",
             value: "",
             clause: "must",
-            fuzzy: false
+            fuzzy: false,
         }]);
 
         self.addParameter = function(){
@@ -20,7 +20,7 @@ hqDefine('case_search/js/case_search.js', function(){
                 key: "",
                 value: "",
                 clause: "must",
-                fuzzy: false
+                fuzzy: false,
             });
         };
         self.removeParameter = function(){
@@ -44,7 +44,7 @@ hqDefine('case_search/js/case_search.js', function(){
                         lineWrapping: true,
                         viewportMargin: Infinity,
                         foldGutter: true,
-                        gutters: ["CodeMirror-linenumbers", "CodeMirror-foldgutter"]
+                        gutters: ["CodeMirror-linenumbers", "CodeMirror-foldgutter"],
                     });
                 } else {
                     self.codeMirror.setValue(values);
