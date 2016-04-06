@@ -19,12 +19,12 @@
 {% block js-inline %}
     <script>
      var CaseSearchModel = hqImport('case_search/js/case_search.js');
-     ko.applyBindings(new CaseSearchModel("{% url 'case_details' request.domain '___' %}"), $("#case-search").get(0));
+     $("#case-search").koApplyBindings(new CaseSearchModel("{% url 'case_details' request.domain '___' %}"));
     </script>
 {% endblock %}
 {% block page_content %}
     <div id="case-search">
-        <h3>{% trans "Search Parameters" "%}</h3>
+        <h3>{% trans "Search Parameters" %}</h3>
         <div class="row">
             <div class="col-sm-8">
                 <div class="controls">
@@ -32,7 +32,7 @@
                         {% csrf_token %}
                         <div class="panel panel-default">
                             <div class="panel-heading">
-                                <strong>{% trans Case Type %}</strong>
+                                <strong>{% trans "Case Type" %}</strong>
                             </div>
                             <div class="panel-body">
                                 <input name="type" type="text" placeholder="Case Type (optional)" data-bind="value: type"/>
@@ -102,7 +102,7 @@
                     <thead>
                         <tr>
                             <th>{% trans "Name" %}</th>
-                            <th>{% trans "Case" %} Type</th>
+                            <th>{% trans "Case Type" %}</th>
                             <th>{% trans "Closed" %}</th>
                             <th>{% trans "Properties" %}</th>
                         </tr>
