@@ -1,18 +1,23 @@
 from corehq.apps.app_manager import id_strings
 from corehq.apps.app_manager.suite_xml.contributors import SuiteContributorByModule
+from corehq.apps.app_manager.suite_xml.sections.details import DetailsHelper
 from corehq.apps.app_manager.suite_xml.xml_models import (
     Command,
     Display,
+    PushFrame,
     QueryData,
     QueryPrompt,
     SessionDatum,
     Stack,
+    StackDatum,
     SyncRequest,
     SyncRequestPost,
     SyncRequestQuery,
     SyncRequestSession,
     Text,
 )
+from corehq.apps.app_manager.xpath import XPath
+from corehq.apps.case_search.models import CALCULATED_DATA, MARK_AS_CLAIMED
 from corehq.util.view_utils import absolute_reverse
 
 
@@ -35,19 +40,42 @@ class SyncRequestContributor(SuiteContributorByModule):
         if isinstance(module, (Module, AdvancedModule)) and module.search_config:
             domain = module.get_app().domain
 
+            details_helper = DetailsHelper(module.get_app())
+
             sync_request = SyncRequest(
-                # For synchronous searching:
+                post=SyncRequestPost(
+                    url=absolute_reverse('claim_case', args=[domain]),
+                    data=[
+                        QueryData(
+                            key='case_id',
+                            ref="instance('results')/case[@case_type='{}'][@status='open'][0]/@case_id".format(
+                                module.case_type),
+                        ),
+                        QueryData(
+                            key='case_type',
+                            ref="instance('results')/case[@case_type='{}'][@status='open'][0]/@case_type".format(
+                                module.case_type),
+                        ),
+                        QueryData(
+                            key='case_name',
+                            ref="instance('results')/case[@case_type='{}'][@status='open'][0]/name".format(
+                                module.case_type),
+                        ),
+                    ]
+                ),
+
                 command=Command(
-                    # TODO: How does <command> refer to module or case list?
-                    id=id_strings.case_list_locale(module) + '.or_something',
+                    id=id_strings.search_command(module),
                     display=Display(
                         text=Text(locale_id=id_strings.case_search_locale(module)),
                     ),
                 ),
+
                 session=SyncRequestSession(
                     queries=[
                         SyncRequestQuery(
                             url=absolute_reverse('sync_search', args=[domain]),
+                            storage_instance='results',
                             data=[
                                 QueryData(
                                     key='case_type',
@@ -64,23 +92,24 @@ class SyncRequestContributor(SuiteContributorByModule):
                             ]
                         )
                     ],
-                    # data=[SessionDatum()],  # TODO: Necessary? 0 or more, right?
+                    data=[SessionDatum(
+                        id='case_id',
+                        nodeset="instance('results')/case[@case_type='{}'][@status='open']".format(
+                            module.case_type),
+                        value='./@case_id',
+                        detail_select=details_helper.get_detail_id_safe(module, 'case_short'),
+                        detail_confirm=details_helper.get_detail_id_safe(module, 'case_long'),
+                    )],
                 ),
-                # stack=[Stack()],  # TODO: Necessary? 0 or more, right?
-                # For case claiming:
-                post=SyncRequestPost(
-                    url=absolute_reverse('claim_case', args=[domain]),
-                    data=[
-                        QueryData(
-                            key='case_id',
-                            ref='session/datum[0]/case[@id]',  # TODO: ref to ID of *chosen* search result
-                        ),
-                        QueryData(
-                            key='case_type',
-                            ref='session/datum[0]/case/type',  # TODO: ref to case type of *chosen* search result
-                        )
-                    ]
-                )
+
+                stack=Stack(),
             )
+
+            frame = PushFrame()
+            # Open first form in module
+            frame.add_command(XPath.string(id_strings.form_command(module, module.forms[0])))
+            frame.add_datum(StackDatum(id=CALCULATED_DATA, value=XPath.string(MARK_AS_CLAIMED)))
+            sync_request.stack.add_frame(frame)
+
             return [sync_request]
         return []
