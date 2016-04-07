@@ -32,6 +32,7 @@ class ElasticsearchIndexInfo(jsonobject.JsonObject):
     alias = jsonobject.StringProperty()
     type = jsonobject.StringProperty()
     meta = jsonobject.DictProperty()
+    mapping = jsonobject.DictProperty()
 
     def __unicode__(self):
         return u'{} ({})'.format(self.alias, self.index)
@@ -163,5 +164,6 @@ def get_index_info_from_pillow(pillow):
         index=pillow.es_index,
         alias=pillow.es_alias,
         type=pillow.es_type,
-        meta=pillow.es_meta
+        meta=pillow.es_meta,
+        mapping=pillow.default_mapping,
     )
