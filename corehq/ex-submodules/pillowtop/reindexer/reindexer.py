@@ -1,5 +1,5 @@
-from corehq.util.elastic import ensure_index_deleted, ensure_production_index_deleted
-from pillowtop.es_utils import create_index_and_set_settings_normal, set_index_reindex_settings, \
+from corehq.util.elastic import ensure_production_index_deleted
+from pillowtop.es_utils import set_index_reindex_settings, \
     set_index_normal_settings, get_index_info_from_pillow, initialize_mapping_if_necessary
 from pillowtop.pillow.interface import PillowRuntimeContext
 
