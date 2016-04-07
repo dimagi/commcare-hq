@@ -105,24 +105,9 @@ def get_doc_info(doc, domain_hint=None, cache=None):
             is_deleted=generic_delete,
         )
     elif has_doc_type(doc_type, 'CommCareCase'):
-        doc_info = DocInfo(
-            display=doc['name'],
-            type_display=_('Case'),
-            link=reverse(
-                'case_details',
-                args=[domain, doc_id],
-            ),
-            is_deleted=generic_delete,
-        )
+        doc_info = case_docinfo(domain, doc_id, doc['name'], generic_delete)
     elif any([has_doc_type(doc_type, d) for d in couchforms_models.doc_types().keys()]):
-        doc_info = DocInfo(
-            type_display=_('Form'),
-            link=reverse(
-                'render_form_data',
-                args=[domain, doc_id],
-            ),
-            is_deleted=generic_delete,
-        )
+        doc_info = form_docinfo(domain, doc_id, generic_delete)
     elif doc_type in ('CommCareUser',):
         doc_info = DocInfo(
             display=raw_username(doc['username']),
@@ -192,6 +177,30 @@ def get_doc_info(doc, domain_hint=None, cache=None):
         cache[doc_id] = doc_info
 
     return doc_info
+
+
+def form_docinfo(domain, doc_id, is_deleted):
+    doc_info = DocInfo(
+        type_display=_('Form'),
+        link=reverse(
+            'render_form_data',
+            args=[domain, doc_id],
+        ),
+        is_deleted=is_deleted,
+    )
+    return doc_info
+
+
+def case_docinfo(domain, doc_id, name, is_deleted):
+    return DocInfo(
+        display=name,
+        type_display=_('Case'),
+        link=reverse(
+            'case_details',
+            args=[domain, doc_id],
+        ),
+        is_deleted=is_deleted,
+    )
 
 
 def get_object_info(obj, cache=None):
