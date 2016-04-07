@@ -4,9 +4,9 @@ from corehq.apps.domain.models import Domain
 from corehq.pillows.base import HQPillow
 from corehq.pillows.mappings.domain_mapping import DOMAIN_MAPPING, DOMAIN_INDEX
 from django_countries.data import COUNTRIES
-from pillowtop.es_utils import doc_exists, get_index_info_from_pillow
+from pillowtop.es_utils import doc_exists
 from pillowtop.reindexer.change_providers.couch import CouchViewChangeProvider
-from pillowtop.reindexer.reindexer import ElasticPillowReindexer, get_default_reindexer_for_elastic_pillow
+from pillowtop.reindexer.reindexer import get_default_reindexer_for_elastic_pillow
 
 
 class DomainPillow(HQPillow):
