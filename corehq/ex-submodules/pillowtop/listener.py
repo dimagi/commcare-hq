@@ -511,7 +511,7 @@ class AliasedElasticPillow(BasicPillow):
                     "tb": tb
                 }
             )
-            return None
+            raise
 
     def process_bulk(self, changes):
         if not changes:
