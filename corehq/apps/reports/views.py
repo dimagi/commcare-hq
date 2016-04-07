@@ -647,7 +647,7 @@ class AddSavedReportConfigView(View):
                 delattr(self.config, "days")
 
         self.config.save()
-        ProjectReportsTab.clear_dropdown_cache(request, self.domain)
+        ProjectReportsTab.clear_dropdown_cache(self.domain, request.couch_user.get_id)
         touch_saved_reports_views(request.couch_user, self.domain)
 
         return json_response(self.config)
@@ -760,7 +760,7 @@ def delete_config(request, domain, config_id):
         raise Http404()
 
     config.delete()
-    ProjectReportsTab.clear_dropdown_cache(request, domain)
+    ProjectReportsTab.clear_dropdown_cache(domain, request.couch_user.get_id)
 
     touch_saved_reports_views(request.couch_user, domain)
     return HttpResponse()
@@ -900,7 +900,7 @@ def edit_scheduled_report(request, domain, scheduled_report_id=None,
             instance.day = calculate_day(instance.interval, instance.day, day_change)
 
         instance.save()
-        ProjectReportsTab.clear_dropdown_cache(request, domain)
+        ProjectReportsTab.clear_dropdown_cache(domain, request.couch_user.get_id)
         if is_new:
             messages.success(request, "Scheduled report added!")
         else:

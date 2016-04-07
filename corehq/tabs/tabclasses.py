@@ -44,11 +44,7 @@ class ProjectReportsTab(UITab):
 
     @property
     def view(self):
-        return self.get_view(self.domain)
-
-    @staticmethod
-    def get_view(domain):
-        module = Domain.get_module_by_name(domain)
+        module = Domain.get_module_by_name(self.domain)
         if hasattr(module, 'DEFAULT_REPORT_CLASS'):
             return "corehq.apps.reports.views.default"
         return "corehq.apps.reports.views.saved_reports"

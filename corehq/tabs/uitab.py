@@ -139,18 +139,13 @@ class UITab(object):
         return urls
 
     @classmethod
-    def clear_dropdown_cache(cls, request, domain):
+    def clear_dropdown_cache(cls, domain, user_id):
         for is_active in True, False:
-            if hasattr(cls, 'get_view'):
-                view = cls.get_view(domain)
-            else:
-                view = cls.view
             key = make_template_fragment_key('header_tab', [
+                cls.class_name(),
                 domain,
-                None,  # tab.org should be None for any non org page
-                view,
                 is_active,
-                request.couch_user.get_id,
+                user_id,
                 get_language(),
             ])
             cache.delete(key)
@@ -158,3 +153,7 @@ class UITab(object):
     @property
     def css_id(self):
         return self.__class__.__name__
+
+    @classmethod
+    def class_name(cls):
+        return cls.__name__
