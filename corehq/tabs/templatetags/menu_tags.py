@@ -82,7 +82,7 @@ class MainMenuNode(template.Node):
         if active_tab:
             active_tab.is_active_tab = True
 
-        visible_tabs = [tab for tab in all_tabs if tab.real_is_viewable]
+        visible_tabs = [tab for tab in all_tabs if tab.should_show()]
 
         # set the context variable in the highest scope so it can be used in
         # other blocks

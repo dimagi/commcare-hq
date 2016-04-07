@@ -39,7 +39,7 @@ class ProjectReportsTab(UITab):
     url_prefix_formats = ('/a/{domain}/reports/',)
 
     @property
-    def is_viewable(self):
+    def _is_viewable(self):
         return user_can_view_reports(self.project, self.couch_user)
 
     @property
@@ -80,7 +80,7 @@ class IndicatorAdminTab(UITab):
     url_prefix_formats = ('/a/{domain}/indicators/',)
 
     @property
-    def is_viewable(self):
+    def _is_viewable(self):
         indicator_enabled_projects = get_indicator_domains()
         return (self.couch_user.can_edit_data() and
                 self.domain in indicator_enabled_projects)
@@ -117,7 +117,7 @@ class DashboardTab(UITab):
     url_prefix_formats = ('/a/{domain}/dashboard/project/',)
 
     @property
-    def is_viewable(self):
+    def _is_viewable(self):
         if self.domain and self.project and not self.project.is_snapshot and self.couch_user:
             # domain hides Dashboard tab if user is non-admin
             if not user_has_custom_top_menu(self.domain, self.couch_user):
@@ -189,7 +189,7 @@ class ProjectInfoTab(UITab):
     url_prefix_formats = ('/exchange/{domain}/info/',)
 
     @property
-    def is_viewable(self):
+    def _is_viewable(self):
         return self.project and self.project.is_snapshot
 
 
@@ -234,7 +234,7 @@ class SetupTab(UITab):
         ]
 
     @property
-    def is_viewable(self):
+    def _is_viewable(self):
         return (self.couch_user.is_domain_admin() and
                 self.project.commtrack_enabled)
 
@@ -384,7 +384,7 @@ class ProjectDataTab(UITab):
         return domain_has_privilege(self.domain, privileges.LOOKUP_TABLES)
 
     @property
-    def is_viewable(self):
+    def _is_viewable(self):
         return self.domain and (self.can_edit_commcare_data or self.can_export_data)
 
     @property
@@ -597,7 +597,7 @@ class ApplicationsTab(UITab):
         return submenu_context
 
     @property
-    def is_viewable(self):
+    def _is_viewable(self):
         couch_user = self.couch_user
         return (self.domain and couch_user and
                 (couch_user.is_web_user() or couch_user.can_edit_apps()) and
@@ -615,7 +615,7 @@ class CloudcareTab(UITab):
     ga_tracker = GaTracker('CloudCare', 'Click Cloud-Care top-level nav')
 
     @property
-    def is_viewable(self):
+    def _is_viewable(self):
         return (
             has_privilege(self._request, privileges.CLOUDCARE)
             and self.domain
@@ -635,7 +635,7 @@ class MessagingTab(UITab):
     )
 
     @property
-    def is_viewable(self):
+    def _is_viewable(self):
         return (self.can_access_reminders or self.can_use_outbound_sms) and (
             self.project and not (self.project.is_snapshot or
                                   self.couch_user.is_commcare_user())
@@ -906,7 +906,7 @@ class ProjectUsersTab(UITab):
     )
 
     @property
-    def is_viewable(self):
+    def _is_viewable(self):
         return self.domain and (self.couch_user.can_edit_commcare_users() or
                                 self.couch_user.can_edit_web_users())
 
@@ -1078,7 +1078,7 @@ class ProjectSettingsTab(UITab):
     url_prefix_formats = ('/a/{domain}/settings/project/',)
 
     @property
-    def is_viewable(self):
+    def _is_viewable(self):
         return (self.domain and self.couch_user and
                 self.couch_user.is_domain_admin(self.domain))
 
@@ -1265,7 +1265,7 @@ class MySettingsTab(UITab):
     view = 'default_my_settings'
 
     @property
-    def is_viewable(self):
+    def _is_viewable(self):
         return self.couch_user is not None
 
     @property
@@ -1304,7 +1304,7 @@ class AccountingTab(UITab):
     show_by_default = False
 
     @property
-    def is_viewable(self):
+    def _is_viewable(self):
         return is_accounting_admin(self._request.user)
 
     @property
@@ -1370,7 +1370,7 @@ class SMSAdminTab(UITab):
         return items
 
     @property
-    def is_viewable(self):
+    def _is_viewable(self):
         return self.couch_user and self.couch_user.is_superuser
 
 
@@ -1401,7 +1401,7 @@ class AdminTab(UITab):
             #                      url=reverse("default_announcement_admin")),
         ]
         try:
-            if AccountingTab(self._request).is_viewable:
+            if AccountingTab(self._request)._is_viewable:
                 submenu_context.append(
                     dropdown_dict(AccountingTab.title, url=reverse('accounting_default'))
                 )
@@ -1480,7 +1480,7 @@ class AdminTab(UITab):
         ]
 
     @property
-    def is_viewable(self):
+    def _is_viewable(self):
         return (self.couch_user and
                 (self.couch_user.is_superuser or
                  toggles.IS_DEVELOPER.enabled(self.couch_user.username)))

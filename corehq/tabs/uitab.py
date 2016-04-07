@@ -70,25 +70,24 @@ class UITab(object):
             return []
 
     @property
-    def is_viewable(self):
+    def _is_viewable(self):
         """
         Whether the tab should be displayed.  Subclass implementations can skip
         checking whether domain, couch_user, or project is not None before
         accessing an attribute of them -- this property is accessed in
-        real_is_viewable and wrapped in a try block that returns False in the
+        should_show and wrapped in a try block that returns False in the
         case of an AttributeError for any of those variables.
 
         """
         raise NotImplementedError()
 
-    @property
     @memoized
-    def real_is_viewable(self):
+    def should_show(self):
         if not self.show_by_default and not self.is_active_tab:
             return False
 
         try:
-            return self.is_viewable
+            return self._is_viewable
         except AttributeError:
             return False
 

@@ -28,7 +28,7 @@ from corehq.apps.styleguide.views.docs import (
 class BaseSGTab(UITab):
 
     @property
-    def is_viewable(self):
+    def _is_viewable(self):
         docs_url = reverse('sg_examples_default')
         return self.request_path.startswith(docs_url)
 
