@@ -52,7 +52,6 @@ branches:
   - java-tf-deploy # Ben/Will 1/21/16
   - show-form-case-refs-in-summary # j$ 1/29
 #  - revamp-multimedia # Jenny 2/16
-  - analytics-retry # Cal 2/18
   - j2me # j$ 2/23
   # B3 Report Migration branches
   - b3-data-import-cases  # BB 2/23
@@ -60,7 +59,6 @@ branches:
   - report-builder-text # Cal 3/1
   - certificate-validation # Cal 3/10
   - knockout-3-3 # Jenny 3/30
-  - multipart-count # Nick P 4/6
 submodules:
   submodules/touchforms-src:
     # let's leave this here even when empty
