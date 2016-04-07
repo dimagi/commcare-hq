@@ -13,7 +13,7 @@ from dimagi.utils.decorators.memoized import memoized
 from .base import HQPillow
 import logging
 from pillowtop.checkpoints.manager import PillowCheckpoint, PillowCheckpointEventHandler
-from pillowtop.es_utils import doc_exists, ElasticsearchIndexMeta
+from pillowtop.es_utils import doc_exists, ElasticsearchIndexInfo
 from pillowtop.listener import lock_manager
 from pillowtop.pillow.interface import ConstructedPillow
 from pillowtop.processors.elastic import ElasticProcessor
@@ -87,7 +87,7 @@ def get_sql_case_to_elasticsearch_pillow(pillow_id='SqlCaseToElasticsearchPillow
     )
     case_processor = ElasticProcessor(
         elasticsearch=get_es_new(),
-        index_meta=ElasticsearchIndexMeta(index=CASE_INDEX, type=CASE_ES_TYPE),
+        index_info=ElasticsearchIndexInfo(index=CASE_INDEX, type=CASE_ES_TYPE),
         doc_prep_fn=transform_case_for_elasticsearch
     )
     return ConstructedPillow(

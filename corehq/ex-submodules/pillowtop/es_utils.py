@@ -27,7 +27,13 @@ INDEX_STANDARD_SETTINGS = {
 }
 
 
-ElasticsearchIndexMeta = namedtuple('ElasticsearchIndexMeta', ['index', 'type'])
+class ElasticsearchIndexInfo(jsonobject.JsonObject):
+    index = jsonobject.StringProperty(required=True)
+    alias = jsonobject.StringProperty()
+    type = jsonobject.StringProperty()
+
+    def __unicode__(self):
+        return u'{} ({})'.format(self.alias, self.index)
 
 
 def update_settings(es, index, settings_dict):
@@ -136,32 +142,16 @@ def get_all_elasticsearch_pillow_classes():
     return filter(lambda x: issubclass(x, AliasedElasticPillow), get_all_pillow_classes())
 
 
-class ElasticsearchIndexInfo(jsonobject.JsonObject):
-    index = jsonobject.StringProperty(required=True)
-    alias = jsonobject.StringProperty()
-
-
 def get_all_expected_es_indices():
     """
     Get all expected elasticsearch indices according to the currently running code
     """
     seen_indices = set()
+    seen_aliases = set()
     pillows = get_all_elasticsearch_pillow_classes()
     for pillow in pillows:
         assert pillow.es_index not in seen_indices
-        yield ElasticsearchIndexInfo(index=pillow.es_index, alias=pillow.es_alias)
+        assert pillow.es_alias not in seen_aliases
+        yield ElasticsearchIndexInfo(index=pillow.es_index, alias=pillow.es_alias, type=pillow.es_type)
         seen_indices.add(pillow.es_index)
-
-
-def needs_reindex(es, index_info):
-    """
-    Returns true if the index needs to be reindexed - either because
-    it does not exist or because the alias isn't properly setup.
-    """
-    if not es.indices.exists(index_info.index) or not has_alias(es, index_info):
-        return True
-
-
-def has_alias(es, index_info):
-    alias_indices = es.indices.get_alias(index_info.alias).keys()
-    return index_info.index in alias_indices
+        seen_aliases.add(pillow.es_alias)

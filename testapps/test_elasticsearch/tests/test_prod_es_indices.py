@@ -24,38 +24,47 @@ class ProdIndexManagementTest(SimpleTestCase):
 EXPECTED_PROD_INDICES = [
     {
         "alias": "hqapps",
-        "index": "test_hqapps_2016-03-01_2128"
+        "index": "test_hqapps_2016-03-01_2128",
+        "type": "app"
     },
     {
         "alias": "hqcases",
-        "index": "test_hqcases_2016-03-04"
+        "index": "test_hqcases_2016-03-04",
+        "type": "case"
     },
     {
         "alias": "hqdomains",
-        "index": "test_hqdomains_20160318_1339"
+        "index": "test_hqdomains_20160318_1339",
+        "type": "hqdomain"
     },
     {
         "alias": "hqgroups",
-        "index": "test_hqgroups_20150403_1501"
+        "index": "test_hqgroups_20150403_1501",
+        "type": "group"
     },
     {
         "alias": "hqusers",
-        "index": "test_hqusers_2016-02-16_1402"
+        "index": "test_hqusers_2016-02-16_1402",
+        "type": "user"
     },
     {
         "alias": "report_cases",
-        "index": "test_report_cases_czei39du507m9mmpqk3y01x72a3ux4p0"
+        "index": "test_report_cases_czei39du507m9mmpqk3y01x72a3ux4p0",
+        "type": "report_case"
     },
     {
         "alias": "report_xforms",
-        "index": "test_report_xforms_20150406_1136"
+        "index": "test_report_xforms_20150406_1136",
+        "type": "report_xform"
     },
     {
         "alias": "smslogs",
-        "index": "test_smslogs_708c77f8e5fe00286fa5791e9fa7d45f"
+        "index": "test_smslogs_708c77f8e5fe00286fa5791e9fa7d45f",
+        "type": "sms"
     },
     {
         "alias": "xforms",
-        "index": "test_xforms_20150403-1728"
+        "index": "test_xforms_20150403-1728",
+        "type": "xform"
     }
 ]
