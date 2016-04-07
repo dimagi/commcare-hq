@@ -1,5 +1,4 @@
 from dimagi.ext import jsonobject
-from collections import namedtuple
 from copy import copy
 from datetime import datetime
 from elasticsearch import TransportError
