@@ -29,7 +29,8 @@ from custom.ilsgateway.tanzania.reports.randr import RRreport
 from custom.ilsgateway.tanzania.reports.stock_on_hand import StockOnHandReport
 from custom.ilsgateway.tanzania.reports.supervision import SupervisionReport
 from casexml.apps.stock.models import StockTransaction
-from custom.ilsgateway.models import ILSGatewayConfig, ReportRun, SupervisionDocument, ILSNotes
+from custom.ilsgateway.models import ILSGatewayConfig, ReportRun, SupervisionDocument, ILSNotes, \
+    PendingReportingDataRecalculation
 from custom.ilsgateway.tasks import report_run
 from custom.logistics.views import BaseConfigView
 
@@ -265,6 +266,19 @@ class ReportRunListView(ListView, DomainViewMixin):
 
     def get_queryset(self):
         return ReportRun.objects.filter(domain=self.domain).order_by('pk')
+
+
+class PendingRecalculationsListView(ListView, DomainViewMixin):
+    context_object_name = 'recalculations'
+    template_name = 'ilsgateway/pending_recalculations.html'
+
+    def dispatch(self, request, *args, **kwargs):
+        if not self.request.couch_user.is_domain_admin():
+            raise Http404()
+        return super(PendingRecalculationsListView, self).dispatch(request, *args, **kwargs)
+
+    def get_queryset(self):
+        return PendingReportingDataRecalculation.objects.filter(domain=self.domain).order_by('pk')
 
 
 class ReportRunDeleteView(DeleteView, DomainViewMixin):

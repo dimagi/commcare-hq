@@ -34,30 +34,14 @@ def is_commtrack(project, request):
 
 
 def get_per_domain_context(project, request=None):
-    if is_commtrack(project, request):
-        domain_type = COMMTRACK
-        logo_url = static('hqstyle/img/commcaresupply-logo.png')
-        site_name = "CommCare Supply"
-        public_site = "http://www.commtrack.org"
-        can_be_your = _("mobile logistics solution")
-    else:
-        domain_type = COMMCARE
-        logo_url = static('hqstyle/img/commcare-logo.png')
-        site_name = "CommCare HQ"
-        public_site = "http://www.commcarehq.org"
-        can_be_your = _("mobile solution for your frontline workforce")
-
+    custom_logo_url = None
     if (project and project.has_custom_logo
         and domain_has_privilege(project.name, privileges.CUSTOM_BRANDING)
     ):
-        logo_url = reverse('logo', args=[project.name])
+        custom_logo_url = reverse('logo', args=[project.name])
 
     return {
-        'DOMAIN_TYPE': domain_type,
-        'LOGO_URL': logo_url,
-        'SITE_NAME': site_name,
-        'CAN_BE_YOUR': can_be_your,
-        'PUBLIC_SITE': public_site,
+        'CUSTOM_LOGO_URL': custom_logo_url,
     }
 
 

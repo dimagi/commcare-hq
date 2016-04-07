@@ -382,6 +382,11 @@ def _login(req, domain_name, template_name):
             'hr_name': domain.display_name() if domain else domain_name,
             'next': req_params.get('next', '/a/%s/' % domain),
             'allow_domain_requests': domain.allow_domain_requests,
+            'current_page': {'page_name': _('Welcome back to %s!') % domain.display_name()}
+        })
+    else:
+        context.update({
+            'current_page': {'page_name': _('Welcome back to CommCare HQ!')}
         })
 
     auth_view = HQLoginView if not domain_name else CloudCareLoginView
@@ -389,18 +394,12 @@ def _login(req, domain_name, template_name):
 
 
 @sensitive_post_parameters('auth-password')
-def login(req, domain_type='commcare'):
+def login(req):
     # this view, and the one below, is overridden because
     # we need to set the base template to use somewhere
     # somewhere that the login page can access it.
     req_params = req.GET if req.method == 'GET' else req.POST
     domain = req_params.get('domain', None)
-
-    from corehq.apps.domain.utils import get_dummy_domain
-    # For showing different logos based on CommTrack, CommConnect, CommCare...
-    dummy_domain = get_dummy_domain(domain_type)
-    req.project = dummy_domain
-
     return _login(req, domain, "login_and_password/login.html")
 
 

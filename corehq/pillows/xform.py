@@ -4,19 +4,21 @@ from casexml.apps.case.xform import extract_case_blocks, get_case_ids_from_form
 from corehq.apps.change_feed import topics
 from corehq.apps.change_feed.consumer.feed import KafkaChangeFeed
 from corehq.elastic import get_es_new
-from corehq.form_processor.backends.sql.dbaccessors import doc_type_to_state
 from corehq.form_processor.change_providers import SqlFormChangeProvider
+from corehq.form_processor.utils.xform import add_couch_properties_to_sql_form_json
 from corehq.pillows.mappings.xform_mapping import XFORM_MAPPING, XFORM_INDEX
+from corehq.pillows.utils import get_user_type
 from .base import HQPillow
 from couchforms.const import RESERVED_WORDS
 from couchforms.models import XFormInstance
 from dateutil import parser
 from pillowtop.checkpoints.manager import PillowCheckpoint, PillowCheckpointEventHandler
-from pillowtop.es_utils import ElasticsearchIndexMeta
+from pillowtop.es_utils import ElasticsearchIndexInfo, get_index_info_from_pillow
 from pillowtop.pillow.interface import ConstructedPillow
 from pillowtop.processors.elastic import ElasticProcessor
 from pillowtop.reindexer.change_providers.couch import CouchViewChangeProvider
-from pillowtop.reindexer.reindexer import PillowReindexer
+from pillowtop.reindexer.reindexer import get_default_reindexer_for_elastic_pillow, \
+    ElasticPillowReindexer
 
 
 UNKNOWN_VERSION = 'XXX'
@@ -88,6 +90,12 @@ def transform_xform_for_elasticsearch(doc_dict, include_props=True):
             if isinstance(doc_ret['form']['meta'].get('appVersion'), dict):
                 doc_ret['form']['meta']['appVersion'] = doc_ret['form']['meta']['appVersion'].get('#text')
 
+        try:
+            user_id = doc_ret['form']['meta']['userID']
+        except KeyError:
+            user_id = None
+        doc_ret['user_type'] = get_user_type(user_id)
+
         case_blocks = extract_case_blocks(doc_ret)
         for case_dict in case_blocks:
             for date_modified_key in ['date_modified', '@date_modified']:
@@ -112,14 +120,9 @@ def transform_xform_for_elasticsearch(doc_dict, include_props=True):
 def prepare_sql_form_json_for_elasticsearch(sql_form_json):
     prepped_form = transform_xform_for_elasticsearch(sql_form_json)
     if prepped_form:
-        prepped_form['doc_type'] = _get_doc_type_from_state(sql_form_json['state'])
-        prepped_form['_id'] = prepped_form['form_id']
+        add_couch_properties_to_sql_form_json(prepped_form)
 
     return prepped_form
-
-
-def _get_doc_type_from_state(state):
-    return {v: k for k, v in doc_type_to_state.items()}.get(state, 'XFormInstance')
 
 
 def get_sql_xform_to_elasticsearch_pillow(pillow_id='SqlXFormToElasticsearchPillow'):
@@ -127,8 +130,8 @@ def get_sql_xform_to_elasticsearch_pillow(pillow_id='SqlXFormToElasticsearchPill
         'sql-xforms-to-elasticsearch',
     )
     form_processor = ElasticProcessor(
-        elasticseach=get_es_new(),
-        index_meta=ElasticsearchIndexMeta(index=XFORM_INDEX, type=XFORM_ES_TYPE),
+        elasticsearch=get_es_new(),
+        index_info=ElasticsearchIndexInfo(index=XFORM_INDEX, type=XFORM_ES_TYPE),
         doc_prep_fn=prepare_sql_form_json_for_elasticsearch
     )
     return ConstructedPillow(
@@ -144,15 +147,27 @@ def get_sql_xform_to_elasticsearch_pillow(pillow_id='SqlXFormToElasticsearchPill
 
 
 def get_couch_form_reindexer():
-    return PillowReindexer(XFormPillow(), CouchViewChangeProvider(
-        document_class=XFormInstance,
-        view_name='all_docs/by_doc_type',
-        view_kwargs={
-            'startkey': ['XFormInstance'],
-            'endkey': ['XFormInstance', {}],
-        }
-    ))
+    return get_default_reindexer_for_elastic_pillow(
+        pillow=XFormPillow(online=False),
+        change_provider=CouchViewChangeProvider(
+            document_class=XFormInstance,
+            view_name='all_docs/by_doc_type',
+            view_kwargs={
+                'startkey': ['XFormInstance'],
+                'endkey': ['XFormInstance', {}],
+            }
+        )
+    )
 
 
 def get_sql_form_reindexer():
-    return PillowReindexer(get_sql_xform_to_elasticsearch_pillow(), SqlFormChangeProvider())
+    return ElasticPillowReindexer(
+        pillow=get_sql_xform_to_elasticsearch_pillow(),
+        change_provider=SqlFormChangeProvider(),
+        elasticsearch=XFormPillow(online=False).get_es_new(),
+        index_info=_get_xform_index_info(),
+    )
+
+
+def _get_xform_index_info():
+    return get_index_info_from_pillow(XFormPillow(online=False))

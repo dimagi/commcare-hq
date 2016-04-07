@@ -2,6 +2,16 @@
 {% load i18n %}
 {% load hq_shared_tags %}
 
+{% block stylesheets %}{{ block.super }}
+    <link href="{% static 'nvd3/src/nv.d3.css' %}" rel="stylesheet">
+    <link href="{% static 'ilsgateway/css/ilsgateway.css' %}" rel="stylesheet">
+{% endblock %}
+
+{% block js %}{{ block.super }}
+    <script src="{% static 'd3/d3.min.js' %}"></script>
+    <script src="{% static 'nvd3/nv.d3.min.js' %}"></script>
+{% endblock %}
+
 {% block export %}
     {% if report.is_exportable %}
         <div class="btn-group">

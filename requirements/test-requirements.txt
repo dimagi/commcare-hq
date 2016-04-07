@@ -1,3 +1,4 @@
+beautifulsoup4>=4.4.1
 coverage
 git+git://github.com/millerdev/django-nose@fast-first#egg=django-nose
 fakecouch==0.0.8

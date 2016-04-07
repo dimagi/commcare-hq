@@ -34,6 +34,7 @@ from dimagi.utils.parsing import json_format_datetime
 
 
 class FormAccessorCouch(AbstractFormAccessor):
+
     @staticmethod
     def form_exists(form_id, domain=None):
         if not domain:
@@ -53,6 +54,10 @@ class FormAccessorCouch(AbstractFormAccessor):
     @staticmethod
     def get_forms(form_ids):
         return get_forms_by_id(form_ids)
+
+    @staticmethod
+    def get_form_ids_in_domain_by_type(domain, type_):
+        pass
 
     @staticmethod
     def get_forms_by_type(domain, type_, limit, recent_first=False):
@@ -116,8 +121,8 @@ class CaseAccessorCouch(AbstractCaseAccessor):
         return get_case_ids_in_domain(domain, type=type)
 
     @staticmethod
-    def get_case_ids_in_domain_by_owners(domain, owner_ids):
-        return get_case_ids_in_domain_by_owner(domain, owner_id__in=owner_ids)
+    def get_case_ids_in_domain_by_owners(domain, owner_ids, closed=None):
+        return get_case_ids_in_domain_by_owner(domain, owner_id__in=owner_ids, closed=closed)
 
     @staticmethod
     def get_open_case_ids(domain, owner_id):
@@ -193,6 +198,18 @@ class LedgerAccessorCouch(AbstractLedgerAccessor):
                 first = False
 
             yield db_tx
+
+    @staticmethod
+    def get_ledger_values_for_case(case_id):
+        from corehq.apps.commtrack.models import StockState
+
+        return StockState.objects.filter(case_id=case_id)
+
+    @staticmethod
+    def get_ledger_values_for_product_ids(product_ids):
+        from corehq.apps.commtrack.models import StockState
+
+        return StockState.objects.filter(product_id__in=product_ids)
 
 
 def _get_attachment_content(doc_class, doc_id, attachment_id):

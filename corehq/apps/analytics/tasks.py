@@ -20,6 +20,7 @@ from django.conf import settings
 from django.core.urlresolvers import reverse
 from corehq.util.soft_assert import soft_assert
 from corehq.toggles import deterministic_random
+from corehq.util.decorators import analytics_task
 
 from dimagi.utils.logging import notify_exception
 
@@ -37,6 +38,15 @@ HUBSPOT_INVITATION_SENT_FORM = "5aa8f696-4aab-4533-b026-bd64c7e06942"
 HUBSPOT_NEW_USER_INVITE_FORM = "3e275361-72be-4e1d-9c68-893c259ed8ff"
 HUBSPOT_EXISTING_USER_INVITE_FORM = "7533717e-3095-4072-85ff-96b139bcb147"
 HUBSPOT_COOKIE = 'hubspotutk'
+
+
+def _raise_for_urllib3_response(response):
+    '''
+    this mimics the behavior of requests.response.raise_for_status so we can
+    treat kissmetrics requests and hubspot requests interchangeably in our retry code
+    '''
+    if 400 <= response.status < 600:
+        raise requests.exceptions.HTTPError(response=response)
 
 
 def _track_on_hubspot(webuser, properties):
@@ -100,8 +110,9 @@ def _hubspot_post(url, data):
             data=data,
             headers=headers
         )
-        _log_response(data, response)
+        _log_response('HS', data, response)
         response.raise_for_status()
+
 
 
 def _get_user_hubspot_id(webuser):
@@ -129,7 +140,7 @@ def _get_client_ip(meta):
     return ip
 
 
-def _send_form_to_hubspot(form_id, webuser, cookies, meta):
+def _send_form_to_hubspot(form_id, webuser, cookies, meta, extra_fields=None):
     """
     This sends hubspot the user's first and last names and tracks everything they did
     up until the point they signed up.
@@ -147,23 +158,25 @@ def _send_form_to_hubspot(form_id, webuser, cookies, meta):
             'lastname': webuser.last_name,
             'hs_context': json.dumps({"hutk": hubspot_cookie, "ipAddress": _get_client_ip(meta)}),
         }
+        if extra_fields:
+            data.update(extra_fields)
 
         response = requests.post(
             url,
             data=data
         )
-        _log_response(data, response)
+        _log_response('HS', data, response)
         response.raise_for_status()
 
 
-@task(queue='background_queue', acks_late=True, ignore_result=True)
+@analytics_task()
 def update_hubspot_properties(webuser, properties):
     vid = _get_user_hubspot_id(webuser)
     if vid:
         _track_on_hubspot(webuser, properties)
 
 
-@task(queue='background_queue', acks_late=True, ignore_result=True)
+@analytics_task()
 def track_user_sign_in_on_hubspot(webuser, cookies, meta, path):
     if path.startswith(reverse("register_user")):
         tracking_dict = {
@@ -176,7 +189,7 @@ def track_user_sign_in_on_hubspot(webuser, cookies, meta, path):
     _send_form_to_hubspot(HUBSPOT_SIGNIN_FORM_ID, webuser, cookies, meta)
 
 
-@task(queue='background_queue', acks_late=True, ignore_result=True)
+@analytics_task()
 def track_built_app_on_hubspot(webuser):
     vid = _get_user_hubspot_id(webuser)
     if vid:
@@ -184,7 +197,7 @@ def track_built_app_on_hubspot(webuser):
         _track_on_hubspot(webuser, {'built_app': True})
 
 
-@task(queue='background_queue', acks_late=True, ignore_result=True)
+@analytics_task()
 def track_confirmed_account_on_hubspot(webuser):
     vid = _get_user_hubspot_id(webuser)
     if vid:
@@ -200,37 +213,40 @@ def track_confirmed_account_on_hubspot(webuser):
         })
 
 
-@task(queue="background_queue", acks_late=True, ignore_result=True)
+@analytics_task()
 def track_entered_form_builder_on_hubspot(webuser, cookies, meta):
     _send_form_to_hubspot(HUBSPOT_FORM_BUILDER_FORM_ID, webuser, cookies, meta)
 
 
-@task(queue="background_queue", acks_late=True, ignore_result=True)
+@analytics_task()
 def track_app_from_template_on_hubspot(webuser, cookies, meta):
     _send_form_to_hubspot(HUBSPOT_APP_TEMPLATE_FORM_ID, webuser, cookies, meta)
 
 
-@task(queue="background_queue", acks_late=True, ignore_result=True)
+@analytics_task()
 def track_clicked_deploy_on_hubspot(webuser, cookies, meta):
-    _send_form_to_hubspot(HUBSPOT_CLICKED_DEPLOY_FORM_ID, webuser, cookies, meta)
+    ab = {
+        'a_b_variable_deploy': 'A' if deterministic_random(webuser.username + 'a_b_variable_deploy') > 0.5 else 'B',
+    }
+    _send_form_to_hubspot(HUBSPOT_CLICKED_DEPLOY_FORM_ID, webuser, cookies, meta, extra_fields=ab)
 
 
-@task(queue="background_queue", acks_late=True, ignore_result=True)
+@analytics_task()
 def track_created_new_project_space_on_hubspot(webuser, cookies, meta):
     _send_form_to_hubspot(HUBSPOT_CREATED_NEW_PROJECT_SPACE_FORM_ID, webuser, cookies, meta)
 
 
-@task(queue="background_queue", acks_late=True, ignore_result=True)
+@analytics_task()
 def track_sent_invite_on_hubspot(webuser, cookies, meta):
     _send_form_to_hubspot(HUBSPOT_INVITATION_SENT_FORM, webuser, cookies, meta)
 
 
-@task(queue="background_queue", acks_late=True, ignore_result=True)
+@analytics_task()
 def track_existing_user_accepted_invite_on_hubspot(webuser, cookies, meta):
     _send_form_to_hubspot(HUBSPOT_INVITATION_SENT_FORM, webuser, cookies, meta)
 
 
-@task(queue="background_queue", acks_late=True, ignore_result=True)
+@analytics_task()
 def track_new_user_accepted_invite_on_hubspot(webuser, cookies, meta):
     _send_form_to_hubspot(HUBSPOT_NEW_USER_INVITE_FORM, webuser, cookies, meta)
 
@@ -247,24 +263,18 @@ def track_workflow(email, event, properties=None):
     _track_workflow_task.delay(email, event, properties, timestamp)
 
 
-@task(queue='background_queue', acks_late=True, ignore_result=True)
+@analytics_task()
 def _track_workflow_task(email, event, properties=None, timestamp=0):
     api_key = settings.ANALYTICS_IDS.get("KISSMETRICS_KEY", None)
     if api_key:
         km = KISSmetrics.Client(key=api_key)
-        km.record(email, event, properties if properties else {}, timestamp)
-        # TODO: Consider adding some error handling for bad/failed requests.
+        res = km.record(email, event, properties if properties else {}, timestamp)
+        _log_response("KM", {'email': email, 'event': event, 'properties': properties, 'timestamp': timestamp}, res)
+        # TODO: Consider adding some better error handling for bad/failed requests.
+        _raise_for_urllib3_response(res)
 
 
-@task(queue='background_queue', acks_late=True, ignore_result=True)
-def update_kissmetrics_properties(email, properties):
-    api_key = settings.ANALYTICS_IDS.get("KISSMETRICS_KEY", None)
-    if api_key:
-        km = KISSmetrics.Client(key=api_key)
-        km.set(email, properties)
-
-
-@task(queue='background_queue', ignore_result=True)
+@analytics_task()
 def identify(email, properties):
     """
     Set the given properties on a KISSmetrics user.
@@ -275,8 +285,10 @@ def identify(email, properties):
     api_key = settings.ANALYTICS_IDS.get("KISSMETRICS_KEY", None)
     if api_key:
         km = KISSmetrics.Client(key=api_key)
-        km.set(email, properties)
-        # TODO: Consider adding some error handling for bad/failed requests.
+        res = km.set(email, properties)
+        _log_response("KM", {'email': email, 'properties': properties}, res)
+        # TODO: Consider adding some better error handling for bad/failed requests.
+        _raise_for_urllib3_response(res)
 
 
 @periodic_task(run_every=crontab(minute="0", hour="0"), queue='background_queue')
@@ -419,18 +431,20 @@ def _track_periodic_data_on_kiss(submit_json):
     os.remove(filename)
 
 
-def _log_response(data, response):
+def _log_response(target, data, response):
+    status_code = response.status_code if isinstance(response, requests.models.Response) else response.status
     try:
         response_text = json.dumps(response.json(), indent=2, sort_keys=True)
     except Exception:
-        response_text = response.status_code
+        response_text = status_code
 
-    message = 'Sent this data to HS: %s \nreceived: %s' % (
-        json.dumps(data, indent=2, sort_keys=True),
-        response_text
+    message = 'Sent this data to {target}: {data} \nreceived: {response}'.format(
+        target=target,
+        data=json.dumps(data, indent=2, sort_keys=True),
+        response=response_text
     )
 
-    if response.status_code != 200:
+    if status_code != 200:
         logger.error(message)
     else:
         logger.debug(message)

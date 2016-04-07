@@ -20,7 +20,7 @@ urlpatterns = patterns(
 
     url(r'^no_permissions/$', 'no_permissions', name='no_permissions'),
 
-    url(r'^accounts/login/(?P<domain_type>\w+)?$', 'login', name="login"),
+    url(r'^accounts/login/$', 'login', name="login"),
     url(r'^accounts/logout/$', 'logout', name="logout"),
     (r'^reports/$', 'redirect_to_default'),
     url(r'^bug_report/$', 'bug_report', name='bug_report'),

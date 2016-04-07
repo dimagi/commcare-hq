@@ -130,5 +130,5 @@ from corehq.apps.app_manager.views.translations import (
 )
 from corehq.apps.app_manager.views.formdesigner import (
     form_designer,
-    get_data_schema,
+    get_form_data_schema,
 )

@@ -12,6 +12,7 @@ from contextlib import contextmanager
 
 from functools import wraps
 from django.conf import settings
+from corehq.util.context_managers import drop_connected_signals
 from corehq.util.decorators import ContextDecorator
 
 
@@ -342,3 +343,33 @@ def make_es_ready_form(metadata, is_db_test=False):
     json_form = wrapped_form.to_json()
     json_form['form']['meta'].pop('appVersion')  # hack - ES chokes on this
     return WrappedJsonFormPair(wrapped_form, json_form)
+
+
+def create_and_save_a_form(domain):
+    """
+    Very basic way to save a form, not caring at all about its contents
+    """
+    from corehq.form_processor.utils import TestFormMetadata
+    from corehq.form_processor.interfaces.processor import FormProcessorInterface
+    metadata = TestFormMetadata(domain=domain)
+    form = get_form_ready_to_save(metadata)
+    FormProcessorInterface(domain=domain).save_processed_models([form])
+    return form
+
+
+def create_and_save_a_case(domain, case_id, case_name):
+    from casexml.apps.case.mock import CaseBlock
+    from casexml.apps.case.signals import case_post_save
+    from casexml.apps.case.util import post_case_blocks
+    # this avoids having to deal with all the reminders code bootstrap
+    with drop_connected_signals(case_post_save):
+        form, cases = post_case_blocks(
+            [
+                CaseBlock(
+                    create=True,
+                    case_id=case_id,
+                    case_name=case_name,
+                ).as_xml()
+            ], domain=domain
+        )
+    return cases[0]

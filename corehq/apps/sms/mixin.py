@@ -1,22 +1,11 @@
-from collections import defaultdict
-import re
-import json
-from dateutil.parser import parse
-from datetime import datetime, timedelta
-from decimal import Decimal
 from dimagi.ext.couchdbkit import *
+import re
+from decimal import Decimal
 from couchdbkit.exceptions import MultipleResultsFound
-from dimagi.utils.couch import release_lock
+from dimagi.utils.couch.migration import SyncCouchToSQLMixin
 from dimagi.utils.couch.undo import DELETED_SUFFIX
-from dimagi.utils.decorators.memoized import memoized
-from django.conf import settings
 from dimagi.utils.couch.database import get_safe_write_kwargs
-from dimagi.utils.modules import try_import
-from dimagi.utils.parsing import json_format_datetime
-from django.db import transaction
-from corehq.apps.domain.models import Domain
 from corehq.util.quickcache import quickcache
-from couchdbkit import ResourceNotFound
 
 
 phone_number_re = re.compile("^\d+$")
@@ -43,7 +32,7 @@ class UnrecognizedBackendException(Exception):
     pass
 
 
-class VerifiedNumber(Document):
+class VerifiedNumber(SyncCouchToSQLMixin, Document):
     """
     There should only be one VerifiedNumber entry per (owner_doc_type, owner_id), and
     each VerifiedNumber.phone_number should be unique across all entries.
@@ -243,6 +232,22 @@ class VerifiedNumber(Document):
     def delete(self, *args, **kwargs):
         self._clear_caches()
         return super(VerifiedNumber, self).delete(*args, **kwargs)
+
+    @classmethod
+    def _migration_get_fields(cls):
+        return cls._migration_get_sql_model_class()._migration_get_fields()
+
+    @classmethod
+    def _migration_get_sql_model_class(cls):
+        from corehq.apps.sms.models import PhoneNumber
+        return PhoneNumber
+
+    def _migration_sync_to_sql(self, sql_object):
+        if self.doc_type and self.doc_type.endswith(DELETED_SUFFIX):
+            sql_object.delete(sync_to_couch=False)
+            return
+
+        super(VerifiedNumber, self)._migration_sync_to_sql(sql_object)
 
 
 def add_plus(phone_number):

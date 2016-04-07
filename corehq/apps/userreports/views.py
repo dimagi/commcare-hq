@@ -12,6 +12,7 @@ from django.core.urlresolvers import reverse
 from django.http import HttpResponseRedirect, HttpResponse
 from django.http.response import Http404
 from django.shortcuts import render
+from django.utils.decorators import method_decorator
 from django.utils.http import urlencode
 from django.utils.translation import ugettext as _, ugettext_lazy
 from django.views.decorators.http import require_POST
@@ -82,6 +83,7 @@ from corehq.apps.users.decorators import require_permission
 from corehq.apps.users.models import Permissions
 from corehq.toggles import REPORT_BUILDER_MAP_REPORTS
 from corehq.util.couch import get_document_or_404
+from toggle import toggle_enabled
 
 
 def get_datasource_config_or_404(config_id, domain):
@@ -138,6 +140,7 @@ def create_report(request, domain):
 
 class ReportBuilderView(BaseDomainView):
 
+    @method_decorator(require_permission(Permissions.edit_data))
     @cls_to_view_login_and_domain
     @use_bootstrap3
     @use_select2
@@ -146,8 +149,7 @@ class ReportBuilderView(BaseDomainView):
     def dispatch(self, request, *args, **kwargs):
         if has_report_builder_access(request):
             report_type = kwargs.get('report_type', None)
-            domain = kwargs.get('domain', None)
-            if report_type != 'map' or REPORT_BUILDER_MAP_REPORTS.enabled(domain):
+            if report_type != 'map' or toggle_enabled(request, REPORT_BUILDER_MAP_REPORTS):
                 return super(ReportBuilderView, self).dispatch(request, *args, **kwargs)
             else:
                 raise Http404

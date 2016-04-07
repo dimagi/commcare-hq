@@ -49,6 +49,10 @@ class AbstractFormAccessor(six.with_metaclass(ABCMeta)):
         raise NotImplementedError
 
     @abstractmethod
+    def get_form_ids_in_domain_by_type(domain, type_):
+        raise NotImplementedError
+
+    @abstractmethod
     def get_forms_by_type(domain, type_, limit, recent_first=False):
         raise NotImplementedError
 
@@ -112,6 +116,12 @@ class FormAccessors(object):
 
     def form_exists(self, form_id):
         return self.db_accessor.form_exists(form_id)
+
+    def get_all_form_ids_in_domain(self):
+        return self.get_form_ids_in_domain_by_type('XFormInstance')
+
+    def get_form_ids_in_domain_by_type(self, type_):
+        return self.db_accessor.get_form_ids_in_domain_by_type(self.domain, type_)
 
     def get_forms_by_type(self, type_, limit, recent_first=False):
         return self.db_accessor.get_forms_by_type(self.domain, type_, limit, recent_first)
@@ -254,7 +264,17 @@ class CaseAccessors(object):
     def get_case_ids_in_domain(self, type=None):
         return self.db_accessor.get_case_ids_in_domain(self.domain, type)
 
-    def get_case_ids_by_owners(self, owner_ids):
+    def get_case_ids_by_owners(self, owner_ids, closed=None):
+        """
+        get case_ids for open, closed, or all cases in a domain
+        that belong to a list of owner_ids
+
+        owner_ids: a list of owner ids to filter on.
+            A case matches if it belongs to any of them.
+        closed: True (only closed cases), False (only open cases), or None (all)
+
+        returns a list of case_ids
+        """
         return self.db_accessor.get_case_ids_in_domain_by_owners(self.domain, owner_ids)
 
     def get_open_case_ids(self, owner_id):
@@ -339,3 +359,9 @@ class LedgerAccessors(object):
         return self.db_accessor.get_transactions_for_consumption(
             self.domain, case_id, product_id, section_id, window_start, window_end
         )
+
+    def get_ledger_values_for_case(self, case_id):
+        return self.db_accessor.get_ledger_values_for_case(case_id)
+
+    def get_ledger_values_for_product_ids(self, product_ids):
+        return self.db_accessor.get_ledger_values_for_product_ids(product_ids)

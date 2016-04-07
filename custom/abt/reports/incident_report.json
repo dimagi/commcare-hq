@@ -9,7 +9,8 @@
     "airszimbabwe",
     "airstanzania",
     "airsghana",
-    "airsbenin"
+    "airsbenin",
+    "airs-testing"
   ],
   "data_source_table": "supervisory-005",
   "report_id": "incident-report",
