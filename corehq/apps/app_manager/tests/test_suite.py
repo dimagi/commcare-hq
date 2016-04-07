@@ -372,7 +372,7 @@ class SuiteTest(SimpleTestCase, TestXmlMixin, SuiteMixin):
             <partial>
               <template form="image" width="13%">
                 <text>
-                  <xpath function="if(age = '10', $k{key1_varname}, if(age > 50, $h{key2_varname}, '')">
+                  <xpath function="if(age = '10', $k{key1_varname}, if(age > 50, $h{key2_varname}, ''))">
                     <variable name="h{key2_varname}">
                       <locale id="m0.case_short.case_age_1.enum.h{key2_varname}"/>
                     </variable>

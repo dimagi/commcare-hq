@@ -378,7 +378,7 @@ class EnumImage(Enum):
             parts.append(xpath_fragment_template)
 
         parts.append(u"''")
-        parts.append(u")" * (len(self.column.enum) - 1))
+        parts.append(u")" * (len(self.column.enum)))
         return ''.join(parts)
 
 
