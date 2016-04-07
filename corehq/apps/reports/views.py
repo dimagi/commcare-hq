@@ -1099,7 +1099,7 @@ class CaseDetailsView(BaseProjectReportSectionView):
                 "display": self.request.project.get_case_display(self.case_instance),
                 "timezone": get_timezone_for_user(self.request.couch_user, self.domain),
                 "get_case_url": lambda case_id: absolute_reverse(
-                    self.urlname, args=[self.domain, self.case_id]),
+                    self.urlname, args=[self.domain, case_id]),
                 "show_transaction_export": toggles.STOCK_TRANSACTION_EXPORT.enabled(
                     self.request.user.username),
             },
