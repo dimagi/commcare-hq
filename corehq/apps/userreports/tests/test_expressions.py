@@ -7,6 +7,7 @@ from fakecouch import FakeCouchDb
 from simpleeval import InvalidExpression
 from casexml.apps.case.mock import CaseStructure, CaseFactory
 from casexml.apps.case.models import CommCareCase
+from casexml.apps.case.tests.util import delete_all_cases, delete_all_xforms
 from corehq.apps.userreports.exceptions import BadSpecError
 from corehq.apps.userreports.expressions.factory import ExpressionFactory
 from corehq.apps.userreports.expressions.specs import (
@@ -866,22 +867,25 @@ def test_unsupported_evluator_statements(self, eq, context):
 
 class TestFormsExpressionSpec(TestCase):
 
-    @classmethod
-    def setUpClass(cls):
-        cls.domain = uuid.uuid4().hex
-        factory = CaseFactory(domain=cls.domain)
-        [cls.case] = factory.create_or_update_case(CaseStructure(attrs={'create': True}))
-        cls.forms = [f.to_json() for f in FormAccessors(cls.domain).get_forms(cls.case.xform_ids)]
-        #  redundant case to create extra forms that shouldn't be in the results for cls.case
-        [cls.case_b] = factory.create_or_update_case(CaseStructure(attrs={'create': True}))
+    def setUp(self):
+        self.domain = uuid.uuid4().hex
+        factory = CaseFactory(domain=self.domain)
+        [self.case] = factory.create_or_update_case(CaseStructure(attrs={'create': True}))
+        self.forms = [f.to_json() for f in FormAccessors(self.domain).get_forms(self.case.xform_ids)]
+        #  redundant case to create extra forms that shouldn't be in the results for self.case
+        [self.case_b] = factory.create_or_update_case(CaseStructure(attrs={'create': True}))
 
-        cls.expression = ExpressionFactory.from_spec({
+        self.expression = ExpressionFactory.from_spec({
             "type": "get_case_forms",
             "case_id_expression": {
                 "type": "property_name",
                 "property_name": "_id"
             },
         })
+
+    def tearDown(self):
+        delete_all_xforms()
+        delete_all_cases()
 
     @run_with_all_backends
     def test_evaluation(self):
