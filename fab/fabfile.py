@@ -773,6 +773,7 @@ def copy_node_modules():
 @roles(ROLES_STATIC)
 def copy_compressed_js_staticfiles():
     if files.exists('{}/staticfiles/CACHE/js'.format(env.code_current)):
+        sudo('mkdir -p {}/staticfiles/CACHE/js'.format(env.code_root))
         sudo('cp -r {}/staticfiles/CACHE/js {}/staticfiles/CACHE/js'.format(env.code_current, env.code_root))
 
 
