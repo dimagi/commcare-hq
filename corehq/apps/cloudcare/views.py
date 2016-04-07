@@ -211,7 +211,10 @@ class CloudcareMain(View):
 @requires_privilege_for_commcare_user(privileges.CLOUDCARE)
 def form_context(request, domain, app_id, module_id, form_id):
     app = Application.get(app_id)
-    form_url = "%s%s" % (get_url_base(), reverse('download_xform', args=[domain, app_id, module_id, form_id]))
+    form_url = '{}{}'.format(
+        settings.CLOUDCARE_BASE_URL or get_url_base(),
+        reverse('download_xform', args=[domain, app_id, module_id, form_id])
+    )
     case_id = request.GET.get('case_id')
     instance_id = request.GET.get('instance_id')
     try:

@@ -6,7 +6,6 @@
     <script type="text/javascript">
     $(function () {
         $("fieldset .helptext").each( function (index, data) {
-            console.log(data.textContent);
             $(this).parent().prev("label").append('<span class="hq-help-template" data-placement="top" data-content="' + data.textContent + '"></span>');
             $(this).remove();
         });

@@ -46,7 +46,7 @@ class _Writer(object):
         self._path = None
 
     @contextlib.contextmanager
-    def open(self, tables):
+    def open(self, export_instances):
         """
         Open the _Writer for writing. This must be called before using _Writer.write().
         Note that this function returns a context manager!
@@ -59,8 +59,14 @@ class _Writer(object):
         with os.fdopen(fd, 'wb') as file:
 
             # open the ExportWriter
-            headers = [(t, (t.get_headers(),)) for t in tables]
-            table_titles = {t: t.label for t in tables}
+            headers = []
+            table_titles = {}
+            for instance in export_instances:
+                headers += [
+                    (t, (t.get_headers(split_columns=instance.split_multiselects),))
+                    for t in instance.selected_tables
+                ]
+                table_titles.update({t: t.label for t in instance.selected_tables})
             self.writer.open(headers, file, table_titles=table_titles)
             yield
             self.writer.close()
@@ -98,18 +104,6 @@ def _get_writer(export_instances):
     return writer
 
 
-def _get_tables(export_instances):
-    """
-    Return a list of tables for the given ExportInstances
-    :param export_instances: A list of ExportInstances
-    :return: a list of TableConfigurations
-    """
-    tables = []
-    for export_instance in export_instances:
-        tables.extend(export_instance.tables)
-    return tables
-
-
 def get_export_download(export_instances, filters, filename=None):
     from corehq.apps.export.tasks import populate_export_download_task
 
@@ -130,7 +124,7 @@ def get_export_file(export_instances, filters, progress_tracker=None):
     """
 
     writer = _get_writer(export_instances)
-    with writer.open(_get_tables(export_instances)):
+    with writer.open(export_instances):
         for export_instance in export_instances:
             # TODO: Don't get the docs multiple times if you don't have to
             docs = _get_export_documents(export_instance, filters)
@@ -162,8 +156,8 @@ def _write_export_instance(writer, export_instance, documents, progress_tracker=
         DownloadBase.set_progress(progress_tracker, 0, documents.count)
 
     for row_number, doc in enumerate(documents):
-        for table in export_instance.tables:
-            rows = table.get_rows(doc, row_number)
+        for table in export_instance.selected_tables:
+            rows = table.get_rows(doc, row_number, split_columns=export_instance.split_multiselects)
             for row in rows:
                 # It might be bad to write one row at a time when you can do more (from a performance perspective)
                 # Regardless, we should handle the batching of rows in the _Writer class, not here.

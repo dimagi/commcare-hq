@@ -1601,7 +1601,6 @@ class SMSLanguagesView(BaseMessagingSectionView):
 
     @use_bootstrap3
     @use_jquery_ui
-    @upgrade_knockout_js
     @method_decorator(domain_admin_required)
     def dispatch(self, *args, **kwargs):
         return super(SMSLanguagesView, self).dispatch(*args, **kwargs)

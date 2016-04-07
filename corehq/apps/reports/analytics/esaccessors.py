@@ -12,7 +12,6 @@ from corehq.apps.es.aggregations import (
 from corehq.apps.es.forms import (
     submitted as submitted_filter,
     completed as completed_filter,
-    user_id as user_id_filter
 )
 from corehq.apps.es.cases import closed_range
 from corehq.util.quickcache import quickcache
@@ -105,7 +104,7 @@ def _get_case_counts_by_user(domain, datespan, case_types=None, is_opened=True):
             )
         )
         .terms_aggregation(user_field, 'by_user')
-        .size(1))
+        .size(0))
 
     if case_types:
         case_query = case_query.filter({"terms": {"type.exact": case_types}})
@@ -217,7 +216,7 @@ def _get_form_counts_by_user(domain, datespan, is_submission_time):
                        lte=datespan.enddate.date()))
     form_query = (form_query
         .user_aggregation()
-        .size(1))
+        .size(0))
     return form_query.run().aggregations.user.counts_by_bucket()
 
 
@@ -246,7 +245,7 @@ def _get_form_counts_by_date(domain, user_ids, datespan, timezone, is_submission
                      lte=datespan.enddate.date())
             .completed_histogram(timezone.zone))
 
-    form_query = form_query.size(1)
+    form_query = form_query.size(0)
 
     results = form_query.run().aggregations.date_histogram.buckets_list
 

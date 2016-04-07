@@ -15,7 +15,7 @@ FORM_PROPERTY_MAPPING = {
     ("form.meta.@xmlns", None): ([PathNode(name='xmlns')], None),
     ("form.meta.appVersion.#text", None): ([PathNode(name='form'), PathNode(name='meta'), PathNode(name='appVersion')], None),
     ("form.meta.appVersion.@xmlns", None): ([PathNode(name='xmlns')], None),
-    ("form.case.@case_id", CASE_NAME_TRANSFORM): ([PathNode(name='form'), PathNode(name='case'), PathNode(name='@case_id')], CASE_NAME_TRANSFORM),
+    ("form.case.@case_id", "corehq.apps.export.transforms.case_id_to_case_name"): ([PathNode(name='form'), PathNode(name='case'), PathNode(name='@case_id')], CASE_NAME_TRANSFORM),
     ("form.case.@case_id", None): ([PathNode(name='form'), PathNode(name='case'), PathNode(name='@case_id')], None),
     ("form.meta.timeEnd", None): ([PathNode(name='form'), PathNode(name='meta'), PathNode(name='timeEnd')], None),
     ("form.meta.deviceID", None): ([PathNode(name='form'), PathNode(name='meta'), PathNode(name='deviceID')], None),

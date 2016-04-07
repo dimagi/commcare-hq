@@ -366,7 +366,7 @@ def edit_module_attr(request, domain, app_id, module_id, attr):
     resp = {'update': {}, 'corrections': {}}
     if should_edit("case_type"):
         case_type = request.POST.get("case_type", None)
-        if is_valid_case_type(case_type):
+        if is_valid_case_type(case_type, module):
             old_case_type = module["case_type"]
             module["case_type"] = case_type
             for cp_mod in (mod for mod in app.modules if isinstance(mod, CareplanModule)):
@@ -385,7 +385,7 @@ def edit_module_attr(request, domain, app_id, module_id, attr):
                 if ad_mod.unique_id != module.unique_id and ad_mod.case_type != old_case_type:
                     # only apply change if the module's case_type does not reference the old value
                     rename_action_case_type(ad_mod)
-        elif case_type == USERCASE_TYPE:
+        elif case_type == USERCASE_TYPE and not isinstance(module, AdvancedModule):
             return HttpResponseBadRequest('"{}" is a reserved case type'.format(USERCASE_TYPE))
         else:
             return HttpResponseBadRequest("case type is improperly formatted")

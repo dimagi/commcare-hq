@@ -336,6 +336,7 @@ class CaseActivityReport(WorkerMonitoringCaseReportTableBase):
             case_es.CaseES()
             .domain(self.domain)
             .user_ids_handle_unknown(users_by_id.keys())
+            .size(0)
         )
         query = query.aggregation(top_level_aggregation)
         missing_users = None in users_by_id.keys()

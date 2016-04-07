@@ -28,7 +28,7 @@ EXPECTED_PROD_INDICES = [
     },
     {
         "alias": "hqcases",
-        "index": "test_hqcases_7a8d2b81335e0a8cef1de718313a23b9"
+        "index": "test_hqcases_2016-03-04"
     },
     {
         "alias": "hqdomains",
