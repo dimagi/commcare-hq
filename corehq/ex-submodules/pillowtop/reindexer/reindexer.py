@@ -28,9 +28,7 @@ class ElasticPillowReindexer(PillowReindexer):
             # when not resuming force delete and create the index
             self._delete_and_prepare_index_for_reindex()
 
-        reindexer_context = PillowRuntimeContext(do_set_checkpoint=False)
-        for change in self.change_provider.iter_changes(start_from=start_from):
-            self.pillow.processor(change, reindexer_context)
+        super(ElasticPillowReindexer, self).reindex(start_from)
 
         self._prepare_index_for_usage()
 
