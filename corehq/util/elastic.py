@@ -28,7 +28,11 @@ def ensure_production_index_deleted(es_index):
 
 @unit_testing_only
 def delete_es_index(es_index):
-    delete_production_es_index(es_index)
+    if es_index.startswith(TEST_ES_PREFIX):
+        delete_production_es_index(es_index)
+
+    else:
+        raise DeleteProductionESIndex('You cannot delete a production index in tests!!')
 
 
 def delete_production_es_index(es_index):
@@ -36,12 +40,8 @@ def delete_production_es_index(es_index):
     Like delete_es_index but usable outside unit tests
     """
     from corehq.elastic import get_es_new
-
-    if es_index.startswith(TEST_ES_PREFIX):
-        es = get_es_new()
-        es.indices.delete(index=es_index)
-    else:
-        raise DeleteProductionESIndex('You cannot delete a production index in tests!!')
+    es = get_es_new()
+    es.indices.delete(index=es_index)
 
 
 class DeleteProductionESIndex(Exception):
