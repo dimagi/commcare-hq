@@ -587,6 +587,7 @@ def edit_app_attr(request, domain, app_id, attr):
         ('amplifies_workers', None),
         ('amplifies_project', None),
         ('minimum_use_threshold', None),
+        ('experienced_threshold', None),
         ('use_grid_menus', None),
         ('comment', None),
         ('custom_base_url', None),

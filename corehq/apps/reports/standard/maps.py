@@ -10,6 +10,7 @@ from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn
 from corehq.apps.reports.generic import GenericReportView, GenericTabularReport, GetParamsMixin
 from corehq.apps.reports.standard import ProjectReport, ProjectReportParametersMixin
 from corehq.apps.reports.standard.cases.basic import CaseListMixin, CaseListReport
+from corehq.apps.style.decorators import use_maps_async, use_maps
 from dimagi.utils.modules import to_function
 from django.template.loader import render_to_string
 
@@ -251,10 +252,16 @@ class GenericMapReport(ProjectReport, ProjectReportParametersMixin):
 class ElasticSearchMapReport(GetParamsMixin, GenericTabularReport, GenericMapReport):
 
     report_template_path = "reports/async/maps.html"
-    report_partial_path = "reports/async/partials/maps.html"
+    report_partial_path = "reports/bootstrap3/partials/base_maps.html"
     ajax_pagination = True
     asynchronous = True
     flush_layout = True
+
+    is_bootstrap3 = True
+
+    @use_maps_async
+    def bootstrap3_dispatcher(self, request, *args, **kwargs):
+        super(ElasticSearchMapReport, self).bootstrap3_dispatcher(request, *args, **kwargs)
 
     def get_report(self):
         Report = to_function(self.data_source['report'])
@@ -479,10 +486,15 @@ class DemoMapReport(GenericMapReport):
         ]
     }
 
+    @use_maps
+    def bootstrap3_dispatcher(self, request, *args, **kwargs):
+        super(DemoMapReport, self).bootstrap3_dispatcher(request, *args, **kwargs)
+
     @classmethod
     def show_in_navigation(cls, domain=None, project=None, user=None):
         return user and toggles.DEMO_REPORTS.enabled(user.username) \
             or domain and toggles.DEMO_REPORTS.enabled(domain)
+
 
 class DemoMapReport2(GenericMapReport):
     """this report is a demonstration of the maps report's capabilities
@@ -567,6 +579,11 @@ class DemoMapReport2(GenericMapReport):
         return user and toggles.DEMO_REPORTS.enabled(user.username) \
             or domain and toggles.DEMO_REPORTS.enabled(domain)
 
+    @use_maps
+    def bootstrap3_dispatcher(self, request, *args, **kwargs):
+        super(DemoMapReport2, self).bootstrap3_dispatcher(request, *args, **kwargs)
+
+
 class GenericCaseListMap(GenericMapReport):
     fields = CaseListMixin.fields
 
@@ -631,6 +648,7 @@ class GenericCaseListMap(GenericMapReport):
 
         return static_config
 
+
 class DemoMapCaseList(GenericCaseListMap):
     name = ugettext_noop("Maps: Case List")
     slug = "maps_demo_caselist"
@@ -645,6 +663,10 @@ class DemoMapCaseList(GenericCaseListMap):
     def show_in_navigation(cls, domain=None, project=None, user=None):
         return user and toggles.DEMO_REPORTS.enabled(user.username) \
             or domain and toggles.DEMO_REPORTS.enabled(domain)
+
+    @use_maps
+    def bootstrap3_dispatcher(self, request, *args, **kwargs):
+        super(DemoMapCaseList, self).bootstrap3_dispatcher(request, *args, **kwargs)
 
 """
 metrics:

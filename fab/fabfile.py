@@ -393,7 +393,6 @@ def env_common():
     proxy = servers['proxy']
     webworkers = servers['webworkers']
     postgresql = servers['postgresql']
-    couchdb = servers['couchdb']
     touchforms = servers['touchforms']
     elasticsearch = servers['elasticsearch']
     celery = servers['celery']
@@ -404,7 +403,6 @@ def env_common():
     deploy = servers.get('deploy', servers['postgresql'])[:1]
 
     env.roledefs = {
-        'couch': couchdb,
         'pg': postgresql,
         'rabbitmq': rabbitmq,
         'django_celery': celery,
@@ -597,11 +595,10 @@ def hotfix_deploy():
     except Exception:
         execute(mail_admins, "Deploy failed", "You had better check the logs.")
         # hopefully bring the server back to life
-        silent_services_restart()
+        silent_services_restart(use_current_release=True)
         raise
     else:
-        execute(services_restart)
-        silent_services_restart()
+        silent_services_restart(use_current_release=True)
         execute(record_successful_deploy, deploy_metadata)
 
 

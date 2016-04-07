@@ -382,6 +382,11 @@ def _login(req, domain_name, template_name):
             'hr_name': domain.display_name() if domain else domain_name,
             'next': req_params.get('next', '/a/%s/' % domain),
             'allow_domain_requests': domain.allow_domain_requests,
+            'current_page': {'page_name': _('Welcome back to %s!') % domain.display_name()}
+        })
+    else:
+        context.update({
+            'current_page': {'page_name': _('Welcome back to CommCare HQ!')}
         })
 
     auth_view = HQLoginView if not domain_name else CloudCareLoginView

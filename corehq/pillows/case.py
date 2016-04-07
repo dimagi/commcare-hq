@@ -1,4 +1,6 @@
 import copy
+import datetime
+
 from casexml.apps.case.models import CommCareCase
 from corehq.apps.change_feed import topics
 from corehq.apps.change_feed.consumer.feed import KafkaChangeFeed
@@ -74,6 +76,7 @@ def transform_case_for_elasticsearch(doc_dict):
             doc_ret["owner_id"] = doc_ret["user_id"]
 
     doc_ret['owner_type'] = get_user_type(doc_ret.get("owner_id", None))
+    doc_ret['inserted_at'] = datetime.datetime.utcnow().isoformat()
 
     return doc_ret
 

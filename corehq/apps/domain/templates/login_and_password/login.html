@@ -1,10 +1,10 @@
-{% extends "style/bootstrap2/centered.html" %}
+{% extends "style/bootstrap3/base_page.html" %}
 {% load i18n %}
 
 {% block title %}{% trans "Login to CommCare HQ" %}{% endblock title %}
 
-{% block centered-content %}
+{% block page_content %}
     {% block login-content %}
     {% include "login_and_password/partials/login_full.html" %}
     {% endblock %}
-{% endblock centered-content %}
+{% endblock page_content %}

@@ -6,9 +6,9 @@ from corehq.apps.es import CaseES
 from corehq.form_processor.tests.utils import FormProcessorTestUtils
 from corehq.pillows.case import CasePillow, get_sql_case_to_elasticsearch_pillow
 from corehq.util.elastic import delete_es_index, ensure_index_deleted
-from corehq.util.test_utils import trap_extra_setup
+from corehq.util.test_utils import trap_extra_setup, create_and_save_a_case
 from elasticsearch.exceptions import ConnectionError
-from testapps.test_pillowtop.utils import get_test_kafka_consumer, make_a_case
+from testapps.test_pillowtop.utils import get_test_kafka_consumer
 
 
 class CasePillowTest(TestCase):
@@ -29,7 +29,7 @@ class CasePillowTest(TestCase):
         # make a case
         case_id = uuid.uuid4().hex
         case_name = 'case-name-{}'.format(uuid.uuid4().hex)
-        case = make_a_case(self.domain, case_id, case_name)
+        case = create_and_save_a_case(self.domain, case_id, case_name)
 
         # send to elasticsearch
         self._sync_couch_cases_to_es()
@@ -49,7 +49,7 @@ class CasePillowTest(TestCase):
         # make a case
         case_id = uuid.uuid4().hex
         case_name = 'case-name-{}'.format(uuid.uuid4().hex)
-        case = make_a_case(self.domain, case_id, case_name)
+        case = create_and_save_a_case(self.domain, case_id, case_name)
 
         # send to elasticsearch
         self._sync_couch_cases_to_es()
@@ -82,7 +82,7 @@ class CasePillowTest(TestCase):
         # make a case
         case_id = uuid.uuid4().hex
         case_name = 'case-name-{}'.format(uuid.uuid4().hex)
-        case = make_a_case(self.domain, case_id, case_name)
+        case = create_and_save_a_case(self.domain, case_id, case_name)
 
         # confirm change made it to kafka
         message = consumer.next()

@@ -6,6 +6,7 @@ from corehq.apps.settings.forms import (
 )
 from corehq.apps.style.decorators import use_bootstrap3, use_select2
 from corehq.apps.users.forms import AddPhoneNumberForm
+from django.conf import settings
 from django.contrib import messages
 from django.views.decorators.http import require_POST
 from corehq.tabs.tabclasses import MySettingsTab
@@ -278,6 +279,7 @@ class ChangeMyPasswordView(BaseMyAccountView):
     def page_context(self):
         return {
             'form': self.password_change_form,
+            'hide_password_feedback': settings.ENABLE_DRACONIAN_SECURITY_FEATURES,
         }
 
     @method_decorator(sensitive_post_parameters())

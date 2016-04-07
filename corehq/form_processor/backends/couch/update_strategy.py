@@ -299,7 +299,7 @@ class CouchCaseUpdateStrategy(UpdateStrategy):
                     value = unicode(value)
                 try:
                     self.case[item] = value
-                except BadValueError:
+                except (AttributeError, BadValueError):
                     notify_exception(None, "Can't set property {} on case {} from form {}".format(
                         item, self.case.case_id, update_action.xform_id
                     ))

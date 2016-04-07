@@ -143,6 +143,7 @@ def select(request, domain_select_template='domain/select.html', do_not_redirect
     additional_context = {
         'domains_for_user': domains_for_user,
         'open_invitations': open_invitations,
+        'current_page': {'page_name': _('Select A Project')},
     }
 
     last_visited_domain = request.session.get('last_visited_domain')
@@ -167,20 +168,6 @@ def select(request, domain_select_template='domain/select.html', do_not_redirect
 
         del request.session['last_visited_domain']
         return render(request, domain_select_template, additional_context)
-
-
-@require_superuser
-def incomplete_email(request,
-                     incomplete_email_template='domain/incomplete_email.html'):
-    from corehq.apps.domain.tasks import (
-        incomplete_self_started_domains,
-        incomplete_domains_to_email
-    )
-    context = {
-        'self_started': incomplete_self_started_domains,
-        'dimagi_owned': incomplete_domains_to_email,
-    }
-    return render(request, incomplete_email_template, context)
 
 
 class DomainViewMixin(object):
@@ -594,6 +581,7 @@ def logo(request, domain):
 class DomainAccountingSettings(BaseAdminProjectSettingsView):
 
     @method_decorator(login_and_domain_required)
+    @use_bootstrap3
     def dispatch(self, request, *args, **kwargs):
         return super(DomainAccountingSettings, self).dispatch(request, *args, **kwargs)
 
@@ -672,7 +660,7 @@ class DomainSubscriptionView(DomainAccountingSettings):
                     self.account
                 ) if self.account else None
             )),
-            'css_class': "label-plan %s" % plan_version.plan.edition.lower(),
+            'css_class': "label-plan label-plan-%s" % plan_version.plan.edition.lower(),
             'do_not_invoice': subscription.do_not_invoice if subscription is not None else False,
             'is_trial': subscription.is_trial if subscription is not None else False,
             'date_start': (subscription.date_start.strftime(USER_DATE_FORMAT)
@@ -789,6 +777,7 @@ class EditExistingBillingAccountView(DomainAccountingSettings, AsyncHandlerMixin
             )
         return EditBillingAccountInfoForm(self.account, self.domain, self.request.couch_user.username)
 
+    @use_select2
     def dispatch(self, request, *args, **kwargs):
         if self.account is None:
             raise Http404()
@@ -939,10 +928,10 @@ class DomainBillingStatementsView(DomainAccountingSettings, CRUDPaginatedViewMix
                 if invoice.is_paid:
                     payment_status = (_("Paid on %s.")
                                       % invoice.date_paid.strftime(USER_DATE_FORMAT))
-                    payment_class = "label label-inverse"
+                    payment_class = "label label-default"
                 else:
                     payment_status = _("Not Paid")
-                    payment_class = "label label-important"
+                    payment_class = "label label-danger"
                 date_due = (
                     (invoice.date_due.strftime(USER_DATE_FORMAT)
                      if not invoice.is_paid else _("Already Paid"))
@@ -1224,8 +1213,11 @@ class InternalSubscriptionManagementView(BaseAdminProjectSettingsView):
     form_classes = INTERNAL_SUBSCRIPTION_MANAGEMENT_FORMS
 
     @method_decorator(require_superuser)
-    def get(self, request, *args, **kwargs):
-        return super(InternalSubscriptionManagementView, self).get(request, *args, **kwargs)
+    @use_bootstrap3
+    @use_jquery_ui
+    @use_select2
+    def dispatch(self, request, *args, **kwargs):
+        return super(InternalSubscriptionManagementView, self).dispatch(request, *args, **kwargs)
 
     @method_decorator(require_superuser)
     def post(self, request, *args, **kwargs):
@@ -1511,6 +1503,10 @@ class ConfirmBillingAccountInfoView(ConfirmSelectedPlanView, AsyncHandlerMixin):
     async_handlers = [
         Select2BillingInfoHandler,
     ]
+
+    @use_select2
+    def dispatch(self, request, *args, **kwargs):
+        return super(ConfirmBillingAccountInfoView, self).dispatch(request, *args, **kwargs)
 
     @property
     def steps(self):
@@ -2955,9 +2951,13 @@ class PasswordResetView(View):
     urlname = "password_reset_confirm"
 
     def get(self, request, *args, **kwargs):
+        extra_context = kwargs.setdefault('extra_context', {})
+        extra_context['hide_password_feedback'] = settings.ENABLE_DRACONIAN_SECURITY_FEATURES
         return password_reset_confirm(request, *args, **kwargs)
 
     def post(self, request, *args, **kwargs):
+        extra_context = kwargs.setdefault('extra_context', {})
+        extra_context['hide_password_feedback'] = settings.ENABLE_DRACONIAN_SECURITY_FEATURES
         response = password_reset_confirm(request, *args, **kwargs)
         uidb64 = kwargs.get('uidb64')
         uid = urlsafe_base64_decode(uidb64)
