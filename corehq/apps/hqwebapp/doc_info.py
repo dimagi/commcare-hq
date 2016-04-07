@@ -215,6 +215,8 @@ def get_object_info(obj, cache=None):
         return cache[cache_key]
 
     from corehq.apps.locations.models import SQLLocation
+    from corehq.form_processor.models import CommCareCaseSQL
+    from corehq.form_processor.models import XFormInstanceSQL
     if isinstance(obj, SQLLocation):
         from corehq.apps.locations.views import EditLocationView
         doc_info = DocInfo(
@@ -226,12 +228,16 @@ def get_object_info(obj, cache=None):
             ),
             is_deleted=False,
         )
+    elif isinstance(obj, CommCareCaseSQL):
+        doc_info = case_docinfo(obj.domain, obj.case_id, obj.name, obj.is_deleted)
+    elif isinstance(obj, XFormInstanceSQL):
+        doc_info = form_docinfo(obj.domain, obj.form_id, obj.is_deleted)
     else:
         doc_info = DocInfo(
             is_deleted=False,
         )
 
-    doc_info.id = str(obj.pk)
+    doc_info.id = doc_info.id or str(obj.pk)
     doc_info.domain = obj.domain if hasattr(obj, 'domain') else None
     doc_info.type = class_name
 
