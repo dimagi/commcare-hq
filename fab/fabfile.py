@@ -521,11 +521,11 @@ def update_code(git_tag, use_current_release=False):
 
     with cd(env.code_root if not use_current_release else env.code_current):
         sudo('git remote prune origin')
-        sudo('git fetch origin --tags')
+        sudo('git fetch origin --tags -q')
         sudo('git checkout {}'.format(git_tag))
         sudo('git reset --hard {}'.format(git_tag))
         sudo('git submodule sync')
-        sudo('git submodule update --init --recursive')
+        sudo('git submodule update --init --recursive -q')
         # remove all untracked files, including submodules
         sudo("git clean -ffd")
         # remove all .pyc files in the project
