@@ -61,16 +61,17 @@ def input_trans(name, langs=None, input_name='name'):
 
 
 @register.simple_tag
-def inline_edit_trans(name, langs=None):
+def inline_edit_trans(name, langs=None, readOnlyClass=''):
     template = '''
         <inline-edit params="
             name: 'name',
             value: '%(value)s',
             placeholder: '%(placeholder)s',
             rows: 1,
-            lang: '%(lang)s'
+            lang: '%(lang)s',
+            readOnlyClass: '{}',
         "></inline-edit>
-    '''
+    '''.format(readOnlyClass)
     return _input_trans(template, name, langs=langs)
 
 

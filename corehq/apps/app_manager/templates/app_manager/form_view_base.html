@@ -250,9 +250,9 @@
 
 {% block form-view %}
     <div id="build_errors"></div>
-    {% if form.short_comment %}
-        <div id="form_short_comment" class="app-comment well">{{ form.short_comment }}</div>
-    {% endif %}
+    {% inline_edit_trans form.name langs readOnlyClass='h3' %}
+    <inline-edit params="name: 'comment', id:'comment-id', value: '{{ form.comment|escapejs }}'"></inline-edit>
+    <br />
     <div class="pull-right">
         <form action="{% url "delete_form" domain app.id module.unique_id form.unique_id %}" method="post">
             {% csrf_token %}

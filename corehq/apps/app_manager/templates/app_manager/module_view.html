@@ -184,6 +184,9 @@
 {% endblock %}
 
 {% block form-view %}
+    {% inline_edit_trans module.name langs readOnlyClass='h3' %}
+    <inline-edit params="name: 'comment', id:'comment-id', value: '{{ module.comment|escapejs }}'"></inline-edit>
+    <br />
     {% include 'app_manager/partials/module_view_heading.html' %}
 <div class="tabbable">
 <ul class="nav nav-tabs" id="module-view-tabs">
@@ -216,12 +219,6 @@
             {% csrf_token %}
             <div class="save-button-holder clearfix"></div>
             <fieldset>
-                <div class="form-group">
-                    <label class="col-sm-2 control-label">{% trans "Module Name" %}</label>
-                    <div class="col-sm-4">
-                        {% inline_edit_trans module.name langs %}
-                    </div>
-                </div>
                 {% block settings_fields %}
                 {% if module.module_type == 'shadow' %}
                 <div class="form-group">
@@ -274,12 +271,6 @@
                     </div>
                 </div>
                 {% endif %}
-                <div class="form-group">
-                    <label class="col-sm-2 control-label" for="comment-id">{% trans "Comment" %}</label>
-                    <div class="col-sm-4">
-                        <inline-edit params="name: 'comment', id:'comment-id', value: '{{ module.comment|escapejs }}'"></inline-edit>
-                    </div>
-                </div>
                 {% endblock %}
             </fieldset>
         </form>

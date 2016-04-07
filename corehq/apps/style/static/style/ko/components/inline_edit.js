@@ -37,6 +37,7 @@ hqDefine('style/ko/components/inline_edit.js', function() {
             // Styling
             self.inline = params.inline || false;
             self.rows = params.rows || 2;
+            self.readOnlyClass = params.readOnlyClass || '';
 
             // Interaction: determine whether widget is in read or write mode
             self.editing = ko.observable(false);
@@ -111,7 +112,7 @@ hqDefine('style/ko/components/inline_edit.js', function() {
                           data-bind="text: lang, visible: !value()"\
                     ></span>\
                 <!-- /ko -->\
-                <span class="text" data-bind="text: value"></span>\
+                <span class="text" data-bind="text: value, css: readOnlyClass"></span>\
                 <span class="placeholder" data-bind="text: placeholder, visible: !value()"></span>\
             </div>\
             <div class="read-write" data-bind="visible: editing() || hasError(), css: {\'form-inline\': inline}">\
