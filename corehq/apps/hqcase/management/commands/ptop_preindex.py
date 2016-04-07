@@ -16,38 +16,38 @@ from django.core.management import call_command
 from django.conf import settings
 
 
-def get_reindex_commands(pillow_class_name):
+def get_reindex_commands(alias_name):
     # pillow_command_map is a mapping from es pillows
     # to lists of management commands or functions
     # that should be used to rebuild the index from scratch
     pillow_command_map = {
-        'DomainPillow': ['ptop_fast_reindex_domains'],
-        'CasePillow': ['ptop_fast_reindex_cases'],
-        'XFormPillow': ['ptop_fast_reindex_xforms'],
+        'hqdomains': ['ptop_fast_reindex_domains'],
+        'hqcases': ['ptop_fast_reindex_cases'],
+        'xforms': ['ptop_fast_reindex_xforms'],
         # groupstousers indexing must happen after all users are indexed
-        'UserPillow': [
+        'hqusers': [
             'ptop_fast_reindex_users',
             add_demo_user_to_user_index,
             'ptop_fast_reindex_groupstousers',
             # 'ptop_fast_reindex_unknownusers',  removed until we have a better workflow for this
         ],
-        'AppPillow': ['ptop_fast_reindex_apps'],
-        'GroupPillow': ['ptop_fast_reindex_groups'],
-        'ReportXFormPillow': ['ptop_fast_reindex_reportxforms'],
-        'ReportCasePillow': ['ptop_fast_reindex_reportcases'],
+        'hqapps': ['ptop_fast_reindex_apps'],
+        'hqgroups': ['ptop_fast_reindex_groups'],
+        'report_xforms': ['ptop_fast_reindex_reportxforms'],
+        'report_cases': ['ptop_fast_reindex_reportcases'],
     }
-    return pillow_command_map.get(pillow_class_name, [])
+    return pillow_command_map.get(alias_name, [])
 
 
-def do_reindex(pillow_class_name):
-    print "Starting pillow preindex %s" % pillow_class_name
-    reindex_commands = get_reindex_commands(pillow_class_name)
+def do_reindex(alias_name):
+    print "Starting pillow preindex %s" % alias_name
+    reindex_commands = get_reindex_commands(alias_name)
     for reindex_command in reindex_commands:
         if isinstance(reindex_command, basestring):
             call_command(reindex_command, **{'noinput': True, 'bulk': True})
         else:
             reindex_command()
-    print "Pillow preindex finished %s" % pillow_class_name
+    print "Pillow preindex finished %s" % alias_name
 
 
 class Command(BaseCommand):
@@ -90,18 +90,17 @@ class Command(BaseCommand):
         for pillow in reindex_pillows:
             # loop through pillows once before running greenlets
             # to fail hard on misconfigured pillows
-            pillow_class_name = pillow.__class__.__name__
-            reindex_command = get_reindex_commands(pillow_class_name)
+            reindex_command = get_reindex_commands(pillow.es_alias)
             if not reindex_command:
                 raise Exception(
                     "Error, pillow [%s] is not configured "
                     "with its own management command reindex command "
-                    "- it needs one" % pillow_class_name
+                    "- it needs one" % pillow.es_alias
                 )
 
         for pillow in reindex_pillows:
-            print pillow.__class__.__name__
-            g = gevent.spawn(do_reindex, pillow.__class__.__name__)
+            print pillow.es_alias
+            g = gevent.spawn(do_reindex, pillow.es_alias)
             runs.append(g)
 
         if len(reindex_pillows) > 0:
