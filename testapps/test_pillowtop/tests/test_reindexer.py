@@ -11,11 +11,8 @@ from corehq.form_processor.interfaces.processor import FormProcessorInterface
 from corehq.form_processor.utils import TestFormMetadata
 from corehq.form_processor.tests.utils import FormProcessorTestUtils, run_with_all_backends
 from corehq.pillows.case import CasePillow
-from corehq.pillows.mappings.case_mapping import CASE_INDEX
 from corehq.pillows.mappings.domain_mapping import DOMAIN_INDEX
 from corehq.pillows.mappings.user_mapping import USER_INDEX
-from corehq.pillows.mappings.xform_mapping import XFORM_INDEX
-from corehq.pillows.xform import XFormPillow
 from corehq.util.elastic import delete_es_index, ensure_index_deleted
 from corehq.util.test_utils import get_form_ready_to_save, trap_extra_setup, create_and_save_a_form, \
     create_and_save_a_case
@@ -73,10 +70,8 @@ class PillowtopReindexerTest(TestCase):
         FormProcessorTestUtils.delete_all_cases()
         case = _create_and_save_a_case()
 
-        ensure_index_deleted(CASE_INDEX)  # new reindexer doesn't force delete the index so do it in the test
         index_id = 'sql-case' if settings.TESTS_SHOULD_USE_SQL_BACKEND else 'case'
         call_command('ptop_reindexer_v2', index_id)
-        CasePillow().get_es_new().indices.refresh(CASE_INDEX)  # as well as refresh the index
 
         self._assert_case_is_in_es(case)
 

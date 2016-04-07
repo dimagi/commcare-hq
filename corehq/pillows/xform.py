@@ -17,7 +17,7 @@ from pillowtop.es_utils import ElasticsearchIndexInfo, get_index_info_from_pillo
 from pillowtop.pillow.interface import ConstructedPillow
 from pillowtop.processors.elastic import ElasticProcessor
 from pillowtop.reindexer.change_providers.couch import CouchViewChangeProvider
-from pillowtop.reindexer.reindexer import PillowReindexer, get_default_reindexer_for_elastic_pillow, \
+from pillowtop.reindexer.reindexer import get_default_reindexer_for_elastic_pillow, \
     ElasticPillowReindexer
 
 
