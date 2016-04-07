@@ -31,6 +31,7 @@ class ElasticsearchIndexInfo(jsonobject.JsonObject):
     index = jsonobject.StringProperty(required=True)
     alias = jsonobject.StringProperty()
     type = jsonobject.StringProperty()
+    meta = jsonobject.DictProperty()
 
     def __unicode__(self):
         return u'{} ({})'.format(self.alias, self.index)
@@ -152,6 +153,11 @@ def get_all_expected_es_indices():
     for pillow in pillows:
         assert pillow.es_index not in seen_indices
         assert pillow.es_alias not in seen_aliases
-        yield ElasticsearchIndexInfo(index=pillow.es_index, alias=pillow.es_alias, type=pillow.es_type)
+        yield ElasticsearchIndexInfo(
+            index=pillow.es_index,
+            alias=pillow.es_alias,
+            type=pillow.es_type,
+            meta=pillow.es_meta
+        )
         seen_indices.add(pillow.es_index)
         seen_aliases.add(pillow.es_alias)
