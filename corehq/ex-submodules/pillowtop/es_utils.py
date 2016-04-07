@@ -153,11 +153,15 @@ def get_all_expected_es_indices():
     for pillow in pillows:
         assert pillow.es_index not in seen_indices
         assert pillow.es_alias not in seen_aliases
-        yield ElasticsearchIndexInfo(
-            index=pillow.es_index,
-            alias=pillow.es_alias,
-            type=pillow.es_type,
-            meta=pillow.es_meta
-        )
+        yield get_index_info_from_pillow(pillow)
         seen_indices.add(pillow.es_index)
         seen_aliases.add(pillow.es_alias)
+
+
+def get_index_info_from_pillow(pillow):
+    return ElasticsearchIndexInfo(
+        index=pillow.es_index,
+        alias=pillow.es_alias,
+        type=pillow.es_type,
+        meta=pillow.es_meta
+    )
