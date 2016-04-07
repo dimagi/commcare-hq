@@ -5,24 +5,6 @@
     <form class="form-horizontal save-button-form" action="{% url "corehq.apps.app_manager.views.edit_form_attr" domain app.id form.get_unique_id 'all' %}">
         {% csrf_token %}
         <div class="save-button-holder clearfix"></div>
-        <div class="form-group">
-            <label class="col-sm-2 control-label">{% trans "Form Name" %}</label>
-            <div class="col-sm-4">
-                {% inline_edit_trans form.name langs %}
-            </div>
-        </div>
-        <div class="form-group">
-            <label class="control-label col-sm-2">
-                {% trans "Comment" %}
-                <span class="hq-help-template"
-                      data-title="{% trans "Comment" %}"
-                      data-content="{% blocktrans %}Comments to document or explain this form for other app builders or maintainers.{% endblocktrans %}"
-                ></span>
-            </label>
-            <div id="form-comment" class="col-sm-4" for="comment-id">
-                <inline-edit params="name: 'comment', id:'comment-id', value: '{{ form.comment|escapejs }}'"></inline-edit>
-            </div>
-        </div>
 
         <legend>
         <a class="collapsed" data-toggle="collapse" data-bind="attr: {href: '#' + id}, css: {collapsed: reallyCollapse}" href="#form-settings-multimedia">
