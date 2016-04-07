@@ -1,9 +1,7 @@
 from gevent import monkey; monkey.patch_all()
 from corehq.elastic import get_es_new
 
-
-from pillowtop.es_utils import get_all_elasticsearch_pillow_classes, get_all_expected_es_indices
-
+from pillowtop.es_utils import get_all_expected_es_indices
 
 from cStringIO import StringIO
 import traceback
@@ -56,7 +54,6 @@ class Command(BaseCommand):
 
     def handle(self, *args, **options):
         runs = []
-        aliased_classes = get_all_elasticsearch_pillow_classes()
         all_es_indices = get_all_expected_es_indices()
         es = get_es_new()
         indices_needing_reindex = [info for info in all_es_indices if not es.indices.exists(info.index)]
@@ -65,45 +62,40 @@ class Command(BaseCommand):
             print 'Nothing needs to be reindexed'
             return
 
-        aliasable_pillows = [p(online=False) for p in aliased_classes]
-        index_names_needing_reindex = [info.index for info in indices_needing_reindex]
-
         print "Reindexing:\n\t",
-        print '\n\t'.join(index_names_needing_reindex)
+        print '\n\t'.join(map(unicode, indices_needing_reindex))
 
-        reindex_pillows = filter(lambda x: x.es_index in index_names_needing_reindex, aliasable_pillows)
         preindex_message = """
         Heads up!
 
-        %s is going to start preindexing the following indices:
+        %s is going to start preindexing the following indices:\n
         %s
 
         This may take a while, so don't deploy until all these have reported finishing.
             """ % (
                 settings.EMAIL_SUBJECT_PREFIX,
-                ', '.join(map(unicode, indices_needing_reindex))
+                '\n\t'.join(map(unicode, indices_needing_reindex))
             )
 
         mail_admins("Pillow preindexing starting", preindex_message)
-
         start = datetime.utcnow()
-        for pillow in reindex_pillows:
+        for index_info in indices_needing_reindex:
             # loop through pillows once before running greenlets
             # to fail hard on misconfigured pillows
-            reindex_command = get_reindex_commands(pillow.es_alias)
+            reindex_command = get_reindex_commands(index_info.alias)
             if not reindex_command:
                 raise Exception(
                     "Error, pillow [%s] is not configured "
                     "with its own management command reindex command "
-                    "- it needs one" % pillow.es_alias
+                    "- it needs one" % index_info.alias
                 )
 
-        for pillow in reindex_pillows:
-            print pillow.es_alias
-            g = gevent.spawn(do_reindex, pillow.es_alias)
+        for index_info in indices_needing_reindex:
+            print index_info.alias
+            g = gevent.spawn(do_reindex, index_info.alias)
             runs.append(g)
 
-        if len(reindex_pillows) > 0:
+        if len(indices_needing_reindex) > 0:
             gevent.joinall(runs)
             try:
                 for job in runs:
