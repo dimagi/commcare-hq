@@ -23,10 +23,16 @@ class SyncRequestSuiteTest(SimpleTestCase, TestXmlMixin, SuiteMixin):
         Suite should include sync-request if searching is configured
         """
         self.module.search_config = [
-            CaseSearch(property='name', label='Name'),
-            CaseSearch(property='dob', label='Date of birth')
+            CaseSearch(property='name', label={'en': 'Name'}),
+            CaseSearch(property='dob', label={'en': 'Date of birth'})
         ]
         with patch('corehq.util.view_utils.get_url_base') as get_url_base_patch:
             get_url_base_patch.return_value = 'https://www.example.com'
             suite = self.app.create_suite()
         self.assertXmlPartialEqual(self.get_xml('sync_request'), suite, "./sync-request[1]")
+
+    def test_case_search_action(self):
+        """
+        Case search action should be added to case list
+        """
+        pass
