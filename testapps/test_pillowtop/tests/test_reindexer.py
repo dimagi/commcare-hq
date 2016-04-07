@@ -94,11 +94,8 @@ class PillowtopReindexerTest(TestCase):
         FormProcessorTestUtils.delete_all_xforms()
         form = create_and_save_a_form(DOMAIN)
 
-        ensure_index_deleted(XFORM_INDEX)
         index_id = 'sql-form' if settings.TESTS_SHOULD_USE_SQL_BACKEND else 'form'
-
         call_command('ptop_reindexer_v2', index_id)
-        XFormPillow().get_es_new().indices.refresh(XFORM_INDEX)
 
         self._assert_form_is_in_es(form)
 
