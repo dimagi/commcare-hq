@@ -40,8 +40,12 @@ def interpolate_xpath(string, case_xpath=None, fixture_xpath=None, module=None, 
     """
     Replace xpath shortcuts with full value.
     """
-    from corehq.apps.app_manager.util import xpath_references_case
-    if case_xpath is None and xpath_references_case(string):
+    if case_xpath is None and any([
+        '#case' in string,
+        '#parent' in string,
+        '#host' in string,
+        re.search(DOT_INTERPOLATE_PATTERN, string),
+    ]):
         # At the moment this function is only used by module and form filters.
         # If that changes, amend the error message accordingly.
         raise CaseXPathValidationError(CASE_REFERENCE_VALIDATION_ERROR, module=module, form=form)
