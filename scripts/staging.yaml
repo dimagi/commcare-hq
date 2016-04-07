@@ -60,8 +60,6 @@ branches:
   - certificate-validation # Cal 3/10
   - knockout-3-3 # Jenny 3/30
   - cache-compress # Ben 4/7
-  - orangejenny-patch-3 # jenny 4/7
-  - drop-data-value # jenny 4/7
   - edit-form-fix # wsp 4/7
   - upgrade-gunicorn # Ben 4/7
 submodules:
