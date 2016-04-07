@@ -3,7 +3,9 @@ from abc import ABCMeta, abstractmethod, abstractproperty
 
 import six as six
 from couchdbkit import ResourceNotFound
+
 from dimagi.utils.decorators.memoized import memoized
+from couchforms import const
 
 
 class AbstractXFormInstance(object):
@@ -99,6 +101,22 @@ class AbstractXFormInstance(object):
     def get(self, xform_id):
         raise NotImplementedError()
 
+    @property
+    def xml_md5(self):
+        raise NotImplementedError()
+
+    @property
+    def version(self):
+        return self.form_data.get(const.TAG_VERSION, "")
+
+    @property
+    def uiversion(self):
+        return self.form_data.get(const.TAG_UIVERSION, "")
+
+    @property
+    def type(self):
+        return self.form_data.get(const.TAG_TYPE, "")
+
     @memoized
     def get_sync_token(self):
         from casexml.apps.phone.models import get_properly_wrapped_sync_log
@@ -150,6 +168,29 @@ class AbstractCommCareCase(object):
 
     def get_case_property(self, property):
         raise NotImplementedError
+
+    @memoized
+    def get_index_map(self, reversed=False):
+        return dict([
+            (index.identifier, {
+                "case_type": index.referenced_type,
+                "case_id": index.referenced_id,
+                "relationship": index.relationship,
+            }) for index in (self.indices if not reversed else self.reverse_indices)
+        ])
+
+    def get_properties_in_api_format(self):
+        return dict(self.dynamic_case_properties().items() + {
+            "external_id": self.external_id,
+            "owner_id": self.owner_id,
+            # renamed
+            "case_name": self.name,
+            # renamed
+            "case_type": self.type,
+            # renamed
+            "date_opened": self.opened_on,
+            # all custom properties go here
+        }.items())
 
     def to_xml(self, version, include_case_on_closed=False):
         from xml.etree import ElementTree

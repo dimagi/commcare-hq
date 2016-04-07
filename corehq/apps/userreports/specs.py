@@ -28,3 +28,10 @@ class EvaluationContext(object):
         self.root_doc = root_doc
         self.iteration = iteration
         self.inserted_timestamp = datetime.utcnow()
+        self.cache = {}
+
+    def get_cache_value(self, key):
+        return self.cache.get(key, None)
+
+    def set_cache_value(self, key, value):
+        self.cache[key] = value

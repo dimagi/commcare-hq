@@ -43,7 +43,9 @@ from corehq.apps.reports.analytics.esaccessors import (
     get_form_duration_stats_for_users,
     get_last_form_submission_for_xmlns,
     guess_form_name_from_submissions_using_xmlns,
+    get_active_case_count
 )
+from corehq.apps.es.aggregations import MISSING_KEY
 from corehq.util.test_utils import make_es_ready_form, trap_extra_setup
 from pillowtop.feed.interface import Change
 
@@ -134,6 +136,12 @@ class TestFormESAccessors(BaseESAccessorsTest):
             received_on=datetime(2013, 7, 2),
             user_id=user_id,
         )
+        self._send_form_to_es(
+            app_id=app_id1,
+            xmlns=xmlns1,
+            received_on=datetime(2013, 7, 2),
+            user_id=None,
+        )
 
         paged_result = get_forms(
             self.domain,
@@ -164,6 +172,16 @@ class TestFormESAccessors(BaseESAccessorsTest):
             xmlnss=[xmlns2],
         )
         self.assertEqual(paged_result.total, 0)
+
+        paged_result = get_forms(
+            self.domain,
+            start,
+            end,
+            user_ids=[None],
+            app_ids=[app_id1],
+            xmlnss=[xmlns1],
+        )
+        self.assertEqual(paged_result.total, 1)
 
     def test_basic_completed_by_user(self):
         start = datetime(2013, 7, 1)
@@ -362,6 +380,7 @@ class TestFormESAccessors(BaseESAccessorsTest):
         self._send_form_to_es(received_on=received_on, user_id=user1, app_id=app1, xmlns=xmlns1)
         self._send_form_to_es(received_on=received_on, user_id=user1, app_id=app2, xmlns=xmlns2)
         self._send_form_to_es(received_on=received_on, user_id=user2, app_id=app2, xmlns=xmlns2)
+        self._send_form_to_es(received_on=received_on, user_id=None, app_id=app2, xmlns=xmlns2)
 
         counts = get_form_counts_by_user_xmlns(self.domain, start, end)
         self.assertEqual(counts, {
@@ -385,6 +404,11 @@ class TestFormESAccessors(BaseESAccessorsTest):
         by_completion = get_form_counts_by_user_xmlns(self.domain, start, end, by_submission_time=False)
         self.assertEqual(by_completion, {
             (user1, app1, xmlns1): 1
+        })
+
+        counts_missing_user = get_form_counts_by_user_xmlns(self.domain, start, end, user_ids=[None])
+        self.assertEqual(counts_missing_user, {
+            (None, app2, xmlns2): 1,
         })
 
     def test_get_form_duration_stats_by_user(self):
@@ -416,12 +440,19 @@ class TestFormESAccessors(BaseESAccessorsTest):
             xmlns=xmlns1,
             time_start=time_start,
         )
+        self._send_form_to_es(
+            completion_time=completion_time,
+            user_id=None,
+            app_id=app1,
+            xmlns=xmlns1,
+            time_start=time_start,
+        )
 
         results = get_form_duration_stats_by_user(
             self.domain,
             app1,
             xmlns1,
-            [user1, user2],
+            [user1, user2, None],
             start,
             end,
             by_submission_time=False
@@ -431,6 +462,8 @@ class TestFormESAccessors(BaseESAccessorsTest):
         self.assertEqual(timedelta(milliseconds=results[user1]['max']), completion_time - time_start)
         self.assertEqual(results[user2]['count'], 1)
         self.assertEqual(timedelta(milliseconds=results[user2]['max']), completion_time - time_start)
+        self.assertEqual(results[MISSING_KEY]['count'], 1)
+        self.assertEqual(timedelta(milliseconds=results[MISSING_KEY]['max']), completion_time - time_start)
 
     def test_get_form_duration_stats_by_user_decoys(self):
         """
@@ -530,18 +563,25 @@ class TestFormESAccessors(BaseESAccessorsTest):
             xmlns=xmlns1,
             time_start=time_start,
         )
+        self._send_form_to_es(
+            completion_time=completion_time,
+            user_id=None,
+            app_id=app1,
+            xmlns=xmlns1,
+            time_start=time_start,
+        )
 
         results = get_form_duration_stats_for_users(
             self.domain,
             app1,
             xmlns1,
-            [user1, user2],
+            [user1, user2, None],
             start,
             end,
             by_submission_time=False
         )
 
-        self.assertEqual(results['count'], 2)
+        self.assertEqual(results['count'], 3)
         self.assertEqual(timedelta(milliseconds=results['max']), completion_time - time_start)
 
     def test_get_form_duration_stats_for_users_decoys(self):
@@ -869,6 +909,29 @@ class TestCaseESAccessors(BaseESAccessorsTest):
         results = get_case_counts_opened_by_user(self.domain, datespan, case_types=['not-here'])
         self.assertEqual(results, {})
 
+    def test_get_all_active_cases(self):
+        datespan = DateSpan(datetime(2013, 7, 1), datetime(2013, 7, 30))
+        opened_on = datetime(2013, 7, 15)
+        opened_before = datetime(2013, 6, 25)
+
+        self._send_case_to_es(opened_on=opened_on)
+        self._send_case_to_es(opened_on=opened_before)
+
+        results = get_active_case_count(self.domain, datespan, []).total
+
+        self.assertEqual(results, 1)
+
+    def test_get_total_active_cases(self):
+        datespan = DateSpan(datetime(2013, 7, 1), datetime(2013, 7, 30))
+        opened_on = datetime(2013, 7, 15)
+        opened_before = datetime(2013, 6, 25)
+
+        self._send_case_to_es(opened_on=opened_on)
+        self._send_case_to_es(opened_on=opened_before)
+
+        results = get_active_case_count(self.domain, datespan, [], True).total
+
+        self.assertEqual(results, 2)
 
 @override_settings(TESTS_SHOULD_USE_SQL_BACKEND=True)
 class TestCaseESAccessorsSQL(TestCaseESAccessors):

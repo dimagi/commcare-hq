@@ -366,16 +366,14 @@ def get_case_ids_from_form(xform):
 
 def cases_referenced_by_xform(xform):
     """
-    JSON repr of XFormInstance -> [CommCareCase]
+    Returns a list of CommCareCase or CommCareCaseSQL given a JSON
+    representation of an XFormInstance
     """
+    from corehq.form_processor.backends.couch.dbaccessors import CaseAccessorCouch
+    from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
     case_ids = get_case_ids_from_form(xform)
-
-    cases = [CommCareCase.wrap(doc)
-             for doc in iter_docs(CommCareCase.get_db(), case_ids)]
-
     domain = get_and_check_xform_domain(xform)
-    if domain:
-        for case in cases:
-            assert case.domain == domain
-
-    return cases
+    case_accessor = CaseAccessors(domain)
+    if domain is None:
+        assert case_accessor.db_accessor == CaseAccessorCouch
+    return case_accessor.get_cases(list(case_ids))

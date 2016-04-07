@@ -97,6 +97,11 @@ hqDefine('app_manager/js/graph-config.js', function () {
                 if (s.radiusFunction !== undefined){
                     series.radius_function = s.radiusFunction;
                 }
+                series.locale_specific_config = _.reduce(
+                    s.localeSpecificConfigurations, function(memo, conf){
+                        memo[conf.property] = omitNulls(conf.values);
+                        return memo;
+                }, {});
                 // convert the list of config objects to a single object (since
                 // order no longer matters)
                 series.config = _.reduce(s.configPairs, function(memo, pair){
@@ -152,6 +157,15 @@ hqDefine('app_manager/js/graph-config.js', function () {
                 if (s.radius_function !== undefined){
                     series.radiusFunction = s.radius_function;
                 }
+                series.localeSpecificConfigurations = _.map(_.pairs(s.locale_specific_config), function(pair){
+                    return {
+                        'lang': moduleOptions.lang,
+                        'langs': moduleOptions.langs,
+                        'property': pair[0],
+                        'values': pair[1]
+                    };
+                });
+                series.localeSpecificConfigurations = _.sortBy(series.localeSpecificConfigurations, 'property');
                 series.configPairs = _.map(_.pairs(s.config), function(pair){
                     return {
                         'property': pair[0],
@@ -346,11 +360,13 @@ hqDefine('app_manager/js/graph-config.js', function () {
         };
         self.childCaseTypes = moduleOptions.childCaseTypes || [];
         self.fixtures = moduleOptions.fixtures || [];
+        self.lang = moduleOptions.lang;
+        self.langs = moduleOptions.langs;
 
         self.selectedGraphType.subscribe(function(newValue) {
             // Recreate the series objects to be of the correct type.
             self.series(_.map(self.series(), function(series){
-                return new (self.getSeriesConstructor())(ko.toJS(series), self.childCaseTypes, self.fixtures);
+                return new (self.getSeriesConstructor())(ko.toJS(series), self.childCaseTypes, self.fixtures, self.lang, self.langs);
             }));
         });
 
@@ -358,7 +374,7 @@ hqDefine('app_manager/js/graph-config.js', function () {
             self.graphDisplayName(obj.graphDisplayName);
             self.selectedGraphType(obj.selectedGraphType);
             self.series(_.map(obj.series, function(o){
-                return new (self.getSeriesConstructor())(o, self.childCaseTypes, self.fixtures);
+                return new (self.getSeriesConstructor())(o, self.childCaseTypes, self.fixtures, self.lang, self.langs);
             }));
             self.annotations(_.map(obj.annotations, function(o){
                 return new Annotation(o);
@@ -388,7 +404,7 @@ hqDefine('app_manager/js/graph-config.js', function () {
             self.series.remove(series);
         };
         self.addSeries = function (series){
-            self.series.push(new (self.getSeriesConstructor())({}, self.childCaseTypes, self.fixtures));
+            self.series.push(new (self.getSeriesConstructor())({}, self.childCaseTypes, self.fixtures, self.lang, self.langs));
         };
         /**
          * Return the proper Series object constructor based on the current state
@@ -432,12 +448,14 @@ hqDefine('app_manager/js/graph-config.js', function () {
     Annotation.prototype.constructor = Annotation;
 
     // private
-    var GraphSeries = function (original, childCaseTypes, fixtures){
+    var GraphSeries = function (original, childCaseTypes, fixtures, lang, langs){
         PairConfiguration.apply(this, [original]);
         var self = this;
         original = original || {};
         childCaseTypes = childCaseTypes || [];
         fixtures = fixtures || [];
+        self.lang = lang;
+        self.langs = langs;
 
         function origOrDefault(prop, fallback){
             return original[prop] === undefined ? fallback : original[prop];
@@ -508,6 +526,20 @@ hqDefine('app_manager/js/graph-config.js', function () {
             'name': "ex: 'My Y-Values 1'",
             'x-name': "ex: 'My X-Values'",
         };
+        self.localeSpecificConfigurations = ko.observableArray(_.map(
+            ['name', 'x-name'],
+            function(s){return new LocalizedConfigPropertyValuePair({
+                'property': s,
+                'lang': self.lang,
+                'langs': self.langs,
+            });}
+        ));
+        if (original.localeSpecificConfigurations && original.localeSpecificConfigurations.length !== 0) {
+            self.localeSpecificConfigurations(_.map(original.localeSpecificConfigurations, function (o) {
+                return new LocalizedConfigPropertyValuePair(o);
+            }));
+        }
+        self.localeSpecificConfigurations.sort();
 
         self.toggleShowDataPath = function() {
             self.showDataPath(!self.showDataPath());
@@ -523,22 +555,21 @@ hqDefine('app_manager/js/graph-config.js', function () {
     GraphSeries.prototype.constructor = GraphSeries;
 
     // private
-    var XYGraphSeries = function(original, childCaseTypes, fixtures){
-        GraphSeries.apply(this, [original, childCaseTypes, fixtures]);
+    var XYGraphSeries = function(original, childCaseTypes, fixtures, lang, langs){
+        GraphSeries.apply(this, [original, childCaseTypes, fixtures, lang, langs]);
         var self = this;
         self.configPropertyOptions = self.configPropertyOptions.concat(['is-data', 'point-style', 'secondary-y']);
         self.configPropertyHints['is-data'] = 'true() or false()';
         // triangle-up and triangle-down are also options
         self.configPropertyHints['point-style'] = "'none', 'circle', 'cross', 'diamond', ...";
         self.configPropertyHints['secondary-y'] = 'true() or false()';
-
     };
     XYGraphSeries.prototype = new GraphSeries();
     XYGraphSeries.constructor = XYGraphSeries;
 
     // private
-    var BarGraphSeries = function(original, childCaseTypes, fixtures){
-        GraphSeries.apply(this, [original, childCaseTypes, fixtures]);
+    var BarGraphSeries = function(original, childCaseTypes, fixtures, lang, langs){
+        GraphSeries.apply(this, [original, childCaseTypes, fixtures, lang, langs]);
         var self = this;
 
         self.xLabel = "Label";
@@ -550,8 +581,8 @@ hqDefine('app_manager/js/graph-config.js', function () {
     BarGraphSeries.constructor = BarGraphSeries;
 
     // private
-    var BubbleGraphSeries = function(original, childCaseTypes, fixtures){
-        GraphSeries.apply(this, [original, childCaseTypes, fixtures]);
+    var BubbleGraphSeries = function(original, childCaseTypes, fixtures, lang, langs){
+        GraphSeries.apply(this, [original, childCaseTypes, fixtures, lang, langs]);
         var self = this;
 
         self.radiusFunction = ko.observable(original.radiusFunction === undefined ? "" : original.radiusFunction);

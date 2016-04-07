@@ -156,6 +156,11 @@ function LocationModel(data, root, depth) {
     }, this);
 
     this.load(data);
+
+    this.new_location_tracking = function() {
+        ga_track_event('Organization Structure', '+ New _______');
+        return true;
+    };
 }
 
 ko.bindingHandlers.bind_element = {

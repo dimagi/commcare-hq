@@ -80,7 +80,10 @@ def activate_subscriptions(based_on_date=None):
         starting_subscriptions
     )
     for subscription in starting_subscriptions:
-        _activate_subscription(subscription)
+        try:
+            _activate_subscription(subscription)
+        except Exception as e:
+            log_accounting_error(e.message)
 
 
 @transaction.atomic
@@ -118,7 +121,10 @@ def deactivate_subscriptions(based_on_date=None):
         is_active=True,
     )
     for subscription in ending_subscriptions:
-        _deactivate_subscription(subscription, ending_date)
+        try:
+            _deactivate_subscription(subscription, ending_date)
+        except Exception as e:
+            log_accounting_error(e.message)
 
 
 def warn_subscriptions_still_active(based_on_date=None):
@@ -272,7 +278,7 @@ def remind_dimagi_contact_subscription_ending_40_days():
 def send_subscription_reminder_emails(num_days, exclude_trials=True):
     today = datetime.date.today()
     date_in_n_days = today + datetime.timedelta(days=num_days)
-    ending_subscriptions = Subscription.objects.filter(date_end=date_in_n_days)
+    ending_subscriptions = Subscription.objects.filter(date_end=date_in_n_days, do_not_email=False)
     if exclude_trials:
         ending_subscriptions = ending_subscriptions.filter(is_trial=False)
     for subscription in ending_subscriptions:
@@ -290,6 +296,7 @@ def send_subscription_reminder_emails_dimagi_contact(num_days):
     ending_subscriptions = (Subscription.objects
                             .filter(is_active=True)
                             .filter(date_end=date_in_n_days)
+                            .filter(do_not_email=False)
                             .filter(account__dimagi_contact__isnull=False))
     for subscription in ending_subscriptions:
         # only send reminder emails if the subscription isn't renewed
@@ -321,10 +328,14 @@ def create_wire_credits_invoice(domain_name,
     wire_invoice.items = invoice_items
 
     record = WirePrepaymentBillingRecord.generate_record(wire_invoice)
-    try:
-        record.send_email(contact_emails=contact_emails)
-    except Exception as e:
-        log_accounting_error(e.message)
+    if record.should_send_email:
+        try:
+            record.send_email(contact_emails=contact_emails)
+        except Exception as e:
+            log_accounting_error(e.message)
+    else:
+        record.skipped_email = True
+        record.save()
 
 
 @task(ignore_result=True)
@@ -518,4 +529,4 @@ def update_exchange_rates(app_id=settings.OPEN_EXCHANGE_RATES_API_ID):
                 'rate': currency.rate_to_default,
             })
     except Exception as e:
-        log_accounting_error(e.message)
+        log_accounting_error("Error updating exchange rates: %s" % e.message)

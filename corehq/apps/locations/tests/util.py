@@ -3,14 +3,16 @@ from dimagi.utils.couch.database import iter_bulk_delete
 from corehq.util.test_utils import unit_testing_only
 from corehq.apps.commtrack.models import SupplyPointCase
 from corehq.apps.commtrack.tests.util import bootstrap_domain
-from corehq.apps.locations.models import Location, SQLLocation, LocationType
+from corehq.dbaccessors.couchapps.all_docs import delete_all_docs_by_doc_type
+
+from ..models import Location, SQLLocation, LocationType
 
 TEST_DOMAIN = 'locations-test'
 TEST_LOCATION_TYPE = 'location'
 
 
 def make_loc(code, name=None, domain=TEST_DOMAIN, type=TEST_LOCATION_TYPE,
-        parent=None, is_archived=False):
+             parent=None, is_archived=False):
     name = name or code
     loc = Location(
         site_code=code, name=name, domain=domain, location_type=type,
@@ -27,9 +29,7 @@ def delete_all_locations():
         SupplyPointCase.get_db().view('supply_point_by_loc/view', reduce=False).all()
     ]
     iter_bulk_delete(SupplyPointCase.get_db(), ids)
-
-    iter_bulk_delete(Location.get_db(), SQLLocation.objects.location_ids())
-
+    delete_all_docs_by_doc_type(Location.get_db(), ['Location'])
     SQLLocation.objects.all().delete()
 
 

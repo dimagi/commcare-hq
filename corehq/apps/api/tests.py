@@ -1,4 +1,5 @@
 import json
+import uuid
 from datetime import datetime
 
 import dateutil.parser
@@ -6,10 +7,15 @@ import dateutil.parser
 from django.utils.http import urlencode
 from django.test import TestCase
 from django.core.urlresolvers import reverse
+from casexml.apps.case.mock import CaseBlock
+from corehq.apps.hqcase.utils import submit_case_blocks
+from corehq.form_processor.tests import run_with_all_backends
 from django_prbac.models import Role
 from tastypie.models import ApiKey
 from tastypie.resources import Resource
 from tastypie import fields
+
+from corehq.apps.api.util import get_obj
 from corehq.apps.groups.models import Group
 from corehq.pillows.reportxform import ReportXFormPillow
 
@@ -262,6 +268,29 @@ class TestXFormInstanceResource(APIResourceTest):
         ]
         self._test_es_query({'include_archived': 'true'}, expected)
 
+    @run_with_all_backends
+    def test_fetching_xform_cases(self):
+        # Create an xform that touches a case
+        case_id = uuid.uuid4().hex
+        form_id = submit_case_blocks(
+            CaseBlock(
+                case_id=case_id,
+                create=True,
+            ).as_string(),
+            self.domain.name
+        )
+
+        # Fetch the xform through the API
+        self.client.login(username=self.username, password=self.password)
+        response = self.client.get(self.single_endpoint(form_id) + "?cases__full=true")
+        self.assertEqual(response.status_code, 200)
+        cases = json.loads(response.content)['cases']
+
+        # Confirm that the case appears in the resource
+        self.assertEqual(len(cases), 1)
+        self.assertEqual(cases[0]['id'], case_id)
+
+
 class TestCommCareCaseResource(APIResourceTest):
     """
     Tests the CommCareCaseREsource, currently only v0_4
@@ -302,6 +331,58 @@ class TestCommCareCaseResource(APIResourceTest):
         self.assertEqual(dateutil.parser.parse(api_case['server_date_modified']), backend_case.server_modified_on)
 
         backend_case.delete()
+
+    @run_with_all_backends
+    def test_parent_and_child_cases(self):
+
+        # Create cases
+        parent_case_id = uuid.uuid4().hex
+        parent_type = 'parent_case_type'
+        submit_case_blocks(
+            CaseBlock(
+                case_id=parent_case_id,
+                create=True,
+                case_type=parent_type,
+            ).as_string(),
+            self.domain.name
+        )
+        child_case_id = uuid.uuid4().hex
+        submit_case_blocks(
+            CaseBlock(
+                case_id=child_case_id,
+                create=True,
+                index={'parent': (parent_type, parent_case_id)}
+            ).as_string(),
+            self.domain.name
+        )
+
+        # Fetch the child case through the API
+        self.client.login(username=self.username, password=self.password)
+        response = self.client.get(self.single_endpoint(child_case_id) + "?parent_cases__full=true")
+        self.assertEqual(
+            response.status_code,
+            200,
+            "Status code was not 200. Response content was {}".format(response.content)
+        )
+        parent_cases = json.loads(response.content)['parent_cases'].values()
+
+        # Confirm that the case appears in the resource
+        self.assertEqual(len(parent_cases), 1)
+        self.assertEqual(parent_cases[0]['id'], parent_case_id)
+
+        # Fetch the parent case through the API
+        self.client.login(username=self.username, password=self.password)
+        response = self.client.get(self.single_endpoint(parent_case_id) + "?child_cases__full=true")
+        self.assertEqual(
+            response.status_code,
+            200,
+            "Status code was not 200. Response content was {}".format(response.content)
+        )
+        child_cases = json.loads(response.content)['child_cases'].values()
+
+        # Confirm that the case appears in the resource
+        self.assertEqual(len(child_cases), 1)
+        self.assertEqual(child_cases[0]['id'], child_case_id)
 
     def test_no_subscription(self):
         """
@@ -835,6 +916,11 @@ class ToManySourceResource(Resource):
     def obj_get_list(self):
         return self.objs
 
+    def detail_uri_kwargs(self, bundle_or_obj):
+        return {
+            'pk': get_obj(bundle_or_obj).other_model_ids
+        }
+
     class Meta:
         model_class = ToManySourceModel
 
@@ -843,6 +929,11 @@ class ToManyDestResource(Resource):
 
     class Meta:
         model_class = ToManyDestModel
+
+    def detail_uri_kwargs(self, bundle_or_obj):
+        return {
+            'pk': get_obj(bundle_or_obj).id
+        }
 
 class TestToManyDocumentsField(TestCase):
     '''
@@ -899,11 +990,21 @@ class ToManyDictSourceResource(Resource):
     def obj_get_list(self):
         return self.objs
 
+    def detail_uri_kwargs(self, bundle_or_obj):
+        return {
+            'pk': get_obj(bundle_or_obj).other_model_ids
+        }
+
     class Meta:
         model_class = ToManyDictSourceModel
 
 class ToManyDictDestResource(Resource):
     id = fields.CharField(attribute='id')
+
+    def detail_uri_kwargs(self, bundle_or_obj):
+        return {
+            'pk': get_obj(bundle_or_obj).id
+        }
 
     class Meta:
         model_class = ToManyDictDestModel
@@ -966,11 +1067,21 @@ class ToOneSourceResource(Resource):
     def obj_get_list(self):
         return self.objs
 
+    def detail_uri_kwargs(self, bundle_or_obj):
+        return {
+            'pk': get_obj(bundle_or_obj).other_model_id
+        }
+
     class Meta:
         model_class = ToOneSourceModel
 
 class ToOneDestResource(Resource):
     id = fields.CharField(attribute='id')
+
+    def detail_uri_kwargs(self, bundle_or_obj):
+        return {
+            'pk': get_obj(bundle_or_obj).id
+        }
 
     class Meta:
         model_class = ToOneDestModel
@@ -1018,6 +1129,11 @@ class UseIfRequestedTestResource(Resource):
 
     def obj_get_list(self):
         return self.objs
+
+    def detail_uri_kwargs(self, bundle_or_obj):
+        return {
+            'pk': get_obj(bundle_or_obj).id
+        }
 
     class Meta:
         model_class = UseIfRequestedModel

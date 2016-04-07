@@ -246,7 +246,7 @@ class ArchiveFormView(DataInterfaceSection):
         try:
             bulk_archive_forms.delay(
                 self.domain,
-                self.request.user,
+                self.request.couch_user,
                 list(self.uploaded_file.get_worksheet())
             )
             messages.success(self.request, _("We received your file and are processing it. "
@@ -741,10 +741,11 @@ class AddAutomaticUpdateRuleView(JSONResponseMixin, DataInterfaceSection):
             )
 
     def create_actions(self, rule):
-        AutomaticUpdateAction.objects.create(
-            rule=rule,
-            action=AutomaticUpdateAction.ACTION_CLOSE,
-        )
+        if self.rule_form._closes_case():
+            AutomaticUpdateAction.objects.create(
+                rule=rule,
+                action=AutomaticUpdateAction.ACTION_CLOSE,
+            )
         if self.rule_form._updates_case():
             AutomaticUpdateAction.objects.create(
                 rule=rule,

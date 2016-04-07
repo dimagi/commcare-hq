@@ -5,9 +5,9 @@ from pillowtop.logger import pillow_logging
 
 class ElasticProcessor(PillowProcessor):
 
-    def __init__(self, elasticseach, index_meta, doc_prep_fn):
-        self.elasticsearch = elasticseach
-        self.index_meta = index_meta
+    def __init__(self, elasticsearch, index_info, doc_prep_fn):
+        self.elasticsearch = elasticsearch
+        self.index_info = index_info
         self.doc_transform_fn = doc_prep_fn
 
     def es_getter(self):
@@ -24,11 +24,11 @@ class ElasticProcessor(PillowProcessor):
         doc_ready_to_save = self.doc_transform_fn(doc)
         # send it across
         send_to_elasticsearch(
-            index=self.index_meta.index,
-            doc_type=self.index_meta.type,
+            index=self.index_info.index,
+            doc_type=self.index_info.type,
             doc_id=change.id,
             es_getter=self.es_getter,
             name=pillow_instance.get_name(),
             data=doc_ready_to_save,
-            update=self.elasticsearch.exists(self.index_meta.index, self.index_meta.type, change.id),
+            update=self.elasticsearch.exists(self.index_info.index, self.index_info.type, change.id),
         )

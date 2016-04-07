@@ -16,10 +16,15 @@ class CacheInvalidatePillow(BasicPillow):
     a single doc being cached, to a view.
     """
 
-    def __init__(self, couch_db, couch_filter=None):
+    def __init__(self, pillow_id, couch_db, couch_filter=None):
+        self._pillow_id = pillow_id
         self.couch_filter = couch_filter
         super(CacheInvalidatePillow, self).__init__(couch_db=couch_db)
         self.gen_caches = set(GenerationCache.doc_type_generation_map().values())
+
+    @property
+    def pillow_id(self):
+        return self._pillow_id
 
     def set_checkpoint(self, change):
         """
@@ -71,10 +76,10 @@ class CacheInvalidatePillow(BasicPillow):
         return None
 
 
-def get_main_cache_invalidation_pillow():
-    return CacheInvalidatePillow(couch_db=XFormInstance.get_db(), couch_filter="hqadmin/not_case_form")
+def get_main_cache_invalidation_pillow(pillow_id):
+    return CacheInvalidatePillow(pillow_id, couch_db=XFormInstance.get_db(), couch_filter="hqadmin/not_case_form")
 
 
-def get_user_groups_cache_invalidation_pillow():
+def get_user_groups_cache_invalidation_pillow(pillow_id):
     from corehq.apps.users.models import CommCareUser
-    return CacheInvalidatePillow(couch_db=CommCareUser.get_db())
+    return CacheInvalidatePillow(pillow_id, couch_db=CommCareUser.get_db())

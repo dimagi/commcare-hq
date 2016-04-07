@@ -5,20 +5,22 @@
 {% block extrahead %}
 {% endblock extrahead %}
 {% block patient-tab-container %}
-    <div class="row-fluid" id="celeryblock">
-        <h4>Edit Information
-        &nbsp;<a class="btn btn-info" href="{{ pt_root_url }}&view=info">Cancel</a>
-            </h4>
-        <form id="pt_edit_form">
-        <table class="table table-striped">
-            <tbody>
-            {{ patient_form.as_table }}
-            </tbody>
-        </table>
-        </form>
-        <div id="form_errors">
+    <div class="row" id="celeryblock">
+        <div class="col-sm-12">
+            <h4>Edit Information
+            &nbsp;<a class="btn btn-info" href="{{ pt_root_url }}&view=info">Cancel</a>
+                </h4>
+            <form id="pt_edit_form">
+            <table class="table table-striped">
+                <tbody>
+                {{ patient_form.as_table }}
+                </tbody>
+            </table>
+            </form>
+            <div id="form_errors">
+            </div>
+            <button id="submit_button" class="btn btn-default">Submit</button>
         </div>
-        <button id="submit_button" class="btn">Submit</button>
     </div>
 
     <script type="text/javascript">

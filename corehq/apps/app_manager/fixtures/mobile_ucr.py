@@ -1,6 +1,7 @@
 from collections import defaultdict
 from datetime import datetime
 import logging
+from couchdbkit import ResourceNotFound
 from lxml.builder import E
 from django.conf import settings
 
@@ -11,7 +12,7 @@ from corehq.apps.app_manager.models import (
 )
 from corehq.util.xml_utils import serialize
 
-from corehq.apps.userreports.exceptions import UserReportsError
+from corehq.apps.userreports.exceptions import UserReportsError, BadReportConfigurationError
 from corehq.apps.userreports.models import ReportConfiguration
 from corehq.apps.userreports.reports.factory import ReportFactory
 from corehq.apps.app_manager.dbaccessors import get_apps_in_domain
@@ -42,6 +43,9 @@ class ReportFixturesProvider(object):
         for report_config in report_configs:
             try:
                 reports_elem.append(self._report_config_to_fixture(report_config, user))
+            except BadReportConfigurationError as err:
+                logging.exception('Error generating report fixture: {}'.format(err))
+                continue
             except UserReportsError:
                 if settings.UNIT_TESTING or settings.DEBUG:
                     raise
@@ -55,7 +59,12 @@ class ReportFixturesProvider(object):
     @staticmethod
     def _report_config_to_fixture(report_config, user):
         report_elem = E.report(id=report_config.uuid)
-        report = ReportConfiguration.get(report_config.report_id)
+        try:
+            report = ReportConfiguration.get(report_config.report_id)
+        except ResourceNotFound as err:
+            # ReportConfiguration not found
+            raise BadReportConfigurationError('Error getting ReportConfiguration with ID "{}": {}'.format(
+                report_config.report_id, err))
         data_source = ReportFactory.from_spec(report)
 
         all_filter_values = {

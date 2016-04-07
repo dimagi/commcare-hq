@@ -44,6 +44,7 @@ class TestBillableCreation(TestCase):
             log_id=msg.couch_id
         )
         self.assertEqual(sms_billables.count(), 1)
+        self.assertEqual(sms_billables[0].multipart_count, 1)
 
     def test_long_creation(self):
         msg = self._get_fake_sms(self.text_long)
@@ -52,7 +53,8 @@ class TestBillableCreation(TestCase):
             domain=self.domain,
             log_id=msg.couch_id
         )
-        self.assertEqual(sms_billables.count(), 2)
+        self.assertEqual(sms_billables.count(), 1)
+        self.assertEqual(sms_billables[0].multipart_count, 2)
 
     def tearDown(self):
         self.mobile_backend.delete()

@@ -9,6 +9,7 @@ from corehq.apps.reports.sqlreport import DatabaseColumn, SummingSqlTabularRepor
 from corehq.apps.reports.standard import CustomProjectReport, DatespanMixin
 from corehq.apps.reports.standard.maps import GenericMapReport
 from corehq.apps.reports.util import format_datatables_data
+from corehq.apps.style.decorators import use_maps, maps_prefer_canvas
 from corehq.apps.userreports.sql import get_table_name
 from corehq.const import USER_MONTH_FORMAT
 from corehq.util.dates import iso_string_to_date
@@ -38,6 +39,7 @@ class GSIDSQLReport(SummingSqlTabularReport, CustomProjectReport, DatespanMixin)
     exportable = True
     emailable = True
     default_aggregation = "clinic"
+    is_bootstrap3 = True
 
     def __init__(self, request, base_context=None, domain=None, **kwargs):
         self.is_map = kwargs.pop('map', False)
@@ -704,6 +706,7 @@ class GSIDSQLByAgeReport(GSIDSQLReport):
 class PatientMapReport(GenericMapReport, CustomProjectReport):
     name = "Patient Summary (Map)"
     slug = "patient_summary_map"
+    is_bootstrap3 = True
 
     fields = ['custom.apps.gsid.reports.TestField', 
               'corehq.apps.reports.filters.dates.DatespanFilter', 
@@ -716,6 +719,11 @@ class PatientMapReport(GenericMapReport, CustomProjectReport):
         'report': 'custom.apps.gsid.reports.sql_reports.GSIDSQLPatientReport',
         'report_params': {'map': True}
     }
+
+    @maps_prefer_canvas
+    @use_maps
+    def bootstrap3_dispatcher(self, request, *args, **kwargs):
+        super(PatientMapReport, self).bootstrap3_dispatcher(request, *args, **kwargs)
 
     @property
     def display_config(self):

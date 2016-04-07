@@ -9,6 +9,7 @@ Initial setup
 * OS X
    * Install [Docker Toolbox](https://docs.docker.com/mac/step_one/). Go through the full tutorial, which will create a default machine.
    * If not using the Quick Start terminal, run `eval $(docker-machine env default)` to set up Docker's environment variables.
+* If you have any HQ services currently running (couch, postgres, redis, etc.), you should stop them now. 
 * Bootstrap the setup:
 
     ```
@@ -91,6 +92,9 @@ After changing any of the python requirements the `web` image will need to be re
 ```
   $ ./dockerhq.sh rebuild
 ```
+
+**copying old data**
+If you don't want to start fresh, Farid wrote up some notes on copying data from an old dev environment [here](https://gist.github.com/proteusvacuum/a3884ce8b65681ebaf95).
 
 Caveats
 -------

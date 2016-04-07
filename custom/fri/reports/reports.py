@@ -35,6 +35,7 @@ NO_RESPONSE = 2
 class FRIReport(CustomProjectReport, GenericTabularReport):
     _interactive_participants = None
     _domain_obj = None
+    is_bootstrap3 = True
 
     @property
     def timezone(self):

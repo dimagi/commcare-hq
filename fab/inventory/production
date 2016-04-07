@@ -9,9 +9,6 @@ hqdjango14.internal.commcarehq.org
 [webworkers:vars]
 newrelic_app_name=django
 
-[couchdb]
-hqdb0.internal.commcarehq.org
-
 [postgresql]
 hqdb0.internal.commcarehq.org
 
@@ -62,8 +59,9 @@ hqriak4.internal.commcarehq.org
 
 [riakcs:vars]
 datavol_device=/dev/xvdb
-# http://docs.basho.com/riak/latest/ops/tuning/linux/#Storage-and-File-System-Tuning
-datavol_opts=barrier=0,data=writeback
 
 [stanchion]
 hqriak0.internal.commcarehq.org
+
+[rackspace_cloud_backup]
+hqdb0.internal.commcarehq.org

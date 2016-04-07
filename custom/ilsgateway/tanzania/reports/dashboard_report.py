@@ -1,12 +1,12 @@
-from custom.ilsgateway.filters import ProgramFilter, ILSDateFilter
+from custom.ilsgateway.filters import ProgramFilter, ILSDateFilter, ILSAsyncLocationFilter
 from custom.ilsgateway.tanzania import MultiReport
+from custom.ilsgateway.tanzania.reports.configs.dashboard_config import DashboardConfig
 from custom.ilsgateway.tanzania.reports.facility_details import InventoryHistoryData, RegistrationData, \
     RandRHistory, Notes, RecentMessages
 from custom.ilsgateway.tanzania.reports.mixins import RandRSubmissionData, DistrictSummaryData, \
     SohSubmissionData, DeliverySubmissionData, ProductAvailabilitySummary
 from custom.ilsgateway.tanzania.reports.stock_on_hand import StockOnHandReport
 from custom.ilsgateway.tanzania.reports.utils import make_url
-from corehq.apps.reports.filters.fixtures import AsyncLocationFilter
 from dimagi.utils.decorators.memoized import memoized
 from django.utils.translation import ugettext as _
 
@@ -26,7 +26,7 @@ class DashboardReport(MultiReport):
 
     @property
     def fields(self):
-        fields = [AsyncLocationFilter, ILSDateFilter, ProgramFilter]
+        fields = [ILSAsyncLocationFilter, ILSDateFilter, ProgramFilter]
         if self.location and self.location.location_type.name.upper() == 'FACILITY':
             fields = []
         return fields
@@ -74,3 +74,22 @@ class DashboardReport(MultiReport):
             '?location_id=%s&filter_by_program=%s&datespan_type=%s&datespan_first=%s&datespan_second=%s',
             (config['location_id'], config['program'], self.type, self.first, self.second)
         )
+
+
+class NewDashboardReport(DashboardReport):
+    slug = 'new_ils_dashboard_report'
+
+    @property
+    def report_config(self):
+        report_config = super(NewDashboardReport, self).report_config
+        report_config['data_config'] = DashboardConfig(
+            self.domain,
+            self.location.location_id,
+            self.datespan.startdate,
+            self.datespan.enddate
+        )
+        return report_config
+
+    @classmethod
+    def show_in_navigation(cls, domain=None, project=None, user=None):
+        return False

@@ -318,6 +318,14 @@ def expected_bulk_app_sheet_rows(app):
                                     list_or_detail
                                 ) + tuple(val.get(lang, "") for lang in app.langs)
                             )
+                        for i, series in enumerate(detail.graph_configuration.series):
+                            for key, val in series.locale_specific_config.iteritems():
+                                rows[module_string].append(
+                                    (
+                                        "{} {} (graph series config)".format(key, i),
+                                        list_or_detail
+                                    ) + tuple(val.get(lang, "") for lang in app.langs)
+                                )
                         for i, annotation in enumerate(detail.graph_configuration.annotations):
                             rows[module_string].append(
                                 (
@@ -550,8 +558,13 @@ def update_form_translations(sheet, rows, missing_cols, app):
         return text_node_.find("./{f}value[@form='markdown']")
 
     def get_value_node(text_node_):
-        return next(n for n in text_node_.findall("./{f}value")
-                    if 'form' not in n.attrib or n.get('form') == 'default')
+        try:
+            return next(
+                n for n in text_node_.findall("./{f}value")
+                if 'form' not in n.attrib or n.get('form') == 'default'
+            )
+        except StopIteration:
+            return WrappedNode(None)
 
     def had_markdown(text_node_):
         """
@@ -567,6 +580,8 @@ def update_form_translations(sheet, rows, missing_cols, app):
         builder that the value isn't Markdown.
         """
         value_node_ = get_value_node(text_node_)
+        if not value_node_.exists():
+            return False
         old_trans = etree.tostring(value_node_.xml, method="text", encoding="unicode").strip()
         return _looks_like_markdown(old_trans) and not had_markdown(text_node_)
 
@@ -724,6 +739,13 @@ def update_case_list_translations(sheet, rows, app):
             parent = condensed_rows[index_of_last_graph_in_condensed]
             parent['configs'] = parent.get('configs', []) + [row]
 
+        # If it's a graph series configuration item, add it to its parent
+        elif row['case_property'].endswith(" (graph series config)"):
+            row['id'] = row['case_property'].split(" ")[0]
+            row['series_index'] = row['case_property'].split(" ")[1]
+            parent = condensed_rows[index_of_last_graph_in_condensed]
+            parent['series_configs'] = parent.get('series_configs', []) + [row]
+
         # If it's a graph annotation, add it to its parent
         elif row['case_property'].startswith("graph annotation "):
             row['id'] = int(row['case_property'].split(" ")[-1])
@@ -821,6 +843,14 @@ def update_case_list_translations(sheet, rows, app):
             _update_translation(
                 graph_config_row,
                 detail['graph_configuration']['locale_specific_config'][config_key],
+                False
+            )
+        for graph_config_row in row.get('series_configs', []):
+            config_key = graph_config_row['id']
+            series_index = int(graph_config_row['series_index'])
+            _update_translation(
+                graph_config_row,
+                detail['graph_configuration']['series'][series_index]['locale_specific_config'][config_key],
                 False
             )
     if case_list_form_label:

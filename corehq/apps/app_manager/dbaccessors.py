@@ -69,7 +69,8 @@ def get_app(domain, app_id, wrap_cls=None, latest=False, target=None):
     """
     from .models import Application
     from corehq.apps.app_manager.util import get_correct_app_class
-
+    if not app_id:
+        raise Http404()
     if latest:
         try:
             original_app = Application.get_db().get(app_id)

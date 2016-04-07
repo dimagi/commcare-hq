@@ -18,6 +18,7 @@ from celery.utils.log import get_task_logger
 
 from casexml.apps.case.xform import extract_case_blocks
 from casexml.apps.case.models import CommCareCase
+from corehq.apps.export.dbaccessors import get_all_daily_saved_export_instances
 from couchexport.files import Temp
 from couchexport.groupexports import export_for_group, rebuild_export
 from couchexport.tasks import cache_file_to_be_served
@@ -183,29 +184,34 @@ def monthly_reports():
 @periodic_task(run_every=crontab(hour=[22], minute="0", day_of_week="*"), queue=getattr(settings, 'CELERY_PERIODIC_QUEUE','celery'))
 def saved_exports():
     for group_config in get_all_hq_group_export_configs():
-        export_for_group_async.delay(group_config, 'couch')
+        export_for_group_async.delay(group_config)
+
+    for daily_saved_export in get_all_daily_saved_export_instances():
+        from corehq.apps.export.tasks import rebuild_export_task
+        last_access_cutoff = datetime.utcnow() - timedelta(days=settings.SAVED_EXPORT_ACCESS_CUTOFF)
+        rebuild_export_task.delay(daily_saved_export, last_access_cutoff)
 
 
 @task(queue='background_queue', ignore_result=True)
-def rebuild_export_task(groupexport_id, index, output_dir='couch', last_access_cutoff=None, filter=None):
+def rebuild_export_task(groupexport_id, index, last_access_cutoff=None, filter=None):
     group_config = HQGroupExportConfiguration.get(groupexport_id)
     config, schema = group_config.all_exports[index]
-    rebuild_export(config, schema, output_dir, last_access_cutoff, filter=filter)
+    rebuild_export(config, schema, last_access_cutoff, filter=filter)
 
 
 @task(queue='saved_exports_queue', ignore_result=True)
-def export_for_group_async(group_config, output_dir):
+def export_for_group_async(group_config):
     # exclude exports not accessed within the last 7 days
     last_access_cutoff = datetime.utcnow() - timedelta(days=settings.SAVED_EXPORT_ACCESS_CUTOFF)
-    export_for_group(group_config, output_dir, last_access_cutoff=last_access_cutoff)
+    export_for_group(group_config, last_access_cutoff=last_access_cutoff)
 
 
 @task(queue='saved_exports_queue', ignore_result=True)
-def rebuild_export_async(config, schema, output_dir):
-    rebuild_export(config, schema, output_dir)
+def rebuild_export_async(config, schema):
+    rebuild_export(config, schema)
 
 
-@periodic_task(run_every=crontab(hour="12, 22", minute="0", day_of_week="*"), queue=getattr(settings, 'CELERY_PERIODIC_QUEUE','celery'))
+@periodic_task(run_every=crontab(hour="22", minute="0", day_of_week="*"), queue='background_queue')
 def update_calculated_properties():
     results = DomainES().is_snapshot(False).fields(["name", "_id"]).run().hits
     all_stats = _all_domain_stats()
@@ -247,6 +253,10 @@ def update_calculated_properties():
                 "cp_n_sms_out_30_d": int(CALC_FNS["sms_out_in_last"](dom, 30)),
                 "cp_n_sms_out_60_d": int(CALC_FNS["sms_out_in_last"](dom, 60)),
                 "cp_n_sms_out_90_d": int(CALC_FNS["sms_out_in_last"](dom, 90)),
+                "cp_n_j2me_30_d": int(CALC_FNS["j2me_forms_in_last"](dom, 30)),
+                "cp_n_j2me_60_d": int(CALC_FNS["j2me_forms_in_last"](dom, 60)),
+                "cp_n_j2me_90_d": int(CALC_FNS["j2me_forms_in_last"](dom, 90)),
+                "cp_j2me_90_d_bool": int(CALC_FNS["j2me_forms_in_last_bool"](dom, 90)),
             }
             if calced_props['cp_first_form'] is None:
                 del calced_props['cp_first_form']
@@ -261,7 +271,7 @@ def is_app_active(app_id, domain):
     return app_has_been_submitted_to_in_last_30_days(domain, app_id)
 
 
-@periodic_task(run_every=crontab(hour="12, 22", minute="0", day_of_week="*"), queue=getattr(settings, 'CELERY_PERIODIC_QUEUE','celery'))
+@periodic_task(run_every=crontab(hour="2", minute="0", day_of_week="*"), queue='background_queue')
 def apps_update_calculated_properties():
     es = get_es_new()
     q = {"filter": {"and": [{"missing": {"field": "copy_of"}}]}}

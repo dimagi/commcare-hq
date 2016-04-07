@@ -21,8 +21,8 @@ from corehq.dbaccessors.couchapps.cases_by_server_date.by_server_modified_on imp
     get_last_modified_dates
 from corehq.form_processor.exceptions import AttachmentNotFound
 from corehq.form_processor.interfaces.dbaccessors import (
-    AbstractCaseAccessor, AbstractFormAccessor, AttachmentContent
-)
+    AbstractCaseAccessor, AbstractFormAccessor, AttachmentContent,
+    AbstractLedgerAccessor)
 from couchforms.dbaccessors import (
     get_forms_by_type,
     get_deleted_form_ids_for_user,
@@ -34,8 +34,9 @@ from dimagi.utils.parsing import json_format_datetime
 
 
 class FormAccessorCouch(AbstractFormAccessor):
+
     @staticmethod
-    def form_exists(self, form_id, domain=None):
+    def form_exists(form_id, domain=None):
         if not domain:
             return XFormInstance.get_db().doc_exist(form_id)
         else:
@@ -53,6 +54,10 @@ class FormAccessorCouch(AbstractFormAccessor):
     @staticmethod
     def get_forms(form_ids):
         return get_forms_by_id(form_ids)
+
+    @staticmethod
+    def get_form_ids_in_domain_by_type(domain, type_):
+        pass
 
     @staticmethod
     def get_forms_by_type(domain, type_, limit, recent_first=False):
@@ -116,8 +121,8 @@ class CaseAccessorCouch(AbstractCaseAccessor):
         return get_case_ids_in_domain(domain, type=type)
 
     @staticmethod
-    def get_case_ids_in_domain_by_owners(domain, owner_ids):
-        return get_case_ids_in_domain_by_owner(domain, owner_id__in=owner_ids)
+    def get_case_ids_in_domain_by_owners(domain, owner_ids, closed=None):
+        return get_case_ids_in_domain_by_owner(domain, owner_id__in=owner_ids, closed=closed)
 
     @staticmethod
     def get_open_case_ids(domain, owner_id):
@@ -169,6 +174,42 @@ class CaseAccessorCouch(AbstractCaseAccessor):
     @staticmethod
     def soft_delete_cases(domain, case_ids, deletion_date=None, deletion_id=None):
         return _soft_delete(CommCareCase.get_db(), case_ids, deletion_date, deletion_id)
+
+
+class LedgerAccessorCouch(AbstractLedgerAccessor):
+    @staticmethod
+    def get_transactions_for_consumption(domain, case_id, product_id, section_id, window_start, window_end):
+        from casexml.apps.stock.models import StockTransaction
+        db_transactions = StockTransaction.objects.filter(
+            case_id=case_id, product_id=product_id,
+            report__date__gt=window_start,
+            report__date__lte=window_end,
+            section_id=section_id,
+        ).order_by('report__date', 'pk')
+
+        first = True
+        for db_tx in db_transactions:
+            # for the very first transaction, include the previous one if there as well
+            # to capture the data on the edge of the window
+            if first:
+                previous = db_tx.get_previous_transaction()
+                if previous:
+                    yield previous
+                first = False
+
+            yield db_tx
+
+    @staticmethod
+    def get_ledger_values_for_case(case_id):
+        from corehq.apps.commtrack.models import StockState
+
+        return StockState.objects.filter(case_id=case_id)
+
+    @staticmethod
+    def get_ledger_values_for_product_ids(product_ids):
+        from corehq.apps.commtrack.models import StockState
+
+        return StockState.objects.filter(product_id__in=product_ids)
 
 
 def _get_attachment_content(doc_class, doc_id, attachment_id):

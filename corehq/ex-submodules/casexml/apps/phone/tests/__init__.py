@@ -12,6 +12,7 @@ try:
     from .test_sync_logs import *
     from .test_sync_mode import *
     from .test_extension_indexes import *
+    from .test_xml import *
     from .test_ota_fixtures import OtaFixtureTest
     # uncomment to run performance tests
     # from .performance_tests import SyncPerformanceTest
