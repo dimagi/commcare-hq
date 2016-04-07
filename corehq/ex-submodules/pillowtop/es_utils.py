@@ -32,6 +32,9 @@ class ElasticsearchIndexInfo(jsonobject.JsonObject):
     alias = jsonobject.StringProperty()
     type = jsonobject.StringProperty()
 
+    def __unicode__(self):
+        return u'{} ({})'.format(self.alias, self.index)
+
 
 def update_settings(es, index, settings_dict):
     return es.indices.put_settings(settings_dict, index=index)

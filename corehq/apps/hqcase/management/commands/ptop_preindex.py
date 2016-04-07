@@ -75,13 +75,13 @@ class Command(BaseCommand):
         preindex_message = """
         Heads up!
 
-        %s is going to start preindexing the following pillows:
+        %s is going to start preindexing the following indices:
         %s
 
         This may take a while, so don't deploy until all these have reported finishing.
             """ % (
                 settings.EMAIL_SUBJECT_PREFIX,
-                ', '.join([x.__class__.__name__ for x in reindex_pillows])
+                ', '.join(map(unicode, indices_needing_reindex))
             )
 
         mail_admins("Pillow preindexing starting", preindex_message)
@@ -117,7 +117,7 @@ class Command(BaseCommand):
                 mail_admins(
                     "Pillow preindexing completed",
                     "Reindexing %s took %s seconds" % (
-                        ', '.join([x.__class__.__name__ for x in reindex_pillows]),
+                        ', '.join(map(unicode, indices_needing_reindex)),
                         (datetime.utcnow() - start).seconds
                     )
                 )
