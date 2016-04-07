@@ -43,6 +43,17 @@ class ProjectReportsTab(UITab):
         return user_can_view_reports(self.project, self.couch_user)
 
     @property
+    def view(self):
+        return self.get_view(self.domain)
+
+    @staticmethod
+    def get_view(domain):
+        module = Domain.get_module_by_name(domain)
+        if hasattr(module, 'DEFAULT_REPORT_CLASS'):
+            return "corehq.apps.reports.views.default"
+        return "corehq.apps.reports.views.saved_reports"
+
+    @property
     def sidebar_items(self):
 
         tools = [(_("Tools"), [
@@ -70,6 +81,38 @@ class ProjectReportsTab(UITab):
             request=self._request, domain=self.domain)
 
         return tools + user_reports + project_reports + custom_reports
+
+    @property
+    def dropdown_items(self):
+        saved_report_header = dropdown_dict(_('My Saved Reports'), is_header=True)
+        saved_reports_list = list(ReportConfig.by_domain_and_owner(
+                                  self.domain,
+                                  self.couch_user._id))
+
+        MAX_DISPLAYABLE_SAVED_REPORTS = 5
+        first_five_items = [
+            dropdown_dict(saved_report.name, url=saved_report.url)
+            for counter, saved_report in enumerate(saved_reports_list)
+            if counter < MAX_DISPLAYABLE_SAVED_REPORTS
+        ]
+        rest_as_second_level_items = [
+            dropdown_dict("More Saved Reports", "#", second_level_dropdowns=[
+                dropdown_dict(saved_report.name, url=saved_report.url)
+                for counter, saved_report in enumerate(saved_reports_list)
+                if counter >= MAX_DISPLAYABLE_SAVED_REPORTS
+            ])
+        ] if len(saved_reports_list) > MAX_DISPLAYABLE_SAVED_REPORTS else []
+
+        if first_five_items:
+            saved_reports_dropdown = ([saved_report_header] + first_five_items + rest_as_second_level_items)
+        else:
+            saved_reports_dropdown = []
+
+        reports = sidebar_to_dropdown(
+            ProjectReportDispatcher.navigation_sections(
+                request=self._request, domain=self.domain),
+            current_url=self.url)
+        return saved_reports_dropdown + reports
 
 
 class IndicatorAdminTab(UITab):
@@ -133,53 +176,6 @@ class DashboardTab(UITab):
     def url(self):
         from corehq.apps.dashboard.views import default_dashboard_url
         return default_dashboard_url(self._request, self.domain)
-
-
-class ReportsTab(UITab):
-    title = ugettext_noop("Reports")
-
-    @property
-    def view(self):
-        return self.get_view(self.domain)
-
-    @staticmethod
-    def get_view(domain):
-        module = Domain.get_module_by_name(domain)
-        if hasattr(module, 'DEFAULT_REPORT_CLASS'):
-            return "corehq.apps.reports.views.default"
-        return "corehq.apps.reports.views.saved_reports"
-
-    @property
-    def dropdown_items(self):
-        saved_report_header = dropdown_dict(_('My Saved Reports'), is_header=True)
-        saved_reports_list = list(ReportConfig.by_domain_and_owner(
-                                  self.domain,
-                                  self.couch_user._id))
-
-        MAX_DISPLAYABLE_SAVED_REPORTS = 5
-        first_five_items = [
-            dropdown_dict(saved_report.name, url=saved_report.url)
-            for counter, saved_report in enumerate(saved_reports_list)
-            if counter < MAX_DISPLAYABLE_SAVED_REPORTS
-        ]
-        rest_as_second_level_items = [
-            dropdown_dict("More Saved Reports", "#", second_level_dropdowns=[
-                dropdown_dict(saved_report.name, url=saved_report.url)
-                for counter, saved_report in enumerate(saved_reports_list)
-                if counter >= MAX_DISPLAYABLE_SAVED_REPORTS
-            ])
-        ] if len(saved_reports_list) > MAX_DISPLAYABLE_SAVED_REPORTS else []
-
-        if first_five_items:
-            saved_reports_dropdown = ([saved_report_header] + first_five_items + rest_as_second_level_items)
-        else:
-            saved_reports_dropdown = []
-
-        reports = sidebar_to_dropdown(
-            ProjectReportDispatcher.navigation_sections(
-                request=self._request, domain=self.domain),
-            current_url=self.url)
-        return saved_reports_dropdown + reports
 
 
 class ProjectInfoTab(UITab):

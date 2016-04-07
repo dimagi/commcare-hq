@@ -6,7 +6,7 @@ from corehq.apps.domain.views import BaseDomainView
 from corehq.apps.hqwebapp.view_permissions import user_can_view_reports
 from corehq.apps.users.permissions import FORM_EXPORT_PERMISSION, CASE_EXPORT_PERMISSION, \
     DEID_EXPORT_PERMISSION
-from corehq.tabs.tabclasses import ReportsTab
+from corehq.tabs.tabclasses import ProjectReportsTab
 import langcodes
 import os
 import pytz
@@ -19,7 +19,6 @@ from urllib2 import URLError
 from django.conf import settings
 from django.contrib import messages
 from django.contrib.auth.decorators import permission_required
-from django.core.cache import cache
 from django.core.exceptions import PermissionDenied
 from django.core.files.base import ContentFile
 from django.core.servers.basehttp import FileWrapper
@@ -648,7 +647,7 @@ class AddSavedReportConfigView(View):
                 delattr(self.config, "days")
 
         self.config.save()
-        ReportsTab.clear_dropdown_cache(request, self.domain)
+        ProjectReportsTab.clear_dropdown_cache(request, self.domain)
         touch_saved_reports_views(request.couch_user, self.domain)
 
         return json_response(self.config)
@@ -761,7 +760,7 @@ def delete_config(request, domain, config_id):
         raise Http404()
 
     config.delete()
-    ReportsTab.clear_dropdown_cache(request, domain)
+    ProjectReportsTab.clear_dropdown_cache(request, domain)
 
     touch_saved_reports_views(request.couch_user, domain)
     return HttpResponse()
@@ -901,7 +900,7 @@ def edit_scheduled_report(request, domain, scheduled_report_id=None,
             instance.day = calculate_day(instance.interval, instance.day, day_change)
 
         instance.save()
-        ReportsTab.clear_dropdown_cache(request, domain)
+        ProjectReportsTab.clear_dropdown_cache(request, domain)
         if is_new:
             messages.success(request, "Scheduled report added!")
         else:
