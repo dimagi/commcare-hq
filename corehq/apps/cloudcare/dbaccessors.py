@@ -25,7 +25,10 @@ def get_cloudcare_apps(domain):
         endkey=[domain, {}]
     )
     app_docs = [row['value'] for row in result]
+    # Note: even though cloudcare_enabled is in the value emitted by
+    # the view, couch will not include it in the emitted value if
+    # it's undefined.
     return [
         app for app in app_docs
-        if app['doc_type'] == 'Application' and app['cloudcare_enabled']
+        if app['doc_type'] == 'Application' and app.get('cloudcare_enabled', False)
     ]

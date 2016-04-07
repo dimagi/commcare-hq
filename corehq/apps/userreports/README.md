@@ -94,6 +94,18 @@ diff_days       | A way to get duration in days between two dates | `(to_date - 
 evaluator       | A way to do arithmetic operations | `a + b*c / d`
 
 
+Following expressions act on a list of objects or a list of lists (for e.g. on a repeat list) and return another list or value. These expressions can be combined to do complex aggregations on list data.
+
+Expression Type | Description  | Example
+--------------- | ------------ | ------
+filter_items    | Filter a list of items to make a new list | `[1, 2, 3, -1, -2, -3] -> [1, 2, 3]`  (filter numbers greater than zero)
+map_items       | Map one list to another list | `[{'name': 'a', gender: 'f'}, {'name': 'b, gender: 'm'}]` -> `['a', 'b']`  (list of names from list of child data)
+sort_items      | Sort a list based on an expression | `[{'name': 'a', age: 5}, {'name': 'b, age: 3}]` -> `[{'name': 'b, age: 3}, {'name': 'a', age: 5}]`  (sort child data by age)
+reduce_items    | Aggregate a list of items into one value | sum on `[1, 2, 3]` -> `6`
+flatten_items   | Flatten multiple lists of items into one list | `[[1, 2], [4, 5]]` -> `[1, 2, 4, 5]`
+
+
+
 ### JSON snippets for expressions
 
 Here are JSON snippets for the various expression types. Hopefully they are self-explanatory.
@@ -400,6 +412,125 @@ The `date_expression` can be any valid expression, or simply constant
     },
 }
 ```
+
+
+#### Filter, Sort, Map and Reduce Expressions
+
+We have following expressions that act on a list of objects or list of lists. The list to operate on is specified by `items_expression`. This can be any valid expression that returns a list. If the `items_expression` doesn't return a valid list, these might either fail or return one of empty list or `None` value.
+
+##### map_items Expression
+
+`map_items` performs a calculation specified by `map_expression` on each item of the list specified by `items_expression` and returns a list of the calculation results. The `map_expression` is evaluated relative to each item in the list and not relative to the parent document from which the list is specified. For e.g. if `items_expression` is a path to repeat-list of children in a form document, `map_expression` is a path relative to the repeat item.
+
+`items_expression` can be any valid expression that returns a list. If this doesn't evaluate to a list an empty list is returned.
+
+`map_expression` can be any valid expression relative to the items in above list.
+
+```json
+{
+    "type": "map_items",
+    "items_expression": {
+        "type": "property_path",
+        "property_path": ["form", "child_repeat"]
+    },
+    "map_expression": {
+        "type": "property_path",
+        "property_path": ["age"]
+    },
+}
+```
+Above returns list of ages. Note that the `property_path` in `map_expression` is relative to the repeat item rather than to the form.
+
+
+##### filter_items Expression
+
+`filter_items` performs filtering on given list and returns a new list. If the boolean expression specified by `filter_expression` evaluates to a `True` value, the item is included in the new list and if not, is not included in the new list.
+
+`items_expression` can be any valid expression that returns a list. If this doesn't evaluate to a list an empty list is returned.
+
+`filter_expression` can be any valid boolean expression relative to the items in above list.
+
+```json
+{
+    "type": "filter_items",
+    "items_expression": {
+        "type": "property_name",
+        "property_name": "family_repeat"
+    },
+    "filter_expression": {
+       "type": "boolean_expression",
+        "expression": {
+            "type": "property_name",
+            "property_name": "gender"
+        },
+        "operator": "eq",
+        "property_value": "female"
+    }
+}
+```
+
+##### sort_items Expression
+
+`sort_items` returns a sorted list of items based on sort value of each item.The sort value of an item is speicifed by `sort_expression`. By default, list will be in ascending order. Order can be changed by adding optional `order` expression with one of `DESC` (for descending) or `ASC` (for ascending) If a sort-value of an item is `None`, the item will appear in the start of list. If sort-values of any two items can't be compared, an empty list is returned.
+
+`items_expression` can be any valid expression that returns a list. If this doesn't evaluate to a list an empty list is returned.
+
+`sort_expression` can be any valid expression relative to the items in above list, that returns a value to be used as sort value.
+
+```json
+{
+    "type": "sort_items",
+    "items_expression": {
+        "type": "property_path",
+        "property_path": ["form", "child_repeat"]
+    },
+    "sort_expression": {
+        "type": "property_path",
+        "property_path": ["age"]
+    },
+}
+```
+
+##### reduce_items Expression
+
+`reduce_items` returns aggregate value of the list specified by `aggregation_fn`.
+
+`items_expression` can be any valid expression that returns a list. If this doesn't evaluate to a list, `aggregation_fn` will be applied on an empty list
+
+`aggregation_fn` is one of following supported functions names.
+
+
+Function Name  | Example
+-------------- | -----------
+`count`        | `['a', 'b']` -> 2
+`sum`          | `[1, 2, 4]` -> 7
+`first_item`   | `['a', 'b']` -> 'a'
+`last_item`    | `['a', 'b']` -> 'b'
+
+```json
+{
+    "type": "filter_items",
+    "items_expression": {
+        "type": "property_name",
+        "property_name": "family_repeat"
+    },
+    "aggregation_fn": "count"
+}
+```
+This returns number of family members
+
+##### flatten_items expression
+
+`flatten_items` takes list of list of objects specified by `items_expression` and returns one list of all objects.
+
+`items_expression` is any valid expression that returns a list of lists. It this doesn't evaluate to a list of lists an empty list is returned.
+```json
+{
+    "type": "flatten_items",
+    "items_expression": {},
+}
+```
+
 
 #### Named Expressions
 
@@ -1460,6 +1591,7 @@ Following are some custom expressions that are currently available.
 
 - `location_type_name`:  A way to get location type from a location document id.
 - `location_parent_id`:  A shortcut to get a location's parent ID a location id.
+- `get_case_forms`: A way to get list of forms submitted for a case.
 
 You can find examples of these in [practical examples](examples/examples.md).
 

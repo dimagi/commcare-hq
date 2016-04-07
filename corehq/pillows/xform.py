@@ -13,7 +13,7 @@ from couchforms.const import RESERVED_WORDS
 from couchforms.models import XFormInstance
 from dateutil import parser
 from pillowtop.checkpoints.manager import PillowCheckpoint, PillowCheckpointEventHandler
-from pillowtop.es_utils import ElasticsearchIndexMeta
+from pillowtop.es_utils import ElasticsearchIndexInfo
 from pillowtop.pillow.interface import ConstructedPillow
 from pillowtop.processors.elastic import ElasticProcessor
 from pillowtop.reindexer.change_providers.couch import CouchViewChangeProvider
@@ -130,7 +130,7 @@ def get_sql_xform_to_elasticsearch_pillow(pillow_id='SqlXFormToElasticsearchPill
     )
     form_processor = ElasticProcessor(
         elasticsearch=get_es_new(),
-        index_meta=ElasticsearchIndexMeta(index=XFORM_INDEX, type=XFORM_ES_TYPE),
+        index_info=ElasticsearchIndexInfo(index=XFORM_INDEX, type=XFORM_ES_TYPE),
         doc_prep_fn=prepare_sql_form_json_for_elasticsearch
     )
     return ConstructedPillow(
