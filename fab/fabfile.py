@@ -771,9 +771,9 @@ def copy_node_modules():
 
 @parallel
 @roles(ROLES_STATIC)
-def copy_staticfiles():
-    if files.exists('{}/staticfiles'.format(env.code_current)):
-        sudo('cp -r {}/staticfiles {}/staticfiles'.format(env.code_current, env.code_root))
+def copy_compressed_js_staticfiles():
+    if files.exists('{}/staticfiles/CACHE/js'.format(env.code_current)):
+        sudo('cp -r {}/staticfiles/CACHE/js {}/staticfiles/CACHE/js'.format(env.code_current, env.code_root))
 
 
 def copy_release_files():
@@ -781,7 +781,7 @@ def copy_release_files():
     execute(copy_tf_localsettings)
     execute(copy_components)
     execute(copy_node_modules)
-    execute(copy_staticfiles)
+    execute(copy_compressed_js_staticfiles)
 
 
 @task
