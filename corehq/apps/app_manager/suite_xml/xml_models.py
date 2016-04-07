@@ -463,7 +463,7 @@ class SyncRequest(OrderedXmlObject, XmlObject):
     instances = NodeListField('instance', Instance)
     command = NodeField('command', Command)
     session = NodeField('session', SyncRequestSession)
-    stacks = NodeListField('stack', Stack)  # Spec says plural but in practice we never have more than one.
+    stack = NodeField('stack', Stack)
 
 
 class MenuMixin(XmlObject):
