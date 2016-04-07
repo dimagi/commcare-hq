@@ -27,7 +27,10 @@ INDEX_STANDARD_SETTINGS = {
 }
 
 
-ElasticsearchIndexMeta = namedtuple('ElasticsearchIndexMeta', ['index', 'type'])
+class ElasticsearchIndexInfo(jsonobject.JsonObject):
+    index = jsonobject.StringProperty(required=True)
+    alias = jsonobject.StringProperty()
+    type = jsonobject.StringProperty()
 
 
 def update_settings(es, index, settings_dict):
@@ -134,12 +137,6 @@ def doc_exists(pillow, doc_id_or_dict):
 def get_all_elasticsearch_pillow_classes():
     from pillowtop.listener import AliasedElasticPillow
     return filter(lambda x: issubclass(x, AliasedElasticPillow), get_all_pillow_classes())
-
-
-class ElasticsearchIndexInfo(jsonobject.JsonObject):
-    index = jsonobject.StringProperty(required=True)
-    alias = jsonobject.StringProperty()
-    type = jsonobject.StringProperty()
 
 
 def get_all_expected_es_indices():
