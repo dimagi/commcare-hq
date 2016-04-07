@@ -6,7 +6,7 @@ from corehq.pillows.mappings.domain_mapping import DOMAIN_MAPPING, DOMAIN_INDEX
 from django_countries.data import COUNTRIES
 from pillowtop.es_utils import doc_exists, get_index_info_from_pillow
 from pillowtop.reindexer.change_providers.couch import CouchViewChangeProvider
-from pillowtop.reindexer.reindexer import ElasticPillowReindexer
+from pillowtop.reindexer.reindexer import ElasticPillowReindexer, get_default_reindexer_for_elastic_pillow
 
 
 class DomainPillow(HQPillow):
@@ -64,9 +64,8 @@ class DomainPillow(HQPillow):
 
 
 def get_domain_reindexer():
-    pillow = DomainPillow(online=False)
-    return ElasticPillowReindexer(
-        pillow=pillow,
+    return get_default_reindexer_for_elastic_pillow(
+        pillow=DomainPillow(online=False),
         change_provider=CouchViewChangeProvider(
             document_class=Domain,
             view_name='all_docs/by_doc_type',
@@ -75,6 +74,4 @@ def get_domain_reindexer():
                 'endkey': ['Domain', {}],
             }
         ),
-        elasticsearch=pillow.get_es_new(),
-        index_info=get_index_info_from_pillow(pillow),
     )

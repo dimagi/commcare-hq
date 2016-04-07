@@ -1,6 +1,6 @@
 from corehq.util.elastic import ensure_index_deleted, ensure_production_index_deleted
 from pillowtop.es_utils import create_index_and_set_settings_normal, set_index_reindex_settings, \
-    set_index_normal_settings
+    set_index_normal_settings, get_index_info_from_pillow
 from pillowtop.pillow.interface import PillowRuntimeContext
 
 
@@ -42,3 +42,12 @@ class ElasticPillowReindexer(PillowReindexer):
     def _prepare_index_for_usage(self):
         set_index_normal_settings(self.es, self.index_info.index)
         self.es.indices.refresh(self.index_info.index)
+
+
+def get_default_reindexer_for_elastic_pillow(pillow, change_provider):
+    return ElasticPillowReindexer(
+        pillow=pillow,
+        change_provider=change_provider,
+        elasticsearch=pillow.get_es_new(),
+        index_info=get_index_info_from_pillow(pillow),
+    )
