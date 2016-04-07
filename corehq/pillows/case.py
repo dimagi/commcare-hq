@@ -13,12 +13,13 @@ from dimagi.utils.decorators.memoized import memoized
 from .base import HQPillow
 import logging
 from pillowtop.checkpoints.manager import PillowCheckpoint, PillowCheckpointEventHandler
-from pillowtop.es_utils import doc_exists, ElasticsearchIndexInfo
+from pillowtop.es_utils import doc_exists, ElasticsearchIndexInfo, get_index_info_from_pillow
 from pillowtop.listener import lock_manager
 from pillowtop.pillow.interface import ConstructedPillow
 from pillowtop.processors.elastic import ElasticProcessor
 from pillowtop.reindexer.change_providers.couch import CouchViewChangeProvider
-from pillowtop.reindexer.reindexer import PillowReindexer
+from pillowtop.reindexer.reindexer import get_default_reindexer_for_elastic_pillow, \
+    ElasticPillowReindexer
 
 
 UNKNOWN_DOMAIN = "__nodomain__"
@@ -103,11 +104,23 @@ def get_sql_case_to_elasticsearch_pillow(pillow_id='SqlCaseToElasticsearchPillow
 
 
 def get_couch_case_reindexer():
-    return PillowReindexer(CasePillow(), CouchViewChangeProvider(
-        document_class=CommCareCase,
-        view_name='cases_by_owner/view'
-    ))
+    return get_default_reindexer_for_elastic_pillow(
+        pillow=CasePillow(online=False),
+        change_provider=CouchViewChangeProvider(
+            document_class=CommCareCase,
+            view_name='cases_by_owner/view'
+        )
+    )
 
 
 def get_sql_case_reindexer():
-    return PillowReindexer(get_sql_case_to_elasticsearch_pillow(), SqlCaseChangeProvider())
+    return ElasticPillowReindexer(
+        pillow=get_sql_case_to_elasticsearch_pillow(),
+        change_provider=SqlCaseChangeProvider(),
+        elasticsearch=CasePillow(online=False).get_es_new(),
+        index_info=_get_case_index_info(),
+    )
+
+
+def _get_case_index_info():
+    return get_index_info_from_pillow(CasePillow(online=False))
