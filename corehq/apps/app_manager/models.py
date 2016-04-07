@@ -1744,7 +1744,7 @@ class CaseSearch(DocumentSchema):
     Case properties available to search on.
     """
     property = StringProperty()
-    label = StringProperty()
+    label = DictProperty()
 
 
 class ParentSelect(DocumentSchema):
