@@ -13,14 +13,28 @@ def es_index(index):
 
 @unit_testing_only
 def ensure_index_deleted(es_index):
+    ensure_production_index_deleted(es_index)
+
+
+def ensure_production_index_deleted(es_index):
+    """
+    Like ensure_index_deleted but usable outside unit tests
+    """
     try:
-        delete_es_index(es_index)
+        delete_production_es_index(es_index)
     except NotFoundError:
         pass
 
 
 @unit_testing_only
 def delete_es_index(es_index):
+    delete_production_es_index(es_index)
+
+
+def delete_production_es_index(es_index):
+    """
+    Like delete_es_index but usable outside unit tests
+    """
     from corehq.elastic import get_es_new
 
     if es_index.startswith(TEST_ES_PREFIX):
