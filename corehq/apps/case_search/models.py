@@ -3,6 +3,10 @@ from django.db import models
 from jsonfield.fields import JSONField
 
 
+CLAIM_CASE_TYPE = 'claim'
+FUZZY_PROPERTIES = "fuzzy_properties"
+
+
 class FuzzyProperties(jsonobject.JsonObject):
     case_type = jsonobject.StringProperty()
     properties = jsonobject.ListProperty(unicode)
