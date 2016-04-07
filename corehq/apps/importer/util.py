@@ -24,6 +24,7 @@ from corehq.form_processor.exceptions import CaseNotFound
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 from corehq.form_processor.utils.general import should_use_sql_backend
 from corehq.util.soft_assert import soft_assert
+from couchexport.export import SCALAR_NEVER_WAS
 
 
 class ImporterConfig(object):
@@ -402,7 +403,12 @@ def populate_updated_fields(config, columns, row, datemode):
             # nothing was selected so don't add this value
             continue
 
-        if update_value is not None:
+        if isinstance(update_value, basestring) and update_value.strip() == SCALAR_NEVER_WAS:
+            # If we find any instances of blanks ('---'), convert them to an
+            # actual blank value without performing any data type validation.
+            # This is to be consistent with how the case export works.
+            update_value = ''
+        elif update_value is not None:
             if field_map[key]['type_field'] == 'date':
                 try:
                     update_value = parse_excel_date(update_value, datemode)

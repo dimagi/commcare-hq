@@ -83,6 +83,7 @@ from corehq.apps.users.decorators import require_permission
 from corehq.apps.users.models import Permissions
 from corehq.toggles import REPORT_BUILDER_MAP_REPORTS
 from corehq.util.couch import get_document_or_404
+from toggle import toggle_enabled
 
 
 def get_datasource_config_or_404(config_id, domain):
@@ -148,8 +149,7 @@ class ReportBuilderView(BaseDomainView):
     def dispatch(self, request, *args, **kwargs):
         if has_report_builder_access(request):
             report_type = kwargs.get('report_type', None)
-            domain = kwargs.get('domain', None)
-            if report_type != 'map' or REPORT_BUILDER_MAP_REPORTS.enabled(domain):
+            if report_type != 'map' or toggle_enabled(request, REPORT_BUILDER_MAP_REPORTS):
                 return super(ReportBuilderView, self).dispatch(request, *args, **kwargs)
             else:
                 raise Http404

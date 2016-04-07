@@ -40,18 +40,6 @@ def api_closed_to_status(closed_string):
     }[closed_string]
 
 
-def closed_to_status(closed_bool):
-    return {None: CASE_STATUS_ALL,
-            True: CASE_STATUS_CLOSED,
-            False: CASE_STATUS_OPEN}[closed_bool]
-
-
-def status_to_closed_flags(status):
-    return {CASE_STATUS_ALL: [True, False],
-            CASE_STATUS_CLOSED: [True],
-            CASE_STATUS_OPEN: [False]}[status]
-
-
 class CaseAPIResult(object):
     """
     The result of a case API query. Useful for abstracting out the difference

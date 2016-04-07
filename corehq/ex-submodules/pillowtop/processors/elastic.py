@@ -5,8 +5,8 @@ from pillowtop.logger import pillow_logging
 
 class ElasticProcessor(PillowProcessor):
 
-    def __init__(self, elasticseach, index_meta, doc_prep_fn):
-        self.elasticsearch = elasticseach
+    def __init__(self, elasticsearch, index_meta, doc_prep_fn):
+        self.elasticsearch = elasticsearch
         self.index_meta = index_meta
         self.doc_transform_fn = doc_prep_fn
 

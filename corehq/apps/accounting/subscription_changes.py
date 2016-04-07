@@ -17,6 +17,7 @@ from corehq.apps.cloudcare.dbaccessors import get_cloudcare_apps
 from corehq.apps.data_interfaces.models import AutomaticUpdateRule
 from corehq.apps.domain.models import Domain
 from corehq.apps.fixtures.models import FixtureDataType
+from corehq.apps.hqmedia.models import HQMediaMixin
 from corehq.apps.reminders.models import METHOD_SMS_SURVEY, METHOD_IVR_SURVEY
 from corehq.apps.users.models import CommCareUser, UserRole
 from corehq.const import USER_DATE_FORMAT
@@ -221,9 +222,10 @@ class DomainUpgradeActionHandler(BaseModifySubscriptionActionHandler):
         """
         try:
             for app in get_all_apps(domain.name):
-                has_restored = app.restore_logos()
-                if has_restored:
-                    app.save()
+                if isinstance(app, HQMediaMixin):
+                    has_restored = app.restore_logos()
+                    if has_restored:
+                        app.save()
             return True
         except Exception:
             log_accounting_error(

@@ -139,12 +139,16 @@ class DomainInvoiceFactory(object):
         with transaction.atomic():
             invoice = self._generate_invoice(subscription, invoice_start, invoice_end)
             record = BillingRecord.generate_record(invoice)
-        try:
-            record.send_email()
-        except InvoiceEmailThrottledError as e:
-            if not self.logged_throttle_error:
-                log_accounting_error(e.message)
-                self.logged_throttle_error = True
+        if record.should_send_email:
+            try:
+                record.send_email()
+            except InvoiceEmailThrottledError as e:
+                if not self.logged_throttle_error:
+                    log_accounting_error(e.message)
+                    self.logged_throttle_error = True
+        else:
+            record.skipped_email = True
+            record.save()
 
         return invoice
 
@@ -293,13 +297,17 @@ class DomainWireInvoiceFactory(object):
 
         record = WireBillingRecord.generate_record(wire_invoice)
 
-        try:
-            record.send_email(contact_emails=self.contact_emails)
-        except InvoiceEmailThrottledError as e:
-            # Currently wire invoices are never throttled
-            if not self.logged_throttle_error:
-                log_accounting_error(e.message)
-                self.logged_throttle_error = True
+        if record.should_send_email:
+            try:
+                record.send_email(contact_emails=self.contact_emails)
+            except InvoiceEmailThrottledError as e:
+                # Currently wire invoices are never throttled
+                if not self.logged_throttle_error:
+                    log_accounting_error(e.message)
+                    self.logged_throttle_error = True
+        else:
+            record.skipped_email = True
+            record.save()
 
         return wire_invoice
 

@@ -1,4 +1,6 @@
 import copy
+import datetime
+
 from casexml.apps.case.models import CommCareCase
 from corehq.apps.change_feed import topics
 from corehq.apps.change_feed.consumer.feed import KafkaChangeFeed
@@ -74,6 +76,7 @@ def transform_case_for_elasticsearch(doc_dict):
             doc_ret["owner_id"] = doc_ret["user_id"]
 
     doc_ret['owner_type'] = get_user_type(doc_ret.get("owner_id", None))
+    doc_ret['inserted_at'] = datetime.datetime.utcnow().isoformat()
 
     return doc_ret
 
@@ -83,7 +86,7 @@ def get_sql_case_to_elasticsearch_pillow(pillow_id='SqlCaseToElasticsearchPillow
         'sql-cases-to-elasticsearch',
     )
     case_processor = ElasticProcessor(
-        elasticseach=get_es_new(),
+        elasticsearch=get_es_new(),
         index_meta=ElasticsearchIndexMeta(index=CASE_INDEX, type=CASE_ES_TYPE),
         doc_prep_fn=transform_case_for_elasticsearch
     )

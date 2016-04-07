@@ -154,10 +154,6 @@ class AbstractCommCareCase(object):
     # def deletion_id(self):
     #     raise NotImplementedError
 
-    @property
-    def transactions(self):
-        raise NotImplementedError
-
     def dynamic_case_properties(self):
         raise NotImplementedError()
 

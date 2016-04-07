@@ -11,11 +11,4 @@ describe('Export Utility functions', function() {
             assert.equal(cls, 'label label-warning');
         });
     });
-
-    describe('#removeDeidTransforms', function() {
-        it('Should remove all deid transforms', function() {
-            result = Exports.Utils.removeDeidTransforms(['deid_id', 'username_transform']);
-            assert.sameMembers(result, ['username_transform']);
-        });
-    });
 });

@@ -1,8 +1,12 @@
+from copy import copy
+
 from django.core.urlresolvers import reverse
 from django.http import Http404
 from django.utils.decorators import method_decorator
 from django.utils.translation import ugettext_noop, ugettext_lazy as _
 from djangular.views.mixins import JSONResponseMixin, allow_remote_invocation
+
+from corehq.apps.app_manager.exceptions import XFormException
 from corehq.apps.app_manager.view_helpers import ApplicationViewMixin
 from corehq.apps.app_manager.xform import VELLUM_TYPES
 from corehq.apps.domain.views import LoginAndDomainMixin
@@ -75,29 +79,43 @@ class AppSummaryView(JSONResponseMixin, LoginAndDomainMixin, BasePageView, Appli
     @allow_remote_invocation
     def get_form_data(self, in_data):
         modules = []
+        errors = []
         for module in self.app.get_modules():
             forms = []
-            for form in module.get_forms():
-                questions = form.get_questions(
-                    self.app.langs,
-                    include_triggers=True,
-                    include_groups=True,
-                    include_translations=True
-                )
-                forms.append({
-                    'id': form.unique_id,
-                    'name': form.name,
-                    'short_comment': form.short_comment,
-                    'questions': [FormQuestionResponse(q).to_json() for q in questions],
-                })
-
-            modules.append({
+            module_meta = {
                 'id': module.unique_id,
                 'name': module.name,
                 'short_comment': module.short_comment,
-                'forms': forms
-            })
+            }
+
+            for form in module.get_forms():
+                form_meta = {
+                    'id': form.unique_id,
+                    'name': form.name,
+                    'short_comment': form.short_comment,
+                }
+                try:
+                    questions = form.get_questions(
+                        self.app.langs,
+                        include_triggers=True,
+                        include_groups=True,
+                        include_translations=True
+                    )
+                    form_meta['questions'] = [FormQuestionResponse(q).to_json() for q in questions]
+                except XFormException as e:
+                    form_meta['error'] = {
+                        'details': unicode(e),
+                        'edit_url': reverse('form_source', args=[self.domain, self.app_id, module.id, form.id])
+                    }
+                    form_meta['module'] = copy(module_meta)
+                    errors.append(form_meta)
+                else:
+                    forms.append(form_meta)
+
+            module_meta['forms'] = forms
+            modules.append(module_meta)
         return {
             'response': modules,
+            'errors': errors,
             'success': True,
         }

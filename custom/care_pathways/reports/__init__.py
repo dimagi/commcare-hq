@@ -21,6 +21,7 @@ class CareReportMixin(object):
             all=2,
             test='test',
             duplicate='duplicate',
+            real_or_test=self.request.GET.get('real_or_test', '')
         )
         hierarchy_config = get_domain_configuration(self.domain).geography_hierarchy
         for k, v in sorted(hierarchy_config.iteritems(), reverse=True):
