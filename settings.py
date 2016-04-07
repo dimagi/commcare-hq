@@ -111,10 +111,8 @@ DJANGO_LOG_FILE = "%s/%s" % (FILEPATH, "commcarehq.django.log")
 ACCOUNTING_LOG_FILE = "%s/%s" % (FILEPATH, "commcarehq.accounting.log")
 ANALYTICS_LOG_FILE = "%s/%s" % (FILEPATH, "commcarehq.analytics.log")
 DATADOG_LOG_FILE = "%s/%s" % (FILEPATH, "commcarehq.datadog.log")
-
-FORMPLAYER_EXPERIMENT_DIRECTORY = "%s/%s/" % (FILEPATH, "formplayer_experiment")
-FORMPLAYER_TIMING_FILE = "%s/%s/" % (FORMPLAYER_EXPERIMENT_DIRECTORY, "formplayer.timing.log")
-FORMPLAYER_DIFF_FILE = "%s/%s/" % (FORMPLAYER_EXPERIMENT_DIRECTORY, "formplayer.diff.log")
+FORMPLAYER_TIMING_FILE = "%s/%s/" % (FILEPATH, "formplayer.timing.log")
+FORMPLAYER_DIFF_FILE = "%s/%s/" % (FILEPATH, "formplayer.diff.log")
 
 LOCAL_LOGGING_HANDLERS = {}
 LOCAL_LOGGING_LOGGERS = {}
