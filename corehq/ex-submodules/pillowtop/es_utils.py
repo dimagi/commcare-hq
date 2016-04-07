@@ -144,9 +144,11 @@ def get_all_expected_es_indices():
     Get all expected elasticsearch indices according to the currently running code
     """
     seen_indices = set()
+    seen_aliases = set()
     pillows = get_all_elasticsearch_pillow_classes()
     for pillow in pillows:
         assert pillow.es_index not in seen_indices
+        assert pillow.es_alias not in seen_aliases
         yield ElasticsearchIndexInfo(index=pillow.es_index, alias=pillow.es_alias, type=pillow.es_type)
         seen_indices.add(pillow.es_index)
-
+        seen_aliases.add(pillow.es_alias)
