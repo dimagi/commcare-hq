@@ -45,7 +45,8 @@
 trunk: master
 name: autostaging
 branches:
-  - tabs  # 4/6
+  - b3-reports-home+tabs  # Danny 4/6
+  - tabs  # Danny 4/6
   - calculatedIcons # Sravan 3/2
   - vellum-staging # J$ 11/13
   - java-tf-deploy # Ben/Will 1/21/16
