@@ -43,7 +43,7 @@ var MapItem = function(item, index, mappingContext){
         var langs = _.union(_(item.value).keys(), [mappingContext.lang]) ;
         _.each(langs, function(lang){
             // return ko reference to path in `iconManager` for current UI language value
-            if (mappingContext.values_are_icons && lang == mappingContext.lang){
+            if (mappingContext.values_are_icons && lang === mappingContext.lang){
                 new_value.push([lang, self.iconManager.customPath]);
             }
             // return new ko.observable for other languages
