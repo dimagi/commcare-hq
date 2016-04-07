@@ -16,14 +16,14 @@ def get_number_of_fixture_data_types_in_domain(domain):
 @quickcache(['domain'], timeout=30 * 60)
 def get_fixture_data_types_in_domain(domain):
     from corehq.apps.fixtures.models import FixtureDataType
-    return FixtureDataType.view(
+    return list(FixtureDataType.view(
         'by_domain_doc_type_date/view',
         endkey=[domain, 'FixtureDataType'],
         startkey=[domain, 'FixtureDataType', {}],
         reduce=False,
         include_docs=True,
         descending=True,
-    )
+    ))
 
 
 def get_owner_ids_by_type(domain, owner_type, data_item_id):
