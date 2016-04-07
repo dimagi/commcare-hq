@@ -8,11 +8,10 @@ from pillowtop.es_utils import pillow_index_exists, get_all_elasticsearch_pillow
 from cStringIO import StringIO
 import traceback
 from datetime import datetime
-from optparse import make_option
 from django.core.mail import mail_admins
 from corehq.pillows.user import add_demo_user_to_user_index
 import gevent
-from django.core.management.base import NoArgsCommand, BaseCommand
+from django.core.management.base import BaseCommand
 from django.core.management import call_command
 from django.conf import settings
 
@@ -54,15 +53,6 @@ def do_reindex(pillow_class_name):
 class Command(BaseCommand):
     help = ("Preindex ES pillows. "
             "Only run reindexer if the index doesn't exist.")
-    option_list = NoArgsCommand.option_list + (
-        make_option(
-            '--replace',
-            action='store_true',
-            dest='replace',
-            default=False,
-            help='Reindex existing indices even if they are already there.',
-        ),
-    )
 
     def handle(self, *args, **options):
         runs = []
@@ -71,24 +61,19 @@ class Command(BaseCommand):
         es = get_es_new()
         indices_needing_reindex = [info for info in all_es_indices if needs_reindex(es, info)]
         aliasable_pillows = [p(online=False) for p in aliased_classes]
-        reindex_all = options['replace']
 
-        print "Master indices missing aliases:"
+        print "Indices needing reindex:"
         unmapped_indices = [info.index for info in indices_needing_reindex]
         print unmapped_indices
 
-        if reindex_all:
-            print "Reindexing ALL master pillows that are not aliased"
-            preindexable_pillows = aliasable_pillows
-        else:
-            print ("Reindexing master pillows that do not exist yet "
-                   "(ones with aliases skipped)")
+        print ("Reindexing master pillows that do not exist yet "
+               "(ones with aliases skipped)")
 
-            preindexable_pillows = [pillow for pillow in aliasable_pillows
-                                    if not pillow_index_exists(pillow)]
+        pillows_without_index = [pillow for pillow in aliasable_pillows
+                                 if not pillow_index_exists(pillow)]
 
         reindex_pillows = filter(lambda x: x.es_index in unmapped_indices,
-                                 preindexable_pillows)
+                                 pillows_without_index)
 
         print "Reindexing:\n\t",
         print '\n\t'.join(x.es_index for x in reindex_pillows)
