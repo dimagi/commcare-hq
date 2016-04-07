@@ -29,6 +29,7 @@ var MapItem = function(item, index, mappingContext){
             uploadController: uploaders.iconUploader,
             defaultPath: 'jr://file/commcare/image/kv-icon' + index + '.png',
             inputElement: $("#" + makeSafeForCSS(this.key())),
+            allowEmptyPath: true,
         });
     }
 
