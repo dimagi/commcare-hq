@@ -2,8 +2,8 @@ from gevent import monkey; monkey.patch_all()
 from corehq.elastic import get_es_new
 
 
-from pillowtop.es_utils import pillow_index_exists, get_all_elasticsearch_pillow_classes, \
-    get_all_expected_es_indices, needs_reindex
+from pillowtop.es_utils import get_all_elasticsearch_pillow_classes, get_all_expected_es_indices
+
 
 from cStringIO import StringIO
 import traceback
@@ -59,27 +59,20 @@ class Command(BaseCommand):
         aliased_classes = get_all_elasticsearch_pillow_classes()
         all_es_indices = get_all_expected_es_indices()
         es = get_es_new()
-        indices_needing_reindex = [info for info in all_es_indices if needs_reindex(es, info)]
+        indices_needing_reindex = [info for info in all_es_indices if not es.indices.exists(info.index)]
+
+        if not indices_needing_reindex:
+            print 'Nothing needs to be reindexed'
+            return
+
         aliasable_pillows = [p(online=False) for p in aliased_classes]
-
-        print "Indices needing reindex:"
-        unmapped_indices = [info.index for info in indices_needing_reindex]
-        print unmapped_indices
-
-        print ("Reindexing master pillows that do not exist yet "
-               "(ones with aliases skipped)")
-
-        pillows_without_index = [pillow for pillow in aliasable_pillows
-                                 if not pillow_index_exists(pillow)]
-
-        reindex_pillows = filter(lambda x: x.es_index in unmapped_indices,
-                                 pillows_without_index)
+        index_names_needing_reindex = [info.index for info in indices_needing_reindex]
 
         print "Reindexing:\n\t",
-        print '\n\t'.join(x.es_index for x in reindex_pillows)
+        print '\n\t'.join(index_names_needing_reindex)
 
-        if len(reindex_pillows) > 0:
-            preindex_message = """
+        reindex_pillows = filter(lambda x: x.es_index in index_names_needing_reindex, aliasable_pillows)
+        preindex_message = """
         Heads up!
 
         %s is going to start preindexing the following pillows:
@@ -91,7 +84,7 @@ class Command(BaseCommand):
                 ', '.join([x.__class__.__name__ for x in reindex_pillows])
             )
 
-            mail_admins("Pillow preindexing starting", preindex_message)
+        mail_admins("Pillow preindexing starting", preindex_message)
 
         start = datetime.utcnow()
         for pillow in reindex_pillows:
