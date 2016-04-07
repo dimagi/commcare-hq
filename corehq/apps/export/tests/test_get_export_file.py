@@ -38,6 +38,7 @@ from corehq.pillows.case import CasePillow
 from corehq.util.elastic import ensure_index_deleted
 from corehq.util.test_utils import trap_extra_setup
 from couchexport.export import get_writer
+from couchexport.transforms import couch_to_excel_datetime
 from couchexport.models import Format
 from pillowtop.es_utils import completely_initialize_pillow_index
 
@@ -62,7 +63,8 @@ class WriterTest(SimpleTestCase):
                     "q4": "boop",
                 },
                 "q3": "bop",
-                "mc": "one two"
+                "mc": "one two",
+                "date": "2015-07-22T14:16:49.584880Z",
             }
         },
     ]
@@ -152,6 +154,44 @@ class WriterTest(SimpleTestCase):
                     u'My table': {
                         u'headers': [u'MC | one', u'MC | two', 'MC | extra'],
                         u'rows': [[None, 1, 'extra'], [1, 1, '']],
+
+                    }
+                }
+            )
+
+    def test_transform_dates(self):
+        """Ensure dates are transformed for excel when `transform_dates` is set to True"""
+        export_instance = FormExportInstance(
+            export_format=Format.JSON,
+            domain=DOMAIN,
+            case_type=DEFAULT_CASE_TYPE,
+            transform_dates=True,
+            tables=[TableConfiguration(
+                label="My table",
+                selected=True,
+                path=[],
+                columns=[
+                    ExportColumn(
+                        label="Date",
+                        item=MultipleChoiceItem(
+                            path=[PathNode(name='form'), PathNode(name='date')],
+                        ),
+                        selected=True,
+                    )
+                ]
+            )]
+        )
+        writer = _get_writer([export_instance])
+        with writer.open([export_instance]):
+            _write_export_instance(writer, export_instance, self.docs)
+
+        with ExportFile(writer.path, writer.format) as export:
+            self.assertEqual(
+                json.loads(export),
+                {
+                    u'My table': {
+                        u'headers': [u'Date'],
+                        u'rows': [[None], [couch_to_excel_datetime('2015-07-22T14:16:49.584880Z', None)]],
 
                     }
                 }

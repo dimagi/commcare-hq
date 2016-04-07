@@ -12,6 +12,7 @@ from corehq.apps.userreports.expressions.getters import (
     transform_from_datatype)
 from corehq.apps.userreports.indicators.specs import DataTypeProperty
 from corehq.apps.userreports.specs import TypeProperty, EvaluationContext
+from corehq.form_processor.interfaces.processor import FormProcessorInterface
 from pillowtop.dao.exceptions import DocumentNotFoundError
 from .utils import eval_statements
 from corehq.util.quickcache import quickcache
@@ -266,3 +267,33 @@ class EvalExpressionSpec(JsonObject):
             for slug, variable_expression in self._context_variables.items()
         }
         return var_dict
+
+
+class FormsExpressionSpec(JsonObject):
+    type = TypeProperty('get_case_forms')
+    case_id_expression = DefaultProperty(required=True)
+
+    def configure(self, case_id_expression):
+        self._case_id_expression = case_id_expression
+
+    def __call__(self, item, context=None):
+        case_id = self._case_id_expression(item, context)
+
+        if not case_id:
+            return []
+
+        assert context.root_doc['domain']
+        return self._get_forms(case_id, context)
+
+    def _get_forms(self, case_id, context):
+        domain = context.root_doc['domain']
+
+        cache_key = (self.__class__.__name__, case_id)
+        if context.get_cache_value(cache_key) is not None:
+            return context.get_cache_value(cache_key)
+
+        xforms = FormProcessorInterface(domain).get_case_forms(case_id)
+        xforms = [f.to_json() for f in xforms if f.domain == domain]
+
+        context.set_cache_value(cache_key, xforms)
+        return xforms

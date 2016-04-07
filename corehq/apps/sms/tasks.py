@@ -251,8 +251,10 @@ def store_billable(msg):
             # This string contains unicode characters, so the allowed
             # per-sms message length is shortened
             msg_length = 70
-        for _ in range(int(math.ceil(float(len(msg.text)) / msg_length))):
-            SmsBillable.create(msg)
+        SmsBillable.create(
+            msg,
+            multipart_count=int(math.ceil(float(len(msg.text)) / msg_length)),
+        )
 
 
 @task(queue='background_queue', ignore_result=True, acks_late=True)

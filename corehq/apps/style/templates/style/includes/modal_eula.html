@@ -1,7 +1,7 @@
 {% load i18n %}
 {% if request.couch_user and not request.couch_user.is_eula_signed %}
     <div class="modal fade" id="eulaModal">
-        <div class="modal-dialog">
+        <div class="modal-dialog modal-lg">
             <form id="eula-agree"
                   action="{% url "agree_to_eula" %}"
                   method="POST">
