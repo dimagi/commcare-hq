@@ -6,7 +6,7 @@ from corehq.apps.domain.views import BaseDomainView
 from corehq.apps.hqwebapp.view_permissions import user_can_view_reports
 from corehq.apps.users.permissions import FORM_EXPORT_PERMISSION, CASE_EXPORT_PERMISSION, \
     DEID_EXPORT_PERMISSION
-from corehq.tabs.tabclasses import ReportsTab
+from corehq.tabs.tabclasses import ProjectReportsTab
 import langcodes
 import os
 import pytz
@@ -675,7 +675,7 @@ class AddSavedReportConfigView(View):
                 delattr(self.config, "days")
 
         self.config.save()
-        ReportsTab.clear_dropdown_cache(request, self.domain)
+        ProjectReportsTab.clear_dropdown_cache(self.domain, request.couch_user.get_id)
         touch_saved_reports_views(request.couch_user, self.domain)
 
         return json_response(self.config)
@@ -788,7 +788,7 @@ def delete_config(request, domain, config_id):
         raise Http404()
 
     config.delete()
-    ReportsTab.clear_dropdown_cache(request, domain)
+    ProjectReportsTab.clear_dropdown_cache(domain, request.couch_user.get_id)
 
     touch_saved_reports_views(request.couch_user, domain)
     return HttpResponse()
@@ -984,7 +984,7 @@ class ScheduledReportsView(BaseProjectReportSectionView):
                 )
 
             self.report_notification.save()
-            ReportsTab.clear_dropdown_cache(request, self.domain)
+            ProjectReportsTab.clear_dropdown_cache(self.domain, request.couch_user.get_id)
 
             if self.is_new:
                 messages.success(request, "Scheduled report added!")
