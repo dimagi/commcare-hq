@@ -151,8 +151,8 @@ class NoCacheMiddleware(object):
 
     def process_response(self, request, response):
         if not self._explicitly_marked_safe(response):
-            response['Cache-Control'] = "no-cache, no-store, must-revalidate"
-            response['Expires'] = "-1"
+            response['Cache-Control'] = "private, no-cache, no-store, must-revalidate, proxy-revalidate"
+            response['Expires'] = "Thu, 01 Dec 1994 16:00:00 GMT"
             response['Pragma'] = "no-cache"
         else:
             content_type, _ = mimetypes.guess_type(request.path)
