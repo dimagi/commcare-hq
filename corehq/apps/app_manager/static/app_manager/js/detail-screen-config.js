@@ -549,7 +549,7 @@ hqDefine('app_manager/js/detail-screen-config.js', function () {
                         langs: that.screen.langs,
                         items: that.original['enum'],
                         modalTitle: 'Editing mapping for ' + that.original.field,
-                        multimedia: that.screen.config.multimedia
+                        multimedia: that.screen.config.multimedia,
                     };
                     that.enum_extra = uiElement.key_value_mapping(o);
                 }());

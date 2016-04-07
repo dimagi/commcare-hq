@@ -23,7 +23,7 @@ var MapItem = function(item, index, mappingContext){
                 "icon_type": "icon-picture",
                 "media_type": "Image",
                 "media_class": "CommCareImage",
-                "icon_class": "icon-picture"
+                "icon_class": "icon-picture",
             },
             objectMap: mappingContext.multimedia,
             uploadController: uploaders.iconUploader,
@@ -159,7 +159,7 @@ uiElement.key_value_mapping = function (o) {
             langs: o.langs,
             items: m.getItems(),
             values_are_icons: m.values_are_icons,
-            multimedia: m.multimedia
+            multimedia: m.multimedia,
         });
         $modalDiv.koApplyBindings({
             modalTitle: o.modalTitle,
@@ -219,7 +219,7 @@ function makeSafeForCSS(name) {
     }
     return name.replace(/[^a-z0-9]/g, function(s) {
         var c = s.charCodeAt(0);
-        if (c == 32) return '-';
+        if (c === 32) return '-';
         if (c >= 65 && c <= 90) return '_' + s.toLowerCase();
         return '__' + ('000' + c.toString(16)).slice(-4);
     });
