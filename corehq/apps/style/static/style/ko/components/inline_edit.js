@@ -106,9 +106,11 @@ hqDefine('style/ko/components/inline_edit.js', function() {
         template: '<div class="ko-inline-edit" data-bind="css: {inline: inline, \'has-error\': hasError()}">\
             <div class="read-only" data-bind="visible: !editing() && !hasError(), click: edit">\
                 <i class="fa fa-pencil pull-right"></i>\
-                <span class="btn btn-xs btn-info btn-langcode-preprocessed pull-right"\
-                      data-bind="text: lang, visible: !value()"\
-                ></span>\
+                <!-- ko if: lang -->\
+                    <span class="btn btn-xs btn-info btn-langcode-preprocessed pull-right"\
+                          data-bind="text: lang, visible: !value()"\
+                    ></span>\
+                <!-- /ko -->\
                 <span class="text" data-bind="text: value"></span>\
                 <span class="placeholder" data-bind="text: placeholder, visible: !value()"></span>\
             </div>\
@@ -120,9 +122,11 @@ hqDefine('style/ko/components/inline_edit.js', function() {
                         hasFocus: editing(),\
                         event: {blur: blur},\
                     "></textarea>\
-                    <span class="btn btn-xs btn-info btn-langcode-preprocessed langcode-input pull-right"\
-                          data-bind="text: lang, visible: !value()"\
-                    ></span>\
+                    <!-- ko if: lang -->\
+                        <span class="btn btn-xs btn-info btn-langcode-preprocessed langcode-input pull-right"\
+                              data-bind="text: lang, visible: !value()"\
+                        ></span>\
+                    <!-- /ko -->\
                 </div>\
                 <div class="form-group">\
                     <button class="btn btn-success" data-bind="click: save, hasFocus: saveHasFocus, visible: !isSaving()">\
