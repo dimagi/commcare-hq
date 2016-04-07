@@ -3,13 +3,14 @@ from django.core.urlresolvers import reverse
 from django.shortcuts import redirect
 from django.utils.decorators import method_decorator
 from django.utils.translation import ugettext_noop
+from casexml.apps.case.fixtures import CaseDBFixture
 from casexml.apps.case.mock import CaseBlock, IndexAttrs
 from casexml.apps.case.models import CommCareCase
 from casexml.apps.case.util import post_case_blocks
 from casexml.apps.case.xml import V2
 from corehq import toggles
 from corehq.apps.app_manager.dbaccessors import get_app
-from corehq.apps.case_search.models import CLAIM_CASE_TYPE
+from corehq.apps.case_search.models import CLAIM_CASE_TYPE, CaseSearchConfig
 from corehq.apps.domain.decorators import domain_admin_required, login_or_digest_or_basic_or_apikey
 from corehq.apps.domain.models import Domain
 from corehq.apps.domain.views import DomainViewMixin, EditMyProjectSettingsView
@@ -18,6 +19,7 @@ from corehq.apps.ota.forms import PrimeRestoreCacheForm, AdvancedPrimeRestoreCac
 from corehq.apps.ota.tasks import prime_restore
 from corehq.apps.style.views import BaseB3SectionPageView
 from corehq.apps.users.models import CouchUser, CommCareUser
+from corehq.form_processor.serializers import CommCareCaseSQLSerializer
 from corehq.tabs.tabclasses import ProjectSettingsTab
 from corehq.form_processor.models import CommCareCaseSQL
 from corehq.form_processor.utils import should_use_sql_backend
@@ -56,11 +58,16 @@ def search(request, domain):
     search_es = CaseSearchES()
     search_es = search_es.domain(domain)
     search_es = search_es.case_type(case_type)
-    fuzzies = get_fuzzy_properties(domain, case_type)  # TODO: define
+    config = CaseSearchConfig(domain=domain).config
+    fuzzies = config.get_fuzzy_properties_for_case_type(case_type)
     for key, value in criteria.items():
         search_es = search_es.case_property_query(key, value, fuzzy=(key in fuzzies))
     results = search_es.values()
-    fixtures = CaseDBFixture([CommCareCase.wrap(case) for case in results])  # TODO: Wait, and rebase.
+    if should_use_sql_backend(domain):
+        fixtures = CaseDBFixture([CommCareCase.wrap(case) for case in results])
+    else:
+        cases = (CommCareCaseSQLSerializer(data=case).validated_data for case in results)
+        fixtures = CaseDBFixture([CommCareCaseSQL(**case) for case in cases])
     return HttpResponse(fixtures, content_type="text/xml")
 
 
