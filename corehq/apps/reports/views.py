@@ -1664,8 +1664,9 @@ class EditFormInstance(View):
             'static-date': [
                 {'name': 'now', 'value': instance.metadata.timeEnd},
                 {'name': 'today', 'value': instance.metadata.timeEnd.date()},
-            ]
+            ],
         }
+        edit_session_data['is_editing'] = True
 
         context.update({
             'domain': domain,
