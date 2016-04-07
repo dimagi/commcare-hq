@@ -1,3 +1,5 @@
+/* globals Exports */
+
 Exports.ViewModels.ExportInstance = function(instanceJSON, options) {
     options = options || {};
     var self = this;
@@ -17,9 +19,9 @@ Exports.ViewModels.ExportInstance.prototype.getFormatOptionText = function(forma
     } else if (format === Exports.Constants.EXPORT_FORMATS.CSV) {
         return gettext('CSV (Zip file)');
     } else if (format === Exports.Constants.EXPORT_FORMATS.XLS) {
-        return gettext('Excel 2007');
+        return gettext('Excel (older versions)');
     } else if (format === Exports.Constants.EXPORT_FORMATS.XLSX) {
-        return gettext('Web Page (Excel Dashboards)');
+        return gettext('Excel 2007');
     }
 };
 
@@ -181,9 +183,12 @@ Exports.ViewModels.ExportColumn.prototype.isCaseName = function() {
     return this.item.isCaseName();
 };
 
+Exports.ViewModels.ExportColumn.prototype.translatedHelp = function() {
+    return gettext(this.help_text);
+};
+
 Exports.ViewModels.ExportColumn.mapping = {
-    include: ['item', 'label', 'is_advanced', 'selected', 'tags', 'deid_transform'],
-    exclude: ['deidTransform'],
+    include: ['item', 'label', 'is_advanced', 'selected', 'tags', 'deid_transform', 'help_text'],
     item: {
         create: function(options) {
             return new Exports.ViewModels.ExportItem(options.data);

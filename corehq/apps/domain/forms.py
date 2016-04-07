@@ -9,6 +9,7 @@ from urlparse import urlparse, parse_qs
 
 import dateutil
 import django
+from captcha.fields import CaptchaField
 from crispy_forms import bootstrap as twbscrispy
 from crispy_forms import layout as crispy
 from crispy_forms.bootstrap import FormActions, StrictButton
@@ -67,7 +68,6 @@ from corehq.apps.app_manager.models import Application, FormBase, RemoteApp
 from corehq.apps.domain.models import (LOGO_ATTACHMENT, LICENSES, DATA_DICT,
     AREA_CHOICES, SUB_AREA_CHOICES, BUSINESS_UNITS, Domain, TransferDomainRequest)
 from corehq.apps.groups.models import Group
-from corehq.apps.hqwebapp.crispy import TextField
 from corehq.apps.hqwebapp.tasks import send_mail_async, send_html_email_async
 from corehq.apps.reminders.models import CaseReminderHandler
 from corehq.apps.sms.phonenumbers_helper import parse_phone_number
@@ -965,7 +965,7 @@ max_pwd = 20
 pwd_pattern = re.compile( r"([-\w]){"  + str(min_pwd) + ',' + str(max_pwd) + '}' )
 
 def clean_password(txt):
-    if getattr(settings, "ENABLE_DRACONIAN_SECURITY_FEATURES", False):
+    if settings.ENABLE_DRACONIAN_SECURITY_FEATURES:
         strength = legacy_get_password_strength(txt)
         message = _('Password is not strong enough. Requirements: 1 special character, '
                     '1 number, 1 capital letter, minimum length of 8 characters.')
@@ -1015,7 +1015,7 @@ class NoAutocompleteMixin(object):
 
     def __init__(self, *args, **kwargs):
         super(NoAutocompleteMixin, self).__init__(*args, **kwargs)
-        if getattr(settings, "ENABLE_DRACONIAN_SECURITY_FEATURES", False):
+        if settings.ENABLE_DRACONIAN_SECURITY_FEATURES:
             for field in self.fields.values():
                 field.widget.attrs.update({'autocomplete': 'off'})
 
@@ -1027,7 +1027,10 @@ class HQPasswordResetForm(NoAutocompleteMixin, forms.Form):
 
     This small change is why we can't use the default PasswordReset form.
     """
-    email = forms.EmailField(label=ugettext_lazy("Username"), max_length=254)
+    email = forms.EmailField(label=ugettext_lazy("Username"), max_length=254,
+                             widget=forms.TextInput(attrs={'class': 'form-control'}))
+    if settings.ENABLE_DRACONIAN_SECURITY_FEATURES:
+        captcha = CaptchaField(label=ugettext_lazy("Type the letters in the box"))
     error_messages = {
         'unknown': ugettext_lazy("That email address doesn't have an associated "
                      "user account. Are you sure you've registered?"),
@@ -1165,7 +1168,9 @@ class EditBillingAccountInfoForm(forms.ModelForm):
         super(EditBillingAccountInfoForm, self).__init__(data, *args, **kwargs)
 
         self.helper = FormHelper()
-        self.helper.form_class = 'form form-horizontal'
+        self.helper.form_class = 'form-horizontal'
+        self.helper.label_class = 'col-sm-3 col-md-2'
+        self.helper.field_class = 'col-sm-9 col-md-8 col-lg-6'
         self.helper.layout = crispy.Layout(
             crispy.Fieldset(
                 _("Basic Information"),
@@ -1185,7 +1190,7 @@ class EditBillingAccountInfoForm(forms.ModelForm):
                 crispy.Field('country', css_class="input-large",
                              data_countryname=COUNTRIES.get(self.current_country, '')),
             ),
-            FormActions(
+            hqcrispy.FormActions(
                 StrictButton(
                     _("Update Billing Information"),
                     type="submit",
@@ -1236,6 +1241,8 @@ class ConfirmNewSubscriptionForm(EditBillingAccountInfoForm):
         self.fields['plan_edition'].initial = self.plan_version.plan.edition
 
         from corehq.apps.domain.views import DomainSubscriptionView
+        self.helper.label_class = 'col-sm-3 col-md-2'
+        self.helper.field_class = 'col-sm-9 col-md-8 col-lg-6'
         self.helper.layout = crispy.Layout(
             'plan_edition',
             crispy.Fieldset(
@@ -1256,16 +1263,15 @@ class ConfirmNewSubscriptionForm(EditBillingAccountInfoForm):
                 crispy.Field('country', css_class="input-large",
                              data_countryname=COUNTRIES.get(self.current_country, ''))
             ),
-            FormActions(
-                crispy.HTML('<a href="%(url)s" style="margin-right:5px;" class="btn">%(title)s</a>' % {
-                    'url': reverse(DomainSubscriptionView.urlname, args=[self.domain]),
-                    'title': _("Cancel"),
-                }),
-                StrictButton(
-                    _("Subscribe to Plan"),
-                    type="submit",
-                    css_class='btn btn-success disable-on-submit-no-spinner add-spinner-on-click',
-                ),
+            hqcrispy.FormActions(
+                hqcrispy.LinkButton(_("Cancel"),
+                                    reverse(DomainSubscriptionView.urlname,
+                                            args=[self.domain]),
+                                    css_class="btn btn-default"),
+                StrictButton(_("Subscribe to Plan"),
+                             type="submit",
+                             css_class='btn btn-success disable-on-submit-no-spinner '
+                                       'add-spinner-on-click'),
             ),
         )
 
@@ -1328,6 +1334,8 @@ class ConfirmSubscriptionRenewalForm(EditBillingAccountInfoForm):
             account, domain, creating_user, data=data, *args, **kwargs
         )
         self.renewed_version = renewed_version
+        self.helper.label_class = 'col-sm-3 col-md-2'
+        self.helper.field_class = 'col-sm-9 col-md-8 col-lg-6'
         self.fields['plan_edition'].initial = renewed_version.plan.edition
         self.fields['confirm_legal'].label = mark_safe(ugettext_noop(
             'I have read and agree to the <a href="%(pa_url)s" '
@@ -1361,11 +1369,12 @@ class ConfirmSubscriptionRenewalForm(EditBillingAccountInfoForm):
                 _("Re-Confirm Product Agreement"),
                 'confirm_legal',
             ),
-            FormActions(
-                crispy.HTML('<a href="%(url)s" style="margin-right:5px;" class="btn">%(title)s</a>' % {
-                    'url': reverse(DomainSubscriptionView.urlname, args=[self.domain]),
-                    'title': _("Cancel"),
-                }),
+            hqcrispy.FormActions(
+                hqcrispy.LinkButton(
+                    _("Cancel"),
+                    reverse(DomainSubscriptionView.urlname, args=[self.domain]),
+                    css_class="btn btn-default"
+                ),
                 StrictButton(
                     _("Renew Plan"),
                     type="submit",
@@ -1578,14 +1587,12 @@ class InternalSubscriptionManagementForm(forms.Form):
     def form_actions(self):
         return (
             crispy.Hidden('slug', self.slug),
-            FormActions(
-                crispy.ButtonHolder(
-                    crispy.Submit(
-                        self.slug,
-                        ugettext_noop('Update'),
-                        css_class='disable-on-submit',
-                    )
-                )
+            hqcrispy.FormActions(
+                crispy.Submit(
+                    self.slug,
+                    ugettext_noop('Update'),
+                    css_class='disable-on-submit',
+                ),
             ),
         )
 
@@ -1599,9 +1606,11 @@ class DimagiOnlyEnterpriseForm(InternalSubscriptionManagementForm):
 
         self.helper = FormHelper()
         self.helper.form_class = 'form-horizontal'
+        self.helper.label_class = 'col-sm-3 col-md-2'
+        self.helper.field_class = 'col-sm-9 col-md-8 col-lg-6'
         self.helper.layout = crispy.Layout(
             crispy.HTML(ugettext_noop(
-                '<i class="icon-info-sign"></i> You will have access to all '
+                '<i class="fa fa-info-circle"></i> You will have access to all '
                 'features for free as soon as you hit "Update".  Please make '
                 'sure this is an internal Dimagi test space, not in use by a '
                 'partner.'
@@ -1669,23 +1678,31 @@ class AdvancedExtendedTrialForm(InternalSubscriptionManagementForm):
 
         self.helper = FormHelper()
         self.helper.form_class = 'form-horizontal'
+        self.helper.label_class = 'col-sm-3 col-md-2'
+        self.helper.field_class = 'col-sm-9 col-md-8 col-lg-6'
         self.helper.layout = crispy.Layout(
             crispy.Field('organization_name'),
             crispy.Field('emails', css_class='input-xxlarge'),
             crispy.Field('trial_length', data_bind='value: trialLength'),
-            crispy.HTML(_(
-                '<p><i class="icon-info-sign"></i> The trial includes '
-                'access to all features, 5 mobile workers, and 25 SMS.  Fees '
-                'apply for users or SMS in excess of these limits (1 '
-                'USD/user/month, regular SMS fees).</p>'
-            )),
-            crispy.HTML(_(
-                '<p><i class="icon-info-sign"></i> The trial will begin as soon '
-                'as you hit "Update" and end on <span data-bind="text: end_date"></span>.  '
-                'On <span data-bind="text: end_date"></span> '
-                'the project space will automatically be subscribed to the '
-                'Community plan.</p>'
-            )),
+            crispy.Div(
+                crispy.Div(
+                    crispy.HTML(_(
+                        '<p><i class="fa fa-info-circle"></i> The trial includes '
+                        'access to all features, 5 mobile workers, and 25 SMS.  Fees '
+                        'apply for users or SMS in excess of these limits (1 '
+                        'USD/user/month, regular SMS fees).</p>'
+                    )),
+                    crispy.HTML(_(
+                        '<p><i class="fa fa-info-circle"></i> The trial will begin as soon '
+                        'as you hit "Update" and end on <span data-bind="text: end_date"></span>.  '
+                        'On <span data-bind="text: end_date"></span> '
+                        'the project space will automatically be subscribed to the '
+                        'Community plan.</p>'
+                    )),
+                    css_class='col-sm-offset-3 col-md-offset-2'
+                ),
+                css_class='form-group'
+            ),
             *self.form_actions
         )
 
@@ -1783,6 +1800,8 @@ class ContractedPartnerForm(InternalSubscriptionManagementForm):
 
         self.helper = FormHelper()
         self.helper.form_class = 'form-horizontal'
+        self.helper.label_class = 'col-sm-3 col-md-2'
+        self.helper.field_class = 'col-sm-9 col-md-8 col-lg-6'
         self.fields['fogbugz_client_name'].initial = self.autocomplete_account_name
         self.fields['emails'].initial = self.current_contact_emails
 
@@ -1790,13 +1809,13 @@ class ContractedPartnerForm(InternalSubscriptionManagementForm):
 
         if self.is_uneditable:
             self.helper.layout = crispy.Layout(
-                TextField('software_plan_edition', plan_edition),
-                TextField('fogbugz_client_name', self.current_subscription.account.name),
-                TextField('emails', self.current_contact_emails),
-                TextField('start_date', self.current_subscription.date_start),
-                TextField('end_date', self.current_subscription.date_end),
+                hqcrispy.B3TextField('software_plan_edition', plan_edition),
+                hqcrispy.B3TextField('fogbugz_client_name', self.current_subscription.account.name),
+                hqcrispy.B3TextField('emails', self.current_contact_emails),
+                hqcrispy.B3TextField('start_date', self.current_subscription.date_start),
+                hqcrispy.B3TextField('end_date', self.current_subscription.date_end),
                 crispy.HTML(_(
-                    '<p><i class="icon-info-sign"></i> This project is on a contracted Enterprise '
+                    '<p><i class="fa fa-info-circle"></i> This project is on a contracted Enterprise '
                     'subscription. You cannot change contracted Enterprise subscriptions here. '
                     'Please contact the Ops team at %(accounts_email)s to request changes.</p>' % {
                         'accounts_email': settings.ACCOUNTS_EMAIL,
@@ -1809,21 +1828,27 @@ class ContractedPartnerForm(InternalSubscriptionManagementForm):
             self.fields['start_date'].initial = datetime.date.today()
             self.fields['end_date'].initial = datetime.date.today() + relativedelta(years=1)
             self.helper.layout = crispy.Layout(
-                TextField('software_plan_edition', plan_edition),
+                hqcrispy.B3TextField('software_plan_edition', plan_edition),
                 crispy.Field('software_plan_edition'),
                 crispy.Field('fogbugz_client_name'),
-                crispy.Field('emails', css_class='input-xxlarge'),
+                crispy.Field('emails'),
                 crispy.Field('start_date', css_class='date-picker'),
                 crispy.Field('end_date', css_class='date-picker'),
                 crispy.Field('sms_credits'),
                 crispy.Field('user_credits'),
-                crispy.HTML(_(
-                    '<p><i class="icon-info-sign"></i> Clicking "Update" will set '
-                    'up the subscription in CommCareHQ to one of our standard '
-                    'contracted plans.  If you need to set up a non-standard plan, '
-                    'please email %(accounts_email)s.</p>') % {
-                        'accounts_email': settings.ACCOUNTS_EMAIL,
-                    }
+                crispy.Div(
+                    crispy.Div(
+                        crispy.HTML(
+                            _('<p><i class="fa fa-info-circle"></i> '
+                              'Clicking "Update" will set up the '
+                              'subscription in CommCareHQ to one of our '
+                              'standard contracted plans.<br/> If you '
+                              'need to set up a non-standard plan, '
+                              'please email {}.</p>').format(settings.ACCOUNTS_EMAIL)
+                        ),
+                        css_class='col-sm-offset-3 col-md-offset-2'
+                    ),
+                    css_class='form-group'
                 ),
                 *self.form_actions
             )
@@ -1833,14 +1858,14 @@ class ContractedPartnerForm(InternalSubscriptionManagementForm):
             self.helper.layout = crispy.Layout(
                 crispy.Field('software_plan_edition'),
                 crispy.Field('fogbugz_client_name'),
-                crispy.Field('emails', css_class='input-xxlarge'),
-                TextField('start_date', self.current_subscription.date_start),
+                crispy.Field('emails'),
+                hqcrispy.B3TextField('start_date', self.current_subscription.date_start),
                 crispy.Hidden('start_date', self.current_subscription.date_start),
                 crispy.Field('end_date', css_class='date-picker'),
                 crispy.Hidden('sms_credits', 0),
                 crispy.Hidden('user_credits', 0),
                 crispy.HTML(_(
-                    '<div class="alert">'
+                    '<div class="alert alert-warning">'
                     '<p><strong>Are you sure you want to extend the subscription?</strong></p>'
                     '<p>If this project is becoming a self-service project and only paying for '
                     'hosting fees, please have them self-subscribe through the subscription page.  '
@@ -1986,9 +2011,11 @@ class SelectSubscriptionTypeForm(forms.Form):
 
         self.helper = FormHelper()
         self.helper.form_class = 'form-horizontal'
+        self.helper.label_class = 'col-sm-3 col-md-2'
+        self.helper.field_class = 'col-sm-9 col-md-8 col-lg-6'
         if defaults and disable_input:
             self.helper.layout = crispy.Layout(
-                TextField(
+                hqcrispy.B3TextField(
                     'subscription_type', {
                         form.slug: form.subscription_type
                         for form in INTERNAL_SUBSCRIPTION_MANAGEMENT_FORMS

@@ -64,7 +64,7 @@ class PtopReindexer(NoArgsCommand):
                     action='store',
                     dest='seq',
                     default=0,
-                    help='Sequence id to resume from'),
+                    help='The offset number to resume loading from'),
         make_option('--noinput',
                     action='store_true',
                     dest='noinput',

@@ -8,6 +8,7 @@ import uuid
 import yaml
 from corehq import toggles
 from corehq.apps.app_manager.exceptions import SuiteError
+from corehq.apps.app_manager.xpath import DOT_INTERPOLATE_PATTERN, UserCaseXPath
 from corehq.apps.builds.models import CommCareBuildConfig
 from corehq.apps.app_manager.tasks import create_user_cases
 from corehq.util.quickcache import quickcache
@@ -34,6 +35,68 @@ import logging
 from dimagi.utils.make_uuid import random_hex
 
 logger = logging.getLogger(__name__)
+
+CASE_XPATH_PATTERN_MATCHES = [
+    DOT_INTERPOLATE_PATTERN
+]
+
+CASE_XPATH_SUBSTRING_MATCHES = [
+    "instance('casedb')",
+    'session/data/case_id',
+    "#case",
+    "#parent",
+    "#host",
+]
+
+
+USER_CASE_XPATH_PATTERN_MATCHES = []
+
+USER_CASE_XPATH_SUBSTRING_MATCHES = [
+    "#user",
+    UserCaseXPath().case(),
+]
+
+
+def _prepare_xpath_for_validation(xpath):
+    prepared_xpath = xpath.lower()
+    prepared_xpath = prepared_xpath.replace('"', "'")
+    prepared_xpath = re.compile('\s').sub('', prepared_xpath)
+    return prepared_xpath
+
+
+def _check_xpath_for_matches(xpath, substring_matches=None, pattern_matches=None):
+    prepared_xpath = _prepare_xpath_for_validation(xpath)
+
+    substring_matches = substring_matches or []
+    pattern_matches = pattern_matches or []
+
+    return any([
+        re.compile(pattern).search(prepared_xpath) for pattern in pattern_matches
+    ] + [
+        substring in prepared_xpath for substring in substring_matches
+    ])
+
+
+def xpath_references_case(xpath):
+    # We want to determine here if the xpath references any cases other
+    # than the user case. To determine if the xpath references the user
+    # case, see xpath_references_user_case()
+    for substring in USER_CASE_XPATH_SUBSTRING_MATCHES:
+        xpath = xpath.replace(substring, '')
+
+    return _check_xpath_for_matches(
+        xpath,
+        substring_matches=CASE_XPATH_SUBSTRING_MATCHES,
+        pattern_matches=CASE_XPATH_PATTERN_MATCHES
+    )
+
+
+def xpath_references_user_case(xpath):
+    return _check_xpath_for_matches(
+        xpath,
+        substring_matches=USER_CASE_XPATH_SUBSTRING_MATCHES,
+        pattern_matches=USER_CASE_XPATH_PATTERN_MATCHES,
+    )
 
 
 def split_path(path):
@@ -75,23 +138,29 @@ def save_xform(app, form, xml):
 CASE_TYPE_REGEX = r'^[\w-]+$'
 _case_type_regex = re.compile(CASE_TYPE_REGEX)
 
-def is_valid_case_type(case_type):
-    """
-    >>> is_valid_case_type('foo')
-    True
-    >>> is_valid_case_type('foo-bar')
-    True
-    >>> is_valid_case_type('foo bar')
-    False
-    >>> is_valid_case_type('')
-    False
-    >>> is_valid_case_type(None)
-    False
-    >>> is_valid_case_type('commcare-user')
-    False
 
+def is_valid_case_type(case_type, module):
     """
-    return bool(_case_type_regex.match(case_type or '')) and case_type != USERCASE_TYPE
+    >>> from corehq.apps.app_manager.models import Module, AdvancedModule
+    >>> is_valid_case_type('foo', Module())
+    True
+    >>> is_valid_case_type('foo-bar', Module())
+    True
+    >>> is_valid_case_type('foo bar', Module())
+    False
+    >>> is_valid_case_type('', Module())
+    False
+    >>> is_valid_case_type(None, Module())
+    False
+    >>> is_valid_case_type('commcare-user', Module())
+    False
+    >>> is_valid_case_type('commcare-user', AdvancedModule())
+    True
+    """
+    from corehq.apps.app_manager.models import AdvancedModule
+    matches_regex = bool(_case_type_regex.match(case_type or ''))
+    prevent_usercase_type = (case_type != USERCASE_TYPE or isinstance(module, AdvancedModule))
+    return matches_regex and prevent_usercase_type
 
 
 class ParentCasePropertyBuilder(object):

@@ -4,8 +4,8 @@ from casexml.apps.case.xform import extract_case_blocks, get_case_ids_from_form
 from corehq.apps.change_feed import topics
 from corehq.apps.change_feed.consumer.feed import KafkaChangeFeed
 from corehq.elastic import get_es_new
-from corehq.form_processor.backends.sql.dbaccessors import doc_type_to_state
 from corehq.form_processor.change_providers import SqlFormChangeProvider
+from corehq.form_processor.utils.xform import add_couch_properties_to_sql_form_json
 from corehq.pillows.mappings.xform_mapping import XFORM_MAPPING, XFORM_INDEX
 from corehq.pillows.utils import get_user_type
 from .base import HQPillow
@@ -119,14 +119,9 @@ def transform_xform_for_elasticsearch(doc_dict, include_props=True):
 def prepare_sql_form_json_for_elasticsearch(sql_form_json):
     prepped_form = transform_xform_for_elasticsearch(sql_form_json)
     if prepped_form:
-        prepped_form['doc_type'] = _get_doc_type_from_state(sql_form_json['state'])
-        prepped_form['_id'] = prepped_form['form_id']
+        add_couch_properties_to_sql_form_json(prepped_form)
 
     return prepped_form
-
-
-def _get_doc_type_from_state(state):
-    return {v: k for k, v in doc_type_to_state.items()}.get(state, 'XFormInstance')
 
 
 def get_sql_xform_to_elasticsearch_pillow(pillow_id='SqlXFormToElasticsearchPillow'):

@@ -581,15 +581,26 @@ class ReportingRatesReport(MultiReport):
         return data_providers
 
     @property
+    def export_providers(self):
+        config = self.report_config
+        config.update(self.reporting_rates())
+        return (
+            NonReporting(config),
+            InCompleteReports(config),
+            SummaryReportingRates(config)
+        )
+
+    @property
     def export_table(self):
         if self.is_reporting_type():
             return super(ReportingRatesReport, self).export_table
-        non_reporting = self.report_context['reports'][-2]['report_table']
+
+        non_reporting_provider, in_complete_provider, summary_reporting_provider = self.export_providers
+        non_reporting = self.get_report_context(non_reporting_provider)['report_table']
         non_reporting['title'] = 'Non reporting'
-        reports = [non_reporting,
-                   self.report_context['reports'][-1]['report_table']]
+        reports = [non_reporting, self.get_report_context(in_complete_provider)['report_table']]
         if self.location.location_type.name.lower() in ['country', 'region']:
-            reports = [self.report_context['reports'][-3]['report_table']] + reports
+            reports = [self.get_report_context(summary_reporting_provider)['report_table']] + reports
         return [self._export(r['title'], r['headers'], r['rows']) for r in reports]
 
     def _export(self, export_sheet_name, headers, formatted_rows, total_row=None):
