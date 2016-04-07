@@ -14,10 +14,9 @@ class UITab(object):
 
     dispatcher = None
 
-    # if a tab subclass has an expensive sidebar_items
-    # it should define its url_prefix_formats here explicitly
-    # e.g. ('/a/{domain}/reports/', '/a/{domain}/otherthing/')
-    # renderer can quickly tell which tab to highlight as active
+    # Tuple of prefixes that this UITab claims e.g.
+    #   ('/a/{domain}/reports/', '/a/{domain}/otherthing/')
+    # This is a required field.
     url_prefix_formats = ()
     show_by_default = True
 
