@@ -51,7 +51,7 @@ SampleExportInstances = {
             "doc_type": "TableConfiguration"
         }],
         "doc_type": "ExportInstance",
-        "is_deidentified": false
+        "is_deidentified": false,
     },
     saved: {
         "_id": "1234",
@@ -106,6 +106,6 @@ SampleExportInstances = {
             "doc_type": "TableConfiguration"
         }],
         "doc_type": "ExportInstance",
-        "is_deidentified": false
+        "is_deidentified": false,
     }
 };
