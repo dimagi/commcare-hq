@@ -62,6 +62,7 @@ branches:
   - cache-compress # Ben 4/7
   - edit-form-fix # wsp 4/7
   - upgrade-gunicorn # Ben 4/7
+  - domain-reindexer # cz 4/8
 submodules:
   submodules/touchforms-src:
     # let's leave this here even when empty
