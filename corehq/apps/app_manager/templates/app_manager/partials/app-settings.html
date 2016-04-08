@@ -163,6 +163,8 @@
     value: '{{ app.short_comment|escapejs }}',
     url: '{% url "edit_app_attr" domain app.id 'comment' %}',
     saveValueName: 'comment',
+    helpTitle: 'Comment',
+    helpContent: 'A comment to document or explain this application for other app builders or maintainers.',
 "></inline-edit>
 
 <div class="tab-pane" id="commcare-settings">

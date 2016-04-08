@@ -185,7 +185,13 @@
 
 {% block form-view %}
     {% inline_edit_trans module.name langs readOnlyClass='h3' %}
-    <inline-edit params="name: 'comment', id:'comment-id', value: '{{ module.comment|escapejs }}'"></inline-edit>
+    <inline-edit params="
+        name: 'comment',
+        id:'comment-id',
+        value: '{{ module.comment|escapejs }}',
+        helpTitle: 'Comment',
+        helpContent: 'A comment to document or explain this module for other app builders or maintainers.',
+    "></inline-edit>
     <br />
     {% include 'app_manager/partials/module_view_heading.html' %}
 <div class="tabbable">

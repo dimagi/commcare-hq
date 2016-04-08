@@ -251,7 +251,13 @@
 {% block form-view %}
     <div id="build_errors"></div>
     {% inline_edit_trans form.name langs readOnlyClass='h3' %}
-    <inline-edit params="name: 'comment', id:'comment-id', value: '{{ form.comment|escapejs }}'"></inline-edit>
+    <inline-edit params="
+        name: 'comment',
+        id:'comment-id',
+        value: '{{ form.comment|escapejs }}',
+        helpTitle: 'Comment',
+        helpContent: 'A comment to document or explain this module for other app builders or maintainers.',
+    "></inline-edit>
     <br />
     <div class="pull-right">
         <form action="{% url "delete_form" domain app.id module.unique_id form.unique_id %}" method="post">
