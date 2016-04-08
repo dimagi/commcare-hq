@@ -31,6 +31,7 @@ hqDefine('style/ko/components/inline_edit.js', function() {
             // Data
             self.placeholder = params.placeholder || '';
             self.original = (ko.isObservable(params.value) ? params.value() : params.value) || '';
+            self.serverValue = self.original;
             self.value = ko.isObservable(params.value) ? params.value : ko.observable(self.original);
             self.lang = params.lang || '';
 
@@ -46,7 +47,7 @@ hqDefine('style/ko/components/inline_edit.js', function() {
 
             // Save to server
             self.url = params.url;
-            self.errorMessage = params.errorMessage || gettext("Error saving, please try again");
+            self.errorMessage = params.errorMessage || gettext("Error saving, please try again.");
             self.saveParams = ko.utils.unwrapObservable(params.saveParams) || {};
             self.saveValueName = params.saveValueName || 'value';
             self.hasError = ko.observable(false);
@@ -58,12 +59,14 @@ hqDefine('style/ko/components/inline_edit.js', function() {
             };
 
             self.save = function() {
-                // Client save: just store the value and switch modes
-                self.original = self.value();
                 self.editing(false);
+                if (self.original === self.value() && (!self.url || self.serverValue === self.value())) {
+                    return;
+                }
 
-                // Server save
+                self.original = self.value();
                 if (self.url) {
+                    // Server save
                     var data = self.saveParams;
                     _.each(data, function(value, key) {
                         data[key] = ko.utils.unwrapObservable(value);
@@ -78,9 +81,11 @@ hqDefine('style/ko/components/inline_edit.js', function() {
                         success: function (data) {
                             self.isSaving(false);
                             self.hasError(false);
+                            self.serverValue = self.original;
                         },
                         error: function () {
-                            //self.isSaving(false);
+                            self.editing(true);
+                            self.isSaving(false);
                             self.hasError(true);
                         }
                     });
@@ -89,24 +94,29 @@ hqDefine('style/ko/components/inline_edit.js', function() {
 
             // Revert to last value and switch modes
             self.cancel = function() {
+                self.original = self.serverValue;
                 self.value(self.original);
                 self.editing(false);
+                self.hasError(false);
             };
 
             // Revert to read-only mode on blur, without saving, unless the input
             // blurred only because focus jumped to one of the buttons (i.e., user pressed tab)
             self.blur = function() {
                 setTimeout(function() {
-                    if (!self.saveHasFocus() && !self.cancelHasFocus()) {
+                    if (!self.saveHasFocus() && !self.cancelHasFocus() && !self.hasError()) {
                         self.editing(false);
-                        self.cancel();
+                        self.value(self.original);
                     }
                 }, 200);
             };
         },
         template: '<div class="ko-inline-edit" data-bind="css: {inline: inline, \'has-error\': hasError()}">\
-            <div class="read-only" data-bind="visible: !editing() && !hasError(), click: edit">\
-                <i class="fa fa-pencil pull-right"></i>\
+            <div class="read-only" data-bind="visible: !editing(), click: edit">\
+                <i class="fa fa-pencil pull-right" data-bind="visible: !isSaving()"></i>\
+                <span data-bind="visible: isSaving()" class="pull-right">\
+                    <img src="/static/hqstyle/img/loading.gif"/>\
+                </span>\
                 <!-- ko if: lang -->\
                     <span class="btn btn-xs btn-info btn-langcode-preprocessed pull-right"\
                           data-bind="text: lang, visible: !value()"\
@@ -115,7 +125,7 @@ hqDefine('style/ko/components/inline_edit.js', function() {
                 <span class="text" data-bind="text: value, css: readOnlyClass"></span>\
                 <span class="placeholder" data-bind="text: placeholder, visible: !value()"></span>\
             </div>\
-            <div class="read-write" data-bind="visible: editing() || hasError(), css: {\'form-inline\': inline}">\
+            <div class="read-write" data-bind="visible: editing(), css: {\'form-inline\': inline}">\
                 <div class="form-group">\
                     <textarea class="form-control langcode-container" data-bind="\
                         attr: {name: name, id: id, placeholder: placeholder, rows: rows},\
@@ -129,18 +139,15 @@ hqDefine('style/ko/components/inline_edit.js', function() {
                         ></span>\
                     <!-- /ko -->\
                 </div>\
+                <div class="help-block" data-bind="text: errorMessage, visible: hasError()"></div>\
                 <div class="form-group">\
                     <button class="btn btn-success" data-bind="click: save, hasFocus: saveHasFocus, visible: !isSaving()">\
                         <i class="fa fa-check"></i>\
                     </button>\
-                    <button class="btn btn-danger" data-bind="click: cancel, hasFocus: cancelHasFocus, visible: !isSaving() && !hasError()">\
+                    <button class="btn btn-danger" data-bind="click: cancel, hasFocus: cancelHasFocus, visible: !isSaving()">\
                         <i class="fa fa-remove"></i>\
                     </button>\
-                    <span data-bind="visible: isSaving()">\
-                        <img src="/static/hqwebapp/img/ajax-loader.gif"/>\
-                    </span>\
                 </div>\
-                <div class="help-block" data-bind="text: errorMessage, visible: hasError()"></div>\
             </div>\
         </div>',
     };

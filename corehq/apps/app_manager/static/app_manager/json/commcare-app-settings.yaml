@@ -1,3 +1,10 @@
+- id: name
+  name: Name
+  description: ""
+  default: ""
+  type: hq
+  widget: none
+
 - id: application_version
   name: "App Version"
   description: ""
@@ -183,3 +190,10 @@
   warning: 'The experienced threshold must be between 1 and 100'
   min_value: 1
   max_value: 100
+
+- id: comment
+  name: 'Comment'
+  description: >
+    A comment to document or explain this application for other app builders or maintainers.
+  default: ''
+  widget: none
