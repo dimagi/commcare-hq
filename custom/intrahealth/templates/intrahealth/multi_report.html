@@ -41,6 +41,14 @@
 {% endblock %}
 
 {% block js-inline %}
+    <script type="text/template" id="js-template-loading-report">
+        <div class="report-loading-container">
+            <div class="report-loading">
+                <h4>{% trans "Loading Report" %}</h4>
+                <i class="fa fa-spin fa-spinner"></i>
+            </div>
+        </div>
+    </script>
     {% for thisreport in reports %}
         {% for chart in thisreport.charts %}
             {% with id1=forloop.counter|stringformat:"s" id2=forloop.parentloop.counter|stringformat:"s" slug=report.slug %}
