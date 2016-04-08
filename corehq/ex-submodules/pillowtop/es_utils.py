@@ -75,10 +75,6 @@ def initialize_index_and_mapping(es, index_info):
     initialize_mapping_if_necessary(es, index_info)
 
 
-def initialize_index_for_pillow(pillow):
-    return initialize_index(pillow.get_es_new(), get_index_info_from_pillow(pillow))
-
-
 def initialize_index(es, index_info):
     return create_index_and_set_settings_normal(es, index_info.index, index_info.meta)
 
