@@ -1,4 +1,3 @@
-from corehq.util.elastic import delete_production_es_index
 from pillowtop.es_utils import set_index_reindex_settings, \
     set_index_normal_settings, get_index_info_from_pillow, initialize_mapping_if_necessary
 from pillowtop.pillow.interface import PillowRuntimeContext
@@ -33,7 +32,8 @@ class ElasticPillowReindexer(PillowReindexer):
         self.index_info = index_info
 
     def clean_index(self):
-        delete_production_es_index(self.index_info.index)
+        if self.es.indices.exists(self.index_info.index):
+            self.es.indices.delete(index=self.index_info.index)
 
     def reindex(self, start_from=None):
         if not start_from:
