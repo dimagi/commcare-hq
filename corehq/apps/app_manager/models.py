@@ -1541,7 +1541,7 @@ class MappingItem(DocumentSchema):
 
     def ref_to_key_variable(self, index, sort_or_display):
         if sort_or_display == "sort":
-            key_as_var = index
+            key_as_var = "{}, ".format(index)
         elif sort_or_display == "display":
             key_as_var = "${var_name}, ".format(var_name=self.key_as_variable)
 
