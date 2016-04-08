@@ -16,9 +16,12 @@ from corehq.apps.app_manager.suite_xml.xml_models import (
     SyncRequestSession,
     Text,
 )
-from corehq.apps.app_manager.xpath import XPath
+from corehq.apps.app_manager.xpath import XPath, CaseTypeXpath
 from corehq.apps.case_search.models import CALCULATED_DATA, MARK_AS_CLAIMED
 from corehq.util.view_utils import absolute_reverse
+
+
+RESULTS_INSTANCE = 'results'  # The name of the instance where search results are stored
 
 
 class SyncRequestContributor(SuiteContributorByModule):
@@ -38,9 +41,9 @@ class SyncRequestContributor(SuiteContributorByModule):
         from corehq.apps.app_manager.models import AdvancedModule, Module
 
         if isinstance(module, (Module, AdvancedModule)) and module.search_config:
-            domain = module.get_app().domain
+            domain = self.app.domain
 
-            details_helper = DetailsHelper(module.get_app())
+            details_helper = DetailsHelper(self.app)
 
             sync_request = SyncRequest(
                 post=SyncRequestPost(
@@ -48,18 +51,28 @@ class SyncRequestContributor(SuiteContributorByModule):
                     data=[
                         QueryData(
                             key='case_id',
-                            ref="instance('results')/case[@case_type='{}'][@status='open'][0]/@case_id".format(
-                                module.case_type),
+                            ref=(CaseTypeXpath(module.case_type)
+                                 .case(instance_name=RESULTS_INSTANCE)
+                                 .select(u'@status', u'open', quote=True)
+                                 .select_raw(0)
+                                 .slash(u'@case_id')),
+                            # e.g. instance('results')/results/case[@case_type='foo'][@status='open'][0]/@case_id
                         ),
                         QueryData(
                             key='case_type',
-                            ref="instance('results')/case[@case_type='{}'][@status='open'][0]/@case_type".format(
-                                module.case_type),
+                            ref=(CaseTypeXpath(module.case_type)
+                                 .case(instance_name=RESULTS_INSTANCE)
+                                 .select(u'@status', u'open', quote=True)
+                                 .select_raw(0)
+                                 .slash(u'@case_type')),
                         ),
                         QueryData(
                             key='case_name',
-                            ref="instance('results')/case[@case_type='{}'][@status='open'][0]/name".format(
-                                module.case_type),
+                            ref=(CaseTypeXpath(module.case_type)
+                                 .case(instance_name=RESULTS_INSTANCE)
+                                 .select(u'@status', u'open', quote=True)
+                                 .select_raw(0)
+                                 .slash(u'name')),
                         ),
                     ]
                 ),
@@ -75,7 +88,7 @@ class SyncRequestContributor(SuiteContributorByModule):
                     queries=[
                         SyncRequestQuery(
                             url=absolute_reverse('sync_search', args=[domain]),
-                            storage_instance='results',
+                            storage_instance=RESULTS_INSTANCE,
                             data=[
                                 QueryData(
                                     key='case_type',
@@ -94,8 +107,9 @@ class SyncRequestContributor(SuiteContributorByModule):
                     ],
                     data=[SessionDatum(
                         id='case_id',
-                        nodeset="instance('results')/case[@case_type='{}'][@status='open']".format(
-                            module.case_type),
+                        nodeset=(CaseTypeXpath(module.case_type)
+                                 .case(instance_name=RESULTS_INSTANCE)
+                                 .select(u'@status', u'open', quote=True)),
                         value='./@case_id',
                         detail_select=details_helper.get_detail_id_safe(module, 'case_short'),
                         detail_confirm=details_helper.get_detail_id_safe(module, 'case_long'),
