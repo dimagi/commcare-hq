@@ -1038,7 +1038,7 @@ class ConfigureListReportForm(ConfigureNewReportBase):
                 _legend(
                     _("Rows"),
                     _('This report will show one row for each {name} {source}').format(
-                            name=source_name, source=self.source_type
+                        name=source_name, source=self.source_type
                     )
                 )
             ),
@@ -1079,12 +1079,12 @@ class ConfigureListReportForm(ConfigureNewReportBase):
                 )
             return cols
         return [ColumnViewModel(
-                        display_text='',
-                        exists_in_current_version=True,
-                        property=None,
-                        data_source_field=None,
-                        calculation='Count per Choice'
-                    )]
+                    display_text='',
+                    exists_in_current_version=True,
+                    property=None,
+                    data_source_field=None,
+                    calculation='Count per Choice'
+                )]
 
     @property
     def _report_columns(self):
