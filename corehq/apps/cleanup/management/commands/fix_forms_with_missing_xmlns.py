@@ -15,7 +15,7 @@ from django.core.management.base import BaseCommand
 from optparse import make_option
 
 class Command(BaseCommand):
-    help = 'fix all of the things'
+    help = 'Fix forms with "undefined" xmlns'
     args = '<log_path>'
 
     option_list = BaseCommand.option_list + (
@@ -24,8 +24,9 @@ class Command(BaseCommand):
             action='store_true',
             dest='dry_run',
             default=False,
-            help="Don't do the actual modifications, just print what would be affected"
+            help="Don't do the actual modifications, but still log what would be affected"
         ),
+    )
 
     def handle(self, *args, **options):
 
