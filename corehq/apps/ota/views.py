@@ -19,7 +19,7 @@ from corehq.apps.ota.forms import PrimeRestoreCacheForm, AdvancedPrimeRestoreCac
 from corehq.apps.ota.tasks import prime_restore
 from corehq.apps.style.views import BaseB3SectionPageView
 from corehq.apps.users.models import CouchUser, CommCareUser
-from corehq.form_processor.serializers import CommCareCaseSQLSerializer
+from corehq.form_processor.serializers import CommCareCaseSQLSerializer, get_instance_from_data
 from corehq.tabs.tabclasses import ProjectSettingsTab
 from corehq.form_processor.models import CommCareCaseSQL
 from corehq.form_processor.utils import should_use_sql_backend
@@ -64,10 +64,9 @@ def search(request, domain):
         search_es = search_es.case_property_query(key, value, fuzzy=(key in fuzzies))
     results = search_es.values()
     if should_use_sql_backend(domain):
-        fixtures = CaseDBFixture([CommCareCase.wrap(case) for case in results])
+        fixtures = CaseDBFixture([get_instance_from_data(CommCareCaseSQLSerializer, result) for result in results])
     else:
-        cases = (CommCareCaseSQLSerializer(data=case).validated_data for case in results)
-        fixtures = CaseDBFixture([CommCareCaseSQL(**case) for case in cases])
+        fixtures = CaseDBFixture([CommCareCase.wrap(result) for result in results])
     return HttpResponse(fixtures, content_type="text/xml")
 
 
