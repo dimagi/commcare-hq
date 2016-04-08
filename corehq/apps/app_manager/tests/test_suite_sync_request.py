@@ -2,7 +2,7 @@ from django.test import SimpleTestCase
 from mock import patch
 
 from corehq.apps.app_manager.const import APP_V2
-from corehq.apps.app_manager.models import Application, Module, CaseSearch
+from corehq.apps.app_manager.models import Application, Module, CaseSearch, CaseSearchProperty
 from corehq.apps.app_manager.tests import TestXmlMixin, SuiteMixin
 
 
@@ -22,10 +22,13 @@ class SyncRequestSuiteTest(SimpleTestCase, TestXmlMixin, SuiteMixin):
         """
         Suite should include sync-request if searching is configured
         """
-        self.module.search_config = [
-            CaseSearch(property='name', label={'en': 'Name'}),
-            CaseSearch(property='dob', label={'en': 'Date of birth'})
-        ]
+        self.module.search_config = CaseSearch(
+            command_label={'en': 'Search Patients Nationally'},
+            properties=[
+                CaseSearchProperty(name='name', label={'en': 'Name'}),
+                CaseSearchProperty(name='dob', label={'en': 'Date of birth'})
+            ]
+        )
         with patch('corehq.util.view_utils.get_url_base') as get_url_base_patch:
             get_url_base_patch.return_value = 'https://www.example.com'
             suite = self.app.create_suite()
@@ -35,4 +38,4 @@ class SyncRequestSuiteTest(SimpleTestCase, TestXmlMixin, SuiteMixin):
         """
         Case search action should be added to case list
         """
-        pass
+        self.assertTrue(False)  # TODO: Write this test
