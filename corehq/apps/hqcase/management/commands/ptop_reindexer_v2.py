@@ -1,3 +1,4 @@
+from optparse import make_option
 from django.core.management import BaseCommand, CommandError
 from corehq.pillows.case import get_couch_case_reindexer, get_sql_case_reindexer
 from corehq.pillows.domain import get_domain_reindexer
@@ -8,7 +9,22 @@ class Command(BaseCommand):
     args = 'index'
     help = 'Reindex a pillowtop index'
 
+    option_list = BaseCommand.option_list + (
+        make_option('--cleanup',
+                    action='store_true',
+                    dest='cleanup',
+                    default=False,
+                    help='Clean index (delete data) before reindexing.'),
+        make_option('--noinput',
+                    action='store_true',
+                    dest='noinput',
+                    default=False,
+                    help='Skip important confirmation warnings.'),
+    )
+
     def handle(self, index, *args, **options):
+        cleanup = options['cleanup']
+        noinput = options['noinput']
         reindex_fns = {
             'domain': get_domain_reindexer,
             'case': get_couch_case_reindexer,
@@ -19,5 +35,11 @@ class Command(BaseCommand):
         if index not in reindex_fns:
             raise CommandError('Supported indices to reindex are: {}'.format(','.join(reindex_fns.keys())))
 
+        def confirm():
+            return raw_input("Are you sure you want to delete the current index (if it exists)? y/n\n") == 'y'
+
         reindexer = reindex_fns[index]()
+        if cleanup and (noinput or confirm()):
+            reindexer.clean_index()
+
         reindexer.reindex()
