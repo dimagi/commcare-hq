@@ -117,7 +117,7 @@ def get_sql_case_reindexer():
     return ElasticPillowReindexer(
         pillow=get_sql_case_to_elasticsearch_pillow(),
         change_provider=SqlCaseChangeProvider(),
-        elasticsearch=CasePillow(online=False).get_es_new(),
+        elasticsearch=get_es_new(),
         index_info=_get_case_index_info(),
     )
 

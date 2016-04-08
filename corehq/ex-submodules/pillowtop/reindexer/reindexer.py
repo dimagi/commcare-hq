@@ -1,4 +1,3 @@
-from corehq.util.elastic import ensure_production_index_deleted
 from pillowtop.es_utils import set_index_reindex_settings, \
     set_index_normal_settings, get_index_info_from_pillow, initialize_mapping_if_necessary
 from pillowtop.pillow.interface import PillowRuntimeContext
@@ -9,6 +8,15 @@ class PillowReindexer(object):
     def __init__(self, pillow, change_provider):
         self.pillow = pillow
         self.change_provider = change_provider
+
+    def clean_index(self):
+        """
+        Cleans the index.
+
+        This can be called prior to reindex to ensure starting from a clean slate.
+        Should be overridden on a case-by-case basis by subclasses.
+        """
+        pass
 
     def reindex(self, start_from=None):
         reindexer_context = PillowRuntimeContext(do_set_checkpoint=False)
@@ -23,18 +31,22 @@ class ElasticPillowReindexer(PillowReindexer):
         self.es = elasticsearch
         self.index_info = index_info
 
+    def clean_index(self):
+        if self.es.indices.exists(self.index_info.index):
+            self.es.indices.delete(index=self.index_info.index)
+
     def reindex(self, start_from=None):
         if not start_from:
             # when not resuming force delete and create the index
-            self._delete_and_prepare_index_for_reindex()
+            self._prepare_index_for_reindex()
 
         super(ElasticPillowReindexer, self).reindex(start_from)
 
         self._prepare_index_for_usage()
 
-    def _delete_and_prepare_index_for_reindex(self):
-        ensure_production_index_deleted(self.index_info.index)
-        self.es.indices.create(index=self.index_info.index, body=self.index_info.meta)
+    def _prepare_index_for_reindex(self):
+        if not self.es.indices.exists(self.index_info.index):
+            self.es.indices.create(index=self.index_info.index, body=self.index_info.meta)
         initialize_mapping_if_necessary(self.es, self.index_info)
         set_index_reindex_settings(self.es, self.index_info.index)
 

@@ -111,6 +111,8 @@ DJANGO_LOG_FILE = "%s/%s" % (FILEPATH, "commcarehq.django.log")
 ACCOUNTING_LOG_FILE = "%s/%s" % (FILEPATH, "commcarehq.accounting.log")
 ANALYTICS_LOG_FILE = "%s/%s" % (FILEPATH, "commcarehq.analytics.log")
 DATADOG_LOG_FILE = "%s/%s" % (FILEPATH, "commcarehq.datadog.log")
+FORMPLAYER_TIMING_FILE = "%s/%s" % (FILEPATH, "formplayer.timing.log")
+FORMPLAYER_DIFF_FILE = "%s/%s" % (FILEPATH, "formplayer.diff.log")
 
 LOCAL_LOGGING_HANDLERS = {}
 LOCAL_LOGGING_LOGGERS = {}
@@ -937,6 +939,12 @@ LOGGING = {
         'datadog': {
             'format': '%(metric)s %(created)s %(value)s metric_type=%(metric_type)s %(message)s'
         },
+        'formplayer_timing': {
+            'format': '%(asctime)s, %(action)s, %(control_duration)s, %(candidate_duration)s'
+        },
+        'formplayer_diff': {
+            'format': '%(asctime)s, %(action)s, %(request)s, %(control)s, %(candidate)s'
+        }
     },
     'filters': {
         'hqcontext': {
@@ -992,6 +1000,22 @@ LOGGING = {
             'class': 'cloghandler.ConcurrentRotatingFileHandler',
             'formatter': 'datadog',
             'filename': DATADOG_LOG_FILE,
+            'maxBytes': 10 * 1024 * 1024,  # 10 MB
+            'backupCount': 20  # Backup 200 MB of logs
+        },
+        'formplayer_diff': {
+            'level': 'INFO',
+            'class': 'logging.handlers.RotatingFileHandler',
+            'formatter': 'formplayer_diff',
+            'filename': FORMPLAYER_DIFF_FILE,
+            'maxBytes': 10 * 1024 * 1024,  # 10 MB
+            'backupCount': 20  # Backup 200 MB of logs
+        },
+        'formplayer_timing': {
+            'level': 'INFO',
+            'class': 'logging.handlers.RotatingFileHandler',
+            'formatter': 'formplayer_timing',
+            'filename': FORMPLAYER_TIMING_FILE,
             'maxBytes': 10 * 1024 * 1024,  # 10 MB
             'backupCount': 20  # Backup 200 MB of logs
         },
@@ -1070,6 +1094,16 @@ LOGGING = {
             'handlers': ['datadog'],
             'level': 'INFO',
             'propogate': False,
+        },
+        'formplayer_timing': {
+            'handlers': ['formplayer_timing'],
+            'level': 'INFO',
+            'propogate': True,
+        },
+        'formplayer_diff': {
+            'handlers': ['formplayer_diff'],
+            'level': 'INFO',
+            'propogate': True,
         },
     }
 }
