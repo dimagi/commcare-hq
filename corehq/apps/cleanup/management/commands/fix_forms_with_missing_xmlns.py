@@ -31,7 +31,6 @@ class Command(BaseCommand):
     def handle(self, *args, **options):
 
         dry_run = options.get("dry_run", True)
-        xlmns_map_path = options.get('xmlns_map_path', False)
         log_path = args[0].strip()
 
         new_xmlnss = {}
