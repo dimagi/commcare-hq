@@ -3,10 +3,10 @@ from corehq.apps.accounting.models import Subscription
 from corehq.apps.domain.models import Domain
 from corehq.pillows.base import HQPillow
 from corehq.pillows.mappings.domain_mapping import DOMAIN_MAPPING, DOMAIN_INDEX
-from dimagi.utils.decorators.memoized import memoized
-from django.conf import settings
 from django_countries.data import COUNTRIES
 from pillowtop.es_utils import doc_exists
+from pillowtop.reindexer.change_providers.couch import CouchViewChangeProvider
+from pillowtop.reindexer.reindexer import get_default_reindexer_for_elastic_pillow
 
 
 class DomainPillow(HQPillow):
@@ -61,3 +61,17 @@ class DomainPillow(HQPillow):
         for country in countries:
             doc_ret['deployment']['countries'].append(COUNTRIES[country].upper())
         return doc_ret
+
+
+def get_domain_reindexer():
+    return get_default_reindexer_for_elastic_pillow(
+        pillow=DomainPillow(online=False),
+        change_provider=CouchViewChangeProvider(
+            document_class=Domain,
+            view_name='all_docs/by_doc_type',
+            view_kwargs={
+                'startkey': ['Domain'],
+                'endkey': ['Domain', {}],
+            }
+        ),
+    )
