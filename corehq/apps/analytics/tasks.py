@@ -256,7 +256,8 @@ def track_new_user_accepted_invite_on_hubspot(webuser, cookies, meta):
 
 @analytics_task()
 def track_clicked_signup_on_hubspot(webuser, cookies, meta):
-    _send_form_to_hubspot(HUBSPOT_CLICKED_SIGNUP_FORM, webuser, cookies, meta, prelogin=True)
+    if webuser:
+        _send_form_to_hubspot(HUBSPOT_CLICKED_SIGNUP_FORM, webuser, cookies, meta, prelogin=True)
 
 
 def track_workflow(email, event, properties=None):
