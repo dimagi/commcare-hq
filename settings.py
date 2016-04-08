@@ -1007,13 +1007,17 @@ LOGGING = {
             'level': 'INFO',
             'class': 'logging.handlers.RotatingFileHandler',
             'formatter': 'formplayer_diff',
-            'filename': FORMPLAYER_DIFF_FILE
+            'filename': FORMPLAYER_DIFF_FILE,
+            'maxBytes': 10 * 1024 * 1024,  # 10 MB
+            'backupCount': 20  # Backup 200 MB of logs
         },
         'formplayer_timing': {
             'level': 'INFO',
             'class': 'logging.handlers.RotatingFileHandler',
             'formatter': 'formplayer_timing',
-            'filename': FORMPLAYER_TIMING_FILE
+            'filename': FORMPLAYER_TIMING_FILE,
+            'maxBytes': 10 * 1024 * 1024,  # 10 MB
+            'backupCount': 20  # Backup 200 MB of logs
         },
         'couchlog': {
             'level': 'WARNING',
