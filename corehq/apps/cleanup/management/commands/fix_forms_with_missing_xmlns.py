@@ -34,16 +34,18 @@ class Command(BaseCommand):
         log_path = args[0].strip()
 
         new_xmlnss = {}
-        things_we_can_fix = 0
+        num_fixed = 0
         total, submissions = get_submissions_without_xmlns()
 
         with open(log_path, "w") as f:
             for i, xform_instance in enumerate(submissions):
                 if i % 500 == 0 and i != 0:
                     print "Progress: {} of {} ({})".format(i, total, round(i / float(total), 2))
-                    print "We can fix {} of {} ({})".format(things_we_can_fix, i, round(things_we_can_fix / float(i), 2))
+                    print "We can fix {} of {} ({})".format(
+                        num_fixed, i, round(num_fixed / float(i), 2)
+                    )
                 if xform_instance.app_id in new_xmlnss:
-                    things_we_can_fix += 1
+                    num_fixed += 1
                     # We've already generated a new xmlns for this app
                     set_xmlns_on_submission(xform_instance, new_xmlnss[xform_instance.app_id], dry_run)
                     f.write("Set new xmlns on submission {}\n".format(xform_instance._id))
@@ -53,7 +55,7 @@ class Command(BaseCommand):
                     if len(forms_without_xmlns) == 1:
                         form = forms_without_xmlns[0]
                         if not xforms_with_real_xmlns_possibly_exist(app._id, form):
-                            things_we_can_fix += 1
+                            num_fixed += 1
                             new_xmlns = generate_random_xmlns()
                             new_xmlnss[xform_instance.app_id] = new_xmlns
                             f.write("New xmlns for form {form.unique_id} in app {app._id} is {new_xmlns}\n".format(
