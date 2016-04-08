@@ -152,8 +152,18 @@
     </aside>
 </script>
 
-<inline-edit params="value: '{{ app.name|escapejs }}', readOnlyClass: 'h3'"></inline-edit>
-<inline-edit params="value: '{{ app.short_comment|escapejs }}'"></inline-edit>
+<inline-edit params="
+    value: '{{ app.name|escapejs }}',
+    readOnlyClass: 'h3',
+    url: '{% url "edit_app_attr" domain app.id 'name' %}',
+    saveValueName: 'name',
+"></inline-edit>
+
+<inline-edit params="
+    value: '{{ app.short_comment|escapejs }}',
+    url: '{% url "edit_app_attr" domain app.id 'comment' %}',
+    saveValueName: 'comment',
+"></inline-edit>
 
 <div class="tab-pane" id="commcare-settings">
     <br />
@@ -172,6 +182,7 @@
                     </a>
                 </legend>
                 <div class="collapse" data-bind="foreach: settings, attr: {id: id}, css: {'in': !reallyCollapse()}">
+                    <!-- ko if: widget !== 'none' -->
                     <div class="form-group" data-bind="
                         visible: visible,
                         css: {error: hasError()}
@@ -209,6 +220,7 @@
                             </div>
                         </div>
                     </div>
+                    <!-- /ko -->
                 </div>
             </fieldset>
         </div>
