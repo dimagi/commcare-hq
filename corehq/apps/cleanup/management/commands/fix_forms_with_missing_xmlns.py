@@ -5,14 +5,14 @@ from couchdbkit import ResourceNotFound
 from corehq.apps.app_manager.models import Application
 from corehq.apps.app_manager.xform import XForm, parse_xml
 from corehq.apps.es import FormES
-from corehq.apps.es.filters import NOT, term
+from corehq.apps.es.filters import NOT
 from corehq.apps.es.forms import xmlns
-from couchforms import const
 from couchforms.const import ATTACHMENT_NAME
 from couchforms.models import XFormInstance
 from dimagi.utils.couch.database import iter_docs
 from django.core.management.base import BaseCommand
 from optparse import make_option
+
 
 class Command(BaseCommand):
     help = 'Fix forms with "undefined" xmlns'
@@ -41,8 +41,8 @@ class Command(BaseCommand):
         with open(log_path, "w") as f:
             for i, xform_instance in enumerate(submissions):
                 if i % 500 == 0 and i != 0:
-                    print "Progress: {} of {} ({})".format(i, total, round(i/float(total), 2))
-                    print "We can fix {} of {} ({})".format(things_we_can_fix, i, round(things_we_can_fix/float(i), 2))
+                    print "Progress: {} of {} ({})".format(i, total, round(i / float(total), 2))
+                    print "We can fix {} of {} ({})".format(things_we_can_fix, i, round(things_we_can_fix / float(i), 2))
                 if xform_instance.app_id in new_xmlnss:
                     things_we_can_fix += 1
                     # We've already generated a new xmlns for this app
@@ -92,10 +92,9 @@ def xforms_with_real_xmlns_possibly_exist(app_id, form):
     """
     for form_name in form.name.values():
         query = (FormES()
-             .term('form.@name', form_name)
-             .app(app_id)
-             .filter(NOT(xmlns('undefined')))
-        )
+                 .term('form.@name', form_name)
+                 .app(app_id)
+                 .filter(NOT(xmlns('undefined'))))
         if query.count():
             return True
     return False
@@ -115,7 +114,6 @@ def set_xmlns_on_submission(xform_instance, xmlns, dry_run):
     xform_instance.form['@xmlns'] = xmlns
     if not dry_run:
         xform_instance.save()
-
 
 
 def set_xmlns_on_form(form, xmlns, app, dry_run):
