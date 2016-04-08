@@ -1,4 +1,3 @@
-from corehq.util.elastic import ensure_production_index_deleted
 from pillowtop.es_utils import set_index_reindex_settings, \
     set_index_normal_settings, get_index_info_from_pillow, initialize_mapping_if_necessary
 from pillowtop.pillow.interface import PillowRuntimeContext
@@ -26,15 +25,15 @@ class ElasticPillowReindexer(PillowReindexer):
     def reindex(self, start_from=None):
         if not start_from:
             # when not resuming force delete and create the index
-            self._delete_and_prepare_index_for_reindex()
+            self._prepare_index_for_reindex()
 
         super(ElasticPillowReindexer, self).reindex(start_from)
 
         self._prepare_index_for_usage()
 
-    def _delete_and_prepare_index_for_reindex(self):
-        ensure_production_index_deleted(self.index_info.index)
-        self.es.indices.create(index=self.index_info.index, body=self.index_info.meta)
+    def _prepare_index_for_reindex(self):
+        if not self.es.indices.exists(self.index_info.index):
+            self.es.indices.create(index=self.index_info.index, body=self.index_info.meta)
         initialize_mapping_if_necessary(self.es, self.index_info)
         set_index_reindex_settings(self.es, self.index_info.index)
 
