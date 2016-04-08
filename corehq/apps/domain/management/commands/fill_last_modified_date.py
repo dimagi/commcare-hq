@@ -15,7 +15,7 @@ class Command(BaseCommand):
                 include_docs=False
             )
         ])
-        return filter(lambda x: 'last_modified' not in x, docs)
+        return filter(lambda x: 'last_modified' not in x or not x['last_modified'], docs)
 
     def handle(self, *args, **options):
         for domain_doc in self._get_domains_without_last_modified_date():
