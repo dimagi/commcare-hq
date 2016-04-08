@@ -257,6 +257,8 @@
         value: '{{ form.comment|escapejs }}',
         helpTitle: 'Comment',
         helpContent: 'A comment to document or explain this module for other app builders or maintainers.',
+        url: '{% url "edit_form_attr" domain app.id form.unique_id 'comment' %}',
+        saveValueName: 'comment',
     "></inline-edit>
     <br />
     <div class="pull-right">
