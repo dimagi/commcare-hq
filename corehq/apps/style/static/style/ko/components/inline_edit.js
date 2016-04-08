@@ -117,7 +117,7 @@ hqDefine('style/ko/components/inline_edit.js', function() {
         },
         template: '<div class="ko-inline-edit" data-bind="css: {inline: inline, \'has-error\': hasError()}">\
             <!--ko if: helpTitle -->\
-                <span class="pull-right">\
+                <span class="pull-right" data-bind="visible: !editing()">\
                     <span data-bind="makeHqHelp: {name: helpTitle, description: helpContent, format: \'html\', placement: \'left\'}"></span>\
                 </span>\
             <!--/ko-->\
