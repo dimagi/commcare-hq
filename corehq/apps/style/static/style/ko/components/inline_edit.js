@@ -9,6 +9,8 @@
  *  - inline: Whether or not to display widget in line with surrounding content. Defaults to false.
  *  - lang: Display this language code in a badge next to the widget.
  *  - rows: Number of rows in textarea.
+ *  - helpTitle: Title for help popover, if any.
+ *  - helpContent: Content for help popover, if any.
  *
  * By default, the widget is client-side only, and it is up to the calling code to actually save the value
  * (likely by providing the widget with a name or id). The following parameters may be used to implement
@@ -39,6 +41,8 @@ hqDefine('style/ko/components/inline_edit.js', function() {
             self.inline = params.inline || false;
             self.rows = params.rows || 2;
             self.readOnlyClass = params.readOnlyClass || '';
+            self.helpTitle = params.helpTitle;
+            self.helpContent = params.helpContent || self.helpTitle;
 
             // Interaction: determine whether widget is in read or write mode
             self.editing = ko.observable(false);
@@ -112,6 +116,11 @@ hqDefine('style/ko/components/inline_edit.js', function() {
             };
         },
         template: '<div class="ko-inline-edit" data-bind="css: {inline: inline, \'has-error\': hasError()}">\
+            <!--ko if: helpTitle -->\
+                <span class="pull-right">\
+                    <span data-bind="makeHqHelp: {name: helpTitle, description: helpContent, format: \'html\', placement: \'left\'}"></span>\
+                </span>\
+            <!--/ko-->\
             <div class="read-only" data-bind="visible: !editing(), click: edit">\
                 <i class="fa fa-pencil pull-right" data-bind="visible: !isSaving()"></i>\
                 <span data-bind="visible: isSaving()" class="pull-right">\
@@ -149,7 +158,7 @@ hqDefine('style/ko/components/inline_edit.js', function() {
                     </button>\
                 </div>\
             </div>\
-        </div>',
+        </div>'
     };
 });
 
