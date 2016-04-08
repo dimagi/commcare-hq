@@ -1037,10 +1037,9 @@ class ConfigureListReportForm(ConfigureNewReportBase):
             crispy.Fieldset(
                 _legend(
                     _("Rows"),
-                    _('This report will show one row for each {name} {source}'.format(
+                    _('This report will show one row for each {name} {source}').format(
                             name=source_name, source=self.source_type
-                        )
-                    ),
+                    )
                 )
             ),
             self.column_fieldset,
