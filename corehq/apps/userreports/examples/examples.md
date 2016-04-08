@@ -83,11 +83,11 @@ NOTE: this should be changed to use boolean datatypes once those exist.
     "expression": {
         "type": "property_name",
         "property_name": "closed",
-        "datatype": "string"
+        "datatype": null
 
     },
     "operator": "eq",
-    "property_value": "False"
+    "property_value": false
 }
 ```
 # Data source indicators
