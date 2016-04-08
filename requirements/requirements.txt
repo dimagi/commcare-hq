@@ -86,4 +86,5 @@ django-simple-captcha==0.5.1
 httpagentparser==1.7.8
 boto3==1.2.3
 simpleeval==0.8.7
+laboratory==0.2.0
 ConcurrentLogHandler==0.9.1
