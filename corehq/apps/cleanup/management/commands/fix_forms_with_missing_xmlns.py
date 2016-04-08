@@ -3,6 +3,7 @@ import uuid
 from couchdbkit import ResourceNotFound
 
 from corehq.apps.app_manager.models import Application
+from corehq.apps.app_manager.util import get_correct_app_class
 from corehq.apps.app_manager.xform import XForm, parse_xml
 from corehq.apps.es import FormES
 from corehq.apps.es.filters import NOT
@@ -119,21 +120,26 @@ def set_xmlns_on_submission(xform_instance, xmlns, dry_run):
 
 def set_xmlns_on_form(form, xmlns, app, dry_run):
     """
-    Set the xmlns on an app_manager.models.Form, and save the document.
+    Set the xmlns on a form and all the corresponding forms in the saved builds
+    that are copies of app.
+    (form is an app_manager.models.Form)
     """
-    xml = form.source
-    wrapped_xml = XForm(xml)
+    form_id = form.unique_id
+    for app_build in [app] + get_saved_apps(app):
+        form_in_build = app_build.get_form(form_id)
 
-    data = wrapped_xml.data_node.render()
-    data = data.replace("undefined", xmlns, 1)
-    wrapped_xml.instance_node.remove(wrapped_xml.data_node.xml)
-    wrapped_xml.instance_node.append(parse_xml(data))
-    new_xml = wrapped_xml.render()
+        xml = form_in_build.source
+        wrapped_xml = XForm(xml)
 
-    form.source = new_xml
-    if not dry_run:
-        # TODO: Alter the builds too?
-        app.save()
+        data = wrapped_xml.data_node.render()
+        data = data.replace("undefined", xmlns, 1)
+        wrapped_xml.instance_node.remove(wrapped_xml.data_node.xml)
+        wrapped_xml.instance_node.append(parse_xml(data))
+        new_xml = wrapped_xml.render()
+
+        form_in_build.source = new_xml
+        if not dry_run:
+            app_build.save()
 
 
 def get_forms_without_xmlns(app):
@@ -157,3 +163,13 @@ def replace_xml(xform, new_xml):
             xform.put_attachment(new_xml, name=ATTACHMENT_NAME, content_type='text/xml')
         except ResourceNotFound:
             raise Exception("Unexpected attachment format: old attachment scheme")
+
+
+def get_saved_apps(app):
+    saved_apps = Application.get_db().view(
+        'app_manager/saved_app',
+        startkey=[app.domain, app._id],
+        endkey=[app.domain, app._id, {}],
+        include_docs=True,
+    )
+    return [get_correct_app_class(row['doc']).wrap(row['doc']) for row in saved_apps]
