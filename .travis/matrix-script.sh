@@ -31,12 +31,13 @@ if [ "${MATRIX_TYPE}" = "python" ]; then
 
 elif [ "${MATRIX_TYPE}" = "python-sharded" ]; then
 
-    SHARDED_TEST_APPS="corehq.form_processor \
-        corehq.sql_db \
-        couchforms \
-        casexml.apps.case \
-        casexml.apps.phone \
-        corehq.apps.receiverwrapper"
+    SHARDED_TEST_APPS="corehq.form_processor"
+    # commented out due to bug that discarded all but first item
+    #    corehq.sql_db \
+    #    couchforms \
+    #    casexml.apps.case \
+    #    casexml.apps.phone \
+    #    corehq.apps.receiverwrapper"
     ENV="-e USE_PARTITIONED_DATABASE=yes"
     run_tests "$SHARDED_TEST_APPS" "$ENV"
 
