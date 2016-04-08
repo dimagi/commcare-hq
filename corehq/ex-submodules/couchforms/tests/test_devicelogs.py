@@ -6,7 +6,7 @@ from corehq.util.test_utils import TestFileMixin
 from corehq.form_processor.interfaces.processor import FormProcessorInterface
 from corehq.form_processor.tests.utils import run_with_all_backends
 from corehq.form_processor.utils import convert_xform_to_json
-from phonelog.models import UserEntry, DeviceReportEntry, UserErrorEntry
+from phonelog.models import UserEntry, DeviceReportEntry, UserErrorEntry, ForceCloseEntry
 from phonelog.utils import _get_logs
 
 
@@ -21,10 +21,14 @@ class DeviceLogTest(TestCase, TestFileMixin):
         DeviceReportEntry.objects.all().delete()
         UserEntry.objects.all().delete()
         UserErrorEntry.objects.all().delete()
+        ForceCloseEntry.objects.all().delete()
 
     def assert_properties_equal(self, obj, expected):
         for prop, value in expected:
-            self.assertEqual(getattr(obj, prop), value)
+            actual = getattr(obj, prop)
+            msg = ("{}.{} mismatch!\nexpected:\t'{}'\ngot:\t\t'{}'"
+                   .format(obj.__class__.__name__, prop, value, actual))
+            self.assertEqual(actual, value, msg)
 
     @run_with_all_backends
     def test_basic_devicelog(self):
@@ -81,6 +85,26 @@ class DeviceLogTest(TestCase, TestFileMixin):
             ('app_id', '36c0bdd028d14a52cbff95bb1bfd0962'),
             ('expr', '/data/fake'),
         ))
+
+    def assert_force_close_entries(self):
+        self.assertEqual(ForceCloseEntry.objects.count(), 1)
+        force_closure = ForceCloseEntry.objects.first()
+
+        self.assert_properties_equal(force_closure, (
+            ('domain', 'test-domain'),
+            ('app_id', '36c0bdd028d14a52cbff95bb1bfd0962'),
+            ('version_number', 15),
+            ('user_id', 'ahelis3q3s0c33ms8r5is7yrei7t02m8'),
+            ('type', 'forceclose'),
+            ('android_version', '6.0.1'),
+            ('device_model', 'Nexus 5X'),
+            ('session_readable', ''),
+            ('session_serialized', 'AAAAAA=='),
+        ))
+        self.assertEqual(force_closure.date.isoformat(), '2016-03-15T13:37:04.573000')
+        self.assertIsNotNone(force_closure.xform_id)
+        self.assertIsNotNone(force_closure.server_date)
+        self.assertIn("java.lang.Exception: exception_text", force_closure.msg)
 
     @run_with_all_backends
     def test_subreports_that_shouldnt_fail(self):
