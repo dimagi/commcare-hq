@@ -281,7 +281,6 @@ class BaseProjectSettingsView(BaseDomainView):
         main_context.update({
             'active_tab': ProjectSettingsTab(
                 self.request,
-                self.urlname,
                 domain=self.domain,
                 couch_user=self.request.couch_user,
                 project=self.request.project
@@ -2147,7 +2146,6 @@ class DomainForwardingRepeatRecords(GenericTabularReport):
         context.update({
             'active_tab': ProjectSettingsTab(
                 self.request,
-                self.slug,
                 domain=self.domain,
                 couch_user=self.request.couch_user,
             )
