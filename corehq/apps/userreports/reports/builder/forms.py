@@ -399,7 +399,7 @@ class DataSourceForm(forms.Form):
         self.app_source_helper = ApplicationDataSourceUIHelper()
         self.app_source_helper.source_type_field.label = _('Forms or Cases')
         self.app_source_helper.source_type_field.choices = [("case", _("Cases")), ("form", _("Forms"))]
-        self.app_source_helper.source_field.label = _('<span data-bind="text: labelMap[sourceType()]"></span>')
+        self.app_source_helper.source_field.label = '<span data-bind="text: labelMap[sourceType()]"></span>'
         self.app_source_helper.bootstrap(self.domain)
         report_source_fields = self.app_source_helper.get_fields()
         report_source_help_texts = {
