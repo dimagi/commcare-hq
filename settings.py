@@ -111,8 +111,8 @@ DJANGO_LOG_FILE = "%s/%s" % (FILEPATH, "commcarehq.django.log")
 ACCOUNTING_LOG_FILE = "%s/%s" % (FILEPATH, "commcarehq.accounting.log")
 ANALYTICS_LOG_FILE = "%s/%s" % (FILEPATH, "commcarehq.analytics.log")
 DATADOG_LOG_FILE = "%s/%s" % (FILEPATH, "commcarehq.datadog.log")
-FORMPLAYER_TIMING_FILE = "%s/%s/" % (FILEPATH, "formplayer.timing.log")
-FORMPLAYER_DIFF_FILE = "%s/%s/" % (FILEPATH, "formplayer.diff.log")
+FORMPLAYER_TIMING_FILE = "%s/%s" % (FILEPATH, "formplayer.timing.log")
+FORMPLAYER_DIFF_FILE = "%s/%s" % (FILEPATH, "formplayer.diff.log")
 
 LOCAL_LOGGING_HANDLERS = {}
 LOCAL_LOGGING_LOGGERS = {}
@@ -1005,13 +1005,13 @@ LOGGING = {
         },
         'formplayer_diff': {
             'level': 'INFO',
-            'class': 'logging.FileHandler',
+            'class': 'logging.handlers.RotatingFileHandler',
             'formatter': 'formplayer_diff',
             'filename': FORMPLAYER_DIFF_FILE
         },
         'formplayer_timing': {
             'level': 'INFO',
-            'class': 'logging.FileHandler',
+            'class': 'logging.handlers.RotatingFileHandler',
             'formatter': 'formplayer_timing',
             'filename': FORMPLAYER_TIMING_FILE
         },
@@ -1098,11 +1098,6 @@ LOGGING = {
         },
         'formplayer_diff': {
             'handlers': ['formplayer_diff'],
-            'level': 'INFO',
-            'propogate': True,
-        },
-        'formplayer': {
-            'handlers': ['formplayer_diff', 'formplayer_timing'],
             'level': 'INFO',
             'propogate': True,
         },
