@@ -138,8 +138,8 @@ class FormAccessors(object):
     def get_deleted_form_ids_for_user(self, domain, user_id):
         return self.db_accessor.get_deleted_form_ids_for_user(domain, user_id)
 
-    def get_form_ids_for_user(self, domain, user_id):
-        return self.db_accessor.get_form_ids_for_user(domain, user_id)
+    def get_form_ids_for_user(self, user_id):
+        return self.db_accessor.get_form_ids_for_user(self.domain, user_id)
 
     def get_attachment_content(self, form_id, attachment_name):
         return self.db_accessor.get_attachment_content(form_id, attachment_name)

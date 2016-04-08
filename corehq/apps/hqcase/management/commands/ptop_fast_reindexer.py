@@ -8,7 +8,7 @@ import json
 from corehq.util.couch_helpers import paginate_view
 from pillowtop.couchdb import CachedCouchDB
 from pillowtop.es_utils import set_index_reindex_settings, set_index_normal_settings, create_index_for_pillow, \
-    initialize_mapping_if_necessary
+    initialize_mapping_if_necessary, get_index_info_from_pillow
 from pillowtop.feed.couch import change_from_couch_row
 from pillowtop.feed.interface import Change
 from pillowtop.listener import AliasedElasticPillow, PythonPillow
@@ -368,7 +368,10 @@ class ElasticReindexer(PtopReindexer):
             self.indexing_pillow.get_es_new().indices.delete(self.indexing_pillow.es_index)
             self.log("Recreating index")
             create_index_for_pillow(self.indexing_pillow)
-            initialize_mapping_if_necessary(self.indexing_pillow)
+            initialize_mapping_if_necessary(
+                self.indexing_pillow.get_es_new(),
+                get_index_info_from_pillow(self.indexing_pillow)
+            )
 
     def post_load_hook(self):
         if not self.in_place:
