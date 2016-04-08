@@ -1,5 +1,5 @@
 var components = {
-    'inline-edit': 'style/ko/components/inline_edit.js',
+    'inline-edit': 'style/ko/components/inline_edit.js'
 };
 
 _.each(components, function(moduleName, elementName) {

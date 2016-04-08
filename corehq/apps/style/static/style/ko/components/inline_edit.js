@@ -82,7 +82,7 @@ hqDefine('style/ko/components/inline_edit.js', function() {
                         type: 'POST',
                         dataType: 'JSON',
                         data: data,
-                        success: function (data) {
+                        success: function (data) {  // eslint-disable-line no-unused-vars
                             self.isSaving(false);
                             self.hasError(false);
                             self.serverValue = self.original;
