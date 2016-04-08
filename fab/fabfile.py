@@ -769,11 +769,20 @@ def copy_node_modules():
         sudo('mkdir {}/node_modules'.format(env.code_root))
 
 
+@parallel
+@roles(ROLES_STATIC)
+def copy_compressed_js_staticfiles():
+    if files.exists('{}/staticfiles/CACHE/js'.format(env.code_current)):
+        sudo('mkdir -p {}/staticfiles/CACHE/js'.format(env.code_root))
+        sudo('cp -r {}/staticfiles/CACHE/js {}/staticfiles/CACHE/js'.format(env.code_current, env.code_root))
+
+
 def copy_release_files():
     execute(copy_localsettings)
     execute(copy_tf_localsettings)
     execute(copy_components)
     execute(copy_node_modules)
+    execute(copy_compressed_js_staticfiles)
 
 
 @task
@@ -1096,6 +1105,7 @@ def _do_compress(use_current_release=False):
     venv = env.virtualenv_root if not use_current_release else env.virtualenv_current
     with cd(env.code_root if not use_current_release else env.code_current):
         sudo('{}/bin/python manage.py compress --force -v 0'.format(venv))
+        sudo('{}/bin/python manage.py purge_compressed_files'.format(venv))
     update_manifest(save=True, use_current_release=use_current_release)
 
 
