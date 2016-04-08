@@ -33,7 +33,7 @@
         </label>
         <div class="col-sm-4">
             <select type="text" name="display_separately" class="form-control">
-                <option value="false"{% if not module.display_separately %} selected{% endif %}>{% trans "Display careplan inside attached module" %}</option>
+                <option value="false">{% trans "Display careplan inside attached module" %}</option>
                 <option value="true"{% if module.display_separately %} selected{% endif %}>{% trans "Display careplan separately" %}</option>
             </select>
         </div>
