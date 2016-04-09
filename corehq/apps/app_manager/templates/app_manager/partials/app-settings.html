@@ -156,6 +156,7 @@
     value: '{{ app.name|escapejs }}',
     readOnlyClass: 'h3',
     url: '{% url "edit_app_attr" domain app.id 'name' %}',
+    postSave: function(data) { return hqImport('app_manager/js/app_manager.js').updateDOM(data.update); },
     saveValueName: 'name',
 "></inline-edit>
 

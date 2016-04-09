@@ -74,7 +74,10 @@ def get_module_template(module):
 def get_module_view_context(app, module, lang=None):
     # shared context
     context = {
-        'edit_name_url': reverse('corehq.apps.app_manager.views.edit_module_attr', args=[app.domain, app.id, module.id, 'name'])
+        'edit_name_url': reverse(
+            'corehq.apps.app_manager.views.edit_module_attr',
+            args=[app.domain, app.id, module.id, 'name']
+        )
     }
     if isinstance(module, CareplanModule):
         context.update(_get_careplan_module_view_context(app, module))
