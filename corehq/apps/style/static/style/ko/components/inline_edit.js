@@ -168,7 +168,7 @@ hqDefine('style/ko/components/inline_edit.js', function() {
                     </button>\
                 </div>\
             </div>\
-        </div>'
+        </div>',
     };
 });
 
