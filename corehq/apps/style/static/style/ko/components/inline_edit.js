@@ -102,7 +102,7 @@ hqDefine('style/ko/components/inline_edit.js', function() {
                         self.isEditing(true);
                         self.isSaving(false);
                         self.hasError(true);
-                    }
+                    },
                 });
             };
 
