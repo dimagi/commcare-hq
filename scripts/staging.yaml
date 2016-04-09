@@ -58,6 +58,7 @@ branches:
   - report-builder-text # Cal 3/1
   - certificate-validation # Cal 3/10
   - knockout-3-3 # Jenny 3/30
+  - inline-editing # Jenny 4/9
   - edit-form-fix # wsp 4/7
   - upgrade-gunicorn # Ben 4/7
 submodules:
