@@ -61,7 +61,7 @@ def input_trans(name, langs=None, input_name='name'):
 
 
 @register.simple_tag
-def inline_edit_trans(name, langs=None, readOnlyClass=''):
+def inline_edit_trans(name, langs=None, url='', saveValueName='', readOnlyClass=''):
     template = '''
         <inline-edit params="
             name: 'name',
@@ -69,9 +69,11 @@ def inline_edit_trans(name, langs=None, readOnlyClass=''):
             placeholder: '%(placeholder)s',
             rows: 1,
             lang: '%(lang)s',
+            url: '{}',
+            saveValueName: '{}',
             readOnlyClass: '{}',
         "></inline-edit>
-    '''.format(readOnlyClass)
+    '''.format(url, saveValueName, readOnlyClass)
     return _input_trans(template, name, langs=langs)
 
 

@@ -184,7 +184,7 @@
 {% endblock %}
 
 {% block form-view %}
-    {% inline_edit_trans module.name langs readOnlyClass='h3' %}
+    {% inline_edit_trans module.name langs url=edit_name_url saveValueName='name' readOnlyClass='h3' %}
     <inline-edit params="
         name: 'comment',
         id:'comment-id',
