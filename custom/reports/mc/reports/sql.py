@@ -128,6 +128,7 @@ class McMixin(object):
 class BaseReport(McMixin, SqlTabularReport, DatespanMixin, CustomProjectReport, ProjectReportParametersMixin):
     report_template_path = "mc/reports/sectioned_tabular.html"
     section = None
+    is_bootstrap3 = True
 
     @property
     def engine_id(self):

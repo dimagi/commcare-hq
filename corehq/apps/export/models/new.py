@@ -16,7 +16,7 @@ from corehq.apps.app_manager.dbaccessors import (
     get_latest_built_app_ids_and_versions,
 )
 from corehq.apps.app_manager.models import Application
-from corehq.apps.app_manager.util import get_case_properties
+from corehq.apps.app_manager.util import get_case_properties, ParentCasePropertyBuilder
 from corehq.apps.domain.models import Domain
 from corehq.apps.products.models import Product
 from corehq.apps.reports.display import xmlns_to_name
@@ -46,6 +46,7 @@ from corehq.apps.export.dbaccessors import (
     get_latest_case_export_schema,
     get_latest_form_export_schema,
 )
+from corehq.apps.export.utils import is_occurrence_deleted
 
 
 DAILY_SAVED_EXPORT_ATTACHMENT_NAME = "payload"
@@ -63,6 +64,15 @@ class PathNode(DocumentSchema):
             self.name == other.name and
             self.is_repeat == other.is_repeat
         )
+
+
+class SplitableItemMixin(object):
+
+    def split_header(self, header, ignore_unspecified_options):
+        raise NotImplementedError()
+
+    def split_value(self, value, ignore_unspecified_options):
+        raise NotImplementedError()
 
 
 class ExportItem(DocumentSchema):
@@ -90,6 +100,8 @@ class ExportItem(DocumentSchema):
                 return ScalarItem.wrap(data)
             elif doc_type == 'MultipleChoiceItem':
                 return MultipleChoiceItem.wrap(data)
+            elif doc_type == 'GeopointItem':
+                return GeopointItem.wrap(data)
             else:
                 raise ValueError('Unexpected doc_type for export item', doc_type)
         else:
@@ -122,7 +134,7 @@ class ExportColumn(DocumentSchema):
     selected = BooleanProperty(default=False)
     tags = ListProperty()
 
-    # A tranforms that deidentifies the value
+    # A transforms that deidentifies the value
     deid_transform = StringProperty(choices=DEID_TRANSFORM_FUNCTIONS.keys())
 
     def get_value(self, doc, base_path, transform_dates=False, row_index=None, split_column=False):
@@ -170,11 +182,11 @@ class ExportColumn(DocumentSchema):
         is_main_table = table_path == MAIN_TABLE
         constructor_args = {
             "item": item,
-            "label": item.label,
+            "label": item.readable_path,
             "is_advanced": is_case_update or False,
         }
 
-        if isinstance(item, MultipleChoiceItem):
+        if isinstance(item, SplitableItemMixin):
             column = SplitExportColumn(**constructor_args)
         else:
             column = ExportColumn(**constructor_args)
@@ -183,12 +195,7 @@ class ExportColumn(DocumentSchema):
         return column
 
     def _is_deleted(self, app_ids_and_versions):
-        is_deleted = True
-        for app_id, version in app_ids_and_versions.iteritems():
-            if self.item.last_occurrences.get(app_id) == version:
-                is_deleted = False
-                break
-        return is_deleted
+        return is_occurrence_deleted(self.item.last_occurrences, app_ids_and_versions)
 
     def update_properties_from_app_ids_and_versions(self, app_ids_and_versions):
         """
@@ -253,6 +260,7 @@ class TableConfiguration(DocumentSchema):
     path = ListProperty(PathNode)
     columns = ListProperty(ExportColumn)
     selected = BooleanProperty(default=False)
+    is_deleted = BooleanProperty(default=False)
 
     def __hash__(self):
         return hash(tuple(self.path))
@@ -271,7 +279,7 @@ class TableConfiguration(DocumentSchema):
             headers.extend(column.get_headers(split_column=split_columns))
         return headers
 
-    def get_rows(self, document, row_number, split_columns=False):
+    def get_rows(self, document, row_number, split_columns=False, transform_dates=False):
         """
         Return a list of ExportRows generated for the given document.
         :param document: dictionary representation of a form submission or case
@@ -285,7 +293,13 @@ class TableConfiguration(DocumentSchema):
 
             row_data = []
             for col in self.selected_columns:
-                val = col.get_value(doc, self.path, row_index=row_index, split_column=split_columns)
+                val = col.get_value(
+                    doc,
+                    self.path,
+                    row_index=row_index,
+                    split_column=split_columns,
+                    transform_dates=transform_dates,
+                )
                 if isinstance(val, list):
                     row_data.extend(val)
                 else:
@@ -419,6 +433,10 @@ class ExportInstance(BlobMixin, Document):
                 path=group_schema.path,
                 label=instance.defaults.get_default_table_name(group_schema.path),
                 selected=instance.defaults.default_is_table_selected(group_schema.path),
+            )
+            table.is_deleted = is_occurrence_deleted(
+                group_schema.last_occurrences,
+                latest_app_ids_and_versions,
             )
             prev_index = 0
             for item in group_schema.items:
@@ -676,6 +694,27 @@ class ScalarItem(ExportItem):
     """
 
 
+class GeopointItem(ExportItem, SplitableItemMixin):
+    """
+    A GPS coordinate question
+    """
+
+    def split_header(self, header, ignore_unspecified_options):
+        header_templates = [
+            _('{}: latitude (meters)'),
+            _('{}: longitude (meters)'),
+            _('{}: altitude (meters)'),
+            _('{}: accuracy (meters)'),
+        ]
+        return map(lambda header_template: header_template.format(header), header_templates)
+
+    def split_value(self, value, ignore_unspecified_options):
+        values = [None] * 4
+        for index, coordinate in enumerate(value.split(' ')):
+            values[index] = coordinate
+        return values
+
+
 class Option(DocumentSchema):
     """
     This object represents a multiple choice question option.
@@ -686,7 +725,7 @@ class Option(DocumentSchema):
     value = StringProperty()
 
 
-class MultipleChoiceItem(ExportItem):
+class MultipleChoiceItem(ExportItem, SplitableItemMixin):
     """
     A multiple choice question or case property
     Choices is the union of choices for the question in each of the builds with
@@ -721,6 +760,37 @@ class MultipleChoiceItem(ExportItem):
         item.options = options
         return item
 
+    def split_header(self, header, ignore_unspecified_options):
+        header_template = header if '{option}' in header else u"{name} | {option}"
+        headers = []
+        for option in self.options:
+            headers.append(
+                header_template.format(
+                    name=header,
+                    option=option.value
+                )
+            )
+        if not ignore_unspecified_options:
+            headers.append(
+                header_template.format(
+                    name=header,
+                    option='extra'
+                )
+            )
+        return headers
+
+    def split_value(self, value, ignore_unspecified_options):
+        if not isinstance(value, basestring):
+            return [None] * len(self.options) + [] if ignore_unspecified_options else [value]
+
+        selected = OrderedDict((x, 1) for x in value.split(" "))
+        row = []
+        for option in self.options:
+            row.append(selected.pop(option.value, None))
+        if not ignore_unspecified_options:
+            row.append(" ".join(selected.keys()))
+        return row
+
 
 class ExportGroupSchema(DocumentSchema):
     """
@@ -745,6 +815,7 @@ class ExportDataSchema(Document):
     last_app_versions = DictProperty()
     datatype_mapping = defaultdict(lambda: ScalarItem, {
         'MSelect': MultipleChoiceItem,
+        'Geopoint': GeopointItem,
     })
 
     class Meta:
@@ -808,6 +879,7 @@ class ExportDataSchema(Document):
             self.last_app_versions.get(app_id, 0),
             app_version,
         )
+
 
 class FormExportDataSchema(ExportDataSchema):
 
@@ -970,27 +1042,30 @@ class CaseExportDataSchema(ExportDataSchema):
                 [case_type],
                 include_parent_properties=False
             )
-            case_schema = CaseExportDataSchema._generate_schema_from_case_property_mapping(
+            parent_types, _ = (
+                ParentCasePropertyBuilder(app)
+                .get_parent_types_and_contributed_properties(case_type)
+            )
+            case_schemas = []
+            case_schemas.append(CaseExportDataSchema._generate_schema_from_case_property_mapping(
                 case_property_mapping,
                 app.copy_of,
                 app.version,
-            )
-            case_history_schema = CaseExportDataSchema._generate_schema_for_case_history(
-                case_property_mapping,
-                app.copy_of,
-                app.version,
-            )
-            case_parent_schema = CaseExportDataSchema._generate_schema_for_parent_case(
-                app.copy_of,
-                app.version,
-            )
+            ))
+            if any(map(lambda relationship_tuple: relationship_tuple[1] == 'parent', parent_types)):
+                case_schemas.append(CaseExportDataSchema._generate_schema_for_parent_case(
+                    app.copy_of,
+                    app.version,
+                ))
 
-            current_case_schema = CaseExportDataSchema._merge_schemas(
-                case_schema,
-                case_history_schema,
-                case_parent_schema,
-                current_case_schema,
-            )
+            case_schemas.append(CaseExportDataSchema._generate_schema_for_case_history(
+                case_property_mapping,
+                app.copy_of,
+                app.version,
+            ))
+            case_schemas.append(current_case_schema)
+
+            current_case_schema = CaseExportDataSchema._merge_schemas(*case_schemas)
 
             current_case_schema.record_update(app.copy_of, app.version)
 
@@ -1194,52 +1269,27 @@ class SplitExportColumn(ExportColumn):
     Note: when split_column is set to False, SplitExportColumn will behave like a
     normal ExportColumn.
     """
-    item = SchemaProperty(MultipleChoiceItem)
+    item = SchemaProperty(ExportItem)
     ignore_unspecified_options = BooleanProperty(default=False)
 
-    def get_value(self, doc, base_path, row_index=None, split_column=False):
+    def get_value(self, doc, base_path, row_index=None, split_column=False, transform_dates=False):
         """
         Get the value of self.item of the given doc.
         When base_path is [], doc is a form submission or case,
         when base_path is non empty, doc is a repeat group from a form submission.
         doc is a form submission or instance of a repeat group in a submission or case
         """
-        value = super(SplitExportColumn, self).get_value(doc, base_path)
+        value = super(SplitExportColumn, self).get_value(doc, base_path, transform_dates=transform_dates)
         if not split_column:
             return value
 
-        if not isinstance(value, basestring):
-            return [None] * len(self.item.options) + [] if self.ignore_unspecified_options else [value]
-
-        selected = OrderedDict((x, 1) for x in value.split(" "))
-        row = []
-        for option in self.item.options:
-            row.append(selected.pop(option.value, None))
-        if not self.ignore_unspecified_options:
-            row.append(" ".join(selected.keys()))
-        return row
+        return self.item.split_value(value, self.ignore_unspecified_options)
 
     def get_headers(self, split_column=False):
         if not split_column:
             return super(SplitExportColumn, self).get_headers()
 
-        header_template = self.label if '{option}' in self.label else u"{name} | {option}"
-        headers = []
-        for option in self.item.options:
-            headers.append(
-                header_template.format(
-                    name=self.label,
-                    option=option.value
-                )
-            )
-        if not self.ignore_unspecified_options:
-            headers.append(
-                header_template.format(
-                    name=self.label,
-                    option='extra'
-                )
-            )
-        return headers
+        return self.item.split_header(self.label, self.ignore_unspecified_options)
 
 
 class RowNumberColumn(ExportColumn):

@@ -15,10 +15,17 @@ from corehq.apps.app_manager.exceptions import (
     LocationXpathValidationError,
     ScheduleError,
 )
-from django.utils.translation import ugettext as _
+from django.utils.translation import ugettext as _, ugettext_lazy
 
 
 DOT_INTERPOLATE_PATTERN = r'(\D|^)\.(\D|$)'
+
+CASE_REFERENCE_VALIDATION_ERROR = ugettext_lazy(
+    "You have a display condition which refers to a case, but cases are not available. Please either remove "
+    "the case reference or (1) make sure that the module is set to display the module first and then form, "
+    "and (2) make sure that all forms in this module update or close a case (which means registration forms "
+    "must go in a different module)."
+)
 
 
 def dot_interpolate(string, replacement):
@@ -29,18 +36,19 @@ def dot_interpolate(string, replacement):
     return re.sub(DOT_INTERPOLATE_PATTERN, repl, string)
 
 
-def interpolate_xpath(string, case_xpath=None, fixture_xpath=None):
+def interpolate_xpath(string, case_xpath=None, fixture_xpath=None, module=None, form=None):
     """
     Replace xpath shortcuts with full value.
     """
-    if case_xpath is None and ('#case' in string or re.search(DOT_INTERPOLATE_PATTERN, string)):
+    if case_xpath is None and any([
+        '#case' in string,
+        '#parent' in string,
+        '#host' in string,
+        re.search(DOT_INTERPOLATE_PATTERN, string),
+    ]):
         # At the moment this function is only used by module and form filters.
         # If that changes, amend the error message accordingly.
-        raise CaseXPathValidationError(_(
-            'Your filter refers to a case, but the case is not available. Either refer to the user case, or make '
-            'sure all the forms in this module update or close a case, which means registration forms must go in '
-            'a different module.'
-        ))
+        raise CaseXPathValidationError(CASE_REFERENCE_VALIDATION_ERROR, module=module, form=form)
     replacements = {
         '#user': UserCaseXPath().case(),
         '#session/': session_var('', path=''),

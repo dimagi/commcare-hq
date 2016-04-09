@@ -23,13 +23,6 @@ var langcodeTag;
                     } else {
                         this.lang_code = value;
                         this.button.text(this.lang_code);
-                        this.button.popover({
-                            title: "Using '" + this.lang_code + "' Value",
-                            content: "There is no translation available for the currently selected language.<br /><br />Using text from the <strong>[" +
-                                this.lang_code + "]</strong> language by default. Edit the value and save to override defaults.",
-                            html: true,
-                            trigger: 'hover'
-                        });
                     }
                 }
             };

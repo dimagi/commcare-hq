@@ -1,3 +1,4 @@
+/* globals moment */
 hqDefine('cloudcare/js/backbone/cases.js', function () {
     var Selectable = hqImport('cloudcare/js/backbone/shared.js').Selectable;
     var localize = hqImport('cloudcare/js/util.js').localize;
@@ -107,13 +108,40 @@ hqDefine('cloudcare/js/backbone/cases.js', function () {
     });
 
     cloudCareCases.caseViewMixin = {
-        lookupField: function (field) {
-            var parentCase;
+        lookupField: function (detailColumn) {
+            var parentCase,
+                field = detailColumn.field,
+                fieldValue;
             if (isParentField(field) && this.model.get('casedb')) {
                 parentCase = this.model.get('casedb').get(this.model.get('indices').parent.case_id);
-                return parentCase.getProperty(field.slice('parent/'.length));
+                fieldValue = parentCase.getProperty(field.slice('parent/'.length));
+            } else {
+                fieldValue = this.model.getProperty(field);
             }
-            return this.model.getProperty(field);
+            return this.formatDetailField(fieldValue, detailColumn);
+        },
+        formatDetailField: function(fieldValue, detailColumn) {
+            var agoInterval = detailColumn.time_ago_interval,
+                // See corehq/apps/app_manager/models#TimeAgoInterval
+                agoIntervalMap = {
+                    '1': 'days',
+                    '7': 'weeks',
+                    '30.4375': 'months',
+                    '365.25': 'years'
+                },
+                agoUnit; // The unit for time-ago (days, months, etc)
+
+            if (!fieldValue) return fieldValue;
+
+            if (detailColumn.format === 'time-ago') {
+                agoUnit = agoIntervalMap[Math.abs(agoInterval)];
+                if (agoInterval < 0) {
+                    fieldValue = moment(fieldValue).diff(new Date(), agoUnit) || 0;
+                } else {
+                    fieldValue = moment(new Date()).diff(fieldValue, agoUnit) || 0;
+                }
+            }
+            return fieldValue;
         },
         delegationFormName: function () {
             var self = this;
@@ -143,7 +171,7 @@ hqDefine('cloudcare/js/backbone/cases.js', function () {
         },
         makeTd: function (col) {
             var self = this,
-                text = self.lookupField(col.field),
+                text = self.lookupField(col),
                 td = $("<td/>");
             if (text) {
                 return td.text(text);
@@ -248,8 +276,8 @@ hqDefine('cloudcare/js/backbone/cases.js', function () {
                 $("<th />").append('<i class="icon-white"></i> ').append(localize(col.header, self.options.language)).appendTo(theadrow);
             });
             var tbody = $("<tbody />").appendTo(table);
-            _(self.caseList.models).each(function(item){
-                self.appendItem(item);
+            _(self.caseList.models).each(function(caseModel){
+                self.appendItem(caseModel);
             });
 
             return self;
@@ -258,12 +286,12 @@ hqDefine('cloudcare/js/backbone/cases.js', function () {
             var columns = details.get('columns');
             return _.any(_.map(columns, function(d) { return d.field; }), isParentField);
         },
-        appendItem: function (item) {
+        appendItem: function (caseModel) {
             var cloudCare = hqImport('cloudcare/js/backbone/apps.js');
             var self = this;
-            item.set('casedb', self.caseList.casedb);
+            caseModel.set('casedb', self.caseList.casedb);
             var caseView = new cloudCareCases.CaseView({
-                model: item,
+                model: caseModel,
                 columns: self.detailsShort.get("columns"),
                 delegation: self.options.delegation,
                 appConfig: self.options.appConfig,
@@ -271,7 +299,7 @@ hqDefine('cloudcare/js/backbone/cases.js', function () {
             });
             // set the app config on the case if it's there
             // so that other events can access it later
-            item.set("appConfig", self.options.appConfig);
+            caseModel.set("appConfig", self.options.appConfig);
             caseView.on("selected", function () {
                 if (self.selectedCaseView) {
                     self.selectedCaseView.deselect();
@@ -287,7 +315,7 @@ hqDefine('cloudcare/js/backbone/cases.js', function () {
             });
 
             $('table tbody', self.el).append(caseView.render().el);
-            self.caseMap[item.id] = caseView;
+            self.caseMap[caseModel.id] = caseView;
 
         },
         appendAll: function () {

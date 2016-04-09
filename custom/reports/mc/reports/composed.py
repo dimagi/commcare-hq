@@ -17,6 +17,8 @@ class ComposedTabularReport(GenericTabularReport):
 
     data_provider = DataProvider()
 
+    is_bootstrap3 = True
+
     @property
     def headers(self):
         return self.data_provider.headers()

@@ -17,6 +17,12 @@ class ProdIndexManagementTest(SimpleTestCase):
 
     def test_prod_config(self):
         found_prod_indices = [info.to_json() for info in get_all_expected_es_indices()]
+        for info in found_prod_indices:
+            # for now don't test these two properties, just ensure they exist
+            self.assertTrue(info['meta'])
+            del info['meta']
+            self.assertTrue(info['mapping'])
+            del info['mapping']
         found_prod_indices = sorted(found_prod_indices, key=lambda info: info['index'])
         self.assertEqual(EXPECTED_PROD_INDICES, found_prod_indices)
 
@@ -24,38 +30,47 @@ class ProdIndexManagementTest(SimpleTestCase):
 EXPECTED_PROD_INDICES = [
     {
         "alias": "hqapps",
-        "index": "test_hqapps_2016-03-01_2128"
+        "index": "test_hqapps_2016-03-01_2128",
+        "type": "app"
     },
     {
         "alias": "hqcases",
-        "index": "test_hqcases_7a8d2b81335e0a8cef1de718313a23b9"
+        "index": "test_hqcases_2016-03-04",
+        "type": "case"
     },
     {
         "alias": "hqdomains",
-        "index": "test_hqdomains_20160318_1339"
+        "index": "test_hqdomains_20160318_1339",
+        "type": "hqdomain"
     },
     {
         "alias": "hqgroups",
-        "index": "test_hqgroups_20150403_1501"
+        "index": "test_hqgroups_20150403_1501",
+        "type": "group"
     },
     {
         "alias": "hqusers",
-        "index": "test_hqusers_2016-02-16_1402"
+        "index": "test_hqusers_2016-02-16_1402",
+        "type": "user"
     },
     {
         "alias": "report_cases",
-        "index": "test_report_cases_czei39du507m9mmpqk3y01x72a3ux4p0"
+        "index": "test_report_cases_czei39du507m9mmpqk3y01x72a3ux4p0",
+        "type": "report_case"
     },
     {
         "alias": "report_xforms",
-        "index": "test_report_xforms_20150406_1136"
+        "index": "test_report_xforms_20150406_1136",
+        "type": "report_xform"
     },
     {
         "alias": "smslogs",
-        "index": "test_smslogs_708c77f8e5fe00286fa5791e9fa7d45f"
+        "index": "test_smslogs_708c77f8e5fe00286fa5791e9fa7d45f",
+        "type": "sms"
     },
     {
         "alias": "xforms",
-        "index": "test_xforms_20150403-1728"
+        "index": "test_xforms_20150403-1728",
+        "type": "xform"
     }
 ]
