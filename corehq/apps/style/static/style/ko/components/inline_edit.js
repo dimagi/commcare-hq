@@ -1,7 +1,11 @@
 /*
  * Component for an inline editing widget: a piece of text that, when clicked on, turns into a textarea.
+ * The textarea is accompanied by a save button capable of saving the new value to the server via ajax.
  *
- * Parameters (all optional)
+ * Required parameters
+ *  - url: The URL to call on save.
+ *
+ * Optional parameters
  *  - value: Text to display and edit
  *  - name: HTML name of textarea
  *  - id: HTML id of textarea
@@ -11,11 +15,6 @@
  *  - rows: Number of rows in textarea.
  *  - helpTitle: Title for help popover, if any.
  *  - helpContent: Content for help popover, if any.
- *
- * By default, the widget is client-side only, and it is up to the calling code to actually save the value
- * (likely by providing the widget with a name or id). The following parameters may be used to implement
- * a widget capable of saving to the server via ajax.
- *  - url: The URL to call on save.
  *  - saveValueName: Name to associate with text value when saving. Defaults to 'value'.
  *  - saveParams: Any additional data to pass along. May contain observables.
  *  - errorMessage: Message to display if server returns an error.
@@ -26,15 +25,19 @@ hqDefine('style/ko/components/inline_edit.js', function() {
         viewModel: function(params) {
             var self = this;
 
+            if (!params.url) {
+                throw "Inline edit widget requires a url";
+            }
+
             // Attributes passed on to the input
             self.name = params.name || '';
             self.id = params.id || '';
 
             // Data
             self.placeholder = params.placeholder || '';
-            self.original = (ko.isObservable(params.value) ? params.value() : params.value) || '';
-            self.serverValue = self.original;
-            self.value = ko.isObservable(params.value) ? params.value : ko.observable(self.original);
+            self.readOnlyValue = (ko.isObservable(params.value) ? params.value() : params.value) || '';
+            self.serverValue = self.readOnlyValue;
+            self.value = ko.isObservable(params.value) ? params.value : ko.observable(self.readOnlyValue);
             self.lang = params.lang || '';
 
             // Styling
@@ -45,7 +48,7 @@ hqDefine('style/ko/components/inline_edit.js', function() {
             self.helpContent = params.helpContent || self.helpTitle;
 
             // Interaction: determine whether widget is in read or write mode
-            self.editing = ko.observable(false);
+            self.isEditing = ko.observable(false);
             self.saveHasFocus = ko.observable(false);
             self.cancelHasFocus = ko.observable(false);
 
@@ -60,51 +63,54 @@ hqDefine('style/ko/components/inline_edit.js', function() {
 
             // On edit, set editing mode, which controls visibility of inner components
             self.edit = function() {
-                self.editing(true);
+                self.isEditing(true);
             };
 
+            // Save to server
+            // On button press, flip back to read-only mode and show a spinner.
+            // On server success, just hide the spinner. On error, display error and go back to edit mode.
             self.save = function() {
-                self.editing(false);
-                if (self.original === self.value() && (!self.url || self.serverValue === self.value())) {
+                self.isEditing(false);
+
+                // Nothing changed
+                if (self.readOnlyValue === self.value() && self.serverValue === self.value()) {
                     return;
                 }
 
-                self.original = self.value();
-                if (self.url) {
-                    // Server save
-                    var data = self.saveParams;
-                    _.each(data, function(value, key) {
-                        data[key] = ko.utils.unwrapObservable(value);
-                    });
-                    data[self.saveValueName] = self.value();
-                    self.isSaving(true);
-                    $.ajax({
-                        url: self.url,
-                        type: 'POST',
-                        dataType: 'JSON',
-                        data: data,
-                        success: function (data) {  // eslint-disable-line no-unused-vars
-                            self.isSaving(false);
-                            self.hasError(false);
-                            self.serverValue = self.original;
-                            if (self.postSave) {
-                                self.postSave(data);
-                            }
-                        },
-                        error: function () {
-                            self.editing(true);
-                            self.isSaving(false);
-                            self.hasError(true);
+                self.readOnlyValue = self.value();
+                var data = self.saveParams;
+                _.each(data, function(value, key) {
+                    data[key] = ko.utils.unwrapObservable(value);
+                });
+                data[self.saveValueName] = self.value();
+                self.isSaving(true);
+
+                $.ajax({
+                    url: self.url,
+                    type: 'POST',
+                    dataType: 'JSON',
+                    data: data,
+                    success: function (data) {
+                        self.isSaving(false);
+                        self.hasError(false);
+                        self.serverValue = self.readOnlyValue;
+                        if (self.postSave) {
+                            self.postSave(data);
                         }
-                    });
-                }
+                    },
+                    error: function () {
+                        self.isEditing(true);
+                        self.isSaving(false);
+                        self.hasError(true);
+                    }
+                });
             };
 
             // Revert to last value and switch modes
             self.cancel = function() {
-                self.original = self.serverValue;
-                self.value(self.original);
-                self.editing(false);
+                self.readOnlyValue = self.serverValue;
+                self.value(self.readOnlyValue);
+                self.isEditing(false);
                 self.hasError(false);
             };
 
@@ -113,19 +119,19 @@ hqDefine('style/ko/components/inline_edit.js', function() {
             self.blur = function() {
                 setTimeout(function() {
                     if (!self.saveHasFocus() && !self.cancelHasFocus() && !self.hasError()) {
-                        self.editing(false);
-                        self.value(self.original);
+                        self.isEditing(false);
+                        self.value(self.readOnlyValue);
                     }
                 }, 200);
             };
         },
         template: '<div class="ko-inline-edit" data-bind="css: {inline: inline, \'has-error\': hasError()}">\
             <!--ko if: helpTitle -->\
-                <span class="pull-right" data-bind="visible: !editing()">\
+                <span class="pull-right" data-bind="visible: !isEditing()">\
                     <span data-bind="makeHqHelp: {name: helpTitle, description: helpContent, format: \'html\', placement: \'left\'}"></span>\
                 </span>\
             <!--/ko-->\
-            <div class="read-only" data-bind="visible: !editing(), click: edit">\
+            <div class="read-only" data-bind="visible: !isEditing(), click: edit">\
                 <i class="fa fa-pencil pull-right" data-bind="visible: !isSaving()"></i>\
                 <span data-bind="visible: isSaving()" class="pull-right">\
                     <img src="/static/hqstyle/img/loading.gif"/>\
@@ -136,14 +142,14 @@ hqDefine('style/ko/components/inline_edit.js', function() {
                     ></span>\
                 <!-- /ko -->\
                 <span class="text" data-bind="text: value, css: readOnlyClass"></span>\
-                <span class="placeholder" data-bind="text: placeholder, visible: !value()"></span>\
+                <span class="placeholder" data-bind="text: placeholder, css: readOnlyClass, visible: !value()"></span>\
             </div>\
-            <div class="read-write" data-bind="visible: editing(), css: {\'form-inline\': inline}">\
-                <div class="form-group">\
-                    <textarea class="form-control langcode-container" data-bind="\
+            <div class="read-write" data-bind="visible: isEditing(), css: {\'form-inline\': inline}">\
+                <div class="form-group langcode-container">\
+                    <textarea class="form-control" data-bind="\
                         attr: {name: name, id: id, placeholder: placeholder, rows: rows},\
                         value: value,\
-                        hasFocus: editing(),\
+                        hasFocus: isEditing(),\
                         event: {blur: blur},\
                     "></textarea>\
                     <!-- ko if: lang -->\
