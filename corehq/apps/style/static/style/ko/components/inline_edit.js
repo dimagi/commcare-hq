@@ -56,6 +56,7 @@ hqDefine('style/ko/components/inline_edit.js', function() {
             self.saveValueName = params.saveValueName || 'value';
             self.hasError = ko.observable(false);
             self.isSaving = ko.observable(false);
+            self.postSave = params.postSave;
 
             // On edit, set editing mode, which controls visibility of inner components
             self.edit = function() {
@@ -86,6 +87,9 @@ hqDefine('style/ko/components/inline_edit.js', function() {
                             self.isSaving(false);
                             self.hasError(false);
                             self.serverValue = self.original;
+                            if (self.postSave) {
+                                self.postSave(data);
+                            }
                         },
                         error: function () {
                             self.editing(true);
