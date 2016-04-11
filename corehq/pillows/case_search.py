@@ -131,10 +131,10 @@ def get_case_search_to_elasticsearch_pillow(pillow_id='CaseSearchToElasticsearch
 
 
 def get_case_search_reindexer(domain=None):
+    """Returns a reindexer that will return either all domains with case search
+    enabled, or a single domain if passed in
     """
-    Returns a reindexer that will either all domains with case search enabled, or a single domain
-    """
-    CaseSearchPillow()
+    CaseSearchPillow()          # TODO: remove this:
     if domain is not None:
         if not case_search_enabled_for_domain(domain):
             raise CaseSearchNotEnabledException("{} does not have case search enabled".format(domain))
