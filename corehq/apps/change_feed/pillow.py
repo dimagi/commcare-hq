@@ -36,7 +36,7 @@ class KafkaProcessor(PillowProcessor):
                 document_type=doc_type_object.raw_doc_type,
                 document_subtype=doc_type_object.subtype,
                 domain=change.document.get('domain', None),
-                is_deletion=change.deleted,
+                is_deletion=change.deleted or doc_type_object.is_deletion,
             )
             self._producer.send_change(get_topic(doc_type_object), change_meta)
 
