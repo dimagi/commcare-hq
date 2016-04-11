@@ -122,7 +122,8 @@ def xforms_with_real_xmlns_possibly_exist(app_id, form):
         query = (FormES()
                  .term('form.@name', form_name)
                  .app(app_id)
-                 .filter(NOT(xmlns('undefined'))))
+                 .filter(NOT(xmlns('undefined')))
+                 .remove_default_filter('is_xform_instance'))
         if query.count():
             return True
     return False
