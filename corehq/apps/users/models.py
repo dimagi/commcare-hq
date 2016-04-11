@@ -1127,7 +1127,8 @@ class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, UnicodeMixIn, EulaMi
         from corehq.apps.hqwebapp.templatetags.hq_shared_tags import _get_domain_list
         self.get_by_username.clear(self.__class__, self.username)
         self.get_by_user_id.clear(self.__class__, self.user_id)
-        self.get_by_user_id.clear(self.__class__, self.user_id, self.domain)
+        for domain in self.get_domains():
+            self.get_by_user_id.clear(self.__class__, self.user_id, domain)
         Domain.active_for_couch_user.clear(self)
         _get_domain_list.clear(self)
 
