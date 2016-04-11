@@ -118,6 +118,10 @@ function XFormListViewModel() {
         self.selected_xform_idx(-1);
     };
 
+    self.all_rows_loaded = ko.computed(function() {
+        return self.total_rows() === self.xforms().length;
+    });
+
     self.page_count = ko.computed(function() {
         return Math.ceil(self.total_rows()/self.page_size());
     });
@@ -128,7 +132,7 @@ function XFormListViewModel() {
             self.disp_page_index(self.page_count.peek());
             return;
         }
-        if (self.total_rows.peek() > 0 && self.page_size() > self.total_rows.peek()) {
+        if (self.total_rows.peek() > 0 && self.all_rows_loaded.peek()) {
             return;
         }
         self.data_loading(true);
