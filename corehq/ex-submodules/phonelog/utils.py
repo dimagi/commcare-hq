@@ -1,3 +1,4 @@
+from datetime import datetime
 from django.db import transaction
 from corehq.apps.users.util import format_username
 from corehq.apps.users.dbaccessors import get_user_id_by_username
@@ -136,12 +137,20 @@ def _process_force_close_subreport(domain, xform):
         # All of this is probably fine to remove after, say June 2016.
         version = (force_closure['app_build'] if 'app_build' in force_closure
                    else force_closure['build_number'])
+        # There seem to be some parts of the framework that honor the timezone, and
+        # some parts that don't, and it seems to be inconsistent between the couch
+        # and sql models.
+        # For now this follows the convention of corehq.form_processor.utils.xform.adjust_datetimes,
+        # which strips the timezone.
+        dt = force_closure["@date"]
+        if isinstance(dt, datetime):
+            dt.replace(tzinfo=None)
         entry = ForceCloseEntry(
             domain=domain,
             xform_id=xform.form_id,
             app_id=force_closure.get('app_id'),
             version_number=int(version),
-            date=force_closure["@date"],
+            date=dt,
             server_date=xform.received_on,
             user_id=force_closure.get('user_id'),
             type=force_closure['type'],
