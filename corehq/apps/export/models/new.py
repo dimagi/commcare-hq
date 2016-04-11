@@ -133,6 +133,7 @@ class ExportColumn(DocumentSchema):
     is_advanced = BooleanProperty(default=False)
     selected = BooleanProperty(default=False)
     tags = ListProperty()
+    help_text = StringProperty()
 
     # A transforms that deidentifies the value
     deid_transform = StringProperty(choices=DEID_TRANSFORM_FUNCTIONS.keys())
@@ -373,9 +374,6 @@ class ExportInstance(BlobMixin, Document):
 
     # Whether to automatically convert dates to excel dates
     transform_dates = BooleanProperty(default=True)
-
-    # Whether to include duplicates and other error'd forms in export
-    include_errors = BooleanProperty(default=False)
 
     # Whether the export is de-identified
     is_deidentified = BooleanProperty(default=False)
