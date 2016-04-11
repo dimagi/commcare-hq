@@ -28,13 +28,22 @@ def create_error(change, message='message', attempts=0, pillow=None, ex_class=No
 class PillowRetryTestCase(TestCase):
     def setUp(self):
         PillowError.objects.all().delete()
+        self._pillowtops = settings.PILLOWTOPS
+        settings.PILLOWTOPS = {
+            'tests': [
+                'pillow_retry.tests.FakePillow',
+            ]
+        }
+
+    def tearDown(self):
+        settings.PILLOWTOPS = self._pillowtops
 
     def test_id(self):
         id = '12345'
         change_dict = {'id': id, 'seq': 54321}
         error = create_error(change_dict)
         self.assertEqual(error.doc_id, id)
-        self.assertEqual(error.pillow, 'pillow_retry.tests.FakePillow')
+        self.assertEqual(error.pillow, 'FakePillow')
         self.assertEqual(error.change_object.id, id)
         self.assertEqual(error.change_object.sequence_id, 54321)
 
@@ -246,7 +255,7 @@ class PillowRetryTestCase(TestCase):
     def test_pillow_not_found(self):
         error = PillowError.objects.create(
             doc_id='missing-pillow',
-            pillow='badmodule.NotARealPillow',
+            pillow='NotARealPillow',
             date_created=datetime.utcnow(),
             date_last_attempt=datetime.utcnow()
         )

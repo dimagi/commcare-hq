@@ -1,5 +1,7 @@
+from custom.ilsgateway.slab.views import SLABConfigurationReport
 from custom.ilsgateway.tanzania.reports.alerts import AlertReport
-from custom.ilsgateway.tanzania.reports.dashboard_report import DashboardReport
+from custom.ilsgateway.tanzania.reports.dashboard_report import DashboardReport, NewDashboardReport, \
+    B3Dashboardreport
 from custom.ilsgateway.tanzania.reports.delivery import DeliveryReport
 from custom.ilsgateway.tanzania.reports.randr import RRreport
 from custom.ilsgateway.tanzania.reports.facility_details import FacilityDetailsReport
@@ -11,6 +13,8 @@ from custom.ilsgateway.tanzania.reports.unrecognized_sms import UnrecognizedSMSR
 CUSTOM_REPORTS = (
     ('Custom reports', (
         DashboardReport,
+        B3Dashboardreport,
+        NewDashboardReport,
         AlertReport,
         StockOnHandReport,
         RRreport,
@@ -19,6 +23,9 @@ CUSTOM_REPORTS = (
         SupervisionReport,
         UnrecognizedSMSReport
     )),
+    ('Slab', (
+        SLABConfigurationReport,
+    ))
 )
 
 LOCATION_TYPES = ["MOHSW", "MSDZONE", "REGION", "DISTRICT", "FACILITY"]

@@ -220,6 +220,10 @@ class XFormInstanceSQL(DisabledDbMixin, models.Model, RedisLockableMixIn, Attach
         return FormAccessorSQL.get_form(form_id)
 
     @property
+    def get_id(self):
+        return self.form_id
+
+    @property
     def is_normal(self):
         return self.state == self.NORMAL
 
@@ -530,6 +534,10 @@ class CommCareCaseSQL(DisabledDbMixin, models.Model, RedisLockableMixIn,
         return dt
 
     @property
+    def get_id(self):
+        return self.case_id
+
+    @property
     @memoized
     def xform_ids(self):
         from corehq.form_processor.backends.sql.dbaccessors import CaseAccessorSQL
@@ -627,17 +635,22 @@ class CommCareCaseSQL(DisabledDbMixin, models.Model, RedisLockableMixIn,
         transactions += self.get_tracked_models_to_create(CaseTransaction)
         return transactions
 
+    @property
+    def actions(self):
+        """For compatability with CommCareCase. Please use transactions when possible"""
+        return self.transactions
+
     def get_transaction_by_form_id(self, form_id):
         from corehq.form_processor.backends.sql.dbaccessors import CaseAccessorSQL
-        transaction = CaseAccessorSQL.get_transaction_by_form_id(self.case_id, form_id)
+        transactions = filter(
+            lambda t: t.form_id == form_id,
+            self.get_tracked_models_to_create(CaseTransaction)
+        )
+        assert len(transactions) <= 1
+        transaction = transactions[0] if transactions else None
 
         if not transaction:
-            transactions = filter(
-                lambda t: t.form_id == form_id,
-                self.get_tracked_models_to_create(CaseTransaction)
-            )
-            assert len(transactions) <= 1
-            transaction = transactions[0] if transactions else None
+            transaction = CaseAccessorSQL.get_transaction_by_form_id(self.case_id, form_id)
         return transaction
 
     @property
@@ -938,6 +951,12 @@ class CaseTransaction(DisabledDbMixin, models.Model):
             relevant = self.form.is_normal
 
         return relevant
+
+    @property
+    def user_id(self):
+        if self.form:
+            return self.form.user_id
+        return None
 
     @property
     def form(self):

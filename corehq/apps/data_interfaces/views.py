@@ -741,10 +741,11 @@ class AddAutomaticUpdateRuleView(JSONResponseMixin, DataInterfaceSection):
             )
 
     def create_actions(self, rule):
-        AutomaticUpdateAction.objects.create(
-            rule=rule,
-            action=AutomaticUpdateAction.ACTION_CLOSE,
-        )
+        if self.rule_form._closes_case():
+            AutomaticUpdateAction.objects.create(
+                rule=rule,
+                action=AutomaticUpdateAction.ACTION_CLOSE,
+            )
         if self.rule_form._updates_case():
             AutomaticUpdateAction.objects.create(
                 rule=rule,

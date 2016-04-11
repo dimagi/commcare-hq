@@ -6,6 +6,7 @@ from corehq.apps.domain.views import BaseDomainView
 from corehq.apps.hqwebapp.view_permissions import user_can_view_reports
 from corehq.apps.users.permissions import FORM_EXPORT_PERMISSION, CASE_EXPORT_PERMISSION, \
     DEID_EXPORT_PERMISSION
+from corehq.tabs.tabclasses import ProjectReportsTab
 import langcodes
 import os
 import pytz
@@ -18,7 +19,6 @@ from urllib2 import URLError
 from django.conf import settings
 from django.contrib import messages
 from django.contrib.auth.decorators import permission_required
-from django.core.cache import cache
 from django.core.exceptions import PermissionDenied
 from django.core.files.base import ContentFile
 from django.core.servers.basehttp import FileWrapper
@@ -105,7 +105,6 @@ from corehq.apps.groups.models import Group
 from corehq.apps.hqcase.dbaccessors import get_case_ids_in_domain
 from corehq.apps.hqcase.export import export_cases
 from corehq.apps.hqcase.utils import submit_case_blocks
-from corehq.apps.hqwebapp.models import ReportsTab
 from corehq.apps.hqwebapp.utils import csrf_inline
 from corehq.apps.locations.permissions import can_edit_form_location
 from corehq.apps.products.models import SQLProduct
@@ -141,7 +140,6 @@ from .models import (
 )
 
 from .standard import inspect, export, ProjectReport
-from corehq.apps.style.decorators import use_bootstrap3
 from .standard.cases.basic import CaseListReport
 from .tasks import (
     build_form_multimedia_zip,
@@ -160,6 +158,7 @@ from .util import (
 )
 from corehq.apps.style.decorators import (
     use_bootstrap3,
+    use_datatables,
     use_jquery_ui,
     use_jquery_ui_multiselect,
     use_select2,
@@ -493,8 +492,7 @@ def hq_download_saved_export(req, domain, export_id):
     # quasi-security hack: the first key of the index is always assumed
     # to be the domain
     assert domain == export.configuration.index[0]
-    cutoff = datetime.utcnow() - timedelta(days=settings.SAVED_EXPORT_ACCESS_CUTOFF)
-    if not export.last_accessed or export.last_accessed < cutoff:
+    if should_update_export(export.last_accessed):
         group_id = req.GET.get('group_export_id')
         if group_id:
             try:
@@ -505,23 +503,34 @@ def hq_download_saved_export(req, domain, export_id):
                 schema = next(itertools.islice(group_config.all_export_schemas,
                                                list_index,
                                                list_index+1))
-                rebuild_export_async.delay(export.configuration, schema, 'couch')
+                rebuild_export_async.delay(export.configuration, schema)
             except Exception:
                 notify_exception(req, 'Failed to rebuild export during download')
 
     export.last_accessed = datetime.utcnow()
     export.save()
-    export = SavedBasicExport.get(export_id)
-    content_type = Format.from_format(export.configuration.format).mimetype
+
     payload = export.get_payload(stream=True)
+    return build_download_saved_export_response(
+        payload, export.configuration.format, export.configuration.filename
+    )
+
+
+def build_download_saved_export_response(payload, format, filename):
+    content_type = Format.from_format(format).mimetype
     response = StreamingHttpResponse(FileWrapper(payload), content_type=content_type)
-    if export.configuration.format != 'html':
+    if format != 'html':
         # ht: http://stackoverflow.com/questions/1207457/convert-unicode-to-string-in-python-containing-extra-symbols
         normalized_filename = unicodedata.normalize(
-            'NFKD', unicode(export.configuration.filename),
+            'NFKD', unicode(filename),
         ).encode('ascii', 'ignore')
         response['Content-Disposition'] = 'attachment; filename="%s"' % normalized_filename
     return response
+
+
+def should_update_export(last_accessed):
+    cutoff = datetime.utcnow() - timedelta(days=settings.SAVED_EXPORT_ACCESS_CUTOFF)
+    return not last_accessed or last_accessed < cutoff
 
 
 @login_or_digest
@@ -638,7 +647,7 @@ class AddSavedReportConfigView(View):
                 delattr(self.config, "days")
 
         self.config.save()
-        ReportsTab.clear_dropdown_cache(request, self.domain)
+        ProjectReportsTab.clear_dropdown_cache(self.domain, request.couch_user.get_id)
         touch_saved_reports_views(request.couch_user, self.domain)
 
         return json_response(self.config)
@@ -732,12 +741,12 @@ def email_report(request, domain, report_slug, report_type=ProjectReportDispatch
 
     if form.cleaned_data['send_to_owner']:
         send_html_email_async.delay(subject, request.couch_user.get_email(), body,
-                                    email_from=settings.DEFAULT_FROM_EMAIL)
+                                    email_from=settings.DEFAULT_FROM_EMAIL, ga_track=True)
 
     if form.cleaned_data['recipient_emails']:
         for recipient in form.cleaned_data['recipient_emails']:
             send_html_email_async.delay(subject, recipient, body,
-                                        email_from=settings.DEFAULT_FROM_EMAIL)
+                                        email_from=settings.DEFAULT_FROM_EMAIL, ga_track=True)
 
     return HttpResponse()
 
@@ -751,7 +760,7 @@ def delete_config(request, domain, config_id):
         raise Http404()
 
     config.delete()
-    ReportsTab.clear_dropdown_cache(request, domain)
+    ProjectReportsTab.clear_dropdown_cache(domain, request.couch_user.get_id)
 
     touch_saved_reports_views(request.couch_user, domain)
     return HttpResponse()
@@ -891,7 +900,7 @@ def edit_scheduled_report(request, domain, scheduled_report_id=None,
             instance.day = calculate_day(instance.interval, instance.day, day_change)
 
         instance.save()
-        ReportsTab.clear_dropdown_cache(request, domain)
+        ProjectReportsTab.clear_dropdown_cache(domain, request.couch_user.get_id)
         if is_new:
             messages.success(request, "Scheduled report added!")
         else:
@@ -1030,45 +1039,72 @@ def view_scheduled_report(request, domain, scheduled_report_id):
     )[0]
 
 
-@require_case_view_permission
-@login_and_domain_required
-@require_GET
-def case_details(request, domain, case_id):
-    try:
-        case = _get_case_or_404(domain, case_id)
-    except Http404:
-        messages.info(request, "Sorry, we couldn't find that case. If you think this is a mistake please report an issue.")
-        return HttpResponseRedirect(CaseListReport.get_url(domain=domain))
+class CaseDetailsView(BaseProjectReportSectionView):
+    urlname = 'case_details'
+    template_name = "reports/reportdata/case_details.html"
+    page_title = ugettext_lazy("Case Details")
+    http_method_names = ['get']
 
-    if not should_use_sql_backend(domain):
-        # TODO: make this work for SQL
-        create_actions = filter(lambda a: a.action_type == CASE_ACTION_CREATE, case.actions)
-        if not create_actions:
-            messages.error(request, _(
-                "The case creation form could not be found. "
-                "Usually this happens if the form that created the case is archived "
-                "but there are other forms that updated the case. "
-                "To fix this you can archive the other forms listed here."
-            ))
+    @method_decorator(require_case_view_permission)
+    @use_datatables
+    def dispatch(self, request, *args, **kwargs):
+        if not self.case_instance:
+            messages.info(request,
+                          "Sorry, we couldn't find that case. If you think this "
+                          "is a mistake please report an issue.")
+            return HttpResponseRedirect(CaseListReport.get_url(domain=self.domain))
+        return super(CaseDetailsView, self).dispatch(request, *args, **kwargs)
 
-    return render(request, "reports/reportdata/case_details.html", {
-        "domain": domain,
-        "case_id": case_id,
-        "case": case,
-        "report": dict(
-            name=case_inline_display(case),
-            slug=CaseListReport.slug,
-            is_async=False,
-        ),
-        "case_display_options": {
-            "display": request.project.get_case_display(case),
-            "timezone": get_timezone_for_user(request.couch_user, domain),
-            "get_case_url": lambda case_id: absolute_reverse(case_details, args=[domain, case_id]),
-            "show_transaction_export": toggles.STOCK_TRANSACTION_EXPORT.enabled(request.user.username),
-        },
-        "show_case_rebuild": toggles.SUPPORT.enabled(request.user.username),
-        'is_usercase': case.type == USERCASE_TYPE,
-    })
+    @property
+    def case_id(self):
+        return self.kwargs['case_id']
+
+    @property
+    @memoized
+    def case_instance(self):
+        try:
+            case = CaseAccessors(self.domain).get_case(self.case_id)
+            if case.domain != self.domain:
+                return None
+            return case
+        except CaseNotFound:
+            return None
+
+    @property
+    def page_name(self):
+        return case_inline_display(self.case_instance)
+
+    @property
+    def page_url(self):
+        return reverse(self.urlname, args=(self.domain, self.case_id,))
+
+    @property
+    def page_context(self):
+        if not should_use_sql_backend(self.domain):
+            # TODO: make this work for SQL
+            create_actions = filter(lambda a: a.action_type == CASE_ACTION_CREATE,
+                                    self.case_instance.actions)
+            if not create_actions:
+                messages.error(self.request, _(
+                    "The case creation form could not be found. "
+                    "Usually this happens if the form that created the case is archived "
+                    "but there are other forms that updated the case. "
+                    "To fix this you can archive the other forms listed here."
+                ))
+        return {
+            "case_id": self.case_id,
+            "case": self.case_instance,
+            "case_display_options": {
+                "display": self.request.project.get_case_display(self.case_instance),
+                "timezone": get_timezone_for_user(self.request.couch_user, self.domain),
+                "get_case_url": lambda case_id: absolute_reverse(
+                    self.urlname, args=[self.domain, case_id]),
+                "show_transaction_export": toggles.STOCK_TRANSACTION_EXPORT.enabled(
+                    self.request.user.username),
+            },
+            "show_case_rebuild": toggles.SUPPORT.enabled(self.request.user.username),
+            'is_usercase': self.case_instance.type == USERCASE_TYPE,
+        }
 
 
 @require_case_view_permission
@@ -1100,15 +1136,22 @@ def case_forms(request, domain, case_id):
     ])
 
 
-@login_and_domain_required
-@require_GET
-def case_attachments(request, domain, case_id):
-    if not can_view_attachments(request):
-        return HttpResponseForbidden(_("You don't have permission to access this page."))
+class CaseAttachmentsView(CaseDetailsView):
+    urlname = 'single_case_attachments'
+    template_name = "reports/reportdata/case_attachments.html"
+    page_title = ugettext_lazy("Case Attachments")
+    http_method_names = ['get']
 
-    case = _get_case_or_404(domain, case_id)
-    return render(request, 'reports/reportdata/case_attachments.html',
-                  {'domain': domain, 'case': case})
+    def dispatch(self, request, *args, **kwargs):
+        if not can_view_attachments(request):
+            return HttpResponseForbidden(_("You don't have permission to access this page."))
+        return super(CaseAttachmentsView, self).dispatch(request, *args, **kwargs)
+
+    @property
+    def page_name(self):
+        return "{} '{}'".format(
+            _("Attachments for case"), super(CaseAttachmentsView, self).page_name
+        )
 
 
 @require_case_view_permission
@@ -1368,7 +1411,7 @@ def _get_form_or_404(domain, id):
 def _get_case_or_404(domain, case_id):
     try:
         case = CaseAccessors(domain).get_case(case_id)
-        if case.domain != domain:
+        if case.domain != domain or case.is_deleted:
             raise Http404()
         return case
     except CaseNotFound:
@@ -1382,24 +1425,73 @@ def _get_form_to_edit(domain, user, instance_id):
     return form
 
 
-@require_form_view_permission
-@login_and_domain_required
-@require_GET
-def form_data(request, domain, instance_id):
-    instance = _get_form_or_404(domain, instance_id)
-    context = _get_form_context(request, domain, instance)
-    try:
-        form_name = instance.form_data["@name"]
-    except KeyError:
-        form_name = "Untitled Form"
+class FormDataView(BaseProjectReportSectionView):
+    urlname = 'render_form_data'
+    page_title = ugettext_lazy("Untitled Form")
+    template_name = "reports/reportdata/form_data.html"
+    http_method_names = ['get']
 
-    context.update({
-        "slug": inspect.SubmitHistory.slug,
-        "form_name": form_name,
-        "form_received_on": instance.received_on
-    })
+    @method_decorator(require_form_view_permission)
+    def dispatch(self, request, *args, **kwargs):
+        if self.xform_instance is None:
+            raise Http404()
+        try:
+            assert self.domain == self.xform_instance.domain
+        except AssertionError:
+            raise Http404()
+        return super(FormDataView, self).dispatch(request, *args, **kwargs)
 
-    return render(request, "reports/reportdata/form_data.html", context)
+    @property
+    def instance_id(self):
+        return self.kwargs['instance_id']
+
+    @property
+    def page_url(self):
+        return reverse(self.urlname, args=(self.domain, self.instance_id,))
+
+    @property
+    @memoized
+    def xform_instance(self):
+        try:
+            return FormAccessors(self.domain).get_form(self.instance_id)
+        except XFormNotFound:
+            return None
+
+    @property
+    @memoized
+    def form_name(self):
+        try:
+            form_name = self.xform_instance.form_data["@name"]
+        except KeyError:
+            form_name = _("Untitled Form")
+        return form_name
+
+    @property
+    def page_name(self):
+        return self.form_name
+
+    @property
+    def page_context(self):
+        timezone = get_timezone_for_user(self.request.couch_user, self.domain)
+        display = self.request.project.get_form_display(self.xform_instance)
+        page_context = {
+            "display": display,
+            "timezone": timezone,
+            "instance": self.xform_instance,
+            "user": self.request.couch_user,
+        }
+        form_render_options = {
+            'domain': self.domain,
+            'request': self.request,
+        }
+        form_render_options.update(page_context)
+        page_context.update({
+            "slug": inspect.SubmitHistory.slug,
+            "form_name": self.form_name,
+            "form_received_on": self.xform_instance.received_on,
+            'form_render_options': form_render_options,
+        })
+        return page_context
 
 
 @require_form_view_permission

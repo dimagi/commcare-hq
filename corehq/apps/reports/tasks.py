@@ -18,6 +18,7 @@ from celery.utils.log import get_task_logger
 
 from casexml.apps.case.xform import extract_case_blocks
 from casexml.apps.case.models import CommCareCase
+from corehq.apps.export.dbaccessors import get_all_daily_saved_export_instances
 from couchexport.files import Temp
 from couchexport.groupexports import export_for_group, rebuild_export
 from couchexport.tasks import cache_file_to_be_served
@@ -37,14 +38,6 @@ from corehq.apps.domain.calculations import (
     total_distinct_users,
 )
 from corehq.apps.es.domains import DomainES
-from corehq.apps.hqadmin.escheck import (
-    CLUSTER_HEALTH,
-    check_case_es_index,
-    check_es_cluster_health,
-    check_reportcase_es_index,
-    check_reportxform_es_index,
-    check_xform_es_index,
-)
 from corehq.apps.indicators.utils import get_mvp_domains
 from corehq.elastic import (
     stream_es_query,
@@ -67,46 +60,6 @@ from .scheduled import get_scheduled_reports
 
 logging = get_task_logger(__name__)
 EXPIRE_TIME = 60 * 60 * 24
-
-@periodic_task(run_every=crontab(hour="*/6", minute="0", day_of_week="*"), queue=getattr(settings, 'CELERY_PERIODIC_QUEUE','celery'))
-def check_es_index():
-    """
-    Verify that the Case and soon to be added XForm Elastic indices are up to date with what's in couch
-
-    This code is also called in the HQ admin page as well
-    """
-
-    es_status = {}
-    es_status.update(check_es_cluster_health())
-
-    es_status.update(check_case_es_index())
-    es_status.update(check_xform_es_index())
-
-    es_status.update(check_reportcase_es_index())
-    es_status.update(check_reportxform_es_index())
-
-    do_notify = False
-    message = []
-    if es_status[CLUSTER_HEALTH] == 'red':
-        do_notify = True
-        message.append("Cluster health is red - something is up with the ES machine")
-
-    for index in es_status.keys():
-        if index == CLUSTER_HEALTH:
-            continue
-        pillow_status = es_status[index]
-        if not pillow_status['status']:
-            do_notify = True
-            message.append(
-                "Elasticsearch %s Index Issue: %s" % (index, es_status[index]['message']))
-
-    if do_notify:
-        message.append(
-            "This alert can give false alarms due to timing lag, so please double check "
-            + absolute_reverse("system_info")
-            + " and the Elasticsearch Status section to make sure."
-        )
-        notify_exception(None, message='\n'.join(message))
 
 
 def send_delayed_report(report):
@@ -183,26 +136,31 @@ def monthly_reports():
 @periodic_task(run_every=crontab(hour=[22], minute="0", day_of_week="*"), queue=getattr(settings, 'CELERY_PERIODIC_QUEUE','celery'))
 def saved_exports():
     for group_config in get_all_hq_group_export_configs():
-        export_for_group_async.delay(group_config, 'couch')
+        export_for_group_async.delay(group_config)
+
+    for daily_saved_export in get_all_daily_saved_export_instances():
+        from corehq.apps.export.tasks import rebuild_export_task
+        last_access_cutoff = datetime.utcnow() - timedelta(days=settings.SAVED_EXPORT_ACCESS_CUTOFF)
+        rebuild_export_task.delay(daily_saved_export, last_access_cutoff)
 
 
 @task(queue='background_queue', ignore_result=True)
-def rebuild_export_task(groupexport_id, index, output_dir='couch', last_access_cutoff=None, filter=None):
+def rebuild_export_task(groupexport_id, index, last_access_cutoff=None, filter=None):
     group_config = HQGroupExportConfiguration.get(groupexport_id)
     config, schema = group_config.all_exports[index]
-    rebuild_export(config, schema, output_dir, last_access_cutoff, filter=filter)
+    rebuild_export(config, schema, last_access_cutoff, filter=filter)
 
 
 @task(queue='saved_exports_queue', ignore_result=True)
-def export_for_group_async(group_config, output_dir):
+def export_for_group_async(group_config):
     # exclude exports not accessed within the last 7 days
     last_access_cutoff = datetime.utcnow() - timedelta(days=settings.SAVED_EXPORT_ACCESS_CUTOFF)
-    export_for_group(group_config, output_dir, last_access_cutoff=last_access_cutoff)
+    export_for_group(group_config, last_access_cutoff=last_access_cutoff)
 
 
 @task(queue='saved_exports_queue', ignore_result=True)
-def rebuild_export_async(config, schema, output_dir):
-    rebuild_export(config, schema, output_dir)
+def rebuild_export_async(config, schema):
+    rebuild_export(config, schema)
 
 
 @periodic_task(run_every=crontab(hour="22", minute="0", day_of_week="*"), queue='background_queue')
@@ -247,6 +205,10 @@ def update_calculated_properties():
                 "cp_n_sms_out_30_d": int(CALC_FNS["sms_out_in_last"](dom, 30)),
                 "cp_n_sms_out_60_d": int(CALC_FNS["sms_out_in_last"](dom, 60)),
                 "cp_n_sms_out_90_d": int(CALC_FNS["sms_out_in_last"](dom, 90)),
+                "cp_n_j2me_30_d": int(CALC_FNS["j2me_forms_in_last"](dom, 30)),
+                "cp_n_j2me_60_d": int(CALC_FNS["j2me_forms_in_last"](dom, 60)),
+                "cp_n_j2me_90_d": int(CALC_FNS["j2me_forms_in_last"](dom, 90)),
+                "cp_j2me_90_d_bool": int(CALC_FNS["j2me_forms_in_last_bool"](dom, 90)),
             }
             if calced_props['cp_first_form'] is None:
                 del calced_props['cp_first_form']

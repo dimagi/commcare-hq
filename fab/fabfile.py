@@ -2,15 +2,6 @@
 # -*- coding: utf-8 -*-
 """
 Server layout:
-    ~/services/
-        This contains two subfolders
-            /apache/
-            /supervisor/
-        which hold the configurations for these applications
-        for each environment (staging, production, etc) running on the server.
-        Theses folders are included in the global /etc/apache2 and
-        /etc/supervisor configurations.
-
     ~/www/
         This folder contains the code, python environment, and logs
         for each environment (staging, production, etc) running on the server.
@@ -24,6 +15,15 @@ Server layout:
     ~/www/<environment>/current
         This path is a symlink to the release that is being run
         (~/www/<environment>/releases<YYYY-MM-DD-HH.SS>).
+
+    ~/www/<environment>/current/services/
+        This contains two subfolders
+            /supervisor/
+        which hold the configurations for these applications
+        for each environment (staging, production, etc) running on the server.
+        Theses folders are included in the global /etc/apache2 and
+        /etc/supervisor configurations.
+
 """
 import datetime
 import json
@@ -103,7 +103,7 @@ env.roledefs = {
 
 def _require_target():
     require('root', 'code_root', 'hosts', 'environment',
-            provided_by=('staging', 'preview', 'production', 'old_india', 'softlayer', 'zambia'))
+            provided_by=('staging', 'preview', 'production', 'softlayer', 'zambia'))
 
 
 class DeployMetadata(object):
@@ -116,15 +116,12 @@ class DeployMetadata(object):
 
     def tag_commit(self):
         self._git.fetch("origin", "--tags")
-        deploy_commit = self.deploy_ref
-        self._check_deploy_commit(deploy_commit, self.env.code_branch)
         pattern = "*{}*".format(self.env.environment)
         self.last_tag = sh.tail(self._git.tag("-l", pattern), "-1").strip()
 
         tag_name = "{}-{}-deploy".format(self.timestamp, self.env.environment)
-        # turn whatever `code_branch` is into a commit
         msg = "{} deploy at {}".format(self.env.environment, self.timestamp)
-        self._git.tag(tag_name, "-m", msg, deploy_commit)
+        self._git.tag(tag_name, "-m", msg, self.deploy_ref)
         self._git.push("origin", tag_name)
         self._deploy_tag = tag_name
 
@@ -160,7 +157,10 @@ class DeployMetadata(object):
     @property
     def deploy_ref(self):
         if self._deploy_ref is None:
-            self._deploy_ref = self._git("rev-parse", self.env.code_branch).strip()
+            # turn whatever `code_branch` is into a commit hash
+            deploy_commit = self._git("rev-parse", self.env.code_branch).strip()
+            self._check_deploy_commit(deploy_commit, self.env.code_branch)
+            self._deploy_ref = deploy_commit
         return self._deploy_ref
 
 
@@ -229,7 +229,7 @@ def _setup_path():
     env.project_media = posixpath.join(env.code_root, 'media')
     env.virtualenv_current = posixpath.join(env.code_current, 'python_env')
     env.virtualenv_root = posixpath.join(env.code_root, 'python_env')
-    env.services = posixpath.join(env.home, 'services')
+    env.services = posixpath.join(env.code_root, 'services')
     env.jython_home = '/usr/local/lib/jython'
     env.db = '%s_%s' % (env.project, env.environment)
 
@@ -260,13 +260,6 @@ def load_env(env_name):
     env_dict = get_env_dict(os.path.join('fab', 'environments.yml'))
     env.update(env_dict['base'])
     env.update(env_dict[env_name])
-
-
-@task
-def old_india():
-    env.inventory = os.path.join('fab', 'inventory', 'india')
-    load_env('india')
-    execute(env_common)
 
 
 @task
@@ -399,7 +392,6 @@ def env_common():
     proxy = servers['proxy']
     webworkers = servers['webworkers']
     postgresql = servers['postgresql']
-    couchdb = servers['couchdb']
     touchforms = servers['touchforms']
     elasticsearch = servers['elasticsearch']
     celery = servers['celery']
@@ -410,7 +402,6 @@ def env_common():
     deploy = servers.get('deploy', servers['postgresql'])[:1]
 
     env.roledefs = {
-        'couch': couchdb,
         'pg': postgresql,
         'rabbitmq': rabbitmq,
         'django_celery': celery,
@@ -529,11 +520,11 @@ def update_code(git_tag, use_current_release=False):
 
     with cd(env.code_root if not use_current_release else env.code_current):
         sudo('git remote prune origin')
-        sudo('git fetch origin --tags')
+        sudo('git fetch origin --tags -q')
         sudo('git checkout {}'.format(git_tag))
         sudo('git reset --hard {}'.format(git_tag))
         sudo('git submodule sync')
-        sudo('git submodule update --init --recursive')
+        sudo('git submodule update --init --recursive -q')
         # remove all untracked files, including submodules
         sudo("git clean -ffd")
         # remove all .pyc files in the project
@@ -603,11 +594,10 @@ def hotfix_deploy():
     except Exception:
         execute(mail_admins, "Deploy failed", "You had better check the logs.")
         # hopefully bring the server back to life
-        silent_services_restart()
+        silent_services_restart(use_current_release=True)
         raise
     else:
-        execute(services_restart)
-        silent_services_restart()
+        silent_services_restart(use_current_release=True)
         execute(record_successful_deploy, deploy_metadata)
 
 
@@ -622,8 +612,9 @@ def _confirm_translated():
 
 @task
 def setup_release():
+    deploy_ref = deploy_metadata.deploy_ref  # Make sure we have a valid commit
     _execute_with_timing(create_code_dir)
-    _execute_with_timing(update_code, deploy_metadata.deploy_ref)
+    _execute_with_timing(update_code, deploy_ref)
     _execute_with_timing(update_virtualenv)
 
     _execute_with_timing(copy_release_files)
@@ -666,7 +657,6 @@ def _deploy_without_asking():
         _execute_with_timing(_do_collectstatic)
         _execute_with_timing(_do_compress)
 
-        _execute_with_timing(clear_services_dir)
         _set_supervisor_config()
 
         do_migrate = env.should_migrate
@@ -777,11 +767,20 @@ def copy_node_modules():
         sudo('mkdir {}/node_modules'.format(env.code_root))
 
 
+@parallel
+@roles(ROLES_STATIC)
+def copy_compressed_js_staticfiles():
+    if files.exists('{}/staticfiles/CACHE/js'.format(env.code_current)):
+        sudo('mkdir -p {}/staticfiles/CACHE/js'.format(env.code_root))
+        sudo('cp -r {}/staticfiles/CACHE/js {}/staticfiles/CACHE/js'.format(env.code_current, env.code_root))
+
+
 def copy_release_files():
     execute(copy_localsettings)
     execute(copy_tf_localsettings)
     execute(copy_components)
     execute(copy_node_modules)
+    execute(copy_compressed_js_staticfiles)
 
 
 @task
@@ -818,7 +817,7 @@ def rollback():
     if all(exists.values()):
         print blue('Updating current and restarting services')
         execute(update_current, unique_release)
-        silent_services_restart()
+        silent_services_restart(use_current_release=True)
         execute(mark_last_release_unsuccessful)
     else:
         print red('Aborting because not all hosts have release')
@@ -896,7 +895,7 @@ def force_update_static():
     execute(_do_collectstatic, use_current_release=True)
     execute(_do_compress, use_current_release=True)
     execute(update_manifest, use_current_release=True)
-    silent_services_restart()
+    silent_services_restart(use_current_release=True)
 
 
 @task
@@ -980,38 +979,9 @@ def update_virtualenv():
 
 
 @task
-def wipe_supervisor_conf():
-    _require_target()
-    execute(clear_services_dir, current=True)
-    execute(services_restart)
-
-
-@roles(ROLES_ALL_SERVICES)
-@parallel
-def clear_services_dir(current=False):
-    """
-    remove old confs from directory first
-    the clear_supervisor_confs management command will scan the directory and find prefixed conf files of the supervisord files
-    and delete them matching the prefix of the current server environment
-
-    """
-    code_root = env.code_current if current else env.code_root
-    venv_root = env.virtualenv_current if current else env.virtualenv_root
-    services_dir = posixpath.join(env.services, u'supervisor')
-    with cd(code_root):
-        sudo((
-            '%(virtualenv_root)s/bin/python manage.py '
-            'clear_supervisor_confs --conf_location "%(conf_location)s"'
-        ) % {
-            'virtualenv_root': venv_root,
-            'conf_location': services_dir,
-        })
-
-
-@task
 def supervisorctl(command):
     require('supervisor_roles',
-            provided_by=('staging', 'preview', 'production', 'old_india', 'softlayer', 'zambia'))
+            provided_by=('staging', 'preview', 'production', 'softlayer', 'zambia'))
 
     @roles(env.supervisor_roles)
     def _inner():
@@ -1105,6 +1075,7 @@ def _do_compress(use_current_release=False):
     venv = env.virtualenv_root if not use_current_release else env.virtualenv_current
     with cd(env.code_root if not use_current_release else env.code_current):
         sudo('{}/bin/python manage.py compress --force -v 0'.format(venv))
+        sudo('{}/bin/python manage.py purge_compressed_files'.format(venv))
     update_manifest(save=True, use_current_release=use_current_release)
 
 
@@ -1182,6 +1153,8 @@ def version_static():
 
 
 def _rebuild_supervisor_conf_file(conf_command, filename, params=None):
+    sudo('mkdir -p {}'.format(posixpath.join(env.services, 'supervisor')))
+
     with cd(env.code_root):
         sudo((
             '%(virtualenv_root)s/bin/python manage.py '

@@ -3,17 +3,15 @@
 {% load i18n %}
 
 {% if report_table.accordion_start and not report_table.is_mixed_report %}
-    <div class="panel panel-default" id="accordion_{{ report_table.slug }}">
-        <div class="panel-heading">
-            <h4 class="panel-title">
-                <a class="accordion-toggle" data-toggle="collapse" data-parent="#accordion_{{ report_table.slug }}" href="#collapse_{{ report_table.slug }}">
-                    <i id="collapse_icon_{{ report_table.slug }}" class="fa fa-chevron-down"></i>
-                    {{ thisreport.report_table.title }}{% if subtitle1 %}<br/><small>{{ subtitle1 }}</small>{% endif %}<br/>{% if subtitle2 %}<small>{{ subtitle2 }}</small>{% endif %}
-                </a>
-            </h4>
+    <div class="accordion" id="accordion_{{ report_table.slug }}">
+        <div class="accordion-heading">
+          <a class="accordion-toggle" data-toggle="collapse" data-parent="#accordion_{{ report_table.slug }}" href="#collapse_{{ report_table.slug }}">
+            <i id="collapse_icon_{{ report_table.slug }}" class="icon-chevron-down"></i>
+            <span style="font-size: 16px;">{{ thisreport.report_table.title }}<br/><small>{{ subtitle1 }}</small><br/><small>{{ subtitle2 }}</small></span>
+          </a>
         </div>
-        <div id="collapse_{{ report_table.slug }}" class="panel-collapse collapse in">
-            <div class="panel-body">
+        <div id="collapse_{{ report_table.slug }}" class="accordion-body collapse in">
+            <div class="accordion-inner">
 {% endif %}
 
         {% if not report_table.chart_only %}
@@ -26,10 +24,10 @@
                         <tr>
                             {% for header in report_table.headers %}
                                 <th {% if not report_table.pagination.is_on %}data-sort="{{ header.sort_type }}" data-sortdir="{{ header.sort_direction }}"{% endif %} {% if header.css_class %}class="{{ header.css_class }}"{% endif %}>
-                                    <i class="fa icon-white"></i>
+                                    <i class="icon-white"></i>
                                     {% if header.html %}{{ header.html }}{% else %}{{ header|linebreaksbr }}{% endif %}
                                     {% if header.help_text %}
-                                        <i class="fa fa-question-circle header-tooltip" title="{{ header.help_text }}"></i>
+                                        <i class="icon-white icon-question-sign header-tooltip" title="{{ header.help_text }}"></i>
                                     {% endif %}
                                 </th>
                             {% endfor %}
@@ -70,7 +68,7 @@
             {% for chart in charts %}
             <div class="row">
                 {% if chart.title %}<h4 style="text-align: center; font-size: smaller">{{ chart.title }}</h4>{% endif %}
-                <div id='chart_{{ report.slug }}_{{ forloop.parentloop.counter }}{{ forloop.counter }}' class="col-sm-6 hide" style="width: 80%">
+                <div id='chart_{{ report.slug }}_{{ forloop.parentloop.counter }}{{ forloop.counter }}' class="span6 hide" style="width: 80%">
                     <svg style='height: {{ chart.height }}px; width: 100%'> </svg>
                 </div>
             </div>
@@ -90,20 +88,19 @@
                 COMMCAREHQ.transformHelpTemplate($(this), true);
             });
             $('#collapse_{{ report_table.slug }}').on('shown', function () {
-               $("#collapse_icon_{{ report_table.slug }}").removeClass("fa fa-chevron-down").addClass("fa fa-chevron-up");
+               $("#collapse_icon_{{ report_table.slug }}").removeClass("icon-chevron-down").addClass("icon-chevron-up");
             });
 
             $('#collapse_{{ report_table.slug }}').on('hidden', function () {
-               $("#collapse_icon_{{ report_table.slug }}").removeClass("fa fa-chevron-up").addClass("fa fa-chevron-down");
+               $("#collapse_icon_{{ report_table.slug }}").removeClass("icon-chevron-up").addClass("icon-chevron-down");
             });
         });
         {% if report_table and report_table.datatables %}
-            var dataTablesDom = "frt<'row-fluid dataTables_control'<'col-sm-5'il><'col-sm-7'p>>";
+            var dataTablesDom = "frt<'row-fluid dataTables_control'<'span5'il><'span7'p>>";
 
             var params = {
                     sDom: dataTablesDom,
-                    "sPaginationType": "bs_normal",
-                    useBootstrap3: true,
+                    "sPaginationType": "bootstrap",
                     iDisplayLength: 10,
                     iDisplayStart: 0,
                     sScrollX: "100%"

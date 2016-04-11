@@ -41,6 +41,10 @@ from corehq.apps.app_manager.util import (
     actions_use_usercase,
     advanced_actions_use_usercase,
     get_usercase_properties,
+    CASE_XPATH_PATTERN_MATCHES,
+    CASE_XPATH_SUBSTRING_MATCHES,
+    USER_CASE_XPATH_PATTERN_MATCHES,
+    USER_CASE_XPATH_SUBSTRING_MATCHES,
 )
 from corehq.apps.app_manager.xform import (
     CaseError,
@@ -460,6 +464,10 @@ def get_form_view_context_and_template(request, domain, form, langs, messages=me
         'is_usercase_in_use': is_usercase_in_use(request.domain),
         'is_module_filter_enabled': (feature_previews.MODULE_FILTER.enabled(request.domain) and
                                      app.enable_module_filtering),
+        'case_xpath_pattern_matches': CASE_XPATH_PATTERN_MATCHES,
+        'case_xpath_substring_matches': CASE_XPATH_SUBSTRING_MATCHES,
+        'user_case_xpath_pattern_matches': USER_CASE_XPATH_PATTERN_MATCHES,
+        'user_case_xpath_substring_matches': USER_CASE_XPATH_SUBSTRING_MATCHES,
     }
 
     if tours.NEW_APP.is_enabled(request.user):

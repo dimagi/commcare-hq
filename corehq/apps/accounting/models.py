@@ -9,7 +9,7 @@ from django.conf import settings
 from django.core.exceptions import ObjectDoesNotExist, ValidationError
 from django.core.validators import MaxValueValidator, MinValueValidator
 from django.db import models, transaction
-from django.db.models import F
+from django.db.models import F, Q
 from django.db.models.manager import Manager
 from django.template.loader import render_to_string
 from django.utils.html import strip_tags
@@ -63,6 +63,7 @@ from corehq.const import USER_DATE_FORMAT
 from corehq.util.dates import get_first_last_days
 from corehq.util.quickcache import quickcache
 from corehq.util.view_utils import absolute_reverse
+from corehq.apps.analytics.tasks import track_workflow
 
 integer_field_validators = [MaxValueValidator(2147483647), MinValueValidator(-2147483648)]
 
@@ -1085,7 +1086,7 @@ class Subscription(models.Model):
         return (Subscription.objects.
                 filter(subscriber=self.subscriber, date_start__gt=self.date_start).
                 exclude(pk=self.pk).
-                exclude(date_start=F('date_end')))
+                filter(Q(date_end__isnull=True) | ~Q(date_start=F('date_end'))))
 
     @property
     def is_renewed(self):
@@ -1307,6 +1308,13 @@ class Subscription(models.Model):
             self, method=adjustment_method, note=note, web_user=web_user,
             reason=change_status_result.adjustment_reason, related_subscription=new_subscription
         )
+
+        upgrade_reasons = [SubscriptionAdjustmentReason.UPGRADE, SubscriptionAdjustmentReason.CREATE]
+        if web_user and adjustment_method == SubscriptionAdjustmentMethod.USER:
+            if change_status_result.adjustment_reason in upgrade_reasons:
+                track_workflow(web_user, 'Changed Plan: Upgrade')
+            if change_status_result.adjustment_reason == SubscriptionAdjustmentReason.DOWNGRADE:
+                track_workflow(web_user, 'Changed Plan: Downgrade')
 
         return new_subscription
 
@@ -2052,11 +2060,6 @@ class BillingRecordBase(models.Model):
         raise NotImplementedError()
 
     def send_email(self, contact_emails=None):
-        if not self.should_send_email:
-            self.skipped_email = True
-            self.save()
-            return
-
         pdf_attachment = {
             'title': self.pdf.get_filename(self.invoice),
             'file_obj': StringIO(self.pdf.get_data(self.invoice)),
@@ -2400,8 +2403,7 @@ class BillingRecord(BillingRecordBase):
 
     def email_subject(self):
         month_name = self.invoice.date_start.strftime("%B")
-        return "Your %(month)s %(product)s Billing Statement for Project Space %(domain)s" % {
-            'product': self.invoice.subscription.plan_version.core_product,
+        return "Your %(month)s CommCare Billing Statement for Project Space %(domain)s" % {
             'month': month_name,
             'domain': self.invoice.subscription.subscriber.domain,
         }
@@ -2745,11 +2747,6 @@ class CreditLine(models.Model):
                 credit_line.adjust_credit_balance(-adjustment_amount, **kwargs)
                 balance -= adjustment_amount
         return balance
-
-    @staticmethod
-    def _validate_add_amount(amount):
-        if not isinstance(amount, Decimal):
-            raise ValueError("Amount must be a Decimal.")
 
     @classmethod
     def make_payment_towards_invoice(cls, invoice, payment_record):

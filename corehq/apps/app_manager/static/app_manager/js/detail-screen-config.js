@@ -837,9 +837,7 @@ hqDefine('app_manager/js/detail-screen-config.js', function () {
                 this.enableTilePullDown.subscribe(function(){
                     that.saveButton.fire('change');
                 });
-                ko.computed(function () {
-                    that.columns();
-                }).subscribe(function () {
+                this.columns.subscribe(function () {
                     that.saveButton.fire('change');
                 });
             }

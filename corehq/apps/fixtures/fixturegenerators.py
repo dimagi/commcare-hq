@@ -81,15 +81,31 @@ class ItemListsProvider(object):
             _set_cached_type(item, data_types[item.data_type_id])
 
         fixtures = []
-        all_types = data_types.values() + global_types.values()
-        for data_type in all_types:
-            xFixture = ElementTree.Element('fixture', attrib={'id': ':'.join((self.id, data_type.tag)),
-                                                              'user_id': user.user_id})
-            xItemList = ElementTree.Element('%s_list' % data_type.tag)
-            xFixture.append(xItemList)
-            for item in sorted(items_by_type[data_type.get_id], key=lambda x: x.sort_key):
-                xItemList.append(item.to_xml())
-            fixtures.append(xFixture)
+        all_types_to_sync = data_types.values() + global_types.values()
+        for data_type in all_types_to_sync:
+            fixtures.append(self._get_fixture_element(
+                data_type.tag,
+                user.user_id,
+                sorted(items_by_type[data_type.get_id], key=lambda x: x.sort_key)
+            ))
+        for data_type_id, data_type in all_types.iteritems():
+            if data_type_id not in global_types and data_type_id not in data_types:
+                fixtures.append(self._get_fixture_element(data_type.tag, user.user_id, []))
         return fixtures
+
+    def _get_fixture_element(self, tag, user_id, items):
+        fixture_element = ElementTree.Element(
+            'fixture',
+            attrib={
+                'id': ':'.join((self.id, tag)),
+                'user_id': user_id
+            }
+        )
+        item_list_element = ElementTree.Element('%s_list' % tag)
+        fixture_element.append(item_list_element)
+        for item in items:
+            item_list_element.append(item.to_xml())
+        return fixture_element
+
 
 item_lists = ItemListsProvider()

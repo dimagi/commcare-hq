@@ -90,6 +90,11 @@ class BasicPillow(PillowBase):
             # document_class must be a CouchDocLockableMixIn
             assert hasattr(self.document_class, 'get_obj_lock_by_id')
 
+    @property
+    def pillow_id(self):
+        # for legacy reasons, by default a Pillow's ID is just it's class name
+        return self.__class__.__name__
+
     def get_couch_db(self):
         if self._couch_db is None:
             self._couch_db = self.get_default_couch_db()
@@ -179,7 +184,7 @@ class BasicPillow(PillowBase):
         try:
             # This breaks the module boundary by using a show function defined in commcare-hq
             # but it was decided that it wasn't worth the effort to maintain the separation.
-            meta = self.get_couch_db().show('domain/domain_date', change['id'])
+            meta = self.get_couch_db().show('domain_shows/domain_date', change['id'])
         except ResourceNotFound:
             # Show function does not exist
             meta = None
@@ -506,7 +511,7 @@ class AliasedElasticPillow(BasicPillow):
                     "tb": tb
                 }
             )
-            return None
+            raise
 
     def process_bulk(self, changes):
         if not changes:

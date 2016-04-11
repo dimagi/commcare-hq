@@ -70,6 +70,7 @@
                 }
             });
             $(archive_location_modal).modal('hide');
+            ga_track_event('Organization Structure', 'Archive')
         }
 
         var modal_context = {
@@ -80,7 +81,6 @@
         ko.cleanNode(archive_location_modal);
         $(archive_location_modal).koApplyBindings(modal_context);
         $(archive_location_modal).modal('show');
-
     };
 
     unarchive_loc = function(button, loc_id) {
@@ -117,6 +117,7 @@
                     }
                 });
                 $(delete_location_modal).modal('hide');
+                ga_track_event('Organization Structure', 'Delete')
             }
         }
 
@@ -148,6 +149,10 @@
         $('#location_tree').koApplyBindings(model);
         model.load(locs, selected_loc);
     });
+
+    gaTrackLink($('#edit-org-levels'), 'Organization Structure', 'Edit Organization Levels');
+
+    gaTrackLink($('#edit-loc-fields'), 'Organization Structure', 'Edit Location Fields');
 </script>
 {% endblock %}
 
@@ -188,19 +193,28 @@
 <div class="row">
     <div class="col-sm-12">
         <div class="btn-toolbar">
-            <a class="btn btn-primary"
+            <a class="btn btn-info"
+               {% if not has_location_types or not can_edit_any_location %}
+                   disabled
+               {% else %}
+                   href="{% url "location_export" domain %}"
+               {% endif %}
+            >
+                <i class="fa fa-cloud-download"></i> {% trans 'Download Organization Structure' %}
+            </a>
+            <a class="btn btn-default"
                {% if not has_location_types or not can_edit_any_location %}
                    disabled
                {% else %}
                    href="{% url "location_import" domain %}"
                {% endif %}
             >
-                <i class="fa fa-upload"></i> {% trans 'Bulk Import/Export' %}
+                <i class="fa fa-cloud-upload"></i> {% trans 'Bulk Upload' %}
             </a>
-            <a class="btn btn-default" href="{% url "location_types" domain %}">
+            <a class="btn btn-default" href="{% url "location_types" domain %}" id="edit-org-levels">
                 {% trans "Edit Organization Levels" %}
             </a>
-            <a class="btn btn-default" href="{% url "location_fields_view" domain %}">
+            <a class="btn btn-default" href="{% url "location_fields_view" domain %}" id="edit-loc-fields">
                 {% trans "Edit Location Fields" %}
             </a>
         </div>
@@ -218,7 +232,8 @@
             <div class="loc_header" data-bind="if: name() != '_root'">
                 <div style="float:right;" data-bind="if: can_edit()">
                     {% if not show_inactive %}
-                        <a class="btn btn-primary" data-bind="attr: { href: loc_edit_url(uuid()) }">
+                        <a class="btn btn-primary"
+                           data-bind="attr: { href: loc_edit_url(uuid()) }">
                             {% trans "Edit" %}
                         </a>
                     {% endif %}
@@ -276,12 +291,13 @@
                 {% if not show_inactive %}
                     <!-- create child button -->
                     <!-- ko if: can_edit() -->
-                        <a class="btn btn-success loc_child" data-bind="attr: { href: NEW_LOC_URL + '?parent=' + (uuid() || '') }">
+                        <a class="btn btn-success loc_child"
+                           data-bind="attr: { href: NEW_LOC_URL + '?parent=' + (uuid() || '') },
+                                      click: new_location_tracking">
                             <i class="fa fa-plus"></i> <span data-bind="text: new_child_caption"></span>
                         </a>
                     <!-- /ko -->
                 {% endif %}
-
             </div>
         </div>
 

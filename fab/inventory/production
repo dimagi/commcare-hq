@@ -9,9 +9,6 @@ hqdjango14.internal.commcarehq.org
 [webworkers:vars]
 newrelic_app_name=django
 
-[couchdb]
-hqdb0.internal.commcarehq.org
-
 [postgresql]
 hqdb0.internal.commcarehq.org
 
@@ -65,3 +62,6 @@ datavol_device=/dev/xvdb
 
 [stanchion]
 hqriak0.internal.commcarehq.org
+
+[rackspace_cloud_backup]
+hqdb0.internal.commcarehq.org

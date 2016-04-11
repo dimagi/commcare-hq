@@ -12,10 +12,8 @@ from casexml.apps.case.mock import CaseBlock
 from casexml.apps.case.models import CommCareCase
 from casexml.apps.case.tests.util import delete_all_cases
 from casexml.apps.case.util import post_case_blocks
-from casexml.apps.case.xml import V2
 from corehq.apps.userreports.reports.view import ConfigurableReport
 from corehq.sql_db.connections import Session
-from corehq.form_processor.interfaces.processor import FormProcessorInterface
 from corehq.util.context_managers import drop_connected_signals
 
 
@@ -176,7 +174,7 @@ class ConfigurableReportViewTest(ConfigurableReportTestMixin, TestCase):
         Simulate building a report where chunking occurs
         """
 
-        with patch('corehq.apps.userreports.tasks.CHUNK_SIZE', 1):
+        with patch('corehq.apps.userreports.tasks.ID_CHUNK_SIZE', 1):
             report = self._build_report()
 
         view = ConfigurableReport()

@@ -79,15 +79,6 @@ COMMCAREHQ.initBlock = function ($elem) {
         $.postGo($(this).attr('href'), {});
     });
 
-    // trick to give a select menu an initial value
-    $('select[data-value]', $elem).each(function () {
-        var val = $(this).attr('data-value');
-        if (val) {
-            $(this).find('option').removeAttr('selected');
-            $(this).find('option[value="' + val + '"]').attr('selected', 'true');
-        }
-    });
-
     $(".button", $elem).button().wrap('<span />');
     $("input[type='submit']", $elem).button();
     $("input[type='text'], input[type='password'], textarea", $elem);
@@ -213,8 +204,10 @@ COMMCAREHQ.makeSaveButton = function(messageStrings, cssClass) {
                 fireChange = function () {
                     button.fire('change');
                 };
-            $form.find('*').change(fireChange);
-            $form.find('input, textarea').bind('textchange', fireChange);
+            _.defer(function () {
+                $form.find('*').change(fireChange);
+                $form.find('input, textarea').bind('textchange', fireChange);
+            });
             return button;
         },
         message: messageStrings

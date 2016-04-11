@@ -4,11 +4,11 @@ from contextlib import contextmanager
 from django.test import SimpleTestCase, TestCase
 from mock import Mock, patch
 from corehq.apps.app_manager.models import (
+    AncestorLocationTypeFilter,
     CustomMonthFilter,
     _filter_by_case_sharing_group_id,
     _filter_by_location_id,
     _filter_by_parent_location_id,
-    _filter_by_ancestor_location_type_id,
     _filter_by_username,
     _filter_by_user_id,
 )
@@ -172,7 +172,6 @@ class AutoFilterTests(TestCase):
         cls.usa = SQLLocation(
             domain=DOMAIN,
             name='The United States of America',
-            location_id='usa',
             site_code='usa',
             location_type=cls.country,
         )
@@ -180,7 +179,6 @@ class AutoFilterTests(TestCase):
         cls.massachusetts = SQLLocation(
             domain=DOMAIN,
             name='Massachusetts',
-            location_id='massachusetts',
             site_code='massachusetts',
             location_type=cls.state,
             parent=cls.usa,
@@ -189,7 +187,6 @@ class AutoFilterTests(TestCase):
         cls.new_york = SQLLocation(
             domain=DOMAIN,
             name='New York',
-            location_id='new_york',
             site_code='new_york',
             location_type=cls.state,
             parent=cls.usa,
@@ -199,7 +196,6 @@ class AutoFilterTests(TestCase):
         cls.cambridge = SQLLocation(
             domain=DOMAIN,
             name='Cambridge',
-            location_id='cambridge',
             site_code='cambridge',
             location_type=cls.city,
             parent=cls.massachusetts,
@@ -208,7 +204,6 @@ class AutoFilterTests(TestCase):
         cls.somerville = SQLLocation(
             domain=DOMAIN,
             name='Somerville',
-            location_id='somerville',
             site_code='somerville',
             location_type=cls.city,
             parent=cls.massachusetts,
@@ -217,7 +212,6 @@ class AutoFilterTests(TestCase):
         cls.nyc = SQLLocation(
             domain=DOMAIN,
             name='New York City',
-            location_id='nyc',
             site_code='nyc',
             location_type=cls.city,
             parent=cls.new_york,
@@ -227,22 +221,22 @@ class AutoFilterTests(TestCase):
         cls.drew = CommCareUser(
             domain=DOMAIN,
             username='drew',
-            location_id='nyc',
+            location_id=cls.nyc.location_id,
         )
         cls.jon = CommCareUser(
             domain=DOMAIN,
             username='jon',
-            location_id='cambridge',
+            location_id=cls.cambridge.location_id,
         )
         cls.nate = CommCareUser(
             domain=DOMAIN,
             username='nate',
-            location_id='somerville',
+            location_id=cls.somerville.location_id,
         )
         cls.sheel = CommCareUser(
             domain=DOMAIN,
             username='sheel',
-            location_id='somerville',
+            location_id=cls.somerville.location_id,
             last_login=datetime.datetime.now(),
             date_joined=datetime.datetime.now(),
         )
@@ -265,25 +259,17 @@ class AutoFilterTests(TestCase):
 
     def test_filter_by_case_sharing_group_id(self):
         result = _filter_by_case_sharing_group_id(self.sheel, None)
-        self.assertEqual(result, [Choice(value='somerville', display=None)])
+        self.assertEqual(result, [Choice(value=self.somerville.location_id, display=None)])
 
     def test_filter_by_location_id(self):
         result = _filter_by_location_id(self.drew, self.ui_filter)
-        self.ui_filter.value.assert_called_with(test_filter='nyc')
+        self.ui_filter.value.assert_called_with(test_filter=self.nyc.location_id)
         self.assertEqual(result, 'result')
 
     def test_filter_by_parent_location_id(self):
         result = _filter_by_parent_location_id(self.jon, self.ui_filter)
-        self.ui_filter.value.assert_called_with(test_filter='massachusetts')
+        self.ui_filter.value.assert_called_with(test_filter=self.massachusetts.location_id)
         self.assertEqual(result, 'result')
-
-    def test_filter_by_ancestor_location_type_id(self):
-        result = _filter_by_ancestor_location_type_id(self.nate, None)
-        self.assertEqual(result, [
-            Choice(value=self.country.id, display='country'),
-            Choice(value=self.state.id, display='state'),
-            # Note: These are ancestors, so the user's own location type is excluded
-        ])
 
     def test_filter_by_username(self):
         result = _filter_by_username(self.sheel, None)
@@ -292,3 +278,9 @@ class AutoFilterTests(TestCase):
     def test_filter_by_user_id(self):
         result = _filter_by_user_id(self.sheel, None)
         self.assertEqual(result, Choice(value=self.sheel._id, display=None))
+
+    # AncestorLocationTypeFilter is not an AutoFilter, but we'll hitch a ride here to reuse setup and teardown
+    def test_ancestor_location_type_filter(self):
+        filt = AncestorLocationTypeFilter(ancestor_location_type_name='state')
+        nate_state = filt.get_filter_value(self.nate, None)
+        self.assertEqual(nate_state, self.massachusetts.location_id)

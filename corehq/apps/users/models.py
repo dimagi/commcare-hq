@@ -845,7 +845,7 @@ class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, UnicodeMixIn, EulaMi
 
     @property
     def human_friendly_name(self):
-        return self.full_name if self.full_name else self.username
+        return self.full_name if self.full_name else self.raw_username
 
     @property
     def name_in_filters(self):
@@ -1505,7 +1505,7 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
         return user
 
     def _get_form_ids(self):
-        return FormAccessors(self.domain).get_form_ids_for_user(self.domain, self.user_id)
+        return FormAccessors(self.domain).get_form_ids_for_user(self.user_id)
 
     def _get_case_ids(self):
         return CaseAccessors(self.domain).get_case_ids_by_owners([self.user_id])

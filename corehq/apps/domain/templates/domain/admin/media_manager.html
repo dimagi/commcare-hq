@@ -9,7 +9,10 @@
 
 {% block js-inline %}{{ block.super }}
 <script type="text/javascript">
-    $('body').koApplyBindings(new MediaManager({{ media|JSON }}, {{ licenses|JSON }}));
+(function () {
+    var MediaManager = hqImport('domain/js/media_manager.js').MediaManager;
+    $('#update-media-sharing-settings').koApplyBindings(new MediaManager({{ media|JSON }}, {{ licenses|JSON }}));
+}());
 </script>
 {% endblock %}
 

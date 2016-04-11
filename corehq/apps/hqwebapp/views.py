@@ -8,12 +8,12 @@ import uuid
 from datetime import datetime
 from urlparse import urlparse
 
+import functools
 from django.conf import settings
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.forms import AdminPasswordChangeForm
 from django.contrib.auth.models import User
-from django.contrib.auth.views import login as django_login
 from django.contrib.auth.views import logout as django_logout
 from django.core import cache
 from django.core.cache import InvalidCacheBackendError
@@ -26,15 +26,21 @@ from django.shortcuts import redirect, render
 from django.template import loader
 from django.template.context import RequestContext
 from django.template.loader import render_to_string
+from django.template.response import TemplateResponse
 from django.utils.decorators import method_decorator
 from django.utils.translation import ugettext as _, ugettext_noop
+from django.views.decorators.debug import sensitive_post_parameters
 from django.views.decorators.http import require_POST
 from django.views.generic import TemplateView
 
 import httpagentparser
 from couchdbkit import ResourceNotFound
 from restkit import Resource
+from two_factor.views import LoginView
+from two_factor.forms import AuthenticationTokenForm, BackupTokenForm
 
+from corehq.form_processor.backends.sql.dbaccessors import FormAccessorSQL, CaseAccessorSQL
+from corehq.form_processor.exceptions import XFormNotFound, CaseNotFound
 from dimagi.utils.couch.cache.cache_core import get_redis_default_cache
 from dimagi.utils.couch.database import get_db
 from dimagi.utils.decorators.memoized import memoized
@@ -54,7 +60,7 @@ from corehq.apps.dropbox.exceptions import DropboxUploadAlreadyInProgress
 from corehq.apps.dropbox.models import DropboxUploadHelper
 from corehq.apps.dropbox.views import DROPBOX_ACCESS_TOKEN
 from corehq.apps.hqadmin.management.commands.deploy_in_progress import DEPLOY_IN_PROGRESS_FLAG
-from corehq.apps.hqwebapp.doc_info import get_doc_info
+from corehq.apps.hqwebapp.doc_info import get_doc_info, get_object_info
 from corehq.apps.hqwebapp.encoders import LazyEncoder
 from corehq.apps.hqwebapp.forms import EmailAuthenticationForm, CloudCareAuthenticationForm
 from corehq.apps.reports.util import is_mobile_worker_with_report_access
@@ -197,6 +203,12 @@ def redirect_to_default(req, domain=None):
                     url = reverse('landing_page')
             else:
                 url = reverse('landing_page')
+    elif domain and _two_factor_needed(domain, req):
+        return TemplateResponse(
+            request=req,
+            template='two_factor/core/otp_required.html',
+            status=403,
+        )
     else:
         if domain:
             domain = normalize_domain_name(domain)
@@ -224,6 +236,13 @@ def redirect_to_default(req, domain=None):
     return HttpResponseRedirect(url)
 
 
+def _two_factor_needed(domain_name, request):
+    domain_name = normalize_domain_name(domain_name)
+    domain = Domain.get_by_name(domain_name)
+    if domain:
+        return domain.two_factor_auth and not request.user.is_verified()
+
+
 def landing_page(req, template_name="home.html"):
     # this view, and the one below, is overridden because
     # we need to set the base template to use somewhere
@@ -231,7 +250,7 @@ def landing_page(req, template_name="home.html"):
     if req.user.is_authenticated():
         return HttpResponseRedirect(reverse('homepage'))
     req.base_template = settings.BASE_TEMPLATE
-    return django_login(req, template_name=template_name, authentication_form=EmailAuthenticationForm)
+    return HQLoginView.as_view()(req)
 
 
 def yui_crossdomain(req):
@@ -337,6 +356,7 @@ def csrf_failure(request, reason=None, template_name="csrf_failure.html"):
              })))
 
 
+@sensitive_post_parameters('auth-password')
 def _login(req, domain_name, template_name):
 
     if req.user.is_authenticated() and req.method == "GET":
@@ -348,9 +368,9 @@ def _login(req, domain_name, template_name):
         else:
             return HttpResponseRedirect(reverse('domain_homepage', args=[domain_name]))
 
-    if req.method == 'POST' and domain_name and '@' not in req.POST.get('username', '@'):
+    if req.method == 'POST' and domain_name and '@' not in req.POST.get('auth-username', '@'):
         req.POST._mutable = True
-        req.POST['username'] = format_username(req.POST['username'], domain_name)
+        req.POST['auth-username'] = format_username(req.POST['auth-username'], domain_name)
         req.POST._mutable = False
 
     req.base_template = settings.BASE_TEMPLATE
@@ -358,32 +378,30 @@ def _login(req, domain_name, template_name):
     context = {}
     if domain_name:
         domain = Domain.get_by_name(domain_name)
-        req_params = expect_GET(req)
+        req_params = req.GET if req.method == 'GET' else req.POST
         context.update({
             'domain': domain_name,
             'hr_name': domain.display_name() if domain else domain_name,
             'next': req_params.get('next', '/a/%s/' % domain),
             'allow_domain_requests': domain.allow_domain_requests,
+            'current_page': {'page_name': _('Welcome back to %s!') % domain.display_name()}
+        })
+    else:
+        context.update({
+            'current_page': {'page_name': _('Welcome back to CommCare HQ!')}
         })
 
-    authentication_form = EmailAuthenticationForm if not domain_name else CloudCareAuthenticationForm
-    return django_login(req, template_name=template_name,
-                        authentication_form=authentication_form,
-                        extra_context=context)
+    auth_view = HQLoginView if not domain_name else CloudCareLoginView
+    return auth_view.as_view(template_name=template_name, extra_context=context)(req)
 
 
-def login(req, domain_type='commcare'):
+@sensitive_post_parameters('auth-password')
+def login(req):
     # this view, and the one below, is overridden because
     # we need to set the base template to use somewhere
     # somewhere that the login page can access it.
-    req_params = expect_GET(req)
+    req_params = req.GET if req.method == 'GET' else req.POST
     domain = req_params.get('domain', None)
-
-    from corehq.apps.domain.utils import get_dummy_domain
-    # For showing different logos based on CommTrack, CommConnect, CommCare...
-    dummy_domain = get_dummy_domain(domain_type)
-    req.project = dummy_domain
-
     return _login(req, domain, "login_and_password/login.html")
 
 
@@ -397,6 +415,28 @@ def domain_login(req, domain, template_name="login_and_password/login.html"):
     req.project = project
 
     return _login(req, domain, template_name)
+
+
+class HQLoginView(LoginView):
+    form_list = [
+        ('auth', EmailAuthenticationForm),
+        ('token', AuthenticationTokenForm),
+        ('backup', BackupTokenForm),
+    ]
+    extra_context = {}
+
+    def get_context_data(self, **kwargs):
+        context = super(HQLoginView, self).get_context_data(**kwargs)
+        context.update(self.extra_context)
+        return context
+
+
+class CloudCareLoginView(HQLoginView):
+    form_list = [
+        ('auth', CloudCareAuthenticationForm),
+        ('token', AuthenticationTokenForm),
+        ('backup', BackupTokenForm),
+    ]
 
 
 def is_mobile_url(url):
@@ -1007,10 +1047,9 @@ def quick_find(request):
     if not query:
         return HttpResponseBadRequest('GET param "q" must be provided')
 
-    def deal_with_couch_doc(doc):
-        domain = doc.get('domain') or doc.get('domains', [None])[0]
+    def deal_with_doc(doc, domain, doc_info_fn):
         if request.couch_user.is_superuser or (domain and request.couch_user.is_domain_admin(domain)):
-            doc_info = get_doc_info(doc, domain_hint=domain)
+            doc_info = doc_info_fn(doc)
         else:
             raise Http404()
         if redirect and doc_info.link:
@@ -1021,15 +1060,27 @@ def quick_find(request):
         else:
             return json_response(doc_info)
 
-    for db_name in (None, 'users', 'receiverwrapper', 'meta'):
+    couch_dbs = [None] + settings.COUCH_SETTINGS_HELPER.extra_db_names
+    for db_name in couch_dbs:
         try:
             doc = get_db(db_name).get(query)
         except ResourceNotFound:
             pass
         else:
-            return deal_with_couch_doc(doc)
-    else:
-        raise Http404()
+            domain = doc.get('domain') or doc.get('domains', [None])[0]
+            doc_info_fn = functools.partial(get_doc_info, domain_hint=domain)
+            return deal_with_doc(doc, domain, doc_info_fn)
+
+    for accessor in (FormAccessorSQL.get_form, CaseAccessorSQL.get_case):
+        try:
+            doc = accessor(query)
+        except (XFormNotFound, CaseNotFound):
+            pass
+        else:
+            domain = doc.domain
+            return deal_with_doc(doc, domain, get_object_info)
+
+    raise Http404()
 
 
 def osdd(request, template='osdd.xml'):

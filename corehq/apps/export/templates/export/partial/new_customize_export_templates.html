@@ -8,7 +8,10 @@
                 <input type="checkbox" data-bind="checked: table.selected" />
             </span>
             <span>
-                <span data-bind="text: Exports.Utils.getTableName(table.path(), $root.type())">
+                <span data-bind="text: table.label()" />
+            </span>
+            <span>
+                <span class="label label-warning" data-bind="visible: table.is_deleted">deleted</span>
             </span>
         </legend>
         <div data-bind="visibleFade: table.selected">
@@ -101,7 +104,17 @@
                                             text: tag,
                                             attr: { class: Exports.Utils.getTagCSSClass(tag) }"></span>
                                     </span>
-                                    <code data-bind="text: column.formatProperty()"></code>
+                                    <code data-toggle="tooltip" data-placement="top" 
+                                        data-bind="
+                                            text: column.formatProperty(),
+                                            attr: {
+                                                'data-original-title': column.help_text,
+                                                'data-toggle': column.help_text ? 'tooltip' : null
+                                            },
+                                            css: {
+                                                'export-tooltip': column.translatedHelp()
+                                            }
+                                        "></code>
                                 </td>
                                 <td><input class="input-xlarge" type="text" data-bind="value: column.label" /></td>
                                 {% if export_instance.type == 'case' and request|feature_preview_enabled:"SPLIT_MULTISELECT_CASE_EXPORT"%}
@@ -135,16 +148,11 @@
                                 {% if allow_deid %}
                                 <td class="deid-column" data-bind="visible: $root.isDeidColumnVisible()">
                                     <select data-bind="
-                                        value: deidTransform,
+                                        value: deid_transform,
                                         options: getDeidOptions(),
-                                        optionsText: getDeidOptionText,
-                                        visible: isDeidSelectVisible()
+                                        optionsText: getDeidOptionText
                                     ">
                                     </select>
-                                    <span class="label label-info"
-                                          data-bind="visible: !isDeidSelectVisible()">
-                                        {% trans "Cannot be published in De-Identified Export." %}
-                                    </span>
                                 </td>
                                 {% endif %}
                             </tr>

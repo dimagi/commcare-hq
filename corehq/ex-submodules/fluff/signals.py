@@ -1,14 +1,11 @@
 from functools import partial
-import pprint
 import sqlalchemy
 import logging
 
 from django.db import DEFAULT_DB_ALIAS
 from django.dispatch import Signal
 from django.conf import settings
-from itertools import chain
-from django.db.models import signals
-from pillowtop.utils import get_pillow_class, get_all_pillow_configs
+from pillowtop.utils import get_all_pillow_configs
 from alembic.migration import MigrationContext
 from alembic.autogenerate import compare_metadata
 from fluff.util import metadata as fluff_metadata

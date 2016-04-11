@@ -27,7 +27,7 @@ class HQCsrfViewMiddleWare(CsrfViewMiddleware):
         _assert = soft_assert('{}@{}'.format('sreddy+logs', 'dimagi.com'), exponential_backoff=False)
         _assert(False, warning)
 
-        if request_url.find('login'):
+        if '/login/' in request_url:
             # exempt login URLs from csrf, but still get failure logs
             self._accept(request)
 

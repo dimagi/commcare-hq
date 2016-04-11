@@ -10,8 +10,12 @@
 
 {% block js-inline %} {{ block.super }}
     <script type="text/javascript">
+    $(function () {
         var settings = {{ settings|JSON }};
         var other_sms_codes = {{ other_sms_codes|JSON }};
+        var initCommtrackSettingsView = hqImport('commtrack/ko/sms.js').initCommtrackSettingsView;
+        initCommtrackSettingsView($('#settings'), settings, other_sms_codes);
+    });
     </script>
 {% endblock %}
 

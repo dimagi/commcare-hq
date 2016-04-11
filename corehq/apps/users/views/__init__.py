@@ -6,6 +6,7 @@ import logging
 import re
 import urllib
 
+from django.conf import settings
 from django.contrib import messages
 from django.contrib.auth import authenticate, login
 from django.contrib.auth.forms import SetPasswordForm
@@ -19,6 +20,7 @@ from django.utils.translation import ugettext as _, ugettext_noop, ugettext_lazy
 from django.views.decorators.debug import sensitive_post_parameters
 from django.views.decorators.http import require_POST
 
+from django_otp.plugins.otp_static.models import StaticToken
 from djangular.views.mixins import allow_remote_invocation, JSONResponseMixin
 
 from couchdbkit.exceptions import ResourceNotFound
@@ -38,7 +40,7 @@ from corehq.apps.analytics.tasks import (
 )
 from corehq.apps.analytics.utils import get_meta
 from corehq.apps.domain.decorators import (login_and_domain_required, require_superuser, domain_admin_required)
-from corehq.apps.domain.models import Domain, toggles
+from corehq.apps.domain.models import Domain
 from corehq.apps.domain.views import BaseDomainView
 from corehq.apps.es import AppES
 from corehq.apps.es.queries import search_string_query
@@ -68,6 +70,7 @@ from corehq.apps.users.models import (CouchUser, CommCareUser, WebUser, DomainRe
                                       DomainMembershipError)
 from corehq.elastic import ADD_TO_ES_FILTER, es_query
 from corehq.util.couch import get_document_or_404
+from corehq import toggles
 
 
 def _users_context(request, domain):
@@ -197,6 +200,17 @@ class BaseEditUserView(BaseUserSettingsView):
         return context
 
     @property
+    def backup_token(self):
+        if Domain.get_by_name(self.request.domain).two_factor_auth:
+            device = self.editable_user.get_django_user().staticdevice_set.get_or_create(name='backup')[0]
+            token = device.token_set.first()
+            if token:
+                return device.token_set.first().token
+            else:
+                return device.token_set.create(token=StaticToken.random_token()).token
+        return None
+
+    @property
     @memoized
     def commtrack_form(self):
         if self.request.method == "POST" and self.request.POST['form_type'] == "commtrack":
@@ -268,6 +282,11 @@ class EditWebUserView(BaseEditUserView):
         return ctx
 
     @property
+    @memoized
+    def can_grant_superuser_access(self):
+        return self.request.couch_user.is_superuser and toggles.SUPPORT.enabled(self.request.couch_user.username)
+
+    @property
     def page_context(self):
         ctx = {
             'form_uneditable': BaseUserInfoForm(),
@@ -275,8 +294,10 @@ class EditWebUserView(BaseEditUserView):
         if (self.request.project.commtrack_enabled or
                 self.request.project.uses_locations):
             ctx.update({'update_form': self.commtrack_form})
-        if self.request.couch_user.is_superuser:
+        if self.can_grant_superuser_access:
             ctx.update({'update_permissions': True})
+
+        ctx.update({'token': self.backup_token})
 
         return ctx
 
@@ -288,7 +309,7 @@ class EditWebUserView(BaseEditUserView):
         return super(EditWebUserView, self).get(request, *args, **kwargs)
 
     def post(self, request, *args, **kwargs):
-        if self.request.POST['form_type'] == "update-user-permissions" and request.couch_user.is_superuser:
+        if self.request.POST['form_type'] == "update-user-permissions" and self.can_grant_superuser_access:
             is_super_user = True if 'super_user' in self.request.POST and self.request.POST['super_user'] == 'on' else False
             if self.form_user_update_permissions.update_user_permission(couch_user=self.request.couch_user,
                                                                         editable_user=self.editable_user, is_super_user=is_super_user):
@@ -344,47 +365,6 @@ class BaseFullEditUserView(BaseEditUserView):
             else:
                 messages.error(request, _("Please enter digits only."))
         return super(BaseFullEditUserView, self).post(request, *args, **kwargs)
-
-
-class EditMyAccountDomainView(BaseFullEditUserView):
-    template_name = "users/edit_full_user.html"
-    urlname = "domain_my_account"
-    page_title = ugettext_noop("Edit My Information")
-    edit_user_form_title = ugettext_noop("My Information")
-    user_update_form_class = UpdateMyAccountInfoForm
-
-    @property
-    def editable_user_id(self):
-        return self.couch_user._id
-
-    @property
-    def editable_user(self):
-        return self.couch_user
-
-    @property
-    @memoized
-    def page_url(self):
-        if self.urlname:
-            return reverse(self.urlname, args=[self.domain])
-
-    @property
-    def page_context(self):
-        context = {
-            'can_use_inbound_sms': domain_has_privilege(self.domain, privileges.INBOUND_SMS),
-        }
-        if (self.request.project.commtrack_enabled or
-                self.request.project.uses_locations):
-            context.update({
-                'update_form': self.commtrack_form,
-            })
-        return context
-
-    def get(self, request, *args, **kwargs):
-        if self.couch_user.is_commcare_user():
-            from corehq.apps.users.views.mobile import EditCommCareUserView
-            return HttpResponseRedirect(reverse(EditCommCareUserView.urlname,
-                                        args=[self.domain, self.editable_user_id]))
-        return super(EditMyAccountDomainView, self).get(request, *args, **kwargs)
 
 
 class ListWebUsersView(JSONResponseMixin, BaseUserSettingsView):
@@ -592,7 +572,7 @@ class UserInvitationView(object):
     template = "users/accept_invite.html"
 
     def __call__(self, request, invitation_id, **kwargs):
-        logging.warning("Don't use this view in more apps until it gets cleaned up.")
+        logging.info("Don't use this view in more apps until it gets cleaned up.")
         # add the correct parameters to this instance
         self.request = request
         self.inv_id = invitation_id
@@ -624,7 +604,20 @@ class UserInvitationView(object):
         if invitation.is_expired:
             return HttpResponseRedirect(reverse("no_permissions"))
 
-        context = self.added_context()
+        # Add zero-width space to username for better line breaking
+        username = self.request.user.username.replace("@", "&#x200b;@")
+        context = {
+            'create_domain': False,
+            'formatted_username': username,
+            'domain': self.domain,
+            'invite_to': self.domain,
+            'invite_type': _('Project'),
+            'hide_password_feedback': settings.ENABLE_DRACONIAN_SECURITY_FEATURES,
+        }
+        if request.user.is_authenticated:
+            context['current_page'] = {'page_name': _('Project Invitation')}
+        else:
+            context['current_page'] = {'page_name': _('Project Invitation, Account Required')}
         if request.user.is_authenticated():
             is_invited_user = request.couch_user.username.lower() == invitation.email.lower()
             if self.is_invited(invitation, request.couch_user) and not request.couch_user.is_superuser:
@@ -704,18 +697,6 @@ class UserInvitationView(object):
         invitation.save()
         messages.success(self.request, self.success_msg)
         send_confirmation_email(invitation)
-
-    def added_context(self):
-        username = self.request.user.username
-        # Add zero-width space for better line breaking
-        username = username.replace("@", "&#x200b;@")
-
-        return {
-            'create_domain': False,
-            'formatted_username': username,
-            'domain': self.domain,
-            'invite_type': _('Project'),
-        }
 
     def validate_invitation(self, invitation):
         assert invitation.domain == self.domain
