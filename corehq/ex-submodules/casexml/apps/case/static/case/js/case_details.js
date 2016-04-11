@@ -80,7 +80,6 @@ function XFormListViewModel() {
     self.page_size = ko.observable(10);
     self.disp_page_index = ko.observable(1);
     self.total_rows = ko.observable(0);
-    self.page_count = ko.observable(0);
     self.selected_xform_idx = ko.observable(-1);
     self.selected_xform_doc_id = ko.observable("");
     self.selected_xforms = ko.observableArray([]);
@@ -112,7 +111,6 @@ function XFormListViewModel() {
 
     self.xform_history_cb = function(data) {
         self.total_rows(CASE_DETAILS.xform_ids.length);
-        self.calc_page_count();
         var mapped_xforms = $.map(data, function (item) {
             return new XFormDataModel(item);
         });
@@ -145,9 +143,9 @@ function XFormListViewModel() {
         });
     };
 
-    self.calc_page_count = function() {
-        self.page_count(Math.ceil(self.total_rows()/self.page_size()));
-    };
+    self.page_count = ko.computed(function() {
+        Math.ceil(self.total_rows()/self.page_size());
+    });
 
     //main function data collection - entry point if you will
     self.refresh_forms();
@@ -195,7 +193,6 @@ function XFormListViewModel() {
 
     self.page_size_changed = self.page_size.subscribe(function () {
         var disp_index = self.disp_page_index();
-        self.calc_page_count();
         if (disp_index > self.page_count()) {
             self.disp_page_index(self.page_count());
         } else {
