@@ -101,7 +101,7 @@ class DeviceLogTest(TestCase, TestFileMixin):
             ('session_readable', ''),
             ('session_serialized', 'AAAAAA=='),
         ))
-        self.assertEqual(force_closure.date.isoformat(), '2016-03-15T13:37:04.573000')
+        self.assertEqual(force_closure.date.isoformat(), '2016-03-15T07:52:04.573000')
         self.assertIsNotNone(force_closure.xform_id)
         self.assertIsNotNone(force_closure.server_date)
         self.assertIn("java.lang.Exception: exception_text", force_closure.msg)
