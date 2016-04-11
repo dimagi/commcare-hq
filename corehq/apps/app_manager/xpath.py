@@ -166,9 +166,9 @@ class XPath(unicode):
 class CaseSelectionXPath(XPath):
     selector = ''
 
-    def case(self, instance_name='casedb'):
-        return CaseXPath(u"instance('{inst}')/{inst}/case[{sel}={self}]".format(
-            inst=instance_name, sel=self.selector, self=self
+    def case(self, instance_name='casedb', case_name='case'):
+        return CaseXPath(u"instance('{inst}')/{inst}/{case}[{sel}={self}]".format(
+            inst=instance_name, case=case_name, sel=self.selector, self=self
         ))
 
 
@@ -179,9 +179,9 @@ class CaseIDXPath(CaseSelectionXPath):
 class CaseTypeXpath(CaseSelectionXPath):
     selector = '@case_type'
 
-    def case(self, instance_name='casedb'):
-        return CaseXPath(u"instance('{inst}')/{inst}/case[{sel}='{self}']".format(
-            inst=instance_name, sel=self.selector, self=self
+    def case(self, instance_name='casedb', case_name='case'):
+        return CaseXPath(u"instance('{inst}')/{inst}/{case}[{sel}='{self}']".format(
+            inst=instance_name, case=case_name, sel=self.selector, self=self
         ))
 
 
@@ -290,7 +290,7 @@ class LedgerdbXpath(XPath):
     def ledger(self):
         entity_id_selection = CaseSelectionXPath(u"instance('commcaresession')/session/data/%s" % self)
         entity_id_selection.selector = '@entity-id'
-        return LedgerXpath(entity_id_selection.case(instance_name='ledgerdb'))
+        return LedgerXpath(entity_id_selection.case(instance_name='ledgerdb', case_name='ledger'))
 
 
 class LedgerXpath(XPath):
