@@ -8,11 +8,15 @@ from corehq.apps.app_manager.xform import XForm, parse_xml
 from corehq.apps.es import FormES
 from corehq.apps.es.filters import NOT
 from corehq.apps.es.forms import xmlns
+from corehq.util.quickcache import quickcache
 from couchforms.const import ATTACHMENT_NAME
 from couchforms.models import XFormInstance
 from dimagi.utils.couch.database import iter_docs
 from django.core.management.base import BaseCommand
 from optparse import make_option
+
+
+ONE_HOUR = 60 * 60
 
 
 class Command(BaseCommand):
@@ -83,6 +87,7 @@ def get_submissions_without_xmlns():
     return total_submissions, doc_generator
 
 
+@quickcache(["app_id", "form.unique_id"], memoize_timeout=ONE_HOUR)
 def xforms_with_real_xmlns_possibly_exist(app_id, form):
     """
     Return True if there exist xforms submitted to the given app against a form
