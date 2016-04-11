@@ -8,7 +8,7 @@ DOMAIN = 'domain'
 META = 'meta'
 
 
-DocumentMetadata = namedtuple('DocumentMetadata', ['raw_doc_type', 'primary_type', 'subtype', 'is_deletion'])
+DocumentMetadata = namedtuple('DocumentMetadata', ['raw_doc_type', 'primary_type', 'subtype', 'domain', 'is_deletion'])
 
 
 def get_doc_meta_object_from_document(document):
@@ -36,10 +36,10 @@ def _make_document_type(raw_doc_type, primary_type, document):
     elif primary_type == FORM:
         return _form_doc_type_constructor(raw_doc_type, document)
     elif primary_type == DOMAIN:
-        return _domain_doc_type_constructor(raw_doc_type)
+        return _domain_doc_type_constructor(raw_doc_type, document)
     else:
         return DocumentMetadata(
-            raw_doc_type, primary_type, None, _is_deletion(raw_doc_type)
+            raw_doc_type, primary_type, None, _get_domain(document), _is_deletion(raw_doc_type)
         )
 
 
@@ -47,25 +47,29 @@ def _get_document_type(document_or_none):
     return document_or_none.get('doc_type', None) if document_or_none else None
 
 
-def _is_deletion(raw_doc_type):
-    # can be overridden
-    return raw_doc_type.endswith(DELETED_SUFFIX)
-
-
 def _case_doc_type_constructor(raw_doc_type, document):
     return DocumentMetadata(
-        raw_doc_type, CASE, document.get('type', None), _is_deletion(raw_doc_type)
+        raw_doc_type, CASE, document.get('type', None), _get_domain(document), _is_deletion(raw_doc_type)
     )
 
 
 def _form_doc_type_constructor(raw_doc_type, document):
     return DocumentMetadata(
-        raw_doc_type, FORM, document.get('xmlns', None), _is_deletion(raw_doc_type)
+        raw_doc_type, FORM, document.get('xmlns', None), _get_domain(document), _is_deletion(raw_doc_type)
     )
 
 
-def _domain_doc_type_constructor(raw_doc_type):
+def _domain_doc_type_constructor(raw_doc_type, document):
     is_deletion = raw_doc_type == 'Domain-DUPLICATE' or _is_deletion(raw_doc_type)
     return DocumentMetadata(
-        raw_doc_type, DOMAIN, None, is_deletion
+        raw_doc_type, DOMAIN, None, document.get('name', None), is_deletion
     )
+
+
+def _get_domain(document):
+    return document.get('domain', None)
+
+
+def _is_deletion(raw_doc_type):
+    # can be overridden
+    return raw_doc_type.endswith(DELETED_SUFFIX)

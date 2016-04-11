@@ -20,15 +20,22 @@ class DocumentTypeTest(SimpleTestCase):
     # subtype tests
     ({'doc_type': 'CommCareCase', 'type': 'person'}, CASE, 'person'),
     ({'doc_type': 'XFormInstance', 'xmlns': 'my-xmlns'}, FORM, 'my-xmlns'),
+    # domain tests
+    ({'doc_type': 'CommCareCase', 'domain': 'test-domain'}, CASE, None, 'test-domain'),
+    ({'doc_type': 'XFormInstance', 'domain': 'test-domain'}, FORM, None, 'test-domain'),
+    ({'doc_type': 'Domain', 'name': 'test-domain'}, DOMAIN, None, 'test-domain'),
+    ({'doc_type': 'Domain', 'domain': 'wrong', 'name': 'right'}, DOMAIN, None, 'right'),
     # deletion tests
-    ({'doc_type': 'CommCareCase-Deleted'}, CASE, None, True),
-    ({'doc_type': 'XFormInstance-Deleted'}, FORM, None, True),
-    ({'doc_type': 'Domain-Deleted'}, DOMAIN, None, True),
-    ({'doc_type': 'Domain-DUPLICATE'}, DOMAIN, None, True),
-    ({'doc_type': 'CommCareUser-Deleted'}, META, None, True),
+    ({'doc_type': 'CommCareCase-Deleted'}, CASE, None, None, True),
+    ({'doc_type': 'XFormInstance-Deleted'}, FORM, None, None, True),
+    ({'doc_type': 'Domain-Deleted'}, DOMAIN, None, None, True),
+    ({'doc_type': 'Domain-DUPLICATE'}, DOMAIN, None, None, True),
+    ({'doc_type': 'CommCareUser-Deleted'}, META, None, None, True),
 ], DocumentTypeTest)
-def test_document_types(self, raw_doc, expected_primary_type, expected_subtype=None, expected_deletion=False):
+def test_document_types(self, raw_doc, expected_primary_type, expected_subtype=None,
+                        expected_domain=None, expected_deletion=False):
     doc_type_object = get_doc_meta_object_from_document(raw_doc)
     self.assertEqual(expected_primary_type, doc_type_object.primary_type)
     self.assertEqual(expected_subtype, doc_type_object.subtype)
+    self.assertEqual(expected_domain, doc_type_object.domain)
     self.assertEqual(expected_deletion, doc_type_object.is_deletion)
