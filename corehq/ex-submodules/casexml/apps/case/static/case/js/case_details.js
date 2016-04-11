@@ -153,7 +153,7 @@ function XFormListViewModel() {
                 self.data_loading(false);
             }
         });
-    });
+    }, this).extend({deferred: true});
 
     self.nextPage = function() {
         self.disp_page_index(self.disp_page_index() + 1);
