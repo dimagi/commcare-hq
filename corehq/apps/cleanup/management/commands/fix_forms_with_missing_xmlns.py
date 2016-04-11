@@ -181,24 +181,25 @@ def set_xmlns_on_form(form, xmlns, app, log_file, app_db, dry_run):
         except FormNotFoundException:
             continue
 
-        xml = form_in_build.source
-        wrapped_xml = XForm(xml)
+        if form_in_build.xmlns == "undefined":
+            xml = form_in_build.source
+            wrapped_xml = XForm(xml)
 
-        data = wrapped_xml.data_node.render()
-        data = data.replace("undefined", xmlns, 1)
-        wrapped_xml.instance_node.remove(wrapped_xml.data_node.xml)
-        wrapped_xml.instance_node.append(parse_xml(data))
-        new_xml = wrapped_xml.render()
+            data = wrapped_xml.data_node.render()
+            data = data.replace("undefined", xmlns, 1)
+            wrapped_xml.instance_node.remove(wrapped_xml.data_node.xml)
+            wrapped_xml.instance_node.append(parse_xml(data))
+            new_xml = wrapped_xml.render()
 
-        form_in_build.source = new_xml
-        log_file.write(
-            "New xmlns for form {form_id} in app {app_build._id} is {new_xmlns}\n".format(
-                form_id=form_id,
-                app_build=app_build,
-                new_xmlns=xmlns
-            ))
-        if not dry_run:
-            app_db.save(app_build)
+            form_in_build.source = new_xml
+            log_file.write(
+                "New xmlns for form {form_id} in app {app_build._id} is {new_xmlns}\n".format(
+                    form_id=form_id,
+                    app_build=app_build,
+                    new_xmlns=xmlns
+                ))
+            if not dry_run:
+                app_db.save(app_build)
 
 
 def get_forms_without_xmlns(app):
