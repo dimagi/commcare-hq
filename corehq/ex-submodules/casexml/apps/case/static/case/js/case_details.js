@@ -118,6 +118,10 @@ function XFormListViewModel() {
         self.selected_xform_idx(-1);
     };
 
+    self.page_count = ko.computed(function() {
+        return Math.ceil(self.total_rows()/self.page_size());
+    });
+
     self.refresh_forms = ko.computed(function () {
         var disp_index = self.disp_page_index();
         if (disp_index > self.page_count().peek()) {
@@ -149,10 +153,6 @@ function XFormListViewModel() {
                 self.data_loading(false);
             }
         });
-    });
-
-    self.page_count = ko.computed(function() {
-        return Math.ceil(self.total_rows()/self.page_size());
     });
 
     self.nextPage = function() {
