@@ -45,11 +45,7 @@ class Command(BaseCommand):
 
         with open(log_path, "w") as f:
             for i, xform_instance in enumerate(submissions):
-                if i % 500 == 0 and i != 0:
-                    print "Progress: {} of {} ({})".format(i, total, round(i / float(total), 2))
-                    print "We can fix {} of {} ({})".format(
-                        num_fixed, i, round(num_fixed / float(i), 2)
-                    )
+                self._print_progress(i, total, num_fixed)
                 if xform_instance.app_id in new_xmlnss:
                     num_fixed += 1
                     # We've already generated a new xmlns for this app
@@ -72,6 +68,15 @@ class Command(BaseCommand):
                             set_xmlns_on_form(form, new_xmlns, app, dry_run)
                             set_xmlns_on_submission(xform_instance, new_xmlnss[xform_instance.app_id], dry_run)
                             f.write("Set new xmlns on submission {}\n".format(xform_instance._id))
+
+    def _print_progress(self, i, total_submissions, num_fixed):
+        if i % 500 == 0 and i != 0:
+            print "Progress: {} of {} ({})".format(
+                i, total_submissions, round(i / float(total_submissions), 2)
+            )
+            print "We can fix {} of {} ({})".format(
+                num_fixed, i, round(num_fixed / float(i), 2)
+            )
 
 
 def get_submissions_without_xmlns():
