@@ -39,6 +39,7 @@ class KafkaProcessor(PillowProcessor):
         except MissingMetaInformationError:
             pass
         else:
+            assert not change.deleted
             self._producer.send_change(get_topic(doc_meta), change_meta)
 
 
