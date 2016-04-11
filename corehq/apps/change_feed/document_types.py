@@ -10,7 +10,9 @@ DOMAIN = 'domain'
 META = 'meta'
 
 
-DocumentMetadata = namedtuple('DocumentMetadata', ['raw_doc_type', 'primary_type', 'subtype', 'domain', 'is_deletion'])
+DocumentMetadata = namedtuple(
+    'DocumentMetadata', ['raw_doc_type', 'primary_type', 'subtype', 'domain', 'is_deletion']
+)
 
 
 def get_doc_meta_object_from_document(document):

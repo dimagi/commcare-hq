@@ -1,7 +1,7 @@
 from django.test import TestCase
 from corehq.apps.change_feed import data_sources
 from corehq.apps.change_feed import document_types
-from corehq.apps.change_feed.document_types import get_doc_meta_object_from_document, change_meta_from_doc
+from corehq.apps.change_feed.document_types import change_meta_from_doc
 from corehq.apps.change_feed.producer import producer
 from corehq.apps.domain.models import Domain
 from corehq.apps.domain.shortcuts import create_domain
@@ -14,7 +14,6 @@ from corehq.util.elastic import ensure_index_deleted
 from corehq.util.test_utils import trap_extra_setup
 from elasticsearch.exceptions import ConnectionError
 from pillowtop.es_utils import get_index_info_from_pillow, initialize_index
-from pillowtop.feed.interface import Change, ChangeMeta
 from testapps.test_pillowtop.utils import get_current_kafka_seq
 
 
