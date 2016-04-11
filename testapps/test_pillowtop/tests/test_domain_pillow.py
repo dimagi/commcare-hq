@@ -70,6 +70,24 @@ class DomainPillowTest(TestCase):
         # verify there
         self._verify_domain_in_es(domain_name)
 
+    def test_kafka_domain_pillow_deletions(self):
+        # run the other test to ensure domain is created and in ES
+        self.test_kafka_domain_pillow()
+        domain_obj = Domain.get_by_name('domain-pillowtest-kafka')
+        domain_obj.doc_type = 'Domain-DUPLICATE'
+
+        # send to kafka
+        since = get_current_kafka_seq(document_types.DOMAIN)
+        producer.send_change(document_types.DOMAIN, _domain_to_change_meta(domain_obj))
+
+        # send to elasticsearch
+        pillow = get_domain_kafka_to_elasticsearch_pillow()
+        pillow.process_changes(since={document_types.DOMAIN: since}, forever=False)
+        self.elasticsearch.indices.refresh(self.index_info.index)
+
+        # ensure removed from ES
+        self.assertEqual(0, DomainES().run().total)
+
     def _verify_domain_in_es(self, domain_name):
         results = DomainES().run()
         self.assertEqual(1, results.total)
