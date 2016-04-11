@@ -1,4 +1,5 @@
 import uuid
+from itertools import chain
 
 from couchdbkit import ResourceNotFound
 
@@ -6,7 +7,7 @@ from corehq.apps.app_manager.models import Application
 from corehq.apps.app_manager.util import get_correct_app_class
 from corehq.apps.app_manager.xform import XForm, parse_xml
 from corehq.apps.es import FormES
-from corehq.apps.es.filters import NOT
+from corehq.apps.es.filters import NOT, doc_type
 from corehq.apps.es.forms import xmlns
 from corehq.util.quickcache import quickcache
 from couchforms.const import ATTACHMENT_NAME
@@ -74,7 +75,6 @@ class Command(BaseCommand):
 
 
 def get_submissions_without_xmlns():
-    # TODO: This view won't get archived forms etc
     submissions = XFormInstance.get_db().view(
         'couchforms/by_xmlns',
         key="undefined",
@@ -83,8 +83,29 @@ def get_submissions_without_xmlns():
     ).all()
     total_submissions = len(submissions)
     submission_id_generator = (s['id'] for s in submissions)
-    doc_generator = (XFormInstance.wrap(i) for i in iter_docs(XFormInstance.get_db(), submission_id_generator))
-    return total_submissions, doc_generator
+    submissions_doc_generator = (
+        XFormInstance.wrap(i)
+        for i in iter_docs(XFormInstance.get_db(), submission_id_generator)
+    )
+
+    total_error_submissions, error_submissions_doc_generator = _get_error_submissions_without_xmlns()
+    return total_submissions+total_error_submissions, chain(submissions_doc_generator, error_submissions_doc_generator)
+
+
+def _get_error_submissions_without_xmlns():
+
+    query = (FormES()
+             .xmlns('undefined')
+             .remove_default_filter("is_xform_instance")
+             .filter(NOT(doc_type('xforminstance')))
+             .source(['_id']))
+    result = query.run()
+    total_error_submissions = result.total
+    error_submissions = (
+        XFormInstance.wrap(i)
+        for i in iter_docs(XFormInstance.get_db(), (x['_id'] for x in result.hits))
+    )
+    return total_error_submissions, error_submissions
 
 
 @quickcache(["app_id", "form.unique_id"], memoize_timeout=ONE_HOUR)
