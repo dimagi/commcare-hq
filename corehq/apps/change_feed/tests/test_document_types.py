@@ -1,5 +1,5 @@
 from django.test import SimpleTestCase
-from corehq.apps.change_feed.document_types import CASE, get_doc_type_object_from_document, FORM, META
+from corehq.apps.change_feed.document_types import CASE, get_doc_type_object_from_document, FORM, META, DOMAIN
 from corehq.util.test_utils import generate_cases
 
 
@@ -15,7 +15,7 @@ class DocumentTypeTest(SimpleTestCase):
     ({'doc_type': 'XFormDeprecated'}, FORM),
     ({'doc_type': 'XFormDuplicate'}, FORM),
     ({'doc_type': 'XFormError'}, FORM),
-    ({'doc_type': 'Domain'}, META),
+    ({'doc_type': 'Domain'}, DOMAIN),
     ({'doc_type': 'CommCareUser'}, META),
     # subtype tests
     ({'doc_type': 'CommCareCase', 'type': 'person'}, CASE, 'person'),
@@ -23,7 +23,8 @@ class DocumentTypeTest(SimpleTestCase):
     # deletion tests
     ({'doc_type': 'CommCareCase-Deleted'}, CASE, None, True),
     ({'doc_type': 'XFormInstance-Deleted'}, FORM, None, True),
-    ({'doc_type': 'Domain-Deleted'}, META, None, True),
+    ({'doc_type': 'Domain-Deleted'}, DOMAIN, None, True),
+    ({'doc_type': 'Domain-DUPLICATE'}, DOMAIN, None, True),
     ({'doc_type': 'CommCareUser-Deleted'}, META, None, True),
 ], DocumentTypeTest)
 def test_document_types(self, raw_doc, expected_primary_type, expected_subtype=None, expected_deletion=False):

@@ -4,6 +4,7 @@ from dimagi.utils.couch.undo import DELETED_SUFFIX
 
 CASE = 'case'
 FORM = 'form'
+DOMAIN = 'domain'
 META = 'meta'
 
 
@@ -22,6 +23,8 @@ def _get_primary_type(raw_doc_type):
         return CASE
     elif raw_doc_type in all_known_formlike_doc_types():
         return FORM
+    elif raw_doc_type in ('Domain', 'Domain-Deleted', 'Domain-DUPLICATE'):
+        return DOMAIN
     else:
         # at some point we may want to make this more granular
         return META
@@ -32,6 +35,8 @@ def _make_document_type(raw_doc_type, primary_type, document):
         return _case_doc_type_constructor(raw_doc_type, document)
     elif primary_type == FORM:
         return _form_doc_type_constructor(raw_doc_type, document)
+    elif primary_type == DOMAIN:
+        return _domain_doc_type_constructor(raw_doc_type)
     else:
         return DocumentType(
             raw_doc_type, primary_type, None, _is_deletion(raw_doc_type)
@@ -56,4 +61,11 @@ def _case_doc_type_constructor(raw_doc_type, document):
 def _form_doc_type_constructor(raw_doc_type, document):
     return DocumentType(
         raw_doc_type, FORM, document.get('xmlns', None), _is_deletion(raw_doc_type)
+    )
+
+
+def _domain_doc_type_constructor(raw_doc_type):
+    is_deletion = raw_doc_type == 'Domain-DUPLICATE' or _is_deletion(raw_doc_type)
+    return DocumentType(
+        raw_doc_type, DOMAIN, None, is_deletion
     )
