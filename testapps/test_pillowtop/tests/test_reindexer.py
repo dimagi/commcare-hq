@@ -36,6 +36,7 @@ class PillowtopReindexerTest(TestCase):
             ('ptop_reindexer_v2', {'index': 'domain', 'cleanup': True, 'noinput': True})
         ]:
             delete_all_domains()
+            ensure_index_deleted(DOMAIN_INDEX)
             name = 'reindex-test-domain'
             create_domain(name)
             call_command(command, **kwargs)
