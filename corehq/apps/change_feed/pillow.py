@@ -1,11 +1,11 @@
 from casexml.apps.case.models import CommCareCase
 from corehq.apps.change_feed import data_sources
 from corehq.apps.change_feed.connection import get_kafka_client_or_none
+from corehq.apps.change_feed.document_types import get_doc_type_object_from_document
 from corehq.apps.change_feed.producer import ChangeProducer
 from corehq.apps.change_feed.topics import get_topic
 from corehq.apps.users.models import CommCareUser
 from corehq.util.couchdb_management import couch_config
-from couchforms.models import all_known_formlike_doc_types
 from pillowtop.checkpoints.manager import PillowCheckpoint, PillowCheckpointEventHandler
 from pillowtop.couchdb import CachedCouchDB
 from pillowtop.feed.couch import CouchChangeFeed
@@ -26,19 +26,19 @@ class KafkaProcessor(PillowProcessor):
         self._data_source_name = data_source_name
 
     def process_change(self, pillow_instance, change, do_set_checkpoint=False):
-        document_type = _get_document_type(change.document)
-        if document_type:
+        doc_type_object = get_doc_type_object_from_document(change.document)
+        if doc_type_object:
             assert change.document is not None
             change_meta = ChangeMeta(
                 document_id=change.id,
                 data_source_type=self._data_source_type,
                 data_source_name=self._data_source_name,
-                document_type=document_type,
-                document_subtype=_get_document_subtype(change.document),
+                document_type=doc_type_object.raw_doc_type,
+                document_subtype=doc_type_object.subtype,
                 domain=change.document.get('domain', None),
                 is_deletion=change.deleted,
             )
-            self._producer.send_change(get_topic(document_type), change_meta)
+            self._producer.send_change(get_topic(doc_type_object), change_meta)
 
 
 class ChangeFeedPillow(PythonPillow):
@@ -96,16 +96,3 @@ def get_user_groups_db_kafka_pillow(pillow_id):
             checkpoint=checkpoint, checkpoint_frequency=100,
         ),
     )
-
-
-def _get_document_type(document_or_none):
-    return document_or_none.get('doc_type', None) if document_or_none else None
-
-
-def _get_document_subtype(document_or_none):
-    type = _get_document_type(document_or_none)
-    if type in ('CommCareCase', 'CommCareCase-Deleted'):
-        return document_or_none.get('type', None)
-    elif type in all_known_formlike_doc_types():
-        return document_or_none.get('xmlns', None)
-    return None
