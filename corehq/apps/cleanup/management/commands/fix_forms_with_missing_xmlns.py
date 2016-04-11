@@ -69,12 +69,7 @@ class Command(BaseCommand):
                                     num_fixed += 1
                                     new_xmlns = generate_random_xmlns()
                                     new_xmlnss[xform_instance.app_id] = new_xmlns
-                                    f.write("New xmlns for form {form.unique_id} in app {app._id} is {new_xmlns}\n".format(
-                                        form=form,
-                                        app=app,
-                                        new_xmlns=new_xmlns
-                                    ))
-                                    set_xmlns_on_form(form, new_xmlns, app, dry_run)
+                                    set_xmlns_on_form(form, new_xmlns, app, f, dry_run)
                                     set_xmlns_on_submission(
                                         xform_instance,
                                         new_xmlnss[xform_instance.app_id],
@@ -167,7 +162,7 @@ def set_xmlns_on_submission(xform_instance, xmlns, xform_db, dry_run):
         xform_db.save(xform_instance)
 
 
-def set_xmlns_on_form(form, xmlns, app, dry_run):
+def set_xmlns_on_form(form, xmlns, app, log_file, dry_run):
     """
     Set the xmlns on a form and all the corresponding forms in the saved builds
     that are copies of app.
@@ -190,6 +185,12 @@ def set_xmlns_on_form(form, xmlns, app, dry_run):
         new_xml = wrapped_xml.render()
 
         form_in_build.source = new_xml
+        log_file.write(
+            "New xmlns for form {form_id} in app {app_build._id} is {new_xmlns}\n".format(
+                form_id=form_id,
+                app_build=app_build,
+                new_xmlns=xmlns
+            ))
         if not dry_run:
             app_build.save()
 
