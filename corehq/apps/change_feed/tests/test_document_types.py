@@ -1,5 +1,5 @@
 from django.test import SimpleTestCase
-from corehq.apps.change_feed.document_types import CASE, get_doc_type_object_from_document, FORM, META, DOMAIN
+from corehq.apps.change_feed.document_types import CASE, get_doc_meta_object_from_document, FORM, META, DOMAIN
 from corehq.util.test_utils import generate_cases
 
 
@@ -28,7 +28,7 @@ class DocumentTypeTest(SimpleTestCase):
     ({'doc_type': 'CommCareUser-Deleted'}, META, None, True),
 ], DocumentTypeTest)
 def test_document_types(self, raw_doc, expected_primary_type, expected_subtype=None, expected_deletion=False):
-    doc_type_object = get_doc_type_object_from_document(raw_doc)
+    doc_type_object = get_doc_meta_object_from_document(raw_doc)
     self.assertEqual(expected_primary_type, doc_type_object.primary_type)
     self.assertEqual(expected_subtype, doc_type_object.subtype)
     self.assertEqual(expected_deletion, doc_type_object.is_deletion)

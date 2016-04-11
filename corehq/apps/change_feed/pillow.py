@@ -1,7 +1,7 @@
 from casexml.apps.case.models import CommCareCase
 from corehq.apps.change_feed import data_sources
 from corehq.apps.change_feed.connection import get_kafka_client_or_none
-from corehq.apps.change_feed.document_types import get_doc_type_object_from_document
+from corehq.apps.change_feed.document_types import get_doc_meta_object_from_document
 from corehq.apps.change_feed.producer import ChangeProducer
 from corehq.apps.change_feed.topics import get_topic
 from corehq.apps.users.models import CommCareUser
@@ -26,7 +26,7 @@ class KafkaProcessor(PillowProcessor):
         self._data_source_name = data_source_name
 
     def process_change(self, pillow_instance, change, do_set_checkpoint=False):
-        doc_type_object = get_doc_type_object_from_document(change.document)
+        doc_type_object = get_doc_meta_object_from_document(change.document)
         if doc_type_object:
             assert change.document is not None
             change_meta = ChangeMeta(

@@ -8,10 +8,10 @@ DOMAIN = 'domain'
 META = 'meta'
 
 
-DocumentType = namedtuple('DocumentType', ['raw_doc_type', 'primary_type', 'subtype', 'is_deletion'])
+DocumentMetadata = namedtuple('DocumentMetadata', ['raw_doc_type', 'primary_type', 'subtype', 'is_deletion'])
 
 
-def get_doc_type_object_from_document(document):
+def get_doc_meta_object_from_document(document):
     raw_doc_type = _get_document_type(document)
     if raw_doc_type:
         primary_type = _get_primary_type(raw_doc_type)
@@ -38,7 +38,7 @@ def _make_document_type(raw_doc_type, primary_type, document):
     elif primary_type == DOMAIN:
         return _domain_doc_type_constructor(raw_doc_type)
     else:
-        return DocumentType(
+        return DocumentMetadata(
             raw_doc_type, primary_type, None, _is_deletion(raw_doc_type)
         )
 
@@ -53,19 +53,19 @@ def _is_deletion(raw_doc_type):
 
 
 def _case_doc_type_constructor(raw_doc_type, document):
-    return DocumentType(
+    return DocumentMetadata(
         raw_doc_type, CASE, document.get('type', None), _is_deletion(raw_doc_type)
     )
 
 
 def _form_doc_type_constructor(raw_doc_type, document):
-    return DocumentType(
+    return DocumentMetadata(
         raw_doc_type, FORM, document.get('xmlns', None), _is_deletion(raw_doc_type)
     )
 
 
 def _domain_doc_type_constructor(raw_doc_type):
     is_deletion = raw_doc_type == 'Domain-DUPLICATE' or _is_deletion(raw_doc_type)
-    return DocumentType(
+    return DocumentMetadata(
         raw_doc_type, DOMAIN, None, is_deletion
     )
