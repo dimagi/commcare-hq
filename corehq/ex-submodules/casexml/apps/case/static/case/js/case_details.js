@@ -125,7 +125,9 @@ function XFormListViewModel() {
             self.disp_page_index(self.page_count().peek());
             return;
         }
-
+        if (self.total_rows.peek() > 0 && self.page_size() > self.total_rows.peek()) {
+            return;
+        }
         var start_num = disp_index || 1;
         var start_range = (start_num - 1) * self.page_size();
         var end_range = start_range + self.page_size();
