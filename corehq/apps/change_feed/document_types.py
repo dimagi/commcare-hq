@@ -7,18 +7,15 @@ FORM = 'form'
 META = 'meta'
 
 
-class DocumentType(namedtuple('DocumentType', ['raw_doc_type', 'primary_type', 'subtype'])):
-
-    @property
-    def is_deletion(self):
-        # can be overridden
-        return self.raw_doc_type.endswith(DELETED_SUFFIX)
+DocumentType = namedtuple('DocumentType', ['raw_doc_type', 'primary_type', 'subtype', 'is_deletion'])
 
 
 def get_doc_type_object_from_document(document):
     raw_doc_type = _get_document_type(document)
     if raw_doc_type:
-        return DocumentType(raw_doc_type, get_primary_type(raw_doc_type), _get_document_subtype(document))
+        return DocumentType(
+            raw_doc_type, get_primary_type(raw_doc_type), _get_document_subtype(document), _is_deletion(raw_doc_type)
+        )
 
 
 def get_primary_type(raw_doc_type):
@@ -42,3 +39,7 @@ def _get_document_subtype(document_or_none):
     elif type in all_known_formlike_doc_types():
         return document_or_none.get('xmlns', None)
     return None
+
+def _is_deletion(raw_doc_type):
+    # can be overridden
+    return raw_doc_type.endswith(DELETED_SUFFIX)
