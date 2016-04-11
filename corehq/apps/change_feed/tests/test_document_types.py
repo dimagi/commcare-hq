@@ -11,6 +11,10 @@ class DocumentTypeTest(SimpleTestCase):
     # primary type tests
     ({'doc_type': 'CommCareCase'}, CASE),
     ({'doc_type': 'XFormInstance'}, FORM),
+    ({'doc_type': 'XFormArchived'}, FORM),
+    ({'doc_type': 'XFormDeprecated'}, FORM),
+    ({'doc_type': 'XFormDuplicate'}, FORM),
+    ({'doc_type': 'XFormError'}, FORM),
     ({'doc_type': 'Domain'}, META),
     ({'doc_type': 'CommCareUser'}, META),
     # subtype tests
