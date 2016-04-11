@@ -82,7 +82,6 @@ class Command(BaseCommand):
             for error_id in list(xform_db.error_ids) + list(app_db.error_ids):
                 f.write("Failed to save {}\n".format(error_id))
 
-
     def _print_progress(self, i, total_submissions, num_fixed):
         if i % 500 == 0 and i != 0:
             print "Progress: {} of {} ({})".format(
