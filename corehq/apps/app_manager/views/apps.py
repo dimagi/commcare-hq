@@ -490,11 +490,17 @@ def edit_app_langs(request, domain, app_id):
 
 @require_can_edit_apps
 @no_conflict_require_POST
-def edit_app_translations(request, domain, app_id):
+def edit_app_ui_translations(request, domain, app_id):
     params = json_request(request.POST)
     lang = params.get('lang')
     translations = params.get('translations')
     app = get_app(domain, app_id)
+
+    # Workaround for https://github.com/dimagi/commcare-hq/pull/10951#issuecomment-203978552
+    # auto-fill UI translations might have modules.m0 in the update originating from popular-translations docs
+    # since module.m0 is not a UI string, don't update modules.m0 in UI translations
+    translations.pop('modules.m0', None)
+
     app.set_translations(lang, translations)
     response = {}
     app.save(response)
@@ -502,7 +508,7 @@ def edit_app_translations(request, domain, app_id):
 
 
 @require_GET
-def get_app_translations(request, domain):
+def get_app_ui_translations(request, domain):
     params = json_request(request.GET)
     lang = params.get('lang', 'en')
     key = params.get('key', None)
