@@ -9,6 +9,7 @@ from corehq.apps.app_manager.xform import XForm, parse_xml
 from corehq.apps.es import FormES
 from corehq.apps.es.filters import NOT, doc_type
 from corehq.apps.es.forms import xmlns
+from corehq.util.couch import IterDB
 from corehq.util.quickcache import quickcache
 from couchforms.const import ATTACHMENT_NAME
 from couchforms.models import XFormInstance
@@ -44,30 +45,45 @@ class Command(BaseCommand):
         total, submissions = get_submissions_without_xmlns()
 
         with open(log_path, "w") as f:
-            for i, xform_instance in enumerate(submissions):
-                self._print_progress(i, total, num_fixed)
-                if xform_instance.app_id in new_xmlnss:
-                    num_fixed += 1
-                    # We've already generated a new xmlns for this app
-                    set_xmlns_on_submission(xform_instance, new_xmlnss[xform_instance.app_id], dry_run)
-                    f.write("Set new xmlns on submission {}\n".format(xform_instance._id))
-                else:
-                    app = Application.get(xform_instance.app_id)
-                    forms_without_xmlns = get_forms_without_xmlns(app)
-                    if len(forms_without_xmlns) == 1:
-                        form = forms_without_xmlns[0]
-                        if not xforms_with_real_xmlns_possibly_exist(app._id, form):
+            with IterDB(XFormInstance.get_db()) as xform_db:
+                for i, xform_instance in enumerate(submissions):
+                    try:
+                        self._print_progress(i, total, num_fixed)
+                        if xform_instance.app_id in new_xmlnss:
                             num_fixed += 1
-                            new_xmlns = generate_random_xmlns()
-                            new_xmlnss[xform_instance.app_id] = new_xmlns
-                            f.write("New xmlns for form {form.unique_id} in app {app._id} is {new_xmlns}\n".format(
-                                form=form,
-                                app=app,
-                                new_xmlns=new_xmlns
-                            ))
-                            set_xmlns_on_form(form, new_xmlns, app, dry_run)
-                            set_xmlns_on_submission(xform_instance, new_xmlnss[xform_instance.app_id], dry_run)
+                            # We've already generated a new xmlns for this app
+                            set_xmlns_on_submission(
+                                xform_instance,
+                                new_xmlnss[xform_instance.app_id],
+                                xform_db,
+                                dry_run,
+                            )
                             f.write("Set new xmlns on submission {}\n".format(xform_instance._id))
+                        else:
+                            app = Application.get(xform_instance.app_id)
+                            forms_without_xmlns = get_forms_without_xmlns(app)
+                            if len(forms_without_xmlns) == 1:
+                                form = forms_without_xmlns[0]
+                                if not xforms_with_real_xmlns_possibly_exist(app._id, form):
+                                    num_fixed += 1
+                                    new_xmlns = generate_random_xmlns()
+                                    new_xmlnss[xform_instance.app_id] = new_xmlns
+                                    f.write("New xmlns for form {form.unique_id} in app {app._id} is {new_xmlns}\n".format(
+                                        form=form,
+                                        app=app,
+                                        new_xmlns=new_xmlns
+                                    ))
+                                    set_xmlns_on_form(form, new_xmlns, app, dry_run)
+                                    set_xmlns_on_submission(
+                                        xform_instance,
+                                        new_xmlnss[xform_instance.app_id],
+                                        xform_db,
+                                        dry_run,
+                                    )
+                                    f.write("Set new xmlns on submission {}\n".format(xform_instance._id))
+                    except Exception as e:
+                        xform_db.commit()
+                        raise e
 
     def _print_progress(self, i, total_submissions, num_fixed):
         if i % 500 == 0 and i != 0:
@@ -134,7 +150,7 @@ def xforms_with_real_xmlns_possibly_exist(app_id, form):
     return False
 
 
-def set_xmlns_on_submission(xform_instance, xmlns, dry_run):
+def set_xmlns_on_submission(xform_instance, xmlns, xform_db, dry_run):
     """
     Set the xmlns on an XFormInstance, and the save the document.
     """
@@ -147,7 +163,7 @@ def set_xmlns_on_submission(xform_instance, xmlns, dry_run):
     xform_instance.xmlns = xmlns
     xform_instance.form['@xmlns'] = xmlns
     if not dry_run:
-        xform_instance.save()
+        xform_db.save(xform_instance)
 
 
 def set_xmlns_on_form(form, xmlns, app, dry_run):
