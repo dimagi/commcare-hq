@@ -1,8 +1,9 @@
-from .document_types import CASE, FORM, META
+from .document_types import CASE, FORM, DOMAIN, META
 
 # this is redundant but helps avoid import warnings until nothing references these
 CASE = CASE
 FORM = FORM
+DOMAIN = DOMAIN
 META = META
 
 # new models
