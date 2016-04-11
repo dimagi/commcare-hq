@@ -950,10 +950,7 @@ def send_test_scheduled_report(request, domain, scheduled_report_id):
     user_id = request.couch_user._id
 
     notification = ReportNotification.get(scheduled_report_id)
-    try:
-        user = WebUser.get_by_user_id(user_id, domain)
-    except CouchUser.AccountTypeError:
-        user = CommCareUser.get_by_user_id(user_id, domain)
+    user = CouchUser.get_by_user_id(user_id, domain)
 
     try:
         send_delayed_report(notification)
