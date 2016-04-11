@@ -1,6 +1,8 @@
 from collections import namedtuple
+from corehq.apps.change_feed.exceptions import MissingMetaInformationError
 from couchforms.models import all_known_formlike_doc_types
 from dimagi.utils.couch.undo import DELETED_SUFFIX
+from pillowtop.feed.interface import ChangeMeta
 
 CASE = 'case'
 FORM = 'form'
@@ -63,6 +65,29 @@ def _domain_doc_type_constructor(raw_doc_type, document):
     is_deletion = raw_doc_type == 'Domain-DUPLICATE' or _is_deletion(raw_doc_type)
     return DocumentMetadata(
         raw_doc_type, DOMAIN, None, document.get('name', None), is_deletion
+    )
+
+
+def change_meta_from_doc(document, data_source_type, data_source_name):
+    if document is None:
+        raise MissingMetaInformationError('No document!')
+
+    doc_meta = get_doc_meta_object_from_document(document)
+    return change_meta_from_doc_meta_and_document(doc_meta, document, data_source_type, data_source_name)
+
+
+def change_meta_from_doc_meta_and_document(doc_meta, document, data_source_type, data_source_name, doc_id=None):
+    if doc_meta is None:
+        raise MissingMetaInformationError(u"Couldn't guess document type for {}!".format(document))
+
+    return ChangeMeta(
+        document_id=doc_id or document['_id'],
+        data_source_type=data_source_type,
+        data_source_name=data_source_name,
+        document_type=doc_meta.raw_doc_type,
+        document_subtype=doc_meta.subtype,
+        domain=doc_meta.domain,
+        is_deletion=doc_meta.is_deletion,
     )
 
 

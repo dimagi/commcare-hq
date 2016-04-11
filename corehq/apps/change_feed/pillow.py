@@ -1,7 +1,9 @@
 from casexml.apps.case.models import CommCareCase
 from corehq.apps.change_feed import data_sources
 from corehq.apps.change_feed.connection import get_kafka_client_or_none
-from corehq.apps.change_feed.document_types import get_doc_meta_object_from_document
+from corehq.apps.change_feed.document_types import get_doc_meta_object_from_document, \
+    change_meta_from_doc_meta_and_document
+from corehq.apps.change_feed.exceptions import MissingMetaInformationError
 from corehq.apps.change_feed.producer import ChangeProducer
 from corehq.apps.change_feed.topics import get_topic
 from corehq.apps.users.models import CommCareUser
@@ -9,7 +11,6 @@ from corehq.util.couchdb_management import couch_config
 from pillowtop.checkpoints.manager import PillowCheckpoint, PillowCheckpointEventHandler
 from pillowtop.couchdb import CachedCouchDB
 from pillowtop.feed.couch import CouchChangeFeed
-from pillowtop.feed.interface import ChangeMeta
 from pillowtop.listener import PythonPillow
 from pillowtop.pillow.interface import ConstructedPillow
 from pillowtop.processors import PillowProcessor
@@ -26,19 +27,19 @@ class KafkaProcessor(PillowProcessor):
         self._data_source_name = data_source_name
 
     def process_change(self, pillow_instance, change, do_set_checkpoint=False):
-        doc_type_object = get_doc_meta_object_from_document(change.document)
-        if doc_type_object:
-            assert change.document is not None
-            change_meta = ChangeMeta(
-                document_id=change.id,
+        try:
+            doc_meta = get_doc_meta_object_from_document(change.document)
+            change_meta = change_meta_from_doc_meta_and_document(
+                doc_meta=doc_meta,
+                document=change.document,
                 data_source_type=self._data_source_type,
                 data_source_name=self._data_source_name,
-                document_type=doc_type_object.raw_doc_type,
-                document_subtype=doc_type_object.subtype,
-                domain=change.document.get('domain', None),
-                is_deletion=change.deleted or doc_type_object.is_deletion,
+                doc_id=change.id,
             )
-            self._producer.send_change(get_topic(doc_type_object), change_meta)
+        except MissingMetaInformationError:
+            pass
+        else:
+            self._producer.send_change(get_topic(doc_meta), change_meta)
 
 
 class ChangeFeedPillow(PythonPillow):

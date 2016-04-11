@@ -1,7 +1,7 @@
 from django.test import TestCase
 from corehq.apps.change_feed import data_sources
 from corehq.apps.change_feed import document_types
-from corehq.apps.change_feed.document_types import get_doc_meta_object_from_document
+from corehq.apps.change_feed.document_types import get_doc_meta_object_from_document, change_meta_from_doc
 from corehq.apps.change_feed.producer import producer
 from corehq.apps.domain.models import Domain
 from corehq.apps.domain.shortcuts import create_domain
@@ -60,7 +60,7 @@ class DomainPillowTest(TestCase):
 
         # send to kafka
         since = get_current_kafka_seq(document_types.DOMAIN)
-        producer.send_change(document_types.DOMAIN, domain_to_change(domain).metadata)
+        producer.send_change(document_types.DOMAIN, _domain_to_change_meta(domain))
 
         # send to elasticsearch
         pillow = get_domain_kafka_to_elasticsearch_pillow()
@@ -78,20 +78,10 @@ class DomainPillowTest(TestCase):
         self.assertEqual('Domain', domain_doc['doc_type'])
 
 
-def domain_to_change(domain):
+def _domain_to_change_meta(domain):
     domain_doc = domain.to_json()
-    doc_info = get_doc_meta_object_from_document(domain_doc)
-    return Change(
-        id=domain_doc['_id'],
-        sequence_id='0',
+    return change_meta_from_doc(
         document=domain_doc,
-        metadata=ChangeMeta(
-            document_id=domain_doc['_id'],
-            data_source_type=data_sources.COUCH,
-            data_source_name=Domain.get_db().dbname,
-            document_type=doc_info.raw_doc_type,
-            document_subtype=doc_info.subtype,
-            domain=domain_doc['name'],
-            is_deletion=False,
-        )
+        data_source_type=data_sources.COUCH,
+        data_source_name=Domain.get_db().dbname,
     )
