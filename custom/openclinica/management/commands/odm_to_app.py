@@ -12,6 +12,7 @@ from corehq.apps.app_manager.models import (
     PreloadAction,
     OpenSubCaseAction,
     FormActionCondition,
+    CaseListForm,
 )
 from corehq.apps.app_manager.xform_builder import XFormBuilder
 from custom.openclinica.const import (
@@ -96,6 +97,13 @@ class StudyObject(object):
 
 class Study(StudyObject):
 
+    case_update = {
+        CC_STUDY_SUBJECT_ID: '/data/' + CC_STUDY_SUBJECT_ID,
+        CC_DOB: '/data/' + CC_DOB,
+        CC_SEX: '/data/' + CC_SEX,
+        CC_ENROLLMENT_DATE: '/data/' + CC_ENROLLMENT_DATE,
+    }
+
     def __init__(self, defn, meta):
         super(Study, self).__init__(defn, meta)
         self.oid = defn.get('OID')
@@ -130,14 +138,7 @@ class Study(StudyObject):
         xform.new_question(CC_ENROLLMENT_DATE, 'Enrollment Date', data_type='date')
         return xform.tostring(pretty_print=True)
 
-    def new_subject_module(self, app):
-
-        case_update = {
-            CC_STUDY_SUBJECT_ID: '/data/' + CC_STUDY_SUBJECT_ID,
-            CC_DOB: '/data/' + CC_DOB,
-            CC_SEX: '/data/' + CC_SEX,
-            CC_ENROLLMENT_DATE: '/data/' + CC_ENROLLMENT_DATE,
-        }
+    def new_reg_subject_module(self, app):
 
         def add_reg_form_to_module(module_):
             reg_form = module_.new_form('Register Subject', None)
@@ -149,16 +150,25 @@ class Study(StudyObject):
                 condition=FormActionCondition(type='always')
             )
             reg_form.actions.update_case = UpdateCaseAction(
-                update=case_update,
+                update=self.case_update,
                 condition=FormActionCondition(type='always')
             )
+
+        module = app.add_module(Module.new_module('Register Subject', None))
+        module.unique_id = 'register_subject'
+        module.case_type = 'subject'
+        module.module_filter = 'false()'  # We just want the form to register from the edit module's case list
+        add_reg_form_to_module(module)
+        return module
+
+    def new_edit_subject_module(self, app, reg_form_id):
 
         def add_edit_form_to_module(module_):
             edit_form = module_.new_form('Edit Subject', None)
             edit_form.get_unique_id()
             edit_form.source = self.get_subject_form_source('Edit Subject')
             edit_form.requires = 'case'
-            update = dict(case_update, name='/data/' + CC_SUBJECT_KEY)
+            update = dict(self.case_update, name='/data/' + CC_SUBJECT_KEY)
             preload = {v: k for k, v in update.items()}
             edit_form.actions.case_preload = PreloadAction(
                 preload=preload,
@@ -172,14 +182,18 @@ class Study(StudyObject):
         module = app.add_module(Module.new_module('Study Subjects', None))
         module.unique_id = 'study_subjects'
         module.case_type = 'subject'
-        add_reg_form_to_module(module)
+        module.case_list_form = CaseListForm(
+            form_id=reg_form_id,
+            label={'en': 'Register Subject'}
+        )
         add_edit_form_to_module(module)
         return module
 
     def get_new_app(self, domain_name, app_name, version=APP_V2):
         app = Application.new_app(domain_name, app_name, application_version=version)
         app.comment = self.name  # Study names can be long. cf. https://clinicaltrials.gov/
-        subject_module = self.new_subject_module(app)
+        reg_module = self.new_reg_subject_module(app)
+        subject_module = self.new_edit_subject_module(app, reg_form_id=reg_module.get_form(0).get_unique_id())
         for event in self.iter_events():
             module = event.new_module_for_app(app, subject_module)
             for study_form in event.iter_forms():
