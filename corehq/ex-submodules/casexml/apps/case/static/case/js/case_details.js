@@ -152,7 +152,7 @@ function XFormListViewModel() {
     });
 
     self.page_count = ko.computed(function() {
-        Math.ceil(self.total_rows()/self.page_size());
+        return Math.ceil(self.total_rows()/self.page_size());
     });
 
     self.nextPage = function() {
