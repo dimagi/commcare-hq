@@ -367,6 +367,8 @@ class StudyForm(StudyObject):
                     params['constraint'] = item.validation
                 if item.validation_msg:
                     params['jr:constraintMsg'] = item.validation_msg
+                if item.comment:
+                    params['hint'] = item.comment
                 group.new_question(item.question_name, item.question_label, ODK_DATA_TYPES[item.data_type],
                                    choices=item.choices, **params)
 
@@ -409,6 +411,8 @@ class Item(StudyObject):
         self.data_type = defn.get('DataType')
         self.length = defn.get('Length')
         self.sas_field_name = defn.get('SASFieldName')
+        # Sometimes OpenClinica will give important context to the question in the comment. The question text might
+        # be completely ambiguous, like "Normal", but the comment might be "Cardiovascular". Use as Hint Message
         self.comment = defn.get('Comment')
         self.item_group = item_group
 
