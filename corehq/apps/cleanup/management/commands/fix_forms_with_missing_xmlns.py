@@ -49,40 +49,34 @@ class Command(BaseCommand):
             with IterDB(XFormInstance.get_db()) as xform_db:
                 with IterDB(Application.get_db()) as app_db:
                     for i, xform_instance in enumerate(submissions):
-                        try:
-                            self._print_progress(i, total, num_fixed)
-                            if xform_instance.app_id in new_xmlnss:
-                                num_fixed += 1
-                                # We've already generated a new xmlns for this app
-                                set_xmlns_on_submission(
-                                    xform_instance,
-                                    new_xmlnss[xform_instance.app_id],
-                                    xform_db,
-                                    dry_run,
-                                )
-                                f.write("Set new xmlns on submission {}\n".format(xform_instance._id))
-                            else:
-                                app = Application.get(xform_instance.app_id)
-                                forms_without_xmlns = get_forms_without_xmlns(app)
-                                if len(forms_without_xmlns) == 1:
-                                    form = forms_without_xmlns[0]
-                                    if not xforms_with_real_xmlns_possibly_exist(app._id, form):
-                                        num_fixed += 1
-                                        new_xmlns = generate_random_xmlns()
-                                        new_xmlnss[xform_instance.app_id] = new_xmlns
-                                        set_xmlns_on_form(form, new_xmlns, app, f, app_db, dry_run)
-                                        set_xmlns_on_submission(
-                                            xform_instance,
-                                            new_xmlnss[xform_instance.app_id],
-                                            xform_db,
-                                            dry_run,
-                                        )
-                                        f.write("Set new xmlns on submission {}\n".format(xform_instance._id))
-                        except Exception:
-                            # TODO: Should I be failing silently if there are failed saves?
-                            xform_db.commit()
-                            app_db.commit()
-                            raise
+                        self._print_progress(i, total, num_fixed)
+                        if xform_instance.app_id in new_xmlnss:
+                            num_fixed += 1
+                            # We've already generated a new xmlns for this app
+                            set_xmlns_on_submission(
+                                xform_instance,
+                                new_xmlnss[xform_instance.app_id],
+                                xform_db,
+                                dry_run,
+                            )
+                            f.write("Set new xmlns on submission {}\n".format(xform_instance._id))
+                        else:
+                            app = Application.get(xform_instance.app_id)
+                            forms_without_xmlns = get_forms_without_xmlns(app)
+                            if len(forms_without_xmlns) == 1:
+                                form = forms_without_xmlns[0]
+                                if not xforms_with_real_xmlns_possibly_exist(app._id, form):
+                                    num_fixed += 1
+                                    new_xmlns = generate_random_xmlns()
+                                    new_xmlnss[xform_instance.app_id] = new_xmlns
+                                    set_xmlns_on_form(form, new_xmlns, app, f, app_db, dry_run)
+                                    set_xmlns_on_submission(
+                                        xform_instance,
+                                        new_xmlnss[xform_instance.app_id],
+                                        xform_db,
+                                        dry_run,
+                                    )
+                                    f.write("Set new xmlns on submission {}\n".format(xform_instance._id))
 
     def _print_progress(self, i, total_submissions, num_fixed):
         if i % 500 == 0 and i != 0:
