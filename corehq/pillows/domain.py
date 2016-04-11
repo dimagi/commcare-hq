@@ -51,16 +51,20 @@ class DomainPillow(HQPillow):
             return doc_dict
 
     def change_transform(self, doc_dict):
-        doc_ret = copy.deepcopy(doc_dict)
-        sub = Subscription.objects.filter(subscriber__domain=doc_dict['name'], is_active=True)
-        doc_ret['deployment'] = doc_dict.get('deployment', None) or {}
-        countries = doc_ret['deployment'].get('countries', [])
-        doc_ret['deployment']['countries'] = []
-        if sub:
-            doc_ret['subscription'] = sub[0].plan_version.plan.edition
-        for country in countries:
-            doc_ret['deployment']['countries'].append(COUNTRIES[country].upper())
-        return doc_ret
+        return transform_domain_for_elasticsearch(doc_dict)
+
+
+def transform_domain_for_elasticsearch(doc_dict):
+    doc_ret = copy.deepcopy(doc_dict)
+    sub = Subscription.objects.filter(subscriber__domain=doc_dict['name'], is_active=True)
+    doc_ret['deployment'] = doc_dict.get('deployment', None) or {}
+    countries = doc_ret['deployment'].get('countries', [])
+    doc_ret['deployment']['countries'] = []
+    if sub:
+        doc_ret['subscription'] = sub[0].plan_version.plan.edition
+    for country in countries:
+        doc_ret['deployment']['countries'].append(COUNTRIES[country].upper())
+    return doc_ret
 
 
 def get_domain_reindexer():
