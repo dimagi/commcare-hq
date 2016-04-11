@@ -708,8 +708,10 @@ class LedgerAccessorSQL(AbstractLedgerAccessor):
 
     @staticmethod
     def get_ledger_values_for_product_ids(product_ids):
-        # TODO: Actually return ledger values for product_ids
-        return []
+        return list(LedgerValue.objects.raw(
+            'SELECT * FROM get_ledger_values_for_product_ids(%s)',
+            [product_ids]
+        ))
 
     @staticmethod
     def get_ledger_transactions_for_case(case_id, entry_id=None, section_id=None):

@@ -15,7 +15,7 @@ from corehq.pillows.mappings.case_search_mapping import CASE_SEARCH_INDEX, \
     CASE_SEARCH_MAPPING
 from pillowtop.checkpoints.manager import PillowCheckpoint, \
     PillowCheckpointEventHandler
-from pillowtop.es_utils import ElasticsearchIndexMeta
+from pillowtop.es_utils import ElasticsearchIndexInfo
 from pillowtop.feed.couch import change_from_couch_row
 from pillowtop.feed.interface import Change
 from pillowtop.pillow.interface import ConstructedPillow
@@ -115,7 +115,7 @@ def get_case_search_to_elasticsearch_pillow(pillow_id='CaseSearchToElasticsearch
     )
     case_processor = CaseSearchPillowProcessor(
         elasticsearch=get_es_new(),
-        index_meta=ElasticsearchIndexMeta(index=CASE_SEARCH_INDEX, type=CASE_ES_TYPE),
+        index_info=ElasticsearchIndexInfo(index=CASE_SEARCH_INDEX, type=CASE_ES_TYPE),
         doc_prep_fn=transform_case_for_elasticsearch
     )
     return ConstructedPillow(

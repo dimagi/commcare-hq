@@ -6,7 +6,9 @@ from django.test import TestCase
 from elasticsearch.exceptions import ConnectionError
 
 from corehq.apps.case_search.models import CaseSearchConfig
-from corehq.apps.es import CaseES, CaseSearchES, ESQuery, FormES, UserES
+from corehq.apps.domain.shortcuts import create_domain
+from corehq.apps.domain.tests.test_utils import delete_all_domains
+from corehq.apps.es import CaseES, CaseSearchES, DomainES, ESQuery, FormES, UserES
 from corehq.apps.users.dbaccessors.all_commcare_users import delete_all_users
 from corehq.apps.users.models import CommCareUser
 from corehq.form_processor.interfaces.processor import FormProcessorInterface
@@ -17,13 +19,12 @@ from corehq.pillows.case import CasePillow
 from corehq.pillows.case_search import CaseSearchPillow
 from corehq.pillows.mappings.case_mapping import CASE_INDEX
 from corehq.pillows.mappings.case_search_mapping import CASE_SEARCH_INDEX
+from corehq.pillows.mappings.domain_mapping import DOMAIN_INDEX
 from corehq.pillows.mappings.user_mapping import USER_INDEX
 from corehq.pillows.mappings.xform_mapping import XFORM_INDEX
-from corehq.pillows.xform import XFormPillow
 from corehq.util.elastic import delete_es_index, ensure_index_deleted
 from corehq.util.test_utils import get_form_ready_to_save, trap_extra_setup, create_and_save_a_form, \
     create_and_save_a_case
-from elasticsearch.exceptions import ConnectionError
 
 DOMAIN = 'reindex-test-domain'
 
@@ -40,6 +41,23 @@ class PillowtopReindexerTest(TestCase):
     def tearDownClass(cls):
         for index in [CASE_SEARCH_INDEX, USER_INDEX, CASE_INDEX, XFORM_INDEX]:
             ensure_index_deleted(index)
+
+    def test_domain_reindexer(self):
+        for command, kwargs in [
+            ('ptop_fast_reindex_domains', {'noinput': True, 'bulk': True}),
+            ('ptop_reindexer_v2', {'index': 'domain', 'cleanup': True, 'noinput': True})
+        ]:
+            delete_all_domains()
+            ensure_index_deleted(DOMAIN_INDEX)
+            name = 'reindex-test-domain'
+            create_domain(name)
+            call_command(command, **kwargs)
+            results = DomainES().run()
+            self.assertEqual(1, results.total)
+            domain_doc = results.hits[0]
+            self.assertEqual(name, domain_doc['name'])
+            self.assertEqual('Domain', domain_doc['doc_type'])
+            delete_es_index(DOMAIN_INDEX)
 
     def test_user_reindexer(self):
         delete_all_users()
@@ -65,10 +83,8 @@ class PillowtopReindexerTest(TestCase):
         FormProcessorTestUtils.delete_all_cases()
         case = _create_and_save_a_case()
 
-        ensure_index_deleted(CASE_INDEX)  # new reindexer doesn't force delete the index so do it in the test
         index_id = 'sql-case' if settings.TESTS_SHOULD_USE_SQL_BACKEND else 'case'
-        call_command('ptop_reindexer_v2', index_id)
-        CasePillow().get_es_new().indices.refresh(CASE_INDEX)  # as well as refresh the index
+        call_command('ptop_reindexer_v2', index_id, cleanup=True, noinput=True)
 
         self._assert_case_is_in_es(case)
 
@@ -107,11 +123,8 @@ class PillowtopReindexerTest(TestCase):
         FormProcessorTestUtils.delete_all_xforms()
         form = create_and_save_a_form(DOMAIN)
 
-        ensure_index_deleted(XFORM_INDEX)
         index_id = 'sql-form' if settings.TESTS_SHOULD_USE_SQL_BACKEND else 'form'
-
-        call_command('ptop_reindexer_v2', index_id)
-        XFormPillow().get_es_new().indices.refresh(XFORM_INDEX)
+        call_command('ptop_reindexer_v2', index_id, cleanup=True, noinput=True)
 
         self._assert_form_is_in_es(form)
 

@@ -57,7 +57,7 @@ class TestExportItemGeneration(SimpleTestCase):
         self.assertEqual(wrapped.to_json(), item.to_json())
 
 
-def TestGeopointItem(SimpleTestCase):
+class TestGeopointItem(SimpleTestCase):
 
     def test_split_value(self):
         item = GeopointItem(path=[PathNode(name='form'), PathNode(name='geo')])

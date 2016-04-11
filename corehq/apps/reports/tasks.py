@@ -38,14 +38,6 @@ from corehq.apps.domain.calculations import (
     total_distinct_users,
 )
 from corehq.apps.es.domains import DomainES
-from corehq.apps.hqadmin.escheck import (
-    CLUSTER_HEALTH,
-    check_case_es_index,
-    check_es_cluster_health,
-    check_reportcase_es_index,
-    check_reportxform_es_index,
-    check_xform_es_index,
-)
 from corehq.apps.indicators.utils import get_mvp_domains
 from corehq.elastic import (
     stream_es_query,
@@ -68,46 +60,6 @@ from .scheduled import get_scheduled_reports
 
 logging = get_task_logger(__name__)
 EXPIRE_TIME = 60 * 60 * 24
-
-@periodic_task(run_every=crontab(hour="*/6", minute="0", day_of_week="*"), queue=getattr(settings, 'CELERY_PERIODIC_QUEUE','celery'))
-def check_es_index():
-    """
-    Verify that the Case and soon to be added XForm Elastic indices are up to date with what's in couch
-
-    This code is also called in the HQ admin page as well
-    """
-
-    es_status = {}
-    es_status.update(check_es_cluster_health())
-
-    es_status.update(check_case_es_index())
-    es_status.update(check_xform_es_index())
-
-    es_status.update(check_reportcase_es_index())
-    es_status.update(check_reportxform_es_index())
-
-    do_notify = False
-    message = []
-    if es_status[CLUSTER_HEALTH] == 'red':
-        do_notify = True
-        message.append("Cluster health is red - something is up with the ES machine")
-
-    for index in es_status.keys():
-        if index == CLUSTER_HEALTH:
-            continue
-        pillow_status = es_status[index]
-        if not pillow_status['status']:
-            do_notify = True
-            message.append(
-                "Elasticsearch %s Index Issue: %s" % (index, es_status[index]['message']))
-
-    if do_notify:
-        message.append(
-            "This alert can give false alarms due to timing lag, so please double check "
-            + absolute_reverse("system_info")
-            + " and the Elasticsearch Status section to make sure."
-        )
-        notify_exception(None, message='\n'.join(message))
 
 
 def send_delayed_report(report):

@@ -367,47 +367,6 @@ class BaseFullEditUserView(BaseEditUserView):
         return super(BaseFullEditUserView, self).post(request, *args, **kwargs)
 
 
-class EditMyAccountDomainView(BaseFullEditUserView):
-    template_name = "users/edit_full_user.html"
-    urlname = "domain_my_account"
-    page_title = ugettext_noop("Edit My Information")
-    edit_user_form_title = ugettext_noop("My Information")
-    user_update_form_class = UpdateMyAccountInfoForm
-
-    @property
-    def editable_user_id(self):
-        return self.couch_user._id
-
-    @property
-    def editable_user(self):
-        return self.couch_user
-
-    @property
-    @memoized
-    def page_url(self):
-        if self.urlname:
-            return reverse(self.urlname, args=[self.domain])
-
-    @property
-    def page_context(self):
-        context = {
-            'can_use_inbound_sms': domain_has_privilege(self.domain, privileges.INBOUND_SMS),
-        }
-        if (self.request.project.commtrack_enabled or
-                self.request.project.uses_locations):
-            context.update({
-                'update_form': self.commtrack_form,
-            })
-        return context
-
-    def get(self, request, *args, **kwargs):
-        if self.couch_user.is_commcare_user():
-            from corehq.apps.users.views.mobile import EditCommCareUserView
-            return HttpResponseRedirect(reverse(EditCommCareUserView.urlname,
-                                        args=[self.domain, self.editable_user_id]))
-        return super(EditMyAccountDomainView, self).get(request, *args, **kwargs)
-
-
 class ListWebUsersView(JSONResponseMixin, BaseUserSettingsView):
     template_name = 'users/web_users.html'
     page_title = ugettext_lazy("Web Users & Roles")
@@ -645,7 +604,20 @@ class UserInvitationView(object):
         if invitation.is_expired:
             return HttpResponseRedirect(reverse("no_permissions"))
 
-        context = self.added_context()
+        # Add zero-width space to username for better line breaking
+        username = self.request.user.username.replace("@", "&#x200b;@")
+        context = {
+            'create_domain': False,
+            'formatted_username': username,
+            'domain': self.domain,
+            'invite_to': self.domain,
+            'invite_type': _('Project'),
+            'hide_password_feedback': settings.ENABLE_DRACONIAN_SECURITY_FEATURES,
+        }
+        if request.user.is_authenticated:
+            context['current_page'] = {'page_name': _('Project Invitation')}
+        else:
+            context['current_page'] = {'page_name': _('Project Invitation, Account Required')}
         if request.user.is_authenticated():
             is_invited_user = request.couch_user.username.lower() == invitation.email.lower()
             if self.is_invited(invitation, request.couch_user) and not request.couch_user.is_superuser:
@@ -725,20 +697,6 @@ class UserInvitationView(object):
         invitation.save()
         messages.success(self.request, self.success_msg)
         send_confirmation_email(invitation)
-
-    def added_context(self):
-        username = self.request.user.username
-        # Add zero-width space for better line breaking
-        username = username.replace("@", "&#x200b;@")
-
-        return {
-            'create_domain': False,
-            'formatted_username': username,
-            'domain': self.domain,
-            'invite_to': self.domain,
-            'invite_type': _('Project'),
-            'hide_password_feedback': settings.ENABLE_DRACONIAN_SECURITY_FEATURES,
-        }
 
     def validate_invitation(self, invitation):
         assert invitation.domain == self.domain

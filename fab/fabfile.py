@@ -230,7 +230,6 @@ def _setup_path():
     env.virtualenv_current = posixpath.join(env.code_current, 'python_env')
     env.virtualenv_root = posixpath.join(env.code_root, 'python_env')
     env.services = posixpath.join(env.code_root, 'services')
-    env.services_old = posixpath.join(env.home, 'services')
     env.jython_home = '/usr/local/lib/jython'
     env.db = '%s_%s' % (env.project, env.environment)
 
@@ -521,11 +520,11 @@ def update_code(git_tag, use_current_release=False):
 
     with cd(env.code_root if not use_current_release else env.code_current):
         sudo('git remote prune origin')
-        sudo('git fetch origin --tags')
+        sudo('git fetch origin --tags -q')
         sudo('git checkout {}'.format(git_tag))
         sudo('git reset --hard {}'.format(git_tag))
         sudo('git submodule sync')
-        sudo('git submodule update --init --recursive')
+        sudo('git submodule update --init --recursive -q')
         # remove all untracked files, including submodules
         sudo("git clean -ffd")
         # remove all .pyc files in the project
@@ -658,7 +657,6 @@ def _deploy_without_asking():
         _execute_with_timing(_do_collectstatic)
         _execute_with_timing(_do_compress)
 
-        _execute_with_timing(clear_services_dir)
         _set_supervisor_config()
 
         do_migrate = env.should_migrate
@@ -769,11 +767,20 @@ def copy_node_modules():
         sudo('mkdir {}/node_modules'.format(env.code_root))
 
 
+@parallel
+@roles(ROLES_STATIC)
+def copy_compressed_js_staticfiles():
+    if files.exists('{}/staticfiles/CACHE/js'.format(env.code_current)):
+        sudo('mkdir -p {}/staticfiles/CACHE/js'.format(env.code_root))
+        sudo('cp -r {}/staticfiles/CACHE/js {}/staticfiles/CACHE/js'.format(env.code_current, env.code_root))
+
+
 def copy_release_files():
     execute(copy_localsettings)
     execute(copy_tf_localsettings)
     execute(copy_components)
     execute(copy_node_modules)
+    execute(copy_compressed_js_staticfiles)
 
 
 @task
@@ -972,34 +979,6 @@ def update_virtualenv():
 
 
 @task
-def wipe_supervisor_conf():
-    _require_target()
-    execute(clear_services_dir, current=True)
-    execute(services_restart)
-
-
-@roles(ROLES_ALL_SERVICES)
-@parallel
-def clear_services_dir(current=False):
-    """
-    remove old confs from directory first
-    the clear_supervisor_confs management command will scan the directory and find prefixed conf files of the supervisord files
-    and delete them matching the prefix of the current server environment
-    """
-    code_root = env.code_current if current else env.code_root
-    venv_root = env.virtualenv_current if current else env.virtualenv_root
-    services_dir = posixpath.join(env.services_old, u'supervisor')
-    with cd(code_root):
-        sudo((
-            '%(virtualenv_root)s/bin/python manage.py '
-            'clear_supervisor_confs --conf_location "%(conf_location)s"'
-        ) % {
-            'virtualenv_root': venv_root,
-            'conf_location': services_dir,
-        })
-
-
-@task
 def supervisorctl(command):
     require('supervisor_roles',
             provided_by=('staging', 'preview', 'production', 'softlayer', 'zambia'))
@@ -1096,6 +1075,7 @@ def _do_compress(use_current_release=False):
     venv = env.virtualenv_root if not use_current_release else env.virtualenv_current
     with cd(env.code_root if not use_current_release else env.code_current):
         sudo('{}/bin/python manage.py compress --force -v 0'.format(venv))
+        sudo('{}/bin/python manage.py purge_compressed_files'.format(venv))
     update_manifest(save=True, use_current_release=use_current_release)
 
 
@@ -1188,20 +1168,6 @@ def _rebuild_supervisor_conf_file(conf_command, filename, params=None):
             'destination': posixpath.join(env.services, 'supervisor'),
             'params': format_env(env, params)
         })
-
-        sudo((
-            '%(virtualenv_root)s/bin/python manage.py '
-            '%(conf_command)s --traceback --conf_file "%(filename)s" '
-            '--conf_destination "%(destination)s" --params \'%(params)s\''
-        ) % {
-
-            'conf_command': conf_command,
-            'virtualenv_root': env.virtualenv_root,
-            'filename': filename,
-            'destination': posixpath.join(env.services_old, 'supervisor'),
-            'params': format_env(env, params)
-        })
-
 
 
 def get_celery_queues():
