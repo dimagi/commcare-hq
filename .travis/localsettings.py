@@ -63,9 +63,9 @@ LOCAL_LOGGING_LOGGERS = {
         'propagate': True,
     },
     'notify': {
-         'level': 'CRITICAL',
-         'handler': 'null',
-         'propagate': True,
+        'level': 'CRITICAL',
+        'handler': 'null',
+        'propagate': True,
     },
 }
 
