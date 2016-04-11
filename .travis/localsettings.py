@@ -44,32 +44,31 @@ AUDIT_ADMIN_VIEWS = False
 SECRET_KEY = 'secrettravis'
 
 # No logging
-LOGGING = {
-    'version': 1,
-    'handlers': {
-        'null': {
-            'level': 'DEBUG',
-            'class': 'django.utils.log.NullHandler',
-        },
+LOCAL_LOGGING_HANDLERS = {
+    'null': {
+        'level': 'DEBUG',
+        'class': 'django.utils.log.NullHandler',
     },
-    'loggers': {
-        '': {
-            'level': 'CRITICAL',
-            'handler': 'null',
-            'propagate': False,
-        },
-        'south': {
-            'level': 'CRITICAL',
-            'handler': 'null',
-            'propagate': False,
-        },
-        'pillowtop': {
-            'level': 'CRITICAL',
-            'handler': 'null',
-            'propagate': False,
-        }
-    }
 }
+
+LOCAL_LOGGING_LOGGERS = {
+    '': {
+        'level': 'CRITICAL',
+        'handler': 'null',
+        'propagate': True,
+    },
+    'pillowtop': {
+        'level': 'CRITICAL',
+        'handler': 'null',
+        'propagate': True,
+    },
+    'notify': {
+        'level': 'CRITICAL',
+        'handler': 'null',
+        'propagate': True,
+    },
+}
+
 
 PHONE_TIMEZONES_HAVE_BEEN_PROCESSED = True
 PHONE_TIMEZONES_SHOULD_BE_PROCESSED = True
