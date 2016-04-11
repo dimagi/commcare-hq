@@ -1,12 +1,18 @@
 from collections import namedtuple
 from couchforms.models import all_known_formlike_doc_types
+from dimagi.utils.couch.undo import DELETED_SUFFIX
 
 CASE = 'case'
 FORM = 'form'
 META = 'meta'
 
 
-DocumentType = namedtuple('DocumentType', ['raw_doc_type', 'primary_type', 'subtype'])
+class DocumentType(namedtuple('DocumentType', ['raw_doc_type', 'primary_type', 'subtype'])):
+
+    @property
+    def is_deletion(self):
+        # can be overridden
+        return self.raw_doc_type.endswith(DELETED_SUFFIX)
 
 
 def get_doc_type_object_from_document(document):
