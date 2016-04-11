@@ -46,8 +46,10 @@ class Command(BaseCommand):
         total, submissions = get_submissions_without_xmlns()
 
         with open(log_path, "w") as f:
-            with IterDB(XFormInstance.get_db()) as xform_db:
-                with IterDB(Application.get_db()) as app_db:
+            xform_db = IterDB(XFormInstance.get_db())
+            app_db = IterDB(Application.get_db())
+            with xform_db as xform_db:
+                with app_db as app_db:
                     for i, xform_instance in enumerate(submissions):
                         self._print_progress(i, total, num_fixed)
                         if xform_instance.app_id in new_xmlnss:
@@ -77,6 +79,9 @@ class Command(BaseCommand):
                                         dry_run,
                                     )
                                     f.write("Set new xmlns on submission {}\n".format(xform_instance._id))
+            for error_id in list(xform_db.error_ids) + list(app_db.error_ids):
+                f.write("Failed to save {}\n".format(error_id))
+
 
     def _print_progress(self, i, total_submissions, num_fixed):
         if i % 500 == 0 and i != 0:
