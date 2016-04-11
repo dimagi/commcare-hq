@@ -510,6 +510,7 @@ class _AuthorizableMixin(IsMemberOfMixin):
         self.save()
 
     def delete_domain_membership(self, domain, create_record=False):
+        self.get_by_user_id.clear(self.__class__, self.user_id, domain)
         for i, dm in enumerate(self.domain_memberships):
             if dm.domain == domain:
                 if create_record:
@@ -763,7 +764,6 @@ class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, UnicodeMixIn, EulaMi
     has_built_app = BooleanProperty(default=False)
 
     _user = None
-    _original_domains = None
 
     @classmethod
     def wrap(cls, data, should_save=False):
@@ -777,7 +777,6 @@ class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, UnicodeMixIn, EulaMi
         if should_save:
             couch_user.save()
 
-        couch_user._original_domains = set(couch_user.get_domains())
         return couch_user
 
     class AccountTypeError(Exception):
@@ -1129,8 +1128,7 @@ class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, UnicodeMixIn, EulaMi
         from corehq.apps.hqwebapp.templatetags.hq_shared_tags import _get_domain_list
         self.get_by_username.clear(self.__class__, self.username)
         self.get_by_user_id.clear(self.__class__, self.user_id)
-        all_domains = self._original_domains | set(self.get_domains())
-        for domain in all_domains:
+        for domain in self.get_domains():
             self.get_by_user_id.clear(self.__class__, self.user_id, domain)
         Domain.active_for_couch_user.clear(self)
         _get_domain_list.clear(self)
