@@ -121,8 +121,8 @@ function XFormListViewModel() {
     self.refresh_forms = ko.computed(function () {
         self.data_loading(true);
         var disp_index = self.disp_page_index();
-        if (disp_index > self.page_count()) {
-            self.disp_page_index(self.page_count());
+        if (disp_index > self.page_count().peek()) {
+            self.disp_page_index(self.page_count().peek());
             return;
         }
 
