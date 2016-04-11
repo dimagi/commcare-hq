@@ -3,6 +3,7 @@ from itertools import chain
 
 from couchdbkit import ResourceNotFound
 
+from corehq.apps.app_manager.exceptions import FormNotFoundException
 from corehq.apps.app_manager.models import Application
 from corehq.apps.app_manager.util import get_correct_app_class
 from corehq.apps.app_manager.xform import XForm, parse_xml
@@ -81,9 +82,9 @@ class Command(BaseCommand):
                                         dry_run,
                                     )
                                     f.write("Set new xmlns on submission {}\n".format(xform_instance._id))
-                    except Exception as e:
+                    except Exception:
                         xform_db.commit()
-                        raise e
+                        raise
 
     def _print_progress(self, i, total_submissions, num_fixed):
         if i % 500 == 0 and i != 0:
@@ -174,7 +175,10 @@ def set_xmlns_on_form(form, xmlns, app, dry_run):
     """
     form_id = form.unique_id
     for app_build in [app] + get_saved_apps(app):
-        form_in_build = app_build.get_form(form_id)
+        try:
+            form_in_build = app_build.get_form(form_id)
+        except FormNotFoundException:
+            continue
 
         xml = form_in_build.source
         wrapped_xml = XForm(xml)
