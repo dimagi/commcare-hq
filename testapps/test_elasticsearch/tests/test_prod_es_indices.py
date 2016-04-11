@@ -70,7 +70,7 @@ EXPECTED_PROD_INDICES = [
     },
     {
         "alias": "xforms",
-        "index": "test_xforms_20150403-1728",
+        "index": "test_xforms_2016-03-02",
         "type": "xform"
     }
 ]
