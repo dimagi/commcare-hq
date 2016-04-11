@@ -20,7 +20,7 @@ from pillowtop.feed.couch import change_from_couch_row
 from pillowtop.feed.interface import Change
 from pillowtop.pillow.interface import ConstructedPillow
 from pillowtop.processors.elastic import ElasticProcessor
-from pillowtop.reindexer.change_providers.case import DomainCaseChangeProvider
+from pillowtop.reindexer.change_providers.case import get_domain_case_change_provider
 from pillowtop.reindexer.reindexer import PillowReindexer
 
 
@@ -143,9 +143,10 @@ def get_case_search_reindexer(domain=None):
         # return changes for all enabled domains
         domains = case_search_enabled_domains()
 
-    return PillowReindexer(get_case_search_to_elasticsearch_pillow(), change_provider=DomainCaseChangeProvider(
-        domains=domains
-    ))
+    return PillowReindexer(
+        get_case_search_to_elasticsearch_pillow(),
+        change_provider=get_domain_case_change_provider(domains=domains)
+    )
 
 
 def delete_case_search_cases(domain):

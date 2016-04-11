@@ -1,24 +1,23 @@
-import itertools
-
 from casexml.apps.case.models import CommCareCase
 from corehq.form_processor.backends.sql.dbaccessors import CaseAccessorSQL
 from corehq.form_processor.change_providers import _sql_case_to_change
 from corehq.form_processor.utils.general import should_use_sql_backend
+from pillowtop.reindexer.change_providers.composite import CompositeChangeProvider
 from pillowtop.reindexer.change_providers.couch import CouchViewChangeProvider
 from pillowtop.reindexer.change_providers.interface import ChangeProvider
 
 
-class CouchDomainCaseChangeProvider(CouchViewChangeProvider):
-    def __init__(self, domain):
-        self.document_class = CommCareCase
-        self._couch_db = self.document_class.get_db()
-        self._view_name = 'cases_by_owner/view'
-        self._chunk_size = 100
-        self._view_kwargs = {
+def get_couch_domain_case_change_provider(domain):
+    return CouchViewChangeProvider(
+        document_class=CommCareCase,
+        view_name='cases_by_owner/view',
+        chunk_size=100,
+        view_kwargs={
             'include_docs': True,
             'startkey': [domain],
             'endkey': [domain, {}, {}]
         }
+    )
 
 
 class SqlDomainCaseChangeProvider(ChangeProvider):
@@ -32,18 +31,11 @@ class SqlDomainCaseChangeProvider(ChangeProvider):
             yield _sql_case_to_change(case)
 
 
-class DomainCaseChangeProvider(ChangeProvider):
-    """Returns all cases only for a list of domains
-    """
-    def __init__(self, domains):
-        self.domains = domains
-        self.change_providers = []
-
-        for domain in self.domains:
-            if should_use_sql_backend(domain):
-                self.change_providers.append(SqlDomainCaseChangeProvider(domain))
-            else:
-                self.change_providers.append(CouchDomainCaseChangeProvider(domain))
-
-    def iter_changes(self, start_from=None):
-        return itertools.chain(*[change_provider.iter_changes() for change_provider in self.change_providers])
+def get_domain_case_change_provider(domains):
+    change_providers = []
+    for domain in domains:
+        if should_use_sql_backend(domain):
+            change_providers.append(SqlDomainCaseChangeProvider(domain))
+        else:
+            change_providers.append(get_couch_domain_case_change_provider(domain))
+    return CompositeChangeProvider(change_providers)
