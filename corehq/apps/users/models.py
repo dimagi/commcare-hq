@@ -34,7 +34,7 @@ from dimagi.utils.logging import notify_exception
 from dimagi.utils.decorators.memoized import memoized
 from dimagi.utils.make_uuid import random_hex
 from dimagi.utils.modules import to_function
-from corehq.util.quickcache import skippable_quickcache
+from corehq.util.quickcache import skippable_quickcache, quickcache
 from casexml.apps.case.mock import CaseBlock
 from casexml.apps.case.models import CommCareCase
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
@@ -1126,6 +1126,8 @@ class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, UnicodeMixIn, EulaMi
     def clear_quickcache_for_user(self):
         from corehq.apps.hqwebapp.templatetags.hq_shared_tags import _get_domain_list
         self.get_by_username.clear(self.__class__, self.username)
+        self.get_by_user_id.clear(self.__class__, self.user_id)
+        self.get_by_user_id.clear(self.__class__, self.user_id, self.domain)
         Domain.active_for_couch_user.clear(self)
         _get_domain_list.clear(self)
 
@@ -1138,13 +1140,14 @@ class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, UnicodeMixIn, EulaMi
             return None
 
     @classmethod
+    @quickcache(['userID', 'domain'])
     def get_by_user_id(cls, userID, domain=None):
         """
         if domain is given, checks to make sure the user is a member of that domain
         returns None if there's no user found or if the domain check fails
         """
         try:
-            couch_user = cls.wrap_correctly(cache_core.cached_open_doc(cls.get_db(), userID))
+            couch_user = cls.wrap_correctly(cls.get_db().get(userID))
         except ResourceNotFound:
             return None
         if couch_user.doc_type != cls.__name__ and cls.__name__ != "CouchUser":
