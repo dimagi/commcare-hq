@@ -106,7 +106,10 @@ def get_submissions_without_xmlns():
     )
 
     total_error_submissions, error_submissions_doc_generator = _get_error_submissions_without_xmlns()
-    return total_submissions+total_error_submissions, chain(submissions_doc_generator, error_submissions_doc_generator)
+    return (
+        total_submissions + total_error_submissions,
+        chain(submissions_doc_generator, error_submissions_doc_generator)
+    )
 
 
 def _get_error_submissions_without_xmlns():
