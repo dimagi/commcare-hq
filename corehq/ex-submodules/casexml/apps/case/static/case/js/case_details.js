@@ -79,7 +79,7 @@ function XFormListViewModel() {
     self.xforms = ko.observableArray([]);
     self.page_size = ko.observable(10);
     self.disp_page_index = ko.observable(1);
-    self.total_rows = ko.observable(0);
+    self.total_rows = ko.observable(-1);
     self.selected_xform_idx = ko.observable(-1);
     self.selected_xform_doc_id = ko.observable("");
     self.selected_xforms = ko.observableArray([]);
@@ -119,7 +119,6 @@ function XFormListViewModel() {
     };
 
     self.refresh_forms = ko.computed(function () {
-        self.data_loading(true);
         var disp_index = self.disp_page_index();
         if (disp_index > self.page_count().peek()) {
             self.disp_page_index(self.page_count().peek());
@@ -128,6 +127,7 @@ function XFormListViewModel() {
         if (self.total_rows.peek() > 0 && self.page_size() > self.total_rows.peek()) {
             return;
         }
+        self.data_loading(true);
         var start_num = disp_index || 1;
         var start_range = (start_num - 1) * self.page_size();
         var end_range = start_range + self.page_size();
