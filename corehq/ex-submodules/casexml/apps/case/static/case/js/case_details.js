@@ -118,9 +118,15 @@ function XFormListViewModel() {
         self.selected_xform_idx(-1);
     };
 
-    self.refresh_forms = function () {
+    self.refresh_forms = ko.computed(function () {
         self.data_loading(true);
-        var start_num = self.disp_page_index() || 1;
+        var disp_index = self.disp_page_index();
+        if (disp_index > self.page_count()) {
+            self.disp_page_index(self.page_count());
+            return;
+        }
+
+        var start_num = disp_index || 1;
         var start_range = (start_num - 1) * self.page_size();
         var end_range = start_range + self.page_size();
         $.ajax({
@@ -141,23 +147,18 @@ function XFormListViewModel() {
                 self.data_loading(false);
             }
         });
-    };
+    });
 
     self.page_count = ko.computed(function() {
         Math.ceil(self.total_rows()/self.page_size());
     });
 
-    //main function data collection - entry point if you will
-    self.refresh_forms();
-
     self.nextPage = function() {
         self.disp_page_index(self.disp_page_index() + 1);
-        self.refresh_forms();
     };
 
     self.prevPage = function() {
         self.disp_page_index(self.disp_page_index() - 1);
-        self.refresh_forms();
     };
 
     self.clickRow = function(item) {
@@ -188,20 +189,6 @@ function XFormListViewModel() {
         else {
             return end_page_num;
         }
-    });
-
-
-    self.page_size_changed = self.page_size.subscribe(function () {
-        var disp_index = self.disp_page_index();
-        if (disp_index > self.page_count()) {
-            self.disp_page_index(self.page_count());
-        } else {
-            self.refresh_forms();
-        }
-    });
-
-    self.disp_page_index_changed = self.disp_page_index.subscribe(function () {
-        self.refresh_forms();
     });
 
     self.all_pages = function() {
