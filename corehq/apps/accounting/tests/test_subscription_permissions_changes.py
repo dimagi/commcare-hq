@@ -14,24 +14,24 @@ class TestSubscriptionPermissionsChanges(BaseAccountingTest):
 
     def setUp(self):
         super(TestSubscriptionPermissionsChanges, self).setUp()
-        self.domain = Domain(
+        self.project = Domain(
             name="test-sub-changes",
             is_active=True,
         )
-        self.domain.save()
+        self.project.save()
 
         self.admin_user = generator.arbitrary_web_user()
-        self.admin_user.add_domain_membership(self.domain.name, is_admin=True)
+        self.admin_user.add_domain_membership(self.project.name, is_admin=True)
         self.admin_user.save()
 
         self.account = BillingAccount.get_or_create_account_by_domain(
-            self.domain.name, created_by=self.admin_user.username)[0]
+            self.project.name, created_by=self.admin_user.username)[0]
         self.advanced_plan = DefaultProductPlan.get_default_plan_by_domain(
-            self.domain.name, edition=SoftwarePlanEdition.ADVANCED)
+            self.project.name, edition=SoftwarePlanEdition.ADVANCED)
 
     def _subscribe_to_advanced(self):
         return Subscription.new_domain_subscription(
-            self.account, self.domain.name, self.advanced_plan,
+            self.account, self.project.name, self.advanced_plan,
             web_user=self.admin_user.username
         )
 
@@ -49,11 +49,11 @@ class TestSubscriptionPermissionsChanges(BaseAccountingTest):
 
         app_standard = Application.wrap(standard_source)
         app_standard.save()
-        self.assertEqual(self.domain.name, app_standard.domain)
+        self.assertEqual(self.project.name, app_standard.domain)
 
         app_build = Application.wrap(build_source)
         app_build.save()
-        self.assertEqual(self.domain.name, app_build.domain)
+        self.assertEqual(self.project.name, app_build.domain)
 
         self.assertTrue(LOGO_HOME in app_standard.logo_refs.keys())
         self.assertTrue(LOGO_LOGIN in app_standard.logo_refs.keys())
@@ -83,21 +83,21 @@ class TestSubscriptionPermissionsChanges(BaseAccountingTest):
     def test_report_builder_datasource_deactivation(self):
 
         def _get_data_source(id_):
-            return get_datasource_config(id_, self.domain.name)[0]
+            return get_datasource_config(id_, self.project.name)[0]
 
         # Upgrade the domain
         advanced_sub = self._subscribe_to_advanced()
 
         # Create reports and data sources
         builder_report_data_source = DataSourceConfiguration(
-            domain=self.domain.name,
+            domain=self.project.name,
             is_deactivated=False,
             referenced_doc_type="XFormInstance",
             table_id="foo",
 
         )
         other_data_source = DataSourceConfiguration(
-            domain=self.domain.name,
+            domain=self.project.name,
             is_deactivated=False,
             referenced_doc_type="XFormInstance",
             table_id="bar",
@@ -105,7 +105,7 @@ class TestSubscriptionPermissionsChanges(BaseAccountingTest):
         builder_report_data_source.save()
         other_data_source.save()
         report_builder_report = ReportConfiguration(
-            domain=self.domain.name,
+            domain=self.project.name,
             config_id=builder_report_data_source._id,
             report_meta=ReportMeta(created_by_builder=True),
         )
@@ -137,7 +137,7 @@ class TestSubscriptionPermissionsChanges(BaseAccountingTest):
         advanced_sub.cancel_subscription(web_user=self.admin_user.username)
 
     def tearDown(self):
-        self.domain.delete()
+        self.project.delete()
         self.admin_user.delete()
         generator.delete_all_subscriptions()
         generator.delete_all_accounts()
