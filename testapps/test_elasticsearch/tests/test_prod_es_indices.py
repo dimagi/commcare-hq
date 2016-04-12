@@ -30,7 +30,8 @@ class ProdIndexManagementTest(SimpleTestCase):
 EXPECTED_PROD_INDICES = [
     {
         "alias": "case_search",
-        "index": "test_case_search_2016-03-15"
+        "index": "test_case_search_2016-03-15",
+        "type": "case"
     },
     {
         "alias": "hqapps",
