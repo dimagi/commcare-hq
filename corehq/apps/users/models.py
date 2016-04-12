@@ -1131,7 +1131,8 @@ class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, UnicodeMixIn, EulaMi
         self.get_by_user_id.clear(self.__class__, self.user_id)
         domains = getattr(self, 'domains', None)
         if domains is None:
-            domains = getattr(self, 'domain', [])
+            domain = getattr(self, 'domain', None)
+            domains = [domain] if domain else []
         for domain in domains:
             self.get_by_user_id.clear(self.__class__, self.user_id, domain)
         Domain.active_for_couch_user.clear(self)
