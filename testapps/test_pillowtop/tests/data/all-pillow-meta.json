@@ -114,6 +114,30 @@
         "name": "CasePillow",
         "unique_id": "85e1a25ff57c5892b6fa95caf949ae4c"
     },
+    "CaseSearchPillow": {
+        "advertised_name": "corehq.pillows.case_search.CaseSearchPillow.37eb28449299eb76faf589cba4eb2121.testhq",
+        "change_feed_type": "CouchChangeFeed",
+        "checkpoint_id": "corehq.pillows.case_search.CaseSearchPillow.37eb28449299eb76faf589cba4eb2121.testhq",
+        "couch_filter": "case/casedocs",
+        "couchdb_type": "Database",
+        "couchdb_uri": "http://{COUCH_SERVER_ROOT}/test_commcarehq",
+        "document_class": "CommCareCase",
+        "es_alias": "case_search",
+        "es_index": "test_case_search_2016-03-15",
+        "es_type": "case",
+        "extra_args": {},
+        "full_class_name": "corehq.pillows.case_search.CaseSearchPillow",
+        "include_docs": true,
+        "name": "CaseSearchPillow",
+        "unique_id": "37eb28449299eb76faf589cba4eb2121"
+    },
+    "CaseSearchToElasticsearchPillow": {
+        "advertised_name": "CaseSearchToElasticsearchPillow",
+        "change_feed_type": "KafkaChangeFeed",
+        "checkpoint_id": "case-search-to-elasticsearch",
+        "full_class_name": "pillowtop.pillow.interface.ConstructedPillow",
+        "name": "CaseSearchToElasticsearchPillow"
+    },
     "CouvertureFluffPillow": {
         "advertised_name": "fluff.CouvertureFluffPillow.testhq",
         "change_feed_type": "KafkaChangeFeed",
