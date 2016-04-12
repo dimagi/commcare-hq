@@ -147,7 +147,9 @@ class DetailContributor(SectionContributor):
                     and not module.put_in_root:
                 target_form = self.app.get_form(module.case_list_form.form_id)
                 if target_form.is_registration_form(module.case_type):
-                    self._add_action_to_detail(d, module)
+                    self._add_reg_form_action_to_detail(d, module)
+                if module.search_config:
+                    self._add_case_search_action_to_detail(d, module)
 
             try:
                 if not self.app.enable_multi_sort:
@@ -167,8 +169,8 @@ class DetailContributor(SectionContributor):
             responses=[Response(**r) for r in detail.lookup_responses],
         )
 
-    def _add_action_to_detail(self, detail, module):
-        # add form action to detail
+    def _add_reg_form_action_to_detail(self, detail, module):
+        # add registration form action to detail
         form = self.app.get_form(module.case_list_form.form_id)
 
         if self.app.enable_localized_menu_media:
@@ -225,6 +227,18 @@ class DetailContributor(SectionContributor):
                 frame.add_datum(StackDatum(id=s_datum.id, value=s_datum.function))
 
         frame.add_datum(StackDatum(id=RETURN_TO, value=XPath.string(id_strings.menu_id(module))))
+        detail.action.stack.add_frame(frame)
+
+    @staticmethod
+    def _add_case_search_action_to_detail(detail, module):
+        detail.action = Action(
+            display=Display(
+                text=Text(locale_id=id_strings.case_search_locale(module))
+            ),
+            stack=Stack()
+        )
+        frame = PushFrame()
+        frame.add_command(XPath.string(id_strings.search_command(module)))
         detail.action.stack.add_frame(frame)
 
     @staticmethod

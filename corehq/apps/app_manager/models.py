@@ -1788,6 +1788,22 @@ class CaseList(IndexedSchema, NavMenuItemMediaMixin):
         _rename_key(self.label, old_lang, new_lang)
 
 
+class CaseSearchProperty(DocumentSchema):
+    """
+    Case properties available to search on.
+    """
+    name = StringProperty()
+    label = DictProperty()
+
+
+class CaseSearch(DocumentSchema):
+    """
+    Properties and search command label
+    """
+    command_label = DictProperty(default={'en': 'Search All Cases'})
+    properties = SchemaProperty(CaseSearchProperty)
+
+
 class ParentSelect(DocumentSchema):
 
     active = BooleanProperty(default=False)
@@ -2156,7 +2172,7 @@ class Module(ModuleBase, ModuleDetailsMixin):
     referral_list = SchemaProperty(CaseList)
     task_list = SchemaProperty(CaseList)
     parent_select = SchemaProperty(ParentSelect)
-
+    search_config = SchemaProperty(CaseSearch)
 
     @classmethod
     def wrap(cls, data):
@@ -2654,6 +2670,7 @@ class AdvancedModule(ModuleBase):
     has_schedule = BooleanProperty()
     schedule_phases = SchemaListProperty(SchedulePhase)
     get_schedule_phases = IndexedSchema.Getter('schedule_phases')
+    search_config = SchemaListProperty(CaseSearch)
 
     @classmethod
     def new_module(cls, name, lang):
