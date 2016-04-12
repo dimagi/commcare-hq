@@ -40,6 +40,8 @@ class KafkaProcessor(PillowProcessor):
         except MissingMetaInformationError:
             pass
         else:
+            # change.deleted is used for hard deletions, from which we don't currently
+            # get any metadata from so this should have raised a MissingMetaInformationError above
             assert not change.deleted
             self._producer.send_change(get_topic(doc_meta), change_meta)
 
