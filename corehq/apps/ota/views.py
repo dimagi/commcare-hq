@@ -14,7 +14,7 @@ from corehq.apps.case_search.models import CLAIM_CASE_TYPE, CaseSearchConfig
 from corehq.apps.domain.decorators import domain_admin_required, login_or_digest_or_basic_or_apikey
 from corehq.apps.domain.models import Domain
 from corehq.apps.domain.views import DomainViewMixin, EditMyProjectSettingsView
-from corehq.apps.es.case_search import CaseSearchES
+from corehq.apps.es.case_search import CaseSearchES, flatten_result
 from corehq.apps.ota.forms import PrimeRestoreCacheForm, AdvancedPrimeRestoreCacheForm
 from corehq.apps.ota.tasks import prime_restore
 from corehq.apps.style.views import BaseB3SectionPageView
@@ -68,7 +68,7 @@ def search(request, domain):
             [get_instance_from_data(CommCareCaseSQLSerializer, result) for result in results]
         ).fixture
     else:
-        fixtures = CaseDBFixture([CommCareCase.wrap(result) for result in results]).fixture
+        fixtures = CaseDBFixture([CommCareCase.wrap(flatten_result(result)) for result in results]).fixture
     return HttpResponse(fixtures, content_type="text/xml")
 
 
