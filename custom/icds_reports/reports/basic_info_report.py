@@ -8,7 +8,7 @@ class BasicInfoReport(IcdsBaseReport):
     @property
     @memoized
     def data_providers(self):
-        config = self.report_config()
+        config = self.report_config
         return [
             Identification(config=config),
             Operationalization(config=config),
