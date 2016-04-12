@@ -1,7 +1,8 @@
-from gevent import monkey; monkey.patch_all()
-from corehq.elastic import get_es_new
+from gevent import monkey;
+from corehq.pillows.utils import get_all_expected_es_indices
 
-from pillowtop.es_utils import get_all_inferred_es_indices_from_pillows
+monkey.patch_all()
+from corehq.elastic import get_es_new
 
 from cStringIO import StringIO
 import traceback
@@ -57,7 +58,7 @@ class Command(BaseCommand):
 
     def handle(self, *args, **options):
         runs = []
-        all_es_indices = get_all_inferred_es_indices_from_pillows()
+        all_es_indices = get_all_expected_es_indices()
         es = get_es_new()
         indices_needing_reindex = [info for info in all_es_indices if not es.indices.exists(info.index)]
 
