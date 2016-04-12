@@ -19,6 +19,7 @@ from urllib2 import URLError
 from django.conf import settings
 from django.contrib import messages
 from django.contrib.auth.decorators import permission_required
+from django.core.cache import cache
 from django.core.exceptions import PermissionDenied
 from django.core.files.base import ContentFile
 from django.core.servers.basehttp import FileWrapper
@@ -162,6 +163,7 @@ from corehq.apps.style.decorators import (
     use_jquery_ui,
     use_jquery_ui_multiselect,
     use_select2,
+    use_datatables,
 )
 
 
@@ -198,7 +200,7 @@ def default(request, domain):
     module = Domain.get_module_by_name(domain)
     if hasattr(module, 'DEFAULT_REPORT_CLASS'):
         return HttpResponseRedirect(getattr(module, 'DEFAULT_REPORT_CLASS').get_url(domain))
-    return HttpResponseRedirect(reverse(saved_reports, args=[domain]))
+    return HttpResponseRedirect(reverse(MySavedReportsView.urlname, args=[domain]))
 
 
 @login_and_domain_required
@@ -221,50 +223,76 @@ class BaseProjectReportSectionView(BaseDomainView):
         return reverse('reports_home', args=(self.domain, ))
 
 
-@login_and_domain_required
-def saved_reports(request, domain, template="reports/reports_home.html"):
-    user = request.couch_user
-    if not user_can_view_reports(request.project, user):
-        raise Http404
+class MySavedReportsView(BaseProjectReportSectionView):
+    urlname = 'saved_reports'
+    page_title = _("My Saved Reports")
+    template_name = 'reports/reports_home.html'
 
-    lang = request.couch_user.language or ucr_default_language()
+    @use_jquery_ui
+    @use_datatables
+    def dispatch(self, request, *args, **kwargs):
+        return super(MySavedReportsView, self).dispatch(request, *args, **kwargs)
 
-    all_configs = ReportConfig.by_domain_and_owner(domain, user._id)
-    good_configs = []
-    for config in all_configs:
-        if config.is_configurable_report and not config.configurable_report:
-            continue
+    @property
+    def language(self):
+        return self.request.couch_user.language or ucr_default_language()
 
-        good_configs.append(config.to_complete_json(lang=lang))
+    @property
+    def good_configs(self):
+        all_configs = ReportConfig.by_domain_and_owner(self.domain, self.request.couch_user._id)
+        good_configs = []
+        for config in all_configs:
+            if config.is_configurable_report and not config.configurable_report:
+                continue
 
-    def _is_valid(rn):
-        # the _id check is for weird bugs we've seen in the wild that look like
-        # oddities in couch.
-        return hasattr(rn, "_id") and rn._id and (not hasattr(rn, 'report_slug') or rn.report_slug != 'admin_domains')
+            good_configs.append(config.to_complete_json(lang=self.language))
+        return good_configs
 
-    scheduled_reports = [rn for rn in ReportNotification.by_domain_and_owner(domain, user._id) if _is_valid(rn)]
-    scheduled_reports = sorted(scheduled_reports, key=lambda rn: rn.configs[0].name)
-    for report in scheduled_reports:
-        time_difference = get_timezone_difference(domain)
-        (report.hour, day_change) = recalculate_hour(report.hour, int(time_difference[:3]), int(time_difference[3:]))
-        report.minute = 0
-        if day_change:
-            report.day = calculate_day(report.interval, report.day, day_change)
+    @property
+    def scheduled_reports(self):
 
-    context = dict(
-        couch_user=request.couch_user,
-        domain=domain,
-        configs=good_configs,
-        scheduled_reports=scheduled_reports,
-        report=dict(
-            title=_("My Saved Reports"),
-            show=True,
-            slug=None,
-            is_async=True,
-            section_name=ProjectReport.section_name,
-        ),
-    )
-    return render(request, template, context)
+        def _is_valid(rn):
+            # the _id check is for weird bugs we've seen in the wild that look like
+            # oddities in couch.
+            return (
+                hasattr(rn, "_id") and rn._id
+                and (not hasattr(rn, 'report_slug')
+                     or rn.report_slug != 'admin_domains')
+            )
+
+        scheduled_reports = [
+            r for r in ReportNotification.by_domain_and_owner(
+                self.domain, self.request.couch_user._id)
+            if _is_valid(r)
+        ]
+        scheduled_reports = sorted(scheduled_reports,
+                                   key=lambda s: s.configs[0].name)
+        for report in scheduled_reports:
+            time_difference = get_timezone_difference(self.domain)
+            (report.hour, day_change) = recalculate_hour(
+                report.hour,
+                int(time_difference[:3]),
+                int(time_difference[3:])
+            )
+            report.minute = 0
+            if day_change:
+                report.day = calculate_day(report.interval, report.day, day_change)
+        return scheduled_reports
+
+    @property
+    def page_context(self):
+        return {
+            'couch_user': self.request.couch_user,
+            'configs': self.good_configs,
+            'scheduled_reports': self.scheduled_reports,
+            'report': {
+                'title': self.page_title,
+                'show': True,
+                'slug': None,
+                'is_async': True,
+                'section_name': self.section_name,
+            }
+        }
 
 
 @requires_privilege_json_response(privileges.API_ACCESS)
@@ -805,126 +833,168 @@ def calculate_day(interval, day, day_change):
     return day
 
 
-@login_and_domain_required
-def edit_scheduled_report(request, domain, scheduled_report_id=None,
-                          template="reports/edit_scheduled_report.html"):
-    from corehq.apps.users.models import WebUser
-    from corehq.apps.reports.forms import ScheduledReportForm
+class ScheduledReportsView(BaseProjectReportSectionView):
+    urlname = 'edit_scheduled_report'
+    page_title = _("Scheduled Report")
+    template_name = 'reports/edit_scheduled_report.html'
 
-    context = {
-        'form': None,
-        'domain': domain,
-        'report': {
-            'show': user_can_view_reports(request.project, request.couch_user),
-            'slug': None,
-            'default_url': reverse('reports_home', args=(domain,)),
-            'is_async': False,
-            'section_name': ProjectReport.section_name,
+    @use_jquery_ui
+    @use_jquery_ui_multiselect
+    @use_select2
+    def dispatch(self, request, *args, **kwargs):
+        return super(ScheduledReportsView, self).dispatch(request, *args, **kwargs)
+
+    @property
+    def scheduled_report_id(self):
+        return self.kwargs.get('scheduled_report_id')
+
+    @property
+    @memoized
+    def report_notification(self):
+        if self.scheduled_report_id:
+            instance = ReportNotification.get(self.scheduled_report_id)
+            time_difference = get_timezone_difference(self.domain)
+            (instance.hour, day_change) = recalculate_hour(
+                instance.hour,
+                int(time_difference[:3]),
+                int(time_difference[3:])
+            )
+            instance.minute = 0
+            if day_change:
+                instance.day = calculate_day(instance.interval, instance.day, day_change)
+
+            if instance.owner_id != self.request.couch_user._id or instance.domain != self.domain:
+                return HttpResponseBadRequest()
+        else:
+            instance = ReportNotification(
+                owner_id=self.request.couch_user._id,
+                domain=self.domain,
+                config_ids=[],
+                hour=8,
+                minute=0,
+                send_to_owner=True,
+                recipient_emails=[],
+                language=None,
+            )
+        return instance
+
+    @property
+    def is_new(self):
+        return self.report_notification.new_document
+
+    @property
+    def page_name(self):
+        if not self.configs:
+            return self.page_title
+        if self.is_new:
+            return _("New Scheduled Report")
+        return _("Edit Scheduled Report")
+
+    @property
+    @memoized
+    def configs(self):
+        return [
+            c for c in ReportConfig.by_domain_and_owner(self.domain, self.request.couch_user._id)
+            if c.report and c.report.emailable
+        ]
+
+    @property
+    def config_choices(self):
+        config_choices = [(c._id, c.full_name) for c in self.configs]
+
+        def _sort_key(config_choice):
+            config_choice_id = config_choice[0]
+            if config_choice_id in self.report_notification.config_ids:
+                return self.report_notification.config_ids.index(config_choice_id)
+            else:
+                return len(self.report_notification.config_ids)
+
+        return sorted(config_choices, key=_sort_key)
+
+    @property
+    @memoized
+    def scheduled_report_form(self):
+        web_users = WebUser.view('users/web_users_by_domain', reduce=False,
+                               key=self.domain, include_docs=True).all()
+        web_user_emails = [u.get_email() for u in web_users]
+        initial = self.report_notification.to_json()
+        initial['recipient_emails'] = ', '.join(initial['recipient_emails'])
+        kwargs = {'initial': initial}
+        args = ((self.request.POST, ) if self.request.method == "POST" else ())
+
+        from corehq.apps.reports.forms import ScheduledReportForm
+        form = ScheduledReportForm(*args, **kwargs)
+        form.fields['config_ids'].choices = self.config_choices
+        form.fields['recipient_emails'].choices = web_user_emails
+
+        form.fields['hour'].help_text = "This scheduled report's timezone is %s (%s GMT)" % \
+                                        (Domain.get_by_name(self.domain)['default_timezone'],
+                                        get_timezone_difference(self.domain)[:3] + ':'
+                                        + get_timezone_difference(self.domain)[3:])
+        return form
+
+    @property
+    def page_context(self):
+        context = {
+            'form': None,
+            'report': {
+                'show': user_can_view_reports(self.request.project, self.request.couch_user),
+                'slug': None,
+                'default_url': reverse('reports_home', args=(self.domain,)),
+                'is_async': False,
+                'section_name': ProjectReport.section_name,
+                'title': self.page_name,
+            }
         }
-    }
 
-    user_id = request.couch_user._id
+        if not self.configs:
+            return context
 
-    configs = [
-        c for c in ReportConfig.by_domain_and_owner(domain, user_id)
-        if c.report and c.report.emailable
-    ]
+        is_configurable_map = {c._id: c.is_configurable_report for c in self.configs}
+        languages_map = {c._id: list(c.languages | set(['en'])) for c in self.configs}
+        languages_for_select = {tup[0]: tup for tup in langcodes.get_all_langs_for_select()}
 
-    if not configs:
-        return render(request, template, context)
+        context.update({
+            'form': self.scheduled_report_form,
+            'day_value': getattr(self.report_notification, "day", 1),
+            'weekly_day_options': ReportNotification.day_choices(),
+            'monthly_day_options': [(i, i) for i in range(1, 32)],
+            'form_action': _("Create a new") if self.is_new else _("Edit"),
+            'is_configurable_map': is_configurable_map,
+            'languages_map': languages_map,
+            'languages_for_select': languages_for_select,
+        })
+        return context
 
-    is_configurable_map = {c._id: c.is_configurable_report for c in configs}
-    languages_map = {c._id: list(c.languages | set(['en'])) for c in configs}
-    languages_for_select = {tup[0]: tup for tup in langcodes.get_all_langs_for_select()}
+    def post(self, request, *args, **kwargs):
+        if self.scheduled_report_form.is_valid():
+            for k, v in self.scheduled_report_form.cleaned_data.items():
+                setattr(self.report_notification, k, v)
 
-    config_choices = [(c._id, c.full_name) for c in configs]
+            time_difference = get_timezone_difference(self.domain)
+            (self.report_notification.hour, day_change) = calculate_hour(
+                self.report_notification.hour, int(time_difference[:3]), int(time_difference[3:])
+            )
+            self.report_notification.minute = int(time_difference[3:])
+            if day_change:
+                self.report_notification.day = calculate_day(
+                    self.report_notification.interval,
+                    self.report_notification.day,
+                    day_change
+                )
 
-    web_users = WebUser.view('users/web_users_by_domain', reduce=False,
-                               key=domain, include_docs=True).all()
-    web_user_emails = [u.get_email() for u in web_users]
+            self.report_notification.save()
+            ProjectReportsTab.clear_dropdown_cache(self.domain, request.couch_user.get_id)
 
-    if scheduled_report_id:
-        instance = ReportNotification.get(scheduled_report_id)
-        time_difference = get_timezone_difference(domain)
-        (instance.hour, day_change) = recalculate_hour(instance.hour, int(time_difference[:3]), int(time_difference[3:]))
-        instance.minute = 0
-        if day_change:
-            instance.day = calculate_day(instance.interval, instance.day, day_change)
+            if self.is_new:
+                messages.success(request, "Scheduled report added!")
+            else:
+                messages.success(request, "Scheduled report updated!")
 
-        if instance.owner_id != user_id or instance.domain != domain:
-            return HttpResponseBadRequest()
-    else:
-        instance = ReportNotification(
-            owner_id=user_id,
-            domain=domain,
-            config_ids=[],
-            hour=8,
-            minute=0,
-            send_to_owner=True,
-            recipient_emails=[],
-            language=None,
-        )
+            touch_saved_reports_views(request.couch_user, self.domain)
+            return HttpResponseRedirect(reverse('reports_home', args=(self.domain,)))
 
-    def _sort_key(config_choice):
-        config_choice_id = config_choice[0]
-        if config_choice_id in instance.config_ids:
-            return instance.config_ids.index(config_choice_id)
-        else:
-            return len(instance.config_ids)
-    config_choices = sorted(config_choices, key=_sort_key)
-
-    is_new = instance.new_document
-    initial = instance.to_json()
-    initial['recipient_emails'] = ', '.join(initial['recipient_emails'])
-
-    kwargs = {'initial': initial}
-    args = ((request.POST, ) if request.method == "POST" else ())
-    form = ScheduledReportForm(*args, **kwargs)
-
-    form.fields['config_ids'].choices = config_choices
-    form.fields['recipient_emails'].choices = web_user_emails
-
-    form.fields['hour'].help_text = "This scheduled report's timezone is %s (%s GMT)"  % \
-                                    (Domain.get_by_name(domain)['default_timezone'],
-                                    get_timezone_difference(domain)[:3] + ':' + get_timezone_difference(domain)[3:])
-
-
-    if request.method == "POST" and form.is_valid():
-        for k, v in form.cleaned_data.items():
-            setattr(instance, k, v)
-
-        time_difference = get_timezone_difference(domain)
-        (instance.hour, day_change) = calculate_hour(instance.hour, int(time_difference[:3]), int(time_difference[3:]))
-        instance.minute = int(time_difference[3:])
-        if day_change:
-            instance.day = calculate_day(instance.interval, instance.day, day_change)
-
-        instance.save()
-        ProjectReportsTab.clear_dropdown_cache(domain, request.couch_user.get_id)
-        if is_new:
-            messages.success(request, "Scheduled report added!")
-        else:
-            messages.success(request, "Scheduled report updated!")
-
-        touch_saved_reports_views(request.couch_user, domain)
-        return HttpResponseRedirect(reverse('reports_home', args=(domain,)))
-
-    context['form'] = form
-    context['day_value'] = getattr(instance, "day", 1)
-    context['weekly_day_options'] = ReportNotification.day_choices()
-    context['monthly_day_options'] = [(i, i) for i in range(1, 32)]
-    if is_new:
-        context['form_action'] = _("Create a new")
-        context['report']['title'] = _("New Scheduled Report")
-    else:
-        context['form_action'] = _("Edit")
-        context['report']['title'] = _("Edit Scheduled Report")
-    context['is_configurable_map'] = is_configurable_map
-    context['languages_map'] = languages_map
-    context['languages_for_select'] = languages_for_select
-
-    return render(request, template, context)
-
+        return self.get(request, *args, **kwargs)
 
 @login_and_domain_required
 @require_POST
