@@ -550,7 +550,7 @@ def location_edited_receiver(sender, loc, moved, **kwargs):
         )
 
     group = last_location_group(loc)
-    if group != loc.metadata['group']:
+    if not loc.sql_location.location_type.administrative and group != loc.metadata['group']:
         PendingReportingDataRecalculation.objects.create(
             domain=loc.domain,
             type='group_change',

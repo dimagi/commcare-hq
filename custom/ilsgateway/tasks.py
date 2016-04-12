@@ -344,7 +344,8 @@ def recalculation_on_location_change(domain, last_run):
             continue
 
         if recalculation_type == 'group_change'\
-                and data_list[0]['previous_group'] != data_list[-1]['current_group']:
+                and data_list[0]['previous_group'] != data_list[-1]['current_group']\
+                and not sql_location.location_type.administrative:
             to_recalculate = recalculate_on_group_change(sql_location.couch_location, last_run)
         elif recalculation_type == 'parent_change' \
                 and data_list[0]['previous_parent'] != data_list[-1]['current_parent']:
