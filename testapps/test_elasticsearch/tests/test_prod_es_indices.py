@@ -1,6 +1,6 @@
 from django.conf import settings
 from django.test import SimpleTestCase
-from pillowtop.es_utils import get_all_expected_es_indices
+from pillowtop.es_utils import get_all_inferred_es_indices_from_pillows
 
 
 class ProdIndexManagementTest(SimpleTestCase):
@@ -16,7 +16,7 @@ class ProdIndexManagementTest(SimpleTestCase):
         settings.PILLOWTOPS = cls._PILLOWTOPS
 
     def test_prod_config(self):
-        found_prod_indices = [info.to_json() for info in get_all_expected_es_indices()]
+        found_prod_indices = [info.to_json() for info in get_all_inferred_es_indices_from_pillows()]
         for info in found_prod_indices:
             # for now don't test these two properties, just ensure they exist
             self.assertTrue(info['meta'])
