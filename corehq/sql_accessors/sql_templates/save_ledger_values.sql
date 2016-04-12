@@ -28,7 +28,12 @@ BEGIN
     FOREACH ledger_transaction IN ARRAY ledger_transactions
     LOOP
         IF ledger_transaction.id IS NOT NULL THEN
-            RAISE EXCEPTION 'Updating ledger transactions is not supported';
+            UPDATE form_processor_ledgertransaction SET
+                delta = ledger_transaction.delta, updated_balance = ledger_transaction.updated_balance
+            WHERE
+                case_id = ledger_transaction.case_id
+                AND section_id = ledger_transaction.section_id
+                AND entry_id = ledger_transaction.entry_id;
         ELSE
             INSERT INTO form_processor_ledgertransaction (
                 form_id, server_date, report_date, type, case_id, entry_id, section_id,
