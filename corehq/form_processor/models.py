@@ -745,7 +745,7 @@ class CommCareCaseSQL(DisabledDbMixin, models.Model, RedisLockableMixIn,
         if identifier:
             indices = filter(lambda index: index.identifier == identifier, indices)
 
-        if relationship:
+        if relationship_id:
             indices = filter(lambda index: index.relationship_id == relationship_id, indices)
 
         return [index.referenced_case for index in indices]
