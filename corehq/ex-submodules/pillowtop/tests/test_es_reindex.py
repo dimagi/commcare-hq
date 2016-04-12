@@ -2,7 +2,7 @@ import uuid
 from django.test import SimpleTestCase, override_settings
 from corehq.elastic import get_es_new
 from corehq.util.elastic import TEST_ES_PREFIX
-from pillowtop.es_utils import get_all_elasticsearch_pillow_classes, get_all_expected_es_indices, \
+from pillowtop.es_utils import get_all_elasticsearch_pillow_classes, get_all_inferred_es_indices_from_pillows, \
     ElasticsearchIndexInfo, create_index_and_set_settings_normal
 from pillowtop.tests.utils import TestElasticPillow
 
@@ -24,8 +24,8 @@ class ElasticReindexTest(SimpleTestCase):
         self.assertEqual(TestElasticPillow, es_pillow_classes[0])
 
     @override_settings(PILLOWTOPS={'test': ['pillowtop.tests.test_elasticsearch.TestElasticPillow']})
-    def test_get_all_elastic_indices(self):
-        es_indices = list(get_all_expected_es_indices())
+    def test_get_all_elastic_indices_from_pillows(self):
+        es_indices = list(get_all_inferred_es_indices_from_pillows())
         self.assertEqual(1, len(es_indices))
         index_info = es_indices[0]
         self.assertEqual(TestElasticPillow.es_index, index_info.index)
