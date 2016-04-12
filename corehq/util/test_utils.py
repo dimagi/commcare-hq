@@ -357,7 +357,7 @@ def create_and_save_a_form(domain):
     return form
 
 
-def create_and_save_a_case(domain, case_id, case_name):
+def create_and_save_a_case(domain, case_id, case_name, case_properties=None):
     from casexml.apps.case.mock import CaseBlock
     from casexml.apps.case.signals import case_post_save
     from casexml.apps.case.util import post_case_blocks
@@ -369,6 +369,7 @@ def create_and_save_a_case(domain, case_id, case_name):
                     create=True,
                     case_id=case_id,
                     case_name=case_name,
+                    update=case_properties,
                 ).as_xml()
             ], domain=domain
         )

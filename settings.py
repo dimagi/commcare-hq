@@ -347,6 +347,7 @@ HQ_APPS = (
     'dimagi.ext',
     'corehq.doctypemigrations',
     'corehq.blobs',
+    'corehq.apps.case_search',
 
     # custom reports
     'a5288',
@@ -1437,6 +1438,8 @@ PILLOWTOPS = {
         'corehq.pillows.user.UnknownUsersPillow',
         'corehq.pillows.sofabed.FormDataPillow',
         'corehq.pillows.sofabed.CaseDataPillow',
+        # TODO: Remove this once ConstructedPillows can deal with their own indices
+        'corehq.pillows.case_search.CaseSearchPillow',
         {
             'name': 'SqlSMSPillow',
             'class': 'pillowtop.pillow.interface.ConstructedPillow',
@@ -1532,6 +1535,11 @@ PILLOWTOPS = {
             'name': 'BlobDeletionPillow',
             'class': 'pillowtop.pillow.interface.ConstructedPillow',
             'instance': 'corehq.blobs.pillow.get_blob_deletion_pillow',
+        },
+        {
+            'name': 'CaseSearchToElasticsearchPillow',
+            'class': 'pillowtop.pillow.interface.ConstructedPillow',
+            'instance': 'corehq.pillows.case_search.get_case_search_to_elasticsearch_pillow',
         },
     ]
 }
