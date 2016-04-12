@@ -64,9 +64,11 @@ def search(request, domain):
         search_es = search_es.case_property_query(key, value, fuzzy=(key in fuzzies))
     results = search_es.values()
     if should_use_sql_backend(domain):
-        fixtures = CaseDBFixture([get_instance_from_data(CommCareCaseSQLSerializer, result) for result in results])
+        fixtures = CaseDBFixture(
+            [get_instance_from_data(CommCareCaseSQLSerializer, result) for result in results]
+        ).fixture
     else:
-        fixtures = CaseDBFixture([CommCareCase.wrap(result) for result in results])
+        fixtures = CaseDBFixture([CommCareCase.wrap(result) for result in results]).fixture
     return HttpResponse(fixtures, content_type="text/xml")
 
 
