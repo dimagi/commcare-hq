@@ -2,12 +2,10 @@ from django import template
 from django.utils import html
 from django.utils.safestring import mark_safe
 
+import re
+
 register = template.Library()
 
-LANG_BUTTON = '''
-    <span class="btn btn-xs btn-info btn-langcode-preprocessed%(extra_class)s"
-          style="%(extra_style)s">%(lang)s</span>
-'''
 EMPTY_LABEL = '<span class="label label-info">Empty</span>'
 
 
@@ -26,7 +24,9 @@ def trans(name, langs=None, include_lang=True, use_delim=True):
         if use_delim:
             suffix = lambda lang: ' [%s]' % lang
         else:
-            suffix = lambda lang: LANG_BUTTON % {"lang": html.escape(lang), "extra_class": "", "extra_style": ""}
+            suffix = lambda lang: '''
+                <span class="btn btn-xs btn-info btn-langcode-preprocessed">%(lang)s</span>
+            ''' % {"lang": html.escape(lang)}
     else:
         suffix = lambda lang: ""
     for lang in langs:
@@ -42,36 +42,66 @@ def trans(name, langs=None, include_lang=True, use_delim=True):
 def html_trans(name, langs=["default"]):
     return mark_safe(trans(name, langs, use_delim=False) or EMPTY_LABEL)
 
+
 @register.filter
 def html_name(name):
     return mark_safe(name or EMPTY_LABEL)
 
 
 @register.simple_tag
-def input_trans(name, langs=None, input_name='name', cssClass=''):
+def input_trans(name, langs=None, input_name='name'):
+    template = '''
+        <input type="text"
+               name="{}"
+               class="form-control"
+               value="%(value)s"
+               placeholder="%(placeholder)s" />
+    '''.format(input_name)
+    return _input_trans(template, name, langs=langs)
+
+
+@register.simple_tag
+def inline_edit_trans(name, langs=None, url='', saveValueName='', readOnlyClass='', postSave=''):
+    template = '''
+        <inline-edit params="
+            name: 'name',
+            value: '%(value)s',
+            placeholder: '%(placeholder)s',
+            rows: 1,
+            lang: '%(lang)s',
+            url: '{}',
+            saveValueName: '{}',
+            readOnlyClass: '{}',
+            postSave: {},
+        "></inline-edit>
+    '''.format(url, saveValueName, readOnlyClass, postSave)
+    return _input_trans(template, name, langs=langs)
+
+
+# template may have replacements for lang, placeholder, and value
+def _input_trans(template, name, langs=None):
     if langs is None:
         langs = ["default"]
-    template = '''
-        <input type="text" name="{}" class="{}" value="%(value)s"
-               placeholder="%(placeholder)s"
-               style="position: relative;" />
-    '''.format(input_name, cssClass)
+    options = {
+        'value': '',
+        'placeholder': name['en'] if 'en' in name else "Untitled",
+        'lang': '',
+    }
     for lang in langs:
         if lang in name:
             if langs and lang == langs[0]:
-                return template % {"value": name[lang], "placeholder": ""}
+                options['value'] = name[lang]
+                options['placeholder'] = ''
             else:
-                return template % {"value": "", "placeholder": name[lang]} + LANG_BUTTON % {
-                    "lang": lang,
-                    "extra_class": " langcode-input",
-                    "extra_style": "position: absolute; top: 6px; right: 15px"
-                }
-    default = "Untitled"
-    if 'en' in name:
-        default = name['en']
-    return mark_safe(template % {"value": "", "placeholder": default})
+                options['placeholder'] = name[lang]
+                options['lang'] = lang
+            break
+    options = {key: re.sub(r"'", "\\'", value) for (key, value) in options.iteritems()}
+    return mark_safe(template % options)
 
 
 @register.filter
-def clean_trans(name, langs=["default"]):
+def clean_trans(name, langs=None):
+    if langs is None:
+        langs = ["default"]
     return trans(name, langs, False)
