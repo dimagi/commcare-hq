@@ -5,10 +5,10 @@ from corehq.apps.change_feed.document_types import DOMAIN
 from corehq.apps.domain.models import Domain
 from corehq.elastic import get_es_new
 from corehq.pillows.base import HQPillow
-from corehq.pillows.mappings.domain_mapping import DOMAIN_MAPPING, DOMAIN_INDEX
+from corehq.pillows.mappings.domain_mapping import DOMAIN_MAPPING, DOMAIN_INDEX, DOMAIN_META, DOMAIN_INDEX_INFO
 from django_countries.data import COUNTRIES
 from pillowtop.checkpoints.manager import PillowCheckpoint, PillowCheckpointEventHandler
-from pillowtop.es_utils import doc_exists, get_index_info_from_pillow
+from pillowtop.es_utils import doc_exists
 from pillowtop.pillow.interface import ConstructedPillow
 from pillowtop.processors import ElasticProcessor
 from pillowtop.reindexer.change_providers.couch import CouchViewChangeProvider
@@ -25,23 +25,7 @@ class DomainPillow(HQPillow):
     es_type = "hqdomain"
     es_index = DOMAIN_INDEX
     default_mapping = DOMAIN_MAPPING
-    es_meta = {
-        "settings": {
-            "analysis": {
-                "analyzer": {
-                    "default": {
-                        "type": "custom",
-                        "tokenizer": "whitespace",
-                        "filter": ["lowercase"]
-                    },
-                    "comma": {
-                        "type": "pattern",
-                        "pattern": "\s*,\s*"
-                    },
-                }
-            }
-        }
-    }
+    es_meta = DOMAIN_META
 
     @classmethod
     def get_unique_id(self):
@@ -79,7 +63,7 @@ def get_domain_kafka_to_elasticsearch_pillow(pillow_id='domain-kafka-to-es'):
     )
     domain_processor = ElasticProcessor(
         elasticsearch=get_es_new(),
-        index_info=_get_domain_index_info(),
+        index_info=DOMAIN_INDEX_INFO,
         doc_prep_fn=transform_domain_for_elasticsearch
     )
     return ConstructedPillow(
@@ -106,7 +90,3 @@ def get_domain_reindexer():
             }
         ),
     )
-
-
-def _get_domain_index_info():
-    return get_index_info_from_pillow(DomainPillow(online=False))
