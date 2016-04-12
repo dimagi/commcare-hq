@@ -19,7 +19,7 @@ def get_reindex_commands(alias_name):
     # to lists of management commands or functions
     # that should be used to rebuild the index from scratch
     pillow_command_map = {
-        'hqdomains': ['ptop_fast_reindex_domains'],
+        'hqdomains': [('ptop_reindexer_v2', {'index': 'domain'})],
         'hqcases': ['ptop_fast_reindex_cases'],
         'xforms': ['ptop_fast_reindex_xforms'],
         # groupstousers indexing must happen after all users are indexed
@@ -43,6 +43,9 @@ def do_reindex(alias_name):
     for reindex_command in reindex_commands:
         if isinstance(reindex_command, basestring):
             call_command(reindex_command, **{'noinput': True, 'bulk': True})
+        elif isinstance(reindex_command, (tuple, list)):
+            reindex_command, kwargs = reindex_command
+            call_command(reindex_command, **kwargs)
         else:
             reindex_command()
     print "Pillow preindex finished %s" % alias_name
