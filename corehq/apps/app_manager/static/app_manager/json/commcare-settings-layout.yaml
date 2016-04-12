@@ -1,8 +1,8 @@
 - title: 'Basic'
   id: app-settings-basic
   settings:
-    - hq.name  # Name
-    - hq.comment  # To explain this app for other app builders
+    - hq.name # won't actually be rendered here
+    - hq.comment # won't actually be rendered here
     - hq.application_version # App Version (disabled)
     # Application
     - hq.case_sharing  # Case Sharing
