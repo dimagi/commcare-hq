@@ -282,7 +282,7 @@ hqDefine('app_manager/js/report-module.js', function () {
 
         this.toJSON = function () {
             self.fullDisplay[self.lang] = self.display();
-            self.fullLocalizedDescription[self.lang] = self.localizedDescription();
+            self.fullLocalizedDescription[self.lang] = self.localizedDescription() || "";
             return {
                 report_id: self.reportId(),
                 graph_configs: self.graphConfig.toJSON(),
@@ -291,7 +291,7 @@ hqDefine('app_manager/js/report-module.js', function () {
                 localized_description: self.fullLocalizedDescription,
                 xpath_description: self.xpathDescription(),
                 use_xpath_description: self.useXpathDescription(),
-                uuid: self.uuid
+                uuid: self.uuid,
             };
         };
     }
