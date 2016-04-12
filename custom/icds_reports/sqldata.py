@@ -75,7 +75,7 @@ class ICDSMixin(object):
         data = {}
         for source in self.sources['data_source']:
             if not count:
-                data.update(ICDSData(source=source, config=self.config).data.get(self.config['location_id'],  {}))
+                data.update(ICDSData(source=source, config=self.config).data.get(self.config['location_id'], {}))
             else:
                 data = len(ICDSData(source=source, config=self.config).data)
         return data
@@ -261,7 +261,6 @@ class BirthsAndDeaths(ICDSMixin):
                         row_data.append(custom_data.get(cell, cell if cell == '--' or idx in [0, 1] else 0))
                 rows.append(row_data)
             return rows
-
 
     @property
     def row_config(self):
