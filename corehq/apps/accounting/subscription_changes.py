@@ -195,6 +195,7 @@ class DomainDowngradeActionHandler(BaseModifySubscriptionActionHandler):
 
     @staticmethod
     def response_report_builder(project):
+        # TODO: Should we be limiting access to the existing reports too? I think yes. Does that already happen?
         from corehq.apps.userreports.models import ReportConfiguration
         reports = ReportConfiguration.by_domain(project.name)
         builder_reports = filter(lambda report: report.report_meta.created_by_builder, reports)
@@ -292,6 +293,7 @@ class DomainDowngradeStatusHandler(BaseModifySubscriptionHandler):
 
     @classmethod
     def privilege_to_response_function(cls):
+        # TODO: Probably need to add something here too
         return {
             privileges.CLOUDCARE: cls.response_cloudcare,
             privileges.LOOKUP_TABLES: cls.response_lookup_tables,
