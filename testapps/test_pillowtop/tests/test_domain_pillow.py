@@ -8,7 +8,9 @@ from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.domain.signals import commcare_domain_post_save
 from corehq.apps.domain.tests.test_utils import delete_all_domains
 from corehq.apps.es import DomainES
+from corehq.elastic import get_es_new
 from corehq.pillows.domain import DomainPillow, get_domain_kafka_to_elasticsearch_pillow
+from corehq.pillows.mappings.domain_mapping import DOMAIN_INDEX_INFO
 from corehq.util.context_managers import drop_connected_signals
 from corehq.util.elastic import ensure_index_deleted
 from corehq.util.test_utils import trap_extra_setup
@@ -26,10 +28,8 @@ class DomainPillowTest(TestCase):
     ]
 
     def setUp(self):
-        with trap_extra_setup(ConnectionError):
-            pillow = DomainPillow(online=False)
-        self.index_info = get_index_info_from_pillow(pillow)
-        self.elasticsearch = pillow.get_es_new()
+        self.index_info = DOMAIN_INDEX_INFO
+        self.elasticsearch = get_es_new()
         delete_all_domains()
         ensure_index_deleted(self.index_info.index)
         initialize_index(self.elasticsearch, self.index_info)
