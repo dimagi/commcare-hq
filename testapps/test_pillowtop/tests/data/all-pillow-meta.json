@@ -143,6 +143,13 @@
         "include_docs": false,
         "name": "DefaultChangeFeedPillow"
     },
+    "DomainDbKafkaPillow": {
+        "advertised_name": "DomainDbKafkaPillow",
+        "change_feed_type": "CouchChangeFeed",
+        "checkpoint_id": "DomainDbKafkaPillow",
+        "full_class_name": "pillowtop.pillow.interface.ConstructedPillow",
+        "name": "DomainDbKafkaPillow"
+    },
     "DomainPillow": {
         "advertised_name": "corehq.pillows.domain.DomainPillow.test_hqdomains_20160318_1339.testhq",
         "change_feed_type": "CouchChangeFeed",

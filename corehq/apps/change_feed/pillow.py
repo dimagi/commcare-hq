@@ -6,6 +6,7 @@ from corehq.apps.change_feed.document_types import get_doc_meta_object_from_docu
 from corehq.apps.change_feed.exceptions import MissingMetaInformationError
 from corehq.apps.change_feed.producer import ChangeProducer
 from corehq.apps.change_feed.topics import get_topic
+from corehq.apps.domain.models import Domain
 from corehq.apps.users.models import CommCareUser
 from corehq.util.couchdb_management import couch_config
 from pillowtop.checkpoints.manager import PillowCheckpoint, PillowCheckpointEventHandler
@@ -82,8 +83,11 @@ def get_default_couch_db_change_feed_pillow(pillow_id):
 def get_user_groups_db_kafka_pillow(pillow_id):
     # note: this is temporarily using ConstructedPillow as a test. If it is successful we should
     # flip the main one over as well
-    user_groups_couch_db = couch_config.get_db_for_class(CommCareUser)
-    return _get_change_feed_pillow_for_db(pillow_id, user_groups_couch_db)
+    return _get_change_feed_pillow_for_db(pillow_id, couch_config.get_db_for_class(CommCareUser))
+
+
+def get_domain_db_kafka_pillow(pillow_id):
+    return _get_change_feed_pillow_for_db(pillow_id, couch_config.get_db_for_class(Domain))
 
 
 def _get_change_feed_pillow_for_db(pillow_id, couch_db):
