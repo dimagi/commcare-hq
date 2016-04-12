@@ -28,6 +28,8 @@ from .views import (
     FormDataView,
     CaseDetailsView,
     CaseAttachmentsView,
+    MySavedReportsView,
+    ScheduledReportsView,
 )
 
 
@@ -49,7 +51,7 @@ urlpatterns = patterns('corehq.apps.reports.views',
     url(r'^builder/edit/(?P<report_id>[\w\-]+)/$', EditReportInBuilder.as_view(), name='edit_report_in_builder'),
 
     url(r'^$', "default", name="reports_home"),
-    url(r'^saved/', "saved_reports", name="saved_reports"),
+    url(r'^saved/', MySavedReportsView.as_view(), name=MySavedReportsView.urlname),
     url(r'^saved_reports', 'old_saved_reports'),
 
     url(r'^case_data/(?P<case_id>[\w\-]+)/$', CaseDetailsView.as_view(), name=CaseDetailsView.urlname),
@@ -108,7 +110,7 @@ urlpatterns = patterns('corehq.apps.reports.views',
 
     # Scheduled reports
     url(r'^scheduled_reports/(?P<scheduled_report_id>[\w-]+)?$',
-        'edit_scheduled_report', name="edit_scheduled_report"),
+        ScheduledReportsView.as_view(), name=ScheduledReportsView.urlname),
     url(r'^scheduled_report/(?P<scheduled_report_id>[\w-]+)/delete$',
         'delete_scheduled_report', name='delete_scheduled_report'),
     url(r'^send_test_scheduled_report/(?P<scheduled_report_id>[\w-]+)/$',
