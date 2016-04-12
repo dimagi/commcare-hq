@@ -9,13 +9,11 @@ from corehq.apps.domain.signals import commcare_domain_post_save
 from corehq.apps.domain.tests.test_utils import delete_all_domains
 from corehq.apps.es import DomainES
 from corehq.elastic import get_es_new
-from corehq.pillows.domain import DomainPillow, get_domain_kafka_to_elasticsearch_pillow
+from corehq.pillows.domain import get_domain_kafka_to_elasticsearch_pillow
 from corehq.pillows.mappings.domain_mapping import DOMAIN_INDEX_INFO
 from corehq.util.context_managers import drop_connected_signals
 from corehq.util.elastic import ensure_index_deleted
-from corehq.util.test_utils import trap_extra_setup
-from elasticsearch.exceptions import ConnectionError
-from pillowtop.es_utils import get_index_info_from_pillow, initialize_index
+from pillowtop.es_utils import initialize_index
 from testapps.test_pillowtop.utils import get_current_kafka_seq
 
 
@@ -36,20 +34,6 @@ class DomainPillowTest(TestCase):
 
     def tearDown(self):
         ensure_index_deleted(self.index_info.index)
-
-    def test_domain_pillow(self):
-        # make a domain
-        domain_name = 'domain-pillowtest'
-        with drop_connected_signals(commcare_domain_post_save):
-            create_domain(domain_name)
-
-        # send to elasticsearch
-        pillow = DomainPillow()
-        pillow.process_changes(since=0, forever=False)
-        self.elasticsearch.indices.refresh(self.index_info.index)
-
-        # verify there
-        self._verify_domain_in_es(domain_name)
 
     def test_kafka_domain_pillow(self):
         # make a domain
