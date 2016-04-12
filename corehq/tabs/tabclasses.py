@@ -47,7 +47,8 @@ class ProjectReportsTab(UITab):
         module = Domain.get_module_by_name(self.domain)
         if hasattr(module, 'DEFAULT_REPORT_CLASS'):
             return "corehq.apps.reports.views.default"
-        return "corehq.apps.reports.views.saved_reports"
+        from corehq.apps.reports.views import MySavedReportsView
+        return MySavedReportsView.urlname
 
     @property
     def sidebar_items(self):
@@ -77,7 +78,6 @@ class ProjectReportsTab(UITab):
             request=self._request, domain=self.domain)
         custom_reports = CustomProjectReportDispatcher.navigation_sections(
             request=self._request, domain=self.domain)
-
         return tools + user_reports + project_reports + custom_reports
 
     @property
@@ -110,6 +110,7 @@ class ProjectReportsTab(UITab):
             ProjectReportDispatcher.navigation_sections(
                 request=self._request, domain=self.domain),
             current_url=self.url)
+
         return saved_reports_dropdown + reports
 
 
