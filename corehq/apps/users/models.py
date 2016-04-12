@@ -874,6 +874,7 @@ class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, UnicodeMixIn, EulaMi
         return session_data
 
     def delete(self):
+        self.clear_quickcache_for_user()
         try:
             user = self.get_django_user()
             user.delete()
@@ -1128,7 +1129,7 @@ class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, UnicodeMixIn, EulaMi
         from corehq.apps.hqwebapp.templatetags.hq_shared_tags import _get_domain_list
         self.get_by_username.clear(self.__class__, self.username)
         self.get_by_user_id.clear(self.__class__, self.user_id)
-        for domain in self.domains:
+        for domain in getattr(self, 'domains', self.domain):
             self.get_by_user_id.clear(self.__class__, self.user_id, domain)
         Domain.active_for_couch_user.clear(self)
         _get_domain_list.clear(self)
