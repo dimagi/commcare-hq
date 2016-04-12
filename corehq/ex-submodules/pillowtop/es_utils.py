@@ -141,7 +141,7 @@ def get_all_elasticsearch_pillow_classes():
     return filter(lambda x: issubclass(x, AliasedElasticPillow), get_all_pillow_classes())
 
 
-def get_all_expected_es_indices():
+def get_all_inferred_es_indices_from_pillows():
     """
     Get all expected elasticsearch indices according to the currently running code
     """
