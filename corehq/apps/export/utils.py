@@ -86,8 +86,9 @@ def convert_saved_export_to_export_instance(domain, saved_export):
                     'ExportItem',
                     None,
                 )
-                new_column.selected = True
-                new_column.label = column.display
+                if new_column:
+                    new_column.selected = True
+                    new_column.label = column.display
                 continue
 
             if column.transform:
