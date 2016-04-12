@@ -1,7 +1,7 @@
 from contextlib import contextmanager
 
 from casexml.apps.case.mock import CaseFactory
-from casexml.apps.case.models import CommCareCase, INDEX_ID_PARENT
+from casexml.apps.case.models import CommCareCase, INDEX_ID_PARENT, INDEX_RELATIONSHIP_CHILD
 from casexml.apps.case.sharedmodels import CommCareCaseIndex
 from casexml.apps.case.signals import case_post_save
 from corehq.apps.data_interfaces.models import (AutomaticUpdateRule,
@@ -339,11 +339,9 @@ class AutomaticCaseUpdateTest(TestCase):
     @run_with_all_backends
     def test_parent_case_lookup(self):
         with _with_case(self.domain, 'test-child-case-type', datetime(2016, 1, 1)) as child, \
-                _with_case(self.domain, 'test-parent-case-type', datetime(2016, 1, 1)) as parent:
+                _with_case(self.domain, 'test-parent-case-type', datetime(2016, 1, 1), case_name='abc') as parent:
 
             # Set the parent case relationship
-            parent.name = 'abc'
-            parent.save()
             set_parent_case(self.domain, child, parent)
 
             # Create a rule that references parent/name which should match
@@ -380,9 +378,9 @@ class AutomaticCaseUpdateTest(TestCase):
 
 
 @contextmanager
-def _with_case(domain, case_type, last_modified):
+def _with_case(domain, case_type, last_modified, **kwargs):
     with drop_connected_signals(case_post_save):
-        case = CaseFactory(domain).create_case(case_type=case_type)
+        case = CaseFactory(domain).create_case(case_type=case_type, **kwargs)
 
     _update_case(domain, case.case_id, last_modified)
     accessors = CaseAccessors(domain)
@@ -423,7 +421,7 @@ def set_parent_case(domain, child_case, parent_case):
             CommCareCaseIndex(
                 identifier=INDEX_ID_PARENT,
                 referenced_id=parent_case.case_id,
-                relationship='child'
+                relationship=INDEX_RELATIONSHIP_CHILD
             )
         ]
         # Don't change server_modified_on when saving
