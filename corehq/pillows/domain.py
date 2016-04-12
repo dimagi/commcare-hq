@@ -79,14 +79,17 @@ def get_domain_kafka_to_elasticsearch_pillow(pillow_id='domain-kafka-to-es'):
 
 
 def get_domain_reindexer():
-    return get_default_reindexer_for_elastic_pillow(
-        pillow=DomainPillow(online=False),
+    return ElasticPillowReindexer(
+        pillow=get_domain_kafka_to_elasticsearch_pillow(),
         change_provider=CouchViewChangeProvider(
             document_class=Domain,
             view_name='all_docs/by_doc_type',
             view_kwargs={
                 'startkey': ['Domain'],
                 'endkey': ['Domain', {}],
+                'include_docs': True,
             }
         ),
+        elasticsearch=get_es_new(),
+        index_info=DOMAIN_INDEX_INFO,
     )
