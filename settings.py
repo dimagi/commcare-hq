@@ -1448,7 +1448,7 @@ PILLOWTOPS = {
         'corehq.pillows.reportxform.ReportXFormPillow',
         {
             'name': 'DefaultChangeFeedPillow',
-            'class': 'corehq.apps.change_feed.pillow.ChangeFeedPillow',
+            'class': 'pillowtop.pillow.interface.ConstructedPillow',
             'instance': 'corehq.apps.change_feed.pillow.get_default_couch_db_change_feed_pillow',
         },
         {

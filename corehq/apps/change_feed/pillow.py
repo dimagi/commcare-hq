@@ -70,19 +70,10 @@ class ChangeFeedPillow(PythonPillow):
 
 
 def get_default_couch_db_change_feed_pillow(pillow_id):
-    default_couch_db = CachedCouchDB(CommCareCase.get_db().uri, readonly=False)
-    kafka_client = get_kafka_client_or_none()
-    return ChangeFeedPillow(
-        pillow_id=pillow_id,
-        couch_db=default_couch_db,
-        kafka=kafka_client,
-        checkpoint=PillowCheckpoint('default-couch-change-feed')
-    )
+    return _get_change_feed_pillow_for_db(pillow_id, CommCareCase.get_db())
 
 
 def get_user_groups_db_kafka_pillow(pillow_id):
-    # note: this is temporarily using ConstructedPillow as a test. If it is successful we should
-    # flip the main one over as well
     return _get_change_feed_pillow_for_db(pillow_id, couch_config.get_db_for_class(CommCareUser))
 
 

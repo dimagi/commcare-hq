@@ -131,16 +131,10 @@
         "name": "CouvertureFluffPillow"
     },
     "DefaultChangeFeedPillow": {
-        "advertised_name": "corehq.apps.change_feed.pillow.ChangeFeedPillow.testhq",
+        "advertised_name": "DefaultChangeFeedPillow",
         "change_feed_type": "CouchChangeFeed",
-        "checkpoint_id": "default-couch-change-feed",
-        "couch_filter": null,
-        "couchdb_type": "CachedCouchDB",
-        "couchdb_uri": "http://{COUCH_SERVER_ROOT}/test_commcarehq",
-        "document_class": null,
-        "extra_args": {},
-        "full_class_name": "corehq.apps.change_feed.pillow.ChangeFeedPillow",
-        "include_docs": false,
+        "checkpoint_id": "DefaultChangeFeedPillow",
+        "full_class_name": "pillowtop.pillow.interface.ConstructedPillow",
         "name": "DefaultChangeFeedPillow"
     },
     "DomainDbKafkaPillow": {
