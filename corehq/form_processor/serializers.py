@@ -61,3 +61,40 @@ class CommCareCaseSQLSerializer(DeletableModelSerializer):
     class Meta:
         model = CommCareCaseSQL
         exclude = ('case_json',)
+
+
+class CommCareCaseSQLAPISerializer(serializers.ModelSerializer):
+    """This serializer is for presenting a case in json for APIs to access"""
+    user_id = serializers.CharField(source='modified_by')
+    date_closed = serializers.DateTimeField(source='closed_on')
+    date_modified = serializers.DateTimeField(source='modified_on')
+    properties = serializers.JSONField(source='get_properties_in_api_format')
+    server_date_modified = serializers.DateTimeField(source='server_modified_on')
+    server_date_opened = serializers.DateTimeField(source='opened_on')
+    indices = serializers.JSONField(source='get_index_map')
+    attachments = serializers.JSONField(source='get_attachment_map')
+    reverse_indices = serializers.JSONField(source='get_reverse_index_map')
+
+    def __init__(self, *args, **kwargs):
+        lite = kwargs.pop('lite', False)
+        if lite:
+            self.fields.pop('reverse_indices')
+        super(CommCareCaseSQLAPISerializer, self).__init__(*args, **kwargs)
+
+    class Meta:
+        model = CommCareCaseSQL
+        fields = (
+            'domain',
+            'case_id',
+            'user_id',
+            'closed',
+            'xform_ids',
+            'date_closed',
+            'date_modified',
+            'server_date_modified',
+            'server_date_opened',
+            'properties',
+            'indices',
+            'reverse_indices',
+            'attachments',
+        )

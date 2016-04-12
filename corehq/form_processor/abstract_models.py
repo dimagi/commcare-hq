@@ -192,6 +192,31 @@ class AbstractCommCareCase(object):
             # all custom properties go here
         }.items())
 
+    @property
+    @memoized
+    def parent(self):
+        from casexml.apps.case.models import INDEX_ID_PARENT
+        from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
+        """
+        Returns the parent case if one exists, else None.
+        NOTE: This property should only return the first parent in the list
+        of indices. If for some reason your use case creates more than one,
+        please write/use a different property.
+        """
+        for index in self.indices:
+            if index.identifier == INDEX_ID_PARENT:
+                return CaseAccessors(self.domain).get_case(index.referenced_id)
+        return None
+
+    @memoized
+    def get_attachment_map(self):
+        return dict([
+            (name, {
+                'url': self.get_attachment_server_url(att.attachment_key),
+                'mime': att.attachment_from
+            }) for name, att in self.case_attachments.items()
+        ])
+
     def to_xml(self, version, include_case_on_closed=False):
         from xml.etree import ElementTree
         from casexml.apps.phone.xml import get_case_element

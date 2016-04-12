@@ -276,15 +276,6 @@ class CommCareCase(SafeSaveDocument, IndexHoldingMixIn, ComputedDocumentMixin,
             })
         return ret
 
-    @memoized
-    def get_attachment_map(self):
-        return dict([
-            (name, {
-                'url': self.get_attachment_server_url(att.attachment_key),
-                'mime': att.attachment_from
-            }) for name, att in self.case_attachments.items()
-        ])
-
     @classmethod
     def get(cls, id, strip_history=False, **kwargs):
         try:
