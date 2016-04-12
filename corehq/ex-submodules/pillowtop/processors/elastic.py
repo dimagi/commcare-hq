@@ -14,7 +14,10 @@ class ElasticProcessor(PillowProcessor):
         return self.elasticsearch
 
     def process_change(self, pillow_instance, change, do_set_checkpoint):
-        # todo: if deletion - delete
+        if change.deleted and change.id:
+            self._delete_doc_if_exists(change.id)
+            return
+
         # prepare doc for es
         doc = change.get_document()
         if doc is None:
@@ -30,5 +33,12 @@ class ElasticProcessor(PillowProcessor):
             es_getter=self.es_getter,
             name=pillow_instance.get_name(),
             data=doc_ready_to_save,
-            update=self.elasticsearch.exists(self.index_info.index, self.index_info.type, change.id),
+            update=self._doc_exists(change.id),
         )
+
+    def _doc_exists(self, doc_id):
+        return self.elasticsearch.exists(self.index_info.index, self.index_info.type, doc_id)
+
+    def _delete_doc_if_exists(self, doc_id):
+        if self._doc_exists(doc_id):
+            self.elasticsearch.delete(self.index_info.index, self.index_info.type, doc_id)

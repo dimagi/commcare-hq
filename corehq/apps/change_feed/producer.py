@@ -25,7 +25,7 @@ def send_to_kafka(producer, topic, change_meta):
             try:
                 _send_to_kafka()
                 break
-            except (FailedPayloadsError, KafkaUnavailableError):
+            except (FailedPayloadsError, KafkaUnavailableError, LeaderNotAvailableError):
                 if i == (tries - 1):
                     # if it's the last try, fail hard
                     raise
