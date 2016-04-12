@@ -44,8 +44,6 @@ from couchdbkit import MultipleResultsFound
 import itertools
 from lxml import etree
 from django.core.cache import cache
-from django.utils.encoding import force_unicode
-from django.utils.safestring import mark_safe
 from django.utils.translation import override, ugettext as _, ugettext
 from couchdbkit.exceptions import BadValueError
 from corehq.apps.app_manager.suite_xml.utils import get_select_chain
@@ -86,7 +84,7 @@ import commcare_translations
 from corehq.util import bitly
 from corehq.util import view_utils
 from corehq.apps.appstore.models import SnapshotMixin
-from corehq.apps.builds.models import BuildSpec, CommCareBuildConfig, BuildRecord
+from corehq.apps.builds.models import BuildSpec, BuildRecord
 from corehq.apps.hqmedia.models import HQMediaMixin
 from corehq.apps.translations.models import TranslationMixin
 from corehq.apps.users.models import CouchUser
@@ -244,8 +242,8 @@ class IndexedSchema(DocumentSchema):
         def __call__(self, instance):
             items = getattr(instance, self.attr)
             l = len(items)
-            for i,item in enumerate(items):
-                yield item.with_id(i%l, instance)
+            for i, item in enumerate(items):
+                yield item.with_id(i % l, instance)
 
         def __get__(self, instance, owner):
             # thanks, http://metapython.blogspot.com/2010/11/python-instance-methods-how-are-they.html
@@ -268,6 +266,7 @@ class FormActionCondition(DocumentSchema):
 
     def is_active(self):
         return self.type in ('if', 'always')
+
 
 class FormAction(DocumentSchema):
     """
@@ -1027,7 +1026,7 @@ class FormBase(DocumentSchema):
 
     def uses_usercase(self):
         raise NotImplementedError()
-    
+
     def update_app_case_meta(self, app_case_meta):
         pass
 
@@ -2142,7 +2141,6 @@ class Module(ModuleBase, ModuleDetailsMixin):
     referral_list = SchemaProperty(CaseList)
     task_list = SchemaProperty(CaseList)
     parent_select = SchemaProperty(ParentSelect)
-
 
     @classmethod
     def wrap(cls, data):
