@@ -1,7 +1,8 @@
-from gevent import monkey; monkey.patch_all()
-from corehq.elastic import get_es_new
+from gevent import monkey;
+from corehq.pillows.utils import get_all_expected_es_indices
 
-from pillowtop.es_utils import get_all_expected_es_indices
+monkey.patch_all()
+from corehq.elastic import get_es_new
 
 from cStringIO import StringIO
 import traceback
