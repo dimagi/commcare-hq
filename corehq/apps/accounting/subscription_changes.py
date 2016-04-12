@@ -202,9 +202,6 @@ class DomainDowngradeActionHandler(BaseModifySubscriptionActionHandler):
         for report in builder_reports:
             try:
                 report.config.deactivate()
-                # It's theoretically possible that someone could have a
-                # hand-built report based on one of these data sources,
-                # in which case they will be sad.
             except DataSourceConfigurationNotFoundError:
                 pass
         return True
