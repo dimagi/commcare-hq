@@ -24,7 +24,7 @@ class ElasticReindexTest(SimpleTestCase):
         self.assertEqual(TestElasticPillow, es_pillow_classes[0])
 
     @override_settings(PILLOWTOPS={'test': ['pillowtop.tests.test_elasticsearch.TestElasticPillow']})
-    def test_get_all_elastic_indices(self):
+    def test_get_all_elastic_indices_from_pillows(self):
         es_indices = list(get_all_inferred_es_indices_from_pillows())
         self.assertEqual(1, len(es_indices))
         index_info = es_indices[0]
