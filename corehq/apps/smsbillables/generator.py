@@ -1,6 +1,7 @@
 import random
 import datetime
 import string
+import uuid
 from collections import namedtuple
 from decimal import Decimal
 from corehq.messaging.smsbackends.twilio.models import SQLTwilioBackend
@@ -196,6 +197,7 @@ def arbitrary_messages_by_backend_and_direction(backend_ids,
                 domain=domain,
                 backend_api=api_id,
                 backend_id=instance_id,
+                backend_message_id=uuid.uuid4().hex,
                 text=arbitrary_message(),
                 date=datetime.datetime.utcnow()
             )
