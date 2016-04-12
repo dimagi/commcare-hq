@@ -485,6 +485,17 @@ class SLABConfig(models.Model):
         app_label = 'ilsgateway'
 
 
+class OneOffTaskProgress(models.Model):
+    task_name = models.CharField(max_length=128)
+    last_synced_object_id = models.CharField(max_length=128, null=True)
+    complete = models.BooleanField(default=False)
+    progress = models.IntegerField(default=0)
+    total = models.IntegerField(default=0)
+
+    class Meta:
+        app_label = 'ilsgateway'
+
+
 @receiver(commcare_domain_pre_delete)
 def domain_pre_delete_receiver(domain, **kwargs):
     from corehq.apps.domain.deletion import ModelDeletion, CustomDeletion

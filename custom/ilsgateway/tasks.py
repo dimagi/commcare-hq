@@ -27,6 +27,8 @@ from custom.ilsgateway.models import ILSGatewayConfig, ReportRun, \
     OrganizationSummary, PendingReportingDataRecalculation
 from dimagi.utils.dates import get_business_day_of_month, get_business_day_of_month_before
 
+from .oneoff import *
+
 
 @periodic_task(run_every=crontab(hour="4", minute="00", day_of_week="*"),
                queue='logistics_background_queue')
