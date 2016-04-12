@@ -294,7 +294,7 @@ def _sync_case_phone_number(contact_case):
     if phone_info.phone_number:
         lock_keys.append('verifying-phone-number-%s' % phone_info.phone_number)
 
-    with CriticalSection(lock_keys, timeout=5*60):
+    with CriticalSection(lock_keys, timeout=5 * 60):
         phone_number = contact_case.get_verified_number()
         if (
             phone_number and
