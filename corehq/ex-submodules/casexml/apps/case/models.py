@@ -45,6 +45,7 @@ CASE_STATUS_CLOSED = 'closed'
 CASE_STATUS_ALL = 'all'
 
 INDEX_ID_PARENT = 'parent'
+INDEX_RELATIONSHIP_CHILD = 'child'
 
 
 class CommCareCaseAction(LooselyEqualDocumentSchema):
@@ -184,19 +185,31 @@ class CommCareCase(SafeSaveDocument, IndexHoldingMixIn, ComputedDocumentMixin,
         return "%s(name=%r, type=%r, id=%r)" % (
                 self.__class__.__name__, self.name, self.type, self._id)
 
-    @property
     @memoized
+    def get_parent(self, identifier=None, relationship=None):
+        indices = self.indices
+
+        if identifier:
+            indices = filter(lambda index: index.identifier == identifier, indices)
+
+        if relationship:
+            indices = filter(lambda index: index.relationship == relationship, indices)
+
+        return [CommCareCase.get(index.referenced_id) for index in indices]
+
+    @property
     def parent(self):
         """
         Returns the parent case if one exists, else None.
         NOTE: This property should only return the first parent in the list
-        of indices. If for some reason your use case creates more than one, 
+        of indices. If for some reason your use case creates more than one,
         please write/use a different property.
         """
-        for index in self.indices:
-            if index.identifier == INDEX_ID_PARENT:
-                return CommCareCase.get(index.referenced_id)
-        return None
+        result = self.get_parent(
+            identifier=INDEX_ID_PARENT,
+            relationship=INDEX_RELATIONSHIP_CHILD
+        )
+        return result[0] if result else None
 
     @property
     def server_opened_on(self):

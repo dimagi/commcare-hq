@@ -738,8 +738,19 @@ class CommCareCaseSQL(DisabledDbMixin, models.Model, RedisLockableMixIn,
         from corehq.form_processor.backends.sql.dbaccessors import CaseAccessorSQL
         return CaseAccessorSQL.get_case(case_id)
 
-    @property
     @memoized
+    def get_parent(self, identifier=None, relationship_id=None):
+        indices = self.indices
+
+        if identifier:
+            indices = filter(lambda index: index.identifier == identifier, indices)
+
+        if relationship:
+            indices = filter(lambda index: index.relationship_id == relationship_id, indices)
+
+        return [index.referenced_case for index in indices]
+
+    @property
     def parent(self):
         """
         Returns the parent case if one exists, else None.
@@ -747,13 +758,11 @@ class CommCareCaseSQL(DisabledDbMixin, models.Model, RedisLockableMixIn,
         of indices. If for some reason your use case creates more than one,
         please write/use a different property.
         """
-        for index in self.indices:
-            if index.identifier == CommCareCaseIndexSQL.PARENT_IDENTIFIER:
-                try:
-                    return index.referenced_case
-                except CaseNotFound:
-                    return None
-        return None
+        result = self.get_parent(
+            identifier=CommCareCaseIndexSQL.PARENT_IDENTIFIER,
+            relationship_id=CommCareCaseIndexSQL.CHILD
+        )
+        return result[0] if result else None
 
     def __unicode__(self):
         return (
