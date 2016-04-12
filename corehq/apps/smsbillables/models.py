@@ -1,17 +1,24 @@
 from decimal import Decimal
 
+from django.conf import settings
 from django.core.exceptions import ObjectDoesNotExist
 from django.db import models
 
 from corehq.apps.accounting import models as accounting
 from corehq.apps.accounting.models import Currency
 from corehq.apps.accounting.utils import EXCHANGE_RATE_DECIMAL_PLACES
-from corehq.apps.sms.models import DIRECTION_CHOICES, SQLMobileBackend
+from corehq.apps.sms.models import (
+    DIRECTION_CHOICES,
+    INCOMING,
+    OUTGOING,
+    SQLMobileBackend,
+)
 from corehq.apps.sms.phonenumbers_helper import get_country_code_and_national_number
 from corehq.apps.smsbillables.utils import log_smsbillables_error
 from corehq.messaging.smsbackends.test.models import SQLTestSMSBackend
 from corehq.apps.sms.util import clean_phone_number
 from corehq.apps.smsbillables.exceptions import AmbiguousPrefixException
+from corehq.messaging.smsbackends.twilio.models import SQLTwilioBackend
 from corehq.util.quickcache import quickcache
 
 
@@ -99,7 +106,7 @@ class SmsGatewayFee(models.Model):
     Once an SmsFee is created, it cannot be modified.
     """
     criteria = models.ForeignKey(SmsGatewayFeeCriteria, on_delete=models.PROTECT)
-    amount = models.DecimalField(default=0.0, max_digits=10, decimal_places=4)
+    amount = models.DecimalField(max_digits=10, decimal_places=4, null=True)
     currency = models.ForeignKey(accounting.Currency, on_delete=models.PROTECT)
     date_created = models.DateTimeField(auto_now_add=True)
 
@@ -374,3 +381,21 @@ class SmsBillable(models.Model):
                 % (direction, domain)
             )
         return usage_fee
+
+
+def add_twilio_gateway_fee(apps):
+    default_currency, _ = apps.get_model(
+        'accounting', 'Currency'
+    ).objects.get_or_create(
+        code=settings.DEFAULT_CURRENCY
+    )
+
+    for direction in [INCOMING, OUTGOING]:
+        SmsGatewayFee.create_new(
+            SQLTwilioBackend.get_api_id(),
+            direction,
+            None,
+            fee_class=apps.get_model('smsbillables', 'SmsGatewayFee'),
+            criteria_class=apps.get_model('smsbillables', 'SmsGatewayFeeCriteria'),
+            currency=default_currency,
+        )
