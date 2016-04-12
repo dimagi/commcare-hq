@@ -60,8 +60,9 @@ branches:
   - knockout-3-3 # Jenny 3/30
   - inline-editing # Jenny 4/9
   - edit-form-fix # wsp 4/7
-  - upgrade-gunicorn # Ben 4/7
   - kafka-domain-pillow-release  # cz 4/12
+  - uatbc/case-search-es         # FR 4/12
+  - suitexml_search              # FR 4/12
 submodules:
   submodules/touchforms-src:
     # let's leave this here even when empty
