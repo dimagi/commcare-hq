@@ -1,8 +1,6 @@
 from django.conf import settings
 from django.test import SimpleTestCase
-from corehq.pillows.domain import DomainPillow
-from corehq.pillows.mappings.domain_mapping import DOMAIN_INDEX_INFO
-from pillowtop.es_utils import get_all_expected_es_indices, get_index_info_from_pillow
+from pillowtop.es_utils import get_all_expected_es_indices
 
 
 class ProdIndexManagementTest(SimpleTestCase):
@@ -27,10 +25,6 @@ class ProdIndexManagementTest(SimpleTestCase):
             del info['mapping']
         found_prod_indices = sorted(found_prod_indices, key=lambda info: info['index'])
         self.assertEqual(EXPECTED_PROD_INDICES, found_prod_indices)
-
-    def test_domain_index_info(self):
-        self.assertEqual(DOMAIN_INDEX_INFO.to_json(),
-                         get_index_info_from_pillow(DomainPillow(online=False)).to_json())
 
 
 EXPECTED_PROD_INDICES = [
