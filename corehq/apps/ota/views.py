@@ -1,18 +1,28 @@
+from uuid import uuid4
 from django.core.urlresolvers import reverse
 from django.shortcuts import redirect
 from django.utils.decorators import method_decorator
 from django.utils.translation import ugettext_noop
+from casexml.apps.case.fixtures import CaseDBFixture
+from casexml.apps.case.mock import CaseBlock, IndexAttrs
+from casexml.apps.case.models import CommCareCase
+from casexml.apps.case.util import post_case_blocks
 from casexml.apps.case.xml import V2
 from corehq import toggles
 from corehq.apps.app_manager.dbaccessors import get_app
+from corehq.apps.case_search.models import CLAIM_CASE_TYPE, CaseSearchConfig
 from corehq.apps.domain.decorators import domain_admin_required, login_or_digest_or_basic_or_apikey
 from corehq.apps.domain.models import Domain
 from corehq.apps.domain.views import DomainViewMixin, EditMyProjectSettingsView
+from corehq.apps.es.case_search import CaseSearchES, flatten_result
 from corehq.apps.ota.forms import PrimeRestoreCacheForm, AdvancedPrimeRestoreCacheForm
 from corehq.apps.ota.tasks import prime_restore
 from corehq.apps.style.views import BaseB3SectionPageView
 from corehq.apps.users.models import CouchUser, CommCareUser
+from corehq.form_processor.serializers import CommCareCaseSQLSerializer, get_instance_from_data
 from corehq.tabs.tabclasses import ProjectSettingsTab
+from corehq.form_processor.models import CommCareCaseSQL
+from corehq.form_processor.utils import should_use_sql_backend
 from corehq.util.view_utils import json_error
 from dimagi.utils.decorators.memoized import memoized
 from casexml.apps.phone.restore import RestoreConfig, RestoreParams, RestoreCacheSettings
@@ -30,6 +40,71 @@ def restore(request, domain, app_id=None):
     user = request.user
     couch_user = CouchUser.from_django_user(user)
     return get_restore_response(domain, couch_user, app_id, **get_restore_params(request))
+
+
+@json_error
+@login_or_digest_or_basic_or_apikey()
+def search(request, domain):
+    """
+    Accepts search criteria as GET params, e.g. "https://www.commcarehq.org/a/domain/phone/search/?a=b&c=d"
+    Returns results as a fixture with the same structure as a casedb instance.
+    """
+    criteria = dict(request.GET)
+    try:
+        case_type = criteria.pop('case_type')
+    except KeyError:
+        return HttpResponse('Search request must specify case type', status=400)
+
+    search_es = CaseSearchES()
+    search_es = search_es.domain(domain)
+    search_es = search_es.case_type(case_type)
+    config = CaseSearchConfig(domain=domain).config
+    fuzzies = config.get_fuzzy_properties_for_case_type(case_type)
+    for key, value in criteria.items():
+        search_es = search_es.case_property_query(key, value, fuzzy=(key in fuzzies))
+    results = search_es.values()
+    if should_use_sql_backend(domain):
+        fixtures = CaseDBFixture(
+            [get_instance_from_data(CommCareCaseSQLSerializer, result) for result in results]
+        ).fixture
+    else:
+        fixtures = CaseDBFixture([CommCareCase.wrap(flatten_result(result)) for result in results]).fixture
+    return HttpResponse(fixtures, content_type="text/xml")
+
+
+@json_error
+@login_or_digest_or_basic_or_apikey()
+def claim(request, domain):
+    couch_user = CouchUser.from_django_user(request.user)
+    # TODO: use request.session to ensure only one extension case if multiple claims for the same beneficiary
+    #       come from the same AWW.
+    if request.method == 'POST':
+        host_id = request.POST['case_id']
+        host_type = request.POST.get('case_type')  # Nice to have,
+        host_name = request.POST.get('case_name')  # but optional
+        if not (host_type and host_name):
+            if should_use_sql_backend(domain):
+                case = CommCareCaseSQL.objects.get(case_id=host_id)
+            else:
+                case = CommCareCase.get(host_id)
+            host_type = case.type
+            host_name = case.name
+        claim_case_block = CaseBlock(
+            create=True,
+            case_id=uuid4().hex,
+            case_name=host_name,
+            case_type=CLAIM_CASE_TYPE,
+            owner_id=couch_user.user_id,
+            index={
+                'host': IndexAttrs(
+                    case_type=host_type,
+                    case_id=host_id,
+                    relationship='extension',
+                )
+            }
+        ).as_xml()
+        post_case_blocks([claim_case_block], {'domain': domain})
+    return HttpResponse(status=200)
 
 
 def get_restore_params(request):
