@@ -21,7 +21,6 @@ from corehq.pillows.mappings.case_search_mapping import CASE_SEARCH_INDEX, \
 from pillowtop.checkpoints.manager import PillowCheckpoint, \
     PillowCheckpointEventHandler
 from pillowtop.es_utils import ElasticsearchIndexInfo
-from pillowtop.feed.couch import change_from_couch_row
 from pillowtop.feed.interface import Change
 from pillowtop.pillow.interface import ConstructedPillow
 from pillowtop.processors.elastic import ElasticProcessor
@@ -75,43 +74,12 @@ def _get_case_properties(doc_dict):
 
 class CaseSearchPillowProcessor(ElasticProcessor):
     def process_change(self, pillow_instance, change, do_set_checkpoint):
-        domain = self._get_domain(change)
-        change_object = self._get_change_object(change)
+        assert isinstance(change, Change)
+        domain = change.get_document()['domain']
         if domain and case_search_enabled_for_domain(domain):
             super(CaseSearchPillowProcessor, self).process_change(
-                pillow_instance, change_object, do_set_checkpoint
+                pillow_instance, change, do_set_checkpoint
             )
-
-    @staticmethod
-    def _get_domain(change):
-        # Changes coming from the KafkaChangeFeed provides a Change Object.
-        # Changes coming from the CouchViewChangeProvider, used in the reindex
-        # provides a dict that comes from the couch view. Figure out which one
-        # it is and get the domain appropriately
-
-        # TODO: when CouchViewChangeProvider provides a change object, this can be removed.
-
-        if isinstance(change, dict):
-            # If this is a dict, it is a row from the couch view, and has come
-            # from the CouchViewChangeProvider. The view: 'cases_by_owner/view'
-            # provides [domain, owner_id, doc.closed] as the keys
-            return change.get('key', [])[0]
-        elif isinstance(change, Change):
-            # If this is a change object, we grab the domain directly from this
-            # object
-            return change.metadata.domain
-
-    @staticmethod
-    def _get_change_object(change):
-        # Similar to _get_domain above, figure out if this is coming from
-        # KafkaChangeFeed or CouchViewChangeProvider. We can't use the Change
-        # object that this returns above, as it doesn't have the metadata
-        # property when coming from a couch_row
-
-        if isinstance(change, dict):
-            return change_from_couch_row(change)
-        elif isinstance(change, Change):
-            return change
 
 
 def get_case_search_to_elasticsearch_pillow(pillow_id='CaseSearchToElasticsearchPillow'):
