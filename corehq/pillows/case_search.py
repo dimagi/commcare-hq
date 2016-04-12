@@ -1,4 +1,9 @@
+import traceback
 from collections import OrderedDict
+from cStringIO import StringIO
+
+from django.db import ProgrammingError
+from django.core.mail import mail_admins
 
 from casexml.apps.case.models import CommCareCase
 from corehq.apps.case_search.exceptions import CaseSearchNotEnabledException
@@ -130,23 +135,46 @@ def get_case_search_to_elasticsearch_pillow(pillow_id='CaseSearchToElasticsearch
     )
 
 
+def _fail_gracefully_and_tell_admins():
+    f = StringIO()
+    traceback.print_exc(file=f)
+    mail_admins("IMPORTANT: Preindexing case_search failed because the case_search table hasn't been initialized",
+                ("***Run ./manage.py migrate first then run ./manage.py ptop_preindex again***\n\n {}"
+                 .format(f.getvalue())))
+
+    class FakeReindexer(object):
+        """Used so that the ptop_preindex command completes successfully
+        """
+        def reindex(self):
+            pass
+
+    return FakeReindexer()
+
+
 def get_case_search_reindexer(domain=None):
     """Returns a reindexer that will return either all domains with case search
     enabled, or a single domain if passed in
     """
-    CaseSearchPillow()          # TODO: remove this:
-    if domain is not None:
-        if not case_search_enabled_for_domain(domain):
-            raise CaseSearchNotEnabledException("{} does not have case search enabled".format(domain))
-        domains = [domain]
-    else:
-        # return changes for all enabled domains
-        domains = case_search_enabled_domains()
+    try:
+        if domain is not None:
+            if not case_search_enabled_for_domain(domain):
+                raise CaseSearchNotEnabledException("{} does not have case search enabled".format(domain))
+            domains = [domain]
+        else:
+            # return changes for all enabled domains
+            domains = case_search_enabled_domains()
 
-    return PillowReindexer(
-        get_case_search_to_elasticsearch_pillow(),
-        change_provider=get_domain_case_change_provider(domains=domains)
-    )
+        change_provider = get_domain_case_change_provider(domains=domains)
+    except ProgrammingError:
+        # The db hasn't been intialized yet, so skip this reindex and complain.
+        return _fail_gracefully_and_tell_admins()
+    else:
+        CaseSearchPillow()          # TODO: remove this
+
+        return PillowReindexer(
+            get_case_search_to_elasticsearch_pillow(),
+            change_provider=change_provider
+        )
 
 
 def delete_case_search_cases(domain):
