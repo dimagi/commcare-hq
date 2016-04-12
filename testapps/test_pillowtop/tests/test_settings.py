@@ -41,7 +41,7 @@ class PillowtopSettingsTest(TestCase, TestFileMixin):
     def get_expected_meta(self):
         expected_meta = self.get_json('all-pillow-meta')
         for pillow, meta in expected_meta.items():
-            if 'couchdb_uri' in meta:
+            if meta.get('couchdb_uri') is not None:
                 meta['couchdb_uri'] = meta['couchdb_uri'].format(COUCH_SERVER_ROOT=settings.COUCH_SERVER_ROOT)
         return expected_meta
 
