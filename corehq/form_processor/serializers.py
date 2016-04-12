@@ -5,6 +5,21 @@ from corehq.form_processor.models import (
 )
 
 
+def get_instance_from_data(SerializerClass, data):
+    """
+    Return a deserialized instance from serialized data
+
+    cf. https://github.com/tomchristie/django-rest-framework/blob/master/rest_framework/serializers.py#L71
+    and https://github.com/tomchristie/django-rest-framework/blob/master/rest_framework/serializers.py#L882
+    """
+    # It does seem like you should be able to do this in one line. Django REST framework makes the assumption that
+    # you always want to save(). This function does everything ModelSerializer.save() does, just without saving.
+    ModelClass = SerializerClass.Meta.model
+    serializer = SerializerClass(data=data)
+    assert serializer.is_valid(), 'Unable to deserialize data while creating {}'.format(ModelClass)
+    return ModelClass(**serializer.validated_data)
+
+
 class DeletableModelSerializer(serializers.ModelSerializer):
     """
     A ModelSerializer that takes an additional `fields` argument that

@@ -13,6 +13,7 @@ from corehq.apps.app_manager.suite_xml.post_process.instances import EntryInstan
 from corehq.apps.app_manager.suite_xml.sections.menus import MenuContributor
 from corehq.apps.app_manager.suite_xml.sections.resources import FormResourceContributor, LocaleResourceContributor
 from corehq.apps.app_manager.suite_xml.post_process.workflow import WorkflowHelper
+from corehq.apps.app_manager.suite_xml.sections.sync_requests import SyncRequestContributor
 from corehq.apps.app_manager.suite_xml.xml_models import Suite, MediaResource
 from corehq.apps.app_manager import id_strings
 from corehq.apps.app_manager.util import split_path
@@ -47,6 +48,7 @@ class SuiteGenerator(object):
         entries = EntriesContributor(self.suite, self.app, self.modules)
         menus = MenuContributor(self.suite, self.app, self.modules)
         careplan_menus = CareplanMenuContributor(self.suite, self.app, self.modules)
+        sync_requests = SyncRequestContributor(self.suite, self.app, self.modules)
         for module in self.modules:
             self.suite.entries.extend(entries.get_module_contributions(module))
 
@@ -56,6 +58,8 @@ class SuiteGenerator(object):
             self.suite.menus.extend(
                 menus.get_module_contributions(module)
             )
+
+            self.suite.sync_requests.extend(sync_requests.get_module_contributions(module))
 
         self._add_sections([
             FixtureContributor(self.suite, self.app, self.modules),
