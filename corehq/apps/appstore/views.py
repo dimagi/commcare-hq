@@ -118,11 +118,12 @@ class CommCareExchangeHomeView(BaseCommCareExchangeSectionView):
     @memoized
     def params(self):
         params, _ = parse_args_for_es(self.request)
+        params.pop('page', None)
         return params
 
     @property
     def page(self):
-        page = self.params.pop('page', 1)
+        page = self.request.GET.get('page', 1)
         return int(page[0] if isinstance(page, list) else page)
 
     @property
