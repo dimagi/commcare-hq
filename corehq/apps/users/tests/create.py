@@ -17,9 +17,6 @@ class CreateTestCase(TestCase):
 
     def setUp(self):
         delete_all_users()
-        all_users = CouchUser.all()
-        for user in all_users:
-            user.delete()
         self.xform = XFormInstance()
         self.xform.form = {}
         self.xform.form['username'] = self.username     = 'test_reg'

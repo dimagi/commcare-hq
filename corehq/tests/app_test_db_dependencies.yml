@@ -435,6 +435,7 @@ corehq.apps.users:
   - auditcare
   - casexml.apps.case
   - casexml.apps.phone
+  - corehq.apps.accounting
   - corehq.apps.domain
   - corehq.apps.dropbox
   - corehq.apps.hqcase
