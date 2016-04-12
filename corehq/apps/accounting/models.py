@@ -2567,7 +2567,7 @@ class CreditLine(models.Model):
     account = models.ForeignKey(BillingAccount, on_delete=models.PROTECT)
     subscription = models.ForeignKey(Subscription, on_delete=models.PROTECT, null=True, blank=True)
     product_type = models.CharField(max_length=25, null=True, blank=True,
-                                    choices=SoftwareProductType.CHOICES)
+                                    choices=((SoftwareProductType.ANY, SoftwareProductType.ANY),))
     feature_type = models.CharField(max_length=10, null=True,
                                     choices=FeatureType.CHOICES)
     date_created = models.DateTimeField(auto_now_add=True)
