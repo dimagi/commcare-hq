@@ -72,18 +72,18 @@ class ChangeFeedPillow(PythonPillow):
 
 
 def get_default_couch_db_change_feed_pillow(pillow_id):
-    return _get_change_feed_pillow_for_db(pillow_id, CommCareCase.get_db())
+    return get_change_feed_pillow_for_db(pillow_id, CommCareCase.get_db())
 
 
 def get_user_groups_db_kafka_pillow(pillow_id):
-    return _get_change_feed_pillow_for_db(pillow_id, couch_config.get_db_for_class(CommCareUser))
+    return get_change_feed_pillow_for_db(pillow_id, couch_config.get_db_for_class(CommCareUser))
 
 
 def get_domain_db_kafka_pillow(pillow_id):
-    return _get_change_feed_pillow_for_db(pillow_id, couch_config.get_db_for_class(Domain))
+    return get_change_feed_pillow_for_db(pillow_id, couch_config.get_db_for_class(Domain))
 
 
-def _get_change_feed_pillow_for_db(pillow_id, couch_db):
+def get_change_feed_pillow_for_db(pillow_id, couch_db):
     kafka_client = get_kafka_client_or_none()
     processor = KafkaProcessor(
         kafka_client, data_source_type=data_sources.COUCH, data_source_name=couch_db.dbname
