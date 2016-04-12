@@ -21,7 +21,7 @@ from uuidfield import UUIDField
 
 from corehq.blobs import get_blob_db
 from corehq.blobs.exceptions import NotFound, BadName
-from corehq.form_processor.exceptions import InvalidAttachment, UnknownActionType, CaseNotFound
+from corehq.form_processor.exceptions import InvalidAttachment, UnknownActionType
 from corehq.form_processor.track_related import TrackRelatedChanges
 from corehq.sql_db.routers import db_for_read_write
 from couchforms import const

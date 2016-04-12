@@ -2,7 +2,6 @@ from contextlib import contextmanager
 
 from casexml.apps.case.mock import CaseFactory, CaseStructure, CaseIndex
 from casexml.apps.case.models import CommCareCase, INDEX_ID_PARENT, INDEX_RELATIONSHIP_CHILD
-from casexml.apps.case.sharedmodels import CommCareCaseIndex
 from casexml.apps.case.signals import case_post_save
 from corehq.apps.data_interfaces.models import (AutomaticUpdateRule,
     AutomaticUpdateRuleCriteria, AutomaticUpdateAction)
@@ -11,7 +10,6 @@ from datetime import datetime, date
 
 from corehq.form_processor.backends.sql.dbaccessors import CaseAccessorSQL
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
-from corehq.form_processor.models import CommCareCaseIndexSQL
 from corehq.form_processor.tests.utils import run_with_all_backends, FormProcessorTestUtils, set_case_property_directly
 from corehq.form_processor.utils.general import should_use_sql_backend
 from django.test import TestCase
