@@ -11,7 +11,7 @@ from corehq.apps.users.models import CommCareUser
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 from corehq.form_processor.tests import run_with_all_backends
 
-DOMAIN = 'test_domain'
+DOMAIN = 'test-domain'
 USERNAME = 'testy_mctestface'
 PASSWORD = '123'
 CASE_NAME = 'Jamie Hand'
@@ -19,19 +19,20 @@ CASE_NAME = 'Jamie Hand'
 
 class ClaimCaseTests(TestCase):
 
-    def setUp(self):
+    @classmethod
+    def setUpClass(cls):
         create_domain(DOMAIN)
-        self.user = CommCareUser.create(DOMAIN, USERNAME, PASSWORD)
-        self.case_id = uuid4().hex
-        _, [self.case] = post_case_blocks([CaseBlock(
+        cls.user = CommCareUser.create(DOMAIN, USERNAME, PASSWORD)
+        cls.case_id = uuid4().hex
+        _, [cls.case] = post_case_blocks([CaseBlock(
             create=True,
-            case_id=self.case_id,
+            case_id=cls.case_id,
             case_type='case',
             case_name=CASE_NAME,
             owner_id='someone_else',
         ).as_xml()], {'domain': DOMAIN})
 
-    @run_with_all_backends
+    # @run_with_all_backends
     def test_claim_case(self):
         """
         A claim case request should create an extension case
@@ -48,3 +49,12 @@ class ClaimCaseTests(TestCase):
         claim = CaseAccessors(DOMAIN).get_case(claim_ids[0])
         self.assertEqual(claim.owner_id, self.user.get_id)
         self.assertEqual(claim.name, CASE_NAME)
+
+    # @run_with_all_backends
+    def test_search_endpoint(self):
+        client = Client()
+        client.login(username=USERNAME, password=PASSWORD)
+        url = reverse('sync_search', kwargs={'domain': DOMAIN})
+        response = client.get(url, {'name': 'Jamie Hand', 'case_type': 'case'})
+        self.assertEqual(response.status_code, 200)
+        # TODO: self.assertEqual(response.content, known_value)
