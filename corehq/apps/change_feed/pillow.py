@@ -83,16 +83,20 @@ def get_user_groups_db_kafka_pillow(pillow_id):
     # note: this is temporarily using ConstructedPillow as a test. If it is successful we should
     # flip the main one over as well
     user_groups_couch_db = couch_config.get_db_for_class(CommCareUser)
+    return _get_change_feed_pillow_for_db(pillow_id, user_groups_couch_db)
+
+
+def _get_change_feed_pillow_for_db(pillow_id, couch_db):
     kafka_client = get_kafka_client_or_none()
     processor = KafkaProcessor(
-        kafka_client, data_source_type=data_sources.COUCH, data_source_name=user_groups_couch_db.dbname
+        kafka_client, data_source_type=data_sources.COUCH, data_source_name=couch_db.dbname
     )
     checkpoint = PillowCheckpoint(pillow_id)
     return ConstructedPillow(
         name=pillow_id,
         document_store=None,  # because we're using include_docs we can be explicit about not using this
         checkpoint=checkpoint,
-        change_feed=CouchChangeFeed(user_groups_couch_db, include_docs=True),
+        change_feed=CouchChangeFeed(couch_db, include_docs=True),
         processor=processor,
         change_processed_event_handler=PillowCheckpointEventHandler(
             checkpoint=checkpoint, checkpoint_frequency=100,
