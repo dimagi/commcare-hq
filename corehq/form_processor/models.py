@@ -710,6 +710,22 @@ class CommCareCaseSQL(DisabledDbMixin, models.Model, RedisLockableMixIn,
         if property in allowed_fields:
             return getattr(self, property)
 
+    def resolve_case_property(self, property_name):
+        """
+        Handles case property parent references. Examples for property_name can be:
+        name
+        parent/name
+        parent/parent/name
+        ...
+        """
+        if property_name.lower().startswith('parent/'):
+            parent = self.parent
+            if not parent:
+                return None
+            return parent.resolve_case_property(property_name[7:])
+
+        return self.to_json().get(property_name)
+
     def on_tracked_models_cleared(self, model_class=None):
         self._saved_indices.reset_cache(self)
 
