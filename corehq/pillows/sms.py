@@ -5,11 +5,11 @@ from corehq.apps.sms.models import SMSLog
 from corehq.pillows.mappings.sms_mapping import SMS_MAPPING, SMS_INDEX
 from dimagi.utils.decorators.memoized import memoized
 from pillowtop.checkpoints.manager import PillowCheckpoint, PillowCheckpointEventHandler
-from pillowtop.es_utils import ElasticsearchIndexMeta
+from pillowtop.es_utils import ElasticsearchIndexInfo
 from pillowtop.listener import AliasedElasticPillow
 from pillowtop.pillow.interface import ConstructedPillow
 from pillowtop.processors.elastic import ElasticProcessor
-from django.conf import settings
+
 
 SMS_PILLOW_CHECKPOINT_ID = 'sql-sms-to-es'
 SMS_PILLOW_KAFKA_CONSUMER_GROUP_ID = 'sql-sms-to-es'
@@ -68,8 +68,8 @@ class SMSPillow(AliasedElasticPillow):
 def get_sql_sms_pillow(pillow_id):
     checkpoint = PillowCheckpoint(SMS_PILLOW_CHECKPOINT_ID)
     processor = ElasticProcessor(
-        elasticseach=get_es_new(),
-        index_meta=ElasticsearchIndexMeta(index=ES_SMS_INDEX, type=ES_SMS_TYPE),
+        elasticsearch=get_es_new(),
+        index_info=ElasticsearchIndexInfo(index=ES_SMS_INDEX, type=ES_SMS_TYPE),
         doc_prep_fn=lambda x: x
     )
     return ConstructedPillow(

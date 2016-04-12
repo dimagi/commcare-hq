@@ -18,6 +18,8 @@ class PactCHWAdminReport(GenericTabularReport, CustomProjectReport):
     exportable = True
     report_template_path = "pact/admin/pact_chw_schedule_admin.html"
 
+    is_bootstrap3 = True
+
     @property
     def headers(self):
         headers = DataTablesHeader(

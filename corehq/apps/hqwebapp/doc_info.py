@@ -105,24 +105,9 @@ def get_doc_info(doc, domain_hint=None, cache=None):
             is_deleted=generic_delete,
         )
     elif has_doc_type(doc_type, 'CommCareCase'):
-        doc_info = DocInfo(
-            display=doc['name'],
-            type_display=_('Case'),
-            link=reverse(
-                'case_details',
-                args=[domain, doc_id],
-            ),
-            is_deleted=generic_delete,
-        )
+        doc_info = case_docinfo(domain, doc_id, doc['name'], generic_delete)
     elif any([has_doc_type(doc_type, d) for d in couchforms_models.doc_types().keys()]):
-        doc_info = DocInfo(
-            type_display=_('Form'),
-            link=reverse(
-                'render_form_data',
-                args=[domain, doc_id],
-            ),
-            is_deleted=generic_delete,
-        )
+        doc_info = form_docinfo(domain, doc_id, generic_delete)
     elif doc_type in ('CommCareUser',):
         doc_info = DocInfo(
             display=raw_username(doc['username']),
@@ -194,6 +179,30 @@ def get_doc_info(doc, domain_hint=None, cache=None):
     return doc_info
 
 
+def form_docinfo(domain, doc_id, is_deleted):
+    doc_info = DocInfo(
+        type_display=_('Form'),
+        link=reverse(
+            'render_form_data',
+            args=[domain, doc_id],
+        ),
+        is_deleted=is_deleted,
+    )
+    return doc_info
+
+
+def case_docinfo(domain, doc_id, name, is_deleted):
+    return DocInfo(
+        display=name,
+        type_display=_('Case'),
+        link=reverse(
+            'case_details',
+            args=[domain, doc_id],
+        ),
+        is_deleted=is_deleted,
+    )
+
+
 def get_object_info(obj, cache=None):
     """
     This function is intended to behave just like get_doc_info, only
@@ -206,6 +215,8 @@ def get_object_info(obj, cache=None):
         return cache[cache_key]
 
     from corehq.apps.locations.models import SQLLocation
+    from corehq.form_processor.models import CommCareCaseSQL
+    from corehq.form_processor.models import XFormInstanceSQL
     if isinstance(obj, SQLLocation):
         from corehq.apps.locations.views import EditLocationView
         doc_info = DocInfo(
@@ -217,12 +228,16 @@ def get_object_info(obj, cache=None):
             ),
             is_deleted=False,
         )
+    elif isinstance(obj, CommCareCaseSQL):
+        doc_info = case_docinfo(obj.domain, obj.case_id, obj.name, obj.is_deleted)
+    elif isinstance(obj, XFormInstanceSQL):
+        doc_info = form_docinfo(obj.domain, obj.form_id, obj.is_deleted)
     else:
         doc_info = DocInfo(
             is_deleted=False,
         )
 
-    doc_info.id = str(obj.pk)
+    doc_info.id = doc_info.id or str(obj.pk)
     doc_info.domain = obj.domain if hasattr(obj, 'domain') else None
     doc_info.type = class_name
 

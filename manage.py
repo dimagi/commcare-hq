@@ -72,6 +72,7 @@ if __name__ == "__main__":
         GeventCommand('ptop_preindex', None),
         GeventCommand('sync_prepare_couchdb_multi', None),
         GeventCommand('sync_couch_views', None),
+        GeventCommand('migrate_multi', 'noinput'),
         GeventCommand('celery', '-P gevent'),
     )
     if len(sys.argv) > 1 and _should_patch_gevent(sys.argv, GEVENT_COMMANDS):

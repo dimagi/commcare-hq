@@ -6,10 +6,19 @@ from corehq.apps.es.cases import (
     modified_range,
     user,
     closed_range,
-    opened_by
-)
-from corehq.apps.es.forms import app, submitted, user_id
+    opened_by,
+    owner_type)
+from corehq.apps.es.forms import app, submitted, user_id, user_type
 from corehq.apps.export.esaccessors import get_group_user_ids
+from corehq.pillows.utils import USER_TYPES
+
+
+def _assert_user_types(user_types):
+        if isinstance(user_types, basestring):
+            user_types = [user_types]
+
+        for type_ in user_types:
+            assert type_ in USER_TYPES, "Expected user type to be in {}, got {}".format(USER_TYPES, type_)
 
 
 class ExportFilter(object):
@@ -62,6 +71,15 @@ class OwnerFilter(ExportFilter):
 
     def to_es_filter(self):
         return owner(self.owner_id)
+
+
+class OwnerTypeFilter(ExportFilter):
+    def __init__(self, owner_type):
+        _assert_user_types(owner_type)
+        self.owner_types = owner_type
+
+    def to_es_filter(self):
+        return owner_type(self.owner_types)
 
 
 class IsClosedFilter(ExportFilter):
@@ -152,9 +170,6 @@ class GroupClosedByFilter(GroupFilter):
     base_filter = ClosedByFilter
 
 
-# TODO: owner/modifier/closer in location filters
-# TODO: Add form filters
-
 class ReceivedOnRangeFilter(RangeExportFilter):
     def to_es_filter(self):
         return submitted(self.gt, self.gte, self.lt, self.lte)
@@ -166,6 +181,15 @@ class FormSubmittedByFilter(ExportFilter):
 
     def to_es_filter(self):
         return user_id(self.submitted_by)
+
+
+class UserTypeFilter(ExportFilter):
+    def __init__(self, user_types):
+        _assert_user_types(user_types)
+        self.user_types = user_types
+
+    def to_es_filter(self):
+        return user_type(self.user_types)
 
 
 class GroupFormSubmittedByFilter(GroupFilter):

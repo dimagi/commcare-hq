@@ -46,4 +46,11 @@ RUN pip install \
     --user --upgrade \
     && rm -rf /root/.cache/pip
 
+COPY package.json /vendor/package.json
+
+RUN cd /vendor \
+    && npm shrinkwrap \
+    && npm -g install \
+    && npm cache clean
+
 ENV PATH=/vendor/bin:$PATH

@@ -9,7 +9,7 @@ from django.conf import settings
 from django.core.exceptions import ObjectDoesNotExist, ValidationError
 from django.core.validators import MaxValueValidator, MinValueValidator
 from django.db import models, transaction
-from django.db.models import F
+from django.db.models import F, Q
 from django.db.models.manager import Manager
 from django.template.loader import render_to_string
 from django.utils.html import strip_tags
@@ -1086,7 +1086,7 @@ class Subscription(models.Model):
         return (Subscription.objects.
                 filter(subscriber=self.subscriber, date_start__gt=self.date_start).
                 exclude(pk=self.pk).
-                exclude(date_start=F('date_end')))
+                filter(Q(date_end__isnull=True) | ~Q(date_start=F('date_end'))))
 
     @property
     def is_renewed(self):
@@ -2060,11 +2060,6 @@ class BillingRecordBase(models.Model):
         raise NotImplementedError()
 
     def send_email(self, contact_emails=None):
-        if not self.should_send_email:
-            self.skipped_email = True
-            self.save()
-            return
-
         pdf_attachment = {
             'title': self.pdf.get_filename(self.invoice),
             'file_obj': StringIO(self.pdf.get_data(self.invoice)),
@@ -2752,11 +2747,6 @@ class CreditLine(models.Model):
                 credit_line.adjust_credit_balance(-adjustment_amount, **kwargs)
                 balance -= adjustment_amount
         return balance
-
-    @staticmethod
-    def _validate_add_amount(amount):
-        if not isinstance(amount, Decimal):
-            raise ValueError("Amount must be a Decimal.")
 
     @classmethod
     def make_payment_towards_invoice(cls, invoice, payment_record):

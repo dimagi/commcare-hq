@@ -176,34 +176,3 @@ ko.bindingHandlers.grabUniqueDefault = {
         $(element).trigger('change');
     }
 };
-
-ko.bindingHandlers.comboboxOptions = {
-    init: function (element, _, allBindingsAccessor) {
-        if ($(element).data('combobox')) {
-            return;
-        }
-        $(element).combobox({
-            placeholder: allBindingsAccessor()['comboboxCaption']
-        });
-
-        var combobox = $(element).data('combobox');
-        combobox.$button.click(function () {
-            if (combobox.$element.val() === '') {
-                $(element).val(null).change();
-            }
-        });
-        $(element).change(function () {
-            if ($(this).val() === '') {
-                combobox.$element.val('');
-            }
-        });
-    },
-    update: function (element, valueAccessor, allBindingsAccessor) {
-        ko.bindingHandlers.options.update(element, valueAccessor, allBindingsAccessor);
-        var value = ko.utils.unwrapObservable(valueAccessor());
-        if (!$(element).find('[value=""]').size()) {
-            $(element).append('<option value=""></option>');
-        }
-        $(element).data('combobox').refresh();
-    }
-};

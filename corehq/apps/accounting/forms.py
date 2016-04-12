@@ -1568,21 +1568,24 @@ class EnterprisePlanContactForm(forms.Form):
         super(EnterprisePlanContactForm, self).__init__(data, *args, **kwargs)
         from corehq.apps.domain.views import SelectPlanView
         self.helper = FormHelper()
-        self.helper.form_class = "form form-horizontal"
+        self.helper.label_class = 'col-sm-3 col-md-2'
+        self.helper.field_class = 'col-sm-9 col-md-8 col-lg-6'
+        self.helper.form_class = "form-horizontal"
         self.helper.layout = crispy.Layout(
             'name',
             'company_name',
             'message',
-            FormActions(
+            hqcrispy.FormActions(
                 StrictButton(
                     _("Request Quote"),
                     type="submit",
                     css_class="btn-primary",
                 ),
-                crispy.HTML('<a href="%(url)s" class="btn btn-default">%(title)s</a>' % {
-                            'url': reverse(SelectPlanView.urlname, args=[self.domain]),
-                            'title': _("Select different plan"),
-                }),
+                hqcrispy.LinkButton(
+                    _("Select different plan"),
+                    reverse(SelectPlanView.urlname, args=[self.domain]),
+                    css_class="btn btn-default"
+                ),
             )
         )
 
@@ -1610,9 +1613,9 @@ class EnterprisePlanContactForm(forms.Form):
 
 
 class TriggerInvoiceForm(forms.Form):
-    month = forms.ChoiceField(label="Invoice Month")
-    year = forms.ChoiceField(label="Invoice Year")
-    domain = forms.CharField(label="Invoiced Project")
+    month = forms.ChoiceField(label="Statement Period Month")
+    year = forms.ChoiceField(label="Statement Period Year")
+    domain = forms.CharField(label="Project Space")
 
     def __init__(self, *args, **kwargs):
         super(TriggerInvoiceForm, self).__init__(*args, **kwargs)
@@ -1656,7 +1659,8 @@ class TriggerInvoiceForm(forms.Form):
         invoice_factory = DomainInvoiceFactory(invoice_start, invoice_end, domain)
         invoice_factory.create_invoices()
 
-    def clean_previous_invoices(self, invoice_start, invoice_end, domain_name):
+    @staticmethod
+    def clean_previous_invoices(invoice_start, invoice_end, domain_name):
         prev_invoices = Invoice.objects.filter(
             date_start__lte=invoice_end, date_end__gte=invoice_start,
             subscription__subscriber__domain=domain_name
@@ -1679,6 +1683,14 @@ class TriggerInvoiceForm(forms.Form):
                     ),
                 )
             )
+
+    def clean(self):
+        today = datetime.date.today()
+        year = int(self.cleaned_data['year'])
+        month = int(self.cleaned_data['month'])
+
+        if (year, month) >= (today.year, today.month):
+            raise ValidationError('Statement period must be in the past')
 
 
 class TriggerBookkeeperEmailForm(forms.Form):

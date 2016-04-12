@@ -1,11 +1,12 @@
 import sqlalchemy
-from sqlalchemy.exc import IntegrityError, ProgrammingError, InternalError
-from corehq.apps.userreports.exceptions import TableRebuildError, BadSaveError
+from sqlalchemy.exc import IntegrityError, ProgrammingError
+from corehq.apps.userreports.exceptions import TableRebuildError
 from corehq.apps.userreports.sql.columns import column_to_sql
 from corehq.apps.userreports.sql.connection import get_engine_id
 from corehq.apps.userreports.sql.util import get_table_name
 from corehq.sql_db.connections import connection_manager
 from dimagi.utils.decorators.memoized import memoized
+from dimagi.utils.logging import notify_exception
 
 
 metadata = sqlalchemy.MetaData()
@@ -44,30 +45,40 @@ class IndicatorSqlAdapter(object):
         """
         return self.session_helper.Session.query(self.get_table())
 
+    def best_effort_save(self, doc):
+        """
+        Does a best-effort save of the document. Will fail silently if the save is not successful.
+
+        For certain known, expected errors this will do no additional logging.
+        For unexpected errors it will log them.
+        """
+        try:
+            self.save(doc)
+        except IntegrityError:
+            pass  # can be do to users messing up their tables/data so don't bother logging
+        except Exception as e:
+            notify_exception(None, u'unexpected error saving UCR doc: {}. domain: {}, doc: {}, table {}'.format(
+                e,
+                self.config.domain,
+                doc.get('_id', '<unknown>'),
+                '{} ({})'.format(self.config.display_name, self.config._id)
+            ))
+
     def save(self, doc):
+        """
+        Saves the document. Should bubble up known errors.
+        """
         indicator_rows = self.config.get_all_values(doc)
         if indicator_rows:
             table = self.get_table()
-            try:
-                with self.engine.begin() as connection:
-                    # delete all existing rows for this doc to ensure we aren't left with stale data
-                    delete = table.delete(table.c.doc_id == doc['_id'])
-                    connection.execute(delete)
-                    bad_saves = False
-                    for indicator_row in indicator_rows:
-                        all_values = {i.column.database_column_name: i.value for i in indicator_row}
-                        insert = table.insert().values(**all_values)
-                        try:
-                            connection.execute(insert)
-                        except (IntegrityError, InternalError):
-                            bad_saves = True
-                    if bad_saves:
-                        raise BadSaveError()
-            except BadSaveError:
-                # swallow BadSaveErrors silently
-                # once we have a better strategy for showing these to users we can revisit whether
-                # we should log something here.
-                pass
+            with self.engine.begin() as connection:
+                # delete all existing rows for this doc to ensure we aren't left with stale data
+                delete = table.delete(table.c.doc_id == doc['_id'])
+                connection.execute(delete)
+                for indicator_row in indicator_rows:
+                    all_values = {i.column.database_column_name: i.value for i in indicator_row}
+                    insert = table.insert().values(**all_values)
+                    connection.execute(insert)
 
     def delete(self, doc):
         table = self.get_table()

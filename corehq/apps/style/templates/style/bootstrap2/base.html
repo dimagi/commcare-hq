@@ -5,9 +5,9 @@
         <meta charset="utf-8"/>
         {% captureas title_block %}{% block title %}{% endblock title %}{% endcaptureas %}
         <title>
-            {% if title_block %}{{ title_block }} - {% endif %}{{ SITE_NAME }}
+            {% if title_block %}{{ title_block }} - {% endif %}CommCare HQ
         </title>
-        <meta name="application-name" content="{{ SITE_NAME }}">
+        <meta name="application-name" content="CommCare HQ">
         <meta http-equiv="content-language" content="{{ LANGUAGE_CODE }}">
         <link type="application/opensearchdescription+xml" rel="search" href="{% url 'osdd' %}" title="CommCare HQ"/>
         <link rel="shortcut icon" href="{% static 'style/img/favicon.png' %}" />
@@ -62,7 +62,11 @@
                 <div class="navbar">
                     <div class="navbar-inner">
                         <hgroup class="brand">
-                            <h1><a href="{% url "homepage" %}"><img src="{{ LOGO_URL }}" alt="{{ SITE_NAME }} Logo" /></a></h1>
+                            <h1>
+                                <a href="{% url "homepage" %}">
+                                    <img src="{% if CUSTOM_LOGO_URL %}{{ CUSTOM_LOGO_URL }}{% else %}{% static 'hqstyle/img/commcare-flower.png' %}{% endif %}" alt="CommCare HQ Logo" />
+                                </a>
+                            </h1>
                         </hgroup>
                     {% if request.user.is_authenticated %}
                         <nav id="hq-navigation-bar">
@@ -76,13 +80,12 @@
                     {% else %}
                         <nav>
                             <div class="btn-toolbar pull-right">
-                                <a href="{% url "login" DOMAIN_TYPE %}" class="btn btn-primary">{% trans 'Sign In' %}</a>
+                                <a href="{% url "login" %}" class="btn btn-primary">{% trans 'Sign In' %}</a>
                             </div>
                         </nav>
                     {% endif %}
                     </div>
                 </div>
-                {% format_subtab_menu %}
             </header>
             {% endwith %}
             {% if request.project.is_snapshot %}

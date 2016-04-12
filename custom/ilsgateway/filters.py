@@ -1,17 +1,19 @@
 import calendar
 from datetime import datetime
 from django.conf import settings
+from django.core.urlresolvers import reverse
 from django.utils.translation import ugettext_noop
 from corehq.apps.products.models import SQLProduct
 from corehq.apps.programs.models import Program
 from corehq.apps.reports.filters.base import BaseDrilldownOptionFilter, BaseSingleOptionFilter, BaseReportFilter
+from corehq.apps.reports.filters.fixtures import AsyncLocationFilter
 from custom.common import ALL_OPTION
 
 
 class ProductByProgramFilter(BaseDrilldownOptionFilter):
     slug = "filter_by"
     single_option_select = 0
-    template = "common/drilldown_options.html"
+    template = "common/bootstrap2/drilldown_options.html"
     label = ugettext_noop("Filter By")
 
     @property
@@ -116,3 +118,22 @@ class ILSDateFilter(BaseReportFilter):
             selected_first=self.selected('first') if self.selected('first') else datetime.utcnow().month,
             selected_second=self.selected('second') if self.selected('second') else datetime.utcnow().year
         )
+
+
+class B3ILSDateFilter(ILSDateFilter):
+    css_class = 'col-md-4'
+    template = 'ilsgateway/bootstrap3/datespan.html'
+
+
+class ILSAsyncLocationFilter(AsyncLocationFilter):
+
+    @property
+    def api_root(self):
+        return reverse('api_dispatch_list', kwargs={'domain': self.domain,
+                                                    'resource_name': 'ils_location',
+                                                    'api_name': 'v0.3'})
+
+
+class B3ILSAsyncLocationFilter(ILSAsyncLocationFilter):
+    css_class = 'col-md-8'
+    template = 'ilsgateway/bootstrap3/location_async.html'

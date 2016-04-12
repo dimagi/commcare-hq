@@ -111,6 +111,8 @@ DJANGO_LOG_FILE = "%s/%s" % (FILEPATH, "commcarehq.django.log")
 ACCOUNTING_LOG_FILE = "%s/%s" % (FILEPATH, "commcarehq.accounting.log")
 ANALYTICS_LOG_FILE = "%s/%s" % (FILEPATH, "commcarehq.analytics.log")
 DATADOG_LOG_FILE = "%s/%s" % (FILEPATH, "commcarehq.datadog.log")
+FORMPLAYER_TIMING_FILE = "%s/%s" % (FILEPATH, "formplayer.timing.log")
+FORMPLAYER_DIFF_FILE = "%s/%s" % (FILEPATH, "formplayer.diff.log")
 
 LOCAL_LOGGING_HANDLERS = {}
 LOCAL_LOGGING_LOGGERS = {}
@@ -159,6 +161,7 @@ SESSION_ENGINE = "django.contrib.sessions.backends.cached_db"
 # time in minutes before forced logout due to inactivity
 INACTIVITY_TIMEOUT = 60 * 24 * 14
 SECURE_TIMEOUT = 30
+ENABLE_DRACONIAN_SECURITY_FEATURES = False
 
 PASSWORD_HASHERS = (
     # this is the default list with SHA1 moved to the front
@@ -208,6 +211,7 @@ DEFAULT_APPS = (
     'djtables',
     'django_prbac',
     'djangular',
+    'captcha',
     'couchdbkit.ext.django',
     'crispy_forms',
     'gunicorn',
@@ -222,6 +226,7 @@ DEFAULT_APPS = (
     'statici18n',
 )
 
+CAPTCHA_FIELD_TEMPLATE = 'hq-captcha-field.html'
 CRISPY_TEMPLATE_PACK = 'bootstrap'
 CRISPY_ALLOWED_TEMPLATE_PACKS = (
     'bootstrap',
@@ -323,6 +328,7 @@ HQ_APPS = (
     'corehq.apps.hqpillow_retry',
     'corehq.couchapps',
     'corehq.preindex',
+    'corehq.tabs',
     'custom.apps.wisepill',
     'custom.fri',
     'fluff',
@@ -345,7 +351,6 @@ HQ_APPS = (
     # custom reports
     'a5288',
     'custom.bihar',
-    'custom.penn_state',
     'custom.apps.gsid',
     'custom.icds',
     'hsph',
@@ -379,7 +384,6 @@ HQ_APPS = (
 
     'custom.dhis2',
     'custom.openclinica',
-
 )
 
 TEST_APPS = ()
@@ -387,6 +391,7 @@ TEST_APPS = ()
 # also excludes any app starting with 'django.'
 APPS_TO_EXCLUDE_FROM_TESTS = (
     'a5288',
+    'captcha',
     'couchdbkit.ext.django',
     'corehq.apps.data_interfaces',
     'corehq.apps.ivr',
@@ -440,9 +445,7 @@ DOMAIN_MAX_REGISTRATION_REQUESTS_PER_DAY = 99
 DOMAIN_SELECT_URL = "/domain/select/"
 
 # This is not used by anything in CommCare HQ, leaving it here in case anything
-# in Django unexpectedly breaks without it.  When you need the login url, you
-# should use reverse('login', kwargs={'domain_type': domain_type}) in order to
-# maintain CommCare HQ/CommCare Supply distinction.
+# in Django unexpectedly breaks without it.
 LOGIN_URL = "/accounts/login/"
 # If a user tries to access domain admin pages but isn't a domain
 # administrator, here's where he/she is redirected
@@ -499,10 +502,16 @@ MASTER_LIST_EMAIL = 'master-list@dimagi.com'
 EULA_CHANGE_EMAIL = 'eula-notifications@dimagi.com'
 CONTACT_EMAIL = 'info@dimagi.com'
 BOOKKEEPER_CONTACT_EMAILS = []
+SOFT_ASSERT_EMAIL = 'commcarehq-ops+soft_asserts@dimagi.com'
 EMAIL_SUBJECT_PREFIX = '[commcarehq] '
 
 SERVER_ENVIRONMENT = 'localdev'
 BASE_ADDRESS = 'localhost:8000'
+
+# Set this if touchforms can't access HQ via the public URL e.g. if using a self signed cert
+# Should include the protocol.
+# If this is None, get_url_base() will be used
+CLOUDCARE_BASE_URL = None
 
 PAGINATOR_OBJECTS_PER_PAGE = 15
 PAGINATOR_MAX_PAGE_LINKS = 5
@@ -819,6 +828,8 @@ COMPRESS_PRECOMPILERS = (
 COMPRESS_ENABLED = True
 COMPRESS_JS_COMPRESSOR = 'corehq.apps.style.uglify.JsUglifySourcemapCompressor'
 # use 'compressor.js.JsCompressor' for faster local compressing (will get rid of source maps)
+COMPRESS_CSS_FILTERS = ['compressor.filters.css_default.CssAbsoluteFilter',
+'compressor.filters.cssmin.rCSSMinFilter']
 
 LESS_B3_PATHS = {
     'variables': '../../../style/less/bootstrap3/includes/variables',
@@ -928,6 +939,12 @@ LOGGING = {
         'datadog': {
             'format': '%(metric)s %(created)s %(value)s metric_type=%(metric_type)s %(message)s'
         },
+        'formplayer_timing': {
+            'format': '%(asctime)s, %(action)s, %(control_duration)s, %(candidate_duration)s'
+        },
+        'formplayer_diff': {
+            'format': '%(asctime)s, %(action)s, %(request)s, %(control)s, %(candidate)s'
+        }
     },
     'filters': {
         'hqcontext': {
@@ -983,6 +1000,22 @@ LOGGING = {
             'class': 'cloghandler.ConcurrentRotatingFileHandler',
             'formatter': 'datadog',
             'filename': DATADOG_LOG_FILE,
+            'maxBytes': 10 * 1024 * 1024,  # 10 MB
+            'backupCount': 20  # Backup 200 MB of logs
+        },
+        'formplayer_diff': {
+            'level': 'INFO',
+            'class': 'logging.handlers.RotatingFileHandler',
+            'formatter': 'formplayer_diff',
+            'filename': FORMPLAYER_DIFF_FILE,
+            'maxBytes': 10 * 1024 * 1024,  # 10 MB
+            'backupCount': 20  # Backup 200 MB of logs
+        },
+        'formplayer_timing': {
+            'level': 'INFO',
+            'class': 'logging.handlers.RotatingFileHandler',
+            'formatter': 'formplayer_timing',
+            'filename': FORMPLAYER_TIMING_FILE,
             'maxBytes': 10 * 1024 * 1024,  # 10 MB
             'backupCount': 20  # Backup 200 MB of logs
         },
@@ -1061,6 +1094,16 @@ LOGGING = {
             'handlers': ['datadog'],
             'level': 'INFO',
             'propogate': False,
+        },
+        'formplayer_timing': {
+            'handlers': ['formplayer_timing'],
+            'level': 'INFO',
+            'propogate': True,
+        },
+        'formplayer_diff': {
+            'handlers': ['formplayer_diff'],
+            'level': 'INFO',
+            'propogate': True,
         },
     }
 }
@@ -1199,7 +1242,6 @@ COUCHDB_APPS = [
     'dhis2',
 
     # custom reports
-    'penn_state',
     'care_benin',
     'gsid',
     'hsph',
@@ -1505,6 +1547,7 @@ STATIC_DATA_SOURCES = [
     os.path.join('custom', 'succeed', 'data_sources', 'patient_task_list.json'),
     os.path.join('custom', 'apps', 'gsid', 'data_sources', 'patient_summary.json'),
     os.path.join('custom', 'abt', 'reports', 'data_sources', 'sms.json'),
+    os.path.join('custom', 'abt', 'reports', 'data_sources', 'sms_case.json'),
     os.path.join('custom', 'abt', 'reports', 'data_sources', 'supervisory.json'),
     os.path.join('custom', '_legacy', 'mvp', 'ucr', 'reports', 'data_sources', 'va_datasource.json'),
     os.path.join('custom', 'reports', 'mc', 'data_sources', 'malaria_consortium.json'),
@@ -1598,7 +1641,6 @@ DOMAIN_MODULE_MAP = {
     'hsph-dev': 'hsph',
     'hsph-betterbirth-pilot-2': 'hsph',
     'mc-inscale': 'custom.reports.mc',
-    'psu-legacy-together': 'custom.penn_state',
     'mvp-potou': 'mvp',
     'mvp-sauri': 'mvp',
     'mvp-bonsaaso': 'mvp',

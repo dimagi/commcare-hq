@@ -80,7 +80,10 @@ def activate_subscriptions(based_on_date=None):
         starting_subscriptions
     )
     for subscription in starting_subscriptions:
-        _activate_subscription(subscription)
+        try:
+            _activate_subscription(subscription)
+        except Exception as e:
+            log_accounting_error(e.message)
 
 
 @transaction.atomic
@@ -118,7 +121,10 @@ def deactivate_subscriptions(based_on_date=None):
         is_active=True,
     )
     for subscription in ending_subscriptions:
-        _deactivate_subscription(subscription, ending_date)
+        try:
+            _deactivate_subscription(subscription, ending_date)
+        except Exception as e:
+            log_accounting_error(e.message)
 
 
 def warn_subscriptions_still_active(based_on_date=None):
@@ -322,10 +328,14 @@ def create_wire_credits_invoice(domain_name,
     wire_invoice.items = invoice_items
 
     record = WirePrepaymentBillingRecord.generate_record(wire_invoice)
-    try:
-        record.send_email(contact_emails=contact_emails)
-    except Exception as e:
-        log_accounting_error(e.message)
+    if record.should_send_email:
+        try:
+            record.send_email(contact_emails=contact_emails)
+        except Exception as e:
+            log_accounting_error(e.message)
+    else:
+        record.skipped_email = True
+        record.save()
 
 
 @task(ignore_result=True)
@@ -519,4 +529,4 @@ def update_exchange_rates(app_id=settings.OPEN_EXCHANGE_RATES_API_ID):
                 'rate': currency.rate_to_default,
             })
     except Exception as e:
-        log_accounting_error(e.message)
+        log_accounting_error("Error updating exchange rates: %s" % e.message)

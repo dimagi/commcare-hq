@@ -5,9 +5,6 @@ proxy0-staging.internal-va.commcarehq.org
 hqdjango0-staging.internal-va.commcarehq.org
 hqdjango1-staging.internal-va.commcarehq.org
 
-[couchdb]
-hqdb0-staging.internal-va.commcarehq.org
-
 [postgresql]
 hqdb0-staging.internal-va.commcarehq.org
 

@@ -1,4 +1,7 @@
+import datetime
 from django.utils.translation import ugettext_noop
+
+import settings
 from corehq.apps.reports.filters.base import BaseDrilldownOptionFilter, BaseSingleOptionFilter
 from corehq.apps.reports.filters.select import YearFilter
 from corehq.apps.users.models import CommCareUser
@@ -162,6 +165,34 @@ class ScheduleFilter(CareBaseDrilldownOptionFilter):
 
 class PPTYearFilter(YearFilter):
     label = "PPT Year"
+
+
+class MalawiPPTYearFilter(PPTYearFilter):
+
+    @property
+    def options(self):
+        start_year = getattr(settings, 'START_YEAR', 2008)
+        years = [(unicode(y), unicode("{0}/{1}".format(y, y+1))) for y in range(start_year, datetime.datetime.utcnow().year + 1)]
+        years.reverse()
+        return years
+
+
+class RealOrTestFilter(BaseSingleOptionFilter):
+    slug = 'real_or_test'
+    default_text = None
+    label = ugettext_noop("Real or Test Data?")
+
+    @property
+    def options(self):
+        return [
+            ('Real', 'Real'),
+            ('Test', 'Test')
+        ]
+
+    @property
+    @memoized
+    def selected(self):
+        return self.get_value(self.request, self.domain) or "Real"
 
 
 class TypeFilter(CareBaseDrilldownOptionFilter):

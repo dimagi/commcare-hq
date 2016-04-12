@@ -107,6 +107,8 @@ from .exceptions import (
     XFormIdNotUnique,
     XFormValidationError,
     ScheduleError,
+    CaseXPathValidationError,
+    UserCaseXPathValidationError,
 )
 from corehq.apps.reports.daterange import get_daterange_start_end_dates
 from jsonpath_rw import jsonpath, parse
@@ -191,15 +193,6 @@ def load_case_reserved_words():
 def load_form_template(filename):
     with open(os.path.join(os.path.dirname(__file__), 'data', filename)) as f:
         return f.read()
-
-
-def partial_escape(xpath):
-    """
-    Copied from http://stackoverflow.com/questions/275174/how-do-i-perform-html-decoding-encoding-using-python-django
-    but without replacing the single quote
-
-    """
-    return mark_safe(force_unicode(xpath).replace('&', '&amp;').replace('<', '&lt;').replace('>', '&gt;').replace('"', '&quot;'))
 
 
 class IndexedSchema(DocumentSchema):
@@ -3283,6 +3276,7 @@ class ReportAppFilter(DocumentSchema):
                 'CustomDatespanFilter': CustomDatespanFilter,
                 'CustomMonthFilter': CustomMonthFilter,
                 'MobileSelectFilter': MobileSelectFilter,
+                'AncestorLocationTypeFilter': AncestorLocationTypeFilter,
             }
             try:
                 klass = doc_type_to_filter_class[doc_type]
@@ -3325,20 +3319,10 @@ def _filter_by_parent_location_id(user, ui_filter):
     return ui_filter.value(**{ui_filter.name: location_parent})
 
 
-def _filter_by_ancestor_location_type_id(user, ui_filter):
-    from corehq.apps.reports_core.filters import Choice
-    location = user.sql_location
-    return [
-        Choice(value=loc.location_type.id, display=loc.location_type.name)
-        for loc in location.get_ancestors()
-    ] if location else []
-
-
 _filter_type_to_func = {
     'case_sharing_group': _filter_by_case_sharing_group_id,
     'location_id': _filter_by_location_id,
     'parent_location_id': _filter_by_parent_location_id,
-    'ancestor_location_type_id': _filter_by_ancestor_location_type_id,
     'username': _filter_by_username,
     'user_id': _filter_by_user_id,
 }
@@ -3506,6 +3490,21 @@ class CustomMonthFilter(ReportAppFilter):
 class MobileSelectFilter(ReportAppFilter):
     def get_filter_value(self, user, ui_filter):
         return None
+
+
+class AncestorLocationTypeFilter(ReportAppFilter):
+    ancestor_location_type_name = StringProperty()
+
+    def get_filter_value(self, user, ui_filter):
+        from corehq.apps.locations.models import SQLLocation
+
+        try:
+            ancestor = user.sql_location.get_ancestors(include_self=True).\
+                get(location_type__name=self.ancestor_location_type_name)
+        except (AttributeError, SQLLocation.DoesNotExist):
+            # user.sql_location is None, or location does not have an ancestor of that type
+            return None
+        return ancestor.location_id
 
 
 class ReportAppConfig(DocumentSchema):
@@ -3973,6 +3972,9 @@ class ApplicationBase(VersionedDoc, SnapshotMixin,
     minimum_use_threshold = StringProperty(
         default='15'
     )
+    experienced_threshold = StringProperty(
+        default='3'
+    )
 
     # exchange properties
     cached_properties = DictProperty()
@@ -4083,14 +4085,6 @@ class ApplicationBase(VersionedDoc, SnapshotMixin,
         # (even though '2.12.0' < '2.2')
         if self.build_spec.version:
             return LooseVersion(self.build_spec.version)
-
-    def get_preview_build(self):
-        preview = self.get_build()
-
-        for path in getattr(preview, '_attachments', {}):
-            if path.startswith('Generic/WebDemo'):
-                return preview
-        return CommCareBuildConfig.fetch().preview.get_build()
 
     @property
     def commcare_minor_release(self):
@@ -4298,6 +4292,18 @@ class ApplicationBase(VersionedDoc, SnapshotMixin,
             self.validate_intents()
             self.validate_jar_path()
             self.create_all_files()
+        except CaseXPathValidationError as cve:
+            errors.append({
+                'type': 'invalid case xpath reference',
+                'module': cve.module,
+                'form': cve.form,
+            })
+        except UserCaseXPathValidationError as ucve:
+            errors.append({
+                'type': 'invalid user case xpath reference',
+                'module': ucve.module,
+                'form': ucve.form,
+            })
         except (AppEditingError, XFormValidationError, XFormException,
                 PermissionDenied, SuiteValidationError) as e:
             errors.append({'type': 'error', 'message': unicode(e)})
@@ -4975,42 +4981,6 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
 
         if from_module['case_type'] != to_module['case_type']:
             raise ConflictingCaseTypeError()
-
-    def convert_module_to_advanced(self, module_id):
-        from_module = self.get_module(module_id)
-
-        name = {lang: u'{} (advanced)'.format(name) for lang, name in from_module.name.items()}
-
-        case_details = deepcopy(from_module.case_details.to_json())
-        to_module = AdvancedModule(
-            name=name,
-            forms=[],
-            case_type=from_module.case_type,
-            case_label=from_module.case_label,
-            put_in_root=from_module.put_in_root,
-            case_list=from_module.case_list,
-            case_details=DetailPair.wrap(case_details),
-            product_details=DetailPair(
-                short=Detail(
-                    columns=[
-                        DetailColumn(
-                            format='plain',
-                            header={'en': ugettext("Product")},
-                            field='name',
-                            model='product',
-                        ),
-                    ],
-                ),
-                long=Detail(),
-            ),
-        )
-        to_module.get_or_create_unique_id()
-        to_module = self.add_module(to_module)
-
-        for form in from_module.get_forms():
-            self._copy_form(from_module, form, to_module)
-
-        return to_module
 
     @cached_property
     def has_case_management(self):

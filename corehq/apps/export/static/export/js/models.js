@@ -1,10 +1,17 @@
+/* globals Exports */
+
 Exports.ViewModels.ExportInstance = function(instanceJSON, options) {
     options = options || {};
     var self = this;
     ko.mapping.fromJS(instanceJSON, Exports.ViewModels.ExportInstance.mapping, self);
     self.saveState = ko.observable(Exports.Constants.SAVE_STATES.READY);
     self.saveUrl = options.saveUrl;
-    self.isDeidColumnVisible = ko.observable(false);
+    // If any column has a deid transform, show deid column
+    self.isDeidColumnVisible = ko.observable(self.is_deidentified() || _.any(self.tables(), function(table) {
+        return table.selected() && _.any(table.columns(), function(column) {
+            return column.selected() && column.deid_transform();
+        });
+    }));
 };
 
 Exports.ViewModels.ExportInstance.prototype.getFormatOptionValues = function() {
@@ -17,9 +24,9 @@ Exports.ViewModels.ExportInstance.prototype.getFormatOptionText = function(forma
     } else if (format === Exports.Constants.EXPORT_FORMATS.CSV) {
         return gettext('CSV (Zip file)');
     } else if (format === Exports.Constants.EXPORT_FORMATS.XLS) {
-        return gettext('Excel 2007');
+        return gettext('Excel (older versions)');
     } else if (format === Exports.Constants.EXPORT_FORMATS.XLSX) {
-        return gettext('Web Page (Excel Dashboards)');
+        return gettext('Excel 2007');
     }
 };
 
@@ -133,10 +140,15 @@ Exports.ViewModels.TableConfiguration.prototype.selectNone = function(table) {
 };
 
 Exports.ViewModels.TableConfiguration.mapping = {
-    include: ['name', 'path', 'columns', 'selected', 'label'],
+    include: ['name', 'path', 'columns', 'selected', 'label', 'is_deleted'],
     columns: {
         create: function(options) {
             return new Exports.ViewModels.ExportColumn(options.data);
+        }
+    },
+    path: {
+        create: function(options) {
+            return new Exports.ViewModels.PathNode(options.data);
         }
     }
 };
@@ -144,21 +156,14 @@ Exports.ViewModels.TableConfiguration.mapping = {
 Exports.ViewModels.ExportColumn = function(columnJSON) {
     var self = this;
     ko.mapping.fromJS(columnJSON, Exports.ViewModels.ExportColumn.mapping, self);
-    self.deidTransform = ko.observable(Exports.Constants.DEID_OPTIONS.NONE);
-    self.deidTransform.subscribe(function(newTransform) {
-        self.transforms(Exports.Utils.removeDeidTransforms(self.transforms()));
-        if (newTransform) {
-            self.transforms.push(newTransform);
-        }
-    });
 };
 
 Exports.ViewModels.ExportColumn.prototype.formatProperty = function() {
-    return this.item.path().join('.');
-};
-
-Exports.ViewModels.ExportColumn.prototype.isDeidSelectVisible = function() {
-    return (this.item.path()[this.item.path().length - 1] !== '_id' || this.transforms()) && !this.isCaseName();
+    if (this.tags().length !== 0){
+        return this.label();
+    } else {
+        return _.map(this.item.path(), function(node) { return node.name(); }).join('.');
+    }
 };
 
 Exports.ViewModels.ExportColumn.prototype.getDeidOptions = function() {
@@ -183,9 +188,12 @@ Exports.ViewModels.ExportColumn.prototype.isCaseName = function() {
     return this.item.isCaseName();
 };
 
+Exports.ViewModels.ExportColumn.prototype.translatedHelp = function() {
+    return gettext(this.help_text);
+};
+
 Exports.ViewModels.ExportColumn.mapping = {
-    include: ['item', 'label', 'is_advanced', 'selected', 'tags', 'transforms'],
-    exclude: ['deidTransform'],
+    include: ['item', 'label', 'is_advanced', 'selected', 'tags', 'deid_transform', 'help_text'],
     item: {
         create: function(options) {
             return new Exports.ViewModels.ExportItem(options.data);
@@ -195,13 +203,26 @@ Exports.ViewModels.ExportColumn.mapping = {
 
 Exports.ViewModels.ExportItem = function(itemJSON) {
     var self = this;
-    ko.mapping.fromJS(itemJSON, Exports.ViewModels.ExportColumn.mapping, self);
+    ko.mapping.fromJS(itemJSON, Exports.ViewModels.ExportItem.mapping, self);
 };
 
 Exports.ViewModels.ExportItem.prototype.isCaseName = function() {
-    return this.path()[this.path().length - 1] === 'name';
+    return this.path()[this.path().length - 1].name === 'name';
 };
 
 Exports.ViewModels.ExportItem.mapping = {
     include: ['path', 'label', 'tag'],
+    path: {
+        create: function(options) {
+            return new Exports.ViewModels.PathNode(options.data);
+        }
+    }
+};
+
+Exports.ViewModels.PathNode = function(pathNodeJSON) {
+    ko.mapping.fromJS(pathNodeJSON, Exports.ViewModels.PathNode.mapping, this);
+};
+
+Exports.ViewModels.PathNode.mapping = {
+    include: ['name', 'is_repeat']
 };

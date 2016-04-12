@@ -39,15 +39,15 @@
                     orphan: false
                 },
                 {
-                    element: '#tour-deploy-link',
+                    element: '#demand-releases',
                     title: gettext("Deploy your App"),
                     content: gettext("Click here to install your app on a mobile device."),
                     onShown: function () {
-                        $('#tour-deploy-link').parent().addClass('active');
+                        $('#demand-releases').parent().addClass('active');
                         analytics.workflow('Saw the "Deploy your App" step of the guided tour')
                     },
                     onHide: function () {
-                        $('#tour-deploy-link').parent().removeClass('active');
+                        $('#demand-releases').parent().removeClass('active');
                     }
                 },
                 {

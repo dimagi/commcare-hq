@@ -250,18 +250,18 @@ class SmsBillable(models.Model):
     """
     A record of matching a fee to a particular SMS.
 
-    If on closer inspection we determine a particular SmsBillable is invalid (whether something is
-    awry with the api_response, or we used the incorrect fee and want to recalculate) we can set
-    this billable to is_valid = False and it will not be used toward calculating the SmsLineItem in
-    the monthly Invoice.
+    If on closer inspection we determine a particular SmsBillable is invalid
+    (we used the incorrect fee and want to recalculate)
+    we can set this billable to is_valid = False and it will not be used toward
+    calculating the SmsLineItem in the monthly Invoice.
     """
     gateway_fee = models.ForeignKey(SmsGatewayFee, null=True, on_delete=models.PROTECT)
     gateway_fee_conversion_rate = models.DecimalField(default=Decimal('1.0'), null=True, max_digits=20,
                                                       decimal_places=EXCHANGE_RATE_DECIMAL_PLACES)
     usage_fee = models.ForeignKey(SmsUsageFee, null=True, on_delete=models.PROTECT)
+    multipart_count = models.IntegerField(default=1)
     log_id = models.CharField(max_length=50, db_index=True)
     phone_number = models.CharField(max_length=50)
-    api_response = models.TextField(null=True, blank=True)
     is_valid = models.BooleanField(default=True, db_index=True)
     domain = models.CharField(max_length=25, db_index=True)
     direction = models.CharField(max_length=10, db_index=True, choices=DIRECTION_CHOICES)
@@ -273,6 +273,14 @@ class SmsBillable(models.Model):
 
     @property
     def gateway_charge(self):
+        return self.multipart_count * self._single_gateway_charge
+
+    @property
+    def usage_charge(self):
+        return self.multipart_count * self._single_usage_charge
+
+    @property
+    def _single_gateway_charge(self):
         if self.gateway_fee is not None:
             try:
                 charge = SmsGatewayFee.objects.get(id=self.gateway_fee.id)
@@ -284,7 +292,7 @@ class SmsBillable(models.Model):
         return Decimal('0.0')
 
     @property
-    def usage_charge(self):
+    def _single_usage_charge(self):
         if self.usage_fee is not None:
             try:
                 charge = SmsUsageFee.objects.get(id=self.usage_fee.id)
@@ -294,7 +302,7 @@ class SmsBillable(models.Model):
         return Decimal('0.0')
 
     @classmethod
-    def create(cls, message_log, api_response=None):
+    def create(cls, message_log, multipart_count=1):
         phone_number = clean_phone_number(message_log.phone_number)
         direction = message_log.direction
         domain = message_log.domain
@@ -306,14 +314,12 @@ class SmsBillable(models.Model):
             direction=direction,
             date_sent=message_log.date,
             domain=domain,
+            multipart_count=multipart_count,
         )
         billable.gateway_fee, billable.gateway_fee_conversion_rate = cls._get_gateway_fee(
             message_log.backend_api, message_log.backend_id, phone_number, direction, log_id
         )
         billable.usage_fee = cls._get_usage_fee(domain, direction)
-
-        if api_response is not None:
-            billable.api_response = api_response
 
         if message_log.backend_api == SQLTestSMSBackend.get_api_id():
             billable.is_valid = False
