@@ -31,21 +31,17 @@ class PillowtopReindexerTest(TestCase):
             CasePillow()  # verify connection to elasticsearch
 
     def test_domain_reindexer(self):
-        for command, kwargs in [
-            ('ptop_fast_reindex_domains', {'noinput': True, 'bulk': True}),
-            ('ptop_reindexer_v2', {'index': 'domain', 'cleanup': True, 'noinput': True})
-        ]:
-            delete_all_domains()
-            ensure_index_deleted(DOMAIN_INDEX)
-            name = 'reindex-test-domain'
-            create_domain(name)
-            call_command(command, **kwargs)
-            results = DomainES().run()
-            self.assertEqual(1, results.total)
-            domain_doc = results.hits[0]
-            self.assertEqual(name, domain_doc['name'])
-            self.assertEqual('Domain', domain_doc['doc_type'])
-            delete_es_index(DOMAIN_INDEX)
+        delete_all_domains()
+        ensure_index_deleted(DOMAIN_INDEX)
+        name = 'reindex-test-domain'
+        create_domain(name)
+        call_command('ptop_reindexer_v2', **{'index': 'domain', 'cleanup': True, 'noinput': True})
+        results = DomainES().run()
+        self.assertEqual(1, results.total)
+        domain_doc = results.hits[0]
+        self.assertEqual(name, domain_doc['name'])
+        self.assertEqual('Domain', domain_doc['doc_type'])
+        delete_es_index(DOMAIN_INDEX)
 
     def test_user_reindexer(self):
         delete_all_users()
