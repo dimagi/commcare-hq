@@ -81,9 +81,12 @@ def iter_docs_with_retry(database, ids, chunksize=100, max_attempts=5, **query_p
             yield doc
 
 
-def iter_bulk_delete(database, ids, chunksize=100):
+def iter_bulk_delete(database, ids, chunksize=100, doc_callback=None):
     for doc_ids in chunked(ids, chunksize):
         doc_dicts = get_docs(database, keys=doc_ids)
+        if doc_callback:
+            for doc in doc_dicts:
+                doc_callback(doc)
         database.bulk_delete(doc_dicts)
 
 
