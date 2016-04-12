@@ -244,7 +244,7 @@ def with_progress_bar(iterable, length=None):
             "'{}' object has no len(), you must pass in the 'length' parameter"
             .format(type(iterable))
         )
-    granularity = 40
+    granularity = min(40, length)
     checkpoints = {length*i/granularity for i in range(length)}
     print 'Processing [' + ' '*granularity + ']',
     print '\b' * (granularity + 2),
