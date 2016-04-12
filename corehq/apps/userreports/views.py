@@ -23,6 +23,7 @@ from djangular.views.mixins import JSONResponseMixin, allow_remote_invocation
 from sqlalchemy import types, exc
 from sqlalchemy.exc import ProgrammingError
 
+from corehq.apps.hqwebapp.templatetags.hq_shared_tags import toggle_enabled
 from couchexport.export import export_from_tables
 from couchexport.files import Temp
 from couchexport.models import Format
@@ -83,7 +84,6 @@ from corehq.apps.users.decorators import require_permission
 from corehq.apps.users.models import Permissions
 from corehq.toggles import REPORT_BUILDER_MAP_REPORTS
 from corehq.util.couch import get_document_or_404
-from toggle import toggle_enabled
 
 
 def get_datasource_config_or_404(config_id, domain):

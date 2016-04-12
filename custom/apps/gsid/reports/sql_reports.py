@@ -9,7 +9,7 @@ from corehq.apps.reports.sqlreport import DatabaseColumn, SummingSqlTabularRepor
 from corehq.apps.reports.standard import CustomProjectReport, DatespanMixin
 from corehq.apps.reports.standard.maps import GenericMapReport
 from corehq.apps.reports.util import format_datatables_data
-from corehq.apps.style.decorators import use_maps, maps_prefer_canvas
+from corehq.apps.style.decorators import use_maps, maps_prefer_canvas, use_nvd3
 from corehq.apps.userreports.sql import get_table_name
 from corehq.const import USER_MONTH_FORMAT
 from corehq.util.dates import iso_string_to_date
@@ -30,6 +30,7 @@ class StaticColumn(AliasColumn):
     def get_value(self, row):
         return self.value
 
+
 class GSIDSQLReport(SummingSqlTabularReport, CustomProjectReport, DatespanMixin):
     fields = ['custom.apps.gsid.reports.TestField', 
               'corehq.apps.reports.filters.dates.DatespanFilter', 
@@ -40,6 +41,10 @@ class GSIDSQLReport(SummingSqlTabularReport, CustomProjectReport, DatespanMixin)
     emailable = True
     default_aggregation = "clinic"
     is_bootstrap3 = True
+
+    @use_nvd3
+    def bootstrap3_dispatcher(self, request, *args, **kwargs):
+        super(GSIDSQLReport, self).bootstrap3_dispatcher(request, *args, **kwargs)
 
     def __init__(self, request, base_context=None, domain=None, **kwargs):
         self.is_map = kwargs.pop('map', False)

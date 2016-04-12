@@ -5,6 +5,7 @@ SampleExportInstances = {
         "tables": [{
             "path": null,
             "name": null,
+            "selected": true,
             "columns": [{
                 "show": true,
                 "item": {
@@ -49,13 +50,15 @@ SampleExportInstances = {
             }],
             "doc_type": "TableConfiguration"
         }],
-        "doc_type": "ExportInstance"
+        "doc_type": "ExportInstance",
+        "is_deidentified": false,
     },
     saved: {
         "_id": "1234",
         "name": null,
         "type": "form",
         "tables": [{
+            "selected": true,
             "path": null,
             "name": null,
             "columns": [{
@@ -102,6 +105,7 @@ SampleExportInstances = {
             }],
             "doc_type": "TableConfiguration"
         }],
-        "doc_type": "ExportInstance"
+        "doc_type": "ExportInstance",
+        "is_deidentified": false,
     }
 };

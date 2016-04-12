@@ -376,6 +376,8 @@ corehq.apps.hqcase:
   - auditcare
   - casexml.apps.case
   - casexml.apps.phone
+  - corehq.apps.accounting
+  - corehq.apps.fixtures
   - corehq.apps.tzmigration
   - corehq.apps.domain
   - corehq.apps.dropbox
@@ -435,9 +437,16 @@ corehq.apps.users:
   - auditcare
   - casexml.apps.case
   - casexml.apps.phone
+  - casexml.apps.stock
+  - corehq.apps.accounting
+  - corehq.apps.commtrack
   - corehq.apps.domain
   - corehq.apps.dropbox
+  - corehq.apps.fixtures
+  - corehq.apps.groups
   - corehq.apps.hqcase
+  - corehq.apps.locations
+  - corehq.apps.products
   - corehq.apps.reminders
   - corehq.apps.sms
   - corehq.apps.smsforms
@@ -448,10 +457,16 @@ corehq.apps.users:
   - corehq.form_processor
   - corehq.sql_accessors
   - couchforms
+  - custom.ilsgateway
+  - custom.ewsghana
   - django.contrib.admin
   - django_digest
+  - django_otp
+  - django_otp.plugins.otp_static
+  - django_otp.plugins.otp_totp
   - django_prbac
   - tastypie
+  - two_factor
   - touchforms.formplayer
 corehq.apps.api:
   - django_prbac

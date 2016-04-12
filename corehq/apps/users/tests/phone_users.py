@@ -1,5 +1,6 @@
 from django.test import TestCase
 from corehq.apps.domain.models import Domain
+from corehq.apps.users.dbaccessors.all_commcare_users import delete_all_users
 from corehq.apps.users.models import CouchUser, WebUser, CommCareUser
 from dimagi.utils.couch import get_cached_property
 
@@ -7,9 +8,7 @@ from dimagi.utils.couch import get_cached_property
 class PhoneUsersTestCase(TestCase):
 
     def setUp(self):
-        all_users = CouchUser.all()
-        for user in all_users:
-            user.delete()
+        delete_all_users()
         self.username = 'username'
         self.password = 'password'
         self.domain = 'mockdomain'

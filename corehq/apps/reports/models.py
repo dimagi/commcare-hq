@@ -452,10 +452,7 @@ class ReportConfig(CachedCouchDocumentMixin, Document):
     @property
     @memoized
     def owner(self):
-        try:
-            return WebUser.get_by_user_id(self.owner_id)
-        except CouchUser.AccountTypeError:
-            return CommCareUser.get_by_user_id(self.owner_id)
+        return CouchUser.get_by_user_id(self.owner_id)
 
     def get_report_content(self, lang, attach_excel=False):
         """
@@ -673,10 +670,7 @@ class ReportNotification(CachedCouchDocumentMixin, Document):
     @memoized
     def owner(self):
         id = self.owner_id
-        try:
-            return WebUser.get_by_user_id(id)
-        except CouchUser.AccountTypeError:
-            return CommCareUser.get_by_user_id(id)
+        return CouchUser.get_by_user_id(id)
 
     @property
     @memoized

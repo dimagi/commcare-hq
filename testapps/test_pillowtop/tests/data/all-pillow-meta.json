@@ -131,17 +131,18 @@
         "name": "CouvertureFluffPillow"
     },
     "DefaultChangeFeedPillow": {
-        "advertised_name": "corehq.apps.change_feed.pillow.ChangeFeedPillow.testhq",
+        "advertised_name": "DefaultChangeFeedPillow",
         "change_feed_type": "CouchChangeFeed",
-        "checkpoint_id": "default-couch-change-feed",
-        "couch_filter": null,
-        "couchdb_type": "CachedCouchDB",
-        "couchdb_uri": "http://{COUCH_SERVER_ROOT}/test_commcarehq",
-        "document_class": null,
-        "extra_args": {},
-        "full_class_name": "corehq.apps.change_feed.pillow.ChangeFeedPillow",
-        "include_docs": false,
+        "checkpoint_id": "DefaultChangeFeedPillow",
+        "full_class_name": "pillowtop.pillow.interface.ConstructedPillow",
         "name": "DefaultChangeFeedPillow"
+    },
+    "DomainDbKafkaPillow": {
+        "advertised_name": "DomainDbKafkaPillow",
+        "change_feed_type": "CouchChangeFeed",
+        "checkpoint_id": "DomainDbKafkaPillow",
+        "full_class_name": "pillowtop.pillow.interface.ConstructedPillow",
+        "name": "DomainDbKafkaPillow"
     },
     "DomainPillow": {
         "advertised_name": "corehq.pillows.domain.DomainPillow.test_hqdomains_20160318_1339.testhq",
@@ -478,19 +479,19 @@
         "name": "SMSPillow",
         "unique_id": "708c77f8e5fe00286fa5791e9fa7d45f"
     },
-    "SqlSMSPillow": {
-        "advertised_name": "SqlSMSPillow",
-        "change_feed_type": "KafkaChangeFeed",
-        "checkpoint_id": "sql-sms-to-es",
-        "full_class_name": "pillowtop.pillow.interface.ConstructedPillow",
-        "name": "SqlSMSPillow"
-    },
     "SqlCaseToElasticsearchPillow": {
         "advertised_name": "SqlCaseToElasticsearchPillow",
         "change_feed_type": "KafkaChangeFeed",
         "checkpoint_id": "sql-cases-to-elasticsearch",
         "full_class_name": "pillowtop.pillow.interface.ConstructedPillow",
         "name": "SqlCaseToElasticsearchPillow"
+    },
+    "SqlSMSPillow": {
+        "advertised_name": "SqlSMSPillow",
+        "change_feed_type": "KafkaChangeFeed",
+        "checkpoint_id": "sql-sms-to-es",
+        "full_class_name": "pillowtop.pillow.interface.ConstructedPillow",
+        "name": "SqlSMSPillow"
     },
     "SqlXFormToElasticsearchPillow": {
         "advertised_name": "SqlXFormToElasticsearchPillow",
@@ -646,21 +647,21 @@
         "name": "WorldVisionMotherFluffPillow"
     },
     "XFormPillow": {
-        "advertised_name": "corehq.pillows.xform.XFormPillow.test_xforms_20150403-1728.testhq",
+        "advertised_name": "corehq.pillows.xform.XFormPillow.test_xforms_2016-03-02.testhq",
         "change_feed_type": "CouchChangeFeed",
-        "checkpoint_id": "corehq.pillows.xform.XFormPillow.test_xforms_20150403-1728.testhq",
+        "checkpoint_id": "corehq.pillows.xform.XFormPillow.test_xforms_2016-03-02.testhq",
         "couch_filter": "couchforms/xforms",
         "couchdb_type": "Database",
         "couchdb_uri": "http://{COUCH_SERVER_ROOT}/test_commcarehq",
         "document_class": "XFormInstance",
         "es_alias": "xforms",
-        "es_index": "test_xforms_20150403-1728",
+        "es_index": "test_xforms_2016-03-02",
         "es_type": "xform",
         "extra_args": {},
         "full_class_name": "corehq.pillows.xform.XFormPillow",
         "include_docs": false,
         "name": "XFormPillow",
-        "unique_id": "test_xforms_20150403-1728"
+        "unique_id": "test_xforms_2016-03-02"
     },
     "kafka-ucr-main": {
         "advertised_name": "kafka-ucr-main",

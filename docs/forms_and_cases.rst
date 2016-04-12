@@ -95,7 +95,7 @@ irrespective of the type. Some examples are shown below:
 Model acessors
 --------------
 To access models from the database there are classes that abstract the actual DB operations.
-These classes are genrally names :code:`<type>Accessors` and must be instantiated with a domain
+These classes are generally names :code:`<type>Accessors` and must be instantiated with a domain
  name in order to know which DB needs to be queried.
 
 **Forms**
@@ -134,7 +134,7 @@ Branching
 In special cases code may need to be branched into SQL and Couch versions.
  This can be accomplished using the :code:`should_use_sql_backend(domain)` function.::
 
-    if should_use_sql_domain(domain_name):
+    if should_use_sql_backend(domain_name):
         # do SQL specifc stuff here
     else:
         # do couch stuff here
@@ -144,7 +144,7 @@ Unit Tests
 ----------
 In most cases tests that use form / cases/ ledgers should be run on both backends as follows::
 
-    @run_with_multiple_backends
+    @run_with_all_backends
     def test_my_function(self):
         ...
 
@@ -159,7 +159,7 @@ To create a form in unit tests use the following pattern::
     from corehq.form_processor.tests.utils import run_with_all_backends
     from corehq.form_processor.utils import get_simple_wrapped_form, TestFormMetadata
 
-    @run_with_multiple_backends
+    @run_with_all_backends
     def test_my_form_function(self):
         # This TestFormMetadata specifies properties about the form to be created
         metadata = TestFormMetadata(
@@ -176,7 +176,7 @@ Creating cases can be done with the :code:`CaseFactory`::
     from corehq.form_processor.tests.utils import run_with_all_backends
     from casexml.apps.case.mock import CaseFactory
 
-    @run_with_multiple_backends
+    @run_with_all_backends
     def test_my_case_function(self):
         factory = CaseFactory(domain='foo')
         factory.create_case(

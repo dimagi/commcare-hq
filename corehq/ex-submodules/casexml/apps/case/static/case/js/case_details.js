@@ -79,8 +79,7 @@ function XFormListViewModel() {
     self.xforms = ko.observableArray([]);
     self.page_size = ko.observable(10);
     self.disp_page_index = ko.observable(1);
-    self.total_rows = ko.observable(0);
-    self.page_count = ko.observable(0);
+    self.total_rows = ko.observable(-1);
     self.selected_xform_idx = ko.observable(-1);
     self.selected_xform_doc_id = ko.observable("");
     self.selected_xforms = ko.observableArray([]);
@@ -112,7 +111,6 @@ function XFormListViewModel() {
 
     self.xform_history_cb = function(data) {
         self.total_rows(CASE_DETAILS.xform_ids.length);
-        self.calc_page_count();
         var mapped_xforms = $.map(data, function (item) {
             return new XFormDataModel(item);
         });
@@ -120,9 +118,25 @@ function XFormListViewModel() {
         self.selected_xform_idx(-1);
     };
 
-    self.refresh_forms = function () {
+    self.all_rows_loaded = ko.computed(function() {
+        return self.total_rows() === self.xforms().length;
+    });
+
+    self.page_count = ko.computed(function() {
+        return Math.ceil(self.total_rows()/self.page_size());
+    });
+
+    self.refresh_forms = ko.computed(function () {
+        var disp_index = self.disp_page_index();
+        if (disp_index > self.page_count.peek()) {
+            self.disp_page_index(self.page_count.peek());
+            return;
+        }
+        if (self.total_rows.peek() > 0 && self.all_rows_loaded.peek()) {
+            return;
+        }
         self.data_loading(true);
-        var start_num = self.disp_page_index() || 1;
+        var start_num = disp_index || 1;
         var start_range = (start_num - 1) * self.page_size();
         var end_range = start_range + self.page_size();
         $.ajax({
@@ -143,23 +157,14 @@ function XFormListViewModel() {
                 self.data_loading(false);
             }
         });
-    };
-
-    self.calc_page_count = function() {
-        self.page_count(Math.ceil(self.total_rows()/self.page_size()));
-    };
-
-    //main function data collection - entry point if you will
-    self.refresh_forms();
+    }, this).extend({deferred: true});
 
     self.nextPage = function() {
         self.disp_page_index(self.disp_page_index() + 1);
-        self.refresh_forms();
     };
 
     self.prevPage = function() {
         self.disp_page_index(self.disp_page_index() - 1);
-        self.refresh_forms();
     };
 
     self.clickRow = function(item) {
@@ -190,21 +195,6 @@ function XFormListViewModel() {
         else {
             return end_page_num;
         }
-    });
-
-
-    self.page_size_changed = self.page_size.subscribe(function () {
-        var disp_index = self.disp_page_index();
-        self.calc_page_count();
-        if (disp_index > self.page_count()) {
-            self.disp_page_index(self.page_count());
-        } else {
-            self.refresh_forms();
-        }
-    });
-
-    self.disp_page_index_changed = self.disp_page_index.subscribe(function () {
-        self.refresh_forms();
     });
 
     self.all_pages = function() {

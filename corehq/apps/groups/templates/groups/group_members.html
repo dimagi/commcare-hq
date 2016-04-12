@@ -206,9 +206,9 @@
                     <div class="control-group">
                         <label class="control-label" for="group-case-sharing-input">{% trans "Case Sharing" %}</label>
                         <div class="controls">
-                            <select class="input-small" name="case_sharing" id="group-case-sharing-input" data-value="{{ group.case_sharing|BOOL }}">
+                            <select class="input-small" name="case_sharing" id="group-case-sharing-input">
                                 <option value="true">{% trans "On" %}</option>
-                                <option value="false">{% trans "Off" %}</option>
+                                <option value="false"{% if not group.case_sharing %} selected{% endif %}>{% trans "Off" %}</option>
                             </select>
                             <p class="help-block">{% trans "Determines whether users within this group will share cases with each other." %}</p>
                             <div id="group-case-sharing-warning" hidden="hidden">
@@ -222,9 +222,9 @@
                     <div class="control-group">
                         <label class="control-label" for="group-reporting-input">{% trans "Reporting" %}</label>
                         <div class="controls">
-                            <select class="input-small" name="reporting" id="group-reporting-input" data-value="{{ group.reporting|BOOL }}">
+                            <select class="input-small" name="reporting" id="group-reporting-input">
                                 <option value="true">{% trans "On" %}</option>
-                                <option value="false">{% trans "Off" %}</option>
+                                <option value="false"{% if not group.reporting %} selected{% endif %}>{% trans "Off" %}</option>
                             </select>
                             <p class="help-block">{% trans "Indicate whether this group's name should appear in the group filter for reports." %}</p>
                         </div>

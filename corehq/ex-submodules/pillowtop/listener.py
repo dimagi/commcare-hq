@@ -184,7 +184,7 @@ class BasicPillow(PillowBase):
         try:
             # This breaks the module boundary by using a show function defined in commcare-hq
             # but it was decided that it wasn't worth the effort to maintain the separation.
-            meta = self.get_couch_db().show('domain/domain_date', change['id'])
+            meta = self.get_couch_db().show('domain_shows/domain_date', change['id'])
         except ResourceNotFound:
             # Show function does not exist
             meta = None
@@ -511,7 +511,7 @@ class AliasedElasticPillow(BasicPillow):
                     "tb": tb
                 }
             )
-            return None
+            raise
 
     def process_bulk(self, changes):
         if not changes:
