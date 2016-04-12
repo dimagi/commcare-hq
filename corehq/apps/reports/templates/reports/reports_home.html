@@ -121,7 +121,7 @@ $(function() {
                     </td>
                     <td>{{ report.day_name }} at {{ report.hour }}:00</td>
                     <td>
-                        handles old documents
+                        {# handles old documents #}
                         {% if report.user_ids or report.send_to_owner %}
                         {% trans "me" %}{% if report.recipient_emails %}, {% endif %}
                         {% endif %}
