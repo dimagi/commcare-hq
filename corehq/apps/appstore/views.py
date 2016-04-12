@@ -147,7 +147,12 @@ class CommCareExchangeHomeView(BaseCommCareExchangeSectionView):
     @property
     @memoized
     def results(self):
-        return es_snapshot_query(self.params, SNAPSHOT_FACETS)
+        start_at = (self.page - 1) * self.page_length
+        return es_snapshot_query(self.params, SNAPSHOT_FACETS, start_at=start_at, size=self.page_length)
+
+    @property
+    def total_results(self):
+        return self.results.get('hits', {}).get('total', 0)
 
     @property
     @memoized
@@ -180,11 +185,11 @@ class CommCareExchangeHomeView(BaseCommCareExchangeSectionView):
     @property
     def page_context(self):
         return {
-            'apps': self.d_results[(self.page - 1) * self.page_length:self.page * self.page_length],
+            'apps': self.d_results,
             'page': self.page,
             'prev_page': (self.page - 1),
             'next_page': (self.page + 1),
-            'more_pages': False if len(self.d_results) <= self.page * self.page_length else True,
+            'more_pages': False if self.total_results <= self.page * self.page_length else True,
             'sort_by': self.sort_by,
             'show_starter_apps': self.starter_apps,
             'include_unapproved': self.include_unapproved,
@@ -241,7 +246,7 @@ def appstore_api(request):
     return HttpResponse(json.dumps(results), content_type="application/json")
 
 
-def es_snapshot_query(params, facets=None, terms=None, sort_by="snapshot_time"):
+def es_snapshot_query(params, facets=None, terms=None, sort_by="snapshot_time", start_at=None, size=None):
     if terms is None:
         terms = ['is_approved', 'sort_by', 'search']
     if facets is None:
@@ -265,7 +270,7 @@ def es_snapshot_query(params, facets=None, terms=None, sort_by="snapshot_time"):
             }
         })
 
-    return es_query(params, facets, terms, q)
+    return es_query(params, facets, terms, q, start_at=start_at, size=size)
 
 
 @require_superuser
