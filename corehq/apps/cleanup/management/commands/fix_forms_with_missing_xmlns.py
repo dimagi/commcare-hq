@@ -1,4 +1,5 @@
 import uuid
+from collections import namedtuple
 from itertools import chain
 
 from couchdbkit import ResourceNotFound
@@ -20,6 +21,9 @@ from optparse import make_option
 
 
 ONE_HOUR = 60 * 60
+
+
+NewXmlnsInfo = namedtuple("NewXmlnsInfo", ["form_names", "xmlns"])
 
 
 class Command(BaseCommand):
@@ -52,12 +56,13 @@ class Command(BaseCommand):
                 with app_db as app_db:
                     for i, xform_instance in enumerate(submissions):
                         self._print_progress(i, total, num_fixed)
-                        if xform_instance.app_id in new_xmlnss:
+                        new_xmls_info = new_xmlnss.get(xform_instance.app_id, None)
+                        if new_xmls_info and xform_instance.name in new_xmls_info.form_names:
                             num_fixed += 1
                             # We've already generated a new xmlns for this app
                             set_xmlns_on_submission(
                                 xform_instance,
-                                new_xmlnss[xform_instance.app_id],
+                                new_xmls_info.xmlns,
                                 xform_db,
                                 dry_run,
                             )
@@ -67,18 +72,19 @@ class Command(BaseCommand):
                             forms_without_xmlns = get_forms_without_xmlns(app)
                             if len(forms_without_xmlns) == 1:
                                 form = forms_without_xmlns[0]
-                                if not xforms_with_real_xmlns_possibly_exist(app._id, form):
-                                    num_fixed += 1
-                                    new_xmlns = generate_random_xmlns()
-                                    new_xmlnss[xform_instance.app_id] = new_xmlns
-                                    set_xmlns_on_form(form, new_xmlns, app, f, app_db, dry_run)
-                                    set_xmlns_on_submission(
-                                        xform_instance,
-                                        new_xmlnss[xform_instance.app_id],
-                                        xform_db,
-                                        dry_run,
-                                    )
-                                    f.write("Set new xmlns on submission {}\n".format(xform_instance._id))
+                                if xform_instance.name in form.name.values():
+                                    if not xforms_with_real_xmlns_possibly_exist(app._id, form):
+                                        num_fixed += 1
+                                        new_xmlns = generate_random_xmlns()
+                                        new_xmlnss[xform_instance.app_id] = NewXmlnsInfo(form.name.values(), new_xmlns)
+                                        set_xmlns_on_form(form, new_xmlns, app, f, app_db, dry_run)
+                                        set_xmlns_on_submission(
+                                            xform_instance,
+                                            new_xmlns,
+                                            xform_db,
+                                            dry_run,
+                                        )
+                                        f.write("Set new xmlns on submission {}\n".format(xform_instance._id))
             for error_id in list(xform_db.error_ids) + list(app_db.error_ids):
                 f.write("Failed to save {}\n".format(error_id))
 
