@@ -2,7 +2,7 @@
 {% load hq_shared_tags %}
 {% load i18n %}
 {% block filter_content %}
-    <label for="{{ css_id }}_startdate" class="pull-left">{% trans 'From' %}</label>
+    <label for="{{ css_id }}_startdate" class="pull-left label-from">{% trans 'From' %}</label>
     <div class="col-md-2">
         <div class="input-group">
             <input type="text"
@@ -16,7 +16,7 @@
         </div>
     </div>
 
-    <label for="{{ css_id }}_enddate" class="pull-left">{% trans 'To' %}</label>
+    <label for="{{ css_id }}_enddate" class="pull-left label-to">{% trans 'To' %}</label>
     <div class="col-md-2">
         <div class="input-group">
             <input type="text"
@@ -36,7 +36,17 @@
         {% blocktrans %}This report's timezone is {{ timezone }}.{% endblocktrans %}
         {% endif %}
     </span>
+    <style>
+        .input-group-btn {
+            padding-left: 5px;
+        }
+
+        .label-from, .label-to {
+            padding-top: 7px;
+        }
+    </style>
 {% endblock %}
+
 {% block filter_js %}
 {% ifequal slug 'datespan'  %}
 <script type="text/javascript">
