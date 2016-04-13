@@ -21,9 +21,8 @@ def ensure_index_deleted(es_index):
 
 @unit_testing_only
 def delete_es_index(es_index):
-    from corehq.elastic import get_es_new
-
     if es_index.startswith(TEST_ES_PREFIX):
+        from corehq.elastic import get_es_new
         es = get_es_new()
         es.indices.delete(index=es_index)
     else:

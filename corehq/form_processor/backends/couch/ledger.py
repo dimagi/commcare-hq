@@ -1,6 +1,6 @@
 from casexml.apps.stock import const
 from casexml.apps.stock.models import StockReport, StockTransaction
-from corehq.apps.commtrack.processing import compute_ledger_values
+from corehq.apps.commtrack.processing import compute_ledger_values, rebuild_stock_state
 from corehq.form_processor.interfaces.ledger_processor import LedgerProcessorInterface, StockModelUpdateResult, \
     LedgerDBInterface
 from corehq.form_processor.parsers.ledgers.helpers import UniqueLedgerReference
@@ -54,6 +54,8 @@ class LedgerProcessorCouch(LedgerProcessorInterface):
             to_save.append(_get_model_for_stock_transaction(report_model, transaction_helper, ledger_db))
         return StockModelUpdateResult(to_save=to_save)
 
+    def rebuild_ledger_state(self, case_id, section_id, entry_id):
+        rebuild_stock_state(case_id, section_id, entry_id)
 
 def _get_model_for_stock_report(domain, stock_report_helper):
     return StockReport(

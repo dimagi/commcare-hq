@@ -1,11 +1,11 @@
 {% load i18n %}
 {{ wizard.management_form }}
 {% for field in wizard.form %}
-<div class="control-group{% if field.errors %} error{% endif %}">
-  <div class="control-label">{{ field.label }}</div>
-  <div class="controls">{{ field }}
+<div class="form-group{% if field.errors %} has-error{% endif %}">
+  <label class="col-sm-4 control-label">{{ field.label }}</label>
+  <div class="col-sm-4">{{ field }}
   {% for error in field.errors %}
-      <span class="help-inline">{{ error }}</span>
+      <span class="help-block">{{ error }}</span>
   {% endfor %}
   {% if field.name == "password" %}
     <p class="help-block">

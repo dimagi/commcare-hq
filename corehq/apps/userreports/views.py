@@ -23,6 +23,7 @@ from djangular.views.mixins import JSONResponseMixin, allow_remote_invocation
 from sqlalchemy import types, exc
 from sqlalchemy.exc import ProgrammingError
 
+from corehq.apps.hqwebapp.templatetags.hq_shared_tags import toggle_enabled
 from couchexport.export import export_from_tables
 from couchexport.files import Temp
 from couchexport.models import Format
@@ -148,8 +149,7 @@ class ReportBuilderView(BaseDomainView):
     def dispatch(self, request, *args, **kwargs):
         if has_report_builder_access(request):
             report_type = kwargs.get('report_type', None)
-            domain = kwargs.get('domain', None)
-            if report_type != 'map' or REPORT_BUILDER_MAP_REPORTS.enabled(domain):
+            if report_type != 'map' or toggle_enabled(request, REPORT_BUILDER_MAP_REPORTS):
                 return super(ReportBuilderView, self).dispatch(request, *args, **kwargs)
             else:
                 raise Http404

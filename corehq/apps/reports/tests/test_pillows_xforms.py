@@ -1,5 +1,5 @@
 import copy
-from django.test import TestCase
+from django.test import SimpleTestCase
 from django.conf import settings
 from corehq.apps.api.es import report_term_filter
 from corehq.pillows.base import restore_property_dict, VALUE_TAG
@@ -121,8 +121,7 @@ CONCEPT_XFORM =  {
 }
 
 
-
-class testReportXFormProcessing(TestCase):
+class TestReportXFormProcessing(SimpleTestCase):
     def testConvertAndRestoreReportXFormDicts(self):
         pillow = ReportXFormPillow(online=False)
         orig = CONCEPT_XFORM
@@ -145,6 +144,10 @@ class testReportXFormProcessing(TestCase):
         # user_type gets added in change_transform
         del(restored['user_type'])
         del(for_indexing['user_type'])
+
+        # inserted_at is inserted during the transform
+        del(restored['inserted_at'])
+        del(for_indexing['inserted_at'])
 
         self.assertNotEqual(for_indexing, orig)
         self.assertNotEqual(for_indexing, restored)

@@ -76,13 +76,13 @@
         $(function () {
             var moduleType = {{ module.module_type|JSON }};
             var showCaseTypeError = function(message) {
-                var $caseTypeError = $('#case_type_error')
+                var $caseTypeError = $('#case_type_error');
                 $caseTypeError.css('display', 'block');
                 $caseTypeError.text(message);
-            }
+            };
             var hideCaseTypeError = function() {
                 $('#case_type_error').css('display', 'none');
-            }
+            };
             $('#case_type').on('textchange', function () {
                 var value = $(this).val();
                 var valueNoSpaces = value.replace(/ /g, '_');
@@ -227,12 +227,14 @@
                         {% trans "Source Module" %}
                     </label>
                     <div class="col-sm-4">
-                        <select type="text" name="source_module_id" data-value="{{ module.source_module_id}}" class="form-control">
+                        <select type="text" name="source_module_id" class="form-control">
                         <option value="">{% trans "None" %}</option>
                         {% for mod in app.modules %}
                             {% if mod.module_type == 'basic' %}
                                 {% if mod.id != module.id %}
-                                    <option value="{{mod.unique_id}}">{{ mod.name|trans:langs }}</option>
+                                    <option value="{{mod.unique_id}}"{% if module.source_module_id == mod.unique_id %} selected{% endif %}>
+                                        {{ mod.name|trans:langs }}
+                                    </option>
                                 {% endif %}
                             {% endif %}
                         {% endfor %}
@@ -245,10 +247,9 @@
                         {% trans "Menu Mode" %}
                     </label>
                     <div class="col-sm-4">
-                        <select type="text" name="put_in_root" class="form-control"
-                                data-value="{% if module.put_in_root %}true{% else %}false{% endif %}">
+                        <select type="text" name="put_in_root" class="form-control">
                             <option value="false">{% trans "Display module and then forms" %}</option>
-                            <option value="true">{% trans "Display only forms" %}</option>
+                            <option value="true"{% if module.put_in_root %} selected{% endif %}>{% trans "Display only forms" %}</option>
                         </select>
                     </div>
                 </div>
@@ -260,11 +261,13 @@
                         {% trans "Parent Module" %}
                     </label>
                     <div class="col-sm-4">
-                        <select type="text" name="root_module_id" data-value="{{ module.root_module_id}}" class="form-control">
-                        <option value="">{% trans "No Parent" %}</option>
-                        {% for mod in valid_parent_modules %}
-                            <option value="{{mod.unique_id}}">{{ mod.name|trans:langs }}</option>
-                        {% endfor %}
+                        <select type="text" name="root_module_id" class="form-control">
+                            <option value="">{% trans "No Parent" %}</option>
+                            {% for mod in valid_parent_modules %}
+                                <option value="{{mod.unique_id}}"{% if mod.unique_id == module.root_module_id %} selected{% endif %}>
+                                    {{ mod.name|trans:langs }}
+                                </option>
+                            {% endfor %}
                         </select>
                     </div>
                 </div>

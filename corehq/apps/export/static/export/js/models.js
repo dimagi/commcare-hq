@@ -6,7 +6,12 @@ Exports.ViewModels.ExportInstance = function(instanceJSON, options) {
     ko.mapping.fromJS(instanceJSON, Exports.ViewModels.ExportInstance.mapping, self);
     self.saveState = ko.observable(Exports.Constants.SAVE_STATES.READY);
     self.saveUrl = options.saveUrl;
-    self.isDeidColumnVisible = ko.observable(false);
+    // If any column has a deid transform, show deid column
+    self.isDeidColumnVisible = ko.observable(self.is_deidentified() || _.any(self.tables(), function(table) {
+        return table.selected() && _.any(table.columns(), function(column) {
+            return column.selected() && column.deid_transform();
+        });
+    }));
 };
 
 Exports.ViewModels.ExportInstance.prototype.getFormatOptionValues = function() {
@@ -135,7 +140,7 @@ Exports.ViewModels.TableConfiguration.prototype.selectNone = function(table) {
 };
 
 Exports.ViewModels.TableConfiguration.mapping = {
-    include: ['name', 'path', 'columns', 'selected', 'label'],
+    include: ['name', 'path', 'columns', 'selected', 'label', 'is_deleted'],
     columns: {
         create: function(options) {
             return new Exports.ViewModels.ExportColumn(options.data);

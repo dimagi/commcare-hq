@@ -14,7 +14,7 @@ class ReadonlyFormDocumentStore(ReadOnlyDocumentStore):
 
     def get_document(self, doc_id):
         try:
-            return self.form_accessors.get_form(doc_id).to_json()
+            return add_couch_properties_to_sql_form_json(self.form_accessors.get_form(doc_id).to_json())
         except (XFormNotFound, BlobError) as e:
             raise DocumentNotFoundError(e)
 

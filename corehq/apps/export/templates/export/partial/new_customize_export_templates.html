@@ -10,6 +10,9 @@
             <span>
                 <span data-bind="text: table.label()" />
             </span>
+            <span>
+                <span class="label label-warning" data-bind="visible: table.is_deleted">deleted</span>
+            </span>
         </legend>
         <div data-bind="visibleFade: table.selected">
             <div class="control-group pull-right">

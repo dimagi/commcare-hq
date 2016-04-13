@@ -32,7 +32,8 @@ class DomainRegistrationForm(forms.Form):
     max_name_length = 25
 
     org = forms.CharField(widget=forms.HiddenInput(), required=False)
-    hr_name = forms.CharField(label=_('Project Name'), max_length=max_name_length)
+    hr_name = forms.CharField(label=_('Project Name'), max_length=max_name_length,
+                                      widget=forms.TextInput(attrs={'class': 'form-control'}))
 
     def __init__(self, *args, **kwargs):
         super(DomainRegistrationForm, self).__init__(*args, **kwargs)
@@ -65,18 +66,23 @@ class NewWebUserRegistrationForm(NoAutocompleteMixin, DomainRegistrationForm):
     """
     full_name = forms.CharField(label=_('Full Name'),
                                 max_length=User._meta.get_field('first_name').max_length +
-                                           User._meta.get_field('last_name').max_length + 1)
+                                           User._meta.get_field('last_name').max_length + 1,
+                                widget=forms.TextInput(attrs={'class': 'form-control'}))
     email = forms.EmailField(label=_('Email Address'),
                              max_length=User._meta.get_field('email').max_length,
-                             help_text=_('You will use this email to log in.'))
+                             help_text=_('You will use this email to log in.'),
+                             widget=forms.TextInput(attrs={'class': 'form-control'}))
     password = forms.CharField(label=_('Create Password'),
                                max_length=max_pwd,
                                widget=forms.PasswordInput(render_value=False,
-                                                          attrs={'data-bind': "value: password, valueUpdate: 'input'"}),
+                                                          attrs={
+                                                            'data-bind': "value: password, valueUpdate: 'input'",
+                                                            'class': 'form-control',
+                                                          }),
                                help_text=mark_safe("""
                                <span data-bind="text: passwordHelp, css: color">
                                """))
-    if getattr(settings, "ENABLE_DRACONIAN_SECURITY_FEATURES", False):
+    if settings.ENABLE_DRACONIAN_SECURITY_FEATURES:
         captcha = CaptchaField(_("Type the letters in the box"))
     create_domain = forms.BooleanField(widget=forms.HiddenInput(), required=False, initial=False)
     # Must be set to False to have the clean_*() routine called

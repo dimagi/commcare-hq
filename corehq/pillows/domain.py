@@ -1,12 +1,18 @@
 import copy
 from corehq.apps.accounting.models import Subscription
+from corehq.apps.change_feed.consumer.feed import KafkaChangeFeed
+from corehq.apps.change_feed.document_types import DOMAIN
 from corehq.apps.domain.models import Domain
+from corehq.elastic import get_es_new
 from corehq.pillows.base import HQPillow
-from corehq.pillows.mappings.domain_mapping import DOMAIN_MAPPING, DOMAIN_INDEX
-from dimagi.utils.decorators.memoized import memoized
-from django.conf import settings
+from corehq.pillows.mappings.domain_mapping import DOMAIN_MAPPING, DOMAIN_INDEX, DOMAIN_META, DOMAIN_INDEX_INFO
 from django_countries.data import COUNTRIES
+from pillowtop.checkpoints.manager import PillowCheckpoint, PillowCheckpointEventHandler
 from pillowtop.es_utils import doc_exists
+from pillowtop.pillow.interface import ConstructedPillow
+from pillowtop.processors import ElasticProcessor
+from pillowtop.reindexer.change_providers.couch import CouchViewChangeProvider
+from pillowtop.reindexer.reindexer import get_default_reindexer_for_elastic_pillow
 
 
 class DomainPillow(HQPillow):
@@ -19,23 +25,7 @@ class DomainPillow(HQPillow):
     es_type = "hqdomain"
     es_index = DOMAIN_INDEX
     default_mapping = DOMAIN_MAPPING
-    es_meta = {
-        "settings": {
-            "analysis": {
-                "analyzer": {
-                    "default": {
-                        "type": "custom",
-                        "tokenizer": "whitespace",
-                        "filter": ["lowercase"]
-                    },
-                    "comma": {
-                        "type": "pattern",
-                        "pattern": "\s*,\s*"
-                    },
-                }
-            }
-        }
-    }
+    es_meta = DOMAIN_META
 
     @classmethod
     def get_unique_id(self):
@@ -51,13 +41,52 @@ class DomainPillow(HQPillow):
             return doc_dict
 
     def change_transform(self, doc_dict):
-        doc_ret = copy.deepcopy(doc_dict)
-        sub = Subscription.objects.filter(subscriber__domain=doc_dict['name'], is_active=True)
-        doc_ret['deployment'] = doc_dict.get('deployment', None) or {}
-        countries = doc_ret['deployment'].get('countries', [])
-        doc_ret['deployment']['countries'] = []
-        if sub:
-            doc_ret['subscription'] = sub[0].plan_version.plan.edition
-        for country in countries:
-            doc_ret['deployment']['countries'].append(COUNTRIES[country].upper())
-        return doc_ret
+        return transform_domain_for_elasticsearch(doc_dict)
+
+
+def transform_domain_for_elasticsearch(doc_dict):
+    doc_ret = copy.deepcopy(doc_dict)
+    sub = Subscription.objects.filter(subscriber__domain=doc_dict['name'], is_active=True)
+    doc_ret['deployment'] = doc_dict.get('deployment', None) or {}
+    countries = doc_ret['deployment'].get('countries', [])
+    doc_ret['deployment']['countries'] = []
+    if sub:
+        doc_ret['subscription'] = sub[0].plan_version.plan.edition
+    for country in countries:
+        doc_ret['deployment']['countries'].append(COUNTRIES[country].upper())
+    return doc_ret
+
+
+def get_domain_kafka_to_elasticsearch_pillow(pillow_id='domain-kafka-to-es'):
+    checkpoint = PillowCheckpoint(
+        pillow_id,
+    )
+    domain_processor = ElasticProcessor(
+        elasticsearch=get_es_new(),
+        index_info=DOMAIN_INDEX_INFO,
+        doc_prep_fn=transform_domain_for_elasticsearch
+    )
+    return ConstructedPillow(
+        name=pillow_id,
+        document_store=None,
+        checkpoint=checkpoint,
+        change_feed=KafkaChangeFeed(topics=[DOMAIN], group_id='domains-to-es'),
+        processor=domain_processor,
+        change_processed_event_handler=PillowCheckpointEventHandler(
+            checkpoint=checkpoint, checkpoint_frequency=100,
+        ),
+    )
+
+
+def get_domain_reindexer():
+    return get_default_reindexer_for_elastic_pillow(
+        pillow=DomainPillow(online=False),
+        change_provider=CouchViewChangeProvider(
+            document_class=Domain,
+            view_name='all_docs/by_doc_type',
+            view_kwargs={
+                'startkey': ['Domain'],
+                'endkey': ['Domain', {}],
+            }
+        ),
+    )
