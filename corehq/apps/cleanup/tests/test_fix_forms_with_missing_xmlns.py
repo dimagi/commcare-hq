@@ -18,6 +18,7 @@ from pillowtop.es_utils import completely_initialize_pillow_index
 
 DOMAIN = "test"
 
+
 class TestFixFormsWithMissingXmlns(TestCase, TestXmlMixin):
     file_path = ['data']
     root = os.path.dirname(__file__)

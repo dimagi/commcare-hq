@@ -78,7 +78,9 @@ class Command(BaseCommand):
                                     if not xforms_with_real_xmlns_possibly_exist(app._id, form):
                                         num_fixed += 1
                                         new_xmlns = generate_random_xmlns()
-                                        new_xmlnss[xform_instance.app_id] = NewXmlnsInfo(form.name.values(), new_xmlns)
+                                        new_xmlnss[xform_instance.app_id] = NewXmlnsInfo(
+                                            form.name.values(), new_xmlns
+                                        )
                                         set_xmlns_on_form(form, new_xmlns, app, f, app_db, dry_run)
                                         set_xmlns_on_submission(
                                             xform_instance,
