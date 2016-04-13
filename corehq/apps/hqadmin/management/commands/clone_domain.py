@@ -19,6 +19,16 @@ class Command(LabelCommand):
         pass
 
 
+def clone_domain_and_settings(old_domain, new_domain):
+    from corehq.apps.domain.models import Domain
+    domain = Domain.get_by_name(old_domain)
+    domain.name = new_domain
+    save_copy(domain)
+
+    from corehq.apps.commtrack.models import CommtrackConfig
+    commtrack_config = CommtrackConfig.for_domain(domain)
+    save_copy(commtrack_config, new_domain)
+
 
 def set_flags(old_domain, new_domain):
     from corehq.toggles import all_toggles, NAMESPACE_DOMAIN
@@ -86,10 +96,11 @@ def copy_ucr_datasources(new_domain, old_domain):
     return datasource_map
 
 
-def save_copy(doc, new_domain):
+def save_copy(doc, new_domain=None):
     old_id = doc['_id']
     del doc['_id']
     del doc['_rev']
-    doc.domain = new_domain
+    if new_domain:
+        doc.domain = new_domain
     doc.save()
     return old_id, doc['_id']
