@@ -102,7 +102,7 @@ class Command(BaseCommand):
             new_lineage = []
             for ancestor in location.lineage:
                 try:
-                    new_lineage.appen(id_map[ancestor])
+                    new_lineage.append(id_map[ancestor])
                 except KeyError:
                     self.stderr.write("Ancestor {} for location {} missing".format(location._id, ancestor))
             location.lineage = new_lineage
@@ -112,9 +112,10 @@ class Command(BaseCommand):
                 domain=new_domain,
                 name=old_type_name,
             )
+            children = location.children
             old_id, new_id = self.save_couch_copy(location, new_domain)
             id_map[old_id] = new_id
-            for child in location.children:
+            for child in children:
                 copy_location_hierarchy(child, id_map)
 
         locations = Location.root_locations(old_domain)
