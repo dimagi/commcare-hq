@@ -37,7 +37,7 @@ from distutils.util import strtobool
 from fabric import utils
 from fabric.api import run, roles, execute, task, sudo, env, parallel
 from fabric.colors import blue, red, yellow
-from fabric.context_managers import settings, cd
+from fabric.context_managers import settings, cd, shell_env
 from fabric.contrib import files, console
 from fabric.operations import require
 
@@ -766,8 +766,9 @@ def copy_formplayer_properties():
 @roles(ROLES_TOUCHFORMS)
 def build_formplayer():
     spring_dir = '{}/{}'.format(env.code_root, 'submodules/formplayer')
-    with cd(spring_dir):
-        sudo('./gradlew build')
+    with shell_env(JAVA_HOME='/usr/lib/jvm/jdk1.7.0'):
+        with cd(spring_dir):
+            sudo('./gradlew build')
 
 
 @parallel
