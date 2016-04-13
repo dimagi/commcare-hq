@@ -1,5 +1,6 @@
 import uuid
 from collections import namedtuple
+from datetime import datetime
 from itertools import chain
 
 from couchdbkit import ResourceNotFound
@@ -168,6 +169,7 @@ def set_xmlns_on_submission(xform_instance, xmlns, xform_db, dry_run):
 
     xform_instance.xmlns = xmlns
     xform_instance.form['@xmlns'] = xmlns
+    xform_instance.form_migrated_from_undefined_xmlns = datetime.utcnow()
     if not dry_run:
         xform_db.save(xform_instance)
 
@@ -196,6 +198,7 @@ def set_xmlns_on_form(form, xmlns, app, log_file, app_db, dry_run):
             new_xml = wrapped_xml.render()
 
             form_in_build.source = new_xml
+            form_in_build.form_migrated_from_undefined_xmlns = datetime.utcnow()
             log_file.write(
                 "New xmlns for form {form_id} in app {app_build._id} is {new_xmlns}\n".format(
                     form_id=form_id,
