@@ -65,9 +65,9 @@ class Command(BaseCommand):
                                 xform_instance,
                                 new_xmls_info.xmlns,
                                 xform_db,
+                                f,
                                 dry_run,
                             )
-                            f.write("Set new xmlns on submission {}\n".format(xform_instance._id))
                         else:
                             app = Application.get(xform_instance.app_id)
                             forms_without_xmlns = get_forms_without_xmlns(app)
@@ -83,9 +83,9 @@ class Command(BaseCommand):
                                             xform_instance,
                                             new_xmlns,
                                             xform_db,
+                                            f,
                                             dry_run,
                                         )
-                                        f.write("Set new xmlns on submission {}\n".format(xform_instance._id))
             for error_id in list(xform_db.error_ids) + list(app_db.error_ids):
                 f.write("Failed to save {}\n".format(error_id))
 
@@ -157,7 +157,7 @@ def xforms_with_real_xmlns_possibly_exist(app_id, form):
     return False
 
 
-def set_xmlns_on_submission(xform_instance, xmlns, xform_db, dry_run):
+def set_xmlns_on_submission(xform_instance, xmlns, xform_db, log_file, dry_run):
     """
     Set the xmlns on an XFormInstance, and the save the document.
     """
@@ -172,6 +172,9 @@ def set_xmlns_on_submission(xform_instance, xmlns, xform_db, dry_run):
     xform_instance.form_migrated_from_undefined_xmlns = datetime.utcnow()
     if not dry_run:
         xform_db.save(xform_instance)
+    log_file.write(
+        "Set new xmlns {} on submission {}\n".format(xmlns, xform_instance._id)
+    )
 
 
 def set_xmlns_on_form(form, xmlns, app, log_file, app_db, dry_run):
