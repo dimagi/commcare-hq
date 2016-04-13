@@ -43,13 +43,17 @@ class Command(BaseCommand):
 
     def clone_domain_and_settings(self, old_domain, new_domain):
         from corehq.apps.domain.models import Domain
-        domain = Domain.get_by_name(old_domain)
-        domain.name = new_domain
-        self.save_couch_copy(domain)
+        new_domain_obj = Domain.get_by_name(new_domain)
+        if not new_domain_obj or raw_input(
+                '{} domain already exists. Do you still want to continue? [y/n]'.format(new_domain)
+            ).lower() == 'y':
+            domain = Domain.get_by_name(old_domain)
+            domain.name = new_domain
+            self.save_couch_copy(domain)
 
-        from corehq.apps.commtrack.models import CommtrackConfig
-        commtrack_config = CommtrackConfig.for_domain(domain)
-        self.save_couch_copy(commtrack_config, new_domain)
+            from corehq.apps.commtrack.models import CommtrackConfig
+            commtrack_config = CommtrackConfig.for_domain(old_domain)
+            self.save_couch_copy(commtrack_config, new_domain)
 
     def set_flags(self, old_domain, new_domain):
         from corehq.toggles import all_toggles, NAMESPACE_DOMAIN
