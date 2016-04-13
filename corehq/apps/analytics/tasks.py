@@ -141,7 +141,7 @@ def _get_client_ip(meta):
     return ip
 
 
-def _send_form_to_hubspot(form_id, webuser, cookies, meta, extra_fields=None, prelogin=False):
+def _send_form_to_hubspot(form_id, webuser, cookies, meta, extra_fields=None, email=False):
     """
     This sends hubspot the user's first and last names and tracks everything they did
     up until the point they signed up.
@@ -154,10 +154,10 @@ def _send_form_to_hubspot(form_id, webuser, cookies, meta, extra_fields=None, pr
             form_id=form_id
         )
         data = {
-            'email': webuser if prelogin else webuser.username,
+            'email': email if email else webuser.username,
             'hs_context': json.dumps({"hutk": hubspot_cookie, "ipAddress": _get_client_ip(meta)}),
         }
-        if not prelogin:
+        if webuser:
             data.update({'firstname': webuser.first_name,
                          'lastname': webuser.last_name,
                          })
@@ -255,9 +255,9 @@ def track_new_user_accepted_invite_on_hubspot(webuser, cookies, meta):
 
 
 @analytics_task()
-def track_clicked_signup_on_hubspot(webuser, cookies, meta):
-    if webuser:
-        _send_form_to_hubspot(HUBSPOT_CLICKED_SIGNUP_FORM, webuser, cookies, meta, prelogin=True)
+def track_clicked_signup_on_hubspot(email, cookies, meta):
+    if email:
+        _send_form_to_hubspot(HUBSPOT_CLICKED_SIGNUP_FORM, None, cookies, meta, email=email)
 
 
 def track_workflow(email, event, properties=None):
