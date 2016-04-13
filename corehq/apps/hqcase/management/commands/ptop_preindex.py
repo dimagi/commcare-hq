@@ -1,7 +1,8 @@
 from gevent import monkey; monkey.patch_all()
-from corehq.elastic import get_es_new
+from corehq.pillows.utils import get_all_expected_es_indices
 
-from pillowtop.es_utils import get_all_expected_es_indices
+
+from corehq.elastic import get_es_new
 
 from cStringIO import StringIO
 import traceback
@@ -33,6 +34,7 @@ def get_reindex_commands(alias_name):
         'hqgroups': ['ptop_fast_reindex_groups'],
         'report_xforms': ['ptop_fast_reindex_reportxforms'],
         'report_cases': ['ptop_fast_reindex_reportcases'],
+        'case_search': [('ptop_reindexer_v2', {'index': 'case-search'})]
     }
     return pillow_command_map.get(alias_name, [])
 

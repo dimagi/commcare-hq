@@ -6,3 +6,4 @@ from .test_settings import *
 from .test_sms_pillow import *
 from .test_xform_pillow import *
 from .test_grouptouser_pillow import *
+from .test_case_search_pillow import *

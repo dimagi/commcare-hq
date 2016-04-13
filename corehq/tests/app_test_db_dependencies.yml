@@ -25,6 +25,7 @@ testapps.test_pillowtop:
   - corehq.sql_proxy_accessors
   - couchforms
   - pillowtop
+  - corehq.apps.case_search
 casexml.apps.phone:
   - auditcare
   - django_digest
@@ -468,6 +469,7 @@ corehq.apps.users:
   - tastypie
   - two_factor
   - touchforms.formplayer
+corehq.apps.case_search: []
 corehq.apps.api:
   - django_prbac
   - corehq.apps.accounting

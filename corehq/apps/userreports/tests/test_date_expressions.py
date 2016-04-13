@@ -1,5 +1,6 @@
 from datetime import date, datetime
 from corehq.apps.userreports.expressions.factory import ExpressionFactory
+from corehq.apps.userreports.specs import FactoryContext
 from corehq.util.test_utils import generate_cases
 
 
@@ -74,12 +75,28 @@ def test_month_end_date_expression(self, source_doc, expected_value):
     ),
 ])
 def test_diff_days_expression(self, source_doc, to_date_expression, expected_value):
+    from_date_expression = {
+        'type': 'property_name',
+        'property_name': 'dob',
+    }
     expression = ExpressionFactory.from_spec({
         'type': 'diff_days',
-        'from_date_expression': {
-            'type': 'property_name',
-            'property_name': 'dob',
-        },
+        'from_date_expression': from_date_expression,
         'to_date_expression': to_date_expression
     })
     self.assertEqual(expected_value, expression(source_doc))
+
+    # test named_expression for 'from_date_expression'
+    context = FactoryContext(
+        {"from_date_name": ExpressionFactory.from_spec(from_date_expression)},
+        {}
+    )
+    named_expression = ExpressionFactory.from_spec({
+        'type': 'diff_days',
+        'from_date_expression': {
+            "type": "named",
+            "name": "from_date_name"
+        },
+        'to_date_expression': to_date_expression
+    }, context)
+    self.assertEqual(expected_value, named_expression(source_doc))

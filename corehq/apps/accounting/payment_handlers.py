@@ -384,7 +384,7 @@ class CreditStripePaymentHandler(BaseStripePaymentHandler):
                     plan_amount,
                     account=self.account,
                     subscription=self.subscription,
-                    product_type=product['type'],
+                    product_type=SoftwareProductType.ANY,
                     payment_record=payment_record,
                 ))
             else:

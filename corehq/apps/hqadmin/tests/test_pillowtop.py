@@ -19,7 +19,6 @@ class TestPillowTopFiltering(SimpleTestCase):
             'core': [
                 'corehq.pillows.case.CasePillow',
                 'corehq.pillows.xform.XFormPillow',
-                'corehq.pillows.domain.DomainPillow',
                 'corehq.pillows.user.UserPillow',
                 'corehq.pillows.application.AppPillow',
                 'corehq.pillows.group.GroupPillow',
@@ -44,7 +43,6 @@ class TestPillowTopFiltering(SimpleTestCase):
     def test_no_blacklist_items(self):
         expected_pillows = {'CasePillow',
                             'XFormPillow',
-                            'DomainPillow',
                             'UserPillow',
                             'AppPillow',
                             'GroupPillow',
@@ -63,7 +61,6 @@ class TestPillowTopFiltering(SimpleTestCase):
     def test_with_blacklist_items(self):
         expected_pillows = {'CasePillow',
                             'XFormPillow',
-                            'DomainPillow',
                             'UserPillow',
                             'AppPillow',
                             'GroupPillow',
