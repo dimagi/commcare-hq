@@ -7,6 +7,7 @@ from django.test import TestCase
 from corehq.apps.accounting.generator import init_default_currency
 from corehq.apps.sms.models import SMS, SQLMobileBackend
 from corehq.apps.smsbillables import generator
+from corehq.apps.smsbillables.management.commands.bootstrap_usage_fees import bootstrap_usage_fees
 from corehq.apps.smsbillables.models import (
     add_twilio_gateway_fee,
     SmsBillable,
@@ -290,6 +291,7 @@ class TestGatewayFee(TestCase):
     )
     def test_twilio_domain_level_backend(self, mock_log_smsbillables_error):
         add_twilio_gateway_fee(apps)
+        bootstrap_usage_fees(apps)
         twilio_backend = SQLTwilioBackend.objects.create(
             name='TWILIO',
             is_global=False,
