@@ -491,6 +491,8 @@ def get_ledgers(request, domain):
         },
         ...
     }
+
+    Note: this only works for the Couch backend
     """
     request_params = expect_GET(request)
     case_id = request_params.get('case_id')
