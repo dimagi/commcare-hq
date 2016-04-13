@@ -331,7 +331,7 @@ class SubscriptionInterface(AddItemInterface):
                 ).order_by('date_created')[0]
                 created_by = dict(SubscriptionAdjustmentMethod.CHOICES).get(
                     created_by_adj.method, "Unknown")
-            except (IndexError, SubscriptionAdjustment.DoesNotExist) as e:
+            except IndexError, SubscriptionAdjustment.DoesNotExist:
                 created_by = "Unknown"
             columns = [
                 subscription.subscriber.domain,
