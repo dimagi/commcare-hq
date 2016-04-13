@@ -19,6 +19,24 @@ class Command(LabelCommand):
         pass
 
 
+
+def set_flags(old_domain, new_domain):
+    from corehq.toggles import all_toggles, NAMESPACE_DOMAIN
+    from corehq.feature_previews import all_previews
+    from corehq.apps.hqwebapp.templatetags.hq_shared_tags import toggle_js_domain_cachebuster
+
+    for toggle in all_toggles():
+        if toggle.enabled(old_domain):
+            toggle.set(new_domain, True, NAMESPACE_DOMAIN)
+
+    for preview in all_previews():
+        if preview.enabled(old_domain):
+            preview.set(new_domain, True, NAMESPACE_DOMAIN)
+            if preview.save_fn is not None:
+                preview.save_fn(new_domain, True)
+
+    toggle_js_domain_cachebuster.clear(new_domain)
+
 def copy_applications(old_domain, new_domain, report_map):
     from corehq.apps.app_manager.dbaccessors import get_apps_in_domain
     from corehq.apps.app_manager.models import ReportModule
