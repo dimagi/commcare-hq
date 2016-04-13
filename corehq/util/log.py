@@ -235,7 +235,7 @@ class SlowRequestFilter(Filter):
             return False
 
 
-def with_progress_bar(iterable, length=None, prefix='Processing'):
+def with_progress_bar(iterable, length=None):
     """Turns 'iterable' into a generator which prints a progress bar"""
     if hasattr(iterable, "__len__"):
         length = len(iterable)
@@ -244,9 +244,9 @@ def with_progress_bar(iterable, length=None, prefix='Processing'):
             "'{}' object has no len(), you must pass in the 'length' parameter"
             .format(type(iterable))
         )
-    granularity = min(40, length)
+    granularity = 40
     checkpoints = {length*i/granularity for i in range(length)}
-    print '{} ['.format(prefix) + ' ' * granularity + ']',
+    print 'Processing [' + ' '*granularity + ']',
     print '\b' * (granularity + 2),
     sys.stdout.flush()
     for i, x in enumerate(iterable):
