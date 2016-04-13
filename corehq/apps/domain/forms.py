@@ -1181,7 +1181,7 @@ class EditBillingAccountInfoForm(forms.ModelForm):
                 'phone_number',
             ),
             crispy.Fieldset(
-                 _("Mailing Address"),
+                _("Mailing Address"),
                 'first_line',
                 'second_line',
                 'city',
@@ -1254,7 +1254,7 @@ class ConfirmNewSubscriptionForm(EditBillingAccountInfoForm):
                 'phone_number',
             ),
             crispy.Fieldset(
-                 _("Mailing Address"),
+                _("Mailing Address"),
                 'first_line',
                 'second_line',
                 'city',
