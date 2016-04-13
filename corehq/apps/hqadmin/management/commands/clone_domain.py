@@ -47,6 +47,21 @@ def set_flags(old_domain, new_domain):
 
     toggle_js_domain_cachebuster.clear(new_domain)
 
+
+def copy_fixtures(old_domain, new_domain):
+    from corehq.apps.fixtures.models import FixtureDataItem
+    from corehq.apps.fixtures.dbaccessors import get_fixture_data_types_in_domain
+
+    fixture_types = get_fixture_data_types_in_domain(old_domain)
+    for fixture_type in fixture_types:
+        old_id, new_id = save_copy(fixture_type, new_domain)
+        for item in FixtureDataItem.by_data_type(old_domain, old_id):
+            item.data_type_id = new_id
+            save_copy(item, new_domain)
+
+    # TODO: FixtureOwnership - requires copying users & groups
+
+
 def copy_applications(old_domain, new_domain, report_map):
     from corehq.apps.app_manager.dbaccessors import get_apps_in_domain
     from corehq.apps.app_manager.models import ReportModule
