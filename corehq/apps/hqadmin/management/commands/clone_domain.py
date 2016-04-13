@@ -63,10 +63,14 @@ class Command(BaseCommand):
             self.save_sql_copy(location_type, new_domain)
 
         def copy_location_hierarchy(location, id_map):
-            try:
-                location.lineage = [id_map[ancestor] for ancestor in location.lineage]
-            except KeyError:
-                pass # ancestor not found
+            new_lineage = []
+            for ancestor in location.lineage:
+                try:
+                    new_lineage.appen(id_map[ancestor])
+                except KeyError:
+                    self.stderr.write("Ancestor {} for location {} missing".format(location['_id'], ancestor))
+            location.lineage = new_lineage
+
             old_id, new_id = self.save_couch_copy(location, new_domain)
             id_map[old_id] = new_id
             for child in location.children:
