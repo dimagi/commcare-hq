@@ -1,18 +1,45 @@
+from optparse import make_option
+
 from django.core.management.base import BaseCommand
 
 from corehq.apps.userreports.dbaccessors import get_report_configs_for_domain, get_datasources_for_domain
 
 
 class Command(BaseCommand):
-    help = """Create a new domain or update an existing domain to match the settings and data of another domain"""
+    args = "<existing_domain> <new_domain>"
+    help = """Clone a domain and it's data"""
 
-    def handle(self, *args, **options):
-        # fixtures?
-        # locations?
-        # products?
-        #
-        pass
+    option_list = BaseCommand.option_list + (
+        make_option('--no-flags', action='store_false', dest='flags', default=True,
+                    help="Don't process domain flags"),
+        make_option('--no-fixtures', action='store_false', dest='fixtures', default=True,
+                    help="Don't process fixtures"),
+        make_option('--no-locations', action='store_false', dest='locations', default=True,
+                    help="Don't process locations"),
+        make_option('--no-products', action='store_false', dest='products', default=True,
+                    help="Don't process products"),
+        make_option('--no-ucr-or-apps', action='store_false', dest='ucr_apps', default=True,
+                    help="Don't process UCR"),
+    )
 
+    def handle(self, flags=True, fixtures=True, locations=True, products=True, ucr_apps=True, *args, **options):
+        existing_domain, new_domain = args
+        self.clone_domain_and_settings(existing_domain, new_domain)
+        if flags:
+            self.set_flags(existing_domain, new_domain)
+
+        if fixtures:
+            self.copy_fixtures(existing_domain, new_domain)
+
+        if locations:
+            self.copy_locations(existing_domain, new_domain)
+
+        if products:
+            self.copy_products(existing_domain, new_domain)
+
+        if ucr_apps:
+            report_map = self.copy_ucr_data(existing_domain, new_domain)
+            self.copy_applications(existing_domain, new_domain, report_map)
 
     def clone_domain_and_settings(self, old_domain, new_domain):
         from corehq.apps.domain.models import Domain
