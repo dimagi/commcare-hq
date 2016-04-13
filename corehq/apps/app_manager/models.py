@@ -4270,6 +4270,7 @@ class ApplicationBase(VersionedDoc, SnapshotMixin,
                                          'files/%s' % filepath)
 
     def create_jadjar_from_build_files(self, save=False):
+        self.validate_jar_path()
         with CriticalSection(['create_jadjar_' + self._id]):
             try:
                 return (
@@ -4307,7 +4308,6 @@ class ApplicationBase(VersionedDoc, SnapshotMixin,
         try:
             self.validate_fixtures()
             self.validate_intents()
-            self.validate_jar_path()
             self.create_all_files()
         except CaseXPathValidationError as cve:
             errors.append({
