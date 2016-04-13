@@ -35,6 +35,7 @@ from corehq import toggles
 from corehq.apps.analytics.tasks import track_workflow
 from corehq.apps.app_manager.dbaccessors import domain_has_apps
 from corehq.apps.app_manager.models import Application, Form
+from corehq.apps.app_manager.util import purge_report_from_mobile_ucr
 from corehq.apps.dashboard.models import IconContext, TileConfiguration, Tile
 from corehq.apps.domain.decorators import login_and_domain_required, login_or_basic
 from corehq.apps.domain.views import BaseDomainView
@@ -500,7 +501,15 @@ def delete_report(request, domain, report_id):
             pass
 
     config.delete()
+    did_purge_something = purge_report_from_mobile_ucr(config)
+
     messages.success(request, _(u'Report "{}" deleted!').format(config.title))
+    if did_purge_something:
+        messages.warning(
+            request,
+            _(u"This report was used in one or more applications. "
+              "It has been removed from there too.")
+        )
     redirect = request.GET.get("redirect", None)
     if not redirect:
         redirect = reverse('configurable_reports_home', args=[domain])
