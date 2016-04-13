@@ -5,6 +5,7 @@ from itertools import chain
 
 from couchdbkit import ResourceNotFound
 
+from corehq.apps.app_manager.dbaccessors import get_app
 from corehq.apps.app_manager.exceptions import FormNotFoundException
 from corehq.apps.app_manager.models import Application
 from corehq.apps.app_manager.util import get_correct_app_class
@@ -69,7 +70,7 @@ class Command(BaseCommand):
                                 dry_run,
                             )
                         else:
-                            app = Application.get(xform_instance.app_id)
+                            app = get_app(xform_instance.domain, xform_instance.app_id)
                             forms_without_xmlns = get_forms_without_xmlns(app)
                             if len(forms_without_xmlns) == 1:
                                 form = forms_without_xmlns[0]
