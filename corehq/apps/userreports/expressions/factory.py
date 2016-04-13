@@ -113,8 +113,8 @@ def _dict_expression(spec, context):
 def _add_days_expression(spec, context):
     wrapped = AddDaysExpressionSpec.wrap(spec)
     wrapped.configure(
-        date_expression=ExpressionFactory.from_spec(wrapped.date_expression),
-        count_expression=ExpressionFactory.from_spec(wrapped.count_expression),
+        date_expression=ExpressionFactory.from_spec(wrapped.date_expression, context),
+        count_expression=ExpressionFactory.from_spec(wrapped.count_expression, context),
     )
     return wrapped
 
@@ -122,8 +122,8 @@ def _add_days_expression(spec, context):
 def _add_months_expression(spec, context):
     wrapped = AddMonthsExpressionSpec.wrap(spec)
     wrapped.configure(
-        date_expression=ExpressionFactory.from_spec(wrapped.date_expression),
-        months_expression=ExpressionFactory.from_spec(wrapped.months_expression),
+        date_expression=ExpressionFactory.from_spec(wrapped.date_expression, context),
+        months_expression=ExpressionFactory.from_spec(wrapped.months_expression, context),
     )
     return wrapped
 
@@ -131,7 +131,7 @@ def _add_months_expression(spec, context):
 def _month_start_date_expression(spec, context):
     wrapped = MonthStartDateExpressionSpec.wrap(spec)
     wrapped.configure(
-        date_expression=ExpressionFactory.from_spec(wrapped.date_expression),
+        date_expression=ExpressionFactory.from_spec(wrapped.date_expression, context),
     )
     return wrapped
 
@@ -139,7 +139,7 @@ def _month_start_date_expression(spec, context):
 def _month_end_date_expression(spec, context):
     wrapped = MonthEndDateExpressionSpec.wrap(spec)
     wrapped.configure(
-        date_expression=ExpressionFactory.from_spec(wrapped.date_expression),
+        date_expression=ExpressionFactory.from_spec(wrapped.date_expression, context),
     )
     return wrapped
 
@@ -147,8 +147,8 @@ def _month_end_date_expression(spec, context):
 def _diff_days_expression(spec, context):
     wrapped = DiffDaysExpressionSpec.wrap(spec)
     wrapped.configure(
-        from_date_expression=ExpressionFactory.from_spec(wrapped.from_date_expression),
-        to_date_expression=ExpressionFactory.from_spec(wrapped.to_date_expression),
+        from_date_expression=ExpressionFactory.from_spec(wrapped.from_date_expression, context),
+        to_date_expression=ExpressionFactory.from_spec(wrapped.to_date_expression, context),
     )
     return wrapped
 
@@ -165,7 +165,7 @@ def _evaluator_expression(spec, context):
 def _get_forms_expression(spec, context):
     wrapped = FormsExpressionSpec.wrap(spec)
     wrapped.configure(
-        case_id_expression=ExpressionFactory.from_spec(wrapped.case_id_expression)
+        case_id_expression=ExpressionFactory.from_spec(wrapped.case_id_expression, context)
     )
     return wrapped
 
@@ -173,7 +173,7 @@ def _get_forms_expression(spec, context):
 def _filter_items_expression(spec, context):
     wrapped = FilterItemsExpressionSpec.wrap(spec)
     wrapped.configure(
-        items_expression=ExpressionFactory.from_spec(wrapped.items_expression),
+        items_expression=ExpressionFactory.from_spec(wrapped.items_expression, context),
         filter_expression=_make_filter(wrapped.filter_expression, context)
     )
     return wrapped
@@ -182,8 +182,8 @@ def _filter_items_expression(spec, context):
 def _map_items_expression(spec, context):
     wrapped = MapItemsExpressionSpec.wrap(spec)
     wrapped.configure(
-        items_expression=ExpressionFactory.from_spec(wrapped.items_expression),
-        map_expression=ExpressionFactory.from_spec(wrapped.map_expression)
+        items_expression=ExpressionFactory.from_spec(wrapped.items_expression, context),
+        map_expression=ExpressionFactory.from_spec(wrapped.map_expression, context)
     )
     return wrapped
 
@@ -191,7 +191,7 @@ def _map_items_expression(spec, context):
 def _reduce_items_expression(spec, context):
     wrapped = ReduceItemsExpressionSpec.wrap(spec)
     wrapped.configure(
-        items_expression=ExpressionFactory.from_spec(wrapped.items_expression)
+        items_expression=ExpressionFactory.from_spec(wrapped.items_expression, context)
     )
     return wrapped
 
@@ -199,7 +199,7 @@ def _reduce_items_expression(spec, context):
 def _flatten_expression(spec, context):
     wrapped = FlattenExpressionSpec.wrap(spec)
     wrapped.configure(
-        items_expression=ExpressionFactory.from_spec(wrapped.items_expression)
+        items_expression=ExpressionFactory.from_spec(wrapped.items_expression, context)
     )
     return wrapped
 
@@ -207,8 +207,8 @@ def _flatten_expression(spec, context):
 def _sort_items_expression(spec, context):
     wrapped = SortItemsExpressionSpec.wrap(spec)
     wrapped.configure(
-        items_expression=ExpressionFactory.from_spec(wrapped.items_expression),
-        sort_expression=ExpressionFactory.from_spec(wrapped.sort_expression)
+        items_expression=ExpressionFactory.from_spec(wrapped.items_expression, context),
+        sort_expression=ExpressionFactory.from_spec(wrapped.sort_expression, context)
     )
     return wrapped
 
