@@ -263,7 +263,7 @@ class ReportBuilderTypeSelect(JSONResponseMixin, ReportBuilderView):
                 slug='map',
                 analytics_usage_label="Map",
                 analytics_workflow_label=analytics_workflow_label,
-                icon='fa fa-globe',
+                icon='fcc fcc-globe',
                 context_processor_class=IconContext,
                 url=reverse('report_builder_select_source', args=[self.domain, 'map']),
                 help_text=_('A map to show data from your cases or forms.'
