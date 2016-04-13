@@ -59,6 +59,7 @@ branches:
   - edit-form-fix # wsp 4/7
   - uatbc/case-search-es         # FR 4/12
   - dogstatsd-gunicorn # BR 4/13
+  - date-sort # Jenny 4/13
 submodules:
   submodules/touchforms-src:
     # let's leave this here even when empty
