@@ -23,7 +23,7 @@
 {% if not read_only %}
 <form method='post' action="{% url 'delete_configurable_data_source' domain data_source.get_id %}" >
     {% csrf_token %}
-    <input type="submit" value="{% trans 'Delete Data Source'%}" class="btn btn-danger disable-on-submit">
+    <input type="submit" value="{% trans 'Delete Data Source'%}" class="btn btn-danger disable-on-submit pull-right">
 </form>
 {% endif %}
 <form method='post' action="{% url 'rebuild_configurable_data_source' domain data_source.get_id %}" >
