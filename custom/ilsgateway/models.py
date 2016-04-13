@@ -486,6 +486,7 @@ class SLABConfig(models.Model):
 
 
 class OneOffTaskProgress(models.Model):
+    domain = models.CharField(max_length=128)
     task_name = models.CharField(max_length=128)
     last_synced_object_id = models.CharField(max_length=128, null=True)
     complete = models.BooleanField(default=False)

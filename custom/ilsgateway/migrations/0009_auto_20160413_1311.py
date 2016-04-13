@@ -16,6 +16,7 @@ class Migration(migrations.Migration):
             name='OneOffTaskProgress',
             fields=[
                 ('id', models.AutoField(verbose_name='ID', serialize=False, auto_created=True, primary_key=True)),
+                ('domain', models.CharField(max_length=128)),
                 ('task_name', models.CharField(max_length=128)),
                 ('last_synced_object_id', models.CharField(max_length=128, null=True)),
                 ('complete', models.BooleanField(default=False)),

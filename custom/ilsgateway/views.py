@@ -111,7 +111,7 @@ class ILSConfigView(BaseConfigView):
     @property
     def page_context(self):
         context = super(ILSConfigView, self).page_context
-        context['oneoff_tasks'] = OneOffTaskProgress.objects.all()
+        context['oneoff_tasks'] = OneOffTaskProgress.objects.filter(domain=self.domain)
         return context
 
 
@@ -329,5 +329,5 @@ def recalculate_moshi_rural(request, domain):
 @domain_admin_required
 @require_POST
 def recalculate_non_facilities(request, domain):
-    recalculate_non_facilities_task.delay()
+    recalculate_non_facilities_task.delay(domain)
     return HttpResponse('')

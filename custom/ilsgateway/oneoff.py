@@ -20,8 +20,8 @@ TASK_NAME = '2016-04-12_recalculate_non_facilities_task'
 
 
 @celery.task(ignore_result=True, queue='logistics_background_queue')
-def recalculate_non_facilities_task():
-    task_progress = OneOffTaskProgress.objects.get_or_create(task_name=TASK_NAME)[0]
+def recalculate_non_facilities_task(domain):
+    task_progress = OneOffTaskProgress.objects.get_or_create(domain=domain, task_name=TASK_NAME)[0]
     if task_progress.complete:
         return
 
