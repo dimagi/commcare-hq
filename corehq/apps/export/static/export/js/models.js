@@ -139,6 +139,22 @@ Exports.ViewModels.TableConfiguration.prototype.selectNone = function(table) {
     table._select(false);
 };
 
+Exports.ViewModels.TableConfiguration.prototype.useLabels = function(table) {
+    _.each(table.columns(), function(column) {
+        if (column.isQuestion()) {
+            column.label(column.item.label() || column.label());
+        }
+    });
+};
+
+Exports.ViewModels.TableConfiguration.prototype.useIds = function(table) {
+    _.each(table.columns(), function(column) {
+        if (column.isQuestion()) {
+            column.label(column.item.readablePath() || column.label());
+        }
+    });
+};
+
 Exports.ViewModels.TableConfiguration.mapping = {
     include: ['name', 'path', 'columns', 'selected', 'label', 'is_deleted'],
     columns: {
@@ -156,6 +172,12 @@ Exports.ViewModels.TableConfiguration.mapping = {
 Exports.ViewModels.ExportColumn = function(columnJSON) {
     var self = this;
     ko.mapping.fromJS(columnJSON, Exports.ViewModels.ExportColumn.mapping, self);
+};
+
+Exports.ViewModels.ExportColumn.prototype.isQuestion = function() {
+    var disallowedTags = ['info', 'case', 'server', 'row', 'app', 'stock'],
+        self = this;
+    return !_.any(disallowedTags, function(tag) { return _.include(self.tags(), tag); });
 };
 
 Exports.ViewModels.ExportColumn.prototype.formatProperty = function() {
@@ -208,6 +230,12 @@ Exports.ViewModels.ExportItem = function(itemJSON) {
 
 Exports.ViewModels.ExportItem.prototype.isCaseName = function() {
     return this.path()[this.path().length - 1].name === 'name';
+};
+
+Exports.ViewModels.ExportItem.prototype.readablePath = function() {
+    return _.map(this.path(), function(pathNode) {
+        return pathNode.name();
+    }).join('.')
 };
 
 Exports.ViewModels.ExportItem.mapping = {
