@@ -68,7 +68,7 @@ class Command(BaseCommand):
                 try:
                     new_lineage.appen(id_map[ancestor])
                 except KeyError:
-                    self.stderr.write("Ancestor {} for location {} missing".format(location['_id'], ancestor))
+                    self.stderr.write("Ancestor {} for location {} missing".format(location._id, ancestor))
             location.lineage = new_lineage
 
             old_id, new_id = self.save_couch_copy(location, new_domain)
@@ -142,13 +142,13 @@ class Command(BaseCommand):
         return datasource_map
 
     def save_couch_copy(self, doc, new_domain=None):
-        old_id = doc['_id']
-        del doc['_id']
+        old_id = doc._id
+        del doc._id
         del doc['_rev']
         if new_domain:
             doc.domain = new_domain
         doc.save()
-        new_id = doc['_id']
+        new_id = doc._id
         self.log_copy(doc.doc_type, old_id, new_id)
         return old_id, new_id
 
