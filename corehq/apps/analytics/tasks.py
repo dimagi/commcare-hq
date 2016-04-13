@@ -37,6 +37,7 @@ HUBSPOT_CREATED_NEW_PROJECT_SPACE_FORM_ID = "619daf02-e043-4617-8947-a23e4589935
 HUBSPOT_INVITATION_SENT_FORM = "5aa8f696-4aab-4533-b026-bd64c7e06942"
 HUBSPOT_NEW_USER_INVITE_FORM = "3e275361-72be-4e1d-9c68-893c259ed8ff"
 HUBSPOT_EXISTING_USER_INVITE_FORM = "7533717e-3095-4072-85ff-96b139bcb147"
+HUBSPOT_CLICKED_SIGNUP_FORM = "06b39b74-62b3-4387-b323-fe256dc92720"
 HUBSPOT_COOKIE = 'hubspotutk'
 
 
@@ -140,7 +141,7 @@ def _get_client_ip(meta):
     return ip
 
 
-def _send_form_to_hubspot(form_id, webuser, cookies, meta, extra_fields=None):
+def _send_form_to_hubspot(form_id, webuser, cookies, meta, extra_fields=None, email=False):
     """
     This sends hubspot the user's first and last names and tracks everything they did
     up until the point they signed up.
@@ -153,11 +154,13 @@ def _send_form_to_hubspot(form_id, webuser, cookies, meta, extra_fields=None):
             form_id=form_id
         )
         data = {
-            'email': webuser.username,
-            'firstname': webuser.first_name,
-            'lastname': webuser.last_name,
+            'email': email if email else webuser.username,
             'hs_context': json.dumps({"hutk": hubspot_cookie, "ipAddress": _get_client_ip(meta)}),
         }
+        if webuser:
+            data.update({'firstname': webuser.first_name,
+                         'lastname': webuser.last_name,
+                         })
         if extra_fields:
             data.update(extra_fields)
 
@@ -249,6 +252,12 @@ def track_existing_user_accepted_invite_on_hubspot(webuser, cookies, meta):
 @analytics_task()
 def track_new_user_accepted_invite_on_hubspot(webuser, cookies, meta):
     _send_form_to_hubspot(HUBSPOT_NEW_USER_INVITE_FORM, webuser, cookies, meta)
+
+
+@analytics_task()
+def track_clicked_signup_on_hubspot(email, cookies, meta):
+    if email:
+        _send_form_to_hubspot(HUBSPOT_CLICKED_SIGNUP_FORM, None, cookies, meta, email=email)
 
 
 def track_workflow(email, event, properties=None):
