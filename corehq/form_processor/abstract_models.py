@@ -222,24 +222,6 @@ class AbstractCommCareCase(object):
             return None
 
 
-class AbstractLedgerValue(six.with_metaclass(ABCMeta)):
-    @abstractproperty
-    def case_id(self):
-        pass
-
-    @abstractproperty
-    def section_id(self):
-        pass
-
-    @abstractproperty
-    def entry_id(self):
-        pass
-
-    @abstractproperty
-    def balance(self):
-        pass
-
-
 class AbstractSupplyInterface(six.with_metaclass(ABCMeta)):
     @classmethod
     @abstractmethod

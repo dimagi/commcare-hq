@@ -2050,8 +2050,9 @@ class ModuleDetailsMixin():
                 })
         if self.case_list_filter:
             try:
-                etree.XPath(self.case_list_filter)
-            except etree.XPathSyntaxError:
+                case_list_filter = interpolate_xpath(self.case_list_filter)
+                etree.XPath(case_list_filter)
+            except (etree.XPathSyntaxError, CaseXPathValidationError):
                 errors.append({
                     'type': 'invalid filter xpath',
                     'module': self.get_module_info(),

@@ -33,9 +33,10 @@ class PillowtopReindexerTest(TestCase):
     def test_domain_reindexer(self):
         for command, kwargs in [
             ('ptop_fast_reindex_domains', {'noinput': True, 'bulk': True}),
-            ('ptop_reindexer_v2', {'index': 'domain'})
+            ('ptop_reindexer_v2', {'index': 'domain', 'cleanup': True, 'noinput': True})
         ]:
             delete_all_domains()
+            ensure_index_deleted(DOMAIN_INDEX)
             name = 'reindex-test-domain'
             create_domain(name)
             call_command(command, **kwargs)
@@ -71,7 +72,7 @@ class PillowtopReindexerTest(TestCase):
         case = _create_and_save_a_case()
 
         index_id = 'sql-case' if settings.TESTS_SHOULD_USE_SQL_BACKEND else 'case'
-        call_command('ptop_reindexer_v2', index_id)
+        call_command('ptop_reindexer_v2', index_id, cleanup=True, noinput=True)
 
         self._assert_case_is_in_es(case)
 
@@ -90,7 +91,7 @@ class PillowtopReindexerTest(TestCase):
         form = create_and_save_a_form(DOMAIN)
 
         index_id = 'sql-form' if settings.TESTS_SHOULD_USE_SQL_BACKEND else 'form'
-        call_command('ptop_reindexer_v2', index_id)
+        call_command('ptop_reindexer_v2', index_id, cleanup=True, noinput=True)
 
         self._assert_form_is_in_es(form)
 

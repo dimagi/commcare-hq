@@ -122,3 +122,14 @@ class ExportFilterResultTest(SimpleTestCase):
         q = get_case_export_base_query(DOMAIN, DEFAULT_CASE_TYPE)
         result = q.run()
         self.assertEqual(4, len(result.hits))
+
+    def test_form_submitted_by_none_filter(self):
+        """
+        Confirm that the FormSubmittedByFilter works when None is one of the
+        arguments.
+        """
+        doc_generator = _get_export_documents(
+            FormExportInstance(domain=DOMAIN, app_id=DEFAULT_APP_ID, xmlns=DEFAULT_XMLNS),
+            [FormSubmittedByFilter([uuid.uuid4().hex, None, uuid.uuid4().hex])]
+        )
+        self.assertEqual(1, len([x for x in doc_generator]))

@@ -12,6 +12,7 @@ var HQAsyncReport = function (o) {
     self.customAsyncUrl = o.customAsyncUrl || null;
     self.additionalParams = o.additionalParams || '';
     self.additionalWindowParams = o.additionalWindowParams || '';
+    self.loaderClass = (o.isBootstrap3) ? '.report-loading' : '.hq-loading';
 
     self.humanReadableErrors = {
         400: "Please check your Internet connection!",
@@ -130,7 +131,7 @@ var HQAsyncReport = function (o) {
                 }
                 self.issueAttempts = 0;
                 self.loadingIssueModal.modal('hide');
-                self.hqLoading = $('.hq-loading');
+                self.hqLoading = $(self.loaderClass);
                 self.reportContent.html(data.report);
                 // clear lingering popovers
                 _.each($('body > .popover'), function (popover) {
@@ -175,7 +176,7 @@ var HQAsyncReport = function (o) {
                     self.issueAttempts += 1;
                     self.loadingIssueModal.modal('show');
                 } else {
-                    self.hqLoading = $('.hq-loading');
+                    self.hqLoading = $(self.loaderClass);
                     self.hqLoading.find('h4').text("Loading Stopped");
                     self.hqLoading.find('.js-loading-spinner').attr('style', 'visibility: hidden;');
                 }
@@ -199,7 +200,7 @@ var HQAsyncReport = function (o) {
 
     self.loadingIssueModal.on('hide hide.bs.modal', function () {
         if (self.issueAttempts > 0) {
-            self.hqLoading = $('.hq-loading');
+            self.hqLoading = $(self.loaderClass);
             self.hqLoading.find('.js-loading-spinner').addClass('hide');
             self.hqLoading.find('h4').text('We were unsuccessful loading the report:').attr('style', 'margin-bottom: 10px;');
         }

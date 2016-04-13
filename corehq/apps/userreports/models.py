@@ -319,6 +319,7 @@ class ReportConfiguration(UnicodeMixIn, QuickCachedDocumentMixin, Document):
     def __unicode__(self):
         return u'{} - {}'.format(self.domain, self.title)
 
+
     @property
     @memoized
     def config(self):

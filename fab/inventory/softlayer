@@ -19,6 +19,21 @@
 [proxy0]
 10.162.36.203
 
+[riak0]
+10.162.36.231
+
+[riak1]
+10.162.36.234
+
+[riak2]
+10.162.36.198
+
+[riak3]
+10.162.36.200
+
+[riak4]
+10.162.36.253
+
 [touch0]
 10.162.36.215
 
@@ -58,3 +73,16 @@ es2
 
 [shared_dir_host:children]
 db0
+
+[riakcs:children]
+riak0
+riak1
+riak2
+riak3
+riak4
+
+[riakcs:vars]
+datavol_device=/dev/xvdc
+
+[stanchion:children]
+riak0
