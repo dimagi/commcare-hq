@@ -138,6 +138,7 @@ class Command(BaseCommand):
     def copy_applications(self, old_domain, new_domain, report_map):
         from corehq.apps.app_manager.dbaccessors import get_apps_in_domain
         from corehq.apps.app_manager.models import ReportModule
+        from corehq.apps.app_manager.models import import_app
         apps = get_apps_in_domain(old_domain)
         for app in apps:
             for module in app.modules:
@@ -145,7 +146,8 @@ class Command(BaseCommand):
                     for config in module.report_configs:
                         config.report_id = report_map[config.report_id]
 
-            self.save_couch_copy(app, new_domain)
+            new_app = import_app(app.to_json(), new_domain)
+            self.log_copy(app.doc_type, app._id, new_app._id)
 
     def copy_ucr_data(self, old_domain, new_domain):
         datasource_map = self.copy_ucr_datasources(new_domain, old_domain)
