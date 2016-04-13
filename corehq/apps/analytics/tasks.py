@@ -18,7 +18,6 @@ import logging
 
 from django.conf import settings
 from django.core.urlresolvers import reverse
-from corehq.util.soft_assert import soft_assert
 from corehq.toggles import deterministic_random
 from corehq.util.decorators import analytics_task
 
@@ -306,19 +305,15 @@ def track_periodic_data():
     Sync data that is neither event or page based with hubspot/Kissmetrics
     :return:
     """
-    start_time = datetime.now()
     # Start by getting a list of web users mapped to their domains
     six_months_ago = date.today() - timedelta(days=180)
     users_to_domains = UserES().web_users().last_logged_in(gte=six_months_ago).fields(['domains', 'email'])\
                                .run().hits
     # users_to_domains is a list of dicts
-    time_users_to_domains_query = datetime.now()
     domains_to_forms = FormES().terms_aggregation('domain', 'domain').size(0).run()\
         .aggregations.domain.counts_by_bucket()
-    time_domains_to_forms_query = datetime.now()
     domains_to_mobile_users = UserES().mobile_users().terms_aggregation('domain', 'domain').size(0).run()\
                                       .aggregations.domain.counts_by_bucket()
-    time_domains_to_mobile_users_query = datetime.now()
 
     # For each web user, iterate through their domains and select the max number of form submissions and
     # max number of mobile workers
@@ -361,23 +356,7 @@ def track_periodic_data():
         }
         submit.append(user_json)
 
-    end_time = datetime.now()
     submit_json = json.dumps(submit)
-
-    processing_time = end_time - start_time
-    _soft_assert = soft_assert('{}@{}'.format('tsheffels', 'dimagi.com'))
-    #TODO: Update this soft assert to only trigger if the timing is longer than a threshold
-    msg = 'Periodic Data Timing: start: {}, users_to_domains: {}, domains_to_forms: {}, ' \
-          'domains_to_mobile_workers: {}, end: {}, size of string post to hubspot (bytes): {}'\
-        .format(
-            start_time,
-            time_users_to_domains_query,
-            time_domains_to_forms_query,
-            time_domains_to_mobile_users_query,
-            end_time,
-            sys.getsizeof(submit_json)
-        )
-    _soft_assert(processing_time.seconds < 100, msg)
 
     submit_data_to_hub_and_kiss(submit_json)
 
