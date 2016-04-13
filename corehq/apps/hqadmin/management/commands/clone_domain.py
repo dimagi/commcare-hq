@@ -1,13 +1,13 @@
 from optparse import make_option
 
-from django.core.management.base import BaseCommand
+from django.core.management.base import BaseCommand, CommandError
 
 from corehq.apps.userreports.dbaccessors import get_report_configs_for_domain, get_datasources_for_domain
 
 
 class Command(BaseCommand):
     args = "<existing_domain> <new_domain>"
-    help = """Clone a domain and it's data"""
+    help = """Clone a domain and it's data (settings, fixtures, locations, products, UCR, apps)"""
 
     option_list = BaseCommand.option_list + (
         make_option('--no-flags', action='store_false', dest='flags', default=True,
