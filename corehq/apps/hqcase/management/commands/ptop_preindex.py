@@ -34,6 +34,7 @@ def get_reindex_commands(alias_name):
         'hqgroups': ['ptop_fast_reindex_groups'],
         'report_xforms': ['ptop_fast_reindex_reportxforms'],
         'report_cases': ['ptop_fast_reindex_reportcases'],
+        'case_search': [('ptop_reindexer_v2', {'index': 'case-search'})]
     }
     return pillow_command_map.get(alias_name, [])
 
