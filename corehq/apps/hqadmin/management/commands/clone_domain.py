@@ -19,6 +19,22 @@ class Command(LabelCommand):
         pass
 
 
+def copy_applications(old_domain, new_domain, report_map):
+    from corehq.apps.app_manager.dbaccessors import get_apps_in_domain
+    from corehq.apps.app_manager.models import ReportModule
+    app_map = {}
+    apps = get_apps_in_domain(old_domain)
+    for app in apps:
+        for module in app.modules:
+            if module.module_type == ReportModule.module_type:
+                for config in module.report_configs:
+                    config.report_id = report_map[config.report_id]
+
+        old_id, new_id = save_copy(app, new_domain)
+        app_map[old_id] = new_id
+    return app_map
+
+
 def copy_ucr_data(old_domain, new_domain):
     datasource_map = copy_ucr_datasources(new_domain, old_domain)
     report_map = copy_ucr_reports(datasource_map, new_domain)
