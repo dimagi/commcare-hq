@@ -178,7 +178,7 @@ class CloudcareMain(View):
             def _get_case(domain, case_id):
                 case = accessor.get_case(case_id)
                 assert case.domain == domain, "case %s not in %s" % (case_id, domain)
-                return case.get_json()
+                return case.to_api_json()
 
             case = _get_case(domain, case_id) if case_id else None
             if parent_id is None and case is not None:
@@ -393,15 +393,15 @@ def filter_cases(request, domain, app_id, module_id, parent_id=None):
     # in the results from touchforms. this is a little hacky but the easiest
     # (quick) workaround. should be revisted when we optimize the case list.
     cases = filter(lambda c: c.type == case_type, cases)
-    cases = [c.get_json(lite=True) for c in cases if c]
+    cases = [c.to_api_json(lite=True) for c in cases if c]
 
     response = {'cases': cases}
     if requires_parent_cases:
         # Subtract already fetched cases from parent list
         parent_ids = set(map(lambda c: c['indices']['parent']['case_id'], cases)) - \
             set(map(lambda c: c['case_id'], cases))
-        parents = list(accessor.iter_cases(parent_ids))
-        parents = [c.get_json(lite=True) for c in parents]
+        parents = accessor.get_cases(parent_ids)
+        parents = [c.to_api_json(lite=True) for c in parents]
         response.update({'parents': parents})
 
     return json_response(response)

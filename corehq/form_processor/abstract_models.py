@@ -169,6 +169,12 @@ class AbstractCommCareCase(object):
     def get_case_property(self, property):
         raise NotImplementedError
 
+    def to_json(self):
+        raise NotImplementedError()
+
+    def to_api_json(self):
+        raise NotImplementedError()
+
     @memoized
     def get_index_map(self, reversed=False):
         return dict([

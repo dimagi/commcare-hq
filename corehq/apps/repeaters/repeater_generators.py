@@ -77,7 +77,7 @@ class CaseRepeaterXMLPayloadGenerator(BasePayloadGenerator):
 class CaseRepeaterJsonPayloadGenerator(BasePayloadGenerator):
     def get_payload(self, repeat_record, payload_doc):
         del payload_doc['actions']
-        data = payload_doc.get_json(lite=True)
+        data = payload_doc.to_api_json(lite=True)
         return json.dumps(data, cls=DjangoJSONEncoder)
 
     @property

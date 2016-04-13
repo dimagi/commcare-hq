@@ -249,7 +249,7 @@ class CommCareCase(SafeSaveDocument, IndexHoldingMixIn, ComputedDocumentMixin,
         self.doc_type += DELETED_SUFFIX
         self.save()
 
-    def get_json(self, lite=False):
+    def to_api_json(self, lite=False):
         ret = {
             # actions excluded here
             "domain": self.domain,

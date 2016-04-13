@@ -563,7 +563,7 @@ class CommCareCaseSQL(DisabledDbMixin, models.Model, RedisLockableMixIn,
     def dynamic_case_properties(self):
         return OrderedDict(sorted(self.case_json.iteritems()))
 
-    def get_json(self, lite=False):
+    def to_api_json(self, lite=False):
         from .serializers import CommCareCaseSQLAPISerializer
         serializer = CommCareCaseSQLAPISerializer(self, lite=lite)
         return serializer.data
