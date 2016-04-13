@@ -400,7 +400,7 @@ def filter_cases(request, domain, app_id, module_id, parent_id=None):
         # Subtract already fetched cases from parent list
         parent_ids = set(map(lambda c: c['indices']['parent']['case_id'], cases)) - \
             set(map(lambda c: c['case_id'], cases))
-        parents = accessor.get_cases(parent_ids)
+        parents = accessor.get_cases(list(parent_ids))
         parents = [c.to_api_json(lite=True) for c in parents]
         response.update({'parents': parents})
 
