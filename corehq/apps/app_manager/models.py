@@ -3925,6 +3925,8 @@ class ApplicationBase(VersionedDoc, SnapshotMixin,
     """
     Abstract base class for Application and RemoteApp.
     Contains methods for generating the various files and zipping them into CommCare.jar
+
+    See note at top of file for high-level overview.
     """
 
     recipients = StringProperty(default="")
