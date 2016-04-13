@@ -1428,7 +1428,6 @@ PILLOWTOPS = {
     'core': [
         'corehq.pillows.case.CasePillow',
         'corehq.pillows.xform.XFormPillow',
-        'corehq.pillows.domain.DomainPillow',
         'corehq.pillows.user.UserPillow',
         'corehq.pillows.application.AppPillow',
         'corehq.pillows.group.GroupPillow',
@@ -1441,6 +1440,11 @@ PILLOWTOPS = {
             'name': 'SqlSMSPillow',
             'class': 'pillowtop.pillow.interface.ConstructedPillow',
             'instance': 'corehq.pillows.sms.get_sql_sms_pillow',
+        },
+        {
+            'name': 'KafkaDomainPillow',
+            'class': 'pillowtop.pillow.interface.ConstructedPillow',
+            'instance': 'corehq.pillows.domain.get_domain_kafka_to_elasticsearch_pillow',
         },
     ],
     'core_ext': [
