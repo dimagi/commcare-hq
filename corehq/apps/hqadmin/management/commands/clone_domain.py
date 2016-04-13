@@ -62,6 +62,31 @@ def copy_fixtures(old_domain, new_domain):
     # TODO: FixtureOwnership - requires copying users & groups
 
 
+def copy_locations(old_domain, new_domain):
+    from corehq.apps.locations.models import LocationType
+    from corehq.apps.locations.models import Location
+
+    location_types = LocationType.objects.filter(domain=old_domain)
+    for location_type in location_types:
+        location_type.domain = new_domain
+        location_type.id = None
+        location_type.save()
+
+    def copy_location_hierarchy(location, id_map):
+        try:
+            location.lineage = [id_map[ancestor] for ancestor in location.lineage]
+        except KeyError:
+            pass # ancestor not found
+        old_id, new_id = save_copy(location, new_domain)
+        id_map[old_id] = new_id
+        for child in location.children:
+            copy_location_hierarchy(child, id_map)
+
+    locations = Location.root_locations(old_domain)
+    for location in locations:
+        copy_location_hierarchy(location, {})
+
+
 def copy_applications(old_domain, new_domain, report_map):
     from corehq.apps.app_manager.dbaccessors import get_apps_in_domain
     from corehq.apps.app_manager.models import ReportModule
