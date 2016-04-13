@@ -81,7 +81,7 @@ class MonthlyPerformanceSummary(jsonobject.JsonObject):
                 user_id=row.user_id,
                 username=raw_username(row.username),
                 num_forms_submitted=row.num_of_forms,
-                is_performing=row.num_of_forms > row.use_threshold,
+                is_performing=row.num_of_forms >= row.use_threshold,
                 previous_stub=None,
             ) for row in self._base_queryset.distinct('user_id')
         }
