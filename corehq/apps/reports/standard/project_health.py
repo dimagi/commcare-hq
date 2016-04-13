@@ -40,6 +40,7 @@ class MonthlyPerformanceSummary(jsonobject.JsonObject):
         self._base_queryset = MALTRow.objects.filter(
             domain_name=domain,
             month=month,
+            user_type__in=['CommCareUser', 'CommCareUser-Deleted'],
         )
         self._performing_queryset = self._base_queryset.filter(
             num_of_forms__gte=F('use_threshold')
