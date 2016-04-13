@@ -710,6 +710,22 @@ class CommCareCaseSQL(DisabledDbMixin, models.Model, RedisLockableMixIn,
         if property in allowed_fields:
             return getattr(self, property)
 
+    def resolve_case_property(self, property_name):
+        """
+        Handles case property parent references. Examples for property_name can be:
+        name
+        parent/name
+        parent/parent/name
+        ...
+        """
+        if property_name.lower().startswith('parent/'):
+            parent = self.parent
+            if not parent:
+                return None
+            return parent.resolve_case_property(property_name[7:])
+
+        return self.to_json().get(property_name)
+
     def on_tracked_models_cleared(self, model_class=None):
         self._saved_indices.reset_cache(self)
 
@@ -721,6 +737,32 @@ class CommCareCaseSQL(DisabledDbMixin, models.Model, RedisLockableMixIn,
     def get_obj_by_id(cls, case_id):
         from corehq.form_processor.backends.sql.dbaccessors import CaseAccessorSQL
         return CaseAccessorSQL.get_case(case_id)
+
+    @memoized
+    def get_parent(self, identifier=None, relationship_id=None):
+        indices = self.indices
+
+        if identifier:
+            indices = filter(lambda index: index.identifier == identifier, indices)
+
+        if relationship_id:
+            indices = filter(lambda index: index.relationship_id == relationship_id, indices)
+
+        return [index.referenced_case for index in indices]
+
+    @property
+    def parent(self):
+        """
+        Returns the parent case if one exists, else None.
+        NOTE: This property should only return the first parent in the list
+        of indices. If for some reason your use case creates more than one,
+        please write/use a different property.
+        """
+        result = self.get_parent(
+            identifier=CommCareCaseIndexSQL.PARENT_IDENTIFIER,
+            relationship_id=CommCareCaseIndexSQL.CHILD
+        )
+        return result[0] if result else None
 
     def __unicode__(self):
         return (
@@ -835,6 +877,8 @@ class CommCareCaseIndexSQL(DisabledDbMixin, models.Model, SaveStateMixin):
     )
     RELATIONSHIP_INVERSE_MAP = dict(RELATIONSHIP_CHOICES)
     RELATIONSHIP_MAP = {v: k for k, v in RELATIONSHIP_CHOICES}
+
+    PARENT_IDENTIFIER = 'parent'
 
     case = models.ForeignKey(
         'CommCareCaseSQL', to_field='case_id', db_index=True,
