@@ -1,7 +1,5 @@
 from django.core.management.base import BaseCommand
 
-from couchexport.models import SavedExportSchema
-
 from corehq.apps.reports.dbaccessors import (
     stale_get_exports_json,
     stale_get_export_count,
