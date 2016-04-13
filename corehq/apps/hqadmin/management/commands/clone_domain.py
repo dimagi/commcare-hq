@@ -123,7 +123,7 @@ class Command(BaseCommand):
         program_map = {}
         programs = Program.by_domain(old_domain)
         for program in programs:
-            old_id, new_id = self.save_couch_copy(program)
+            old_id, new_id = self.save_couch_copy(program, new_domain)
             program_map[old_id] = new_id
             
         products = Product.by_domain(old_domain)
@@ -133,7 +133,7 @@ class Command(BaseCommand):
                     product.program_id = program_map[product.program_id]
                 except:
                     self.stderr('Missing program {} for product {}'.format(product.program_id, product._id))
-            self.save_couch_copy(product)
+            self.save_couch_copy(product, new_domain)
 
     def copy_applications(self, old_domain, new_domain, report_map):
         from corehq.apps.app_manager.dbaccessors import get_apps_in_domain
