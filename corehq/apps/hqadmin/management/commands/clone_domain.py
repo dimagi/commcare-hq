@@ -22,22 +22,22 @@ class Command(BaseCommand):
                     help="Don't process UCR"),
     )
 
-    def handle(self, flags=True, fixtures=True, locations=True, products=True, ucr_apps=True, *args, **options):
+    def handle(self, *args, **options):
         existing_domain, new_domain = args
         self.clone_domain_and_settings(existing_domain, new_domain)
-        if flags:
+        if options['flags']:
             self.set_flags(existing_domain, new_domain)
 
-        if fixtures:
+        if options['fixtures']:
             self.copy_fixtures(existing_domain, new_domain)
 
-        if locations:
+        if options['locations']:
             self.copy_locations(existing_domain, new_domain)
 
-        if products:
+        if options['products']:
             self.copy_products(existing_domain, new_domain)
 
-        if ucr_apps:
+        if options['ucr_apps']:
             report_map = self.copy_ucr_data(existing_domain, new_domain)
             self.copy_applications(existing_domain, new_domain, report_map)
 
