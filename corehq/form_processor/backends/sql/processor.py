@@ -205,7 +205,9 @@ class FormProcessorSQL(object):
         if detail.type == CaseTransaction.TYPE_REBUILD_FORM_ARCHIVED and not detail.archived:
             # we're rebuilding because a form was un-archived
             unarchived_form_id = detail.form_id
-        strategy.rebuild_from_transactions(transactions, rebuild_transaction, unarchived_form_id=unarchived_form_id)
+        strategy.rebuild_from_transactions(
+            transactions, rebuild_transaction, unarchived_form_id=unarchived_form_id
+        )
         return case
 
     @staticmethod

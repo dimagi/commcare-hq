@@ -369,12 +369,12 @@ class CaseRebuildTest(TestCase):
         self.assertEqual(f1, u1)
         self.assertEqual(f3, u3)
 
-        self.assertTrue(case.closed) # no change
-        self.assertEqual(case.get_case_property('p1'), 'p1-1') # original
-        self.assertEqual(case.get_case_property('p2'), 'p2-1') # loses second form update
-        self.assertFalse('p3' in case.dynamic_case_properties()) # should disappear entirely
-        self.assertEqual(case.get_case_property('p4'), 'p4-3') # no change
-        self.assertEqual(case.get_case_property('p5'), 'p5-3') # no change
+        self.assertTrue(case.closed)  # no change
+        self.assertEqual(case.get_case_property('p1'), 'p1-1')  # original
+        self.assertEqual(case.get_case_property('p2'), 'p2-1')  # loses second form update
+        self.assertFalse('p3' in case.dynamic_case_properties())  # should disappear entirely
+        self.assertEqual(case.get_case_property('p4'), 'p4-3')  # no change
+        self.assertEqual(case.get_case_property('p5'), 'p5-3')  # no change
 
         _reset(f2)
 
