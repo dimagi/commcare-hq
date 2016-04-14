@@ -27,6 +27,7 @@ from django.utils.translation import ugettext as _, ugettext_lazy
 from django.contrib.auth.models import User
 
 from corehq.apps.app_manager.dbaccessors import get_apps_in_domain
+from corehq.apps.case_search.models import CaseSearchConfig
 from corehq.apps.hqwebapp.templatetags.hq_shared_tags import toggle_js_domain_cachebuster
 
 from corehq.const import USER_DATE_FORMAT
@@ -2094,8 +2095,13 @@ class CaseSearchConfigView(BaseAdminProjectSettingsView):
     def page_context(self):
         apps = get_apps_in_domain(self.domain, include_remote=False)
         case_types = {t for app in apps for t in app.get_case_types() if t}
+        current_values = CaseSearchConfig.objects.get_or_none(pk=self.domain)
         return {
-            'case_types': sorted(list(case_types))
+            'case_types': sorted(list(case_types)),
+            'values': {
+                'enabled': current_values.enabled if current_values else False,
+                'config': current_values.config if current_values else {}
+            }
         }
 
 
