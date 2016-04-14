@@ -9,10 +9,9 @@ from corehq.apps.change_feed.topics import get_topic
 from corehq.apps.domain.models import Domain
 from corehq.apps.users.models import CommCareUser
 from corehq.util.couchdb_management import couch_config
+from corehq.util.soft_assert import soft_assert
 from pillowtop.checkpoints.manager import PillowCheckpoint, PillowCheckpointEventHandler
-from pillowtop.couchdb import CachedCouchDB
 from pillowtop.feed.couch import CouchChangeFeed
-from pillowtop.listener import PythonPillow
 from pillowtop.pillow.interface import ConstructedPillow
 from pillowtop.processors import PillowProcessor
 
@@ -42,7 +41,11 @@ class KafkaProcessor(PillowProcessor):
         else:
             # change.deleted is used for hard deletions, from which we don't currently
             # get any metadata from so this should have raised a MissingMetaInformationError above
-            assert not change.deleted
+            _assert = soft_assert(to='@'.join(['czue', 'dimagi.com']), send_to_ops=False)
+            _assert(not change.deleted, u'change {} (meta: {}) should not have been deleted but was.'.format(
+                change,
+                change_meta.to_json()
+            ))
             self._producer.send_change(get_topic(doc_meta), change_meta)
 
 
