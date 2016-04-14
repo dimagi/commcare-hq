@@ -192,7 +192,10 @@ class ExportColumn(DocumentSchema):
         if isinstance(item, SplitableItemMixin):
             column = SplitExportColumn(**constructor_args)
         elif isinstance(item, CaseIndexItem):
-            column = CaseIndexExportColumn(**constructor_args)
+            column = CaseIndexExportColumn(
+                help_text=_(u'The ID of the associated {} case type').format(item.case_type),
+                **constructor_args
+            )
         else:
             column = ExportColumn(**constructor_args)
         column.update_properties_from_app_ids_and_versions(app_ids_and_versions)
@@ -702,6 +705,10 @@ class CaseIndexItem(ExportItem):
     """
     An item that refers to a case index
     """
+
+    @property
+    def case_type(self):
+        return self.path[1].name
 
 
 class GeopointItem(ExportItem, SplitableItemMixin):
@@ -1335,7 +1342,7 @@ class CaseIndexExportColumn(ExportColumn):
 
     def get_value(self, doc, **kwargs):
         path = [self.item.path[0].name]  # Index columns always are just a reference to 'indices'
-        case_type = self.item.path[1].name  # Second part of path is always the case type
+        case_type = self.item.case_type
 
         indices = NestedDictGetter(path)(doc) or []
         case_ids = map(
