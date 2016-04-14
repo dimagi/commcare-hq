@@ -25,11 +25,17 @@ class Command(AppMigrationCommandBase):
             should_save = True
             app = Application.wrap(app_doc)
 
+            if '_attachments' in app_doc:
+                source_attachments = app_doc['_attachments']
+            else:
+                source_attachments = app_doc.get('external_blobs', {})
             _attachments = {}
-            for name in app_doc.get('_attachments', {}):
+            for name in source_attachments:
                 if re.match(ATTACHMENT_REGEX, name):
+                    # FIXME loss of metadata (content type, etc.)
                     _attachments[name] = app.fetch_attachment(name)
             app_doc['_attachments'] = _attachments
+            app_doc.pop('external_blobs', None)
 
             app_doc = update_unique_ids(app_doc)
 

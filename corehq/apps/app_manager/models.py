@@ -22,6 +22,7 @@ When a build is starred, this is called "releasing" the build.  The parameter
 You might also run in to remote applications and applications copied to be
 published on the exchange, but those are quite infrequent.
 """
+import base64
 import calendar
 from distutils.version import LooseVersion
 from itertools import chain
@@ -37,6 +38,7 @@ import datetime
 from collections import defaultdict, namedtuple
 from functools import wraps
 from copy import deepcopy
+from mimetypes import guess_type
 from urllib2 import urlopen
 from urlparse import urljoin
 
@@ -56,6 +58,7 @@ from django.template.loader import render_to_string
 from restkit.errors import ResourceError
 from couchdbkit.resource import ResourceNotFound
 from corehq import toggles, privileges
+from corehq.blobs.mixin import BlobMixin
 from corehq.const import USER_DATE_FORMAT, USER_TIME_FORMAT
 from corehq.apps.app_manager.feature_support import CommCareFeatureSupportMixin
 from corehq.util.quickcache import quickcache
@@ -3833,7 +3836,88 @@ class ShadowModule(ModuleBase, ModuleDetailsMixin):
         return errors
 
 
-class VersionedDoc(LazyAttachmentDoc):
+class LazyBlobDoc(BlobMixin, LazyAttachmentDoc):
+    """Adapt LazyAttachmentDoc to blob db"""
+
+    migrating_blobs_from_couch = True
+    __save_params = None
+
+    @classmethod
+    def wrap(cls, data):
+        if "_attachments" in data:
+            data = data.copy()
+            attachments = data.pop("_attachments")
+        else:
+            attachments = None
+        self = super(LazyAttachmentDoc, cls).wrap(data)
+        if attachments:
+            for name, attachment in attachments.items():
+                if isinstance(attachment, basestring):
+                    info = {"content": attachment}
+                elif "data" in attachment:
+                    # TODO find out if this is only needed for serialized test data
+                    info = {
+                        "content": base64.b64decode(attachment["data"]),
+                        "content_type": attachment.get("content_type"),
+                    }
+                else:
+                    # ignore attachment stub with no content
+                    continue
+                self.lazy_put_attachment(name=name, **info)
+        return self
+
+    def lazy_list_attachments(self):
+        keys = set()
+        keys.update(getattr(self, '_LAZY_ATTACHMENTS', None) or {})
+        keys.update(self.blobs or {})
+        return keys
+
+    def put_attachment(self, content, name=None, content_type=None,
+                       content_length=None):
+        self._LazyAttachmentDoc__remove_cached_attachment(name)
+        info = self._LazyAttachmentDoc__store_lazy_attachment(
+                        content, name, content_type, content_length)
+        return super(LazyBlobDoc, self).put_attachment(name=name, **info)
+
+    def save(self, **params):
+        if hasattr(self, '_PRE_SAVE'):
+            for pre_save in self._PRE_SAVE:
+                pre_save()
+
+            def del_pre_save():
+                del self._PRE_SAVE
+
+            self.register_post_save(del_pre_save)
+
+        if self._LAZY_ATTACHMENTS and self.__save_params is None:
+            assert self.__save_params is None, (self.__save_params, params)
+            self.__save_params = params
+            try:
+                # atomic_blobs context manager calls self.save()
+                with self.atomic_blobs():
+                    for name, info in self._LAZY_ATTACHMENTS.items():
+                        if not info['content_type']:
+                            info['content_type'] = ';'.join(filter(None, guess_type(name)))
+                        self._LazyAttachmentDoc__remove_cached_attachment(name)
+                        super(LazyBlobDoc, self).put_attachment(name=name, **info)
+            finally:
+                del self.__save_params
+        else:
+            if self.__save_params is not None:
+                # recursive save by atomic_blobs context manager
+                assert not params, params
+                params = self.__save_params
+            # super super call
+            super(LazyAttachmentDoc, self).save(**params)
+
+        if hasattr(self, '_POST_SAVE'):
+            for post_save in self._POST_SAVE:
+                post_save()
+
+            del self._POST_SAVE
+
+
+class VersionedDoc(LazyBlobDoc):
     """
     A document that keeps an auto-incrementing version number, knows how to make copies of itself,
     delete a copy of itself, and revert back to an earlier copy of itself.
@@ -3872,7 +3956,7 @@ class VersionedDoc(LazyAttachmentDoc):
             copy = copies[0]
         else:
             copy = deepcopy(self.to_json())
-            bad_keys = ('_id', '_rev', '_attachments',
+            bad_keys = ('_id', '_rev', '_attachments', 'external_blobs',
                         'short_url', 'short_odk_url', 'short_odk_media_url', 'recipients')
 
             for bad_key in bad_keys:
@@ -3906,8 +3990,8 @@ class VersionedDoc(LazyAttachmentDoc):
         app['_id'] = self._id
         app['version'] = self.version
         app['copy_of'] = None
-        if '_attachments' in app:
-            del app['_attachments']
+        app.pop('_attachments', None)
+        app.pop('external_blobs', None)
         cls = self.__class__
         app = cls.wrap(app)
         app.copy_attachments(copy)
@@ -3938,9 +4022,13 @@ class VersionedDoc(LazyAttachmentDoc):
         _attachments = {}
         for name in self.lazy_list_attachments():
             if re.match(ATTACHMENT_REGEX, name):
+                # FIXME loss of metadata (content type, etc.)
                 _attachments[name] = self.lazy_fetch_attachment(name)
 
+        # the '_attachments' key is a dict of `name: blob_content`
+        # pairs, and is part of the exported (serialized) app interface
         source['_attachments'] = _attachments
+        source.pop("external_blobs", None)
         source = self.scrub_source(source)
 
         return json.dumps(source) if dump_json else source
@@ -4343,7 +4431,7 @@ class ApplicationBase(VersionedDoc, SnapshotMixin,
             except (ResourceError, KeyError):
                 all_files = {
                     filename[len('files/'):]: self.lazy_fetch_attachment(filename)
-                    for filename in self._attachments if filename.startswith('files/')
+                    for filename in self.blobs if filename.startswith('files/')
                 }
                 all_files = {
                     name: (contents if isinstance(contents, str) else contents.encode('utf-8'))
@@ -4557,7 +4645,7 @@ class SavedAppBuild(ApplicationBase):
 
     def to_saved_build_json(self, timezone):
         data = super(SavedAppBuild, self).to_json().copy()
-        for key in ('modules', 'user_registration',
+        for key in ('modules', 'user_registration', 'external_blobs',
                     '_attachments', 'profile', 'translations'
                     'description', 'short_description'):
             data.pop(key, None)
@@ -5455,9 +5543,10 @@ def import_app(app_id_or_source, domain, source_properties=None, validate_source
                 m.valid_domains.append(domain)
                 m.save()
 
-    for name, attachment in attachments.items():
-        if re.match(ATTACHMENT_REGEX, name):
-            app.put_attachment(attachment, name)
+    with app.atomic_blobs():
+        for name, attachment in attachments.items():
+            if re.match(ATTACHMENT_REGEX, name):
+                app.put_attachment(attachment, name)
 
     if not app.is_remote_app() and any(module.uses_usercase() for module in app.get_modules()):
         from corehq.apps.app_manager.util import enable_usercase
