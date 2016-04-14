@@ -4,7 +4,6 @@ from corehq.apps.reports.datatables import (
     DataTablesColumn,
     DataTablesHeader,
 )
-from corehq.apps.reports.datatables import DTSortType
 from corehq.apps.reports.generic import GenericTabularReport
 from corehq.apps.sms.models import (
     INCOMING,
