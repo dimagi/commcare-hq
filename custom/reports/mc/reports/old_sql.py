@@ -381,6 +381,7 @@ class MCBase(ComposedTabularReport, CustomProjectReport, DatespanMixin):
     format_class = None  # override
     extra_context_providers = [section_context]
     is_bootstrap3 = True
+    use_datatables = False
 
     def __init__(self, request, base_context=None, domain=None, **kwargs):
         super(MCBase, self).__init__(request, base_context, domain, **kwargs)
