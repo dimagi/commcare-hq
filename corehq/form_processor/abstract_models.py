@@ -141,6 +141,10 @@ class AbstractCommCareCase(object):
     def case_name(self):
         raise NotImplementedError()
 
+    @property
+    def parent(self):
+        raise NotImplementedError()
+
     def soft_delete(self):
         raise NotImplementedError()
 
@@ -197,22 +201,6 @@ class AbstractCommCareCase(object):
             "date_opened": self.opened_on,
             # all custom properties go here
         }.items())
-
-    @property
-    @memoized
-    def parent(self):
-        from casexml.apps.case.models import INDEX_ID_PARENT
-        from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
-        """
-        Returns the parent case if one exists, else None.
-        NOTE: This property should only return the first parent in the list
-        of indices. If for some reason your use case creates more than one,
-        please write/use a different property.
-        """
-        for index in self.indices:
-            if index.identifier == INDEX_ID_PARENT:
-                return CaseAccessors(self.domain).get_case(index.referenced_id)
-        return None
 
     @memoized
     def get_attachment_map(self):
