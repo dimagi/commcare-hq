@@ -507,8 +507,6 @@ def _reopen_or_create_supply_point(location):
     )
     if supply_point:
         if supply_point and supply_point.closed:
-            form_ids = CaseAccessors(supply_point.domain).get_case_xform_ids(supply_point.case_id)
-            form_accessor = FormAccessors(supply_point.domain)
             transactions = supply_point.closed_transactions
             for transaction in transactions:
                 transaction.form.archive(user_id=const.COMMTRACK_USERNAME)
