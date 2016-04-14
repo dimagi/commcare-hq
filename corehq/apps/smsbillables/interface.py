@@ -4,6 +4,7 @@ from corehq.apps.reports.datatables import (
     DataTablesColumn,
     DataTablesHeader,
 )
+from corehq.apps.reports.datatables import DTSortType
 from corehq.apps.reports.generic import GenericTabularReport
 from corehq.apps.sms.models import (
     INCOMING,
@@ -52,7 +53,7 @@ class SMSBillablesInterface(GenericTabularReport):
     @property
     def headers(self):
         return DataTablesHeader(
-            DataTablesColumn("Date of Message", sort_type=DTSortType.DATE)
+            DataTablesColumn("Date of Message", sort_type=DTSortType.DATE),
             DataTablesColumn("Project Space"),
             DataTablesColumn("Direction"),
             DataTablesColumn("SMS parts"),
