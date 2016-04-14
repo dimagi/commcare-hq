@@ -49,7 +49,9 @@ class CommCareCaseIndex(LooselyEqualDocumentSchema, UnicodeMixIn):
             "CommCareCaseIndex("
             "identifier='{index.identifier}', "
             "referenced_type='{index.referenced_type}', "
-            "referenced_id='{index.referenced_id}'"
+            "referenced_id='{index.referenced_id}', "
+            "relationship='{index.relationship}'"
+            ")"
         ).format(index=self)
 
     def __cmp__(self, other):
