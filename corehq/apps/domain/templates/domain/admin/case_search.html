@@ -10,7 +10,7 @@
     (function () {
         var CaseSearchConfig = hqImport('domain/js/case-search-config.js').CaseSearchConfig;
         var viewModel = new CaseSearchConfig({
-            values: {enabled: false},
+            values: {{ values|JSON }},
             caseTypes: {{ case_types|JSON }}
         });
         $('#case-search-config').koApplyBindings(viewModel);
@@ -23,8 +23,11 @@
 
     <div class="row">
         <div class="col-sm-6">
-            <form id="case-search-config" action="" method="post">
+            <form id="case-search-config"
+                  action="{% url 'case_search_config' request.domain %}"
+                  method="post">
                 {% csrf_token %}
+
                 <button type="submit" class="btn btn-primary">Save</button>
 
                 <p class="spacer"></p>
@@ -42,7 +45,7 @@
                 </p>
 
                 <p>
-                    <input name="enable" type="checkbox" data-bind="checked: toggleEnabled"/>
+                    <input id="enable" type="checkbox" data-bind="checked: toggleEnabled"/>
                     <label for="enable">{% trans "Enable Case Search" %}</label>
                 </p>
 
@@ -54,7 +57,9 @@
                         a small amount, e.g. "age".{% endblocktrans %}
                     </p>
 
-                    <div data-bind="template: 'case_type_template'"></div>
+                    <div data-bind="template: { name: 'case_type_template',
+                                                foreach: fuzzyProperties,
+                                                as: 'caseTypeProps' }"></div>
                 </div>
             </form>
         </div>
