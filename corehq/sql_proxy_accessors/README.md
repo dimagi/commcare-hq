@@ -64,19 +64,12 @@ localsettings:
 
 2. Migrate the databases
 
-  * SSH into the DB machine
-  
 ```
-  $ sudo -iu cchq
-  $ cd www/<env>/current
-  $ source python_env/bin/activate
-  $ ./manage.py migrate_multi --noinput
+  $ fab [environment] manage:'migrate_multi --noinput'
 ```
 
 3. Setup the sharding configuration for PL/Proxy
 
-(still logged into the DB machine as the CCHQ user)
-
 ```
-  $ ./manage.py configure_pl_proxy_cluster
+  $ fab [environment] manage:configure_pl_proxy_cluster
 ```
