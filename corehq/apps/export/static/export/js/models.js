@@ -235,7 +235,7 @@ Exports.ViewModels.ExportItem.prototype.isCaseName = function() {
 Exports.ViewModels.ExportItem.prototype.readablePath = function() {
     return _.map(this.path(), function(pathNode) {
         return pathNode.name();
-    }).join('.')
+    }).join('.');
 };
 
 Exports.ViewModels.ExportItem.mapping = {
