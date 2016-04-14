@@ -9,7 +9,7 @@ import pytz
 from couchdbkit import ResourceNotFound
 import dateutil
 from django.core.paginator import Paginator
-from django.views.generic import View
+from django.views.generic import View, UpdateView
 from django.db.models import Sum
 from django.conf import settings
 from django.template.loader import render_to_string
@@ -25,6 +25,8 @@ from django.views.decorators.http import require_POST
 from PIL import Image
 from django.utils.translation import ugettext as _, ugettext_lazy
 from django.contrib.auth.models import User
+
+from corehq.apps.app_manager.dbaccessors import get_apps_in_domain
 from corehq.apps.hqwebapp.templatetags.hq_shared_tags import toggle_js_domain_cachebuster
 
 from corehq.const import USER_DATE_FORMAT
@@ -92,7 +94,14 @@ from corehq.apps.domain.forms import (
     ConfirmSubscriptionRenewalForm, SnapshotFixtureForm, TransferDomainForm,
     SelectSubscriptionTypeForm, INTERNAL_SUBSCRIPTION_MANAGEMENT_FORMS, AdvancedExtendedTrialForm,
     ContractedPartnerForm, DimagiOnlyEnterpriseForm)
-from corehq.apps.domain.models import Domain, LICENSES, TransferDomainRequest
+from corehq.apps.domain.models import (
+    CaseTypeFuzzyProperties,
+    Domain,
+    FuzzyProperty,
+    LICENSES,
+    ProjectSearchConfig,
+    TransferDomainRequest,
+)
 from corehq.apps.domain.utils import normalize_domain_name
 from corehq.apps.hqwebapp.views import BaseSectionPageView, BasePageView, CRUDPaginatedViewMixin
 from corehq.apps.domain.forms import ProjectSettingsForm
@@ -2069,6 +2078,25 @@ class ManageProjectMediaView(BaseAdminProjectSettingsView):
             m_file.save()
         messages.success(request, _("Multimedia updated successfully!"))
         return self.get(request, *args, **kwargs)
+
+
+class CaseSearchConfigView(BaseAdminProjectSettingsView):
+    urlname = 'case_search_config'
+    page_title = ugettext_lazy('Case Search')
+    template_name = 'domain/admin/case_search.html'
+
+    @method_decorator(domain_admin_required)
+    @use_bootstrap3
+    def dispatch(self, request, *args, **kwargs):
+        return super(CaseSearchConfigView, self).dispatch(request, *args, **kwargs)
+
+    @property
+    def page_context(self):
+        apps = get_apps_in_domain(self.domain, include_remote=False)
+        case_types = {t for app in apps for t in app.get_case_types() if t}
+        return {
+            'case_types': sorted(list(case_types))
+        }
 
 
 class RepeaterMixin(object):
