@@ -3,7 +3,8 @@ import logging
 from couchdbkit.exceptions import ResourceNotFound
 from elasticsearch import Elasticsearch
 from elasticsearch.exceptions import RequestError, ConnectionError, NotFoundError, ConflictError
-from psycopg2._psycopg import InterfaceError
+from psycopg2._psycopg import InterfaceError as Psycopg2InterfaceError
+from django.db.utils import InterfaceError as DjangoInterfaceError
 from datetime import datetime, timedelta
 import hashlib
 import traceback
@@ -608,7 +609,7 @@ def retry_on_connection_failure(fn):
             db.transaction.rollback()
             # re raise the exception for additional error handling
             raise
-        except InterfaceError:
+        except (Psycopg2InterfaceError, DjangoInterfaceError):
             # force closing the connection to prevent Django from trying to reuse it.
             # http://www.tryolabs.com/Blog/2014/02/12/long-time-running-process-and-django-orm/
             db.connection.close()
