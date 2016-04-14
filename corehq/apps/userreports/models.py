@@ -262,7 +262,7 @@ class DataSourceConfiguration(UnicodeMixIn, CachedCouchDocumentMixin, Document):
 
     @classmethod
     def by_domain(cls, domain):
-        get_datasources_for_domain(domain)
+        return get_datasources_for_domain(domain)
 
     @classmethod
     def all_ids(cls):
