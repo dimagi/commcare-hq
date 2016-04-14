@@ -52,7 +52,7 @@ class SMSBillablesInterface(GenericTabularReport):
     @property
     def headers(self):
         return DataTablesHeader(
-            DataTablesColumn("Date of Message"),
+            DataTablesColumn("Date of Message", sort_type=DTSortType.DATE)
             DataTablesColumn("Project Space"),
             DataTablesColumn("Direction"),
             DataTablesColumn("SMS parts"),
