@@ -48,6 +48,17 @@ class CaseSearchConfigJSON(jsonobject.JsonObject):
         return []
 
 
+class GetOrNoneManager(models.Manager):
+    """
+    Adds get_or_none method to objects
+    """
+    def get_or_none(self, **kwargs):
+        try:
+            return self.get(**kwargs)
+        except self.model.DoesNotExist:
+            return None
+
+
 class CaseSearchConfig(models.Model):
     """
     Contains config for case search
@@ -64,6 +75,8 @@ class CaseSearchConfig(models.Model):
     )
     enabled = models.BooleanField(blank=False, null=False, default=False)
     _config = JSONField(default=dict)
+
+    objects = GetOrNoneManager()
 
     @classmethod
     def enabled_domains(cls):
