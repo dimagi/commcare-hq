@@ -3,10 +3,6 @@
 {% load report_tags %}
 {% load i18n %}
 
-{% block js %}{{ block.super }}
-    <script src="{% static 'ewsghana/report_links.js' %}"></script>
-{% endblock %}
-
 {% block reportcontent %}
     {% if report.slug|safe == 'stock_summary_report' or report.slug|safe == 'cms_rms_summary_report' %}
         <h2 style="background-color: black; color: white">{{ title }}</h2>

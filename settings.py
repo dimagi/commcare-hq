@@ -111,6 +111,8 @@ DJANGO_LOG_FILE = "%s/%s" % (FILEPATH, "commcarehq.django.log")
 ACCOUNTING_LOG_FILE = "%s/%s" % (FILEPATH, "commcarehq.accounting.log")
 ANALYTICS_LOG_FILE = "%s/%s" % (FILEPATH, "commcarehq.analytics.log")
 DATADOG_LOG_FILE = "%s/%s" % (FILEPATH, "commcarehq.datadog.log")
+FORMPLAYER_TIMING_FILE = "%s/%s" % (FILEPATH, "formplayer.timing.log")
+FORMPLAYER_DIFF_FILE = "%s/%s" % (FILEPATH, "formplayer.diff.log")
 
 LOCAL_LOGGING_HANDLERS = {}
 LOCAL_LOGGING_LOGGERS = {}
@@ -159,6 +161,7 @@ SESSION_ENGINE = "django.contrib.sessions.backends.cached_db"
 # time in minutes before forced logout due to inactivity
 INACTIVITY_TIMEOUT = 60 * 24 * 14
 SECURE_TIMEOUT = 30
+ENABLE_DRACONIAN_SECURITY_FEATURES = False
 
 PASSWORD_HASHERS = (
     # this is the default list with SHA1 moved to the front
@@ -344,11 +347,11 @@ HQ_APPS = (
     'dimagi.ext',
     'corehq.doctypemigrations',
     'corehq.blobs',
+    'corehq.apps.case_search',
 
     # custom reports
     'a5288',
     'custom.bihar',
-    'custom.penn_state',
     'custom.apps.gsid',
     'custom.icds',
     'hsph',
@@ -500,10 +503,16 @@ MASTER_LIST_EMAIL = 'master-list@dimagi.com'
 EULA_CHANGE_EMAIL = 'eula-notifications@dimagi.com'
 CONTACT_EMAIL = 'info@dimagi.com'
 BOOKKEEPER_CONTACT_EMAILS = []
+SOFT_ASSERT_EMAIL = 'commcarehq-ops+soft_asserts@dimagi.com'
 EMAIL_SUBJECT_PREFIX = '[commcarehq] '
 
 SERVER_ENVIRONMENT = 'localdev'
 BASE_ADDRESS = 'localhost:8000'
+
+# Set this if touchforms can't access HQ via the public URL e.g. if using a self signed cert
+# Should include the protocol.
+# If this is None, get_url_base() will be used
+CLOUDCARE_BASE_URL = None
 
 PAGINATOR_OBJECTS_PER_PAGE = 15
 PAGINATOR_MAX_PAGE_LINKS = 5
@@ -931,6 +940,12 @@ LOGGING = {
         'datadog': {
             'format': '%(metric)s %(created)s %(value)s metric_type=%(metric_type)s %(message)s'
         },
+        'formplayer_timing': {
+            'format': '%(asctime)s, %(action)s, %(control_duration)s, %(candidate_duration)s'
+        },
+        'formplayer_diff': {
+            'format': '%(asctime)s, %(action)s, %(request)s, %(control)s, %(candidate)s'
+        }
     },
     'filters': {
         'hqcontext': {
@@ -986,6 +1001,22 @@ LOGGING = {
             'class': 'cloghandler.ConcurrentRotatingFileHandler',
             'formatter': 'datadog',
             'filename': DATADOG_LOG_FILE,
+            'maxBytes': 10 * 1024 * 1024,  # 10 MB
+            'backupCount': 20  # Backup 200 MB of logs
+        },
+        'formplayer_diff': {
+            'level': 'INFO',
+            'class': 'logging.handlers.RotatingFileHandler',
+            'formatter': 'formplayer_diff',
+            'filename': FORMPLAYER_DIFF_FILE,
+            'maxBytes': 10 * 1024 * 1024,  # 10 MB
+            'backupCount': 20  # Backup 200 MB of logs
+        },
+        'formplayer_timing': {
+            'level': 'INFO',
+            'class': 'logging.handlers.RotatingFileHandler',
+            'formatter': 'formplayer_timing',
+            'filename': FORMPLAYER_TIMING_FILE,
             'maxBytes': 10 * 1024 * 1024,  # 10 MB
             'backupCount': 20  # Backup 200 MB of logs
         },
@@ -1064,6 +1095,16 @@ LOGGING = {
             'handlers': ['datadog'],
             'level': 'INFO',
             'propogate': False,
+        },
+        'formplayer_timing': {
+            'handlers': ['formplayer_timing'],
+            'level': 'INFO',
+            'propogate': True,
+        },
+        'formplayer_diff': {
+            'handlers': ['formplayer_diff'],
+            'level': 'INFO',
+            'propogate': True,
         },
     }
 }
@@ -1202,7 +1243,6 @@ COUCHDB_APPS = [
     'dhis2',
 
     # custom reports
-    'penn_state',
     'care_benin',
     'gsid',
     'hsph',
@@ -1389,7 +1429,6 @@ PILLOWTOPS = {
     'core': [
         'corehq.pillows.case.CasePillow',
         'corehq.pillows.xform.XFormPillow',
-        'corehq.pillows.domain.DomainPillow',
         'corehq.pillows.user.UserPillow',
         'corehq.pillows.application.AppPillow',
         'corehq.pillows.group.GroupPillow',
@@ -1398,10 +1437,17 @@ PILLOWTOPS = {
         'corehq.pillows.user.UnknownUsersPillow',
         'corehq.pillows.sofabed.FormDataPillow',
         'corehq.pillows.sofabed.CaseDataPillow',
+        # TODO: Remove this once ConstructedPillows can deal with their own indices
+        'corehq.pillows.case_search.CaseSearchPillow',
         {
             'name': 'SqlSMSPillow',
             'class': 'pillowtop.pillow.interface.ConstructedPillow',
             'instance': 'corehq.pillows.sms.get_sql_sms_pillow',
+        },
+        {
+            'name': 'KafkaDomainPillow',
+            'class': 'pillowtop.pillow.interface.ConstructedPillow',
+            'instance': 'corehq.pillows.domain.get_domain_kafka_to_elasticsearch_pillow',
         },
     ],
     'core_ext': [
@@ -1409,13 +1455,18 @@ PILLOWTOPS = {
         'corehq.pillows.reportxform.ReportXFormPillow',
         {
             'name': 'DefaultChangeFeedPillow',
-            'class': 'corehq.apps.change_feed.pillow.ChangeFeedPillow',
+            'class': 'pillowtop.pillow.interface.ConstructedPillow',
             'instance': 'corehq.apps.change_feed.pillow.get_default_couch_db_change_feed_pillow',
         },
         {
             'name': 'UserGroupsDbKafkaPillow',
             'class': 'pillowtop.pillow.interface.ConstructedPillow',
             'instance': 'corehq.apps.change_feed.pillow.get_user_groups_db_kafka_pillow',
+        },
+        {
+            'name': 'DomainDbKafkaPillow',
+            'class': 'pillowtop.pillow.interface.ConstructedPillow',
+            'instance': 'corehq.apps.change_feed.pillow.get_domain_db_kafka_pillow',
         },
         {
             'name': 'kafka-ucr-main',
@@ -1426,6 +1477,16 @@ PILLOWTOPS = {
             'name': 'kafka-ucr-static',
             'class': 'corehq.apps.userreports.pillow.ConfigurableReportKafkaPillow',
             'instance': 'corehq.apps.userreports.pillow.get_kafka_ucr_static_pillow',
+        },
+        {
+            'name': 'SqlXFormToElasticsearchPillow',
+            'class': 'pillowtop.pillow.interface.ConstructedPillow',
+            'instance': 'corehq.pillows.xform.get_sql_xform_to_elasticsearch_pillow',
+        },
+        {
+            'name': 'SqlCaseToElasticsearchPillow',
+            'class': 'pillowtop.pillow.interface.ConstructedPillow',
+            'instance': 'corehq.pillows.case.get_sql_case_to_elasticsearch_pillow',
         },
     ],
     'cache': [
@@ -1475,14 +1536,9 @@ PILLOWTOPS = {
             'instance': 'corehq.blobs.pillow.get_blob_deletion_pillow',
         },
         {
-            'name': 'SqlXFormToElasticsearchPillow',
+            'name': 'CaseSearchToElasticsearchPillow',
             'class': 'pillowtop.pillow.interface.ConstructedPillow',
-            'instance': 'corehq.pillows.xform.get_sql_xform_to_elasticsearch_pillow',
-        },
-        {
-            'name': 'SqlCaseToElasticsearchPillow',
-            'class': 'pillowtop.pillow.interface.ConstructedPillow',
-            'instance': 'corehq.pillows.case.get_sql_case_to_elasticsearch_pillow',
+            'instance': 'corehq.pillows.case_search.get_case_search_to_elasticsearch_pillow',
         },
     ]
 }
@@ -1602,7 +1658,6 @@ DOMAIN_MODULE_MAP = {
     'hsph-dev': 'hsph',
     'hsph-betterbirth-pilot-2': 'hsph',
     'mc-inscale': 'custom.reports.mc',
-    'psu-legacy-together': 'custom.penn_state',
     'mvp-potou': 'mvp',
     'mvp-sauri': 'mvp',
     'mvp-bonsaaso': 'mvp',

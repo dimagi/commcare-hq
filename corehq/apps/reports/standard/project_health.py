@@ -1,6 +1,5 @@
 from collections import namedtuple
 import datetime
-from django.db.models import F
 from django.utils.translation import ugettext_noop
 from corehq.apps.data_analytics.models import MALTRow
 from corehq.apps.reports.standard import ProjectReport
@@ -10,6 +9,9 @@ from corehq.toggles import PROJECT_HEALTH_DASHBOARD
 from dimagi.ext import jsonobject
 from dimagi.utils.dates import add_months
 from dimagi.utils.decorators.memoized import memoized
+
+
+USE_THRESHOLD = 15
 
 
 class UserActivityStub(namedtuple('UserStub', ['user_id', 'username', 'num_forms_submitted',
@@ -40,9 +42,10 @@ class MonthlyPerformanceSummary(jsonobject.JsonObject):
         self._base_queryset = MALTRow.objects.filter(
             domain_name=domain,
             month=month,
+            user_type__in=['CommCareUser', 'CommCareUser-Deleted'],
         )
         self._performing_queryset = self._base_queryset.filter(
-            num_of_forms__gte=F('threshold')
+            num_of_forms__gte=USE_THRESHOLD,
         )
         super(MonthlyPerformanceSummary, self).__init__(
             month=month,
@@ -81,7 +84,7 @@ class MonthlyPerformanceSummary(jsonobject.JsonObject):
                 user_id=row.user_id,
                 username=raw_username(row.username),
                 num_forms_submitted=row.num_of_forms,
-                is_performing=row.num_of_forms > row.threshold,
+                is_performing=row.num_of_forms >= USE_THRESHOLD,
                 previous_stub=None,
             ) for row in self._base_queryset.distinct('user_id')
         }
@@ -181,5 +184,5 @@ class ProjectHealthDashboard(ProjectReport):
         return {
             'rows': rows,
             'last_month': rows[-1],
-            'threshold': 15,  # todo: use dynamic thresholds
+            'threshold': USE_THRESHOLD,
         }

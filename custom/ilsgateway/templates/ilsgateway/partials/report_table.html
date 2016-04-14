@@ -2,7 +2,7 @@
 {% load report_tags %}
 {% load i18n %}
 
-<div class="{{ thisreport.css_class }} module">
+<div class="{{ thisreport.css_class }} {{ b3_class }} module">
     <h4 class="media-heading">{{ report_table.title }}<br/></h4>
       {% if report_table.subtitle %}
         <span style="color: slategray">{{ report_table.subtitle }}</span>

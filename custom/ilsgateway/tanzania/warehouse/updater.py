@@ -572,7 +572,7 @@ def process_non_facility_warehouse_data(location, start_date, end_date, runner=N
             product_data.total = sub_prod.get('total_sum', 0)
             if strict:
                 assert product_data.total == total_orgs, \
-                    "total should match number of sub facilities"
+                    "total should match number of sub facilities %s-%s" % (product_data.total, total_orgs)
             product_data.with_stock = sub_prod.get('with_stock_sum', 0)
             product_data.without_stock = sub_prod.get('without_stock_sum', 0)
             product_data.without_data = product_data.total - product_data.with_stock - product_data.without_stock

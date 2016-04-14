@@ -750,7 +750,6 @@ class CreditForm(forms.Form):
         ),
         required=False,
     )
-    product_type = forms.ChoiceField(required=False, label=ugettext_lazy("Product Type"))
     feature_type = forms.ChoiceField(required=False, label=ugettext_lazy("Feature Type"))
     adjust = forms.CharField(widget=forms.HiddenInput, required=False)
 
@@ -761,7 +760,6 @@ class CreditForm(forms.Form):
 
         product_choices = [('', 'Any')]
         product_choices.extend(SoftwareProductType.CHOICES)
-        self.fields['product_type'].choices = product_choices
         self.fields['feature_type'].choices = FeatureType.CHOICES
 
         self.helper = FormHelper()
@@ -773,7 +771,6 @@ class CreditForm(forms.Form):
                 'amount',
                 'note',
                 crispy.Field('rate_type', data_bind="value: rateType"),
-                crispy.Div('product_type', data_bind="visible: showProduct"),
                 crispy.Div('feature_type', data_bind="visible: showFeature"),
                 'adjust'
             ),
@@ -804,7 +801,7 @@ class CreditForm(forms.Form):
     def adjust_credit(self, web_user=None):
         amount = self.cleaned_data['amount']
         note = self.cleaned_data['note']
-        product_type = (self.cleaned_data['product_type']
+        product_type = (SoftwareProductType.ANY
                         if self.cleaned_data['rate_type'] == 'Product' else None)
         feature_type = (self.cleaned_data['feature_type']
                         if self.cleaned_data['rate_type'] == 'Feature' else None)
@@ -1613,9 +1610,9 @@ class EnterprisePlanContactForm(forms.Form):
 
 
 class TriggerInvoiceForm(forms.Form):
-    month = forms.ChoiceField(label="Invoice Month")
-    year = forms.ChoiceField(label="Invoice Year")
-    domain = forms.CharField(label="Invoiced Project")
+    month = forms.ChoiceField(label="Statement Period Month")
+    year = forms.ChoiceField(label="Statement Period Year")
+    domain = forms.CharField(label="Project Space")
 
     def __init__(self, *args, **kwargs):
         super(TriggerInvoiceForm, self).__init__(*args, **kwargs)
@@ -1659,7 +1656,8 @@ class TriggerInvoiceForm(forms.Form):
         invoice_factory = DomainInvoiceFactory(invoice_start, invoice_end, domain)
         invoice_factory.create_invoices()
 
-    def clean_previous_invoices(self, invoice_start, invoice_end, domain_name):
+    @staticmethod
+    def clean_previous_invoices(invoice_start, invoice_end, domain_name):
         prev_invoices = Invoice.objects.filter(
             date_start__lte=invoice_end, date_end__gte=invoice_start,
             subscription__subscriber__domain=domain_name
@@ -1682,6 +1680,14 @@ class TriggerInvoiceForm(forms.Form):
                     ),
                 )
             )
+
+    def clean(self):
+        today = datetime.date.today()
+        year = int(self.cleaned_data['year'])
+        month = int(self.cleaned_data['month'])
+
+        if (year, month) >= (today.year, today.month):
+            raise ValidationError('Statement period must be in the past')
 
 
 class TriggerBookkeeperEmailForm(forms.Form):

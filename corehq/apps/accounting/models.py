@@ -2250,16 +2250,15 @@ class BillingRecord(BillingRecordBase):
         return credits
 
     def _add_product_credits(self, credits):
-        product_type = self.invoice.subscription.plan_version.core_product
         credit_adjustments = CreditAdjustment.objects.filter(
             invoice=self.invoice,
-            line_item__product_rate__product__product_type=product_type,
+            line_item__product_rate__product__product_type__isnull=False,
         )
 
         subscription_credits = BillingRecord._get_total_balance(
             CreditLine.get_credits_by_subscription_and_features(
                 self.invoice.subscription,
-                product_type=product_type,
+                product_type=SoftwareProductType.ANY,
             )
         )
         if subscription_credits or credit_adjustments.filter(
@@ -2274,7 +2273,7 @@ class BillingRecord(BillingRecordBase):
         account_credits = BillingRecord._get_total_balance(
             CreditLine.get_credits_for_account(
                 self.invoice.subscription.account,
-                product_type=product_type,
+                product_type=SoftwareProductType.ANY,
             )
         )
         if account_credits or credit_adjustments.filter(
@@ -2567,7 +2566,7 @@ class CreditLine(models.Model):
     account = models.ForeignKey(BillingAccount, on_delete=models.PROTECT)
     subscription = models.ForeignKey(Subscription, on_delete=models.PROTECT, null=True, blank=True)
     product_type = models.CharField(max_length=25, null=True, blank=True,
-                                    choices=SoftwareProductType.CHOICES)
+                                    choices=((SoftwareProductType.ANY, SoftwareProductType.ANY),))
     feature_type = models.CharField(max_length=10, null=True,
                                     choices=FeatureType.CHOICES)
     date_created = models.DateTimeField(auto_now_add=True)

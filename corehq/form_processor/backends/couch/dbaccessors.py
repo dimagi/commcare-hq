@@ -5,6 +5,8 @@ from casexml.apps.case.dbaccessors import get_extension_case_ids, \
     get_indexed_case_ids, get_all_reverse_indices_info
 from casexml.apps.case.models import CommCareCase
 from casexml.apps.case.util import get_case_xform_ids
+from casexml.apps.stock.models import StockTransaction
+from corehq.apps.commtrack.models import StockState
 from corehq.apps.hqcase.dbaccessors import (
     get_case_ids_in_domain,
     get_open_case_ids,
@@ -19,7 +21,7 @@ from corehq.dbaccessors.couchapps.cases_by_server_date.by_owner_server_modified_
     get_case_ids_modified_with_owner_since
 from corehq.dbaccessors.couchapps.cases_by_server_date.by_server_modified_on import \
     get_last_modified_dates
-from corehq.form_processor.exceptions import AttachmentNotFound
+from corehq.form_processor.exceptions import AttachmentNotFound, LedgerValueNotFound
 from corehq.form_processor.interfaces.dbaccessors import (
     AbstractCaseAccessor, AbstractFormAccessor, AttachmentContent,
     AbstractLedgerAccessor)
@@ -198,6 +200,28 @@ class LedgerAccessorCouch(AbstractLedgerAccessor):
                 first = False
 
             yield db_tx
+
+    @staticmethod
+    def get_ledger_value(case_id, section_id, entry_id):
+        try:
+            return StockState.objects.get(case_id=case_id, section_id=section_id, product_id=entry_id)
+        except StockState.DoesNotExist:
+            raise LedgerValueNotFound
+
+    @staticmethod
+    def get_ledger_transactions_for_case(case_id, section_id=None, entry_id=None):
+        query = StockTransaction.objects.filter(case_id=case_id)
+        if entry_id:
+            query = query.filter(product_id=entry_id)
+
+        if section_id:
+            query.filter(section_id=section_id)
+
+        return query.order_by('report__date', 'pk')
+
+    @staticmethod
+    def get_latest_transaction(case_id, section_id, entry_id):
+        return StockTransaction.latest(case_id, section_id, entry_id)
 
     @staticmethod
     def get_ledger_values_for_case(case_id):

@@ -24,6 +24,7 @@ from corehq.apps.domain.decorators import domain_admin_required
 from corehq.const import SERVER_DATETIME_FORMAT_NO_SEC
 from custom.ilsgateway import DashboardReport
 from custom.ilsgateway.forms import SupervisionDocumentForm
+from custom.ilsgateway.oneoff import recalculate_moshi_rural_task, recalculate_non_facilities_task
 from custom.ilsgateway.tanzania import make_url
 from custom.ilsgateway.tanzania.reports.delivery import DeliveryReport
 from custom.ilsgateway.tanzania.reports.randr import RRreport
@@ -31,7 +32,7 @@ from custom.ilsgateway.tanzania.reports.stock_on_hand import StockOnHandReport
 from custom.ilsgateway.tanzania.reports.supervision import SupervisionReport
 from casexml.apps.stock.models import StockTransaction
 from custom.ilsgateway.models import ILSGatewayConfig, ReportRun, SupervisionDocument, ILSNotes, \
-    PendingReportingDataRecalculation
+    PendingReportingDataRecalculation, OneOffTaskProgress
 from custom.ilsgateway.tasks import report_run
 from custom.logistics.views import BaseConfigView
 
@@ -111,6 +112,12 @@ class ILSConfigView(BaseConfigView):
     page_title = ugettext_noop("ILSGateway")
     template_name = 'ilsgateway/ilsconfig.html'
     source = 'ilsgateway'
+
+    @property
+    def page_context(self):
+        context = super(ILSConfigView, self).page_context
+        context['oneoff_tasks'] = OneOffTaskProgress.objects.filter(domain=self.domain)
+        return context
 
 
 class SupervisionDocumentListView(BaseDomainView):
@@ -320,3 +327,17 @@ class DashboardPageRedirect(RedirectView):
             )
 
         return url
+
+
+@domain_admin_required
+@require_POST
+def recalculate_moshi_rural(request, domain):
+    recalculate_moshi_rural_task.delay()
+    return HttpResponse('')
+
+
+@domain_admin_required
+@require_POST
+def recalculate_non_facilities(request, domain):
+    recalculate_non_facilities_task.delay(domain)
+    return HttpResponse('')

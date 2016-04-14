@@ -1,9 +1,9 @@
 {% load i18n %}
 <div class="row">
-    <div class="span8">
+    <div class="col-sm-8">
         {% include "login_and_password/two_factor/core/login.html" %}
     </div>
-    <div class="span4">
+    <div class="col-sm-4">
         <aside class="well clearfix">
             <h2>{% blocktrans %}Are you new to CommCare HQ?{% endblocktrans %}<br /><small>{% trans "Sign up today, it's free!" %}</small></h2>
             {% if not allow_domain_requests %}
@@ -13,7 +13,7 @@
               </p>
             {% endif %}
               <p>{% blocktrans %}Don't have a CommCare HQ account? Sign up for free and get started today!{% endblocktrans %}</p>
-              <a class="btn btn-success btn-large pull-right"
+              <a class="btn btn-success btn-lg pull-right"
                  {% if allow_domain_requests %}
                    href="{% url "domain_request" domain %}"
                  {% else %}
