@@ -53,7 +53,7 @@ class SMSBillablesInterface(GenericTabularReport):
     @property
     def headers(self):
         return DataTablesHeader(
-            DataTablesColumn("Date of Message", sort_type=DTSortType.DATE),
+            DataTablesColumn("Date of Message"),
             DataTablesColumn("Project Space"),
             DataTablesColumn("Direction"),
             DataTablesColumn("SMS parts"),
@@ -71,6 +71,7 @@ class SMSBillablesInterface(GenericTabularReport):
             'date_sent',
             'domain',
             'direction',
+            'multipart_count',
             'date_created',
         ]
         sort_index = int(self.request.GET.get('iSortCol_0', 2))
