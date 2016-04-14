@@ -2,31 +2,39 @@
 
 <div id="property_template" class="hide">
     <p>
-        <label for="case_type_X_property[]">Property</label>
-        <input name="case_type_X_property[]" type="text"/>
-        <button type="button" class="btn btn-danger">x</button>
+        <label>{% trans "Property name" %}</label>
+        <input type="text" data-bind="attr: { name: $parent.field_id + '_properties' }, value: property"/>
+        <button type="button"
+                class="btn btn-danger"
+                data-bind="$root.click: removeProperty">x</button>
     </p>
 </div>
 
 <div id="case_type_template" class="hide">
     <fieldset style="padding: 0 0 0 2em;">
         <p>
-            <label for="case_type[]">{% trans "Case type" %}</label>
-            <select name="case_type[]" type="text">
-                {% for case_type in case_types %}
-                <option>{{ case_type }}</option>
-                {% endfor %}
-            </select>
-            <button type="button" class="btn btn-danger">x</button>
+            <label data-bind="attr: { for: field_id }">{% trans "Case type" %}</label>
+            <select data-bind="attr: { id: field_id }, options: $root.caseTypes, value: case_type"></select>
+            <button type="button"
+                    class="btn btn-danger"
+                    data-bind="click: $root.removeCaseType">x</button>
         </p>
         <fieldset style="padding: 0 0 0 2em;">
-            <div data-bind="template: 'property_template'"></div>
+            <div data-bind="template: { name: 'property_template', foreach: properties, as: 'property' }"></div>
             <p>
-                <button type="button" class="btn btn-primary">{% trans "Add another property" %}</button>
+                <button type="button"
+                        class="btn btn-primary"
+                        data-bind="click: $root.addProperty">
+                    {% trans "Add another property" %}
+                </button>
             </p>
         </fieldset>
         <p>
-            <button type="button" class="btn btn-primary">{% trans "Add another case type" %}</button>
+            <button type="button"
+                    class="btn btn-primary"
+                    data-bind="click: $root.addCaseType">
+                {% trans "Add another case type" %}
+            </button>
         </p>
     </fieldset>
 </div>
