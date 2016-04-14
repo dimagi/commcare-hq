@@ -384,7 +384,7 @@ def filter_cases(request, domain, app_id, module_id, parent_id=None):
             ids_only=True,
         )]
 
-    cases = list(accessor.iter_cases(case_ids))
+    cases = accessor.get_cases(case_ids)
 
     if parent_id:
         cases = filter(lambda c: c.parent and c.parent.case_id == parent_id, cases)
