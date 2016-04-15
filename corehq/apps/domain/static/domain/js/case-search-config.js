@@ -7,14 +7,14 @@ hqDefine('domain/js/case-search-config.js', function () {
 
     var CaseTypeProps = function (caseType, properties) {
         var self = this;
-        self.caseType = ko.observable(caseType);
+        self.case_type = ko.observable(caseType);
         self.properties = ko.observableArray(properties);
 
         self.addProperty = function (data, event) {
             self.properties.push('');
         };
         self.removeProperty = function (data, event) {
-            // `data` in an empty string (the field's original value?).
+            // `data` is an empty string (the field's original value?).
             //self.properties.remove(data); // removes all properties.
         };
     };
@@ -30,7 +30,7 @@ hqDefine('domain/js/case-search-config.js', function () {
         var viewModel = {
             caseTypes: ko.observableArray(self.caseTypes),
             toggleEnabled: ko.observable(initialValues.enabled),
-            fuzzyProperties: ko.observableArray()
+            fuzzyProperties: ko.observableArray()  // TODO: Why is this a bunch of empty strings?
         };
         if (initialValues.config.hasOwnProperty('fuzzy_properties')) {
             for (var i = 0; i < initialValues.config.fuzzy_properties.length; i++) {
@@ -56,7 +56,7 @@ hqDefine('domain/js/case-search-config.js', function () {
                 {
                     'enable': viewModel.toggleEnabled(),
                     'config': {
-                        'fuzzy_properties': viewModel.fuzzyProperties()  // TODO: Just the data, not the methods
+                        'fuzzy_properties': viewModel.fuzzyProperties()  // TODO: Strip the methods
                     }
                 }
             ).success(function (data) {
