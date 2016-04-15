@@ -4551,13 +4551,10 @@ class ApplicationBase(VersionedDoc, SnapshotMixin,
         copy.set_media_versions(previous_version)
         copy.create_build_files(save=True)
 
-        try:
-            # since this hard to put in a test
-            # I'm putting this assert here if copy._id is ever None
-            # which makes tests error
-            assert copy._id
-        except AssertionError:
-            raise
+        # since this hard to put in a test
+        # I'm putting this assert here if copy._id is ever None
+        # which makes tests error
+        assert copy._id
 
         copy.build_comment = comment
         copy.comment_from = user_id
