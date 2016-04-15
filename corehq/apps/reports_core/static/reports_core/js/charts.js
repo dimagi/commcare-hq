@@ -170,6 +170,11 @@ hqDefine('reports_core/js/charts.js', function() {
             }
         }
     };
+
+    fn.clear = function(chartContainer) {
+        chartContainer.hide();
+        chartContainer.empty();
+    };
     return fn;
 
 });
