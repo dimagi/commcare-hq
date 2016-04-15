@@ -1,5 +1,7 @@
 import copy
 import datetime
+import re
+from collections import defaultdict
 from decimal import Decimal
 import logging
 import json
@@ -27,7 +29,7 @@ from django.utils.translation import ugettext as _, ugettext_lazy
 from django.contrib.auth.models import User
 
 from corehq.apps.app_manager.dbaccessors import get_apps_in_domain
-from corehq.apps.case_search.models import CaseSearchConfig
+from corehq.apps.case_search.models import CaseSearchConfig, CaseSearchConfigJSON
 from corehq.apps.hqwebapp.templatetags.hq_shared_tags import toggle_js_domain_cachebuster
 
 from corehq.const import USER_DATE_FORMAT
@@ -2089,8 +2091,27 @@ class CaseSearchConfigView(BaseAdminProjectSettingsView):
         return super(CaseSearchConfigView, self).dispatch(request, *args, **kwargs)
 
     def post(self, request, *args, **kwargs):
-        # TODO: ...
-        pass
+
+        def unpack_config(query_dict):
+            """
+            Builds an integer-keyed dictionary from POST request data, and returns a list of dictionaries that can
+            be wrapped by CaseSearchConfigJSON
+            """
+            pattern = re.compile(r'^config\[fuzzy_properties]\[(?P<index>\d+)]\[(?P<attr>\w+)]$')
+            fuzzy_dict = defaultdict(dict)
+            for key, value in query_dict.items():
+                match = pattern.match(key)
+                if match and match.group('attr') in ('case_type', 'properties'):
+                    fuzzy_dict[int(match.group('index'))][match.group('attr')] = value
+            return [fuzzy_dict[i] for i in range(max(fuzzy_dict.keys()) + 1) if fuzzy_dict[i]]
+
+        try:
+            config = CaseSearchConfig.objects.get(pk=self.domain)
+        except CaseSearchConfig.DoesNotExist:
+            config = CaseSearchConfig(domain=self.domain)
+        config.enabled = request.POST['enable']
+        config.config = [CaseSearchConfigJSON.wrap(conf) for conf in unpack_config(request.POST)]
+        config.save()
 
     @property
     def page_context(self):
