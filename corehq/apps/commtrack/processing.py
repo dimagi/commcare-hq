@@ -1,5 +1,6 @@
 from collections import namedtuple
 import logging
+from itertools import groupby
 
 from django.db import transaction
 from django.utils.translation import ugettext as _
@@ -130,16 +131,21 @@ def process_stock(xforms, case_db=None):
 def mark_cases_changed(case_action_intents, case_db):
     relevant_cases = []
     # touch every case for proper ota restore logic syncing to be preserved
-    for action_intent in case_action_intents:
-        case_id = action_intent.case_id
-        case = case_db.get(action_intent.case_id)
+    for case_id, intents in groupby(case_action_intents, lambda intent: intent.case_id):
+        case = case_db.get(case_id)
         relevant_cases.append(case)
         if case is None:
             raise IllegalCaseId(
                 _('Ledger transaction references invalid Case ID "{}"')
                 .format(case_id))
 
-        case_db.apply_action_intent(case, action_intent)
+        deprecation_intent = None
+        intents = list(intents)
+        if len(intents) > 1:
+            primary_intent, deprecation_intent = sorted(case_action_intents, key=lambda i: i.is_deprecation)
+        else:
+            [primary_intent] = intents
+        case_db.apply_action_intents(case, primary_intent, deprecation_intent)
         case_db.mark_changed(case)
 
     return relevant_cases

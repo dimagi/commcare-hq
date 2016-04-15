@@ -939,7 +939,7 @@ class CommCareCaseIndexSQL(DisabledDbMixin, models.Model, SaveStateMixin):
         app_label = "form_processor"
 
 
-class CaseTransaction(DisabledDbMixin, models.Model):
+class CaseTransaction(DisabledDbMixin, SaveStateMixin, models.Model):
     objects = RestrictedManager()
 
     # types should be powers of 2

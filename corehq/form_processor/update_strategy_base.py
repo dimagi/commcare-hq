@@ -34,5 +34,5 @@ class UpdateStrategy(object):
         pass
 
     @abstractmethod
-    def apply_action_intent(self, case_action_intent):
+    def apply_action_intents(self, primary_intent, deprecation_intent=None):
         pass
