@@ -545,6 +545,7 @@ class AdminReport(GenericTabularReport):
 
     base_template = "hqadmin/bootstrap3/faceted_report.html"
     report_template_path = "reports/async/bootstrap3/tabular.html"
+    section_name = ugettext_noop("ADMINREPORT")
 
 
 class AdminFacetedReport(AdminReport, ElasticTabularReport):
@@ -556,7 +557,6 @@ class AdminFacetedReport(AdminReport, ElasticTabularReport):
     es_queried = False
     es_facet_list = []
     es_facet_mapping = []
-    section_name = ugettext_noop("ADMINREPORT")
     es_index = None
 
     @property
@@ -999,7 +999,6 @@ class AdminAppReport(AdminFacetedReport):
 
 class GlobalAdminReports(AdminDomainStatsReport):
     base_template = "hqadmin/indicator_report.html"
-    section_name = ugettext_noop("ADMINREPORT")  # not sure why ...
 
     @property
     def template_context(self):
