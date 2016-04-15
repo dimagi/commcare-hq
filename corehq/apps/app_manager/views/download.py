@@ -205,9 +205,12 @@ def download_file(request, domain, app_id, path):
         content_type = None
     response = HttpResponse(content_type=content_type)
 
+    profile = request.GET.get('profile')
     if path in ('CommCare.jad', 'CommCare.jar'):
         set_file_download(response, path)
         full_path = path
+    elif profile:
+        full_path = 'files/%s/%s' % (profile, path)
     else:
         full_path = 'files/%s' % path
 
@@ -222,7 +225,15 @@ def download_file(request, domain, app_id, path):
             path=full_path,
         ))
         if not obj.is_cached():
-            payload = request.app.fetch_attachment(full_path)
+            #lazily create language profiles to avoid slowing initial build
+            try:
+                payload = request.app.fetch_attachment(full_path)
+            except ResourceNotFound:
+                if profile in request.app.language_profiles:
+                    request.app.create_all_files(profile)
+                    payload = request.app.fetch_attachment(full_path)
+                else:
+                    raise
             if type(payload) is unicode:
                 payload = payload.encode('utf-8')
             buffer = StringIO(payload)

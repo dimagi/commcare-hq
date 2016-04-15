@@ -1,6 +1,6 @@
 from django.conf.urls import patterns, url, include
 from corehq.apps.app_manager.view_helpers import DynamicTemplateView
-from corehq.apps.app_manager.views import DownloadCCZ, AppSummaryView, AppDiffView
+from corehq.apps.app_manager.views import DownloadCCZ, AppSummaryView, AppDiffView, LanguageProfilesView
 from corehq.apps.hqmedia.urls import application_urls as hqmedia_urls
 from corehq.apps.hqmedia.urls import download_urls as media_download_urls
 
@@ -23,6 +23,7 @@ app_urls = patterns('corehq.apps.app_manager.views',
         name='release_build'),
     url(r'^releases/unrelease/(?P<saved_app_id>[\w-]+)/$', 'release_build',
         name='unrelease_build', kwargs={'is_released': False}),
+    url(r'^releases/profiles/$', LanguageProfilesView.as_view(), name=LanguageProfilesView.urlname),
     url(r'^modules-(?P<module_id>[\w-]+)/$', 'view_module', name='view_module'),
     url(r'^modules-(?P<module_id>[\w-]+)/forms-(?P<form_id>[\w-]+)/$',
         'view_form', name='view_form'),

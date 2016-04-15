@@ -1,12 +1,14 @@
 import json
+import uuid
 
 from django.template.loader import render_to_string
 from django.utils.translation import ugettext_lazy
 from django.views.decorators.cache import cache_control
 from django.http import HttpResponse, Http404
 from django.http import HttpResponseRedirect
-from django.core.urlresolvers import reverse
+from django.views.generic import View
 from django.shortcuts import render
+from django.utils.decorators import method_decorator
 from couchdbkit.resource import ResourceNotFound
 from django.contrib import messages
 import ghdiff
@@ -39,6 +41,7 @@ from corehq.apps.app_manager.models import (
 from corehq.apps.app_manager.decorators import no_conflict_require_POST, \
     require_can_edit_apps, require_deploy_apps
 from corehq.apps.users.models import CommCareUser
+from corehq.util.view_utils import reverse
 
 
 @cache_control(no_cache=True, no_store=True)
@@ -136,6 +139,7 @@ def save_copy(request, domain, app_id):
     track_built_app_on_hubspot.delay(request.couch_user)
     comment = request.POST.get('comment')
     app = get_app(domain, app_id)
+    app.update_mm_map()
     try:
         errors = app.validate_app()
     except ModuleIdMissingException:
@@ -209,22 +213,30 @@ def delete_copy(request, domain, app_id):
 def odk_install(request, domain, app_id, with_media=False):
     app = get_app(domain, app_id)
     qr_code_view = "odk_qr_code" if not with_media else "odk_media_qr_code"
+    language_profile = request.GET.get('profile')
+    profile_url = app.odk_profile_display_url if not with_media else app.odk_media_profile_display_url
+    if language_profile:
+        profile_url += '?profile={profile}'.format(profile=language_profile)
     context = {
         "domain": domain,
         "app": app,
-        "qr_code": reverse("corehq.apps.app_manager.views.%s" % qr_code_view, args=[domain, app_id]),
-        "profile_url": app.odk_profile_display_url if not with_media else app.odk_media_profile_display_url,
+        "qr_code": reverse("corehq.apps.app_manager.views.%s" % qr_code_view,
+                           args=[domain, app_id],
+                           params={'profile': language_profile}),
+        "profile_url": profile_url,
     }
     return render(request, "app_manager/odk_install.html", context)
 
 
 def odk_qr_code(request, domain, app_id):
-    qr_code = get_app(domain, app_id).get_odk_qr_code()
+    profile = request.GET.get('profile')
+    qr_code = get_app(domain, app_id).get_odk_qr_code(profile=profile)
     return HttpResponse(qr_code, content_type="image/png")
 
 
 def odk_media_qr_code(request, domain, app_id):
-    qr_code = get_app(domain, app_id).get_odk_qr_code(with_media=True)
+    profile = request.GET.get('profile')
+    qr_code = get_app(domain, app_id).get_odk_qr_code(with_media=True, profile=profile)
     return HttpResponse(qr_code, content_type="image/png")
 
 
@@ -339,3 +351,29 @@ class AppDiffView(LoginAndDomainMixin, BasePageView, DomainViewMixin):
     @property
     def page_url(self):
         return reverse(self.urlname, args=[self.domain, self.first_app_id, self.second_app_id])
+
+class LanguageProfilesView(View):
+    urlname = 'language_profiles'
+
+    @method_decorator(require_can_edit_apps)
+    def dispatch(self, request, *args, **kwargs):
+        return super(LanguageProfilesView, self).dispatch(request, *args, **kwargs)
+
+    def post(self, request, domain, app_id, *args, **kwargs):
+        profiles = json.loads(request.body).get('profiles')
+        profiles_dict = {}
+        if profiles:
+            app = Application.get(app_id)
+            for profile in profiles:
+                if not profile.get('id'):
+                    id = uuid.uuid4().hex
+                    profiles_dict[id] = {'langs': profile['langs'], 'name': profile['name']}
+                else:
+                    profiles_dict[profile['id']] = {'langs': profile['langs'], 'name': profile['name']}
+            app.language_profiles = profiles_dict
+            app.save()
+        return HttpResponse()
+
+
+    def get(self, request, *args, **kwargs):
+        return HttpResponse()
