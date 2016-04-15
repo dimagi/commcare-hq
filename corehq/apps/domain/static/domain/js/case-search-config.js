@@ -5,31 +5,18 @@ hqDefine('domain/js/case-search-config.js', function () {
 
     var module = {};
 
-    /**
-     * Create observables for current fuzzy properties config.
-     * Modifies viewModel in-place
-     * config mirrors the structure of corehq.apps.case_search.models.CaseSearchConfigJSON
-     */
-    module.getFuzzyPropertiesObservables = function (config) {
-        var fuzzyProperties = [];
-        if (config.hasOwnProperty('fuzzy_properties')) {
-            // Build up observables for all case types and their properties
-            for (var i = 0; i < config.fuzzy_properties.length; i++) {
-                viewModel.fuzzyProperties.push({
-                    field_id: 'case_type_' + i,
-                    case_type: ko.observable(config.fuzzy_properties[i].case_type),
-                    properties: ko.observableArray(config.fuzzy_properties[i].properties)
-                });
-            }
-        } else {
-            // New settings. Just create observables for an empty form
-            fuzzyProperties.push({
-                field_id: 'case_type_0',
-                case_type: ko.observable(),  // Use Python naming convention because we will POST as-is
-                properties: ko.observableArray([''])
-            });
-        }
-        return fuzzyProperties;
+    var CaseTypeProps = function (caseType, properties) {
+        var self = this;
+        self.caseType = ko.observable(caseType);
+        self.properties = ko.observableArray(properties);
+
+        self.addProperty = function (data, event) {
+            self.properties.push('');
+        };
+        self.removeProperty = function (data, event) {
+            // `data` in an empty string (the field's original value?).
+            //self.properties.remove(data); // removes all properties.
+        };
     };
 
     /**
@@ -43,19 +30,38 @@ hqDefine('domain/js/case-search-config.js', function () {
         var viewModel = {
             caseTypes: ko.observableArray(self.caseTypes),
             toggleEnabled: ko.observable(initialValues.enabled),
-            fuzzyProperties: module.getFuzzyPropertiesObservables(initialValues.config)
+            fuzzyProperties: ko.observableArray()
         };
-        viewModel.addProperty = function (data, event) {
-            return true;
-        };
-        viewModel.removeProperty = function (data, event) {
-            return true;
-        };
+        if (initialValues.config.hasOwnProperty('fuzzy_properties')) {
+            for (var i = 0; i < initialValues.config.fuzzy_properties.length; i++) {
+                viewModel.fuzzyProperties.push(new CaseTypeProps(
+                    initialValues.config.fuzzy_properties[i].case_type,
+                    initialValues.config.fuzzy_properties[i].properties
+                ));
+            }
+        } else {
+            viewModel.fuzzyProperties.push(new CaseTypeProps('', ['']));
+        }
+
         viewModel.addCaseType = function (data, event) {
-            return true;
+            viewModel.fuzzyProperties.push(new CaseTypeProps('', ['']));
         };
         viewModel.removeCaseType = function (data, event) {
-            return true;
+            viewModel.fuzzyProperties.remove(data);
+        };
+
+        viewModel.submit = function (form) {
+            $.post(
+                form.action,
+                {
+                    'enable': viewModel.toggleEnabled(),
+                    'config': {
+                        'fuzzy_properties': viewModel.fuzzyProperties()  // TODO: Just the data, not the methods
+                    }
+                }
+            ).success(function (data) {
+                // TODO: Watch changes. On success change Save button from btn-primary to btn-default
+            });
         };
 
         return viewModel;
