@@ -55,7 +55,7 @@
         PropertyListItem.wrap = function(o){
             var i = new PropertyListItem();
             i.existsInCurrentVersion(o.exists_in_current_version);
-            i.property(o.property !== undefined ? o.property : null);
+            i.property(o.property !== undefined ? o.property : "");
             i.dataSourceField(o.data_source_field !== undefined ? o.data_source_field : null);
             i.displayText(o.display_text);
             i.userModifiedDisplayText = true;
