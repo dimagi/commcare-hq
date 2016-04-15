@@ -5504,18 +5504,16 @@ def import_app(app_id_or_source, domain, source_properties=None, validate_source
     app = cls.from_source(source, domain)
     app.cloudcare_enabled = domain_has_privilege(domain, privileges.CLOUDCARE)
 
-    app.save()
+    with app.atomic_blobs():
+        for name, attachment in attachments.items():
+            if re.match(ATTACHMENT_REGEX, name):
+                app.put_attachment(attachment, name)
 
     if not app.is_remote_app():
         for _, m in app.get_media_objects():
             if domain not in m.valid_domains:
                 m.valid_domains.append(domain)
                 m.save()
-
-    with app.atomic_blobs():
-        for name, attachment in attachments.items():
-            if re.match(ATTACHMENT_REGEX, name):
-                app.put_attachment(attachment, name)
 
     if not app.is_remote_app() and any(module.uses_usercase() for module in app.get_modules()):
         from corehq.apps.app_manager.util import enable_usercase
