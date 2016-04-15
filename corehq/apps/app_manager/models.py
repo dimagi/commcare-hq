@@ -3869,42 +3869,25 @@ class LazyBlobDoc(BlobMixin, LazyAttachmentDoc):
                         content, name, content_type, content_length)
         return super(LazyBlobDoc, self).put_attachment(name=name, **info)
 
+    def register_pre_save(self, fn):
+        raise NotImplementedError("unused/removed")
+
+    def register_post_save(self, fn):
+        raise NotImplementedError("unused/removed")
+
     def save(self, **params):
-        if hasattr(self, '_PRE_SAVE'):
-            for pre_save in self._PRE_SAVE:
-                pre_save()
-
-            def del_pre_save():
-                del self._PRE_SAVE
-
-            self.register_post_save(del_pre_save)
-
-        if self._LAZY_ATTACHMENTS and self.__save_params is None:
-            assert self.__save_params is None, (self.__save_params, params)
-            self.__save_params = params
-            try:
-                # atomic_blobs context manager calls self.save()
-                with self.atomic_blobs():
-                    for name, info in self._LAZY_ATTACHMENTS.items():
-                        if not info['content_type']:
-                            info['content_type'] = ';'.join(filter(None, guess_type(name)))
-                        self._LazyAttachmentDoc__remove_cached_attachment(name)
-                        super(LazyBlobDoc, self).put_attachment(name=name, **info)
-            finally:
-                del self.__save_params
-        else:
-            if self.__save_params is not None:
-                # recursive save by atomic_blobs context manager
-                assert not params, params
-                params = self.__save_params
-            # super super call
+        def super_super_save():
+            # skip LazyAttachmentDoc.save in the inheritance chain
             super(LazyAttachmentDoc, self).save(**params)
-
-        if hasattr(self, '_POST_SAVE'):
-            for post_save in self._POST_SAVE:
-                post_save()
-
-            del self._POST_SAVE
+        if self._LAZY_ATTACHMENTS:
+            with self.atomic_blobs(super_super_save):
+                for name, info in self._LAZY_ATTACHMENTS.items():
+                    if not info['content_type']:
+                        info['content_type'] = ';'.join(filter(None, guess_type(name)))
+                    self._LazyAttachmentDoc__remove_cached_attachment(name)
+                    super(LazyBlobDoc, self).put_attachment(name=name, **info)
+        else:
+            super_super_save()
 
 
 class VersionedDoc(LazyBlobDoc):
