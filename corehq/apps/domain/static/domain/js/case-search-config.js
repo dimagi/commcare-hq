@@ -51,15 +51,10 @@ hqDefine('domain/js/case-search-config.js', function () {
         };
 
         viewModel.submit = function (form) {
-            $.post(
-                form.action,
-                {
-                    'enable': viewModel.toggleEnabled(),
-                    'config': {
-                        'fuzzy_properties': viewModel.fuzzyProperties()  // TODO: Strip the methods
-                    }
-                }
-            ).success(function (data) {
+            $.post(form.action, {
+                'enable': viewModel.toggleEnabled(),
+                'config': {'fuzzy_properties': _.pick(viewModel.fuzzyProperties(), 'case_type', 'properties')},
+            }).success(function () {
                 // TODO: Watch changes. On success change Save button from btn-primary to btn-default
             });
         };

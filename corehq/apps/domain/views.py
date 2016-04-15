@@ -2101,17 +2101,17 @@ class CaseSearchConfigView(BaseAdminProjectSettingsView):
             fuzzy_dict = defaultdict(dict)
             for key, value in query_dict.items():
                 match = pattern.match(key)
-                if match and match.group('attr') in ('case_type', 'properties'):
+                if match:  # non-fuzzy-properties won't match, i.e. "^enable$"
                     fuzzy_dict[int(match.group('index'))][match.group('attr')] = value
             return [fuzzy_dict[i] for i in range(max(fuzzy_dict.keys()) + 1) if fuzzy_dict[i]]
 
         try:
-            config = CaseSearchConfig.objects.get(pk=self.domain)
+            case_search_config = CaseSearchConfig.objects.get(pk=self.domain)
         except CaseSearchConfig.DoesNotExist:
-            config = CaseSearchConfig(domain=self.domain)
-        config.enabled = request.POST['enable']
-        config.config = [CaseSearchConfigJSON.wrap(conf) for conf in unpack_config(request.POST)]
-        config.save()
+            case_search_config = CaseSearchConfig(domain=self.domain)
+        case_search_config.enabled = request.POST['enable']
+        case_search_config.config = [CaseSearchConfigJSON.wrap(conf) for conf in unpack_config(request.POST)]
+        case_search_config.save()
 
     @property
     def page_context(self):
