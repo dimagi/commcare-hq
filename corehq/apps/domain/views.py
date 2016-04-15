@@ -9,7 +9,7 @@ import pytz
 from couchdbkit import ResourceNotFound
 import dateutil
 from django.core.paginator import Paginator
-from django.views.generic import View, UpdateView
+from django.views.generic import View
 from django.db.models import Sum
 from django.conf import settings
 from django.template.loader import render_to_string
@@ -96,11 +96,8 @@ from corehq.apps.domain.forms import (
     SelectSubscriptionTypeForm, INTERNAL_SUBSCRIPTION_MANAGEMENT_FORMS, AdvancedExtendedTrialForm,
     ContractedPartnerForm, DimagiOnlyEnterpriseForm)
 from corehq.apps.domain.models import (
-    CaseTypeFuzzyProperties,
     Domain,
-    FuzzyProperty,
     LICENSES,
-    ProjectSearchConfig,
     TransferDomainRequest,
 )
 from corehq.apps.domain.utils import normalize_domain_name
@@ -2090,6 +2087,10 @@ class CaseSearchConfigView(BaseAdminProjectSettingsView):
     @use_bootstrap3
     def dispatch(self, request, *args, **kwargs):
         return super(CaseSearchConfigView, self).dispatch(request, *args, **kwargs)
+
+    def post(self, request, *args, **kwargs):
+        # TODO: ...
+        pass
 
     @property
     def page_context(self):
