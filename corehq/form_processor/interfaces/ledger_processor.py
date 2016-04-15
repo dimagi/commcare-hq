@@ -16,12 +16,6 @@ class StockModelUpdateResult(namedtuple('StockModelUpdate', ['to_save', 'to_dele
             to_delete=to_delete or [],
         )
 
-    def commit(self):
-        for to_delete in self.to_delete:
-            to_delete.delete()
-        for to_save in self.to_save:
-            to_save.save()
-
 
 class LedgerDBInterface(object):
     """

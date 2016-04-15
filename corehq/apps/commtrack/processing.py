@@ -29,8 +29,13 @@ class StockProcessingResult(object):
         self.xform = xform
         self.relevant_cases = relevant_cases or []
         self.stock_report_helpers = stock_report_helpers or []
+        self.models_to_save = None
+        self.models_to_delete = None
+        self.populated = False
 
-    def get_models_to_save(self):
+    def populate_models(self):
+        self.populated = True
+
         interface = FormProcessorInterface(domain=self.domain)
         processor = interface.ledger_processor
         ledger_db = interface.ledger_db
@@ -41,7 +46,14 @@ class StockProcessingResult(object):
         normal_helpers = [srh for srh in self.stock_report_helpers if not srh.deprecated]
         deprecated_helpers = [srh for srh in self.stock_report_helpers if srh.deprecated]
 
-        return processor.get_models_to_update(normal_helpers, deprecated_helpers, ledger_db)
+        models_result = processor.get_models_to_update(normal_helpers, deprecated_helpers, ledger_db)
+        self.models_to_save, self.models_to_delete = models_result
+
+    def commit(self):
+        for to_delete in self.models_to_delete:
+            to_delete.delete()
+        for to_save in self.models_to_save:
+            to_save.save()
 
     def finalize(self):
         """
