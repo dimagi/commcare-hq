@@ -2092,7 +2092,7 @@ class CaseSearchConfigView(BaseAdminProjectSettingsView):
 
     def post(self, request, *args, **kwargs):
 
-        def unpack_config(query_dict):
+        def unpack_fuzzies(query_dict):
             """
             Builds an integer-keyed dictionary from POST request data, and returns a list of dictionaries that can
             be wrapped by CaseSearchConfigJSON
@@ -2103,6 +2103,8 @@ class CaseSearchConfigView(BaseAdminProjectSettingsView):
                 match = pattern.match(key)
                 if match:  # non-fuzzy-properties won't match, i.e. "^enable$"
                     fuzzy_dict[int(match.group('index'))][match.group('attr')] = value
+            if not fuzzy_dict:
+                return []
             return [fuzzy_dict[i] for i in range(max(fuzzy_dict.keys()) + 1) if fuzzy_dict[i]]
 
         try:
@@ -2110,8 +2112,10 @@ class CaseSearchConfigView(BaseAdminProjectSettingsView):
         except CaseSearchConfig.DoesNotExist:
             case_search_config = CaseSearchConfig(domain=self.domain)
         case_search_config.enabled = request.POST['enable']
-        case_search_config.config = [CaseSearchConfigJSON.wrap(conf) for conf in unpack_config(request.POST)]
+        case_search_config.config = CaseSearchConfigJSON({'fuzzy_properties': unpack_fuzzies(request.POST)})
         case_search_config.save()
+        messages.success(request, _("Case search configuration updated successfully"))
+        return self.get(request, *args, **kwargs)
 
     @property
     def page_context(self):
