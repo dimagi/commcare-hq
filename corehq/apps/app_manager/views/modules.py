@@ -10,6 +10,7 @@ from django.views.decorators.http import require_GET
 from django.contrib import messages
 from corehq.apps.app_manager.views.media_utils import process_media_attribute, \
     handle_media_edits
+from corehq.apps.case_search.models import case_search_enabled_for_domain
 
 from dimagi.utils.logging import notify_exception
 
@@ -128,6 +129,7 @@ def _get_advanced_module_view_context(app, module):
             if not getattr(parent_module, 'root_module_id', None)
         ],
         'child_module_enabled': True,
+        'is_search_enabled': case_search_enabled_for_domain(app.domain),
         'schedule_phases': [
             {
                 'id': schedule.id,
@@ -167,7 +169,8 @@ def _get_basic_module_view_context(app, module):
         'case_list_form_not_allowed_reason': allow_case_list_form,
         'valid_parent_modules': _get_valid_parent_modules(app, module),
         'child_module_enabled': toggles.BASIC_CHILD_MODULE.enabled(app.domain)
-                                 and module.doc_type != "ShadowModule"
+                                 and module.doc_type != "ShadowModule",
+        'is_search_enabled': case_search_enabled_for_domain(app.domain),
     }
 
 

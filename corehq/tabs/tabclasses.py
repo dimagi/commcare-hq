@@ -1126,6 +1126,12 @@ class ProjectSettingsTab(UITab):
                 }
             ]
 
+            if toggles.SYNC_SEARCH_CASE_CLAIM.enabled(self.domain):
+                administration.append({
+                    'title': _('Case Search'),
+                    'url': reverse('case_search_config', args=[self.domain])
+                })
+
             def forward_name(repeater_type=None, **context):
                 if repeater_type == 'FormRepeater':
                     return _("Forward Forms")
