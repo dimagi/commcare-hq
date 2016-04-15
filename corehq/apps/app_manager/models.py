@@ -11,6 +11,7 @@ import json
 import types
 import re
 import datetime
+import uuid
 from collections import defaultdict, namedtuple
 from functools import wraps
 from copy import deepcopy
@@ -906,17 +907,18 @@ class FormBase(DocumentSchema):
     def get_version(self):
         return self.version if self.version else self.get_app().version
 
-    def add_stuff_to_xform(self, xform):
+    def add_stuff_to_xform(self, xform, lang_profile=None):
         app = self.get_app()
-        xform.exclude_languages(app.build_langs)
-        xform.set_default_language(app.build_langs[0])
+        langs = app.langs if not lang_profile else app.language_profiles[lang_profile]['langs']
+        xform.exclude_languages(langs)
+        xform.set_default_language(langs[0])
         xform.normalize_itext()
         xform.strip_vellum_ns_attributes()
         xform.set_version(self.get_version())
 
-    def render_xform(self):
+    def render_xform(self, lang_profile=None):
         xform = XForm(self.source)
-        self.add_stuff_to_xform(xform)
+        self.add_stuff_to_xform(xform, lang_profile)
         return xform.render()
 
     @quickcache(['self.source', 'langs', 'include_triggers', 'include_groups', 'include_translations'])
@@ -971,7 +973,7 @@ class FormBase(DocumentSchema):
         app = self.get_app()
         return trans(
             self.name,
-            [app.default_language] + app.build_langs,
+            [app.default_language] + app.langs,
             include_lang=False
         )
 
@@ -1240,8 +1242,8 @@ class Form(IndexedFormBase, NavMenuItemMediaMixin):
     requires = StringProperty(choices=["case", "referral", "none"], default="none")
     actions = SchemaProperty(FormActions)
 
-    def add_stuff_to_xform(self, xform):
-        super(Form, self).add_stuff_to_xform(xform)
+    def add_stuff_to_xform(self, xform, lang_profile=None):
+        super(Form, self).add_stuff_to_xform(xform, lang_profile)
         xform.add_case_and_meta(self)
 
     def all_other_forms_require_a_case(self):
@@ -1870,7 +1872,7 @@ class ModuleBase(IndexedSchema, NavMenuItemMediaMixin, CommentMixin):
         app = self.get_app()
         return trans(
             self.name,
-            [app.default_language] + app.build_langs,
+            [app.default_language] + app.langs,
             include_lang=False
         )
 
@@ -2259,7 +2261,7 @@ class AdvancedForm(IndexedFormBase, NavMenuItemMediaMixin):
                               "that there are no issues with this module.".format(error=e, form_id=self.unique_id))
                 pass
 
-    def add_stuff_to_xform(self, xform):
+    def add_stuff_to_xform(self, xform, lang_profile=None):
         super(AdvancedForm, self).add_stuff_to_xform(xform)
         xform.add_case_and_meta_advanced(self)
 
@@ -2953,7 +2955,7 @@ class CareplanForm(IndexedFormBase, NavMenuItemMediaMixin):
         else:
             return super(CareplanForm, cls).wrap(data)
 
-    def add_stuff_to_xform(self, xform):
+    def add_stuff_to_xform(self, xform, lang_profile=None):
         super(CareplanForm, self).add_stuff_to_xform(xform)
         xform.add_care_plan(self)
 
@@ -3956,8 +3958,7 @@ class ApplicationBase(VersionedDoc, SnapshotMixin,
     application_version = StringProperty(default=APP_V2, choices=[APP_V1, APP_V2], required=False)
 
     langs = StringListProperty()
-    # only the languages that go in the build
-    build_langs = StringListProperty()
+
     secure_submissions = BooleanProperty(default=False)
 
     # metadata for data platform
@@ -3987,6 +3988,8 @@ class ApplicationBase(VersionedDoc, SnapshotMixin,
     # always false for RemoteApp
     case_sharing = BooleanProperty(default=False)
 
+    language_profiles = DictProperty()
+
     @classmethod
     def wrap(cls, data):
         # scrape for old conventions and get rid of them
@@ -4005,6 +4008,13 @@ class ApplicationBase(VersionedDoc, SnapshotMixin,
             if 'text_input' not in data:
                 data['text_input'] = 'native' if data['native_input'] else 'roman'
             del data['native_input']
+
+        if 'build_langs' in data:
+            if data['build_langs'] != data['langs']:
+                if 'language_profiles' in data:
+                    data['language_profiles'].update({uuid.uuid4().hex : {'name': 'deploy langs', 'langs': data['build_langs']}})
+                data['language_profiles'] = {uuid.uuid4().hex : {'name': 'deploy langs', 'langs': data['build_langs']}}
+            del data['build_langs']
 
         should_save = False
         if data.has_key('original_doc'):
@@ -4237,9 +4247,9 @@ class ApplicationBase(VersionedDoc, SnapshotMixin,
             settings['Build-Number'] = self.version
         return settings
 
-    def create_build_files(self, save=False):
+    def create_build_files(self, save=False, lang_profile=None):
         built_on = datetime.datetime.utcnow()
-        all_files = self.create_all_files()
+        all_files = self.create_all_files(lang_profile)
         if save:
             self.built_on = built_on
             self.built_with = BuildRecord(
@@ -4334,7 +4344,7 @@ class ApplicationBase(VersionedDoc, SnapshotMixin,
     def odk_media_profile_display_url(self):
         return self.short_odk_media_url or self.odk_media_profile_url
 
-    def get_odk_qr_code(self, with_media=False):
+    def get_odk_qr_code(self, with_media=False, profile=None):
         """Returns a QR code, as a PNG to install on CC-ODK"""
         try:
             return self.lazy_fetch_attachment("qrcode.png")
@@ -4342,7 +4352,10 @@ class ApplicationBase(VersionedDoc, SnapshotMixin,
             from pygooglechart import QRChart
             HEIGHT = WIDTH = 250
             code = QRChart(HEIGHT, WIDTH)
-            code.add_data(self.odk_profile_url if not with_media else self.odk_media_profile_url)
+            url = self.odk_profile_url if not with_media else self.odk_media_profile_url
+            if profile:
+                url += '?profile={profile}'.format(profile=profile)
+            code.add_data(url)
 
             # "Level L" error correction with a 0 pixel margin
             code.set_ec('L', 0)
@@ -4443,6 +4456,17 @@ class ApplicationBase(VersionedDoc, SnapshotMixin,
     def set_media_versions(self, previous_version):
         pass
 
+    def update_mm_map(self):
+        for form in self.get_forms(bare=False):
+            xml = XForm(form['form'].source)
+            lang_map = {lang: xml.all_references(lang) for lang in self.langs}
+            for lang, media_list in lang_map.items():
+                for media in media_list:
+                    if 'langs' in self.multimedia_map[media]:
+                        self.multimedia_map[media]["langs"][lang] = True
+                    else:
+                        self.multimedia_map[media]["langs"] = {lang : True}
+
 
 def validate_lang(lang):
     if not re.match(r'^[a-z]{2,3}(-[a-z]*)?$', lang):
@@ -4542,8 +4566,6 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
                     module['case_label'][lang] = commcare_translations.load_translations(lang).get('cchq.case', 'Cases')
                 if not module['referral_label'].get(lang):
                     module['referral_label'][lang] = commcare_translations.load_translations(lang).get('cchq.referral', 'Referrals')
-        if not data.get('build_langs'):
-            data['build_langs'] = data['langs']
         data.pop('commtrack_enabled', None)  # Remove me after migrating apps
         self = super(Application, cls).wrap(data)
 
@@ -4602,12 +4624,12 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
 
     @property
     def default_language(self):
-        return self.build_langs[0] if len(self.build_langs) > 0 else "en"
+        return self.langs[0] if len(self.langs) > 0 else "en"
 
-    def fetch_xform(self, module_id=None, form_id=None, form=None):
+    def fetch_xform(self, module_id=None, form_id=None, form=None, lang_profile=None):
         if not form:
             form = self.get_module(module_id).get_form(form_id)
-        return form.validate_form().render_xform().encode('utf-8')
+        return form.validate_form().render_xform(lang_profile).encode('utf-8')
 
     def set_form_versions(self, previous_version):
         """
@@ -4700,7 +4722,7 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
         })
         return s
 
-    def create_profile(self, is_odk=False, with_media=False, template='app_manager/profile.xml'):
+    def create_profile(self, is_odk=False, with_media=False, template='app_manager/profile.xml', lang_profile=None):
         self__profile = self.profile
         app_profile = defaultdict(dict)
 
@@ -4755,7 +4777,8 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
             'include_media_suite': with_media,
             'uniqueid': self.copy_of or self.id,
             'name': self.name,
-            'descriptor': u"Profile File"
+            'descriptor': u"Profile File",
+            'lang_profile': lang_profile
         }).encode('utf-8')
 
     @property
@@ -4768,40 +4791,43 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
     def set_custom_suite(self, value):
         self.put_attachment(value, 'custom_suite.xml')
 
-    def create_suite(self):
+    def create_suite(self, lang_profile=None):
         if self.application_version == APP_V1:
             template='app_manager/suite-%s.xml' % self.application_version
+            langs = self.langs if not lang_profile else self.language_profiles[lang_profile]['langs']
             return render_to_string(template, {
                 'app': self,
-                'langs': ["default"] + self.build_langs
+                'langs': ["default"] + langs
             })
         else:
-            return SuiteGenerator(self).generate_suite()
+            return SuiteGenerator(self, lang_profile).generate_suite()
 
-    def create_media_suite(self):
-        return MediaSuiteGenerator(self).generate_suite()
+    def create_media_suite(self, lang_profile=None):
+        return MediaSuiteGenerator(self, lang_profile).generate_suite()
 
     @classmethod
     def get_form_filename(cls, type=None, form=None, module=None):
         return 'modules-%s/forms-%s.xml' % (module.id, form.id)
 
-    def create_all_files(self):
+    def create_all_files(self, lang_profile=None):
+        prefix = '' if not lang_profile else lang_profile + '/'
         files = {
-            'profile.xml': self.create_profile(is_odk=False),
-            'profile.ccpr': self.create_profile(is_odk=True),
-            'media_profile.xml': self.create_profile(is_odk=False, with_media=True),
-            'media_profile.ccpr': self.create_profile(is_odk=True, with_media=True),
-            'suite.xml': self.create_suite(),
-            'media_suite.xml': self.create_media_suite(),
+            '{}profile.xml'.format(prefix): self.create_profile(is_odk=False, lang_profile=lang_profile),
+            '{}profile.ccpr'.format(prefix): self.create_profile(is_odk=True, lang_profile=lang_profile),
+            '{}media_profile.xml'.format(prefix): self.create_profile(is_odk=False, with_media=True, lang_profile=lang_profile),
+            '{}media_profile.ccpr'.format(prefix): self.create_profile(is_odk=True, with_media=True, lang_profile=lang_profile),
+            '{}suite.xml'.format(prefix): self.create_suite(lang_profile),
+            '{}media_suite.xml'.format(prefix): self.create_media_suite(lang_profile),
         }
 
-        for lang in ['default'] + self.build_langs:
+        langs_for_build = self.langs if not lang_profile else self.language_profiles[lang_profile]['langs']
+        for lang in ['default'] + langs_for_build:
             files["%s/app_strings.txt" % lang] = self.create_app_strings(lang)
         for form_stuff in self.get_forms(bare=False):
-            filename = self.get_form_filename(**form_stuff)
+            filename = prefix + self.get_form_filename(**form_stuff)
             form = form_stuff['form']
             try:
-                files[filename] = self.fetch_xform(form=form)
+                files[filename] = self.fetch_xform(form=form, lang_profile=lang_profile)
             except XFormException as e:
                 raise XFormException(_('Error in form "{}": {}').format(trans(form.name), unicode(e)))
         return files
@@ -4853,7 +4879,7 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
 
     @classmethod
     def new_app(cls, domain, name, application_version, lang="en"):
-        app = cls(domain=domain, modules=[], name=name, langs=[lang], build_langs=[lang], application_version=application_version)
+        app = cls(domain=domain, modules=[], name=name, langs=[lang], application_version=application_version)
         return app
 
     def add_module(self, module):
@@ -5247,11 +5273,12 @@ class RemoteApp(ApplicationBase):
     def SUITE_XPATH(self):
         return 'suite/resource/location[@authority="local"]'
 
-    def create_all_files(self):
+    def create_all_files(self, lang_profile=None):
         files = {
             'profile.xml': self.create_profile(),
         }
         tree = _parse_xml(files['profile.xml'])
+        langs_for_build = self.langs if not lang_profile else self.language_profiles[lang_profile]['langs']
 
         def add_file_from_path(path, strict=False, transform=None):
             added_files = []
@@ -5287,17 +5314,18 @@ class RemoteApp(ApplicationBase):
 
             for tag, location in self.get_locations(suite_xml):
                 location, data = self.fetch_file(location)
-                if tag == 'xform' and self.build_langs:
+                if tag == 'xform' and langs_for_build:
                     try:
                         xform = XForm(data)
                     except XFormException as e:
                         raise XFormException('In file %s: %s' % (location, e))
-                    xform.exclude_languages(whitelist=self.build_langs)
+                    xform.exclude_languages(whitelist=langs_for_build)
                     data = xform.render()
                 files.update({location: data})
         return files
 
-    def make_questions_map(self):
+    def make_questions_map(self, lang_profile=None):
+        langs_for_build = self.langs if not lang_profile else self.language_profiles[lang_profile]['langs']
         if self.copy_of:
             xmlns_map = {}
 
@@ -5313,7 +5341,7 @@ class RemoteApp(ApplicationBase):
                 if tag == 'xform':
                     xform = XForm(fetch(location))
                     xmlns = xform.data_node.tag_xmlns
-                    questions = xform.get_questions(self.build_langs)
+                    questions = xform.get_questions(langs_for_build)
                     xmlns_map[xmlns] = questions
             return xmlns_map
         else:

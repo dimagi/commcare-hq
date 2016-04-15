@@ -22,10 +22,11 @@ from corehq.apps.hqmedia.models import HQMediaMapItem
 class SuiteGenerator(object):
     descriptor = u"Suite File"
 
-    def __init__(self, app):
+    def __init__(self, app, lang_profile=None):
         self.app = app
         self.modules = list(app.get_modules())
         self.suite = Suite(version=self.app.version, descriptor=self.descriptor)
+        self.lang_profile = lang_profile
 
     def _add_sections(self, contributors):
         for contributor in contributors:
@@ -38,7 +39,7 @@ class SuiteGenerator(object):
         # Note: the order in which things happen in this function matters
 
         self._add_sections([
-            FormResourceContributor(self.suite, self.app, self.modules),
+            FormResourceContributor(self.suite, self.app, self.modules, self.lang_profile),
             LocaleResourceContributor(self.suite, self.app, self.modules),
             DetailContributor(self.suite, self.app, self.modules),
         ])
@@ -75,8 +76,9 @@ class SuiteGenerator(object):
 class MediaSuiteGenerator(object):
     descriptor = u"Media Suite File"
 
-    def __init__(self, app):
+    def __init__(self, app, profile=None):
         self.app = app
+        self.profile = app.language_profiles[profile] if profile else None
         self.suite = Suite(
             version=self.app.version,
             descriptor=self.descriptor,
@@ -94,7 +96,10 @@ class MediaSuiteGenerator(object):
         self.app.remove_unused_mappings()
         if self.app.multimedia_map is None:
             self.app.multimedia_map = {}
+        langs = self.app.langs if not self.profile else self.profile['langs']
         for path, m in self.app.multimedia_map.items():
+            if not any([m['langs'].get(l) for l in langs]):
+                continue
             unchanged_path = path
             if path.startswith(PREFIX):
                 path = path[len(PREFIX):]
