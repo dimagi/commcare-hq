@@ -80,6 +80,9 @@ urlpatterns = patterns('corehq.apps.reports.views',
     url(r'^form_data/(?P<instance_id>[\w\-:]+)/unarchive/$', 'unarchive_form', name='unarchive_form'),
     url(r'^form_data/(?P<instance_id>[\w\-:]+)/rebuild/$', 'resave_form', name='resave_form'),
 
+    # project health ajax
+    url(r'^project_health/ajax/(?P<user_id>[\w\-]+)/$', 'project_health_user_details', name='project_health_user_details'),
+
     # export API
     url(r"^export/$", 'export_data'),
 
