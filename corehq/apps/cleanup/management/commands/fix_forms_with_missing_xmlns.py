@@ -108,6 +108,7 @@ class Command(BaseCommand):
                 i, total_submissions, round(i / float(total_submissions), 2)
             )
 
+
 def get_submissions_without_xmlns():
     submissions = XFormInstance.get_db().view(
         'couchforms/by_xmlns',
@@ -245,6 +246,7 @@ def get_form_unique_id(xform_instance):
         )
     return form.unique_id
 
+
 def get_xmlns(form_unique_id, app_id, domain):
     app = get_app(domain, app_id)
     existing_xmlns = set()
@@ -259,6 +261,7 @@ def get_xmlns(form_unique_id, app_id, domain):
         return existing_xmlns.pop()
     assert len(existing_xmlns) == 0
     return generate_random_xmlns()
+
 
 def _name_matches(xform_name, form_names):
     if xform_name in form_names.values():

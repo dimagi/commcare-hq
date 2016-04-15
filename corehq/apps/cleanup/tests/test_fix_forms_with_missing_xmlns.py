@@ -85,7 +85,6 @@ class TestFixFormsWithMissingXmlns(TestCase, TestXmlMixin):
 
         return good_form, bad_form, good_xform, bad_xforms
 
-
     def build_app_with_recently_fixed_form(self):
         """
         Generates an app with a form that:
