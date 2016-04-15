@@ -11,7 +11,8 @@ from corehq.apps.app_manager.dbaccessors import domain_has_apps, get_brief_apps_
 from corehq.apps.domain.models import Domain
 from corehq.apps.domain.utils import user_has_custom_top_menu
 from corehq.apps.hqadmin.reports import RealProjectSpacesReport, \
-    CommConnectProjectSpacesReport, CommTrackProjectSpacesReport
+    CommConnectProjectSpacesReport, CommTrackProjectSpacesReport, \
+    DeviceLogSoftAssertReport
 from corehq.apps.hqwebapp.models import GaTracker
 from corehq.apps.hqwebapp.view_permissions import user_can_view_reports
 from corehq.apps.indicators.dispatcher import IndicatorAdminInterfaceDispatcher
@@ -1471,6 +1472,7 @@ class AdminTab(UITab):
                     RealProjectSpacesReport,
                     CommConnectProjectSpacesReport,
                     CommTrackProjectSpacesReport,
+                    DeviceLogSoftAssertReport,
                 ]
             ]),
         ]

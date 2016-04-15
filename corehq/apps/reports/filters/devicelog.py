@@ -37,6 +37,7 @@ class DeviceLogDomainFilter(BaseSingleOptionFilter):
     label = ugettext_lazy("Filter Logs by Domain")
 
     @property
+    @quickcache([], timeout=60 * 60)
     def options(self):
         return [(d, d) for d in fast_distinct(DeviceReportEntry, 'domain')]
 
