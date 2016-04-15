@@ -18,8 +18,16 @@ hqDefine('app_manager/js/releases.js', function () {
         });
         self.app_code = ko.observable(null);
         self.failed_url_generation = ko.observable(false);
+        self.profile = ko.observable('');
         self.base_url = function() {
             return '/a/' + self.domain() + '/apps/odk/' + self.id() + '/';
+        };
+        self.lang_profiles = function() {
+            profiles = [{'label': 'default', 'value': ''}];
+            _.each(app_data.language_profiles, function(value, key, list) {
+                profiles.push({'label': value['name'], 'value': key})
+            });
+            return profiles;
         };
 
         self.should_generate_url = function(url_type) {
@@ -106,6 +114,10 @@ hqDefine('app_manager/js/releases.js', function () {
         self.get_odk_install_url = ko.computed(function() {
             var slug = self.include_media() ? 'odk_media' : 'odk';
             return releasesMain.url(slug, self.id());
+        });
+
+        self.full_odk_install_url = ko.computed(function() {
+            return self.get_odk_install_url() + '?profile=' + self.profile();
         });
 
         self.sms_url = function(index) {

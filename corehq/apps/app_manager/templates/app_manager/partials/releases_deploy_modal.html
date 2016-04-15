@@ -47,6 +47,8 @@
                                                 </a>
                                                 {% trans "to your Android device." %}
                                             </p>
+                                            <label>Language Profile </label>
+                                            <select data-bind="optstr: lang_profiles(), value: profile" class="form-control"></select>
                                             {% if multimedia_state.has_media %}
                                                 <div class="checkbox">
                                                     <label data-bind="visible: allow_media_install">
@@ -65,7 +67,7 @@
                                                 </p>
                                                 <p>
                                                     <a href="#" data-bind="
-                                                        openRemoteModal: get_odk_install_url,
+                                                        openRemoteModal: full_odk_install_url,
                                                         click: clickScan
                                                     ">
                                                         {% trans "Scan Application Barcode" %}
