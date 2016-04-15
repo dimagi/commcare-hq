@@ -26,39 +26,35 @@ hqDefine('domain/js/case-search-config.js', function () {
         var self = this;
         var initialValues = options.values;
 
-        var viewModel = {
-            caseTypes: options.caseTypes,
-            toggleEnabled: ko.observable(initialValues.enabled),
-            fuzzyProperties: ko.observableArray(),
-        };
+        self.caseTypes = options.caseTypes;
+        self.toggleEnabled = ko.observable(initialValues.enabled);
+        self.fuzzyProperties = ko.observableArray();
         if (initialValues.config.hasOwnProperty('fuzzy_properties')) {
             for (var i = 0; i < initialValues.config.fuzzy_properties.length; i++) {
-                viewModel.fuzzyProperties.push(new CaseTypeProps(
+                self.fuzzyProperties.push(new CaseTypeProps(
                     initialValues.config.fuzzy_properties[i].case_type,
                     initialValues.config.fuzzy_properties[i].properties
                 ));
             }
         } else {
-            viewModel.fuzzyProperties.push(new CaseTypeProps('', ['']));
+            self.fuzzyProperties.push(new CaseTypeProps('', ['']));
         }
 
-        viewModel.addCaseType = function () {
-            viewModel.fuzzyProperties.push(new CaseTypeProps('', ['']));
+        self.addCaseType = function () {
+            self.fuzzyProperties.push(new CaseTypeProps('', ['']));
         };
-        viewModel.removeCaseType = function (caseType) {
-            viewModel.fuzzyProperties.remove(caseType);
+        self.removeCaseType = function (caseType) {
+            self.fuzzyProperties.remove(caseType);
         };
 
-        viewModel.submit = function (form) {
+        self.submit = function (form) {
             $.post(form.action, {
-                'enable': viewModel.toggleEnabled(),
-                'config': {'fuzzy_properties': _.pick(viewModel.fuzzyProperties(), 'case_type', 'properties')},
+                'enable': self.toggleEnabled(),
+                'config': {'fuzzy_properties': _.pick(self.fuzzyProperties(), 'case_type', 'properties')},
             }).success(function () {
                 // TODO: Watch changes. On success change Save button from btn-primary to btn-default
             });
         };
-
-        return viewModel;
     };
 
     return module;
