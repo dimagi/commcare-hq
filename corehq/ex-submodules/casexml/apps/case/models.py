@@ -273,7 +273,7 @@ class CommCareCase(SafeSaveDocument, IndexHoldingMixIn, ComputedDocumentMixin,
         self.doc_type += DELETED_SUFFIX
         self.save()
 
-    def get_json(self, lite=False):
+    def to_api_json(self, lite=False):
         ret = {
             # actions excluded here
             "domain": self.domain,
@@ -299,15 +299,6 @@ class CommCareCase(SafeSaveDocument, IndexHoldingMixIn, ComputedDocumentMixin,
                 "reverse_indices": self.get_index_map(True),
             })
         return ret
-
-    @memoized
-    def get_attachment_map(self):
-        return dict([
-            (name, {
-                'url': self.get_attachment_server_url(att.attachment_key),
-                'mime': att.attachment_from
-            }) for name, att in self.case_attachments.items()
-        ])
 
     @classmethod
     def get(cls, id, strip_history=False, **kwargs):

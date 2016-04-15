@@ -563,6 +563,11 @@ class CommCareCaseSQL(DisabledDbMixin, models.Model, RedisLockableMixIn,
     def dynamic_case_properties(self):
         return OrderedDict(sorted(self.case_json.iteritems()))
 
+    def to_api_json(self, lite=False):
+        from .serializers import CommCareCaseSQLAPISerializer
+        serializer = CommCareCaseSQLAPISerializer(self, lite=lite)
+        return serializer.data
+
     def to_json(self):
         from .serializers import CommCareCaseSQLSerializer
         serializer = CommCareCaseSQLSerializer(self)
@@ -584,6 +589,9 @@ class CommCareCaseSQL(DisabledDbMixin, models.Model, RedisLockableMixIn,
     def reverse_indices(self):
         from corehq.form_processor.backends.sql.dbaccessors import CaseAccessorSQL
         return CaseAccessorSQL.get_reverse_indices(self.case_id)
+
+    def get_reverse_index_map(self):
+        return self.get_index_map(True)
 
     @memoized
     def _saved_indices(self):
