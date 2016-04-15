@@ -39,7 +39,7 @@
             };
 
             this.isNotBlank = ko.computed(function(){
-               return that.property() !== "";
+               return !!that.property();
             });
 
             this.isValid= ko.computed(function(){
