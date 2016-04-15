@@ -1,4 +1,4 @@
-var charts = (function() {
+hqDefine('reports_core/js/charts.js', function() {
     var fn = {};
     var renderPie = function (config, data, svgSelector) {
         return function () {
@@ -172,4 +172,4 @@ var charts = (function() {
     };
     return fn;
 
-})();
+});

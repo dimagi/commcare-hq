@@ -34,6 +34,7 @@
             return base_url;
         }
     $(function() {
+        var charts = hqImport('reports_core/js/charts.js');
         var chartSpecs = {{ report.spec.charts|JSON }};
         var updateCharts = function (data) {
             if (chartSpecs !== null && chartSpecs.length > 0) {
