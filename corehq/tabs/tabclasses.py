@@ -1463,9 +1463,10 @@ class AdminTab(UITab):
             (_('CommCare Reports'), [
                 {
                     'title': report.name,
-                    'url': '%s?%s' % (reverse('admin_report_dispatcher',
-                                              args=(report.slug,)),
-                                      urlencode(report.default_params))
+                    'url': '{url}{params}'.format(
+                        url=reverse('admin_report_dispatcher', args=(report.slug,)),
+                        params="?{}".format(urlencode(report.default_params)) if report.default_params else ""
+                    )
                 } for report in [
                     RealProjectSpacesReport,
                     CommConnectProjectSpacesReport,
