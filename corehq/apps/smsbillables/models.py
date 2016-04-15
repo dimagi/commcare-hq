@@ -5,6 +5,7 @@ from django.conf import settings
 from django.core.exceptions import ObjectDoesNotExist
 from django.db import models
 
+from twilio import TwilioRestException
 from twilio.rest import TwilioRestClient
 
 from corehq.apps.accounting import models as accounting
@@ -20,7 +21,7 @@ from corehq.apps.sms.phonenumbers_helper import get_country_code_and_national_nu
 from corehq.apps.smsbillables.utils import log_smsbillables_error
 from corehq.messaging.smsbackends.test.models import SQLTestSMSBackend
 from corehq.apps.sms.util import clean_phone_number
-from corehq.apps.smsbillables.exceptions import AmbiguousPrefixException
+from corehq.apps.smsbillables.exceptions import AmbiguousPrefixException, RetryBillableTaskException
 from corehq.messaging.smsbackends.twilio.models import SQLTwilioBackend
 from corehq.util.quickcache import quickcache
 
@@ -407,25 +408,23 @@ class SmsBillable(models.Model):
             config = twilio_backend.config
             return TwilioRestClient(config.account_sid, config.auth_token)
 
-        try:
-            if backend_message_id:
+        if backend_message_id:
+            try:
                 twilio_message = _get_twilio_client().messages.get(backend_message_id)
-                return _TwilioChargeInfo(
-                    Decimal(twilio_message.price) * -1,
-                    SmsGatewayFee.get_by_criteria(
-                        SQLTwilioBackend.get_api_id(),
-                        direction,
-                    )
+            except TwilioRestException:
+                raise RetryBillableTaskException
+            return _TwilioChargeInfo(
+                Decimal(twilio_message.price) * -1,
+                SmsGatewayFee.get_by_criteria(
+                    SQLTwilioBackend.get_api_id(),
+                    direction,
                 )
-            else:
-                log_smsbillables_error(
-                    "Could not create gateway fee for Twilio message %s: no backend_message_id" % couch_id
-                )
-        except Exception as e:
-            log_smsbillables_error(
-                "Error looking up Twilio gateway fee for SMSLog %s: %s" % (couch_id, e.message)
             )
-        return _TwilioChargeInfo(None, None)
+        else:
+            log_smsbillables_error(
+                "Could not create gateway fee for Twilio message %s: no backend_message_id" % couch_id
+            )
+            return _TwilioChargeInfo(None, None)
 
 _TwilioChargeInfo = namedtuple('_TwilioCharges', ['twilio_gateway_fee', 'gateway_fee'])
 _GatewayChargeInfo = namedtuple('_GatewayChargeInfo', ['gateway_fee', 'conversion_rate', 'direct_gateway_fee'])
