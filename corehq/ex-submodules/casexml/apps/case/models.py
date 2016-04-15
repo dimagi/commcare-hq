@@ -105,6 +105,30 @@ class CommCareCaseAction(LooselyEqualDocumentSchema):
         """For compatability with CaseTransaction"""
         return self.xform
 
+    @property
+    def form_id(self):
+        return self.xform_id
+
+    @property
+    def is_case_create(self):
+        return self.action_type == const.CASE_ACTION_CREATE
+
+    @property
+    def is_case_close(self):
+        return self.action_type == const.CASE_ACTION_CLOSE
+
+    @property
+    def is_case_index(self):
+        return self.action_type == const.CASE_ACTION_INDEX
+
+    @property
+    def is_case_attachment(self):
+        return self.action_type == const.CASE_ACTION_ATTACHMENT
+
+    @property
+    def is_case_rebuild(self):
+        return self.action_type == const.CASE_ACTION_REBUILD
+
     def get_user_id(self):
         key = 'xform-%s-user_id' % self.xform_id
         id = cache.get(key)
