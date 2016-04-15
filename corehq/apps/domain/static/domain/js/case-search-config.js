@@ -9,6 +9,7 @@ hqDefine('domain/js/case-search-config.js', function () {
         var self = this;
         self.case_type = ko.observable(caseType);
         self.properties = ko.observableArray(properties);
+        // TODO: ^^^ This observableArray isn't changing the values of the strings inside it.
 
         self.addProperty = function () {
             self.properties.push('');
@@ -30,7 +31,6 @@ hqDefine('domain/js/case-search-config.js', function () {
             caseTypes: ko.observableArray(self.caseTypes),
             toggleEnabled: ko.observable(initialValues.enabled),
             fuzzyProperties: ko.observableArray(),
-            // TODO: ^^^ This observableArray isn't changing the values of the strings inside it.
         };
         if (initialValues.config.hasOwnProperty('fuzzy_properties')) {
             for (var i = 0; i < initialValues.config.fuzzy_properties.length; i++) {
