@@ -25,10 +25,9 @@ hqDefine('domain/js/case-search-config.js', function () {
     module.CaseSearchConfig = function (options) {
         var self = this;
         var initialValues = options.values;
-        self.caseTypes = options.caseTypes;
 
         var viewModel = {
-            caseTypes: ko.observableArray(self.caseTypes),
+            caseTypes: options.caseTypes,
             toggleEnabled: ko.observable(initialValues.enabled),
             fuzzyProperties: ko.observableArray(),
         };
