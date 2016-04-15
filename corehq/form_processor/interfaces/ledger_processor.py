@@ -65,7 +65,7 @@ class LedgerProcessorInterface(object):
         self.domain = domain
 
     @abstractmethod
-    def get_models_to_update(self, stock_report_helpers, deprecated_helpers, ledger_db=None):
+    def get_models_to_update(self, form_id, stock_report_helpers, deprecated_helpers, ledger_db=None):
         """
         Returns a list of StockModelUpdate object containing everything that needs to be updated.
         """

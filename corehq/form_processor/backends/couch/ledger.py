@@ -39,11 +39,14 @@ class LedgerProcessorCouch(LedgerProcessorInterface):
     form and case models, which is why it lives in the "couch" module.
     """
 
-    def get_models_to_update(self, stock_report_helpers, deprecated_helpers, ledger_db=None):
+    def get_models_to_update(self, form_id, stock_report_helpers, deprecated_helpers, ledger_db=None):
         ledger_db = ledger_db or LedgerDBCouch()
         result = StockModelUpdateResult()
-        for deprecated_helper in deprecated_helpers:
-            result.to_delete.append(StockReport.objects.filter(domain=self.domain, form_id=deprecated_helper.form_id))
+
+        if len(deprecated_helpers):
+            form_ids = list({deprecated_helper.form_id for deprecated_helper in deprecated_helpers})
+            assert form_ids == [form_id]
+            result.to_delete.append(StockReport.objects.filter(domain=self.domain, form_id=form_id))
 
         for helper in stock_report_helpers:
             if helper.report_type not in const.VALID_REPORT_TYPES:

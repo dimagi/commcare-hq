@@ -29,7 +29,7 @@ class LedgerProcessorSQL(LedgerProcessorInterface):
     Ledger processor for new SQL-based code.
     """
 
-    def get_models_to_update(self, stock_report_helpers, deprecated_helpers, ledger_db=None):
+    def get_models_to_update(self, form_id, stock_report_helpers, deprecated_helpers, ledger_db=None):
         ledger_db = ledger_db or LedgerDBSQL()
         result = StockModelUpdateResult()
         for helper in stock_report_helpers:
