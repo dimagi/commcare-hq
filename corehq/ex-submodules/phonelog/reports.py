@@ -199,7 +199,7 @@ class BaseDeviceLogReport(GetParamsMixin, DatespanMixin, PaginatedReportMixin):
                        .user_time(self.timezone).ui_string())
 
             username = log.username
-            username_fmt =  self._username_fmt % {
+            username_fmt = self._username_fmt % {
                 "url": "%s?%s=%s&%s" % (
                     self.get_url(domain=self.domain),
                     DeviceLogUsersFilter.slug,
@@ -214,7 +214,7 @@ class BaseDeviceLogReport(GetParamsMixin, DatespanMixin, PaginatedReportMixin):
 
             device_users = _device_users_by_xform(log.xform_id)
             device_users_fmt = ', '.join([
-                 self._device_users_fmt % {
+                self._device_users_fmt % {
                     "url": "%s?%s=%s&%s" % (self.get_url(domain=self.domain),
                                             DeviceLogUsersFilter.slug,
                                             username,
