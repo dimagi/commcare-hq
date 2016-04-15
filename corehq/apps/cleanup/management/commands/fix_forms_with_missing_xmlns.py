@@ -57,7 +57,6 @@ class Command(BaseCommand):
         xform_db = IterDB(XFormInstance.get_db())
         with xform_db as xform_db:
             for i, xform_instance in enumerate(submissions):
-                # print i, datetime.now()
                 Command._print_progress(i, total)
                 unique_id = get_form_unique_id(xform_instance)
                 if unique_id not in unique_id_to_xmlns_map:
