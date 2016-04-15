@@ -368,6 +368,8 @@ def chevron(value):
         return '<span class="fa fa-chevron-up" style="color: #006400;"></span>'
     elif value < 0:
         return '<span class="fa fa-chevron-down" style="color: #8b0000;"> </span>'
+    else:
+        return ''
 
 
 @register.simple_tag
