@@ -10,7 +10,7 @@ from corehq.apps.case_search.exceptions import CaseSearchNotEnabledException
 from corehq.apps.case_search.models import case_search_enabled_domains, \
     case_search_enabled_for_domain
 from corehq.apps.change_feed import topics
-from corehq.apps.change_feed.consumer.feed import KafkaChangeFeed
+from corehq.apps.change_feed.consumer.feed import KafkaChangeFeed, MultiTopicCheckpointEventHandler
 from corehq.apps.es import CaseSearchES
 from corehq.elastic import get_es_new
 from corehq.form_processor.utils.general import should_use_sql_backend
@@ -18,8 +18,7 @@ from corehq.pillows.case import CASE_ES_TYPE, CasePillow
 from corehq.pillows.const import CASE_SEARCH_ALIAS
 from corehq.pillows.mappings.case_search_mapping import CASE_SEARCH_INDEX, \
     CASE_SEARCH_MAPPING
-from pillowtop.checkpoints.manager import PillowCheckpoint, \
-    PillowCheckpointEventHandler
+from pillowtop.checkpoints.manager import PillowCheckpoint
 from pillowtop.es_utils import ElasticsearchIndexInfo
 from pillowtop.feed.interface import Change
 from pillowtop.pillow.interface import ConstructedPillow
@@ -75,7 +74,12 @@ def _get_case_properties(doc_dict):
 class CaseSearchPillowProcessor(ElasticProcessor):
     def process_change(self, pillow_instance, change, do_set_checkpoint):
         assert isinstance(change, Change)
-        domain = change.get_document()['domain']
+        if change.metadata is not None:
+            # Comes from KafkaChangeFeed (i.e. running pillowtop)
+            domain = change.metadata.domain
+        else:
+            # comes from ChangeProvider (i.e reindexing)
+            domain = change.get_document()['domain']
         if domain and case_search_enabled_for_domain(domain):
             super(CaseSearchPillowProcessor, self).process_change(
                 pillow_instance, change, do_set_checkpoint
@@ -91,14 +95,15 @@ def get_case_search_to_elasticsearch_pillow(pillow_id='CaseSearchToElasticsearch
         index_info=ElasticsearchIndexInfo(index=CASE_SEARCH_INDEX, type=CASE_ES_TYPE),
         doc_prep_fn=transform_case_for_elasticsearch
     )
+    change_feed = KafkaChangeFeed(topics=[topics.CASE, topics.CASE_SQL], group_id='cases-to-es')
     return ConstructedPillow(
         name=pillow_id,
         document_store=None,
         checkpoint=checkpoint,
-        change_feed=KafkaChangeFeed(topics=[topics.CASE, topics.CASE_SQL], group_id='cases-to-es'),
+        change_feed=change_feed,
         processor=case_processor,
-        change_processed_event_handler=PillowCheckpointEventHandler(
-            checkpoint=checkpoint, checkpoint_frequency=100,
+        change_processed_event_handler=MultiTopicCheckpointEventHandler(
+            checkpoint=checkpoint, checkpoint_frequency=100, change_feed=change_feed,
         ),
     )
 
