@@ -1,4 +1,4 @@
-/* globals hqDefine, ko */
+/* globals hqDefine, ko, $, _ */
 
 hqDefine('domain/js/case-search-config.js', function () {
     'use strict';
@@ -10,12 +10,11 @@ hqDefine('domain/js/case-search-config.js', function () {
         self.case_type = ko.observable(caseType);
         self.properties = ko.observableArray(properties);
 
-        self.addProperty = function (data, event) {
+        self.addProperty = function () {
             self.properties.push('');
         };
-        self.removeProperty = function (data, event) {
-            // `data` is an empty string (the field's original value?).
-            //self.properties.remove(data); // removes all properties.
+        self.removeProperty = function (property) {
+            self.properties.remove(property);
         };
     };
 
@@ -30,7 +29,8 @@ hqDefine('domain/js/case-search-config.js', function () {
         var viewModel = {
             caseTypes: ko.observableArray(self.caseTypes),
             toggleEnabled: ko.observable(initialValues.enabled),
-            fuzzyProperties: ko.observableArray()  // TODO: Why is this a bunch of empty strings?
+            fuzzyProperties: ko.observableArray(),
+            // TODO: ^^^ This observableArray isn't changing the values of the strings inside it.
         };
         if (initialValues.config.hasOwnProperty('fuzzy_properties')) {
             for (var i = 0; i < initialValues.config.fuzzy_properties.length; i++) {
@@ -43,11 +43,11 @@ hqDefine('domain/js/case-search-config.js', function () {
             viewModel.fuzzyProperties.push(new CaseTypeProps('', ['']));
         }
 
-        viewModel.addCaseType = function (data, event) {
+        viewModel.addCaseType = function () {
             viewModel.fuzzyProperties.push(new CaseTypeProps('', ['']));
         };
-        viewModel.removeCaseType = function (data, event) {
-            viewModel.fuzzyProperties.remove(data);
+        viewModel.removeCaseType = function (caseType) {
+            viewModel.fuzzyProperties.remove(caseType);
         };
 
         viewModel.submit = function (form) {
