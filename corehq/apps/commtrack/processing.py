@@ -34,13 +34,14 @@ class StockProcessingResult(object):
         interface = FormProcessorInterface(domain=self.domain)
         processor = interface.ledger_processor
         ledger_db = interface.ledger_db
-        update_results = []
 
-        for stock_report_helper in self.stock_report_helpers:
-            this_result = processor.get_models_to_update(stock_report_helper, ledger_db)
-            if this_result:
-                update_results.append(this_result)
-        return update_results
+        for helper in self.stock_report_helpers:
+            assert helper.domain == self.domain
+
+        normal_helpers = [srh for srh in self.stock_report_helpers if not srh.deprecated]
+        deprecated_helpers = [srh for srh in self.stock_report_helpers if srh.deprecated]
+
+        return processor.get_models_to_update(normal_helpers, deprecated_helpers, ledger_db)
 
     def finalize(self):
         """

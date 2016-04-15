@@ -29,41 +29,42 @@ class LedgerProcessorSQL(LedgerProcessorInterface):
     Ledger processor for new SQL-based code.
     """
 
-    def get_models_to_update(self, stock_report_helper, ledger_db=None):
+    def get_models_to_update(self, stock_report_helpers, deprecated_helpers, ledger_db=None):
         ledger_db = ledger_db or LedgerDBSQL()
         latest_values = {}
-        to_save = []
-        for stock_trans in stock_report_helper.transactions:
-            def _lazy_original_balance():
-                # needs to be in closures because it's zero-argument.
-                # see compute_ledger_values for more information
-                reference = stock_trans.ledger_reference
-                if reference not in latest_values:
-                    latest_values[reference] = ledger_db.get_current_ledger_value(reference)
-                return latest_values[reference]
+        result = StockModelUpdateResult()
+        for helper in stock_report_helpers:
+            for stock_trans in helper.transactions:
+                def _lazy_original_balance():
+                    # needs to be in closures because it's zero-argument.
+                    # see compute_ledger_values for more information
+                    reference = stock_trans.ledger_reference
+                    if reference not in latest_values:
+                        latest_values[reference] = ledger_db.get_current_ledger_value(reference)
+                    return latest_values[reference]
 
-            new_ledger_values = compute_ledger_values(
-                _lazy_original_balance, stock_report_helper.report_type, stock_trans.relative_quantity
-            )
+                new_ledger_values = compute_ledger_values(
+                    _lazy_original_balance, helper.report_type, stock_trans.relative_quantity
+                )
 
-            ledger_value = ledger_db.get_ledger(stock_trans.ledger_reference)
-            if not ledger_value:
-                ledger_value = LedgerValue(**stock_trans.ledger_reference._asdict())
+                ledger_value = ledger_db.get_ledger(stock_trans.ledger_reference)
+                if not ledger_value:
+                    ledger_value = LedgerValue(**stock_trans.ledger_reference._asdict())
 
-            transaction = _get_ledger_transaction(
-                _lazy_original_balance,
-                stock_report_helper,
-                stock_trans,
-                new_ledger_values.balance
-            )
-            ledger_value.track_create(transaction)
+                transaction = _get_ledger_transaction(
+                    _lazy_original_balance,
+                    helper,
+                    stock_trans,
+                    new_ledger_values.balance
+                )
+                ledger_value.track_create(transaction)
 
-            # only do this after we've created the transaction otherwise we'll get the wrong delta
-            ledger_value.balance = new_ledger_values.balance
-            latest_values[stock_trans.ledger_reference] = new_ledger_values.balance
-            to_save.append(ledger_value)
+                # only do this after we've created the transaction otherwise we'll get the wrong delta
+                ledger_value.balance = new_ledger_values.balance
+                latest_values[stock_trans.ledger_reference] = new_ledger_values.balance
+                result.to_save.append(ledger_value)
 
-        return StockModelUpdateResult(to_save=to_save)
+        return result
 
     def rebuild_ledger_state(self, case_id, section_id, entry_id):
         LedgerProcessorSQL.hard_rebuild_ledgers(case_id, section_id, entry_id)
