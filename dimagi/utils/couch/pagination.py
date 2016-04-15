@@ -5,15 +5,6 @@ import json
 from restkit.errors import RequestFailed
 import itertools
 
-try:
-    # this isn't actually part of dimagi-utils
-    # but this is temporary and don't want to do a bigger reorg
-    from corehq.util.view_utils import expect_GET
-except ImportError:
-    def expect_GET(request):
-        assert request.method == 'GET'
-        return request.GET
-
 DEFAULT_DISPLAY_LENGTH = "10"
 DEFAULT_START = "0"
 DEFAULT_ECHO = "0"
@@ -90,7 +81,7 @@ class CouchPaginator(object):
         returned
         """
         extras = extras or {}
-        query = expect_GET(request)
+        query = request.GET
         params = DatatablesParams.from_request_dict(query)
 
         # search
