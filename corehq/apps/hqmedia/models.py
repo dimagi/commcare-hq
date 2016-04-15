@@ -685,7 +685,7 @@ class HQMediaMixin(Document):
                 updated_doc = self.get(self._id)
                 updated_doc.create_mapping(multimedia, form_path)
 
-    def get_media_objects(self):
+    def get_media_objects(self, profile=None):
         """
             Gets all the media objects stored in the multimedia map.
         """
@@ -695,14 +695,15 @@ class HQMediaMixin(Document):
         expected_ids = [map_item.multimedia_id for map_item in self.multimedia_map.values()]
         raw_docs = dict((d["_id"], d) for d in iter_docs(CommCareMultimedia.get_db(), expected_ids))
         for path, map_item in self.multimedia_map.items():
-            media_item = raw_docs.get(map_item.multimedia_id)
-            if media_item:
-                media_cls = CommCareMultimedia.get_doc_class(map_item.media_type)
-                yield path, media_cls.wrap(media_item)
-            else:
-                # delete media reference from multimedia map so this doesn't pop up again!
-                del self.multimedia_map[path]
-                found_missing_mm = True
+            if not profile or any([map_item['langs'].get(l) for l in profile['langs']]):
+                media_item = raw_docs.get(map_item.multimedia_id)
+                if media_item:
+                    media_cls = CommCareMultimedia.get_doc_class(map_item.media_type)
+                    yield path, media_cls.wrap(media_item)
+                else:
+                    # delete media reference from multimedia map so this doesn't pop up again!
+                    del self.multimedia_map[path]
+                    found_missing_mm = True
         if found_missing_mm:
             self.save()
 

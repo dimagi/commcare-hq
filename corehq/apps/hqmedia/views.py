@@ -510,7 +510,8 @@ class DownloadMultimediaZip(View, ApplicationViewMixin):
             app=self.app,
             download_id=download.download_id,
             compress_zip=self.compress_zip,
-            filename=self.zip_name)
+            filename=self.zip_name,
+            profile=request.GET.get('profile'))
         )
         return download.get_start_response()
 
@@ -604,13 +605,16 @@ class ViewMultimediaFile(View):
         return HttpResponse(data, content_type=content_type)
 
 
-def iter_index_files(app):
+def iter_index_files(app, profile=None):
     from corehq.apps.app_manager.views.download import download_index_files
     skip_files = ('profile.xml', 'profile.ccpr', 'media_profile.xml')
     text_extensions = ('.xml', '.ccpr', '.txt')
-    get_name = lambda f: {'media_profile.ccpr': 'profile.ccpr'}.get(f, f)
     files = []
     errors = []
+
+    def _get_name(f):
+        f = f.replace(profile + '/', '')
+        return {'media_profile.ccpr': 'profile.ccpr'}.get(f, f)
 
     def _encode_if_unicode(s):
         return s.encode('utf-8') if isinstance(s, unicode) else s
@@ -621,7 +625,7 @@ def iter_index_files(app):
                 # TODO: make RemoteApp.create_all_files not return media files
                 extension = os.path.splitext(name)[1]
                 data = _encode_if_unicode(f) if extension in text_extensions else f
-                yield (get_name(name), data)
+                yield (_get_name(name), data)
     try:
         files = download_index_files(app)
     except Exception:
