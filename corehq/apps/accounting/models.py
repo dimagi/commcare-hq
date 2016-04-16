@@ -1935,7 +1935,7 @@ class SubscriptionAdjustment(models.Model):
     invoice = models.ForeignKey(Invoice, on_delete=models.PROTECT, null=True)
     related_subscription = models.ForeignKey(Subscription, on_delete=models.PROTECT, null=True,
                                              related_name='subscriptionadjustment_related')
-    date_created = models.DateField(auto_now_add=True)
+    date_created = models.DateTimeField(auto_now_add=True)
     new_date_start = models.DateField()
     new_date_end = models.DateField(blank=True, null=True)
     new_date_delay_invoicing = models.DateField(blank=True, null=True)
