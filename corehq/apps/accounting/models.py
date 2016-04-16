@@ -216,7 +216,7 @@ class PaymentMethodType(object):
 
 class SubscriptionType(object):
     IMPLEMENTATION = "IMPLEMENTATION"
-    SELF_SERVICE = "PRODUCT"
+    PRODUCT = "PRODUCT"
     TRIAL = "TRIAL"
     EXTENDED_TRIAL = "EXTENDED_TRIAL"
     SANDBOX = "SANDBOX"
@@ -224,7 +224,7 @@ class SubscriptionType(object):
     NOT_SET = "NOT_SET"
     CHOICES = (
         (IMPLEMENTATION, "Implementation"),
-        (SELF_SERVICE, "Product"),
+        (PRODUCT, "Product"),
         (TRIAL, "Trial"),
         (EXTENDED_TRIAL, "Extended Trial"),
         (SANDBOX, "Sandbox"),
@@ -1545,7 +1545,7 @@ class Subscription(models.Model):
 
     def set_billing_account_entry_point(self):
         no_current_entry_point = self.account.entry_point == EntryPoint.NOT_SET
-        self_serve = self.service_type == SubscriptionType.SELF_SERVICE
+        self_serve = self.service_type == SubscriptionType.PRODUCT
         if (no_current_entry_point and self_serve and not self.is_trial):
             self.account.entry_point = EntryPoint.SELF_STARTED
             self.account.save()

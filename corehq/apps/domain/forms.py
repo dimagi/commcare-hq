@@ -1293,7 +1293,7 @@ class ConfirmNewSubscriptionForm(EditBillingAccountInfoForm):
                             self.plan_version,
                             web_user=self.creating_user,
                             adjustment_method=SubscriptionAdjustmentMethod.USER,
-                            service_type=SubscriptionType.SELF_SERVICE,
+                            service_type=SubscriptionType.PRODUCT,
                             pro_bono_status=ProBonoStatus.NO,
                         )
                         subscription.is_active = True
@@ -1305,7 +1305,7 @@ class ConfirmNewSubscriptionForm(EditBillingAccountInfoForm):
                         self.account, self.domain, self.plan_version,
                         web_user=self.creating_user,
                         adjustment_method=SubscriptionAdjustmentMethod.USER,
-                        service_type=SubscriptionType.SELF_SERVICE,
+                        service_type=SubscriptionType.PRODUCT,
                         pro_bono_status=ProBonoStatus.NO,
                         funding_source=FundingSource.CLIENT
                     )
@@ -1409,7 +1409,7 @@ class ConfirmSubscriptionRenewalForm(EditBillingAccountInfoForm):
                 self.current_subscription.renew_subscription(
                     web_user=self.creating_user,
                     adjustment_method=SubscriptionAdjustmentMethod.USER,
-                    service_type=SubscriptionType.SELF_SERVICE,
+                    service_type=SubscriptionType.PRODUCT,
                     pro_bono_status=ProBonoStatus.NO,
                     funding_source=FundingSource.CLIENT,
                     new_version=self.renewed_version,

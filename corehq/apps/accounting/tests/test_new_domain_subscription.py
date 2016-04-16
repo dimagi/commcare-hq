@@ -115,7 +115,7 @@ class TestNewDomainSubscription(BaseAccountingTest):
     def test_update_billing_account_entry_point_self_serve(self):
         self_serve_subscription = Subscription.new_domain_subscription(
             self.account, self.domain.name, self.advanced_plan,
-            web_user=self.admin_user.username, service_type=SubscriptionType.SELF_SERVICE
+            web_user=self.admin_user.username, service_type=SubscriptionType.PRODUCT
         )
         self.assertEqual(self_serve_subscription.account.entry_point, EntryPoint.SELF_STARTED)
 
