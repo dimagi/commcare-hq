@@ -32,7 +32,9 @@ import posixpath
 import sh
 import time
 import yaml
+import re
 from distutils.util import strtobool
+from github3 import GitHub
 
 from fabric import utils
 from fabric.api import run, roles, execute, task, sudo, env, parallel
@@ -107,50 +109,37 @@ def _require_target():
 
 
 class DeployMetadata(object):
-    def __init__(self, env):
-        self.env = env
+    def __init__(self):
         self.timestamp = datetime.datetime.utcnow().strftime('%Y-%m-%d_%H.%M')
         self._deploy_ref = None
         self._deploy_tag = None
-        self._git = sh.git.bake(_tty_out=False)
+        self._repo = GitHub().repository('dimagi', 'commcare-hq')
+        self._max_tags = 100
+        self._last_tag = None
 
     def tag_commit(self):
-        self._git.fetch("origin", "--tags")
-        pattern = "*{}*".format(self.env.environment)
-        self.last_tag = sh.tail(self._git.tag("-l", pattern), "-1").strip()
+        pattern = ".*-{}-.*".format(env.environment)
+        for tag in self._repo.tags(self._max_tags):
+            if re.match(pattern, tag.name):
+                self._last_tag = tag.name
+                break
 
-        tag_name = "{}-{}-deploy".format(self.timestamp, self.env.environment)
-        msg = "{} deploy at {}".format(self.env.environment, self.timestamp)
-        self._git.tag(tag_name, "-m", msg, self.deploy_ref)
-        self._git.push("origin", tag_name)
+        if not self._last_tag:
+            print yellow('Warning: No previous tag found in last {} tags for {}'.format(
+                self._max_tags,
+                env.environment
+            ))
+        tag_name = "{}-{}-deploy".format(self.timestamp, env.environment)
+        msg = "{} deploy at {}".format(env.environment, self.timestamp)
+        self._repo.create_tag(tag_name, msg, self.deploy_ref)
         self._deploy_tag = tag_name
-
-    def _check_deploy_commit(self, deploy_commit, code_branch):
-        try:
-            origin_commit = self._git("rev-parse", "origin/{}".format(code_branch)).strip()
-        except sh.ErrorReturnCode:
-            print yellow("Branch '{}' was not found on origin".format(code_branch))
-            if not console.confirm("Do you want to deploy it anyways?", default=False):
-                utils.abort('Aborting.')
-        else:
-            if deploy_commit != origin_commit:
-                print yellow("\n*********\n*WARNING*\n*********")
-                print ("Your local copy of '{}' differs from the version on "
-                       "'origin'.\n".format(code_branch))
-                print "Here's the latest local commit:",
-                print self._git.show(deploy_commit, "--quiet")
-                print "Here's the latest commit on 'origin':",
-                print self._git.show(origin_commit, "--quiet")
-                if not console.confirm("Are you sure you want to deploy the "
-                                       "local commit?", default=False):
-                    utils.abort('Check yourself before you wreck yourself.')
 
     @property
     def diff_url(self):
         if self._deploy_tag is None:
             raise Exception("You haven't tagged anything yet.")
         return "https://github.com/dimagi/commcare-hq/compare/{}...{}".format(
-            self.last_tag,
+            self._last_tag,
             self._deploy_tag,
         )
 
@@ -158,13 +147,9 @@ class DeployMetadata(object):
     def deploy_ref(self):
         if self._deploy_ref is None:
             # turn whatever `code_branch` is into a commit hash
-            deploy_commit = self._git("rev-parse", self.env.code_branch).strip()
-            self._check_deploy_commit(deploy_commit, self.env.code_branch)
-            self._deploy_ref = deploy_commit
+            branch = self._repo.branch(env.code_branch)
+            self._deploy_ref = branch.commit.sha
         return self._deploy_ref
-
-
-deploy_metadata = DeployMetadata(env)
 
 
 def format_env(current_env, extra=None):
@@ -224,7 +209,7 @@ def _setup_path():
     env.log_dir = posixpath.join(env.home, 'www', env.environment, 'log')
     env.releases = posixpath.join(env.root, 'releases')
     env.code_current = posixpath.join(env.root, 'current')
-    env.code_root = posixpath.join(env.releases, deploy_metadata.timestamp)
+    env.code_root = posixpath.join(env.releases, env.deploy_metadata.timestamp)
     env.project_root = posixpath.join(env.code_root, env.project)
     env.project_media = posixpath.join(env.code_root, 'media')
     env.virtualenv_current = posixpath.join(env.code_current, 'python_env')
@@ -387,6 +372,7 @@ def env_common():
     require('inventory', 'environment')
     servers = read_inventory_file(env.inventory)
 
+    env.deploy_metadata = DeployMetadata()
     _setup_path()
 
     proxy = servers['proxy']
@@ -545,9 +531,9 @@ def mail_admins(subject, message):
 
 
 @roles(ROLES_DB_ONLY)
-def record_successful_deploy(deploy_metadata):
+def record_successful_deploy():
     with cd(env.code_current):
-        deploy_metadata.tag_commit()
+        env.deploy_metadata.tag_commit()
         sudo((
             '%(virtualenv_current)s/bin/python manage.py '
             'record_deploy_success --user "%(user)s" --environment '
@@ -556,7 +542,7 @@ def record_successful_deploy(deploy_metadata):
             'virtualenv_current': env.virtualenv_current,
             'user': env.user,
             'environment': env.environment,
-            'url': deploy_metadata.diff_url,
+            'url': env.deploy_metadata.diff_url,
         })
 
 
@@ -590,7 +576,7 @@ def hotfix_deploy():
     _require_target()
     run('echo ping!')  # workaround for delayed console response
     try:
-        execute(update_code, deploy_metadata.deploy_ref, True)
+        execute(update_code, env.deploy_metadata.deploy_ref, True)
     except Exception:
         execute(mail_admins, "Deploy failed", "You had better check the logs.")
         # hopefully bring the server back to life
@@ -598,7 +584,7 @@ def hotfix_deploy():
         raise
     else:
         silent_services_restart(use_current_release=True)
-        execute(record_successful_deploy, deploy_metadata)
+        execute(record_successful_deploy)
 
 
 def _confirm_translated():
@@ -612,7 +598,7 @@ def _confirm_translated():
 
 @task
 def setup_release():
-    deploy_ref = deploy_metadata.deploy_ref  # Make sure we have a valid commit
+    deploy_ref = env.deploy_metadata.deploy_ref  # Make sure we have a valid commit
     _execute_with_timing(create_code_dir)
     _execute_with_timing(update_code, deploy_ref)
     _execute_with_timing(update_virtualenv)
@@ -695,7 +681,7 @@ def _deploy_without_asking():
         _execute_with_timing(update_current)
         silent_services_restart()
         _execute_with_timing(record_successful_release)
-        _execute_with_timing(record_successful_deploy, deploy_metadata)
+        _execute_with_timing(record_successful_deploy)
 
 
 @task
