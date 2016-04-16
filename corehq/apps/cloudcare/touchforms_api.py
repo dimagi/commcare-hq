@@ -1,4 +1,4 @@
-from casexml.apps.case.models import CommCareCase
+from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 from corehq.apps.app_manager.suite_xml.sections.entries import EntriesHelper
 from touchforms.formplayer.api import post_data
 import json
@@ -83,7 +83,7 @@ class CaseSessionDataHelper(BaseSessionDataHelper):
     @property
     def case(self):
         if not self._case:
-            self._case = CommCareCase.get(self.case_id)
+            self._case = CaseAccessors(self.domain).get_case(self.case_id)
         return self._case
 
     @property

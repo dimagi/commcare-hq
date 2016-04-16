@@ -1,13 +1,10 @@
-{% extends "reports/async/bootstrap2/tabular.html" %}
+{% extends "reports/async/bootstrap3/tabular.html" %}
 {% load hq_shared_tags %}
 {% load report_tags %}
 {% load i18n %}
 
 {% block js %}{{ block.super }}
-    <link href="{% static 'hqwebapp/js/lib/nvd3/nv.d3.css' %}" rel="stylesheet">
     <link href="{% static 'care_pathways/css/care_pathways.css' %}" rel="stylesheet"/>
-    <script src="{% static 'hqwebapp/js/lib/nvd3/lib/d3.v3.js' %}"></script>
-    <script src="{% static 'hqwebapp/js/lib/nvd3/nv.d3.min.js' %}"></script>
 {% endblock %}
 
 {% block reportcontent %}
@@ -15,10 +12,10 @@
     {% if not report.needs_filters %}
         {% if rendered_as == 'print' %}
         <div class="row">
-            <div class="span10">{% now "d M Y" %}</div>
+            <div class="col-sm-10">{% now "d M Y" %}</div>
         </div>
         <div class="row">
-            <div class="span10">
+            <div class="col-sm-10">
                 <h3 class="media-heading">{{ title }}<br/></h3>
             </div>
         </div>
@@ -34,7 +31,7 @@
 
 {% block reporttable %}
 {% if report.needs_filters %}
-    {% include 'reports/bootstrap2/partials/description.html' %}
+    {% include 'reports/bootstrap3/partials/description.html' %}
 {% else %}
     <table>
         <tr style="background-color: #008000">

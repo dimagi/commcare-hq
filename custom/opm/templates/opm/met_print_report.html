@@ -5,9 +5,6 @@
 {% if show_time_notice %}{% endif %}
 
 {% block js %}
-    <script src="{% static 'jquery/dist/jquery.min.js' %}"></script>
-    <script src="{% static 'jquery-migrate/jquery-migrate.min.js' %}"></script>
-    {% include 'style/bootstrap2/partials/bootstrap2_js.html' %}
     <script src="{% static 'opm/js/opm_utils.js' %}"></script>
     {{ block.super }}
 {% endblock %}
@@ -29,7 +26,6 @@
 
 {% block reportcontent %}
     {% compress css %}
-    <link type="text/less" rel="stylesheet" media="all" href="{% static 'style/less/hqstyle-core.less' %}"/>
     <style media="all">
         @page {
             size: A4 landscape;
