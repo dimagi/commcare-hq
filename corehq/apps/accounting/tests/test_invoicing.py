@@ -238,7 +238,7 @@ class TestContractedInvoices(BaseInvoiceTestCase):
             self.domain,
             date_start=subscription_start_date,
             date_end=subscription_end_date,
-            service_type=SubscriptionType.CONTRACTED,
+            service_type=SubscriptionType.IMPLEMENTATION,
         )
 
         self.invoice_date = utils.months_from_date(

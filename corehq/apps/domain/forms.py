@@ -1885,7 +1885,7 @@ class ContractedPartnerForm(InternalSubscriptionManagementForm):
 
         if (
             self.current_subscription
-            and self.current_subscription.service_type == SubscriptionType.CONTRACTED
+            and self.current_subscription.service_type == SubscriptionType.IMPLEMENTATION
             and self.current_subscription.plan_version == new_plan_version
             and self.current_subscription.date_start == self.cleaned_data['start_date']
         ):
@@ -1931,7 +1931,7 @@ class ContractedPartnerForm(InternalSubscriptionManagementForm):
         return (
             self.current_subscription
             and self.current_subscription.plan_version.plan.edition == SoftwarePlanEdition.ENTERPRISE
-            and self.current_subscription.service_type == SubscriptionType.CONTRACTED
+            and self.current_subscription.service_type == SubscriptionType.IMPLEMENTATION
         )
 
     @property
@@ -1941,7 +1941,7 @@ class ContractedPartnerForm(InternalSubscriptionManagementForm):
             'auto_generate_credits': True,
             'date_end': self.cleaned_data['end_date'],
             'do_not_invoice': False,
-            'service_type': SubscriptionType.CONTRACTED,
+            'service_type': SubscriptionType.IMPLEMENTATION,
         })
         return fields
 

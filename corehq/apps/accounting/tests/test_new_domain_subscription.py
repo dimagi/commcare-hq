@@ -122,7 +122,7 @@ class TestNewDomainSubscription(BaseAccountingTest):
     def test_update_billing_account_entry_point_contracted(self):
         contracted_subscription = Subscription.new_domain_subscription(
             self.account, self.domain.name, self.advanced_plan,
-            web_user=self.admin_user.username, service_type=SubscriptionType.CONTRACTED
+            web_user=self.admin_user.username, service_type=SubscriptionType.IMPLEMENTATION
         )
 
         self.assertNotEqual(contracted_subscription.account.entry_point, EntryPoint.SELF_STARTED)
@@ -133,7 +133,7 @@ class TestNewDomainSubscription(BaseAccountingTest):
 
         subscription = Subscription.new_domain_subscription(
             self.account, self.domain.name, self.advanced_plan,
-            web_user=self.admin_user.username, service_type=SubscriptionType.CONTRACTED
+            web_user=self.admin_user.username, service_type=SubscriptionType.IMPLEMENTATION
         )
 
         self.assertEqual(subscription.account.entry_point, EntryPoint.CONTRACTED)

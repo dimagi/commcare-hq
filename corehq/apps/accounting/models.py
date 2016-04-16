@@ -215,7 +215,7 @@ class PaymentMethodType(object):
 
 
 class SubscriptionType(object):
-    CONTRACTED = "IMPLEMENTATION"
+    IMPLEMENTATION = "IMPLEMENTATION"
     SELF_SERVICE = "PRODUCT"
     TRIAL = "TRIAL"
     EXTENDED_TRIAL = "EXTENDED_TRIAL"
@@ -223,7 +223,7 @@ class SubscriptionType(object):
     INTERNAL = "INTERNAL"
     NOT_SET = "NOT_SET"
     CHOICES = (
-        (CONTRACTED, "Implementation"),
+        (IMPLEMENTATION, "Implementation"),
         (SELF_SERVICE, "Product"),
         (TRIAL, "Trial"),
         (EXTENDED_TRIAL, "Extended Trial"),
@@ -1809,7 +1809,7 @@ class Invoice(InvoiceBase):
 
     @property
     def email_recipients(self):
-        if self.subscription.service_type == SubscriptionType.CONTRACTED:
+        if self.subscription.service_type == SubscriptionType.IMPLEMENTATION:
             return [settings.FINANCE_EMAIL]
         else:
             return self.contact_emails
@@ -2155,7 +2155,7 @@ class BillingRecord(BillingRecordBase):
 
     @property
     def html_template(self):
-        if self.invoice.subscription.service_type == SubscriptionType.CONTRACTED:
+        if self.invoice.subscription.service_type == SubscriptionType.IMPLEMENTATION:
             return self.INVOICE_CONTRACTED_HTML_TEMPLATE
 
         if self.invoice.subscription.account.auto_pay_enabled:
@@ -2165,7 +2165,7 @@ class BillingRecord(BillingRecordBase):
 
     @property
     def text_template(self):
-        if self.invoice.subscription.service_type == SubscriptionType.CONTRACTED:
+        if self.invoice.subscription.service_type == SubscriptionType.IMPLEMENTATION:
             return self.INVOICE_CONTRACTED_TEXT_TEMPLATE
 
         if self.invoice.subscription.account.auto_pay_enabled:
@@ -2178,7 +2178,7 @@ class BillingRecord(BillingRecordBase):
         subscription = self.invoice.subscription
         autogenerate = (subscription.auto_generate_credits and not self.invoice.balance)
         small_contracted = (self.invoice.balance <= SMALL_INVOICE_THRESHOLD and
-                            subscription.service_type == SubscriptionType.CONTRACTED)
+                            subscription.service_type == SubscriptionType.IMPLEMENTATION)
         hidden = self.invoice.is_hidden
         do_not_email = self.invoice.subscription.do_not_email
         return not (autogenerate or small_contracted or hidden or do_not_email)
@@ -2210,7 +2210,7 @@ class BillingRecord(BillingRecordBase):
             'is_total_balance_due': total_balance >= SMALL_INVOICE_THRESHOLD,
             'payment_status': payment_status,
         })
-        if self.invoice.subscription.service_type == SubscriptionType.CONTRACTED:
+        if self.invoice.subscription.service_type == SubscriptionType.IMPLEMENTATION:
             from corehq.apps.accounting.dispatcher import AccountingAdminInterfaceDispatcher
             context.update({
                 'salesforce_contract_id': self.invoice.subscription.salesforce_contract_id,

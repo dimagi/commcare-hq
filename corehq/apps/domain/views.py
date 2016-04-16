@@ -1266,7 +1266,7 @@ class InternalSubscriptionManagementView(BaseAdminProjectSettingsView):
             subscription_type = None
         else:
             plan = subscription.plan_version.plan
-            if subscription.service_type == SubscriptionType.CONTRACTED:
+            if subscription.service_type == SubscriptionType.IMPLEMENTATION:
                 subscription_type = ContractedPartnerForm.slug
             elif plan.edition == SoftwarePlanEdition.ENTERPRISE:
                 subscription_type = DimagiOnlyEnterpriseForm.slug
