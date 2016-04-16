@@ -257,14 +257,14 @@ def load_env(env_name):
         else:
             raise Exception("Environment file not found: {}".format(path))
 
-    env_dict = get_env_dict(os.path.join('fab', 'environments.yml'))
+    env_dict = get_env_dict(os.path.join(PROJECT_ROOT, 'environments.yml'))
     env.update(env_dict['base'])
     env.update(env_dict[env_name])
 
 
 @task
 def swiss():
-    env.inventory = os.path.join('fab', 'inventory', 'swiss')
+    env.inventory = os.path.join(PROJECT_ROOT, 'inventory', 'swiss')
     load_env('swiss')
     execute(env_common)
 
@@ -276,7 +276,7 @@ def india():
 
 @task
 def softlayer():
-    env.inventory = os.path.join('fab', 'inventory', 'softlayer')
+    env.inventory = os.path.join(PROJECT_ROOT, 'inventory', 'softlayer')
     load_env('softlayer')
     execute(env_common)
 
@@ -321,7 +321,7 @@ def production():
             utils.abort('Action aborted.')
 
     load_env('production')
-    env.inventory = os.path.join('fab', 'inventory', 'production')
+    env.inventory = os.path.join(PROJECT_ROOT, 'inventory', 'production')
     execute(env_common)
 
 
@@ -333,7 +333,7 @@ def staging():
         print ("using default branch of autostaging. you can override this "
                "with --set code_branch=<branch>")
 
-    env.inventory = os.path.join('fab', 'inventory', 'staging')
+    env.inventory = os.path.join(PROJECT_ROOT, 'inventory', 'staging')
     load_env('staging')
     execute(env_common)
 
@@ -346,7 +346,7 @@ def preview():
     production data in a safe preview environment on remote host
 
     """
-    env.inventory = os.path.join('fab', 'inventory', 'preview')
+    env.inventory = os.path.join(PROJECT_ROOT, 'inventory', 'preview')
     load_env('preview')
     execute(env_common)
 
