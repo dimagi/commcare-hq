@@ -55,19 +55,6 @@ class PillowtopReindexerTest(TestCase):
         self.assertEqual('Domain', domain_doc['doc_type'])
         delete_es_index(DOMAIN_INDEX)
 
-    def test_user_reindexer(self):
-        delete_all_users()
-        username = 'reindex-test-username'
-        CommCareUser.create(self.domain, username, 'secret')
-        call_command('ptop_fast_reindex_users', noinput=True, bulk=True)
-        results = UserES().run()
-        self.assertEqual(1, results.total)
-        user_doc = results.hits[0]
-        self.assertEqual(self.domain, user_doc['domain'])
-        self.assertEqual(username, user_doc['username'])
-        self.assertEqual('CommCareUser', user_doc['doc_type'])
-        delete_es_index(USER_INDEX)
-
     def test_case_reindexer(self):
         FormProcessorTestUtils.delete_all_cases()
         case = _create_and_save_a_case()
@@ -171,6 +158,27 @@ class PillowtopReindexerTest(TestCase):
     def _assert_index_empty(self, esquery=CaseES()):
         results = esquery.run()
         self.assertEqual(0, results.total)
+
+
+class UserReindexerTest(TestCase):
+    dependent_apps = ['auditcare', 'django_digest', 'pillowtop', 'corehq.apps.users']
+
+    @classmethod
+    def tearDownClass(cls):
+        ensure_index_deleted(USER_INDEX)
+
+    def test_user_reindexer(self):
+        delete_all_users()
+        username = 'reindex-test-username'
+        CommCareUser.create(DOMAIN, username, 'secret')
+        call_command('ptop_fast_reindex_users', noinput=True, bulk=True)
+        results = UserES().run()
+        self.assertEqual(1, results.total)
+        user_doc = results.hits[0]
+        self.assertEqual(DOMAIN, user_doc['domain'])
+        self.assertEqual(username, user_doc['username'])
+        self.assertEqual('CommCareUser', user_doc['doc_type'])
+        delete_es_index(USER_INDEX)
 
 
 def _create_and_save_a_case():
