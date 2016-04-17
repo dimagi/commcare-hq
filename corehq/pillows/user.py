@@ -1,4 +1,6 @@
 from casexml.apps.case.xform import is_device_report
+from corehq.apps.change_feed.consumer.feed import KafkaChangeFeed
+from corehq.apps.change_feed.document_types import COMMCARE_USER, WEB_USER
 from corehq.apps.users.models import CommCareUser, CouchUser
 from corehq.apps.users.util import WEIRD_USER_IDS
 from corehq.elastic import (
@@ -8,8 +10,11 @@ from corehq.elastic import (
 from corehq.pillows.mappings.user_mapping import USER_MAPPING, USER_INDEX, USER_META, USER_INDEX_INFO
 from couchforms.models import XFormInstance, all_known_formlike_doc_types
 from dimagi.utils.decorators.memoized import memoized
-from pillowtop.checkpoints.manager import get_default_django_checkpoint_for_legacy_pillow_class
+from pillowtop.checkpoints.manager import get_default_django_checkpoint_for_legacy_pillow_class, PillowCheckpoint, \
+    PillowCheckpointEventHandler
 from pillowtop.listener import AliasedElasticPillow, PythonPillow
+from pillowtop.pillow.interface import ConstructedPillow
+from pillowtop.processors import ElasticProcessor
 from pillowtop.reindexer.change_providers.couch import CouchViewChangeProvider
 from pillowtop.reindexer.reindexer import ElasticPillowReindexer
 
@@ -129,6 +134,26 @@ def add_demo_user_to_user_index():
     send_to_elasticsearch(
         'users',
         {"_id": "demo_user", "username": "demo_user", "doc_type": "DemoUser"}
+    )
+
+
+def get_user_kafka_to_elasticsearch_pillow(pillow_id='user-kafka-to-es'):
+    checkpoint = PillowCheckpoint(
+        pillow_id,
+    )
+    domain_processor = ElasticProcessor(
+        elasticsearch=get_es_new(),
+        index_info=USER_INDEX_INFO,
+    )
+    return ConstructedPillow(
+        name=pillow_id,
+        document_store=None,
+        checkpoint=checkpoint,
+        change_feed=KafkaChangeFeed(topics=[COMMCARE_USER, WEB_USER], group_id='users-to-es'),
+        processor=domain_processor,
+        change_processed_event_handler=PillowCheckpointEventHandler(
+            checkpoint=checkpoint, checkpoint_frequency=100,
+        ),
     )
 
 
