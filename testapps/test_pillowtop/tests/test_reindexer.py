@@ -163,22 +163,26 @@ class PillowtopReindexerTest(TestCase):
 class UserReindexerTest(TestCase):
     dependent_apps = ['auditcare', 'django_digest', 'pillowtop', 'corehq.apps.users']
 
+    def setUp(self):
+        delete_all_users()
+
     @classmethod
     def tearDownClass(cls):
         ensure_index_deleted(USER_INDEX)
 
     def test_user_reindexer(self):
-        delete_all_users()
         username = 'reindex-test-username'
         CommCareUser.create(DOMAIN, username, 'secret')
         call_command('ptop_fast_reindex_users', noinput=True, bulk=True)
+        self._assert_user_in_es(username)
+
+    def _assert_user_in_es(self, username):
         results = UserES().run()
         self.assertEqual(1, results.total)
         user_doc = results.hits[0]
         self.assertEqual(DOMAIN, user_doc['domain'])
         self.assertEqual(username, user_doc['username'])
         self.assertEqual('CommCareUser', user_doc['doc_type'])
-        delete_es_index(USER_INDEX)
 
 
 def _create_and_save_a_case():
