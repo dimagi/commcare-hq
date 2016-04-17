@@ -21,7 +21,7 @@ class CouchViewChangeProvider(ChangeProvider):
         self._chunk_size = chunk_size
         self._view_kwargs = view_kwargs or {}
 
-    def iter_changes(self, start_from=None):
+    def iter_all_changes(self, start_from=None):
         view_kwargs = copy(self._view_kwargs)
         view_kwargs['reduce'] = False  # required to paginate a view
         if start_from is not None:
