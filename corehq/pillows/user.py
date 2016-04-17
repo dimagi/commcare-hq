@@ -5,11 +5,10 @@ from corehq.elastic import (
     stream_es_query, doc_exists_in_es,
     send_to_elasticsearch, get_es_new, ES_META
 )
-from corehq.pillows.mappings.user_mapping import USER_MAPPING, USER_INDEX
+from corehq.pillows.mappings.user_mapping import USER_MAPPING, USER_INDEX, USER_META, USER_INDEX_INFO
 from couchforms.models import XFormInstance, all_known_formlike_doc_types
 from dimagi.utils.decorators.memoized import memoized
 from pillowtop.checkpoints.manager import get_default_django_checkpoint_for_legacy_pillow_class
-from pillowtop.es_utils import get_index_info_from_pillow
 from pillowtop.listener import AliasedElasticPillow, PythonPillow
 from pillowtop.reindexer.change_providers.couch import CouchViewChangeProvider
 from pillowtop.reindexer.reindexer import ElasticPillowReindexer
@@ -26,19 +25,7 @@ class UserPillow(AliasedElasticPillow):
     es_timeout = 60
     es_alias = "hqusers"
     es_type = "user"
-    es_meta = {
-        "settings": {
-            "analysis": {
-                "analyzer": {
-                    "default": {
-                        "type": "custom",
-                        "tokenizer": "whitespace",
-                        "filter": ["lowercase"]
-                    },
-                }
-            }
-        }
-    }
+    es_meta = USER_META
     es_index = USER_INDEX
     default_mapping = USER_MAPPING
 
@@ -154,5 +141,5 @@ def get_user_reindexer():
             view_name='users/by_username',
         ),
         elasticsearch=get_es_new(),
-        index_info=get_index_info_from_pillow(pillow),
+        index_info=USER_INDEX_INFO,
     )
