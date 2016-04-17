@@ -147,7 +147,7 @@ class ExportsPermissionsMixin(object):
 
 
 class BaseExportView(BaseProjectDataView):
-    template_name = 'export/customize_export.html'
+    template_name = 'export/bootstrap2/customize_export.html'
     export_type = None
     is_async = True
 
@@ -1401,7 +1401,7 @@ class CaseExportListView(BaseExportListView):
 
 
 class BaseNewExportView(BaseExportView):
-    template_name = 'export/new_customize_export.html'
+    template_name = 'export/bootstrap3/customize_export.html'
 
     @property
     def export_instance_cls(self):
