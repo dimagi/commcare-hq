@@ -10,7 +10,7 @@ from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.domain.tests.test_utils import delete_all_domains
 from corehq.apps.es import CaseES, CaseSearchES, DomainES, ESQuery, FormES, UserES
 from corehq.apps.users.dbaccessors.all_commcare_users import delete_all_users
-from corehq.apps.users.models import CommCareUser
+from corehq.apps.users.models import CommCareUser, WebUser
 from corehq.form_processor.interfaces.processor import FormProcessorInterface
 from corehq.form_processor.tests.utils import FormProcessorTestUtils, \
     run_with_all_backends
@@ -161,10 +161,18 @@ class PillowtopReindexerTest(TestCase):
 
 
 class UserReindexerTest(TestCase):
-    dependent_apps = ['auditcare', 'django_digest', 'pillowtop', 'corehq.apps.users']
+    dependent_apps = [
+        'auditcare', 'django_digest', 'pillowtop',
+        'corehq.apps.domain', 'corehq.apps.users', 'corehq.apps.tzmigration',
+    ]
 
     def setUp(self):
         delete_all_users()
+
+    @classmethod
+    def setUpClass(cls):
+        create_domain(DOMAIN)
+        ensure_index_deleted(USER_INDEX)
 
     @classmethod
     def tearDownClass(cls):
@@ -182,13 +190,22 @@ class UserReindexerTest(TestCase):
         call_command('ptop_reindexer_v2', **{'index': 'user', 'cleanup': True, 'noinput': True})
         self._assert_user_in_es(username)
 
-    def _assert_user_in_es(self, username):
+    def test_web_user_reindexer_v2(self):
+        username = 'test-v2@example.com'
+        WebUser.create(DOMAIN, username, 'secret')
+        call_command('ptop_reindexer_v2', **{'index': 'user', 'cleanup': True, 'noinput': True})
+        self._assert_user_in_es(username, is_webuser=True)
+
+    def _assert_user_in_es(self, username, is_webuser=False):
         results = UserES().run()
         self.assertEqual(1, results.total)
         user_doc = results.hits[0]
-        self.assertEqual(DOMAIN, user_doc['domain'])
         self.assertEqual(username, user_doc['username'])
-        self.assertEqual('CommCareUser', user_doc['doc_type'])
+        if not is_webuser:
+            self.assertEqual(DOMAIN, user_doc['domain'])
+            self.assertEqual('CommCareUser', user_doc['doc_type'])
+        else:
+            self.assertEqual('WebUser', user_doc['doc_type'])
 
 
 def _create_and_save_a_case():
