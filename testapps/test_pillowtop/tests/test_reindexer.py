@@ -75,7 +75,7 @@ class PillowtopReindexerTest(TestCase):
         self._assert_case_is_in_es(case)
 
     @run_with_all_backends
-    def test_new_case_reindexer(self):
+    def test_case_reindexer_v2(self):
         FormProcessorTestUtils.delete_all_cases()
         case = _create_and_save_a_case()
 
@@ -115,7 +115,7 @@ class PillowtopReindexerTest(TestCase):
         form.delete()
 
     @run_with_all_backends
-    def test_new_xform_reindexer(self):
+    def test_xform_reindexer_v2(self):
         FormProcessorTestUtils.delete_all_xforms()
         form = create_and_save_a_form(DOMAIN)
 
