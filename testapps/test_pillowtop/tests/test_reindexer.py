@@ -176,6 +176,12 @@ class UserReindexerTest(TestCase):
         call_command('ptop_fast_reindex_users', noinput=True, bulk=True)
         self._assert_user_in_es(username)
 
+    def test_user_reindexer_v2(self):
+        username = 'reindex-test-username-v2'
+        CommCareUser.create(DOMAIN, username, 'secret')
+        call_command('ptop_reindexer_v2', **{'index': 'user', 'cleanup': True, 'noinput': True})
+        self._assert_user_in_es(username)
+
     def _assert_user_in_es(self, username):
         results = UserES().run()
         self.assertEqual(1, results.total)

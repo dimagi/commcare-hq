@@ -9,7 +9,10 @@ from corehq.pillows.mappings.user_mapping import USER_MAPPING, USER_INDEX
 from couchforms.models import XFormInstance, all_known_formlike_doc_types
 from dimagi.utils.decorators.memoized import memoized
 from pillowtop.checkpoints.manager import get_default_django_checkpoint_for_legacy_pillow_class
+from pillowtop.es_utils import get_index_info_from_pillow
 from pillowtop.listener import AliasedElasticPillow, PythonPillow
+from pillowtop.reindexer.change_providers.couch import CouchViewChangeProvider
+from pillowtop.reindexer.reindexer import ElasticPillowReindexer
 
 
 class UserPillow(AliasedElasticPillow):
@@ -139,4 +142,17 @@ def add_demo_user_to_user_index():
     send_to_elasticsearch(
         'users',
         {"_id": "demo_user", "username": "demo_user", "doc_type": "DemoUser"}
+    )
+
+
+def get_user_reindexer():
+    pillow = UserPillow(online=False)
+    return ElasticPillowReindexer(
+        pillow=pillow,
+        change_provider=CouchViewChangeProvider(
+            couch_db=CommCareUser.get_db(),
+            view_name='users/by_username',
+        ),
+        elasticsearch=get_es_new(),
+        index_info=get_index_info_from_pillow(pillow),
     )
