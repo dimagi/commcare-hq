@@ -25,7 +25,7 @@ def get_reindex_commands(alias_name):
         'xforms': ['ptop_fast_reindex_xforms'],
         # groupstousers indexing must happen after all users are indexed
         'hqusers': [
-            'ptop_fast_reindex_users',
+            ('ptop_reindexer_v2', {'index': 'user'}),
             add_demo_user_to_user_index,
             'ptop_fast_reindex_groupstousers',
             # 'ptop_fast_reindex_unknownusers',  removed until we have a better workflow for this
