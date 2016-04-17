@@ -162,6 +162,9 @@ def get_user_reindexer():
         change_provider=CouchViewChangeProvider(
             couch_db=CommCareUser.get_db(),
             view_name='users/by_username',
+            view_kwargs={
+                'include_docs': True,
+            }
         ),
         elasticsearch=get_es_new(),
         index_info=USER_INDEX_INFO,

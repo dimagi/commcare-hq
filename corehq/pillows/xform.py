@@ -157,6 +157,7 @@ def get_couch_form_reindexer():
             view_kwargs={
                 'startkey': ['XFormInstance'],
                 'endkey': ['XFormInstance', {}],
+                'include_docs': True,
             }
         )
     )

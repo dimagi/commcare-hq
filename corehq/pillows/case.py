@@ -107,7 +107,10 @@ def get_couch_case_reindexer():
         pillow=CasePillow(online=False),
         change_provider=CouchViewChangeProvider(
             couch_db=CommCareCase.get_db(),
-            view_name='cases_by_owner/view'
+            view_name='cases_by_owner/view',
+            view_kwargs={
+                'include_docs': True,
+            }
         )
     )
 
