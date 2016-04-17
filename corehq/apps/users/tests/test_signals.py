@@ -17,7 +17,7 @@ from ..models import CommCareUser, WebUser
 
 # Also, you need to patch the path to the function in the file where the signal
 # handler uses it, not where it's actually defined.  That's quite a gotcha.
-from pillowtop.es_utils import initialize_index, initialize_index_and_mapping
+from pillowtop.es_utils import initialize_index_and_mapping
 
 
 @mock_out_couch()
