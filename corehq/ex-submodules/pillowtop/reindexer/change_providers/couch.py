@@ -15,9 +15,8 @@ class CouchViewChangeProvider(ChangeProvider):
     that currently deal with this.
     """
 
-    def __init__(self, document_class, view_name, chunk_size=100, view_kwargs=None):
-        self.document_class = document_class
-        self._couch_db = document_class.get_db()
+    def __init__(self, couch_db, view_name, chunk_size=100, view_kwargs=None):
+        self._couch_db = couch_db
         self._view_name = view_name
         self._chunk_size = chunk_size
         self._view_kwargs = view_kwargs or {}

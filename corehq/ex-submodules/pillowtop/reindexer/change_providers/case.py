@@ -9,7 +9,7 @@ from pillowtop.reindexer.change_providers.interface import ChangeProvider
 
 def get_couch_domain_case_change_provider(domain):
     return CouchViewChangeProvider(
-        document_class=CommCareCase,
+        couch_db=CommCareCase.get_db(),
         view_name='cases_by_owner/view',
         chunk_size=100,
         view_kwargs={

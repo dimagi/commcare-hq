@@ -107,7 +107,7 @@ def get_couch_case_reindexer():
     return get_default_reindexer_for_elastic_pillow(
         pillow=CasePillow(online=False),
         change_provider=CouchViewChangeProvider(
-            document_class=CommCareCase,
+            couch_db=CommCareCase.get_db(),
             view_name='cases_by_owner/view'
         )
     )

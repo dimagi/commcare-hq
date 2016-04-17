@@ -153,7 +153,7 @@ def get_couch_form_reindexer():
     return get_default_reindexer_for_elastic_pillow(
         pillow=XFormPillow(online=False),
         change_provider=CouchViewChangeProvider(
-            document_class=XFormInstance,
+            couch_db=XFormInstance.get_db(),
             view_name='all_docs/by_doc_type',
             view_kwargs={
                 'startkey': ['XFormInstance'],

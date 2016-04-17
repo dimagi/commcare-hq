@@ -51,7 +51,7 @@ def get_domain_reindexer():
     return ElasticPillowReindexer(
         pillow=get_domain_kafka_to_elasticsearch_pillow(),
         change_provider=CouchViewChangeProvider(
-            document_class=Domain,
+            couch_db=Domain.get_db(),
             view_name='all_docs/by_doc_type',
             view_kwargs={
                 'startkey': ['Domain'],
