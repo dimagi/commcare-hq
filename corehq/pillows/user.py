@@ -157,9 +157,8 @@ def get_user_kafka_to_elasticsearch_pillow(pillow_id='user-kafka-to-es'):
 
 
 def get_user_reindexer():
-    pillow = UserPillow(online=False)
     return ElasticPillowReindexer(
-        pillow=pillow,
+        pillow=get_user_kafka_to_elasticsearch_pillow(),
         change_provider=CouchViewChangeProvider(
             couch_db=CommCareUser.get_db(),
             view_name='users/by_username',
