@@ -37,7 +37,6 @@ def get_domain_kafka_to_elasticsearch_pillow(pillow_id='domain-kafka-to-es'):
     )
     return ConstructedPillow(
         name=pillow_id,
-        document_store=None,
         checkpoint=checkpoint,
         change_feed=KafkaChangeFeed(topics=[DOMAIN], group_id='domains-to-es'),
         processor=domain_processor,

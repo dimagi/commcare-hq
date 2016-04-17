@@ -147,7 +147,6 @@ def get_user_kafka_to_elasticsearch_pillow(pillow_id='user-kafka-to-es'):
     )
     return ConstructedPillow(
         name=pillow_id,
-        document_store=None,
         checkpoint=checkpoint,
         change_feed=KafkaChangeFeed(topics=[COMMCARE_USER, WEB_USER], group_id='users-to-es'),
         processor=domain_processor,

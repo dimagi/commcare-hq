@@ -139,7 +139,6 @@ def get_sql_xform_to_elasticsearch_pillow(pillow_id='SqlXFormToElasticsearchPill
     )
     return ConstructedPillow(
         name=pillow_id,
-        document_store=None,
         checkpoint=checkpoint,
         change_feed=KafkaChangeFeed(topics=[topics.FORM_SQL], group_id='sql-forms-to-es'),
         processor=form_processor,
