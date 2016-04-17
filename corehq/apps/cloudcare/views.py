@@ -21,6 +21,7 @@ from casexml.apps.case.xml import V2
 from casexml.apps.phone.fixtures import generator
 from casexml.apps.stock.models import StockTransaction
 from casexml.apps.stock.utils import get_current_ledger_transactions
+from corehq.form_processor.utils import should_use_sql_backend
 from dimagi.utils.logging import notify_exception
 from dimagi.utils.parsing import string_to_boolean
 from dimagi.utils.web import json_response, get_url_base, json_handler
@@ -355,7 +356,7 @@ def filter_cases(request, domain, app_id, module_id, parent_id=None):
     xpath = HTMLParser.HTMLParser().unescape(xpath)
     case_type = module.case_type
 
-    if xpath:
+    if xpath or should_use_sql_backend(domain):
         # if we need to do a custom filter, send it to touchforms for processing
         additional_filters = {
             "properties/case_type": case_type,
