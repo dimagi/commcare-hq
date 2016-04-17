@@ -6,4 +6,5 @@ from .test_grouptouser_pillow import *
 from .test_reindexer import *
 from .test_settings import *
 from .test_sms_pillow import *
+from .test_user_pillow import *
 from .test_xform_pillow import *
