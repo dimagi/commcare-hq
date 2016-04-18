@@ -116,6 +116,8 @@ class AccountingInterface(AddItemInterface):
     description = "List of all billing accounts"
     slug = "accounts"
     dispatcher = AccountingAdminInterfaceDispatcher
+    hide_filters = False
+    item_name = "Billing Account"
 
     fields = ['corehq.apps.accounting.interface.DateCreatedFilter',
               'corehq.apps.accounting.interface.NameFilter',
@@ -125,9 +127,6 @@ class AccountingInterface(AddItemInterface):
               'corehq.apps.accounting.interface.DimagiContactFilter',
               'corehq.apps.accounting.interface.EntryPointFilter',
               ]
-    hide_filters = False
-
-    item_name = "Billing Account"
 
     @property
     def new_item_view(self):
@@ -206,6 +205,8 @@ class SubscriptionInterface(AddItemInterface):
     description = "List of all subscriptions"
     slug = "subscriptions"
     dispatcher = AccountingAdminInterfaceDispatcher
+    hide_filters = False
+    item_name = "Subscription"
 
     fields = [
         'corehq.apps.accounting.interface.StartDateFilter',
@@ -220,9 +221,6 @@ class SubscriptionInterface(AddItemInterface):
         'corehq.apps.accounting.interface.SubscriptionTypeFilter',
         'corehq.apps.accounting.interface.ProBonoStatusFilter',
     ]
-    hide_filters = False
-
-    item_name = "Subscription"
 
     @property
     def new_item_view(self):
@@ -358,15 +356,14 @@ class SoftwarePlanInterface(AddItemInterface):
     description = "List of all software plans"
     slug = "software_plans"
     dispatcher = AccountingAdminInterfaceDispatcher
+    hide_filters = False
+    item_name = "Software Plan"
 
     fields = [
         'corehq.apps.accounting.interface.SoftwarePlanNameFilter',
         'corehq.apps.accounting.interface.SoftwarePlanEditionFilter',
         'corehq.apps.accounting.interface.SoftwarePlanVisibilityFilter',
     ]
-    hide_filters = False
-
-    item_name = "Software Plan"
 
     @property
     def new_item_view(self):
