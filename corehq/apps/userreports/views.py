@@ -659,7 +659,7 @@ def rebuild_data_source(request, domain, config_id):
 @require_POST
 def resume_building_data_source(request, domain, config_id):
     config, is_static = get_datasource_config_or_404(config_id, domain)
-    if not is_static and config.meta.build.finished:
+    if not is_static and config.meta.build.finished: #
         messages.warning(
             request,
             _('Table "{}" has already finished building. Rebuild table to start over.').format(
@@ -824,7 +824,20 @@ def export_data_source(request, domain, config_id):
 @login_and_domain_required
 def data_source_status(request, domain, config_id):
     config, _ = get_datasource_config_or_404(config_id, domain)
-    return json_response({'isBuilt': config.meta.build.finished})
+    return json_response({'isBuilt': config.meta.build.finished}) #
+    # TODO - really need another status as well to suggest that DS is stale
+    """
+    stale - not initiated, not finished. may or may not have any data, depending if table was ever built
+
+    in progress - initated, not finished. (DOES THIS CORRECTLY HAPPEN IN REPORT BUILDER?)
+
+    done - initiated, finished
+
+    suggestions:
+    break stale into:
+        expired - stale with a table
+        new - stale, without a table
+    """
 
 
 @login_and_domain_required

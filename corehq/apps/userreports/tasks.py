@@ -45,8 +45,22 @@ def _build_indicators(config, document_store, relevant_ids):
         except:
             redis_client.srem(redis_key, last_id)
 
+<<<<<<< Updated upstream
     if last_id:
         redis_client.rpush(redis_key, last_id)
+=======
+    if not _is_static(indicator_config_id):
+        redis_client.delete(redis_key)
+        config.meta.build.finished = True #
+        try:
+            config.save()
+        except ResourceConflict:
+            current_config = DataSourceConfiguration.get(config._id)
+            # check that a new build has not yet started
+            if config.meta.build.initiated == current_config.meta.build.initiated: #
+                current_config.meta.build.finished = True #
+                current_config.save()
+>>>>>>> Stashed changes
 
 
 @task(queue='ucr_queue', ignore_result=True)
@@ -57,8 +71,8 @@ def rebuild_indicators(indicator_config_id):
     if not is_static(indicator_config_id):
         # Save the start time now in case anything goes wrong. This way we'll be
         # able to see if the rebuild started a long time ago without finishing.
-        config.meta.build.initiated = datetime.datetime.utcnow()
-        config.meta.build.finished = False
+        config.meta.build.initiated = datetime.datetime.utcnow() #
+        config.meta.build.finished = False #
         config.save()
 
     adapter.rebuild_table()

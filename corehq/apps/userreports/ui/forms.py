@@ -150,8 +150,8 @@ class ConfigurableDataSourceEditForm(DocumentFormBase):
         return cleaned_data
 
     def save(self, commit=False):
-        self.instance.meta.build.finished = False
-        self.instance.meta.build.initiated = None
+        self.instance.meta.build.finished = False #
+        self.instance.meta.build.initiated = None #
         return super(ConfigurableDataSourceEditForm, self).save(commit)
 
 
