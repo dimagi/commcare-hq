@@ -14,6 +14,7 @@ from django.conf import settings
 from django.test import TestCase
 from testil import replattr, tempdir
 
+from corehq.apps.app_manager.models import Application
 from couchexport.models import SavedBasicExport, ExportConfiguration
 
 NOT_SET = object()
@@ -165,6 +166,53 @@ class TestSavedExportsMigrations(BaseMigrationTest):
         exp = SavedBasicExport.get(saved._id)
         self.assertEqual(exp.get_payload(), new_payload)
         self.assertEqual(exp.fetch_attachment("other"), old_payload)
+
+
+class TestApplicationMigrations(BaseMigrationTest):
+
+    slug = "applications"
+
+    def test_migrate_saved_exports(self):
+        # setup data
+        app = Application()
+        app.save()
+        payload = '<fake xform source />'
+        super(BlobMixin, app).put_attachment(payload, "form.xml")
+        app.save()
+
+        # verify: attachment is in couch and migration not complete
+        self.assertEqual(len(app._attachments), 1)
+        self.assertEqual(len(app.external_blobs), 0)
+
+        self.do_migration([app])
+
+        exp = Application.get(app._id)
+        self.assertEqual(exp.fetch_attachment("form.xml"), payload)
+
+    def test_migrate_with_concurrent_modification(self):
+        # setup data
+        app = Application()
+        app.save()
+        new_payload = 'something new'
+        old_payload = 'something old'
+        super(BlobMixin, app).put_attachment(old_payload, "form.xml")
+        super(BlobMixin, app).put_attachment(old_payload, "other.xml")
+        app.save()
+
+        # verify: attachments are in couch
+        self.assertEqual(len(app._attachments), 2)
+        self.assertEqual(len(app.external_blobs), 0)
+
+        def modify():
+            doc = Application.get(app._id)
+            doc.put_attachment(new_payload, "form.xml")  # calls save()
+
+        self.do_failed_migration({app: (1, 1)}, modify)
+
+        # verify: attachments were not migrated
+        exp = Application.get(app._id)
+        self.assertEqual(exp.fetch_attachment("form.xml"), new_payload)
+        self.assertEqual(exp.fetch_attachment("other.xml"), old_payload)
 
 
 class TestMigrateBackend(TestCase):

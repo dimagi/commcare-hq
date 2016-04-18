@@ -3866,7 +3866,15 @@ class LazyBlobDoc(BlobMixin):
     def wrap(cls, data):
         if "_attachments" in data:
             data = data.copy()
-            attachments = data.pop("_attachments")
+            attachments = data.pop("_attachments").copy()
+            if cls.migrating_blobs_from_couch:
+                # preserve stubs so couch attachments don't get deleted on save
+                stubs = {}
+                for name, value in list(attachments.items()):
+                    if "stub" in value:
+                        stubs[name] = attachments.pop(name)
+                if stubs:
+                    data["_attachments"] = stubs
         else:
             attachments = None
         self = super(LazyBlobDoc, cls).wrap(data)
@@ -3874,9 +3882,6 @@ class LazyBlobDoc(BlobMixin):
             for name, attachment in attachments.items():
                 if isinstance(attachment, basestring):
                     info = {"content": attachment}
-                elif "stub" in attachment:
-                    # ignore attachment stub with no content
-                    continue
                 else:
                     raise ValueError("Unknown attachment format: {!r}"
                                      .format(attachment))
@@ -3905,11 +3910,9 @@ class LazyBlobDoc(BlobMixin):
         self._LAZY_ATTACHMENTS[name] = info
         return info
 
-    def put_attachment(self, content, name=None, content_type=None,
-                       content_length=None):
+    def put_attachment(self, content, name=None, *args, **kw):
         self.__remove_cached_attachment(name)
-        info = self.__store_lazy_attachment(content, name, content_type, content_length)
-        return super(LazyBlobDoc, self).put_attachment(name=name, **info)
+        return super(LazyBlobDoc, self).put_attachment(content, name, *args, **kw)
 
     def lazy_put_attachment(self, content, name=None, content_type=None,
                             content_length=None):
