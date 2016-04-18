@@ -63,8 +63,10 @@ class DomainInvoiceFactory(object):
     def _get_subscriptions(self):
         subscriptions = Subscription.objects.filter(
             subscriber=self.subscriber, date_start__lte=self.date_end
-        ).filter(Q(date_end=None) | Q(date_end__gt=self.date_start)
-        ).filter(Q(date_end=None) | Q(date_end__gt=F('date_start'))
+        ).filter(
+            Q(date_end=None) | Q(date_end__gt=self.date_start)
+        ).filter(
+            Q(date_end=None) | Q(date_end__gt=F('date_start'))
         ).order_by('date_start', 'date_end').all()
         return list(subscriptions)
 
@@ -116,10 +118,7 @@ class DomainInvoiceFactory(object):
                 return date_start
 
         def _get_invoice_end(sub, date_end):
-            if (
-                sub.date_end is not None
-                and sub.date_end <= date_end
-            ):
+            if sub.date_end is not None and sub.date_end <= date_end:
                 # Since the Subscription is actually terminated on date_end
                 # have the invoice period be until the day before date_end.
                 return sub.date_end - datetime.timedelta(days=1)
@@ -169,9 +168,10 @@ class DomainInvoiceFactory(object):
                     community_ranges.append((prev_sub_end, sub.date_start))
                 prev_sub_end = sub.date_end
 
-                if (ind == len(subscriptions) - 1
-                    and sub.date_end is not None
-                    and sub.date_end <= self.date_end
+                if (
+                    ind == len(subscriptions) - 1 and
+                    sub.date_end is not None and
+                    sub.date_end <= self.date_end
                 ):
                     # the last subscription ended BEFORE the end of
                     # the invoicing period
