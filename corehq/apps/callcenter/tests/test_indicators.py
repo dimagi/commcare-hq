@@ -124,10 +124,10 @@ class BaseCCTests(TestCase):
         user_data = data_set[case_id]
 
         mismatches = []
-        for k, v in expected.items():
-            expected_value = user_data.pop(k, None)
-            if expected_value != v:
-                mismatches.append('{}: {} != {}'.format(k, v, expected_value))
+        for indicator_key, expected_value in expected.items():
+            actual_value = user_data.pop(indicator_key, None)
+            if actual_value != expected_value:
+                mismatches.append('{}: {} != {}'.format(indicator_key, expected_value, actual_value))
 
         if mismatches:
             self.fail('Mismatching indicators:\n{}'.format('\t\n'.join(mismatches)))
