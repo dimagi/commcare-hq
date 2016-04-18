@@ -155,7 +155,7 @@ class DomainInvoiceFactory(object):
     def _get_community_ranges(self, subscriptions):
         community_ranges = []
         if len(subscriptions) == 0:
-            community_ranges.append((self.date_start, self.date_end))
+            return [(self.date_start, self.date_end + datetime.timedelta(days=1))]
         else:
             prev_sub_end = self.date_end
             for ind, sub in enumerate(subscriptions):
@@ -178,7 +178,7 @@ class DomainInvoiceFactory(object):
                     community_ranges.append(
                         (sub.date_end, self.date_end + datetime.timedelta(days=1))
                     )
-        return community_ranges
+            return community_ranges
 
     def _generate_invoice(self, subscription, invoice_start, invoice_end):
         invoice, is_new_invoice = Invoice.objects.get_or_create(
