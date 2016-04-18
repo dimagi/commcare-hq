@@ -16,16 +16,22 @@ def get_table(mapping):
 
 def get_formdata(days_ago, domain, user_id, xmlns=None, duration=1):
     now = datetime.utcnow()
-    return FormData(
-        domain=domain,
-        user_id=user_id,
-        time_end=now - timedelta(days=days_ago),
-        received_on=now,
-        instance_id=uuid.uuid4(),
-        time_start=now,
-        duration=duration*1000,  # convert to ms
-        xmlns=xmlns
-    )
+    time_end = now - timedelta(days=days_ago)
+    time_start = time_end - timedelta(seconds=duration)
+    return {
+        '_id': uuid.uuid4().hex,
+        'doc_type': 'XFormInstance',
+        'domain': domain,
+        'form': {
+            'meta': {
+                'userID': user_id,
+                'timeStart': time_start,
+                'timeEnd': time_end
+            }
+        },
+        'received_on': now,
+        'xmlns': xmlns
+    }
 
 
 CaseInfo = namedtuple('CaseInfo', 'id, days_ago, case_type, is_closed')
@@ -96,11 +102,20 @@ def load_data(domain, form_user_id, case_user_id=None,
         for info in case_infos
     ]
 
-    FormData.objects.bulk_create(form_data)
+    _insert_form_data(form_data)
+
     CaseData.objects.bulk_create(case_data)
 
     for case in case_data:
         add_case_action(case)
+
+
+def _insert_form_data(domain, form_data):
+    from corehq.apps.callcenter.data_source import get_report_data_sources_for_domain
+    adapter = get_report_data_sources_for_domain(domain).forms
+    adapter.rebuild_table()
+    for data in form_data:
+        adapter.save(data)
 
 
 def load_custom_data(domain, user_id, xmlns):
@@ -117,7 +132,7 @@ def load_custom_data(domain, user_id, xmlns):
         get_formdata(30, domain, user_id, xmlns=xmlns, duration=1),
     ]
 
-    FormData.objects.bulk_create(form_data)
+    _insert_form_data(domain, form_data)
 
 
 def clear_data():

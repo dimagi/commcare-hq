@@ -14,6 +14,8 @@ from corehq.apps.sofabed.models import FormData, CaseData, CaseActionData
 from dimagi.utils.decorators.memoized import memoized
 import logging
 from corehq.apps.callcenter.const import *
+from sqlalchemy.sql import operators, and_, label, select
+from sqlalchemy import func
 
 logger = logging.getLogger('callcenter')
 
@@ -96,6 +98,12 @@ class CallCenterIndicators(object):
             override_date = override_date.date()
 
         self.reference_date = override_date or datetime.now(self.timezone).date()
+
+    @property
+    @memoized
+    def data_sources(self):
+        from corehq.apps.callcenter.data_source import get_report_data_sources_for_domain
+        return get_report_data_sources_for_domain(self.domain)
 
     @property
     @memoized
@@ -435,14 +443,23 @@ class CallCenterIndicators(object):
 
         for range_name in indicator_config.date_ranges:
             lower, upper = self.date_ranges[range_name]
-            results = FormData.objects \
-                .values('user_id') \
-                .filter(**self._date_filters('time_end', lower, upper)) \
-                .filter(
-                    domain=self.domain,
-                    user_id__in=self.users_needing_data
-                )\
-                .annotate(count=Count('instance_id'))
+
+            adapter = self.data_sources.forms
+            table = adapter.get_table()
+
+            query = select([
+                label('user_id', table.c.user_id),
+                label('count', func.count(table.c.doc_id))
+            ]).where(and_(
+                operators.ge(table.c.time_end, lower),
+                operators.lt(table.c.time_end, upper),
+                operators.in_op(table.c.user_id, self.users_needing_data)
+            )).group_by(
+                table.c.user_id
+            )
+
+            with adapter.session_helper.session_context() as session:
+                results = FakeQuerySet(list(session.execute(query)))
 
             self._add_data(results, '{}_{}'.format(FORMS_SUBMITTED, range_name))
 
