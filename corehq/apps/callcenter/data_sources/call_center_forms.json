@@ -4,12 +4,29 @@
     "description": "",
     "display_name": "Call center forms",
     "engine_id": "ucr",
-    "named_expressions": {},
     "named_filters": {},
     "referenced_doc_type": "XFormInstance",
     "table_id": "call_center_forms",
     "base_item_expression": {},
     "configured_filter": {},
+    "named_expressions": {
+        "time_start": {
+            "type": "property_path",
+            "property_path": [
+                "form",
+                "meta",
+                "timeStart"
+            ]
+        },
+        "time_end": {
+            "type": "property_path",
+            "property_path": [
+                "form",
+                "meta",
+                "timeEnd"
+            ]
+        }
+    },
     "configured_indicators": [
         {
             "column_id": "user_id",
@@ -64,15 +81,33 @@
         {
             "column_id": "time_end",
             "datatype": "date",
-            "display_name": "Phone Date",
+            "display_name": "Completed On",
             "expression": {
-                "datatype": null,
-                "property_path": [
-                    "form",
-                    "meta",
-                    "timeEnd"
-                ],
-                "type": "property_path"
+                "name": "time_end",
+                "type": "named"
+            },
+            "is_nullable": false,
+            "is_primary_key": false,
+            "transform": {},
+            "type": "expression"
+        },
+        {
+            "column_id": "duration",
+            "datatype": "integer",
+            "display_name": "Duration",
+            "expression": {
+                "type": "evaluator",
+                "statement": "timedelta_to_seconds(time_end - time_start)",
+                "context_variables": {
+                    "time_start": {
+                        "name": "time_start",
+                        "type": "named"
+                    },
+                    "time_end": {
+                        "name": "time_end",
+                        "type": "named"
+                    }
+                }
             },
             "is_nullable": false,
             "is_primary_key": false,

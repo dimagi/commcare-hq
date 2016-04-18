@@ -1,6 +1,6 @@
 import copy
 import uuid
-from datetime import date, datetime
+from datetime import date, datetime, timedelta
 from decimal import Decimal
 from django.test import SimpleTestCase, TestCase
 from fakecouch import FakeCouchDb
@@ -775,6 +775,7 @@ def test_add_days_to_date_expression(self, source_doc, count_expression, expecte
 
 @generate_cases([
     ({}, "a + b", {"a": 2, "b": 3}, 2 + 3),
+    ({}, "timedelta_to_seconds(a - b)", {"a": "2016-01-01T11:30:00.000000Z", "b": "2016-01-01T11:00:00.000000Z"}, 30 * 60),
     # supports string manupulation
     ({}, "str(a)+'text'", {"a": 3}, "3text"),
     # context can contain expressions
