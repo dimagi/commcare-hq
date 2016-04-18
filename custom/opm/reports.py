@@ -523,10 +523,12 @@ class BeneficiaryPaymentReport(CaseReportMixin, BaseReport):
                         yield ','.join(unique_values)
                 elif i == self.column_index('issues'):
                     sep = ', '
-                    if share_account and (has_bonus_cash == 2000 or has_bonus_cash == 3000):
-                        msg = _("Check for multiple pregnancies")
-                    else:
-                        msg = _("Duplicate account number")
+                    msg = ''
+                    if share_account:
+                        if has_bonus_cash == 2000 or has_bonus_cash == 3000:
+                            msg = _("Check for multiple pregnancies")
+                        else:
+                            msg = _("Duplicate account number")
                     all_issues = sep.join(filter(None, values + (msg,)))
                     yield sep.join(set(all_issues.split(sep)))
                 else:
