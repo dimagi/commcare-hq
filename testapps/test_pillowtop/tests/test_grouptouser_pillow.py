@@ -2,9 +2,10 @@ from django.test import SimpleTestCase
 
 from corehq.apps.users.models import CommCareUser
 from corehq.elastic import get_es_new
-from corehq.pillows.mappings.user_mapping import USER_INDEX
+from corehq.pillows.mappings.user_mapping import USER_INDEX, USER_INDEX_INFO
 from corehq.pillows.user import UserPillow, update_es_user_with_groups
 from corehq.util.elastic import ensure_index_deleted
+from pillowtop.es_utils import initialize_index_and_mapping
 
 
 class GroupToUserPillowTest(SimpleTestCase):
@@ -13,22 +14,10 @@ class GroupToUserPillowTest(SimpleTestCase):
 
     def setUp(self):
         ensure_index_deleted(USER_INDEX)
-        self.user_pillow = UserPillow()
         self.es_client = get_es_new()
+        initialize_index_and_mapping(self.es_client, USER_INDEX_INFO)
         self.user_id = 'user1'
-        self._create_es_user()
-
-    def _create_es_user(self):
-        user = CommCareUser(
-            _id=self.user_id,
-            domain=self.domain,
-            username='hc',
-            first_name='Harry',
-            last_name='Casual',
-        )
-        self.user_pillow.change_transport(user.to_json())
-        self.es_client.indices.refresh(USER_INDEX)
-        return user
+        _create_es_user(self.es_client, self.user_id, self.domain)
 
     def tearDown(self):
         ensure_index_deleted(USER_INDEX)
@@ -75,3 +64,16 @@ class GroupToUserPillowTest(SimpleTestCase):
         }
         update_es_user_with_groups(new_group)
         self._check_es_user(['group1', 'group2'], ['g1', 'g2'])
+
+
+def _create_es_user(es_client, user_id, domain):
+    user = CommCareUser(
+        _id=user_id,
+        domain=domain,
+        username='hc',
+        first_name='Harry',
+        last_name='Casual',
+    )
+    UserPillow().change_transport(user.to_json())
+    es_client.indices.refresh(USER_INDEX)
+    return user
