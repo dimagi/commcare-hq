@@ -412,26 +412,30 @@ class CallCenterIndicators(object):
         For specific forms add the number of forms completed during the time period (lower to upper)
         In some cases also add the average duration of the forms.
         """
-        aggregation = Avg('duration') if indicator_type == TYPE_DURATION else Count('instance_id')
+        adapter = self.data_sources.forms
+        table = adapter.get_table()
 
-        def millis_to_secs(x):
-            return round(x / 1000)
+        aggregation = func.avg(table.c.duration) if indicator_type == TYPE_DURATION else func.count(table.c.doc_id)
+        query = select([
+            label('user_id', table.c.user_id),
+            label('count', aggregation)
+        ]).where(and_(
+            operators.ge(table.c.time_end, lower),
+            operators.lt(table.c.time_end, upper),
+            operators.in_op(table.c.user_id, self.users_needing_data),
+            table.c.xmlns == xmlns,
+        )).group_by(
+            table.c.user_id
+        )
 
-        transformer = millis_to_secs if indicator_type == TYPE_DURATION else None
-
-        results = FormData.objects \
-            .values('user_id') \
-            .filter(
-                xmlns=xmlns,
-                domain=self.domain,
-                user_id__in=self.users_needing_data) \
-            .filter(**self._date_filters('time_end', lower, upper)) \
-            .annotate(count=aggregation)
+        with adapter.session_helper.session_context() as session:
+            results = FakeQuerySet(list(session.execute(query)))
 
         self._add_data(
             results,
             '{}{}'.format(indicator_name, range_name.title()),
-            transformer=transformer)
+            transformer=round
+        )
 
     def add_form_data(self, indicator_config):
         """
