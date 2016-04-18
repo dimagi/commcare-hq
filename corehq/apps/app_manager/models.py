@@ -79,7 +79,6 @@ from corehq.apps.app_manager.xpath import (
 from corehq.apps.builds import get_default_build_spec
 from corehq.util.hash_compat import make_password
 from dimagi.utils.couch.cache import cache_core
-from dimagi.utils.couch.lazy_attachment_doc import LazyAttachmentDoc
 from dimagi.utils.couch.undo import DeleteRecord, DELETED_SUFFIX
 from dimagi.utils.dates import DateSpan
 from dimagi.utils.decorators.memoized import memoized
@@ -3848,11 +3847,32 @@ class ShadowModule(ModuleBase, ModuleDetailsMixin):
         return errors
 
 
-class LazyBlobDoc(BlobMixin, LazyAttachmentDoc):
-    """Adapt LazyAttachmentDoc to blob db"""
+class LazyBlobDoc(BlobMixin):
+    """LazyAttachmentDoc for blob db
+
+    Cache blobs in local memory (for this request)
+    and in django cache (for the next few requests)
+    and commit to couchdb.
+
+    See also `dimagi.utils.couch.lazy_attachment_doc.LazyAttachmentDoc`
+
+    Cache strategy:
+    - on fetch, check in local memory, then cache
+      - if both are a miss, fetch from couchdb and store in both
+    - before an attachment is committed to couchdb, clear cache
+      (allowing the next fetch to go all the way through).
+      Clear rather than write new value, in case something
+      goes wrong with the save.
+    """
 
     migrating_blobs_from_couch = True
-    __save_params = None
+
+    def __init__(self, *args, **kwargs):
+        super(LazyBlobDoc, self).__init__(*args, **kwargs)
+        self._LAZY_ATTACHMENTS = {}
+        # to cache fetched attachments
+        # these we do *not* send back down upon save
+        self._LAZY_ATTACHMENTS_CACHE = {}
 
     @classmethod
     def wrap(cls, data):
@@ -3861,13 +3881,13 @@ class LazyBlobDoc(BlobMixin, LazyAttachmentDoc):
             attachments = data.pop("_attachments")
         else:
             attachments = None
-        self = super(LazyAttachmentDoc, cls).wrap(data)
+        self = super(LazyBlobDoc, cls).wrap(data)
         if attachments:
             for name, attachment in attachments.items():
                 if isinstance(attachment, basestring):
                     info = {"content": attachment}
                 elif "data" in attachment:
-                    # TODO find out if this is only needed for serialized test data
+                    # TODO find out if this is only for json data in tests
                     info = {
                         "content": base64.b64decode(attachment["data"]),
                         "content_type": attachment.get("content_type"),
@@ -3878,38 +3898,92 @@ class LazyBlobDoc(BlobMixin, LazyAttachmentDoc):
                 self.lazy_put_attachment(name=name, **info)
         return self
 
+    def __attachment_cache_key(self, name):
+        return u'lazy_attachment/{id}/{name}'.format(id=self.get_id, name=name)
+
+    def __set_cached_attachment(self, name, content):
+        cache.set(self.__attachment_cache_key(name), content, timeout=60 * 60 * 24)
+
+    def __get_cached_attachment(self, name):
+        return cache.get(self.__attachment_cache_key(name))
+
+    def __remove_cached_attachment(self, name):
+        cache.delete(self.__attachment_cache_key(name))
+
+    def __store_lazy_attachment(self, content, name=None, content_type=None,
+                                content_length=None):
+        info = {
+            'content': content,
+            'content_type': content_type,
+            'content_length': content_length,
+        }
+        self._LAZY_ATTACHMENTS[name] = info
+        return info
+
+    def put_attachment(self, content, name=None, content_type=None,
+                       content_length=None):
+        self.__remove_cached_attachment(name)
+        info = self.__store_lazy_attachment(content, name, content_type, content_length)
+        return super(LazyBlobDoc, self).put_attachment(name=name, **info)
+
+    def lazy_put_attachment(self, content, name=None, content_type=None,
+                            content_length=None):
+        """
+        Ensure the attachment is available through lazy_fetch_attachment
+        and that upon self.save(), the attachments are put to the doc as well
+
+        """
+        self.__store_lazy_attachment(content, name, content_type, content_length)
+
+    def lazy_fetch_attachment(self, name):
+        # it has been put/lazy-put already during this request
+        if name in self._LAZY_ATTACHMENTS and 'content' in self._LAZY_ATTACHMENTS[name]:
+            content = self._LAZY_ATTACHMENTS[name]['content']
+        # it has been fetched already during this request
+        elif name in self._LAZY_ATTACHMENTS_CACHE:
+            content = self._LAZY_ATTACHMENTS_CACHE[name]
+        else:
+            content = self.__get_cached_attachment(name)
+
+            if not content:
+                try:
+                    content = self.fetch_attachment(name)
+                except ResourceNotFound as e:
+                    # django cache will pickle this exception for you
+                    # but e.response isn't picklable
+                    if hasattr(e, 'response'):
+                        del e.response
+                    content = e
+                    raise
+                finally:
+                    self.__set_cached_attachment(name, content)
+                    self._LAZY_ATTACHMENTS_CACHE[name] = content
+            else:
+                self._LAZY_ATTACHMENTS_CACHE[name] = content
+
+        if isinstance(content, ResourceNotFound):
+            raise content
+
+        return content
+
     def lazy_list_attachments(self):
         keys = set()
         keys.update(getattr(self, '_LAZY_ATTACHMENTS', None) or {})
         keys.update(self.blobs or {})
         return keys
 
-    def put_attachment(self, content, name=None, content_type=None,
-                       content_length=None):
-        self._LazyAttachmentDoc__remove_cached_attachment(name)
-        info = self._LazyAttachmentDoc__store_lazy_attachment(
-                        content, name, content_type, content_length)
-        return super(LazyBlobDoc, self).put_attachment(name=name, **info)
-
-    def register_pre_save(self, fn):
-        raise NotImplementedError("unused/removed")
-
-    def register_post_save(self, fn):
-        raise NotImplementedError("unused/removed")
-
     def save(self, **params):
-        def super_super_save():
-            # skip LazyAttachmentDoc.save in the inheritance chain
-            super(LazyAttachmentDoc, self).save(**params)
+        def super_save():
+            super(LazyBlobDoc, self).save(**params)
         if self._LAZY_ATTACHMENTS:
-            with self.atomic_blobs(super_super_save):
+            with self.atomic_blobs(super_save):
                 for name, info in self._LAZY_ATTACHMENTS.items():
                     if not info['content_type']:
                         info['content_type'] = ';'.join(filter(None, guess_type(name)))
-                    self._LazyAttachmentDoc__remove_cached_attachment(name)
+                    self.__remove_cached_attachment(name)
                     super(LazyBlobDoc, self).put_attachment(name=name, **info)
         else:
-            super_super_save()
+            super_save()
 
 
 class VersionedDoc(LazyBlobDoc):
@@ -4020,7 +4094,7 @@ class VersionedDoc(LazyBlobDoc):
                 # FIXME loss of metadata (content type, etc.)
                 _attachments[name] = self.lazy_fetch_attachment(name)
 
-        # the '_attachments' key is a dict of `name: blob_content`
+        # the '_attachments' value is a dict of `name: blob_content`
         # pairs, and is part of the exported (serialized) app interface
         source['_attachments'] = _attachments
         source.pop("external_blobs", None)
