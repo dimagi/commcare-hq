@@ -148,47 +148,8 @@ class AccountingInterface(AddItemInterface):
 
     @property
     def rows(self):
-        rows = []
-        filters = {}
-
-        if DateCreatedFilter.use_filter(self.request):
-            filters.update(
-                date_created__gte=DateCreatedFilter.get_start_date(self.request),
-                date_created__lte=DateCreatedFilter.get_end_date(self.request),
-            )
-        name = NameFilter.get_value(self.request, self.domain)
-        if name is not None:
-            filters.update(
-                name=name,
-            )
-        salesforce_account_id = SalesforceAccountIDFilter.get_value(self.request, self.domain)
-        if salesforce_account_id is not None:
-            filters.update(
-                salesforce_account_id=salesforce_account_id,
-            )
-        account_type = AccountTypeFilter.get_value(self.request, self.domain)
-        if account_type is not None:
-            filters.update(
-                account_type=account_type,
-            )
-        is_active = ActiveStatusFilter.get_value(self.request, self.domain)
-        if is_active is not None:
-            filters.update(
-                is_active=is_active == ActiveStatusFilter.active,
-            )
-        dimagi_contact = DimagiContactFilter.get_value(self.request, self.domain)
-        if dimagi_contact is not None:
-            filters.update(
-                dimagi_contact=dimagi_contact,
-            )
-        entry_point = EntryPointFilter.get_value(self.request, self.domain)
-        if entry_point is not None:
-            filters.update(
-                entry_point=entry_point,
-            )
-
-        for account in BillingAccount.objects.filter(**filters):
-            rows.append([
+        def _account_to_row(account):
+            return [
                 mark_safe('<a href="./%d">%s</a>' % (account.id, account.name)),
                 account.salesforce_account_id,
                 account.date_created.date(),
@@ -196,8 +157,51 @@ class AccountingInterface(AddItemInterface):
                 "Active" if account.is_active else "Inactive",
                 account.dimagi_contact,
                 account.entry_point,
-            ])
-        return rows
+            ]
+
+        return map(_account_to_row, self._accounts)
+
+    @property
+    def _accounts(self):
+        queryset = BillingAccount.objects.all()
+
+        if DateCreatedFilter.use_filter(self.request):
+            queryset = queryset.filter(
+                date_created__gte=DateCreatedFilter.get_start_date(self.request),
+                date_created__lte=DateCreatedFilter.get_end_date(self.request),
+            )
+        name = NameFilter.get_value(self.request, self.domain)
+        if name is not None:
+            queryset = queryset.filter(
+                name=name,
+            )
+        salesforce_account_id = SalesforceAccountIDFilter.get_value(self.request, self.domain)
+        if salesforce_account_id is not None:
+            queryset = queryset.filter(
+                salesforce_account_id=salesforce_account_id,
+            )
+        account_type = AccountTypeFilter.get_value(self.request, self.domain)
+        if account_type is not None:
+            queryset = queryset.filter(
+                account_type=account_type,
+            )
+        is_active = ActiveStatusFilter.get_value(self.request, self.domain)
+        if is_active is not None:
+            queryset = queryset.filter(
+                is_active=is_active == ActiveStatusFilter.active,
+            )
+        dimagi_contact = DimagiContactFilter.get_value(self.request, self.domain)
+        if dimagi_contact is not None:
+            queryset = queryset.filter(
+                dimagi_contact=dimagi_contact,
+            )
+        entry_point = EntryPointFilter.get_value(self.request, self.domain)
+        if entry_point is not None:
+            queryset = queryset.filter(
+                entry_point=entry_point,
+            )
+
+        return queryset
 
 
 class SubscriptionInterface(AddItemInterface):
