@@ -123,16 +123,3 @@ def reverse(viewname, params=None, absolute=False, **kwargs):
 
 def absolute_reverse(*args, **kwargs):
     return reverse(*args, absolute=True, **kwargs)
-
-
-def expect_GET(request):
-    if request.method == 'GET':
-        return request.GET
-    else:
-        from corehq.util.soft_assert import soft_assert
-        _soft_assert = soft_assert(
-            to='{}@{}'.format('npellegrino', 'dimagi.com'),
-            exponential_backoff=True,
-        )
-        _soft_assert(False, "received POST when expecting GET")
-        return request.POST
