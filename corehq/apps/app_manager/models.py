@@ -3864,15 +3864,12 @@ class LazyBlobDoc(BlobMixin):
             for name, attachment in attachments.items():
                 if isinstance(attachment, basestring):
                     info = {"content": attachment}
-                elif "data" in attachment:
-                    # TODO find out if this is only for json data in tests
-                    info = {
-                        "content": base64.b64decode(attachment["data"]),
-                        "content_type": attachment.get("content_type"),
-                    }
-                else:
+                elif "stub" in attachment:
                     # ignore attachment stub with no content
                     continue
+                else:
+                    raise ValueError("Unknown attachment format: {!r}"
+                                     .format(attachment))
                 self.lazy_put_attachment(name=name, **info)
         return self
 
