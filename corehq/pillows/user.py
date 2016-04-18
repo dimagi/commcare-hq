@@ -79,7 +79,6 @@ class UnknownUsersPillow(PythonPillow):
     """
     document_class = XFormInstance
     include_docs_when_preindexing = False
-    es_path = USER_INDEX + "/user/"
 
     def __init__(self):
         checkpoint = get_default_django_checkpoint_for_legacy_pillow_class(self.__class__)
