@@ -11,6 +11,7 @@ from corehq.elastic import get_es_new
 from corehq.pillows.mappings.user_mapping import USER_INDEX_INFO
 from corehq.pillows.user import UserPillow, get_user_kafka_to_elasticsearch_pillow
 from corehq.util.elastic import ensure_index_deleted
+from dimagi.utils.couch.undo import DELETED_SUFFIX
 from pillowtop.es_utils import initialize_index
 from testapps.test_pillowtop.utils import get_current_kafka_seq
 
@@ -51,6 +52,22 @@ class UserPillowTest(TestCase):
 
     def test_kafka_user_pillow(self):
         self._make_and_test_user_kafka_pillow('user-pillow-test-kafka')
+
+    def test_kafka_user_pillow_deletion(self):
+        user = self._make_and_test_user_kafka_pillow('test-kafka-user_deletion')
+        # soft delete
+        user.doc_type = '{}{}'.format(user.doc_type, DELETED_SUFFIX)
+        user.save()
+
+        # send to kafka
+        since = get_current_kafka_seq(document_types.COMMCARE_USER)
+        producer.send_change(document_types.COMMCARE_USER, _user_to_change_meta(user))
+
+        # send to elasticsearch
+        pillow = get_user_kafka_to_elasticsearch_pillow()
+        pillow.process_changes(since={document_types.COMMCARE_USER: since}, forever=False)
+        self.elasticsearch.indices.refresh(self.index_info.index)
+        self.assertEqual(0, UserES().run().total)
 
     def _make_and_test_user_kafka_pillow(self, username):
         # make a user
