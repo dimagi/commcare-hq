@@ -1403,6 +1403,10 @@ class CaseExportListView(BaseExportListView):
 class BaseNewExportView(BaseExportView):
     template_name = 'export/bootstrap3/customize_export.html'
 
+    @use_bootstrap3
+    def dispatch(self, request, *args, **kwargs):
+        return super(BaseNewExportView, self).dispatch(request, *args, **kwargs)
+
     @property
     def export_instance_cls(self):
         return {

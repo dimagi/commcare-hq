@@ -1,4 +1,4 @@
-{% extends "settings/bootstrap3/base_template.html" %}
+{% extends "style/bootstrap3/base_section.html" %}
 {% load hq_shared_tags %}
 {% load i18n %}
 
@@ -29,7 +29,7 @@
     </script>
 {% endblock %}
 
-{% block main_column %}
+{% block page_content %}
 <div id="customize-export" style="display: none;" data-bind="visible: true">
     {# content for multi-select help popover #}
     {% if export_instance.type == 'case' %}
@@ -52,16 +52,24 @@
     <form class="form-horizontal" method="post">
         {% csrf_token %}
         <fieldset>
-            <div class="control-group">
-                <label for="export-name" class="control-label">{% trans "Export Name" %}</label>
-                <div class="controls">
-                    <input type="text" id="export-name" data-bind="value: name" />
+            <div class="form-group">
+                <label
+                    for="export-name"
+                    class="col-sm-2 control-label">
+                    {% trans "Export Name" %}
+                </label>
+                <div class="col-sm-4">
+                    <input type="text" class="form-control" id="export-name" data-bind="value: name" />
                 </div>
             </div>
-            <div class="control-group">
-                <label for="format-select" class="control-label">{% trans "Default file type" %}</label>
-                <div class="controls">
-                    <select id="format-select" data-bind="
+            <div class="form-group">
+                <label
+                    for="format-select"
+                    class="col-sm-2 control-label">
+                    {% trans "Default file type" %}
+                </label>
+                <div class="col-sm-4">
+                    <select class="form-control" id="format-select" data-bind="
                             options: getFormatOptionValues(),
                             optionsText: getFormatOptionText,
                             value: export_format
@@ -69,28 +77,36 @@
                     </select>
                 </div>
             </div>
-            <div class="control-group">
-                <div class="controls">
-                    <label class="checkbox">
-                        <input type="checkbox" id="transform-dates-checkbox" data-bind="checked: transform_dates" />
-                        {% trans "Automatically convert dates for Excel" %}
-                    </label>
-                    <label class="checkbox">
-                        <input
-                            type="checkbox"
-                            id="daily-saved-export-checkbox"
-                            data-bind="checked: is_daily_saved_export" />
-                        {% trans "Create a Daily Saved Export" %}
-                    </label>
+            <div class="form-group">
+                <div class="col-sm-offset-2 col-sm-4">
+                    <div class="checkbox">
+                        <label>
+                            <input type="checkbox" id="transform-dates-checkbox" data-bind="checked: transform_dates" />
+                            {% trans "Automatically convert dates for Excel" %}
+                        </label>
+                    </div>
+                    <div class="checkbox">
+                        <label>
+                            <input
+                                type="checkbox"
+                                id="daily-saved-export-checkbox"
+                                data-bind="checked: is_daily_saved_export" />
+                            {% trans "Create a Daily Saved Export" %}
+                        </label>
+                    </div>
                 {% if export_instance.type == 'form' %}
-                    <label class="checkbox">
-                        <input type="checkbox" id="include-errors-checkbox" data-bind="checked: include_errors" />
-                        {% trans "Include duplicates and other unprocessed forms" %}
-                    </label>
-                    <label class="checkbox">
-                        <input type="checkbox" id="split-multiselects-checkbox" data-bind="checked: split_multiselects" />
-                        {% trans "Expand Checkbox Questions" %}
-                    </label>
+                    <div class="checkbox">
+                        <label>
+                            <input type="checkbox" id="include-errors-checkbox" data-bind="checked: include_errors" />
+                            {% trans "Include duplicates and other unprocessed forms" %}
+                        </label>
+                    </div>
+                    <div class="checkbox">
+                        <label>
+                            <input type="checkbox" id="split-multiselects-checkbox" data-bind="checked: split_multiselects" />
+                            {% trans "Expand Checkbox Questions" %}
+                        </label>
+                    </div>
                 {% endif %}
                 </div>
             </div>
@@ -101,16 +117,20 @@
         {% if allow_deid %}
         <fieldset>
             <legend>{% trans "Privacy Settings" %}</legend>
-            <div class="control-group">
-                <label for="is_safe" class="control-label"></label>
-                <div class="controls deid-column" data-bind="visible: isDeidColumnVisible()">
-                    <label class="checkbox">
-                        <input type="checkbox" id="is_deidentified" data-bind="checked: is_deidentified" />
-                        {% trans "Publish as De-Identified" %}
-                    </label>
-                    <span class="help-inline">{% trans "Check only if this export has been fully and safely de-identified." %}</span>
+            <div class="form-group">
+                <label for="is_safe" class="col-sm-2 control-label"></label>
+                <div class="col-sm-4 deid-column" data-bind="visible: isDeidColumnVisible()">
+                    <div class="checkbox">
+                        <label>
+                            <input type="checkbox" id="is_deidentified" data-bind="checked: is_deidentified" />
+                            {% trans "Publish as De-Identified" %}
+                        </label>
+                    </div>
+                    <span class="help-inline">
+                        {% trans "Check only if this export has been fully and safely de-identified." %}
+                    </span>
                 </div>
-                <button class="btn" data-bind="
+                <button class="btn btn-default" data-bind="
                     visible: !isDeidColumnVisible(),
                     click: showDeidColumn
                 ">
@@ -120,7 +140,7 @@
         </fieldset>
         {% endif %}
         <div class="form-actions">
-            <button type="submit" class="btn btn-large btn-primary" data-bind="
+            <button type="submit" class="btn btn-lg btn-primary" data-bind="
                 click: save,
                 disable: (saveState() === Exports.Constants.SAVE_STATES.SAVING ||
                           saveState() === Exports.Constants.SAVE_STATES.SUCCESS)
@@ -140,10 +160,10 @@
                     {% trans "Saved!" %}
                 </span>
             </button>
-            <a class="btn btn-large" href="{{ export_home_url }}">{% trans "Cancel" %}</a>
+            <a class="btn btn-default btn-lg" href="{{ export_home_url }}">{% trans "Cancel" %}</a>
             {% if export_instance.get_id %}
-            <a class="btn btn-large btn-danger pull-right" data-toggle="modal" href="#delete-export-modal-{{ export_instance.get_id }}">
-                <i class="icon-remove icon-white"></i>
+            <a class="btn btn-lg btn-danger pull-right" data-toggle="modal" href="#delete-export-modal-{{ export_instance.get_id }}">
+                <i class="fa fa-remove fa-white"></i>
                 {% trans "Delete this Export" %}
             </a>
             {% endif %}
