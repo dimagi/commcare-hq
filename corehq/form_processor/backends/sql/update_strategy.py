@@ -186,7 +186,26 @@ class SqlCaseUpdateStrategy(UpdateStrategy):
         self.case.closed_by = ''
         self.case.opened_by = None
 
-    def rebuild_from_transactions(self, transactions, rebuild_transaction):
+    def rebuild_from_transactions(self, transactions, rebuild_transaction, unarchived_form_id=None):
+        """
+        :param transactions:        The transactions required to rebuild the case
+        :param rebuild_transaction: The transaction to add for this rebuild
+        :param unarchived_form_id:  If this rebuild was triggered by a form being unarchived then this is
+                                    its ID.
+        """
+        already_deleted = False
+        if self.case.is_deleted:
+            # we exclude the transaction of the form being unarchived since it would
+            # have been revoked prior to the rebuild.
+            primary_transactions = [
+                tx for tx in transactions
+                if not tx.is_case_rebuild and tx.form_id != unarchived_form_id
+            ]
+            if primary_transactions:
+                # already deleted means it was explicitly set to "deleted",
+                # as opposed to getting set to that because it has no 'real' transactions
+                already_deleted = True
+
         self._reset_case_state()
 
         real_transactions = []
@@ -197,10 +216,11 @@ class SqlCaseUpdateStrategy(UpdateStrategy):
                 self._apply_form_transaction(transaction)
                 real_transactions.append(transaction)
 
-        self.case.deleted = not bool(real_transactions)
+        self.case.deleted = already_deleted or not bool(real_transactions)
 
         self.case.track_create(rebuild_transaction)
-        self.case.modified_on = rebuild_transaction.server_date
+        if not self.case.modified_on:
+            self.case.modified_on = rebuild_transaction.server_date
 
     def _apply_form_transaction(self, transaction):
         form = transaction.form

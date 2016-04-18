@@ -1,8 +1,6 @@
 {% load i18n %}
 {% load hq_shared_tags %}
 
-{% include 'cloudcare/includes/touchforms-inline.html' %}
-
 <script src="{% static "case/js/lib/jquery-treetable/jquery.treetable.js" %}"></script>
 <link rel="stylesheet" type="text/css" href="{% static "case/js/lib/jquery-treetable/jquery.treetable.css" %}">
 <link rel="stylesheet" type="text/css" href="{% static "case/js/lib/jquery-treetable/jquery.treetable.theme.default.css" %}">
@@ -131,7 +129,9 @@
                 {% if case.edit_data.edit_form_id != None or case.add_child_data.create_form_id != None %}
                 <br style="line-height:0">
                 <span class="indenter" style="line-height:0; padding-left:{{ case.edit_data.indent_px }}px"></span>
-                <div class="touchforms-inline" id="edit_{{ case.get_id }}"></div>
+                <div class="touchforms-inline" id="edit_{{ case.get_id }}">
+                    <section id="webforms" class="webforms" data-bind="template: { name: 'form-fullform-ko-template' }"></section>
+                </div>
                 {% endif %}
             </td>
 

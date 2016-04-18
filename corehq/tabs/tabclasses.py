@@ -11,7 +11,8 @@ from corehq.apps.app_manager.dbaccessors import domain_has_apps, get_brief_apps_
 from corehq.apps.domain.models import Domain
 from corehq.apps.domain.utils import user_has_custom_top_menu
 from corehq.apps.hqadmin.reports import RealProjectSpacesReport, \
-    CommConnectProjectSpacesReport, CommTrackProjectSpacesReport
+    CommConnectProjectSpacesReport, CommTrackProjectSpacesReport, \
+    DeviceLogSoftAssertReport
 from corehq.apps.hqwebapp.models import GaTracker
 from corehq.apps.hqwebapp.view_permissions import user_can_view_reports
 from corehq.apps.indicators.dispatcher import IndicatorAdminInterfaceDispatcher
@@ -47,14 +48,17 @@ class ProjectReportsTab(UITab):
         module = Domain.get_module_by_name(self.domain)
         if hasattr(module, 'DEFAULT_REPORT_CLASS'):
             return "corehq.apps.reports.views.default"
-        return "corehq.apps.reports.views.saved_reports"
+        from corehq.apps.reports.views import MySavedReportsView
+        return MySavedReportsView.urlname
 
     @property
     def sidebar_items(self):
 
+        from corehq.apps.reports.views import MySavedReportsView
+
         tools = [(_("Tools"), [
-            {'title': _('My Saved Reports'),
-             'url': reverse('saved_reports', args=[self.domain]),
+            {'title': MySavedReportsView.page_title,
+             'url': reverse(MySavedReportsView.urlname, args=[self.domain]),
              'icon': 'icon-tasks fa fa-tasks',
              'show_in_dropdown': True}
         ])]
@@ -75,7 +79,6 @@ class ProjectReportsTab(UITab):
             request=self._request, domain=self.domain)
         custom_reports = CustomProjectReportDispatcher.navigation_sections(
             request=self._request, domain=self.domain)
-
         return tools + user_reports + project_reports + custom_reports
 
     @property
@@ -108,6 +111,7 @@ class ProjectReportsTab(UITab):
             ProjectReportDispatcher.navigation_sections(
                 request=self._request, domain=self.domain),
             current_url=self.url)
+
         return saved_reports_dropdown + reports
 
 
@@ -1460,13 +1464,15 @@ class AdminTab(UITab):
             (_('CommCare Reports'), [
                 {
                     'title': report.name,
-                    'url': '%s?%s' % (reverse('admin_report_dispatcher',
-                                              args=(report.slug,)),
-                                      urlencode(report.default_params))
+                    'url': '{url}{params}'.format(
+                        url=reverse('admin_report_dispatcher', args=(report.slug,)),
+                        params="?{}".format(urlencode(report.default_params)) if report.default_params else ""
+                    )
                 } for report in [
                     RealProjectSpacesReport,
                     CommConnectProjectSpacesReport,
                     CommTrackProjectSpacesReport,
+                    DeviceLogSoftAssertReport,
                 ]
             ]),
         ]

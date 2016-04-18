@@ -37,7 +37,7 @@ from distutils.util import strtobool
 from fabric import utils
 from fabric.api import run, roles, execute, task, sudo, env, parallel
 from fabric.colors import blue, red, yellow
-from fabric.context_managers import settings, cd
+from fabric.context_managers import settings, cd, shell_env
 from fabric.contrib import files, console
 from fabric.operations import require
 
@@ -659,6 +659,8 @@ def _deploy_without_asking():
 
         _set_supervisor_config()
 
+        _execute_with_timing(build_formplayer)
+
         do_migrate = env.should_migrate
         if do_migrate:
 
@@ -750,6 +752,26 @@ def copy_tf_localsettings():
 
 
 @parallel
+@roles(ROLES_TOUCHFORMS)
+def copy_formplayer_properties():
+    with settings(warn_only=True):
+        sudo(
+            'cp {}/submodules/formplayer/config/{}.properties '
+            '{}/submodules/formplayer/config'.format(
+                env.code_current, env.environment, env.code_root
+            ))
+
+
+@task
+@roles(ROLES_TOUCHFORMS)
+def build_formplayer():
+    spring_dir = '{}/{}'.format(env.code_root, 'submodules/formplayer')
+    with shell_env(JAVA_HOME='/usr/lib/jvm/jdk1.7.0'):
+        with cd(spring_dir):
+            sudo('./gradlew build')
+
+
+@parallel
 @roles(ROLES_ALL_SRC)
 def copy_components():
     if files.exists('{}/bower_components'.format(env.code_current)):
@@ -778,6 +800,7 @@ def copy_compressed_js_staticfiles():
 def copy_release_files():
     execute(copy_localsettings)
     execute(copy_tf_localsettings)
+    execute(copy_formplayer_properties)
     execute(copy_components)
     execute(copy_node_modules)
     execute(copy_compressed_js_staticfiles)
@@ -900,20 +923,19 @@ def force_update_static():
 
 @task
 @roles(['deploy'])
-def manage():
+def manage(cmd):
     """
     run a management command
 
     usage:
-        fab <env> manage --set cmd='<command>'
+        fab <env> manage:<command>
     e.g.
-        fab production manage --set cmd='prune_couch_views'
+        fab production manage:'prune_couch_views --noinput'
     """
     _require_target()
-    require('cmd')
     with cd(env.code_current):
-        sudo('{env.virtualenv_current}/bin/python manage.py {env.cmd}'
-             .format(env=env))
+        sudo('{env.virtualenv_current}/bin/python manage.py {cmd}'
+             .format(env=env, cmd=cmd))
 
 
 @task(alias='deploy')
@@ -1241,6 +1263,12 @@ def set_errand_boy_supervisorconf():
 def set_formsplayer_supervisorconf():
     _rebuild_supervisor_conf_file('make_supervisor_conf', 'supervisor_formsplayer.conf')
 
+
+@roles(ROLES_TOUCHFORMS)
+def set_formplayer_spring_supervisorconf():
+    _rebuild_supervisor_conf_file('make_supervisor_conf', 'supervisor_formplayer_spring.conf')
+
+
 @roles(ROLES_SMS_QUEUE)
 @parallel
 def set_sms_queue_supervisorconf():
@@ -1279,6 +1307,7 @@ def _set_supervisor_config():
     _execute_with_timing(set_djangoapp_supervisorconf)
     _execute_with_timing(set_errand_boy_supervisorconf)
     _execute_with_timing(set_formsplayer_supervisorconf)
+    _execute_with_timing(set_formplayer_spring_supervisorconf)
     _execute_with_timing(set_pillowtop_supervisorconf)
     _execute_with_timing(set_sms_queue_supervisorconf)
     _execute_with_timing(set_reminder_queue_supervisorconf)

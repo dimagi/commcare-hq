@@ -1,5 +1,6 @@
 from corehq.apps.reports.generic import GenericTabularReport, GetParamsMixin
 from corehq.apps.reports.standard import CustomProjectReport
+from corehq.apps.style.decorators import use_nvd3_v3
 from custom.care_pathways.utils import get_domain_configuration
 
 
@@ -33,6 +34,11 @@ class CareReportMixin(object):
 
 
 class CareBaseReport(GetParamsMixin, GenericTabularReport, CustomProjectReport, CareReportMixin):
+    is_bootstrap3 = True
+
+    @use_nvd3_v3
+    def bootstrap3_dispatcher(self, request, *args, **kwargs):
+        super(CareBaseReport, self).bootstrap3_dispatcher(request, *args, **kwargs)
 
     @classmethod
     def show_in_navigation(cls, domain=None, project=None, user=None):

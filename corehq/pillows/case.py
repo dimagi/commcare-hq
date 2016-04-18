@@ -93,7 +93,6 @@ def get_sql_case_to_elasticsearch_pillow(pillow_id='SqlCaseToElasticsearchPillow
     )
     return ConstructedPillow(
         name=pillow_id,
-        document_store=None,
         checkpoint=checkpoint,
         change_feed=KafkaChangeFeed(topics=[topics.CASE_SQL], group_id='sql-cases-to-es'),
         processor=case_processor,
@@ -107,8 +106,11 @@ def get_couch_case_reindexer():
     return get_default_reindexer_for_elastic_pillow(
         pillow=CasePillow(online=False),
         change_provider=CouchViewChangeProvider(
-            document_class=CommCareCase,
-            view_name='cases_by_owner/view'
+            couch_db=CommCareCase.get_db(),
+            view_name='cases_by_owner/view',
+            view_kwargs={
+                'include_docs': True,
+            }
         )
     )
 

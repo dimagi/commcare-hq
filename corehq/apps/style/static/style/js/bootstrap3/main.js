@@ -79,14 +79,6 @@ COMMCAREHQ.initBlock = function ($elem) {
         $.postGo($(this).attr('href'), {});
     });
 
-    // trick to give a select menu an initial value
-    $('select[data-value]', $elem).each(function () {
-        var val = $(this).attr('data-value');
-        if (val) {
-            $(this).val(val);
-        }
-    });
-
     $(".button", $elem).button().wrap('<span />');
     $("input[type='submit']", $elem).button();
     $("input[type='text'], input[type='password'], textarea", $elem);
@@ -169,6 +161,10 @@ COMMCAREHQ.makeSaveButton = function(messageStrings, cssClass) {
                         that.nextState = null;
                         that.setState('retry');
                         var customError = ((data.responseJSON && data.responseJSON.message) ? data.responseJSON.message : data.responseText);
+                        if (customError.indexOf('<head>') > -1) {
+                            // this is sending back a full html page, likely login, so no error message.
+                            customError = null;
+                        }
                         alert_user(customError || SaveButton.message.ERROR_SAVING, 'danger');
                         error.apply(this, arguments);
                     };

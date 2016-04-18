@@ -8,7 +8,12 @@
             var separator = '{{ separator }}';
             var report_labels = JSON.parse('{{ report_labels|safe }}');
 
-            $('#filter_range').createDateRangePicker(report_labels, separator);
+            $('#filter_range').createBootstrap3DateRangePicker(
+                report_labels,
+                separator,
+                '{{ datespan.startdate|date:"Y-m-d" }}',
+                '{{ datespan.enddate|date:"Y-m-d" }}'
+            );
             $('#filter_range').on('apply', function(ev, picker) {
                 var diffDays = moment.duration(picker.endDate.diff(picker.startDate)).asDays();
                 if (diffDays > 31) {

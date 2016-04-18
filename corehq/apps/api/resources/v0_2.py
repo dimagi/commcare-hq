@@ -51,7 +51,7 @@ class CommCareCaseResource(HqBaseResource, DomainSpecificResourceMixin):
 
     def obj_get(self, bundle, **kwargs):
         case = get_object_or_not_exist(CommCareCase, kwargs['pk'], kwargs['domain'])
-        return dict_object(case.get_json())
+        return dict_object(case.to_api_json())
 
     def obj_get_list(self, bundle, domain, **kwargs):
         user_id = bundle.request.GET.get('user_id')
