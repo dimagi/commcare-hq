@@ -87,7 +87,9 @@ class LedgerProcessorSQL(LedgerProcessorInterface):
         :param ledger_value: LedgerValue to rebuild with transactions from new form tracked on the model
         :return: updated LedgerValue object
         """
-        transactions = LedgerAccessorSQL.get_ledger_transactions_for_case(**ledger_value.ledger_reference._asdict())
+        transactions = LedgerAccessorSQL.get_ledger_transactions_for_case(
+            **ledger_value.ledger_reference._asdict()
+        )
         transaction_excluding_deprecated_form = [tx for tx in transactions if tx.form_id != form_id]
         new_transactions = ledger_value.get_tracked_models_to_create(LedgerTransaction)
         all_transactions = transaction_excluding_deprecated_form + new_transactions

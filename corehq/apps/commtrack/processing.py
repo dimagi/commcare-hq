@@ -47,7 +47,9 @@ class StockProcessingResult(object):
         normal_helpers = [srh for srh in self.stock_report_helpers if not srh.deprecated]
         deprecated_helpers = [srh for srh in self.stock_report_helpers if srh.deprecated]
 
-        models_result = processor.get_models_to_update(self.xform.form_id, normal_helpers, deprecated_helpers, ledger_db)
+        models_result = processor.get_models_to_update(
+            self.xform.form_id, normal_helpers, deprecated_helpers, ledger_db
+        )
         self.models_to_save, self.models_to_delete = models_result
 
     def commit(self):

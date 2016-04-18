@@ -55,7 +55,10 @@ class LedgerProcessorCouch(LedgerProcessorInterface):
             report_model = _get_model_for_stock_report(self.domain, helper)
             result.to_save.append(report_model)
             for transaction_helper in helper.transactions:
-                result.to_save.append(_get_model_for_stock_transaction(report_model, transaction_helper, ledger_db))
+                transaction = _get_model_for_stock_transaction(
+                    report_model, transaction_helper, ledger_db
+                )
+                result.to_save.append(transaction)
 
         return result
 
