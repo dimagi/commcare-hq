@@ -113,7 +113,7 @@ class TestSavedExportsMigrations(BaseMigrationTest):
         # setup data
         saved = SavedBasicExport(configuration=_mk_config())
         saved.save()
-        payload = 'something small and simple'
+        payload = b'binary data not valid utf-8 \xe4\x94'
         name = saved.get_attachment_name()
         super(BlobMixin, saved).put_attachment(payload, name)
         saved.save()

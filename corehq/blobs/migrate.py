@@ -68,6 +68,7 @@ That's it, you're done!
 import json
 import os
 import traceback
+from base64 import b64decode, b64encode
 from datetime import datetime
 from tempfile import mkdtemp
 
@@ -127,11 +128,11 @@ def migrate_from_couch_to_blobdb(filename, type_map, total):
                 print_status(n + 1, total, datetime.now() - start)
             doc = json.loads(line)
             attachments = doc.pop("_attachments")
-            doc["_attachments"] = {}
             obj = type_map[doc["doc_type"]](doc)
             try:
                 with obj.atomic_blobs():
                     for name, data in list(attachments.iteritems()):
+                        data["content"] = b64decode(data["content"])
                         obj.put_attachment(name=name, **data)
             except ResourceConflict:
                 # Do not migrate document if `atomic_blobs()` fails.
@@ -241,7 +242,7 @@ def migrate(slug, doc_types, migrate_func, filename=None):
                     doc["_attachments"] = {
                         name: {
                             "content_type": meta["content_type"],
-                            "content": fetch_attachment(name),
+                            "content": b64encode(fetch_attachment(name)),
                         }
                         for name, meta in doc["_attachments"].items()
                     }
