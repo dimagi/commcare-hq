@@ -53,6 +53,7 @@ class StockProcessingResult(object):
         self.models_to_save, self.models_to_delete = models_result
 
     def commit(self):
+        assert self.populated
         for to_delete in self.models_to_delete:
             to_delete.delete()
         for to_save in self.models_to_save:
