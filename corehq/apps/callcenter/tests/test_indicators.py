@@ -386,7 +386,7 @@ class CallCenterTests(BaseCCTests):
 class CallCenterSupervisorGroupTest(BaseCCTests):
     @classmethod
     def setUpClass(cls):
-        domain_name = 'cc_test_supervisor_group'
+        domain_name = 'cc_supervisor'
         cls.domain = create_domain(domain_name)
         cls.supervisor = CommCareUser.create(domain_name, 'supervisor@' + domain_name, '***')
 
@@ -437,7 +437,7 @@ class CallCenterSupervisorGroupTest(BaseCCTests):
 class CallCenterCaseSharingTest(BaseCCTests):
     @classmethod
     def setUpClass(cls):
-        domain_name = 'cc_test_case_sharing'
+        domain_name = 'cc_sharing'
         cls.domain = create_domain(domain_name)
         cls.supervisor = CommCareUser.create(domain_name, 'supervisor@' + domain_name, '***')
 
@@ -495,7 +495,7 @@ class CallCenterCaseSharingTest(BaseCCTests):
 class CallCenterTestOpenedClosed(BaseCCTests):
     @classmethod
     def setUpClass(cls):
-        domain_name = 'cc_test_opened_closed'
+        domain_name = 'cc_opened_closed'
         cls.domain = create_domain(domain_name)
         cls.supervisor = CommCareUser.create(domain_name, 'supervisor@' + domain_name, '***')
 
