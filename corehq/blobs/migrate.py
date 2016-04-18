@@ -87,15 +87,14 @@ MIGRATION_INSTRUCTIONS = """
 There are {total} documents that may have attachments, and they must be
 migrated to a new blob database.
 
-Run these commands to procede with migrations:
+Run these commands to proceed with migrations:
 
 ./manage.py run_blob_migration {slug} --file=FILE
 ./manage.py migrate
 
 Note: --file=FILE is optional and can be omitted if you do not want to
-keep a copy of the couch documents that were migrated. Also note that
-the copy of the couch documents will not include attachment content
-because `get_all_docs_with_doc_types()` does not support that.
+keep a copy of the couch documents, including attachments, that were
+migrated.
 
 See also:
 https://github.com/dimagi/commcare-hq/blob/master/corehq/blobs/migrate.py
@@ -125,18 +124,13 @@ def migrate_from_couch_to_blobdb(filename, type_map, total):
             if n % 100 == 0:
                 print_status(n + 1, total)
             doc = json.loads(line)
+            attachments = doc.pop("_attachments")
+            doc["_attachments"] = {}
             obj = type_map[doc["doc_type"]](doc)
-            fetch_attachment = super(BlobMixin, obj).fetch_attachment
             try:
                 with obj.atomic_blobs():
-                    for name, meta in list(obj._attachments.iteritems()):
-                        try:
-                            content = fetch_attachment(name, stream=True)
-                        except ResourceNotFound:
-                            # ignore attachment that has been removed
-                            continue
-                        obj.put_attachment(
-                            content, name, content_type=meta["content_type"])
+                    for name, data in list(attachments.iteritems()):
+                        obj.put_attachment(name=name, **data)
             except ResourceConflict:
                 # Do not migrate document if `atomic_blobs()` fails.
                 # This is an unlikely state, but could happen if the
@@ -145,6 +139,7 @@ def migrate_from_couch_to_blobdb(filename, type_map, total):
                 skips += 1
     return total, skips
 
+migrate_from_couch_to_blobdb.load_attachments = True
 migrate_from_couch_to_blobdb.blobs_key = "_attachments"
 
 
@@ -232,9 +227,20 @@ def migrate(slug, doc_types, migrate_func, filename=None):
 
     print("Loading documents: {}...".format(", ".join(type_map)))
     total = 0
+    load_attachments = getattr(migrate_func, "load_attachments", False)
     with open(filename, 'w') as f:
         for doc in get_all_docs_with_doc_types(couchdb, list(type_map)):
             if doc.get(migrate_func.blobs_key):
+                if load_attachments:
+                    obj = type_map[doc["doc_type"]](doc)
+                    fetch_attachment = super(BlobMixin, obj).fetch_attachment
+                    doc["_attachments"] = {
+                        name: {
+                            "content_type": meta["content_type"],
+                            "content": fetch_attachment(name),
+                        }
+                        for name, meta in doc["_attachments"].items()
+                    }
                 f.write('{}\n'.format(json.dumps(doc)))
                 total += 1
 
