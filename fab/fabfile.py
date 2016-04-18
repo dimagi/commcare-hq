@@ -109,16 +109,18 @@ def _require_target():
 
 
 class DeployMetadata(object):
-    def __init__(self):
+    def __init__(self, code_branch, environment):
         self.timestamp = datetime.datetime.utcnow().strftime('%Y-%m-%d_%H.%M')
         self._deploy_ref = None
         self._deploy_tag = None
         self._repo = GitHub().repository('dimagi', 'commcare-hq')
         self._max_tags = 100
         self._last_tag = None
+        self._code_branch = code_branch
+        self._environment = environment
 
     def tag_commit(self):
-        pattern = ".*-{}-.*".format(env.environment)
+        pattern = ".*-{}-.*".format(self._environment)
         for tag in self._repo.tags(self._max_tags):
             if re.match(pattern, tag.name):
                 self._last_tag = tag.name
@@ -127,10 +129,10 @@ class DeployMetadata(object):
         if not self._last_tag:
             print yellow('Warning: No previous tag found in last {} tags for {}'.format(
                 self._max_tags,
-                env.environment
+                self._environment
             ))
-        tag_name = "{}-{}-deploy".format(self.timestamp, env.environment)
-        msg = "{} deploy at {}".format(env.environment, self.timestamp)
+        tag_name = "{}-{}-deploy".format(self.timestamp, self._environment)
+        msg = "{} deploy at {}".format(self._environment, self.timestamp)
         self._repo.create_tag(tag_name, msg, self.deploy_ref)
         self._deploy_tag = tag_name
 
@@ -147,7 +149,7 @@ class DeployMetadata(object):
     def deploy_ref(self):
         if self._deploy_ref is None:
             # turn whatever `code_branch` is into a commit hash
-            branch = self._repo.branch(env.code_branch)
+            branch = self._repo.branch(self._code_branch)
             self._deploy_ref = branch.commit.sha
         return self._deploy_ref
 
@@ -372,7 +374,7 @@ def env_common():
     require('inventory', 'environment')
     servers = read_inventory_file(env.inventory)
 
-    env.deploy_metadata = DeployMetadata()
+    env.deploy_metadata = DeployMetadata(env.code_branch, env.environment)
     _setup_path()
 
     proxy = servers['proxy']
