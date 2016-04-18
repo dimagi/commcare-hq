@@ -114,7 +114,8 @@ class DeployMetadata(object):
         self.timestamp = datetime.datetime.utcnow().strftime('%Y-%m-%d_%H.%M')
         self._deploy_ref = None
         self._deploy_tag = None
-        self._repo = _get_github().repository('dimagi', 'commcare-hq')
+        self._github = _get_github()
+        self._repo = self._github.repository('dimagi', 'commcare-hq')
         self._max_tags = 100
         self._last_tag = None
         self._code_branch = code_branch
@@ -134,7 +135,17 @@ class DeployMetadata(object):
             ))
         tag_name = "{}-{}-deploy".format(self.timestamp, self._environment)
         msg = "{} deploy at {}".format(self._environment, self.timestamp)
-        self._repo.create_tag(tag_name, msg, self.deploy_ref)
+        user = self._github.me()
+        self._repo.create_tag(
+            tag=tag_name,
+            message=msg,
+            sha=self.deploy_ref,
+            obj_type='commit',
+            tagger={
+                'name': user.name,
+                'email': user.email,
+            }
+        )
         self._deploy_tag = tag_name
 
     @property
