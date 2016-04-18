@@ -339,7 +339,7 @@ class CallCenterIndicators(object):
             type_filter,
             table.c['{}_on'.format(opened_or_closed)] >= lower,
             table.c['{}_on'.format(opened_or_closed)] < upper,
-            operators.in_op(owner_column, self.users_needing_data),
+            operators.in_op(owner_column, self.owners_needing_data),
         )).group_by(
             *group_by
         )
@@ -379,7 +379,7 @@ class CallCenterIndicators(object):
             type_filter,
             table.c.date >= lower,
             table.c.date < upper,
-            operators.in_op(table.c.owner_id, self.users_needing_data),
+            operators.in_op(table.c.owner_id, self.owners_needing_data),
         )).group_by(
             *group_by
         )
@@ -418,7 +418,7 @@ class CallCenterIndicators(object):
         ).where(and_(
             type_filter,
             table.c.opened_on < upper,
-            operators.in_op(table.c.owner_id, self.users_needing_data),
+            operators.in_op(table.c.owner_id, self.owners_needing_data),
             or_(
                 table.c.closed == 0,
                 table.c.closed_on >= lower
