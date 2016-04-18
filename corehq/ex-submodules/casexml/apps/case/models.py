@@ -105,6 +105,11 @@ class CommCareCaseAction(LooselyEqualDocumentSchema):
         """For compatability with CaseTransaction"""
         return self.xform
 
+    @property
+    def form_id(self):
+        """For compatability with CaseTransaction"""
+        return self.xform_id
+
     def get_user_id(self):
         key = 'xform-%s-user_id' % self.xform_id
         id = cache.get(key)
