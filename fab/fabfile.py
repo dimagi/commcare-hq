@@ -923,20 +923,19 @@ def force_update_static():
 
 @task
 @roles(['deploy'])
-def manage():
+def manage(cmd):
     """
     run a management command
 
     usage:
-        fab <env> manage --set cmd='<command>'
+        fab <env> manage:<command>
     e.g.
-        fab production manage --set cmd='prune_couch_views'
+        fab production manage:'prune_couch_views --noinput'
     """
     _require_target()
-    require('cmd')
     with cd(env.code_current):
-        sudo('{env.virtualenv_current}/bin/python manage.py {env.cmd}'
-             .format(env=env))
+        sudo('{env.virtualenv_current}/bin/python manage.py {cmd}'
+             .format(env=env, cmd=cmd))
 
 
 @task(alias='deploy')

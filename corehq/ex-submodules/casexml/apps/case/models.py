@@ -110,6 +110,26 @@ class CommCareCaseAction(LooselyEqualDocumentSchema):
         """For compatability with CaseTransaction"""
         return self.xform_id
 
+    @property
+    def is_case_create(self):
+        return self.action_type == const.CASE_ACTION_CREATE
+
+    @property
+    def is_case_close(self):
+        return self.action_type == const.CASE_ACTION_CLOSE
+
+    @property
+    def is_case_index(self):
+        return self.action_type == const.CASE_ACTION_INDEX
+
+    @property
+    def is_case_attachment(self):
+        return self.action_type == const.CASE_ACTION_ATTACHMENT
+
+    @property
+    def is_case_rebuild(self):
+        return self.action_type == const.CASE_ACTION_REBUILD
+
     def get_user_id(self):
         key = 'xform-%s-user_id' % self.xform_id
         id = cache.get(key)
@@ -254,7 +274,7 @@ class CommCareCase(SafeSaveDocument, IndexHoldingMixIn, ComputedDocumentMixin,
         self.doc_type += DELETED_SUFFIX
         self.save()
 
-    def get_json(self, lite=False):
+    def to_api_json(self, lite=False):
         ret = {
             # actions excluded here
             "domain": self.domain,
@@ -280,15 +300,6 @@ class CommCareCase(SafeSaveDocument, IndexHoldingMixIn, ComputedDocumentMixin,
                 "reverse_indices": self.get_index_map(True),
             })
         return ret
-
-    @memoized
-    def get_attachment_map(self):
-        return dict([
-            (name, {
-                'url': self.get_attachment_server_url(att.attachment_key),
-                'mime': att.attachment_from
-            }) for name, att in self.case_attachments.items()
-        ])
 
     @classmethod
     def get(cls, id, strip_history=False, **kwargs):

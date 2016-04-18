@@ -1855,3 +1855,19 @@ def form_multimedia_export(request, domain):
     download.set_task(build_form_multimedia_zip.delay(**task_kwargs))
 
     return download.get_start_response()
+
+
+@require_permission(Permissions.view_report, 'corehq.apps.reports.standard.project_health.ProjectHealthDashboard')
+def project_health_user_details(request, domain, user_id):
+    # todo: move to project_health.py? goes with project health dashboard.
+    user = get_document_or_404(CommCareUser, domain, user_id)
+    submission_by_form_link = '{}?emw=u__{}'.format(
+        reverse('project_report_dispatcher', args=(domain, 'submissions_by_form')),
+        user_id,
+    )
+    return render(request, 'reports/project_health/user_details.html', {
+        'domain': domain,
+        'user': user,
+        'groups': ', '.join(g.name for g in Group.by_user(user)),
+        'submission_by_form_link': submission_by_form_link,
+    })

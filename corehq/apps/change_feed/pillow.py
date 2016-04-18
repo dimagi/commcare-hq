@@ -69,7 +69,6 @@ def get_change_feed_pillow_for_db(pillow_id, couch_db):
     checkpoint = PillowCheckpoint(pillow_id)
     return ConstructedPillow(
         name=pillow_id,
-        document_store=None,  # because we're using include_docs we can be explicit about not using this
         checkpoint=checkpoint,
         change_feed=CouchChangeFeed(couch_db, include_docs=True),
         processor=processor,

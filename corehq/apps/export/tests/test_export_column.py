@@ -1,8 +1,11 @@
 from django.test import SimpleTestCase
 
-from corehq.apps.export.models import ExportColumn
-from corehq.apps.export.models.new import (
+from corehq.apps.export.models import (
+    ExportColumn,
     RowNumberColumn,
+    CaseIndexExportColumn,
+    CaseIndexItem,
+    PathNode,
 )
 
 
@@ -35,3 +38,39 @@ class TestRowNumberColumn(SimpleTestCase):
             col.get_value({}, [], row_index=(12, 0, 6, 1)),
             ["12.0.6.1", 12, 0, 6, 1]
         )
+
+
+class TestCaseIndexExportColumn(SimpleTestCase):
+
+    def test_get_value(self):
+        doc = {
+            'indices': [
+                {
+                    'referenced_id': 'abc',
+                    'referenced_type': 'RegCase',
+                },
+                {
+                    'referenced_id': 'def',
+                    'referenced_type': 'RegCase',
+                },
+                {
+                    'referenced_id': 'notme',
+                    'referenced_type': 'OtherCase',
+                },
+            ]
+        }
+        item = CaseIndexItem(path=[PathNode(name='indices'), PathNode(name='RegCase')])
+        col = CaseIndexExportColumn(item=item)
+        self.assertEqual(col.get_value(doc), 'abc def')
+
+    def test_get_value_missing_index(self):
+        doc = {
+            'indices': []
+        }
+        doc2 = {}
+
+        item = CaseIndexItem(path=[PathNode(name='indices'), PathNode(name='RegCase')])
+        col = CaseIndexExportColumn(item=item)
+
+        self.assertEqual(col.get_value(doc), '')
+        self.assertEqual(col.get_value(doc2), '')

@@ -1181,7 +1181,7 @@ class EditBillingAccountInfoForm(forms.ModelForm):
                 'phone_number',
             ),
             crispy.Fieldset(
-                 _("Mailing Address"),
+                _("Mailing Address"),
                 'first_line',
                 'second_line',
                 'city',
@@ -1254,7 +1254,7 @@ class ConfirmNewSubscriptionForm(EditBillingAccountInfoForm):
                 'phone_number',
             ),
             crispy.Fieldset(
-                 _("Mailing Address"),
+                _("Mailing Address"),
                 'first_line',
                 'second_line',
                 'city',
@@ -1284,8 +1284,10 @@ class ConfirmNewSubscriptionForm(EditBillingAccountInfoForm):
 
                 if self.current_subscription is not None:
                     if self.plan_version.plan.edition == SoftwarePlanEdition.COMMUNITY:
-                        self.current_subscription.cancel_subscription(adjustment_method=SubscriptionAdjustmentMethod.USER,
-                                                                      web_user=self.creating_user)
+                        self.current_subscription.cancel_subscription(
+                            adjustment_method=SubscriptionAdjustmentMethod.USER,
+                            web_user=self.creating_user,
+                        )
                     else:
                         subscription = self.current_subscription.change_plan(
                             self.plan_version,
