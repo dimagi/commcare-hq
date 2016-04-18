@@ -47,7 +47,7 @@
                                                 </a>
                                                 {% trans "to your Android device." %}
                                             </p>
-                                            <label>Language Profile </label>
+                                            <label>{% trans "Language Profile" %}</label>
                                             <select data-bind="optstr: lang_profiles(), value: profile" class="form-control"></select>
                                             {% if multimedia_state.has_media %}
                                                 <div class="checkbox">
@@ -104,11 +104,13 @@
                                                 Offline install is unavailable for Remote Apps.
                                             </div>
                                             <div data-bind="if: hqImport('app_manager/js/app_manager.js').versionGE(build_spec.version(), '2.13.0') && allow_media_install()">
+                                                <label>{% trans "Language Profile" %}</label>
+                                                <select data-bind="optstr: lang_profiles(), value: profile" class="form-control"></select>
                                                 <ol>
                                                     <li>
                                                         {% trans "Download" %}
                                                         <a href="#" data-bind="click: function () {
-                                                            download_application_zip(false);
+                                                            download_application_zip(false, profile());
                                                         }">
                                                             CommCare.ccz
                                                         </a>

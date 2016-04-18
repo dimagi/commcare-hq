@@ -685,9 +685,11 @@ class HQMediaMixin(Document):
                 updated_doc = self.get(self._id)
                 updated_doc.create_mapping(multimedia, form_path)
 
-    def get_media_objects(self, profile=None):
+    def get_media_objects(self, languages=None):
         """
             Gets all the media objects stored in the multimedia map.
+            If passed a profile, will only get those that are used
+            in a language in the profile.
         """
         found_missing_mm = False
         # preload all the docs to avoid excessive couch queries.
@@ -695,7 +697,7 @@ class HQMediaMixin(Document):
         expected_ids = [map_item.multimedia_id for map_item in self.multimedia_map.values()]
         raw_docs = dict((d["_id"], d) for d in iter_docs(CommCareMultimedia.get_db(), expected_ids))
         for path, map_item in self.multimedia_map.items():
-            if not profile or any([map_item['langs'].get(l) for l in profile['langs']]):
+            if not languages or any([map_item['langs'].get(l) for l in languages]):
                 media_item = raw_docs.get(map_item.multimedia_id)
                 if media_item:
                     media_cls = CommCareMultimedia.get_doc_class(map_item.media_type)

@@ -4011,9 +4011,8 @@ class ApplicationBase(VersionedDoc, SnapshotMixin,
 
         if 'build_langs' in data:
             if data['build_langs'] != data['langs']:
-                if 'language_profiles' in data:
-                    data['language_profiles'].update({uuid.uuid4().hex : {'name': 'deploy langs', 'langs': data['build_langs']}})
-                data['language_profiles'] = {uuid.uuid4().hex : {'name': 'deploy langs', 'langs': data['build_langs']}}
+                if not 'language_profiles' in data:
+                    data['language_profiles'] = {uuid.uuid4().hex : {'name': ', '.join(data['build_langs']), 'langs': data['build_langs']}}
             del data['build_langs']
 
         should_save = False
@@ -4822,7 +4821,7 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
 
         langs_for_build = self.langs if not lang_profile else self.language_profiles[lang_profile]['langs']
         for lang in ['default'] + langs_for_build:
-            files["%s/app_strings.txt" % lang] = self.create_app_strings(lang)
+            files["{prefix}{lang}/app_strings.txt".format(prefix=prefix, lang=lang)] = self.create_app_strings(lang)
         for form_stuff in self.get_forms(bare=False):
             filename = prefix + self.get_form_filename(**form_stuff)
             form = form_stuff['form']

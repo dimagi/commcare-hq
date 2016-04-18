@@ -230,7 +230,8 @@ def download_file(request, domain, app_id, path):
                 payload = request.app.fetch_attachment(full_path)
             except ResourceNotFound:
                 if profile in request.app.language_profiles:
-                    request.app.create_all_files(profile)
+                    request.app.create_build_files(save=True, lang_profile=profile)
+                    request.app.save()
                     payload = request.app.fetch_attachment(full_path)
                 else:
                     raise
@@ -376,12 +377,36 @@ def validate_form_for_build(request, domain, app_id, unique_form_id, ajax=True):
         return HttpResponse(response_html)
 
 
-def download_index_files(app):
+def _requested(path, prefix, profiles):
+    if path.startswith(prefix):
+        # already narrowed to specific profile
+        if prefix != 'files/':
+            return True
+        else:
+            second = path.split('/')[1]
+            # dont want to return files from other profiles
+            if second in profiles:
+                return False
+            else:
+                return True
+    else:
+        return False
+
+
+def download_index_files(app, profile=None):
     files = []
+    prefix = 'files/'
+    profiles = set(app.language_profiles.keys())
+    if profile:
+        prefix += profile + '/'
     if app.copy_of:
-        files = [(path[len('files/'):], app.fetch_attachment(path))
+        # profile hasnt been built yet
+        if not (prefix + 'profile.ccpr') in app._attachments:
+            app.create_build_files(save=True, lang_profile=profile)
+            app.save()
+        files = [(path[len(prefix):], app.fetch_attachment(path))
                  for path in app._attachments
-                 if path.startswith('files/')]
+                 if _requested(path, prefix, profiles)]
     else:
         files = app.create_all_files().items()
 

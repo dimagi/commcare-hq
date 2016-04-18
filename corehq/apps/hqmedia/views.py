@@ -452,14 +452,17 @@ def iter_media_files(media_objects):
     return _media_files(), errors
 
 
-def iter_app_files(app, include_multimedia_files, include_index_files):
+def iter_app_files(app, include_multimedia_files, include_index_files, profile=None):
     file_iterator = []
     errors = []
     if include_multimedia_files:
         app.remove_unused_mappings()
-        file_iterator, errors = iter_media_files(app.get_media_objects())
+        languages = None
+        if profile:
+            languages = app.language_profiles[profile]['langs']
+        file_iterator, errors = iter_media_files(app.get_media_objects(languages=languages))
     if include_index_files:
-        index_files, index_file_errors = iter_index_files(app)
+        index_files, index_file_errors = iter_index_files(app, profile=profile)
         if index_file_errors:
             errors.extend(index_file_errors)
         file_iterator = itertools.chain(file_iterator, index_files)
@@ -613,7 +616,8 @@ def iter_index_files(app, profile=None):
     errors = []
 
     def _get_name(f):
-        f = f.replace(profile + '/', '')
+        if profile:
+            f = f.replace(profile + '/', '')
         return {'media_profile.ccpr': 'profile.ccpr'}.get(f, f)
 
     def _encode_if_unicode(s):
@@ -627,7 +631,7 @@ def iter_index_files(app, profile=None):
                 data = _encode_if_unicode(f) if extension in text_extensions else f
                 yield (_get_name(name), data)
     try:
-        files = download_index_files(app)
+        files = download_index_files(app, profile)
     except Exception:
         errors = _(
             "We were unable to get your files "
