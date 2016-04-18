@@ -68,6 +68,7 @@ That's it, you're done!
 import json
 import os
 import traceback
+from datetime import datetime
 from tempfile import mkdtemp
 
 from django.conf import settings
@@ -81,7 +82,7 @@ from corehq.dbaccessors.couchapps.all_docs import (
     get_all_docs_with_doc_types,
     get_doc_count_by_type,
 )
-from couchdbkit import ResourceConflict, ResourceNotFound
+from couchdbkit import ResourceConflict
 
 MIGRATION_INSTRUCTIONS = """
 There are {total} documents that may have attachments, and they must be
@@ -227,6 +228,7 @@ def migrate(slug, doc_types, migrate_func, filename=None):
 
     print("Loading documents: {}...".format(", ".join(type_map)))
     total = 0
+    start = datetime.now()
     load_attachments = getattr(migrate_func, "load_attachments", False)
     with open(filename, 'w') as f:
         for doc in get_all_docs_with_doc_types(couchdb, list(type_map)):
@@ -243,6 +245,9 @@ def migrate(slug, doc_types, migrate_func, filename=None):
                     }
                 f.write('{}\n'.format(json.dumps(doc)))
                 total += 1
+                if total % 100 == 0:
+                    print("Loaded {} documents in {}"
+                          .format(total, datetime.now() - start))
 
     migrated, skips = migrate_func(filename, type_map, total)
 
