@@ -1,0 +1,97 @@
+{
+    "_id": "",
+    "domain": "",
+    "description": "",
+    "display_name": "Call center forms",
+    "engine_id": "ucr",
+    "named_expressions": {},
+    "named_filters": {},
+    "referenced_doc_type": "XFormInstance",
+    "table_id": "call_center_forms",
+    "base_item_expression": {},
+    "configured_filter": {},
+    "configured_indicators": [
+        {
+            "column_id": "user_id",
+            "datatype": "string",
+            "display_name": "User ID",
+            "expression": {
+                "datatype": null,
+                "property_path": [
+                    "form",
+                    "meta",
+                    "userID"
+                ],
+                "type": "property_path"
+            },
+            "is_nullable": false,
+            "is_primary_key": false,
+            "transform": {},
+            "type": "expression"
+        },
+        {
+            "column_id": "username",
+            "datatype": "string",
+            "display_name": "Username",
+            "expression": {
+                "datatype": null,
+                "property_path": [
+                    "form",
+                    "meta",
+                    "username"
+                ],
+                "type": "property_path"
+            },
+            "is_nullable": true,
+            "is_primary_key": false,
+            "transform": {},
+            "type": "expression"
+        },
+        {
+            "column_id": "received_on",
+            "datatype": "date",
+            "display_name": "Server Date",
+            "expression": {
+                "datatype": null,
+                "property_name": "received_on",
+                "type": "property_name"
+            },
+            "is_nullable": false,
+            "is_primary_key": false,
+            "transform": {},
+            "type": "expression"
+        },
+        {
+            "column_id": "time_end",
+            "datatype": "date",
+            "display_name": "Phone Date",
+            "expression": {
+                "datatype": null,
+                "property_path": [
+                    "form",
+                    "meta",
+                    "timeEnd"
+                ],
+                "type": "property_path"
+            },
+            "is_nullable": false,
+            "is_primary_key": false,
+            "transform": {},
+            "type": "expression"
+        },
+        {
+            "column_id": "xmlns",
+            "datatype": "string",
+            "display_name": "xmlns",
+            "expression": {
+                "datatype": null,
+                "property_name": "xmlns",
+                "type": "property_name"
+            },
+            "is_nullable": true,
+            "is_primary_key": false,
+            "transform": {},
+            "type": "expression"
+        }
+    ]
+}

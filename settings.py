@@ -1572,6 +1572,10 @@ STATIC_DATA_SOURCES = [
     os.path.join('custom', 'apps', 'cvsu', 'data_sources', 'unicef_malawi.json')
 ]
 
+STATIC_DATA_SOURCE_PROVIDERS = [
+    'corehq.apps.callcenter.data_source.call_center_data_source_provider'
+]
+
 
 for k, v in LOCAL_PILLOWTOPS.items():
     plist = PILLOWTOPS.get(k, [])
