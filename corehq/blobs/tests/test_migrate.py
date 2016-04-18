@@ -74,12 +74,12 @@ class BaseMigrationTest(TestCase):
         print_status = mod.print_status
 
         # setup concurrent modification
-        def modify_doc_and_print_status(num, total):
+        def modify_doc_and_print_status(num, total, elapsed):
             if not modified:
                 # do concurrent modification
                 modify_docs()
                 modified.append(True)
-            print_status(num, total)
+            print_status(num, total, elapsed)
 
         # hook print_status() call to simulate concurrent modification
         with replattr(mod, "print_status", modify_doc_and_print_status):

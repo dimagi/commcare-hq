@@ -120,10 +120,11 @@ def migrate_from_couch_to_blobdb(filename, type_map, total):
     """Migrate attachments from couchdb to blob storage
     """
     skips = 0
+    start = datetime.now()
     with open(filename, 'r') as f:
         for n, line in enumerate(f):
             if n % 100 == 0:
-                print_status(n + 1, total)
+                print_status(n + 1, total, datetime.now() - start)
             doc = json.loads(line)
             attachments = doc.pop("_attachments")
             doc["_attachments"] = {}
@@ -159,10 +160,11 @@ def migrate_blob_db_backend(filename, type_map, total):
             "Expected to find migrating blob db backend (got %r)" % db)
 
     not_found = 0
+    start = datetime.now()
     with open(filename, 'r') as f:
         for n, line in enumerate(f):
             if n % 100 == 0:
-                print_status(n + 1, total)
+                print_status(n + 1, total, datetime.now() - start)
             doc = json.loads(line)
             obj = type_map[doc["doc_type"]](doc)
             bucket = obj._blobdb_bucket()
@@ -263,8 +265,8 @@ def migrate(slug, doc_types, migrate_func, filename=None):
     return migrated - skips, skips
 
 
-def print_status(num, total):
-    print("Migrating {} of {} documents".format(num, total))
+def print_status(num, total, elapsed):
+    print("Migrating {} of {} documents in {}".format(num, total, elapsed))
 
 
 def assert_migration_complete(slug):
