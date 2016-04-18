@@ -50,8 +50,10 @@ class UserPillowTest(TestCase):
         self._verify_user_in_es(username)
 
     def test_kafka_user_pillow(self):
+        self._make_and_test_user_kafka_pillow('user-pillow-test-kafka')
+
+    def _make_and_test_user_kafka_pillow(self, username):
         # make a user
-        username = 'user-pillow-test-kafka'
         user = CommCareUser.create(TEST_DOMAIN, username, 'secret')
 
         # send to kafka
@@ -63,6 +65,7 @@ class UserPillowTest(TestCase):
         pillow.process_changes(since={document_types.COMMCARE_USER: since}, forever=False)
         self.elasticsearch.indices.refresh(self.index_info.index)
         self._verify_user_in_es(username)
+        return user
 
     def _verify_user_in_es(self, username):
         results = UserES().run()
