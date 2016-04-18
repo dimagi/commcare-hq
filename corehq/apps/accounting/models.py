@@ -2966,16 +2966,16 @@ class CreditAdjustment(ValidateModelMixin, models.Model):
     credit_line = models.ForeignKey(CreditLine, on_delete=models.PROTECT)
     reason = models.CharField(max_length=25, default=CreditAdjustmentReason.MANUAL,
                               choices=CreditAdjustmentReason.CHOICES)
-    note = models.TextField()
+    note = models.TextField(blank=True)
     amount = models.DecimalField(default=Decimal('0.0000'), max_digits=10, decimal_places=4)
-    line_item = models.ForeignKey(LineItem, on_delete=models.PROTECT, null=True)
-    invoice = models.ForeignKey(Invoice, on_delete=models.PROTECT, null=True)
+    line_item = models.ForeignKey(LineItem, on_delete=models.PROTECT, null=True, blank=True)
+    invoice = models.ForeignKey(Invoice, on_delete=models.PROTECT, null=True, blank=True)
     payment_record = models.ForeignKey(PaymentRecord,
-                                       on_delete=models.PROTECT, null=True)
+                                       on_delete=models.PROTECT, null=True, blank=True)
     related_credit = models.ForeignKey(CreditLine, on_delete=models.PROTECT,
-                                       null=True, related_name='creditadjustment_related')
+                                       null=True, blank=True, related_name='creditadjustment_related')
     date_created = models.DateTimeField(auto_now_add=True)
-    web_user = models.CharField(max_length=80, null=True)
+    web_user = models.CharField(max_length=80, null=True, blank=True)
     last_modified = models.DateTimeField(auto_now=True)
 
     class Meta:
