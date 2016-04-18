@@ -97,7 +97,7 @@ class UserPillowTest(UserPillowTestBase):
         self.assertEqual(username, user_doc['username'])
 
 
-class UnknownUserTest(UserPillowTestBase):
+class UnknownUserPillowTest(UserPillowTestBase):
     dependent_apps = [
         'auditcare',
         'django_digest',
