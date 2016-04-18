@@ -350,6 +350,7 @@ def patch_xform(request, domain, app_id, unique_form_id):
     return json_response(response_json)
 
 
+@require_GET
 @require_can_edit_apps
 def get_xform_source(request, domain, app_id, module_id, form_id):
     app = get_app(domain, app_id)
