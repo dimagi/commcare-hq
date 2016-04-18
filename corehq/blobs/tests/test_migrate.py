@@ -9,31 +9,105 @@ from corehq.blobs.s3db import maybe_not_found
 from corehq.blobs.tests.util import (TemporaryFilesystemBlobDB,
     TemporaryMigratingBlobDB, TemporaryS3BlobDB)
 from corehq.util.test_utils import trap_extra_setup
-from couchexport.models import SavedBasicExport, ExportConfiguration
 
 from django.conf import settings
 from django.test import TestCase
 from testil import replattr, tempdir
 
+from couchexport.models import SavedBasicExport, ExportConfiguration
+
 NOT_SET = object()
 
 
-class TestSavedExportsMigrations(TestCase):
-
-    slug = "saved_exports"
+class BaseMigrationTest(TestCase):
 
     def setUp(self):
         mod.BlobMigrationState.objects.filter(slug=self.slug).delete()
-        self._old_flag = getattr(
-            SavedBasicExport, "migrating_blobs_from_couch", NOT_SET)
-        SavedBasicExport.migrating_blobs_from_couch = True
+        self._old_flag = getattr(self.model, "migrating_blobs_from_couch", NOT_SET)
+        self.model.migrating_blobs_from_couch = True
 
     def tearDown(self):
         mod.BlobMigrationState.objects.filter(slug=self.slug).delete()
         if self._old_flag is NOT_SET:
-            del SavedBasicExport.migrating_blobs_from_couch
+            del self.model.migrating_blobs_from_couch
         else:
-            SavedBasicExport.migrating_blobs_from_couch = self._old_flag
+            self.model.migrating_blobs_from_couch = self._old_flag
+
+    # abstract properties, must be overridden in base class
+    slug = None
+    model = None
+
+    def do_migration(self, docs, num_attachments=1):
+        if not docs or not num_attachments:
+            raise Exception("bad test: must have at least one document and "
+                            "one attachment")
+        with tempdir() as tmp:
+            filename = join(tmp, "file.txt")
+
+            # do migration
+            migrated, skipped = mod.MIGRATIONS[self.slug].migrate(filename)
+            self.assertGreaterEqual(migrated, len(docs))
+
+            # verify: migration state recorded
+            mod.BlobMigrationState.objects.get(slug=self.slug)
+
+            # verify: migrated data was written to the file
+            with open(filename) as fh:
+                lines = list(fh)
+            lines_by_id = {d["_id"]: d for d in (json.loads(x) for x in lines)}
+            for doc in docs:
+                self.assertEqual(lines_by_id[doc._id]["_rev"], doc._rev)
+            self.assertEqual(len(lines), migrated, lines)
+
+        for doc in docs:
+            # verify: attachments were moved to blob db
+            exp = self.model.get(doc._id)
+            self.assertNotEqual(exp._rev, doc._rev)
+            self.assertEqual(len(exp.blobs), num_attachments, repr(exp.blobs))
+            self.assertFalse(exp._attachments, exp._attachments)
+            self.assertEqual(len(exp.external_blobs), num_attachments)
+
+    def do_failed_migration(self, docs, modify_docs):
+        if not docs:
+            raise Exception("bad test: must have at least one document")
+        modified = []
+        print_status = mod.print_status
+
+        # setup concurrent modification
+        def modify_doc_and_print_status(num, total):
+            if not modified:
+                # do concurrent modification
+                modify_docs()
+                modified.append(True)
+            print_status(num, total)
+
+        # hook print_status() call to simulate concurrent modification
+        with replattr(mod, "print_status", modify_doc_and_print_status):
+            # do migration
+            migrated, skipped = mod.MIGRATIONS[self.slug].migrate()
+            self.assertGreaterEqual(skipped, len(docs))
+
+        self.assertTrue(modified)
+
+        # verify: migration state not set when docs are skipped
+        with self.assertRaises(mod.BlobMigrationState.DoesNotExist):
+            mod.BlobMigrationState.objects.get(slug=self.slug)
+
+        for doc_id, (num_attachments, num_blobs) in docs.items():
+            exp = self.model.get(doc_id)
+            if not num_attachments:
+                raise Exception("bad test: modify function should leave "
+                                "unmigrated attachments")
+            # verify: attachments were not migrated
+            print(exp)
+            self.assertEqual(len(exp._attachments), num_attachments)
+            self.assertEqual(len(exp.external_blobs), num_blobs)
+
+
+class TestSavedExportsMigrations(BaseMigrationTest):
+
+    slug = "saved_exports"
+    model = SavedBasicExport
 
     def test_migrate_saved_exports(self):
         # setup data
@@ -48,29 +122,9 @@ class TestSavedExportsMigrations(TestCase):
         self.assertEqual(len(saved._attachments), 1)
         self.assertEqual(len(saved.external_blobs), 0)
 
-        with tempdir() as tmp, replattr(SavedBasicExport, "migrating_blobs_from_couch", True):
-            filename = join(tmp, "file.txt")
+        self.do_migration([saved])
 
-            # do migration
-            migrated, skipped = mod.MIGRATIONS[self.slug].migrate(filename)
-            self.assertGreaterEqual(migrated, 1)
-
-            # verify: migration state recorded
-            mod.BlobMigrationState.objects.get(slug=self.slug)
-
-            # verify: migrated data was written to the file
-            with open(filename) as fh:
-                lines = list(fh)
-            doc = {d["_id"]: d for d in (json.loads(x) for x in lines)}[saved._id]
-            self.assertEqual(doc["_rev"], saved._rev)
-            self.assertEqual(len(lines), migrated, lines)
-
-        # verify: attachment was moved to blob db
         exp = SavedBasicExport.get(saved._id)
-        self.assertNotEqual(exp._rev, saved._rev)
-        self.assertEqual(len(exp.blobs), 1, repr(exp.blobs))
-        self.assertFalse(exp._attachments, exp._attachments)
-        self.assertEqual(len(exp.external_blobs), 1)
         self.assertEqual(exp.get_payload(), payload)
 
     def test_migrate_with_concurrent_modification(self):
@@ -88,33 +142,15 @@ class TestSavedExportsMigrations(TestCase):
         self.assertEqual(len(saved._attachments), 2)
         self.assertEqual(len(saved.external_blobs), 0)
 
-        modified = []
-        print_status = mod.print_status
+        def modify():
+            doc = SavedBasicExport.get(saved._id)
+            doc.set_payload(new_payload)
+            doc.save()
 
-        # setup concurrent modification
-        def modify_doc_and_print_status(num, total):
-            if not modified:
-                # do concurrent modification
-                doc = SavedBasicExport.get(saved._id)
-                doc.set_payload(new_payload)
-                doc.save()
-                modified.append(True)
-            print_status(num, total)
-
-        # hook print_status() call to simulate concurrent modification
-        with replattr(mod, "print_status", modify_doc_and_print_status):
-            # do migration
-            migrated, skipped = mod.MIGRATIONS[self.slug].migrate()
-            self.assertGreaterEqual(skipped, 1)
-
-        # verify: migration state not set when docs are skipped
-        with self.assertRaises(mod.BlobMigrationState.DoesNotExist):
-            mod.BlobMigrationState.objects.get(slug=self.slug)
+        self.do_failed_migration({saved._id: (1, 1)}, modify)
 
         # verify: attachments were not migrated
         exp = SavedBasicExport.get(saved._id)
-        self.assertEqual(len(exp._attachments), 1, exp._attachments)
-        self.assertEqual(len(exp.external_blobs), 1, exp.external_blobs)
         self.assertEqual(exp.get_payload(), new_payload)
         self.assertEqual(exp.fetch_attachment("other"), old_payload)
 
