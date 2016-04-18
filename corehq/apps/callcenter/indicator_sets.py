@@ -2,20 +2,17 @@ from collections import defaultdict
 from datetime import timedelta, datetime
 import functools
 from django.core.cache import cache
-from django.db.models.aggregates import Count, Avg
-from django.db.models.query_utils import Q
 from corehq.apps.callcenter.models import CallCenterIndicatorConfig
 from corehq.apps.hqcase.dbaccessors import get_case_types_for_domain
 from dimagi.ext.jsonobject import JsonObject, DictProperty, StringProperty
 import pytz
 from corehq.apps.callcenter.utils import get_call_center_cases
 from corehq.apps.groups.models import Group
-from corehq.apps.sofabed.models import FormData, CaseData, CaseActionData
 from dimagi.utils.decorators.memoized import memoized
 import logging
 from corehq.apps.callcenter.const import *
-from sqlalchemy.sql import operators, and_, label, select
-from sqlalchemy import func
+from sqlalchemy.sql import operators, and_, or_, label, select
+from sqlalchemy import func, distinct
 
 logger = logging.getLogger('callcenter')
 
@@ -266,7 +263,7 @@ class CallCenterIndicators(object):
         """
         total_data = defaultdict(lambda: 0)
         for result in queryset:
-            owner = result['case_owner']
+            owner = result['owner_id']
             count = result['count']
             self._update_dataset(total_data, owner, count)
 
@@ -290,7 +287,7 @@ class CallCenterIndicators(object):
         """
         type_data = defaultdict(lambda: defaultdict(lambda: 0))
         for result in queryset:
-            owner = result['case_owner']
+            owner = result['owner_id']
             count = result['count']
             case_type = result['type']
             self._update_dataset(type_data[case_type], owner, count)
@@ -306,7 +303,7 @@ class CallCenterIndicators(object):
         for case_type in unseen_cases:
             self._add_data(FakeQuerySet([]), '{}_{}_{}'.format(indicator_prefix, case_type, range_name))
 
-    def _case_query_opened_closed(self, opened_or_closed, values, filters, lower, upper):
+    def _case_query_opened_closed(self, opened_or_closed, include_type_in_result, limit_types, lower, upper):
         """
         Count of cases where lower <= opened_on < upper
             cases_opened_{period}
@@ -316,63 +313,133 @@ class CallCenterIndicators(object):
             cases_closed_{period}
             cases_closed_{case_type}_{period}
         """
-        return CaseData.objects \
-            .extra(select={'case_owner': '{}_by'.format(opened_or_closed)}) \
-            .values(*values) \
-            .filter(filters) \
-            .filter(
-                domain=self.domain) \
-            .filter(**self._date_filters('{}_on'.format(opened_or_closed), lower, upper)) \
-            .filter(**{
-                '{}_by__in'.format(opened_or_closed): self.users_needing_data
-            }).annotate(count=Count('case_id'))
+        adapter = self.data_sources.cases
+        table = adapter.get_table()
 
-    def _case_query_active(self, values, filters, lower, upper):
+        owner_column = table.c['{}_by'.format(opened_or_closed)]
+        columns = [
+            label('owner_id', owner_column),
+            label('count', func.count(table.c.doc_id)),
+        ]
+        group_by = [owner_column]
+        if include_type_in_result:
+            columns.append(
+                label('type', table.c.type)
+            )
+            group_by.append(table.c.type)
+
+        if limit_types:
+            type_filter = operators.in_op(table.c.type, limit_types)
+        else:
+            type_filter = table.c.type != self.cc_case_type
+
+        query = select(
+            columns
+        ).where(and_(
+            type_filter,
+            table.c['{}_on'.format(opened_or_closed)] >= lower,
+            table.c['{}_on'.format(opened_or_closed)] < upper,
+            operators.in_op(owner_column, self.users_needing_data),
+        )).group_by(
+            *group_by
+        )
+
+        with adapter.session_helper.session_context() as session:
+            return list(session.execute(query))
+
+    def _case_query_active(self, include_type_in_result, limit_types, lower, upper):
         """
         Count of cases where lower <= case_action.date < upper
 
         cases_active_{period}
         cases_active_{case_type}_{period}
         """
-        return CaseActionData.objects \
-            .extra(select={'type': 'case_type'}) \
-            .values(*values) \
-            .filter(filters) \
-            .filter(
-                domain=self.domain,
-                case_owner__in=self.owners_needing_data,
-                date__gte=lower,
-                date__lt=upper
-            ).annotate(count=Count('case', distinct=True))
+        adapter = self.data_sources.case_actions
+        table = adapter.get_table()
 
-    def _cases_total_query(self, values, filters, lower, upper):
+        columns = [
+            label('owner_id', table.c.owner_id),
+            label('count', func.count(distinct(table.c.doc_id))),
+        ]
+        group_by = [table.c.owner_id]
+        if include_type_in_result:
+            columns.append(
+                label('type', table.c.type)
+            )
+            group_by.append(table.c.type)
+
+        if limit_types:
+            type_filter = operators.in_op(table.c.type, limit_types)
+        else:
+            type_filter = table.c.type != self.cc_case_type
+
+        query = select(
+            columns
+        ).where(and_(
+            type_filter,
+            table.c.date >= lower,
+            table.c.date < upper,
+            operators.in_op(table.c.owner_id, self.users_needing_data),
+        )).group_by(
+            *group_by
+        )
+
+        with adapter.session_helper.session_context() as session:
+            return list(session.execute(query))
+
+    def _cases_total_query(self, include_type_in_result, limit_types, lower, upper):
         """
         Count of cases where opened_on < upper and (closed == False or closed_on >= lower)
 
         cases_total_{period}
         cases_total_{case_type}_{period}
         """
-        return CaseData.objects \
-            .values(*values) \
-            .filter(filters) \
-            .filter(
-                case_owner__in=self.owners_needing_data,
-                domain=self.domain,
-                opened_on__lt=upper) \
-            .filter(Q(closed=False) | Q(closed_on__gte=lower)) \
-            .annotate(count=Count('case_id'))
+        adapter = self.data_sources.cases
+        table = adapter.get_table()
+
+        columns = [
+            label('owner_id', table.c.owner_id),
+            label('count', func.count(table.c.doc_id)),
+        ]
+        group_by = [table.c.owner_id]
+        if include_type_in_result:
+            columns.append(
+                label('type', table.c.type)
+            )
+            group_by.append(table.c.type)
+
+        if limit_types:
+            type_filter = operators.in_op(table.c.type, limit_types)
+        else:
+            type_filter = table.c.type != self.cc_case_type
+
+        query = select(
+            columns
+        ).where(and_(
+            type_filter,
+            table.c.opened_on < upper,
+            operators.in_op(table.c.owner_id, self.users_needing_data),
+            or_(
+                table.c.closed == 0,
+                table.c.closed_on >= lower
+            )
+        )).group_by(
+            *group_by
+        )
+
+        with adapter.session_helper.session_context() as session:
+            return list(session.execute(query))
 
     def add_case_data(self, query_fn, slug, indicator_config, type_column='type', legacy_prefix=None):
         include_types = indicator_config.all_types or indicator_config.types
         include_total = indicator_config.total.active
         limit_types = indicator_config.types
 
-        q_type_exclude = {type_column: self.cc_case_type}
         if include_total and include_types and not limit_types:
             logger.debug('Adding case_data %s: totals and all types: %s', slug, indicator_config.total.date_ranges)
             for range_name in indicator_config.total.date_ranges:
                 lower, upper = self.date_ranges[range_name]
-                results = query_fn(['case_owner', 'type'], ~Q(**q_type_exclude), lower, upper)
+                results = query_fn(True, None, lower, upper)
                 self._add_case_data_total(results, slug, range_name, legacy_prefix=legacy_prefix)
                 self._add_case_data_by_type(results, slug, range_name)
         else:
@@ -380,15 +447,14 @@ class CallCenterIndicators(object):
                 logger.debug('Adding case_data %s: totals: %s', slug, indicator_config.total.date_ranges)
                 for range_name in indicator_config.total.date_ranges:
                     lower, upper = self.date_ranges[range_name]
-                    total_results = query_fn(['case_owner'], ~Q(**q_type_exclude), lower, upper)
+                    total_results = query_fn(False, None, lower, upper)
                     self._add_case_data_total(total_results, slug, range_name, legacy_prefix=legacy_prefix)
 
             if include_types:
                 for range_name, types in indicator_config.types_by_date_range().items():
                     logger.debug('Adding case_data %s: types: %s, %s', slug, range_name, types)
-                    q_type_in = {'{}__in'.format(type_column): types}
                     lower, upper = self.date_ranges[range_name]
-                    type_results = query_fn(['case_owner', 'type'], Q(**q_type_in), lower, upper)
+                    type_results = query_fn(True, types, lower, upper)
                     self._add_case_data_by_type(type_results, slug, range_name, all_types=types)
 
     def add_case_total_legacy(self):
@@ -396,14 +462,22 @@ class CallCenterIndicators(object):
         Count of cases per user that are currently open (legacy indicator).
         """
         logger.debug('Adding legacy totals')
-        results = CaseData.objects \
-            .values('user_id') \
-            .exclude(type=self.cc_case_type) \
-            .filter(
-                domain=self.domain,
-                closed=False,
-                user_id__in=self.users_needing_data) \
-            .annotate(count=Count('case_id'))
+        adapter = self.data_sources.cases
+        table = adapter.get_table()
+
+        query = select([
+            label('user_id', table.c.owner_id),
+            label('count', func.count(table.c.doc_id))
+        ]).where(and_(
+            table.c.type != self.cc_case_type,
+            table.c.closed == 0,
+            operators.in_op(table.c.owner_id, self.users_needing_data),
+        )).group_by(
+            table.c.owner_id
+        )
+
+        with adapter.session_helper.session_context() as session:
+            results = FakeQuerySet(list(session.execute(query)))
 
         self._add_data(results, LEGACY_TOTAL_CASES)
 

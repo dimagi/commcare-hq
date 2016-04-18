@@ -40,37 +40,28 @@ CaseInfo = namedtuple('CaseInfo', 'id, days_ago, case_type, is_closed')
 def get_casedata(case_info, domain, user_id, owner_id, opened_by, closed_by):
     now = datetime.utcnow()
     date_ago = now - timedelta(days=case_info.days_ago)
-    return CaseData(
-        case_id=case_info.id,
-        type=case_info.case_type,
-        domain=domain,
-        owner_id=owner_id,
-        user_id=user_id,
-        opened_on=date_ago,
-        opened_by=opened_by or user_id,
-        modified_on=now,
-        closed=case_info.is_closed,
-        closed_on=(date_ago if case_info.is_closed else None),
-        closed_by=(closed_by or user_id) if case_info.is_closed else None,
-        case_owner=(owner_id or user_id)
-    )
-    return case
-
-
-def add_case_action(case):
-    case.actions.create(
-        index=1,
-        action_type='update',
-        date=case.opened_on,
-        user_id=case.user_id,
-        domain=case.domain,
-        case_owner=case.case_owner,
-        case_type=case.type
-    )
+    return {
+        '_id': case_info.id,
+        'doc_type': 'CommCareCase',
+        'domain': domain,
+        'type': case_info.case_type,
+        'owner_id': owner_id,
+        'opened_on': date_ago,
+        'opened_by': opened_by or user_id,
+        'modified_on': now,
+        'closed': case_info.is_closed,
+        'closed_on': (date_ago if case_info.is_closed else None),
+        'closed_by': (closed_by or user_id) if case_info.is_closed else None,
+        'actions': {
+            'date': date_ago,
+        }
+    }
 
 
 def load_data(domain, form_user_id, case_user_id=None,
               case_owner_id=None, case_opened_by=None, case_closed_by=None):
+    from corehq.apps.callcenter.data_source import get_report_data_sources_for_domain
+
     form_data = [
         get_formdata(0, domain, form_user_id),
         get_formdata(3, domain, form_user_id),
@@ -102,23 +93,20 @@ def load_data(domain, form_user_id, case_user_id=None,
         for info in case_infos
     ]
 
-    _insert_form_data(domain, form_data)
-
-    CaseData.objects.bulk_create(case_data)
-
-    for case in case_data:
-        add_case_action(case)
+    data_sources = get_report_data_sources_for_domain(domain)
+    _insert_docs(data_sources.forms, form_data)
+    _insert_docs(data_sources.cases, case_data)
+    _insert_docs(data_sources.case_actions, case_data)
 
 
-def _insert_form_data(domain, form_data):
-    from corehq.apps.callcenter.data_source import get_report_data_sources_for_domain
-    adapter = get_report_data_sources_for_domain(domain).forms
-    adapter.rebuild_table()
-    for data in form_data:
-        adapter.save(data)
+def _insert_docs(data_source_adapter, docs):
+    data_source_adapter.rebuild_table()
+    for doc in docs:
+        data_source_adapter.save(doc)
 
 
 def load_custom_data(domain, user_id, xmlns):
+    from corehq.apps.callcenter.data_source import get_report_data_sources_for_domain
     form_data = [
         get_formdata(0, domain, user_id, xmlns=xmlns, duration=3),
         get_formdata(1, domain, user_id, xmlns=xmlns, duration=2),
@@ -132,9 +120,14 @@ def load_custom_data(domain, user_id, xmlns):
         get_formdata(30, domain, user_id, xmlns=xmlns, duration=1),
     ]
 
-    _insert_form_data(domain, form_data)
+    data_sources = get_report_data_sources_for_domain(domain)
+    _insert_docs(data_sources.forms, form_data)
+    _insert_docs(data_sources.cases, [])  # ensure the table exists
+    _insert_docs(data_sources.case_actions, [])
 
 
-def clear_data():
-    FormData.objects.all().delete()
-    CaseData.objects.all().delete()
+def clear_data(domain):
+    from corehq.apps.callcenter.data_source import get_report_data_sources_for_domain
+    data_sources = get_report_data_sources_for_domain(domain)
+    for data_source in data_sources:
+        data_source.drop_table()
