@@ -19,14 +19,6 @@ class TestPillowTopFiltering(SimpleTestCase):
             'core': [
                 'corehq.pillows.case.CasePillow',
                 'corehq.pillows.xform.XFormPillow',
-                'corehq.pillows.user.UserPillow',
-                'corehq.pillows.application.AppPillow',
-                'corehq.pillows.group.GroupPillow',
-                'corehq.pillows.sms.SMSPillow',
-                'corehq.pillows.user.GroupToUserPillow',
-                'corehq.pillows.user.UnknownUsersPillow',
-                'corehq.pillows.sofabed.FormDataPillow',
-                'corehq.pillows.sofabed.CaseDataPillow',
             ],
             'phonelog': [
                 'corehq.pillows.log.PhoneLogPillow',
@@ -43,14 +35,6 @@ class TestPillowTopFiltering(SimpleTestCase):
     def test_no_blacklist_items(self):
         expected_pillows = {'CasePillow',
                             'XFormPillow',
-                            'UserPillow',
-                            'AppPillow',
-                            'GroupPillow',
-                            'SMSPillow',
-                            'GroupToUserPillow',
-                            'UnknownUsersPillow',
-                            'FormDataPillow',
-                            'CaseDataPillow',
                             'PhoneLogPillow',
                             'FakeConstructedPillowName',
                             }
@@ -61,14 +45,6 @@ class TestPillowTopFiltering(SimpleTestCase):
     def test_with_blacklist_items(self):
         expected_pillows = {'CasePillow',
                             'XFormPillow',
-                            'UserPillow',
-                            'AppPillow',
-                            'GroupPillow',
-                            'SMSPillow',
-                            'GroupToUserPillow',
-                            'UnknownUsersPillow',
-                            'FormDataPillow',
-                            'CaseDataPillow',
                             'FakeConstructedPillowName',
                             }
 

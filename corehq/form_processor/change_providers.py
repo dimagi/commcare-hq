@@ -9,7 +9,7 @@ class SqlCaseChangeProvider(ChangeProvider):
     def __init__(self, chunk_size=500):
         self.chunk_size = chunk_size
 
-    def iter_changes(self, start_from=None):
+    def iter_all_changes(self, start_from=None):
         for case in CaseAccessorSQL.get_all_cases_modified_since(start_from, chunk_size=self.chunk_size):
             yield _sql_case_to_change(case)
 
@@ -30,7 +30,7 @@ class SqlFormChangeProvider(ChangeProvider):
     def __init__(self, chunk_size=500):
         self.chunk_size = chunk_size
 
-    def iter_changes(self, start_from=None):
+    def iter_all_changes(self, start_from=None):
         for form in FormAccessorSQL.get_all_forms_received_since(start_from, chunk_size=self.chunk_size):
             yield _sql_form_to_change(form)
 
