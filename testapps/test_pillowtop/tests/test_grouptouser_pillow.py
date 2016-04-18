@@ -23,18 +23,8 @@ class GroupToUserPillowTest(SimpleTestCase):
         ensure_index_deleted(USER_INDEX)
 
     def _check_es_user(self, group_ids=None, group_names=None):
-        self.es_client.indices.refresh(USER_INDEX)
-        es_user = self.es_client.get(USER_INDEX, self.user_id)
-        user_doc = es_user['_source']
-        if group_ids is None:
-            self.assertTrue('__group_ids' not in user_doc)
-        else:
-            self.assertEqual(set(user_doc['__group_ids']), set(group_ids))
-
-        if group_names is None:
-            self.assertTrue('__group_names' not in user_doc)
-        else:
-            self.assertEqual(set(user_doc['__group_names']), set(group_names))
+        _assert_es_user_and_groups(
+            self, self.es_client, self.user_id, group_ids, group_names)
 
     def test_update_es_user_with_groups(self):
         group_doc = {
@@ -64,6 +54,21 @@ class GroupToUserPillowTest(SimpleTestCase):
         }
         update_es_user_with_groups(new_group)
         self._check_es_user(['group1', 'group2'], ['g1', 'g2'])
+
+
+def _assert_es_user_and_groups(test_case, es_client, user_id, group_ids=None, group_names=None):
+    es_client.indices.refresh(USER_INDEX)
+    es_user = es_client.get(USER_INDEX, user_id)
+    user_doc = es_user['_source']
+    if group_ids is None:
+        test_case.assertTrue('__group_ids' not in user_doc)
+    else:
+        test_case.assertEqual(set(user_doc['__group_ids']), set(group_ids))
+
+    if group_names is None:
+        test_case.assertTrue('__group_names' not in user_doc)
+    else:
+        test_case.assertEqual(set(user_doc['__group_names']), set(group_names))
 
 
 def _create_es_user(es_client, user_id, domain):
