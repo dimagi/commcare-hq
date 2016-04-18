@@ -178,12 +178,6 @@ class UserReindexerTest(TestCase):
     def tearDownClass(cls):
         ensure_index_deleted(USER_INDEX)
 
-    def test_user_reindexer(self):
-        username = 'reindex-test-username'
-        CommCareUser.create(DOMAIN, username, 'secret')
-        call_command('ptop_fast_reindex_users', noinput=True, bulk=True)
-        self._assert_user_in_es(username)
-
     def test_user_reindexer_v2(self):
         username = 'reindex-test-username-v2'
         CommCareUser.create(DOMAIN, username, 'secret')
