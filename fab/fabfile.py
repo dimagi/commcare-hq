@@ -765,10 +765,10 @@ def copy_formplayer_properties():
 @task
 @roles(ROLES_TOUCHFORMS)
 def build_formplayer():
-    spring_dir = '{}/{}'.format(env.code_root, 'submodules/formplayer')
-    with shell_env(JAVA_HOME='/usr/lib/jvm/jdk1.7.0'):
-        with cd(spring_dir):
-            sudo('./gradlew build')
+    build_dir = '{}/{}'.format(env.code_root, 'submodules/formplayer/build/libs')
+    jenkins_formplayer_build_url = 'http://jenkins.dimagi.com/job/formplayer/lastSuccessfulBuild/artifact/build/libs/formplayer.jar'
+
+    sudo('wget {} -P {}'.format(jenkins_formplayer_build_url, build_dir))
 
 
 @parallel
