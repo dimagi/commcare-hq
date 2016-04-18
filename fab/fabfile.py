@@ -1400,6 +1400,8 @@ def _get_github():
     try:
         from .config import GITHUB_APIKEY
     except ImportError:
+        print 'Try creating a fab/config.py with your GitHub API key to automate this step.'
+        print 'See fab/config.example.py.'
         username = raw_input('Github username: ')
         password = getpass('Github password: ')
         return login(
