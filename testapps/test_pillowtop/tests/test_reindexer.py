@@ -111,29 +111,6 @@ class PillowtopReindexerTest(TestCase):
 
         self._assert_form_is_in_es(form)
 
-    def test_unknown_user_reindexer(self):
-        FormProcessorTestUtils.delete_all_xforms()
-        user_id = 'test-unknown-user'
-        metadata = TestFormMetadata(domain=self.domain, user_id='test-unknown-user')
-        form = get_form_ready_to_save(metadata)
-        FormProcessorInterface(domain=self.domain).save_processed_models([form])
-        ensure_index_deleted(USER_INDEX)
-        call_command('ptop_fast_reindex_unknownusers', noinput=True, bulk=True)
-        # the default query doesn't include unknown users so should have no results
-        self.assertEqual(0, UserES().run().total)
-        user_es = UserES()
-        # hack: clear the default filters which hide unknown users
-        # todo: find a better way to do this.
-        user_es._default_filters = ESQuery.default_filters
-        results = user_es.run()
-        self.assertEqual(1, results.total)
-        user_doc = results.hits[0]
-        self.assertEqual(self.domain, user_doc['domain'])
-        self.assertEqual(user_id, user_doc['_id'])
-        self.assertEqual('UnknownUser', user_doc['doc_type'])
-        form.delete()
-        delete_es_index(USER_INDEX)
-
     def _assert_es_empty(self, esquery=CaseES()):
         results = esquery.run()
         self.assertEqual(0, results.total)

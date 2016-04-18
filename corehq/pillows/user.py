@@ -90,8 +90,8 @@ class UnknownUsersPillow(PythonPillow):
 
     def python_filter(self, change):
         # designed to exactly mimic the behavior of couchforms/filters/xforms.js
-        doc = change.document
-        return doc.get('doc_type', None) in all_known_formlike_doc_types() and not is_device_report(doc)
+        doc = change.get_document()
+        return doc and doc.get('doc_type', None) in all_known_formlike_doc_types() and not is_device_report(doc)
 
     def get_fields_from_doc(self, doc):
         form_meta = doc.get('form', {}).get('meta', {})
