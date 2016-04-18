@@ -102,7 +102,7 @@ def load_data(domain, form_user_id, case_user_id=None,
         for info in case_infos
     ]
 
-    _insert_form_data(form_data)
+    _insert_form_data(domain, form_data)
 
     CaseData.objects.bulk_create(case_data)
 
