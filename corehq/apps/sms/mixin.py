@@ -302,7 +302,7 @@ class CommCareMobileContactMixin(object):
         raise NotImplementedError('Please implement this method')
 
     def get_verified_numbers(self, include_pending=False):
-        v = VerifiedNumber.by_owner_id(self._id)
+        v = VerifiedNumber.by_owner_id(self.get_id)
         v = filter(lambda c: c.verified or include_pending, v)
         return dict((c.phone_number, c) for c in v)
 
@@ -344,7 +344,7 @@ class CommCareMobileContactMixin(object):
         """
         self.validate_number_format(phone_number)
         v = VerifiedNumber.by_phone(phone_number, include_pending=True)
-        if v is not None and (v.owner_doc_type != self.doc_type or v.owner_id != self._id):
+        if v is not None and (v.owner_doc_type != self.doc_type or v.owner_id != self.get_id):
             raise PhoneNumberInUseException("Phone number is already in use.")
 
     def save_verified_number(self, domain, phone_number, verified, backend_id=None, ivr_backend_id=None, only_one_number_allowed=False):
@@ -369,7 +369,7 @@ class CommCareMobileContactMixin(object):
         if v is None:
             v = VerifiedNumber(
                 owner_doc_type = self.doc_type,
-                owner_id = self._id
+                owner_id = self.get_id
             )
         v.domain = domain
         v.phone_number = phone_number

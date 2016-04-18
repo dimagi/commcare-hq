@@ -15,6 +15,7 @@ from corehq.apps.accounting.utils import domain_has_privilege
 from corehq.apps.domain.models import Domain
 from corehq.apps.smsbillables.models import SmsBillable
 from corehq.apps.sms.change_publishers import publish_sms_saved
+from corehq.apps.sms.util import get_case_contact_class
 from corehq.util.timezones.conversions import ServerTime
 from dimagi.utils.chunked import chunked
 from dimagi.utils.couch.bulk import soft_delete_docs
@@ -271,8 +272,9 @@ def delete_phone_numbers_for_owners(owner_ids):
 @task(queue=settings.CELERY_REMINDER_CASE_UPDATE_QUEUE, ignore_result=True, acks_late=True,
       default_retry_delay=5 * 60, max_retries=10, bind=True)
 def sync_case_phone_number(self, case):
+    cls = get_case_contact_class(case.domain)
     try:
-        contact = CommConnectCase.wrap_as_commconnect_case(case)
+        contact = cls.wrap_as_commconnect_case(case)
         _sync_case_phone_number(contact)
     except Exception as e:
         self.retry(exc=e)
@@ -290,7 +292,7 @@ def _phone_number_is_same(phone_number, phone_info):
 def _sync_case_phone_number(contact_case):
     phone_info = contact_case.get_phone_info()
 
-    lock_keys = ['sync-case-phone-number-for-%s' % contact_case._id]
+    lock_keys = ['sync-case-phone-number-for-%s' % contact_case.case_id]
     if phone_info.phone_number:
         lock_keys.append('verifying-phone-number-%s' % phone_info.phone_number)
 
@@ -315,7 +317,7 @@ def _sync_case_phone_number(contact_case):
                 phone_number = VerifiedNumber(
                     domain=contact_case.domain,
                     owner_doc_type=contact_case.doc_type,
-                    owner_id=contact_case._id,
+                    owner_id=contact_case.case_id,
                 )
             elif _phone_number_is_same(phone_number, phone_info):
                 return

@@ -5,6 +5,7 @@ import uuid
 import datetime
 from couchdbkit.resource import ResourceNotFound
 from corehq.apps.users.models import CouchUser, CommCareUser
+from corehq.form_processor.utils.general import should_use_sql_backend
 from django.conf import settings
 from corehq.apps.hqcase.utils import submit_case_block_from_template
 from corehq.util.quickcache import quickcache
@@ -237,3 +238,11 @@ def set_domain_default_backend_to_test_backend(domain):
         domain,
         test_backend
     )
+
+
+def get_case_contact_class(domain):
+    from corehq.apps.sms.models import CommConnectCase, CommConnectCaseSQL
+    if should_use_sql_backend(domain):
+        return CommConnectCaseSQL
+    else:
+        return CommConnectCase
