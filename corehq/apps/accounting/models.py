@@ -61,6 +61,7 @@ from corehq.apps.hqwebapp.tasks import send_html_email_async
 from corehq.apps.users.models import WebUser
 from corehq.const import USER_DATE_FORMAT
 from corehq.util.dates import get_first_last_days
+from corehq.util.mixin import ValidateModelMixin
 from corehq.util.quickcache import quickcache
 from corehq.util.view_utils import absolute_reverse
 from corehq.apps.analytics.tasks import track_workflow
@@ -2957,7 +2958,7 @@ class PaymentRecord(models.Model):
         )
 
 
-class CreditAdjustment(models.Model):
+class CreditAdjustment(ValidateModelMixin, models.Model):
     """
     A record of any additions (positive amounts) or deductions (negative amounts) that contributed to the
     current balance of the associated CreditLine.
