@@ -101,6 +101,14 @@ class AddItemInterface(GenericTabularReport):
         )
         return context
 
+    @property
+    def report_context(self):
+        context = super(AddItemInterface, self).report_context
+        context.update(
+            hideButton=True,
+        )
+        return context
+
 
 class AccountingInterface(AddItemInterface):
     section_name = "Accounting"
@@ -190,14 +198,6 @@ class AccountingInterface(AddItemInterface):
                 account.entry_point,
             ])
         return rows
-
-    @property
-    def report_context(self):
-        context = super(AccountingInterface, self).report_context
-        context.update(
-            hideButton=True,
-        )
-        return context
 
 
 class SubscriptionInterface(AddItemInterface):
@@ -351,14 +351,6 @@ class SubscriptionInterface(AddItemInterface):
 
         return rows
 
-    @property
-    def report_context(self):
-        context = super(SubscriptionInterface, self).report_context
-        context.update(
-            hideButton=True,
-        )
-        return context
-
 
 class SoftwarePlanInterface(AddItemInterface):
     section_name = "Accounting"
@@ -423,14 +415,6 @@ class SoftwarePlanInterface(AddItemInterface):
             ])
 
         return rows
-
-    @property
-    def report_context(self):
-        context = super(SoftwarePlanInterface, self).report_context
-        context.update(
-            hideButton=True,
-        )
-        return context
 
 
 def get_exportable_column(amount):
