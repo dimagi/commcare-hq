@@ -125,7 +125,6 @@ class UnknownUserTest(UserPillowTestBase):
         self.elasticsearch.indices.refresh(self.index_info.index)
 
         # the default query doesn't include unknown users so should have no results
-        print UserES().run().hits
         self.assertEqual(0, UserES().run().total)
         user_es = UserES()
         # hack: clear the default filters which hide unknown users
