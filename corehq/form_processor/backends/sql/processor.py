@@ -73,7 +73,7 @@ class FormProcessorSQL(object):
                     CaseAccessorSQL.save_case(case)
 
             ledgers_to_save = stock_result.models_to_save
-            LedgerAccessorSQL.save_ledger_values(ledgers_to_save)
+            LedgerAccessorSQL.save_ledger_values(ledgers_to_save, processed_forms.deprecated)
 
         cls._publish_changes(processed_forms, cases)
 
