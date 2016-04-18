@@ -119,14 +119,15 @@ class AccountingInterface(AddItemInterface):
     hide_filters = False
     item_name = "Billing Account"
 
-    fields = ['corehq.apps.accounting.interface.DateCreatedFilter',
-              'corehq.apps.accounting.interface.NameFilter',
-              'corehq.apps.accounting.interface.SalesforceAccountIDFilter',
-              'corehq.apps.accounting.interface.AccountTypeFilter',
-              'corehq.apps.accounting.interface.ActiveStatusFilter',
-              'corehq.apps.accounting.interface.DimagiContactFilter',
-              'corehq.apps.accounting.interface.EntryPointFilter',
-              ]
+    fields = [
+        'corehq.apps.accounting.interface.DateCreatedFilter',
+        'corehq.apps.accounting.interface.NameFilter',
+        'corehq.apps.accounting.interface.SalesforceAccountIDFilter',
+        'corehq.apps.accounting.interface.AccountTypeFilter',
+        'corehq.apps.accounting.interface.ActiveStatusFilter',
+        'corehq.apps.accounting.interface.DimagiContactFilter',
+        'corehq.apps.accounting.interface.EntryPointFilter',
+    ]
 
     @property
     def new_item_view(self):
