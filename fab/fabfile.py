@@ -33,8 +33,9 @@ import sh
 import time
 import yaml
 import re
+from getpass import getpass
 from distutils.util import strtobool
-from github3 import GitHub
+from github3 import login
 
 from fabric import utils
 from fabric.api import run, roles, execute, task, sudo, env, parallel
@@ -113,7 +114,7 @@ class DeployMetadata(object):
         self.timestamp = datetime.datetime.utcnow().strftime('%Y-%m-%d_%H.%M')
         self._deploy_ref = None
         self._deploy_tag = None
-        self._repo = GitHub().repository('dimagi', 'commcare-hq')
+        self._repo = _get_github().repository('dimagi', 'commcare-hq')
         self._max_tags = 100
         self._last_tag = None
         self._code_branch = code_branch
@@ -1393,6 +1394,22 @@ def _execute_with_timing(fn, *args, **kwargs):
         with open(env.timing_log, 'a') as timing_log:
             duration = datetime.datetime.utcnow() - start_time
             timing_log.write('{}: {}\n'.format(fn.__name__, duration.seconds))
+
+
+def _get_github():
+    try:
+        from .config import GITHUB_APIKEY
+    except ImportError:
+        username = raw_input('Github username: ')
+        password = getpass('Github password: ')
+        return login(
+            username=username,
+            password=password,
+        )
+    else:
+        return login(
+            token=GITHUB_APIKEY,
+        )
 
 
 class PreindexNotFinished(Exception):
