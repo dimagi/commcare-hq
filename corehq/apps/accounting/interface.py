@@ -121,9 +121,6 @@ class AccountingInterface(AddItemInterface):
 
     item_name = "Billing Account"
 
-    def validate_document_class(self):
-        return True
-
     @property
     def new_item_view(self):
         from corehq.apps.accounting.views import NewBillingAccountView
@@ -226,9 +223,6 @@ class SubscriptionInterface(AddItemInterface):
     hide_filters = False
 
     item_name = "Subscription"
-
-    def validate_document_class(self):
-        return True
 
     @property
     def new_item_view(self):
@@ -381,9 +375,6 @@ class SoftwarePlanInterface(AddItemInterface):
     hide_filters = False
 
     item_name = "Software Plan"
-
-    def validate_document_class(self):
-        return True
 
     @property
     def new_item_view(self):
