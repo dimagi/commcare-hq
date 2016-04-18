@@ -130,7 +130,7 @@ class BaseCCTests(TestCase):
                 mismatches.append('{}: {} != {}'.format(indicator_key, expected_value, actual_value))
 
         if mismatches:
-            self.fail('Mismatching indicators:\n{}'.format('\t\n'.join(mismatches)))
+            self.fail('Mismatching indicators:\n{}'.format('\t\n'.join(sorted(mismatches))))
 
         if user_data:
             self.fail('Additional indicators:\n{}'.format('\t\n'.join(user_data.keys())))
@@ -151,12 +151,13 @@ class CallCenterTests(BaseCCTests):
 
     @classmethod
     def tearDownClass(cls):
+        clear_data(cls.aarohi_domain.name)
+        clear_data(cls.cc_domain.name)
         cls.cc_user.delete()
         cls.cc_user_no_data.delete()
         cls.cc_domain.delete()
         cls.aarohi_user.delete()
         cls.aarohi_domain.delete()
-        clear_data()
 
     def check_cc_indicators(self, data_set, expected):
         self._test_indicators(self.cc_user, data_set, expected)
@@ -412,8 +413,8 @@ class CallCenterSupervisorGroupTest(BaseCCTests):
 
     @classmethod
     def tearDownClass(cls):
+        clear_data(cls.domain.name)
         cls.domain.delete()
-        clear_data()
 
     def test_users_assigned_via_group(self):
         """
@@ -469,8 +470,8 @@ class CallCenterCaseSharingTest(BaseCCTests):
 
     @classmethod
     def tearDownClass(cls):
+        clear_data(cls.domain.name)
         cls.domain.delete()
-        clear_data()
 
     def test_cases_owned_by_group(self):
         """
@@ -513,8 +514,8 @@ class CallCenterTestOpenedClosed(BaseCCTests):
 
     @classmethod
     def tearDownClass(cls):
+        clear_data(cls.domain.name)
         cls.domain.delete()
-        clear_data()
 
     def test_opened_closed(self):
         """
