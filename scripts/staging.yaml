@@ -57,6 +57,7 @@ branches:
   - inline-editing # Jenny 4/9
   - edit-form-fix # wsp 4/7
   - uatbc/case-search-es         # FR 4/12
+  - fetch-formplayer-jar # ben 4/18
 submodules:
   submodules/touchforms-src:
     # let's leave this here even when empty
