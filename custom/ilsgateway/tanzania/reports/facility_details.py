@@ -3,6 +3,7 @@ from corehq.apps.locations.dbaccessors import get_user_docs_by_location
 from corehq.apps.locations.models import SQLLocation
 from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn
 from corehq.apps.sms.models import SMS
+from corehq.apps.users.models import CommCareUser
 from corehq.util.timezones.conversions import ServerTime
 from corehq.const import SERVER_DATETIME_FORMAT_NO_SEC
 from custom.ilsgateway.models import SupplyPointStatusTypes, ILSNotes
@@ -110,6 +111,7 @@ class Notes(ILSData):
     title = 'Notes'
     show_chart = False
     show_table = True
+    use_datatables = True
 
     @property
     def headers(self):
@@ -154,6 +156,7 @@ class RecentMessages(ILSData):
     show_chart = False
     show_table = True
     default_rows = 5
+    use_datatables = True
 
     @property
     def headers(self):

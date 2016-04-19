@@ -32,6 +32,7 @@ class ILSData(object):
     subtitle = None
     default_rows = 10
     searchable = False
+    use_datatables = False
 
     chart_config = {
         'on_time': {
@@ -350,10 +351,10 @@ class MultiReport(SqlTabularReport, ILSMixin, CustomProjectReport,
                 title=data_provider.title,
                 title_url=data_provider.title_url,
                 title_url_name=data_provider.title_url_name,
+                datatables=data_provider.use_datatables,
                 slug=data_provider.slug,
                 headers=headers,
                 rows=rows,
-                datatables=self.use_datatables,
                 total_row=total_row,
                 start_at_row=0,
                 subtitle=data_provider.subtitle,

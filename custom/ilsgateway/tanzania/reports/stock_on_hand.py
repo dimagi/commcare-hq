@@ -46,7 +46,7 @@ def product_format(ret, srs, month):
     if mos == NO_DATA:
         text = '<span style="color:grey">%s</span>'
     elif mos == STOCKOUT:
-        text = '<span class="fa-remove" style="color:red"/>%s'
+        text = '<span class="fa fa-remove" style="color:red"/>%s'
     elif mos < LOW:
         text = '<span class="fa fa-exclamation-triangle" style="color:orange"/>%s'
     elif mos <= ADEQUATE:
@@ -70,6 +70,7 @@ class SohPercentageTableData(ILSData):
     show_chart = False
     show_table = True
     searchable = True
+    use_datatables = True
 
     @property
     def headers(self):
@@ -284,6 +285,7 @@ class DistrictSohPercentageTableData(ILSData):
     show_chart = False
     show_table = True
     searchable = True
+    use_datatables = True
 
     @property
     def title(self):
@@ -418,7 +420,6 @@ class ProductSelectionPane(ILSData):
 class StockOnHandReport(DetailsReport):
     slug = "stock_on_hand"
     name = 'Stock On Hand'
-    use_datatables = True
 
     @property
     def title(self):
