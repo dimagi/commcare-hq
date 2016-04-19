@@ -2,7 +2,7 @@ from smtplib import SMTPSenderRefused
 import uuid
 import requests
 import re
-from urllib import quote
+from urllib import urlencode
 from django.conf import settings
 from django.core.mail import get_connection
 from django.core.mail.message import EmailMultiAlternatives
@@ -20,7 +20,7 @@ in HTML, or use an email client that supports HTML emails.
 
 def send_HTML_email(subject, recipient, html_content, text_content=None,
                     cc=None, email_from=settings.DEFAULT_FROM_EMAIL,
-                    file_attachments=None, bcc=None, ga_track=False):
+                    file_attachments=None, bcc=None, ga_track=False, ga_tracking_info=None):
 
     recipient = list(recipient) if not isinstance(recipient, basestring) else [recipient]
 
@@ -35,11 +35,18 @@ def send_HTML_email(subject, recipient, html_content, text_content=None,
             )
 
     if ga_track and settings.ANALYTICS_IDS.get('GOOGLE_ANALYTICS_API_ID'):
-        url_subject = quote(subject.encode('utf-8'))
-        url = "https://www.google-analytics.com/collect?v=1&tid={ga_tid}&cid={ga_cid}&dt={subject}&t=event&ec=email" \
-            .format(ga_tid=settings.ANALYTICS_IDS.get('GOOGLE_ANALYTICS_API_ID'),
-                    ga_cid=uuid.uuid4().hex,
-                    subject=url_subject)
+        ga_data = {
+            'v': 1,
+            'tid': settings.ANALYTICS_IDS.get('GOOGLE_ANALYTICS_API_ID'),
+            'cid': uuid.uuid4().hex,
+            'dt': subject.encode('utf-8'),
+            't': 'event',
+            'ec': 'email'
+        }
+        extra_data = ga_tracking_info if ga_tracking_info else {}
+        ga_data.update(extra_data)
+        post_data = urlencode(ga_data)
+        url = "https://www.google-analytics.com/collect?" + post_data
         new_content = '<img src="{url}&ea=open"/>\n</body>'.format(url=url)
         html_content, count = re.subn(r'(.*)</body>', r'\1'+new_content, html_content)
         assert count != 0, 'Attempted to add tracking to HTML Email with no closing body tag'
