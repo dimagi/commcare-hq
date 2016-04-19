@@ -48,7 +48,9 @@
                                                 {% trans "to your Android device." %}
                                             </p>
                                             <label>{% trans "Language Profile" %}</label>
+                                            {% if build_profile_access %}
                                             <select data-bind="optstr: lang_profiles(), value: profile" class="form-control"></select>
+                                            {% endif %}
                                             {% if multimedia_state.has_media %}
                                                 <div class="checkbox">
                                                     <label data-bind="visible: allow_media_install">
@@ -105,7 +107,9 @@
                                             </div>
                                             <div data-bind="if: hqImport('app_manager/js/app_manager.js').versionGE(build_spec.version(), '2.13.0') && allow_media_install()">
                                                 <label>{% trans "Language Profile" %}</label>
+                                                {% if build_profile_access %}
                                                 <select data-bind="optstr: lang_profiles(), value: profile" class="form-control"></select>
+                                                {% endif %}
                                                 <ol>
                                                     <li>
                                                         {% trans "Download" %}

@@ -157,7 +157,9 @@ class Command(BaseCommand):
         Role(slug=privileges.CUSTOM_INTENTS, name='Custom Intents',
              description='Allows for specifying custom intents'),
         Role(slug=privileges.ADVANCED_DOMAIN_SECURITY, name='Advanced Domain Security',
-             description='Allows domains to set security policies for all web users')
+             description='Allows domains to set security policies for all web users'),
+        Role(slug=privileges.BUILD_PROFILES, name='Build Profiles',
+             description='Allows domains to create build profiles to customize app deploys')
     ]
 
     BOOTSTRAP_PLANS = [
@@ -201,7 +203,8 @@ class Command(BaseCommand):
         privileges.ACTIVE_DATA_MANAGEMENT,
         privileges.COMMCARE_LOGO_UPLOADER,
         privileges.CUSTOM_INTENTS,
-        privileges.ADVANCED_DOMAIN_SECURITY
+        privileges.ADVANCED_DOMAIN_SECURITY,
+        privileges.BUILD_PROFILES,
     ]
 
     enterprise_plan_features = advanced_plan_features + []

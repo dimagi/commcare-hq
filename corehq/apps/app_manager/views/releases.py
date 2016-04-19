@@ -76,6 +76,7 @@ def releases_ajax(request, domain, app_id, template='app_manager/partials/releas
     app = get_app(domain, app_id)
     context = get_apps_base_context(request, domain, app)
     can_send_sms = domain_has_privilege(domain, privileges.OUTBOUND_SMS)
+    build_profile_access = domain_has_privilege(domain, privileges.BUILD_PROFILES)
 
     context.update({
         'release_manager': True,
@@ -85,6 +86,7 @@ def releases_ajax(request, domain, app_id, template='app_manager/partials/releas
             get_sms_autocomplete_context(request, domain)['sms_contacts']
             if can_send_sms else []
         ),
+        'build_profile_access': build_profile_access
     })
     if not app.is_remote_app():
         # Multimedia is not supported for remote applications at this time.
