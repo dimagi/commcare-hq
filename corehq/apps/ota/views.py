@@ -19,6 +19,7 @@ from corehq.apps.ota.forms import PrimeRestoreCacheForm, AdvancedPrimeRestoreCac
 from corehq.apps.ota.tasks import prime_restore
 from corehq.apps.style.views import BaseB3SectionPageView
 from corehq.apps.users.models import CouchUser, CommCareUser
+from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 from corehq.form_processor.serializers import CommCareCaseSQLSerializer, get_instance_from_data
 from corehq.pillows.mappings.case_search_mapping import CASE_SEARCH_MAX_RESULTS
 from corehq.tabs.tabclasses import ProjectSettingsTab
@@ -84,10 +85,7 @@ def claim(request, domain):
         host_type = request.POST.get('case_type')  # Nice to have,
         host_name = request.POST.get('case_name')  # but optional
         if not (host_type and host_name):
-            if should_use_sql_backend(domain):
-                case = CommCareCaseSQL.objects.get(case_id=host_id)
-            else:
-                case = CommCareCase.get(host_id)
+            case = CaseAccessors(domain).get_case(host_id)
             host_type = case.type
             host_name = case.name
         claim_case_block = CaseBlock(
