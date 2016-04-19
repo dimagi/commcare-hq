@@ -492,13 +492,14 @@ class WireInvoiceInterface(InvoiceInterfaceBase):
 
     @property
     def rows(self):
-        from corehq.apps.accounting.views import (
-            WireInvoiceSummaryView, ManageBillingAccountView,
-        )
-        rows = []
-        for invoice in self.invoices:
-            new_this_month = (invoice.date_created.month == invoice.account.date_created.month
-                              and invoice.date_created.year == invoice.account.date_created.year)
+        def _invoice_to_row(invoice):
+            from corehq.apps.accounting.views import (
+                WireInvoiceSummaryView, ManageBillingAccountView,
+            )
+            new_this_month = (
+                invoice.date_created.month == invoice.account.date_created.month and
+                invoice.date_created.year == invoice.account.date_created.year
+            )
             try:
                 contact_info = BillingContactInfo.objects.get(account=invoice.account)
             except BillingContactInfo.DoesNotExist:
@@ -506,7 +507,7 @@ class WireInvoiceInterface(InvoiceInterfaceBase):
 
             account_url = reverse(ManageBillingAccountView.urlname, args=[invoice.account.id])
             invoice_url = reverse(WireInvoiceSummaryView.urlname, args=(invoice.id,))
-            columns = [
+            return [
                 format_datatables_data(
                     mark_safe(make_anchor_tag(invoice_url, invoice.invoice_number)),
                     invoice.id,
@@ -537,22 +538,21 @@ class WireInvoiceInterface(InvoiceInterfaceBase):
                 "YES" if invoice.is_hidden else "no",
             ]
 
-            rows.append(columns)
-        return rows
+        return map(_invoice_to_row, self._invoices)
 
     @property
     @memoized
-    def filters(self):
-        filters = {}
+    def _invoices(self):
+        queryset = WireInvoice.objects.all()
 
         domain_name = DomainFilter.get_value(self.request, self.domain)
         if domain_name is not None:
-            filters.update(domain=domain_name)
+            queryset = queryset.filter(domain=domain_name)
 
         payment_status = \
             PaymentStatusFilter.get_value(self.request, self.domain)
         if payment_status is not None:
-            filters.update(
+            queryset = queryset.filter(
                 date_paid__isnull=(
                     payment_status == PaymentStatusFilter.NOT_PAID
                 ),
@@ -561,7 +561,7 @@ class WireInvoiceInterface(InvoiceInterfaceBase):
         statement_period = \
             StatementPeriodFilter.get_value(self.request, self.domain)
         if statement_period is not None:
-            filters.update(
+            queryset = queryset.filter(
                 date_start__gte=statement_period[0],
                 date_start__lte=statement_period[1],
             )
@@ -569,36 +569,29 @@ class WireInvoiceInterface(InvoiceInterfaceBase):
         due_date_period = \
             DueDatePeriodFilter.get_value(self.request, self.domain)
         if due_date_period is not None:
-            filters.update(
+            queryset = queryset.filter(
                 date_due__gte=due_date_period[0],
                 date_due__lte=due_date_period[1],
             )
 
         is_hidden = IsHiddenFilter.get_value(self.request, self.domain)
         if is_hidden is not None:
-            filters.update(
+            queryset = queryset.filter(
                 is_hidden=(is_hidden == IsHiddenFilter.IS_HIDDEN),
             )
 
-        return filters
-
-    @property
-    @memoized
-    def invoices(self):
-        return WireInvoice.objects.filter(**self.filters)
+        return queryset
 
     @property
     def email_response(self):
         self.is_rendered_as_email = True
         statement_start = StatementPeriodFilter.get_value(
             self.request, self.domain) or datetime.date.today()
-        return render_to_string('accounting/bookkeeper_email.html',
-            {
-                'headers': self.headers,
-                'month': statement_start.strftime("%B"),
-                'rows': self.rows,
-            }
-        )
+        return render_to_string('accounting/bookkeeper_email.html', {
+            'headers': self.headers,
+            'month': statement_start.strftime("%B"),
+            'rows': self.rows,
+        })
 
 
 class InvoiceInterface(InvoiceInterfaceBase):
