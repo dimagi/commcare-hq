@@ -1,67 +1,29 @@
 import json
 import os
-from sqlagg.columns import SimpleColumn, SumColumn, CountColumn
-from sqlagg.filters import EQ, BETWEEN
-
 from corehq.apps.locations.models import SQLLocation
 from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn, DataTablesColumnGroup
-from corehq.apps.reports.sqlreport import SqlData, DatabaseColumn
-from corehq.apps.userreports.models import DataSourceConfiguration
-from corehq.apps.userreports.sql import get_table_name
-from corehq.sql_db.connections import UCR_ENGINE_ID
+from corehq.apps.reports_core.filters import Choice
+from corehq.apps.userreports.models import ReportConfiguration
+from corehq.apps.userreports.reports.factory import ReportFactory
 from django.utils.translation import ugettext as _
+from corehq.util.couch import get_document_or_not_found
 
 
-class ICDSData(SqlData):
+class ICDSData(object):
 
-    def __init__(self, source=None, config=None):
-        self.source = source
-        super(ICDSData, self).__init__(config=config)
-        data_source = DataSourceConfiguration.get(source['id'])
-        self.table_name = get_table_name(self.config['domain'], data_source.table_id)
+    def __init__(self, domain, filters, report_id):
+        report_config = ReportFactory.from_spec(
+            get_document_or_not_found(
+                ReportConfiguration,
+                domain,
+                report_id
+            )
+        )
+        report_config.set_filter_values(filters)
+        self.report_config = report_config
 
-    @property
-    def engine_id(self):
-        return UCR_ENGINE_ID
-
-    @property
-    def filters(self):
-        filters = []
-        if 'location_id' in self.config and self.config['location_id']:
-            type = SQLLocation.objects.get(
-                location_id=self.config['location_id']
-            ).location_type.name.lower()
-            filters.append(EQ("%s_id" % type, 'location_id'))
-        if ('start_date' in self.config and self.config['start_date'])\
-                and ('end_date' in self.config and self.config['end_date']):
-            filters.append(BETWEEN(self.source['date_filter_field'], 'start_date', 'end_date'))
-        return filters
-
-    @property
-    def group_by(self):
-        # if group_by equals location then groupo by chosen location type
-        if self.source['group_by'] == "location":
-            type = SQLLocation.objects.get(
-                location_id=self.config['location_id']
-            ).location_type.name.lower()
-            return ["%s_id" % type]
-        return [self.source['group_by']]
-
-    @property
-    def columns(self):
-        columns = []
-        for col in self.source['columns']:
-            if col['agg_fun'] == 'count':
-                column = CountColumn
-            elif col['agg_fun'] == 'sum':
-                column = SumColumn
-                type = SQLLocation.objects.get(
-                    location_id=self.config['location_id']
-                ).location_type.name.lower()
-                columns.append(DatabaseColumn('test', SimpleColumn("%s_id" % type)))
-
-            columns.append(DatabaseColumn(col['column_name'], column(col['column_name'])))
-        return columns
+    def data(self):
+        return self.report_config.get_data()
 
 
 class ICDSMixin(object):
@@ -71,13 +33,24 @@ class ICDSMixin(object):
         with open(os.path.join(os.path.dirname(__file__), 'resources/block_mpr.json')) as f:
             return json.loads(f.read())[self.slug]
 
-    def custom_data(self, count=False):
+    def custom_data(self, filters, domain):
         data = {}
-        for source in self.sources['data_source']:
-            if not count:
-                data.update(ICDSData(source=source, config=self.config).data.get(self.config['location_id'], {}))
-            else:
-                data = len(ICDSData(source=source, config=self.config).data)
+        for config in self.sources['data_source']:
+            if 'date_filter_field' in config:
+                filters.update({config['date_filter_field']: self.config['date_span']})
+            report_data = ICDSData(domain, filters, config['id']).data()
+            for column in config['columns']:
+                column_agg_func = column['agg_fun']
+                column_name = column['column_name']
+                column_data = 0
+                if column_agg_func == 'sum':
+                    column_data = sum([x[column_name] for x in report_data])
+                elif column_agg_func == 'count':
+                    column_data = len(report_data)
+
+                data.update({
+                    column_name: data.get(column_name, 0) + column_data
+                })
         return data
 
 
@@ -143,13 +116,20 @@ class Operationalization(ICDSMixin):
                 loc for loc in awcs
                 if 'test' not in loc.metadata and loc.metadata.get('test', '').lower() != 'yes'
             ]
+            key = selected_location.location_type.name.lower() + '_id'
 
+            data = self.custom_data(
+                domain=self.config['domain'],
+                filters={
+                    key: [Choice(value=selected_location.location_id, display=selected_location.name)],
+                }
+            )
             return [
                 [
                     'No. of AWCs',
                     len(awc_number),
                     0,
-                    self.custom_data(count=True)
+                    data['owner_id']
                 ],
                 [
                     'No. of Mini AWCs',
@@ -211,7 +191,10 @@ class Population(ICDSMixin):
     @property
     def rows(self):
         if self.config['location_id']:
-            data = self.custom_data()
+            data = self.custom_data(
+                domain=self.config['domain'],
+                filters={}
+            )
             return [
                 [
                     "Total Population of the project (as of last April):",
@@ -248,17 +231,27 @@ class BirthsAndDeaths(ICDSMixin):
     @property
     def rows(self):
         if self.config['location_id']:
-            custom_data = self.custom_data()
+            selected_location = SQLLocation.objects.get(
+                location_id=self.config['location_id']
+            )
+            key = selected_location.location_type.name.lower() + '_id'
+
+            data = self.custom_data(
+                domain=self.config['domain'],
+                filters={
+                    key: [Choice(value=selected_location.location_id, display=selected_location.name)],
+                }
+            )
             rows = []
             for row in self.row_config:
                 row_data = []
                 for idx, cell in enumerate(row):
                     if isinstance(cell, tuple):
-                        x = custom_data.get(cell[0], 0)
-                        y = custom_data.get(cell[1], 0)
+                        x = data.get(cell[0], 0)
+                        y = data.get(cell[1], 0)
                         row_data.append(x + y)
                     else:
-                        row_data.append(custom_data.get(cell, cell if cell == '--' or idx in [0, 1] else 0))
+                        row_data.append(data.get(cell, cell if cell == '--' or idx in [0, 1] else 0))
                 rows.append(row_data)
             return rows
 

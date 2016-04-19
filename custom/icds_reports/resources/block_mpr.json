@@ -2,38 +2,34 @@
   "operationalization": {
     "data_source": [
       {
-        "id": "a187158f64f500e0d91c4ce36e8cf5cc",
+        "id": "006c243827ea58a92eb80117abc61629",
+        "date_filter_field": "submitted_on",
         "columns": [
           {
-            "column_name": "awc_id",
+            "column_name": "owner_id",
             "agg_fun": "count"
           }
-        ],
-        "group_by": "awc_id",
-        "date_filter_field": "submitted_on"
+        ]
       }
     ]
   },
   "population" : {
     "data_source": [
       {
-        "id": "5116430e50fcfb29e47316dc00b282ca",
+        "id": "05e9c905d1cf4b11d0cfc92b559aaddd",
         "columns": [
           {
             "column_name": "open_count",
             "agg_fun": "sum"
           }
-        ],
-        "group_by": "location"
+        ]
       }
     ]
   },
   "births_and_deaths": {
     "data_source": [
       {
-        "id": "a347fa3a66a68a53bad7a11284686cd4",
-        "group_by": "location",
-        "date_filter_field": "submitted_on",
+        "id": "a347fa3a66a68a53bad7a11284a85573",
         "columns": [
           {
             "column_name": "live_F_resident_birth_count",
@@ -102,9 +98,8 @@
         ]
       },
       {
-        "id": "5116430e50fcfb29e47316dc00b282ca",
-        "group_by": "location",
-        "date_filter_field": "opened_on",
+        "id": "d983f451465565589a025316f2e9638b",
+        "date_filter_field": "date_death",
         "columns": [
           {
             "column_name": "dead_F_resident_neo_count",

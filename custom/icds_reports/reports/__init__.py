@@ -38,7 +38,8 @@ class IcdsBaseReport(CustomProjectReport, ProjectReportParametersMixin, MonthYea
             month=self.month,
             year=self.year,
             start_date=start_date,
-            end_date=end_date
+            end_date=end_date,
+            date_span=self.datespan
         )
         return config
 
