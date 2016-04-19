@@ -139,33 +139,35 @@
         </fieldset>
         {% endif %}
         <div class="form-actions">
-            <button type="submit" class="btn btn-lg btn-primary" data-bind="
-                click: save,
-                disable: (saveState() === Exports.Constants.SAVE_STATES.SAVING ||
-                          saveState() === Exports.Constants.SAVE_STATES.SUCCESS)
-            ">
-                <span data-bind="
-                    visible: saveState() === Exports.Constants.SAVE_STATES.READY,
-                    text: getSaveText()">
-                </span>
-                <span data-bind="visible: saveState() === Exports.Constants.SAVE_STATES.SAVING">
-                    <i class="icon-refresh icon-spin"></i>
-                    {% trans "Saving" %}
-                </span>
-                <span data-bind="visible: saveState() === Exports.Constants.SAVE_STATES.ERROR">
-                    {% trans "Try Again" %}
-                </span>
-                <span data-bind="visible: saveState() === Exports.Constants.SAVE_STATES.SUCCESS">
-                    {% trans "Saved!" %}
-                </span>
-            </button>
-            <a class="btn btn-default btn-lg" href="{{ export_home_url }}">{% trans "Cancel" %}</a>
-            {% if export_instance.get_id %}
-            <a class="btn btn-lg btn-danger pull-right" data-toggle="modal" href="#delete-export-modal-{{ export_instance.get_id }}">
-                <i class="fa fa-remove fa-white"></i>
-                {% trans "Delete this Export" %}
-            </a>
-            {% endif %}
+            <div class="col-sm-offset-2 col-sm-10 controls">
+                <button type="submit" class="btn btn-lg btn-primary" data-bind="
+                    click: save,
+                    disable: (saveState() === Exports.Constants.SAVE_STATES.SAVING ||
+                              saveState() === Exports.Constants.SAVE_STATES.SUCCESS)
+                ">
+                    <span data-bind="
+                        visible: saveState() === Exports.Constants.SAVE_STATES.READY,
+                        text: getSaveText()">
+                    </span>
+                    <span data-bind="visible: saveState() === Exports.Constants.SAVE_STATES.SAVING">
+                        <i class="icon-refresh icon-spin"></i>
+                        {% trans "Saving" %}
+                    </span>
+                    <span data-bind="visible: saveState() === Exports.Constants.SAVE_STATES.ERROR">
+                        {% trans "Try Again" %}
+                    </span>
+                    <span data-bind="visible: saveState() === Exports.Constants.SAVE_STATES.SUCCESS">
+                        {% trans "Saved!" %}
+                    </span>
+                </button>
+                <a class="btn btn-default btn-lg" href="{{ export_home_url }}">{% trans "Cancel" %}</a>
+                {% if export_instance.get_id %}
+                <a class="btn btn-lg btn-danger pull-right" data-toggle="modal" href="#delete-export-modal-{{ export_instance.get_id }}">
+                    <i class="fa fa-remove fa-white"></i>
+                    {% trans "Delete this Export" %}
+                </a>
+                {% endif %}
+            </div>
         </div>
     </form>
 </div>
