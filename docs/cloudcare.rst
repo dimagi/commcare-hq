@@ -28,10 +28,10 @@ The backbone app consists of several ``Backbone.View``\ s subclasses. What follo
 ``cloudCare.FormListView``
     Renders the list of forms in the currently selected module on the left hand side of the page.
 
-``cloudCare.CaseMainView``
+``cloudCareCases.CaseMainView``
     Renders the list of cases for the selected form. Note that this list is populated asynchronously.
 
-``cloudCare.CaseDetailsView``
+``cloudCareCases.CaseDetailsView``
     Renders the table displaying the currently selected case's properties.
 
 ``cloudCare.AppView``
@@ -39,7 +39,7 @@ The backbone app consists of several ``Backbone.View``\ s subclasses. What follo
     It is also responsible for inserting the form html into the DOM.
     This html is constructed using JSON returned by the touchforms process and several js libs
     found in the ``/touchforms/formplayer/static/formplayer/script/`` directory. This is kicked off by the AppView's ``_playForm`` method.
-    AppView also inserts ``cloudCare.CaseMainView``\ s as necessary.
+    AppView also inserts ``cloudCareCases.CaseMainView``\ s as necessary.
 
 ``cloudCare.AppMainView``
     AppMainView (not to be confused with AppView) holds all of the other views and is the entry point for the application. Most of the applications event handling is set up inside AppMainView's ``initialize`` method. The AppMainView has a router. Event handlers are set on this router to modify the state of the backbone application when the browser's back button is used, or when the user enters a link to a certain part of the app (like a particular form) directly.

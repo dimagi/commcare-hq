@@ -8,11 +8,11 @@ from corehq.apps.app_manager.dbaccessors import get_app
 from corehq.apps.domain.decorators import domain_admin_required, login_or_digest_or_basic_or_apikey
 from corehq.apps.domain.models import Domain
 from corehq.apps.domain.views import DomainViewMixin, EditMyProjectSettingsView
-from corehq.apps.hqwebapp.models import ProjectSettingsTab
 from corehq.apps.ota.forms import PrimeRestoreCacheForm, AdvancedPrimeRestoreCacheForm
 from corehq.apps.ota.tasks import prime_restore
 from corehq.apps.style.views import BaseB3SectionPageView
 from corehq.apps.users.models import CouchUser, CommCareUser
+from corehq.tabs.tabclasses import ProjectSettingsTab
 from corehq.util.view_utils import json_error
 from dimagi.utils.decorators.memoized import memoized
 from casexml.apps.phone.restore import RestoreConfig, RestoreParams, RestoreCacheSettings
@@ -100,7 +100,6 @@ class PrimeRestoreCacheView(BaseB3SectionPageView, DomainViewMixin):
         main_context.update({
             'active_tab': ProjectSettingsTab(
                 self.request,
-                self.urlname,
                 domain=self.domain,
                 couch_user=self.request.couch_user,
                 project=self.request.project

@@ -1,7 +1,6 @@
 from django.test import override_settings, SimpleTestCase, TestCase
 from pillowtop import get_all_pillow_instances, get_all_pillow_classes, get_pillow_by_name
 from pillowtop.checkpoints.manager import PillowCheckpoint
-from pillowtop.dao.mock import MockDocumentStore
 from pillowtop.exceptions import PillowNotFoundError
 from pillowtop.feed.mock import RandomChangeFeed
 from pillowtop.feed.interface import Change
@@ -18,12 +17,12 @@ class FakePillow(BasicPillow):
 @override_settings(PILLOWTOPS={'test': ['pillowtop.tests.FakePillow']})
 class PillowImportTestCase(SimpleTestCase):
 
-    def test_get_pillow_classes(self):
+    def test_get_all_pillow_classes(self):
         pillows = get_all_pillow_classes()
         self.assertEquals(len(pillows), 1)
         self.assertTrue(isclass(pillows[0]))
 
-    def test_get_pillow_instances(self):
+    def test_get_all_pillow_instances(self):
         pillows = get_all_pillow_instances()
         self.assertEquals(len(pillows), 1)
         self.assertFalse(isclass(pillows[0]))
@@ -43,11 +42,9 @@ class FakeConstructedPillow(ConstructedPillow):
     pass
 
 
-def make_fake_constructed_pillow():
-    fake_dao = MockDocumentStore()
+def make_fake_constructed_pillow(pillow_id):
     pillow = FakeConstructedPillow(
-        name='FakeConstructedPillowName',
-        document_store=fake_dao,
+        name=pillow_id,
         checkpoint=PillowCheckpoint('fake-constructed-pillow'),
         change_feed=RandomChangeFeed(10),
         processor=LoggingProcessor(),
@@ -98,7 +95,7 @@ class PillowFactoryFunctionTestCase(SimpleTestCase):
 class PillowTestCase(TestCase):
 
     def test_pillow_reset_checkpoint(self):
-        pillow = make_fake_constructed_pillow()
+        pillow = make_fake_constructed_pillow('FakeConstructedPillowName')
         seq_id = '456'
         pillow.set_checkpoint(Change('123', seq_id))
         self.assertEqual(pillow.checkpoint.get_or_create_wrapped().document.sequence, seq_id)

@@ -40,7 +40,6 @@ class PatientSubmissionReport(GenericTabularReport, CustomProjectReport, Project
     name = 'Patient Submissions'
     use_datatables = True
     hide_filters = True
-
     is_bootstrap3 = True
 
     @classmethod

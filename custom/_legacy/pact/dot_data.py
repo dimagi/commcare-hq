@@ -1,5 +1,4 @@
 import logging
-import dateutil
 from django.conf import settings
 from pytz import timezone
 from datetime import datetime, timedelta, date
@@ -233,45 +232,6 @@ def sort_observations(observations):
     return sorted(observations, cmp=cmp_observation, reverse=True)
 
 
-def get_regimen_code_arr(str_regimen):
-    """
-    Helper function to decode regimens for both the old style regimens
-    (in REGIMEN_CHOICES) as well as the new style
-    regimens as required in the technical specs above.
-
-    should return an array of day slot indices.
-    """
-    if str_regimen is None or str_regimen == '' or str_regimen == 'None':
-        return []
-
-    # legacy handling
-    if str_regimen.lower() == 'qd':
-        return [0]
-    elif str_regimen.lower() == 'qd-am':
-        return [0]
-    elif str_regimen.lower() == 'qd-pm':
-        return [2]
-    elif str_regimen.lower() == 'bid':
-        return [0, 2]
-    elif str_regimen.lower() == 'qid':
-        return [0, 1, 2, 3]
-    elif str_regimen.lower() == 'tid':
-        return [0, 1, 2]
-    elif str_regimen.lower() == '':
-        return []
-
-    # newer handling, a split string
-    splits = str_regimen.split(',')
-    ret = []
-    for x in splits:
-        if x in DAY_SLOTS_BY_TIME.keys():
-            ret.append(DAY_SLOTS_BY_TIME[x])
-        else:
-            logging.error("value error, the regimen string is incorrect for the given patient, returning blank")
-            ret = []
-    return ret
-
-
 def get_dots_case_json(casedoc, anchor_date=None):
     """
     Return JSON-ready array of the DOTS block for given patient.
@@ -309,27 +269,3 @@ def get_dots_case_json(casedoc, anchor_date=None):
 
     ret['days'].reverse()
     return ret
-
-
-def calculate_regimen_caseblock(case):
-    """
-    Forces all labels to be reset back to the labels set
-    on the patient document.
-    Patient document trumps casedoc in this case.
-    """
-    update_ret = {}
-    for prop_fmt in ['dot_a_%s', 'dot_n_%s']:
-        if prop_fmt[4] == 'a':
-            code_arr = get_regimen_code_arr(case.art_regimen)
-            update_ret['artregimen'] = str(len(code_arr)) if len(code_arr) > 0 else ""
-        elif prop_fmt[4] == 'n':
-            code_arr = get_regimen_code_arr(case.non_art_regimen)
-            update_ret['nonartregimen'] = str(len(code_arr)) if len(code_arr) > 0 else ""
-        digit_strings = ["zero", 'one', 'two', 'three', 'four']
-        for x in range(1, 5):
-            prop_prop = prop_fmt % digit_strings[x]
-            if x > len(code_arr):
-                update_ret[prop_prop] = ''
-            else:
-                update_ret[prop_prop] = str(code_arr[x-1])
-    return update_ret

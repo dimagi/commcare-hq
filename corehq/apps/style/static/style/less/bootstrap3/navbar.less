@@ -5,7 +5,21 @@
   margin-bottom: 0px;
 
   .navbar-brand {
-    padding: 15px 20px;
+    padding: 11px;
+
+    // Standard HQ logo
+    // Custom domain logos use an actual image
+    > div {
+        background-image: url(/static/hqstyle/img/commcare-flower.png);
+        background-size: contain;
+        width: 38px;
+        height: 38px;
+
+        @media only screen and (-webkit-min-device-pixel-ratio: 2), (min-resolution: 192dpi) {
+            background-image: url(/static/hqstyle/img/commcare-flower-lg.png);
+            width: 51px;
+        }
+    }
   }
 
   .nav > li:not(.active) > a:focus,
@@ -54,8 +68,14 @@
   }
 }
 
-.nav-settings-bar > .navbar-nav {
-  padding-right: 10px;
+.nav-settings-bar {
+  > .navbar-nav {
+    padding-right: 10px;
+  }
+
+  > .navbar-btn {
+    margin-right: 10px;
+  }
 }
 
 @navbar-mobile-height: 40px;

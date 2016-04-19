@@ -19,15 +19,6 @@ class TestPillowTopFiltering(SimpleTestCase):
             'core': [
                 'corehq.pillows.case.CasePillow',
                 'corehq.pillows.xform.XFormPillow',
-                'corehq.pillows.domain.DomainPillow',
-                'corehq.pillows.user.UserPillow',
-                'corehq.pillows.application.AppPillow',
-                'corehq.pillows.group.GroupPillow',
-                'corehq.pillows.sms.SMSPillow',
-                'corehq.pillows.user.GroupToUserPillow',
-                'corehq.pillows.user.UnknownUsersPillow',
-                'corehq.pillows.sofabed.FormDataPillow',
-                'corehq.pillows.sofabed.CaseDataPillow',
             ],
             'phonelog': [
                 'corehq.pillows.log.PhoneLogPillow',
@@ -44,15 +35,6 @@ class TestPillowTopFiltering(SimpleTestCase):
     def test_no_blacklist_items(self):
         expected_pillows = {'CasePillow',
                             'XFormPillow',
-                            'DomainPillow',
-                            'UserPillow',
-                            'AppPillow',
-                            'GroupPillow',
-                            'SMSPillow',
-                            'GroupToUserPillow',
-                            'UnknownUsersPillow',
-                            'FormDataPillow',
-                            'CaseDataPillow',
                             'PhoneLogPillow',
                             'FakeConstructedPillowName',
                             }
@@ -63,15 +45,6 @@ class TestPillowTopFiltering(SimpleTestCase):
     def test_with_blacklist_items(self):
         expected_pillows = {'CasePillow',
                             'XFormPillow',
-                            'DomainPillow',
-                            'UserPillow',
-                            'AppPillow',
-                            'GroupPillow',
-                            'SMSPillow',
-                            'GroupToUserPillow',
-                            'UnknownUsersPillow',
-                            'FormDataPillow',
-                            'CaseDataPillow',
                             'FakeConstructedPillowName',
                             }
 
@@ -95,6 +68,6 @@ class TestPillowTopFiltering(SimpleTestCase):
             'custom.opm.models.OpmUserFluffPillow',
         ]
 
-        pillows = [c.name for c in get_pillows_for_env('india', self.pillowtops)]
+        pillows = [c.name for c in get_pillows_for_env('softlayer', self.pillowtops)]
         self.assertNotIn('OpmUserFluffPillow', pillows)
         self.assertIn('CareBiharFluffPillow', pillows)

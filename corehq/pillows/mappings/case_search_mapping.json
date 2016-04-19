@@ -1,0 +1,141 @@
+{
+    "date_detection": false,
+    "date_formats": "__DATE_FORMATS_ARR__",
+    "dynamic": false,
+    "_meta": {
+        "comment": "",
+        "created": "2013-09-19 @dmyung"
+    },
+    "properties": {
+        "case_properties": {
+            "type": "nested",
+            "dynamic": false,
+            "properties": {
+                "key": {
+                    "type": "string"
+                },
+                "value": {
+                    "type": "string"
+                }
+            }
+        },
+        "closed": {
+            "type": "boolean"
+        },
+        "closed_by": {
+            "type": "string"
+        },
+        "closed_on": {
+            "format": "__DATE_FORMATS_STRING__",
+            "type": "date"
+        },
+        "doc_type": {
+            "index": "not_analyzed",
+            "type": "string"
+        },
+        "domain": {
+            "fields": {
+                "exact": {
+                    "index": "not_analyzed",
+                    "type": "string"
+                }
+            },
+            "type": "multi_field"
+        },
+        "export_tag": {
+            "type": "string"
+        },
+        "external_id": {
+            "fields": {
+                "exact": {
+                    "index": "not_analyzed",
+                    "type": "string"
+                },
+                "external_id": {
+                    "index": "analyzed",
+                    "type": "string"
+                }
+            },
+            "type": "multi_field"
+        },
+        "indices": {
+            "dynamic": false,
+            "properties": {
+                "doc_type": {
+                    "index": "not_analyzed",
+                    "type": "string"
+                },
+                "identifier": {
+                    "type": "string"
+                },
+                "referenced_id": {
+                    "type": "string"
+                },
+                "referenced_type": {
+                    "type": "string"
+                },
+                "relationship": {
+                    "type": "string"
+                }
+            },
+            "type": "object"
+        },
+        "location_id": {
+            "type": "string"
+        },
+        "modified_on": {
+            "format": "__DATE_FORMATS_STRING__",
+            "type": "date"
+        },
+        "name": {
+            "fields": {
+                "exact": {
+                    "index": "not_analyzed",
+                    "type": "string"
+                },
+                "name": {
+                    "index": "analyzed",
+                    "type": "string"
+                }
+            },
+            "type": "multi_field"
+        },
+        "opened_by": {
+            "type": "string"
+        },
+        "opened_on": {
+            "format": "__DATE_FORMATS_STRING__",
+            "type": "date"
+        },
+        "owner_id": {
+            "type": "string"
+        },
+        "referrals": {
+            "enabled": false,
+            "type": "object"
+        },
+        "server_modified_on": {
+            "format": "__DATE_FORMATS_STRING__",
+            "type": "date"
+        },
+        "type": {
+            "fields": {
+                "exact": {
+                    "index": "not_analyzed",
+                    "type": "string"
+                },
+                "type": {
+                    "index": "analyzed",
+                    "type": "string"
+                }
+            },
+            "type": "multi_field"
+        },
+        "user_id": {
+            "type": "string"
+        },
+        "version": {
+            "type": "string"
+        }
+    }
+}

@@ -180,7 +180,8 @@ APP_BUILDER_CAREPLAN = StaticToggle(
 APP_BUILDER_ADVANCED = StaticToggle(
     'advanced-app-builder',
     'Advanced Module in App-Builder',
-    TAG_EXPERIMENTAL
+    TAG_EXPERIMENTAL,
+    [NAMESPACE_DOMAIN],
 )
 
 APP_BUILDER_SHADOW_MODULES = StaticToggle(
@@ -610,14 +611,6 @@ CUSTOM_MENU_BAR = StaticToggle(
     namespaces=[NAMESPACE_DOMAIN],
 )
 
-LINK_SUPPLY_POINT = StaticToggle(
-    'link_supply_point',
-    'Add a "Supply Point" tab to location pages.  This is feature flagged '
-    'because this is not a great way to display additional information.',
-    TAG_EXPERIMENTAL,
-    namespaces=[NAMESPACE_DOMAIN],
-)
-
 ICDS_REPORTS = StaticToggle(
     'icds_reports',
     'Enable access to the Tableau dashboard for ICDS',
@@ -666,6 +659,13 @@ USE_FORMPLAYER = StaticToggle(
     [NAMESPACE_DOMAIN],
 )
 
+FORMPLAYER_EXPERIMENT = StaticToggle(
+    'use_formplayer_experiment',
+    'Do formplayer experimenting with Science',
+    TAG_EXPERIMENTAL,
+    [NAMESPACE_DOMAIN],
+)
+
 FIXTURE_CASE_SELECTION = StaticToggle(
     'fixture_case',
     'Allow a configurable case list that is filtered based on a fixture type and fixture selection (Due List)',
@@ -699,6 +699,20 @@ TELERIVET_SETUP_WALKTHROUGH = StaticToggle(
     'telerivet_setup_walkthrough',
     'Use the new Telerivet setup walkthrough for creating Telerivet backends.',
     TAG_PRODUCT_PATH,
+    [NAMESPACE_DOMAIN],
+)
+
+ABT_REMINDER_RECIPIENT = StaticToggle(
+    'abt_reminder_recipient',
+    "Ability to send a reminder to the case owner's location's parent location",
+    TAG_ONE_OFF,
+    [NAMESPACE_DOMAIN],
+)
+
+AUTO_CASE_UPDATES = StaticToggle(
+    'auto_case_updates',
+    'Ability to perform automatic case updates without closing the case.',
+    TAG_ONE_OFF,
     [NAMESPACE_DOMAIN],
 )
 
@@ -737,6 +751,7 @@ USE_SQL_BACKEND = StaticToggle(
     [NAMESPACE_DOMAIN]
 )
 
+
 EWS_WEB_USER_EXTENSION = StaticToggle(
     'ews_web_user_extension',
     'Enable EWSGhana web user extension',
@@ -772,12 +787,6 @@ TF_USES_SQLITE_BACKEND = StaticToggle(
     [NAMESPACE_DOMAIN]
 )
 
-SECURE_SESSIONS_CHECKBOX = StaticToggle(
-    'secure_sessions_checkbox',
-    'Show secure sessions checkbox',
-    TAG_PRODUCT_PATH,
-    [NAMESPACE_DOMAIN]
-)
 
 CUSTOM_APP_BASE_URL = StaticToggle(
     'custom_app_base_url',
@@ -805,7 +814,7 @@ NOTIFICATIONS = StaticToggle(
 
 PROJECT_HEALTH_DASHBOARD = StaticToggle(
     'project_health_dashboard',
-    'Shows the project health dashboard in the reports navigation',
+    'Shows the project performance dashboard in the reports navigation',
     TAG_PRODUCT_PATH,
     [NAMESPACE_DOMAIN]
 )

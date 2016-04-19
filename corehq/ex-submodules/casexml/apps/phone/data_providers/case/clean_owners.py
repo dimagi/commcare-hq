@@ -85,18 +85,21 @@ class CleanOwnerCaseSyncOperation(object):
 
                 # update the indices in the new sync log
                 if case.indices:
-                    # and double check footprint for non-live cases
                     extension_indices[case.case_id] = {
                         index.identifier: index.referenced_id
                         for index in case.indices
                         if index.relationship == CASE_INDEX_EXTENSION
                     }
-                    child_indices[case.case_id] = {index.identifier: index.referenced_id for index in case.indices
-                                               if index.relationship == CASE_INDEX_CHILD}
+                    child_indices[case.case_id] = {
+                        index.identifier: index.referenced_id
+                        for index in case.indices
+                        if index.relationship == CASE_INDEX_CHILD
+                    }
                     for index in case.indices:
                         if index.referenced_id not in all_maybe_syncing:
                             case_ids_to_sync.add(index.referenced_id)
 
+                # and double check footprint for non-live cases
                 if not _is_live(case, self.restore_state):
                     all_dependencies_syncing.add(case.case_id)
                     if case.closed:
@@ -131,6 +134,9 @@ class CleanOwnerCaseSyncOperation(object):
                 primary_cases_syncing
             )
             index_tree = self.restore_state.last_sync_log.index_tree.apply_updates(index_tree)
+            extension_index_tree = self.restore_state.last_sync_log.extension_index_tree.apply_updates(
+                extension_index_tree
+            )
 
         self.restore_state.current_sync_log.case_ids_on_phone = case_ids_on_phone
         self.restore_state.current_sync_log.dependent_case_ids_on_phone = all_dependencies_syncing

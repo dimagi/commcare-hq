@@ -1,13 +1,16 @@
 from django.test import TestCase
 from casexml.apps.case.cleanup import rebuild_case_from_forms
+from casexml.apps.case.mock import CaseFactory
 from casexml.apps.case.models import CommCareCase
-from casexml.apps.stock.models import StockTransaction
 from corehq.apps.commtrack.helpers import make_product
-from corehq.apps.commtrack.models import StockState
 from corehq.apps.commtrack.processing import rebuild_stock_state
 from corehq.apps.commtrack.tests.util import get_single_balance_block
 from corehq.apps.hqcase.utils import submit_case_blocks
+from corehq.form_processor.interfaces.dbaccessors import LedgerAccessors, CaseAccessors
+from corehq.form_processor.interfaces.processor import FormProcessorInterface
 from corehq.form_processor.models import RebuildWithReason
+from corehq.form_processor.parsers.ledgers.helpers import UniqueLedgerReference
+from corehq.form_processor.tests.utils import run_with_all_backends
 
 LEDGER_BLOCKS_SIMPLE = """
 <transfer xmlns="http://commcarehq.org/ledger/v1" dest="{case_id}" date="2000-01-02" section-id="stock">
@@ -33,58 +36,56 @@ LEDGER_BLOCKS_INFERRED = """
 class RebuildStockStateTest(TestCase):
     def setUp(self):
         self.domain = 'asldkjf-domain'
-        self.case = CommCareCase(domain=self.domain)
-        self.case.save()
+        self.case = CaseFactory(domain=self.domain).create_case()
         self.product = make_product(self.domain, 'Product Name', 'prodcode')
         self._stock_state_key = dict(
             section_id='stock',
-            case_id=self.case.get_id,
+            case_id=self.case.case_id,
             product_id=self.product.get_id
         )
+        self.unique_reference = UniqueLedgerReference(
+            case_id=self.case.case_id, section_id='stock', entry_id=self.product.get_id
+        )
 
-    def _get_stats(self):
-        stock_state = StockState.objects.get(**self._stock_state_key)
-        latest_txn = StockTransaction.latest(**self._stock_state_key)
-        all_txns = StockTransaction.get_ordered_transactions_for_stock(
-            **self._stock_state_key)
-        return stock_state, latest_txn, all_txns
+        self.ledger_processor = FormProcessorInterface(self.domain).ledger_processor
+
+    def _assert_stats(self, epxected_tx_count, expected_stock_state_balance, expected_tx_balance):
+        ledger_value = LedgerAccessors(self.domain).get_ledger_value(**self.unique_reference._asdict())
+        latest_txn = LedgerAccessors(self.domain).get_latest_transaction(**self.unique_reference._asdict())
+        all_txns = LedgerAccessors(self.domain).get_ledger_transactions_for_case(**self.unique_reference._asdict())
+        self.assertEqual(epxected_tx_count, len(all_txns))
+        self.assertEqual(expected_stock_state_balance, ledger_value.stock_on_hand)
+        self.assertEqual(expected_tx_balance, latest_txn.stock_on_hand)
 
     def _submit_ledgers(self, ledger_blocks):
         return submit_case_blocks(
             ledger_blocks.format(**self._stock_state_key), self.domain)
 
+    @run_with_all_backends
     def test_simple(self):
         self._submit_ledgers(LEDGER_BLOCKS_SIMPLE)
-        stock_state, latest_txn, all_txns = self._get_stats()
-        self.assertEqual(stock_state.stock_on_hand, 100)
-        self.assertEqual(latest_txn.stock_on_hand, 100)
-        self.assertEqual(all_txns.count(), 2)
+        self._assert_stats(2, 100, 100)
 
-        rebuild_stock_state(**self._stock_state_key)
+        self.ledger_processor.rebuild_ledger_state(**self.unique_reference._asdict())
 
-        stock_state, latest_txn, all_txns = self._get_stats()
-        self.assertEqual(stock_state.stock_on_hand, 200)
-        self.assertEqual(latest_txn.stock_on_hand, 200)
-        self.assertEqual(all_txns.count(), 2)
+        self._assert_stats(2, 200, 200)
 
     def test_inferred(self):
         self._submit_ledgers(LEDGER_BLOCKS_INFERRED)
-        stock_state, latest_txn, all_txns = self._get_stats()
         # this is weird behavior:
         # it just doesn't process the second one
         # even though knowing yesterday's certainly changes the meaning
         # of today's transfer
-        self.assertEqual(stock_state.stock_on_hand, 50)
-        self.assertEqual(latest_txn.stock_on_hand, 50)
-        self.assertEqual(all_txns.count(), 3)
+
+        # UPDATE SK 2016-03-14: this happens because the transactions are received out of order
+        # (they appear out of order in the form XML) and hence saved out of order.
+        # When the older transaction is saved it will only look back in time
+        # to create inferred transactions and not ahead.
+        self._assert_stats(2, 50, 50)
 
         rebuild_stock_state(**self._stock_state_key)
 
-        stock_state, latest_txn, all_txns = self._get_stats()
-
-        self.assertEqual(stock_state.stock_on_hand, 150)
-        self.assertEqual(latest_txn.stock_on_hand, 150)
-        self.assertEqual(all_txns.count(), 2)
+        self._assert_stats(2, 150, 150)
 
     def test_case_actions(self):
         """
@@ -94,9 +95,9 @@ class RebuildStockStateTest(TestCase):
         form_id = self._submit_ledgers(LEDGER_BLOCKS_SIMPLE)
         case_id = self.case.case_id
         rebuild_case_from_forms(self.domain, case_id, RebuildWithReason(reason='test'))
-        case = CommCareCase.get(case_id)
-        self.assertEqual(case.xform_ids, [form_id])
-        self.assertEqual(case.actions[0].xform_id, form_id)
+        case = CaseAccessors(self.domain).get_case(self.case.case_id)
+        self.assertEqual(case.xform_ids[1:], [form_id])
+        self.assertEqual(case.actions[1].xform_id, form_id)
 
     def test_edit_submissions_simple(self):
         initial_quantity = 100
@@ -104,13 +105,11 @@ class RebuildStockStateTest(TestCase):
             case_blocks=get_single_balance_block(quantity=initial_quantity, **self._stock_state_key),
             domain=self.domain,
         )
-        stock_state, latest_txn, all_txns = self._get_stats()
-        self.assertEqual(stock_state.stock_on_hand, initial_quantity)
-        self.assertEqual(latest_txn.stock_on_hand, initial_quantity)
-        self.assertEqual(all_txns.count(), 1)
-        case = CommCareCase.get(id=self.case.case_id)
-        self.assertEqual(1, len(case.actions))
-        self.assertEqual([form_id], case.xform_ids)
+        self._assert_stats(1, initial_quantity, initial_quantity)
+
+        case = CaseAccessors(self.domain).get_case(self.case.case_id)
+        self.assertEqual(2, len(case.actions))
+        self.assertEqual([form_id], case.xform_ids[1:])
 
         # change the value to 50
         edit_quantity = 50
@@ -120,9 +119,6 @@ class RebuildStockStateTest(TestCase):
             form_id=form_id,
         )
         case = CommCareCase.get(id=self.case.case_id)
-        self.assertEqual(1, len(case.actions))
-        stock_state, latest_txn, all_txns = self._get_stats()
-        self.assertEqual(stock_state.stock_on_hand, edit_quantity)
-        self.assertEqual(latest_txn.stock_on_hand, edit_quantity)
-        self.assertEqual(all_txns.count(), 1)
-        self.assertEqual([form_id], case.xform_ids)
+        self.assertEqual(2, len(case.actions))
+        self._assert_stats(1, edit_quantity, edit_quantity)
+        self.assertEqual([form_id], case.xform_ids[1:])

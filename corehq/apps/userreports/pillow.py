@@ -124,7 +124,8 @@ class ConfigurableReportPillowProcessor(ConfigurableReportTableManagerMixin, Pil
                 # only bother getting the document if we have a domain match from the metadata
                 doc = change.get_document()
                 if table.config.filter(doc):
-                    table.save(doc)
+                    # best effort will swallow errors in the table
+                    table.best_effort_save(doc)
                 elif table.config.deleted_filter(doc):
                     table.delete(doc)
 
@@ -143,7 +144,6 @@ class ConfigurableReportKafkaPillow(ConstructedPillow):
         )
         super(ConfigurableReportKafkaPillow, self).__init__(
             name=pillow_name,
-            document_store=None,
             change_feed=change_feed,
             processor=processor,
             checkpoint=checkpoint,
@@ -160,21 +160,21 @@ class ConfigurableReportKafkaPillow(ConstructedPillow):
         self._processor.rebuild_table(sql_adapter)
 
 
-def get_kafka_ucr_pillow():
+def get_kafka_ucr_pillow(pillow_id='kafka-ucr-main'):
     return ConfigurableReportKafkaPillow(
         processor=ConfigurableReportPillowProcessor(
             data_source_provider=DynamicDataSourceProvider(),
             auto_repopulate_tables=False,
         ),
-        pillow_name='kafka-ucr-main',
+        pillow_name=pillow_id,
     )
 
 
-def get_kafka_ucr_static_pillow():
+def get_kafka_ucr_static_pillow(pillow_id='kafka-ucr-static'):
     return ConfigurableReportKafkaPillow(
         processor=ConfigurableReportPillowProcessor(
             data_source_provider=StaticDataSourceProvider(),
             auto_repopulate_tables=True,
         ),
-        pillow_name='kafka-ucr-static',
+        pillow_name=pillow_id,
     )

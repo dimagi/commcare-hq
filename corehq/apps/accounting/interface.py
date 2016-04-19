@@ -331,7 +331,7 @@ class SubscriptionInterface(AddItemInterface):
                 ).order_by('date_created')[0]
                 created_by = dict(SubscriptionAdjustmentMethod.CHOICES).get(
                     created_by_adj.method, "Unknown")
-            except (IndexError, SubscriptionAdjustment.DoesNotExist) as e:
+            except IndexError, SubscriptionAdjustment.DoesNotExist:
                 created_by = "Unknown"
             columns = [
                 subscription.subscriber.domain,
@@ -449,20 +449,6 @@ def get_exportable_column(amount):
     )
 
 
-def get_exportable_column_cost(subtotal, deduction):
-    return format_datatables_data(
-        text=get_column_formatted_str(subtotal, deduction),
-        sort_key=subtotal,
-    )
-
-
-def get_column_formatted_str(subtotal, deduction):
-    return mark_safe('%s<br />(%s)') % (
-        get_money_str(subtotal),
-        get_money_str(deduction)
-    )
-
-
 def get_subtotal_and_deduction(line_items):
     subtotal = 0
     deduction = 0
@@ -495,7 +481,7 @@ class WireInvoiceInterface(InvoiceInterfaceBase):
 
     @property
     def headers(self):
-        header = DataTablesHeader(
+        return DataTablesHeader(
             DataTablesColumn("Invoice #"),
             DataTablesColumn("Account Name (Fogbugz Client Name)"),
             DataTablesColumn("Project Space"),
@@ -520,10 +506,6 @@ class WireInvoiceInterface(InvoiceInterfaceBase):
             DataTablesColumn("Payment Status"),
             DataTablesColumn("Do Not Invoice"),
         )
-
-        if not self.is_rendered_as_email:
-            header.add_column(DataTablesColumn("View Invoice"))
-        return header
 
     @property
     def rows(self):
@@ -572,10 +554,6 @@ class WireInvoiceInterface(InvoiceInterfaceBase):
                 "YES" if invoice.is_hidden else "no",
             ]
 
-            if not self.is_rendered_as_email:
-                columns.extend([
-                    mark_safe(make_anchor_tag(invoice_url, 'Go to Invoice'))
-                ])
             rows.append(columns)
         return rows
 
@@ -702,7 +680,7 @@ class InvoiceInterface(InvoiceInterfaceBase):
     @property
     def rows(self):
         from corehq.apps.accounting.views import (
-            InvoiceSummaryView, ManageBillingAccountView, EditSubscriptionView,
+            ManageBillingAccountView, EditSubscriptionView,
         )
         rows = []
         for invoice in self.invoices:
@@ -722,7 +700,6 @@ class InvoiceInterface(InvoiceInterfaceBase):
             plan_href = reverse(EditSubscriptionView.urlname, args=[invoice.subscription.id])
             account_name = invoice.subscription.account.name
             account_href = reverse(ManageBillingAccountView.urlname, args=[invoice.subscription.account.id])
-            invoice_href = reverse(InvoiceSummaryView.urlname, args=(invoice.id,))
 
             columns = [
                 invoice_column_cell(invoice),

@@ -1,5 +1,3 @@
-import json
-import os
 from decimal import Decimal
 from django.core.urlresolvers import reverse
 from django.test import TestCase
@@ -15,12 +13,10 @@ from corehq.apps.sms.models import SMS
 from corehq.apps.sms.tests.util import setup_default_sms_test_backend
 from corehq.apps.users.models import WebUser, UserRole
 from django.test.client import Client
-from custom.ewsghana.api import EWSApi, Product, Location
 from custom.ewsghana.models import EWSExtension
 from custom.ewsghana.reports.specific_reports.stock_status_report import StockStatus
-from custom.ewsghana.tests.mock_endpoint import MockEndpoint
 from custom.ewsghana.utils import make_url
-from custom.ewsghana.tests.test_utils import create_test_locations
+import test_utils
 from dimagi.utils.couch.database import get_db
 
 TEST_DOMAIN = 'ewsghana-test-input-stock'
@@ -52,18 +48,11 @@ class TestInputStockView(TestCase, DomainSubscriptionMixin):
 
         cls.setup_subscription(TEST_DOMAIN, SoftwarePlanEdition.ENTERPRISE)
 
-        cls.endpoint = MockEndpoint('http://test-api.com/', 'dummy', 'dummy')
-        cls.api_object = EWSApi(TEST_DOMAIN, cls.endpoint)
-        cls.api_object.prepare_commtrack_config()
-        cls.api_object.prepare_custom_fields()
-        cls.api_object.create_or_edit_roles()
-        cls.datapath = os.path.join(os.path.dirname(__file__), 'data')
-
-        with open(os.path.join(cls.datapath, 'sample_products.json')) as f:
-            for p in json.loads(f.read()):
-                cls.api_object.product_sync(Product(p))
-
-        create_test_locations(TEST_DOMAIN)
+        test_utils.prepare_commtrack_config(TEST_DOMAIN)
+        test_utils.prepare_custom_fields(TEST_DOMAIN)
+        test_utils.create_or_edit_roles(TEST_DOMAIN)
+        test_utils.create_test_products(TEST_DOMAIN)
+        test_utils.create_test_locations(TEST_DOMAIN)
 
         cls.test_facility3 = SQLLocation.objects.get(domain=TEST_DOMAIN, site_code='tsactive')
         cls.testregion2 = SQLLocation.objects.get(domain=TEST_DOMAIN, site_code='testregion2')

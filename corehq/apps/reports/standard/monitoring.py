@@ -29,7 +29,7 @@ from corehq.apps.reports.analytics.esaccessors import (
     get_forms,
     get_form_duration_stats_by_user,
     get_form_duration_stats_for_users,
-)
+    get_active_case_count)
 from corehq.apps.reports.exceptions import TooMuchDataError
 from corehq.apps.reports.filters.users import ExpandedMobileWorkerFilter as EMWF
 from corehq.apps.reports.standard import ProjectReportParametersMixin, \
@@ -336,6 +336,7 @@ class CaseActivityReport(WorkerMonitoringCaseReportTableBase):
             case_es.CaseES()
             .domain(self.domain)
             .user_ids_handle_unknown(users_by_id.keys())
+            .size(0)
         )
         query = query.aggregation(top_level_aggregation)
         missing_users = None in users_by_id.keys()
@@ -1497,7 +1498,7 @@ class WorkerActivityReport(WorkerMonitoringCaseReportTableBase, DatespanMixin):
             cases_opened_by_user=get_case_counts_opened_by_user(self.domain, self.datespan, self.case_types),
         )
 
-    def _total_row(self, rows):
+    def _total_row(self, rows, report_data):
         total_row = [_("Total")]
         summing_cols = [1, 2, 4, 5, 6, 7]
 
@@ -1510,21 +1511,19 @@ class WorkerActivityReport(WorkerMonitoringCaseReportTableBase, DatespanMixin):
                 total_row.append('---')
 
         if self.view_by_groups:
-            def parse(str):
-                num, denom = tuple(str.split('/'))
-                num = int(num.strip())
-                denom = int(denom.strip())
-                return num, denom
-
-            def add(result_tuple, str):
-                num, denom = parse(str)
-                return num + result_tuple[0], denom + result_tuple[1]
-
-            total_row[3] = '%s / %s' % reduce(add, [row[3]["html"] for row in rows], (0, 0))
+            active_users = set()
+            all_users = set()
+            for users in self.users_by_group.values():
+                for user in users:
+                    if report_data.submissions_by_user.get(user['user_id'], False):
+                        active_users.add(user['user_id'])
+                    all_users.add(user['user_id'])
+            total_row[3] = '%s / %s' % (len(active_users), len(all_users))
         else:
             num = len(filter(lambda row: row[3] != _(self.NO_FORMS_TEXT), rows))
             total_row[3] = '%s / %s' % (num, len(rows))
-
+            total_row[6] = get_active_case_count(self.domain, self.datespan, self.case_types).total
+            total_row[7] = get_active_case_count(self.domain, self.datespan, self.case_types, True).total
         return total_row
 
     @property
@@ -1537,5 +1536,5 @@ class WorkerActivityReport(WorkerMonitoringCaseReportTableBase, DatespanMixin):
         else:
             rows = self._rows_by_user(report_data)
 
-        self.total_row = self._total_row(rows)
+        self.total_row = self._total_row(rows, report_data)
         return rows

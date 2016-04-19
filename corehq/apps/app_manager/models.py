@@ -1,4 +1,27 @@
 # coding=utf-8
+"""
+Application terminology
+
+For any given application, there are a number of different documents.
+
+The primary application document is an instance of Application.  This
+document id is what you'll see in the URL on most app manager pages. Primary
+application documents should have `copy_of == None` and `is_released ==
+False`. When an application is saved, the field `version` is incremented.
+
+When a user makes a build of an application, a copy of the primary
+application document is made. These documents are the "versions" you see on
+the deploy page. Each build document will have a different id, and the
+`copy_of` field will be set to the ID of the primary application document.
+Additionally, some attachments such as `profile.xml` and `suite.xml` will be
+created and saved to the build doc (see `create_all_files`).
+
+When a build is starred, this is called "releasing" the build.  The parameter
+`is_released` will be set to True on the build document.
+
+You might also run in to remote applications and applications copied to be
+published on the exchange, but those are quite infrequent.
+"""
 import calendar
 from distutils.version import LooseVersion
 from itertools import chain
@@ -21,8 +44,6 @@ from couchdbkit import MultipleResultsFound
 import itertools
 from lxml import etree
 from django.core.cache import cache
-from django.utils.encoding import force_unicode
-from django.utils.safestring import mark_safe
 from django.utils.translation import override, ugettext as _, ugettext
 from couchdbkit.exceptions import BadValueError
 from corehq.apps.app_manager.suite_xml.utils import get_select_chain
@@ -63,7 +84,7 @@ import commcare_translations
 from corehq.util import bitly
 from corehq.util import view_utils
 from corehq.apps.appstore.models import SnapshotMixin
-from corehq.apps.builds.models import BuildSpec, CommCareBuildConfig, BuildRecord
+from corehq.apps.builds.models import BuildSpec, BuildRecord
 from corehq.apps.hqmedia.models import HQMediaMixin
 from corehq.apps.translations.models import TranslationMixin
 from corehq.apps.users.models import CouchUser
@@ -107,6 +128,8 @@ from .exceptions import (
     XFormIdNotUnique,
     XFormValidationError,
     ScheduleError,
+    CaseXPathValidationError,
+    UserCaseXPathValidationError,
 )
 from corehq.apps.reports.daterange import get_daterange_start_end_dates
 from jsonpath_rw import jsonpath, parse
@@ -193,15 +216,6 @@ def load_form_template(filename):
         return f.read()
 
 
-def partial_escape(xpath):
-    """
-    Copied from http://stackoverflow.com/questions/275174/how-do-i-perform-html-decoding-encoding-using-python-django
-    but without replacing the single quote
-
-    """
-    return mark_safe(force_unicode(xpath).replace('&', '&amp;').replace('<', '&lt;').replace('>', '&gt;').replace('"', '&quot;'))
-
-
 class IndexedSchema(DocumentSchema):
     """
     Abstract class.
@@ -228,8 +242,8 @@ class IndexedSchema(DocumentSchema):
         def __call__(self, instance):
             items = getattr(instance, self.attr)
             l = len(items)
-            for i,item in enumerate(items):
-                yield item.with_id(i%l, instance)
+            for i, item in enumerate(items):
+                yield item.with_id(i % l, instance)
 
         def __get__(self, instance, owner):
             # thanks, http://metapython.blogspot.com/2010/11/python-instance-methods-how-are-they.html
@@ -252,6 +266,7 @@ class FormActionCondition(DocumentSchema):
 
     def is_active(self):
         return self.type in ('if', 'always')
+
 
 class FormAction(DocumentSchema):
     """
@@ -1016,7 +1031,7 @@ class FormBase(DocumentSchema):
 
     def uses_usercase(self):
         raise NotImplementedError()
-    
+
     def update_app_case_meta(self, app_case_meta):
         pass
 
@@ -1538,6 +1553,7 @@ class GraphAnnotations(IndexedSchema):
 
 class GraphSeries(DocumentSchema):
     config = DictProperty()
+    locale_specific_config = DictProperty()
     data_path = StringProperty()
     x_function = StringProperty()
     y_function = StringProperty()
@@ -2062,8 +2078,9 @@ class ModuleDetailsMixin():
                 })
         if self.case_list_filter:
             try:
-                etree.XPath(self.case_list_filter)
-            except etree.XPathSyntaxError:
+                case_list_filter = interpolate_xpath(self.case_list_filter)
+                etree.XPath(case_list_filter)
+            except (etree.XPathSyntaxError, CaseXPathValidationError):
                 errors.append({
                     'type': 'invalid filter xpath',
                     'module': self.get_module_info(),
@@ -2131,7 +2148,6 @@ class Module(ModuleBase, ModuleDetailsMixin):
     referral_list = SchemaProperty(CaseList)
     task_list = SchemaProperty(CaseList)
     parent_select = SchemaProperty(ParentSelect)
-
 
     @classmethod
     def wrap(cls, data):
@@ -3288,6 +3304,8 @@ class ReportAppFilter(DocumentSchema):
                 'CustomDatespanFilter': CustomDatespanFilter,
                 'CustomMonthFilter': CustomMonthFilter,
                 'MobileSelectFilter': MobileSelectFilter,
+                'AncestorLocationTypeFilter': AncestorLocationTypeFilter,
+                'NumericFilter': NumericFilter,
             }
             try:
                 klass = doc_type_to_filter_class[doc_type]
@@ -3330,20 +3348,10 @@ def _filter_by_parent_location_id(user, ui_filter):
     return ui_filter.value(**{ui_filter.name: location_parent})
 
 
-def _filter_by_ancestor_location_type_id(user, ui_filter):
-    from corehq.apps.reports_core.filters import Choice
-    location = user.sql_location
-    return [
-        Choice(value=loc.location_type.id, display=loc.location_type.name)
-        for loc in location.get_ancestors()
-    ] if location else []
-
-
 _filter_type_to_func = {
     'case_sharing_group': _filter_by_case_sharing_group_id,
     'location_id': _filter_by_location_id,
     'parent_location_id': _filter_by_parent_location_id,
-    'ancestor_location_type_id': _filter_by_ancestor_location_type_id,
     'username': _filter_by_username,
     'user_id': _filter_by_user_id,
 }
@@ -3511,6 +3519,37 @@ class CustomMonthFilter(ReportAppFilter):
 class MobileSelectFilter(ReportAppFilter):
     def get_filter_value(self, user, ui_filter):
         return None
+
+
+class AncestorLocationTypeFilter(ReportAppFilter):
+    ancestor_location_type_name = StringProperty()
+
+    def get_filter_value(self, user, ui_filter):
+        from corehq.apps.locations.models import SQLLocation
+
+        try:
+            ancestor = user.sql_location.get_ancestors(include_self=True).\
+                get(location_type__name=self.ancestor_location_type_name)
+        except (AttributeError, SQLLocation.DoesNotExist):
+            # user.sql_location is None, or location does not have an ancestor of that type
+            return None
+        return ancestor.location_id
+
+
+class NumericFilter(ReportAppFilter):
+    operator = StringProperty(choices=['=', '!=', '<', '<=', '>', '>=']),
+    operand = FloatProperty()
+
+    @classmethod
+    def wrap(cls, doc):
+        doc['operand'] = float(doc['operand'])
+        return super(NumericFilter, cls).wrap(doc)
+
+    def get_filter_value(self, user, ui_filter):
+        return {
+            'operator': self.operator,
+            'operand': self.operand,
+        }
 
 
 class ReportAppConfig(DocumentSchema):
@@ -3911,12 +3950,7 @@ class ApplicationBase(VersionedDoc, SnapshotMixin,
     Abstract base class for Application and RemoteApp.
     Contains methods for generating the various files and zipping them into CommCare.jar
 
-    There are several flavors of Applications:
-        Application - The current state of the application has copy_of==None
-        SavedAppBuild - Whenever the app is built, a copy is created, and
-            copy_of will be set to the original application's id.
-        Released builds are SavedAppBuilds with is_released==True.  These have
-            been starred on the releases page.
+    See note at top of file for high-level overview.
     """
 
     recipients = StringProperty(default="")
@@ -3977,6 +4011,9 @@ class ApplicationBase(VersionedDoc, SnapshotMixin,
     )
     minimum_use_threshold = StringProperty(
         default='15'
+    )
+    experienced_threshold = StringProperty(
+        default='3'
     )
 
     # exchange properties
@@ -4088,14 +4125,6 @@ class ApplicationBase(VersionedDoc, SnapshotMixin,
         # (even though '2.12.0' < '2.2')
         if self.build_spec.version:
             return LooseVersion(self.build_spec.version)
-
-    def get_preview_build(self):
-        preview = self.get_build()
-
-        for path in getattr(preview, '_attachments', {}):
-            if path.startswith('Generic/WebDemo'):
-                return preview
-        return CommCareBuildConfig.fetch().preview.get_build()
 
     @property
     def commcare_minor_release(self):
@@ -4264,6 +4293,7 @@ class ApplicationBase(VersionedDoc, SnapshotMixin,
                                          'files/%s' % filepath)
 
     def create_jadjar_from_build_files(self, save=False):
+        self.validate_jar_path()
         with CriticalSection(['create_jadjar_' + self._id]):
             try:
                 return (
@@ -4279,8 +4309,9 @@ class ApplicationBase(VersionedDoc, SnapshotMixin,
                     name: (contents if isinstance(contents, str) else contents.encode('utf-8'))
                     for name, contents in all_files.items()
                 }
+                release_date = self.built_with.datetime or datetime.datetime.utcnow()
                 jad_settings = {
-                    'Released-on': self.built_with.datetime.strftime("%Y-%b-%d %H:%M"),
+                    'Released-on': release_date.strftime("%Y-%b-%d %H:%M"),
                 }
                 jad_settings.update(self.jad_settings)
                 jadjar = self.get_jadjar().pack(all_files, jad_settings)
@@ -4300,8 +4331,19 @@ class ApplicationBase(VersionedDoc, SnapshotMixin,
         try:
             self.validate_fixtures()
             self.validate_intents()
-            self.validate_jar_path()
             self.create_all_files()
+        except CaseXPathValidationError as cve:
+            errors.append({
+                'type': 'invalid case xpath reference',
+                'module': cve.module,
+                'form': cve.form,
+            })
+        except UserCaseXPathValidationError as ucve:
+            errors.append({
+                'type': 'invalid user case xpath reference',
+                'module': ucve.module,
+                'form': ucve.form,
+            })
         except (AppEditingError, XFormValidationError, XFormException,
                 PermissionDenied, SuiteValidationError) as e:
             errors.append({'type': 'error', 'message': unicode(e)})
@@ -4979,42 +5021,6 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
 
         if from_module['case_type'] != to_module['case_type']:
             raise ConflictingCaseTypeError()
-
-    def convert_module_to_advanced(self, module_id):
-        from_module = self.get_module(module_id)
-
-        name = {lang: u'{} (advanced)'.format(name) for lang, name in from_module.name.items()}
-
-        case_details = deepcopy(from_module.case_details.to_json())
-        to_module = AdvancedModule(
-            name=name,
-            forms=[],
-            case_type=from_module.case_type,
-            case_label=from_module.case_label,
-            put_in_root=from_module.put_in_root,
-            case_list=from_module.case_list,
-            case_details=DetailPair.wrap(case_details),
-            product_details=DetailPair(
-                short=Detail(
-                    columns=[
-                        DetailColumn(
-                            format='plain',
-                            header={'en': ugettext("Product")},
-                            field='name',
-                            model='product',
-                        ),
-                    ],
-                ),
-                long=Detail(),
-            ),
-        )
-        to_module.get_or_create_unique_id()
-        to_module = self.add_module(to_module)
-
-        for form in from_module.get_forms():
-            self._copy_form(from_module, form, to_module)
-
-        return to_module
 
     @cached_property
     def has_case_management(self):

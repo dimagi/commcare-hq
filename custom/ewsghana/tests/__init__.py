@@ -1,5 +1,3 @@
-from .test_apis import *
-from .test_products_sync import *
 from .handlers.receipt import *
 from .handlers.requisition_status import *
 from .handlers.stock_on_hand import *
@@ -7,7 +5,6 @@ from .handlers.handler import *
 from .handlers.default import *
 from .handlers.formatter import *
 from .test_input_stock_view import *
-from .test_stock_data_sync import *
 from .test_delete_domain import *
 from .test_reminders import *
 from .test_alerts import *

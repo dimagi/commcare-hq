@@ -1,16 +1,20 @@
 import datetime
 import uuid
 from django.test import TestCase
-from corehq.util.test_utils import DocTestMixin
+from requests import ConnectionError
+
+from corehq.pillows.xform import XFormPillow
+from corehq.util.elastic import ensure_index_deleted
+from corehq.util.test_utils import DocTestMixin, trap_extra_setup
 from couchforms.analytics import domain_has_submission_in_last_30_days, \
     get_number_of_forms_per_domain, get_number_of_forms_in_domain, \
     get_first_form_submission_received, get_last_form_submission_received, \
     app_has_been_submitted_to_in_last_30_days, update_analytics_indexes, \
     get_username_in_last_form_user_id_submitted, get_all_user_ids_submitted, \
     get_all_xmlns_app_id_pairs_submitted_to_in_domain, \
-    get_number_of_submissions, get_form_analytics_metadata, \
-    get_number_of_forms_of_all_types, get_number_of_forms_by_type, get_exports_by_form
+    get_form_analytics_metadata, get_exports_by_form
 from couchforms.models import XFormInstance, XFormError
+from pillowtop.es_utils import completely_initialize_pillow_index
 
 
 class CouchformsAnalyticsTest(TestCase, DocTestMixin):
@@ -87,30 +91,6 @@ class CouchformsAnalyticsTest(TestCase, DocTestMixin):
             get_all_xmlns_app_id_pairs_submitted_to_in_domain(self.domain),
             {(self.xmlns, self.app_id)})
 
-    def test_get_number_of_submissions(self):
-        self.assertEqual(
-            get_number_of_submissions(
-                self.domain, self.user_id, self.xmlns, self.app_id,
-                end=self.now, start=self.now - datetime.timedelta(days=100)), 2)
-
-    def test_get_number_of_forms_of_all_types(self):
-        self.assertEqual(
-            get_number_of_forms_of_all_types(self.domain),
-            len(self.all_forms)
-        )
-
-    def test_get_number_of_forms_by_type_xforminstance(self):
-        self.assertEqual(
-            get_number_of_forms_by_type(self.domain, 'XFormInstance'),
-            len(self.forms)
-        )
-
-    def test_get_number_of_forms_by_type_xformerror(self):
-        self.assertEqual(
-            get_number_of_forms_by_type(self.domain, 'XFormError'),
-            len(self.error_forms)
-        )
-
 
 class ExportsFormsAnalyticsTest(TestCase, DocTestMixin):
     dependent_apps = ['corehq.couchapps', 'corehq.apps.domain', 'corehq.form_processor',
@@ -122,6 +102,11 @@ class ExportsFormsAnalyticsTest(TestCase, DocTestMixin):
         from casexml.apps.case.tests.util import delete_all_xforms
         from corehq.apps.app_manager.models import Application, Module, Form
         delete_all_xforms()
+
+        cls.form_pillow = XFormPillow(online=False)
+        with trap_extra_setup(ConnectionError, msg="cannot connect to elasicsearch"):
+            completely_initialize_pillow_index(cls.form_pillow)
+
         cls.domain = 'exports_forms_analytics_domain'
         cls.app_id_1 = 'a' + uuid.uuid4().hex
         cls.app_id_2 = 'b' + uuid.uuid4().hex
@@ -145,7 +130,9 @@ class ExportsFormsAnalyticsTest(TestCase, DocTestMixin):
         cls.all_forms = cls.forms + cls.error_forms
         for form in cls.all_forms:
             form.save()
+            cls.form_pillow.send_robust(form.to_json())
 
+        cls.form_pillow.get_es_new().indices.refresh(cls.form_pillow.es_index)
         update_analytics_indexes()
 
     @classmethod
@@ -154,6 +141,7 @@ class ExportsFormsAnalyticsTest(TestCase, DocTestMixin):
             form.delete()
         for app in cls.apps:
             app.delete()
+        ensure_index_deleted(cls.form_pillow.es_index)
 
     def test_get_form_analytics_metadata__no_match(self):
         self.assertIsNone(

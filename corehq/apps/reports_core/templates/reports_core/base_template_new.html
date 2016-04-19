@@ -33,13 +33,19 @@
         function get_report_url() {
             return base_url;
         }
-
     $(function() {
+        var charts = hqImport('reports_core/js/charts.js');
         var chartSpecs = {{ report.spec.charts|JSON }};
         var updateCharts = function (data) {
             if (chartSpecs !== null && chartSpecs.length > 0) {
-                // draw graph
-                charts.render(chartSpecs, data.aaData, $("#chart-container"));
+                var isReportBuilderReport = {{ report.spec.report_meta.created_by_builder|JSON }};
+                if (data.iTotalRecords > 25 && isReportBuilderReport) {
+                    $("#chart-warning").removeClass("hide");
+                    charts.clear($("#chart-container"))
+                } else {
+                    $("#chart-warning").addClass("hide");
+                    charts.render(chartSpecs, data.aaData, $("#chart-container"));
+                }
             }
         };
 
@@ -102,6 +108,9 @@
             event.preventDefault();
             reportTables.render();
         });
+        // after we've registered the event that prevents the default form submission
+        // we can enable the submit button
+        $("#apply-filters").prop('disabled', false);
 
         $(function() {
             $('.header-popover').popover({
@@ -201,6 +210,11 @@
     <div id="reportContent" class="hide">
         {% block reportcharts %}
         <section id="chart-container" style="display: none;">
+        </section>
+        <section id="chart-warning" class="alert alert-warning hide">
+        {% blocktrans %}
+            Charts cannot be displayed with more than 25 categories. Please filter the data or change your report to limit the number of rows.
+        {% endblocktrans %}
         </section>
         <section id="map-container" style="display: none;" >
         </section>

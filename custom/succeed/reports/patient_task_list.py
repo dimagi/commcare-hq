@@ -19,6 +19,7 @@ from dimagi.utils.decorators.memoized import memoized
 
 
 class PatientTaskListReport(SqlTabularReport, CustomProjectReport, ProjectReportParametersMixin):
+    base_template = 'succeed/base_template.html'
     name = ugettext_noop('Patient Tasks')
     slug = 'patient_task_list'
     fields = ['custom.succeed.fields.ResponsibleParty',

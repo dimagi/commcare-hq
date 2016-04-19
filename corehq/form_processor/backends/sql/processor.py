@@ -193,6 +193,7 @@ class FormProcessorSQL(object):
         if case.is_deleted and not found:
             return None
         CaseAccessorSQL.save_case(case)
+        return case
 
     @staticmethod
     def _rebuild_case_from_transactions(case, detail, updated_xforms=None):
@@ -200,7 +201,13 @@ class FormProcessorSQL(object):
         strategy = SqlCaseUpdateStrategy(case)
 
         rebuild_transaction = CaseTransaction.rebuild_transaction(case, detail)
-        strategy.rebuild_from_transactions(transactions, rebuild_transaction)
+        unarchived_form_id = None
+        if detail.type == CaseTransaction.TYPE_REBUILD_FORM_ARCHIVED and not detail.archived:
+            # we're rebuilding because a form was un-archived
+            unarchived_form_id = detail.form_id
+        strategy.rebuild_from_transactions(
+            transactions, rebuild_transaction, unarchived_form_id=unarchived_form_id
+        )
         return case
 
     @staticmethod
@@ -210,6 +217,17 @@ class FormProcessorSQL(object):
 
 
 def get_case_transactions(case_id, updated_xforms=None):
+    """
+    This fetches all the transactions required to rebuild the case along
+    with all the forms for those transactions.
+
+    For any forms that have been updated it replaces the old form
+    with the new one.
+
+    :param case_id: ID of case to rebuild
+    :param updated_xforms: list of forms that have been changed.
+    :return: list of ``CaseTransaction`` objects with their associated forms attached.
+    """
     transactions = CaseAccessorSQL.get_transactions_for_case_rebuild(case_id)
     form_ids = {tx.form_id for tx in transactions}
     updated_xforms_map = {

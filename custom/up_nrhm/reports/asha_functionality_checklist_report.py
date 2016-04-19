@@ -11,6 +11,8 @@ class ASHAFunctionalityChecklistReport(GenericTabularReport, NRHMDatespanMixin, 
     name = ugettext_noop("Format-1 for ASHA Sanginis")
     slug = "asha_functionality_checklist_report"
 
+    is_bootstrap3 = True
+
     @property
     def report_config(self):
         return {

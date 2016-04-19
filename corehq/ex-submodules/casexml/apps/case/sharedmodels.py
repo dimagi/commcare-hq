@@ -45,11 +45,15 @@ class CommCareCaseIndex(LooselyEqualDocumentSchema, UnicodeMixIn):
                    relationship=index.relationship,)
 
     def __unicode__(self):
-        return "%(identifier)s ref: (type: %(ref_type)s, id: %(ref_id)s)" % \
-                {"identifier": self.identifier,
-                 "ref_type": self.referenced_type,
-                 "ref_id": self.referenced_id}
-    
+        return (
+            u"CommCareCaseIndex("
+            u"identifier='{index.identifier}', "
+            u"referenced_type='{index.referenced_type}', "
+            u"referenced_id='{index.referenced_id}', "
+            u"relationship='{index.relationship}'"
+            u")"
+        ).format(index=self)
+
     def __cmp__(self, other):
         return cmp(unicode(self), unicode(other))
 

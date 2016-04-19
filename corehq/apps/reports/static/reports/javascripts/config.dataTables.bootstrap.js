@@ -200,9 +200,14 @@ function HQReportDataTables(options) {
                     iLeftWidth: self.fixColsWidth
                 });
             }
-            $(window).on('resize', function () {
+            // only resize the window once every 5 seconds to avoid making
+            // tons of requests when the size of the window is dragged.
+            // http://manage.dimagi.com/default.asp?221237
+            var throttledResize = _.throttle(function () {
                 datatable.fnAdjustColumnSizing();
-            });
+            }, 5000);
+
+            $(window).on('resize', throttledResize);
             if (self.useBootstrap3) {
                 $('.dataTables_paginate a').on('click', function () {
                     datatable.fnAdjustColumnSizing();
@@ -236,8 +241,8 @@ function HQReportDataTables(options) {
                 $inputLabel.html($('<i />').addClass("icon-search"));
             }
 
-            var $dataTablesLength = $(".dataTables_length"),
-                $dataTablesInfo = $(".dataTables_info");
+            var $dataTablesLength = $(self.dataTableElem).parents('.dataTables_wrapper').find(".dataTables_length"),
+                $dataTablesInfo = $(self.dataTableElem).parents('.dataTables_wrapper').find(".dataTables_info");
             if($dataTablesLength && $dataTablesInfo) {
                 var $selectField = $dataTablesLength.find("select"),
                     $selectLabel = $dataTablesLength.find("label");

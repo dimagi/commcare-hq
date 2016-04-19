@@ -1,6 +1,8 @@
 from django.conf import settings
 from django.conf.urls import patterns, url, include
+from django.shortcuts import render
 from django.views.generic import TemplateView, RedirectView
+from corehq.apps.domain.decorators import login_and_domain_required
 from corehq.apps.domain.utils import legacy_domain_re
 
 from django.contrib import admin
@@ -53,6 +55,7 @@ domain_specific = patterns('',
     (r'^data/', include('corehq.apps.data_interfaces.urls')),
     (r'^', include(hqwebapp_domain_specific)),
     (r'^case/', include('corehq.apps.hqcase.urls')),
+    (r'^case/', include('corehq.apps.case_search.urls')),
     (r'^cloudcare/', include('corehq.apps.cloudcare.urls')),
     (r'^fixtures/', include('corehq.apps.fixtures.urls')),
     (r'^importer/', include('corehq.apps.importer.urls')),
@@ -67,6 +70,9 @@ domain_specific = patterns('',
     (r'^configurable_reports/', include('corehq.apps.userreports.urls')),
     (r'^performance_messaging/', include('corehq.apps.performance_sms.urls')),
     (r'^', include('custom.icds.urls')),
+    (r'^_base_template/$', login_and_domain_required(
+        lambda request, domain: render(request, 'style/bootstrap3/base.html', {'domain': domain})
+    ))
 )
 
 urlpatterns = patterns('',
@@ -116,6 +122,7 @@ urlpatterns = patterns('',
     (r'^500/$', TemplateView.as_view(template_name='500.html')),
     (r'^404/$', TemplateView.as_view(template_name='404.html')),
     (r'^403/$', TemplateView.as_view(template_name='403.html')),
+    url(r'^captcha/', include('captcha.urls')),
     url(r'^eula_basic/$', TemplateView.as_view(template_name='eula.html'), name='eula_basic'),
     url(r'^eula/$', 'corehq.apps.hqwebapp.views.eula', name='eula'),
     url(r'^apache_license_basic/$', TemplateView.as_view(template_name='apache_license.html'), name='apache_license_basic'),
@@ -132,6 +139,7 @@ urlpatterns = patterns('',
     url(r'^pro_bono/$', ProBonoStaticView.as_view(),
         name=ProBonoStaticView.urlname),
     url(r'^loadtest/', include('corehq.apps.loadtestendpoints.urls')),
+    url(r'^ping/$', 'corehq.apps.app_manager.views.formdesigner.ping', name='ping'),
     url(r'^robots.txt$', TemplateView.as_view(template_name='robots.txt', content_type='text/plain')),
     url(r'^software-plans/$', RedirectView.as_view(url=PRICING_LINK), name='go_to_pricing'),
 ) + patterns('', *LOCAL_APP_URLS)

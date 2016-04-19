@@ -88,6 +88,21 @@
     </div>
     <div>
         <loading></loading>
+        <div class="alert alert-danger" ng-show="error">
+            {% trans "Sorry, something went wrong generating the summary. If you see this repeatedly please report an issue." %}
+        </div>
+        <div class="alert alert-danger" ng-repeat="form in errors" ng-show="errors">
+            <i class="fa fa-exclamation-circle"></i> {% trans "Error in form:" %}
+            {% verbatim %}"{{ getFormModuleLabel(form) }}"{% endverbatim %}
+            {% trans "in module" %}
+            {% verbatim %}"{{ getFormModuleLabel(form.module) }}"
+            <a href="{{ form.error.edit_url }}">
+                <i class="fa fa-pencil"></i>
+            </a><br/>
+            {{ form.error.details }}
+            {% endverbatim %}
+            </div>
+        </div>
         <ul>
             <li ng-repeat="module in modules|filter:moduleSearch">
                  <h4>

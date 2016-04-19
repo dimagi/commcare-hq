@@ -13,6 +13,19 @@ class RandRSubmissionData(ILSData):
 
     @property
     def rows(self):
+        if 'data_config' in self.config:
+            data_config = self.config['data_config']
+            submitted_on_time = data_config.rr_data_total.get(('on_time', 'submitted'), 0)
+            not_submitted_on_time = data_config.rr_data_total.get(('on_time', 'not_submitted'), 0)
+            submitted_late = data_config.rr_data_total.get(('late', 'submitted'), 0)
+            not_submitted_late = data_config.rr_data_total.get(('late', 'not_submitted'), 0)
+            return[GroupSummary(
+                title=SupplyPointStatusTypes.R_AND_R_FACILITY,
+                responded=submitted_on_time + not_submitted_on_time + submitted_late + not_submitted_late,
+                on_time=submitted_on_time,
+                complete=submitted_on_time + submitted_late,
+                total=data_config.rr_data_total.get('total', 0)
+            )]
         if self.config['org_summary']:
             rr = GroupSummary.objects.filter(
                 title=SupplyPointStatusTypes.R_AND_R_FACILITY,
@@ -100,6 +113,20 @@ class SohSubmissionData(ILSData):
     @property
     def rows(self):
         soh_data = []
+
+        if 'data_config' in self.config:
+            data_config = self.config['data_config']
+            late = data_config.soh_data_total.get('late', 0)
+            on_time = data_config.soh_data_total.get('on_time', 0)
+            soh_data.append(GroupSummary(
+                title=SupplyPointStatusTypes.SOH_FACILITY,
+                responded=late + on_time,
+                on_time=on_time,
+                complete=late + on_time,
+                total=len(data_config.descendants)
+            ))
+            return soh_data
+
         if self.config['org_summary']:
             try:
                 sohs = GroupSummary.objects.filter(
@@ -126,6 +153,19 @@ class DeliverySubmissionData(ILSData):
     @property
     def rows(self):
         del_data = []
+        if 'data_config' in self.config:
+            data_config = self.config['data_config']
+            delivered = data_config.delivery_data_total.get('received', 0)
+            not_delivered = data_config.delivery_data_total.get('not_received', 0)
+            del_data.append(GroupSummary(
+                title=SupplyPointStatusTypes.DELIVERY_FACILITY,
+                responded=delivered + not_delivered,
+                on_time=delivered + not_delivered,
+                complete=delivered,
+                total=data_config.delivery_data_total.get('total', 0)
+            ))
+            return del_data
+
         if self.config['org_summary']:
             try:
                 data = GroupSummary.objects.filter(

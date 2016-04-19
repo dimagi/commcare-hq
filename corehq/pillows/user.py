@@ -1,16 +1,22 @@
 from casexml.apps.case.xform import is_device_report
+from corehq.apps.change_feed.consumer.feed import KafkaChangeFeed
+from corehq.apps.change_feed.document_types import COMMCARE_USER, WEB_USER
 from corehq.apps.users.models import CommCareUser, CouchUser
 from corehq.apps.users.util import WEIRD_USER_IDS
 from corehq.elastic import (
     stream_es_query, doc_exists_in_es,
     send_to_elasticsearch, get_es_new, ES_META
 )
-from corehq.pillows.mappings.user_mapping import USER_MAPPING, USER_INDEX
+from corehq.pillows.mappings.user_mapping import USER_MAPPING, USER_INDEX, USER_META, USER_INDEX_INFO
 from couchforms.models import XFormInstance, all_known_formlike_doc_types
 from dimagi.utils.decorators.memoized import memoized
-from pillowtop.checkpoints.manager import get_default_django_checkpoint_for_legacy_pillow_class
+from pillowtop.checkpoints.manager import get_default_django_checkpoint_for_legacy_pillow_class, PillowCheckpoint, \
+    PillowCheckpointEventHandler
 from pillowtop.listener import AliasedElasticPillow, PythonPillow
-from django.conf import settings
+from pillowtop.pillow.interface import ConstructedPillow
+from pillowtop.processors import ElasticProcessor
+from pillowtop.reindexer.change_providers.couch import CouchViewChangeProvider
+from pillowtop.reindexer.reindexer import ElasticPillowReindexer
 
 
 class UserPillow(AliasedElasticPillow):
@@ -24,19 +30,7 @@ class UserPillow(AliasedElasticPillow):
     es_timeout = 60
     es_alias = "hqusers"
     es_type = "user"
-    es_meta = {
-        "settings": {
-            "analysis": {
-                "analyzer": {
-                    "default": {
-                        "type": "custom",
-                        "tokenizer": "whitespace",
-                        "filter": ["lowercase"]
-                    },
-                }
-            }
-        }
-    }
+    es_meta = USER_META
     es_index = USER_INDEX
     default_mapping = USER_MAPPING
 
@@ -96,8 +90,8 @@ class UnknownUsersPillow(PythonPillow):
 
     def python_filter(self, change):
         # designed to exactly mimic the behavior of couchforms/filters/xforms.js
-        doc = change.document
-        return doc.get('doc_type', None) in all_known_formlike_doc_types() and not is_device_report(doc)
+        doc = change.get_document()
+        return doc and doc.get('doc_type', None) in all_known_formlike_doc_types() and not is_device_report(doc)
 
     def get_fields_from_doc(self, doc):
         form_meta = doc.get('form', {}).get('meta', {})
@@ -140,4 +134,38 @@ def add_demo_user_to_user_index():
     send_to_elasticsearch(
         'users',
         {"_id": "demo_user", "username": "demo_user", "doc_type": "DemoUser"}
+    )
+
+
+def get_user_kafka_to_elasticsearch_pillow(pillow_id='user-kafka-to-es'):
+    checkpoint = PillowCheckpoint(
+        pillow_id,
+    )
+    domain_processor = ElasticProcessor(
+        elasticsearch=get_es_new(),
+        index_info=USER_INDEX_INFO,
+    )
+    return ConstructedPillow(
+        name=pillow_id,
+        checkpoint=checkpoint,
+        change_feed=KafkaChangeFeed(topics=[COMMCARE_USER, WEB_USER], group_id='users-to-es'),
+        processor=domain_processor,
+        change_processed_event_handler=PillowCheckpointEventHandler(
+            checkpoint=checkpoint, checkpoint_frequency=100,
+        ),
+    )
+
+
+def get_user_reindexer():
+    return ElasticPillowReindexer(
+        pillow=get_user_kafka_to_elasticsearch_pillow(),
+        change_provider=CouchViewChangeProvider(
+            couch_db=CommCareUser.get_db(),
+            view_name='users/by_username',
+            view_kwargs={
+                'include_docs': True,
+            }
+        ),
+        elasticsearch=get_es_new(),
+        index_info=USER_INDEX_INFO,
     )

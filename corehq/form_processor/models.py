@@ -44,6 +44,20 @@ CommCareCaseIndexSQL_DB_TABLE = 'form_processor_commcarecaseindexsql'
 CaseAttachmentSQL_DB_TABLE = 'form_processor_caseattachmentsql'
 CaseTransaction_DB_TABLE = 'form_processor_casetransaction'
 LedgerValue_DB_TABLE = 'form_processor_ledgervalue'
+LedgerTransaction_DB_TABLE = 'form_processor_ledgertransaction'
+
+CaseAction = namedtuple("CaseAction", ["action_type", "updated_known_properties", "indices"])
+
+
+class TruncatingCharField(models.CharField):
+    """
+    http://stackoverflow.com/a/3460942
+    """
+    def get_prep_value(self, value):
+        value = super(TruncatingCharField, self).get_prep_value(value)
+        if value:
+            return value[:self.max_length]
+        return value
 
 
 class Attachment(namedtuple('Attachment', 'name raw_content content_type')):
@@ -204,6 +218,10 @@ class XFormInstanceSQL(DisabledDbMixin, models.Model, RedisLockableMixIn, Attach
     def get_obj_by_id(cls, form_id):
         from corehq.form_processor.backends.sql.dbaccessors import FormAccessorSQL
         return FormAccessorSQL.get_form(form_id)
+
+    @property
+    def get_id(self):
+        return self.form_id
 
     @property
     def is_normal(self):
@@ -516,6 +534,10 @@ class CommCareCaseSQL(DisabledDbMixin, models.Model, RedisLockableMixIn,
         return dt
 
     @property
+    def get_id(self):
+        return self.case_id
+
+    @property
     @memoized
     def xform_ids(self):
         from corehq.form_processor.backends.sql.dbaccessors import CaseAccessorSQL
@@ -541,6 +563,11 @@ class CommCareCaseSQL(DisabledDbMixin, models.Model, RedisLockableMixIn,
     def dynamic_case_properties(self):
         return OrderedDict(sorted(self.case_json.iteritems()))
 
+    def to_api_json(self, lite=False):
+        from .serializers import CommCareCaseSQLAPISerializer
+        serializer = CommCareCaseSQLAPISerializer(self, lite=lite)
+        return serializer.data
+
     def to_json(self):
         from .serializers import CommCareCaseSQLSerializer
         serializer = CommCareCaseSQLSerializer(self)
@@ -562,6 +589,9 @@ class CommCareCaseSQL(DisabledDbMixin, models.Model, RedisLockableMixIn,
     def reverse_indices(self):
         from corehq.form_processor.backends.sql.dbaccessors import CaseAccessorSQL
         return CaseAccessorSQL.get_reverse_indices(self.case_id)
+
+    def get_reverse_index_map(self):
+        return self.get_index_map(True)
 
     @memoized
     def _saved_indices(self):
@@ -613,17 +643,22 @@ class CommCareCaseSQL(DisabledDbMixin, models.Model, RedisLockableMixIn,
         transactions += self.get_tracked_models_to_create(CaseTransaction)
         return transactions
 
+    @property
+    def actions(self):
+        """For compatability with CommCareCase. Please use transactions when possible"""
+        return self.non_revoked_transactions
+
     def get_transaction_by_form_id(self, form_id):
         from corehq.form_processor.backends.sql.dbaccessors import CaseAccessorSQL
-        transaction = CaseAccessorSQL.get_transaction_by_form_id(self.case_id, form_id)
+        transactions = filter(
+            lambda t: t.form_id == form_id,
+            self.get_tracked_models_to_create(CaseTransaction)
+        )
+        assert len(transactions) <= 1
+        transaction = transactions[0] if transactions else None
 
         if not transaction:
-            transactions = filter(
-                lambda t: t.form_id == form_id,
-                self.get_tracked_models_to_create(CaseTransaction)
-            )
-            assert len(transactions) <= 1
-            transaction = transactions[0] if transactions else None
+            transaction = CaseAccessorSQL.get_transaction_by_form_id(self.case_id, form_id)
         return transaction
 
     @property
@@ -683,6 +718,22 @@ class CommCareCaseSQL(DisabledDbMixin, models.Model, RedisLockableMixIn,
         if property in allowed_fields:
             return getattr(self, property)
 
+    def resolve_case_property(self, property_name):
+        """
+        Handles case property parent references. Examples for property_name can be:
+        name
+        parent/name
+        parent/parent/name
+        ...
+        """
+        if property_name.lower().startswith('parent/'):
+            parent = self.parent
+            if not parent:
+                return None
+            return parent.resolve_case_property(property_name[7:])
+
+        return self.to_json().get(property_name)
+
     def on_tracked_models_cleared(self, model_class=None):
         self._saved_indices.reset_cache(self)
 
@@ -694,6 +745,32 @@ class CommCareCaseSQL(DisabledDbMixin, models.Model, RedisLockableMixIn,
     def get_obj_by_id(cls, case_id):
         from corehq.form_processor.backends.sql.dbaccessors import CaseAccessorSQL
         return CaseAccessorSQL.get_case(case_id)
+
+    @memoized
+    def get_parent(self, identifier=None, relationship_id=None):
+        indices = self.indices
+
+        if identifier:
+            indices = filter(lambda index: index.identifier == identifier, indices)
+
+        if relationship_id:
+            indices = filter(lambda index: index.relationship_id == relationship_id, indices)
+
+        return [index.referenced_case for index in indices]
+
+    @property
+    def parent(self):
+        """
+        Returns the parent case if one exists, else None.
+        NOTE: This property should only return the first parent in the list
+        of indices. If for some reason your use case creates more than one,
+        please write/use a different property.
+        """
+        result = self.get_parent(
+            identifier=CommCareCaseIndexSQL.PARENT_IDENTIFIER,
+            relationship_id=CommCareCaseIndexSQL.CHILD
+        )
+        return result[0] if result else None
 
     def __unicode__(self):
         return (
@@ -808,6 +885,8 @@ class CommCareCaseIndexSQL(DisabledDbMixin, models.Model, SaveStateMixin):
     )
     RELATIONSHIP_INVERSE_MAP = dict(RELATIONSHIP_CHOICES)
     RELATIONSHIP_MAP = {v: k for k, v in RELATIONSHIP_CHOICES}
+
+    PARENT_IDENTIFIER = 'parent'
 
     case = models.ForeignKey(
         'CommCareCaseSQL', to_field='case_id', db_index=True,
@@ -926,6 +1005,12 @@ class CaseTransaction(DisabledDbMixin, models.Model):
         return relevant
 
     @property
+    def user_id(self):
+        if self.form:
+            return self.form.user_id
+        return None
+
+    @property
     def form(self):
         from corehq.form_processor.backends.sql.dbaccessors import FormAccessorSQL
         if not self.form_id:
@@ -958,6 +1043,16 @@ class CaseTransaction(DisabledDbMixin, models.Model):
     @property
     def is_case_attachment(self):
         return bool(self.is_form_transaction and self.TYPE_CASE_ATTACHMENT & self.type)
+
+    @property
+    def is_case_rebuild(self):
+        return bool(
+            (self.TYPE_REBUILD_FORM_ARCHIVED & self.type) or
+            (self.TYPE_REBUILD_FORM_EDIT & self.type) or
+            (self.TYPE_REBUILD_USER_ARCHIVED & self.type) or
+            (self.TYPE_REBUILD_USER_REQUESTED & self.type) or
+            (self.TYPE_REBUILD_WITH_REASON & self.type)
+        )
 
     @property
     def readable_type(self):
@@ -1054,7 +1149,7 @@ class CaseTransaction(DisabledDbMixin, models.Model):
             "sync_log_id='{self.sync_log_id}', "
             "type='{self.type}', "
             "server_date='{self.server_date}', "
-            "revoked='{self.revoked}'"
+            "revoked='{self.revoked}')"
         ).format(self=self)
 
     class Meta:
@@ -1104,7 +1199,7 @@ class FormEditRebuild(CaseTransactionDetail):
     deprecated_form_id = StringProperty()
 
 
-class LedgerValue(DisabledDbMixin, models.Model):
+class LedgerValue(DisabledDbMixin, models.Model, TrackRelatedChanges):
     """
     Represents the current state of a ledger. Supercedes StockState
     """
@@ -1119,8 +1214,116 @@ class LedgerValue(DisabledDbMixin, models.Model):
     balance = models.IntegerField(default=0)  # todo: confirm we aren't ever intending to support decimals
     last_modified = models.DateTimeField(auto_now=True)
 
+    @property
+    def stock_on_hand(self):
+        return self.balance
+
     class Meta:
         app_label = "form_processor"
         db_table = LedgerValue_DB_TABLE
 
-CaseAction = namedtuple("CaseAction", ["action_type", "updated_known_properties", "indices"])
+
+class LedgerTransaction(DisabledDbMixin, models.Model):
+    TYPE_BALANCE = 1
+    TYPE_TRANSFER = 2
+    TYPE_CHOICES = (
+        (TYPE_BALANCE, 'balance'),
+        (TYPE_TRANSFER, 'transfer'),
+    )
+
+    form_id = models.CharField(max_length=255, null=False)
+    server_date = models.DateTimeField()
+    report_date = models.DateTimeField()
+    type = models.PositiveSmallIntegerField(choices=TYPE_CHOICES)
+    case_id = models.CharField(max_length=255, db_index=True, default=None)
+    entry_id = models.CharField(max_length=100, default=None)
+    section_id = models.CharField(max_length=100, default=None)
+
+    user_defined_type = TruncatingCharField(max_length=20, null=True, blank=True)
+
+    # change from previous balance
+    delta = models.IntegerField(default=0)
+    # new balance
+    updated_balance = models.IntegerField(default=0)
+
+    def get_consumption_transactions(self, exclude_inferred_receipts=False):
+        """
+        This adds in the inferred transactions for BALANCE transactions and converts
+        TRANSFER transactions to ``consumption`` / ``receipts``
+        :return: list of ``ConsumptionTransaction`` objects
+        """
+        from casexml.apps.stock.const import (
+            TRANSACTION_TYPE_STOCKONHAND,
+            TRANSACTION_TYPE_RECEIPTS,
+            TRANSACTION_TYPE_CONSUMPTION
+        )
+        transactions = [
+            ConsumptionTransaction(
+                TRANSACTION_TYPE_RECEIPTS if self.delta > 0 else TRANSACTION_TYPE_CONSUMPTION,
+                abs(self.delta),
+                self.report_date
+            )
+        ]
+        if self.type == LedgerTransaction.TYPE_BALANCE:
+            if self.delta > 0 and exclude_inferred_receipts:
+                transactions = []
+
+            transactions.append(
+                ConsumptionTransaction(
+                    TRANSACTION_TYPE_STOCKONHAND,
+                    self.updated_balance,
+                    self.report_date
+                )
+            )
+        return transactions
+
+    @property
+    def readable_type(self):
+        for type_, type_slug in self.TYPE_CHOICES:
+            if self.type == type_:
+                return type_slug
+
+    @property
+    def ledger_reference(self):
+        from corehq.form_processor.parsers.ledgers.helpers import UniqueLedgerReference
+        return UniqueLedgerReference(
+            case_id=self.case_id, section_id=self.section_id, entry_id=self.entry_id
+        )
+
+    @property
+    def stock_on_hand(self):
+        return self.updated_balance
+
+    def __unicode__(self):
+        return (
+            "LedgerTransaction("
+            "form_id='{self.form_id}', "
+            "server_date='{self.server_date}', "
+            "report_date='{self.report_date}', "
+            "type='{self.readable_type}', "
+            "case_id='{self.case_id}', "
+            "entry_id='{self.entry_id}', "
+            "section_id='{self.section_id}', "
+            "user_defined_type='{self.user_defined_type}', "
+            "delta='{self.delta}', "
+            "updated_balance='{self.updated_balance}')"
+        ).format(self=self)
+
+    class Meta:
+        db_table = LedgerTransaction_DB_TABLE
+        app_label = "form_processor"
+        index_together = [
+            ["case_id", "entry_id", "section_id"],
+        ]
+
+
+class ConsumptionTransaction(namedtuple('ConsumptionTransaction', ['type', 'normalized_value', 'received_on'])):
+    @property
+    def is_stockout(self):
+        from casexml.apps.stock.const import TRANSACTION_TYPE_STOCKONHAND
+        return self.type == TRANSACTION_TYPE_STOCKONHAND and self.normalized_value == 0
+
+    @property
+    def is_checkpoint(self):
+        from casexml.apps.stock.const import TRANSACTION_TYPE_STOCKONHAND
+        return self.type == TRANSACTION_TYPE_STOCKONHAND and not self.is_stockout

@@ -12,35 +12,32 @@
             </div>
     {% endblock patient_header %}
 
-
     {% block patient_content %}
-        {% block patient-content-tabs %}
-            <div class="row">
-                <div class="col-sm-12">
-                    <ul class="nav nav-pills">
-                        {% block patient-tab %}
-                            {% if patient_info_url != '' %}
-                            <li {% if view_mode == "info" %}class="active"{% endif %}>
-                                <a href="{{ patient_info_url }}{% if notabs %}&notabs{% endif %}" >{% trans "Info" %}</a></li>
-                            {% endif %}
-                            {% if patient_submission_url != '' %}
-                            <li {% if view_mode == "submissions" %}class="active"{% endif %}>
-                                <a href="{{ patient_submission_url }}{% if notabs %}&notabs{% endif %}" >{% trans "Submissions" %}</a></li>
-                            {% endif %}
-                            {% if patient_interactions_url != '' %}
-                            <li {% if view_mode == "interactions" %}class="active"{% endif %}>
-                                <a href="{{ patient_interactions_url }}{% if notabs %}&notabs{% endif %}" >{% trans "Patient Interactions" %}</a></li>
-                            {% endif %}
-                            {% if patient_status_url != '' %}
-                            <li {% if view_mode == "status" %}class="active"{% endif %}>
-                                <a href="{{ patient_status_url }}{% if notabs %}&notabs{% endif %}" >{% trans "Manage Patient Status" %}</a></li>
-                            {% endif %}
-                        {% endblock patient-tab %}
-                    </ul>
-                </div>
-            </div>
-            {% block patient-tab-container %}
-            {% endblock patient-tab-container %}
-        {% endblock patient-content-tabs %}
+        <div class="col-md-11">
+            {% block patient-content-tabs %}
+                <ul class="nav nav-pills">
+                    {% block patient-tab %}
+                        {% if patient_info_url != '' %}
+                        <li {% if view_mode == "info" %}class="active"{% endif %}>
+                            <a href="{{ patient_info_url }}{% if notabs %}&notabs{% endif %}" >{% trans "Info" %}</a></li>
+                        {% endif %}
+                        {% if patient_submission_url != '' %}
+                        <li {% if view_mode == "submissions" %}class="active"{% endif %}>
+                            <a href="{{ patient_submission_url }}{% if notabs %}&notabs{% endif %}" >{% trans "Submissions" %}</a></li>
+                        {% endif %}
+                        {% if patient_interactions_url != '' %}
+                        <li {% if view_mode == "interactions" %}class="active"{% endif %}>
+                            <a href="{{ patient_interactions_url }}{% if notabs %}&notabs{% endif %}" >{% trans "Patient Interactions" %}</a></li>
+                        {% endif %}
+                        {% if patient_status_url != '' %}
+                        <li {% if view_mode == "status" %}class="active"{% endif %}>
+                            <a href="{{ patient_status_url }}{% if notabs %}&notabs{% endif %}" >{% trans "Manage Patient Status" %}</a></li>
+                        {% endif %}
+                    {% endblock patient-tab %}
+                </ul>
+                {% block patient-tab-container %}
+                {% endblock patient-tab-container %}
+            {% endblock patient-content-tabs %}
+        </div>
     {% endblock patient_content %}
 {% endblock reportcontent %}

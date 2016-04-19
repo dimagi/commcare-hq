@@ -1,14 +1,16 @@
-from functools import wraps
 import json
 import logging
 import traceback
-from django.core.urlresolvers import reverse as _reverse
-from django.utils.http import urlencode
-from dimagi.utils.web import get_url_base
+from functools import wraps
 
 from django import http
 from django.conf import settings
 from django.core.exceptions import PermissionDenied
+from django.core.urlresolvers import reverse as _reverse
+from django.utils.http import urlencode
+
+from dimagi.utils.web import get_url_base
+
 from corehq.util import global_request
 
 JSON = 'application/json'
@@ -60,47 +62,46 @@ def json_error(f):
             return response
 
         except http.Http404 as e:
-            blob = json.dumps({
-                'error': 404,
-                'message': unicode(e),
-            })
-            logger.warning('Not found: %s', request.path,
-                           extra={
-                               'status_code': 404,
-                               'request': request,
-                           })
-            return http.HttpResponseNotFound(blob, content_type=JSON)
+            return _get_json_exception_response(404, request, e, log_message='Not found: %s')
         except PermissionDenied as e:
-            logger.warning(
-                'Forbidden (Permission denied): %s', request.path,
-                extra={
-                    'status_code': 403,
-                    'request': request,
-                })
-            blob = json.dumps({
-                'error': 403,
-                'message': unicode(e),
-            })
-            return http.HttpResponseForbidden(blob, content_type=JSON)
+            return _get_json_exception_response(403, request, e, log_message='Forbidden (Permission denied): %s')
         except BadRequest as e:
-            blob = json.dumps({
-                'error': 400,
-                'message': unicode(e),
-            })
-            return http.HttpResponseBadRequest(blob, content_type=JSON)
+            return _get_json_exception_response(400, request, e)
         except Exception as e:
-            data = {
-                'error': 500,
-                'message': unicode(e)
-            }
-            if settings.DEBUG:
-                data['traceback'] = traceback.format_exc()
-            return http.HttpResponse(
-                status=500,
-                content=json.dumps(data),
-                content_type=JSON
-            )
+            return _get_json_exception_response(500, request, e)
     return inner
+
+
+def _get_json_exception_response(code, request, exception, log_message=None):
+    if log_message:
+        logger.warning(
+            log_message, request.path,
+            extra={
+                'status_code': code,
+                'request': request,
+            })
+
+    data = _json_exception_response_data(code, exception)
+
+    return http.HttpResponse(
+        status=code,
+        content=json.dumps(data),
+        content_type=JSON
+    )
+
+
+def _json_exception_response_data(code, exception):
+    if isinstance(exception.message, unicode):
+        message = unicode(exception)
+    else:
+        message = str(exception).decode('utf-8')
+    data = {
+        'error': code,
+        'message': message
+    }
+    if code == 500 and settings.DEBUG:
+        data['traceback'] = traceback.format_exc()
+    return data
 
 
 def get_request():

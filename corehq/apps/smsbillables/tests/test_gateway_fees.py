@@ -1,4 +1,4 @@
-from random import choice
+from random import choice, randint
 
 from django.test import TestCase
 
@@ -16,9 +16,6 @@ from corehq.apps.smsbillables.models import (
 
 class TestGatewayFee(TestCase):
     def setUp(self):
-        SmsGatewayFee.objects.all().delete()
-        SmsGatewayFeeCriteria.objects.all().delete()
-
         self.currency_usd = init_default_currency()
 
         self.backend_ids = generator.arbitrary_backend_ids()
@@ -85,6 +82,20 @@ class TestGatewayFee(TestCase):
             self.assertEqual(
                 billable.gateway_charge,
                 self.least_specific_fees[billable.direction][billable.gateway_fee.criteria.backend_api_id]
+            )
+
+    def test_multipart_gateway_charge(self):
+        self.create_least_specific_gateway_fees()
+
+        for msg_log in self.message_logs:
+            multipart_count = randint(1, 10)
+            billable = SmsBillable.create(msg_log, multipart_count=multipart_count)
+            self.assertIsNotNone(billable)
+            self.assertEqual(
+                billable.gateway_charge,
+                self.least_specific_fees
+                [billable.direction]
+                [billable.gateway_fee.criteria.backend_api_id] * multipart_count
             )
 
     def test_other_currency_fees(self):

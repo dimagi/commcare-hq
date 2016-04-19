@@ -17,8 +17,10 @@ from corehq.apps.cloudcare.dbaccessors import get_cloudcare_apps
 from corehq.apps.data_interfaces.models import AutomaticUpdateRule
 from corehq.apps.domain.models import Domain
 from corehq.apps.fixtures.models import FixtureDataType
+from corehq.apps.hqmedia.models import HQMediaMixin
 from corehq.apps.reminders.models import METHOD_SMS_SURVEY, METHOD_IVR_SURVEY
 from corehq.apps.users.models import CommCareUser, UserRole
+from corehq.apps.userreports.exceptions import DataSourceConfigurationNotFoundError
 from corehq.const import USER_DATE_FORMAT
 
 
@@ -79,6 +81,8 @@ class DomainDowngradeActionHandler(BaseModifySubscriptionActionHandler):
             privileges.ROLE_BASED_ACCESS: cls.response_role_based_access,
             privileges.DATA_CLEANUP: cls.response_data_cleanup,
             privileges.COMMCARE_LOGO_UPLOADER: cls.response_commcare_logo_uploader,
+            privileges.ADVANCED_DOMAIN_SECURITY: cls.response_domain_security,
+            privileges.REPORT_BUILDER: cls.response_report_builder,
         }
 
     @staticmethod
@@ -113,7 +117,7 @@ class DomainDowngradeActionHandler(BaseModifySubscriptionActionHandler):
                 survey.save()
         except Exception:
             log_accounting_error(
-                "Failed to downgrade outbound sms for domain %s."
+                "Failed to downgrade inbound sms for domain %s."
                 % domain.name
             )
             return False
@@ -182,6 +186,25 @@ class DomainDowngradeActionHandler(BaseModifySubscriptionActionHandler):
             )
             return False
 
+    @staticmethod
+    def response_domain_security(domain):
+        if domain.two_factor_auth or domain.secure_sessions:
+            domain.two_factor_auth = False
+            domain.secure_sessions = False
+            domain.save()
+
+    @staticmethod
+    def response_report_builder(project):
+        from corehq.apps.userreports.models import ReportConfiguration
+        reports = ReportConfiguration.by_domain(project.name)
+        builder_reports = filter(lambda report: report.report_meta.created_by_builder, reports)
+        for report in builder_reports:
+            try:
+                report.config.deactivate()
+            except DataSourceConfigurationNotFoundError:
+                pass
+        return True
+
 
 class DomainUpgradeActionHandler(BaseModifySubscriptionActionHandler):
     """
@@ -196,6 +219,7 @@ class DomainUpgradeActionHandler(BaseModifySubscriptionActionHandler):
         return {
             privileges.ROLE_BASED_ACCESS: cls.response_role_based_access,
             privileges.COMMCARE_LOGO_UPLOADER: cls.response_commcare_logo_uploader,
+            privileges.REPORT_BUILDER: cls.response_report_builder,
         }
 
     @staticmethod
@@ -213,9 +237,10 @@ class DomainUpgradeActionHandler(BaseModifySubscriptionActionHandler):
         """
         try:
             for app in get_all_apps(domain.name):
-                has_restored = app.restore_logos()
-                if has_restored:
-                    app.save()
+                if isinstance(app, HQMediaMixin):
+                    has_restored = app.restore_logos()
+                    if has_restored:
+                        app.save()
             return True
         except Exception:
             log_accounting_error(
@@ -224,6 +249,21 @@ class DomainUpgradeActionHandler(BaseModifySubscriptionActionHandler):
             )
             return False
 
+    @staticmethod
+    def response_report_builder(project):
+        from corehq.apps.userreports.models import ReportConfiguration
+        from corehq.apps.userreports.tasks import rebuild_indicators
+        reports = ReportConfiguration.by_domain(project.name)
+        builder_reports = filter(lambda report: report.report_meta.created_by_builder, reports)
+        for report in builder_reports:
+            try:
+                if report.config.is_deactivated:
+                    report.config.is_deactivated = False
+                    report.config.save()
+                    rebuild_indicators.delay(report.config._id)
+            except DataSourceConfigurationNotFoundError:
+                pass
+        return True
 
 # TODO - cache
 def _active_reminder_methods(domain):
@@ -258,6 +298,7 @@ class DomainDowngradeStatusHandler(BaseModifySubscriptionHandler):
             privileges.DEIDENTIFIED_DATA: cls.response_deidentified_data,
             privileges.ROLE_BASED_ACCESS: cls.response_role_based_access,
             privileges.DATA_CLEANUP: cls.response_data_cleanup,
+            privileges.ADVANCED_DOMAIN_SECURITY: cls.response_domain_security,
         }
 
     def get_response(self):
@@ -375,6 +416,7 @@ class DomainDowngradeStatusHandler(BaseModifySubscriptionHandler):
             startkey=startkey,
             endkey=endkey,
             include_docs=True,
+            reduce=False,
         )
         num_deid_reports = len(filter(lambda r: r.is_safe, reports))
         if num_deid_reports > 0:
@@ -500,4 +542,28 @@ class DomainDowngradeStatusHandler(BaseModifySubscriptionHandler):
                 ) % {
                     'rule_count': rule_count,
                 }
+            )
+
+    @staticmethod
+    def response_domain_security(domain):
+        """
+        turn off any domain enforced security features and alert user of deactivated features
+        """
+        two_factor = domain.two_factor_auth
+        secure_sessions = domain.secure_sessions
+        msgs = []
+        if secure_sessions:
+            msgs.append(_("Your project has enabled a 30 minute session timeout setting. "
+                          "By changing to a different plan, you will lose the ability to "
+                          "enforce this shorter timeout policy."))
+        if two_factor:
+            msgs.append(_("Two factor authentication is currently required of all of your "
+                          "web users for this project space.  By changing to a different "
+                          "plan you will lose the ability to enforce this requirement. "
+                          "However, any web user who still wants to use two factor "
+                          "authentication will be able to continue using it."))
+        if msgs:
+            return _fmt_alert(
+                _("The following security features will be affected if you select this plan:"),
+                msgs
             )

@@ -135,6 +135,7 @@ class EmwfOptionsView(LoginAndDomainMixin, JSONResponseMixin, View):
         return (GroupES()
                 .domain(self.domain)
                 .filter(type_filter)
+                .not_deleted()
                 .search_string_query(query, default_fields=["name"]))
 
     def get_groups(self, query, start, size):

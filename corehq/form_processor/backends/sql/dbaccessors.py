@@ -2,17 +2,46 @@ import logging
 from itertools import groupby
 from datetime import datetime
 
+import itertools
 from django.db import connections, InternalError, transaction
-from corehq.form_processor.exceptions import XFormNotFound, CaseNotFound, AttachmentNotFound, CaseSaveError, \
-    LedgerSaveError
-from corehq.form_processor.interfaces.dbaccessors import AbstractCaseAccessor, AbstractFormAccessor, \
-    CaseIndexInfo, AttachmentContent
+
+from corehq.form_processor.exceptions import (
+    XFormNotFound,
+    CaseNotFound,
+    AttachmentNotFound,
+    CaseSaveError,
+    LedgerSaveError,
+    LedgerValueNotFound)
+from corehq.form_processor.interfaces.dbaccessors import (
+    AbstractCaseAccessor,
+    AbstractFormAccessor,
+    CaseIndexInfo,
+    AttachmentContent,
+    AbstractLedgerAccessor
+)
 from corehq.form_processor.models import (
-    XFormInstanceSQL, CommCareCaseIndexSQL, CaseAttachmentSQL, CaseTransaction,
-    CommCareCaseSQL, XFormAttachmentSQL, XFormOperationSQL,
-    CommCareCaseIndexSQL_DB_TABLE, CaseAttachmentSQL_DB_TABLE, LedgerValue, LedgerValue_DB_TABLE)
-from corehq.form_processor.utils.sql import fetchone_as_namedtuple, fetchall_as_namedtuple, case_adapter, \
-    case_transaction_adapter, case_index_adapter, case_attachment_adapter
+    XFormInstanceSQL,
+    CommCareCaseIndexSQL,
+    CaseAttachmentSQL,
+    CaseTransaction,
+    CommCareCaseSQL,
+    XFormAttachmentSQL,
+    XFormOperationSQL,
+    CommCareCaseIndexSQL_DB_TABLE,
+    CaseAttachmentSQL_DB_TABLE,
+    LedgerTransaction_DB_TABLE,
+    LedgerValue_DB_TABLE,
+    LedgerValue,
+    LedgerTransaction,
+)
+from corehq.form_processor.utils.sql import (
+    fetchone_as_namedtuple,
+    fetchall_as_namedtuple,
+    case_adapter,
+    case_transaction_adapter,
+    case_index_adapter,
+    case_attachment_adapter
+)
 from corehq.sql_db.routers import db_for_read_write
 from corehq.util.test_utils import unit_testing_only
 
@@ -135,10 +164,12 @@ class FormAccessorSQL(AbstractFormAccessor):
     @staticmethod
     def archive_form(form, user_id=None):
         FormAccessorSQL._archive_unarchive_form(form, user_id, True)
+        form.state = XFormInstanceSQL.ARCHIVED
 
     @staticmethod
     def unarchive_form(form, user_id=None):
         FormAccessorSQL._archive_unarchive_form(form, user_id, False)
+        form.state = XFormInstanceSQL.NORMAL
 
     @staticmethod
     def soft_delete_forms(domain, form_ids, deletion_date=None, deletion_id=None):
@@ -238,6 +269,17 @@ class FormAccessorSQL(AbstractFormAccessor):
             user_id,
             True,
         )
+
+    @staticmethod
+    def get_form_ids_in_domain_by_type(domain, type_):
+        state = doc_type_to_state[type_]
+        with get_cursor(XFormInstanceSQL) as cursor:
+            cursor.execute(
+                'SELECT form_id from get_form_ids_in_domain_by_type(%s, %s)',
+                [domain, state]
+            )
+            results = fetchall_as_namedtuple(cursor)
+            return [result.form_id for result in results]
 
     @staticmethod
     def get_form_ids_for_user(domain, user_id):
@@ -451,9 +493,12 @@ class CaseAccessorSQL(AbstractCaseAccessor):
             return [result.case_id for result in results]
 
     @staticmethod
-    def get_case_ids_in_domain_by_owners(domain, owner_ids):
+    def get_case_ids_in_domain_by_owners(domain, owner_ids, closed=None):
         with get_cursor(CommCareCaseSQL) as cursor:
-            cursor.execute('SELECT case_id FROM get_case_ids_in_domain_by_owners(%s, %s)', [domain, owner_ids])
+            cursor.execute(
+                'SELECT case_id FROM get_case_ids_in_domain_by_owners(%s, %s, %s)',
+                [domain, owner_ids, closed]
+            )
             results = fetchall_as_namedtuple(cursor)
             return [result.case_id for result in results]
 
@@ -621,7 +666,7 @@ class CaseAccessorSQL(AbstractCaseAccessor):
             return sum([result.affected_count for result in results])
 
 
-class LedgerAccessorSQL(object):
+class LedgerAccessorSQL(AbstractLedgerAccessor):
     @staticmethod
     def get_ledger_values_for_case(case_id):
         return list(LedgerValue.objects.raw(
@@ -637,26 +682,74 @@ class LedgerAccessorSQL(object):
                 [case_id, section_id, entry_id]
             )[0]
         except IndexError:
-            raise LedgerValue.DoesNotExist
+            raise LedgerValueNotFound
 
     @staticmethod
     def save_ledger_values(ledger_values):
         if not ledger_values:
             return
 
-        case_ids = [lv.case_id for lv in ledger_values]
+        for ledger_value in ledger_values:
+            transactions = ledger_value.get_live_tracked_models(LedgerTransaction)
 
-        for ledger in ledger_values:
-            ledger.last_modified = datetime.utcnow()
+            ledger_value.last_modified = datetime.utcnow()
 
-        with get_cursor(LedgerValue) as cursor:
-            try:
-                cursor.execute(
-                    "SELECT save_ledger_values(%s, %s::{}[])".format(LedgerValue_DB_TABLE),
-                    [case_ids, ledger_values]
-                )
-            except InternalError as e:
-                raise LedgerSaveError(e)
+            with get_cursor(LedgerValue) as cursor:
+                try:
+                    cursor.execute(
+                        "SELECT save_ledger_values(%s, %s::{}, %s::{}[])".format(
+                            LedgerValue_DB_TABLE,
+                            LedgerTransaction_DB_TABLE
+                        ),
+                        [ledger_value.case_id, ledger_value, transactions]
+                    )
+                except InternalError as e:
+                    raise LedgerSaveError(e)
+
+            ledger_value.clear_tracked_models()
+
+    @staticmethod
+    def get_ledger_values_for_product_ids(product_ids):
+        return list(LedgerValue.objects.raw(
+            'SELECT * FROM get_ledger_values_for_product_ids(%s)',
+            [product_ids]
+        ))
+
+    @staticmethod
+    def get_ledger_transactions_for_case(case_id, section_id=None, entry_id=None):
+        return RawQuerySetWrapper(LedgerTransaction.objects.raw(
+            "SELECT * FROM get_ledger_transactions_for_case(%s, %s, %s)",
+            [case_id, section_id, entry_id]
+        ))
+
+    @staticmethod
+    def get_ledger_transactions_in_window(case_id, section_id, entry_id, window_start, window_end):
+        return RawQuerySetWrapper(LedgerTransaction.objects.raw(
+            "SELECT * FROM get_ledger_transactions_for_case(%s, %s, %s, %s, %s)",
+            [case_id, section_id, entry_id, window_start, window_end]
+        ))
+
+    @staticmethod
+    def get_transactions_for_consumption(domain, case_id, product_id, section_id, window_start, window_end):
+        from corehq.apps.commtrack.consumption import should_exclude_invalid_periods
+        transactions = LedgerAccessorSQL.get_ledger_transactions_in_window(
+            case_id, section_id, product_id, window_start, window_end
+        )
+        exclude_inferred_receipts = should_exclude_invalid_periods(domain)
+        return itertools.chain.from_iterable([
+            transaction.get_consumption_transactions(exclude_inferred_receipts)
+            for transaction in transactions
+        ])
+
+    @staticmethod
+    def get_latest_transaction(case_id, section_id, entry_id):
+        try:
+            return LedgerTransaction.objects.raw(
+                "SELECT * FROM get_latest_ledger_transaction(%s, %s, %s)",
+                [case_id, section_id, entry_id]
+            )[0]
+        except IndexError:
+            return None
 
 
 def _order_list(id_list, object_list, id_property):
@@ -698,3 +791,36 @@ def _batch_iterate(batch_fn, next_start_from_fn, start_from=None, chunk_size=500
             batch = batch_fn(start_from, limit=chunk_size)
         else:
             batch = []  # equivalent to return
+
+
+class RawQuerySetWrapper(object):
+    """
+    Wrapper for RawQuerySet objects to make them behave more like
+    normal QuerySet objects
+    """
+    def __init__(self, queryset):
+        self.queryset = queryset
+        self._result_cache = None
+
+    def _fetch_all(self):
+        if self._result_cache is None:
+            self._result_cache = list(self.queryset)
+        return self._result_cache
+
+    def __getattr__(self, item):
+        return getattr(self.queryset, item)
+
+    def __getitem__(self, k):
+        self._fetch_all()
+        return list(self._result_cache)[k]
+
+    def __iter__(self):
+        return self.queryset.__iter__()
+
+    def __len__(self):
+        self._fetch_all()
+        return len(self._result_cache)
+
+    def __nonzero__(self):
+        self._fetch_all()
+        return bool(self._result_cache)

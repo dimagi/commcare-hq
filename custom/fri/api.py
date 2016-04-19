@@ -154,6 +154,7 @@ def add_metadata(sms, message_bank_messages):
     sms.fri_message_bank_lookup_completed = True
     try:
         sms.save()
+        sms.publish_change()
     except Exception:
         # No big deal, we'll just perform the lookup again the next time it's needed, and
         # try to save it again then.

@@ -14,6 +14,7 @@ import sys
 import threading
 from unittest.case import TestCase
 
+import couchlog.signals
 from couchdbkit import ResourceNotFound
 from couchdbkit.ext.django import loading
 from mock import patch, Mock
@@ -101,6 +102,10 @@ class ErrorOnDbAccessContext(object):
         self.original_db_enabled = settings.DB_ENABLED
         settings.DB_ENABLED = False
 
+        # do not log request exceptions to couch for non-database tests
+        couchlog.signals.got_request_exception.disconnect(
+            couchlog.signals.log_request_exception)
+
         self.db_patch = patch('django.db.backends.util.CursorWrapper')
         db_mock = self.db_patch.start()
         error = RuntimeError(
@@ -127,6 +132,8 @@ class ErrorOnDbAccessContext(object):
         for cls in self.db_classes:
             db = loading.get_db(cls._meta.app_label)
             cls.set_db(db)
+        couchlog.signals.got_request_exception.connect(
+            couchlog.signals.log_request_exception)
         self.db_patch.stop()
 
 
@@ -186,7 +193,8 @@ class HqdbContext(DatabaseContext):
                 deleted_databases.append(uri)
                 log.info("deleted database %s for %s", db.dbname, app_label)
             except ResourceNotFound:
-                log.info("database %s not found for %s! it was probably already deleted.", db.dbname, app_label)
+                log.info("database %s not found for %s! it was probably already deleted.",
+                         db.dbname, app_label)
 
         # HACK clean up leaked database connections
         from corehq.sql_db.connections import connection_manager

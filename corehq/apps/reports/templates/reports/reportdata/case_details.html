@@ -1,4 +1,4 @@
-{% extends "reports/bootstrap2/base_template.html" %}
+{% extends "style/bootstrap3/base_section.html" %}
 {% load case_tags %}
 {% load hq_shared_tags %}
 {% load i18n %}
@@ -8,14 +8,8 @@
 {% block head %} {{ block.super }}
     {% include "imports/proptable.html" %}
     {% include "imports/fancy-code.html" %}
-    <style type="text/css" >
-        .hq-generic-report {
-            padding: 10px;
-        }
-        section#case-actions {
-            padding-top: 1em;
-        }
-        section#case-actions form {
+    <style type="text/css">
+        .dataTables_length select {
             display: inline-block;
         }
     </style>
@@ -60,39 +54,31 @@
         return false;
     });
     </script>
+
+    {# This is needed for rendering the case hierarchy. It's included here to prevent an #}
+    {# import error: http://manage.dimagi.com/default.asp?223100 #}
+    {% include 'cloudcare/includes/touchforms-inline.html' %}
 {% endblock %}
 
-{% block page-title %}
-    <ul class="breadcrumb">
-        <li>
-            <a href="{% url "reports_home" domain %}"><strong>{% trans "Reports" %}</strong></a> <span class="divider">&gt;</span>
-        </li>
-        <li>
-            <a href="{% url "project_report_dispatcher" domain 'case_list' %}">{% trans "Case List" %}</a> <span class="divider">&gt;</span>
-        </li>
-        <li class="active">
-            <a href="#">{{ report.name }}</a>
-        </li>
-    </ul>
-{% endblock %}
-
-{% block main_column %}
+{% block page_content %}
 <div class="hq-generic-report">
     {% render_case case case_display_options %}
-    <section id="case-actions" >
-    {% if show_case_rebuild %}
-        <form action="{% url 'resave_case' domain case_id %}" method="post" >{% csrf_token %}
-             <button type="submit" class="btn btn-info disable-on-submit" >{% trans 'Resave Case' %}</button>
-        </form>
-        <form action="{% url 'rebuild_case' domain case_id %}" method="post" >{% csrf_token %}
-             <button type="submit" class="btn btn-primary disable-on-submit" >{% trans 'Rebuild Case' %}</button>
-        </form>
-    {% endif %}
-    {% if not case.closed and not is_usercase %}
-        <form action="{% url 'close_case' domain case_id %}" method="post" id="close_case">{% csrf_token %}
-             <button type="submit" class="btn btn-danger disable-on-submit" >{% trans 'Close Case' %}</button>
-        </form>
-    {% endif %}
-    </section>
+    <div id="case-actions" class="clearfix form-actions">
+        <div class="col-sm-12">
+        {% if show_case_rebuild %}
+            <form action="{% url 'resave_case' domain case_id %}" method="post" >{% csrf_token %}
+                 <button type="submit" class="btn btn-info disable-on-submit" >{% trans 'Resave Case' %}</button>
+            </form>
+            <form action="{% url 'rebuild_case' domain case_id %}" method="post" >{% csrf_token %}
+                 <button type="submit" class="btn btn-primary disable-on-submit" >{% trans 'Rebuild Case' %}</button>
+            </form>
+        {% endif %}
+        {% if not case.closed and not is_usercase %}
+            <form action="{% url 'close_case' domain case_id %}" method="post" id="close_case">{% csrf_token %}
+                 <button type="submit" class="btn btn-danger disable-on-submit" >{% trans 'Close Case' %}</button>
+            </form>
+        {% endif %}
+        </div>
+    </div>
 </div>
 {% endblock %}

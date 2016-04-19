@@ -1,7 +1,8 @@
 from corehq.util.elastic import es_index
+from pillowtop.es_utils import ElasticsearchIndexInfo
 
-DOMAIN_INDEX = es_index("hqdomains_20160308_1304")
-DOMAIN_MAPPING = {'_meta': {'comment': 'Lukasz Wyszomirski modified on 2016/03/08',
+DOMAIN_INDEX = es_index("hqdomains_20160318_1339")
+DOMAIN_MAPPING = {'_meta': {'comment': 'j$ modified on 2016/03/18',
                             'created': None},
  'date_detection': False,
  'date_formats': ['yyyy-MM-dd',
@@ -74,6 +75,10 @@ DOMAIN_MAPPING = {'_meta': {'comment': 'Lukasz Wyszomirski modified on 2016/03/0
                 'cp_n_forms_30_d': {'type': 'long'},
                 'cp_n_forms_60_d': {'type': 'long'},
                 'cp_n_forms_90_d': {'type': 'long'},
+                'cp_n_j2me_30_d': {'type': 'long'},
+                'cp_n_j2me_60_d': {'type': 'long'},
+                'cp_n_j2me_90_d': {'type': 'long'},
+                'cp_j2me_90_d_bool': {'type': 'boolean'},
                 'cp_n_inactive_cases': {'type': 'long'},
                 'cp_n_users_submitted_form': {'type': 'long'},
                 'cp_n_web_users': {'type': 'long'},
@@ -250,3 +255,31 @@ DOMAIN_MAPPING = {'_meta': {'comment': 'Lukasz Wyszomirski modified on 2016/03/0
                                                'type': 'string'}},
                           'type': 'multi_field'},
                 'yt_id': {'type': 'string'}}}
+
+
+DOMAIN_META = {
+    "settings": {
+        "analysis": {
+            "analyzer": {
+                "default": {
+                    "type": "custom",
+                    "tokenizer": "whitespace",
+                    "filter": ["lowercase"]
+                },
+                "comma": {
+                    "type": "pattern",
+                    "pattern": "\s*,\s*"
+                },
+            }
+        }
+    }
+}
+
+
+DOMAIN_INDEX_INFO = ElasticsearchIndexInfo(
+    index=DOMAIN_INDEX,
+    alias='hqdomains',
+    type='hqdomain',
+    meta=DOMAIN_META,
+    mapping=DOMAIN_MAPPING,
+)

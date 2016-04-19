@@ -12,6 +12,7 @@ from django.core.urlresolvers import reverse
 from django.http import HttpResponseRedirect, HttpResponse
 from django.http.response import Http404
 from django.shortcuts import render
+from django.utils.decorators import method_decorator
 from django.utils.http import urlencode
 from django.utils.translation import ugettext as _, ugettext_lazy
 from django.views.decorators.http import require_POST
@@ -22,6 +23,7 @@ from djangular.views.mixins import JSONResponseMixin, allow_remote_invocation
 from sqlalchemy import types, exc
 from sqlalchemy.exc import ProgrammingError
 
+from corehq.apps.hqwebapp.templatetags.hq_shared_tags import toggle_enabled
 from couchexport.export import export_from_tables
 from couchexport.files import Temp
 from couchexport.models import Format
@@ -33,6 +35,7 @@ from corehq import toggles
 from corehq.apps.analytics.tasks import track_workflow
 from corehq.apps.app_manager.dbaccessors import domain_has_apps
 from corehq.apps.app_manager.models import Application, Form
+from corehq.apps.app_manager.util import purge_report_from_mobile_ucr
 from corehq.apps.dashboard.models import IconContext, TileConfiguration, Tile
 from corehq.apps.domain.decorators import login_and_domain_required, login_or_basic
 from corehq.apps.domain.views import BaseDomainView
@@ -138,6 +141,7 @@ def create_report(request, domain):
 
 class ReportBuilderView(BaseDomainView):
 
+    @method_decorator(require_permission(Permissions.edit_data))
     @cls_to_view_login_and_domain
     @use_bootstrap3
     @use_select2
@@ -146,8 +150,7 @@ class ReportBuilderView(BaseDomainView):
     def dispatch(self, request, *args, **kwargs):
         if has_report_builder_access(request):
             report_type = kwargs.get('report_type', None)
-            domain = kwargs.get('domain', None)
-            if report_type != 'map' or REPORT_BUILDER_MAP_REPORTS.enabled(domain):
+            if report_type != 'map' or toggle_enabled(request, REPORT_BUILDER_MAP_REPORTS):
                 return super(ReportBuilderView, self).dispatch(request, *args, **kwargs)
             else:
                 raise Http404
@@ -261,7 +264,7 @@ class ReportBuilderTypeSelect(JSONResponseMixin, ReportBuilderView):
                 slug='map',
                 analytics_usage_label="Map",
                 analytics_workflow_label=analytics_workflow_label,
-                icon='fa fa-globe',
+                icon='fcc fcc-globe',
                 context_processor_class=IconContext,
                 url=reverse('report_builder_select_source', args=[self.domain, 'map']),
                 help_text=_('A map to show data from your cases or forms.'
@@ -498,7 +501,15 @@ def delete_report(request, domain, report_id):
             pass
 
     config.delete()
+    did_purge_something = purge_report_from_mobile_ucr(config)
+
     messages.success(request, _(u'Report "{}" deleted!').format(config.title))
+    if did_purge_something:
+        messages.warning(
+            request,
+            _(u"This report was used in one or more applications. "
+              "It has been removed from there too.")
+        )
     redirect = request.GET.get("redirect", None)
     if not redirect:
         redirect = reverse('configurable_reports_home', args=[domain])

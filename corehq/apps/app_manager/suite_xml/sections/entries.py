@@ -14,11 +14,16 @@ from corehq.apps.app_manager.util import actions_use_usercase
 from corehq.apps.app_manager.xform import autoset_owner_id_for_open_case, \
     autoset_owner_id_for_subcase
 from corehq.apps.app_manager.xpath import CaseIDXPath, session_var, \
-    CaseTypeXpath, ItemListFixtureXpath, XPath, ProductInstanceXpath, UserCaseXPath
+    CaseTypeXpath, ItemListFixtureXpath, XPath, ProductInstanceXpath, UserCaseXPath, \
+    interpolate_xpath
 from corehq.apps.app_manager.suite_xml.xml_models import *
 
 
-FormDatumMeta = namedtuple('FormDatumMeta', 'datum case_type requires_selection action')
+class FormDatumMeta(namedtuple('FormDatumMeta', 'datum case_type requires_selection action')):
+    def __repr__(self):
+        return 'FormDataumMeta(datum=<SessionDatum(id={})>, case_type={}, requires_selection={}, action={})'.format(
+            self.datum.id, self.case_type, self.requires_selection, self.action
+        )
 
 
 class EntriesContributor(SuiteContributorByModule):
@@ -51,7 +56,7 @@ class EntriesHelper(object):
     def get_filter_xpath(module, delegation=False):
         filter = module.case_details.short.filter
         if filter:
-            xpath = '[%s]' % filter
+            xpath = '[%s]' % interpolate_xpath(filter)
         else:
             xpath = ''
         if delegation:
@@ -344,7 +349,7 @@ class EntriesHelper(object):
                     filter_xpath_template.replace('$fixture_value', fixture_value)
                 )
 
-            filter_xpath = EntriesHelper.get_filter_xpath(datum['module']) if use_filter else ''
+            filter_xpath = EntriesHelper.get_filter_xpath(detail_module) if use_filter else ''
 
             datums.append(FormDatumMeta(
                 datum=SessionDatum(

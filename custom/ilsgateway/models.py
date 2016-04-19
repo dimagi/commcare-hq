@@ -1,17 +1,13 @@
 from datetime import datetime
 
 import json_field
-from django.core.urlresolvers import reverse
 from django.dispatch.dispatcher import receiver
 from corehq.apps.domain.signals import commcare_domain_pre_delete
 from corehq.apps.locations.signals import location_edited
-from corehq.apps.users.views import EditWebUserView
-from corehq.apps.users.views.mobile import EditCommCareUserView
 from dimagi.ext.couchdbkit import Document, BooleanProperty, StringProperty
 from django.db import models, connection
 
 from casexml.apps.stock.models import DocDomainMapping
-from corehq.apps.products.models import Product
 from corehq.apps.locations.models import SQLLocation
 from custom.utils.utils import add_to_module_map
 from dimagi.utils.dates import force_to_datetime
@@ -93,6 +89,7 @@ class SupplyPointStatusTypes(object):
     SUPERVISION_FACILITY = "super_fac"
     LOSS_ADJUSTMENT_FACILITY = "la_fac"
     DELINQUENT_DELIVERIES = "del_del"
+    TRANS_FACILITY = "trans_fac"
 
     CHOICE_MAP = {
         DELIVERY_FACILITY: {SupplyPointStatusValues.REMINDER_SENT: "Waiting Delivery Confirmation",
@@ -117,6 +114,11 @@ class SupplyPointStatusTypes(object):
         DELINQUENT_DELIVERIES: {
             SupplyPointStatusValues.ALERT_SENT: "Delinquent deliveries summary sent to District"
         },
+        TRANS_FACILITY: {
+            SupplyPointStatusValues.SUBMITTED: "Transfer Stock Submitted",
+            SupplyPointStatusValues.NOT_SUBMITTED: "Transfer Stock Not Submitted",
+            SupplyPointStatusValues.REMINDER_SENT: "Transfer Reminder Sent"
+        }
     }
 
     @classmethod
@@ -151,17 +153,6 @@ class SupplyPointStatus(models.Model):
     def name(self):
         return SupplyPointStatusTypes.get_display_name(self.status_type, self.status_value)
 
-    @classmethod
-    def wrap_from_json(cls, obj, location):
-        try:
-            obj['location_id'] = location.location_id
-        except SQLLocation.DoesNotExist:
-            return None
-        obj['external_id'] = obj['id']
-        del obj['id']
-        del obj['supply_point']
-        return cls(**obj)
-
     class Meta:
         app_label = 'ilsgateway'
         verbose_name = "Facility Status"
@@ -182,18 +173,6 @@ class DeliveryGroupReport(models.Model):
     class Meta:
         app_label = 'ilsgateway'
         ordering = ('-report_date',)
-
-    @classmethod
-    def wrap_from_json(cls, obj, location):
-        try:
-            obj['location_id'] = location.location_id
-        except SQLLocation.DoesNotExist:
-            return None
-
-        obj['external_id'] = obj['id']
-        del obj['id']
-        del obj['supply_point']
-        return cls(**obj)
 
 
 # Ported from: https://github.com/dimagi/logistics/blob/tz-master/logistics_project/apps/tanzania/models.py#L170
@@ -333,15 +312,6 @@ class ProductAvailabilityData(ReportingModel):
     class Meta:
         app_label = 'ilsgateway'
 
-    @classmethod
-    def wrap_from_json(cls, obj, domain, location_id):
-        product = Product.get_by_code(domain, obj['product'])
-        obj['product'] = product._id
-        obj['location_id'] = location_id
-        obj['external_id'] = obj['id']
-        del obj['id']
-        return cls(**obj)
-
     def __str__(self):
         return 'ProductAvailabilityData(date={}, product={}, total={}, with_stock={}, without_stock={}, ' \
                'without_data={})'.format(self.date, self.product, self.total, self.with_stock,
@@ -464,16 +434,6 @@ class ReportRun(models.Model):
         return qs.order_by("-start_run")[0] if qs.count() else None
 
 
-class HistoricalLocationGroup(models.Model):
-    location_id = models.ForeignKey(SQLLocation, on_delete=models.PROTECT)
-    date = models.DateField()
-    group = models.CharField(max_length=1)
-
-    class Meta:
-        app_label = 'ilsgateway'
-        unique_together = ('location_id', 'date', 'group')
-
-
 class RequisitionReport(models.Model):
     location_id = models.CharField(max_length=100, db_index=True)
     submitted = models.BooleanField(default=False)
@@ -506,62 +466,32 @@ class ILSNotes(models.Model):
         app_label = 'ilsgateway'
 
 
-class ILSMigrationStats(models.Model):
-    products_count = models.IntegerField(default=0)
-    locations_count = models.IntegerField(default=0)
-    sms_users_count = models.IntegerField(default=0)
-    web_users_count = models.IntegerField(default=0)
-    domain = models.CharField(max_length=128, db_index=True)
-    last_modified = models.DateTimeField(auto_now=True)
-
-    class Meta:
-        app_label = 'ilsgateway'
-
-
-class ILSMigrationProblem(models.Model):
-    domain = models.CharField(max_length=128, db_index=True)
-    object_id = models.CharField(max_length=128, null=True)
-    object_type = models.CharField(max_length=30)
-    description = models.CharField(max_length=128)
-    external_id = models.CharField(max_length=128)
-    last_modified = models.DateTimeField(auto_now=True)
-
-    @property
-    def object_url(self):
-        from corehq.apps.locations.views import EditLocationView
-
-        if not self.object_id:
-            return
-
-        if self.object_type == 'smsuser':
-            return reverse(
-                EditCommCareUserView.urlname, kwargs={'domain': self.domain, 'couch_user_id': self.object_id}
-            )
-        elif self.object_type == 'webuser':
-            return reverse(
-                EditWebUserView.urlname, kwargs={'domain': self.domain, 'couch_user_id': self.object_id}
-            )
-        elif self.object_type == 'location':
-            return reverse(EditLocationView.urlname, kwargs={'domain': self.domain, 'loc_id': self.object_id})
-
-    class Meta:
-        app_label = 'ilsgateway'
-
-
-class ILSGatewayWebUser(models.Model):
-    # To remove after switchover
-    external_id = models.IntegerField(db_index=True)
-    email = models.CharField(max_length=128)
-
-    class Meta:
-        app_label = 'ilsgateway'
-
-
 class PendingReportingDataRecalculation(models.Model):
     domain = models.CharField(max_length=128)
     sql_location = models.ForeignKey(SQLLocation)
     type = models.CharField(max_length=128)
     data = json_field.JSONField()
+
+    class Meta:
+        app_label = 'ilsgateway'
+
+
+class SLABConfig(models.Model):
+    is_pilot = models.BooleanField(default=False)
+    sql_location = models.ForeignKey(SQLLocation, null=False, unique=True)
+    closest_supply_points = models.ManyToManyField(SQLLocation, related_name='+')
+
+    class Meta:
+        app_label = 'ilsgateway'
+
+
+class OneOffTaskProgress(models.Model):
+    domain = models.CharField(max_length=128)
+    task_name = models.CharField(max_length=128)
+    last_synced_object_id = models.CharField(max_length=128, null=True)
+    complete = models.BooleanField(default=False)
+    progress = models.IntegerField(default=0)
+    total = models.IntegerField(default=0)
 
     class Meta:
         app_label = 'ilsgateway'
@@ -604,11 +534,6 @@ def domain_pre_delete_receiver(domain, **kwargs):
                 "(SELECT location_id FROM locations_sqllocation WHERE domain=%s)", [domain_name]
             )
 
-            cursor.execute(
-                "DELETE FROM ilsgateway_historicallocationgroup WHERE location_id_id IN "
-                "(SELECT id FROM locations_sqllocation WHERE domain=%s)", [domain_name]
-            )
-
     return [
         CustomDeletion('ilsgateway', _delete_ilsgateway_data),
         ModelDeletion('ilsgateway', 'ReportRun', 'domain'),
@@ -637,7 +562,7 @@ def location_edited_receiver(sender, loc, moved, **kwargs):
         )
 
     group = last_location_group(loc)
-    if group != loc.metadata['group']:
+    if not loc.sql_location.location_type.administrative and group != loc.metadata['group']:
         PendingReportingDataRecalculation.objects.create(
             domain=loc.domain,
             type='group_change',

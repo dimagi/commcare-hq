@@ -299,7 +299,7 @@ class CouchCaseUpdateStrategy(UpdateStrategy):
                     value = unicode(value)
                 try:
                     self.case[item] = value
-                except BadValueError:
+                except (AttributeError, BadValueError):
                     notify_exception(None, "Can't set property {} on case {} from form {}".format(
                         item, self.case.case_id, update_action.xform_id
                     ))
@@ -354,8 +354,8 @@ class CouchCaseUpdateStrategy(UpdateStrategy):
             update_attachments[k] = v
             if v.is_present:
                 #fetch attachment from xform
-                attachment_key = v.attachment_key
-                attach = stream_dict[attachment_key]
+                identifier = v.identifier
+                attach = stream_dict[identifier]
                 attachment_builder.add(name=k, content=attach,
                                        content_type=v.server_mime)
             else:

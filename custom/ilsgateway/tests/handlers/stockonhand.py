@@ -1,5 +1,6 @@
 from casexml.apps.stock.models import StockTransaction
 from corehq.apps.commtrack.models import StockState
+from corehq.apps.sms.api import incoming
 from corehq.util.translation import localize
 from custom.ilsgateway.models import SupplyPointStatus, SupplyPointStatusTypes, SupplyPointStatusValues
 from custom.ilsgateway.tanzania.reminders import SOH_CONFIRM, SOH_BAD_FORMAT, LANGUAGE_CONFIRM
@@ -249,3 +250,27 @@ class ILSSoHTest(ILSTestScript):
             5551234 < {0}
         """.format(unicode(response % dict(language='Swahili')))
         self.run_script(language_message)
+
+    def test_multiline_message(self):
+        quantities = {
+            'fs': 100,
+            'md': 100,
+            'ff': 100,
+            'pc': 100
+        }
+        message = """
+            hmk
+            fs 100 md 100 ff 100 pc 100
+        """
+        verified_number = self.user1.get_verified_number()
+        msg = incoming(
+            verified_number.phone_number, message, verified_number.backend_id, domain_scope=verified_number.domain
+        )
+        self.assertIsNotNone(msg)
+
+        stock_states = StockState.objects.filter(
+            case_id=self.facility_sp_id
+        ).values_list('sql_product__code', 'stock_on_hand')
+
+        for product_code, quantity in stock_states:
+            self.assertEqual(quantity, quantities[product_code])

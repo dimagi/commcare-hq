@@ -62,7 +62,7 @@ COMMCAREHQ.initBlock = function ($elem) {
         e.preventDefault();
         if (!$(this).data('clicked')) {
             $(this).prev('form').submit();
-            $(this).data('clicked', 'true').children('i').removeClass().addClass("icon-refresh icon-spin");
+            $(this).data('clicked', 'true').children('i').removeClass().addClass("icon-refresh icon-spin fa fa-refresh fa-spin");
         }
     });
 
@@ -77,15 +77,6 @@ COMMCAREHQ.initBlock = function ($elem) {
     $('.post-link').click(function (e) {
         e.preventDefault();
         $.postGo($(this).attr('href'), {});
-    });
-
-    // trick to give a select menu an initial value
-    $('select[data-value]', $elem).each(function () {
-        var val = $(this).attr('data-value');
-        if (val) {
-            $(this).find('option').removeAttr('selected');
-            $(this).find('option[value="' + val + '"]').attr('selected', 'true');
-        }
     });
 
     $(".button", $elem).button().wrap('<span />');
@@ -169,7 +160,12 @@ COMMCAREHQ.makeSaveButton = function(messageStrings, cssClass) {
                     options.error = function (data) {
                         that.nextState = null;
                         that.setState('retry');
-                        alert_user(data.responseText || SaveButton.message.ERROR_SAVING, 'danger');
+                        var customError = ((data.responseJSON && data.responseJSON.message) ? data.responseJSON.message : data.responseText);
+                        if (customError.indexOf('<head>') > -1) {
+                            // this is sending back a full html page, likely login, so no error message.
+                            customError = null;
+                        }
+                        alert_user(customError || SaveButton.message.ERROR_SAVING, 'danger');
                         error.apply(this, arguments);
                     };
                     var jqXHR = $.ajax(options);
@@ -212,8 +208,10 @@ COMMCAREHQ.makeSaveButton = function(messageStrings, cssClass) {
                 fireChange = function () {
                     button.fire('change');
                 };
-            $form.find('*').change(fireChange);
-            $form.find('input, textarea').bind('textchange', fireChange);
+            _.defer(function () {
+                $form.find('*').change(fireChange);
+                $form.find('input, textarea').bind('textchange', fireChange);
+            });
             return button;
         },
         message: messageStrings

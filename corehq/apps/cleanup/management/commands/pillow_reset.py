@@ -5,7 +5,7 @@ from django.core.management.base import LabelCommand, CommandError
 from dimagi.ext.jsonobject import JsonObject, StringProperty, ListProperty
 from dimagi.utils.couch.database import get_db
 from dimagi.utils.parsing import json_format_datetime
-from pillowtop.utils import get_pillow_instance
+from pillowtop.utils import get_pillow_by_name
 
 
 class Command(LabelCommand):
@@ -59,4 +59,4 @@ class PillowResetConfig(JsonObject):
 
     @property
     def pillows(self):
-        return [get_pillow_instance(name) for name in self.pillow_names]
+        return [get_pillow_by_name(name) for name in self.pillow_names]

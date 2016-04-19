@@ -20,7 +20,7 @@ from corehq.apps.cachehq.mixins import (
     QuickCachedDocumentMixin,
 )
 from corehq.apps.userreports.dbaccessors import get_number_of_report_configs_by_data_source, \
-    get_report_configs_for_domain
+    get_report_configs_for_domain, get_datasources_for_domain
 from corehq.apps.userreports.exceptions import (
     BadSpecError,
     DataSourceConfigurationNotFoundError,
@@ -262,16 +262,7 @@ class DataSourceConfiguration(UnicodeMixIn, CachedCouchDocumentMixin, Document):
 
     @classmethod
     def by_domain(cls, domain):
-        return sorted(
-            cls.view(
-                'userreports/data_sources_by_build_info',
-                start_key=[domain],
-                end_key=[domain, {}],
-                reduce=False,
-                include_docs=True
-            ),
-            key=lambda config: config.display_name
-        )
+        return get_datasources_for_domain(domain)
 
     @classmethod
     def all_ids(cls):
@@ -283,10 +274,15 @@ class DataSourceConfiguration(UnicodeMixIn, CachedCouchDocumentMixin, Document):
         for result in iter_docs(cls.get_db(), cls.all_ids()):
             yield cls.wrap(result)
 
+    @property
+    def is_static(self):
+        return _id_is_static(self._id)
+
     def deactivate(self):
-        self.is_deactivated = True
-        self.save()
-        IndicatorSqlAdapter(self).drop_table()
+        if not self.is_static:
+            self.is_deactivated = True
+            self.save()
+            IndicatorSqlAdapter(self).drop_table()
 
 
 class ReportMeta(DocumentSchema):
@@ -313,6 +309,7 @@ class ReportConfiguration(UnicodeMixIn, QuickCachedDocumentMixin, Document):
 
     def __unicode__(self):
         return u'{} - {}'.format(self.domain, self.title)
+
 
     @property
     @memoized
@@ -554,7 +551,7 @@ def get_datasource_config(config_id, domain):
             'The data source referenced by this report could not be found.'
         ))
 
-    is_static = config_id.startswith(StaticDataSourceConfiguration._datasource_id_prefix)
+    is_static = _id_is_static(config_id)
     if is_static:
         config = StaticDataSourceConfiguration.by_id(config_id)
         if config.domain != domain:
@@ -565,6 +562,12 @@ def get_datasource_config(config_id, domain):
         except DocumentNotFound:
             _raise_not_found()
     return config, is_static
+
+
+def _id_is_static(data_source_id):
+    if data_source_id is None:
+        return False
+    return data_source_id.startswith(StaticDataSourceConfiguration._datasource_id_prefix)
 
 
 def get_report_config(config_id, domain):

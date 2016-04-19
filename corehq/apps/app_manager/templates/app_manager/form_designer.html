@@ -44,6 +44,7 @@
                     "meta/timeEnd",
                     "meta/location"
                 ].concat({{ scheduler_data_nodes|JSON }}),
+                activityUrl: '{% url "ping" %}',
                 onFormSave: function (data) {
                     var app_manager = hqImport('app_manager/js/app_manager.js')
                     app_manager.updateDOM(data.update);
