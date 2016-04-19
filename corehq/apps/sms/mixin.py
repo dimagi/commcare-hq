@@ -368,8 +368,8 @@ class CommCareMobileContactMixin(object):
             v = self.get_verified_number(phone_number)
         if v is None:
             v = VerifiedNumber(
-                owner_doc_type = self.doc_type,
-                owner_id = self.get_id
+                owner_doc_type=self.doc_type,
+                owner_id=self.get_id
             )
         v.domain = domain
         v.phone_number = phone_number

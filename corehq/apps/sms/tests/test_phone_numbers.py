@@ -1,4 +1,4 @@
-from casexml.apps.case.mock import CaseFactory, CaseStructure
+from casexml.apps.case.mock import CaseFactory
 from casexml.apps.case.models import CommCareCase
 from contextlib import contextmanager
 from corehq.apps.hqcase.utils import update_case
@@ -10,7 +10,7 @@ from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 from corehq.form_processor.utils.general import should_use_sql_backend
 from datetime import datetime, timedelta
 from django.test import TestCase
-from corehq.form_processor.tests.utils import set_case_property_directly, run_with_all_backends
+from corehq.form_processor.tests.utils import run_with_all_backends
 
 
 class PhoneNumberLookupTestCase(TestCase):
