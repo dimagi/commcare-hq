@@ -97,11 +97,11 @@ class SyncRequestContributor(SuiteContributorByModule):
                             ],
                             prompts=[
                                 QueryPrompt(
-                                    key=s.property,
+                                    key=p.name,
                                     display=Display(
-                                        text=Text(locale_id=id_strings.search_property_locale(module, s.property)),
+                                        text=Text(locale_id=id_strings.search_property_locale(module, p.name)),
                                     ),
-                                ) for s in module.search_config
+                                ) for p in module.search_config.properties
                             ]
                         )
                     ],
