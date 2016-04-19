@@ -134,11 +134,13 @@ class SchemaTest(SimpleTestCase):
     def add_advanced_form(self, app, case_types=list(), module_id=None):
         if module_id is None:
             module_id = len(app.modules)
-            m = app.add_module(AdvancedModule.new_module('Advanced Module{}'.format(module_id), lang='en'))
+            app.add_module(AdvancedModule.new_module('Advanced Module{}'.format(module_id), lang='en'))
         form = app.new_form(module_id, 'form {}'.format(', '.join(case_types)), lang='en')
         form.actions.load_update_cases = []
         for case_type in case_types:
-            form.actions.load_update_cases.append(LoadUpdateAction(case_type=case_type, case_tag='load_' + case_type + '_0'))
+            form.actions.load_update_cases.append(
+                LoadUpdateAction(case_type=case_type, case_tag='load_' + case_type + '_0')
+            )
         return form
 
     def add_form(self, app, case_type=None, module_id=None):
