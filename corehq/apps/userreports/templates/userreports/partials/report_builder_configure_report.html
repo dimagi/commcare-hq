@@ -173,5 +173,11 @@
         var formViewModel = new configForm();
         $("#report-config-form").koApplyBindings(formViewModel);
 
+        $(function () {
+            gaTrackLink(
+                "#delete-report-button", "Report Builder", "Delete a Repot", '{{ report_type }}'
+            );
+        });
+
     </script>
 {% endblock %}
