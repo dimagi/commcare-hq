@@ -1,4 +1,5 @@
 import uuid
+import re
 from collections import defaultdict
 from datetime import datetime
 from itertools import chain
@@ -7,7 +8,7 @@ from couchdbkit import ResourceNotFound
 
 from corehq.apps.app_manager.dbaccessors import get_app
 from corehq.apps.app_manager.exceptions import FormNotFoundException
-from corehq.apps.app_manager.models import Application
+from corehq.apps.app_manager.models import Application, Form
 from corehq.apps.app_manager.util import get_correct_app_class
 from corehq.apps.app_manager.xform import XForm, parse_xml
 from corehq.apps.es import FormES
@@ -27,7 +28,7 @@ ONE_HOUR = 60 * 60
 
 class Command(BaseCommand):
     help = 'Fix forms with "undefined" xmlns'
-    args = '<log_path>'
+    args = '<prev_log_path> <log_path>'
 
     option_list = BaseCommand.option_list + (
         make_option(
@@ -42,14 +43,30 @@ class Command(BaseCommand):
     def handle(self, *args, **options):
 
         dry_run = options.get("dry_run", True)
-        log_path = args[0].strip()
+        prev_log_path = args[0].strip()
+        log_path = args[1].strip()
 
         unique_id_to_xmlns_map = {}
         app_to_unique_ids_map = defaultdict(set)
 
+        with open(prev_log_path, "r") as prev_log_file:
+            self.rebuild_maps(prev_log_file, unique_id_to_xmlns_map, app_to_unique_ids_map)
+
         with open(log_path, "w") as log_file:
             self.fix_xforms(unique_id_to_xmlns_map, app_to_unique_ids_map, log_file, dry_run)
             self.fix_apps(unique_id_to_xmlns_map, app_to_unique_ids_map, log_file, dry_run)
+
+    @staticmethod
+    def rebuild_maps(prev_log_file, unique_id_to_xmlns_map, app_to_unique_ids_map):
+        for line in prev_log_file:
+            match = re.match(r"Using xmlns (.*) for form id (.*)", line)
+            if match:
+                xmlns = match.group(1)
+                form_unique_id = match.group(2)
+                unique_id_to_xmlns_map[form_unique_id] = xmlns
+                form = Form.get_form(form_unique_id)
+                app = form.get_app()
+                app_to_unique_ids_map[(app._id, app.domain)].add(form_unique_id)
 
     @staticmethod
     def fix_xforms(unique_id_to_xmlns_map, app_to_unique_ids_map, log_file, dry_run):
@@ -59,25 +76,27 @@ class Command(BaseCommand):
             for i, xform_instance in enumerate(submissions):
                 Command._print_progress(i, total)
                 unique_id = get_form_unique_id(xform_instance)
-                if unique_id not in unique_id_to_xmlns_map:
-                    xmlns = get_xmlns(unique_id, xform_instance.app_id,
-                                      xform_instance.domain)
-                    log_file.write(
-                        "Using xmlns {} for form id {}\n".format(xmlns, unique_id)
+                if unique_id:
+                    if unique_id not in unique_id_to_xmlns_map:
+                        xmlns = get_xmlns(unique_id, xform_instance.app_id,
+                                          xform_instance.domain)
+                        log_file.write(
+                            "Using xmlns {} for form id {}\n".format(xmlns, unique_id)
+                        )
+                        unique_id_to_xmlns_map[unique_id] = xmlns
+
+                    set_xmlns_on_submission(
+                        xform_instance,
+                        unique_id_to_xmlns_map[unique_id],
+                        xform_db,
+                        log_file,
+                        dry_run,
                     )
-                    unique_id_to_xmlns_map[unique_id] = xmlns
 
-                set_xmlns_on_submission(
-                    xform_instance,
-                    unique_id_to_xmlns_map[unique_id],
-                    xform_db,
-                    log_file,
-                    dry_run,
-                )
+                    app_to_unique_ids_map[
+                        (xform_instance.app_id, xform_instance.domain)
+                    ].add(unique_id)
 
-                app_to_unique_ids_map[
-                    (xform_instance.app_id, xform_instance.domain)
-                ].add(unique_id)
         for error_id in xform_db.error_ids:
             log_file.write("Failed to save xform {}\n".format(error_id))
 
@@ -102,9 +121,9 @@ class Command(BaseCommand):
 
     @staticmethod
     def _print_progress(i, total_submissions):
-        if i % 25 == 0 and i != 0:
-            print "Progress: {} of {} ({})".format(
-                i, total_submissions, round(i / float(total_submissions), 2)
+        if i % 200 == 0 and i != 0:
+            print "Progress: {} of {} ({})  {}".format(
+                i, total_submissions, round(i / float(total_submissions), 2), datetime.now()
             )
 
 
@@ -233,6 +252,8 @@ def get_saved_apps(app):
 
 @quickcache(["xform_instance.build_id"], memoize_timeout=ONE_HOUR)
 def get_form_unique_id(xform_instance):
+    if xform_instance.build_id is None:
+        return None
     app = get_app(xform_instance.domain, xform_instance.build_id)
     # TODO: What if the app has been deleted?
     forms_without_xmlns = get_forms_without_xmlns(app)
