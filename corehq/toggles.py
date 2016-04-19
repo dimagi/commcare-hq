@@ -814,7 +814,7 @@ NOTIFICATIONS = StaticToggle(
 
 PROJECT_HEALTH_DASHBOARD = StaticToggle(
     'project_health_dashboard',
-    'Shows the project health dashboard in the reports navigation',
+    'Shows the project performance dashboard in the reports navigation',
     TAG_PRODUCT_PATH,
     [NAMESPACE_DOMAIN]
 )

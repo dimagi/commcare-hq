@@ -12,6 +12,7 @@ from django.template import RequestContext
 from django.template.loader import render_to_string
 from django.utils.translation import ugettext_noop, ugettext as _
 from sqlagg.filters import IN
+from corehq.apps.style.decorators import use_maps
 from corehq.const import SERVER_DATETIME_FORMAT
 from couchexport.models import Format
 from couchforms.models import XFormInstance
@@ -166,6 +167,8 @@ class BaseReport(BaseMixin, GetParamsMixin, MonthYearMixin, CustomProjectReport,
     include_out_of_range_cases = False
 
     _debug_data = []
+
+    is_bootstrap3 = True
 
     @property
     def debug(self):
@@ -520,10 +523,12 @@ class BeneficiaryPaymentReport(CaseReportMixin, BaseReport):
                         yield ','.join(unique_values)
                 elif i == self.column_index('issues'):
                     sep = ', '
-                    if share_account and (has_bonus_cash == 2000 or has_bonus_cash == 3000):
-                        msg = _("Check for multiple pregnancies")
-                    else:
-                        msg = _("Duplicate account number")
+                    msg = ''
+                    if share_account:
+                        if has_bonus_cash == 2000 or has_bonus_cash == 3000:
+                            msg = _("Check for multiple pregnancies")
+                        else:
+                            msg = _("Duplicate account number")
                     all_issues = sep.join(filter(None, values + (msg,)))
                     yield sep.join(set(all_issues.split(sep)))
                 else:
@@ -1030,6 +1035,12 @@ class HealthMapReport(BaseMixin, GenericMapReport, GetParamsMixin, CustomProject
         'geo_column': 'gps',
         'report': 'custom.opm.reports.HealthMapSource',
     }
+
+    is_bootstrap3 = True
+
+    @use_maps
+    def bootstrap3_dispatcher(self, request, *args, **kwargs):
+        super(HealthMapReport, self).bootstrap3_dispatcher(request, *args, **kwargs)
 
     @property
     def report_subtitles(self):

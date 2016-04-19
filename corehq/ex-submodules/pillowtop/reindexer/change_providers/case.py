@@ -9,7 +9,7 @@ from pillowtop.reindexer.change_providers.interface import ChangeProvider
 
 def get_couch_domain_case_change_provider(domain):
     return CouchViewChangeProvider(
-        document_class=CommCareCase,
+        couch_db=CommCareCase.get_db(),
         view_name='cases_by_owner/view',
         chunk_size=100,
         view_kwargs={
@@ -25,7 +25,7 @@ class SqlDomainCaseChangeProvider(ChangeProvider):
     def __init__(self, domain):
         self.domain = domain
 
-    def iter_changes(self, start_from=None):
+    def iter_all_changes(self, start_from=None):
         case_ids = CaseAccessorSQL.get_case_ids_in_domain(self.domain)
         for case in CaseAccessorSQL.get_cases(case_ids):
             yield _sql_case_to_change(case)

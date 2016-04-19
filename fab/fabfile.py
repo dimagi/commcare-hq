@@ -37,7 +37,7 @@ from distutils.util import strtobool
 from fabric import utils
 from fabric.api import run, roles, execute, task, sudo, env, parallel
 from fabric.colors import blue, red, yellow
-from fabric.context_managers import settings, cd
+from fabric.context_managers import settings, cd, shell_env
 from fabric.contrib import files, console
 from fabric.operations import require
 
@@ -765,9 +765,10 @@ def copy_formplayer_properties():
 @task
 @roles(ROLES_TOUCHFORMS)
 def build_formplayer():
-    spring_dir = '{}/{}'.format(env.code_root, 'submodules/formplayer')
-    with cd(spring_dir):
-        sudo('./gradlew build')
+    build_dir = '{}/{}'.format(env.code_root, 'submodules/formplayer/build/libs')
+    jenkins_formplayer_build_url = 'http://jenkins.dimagi.com/job/formplayer/lastSuccessfulBuild/artifact/build/libs/formplayer.jar'
+
+    sudo('wget {} -P {}'.format(jenkins_formplayer_build_url, build_dir))
 
 
 @parallel
@@ -922,20 +923,19 @@ def force_update_static():
 
 @task
 @roles(['deploy'])
-def manage():
+def manage(cmd):
     """
     run a management command
 
     usage:
-        fab <env> manage --set cmd='<command>'
+        fab <env> manage:<command>
     e.g.
-        fab production manage --set cmd='prune_couch_views'
+        fab production manage:'prune_couch_views --noinput'
     """
     _require_target()
-    require('cmd')
     with cd(env.code_current):
-        sudo('{env.virtualenv_current}/bin/python manage.py {env.cmd}'
-             .format(env=env))
+        sudo('{env.virtualenv_current}/bin/python manage.py {cmd}'
+             .format(env=env, cmd=cmd))
 
 
 @task(alias='deploy')

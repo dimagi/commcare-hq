@@ -16,9 +16,6 @@ from corehq.apps.smsbillables.models import (
 
 class TestGatewayFee(TestCase):
     def setUp(self):
-        SmsGatewayFee.objects.all().delete()
-        SmsGatewayFeeCriteria.objects.all().delete()
-
         self.currency_usd = init_default_currency()
 
         self.backend_ids = generator.arbitrary_backend_ids()

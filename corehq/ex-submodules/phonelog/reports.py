@@ -40,7 +40,7 @@ TAGS = {
 }
 
 
-class DeviceLogDetailsReport(GetParamsMixin, DeploymentsReport, DatespanMixin, PaginatedReportMixin):
+class BaseDeviceLogReport(GetParamsMixin, DatespanMixin, PaginatedReportMixin):
     name = ugettext_noop("Device Log Details")
     slug = "log_details"
     fields = ['corehq.apps.reports.filters.dates.DatespanFilter',
@@ -187,22 +187,19 @@ class DeviceLogDetailsReport(GetParamsMixin, DeploymentsReport, DatespanMixin, P
         logs = self._filter_logs()
         return self._create_rows(logs)
 
-    def _create_rows(self, logs, matching_id=None, range=None):
-        _device_users_by_xform = memoized(device_users_by_xform)
-        row_set = []
-        user_query = self._filter_query_by_slug(DeviceLogUsersFilter.slug)
-        device_query = self._filter_query_by_slug(DeviceLogDevicesFilter.slug)
+    _username_fmt = '<a href="%(url)s">%(username)s</a>'
+    _device_users_fmt = '<a href="%(url)s">%(username)s</a>'
+    _device_id_fmt = '<a href="%(url)s">%(device)s</a>'
+    _log_tag_fmt = ('<a href="%(url)s" class="%(classes)s"%(extra_params)s '
+                    'data-datatable-tooltip="right" '
+                    'data-datatable-tooltip-text="%(tooltip)s">%(text)s</a>')
 
-        self.total_records = logs.count()
-        logs = logs.order_by(self.ordering)
-        if range:
-            logs = logs[range]
-        for log in logs:
+    def _create_row(self, log, matching_id, _device_users_by_xform, user_query, device_query):
             ui_date = (ServerTime(log.date)
-                        .user_time(self.timezone).ui_string())
+                       .user_time(self.timezone).ui_string())
 
             username = log.username
-            username_fmt = '<a href="%(url)s">%(username)s</a>' % {
+            username_fmt = self._username_fmt % {
                 "url": "%s?%s=%s&%s" % (
                     self.get_url(domain=self.domain),
                     DeviceLogUsersFilter.slug,
@@ -217,7 +214,7 @@ class DeviceLogDetailsReport(GetParamsMixin, DeploymentsReport, DatespanMixin, P
 
             device_users = _device_users_by_xform(log.xform_id)
             device_users_fmt = ', '.join([
-                '<a href="%(url)s">%(username)s</a>' % {
+                self._device_users_fmt % {
                     "url": "%s?%s=%s&%s" % (self.get_url(domain=self.domain),
                                             DeviceLogUsersFilter.slug,
                                             username,
@@ -232,11 +229,10 @@ class DeviceLogDetailsReport(GetParamsMixin, DeploymentsReport, DatespanMixin, P
             if log_tag in self.tag_labels:
                 tag_classes.append(self.tag_labels[log_tag])
 
-            log_tag_format = (
-                '<a href="%(url)s" class="%(classes)s"%(extra_params)s '
-                'data-datatable-tooltip="right" '
-                'data-datatable-tooltip-text="%(tooltip)s">%(text)s</a>'
-            ) % {
+            if len(tag_classes) == 1:
+                tag_classes.append('label-info')
+
+            log_tag_format = self._log_tag_fmt % {
                 "url": "%s?goto=%s" % (self.get_url(domain=self.domain),
                                        html.escape(json.dumps(log.id))),
                 "classes": " ".join(tag_classes),
@@ -247,7 +243,7 @@ class DeviceLogDetailsReport(GetParamsMixin, DeploymentsReport, DatespanMixin, P
             }
 
             device = log.device_id
-            device_fmt = '<a href="%(url)s">%(device)s</a>' % {
+            device_fmt = self._device_id_fmt % {
                 "url": "%s?%s=%s&%s" % (self.get_url(domain=self.domain),
                                         DeviceLogDevicesFilter.slug,
                                         device,
@@ -262,8 +258,22 @@ class DeviceLogDetailsReport(GetParamsMixin, DeploymentsReport, DatespanMixin, P
                 '<i class="icon icon-info-sign"></i></a>'
             ) % (version.split(' ')[0], html.escape(version))
 
-            row_set.append([ui_date, log_tag_format, username_fmt,
-                            device_users_fmt, device_fmt, log.msg, ver_format])
+            return [ui_date, log_tag_format, username_fmt,
+                    device_users_fmt, device_fmt, log.msg, ver_format]
+
+    def _create_rows(self, logs, matching_id=None, range=None):
+        _device_users_by_xform = memoized(device_users_by_xform)
+        row_set = []
+        user_query = self._filter_query_by_slug(DeviceLogUsersFilter.slug)
+        device_query = self._filter_query_by_slug(DeviceLogDevicesFilter.slug)
+
+        self.total_records = logs.count()
+        logs = logs.order_by(self.ordering)
+        if range:
+            logs = logs[range]
+        for log in logs:
+            row_set.append(self._create_row(log, matching_id, _device_users_by_xform, user_query, device_query))
+
         return row_set
 
     def _filter_logs(self):
@@ -288,3 +298,7 @@ class DeviceLogDetailsReport(GetParamsMixin, DeploymentsReport, DatespanMixin, P
 
     def _filter_query_by_slug(self, slug):
         return urlencode({k: v for (k, v) in self.request.GET.iteritems() if not k.startswith(slug)})
+
+
+class DeviceLogDetailsReport(BaseDeviceLogReport, DeploymentsReport):
+    pass

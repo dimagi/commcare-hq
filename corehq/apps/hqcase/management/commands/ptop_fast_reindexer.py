@@ -5,7 +5,7 @@ import sys
 
 from django.core.management.base import NoArgsCommand
 import json
-from corehq.util.couch_helpers import paginate_view
+from corehq.util.couch_helpers import paginate_view, PaginateViewLogHandler
 from pillowtop.couchdb import CachedCouchDB
 from pillowtop.es_utils import set_index_reindex_settings, set_index_normal_settings, \
     get_index_info_from_pillow, initialize_index_and_mapping
@@ -22,23 +22,12 @@ RETRY_DELAY = 60
 RETRY_TIME_DELAY_FACTOR = 15
 
 
-class PaginateViewLogHandler(object):
+class ReindexLogHandler(PaginateViewLogHandler):
     def __init__(self, reindexer):
         self.reindexer = reindexer
 
-    def log(self, *args, **kwargs):
-        self.reindexer.log(*args, **kwargs)
-
-    def view_starting(self, db, view_name, kwargs, total_emitted):
-        self.log('Fetching rows {}-{} from couch'.format(
-            total_emitted,
-            total_emitted + kwargs['limit'] - 1)
-        )
-        startkey = kwargs.get('startkey')
-        self.log(u'  startkey={!r}, startkey_docid={!r}'.format(startkey, kwargs.get('startkey_docid')))
-
-    def view_ending(self, db, view_name, kwargs, total_emitted, time):
-        self.log('View call took {}'.format(time))
+    def log(self, message):
+        self.reindexer.log(message)
 
 
 class PtopReindexer(NoArgsCommand):
@@ -134,7 +123,7 @@ class PtopReindexer(NoArgsCommand):
         if 'chunk_size' not in kwargs:
             kwargs['chunk_size'] = self.chunk_size
         if 'log_handler' not in kwargs:
-            kwargs['log_handler'] = PaginateViewLogHandler(self)
+            kwargs['log_handler'] = ReindexLogHandler(self)
         return paginate_view(*args, **kwargs)
 
     def full_couch_view_iter(self):

@@ -8,6 +8,8 @@ CASE = 'case'
 FORM = 'form'
 DOMAIN = 'domain'
 META = 'meta'
+COMMCARE_USER = 'commcare-user'
+WEB_USER = 'web-user'
 
 
 DocumentMetadata = namedtuple(
@@ -29,6 +31,10 @@ def _get_primary_type(raw_doc_type):
         return FORM
     elif raw_doc_type in ('Domain', 'Domain-Deleted', 'Domain-DUPLICATE'):
         return DOMAIN
+    elif raw_doc_type in ('CommCareUser', 'CommCareUser-Deleted'):
+        return COMMCARE_USER
+    elif raw_doc_type in ('WebUser', 'WebUser-Deleted'):
+        return WEB_USER
     else:
         # at some point we may want to make this more granular
         return META

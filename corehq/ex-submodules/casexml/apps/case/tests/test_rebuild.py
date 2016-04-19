@@ -11,7 +11,11 @@ from copy import deepcopy
 from casexml.apps.case.tests.util import delete_all_cases
 from casexml.apps.case.util import primary_actions, post_case_blocks
 from corehq.form_processor.backends.couch.update_strategy import CouchCaseUpdateStrategy, _action_sort_key_function
+from corehq.form_processor.exceptions import CaseNotFound
+from corehq.form_processor.interfaces.dbaccessors import CaseAccessors, FormAccessors
 from corehq.form_processor.models import RebuildWithReason
+from corehq.form_processor.tests.utils import run_with_all_backends
+from corehq.form_processor.utils.general import should_use_sql_backend
 from couchforms.models import XFormInstance
 
 REBUILD_TEST_DOMAIN = 'rebuild-test'
@@ -61,7 +65,7 @@ class CaseRebuildTest(TestCase):
         else:
             self.fail(msg)
 
-    def testActionEquality(self):
+    def test_couch_action_equality(self):
         case_id = _post_util(create=True)
         _post_util(case_id=case_id, p1='p1', p2='p2')
 
@@ -87,7 +91,7 @@ class CaseRebuildTest(TestCase):
         copy.updated_unknown_properties['pnew'] = ''
         self.assertTrue(copy != orig)
 
-    def testBasicRebuild(self):
+    def test_couch_soft_rebuild(self):
         user_id = 'test-basic-rebuild-user'
         now = datetime.utcnow()
         case_id = _post_util(create=True, user_id=user_id, date_modified=now)
@@ -115,7 +119,7 @@ class CaseRebuildTest(TestCase):
         self.assertEqual(case.p2, 'p2-1') # updated (back!)
         self.assertEqual(case.p3, 'p3-2') # new
 
-    def testActionComparison(self):
+    def test_couch_action_comparison(self):
         user_id = 'test-action-comparison-user'
         case_id = _post_util(create=True, property='a1 wins', user_id=user_id)
         _post_util(case_id=case_id, property='a2 wins', user_id=user_id)
@@ -168,29 +172,31 @@ class CaseRebuildTest(TestCase):
         CouchCaseUpdateStrategy(case).soft_rebuild_case()
         _confirm_action_order(case, [a1, a2, a3])
 
-    def testRebuildEmpty(self):
+    @run_with_all_backends
+    def test_rebuild_empty(self):
         self.assertEqual(None, rebuild_case_from_forms('anydomain', 'notarealid', RebuildWithReason(reason='test')))
 
-    def testRebuildCreateCase(self):
+    def test_couch_rebuild_deleted_case(self):
+        """
+        Note: Can't run this on SQL because if a case gets hard deleted then there is no way to find
+        out which forms created / updated it without going through ALL the forms in the domain.
+        ie. there is no SQL equivalent to the "form_case_index/form_case_index" couch view
+        """
         case_id = _post_util(create=True)
         _post_util(case_id=case_id, p1='p1', p2='p2')
 
         # delete initial case
-        case = CommCareCase.get(case_id)
-        case.delete()
+        delete_all_cases()
 
-        try:
-            CommCareCase.get(case_id)
-            self.fail('get should fail on deleted cases')
-        except ResourceNotFound:
-            pass
+        with self.assertRaises(CaseNotFound):
+            CaseAccessors(REBUILD_TEST_DOMAIN).get_case(case_id)
 
         case = rebuild_case_from_forms(REBUILD_TEST_DOMAIN, case_id, RebuildWithReason(reason='test'))
         self.assertEqual(case.p1, 'p1')
         self.assertEqual(case.p2, 'p2')
         self.assertEqual(2, len(primary_actions(case)))  # create + update
 
-    def testReconcileActions(self):
+    def test_couch_reconcile_actions(self):
         now = datetime.utcnow()
         # make sure we timestamp everything so they have the right order
         case_id = _post_util(create=True, form_extras={'received_on': now})
@@ -239,34 +245,40 @@ class CaseRebuildTest(TestCase):
         self._assertListEqual(original_actions, primary_actions(case))
         self._assertListEqual(original_form_ids, case.xform_ids)
 
-    def testArchivingOnlyForm(self):
+    @run_with_all_backends
+    def test_archiving_only_form(self):
         """
         Checks that archiving the only form associated with the case archives
         the case and unarchiving unarchives it.
         """
         case_id = _post_util(create=True, p1='p1-1', p2='p2-1')
-        case = CommCareCase.get(case_id)
+        case_accessors = CaseAccessors(REBUILD_TEST_DOMAIN)
+        case = case_accessors.get_case(case_id)
 
-        self.assertEqual('CommCareCase', case._doc['doc_type'])
-        self.assertEqual(2, len(case.actions))
+        self.assertFalse(case.is_deleted)
+        if should_use_sql_backend(REBUILD_TEST_DOMAIN):
+            self.assertEqual(1, len(case.actions))
+        else:
+            self.assertEqual(2, len(case.actions))
         [form_id] = case.xform_ids
-        form = XFormInstance.get(form_id)
+        form = FormAccessors(REBUILD_TEST_DOMAIN).get_form(form_id)
 
         form.archive()
-        case = CommCareCase.get(case_id)
+        case = case_accessors.get_case(case_id)
 
-        self.assertEqual('CommCareCase-Deleted', case._doc['doc_type'])
+        self.assertTrue(case.is_deleted)
         # should just have the 'rebuild' action
         self.assertEqual(1, len(case.actions))
-        self.assertEqual(const.CASE_ACTION_REBUILD, case.actions[0].action_type)
+        self.assertTrue(case.actions[0].is_case_rebuild)
 
         form.unarchive()
-        case = CommCareCase.get(case_id)
-        self.assertEqual('CommCareCase', case._doc['doc_type'])
+        case = case_accessors.get_case(case_id)
+        self.assertFalse(case.is_deleted)
         self.assertEqual(3, len(case.actions))
-        self.assertEqual(const.CASE_ACTION_REBUILD, case.actions[-1].action_type)
+        self.assertTrue(case.actions[-1].is_case_rebuild)
 
-    def testFormArchiving(self):
+    @run_with_all_backends
+    def test_form_archiving(self):
         now = datetime.utcnow()
         # make sure we timestamp everything so they have the right order
         case_id = _post_util(create=True, p1='p1-1', p2='p2-1',
@@ -276,7 +288,8 @@ class CaseRebuildTest(TestCase):
         _post_util(case_id=case_id, p4='p4-3', p5='p5-3', close=True,
                   form_extras={'received_on': now + timedelta(seconds=2)})
 
-        case = CommCareCase.get(case_id)
+        case_accessors = CaseAccessors(REBUILD_TEST_DOMAIN)
+        case = case_accessors.get_case(case_id)
         closed_by = case.closed_by
         closed_on = case.closed_on
         self.assertNotEqual('', closed_by)
@@ -286,71 +299,94 @@ class CaseRebuildTest(TestCase):
             self.assertTrue(case.closed)
             self.assertEqual(closed_by, case.closed_by)
             self.assertEqual(closed_on, case.closed_on)
-            self.assertEqual(case.p1, 'p1-1')  # original
-            self.assertEqual(case.p2, 'p2-2')  # updated in second post
-            self.assertEqual(case.p3, 'p3-2')  # new in second post
-            self.assertEqual(case.p4, 'p4-3')  # updated in third post
-            self.assertEqual(case.p5, 'p5-3')  # new in third post
-            self.assertEqual(5, len(primary_actions(case)))  # create + 3 updates + close
+            self.assertEqual(case.get_case_property('p1'), 'p1-1')  # original
+            self.assertEqual(case.get_case_property('p2'), 'p2-2')  # updated in second post
+            self.assertEqual(case.get_case_property('p3'), 'p3-2')  # new in second post
+            self.assertEqual(case.get_case_property('p4'), 'p4-3')  # updated in third post
+            self.assertEqual(case.get_case_property('p5'), 'p5-3')  # new in third post
+            if should_use_sql_backend(REBUILD_TEST_DOMAIN):
+                # SQL stores one transaction per form
+                self.assertEqual(3, len(primary_actions(case)))  # create + update + close
+            else:
+                self.assertEqual(5, len(primary_actions(case)))  # create + 3 updates + close
 
         _check_initial_state(case)
 
         # verify xform/action states
-        [create, u1, u2, u3, close] = case.actions
         [f1, f2, f3] = case.xform_ids
-        self.assertEqual(f1, create.xform_id)
-        self.assertEqual(f1, u1.xform_id)
-        self.assertEqual(f2, u2.xform_id)
-        self.assertEqual(f3, u3.xform_id)
+        if should_use_sql_backend(REBUILD_TEST_DOMAIN):
+            [create, update, close] = case.actions
+            self.assertEqual(f1, create.form_id)
+            self.assertEqual(f2, update.form_id)
+            self.assertEqual(f3, close.form_id)
+        else:
+            [create, u1, u2, u3, close] = case.actions
+            self.assertEqual(f1, create.form_id)
+            self.assertEqual(f1, u1.form_id)
+            self.assertEqual(f2, u2.form_id)
+            self.assertEqual(f3, u3.form_id)
 
         # todo: should this be the behavior for archiving the create form?
-        f1_doc = XFormInstance.get(f1)
+        form_acessors = FormAccessors(REBUILD_TEST_DOMAIN)
+        f1_doc = form_acessors.get_form(f1)
         f1_doc.archive()
-        case = CommCareCase.get(case_id)
+        case = case_accessors.get_case(case_id)
 
-        self.assertEqual(3, len(primary_actions(case)))
+        if should_use_sql_backend(REBUILD_TEST_DOMAIN):
+            self.assertEqual(2, len(primary_actions(case)))
+        else:
+            self.assertEqual(3, len(primary_actions(case)))
+
         [u2, u3] = case.xform_ids
         self.assertEqual(f2, u2)
         self.assertEqual(f3, u3)
 
         self.assertTrue(case.closed)  # no change
-        self.assertFalse('p1' in case._doc)  # should disappear entirely
-        self.assertEqual(case.p2, 'p2-2')  # no change
-        self.assertEqual(case.p3, 'p3-2')  # no change
-        self.assertEqual(case.p4, 'p4-3')  # no change
-        self.assertEqual(case.p5, 'p5-3')  # no change
+        self.assertFalse('p1' in case.dynamic_case_properties())  # should disappear entirely
+        self.assertEqual(case.get_case_property('p2'), 'p2-2')  # no change
+        self.assertEqual(case.get_case_property('p3'), 'p3-2')  # no change
+        self.assertEqual(case.get_case_property('p4'), 'p4-3')  # no change
+        self.assertEqual(case.get_case_property('p5'), 'p5-3')  # no change
 
         def _reset(form_id):
-            form_doc = XFormInstance.get(form_id)
+            form_doc = form_acessors.get_form(form_id)
             form_doc.unarchive()
-            case = CommCareCase.get(case_id)
+            case = case_accessors.get_case(case_id)
             _check_initial_state(case)
 
         _reset(f1)
 
-        f2_doc = XFormInstance.get(f2)
+        f2_doc = form_acessors.get_form(f2)
         f2_doc.archive()
-        case = CommCareCase.get(case_id)
+        case = case_accessors.get_case(case_id)
 
-        self.assertEqual(4, len(primary_actions(case)))
+        if should_use_sql_backend(REBUILD_TEST_DOMAIN):
+            self.assertEqual(2, len(primary_actions(case)))
+        else:
+            self.assertEqual(4, len(primary_actions(case)))
+
         [u1, u3] = case.xform_ids
         self.assertEqual(f1, u1)
         self.assertEqual(f3, u3)
 
-        self.assertTrue(case.closed) # no change
-        self.assertEqual(case.p1, 'p1-1') # original
-        self.assertEqual(case.p2, 'p2-1') # loses second form update
-        # self.assertFalse('p3' in case._doc) # todo: should disappear entirely
-        self.assertEqual(case.p4, 'p4-3') # no change
-        self.assertEqual(case.p5, 'p5-3') # no change
+        self.assertTrue(case.closed)  # no change
+        self.assertEqual(case.get_case_property('p1'), 'p1-1')  # original
+        self.assertEqual(case.get_case_property('p2'), 'p2-1')  # loses second form update
+        self.assertFalse('p3' in case.dynamic_case_properties())  # should disappear entirely
+        self.assertEqual(case.get_case_property('p4'), 'p4-3')  # no change
+        self.assertEqual(case.get_case_property('p5'), 'p5-3')  # no change
 
         _reset(f2)
 
-        f3_doc = XFormInstance.get(f3)
+        f3_doc = form_acessors.get_form(f3)
         f3_doc.archive()
-        case = CommCareCase.get(case_id)
+        case = case_accessors.get_case(case_id)
 
-        self.assertEqual(3, len(primary_actions(case)))
+        if should_use_sql_backend(REBUILD_TEST_DOMAIN):
+            self.assertEqual(2, len(primary_actions(case)))
+        else:
+            self.assertEqual(3, len(primary_actions(case)))
+
         [u1, u2] = case.xform_ids
         self.assertEqual(f1, u1)
         self.assertEqual(f2, u2)
@@ -358,14 +394,15 @@ class CaseRebuildTest(TestCase):
         self.assertFalse(case.closed)  # reopened!
         self.assertEqual('', case.closed_by)
         self.assertEqual(None, case.closed_on)
-        self.assertEqual(case.p1, 'p1-1')  # original
-        self.assertEqual(case.p2, 'p2-2')  # original
-        self.assertEqual(case.p3, 'p3-2')  # new in second post
-        self.assertEqual(case.p4, 'p4-2')  # loses third form update
-        # self.assertFalse('p5' in case._doc) # todo: should disappear entirely
+        self.assertEqual(case.get_case_property('p1'), 'p1-1')  # original
+        self.assertEqual(case.get_case_property('p2'), 'p2-2')  # original
+        self.assertEqual(case.get_case_property('p3'), 'p3-2')  # new in second post
+        self.assertEqual(case.get_case_property('p4'), 'p4-2')  # loses third form update
+        self.assertFalse('p5' in case.dynamic_case_properties())  # should disappear entirely
         _reset(f3)
 
-    def testArchiveModifiedOn(self):
+    @run_with_all_backends
+    def test_archie_modified_on(self):
         case_id = uuid.uuid4().hex
         now = datetime.utcnow().replace(microsecond=0)
         earlier = now - timedelta(hours=1)
@@ -380,15 +417,17 @@ class CaseRebuildTest(TestCase):
             [update_block.as_xml()], form_extras={'received_on': earlier}
         )
 
-        case = CommCareCase.get(case_id)
+        case_accessors = CaseAccessors(REBUILD_TEST_DOMAIN)
+        case = case_accessors.get_case(case_id)
         self.assertEqual(earlier, case.modified_on)
 
-        second_form = XFormInstance.get(case.xform_ids[-1])
+        second_form = FormAccessors(REBUILD_TEST_DOMAIN).get_form(case.xform_ids[-1])
         second_form.archive()
-        case = CommCareCase.get(case_id)
+        case = case_accessors.get_case(case_id)
         self.assertEqual(way_earlier, case.modified_on)
 
-    def testArchiveAgainstDeletedCases(self):
+    @run_with_all_backends
+    def test_archive_against_deleted_case(self):
         now = datetime.utcnow()
         # make sure we timestamp everything so they have the right order
         case_id = _post_util(create=True, p1='p1', form_extras={'received_on': now})
@@ -397,15 +436,15 @@ class CaseRebuildTest(TestCase):
         _post_util(case_id=case_id, p3='p3',
                   form_extras={'received_on': now + timedelta(seconds=2)})
 
-        case = CommCareCase.get(case_id)
-        case.doc_type = 'CommCareCase-Deleted'
-        case.save()
+        case_accessors = CaseAccessors(REBUILD_TEST_DOMAIN)
+        case = case_accessors.get_case(case_id)
+        case_accessors.soft_delete_cases([case_id])
 
         [f1, f2, f3] = case.xform_ids
-        f2_doc = XFormInstance.get(f2)
+        f2_doc = FormAccessors(REBUILD_TEST_DOMAIN).get_form(f2)
         f2_doc.archive()
-        case = CommCareCase.get(case_id)
-        self.assertEqual(case.doc_type, 'CommCareCase-Deleted')
+        case = case_accessors.get_case(case_id)
+        self.assertTrue(case.is_deleted)
 
 
 class TestCheckActionOrder(SimpleTestCase):

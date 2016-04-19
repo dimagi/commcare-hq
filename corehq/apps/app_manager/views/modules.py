@@ -63,15 +63,15 @@ def get_module_template(module):
         return "app_manager/module_view.html"
 
 
-def get_module_view_context(app, module):
+def get_module_view_context(app, module, lang=None):
     if isinstance(module, CareplanModule):
         return _get_careplan_module_view_context(app, module)
     elif isinstance(module, AdvancedModule):
-        return _get_advanced_module_view_context(app, module)
+        return _get_advanced_module_view_context(app, module, lang)
     elif isinstance(module, ReportModule):
         return _get_report_module_context(app, module)
     else:
-        return _get_basic_module_view_context(app, module)
+        return _get_basic_module_view_context(app, module, lang)
 
 
 def _get_careplan_module_view_context(app, module):
@@ -111,10 +111,10 @@ def _get_careplan_module_view_context(app, module):
     }
 
 
-def _get_advanced_module_view_context(app, module):
+def _get_advanced_module_view_context(app, module, lang=None):
     case_property_builder = _setup_case_property_builder(app)
     case_type = module.case_type
-    form_options = _case_list_form_options(app, module, case_type)
+    form_options = _case_list_form_options(app, module, case_type, lang)
     return {
         'fixtures': _get_fixture_types(app.domain),
         'details': _get_module_details_context(app, module,
@@ -140,7 +140,7 @@ def _get_advanced_module_view_context(app, module):
     }
 
 
-def _get_basic_module_view_context(app, module):
+def _get_basic_module_view_context(app, module, lang=None):
     case_property_builder = _setup_case_property_builder(app)
     fixture_columns = [
         field.field_name
@@ -148,7 +148,7 @@ def _get_basic_module_view_context(app, module):
         for field in fixture.fields
     ]
     case_type = module.case_type
-    form_options = _case_list_form_options(app, module, case_type)
+    form_options = _case_list_form_options(app, module, case_type, lang)
     # http://manage.dimagi.com/default.asp?178635
     allow_with_parent_select = app.build_version >= '2.23' or not module.parent_select.active
     allow_case_list_form = _case_list_form_not_allowed_reason(
@@ -186,11 +186,13 @@ def _get_report_module_context(app, module):
     warnings = []
     validity = module.check_report_validity()
 
+    # We're now proactively deleting these references, so after that's been
+    # out for a while, this can be removed (say June 2016 or later)
     if not validity.is_valid:
         module.report_configs = validity.valid_report_configs
         warnings.append(
-            gettext_lazy(
-                'Your app contains references to reports that are deleted. These will be removed on save.')
+            gettext_lazy('Your app contains references to reports that are '
+                         'deleted. These will be removed on save.')
         )
     return {
         'all_reports': [_report_to_config(r) for r in all_reports],
@@ -233,7 +235,7 @@ def _get_valid_parent_modules(app, module):
             and not parent_module == module and parent_module.doc_type != "ShadowModule"]
 
 
-def _case_list_form_options(app, module, case_type_):
+def _case_list_form_options(app, module, case_type_, lang=None):
     options = OrderedDict()
     forms = [
         form
@@ -241,7 +243,8 @@ def _case_list_form_options(app, module, case_type_):
         for form in mod.get_forms() if form.is_registration_form(case_type_)
     ]
     options['disabled'] = gettext_lazy("Don't Show")
-    options.update({f.unique_id: trans(f.name, app.langs) for f in forms})
+    langs = None if lang is None else [lang]
+    options.update({f.unique_id: trans(f.name, langs) for f in forms})
 
     return options
 

@@ -3300,6 +3300,7 @@ class ReportAppFilter(DocumentSchema):
                 'CustomMonthFilter': CustomMonthFilter,
                 'MobileSelectFilter': MobileSelectFilter,
                 'AncestorLocationTypeFilter': AncestorLocationTypeFilter,
+                'NumericFilter': NumericFilter,
             }
             try:
                 klass = doc_type_to_filter_class[doc_type]
@@ -3528,6 +3529,22 @@ class AncestorLocationTypeFilter(ReportAppFilter):
             # user.sql_location is None, or location does not have an ancestor of that type
             return None
         return ancestor.location_id
+
+
+class NumericFilter(ReportAppFilter):
+    operator = StringProperty(choices=['=', '!=', '<', '<=', '>', '>=']),
+    operand = FloatProperty()
+
+    @classmethod
+    def wrap(cls, doc):
+        doc['operand'] = float(doc['operand'])
+        return super(NumericFilter, cls).wrap(doc)
+
+    def get_filter_value(self, user, ui_filter):
+        return {
+            'operator': self.operator,
+            'operand': self.operand,
+        }
 
 
 class ReportAppConfig(DocumentSchema):
@@ -4414,6 +4431,7 @@ class ApplicationBase(VersionedDoc, SnapshotMixin,
                                          'files/%s' % filepath)
 
     def create_jadjar_from_build_files(self, save=False):
+        self.validate_jar_path()
         with CriticalSection(['create_jadjar_' + self._id]):
             try:
                 return (
@@ -4451,7 +4469,6 @@ class ApplicationBase(VersionedDoc, SnapshotMixin,
         try:
             self.validate_fixtures()
             self.validate_intents()
-            self.validate_jar_path()
             self.create_all_files()
         except CaseXPathValidationError as cve:
             errors.append({
