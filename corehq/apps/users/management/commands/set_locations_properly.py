@@ -6,16 +6,6 @@ from corehq.apps.locations.models import Location
 from corehq.util.log import with_progress_bar
 from dimagi.utils.couch.database import iter_docs
 
-domains_to_skip = [
-    "ews-ghana-test2",
-    "ilsgateway-test-2",
-    "ilsgateway-test-1",
-    "ews-test-1",
-    "ews-ghana-test-2",
-    "ewsghana-test-1",
-    "ews-ghana-test",
-]
-
 
 def get_affected_ids():
     users = (UserES()
@@ -49,12 +39,16 @@ def set_correct_locations():
         user = CommCareUser.wrap(doc)
         if user.location_id != user.user_data.get('commcare_location_id'):
             location = locations.get(user.location_id, None)
-            if location:
-                user.set_location(location)
-                users_set += 1
-            else:
-                user.unset_location()
-                users_unset += 1
+            try:
+                if location:
+                    user.set_location(location)
+                    users_set += 1
+                else:
+                    user.unset_location()
+                    users_unset += 1
+            except Exception as e:
+                print user._id, "failed", repr(e)
+                location.save()
     print "Set locations on {} users".format(users_set)
     print "Unset locations on {} users".format(users_unset)
 
