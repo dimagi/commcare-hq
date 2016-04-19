@@ -286,7 +286,6 @@ class DomainWireInvoiceFactory(object):
 
         date_due = date_end + datetime.timedelta(DEFAULT_DAYS_UNTIL_DUE)
 
-        # TODO: figure out how to handle line items
         wire_invoice = WireInvoice.objects.create(
             domain=self.domain.name,
             date_start=date_start,
