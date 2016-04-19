@@ -93,8 +93,8 @@ class CallCenterIndicators(object):
     @property
     @memoized
     def data_sources(self):
-        from corehq.apps.callcenter.data_source import get_report_data_sources_for_domain
-        return get_report_data_sources_for_domain(self.domain)
+        from corehq.apps.callcenter.data_source import get_sql_adapters_for_domain
+        return get_sql_adapters_for_domain(self.domain)
 
     @property
     @memoized

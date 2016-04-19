@@ -34,8 +34,8 @@ class CaseQuery(BaseQuery):
 
     @property
     def sql_adapter(self):
-        from corehq.apps.callcenter.data_source import get_report_data_sources_for_domain
-        return get_report_data_sources_for_domain(self.domain).cases
+        from corehq.apps.callcenter.data_source import get_sql_adapters_for_domain
+        return get_sql_adapters_for_domain(self.domain).cases
 
     @property
     def owner_column(self):
@@ -154,8 +154,8 @@ class CaseQueryActive(CaseQuery):
 
     @property
     def sql_adapter(self):
-        from corehq.apps.callcenter.data_source import get_report_data_sources_for_domain
-        return get_report_data_sources_for_domain(self.domain).case_actions
+        from corehq.apps.callcenter.data_source import get_sql_adapters_for_domain
+        return get_sql_adapters_for_domain(self.domain).case_actions
 
     def get_results(self, include_type_in_result, limit_types, start_date, end_date):
         query = self._build_query(include_type_in_result, limit_types, [
@@ -176,8 +176,8 @@ class CaseQueryTotalLegacy(BaseQuery):
 
     @property
     def sql_adapter(self):
-        from corehq.apps.callcenter.data_source import get_report_data_sources_for_domain
-        return get_report_data_sources_for_domain(self.domain).cases
+        from corehq.apps.callcenter.data_source import get_sql_adapters_for_domain
+        return get_sql_adapters_for_domain(self.domain).cases
 
     def get_results(self):
         query = select([
@@ -201,8 +201,8 @@ class FormQuery(BaseQuery):
 
     @property
     def sql_adapter(self):
-        from corehq.apps.callcenter.data_source import get_report_data_sources_for_domain
-        return get_report_data_sources_for_domain(self.domain).forms
+        from corehq.apps.callcenter.data_source import get_sql_adapters_for_domain
+        return get_sql_adapters_for_domain(self.domain).forms
 
 
 class StandardFormQuery(FormQuery):
