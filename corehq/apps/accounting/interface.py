@@ -253,78 +253,12 @@ class SubscriptionInterface(AddItemInterface):
 
     @property
     def rows(self):
-        from corehq.apps.accounting.views import ManageBillingAccountView
-        rows = []
-        filters = {}
-
-        if StartDateFilter.use_filter(self.request):
-            filters.update(
-                date_start__gte=StartDateFilter.get_start_date(self.request),
-                date_start__lte=StartDateFilter.get_end_date(self.request),
-            )
-        if EndDateFilter.use_filter(self.request):
-            filters.update(
-                date_end__gte=EndDateFilter.get_start_date(self.request),
-                date_end__lte=EndDateFilter.get_end_date(self.request),
-            )
-        if DateCreatedFilter.use_filter(self.request):
-            filters.update(
-                date_created__gte=DateCreatedFilter.get_start_date(self.request),
-                date_created__lte=DateCreatedFilter.get_end_date(self.request),
-            )
-        subscriber = SubscriberFilter.get_value(self.request, self.domain)
-        if subscriber is not None:
-            filters.update(
-                subscriber__domain=subscriber,
-            )
-        salesforce_contract_id = SalesforceContractIDFilter.get_value(self.request, self.domain)
-        if salesforce_contract_id is not None:
-            filters.update(
-                salesforce_contract_id=salesforce_contract_id,
-            )
-        active_status = ActiveStatusFilter.get_value(self.request, self.domain)
-        if active_status is not None:
-            filters.update(
-                is_active=(active_status == ActiveStatusFilter.active),
-            )
-        do_not_invoice = DoNotInvoiceFilter.get_value(self.request, self.domain)
-        if do_not_invoice is not None:
-            filters.update(
-                do_not_invoice=(do_not_invoice == DoNotInvoiceFilter.DO_NOT_INVOICE),
-            )
-
-        filter_created_by = CreatedSubAdjMethodFilter.get_value(
-            self.request, self.domain)
-        if (filter_created_by is not None and filter_created_by in
-            [s[0] for s in SubscriptionAdjustmentMethod.CHOICES]
-        ):
-            filters.update({
-                'subscriptionadjustment__reason': SubscriptionAdjustmentReason.CREATE,
-                'subscriptionadjustment__method': filter_created_by,
-            })
-
-        trial_status_filter = TrialStatusFilter.get_value(self.request, self.domain)
-        if trial_status_filter is not None:
-            is_trial = trial_status_filter == TrialStatusFilter.TRIAL
-            filters.update(is_trial=is_trial)
-
-        service_type = SubscriptionTypeFilter.get_value(self.request, self.domain)
-        if service_type is not None:
-            filters.update(
-                service_type=service_type,
-            )
-
-        pro_bono_status = ProBonoStatusFilter.get_value(self.request, self.domain)
-        if pro_bono_status is not None:
-            filters.update(
-                pro_bono_status=pro_bono_status,
-            )
-
-        for subscription in Subscription.objects.filter(**filters):
+        def _subscription_to_row(subscription):
+            from corehq.apps.accounting.views import ManageBillingAccountView
             try:
                 created_by_adj = SubscriptionAdjustment.objects.filter(
                     subscription=subscription,
-                    reason=SubscriptionAdjustmentReason.CREATE
+                    reason=SubscriptionAdjustmentReason.CREATE,
                 ).order_by('date_created')[0]
                 created_by = dict(SubscriptionAdjustmentMethod.CHOICES).get(
                     created_by_adj.method, "Unknown")
@@ -334,7 +268,8 @@ class SubscriptionInterface(AddItemInterface):
                 subscription.subscriber.domain,
                 format_datatables_data(
                     text=mark_safe('<a href="%s">%s</a>' % (
-                        reverse(ManageBillingAccountView.urlname, args=(subscription.account.id,)
+                        reverse(
+                            ManageBillingAccountView.urlname, args=(subscription.account.id,)
                         ), subscription.account.name)),
                     sort_key=subscription.account.name,
                 ),
@@ -350,9 +285,75 @@ class SubscriptionInterface(AddItemInterface):
             ]
             if not self.is_rendered_as_email:
                 columns.append(mark_safe('<a href="./%d" class="btn btn-default">Edit</a>' % subscription.id))
-            rows.append(columns)
+            return columns
 
-        return rows
+        return map(_subscription_to_row, self._subscriptions)
+
+    @property
+    def _subscriptions(self):
+        queryset = Subscription.objects.all()
+
+        if StartDateFilter.use_filter(self.request):
+            queryset = queryset.filter(
+                date_start__gte=StartDateFilter.get_start_date(self.request),
+                date_start__lte=StartDateFilter.get_end_date(self.request),
+            )
+        if EndDateFilter.use_filter(self.request):
+            queryset = queryset.filter(
+                date_end__gte=EndDateFilter.get_start_date(self.request),
+                date_end__lte=EndDateFilter.get_end_date(self.request),
+            )
+        if DateCreatedFilter.use_filter(self.request):
+            queryset = queryset.filter(
+                date_created__gte=DateCreatedFilter.get_start_date(self.request),
+                date_created__lte=DateCreatedFilter.get_end_date(self.request),
+            )
+        subscriber = SubscriberFilter.get_value(self.request, self.domain)
+        if subscriber is not None:
+            queryset = queryset.filter(
+                subscriber__domain=subscriber,
+            )
+        salesforce_contract_id = SalesforceContractIDFilter.get_value(self.request, self.domain)
+        if salesforce_contract_id is not None:
+            queryset = queryset.filter(
+                salesforce_contract_id=salesforce_contract_id,
+            )
+        active_status = ActiveStatusFilter.get_value(self.request, self.domain)
+        if active_status is not None:
+            queryset = queryset.filter(
+                is_active=(active_status == ActiveStatusFilter.active),
+            )
+        do_not_invoice = DoNotInvoiceFilter.get_value(self.request, self.domain)
+        if do_not_invoice is not None:
+            queryset = queryset.filter(
+                do_not_invoice=(do_not_invoice == DoNotInvoiceFilter.DO_NOT_INVOICE),
+            )
+        filter_created_by = CreatedSubAdjMethodFilter.get_value(
+            self.request, self.domain)
+        if (
+            filter_created_by is not None and
+            filter_created_by in [s[0] for s in SubscriptionAdjustmentMethod.CHOICES]
+        ):
+            queryset = queryset.filter(
+                subscriptionadjustment__reason=SubscriptionAdjustmentReason.CREATE,
+                subscriptionadjustment__method=filter_created_by,
+            )
+        trial_status_filter = TrialStatusFilter.get_value(self.request, self.domain)
+        if trial_status_filter is not None:
+            is_trial = trial_status_filter == TrialStatusFilter.TRIAL
+            queryset = queryset.filter(is_trial=is_trial)
+        service_type = SubscriptionTypeFilter.get_value(self.request, self.domain)
+        if service_type is not None:
+            queryset = queryset.filter(
+                service_type=service_type,
+            )
+        pro_bono_status = ProBonoStatusFilter.get_value(self.request, self.domain)
+        if pro_bono_status is not None:
+            queryset = queryset.filter(
+                pro_bono_status=pro_bono_status,
+            )
+
+        return queryset
 
 
 class SoftwarePlanInterface(AddItemInterface):
