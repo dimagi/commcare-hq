@@ -64,7 +64,6 @@ class Command(BaseCommand):
                 xmlns = match.group(1)
                 form_unique_id = match.group(2)
                 unique_id_to_xmlns_map[form_unique_id] = xmlns
-                print form_unique_id
 
                 try:
                     form = Form.get_form(form_unique_id)
