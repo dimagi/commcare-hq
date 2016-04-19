@@ -116,12 +116,6 @@ class CallCenterIndicators(object):
             MONTH1: (daysago60, daysago30),
         }
 
-    def _date_filters(self, date_field, lower, upper):
-        return {
-            '{}__gte'.format(date_field): lower,
-            '{}__lt'.format(date_field): upper,
-        }
-
     @property
     @memoized
     def call_center_cases(self):
