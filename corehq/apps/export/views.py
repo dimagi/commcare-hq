@@ -76,6 +76,7 @@ from corehq.apps.style.decorators import (
     use_bootstrap3,
     use_select2,
     use_daterangepicker,
+    use_jquery_ui,
     use_angular_js)
 from corehq.apps.style.forms.widgets import DateRangePickerWidget
 from corehq.apps.style.utils import format_angular_error, format_angular_success
@@ -1404,6 +1405,7 @@ class BaseNewExportView(BaseExportView):
     template_name = 'export/bootstrap3/customize_export.html'
 
     @use_bootstrap3
+    @use_jquery_ui
     def dispatch(self, request, *args, **kwargs):
         return super(BaseNewExportView, self).dispatch(request, *args, **kwargs)
 
