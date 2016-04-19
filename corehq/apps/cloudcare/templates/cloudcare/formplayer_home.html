@@ -18,10 +18,16 @@
 
     <script src="{% static 'datatables/media/js/jquery.dataTables.min.js' %}"></script>
     <script src="{% static 'datatables/media/js/dataTables.bootstrap.min.js' %}"></script>
+
 {% endblock %}
 
 {% block js %} {{ block.super }}
     {% compress js %}
+            <script src="{% static 'jquery/dist/jquery.min.js' %}"></script>
+            <script src="{% static 'json2/json2.js' %}"></script>
+            <script src="{% static 'underscore/underscore.js' %}"></script>
+            <script src="{% static 'backbone/backbone-min.js' %}"></script>
+            <script src="{% static 'backbone.marionette/lib/backbone.marionette.min.js' %}"></script>
             <script src="{% static 'cloudcare/js/formplayer/app.js' %}"></script>
     {% endcompress %}
 {% endblock %}
