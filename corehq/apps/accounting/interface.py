@@ -1125,6 +1125,7 @@ class CreditAdjustmentInterface(GenericTabularReport):
             DataTablesColumn("Invoice"),
             DataTablesColumn("Note"),
             DataTablesColumn("Amount"),
+            DataTablesColumn("New Balance"),
             DataTablesColumn("By User"),
             DataTablesColumnGroup(
                 "Related Credit Line",
@@ -1183,6 +1184,10 @@ class CreditAdjustmentInterface(GenericTabularReport):
                 invoice_column_cell(credit_adj.invoice) if credit_adj.invoice else None,
                 credit_adj.note,
                 quantize_accounting_decimal(credit_adj.amount),
+                quantize_accounting_decimal(sum(c_adj.amount for c_adj in CreditAdjustment.objects.filter(
+                    credit_line=credit_adj.credit_line,
+                    date_created__lte=credit_adj.date_created,
+                ))),
                 credit_adj.web_user,
             ] + (
                 _get_credit_line_columns_from_credit_line(credit_adj.related_credit)
