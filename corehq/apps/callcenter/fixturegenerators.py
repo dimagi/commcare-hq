@@ -3,8 +3,7 @@ from datetime import datetime
 import pytz
 from corehq.apps.callcenter.indicator_sets import CallCenterIndicators
 from corehq.apps.users.models import CommCareUser
-from corehq.util.soft_assert import soft_assert
-from corehq.util.timezones.conversions import UserTime, ServerTime
+from corehq.util.timezones.conversions import ServerTime
 from dimagi.utils.logging import notify_exception
 
 utc = pytz.utc
@@ -23,13 +22,7 @@ def should_sync(domain, last_sync, utcnow=None):
     except pytz.UnknownTimeZoneError:
         timezone = utc
 
-    _assert = soft_assert(to=['droberts' + '@' + 'dimagi.com'])
-
     last_sync_utc = last_sync.date
-
-    if not _assert(last_sync_utc.tzinfo is None,
-                   'last_sync.date should be an offset-naive dt'):
-        last_sync_utc = UserTime(last_sync_utc).server_time().done()
 
     # check if user has already synced today (in local timezone).
     # Indicators only change daily.
