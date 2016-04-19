@@ -35,7 +35,7 @@
     },
     "named_filters": {},
     "referenced_doc_type": "CommCareCase",
-    "table_id": "call_center_case_actions",
+    "table_id": "cc_case_actions",
     "base_item_expression": {
         "datatype": null,
         "property_name": "actions",

@@ -6,7 +6,7 @@
     "engine_id": "ucr",
     "named_filters": {},
     "referenced_doc_type": "XFormInstance",
-    "table_id": "call_center_forms",
+    "table_id": "cc_forms",
     "base_item_expression": {},
     "configured_filter": {},
     "named_expressions": {

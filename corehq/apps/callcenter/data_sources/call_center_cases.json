@@ -32,7 +32,7 @@
     },
     "named_filters": {},
     "referenced_doc_type": "CommCareCase",
-    "table_id": "call_center_cases",
+    "table_id": "cc_cases",
     "base_item_expression": {},
     "configured_filter": {},
     "configured_indicators": [

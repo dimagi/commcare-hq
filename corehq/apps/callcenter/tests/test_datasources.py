@@ -21,6 +21,6 @@ class TestCallCenterDataSources(SimpleTestCase):
 
         table_ids = [ds.table_id for ds in data_sources]
         self.assertEqual(
-            ['call_center_forms', 'call_center_cases', 'call_center_case_actions'] * 2,
+            ['cc_forms', 'cc_cases', 'cc_case_actions'] * 2,
             table_ids
         )
