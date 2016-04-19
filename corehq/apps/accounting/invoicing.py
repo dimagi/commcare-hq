@@ -328,7 +328,6 @@ class LineItemFactory(object):
     """
     This generates a line item based on what type of Feature or Product rate triggers it.
     """
-    line_item_details_template = ""  # todo
 
     def __init__(self, subscription, rate, invoice):
         self.subscription = subscription
