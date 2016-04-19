@@ -877,7 +877,6 @@ class InvoiceInterface(InvoiceInterfaceBase):
 
 
 def _get_domain_from_payment_record(payment_record):
-    from corehq.apps.accounting.models import CreditAdjustment
     credit_adjustments = CreditAdjustment.objects.filter(payment_record=payment_record)
     domains = set(
         credit_adj.credit_line.account.created_by_domain
