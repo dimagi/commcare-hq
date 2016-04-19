@@ -22,6 +22,9 @@ def change_meta_from_sql_form(form):
 
 
 def publish_case_saved(case):
+    """
+    Publish the change to kafka and run case post-save signals.
+    """
     producer.send_change(topics.CASE_SQL, change_meta_from_sql_case(case))
     sql_case_post_save.send(case.__class__, case=case)
 

@@ -11,6 +11,7 @@ from django.db import models, transaction
 from collections import namedtuple
 from corehq.apps.app_manager.dbaccessors import get_app
 from corehq.apps.app_manager.models import Form
+from corehq.form_processor.backends.sql.dbaccessors import CaseAccessorSQL
 from corehq.form_processor.models import CommCareCaseSQL
 from corehq.util.mixin import UUIDGeneratorMixin
 from corehq.apps.users.models import CouchUser
@@ -801,10 +802,11 @@ class CommConnectCaseSQL(CommCareCaseSQL, CommCareMobileContactMixin):
             contact_phone_number and
             contact_phone_number != '0' and
             not self.closed and
-            not self.deleted and
+            not self.is_deleted and
             # For legacy reasons, any truthy value here suffices
             contact_phone_number_is_verified
         )
+
         return PhoneInfo(
             requires_entry,
             contact_phone_number,
@@ -833,7 +835,7 @@ class CommConnectCaseSQL(CommCareCaseSQL, CommCareMobileContactMixin):
         # Having an extra lookup to do this isn't great.
         # TODO: Try to replace all references to wrap_as_commconnect_case to
         # avoid the extra lookup.
-        return CommConnectCaseSQL.get(case_id=case.case_id)
+        return CaseAccessorSQL.get_case(case.case_id, cls=cls)
 
 
 class PhoneBlacklist(models.Model):

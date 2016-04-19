@@ -325,9 +325,9 @@ class FormAccessorSQL(AbstractFormAccessor):
 class CaseAccessorSQL(AbstractCaseAccessor):
 
     @staticmethod
-    def get_case(case_id):
+    def get_case(case_id, cls=CommCareCaseSQL):
         try:
-            return CommCareCaseSQL.objects.raw('SELECT * from get_case_by_id(%s)', [case_id])[0]
+            return cls.objects.raw('SELECT * from get_case_by_id(%s)', [case_id])[0]
         except IndexError:
             raise CaseNotFound
 
@@ -655,15 +655,23 @@ class CaseAccessorSQL(AbstractCaseAccessor):
 
     @staticmethod
     def soft_delete_cases(domain, case_ids, deletion_date=None, deletion_id=None):
+        from corehq.form_processor.change_publishers import publish_case_saved
+
         assert isinstance(case_ids, list)
-        deletion_date = deletion_date or datetime.utcnow()
+        utcnow = datetime.utcnow()
+        deletion_date = deletion_date or utcnow
         with get_cursor(CommCareCaseSQL) as cursor:
             cursor.execute(
-                'SELECT soft_delete_cases(%s, %s, %s, %s) as affected_count',
-                [domain, case_ids, deletion_date, deletion_id]
+                'SELECT soft_delete_cases(%s, %s, %s, %s, %s) as affected_count',
+                [domain, case_ids, utcnow, deletion_date, deletion_id]
             )
             results = fetchall_as_namedtuple(cursor)
-            return sum([result.affected_count for result in results])
+            affected_count = sum([result.affected_count for result in results])
+
+        for case in CaseAccessorSQL.get_cases(case_ids):
+            publish_case_saved(case)
+
+        return affected_count
 
 
 class LedgerAccessorSQL(AbstractLedgerAccessor):

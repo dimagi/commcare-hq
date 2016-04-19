@@ -304,7 +304,6 @@ def _sync_case_phone_number(contact_case):
             phone_number.contact_last_modified >= contact_case.server_modified_on
         ):
             return
-
         if phone_info.requires_entry:
             try:
                 contact_case.verify_unique_number(phone_info.phone_number)
