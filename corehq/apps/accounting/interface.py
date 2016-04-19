@@ -921,47 +921,17 @@ class PaymentRecordInterface(GenericTabularReport):
         )
 
     @property
-    def filters(self):
-        filters = {}
-        account_name = NameFilter.get_value(self.request, self.domain)
-        if account_name is not None:
-            filters.update(
-                creditadjustment__credit_line__account__name=account_name,
-            )
-        if DateCreatedFilter.use_filter(self.request):
-            filters.update(
-                date_created__gte=DateCreatedFilter.get_start_date(self.request),
-                date_created__lte=DateCreatedFilter.get_end_date(self.request),
-            )
-        subscriber = SubscriberFilter.get_value(self.request, self.domain)
-        if subscriber is not None:
-            filters.update(
-                creditadjustment__credit_line__subscription__subscriber__domain=subscriber
-            )
-        transaction_id = PaymentTransactionIdFilter.get_value(self.request, self.domain)
-        if transaction_id:
-            filters.update(
-                transaction_id=transaction_id.strip(),
-            )
-        return filters
-
-    @property
-    def payment_records(self):
-        return PaymentRecord.objects.filter(**self.filters)
-
-    @property
     def rows(self):
-        from corehq.apps.accounting.views import ManageBillingAccountView
-        rows = []
-        for record in self.payment_records:
+        def _payment_record_to_row(payment_record):
+            from corehq.apps.accounting.views import ManageBillingAccountView
             applicable_credit_line = CreditAdjustment.objects.filter(
-                payment_record_id=record.id
+                payment_record_id=payment_record.id
             ).latest('last_modified').credit_line
             account = applicable_credit_line.account
-            rows.append([
+            return [
                 format_datatables_data(
-                    text=record.date_created.strftime(SERVER_DATE_FORMAT),
-                    sort_key=record.date_created.isoformat(),
+                    text=payment_record.date_created.strftime(SERVER_DATE_FORMAT),
+                    sort_key=payment_record.date_created.isoformat(),
                 ),
                 format_datatables_data(
                     text=mark_safe(
@@ -972,21 +942,49 @@ class PaymentRecordInterface(GenericTabularReport):
                     ),
                     sort_key=account.name,
                 ),
-                _get_domain_from_payment_record(record),
-                record.payment_method.web_user,
+                _get_domain_from_payment_record(payment_record),
+                payment_record.payment_method.web_user,
                 format_datatables_data(
                     text=mark_safe(
                         '<a href="https://dashboard.stripe.com/payments/%s"'
                         '   target="_blank">%s'
                         '</a>' % (
-                            record.transaction_id,
-                            record.transaction_id,
+                            payment_record.transaction_id,
+                            payment_record.transaction_id,
                         )),
-                    sort_key=record.transaction_id,
+                    sort_key=payment_record.transaction_id,
                 ),
-                quantize_accounting_decimal(record.amount),
-            ])
-        return rows
+                quantize_accounting_decimal(payment_record.amount),
+            ]
+
+        return map(_payment_record_to_row, self._payment_records)
+
+    @property
+    def _payment_records(self):
+        queryset = PaymentRecord.objects.all()
+
+        account_name = NameFilter.get_value(self.request, self.domain)
+        if account_name is not None:
+            queryset = queryset.filter(
+                creditadjustment__credit_line__account__name=account_name,
+            )
+        if DateCreatedFilter.use_filter(self.request):
+            queryset = queryset.filter(
+                date_created__gte=DateCreatedFilter.get_start_date(self.request),
+                date_created__lte=DateCreatedFilter.get_end_date(self.request),
+            )
+        subscriber = SubscriberFilter.get_value(self.request, self.domain)
+        if subscriber is not None:
+            queryset = queryset.filter(
+                creditadjustment__credit_line__subscription__subscriber__domain=subscriber
+            )
+        transaction_id = PaymentTransactionIdFilter.get_value(self.request, self.domain)
+        if transaction_id:
+            queryset = queryset.filter(
+                transaction_id=transaction_id.strip(),
+            )
+
+        return queryset
 
 
 class SubscriptionAdjustmentInterface(GenericTabularReport):
