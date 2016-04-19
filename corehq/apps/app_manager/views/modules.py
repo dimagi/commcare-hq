@@ -1,3 +1,4 @@
+# coding=utf-8
 from collections import OrderedDict, namedtuple
 import json
 import logging
@@ -35,6 +36,8 @@ from corehq.apps.app_manager.dbaccessors import get_app
 from corehq.apps.app_manager.models import (
     AdvancedModule,
     CareplanModule,
+    CaseSearch,
+    CaseSearchProperty,
     DeleteModuleRecord,
     DetailColumn,
     DetailTab,
@@ -539,6 +542,44 @@ def undo_delete_module(request, domain, record_id):
     return back_to_main(request, domain, app_id=record.app_id, module_id=record.module_id)
 
 
+def _update_search_properties(module, search_properties, lang='en'):
+    """
+    Updates the translation of a module's current search properties, and drops missing search properties.
+
+    Labels in incoming search_properties aren't keyed by language, so lang specifies that.
+
+    e.g.:
+
+    >>> module = Module()
+    >>> module.search_config.properties = [
+    ...     CaseSearchProperty(name='name', label={'fr': 'Nom'}),
+    ...     CaseSearchProperty(name='age', label={'fr': 'Âge'}),
+    ... ]
+    >>> search_properties = [
+    ...     {'name': 'name', 'label': 'Name'},
+    ...     {'name': 'dob'. 'label': 'Date of birth'}
+    ... ]  # Incoming search properties' labels are not dictionaries
+    >>> lang = 'en'
+    >>> list(_update_search_properties(module, search_properties, lang)) == [
+    ...     {'name': 'name', 'label': {'fr': 'Nom', 'en': 'Name'}},
+    ...     {'name': 'dob'. 'label': {'en': 'Date of birth'}},
+    ... ]  # English label is added, "age" property is dropped
+    True
+
+    """
+    current = {p.name: p.label for p in module.search_config.properties}
+    for prop in search_properties:
+        if prop['name'] in current:
+            label = current[prop['name']]
+            label.update({lang: prop['label']})
+        else:
+            label = {lang: prop['label']}
+        yield {
+            'name': prop['name'],
+            'label': label
+        }
+
+
 @no_conflict_require_POST
 @require_can_edit_apps
 def edit_module_detail_screens(request, domain, app_id, module_id):
@@ -562,6 +603,7 @@ def edit_module_detail_screens(request, domain, app_id, module_id):
     persist_tile_on_forms = params.get("persistTileOnForms", None)
     pull_down_tile = params.get("enableTilePullDown", None)
     case_list_lookup = params.get("case_list_lookup", None)
+    search_properties = params.get("search_properties")
 
     app = get_app(domain, app_id)
     module = app.get_module(module_id)
@@ -613,6 +655,12 @@ def edit_module_detail_screens(request, domain, app_id, module_id):
         module.parent_select = ParentSelect.wrap(parent_select)
     if fixture_select is not None:
         module.fixture_select = FixtureSelect.wrap(fixture_select)
+    if search_properties is not None:
+        lang = request.COOKIES.get('lang', app.langs[0])
+        module.search_config = CaseSearch(properties=[
+            CaseSearchProperty.wrap(p) for p in _update_search_properties(module, search_properties, lang)
+        ])
+        # TODO: Add UI and controller support for CaseSearch.command_label
 
     resp = {}
     app.save(resp)

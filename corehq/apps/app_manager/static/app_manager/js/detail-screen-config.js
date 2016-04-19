@@ -226,6 +226,28 @@ hqDefine('app_manager/js/detail-screen-config.js', function () {
         self.removeProperty = function (property) {
             self.searchProperties.remove(property);
         };
+        self._getProperties = function () {
+            // i.e. [{'name': p.name, 'label': p.label} for p in self.searchProperties if p.name]
+            return _.map(
+                _.filter(
+                    self.searchProperties(),
+                    function (p) { return p.name().length > 0; }  // Skip properties where name is blank
+                ),
+                function (p) {
+                    return {
+                        name: p.name(),
+                        label: p.label().length ? p.label() : p.name(),  // If label isn't set, use name
+                    };
+                }
+            );
+        };
+
+        self.serialize = function () {
+            var data = {
+                search_properties: self._getProperties(),
+            };
+            return data;
+        };
     };
 
     var caseListLookupViewModel = function($el, state, saveButton) {
@@ -783,6 +805,7 @@ hqDefine('app_manager/js/detail-screen-config.js', function () {
                 this.containsFixtureConfiguration = options.containsFixtureConfiguration;
                 this.containsFilterConfiguration = options.containsFilterConfiguration;
                 this.containsCaseListLookupConfiguration = options.containsCaseListLookupConfiguration;
+                this.containsSearchConfiguration = options.containsSearchConfiguration;
                 this.containsCustomXMLConfiguration = options.containsCustomXMLConfiguration;
                 this.allowsTabs = options.allowsTabs;
                 this.useCaseTiles = ko.observable(spec[this.columnKey].use_case_tiles ? "yes" : "no");
@@ -1013,6 +1036,9 @@ hqDefine('app_manager/js/detail-screen-config.js', function () {
                     }
                     if (this.containsCustomXMLConfiguration){
                         data.custom_xml = this.config.customXMLViewModel.xml();
+                    }
+                    if (this.containsSearchConfiguration) {
+                        data.search_properties = JSON.stringify(this.config.search.serialize());
                     }
                     return data;
                 },
