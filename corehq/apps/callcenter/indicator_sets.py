@@ -358,29 +358,7 @@ class CallCenterIndicators(object):
     def get_data(self):
         final_data = {}
         if self.users_needing_data:
-            logger.debug('Adding data for users: %s', self.users_needing_data)
-            if self.config.cases_total.active and self.config.cases_total.include_legacy:
-                self.add_case_total_legacy()
-
-            if self.config.forms_submitted.active:
-                self.add_form_data(self.config.forms_submitted)
-
-            if self.config.cases_total.active:
-                query = CaseQueryTotal(self.domain, self.cc_case_type, self.owners_needing_data)
-                self.add_case_data(query, CASES_TOTAL, self.config.cases_total)
-
-            if self.config.cases_opened.active:
-                query = CaseQueryOpenedClosed(self.domain, self.cc_case_type, self.owners_needing_data, opened=True)
-                self.add_case_data(query, CASES_OPENED, self.config.cases_opened)
-
-            if self.config.cases_closed.active:
-                query = CaseQueryOpenedClosed(self.domain, self.cc_case_type, self.owners_needing_data, opened=False)
-                self.add_case_data(query, CASES_CLOSED, self.config.cases_closed)
-
-            if self.config.cases_active.active:
-                legacy_prefix = LEGACY_CASES_UPDATED if self.config.cases_active.include_legacy else None
-                query = CaseQueryActive(self.domain, self.cc_case_type, self.owners_needing_data)
-                self.add_case_data(query, CASES_ACTIVE, self.config.cases_total, legacy_prefix=legacy_prefix)
+            self._populate_dataset()
 
             cache_timeout = seconds_till_midnight(self.timezone)
             user_to_case_map = self.user_to_case_map
@@ -407,3 +385,28 @@ class CallCenterIndicators(object):
             final_data[cache_data.case_id] = cache_data.indicators
 
         return final_data
+
+    def _populate_dataset(self):
+        logger.debug('Adding data for users: %s', self.users_needing_data)
+        if self.config.cases_total.active and self.config.cases_total.include_legacy:
+            self.add_case_total_legacy()
+
+        if self.config.forms_submitted.active:
+            self.add_form_data(self.config.forms_submitted)
+
+        if self.config.cases_total.active:
+            query = CaseQueryTotal(self.domain, self.cc_case_type, self.owners_needing_data)
+            self.add_case_data(query, CASES_TOTAL, self.config.cases_total)
+
+        if self.config.cases_opened.active:
+            query = CaseQueryOpenedClosed(self.domain, self.cc_case_type, self.owners_needing_data, opened=True)
+            self.add_case_data(query, CASES_OPENED, self.config.cases_opened)
+
+        if self.config.cases_closed.active:
+            query = CaseQueryOpenedClosed(self.domain, self.cc_case_type, self.owners_needing_data, opened=False)
+            self.add_case_data(query, CASES_CLOSED, self.config.cases_closed)
+
+        if self.config.cases_active.active:
+            legacy_prefix = LEGACY_CASES_UPDATED if self.config.cases_active.include_legacy else None
+            query = CaseQueryActive(self.domain, self.cc_case_type, self.owners_needing_data)
+            self.add_case_data(query, CASES_ACTIVE, self.config.cases_total, legacy_prefix=legacy_prefix)
