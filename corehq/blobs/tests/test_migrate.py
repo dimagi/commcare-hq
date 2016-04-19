@@ -173,16 +173,11 @@ class TestApplicationMigrations(BaseMigrationTest):
     slug = "applications"
 
     def test_migrate_saved_exports(self):
-        # setup data
         app = Application()
         app.save()
-        payload = u'<fake xform source>\u2713</fake>'
-        super(BlobMixin, app).put_attachment(payload, "form.xml")
+        form = u'<fake xform source>\u2713</fake>'
+        super(BlobMixin, app).put_attachment(form, "form.xml")
         app.save()
-
-        # verify: attachment is in couch and migration not complete
-        self.assertEqual(len(app._attachments), 1)
-        self.assertEqual(len(app.external_blobs), 0)
 
         # add legacy attribute to make sure the migration uses doc_type.wrap()
         db = app.get_db()
@@ -194,32 +189,27 @@ class TestApplicationMigrations(BaseMigrationTest):
         self.do_migration([app])
 
         exp = Application.get(app._id)
-        self.assertEqual(exp.fetch_attachment("form.xml"), payload)
+        self.assertEqual(exp.fetch_attachment("form.xml"), form)
 
     def test_migrate_with_concurrent_modification(self):
-        # setup data
         app = Application()
         app.save()
-        new_payload = 'something new'
-        old_payload = 'something old'
-        super(BlobMixin, app).put_attachment(old_payload, "form.xml")
-        super(BlobMixin, app).put_attachment(old_payload, "other.xml")
+        new_form = 'something new'
+        old_form = 'something old'
+        super(BlobMixin, app).put_attachment(old_form, "form.xml")
+        super(BlobMixin, app).put_attachment(old_form, "other.xml")
         app.save()
-
-        # verify: attachments are in couch
         self.assertEqual(len(app._attachments), 2)
-        self.assertEqual(len(app.external_blobs), 0)
 
         def modify():
-            doc = Application.get(app._id)
-            doc.put_attachment(new_payload, "form.xml")  # calls save()
+            # put_attachment() calls .save()
+            Application.get(app._id).put_attachment(new_form, "form.xml")
 
         self.do_failed_migration({app: (1, 1)}, modify)
 
-        # verify: attachments were not migrated
         exp = Application.get(app._id)
-        self.assertEqual(exp.fetch_attachment("form.xml"), new_payload)
-        self.assertEqual(exp.fetch_attachment("other.xml"), old_payload)
+        self.assertEqual(exp.fetch_attachment("form.xml"), new_form)
+        self.assertEqual(exp.fetch_attachment("other.xml"), old_form)
 
 
 class TestMigrateBackend(TestCase):
