@@ -34,14 +34,6 @@ class CachedIndicators(JsonObject):
     indicators = DictProperty()
 
 
-class FakeQuerySet(object):
-    def __init__(self, results):
-        self.results = results
-
-    def iterator(self):
-        return (r for r in self.results)
-
-
 class CallCenterIndicators(object):
     """
     Data source class that provides the CallCenter / Supervisor indicators for users of a domain.
@@ -215,7 +207,7 @@ class CallCenterIndicators(object):
         """
         seen_users = set()
 
-        for row in queryset.iterator():
+        for row in queryset:
             user_id = row['user_id']
             val = transformer(row['count']) if transformer else row['count']
             self.data[user_id][indicator_name] = val
@@ -242,9 +234,9 @@ class CallCenterIndicators(object):
 
     def _reformat_and_add(self, data_dict, indicator_name, legacy_name=None):
         rows = [dict(user_id=user, count=cnt) for user, cnt in data_dict.items()]
-        self._add_data(FakeQuerySet(rows), indicator_name)
+        self._add_data(rows, indicator_name)
         if legacy_name:
-            self._add_data(FakeQuerySet(rows), legacy_name)
+            self._add_data(rows, legacy_name)
 
     def _add_case_data_total(self, queryset, indicator_prefix, range_name, legacy_prefix=None):
         """
@@ -295,7 +287,7 @@ class CallCenterIndicators(object):
         # add data for case types with no data
         unseen_cases = all_types - seen_types
         for case_type in unseen_cases:
-            self._add_data(FakeQuerySet([]), '{}_{}_{}'.format(indicator_prefix, case_type, range_name))
+            self._add_data([], '{}_{}_{}'.format(indicator_prefix, case_type, range_name))
 
     def _case_query_opened_closed(self, opened_or_closed, include_type_in_result, limit_types, lower, upper):
         """
@@ -471,7 +463,7 @@ class CallCenterIndicators(object):
         )
 
         with adapter.session_helper.session_context() as session:
-            results = FakeQuerySet(list(session.execute(query)))
+            results = list(session.execute(query))
 
         self._add_data(results, LEGACY_TOTAL_CASES)
 
@@ -497,7 +489,7 @@ class CallCenterIndicators(object):
         )
 
         with adapter.session_helper.session_context() as session:
-            results = FakeQuerySet(list(session.execute(query)))
+            results = list(session.execute(query))
 
         self._add_data(
             results,
@@ -531,7 +523,7 @@ class CallCenterIndicators(object):
             )
 
             with adapter.session_helper.session_context() as session:
-                results = FakeQuerySet(list(session.execute(query)))
+                results = list(session.execute(query))
 
             self._add_data(results, '{}_{}'.format(FORMS_SUBMITTED, range_name))
 
