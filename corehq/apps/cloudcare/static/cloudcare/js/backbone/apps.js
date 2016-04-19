@@ -917,6 +917,7 @@ hqDefine('cloudcare/js/backbone/apps.js', function () {
         TITLE_DEFAULT: 'Cloudcare',
 
         initialize: function () {
+            debugger;
             var cloudCareCases = hqImport('cloudcare/js/backbone/cases.js');
             var self = this;
             _.bindAll(self, "render", 'selectApp', "clearCases", "clearForms",
