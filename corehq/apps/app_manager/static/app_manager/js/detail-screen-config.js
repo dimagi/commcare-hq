@@ -196,7 +196,7 @@ hqDefine('app_manager/js/detail-screen-config.js', function () {
         };
     };
 
-    var searchViewModel = function (searchProperties, saveButton) {
+    var searchViewModel = function (searchProperties, lang, saveButton) {
         var self = this;
 
         var SearchProperty = function (name, label) {
@@ -208,9 +208,11 @@ hqDefine('app_manager/js/detail-screen-config.js', function () {
         self.searchProperties = ko.observableArray();
         if (searchProperties.length > 0) {
             for (var i = 0; i < searchProperties.length; i++) {
+                // property labels come in keyed by lang.
+                var label = searchProperties[i].label[lang];
                 self.searchProperties.push(new SearchProperty(
                     searchProperties[i].name,
-                    searchProperties[i].label
+                    label
                 ));
             }
         } else {
@@ -1163,7 +1165,11 @@ hqDefine('app_manager/js/detail-screen-config.js', function () {
                     var $case_list_lookup_el = $("#" + spec.state.type + "-list-callout-configuration");
                     this.caseListLookup = new caseListLookupViewModel($case_list_lookup_el, spec.state.short, this.shortScreen.saveButton);
                     // Set up case search
-                    this.search = new searchViewModel([], this.shortScreen.saveButton);  // TODO: Init with current values
+                    this.search = new searchViewModel(
+                        spec.searchProperties || [],
+                        spec.lang,
+                        this.shortScreen.saveButton
+                    );
                 }
                 if (spec.state.long !== undefined) {
                     this.longScreen = addScreen(spec.state, "long");

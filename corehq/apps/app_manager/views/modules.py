@@ -133,6 +133,7 @@ def _get_advanced_module_view_context(app, module, lang=None):
         ],
         'child_module_enabled': True,
         'is_search_enabled': case_search_enabled_for_domain(app.domain),
+        'search_properties': module.search_config.properties if module.search_config else [],
         'schedule_phases': [
             {
                 'id': schedule.id,
@@ -174,6 +175,7 @@ def _get_basic_module_view_context(app, module, lang=None):
         'child_module_enabled': (toggles.BASIC_CHILD_MODULE.enabled(app.domain) and
                                  module.doc_type != "ShadowModule"),
         'is_search_enabled': case_search_enabled_for_domain(app.domain),
+        'search_properties': module.search_config.properties if module.search_config else [],
     }
 
 
