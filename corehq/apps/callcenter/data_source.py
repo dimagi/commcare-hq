@@ -31,7 +31,7 @@ def get_data_source_templates():
     return call_center_data_sources
 
 
-def get_report_data_sources_for_domain(domain):
+def get_sql_adapters_for_domain(domain):
     forms, cases, case_actions = get_data_source_templates()
     return CallCenterReportDataSources(
         forms=_get_sql_adapter(domain, forms),
