@@ -655,13 +655,14 @@ class InvoiceInterface(InvoiceInterfaceBase):
 
     @property
     def rows(self):
-        from corehq.apps.accounting.views import (
-            ManageBillingAccountView, EditSubscriptionView,
-        )
-        rows = []
-        for invoice in self.invoices:
-            new_this_month = (invoice.date_created.month == invoice.subscription.account.date_created.month
-                              and invoice.date_created.year == invoice.subscription.account.date_created.year)
+        def _invoice_to_row(invoice):
+            from corehq.apps.accounting.views import (
+                ManageBillingAccountView, EditSubscriptionView,
+            )
+            new_this_month = (
+                invoice.date_created.month == invoice.subscription.account.date_created.month and
+                invoice.date_created.year == invoice.subscription.account.date_created.year
+            )
             try:
                 contact_info = BillingContactInfo.objects.get(
                     account=invoice.subscription.account,
@@ -744,31 +745,32 @@ class InvoiceInterface(InvoiceInterfaceBase):
                 columns.append(
                     mark_safe(make_anchor_tag(adjust_href, adjust_name, adjust_attrs)),
                 )
-            rows.append(columns)
-        return rows
+            return columns
+
+        return map(_invoice_to_row, self._invoices)
 
     @property
     @memoized
-    def filters(self):
-        filters = {}
+    def _invoices(self):
+        queryset = Invoice.objects.all()
 
         account_name = NameFilter.get_value(self.request, self.domain)
         if account_name is not None:
-            filters.update(
+            queryset = queryset.filter(
                 subscription__account__name=account_name,
             )
 
         subscriber_domain = \
             SubscriberFilter.get_value(self.request, self.domain)
         if subscriber_domain is not None:
-            filters.update(
+            queryset = queryset.filter(
                 subscription__subscriber__domain=subscriber_domain,
             )
 
         payment_status = \
             PaymentStatusFilter.get_value(self.request, self.domain)
         if payment_status is not None:
-            filters.update(
+            queryset = queryset.filter(
                 date_paid__isnull=(
                     payment_status == PaymentStatusFilter.NOT_PAID
                 ),
@@ -777,7 +779,7 @@ class InvoiceInterface(InvoiceInterfaceBase):
         statement_period = \
             StatementPeriodFilter.get_value(self.request, self.domain)
         if statement_period is not None:
-            filters.update(
+            queryset = queryset.filter(
                 date_start__gte=statement_period[0],
                 date_start__lte=statement_period[1],
             )
@@ -785,7 +787,7 @@ class InvoiceInterface(InvoiceInterfaceBase):
         due_date_period = \
             DueDatePeriodFilter.get_value(self.request, self.domain)
         if due_date_period is not None:
-            filters.update(
+            queryset = queryset.filter(
                 date_due__gte=due_date_period[0],
                 date_due__lte=due_date_period[1],
             )
@@ -793,7 +795,7 @@ class InvoiceInterface(InvoiceInterfaceBase):
         salesforce_account_id = \
             SalesforceAccountIDFilter.get_value(self.request, self.domain)
         if salesforce_account_id is not None:
-            filters.update(
+            queryset = queryset.filter(
                 subscription__account__salesforce_account_id=
                 salesforce_account_id,
             )
@@ -801,20 +803,20 @@ class InvoiceInterface(InvoiceInterfaceBase):
         salesforce_contract_id = \
             SalesforceContractIDFilter.get_value(self.request, self.domain)
         if salesforce_contract_id is not None:
-            filters.update(
+            queryset = queryset.filter(
                 subscription__salesforce_contract_id=salesforce_contract_id,
             )
 
         plan_name = SoftwarePlanNameFilter.get_value(self.request, self.domain)
         if plan_name is not None:
-            filters.update(
+            queryset = queryset.filter(
                 subscription__plan_version__plan__name=plan_name,
             )
 
         contact_name = \
             BillingContactFilter.get_value(self.request, self.domain)
         if contact_name is not None:
-            filters.update(
+            queryset = queryset.filter(
                 subscription__account__in=[
                     contact_info.account.id
                     for contact_info in BillingContactInfo.objects.all()
@@ -824,21 +826,16 @@ class InvoiceInterface(InvoiceInterfaceBase):
 
         is_hidden = IsHiddenFilter.get_value(self.request, self.domain)
         if is_hidden is not None:
-            filters.update(
+            queryset = queryset.filter(
                 is_hidden=(is_hidden == IsHiddenFilter.IS_HIDDEN),
             )
 
-        return filters
-
-    @property
-    @memoized
-    def invoices(self):
-        return Invoice.objects.filter(**self.filters)
+        return queryset
 
     @property
     @memoized
     def adjust_balance_forms(self):
-        return [AdjustBalanceForm(invoice) for invoice in self.invoices]
+        return [AdjustBalanceForm(invoice) for invoice in self._invoices]
 
     @property
     def report_context(self):
