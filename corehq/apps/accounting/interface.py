@@ -869,13 +869,11 @@ class InvoiceInterface(InvoiceInterfaceBase):
         self.is_rendered_as_email = True
         statement_start = StatementPeriodFilter.get_value(
             self.request, self.domain) or datetime.date.today()
-        return render_to_string('accounting/bookkeeper_email.html',
-            {
-                'headers': self.headers,
-                'month': statement_start.strftime("%B"),
-                'rows': self.rows,
-            }
-        )
+        return render_to_string('accounting/bookkeeper_email.html', {
+            'headers': self.headers,
+            'month': statement_start.strftime("%B"),
+            'rows': self.rows,
+        })
 
 
 def _get_domain_from_payment_record(payment_record):
