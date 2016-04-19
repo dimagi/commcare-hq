@@ -5,6 +5,35 @@ from corehq.apps.callcenter.models import (
 from django.test import SimpleTestCase
 
 
+def get_indicator_slugs_from_config(config, all_types=None):
+    def basic_slugs(key, indicator_conf):
+        for date_range in indicator_conf.date_ranges:
+            yield '{}_{}'.format(key, date_range)
+
+    def typed_slugs(key, types, indicator_conf):
+        for date_range in indicator_conf.date_ranges:
+            for type_ in types:
+                yield '{}_{}_{}'.format(key, type_, date_range)
+
+    slugs = []
+    if config.forms_submitted.active:
+        slugs.extend(basic_slugs('forms_submitted', config.forms_submitted))
+
+    for key in ['cases_total', 'cases_active', 'cases_opened', 'cases_closed']:
+        indicator_config = getattr(config, key)
+        if indicator_config.active:
+            if indicator_config.total.active:
+                slugs.extend(basic_slugs(key, indicator_config.total))
+            if indicator_config.all_types and all_types:
+                slugs.extend(typed_slugs(key, all_types, indicator_config))
+            else:
+                for type_ in indicator_config.types:
+                    if type_.active:
+                        slugs.extend(typed_slugs(key, [type_.type], type_))
+
+    return slugs
+
+
 class ModelTests(SimpleTestCase):
     def test_types_by_date_range(self):
         by_type = ByTypeIndicator(types=[
@@ -20,34 +49,6 @@ class ModelTests(SimpleTestCase):
             WEEK1: {'dog', 'canary', 'fish'},
             MONTH0: {'fish'},
         })
-
-    def _get_indicator_slugs(self, config, all_types=None):
-        def basic_slugs(key, indicator_conf):
-            for date_range in indicator_conf.date_ranges:
-                yield '{}_{}'.format(key, date_range)
-
-        def typed_slugs(key, types, indicator_conf):
-            for date_range in indicator_conf.date_ranges:
-                for type_ in types:
-                    yield '{}_{}_{}'.format(key, type_, date_range)
-
-        slugs = []
-        if config.forms_submitted.active:
-            slugs.extend(basic_slugs('forms_submitted', config.forms_submitted))
-
-        for key in ['cases_total', 'cases_active', 'cases_opened', 'cases_closed']:
-            indicator_config = getattr(config, key)
-            if indicator_config.active:
-                if indicator_config.total.active:
-                    slugs.extend(basic_slugs(key, indicator_config.total))
-                if indicator_config.all_types and all_types:
-                    slugs.extend(typed_slugs(key, all_types, indicator_config))
-                else:
-                    for type_ in indicator_config.types:
-                        if type_.active:
-                            slugs.extend(typed_slugs(key, [type_.type], type_))
-
-        return slugs
 
     def test_real_example(self):
         config = CallCenterIndicatorConfig(
@@ -69,7 +70,7 @@ class ModelTests(SimpleTestCase):
             )
         )
 
-        self.assertEqual(set(self._get_indicator_slugs(config)), {
+        self.assertEqual(set(get_indicator_slugs_from_config(config)), {
             'forms_submitted_month0',
             'cases_total_caregiver_month0',
             'cases_active_caregiver_month0',

@@ -5,6 +5,10 @@ from corehq.apps.callcenter import const
 ParsedIndicator = namedtuple('ParsedIndicator', 'category, sub_category, period, is_legacy')
 
 
+def get_call_center_config_from_app(app):
+    return None
+
+
 def parse_indicator(indicator_name):
     is_legacy = '_' not in indicator_name
     if is_legacy:
