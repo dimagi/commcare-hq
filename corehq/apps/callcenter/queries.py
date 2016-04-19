@@ -37,6 +37,59 @@ class CaseQuery(BaseQuery):
         from corehq.apps.callcenter.data_source import get_report_data_sources_for_domain
         return get_report_data_sources_for_domain(self.domain).cases
 
+    @property
+    def owner_column(self):
+        return self.sql_table.c.owner_id
+
+    @property
+    def type_column(self):
+        return self.sql_table.c.type
+
+    def columns(self, include_type_in_result, distinct_docs=False):
+        doc_id = self.sql_table.c.doc_id
+        if distinct_docs:
+            doc_id = distinct(doc_id)
+
+        columns = [
+            label('owner_id', self.owner_column),
+            label('count', func.count(doc_id)),
+        ]
+
+        if include_type_in_result:
+            columns.append(
+                label('type', self.type_column)
+            )
+        return columns
+
+    def group_by(self, include_type_in_result):
+        group_by = [self.owner_column]
+
+        if include_type_in_result:
+            group_by.append(self.type_column)
+
+        return group_by
+
+    def type_filter(self, limit_types):
+        if limit_types:
+            return operators.in_op(self.type_column, limit_types)
+        else:
+            return self.type_column != self.cc_case_type
+
+    def _build_query(self, include_type_in_result, limit_types, where_clauses, distinct_docs=False):
+        standard_where = [
+            self.type_filter(limit_types),
+            operators.in_op(self.owner_column, self.owners_needing_data),
+        ]
+        all_where = where_clauses + standard_where
+
+        query = select(
+            self.columns(include_type_in_result, distinct_docs=distinct_docs)
+        ).where(and_(
+            *all_where
+        )).group_by(
+            *self.group_by(include_type_in_result)
+        )
+        return query
 
 class CaseQueryOpenedClosed(CaseQuery):
     """
@@ -53,40 +106,21 @@ class CaseQueryOpenedClosed(CaseQuery):
         self.opened = opened
         super(CaseQueryOpenedClosed, self).__init__(domain, cc_case_type, owners_needing_data)
 
-        opened_or_closed = 'opened' if opened else 'closed'
-        self.owner_column = self.sql_table.c['{}_by'.format(opened_or_closed)]
-        self.date_column = self.sql_table.c['{}_on'.format(opened_or_closed)]
+        self.opened_or_closed = 'opened' if opened else 'closed'
+
+    @property
+    def owner_column(self):
+        return self.sql_table.c['{}_by'.format(self.opened_or_closed)]
+
+    @property
+    def date_column(self):
+        return self.sql_table.c['{}_on'.format(self.opened_or_closed)]
 
     def get_results(self, include_type_in_result, limit_types, start_date, end_date):
-        columns = [
-            label('owner_id', self.owner_column),
-            label('count', func.count(self.sql_table.c.doc_id)),
-        ]
-        group_by = [self.owner_column]
-
-        type_column = self.sql_table.c.type
-
-        if include_type_in_result:
-            columns.append(
-                label('type', type_column)
-            )
-            group_by.append(type_column)
-
-        if limit_types:
-            type_filter = operators.in_op(type_column, limit_types)
-        else:
-            type_filter = type_column != self.cc_case_type
-
-        query = select(
-            columns
-        ).where(and_(
-            type_filter,
+        query = self._build_query(include_type_in_result, limit_types, [
             self.date_column >= start_date,
             self.date_column < end_date,
-            operators.in_op(self.owner_column, self.owners_needing_data),
-        )).group_by(
-            *group_by
-        )
+        ])
 
         return self._run_query(query)
 
@@ -100,39 +134,13 @@ class CaseQueryTotal(CaseQuery):
     """
 
     def get_results(self, include_type_in_result, limit_types, start_date, end_date):
-        owner_column = self.sql_table.c.owner_id
-        type_column = self.sql_table.c.type
-
-        columns = [
-            label('owner_id', owner_column),
-            label('count', func.count(self.sql_table.c.doc_id)),
-        ]
-        group_by = [owner_column]
-        if include_type_in_result:
-            columns.append(
-                label('type', type_column)
-            )
-            group_by.append(type_column)
-
-        if limit_types:
-            type_filter = operators.in_op(type_column, limit_types)
-        else:
-            type_filter = type_column != self.cc_case_type
-
-        query = select(
-            columns
-        ).where(and_(
-            type_filter,
+        query = self._build_query(include_type_in_result, limit_types, [
             self.sql_table.c.opened_on < end_date,
-            operators.in_op(owner_column, self.owners_needing_data),
             or_(
                 self.sql_table.c.closed == 0,
                 self.sql_table.c.closed_on >= start_date
             )
-        )).group_by(
-            *group_by
-        )
-
+        ])
         return self._run_query(query)
 
 
@@ -150,35 +158,10 @@ class CaseQueryActive(CaseQuery):
         return get_report_data_sources_for_domain(self.domain).case_actions
 
     def get_results(self, include_type_in_result, limit_types, start_date, end_date):
-        owner_column = self.sql_table.c.owner_id
-        type_column = self.sql_table.c.type
-        columns = [
-            label('owner_id', owner_column),
-            label('count', func.count(distinct(self.sql_table.c.doc_id))),
-        ]
-        group_by = [owner_column]
-        if include_type_in_result:
-            columns.append(
-                label('type', type_column)
-            )
-            group_by.append(type_column)
-
-        if limit_types:
-            type_filter = operators.in_op(type_column, limit_types)
-        else:
-            type_filter = type_column != self.cc_case_type
-
-        query = select(
-            columns
-        ).where(and_(
-            type_filter,
+        query = self._build_query(include_type_in_result, limit_types, [
             self.sql_table.c.date >= start_date,
             self.sql_table.c.date < end_date,
-            operators.in_op(owner_column, self.owners_needing_data),
-        )).group_by(
-            *group_by
-        )
-
+        ], distinct_docs=True)
         return self._run_query(query)
 
 
