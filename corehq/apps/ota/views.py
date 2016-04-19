@@ -20,6 +20,7 @@ from corehq.apps.ota.tasks import prime_restore
 from corehq.apps.style.views import BaseB3SectionPageView
 from corehq.apps.users.models import CouchUser, CommCareUser
 from corehq.form_processor.serializers import CommCareCaseSQLSerializer, get_instance_from_data
+from corehq.pillows.const import MAX_SEARCH_RESULTS
 from corehq.tabs.tabclasses import ProjectSettingsTab
 from corehq.form_processor.models import CommCareCaseSQL
 from corehq.form_processor.utils import should_use_sql_backend
@@ -55,9 +56,10 @@ def search(request, domain):
     except KeyError:
         return HttpResponse('Search request must specify case type', status=400)
 
-    search_es = CaseSearchES()
-    search_es = search_es.domain(domain)
-    search_es = search_es.case_type(case_type)
+    search_es = (CaseSearchES()
+                 .domain(domain)
+                 .case_type(case_type)
+                 .size(MAX_SEARCH_RESULTS))
     config = CaseSearchConfig(domain=domain).config
     fuzzies = config.get_fuzzy_properties_for_case_type(case_type)
     for key, value in criteria.items():
