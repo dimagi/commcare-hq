@@ -203,7 +203,7 @@ hqDefine('app_manager/js/detail-screen-config.js', function () {
             var self = this;
             self.name = ko.observable(name);
             self.label = ko.observable(label);
-        }
+        };
 
         self.searchProperties = ko.observableArray();
         if (searchProperties.length > 0) {
@@ -1100,6 +1100,7 @@ hqDefine('app_manager/js/detail-screen-config.js', function () {
                             containsFixtureConfiguration: (columnType == "short" && COMMCAREHQ.toggleEnabled('FIXTURE_CASE_SELECTION')),
                             containsFilterConfiguration: columnType == "short",
                             containsCaseListLookupConfiguration: (columnType == "short" && COMMCAREHQ.toggleEnabled('CASE_LIST_LOOKUP')),
+                            containsSearchConfiguration: columnType === "short",
                             containsCustomXMLConfiguration: columnType == "short",
                             allowsTabs: columnType == 'long',
                             allowsEmptyColumns: columnType == 'long'

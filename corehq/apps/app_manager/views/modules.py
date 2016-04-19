@@ -168,8 +168,8 @@ def _get_basic_module_view_context(app, module, lang=None):
         'case_list_form_options': form_options,
         'case_list_form_not_allowed_reason': allow_case_list_form,
         'valid_parent_modules': _get_valid_parent_modules(app, module),
-        'child_module_enabled': toggles.BASIC_CHILD_MODULE.enabled(app.domain)
-                                 and module.doc_type != "ShadowModule",
+        'child_module_enabled': (toggles.BASIC_CHILD_MODULE.enabled(app.domain) and
+                                 module.doc_type != "ShadowModule"),
         'is_search_enabled': case_search_enabled_for_domain(app.domain),
     }
 
