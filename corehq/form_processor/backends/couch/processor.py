@@ -68,7 +68,8 @@ class FormProcessorCouch(object):
         docs = filter(None, docs)
         assert XFormInstance.get_db().uri == CommCareCase.get_db().uri
         XFormInstance.get_db().bulk_save(docs)
-        stock_result.commit()
+        if stock_result:
+            stock_result.commit()
 
     @classmethod
     def apply_deprecation(cls, existing_xform, new_xform):
