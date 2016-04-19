@@ -1172,10 +1172,10 @@ class Subscription(models.Model):
                 )
 
     def update_subscription(self, date_start, date_end,
-                            date_delay_invoicing=None, do_not_invoice=False,
-                            no_invoice_reason=None, do_not_email=False,
+                            date_delay_invoicing=None, do_not_invoice=None,
+                            no_invoice_reason=None, do_not_email=None,
                             salesforce_contract_id=None,
-                            auto_generate_credits=False,
+                            auto_generate_credits=None,
                             web_user=None, note=None, adjustment_method=None,
                             service_type=None, pro_bono_status=None, funding_source=None):
         adjustment_method = adjustment_method or SubscriptionAdjustmentMethod.INTERNAL
