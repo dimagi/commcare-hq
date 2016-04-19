@@ -22,13 +22,13 @@
 
 {% block js %} {{ block.super }}
     {% compress js %}
-            <script src="{% static 'cloudcare/formplayer/js/app.js' %}"></script>
+            <script src="{% static 'cloudcare/js/formplayer/app.js' %}"></script>
     {% endcompress %}
 {% endblock %}
 
 {% block js-inline %} {{ block.super }}
 <script>
-    var formPlayer = hqImport('cloudcare/formplayer/js/app.js');
+    var formPlayer = hqImport('cloudcare/js/formplayer/app.js');
     var apps = {{ apps|JSON }};
     console.log(apps)
     FormplayerFrontend.start();
