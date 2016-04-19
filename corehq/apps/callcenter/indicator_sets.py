@@ -416,7 +416,7 @@ class CallCenterIndicators(object):
         with adapter.session_helper.session_context() as session:
             return list(session.execute(query))
 
-    def add_case_data(self, query_fn, slug, indicator_config, type_column='type', legacy_prefix=None):
+    def add_case_data(self, query_fn, slug, indicator_config, legacy_prefix=None):
         include_types = indicator_config.all_types or indicator_config.types
         include_total = indicator_config.total.active
         limit_types = indicator_config.types
@@ -569,7 +569,6 @@ class CallCenterIndicators(object):
                     self._case_query_active,
                     CASES_ACTIVE,
                     self.config.cases_total,
-                    type_column='case_type',
                     legacy_prefix=legacy_prefix
                 )
 
