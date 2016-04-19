@@ -42,7 +42,7 @@ class StockLevelsLegend(EWSData):
     @property
     def rows(self):
         return [['<span class="fa fa-arrow-up" style="color:purple"/>', 'Overstock'],
-                ['<span class="fa fa-ok" style="color:green"/>', 'Adequate'],
+                ['<span class="fa fa-check" style="color:green"/>', 'Adequate'],
                 ['<span class="fa fa-exclamation-triangle" style="color:orange"/>', 'Low'],
                 ['<span class="fa fa-remove" style="color:red"/>', 'Stockout']]
 
@@ -76,7 +76,7 @@ class FacilityReportData(EWSData):
             elif float(value) <= loc.location_type.understock_threshold:
                 return '%s <span class="fa fa-exclamation-triangle" style="color:orange"/>' % value
             elif loc.location_type.understock_threshold < float(value) < loc.location_type.overstock_threshold:
-                return '%s <span class="fa fa-ok" style="color:green"/>' % value
+                return '%s <span class="fa fa-check" style="color:green"/>' % value
             elif float(value) >= loc.location_type.overstock_threshold:
                 return '%s <span class="fa fa-arrow-up" style="color:purple"/>' % value
 

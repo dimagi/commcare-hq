@@ -7,7 +7,7 @@ from corehq.apps.reports.commtrack.const import STOCK_SECTION_TYPE
 from corehq.apps.reports.commtrack.data_sources import StockStatusBySupplyPointDataSource
 from corehq.apps.reports.commtrack.maps import StockStatusMapReport
 from corehq.apps.reports.standard import CustomProjectReport
-from corehq.apps.style.decorators import maps_prefer_canvas
+from corehq.apps.style.decorators import maps_prefer_canvas, use_maps
 from custom.ewsghana.utils import get_country_id, filter_slugs_by_role
 from dimagi.utils.decorators.memoized import memoized
 
@@ -133,6 +133,7 @@ class EWSMapReport(CustomProjectReport, StockStatusMapReport):
     ]
 
     @maps_prefer_canvas
+    @use_maps
     def bootstrap3_dispatcher(self, request, *args, **kwargs):
         super(StockStatusMapReport, self).bootstrap3_dispatcher(request, *args, **kwargs)
 

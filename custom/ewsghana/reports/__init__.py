@@ -45,6 +45,10 @@ class EWSLineChart(LineChart):
 class EWSPieChart(PieChart):
     template_partial = 'ewsghana/partials/ews_pie_chart.html'
 
+    def __init__(self, title, key, values, color=None):
+        super(EWSPieChart, self).__init__(title, key, values, color)
+        self.data = values
+
 
 class EWSMultiBarChart(MultiBarChart):
     template_partial = 'ewsghana/partials/ews_multibar_chart.html'
