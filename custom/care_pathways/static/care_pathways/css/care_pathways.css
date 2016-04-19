@@ -3,19 +3,17 @@
 #fieldset_cbt_name,
 #fieldset_real_or_test {
     float: left;
-    width: 190px;
     margin-left: 10px;
 }
 
 #fieldset_year {
     float: left;
     width: 190px;
-    margin-left: 205px;
+    margin-left: 340px;
 }
 
 #fieldset_farmer_social_category {
     clear: left;
-    margin-left: 180px;
 }
 
 #fieldset_year label,
@@ -45,4 +43,8 @@
 #fieldset_farmer_social_category .select2-container,
 #fieldset_real_or_test .select2-container {
     width: 100%;
+}
+
+#fieldset_cbt_name {
+    width: 220px;
 }

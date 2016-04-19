@@ -1403,7 +1403,7 @@
                                 "name": "referral_given_reason"
                             },
                             "type": "boolean_expression",
-                            "property_value": 0
+                            "property_value": "0"
                         },
                         "expression_if_true": {
                             "type": "constant",

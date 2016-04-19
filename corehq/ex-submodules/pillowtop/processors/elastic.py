@@ -3,12 +3,15 @@ from pillowtop.listener import send_to_elasticsearch
 from pillowtop.logger import pillow_logging
 
 
+IDENTITY_FN = lambda x: x
+
+
 class ElasticProcessor(PillowProcessor):
 
-    def __init__(self, elasticsearch, index_info, doc_prep_fn):
+    def __init__(self, elasticsearch, index_info, doc_prep_fn=None):
         self.elasticsearch = elasticsearch
         self.index_info = index_info
-        self.doc_transform_fn = doc_prep_fn
+        self.doc_transform_fn = doc_prep_fn or IDENTITY_FN
 
     def es_getter(self):
         return self.elasticsearch

@@ -1,7 +1,8 @@
 from gevent import monkey; monkey.patch_all()
-from corehq.elastic import get_es_new
+from corehq.pillows.utils import get_all_expected_es_indices
 
-from pillowtop.es_utils import get_all_expected_es_indices
+
+from corehq.elastic import get_es_new
 
 from cStringIO import StringIO
 import traceback
@@ -24,10 +25,9 @@ def get_reindex_commands(alias_name):
         'xforms': ['ptop_fast_reindex_xforms'],
         # groupstousers indexing must happen after all users are indexed
         'hqusers': [
-            'ptop_fast_reindex_users',
+            ('ptop_reindexer_v2', {'index': 'user'}),
             add_demo_user_to_user_index,
             'ptop_fast_reindex_groupstousers',
-            # 'ptop_fast_reindex_unknownusers',  removed until we have a better workflow for this
         ],
         'hqapps': ['ptop_fast_reindex_apps'],
         'hqgroups': ['ptop_fast_reindex_groups'],

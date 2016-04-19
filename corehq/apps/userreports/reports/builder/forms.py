@@ -355,9 +355,9 @@ class DataSourceBuilder(object):
     @memoized
     def data_source_name(self):
         if self.source_type == 'form':
-            return "{} (v{})".format(self.source_form.default_name(), self.app.version)
+            return u"{} (v{})".format(self.source_form.default_name(), self.app.version)
         if self.source_type == 'case':
-            return "{} (v{})".format(self.source_id, self.app.version)
+            return u"{} (v{})".format(self.source_id, self.app.version)
 
     def get_existing_match(self):
         return DataSourceConfiguration.view(

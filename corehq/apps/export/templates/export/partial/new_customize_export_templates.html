@@ -53,9 +53,10 @@
                         <thead>
                         <tr class="nodrag nodrop">
                             <th></th>
-                            <th>{% trans "Include this Field?" %}<br>
+                            <th>{% trans "Include this Field?" %}<br />
                                 <a class="btn btn-mini" data-bind="click: table.selectAll">{% trans "Select All" %}</a>
-                                <a class="btn btn-mini btn-inverse" data-bind="click: table.selectNone">{% trans "Select None" %}</a></th>
+                                <a class="btn btn-mini btn-inverse" data-bind="click: table.selectNone">{% trans "Select None" %}</a>
+                            </th>
                             <th>
                             {% if export_instance.type == 'form' %}
                                 {% trans "Question" %}
@@ -63,7 +64,21 @@
                                 {% trans "Property" %}
                             {% endif %}
                             </th>
-                            <th>{% trans "Display" %}</th>
+                            <th>
+                                {% trans "Display" %}<br />
+                                {% if export_instance.type == 'form' %}
+                                <a
+                                    class="btn btn-mini"
+                                    data-bind="click: table.useLabels">
+                                    {% trans "Use question labels" %}
+                                </a>
+                                <a
+                                    class="btn btn-mini btn-inverse"
+                                    data-bind="click: table.useIds">
+                                    {% trans "Use question ids" %}
+                                </a>
+                                {% endif %}
+                            </th>
                             {% if export_instance.type == 'case' and request|feature_preview_enabled:"SPLIT_MULTISELECT_CASE_EXPORT"%}
                             <th>{% trans "Type" %}</th>
                             {% endif %}

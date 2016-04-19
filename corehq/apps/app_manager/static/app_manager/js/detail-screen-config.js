@@ -196,6 +196,62 @@ hqDefine('app_manager/js/detail-screen-config.js', function () {
         };
     };
 
+    var searchViewModel = function (searchProperties, lang, saveButton) {
+        var self = this;
+
+        var SearchProperty = function (name, label) {
+            var self = this;
+            self.name = ko.observable(name);
+            self.label = ko.observable(label);
+        };
+
+        self.searchProperties = ko.observableArray();
+        if (searchProperties.length > 0) {
+            for (var i = 0; i < searchProperties.length; i++) {
+                // property labels come in keyed by lang.
+                var label = searchProperties[i].label[lang];
+                self.searchProperties.push(new SearchProperty(
+                    searchProperties[i].name,
+                    label
+                ));
+            }
+        } else {
+            self.searchProperties.push(new SearchProperty('', ''));
+        }
+        self.searchProperties.subscribe(function () {
+            saveButton.fire('change');
+        });
+
+        self.addProperty = function () {
+            self.searchProperties.push(new SearchProperty('', ''));
+        };
+        self.removeProperty = function (property) {
+            self.searchProperties.remove(property);
+        };
+        self._getProperties = function () {
+            // i.e. [{'name': p.name, 'label': p.label} for p in self.searchProperties if p.name]
+            return _.map(
+                _.filter(
+                    self.searchProperties(),
+                    function (p) { return p.name().length > 0; }  // Skip properties where name is blank
+                ),
+                function (p) {
+                    return {
+                        name: p.name(),
+                        label: p.label().length ? p.label() : p.name(),  // If label isn't set, use name
+                    };
+                }
+            );
+        };
+
+        self.serialize = function () {
+            var data = {
+                search_properties: self._getProperties(),
+            };
+            return data;
+        };
+    };
+
     var caseListLookupViewModel = function($el, state, saveButton) {
         'use strict';
         var self = this,
@@ -746,6 +802,7 @@ hqDefine('app_manager/js/detail-screen-config.js', function () {
                 this.containsFixtureConfiguration = options.containsFixtureConfiguration;
                 this.containsFilterConfiguration = options.containsFilterConfiguration;
                 this.containsCaseListLookupConfiguration = options.containsCaseListLookupConfiguration;
+                this.containsSearchConfiguration = options.containsSearchConfiguration;
                 this.containsCustomXMLConfiguration = options.containsCustomXMLConfiguration;
                 this.allowsTabs = options.allowsTabs;
                 this.useCaseTiles = ko.observable(spec[this.columnKey].use_case_tiles ? "yes" : "no");
@@ -977,6 +1034,9 @@ hqDefine('app_manager/js/detail-screen-config.js', function () {
                     if (this.containsCustomXMLConfiguration){
                         data.custom_xml = this.config.customXMLViewModel.xml();
                     }
+                    if (this.containsSearchConfiguration) {
+                        data.search_properties = JSON.stringify(this.config.search.serialize());
+                    }
                     return data;
                 },
                 addItem: function (columnConfiguration, index) {
@@ -1068,6 +1128,7 @@ hqDefine('app_manager/js/detail-screen-config.js', function () {
                             containsFixtureConfiguration: (columnType == "short" && COMMCAREHQ.toggleEnabled('FIXTURE_CASE_SELECTION')),
                             containsFilterConfiguration: columnType == "short",
                             containsCaseListLookupConfiguration: (columnType == "short" && COMMCAREHQ.toggleEnabled('CASE_LIST_LOOKUP')),
+                            containsSearchConfiguration: columnType === "short",
                             containsCustomXMLConfiguration: columnType == "short",
                             allowsTabs: columnType == 'long',
                             allowsEmptyColumns: columnType == 'long'
@@ -1103,6 +1164,12 @@ hqDefine('app_manager/js/detail-screen-config.js', function () {
                     });
                     var $case_list_lookup_el = $("#" + spec.state.type + "-list-callout-configuration");
                     this.caseListLookup = new caseListLookupViewModel($case_list_lookup_el, spec.state.short, this.shortScreen.saveButton);
+                    // Set up case search
+                    this.search = new searchViewModel(
+                        spec.searchProperties || [],
+                        spec.lang,
+                        this.shortScreen.saveButton
+                    );
                 }
                 if (spec.state.long !== undefined) {
                     this.longScreen = addScreen(spec.state, "long");

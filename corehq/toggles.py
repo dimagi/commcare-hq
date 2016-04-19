@@ -351,6 +351,13 @@ EXTENSION_CASES_SYNC_ENABLED = StaticToggle(
     [NAMESPACE_DOMAIN]
 )
 
+SYNC_SEARCH_CASE_CLAIM = StaticToggle(
+    'search_claim',
+    'Enable synchronous mobile searching and case claiming',
+    TAG_PRODUCT_PATH,
+    [NAMESPACE_DOMAIN]
+)
+
 NO_VELLUM = StaticToggle(
     'no_vellum',
     'Allow disabling Form Builder per form '
@@ -814,7 +821,7 @@ NOTIFICATIONS = StaticToggle(
 
 PROJECT_HEALTH_DASHBOARD = StaticToggle(
     'project_health_dashboard',
-    'Shows the project health dashboard in the reports navigation',
+    'Shows the project performance dashboard in the reports navigation',
     TAG_PRODUCT_PATH,
     [NAMESPACE_DOMAIN]
 )
@@ -824,13 +831,5 @@ UNLIMITED_REPORT_BUILDER_REPORTS = StaticToggle(
     'unlimited_report_builder_reports',
     'Allow unlimited reports created in report builder',
     TAG_PRODUCT_PATH,
-    [NAMESPACE_DOMAIN]
-)
-
-
-ALLOW_BROKEN_MULTIMEDIA_SUBMISSIONS = StaticToggle(
-    'allow_broken_multimedia_submissions',
-    "Explicitly bypass HQ's protection from the 2.26 multimedia submission bug. NOT RECOMMENDED",
-    TAG_ONE_OFF,
     [NAMESPACE_DOMAIN]
 )

@@ -44,4 +44,10 @@ def get_all_user_ids():
 
 @unit_testing_only
 def delete_all_users():
-    iter_bulk_delete(CommCareUser.get_db(), get_all_user_ids())
+    from corehq.apps.users.models import CouchUser
+    from django.contrib.auth.models import User
+    def _clear_cache(doc):
+        user = CouchUser.wrap_correctly(doc, allow_deleted_doc_types=True)
+        user.clear_quickcache_for_user()
+    iter_bulk_delete(CommCareUser.get_db(), get_all_user_ids(), doc_callback=_clear_cache)
+    User.objects.all().delete()

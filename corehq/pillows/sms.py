@@ -74,7 +74,6 @@ def get_sql_sms_pillow(pillow_id):
     )
     return ConstructedPillow(
         name=pillow_id,
-        document_store=None,
         checkpoint=checkpoint,
         change_feed=KafkaChangeFeed(topics=[topics.SMS], group_id=SMS_PILLOW_KAFKA_CONSUMER_GROUP_ID),
         processor=processor,

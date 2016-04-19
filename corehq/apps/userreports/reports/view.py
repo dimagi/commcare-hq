@@ -209,6 +209,7 @@ class ConfigurableReport(JSONResponseMixin, BaseDomainView):
     def page_context(self):
         context = {
             'report': self,
+            'report_table': {'default_rows': 25},
             'filter_context': self.filter_context,
             'url': self.url,
             'headers': self.headers
