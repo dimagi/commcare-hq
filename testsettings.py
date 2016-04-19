@@ -2,6 +2,8 @@ from settings import *
 
 INSTALLED_APPS += (
     'django_nose',
+    'testapps.test_elasticsearch',
+    'testapps.test_pillowtop',
 ) + TEST_APPS
 
 TEST_RUNNER = 'django_nose.NoseTestSuiteRunner'
