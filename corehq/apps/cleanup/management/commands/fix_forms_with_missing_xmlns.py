@@ -11,7 +11,7 @@ from corehq.apps.app_manager.exceptions import FormNotFoundException
 from corehq.apps.app_manager.models import Application, Form
 from corehq.apps.app_manager.util import get_correct_app_class
 from corehq.apps.app_manager.xform import XForm, parse_xml
-from corehq.apps.es import FormES
+from corehq.apps.es import FormES, AppES
 from corehq.apps.es.filters import NOT, doc_type
 from corehq.util.couch import IterDB
 from corehq.util.log import with_progress_bar
@@ -64,9 +64,38 @@ class Command(BaseCommand):
                 xmlns = match.group(1)
                 form_unique_id = match.group(2)
                 unique_id_to_xmlns_map[form_unique_id] = xmlns
-                form = Form.get_form(form_unique_id)
-                app = form.get_app()
-                app_to_unique_ids_map[(app._id, app.domain)].add(form_unique_id)
+                print form_unique_id
+
+                try:
+                    form = Form.get_form(form_unique_id)
+                    app = form.get_app()
+                    map_key = (app._id, app.domain)
+                except ResourceNotFound:
+                    map_key = Command._get_map_key_from_es(form_unique_id)
+                app_to_unique_ids_map[map_key].add(form_unique_id)
+
+    @staticmethod
+    def _get_map_key_from_es(form_unique_id):
+        builds_query = (AppES()
+                      .remove_default_filters()
+                      .term('modules.forms.unique_id', form_unique_id))
+        non_builds_query = builds_query.is_build(False)
+
+        # Try getting the "base" app
+        result = non_builds_query.run()
+        if result.total == 1:
+            app_id = result.hits[0]['_id']
+            domain = result.hits[0]['domain']
+            return (app_id, domain)
+
+        # Try getting builds
+        result = builds_query.run()
+        app_ids = set([h['copy_of'] for h in result.hits])
+        if len(app_ids) == 1:
+            app_id = app_ids.pop()
+            return (app_id, result.hits[0]['domain'])
+
+        raise Exception("Couldn't find the form {}".format(form_unique_id))
 
     @staticmethod
     def fix_xforms(unique_id_to_xmlns_map, app_to_unique_ids_map, log_file, dry_run):
@@ -75,7 +104,13 @@ class Command(BaseCommand):
         with xform_db as xform_db:
             for i, xform_instance in enumerate(submissions):
                 Command._print_progress(i, total)
-                unique_id = get_form_unique_id(xform_instance)
+                try:
+                    unique_id = get_form_unique_id(xform_instance)
+                except (MultipleFormsMissingXmlns, FormNameMismatch) as e:
+                    log_file.write(e.message)
+                    print e.message
+                    continue
+
                 if unique_id:
                     if unique_id not in unique_id_to_xmlns_map:
                         xmlns = get_xmlns(unique_id, xform_instance.app_id,
@@ -93,6 +128,11 @@ class Command(BaseCommand):
                         dry_run,
                     )
 
+                    log_file.write(
+                        "app_to_unique_ids_map[({}, {})].add({})".format(
+                            xform_instance.app_id, xform_instance.domain, unique_id
+                        )
+                    )
                     app_to_unique_ids_map[
                         (xform_instance.app_id, xform_instance.domain)
                     ].add(unique_id)
@@ -250,6 +290,24 @@ def get_saved_apps(app):
     return [get_correct_app_class(row['doc']).wrap(row['doc']) for row in saved_apps]
 
 
+class MultipleFormsMissingXmlns(Exception):
+    def __init__(self, build_id):
+        msg = "Multiple forms missing xmlns for build {}".format(
+            build_id
+        )
+        super(MultipleFormsMissingXmlns, self).__init__(msg)
+
+
+class FormNameMismatch(Exception):
+    def __init__(self, instance_id, instance_build_id, form_unique_id):
+        msg = "xform {} name does not match form {} name in build {}".format(
+            instance_id,
+            form_unique_id,
+            instance_build_id
+        )
+        super(FormNameMismatch, self).__init__(msg)
+
+
 @quickcache(["xform_instance.build_id"], memoize_timeout=ONE_HOUR)
 def get_form_unique_id(xform_instance):
     if xform_instance.build_id is None:
@@ -257,12 +315,14 @@ def get_form_unique_id(xform_instance):
     app = get_app(xform_instance.domain, xform_instance.build_id)
     # TODO: What if the app has been deleted?
     forms_without_xmlns = get_forms_without_xmlns(app)
-    assert len(forms_without_xmlns) == 1
+    if len(forms_without_xmlns) != 1:
+        raise MultipleFormsMissingXmlns(xform_instance.build_id)
     form = forms_without_xmlns[0]
-    assert \
-        _name_matches(xform_instance.name, form.name), \
-        "xform {} name does not match form {} name in build {}".format(
-            xform_instance._id, form.unique_id, xform_instance.build_id
+    if not _name_matches(xform_instance.name, form.name):
+        raise FormNameMismatch(
+            xform_instance._id,
+            xform_instance.build_id,
+            form.unique_id,
         )
     return form.unique_id
 
