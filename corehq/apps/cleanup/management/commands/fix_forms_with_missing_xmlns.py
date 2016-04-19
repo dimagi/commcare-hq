@@ -8,10 +8,10 @@ from couchdbkit import ResourceNotFound
 
 from corehq.apps.app_manager.dbaccessors import get_app
 from corehq.apps.app_manager.exceptions import FormNotFoundException
-from corehq.apps.app_manager.models import Application, Form
+from corehq.apps.app_manager.models import Application
 from corehq.apps.app_manager.util import get_correct_app_class
 from corehq.apps.app_manager.xform import XForm, parse_xml
-from corehq.apps.es import FormES, AppES
+from corehq.apps.es import FormES
 from corehq.apps.es.filters import NOT, doc_type
 from corehq.util.couch import IterDB
 from corehq.util.log import with_progress_bar
@@ -24,6 +24,16 @@ from optparse import make_option
 
 
 ONE_HOUR = 60 * 60
+
+
+def xmlns_map_log_message(xmlns, unique_id):
+    return "Using xmlns {} for form id {}\n".format(xmlns, unique_id)
+
+
+def unique_ids_map_log_message(app_id, domain, form_unique_id):
+    return "app_to_unique_ids_map[({}, {})].add({})\n".format(
+        app_id, domain, form_unique_id
+    )
 
 
 class Command(BaseCommand):
@@ -49,52 +59,36 @@ class Command(BaseCommand):
         unique_id_to_xmlns_map = {}
         app_to_unique_ids_map = defaultdict(set)
 
-        with open(prev_log_path, "r") as prev_log_file:
-            self.rebuild_maps(prev_log_file, unique_id_to_xmlns_map, app_to_unique_ids_map)
-
         with open(log_path, "w") as log_file:
+            with open(prev_log_path, "r") as prev_log_file:
+                self.rebuild_maps(prev_log_file, log_file, unique_id_to_xmlns_map, app_to_unique_ids_map)
             self.fix_xforms(unique_id_to_xmlns_map, app_to_unique_ids_map, log_file, dry_run)
             self.fix_apps(unique_id_to_xmlns_map, app_to_unique_ids_map, log_file, dry_run)
 
     @staticmethod
-    def rebuild_maps(prev_log_file, unique_id_to_xmlns_map, app_to_unique_ids_map):
+    def rebuild_maps(prev_log_file, new_log_file, unique_id_to_xmlns_map, app_to_unique_ids_map):
         for line in prev_log_file:
+            # Get unique_id_to_xmlns_map entries
             match = re.match(r"Using xmlns (.*) for form id (.*)", line)
             if match:
                 xmlns = match.group(1)
                 form_unique_id = match.group(2)
                 unique_id_to_xmlns_map[form_unique_id] = xmlns
+                new_log_file.write(xmlns_map_log_message(xmlns, form_unique_id))
 
-                try:
-                    form = Form.get_form(form_unique_id)
-                    app = form.get_app()
-                    map_key = (app._id, app.domain)
-                except ResourceNotFound:
-                    map_key = Command._get_map_key_from_es(form_unique_id)
-                app_to_unique_ids_map[map_key].add(form_unique_id)
+            match = re.match(r"app_to_unique_ids_map\[\((.*), (.*)\)\]\.add\((.*)\)", line)
+            if match:
+                app_id = match.group(1)
+                domain = match.group(2)
+                form_unique_id = match.group(3)
+                app_to_unique_ids_map[(app_id, domain)].add(form_unique_id)
 
-    @staticmethod
-    def _get_map_key_from_es(form_unique_id):
-        builds_query = (AppES()
-                      .remove_default_filters()
-                      .term('modules.forms.unique_id', form_unique_id))
-        non_builds_query = builds_query.is_build(False)
-
-        # Try getting the "base" app
-        result = non_builds_query.run()
-        if result.total == 1:
-            app_id = result.hits[0]['_id']
-            domain = result.hits[0]['domain']
-            return (app_id, domain)
-
-        # Try getting builds
-        result = builds_query.run()
-        app_ids = set([h['copy_of'] for h in result.hits])
-        if len(app_ids) == 1:
-            app_id = app_ids.pop()
-            return (app_id, result.hits[0]['domain'])
-
-        raise Exception("Couldn't find the form {}".format(form_unique_id))
+        # Logging here instead of in the loop to reduce superfluous repeated lines
+        for key, unique_ids in app_to_unique_ids_map.iteritems():
+            for form_unique_id in unique_ids:
+                new_log_file.write(unique_ids_map_log_message(
+                    key[0], key[1], form_unique_id
+                ))
 
     @staticmethod
     def fix_xforms(unique_id_to_xmlns_map, app_to_unique_ids_map, log_file, dry_run):
@@ -114,9 +108,7 @@ class Command(BaseCommand):
                     if unique_id not in unique_id_to_xmlns_map:
                         xmlns = get_xmlns(unique_id, xform_instance.app_id,
                                           xform_instance.domain)
-                        log_file.write(
-                            "Using xmlns {} for form id {}\n".format(xmlns, unique_id)
-                        )
+                        log_file.write(xmlns_map_log_message(xmlns, unique_id))
                         unique_id_to_xmlns_map[unique_id] = xmlns
 
                     set_xmlns_on_submission(
@@ -127,14 +119,11 @@ class Command(BaseCommand):
                         dry_run,
                     )
 
-                    log_file.write(
-                        "app_to_unique_ids_map[({}, {})].add({})".format(
-                            xform_instance.app_id, xform_instance.domain, unique_id
-                        )
-                    )
-                    app_to_unique_ids_map[
-                        (xform_instance.app_id, xform_instance.domain)
-                    ].add(unique_id)
+                    key = (xform_instance.app_id, xform_instance.domain)
+                    val = unique_id
+                    if val not in app_to_unique_ids_map[key]:
+                        log_file.write(unique_ids_map_log_message(key[0], key[1], unique_id))
+                        app_to_unique_ids_map[key].add(val)
 
         for error_id in xform_db.error_ids:
             log_file.write("Failed to save xform {}\n".format(error_id))
