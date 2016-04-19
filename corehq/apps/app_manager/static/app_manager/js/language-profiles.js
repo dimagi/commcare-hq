@@ -11,7 +11,7 @@ hqDefine('app_manager/js/language-profiles.js', function () {
         this.app_profiles = ko.observableArray([]);
         this.app_langs = app_langs;
         this.saveButton = COMMCAREHQ.SaveButton.init({
-            unsavedMessage: "You have unsaved changes to your language profiles",
+            unsavedMessage: gettext("You have unsaved changes to your language profiles"),
             save: function() {
                 var postProfiles = [];
                 _.each(self.app_profiles(), function(element, index, list) {
@@ -30,7 +30,7 @@ hqDefine('app_manager/js/language-profiles.js', function () {
                     type: 'post',
                     data: JSON.stringify({'profiles': postProfiles}),
                     error: function() {
-                        throw "There was an error saving";
+                        throw gettext("There was an error saving");
                     },
                 });
             }
@@ -38,7 +38,6 @@ hqDefine('app_manager/js/language-profiles.js', function () {
         var changeSaveButton = function () {
             self.saveButton.fire('change');
         };
-        this.app_profiles.subscribe(changeSaveButton);
         this.addProfile = function(langs, name, id) {
             var profile = new Profile(langs, name, id);
             profile.name.subscribe(changeSaveButton);
@@ -51,13 +50,21 @@ hqDefine('app_manager/js/language-profiles.js', function () {
         });
         this.newProfile = function() {
             self.addProfile([], '', '');
+            var index = self.app_profiles().length - 1;
+            _.delay(function() {
+                $('#profile-' + index).select2();
+            })
         };
         if (!self.app_profiles()) {
             self.newProfile();
         }
         this.removeProfile = function(profile) {
             self.app_profiles.remove(profile);
-        }
+        };
+        this.app_profiles.subscribe(changeSaveButton);
+        _.delay(function() {
+            $('.language-select').select2();
+        })
     }
     return {ProfileManager: ProfileManager};
 });
