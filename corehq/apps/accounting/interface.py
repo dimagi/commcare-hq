@@ -1129,8 +1129,8 @@ class CreditAdjustmentInterface(GenericTabularReport):
                 ),
             ]
 
-        return [
-            map(lambda x: x or '', [
+        def _credit_adjustment_to_row(credit_adj):
+            return map(lambda x: x or '', [
                 credit_adj.date_created,
             ] + _get_credit_line_columns_from_credit_line(credit_adj.credit_line) + [
                 (
@@ -1149,20 +1149,20 @@ class CreditAdjustmentInterface(GenericTabularReport):
                 _get_credit_line_columns_from_credit_line(credit_adj.related_credit)
                 if credit_adj.related_credit else ['', '', '']
             ))
-            for credit_adj in self.filtered_credit_adjustments
-        ]
+
+        return map(_credit_adjustment_to_row, self._credit_adjustments)
 
     @property
-    def filtered_credit_adjustments(self):
-        query = CreditAdjustment.objects.all()
+    def _credit_adjustments(self):
+        queryset = CreditAdjustment.objects.all()
 
         account_name = NameFilter.get_value(self.request, self.domain)
         if account_name is not None:
-            query = query.filter(credit_line__account__name=account_name)
+            queryset = queryset.filter(credit_line__account__name=account_name)
 
         domain = DomainFilter.get_value(self.request, self.domain)
         if domain is not None:
-            query = query.filter(
+            queryset = queryset.filter(
                 Q(credit_line__subscription__subscriber__domain=domain) |
                 Q(invoice__subscription__subscriber__domain=domain) |
                 Q(
@@ -1173,9 +1173,9 @@ class CreditAdjustmentInterface(GenericTabularReport):
             )
 
         if DateFilter.use_filter(self.request):
-            query = query.filter(
+            queryset = queryset.filter(
                 date_created__gte=DateFilter.get_start_date(self.request),
                 date_created__lte=DateFilter.get_end_date(self.request),
             )
 
-        return query
+        return queryset
