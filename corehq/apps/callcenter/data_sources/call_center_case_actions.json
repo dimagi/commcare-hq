@@ -55,7 +55,7 @@
                 },
                 "type": "root_doc"
             },
-            "is_nullable": true,
+            "is_nullable": false,
             "is_primary_key": false,
             "transform": {},
             "type": "expression"
@@ -68,7 +68,7 @@
                 "name": "owner_id",
                 "type": "named"
             },
-            "is_nullable": true,
+            "is_nullable": false,
             "is_primary_key": false,
             "transform": {},
             "type": "expression"

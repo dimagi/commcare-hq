@@ -83,7 +83,7 @@
                 "property_name": "opened_on",
                 "type": "property_name"
             },
-            "is_nullable": true,
+            "is_nullable": false,
             "is_primary_key": false,
             "transform": {},
             "type": "expression"
@@ -125,13 +125,13 @@
                 "property_name": "closed_by",
                 "type": "property_name"
             },
-            "is_nullable": false,
+            "is_nullable": true,
             "is_primary_key": false,
             "transform": {},
             "type": "expression"
         },
         {
-            "column_id": "last_seen",
+            "column_id": "server_modified_on",
             "datatype": "date",
             "display_name": "Server Modified",
             "expression": {
@@ -143,11 +143,6 @@
             "is_primary_key": false,
             "transform": {},
             "type": "expression"
-        },
-        {
-            "column_id": "count",
-            "display_name": "Count",
-            "type": "count"
         }
     ]
 }
