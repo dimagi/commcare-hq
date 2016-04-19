@@ -388,36 +388,41 @@ class SoftwarePlanInterface(AddItemInterface):
 
     @property
     def rows(self):
-        rows = []
-        filters = {}
-
-        name = SoftwarePlanNameFilter.get_value(self.request, self.domain)
-        if name is not None:
-            filters.update(
-                name=name,
-            )
-        edition = SoftwarePlanEditionFilter.get_value(self.request, self.domain)
-        if edition is not None:
-            filters.update(
-                edition=edition,
-            )
-        visibility = SoftwarePlanVisibilityFilter.get_value(self.request, self.domain)
-        if visibility is not None:
-            filters.update(
-                visibility=visibility,
-            )
-
-        for plan in SoftwarePlan.objects.filter(**filters):
-            rows.append([
+        def _plan_to_row(plan):
+            return [
                 mark_safe('<a href="./%d">%s</a>' % (plan.id, plan.name)),
                 plan.description,
                 plan.edition,
                 plan.visibility,
-                SoftwarePlan.objects.get(id=plan.id).get_version().date_created
-                    if len(SoftwarePlanVersion.objects.filter(plan=plan)) != 0 else 'N/A',
-            ])
+                (
+                    SoftwarePlan.objects.get(id=plan.id).get_version().date_created
+                    if len(SoftwarePlanVersion.objects.filter(plan=plan)) != 0 else 'N/A'
+                ),
+            ]
 
-        return rows
+        return map(_plan_to_row, self._plans)
+
+    @property
+    def _plans(self):
+        queryset = SoftwarePlan.objects.all()
+
+        name = SoftwarePlanNameFilter.get_value(self.request, self.domain)
+        if name is not None:
+            queryset = queryset.filter(
+                name=name,
+            )
+        edition = SoftwarePlanEditionFilter.get_value(self.request, self.domain)
+        if edition is not None:
+            queryset = queryset.filter(
+                edition=edition,
+            )
+        visibility = SoftwarePlanVisibilityFilter.get_value(self.request, self.domain)
+        if visibility is not None:
+            queryset = queryset.filter(
+                visibility=visibility,
+            )
+
+        return queryset
 
 
 def get_exportable_column(amount):
