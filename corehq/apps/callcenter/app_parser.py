@@ -1,12 +1,20 @@
 from collections import namedtuple
 
 from corehq.apps.callcenter import const
+from corehq.apps.callcenter.models import CallCenterIndicatorConfig, CallCenterIndicatorConfig
 
-ParsedIndicator = namedtuple('ParsedIndicator', 'category, sub_category, period, is_legacy')
+ParsedIndicator = namedtuple('ParsedIndicator', 'category, type, date_range, is_legacy')
 
 
 def get_call_center_config_from_app(app):
-    return None
+    indicators = get_indicators_used_in_app(app)
+    parsed_indicators = {
+        parse_indicator(indicator) for indicator in indicators
+    }
+    config = CallCenterIndicatorConfig()
+    for parsed_indicator in parsed_indicators:
+        config.set_indicator(parsed_indicator)
+    return config
 
 
 def parse_indicator(indicator_name):
