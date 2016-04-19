@@ -23,24 +23,33 @@ class BaseMigrationTest(TestCase):
 
     def setUp(self):
         mod.BlobMigrationState.objects.filter(slug=self.slug).delete()
-        self._old_flag = getattr(self.model, "migrating_blobs_from_couch", NOT_SET)
-        self.model.migrating_blobs_from_couch = True
+        self._old_flags = {}
+        for model in self.models:
+            self._old_flags[model] = getattr(model, "migrating_blobs_from_couch", NOT_SET)
+            model.migrating_blobs_from_couch = True
 
     def tearDown(self):
         mod.BlobMigrationState.objects.filter(slug=self.slug).delete()
-        if self._old_flag is NOT_SET:
-            del self.model.migrating_blobs_from_couch
-        else:
-            self.model.migrating_blobs_from_couch = self._old_flag
+        for model, flag in self._old_flags.items():
+            if flag is NOT_SET:
+                del model.migrating_blobs_from_couch
+            else:
+                model.migrating_blobs_from_couch = flag
 
     # abstract properties, must be overridden in base class
     slug = None
-    model = None
+    models = None
 
     def do_migration(self, docs, num_attachments=1):
         if not docs or not num_attachments:
             raise Exception("bad test: must have at least one document and "
                             "one attachment")
+
+        for doc in docs:
+            # verify: attachment is in couch and migration not complete
+            self.assertEqual(len(doc._attachments), num_attachments)
+            self.assertEqual(len(doc.external_blobs), 0)
+
         with tempdir() as tmp:
             filename = join(tmp, "file.txt")
 
@@ -61,15 +70,15 @@ class BaseMigrationTest(TestCase):
 
         for doc in docs:
             # verify: attachments were moved to blob db
-            exp = self.model.get(doc._id)
+            exp = type(doc).get(doc._id)
             self.assertNotEqual(exp._rev, doc._rev)
             self.assertEqual(len(exp.blobs), num_attachments, repr(exp.blobs))
             self.assertFalse(exp._attachments, exp._attachments)
             self.assertEqual(len(exp.external_blobs), num_attachments)
 
     def do_failed_migration(self, docs, modify_docs):
-        if not docs:
-            raise Exception("bad test: must have at least one document")
+        if len(docs) < len(self.models):
+            raise Exception("bad test: must have at least one document per model class")
         modified = []
         print_status = mod.print_status
 
@@ -80,6 +89,11 @@ class BaseMigrationTest(TestCase):
                 modify_docs()
                 modified.append(True)
             print_status(num, total, elapsed)
+
+        # verify: attachments are in couch, not blob db
+        for doc in docs:
+            self.assertGreaterEqual(len(doc._attachments), 1)
+            self.assertEqual(len(doc.external_blobs), 0)
 
         # hook print_status() call to simulate concurrent modification
         with replattr(mod, "print_status", modify_doc_and_print_status):
@@ -93,8 +107,10 @@ class BaseMigrationTest(TestCase):
         with self.assertRaises(mod.BlobMigrationState.DoesNotExist):
             mod.BlobMigrationState.objects.get(slug=self.slug)
 
-        for doc_id, (num_attachments, num_blobs) in docs.items():
-            exp = self.model.get(doc_id)
+        tested = set()
+        for doc, (num_attachments, num_blobs) in docs.items():
+            tested.add(type(doc))
+            exp = type(doc).get(doc._id)
             if not num_attachments:
                 raise Exception("bad test: modify function should leave "
                                 "unmigrated attachments")
@@ -103,14 +119,15 @@ class BaseMigrationTest(TestCase):
             self.assertEqual(len(exp._attachments), num_attachments)
             self.assertEqual(len(exp.external_blobs), num_blobs)
 
+        self.assertEqual(set(self.models), tested) # were all the model types tested?
+
 
 class TestSavedExportsMigrations(BaseMigrationTest):
 
     slug = "saved_exports"
-    model = SavedBasicExport
+    models = [SavedBasicExport]
 
     def test_migrate_saved_exports(self):
-        # setup data
         saved = SavedBasicExport(configuration=_mk_config())
         saved.save()
         payload = b'binary data not valid utf-8 \xe4\x94'
@@ -118,17 +135,12 @@ class TestSavedExportsMigrations(BaseMigrationTest):
         super(BlobMixin, saved).put_attachment(payload, name)
         saved.save()
 
-        # verify: attachment is in couch and migration not complete
-        self.assertEqual(len(saved._attachments), 1)
-        self.assertEqual(len(saved.external_blobs), 0)
-
         self.do_migration([saved])
 
         exp = SavedBasicExport.get(saved._id)
         self.assertEqual(exp.get_payload(), payload)
 
     def test_migrate_with_concurrent_modification(self):
-        # setup data
         saved = SavedBasicExport(configuration=_mk_config())
         saved.save()
         name = saved.get_attachment_name()
@@ -137,19 +149,15 @@ class TestSavedExportsMigrations(BaseMigrationTest):
         super(BlobMixin, saved).put_attachment(old_payload, name)
         super(BlobMixin, saved).put_attachment(old_payload, "other")
         saved.save()
-
-        # verify: attachments are in couch
         self.assertEqual(len(saved._attachments), 2)
-        self.assertEqual(len(saved.external_blobs), 0)
 
         def modify():
             doc = SavedBasicExport.get(saved._id)
             doc.set_payload(new_payload)
             doc.save()
 
-        self.do_failed_migration({saved._id: (1, 1)}, modify)
+        self.do_failed_migration({saved: (1, 1)}, modify)
 
-        # verify: attachments were not migrated
         exp = SavedBasicExport.get(saved._id)
         self.assertEqual(exp.get_payload(), new_payload)
         self.assertEqual(exp.fetch_attachment("other"), old_payload)
