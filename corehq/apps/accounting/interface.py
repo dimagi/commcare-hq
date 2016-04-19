@@ -1017,16 +1017,9 @@ class SubscriptionAdjustmentInterface(GenericTabularReport):
 
     @property
     def rows(self):
-        from corehq.apps.accounting.views import EditSubscriptionView
-
-        def get_choice(choice, choices):
-            for slug, user_text in choices:
-                if choice == slug:
-                    return user_text
-            return None
-
-        return [
-            map(lambda x: x or '', [
+        def _subscription_adjustment_to_row(sub_adj):
+            from corehq.apps.accounting.views import EditSubscriptionView
+            return map(lambda x: x or '', [
                 sub_adj.date_created,
                 format_datatables_data(
                     mark_safe(make_anchor_tag(
@@ -1036,29 +1029,29 @@ class SubscriptionAdjustmentInterface(GenericTabularReport):
                     sub_adj.subscription.id,
                 ),
                 sub_adj.subscription.subscriber.domain,
-                get_choice(sub_adj.reason, SubscriptionAdjustmentReason.CHOICES),
-                get_choice(sub_adj.method, SubscriptionAdjustmentMethod.CHOICES),
+                dict(SubscriptionAdjustmentReason.CHOICES).get(sub_adj.reason),
+                dict(SubscriptionAdjustmentMethod.CHOICES).get(sub_adj.method),
                 sub_adj.note,
                 sub_adj.web_user,
             ])
-            for sub_adj in self.subscription_adjustments
-        ]
+
+        return map(_subscription_adjustment_to_row, self._subscription_adjustments)
 
     @property
-    def subscription_adjustments(self):
-        query = SubscriptionAdjustment.objects.all()
+    def _subscription_adjustments(self):
+        queryset = SubscriptionAdjustment.objects.all()
 
         domain = DomainFilter.get_value(self.request, self.domain)
         if domain is not None:
-            query = query.filter(subscription__subscriber__domain=domain)
+            queryset = queryset.filter(subscription__subscriber__domain=domain)
 
         if DateFilter.use_filter(self.request):
-            query = query.filter(
+            queryset = queryset.filter(
                 date_created__gte=DateFilter.get_start_date(self.request),
                 date_created__lte=DateFilter.get_end_date(self.request),
             )
 
-        return query
+        return queryset
 
 
 class CreditAdjustmentInterface(GenericTabularReport):
