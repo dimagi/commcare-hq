@@ -87,6 +87,9 @@ from corehq.toggles import REPORT_BUILDER_MAP_REPORTS
 from corehq.util.couch import get_document_or_404
 
 
+USAGE_EVENT_SESSION_KEY = 'USAGE_EVENT'
+
+
 def get_datasource_config_or_404(config_id, domain):
     try:
         return get_datasource_config(config_id, domain)
@@ -321,6 +324,13 @@ class ReportBuilderDataSourceSelect(ReportBuilderView):
                 "Successfully submitted the first part of the Report Builder "
                 "wizard where you give your report a name and choose a data source"
             )
+
+            request.session[USAGE_EVENT_SESSION_KEY] = [
+                "Report Builder",
+                "Successful Click on Next (Data Source)",
+                app_source.source_type,
+            ]
+
             return HttpResponseRedirect(
                 reverse(url_name, args=[self.domain]) + '?' + urlencode(get_params)
             )
@@ -384,7 +394,8 @@ class ConfigureChartReport(ReportBuilderView):
             'filter_property_help_text': _('Choose the property you would like to add as a filter to this report.'),
             'filter_display_help_text': _('Web users viewing the report will see this display text instead of the property name. Name your filter something easy for users to understand.'),
             'filter_format_help_text': _('What type of property is this filter?<br/><br/><strong>Date</strong>: select this if the property is a date.<br/><strong>Choice</strong>: select this if the property is text or multiple choice.'),
-            'calculation_help_text': _("Column format selection will determine how each row's value is calculated.")
+            'calculation_help_text': _("Column format selection will determine how each row's value is calculated."),
+            'usage_event': self.request.session.pop(USAGE_EVENT_SESSION_KEY, None)
         }
 
     @property
