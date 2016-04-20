@@ -27,8 +27,7 @@ class ByTypeWithTotal(JsonObject):
             TypeRange(type_.type, date_range) for type_ in self.by_type
             for date_range in type_.date_ranges
             if type_.enabled
-            ], key=lambda x: x.range_slug
-        )
+        ], key=lambda x: x.range_slug)
 
         return {
             range_slug: {type_.type for type_ in group}

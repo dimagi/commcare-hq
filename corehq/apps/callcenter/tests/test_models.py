@@ -93,5 +93,7 @@ class ModelTests(SimpleTestCase):
         self.assertEqual(get_indicator_slugs_from_config(CallCenterIndicatorConfig()), [])
 
     def test_default(self):
-        indicators = get_indicator_slugs_from_config(CallCenterIndicatorConfig.default_config(), all_types=['t1', 't2'])
+        indicators = get_indicator_slugs_from_config(
+            CallCenterIndicatorConfig.default_config(), all_types=['t1', 't2']
+        )
         self.assertEqual(len(indicators), 61)

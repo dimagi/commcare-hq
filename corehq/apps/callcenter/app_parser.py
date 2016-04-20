@@ -1,7 +1,7 @@
 from collections import namedtuple
 
 from corehq.apps.callcenter import const
-from corehq.apps.callcenter.models import CallCenterIndicatorConfig, CallCenterIndicatorConfig
+from corehq.apps.callcenter.models import CallCenterIndicatorConfig
 
 ParsedIndicator = namedtuple('ParsedIndicator', 'category, type, date_range, is_legacy')
 
