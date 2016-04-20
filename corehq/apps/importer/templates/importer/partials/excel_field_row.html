@@ -9,7 +9,7 @@
 </td>
 
 <td class="col-sm-3">
-    <select class="form-control" name="excel_field[]" class="excel_field">
+    <select class="form-control excel_field" name="excel_field[]">
         <option>{% trans "Select field from excel..." %}</option>
         {% for field in excel_fields %}
             {% ifequal field item %}
@@ -39,12 +39,12 @@
 
 <td class="hide">
     <input type="text" name="custom_field[]"
-           class="hide custom_field"
+           class="custom_field form-control"
            placeholder="Enter new property name" />
 </td>
 
 <td class="col-sm-3">
-    <select class="form-control" name="case_field[]" class="case_field">
+    <select class="form-control case_field" name="case_field[]">
         <option value="">{% trans "Select property name..." %}</option>
 
         {% for field in case_fields %}
