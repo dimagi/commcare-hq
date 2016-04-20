@@ -85,7 +85,7 @@ from corehq.dbaccessors.couchapps.all_docs import (
 from couchdbkit import ResourceConflict
 
 # models to be migrated
-from corehq.apps.app_manager.models import Application
+from corehq.apps.app_manager.models import Application, RemoteApp
 from couchexport.models import SavedBasicExport
 
 
@@ -211,7 +211,10 @@ class Migrator(object):
 MIGRATIONS = {m.slug: m for m in [
     Migrator("saved_exports", [SavedBasicExport], migrate_from_couch_to_blobdb),
     Migrator("migrate_backend", [SavedBasicExport], migrate_blob_db_backend),
-    Migrator("applications", [Application], migrate_from_couch_to_blobdb),
+    Migrator("applications", [
+        Application,
+        RemoteApp,
+    ], migrate_from_couch_to_blobdb),
 ]}
 
 
