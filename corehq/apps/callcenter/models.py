@@ -20,6 +20,7 @@ class TypedIndicator(BasicIndicator):
 class ByTypeWithTotal(JsonObject):
     by_type = ListProperty(TypedIndicator)
     totals = ObjectProperty(BasicIndicator)
+    all_types = BooleanProperty(default=False)
 
     def types_by_date_range(self):
         types_list = sorted([
@@ -55,6 +56,29 @@ class CallCenterIndicatorConfig(JsonObject):
     legacy_forms_submitted = ObjectProperty(BasicIndicator)
     legacy_cases_total = ObjectProperty(BasicIndicator)
     legacy_cases_active = ObjectProperty(BasicIndicator)
+
+    @classmethod
+    def default_config(cls, include_legacy=True):
+        def default_basic():
+            return BasicIndicator(enabled=True, date_ranges=set(const.DATE_RANGES))
+
+        def default_typed():
+            return ByTypeWithTotal(totals=default_basic(), all_types=True)
+
+        config = cls(
+            forms_submitted=default_basic(),
+            cases_total=default_typed(),
+            cases_active=default_typed(),
+            cases_opened=default_typed(),
+            cases_closed=default_typed(),
+        )
+
+        if include_legacy:
+            config.legacy_forms_submitted = default_basic()
+            config.legacy_cases_total = default_basic()
+            config.legacy_cases_active = default_basic()
+
+        return config
 
     def set_indicator(self, parsed_indicator):
         if parsed_indicator.is_legacy:
