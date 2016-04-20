@@ -2,13 +2,17 @@ from django.test.testcases import SimpleTestCase
 from mock import patch
 
 from corehq.apps.callcenter.data_source import call_center_data_source_provider
+from corehq.apps.callcenter.utils import DomainLite
 
 
 class TestCallCenterDataSources(SimpleTestCase):
 
     @patch('corehq.apps.callcenter.data_source.get_call_center_domains')
     def test_call_center_data_source_provider(self, get_call_center_domains):
-        get_call_center_domains.return_value = ['domain1', 'domain2']
+        get_call_center_domains.return_value = [
+            DomainLite('domain1', None, None, None),
+            DomainLite('domain2', None, None, None)
+        ]
 
         data_sources = list(call_center_data_source_provider())
         self.assertEqual(6, len(data_sources))
