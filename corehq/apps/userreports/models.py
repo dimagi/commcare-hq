@@ -465,14 +465,9 @@ class StaticDataSourceConfiguration(JsonObject):
                     yield DataSourceConfiguration.wrap(doc)
 
         for provider_path in settings.STATIC_DATA_SOURCE_PROVIDERS:
-            try:
-                provider_fn = to_function(provider_path, failhard=True)
-            except:
-                if settings.DEBUG or settings.UNIT_TESTING:
-                    raise
-            else:
-                for datasource in provider_fn():
-                    yield datasource
+            provider_fn = to_function(provider_path, failhard=True)
+            for datasource in provider_fn():
+                yield datasource
 
     @classmethod
     def by_domain(cls, domain):
