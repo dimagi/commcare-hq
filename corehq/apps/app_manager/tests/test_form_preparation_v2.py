@@ -98,7 +98,7 @@ class FormPreparationV2Test(SimpleTestCase, TestXmlMixin):
         self.assertXmlEqual(xform.render(), after)
 
     def test_empty_itext(self):
-        self.app.build_langs = ['fra']  # lang that's not in the form
+        self.app.langs = ['fra']  # lang that's not in the form
         with self.assertRaises(XFormException):
             self.form.render_xform()
 
