@@ -8,7 +8,7 @@ from corehq.sql_db.operations import HqRunPython
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('accounting', '0022_bootstrap_prbac_roles'),
+        ('accounting', '0024_date_created_to_datetime'),
     ]
 
     operations = [
