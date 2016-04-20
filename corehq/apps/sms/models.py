@@ -1955,7 +1955,7 @@ class SQLMobileBackend(UUIDGeneratorMixin, models.Model):
         api_id - if you know the hq_api_id of the SQLMobileBackend, pass it
                  here for a faster lookup; otherwise, it will be looked up
                  automatically
-        couch_id - if True, then backend_id should be the couch_id to use
+        is_couch_id - if True, then backend_id should be the couch_id to use
                    during lookup instead of the postgres model's pk;
                    we have to support both for a little while until all
                    foreign keys are migrated over
