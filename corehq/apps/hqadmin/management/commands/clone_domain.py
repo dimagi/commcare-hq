@@ -187,11 +187,23 @@ class Command(BaseCommand):
 
     def save_couch_copy(self, doc, new_domain=None):
         old_id = doc._id
-        del doc._id
+        doc._id = doc.get_db().server.next_uuid()
         del doc['_rev']
         if new_domain:
             doc.domain = new_domain
+
+        attachments = {}
+        if "_attachments" in doc and doc['_attachments']:
+            attachemnt_stubs = doc["_attachments"]
+            del doc['_attachments']
+            attachments = {k: doc.get_db().fetch_attachment(old_id, k) for k in attachemnt_stubs}
+
         doc.save()
+
+        for k, attach in attachments.items():
+            doc.put_attachment(attach, name=k, content_type=attachemnt_stubs[k]["content_type"])
+
+
         new_id = doc._id
         self.log_copy(doc.doc_type, old_id, new_id)
         return old_id, new_id
