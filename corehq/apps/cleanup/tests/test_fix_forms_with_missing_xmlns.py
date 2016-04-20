@@ -125,7 +125,7 @@ class TestFixFormsWithMissingXmlns(TestCase, TestXmlMixin):
         form, xform = self.build_normal_app()
         self._refresh_pillow()
 
-        call_command('fix_forms_with_missing_xmlns', 'log.txt')
+        call_command('fix_forms_with_missing_xmlns', '/dev/null', 'log.txt')
 
         with open("log.txt") as log_file:
             log = log_file.read()
@@ -136,7 +136,7 @@ class TestFixFormsWithMissingXmlns(TestCase, TestXmlMixin):
         good_form, bad_form, good_xform, bad_xforms = self.build_app_with_bad_form()
         self._refresh_pillow()
 
-        call_command('fix_forms_with_missing_xmlns', 'log.txt')
+        call_command('fix_forms_with_missing_xmlns', '/dev/null', 'log.txt')
 
         with open("log.txt") as log_file:
             log = log_file.read()
@@ -150,7 +150,7 @@ class TestFixFormsWithMissingXmlns(TestCase, TestXmlMixin):
         form, good_build, bad_build, good_xform, bad_xform = self.build_app_with_recently_fixed_form()
         self._refresh_pillow()
 
-        call_command('fix_forms_with_missing_xmlns', 'log.txt')
+        call_command('fix_forms_with_missing_xmlns', '/dev/null', 'log.txt')
 
         with open("log.txt") as log_file:
             log = log_file.read()
