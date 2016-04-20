@@ -30,7 +30,7 @@ class TestUseFixturesConfig(SimpleTestCase):
 
 
 class TestIndicatorsFromApp(SimpleTestCase):
-    
+
     @property
     def test_indicators(self):
         return sorted([
@@ -45,7 +45,7 @@ class TestIndicatorsFromApp(SimpleTestCase):
             'forms_submitted_month1',
             'totalCases',
         ])
-    
+
     def test_get_indicators_from_app(self):
         app = self._build_app()
 
@@ -95,7 +95,7 @@ class TestIndicatorsFromApp(SimpleTestCase):
     ('cases_closed_beneficiary_week0', (CASES_CLOSED, 'beneficiary', WEEK0, False)),
     ('casesUpdatedMonth0', (CASES_ACTIVE, None, MONTH0, True)),
     ('formsSubmittedWeek0', (FORMS_SUBMITTED, None, WEEK0, True)),
-    ('forms_submitted_month1',(FORMS_SUBMITTED, None, MONTH1, False)),
+    ('forms_submitted_month1', (FORMS_SUBMITTED, None, MONTH1, False)),
     ('totalCases', (CASES_TOTAL, None, None, True)),
     ('motherFormsMonth0', ('custom', None, None, True)),
 ], TestIndicatorsFromApp)
