@@ -198,13 +198,11 @@ class SubscriptionAdjustmentMethod(object):
     INTERNAL = "INTERNAL"
     TASK = "TASK"
     TRIAL = "TRIAL"
-    TRIAL_INTERNAL = "TRIAL_INT"
     CHOICES = (
         (USER, "User"),
         (INTERNAL, "Ops"),
         (TASK, "Task (Invoicing)"),
         (TRIAL, "30 Day Trial"),
-        (TRIAL_INTERNAL, "Custom Trial Period"),
     )
 
 
