@@ -76,7 +76,7 @@ class LocationFixtureProvider(object):
             locations = []
             user_location = user.sql_location
             if user_location:
-                # add users location (and ancestors) to fixture
+                # add user's location to fixture
                 locations.append(user_location)
 
                 # add all descendants as well
@@ -99,6 +99,7 @@ class LocationFixtureProvider(object):
                        {'id': self.id,
                         'user_id': user.user_id})
 
+        # add ancestor locations to fixture
         root_locations = filter(
             lambda loc: loc.parent is None, location_db.by_id.values()
         )
