@@ -2,7 +2,7 @@ from copy import copy
 import decimal
 import uuid
 from django.test import TestCase, SimpleTestCase, override_settings
-from mock import patch
+from mock import patch, MagicMock
 from datetime import datetime, timedelta
 from casexml.apps.case.mock import CaseBlock
 from casexml.apps.case.models import CommCareCase
@@ -177,6 +177,7 @@ class IndicatorPillowTest(IndicatorPillowTestBase):
 class StaticKafkaIndicatorPillowTest(TestCase):
     dependent_apps = ['pillowtop']
 
+    @patch('corehq.apps.callcenter.data_source.get_call_center_domains', MagicMock(return_value=['cc1']))
     def test_bootstrap_can_be_called(self):
         get_kafka_ucr_static_pillow().bootstrap()
 
