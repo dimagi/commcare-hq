@@ -24,6 +24,7 @@ from sqlalchemy import types, exc
 from sqlalchemy.exc import ProgrammingError
 
 from corehq.apps.hqwebapp.templatetags.hq_shared_tags import toggle_enabled
+from corehq.apps.userreports.const import REPORT_BUILDER_EVENTS_KEY
 from couchexport.export import export_from_tables
 from couchexport.files import Temp
 from couchexport.models import Format
@@ -80,15 +81,11 @@ from corehq.apps.userreports.ui.forms import (
     ConfigurableDataSourceEditForm,
     ConfigurableDataSourceFromAppForm,
 )
-from corehq.apps.userreports.util import has_report_builder_access
+from corehq.apps.userreports.util import has_report_builder_access, add_event
 from corehq.apps.users.decorators import require_permission
 from corehq.apps.users.models import Permissions
 from corehq.toggles import REPORT_BUILDER_MAP_REPORTS
 from corehq.util.couch import get_document_or_404
-
-
-CHOOSE_DATA_SOURCE_EVENT_KEY = 'CHOOSE_DATA_SOURCE_EVENT'
-CREATE_REPORT_EVENT_KEY = 'CREATE_REPORT_EVENT_KEY'
 
 
 def get_datasource_config_or_404(config_id, domain):
@@ -326,11 +323,11 @@ class ReportBuilderDataSourceSelect(ReportBuilderView):
                 "wizard where you give your report a name and choose a data source"
             )
 
-            request.session[CHOOSE_DATA_SOURCE_EVENT_KEY] = [
+            add_event(request, [
                 "Report Builder",
                 "Successful Click on Next (Data Source)",
                 app_source.source_type,
-            ]
+            ])
 
             return HttpResponseRedirect(
                 reverse(url_name, args=[self.domain]) + '?' + urlencode(get_params)
@@ -396,7 +393,7 @@ class ConfigureChartReport(ReportBuilderView):
             'filter_display_help_text': _('Web users viewing the report will see this display text instead of the property name. Name your filter something easy for users to understand.'),
             'filter_format_help_text': _('What type of property is this filter?<br/><br/><strong>Date</strong>: select this if the property is a date.<br/><strong>Choice</strong>: select this if the property is text or multiple choice.'),
             'calculation_help_text': _("Column format selection will determine how each row's value is calculated."),
-            'usage_event': self.request.session.pop(CHOOSE_DATA_SOURCE_EVENT_KEY, None)
+            'report_builder_events': self.request.session.pop(REPORT_BUILDER_EVENTS_KEY, [])
         }
 
     @property
@@ -420,10 +417,25 @@ class ConfigureChartReport(ReportBuilderView):
             args.append(self.request.POST)
         return self.configuration_form_class(*args)
 
+    def _get_sum_avg_columns(self, columns):
+        """
+        Return a list of columns that have either sum or average aggregation types.
+        Items in the list are tuples of (column['field'], column['aggregation']).
+        """
+        return [
+            (col.get('field', None), col['aggregation'])
+            for col in columns
+            if col.get('aggregation', None) in ("sum", "average")
+        ]
+
     def post(self, *args, **kwargs):
         if self.report_form.is_valid():
+            existing_sum_avg_cols = []
             if self.report_form.existing_report:
                 try:
+                    existing_sum_avg_cols = self._get_sum_avg_columns(
+                        self.report_form.existing_report.columns
+                    )
                     report_configuration = self.report_form.update_report()
                 except ValidationError as e:
                     messages.error(self.request, e.message)
@@ -434,14 +446,24 @@ class ConfigureChartReport(ReportBuilderView):
                     self.request.user.email,
                     "Successfully created a new report in the Report Builder"
                 )
-                self.request.session[CREATE_REPORT_EVENT_KEY] = [
+                add_event(self.request, [
                     "Report Builder",
                     "Click On Done On New Report (Successfully)",
                     self.report_type,
-                ]
+                ])
+
             return HttpResponseRedirect(
                 reverse(ConfigurableReport.slug, args=[self.domain, report_configuration._id])
             )
+        else:
+            group_by_errors = self.report_form.errors.as_data().get('group_by', [])
+            if "required" in [e.code for e in group_by_errors]:
+                add_event( self.request, [
+                    "Report Builder",
+                    "Click on Done (No Group By Chosen)",
+                    self.report_type,
+                ])
+
         return self.get(*args, **kwargs)
 
 

@@ -174,10 +174,10 @@
         $("#report-config-form").koApplyBindings(formViewModel);
 
         $(function () {
-            {% if usage_event %}
-                {# Track a usage event that was produced on the server #}
-                window.analytics.usage.apply(this, {{usage_event|JSON}});
-            {% endif %}
+            {% for event in report_builder_events %}
+                {# Track a usage events that were produced on the server #}
+                window.analytics.usage.apply(this, {{event|JSON}});
+            {% endfor %}
             gaTrackLink(
                 "#delete-report-button", "Report Builder", "Delete a Repot", '{{ report_type }}'
             );

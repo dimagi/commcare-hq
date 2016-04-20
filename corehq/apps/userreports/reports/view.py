@@ -5,6 +5,7 @@ from StringIO import StringIO
 from corehq.apps.domain.views import BaseDomainView
 from corehq.apps.style.decorators import use_bootstrap3, \
     use_select2, use_daterangepicker, use_jquery_ui, use_nvd3, use_datatables
+from corehq.apps.userreports.const import REPORT_BUILDER_EVENTS_KEY
 from dimagi.utils.modules import to_function
 from django.conf import settings
 from django.contrib import messages
@@ -224,7 +225,7 @@ class ConfigurableReport(JSONResponseMixin, BaseDomainView):
         be included in the template context.
         """
         return {
-            'report_builder_event': self.request.session.pop(CREATE_REPORT_EVENT_KEY, None)
+            'report_builder_events': self.request.session.pop(REPORT_BUILDER_EVENTS_KEY, [])
         }
 
     @property
