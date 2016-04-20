@@ -78,7 +78,7 @@ class CallCenterIndicators(object):
         self.override_cases = override_cases
         self.override_cache = override_cache
 
-        self.config = indicator_config or CallCenterIndicatorConfig.for_domain(domain_name)
+        self.config = indicator_config or CallCenterIndicatorConfig.default_config()
 
         try:
             self.timezone = pytz.timezone(domain_timezone)

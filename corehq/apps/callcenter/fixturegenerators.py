@@ -1,6 +1,8 @@
 from xml.etree import ElementTree
 from datetime import datetime
 import pytz
+
+from corehq.apps.callcenter.app_parser import get_call_center_config_from_app
 from corehq.apps.callcenter.indicator_sets import CallCenterIndicators
 from corehq.apps.users.models import CommCareUser
 from corehq.util.timezones.conversions import ServerTime
@@ -47,12 +49,23 @@ class IndicatorsFixturesProvider(object):
         if self._should_return_no_fixtures(domain, last_sync):
             return fixtures
 
+        config = None
+        if app:
+            try:
+                config = get_call_center_config_from_app(app)
+            except:
+                notify_exception(None, "Error getting call center config from app", details={
+                    'domain': app.domain,
+                    'app_id': app.get_id
+                })
+
         try:
             fixtures.append(gen_fixture(user, CallCenterIndicators(
                 domain.name,
                 domain.default_timezone,
                 domain.call_center_config.case_type,
-                user
+                user,
+                indicator_config=config
             )))
         except Exception:  # blanket exception catching intended
             notify_exception(None, 'problem generating callcenter fixture', details={

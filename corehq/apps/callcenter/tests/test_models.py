@@ -6,38 +6,42 @@ from corehq.apps.callcenter.models import (
 from django.test import SimpleTestCase
 
 
-def get_indicator_slugs_from_config(config):
-    def legacy_slugs(key, indicator_conf):
-        for date_range in indicator_conf.date_ranges:
+def get_indicator_slugs_from_config(config, all_types=None):
+    def legacy_slugs(key, date_ranges):
+        for date_range in date_ranges:
             yield '{}{}'.format(key, date_range.title())
 
-    def basic_slugs(key, indicator_conf):
-        for date_range in indicator_conf.date_ranges:
+    def basic_slugs(key, date_ranges):
+        for date_range in date_ranges:
             yield '{}_{}'.format(key, date_range)
 
-    def typed_slugs(key, type_, indicator_conf):
-        for date_range in indicator_conf.date_ranges:
+    def typed_slugs(key, type_, date_ranges):
+        for date_range in date_ranges:
             yield '{}_{}_{}'.format(key, type_, date_range)
 
     slugs = []
     if config.forms_submitted.enabled:
-        slugs.extend(basic_slugs(const.FORMS_SUBMITTED, config.forms_submitted))
+        slugs.extend(basic_slugs(const.FORMS_SUBMITTED, config.forms_submitted.date_ranges))
 
     for key in ['cases_total', 'cases_active', 'cases_opened', 'cases_closed']:
         indicator_config = getattr(config, key)
         if indicator_config.totals.enabled:
-            slugs.extend(basic_slugs(key, indicator_config.totals))
+            slugs.extend(basic_slugs(key, indicator_config.totals.date_ranges))
+
+        if indicator_config.all_types:
+            for type_ in all_types:
+                slugs.extend(typed_slugs(key, type_, const.DATE_RANGES))
 
         for type_config in indicator_config.by_type:
             if type_config.enabled:
-                slugs.extend(typed_slugs(key, type_config.type, type_config))
+                slugs.extend(typed_slugs(key, type_config.type, type_config.date_ranges))
 
     if config.legacy_forms_submitted.enabled:
-        slugs.extend(legacy_slugs(const.LEGACY_FORMS_SUBMITTED, config.legacy_forms_submitted))
+        slugs.extend(legacy_slugs(const.LEGACY_FORMS_SUBMITTED, config.legacy_forms_submitted.date_ranges))
     if config.legacy_cases_total.enabled:
         slugs.append(const.LEGACY_TOTAL_CASES)
     if config.legacy_cases_active.enabled:
-        slugs.extend(legacy_slugs(const.LEGACY_CASES_UPDATED, config.legacy_cases_active))
+        slugs.extend(legacy_slugs(const.LEGACY_CASES_UPDATED, config.legacy_cases_active.date_ranges))
     return slugs
 
 
@@ -84,3 +88,10 @@ class ModelTests(SimpleTestCase):
             'cases_total_beneficiary_month0',
             'cases_active_beneficiary_month0'
         })
+
+    def test_empty(self):
+        self.assertEqual(get_indicator_slugs_from_config(CallCenterIndicatorConfig()), [])
+
+    def test_default(self):
+        indicators = get_indicator_slugs_from_config(CallCenterIndicatorConfig.default_config(), all_types=['t1', 't2'])
+        self.assertEqual(len(indicators), 61)
