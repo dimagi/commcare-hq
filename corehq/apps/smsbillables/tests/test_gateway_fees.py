@@ -257,6 +257,7 @@ class TestGatewayFee(TestCase):
             name='TWILIO',
             is_global=True,
             hq_api_id=SQLTwilioBackend.get_api_id(),
+            couch_id='global_backend',
         )
         twilio_backend.set_extra_fields(
             account_sid='sid',
@@ -296,7 +297,7 @@ class TestGatewayFee(TestCase):
             name='TWILIO',
             is_global=False,
             hq_api_id=SQLTwilioBackend.get_api_id(),
-            couch_id='backend_instance'
+            couch_id='domain_backend',
         )
         twilio_backend.set_extra_fields(
             account_sid='sid',

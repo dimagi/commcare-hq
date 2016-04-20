@@ -353,7 +353,7 @@ class SmsBillable(models.Model):
             is_twilio_message = backend_api_id == SQLTwilioBackend.get_api_id()
             if is_twilio_message:
                 twilio_charges = cls._get_twilio_charges(
-                    backend_message_id, direction, couch_id
+                    backend_message_id, backend_instance, direction, couch_id
                 )
                 gateway_fee = twilio_charges.gateway_fee
                 direct_gateway_fee = twilio_charges.twilio_gateway_fee
@@ -395,9 +395,9 @@ class SmsBillable(models.Model):
         return usage_fee
 
     @classmethod
-    def _get_twilio_charges(cls, backend_message_id, direction, couch_id):
+    def _get_twilio_charges(cls, backend_message_id, backend_instance, direction, couch_id):
         def _get_twilio_client():
-            twilio_backend = SQLTwilioBackend.get_global_backends_for_this_class(SQLTwilioBackend.SMS).get()
+            twilio_backend = SQLTwilioBackend.objects.get(couch_id=backend_instance)
             config = twilio_backend.config
             return TwilioRestClient(config.account_sid, config.auth_token)
 
