@@ -176,9 +176,10 @@ def arbitrary_backend_ids():
 def arbitrary_messages_by_backend_and_direction(backend_ids,
                                                 phone_number=None,
                                                 domain=None,
-                                                directions=DIRECTIONS):
+                                                directions=None):
     phone_number = phone_number or TEST_NUMBER
     domain = domain or TEST_DOMAIN
+    directions = directions or DIRECTIONS
     messages = []
     for api_id, instance_id in backend_ids.items():
         for direction in directions:

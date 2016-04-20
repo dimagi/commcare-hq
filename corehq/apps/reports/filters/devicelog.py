@@ -1,5 +1,5 @@
-from django.utils.translation import ugettext_noop
-from corehq.apps.reports.filters.base import BaseReportFilter
+from django.utils.translation import ugettext_noop, ugettext_lazy
+from corehq.apps.reports.filters.base import BaseReportFilter, BaseSingleOptionFilter
 from corehq.util.queries import fast_distinct, fast_distinct_in_domain
 from corehq.util.quickcache import quickcache
 from phonelog.models import DeviceReportEntry
@@ -30,6 +30,16 @@ class DeviceLogTagFilter(BaseReportFilter):
             self.errors_only_slug: errors_only,
         }
         return context
+
+
+class DeviceLogDomainFilter(BaseSingleOptionFilter):
+    slug = "domain"
+    label = ugettext_lazy("Filter Logs by Domain")
+
+    @property
+    @quickcache([], timeout=60 * 60)
+    def options(self):
+        return [(d, d) for d in fast_distinct(DeviceReportEntry, 'domain')]
 
 
 class BaseDeviceLogFilter(BaseReportFilter):

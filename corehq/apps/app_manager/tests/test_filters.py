@@ -6,6 +6,7 @@ from mock import Mock, patch
 from corehq.apps.app_manager.models import (
     AncestorLocationTypeFilter,
     CustomMonthFilter,
+    NumericFilter,
     _filter_by_case_sharing_group_id,
     _filter_by_location_id,
     _filter_by_parent_location_id,
@@ -284,3 +285,11 @@ class AutoFilterTests(TestCase):
         filt = AncestorLocationTypeFilter(ancestor_location_type_name='state')
         nate_state = filt.get_filter_value(self.nate, None)
         self.assertEqual(nate_state, self.massachusetts.location_id)
+
+
+class NumericFilterTests(TestCase):
+    def test_numeric_filter(self):
+        self.assertEqual(
+            NumericFilter.wrap({'operator': '>', 'operand': '1.5'}).get_filter_value(None, None),
+            {'operator': '>', 'operand': 1.5}
+        )

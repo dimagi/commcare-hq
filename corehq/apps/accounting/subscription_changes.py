@@ -20,6 +20,7 @@ from corehq.apps.fixtures.models import FixtureDataType
 from corehq.apps.hqmedia.models import HQMediaMixin
 from corehq.apps.reminders.models import METHOD_SMS_SURVEY, METHOD_IVR_SURVEY
 from corehq.apps.users.models import CommCareUser, UserRole
+from corehq.apps.userreports.exceptions import DataSourceConfigurationNotFoundError
 from corehq.const import USER_DATE_FORMAT
 
 
@@ -80,7 +81,8 @@ class DomainDowngradeActionHandler(BaseModifySubscriptionActionHandler):
             privileges.ROLE_BASED_ACCESS: cls.response_role_based_access,
             privileges.DATA_CLEANUP: cls.response_data_cleanup,
             privileges.COMMCARE_LOGO_UPLOADER: cls.response_commcare_logo_uploader,
-            privileges.ADVANCED_DOMAIN_SECURITY: cls.response_domain_security
+            privileges.ADVANCED_DOMAIN_SECURITY: cls.response_domain_security,
+            privileges.REPORT_BUILDER: cls.response_report_builder,
         }
 
     @staticmethod
@@ -191,6 +193,18 @@ class DomainDowngradeActionHandler(BaseModifySubscriptionActionHandler):
             domain.secure_sessions = False
             domain.save()
 
+    @staticmethod
+    def response_report_builder(project):
+        from corehq.apps.userreports.models import ReportConfiguration
+        reports = ReportConfiguration.by_domain(project.name)
+        builder_reports = filter(lambda report: report.report_meta.created_by_builder, reports)
+        for report in builder_reports:
+            try:
+                report.config.deactivate()
+            except DataSourceConfigurationNotFoundError:
+                pass
+        return True
+
 
 class DomainUpgradeActionHandler(BaseModifySubscriptionActionHandler):
     """
@@ -205,6 +219,7 @@ class DomainUpgradeActionHandler(BaseModifySubscriptionActionHandler):
         return {
             privileges.ROLE_BASED_ACCESS: cls.response_role_based_access,
             privileges.COMMCARE_LOGO_UPLOADER: cls.response_commcare_logo_uploader,
+            privileges.REPORT_BUILDER: cls.response_report_builder,
         }
 
     @staticmethod
@@ -234,6 +249,21 @@ class DomainUpgradeActionHandler(BaseModifySubscriptionActionHandler):
             )
             return False
 
+    @staticmethod
+    def response_report_builder(project):
+        from corehq.apps.userreports.models import ReportConfiguration
+        from corehq.apps.userreports.tasks import rebuild_indicators
+        reports = ReportConfiguration.by_domain(project.name)
+        builder_reports = filter(lambda report: report.report_meta.created_by_builder, reports)
+        for report in builder_reports:
+            try:
+                if report.config.is_deactivated:
+                    report.config.is_deactivated = False
+                    report.config.save()
+                    rebuild_indicators.delay(report.config._id)
+            except DataSourceConfigurationNotFoundError:
+                pass
+        return True
 
 # TODO - cache
 def _active_reminder_methods(domain):
@@ -386,6 +416,7 @@ class DomainDowngradeStatusHandler(BaseModifySubscriptionHandler):
             startkey=startkey,
             endkey=endkey,
             include_docs=True,
+            reduce=False,
         )
         num_deid_reports = len(filter(lambda r: r.is_safe, reports))
         if num_deid_reports > 0:

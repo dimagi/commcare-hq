@@ -1,4 +1,4 @@
-{% extends "reports/async/bootstrap2/tabular.html" %}
+{% extends "reports/async/bootstrap3/tabular.html" %}
 {% load hq_shared_tags %}
 {% load report_tags %}
 {% load i18n %}
@@ -6,8 +6,6 @@
 {% block pretable %}
 <link rel="stylesheet" href="{% static "opm/css/report.css" %}">
 <link rel="stylesheet" href="{% static "opm/css/met_report.css" %}" rel="stylesheet" media="screen">
-
-
 
 {% if not report.needs_filters %}
     {% if rendered_as == 'print' %}

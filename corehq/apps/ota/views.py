@@ -100,7 +100,6 @@ class PrimeRestoreCacheView(BaseB3SectionPageView, DomainViewMixin):
         main_context.update({
             'active_tab': ProjectSettingsTab(
                 self.request,
-                self.urlname,
                 domain=self.domain,
                 couch_user=self.request.couch_user,
                 project=self.request.project

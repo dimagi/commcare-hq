@@ -14,8 +14,6 @@ from dimagi.utils.couch.database import get_db, iter_docs
 from corehq.apps.domainsync.config import DocumentTransform, save
 from couchdbkit.client import Database
 from optparse import make_option
-from corehq.util.soft_assert.api import soft_assert
-_soft_assert = soft_assert('{}@{}'.format('tsheffels', 'dimagi.com'))
 
 # doctypes we want to be careful not to copy, which must be explicitly
 # specified with --include
@@ -283,16 +281,14 @@ def copy_doc(doc, count, sourcedb, targetdb, exclude_types, total, simulate, exc
                 try:
                     dt = DocumentTransform(doc, sourcedb, exclude_attachments)
                     break
-                except RequestError as r:
+                except RequestError:
                     if i == 0:
-                        _soft_assert(False, 'Copy domain failed after 5 tries with {}'.format(r))
                         raise
             for i in reversed(range(5)):
                 try:
                     save(dt, targetdb)
                     break
-                except (ResourceConflict, ParserError, TypeError) as e:
+                except (ResourceConflict, ParserError, TypeError):
                     if i == 0:
-                        _soft_assert(False, 'Copy domain failed after 5 tries with {}'.format(e))
                         raise
     print "     Synced %s/%s docs (%s: %s)" % (count, total, doc["doc_type"], doc["_id"])

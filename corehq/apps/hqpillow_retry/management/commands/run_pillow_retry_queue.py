@@ -5,7 +5,6 @@ from hqscripts.generic_queue import GenericEnqueuingOperation
 from pillow_retry.models import PillowError
 from pillow_retry.tasks import process_pillow_retry
 from django import db
-from pillowtop.listener import retry_on_connection_failure
 
 
 class PillowRetryEnqueuingOperation(GenericEnqueuingOperation):
@@ -19,7 +18,6 @@ class PillowRetryEnqueuingOperation(GenericEnqueuingOperation):
         return settings.PILLOW_RETRY_QUEUE_ENQUEUING_TIMEOUT
 
     @staticmethod
-    @retry_on_connection_failure
     def _get_items(utcnow):
         errors = PillowError.get_errors_to_process(utcnow=utcnow, limit=1000)
         error_pks = [error['id'] for error in errors]

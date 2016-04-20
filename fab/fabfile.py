@@ -32,12 +32,15 @@ import posixpath
 import sh
 import time
 import yaml
+import re
+from getpass import getpass
 from distutils.util import strtobool
+from github3 import login
 
 from fabric import utils
 from fabric.api import run, roles, execute, task, sudo, env, parallel
 from fabric.colors import blue, red, yellow
-from fabric.context_managers import settings, cd
+from fabric.context_managers import settings, cd, shell_env
 from fabric.contrib import files, console
 from fabric.operations import require
 
@@ -107,50 +110,50 @@ def _require_target():
 
 
 class DeployMetadata(object):
-    def __init__(self, env):
-        self.env = env
+    def __init__(self, code_branch, environment):
         self.timestamp = datetime.datetime.utcnow().strftime('%Y-%m-%d_%H.%M')
         self._deploy_ref = None
         self._deploy_tag = None
-        self._git = sh.git.bake(_tty_out=False)
+        self._github = _get_github()
+        self._repo = self._github.repository('dimagi', 'commcare-hq')
+        self._max_tags = 100
+        self._last_tag = None
+        self._code_branch = code_branch
+        self._environment = environment
 
     def tag_commit(self):
-        self._git.fetch("origin", "--tags")
-        pattern = "*{}*".format(self.env.environment)
-        self.last_tag = sh.tail(self._git.tag("-l", pattern), "-1").strip()
+        pattern = ".*-{}-.*".format(self._environment)
+        for tag in self._repo.tags(self._max_tags):
+            if re.match(pattern, tag.name):
+                self._last_tag = tag.name
+                break
 
-        tag_name = "{}-{}-deploy".format(self.timestamp, self.env.environment)
-        msg = "{} deploy at {}".format(self.env.environment, self.timestamp)
-        self._git.tag(tag_name, "-m", msg, self.deploy_ref)
-        self._git.push("origin", tag_name)
+        if not self._last_tag:
+            print yellow('Warning: No previous tag found in last {} tags for {}'.format(
+                self._max_tags,
+                self._environment
+            ))
+        tag_name = "{}-{}-deploy".format(self.timestamp, self._environment)
+        msg = "{} deploy at {}".format(self._environment, self.timestamp)
+        user = self._github.me()
+        self._repo.create_tag(
+            tag=tag_name,
+            message=msg,
+            sha=self.deploy_ref,
+            obj_type='commit',
+            tagger={
+                'name': user.name,
+                'email': user.email,
+            }
+        )
         self._deploy_tag = tag_name
-
-    def _check_deploy_commit(self, deploy_commit, code_branch):
-        try:
-            origin_commit = self._git("rev-parse", "origin/{}".format(code_branch)).strip()
-        except sh.ErrorReturnCode:
-            print yellow("Branch '{}' was not found on origin".format(code_branch))
-            if not console.confirm("Do you want to deploy it anyways?", default=False):
-                utils.abort('Aborting.')
-        else:
-            if deploy_commit != origin_commit:
-                print yellow("\n*********\n*WARNING*\n*********")
-                print ("Your local copy of '{}' differs from the version on "
-                       "'origin'.\n".format(code_branch))
-                print "Here's the latest local commit:",
-                print self._git.show(deploy_commit, "--quiet")
-                print "Here's the latest commit on 'origin':",
-                print self._git.show(origin_commit, "--quiet")
-                if not console.confirm("Are you sure you want to deploy the "
-                                       "local commit?", default=False):
-                    utils.abort('Check yourself before you wreck yourself.')
 
     @property
     def diff_url(self):
         if self._deploy_tag is None:
             raise Exception("You haven't tagged anything yet.")
         return "https://github.com/dimagi/commcare-hq/compare/{}...{}".format(
-            self.last_tag,
+            self._last_tag,
             self._deploy_tag,
         )
 
@@ -158,13 +161,9 @@ class DeployMetadata(object):
     def deploy_ref(self):
         if self._deploy_ref is None:
             # turn whatever `code_branch` is into a commit hash
-            deploy_commit = self._git("rev-parse", self.env.code_branch).strip()
-            self._check_deploy_commit(deploy_commit, self.env.code_branch)
-            self._deploy_ref = deploy_commit
+            branch = self._repo.branch(self._code_branch)
+            self._deploy_ref = branch.commit.sha
         return self._deploy_ref
-
-
-deploy_metadata = DeployMetadata(env)
 
 
 def format_env(current_env, extra=None):
@@ -224,13 +223,12 @@ def _setup_path():
     env.log_dir = posixpath.join(env.home, 'www', env.environment, 'log')
     env.releases = posixpath.join(env.root, 'releases')
     env.code_current = posixpath.join(env.root, 'current')
-    env.code_root = posixpath.join(env.releases, deploy_metadata.timestamp)
+    env.code_root = posixpath.join(env.releases, env.deploy_metadata.timestamp)
     env.project_root = posixpath.join(env.code_root, env.project)
     env.project_media = posixpath.join(env.code_root, 'media')
     env.virtualenv_current = posixpath.join(env.code_current, 'python_env')
     env.virtualenv_root = posixpath.join(env.code_root, 'python_env')
     env.services = posixpath.join(env.code_root, 'services')
-    env.services_old = posixpath.join(env.home, 'services')
     env.jython_home = '/usr/local/lib/jython'
     env.db = '%s_%s' % (env.project, env.environment)
 
@@ -258,14 +256,14 @@ def load_env(env_name):
         else:
             raise Exception("Environment file not found: {}".format(path))
 
-    env_dict = get_env_dict(os.path.join('fab', 'environments.yml'))
+    env_dict = get_env_dict(os.path.join(PROJECT_ROOT, 'environments.yml'))
     env.update(env_dict['base'])
     env.update(env_dict[env_name])
 
 
 @task
 def swiss():
-    env.inventory = os.path.join('fab', 'inventory', 'swiss')
+    env.inventory = os.path.join(PROJECT_ROOT, 'inventory', 'swiss')
     load_env('swiss')
     execute(env_common)
 
@@ -277,7 +275,7 @@ def india():
 
 @task
 def softlayer():
-    env.inventory = os.path.join('fab', 'inventory', 'softlayer')
+    env.inventory = os.path.join(PROJECT_ROOT, 'inventory', 'softlayer')
     load_env('softlayer')
     execute(env_common)
 
@@ -322,7 +320,7 @@ def production():
             utils.abort('Action aborted.')
 
     load_env('production')
-    env.inventory = os.path.join('fab', 'inventory', 'production')
+    env.inventory = os.path.join(PROJECT_ROOT, 'inventory', 'production')
     execute(env_common)
 
 
@@ -334,7 +332,7 @@ def staging():
         print ("using default branch of autostaging. you can override this "
                "with --set code_branch=<branch>")
 
-    env.inventory = os.path.join('fab', 'inventory', 'staging')
+    env.inventory = os.path.join(PROJECT_ROOT, 'inventory', 'staging')
     load_env('staging')
     execute(env_common)
 
@@ -347,7 +345,7 @@ def preview():
     production data in a safe preview environment on remote host
 
     """
-    env.inventory = os.path.join('fab', 'inventory', 'preview')
+    env.inventory = os.path.join(PROJECT_ROOT, 'inventory', 'preview')
     load_env('preview')
     execute(env_common)
 
@@ -388,6 +386,7 @@ def env_common():
     require('inventory', 'environment')
     servers = read_inventory_file(env.inventory)
 
+    env.deploy_metadata = DeployMetadata(env.code_branch, env.environment)
     _setup_path()
 
     proxy = servers['proxy']
@@ -521,11 +520,11 @@ def update_code(git_tag, use_current_release=False):
 
     with cd(env.code_root if not use_current_release else env.code_current):
         sudo('git remote prune origin')
-        sudo('git fetch origin --tags')
+        sudo('git fetch origin --tags -q')
         sudo('git checkout {}'.format(git_tag))
         sudo('git reset --hard {}'.format(git_tag))
         sudo('git submodule sync')
-        sudo('git submodule update --init --recursive')
+        sudo('git submodule update --init --recursive -q')
         # remove all untracked files, including submodules
         sudo("git clean -ffd")
         # remove all .pyc files in the project
@@ -546,9 +545,9 @@ def mail_admins(subject, message):
 
 
 @roles(ROLES_DB_ONLY)
-def record_successful_deploy(deploy_metadata):
+def record_successful_deploy():
     with cd(env.code_current):
-        deploy_metadata.tag_commit()
+        env.deploy_metadata.tag_commit()
         sudo((
             '%(virtualenv_current)s/bin/python manage.py '
             'record_deploy_success --user "%(user)s" --environment '
@@ -557,7 +556,7 @@ def record_successful_deploy(deploy_metadata):
             'virtualenv_current': env.virtualenv_current,
             'user': env.user,
             'environment': env.environment,
-            'url': deploy_metadata.diff_url,
+            'url': env.deploy_metadata.diff_url,
         })
 
 
@@ -591,7 +590,7 @@ def hotfix_deploy():
     _require_target()
     run('echo ping!')  # workaround for delayed console response
     try:
-        execute(update_code, deploy_metadata.deploy_ref, True)
+        execute(update_code, env.deploy_metadata.deploy_ref, True)
     except Exception:
         execute(mail_admins, "Deploy failed", "You had better check the logs.")
         # hopefully bring the server back to life
@@ -599,7 +598,7 @@ def hotfix_deploy():
         raise
     else:
         silent_services_restart(use_current_release=True)
-        execute(record_successful_deploy, deploy_metadata)
+        execute(record_successful_deploy)
 
 
 def _confirm_translated():
@@ -613,7 +612,7 @@ def _confirm_translated():
 
 @task
 def setup_release():
-    deploy_ref = deploy_metadata.deploy_ref  # Make sure we have a valid commit
+    deploy_ref = env.deploy_metadata.deploy_ref  # Make sure we have a valid commit
     _execute_with_timing(create_code_dir)
     _execute_with_timing(update_code, deploy_ref)
     _execute_with_timing(update_virtualenv)
@@ -658,8 +657,9 @@ def _deploy_without_asking():
         _execute_with_timing(_do_collectstatic)
         _execute_with_timing(_do_compress)
 
-        _execute_with_timing(clear_services_dir)
         _set_supervisor_config()
+
+        _execute_with_timing(build_formplayer)
 
         do_migrate = env.should_migrate
         if do_migrate:
@@ -695,7 +695,7 @@ def _deploy_without_asking():
         _execute_with_timing(update_current)
         silent_services_restart()
         _execute_with_timing(record_successful_release)
-        _execute_with_timing(record_successful_deploy, deploy_metadata)
+        _execute_with_timing(record_successful_deploy)
 
 
 @task
@@ -752,6 +752,26 @@ def copy_tf_localsettings():
 
 
 @parallel
+@roles(ROLES_TOUCHFORMS)
+def copy_formplayer_properties():
+    with settings(warn_only=True):
+        sudo(
+            'cp {}/submodules/formplayer/config/{}.properties '
+            '{}/submodules/formplayer/config'.format(
+                env.code_current, env.environment, env.code_root
+            ))
+
+
+@task
+@roles(ROLES_TOUCHFORMS)
+def build_formplayer():
+    build_dir = '{}/{}'.format(env.code_root, 'submodules/formplayer/build/libs')
+    jenkins_formplayer_build_url = 'http://jenkins.dimagi.com/job/formplayer/lastSuccessfulBuild/artifact/build/libs/formplayer.jar'
+
+    sudo('wget {} -P {}'.format(jenkins_formplayer_build_url, build_dir))
+
+
+@parallel
 @roles(ROLES_ALL_SRC)
 def copy_components():
     if files.exists('{}/bower_components'.format(env.code_current)):
@@ -769,11 +789,21 @@ def copy_node_modules():
         sudo('mkdir {}/node_modules'.format(env.code_root))
 
 
+@parallel
+@roles(ROLES_STATIC)
+def copy_compressed_js_staticfiles():
+    if files.exists('{}/staticfiles/CACHE/js'.format(env.code_current)):
+        sudo('mkdir -p {}/staticfiles/CACHE/js'.format(env.code_root))
+        sudo('cp -r {}/staticfiles/CACHE/js {}/staticfiles/CACHE/js'.format(env.code_current, env.code_root))
+
+
 def copy_release_files():
     execute(copy_localsettings)
     execute(copy_tf_localsettings)
+    execute(copy_formplayer_properties)
     execute(copy_components)
     execute(copy_node_modules)
+    execute(copy_compressed_js_staticfiles)
 
 
 @task
@@ -893,20 +923,19 @@ def force_update_static():
 
 @task
 @roles(['deploy'])
-def manage():
+def manage(cmd):
     """
     run a management command
 
     usage:
-        fab <env> manage --set cmd='<command>'
+        fab <env> manage:<command>
     e.g.
-        fab production manage --set cmd='prune_couch_views'
+        fab production manage:'prune_couch_views --noinput'
     """
     _require_target()
-    require('cmd')
     with cd(env.code_current):
-        sudo('{env.virtualenv_current}/bin/python manage.py {env.cmd}'
-             .format(env=env))
+        sudo('{env.virtualenv_current}/bin/python manage.py {cmd}'
+             .format(env=env, cmd=cmd))
 
 
 @task(alias='deploy')
@@ -969,34 +998,6 @@ def update_virtualenv():
             posixpath.join(requirements, 'prod-requirements.txt'),
             posixpath.join(requirements, 'requirements.txt'),
         ))
-
-
-@task
-def wipe_supervisor_conf():
-    _require_target()
-    execute(clear_services_dir, current=True)
-    execute(services_restart)
-
-
-@roles(ROLES_ALL_SERVICES)
-@parallel
-def clear_services_dir(current=False):
-    """
-    remove old confs from directory first
-    the clear_supervisor_confs management command will scan the directory and find prefixed conf files of the supervisord files
-    and delete them matching the prefix of the current server environment
-    """
-    code_root = env.code_current if current else env.code_root
-    venv_root = env.virtualenv_current if current else env.virtualenv_root
-    services_dir = posixpath.join(env.services_old, u'supervisor')
-    with cd(code_root):
-        sudo((
-            '%(virtualenv_root)s/bin/python manage.py '
-            'clear_supervisor_confs --conf_location "%(conf_location)s"'
-        ) % {
-            'virtualenv_root': venv_root,
-            'conf_location': services_dir,
-        })
 
 
 @task
@@ -1096,6 +1097,7 @@ def _do_compress(use_current_release=False):
     venv = env.virtualenv_root if not use_current_release else env.virtualenv_current
     with cd(env.code_root if not use_current_release else env.code_current):
         sudo('{}/bin/python manage.py compress --force -v 0'.format(venv))
+        sudo('{}/bin/python manage.py purge_compressed_files'.format(venv))
     update_manifest(save=True, use_current_release=use_current_release)
 
 
@@ -1189,20 +1191,6 @@ def _rebuild_supervisor_conf_file(conf_command, filename, params=None):
             'params': format_env(env, params)
         })
 
-        sudo((
-            '%(virtualenv_root)s/bin/python manage.py '
-            '%(conf_command)s --traceback --conf_file "%(filename)s" '
-            '--conf_destination "%(destination)s" --params \'%(params)s\''
-        ) % {
-
-            'conf_command': conf_command,
-            'virtualenv_root': env.virtualenv_root,
-            'filename': filename,
-            'destination': posixpath.join(env.services_old, 'supervisor'),
-            'params': format_env(env, params)
-        })
-
-
 
 def get_celery_queues():
     host = env.get('host_string')
@@ -1275,6 +1263,12 @@ def set_errand_boy_supervisorconf():
 def set_formsplayer_supervisorconf():
     _rebuild_supervisor_conf_file('make_supervisor_conf', 'supervisor_formsplayer.conf')
 
+
+@roles(ROLES_TOUCHFORMS)
+def set_formplayer_spring_supervisorconf():
+    _rebuild_supervisor_conf_file('make_supervisor_conf', 'supervisor_formplayer_spring.conf')
+
+
 @roles(ROLES_SMS_QUEUE)
 @parallel
 def set_sms_queue_supervisorconf():
@@ -1313,6 +1307,7 @@ def _set_supervisor_config():
     _execute_with_timing(set_djangoapp_supervisorconf)
     _execute_with_timing(set_errand_boy_supervisorconf)
     _execute_with_timing(set_formsplayer_supervisorconf)
+    _execute_with_timing(set_formplayer_spring_supervisorconf)
     _execute_with_timing(set_pillowtop_supervisorconf)
     _execute_with_timing(set_sms_queue_supervisorconf)
     _execute_with_timing(set_reminder_queue_supervisorconf)
@@ -1410,6 +1405,24 @@ def _execute_with_timing(fn, *args, **kwargs):
         with open(env.timing_log, 'a') as timing_log:
             duration = datetime.datetime.utcnow() - start_time
             timing_log.write('{}: {}\n'.format(fn.__name__, duration.seconds))
+
+
+def _get_github():
+    try:
+        from .config import GITHUB_APIKEY
+    except ImportError:
+        print 'Try creating a fab/config.py with your GitHub API key to automate this step.'
+        print 'See fab/config.example.py.'
+        username = raw_input('Github username: ')
+        password = getpass('Github password: ')
+        return login(
+            username=username,
+            password=password,
+        )
+    else:
+        return login(
+            token=GITHUB_APIKEY,
+        )
 
 
 class PreindexNotFinished(Exception):

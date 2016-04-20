@@ -1,10 +1,10 @@
 {% load hq_shared_tags %}
 
 {# todo: fix template to properly inherit from filters/base.html #}
-<label class="control-label">{{ control_name }}</label> {# this is wrong, see filters/single_option.html for a proper implementation #}
-<div class="controls">
+<label class="control-label {{ css_label_class }}">{{ control_name }}</label> {# this is wrong, see filters/single_option.html for a proper implementation #}
+<div class="{{ css_field_class }}">
   <div data-bind="foreach: selected_path" style="display: inline-block;">
-    <select data-bind="options: children, optionsText: 'display_name', value: selected_child"></select>
+    <select class="form-control" data-bind="options: children, optionsText: 'display_name', value: selected_child"></select>
   </div>
   <img id="loc_ajax" src="{% static 'formplayer/img/loading_small.gif' %}" style="display: none;">
 </div>

@@ -10,8 +10,8 @@ from corehq.form_processor.exceptions import (
     CaseNotFound,
     AttachmentNotFound,
     CaseSaveError,
-    LedgerSaveError
-)
+    LedgerSaveError,
+    LedgerValueNotFound)
 from corehq.form_processor.interfaces.dbaccessors import (
     AbstractCaseAccessor,
     AbstractFormAccessor,
@@ -164,10 +164,12 @@ class FormAccessorSQL(AbstractFormAccessor):
     @staticmethod
     def archive_form(form, user_id=None):
         FormAccessorSQL._archive_unarchive_form(form, user_id, True)
+        form.state = XFormInstanceSQL.ARCHIVED
 
     @staticmethod
     def unarchive_form(form, user_id=None):
         FormAccessorSQL._archive_unarchive_form(form, user_id, False)
+        form.state = XFormInstanceSQL.NORMAL
 
     @staticmethod
     def soft_delete_forms(domain, form_ids, deletion_date=None, deletion_id=None):
@@ -680,7 +682,7 @@ class LedgerAccessorSQL(AbstractLedgerAccessor):
                 [case_id, section_id, entry_id]
             )[0]
         except IndexError:
-            raise LedgerValue.DoesNotExist
+            raise LedgerValueNotFound
 
     @staticmethod
     def save_ledger_values(ledger_values):
@@ -688,7 +690,7 @@ class LedgerAccessorSQL(AbstractLedgerAccessor):
             return
 
         for ledger_value in ledger_values:
-            transactions = ledger_value.get_tracked_models_to_create(LedgerTransaction)
+            transactions = ledger_value.get_live_tracked_models(LedgerTransaction)
 
             ledger_value.last_modified = datetime.utcnow()
 
@@ -708,34 +710,46 @@ class LedgerAccessorSQL(AbstractLedgerAccessor):
 
     @staticmethod
     def get_ledger_values_for_product_ids(product_ids):
-        # TODO: Actually return ledger values for product_ids
-        return []
-
-    @staticmethod
-    def get_ledger_transactions_for_case(case_id, entry_id=None, section_id=None):
-        return RawQuerySetWrapper(LedgerTransaction.objects.raw(
-            "SELECT * FROM get_ledger_transactions_for_case(%s, %s, %s)",
-            [case_id, entry_id, section_id]
+        return list(LedgerValue.objects.raw(
+            'SELECT * FROM get_ledger_values_for_product_ids(%s)',
+            [product_ids]
         ))
 
     @staticmethod
-    def get_ledger_transactions_in_window(case_id, entry_id, section_id, window_start, window_end):
+    def get_ledger_transactions_for_case(case_id, section_id=None, entry_id=None):
+        return RawQuerySetWrapper(LedgerTransaction.objects.raw(
+            "SELECT * FROM get_ledger_transactions_for_case(%s, %s, %s)",
+            [case_id, section_id, entry_id]
+        ))
+
+    @staticmethod
+    def get_ledger_transactions_in_window(case_id, section_id, entry_id, window_start, window_end):
         return RawQuerySetWrapper(LedgerTransaction.objects.raw(
             "SELECT * FROM get_ledger_transactions_for_case(%s, %s, %s, %s, %s)",
-            [case_id, entry_id, section_id, window_start, window_end]
+            [case_id, section_id, entry_id, window_start, window_end]
         ))
 
     @staticmethod
     def get_transactions_for_consumption(domain, case_id, product_id, section_id, window_start, window_end):
         from corehq.apps.commtrack.consumption import should_exclude_invalid_periods
         transactions = LedgerAccessorSQL.get_ledger_transactions_in_window(
-            case_id, product_id, section_id, window_start, window_end
+            case_id, section_id, product_id, window_start, window_end
         )
         exclude_inferred_receipts = should_exclude_invalid_periods(domain)
         return itertools.chain.from_iterable([
             transaction.get_consumption_transactions(exclude_inferred_receipts)
             for transaction in transactions
         ])
+
+    @staticmethod
+    def get_latest_transaction(case_id, section_id, entry_id):
+        try:
+            return LedgerTransaction.objects.raw(
+                "SELECT * FROM get_latest_ledger_transaction(%s, %s, %s)",
+                [case_id, section_id, entry_id]
+            )[0]
+        except IndexError:
+            return None
 
 
 def _order_list(id_list, object_list, id_property):

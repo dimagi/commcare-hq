@@ -1487,6 +1487,19 @@ class BaseEditNewCustomExportView(BaseModifyNewCustomView):
     def page_url(self):
         return reverse(self.urlname, args=[self.domain, self.export_id])
 
+    def commit(self, request):
+        export = self.export_instance_cls.wrap(json.loads(request.body))
+        export.save()
+        messages.success(
+            request,
+            mark_safe(
+                _(u"Export <strong>{}</strong> was saved.").format(
+                    export.name
+                )
+            )
+        )
+        return export._id
+
     def get_export_schema(self, export_instance):
         raise NotImplementedError()
 

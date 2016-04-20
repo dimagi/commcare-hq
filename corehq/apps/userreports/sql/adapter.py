@@ -55,7 +55,7 @@ class IndicatorSqlAdapter(object):
         try:
             self.save(doc)
         except IntegrityError:
-            pass  # can be do to users messing up their tables/data so don't bother logging
+            pass  # can be due to users messing up their tables/data so don't bother logging
         except Exception as e:
             notify_exception(None, u'unexpected error saving UCR doc: {}. domain: {}, doc: {}, table {}'.format(
                 e,

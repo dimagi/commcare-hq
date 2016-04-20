@@ -251,8 +251,10 @@ def store_billable(msg):
             # This string contains unicode characters, so the allowed
             # per-sms message length is shortened
             msg_length = 70
-        for _ in range(int(math.ceil(float(len(msg.text)) / msg_length))):
-            SmsBillable.create(msg)
+        SmsBillable.create(
+            msg,
+            multipart_count=int(math.ceil(float(len(msg.text)) / msg_length)),
+        )
 
 
 @task(queue='background_queue', ignore_result=True, acks_late=True)
@@ -292,7 +294,7 @@ def _sync_case_phone_number(contact_case):
     if phone_info.phone_number:
         lock_keys.append('verifying-phone-number-%s' % phone_info.phone_number)
 
-    with CriticalSection(lock_keys):
+    with CriticalSection(lock_keys, timeout=5 * 60):
         phone_number = contact_case.get_verified_number()
         if (
             phone_number and

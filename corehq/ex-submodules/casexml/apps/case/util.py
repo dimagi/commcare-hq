@@ -149,7 +149,7 @@ def get_indexed_cases(domain, case_ids):
 
 
 def primary_actions(case):
-    return filter(lambda a: a.action_type != const.CASE_ACTION_REBUILD,
+    return filter(lambda a: not a.is_case_rebuild,
                   case.actions)
 
 

@@ -249,11 +249,10 @@
                         {% if request.user.is_authenticated %}
                             {% include 'style/includes/global_navigation_bar.html' %}
                         {% else %}
-                            <a href="{% url "login" %}" class="btn btn-primary">{% trans 'Sign In' %}</a>
+                            <a href="{% url "login" %}" class="btn btn-primary navbar-btn">{% trans 'Sign In' %}</a>
                         {% endif %}
                         </div>
                     </nav>
-                    {% format_subtab_menu %}
                 </div>
             </div>
             {% if request.project.is_snapshot %}
@@ -319,7 +318,7 @@
                                 is copyright &copy;
                             {% endblocktrans %}{% now "Y" %}
                             <a href="http://www.dimagi.com/">Dimagi, Inc.</a>
-                            {% if user.is_authenticated %}
+                            {% if request.user.is_authenticated %}
                                 &nbsp;|&nbsp;
                                 <a href="{% trans 'http://www.commcarehq.org/home' %}">{% trans 'Learn more about CommCare HQ' %}</a>
                             {% endif %}
