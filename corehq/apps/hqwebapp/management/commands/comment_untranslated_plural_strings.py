@@ -19,7 +19,7 @@ class Command(LabelCommand):
             regex = re.compile('(\nmsgid(.+\n)+msgid_plural(.+\n)+msgstr\[0\] ""\nmsgstr\[1\] ""\n\n)')
             for matches in regex.findall(content):
                 string = matches[0][:-2]
-                replacement = string.replace('\n', '\n#')
+                replacement = string.replace('\n', '\n# ')
                 content = content.replace(string, comment + replacement)
 
         with open(filepath, 'w') as f:
