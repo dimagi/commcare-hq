@@ -485,6 +485,9 @@ class HQMediaMixin(Document):
     # keys are the paths to each file in the final application media zip
     multimedia_map = SchemaDictProperty(HQMediaMapItem)
 
+    # each language is a key and the value is a list of multimedia referenced in that language
+    media_language_map = DictProperty()
+
     # paths to custom logos
     logo_refs = DictProperty()
 
@@ -692,12 +695,13 @@ class HQMediaMixin(Document):
             in a language in the profile.
         """
         found_missing_mm = False
+        filter_multimedia = languages and self.media_language_map
         # preload all the docs to avoid excessive couch queries.
         # these will all be needed in memory anyway so this is ok.
         expected_ids = [map_item.multimedia_id for map_item in self.multimedia_map.values()]
         raw_docs = dict((d["_id"], d) for d in iter_docs(CommCareMultimedia.get_db(), expected_ids))
         for path, map_item in self.multimedia_map.items():
-            if not languages or any([map_item['langs'].get(l) for l in languages]):
+            if not filter_multimedia or any((self.media_language_map[l].get(path) for l in languages)):
                 media_item = raw_docs.get(map_item.multimedia_id)
                 if media_item:
                     media_cls = CommCareMultimedia.get_doc_class(map_item.media_type)

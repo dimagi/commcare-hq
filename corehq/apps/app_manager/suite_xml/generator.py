@@ -96,9 +96,9 @@ class MediaSuiteGenerator(object):
         self.app.remove_unused_mappings()
         if self.app.multimedia_map is None:
             self.app.multimedia_map = {}
-        langs = self.app.langs if not self.profile else self.profile.langs
+        filter_multimedia = self.app.media_language_map and self.profile
         for path, m in self.app.multimedia_map.items():
-            if not any([m['langs'].get(l) for l in langs]):
+            if filter_multimedia and not any((self.app.media_language_map[l].get(path) for l in self.profile.langs)):
                 continue
             unchanged_path = path
             if path.startswith(PREFIX):
