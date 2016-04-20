@@ -176,7 +176,7 @@ class TestApplicationMigrations(BaseMigrationTest):
         # setup data
         app = Application()
         app.save()
-        payload = '<fake xform source />'
+        payload = u'<fake xform source>\u2713</fake>'
         super(BlobMixin, app).put_attachment(payload, "form.xml")
         app.save()
 
