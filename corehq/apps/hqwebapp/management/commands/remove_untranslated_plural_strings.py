@@ -13,14 +13,12 @@ class Command(LabelCommand):
     args = ""
 
     def handle_po_file(self, filepath):
-        comment = '\n# *** Commenting untranslated plural strings ***'
         with open(filepath, 'r') as f:
             content = f.read()
-            regex = re.compile('(\nmsgid(.+\n)+msgid_plural(.+\n)+msgstr\[0\] ""\nmsgstr\[1\] ""\n\n)')
+            regex = re.compile('(#(.+\n)#(.+\n)msgid(.+\n)+msgid_plural(.+\n)+msgstr\[0\] ""\nmsgstr\[1\] ""\n\n)')
             for matches in regex.findall(content):
-                string = matches[0][:-2]
-                replacement = string.replace('\n', '\n# ')
-                content = content.replace(string, comment + replacement)
+                string = matches[0]
+                content = content.replace(string, '')
 
         with open(filepath, 'w') as f:
             f.write(content)
