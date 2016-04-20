@@ -51,8 +51,6 @@ DATE_FORMAT = '%Y-%m-%dT%H:%M:%SZ'
 BUSINESS_UNITS = [
     "DSA",
     "DSI",
-    "DLAC",
-    "DMOZ",
     "DWA",
     "INC",
 ]
