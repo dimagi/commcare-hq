@@ -33,4 +33,8 @@ FormplayerFrontend.on("start", function (apps) {
         console.log("triggering apps:list");
         FormplayerFrontend.trigger("apps:list", apps);
     }
+});
+
+FormplayerFrontend.on("app:select:modules", function(model){
+    console.log("Getting modules for: " + model);
 })

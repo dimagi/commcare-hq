@@ -25,7 +25,7 @@
     {% compress js %}
         <script src="{% static 'json2/json2.js' %}"></script>
         <script src="{% static 'underscore/underscore.js' %}"></script>
-        <script src="{% static 'backbone/backbone-min.js' %}"></script>
+        <script src="{% static 'backbone/backbone.js' %}"></script>
         <script src="{% static 'backbone.babysitter/lib/backbone.babysitter.js' %}"></script>
         <script src="{% static 'backbone.wreqr/lib/backbone.wreqr.js' %}"></script>
         <script src="{% static 'backbone.marionette/lib/backbone.marionette.js' %}"></script>
@@ -33,9 +33,12 @@
         <script src="{% static 'cloudcare/js/formplayer/app.js' %}"></script>
         <script src="{% static 'cloudcare/js/formplayer/js/apps/config/storage/localstorage.js' %}"></script>
         <script src="{% static 'cloudcare/js/formplayer/js/entities/app_selection.js' %}"></script>
+        <script src="{% static 'cloudcare/js/formplayer/js/entities/menu.js' %}"></script>
         <script src="{% static 'cloudcare/js/formplayer/js/apps/cc_apps.js' %}"></script>
         <script src="{% static 'cloudcare/js/formplayer/js/apps/list/list_controller.js' %}"></script>
         <script src="{% static 'cloudcare/js/formplayer/js/apps/list/list_view.js' %}"></script>
+        <script src="{% static 'cloudcare/js/formplayer/js/apps/menus/menu_view.js' %}"></script>
+        <script src="{% static 'cloudcare/js/formplayer/js/apps/menus/menu_controller.js' %}"></script>
     {% endcompress %}
 {% endblock %}
 
@@ -70,27 +73,46 @@
 {% endblock %}
 
 {% block page_content %}
-<div id="app-container">
-    <div id="main-region" class="container">
-        <p>Here is static content in the web page. You'll notice that it gets replaced by our app as soon as we start
-            it.</p>
+    <div id="app-container">
+        <div id="main-region" class="container">
+            <p>Here is static content in the web page. You'll notice that it gets replaced by our app as soon as we
+                start
+                it.</p>
+        </div>
     </div>
-</div>
 
     <script type="text/template" id="app-select-list">
-    <thead>
-    <tr>
-        <th>First Name</th>
-        <th>Last Name</th>
-        <th></th>
-    </tr>
-    </thead>
-    <tbody>
-    </tbody>
-</script>
+        <thead>
+        <tr>
+            <th>Name</th>
+            <th>ID</th>
+            <th></th>
+        </tr>
+        </thead>
+        <tbody>
+        </tbody>
+    </script>
 
-<script type="text/template" id="app-select-list-item">
-    <td><%- name %></td>
-    <td><%- _id %></td>
-</script>
+    <script type="text/template" id="app-select-list-item">
+        <td><%- name %></td>
+        <td><%- _id %></td>
+    </script>
+
+    <script type="text/template" id="menu-view-list">
+        <thead>
+        <tr>
+            <th>text</th>
+            <th>audio</th>
+            <th>image</th>
+        </tr>
+        </thead>
+        <tbody>
+        </tbody>
+    </script>
+
+    <script type="text/template" id="menu-view-item">
+        <td><%- text %></td>
+        <td><%- audioUri %></td>
+        <td><%- imageUri %></td>
+    </script>
 {% endblock %}

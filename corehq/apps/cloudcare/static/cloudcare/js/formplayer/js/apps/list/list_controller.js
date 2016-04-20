@@ -1,15 +1,15 @@
-FormplayerFrontend.module("AppSelect.List", function(List, FormplayerFrontend, Backbone, Marionette, $, _){
-    List.Controller = {
+FormplayerFrontend.module("AppSelect.AppList", function(AppList, FormplayerFrontend, Backbone, Marionette, $, _){
+    AppList.Controller = {
         listApps: function(){
-            var fetchingApps = FormplayerFrontend.request("appselect:apps")
+            var fetchingApps = FormplayerFrontend.request("appselect:apps");
 
             $.when(fetchingApps).done(function (apps) {
 
-                var contactsListView = new List.AppSelectView({
+                var appListView = new AppList.AppSelectView({
                     collection: apps
                 });
 
-                FormplayerFrontend.regions.main.show(contactsListView);
+                FormplayerFrontend.regions.main.show(appListView);
             });
         }
     }

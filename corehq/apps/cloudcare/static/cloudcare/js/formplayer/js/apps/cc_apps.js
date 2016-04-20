@@ -10,11 +10,11 @@ FormplayerFrontend.module("AppSelect", function(AppSelect, FormplayerFrontend, B
     var API = {
         listApps: function() {
             console.log("list apps");
-            AppSelect.List.Controller.listApps();
+            AppSelect.AppList.Controller.listApps();
         },
-        selectApp: function() {
-            console.log("select app");
-            //AppSelect.Select.Controller.selectApp(id);
+        selectApp: function(model) {
+            console.log("selectApp API: " + model);
+            AppSelect.MenuList.Controller.listMenus(model);
         },
         storeApps: function(apps){
             console.log("CC apps API store apps");
@@ -28,15 +28,24 @@ FormplayerFrontend.module("AppSelect", function(AppSelect, FormplayerFrontend, B
         API.listApps();
     });
 
-    FormplayerFrontend.on("apps:select", function(id){
-        FormplayerFrontend.navigate("apps/" + id + "/select");
-        API.selectApp(id);
+    FormplayerFrontend.on("app:select", function(model){
+        console.log("ccapps:appselect" + model);
+        FormplayerFrontend.navigate("apps/" + model.attributes._id + "/select");
+        API.selectApp(model);
     });
 
     FormplayerFrontend.on("apps:storeapps", function(apps){
         console.log("apps:storeapps");
         API.storeApps(apps);
         FormplayerFrontend.navigate("apps");
-    })
+    });
+
+    FormplayerFrontend.on("app:select:")
+
+    AppSelect.on("start", function() {
+        new AppSelect.Router({
+            controller: API
+        });
+    });
 
 });
