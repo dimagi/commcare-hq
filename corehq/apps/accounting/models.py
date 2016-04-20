@@ -372,7 +372,6 @@ class BillingAccount(models.Model):
     @classmethod
     def get_or_create_account_by_domain(cls, domain,
                                         created_by=None, account_type=None,
-                                        created_by_invoicing=False,
                                         entry_point=None, last_payment_method=None,
                                         pre_or_post_pay=None):
         """
