@@ -17,7 +17,7 @@ from corehq.apps.userreports.pillow import REBUILD_CHECK_INTERVAL, \
 from corehq.apps.userreports.sql import IndicatorSqlAdapter
 from corehq.apps.userreports.tasks import rebuild_indicators
 from corehq.apps.userreports.tests.utils import get_sample_data_source, get_sample_doc_and_indicators, \
-    doc_to_change
+    doc_to_change, domain_lite
 from corehq.form_processor.backends.sql.dbaccessors import CaseAccessorSQL
 from corehq.util.test_utils import softer_assert
 from corehq.util.context_managers import drop_connected_signals
@@ -177,7 +177,7 @@ class IndicatorPillowTest(IndicatorPillowTestBase):
 class StaticKafkaIndicatorPillowTest(TestCase):
     dependent_apps = ['pillowtop']
 
-    @patch('corehq.apps.callcenter.data_source.get_call_center_domains', MagicMock(return_value=['cc1']))
+    @patch('corehq.apps.callcenter.data_source.get_call_center_domains', MagicMock(return_value=[domain_lite('cc1')]))
     def test_bootstrap_can_be_called(self):
         get_kafka_ucr_static_pillow().bootstrap()
 

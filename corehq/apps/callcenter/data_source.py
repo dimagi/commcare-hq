@@ -23,13 +23,13 @@ def call_center_data_source_provider():
             yield _make_data_source_for_domain(data_source_json, domain)
 
 
-def _make_data_source_for_domain(data_source_json, domain):
+def _make_data_source_for_domain(data_source_json, domain_lite):
     from corehq.apps.userreports.models import StaticDataSourceConfiguration
     from corehq.apps.userreports.models import DataSourceConfiguration
 
     doc = deepcopy(data_source_json)
-    doc['domain'] = domain
-    doc['_id'] = StaticDataSourceConfiguration.get_doc_id(domain, doc['table_id'])
+    doc['domain'] = domain_lite.name
+    doc['_id'] = StaticDataSourceConfiguration.get_doc_id(domain_lite.name, doc['table_id'])
     return DataSourceConfiguration.wrap(doc)
 
 

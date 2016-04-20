@@ -4,11 +4,12 @@ from django.test import SimpleTestCase
 from django.test.utils import override_settings
 from mock import patch, MagicMock
 
+from corehq.apps.userreports.tests.utils import domain_lite
 from corehq.util.test_utils import TestFileMixin
 from corehq.apps.userreports.models import StaticDataSourceConfiguration, DataSourceConfiguration
 
 
-@patch('corehq.apps.callcenter.data_source.get_call_center_domains', MagicMock(return_value=['cc1']))
+@patch('corehq.apps.callcenter.data_source.get_call_center_domains', MagicMock(return_value=[domain_lite('cc1')]))
 class TestStaticDataSource(SimpleTestCase, TestFileMixin):
 
     file_path = ('data', 'static_data_sources')
