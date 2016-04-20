@@ -22,11 +22,11 @@ from corehq.apps.hqmedia.models import HQMediaMapItem
 class SuiteGenerator(object):
     descriptor = u"Suite File"
 
-    def __init__(self, app, lang_profile=None):
+    def __init__(self, app, build_profile=None):
         self.app = app
         self.modules = list(app.get_modules())
         self.suite = Suite(version=self.app.version, descriptor=self.descriptor)
-        self.lang_profile = lang_profile
+        self.build_profile = build_profile
 
     def _add_sections(self, contributors):
         for contributor in contributors:
@@ -39,7 +39,7 @@ class SuiteGenerator(object):
         # Note: the order in which things happen in this function matters
 
         self._add_sections([
-            FormResourceContributor(self.suite, self.app, self.modules, self.lang_profile),
+            FormResourceContributor(self.suite, self.app, self.modules, self.build_profile),
             LocaleResourceContributor(self.suite, self.app, self.modules),
             DetailContributor(self.suite, self.app, self.modules),
         ])
@@ -78,7 +78,7 @@ class MediaSuiteGenerator(object):
 
     def __init__(self, app, profile=None):
         self.app = app
-        self.profile = app.language_profiles[profile] if profile else None
+        self.profile = app.build_profiles[profile] if profile else None
         self.suite = Suite(
             version=self.app.version,
             descriptor=self.descriptor,

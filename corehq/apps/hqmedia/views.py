@@ -459,7 +459,7 @@ def iter_app_files(app, include_multimedia_files, include_index_files, profile=N
         app.remove_unused_mappings()
         languages = None
         if profile:
-            languages = app.language_profiles[profile].langs
+            languages = app.build_profiles[profile].langs
         file_iterator, errors = iter_media_files(app.get_media_objects(languages=languages))
     if include_index_files:
         index_files, index_file_errors = iter_index_files(app, profile=profile)

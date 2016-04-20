@@ -20,7 +20,7 @@ function(doc){
             comment_from: doc.comment_from,
             is_released: doc.is_released,
             case_sharing: doc.case_sharing,
-            language_profiles: doc.language_profiles
+            build_profiles: doc.build_profiles
         });
     }
 }

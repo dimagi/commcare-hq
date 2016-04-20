@@ -22,9 +22,9 @@ hqDefine('app_manager/js/releases.js', function () {
         self.base_url = function() {
             return '/a/' + self.domain() + '/apps/odk/' + self.id() + '/';
         };
-        self.lang_profiles = function() {
+        self.build_profiles = function() {
             profiles = [{'label': gettext('all languages'), 'value': ''}];
-            _.each(app_data.language_profiles, function(value, key, list) {
+            _.each(app_data.build_profiles, function(value, key, list) {
                 profiles.push({'label': value['name'], 'value': key})
             });
             return profiles;

@@ -356,7 +356,7 @@ class AppDiffView(LoginAndDomainMixin, BasePageView, DomainViewMixin):
         return reverse(self.urlname, args=[self.domain, self.first_app_id, self.second_app_id])
 
 class LanguageProfilesView(View):
-    urlname = 'language_profiles'
+    urlname = 'build_profiles'
 
     @method_decorator(require_can_edit_apps)
     def dispatch(self, request, *args, **kwargs):
@@ -368,9 +368,9 @@ class LanguageProfilesView(View):
         if profiles:
             for profile in profiles:
                 id = profile.get('id', uuid.uuid4().hex)
-                app.language_profiles[id] = BuildProfile(langs=profile['langs'], name=profile['name'])
+                app.build_profiles[id] = BuildProfile(langs=profile['langs'], name=profile['name'])
         else:
-            app.language_profiles = {}
+            app.build_profiles = {}
         app.save()
         return HttpResponse()
 

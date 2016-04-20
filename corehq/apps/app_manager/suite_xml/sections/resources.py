@@ -8,16 +8,16 @@ from corehq.apps.app_manager.util import languages_mapping
 class FormResourceContributor(SectionContributor):
     section_name = 'xform_resources'
 
-    def __init__(self, suite, app, modules, lang_profile):
+    def __init__(self, suite, app, modules, build_profile):
         super(FormResourceContributor, self).__init__(suite, app, modules)
-        self.lang_profile = lang_profile
+        self.build_profile = build_profile
 
     def get_section_elements(self):
         for form_stuff in self.app.get_forms(bare=False):
             form = form_stuff["form"]
             path = './modules-{module.id}/forms-{form.id}.xml'.format(**form_stuff)
-            if self.lang_profile:
-                path += '?profile={profile}'.format(profile=self.lang_profile)
+            if self.build_profile:
+                path += '?profile={profile}'.format(profile=self.build_profile)
             resource = XFormResource(
                 id=id_strings.xform_resource(form),
                 version=form.get_version(),
