@@ -91,7 +91,7 @@
                                type="text"
                                data-bind="value: filter.selectedValue.ancestor_location_type_name"/>
                     </div>
-                    <div data-bind="visible: filter.selectedValue.doc_type() === 'NumericFilter'">
+                    <!-- ko if: filter.selectedValue.doc_type() === 'NumericFilter' -->
                         <div class="form-inline">
                             <div class="form-group">
                                 <select
@@ -106,7 +106,7 @@
                                 <input type="number" class="form-control" data-bind="value: filter.selectedValue.operand"/>
                             </div>
                         </div>
-                    </div>
+                    <!-- /ko -->
                 </div>
             </th>
         </tr>
