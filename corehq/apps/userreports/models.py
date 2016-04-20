@@ -464,7 +464,7 @@ class StaticDataSourceConfiguration(JsonObject):
                     doc['_id'] = cls.get_doc_id(domain, doc['table_id'])
                     yield DataSourceConfiguration.wrap(doc)
 
-        for provider_path in settings.STATIC_DATA_SOURCES:
+        for provider_path in settings.STATIC_DATA_SOURCE_PROVIDERS:
             try:
                 provider_fn = to_function(provider_path, failhard=True)
             except:
