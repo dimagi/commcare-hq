@@ -3900,6 +3900,11 @@ def absolute_url_property(method):
     return property(_inner)
 
 
+class BuildProfile(DocumentSchema):
+    name = StringProperty()
+    langs = StringListProperty()
+
+
 class ApplicationBase(VersionedDoc, SnapshotMixin,
                       CommCareFeatureSupportMixin,
                       CommentMixin):
@@ -3988,7 +3993,7 @@ class ApplicationBase(VersionedDoc, SnapshotMixin,
     # always false for RemoteApp
     case_sharing = BooleanProperty(default=False)
 
-    language_profiles = DictProperty()
+    language_profiles = SchemaDictProperty(BuildProfile)
 
     @classmethod
     def wrap(cls, data):
@@ -4793,7 +4798,7 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
     def create_suite(self, lang_profile=None):
         if self.application_version == APP_V1:
             template='app_manager/suite-%s.xml' % self.application_version
-            langs = self.langs if not lang_profile else self.language_profiles[lang_profile]['langs']
+            langs = self.langs if not lang_profile else self.language_profiles[lang_profile].langs
             return render_to_string(template, {
                 'app': self,
                 'langs': ["default"] + langs
@@ -4819,7 +4824,7 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
             '{}media_suite.xml'.format(prefix): self.create_media_suite(lang_profile),
         }
 
-        langs_for_build = self.langs if not lang_profile else self.language_profiles[lang_profile]['langs']
+        langs_for_build = self.langs if not lang_profile else self.language_profiles[lang_profile].langs
         for lang in ['default'] + langs_for_build:
             files["{prefix}{lang}/app_strings.txt".format(prefix=prefix, lang=lang)] = self.create_app_strings(lang)
         for form_stuff in self.get_forms(bare=False):
@@ -5277,7 +5282,7 @@ class RemoteApp(ApplicationBase):
             'profile.xml': self.create_profile(),
         }
         tree = _parse_xml(files['profile.xml'])
-        langs_for_build = self.langs if not lang_profile else self.language_profiles[lang_profile]['langs']
+        langs_for_build = self.langs if not lang_profile else self.language_profiles[lang_profile].langs
 
         def add_file_from_path(path, strict=False, transform=None):
             added_files = []
@@ -5324,7 +5329,7 @@ class RemoteApp(ApplicationBase):
         return files
 
     def make_questions_map(self, lang_profile=None):
-        langs_for_build = self.langs if not lang_profile else self.language_profiles[lang_profile]['langs']
+        langs_for_build = self.langs if not lang_profile else self.language_profiles[lang_profile].langs
         if self.copy_of:
             xmlns_map = {}
 

@@ -37,6 +37,7 @@ from corehq.apps.app_manager.dbaccessors import get_app, get_latest_build_doc
 from corehq.apps.app_manager.models import (
     Application,
     SavedAppBuild,
+    BuildProfile,
 )
 from corehq.apps.app_manager.decorators import no_conflict_require_POST, \
     require_can_edit_apps, require_deploy_apps
@@ -363,17 +364,14 @@ class LanguageProfilesView(View):
 
     def post(self, request, domain, app_id, *args, **kwargs):
         profiles = json.loads(request.body).get('profiles')
-        profiles_dict = {}
+        app = Application.get(app_id)
         if profiles:
-            app = Application.get(app_id)
             for profile in profiles:
-                if not profile.get('id'):
-                    id = uuid.uuid4().hex
-                    profiles_dict[id] = {'langs': profile['langs'], 'name': profile['name']}
-                else:
-                    profiles_dict[profile['id']] = {'langs': profile['langs'], 'name': profile['name']}
-            app.language_profiles = profiles_dict
-            app.save()
+                id = profile.get('id', uuid.uuid4().hex)
+                app.language_profiles[id] = BuildProfile(langs=profile['langs'], name=profile['name'])
+        else:
+            app.language_profiles = {}
+        app.save()
         return HttpResponse()
 
 
