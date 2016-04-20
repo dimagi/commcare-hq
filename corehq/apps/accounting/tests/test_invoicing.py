@@ -3,23 +3,36 @@ import random
 import datetime
 
 from django.core.exceptions import ObjectDoesNotExist
-from django.core.management import call_command
-from corehq.apps.accounting.tests.base_tests import BaseAccountingTest
 
 from dimagi.utils.dates import add_months_to_date
 
 from corehq.apps.sms.models import INCOMING, OUTGOING
 from corehq.apps.smsbillables.models import (
-    SmsGatewayFee, SmsGatewayFeeCriteria, SmsUsageFee, SmsUsageFeeCriteria,
     SmsBillable,
+    SmsGatewayFee,
+    SmsGatewayFeeCriteria,
+    SmsUsageFee,
+    SmsUsageFeeCriteria,
 )
 from corehq.apps.accounting import generator, tasks, utils
 from corehq.apps.accounting.models import (
-    Invoice, FeatureType, LineItem, Subscriber, DefaultProductPlan,
-    CreditAdjustment, CreditLine, SubscriptionAdjustment, SoftwareProductType,
-    SoftwarePlanEdition, BillingRecord, BillingAccount, SubscriptionType,
-    InvoiceBaseManager, SMALL_INVOICE_THRESHOLD, Subscription
+    SMALL_INVOICE_THRESHOLD,
+    BillingAccount,
+    BillingRecord,
+    CreditAdjustment,
+    CreditLine,
+    DefaultProductPlan,
+    FeatureType,
+    Invoice,
+    LineItem,
+    SoftwarePlanEdition,
+    SoftwareProductType,
+    Subscriber,
+    Subscription,
+    SubscriptionAdjustment,
+    SubscriptionType,
 )
+from corehq.apps.accounting.tests.base_tests import BaseAccountingTest
 
 
 class BaseInvoiceTestCase(BaseAccountingTest):
@@ -238,7 +251,7 @@ class TestContractedInvoices(BaseInvoiceTestCase):
             self.domain,
             date_start=subscription_start_date,
             date_end=subscription_end_date,
-            service_type=SubscriptionType.CONTRACTED,
+            service_type=SubscriptionType.IMPLEMENTATION,
         )
 
         self.invoice_date = utils.months_from_date(

@@ -374,7 +374,7 @@ class SubscriptionForm(forms.Form):
     service_type = forms.ChoiceField(
         label=ugettext_lazy("Type"),
         choices=SubscriptionType.CHOICES,
-        initial=SubscriptionType.CONTRACTED,
+        initial=SubscriptionType.IMPLEMENTATION,
     )
     pro_bono_status = forms.ChoiceField(
         label=ugettext_lazy("Discounted"),
@@ -676,7 +676,7 @@ class ChangeSubscriptionForm(forms.Form):
     service_type = forms.ChoiceField(
         label=ugettext_lazy("Type"),
         choices=SubscriptionType.CHOICES,
-        initial=SubscriptionType.CONTRACTED,
+        initial=SubscriptionType.IMPLEMENTATION,
     )
     pro_bono_status = forms.ChoiceField(
         label=ugettext_lazy("Discounted"),

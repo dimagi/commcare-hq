@@ -30,7 +30,7 @@ from django.template.response import TemplateResponse
 from django.utils.decorators import method_decorator
 from django.utils.translation import ugettext as _, ugettext_noop
 from django.views.decorators.debug import sensitive_post_parameters
-from django.views.decorators.http import require_POST
+from django.views.decorators.http import require_GET, require_POST
 from django.views.generic import TemplateView
 
 import httpagentparser
@@ -71,7 +71,6 @@ from corehq.middleware import always_allow_browser_caching
 from corehq.util.datadog.const import DATADOG_UNKNOWN
 from corehq.util.datadog.metrics import JSERROR_COUNT
 from corehq.util.datadog.utils import create_datadog_event, log_counter, sanitize_url
-from corehq.util.view_utils import expect_GET
 
 
 def pg_check():
@@ -189,6 +188,7 @@ def not_found(request, template_name='404.html'):
         })))
 
 
+@require_GET
 def redirect_to_default(req, domain=None):
     if not req.user.is_authenticated():
         if domain != None:

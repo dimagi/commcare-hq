@@ -16,7 +16,7 @@ class UserGroupsFixtureProvider(object):
         they are a part of.
         """
         fixture = self.get_group_fixture(user, last_sync)
-        if fixture:
+        if len(fixture):
             return [fixture]
         else:
             return []

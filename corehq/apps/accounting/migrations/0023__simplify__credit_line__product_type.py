@@ -16,6 +16,8 @@ def confirm_no_mismatched_subscription_credit(apps, schema_editor):
         product_type=F('subscription__plan_version__product_rate__product__product_type'),
     ).exclude(
         balance=0,
+    ).exclude(
+        subscription__is_hidden_to_ops=True,
     ).exists():
         raise Exception("""
 
@@ -34,6 +36,8 @@ problematic_credit_lines = CreditLine.objects.filter(
     product_type=F('subscription__plan_version__product_rate__product__product_type'),
 ).exclude(
     balance=0,
+).exclude(
+    subscription__is_hidden_to_ops=True,
 )
 CreditAdjustment.objects.filter(credit_line__in=problematic_credit_lines).delete()
 CreditAdjustment.objects.filter(related_credit__in=problematic_credit_lines).delete()
@@ -46,6 +50,8 @@ def confirm_no_mismatched_account_credit_can_be_invoiced_automatically(apps, sch
     previous_invoicing_date = date(date.today().year, date.today().month, 1)
     subscriptions_in_future_invoicing_periods = apps.get_model('accounting', 'Subscription').objects.exclude(
         date_end__lte=previous_invoicing_date,
+    ).exclude(
+        is_hidden_to_ops=True,
     )
     if filter(
         lambda sub: apps.get_model('accounting', 'CreditLine').objects.filter(

@@ -70,10 +70,15 @@ class SMSBillablesInterface(GenericTabularReport):
             'date_sent',
             'domain',
             'direction',
+            'multipart_count',
+            None,
+            None,
+            None,
+            None,
+            None,
             'date_created',
         ]
-        sort_index = int(self.request.GET.get('iSortCol_0', 2))
-        sort_index = 1 if sort_index == 0 else sort_index - 1
+        sort_index = int(self.request.GET.get('iSortCol_0', 1))
         field = sort_fields[sort_index]
         sort_descending = self.request.GET.get('sSortDir_0', 'asc') == 'desc'
         return field if not sort_descending else '-{0}'.format(field)

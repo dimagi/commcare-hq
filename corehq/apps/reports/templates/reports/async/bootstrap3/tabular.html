@@ -16,7 +16,7 @@
     {% if charts %}
     <div class="row">
         {% for chart in charts %}
-        <div id='chart_{{ report.slug }}_{{ forloop.counter }}' class="span{{ chart_span }} hide">
+        <div id='chart_{{ report.slug }}_{{ forloop.counter }}' class="col-md-{{ chart_span }} collapse">
             {% if chart.title %}<h4 style="text-align: center;">{{ chart.title }}</h4>{% endif %}
             <svg style='height: {{ chart.height }}px'> </svg>
         </div>

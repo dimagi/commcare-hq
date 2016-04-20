@@ -6,11 +6,16 @@
         #chart svg {
             height: 300px;
         }
+        .popover {
+            max-width: 100%;
+            min-width: 300px;
+            min-height: 200px;
+        }
     </style>
 {% endblock %}
 {% block js-inline %}
 <script type="text/javascript">
-    $(function() {
+    function setupCharts() {
         // setup chart
         var data = {{ rows|JSON }};
         var performingSeries = {
@@ -43,11 +48,40 @@
             nv.utils.windowResize(chart.update);
             return chart;
         });
+    }
+
+    function setupPopovers() {
+        // ajax popover: http://stackoverflow.com/a/14560039/8207
+        $('a.user-popover').popover({
+            "html": true,
+            "content": function() {
+                var div_id =  "tmp-id-" + $.now();
+                return details_in_popup($(this).data('url'), div_id);
+            }
+        });
+
+        function details_in_popup(link, div_id) {
+            $.ajax({
+                url: link,
+                success: function(response) {
+                    $('#'+div_id).html(response);
+                },
+                error: function(response) {
+                    $('#'+div_id).html(gettext("Sorry we couldn't load that."));
+                }
+            });
+            return $('<div />').attr('id', div_id).text(gettext('Loading...'))[0].outerHTML;
+        }
+    }
+
+    $(function() {
+        setupCharts();
+        setupPopovers();
     });
 </script>
 {% endblock %}
 {% block main_column_content %}
-    <h1>{% trans "Project Health Dashboard" %}</h1>
+    <h1>{% trans "Project Performance Dashboard" %}</h1>
     <p class="lead">
         {% blocktrans %}
         A summary of the overall health of your project based on how your users are doing over time.

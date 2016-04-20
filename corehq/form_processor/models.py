@@ -563,6 +563,11 @@ class CommCareCaseSQL(DisabledDbMixin, models.Model, RedisLockableMixIn,
     def dynamic_case_properties(self):
         return OrderedDict(sorted(self.case_json.iteritems()))
 
+    def to_api_json(self, lite=False):
+        from .serializers import CommCareCaseSQLAPISerializer
+        serializer = CommCareCaseSQLAPISerializer(self, lite=lite)
+        return serializer.data
+
     def to_json(self):
         from .serializers import CommCareCaseSQLSerializer
         serializer = CommCareCaseSQLSerializer(self)
@@ -584,6 +589,9 @@ class CommCareCaseSQL(DisabledDbMixin, models.Model, RedisLockableMixIn,
     def reverse_indices(self):
         from corehq.form_processor.backends.sql.dbaccessors import CaseAccessorSQL
         return CaseAccessorSQL.get_reverse_indices(self.case_id)
+
+    def get_reverse_index_map(self):
+        return self.get_index_map(True)
 
     @memoized
     def _saved_indices(self):
@@ -638,7 +646,7 @@ class CommCareCaseSQL(DisabledDbMixin, models.Model, RedisLockableMixIn,
     @property
     def actions(self):
         """For compatability with CommCareCase. Please use transactions when possible"""
-        return self.transactions
+        return self.non_revoked_transactions
 
     def get_transaction_by_form_id(self, form_id):
         from corehq.form_processor.backends.sql.dbaccessors import CaseAccessorSQL
@@ -1035,6 +1043,16 @@ class CaseTransaction(DisabledDbMixin, models.Model):
     @property
     def is_case_attachment(self):
         return bool(self.is_form_transaction and self.TYPE_CASE_ATTACHMENT & self.type)
+
+    @property
+    def is_case_rebuild(self):
+        return bool(
+            (self.TYPE_REBUILD_FORM_ARCHIVED & self.type) or
+            (self.TYPE_REBUILD_FORM_EDIT & self.type) or
+            (self.TYPE_REBUILD_USER_ARCHIVED & self.type) or
+            (self.TYPE_REBUILD_USER_REQUESTED & self.type) or
+            (self.TYPE_REBUILD_WITH_REASON & self.type)
+        )
 
     @property
     def readable_type(self):
