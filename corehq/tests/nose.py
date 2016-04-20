@@ -130,8 +130,7 @@ class ErrorOnDbAccessContext(object):
         from django.conf import settings
         settings.DB_ENABLED = self.original_db_enabled
         for cls in self.db_classes:
-            db = loading.get_db(cls._meta.app_label)
-            cls.set_db(db)
+            del cls._db
         couchlog.signals.got_request_exception.connect(
             couchlog.signals.log_request_exception)
         self.db_patch.stop()
