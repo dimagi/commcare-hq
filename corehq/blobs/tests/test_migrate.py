@@ -14,7 +14,7 @@ from django.conf import settings
 from django.test import TestCase
 from testil import replattr, tempdir
 
-from corehq.apps.app_manager.models import Application
+from corehq.apps.app_manager.models import Application, RemoteApp
 from couchexport.models import SavedBasicExport, ExportConfiguration
 
 NOT_SET = object()
@@ -179,6 +179,11 @@ class TestApplicationMigrations(BaseMigrationTest):
         super(BlobMixin, app).put_attachment(form, "form.xml")
         app.save()
 
+        remote_app = RemoteApp()
+        remote_app.save()
+        super(BlobMixin, remote_app).put_attachment(form, "form.xml")
+        remote_app.save()
+
         # add legacy attribute to make sure the migration uses doc_type.wrap()
         db = app.get_db()
         doc = db.get(app._id, wrapper=None)
@@ -186,9 +191,11 @@ class TestApplicationMigrations(BaseMigrationTest):
         db.save_doc(doc)
         app = Application.get(app._id)
 
-        self.do_migration([app])
+        self.do_migration([app, remote_app])
 
         exp = Application.get(app._id)
+        self.assertEqual(exp.fetch_attachment("form.xml"), form)
+        exp = RemoteApp.get(remote_app._id)
         self.assertEqual(exp.fetch_attachment("form.xml"), form)
 
     def test_migrate_with_concurrent_modification(self):
@@ -201,13 +208,24 @@ class TestApplicationMigrations(BaseMigrationTest):
         app.save()
         self.assertEqual(len(app._attachments), 2)
 
+        remote_app = RemoteApp()
+        remote_app.save()
+        super(BlobMixin, remote_app).put_attachment(old_form, "form.xml")
+        super(BlobMixin, remote_app).put_attachment(old_form, "other.xml")
+        remote_app.save()
+        self.assertEqual(len(remote_app._attachments), 2)
+
         def modify():
             # put_attachment() calls .save()
             Application.get(app._id).put_attachment(new_form, "form.xml")
+            RemoteApp.get(remote_app._id).put_attachment(new_form, "form.xml")
 
-        self.do_failed_migration({app: (1, 1)}, modify)
+        self.do_failed_migration({app: (1, 1), remote_app: (1, 1)}, modify)
 
         exp = Application.get(app._id)
+        self.assertEqual(exp.fetch_attachment("form.xml"), new_form)
+        self.assertEqual(exp.fetch_attachment("other.xml"), old_form)
+        exp = RemoteApp.get(remote_app._id)
         self.assertEqual(exp.fetch_attachment("form.xml"), new_form)
         self.assertEqual(exp.fetch_attachment("other.xml"), old_form)
 
