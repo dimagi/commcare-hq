@@ -76,7 +76,7 @@ STATIC_URL = '/static/'
 STATIC_CDN = ''
 
 FILEPATH = os.path.abspath(os.path.dirname(__file__))
-SERVICE_DIR = os.path.join(FILEPATH, 'fab', 'services', 'templates')
+SERVICE_DIR = os.path.join(FILEPATH, 'deployment', 'commcare-hq-deploy', 'fab', 'services', 'templates')
 # media for user uploaded media.  in general this won't be used at all.
 MEDIA_ROOT = os.path.join(FILEPATH, 'mediafiles')
 STATIC_ROOT = os.path.join(FILEPATH, 'staticfiles')
