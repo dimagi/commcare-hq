@@ -1,16 +1,14 @@
-from uuid import uuid4
 from django.core.urlresolvers import reverse
 from django.shortcuts import redirect
 from django.utils.decorators import method_decorator
 from django.utils.translation import ugettext_noop
+from casexml.apps.case.cleanup import claim_case
 from casexml.apps.case.fixtures import CaseDBFixture
-from casexml.apps.case.mock import CaseBlock, IndexAttrs
 from casexml.apps.case.models import CommCareCase
-from casexml.apps.case.util import post_case_blocks
 from casexml.apps.case.xml import V2
 from corehq import toggles
 from corehq.apps.app_manager.dbaccessors import get_app
-from corehq.apps.case_search.models import CLAIM_CASE_TYPE, CaseSearchConfig
+from corehq.apps.case_search.models import CaseSearchConfig
 from corehq.apps.domain.decorators import domain_admin_required, login_or_digest_or_basic_or_apikey
 from corehq.apps.domain.models import Domain
 from corehq.apps.domain.views import DomainViewMixin, EditMyProjectSettingsView
@@ -19,11 +17,9 @@ from corehq.apps.ota.forms import PrimeRestoreCacheForm, AdvancedPrimeRestoreCac
 from corehq.apps.ota.tasks import prime_restore
 from corehq.apps.style.views import BaseB3SectionPageView
 from corehq.apps.users.models import CouchUser, CommCareUser
-from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 from corehq.form_processor.serializers import CommCareCaseSQLSerializer, get_instance_from_data
 from corehq.pillows.mappings.case_search_mapping import CASE_SEARCH_MAX_RESULTS
 from corehq.tabs.tabclasses import ProjectSettingsTab
-from corehq.form_processor.models import CommCareCaseSQL
 from corehq.form_processor.utils import should_use_sql_backend
 from corehq.util.view_utils import json_error
 from dimagi.utils.decorators.memoized import memoized
@@ -81,28 +77,8 @@ def claim(request, domain):
     # TODO: use request.session to ensure only one extension case if multiple claims for the same beneficiary
     #       come from the same AWW.
     if request.method == 'POST':
-        host_id = request.POST['case_id']
-        host_type = request.POST.get('case_type')  # Nice to have,
-        host_name = request.POST.get('case_name')  # but optional
-        if not (host_type and host_name):
-            case = CaseAccessors(domain).get_case(host_id)
-            host_type = case.type
-            host_name = case.name
-        claim_case_block = CaseBlock(
-            create=True,
-            case_id=uuid4().hex,
-            case_name=host_name,
-            case_type=CLAIM_CASE_TYPE,
-            owner_id=couch_user.user_id,
-            index={
-                'host': IndexAttrs(
-                    case_type=host_type,
-                    case_id=host_id,
-                    relationship='extension',
-                )
-            }
-        ).as_xml()
-        post_case_blocks([claim_case_block], {'domain': domain})
+        claim_case(domain, couch_user.user_id, request.POST['case_id'],
+                   host_type=request.POST.get('case_type'), host_name=request.POST.get('case_name'))
     return HttpResponse(status=200)
 
 
