@@ -259,7 +259,8 @@ def migrate(slug, doc_types, migrate_func, filename=None):
                 f.write('{}\n'.format(json.dumps(doc)))
                 total += 1
                 if total % 100 == 0:
-                    print("Loaded %s documents in %s" % (datetime.now() - start))
+                    print("Loaded {} documents in {}"
+                          .format(total, datetime.now() - start))
 
     migrated, skips = migrate_func(filename, type_map, total)
 
