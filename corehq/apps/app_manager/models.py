@@ -4017,7 +4017,7 @@ class ApplicationBase(VersionedDoc, SnapshotMixin,
         if 'build_langs' in data:
             if data['build_langs'] != data['langs']:
                 if not 'build_profiles' in data:
-                    data['build_profiles'] = {uuid.uuid4().hex : {'name': ', '.join(data['build_langs']), 'langs': data['build_langs']}}
+                    data['build_profiles'] = {uuid.uuid4().hex : BuildProfile(name=', '.join(data['build_langs']), langs=data['build_langs'])}
             del data['build_langs']
 
         should_save = False
