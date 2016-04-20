@@ -87,7 +87,8 @@ from corehq.toggles import REPORT_BUILDER_MAP_REPORTS
 from corehq.util.couch import get_document_or_404
 
 
-USAGE_EVENT_SESSION_KEY = 'USAGE_EVENT'
+CHOOSE_DATA_SOURCE_EVENT_KEY = 'CHOOSE_DATA_SOURCE_EVENT'
+CREATE_REPORT_EVENT_KEY = 'CREATE_REPORT_EVENT_KEY'
 
 
 def get_datasource_config_or_404(config_id, domain):
@@ -325,7 +326,7 @@ class ReportBuilderDataSourceSelect(ReportBuilderView):
                 "wizard where you give your report a name and choose a data source"
             )
 
-            request.session[USAGE_EVENT_SESSION_KEY] = [
+            request.session[CHOOSE_DATA_SOURCE_EVENT_KEY] = [
                 "Report Builder",
                 "Successful Click on Next (Data Source)",
                 app_source.source_type,
@@ -395,7 +396,7 @@ class ConfigureChartReport(ReportBuilderView):
             'filter_display_help_text': _('Web users viewing the report will see this display text instead of the property name. Name your filter something easy for users to understand.'),
             'filter_format_help_text': _('What type of property is this filter?<br/><br/><strong>Date</strong>: select this if the property is a date.<br/><strong>Choice</strong>: select this if the property is text or multiple choice.'),
             'calculation_help_text': _("Column format selection will determine how each row's value is calculated."),
-            'usage_event': self.request.session.pop(USAGE_EVENT_SESSION_KEY, None)
+            'usage_event': self.request.session.pop(CHOOSE_DATA_SOURCE_EVENT_KEY, None)
         }
 
     @property
@@ -433,6 +434,11 @@ class ConfigureChartReport(ReportBuilderView):
                     self.request.user.email,
                     "Successfully created a new report in the Report Builder"
                 )
+                self.request.session[CREATE_REPORT_EVENT_KEY] = [
+                    "Report Builder",
+                    "Click On Done On New Report (Successfully)",
+                    self.report_type,
+                ]
             return HttpResponseRedirect(
                 reverse(ConfigurableReport.slug, args=[self.domain, report_configuration._id])
             )

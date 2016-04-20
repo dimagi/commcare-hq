@@ -215,7 +215,17 @@ class ConfigurableReport(JSONResponseMixin, BaseDomainView):
             'headers': self.headers
         }
         context.update(self.saved_report_context_data)
+        context.update(self.pop_report_builder_context_data())
         return context
+
+    def pop_report_builder_context_data(self):
+        """
+        Pop any report builder data stored on the session and return a dict to
+        be included in the template context.
+        """
+        return {
+            'report_builder_event': self.request.session.pop(CREATE_REPORT_EVENT_KEY, None)
+        }
 
     @property
     def saved_report_context_data(self):
