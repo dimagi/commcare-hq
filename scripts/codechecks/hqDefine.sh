@@ -1,5 +1,6 @@
+#!/bin/bash
 # run as
-# bash scripts/codechecks/hqDefine.sh
+# scripts/codechecks/hqDefine.sh
 
 function list-js() {
   find corehq -name '*.js' | grep -v '/_design/' | grep -v 'couchapps' | grep -v '/js/vellum/'
