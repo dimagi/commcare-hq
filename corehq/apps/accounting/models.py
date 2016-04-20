@@ -151,12 +151,10 @@ class SoftwarePlanVisibility(object):
     PUBLIC = "PUBLIC"
     INTERNAL = "INTERNAL"
     TRIAL = "TRIAL"
-    TRIAL_INTERNAL = "TRIAL_INT"
     CHOICES = (
         (PUBLIC, "Anyone can subscribe"),
         (INTERNAL, "Dimagi must create subscription"),
         (TRIAL, "This is a Trial Plan"),
-        (TRIAL_INTERNAL, "This is special Trial plan that Dimagi manages."),
     )
 
 
@@ -1077,7 +1075,7 @@ class Subscription(models.Model):
 
     @property
     def is_trial_or_internal_trial(self):
-        return self.is_trial or self.plan_version.plan.visibility == SoftwarePlanVisibility.TRIAL_INTERNAL
+        return self.is_trial
 
     @property
     def allowed_attr_changes(self):

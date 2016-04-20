@@ -1270,8 +1270,7 @@ class InternalSubscriptionManagementView(BaseAdminProjectSettingsView):
                 subscription_type = ContractedPartnerForm.slug
             elif plan.edition == SoftwarePlanEdition.ENTERPRISE:
                 subscription_type = DimagiOnlyEnterpriseForm.slug
-            elif (plan.edition == SoftwarePlanEdition.ADVANCED
-                  and plan.visibility == SoftwarePlanVisibility.TRIAL_INTERNAL):
+            elif plan.edition == SoftwarePlanEdition.ADVANCED:
                 subscription_type = AdvancedExtendedTrialForm.slug
 
         return SelectSubscriptionTypeForm(
