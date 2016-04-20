@@ -452,6 +452,17 @@ class ConfigureChartReport(ReportBuilderView):
                     self.report_type,
                 ])
 
+            if self.report_type != "chart":
+                sum_avg_cols = self._get_sum_avg_columns(
+                    report_configuration.columns)
+                # A column is "new" if there are no columns with the (property, agg) combo in the previous report
+                if not set(sum_avg_cols).issubset(set(existing_sum_avg_cols)):
+                    add_event(self.request, [
+                        "Report Builder",
+                        "Changed Column Format to Sum or Average",
+                        self.report_type,
+                    ])
+
             return HttpResponseRedirect(
                 reverse(ConfigurableReport.slug, args=[self.domain, report_configuration._id])
             )

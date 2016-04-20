@@ -642,8 +642,6 @@ class ConfigureNewReportBase(forms.Form):
         return data_source_config._id
 
     def update_report(self):
-        from corehq.apps.userreports.views import delete_data_source_shared
-
         matching_data_source = self.ds_builder.get_existing_match()
         if matching_data_source:
             reactivated = False

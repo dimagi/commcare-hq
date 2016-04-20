@@ -38,4 +38,4 @@ def has_report_builder_access(request):
 
 def add_event(request, event):
     events = request.session.get(REPORT_BUILDER_EVENTS_KEY, [])
-    request.session[REPORT_BUILDER_EVENTS_KEY] = events + event
+    request.session[REPORT_BUILDER_EVENTS_KEY] = events + [event]
