@@ -229,6 +229,11 @@ def migrate(slug, doc_types, migrate_func, filename=None):
         dirpath = mkdtemp()
         filename = os.path.join(dirpath, "export.txt")
 
+    def encode_content(data):
+        if isinstance(data, unicode):
+            data = data.encode("utf-8")
+        return b64encode(data)
+
     print("Loading documents: {}...".format(", ".join(type_map)))
     total = 0
     start = datetime.now()
@@ -242,7 +247,7 @@ def migrate(slug, doc_types, migrate_func, filename=None):
                     doc["_attachments"] = {
                         name: {
                             "content_type": meta["content_type"],
-                            "content": b64encode(fetch_attachment(name)),
+                            "content": encode_content(fetch_attachment(name)),
                         }
                         for name, meta in doc["_attachments"].items()
                     }
