@@ -8,7 +8,7 @@
 # Ayla Reith <areith@dimagi.com>, 2015
 # Carla Legros <clegros@dimagi.com>, 2015
 # Claire_Cravero <ccravero@dimagi.com>, 2014,2016
-# Claire_Cravero <ccravero@dimagi.com>, 2014
+# Claire_Cravero <ccravero@dimagi.com>, 2014,2016
 # Derek Hans <dhans@dimagi.com>, 2015
 # Dimagi Dev <devops@dimagi.com>, 2015-2016
 # djindag <djindalaure@gmail.com>, 2015
@@ -31,8 +31,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: CommCare HQ\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2016-04-20 13:22+0000\n"
-"PO-Revision-Date: 2016-04-19 19:17+0000\n"
+"POT-Creation-Date: 2016-04-20 22:30+0000\n"
+"PO-Revision-Date: 2016-04-20 17:00+0000\n"
 "Last-Translator: Dimagi Dev <devops@dimagi.com>\n"
 "Language-Team: French (http://www.transifex.com/dimagi/commcare-hq/language/"
 "fr/)\n"
@@ -483,7 +483,7 @@ msgstr "Un nom est requis pour ce nouveau rôle."
 msgid "Name"
 msgstr "Nom"
 
-#: corehq/apps/accounting/forms.py:1554 corehq/apps/accounting/models.py:524
+#: corehq/apps/accounting/forms.py:1554 corehq/apps/accounting/models.py:525
 msgid "Company / Organization"
 msgstr "Compagnie / Organisation"
 
@@ -552,15 +552,15 @@ msgstr ""
 msgid "Messages"
 msgstr "Messages"
 
-#: corehq/apps/accounting/models.py:450
+#: corehq/apps/accounting/models.py:451
 msgid "Your card is no longer being used to auto-pay for {billing_account}"
 msgstr ""
 
-#: corehq/apps/accounting/models.py:475
+#: corehq/apps/accounting/models.py:476
 msgid "Your card is being used to auto-pay for {billing_account}"
 msgstr ""
 
-#: corehq/apps/accounting/models.py:507
+#: corehq/apps/accounting/models.py:508
 #: corehq/apps/styleguide/example_forms.py:12 corehq/apps/users/forms.py:178
 #: corehq/apps/users/forms.py:411
 #: corehq/apps/users/templates/users/mobile_workers.html:81
@@ -568,18 +568,18 @@ msgstr ""
 msgid "First Name"
 msgstr "Prénom"
 
-#: corehq/apps/accounting/models.py:510 corehq/apps/users/forms.py:179
+#: corehq/apps/accounting/models.py:511 corehq/apps/users/forms.py:179
 #: corehq/apps/users/forms.py:416
 #: corehq/apps/users/templates/users/mobile_workers.html:82
 #: corehq/apps/users/templates/users/mobile_workers.html:361
 msgid "Last Name"
 msgstr "Nom"
 
-#: corehq/apps/accounting/models.py:515
+#: corehq/apps/accounting/models.py:516
 msgid "Contact Emails"
 msgstr "Contact email "
 
-#: corehq/apps/accounting/models.py:516
+#: corehq/apps/accounting/models.py:517
 msgid ""
 "We will email communications regarding your account to the emails specified "
 "here."
@@ -587,7 +587,7 @@ msgstr ""
 "Nous vous enverrons les communications concernant votre compte pour les "
 "emails indiqués ici."
 
-#: corehq/apps/accounting/models.py:520
+#: corehq/apps/accounting/models.py:521
 #: corehq/apps/data_interfaces/views.py:344
 #: corehq/apps/reports/standard/ivr.py:48
 #: corehq/apps/reports/standard/sms.py:309
@@ -602,48 +602,48 @@ msgstr ""
 msgid "Phone Number"
 msgstr "Numéro de téléphone"
 
-#: corehq/apps/accounting/models.py:528
+#: corehq/apps/accounting/models.py:529
 msgid "Address First Line"
 msgstr "Première ligne D'adresse"
 
-#: corehq/apps/accounting/models.py:532
+#: corehq/apps/accounting/models.py:533
 msgid "Address Second Line"
 msgstr " Deuxième ligne d'adresse"
 
-#: corehq/apps/accounting/models.py:535
+#: corehq/apps/accounting/models.py:536
 #: corehq/apps/appstore/templates/appstore/deployment_info.html:36
 msgid "City"
 msgstr "Ville"
 
-#: corehq/apps/accounting/models.py:539
+#: corehq/apps/accounting/models.py:540
 msgid "State / Province / Region"
 msgstr "Etat / Province / Region"
 
-#: corehq/apps/accounting/models.py:542
+#: corehq/apps/accounting/models.py:543
 msgid "Postal Code"
 msgstr "Code Postale"
 
-#: corehq/apps/accounting/models.py:545
+#: corehq/apps/accounting/models.py:546
 msgid "Country"
 msgstr "Pays"
 
-#: corehq/apps/accounting/models.py:1444
+#: corehq/apps/accounting/models.py:1445
 msgid "tomorrow!"
 msgstr "demain"
 
-#: corehq/apps/accounting/models.py:1446
+#: corehq/apps/accounting/models.py:1447
 #, python-format
 msgid "on %s."
 msgstr "sur %s."
 
-#: corehq/apps/accounting/models.py:1455
+#: corehq/apps/accounting/models.py:1456
 #, python-format
 msgid "%(product)s Alert: 30 day trial for '%(domain)s' ends %(ending_on)s"
 msgstr ""
 "%(product)s Alerte: 30jours de version d'essai pour '%(domain)s' extrémités %"
 "(ending_on)s"
 
-#: corehq/apps/accounting/models.py:1464
+#: corehq/apps/accounting/models.py:1465
 #, python-format
 msgid ""
 "%(product)s Alert: %(domain)s's subscription to %(plan_name)s ends %"
@@ -652,7 +652,7 @@ msgstr ""
 "%(product)s Alerte: %(domain)s subscription au %(plan_name)s finissant %"
 "(ending_on)s"
 
-#: corehq/apps/accounting/models.py:1616
+#: corehq/apps/accounting/models.py:1617
 #, python-format
 msgid ""
 "There is already a subscription '%s' with no end date that conflicts with "
@@ -661,7 +661,7 @@ msgstr ""
 "Il y a déjà une souscription  '%s' sans date d'expiration en conflits avec "
 "la date de début et de fin de cette souscription."
 
-#: corehq/apps/accounting/models.py:1629
+#: corehq/apps/accounting/models.py:1630
 #, python-format
 msgid ""
 "There is already a subscription '%(sub)s' that has an end date that "
@@ -672,28 +672,28 @@ msgstr ""
 "avec la date de fin, et la date fin de cette souscription %(start)s - %(end)"
 "s."
 
-#: corehq/apps/accounting/models.py:2049 corehq/apps/accounting/models.py:2202
+#: corehq/apps/accounting/models.py:2050 corehq/apps/accounting/models.py:2203
 msgid "Paid"
 msgstr "Payé"
 
-#: corehq/apps/accounting/models.py:2050 corehq/apps/accounting/models.py:2204
+#: corehq/apps/accounting/models.py:2051 corehq/apps/accounting/models.py:2205
 msgid "Payment Required"
 msgstr "Payement Requis"
 
-#: corehq/apps/accounting/models.py:2078
+#: corehq/apps/accounting/models.py:2079
 msgid "Hello,"
 msgstr "Bonjour,"
 
-#: corehq/apps/accounting/models.py:2084 custom/ewsghana/alerts/alerts.py:69
+#: corehq/apps/accounting/models.py:2085 custom/ewsghana/alerts/alerts.py:69
 #, python-format
 msgid "Dear %s,"
 msgstr "Chère %s,"
 
-#: corehq/apps/accounting/models.py:2142
+#: corehq/apps/accounting/models.py:2143
 msgid "Your prepayment invoice"
 msgstr ""
 
-#: corehq/apps/accounting/models.py:2988
+#: corehq/apps/accounting/models.py:2989
 msgid "You can't specify both an invoice and a line item."
 msgstr ""
 
@@ -720,20 +720,23 @@ msgstr "Paiement en masse pour l'espace de projet %s"
 msgid "Credits: {credit_types} for {sub_or_account}"
 msgstr ""
 
-#: corehq/apps/accounting/subscription_changes.py:327
-#, python-format
+#: corehq/apps/accounting/subscription_changes.py:350
+#, fuzzy, python-format
+#| msgid ""
+#| "You are using custom branding. Selecting this plan will remove this "
+#| "feature."
 msgid ""
-"You have %(num_apps)d application that will lose CloudCare access if you "
-"select this plan."
+"You have %(num_fix)s Lookup Table set up. Selecting this plan will delete "
+"this Lookup Table."
 msgid_plural ""
-"You have %(num_apps)d applications that will lose CloudCare access if you "
-"select this plan."
+"You have %(num_fix)s Lookup Tables set up. Selecting this plan will delete "
+"these Lookup Tables."
 msgstr[0] ""
-"Vous avez %(num_apps)d application qui perdra l’accès à CloudCare si vous "
-"sélectionner ce plan."
+"Vous utilisez la marque personnalisée. Choisir ce plan effacera les "
+"caractéristiques."
 msgstr[1] ""
-"Vous avez %(num_apps)d applications qui perdrons l’accès à CloudCare si vous "
-"sélectionner ce plan."
+"Vous utilisez la marque personnalisée. Choisir ce plan effacera les "
+"caractéristiques."
 
 #: corehq/apps/accounting/subscription_changes.py:364
 msgid ""
@@ -743,7 +746,10 @@ msgstr ""
 "caractéristiques."
 
 #: corehq/apps/accounting/subscription_changes.py:377
-#, python-format
+#, fuzzy, python-format
+#| msgid ""
+#| "You are using custom branding. Selecting this plan will remove this "
+#| "feature."
 msgid ""
 "You have %(num_active)d active Reminder Rule. Selecting this plan will "
 "deactivate this rule."
@@ -751,14 +757,17 @@ msgid_plural ""
 "You have %(num_active)d active Reminder Rules. Selecting this plan will "
 "deactivate these rules."
 msgstr[0] ""
-"Vous avez  %(num_active)d rôle de rappel actif. Choisir ce plan désactivera "
-"ce rôle."
+"Vous utilisez la marque personnalisée. Choisir ce plan effacera les "
+"caractéristiques."
 msgstr[1] ""
-"Vous avez  %(num_active)d rôles de rappel actifs. Choisir ce plan "
-"désactivera ces rôles."
+"Vous utilisez la marque personnalisée. Choisir ce plan effacera les "
+"caractéristiques."
 
 #: corehq/apps/accounting/subscription_changes.py:397
-#, python-format
+#, fuzzy, python-format
+#| msgid ""
+#| "You are using custom branding. Selecting this plan will remove this "
+#| "feature."
 msgid ""
 "You have %(num_active)d active Reminder Rule for a Survey. Selecting this "
 "plan will deactivate this rule."
@@ -766,65 +775,27 @@ msgid_plural ""
 "You have %(num_active)d active Reminder Rules for a Survey. Selecting this "
 "plan will deactivate these rules."
 msgstr[0] ""
-"Vous avez  %(num_active)d rôle de rappel actif pour le suivis. Choisir ce "
-"plan désactivera ce rôle."
+"Vous utilisez la marque personnalisée. Choisir ce plan effacera les "
+"caractéristiques."
 msgstr[1] ""
-"Vous avez  %(num_active)d rôles de rappel actifs pour le suivis. Choisir ce "
-"plan désactivera ces rôles."
+"Vous utilisez la marque personnalisée. Choisir ce plan effacera les "
+"caractéristiques."
 
 #: corehq/apps/accounting/subscription_changes.py:425
-#, python-format
+#, fuzzy, python-format
+#| msgid ""
+#| "You are using custom branding. Selecting this plan will remove this "
+#| "feature."
 msgid ""
 "You have %(num)d De-Identified Export. Selecting this plan will remove it."
 msgid_plural ""
 "You have %(num)d De-Identified Exports. Selecting this plan will remove them."
 msgstr[0] ""
-"Vous avez %(num)d Rapport Dé-identifié.  Choisir ce plan le supprimera."
+"Vous utilisez la marque personnalisée. Choisir ce plan effacera les "
+"caractéristiques."
 msgstr[1] ""
-"Vous avez %(num)d Téléchargements Dé-identifiés.  Choisir ce plan les "
-"supprimera."
-
-#: corehq/apps/accounting/subscription_changes.py:452
-#, python-format
-msgid ""
-"You have %(num_users)d Mobile Worker over the monthly limit of %"
-"(monthly_limit)d for this new plan. There will be an additional monthly "
-"charge of USD %(excess_fee)s per Mobile Worker, totalling USD %"
-"(monthly_total)s per month, if you select this plan."
-msgid_plural ""
-"You have %(num_users)d Mobile Workers over the monthly limit of %"
-"(monthly_limit)d for this new plan. There will be an additional monthly "
-"charge of USD %(excess_fee)s per Mobile Worker, totalling USD %"
-"(monthly_total)s per month, if you select this plan."
-msgstr[0] ""
-"You have %(num_users)d travailleur mobile ayant dépassé la limité mensuelle "
-"de %(monthly_limit)d pour ce nouveau plan. Il y a charge additive mensuelle "
-"de USD %(excess_fee)s par utilisateur Mobile, pour un total de USD %"
-"(monthly_total)s par mois, si vous sélectionnez ce plan."
-msgstr[1] ""
-"Vous avez %(num_users)d utilisateurs mobile ayant dépassé la limite "
-"mensuelle de %(monthly_limit)d pour ce nouveau plan. Il y a charge additive "
-"mensuelle de USD %(excess_fee)s par utilisateur Mobile, pour un total de USD "
-"%(monthly_total)s par mois, si vous sélectionnez ce plan."
-
-#: corehq/apps/accounting/subscription_changes.py:488
-#, python-format
-msgid ""
-"You have %(num_roles)d Custom Role configured for your project. If you "
-"select this plan, all users with that role will change to having the Read "
-"Only role."
-msgid_plural ""
-"You have %(num_roles)d Custom Roles configured for your project . If you "
-"select this plan, all users with these roles will change to having the Read "
-"Only role."
-msgstr[0] ""
-"Vous avez  %(num_roles)d  profile personnalisé pour ce projet. Si vous "
-"choisissez ce plan, tous  les utilisateurs ayant ce profile, leur droit "
-"d’accès changé en Lecture Seulement."
-msgstr[1] ""
-"Vous avez  %(num_roles)d  profiles personnalisés pour ce projet. Si vous "
-"choisissez ce plan, tous  les utilisateurs ayant ces profiles, leurs droits "
-"d’accès changés en Lecture Seulement."
+"Vous utilisez la marque personnalisée. Choisir ce plan effacera les "
+"caractéristiques."
 
 #: corehq/apps/accounting/subscription_changes.py:514
 #, python-format
@@ -3121,10 +3092,8 @@ msgstr "Relatorio Semanal aos Coordinadores do Distrito e os NEDs"
 
 #: corehq/apps/app_manager/commcare_settings.py:43
 #: custom/bihar/reports/due_list.py:124 custom/bihar/reports/due_list.py:174
-#, fuzzy
-#| msgid "Title"
 msgid "title"
-msgstr "Titre"
+msgstr ""
 
 #: corehq/apps/app_manager/fields.py:67 corehq/apps/hqwebapp/doc_info.py:197
 #: corehq/apps/reminders/forms.py:376 corehq/apps/sms/models.py:990
@@ -3401,10 +3370,8 @@ msgid ""
 msgstr ""
 
 #: corehq/apps/app_manager/models.py:4253
-#, fuzzy
-#| msgid "Table name"
 msgid "value_names"
-msgstr "Nom de tableau"
+msgstr ""
 
 #: corehq/apps/app_manager/models.py:4840
 msgid "Error in form \"{}\": {}"
@@ -7181,10 +7148,8 @@ msgid "Sync consumption fixtures"
 msgstr "Synchronisation du tableau des consommation"
 
 #: corehq/apps/commtrack/forms.py:55
-#, fuzzy
-#| msgid "Use automatic consumption calculation"
 msgid "You must use automatic consumption calculation or "
-msgstr "Utiliser le calcul de consommation automatique"
+msgstr ""
 
 #: corehq/apps/commtrack/forms.py:71 corehq/apps/commtrack/forms.py:76
 #: corehq/apps/commtrack/views.py:259
@@ -11016,7 +10981,7 @@ msgstr ""
 #: corehq/apps/domain/templates/login_and_password/two_factor/_wizard_actions.html:9
 #: corehq/apps/prelogin/templates/prelogin/base.html:132
 #: corehq/apps/style/templates/style/bootstrap2/base.html:83
-#: corehq/apps/style/templates/style/bootstrap3/base.html:252
+#: corehq/apps/style/templates/style/bootstrap3/base.html:253
 msgid "Sign In"
 msgstr "Connexion"
 
@@ -11334,6 +11299,30 @@ msgid ""
 "            your account using backup tokens."
 msgstr ""
 
+#: corehq/apps/domain/templates/login_and_password/two_factor/profile/profile.html:43
+#, fuzzy, python-format
+#| msgid ""
+#| "\n"
+#| "            You must be a Project Administrator to make Subscription "
+#| "changes.\n"
+#| "            "
+msgid ""
+"\n"
+"            You have only one backup token remaining.\n"
+"          "
+msgid_plural ""
+"\n"
+"            You have %(counter)s backup tokens remaining.\n"
+"          "
+msgstr[0] ""
+"\n"
+"Vous devez être connecté comme administrateur pour modifier le plan "
+"d'abonnement."
+msgstr[1] ""
+"\n"
+"Vous devez être connecté comme administrateur pour modifier le plan "
+"d'abonnement."
+
 #: corehq/apps/domain/templates/login_and_password/two_factor/profile/profile.html:50
 msgid "Show Codes"
 msgstr ""
@@ -11377,8 +11366,8 @@ msgid ""
 msgstr ""
 
 #: corehq/apps/domain/urls.py:58 corehq/apps/registration/views.py:75
-#: corehq/apps/registration/views.py:141 corehq/apps/registration/views.py:154
-#: corehq/apps/registration/views.py:216
+#: corehq/apps/registration/views.py:142 corehq/apps/registration/views.py:155
+#: corehq/apps/registration/views.py:217
 msgid "Oops!"
 msgstr ""
 
@@ -11643,7 +11632,7 @@ msgstr "Fichier multimédia mis à jour avec succès !"
 #: corehq/apps/domain/views.py:2079 corehq/apps/export/models/new.py:671
 #: corehq/apps/export/templates/export/customize_export.html:17
 #: corehq/apps/hqadmin/templates/hqadmin/domain_faceted_report.html:126
-#: corehq/apps/userreports/models.py:354
+#: corehq/apps/userreports/models.py:356
 #: corehq/apps/userreports/reports/builder/forms.py:403
 msgid "Forms"
 msgstr "Formulaires"
@@ -11651,7 +11640,7 @@ msgstr "Formulaires"
 #: corehq/apps/domain/views.py:2080 corehq/apps/export/models/new.py:681
 #: corehq/apps/export/templates/export/customize_export.html:19
 #: corehq/apps/hqadmin/templates/hqadmin/domain_faceted_report.html:134
-#: corehq/apps/userreports/models.py:355
+#: corehq/apps/userreports/models.py:357
 #: corehq/apps/userreports/reports/builder/forms.py:403
 msgid "Cases"
 msgstr "Dossiers"
@@ -13274,10 +13263,8 @@ msgid "Workbook does not contain a sheet called '%(title)s'"
 msgstr "Le classeur ne contient aucune feuille intitulée '%(title)s'"
 
 #: corehq/apps/fixtures/upload.py:165
-#, fuzzy
-#| msgid "duplicate"
 msgid "duplicate_tag"
-msgstr "dupliquer"
+msgstr ""
 
 #: corehq/apps/fixtures/upload.py:192
 #, python-format
@@ -13334,10 +13321,8 @@ msgid "invalid_field_with_property"
 msgstr ""
 
 #: corehq/apps/fixtures/upload.py:353
-#, fuzzy
-#| msgid "Case property"
 msgid "invalid_property"
-msgstr "Propriété de Cas"
+msgstr ""
 
 #: corehq/apps/fixtures/upload.py:359
 msgid "wrong_field_property_combos"
@@ -13480,13 +13465,6 @@ msgstr ""
 "Restaurer le Groupe \"%(group_name)s\"\n"
 "            "
 
-#: corehq/apps/groups/templates/groups/group_members.html:159
-#, python-format
-msgid "%(num_users)s member"
-msgid_plural "%(num_users)s members"
-msgstr[0] "%(num_users)s membre "
-msgstr[1] "%(num_users)s membres "
-
 #: corehq/apps/groups/templates/groups/group_members.html:161
 msgid "Edit Settings"
 msgstr "Modifier les paramètres"
@@ -13503,8 +13481,15 @@ msgstr ""
 "                "
 
 #: corehq/apps/groups/templates/groups/group_members.html:172
+#, fuzzy
+#| msgid "Phone Numbers"
+msgid "Verify Phone Numbers"
+msgstr "Numéros de téléphone"
+
 #: corehq/apps/groups/templates/groups/group_members.html:175
-msgid "Initiate Phone Verification for All Members"
+#, fuzzy
+#| msgid "Initiate Phone Verification for All Members"
+msgid "Initiate Phone Number Verification for All Mobile Workers In This Group"
 msgstr "Lancer la vérification des téléphones pour tous les membres"
 
 #: corehq/apps/groups/templates/groups/group_members.html:176
@@ -19321,7 +19306,7 @@ msgstr ""
 "déjà inclus dans ce projet ou son invitation est en attente."
 
 #: corehq/apps/registration/templates/registration/confirmation_resend.html:4
-#: corehq/apps/registration/views.py:232
+#: corehq/apps/registration/views.py:233
 msgid "Resend Confirmation Email"
 msgstr ""
 
@@ -19363,17 +19348,17 @@ msgstr ""
 msgid "Create an Account"
 msgstr "Créer un compte"
 
-#: corehq/apps/registration/templates/registration/create_new_user.html:25
+#: corehq/apps/registration/templates/registration/create_new_user.html:44
 #: corehq/apps/users/templates/users/accept_invite.html:73
 msgid "New user information"
 msgstr ""
 
-#: corehq/apps/registration/templates/registration/create_new_user.html:35
+#: corehq/apps/registration/templates/registration/create_new_user.html:54
 #: corehq/apps/users/templates/users/accept_invite.html:80
 msgid "Create your first project"
 msgstr ""
 
-#: corehq/apps/registration/templates/registration/create_new_user.html:45
+#: corehq/apps/registration/templates/registration/create_new_user.html:64
 #: corehq/apps/users/templates/users/accept_invite.html:89
 msgid "Create Account"
 msgstr "Créer compte"
@@ -19491,26 +19476,26 @@ msgstr "Chargement des Conditions en cours..."
 msgid "Activate your CommCare project"
 msgstr ""
 
-#: corehq/apps/registration/views.py:76 corehq/apps/registration/views.py:155
+#: corehq/apps/registration/views.py:76 corehq/apps/registration/views.py:156
 msgid "Project name already taken - please try another"
 msgstr ""
 
-#: corehq/apps/registration/views.py:119 corehq/apps/registration/views.py:164
+#: corehq/apps/registration/views.py:120 corehq/apps/registration/views.py:165
 msgid "Confirm Account"
 msgstr ""
 
-#: corehq/apps/registration/views.py:143
+#: corehq/apps/registration/views.py:144
 #, python-format
 msgid "Number of domains requested today exceeds limit (%d) - contact Dimagi"
 msgstr ""
 "Le nombre de domaines demandés aujourd'hui dépasse la limite (%d) ; "
 "contactez Dimagi"
 
-#: corehq/apps/registration/views.py:217
+#: corehq/apps/registration/views.py:218
 msgid "There was a problem with your request"
 msgstr "Votre demande comportait un élément problématique"
 
-#: corehq/apps/registration/views.py:242
+#: corehq/apps/registration/views.py:243
 msgid ""
 "An account activation key was not provided.  If you think this is an error, "
 "please contact the system administrator."
@@ -19518,7 +19503,7 @@ msgstr ""
 "Aucune clé d'activation n'a été fournie.  Si vous pensez qu'il s'agit d'une "
 "erreur, veuillez contacter l'administrateur système."
 
-#: corehq/apps/registration/views.py:249
+#: corehq/apps/registration/views.py:250
 #, python-format
 msgid ""
 "The account activation key \"%s\" provided is invalid. If you think this is "
@@ -24957,7 +24942,7 @@ msgid "Logout"
 msgstr "Déconnexion"
 
 #: corehq/apps/style/templates/style/bootstrap2/base.html:93
-#: corehq/apps/style/templates/style/bootstrap3/base.html:260
+#: corehq/apps/style/templates/style/bootstrap3/base.html:261
 msgid "This is a snapshot of "
 msgstr "Voici un instantané de "
 
@@ -24971,32 +24956,32 @@ msgid ""
 msgstr ""
 
 #: corehq/apps/style/templates/style/bootstrap2/base.html:154
-#: corehq/apps/style/templates/style/bootstrap3/base.html:323
+#: corehq/apps/style/templates/style/bootstrap3/base.html:324
 msgid "http://www.commcarehq.org/home"
 msgstr "http://www.commcarehq.org/home"
 
 #: corehq/apps/style/templates/style/bootstrap2/base.html:154
-#: corehq/apps/style/templates/style/bootstrap3/base.html:323
+#: corehq/apps/style/templates/style/bootstrap3/base.html:324
 msgid "Learn more about CommCare HQ"
 msgstr "En savoir davantage sur CommCare HQ"
 
 #: corehq/apps/style/templates/style/bootstrap2/base.html:157
-#: corehq/apps/style/templates/style/bootstrap3/base.html:326
+#: corehq/apps/style/templates/style/bootstrap3/base.html:327
 msgid "Read CommCare HQ's End User License Agreement"
 msgstr "Lire le Contrat de licence d'utilisateur final de CommCare HQ"
 
 #: corehq/apps/style/templates/style/bootstrap2/base.html:159
-#: corehq/apps/style/templates/style/bootstrap3/base.html:328
+#: corehq/apps/style/templates/style/bootstrap3/base.html:329
 msgid "http://www.dimagi.com/policy"
 msgstr "http://www.dimagi.com/policy"
 
 #: corehq/apps/style/templates/style/bootstrap2/base.html:159
-#: corehq/apps/style/templates/style/bootstrap3/base.html:328
+#: corehq/apps/style/templates/style/bootstrap3/base.html:329
 msgid "Privacy"
 msgstr "Confidentialité"
 
 #: corehq/apps/style/templates/style/bootstrap2/base.html:161
-#: corehq/apps/style/templates/style/bootstrap3/base.html:330
+#: corehq/apps/style/templates/style/bootstrap3/base.html:331
 msgid "Product Subscription Agreement"
 msgstr "Accord d'abonnement au produit"
 
@@ -25198,11 +25183,11 @@ msgstr "La date et l'heure actuelles sont"
 msgid "All dates are in"
 msgstr "Toutes les dates sont incluses"
 
-#: corehq/apps/style/templates/style/bootstrap3/base.html:266
+#: corehq/apps/style/templates/style/bootstrap3/base.html:267
 msgid "CommCare HQ does not work well with Internet Explorer."
 msgstr ""
 
-#: corehq/apps/style/templates/style/bootstrap3/base.html:268
+#: corehq/apps/style/templates/style/bootstrap3/base.html:269
 msgid ""
 "\n"
 "                        We recommend\n"
@@ -25212,7 +25197,7 @@ msgid ""
 "                        "
 msgstr ""
 
-#: corehq/apps/style/templates/style/bootstrap3/base.html:316
+#: corehq/apps/style/templates/style/bootstrap3/base.html:317
 msgid ""
 "\n"
 "                                <a href=\"http://www.commcarehq.org/"
@@ -25626,15 +25611,15 @@ msgid ""
 "Illegal indicator type: \"{0}\", must be one of the following choice: ({1})"
 msgstr ""
 
-#: corehq/apps/userreports/models.py:258
+#: corehq/apps/userreports/models.py:260
 msgid "Report contains duplicate column ids: {}"
 msgstr ""
 
-#: corehq/apps/userreports/models.py:483 corehq/apps/userreports/models.py:551
+#: corehq/apps/userreports/models.py:490 corehq/apps/userreports/models.py:558
 msgid "The data source referenced by this report could not be found."
 msgstr "Les données sources de rapport ne sont trouvées."
 
-#: corehq/apps/userreports/models.py:536 corehq/apps/userreports/models.py:544
+#: corehq/apps/userreports/models.py:543 corehq/apps/userreports/models.py:551
 msgid "The report configuration referenced by this report could not be found."
 msgstr ""
 
@@ -31102,10 +31087,9 @@ msgid "Thank you for reporting that you have received supervision this month."
 msgstr ""
 
 #: custom/ilsgateway/tanzania/reminders/__init__.py:77
-#, fuzzy, python-format
-#| msgid "%s is an invalid phone number."
+#, python-format
 msgid "Not a valid number: %(number)s"
-msgstr "%s n'est pas un numéro de téléphone valide."
+msgstr ""
 
 #: custom/ilsgateway/tanzania/reminders/__init__.py:80
 msgid "You have reported that you haven't yet received your delivery."
@@ -34021,10 +34005,8 @@ msgstr ""
 
 #: custom/reports/mc/reports/old_sql.py:480
 #: custom/reports/mc/reports/sql.py:61
-#, fuzzy
-#| msgid "Referrals"
 msgid "msg_bad_referrals"
-msgstr "Envoi vers spécialistes"
+msgstr ""
 
 #: custom/reports/mc/reports/old_sql.py:484
 #: custom/reports/mc/reports/sql.py:65
