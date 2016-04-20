@@ -16,12 +16,12 @@ hqDefine('app_manager/js/language-profiles.js', function () {
                 var postProfiles = [];
                 _.each(self.app_profiles(), function(element, index, list) {
                     // move default lang to first element of array
-                    postLangs = element.langs();
+                    var postLangs = element.langs();
                     postLangs.splice(postLangs.indexOf(element.defaultLang()), 1);
                     postLangs.unshift(element.defaultLang());
                     postProfiles.push({
                         'name': element.name(),
-                        'langs': element.langs(),
+                        'langs': postLangs,
                         'id': element.id,
                     });
                 });
@@ -64,7 +64,7 @@ hqDefine('app_manager/js/language-profiles.js', function () {
         this.app_profiles.subscribe(changeSaveButton);
         _.delay(function() {
             $('.language-select').select2();
-        })
+        });
     }
     return {ProfileManager: ProfileManager};
 });

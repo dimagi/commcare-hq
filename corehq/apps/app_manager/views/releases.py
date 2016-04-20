@@ -374,6 +374,5 @@ class LanguageProfilesView(View):
         app.save()
         return HttpResponse()
 
-
     def get(self, request, *args, **kwargs):
         return HttpResponse()

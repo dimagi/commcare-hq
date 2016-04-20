@@ -23,9 +23,9 @@ hqDefine('app_manager/js/releases.js', function () {
             return '/a/' + self.domain() + '/apps/odk/' + self.id() + '/';
         };
         self.build_profiles = function() {
-            profiles = [{'label': gettext('all languages'), 'value': ''}];
+            var profiles = [{'label': gettext('all languages'), 'value': ''}];
             _.each(app_data.build_profiles, function(value, key, list) {
-                profiles.push({'label': value['name'], 'value': key})
+                profiles.push({'label': value['name'], 'value': key});
             });
             return profiles;
         };
