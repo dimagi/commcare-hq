@@ -685,25 +685,27 @@ msgstr ""
 
 #: corehq/apps/accounting/subscription_changes.py:327
 #, python-format
-msgid ""
-"You have %(num_apps)d application that will lose CloudCare access if you "
-"select this plan."
-msgid_plural ""
-"You have %(num_apps)d applications that will lose CloudCare access if you "
-"select this plan."
-msgstr[0] ""
-msgstr[1] ""
+# *** Commenting untranslated plural strings ***
+# msgid ""
+# "You have %(num_apps)d application that will lose CloudCare access if you "
+# "select this plan."
+# msgid_plural ""
+# "You have %(num_apps)d applications that will lose CloudCare access if you "
+# "select this plan."
+# msgstr[0] ""
+# msgstr[1] ""
 
 #: corehq/apps/accounting/subscription_changes.py:350
 #, python-format
-msgid ""
-"You have %(num_fix)s Lookup Table set up. Selecting this plan will delete "
-"this Lookup Table."
-msgid_plural ""
-"You have %(num_fix)s Lookup Tables set up. Selecting this plan will delete "
-"these Lookup Tables."
-msgstr[0] ""
-msgstr[1] ""
+# *** Commenting untranslated plural strings ***
+# msgid ""
+# "You have %(num_fix)s Lookup Table set up. Selecting this plan will delete "
+# "this Lookup Table."
+# msgid_plural ""
+# "You have %(num_fix)s Lookup Tables set up. Selecting this plan will delete "
+# "these Lookup Tables."
+# msgstr[0] ""
+# msgstr[1] ""
 
 #: corehq/apps/accounting/subscription_changes.py:364
 msgid ""
@@ -712,62 +714,67 @@ msgstr ""
 
 #: corehq/apps/accounting/subscription_changes.py:377
 #, python-format
-msgid ""
-"You have %(num_active)d active Reminder Rule. Selecting this plan will "
-"deactivate this rule."
-msgid_plural ""
-"You have %(num_active)d active Reminder Rules. Selecting this plan will "
-"deactivate these rules."
-msgstr[0] ""
-msgstr[1] ""
+# *** Commenting untranslated plural strings ***
+# msgid ""
+# "You have %(num_active)d active Reminder Rule. Selecting this plan will "
+# "deactivate this rule."
+# msgid_plural ""
+# "You have %(num_active)d active Reminder Rules. Selecting this plan will "
+# "deactivate these rules."
+# msgstr[0] ""
+# msgstr[1] ""
 
 #: corehq/apps/accounting/subscription_changes.py:397
 #, python-format
-msgid ""
-"You have %(num_active)d active Reminder Rule for a Survey. Selecting this "
-"plan will deactivate this rule."
-msgid_plural ""
-"You have %(num_active)d active Reminder Rules for a Survey. Selecting this "
-"plan will deactivate these rules."
-msgstr[0] ""
-msgstr[1] ""
+# *** Commenting untranslated plural strings ***
+# msgid ""
+# "You have %(num_active)d active Reminder Rule for a Survey. Selecting this "
+# "plan will deactivate this rule."
+# msgid_plural ""
+# "You have %(num_active)d active Reminder Rules for a Survey. Selecting this "
+# "plan will deactivate these rules."
+# msgstr[0] ""
+# msgstr[1] ""
 
 #: corehq/apps/accounting/subscription_changes.py:425
 #, python-format
-msgid ""
-"You have %(num)d De-Identified Export. Selecting this plan will remove it."
-msgid_plural ""
-"You have %(num)d De-Identified Exports. Selecting this plan will remove them."
-msgstr[0] ""
-msgstr[1] ""
+# *** Commenting untranslated plural strings ***
+# msgid ""
+# "You have %(num)d De-Identified Export. Selecting this plan will remove it."
+# msgid_plural ""
+# "You have %(num)d De-Identified Exports. Selecting this plan will remove them."
+# msgstr[0] ""
+# msgstr[1] ""
 
 #: corehq/apps/accounting/subscription_changes.py:452
 #, python-format
-msgid ""
-"You have %(num_users)d Mobile Worker over the monthly limit of %"
-"(monthly_limit)d for this new plan. There will be an additional monthly "
-"charge of USD %(excess_fee)s per Mobile Worker, totalling USD %"
-"(monthly_total)s per month, if you select this plan."
-msgid_plural ""
-"You have %(num_users)d Mobile Workers over the monthly limit of %"
-"(monthly_limit)d for this new plan. There will be an additional monthly "
-"charge of USD %(excess_fee)s per Mobile Worker, totalling USD %"
-"(monthly_total)s per month, if you select this plan."
-msgstr[0] ""
-msgstr[1] ""
+# *** Commenting untranslated plural strings ***
+# msgid ""
+# "You have %(num_users)d Mobile Worker over the monthly limit of %"
+# "(monthly_limit)d for this new plan. There will be an additional monthly "
+# "charge of USD %(excess_fee)s per Mobile Worker, totalling USD %"
+# "(monthly_total)s per month, if you select this plan."
+# msgid_plural ""
+# "You have %(num_users)d Mobile Workers over the monthly limit of %"
+# "(monthly_limit)d for this new plan. There will be an additional monthly "
+# "charge of USD %(excess_fee)s per Mobile Worker, totalling USD %"
+# "(monthly_total)s per month, if you select this plan."
+# msgstr[0] ""
+# msgstr[1] ""
 
 #: corehq/apps/accounting/subscription_changes.py:488
 #, python-format
-msgid ""
-"You have %(num_roles)d Custom Role configured for your project. If you "
-"select this plan, all users with that role will change to having the Read "
-"Only role."
-msgid_plural ""
-"You have %(num_roles)d Custom Roles configured for your project . If you "
-"select this plan, all users with these roles will change to having the Read "
-"Only role."
-msgstr[0] ""
-msgstr[1] ""
+# *** Commenting untranslated plural strings ***
+# msgid ""
+# "You have %(num_roles)d Custom Role configured for your project. If you "
+# "select this plan, all users with that role will change to having the Read "
+# "Only role."
+# msgid_plural ""
+# "You have %(num_roles)d Custom Roles configured for your project . If you "
+# "select this plan, all users with these roles will change to having the Read "
+# "Only role."
+# msgstr[0] ""
+# msgstr[1] ""
 
 #: corehq/apps/accounting/subscription_changes.py:514
 #, python-format
@@ -778,14 +785,15 @@ msgstr ""
 
 #: corehq/apps/accounting/subscription_changes.py:535
 #, python-format
-msgid ""
-"You have %(rule_count)d automatic case update rule configured in your "
-"project. If you select this plan, this rule will be deactivated."
-msgid_plural ""
-"You have %(rule_count)d automatic case update rules configured in your "
-"project. If you select this plan, these rules will be deactivated."
-msgstr[0] ""
-msgstr[1] ""
+# *** Commenting untranslated plural strings ***
+# msgid ""
+# "You have %(rule_count)d automatic case update rule configured in your "
+# "project. If you select this plan, this rule will be deactivated."
+# msgid_plural ""
+# "You have %(rule_count)d automatic case update rules configured in your "
+# "project. If you select this plan, these rules will be deactivated."
+# msgstr[0] ""
+# msgstr[1] ""
 
 #: corehq/apps/accounting/subscription_changes.py:556
 msgid ""
@@ -10761,16 +10769,17 @@ msgstr ""
 
 #: corehq/apps/domain/templates/login_and_password/two_factor/profile/profile.html:43
 #, python-format
-msgid ""
-"\n"
-"            You have only one backup token remaining.\n"
-"          "
-msgid_plural ""
-"\n"
-"            You have %(counter)s backup tokens remaining.\n"
-"          "
-msgstr[0] ""
-msgstr[1] ""
+# *** Commenting untranslated plural strings ***
+# msgid ""
+# "\n"
+# "            You have only one backup token remaining.\n"
+# "          "
+# msgid_plural ""
+# "\n"
+# "            You have %(counter)s backup tokens remaining.\n"
+# "          "
+# msgstr[0] ""
+# msgstr[1] ""
 
 #: corehq/apps/domain/templates/login_and_password/two_factor/profile/profile.html:50
 msgid "Show Codes"
@@ -12836,10 +12845,11 @@ msgstr ""
 
 #: corehq/apps/groups/templates/groups/group_members.html:159
 #, python-format
-msgid "%(num_users)s member"
-msgid_plural "%(num_users)s members"
-msgstr[0] ""
-msgstr[1] ""
+# *** Commenting untranslated plural strings ***
+# msgid "%(num_users)s member"
+# msgid_plural "%(num_users)s members"
+# msgstr[0] ""
+# msgstr[1] ""
 
 #: corehq/apps/groups/templates/groups/group_members.html:161
 msgid "Edit Settings"
