@@ -27,10 +27,11 @@ class KafkaProcessor(PillowProcessor):
 
     def process_change(self, pillow_instance, change, do_set_checkpoint=False):
         try:
-            doc_meta = get_doc_meta_object_from_document(change.document)
+            document = change.get_document()
+            doc_meta = get_doc_meta_object_from_document(document)
             change_meta = change_meta_from_doc_meta_and_document(
                 doc_meta=doc_meta,
-                document=change.document,
+                document=document,
                 data_source_type=self._data_source_type,
                 data_source_name=self._data_source_name,
                 doc_id=change.id,
