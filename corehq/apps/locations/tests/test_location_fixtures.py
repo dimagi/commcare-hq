@@ -1,14 +1,155 @@
+import mock
+import os
+from xml.etree import ElementTree
+
 from datetime import datetime, timedelta
 from django.test import TestCase
 from casexml.apps.phone.models import SyncLog
 from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.users.models import CommCareUser
+from corehq.apps.domain.models import Domain
 
-from ..fixtures import _location_to_fixture, _location_footprint, should_sync_locations
+from corehq.apps.app_manager.tests.util import TestXmlMixin
+from casexml.apps.case.xml import V2
+
+from .util import LocationHierarchyPerTest
+from ..fixtures import _location_to_fixture, _location_footprint, should_sync_locations, location_fixture_generator
 from ..models import SQLLocation, LocationType, Location
 
 
-class LocationFixturesTest(TestCase):
+@mock.patch.object(Domain, 'uses_locations', return_value=True)
+class LocationFixturesTest(LocationHierarchyPerTest, TestXmlMixin):
+    root = os.path.dirname(__file__)
+    file_path = ['data']
+    location_type_names = ['state', 'county', 'city']
+    location_structure = [
+        ('Massachusetts', [
+            ('Middlesex', [
+                ('Cambridge', []),
+                ('Somerville', []),
+            ]),
+            ('Suffolk', [
+                ('Boston', []),
+                ('Revere', []),
+            ])
+        ]),
+        ('New York', [
+                ('New York City', [
+                    ('Manhattan', []),
+                    ('Brooklyn', []),
+                    ('Queens', []),
+                ]),
+        ]),
+    ]
+
+    def setUp(self):
+        super(LocationFixturesTest, self).setUp()
+        self.user = CommCareUser.create(self.domain, 'user', '123')
+
+    def test_simple_location_fixture(self, uses_locations):
+        self.user.set_location(self.locations['Suffolk'].couch_location)
+
+        self._assert_fixtures_equal(
+            'simple_fixture',
+            state_id=self.locations['Massachusetts'].location_id,
+            county_id=self.locations['Suffolk'].location_id,
+            boston_id=self.locations['Boston'].location_id,
+            revere_id=self.locations['Revere'].location_id,
+        )
+
+    def test_expand_to_county(self, uses_locations):
+        """
+        expand to "county"
+        should return:
+            Mass
+            - Suffolk
+        """
+        self.user.set_location(self.locations['Suffolk'].couch_location)
+        location_type = self.locations['Suffolk'].location_type
+        location_type.expand_to = location_type
+        location_type.save()
+
+        self._assert_fixtures_equal(
+            'expand_to_county',
+            state_id=self.locations['Massachusetts'].location_id,
+            county_id=self.locations['Suffolk'].location_id,
+        )
+
+    def test_expand_to_county_from_state(self, uses_locations):
+        self.user.set_location(self.locations['Massachusetts'].couch_location)
+        location_type = self.locations['Massachusetts'].location_type
+        location_type.expand_to = self.locations['Suffolk'].location_type
+        location_type.save()
+
+        self._assert_fixtures_equal(
+            'expand_to_county_from_state',
+            state_id=self.locations['Massachusetts'].location_id,
+            suffolk_id=self.locations['Suffolk'].location_id,
+            middlesex_id=self.locations['Middlesex'].location_id,
+        )
+
+    def test_expand_from_county_at_city(self, uses_locations):
+        self.user.set_location(self.locations['Boston'].couch_location)
+        location_type = self.locations['Boston'].location_type
+        location_type.expand_from = self.locations['Suffolk'].location_type
+        location_type.save()
+
+        self._assert_fixtures_equal(
+            'expand_from_county_at_city',
+            state_id=self.locations['Massachusetts'].location_id,
+            suffolk_id=self.locations['Suffolk'].location_id,
+            middlesex_id=self.locations['Middlesex'].location_id,
+            boston_id=self.locations['Boston'].location_id,
+            revere_id=self.locations['Revere'].location_id,
+        )
+
+    def test_expand_from_root_at_city(self, uses_locations):
+        self.user.set_location(self.locations['Boston'].couch_location)
+        location_type = self.locations['Boston'].location_type
+        location_type.expand_from_root = True
+        location_type.save()
+
+        self._assert_fixtures_equal(
+            'expand_from_root',
+            state_id=self.locations['Massachusetts'].location_id,
+            suffolk_id=self.locations['Suffolk'].location_id,
+            middlesex_id=self.locations['Middlesex'].location_id,
+            boston_id=self.locations['Boston'].location_id,
+            revere_id=self.locations['Revere'].location_id,
+            cambridge_id=self.locations['Cambridge'].location_id,
+            somerville_id=self.locations['Somerville'].location_id,
+            new_york_id=self.locations['New York'].location_id,
+            new_york_city_id=self.locations['New York City'].location_id,
+            manhattan_id=self.locations['Manhattan'].location_id,
+            queens_id=self.locations['Queens'].location_id,
+            brooklyn_id=self.locations['Brooklyn'].location_id,
+        )
+
+    def test_expand_from_root_to_county(self, uses_locations):
+        self.user.set_location(self.locations['Massachusetts'].couch_location)
+        location_type = self.locations['Massachusetts'].location_type
+        location_type.expand_from_root = True
+        location_type.expand_to = self.locations['Suffolk'].location_type
+        location_type.save()
+        self._assert_fixtures_equal(
+            'expand_from_root_to_county',
+            state_id=self.locations['Massachusetts'].location_id,
+            suffolk_id=self.locations['Suffolk'].location_id,
+            middlesex_id=self.locations['Middlesex'].location_id,
+            new_york_id=self.locations['New York'].location_id,
+            new_york_city_id=self.locations['New York City'].location_id,
+        )
+
+    def _assert_fixtures_equal(self, xml_name, **kwargs):
+        fixture = ElementTree.tostring(location_fixture_generator(self.user, V2)[0])
+        desired_fixture = self.get_xml(xml_name).format(
+            user_id=self.user.user_id,
+            **kwargs
+        )
+        self.assertXmlEqual(desired_fixture, fixture)
+
+
+class ShouldSyncLocationFixturesTest(TestCase):
 
     @classmethod
     def setUpClass(cls):

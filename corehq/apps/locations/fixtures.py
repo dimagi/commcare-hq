@@ -56,6 +56,36 @@ def should_sync_locations(last_sync, location_db, user):
     return False
 
 
+def _gather_leaf_locations(user_location, domain):
+    """Returns all the leaf locations for which we want ancestors
+    """
+    # From the root most location we want (expand_from), we traverse down the
+    # tree until we get to the leaf-most location we want. We populate the
+    # fixture with all ancestors of these desired leafs later
+
+    location_type = user_location.location_type
+    expand_from = location_type.expand_from or location_type
+    expand_to = location_type.expand_to
+
+    if location_type.expand_from_root:
+        root = SQLLocation.root_locations(domain=domain)
+    else:
+        root = (user_location
+                .get_ancestors(include_self=True)
+                .filter(location_type=expand_from)
+                .filter(is_archived=False))
+
+    for root_location in root:
+        root_to_tail = (root_location
+                        .get_descendants(include_self=True)
+                        .filter(is_archived=False))
+        if expand_to is not None:
+            root_to_tail = root_to_tail.filter(location_type=expand_to)
+
+        for location in root_to_tail:
+            yield location
+
+
 class LocationFixtureProvider(object):
     id = 'commtrack:locations'
 
@@ -76,12 +106,7 @@ class LocationFixtureProvider(object):
             locations = []
             user_location = user.sql_location
             if user_location:
-                # add user's location to fixture
-                locations.append(user_location)
-
-                # add all descendants as well
-                locations += (user_location.get_descendants()
-                                           .filter(is_archived=False))
+                locations += [leaf_location for leaf_location in _gather_leaf_locations(user_location, user.domain)]
 
             if user.project.supports_multiple_locations_per_user:
                 # this might add duplicate locations but we filter that out later

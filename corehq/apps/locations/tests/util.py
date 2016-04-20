@@ -104,3 +104,27 @@ class LocationHierarchyTestCase(TestCase):
     def tearDownClass(cls):
         cls.domain_obj.delete()
         delete_all_locations()
+
+
+class LocationHierarchyPerTest(TestCase):
+    """
+    Sets up and tears down a hierarchy for you based on the class attrs
+    Does it per test instead of LocationHierarchyTestCase which does it once per class
+    """
+    location_type_names = []
+    stock_tracking_types = []
+    location_structure = []
+    domain = 'test-domain'
+
+    def setUp(self):
+        self.domain_obj = bootstrap_domain(self.domain)
+        self.location_types, self.locations = setup_locations_and_types(
+            self.domain,
+            self.location_type_names,
+            self.stock_tracking_types,
+            self.location_structure,
+        )
+
+    def tearDown(self):
+        self.domain_obj.delete()
+        delete_all_locations()
