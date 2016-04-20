@@ -184,6 +184,13 @@ class TestApplicationMigrations(BaseMigrationTest):
         self.assertEqual(len(app._attachments), 1)
         self.assertEqual(len(app.external_blobs), 0)
 
+        # add legacy attribute to make sure the migration uses doc_type.wrap()
+        db = app.get_db()
+        doc = db.get(app._id, wrapper=None)
+        doc["commtrack_enabled"] = True
+        db.save_doc(doc)
+        app = Application.get(app._id)
+
         self.do_migration([app])
 
         exp = Application.get(app._id)
