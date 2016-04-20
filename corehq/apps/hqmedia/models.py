@@ -74,6 +74,8 @@ class CommCareMultimedia(BlobMixin, SafeSaveDocument):
     shared_by = StringListProperty(default=[])  # list of domains that can share this file
     tags = DictProperty(default={})  # dict of string lists
 
+    migrating_blobs_from_couch = True
+
     @classmethod
     def get(cls, docid, rev=None, db=None, dynamic_properties=True):
         # copied and tweaked from the superclass's method
