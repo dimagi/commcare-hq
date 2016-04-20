@@ -2119,7 +2119,8 @@ class WireBillingRecord(BillingRecordBase):
         hidden = self.invoice.is_hidden
         return not hidden
 
-    def is_email_throttled(self):
+    @staticmethod
+    def is_email_throttled():
         return False
 
     def email_subject(self):
@@ -2129,7 +2130,8 @@ class WireBillingRecord(BillingRecordBase):
             'domain': self.invoice.get_domain(),
         }
 
-    def email_from(self):
+    @staticmethod
+    def email_from():
         return "Dimagi Accounting <{email}>".format(email=settings.INVOICING_CONTACT_EMAIL)
 
 
@@ -2899,7 +2901,8 @@ class StripePaymentMethod(PaymentMethod):
         if autopay_card is not None:
             self._update_autopay_status(autopay_card, billing_account, autopay=False)
 
-    def _remove_other_auto_pay_cards(self, billing_account):
+    @staticmethod
+    def _remove_other_auto_pay_cards(billing_account):
         user = billing_account.auto_pay_user
         try:
             other_payment_method = StripePaymentMethod.objects.get(web_user=user)
@@ -2907,7 +2910,8 @@ class StripePaymentMethod(PaymentMethod):
         except StripePaymentMethod.DoesNotExist:
             pass
 
-    def _auto_pay_card_metadata_key(self, billing_account):
+    @staticmethod
+    def _auto_pay_card_metadata_key(billing_account):
         """
         Returns the autopay key for the billing account
 
