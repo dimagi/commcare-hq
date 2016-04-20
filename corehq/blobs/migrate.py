@@ -128,7 +128,7 @@ def migrate_from_couch_to_blobdb(filename, type_map, total):
                 print_status(n + 1, total, datetime.now() - start)
             doc = json.loads(line)
             attachments = doc.pop("_attachments")
-            obj = type_map[doc["doc_type"]](doc)
+            obj = type_map[doc["doc_type"]].wrap(doc)
             try:
                 with obj.atomic_blobs():
                     for name, data in list(attachments.iteritems()):
@@ -167,7 +167,7 @@ def migrate_blob_db_backend(filename, type_map, total):
             if n % 100 == 0:
                 print_status(n + 1, total, datetime.now() - start)
             doc = json.loads(line)
-            obj = type_map[doc["doc_type"]](doc)
+            obj = type_map[doc["doc_type"]].wrap(doc)
             bucket = obj._blobdb_bucket()
             assert obj.external_blobs == obj.blobs, (obj.external_blobs, obj.blobs)
             for name, meta in obj.blobs.iteritems():
@@ -237,7 +237,7 @@ def migrate(slug, doc_types, migrate_func, filename=None):
         for doc in get_all_docs_with_doc_types(couchdb, list(type_map)):
             if doc.get(migrate_func.blobs_key):
                 if load_attachments:
-                    obj = type_map[doc["doc_type"]](doc)
+                    obj = type_map[doc["doc_type"]].wrap(doc)
                     fetch_attachment = super(BlobMixin, obj).fetch_attachment
                     doc["_attachments"] = {
                         name: {
