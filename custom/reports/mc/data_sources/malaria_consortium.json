@@ -196,8 +196,25 @@
                             "constant": 1
                         },
                         "expression_if_false": {
-                            "type": "constant",
-                            "constant": 0
+                            "type": "conditional",
+                            "test": {
+                                "operator": "eq",
+                                "expression": {
+                                    "type": "property_path",
+                                    "property_path": ["form", "pregnant"],
+                                    "datetyoe": "string"
+                                },
+                                "type": "boolean_expression",
+                                "property_value": "0"
+                            },
+                            "expression_if_true": {
+                                "type": "constant",
+                                "constant": 0
+                            },
+                            "expression_if_false": {
+                                "type": "constant",
+                                "constant": -1
+                            }
                         }
                     },
                     "expression_if_false": {
