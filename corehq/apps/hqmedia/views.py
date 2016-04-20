@@ -24,6 +24,7 @@ from corehq.util.files import file_extention_from_filename
 
 from soil import DownloadBase
 
+from corehq.apps.accounting.utils import domain_has_privilege
 from corehq.apps.app_manager.decorators import safe_download
 from corehq.apps.app_manager.view_helpers import ApplicationViewMixin
 from corehq.apps.hqmedia.cache import BulkMultimediaStatusCache, BulkMultimediaStatusCacheNfs
@@ -507,6 +508,9 @@ class DownloadMultimediaZip(View, ApplicationViewMixin):
 
         message = request.GET['message'] if 'message' in request.GET else None
         download = DownloadBase(message=message)
+        build_profile = None
+        if domain_has_privilege(request.domain, privileges.BUILD_PROFILES):
+            build_profile = request.GET.get('profile')
         download.set_task(build_application_zip.delay(
             include_multimedia_files=self.include_multimedia_files,
             include_index_files=self.include_index_files,
@@ -514,7 +518,7 @@ class DownloadMultimediaZip(View, ApplicationViewMixin):
             download_id=download.download_id,
             compress_zip=self.compress_zip,
             filename=self.zip_name,
-            profile=request.GET.get('profile'))
+            profile=build_profile)
         )
         return download.get_start_response()
 
