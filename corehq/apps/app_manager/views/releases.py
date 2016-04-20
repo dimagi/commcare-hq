@@ -9,6 +9,7 @@ from django.http import HttpResponseRedirect
 from django.views.generic import View
 from django.shortcuts import render
 from django.utils.decorators import method_decorator
+from django_prbac.decorators import requires_privilege
 from couchdbkit.resource import ResourceNotFound
 from django.contrib import messages
 import ghdiff
@@ -359,6 +360,7 @@ class LanguageProfilesView(View):
     urlname = 'build_profiles'
 
     @method_decorator(require_can_edit_apps)
+    @method_decorator(requires_privilege(privileges.BUILD_PROFILES))
     def dispatch(self, request, *args, **kwargs):
         return super(LanguageProfilesView, self).dispatch(request, *args, **kwargs)
 

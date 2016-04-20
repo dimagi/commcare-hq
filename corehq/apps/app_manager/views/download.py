@@ -21,6 +21,8 @@ from corehq.apps.hqmedia.views import DownloadMultimediaZip
 from corehq.util.view_utils import set_file_download
 from dimagi.utils.django.cached_object import CachedObject
 from dimagi.utils.web import json_response
+from corehq.apps.accounting.utils import domain_has_privilege
+from corehq import privileges
 
 
 BAD_BUILD_MESSAGE = _("Sorry: this build is invalid. Try deleting it and rebuilding. "
@@ -205,12 +207,13 @@ def download_file(request, domain, app_id, path):
         content_type = None
     response = HttpResponse(content_type=content_type)
 
-    profile = request.GET.get('profile')
+    build_profile = request.GET.get('profile')
+    build_profile_access = domain_has_privilege(domain, privileges.BUILD_PROFILES)
     if path in ('CommCare.jad', 'CommCare.jar'):
         set_file_download(response, path)
         full_path = path
-    elif profile:
-        full_path = 'files/%s/%s' % (profile, path)
+    elif build_profile and build_profile in request.app.build_profiles and build_profile_access:
+        full_path = 'files/%s/%s' % (build_profile, path)
     else:
         full_path = 'files/%s' % path
 
@@ -229,8 +232,8 @@ def download_file(request, domain, app_id, path):
             try:
                 payload = request.app.fetch_attachment(full_path)
             except ResourceNotFound:
-                if profile in request.app.build_profiles:
-                    request.app.create_build_files(save=True, build_profile=profile)
+                if build_profile in request.app.build_profiles and build_profile_access:
+                    request.app.create_build_files(save=True, build_profile=build_profile)
                     request.app.save()
                     payload = request.app.fetch_attachment(full_path)
                 else:
