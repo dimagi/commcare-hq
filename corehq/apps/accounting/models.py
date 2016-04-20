@@ -1066,7 +1066,7 @@ class Subscription(models.Model):
         super(Subscription, self).save(*args, **kwargs)
         try:
             Domain.get_by_name(self.subscriber.domain).save()
-        except Exception as e:
+        except Exception:
             # If a subscriber doesn't have a valid domain associated with it
             # we don't care the pillow won't be updated
             pass
