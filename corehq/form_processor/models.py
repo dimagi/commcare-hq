@@ -947,7 +947,7 @@ class CommCareCaseIndexSQL(DisabledDbMixin, models.Model, SaveStateMixin):
         app_label = "form_processor"
 
 
-class CaseTransaction(DisabledDbMixin, models.Model):
+class CaseTransaction(DisabledDbMixin, SaveStateMixin, models.Model):
     objects = RestrictedManager()
 
     # types should be powers of 2
@@ -1218,12 +1218,19 @@ class LedgerValue(DisabledDbMixin, models.Model, TrackRelatedChanges):
     def stock_on_hand(self):
         return self.balance
 
+    @property
+    def ledger_reference(self):
+        from corehq.form_processor.parsers.ledgers.helpers import UniqueLedgerReference
+        return UniqueLedgerReference(
+            case_id=self.case_id, section_id=self.section_id, entry_id=self.entry_id
+        )
+
     class Meta:
         app_label = "form_processor"
         db_table = LedgerValue_DB_TABLE
 
 
-class LedgerTransaction(DisabledDbMixin, models.Model):
+class LedgerTransaction(DisabledDbMixin, SaveStateMixin, models.Model):
     TYPE_BALANCE = 1
     TYPE_TRANSFER = 2
     TYPE_CHOICES = (

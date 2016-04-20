@@ -118,13 +118,15 @@ class FormProcessorInterface(object):
     def xformerror_from_xform_instance(self, instance, error_message, with_new_id=False):
         return self.processor.xformerror_from_xform_instance(instance, error_message, with_new_id=with_new_id)
 
-    def save_processed_models(self, forms, cases=None, stock_updates=None):
+    def save_processed_models(self, forms, cases=None, stock_result=None):
         forms = _list_to_processed_forms_tuple(forms)
+        if stock_result:
+            assert stock_result.populated
         try:
             return self.processor.save_processed_models(
                 forms,
                 cases=cases,
-                stock_updates=stock_updates,
+                stock_result=stock_result,
             )
         except BulkSaveError as e:
             logging.error('BulkSaveError saving forms', exc_info=1,
