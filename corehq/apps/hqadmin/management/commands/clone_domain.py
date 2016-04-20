@@ -187,7 +187,7 @@ class Command(BaseCommand):
 
     def save_couch_copy(self, doc, new_domain=None):
         old_id = doc._id
-        del doc._id
+        doc._id = doc.get_db().server.next_uuid()
         del doc['_rev']
         if new_domain:
             doc.domain = new_domain
