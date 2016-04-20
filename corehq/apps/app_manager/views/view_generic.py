@@ -71,6 +71,12 @@ def view_generic(request, domain, app_id=None, module_id=None, form_id=None,
     except ModuleNotFoundException:
         return bail(request, domain, app_id)
 
+    if app and app.application_version == '1.0':
+        return render(request, 'app_manager/no_longer_supported.html', {
+            'domain': domain,
+            'app': app,
+        })
+
     context = get_apps_base_context(request, domain, app)
     if app and app.copy_of:
         # don't fail hard.
