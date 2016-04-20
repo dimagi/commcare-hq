@@ -9,7 +9,6 @@ from corehq.apps.change_feed.topics import get_topic
 from corehq.apps.domain.models import Domain
 from corehq.apps.users.models import CommCareUser
 from corehq.util.couchdb_management import couch_config
-from corehq.util.soft_assert import soft_assert
 from pillowtop.checkpoints.manager import PillowCheckpoint, PillowCheckpointEventHandler
 from pillowtop.feed.couch import CouchChangeFeed
 from pillowtop.pillow.interface import ConstructedPillow
@@ -39,13 +38,11 @@ class KafkaProcessor(PillowProcessor):
         except MissingMetaInformationError:
             pass
         else:
-            # change.deleted is used for hard deletions, from which we don't currently
-            # get any metadata from so this should have raised a MissingMetaInformationError above
-            _assert = soft_assert(to='@'.join(['czue', 'dimagi.com']), send_to_ops=False)
-            _assert(not change.deleted, u'change {} (meta: {}) should not have been deleted but was.'.format(
-                change,
-                change_meta.to_json()
-            ))
+            # change.deleted is used for hard deletions whereas change_meta.is_deletion is for soft deletions.
+            # from the consumer's perspective both should be counted as deletions so just "or" them
+            # note: it is strange and hard to reproduce that the couch changes feed is providing a "doc"
+            # along with a hard deletion, but it is doing that in the wild so we might as well support it.
+            change_meta.is_deletion = change_meta.is_deletion or change.deleted
             self._producer.send_change(get_topic(doc_meta), change_meta)
 
 
