@@ -4495,18 +4495,11 @@ class ApplicationBase(VersionedDoc, SnapshotMixin,
 
     def update_mm_map(self):
         if self.build_profiles and domain_has_privilege(self.domain, privileges.BUILD_PROFILES):
-            self.media_language_map = {lang: set() for lang in self.langs}
+            self.media_language_map = {lang: [] for lang in self.langs}
             for form in self.get_forms(bare=False):
                 xml = XForm(form['form'].source)
                 for lang in self.langs:
-                    self.media_language_map[lang] |= xml.all_references(lang)
-                #lang_map = {lang: xml.all_references(lang) for lang in self.langs}
-                # for lang, media_list in lang_map.items():
-                #     for media in media_list:
-                #         if 'langs' in self.multimedia_map[media]:
-                #             self.multimedia_map[media]["langs"][lang] = True
-                #         else:
-                #             self.multimedia_map[media]["langs"] = {lang : True}
+                    self.media_language_map[lang] += xml.all_references(lang)
         else:
             self.media_language_map = {}
 
