@@ -737,15 +737,14 @@ msgstr[1] ""
 
 #: corehq/apps/accounting/subscription_changes.py:350
 #, python-format
-# *** Commenting untranslated plural strings ***
-# msgid ""
-# "You have %(num_fix)s Lookup Table set up. Selecting this plan will delete "
-# "this Lookup Table."
-# msgid_plural ""
-# "You have %(num_fix)s Lookup Tables set up. Selecting this plan will delete "
-# "these Lookup Tables."
-# msgstr[0] ""
-# msgstr[1] ""
+msgid ""
+"You have %(num_fix)s Lookup Table set up. Selecting this plan will delete "
+"this Lookup Table."
+msgid_plural ""
+"You have %(num_fix)s Lookup Tables set up. Selecting this plan will delete "
+"these Lookup Tables."
+msgstr[0] ""
+msgstr[1] ""
 
 #: corehq/apps/accounting/subscription_changes.py:364
 msgid ""
@@ -849,15 +848,14 @@ msgstr ""
 
 #: corehq/apps/accounting/subscription_changes.py:535
 #, python-format
-# *** Commenting untranslated plural strings ***
-# msgid ""
-# "You have %(rule_count)d automatic case update rule configured in your "
-# "project. If you select this plan, this rule will be deactivated."
-# msgid_plural ""
-# "You have %(rule_count)d automatic case update rules configured in your "
-# "project. If you select this plan, these rules will be deactivated."
-# msgstr[0] ""
-# msgstr[1] ""
+msgid ""
+"You have %(rule_count)d automatic case update rule configured in your "
+"project. If you select this plan, this rule will be deactivated."
+msgid_plural ""
+"You have %(rule_count)d automatic case update rules configured in your "
+"project. If you select this plan, these rules will be deactivated."
+msgstr[0] ""
+msgstr[1] ""
 
 #: corehq/apps/accounting/subscription_changes.py:556
 msgid ""
@@ -11360,17 +11358,16 @@ msgstr ""
 
 #: corehq/apps/domain/templates/login_and_password/two_factor/profile/profile.html:43
 #, python-format
-# *** Commenting untranslated plural strings ***
-# msgid ""
-# "\n"
-# "            You have only one backup token remaining.\n"
-# "          "
-# msgid_plural ""
-# "\n"
-# "            You have %(counter)s backup tokens remaining.\n"
-# "          "
-# msgstr[0] ""
-# msgstr[1] ""
+msgid ""
+"\n"
+"            You have only one backup token remaining.\n"
+"          "
+msgid_plural ""
+"\n"
+"            You have %(counter)s backup tokens remaining.\n"
+"          "
+msgstr[0] ""
+msgstr[1] ""
 
 #: corehq/apps/domain/templates/login_and_password/two_factor/profile/profile.html:50
 msgid "Show Codes"
