@@ -10,7 +10,7 @@ from django.forms.util import flatatt
 from django.template.loader import render_to_string
 from django.utils.html import format_html
 from django.utils.safestring import mark_safe
-from django.utils.translation import ugettext as _, ugettext_noop
+from django.utils.translation import ugettext as _, ugettext_noop, ugettext_lazy
 
 from crispy_forms import layout as crispy
 from crispy_forms.bootstrap import StrictButton
@@ -992,7 +992,13 @@ class ConfigurePieChartReportForm(ConfigureBarChartReportForm):
 
 class ConfigureListReportForm(ConfigureNewReportBase):
     report_type = 'list'
-    columns = JsonField(required=True)
+    columns = JsonField(
+        expected_type=list,
+        null_values=([],),
+        required=True,
+        widget=forms.HiddenInput,
+        error_messages={"required": ugettext_lazy("At least one column is required")},
+    )
     column_legend_fine_print = ugettext_noop("Add columns to your report to display information from cases or form submissions. You may rearrange the order of the columns by dragging the arrows next to the column.")
 
     @property
@@ -1023,7 +1029,7 @@ class ConfigureListReportForm(ConfigureNewReportBase):
             crispy.Div(
                 crispy.HTML(self.column_config_template), id="columns-table", data_bind='with: columnsList'
             ),
-            crispy.Hidden('columns', None, data_bind="value: columnsList.serializedProperties")
+            hqcrispy.HiddenFieldWithErrors('columns', None, data_bind="value: columnsList.serializedProperties"),
         )
 
     @property
