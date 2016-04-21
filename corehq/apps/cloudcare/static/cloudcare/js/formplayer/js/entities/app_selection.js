@@ -27,7 +27,6 @@ FormplayerFrontend.module("Entities", function (Entities, FormplayerFrontend, Ba
             if (oldApps.length === 0) {
                 apps = new Entities.AppSelectCollection(apps);
                 apps.forEach(function (app) {
-                    console.log("Storing app: " + app);
                     app.save();
                 });
                 oldApps.reset(apps.models);
@@ -58,7 +57,6 @@ FormplayerFrontend.module("Entities", function (Entities, FormplayerFrontend, Ba
     });
 
     FormplayerFrontend.reqres.setHandler("appselect:storeapps", function (apps) {
-        console.log("app selection store apps");
         return API.storeApps(apps);
     })
 });

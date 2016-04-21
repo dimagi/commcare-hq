@@ -12,9 +12,10 @@ FormplayerFrontend.module("Entities", function (Entities, FormplayerFrontend, Ba
         },
 
         initialize: function (params) {
-            this.profileRef = "http://localhost:8000/a/" + params.domain +
-                "/apps/api/download_ccz/?app_id=" + params.app_id + "#hack=commcare.ccz";
-            console.log("init profile ref: " + this.profileRef);
+            this.domain = params.domain;
+            this.app_id = params.app_id;
+            this.profileRef = "http://localhost:8000/a/" + this.domain +
+                "/apps/api/download_ccz/?app_id=" + this.app_id + "#hack=commcare.ccz";
         },
 
         fetch: function (options) {
@@ -23,7 +24,8 @@ FormplayerFrontend.module("Entities", function (Entities, FormplayerFrontend, Ba
                 "install_reference": collection.profileRef,
                 "username": "test",
                 "password": "123",
-                "domain": "test"
+                "domain": collection.domain,
+                "app_id": collection.app_id
             });
             options.url = 'http://localhost:8080/install';
             options.type = 'POST';
@@ -35,7 +37,6 @@ FormplayerFrontend.module("Entities", function (Entities, FormplayerFrontend, Ba
 
     var API = {
         getMenus: function (app) {
-            console.log("API Get Menus: " + app);
             var menus = new Entities.MenuSelectCollection({domain: app.attributes.domain, app_id: app.attributes._id});
             var defer = $.Deferred();
             menus.fetch({

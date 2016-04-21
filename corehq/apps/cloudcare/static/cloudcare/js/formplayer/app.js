@@ -22,13 +22,9 @@ FormplayerFrontend.getCurrentRoute = function () {
 };
 
 FormplayerFrontend.on("start", function (apps) {
-    console.log("Storing: " + apps);
-
-    //apps = new Entities.AppSelectCollection(apps);
 
     FormplayerFrontend.trigger("apps:storeapps", apps);
 
-    //console.log("Apps: " + apps);
     if (this.getCurrentRoute() === undefined) {
         console.log("triggering apps:list");
         FormplayerFrontend.trigger("apps:list", apps);
