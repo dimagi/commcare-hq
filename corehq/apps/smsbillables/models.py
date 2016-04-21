@@ -397,7 +397,12 @@ class SmsBillable(models.Model):
     @classmethod
     def _get_twilio_charges(cls, backend_message_id, backend_instance, direction, couch_id):
         def _get_twilio_client():
-            twilio_backend = SQLTwilioBackend.objects.get(couch_id=backend_instance)
+            twilio_backend = SQLMobileBackend.load(
+                backend_instance,
+                api_id=SQLTwilioBackend.get_api_id(),
+                is_couch_id=True,
+                include_deleted=True,
+            )
             config = twilio_backend.config
             return TwilioRestClient(config.account_sid, config.auth_token)
 
