@@ -28,7 +28,7 @@ def get_formdata(days_ago, domain, user_id, xmlns=None, duration=1):
             }
         },
         'received_on': now,
-        'xmlns': xmlns
+        'xmlns': xmlns or 'http://anything'
     }
 
 
