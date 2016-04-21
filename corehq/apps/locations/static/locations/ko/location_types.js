@@ -79,12 +79,13 @@ function LocationSettingsViewModel(loc_types, commtrack_enabled) {
             }
         };
         for (var i = 0; i < this.loc_types().length; i++) {
-            var visited = [];
+            var visited = [],
                 loc_type = this.loc_types()[i].pk;
             if (already_visited(loc_type, visited)) {
                 return true;
             }
         }
+        return false;
     };
 
     this.presubmit = function() {
