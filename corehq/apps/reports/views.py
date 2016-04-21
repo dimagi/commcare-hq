@@ -1649,7 +1649,7 @@ class EditFormInstance(View):
         if form.form_type == 'advanced_form':
             datums = EntriesHelper(form.get_app()).get_datums_meta_for_form_generic(form)
             for case_block in case_blocks:
-                path = case_block.path[0]  # all case blocks in advanced forms are nested on level deep
+                path = case_block.path[0]  # all case blocks in advanced forms are nested one level deep
                 matching_datums = [datum for datum in datums if datum.action.form_element_name == path]
                 if len(matching_datums) == 1:
                     edit_session_data[matching_datums[0].datum.id] = case_block.caseblock.get(const.CASE_ATTR_ID)
