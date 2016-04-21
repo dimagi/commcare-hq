@@ -13,20 +13,23 @@ FormplayerFrontend.on("before:start", function () {
 });
 
 FormplayerFrontend.navigate = function (route, options) {
+    console.log("Navigating in app with route: " + route);
     options || (options = {});
+    console.log("options: " + options);
     Backbone.history.navigate(route, options);
 };
 
 FormplayerFrontend.getCurrentRoute = function () {
-    return Backbone.history.fragment
+    return Backbone.history.fragment;
 };
 
 FormplayerFrontend.on("start", function (apps) {
+    if (Backbone.history) {
+        Backbone.history.start();
+        FormplayerFrontend.trigger("apps:storeapps", apps);
 
-    FormplayerFrontend.trigger("apps:storeapps", apps);
-
-    if (this.getCurrentRoute() === undefined) {
-        console.log("triggering apps:list");
-        FormplayerFrontend.trigger("apps:list", apps);
+        if (this.getCurrentRoute() === "") {
+            FormplayerFrontend.trigger("apps:list", apps);
+        }
     }
 });

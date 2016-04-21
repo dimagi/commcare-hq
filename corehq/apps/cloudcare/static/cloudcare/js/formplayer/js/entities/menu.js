@@ -26,6 +26,7 @@ FormplayerFrontend.module("Entities", function (Entities, FormplayerFrontend, Ba
     var API = {
 
         getMenus: function (app) {
+            debugger;
             var menus = new Entities.MenuSelectCollection({
                 domain: app.attributes.domain,
                 app_id: app.attributes._id,
@@ -65,7 +66,6 @@ FormplayerFrontend.module("Entities", function (Entities, FormplayerFrontend, Ba
         },
 
         selectMenu: function (menu) {
-            debugger;
             var menus = new Entities.MenuSelectCollection({
                 selection: menu.attributes.index,
                 sessionId: menu.collection.sessionId,
@@ -76,7 +76,6 @@ FormplayerFrontend.module("Entities", function (Entities, FormplayerFrontend, Ba
                         "selection": collection.selection,
                         "session_id": collection.sessionId
                     });
-                    debugger;
                     options.url = 'http://localhost:8080/menu_select';
                     options.type = 'POST';
                     options.dataType = "json";

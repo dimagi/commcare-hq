@@ -1,8 +1,9 @@
 FormplayerFrontend.module("AppSelect", function (AppSelect, FormplayerFrontend, Backbone, Marionette, $, _) {
     AppSelect.Router = Marionette.AppRouter.extend({
         appRoutes: {
-            "apps/:apps": "listApps",
-            "apps/:id/select": "selectApp",
+            "apps": "listApps",
+            "apps/:id": "selectApp",
+            "apps/:id/menu/:menuId": "selectMenu",
             "apps/:apps/store": "storeApps"
         }
     });
@@ -28,18 +29,18 @@ FormplayerFrontend.module("AppSelect", function (AppSelect, FormplayerFrontend, 
     });
 
     FormplayerFrontend.on("app:select", function (model) {
-        FormplayerFrontend.navigate("apps/" + model.attributes._id + "/select");
+        console.log("Navigating");
+        FormplayerFrontend.navigate("apps/" + model.attributes._id);
         API.selectApp(model);
     });
 
     FormplayerFrontend.on("apps:storeapps", function (apps) {
         API.storeApps(apps);
-        FormplayerFrontend.navigate("apps");
     });
 
     FormplayerFrontend.on("menu:select", function (model) {
         API.selectMenu(model);
-        FormplayerFrontend.navigate("model");
+        FormplayerFrontend.navigate("apps/" + model.collection.app_id + "/menu/" + model.attributes.index);
     });
 
     AppSelect.on("start", function () {
