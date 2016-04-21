@@ -9,7 +9,7 @@ FormplayerFrontend.module("AppSelect.AppList", function (AppList, FormplayerFron
 
         rowClick: function(e){
             e.preventDefault();
-            FormplayerFrontend.trigger("app:select", this.model);
+            FormplayerFrontend.trigger("app:select", this.model.attributes._id);
         }
     });
 

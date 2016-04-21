@@ -1,8 +1,8 @@
 FormplayerFrontend.module("AppSelect.MenuList", function (MenuList, FormplayerFrontend, Backbone, Marionette, $, _) {
     MenuList.Controller = {
-        listMenus: function (app) {
+        listMenus: function (app_id) {
 
-            var fetchingApps = FormplayerFrontend.request("app:select:menus", app);
+            var fetchingApps = FormplayerFrontend.request("app:select:menus", app_id);
 
             $.when(fetchingApps).done(function (menus) {
 

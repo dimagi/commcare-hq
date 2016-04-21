@@ -12,14 +12,14 @@ FormplayerFrontend.module("AppSelect", function (AppSelect, FormplayerFrontend, 
         listApps: function () {
             AppSelect.AppList.Controller.listApps();
         },
-        selectApp: function (model) {
-            AppSelect.MenuList.Controller.listMenus(model);
+        selectApp: function (app_id) {
+            AppSelect.MenuList.Controller.listMenus(app_id);
         },
         storeApps: function (apps) {
             FormplayerFrontend.request("appselect:storeapps", apps)
         },
-        selectMenu: function(model) {
-            AppSelect.MenuList.Controller.selectMenu(model);
+        selectMenu: function(id, menuId) {
+            AppSelect.MenuList.Controller.selectMenu(menuId);
         }
     };
 
@@ -28,10 +28,10 @@ FormplayerFrontend.module("AppSelect", function (AppSelect, FormplayerFrontend, 
         API.listApps();
     });
 
-    FormplayerFrontend.on("app:select", function (model) {
+    FormplayerFrontend.on("app:select", function (app_id) {
         console.log("Navigating");
-        FormplayerFrontend.navigate("apps/" + model.attributes._id);
-        API.selectApp(model);
+        FormplayerFrontend.navigate("apps/" + app_id);
+        API.selectApp(app_id);
     });
 
     FormplayerFrontend.on("apps:storeapps", function (apps) {
@@ -39,7 +39,7 @@ FormplayerFrontend.module("AppSelect", function (AppSelect, FormplayerFrontend, 
     });
 
     FormplayerFrontend.on("menu:select", function (model) {
-        API.selectMenu(model);
+        API.selectMenu(model.collection.app_id, model.attributes.index);
         FormplayerFrontend.navigate("apps/" + model.collection.app_id + "/menu/" + model.attributes.index);
     });
 

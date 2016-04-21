@@ -15,6 +15,7 @@ FormplayerFrontend.module("Entities", function (Entities, FormplayerFrontend, Ba
         parse: function (response) {
             this.sessionId = response.session_id;
             this.sequenceId = response.sequenceId;
+            FormplayerFrontend.request('currentUser').sessionId = this.sessionId;
             return response.commands;
         },
 
@@ -30,10 +31,10 @@ FormplayerFrontend.module("Entities", function (Entities, FormplayerFrontend, Ba
 
     var API = {
 
-        getMenus: function (app) {
+        getMenus: function (app_id) {
             var menus = new Entities.MenuSelectCollection({
                 domain: FormplayerFrontend.request('currentUser').domain,
-                app_id: app.attributes._id,
+                app_id: app_id,
 
                 fetch: function (options) {
                     var collection = this;
@@ -71,8 +72,8 @@ FormplayerFrontend.module("Entities", function (Entities, FormplayerFrontend, Ba
 
         selectMenu: function (menu) {
             var menus = new Entities.MenuSelectCollection({
-                selection: menu.attributes.index,
-                sessionId: menu.collection.sessionId,
+                selection: menu,
+                sessionId: FormplayerFrontend.request('currentUser').sessionId,
 
                 fetch: function (options) {
                     var collection = this;
