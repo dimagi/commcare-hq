@@ -10,6 +10,13 @@ function (doc) {
                     attachments[key] = doc._attachments[key];
                 }
             }
+            for (var key in doc.external_blobs) {
+                if (doc.external_blobs.hasOwnProperty(key) &&
+                    doc.external_blobs[key].content_type !== "text/xml") {
+                    media += 1;
+                    attachments[key] = doc.external_blobs[key];
+                }
+            }
             if (media > 0) {
                 value = {
                     xmlns: doc.xmlns,
