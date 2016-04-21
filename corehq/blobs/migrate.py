@@ -214,6 +214,8 @@ MIGRATIONS = {m.slug: m for m in [
     Migrator("applications", [
         Application,
         RemoteApp,
+        ("Application-Deleted", Application),
+        ("RemoteApp-Deleted", RemoteApp),
     ], migrate_from_couch_to_blobdb),
 ]}
 
