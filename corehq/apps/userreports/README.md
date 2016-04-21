@@ -410,8 +410,6 @@ Only the following functions are permitted:
   * e.g. `timedelta_to_seconds(time_end - time_start)`
 
 
-More examples can be found on practical [examples page](examples/examples.md#evaluator-examples).
-
 #### "Month Start Date" and "Month End Date" expressions
 
 `month_start_date` returns date of first day in the month of given date and `month_end_date` returns date of last day in the month of given date.
