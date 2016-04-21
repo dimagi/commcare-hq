@@ -150,17 +150,15 @@ def _get_basic_module_view_context(app, module, lang=None):
         AllowWithReason(allow_with_parent_select, AllowWithReason.PARENT_SELECT_ACTIVE)
     )
     return {
-        'parent_modules': _get_parent_modules(app, module,
-                                             case_property_builder, case_type),
+        'parent_modules': _get_parent_modules(app, module, case_property_builder, case_type),
         'fixture_columns_by_type': _get_fixture_columns_by_type(app.domain),
-        'details': _get_module_details_context(app, module,
-                                               case_property_builder,
-                                               case_type),
+        'details': _get_module_details_context(app, module, case_property_builder, case_type),
         'case_list_form_options': form_options,
         'case_list_form_not_allowed_reason': allow_case_list_form,
         'valid_parent_modules': _get_valid_parent_modules(app, module),
-        'child_module_enabled': toggles.BASIC_CHILD_MODULE.enabled(app.domain)
-                                 and module.doc_type != "ShadowModule"
+        'child_module_enabled': (
+            toggles.BASIC_CHILD_MODULE.enabled(app.domain) and module.doc_type != "ShadowModule"
+        )
     }
 
 
