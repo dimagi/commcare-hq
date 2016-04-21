@@ -28,7 +28,6 @@ def get_reindex_commands(alias_name):
             ('ptop_reindexer_v2', {'index': 'user'}),
             add_demo_user_to_user_index,
             'ptop_fast_reindex_groupstousers',
-            # 'ptop_fast_reindex_unknownusers',  removed until we have a better workflow for this
         ],
         'hqapps': ['ptop_fast_reindex_apps'],
         'hqgroups': ['ptop_fast_reindex_groups'],

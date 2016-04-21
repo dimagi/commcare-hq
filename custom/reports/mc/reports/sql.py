@@ -152,8 +152,8 @@ class BaseReport(McMixin, SqlTabularReport, DatespanMixin, CustomProjectReport, 
             loc = FixtureDataItem.get(id).fields['name']['field_list'][0]['field_value']
         return {
             'domain': self.domain,
-            'startdate': self.datespan.startdate,
-            'enddate': self.datespan.enddate,
+            'startdate': self.datespan.startdate_param_utc,
+            'enddate': self.datespan.enddate_param_utc,
             type: loc,
             'one': 1,
             'zero': 0,

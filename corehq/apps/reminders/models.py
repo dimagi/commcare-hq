@@ -1294,6 +1294,7 @@ class CaseReminderHandler(Document):
             is_archived=False))
 
     def clear_caches(self):
+        self.domain_has_reminders.clear(CaseReminderHandler, self.domain)
         self.get_handler_ids.clear(CaseReminderHandler, self.domain, reminder_type_filter=None)
         reminder_type = self.reminder_type or REMINDER_TYPE_DEFAULT
         self.get_handler_ids.clear(CaseReminderHandler, self.domain, reminder_type_filter=reminder_type)
@@ -1379,6 +1380,18 @@ class CaseReminderHandler(Document):
             descending=True,
         )
         return [row['id'] for row in result]
+
+    @classmethod
+    @quickcache(['domain'], timeout=60 * 60)
+    def domain_has_reminders(cls, domain):
+        reduced = cls.view('reminders/handlers_by_reminder_type',
+            startkey=[domain],
+            endkey=[domain, {}],
+            include_docs=False,
+            reduce=True
+        ).all()
+        count = reduced[0]['value'] if reduced else 0
+        return count > 0
 
     @classmethod
     @quickcache(['domain', 'reminder_type_filter'], timeout=60 * 60)
@@ -1683,6 +1696,25 @@ class SurveyKeyword(Document):
             reduce=False,
             **extra_kwargs
         ).all()
+
+    def save(self, *args, **kwargs):
+        self.clear_caches()
+        return super(SurveyKeyword, self).save(*args, **kwargs)
+
+    def clear_caches(self):
+        self.domain_has_keywords.clear(SurveyKeyword, self.domain)
+
+    @classmethod
+    @quickcache(['domain'], timeout=60 * 60)
+    def domain_has_keywords(cls, domain):
+        reduced = cls.view('reminders/survey_keywords',
+            startkey=[domain],
+            endkey=[domain, {}],
+            include_docs=False,
+            reduce=True
+        ).all()
+        count = reduced[0]['value'] if reduced else 0
+        return count > 0
 
 
 class EmailUsage(models.Model):

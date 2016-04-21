@@ -108,6 +108,7 @@ class CommCareCaseAction(LooselyEqualDocumentSchema):
 
     @property
     def form_id(self):
+        """For compatability with CaseTransaction"""
         return self.xform_id
 
     @property

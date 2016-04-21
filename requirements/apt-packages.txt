@@ -13,6 +13,7 @@ apache2
 redis-server # [travis_ignore]
 
 # dependencies for the pip modules
+libffi-dev
 libfreetype6-dev
 libjpeg-dev
 libtiff-dev

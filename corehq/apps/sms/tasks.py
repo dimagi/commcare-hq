@@ -13,6 +13,7 @@ from django.conf import settings
 from corehq import privileges
 from corehq.apps.accounting.utils import domain_has_privilege
 from corehq.apps.domain.models import Domain
+from corehq.apps.smsbillables.exceptions import RetryBillableTaskException
 from corehq.apps.smsbillables.models import SmsBillable
 from corehq.apps.sms.change_publishers import publish_sms_saved
 from corehq.util.timezones.conversions import ServerTime
@@ -238,8 +239,8 @@ def process_sms(queued_sms_pk):
             process_sms.delay(queued_sms_pk)
 
 
-@task(ignore_result=True)
-def store_billable(msg):
+@task(ignore_result=True, default_retry_delay=5 * 60, max_retries=10, bind=True)
+def store_billable(self, msg):
     if not isinstance(msg, SMS):
         raise Exception("Expected msg to be an SMS")
 
@@ -251,10 +252,13 @@ def store_billable(msg):
             # This string contains unicode characters, so the allowed
             # per-sms message length is shortened
             msg_length = 70
-        SmsBillable.create(
-            msg,
-            multipart_count=int(math.ceil(float(len(msg.text)) / msg_length)),
-        )
+        try:
+            SmsBillable.create(
+                msg,
+                multipart_count=int(math.ceil(float(len(msg.text)) / msg_length)),
+            )
+        except RetryBillableTaskException as e:
+            self.retry(exc=e)
 
 
 @task(queue='background_queue', ignore_result=True, acks_late=True)

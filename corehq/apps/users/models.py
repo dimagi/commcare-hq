@@ -1091,12 +1091,16 @@ class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, UnicodeMixIn, EulaMi
         return couch_user
 
     @classmethod
-    def wrap_correctly(cls, source):
+    def wrap_correctly(cls, source, allow_deleted_doc_types=False):
+        doc_type = source['doc_type']
+        if allow_deleted_doc_types:
+            doc_type = doc_type.replace(DELETED_SUFFIX, '')
+
         return {
             'WebUser': WebUser,
             'CommCareUser': CommCareUser,
             'FakeUser': FakeUser,
-        }[source['doc_type']].wrap(source)
+        }[doc_type].wrap(source)
 
     @classmethod
     @skippable_quickcache(['username'], skip_arg='strict')

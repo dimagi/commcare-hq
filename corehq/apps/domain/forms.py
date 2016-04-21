@@ -1293,7 +1293,7 @@ class ConfirmNewSubscriptionForm(EditBillingAccountInfoForm):
                             self.plan_version,
                             web_user=self.creating_user,
                             adjustment_method=SubscriptionAdjustmentMethod.USER,
-                            service_type=SubscriptionType.SELF_SERVICE,
+                            service_type=SubscriptionType.PRODUCT,
                             pro_bono_status=ProBonoStatus.NO,
                         )
                         subscription.is_active = True
@@ -1305,7 +1305,7 @@ class ConfirmNewSubscriptionForm(EditBillingAccountInfoForm):
                         self.account, self.domain, self.plan_version,
                         web_user=self.creating_user,
                         adjustment_method=SubscriptionAdjustmentMethod.USER,
-                        service_type=SubscriptionType.SELF_SERVICE,
+                        service_type=SubscriptionType.PRODUCT,
                         pro_bono_status=ProBonoStatus.NO,
                         funding_source=FundingSource.CLIENT
                     )
@@ -1409,7 +1409,7 @@ class ConfirmSubscriptionRenewalForm(EditBillingAccountInfoForm):
                 self.current_subscription.renew_subscription(
                     web_user=self.creating_user,
                     adjustment_method=SubscriptionAdjustmentMethod.USER,
-                    service_type=SubscriptionType.SELF_SERVICE,
+                    service_type=SubscriptionType.PRODUCT,
                     pro_bono_status=ProBonoStatus.NO,
                     funding_source=FundingSource.CLIENT,
                     new_version=self.renewed_version,
@@ -1885,7 +1885,7 @@ class ContractedPartnerForm(InternalSubscriptionManagementForm):
 
         if (
             self.current_subscription
-            and self.current_subscription.service_type == SubscriptionType.CONTRACTED
+            and self.current_subscription.service_type == SubscriptionType.IMPLEMENTATION
             and self.current_subscription.plan_version == new_plan_version
             and self.current_subscription.date_start == self.cleaned_data['start_date']
         ):
@@ -1931,7 +1931,7 @@ class ContractedPartnerForm(InternalSubscriptionManagementForm):
         return (
             self.current_subscription
             and self.current_subscription.plan_version.plan.edition == SoftwarePlanEdition.ENTERPRISE
-            and self.current_subscription.service_type == SubscriptionType.CONTRACTED
+            and self.current_subscription.service_type == SubscriptionType.IMPLEMENTATION
         )
 
     @property
@@ -1941,7 +1941,7 @@ class ContractedPartnerForm(InternalSubscriptionManagementForm):
             'auto_generate_credits': True,
             'date_end': self.cleaned_data['end_date'],
             'do_not_invoice': False,
-            'service_type': SubscriptionType.CONTRACTED,
+            'service_type': SubscriptionType.IMPLEMENTATION,
         })
         return fields
 

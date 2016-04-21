@@ -693,23 +693,25 @@ class LedgerAccessorSQL(AbstractLedgerAccessor):
             raise LedgerValueNotFound
 
     @staticmethod
-    def save_ledger_values(ledger_values):
+    def save_ledger_values(ledger_values, deprecated_form=None):
         if not ledger_values:
             return
 
+        deprecated_form_id = deprecated_form.orig_id if deprecated_form else None
+
         for ledger_value in ledger_values:
-            transactions = ledger_value.get_live_tracked_models(LedgerTransaction)
+            transactions_to_save = ledger_value.get_live_tracked_models(LedgerTransaction)
 
             ledger_value.last_modified = datetime.utcnow()
 
             with get_cursor(LedgerValue) as cursor:
                 try:
                     cursor.execute(
-                        "SELECT save_ledger_values(%s, %s::{}, %s::{}[])".format(
+                        "SELECT save_ledger_values(%s, %s::{}, %s::{}[], %s)".format(
                             LedgerValue_DB_TABLE,
                             LedgerTransaction_DB_TABLE
                         ),
-                        [ledger_value.case_id, ledger_value, transactions]
+                        [ledger_value.case_id, ledger_value, transactions_to_save, deprecated_form_id]
                     )
                 except InternalError as e:
                     raise LedgerSaveError(e)
