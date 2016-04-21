@@ -20,7 +20,7 @@ def call_center_data_source_provider():
     for domain in get_call_center_domains():
         if domain.use_fixtures:
             for data_source_json in call_center_data_sources:
-                yield _make_data_source_for_domain(data_source_json, domain)
+                yield _make_data_source_for_domain(data_source_json, domain.name)
 
 
 def get_data_source_templates():
@@ -32,28 +32,28 @@ def get_data_source_templates():
     return call_center_data_sources
 
 
-def get_sql_adapters_for_domain(domain):
+def get_sql_adapters_for_domain(domain_name):
     forms, cases, case_actions = get_data_source_templates()
     return CallCenterReportDataSources(
-        forms=_get_sql_adapter(domain, forms),
-        cases=_get_sql_adapter(domain, cases),
-        case_actions=_get_sql_adapter(domain, case_actions),
+        forms=_get_sql_adapter(domain_name, forms),
+        cases=_get_sql_adapter(domain_name, cases),
+        case_actions=_get_sql_adapter(domain_name, case_actions),
     )
 
 
-def _get_sql_adapter(domain, data_source_json):
+def _get_sql_adapter(domain_name, data_source_json):
     from corehq.apps.userreports.sql import IndicatorSqlAdapter
-    data_source = _make_data_source_for_domain(data_source_json, domain)
+    data_source = _make_data_source_for_domain(data_source_json, domain_name)
     return IndicatorSqlAdapter(data_source)
 
 
-def _make_data_source_for_domain(data_source_json, domain_lite):
+def _make_data_source_for_domain(data_source_json, domain_name):
     from corehq.apps.userreports.models import StaticDataSourceConfiguration
     from corehq.apps.userreports.models import DataSourceConfiguration
 
     doc = deepcopy(data_source_json)
-    doc['domain'] = domain_lite.name
-    doc['_id'] = StaticDataSourceConfiguration.get_doc_id(domain_lite.name, doc['table_id'])
+    doc['domain'] = domain_name
+    doc['_id'] = StaticDataSourceConfiguration.get_doc_id(domain_name, doc['table_id'])
     return DataSourceConfiguration.wrap(doc)
 
 
