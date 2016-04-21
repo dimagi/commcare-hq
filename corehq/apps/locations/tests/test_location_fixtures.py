@@ -85,31 +85,18 @@ class LocationFixturesTest(LocationHierarchyPerTest, TestXmlMixin):
     def test_simple_location_fixture(self, uses_locations):
         self.user.set_location(self.locations['Suffolk'].couch_location)
 
-        self._assert_fixtures_equal(
+        self._assert_fixture_has_locations(
             'simple_fixture',
-            state_id=self.locations['Massachusetts'].location_id,
-            county_id=self.locations['Suffolk'].location_id,
-            boston_id=self.locations['Boston'].location_id,
-            revere_id=self.locations['Revere'].location_id,
+            ['Massachusetts', 'Suffolk', 'Boston', 'Revere']
         )
 
     def test_all_locations_flag_returns_all_locations(self, uses_locations):
         with flag_enabled('SYNC_ALL_LOCATIONS'):
-            self._assert_fixtures_equal(
+            self._assert_fixture_has_locations(
                 'expand_from_root',
-                state_id=self.locations['Massachusetts'].location_id,
-                suffolk_id=self.locations['Suffolk'].location_id,
-                middlesex_id=self.locations['Middlesex'].location_id,
-                boston_id=self.locations['Boston'].location_id,
-                revere_id=self.locations['Revere'].location_id,
-                cambridge_id=self.locations['Cambridge'].location_id,
-                somerville_id=self.locations['Somerville'].location_id,
-                new_york_id=self.locations['New York'].location_id,
-                new_york_city_id=self.locations['New York City'].location_id,
-                manhattan_id=self.locations['Manhattan'].location_id,
-                queens_id=self.locations['Queens'].location_id,
-                brooklyn_id=self.locations['Brooklyn'].location_id,
-            )
+                ['Massachusetts', 'Suffolk', 'Middlesex', 'Boston', 'Revere', 'Cambridge',
+                 'Somerville', 'New York', 'New York City', 'Manhattan', 'Queens', 'Brooklyn']
+                )
 
     @mock.patch.object(CommCareUser, 'locations')
     @mock.patch.object(Domain, 'supports_multiple_locations_per_user')
@@ -126,17 +113,10 @@ class LocationFixturesTest(LocationHierarchyPerTest, TestXmlMixin):
         supports_multiple_locations.__get__ = mock.Mock(return_value=True)
         user_locations.__get__ = mock.Mock(return_value=multiple_locations_different_states)
 
-        self._assert_fixtures_equal(
+        self._assert_fixture_has_locations(
             'multiple_locations',
-            massachusetts_id=self.locations['Massachusetts'].location_id,
-            suffolk_id=self.locations['Suffolk'].location_id,
-            boston_id=self.locations['Boston'].location_id,
-            revere_id=self.locations['Revere'].location_id,
-            new_york_id=self.locations['New York'].location_id,
-            new_york_city_id=self.locations['New York City'].location_id,
-            manhattan_id=self.locations['Manhattan'].location_id,
-            queens_id=self.locations['Queens'].location_id,
-            brooklyn_id=self.locations['Brooklyn'].location_id,
+            ['Massachusetts', 'Suffolk', 'Boston', 'Revere', 'New York',
+             'New York City', 'Manhattan', 'Queens', 'Brooklyn']
         )
 
     def test_expand_to_county(self, uses_locations):
@@ -151,10 +131,9 @@ class LocationFixturesTest(LocationHierarchyPerTest, TestXmlMixin):
         location_type.expand_to = location_type
         location_type.save()
 
-        self._assert_fixtures_equal(
+        self._assert_fixture_has_locations(
             'expand_to_county',
-            state_id=self.locations['Massachusetts'].location_id,
-            county_id=self.locations['Suffolk'].location_id,
+            ['Massachusetts', 'Suffolk']
         )
 
     def test_expand_to_county_from_state(self, uses_locations):
@@ -163,11 +142,9 @@ class LocationFixturesTest(LocationHierarchyPerTest, TestXmlMixin):
         location_type.expand_to = self.locations['Suffolk'].location_type
         location_type.save()
 
-        self._assert_fixtures_equal(
+        self._assert_fixture_has_locations(
             'expand_to_county_from_state',
-            state_id=self.locations['Massachusetts'].location_id,
-            suffolk_id=self.locations['Suffolk'].location_id,
-            middlesex_id=self.locations['Middlesex'].location_id,
+            ['Massachusetts', 'Suffolk', 'Middlesex']
         )
 
     def test_expand_from_county_at_city(self, uses_locations):
@@ -176,13 +153,9 @@ class LocationFixturesTest(LocationHierarchyPerTest, TestXmlMixin):
         location_type.expand_from = self.locations['Suffolk'].location_type
         location_type.save()
 
-        self._assert_fixtures_equal(
+        self._assert_fixture_has_locations(
             'expand_from_county_at_city',
-            state_id=self.locations['Massachusetts'].location_id,
-            suffolk_id=self.locations['Suffolk'].location_id,
-            middlesex_id=self.locations['Middlesex'].location_id,
-            boston_id=self.locations['Boston'].location_id,
-            revere_id=self.locations['Revere'].location_id,
+            ['Massachusetts', 'Suffolk', 'Middlesex', 'Boston', 'Revere']
         )
 
     def test_expand_from_root_at_city(self, uses_locations):
@@ -191,20 +164,10 @@ class LocationFixturesTest(LocationHierarchyPerTest, TestXmlMixin):
         location_type.expand_from_root = True
         location_type.save()
 
-        self._assert_fixtures_equal(
+        self._assert_fixture_has_locations(
             'expand_from_root',
-            state_id=self.locations['Massachusetts'].location_id,
-            suffolk_id=self.locations['Suffolk'].location_id,
-            middlesex_id=self.locations['Middlesex'].location_id,
-            boston_id=self.locations['Boston'].location_id,
-            revere_id=self.locations['Revere'].location_id,
-            cambridge_id=self.locations['Cambridge'].location_id,
-            somerville_id=self.locations['Somerville'].location_id,
-            new_york_id=self.locations['New York'].location_id,
-            new_york_city_id=self.locations['New York City'].location_id,
-            manhattan_id=self.locations['Manhattan'].location_id,
-            queens_id=self.locations['Queens'].location_id,
-            brooklyn_id=self.locations['Brooklyn'].location_id,
+            ['Massachusetts', 'Suffolk', 'Middlesex', 'Boston', 'Revere', 'Cambridge',
+             'Somerville', 'New York', 'New York City', 'Manhattan', 'Queens', 'Brooklyn']
         )
 
     def test_expand_from_root_to_county(self, uses_locations):
@@ -213,20 +176,22 @@ class LocationFixturesTest(LocationHierarchyPerTest, TestXmlMixin):
         location_type.expand_from_root = True
         location_type.expand_to = self.locations['Suffolk'].location_type
         location_type.save()
-        self._assert_fixtures_equal(
+        self._assert_fixture_has_locations(
             'expand_from_root_to_county',
-            state_id=self.locations['Massachusetts'].location_id,
-            suffolk_id=self.locations['Suffolk'].location_id,
-            middlesex_id=self.locations['Middlesex'].location_id,
-            new_york_id=self.locations['New York'].location_id,
-            new_york_city_id=self.locations['New York City'].location_id,
+            ['Massachusetts', 'Suffolk', 'Middlesex', 'New York', 'New York City']
         )
 
-    def _assert_fixtures_equal(self, xml_name, **kwargs):
+    def _assert_fixture_has_locations(self, xml_name, desired_locations):
+        ids = {
+            "{}_id".format(desired_location.lower().replace(" ", "_")): (
+                self.locations[desired_location].location_id
+            )
+            for desired_location in desired_locations
+        }  # eg: {"massachusetts_id" = self.locations["Massachusetts"].location_id}
         fixture = ElementTree.tostring(location_fixture_generator(self.user, V2)[0])
         desired_fixture = self.get_xml(xml_name).format(
             user_id=self.user.user_id,
-            **kwargs
+            **ids
         )
         self.assertXmlEqual(desired_fixture, fixture)
 

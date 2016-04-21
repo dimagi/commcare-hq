@@ -1,6 +1,6 @@
 <fixture id="commtrack:locations" user_id="{user_id}">
   <states>
-    <state id="{state_id}">
+    <state id="{massachusetts_id}">
       <name>Massachusetts</name>
       <site_code>massachusetts</site_code>
       <external_id />
@@ -10,7 +10,7 @@
       <supply_point_id />
       <location_data />
       <countys>
-        <county id="{county_id}">
+        <county id="{suffolk_id}">
           <name>Suffolk</name>
           <site_code>suffolk</site_code>
           <external_id />
