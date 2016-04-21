@@ -1612,13 +1612,8 @@ class EditFormInstance(View):
         return reverse(
             'cloudcare_form_context',
             args=[domain, instance.build_id, form.get_module().id, form.id],
-            params={'instance_id': instance._id}
+            params={'instance_id': instance.form_id}
         )
-
-    @staticmethod
-    def _form_uses_usercase(form):
-        actions = form.active_actions()
-        return form.form_type == 'module_form' and actions_use_usercase(actions)
 
     def get(self, request, *args, **kwargs):
         domain = request.domain
@@ -1641,7 +1636,8 @@ class EditFormInstance(View):
         edit_session_data = get_user_contributions_to_touchforms_session(user)
 
         # add usercase to session
-        if self._form_uses_usercase(self._get_form_from_instance(instance)):
+        form = self._get_form_from_instance(instance)
+        if form.uses_usercase():
             usercase_id = user.get_usercase_id()
             if not usercase_id:
                 return _error(_('Could not find the user-case for this form'))
@@ -1649,7 +1645,7 @@ class EditFormInstance(View):
 
         case_blocks = extract_case_blocks(instance, include_path=True)
         # a bit hacky - the app manager puts the main case directly in the form, so it won't have
-        # any other path associated with it. This allows us to differentiat from parent cases.
+        # any other path associated with it. This allows us to differentiate from parent cases.
         # One thing this definitely does not do is support advanced modules or forms with case-management
         # done by hand.
         # You might think that you need to populate other session variables like parent_id, but those
