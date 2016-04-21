@@ -37,11 +37,11 @@ class Command(BaseCommand):
            'Managed Hosting and Reseller'
 
     option_list = BaseCommand.option_list + (
-        make_option('--dry-run', action='store_true',  default=False,
+        make_option('--dry-run', action='store_true', default=False,
                     help='Do not actually modify the database, just verbosely log what happen'),
-        make_option('--verbose', action='store_true',  default=False,
+        make_option('--verbose', action='store_true', default=False,
                     help='Enable debug output'),
-        make_option('--testing', action='store_true',  default=False,
+        make_option('--testing', action='store_true', default=False,
                     help='Run this command for testing purposes.'),
     )
 
@@ -109,7 +109,10 @@ def ensure_plans(dry_run, verbose, for_tests, apps):
                             assert len(product_rates) == 1
                             software_plan_version.product_rate = product_rate
                         else:
-                            raise AccountingError('SoftwarePlanVersion does not have product_rate or product_rates field')
+                            raise AccountingError(
+                                'SoftwarePlanVersion does not have product_rate '
+                                'or product_rates field'
+                            )
 
                     # must save before assigning many-to-many relationship
                     if hasattr(SoftwarePlanVersion, 'product_rate'):
