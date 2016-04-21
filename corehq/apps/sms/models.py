@@ -11,8 +11,6 @@ from django.db import models, transaction
 from collections import namedtuple
 from corehq.apps.app_manager.dbaccessors import get_app
 from corehq.apps.app_manager.models import Form
-from corehq.form_processor.backends.sql.dbaccessors import CaseAccessorSQL
-from corehq.form_processor.models import CommCareCaseSQL
 from corehq.util.mixin import UUIDGeneratorMixin
 from corehq.apps.users.models import CouchUser
 from casexml.apps.case.models import CommCareCase

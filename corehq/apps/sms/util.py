@@ -5,7 +5,6 @@ import uuid
 import datetime
 from couchdbkit.resource import ResourceNotFound
 from corehq.apps.users.models import CouchUser, CommCareUser
-from corehq.form_processor.utils.general import should_use_sql_backend
 from django.conf import settings
 from corehq.apps.hqcase.utils import submit_case_block_from_template
 from corehq.util.quickcache import quickcache
