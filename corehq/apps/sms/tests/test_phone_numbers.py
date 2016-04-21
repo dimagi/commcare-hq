@@ -3,6 +3,7 @@ from casexml.apps.case.models import CommCareCase
 from contextlib import contextmanager
 from corehq.apps.hqcase.utils import update_case
 from corehq.apps.sms.mixin import VerifiedNumber
+from corehq.apps.users.tasks import tag_cases_as_deleted_and_remove_indices
 from corehq.form_processor.backends.sql.dbaccessors import CaseAccessorSQL
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 from corehq.form_processor.utils.general import should_use_sql_backend
@@ -180,7 +181,7 @@ class CaseContactPhoneNumberTestCase(TestCase):
             case = self.set_case_property(case, 'contact_phone_number_is_verified', '1')
             self.assertIsNotNone(self.get_case_verified_number(case))
 
-            case.soft_delete()
+            tag_cases_as_deleted_and_remove_indices(self.domain, [case.case_id], '123', datetime.utcnow())
             self.assertIsNone(self.get_case_verified_number(case))
 
     @run_with_all_backends
