@@ -212,13 +212,16 @@ class ReportBuilderTypeSelect(JSONResponseMixin, ReportBuilderView):
 
     @property
     def tiles(self):
-        analytics_workflow_label = "Clicked on Report Builder Tile"
+        clicked_tile = "Clicked on Report Builder Tile"
         tiles = [
             TileConfiguration(
                 title=_('Chart'),
                 slug='chart',
                 analytics_usage_label="Chart",
-                analytics_workflow_label=analytics_workflow_label,
+                analytics_workflow_labels=[
+                    clicked_tile,
+                    "Clicked Chart Tile",
+                ],
                 icon='fcc fcc-piegraph-report',
                 context_processor_class=IconContext,
                 url=reverse('report_builder_select_source', args=[self.domain, 'chart']),
@@ -229,7 +232,10 @@ class ReportBuilderTypeSelect(JSONResponseMixin, ReportBuilderView):
                 title=_('Form or Case List'),
                 slug='form-or-case-list',
                 analytics_usage_label="List",
-                analytics_workflow_label=analytics_workflow_label,
+                analytics_workflow_labels=[
+                    clicked_tile,
+                    "Clicked Form or Case List Tile"
+                ],
                 icon='fcc fcc-form-report',
                 context_processor_class=IconContext,
                 url=reverse('report_builder_select_source', args=[self.domain, 'list']),
@@ -240,7 +246,10 @@ class ReportBuilderTypeSelect(JSONResponseMixin, ReportBuilderView):
                 title=_('Worker Report'),
                 slug='worker-report',
                 analytics_usage_label="Worker",
-                analytics_workflow_label=analytics_workflow_label,
+                analytics_workflow_labels=[
+                    clicked_tile,
+                    "Clicked Worker Report Tile",
+                ],
                 icon='fcc fcc-user-report',
                 context_processor_class=IconContext,
                 url=reverse('report_builder_select_source', args=[self.domain, 'worker']),
@@ -251,7 +260,10 @@ class ReportBuilderTypeSelect(JSONResponseMixin, ReportBuilderView):
                 title=_('Data Table'),
                 slug='data-table',
                 analytics_usage_label="Table",
-                analytics_workflow_label=analytics_workflow_label,
+                analytics_workflow_labels=[
+                    clicked_tile,
+                    "Clicked Data Table Tile"
+                ],
                 icon='fcc fcc-datatable-report',
                 context_processor_class=IconContext,
                 url=reverse('report_builder_select_source', args=[self.domain, 'table']),
@@ -264,7 +276,7 @@ class ReportBuilderTypeSelect(JSONResponseMixin, ReportBuilderView):
                 title=_('Map'),
                 slug='map',
                 analytics_usage_label="Map",
-                analytics_workflow_label=analytics_workflow_label,
+                analytics_workflow_labels=[clicked_tile],
                 icon='fcc fcc-globe',
                 context_processor_class=IconContext,
                 url=reverse('report_builder_select_source', args=[self.domain, 'map']),

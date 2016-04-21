@@ -229,8 +229,9 @@
                     if (!_.isEmpty(currentVal.usage_label)) {
                         gaTrackLink(element, analyticsConfig.category, analyticsConfig.action, currentVal.usage_label);
                     }
-                    if (!_.isEmpty(currentVal.workflow_label)) {
-                        analytics.trackWorkflowLink(element, currentVal.workflow_label);
+                    for (var i in currentVal.workflow_labels) {
+                        var label = currentVal.workflow_labels[i];
+                        window.analytics.trackWorkflowLink(element, label);
                     }
                 }
             });
