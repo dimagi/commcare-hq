@@ -325,9 +325,9 @@ class FormAccessorSQL(AbstractFormAccessor):
 class CaseAccessorSQL(AbstractCaseAccessor):
 
     @staticmethod
-    def get_case(case_id, cls=CommCareCaseSQL):
+    def get_case(case_id):
         try:
-            return cls.objects.raw('SELECT * from get_case_by_id(%s)', [case_id])[0]
+            return CommCareCaseSQL.objects.raw('SELECT * from get_case_by_id(%s)', [case_id])[0]
         except IndexError:
             raise CaseNotFound
 
