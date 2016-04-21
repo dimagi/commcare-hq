@@ -389,3 +389,51 @@ class CommCareMobileContactMixin(object):
         v = self.get_verified_number(phone_number)
         if v is not None:
             v.retire()
+
+
+class MessagingCaseContactMixin(CommCareMobileContactMixin):
+
+    def get_phone_info(self):
+        PhoneInfo = namedtuple(
+            'PhoneInfo',
+            [
+                'requires_entry',
+                'phone_number',
+                'sms_backend_id',
+                'ivr_backend_id',
+            ]
+        )
+        contact_phone_number = self.get_case_property('contact_phone_number')
+        contact_phone_number = apply_leniency(contact_phone_number)
+        contact_phone_number_is_verified = self.get_case_property('contact_phone_number_is_verified')
+        contact_backend_id = self.get_case_property('contact_backend_id')
+        contact_ivr_backend_id = self.get_case_property('contact_ivr_backend_id')
+
+        requires_entry = (
+            contact_phone_number and
+            contact_phone_number != '0' and
+            not self.closed and
+            not self.is_deleted and
+            # For legacy reasons, any truthy value here suffices
+            contact_phone_number_is_verified
+        )
+
+        return PhoneInfo(
+            requires_entry,
+            contact_phone_number,
+            contact_backend_id,
+            contact_ivr_backend_id
+        )
+
+    def get_time_zone(self):
+        return self.get_case_property('time_zone')
+
+    def get_language_code(self):
+        return self.get_case_property('language_code')
+
+    def get_email(self):
+        return self.get_case_property('commcare_email_address')
+
+    @property
+    def raw_username(self):
+        return self.name
