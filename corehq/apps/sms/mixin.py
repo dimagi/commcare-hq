@@ -5,6 +5,7 @@ from couchdbkit.exceptions import MultipleResultsFound
 from dimagi.utils.couch.migration import SyncCouchToSQLMixin
 from dimagi.utils.couch.undo import DELETED_SUFFIX
 from dimagi.utils.couch.database import get_safe_write_kwargs
+from collections import namedtuple
 from corehq.util.quickcache import quickcache
 
 
@@ -201,24 +202,34 @@ class VerifiedNumber(SyncCouchToSQLMixin, Document):
             include_docs=True
         ).all()
 
-    def _clear_suffix_lookup_cache(self, phone_number):
+    @classmethod
+    def _clear_suffix_lookup_cache(cls, phone_number):
         if isinstance(phone_number, basestring):
-            self._by_suffix.clear(VerifiedNumber, phone_number[1:])
-            self._by_suffix.clear(VerifiedNumber, phone_number[2:])
-            self._by_suffix.clear(VerifiedNumber, phone_number[3:])
+            cls._by_suffix.clear(cls, phone_number[1:])
+            cls._by_suffix.clear(cls, phone_number[2:])
+            cls._by_suffix.clear(cls, phone_number[3:])
+
+    @classmethod
+    def _clear_quickcaches(cls, owner_id, phone_number, old_owner_id=None, old_phone_number=None):
+        cls.by_owner_id.clear(cls, owner_id)
+
+        if old_owner_id and old_owner_id != owner_id:
+            cls.by_owner_id.clear(cls, old_owner_id)
+
+        cls._by_phone.clear(cls, phone_number)
+        cls._clear_suffix_lookup_cache(phone_number)
+
+        if old_phone_number and old_phone_number != phone_number:
+            cls._by_phone.clear(cls, old_phone_number)
+            cls._clear_suffix_lookup_cache(old_phone_number)
 
     def _clear_caches(self):
-        self.by_owner_id.clear(VerifiedNumber, self.owner_id)
-
-        if self._old_owner_id and self._old_owner_id != self.owner_id:
-            self.by_owner_id.clear(VerifiedNumber, self._old_owner_id)
-
-        self._by_phone.clear(VerifiedNumber, self.phone_number)
-        self._clear_suffix_lookup_cache(self.phone_number)
-
-        if self._old_phone_number and self._old_phone_number != self.phone_number:
-            self._by_phone.clear(VerifiedNumber, self._old_phone_number)
-            self._clear_suffix_lookup_cache(self._old_phone_number)
+        self._clear_quickcaches(
+            self.owner_id,
+            self.phone_number,
+            old_owner_id=self._old_owner_id,
+            old_phone_number=self._old_phone_number
+        )
 
     def save(self, *args, **kwargs):
         self._clear_caches()

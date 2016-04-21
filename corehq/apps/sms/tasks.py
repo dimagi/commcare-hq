@@ -265,7 +265,11 @@ def delete_phone_numbers_for_owners(owner_ids):
             keys=ids,
             include_docs=True
         )
-        soft_delete_docs([row['doc'] for row in results], VerifiedNumber)
+        docs = [row['doc'] for row in results]
+        cache_info = [(doc['owner_id'], doc['phone_number']) for doc in docs]
+        for owner_id, phone_number in cache_info:
+            VerifiedNumber._clear_quickcaches(owner_id, phone_number)
+        soft_delete_docs(docs, VerifiedNumber)
 
 
 @task(queue=settings.CELERY_REMINDER_CASE_UPDATE_QUEUE, ignore_result=True, acks_late=True,
