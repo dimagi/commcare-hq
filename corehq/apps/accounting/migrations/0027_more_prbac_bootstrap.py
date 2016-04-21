@@ -8,7 +8,7 @@ from corehq.sql_db.operations import HqRunPython
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('accounting', '0024_date_created_to_datetime'),
+        ('accounting', '0026_subscriber_domain_unique'),
     ]
 
     operations = [
