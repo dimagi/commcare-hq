@@ -287,7 +287,7 @@ class LocationXpath(XPath):
 class LedgerdbXpath(XPath):
 
     def ledger(self):
-        entity_id_selection = CaseSelectionXPath(u"instance('commcaresession')/session/data/%s" % self)
+        entity_id_selection = CaseSelectionXPath(session_var(self))
         entity_id_selection.selector = '@entity-id'
         return LedgerXpath(entity_id_selection.case(instance_name='ledgerdb', case_name='ledger'))
 
