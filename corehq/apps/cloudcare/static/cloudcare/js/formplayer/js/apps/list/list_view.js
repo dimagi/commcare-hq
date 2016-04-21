@@ -9,10 +9,6 @@ FormplayerFrontend.module("AppSelect.AppList", function (AppList, FormplayerFron
 
         rowClick: function(e){
             e.preventDefault();
-            console.log("Model: " + this.model);
-            var profileRef = "commcarehq.org/a/" + this.model.attributes.domain +
-                    "/apps/download/" + this.model.attributes._id+ "/profile.ccpr";
-            console.log("Profile Ref: " + profileRef);
             FormplayerFrontend.trigger("app:select", this.model);
         }
     });
