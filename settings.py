@@ -76,7 +76,7 @@ STATIC_URL = '/static/'
 STATIC_CDN = ''
 
 FILEPATH = os.path.abspath(os.path.dirname(__file__))
-SERVICE_DIR = os.path.join(FILEPATH, 'fab', 'services', 'templates')
+SERVICE_DIR = os.path.join(FILEPATH, 'deployment', 'commcare-hq-deploy', 'fab', 'services', 'templates')
 # media for user uploaded media.  in general this won't be used at all.
 MEDIA_ROOT = os.path.join(FILEPATH, 'mediafiles')
 STATIC_ROOT = os.path.join(FILEPATH, 'staticfiles')
@@ -386,6 +386,7 @@ HQ_APPS = (
 
     'custom.dhis2',
     'custom.openclinica',
+    'custom.icds_reports',
 )
 
 TEST_APPS = ()
@@ -1573,6 +1574,10 @@ STATIC_DATA_SOURCES = [
     os.path.join('custom', 'apps', 'cvsu', 'data_sources', 'unicef_malawi.json')
 ]
 
+STATIC_DATA_SOURCE_PROVIDERS = [
+    'corehq.apps.callcenter.data_source.call_center_data_source_provider'
+]
+
 
 for k, v in LOCAL_PILLOWTOPS.items():
     plist = PILLOWTOPS.get(k, [])
@@ -1673,6 +1678,7 @@ DOMAIN_MODULE_MAP = {
     'project': 'custom.apps.care_benin',
 
     'ipm-senegal': 'custom.intrahealth',
+    'icds-test': 'custom.icds_reports',
     'testing-ipm-senegal': 'custom.intrahealth',
     'up-nrhm': 'custom.up_nrhm',
 

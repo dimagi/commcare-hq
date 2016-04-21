@@ -1509,17 +1509,26 @@ class BaseEditNewCustomExportView(BaseModifyNewCustomView):
         except ResourceNotFound:
             # If it's not found, try and see if it's on the legacy system before throwing a 404
             try:
-                export_helper = make_custom_export_helper(
-                    self.request,
-                    self.export_type,
-                    self.domain,
-                    self.export_id
-                )
+                legacy_cls = None
+                if self.export_type == FORM_EXPORT:
+                    legacy_cls = FormExportSchema
+                elif self.export_type == CASE_EXPORT:
+                    legacy_cls = CaseExportSchema
 
-                export_instance = convert_saved_export_to_export_instance(
-                    self.domain,
-                    export_helper.custom_export,
-                )
+                legacy_export = legacy_cls.get(self.export_id)
+
+                if legacy_export.converted_saved_export_id:
+                    # If this is the case, this means the user has refreshed the Export page
+                    # before saving, thus we've already converted, but the URL still has
+                    # the legacy ID
+                    export_instance = self.export_instance_cls.get(
+                        legacy_export.converted_saved_export_id
+                    )
+                else:
+                    export_instance = convert_saved_export_to_export_instance(
+                        self.domain,
+                        legacy_export,
+                    )
 
             except ResourceNotFound:
                 raise Http404()

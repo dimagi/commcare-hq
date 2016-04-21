@@ -181,11 +181,12 @@ class ExportColumn(DocumentSchema):
         :returns: An ExportColumn instance
         """
         is_case_update = item.tag == PROPERTY_TAG_CASE and not isinstance(item, CaseIndexItem)
+        is_case_history_update = item.tag == PROPERTY_TAG_UPDATE
 
         is_main_table = table_path == MAIN_TABLE
         constructor_args = {
             "item": item,
-            "label": item.readable_path,
+            "label": item.readable_path if not is_case_history_update else item.label,
             "is_advanced": is_case_update or False,
         }
 

@@ -61,6 +61,7 @@ from corehq.apps.hqwebapp.tasks import send_html_email_async
 from corehq.apps.users.models import WebUser
 from corehq.const import USER_DATE_FORMAT
 from corehq.util.dates import get_first_last_days
+from corehq.util.mixin import ValidateModelMixin
 from corehq.util.quickcache import quickcache
 from corehq.util.view_utils import absolute_reverse
 from corehq.apps.analytics.tasks import track_workflow
@@ -371,7 +372,6 @@ class BillingAccount(models.Model):
     @classmethod
     def get_or_create_account_by_domain(cls, domain,
                                         created_by=None, account_type=None,
-                                        created_by_invoicing=False,
                                         entry_point=None, last_payment_method=None,
                                         pre_or_post_pay=None):
         """
@@ -881,7 +881,7 @@ class Subscriber(models.Model):
     """
     The objects that can be subscribed to a Subscription.
     """
-    domain = models.CharField(max_length=256, db_index=True)
+    domain = models.CharField(max_length=256, unique=True, db_index=True)
     last_modified = models.DateTimeField(auto_now=True)
 
     objects = SubscriberManager()
@@ -2957,7 +2957,7 @@ class PaymentRecord(models.Model):
         )
 
 
-class CreditAdjustment(models.Model):
+class CreditAdjustment(ValidateModelMixin, models.Model):
     """
     A record of any additions (positive amounts) or deductions (negative amounts) that contributed to the
     current balance of the associated CreditLine.
@@ -2965,16 +2965,16 @@ class CreditAdjustment(models.Model):
     credit_line = models.ForeignKey(CreditLine, on_delete=models.PROTECT)
     reason = models.CharField(max_length=25, default=CreditAdjustmentReason.MANUAL,
                               choices=CreditAdjustmentReason.CHOICES)
-    note = models.TextField()
+    note = models.TextField(blank=True)
     amount = models.DecimalField(default=Decimal('0.0000'), max_digits=10, decimal_places=4)
-    line_item = models.ForeignKey(LineItem, on_delete=models.PROTECT, null=True)
-    invoice = models.ForeignKey(Invoice, on_delete=models.PROTECT, null=True)
+    line_item = models.ForeignKey(LineItem, on_delete=models.PROTECT, null=True, blank=True)
+    invoice = models.ForeignKey(Invoice, on_delete=models.PROTECT, null=True, blank=True)
     payment_record = models.ForeignKey(PaymentRecord,
-                                       on_delete=models.PROTECT, null=True)
+                                       on_delete=models.PROTECT, null=True, blank=True)
     related_credit = models.ForeignKey(CreditLine, on_delete=models.PROTECT,
-                                       null=True, related_name='creditadjustment_related')
+                                       null=True, blank=True, related_name='creditadjustment_related')
     date_created = models.DateTimeField(auto_now_add=True)
-    web_user = models.CharField(max_length=80, null=True)
+    web_user = models.CharField(max_length=80, null=True, blank=True)
     last_modified = models.DateTimeField(auto_now=True)
 
     class Meta:
@@ -2984,5 +2984,5 @@ class CreditAdjustment(models.Model):
         """
         Only one of either a line item or invoice may be specified as the adjuster.
         """
-        if self.line_item and self.invoice is not None:
+        if self.line_item and self.invoice:
             raise ValidationError(_("You can't specify both an invoice and a line item."))
