@@ -70,7 +70,7 @@ def interpolate_xpath(string, case_xpath=None, fixture_xpath=None, module=None, 
 
 
 def session_var(var, path=u'data'):
-    session = XPath(u"instance('commcaresession')") / 'session'
+    session = XPath(u'commcaresession').instance() / 'session'
     if path:
         session /= path
     return session / var
@@ -103,11 +103,22 @@ class XPath(unicode):
         if quote is None:
             quote = not isinstance(value, XPath)
         if quote:
-            value = XPath.string(value)
+            value = XPath(value).quote()
         return XPath(u"{self}[{ref}={value}]".format(self=self, ref=ref, value=value))
 
+    def quote(self):
+        escaped = self.replace("'", r"\'")
+        return XPath(u"'{}'".format(escaped))
+
+    def passto(self, func):
+        return XPath(u'{func}({quoted})'.format(func=func, quoted=self.quote()))
+
     def count(self):
+        # Don't `self.passto('count')` because we don't want to quote self
         return XPath(u'count({self})'.format(self=self))
+
+    def instance(self):
+        return self.passto(u'instance')
 
     def eq(self, b):
         return XPath(u'{} = {}'.format(self, b))
@@ -136,8 +147,7 @@ class XPath(unicode):
 
     @staticmethod
     def string(a):
-        # todo: escape text
-        return XPath(u"'{}'".format(a))
+        return XPath(a).quote()
 
     @staticmethod
     def and_(*args):
@@ -167,10 +177,8 @@ class XPath(unicode):
 class CaseSelectionXPath(XPath):
     selector = ''
 
-    def case(self, instance_name='casedb', case_name='case'):
-        return CaseXPath(u"instance('{inst}')/{inst}/{case}[{sel}={self}]".format(
-            inst=instance_name, case=case_name, sel=self.selector, self=self
-        ))
+    def case(self, instance_name=u'casedb', case_name=u'case'):
+        return XPath(instance_name).instance() / instance_name / XPath(case_name).select(self.selector, self)
 
 
 class CaseIDXPath(CaseSelectionXPath):
@@ -180,8 +188,8 @@ class CaseIDXPath(CaseSelectionXPath):
 class CaseTypeXpath(CaseSelectionXPath):
     selector = '@case_type'
 
-    def case(self, instance_name='casedb', case_name='case'):
-        quoted = CaseTypeXpath(u"'{}'".format(self))
+    def case(self, instance_name=u'casedb', case_name=u'case'):
+        quoted = CaseTypeXpath(self.quote())
         return super(CaseTypeXpath, quoted).case(instance_name, case_name)
 
 
@@ -236,7 +244,7 @@ class LocationXpath(XPath):
             return '{prefix}{expr}/{property}'.format(prefix=prefix, expr=my_expr, property=property)
 
         self.validate(ref, hierarchy)
-        return XPath(u"instance('{instance}')/{ref}").format(instance=self, ref=ref_to_xpath(ref, hierarchy))
+        return self.instance() / ref_to_xpath(ref, hierarchy)
 
     def validate(self, ref, hierarchy):
         my_type, ref_type, property = self._parse_input(ref)
@@ -351,16 +359,16 @@ class CommCareSession(object):
 class ScheduleFixtureInstance(XPath):
 
     def visit(self):
-        return XPath(u"instance('{0}')/schedule/visit".format(self))
+        return XPath(self).instance() / u'schedule' / u'visit'
 
     def expires(self):
-        return XPath(u"instance('{0}')/schedule/@expires".format(self))
+        return XPath(self).instance() / u'schedule' / u'@expires'
 
     def starts(self):
-        return XPath(u"instance('{0}')/schedule/@starts".format(self))
+        return XPath(self).instance() / u'schedule' / u'@starts'
 
     def unscheduled_visits(self):
-        return XPath(u"instance('{0}')/schedule/@allow_unscheduled".format(self))
+        return XPath(self).instance() / u'schedule' / u'@allow_unscheduled'
 
 
 class ScheduleFormXPath(object):
