@@ -1612,7 +1612,7 @@ class EditFormInstance(View):
         return reverse(
             'cloudcare_form_context',
             args=[domain, instance.build_id, form.get_module().id, form.id],
-            params={'instance_id': instance._id}
+            params={'instance_id': instance.form_id}
         )
 
     def get(self, request, *args, **kwargs):
