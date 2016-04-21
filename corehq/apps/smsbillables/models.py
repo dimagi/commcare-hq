@@ -153,7 +153,6 @@ class SmsGatewayFee(models.Model):
             new_fee.save()
         return new_fee
 
-
     @classmethod
     def get_by_criteria(cls, backend_api_id, direction,
                         backend_instance=None, country_code=None, national_number=None):
