@@ -1645,7 +1645,7 @@ class EditFormInstance(View):
 
         case_blocks = extract_case_blocks(instance, include_path=True)
         # a bit hacky - the app manager puts the main case directly in the form, so it won't have
-        # any other path associated with it. This allows us to differentiat from parent cases.
+        # any other path associated with it. This allows us to differentiate from parent cases.
         # One thing this definitely does not do is support advanced modules or forms with case-management
         # done by hand.
         # You might think that you need to populate other session variables like parent_id, but those
