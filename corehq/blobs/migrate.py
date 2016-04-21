@@ -194,20 +194,14 @@ class Migrator(object):
 
     def __init__(self, slug, doc_types, migrate_func):
         self.slug = slug
-        self.doc_types = doc_types
         self.migrate_func = migrate_func
+        self.doc_type_map = dict(
+            t if isinstance(t, tuple) else (t.__name__, t) for t in doc_types)
+        if len(doc_types) != len(self.doc_type_map):
+            raise ValueError("Invalid (duplicate?) doc types")
 
     def migrate(self, filename=None):
         return migrate(self.slug, self.doc_type_map, self.migrate_func, filename)
-
-    @property
-    def doc_type_map(self):
-        def itemize(item):
-            """get `(doc_type, model_class)` pair"""
-            if isinstance(item, tuple):
-                return item
-            return item.__name__, item
-        return dict(itemize(item) for item in self.doc_types)
 
 
 MIGRATIONS = {m.slug: m for m in [
