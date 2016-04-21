@@ -19,8 +19,37 @@ from ..fixtures import _location_to_fixture, _location_footprint, should_sync_lo
 from ..models import SQLLocation, LocationType, Location
 
 
-@mock.patch.object(Domain, 'uses_locations', return_value=True)
+@mock.patch.object(Domain, 'uses_locations', return_value=True)  # removes dependency on accounting
 class LocationFixturesTest(LocationHierarchyPerTest, TestXmlMixin):
+    dependent_apps = [
+        'auditcare',
+        'couchforms',
+        'phonelog',
+        'django_digest',
+        'casexml.apps.case',
+        'casexml.apps.phone',
+        'casexml.apps.stock',
+        'corehq.couchapps',
+        'corehq.form_processor',
+        'corehq.sql_accessors',
+        'corehq.sql_proxy_accessors',
+        'corehq.apps.commtrack',
+        'corehq.apps.consumption',
+        'corehq.apps.custom_data_fields',
+        'corehq.apps.domain',
+        'corehq.apps.hqcase',
+        'corehq.apps.fixtures',
+        'corehq.apps.groups',
+        'corehq.apps.products',
+        'corehq.apps.reminders',
+        'corehq.apps.sms',
+        'corehq.apps.smsforms',
+        'corehq.apps.tzmigration',
+        'corehq.apps.users',
+        'custom.logistics',
+        'custom.ilsgateway',
+        'custom.ewsghana',
+    ]
     root = os.path.dirname(__file__)
     file_path = ['data']
     location_type_names = ['state', 'county', 'city']
