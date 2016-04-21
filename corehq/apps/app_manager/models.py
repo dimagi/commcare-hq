@@ -412,6 +412,10 @@ class AdvancedAction(IndexedSchema):
     def is_subcase(self):
         return bool(self.case_indices)
 
+    @property
+    def form_element_name(self):
+        return "case_{}".format(self.case_tag)
+
 
 class AutoSelectCase(DocumentSchema):
     """
