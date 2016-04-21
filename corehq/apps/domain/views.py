@@ -2097,23 +2097,25 @@ class CaseSearchConfigView(BaseAdminProjectSettingsView):
             Builds an integer-keyed dictionary from POST request data, and returns a list of dictionaries that can
             be wrapped by CaseSearchConfigJSON
             """
-            pattern = re.compile(r'^config\[fuzzy_properties]\[(?P<index>\d+)]\[(?P<attr>\w+)]$')
+            # match "config[fuzzy_properties][0][case_type]" and "config[fuzzy_properties][0][properties][]" but
+            # not "enable"
+            pattern = re.compile(r'^config\[fuzzy_properties]\[(?P<index>\d+)]\[(?P<attr>\w+)](?:\[])?$')
             fuzzy_dict = defaultdict(dict)
-            for key, value in query_dict.items():
+            for key in query_dict:
                 match = pattern.match(key)
-                if match:  # non-fuzzy-properties won't match, i.e. "^enable$"
-                    fuzzy_dict[int(match.group('index'))][match.group('attr')] = value
+                if match:
+                    i = int(match.group('index'))
+                    attr = match.group('attr')
+                    is_list = key.endswith('[]')  # i.e. "...[properties][]"
+                    fuzzy_dict[i][attr] = query_dict.getlist(key) if is_list else query_dict[key]
             if not fuzzy_dict:
                 return []
             return [fuzzy_dict[i] for i in range(max(fuzzy_dict.keys()) + 1) if fuzzy_dict[i]]
 
-        try:
-            case_search_config = CaseSearchConfig.objects.get(pk=self.domain)
-        except CaseSearchConfig.DoesNotExist:
-            case_search_config = CaseSearchConfig(domain=self.domain)
-        case_search_config.enabled = request.POST['enable']
-        case_search_config.config = CaseSearchConfigJSON({'fuzzy_properties': unpack_fuzzies(request.POST)})
-        case_search_config.save()
+        CaseSearchConfig.objects.update_or_create(domain=self.domain, defaults={
+            'enabled': request.POST['enable'],
+            'config': CaseSearchConfigJSON({'fuzzy_properties': unpack_fuzzies(request.POST)})
+        })
         messages.success(request, _("Case search configuration updated successfully"))
         return self.get(request, *args, **kwargs)
 
