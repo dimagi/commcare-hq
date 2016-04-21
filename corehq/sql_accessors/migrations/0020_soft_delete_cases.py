@@ -10,7 +10,7 @@ migrator = RawSQLMigration(('corehq', 'sql_accessors', 'sql_templates'))
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('sql_accessors', '0017_merge'),
+        ('sql_accessors', '0019_get_case_ids_in_domain_by_owners'),
     ]
 
     operations = [
