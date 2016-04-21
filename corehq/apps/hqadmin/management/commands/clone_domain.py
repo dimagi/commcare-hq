@@ -148,7 +148,7 @@ class Command(BaseCommand):
         apps = get_apps_in_domain(old_domain)
         for app in apps:
             for module in app.modules:
-                if module.module_type == ReportModule.module_type:
+                if isinstance(module, ReportModule):
                     for config in module.report_configs:
                         config.report_id = report_map[config.report_id]
 
