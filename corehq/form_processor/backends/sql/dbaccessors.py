@@ -669,7 +669,7 @@ class CaseAccessorSQL(AbstractCaseAccessor):
             affected_count = sum([result.affected_count for result in results])
 
         for case in CaseAccessorSQL.get_cases(case_ids):
-            publish_case_saved(case)
+            publish_case_saved(case, send_post_save_signal=False)
 
         return affected_count
 
