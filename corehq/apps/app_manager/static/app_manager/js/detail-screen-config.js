@@ -419,9 +419,8 @@ hqDefine('app_manager/js/detail-screen-config.js', function () {
         self.fixture_columns = ko.computed(function() {
             var columns_for_type = init.fixture_columns_by_type[self.fixtureType()],
                 default_option = [gettext("Select One")];
-            return default_option.concat(columns_for_type)
-        })
-
+            return default_option.concat(columns_for_type);
+        });
     };
 
     module.DetailScreenConfig = (function () {
@@ -1044,7 +1043,7 @@ hqDefine('app_manager/js/detail-screen-config.js', function () {
                         localize: spec.fixtureSelect.localize,
                         variableColumn: spec.fixtureSelect.variable_column,
                         xpath: spec.fixtureSelect.xpath,
-                        fixture_columns_by_type: spec.fixture_columns_by_type
+                        fixture_columns_by_type: spec.fixture_columns_by_type,
                     });
                 }
                 this.saveUrl = spec.saveUrl;
