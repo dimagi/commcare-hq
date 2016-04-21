@@ -290,21 +290,21 @@ class CallCenterIndicators(object):
             self._add_data([], '{}_{}_{}'.format(indicator_prefix, case_type, range_name))
 
     def add_case_data(self, query, slug, indicator_config, legacy_prefix=None):
-        include_types = indicator_config.all_types or indicator_config.types
-        include_total = indicator_config.total.active
-        limit_types = indicator_config.types
+        include_types = indicator_config.all_types or indicator_config.by_type
+        include_total = indicator_config.totals.enabled
+        limit_types = indicator_config.by_type
 
         if include_total and include_types and not limit_types:
-            logger.debug('Adding case_data %s: totals and all types: %s', slug, indicator_config.total.date_ranges)
-            for range_name in indicator_config.total.date_ranges:
+            logger.debug('Adding case_data %s: totals and all types: %s', slug, indicator_config.totals.date_ranges)
+            for range_name in indicator_config.totals.date_ranges:
                 lower, upper = self.date_ranges[range_name]
                 results = query.get_results(True, None, lower, upper)
                 self._add_case_data_total(results, slug, range_name, legacy_prefix=legacy_prefix)
                 self._add_case_data_by_type(results, slug, range_name)
         else:
             if include_total:
-                logger.debug('Adding case_data %s: totals: %s', slug, indicator_config.total.date_ranges)
-                for range_name in indicator_config.total.date_ranges:
+                logger.debug('Adding case_data %s: totals: %s', slug, indicator_config.totals.date_ranges)
+                for range_name in indicator_config.totals.date_ranges:
                     lower, upper = self.date_ranges[range_name]
                     total_results = query.get_results(False, None, lower, upper)
                     self._add_case_data_total(total_results, slug, range_name, legacy_prefix=legacy_prefix)
@@ -330,8 +330,6 @@ class CallCenterIndicators(object):
 
     def add_form_data(self, indicator_config):
         logger.debug('Adding forms submitted stats: %s', indicator_config.date_ranges)
-        if indicator_config.include_legacy:
-            logger.debug('Adding legacy forms submitted stats: %s', indicator_config.date_ranges)
 
         for range_name in indicator_config.date_ranges:
             lower, upper = self.date_ranges[range_name]
@@ -340,8 +338,9 @@ class CallCenterIndicators(object):
 
             self._add_data(results, '{}_{}'.format(FORMS_SUBMITTED, range_name))
 
-            if indicator_config.include_legacy:
+            if self.config.legacy_forms_submitted.enabled:
                 #  maintained for backwards compatibility
+                logger.debug('Adding legacy forms submitted stats: %s', indicator_config.date_ranges)
                 self._add_data(results, '{}{}'.format(LEGACY_FORMS_SUBMITTED, range_name.title()))
 
             if self.domain in PER_DOMAIN_FORM_INDICATORS:
@@ -388,25 +387,25 @@ class CallCenterIndicators(object):
 
     def _populate_dataset(self):
         logger.debug('Adding data for users: %s', self.users_needing_data)
-        if self.config.cases_total.active and self.config.cases_total.include_legacy:
+        if self.config.legacy_cases_total.enabled:
             self.add_case_total_legacy()
 
-        if self.config.forms_submitted.active:
+        if self.config.forms_submitted.enabled:
             self.add_form_data(self.config.forms_submitted)
 
-        if self.config.cases_total.active:
+        if self.config.cases_total.enabled:
             query = CaseQueryTotal(self.domain, self.cc_case_type, self.owners_needing_data)
             self.add_case_data(query, CASES_TOTAL, self.config.cases_total)
 
-        if self.config.cases_opened.active:
+        if self.config.cases_opened.enabled:
             query = CaseQueryOpenedClosed(self.domain, self.cc_case_type, self.owners_needing_data, opened=True)
             self.add_case_data(query, CASES_OPENED, self.config.cases_opened)
 
-        if self.config.cases_closed.active:
+        if self.config.cases_closed.enabled:
             query = CaseQueryOpenedClosed(self.domain, self.cc_case_type, self.owners_needing_data, opened=False)
             self.add_case_data(query, CASES_CLOSED, self.config.cases_closed)
 
-        if self.config.cases_active.active:
-            legacy_prefix = LEGACY_CASES_UPDATED if self.config.cases_active.include_legacy else None
+        if self.config.cases_active.enabled:
+            legacy_prefix = LEGACY_CASES_UPDATED if self.config.legacy_cases_active.enabled else None
             query = CaseQueryActive(self.domain, self.cc_case_type, self.owners_needing_data)
             self.add_case_data(query, CASES_ACTIVE, self.config.cases_total, legacy_prefix=legacy_prefix)

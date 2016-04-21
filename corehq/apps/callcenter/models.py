@@ -22,11 +22,18 @@ class ByTypeWithTotal(JsonObject):
     totals = ObjectProperty(BasicIndicator)
     all_types = BooleanProperty(default=False)
 
+    @property
+    def enabled(self):
+        return self.totals.enabled or self.all_types or len(self.enabled_types) > 0
+
+    @property
+    def enabled_types(self):
+        return [type_ for type_ in self.by_type if type_.enabled]
+
     def types_by_date_range(self):
         types_list = sorted([
-            TypeRange(type_.type, date_range) for type_ in self.by_type
+            TypeRange(type_.type, date_range) for type_ in self.enabled_types
             for date_range in type_.date_ranges
-            if type_.enabled
         ], key=lambda x: x.range_slug)
 
         return {

@@ -181,7 +181,7 @@ class CallCenterTests(BaseCCTests):
         self.check_cc_indicators(indicator_set.get_data(), expected_standard_indicators())
 
     def test_standard_indicators_no_legacy(self):
-        config = CallCenterIndicatorConfig.default_config(self.cc_domain.name, include_legacy=False)
+        config = CallCenterIndicatorConfig.default_config(include_legacy=False)
 
         indicator_set = CallCenterIndicators(
             self.cc_domain.name,
@@ -197,7 +197,7 @@ class CallCenterTests(BaseCCTests):
             expected_standard_indicators(include_legacy=False))
 
     def test_standard_indicators_case_totals_only(self):
-        config = CallCenterIndicatorConfig.default_config(self.cc_domain.name, include_legacy=False)
+        config = CallCenterIndicatorConfig.default_config(include_legacy=False)
         config.cases_total.all_types = False
         config.cases_opened.all_types = False
         config.cases_closed.all_types = False
@@ -220,32 +220,14 @@ class CallCenterTests(BaseCCTests):
                 case_types=[])
         )
 
-    def test_standard_indicators_load_config_from_db(self):
-        config = CallCenterIndicatorConfig.default_config(self.cc_domain.name, include_legacy=False)
-        config.save()
-
-        self.addCleanup(config.delete)
-
-        indicator_set = CallCenterIndicators(
-            self.cc_domain.name,
-            self.cc_domain.default_timezone,
-            self.cc_domain.call_center_config.case_type,
-            self.cc_user,
-            custom_cache=locmem_cache,
-        )
-        self._test_indicators(
-            self.cc_user,
-            indicator_set.get_data(),
-            expected_standard_indicators(include_legacy=False))
-        
     def test_standard_indicators_case_dog_only(self):
-        config = CallCenterIndicatorConfig.default_config(self.cc_domain.name, include_legacy=False)
-        config.forms_submitted.active = False
+        config = CallCenterIndicatorConfig.default_config(include_legacy=False)
+        config.forms_submitted.enabled = False
 
         def dog_only(conf):
-            conf.total.active = False
+            conf.totals.enabled = False
             conf.all_types = False
-            conf.types = [TypedIndicator(active=True, date_ranges=[WEEK0, MONTH0], type='dog')]
+            conf.by_type = [TypedIndicator(enabled=True, date_ranges={WEEK0, MONTH0}, type='dog')]
 
         dog_only(config.cases_total)
         dog_only(config.cases_opened)
@@ -271,12 +253,12 @@ class CallCenterTests(BaseCCTests):
         )
 
     def test_standard_indicators_case_week1_only(self):
-        config = CallCenterIndicatorConfig.default_config(self.cc_domain.name, include_legacy=False)
-        config.forms_submitted.date_ranges = [WEEK1]
-        config.cases_total.total.date_ranges = [WEEK1]
-        config.cases_opened.total.date_ranges = [WEEK1]
-        config.cases_closed.total.date_ranges = [WEEK1]
-        config.cases_active.total.date_ranges = [WEEK1]
+        config = CallCenterIndicatorConfig.default_config(include_legacy=False)
+        config.forms_submitted.date_ranges = {WEEK1}
+        config.cases_total.totals.date_ranges = {WEEK1}
+        config.cases_opened.totals.date_ranges = {WEEK1}
+        config.cases_closed.totals.date_ranges = {WEEK1}
+        config.cases_active.totals.date_ranges = {WEEK1}
 
         indicator_set = CallCenterIndicators(
             self.cc_domain.name,
