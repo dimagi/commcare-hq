@@ -1,4 +1,9 @@
 FormplayerFrontend.module("Entities", function (Entities, FormplayerFrontend, Backbone, Marionette, $, _) {
+
+    Entities.UserModel = Backbone.Model.extend({
+
+    });
+
     Entities.MenuSelect = Backbone.Model.extend({
         urlRoot: "menuSelects"
     });
@@ -26,9 +31,8 @@ FormplayerFrontend.module("Entities", function (Entities, FormplayerFrontend, Ba
     var API = {
 
         getMenus: function (app) {
-            debugger;
             var menus = new Entities.MenuSelectCollection({
-                domain: app.attributes.domain,
+                domain: FormplayerFrontend.request('currentUser').domain,
                 app_id: app.attributes._id,
 
                 fetch: function (options) {
