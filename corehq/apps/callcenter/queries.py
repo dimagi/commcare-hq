@@ -91,6 +91,7 @@ class CaseQuery(BaseQuery):
         )
         return query
 
+
 class CaseQueryOpenedClosed(CaseQuery):
     """
     Count of cases where lower <= opened_on < upper
