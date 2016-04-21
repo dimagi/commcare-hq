@@ -44,9 +44,12 @@ class BaseMigrationTest(TestCase):
         return set(mod.MIGRATIONS[self.slug].doc_type_map)
 
     def do_migration(self, docs, num_attachments=1):
-        if not docs or not num_attachments:
-            raise Exception("bad test: must have at least one document and "
-                            "one attachment")
+        test_types = {d.doc_type for d in docs}
+        if test_types != self.doc_types:
+            raise Exception("bad test: must have at least one document per doc "
+                            "type (got: {})".format(test_types))
+        if not num_attachments:
+            raise Exception("bad test: must have at least one attachment")
 
         for doc in docs:
             # verify: attachment is in couch and migration not complete
@@ -74,14 +77,17 @@ class BaseMigrationTest(TestCase):
         for doc in docs:
             # verify: attachments were moved to blob db
             exp = type(doc).get(doc._id)
+            self.assertEqual(exp.doc_type, doc.doc_type)
             self.assertNotEqual(exp._rev, doc._rev)
             self.assertEqual(len(exp.blobs), num_attachments, repr(exp.blobs))
             self.assertFalse(exp._attachments, exp._attachments)
             self.assertEqual(len(exp.external_blobs), num_attachments)
 
     def do_failed_migration(self, docs, modify_docs):
-        if len(docs) < len(self.doc_types):
-            raise Exception("bad test: must have at least one document per doc type")
+        test_types = {d.doc_type for d in docs}
+        if test_types != self.doc_types:
+            raise Exception("bad test: must have at least one document per doc "
+                            "type (got: {})".format(test_types))
         modified = []
         print_status = mod.print_status
 
@@ -110,9 +116,7 @@ class BaseMigrationTest(TestCase):
         with self.assertRaises(mod.BlobMigrationState.DoesNotExist):
             mod.BlobMigrationState.objects.get(slug=self.slug)
 
-        tested = set()
         for doc, (num_attachments, num_blobs) in docs.items():
-            tested.add(doc.doc_type)
             exp = type(doc).get(doc._id)
             if not num_attachments:
                 raise Exception("bad test: modify function should leave "
@@ -121,8 +125,6 @@ class BaseMigrationTest(TestCase):
             print(exp)
             self.assertEqual(len(exp._attachments), num_attachments)
             self.assertEqual(len(exp.external_blobs), num_blobs)
-
-        self.assertEqual(self.doc_types, tested) # were all the model types tested?
 
 
 class TestSavedExportsMigrations(BaseMigrationTest):
