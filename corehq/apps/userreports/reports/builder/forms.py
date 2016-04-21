@@ -592,7 +592,7 @@ class ConfigureNewReportBase(forms.Form):
 
     @property
     def column_config_template(self):
-        return render_to_string('userreports/partials/report_filter_configuration.html')
+        return render_to_string('userreports/partials/property_list_configuration.html')
 
     @property
     def container_fieldset(self):
