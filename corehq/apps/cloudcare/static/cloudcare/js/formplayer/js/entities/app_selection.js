@@ -41,13 +41,11 @@ FormplayerFrontend.module("Entities", function (Entities, FormplayerFrontend, Ba
             var apps = new Entities.AppSelectCollection();
             var defer = $.Deferred();
             apps.fetch({
-                success: function (data) {
-                    defer.resolve(data);
+                success: function (request) {
+                    defer.resolve(request);
                 }
             });
-            var promise = defer.promise();
-            console.log("Get App Entities");
-            return promise;
+            return defer.promise();
         },
 
         storeApps: function (apps) {

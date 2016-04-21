@@ -8,7 +8,7 @@ FormplayerFrontend.module("AppSelect.MenuList", function(MenuList, FormplayerFro
 
             $.when(fetchingApps).done(function (menus) {
 
-                console.log("Menu fetch done");
+                //debugger;
 
                 var menuListView = new MenuList.MenuListView({
                     collection: menus
