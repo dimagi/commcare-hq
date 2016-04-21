@@ -50,46 +50,29 @@ def _apply_pillow_actions_to_pillows(pillow_actions, pillows_by_group):
     )
 
 
-def get_pillow_actions_for_env(env_name, base_path=None):
+def get_pillow_actions_for_env(pillow_env_configs):
     pillow_actions = []
-    for name in ['default', env_name]:
-        pillow_action = get_single_pillow_action(name, base_path)
+    for config in pillow_env_configs:
+        pillow_action = get_single_pillow_action(config)
         if pillow_action:
             pillow_actions.append(pillow_action)
     return pillow_actions
 
 
-def get_single_pillow_action(env_name, base_path=None):
+def get_single_pillow_action(pillow_env_config):
     """
     pillows_by_group should be something in the format of settings.PILLOWTOPS
     env_name should correspond to fab/pillows/{env_name}.yml (if applicable)
 
     """
-    if base_path is None:
-        base_path = os.path.join(os.path.dirname(__file__), 'pillows')
-
-    filename = '{}.yml'.format(env_name)
-    file_path = os.path.join(base_path, filename)
-    if os.path.isfile(file_path):
-        with open(file_path) as f:
-            try:
-                yml = yaml.load(f)
-                pillow_action = _PillowAction.wrap(yml)
-            except Exception:
-                # just to give the person debugging a path to the file
-                logging.error('Error in file {}'.format(file_path))
-                raise
-            else:
-                return pillow_action
-    else:
-        return None
+    return _PillowAction.wrap(pillow_env_config)
 
 
-def get_pillows_for_env(env_name, pillows_by_group=None, base_path=None):
+def get_pillows_for_env(pillow_env_configs, pillows_by_group=None):
     if pillows_by_group is None:
         from django.conf import settings
         pillows_by_group = settings.PILLOWTOPS
-    pillow_actions = get_pillow_actions_for_env(env_name, base_path)
+    pillow_actions = get_pillow_actions_for_env(pillow_env_configs)
     return apply_pillow_actions_to_pillows(pillow_actions, pillows_by_group)
 
 
