@@ -410,6 +410,13 @@ class SmsBillable(models.Model):
                 twilio_message = _get_twilio_client().messages.get(backend_message_id)
             except TwilioRestException:
                 raise RetryBillableTaskException
+            if twilio_message.status in [
+                'accepted',
+                'queued',
+                'sending',
+                'receiving',
+            ]:
+                raise RetryBillableTaskException
             return _TwilioChargeInfo(
                 Decimal(twilio_message.price) * -1,
                 SmsGatewayFee.get_by_criteria(
