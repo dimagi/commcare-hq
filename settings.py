@@ -386,6 +386,7 @@ HQ_APPS = (
 
     'custom.dhis2',
     'custom.openclinica',
+    'custom.icds_reports',
 )
 
 TEST_APPS = ()
@@ -1677,6 +1678,7 @@ DOMAIN_MODULE_MAP = {
     'project': 'custom.apps.care_benin',
 
     'ipm-senegal': 'custom.intrahealth',
+    'icds-test': 'custom.icds_reports',
     'testing-ipm-senegal': 'custom.intrahealth',
     'up-nrhm': 'custom.up_nrhm',
 
