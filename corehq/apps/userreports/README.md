@@ -390,12 +390,25 @@ The from_date_expression and to_date_expression can be any valid expressions, or
 ```
 This returns 25 (1 + 20 - 2 + 6).
 
-`statement` can be any statement that returns a valid number. All python math [operators](https://en.wikibooks.org/wiki/Python_Programming/Basic_Math#Mathematical_Operators) except power opertor are available for use.
+`statement` can be any statement that returns a valid number. All python math [operators](https://en.wikibooks.org/wiki/Python_Programming/Basic_Math#Mathematical_Operators) except power operator are available for use.
 
 `context_variables` is a dictionary of Expressions where keys are names of variables used in the `statement` and values are expressions to generate those variables.
-Variables can be any valid numbers (Python datatypes `int`, `float`, and `long` are considered valid numbers.) or also expressions that return numbers.
+Variables can be any valid numbers (Python datatypes `int`, `float` and `long` are considered valid numbers.) or also expressions that return numbers. In addition to numbers the following types are supported:
 
-More examples can be found on practical [examples page](examples/examples.md#evaluator-examples).
+* `date`
+* `datetime`
+
+#### Function calls within evaluator expressions
+Only the following functions are permitted:
+
+* `rand()`: generate a random number between 0 and 1
+* `randint(max)`: generate a random integer beween 0 and `max`
+* `int(value)`: convert `value` to an int. Value can be a number or a string representation of a number
+* `float(value)`: convert `value` to a floating point number
+* `str(value)`: convert `value` to a string
+* `timedelta_to_seconds(time_delta)`: convert a TimeDelta object into seconds. This is useful for getting the number of seconds between two dates.
+  * e.g. `timedelta_to_seconds(time_end - time_start)`
+
 
 #### "Month Start Date" and "Month End Date" expressions
 
