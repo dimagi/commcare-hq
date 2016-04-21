@@ -1446,7 +1446,7 @@ class XForm(WrappedNode):
                              'that the xmlns="http://www.w3.org/2002/xforms" '
                              "attribute exists in your form."))
 
-    def _schedule_global_next_visit_date(self, case_tag, action, form, case):
+    def _schedule_global_next_visit_date(self, form, case):
         """
         Adds the necessary hidden properties, fixture references, and calculations to
         get the global next visit date for schedule modules
@@ -1543,7 +1543,7 @@ class XForm(WrappedNode):
             )
             update_block.append(make_case_elem(last_visit_date))
 
-            self._schedule_global_next_visit_date(case_tag, action, form, case)
+            self._schedule_global_next_visit_date(form, case)
 
         def create_case_block(action, bind_case_id_xpath=None):
             tag = action.form_element_name
