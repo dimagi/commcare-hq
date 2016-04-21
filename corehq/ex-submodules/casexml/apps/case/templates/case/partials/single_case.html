@@ -129,7 +129,7 @@
                                 <select id="page_size_select" class="form-control" data-bind="options: pagination_options, value: $root.page_size"></select> <span>/ {% trans "page" %}</span>
                             </div>
 
-                            <div class="pagination pagination-right" data-bind="visible: $root.page_count() > 1">
+                            <div class="pull-right" data-bind="visible: $root.page_count() > 1">
                                 <ul class="pagination">
                                     <li>
                                         <button class="btn btn-sm btn-default" type="button" data-bind="enable: $root.disp_page_index() > 1, click: $root.prevPage">«</button>
