@@ -941,7 +941,6 @@ class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, UnicodeMixIn, EulaMi
                             'CouchUser': 'user',
                             'CommCareUser': 'user',
                             'CommCareCase': 'case',
-                            'CommConnectCase': 'case',
                         }[duplicate.owner_doc_type]
                         from corehq.apps.users.views.mobile import EditCommCareUserView
                         url_ref, doc_id_param = {

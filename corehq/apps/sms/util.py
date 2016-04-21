@@ -171,10 +171,10 @@ def clean_text(text):
 
 
 def get_contact(contact_id):
-    from corehq.apps.sms.models import CommConnectCase
+    from casexml.apps.case.models import CommCareCase
     contact = None
     try:
-        contact = CommConnectCase.get(contact_id)
+        contact = CommCareCase.get(contact_id)
     except ResourceNotFound:
         pass
 
@@ -238,11 +238,3 @@ def set_domain_default_backend_to_test_backend(domain):
         domain,
         test_backend
     )
-
-
-def get_case_contact_class(domain):
-    from corehq.apps.sms.models import CommConnectCase, CommConnectCaseSQL
-    if should_use_sql_backend(domain):
-        return CommConnectCaseSQL
-    else:
-        return CommConnectCase

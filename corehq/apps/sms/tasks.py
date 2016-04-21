@@ -5,7 +5,7 @@ from time import sleep
 from corehq.apps.sms.mixin import (VerifiedNumber, InvalidFormatException,
     PhoneNumberInUseException)
 from corehq.apps.sms.models import (OUTGOING, INCOMING, SMS,
-    PhoneLoadBalancingMixin, CommConnectCase, QueuedSMS)
+    PhoneLoadBalancingMixin, QueuedSMS)
 from corehq.apps.sms.api import (send_message_via_backend, process_incoming,
     log_sms_exception, create_billable_for_sms, get_utcnow)
 from django.db import transaction
@@ -15,7 +15,6 @@ from corehq.apps.accounting.utils import domain_has_privilege
 from corehq.apps.domain.models import Domain
 from corehq.apps.smsbillables.models import SmsBillable
 from corehq.apps.sms.change_publishers import publish_sms_saved
-from corehq.apps.sms.util import get_case_contact_class
 from corehq.util.timezones.conversions import ServerTime
 from dimagi.utils.chunked import chunked
 from dimagi.utils.couch.bulk import soft_delete_docs
@@ -272,10 +271,8 @@ def delete_phone_numbers_for_owners(owner_ids):
 @task(queue=settings.CELERY_REMINDER_CASE_UPDATE_QUEUE, ignore_result=True, acks_late=True,
       default_retry_delay=5 * 60, max_retries=10, bind=True)
 def sync_case_phone_number(self, case):
-    cls = get_case_contact_class(case.domain)
     try:
-        contact = cls.wrap_as_commconnect_case(case)
-        _sync_case_phone_number(contact)
+        _sync_case_phone_number(case)
     except Exception as e:
         self.retry(exc=e)
 

@@ -129,7 +129,7 @@ def get_user_contributions_to_touchforms_session(couch_user_or_commconnect_case)
         'username': couch_user_or_commconnect_case.raw_username,
         'user_id': couch_user_or_commconnect_case.get_id,
         # This API is used by smsforms, so sometimes "couch_user" can be
-        # a CommConnectCase, in which case there is no user_data.
+        # a case, in which case there is no user_data.
         'user_data': (couch_user_or_commconnect_case.user_session_data
             if isinstance(couch_user_or_commconnect_case, CouchUser) else {}),
     }

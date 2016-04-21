@@ -3,8 +3,6 @@ from casexml.apps.case.models import CommCareCase
 from contextlib import contextmanager
 from corehq.apps.hqcase.utils import update_case
 from corehq.apps.sms.mixin import VerifiedNumber
-from corehq.apps.sms.models import CommConnectCase
-from corehq.apps.sms.util import get_case_contact_class
 from corehq.form_processor.backends.sql.dbaccessors import CaseAccessorSQL
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 from corehq.form_processor.utils.general import should_use_sql_backend
@@ -112,7 +110,7 @@ class CaseContactPhoneNumberTestCase(TestCase):
         return CaseAccessors(self.domain).get_case(case.case_id)
 
     def get_case_verified_number(self, case):
-        return get_case_contact_class(self.domain).wrap_as_commconnect_case(case).get_verified_number()
+        return case.get_verified_number()
 
     def assertPhoneNumberDetails(self, case, phone_number, sms_backend_id, ivr_backend_id, _id=None, _rev=None):
         v = self.get_case_verified_number(case)
