@@ -180,9 +180,8 @@ class CaseTypeXpath(CaseSelectionXPath):
     selector = '@case_type'
 
     def case(self, instance_name='casedb', case_name='case'):
-        return CaseXPath(u"instance('{inst}')/{inst}/{case}[{sel}='{self}']".format(
-            inst=instance_name, case=case_name, sel=self.selector, self=self
-        ))
+        quoted = CaseTypeXpath(u"'{}'".format(self))
+        return super(CaseTypeXpath, quoted).case(instance_name, case_name)
 
 
 class UserCaseXPath(XPath):
