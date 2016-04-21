@@ -3,7 +3,7 @@
 <div id="property_template" class="hide">
     <p>
         <label>{% trans "Property name" %}</label>
-        <input type="text" data-bind="value: property"/>
+        <input type="text" data-bind="value: property.name"/>
         <button type="button"
                 class="btn btn-danger"
                 data-bind="click: $parent.removeProperty">x</button>
@@ -14,7 +14,7 @@
     <fieldset style="padding: 0 0 0 2em;">
         <p>
             <label>{% trans "Case type" %}</label>
-            <select data-bind="options: $root.caseTypes, value: case_type"></select>
+            <select data-bind="options: $root.caseTypes, value: caseType"></select>
             <button type="button"
                     class="btn btn-danger"
                     data-bind="click: $root.removeCaseType">x</button>
