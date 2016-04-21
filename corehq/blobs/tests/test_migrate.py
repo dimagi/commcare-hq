@@ -24,8 +24,8 @@ class BaseMigrationTest(TestCase):
     def setUp(self):
         mod.BlobMigrationState.objects.filter(slug=self.slug).delete()
         self._old_flags = {}
-        for model in self.models:
-            self._old_flags[model] = getattr(model, "migrating_blobs_from_couch", NOT_SET)
+        for model in mod.MIGRATIONS[self.slug].doc_type_map.values():
+            self._old_flags[model] = model.migrating_blobs_from_couch
             model.migrating_blobs_from_couch = True
 
     def tearDown(self):
@@ -36,9 +36,12 @@ class BaseMigrationTest(TestCase):
             else:
                 model.migrating_blobs_from_couch = flag
 
-    # abstract properties, must be overridden in base class
+    # abstract property, must be overridden in base class
     slug = None
-    models = None
+
+    @property
+    def doc_types(self):
+        return set(mod.MIGRATIONS[self.slug].doc_type_map)
 
     def do_migration(self, docs, num_attachments=1):
         if not docs or not num_attachments:
@@ -77,8 +80,8 @@ class BaseMigrationTest(TestCase):
             self.assertEqual(len(exp.external_blobs), num_attachments)
 
     def do_failed_migration(self, docs, modify_docs):
-        if len(docs) < len(self.models):
-            raise Exception("bad test: must have at least one document per model class")
+        if len(docs) < len(self.doc_types):
+            raise Exception("bad test: must have at least one document per doc type")
         modified = []
         print_status = mod.print_status
 
@@ -109,7 +112,7 @@ class BaseMigrationTest(TestCase):
 
         tested = set()
         for doc, (num_attachments, num_blobs) in docs.items():
-            tested.add(type(doc))
+            tested.add(doc.doc_type)
             exp = type(doc).get(doc._id)
             if not num_attachments:
                 raise Exception("bad test: modify function should leave "
@@ -119,13 +122,12 @@ class BaseMigrationTest(TestCase):
             self.assertEqual(len(exp._attachments), num_attachments)
             self.assertEqual(len(exp.external_blobs), num_blobs)
 
-        self.assertEqual(set(self.models), tested) # were all the model types tested?
+        self.assertEqual(self.doc_types, tested) # were all the model types tested?
 
 
 class TestSavedExportsMigrations(BaseMigrationTest):
 
     slug = "saved_exports"
-    models = [SavedBasicExport]
 
     def test_migrate_saved_exports(self):
         saved = SavedBasicExport(configuration=_mk_config())
