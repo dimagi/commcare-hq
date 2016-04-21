@@ -1,8 +1,14 @@
+/* globals _, ko, $ */
 function LocationSettingsViewModel(loc_types, commtrack_enabled) {
     this.loc_types = ko.observableArray();
     this.loc_types($.map(loc_types, function(loc_type) {
         return new LocationTypeModel(loc_type, commtrack_enabled);
     }));
+
+    var root_type = new LocationTypeModel({
+        name: "root",
+        pk: 0,
+    });
 
     this.json_payload = ko.observable();
 
@@ -13,6 +19,54 @@ function LocationSettingsViewModel(loc_types, commtrack_enabled) {
         return this.loc_types().filter(function(type) {
             return type.name !== loc_type.name;
         });
+    };
+
+    this.loc_types_by_id = _.reduce(this.loc_types(), function(memo, loc_type){
+        memo[loc_type.pk] = loc_type;
+        return memo;
+    }, {});
+
+    this.loc_types_by_parent = _.reduce(this.loc_types(), function(memo, loc_type){
+        memo[loc_type.parent_type()] = loc_type;
+        return memo;
+    }, {});
+
+    this.expand_from_options = function(loc_type) {
+        // traverse all locations upwards, include a root option
+        var parents = [loc_type],
+            to_check = [loc_type];
+        if (!this.has_cycles()) {
+            while (to_check.length > 0){
+                var current_loc = to_check.pop(),
+                    parent_type = current_loc.parent_type();
+                if (parent_type){
+                    var parent = this.loc_types_by_id[parent_type];
+                    parents.push(parent);
+                    if (parent.parent_type()){
+                        to_check.push(parent);
+                    }
+                };
+            };
+        }
+        parents.push(root_type);
+        return parents.reverse();
+    };
+
+    this.expand_to_options = function(loc_type) {
+        // from us, go down the tree.
+        var children = [loc_type],
+            to_check = [loc_type];
+        while (to_check.length > 0){
+            var current_loc = to_check.pop(),
+                child = this.loc_types_by_parent[current_loc.pk];
+            if (child){
+                children.push(child);
+                if (this.loc_types_by_parent[child.pk]){
+                    to_check.push(child);
+                }
+            }
+        }
+        return children;
     };
 
     var settings = this;
@@ -125,6 +179,9 @@ function LocationTypeModel(loc_type, commtrack_enabled) {
     this.shares_cases = ko.observable(loc_type.shares_cases);
     this.view_descendants = ko.observable(loc_type.view_descendants);
     this.code = ko.observable(loc_type.code || '');
+    this.expand_from = ko.observable(loc_type.expand_from || '');
+    this.expand_from_root = ko.observable(loc_type.expand_from || false);
+    this.expand_to = ko.observable(loc_type.expand_to || '');
 
     this.name_error = ko.observable(false);
 
@@ -145,7 +202,10 @@ function LocationTypeModel(loc_type, commtrack_enabled) {
             administrative: commtrack_enabled ? !this.tracks_stock() : true,
             shares_cases: this.shares_cases() === true,
             view_descendants: this.view_descendants() === true,
-            code: this.code().trim() || ''
+            code: this.code().trim() || '',
+            expand_from: this.expand_from,
+            expand_from_root: this.expand_from_root,
+            expand_to: this.expand_to,
         };
     };
 }

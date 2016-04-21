@@ -102,6 +102,12 @@
                                 <th>
                                     {% trans "Type Code"%}
                                 </th>
+                                <th>
+                                    {% trans "Expand From"%}
+                                </th>
+                                <th>
+                                    {% trans "Expand To"%}
+                                </th>
                                 <!-- /ko -->
                                 {% if commtrack_enabled %}
                                 <th>
@@ -167,6 +173,24 @@
                             <!-- ko if:$parent.advanced_mode() -->
                             <td class="form-group">
                                 <input class="form-control typecode" data-bind="value: code" type="text" />
+                            </td>
+                            <td class="form-group">
+                                <select class="form-control"
+                                        data-bind="options: $root.expand_from_options($data),
+                                                   optionsText: 'name',
+                                                   optionsValue: 'pk',
+                                                   value: expand_from,
+                                                   optionsCaption: '\u2013{%trans 'default'%}\u2013'">
+                                </select>
+                            </td>
+                            <td class="form-group">
+                                <select class="form-control"
+                                        data-bind="options: $root.expand_to_options($data),
+                                                   optionsText: 'name',
+                                                   optionsValue: 'pk',
+                                                   value: expand_to,
+                                                   optionsCaption: '\u2013{%trans 'default'%}\u2013'">
+                                </select>
                             </td>
                             <!-- /ko -->
                             {% if commtrack_enabled %}
