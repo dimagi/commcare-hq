@@ -32,12 +32,12 @@ def reset_twilio_gateway_fees(apps, schema_editor):
         gateway_fee__criteria__is_active=False,
         is_valid=True,
     )
-    with transaction.atomic():
-        old_twilio_billables.update(is_valid=False)
-        for log_id in set(map(
-            lambda field_to_value: field_to_value['log_id'],
-            old_twilio_billables.values('log_id')
-        )):
+    for log_id in set(map(
+        lambda field_to_value: field_to_value['log_id'],
+        old_twilio_billables.values('log_id')
+    )):
+        with transaction.atomic():
+            old_twilio_billables.filter(log_id=log_id).update(is_valid=False)
             SmsBillable.create(SMS.objects.get(couch_id=log_id))
 
     assert not SmsBillable.objects.filter(
