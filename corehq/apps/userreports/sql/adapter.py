@@ -91,21 +91,15 @@ class IndicatorSqlAdapter(object):
 
 
 class ErrorRaisingIndicatorSqlAdapter(IndicatorSqlAdapter):
-    def best_effort_save(self, doc):
-        try:
-            self.save(doc)
-        except IntegrityError:
-            pass  # can be due to users messing up their tables/data so don't bother logging
-        except ProgrammingError as e:
-            orig = getattr(e, 'orig')
+    def handle_exception(self, doc, exception):
+        if isinstance(exception, ProgrammingError):
+            orig = getattr(exception, 'orig')
             if orig:
                 error_code = getattr(orig, 'pgcode')
                 if error_code == '42P01':  # http://www.postgresql.org/docs/9.4/static/errcodes-appendix.html
                     raise TableNotFoundWarning
 
-            self.handle_exception(doc, e)
-        except Exception as e:
-            self.handle_exception(doc, e)
+        super(ErrorRaisingIndicatorSqlAdapter, self).handle_exception(doc, exception)
 
 
 def get_indicator_table(indicator_config, custom_metadata=None):
