@@ -197,7 +197,7 @@
                 {# Track a usage events that were produced on the server #}
                 window.analytics.usage.apply(this, {{event|JSON}});
             {% endfor %}
-            gaTrackLink(
+            window.analytics.trackUsageLink(
                 "#delete-report-button", "Report Builder", "Delete a Repot", '{{ report_type }}'
             );
         });
