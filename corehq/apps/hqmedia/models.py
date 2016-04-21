@@ -485,9 +485,6 @@ class HQMediaMixin(Document):
     # keys are the paths to each file in the final application media zip
     multimedia_map = SchemaDictProperty(HQMediaMapItem)
 
-    # each language is a key and the value is a list of multimedia referenced in that language
-    media_language_map = DictProperty()
-
     # paths to custom logos
     logo_refs = DictProperty()
 
@@ -699,7 +696,7 @@ class HQMediaMixin(Document):
         if filter_multimedia:
             media_list = []
             for lang in languages:
-                media_list += self.media_language_map[lang]
+                media_list += self.media_language_map[lang].media_refs
             requested_media = set(media_list)
         # preload all the docs to avoid excessive couch queries.
         # these will all be needed in memory anyway so this is ok.

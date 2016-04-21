@@ -100,7 +100,7 @@ class MediaSuiteGenerator(object):
         if filter_multimedia:
             media_list = []
             for lang in self.profile.langs:
-                media_list += self.app.media_language_map[lang]
+                media_list += self.app.media_language_map[lang].media_refs
             requested_media = set(media_list)
         for path, m in self.app.multimedia_map.items():
             if filter_multimedia and path not in requested_media:

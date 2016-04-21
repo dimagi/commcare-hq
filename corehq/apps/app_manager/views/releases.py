@@ -367,12 +367,14 @@ class LanguageProfilesView(View):
     def post(self, request, domain, app_id, *args, **kwargs):
         profiles = json.loads(request.body).get('profiles')
         app = Application.get(app_id)
+        build_profiles = {}
         if profiles:
             for profile in profiles:
-                id = profile.get('id', uuid.uuid4().hex)
-                app.build_profiles[id] = BuildProfile(langs=profile['langs'], name=profile['name'])
-        else:
-            app.build_profiles = {}
+                id = profile.get('id')
+                if not id:
+                    id = uuid.uuid4().hex
+                build_profiles[id] = BuildProfile(langs=profile['langs'], name=profile['name'])
+        app.build_profiles = build_profiles
         app.save()
         return HttpResponse()
 

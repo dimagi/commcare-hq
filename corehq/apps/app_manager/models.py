@@ -3944,6 +3944,10 @@ class BuildProfile(DocumentSchema):
     langs = StringListProperty()
 
 
+class MediaList(DocumentSchema):
+    media_refs = StringListProperty()
+
+
 class ApplicationBase(VersionedDoc, SnapshotMixin,
                       CommCareFeatureSupportMixin,
                       CommentMixin):
@@ -4028,6 +4032,10 @@ class ApplicationBase(VersionedDoc, SnapshotMixin,
     case_sharing = BooleanProperty(default=False)
 
     build_profiles = SchemaDictProperty(BuildProfile)
+
+    # each language is a key and the value is a list of multimedia referenced in that language
+    media_language_map = SchemaDictProperty(MediaList)
+
 
     @classmethod
     def wrap(cls, data):
@@ -4495,11 +4503,12 @@ class ApplicationBase(VersionedDoc, SnapshotMixin,
 
     def update_mm_map(self):
         if self.build_profiles and domain_has_privilege(self.domain, privileges.BUILD_PROFILES):
-            self.media_language_map = {lang: [] for lang in self.langs}
+            for lang in self.langs:
+                self.media_language_map[lang] = MediaList()
             for form in self.get_forms(bare=False):
                 xml = XForm(form['form'].source)
                 for lang in self.langs:
-                    self.media_language_map[lang] += xml.all_references(lang)
+                    self.media_language_map[lang].media_refs.extend(xml.all_references(lang))
         else:
             self.media_language_map = {}
 
