@@ -1615,11 +1615,6 @@ class EditFormInstance(View):
             params={'instance_id': instance._id}
         )
 
-    @staticmethod
-    def _form_uses_usercase(form):
-        actions = form.active_actions()
-        return form.form_type == 'module_form' and actions_use_usercase(actions)
-
     def get(self, request, *args, **kwargs):
         domain = request.domain
         instance_id = self.kwargs.get('instance_id', None)
@@ -1641,7 +1636,8 @@ class EditFormInstance(View):
         edit_session_data = get_user_contributions_to_touchforms_session(user)
 
         # add usercase to session
-        if self._form_uses_usercase(self._get_form_from_instance(instance)):
+        form = self._get_form_from_instance(instance)
+        if form.uses_usercase():
             usercase_id = user.get_usercase_id()
             if not usercase_id:
                 return _error(_('Could not find the user-case for this form'))
