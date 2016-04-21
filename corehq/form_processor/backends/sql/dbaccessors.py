@@ -655,7 +655,7 @@ class CaseAccessorSQL(AbstractCaseAccessor):
 
     @staticmethod
     def soft_delete_cases(domain, case_ids, deletion_date=None, deletion_id=None):
-        from corehq.form_processor.change_publishers import publish_case_saved
+        from corehq.form_processor.change_publishers import publish_case_deleted
 
         assert isinstance(case_ids, list)
         utcnow = datetime.utcnow()
@@ -668,8 +668,8 @@ class CaseAccessorSQL(AbstractCaseAccessor):
             results = fetchall_as_namedtuple(cursor)
             affected_count = sum([result.affected_count for result in results])
 
-        for case in CaseAccessorSQL.get_cases(case_ids):
-            publish_case_saved(case, send_post_save_signal=False)
+        for case_id in case_ids:
+            publish_case_deleted(domain, case_id)
 
         return affected_count
 
