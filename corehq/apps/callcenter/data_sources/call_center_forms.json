@@ -11,6 +11,7 @@
     "configured_filter": {},
     "named_expressions": {
         "time_start": {
+            "datatype": "datetime",
             "type": "property_path",
             "property_path": [
                 "form",
@@ -19,6 +20,7 @@
             ]
         },
         "time_end": {
+            "datatype": "datetime",
             "type": "property_path",
             "property_path": [
                 "form",

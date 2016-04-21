@@ -19,8 +19,9 @@ def call_center_data_source_provider():
     ]
 
     for domain in get_call_center_domains():
-        for data_source_json in call_center_data_sources:
-            yield _make_data_source_for_domain(data_source_json, domain)
+        if domain.use_fixtures:
+            for data_source_json in call_center_data_sources:
+                yield _make_data_source_for_domain(data_source_json, domain)
 
 
 def _make_data_source_for_domain(data_source_json, domain_lite):

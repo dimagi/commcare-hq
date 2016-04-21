@@ -882,7 +882,7 @@ class Subscriber(models.Model):
     """
     The objects that can be subscribed to a Subscription.
     """
-    domain = models.CharField(max_length=256, db_index=True)
+    domain = models.CharField(max_length=256, unique=True, db_index=True)
     last_modified = models.DateTimeField(auto_now=True)
 
     objects = SubscriberManager()

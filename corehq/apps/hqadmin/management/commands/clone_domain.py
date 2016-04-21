@@ -148,7 +148,7 @@ class Command(BaseCommand):
         apps = get_apps_in_domain(old_domain)
         for app in apps:
             for module in app.modules:
-                if module.module_type == ReportModule.module_type:
+                if isinstance(module, ReportModule):
                     for config in module.report_configs:
                         config.report_id = report_map[config.report_id]
 
@@ -157,12 +157,12 @@ class Command(BaseCommand):
 
     def copy_ucr_data(self, old_domain, new_domain):
         datasource_map = self.copy_ucr_datasources(new_domain, old_domain)
-        report_map = self.copy_ucr_reports(datasource_map, new_domain)
+        report_map = self.copy_ucr_reports(old_domain, datasource_map, new_domain)
         return report_map
 
-    def copy_ucr_reports(self, datasource_map, new_domain):
+    def copy_ucr_reports(self, old_domain, datasource_map, new_domain):
         report_map = {}
-        reports = get_report_configs_for_domain('icds-sql')
+        reports = get_report_configs_for_domain(old_domain)
         for report in reports:
             old_datasource_id = report.config_id
             try:

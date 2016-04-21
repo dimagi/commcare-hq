@@ -43,6 +43,7 @@ class UserErrorEntry(models.Model):
     user_id = models.CharField(max_length=COUCH_UUID_MAX_LEN, db_index=True)
 
     # Information about the specific error
+    context_node = models.CharField(max_length=255, blank=True)
     expr = models.TextField()
     msg = models.TextField()
     session = models.TextField()

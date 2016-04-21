@@ -79,4 +79,4 @@ def doc_to_change(doc):
 
 def domain_lite(name):
     from corehq.apps.callcenter.utils import DomainLite
-    return DomainLite(name, None, None, None)
+    return DomainLite(name, None, None, True)
