@@ -245,10 +245,7 @@ hqDefine('app_manager/js/detail-screen-config.js', function () {
         };
 
         self.serialize = function () {
-            var data = {
-                search_properties: self._getProperties(),
-            };
-            return data;
+            return self._getProperties();
         };
     };
 
