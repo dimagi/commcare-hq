@@ -81,7 +81,6 @@ def _get_careplan_module_view_context(app, module):
         'parent_modules': _get_parent_modules(app, module,
                                              case_property_builder,
                                              CAREPLAN_GOAL),
-        'fixtures': _get_fixture_types(app.domain),
         'details': [
             {
                 'label': gettext_lazy('Goal List'),
