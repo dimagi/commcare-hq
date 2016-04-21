@@ -20,6 +20,8 @@ from corehq.messaging.smsbackends.twilio.models import SQLTwilioBackend
 
 
 class FakeTwilioMessage(object):
+    status = 'sent'
+
     def __init__(self, price):
         self.price = price
 
