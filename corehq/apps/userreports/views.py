@@ -440,6 +440,38 @@ class ConfigureChartReport(ReportBuilderView):
             if col.get('aggregation', None) in ("sum", "average")
         ]
 
+    def _track_invalid_form_events(self):
+        group_by_errors = self.report_form.errors.as_data().get('group_by', [])
+        if "required" in [e.code for e in group_by_errors]:
+            add_event(self.request, [
+                "Report Builder",
+                "Click on Done (No Group By Chosen)",
+                self.report_type,
+            ])
+
+    def _track_valid_form_events(self, existing_sum_avg_cols, report_configuration):
+        if self.report_type != "chart":
+            sum_avg_cols = self._get_sum_avg_columns(
+                report_configuration.columns)
+            # A column is "new" if there are no columns with the (property, agg) combo in the previous report
+            if not set(sum_avg_cols).issubset(set(existing_sum_avg_cols)):
+                add_event(self.request, [
+                    "Report Builder",
+                    "Changed Column Format to Sum or Average",
+                    self.report_type,
+                ])
+
+    def _track_new_report_events(self):
+        track_workflow(
+            self.request.user.email,
+            "Successfully created a new report in the Report Builder"
+        )
+        add_event(self.request, [
+            "Report Builder",
+            "Click On Done On New Report (Successfully)",
+            self.report_type,
+        ])
+
     def post(self, *args, **kwargs):
         if self.report_form.is_valid():
             existing_sum_avg_cols = []
@@ -454,38 +486,14 @@ class ConfigureChartReport(ReportBuilderView):
                     return self.get(*args, **kwargs)
             else:
                 report_configuration = self.report_form.create_report()
-                track_workflow(
-                    self.request.user.email,
-                    "Successfully created a new report in the Report Builder"
-                )
-                add_event(self.request, [
-                    "Report Builder",
-                    "Click On Done On New Report (Successfully)",
-                    self.report_type,
-                ])
+                self._track_new_report_events()
 
-            if self.report_type != "chart":
-                sum_avg_cols = self._get_sum_avg_columns(
-                    report_configuration.columns)
-                # A column is "new" if there are no columns with the (property, agg) combo in the previous report
-                if not set(sum_avg_cols).issubset(set(existing_sum_avg_cols)):
-                    add_event(self.request, [
-                        "Report Builder",
-                        "Changed Column Format to Sum or Average",
-                        self.report_type,
-                    ])
-
+            self._track_valid_form_events(existing_sum_avg_cols, report_configuration)
             return HttpResponseRedirect(
                 reverse(ConfigurableReport.slug, args=[self.domain, report_configuration._id])
             )
         else:
-            group_by_errors = self.report_form.errors.as_data().get('group_by', [])
-            if "required" in [e.code for e in group_by_errors]:
-                add_event( self.request, [
-                    "Report Builder",
-                    "Click on Done (No Group By Chosen)",
-                    self.report_type,
-                ])
+            self._track_invalid_form_events()
 
         return self.get(*args, **kwargs)
 
