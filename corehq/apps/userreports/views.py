@@ -8,7 +8,6 @@ import tempfile
 from django.conf import settings
 from django.contrib import messages
 from django.core.exceptions import ValidationError
-from django.core.urlresolvers import reverse
 from django.http import HttpResponseRedirect, HttpResponse
 from django.http.response import Http404
 from django.shortcuts import render
@@ -25,6 +24,7 @@ from sqlalchemy.exc import ProgrammingError
 
 from corehq.apps.hqwebapp.templatetags.hq_shared_tags import toggle_enabled
 from corehq.apps.userreports.const import REPORT_BUILDER_EVENTS_KEY
+from corehq.util import reverse
 from couchexport.export import export_from_tables
 from couchexport.files import Temp
 from couchexport.models import Format
@@ -342,7 +342,7 @@ class ReportBuilderDataSourceSelect(ReportBuilderView):
             ])
 
             return HttpResponseRedirect(
-                reverse(url_name, args=[self.domain]) + '?' + urlencode(get_params)
+                reverse(url_name, args=[self.domain], params=get_params)
             )
         else:
             return self.get(request, *args, **kwargs)
