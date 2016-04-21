@@ -2,6 +2,8 @@ import mock
 import os
 from xml.etree import ElementTree
 
+from corehq.util.test_utils import flag_enabled
+
 from datetime import datetime, timedelta
 from django.test import TestCase
 from casexml.apps.phone.models import SyncLog
@@ -46,6 +48,11 @@ class LocationFixturesTest(LocationHierarchyPerTest, TestXmlMixin):
         super(LocationFixturesTest, self).setUp()
         self.user = CommCareUser.create(self.domain, 'user', '123')
 
+    def test_no_user_locations_returns_empty(self, uses_locations):
+        empty_fixture = "<fixture id='commtrack:locations' user_id='{}' />".format(self.user.user_id)
+        fixture = ElementTree.tostring(location_fixture_generator(self.user, V2)[0])
+        self.assertXmlEqual(empty_fixture, fixture)
+
     def test_simple_location_fixture(self, uses_locations):
         self.user.set_location(self.locations['Suffolk'].couch_location)
 
@@ -55,6 +62,52 @@ class LocationFixturesTest(LocationHierarchyPerTest, TestXmlMixin):
             county_id=self.locations['Suffolk'].location_id,
             boston_id=self.locations['Boston'].location_id,
             revere_id=self.locations['Revere'].location_id,
+        )
+
+    def test_all_locations_flag_returns_all_locations(self, uses_locations):
+        with flag_enabled('SYNC_ALL_LOCATIONS'):
+            self._assert_fixtures_equal(
+                'expand_from_root',
+                state_id=self.locations['Massachusetts'].location_id,
+                suffolk_id=self.locations['Suffolk'].location_id,
+                middlesex_id=self.locations['Middlesex'].location_id,
+                boston_id=self.locations['Boston'].location_id,
+                revere_id=self.locations['Revere'].location_id,
+                cambridge_id=self.locations['Cambridge'].location_id,
+                somerville_id=self.locations['Somerville'].location_id,
+                new_york_id=self.locations['New York'].location_id,
+                new_york_city_id=self.locations['New York City'].location_id,
+                manhattan_id=self.locations['Manhattan'].location_id,
+                queens_id=self.locations['Queens'].location_id,
+                brooklyn_id=self.locations['Brooklyn'].location_id,
+            )
+
+    @mock.patch.object(CommCareUser, 'locations')
+    @mock.patch.object(Domain, 'supports_multiple_locations_per_user')
+    def test_multiple_locations_returns_multiple_trees(
+            self,
+            supports_multiple_locations,
+            user_locations,
+            uses_locations
+    ):
+        multiple_locations_different_states = [
+            self.locations['Suffolk'].couch_location,
+            self.locations['New York City'].couch_location
+        ]
+        supports_multiple_locations.__get__ = mock.Mock(return_value=True)
+        user_locations.__get__ = mock.Mock(return_value=multiple_locations_different_states)
+
+        self._assert_fixtures_equal(
+            'multiple_locations',
+            massachusetts_id=self.locations['Massachusetts'].location_id,
+            suffolk_id=self.locations['Suffolk'].location_id,
+            boston_id=self.locations['Boston'].location_id,
+            revere_id=self.locations['Revere'].location_id,
+            new_york_id=self.locations['New York'].location_id,
+            new_york_city_id=self.locations['New York City'].location_id,
+            manhattan_id=self.locations['Manhattan'].location_id,
+            queens_id=self.locations['Queens'].location_id,
+            brooklyn_id=self.locations['Brooklyn'].location_id,
         )
 
     def test_expand_to_county(self, uses_locations):
