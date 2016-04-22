@@ -1,6 +1,7 @@
 from casexml.apps.case.xform import is_device_report
 from corehq.apps.change_feed.consumer.feed import KafkaChangeFeed
-from corehq.apps.change_feed.document_types import COMMCARE_USER, WEB_USER
+from corehq.apps.change_feed.document_types import COMMCARE_USER, WEB_USER, get_doc_meta_object_from_document, \
+    GROUP
 from corehq.apps.users.models import CommCareUser, CouchUser
 from corehq.apps.users.util import WEIRD_USER_IDS
 from corehq.elastic import (
@@ -49,7 +50,8 @@ class GroupToUserPillow(PythonPillow):
         self.es_type = ES_META['users'].type
 
     def python_filter(self, change):
-        return change.get_document().get('doc_type', None) in ('Group', 'Group-Deleted')
+        doc_meta = get_doc_meta_object_from_document(change.get_document())
+        return doc_meta and doc_meta.primary_type == GROUP
 
     def change_transport(self, doc_dict):
         update_es_user_with_groups(doc_dict, self.es)
