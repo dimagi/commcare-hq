@@ -298,7 +298,9 @@ class CallCenterIndicators(object):
             logger.debug('Adding case_data %s: totals and all types: %s', slug, indicator_config.totals.date_ranges)
             for range_name in indicator_config.totals.date_ranges:
                 lower, upper = self.date_ranges[range_name]
-                results = query.get_results(True, None, lower, upper)
+                results = query.get_results(
+                    include_type_in_result=True, limit_types=None, start_date=lower, end_date=upper
+                )
                 self._add_case_data_total(results, slug, range_name, legacy_prefix=legacy_prefix)
                 self._add_case_data_by_type(results, slug, range_name)
         else:
@@ -306,14 +308,18 @@ class CallCenterIndicators(object):
                 logger.debug('Adding case_data %s: totals: %s', slug, indicator_config.totals.date_ranges)
                 for range_name in indicator_config.totals.date_ranges:
                     lower, upper = self.date_ranges[range_name]
-                    total_results = query.get_results(False, None, lower, upper)
+                    total_results = query.get_results(
+                        include_type_in_result=False, limit_types=None, start_date=lower, end_date=upper
+                    )
                     self._add_case_data_total(total_results, slug, range_name, legacy_prefix=legacy_prefix)
 
             if include_types:
                 for range_name, types in indicator_config.types_by_date_range().items():
                     logger.debug('Adding case_data %s: types: %s, %s', slug, range_name, types)
                     lower, upper = self.date_ranges[range_name]
-                    type_results = query.get_results(True, types, lower, upper)
+                    type_results = query.get_results(
+                        include_type_in_result=True, limit_types=types, start_date=lower, end_date=upper
+                    )
                     self._add_case_data_by_type(type_results, slug, range_name, all_types=types)
 
     def add_case_total_legacy(self):
