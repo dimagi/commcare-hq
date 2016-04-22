@@ -5,6 +5,7 @@ import pytz
 from corehq.apps.callcenter.app_parser import get_call_center_config_from_app
 from corehq.apps.callcenter.indicator_sets import CallCenterIndicators
 from corehq.apps.users.models import CommCareUser
+from corehq.util.soft_assert.api import soft_assert
 from corehq.util.timezones.conversions import ServerTime
 from dimagi.utils.logging import notify_exception
 
@@ -58,6 +59,13 @@ class IndicatorsFixturesProvider(object):
                     'domain': app.domain,
                     'app_id': app.get_id
                 })
+
+        if config:
+            _assert = soft_assert(['skelly_at_dimagi_dot_com'.replace('_at_', '@').replace('_dot_', '.')])
+            _assert(not config.includes_legacy(), 'Domain still using legacy call center indicators', {
+                'domain': domain,
+                'config': config.to_json()
+            })
 
         try:
             fixtures.append(gen_fixture(user, CallCenterIndicators(
