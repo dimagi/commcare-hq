@@ -1,6 +1,8 @@
-from casexml.apps.case.xform import is_device_report
+from collections import namedtuple
 from corehq.apps.change_feed.consumer.feed import KafkaChangeFeed
-from corehq.apps.change_feed.document_types import COMMCARE_USER, WEB_USER
+from corehq.apps.change_feed.document_types import COMMCARE_USER, WEB_USER, get_doc_meta_object_from_document, \
+    GROUP, FORM
+from corehq.apps.change_feed.topics import FORM_SQL
 from corehq.apps.users.models import CommCareUser, CouchUser
 from corehq.apps.users.util import WEIRD_USER_IDS
 from corehq.elastic import (
@@ -8,13 +10,12 @@ from corehq.elastic import (
     send_to_elasticsearch, get_es_new, ES_META
 )
 from corehq.pillows.mappings.user_mapping import USER_MAPPING, USER_INDEX, USER_META, USER_INDEX_INFO
-from couchforms.models import XFormInstance, all_known_formlike_doc_types
-from dimagi.utils.decorators.memoized import memoized
+from corehq.util.quickcache import quickcache
 from pillowtop.checkpoints.manager import get_default_django_checkpoint_for_legacy_pillow_class, PillowCheckpoint, \
     PillowCheckpointEventHandler
 from pillowtop.listener import AliasedElasticPillow, PythonPillow
 from pillowtop.pillow.interface import ConstructedPillow
-from pillowtop.processors import ElasticProcessor
+from pillowtop.processors import ElasticProcessor, PillowProcessor
 from pillowtop.reindexer.change_providers.couch import CouchViewChangeProvider
 from pillowtop.reindexer.reindexer import ElasticPillowReindexer
 
@@ -49,85 +50,112 @@ class GroupToUserPillow(PythonPillow):
         self.es_type = ES_META['users'].type
 
     def python_filter(self, change):
-        return change.document.get('doc_type', None) in ('Group', 'Group-Deleted')
+        doc_meta = get_doc_meta_object_from_document(change.get_document())
+        return doc_meta and doc_meta.primary_type == GROUP
 
     def change_transport(self, doc_dict):
-        update_es_user_with_groups(doc_dict, self.es)
+        doc_meta = get_doc_meta_object_from_document(doc_dict)
+        if doc_meta.is_deletion:
+            remove_group_from_users(doc_dict, self.es)
+        else:
+            update_es_user_with_groups(doc_dict, self.es)
+
+
+def remove_group_from_users(group_doc, es_client):
+    for user_source in stream_user_sources(group_doc.get("users", [])):
+        if group_doc["name"] in user_source.group_names or group_doc["_id"] in user_source.group_ids:
+            user_source.group_ids.remove(group_doc["_id"])
+            user_source.group_names.remove(group_doc["name"])
+            doc = {"__group_ids": list(user_source.group_ids), "__group_names": list(user_source.group_names)}
+            es_client.update(USER_INDEX, ES_META['users'].type, user_source.user_id, body={"doc": doc})
 
 
 def update_es_user_with_groups(group_doc, es_client=None):
     if not es_client:
         es_client = get_es_new()
 
-    user_ids = group_doc.get("users", [])
+    for user_source in stream_user_sources(group_doc.get("users", [])):
+        if group_doc["name"] not in user_source.group_names or group_doc["_id"] not in user_source.group_ids:
+            user_source.group_ids.add(group_doc["_id"])
+            user_source.group_names.add(group_doc["name"])
+            doc = {"__group_ids": list(user_source.group_ids), "__group_names": list(user_source.group_names)}
+            es_client.update(USER_INDEX, ES_META['users'].type, user_source.user_id, body={"doc": doc})
+
+
+UserSource = namedtuple('UserSource', ['user_id', 'group_ids', 'group_names'])
+
+
+def stream_user_sources(user_ids):
     q = {"filter": {"and": [{"terms": {"_id": user_ids}}]}}
-    for user_source in stream_es_query(es_index='users', q=q, fields=["__group_ids", "__group_names"]):
-        group_ids = user_source.get('fields', {}).get("__group_ids", [])
+    for result in stream_es_query(es_index='users', q=q, fields=["__group_ids", "__group_names"]):
+        group_ids = result.get('fields', {}).get("__group_ids", [])
         group_ids = set(group_ids) if isinstance(group_ids, list) else {group_ids}
-        group_names = user_source.get('fields', {}).get("__group_names", [])
+        group_names = result.get('fields', {}).get("__group_names", [])
         group_names = set(group_names) if isinstance(group_names, list) else {group_names}
-        if group_doc["name"] not in group_names or group_doc["_id"] not in group_ids:
-            group_ids.add(group_doc["_id"])
-            group_names.add(group_doc["name"])
-            doc = {"__group_ids": list(group_ids), "__group_names": list(group_names)}
-            es_client.update(USER_INDEX, ES_META['users'].type, user_source["_id"], body={"doc": doc})
+        yield UserSource(result['_id'], group_ids, group_names)
 
 
-class UnknownUsersPillow(PythonPillow):
+def update_unknown_user_from_form_if_necessary(es, doc_dict):
+    doc = doc_dict
+    user_id, username, domain, xform_id = _get_user_fields_from_form_doc(doc)
+
+    if user_id in WEIRD_USER_IDS:
+        user_id = None
+
+    if (user_id and not _user_exists(user_id)
+            and not doc_exists_in_es('users', user_id)):
+        doc_type = "AdminUser" if username == "admin" else "UnknownUser"
+        doc = {
+            "_id": user_id,
+            "domain": domain,
+            "username": username,
+            "first_form_found_in": xform_id,
+            "doc_type": doc_type,
+        }
+        if domain:
+            doc["domain_membership"] = {"domain": domain}
+        es.create(USER_INDEX, ES_META['users'].type, body=doc, id=user_id)
+
+
+@quickcache(['user_id'])
+def _user_exists(user_id):
+    return CouchUser.get_db().doc_exist(user_id)
+
+
+def _get_user_fields_from_form_doc(form_doc):
+    form_meta = form_doc.get('form', {}).get('meta', {})
+    domain = form_doc.get('domain')
+    user_id = form_meta.get('userID')
+    username = form_meta.get('username')
+    xform_id = form_doc.get('_id')
+    return user_id, username, domain, xform_id
+
+
+class UnknownUsersProcessor(PillowProcessor):
+    def __init__(self):
+        self._es = get_es_new()
+
+    def process_change(self, pillow_instance, change, do_set_checkpoint):
+        update_unknown_user_from_form_if_necessary(self._es, change.get_document())
+
+
+def get_unknown_users_pillow(pillow_id='unknown-users-pillow'):
     """
     This pillow adds users from xform submissions that come in to the User Index if they don't exist in HQ
     """
-    document_class = XFormInstance
-    include_docs_when_preindexing = False
-    es_path = USER_INDEX + "/user/"
-
-    def __init__(self):
-        checkpoint = get_default_django_checkpoint_for_legacy_pillow_class(self.__class__)
-        super(UnknownUsersPillow, self).__init__(checkpoint=checkpoint)
-        self.user_db = CouchUser.get_db()
-        self.es = get_es_new()
-        self.es_type = ES_META['users'].type
-
-    def python_filter(self, change):
-        # designed to exactly mimic the behavior of couchforms/filters/xforms.js
-        doc = change.get_document()
-        return doc and doc.get('doc_type', None) in all_known_formlike_doc_types() and not is_device_report(doc)
-
-    def get_fields_from_doc(self, doc):
-        form_meta = doc.get('form', {}).get('meta', {})
-        domain = doc.get('domain')
-        user_id = form_meta.get('userID')
-        username = form_meta.get('username')
-        xform_id = doc.get('_id')
-        return user_id, username, domain, xform_id
-
-    @memoized
-    def _user_exists(self, user_id):
-        return self.user_db.doc_exist(user_id)
-
-    def _user_indexed(self, user_id):
-        return doc_exists_in_es('users', user_id)
-
-    def change_transport(self, doc_dict):
-        doc = doc_dict
-        user_id, username, domain, xform_id = self.get_fields_from_doc(doc)
-
-        if user_id in WEIRD_USER_IDS:
-            user_id = None
-
-        if (user_id and not self._user_exists(user_id)
-                and not self._user_indexed(user_id)):
-            doc_type = "AdminUser" if username == "admin" else "UnknownUser"
-            doc = {
-                "_id": user_id,
-                "domain": domain,
-                "username": username,
-                "first_form_found_in": xform_id,
-                "doc_type": doc_type,
-            }
-            if domain:
-                doc["domain_membership"] = {"domain": domain}
-            self.es.create(USER_INDEX, self.es_type, body=doc, id=user_id)
+    checkpoint = PillowCheckpoint(
+        pillow_id,
+    )
+    processor = UnknownUsersProcessor()
+    return ConstructedPillow(
+        name=pillow_id,
+        checkpoint=checkpoint,
+        change_feed=KafkaChangeFeed(topics=[FORM, FORM_SQL], group_id='unknown-users'),
+        processor=processor,
+        change_processed_event_handler=PillowCheckpointEventHandler(
+            checkpoint=checkpoint, checkpoint_frequency=100,
+        ),
+    )
 
 
 def add_demo_user_to_user_index():
@@ -137,7 +165,7 @@ def add_demo_user_to_user_index():
     )
 
 
-def get_user_kafka_to_elasticsearch_pillow(pillow_id='user-kafka-to-es'):
+def get_user_kafka_to_elasticsearch_pillow(pillow_id='UnknownUsersPillow'):
     checkpoint = PillowCheckpoint(
         pillow_id,
     )

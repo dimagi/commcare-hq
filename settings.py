@@ -1436,7 +1436,6 @@ PILLOWTOPS = {
         'corehq.pillows.group.GroupPillow',
         'corehq.pillows.sms.SMSPillow',
         'corehq.pillows.user.GroupToUserPillow',
-        'corehq.pillows.user.UnknownUsersPillow',
         'corehq.pillows.sofabed.FormDataPillow',
         'corehq.pillows.sofabed.CaseDataPillow',
         # TODO: Remove this once ConstructedPillows can deal with their own indices
@@ -1489,6 +1488,11 @@ PILLOWTOPS = {
             'name': 'SqlCaseToElasticsearchPillow',
             'class': 'pillowtop.pillow.interface.ConstructedPillow',
             'instance': 'corehq.pillows.case.get_sql_case_to_elasticsearch_pillow',
+        },
+        {
+            'name': 'UnknownUsersPillow',
+            'class': 'pillowtop.pillow.interface.ConstructedPillow',
+            'instance': 'corehq.pillows.user.get_unknown_users_pillow',
         },
     ],
     'cache': [
