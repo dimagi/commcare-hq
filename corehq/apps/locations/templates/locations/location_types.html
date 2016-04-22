@@ -182,16 +182,16 @@
                                                    optionsText: 'name',
                                                    optionsValue: 'pk',
                                                    value: expand_from,
-                                                   optionsCaption: '\u2013{%trans 'default'%}\u2013'">
+                                                   optionsCaption: '\u2013{%trans 'default'%} (' + name() + ')\u2013'">
                                 </select>
                             </td>
                             <td class="form-group">
                                 <select class="form-control"
-                                        data-bind="options: $root.expand_to_options($data),
+                                        data-bind="options: $root.expand_to_options($data).children,
                                                    optionsText: 'name',
                                                    optionsValue: 'pk',
                                                    value: expand_to,
-                                                   optionsCaption: '\u2013{%trans 'default'%}\u2013'">
+                                                   optionsCaption: '\u2013{%trans 'default'%} (' + $root.expand_to_options($data).leaf.name() + ')\u2013'">
                                 </select>
                             </td>
                             <!-- /ko -->

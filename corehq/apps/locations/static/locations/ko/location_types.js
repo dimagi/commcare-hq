@@ -36,7 +36,7 @@ function LocationSettingsViewModel(loc_types, commtrack_enabled) {
 
     this.expand_from_options = function(loc_type) {
         // traverse all locations upwards, include a root option
-        var parents = [loc_type],
+        var parents = [],
             to_check = [loc_type];
         if (!this.has_cycles()) {
             while (to_check.length > 0){
@@ -56,20 +56,26 @@ function LocationSettingsViewModel(loc_types, commtrack_enabled) {
     };
 
     this.expand_to_options = function(loc_type) {
-        // from us, go down the tree.
+        // from us, go down the tree, extract the last one so we can use it as the default
         var children = [loc_type],
             to_check = [loc_type];
-        while (to_check.length > 0){
-            var current_loc = to_check.pop(),
-                child = this.loc_types_by_parent[current_loc.pk];
-            if (child){
-                children.push(child);
-                if (this.loc_types_by_parent[child.pk]){
-                    to_check.push(child);
+
+        if (!this.has_cycles()){
+            while (to_check.length > 0){
+                var current_loc = to_check.pop(),
+                    child = this.loc_types_by_parent[current_loc.pk];
+                if (child){
+                    children.push(child);
+                    if (this.loc_types_by_parent[child.pk]){
+                        to_check.push(child);
+                    }
                 }
             }
         }
-        return children;
+        return {
+            children: children.slice(0, children.length - 1),
+            leaf: children[children.length - 1]
+        };
     };
 
     var settings = this;
