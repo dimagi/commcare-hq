@@ -5,7 +5,7 @@ from datetime import datetime, timedelta
 from django.test import SimpleTestCase
 from django.test.utils import override_settings
 
-from corehq.elastic import get_es_new
+from corehq.elastic import get_es_new, send_to_elasticsearch
 from corehq.form_processor.models import CommCareCaseSQL, CaseTransaction
 from corehq.pillows.mappings.case_mapping import CASE_INDEX
 from corehq.pillows.mappings.group_mapping import GROUP_INDEX
@@ -23,7 +23,6 @@ from casexml.apps.case.models import CommCareCase, CommCareCaseAction
 from casexml.apps.case.const import CASE_ACTION_CREATE
 from corehq.pillows.xform import XFormPillow, get_sql_xform_to_elasticsearch_pillow
 from corehq.pillows.user import UserPillow
-from corehq.pillows.group import GroupPillow
 from corehq.pillows.case import CasePillow, get_sql_case_to_elasticsearch_pillow
 from corehq.apps.reports.analytics.esaccessors import (
     get_submission_counts_by_user,
@@ -723,16 +722,14 @@ class TestUserESAccessors(BaseESAccessorsTest):
         })
 
 
-class TestGroupESAccessors(BaseESAccessorsTest):
-
-    pillow_class = GroupPillow
-    es_index = GROUP_INDEX
+class TestGroupESAccessors(SimpleTestCase):
 
     def setUp(self):
-        super(TestGroupESAccessors, self).setUp()
         self.group_name = 'justice league'
+        self.domain = 'group-esaccessors-test'
         self.reporting = True
         self.case_sharing = False
+        self.es = get_es_new()
 
     def _send_group_to_es(self, _id=None):
         group = Group(
@@ -742,8 +739,8 @@ class TestGroupESAccessors(BaseESAccessorsTest):
             reporting=self.reporting,
             _id=_id or uuid.uuid4().hex,
         )
-        self.pillow.change_transport(group.to_json())
-        self.pillow.get_es_new().indices.refresh(self.pillow.es_index)
+        send_to_elasticsearch('groups', group.to_json())
+        self.es.indices.refresh(GROUP_INDEX)
         return group
 
     def test_group_query(self):
