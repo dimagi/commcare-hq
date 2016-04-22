@@ -3,30 +3,12 @@ from corehq.apps.change_feed.document_types import GROUP
 from corehq.apps.groups.models import Group
 from corehq.elastic import get_es_new
 
-from .mappings.group_mapping import GROUP_INDEX, GROUP_MAPPING, GROUP_INDEX_INFO
-from .base import HQPillow
+from .mappings.group_mapping import GROUP_INDEX_INFO
 from pillowtop.checkpoints.manager import PillowCheckpoint, PillowCheckpointEventHandler
 from pillowtop.pillow.interface import ConstructedPillow
 from pillowtop.processors import ElasticProcessor
 from pillowtop.reindexer.change_providers.couch import CouchViewChangeProvider
 from pillowtop.reindexer.reindexer import ElasticPillowReindexer
-
-
-class GroupPillow(HQPillow):
-    """
-    Simple/Common Case properties Indexer
-    """
-
-    document_class = Group
-    couch_filter = "groups/all_groups"
-    es_alias = "hqgroups"
-    es_type = "group"
-    es_index = GROUP_INDEX
-    default_mapping = GROUP_MAPPING
-
-    @classmethod
-    def get_unique_id(self):
-        return GROUP_INDEX
 
 
 def get_group_pillow(pillow_id='group-pillow'):
