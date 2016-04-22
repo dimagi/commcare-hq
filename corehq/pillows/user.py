@@ -101,7 +101,6 @@ class UnknownUsersPillow(PythonPillow):
     This pillow adds users from xform submissions that come in to the User Index if they don't exist in HQ
     """
     document_class = XFormInstance
-    include_docs_when_preindexing = False
 
     def __init__(self):
         checkpoint = get_default_django_checkpoint_for_legacy_pillow_class(self.__class__)
