@@ -118,9 +118,6 @@ class UnknownUsersPillow(PythonPillow):
     def _user_exists(self, user_id):
         return self.user_db.doc_exist(user_id)
 
-    def _user_indexed(self, user_id):
-        return doc_exists_in_es('users', user_id)
-
     def change_transport(self, doc_dict):
         doc = doc_dict
         user_id, username, domain, xform_id = _get_user_fields_from_form_doc(doc)
@@ -129,7 +126,7 @@ class UnknownUsersPillow(PythonPillow):
             user_id = None
 
         if (user_id and not self._user_exists(user_id)
-                and not self._user_indexed(user_id)):
+                and not doc_exists_in_es('users', user_id)):
             doc_type = "AdminUser" if username == "admin" else "UnknownUser"
             doc = {
                 "_id": user_id,
