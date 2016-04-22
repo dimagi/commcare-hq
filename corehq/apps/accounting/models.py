@@ -621,8 +621,8 @@ class SoftwareProductRate(models.Model):
 
 class Feature(models.Model):
     """
-    This is what will link a feature type (USER, API, etc.) to a name (Users Pro, API Standard, etc.) and will be what
-    the FeatureRate references to provide a monthly fee, limit and per-excess fee.
+    This is what will link a feature type (USER, API, etc.) to a name (Users Pro, API Standard, etc.)
+    and will be what the FeatureRate references to provide a monthly fee, limit and per-excess fee.
     """
     name = models.CharField(max_length=40, unique=True)
     feature_type = models.CharField(max_length=10, db_index=True, choices=FeatureType.CHOICES)
@@ -753,7 +753,9 @@ class DefaultProductPlan(models.Model):
             )
             return default_product_plan.plan.get_version()
         except DefaultProductPlan.DoesNotExist:
-            raise AccountingError("No default product plan was set up, did you forget to run cchq_software_plan_bootstrap?")
+            raise AccountingError(
+                "No default product plan was set up, did you forget to run cchq_software_plan_bootstrap?"
+            )
 
     @classmethod
     def get_lowest_edition_by_domain(cls, domain, requested_privileges,
@@ -1122,7 +1124,8 @@ class Subscription(models.Model):
         self.transfer_credits()
 
         SubscriptionAdjustment.record_adjustment(
-            self, reason=SubscriptionAdjustmentReason.CANCEL, method=adjustment_method, note=note, web_user=web_user,
+            self, reason=SubscriptionAdjustmentReason.CANCEL,
+            method=adjustment_method, note=note, web_user=web_user,
         )
 
     def raise_conflicting_dates(self, date_start, date_end):
@@ -1130,8 +1133,8 @@ class Subscription(models.Model):
         conflicts with other subscriptions related to this subscriber.
         """
         for sub in Subscription.objects.filter(
-            subscriber=self.subscriber).exclude(id=self.id
-        ).all():
+            subscriber=self.subscriber
+        ).exclude(id=self.id).all():
             related_has_no_end = sub.date_end is None
             current_has_no_end = date_end is None
             start_before_related_end = (
@@ -1168,7 +1171,7 @@ class Subscription(models.Model):
                     "subscription dates to %(related_sub)s." % {
                         'start_date': self.date_start.strftime(USER_DATE_FORMAT),
                         'related_sub': sub,
-                   }
+                    }
                 )
 
     def update_subscription(self, date_start, date_end,
@@ -1264,8 +1267,7 @@ class Subscription(models.Model):
             self.date_start = today
         if self.date_end is None or self.date_end > today:
             self.date_end = today
-        if (self.date_delay_invoicing is not None
-           and self.date_delay_invoicing > today):
+        if self.date_delay_invoicing is not None and self.date_delay_invoicing > today:
             self.date_delay_invoicing = today
         self.is_active = False
         self.save()
@@ -1546,7 +1548,7 @@ class Subscription(models.Model):
     def set_billing_account_entry_point(self):
         no_current_entry_point = self.account.entry_point == EntryPoint.NOT_SET
         self_serve = self.service_type == SubscriptionType.PRODUCT
-        if (no_current_entry_point and self_serve and not self.is_trial):
+        if no_current_entry_point and self_serve and not self.is_trial:
             self.account.entry_point = EntryPoint.SELF_STARTED
             self.account.save()
 
@@ -1683,9 +1685,10 @@ class Subscription(models.Model):
         if not last_subscription.exists():
             return False, None
         last_subscription = last_subscription.latest('date_created')
-        return (last_subscription.account.pk == account.pk and
-                last_subscription.plan_version.pk == plan_version.pk
-               ), last_subscription
+        return (
+            last_subscription.account.pk == account.pk and
+            last_subscription.plan_version.pk == plan_version.pk
+        ), last_subscription
 
 
 class InvoiceBaseManager(models.Manager):
@@ -1781,7 +1784,6 @@ class WireInvoice(InvoiceBase):
                 % self.id
             )
             return []
-
 
 
 class WirePrepaymentInvoice(WireInvoice):
@@ -2449,8 +2451,7 @@ class InvoicePdf(SafeSaveDocument):
         if not invoice.is_wire:
             for line_item in LineItem.objects.filter(invoice=invoice):
                 is_unit = line_item.unit_description is not None
-                description = (line_item.base_description
-                               or line_item.unit_description)
+                description = line_item.base_description or line_item.unit_description
                 if line_item.quantity > 0:
                     template.add_item(
                         description,
@@ -2707,7 +2708,7 @@ class CreditLine(models.Model):
             raise CreditLineError(
                 "Could not find a unique credit line for %(account)s"
                 "%(subscription)s%(feature)s%(product)s. %(error)s"
-                "instead." %{
+                "instead." % {
                     'account': "Account ID %d" % account.id,
                     'subscription': (" | Subscription ID %d" % subscription.id
                                      if subscription is not None else ""),
