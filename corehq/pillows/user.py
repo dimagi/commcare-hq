@@ -62,9 +62,7 @@ class GroupToUserPillow(PythonPillow):
 
 
 def remove_group_from_users(group_doc, es_client):
-    user_ids = group_doc.get("users", [])
-    q = {"filter": {"and": [{"terms": {"_id": user_ids}}]}}
-    for user_source in stream_es_query(es_index='users', q=q, fields=["__group_ids", "__group_names"]):
+    for user_source in stream_user_sources(group_doc.get("users", [])):
         group_ids = user_source.get('fields', {}).get("__group_ids", [])
         group_ids = set(group_ids) if isinstance(group_ids, list) else {group_ids}
         group_names = user_source.get('fields', {}).get("__group_names", [])
@@ -80,9 +78,7 @@ def update_es_user_with_groups(group_doc, es_client=None):
     if not es_client:
         es_client = get_es_new()
 
-    user_ids = group_doc.get("users", [])
-    q = {"filter": {"and": [{"terms": {"_id": user_ids}}]}}
-    for user_source in stream_es_query(es_index='users', q=q, fields=["__group_ids", "__group_names"]):
+    for user_source in stream_user_sources(group_doc.get("users", [])):
         group_ids = user_source.get('fields', {}).get("__group_ids", [])
         group_ids = set(group_ids) if isinstance(group_ids, list) else {group_ids}
         group_names = user_source.get('fields', {}).get("__group_names", [])
@@ -92,6 +88,11 @@ def update_es_user_with_groups(group_doc, es_client=None):
             group_names.add(group_doc["name"])
             doc = {"__group_ids": list(group_ids), "__group_names": list(group_names)}
             es_client.update(USER_INDEX, ES_META['users'].type, user_source["_id"], body={"doc": doc})
+
+
+def stream_user_sources(user_ids):
+    q = {"filter": {"and": [{"terms": {"_id": user_ids}}]}}
+    return stream_es_query(es_index='users', q=q, fields=["__group_ids", "__group_names"])
 
 
 class UnknownUsersPillow(PythonPillow):
