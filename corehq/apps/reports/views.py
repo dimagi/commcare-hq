@@ -1662,12 +1662,7 @@ class EditFormInstance(View):
             if len(non_parents) == 1:
                 edit_session_data['case_id'] = non_parents[0].caseblock.get(const.CASE_ATTR_ID)
 
-        edit_session_data['function_context'] = {
-            'static-date': [
-                {'name': 'now', 'value': instance.metadata.timeEnd},
-                {'name': 'today', 'value': instance.metadata.timeEnd.date()},
-            ]
-        }
+        edit_session_data['is_editing'] = True
 
         context.update({
             'domain': domain,
