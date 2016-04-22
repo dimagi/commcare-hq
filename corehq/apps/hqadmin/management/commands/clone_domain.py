@@ -20,6 +20,12 @@ class Command(BaseCommand):
                     help="Don't process products"),
         make_option('--no-ucr-or-apps', action='store_false', dest='ucr_apps', default=True,
                     help="Don't process UCR"),
+        make_option('--no-user-fields', action='store_false', dest='user_fields', default=True,
+                    help="Don't process Custom User Fields"),
+        make_option('--no-location-fields', action='store_false', dest='location_fields', default=True,
+                    help="Don't process Custom Location Fields"),
+        make_option('--no-product-fields', action='store_false', dest='product_fields', default=True,
+                    help="Don't process Custom Product Fields"),
     )
 
     def handle(self, *args, **options):
@@ -40,6 +46,19 @@ class Command(BaseCommand):
         if options['ucr_apps']:
             report_map = self.copy_ucr_data(existing_domain, new_domain)
             self.copy_applications(existing_domain, new_domain, report_map)
+
+        if options['user_fields']:
+            from corehq.apps.users.views.mobile import UserFieldsView
+            self._copy_custom_data(existing_domain, new_domain, UserFieldsView.field_type)
+
+        if options['location_fields']:
+            from corehq.apps.locations.views import LocationFieldsView
+            self._copy_custom_data(existing_domain, new_domain, LocationFieldsView.field_type)
+
+        if options['product_fields']:
+            from corehq.apps.locations.views import LocationFieldsView
+            from corehq.apps.products.views import ProductFieldsView
+            self._copy_custom_data(existing_domain, new_domain, ProductFieldsView.field_type)
 
     def clone_domain_and_settings(self, old_domain, new_domain):
         from corehq.apps.domain.models import Domain
@@ -184,6 +203,17 @@ class Command(BaseCommand):
             old_id, new_id = self.save_couch_copy(datasource, new_domain)
             datasource_map[old_id] = new_id
         return datasource_map
+
+    def _copy_custom_data(self, old_domain, new_domain, type_):
+        from corehq.apps.custom_data_fields.dbaccessors import get_by_domain_and_type
+        doc = get_by_domain_and_type(old_domain, type_)
+        if doc:
+            self.save_couch_copy(doc, new_domain)
+
+    def _copy_all_docs_of_type(self, old_domain, new_domain, doc_class):
+        from corehq.apps.domain.dbaccessors import get_docs_in_domain_by_class
+        for doc in get_docs_in_domain_by_class(old_domain, doc_class):
+            self.save_couch_copy(doc, new_domain)
 
     def save_couch_copy(self, doc, new_domain=None):
         old_id = doc._id
