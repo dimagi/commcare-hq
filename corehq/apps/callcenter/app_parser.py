@@ -71,6 +71,7 @@ def _get_indicators_used_in_forms(app):
 
     return indicators
 
+
 def _get_indicators_in_detail(detail):
     from corehq.apps.app_manager.suite_xml.const import FIELD_TYPE_INDICATOR
     for column in detail.columns:
