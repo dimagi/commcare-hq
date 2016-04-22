@@ -2,12 +2,11 @@ import uuid
 from django.test import TestCase
 from corehq.apps.es import GroupES
 from corehq.apps.groups.models import Group
-from corehq.dbaccessors.couchapps.all_docs import get_all_docs_with_doc_types
+from corehq.apps.groups.tests.test_utils import delete_all_groups
 from corehq.elastic import get_es_new
 from corehq.pillows.group import GroupPillow
 from corehq.pillows.mappings.group_mapping import GROUP_INDEX_INFO
 from corehq.util.elastic import ensure_index_deleted
-from corehq.util.test_utils import unit_testing_only
 from pillowtop.es_utils import initialize_index
 
 
@@ -50,9 +49,3 @@ class GroupPillowTest(TestCase):
         self.assertEqual(group.name, es_group['name'])
         self.assertEqual(group.users, es_group['users'])
         self.assertEqual('Group', es_group['doc_type'])
-
-
-@unit_testing_only
-def delete_all_groups():
-    all_groups = list(get_all_docs_with_doc_types(Group.get_db(), 'Group'))
-    Group.bulk_delete(all_groups)
