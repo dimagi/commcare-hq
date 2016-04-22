@@ -48,8 +48,8 @@ function LocationSettingsViewModel(loc_types, commtrack_enabled) {
                     if (parent.parent_type()){
                         to_check.push(parent);
                     }
-                };
-            };
+                }
+            }
         }
         parents.push(root_type);
         return parents.reverse();
@@ -74,7 +74,7 @@ function LocationSettingsViewModel(loc_types, commtrack_enabled) {
         }
         return {
             children: children.slice(0, children.length - 1),
-            leaf: children[children.length - 1]
+            leaf: children[children.length - 1],
         };
     };
 

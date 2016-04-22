@@ -65,11 +65,11 @@ class LocationFixturesTest(LocationHierarchyPerTest, TestXmlMixin):
             ])
         ]),
         ('New York', [
-                ('New York City', [
-                    ('Manhattan', []),
-                    ('Brooklyn', []),
-                    ('Queens', []),
-                ]),
+            ('New York City', [
+                ('Manhattan', []),
+                ('Brooklyn', []),
+                ('Queens', []),
+            ]),
         ]),
     ]
 
@@ -96,7 +96,7 @@ class LocationFixturesTest(LocationHierarchyPerTest, TestXmlMixin):
                 'expand_from_root',
                 ['Massachusetts', 'Suffolk', 'Middlesex', 'Boston', 'Revere', 'Cambridge',
                  'Somerville', 'New York', 'New York City', 'Manhattan', 'Queens', 'Brooklyn']
-                )
+            )
 
     @mock.patch.object(CommCareUser, 'locations')
     @mock.patch.object(Domain, 'supports_multiple_locations_per_user')
