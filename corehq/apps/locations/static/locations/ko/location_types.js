@@ -1,4 +1,7 @@
 /* globals _, ko, $ */
+
+var ROOT_LOCATION_ID = -1;
+
 function LocationSettingsViewModel(loc_types, commtrack_enabled) {
     this.loc_types = ko.observableArray();
     this.loc_types($.map(loc_types, function(loc_type) {
@@ -7,7 +10,7 @@ function LocationSettingsViewModel(loc_types, commtrack_enabled) {
 
     var root_type = new LocationTypeModel({
         name: "root",
-        pk: 0,
+        pk: ROOT_LOCATION_ID,
     });
 
     this.json_payload = ko.observable();
@@ -179,9 +182,8 @@ function LocationTypeModel(loc_type, commtrack_enabled) {
     this.shares_cases = ko.observable(loc_type.shares_cases);
     this.view_descendants = ko.observable(loc_type.view_descendants);
     this.code = ko.observable(loc_type.code || '');
-    this.expand_from = ko.observable(loc_type.expand_from || '');
-    this.expand_from_root = ko.observable(loc_type.expand_from || false);
-    this.expand_to = ko.observable(loc_type.expand_to || '');
+    this.expand_from = ko.observable(loc_type.expand_from_root ? ROOT_LOCATION_ID : loc_type.expand_from);
+    this.expand_to = ko.observable(loc_type.expand_to);
 
     this.name_error = ko.observable(false);
 
@@ -203,9 +205,9 @@ function LocationTypeModel(loc_type, commtrack_enabled) {
             shares_cases: this.shares_cases() === true,
             view_descendants: this.view_descendants() === true,
             code: this.code().trim() || '',
-            expand_from: this.expand_from,
-            expand_from_root: this.expand_from_root,
-            expand_to: this.expand_to,
+            expand_from: (this.expand_from() !== -1 ? this.expand_from() : null) || null,
+            expand_from_root: this.expand_from() === ROOT_LOCATION_ID,
+            expand_to: this.expand_to() || null,
         };
     };
 }
