@@ -2,7 +2,8 @@ from collections import namedtuple
 from casexml.apps.case.xform import is_device_report
 from corehq.apps.change_feed.consumer.feed import KafkaChangeFeed
 from corehq.apps.change_feed.document_types import COMMCARE_USER, WEB_USER, get_doc_meta_object_from_document, \
-    GROUP
+    GROUP, FORM
+from corehq.apps.change_feed.topics import FORM_SQL
 from corehq.apps.users.models import CommCareUser, CouchUser
 from corehq.apps.users.util import WEIRD_USER_IDS
 from corehq.elastic import (
@@ -16,7 +17,7 @@ from pillowtop.checkpoints.manager import get_default_django_checkpoint_for_lega
     PillowCheckpointEventHandler
 from pillowtop.listener import AliasedElasticPillow, PythonPillow
 from pillowtop.pillow.interface import ConstructedPillow
-from pillowtop.processors import ElasticProcessor
+from pillowtop.processors import ElasticProcessor, PillowProcessor
 from pillowtop.reindexer.change_providers.couch import CouchViewChangeProvider
 from pillowtop.reindexer.reindexer import ElasticPillowReindexer
 
@@ -150,6 +151,30 @@ def _get_user_fields_from_form_doc(form_doc):
     username = form_meta.get('username')
     xform_id = form_doc.get('_id')
     return user_id, username, domain, xform_id
+
+
+class UnknownUsersProcessor(PillowProcessor):
+    def __init__(self):
+        self._es = get_es_new()
+
+    def process_change(self, pillow_instance, change, do_set_checkpoint):
+        update_unknown_user_from_form_if_necessary(self._es, change.get_document())
+
+
+def get_unknown_users_pillow(pillow_id='unknown-users-pillow'):
+    checkpoint = PillowCheckpoint(
+        pillow_id,
+    )
+    processor = UnknownUsersProcessor()
+    return ConstructedPillow(
+        name=pillow_id,
+        checkpoint=checkpoint,
+        change_feed=KafkaChangeFeed(topics=[FORM, FORM_SQL], group_id='unknown-users'),
+        processor=processor,
+        change_processed_event_handler=PillowCheckpointEventHandler(
+            checkpoint=checkpoint, checkpoint_frequency=100,
+        ),
+    )
 
 
 def add_demo_user_to_user_index():
