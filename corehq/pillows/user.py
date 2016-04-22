@@ -49,7 +49,7 @@ class GroupToUserPillow(PythonPillow):
         self.es_type = ES_META['users'].type
 
     def python_filter(self, change):
-        return change.document.get('doc_type', None) in ('Group', 'Group-Deleted')
+        return change.get_document().get('doc_type', None) in ('Group', 'Group-Deleted')
 
     def change_transport(self, doc_dict):
         update_es_user_with_groups(doc_dict, self.es)
