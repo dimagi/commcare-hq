@@ -8,13 +8,11 @@ from elasticsearch.exceptions import ConnectionError
 from corehq.apps.case_search.models import CaseSearchConfig
 from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.domain.tests.test_utils import delete_all_domains
-from corehq.apps.es import CaseES, CaseSearchES, DomainES, ESQuery, FormES, UserES
+from corehq.apps.es import CaseES, CaseSearchES, DomainES, FormES, UserES
 from corehq.apps.users.dbaccessors.all_commcare_users import delete_all_users
 from corehq.apps.users.models import CommCareUser, WebUser
-from corehq.form_processor.interfaces.processor import FormProcessorInterface
 from corehq.form_processor.tests.utils import FormProcessorTestUtils, \
     run_with_all_backends
-from corehq.form_processor.utils import TestFormMetadata
 from corehq.pillows.case import CasePillow
 from corehq.pillows.case_search import CaseSearchPillow
 from corehq.pillows.mappings.case_mapping import CASE_INDEX
@@ -23,8 +21,8 @@ from corehq.pillows.mappings.domain_mapping import DOMAIN_INDEX
 from corehq.pillows.mappings.user_mapping import USER_INDEX
 from corehq.pillows.mappings.xform_mapping import XFORM_INDEX
 from corehq.util.elastic import delete_es_index, ensure_index_deleted
-from corehq.util.test_utils import get_form_ready_to_save, trap_extra_setup, create_and_save_a_form, \
-    create_and_save_a_case
+from corehq.util.test_utils import trap_extra_setup, create_and_save_a_form, create_and_save_a_case
+
 
 DOMAIN = 'reindex-test-domain'
 
