@@ -1,9 +1,11 @@
-from django.test import SimpleTestCase
+import uuid
+from django.test import SimpleTestCase, TestCase
+from corehq.apps.groups.models import Group
 
 from corehq.apps.users.models import CommCareUser
 from corehq.elastic import get_es_new
 from corehq.pillows.mappings.user_mapping import USER_INDEX, USER_INDEX_INFO
-from corehq.pillows.user import UserPillow, update_es_user_with_groups
+from corehq.pillows.user import UserPillow, update_es_user_with_groups, GroupToUserPillow
 from corehq.util.elastic import ensure_index_deleted
 from pillowtop.es_utils import initialize_index_and_mapping
 
@@ -82,3 +84,34 @@ def _create_es_user(es_client, user_id, domain):
     UserPillow().change_transport(user.to_json())
     es_client.indices.refresh(USER_INDEX)
     return user
+
+
+class GroupToUserPillowDbTest(TestCase):
+    dependent_apps = ['corehq.apps.groups']
+
+    def setUp(self):
+        ensure_index_deleted(USER_INDEX)
+        self.es_client = get_es_new()
+        initialize_index_and_mapping(self.es_client, USER_INDEX_INFO)
+
+    def tearDown(self):
+        ensure_index_deleted(USER_INDEX)
+
+    def test_pillow(self):
+        user_id = uuid.uuid4().hex
+        domain = 'dbtest-group-user'
+        _create_es_user(self.es_client, user_id, domain)
+        _assert_es_user_and_groups(self, self.es_client, user_id, None, None)
+
+        # make and save group
+        group = Group(domain=domain, name='g1', users=[user_id])
+        group.save()
+
+        # process using pillow
+        pillow = GroupToUserPillow()
+        pillow.use_chunking = False  # hack - make sure the pillow doesn't chunk
+        pillow.process_changes(since=0, forever=False)
+
+        # confirm updated in elasticsearch
+        self.es_client.indices.refresh(USER_INDEX)
+        _assert_es_user_and_groups(self, self.es_client, user_id, [group._id], [group.name])
