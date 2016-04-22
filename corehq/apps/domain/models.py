@@ -51,8 +51,6 @@ DATE_FORMAT = '%Y-%m-%dT%H:%M:%SZ'
 BUSINESS_UNITS = [
     "DSA",
     "DSI",
-    "DLAC",
-    "DMOZ",
     "DWA",
     "INC",
 ]
@@ -162,7 +160,8 @@ class InternalProperties(DocumentSchema, UpdatableSchema):
     goal_followup_rate = DecimalProperty()
     # intentionally different from and commtrack_enabled so that FMs can change
     commtrack_domain = BooleanProperty()
-    business_unit = StringProperty(choices=BUSINESS_UNITS + [""], default="")
+    #  DLAC and DMOZ are no longer valid choices
+    business_unit = StringProperty(choices=BUSINESS_UNITS + ["", "DLAC", "DMOZ"], default="")
 
 
 class CaseDisplaySettings(DocumentSchema):
@@ -582,7 +581,11 @@ class Domain(QuickCachedDocumentMixin, Document, SnapshotMixin):
 
     @classmethod
     def get_all_names(cls):
-        return [d['key'] for d in Domain.get_all(include_docs=False)]
+        return [d['key'] for d in cls.get_all(include_docs=False)]
+
+    @classmethod
+    def get_all_ids(cls):
+        return [d['id'] for d in cls.get_all(include_docs=False)]
 
     @classmethod
     def get_names_by_prefix(cls, prefix):
