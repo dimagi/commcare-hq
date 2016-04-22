@@ -591,6 +591,14 @@ class CommCareCaseSQL(DisabledDbMixin, models.Model, RedisLockableMixIn,
         from corehq.form_processor.backends.sql.dbaccessors import CaseAccessorSQL
         return CaseAccessorSQL.get_reverse_indices(self.case_id)
 
+    @memoized
+    def get_subcases(self, index_identifier=None):
+        subcase_ids = [
+            ix.referenced_id for ix in self.reverse_indices
+            if (index_identifier is None or ix.identifier == index_identifier)
+        ]
+        return CaseAccessorSQL.get_cases(subcase_ids)
+
     def get_reverse_index_map(self):
         return self.get_index_map(True)
 
@@ -748,14 +756,14 @@ class CommCareCaseSQL(DisabledDbMixin, models.Model, RedisLockableMixIn,
         return CaseAccessorSQL.get_case(case_id)
 
     @memoized
-    def get_parent(self, identifier=None, relationship_id=None):
+    def get_parent(self, identifier=None, relationship=None):
         indices = self.indices
 
         if identifier:
             indices = filter(lambda index: index.identifier == identifier, indices)
 
-        if relationship_id:
-            indices = filter(lambda index: index.relationship_id == relationship_id, indices)
+        if relationship:
+            indices = filter(lambda index: index.relationship_id == relationship, indices)
 
         return [index.referenced_case for index in indices]
 
@@ -769,7 +777,7 @@ class CommCareCaseSQL(DisabledDbMixin, models.Model, RedisLockableMixIn,
         """
         result = self.get_parent(
             identifier=CommCareCaseIndexSQL.PARENT_IDENTIFIER,
-            relationship_id=CommCareCaseIndexSQL.CHILD
+            relationship=CommCareCaseIndexSQL.CHILD
         )
         return result[0] if result else None
 

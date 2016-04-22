@@ -167,7 +167,10 @@ class AbstractCommCareCase(object):
     def modified_since_sync(self, sync_log):
         raise NotImplementedError
 
-    def get_subcases(self):
+    def get_subcases(self, index_identifier=None):
+        raise NotImplementedError
+
+    def get_parent(self, identifier=None, relationship=None):
         raise NotImplementedError
 
     def get_case_property(self, property):
