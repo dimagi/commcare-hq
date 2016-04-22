@@ -36,19 +36,19 @@
                 </button>
             </div>
             <div class="form-group">
-                <label class="col-xs-4 col-md-3 col-lg-2 control-label">{% trans "Sheet Name" %}</label>
-                <div class="col-sm-4">
+                <label class="col-sm-4 col-md-3 col-lg-2 control-label">{% trans "Sheet Name" %}</label>
+                <div class="col-sm-4 col-md-3 col-lg-2">
                     <input type="text" class="form-control" data-bind="value: table.label" />
                 </div>
             </div>
             <div class="form-group">
-                <label class="col-xs-4 col-md-3 col-lg-2 control-label">
+                <label class="col-md-3 col-lg-2 control-label">
                     <strong>{% trans "Choose the fields you want to export." %}</strong><br />
                     <span style="font-weight: normal">
                     {% trans "You can drag and drop fields to reorder them.  You can also rename fields, which will update the headers in the export file." %}
                     </span>
                 </label>
-                <div class="col-sm-10">
+                <div class="col-md-9 col-lg-10">
                     <table class="table table-bordered table-striped table-condensed" id="field-select">
                         <thead>
                         <tr class="nodrag nodrop">

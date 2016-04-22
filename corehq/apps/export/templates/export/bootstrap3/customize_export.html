@@ -54,20 +54,20 @@
             <div class="form-group">
                 <label
                     for="export-name"
-                    class="col-xs-4 col-md-3 col-lg-2 control-label">
+                    class="col-sm-4 col-md-3 col-lg-2 control-label">
                     {% trans "Export Name" %}
                 </label>
-                <div class="col-sm-4">
+                <div class="col-sm-4 col-md-3 col-lg-2">
                     <input type="text" class="form-control" id="export-name" data-bind="value: name" />
                 </div>
             </div>
             <div class="form-group">
                 <label
                     for="format-select"
-                    class="col-xs-4 col-md-3 col-lg-2 control-label">
+                    class="col-sm-4 col-md-3 col-lg-2 control-label">
                     {% trans "Default file type" %}
                 </label>
-                <div class="col-sm-4">
+                <div class="col-sm-4 col-md-3 col-lg-2">
                     <select class="form-control" id="format-select" data-bind="
                             options: getFormatOptionValues(),
                             optionsText: getFormatOptionText,
@@ -77,7 +77,7 @@
                 </div>
             </div>
             <div class="form-group">
-                <div class="col-xs-offset-4 col-md-offset-3 col-lg-offset-2 col-sm-4">
+                <div class="col-sm-offset-4 col-md-offset-3 col-lg-offset-2 col-sm-4">
                     <div class="checkbox">
                         <label>
                             <input type="checkbox" id="transform-dates-checkbox" data-bind="checked: transform_dates" />
@@ -117,8 +117,8 @@
         <fieldset>
             <legend>{% trans "Privacy Settings" %}</legend>
             <div class="form-group">
-                <label for="is_safe" class="col-xs-4 col-md-3 col-lg-2 control-label"></label>
-                <div class="col-sm-4 deid-column" data-bind="visible: isDeidColumnVisible()">
+                <label for="is_safe" class="col-sm-4 col-md-3 col-lg-2 control-label"></label>
+                <div class="col-sm-4 col-md-3 col-lg-2 deid-column" data-bind="visible: isDeidColumnVisible()">
                     <div class="checkbox">
                         <label>
                             <input type="checkbox" id="is_deidentified" data-bind="checked: is_deidentified" />
@@ -139,7 +139,7 @@
         </fieldset>
         {% endif %}
         <div class="form-actions">
-            <div class="col-xs-offset-4 col-md-offset-3 col-lg-offset-2 col-sm-10 controls">
+            <div class="col-sm-offset-4 col-md-offset-3 col-lg-offset-2 col-sm-8 col-md-9 col-lg-10 controls">
                 <button type="submit" class="btn btn-lg btn-primary" data-bind="
                     click: save,
                     disable: (saveState() === Exports.Constants.SAVE_STATES.SAVING ||
