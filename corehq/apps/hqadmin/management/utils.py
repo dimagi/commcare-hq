@@ -1,21 +1,10 @@
 from __future__ import print_function
-import re
 from django.template.loader import render_to_string
 import requests
 from gevent.pool import Pool
 
 
-def get_deploy_email_message_body(environment, user, compare_url):
-    import sh
-    git = sh.git.bake(_tty_out=False)
-    git.fetch('origin', 'refs/tags/*:refs/tags/*')
-    current_deploy, last_deploy = _get_last_two_deploys(environment)
-    pr_merges = git(
-        'log', '{}...{}'.format(last_deploy, current_deploy),
-        oneline=True, grep='Merge pull request #'
-    ).strip().split('\n')
-    pr_numbers = [int(re.search(r'Merge pull request #(\d+)', line).group(1))
-                  for line in pr_merges if line]
+def get_deploy_email_message_body(user, compare_url, current_deploy, last_deploy, pr_numbers):
     pool = Pool(5)
     pr_infos = pool.map(_get_pr_info, pr_numbers)
 
@@ -28,16 +17,6 @@ def get_deploy_email_message_body(environment, user, compare_url):
                         .format(last_deploy, current_deploy)),
         'compare_url_check': compare_url,
     })
-
-
-def _get_last_two_deploys(environment):
-    import sh
-    git = sh.git.bake(_tty_out=False)
-    pipe = git('tag')
-    pipe = sh.grep(pipe, environment)
-    pipe = sh.sort(pipe, '-rn')
-    pipe = sh.head(pipe, '-n2')
-    return pipe.strip().split('\n')
 
 
 def _get_pr_info(pr_number):
