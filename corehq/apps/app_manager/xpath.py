@@ -89,7 +89,7 @@ class XPath(unicode):
 
     def slash(self, xpath):
         if self:
-            return XPath(u'%s/%s' % (self, xpath))
+            return self.__class__(u'%s/%s' % (self, xpath))
         else:
             return XPath(xpath)
 
@@ -97,37 +97,37 @@ class XPath(unicode):
         return self.slash(other)
 
     def select_raw(self, expression):
-        return XPath(u"{self}[{expression}]".format(self=self, expression=expression))
+        return self.__class__(u"{self}[{expression}]".format(self=self, expression=expression))
 
     def select(self, ref, value, quote=None):
         if quote is None:
             quote = not isinstance(value, XPath)
         if quote:
             value = XPath(value).quote()
-        return XPath(u"{self}[{ref}={value}]".format(self=self, ref=ref, value=value))
+        return self.__class__(u"{self}[{ref}={value}]".format(self=self, ref=ref, value=value))
 
     def quote(self):
         escaped = self.replace("'", r"\'")
-        return XPath(u"'{}'".format(escaped))
+        return self.__class__(u"'{}'".format(escaped))
 
     def passto(self, func):
-        return XPath(u'{func}({quoted})'.format(func=func, quoted=self.quote()))
+        return self.__class__(u'{func}({quoted})'.format(func=func, quoted=self.quote()))
 
     def count(self):
         # Don't `self.passto('count')` because we don't want to quote self
-        return XPath(u'count({self})'.format(self=self))
+        return self.__class__(u'count({self})'.format(self=self))
 
     def instance(self):
         return self.passto(u'instance')
 
     def eq(self, b):
-        return XPath(u'{} = {}'.format(self, b))
+        return self.__class__(u'{} = {}'.format(self, b))
 
     def neq(self, b):
-        return XPath(u'{} != {}'.format(self, b))
+        return self.__class__(u'{} != {}'.format(self, b))
 
     def gt(self, b):
-        return XPath(u'{} > {}'.format(self, b))
+        return self.__class__(u'{} > {}'.format(self, b))
 
     @staticmethod
     def expr(template, args, chainable=False):
@@ -178,7 +178,8 @@ class CaseSelectionXPath(XPath):
     selector = ''
 
     def case(self, instance_name=u'casedb', case_name=u'case'):
-        return XPath(instance_name).instance() / instance_name / XPath(case_name).select(self.selector, self)
+        # Return CaseXPath because we want to be able to call index_id method on result.
+        return CaseXPath(instance_name).instance() / instance_name / XPath(case_name).select(self.selector, self)
 
 
 class CaseIDXPath(CaseSelectionXPath):
