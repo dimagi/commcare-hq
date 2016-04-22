@@ -1,5 +1,4 @@
 from collections import namedtuple
-from casexml.apps.case.xform import is_device_report
 from corehq.apps.change_feed.consumer.feed import KafkaChangeFeed
 from corehq.apps.change_feed.document_types import COMMCARE_USER, WEB_USER, get_doc_meta_object_from_document, \
     GROUP, FORM
@@ -12,7 +11,6 @@ from corehq.elastic import (
 )
 from corehq.pillows.mappings.user_mapping import USER_MAPPING, USER_INDEX, USER_META, USER_INDEX_INFO
 from corehq.util.quickcache import quickcache
-from couchforms.models import XFormInstance, all_known_formlike_doc_types
 from pillowtop.checkpoints.manager import get_default_django_checkpoint_for_legacy_pillow_class, PillowCheckpoint, \
     PillowCheckpointEventHandler
 from pillowtop.listener import AliasedElasticPillow, PythonPillow
@@ -97,26 +95,6 @@ def stream_user_sources(user_ids):
         yield UserSource(result['_id'], group_ids, group_names)
 
 
-class UnknownUsersPillow(PythonPillow):
-    """
-    This pillow adds users from xform submissions that come in to the User Index if they don't exist in HQ
-    """
-    document_class = XFormInstance
-
-    def __init__(self):
-        checkpoint = get_default_django_checkpoint_for_legacy_pillow_class(self.__class__)
-        super(UnknownUsersPillow, self).__init__(checkpoint=checkpoint)
-        self.es = get_es_new()
-
-    def python_filter(self, change):
-        # designed to exactly mimic the behavior of couchforms/filters/xforms.js
-        doc = change.get_document()
-        return doc and doc.get('doc_type', None) in all_known_formlike_doc_types() and not is_device_report(doc)
-
-    def change_transport(self, doc_dict):
-        return update_unknown_user_from_form_if_necessary(self.es, doc_dict)
-
-
 def update_unknown_user_from_form_if_necessary(es, doc_dict):
     doc = doc_dict
     user_id, username, domain, xform_id = _get_user_fields_from_form_doc(doc)
@@ -162,6 +140,9 @@ class UnknownUsersProcessor(PillowProcessor):
 
 
 def get_unknown_users_pillow(pillow_id='unknown-users-pillow'):
+    """
+    This pillow adds users from xform submissions that come in to the User Index if they don't exist in HQ
+    """
     checkpoint = PillowCheckpoint(
         pillow_id,
     )
@@ -184,7 +165,7 @@ def add_demo_user_to_user_index():
     )
 
 
-def get_user_kafka_to_elasticsearch_pillow(pillow_id='user-kafka-to-es'):
+def get_user_kafka_to_elasticsearch_pillow(pillow_id='UnknownUsersPillow'):
     checkpoint = PillowCheckpoint(
         pillow_id,
     )
