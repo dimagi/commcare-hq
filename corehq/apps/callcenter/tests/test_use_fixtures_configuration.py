@@ -1,13 +1,15 @@
+import os
+
 from django.test import SimpleTestCase
 
 from corehq.apps.callcenter.app_parser import get_indicators_used_in_app, parse_indicator, ParsedIndicator, \
-    get_call_center_config_from_app
+    get_call_center_config_from_app, _get_indicators_used_in_modules, _get_indicators_used_in_forms
 from corehq.apps.callcenter.const import CASES_TOTAL, CASES_CLOSED, CASES_OPENED, CASES_ACTIVE, MONTH0, MONTH1, WEEK1, \
     WEEK0, FORMS_SUBMITTED
 from corehq.apps.callcenter.tests import get_indicator_slugs_from_config
 from corehq.apps.domain.models import Domain, CallCenterProperties
 from corehq.apps.callcenter.fixturegenerators import IndicatorsFixturesProvider
-from corehq.util.test_utils import generate_cases
+from corehq.util.test_utils import generate_cases, TestFileMixin
 
 
 class TestUseFixturesConfig(SimpleTestCase):
@@ -29,7 +31,9 @@ class TestUseFixturesConfig(SimpleTestCase):
         self.assertFalse(provider._should_return_no_fixtures(domain, None))
 
 
-class TestIndicatorsFromApp(SimpleTestCase):
+class TestIndicatorsFromApp(SimpleTestCase, TestFileMixin):
+    file_path = ('data',)
+    root = os.path.dirname(__file__)
 
     @property
     def test_indicators(self):
@@ -46,16 +50,35 @@ class TestIndicatorsFromApp(SimpleTestCase):
             'totalCases',
         ])
 
-    def test_get_indicators_from_app(self):
-        app = self._build_app()
+    def test_get_indicators_used_in_app_blank(self):
+        app = self._get_app()
+
+        indicators = list(
+            _get_indicators_used_in_modules(app)
+        )
+        self.assertEqual(indicators, [])
+
+    def test_get_indicators_used_in_modules(self):
+        app = self._get_app()
+        self._add_indicators_to_module_details(app)
 
         indicators = sorted(list(
-            get_indicators_used_in_app(app)
+            _get_indicators_used_in_modules(app)
+        ))
+        self.assertEqual(indicators, self.test_indicators)
+
+    def test_get_indicators_used_in_forms(self):
+        app = self._get_app()
+        self._add_indicators_to_forms(app)
+
+        indicators = sorted(list(
+            _get_indicators_used_in_forms(app)
         ))
         self.assertEqual(indicators, self.test_indicators)
 
     def test_get_config_from_app(self):
-        app = self._build_app()
+        app = self._get_app()
+        self._add_indicators_to_module_details(app)
         config = get_call_center_config_from_app(app)
         indicators_from_config = get_indicator_slugs_from_config(config)
         expected = self.test_indicators
@@ -69,25 +92,62 @@ class TestIndicatorsFromApp(SimpleTestCase):
             expected
         )
 
-    def _build_app(self):
+    def _get_app(self):
         from corehq.apps.app_manager.tests.app_factory import AppFactory
         factory = AppFactory()
-        m0 = factory.new_basic_module('m0', 'case1', with_form=False)
-        m1 = factory.new_basic_module('m1', 'case2', with_form=False)
-        m2 = factory.new_advanced_module('m2', 'case3', with_form=False)
-        m0.case_details.short.columns.extend([
+        factory.new_basic_module('m0', 'case1')
+        factory.new_basic_module('m1', 'case2')
+        factory.new_advanced_module('m2', 'case3')
+        return factory.app
+
+    def _add_indicators_to_module_details(self, app):
+        app.get_module(0).case_details.short.columns.extend([
             _get_detail_column(self.test_indicators[0]),
             _get_detail_column(self.test_indicators[1]),
         ])
-        m1.case_details.long.columns.extend([
+        app.get_module(1).case_details.long.columns.extend([
             _get_detail_column(self.test_indicators[2]),
             _get_detail_column(self.test_indicators[3]),
         ])
         for indicator in self.test_indicators[4:]:
-            m2.case_details.short.columns.append(
+            app.get_module(2).case_details.short.columns.append(
                 _get_detail_column(indicator)
             )
-        return factory.app
+
+    def _add_indicators_to_forms(self, app):
+
+        def _get_bind(indicator):
+            return """<bind
+            nodeset="/data/question1"
+            type="xsd:string"
+            calculate="instance(\'indicators\')/indicators/case[
+                @id = instance(\'commcaresession\')/session/data/case_id
+            ]/{}"/>
+            """.format(indicator)
+
+        form_template = self.get_xml('form_template')
+        forms = list(app.get_forms(bare=True))
+        instance = '<instance id="indicators" src="jr://fixture/indicators:call-center" />'
+        forms[0].source = form_template.format(
+            instance=instance,
+            binds=''.join([
+                _get_bind(self.test_indicators[0]),
+                _get_bind(self.test_indicators[1]),
+            ])
+        )
+        forms[1].source = form_template.format(
+            instance=instance,
+            binds=''.join([
+                _get_bind(self.test_indicators[2]),
+                _get_bind(self.test_indicators[3]),
+            ])
+        )
+        forms[2].source = form_template.format(
+            instance=instance,
+            binds=''.join([
+                _get_bind(indicator) for indicator in self.test_indicators[4:]
+            ])
+        )
 
 
 @generate_cases([
