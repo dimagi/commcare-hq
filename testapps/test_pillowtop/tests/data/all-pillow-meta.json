@@ -563,16 +563,10 @@
         "name": "UCLAPatientFluffPillow"
     },
     "UnknownUsersPillow": {
-        "advertised_name": "corehq.pillows.user.UnknownUsersPillow.testhq",
-        "change_feed_type": "CouchChangeFeed",
-        "checkpoint_id": "corehq.pillows.user.UnknownUsersPillow.testhq",
-        "couch_filter": null,
-        "couchdb_type": "CachedCouchDB",
-        "couchdb_uri": "http://{COUCH_SERVER_ROOT}/test_commcarehq",
-        "document_class": "XFormInstance",
-        "extra_args": {},
-        "full_class_name": "corehq.pillows.user.UnknownUsersPillow",
-        "include_docs": false,
+        "advertised_name": "UnknownUsersPillow",
+        "change_feed_type": "KafkaChangeFeed",
+        "checkpoint_id": "UnknownUsersPillow",
+        "full_class_name": "pillowtop.pillow.interface.ConstructedPillow",
         "name": "UnknownUsersPillow"
     },
     "UserCacheInvalidatePillow": {
