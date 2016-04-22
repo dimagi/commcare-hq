@@ -106,7 +106,6 @@ class UnknownUsersPillow(PythonPillow):
         checkpoint = get_default_django_checkpoint_for_legacy_pillow_class(self.__class__)
         super(UnknownUsersPillow, self).__init__(checkpoint=checkpoint)
         self.es = get_es_new()
-        self.es_type = ES_META['users'].type
 
     def python_filter(self, change):
         # designed to exactly mimic the behavior of couchforms/filters/xforms.js
@@ -114,25 +113,29 @@ class UnknownUsersPillow(PythonPillow):
         return doc and doc.get('doc_type', None) in all_known_formlike_doc_types() and not is_device_report(doc)
 
     def change_transport(self, doc_dict):
-        doc = doc_dict
-        user_id, username, domain, xform_id = _get_user_fields_from_form_doc(doc)
+        return update_unknown_user_from_form_if_necessary(self.es, doc_dict)
 
-        if user_id in WEIRD_USER_IDS:
-            user_id = None
 
-        if (user_id and not _user_exists(user_id)
-                and not doc_exists_in_es('users', user_id)):
-            doc_type = "AdminUser" if username == "admin" else "UnknownUser"
-            doc = {
-                "_id": user_id,
-                "domain": domain,
-                "username": username,
-                "first_form_found_in": xform_id,
-                "doc_type": doc_type,
-            }
-            if domain:
-                doc["domain_membership"] = {"domain": domain}
-            self.es.create(USER_INDEX, self.es_type, body=doc, id=user_id)
+def update_unknown_user_from_form_if_necessary(es, doc_dict):
+    doc = doc_dict
+    user_id, username, domain, xform_id = _get_user_fields_from_form_doc(doc)
+
+    if user_id in WEIRD_USER_IDS:
+        user_id = None
+
+    if (user_id and not _user_exists(user_id)
+            and not doc_exists_in_es('users', user_id)):
+        doc_type = "AdminUser" if username == "admin" else "UnknownUser"
+        doc = {
+            "_id": user_id,
+            "domain": domain,
+            "username": username,
+            "first_form_found_in": xform_id,
+            "doc_type": doc_type,
+        }
+        if domain:
+            doc["domain_membership"] = {"domain": domain}
+        es.create(USER_INDEX, ES_META['users'].type, body=doc, id=user_id)
 
 
 @quickcache(['user_id'])
