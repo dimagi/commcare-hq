@@ -56,6 +56,14 @@ class Command(BaseCommand):
             from corehq.apps.users.views.mobile import UserFieldsView
             self._copy_custom_data(UserFieldsView.field_type)
 
+        if self._clone_type(options, 'reminders'):
+            from corehq.apps.reminders.models import CaseReminderHandler
+            self._copy_all_docs_of_type(CaseReminderHandler)
+
+        if self._clone_type(options, 'keywords'):
+            from corehq.apps.reminders.models import SurveyKeyword
+            self._copy_all_docs_of_type(SurveyKeyword)
+
     def clone_domain_and_settings(self):
         from corehq.apps.domain.models import Domain
         new_domain_obj = Domain.get_by_name(self.new_domain)
@@ -211,6 +219,19 @@ class Command(BaseCommand):
             old_id, new_id = self.save_couch_copy(datasource, self.new_domain)
             datasource_map[old_id] = new_id
         return datasource_map
+
+    def copy_auto_case_update_rules(self):
+        from corehq.apps.data_interfaces.models import AutomaticUpdateRule
+        update_rules = AutomaticUpdateRule.objects.filter(deleted=False, domain=self.existing_domain)
+        for rule in update_rules:
+            self.save_sql_copy(rule, self.new_domain)
+            for criteria in rule.automaticupdaterulecriteria_set:
+                criteria.rule = rule
+                self.save_sql_copy(criteria, self.new_domain)
+
+            for action in rule.automaticupdateaction_set:
+                action.rule = rule
+                self.save_sql_copy(action, self.new_domain)
 
     def _copy_custom_data(self, type_):
         from corehq.apps.custom_data_fields.dbaccessors import get_by_domain_and_type
