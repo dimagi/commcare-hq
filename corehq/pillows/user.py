@@ -54,7 +54,26 @@ class GroupToUserPillow(PythonPillow):
         return doc_meta and doc_meta.primary_type == GROUP
 
     def change_transport(self, doc_dict):
-        update_es_user_with_groups(doc_dict, self.es)
+        doc_meta = get_doc_meta_object_from_document(doc_dict)
+        if doc_meta.is_deletion:
+            remove_group_from_users(doc_dict, self.es)
+        else:
+            update_es_user_with_groups(doc_dict, self.es)
+
+
+def remove_group_from_users(group_doc, es_client):
+    user_ids = group_doc.get("users", [])
+    q = {"filter": {"and": [{"terms": {"_id": user_ids}}]}}
+    for user_source in stream_es_query(es_index='users', q=q, fields=["__group_ids", "__group_names"]):
+        group_ids = user_source.get('fields', {}).get("__group_ids", [])
+        group_ids = set(group_ids) if isinstance(group_ids, list) else {group_ids}
+        group_names = user_source.get('fields', {}).get("__group_names", [])
+        group_names = set(group_names) if isinstance(group_names, list) else {group_names}
+        if group_doc["name"] in group_names or group_doc["_id"] in group_ids:
+            group_ids.remove(group_doc["_id"])
+            group_names.remove(group_doc["name"])
+            doc = {"__group_ids": list(group_ids), "__group_names": list(group_names)}
+            es_client.update(USER_INDEX, ES_META['users'].type, user_source["_id"], body={"doc": doc})
 
 
 def update_es_user_with_groups(group_doc, es_client=None):
