@@ -24,6 +24,16 @@ from corehq.util.view_utils import absolute_reverse
 RESULTS_INSTANCE = 'results'  # The name of the instance where search results are stored
 
 
+def module_offers_search(module):
+    from corehq.apps.app_manager.models import AdvancedModule, Module
+
+    return (
+        isinstance(module, (Module, AdvancedModule)) and
+        module.search_config and
+        module.search_config.properties
+    )
+
+
 class SyncRequestContributor(SuiteContributorByModule):
     """
     Adds a sync-request node, which sets the URL and query details for
@@ -38,9 +48,7 @@ class SyncRequestContributor(SuiteContributorByModule):
 
     """
     def get_module_contributions(self, module):
-        from corehq.apps.app_manager.models import AdvancedModule, Module
-
-        if isinstance(module, (Module, AdvancedModule)) and module.search_config:
+        if module_offers_search(module):
             domain = self.app.domain
 
             details_helper = DetailsHelper(self.app)
