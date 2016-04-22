@@ -12,7 +12,11 @@ types = [
     'ucr',
     'apps',
     'user_fields',
+    'reminders',
+    'keywords',
+    'auto_case_updates',
 ]
+
 
 class Command(BaseCommand):
     args = "<existing_domain> <new_domain>"
@@ -28,7 +32,7 @@ class Command(BaseCommand):
     def _clone_type(self, options, type_):
         return (
                    not options['include'] or type_ in options['include']
-               ) and 'feature_flags' not in options['exclude']
+               ) and type_ not in (options['exclude'] or [])
 
     def handle(self, *args, **options):
         self.existing_domain, self.new_domain = args
@@ -63,6 +67,9 @@ class Command(BaseCommand):
         if self._clone_type(options, 'keywords'):
             from corehq.apps.reminders.models import SurveyKeyword
             self._copy_all_docs_of_type(SurveyKeyword)
+
+        if self._clone_type(options, 'auto_case_updates'):
+            self.copy_auto_case_update_rules()
 
     def clone_domain_and_settings(self):
         from corehq.apps.domain.models import Domain
@@ -224,12 +231,15 @@ class Command(BaseCommand):
         from corehq.apps.data_interfaces.models import AutomaticUpdateRule
         update_rules = AutomaticUpdateRule.objects.filter(deleted=False, domain=self.existing_domain)
         for rule in update_rules:
-            self.save_sql_copy(rule, self.new_domain)
-            for criteria in rule.automaticupdaterulecriteria_set:
-                criteria.rule = rule
-                self.save_sql_copy(criteria, self.new_domain)
+            criteria = list(rule.automaticupdaterulecriteria_set.all())
+            actions = rule.automaticupdateaction_set.all()
 
-            for action in rule.automaticupdateaction_set:
+            self.save_sql_copy(rule, self.new_domain)
+            for crit in criteria:
+                crit.rule = rule
+                self.save_sql_copy(crit, self.new_domain)
+
+            for action in actions:
                 action.rule = rule
                 self.save_sql_copy(action, self.new_domain)
 
