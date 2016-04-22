@@ -7,7 +7,7 @@ from django.db import models, migrations
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('accounting', '0025_creditadjustment_permit_blank_fields'),
+        ('accounting', '0026_subscriber_domain_unique'),
     ]
 
     operations = [

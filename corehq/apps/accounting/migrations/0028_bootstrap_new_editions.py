@@ -14,7 +14,7 @@ def cchq_new_editions_bootstrap(apps, schema_editor):
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('accounting', '0026_auto_20160420_2211'),
+        ('accounting', '0027_auto_20160422_1744'),
     ]
 
     operations = [
