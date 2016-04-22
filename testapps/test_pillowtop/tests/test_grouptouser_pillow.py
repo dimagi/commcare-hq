@@ -115,3 +115,15 @@ class GroupToUserPillowDbTest(TestCase):
         # confirm updated in elasticsearch
         self.es_client.indices.refresh(USER_INDEX)
         _assert_es_user_and_groups(self, self.es_client, user_id, [group._id], [group.name])
+        return user_id, group
+
+    def test_pillow_deletion(self):
+        user_id, group = self.test_pillow()
+        group.soft_delete()
+        pillow = GroupToUserPillow()
+        pillow.use_chunking = False  # hack - make sure the pillow doesn't chunk
+        pillow.process_changes(since=0, forever=False)
+
+        # confirm removed in elasticsearch
+        self.es_client.indices.refresh(USER_INDEX)
+        _assert_es_user_and_groups(self, self.es_client, user_id, [], [])
