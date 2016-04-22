@@ -10,8 +10,8 @@ from corehq.elastic import (
     send_to_elasticsearch, get_es_new, ES_META
 )
 from corehq.pillows.mappings.user_mapping import USER_MAPPING, USER_INDEX, USER_META, USER_INDEX_INFO
+from corehq.util.quickcache import quickcache
 from couchforms.models import XFormInstance, all_known_formlike_doc_types
-from dimagi.utils.decorators.memoized import memoized
 from pillowtop.checkpoints.manager import get_default_django_checkpoint_for_legacy_pillow_class, PillowCheckpoint, \
     PillowCheckpointEventHandler
 from pillowtop.listener import AliasedElasticPillow, PythonPillow
@@ -105,7 +105,6 @@ class UnknownUsersPillow(PythonPillow):
     def __init__(self):
         checkpoint = get_default_django_checkpoint_for_legacy_pillow_class(self.__class__)
         super(UnknownUsersPillow, self).__init__(checkpoint=checkpoint)
-        self.user_db = CouchUser.get_db()
         self.es = get_es_new()
         self.es_type = ES_META['users'].type
 
@@ -114,10 +113,6 @@ class UnknownUsersPillow(PythonPillow):
         doc = change.get_document()
         return doc and doc.get('doc_type', None) in all_known_formlike_doc_types() and not is_device_report(doc)
 
-    @memoized
-    def _user_exists(self, user_id):
-        return self.user_db.doc_exist(user_id)
-
     def change_transport(self, doc_dict):
         doc = doc_dict
         user_id, username, domain, xform_id = _get_user_fields_from_form_doc(doc)
@@ -125,7 +120,7 @@ class UnknownUsersPillow(PythonPillow):
         if user_id in WEIRD_USER_IDS:
             user_id = None
 
-        if (user_id and not self._user_exists(user_id)
+        if (user_id and not _user_exists(user_id)
                 and not doc_exists_in_es('users', user_id)):
             doc_type = "AdminUser" if username == "admin" else "UnknownUser"
             doc = {
@@ -138,6 +133,11 @@ class UnknownUsersPillow(PythonPillow):
             if domain:
                 doc["domain_membership"] = {"domain": domain}
             self.es.create(USER_INDEX, self.es_type, body=doc, id=user_id)
+
+
+@quickcache(['user_id'])
+def _user_exists(user_id):
+    return CouchUser.get_db().doc_exist(user_id)
 
 
 def _get_user_fields_from_form_doc(form_doc):
