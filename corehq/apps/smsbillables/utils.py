@@ -3,8 +3,12 @@ import logging
 from django.utils.encoding import force_unicode
 
 from django_countries.data import COUNTRIES
-
 from phonenumbers import COUNTRY_CODE_TO_REGION_CODE
+from twilio import TwilioRestException
+from twilio.rest import TwilioRestClient
+
+from corehq.apps.sms.models import SQLMobileBackend
+from corehq.apps.smsbillables.exceptions import RetryBillableTaskException
 
 logger = logging.getLogger("smsbillables")
 
@@ -20,3 +24,22 @@ def log_smsbillables_error(message):
 
 def log_smsbillables_info(message):
     logger.info("[SMS Billables] %s" % message)
+
+
+def _get_twilio_client(backend_instance):
+    from corehq.messaging.smsbackends.twilio.models import SQLTwilioBackend
+    twilio_backend = SQLMobileBackend.load(
+        backend_instance,
+        api_id=SQLTwilioBackend.get_api_id(),
+        is_couch_id=True,
+        include_deleted=True,
+    )
+    config = twilio_backend.config
+    return TwilioRestClient(config.account_sid, config.auth_token)
+
+
+def get_twilio_message(backend_instance, backend_message_id):
+    try:
+        return _get_twilio_client(backend_instance).messages.get(backend_message_id)
+    except TwilioRestException:
+        raise RetryBillableTaskException

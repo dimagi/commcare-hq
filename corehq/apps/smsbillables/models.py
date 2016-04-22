@@ -5,9 +5,6 @@ from django.conf import settings
 from django.core.exceptions import ObjectDoesNotExist
 from django.db import models
 
-from twilio import TwilioRestException
-from twilio.rest import TwilioRestClient
-
 from corehq.apps.accounting import models as accounting
 from corehq.apps.accounting.models import Currency
 from corehq.apps.accounting.utils import EXCHANGE_RATE_DECIMAL_PLACES
@@ -18,7 +15,10 @@ from corehq.apps.sms.models import (
     SQLMobileBackend,
 )
 from corehq.apps.sms.phonenumbers_helper import get_country_code_and_national_number
-from corehq.apps.smsbillables.utils import log_smsbillables_error
+from corehq.apps.smsbillables.utils import (
+    get_twilio_message,
+    log_smsbillables_error,
+)
 from corehq.messaging.smsbackends.test.models import SQLTestSMSBackend
 from corehq.apps.sms.util import clean_phone_number
 from corehq.apps.smsbillables.exceptions import AmbiguousPrefixException, RetryBillableTaskException
@@ -395,21 +395,8 @@ class SmsBillable(models.Model):
 
     @classmethod
     def _get_twilio_charges(cls, backend_message_id, backend_instance, direction, couch_id):
-        def _get_twilio_client():
-            twilio_backend = SQLMobileBackend.load(
-                backend_instance,
-                api_id=SQLTwilioBackend.get_api_id(),
-                is_couch_id=True,
-                include_deleted=True,
-            )
-            config = twilio_backend.config
-            return TwilioRestClient(config.account_sid, config.auth_token)
-
         if backend_message_id:
-            try:
-                twilio_message = _get_twilio_client().messages.get(backend_message_id)
-            except TwilioRestException:
-                raise RetryBillableTaskException
+            twilio_message = get_twilio_message(backend_instance, backend_message_id)
             if twilio_message.status in [
                 'accepted',
                 'queued',
