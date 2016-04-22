@@ -53,7 +53,7 @@ def get_group_pillow(pillow_id='group-pillow'):
 
 def get_group_reindexer():
     return ElasticPillowReindexer(
-        pillow=GroupPillow(),
+        pillow=get_group_pillow(),
         change_provider=CouchViewChangeProvider(
             couch_db=Group.get_db(),
             view_name='all_docs/by_doc_type',
