@@ -338,7 +338,7 @@ class CallCenterIndicators(object):
 
             self._add_data(results, '{}_{}'.format(FORMS_SUBMITTED, range_name))
 
-            if self.config.legacy_forms_submitted.enabled:
+            if self.config.legacy_forms_submitted:
                 #  maintained for backwards compatibility
                 logger.debug('Adding legacy forms submitted stats: %s', indicator_config.date_ranges)
                 self._add_data(results, '{}{}'.format(LEGACY_FORMS_SUBMITTED, range_name.title()))
@@ -387,7 +387,7 @@ class CallCenterIndicators(object):
 
     def _populate_dataset(self):
         logger.debug('Adding data for users: %s', self.users_needing_data)
-        if self.config.legacy_cases_total.enabled:
+        if self.config.legacy_cases_total:
             self.add_case_total_legacy()
 
         if self.config.forms_submitted.enabled:
@@ -406,6 +406,6 @@ class CallCenterIndicators(object):
             self.add_case_data(query, CASES_CLOSED, self.config.cases_closed)
 
         if self.config.cases_active.enabled:
-            legacy_prefix = LEGACY_CASES_UPDATED if self.config.legacy_cases_active.enabled else None
+            legacy_prefix = LEGACY_CASES_UPDATED if self.config.legacy_cases_active else None
             query = CaseQueryActive(self.domain, self.cc_case_type, self.owners_needing_data)
             self.add_case_data(query, CASES_ACTIVE, self.config.cases_total, legacy_prefix=legacy_prefix)

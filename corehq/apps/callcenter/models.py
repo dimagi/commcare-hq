@@ -59,9 +59,16 @@ class CallCenterIndicatorConfig(JsonObject):
     cases_opened = ObjectProperty(ByTypeWithTotal)
     cases_closed = ObjectProperty(ByTypeWithTotal)
 
-    legacy_forms_submitted = ObjectProperty(BasicIndicator)
-    legacy_cases_total = ObjectProperty(BasicIndicator)
-    legacy_cases_active = ObjectProperty(BasicIndicator)
+    legacy_forms_submitted = BooleanProperty(False)
+    legacy_cases_total = BooleanProperty(False)
+    legacy_cases_active = BooleanProperty(False)
+
+    def includes_legacy(self):
+        return (
+            self.legacy_forms_submitted or
+            self.legacy_cases_total or
+            self.legacy_cases_active
+        )
 
     @classmethod
     def default_config(cls, include_legacy=True):
@@ -79,19 +86,22 @@ class CallCenterIndicatorConfig(JsonObject):
             cases_closed=default_typed(),
         )
 
-        if include_legacy:
-            config.legacy_forms_submitted = default_basic()
-            config.legacy_cases_total = default_basic()
-            config.legacy_cases_active = default_basic()
+        config.legacy_forms_submitted = include_legacy
+        config.legacy_cases_total = include_legacy
+        config.legacy_cases_active = include_legacy
 
         return config
 
     def set_indicator(self, parsed_indicator):
         if parsed_indicator.is_legacy:
-            indicator = getattr(self, 'legacy_{}'.format(parsed_indicator.category))
-            indicator.enabled = True
+            legacy_indicator = setattr(self, 'legacy_{}'.format(parsed_indicator.category), True)
+            indicator = getattr(self, parsed_indicator.category)
             if parsed_indicator.date_range:
-                indicator.date_ranges.add(parsed_indicator.date_range)
+                date_range = parsed_indicator.date_range
+                if isinstance(indicator, ByTypeWithTotal):
+                    indicator.totals.date_ranges.add(date_range)
+                else:
+                    indicator.date_ranges.add(date_range)
         elif parsed_indicator.category == const.FORMS_SUBMITTED:
             self.forms_submitted.enabled = True
             if parsed_indicator.date_range:

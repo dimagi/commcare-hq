@@ -58,9 +58,15 @@ class TestIndicatorsFromApp(SimpleTestCase):
         app = self._build_app()
         config = get_call_center_config_from_app(app)
         indicators_from_config = get_indicator_slugs_from_config(config)
+        expected = self.test_indicators
+        expected = sorted(
+            # these get added becuase legacy indicators just use the date ranges for the
+            # new indicator names
+            expected + ['formsSubmittedMonth1', 'forms_submitted_week0']
+        )
         self.assertEqual(
             sorted(indicators_from_config),
-            self.test_indicators
+            expected
         )
 
     def _build_app(self):

@@ -36,12 +36,12 @@ def get_indicator_slugs_from_config(config, all_types=None):
             if type_config.enabled:
                 slugs.extend(typed_slugs(key, type_config.type, type_config.date_ranges))
 
-    if config.legacy_forms_submitted.enabled:
-        slugs.extend(legacy_slugs(const.LEGACY_FORMS_SUBMITTED, config.legacy_forms_submitted.date_ranges))
-    if config.legacy_cases_total.enabled:
+    if config.legacy_forms_submitted:
+        slugs.extend(legacy_slugs(const.LEGACY_FORMS_SUBMITTED, config.forms_submitted.date_ranges))
+    if config.legacy_cases_total:
         slugs.append(const.LEGACY_TOTAL_CASES)
-    if config.legacy_cases_active.enabled:
-        slugs.extend(legacy_slugs(const.LEGACY_CASES_UPDATED, config.legacy_cases_active.date_ranges))
+    if config.legacy_cases_active:
+        slugs.extend(legacy_slugs(const.LEGACY_CASES_UPDATED, config.cases_active.totals.date_ranges))
     return slugs
 
 
