@@ -324,7 +324,6 @@ class SmsBillable(models.Model):
             direction=direction,
             date_sent=message_log.date,
             domain=domain,
-            multipart_count=multipart_count,
         )
 
         gateway_charge_info = cls._get_gateway_fee(
@@ -334,6 +333,9 @@ class SmsBillable(models.Model):
         billable.gateway_fee = gateway_charge_info.gateway_fee
         billable.gateway_fee_conversion_rate = gateway_charge_info.conversion_rate
         billable.direct_gateway_fee = gateway_charge_info.direct_gateway_fee
+        billable.multipart_count = cls._get_multipart_count(
+            message_log.backend_api, message_log.backend_id, message_log.backend_message_id, multipart_count
+        )
         billable.usage_fee = cls._get_usage_fee(domain, direction)
 
         if message_log.backend_api == SQLTestSMSBackend.get_api_id():
@@ -341,6 +343,13 @@ class SmsBillable(models.Model):
 
         billable.save()
         return billable
+
+    @classmethod
+    def _get_multipart_count(cls, backend_api_id, backend_instance, backend_message_id, multipart_count):
+        if backend_api_id == SQLTwilioBackend.get_api_id():
+            return int(get_twilio_message(backend_instance, backend_message_id).num_segments)
+        else:
+            return multipart_count
 
     @classmethod
     def _get_gateway_fee(cls, backend_api_id, backend_instance,
