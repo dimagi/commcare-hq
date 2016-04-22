@@ -1,13 +1,17 @@
 import uuid
 from django.test import TestCase
+from corehq.apps.change_feed import data_sources
+from corehq.apps.change_feed.document_types import GROUP, change_meta_from_doc
+from corehq.apps.change_feed.producer import producer
 from corehq.apps.es import GroupES
 from corehq.apps.groups.models import Group
 from corehq.apps.groups.tests.test_utils import delete_all_groups
 from corehq.elastic import get_es_new
-from corehq.pillows.group import GroupPillow
+from corehq.pillows.group import GroupPillow, get_group_pillow
 from corehq.pillows.mappings.group_mapping import GROUP_INDEX_INFO
 from corehq.util.elastic import ensure_index_deleted
 from pillowtop.es_utils import initialize_index
+from testapps.test_pillowtop.utils import get_current_kafka_seq
 
 
 class GroupPillowTest(TestCase):
@@ -36,6 +40,31 @@ class GroupPillowTest(TestCase):
         pillow = GroupPillow()
         pillow.use_chunking = False
         pillow.process_changes(since=0, forever=False)
+        self.elasticsearch.indices.refresh(GROUP_INDEX_INFO.index)
+
+        # verify there
+        self._verify_group_in_es(group)
+
+    def test_kafka_group_pillow(self):
+        domain = uuid.uuid4().hex
+        user_id = uuid.uuid4().hex
+
+        # make a group
+        group = Group(domain=domain, name='g1', users=[user_id])
+        group.save()
+
+        # send to kafka
+        since = get_current_kafka_seq(GROUP)
+        change_meta = change_meta_from_doc(
+            document=group.to_json(),
+            data_source_type=data_sources.COUCH,
+            data_source_name=Group.get_db().dbname,
+        )
+        producer.send_change(GROUP, change_meta)
+
+        # send to elasticsearch
+        pillow = get_group_pillow()
+        pillow.process_changes(since={GROUP: since}, forever=False)
         self.elasticsearch.indices.refresh(GROUP_INDEX_INFO.index)
 
         # verify there
