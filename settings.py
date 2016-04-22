@@ -1433,7 +1433,11 @@ PILLOWTOPS = {
         'corehq.pillows.xform.XFormPillow',
         'corehq.pillows.user.UserPillow',
         'corehq.pillows.application.AppPillow',
-        'corehq.pillows.group.GroupPillow',
+        {
+            'name': 'GroupPillow',
+            'class': 'pillowtop.pillow.interface.ConstructedPillow',
+            'instance': 'corehq.pillows.group.get_group_pillow',
+        },
         'corehq.pillows.sms.SMSPillow',
         'corehq.pillows.user.GroupToUserPillow',
         'corehq.pillows.sofabed.FormDataPillow',
