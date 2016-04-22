@@ -416,6 +416,11 @@ hqDefine('app_manager/js/detail-screen-config.js', function () {
         self.localize = ko.observable(init.localize);
         self.variableColumn = ko.observable(init.variableColumn);
         self.xpath = ko.observable(init.xpath);
+        self.fixture_columns = ko.computed(function() {
+            var columns_for_type = init.fixture_columns_by_type[self.fixtureType()],
+                default_option = [gettext("Select One")];
+            return default_option.concat(columns_for_type);
+        });
     };
 
     module.DetailScreenConfig = (function () {
@@ -1037,7 +1042,8 @@ hqDefine('app_manager/js/detail-screen-config.js', function () {
                         displayColumn: spec.fixtureSelect.display_column,
                         localize: spec.fixtureSelect.localize,
                         variableColumn: spec.fixtureSelect.variable_column,
-                        xpath: spec.fixtureSelect.xpath
+                        xpath: spec.fixtureSelect.xpath,
+                        fixture_columns_by_type: spec.fixture_columns_by_type,
                     });
                 }
                 this.saveUrl = spec.saveUrl;
@@ -1062,7 +1068,7 @@ hqDefine('app_manager/js/detail-screen-config.js', function () {
                             saveUrl: that.saveUrl,
                             columnKey: columnType,
                             childCaseTypes: spec.childCaseTypes,
-                            fixtures: spec.fixtures,
+                            fixtures: _.keys(spec.fixture_columns_by_type),
                             containsSortConfiguration: columnType == "short",
                             containsParentConfiguration: columnType == "short",
                             containsFixtureConfiguration: (columnType == "short" && COMMCAREHQ.toggleEnabled('FIXTURE_CASE_SELECTION')),
