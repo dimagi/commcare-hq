@@ -33,7 +33,7 @@ from corehq.apps.app_manager.suite_xml.xml_models import (
     Xpath,
 )
 from corehq.apps.app_manager.suite_xml.features.scheduler import schedule_detail_variables
-from corehq.apps.app_manager.util import create_temp_sort_column
+from corehq.apps.app_manager.util import create_temp_sort_column, module_offers_search
 from corehq.apps.app_manager import id_strings
 from corehq.apps.app_manager.exceptions import SuiteError, SuiteValidationError
 from corehq.apps.app_manager.xpath import session_var, XPath
@@ -148,8 +148,8 @@ class DetailContributor(SectionContributor):
                 target_form = self.app.get_form(module.case_list_form.form_id)
                 if target_form.is_registration_form(module.case_type):
                     self._add_reg_form_action_to_detail(d, module)
-                if module.search_config:
-                    self._add_case_search_action_to_detail(d, module)
+            if module_offers_search(module) and detail_type.endswith('short') and not module.put_in_root:
+                self._add_case_search_action_to_detail(d, module)
 
             try:
                 if not self.app.enable_multi_sort:

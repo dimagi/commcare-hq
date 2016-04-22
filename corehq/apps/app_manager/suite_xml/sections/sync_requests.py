@@ -16,22 +16,13 @@ from corehq.apps.app_manager.suite_xml.xml_models import (
     SyncRequestSession,
     Text,
 )
+from corehq.apps.app_manager.util import module_offers_search
 from corehq.apps.app_manager.xpath import XPath, CaseTypeXpath
 from corehq.apps.case_search.models import CALCULATED_DATA, MARK_AS_CLAIMED
 from corehq.util.view_utils import absolute_reverse
 
 
 RESULTS_INSTANCE = 'results'  # The name of the instance where search results are stored
-
-
-def module_offers_search(module):
-    from corehq.apps.app_manager.models import AdvancedModule, Module
-
-    return (
-        isinstance(module, (Module, AdvancedModule)) and
-        module.search_config and
-        module.search_config.properties
-    )
 
 
 class SyncRequestContributor(SuiteContributorByModule):
