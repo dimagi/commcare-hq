@@ -114,14 +114,6 @@ class UnknownUsersPillow(PythonPillow):
         doc = change.get_document()
         return doc and doc.get('doc_type', None) in all_known_formlike_doc_types() and not is_device_report(doc)
 
-    def get_fields_from_doc(self, doc):
-        form_meta = doc.get('form', {}).get('meta', {})
-        domain = doc.get('domain')
-        user_id = form_meta.get('userID')
-        username = form_meta.get('username')
-        xform_id = doc.get('_id')
-        return user_id, username, domain, xform_id
-
     @memoized
     def _user_exists(self, user_id):
         return self.user_db.doc_exist(user_id)
@@ -131,7 +123,7 @@ class UnknownUsersPillow(PythonPillow):
 
     def change_transport(self, doc_dict):
         doc = doc_dict
-        user_id, username, domain, xform_id = self.get_fields_from_doc(doc)
+        user_id, username, domain, xform_id = _get_user_fields_from_form_doc(doc)
 
         if user_id in WEIRD_USER_IDS:
             user_id = None
@@ -149,6 +141,15 @@ class UnknownUsersPillow(PythonPillow):
             if domain:
                 doc["domain_membership"] = {"domain": domain}
             self.es.create(USER_INDEX, self.es_type, body=doc, id=user_id)
+
+
+def _get_user_fields_from_form_doc(form_doc):
+    form_meta = form_doc.get('form', {}).get('meta', {})
+    domain = form_doc.get('domain')
+    user_id = form_meta.get('userID')
+    username = form_meta.get('username')
+    xform_id = form_doc.get('_id')
+    return user_id, username, domain, xform_id
 
 
 def add_demo_user_to_user_index():
