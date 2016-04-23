@@ -14,6 +14,9 @@ from corehq.apps.export.models import (
     GeopointItem,
     ExportItem,
     SplitUserDefinedExportColumn,
+    SplitExportColumn,
+    MultipleChoiceItem,
+    Option,
 )
 
 
@@ -138,4 +141,37 @@ class TestSplitUserDefinedExportColumn(SimpleTestCase):
 
         column.split_type = PLAIN_USER_DEFINED_SPLIT_TYPE
         result = column.get_headers()
+        self.assertEqual(result, ['form.mc'])
+
+
+class TestSplitExportColumn(SimpleTestCase):
+
+    def test_get_value(self):
+        column = SplitExportColumn(
+            item=MultipleChoiceItem(
+                path=[PathNode(name='form'), PathNode(name='mc')],
+                options=[Option(value="foo"), Option(value="bar")]
+            ),
+        )
+        result = column.get_value({'form': {'mc': 'foo extra'}}, [], split_column=True)
+        self.assertEqual(result, [1, None, 'extra'])
+
+        result = column.get_value({'form': {'mc': 'foo extra'}}, [], split_column=False)
+        self.assertEqual(result, 'foo extra')
+
+    def test_get_headers(self):
+        column = SplitExportColumn(
+            item=MultipleChoiceItem(
+                path=[PathNode(name='form'), PathNode(name='mc')],
+                options=[Option(value="foo"), Option(value="bar")]
+            ),
+            label='form.mc'
+        )
+        result = column.get_headers(split_column=True)
+        self.assertEqual(
+            result,
+            ['form.mc | foo', 'form.mc | bar', 'form.mc | extra']
+        )
+
+        result = column.get_headers(split_column=False)
         self.assertEqual(result, ['form.mc'])
