@@ -9,6 +9,7 @@ from django.utils.translation import ugettext as _
 from dimagi.utils.decorators.memoized import memoized
 from couchdbkit import SchemaListProperty, SchemaProperty, BooleanProperty, DictProperty
 
+from corehq import feature_previews
 from corehq.apps.userreports.expressions.getters import NestedDictGetter
 from corehq.apps.app_manager.dbaccessors import (
     get_built_app_ids_for_app_id,
@@ -22,6 +23,7 @@ from corehq.apps.products.models import Product
 from corehq.apps.reports.display import xmlns_to_name
 from corehq.blobs.mixin import BlobMixin
 from corehq.form_processor.interfaces.dbaccessors import LedgerAccessors
+from corehq.util.global_request import get_request
 from couchexport.models import Format
 from couchexport.transforms import couch_to_excel_datetime
 from dimagi.utils.couch.database import iter_docs
@@ -41,6 +43,8 @@ from corehq.apps.export.const import (
     DEID_TRANSFORM_FUNCTIONS,
     PROPERTY_TAG_ROW,
     PROPERTY_TAG_CASE,
+    USER_DEFINED_SPLIT_TYPES,
+    PLAIN_USER_DEFINED_SPLIT_TYPE
 )
 from corehq.apps.export.dbaccessors import (
     get_latest_case_export_schema,
@@ -190,6 +194,8 @@ class ExportColumn(DocumentSchema):
                 help_text=_(u'The ID of the associated {} case type').format(item.case_type),
                 **constructor_args
             )
+        elif feature_previews.SPLIT_MULTISELECT_CASE_EXPORT.enabled(get_request().domain):
+            column = SplitUserDefinedExportColumn(**constructor_args)
         else:
             column = ExportColumn(**constructor_args)
         column.update_properties_from_app_ids_and_versions(app_ids_and_versions)
@@ -240,6 +246,10 @@ class ExportColumn(DocumentSchema):
                 return StockExportColumn.wrap(data)
             elif doc_type == 'CaseIndexExportColumn':
                 return CaseIndexExportColumn.wrap(data)
+            elif doc_type == 'SplitUserDefinedExportColumn':
+                return SplitUserDefinedExportColumn.wrap(data)
+            elif doc_type == 'SplitGPSExportColumn':
+                return SplitGPSExportColumn.wrap(data)
             else:
                 raise ValueError('Unexpected doc_type for export column', doc_type)
         else:
@@ -1218,6 +1228,60 @@ def _merge_dicts(one, two, resolvefn):
         for key in one.viewkeys() & two.viewkeys()
     })
     return merged
+
+
+class SplitUserDefinedExportColumn(ExportColumn):
+    split_type = StringProperty(
+        choices=USER_DEFINED_SPLIT_TYPES,
+        default=PLAIN_USER_DEFINED_SPLIT_TYPE
+    )
+    user_defined_options = ListProperty()
+
+    def get_value(self, doc, base_path, row_index=None, split_column=False, transform_dates=False):
+        """
+        Get the value of self.item of the given doc.
+        When base_path is [], doc is a form submission or case,
+        when base_path is non empty, doc is a repeat group from a form submission.
+        doc is a form submission or instance of a repeat group in a submission or case
+        """
+        value = super(SplitUserDefinedExportColumn, self).get_value(
+            doc,
+            base_path,
+            transform_dates=transform_dates
+        )
+        if not split_column:
+            return value
+
+        if not isinstance(value, basestring):
+            return [None] * len(self.item.options) + [value]
+
+        selected = OrderedDict((x, 1) for x in value.split(" "))
+        row = []
+        for option in self.options:
+            row.append(selected.pop(option.value, None))
+        row.append(" ".join(selected.keys()))
+        return row
+
+    def get_headers(self, split_column=False):
+        if not split_column:
+            return super(SplitUserDefinedExportColumn, self).get_headers()
+        header = self.label
+        header_template = header if '{option}' in header else u"{name} | {option}"
+        headers = []
+        for option in self.user_defined_options:
+            headers.append(
+                header_template.format(
+                    name=header,
+                    option=option
+                )
+            )
+        headers.append(
+            header_template.format(
+                name=header,
+                option='extra'
+            )
+        )
+        return headers
 
 
 class SplitGPSExportColumn(ExportColumn):
