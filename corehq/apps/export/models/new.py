@@ -1292,10 +1292,10 @@ class SplitGPSExportColumn(ExportColumn):
             return super(SplitGPSExportColumn, self).get_headers()
         header = self.label
         header_templates = [
-            _('{}: latitude (meters)'),
-            _('{}: longitude (meters)'),
-            _('{}: altitude (meters)'),
-            _('{}: accuracy (meters)'),
+            _(u'{}: latitude (meters)'),
+            _(u'{}: longitude (meters)'),
+            _(u'{}: altitude (meters)'),
+            _(u'{}: accuracy (meters)'),
         ]
         return map(lambda header_template: header_template.format(header), header_templates)
 
