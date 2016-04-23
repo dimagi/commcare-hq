@@ -1433,7 +1433,11 @@ PILLOWTOPS = {
         'corehq.pillows.xform.XFormPillow',
         'corehq.pillows.user.UserPillow',
         'corehq.pillows.application.AppPillow',
-        'corehq.pillows.group.GroupPillow',
+        {
+            'name': 'GroupPillow',
+            'class': 'pillowtop.pillow.interface.ConstructedPillow',
+            'instance': 'corehq.pillows.group.get_group_pillow',
+        },
         'corehq.pillows.sms.SMSPillow',
         'corehq.pillows.user.GroupToUserPillow',
         'corehq.pillows.sofabed.FormDataPillow',
@@ -1444,6 +1448,11 @@ PILLOWTOPS = {
             'name': 'SqlSMSPillow',
             'class': 'pillowtop.pillow.interface.ConstructedPillow',
             'instance': 'corehq.pillows.sms.get_sql_sms_pillow',
+        },
+        {
+            'name': 'UserGroupsDbKafkaPillow',
+            'class': 'pillowtop.pillow.interface.ConstructedPillow',
+            'instance': 'corehq.apps.change_feed.pillow.get_user_groups_db_kafka_pillow',
         },
         {
             'name': 'KafkaDomainPillow',
@@ -1458,11 +1467,6 @@ PILLOWTOPS = {
             'name': 'DefaultChangeFeedPillow',
             'class': 'pillowtop.pillow.interface.ConstructedPillow',
             'instance': 'corehq.apps.change_feed.pillow.get_default_couch_db_change_feed_pillow',
-        },
-        {
-            'name': 'UserGroupsDbKafkaPillow',
-            'class': 'pillowtop.pillow.interface.ConstructedPillow',
-            'instance': 'corehq.apps.change_feed.pillow.get_user_groups_db_kafka_pillow',
         },
         {
             'name': 'DomainDbKafkaPillow',

@@ -214,21 +214,11 @@
         "name": "GeographyFluffPillow"
     },
     "GroupPillow": {
-        "advertised_name": "corehq.pillows.group.GroupPillow.test_hqgroups_20150403_1501.testhq",
-        "change_feed_type": "CouchChangeFeed",
-        "checkpoint_id": "corehq.pillows.group.GroupPillow.test_hqgroups_20150403_1501.testhq",
-        "couch_filter": "groups/all_groups",
-        "couchdb_type": "Database",
-        "couchdb_uri": "http://{COUCH_SERVER_ROOT}/test_commcarehq__users",
-        "document_class": "Group",
-        "es_alias": "hqgroups",
-        "es_index": "test_hqgroups_20150403_1501",
-        "es_type": "group",
-        "extra_args": {},
-        "full_class_name": "corehq.pillows.group.GroupPillow",
-        "include_docs": true,
-        "name": "GroupPillow",
-        "unique_id": "test_hqgroups_20150403_1501"
+        "advertised_name": "GroupPillow",
+        "change_feed_type": "KafkaChangeFeed",
+        "checkpoint_id": "GroupPillow",
+        "full_class_name": "pillowtop.pillow.interface.ConstructedPillow",
+        "name": "GroupPillow"
     },
     "GroupToUserPillow": {
         "advertised_name": "corehq.pillows.user.GroupToUserPillow.testhq",

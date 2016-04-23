@@ -2,6 +2,7 @@ from corehq.apps.commtrack.const import COMMTRACK_USERNAME
 from corehq.apps.users.models import CouchUser
 from corehq.apps.users.util import SYSTEM_USER_ID, DEMO_USER_ID
 from corehq.pillows.mappings.domain_mapping import DOMAIN_INDEX_INFO
+from corehq.pillows.mappings.group_mapping import GROUP_INDEX_INFO
 from corehq.util.quickcache import quickcache
 from pillowtop.es_utils import get_all_inferred_es_indices_from_pillows
 
@@ -73,3 +74,4 @@ def get_all_expected_es_indices():
     for index_info in get_all_inferred_es_indices_from_pillows():
         yield index_info
     yield DOMAIN_INDEX_INFO
+    yield GROUP_INDEX_INFO
