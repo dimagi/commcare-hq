@@ -1253,7 +1253,7 @@ class SplitUserDefinedExportColumn(ExportColumn):
             return value
 
         if not isinstance(value, basestring):
-            return [None] * len(self.item.options) + [value]
+            return [None] * len(self.user_defined_options) + [value]
 
         selected = OrderedDict((x, 1) for x in value.split(" "))
         row = []
