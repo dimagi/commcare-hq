@@ -192,11 +192,12 @@ APP_BUILDER_SHADOW_MODULES = StaticToggle(
     help_link='https://confluence.dimagi.com/display/ccinternal/Shadow+Modules',
 )
 
-APP_AWARE_SYNC = StaticToggle(
+APP_AWARE_SYNC = PredictablyRandomToggle(
     'app_aware_sync',
     'App-aware Sync',
     TAG_PRODUCT_PATH,
-    [NAMESPACE_DOMAIN]
+    [NAMESPACE_DOMAIN],
+    randomness=0.1
 )
 
 CASE_LIST_CUSTOM_XML = StaticToggle(
