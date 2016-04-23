@@ -412,7 +412,11 @@ def numcell(text, value=None, convert='int', raw=None):
 
 
 def datespan_from_beginning(domain_object, timezone):
-    startdate = get_first_form_submission_received(domain_object.name)
+    from corehq import toggles
+    if toggles.NEW_EXPORTS.enabled(domain_object.name):
+        startdate = domain_object.date_created
+    else:
+        startdate = get_first_form_submission_received(domain_object.name)
     now = datetime.utcnow()
     datespan = DateSpan(startdate, now, timezone=timezone)
     datespan.is_default = True
