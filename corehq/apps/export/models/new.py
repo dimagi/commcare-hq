@@ -1237,7 +1237,7 @@ class SplitUserDefinedExportColumn(ExportColumn):
     )
     user_defined_options = ListProperty()
 
-    def get_value(self, doc, base_path, row_index=None, split_column=False, transform_dates=False):
+    def get_value(self, doc, base_path, transform_dates=False, **kwargs):
         """
         Get the value of self.item of the given doc.
         When base_path is [], doc is a form submission or case,
@@ -1249,7 +1249,7 @@ class SplitUserDefinedExportColumn(ExportColumn):
             base_path,
             transform_dates=transform_dates
         )
-        if not split_column:
+        if self.split_type == PLAIN_USER_DEFINED_SPLIT_TYPE:
             return value
 
         if not isinstance(value, basestring):
@@ -1257,13 +1257,13 @@ class SplitUserDefinedExportColumn(ExportColumn):
 
         selected = OrderedDict((x, 1) for x in value.split(" "))
         row = []
-        for option in self.options:
-            row.append(selected.pop(option.value, None))
+        for option in self.user_defined_options:
+            row.append(selected.pop(option, None))
         row.append(" ".join(selected.keys()))
         return row
 
-    def get_headers(self, split_column=False):
-        if not split_column:
+    def get_headers(self, **kwargs):
+        if self.split_type == PLAIN_USER_DEFINED_SPLIT_TYPE:
             return super(SplitUserDefinedExportColumn, self).get_headers()
         header = self.label
         header_template = header if '{option}' in header else u"{name} | {option}"

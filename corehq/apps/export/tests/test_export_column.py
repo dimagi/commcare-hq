@@ -1,5 +1,9 @@
 from django.test import SimpleTestCase
 
+from corehq.apps.export.const import (
+    PLAIN_USER_DEFINED_SPLIT_TYPE,
+    MULTISELCT_USER_DEFINED_SPLIT_TYPE,
+)
 from corehq.apps.export.models import (
     ExportColumn,
     RowNumberColumn,
@@ -8,6 +12,8 @@ from corehq.apps.export.models import (
     PathNode,
     SplitGPSExportColumn,
     GeopointItem,
+    ExportItem,
+    SplitUserDefinedExportColumn,
 )
 
 
@@ -100,3 +106,36 @@ class TestGeopointExportColumn(SimpleTestCase):
 
         result = column.get_headers(split_column=False)
         self.assertEqual(result, ['geo-label'])
+
+
+class TestSplitUserDefinedExportColumn(SimpleTestCase):
+
+    def test_get_value(self):
+        column = SplitUserDefinedExportColumn(
+            split_type=MULTISELCT_USER_DEFINED_SPLIT_TYPE,
+            item=ExportItem(path=[PathNode(name='form'), PathNode(name='mc')]),
+            user_defined_options=['one', 'two', 'three'],
+        )
+        result = column.get_value({'form': {'mc': 'one two extra'}}, [])
+        self.assertEqual(result, [1, 1, None, 'extra'])
+
+        column.split_type = PLAIN_USER_DEFINED_SPLIT_TYPE
+        result = column.get_value({'form': {'mc': 'one two extra'}}, [])
+        self.assertEqual(result, 'one two extra')
+
+    def test_get_headers(self):
+        column = SplitUserDefinedExportColumn(
+            split_type=MULTISELCT_USER_DEFINED_SPLIT_TYPE,
+            item=ExportItem(path=[PathNode(name='form'), PathNode(name='mc')]),
+            user_defined_options=['one', 'two', 'three'],
+            label='form.mc',
+        )
+        result = column.get_headers()
+        self.assertEqual(
+            result,
+            ['form.mc | one', 'form.mc | two', 'form.mc | three', 'form.mc | extra']
+        )
+
+        column.split_type = PLAIN_USER_DEFINED_SPLIT_TYPE
+        result = column.get_headers()
+        self.assertEqual(result, ['form.mc'])
