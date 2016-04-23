@@ -183,11 +183,11 @@ Exports.ViewModels.ExportColumn.prototype.isQuestion = function() {
 };
 
 Exports.ViewModels.ExportColumn.prototype.addUserDefinedOption = function() {
-    var option = this.userDefinedOptionToAdd()
+    var option = this.userDefinedOptionToAdd();
     if (option) {
         this.user_defined_options.push(option);
     }
-    this.userDefinedOptionToAdd('')
+    this.userDefinedOptionToAdd('');
 };
 
 Exports.ViewModels.ExportColumn.prototype.removeUserDefinedOption = function(option) {

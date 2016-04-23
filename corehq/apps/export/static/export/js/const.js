@@ -1,4 +1,5 @@
-/*
+/* globals Exports
+ *
  * Some of these constants need correspond to constants set in corehq/apps/exports/const.py
  * so if changing a value, ensure that both places reflect the change
  */
