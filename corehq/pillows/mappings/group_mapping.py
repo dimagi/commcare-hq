@@ -1,6 +1,6 @@
 from corehq.util.elastic import es_index
 
-GROUP_INDEX = es_index("hqgroups_20150403_1501")
+GROUP_INDEX = es_index("hqgroups_20160423-tmp")
 GROUP_MAPPING = {
     "date_formats": [
         "yyyy-MM-dd",
