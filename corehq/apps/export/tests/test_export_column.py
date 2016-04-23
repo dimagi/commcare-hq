@@ -6,6 +6,8 @@ from corehq.apps.export.models import (
     CaseIndexExportColumn,
     CaseIndexItem,
     PathNode,
+    SplitGPSExportColumn,
+    GeopointItem,
 )
 
 
@@ -74,3 +76,27 @@ class TestCaseIndexExportColumn(SimpleTestCase):
 
         self.assertEqual(col.get_value(doc), '')
         self.assertEqual(col.get_value(doc2), '')
+
+
+class TestGeopointExportColumn(SimpleTestCase):
+
+    def test_get_value(self):
+        column = SplitGPSExportColumn(
+            item=GeopointItem(path=[PathNode(name='form'), PathNode(name='geo')])
+        )
+        result = column.get_value({'form': {'geo': '10 20'}}, [], split_column=True)
+        self.assertEqual(result, ['10', '20', None, None])
+
+        result = column.get_value({'form': {'geo': '10 20'}}, [], split_column=False)
+        self.assertEqual(result, '10 20')
+
+    def test_get_headers(self):
+        column = SplitGPSExportColumn(
+            item=GeopointItem(path=[PathNode(name='form'), PathNode(name='geo')]),
+            label='geo-label',
+        )
+        result = column.get_headers(split_column=True)
+        self.assertEqual(len(result), 4)
+
+        result = column.get_headers(split_column=False)
+        self.assertEqual(result, ['geo-label'])

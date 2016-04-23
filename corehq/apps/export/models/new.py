@@ -1350,7 +1350,7 @@ class SplitExportColumn(ExportColumn):
 
         selected = OrderedDict((x, 1) for x in value.split(" "))
         row = []
-        for option in self.options:
+        for option in self.item.options:
             row.append(selected.pop(option.value, None))
         if not self.ignore_unspecified_options:
             row.append(" ".join(selected.keys()))
@@ -1362,7 +1362,7 @@ class SplitExportColumn(ExportColumn):
         header = self.label
         header_template = header if '{option}' in header else u"{name} | {option}"
         headers = []
-        for option in self.options:
+        for option in self.item.options:
             headers.append(
                 header_template.format(
                     name=header,
