@@ -41,7 +41,7 @@ def get_all_docs_with_doc_types(db, doc_types):
 
     returns doc JSON (not wrapped)
     """
-    if isinstance(doc_types, unicode):
+    if isinstance(doc_types, basestring):
         raise TypeError('get_all_docs_with_doc_types requires doc_types '
                         'to be a sequence of strings, not {!r}'.format(doc_types))
     for doc_type in doc_types:
