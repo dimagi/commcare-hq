@@ -170,10 +170,10 @@ def clean_text(text):
 
 
 def get_contact(contact_id):
-    from corehq.apps.sms.models import CommConnectCase
+    from casexml.apps.case.models import CommCareCase
     contact = None
     try:
-        contact = CommConnectCase.get(contact_id)
+        contact = CommCareCase.get(contact_id)
     except ResourceNotFound:
         pass
 

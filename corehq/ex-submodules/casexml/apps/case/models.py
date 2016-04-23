@@ -18,6 +18,7 @@ from django.utils.translation import ugettext as _
 from couchdbkit.exceptions import ResourceNotFound
 
 from casexml.apps.case.dbaccessors import get_reverse_indices
+from corehq.apps.sms.mixin import MessagingCaseContactMixin
 from corehq.form_processor.abstract_models import AbstractCommCareCase
 from dimagi.ext.couchdbkit import *
 from dimagi.utils.django.cached_object import (
@@ -150,7 +151,7 @@ class CommCareCaseAction(LooselyEqualDocumentSchema):
 
 
 class CommCareCase(SafeSaveDocument, IndexHoldingMixIn, ComputedDocumentMixin,
-                   CouchDocLockableMixIn, AbstractCommCareCase):
+                   CouchDocLockableMixIn, AbstractCommCareCase, MessagingCaseContactMixin):
     """
     A case, taken from casexml.  This represents the latest
     representation of the case - the result of playing all

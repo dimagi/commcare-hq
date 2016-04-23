@@ -18,9 +18,10 @@ from jsonobject import StringProperty
 from jsonobject.properties import BooleanProperty
 from lxml import etree
 from uuidfield import UUIDField
-
+from corehq.apps.sms.mixin import MessagingCaseContactMixin
 from corehq.blobs import get_blob_db
 from corehq.blobs.exceptions import NotFound, BadName
+from corehq.form_processor import signals
 from corehq.form_processor.exceptions import InvalidAttachment, UnknownActionType
 from corehq.form_processor.track_related import TrackRelatedChanges
 from corehq.sql_db.routers import db_for_read_write
@@ -496,7 +497,7 @@ class SupplyPointCaseMixin(object):
 
 class CommCareCaseSQL(DisabledDbMixin, models.Model, RedisLockableMixIn,
                       AttachmentMixin, AbstractCommCareCase, TrackRelatedChanges,
-                      SupplyPointCaseMixin):
+                      SupplyPointCaseMixin, MessagingCaseContactMixin):
     objects = RestrictedManager()
 
     case_id = models.CharField(max_length=255, unique=True, db_index=True)
