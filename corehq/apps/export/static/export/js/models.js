@@ -190,6 +190,10 @@ Exports.ViewModels.ExportColumn.prototype.addUserDefinedOption = function() {
     this.userDefinedOptionToAdd('')
 };
 
+Exports.ViewModels.ExportColumn.prototype.removeUserDefinedOption = function(option) {
+    this.user_defined_options.remove(option);
+};
+
 Exports.ViewModels.ExportColumn.prototype.formatProperty = function() {
     if (this.tags().length !== 0){
         return this.label();
