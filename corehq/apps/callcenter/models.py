@@ -95,6 +95,7 @@ class CallCenterIndicatorConfig(JsonObject):
     def set_indicator(self, parsed_indicator):
         if parsed_indicator.is_legacy:
             indicator = getattr(self, parsed_indicator.category)
+            setattr(self, 'legacy_{}'.format(parsed_indicator.category), True)
             if parsed_indicator.date_range:
                 date_range = parsed_indicator.date_range
                 if isinstance(indicator, ByTypeWithTotal):
