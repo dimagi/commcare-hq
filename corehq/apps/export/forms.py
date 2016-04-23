@@ -309,7 +309,7 @@ class GenericFilterFormExportDownloadForm(BaseFilterExportDownloadForm):
 
         # update date_range filter's initial values to span the entirety of
         # the domain's submission range
-        default_datespan = datespan_from_beginning(self.domain_object.name, self.timezone)
+        default_datespan = datespan_from_beginning(self.domain_object, self.timezone)
         self.fields['date_range'].widget = DateRangePickerWidget(
             default_datespan=default_datespan
         )
