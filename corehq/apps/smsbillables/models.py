@@ -417,6 +417,12 @@ class SmsBillable(models.Model):
                 'receiving',
             ]:
                 raise RetryBillableTaskException
+            if twilio_message.price is None:
+                log_smsbillables_error(
+                    "price is None: backend_message_id=%s, status=%s"
+                    % (twilio_message.backend_message_id, twilio_message.status)
+                )
+                return _TwilioChargeInfo(None, None)
             return _TwilioChargeInfo(
                 Decimal(twilio_message.price) * -1,
                 SmsGatewayFee.get_by_criteria(
