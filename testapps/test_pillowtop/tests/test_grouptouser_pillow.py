@@ -1,9 +1,11 @@
 import uuid
+from django.core.management import call_command
 from django.test import SimpleTestCase, TestCase
 from corehq.apps.change_feed import data_sources
 from corehq.apps.change_feed.document_types import change_meta_from_doc, GROUP
 from corehq.apps.change_feed.producer import producer
 from corehq.apps.groups.models import Group
+from corehq.apps.groups.tests import delete_all_groups
 
 from corehq.apps.users.models import CommCareUser
 from corehq.elastic import get_es_new
@@ -147,3 +149,38 @@ def _group_to_change_meta(group):
         data_source_type=data_sources.COUCH,
         data_source_name=Group.get_db().dbname,
     )
+
+
+class GroupsToUserReindexerTest(TestCase):
+    dependent_apps = [
+        'pillowtop',
+        'corehq.apps.groups',
+        'corehq.couchapps',
+    ]
+
+    def setUp(self):
+        delete_all_groups()
+
+    @classmethod
+    def setUpClass(cls):
+        cls.es = get_es_new()
+        ensure_index_deleted(USER_INDEX)
+        initialize_index_and_mapping(cls.es, USER_INDEX_INFO)
+
+    @classmethod
+    def tearDownClass(cls):
+        ensure_index_deleted(USER_INDEX)
+
+    def test_groups_to_user_reindexer(self):
+        initialize_index_and_mapping(self.es, USER_INDEX_INFO)
+        user_id = uuid.uuid4().hex
+        domain = 'test-groups-to-user-reindex'
+        _create_es_user(self.es, user_id, domain)
+
+        # create and save a group
+        group = Group(domain=domain, name='g1', users=[user_id])
+        group.save()
+
+        call_command('ptop_fast_reindex_groupstousers', noinput=True, bulk=True)
+        self.es.indices.refresh(USER_INDEX)
+        _assert_es_user_and_groups(self, self.es, user_id, [group._id], [group.name])
