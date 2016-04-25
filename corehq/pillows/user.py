@@ -107,7 +107,7 @@ def add_demo_user_to_user_index():
     )
 
 
-def get_user_kafka_to_elasticsearch_pillow(pillow_id='UserPillow'):
+def get_user_pillow(pillow_id='UserPillow'):
     checkpoint = PillowCheckpoint(
         pillow_id,
     )
@@ -128,7 +128,7 @@ def get_user_kafka_to_elasticsearch_pillow(pillow_id='UserPillow'):
 
 def get_user_reindexer():
     return ElasticPillowReindexer(
-        pillow=get_user_kafka_to_elasticsearch_pillow(),
+        pillow=get_user_pillow(),
         change_provider=CouchViewChangeProvider(
             couch_db=CommCareUser.get_db(),
             view_name='users/by_username',
