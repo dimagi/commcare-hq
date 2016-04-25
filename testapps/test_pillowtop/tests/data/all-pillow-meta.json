@@ -466,23 +466,6 @@
         "name": "ReportXFormPillow",
         "unique_id": "test_report_xforms_20150406_1136"
     },
-    "SMSPillow": {
-        "advertised_name": "corehq.pillows.sms.SMSPillow.708c77f8e5fe00286fa5791e9fa7d45f.testhq",
-        "change_feed_type": "CouchChangeFeed",
-        "checkpoint_id": "corehq.pillows.sms.SMSPillow.708c77f8e5fe00286fa5791e9fa7d45f.testhq",
-        "couch_filter": "sms/all_logs",
-        "couchdb_type": "Database",
-        "couchdb_uri": "http://{COUCH_SERVER_ROOT}/test_commcarehq",
-        "document_class": "SMSLog",
-        "es_alias": "smslogs",
-        "es_index": "test_smslogs_708c77f8e5fe00286fa5791e9fa7d45f",
-        "es_type": "sms",
-        "extra_args": {},
-        "full_class_name": "corehq.pillows.sms.SMSPillow",
-        "include_docs": true,
-        "name": "SMSPillow",
-        "unique_id": "708c77f8e5fe00286fa5791e9fa7d45f"
-    },
     "SqlCaseToElasticsearchPillow": {
         "advertised_name": "SqlCaseToElasticsearchPillow",
         "change_feed_type": "KafkaChangeFeed",
