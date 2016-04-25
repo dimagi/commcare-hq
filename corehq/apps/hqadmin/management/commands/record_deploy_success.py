@@ -31,18 +31,21 @@ class Command(BaseCommand):
         make_option('--environment', help='Environment {production|staging etc...}', default=settings.SERVER_ENVIRONMENT),
         make_option('--mail_admins', help='Mail Admins', default=False, action='store_true'),
         make_option('--url', help='A link to a URL for the deploy', default=False),
+        make_option('--current_deploy', help='ref of current deploy', default=None),
+        make_option('--previous_deploy', help='ref of previous deploy', default=None),
+        make_option('--pr_numbers', help='List of PRs included in deploy', default=None),
+
     )
     
     def handle(self, *args, **options):
 
         root_dir = settings.FILEPATH
-        git_snapshot = gitinfo.get_project_snapshot(root_dir, submodules=True)
-        compare_url = git_snapshot['diff_url'] = options.get('url', None)
+        compare_url = options.get('url', None)
         deploy = HqDeploy(
             date=datetime.utcnow(),
             user=options['user'],
             environment=options['environment'],
-            code_snapshot=git_snapshot,
+            # code_snapshot=git_snapshot,
         )
         deploy.save()
 
@@ -85,6 +88,10 @@ class Command(BaseCommand):
 
         if options['mail_admins']:
             message_body = get_deploy_email_message_body(
-                environment=options['environment'], user=options['user'],
-                compare_url=compare_url)
+                user=options['user'],
+                compare_url=compare_url,
+                current_deploy=options.get('current_deploy'),
+                previous_deploy=options.get('current_deploy'),
+                pr_numbers=options.get('pr_numbers'),
+            )
             call_command('mail_admins', message_body, **{'subject': 'Deploy successful', 'html': True})
