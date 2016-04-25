@@ -257,7 +257,7 @@ class TestGatewayFee(TestCase):
             FakeTwilioMessageFactory.add_price_for_message(msg_log.backend_message_id, generator.arbitrary_fee())
 
         for msg_log in messages:
-            multipart_count = randint(1, 10)
+            multipart_count = randint(1, 10)  # Should be ignored
             billable = SmsBillable.create(msg_log, multipart_count=multipart_count)
             self.assertIsNotNone(billable)
             self.assertIsNotNone(billable.gateway_fee)
@@ -297,7 +297,7 @@ class TestGatewayFee(TestCase):
             FakeTwilioMessageFactory.add_price_for_message(msg_log.backend_message_id, generator.arbitrary_fee())
 
         for msg_log in messages:
-            multipart_count = randint(1, 10)
+            multipart_count = randint(1, 10)  # Should be ignored
             billable = SmsBillable.create(msg_log, multipart_count=multipart_count)
             self.assertIsNotNone(billable)
             self.assertIsNone(billable.gateway_fee)
