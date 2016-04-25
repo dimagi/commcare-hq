@@ -20,21 +20,24 @@ FormplayerFrontend.module("AppSelect.MenuList", function (MenuList, FormplayerFr
             $.when(fetchingApps).done(function (options) {
                 if(options.type === "commands") {
                     var menuListView = new MenuList.MenuListView({
-                        collection: options
+                        collection: options,
+                        title: options.title
                     });
                 }
                 else if(options.type === "entities") {
                     var menuListView = new MenuList.CaseListView({
-                        collection: options
+                        collection: options,
+                        title: options.title
                     });
                 }
                 else if(options.type === "details") {
                     var menuListView = new MenuList.DetailListView({
-                        collection: options
+                        collection: options,
+                        title: options.title
                     });
                 }
 
-                FormplayerFrontend.regions.main.show(menuListView);
+                FormplayerFrontend.regions.main.show(menuListView.render());
             });
         }
     }
