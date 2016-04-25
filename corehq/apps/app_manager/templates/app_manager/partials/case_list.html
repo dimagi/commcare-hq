@@ -231,8 +231,5 @@
 {% endif %}
 
 {% if detail.type == 'case' and is_search_enabled %}
-<legend>
-    {% trans "Searching" %}
-</legend>
 {% include 'app_manager/partials/case_search_properties.html' %}
 {% endif %}
