@@ -81,7 +81,6 @@ def _get_careplan_module_view_context(app, module):
         'parent_modules': _get_parent_modules(app, module,
                                              case_property_builder,
                                              CAREPLAN_GOAL),
-        'fixtures': _get_fixture_types(app.domain),
         'details': [
             {
                 'label': gettext_lazy('Goal List'),
@@ -116,7 +115,7 @@ def _get_advanced_module_view_context(app, module, lang=None):
     case_type = module.case_type
     form_options = _case_list_form_options(app, module, case_type, lang)
     return {
-        'fixtures': _get_fixture_types(app.domain),
+        'fixture_columns_by_type': _get_fixture_columns_by_type(app.domain),
         'details': _get_module_details_context(app, module,
                                                case_property_builder,
                                                case_type),
@@ -142,11 +141,6 @@ def _get_advanced_module_view_context(app, module, lang=None):
 
 def _get_basic_module_view_context(app, module, lang=None):
     case_property_builder = _setup_case_property_builder(app)
-    fixture_columns = [
-        field.field_name
-        for fixture in FixtureDataType.by_domain(app.domain)
-        for field in fixture.fields
-    ]
     case_type = module.case_type
     form_options = _case_list_form_options(app, module, case_type, lang)
     # http://manage.dimagi.com/default.asp?178635
@@ -156,18 +150,15 @@ def _get_basic_module_view_context(app, module, lang=None):
         AllowWithReason(allow_with_parent_select, AllowWithReason.PARENT_SELECT_ACTIVE)
     )
     return {
-        'parent_modules': _get_parent_modules(app, module,
-                                             case_property_builder, case_type),
-        'fixtures': _get_fixture_types(app.domain),
-        'fixture_columns': fixture_columns,
-        'details': _get_module_details_context(app, module,
-                                               case_property_builder,
-                                               case_type),
+        'parent_modules': _get_parent_modules(app, module, case_property_builder, case_type),
+        'fixture_columns_by_type': _get_fixture_columns_by_type(app.domain),
+        'details': _get_module_details_context(app, module, case_property_builder, case_type),
         'case_list_form_options': form_options,
         'case_list_form_not_allowed_reason': allow_case_list_form,
         'valid_parent_modules': _get_valid_parent_modules(app, module),
-        'child_module_enabled': toggles.BASIC_CHILD_MODULE.enabled(app.domain)
-                                 and module.doc_type != "ShadowModule"
+        'child_module_enabled': (
+            toggles.BASIC_CHILD_MODULE.enabled(app.domain) and module.doc_type != "ShadowModule"
+        )
     }
 
 
@@ -201,8 +192,11 @@ def _get_report_module_context(app, module):
     }
 
 
-def _get_fixture_types(domain):
-    return [f.tag for f in FixtureDataType.by_domain(domain)]
+def _get_fixture_columns_by_type(domain):
+    return {
+        fixture.tag: [field.field_name for field in fixture.fields]
+        for fixture in FixtureDataType.by_domain(domain)
+    }
 
 
 def _setup_case_property_builder(app):

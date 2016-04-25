@@ -58,6 +58,10 @@ class TestGatewayFee(TestCase):
 
         self.other_currency = generator.arbitrary_currency()
 
+        # Must remove existing data populated in migrations
+        SmsGatewayFee.objects.all().delete()
+        SmsGatewayFeeCriteria.objects.all().delete()
+
     def create_least_specific_gateway_fees(self):
         for direction, fees in self.least_specific_fees.items():
             for backend_api_id, amount in fees.items():

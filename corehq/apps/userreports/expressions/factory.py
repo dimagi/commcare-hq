@@ -7,7 +7,8 @@ from corehq.apps.userreports.exceptions import BadSpecError
 from corehq.apps.userreports.expressions.specs import PropertyNameGetterSpec, PropertyPathGetterSpec, \
     ConditionalExpressionSpec, ConstantGetterSpec, RootDocExpressionSpec, RelatedDocExpressionSpec, \
     IdentityExpressionSpec, IteratorExpressionSpec, SwitchExpressionSpec, ArrayIndexExpressionSpec, \
-    NestedExpressionSpec, DictExpressionSpec, NamedExpressionSpec, EvalExpressionSpec, FormsExpressionSpec
+    NestedExpressionSpec, DictExpressionSpec, NamedExpressionSpec, EvalExpressionSpec, FormsExpressionSpec, \
+    IterationNumberExpressionSpec
 from corehq.apps.userreports.expressions.date_specs import AddDaysExpressionSpec, AddMonthsExpressionSpec, \
     MonthStartDateExpressionSpec, MonthEndDateExpressionSpec, DiffDaysExpressionSpec
 from corehq.apps.userreports.expressions.list_specs import FilterItemsExpressionSpec, \
@@ -31,6 +32,7 @@ _identity_expression = functools.partial(_simple_expression_generator, IdentityE
 _constant_expression = functools.partial(_simple_expression_generator, ConstantGetterSpec)
 _property_name_expression = functools.partial(_simple_expression_generator, PropertyNameGetterSpec)
 _property_path_expression = functools.partial(_simple_expression_generator, PropertyPathGetterSpec)
+_iteration_number_expression = functools.partial(_simple_expression_generator, IterationNumberExpressionSpec)
 
 
 def _named_expression(spec, context):
@@ -225,6 +227,7 @@ class ExpressionFactory(object):
         'root_doc': _root_doc_expression,
         'related_doc': _related_doc_expression,
         'iterator': _iterator_expression,
+        'base_iteration_number': _iteration_number_expression,
         'switch': _switch_expression,
         'nested': _nested_expression,
         'dict': _dict_expression,
