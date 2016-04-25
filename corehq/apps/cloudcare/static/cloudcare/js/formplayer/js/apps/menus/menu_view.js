@@ -7,7 +7,7 @@ FormplayerFrontend.module("AppSelect.MenuList", function (MenuList, FormplayerFr
             "click": "rowClick"
         },
 
-        rowClick: function(e){
+        rowClick: function (e) {
             e.preventDefault();
             FormplayerFrontend.trigger("menu:select", this.model);
         }
@@ -18,6 +18,28 @@ FormplayerFrontend.module("AppSelect.MenuList", function (MenuList, FormplayerFr
         className: "table table-hover",
         template: "#menu-view-list",
         childView: MenuList.MenuView,
+        childViewContainer: "tbody"
+    });
+
+    MenuList.CaseView = Marionette.ItemView.extend({
+        tagName: "tr",
+        template: "#case-view-item",
+
+        events: {
+            "click": "rowClick"
+        },
+
+        rowClick: function (e) {
+            e.preventDefault();
+            FormplayerFrontend.trigger("menu:select", this.model);
+        }
+    });
+
+    MenuList.CaseListView = Marionette.CompositeView.extend({
+        tagName: "table",
+        className: "table table-hover",
+        template: "#case-view-list",
+        childView: MenuList.CaseView,
         childViewContainer: "tbody"
     });
 });

@@ -16,7 +16,13 @@ FormplayerFrontend.module("Entities", function (Entities, FormplayerFrontend, Ba
             this.sessionId = response.session_id;
             this.sequenceId = response.sequenceId;
             FormplayerFrontend.request('currentUser').sessionId = this.sessionId;
-            return response.commands;
+            if(response.commands){
+                this.type = "commands";
+                return response.commands;
+            } else if(response.entities){
+                this.type = "entities";
+                return response.entities;
+            }
         },
 
         initialize: function (params) {
@@ -96,12 +102,11 @@ FormplayerFrontend.module("Entities", function (Entities, FormplayerFrontend, Ba
             });
             var defer = $.Deferred();
             menus.fetch({
-                success: function (request) {
+                success: function (request, response, whatever) {
                     defer.resolve(request);
                 }
             });
-            var promise = defer.promise();
-            return promise;
+            return defer.promise();
         },
 
 

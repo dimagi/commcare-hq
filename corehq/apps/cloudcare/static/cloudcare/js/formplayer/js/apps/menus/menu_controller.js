@@ -5,7 +5,6 @@ FormplayerFrontend.module("AppSelect.MenuList", function (MenuList, FormplayerFr
             var fetchingApps = FormplayerFrontend.request("app:select:menus", app_id);
 
             $.when(fetchingApps).done(function (menus) {
-
                 var menuListView = new MenuList.MenuListView({
                     collection: menus
                 });
@@ -18,11 +17,17 @@ FormplayerFrontend.module("AppSelect.MenuList", function (MenuList, FormplayerFr
 
             var fetchingApps = FormplayerFrontend.request("app:select:menus:select", model);
 
-            $.when(fetchingApps).done(function (menus) {
-
-                var menuListView = new MenuList.MenuListView({
-                    collection: menus
-                });
+            $.when(fetchingApps).done(function (options) {
+                if(options.type === "commands") {
+                    var menuListView = new MenuList.MenuListView({
+                        collection: options
+                    });
+                }
+                else if(options.type === "entities") {
+                    var menuListView = new MenuList.CaseListView({
+                        collection: options
+                    });
+                }
 
                 FormplayerFrontend.regions.main.show(menuListView);
             });
