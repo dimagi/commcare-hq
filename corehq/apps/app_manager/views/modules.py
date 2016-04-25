@@ -26,9 +26,12 @@ from corehq.apps.app_manager.const import (
 from corehq.apps.app_manager.util import (
     is_valid_case_type,
     is_usercase_in_use,
-    get_per_type_defaults, ParentCasePropertyBuilder,
-    prefix_usercase_properties, commtrack_ledger_sections)
-
+    get_per_type_defaults,
+    ParentCasePropertyBuilder,
+    prefix_usercase_properties,
+    commtrack_ledger_sections,
+    module_offers_search,
+)
 from corehq.apps.fixtures.models import FixtureDataType
 from corehq.apps.userreports.models import ReportConfiguration
 from dimagi.utils.web import json_response, json_request
@@ -132,7 +135,7 @@ def _get_advanced_module_view_context(app, module, lang=None):
         ],
         'child_module_enabled': True,
         'is_search_enabled': case_search_enabled_for_domain(app.domain),
-        'search_properties': module.search_config.properties if module.search_config else [],
+        'search_properties': module.search_config.properties if module_offers_search(module) else [],
         'schedule_phases': [
             {
                 'id': schedule.id,
@@ -166,7 +169,7 @@ def _get_basic_module_view_context(app, module, lang=None):
             toggles.BASIC_CHILD_MODULE.enabled(app.domain) and module.doc_type != "ShadowModule"
         ),
         'is_search_enabled': case_search_enabled_for_domain(app.domain),
-        'search_properties': module.search_config.properties if module.search_config else [],
+        'search_properties': module.search_config.properties if module_offers_search(module) else [],
     }
 
 
