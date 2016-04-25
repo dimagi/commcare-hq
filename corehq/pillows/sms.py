@@ -56,7 +56,7 @@ def get_sql_sms_pillow(pillow_id):
     checkpoint = PillowCheckpoint(SMS_PILLOW_CHECKPOINT_ID)
     processor = ElasticProcessor(
         elasticsearch=get_es_new(),
-        index_info=ElasticsearchIndexInfo(index=ES_SMS_INDEX, type=ES_SMS_TYPE),
+        index_info=SMS_INDEX_INFO,
         doc_prep_fn=lambda x: x
     )
     return ConstructedPillow(
