@@ -74,6 +74,7 @@ class PillowtopReindexerTest(TestCase):
 
     @run_with_all_backends
     def test_case_search_reindexer(self):
+        es = get_es_new()
         FormProcessorTestUtils.delete_all_cases()
         case = _create_and_save_a_case()
 
@@ -82,7 +83,7 @@ class PillowtopReindexerTest(TestCase):
         # With case search not enabled, case should not make it to ES
         CaseSearchConfig.objects.all().delete()
         call_command('ptop_reindexer_v2', 'case-search')
-        get_es_new().indices.refresh(CASE_SEARCH_INDEX)  # as well as refresh the index
+        es.indices.refresh(CASE_SEARCH_INDEX)  # as well as refresh the index
         self._assert_es_empty(esquery=CaseSearchES())
 
         # With case search enabled, it should get indexed
@@ -90,7 +91,7 @@ class PillowtopReindexerTest(TestCase):
         self.addCleanup(CaseSearchConfig.objects.all().delete)
         call_command('ptop_reindexer_v2', 'case-search')
 
-        get_es_new().indices.refresh(CASE_SEARCH_INDEX)  # as well as refresh the index
+        es.indices.refresh(CASE_SEARCH_INDEX)  # as well as refresh the index
         self._assert_case_is_in_es(case, esquery=CaseSearchES())
 
     def test_xform_reindexer(self):
