@@ -66,8 +66,9 @@ class ProjectReportsTab(UITab):
         if has_report_builder_access(self._request):
             create_report_url = reverse("report_builder_select_type", args=[self.domain])
         else:
-            from corehq.apps.userreports.views import ReportBuilderPaywall
-            create_report_url = reverse(ReportBuilderPaywall.urlname, args=[self.domain])
+            from corehq.apps.userreports.views import paywall_home
+            create_report_url = paywall_home(self.domain)
+
         user_reports = [(
             _("Create Reports"),
             [{

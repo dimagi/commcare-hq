@@ -22,10 +22,12 @@ from djangular.views.mixins import JSONResponseMixin, allow_remote_invocation
 from sqlalchemy import types, exc
 from sqlalchemy.exc import ProgrammingError
 
+from corehq.apps.domain.models import Domain
 from corehq.apps.hqwebapp.tasks import send_mail_async
 from corehq.apps.hqwebapp.templatetags.hq_shared_tags import toggle_enabled
 from corehq.apps.userreports.const import REPORT_BUILDER_EVENTS_KEY
 from corehq.util import reverse
+from corehq.util.quickcache import quickcache
 from couchexport.export import export_from_tables
 from couchexport.files import Temp
 from couchexport.models import Format
@@ -168,6 +170,21 @@ class ReportBuilderView(BaseDomainView):
         return reverse(ReportBuilderTypeSelect.urlname, args=[self.domain])
 
 
+@quickcache(["domain"], timeout=0, memoize_timeout=4)
+def paywall_home(domain):
+    """
+    Return the url for the page in the report builder paywall that users
+    in the given domain should be directed to upon clicking "+ Create new report"
+    """
+    project = Domain.get_by_name(domain, strict=True)
+    if project.requested_report_builder_subscription:
+        return reverse( ReportBuilderPaywallActivatingSubscription.urlname, args=[domain])
+    elif project.requested_report_builder_trial:
+        return reverse(ReportBuilderPaywallActivatingTrial.urlname, args=[domain])
+    else:
+        return reverse(ReportBuilderPaywall.urlname,args=[domain])
+
+
 class ReportBuilderPaywallBase(BaseDomainView):
     page_title = ugettext_lazy('Subscribe')
 
@@ -177,7 +194,7 @@ class ReportBuilderPaywallBase(BaseDomainView):
 
     @property
     def section_url(self):
-        return reverse(ReportBuilderPaywall.urlname, args=[self.domain])
+        return paywall_home(self.domain)
 
 
 class ReportBuilderPaywall(ReportBuilderPaywallBase):
@@ -192,6 +209,8 @@ class ReportBuilderPaywallActivatingTrial(ReportBuilderPaywallBase):
     page_title = ugettext_lazy('Trial')
 
     def post(self, request, domain, *args, **kwargs):
+        self.domain_object.requested_report_builder_trial.append(request.user.username)
+        self.domain_object.save()
         send_mail_async.delay(
             "Report Builder Trial Request: {}".format(domain),
             "User {} in the {} domain has requested access to the report builder trial.".format(
@@ -199,7 +218,7 @@ class ReportBuilderPaywallActivatingTrial(ReportBuilderPaywallBase):
                 domain,
             ),
             settings.DEFAULT_FROM_EMAIL,
-            ["ksmith"+"@"+"dimagi.com"],
+            ["updates"+"@"+"dimagi.com"],
         )
         return self.get(request, domain, *args, **kwargs)
 
@@ -215,6 +234,8 @@ class ReportBuilderPaywallActivatingSubscription(ReportBuilderPaywallBase):
     urlname = 'report_builder_paywall_activating_subscription'
 
     def post(self, request, domain, *args, **kwargs):
+        self.domain_object.requested_report_builder_subscription.append(request.user.username)
+        self.domain_object.save()
         send_mail_async.delay(
             "Report Builder Subscription Request: {}".format(domain),
             "User {} in the {} domain has requested a report builder subscription.".format(
@@ -222,7 +243,7 @@ class ReportBuilderPaywallActivatingSubscription(ReportBuilderPaywallBase):
                 domain,
             ),
             settings.DEFAULT_FROM_EMAIL,
-            ["ksmith"+"@"+"dimagi.com"],
+            ["updates"+"@"+"dimagi.com"],
         )
         return self.get(request, domain, *args, **kwargs)
 
