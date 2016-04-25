@@ -14,7 +14,8 @@ from corehq.apps.change_feed.consumer.feed import KafkaChangeFeed, MultiTopicChe
 from corehq.apps.es import CaseSearchES
 from corehq.elastic import get_es_new
 from corehq.form_processor.utils.general import should_use_sql_backend
-from corehq.pillows.case import CASE_ES_TYPE, CasePillow
+from corehq.pillows.case import CasePillow
+from corehq.pillows.mappings.case_mapping import CASE_ES_TYPE
 from corehq.pillows.mappings.case_search_mapping import CASE_SEARCH_INDEX, \
     CASE_SEARCH_MAPPING, CASE_SEARCH_ALIAS
 from pillowtop.checkpoints.manager import PillowCheckpoint
@@ -33,7 +34,6 @@ class CaseSearchPillow(CasePillow):
     Nested case properties indexer.
     """
     es_alias = CASE_SEARCH_ALIAS
-
     es_index = CASE_SEARCH_INDEX
     default_mapping = CASE_SEARCH_MAPPING
 
