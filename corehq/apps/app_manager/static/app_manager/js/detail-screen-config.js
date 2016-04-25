@@ -547,8 +547,9 @@ hqDefine('app_manager/js/detail-screen-config.js', function () {
                     var o = {
                         lang: that.lang,
                         langs: that.screen.langs,
+                        module_id: that.screen.config.module_id,
                         items: that.original['enum'],
-                        modalTitle: 'Editing mapping for ' + that.original.field,
+                        property_name: that.field,
                         multimedia: that.screen.config.multimedia,
                     };
                     that.enum_extra = uiElement.key_value_mapping(o);
@@ -1023,6 +1024,7 @@ hqDefine('app_manager/js/detail-screen-config.js', function () {
                 this.lang = spec.lang;
                 this.langs = spec.langs || [];
                 this.multimedia = spec.multimedia || {};
+                this.module_id = spec.module_id || '';
                 if (spec.hasOwnProperty('parentSelect') && spec.parentSelect) {
                     this.parentSelect = new module.ParentSelect({
                         active: spec.parentSelect.active,

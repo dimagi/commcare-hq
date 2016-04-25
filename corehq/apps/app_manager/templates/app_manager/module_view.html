@@ -46,6 +46,7 @@
             for (var i = 0; i < details.length; i++) {
                 var detail = details[i];
                 var detailScreenConfig = DetailScreenConfig.init({
+                    module_id: '{{ module.id }}',
                     state: {
                         type: detail.type,
                         short: detail.short,

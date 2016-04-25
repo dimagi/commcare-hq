@@ -107,10 +107,10 @@
 </div>
 
 <div id="value_icon_uploader" class="hide">
-    <div class="col-sm-3">
-        <input type="text" class="col-md-2 form-control" data-bind="value: customPath,
-                          valueUpdate: 'textchange',
-                          attr: {placeholder: $parents[1].backup($parent.value()).value}">
+    <div class="col-sm-1" data-bind="visible: url" style="margin-right: 5px">
+        <a data-bind="if: isMediaMatched, attr: {href: url}" target="_blank">
+            <img data-bind="attr: {src: thumbnailUrl}">
+        </a>
     </div>
     <div class="col-sm-2" id="$parent.cssId()">
         <button type="button" class="btn btn-default" data-toggle="modal" data-target="#hqimage" data-bind="
@@ -125,9 +125,21 @@
             <span data-bind="visible: isMediaUnmatched">{% trans 'Upload' %}</span>
         </button>
     </div>
-    <div class="col-sm-1" data-bind="visible: url">
-        <a data-bind="if: isMediaMatched, attr: {href: url}" target="_blank">
-            <img data-bind="attr: {src: thumbnailUrl}">
-        </a>
+    <div class="col-sm-3">
+        <button type="button" class="btn btn-default pull-right"
+                data-bind="
+                    visible: !$parent.editing(),
+                    click: function () {
+                        $parent.editing(true);
+                    }">
+            <i class="fa fa-cog"></i>
+            {% trans 'Set Path' %}
+        </button>
+        <span data-bind="visible: $parent.editing">
+            <input type="text" class="col-md-2 form-control" data-bind="value: customPath,
+                          valueUpdate: 'textchange',
+                          attr: {placeholder: $parents[1].backup($parent.value()).value}">
+            <span data-bind="click: function () { $parent.editing(false);}"><i class="fa fa-cog"></i></span>
+        </span>
     </div>
 </div>

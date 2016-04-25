@@ -12,6 +12,18 @@
 var MapItem = function(item, index, mappingContext){
     var self = this;
     this.key = ko.observable(item.key);
+    this.editing = ko.observable(false);
+
+    this.cssId = ko.computed(function(){
+        return makeSafeForCSS(this.key());
+    }, this);
+
+    // util function to generate icon-name of the format "module<module_id>_list_icon_<property_name>_<hash_of_item.key>"
+    this.generateIconPath = ko.computed(function(){
+        var hash_of_key = this.cssId();
+        var icon_name = "module" + mappingContext.module_id+ "_list_icon_" + mappingContext.property_name.val() + "_" + this.hash_of_key;
+        return 'jr://file/commcare/image/' + icon_name + '.png';
+    }, this);
 
     var app_manager = hqImport('app_manager/js/app_manager_media.js');
     var uploaders = hqImport('#app_manager/partials/nav_menu_media_js_common.html');
@@ -19,7 +31,7 @@ var MapItem = function(item, index, mappingContext){
     if (mappingContext.values_are_icons) {
         this.iconManager = new app_manager.AppMenuMediaManager({
             ref: {
-                "path": item.value[mappingContext.lang],
+                "path": item.value[mappingContext.lang] || self.generateIconPath(),
                 "icon_type": "icon-picture",
                 "media_type": "Image",
                 "media_class": "CommCareImage",
@@ -27,15 +39,12 @@ var MapItem = function(item, index, mappingContext){
             },
             objectMap: mappingContext.multimedia,
             uploadController: uploaders.iconUploader,
-            defaultPath: 'jr://file/commcare/image/kv-icon' + index + '.png',
-            inputElement: $("#" + makeSafeForCSS(this.key())),
-            allowEmptyPath: true,
+            defaultPath: self.generateIconPath(),
+            inputElement: $("#" + self.cssId()),
+
         });
     }
 
-    this.cssId = ko.computed(function(){
-        return makeSafeForCSS(this.key());
-    }, this);
 
     this.value = ko.computed(function() {
         // ko.observable for item.value
@@ -76,10 +85,12 @@ function MapList(o) {
     var self = this;
     self.lang = o.lang;
     self.langs = [o.lang].concat(o.langs);
+    self.module_id = o.module_id;
     self.items = ko.observableArray();
     self.duplicatedItems = ko.observableArray();
     self.values_are_icons = o.values_are_icons || false;
     self.multimedia = o.multimedia;
+    self.property_name = o.property_name;
 
     self.setItems = function (items) {
         self.items(_(items).map(function (item, i) {
@@ -157,12 +168,16 @@ uiElement.key_value_mapping = function (o) {
         var copy = new MapList({
             lang: o.lang,
             langs: o.langs,
+            module_id: o.module_id,
             items: m.getItems(),
             values_are_icons: m.values_are_icons,
             multimedia: m.multimedia,
+            property_name: o.property_name,
         });
         $modalDiv.koApplyBindings({
-            modalTitle: o.modalTitle,
+            modalTitle: ko.computed(function() {
+                return 'Edit Mapping for ' + this.property_name.val();
+            }, this),
             mapList: copy,
             save: function (data, e) {
                 if(copy.duplicatedItems().length > 0) {
