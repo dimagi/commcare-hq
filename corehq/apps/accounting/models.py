@@ -126,18 +126,24 @@ class SoftwarePlanEdition(object):
     PRO = "Pro"
     ADVANCED = "Advanced"
     ENTERPRISE = "Enterprise"
+    RESELLER = "Reseller"
+    MANAGED_HOSTING = "Managed Hosting"
     CHOICES = (
         (COMMUNITY, COMMUNITY),
         (STANDARD, STANDARD),
         (PRO, PRO),
         (ADVANCED, ADVANCED),
         (ENTERPRISE, ENTERPRISE),
+        (RESELLER, RESELLER),
+        (MANAGED_HOSTING, MANAGED_HOSTING),
     )
     ORDER = [
         COMMUNITY,
         STANDARD,
         PRO,
         ADVANCED,
+        RESELLER,
+        MANAGED_HOSTING,
     ]
 
 
