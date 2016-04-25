@@ -110,6 +110,7 @@ class Notes(ILSData):
     title = 'Notes'
     show_chart = False
     show_table = True
+    use_datatables = True
 
     @property
     def headers(self):
@@ -154,6 +155,7 @@ class RecentMessages(ILSData):
     show_chart = False
     show_table = True
     default_rows = 5
+    use_datatables = True
 
     @property
     def headers(self):

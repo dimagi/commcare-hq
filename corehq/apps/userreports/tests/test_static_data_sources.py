@@ -2,10 +2,14 @@ import os
 import uuid
 from django.test import SimpleTestCase
 from django.test.utils import override_settings
+from mock import patch, MagicMock
+
+from corehq.apps.userreports.tests.utils import domain_lite
 from corehq.util.test_utils import TestFileMixin
 from corehq.apps.userreports.models import StaticDataSourceConfiguration, DataSourceConfiguration
 
 
+@patch('corehq.apps.callcenter.data_source.get_call_center_domains', MagicMock(return_value=[domain_lite('cc1')]))
 class TestStaticDataSource(SimpleTestCase, TestFileMixin):
 
     file_path = ('data', 'static_data_sources')
@@ -18,12 +22,15 @@ class TestStaticDataSource(SimpleTestCase, TestFileMixin):
     def test_get_all(self):
         with override_settings(STATIC_DATA_SOURCES=[self.get_path('sample_static_data_source', 'json')]):
             all = list(StaticDataSourceConfiguration.all())
-            self.assertEqual(2, len(all))
-            example, dimagi = all
+            self.assertEqual(2 + 3, len(all))
+            example, dimagi = all[:2]
             self.assertEqual('example', example.domain)
             self.assertEqual('dimagi', dimagi.domain)
-            for config in all:
+            for config in all[:2]:
                 self.assertEqual('all_candidates', config.table_id)
+
+            for config in all[3:]:
+                self.assertEqual('cc1', config.domain)
 
     def test_is_static_positive(self):
         with override_settings(STATIC_DATA_SOURCES=[self.get_path('sample_static_data_source', 'json')]):

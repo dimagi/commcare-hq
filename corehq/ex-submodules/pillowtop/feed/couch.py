@@ -1,5 +1,6 @@
 from couchdbkit import ChangesStream
 from django.conf import settings
+from pillowtop.dao.couch import CouchDocumentStore
 from pillowtop.feed.interface import ChangeFeed, Change
 
 
@@ -7,6 +8,7 @@ class CouchChangeFeed(ChangeFeed):
 
     def __init__(self, couch_db, include_docs, couch_filter=None, extra_couch_view_params=None):
         self._couch_db = couch_db
+        self._document_store = CouchDocumentStore(couch_db)
         self._couch_filter = couch_filter
         self._include_docs = include_docs
         self._extra_couch_view_params = extra_couch_view_params or {}
@@ -23,18 +25,19 @@ class CouchChangeFeed(ChangeFeed):
             **extra_args
         )
         for couch_change in changes_stream:
-            yield change_from_couch_row(couch_change)
+            yield change_from_couch_row(couch_change, document_store=self._document_store)
 
     def get_latest_change_id(self):
         return get_current_seq(self._couch_db)
 
 
-def change_from_couch_row(couch_change):
+def change_from_couch_row(couch_change, document_store=None):
     return Change(
         id=couch_change['id'],
         sequence_id=couch_change.get('seq', None),
         document=couch_change.get('doc', None),
         deleted=couch_change.get('deleted', False),
+        document_store=document_store,
     )
 
 

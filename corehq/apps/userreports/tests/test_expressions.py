@@ -775,6 +775,15 @@ def test_add_days_to_date_expression(self, source_doc, count_expression, expecte
 
 @generate_cases([
     ({}, "a + b", {"a": 2, "b": 3}, 2 + 3),
+    (
+        {},
+        "timedelta_to_seconds(a - b)",
+        {
+            "a": "2016-01-01T11:30:00.000000Z",
+            "b": "2016-01-01T11:00:00.000000Z"
+        },
+        30 * 60
+    ),
     # supports string manupulation
     ({}, "str(a)+'text'", {"a": 3}, "3text"),
     # context can contain expressions
@@ -900,6 +909,19 @@ class TestFormsExpressionSpec(TestCase):
         context = EvaluationContext({"domain": "wrong-domain"}, 0)
         forms = self.expression(self.case.to_json(), context)
         self.assertEqual(forms, [])
+
+
+class TestIterationNumberExpression(SimpleTestCase):
+
+    @classmethod
+    def setUpClass(cls):
+        cls.spec = ExpressionFactory.from_spec({'type': 'base_iteration_number'})
+
+    def test_default(self):
+        self.assertEqual(0, self.spec({}, EvaluationContext({})))
+
+    def test_value_set(self):
+        self.assertEqual(7, self.spec({}, EvaluationContext({}, iteration=7)))
 
 
 class TestEvaluationContext(SimpleTestCase):

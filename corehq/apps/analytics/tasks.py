@@ -184,6 +184,7 @@ def track_user_sign_in_on_hubspot(webuser, cookies, meta, path):
         tracking_dict = {
             'created_account_in_hq': True,
             'is_a_commcare_user': True,
+            'lifecyclestage': 'lead'
         }
         tracking_dict.update(get_ab_test_properties(webuser))
         _track_on_hubspot(webuser, tracking_dict)
@@ -255,8 +256,9 @@ def track_new_user_accepted_invite_on_hubspot(webuser, cookies, meta):
 
 @analytics_task()
 def track_clicked_signup_on_hubspot(email, cookies, meta):
+    lifecycle = {'lifecyclestage': 'subscriber'}
     if email:
-        _send_form_to_hubspot(HUBSPOT_CLICKED_SIGNUP_FORM, None, cookies, meta, email=email)
+        _send_form_to_hubspot(HUBSPOT_CLICKED_SIGNUP_FORM, None, cookies, meta, extra_fields=lifecycle, email=email)
 
 
 def track_workflow(email, event, properties=None):

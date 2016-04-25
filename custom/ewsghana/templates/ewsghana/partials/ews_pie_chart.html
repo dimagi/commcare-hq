@@ -25,7 +25,6 @@
         if (chart_config.color.length !== 0) {
             chart.color(chart_config.color);
         }
-
         d3.select(chart_id + ' svg')
                 .datum(chart_data)
                 .transition().duration(500).call(chart);
@@ -41,10 +40,10 @@
         });
         $(chart_id + ' svg .nv-slice').on('mouseenter', function() {
             var $element = $(this);
-            $(this).parents('.row').find('.desc').each(function(idx, element) {
+            $(chart_id).find('.desc').each(function(idx, element) {
                 if (chart_id === '#chart_reporting_page_21' || chart_id === '#chart_reporting_page_31' ||
                     chart_id === '#chart_dashboard_report_21' || chart_id === '#chart_dashboard_report_31') {
-                    var description = chart_data[0].values.filter(function(data) {
+                    var description = chart_data.filter(function(data) {
                         return data.color === $element.attr('fill');
                     })[0].description;
                     $(element).text(description);

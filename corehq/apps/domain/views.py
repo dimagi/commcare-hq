@@ -100,8 +100,8 @@ from dimagi.utils.decorators.memoized import memoized
 from dimagi.utils.web import get_ip, json_response, get_site_domain
 from corehq.apps.users.decorators import require_can_edit_web_users
 from corehq.apps.repeaters.forms import GenericRepeaterForm, FormRepeaterForm
-from corehq.apps.repeaters.models import FormRepeater, CaseRepeater, ShortFormRepeater, AppStructureRepeater, \
-    RepeatRecord, repeater_types, RegisterGenerator
+from corehq.apps.repeaters.models import Repeater, FormRepeater, CaseRepeater, ShortFormRepeater, \
+    AppStructureRepeater, RepeatRecord, repeater_types, RegisterGenerator
 from corehq.apps.repeaters.dbaccessors import (
     get_paged_repeat_records,
     get_repeat_record_count,
@@ -520,9 +520,9 @@ class EditDhis2SettingsView(BaseProjectSettingsView):
 @require_POST
 @require_can_edit_web_users
 def drop_repeater(request, domain, repeater_id):
-    rep = FormRepeater.get(repeater_id)
+    rep = Repeater.get(repeater_id)
     rep.retire()
-    messages.success(request, "Form forwarding stopped!")
+    messages.success(request, "Forwarding stopped!")
     return HttpResponseRedirect(reverse(DomainForwardingOptionsView.urlname, args=[domain]))
 
 
@@ -1266,7 +1266,7 @@ class InternalSubscriptionManagementView(BaseAdminProjectSettingsView):
             subscription_type = None
         else:
             plan = subscription.plan_version.plan
-            if subscription.service_type == SubscriptionType.CONTRACTED:
+            if subscription.service_type == SubscriptionType.IMPLEMENTATION:
                 subscription_type = ContractedPartnerForm.slug
             elif plan.edition == SoftwarePlanEdition.ENTERPRISE:
                 subscription_type = DimagiOnlyEnterpriseForm.slug

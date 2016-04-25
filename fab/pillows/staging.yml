@@ -1,4 +1,0 @@
-# fab/pillows/staging.yml
----
-include_groups:
-  - mvp_indicators

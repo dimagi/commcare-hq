@@ -127,11 +127,7 @@ class PtopReindexer(NoArgsCommand):
         return paginate_view(*args, **kwargs)
 
     def full_couch_view_iter(self):
-        if hasattr(self.pillow, 'include_docs_when_preindexing'):
-            include_docs = self.pillow.include_docs_when_preindexing
-        else:
-            include_docs = self.pillow.include_docs
-        view_kwargs = {"include_docs": include_docs}
+        view_kwargs = {"include_docs": self.pillow.include_docs}
         if self.couch_key is not None:
             view_kwargs["key"] = self.couch_key
 

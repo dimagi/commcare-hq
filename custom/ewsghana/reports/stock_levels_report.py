@@ -41,10 +41,10 @@ class StockLevelsLegend(EWSData):
 
     @property
     def rows(self):
-        return [['<span class="icon-arrow-up" style="color:purple"/>', 'Overstock'],
-                ['<span class="icon-ok" style="color:green"/>', 'Adequate'],
-                ['<span class="icon-warning-sign" style="color:orange"/>', 'Low'],
-                ['<span class="icon-remove" style="color:red"/>', 'Stockout']]
+        return [['<span class="fa fa-arrow-up" style="color:purple"/>', 'Overstock'],
+                ['<span class="fa fa-check" style="color:green"/>', 'Adequate'],
+                ['<span class="fa fa-exclamation-triangle" style="color:orange"/>', 'Low'],
+                ['<span class="fa fa-remove" style="color:red"/>', 'Stockout']]
 
 
 class FacilityReportData(EWSData):
@@ -72,13 +72,13 @@ class FacilityReportData(EWSData):
     def get_prod_data(self):
         def get_months_until_stockout_icon(value, loc):
             if float(value) == 0.0:
-                return '%s <span class="icon-remove" style="color:red"/>' % value
+                return '%s <span class="fa fa-remove" style="color:red"/>' % value
             elif float(value) <= loc.location_type.understock_threshold:
-                return '%s <span class="icon-warning-sign" style="color:orange"/>' % value
+                return '%s <span class="fa fa-exclamation-triangle" style="color:orange"/>' % value
             elif loc.location_type.understock_threshold < float(value) < loc.location_type.overstock_threshold:
-                return '%s <span class="icon-ok" style="color:green"/>' % value
+                return '%s <span class="fa fa-check" style="color:green"/>' % value
             elif float(value) >= loc.location_type.overstock_threshold:
-                return '%s <span class="icon-arrow-up" style="color:purple"/>' % value
+                return '%s <span class="fa fa-arrow-up" style="color:purple"/>' % value
 
         state_grouping = {}
 
