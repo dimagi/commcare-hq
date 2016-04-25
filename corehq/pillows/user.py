@@ -107,7 +107,7 @@ def add_demo_user_to_user_index():
     )
 
 
-def get_user_kafka_to_elasticsearch_pillow(pillow_id='UnknownUsersPillow'):
+def get_user_kafka_to_elasticsearch_pillow(pillow_id='UserPillow'):
     checkpoint = PillowCheckpoint(
         pillow_id,
     )
