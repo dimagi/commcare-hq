@@ -873,16 +873,7 @@ class Domain(QuickCachedDocumentMixin, Document, SnapshotMixin):
         for db, related_doc_ids in get_all_doc_ids_for_domain_grouped_by_db(self.name):
             iter_bulk_delete(db, related_doc_ids, chunksize=500)
 
-        self._delete_web_users_from_domain()
         apply_deletion_operations(self.name, dynamic_deletion_operations)
-
-    def _delete_web_users_from_domain(self):
-        from corehq.apps.users.models import WebUser
-        active_web_users = WebUser.by_domain(self.name)
-        inactive_web_users = WebUser.by_domain(self.name, is_active=False)
-        for web_user in list(active_web_users) + list(inactive_web_users):
-            web_user.delete_domain_membership(self.name)
-            web_user.save()
 
     def all_media(self, from_apps=None):  # todo add documentation or refactor
         from corehq.apps.hqmedia.models import CommCareMultimedia
