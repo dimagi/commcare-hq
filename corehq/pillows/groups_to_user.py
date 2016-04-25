@@ -1,38 +1,14 @@
 from collections import namedtuple
 from corehq.apps.change_feed.consumer.feed import KafkaChangeFeed
-from corehq.apps.change_feed.document_types import get_doc_meta_object_from_document, GROUP
+from corehq.apps.change_feed.document_types import GROUP
 from corehq.apps.groups.models import Group
-from corehq.apps.users.models import CommCareUser
 from corehq.elastic import stream_es_query, get_es_new, ES_META
 from corehq.pillows.mappings.user_mapping import USER_INDEX
-from pillowtop.checkpoints.manager import get_default_django_checkpoint_for_legacy_pillow_class, PillowCheckpoint, \
-    PillowCheckpointEventHandler
-from pillowtop.listener import PythonPillow
+from pillowtop.checkpoints.manager import PillowCheckpoint, PillowCheckpointEventHandler
 from pillowtop.pillow.interface import ConstructedPillow
 from pillowtop.processors import PillowProcessor
 from pillowtop.reindexer.change_providers.couch import CouchViewChangeProvider
 from pillowtop.reindexer.reindexer import PillowReindexer
-
-
-class GroupToUserPillow(PythonPillow):
-    document_class = CommCareUser
-
-    def __init__(self):
-        checkpoint = get_default_django_checkpoint_for_legacy_pillow_class(self.__class__)
-        super(GroupToUserPillow, self).__init__(checkpoint=checkpoint)
-        self.es = get_es_new()
-        self.es_type = ES_META['users'].type
-
-    def python_filter(self, change):
-        doc_meta = get_doc_meta_object_from_document(change.get_document())
-        return doc_meta and doc_meta.primary_type == GROUP
-
-    def change_transport(self, doc_dict):
-        doc_meta = get_doc_meta_object_from_document(doc_dict)
-        if doc_meta.is_deletion:
-            remove_group_from_users(doc_dict, self.es)
-        else:
-            update_es_user_with_groups(doc_dict, self.es)
 
 
 class GroupsToUsersProcessor(PillowProcessor):
