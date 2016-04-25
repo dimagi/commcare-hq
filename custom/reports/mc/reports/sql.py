@@ -240,7 +240,7 @@ class DistrictWeekly(BaseReport):
         'custom.reports.mc.reports.fields.DistrictField',
     ]
     slug = 'district_weekly_ucr'
-    name = "UCR Relatorio Semanal aos Coordinadores do Distrito e os NEDs"
+    name = "Relatorio Semanal aos Coordinadores do Distrito e os NEDs"
     section = DISTRICT_WEEKLY_REPORT
 
     @property
@@ -384,7 +384,7 @@ class DistrictMonthly(BaseReport):
         'custom.reports.mc.reports.fields.DistrictField',
     ]
     slug = 'district_monthly_ucr'
-    name = "UCR Relatorio Mensal aos Coordinadores do Distrito e os NEDs"
+    name = "Relatorio Mensal aos Coordinadores do Distrito e os NEDs"
     section = DISTRICT_MONTHLY_REPORT
 
     @property
@@ -634,7 +634,7 @@ class HeathFacilityMonthly(DistrictMonthly):
         'corehq.apps.reports.filters.dates.DatespanFilter',
         'custom.reports.mc.reports.fields.HealthFacilityField',
     ]
-    name = "UCR Relatorio Mensal aos Supervisores dos APEs"
+    name = "Relatorio Mensal aos Supervisores dos APEs"
     section = HF_MONTHLY_REPORT
 
 
@@ -647,7 +647,7 @@ class HealthFacilityWeekly(DistrictWeekly):
     ]
     slug = 'hf_weekly_ucr'
     #TODO change to ugettext when old reports remove
-    name = "UCR Relatorio Semanal aos Supervisores dos APEs"
+    name = "Relatorio Semanal aos Supervisores dos APEs"
     section = HF_WEEKLY_REPORT
 
     @property
