@@ -17,9 +17,8 @@ from corehq.form_processor.utils.general import should_use_sql_backend
 from corehq.pillows.case import CasePillow
 from corehq.pillows.mappings.case_mapping import CASE_ES_TYPE
 from corehq.pillows.mappings.case_search_mapping import CASE_SEARCH_INDEX, \
-    CASE_SEARCH_MAPPING, CASE_SEARCH_ALIAS
+    CASE_SEARCH_MAPPING, CASE_SEARCH_ALIAS, CASE_SEARCH_INDEX_INFO
 from pillowtop.checkpoints.manager import PillowCheckpoint
-from pillowtop.es_utils import ElasticsearchIndexInfo
 from pillowtop.feed.interface import Change
 from pillowtop.pillow.interface import ConstructedPillow
 from pillowtop.processors.elastic import ElasticProcessor
@@ -91,7 +90,7 @@ def get_case_search_to_elasticsearch_pillow(pillow_id='CaseSearchToElasticsearch
     )
     case_processor = CaseSearchPillowProcessor(
         elasticsearch=get_es_new(),
-        index_info=ElasticsearchIndexInfo(index=CASE_SEARCH_INDEX, type=CASE_ES_TYPE),
+        index_info=CASE_SEARCH_INDEX_INFO,
         doc_prep_fn=transform_case_for_elasticsearch
     )
     change_feed = KafkaChangeFeed(topics=[topics.CASE, topics.CASE_SQL], group_id='cases-to-es')
