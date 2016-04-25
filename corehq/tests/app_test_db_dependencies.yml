@@ -14,7 +14,6 @@ default:
   - two_factor
   - django_otp.plugins.otp_static
   - django_otp.plugins.otp_totp
-  - corehq.couchapps
   - corehq.apps.tzmigration
   - couchforms
   - corehq.apps.users
@@ -30,6 +29,7 @@ testapps.test_pillowtop:
   - corehq.apps.accounting
   - corehq.apps.domain
   - corehq.apps.hqadmin
+  - corehq.couchapps
   - corehq.form_processor
   - corehq.sql_accessors
   - corehq.sql_proxy_accessors
@@ -40,6 +40,7 @@ casexml.apps.phone:
   - django_digest
   - casexml.apps.phone
   - casexml.apps.stock
+  - corehq.couchapps
   - corehq.form_processor
   - corehq.sql_accessors
   - corehq.sql_proxy_accessors
@@ -71,6 +72,7 @@ casexml.apps.phone:
 casexml.apps.case:
   - casexml.apps.phone
   - casexml.apps.stock
+  - corehq.couchapps
   - corehq.form_processor
   - corehq.sql_accessors
   - corehq.sql_proxy_accessors
@@ -83,6 +85,7 @@ casexml.apps.case:
 casexml.apps.stock:
   - casexml.apps.phone
   - casexml.apps.stock
+  - corehq.couchapps
   - corehq.form_processor
   - corehq.sql_accessors
   - corehq.sql_proxy_accessors
@@ -104,6 +107,7 @@ corehq.apps.app_manager:
   - django.contrib.admin
   - djangular
   - casexml.apps.stock
+  - corehq.couchapps
   - corehq.apps.accounting
   - corehq.apps.builds
   - corehq.apps.custom_data_fields
@@ -138,6 +142,7 @@ corehq.apps.commtrack:
   - casexml.apps.case
   - casexml.apps.phone
   - casexml.apps.stock
+  - corehq.couchapps
   - corehq.form_processor
   - corehq.sql_accessors
   - corehq.sql_proxy_accessors
@@ -168,6 +173,7 @@ corehq.apps.locations:
   - casexml.apps.case
   - casexml.apps.phone
   - casexml.apps.stock
+  - corehq.couchapps
   - corehq.form_processor
   - corehq.sql_accessors
   - corehq.sql_proxy_accessors
@@ -196,6 +202,7 @@ corehq.apps.userreports:
   - casexml.apps.case
   - casexml.apps.phone
   - casexml.apps.stock
+  - corehq.couchapps
   - corehq.form_processor
   - corehq.sql_accessors
   - corehq.sql_proxy_accessors
@@ -218,6 +225,7 @@ couchforms:
   - corehq.apps.reminders
   - corehq.apps.sms
   - corehq.apps.smsforms
+  - corehq.couchapps
   - corehq.form_processor
   - corehq.sql_accessors
   - corehq.sql_proxy_accessors
@@ -235,6 +243,7 @@ corehq.apps.receiverwrapper:
   - corehq.apps.reminders
   - corehq.apps.sms
   - corehq.apps.smsforms
+  - corehq.couchapps
   - corehq.form_processor
   - corehq.sql_accessors
   - corehq.sql_proxy_accessors
@@ -259,10 +268,12 @@ corehq.form_processor:
   - corehq.apps.reminders
   - corehq.apps.sms
   - corehq.apps.smsforms
+  - corehq.couchapps
   - corehq.sql_accessors
   - corehq.sql_proxy_accessors
 corehq.apps.toggle_ui: []
-corehq.doctypemigrations: []
+corehq.doctypemigrations:
+  - corehq.couchapps
 corehq.apps.repeaters:
   - casexml.apps.case
   - casexml.apps.stock
@@ -270,6 +281,7 @@ corehq.apps.repeaters:
   - corehq.apps.locations
   - corehq.apps.products
   - corehq.apps.domain
+  - corehq.couchapps
   - phonelog
   - django_prbac
   - corehq.form_processor
@@ -290,6 +302,7 @@ corehq.apps.accounting:
   - django_prbac
   - corehq.apps.domain
   - corehq.apps.userhack
+  - corehq.couchapps
   - corehq.apps.sms
   - corehq.apps.smsforms
   - auditcare
@@ -325,6 +338,7 @@ corehq.apps.callcenter:
   - corehq.apps.sofabed
   - corehq.apps.tour
   - corehq.apps.userhack
+  - corehq.couchapps
   - corehq.form_processor
   - corehq.sql_accessors
   - corehq.sql_proxy_accessors
@@ -347,6 +361,7 @@ corehq.apps.hqcase:
   - corehq.apps.reminders
   - corehq.apps.tour
   - corehq.apps.userhack
+  - corehq.couchapps
   - corehq.form_processor
   - corehq.sql_accessors
   - django.contrib.admin
@@ -372,6 +387,7 @@ corehq.apps.data_interfaces:
   - corehq.apps.hqwebapp
   - corehq.apps.style
   - corehq.apps.tour
+  - corehq.couchapps
   - corehq.form_processor
   - corehq.sql_accessors
   - compressor
@@ -401,6 +417,7 @@ corehq.apps.users:
   - corehq.apps.smsforms
   - corehq.apps.tour
   - corehq.apps.userhack
+  - corehq.couchapps
   - corehq.form_processor
   - corehq.sql_accessors
   - custom.ilsgateway
@@ -423,6 +440,7 @@ corehq.apps.api:
   - corehq.sql_accessors
   - corehq.sql_proxy_accessors
 # At least one of the following items is required, I don't know which ones
+  - corehq.couchapps
   - corehq.apps.sms
   - corehq.apps.smsforms
   - auditcare
@@ -432,4 +450,5 @@ corehq.apps.api:
   - corehq.apps.tour
   - touchforms.formplayer
   - corehq.apps.smsbillables
-corehq.apps.performance_sms: []
+corehq.apps.performance_sms:
+  - corehq.couchapps
