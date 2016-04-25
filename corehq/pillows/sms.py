@@ -1,7 +1,7 @@
 from corehq.apps.change_feed import topics
 from corehq.apps.change_feed.consumer.feed import KafkaChangeFeed
 from corehq.elastic import get_es_new
-from corehq.pillows.mappings.sms_mapping import SMS_INDEX, SMS_INDEX_INFO
+from corehq.pillows.mappings.sms_mapping import SMS_INDEX_INFO
 from pillowtop.checkpoints.manager import PillowCheckpoint, PillowCheckpointEventHandler
 from pillowtop.pillow.interface import ConstructedPillow
 from pillowtop.processors.elastic import ElasticProcessor
@@ -9,8 +9,6 @@ from pillowtop.processors.elastic import ElasticProcessor
 
 SMS_PILLOW_CHECKPOINT_ID = 'sql-sms-to-es'
 SMS_PILLOW_KAFKA_CONSUMER_GROUP_ID = 'sql-sms-to-es'
-
-ES_SMS_INDEX = SMS_INDEX
 
 
 def get_sql_sms_pillow(pillow_id):
