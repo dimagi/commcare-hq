@@ -3,7 +3,6 @@ import re
 from sqlagg.base import AliasColumn
 from sqlagg.filters import EQ, OR, AND, BETWEEN, NOTEQ
 from corehq.apps.userreports.sql import get_table_name
-from corehq.toggles import USER_CONFIGURABLE_REPORTS
 from dimagi.utils.decorators.memoized import memoized
 from sqlagg.columns import *
 from django.utils.translation import ugettext as _, ugettext_noop
@@ -138,10 +137,6 @@ class BaseReport(McMixin, SqlTabularReport, DatespanMixin, CustomProjectReport, 
     @property
     def table_name(self):
         return get_table_name(self.config['domain'], "malaria_consortium")
-
-    @classmethod
-    def show_in_navigation(cls, domain=None, project=None, user=None):
-        return user and USER_CONFIGURABLE_REPORTS.enabled(user.username)
 
     @property
     def config(self):
