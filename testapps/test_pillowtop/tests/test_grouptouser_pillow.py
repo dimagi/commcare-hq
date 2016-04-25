@@ -4,8 +4,9 @@ from corehq.apps.groups.models import Group
 
 from corehq.apps.users.models import CommCareUser
 from corehq.elastic import get_es_new
+from corehq.pillows.groups_to_user import update_es_user_with_groups, GroupToUserPillow
 from corehq.pillows.mappings.user_mapping import USER_INDEX, USER_INDEX_INFO
-from corehq.pillows.user import UserPillow, update_es_user_with_groups, GroupToUserPillow
+from corehq.pillows.user import UserPillow
 from corehq.util.elastic import ensure_index_deleted
 from pillowtop.es_utils import initialize_index_and_mapping
 

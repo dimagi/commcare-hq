@@ -1438,7 +1438,7 @@ PILLOWTOPS = {
             'class': 'pillowtop.pillow.interface.ConstructedPillow',
             'instance': 'corehq.pillows.group.get_group_pillow',
         },
-        'corehq.pillows.user.GroupToUserPillow',
+        'corehq.pillows.groups_to_user.GroupToUserPillow',
         'corehq.pillows.sofabed.FormDataPillow',
         'corehq.pillows.sofabed.CaseDataPillow',
         # TODO: Remove this once ConstructedPillows can deal with their own indices
