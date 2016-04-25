@@ -1,8 +1,6 @@
 FormplayerFrontend.module("Entities", function (Entities, FormplayerFrontend, Backbone, Marionette, $, _) {
 
-    Entities.UserModel = Backbone.Model.extend({
-
-    });
+    Entities.UserModel = Backbone.Model.extend({});
 
     Entities.MenuSelect = Backbone.Model.extend({
         urlRoot: "menuSelects"
@@ -14,14 +12,32 @@ FormplayerFrontend.module("Entities", function (Entities, FormplayerFrontend, Ba
 
         parse: function (response) {
             this.sessionId = response.session_id;
-            this.sequenceId = response.sequenceId;
+            this.sequenceId = response.seq_id;
+            this.title = response.title;
             FormplayerFrontend.request('currentUser').sessionId = this.sessionId;
-            if(response.commands){
+
+            if (response.commands) {
                 this.type = "commands";
                 return response.commands;
-            } else if(response.entities){
+            }
+            else if (response.entities) {
                 this.type = "entities";
+                this.action = response.action;
+                this.styles = response.styles;
                 return response.entities;
+            }
+            else if (response.details) {
+                this.type = "details";
+                this.styles = response.styles;
+                this.headers = response.headers;
+                this.details = response.details;
+
+                var model = [];
+                for (i = 0; i < this.details.length; i += 1) {
+                    current = {'header': this.headers[i], 'data': this.details[i]};
+                    model.push(current)
+                }
+                return model;
             }
         },
 

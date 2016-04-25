@@ -28,6 +28,11 @@ FormplayerFrontend.module("AppSelect.MenuList", function (MenuList, FormplayerFr
                         collection: options
                     });
                 }
+                else if(options.type === "details") {
+                    var menuListView = new MenuList.DetailListView({
+                        collection: options
+                    });
+                }
 
                 FormplayerFrontend.regions.main.show(menuListView);
             });

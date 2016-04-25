@@ -42,4 +42,26 @@ FormplayerFrontend.module("AppSelect.MenuList", function (MenuList, FormplayerFr
         childView: MenuList.CaseView,
         childViewContainer: "tbody"
     });
+
+    MenuList.DetailView = Marionette.ItemView.extend({
+        tagName: "tr",
+        template: "#detail-view-item",
+
+        events: {
+            "click": "rowClick"
+        },
+
+        rowClick: function (e) {
+            e.preventDefault();
+            FormplayerFrontend.trigger("menu:select", this.model);
+        }
+    });
+
+    MenuList.DetailListView = Marionette.CompositeView.extend({
+        tagName: "table",
+        className: "table table-hover",
+        template: "#detail-view-list",
+        childView: MenuList.DetailView,
+        childViewContainer: "tbody"
+    });
 });
