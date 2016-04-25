@@ -39,20 +39,3 @@
     {% endblock %}
     </tbody>
 </table>
-
-<script type="text/javascript">
-   {% if report_table and report_table.datatables %}
-        var dataTablesDom = "frt<'row-fluid dataTables_control'<'span5'il><'span7'p>>";
-
-        var params = {
-                sDom: dataTablesDom,
-                "sPaginationType": "bootstrap",
-                iDisplayLength: 10,
-                iDisplayStart: 0,
-                sScrollX: "100%"
-            };
-
-        var id = '#report_table_{{ report_table.slug }}';
-        var datatable = $(id).dataTable(params);
-    {% endif %}
-</script>
