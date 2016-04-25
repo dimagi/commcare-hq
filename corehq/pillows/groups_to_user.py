@@ -1,10 +1,14 @@
 from collections import namedtuple
+from corehq.apps.change_feed.consumer.feed import KafkaChangeFeed
 from corehq.apps.change_feed.document_types import get_doc_meta_object_from_document, GROUP
 from corehq.apps.users.models import CommCareUser
 from corehq.elastic import stream_es_query, get_es_new, ES_META
 from corehq.pillows.mappings.user_mapping import USER_INDEX
-from pillowtop.checkpoints.manager import get_default_django_checkpoint_for_legacy_pillow_class
+from pillowtop.checkpoints.manager import get_default_django_checkpoint_for_legacy_pillow_class, PillowCheckpoint, \
+    PillowCheckpointEventHandler
 from pillowtop.listener import PythonPillow
+from pillowtop.pillow.interface import ConstructedPillow
+from pillowtop.processors import PillowProcessor
 
 
 class GroupToUserPillow(PythonPillow):
@@ -26,6 +30,33 @@ class GroupToUserPillow(PythonPillow):
             remove_group_from_users(doc_dict, self.es)
         else:
             update_es_user_with_groups(doc_dict, self.es)
+
+
+class GroupsToUsersProcessor(PillowProcessor):
+    def __init__(self):
+        self._es = get_es_new()
+
+    def process_change(self, pillow_instance, change, do_set_checkpoint):
+        if change.deleted:
+            remove_group_from_users(change.get_document(), self._es)
+        else:
+            update_es_user_with_groups(change.get_document(), self._es)
+
+
+def get_group_to_user_pillow(pillow_id='GroupToUserPillow'):
+    checkpoint = PillowCheckpoint(
+        pillow_id,
+    )
+    processor = GroupsToUsersProcessor()
+    return ConstructedPillow(
+        name=pillow_id,
+        checkpoint=checkpoint,
+        change_feed=KafkaChangeFeed(topics=[GROUP], group_id='groups-to-users'),
+        processor=processor,
+        change_processed_event_handler=PillowCheckpointEventHandler(
+            checkpoint=checkpoint, checkpoint_frequency=100,
+        ),
+    )
 
 
 def remove_group_from_users(group_doc, es_client):

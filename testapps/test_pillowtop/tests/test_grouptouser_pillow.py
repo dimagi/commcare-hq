@@ -1,14 +1,18 @@
 import uuid
 from django.test import SimpleTestCase, TestCase
+from corehq.apps.change_feed import data_sources
+from corehq.apps.change_feed.document_types import change_meta_from_doc, GROUP
+from corehq.apps.change_feed.producer import producer
 from corehq.apps.groups.models import Group
 
 from corehq.apps.users.models import CommCareUser
 from corehq.elastic import get_es_new
-from corehq.pillows.groups_to_user import update_es_user_with_groups, GroupToUserPillow
+from corehq.pillows.groups_to_user import update_es_user_with_groups, get_group_to_user_pillow
 from corehq.pillows.mappings.user_mapping import USER_INDEX, USER_INDEX_INFO
 from corehq.pillows.user import UserPillow
 from corehq.util.elastic import ensure_index_deleted
 from pillowtop.es_utils import initialize_index_and_mapping
+from testapps.test_pillowtop.utils import get_current_kafka_seq
 
 
 class GroupToUserPillowTest(SimpleTestCase):
@@ -104,14 +108,17 @@ class GroupToUserPillowDbTest(TestCase):
         _create_es_user(self.es_client, user_id, domain)
         _assert_es_user_and_groups(self, self.es_client, user_id, None, None)
 
-        # make and save group
+        # create and save a group
         group = Group(domain=domain, name='g1', users=[user_id])
         group.save()
 
+        # send to kafka
+        since = get_current_kafka_seq(GROUP)
+        producer.send_change(GROUP, _group_to_change_meta(group.to_json()))
+
         # process using pillow
-        pillow = GroupToUserPillow()
-        pillow.use_chunking = False  # hack - make sure the pillow doesn't chunk
-        pillow.process_changes(since=0, forever=False)
+        pillow = get_group_to_user_pillow()
+        pillow.process_changes(since=since, forever=False)
 
         # confirm updated in elasticsearch
         self.es_client.indices.refresh(USER_INDEX)
@@ -121,10 +128,22 @@ class GroupToUserPillowDbTest(TestCase):
     def test_pillow_deletion(self):
         user_id, group = self.test_pillow()
         group.soft_delete()
-        pillow = GroupToUserPillow()
-        pillow.use_chunking = False  # hack - make sure the pillow doesn't chunk
-        pillow.process_changes(since=0, forever=False)
+
+        # send to kafka
+        since = get_current_kafka_seq(GROUP)
+        producer.send_change(GROUP, _group_to_change_meta(group.to_json()))
+
+        pillow = get_group_to_user_pillow()
+        pillow.process_changes(since=since, forever=False)
 
         # confirm removed in elasticsearch
         self.es_client.indices.refresh(USER_INDEX)
         _assert_es_user_and_groups(self, self.es_client, user_id, [], [])
+
+
+def _group_to_change_meta(group):
+    return change_meta_from_doc(
+        document=group,
+        data_source_type=data_sources.COUCH,
+        data_source_name=Group.get_db().dbname,
+    )
