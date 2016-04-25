@@ -204,16 +204,10 @@
         "name": "GroupPillow"
     },
     "GroupToUserPillow": {
-        "advertised_name": "corehq.pillows.user.GroupToUserPillow.testhq",
-        "change_feed_type": "CouchChangeFeed",
-        "checkpoint_id": "corehq.pillows.user.GroupToUserPillow.testhq",
-        "couch_filter": null,
-        "couchdb_type": "CachedCouchDB",
-        "couchdb_uri": "http://{COUCH_SERVER_ROOT}/test_commcarehq__users",
-        "document_class": "CommCareUser",
-        "extra_args": {},
-        "full_class_name": "corehq.pillows.user.GroupToUserPillow",
-        "include_docs": false,
+        "advertised_name": "GroupToUserPillow",
+        "change_feed_type": "KafkaChangeFeed",
+        "checkpoint_id": "GroupToUserPillow",
+        "full_class_name": "pillowtop.pillow.interface.ConstructedPillow",
         "name": "GroupToUserPillow"
     },
     "ImmunizationHmisCaseFluffPillow": {
