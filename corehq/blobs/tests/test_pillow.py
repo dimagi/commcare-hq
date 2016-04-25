@@ -5,7 +5,7 @@ from couchdbkit.exceptions import ResourceNotFound
 from testil import assert_raises, Config
 
 
-class TestBlobDeletionPillow(BaseTestCase):
+class TestBlobDeletionProcessor(BaseTestCase):
 
     def setUp(self):
         super(TestBlobDeletionPillow, self).setUp()
