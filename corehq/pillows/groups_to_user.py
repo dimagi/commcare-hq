@@ -1,6 +1,7 @@
 from collections import namedtuple
 from corehq.apps.change_feed.consumer.feed import KafkaChangeFeed
 from corehq.apps.change_feed.document_types import get_doc_meta_object_from_document, GROUP
+from corehq.apps.groups.models import Group
 from corehq.apps.users.models import CommCareUser
 from corehq.elastic import stream_es_query, get_es_new, ES_META
 from corehq.pillows.mappings.user_mapping import USER_INDEX
@@ -9,6 +10,8 @@ from pillowtop.checkpoints.manager import get_default_django_checkpoint_for_lega
 from pillowtop.listener import PythonPillow
 from pillowtop.pillow.interface import ConstructedPillow
 from pillowtop.processors import PillowProcessor
+from pillowtop.reindexer.change_providers.couch import CouchViewChangeProvider
+from pillowtop.reindexer.reindexer import PillowReindexer
 
 
 class GroupToUserPillow(PythonPillow):
@@ -91,3 +94,18 @@ def stream_user_sources(user_ids):
         group_names = result.get('fields', {}).get("__group_names", [])
         group_names = set(group_names) if isinstance(group_names, list) else {group_names}
         yield UserSource(result['_id'], group_ids, group_names)
+
+
+def get_groups_to_user_reindexer():
+    return PillowReindexer(
+        pillow=get_group_to_user_pillow(),
+        change_provider=CouchViewChangeProvider(
+            couch_db=Group.get_db(),
+            view_name='all_docs/by_doc_type',
+            view_kwargs={
+                'startkey': ['Group'],
+                'endkey': ['Group', {}],
+                'include_docs': True,
+            }
+        ),
+    )
