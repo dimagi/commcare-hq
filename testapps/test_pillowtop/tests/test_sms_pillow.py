@@ -14,6 +14,7 @@ from testapps.test_pillowtop.utils import get_test_kafka_consumer
 
 @patch('corehq.apps.sms.change_publishers.do_publish')
 class SqlSMSPillowTest(TestCase):
+    dependent_apps = ['corehq.apps.sms', 'corehq.apps.smsforms']
 
     domain = 'sms-pillow-test-domain'
 
