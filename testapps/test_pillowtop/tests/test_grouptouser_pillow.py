@@ -8,10 +8,9 @@ from corehq.apps.groups.models import Group
 from corehq.apps.groups.tests import delete_all_groups
 
 from corehq.apps.users.models import CommCareUser
-from corehq.elastic import get_es_new
+from corehq.elastic import get_es_new, send_to_elasticsearch
 from corehq.pillows.groups_to_user import update_es_user_with_groups, get_group_to_user_pillow
 from corehq.pillows.mappings.user_mapping import USER_INDEX, USER_INDEX_INFO
-from corehq.pillows.user import UserPillow
 from corehq.util.elastic import ensure_index_deleted
 from pillowtop.es_utils import initialize_index_and_mapping
 from testapps.test_pillowtop.utils import get_current_kafka_seq
@@ -88,7 +87,7 @@ def _create_es_user(es_client, user_id, domain):
         first_name='Harry',
         last_name='Casual',
     )
-    UserPillow().change_transport(user.to_json())
+    send_to_elasticsearch('users', user.to_json())
     es_client.indices.refresh(USER_INDEX)
     return user
 
