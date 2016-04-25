@@ -1,16 +1,17 @@
-{% extends "reports/async/bootstrap2/basic.html" %}
+{% extends "reports/async/bootstrap3/basic.html" %}
 {% load hq_shared_tags %}
 {% load report_tags %}
 {% load i18n %}
 
-{% block js %} {{ block.super }}
-    <script src="{% static 'ewsghana/report_links.js' %}"></script>
-    <script src='{% static 'ewsghana/js/lib/leaflet-image/leaflet-image.min.js' %}'></script>
-{% endblock %}
 {% block js-inline %}
     {{ block.super }}
     <script>
-        add_report_links({{ context.slugs|JSON }});
+        $.when(
+            $.getScript("{% static 'ewsghana/report_links.js' %}"),
+            $.getScript("{% static 'ewsghana/js/lib/leaflet-image/leaflet-image.min.js' %}")
+        ).done(function () {
+            add_report_links({{ context.slugs|JSON }});
+        });
     </script>
 {% endblock %}
 

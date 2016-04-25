@@ -8,12 +8,12 @@
             <tr>
                 <th rowspan="1">
                     <div>
-                        <i class="icon-white"></i>User
+                        <i class="icon-white fa dt-sort-icon"></i>User
                     </div>
                 </th>
                 <th rowspan="1">
                     <div>
-                        <i class="icon-white"></i>Phone Number
+                        <i class="icon-white fa dt-sort-icon"></i>Phone Number
                     </div>
                 </th>
             </tr>
@@ -32,12 +32,12 @@
             <tr>
                 <th rowspan="1">
                     <div>
-                        <i class="icon-white"></i>User
+                        <i class="icon-white fa dt-sort-icon"></i>User
                     </div>
                 </th>
                 <th rowspan="1">
                     <div>
-                        <i class="icon-white"></i>Email
+                        <i class="icon-white fa dt-sort-icon"></i>Email
                     </div>
                 </th>
             </tr>
@@ -74,29 +74,33 @@
         </tr>
         </tbody>
         <tr>
-            <td><button id="in-charge-button" class="btn btn-small" data-target="#configureInCharge" data-toggle="modal">Configure In Charge</button></td>
+            <td><button id="in-charge-button" class="btn btn-default btn-sm" data-target="#configureInCharge" data-toggle="modal">Configure In Charge</button></td>
         </tr>
     </table>
     {% if rendered_as != 'email' %}
-        <div class="modal hide fade" id="configureInCharge">
-            <div class="modal-header">
-                <a class="close" data-dismiss="modal" data-bind="click: cancel">&times;</a>
-                <h3>
-                    {% trans "Configure In Charge users" %}
-                </h3>
-            </div>
-            <div class="modal-body">
-                <input type="hidden" name="users" value="in_charge" />
-                <div class="control-group">
-                    <label class="control-label" for="in_charge_select">{% trans "Select In Charge users" %}</label>
-                    <div class="controls">
-                        <select style="width: 250px" multiple data-bind="options: districtInCharges, optionsText: 'optionsText', optionsValue: 'id', selectedOptions: selectedUsers, select2: {}"></select>
+        <div class="modal fade" id="configureInCharge">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <a class="close" data-dismiss="modal" data-bind="click: cancel">&times;</a>
+                        <h4 class="modal-title">
+                            {% trans "Configure In Charge users" %}
+                        </h4>
+                    </div>
+                    <div class="modal-body">
+                        <input type="hidden" name="users" value="in_charge" />
+                        <div class="form-group">
+                            <label class="control-label col-sm-3" for="in_charge_select">{% trans "Select In Charge users" %}</label>
+                            <div class="col-sm-9">
+                                <select class="form-control" multiple data-bind="options: districtInCharges, optionsText: 'optionsText', optionsValue: 'id', selectedOptions: selectedUsers, select2: {}"></select>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button id='in_charge_button' data-bind="click: save" class="btn btn-success" type="submit">{% trans "Save" %}</button>
+                        <a href="#" class="btn btn-default" data-dismiss="modal" data-bind="click: cancel">{% trans "Cancel" %}</a>
                     </div>
                 </div>
-            </div>
-            <div class="modal-footer">
-                <button id='in_charge_button' data-bind="click: save" class="btn btn-success" type="submit">{% trans "Save" %}</button>
-                <a href="#" class="btn" data-dismiss="modal" data-bind="click: cancel">{% trans "Cancel" %}</a>
             </div>
         </div>
     {% endif %}

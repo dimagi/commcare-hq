@@ -4,7 +4,7 @@
 
 
 {% if report.needs_filters %}
-    {% include 'reports/bootstrap2/partials/description.html' %}
+    {% include 'reports/bootstrap3/partials/description.html' %}
 {% else %}
     <div style="float: left;" class="{{ thisreport.css_class }}">
         <div class="media">
@@ -14,7 +14,7 @@
                     {{ report_table.title }}
                  </span>
                  {% if report_table.searchable %}
-                     <span style="position: absolute; right: 150px">
+                     <span class="pull-right">
                          <label>Search: <input type="text" class="filter-box" aria-controls="report_table_inventory_region_table"></label>
                      </span>
                  {% endif %}
@@ -31,10 +31,10 @@
                     <tr>
                         {% for header in report_table.headers %}
                             <th {% if not report_table.pagination.is_on %}data-sort="{{ header.sort_type }}" data-sortdir="{{ header.sort_direction }}"{% endif %} {% if header.css_class %}class="{{ header.css_class }}"{% endif %}>
-                                <i class="icon-white"></i>
+                                <i class="icon-white fa dt-sort-icon"></i>
                                 {% if header.html %}{{ header.html }}{% else %}{{ header|linebreaksbr }}{% endif %}
                                 {% if header.help_text %}
-                                    <i class="icon-white icon-question-sign header-tooltip" title="{{ header.help_text }}"></i>
+                                    <i class="fa fa-question-circle header-tooltip" title="{{ header.help_text }}"></i>
                                 {% endif %}
                             </th>
                         {% endfor %}
@@ -106,62 +106,61 @@
             });
         {% endif %}
 
+        var datatable;
         {% if report_table and report_table.datatables and thisreport.show_table %}
-            {% if report_table.slug != 'product_selection_pane'%}
-                var dataTablesDom = "frt<'row-fluid dataTables_control'<'span6'il><'span6'p>>";
-                var params = {
-                    sDom: dataTablesDom,
-                    "sPaginationType": "bootstrap",
-                    iDisplayLength: {{ report_table.default_rows }},
-                    iDisplayStart: 0,
-                    sScrollX: "100%",
-                    autoWidth: true
-                };
+            var reportTables = new HQReportDataTables({
+                dataTableElem: '#report_table_{{ report_table.slug }}',
+                defaultRows: {{ report_table.default_rows|default:10 }},
+                startAtRowNum: {{ report_table.start_at_row|default:0 }},
+                showAllRowsOption: {{ report_table.show_all_rows|JSON }},
+                useBootstrap3: true,
+                paginationType: 'bs_normal',
+                loadingTemplateSelector: '#js-template-loading-report'
+            });
+            if (typeof standardHQReport !== 'undefined') {
+                standardHQReport.handleTabularReportCookies(reportTables);
+            }
+            reportTables.render();
+            datatable = reportTables.datatable;
+            $('.filter-box').on('keyup', function () {
+                datatable.fnFilter(this.value);
+            });
 
-                var id = '#report_table_{{ report_table.slug }}';
-                var datatable = $(id).dataTable(params);
-                window.test = datatable;
-                $('.filter-box').on('keyup', function () {
-                    datatable.fnFilter(this.value);
+            var show_hide_table_columns = function(element) {
+                var col_idx = $(element).attr('data-column');
+                var bVis = datatable.fnSettings().aoColumns[col_idx].bVisible;
+                datatable.fnSetColumnVis( col_idx, bVis ? false : true );
+            };
+
+            var show_hide_chart_data = function() {
+                var data =  JSON.parse(JSON.stringify(multibar_chart_data));
+                var productCodes = [];
+                $("#report_table_product_selection_pane input:not(:checked)").each(function () {
+                    productCodes.push($(this).attr('value'));
                 });
-
-                var show_hide_table_columns = function(element) {
-                    var col_idx = $(element).attr('data-column');
-                    var bVis = datatable.fnSettings().aoColumns[col_idx].bVisible;
-                    datatable.fnSetColumnVis( col_idx, bVis ? false : true );
-                };
-
-                var show_hide_chart_data = function() {
-                    var data =  JSON.parse(JSON.stringify(multibar_chart_data));
-                    var productCodes = [];
-                    $("#report_table_product_selection_pane input:not(:checked)").each(function () {
-                        productCodes.push($(this).attr('value'));
+                for(var i = 0; i < data.length; i++) {
+                    data[i].values = jQuery.grep(data[i].values, function(value) {
+                        return jQuery.inArray(value.x, productCodes) === -1;
                     });
-                    for(var i = 0; i < data.length; i++) {
-                        data[i].values = jQuery.grep(data[i].values, function(value) {
-                            return jQuery.inArray(value.x, productCodes) === -1;
-                        });
-                    }
-                    d3.select(multibar_chart_id + ' svg')
-                        .datum(data)
-                        .transition().duration(100).call(multibar_chart);
-                };
+                }
+                d3.select(multibar_chart_id + ' svg')
+                    .datum(data)
+                    .transition().duration(100).call(multibar_chart);
+            };
 
-                $('.toggle-column').bind('click', function() {
-                    show_hide_table_columns(this);
-                    show_hide_chart_data();
-                    if ($('.toggle-column:checked').length == 10) {
-                        $(".toggle-column:checkbox:not(:checked)").prop('disabled', true)
-                    } else {
-                        $(".toggle-column:checkbox:not(:checked)").prop('disabled', false)
-                    }
-                });
-
-            {% endif %}
+            $('.toggle-column').bind('click', function() {
+                show_hide_table_columns(this);
+                show_hide_chart_data();
+                if ($('.toggle-column:checked').length == 10) {
+                    $(".toggle-column:checkbox:not(:checked)").prop('disabled', true)
+                } else {
+                    $(".toggle-column:checkbox:not(:checked)").prop('disabled', false)
+                }
+            });
         {% endif %}
 
         $(function() {
-            $('.header-popover').popout({
+            $('.header-popover').popover({
                 trigger: 'hover',
                 placement: 'bottom'
             });

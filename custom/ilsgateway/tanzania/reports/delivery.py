@@ -20,6 +20,7 @@ class LeadTimeHistory(ILSData):
     slug = "lead_time_history"
     show_chart = False
     searchable = True
+    use_datatables = True
 
     @property
     def headers(self):
