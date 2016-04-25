@@ -49,7 +49,6 @@ branches:
   - vellum-staging # J$ 11/13
   - show-form-case-refs-in-summary # j$ 1/29
 #  - revamp-multimedia # Jenny 2/16
-  # B3 Report Migration branches
   - certificate-validation # Cal 3/10
   - knockout-3-3 # Jenny 3/30
   - inline-editing # Jenny 4/9
