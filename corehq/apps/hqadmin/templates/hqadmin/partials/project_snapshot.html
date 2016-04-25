@@ -25,12 +25,5 @@
         <p>No PRs were merged since last deploy.</p>
         {% endif %}
         <p>Here's the complete diff on github: <a href="{{ compare_url }}">{{ compare_url }}</a></p>
-        {% if compare_url != compare_url_check %}
-            <p style="color: red; background-color: pink">
-                But oddly this differs from the link I just posted on Slack:
-                <a href="{{ compare_url_check }}">{{ compare_url_check }}</a>.
-                There's probably a bug in my code.
-            </p>
-        {% endif %}
     </body>
 </html>
