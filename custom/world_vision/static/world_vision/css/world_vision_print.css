@@ -1,14 +1,8 @@
-.accordion-inner {
-    width: 100%;
-}
-
 svg {
     overflow: visible;
 }
 
-.span6.hide {
-    width: 100% !important;
-}
+
 
 .nv-controlsWrap, .icon-question-sign, .accordion-heading, br, .hq-help {
     display: none;
@@ -22,21 +16,7 @@ td {
     font-size: small !important;
 }
 
-.mother_child_report .row h4 {
-    margin-top: -0.75cm;
-}
-
-.mother_child_report .row:first-of-type h4 {
-    margin-top: -0.35cm;
-    margin-bottom: -0.4cm;
-}
-
-.mother_child_report .row:nth-last-of-type(4) h4, .mother_child_report .row:last-of-type h4 {
-    margin-top: auto;
-}
-
-.mother_child_report table, .mother_child_report .row {
-    width: 8cm !important;
+.mother_child_report table, .mother_child_report > .row {
     margin-left: 0.5cm;
     margin-bottom: 5px;
     float:left;
@@ -44,38 +24,15 @@ td {
     page-break-inside: avoid;
 }
 
-.mother_report table, .child_report table {
-    width: 12cm;
-    margin-left: 0.5cm;
-    margin-bottom: 30px;
-}
-
-.mother_report table + .row, .mother_report .row + .row, .child_report table + .row, .child_report .row + .row {
-    width: 8cm;
-    margin-left: 2cm;
-}
-
-.mother_report .row, .mother_report .table-nonfluid,
-.child_report .row, .child_report .table-nonfluid{
+.mother_report  > .row, .mother_report .table-nonfluid,
+.child_report > .row, .child_report .table-nonfluid{
     display: inline-block;
     float: left;
     page-break-inside: avoid;
 }
 
-.mother_report, .mother_report .accordion, .mother_report .accordion-inner, .mother_report .accordion-body,
-.child_report, .child_report .accordion, .child_report .accordion-inner, .child_report .accordion-body {
-    display: inline-block;
-    float: left;
-    margin: 0;
-    border: 0;
-}
-
-.mother_report #report_table_delivery_still_birth_details {
-    margin-top: -4cm;
-}
-
-.mother_report #collapse_postnatal_care_overview, .mother_report #collapse_Cause_of_maternal_deaths {
-    margin-top: -1.5cm;
+.child_report > .row {
+    margin-right: 2cm;
 }
 
 @page {
@@ -85,4 +42,36 @@ td {
 
 body {
     margin: 0;
+}
+
+#loadingReportIssueModal {
+    display: none;
+}
+
+.row:after {
+    clear:both;
+}
+
+.col-md-12 {
+    width: 100%;
+    float: left;
+}
+
+.col-md-4 {
+    width: 33.3333%;
+    float: left;
+}
+
+.col-md-6 {
+    width: 50%;
+    float: left;
+}
+
+.col-md-8 {
+    width: 66.666%;
+    float: left;
+}
+
+.chart {
+    width: 8cm;
 }
