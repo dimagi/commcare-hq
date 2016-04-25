@@ -75,7 +75,7 @@ TODO:
                     "></i>
                 </td>
 
-                <td class="form-group" data-bind="css:{'error': !isValid()}">
+                <td class="form-group" data-bind="css:{'has-error': $parent.showWarnings() && !isValid()}">
 
                     <!-- ko ifnot: $parent.optionsContainQuestions -->
                     <input type="text"

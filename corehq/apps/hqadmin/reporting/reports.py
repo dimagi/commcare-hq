@@ -366,7 +366,7 @@ def get_active_supply_points_data(domains, datespan, interval):
                 .domain(domains)
                 .case_type(SUPPLY_POINT_CASE_TYPE)
                 .active_in_range(gte=start_date, lte=end_date)
-                .size(0)).run().hits
+                .size(0)).run().total
 
         if num_active_supply_points > 0:
             histo_data.append(get_data_point(num_active_supply_points, end_date))

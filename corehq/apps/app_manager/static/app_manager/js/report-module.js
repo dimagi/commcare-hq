@@ -153,6 +153,7 @@ hqDefine('app_manager/js/report-module.js', function () {
                     'filter_type',
                     'select_value',
                     'operator',
+                    'operand',
                     'date_number',
                     'date_number2',
                     'start_of_month',
@@ -199,7 +200,8 @@ hqDefine('app_manager/js/report-module.js', function () {
                         StaticDatespanFilter: ['date_range'],
                         CustomDatespanFilter: ['operator', 'date_number', 'date_number2'],
                         CustomMonthFilter: ['start_of_month', 'period'],
-                        AncestorLocationTypeFilter: ['ancestor_location_type_name']
+                        AncestorLocationTypeFilter: ['ancestor_location_type_name'],
+                        NumericFilter: ['operator', 'operand'],
                     };
                     _.each(docTypeToField, function(field, docType) {
                         if(filter.selectedValue.doc_type() === docType) {
@@ -239,7 +241,8 @@ hqDefine('app_manager/js/report-module.js', function () {
             'StaticChoiceListFilter',
             'StaticChoiceFilter',
             'MobileSelectFilter',
-            'AncestorLocationTypeFilter'
+            'AncestorLocationTypeFilter',
+            'NumericFilter',
         ];
         this.autoFilterTypes = [
             'case_sharing_group',
@@ -250,6 +253,7 @@ hqDefine('app_manager/js/report-module.js', function () {
         ];
         this.date_range_options = ['last7', 'last30', 'thismonth', 'lastmonth', 'lastyear'];
         this.date_operators = ['=', '<', '<=', '>', '>=', 'between'];
+        this.numeric_operators = ['=', '!=', '<', '<=', '>', '>='];
     }
 
     function ReportConfig(report_id, display,
@@ -282,7 +286,7 @@ hqDefine('app_manager/js/report-module.js', function () {
 
         this.toJSON = function () {
             self.fullDisplay[self.lang] = self.display();
-            self.fullLocalizedDescription[self.lang] = self.localizedDescription();
+            self.fullLocalizedDescription[self.lang] = self.localizedDescription() || "";
             return {
                 report_id: self.reportId(),
                 graph_configs: self.graphConfig.toJSON(),
@@ -291,7 +295,7 @@ hqDefine('app_manager/js/report-module.js', function () {
                 localized_description: self.fullLocalizedDescription,
                 xpath_description: self.xpathDescription(),
                 use_xpath_description: self.useXpathDescription(),
-                uuid: self.uuid
+                uuid: self.uuid,
             };
         };
     }

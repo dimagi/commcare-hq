@@ -144,7 +144,6 @@ class ConfigurableReportKafkaPillow(ConstructedPillow):
         )
         super(ConfigurableReportKafkaPillow, self).__init__(
             name=pillow_name,
-            document_store=None,
             change_feed=change_feed,
             processor=processor,
             checkpoint=checkpoint,

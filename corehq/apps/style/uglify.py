@@ -87,11 +87,13 @@ class JsUglifySourcemapCompressor(JsCompressor):
             filepath = self.get_filepath(concatenated_content, basename=None)
 
             # UglifySourcemapFilter writes the file directly, as it needs to
-            # output the sourcemap as well
-            UglifySourcemapFilter(content).output(
-                outfile=filepath,
-                content_meta=self.split_content,
-                root_location=self.storage.base_location)
+            # output the sourcemap as well. Only write the file if it doesn't
+            # already exist
+            if not os.path.exists(os.path.join(settings.STATIC_ROOT, filepath)):
+                UglifySourcemapFilter(content).output(
+                    outfile=filepath,
+                    content_meta=self.split_content,
+                    root_location=self.storage.base_location)
 
             return self.output_file(mode, filepath)
         else:

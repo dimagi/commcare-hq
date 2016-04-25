@@ -25,6 +25,8 @@ class PatientInteractionsReport(PatientDetailsReport):
     slug = "patient_interactions"
     name = 'Patient Interactions'
 
+    is_bootstrap3 = True
+
     @property
     def report_context(self):
         self.report_template_path = "patient_interactions.html"

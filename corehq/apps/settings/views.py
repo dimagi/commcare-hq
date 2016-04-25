@@ -14,7 +14,8 @@ import langcodes
 
 from django.http import HttpResponseRedirect, HttpResponse
 from django.utils.decorators import method_decorator
-from django.utils.translation import ugettext as _, ugettext_noop, ugettext_lazy
+from django.utils.translation import (ugettext as _, ugettext_noop, ugettext_lazy,
+    activate, LANGUAGE_SESSION_KEY)
 from corehq.apps.domain.decorators import (login_and_domain_required, require_superuser,
                                            login_required)
 from django.core.urlresolvers import reverse
@@ -204,9 +205,11 @@ class MyAccountSettingsView(BaseMyAccountView):
             old_lang = self.request.couch_user.language
             self.settings_form.update_user(existing_user=self.request.couch_user)
             new_lang = self.request.couch_user.language
-            # set language in the session so it takes effect immediately
             if new_lang != old_lang:
-                request.session['django_language'] = new_lang
+                # update the current session's language setting
+                request.session[LANGUAGE_SESSION_KEY] = new_lang
+                # and activate it for the current thread so the response page is translated too
+                activate(new_lang)
         return self.get(request, *args, **kwargs)
 
 

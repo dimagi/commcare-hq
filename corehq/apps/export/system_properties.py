@@ -101,8 +101,15 @@ BOTTOM_MAIN_FORM_TABLE_PROPERTIES = [
         is_advanced=True,
         help_text=_("The id of the device that submitted this form")
     ),
-
-
+    ExportColumn(
+        tags=[PROPERTY_TAG_INFO],
+        label='location',
+        item=ExportItem(path=[
+            PathNode(name='form'), PathNode(name='meta'), PathNode(name='location')
+        ]),
+        is_advanced=True,
+        help_text=_("GPS capture when opening the form"),
+    ),
     ExportColumn(
         tags=[PROPERTY_TAG_APP],
         label='app_id',

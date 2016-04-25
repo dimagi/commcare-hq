@@ -1,4 +1,27 @@
 # coding=utf-8
+"""
+Application terminology
+
+For any given application, there are a number of different documents.
+
+The primary application document is an instance of Application.  This
+document id is what you'll see in the URL on most app manager pages. Primary
+application documents should have `copy_of == None` and `is_released ==
+False`. When an application is saved, the field `version` is incremented.
+
+When a user makes a build of an application, a copy of the primary
+application document is made. These documents are the "versions" you see on
+the deploy page. Each build document will have a different id, and the
+`copy_of` field will be set to the ID of the primary application document.
+Additionally, some attachments such as `profile.xml` and `suite.xml` will be
+created and saved to the build doc (see `create_all_files`).
+
+When a build is starred, this is called "releasing" the build.  The parameter
+`is_released` will be set to True on the build document.
+
+You might also run in to remote applications and applications copied to be
+published on the exchange, but those are quite infrequent.
+"""
 import calendar
 from distutils.version import LooseVersion
 from itertools import chain
@@ -21,8 +44,6 @@ from couchdbkit import MultipleResultsFound
 import itertools
 from lxml import etree
 from django.core.cache import cache
-from django.utils.encoding import force_unicode
-from django.utils.safestring import mark_safe
 from django.utils.translation import override, ugettext as _, ugettext
 from couchdbkit.exceptions import BadValueError
 from corehq.apps.app_manager.suite_xml.utils import get_select_chain
@@ -64,7 +85,7 @@ import commcare_translations
 from corehq.util import bitly
 from corehq.util import view_utils
 from corehq.apps.appstore.models import SnapshotMixin
-from corehq.apps.builds.models import BuildSpec, CommCareBuildConfig, BuildRecord
+from corehq.apps.builds.models import BuildSpec, BuildRecord
 from corehq.apps.hqmedia.models import HQMediaMixin
 from corehq.apps.translations.models import TranslationMixin
 from corehq.apps.users.models import CouchUser
@@ -222,8 +243,8 @@ class IndexedSchema(DocumentSchema):
         def __call__(self, instance):
             items = getattr(instance, self.attr)
             l = len(items)
-            for i,item in enumerate(items):
-                yield item.with_id(i%l, instance)
+            for i, item in enumerate(items):
+                yield item.with_id(i % l, instance)
 
         def __get__(self, instance, owner):
             # thanks, http://metapython.blogspot.com/2010/11/python-instance-methods-how-are-they.html
@@ -246,6 +267,7 @@ class FormActionCondition(DocumentSchema):
 
     def is_active(self):
         return self.type in ('if', 'always')
+
 
 class FormAction(DocumentSchema):
     """
@@ -1005,7 +1027,7 @@ class FormBase(DocumentSchema):
 
     def uses_usercase(self):
         raise NotImplementedError()
-    
+
     def update_app_case_meta(self, app_case_meta):
         pass
 
@@ -2080,8 +2102,9 @@ class ModuleDetailsMixin():
                 })
         if self.case_list_filter:
             try:
-                etree.XPath(self.case_list_filter)
-            except etree.XPathSyntaxError:
+                case_list_filter = interpolate_xpath(self.case_list_filter)
+                etree.XPath(case_list_filter)
+            except (etree.XPathSyntaxError, CaseXPathValidationError):
                 errors.append({
                     'type': 'invalid filter xpath',
                     'module': self.get_module_info(),
@@ -2149,7 +2172,6 @@ class Module(ModuleBase, ModuleDetailsMixin):
     referral_list = SchemaProperty(CaseList)
     task_list = SchemaProperty(CaseList)
     parent_select = SchemaProperty(ParentSelect)
-
 
     @classmethod
     def wrap(cls, data):
@@ -3307,6 +3329,7 @@ class ReportAppFilter(DocumentSchema):
                 'CustomMonthFilter': CustomMonthFilter,
                 'MobileSelectFilter': MobileSelectFilter,
                 'AncestorLocationTypeFilter': AncestorLocationTypeFilter,
+                'NumericFilter': NumericFilter,
             }
             try:
                 klass = doc_type_to_filter_class[doc_type]
@@ -3535,6 +3558,22 @@ class AncestorLocationTypeFilter(ReportAppFilter):
             # user.sql_location is None, or location does not have an ancestor of that type
             return None
         return ancestor.location_id
+
+
+class NumericFilter(ReportAppFilter):
+    operator = StringProperty(choices=['=', '!=', '<', '<=', '>', '>=']),
+    operand = FloatProperty()
+
+    @classmethod
+    def wrap(cls, doc):
+        doc['operand'] = float(doc['operand'])
+        return super(NumericFilter, cls).wrap(doc)
+
+    def get_filter_value(self, user, ui_filter):
+        return {
+            'operator': self.operator,
+            'operand': self.operand,
+        }
 
 
 class ReportAppConfig(DocumentSchema):
@@ -3935,12 +3974,7 @@ class ApplicationBase(VersionedDoc, SnapshotMixin,
     Abstract base class for Application and RemoteApp.
     Contains methods for generating the various files and zipping them into CommCare.jar
 
-    There are several flavors of Applications:
-        Application - The current state of the application has copy_of==None
-        SavedAppBuild - Whenever the app is built, a copy is created, and
-            copy_of will be set to the original application's id.
-        Released builds are SavedAppBuilds with is_released==True.  These have
-            been starred on the releases page.
+    See note at top of file for high-level overview.
     """
 
     recipients = StringProperty(default="")
@@ -4283,6 +4317,7 @@ class ApplicationBase(VersionedDoc, SnapshotMixin,
                                          'files/%s' % filepath)
 
     def create_jadjar_from_build_files(self, save=False):
+        self.validate_jar_path()
         with CriticalSection(['create_jadjar_' + self._id]):
             try:
                 return (
@@ -4320,7 +4355,6 @@ class ApplicationBase(VersionedDoc, SnapshotMixin,
         try:
             self.validate_fixtures()
             self.validate_intents()
-            self.validate_jar_path()
             self.create_all_files()
         except CaseXPathValidationError as cve:
             errors.append({

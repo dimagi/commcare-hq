@@ -83,11 +83,11 @@ NOTE: this should be changed to use boolean datatypes once those exist.
     "expression": {
         "type": "property_name",
         "property_name": "closed",
-        "datatype": "string"
+        "datatype": null
 
     },
     "operator": "eq",
-    "property_value": "False"
+    "property_value": false
 }
 ```
 # Data source indicators
@@ -480,6 +480,77 @@ This will lookup the property `age` and substituite its value in the `statement`
 }
 ```
 This will return value of `weight_at_1_year - weight_at_birth`
+
+## Getting forms submitted for a case
+
+```json
+{
+    "type": "get_case_forms",
+    "case_id_expression": {
+        "type": "property_name",
+        "property_name": "case_id"
+    },
+}
+```
+
+## Filter, Map, Reduce, Flatten and Sort expressions
+
+### Getting number of forms of a particular type
+
+```json
+{
+    "type": "reduce_items",
+    "items_expression": {
+        "type": "filter_items",
+        "items_expression": {
+         "type": "get_case_forms",
+         "case_id_expression": {"type": "property_name", "property_name": "case_id"}
+        },
+        "filter_expression": {
+                   "type": "boolean_expression",
+                   "operator": "eq",
+                   "expression": {"type": "property_name", "property_name": "xmls"},
+                   "property_value": "gmp_xmlns"
+        }
+    },
+    "aggregation_fn": "count"
+}
+```
+It can be read as `reduce(filter(get_case_forms))`
+
+### Getting latest form property
+
+```json
+{
+    "type": "nested",
+    "argument_expression": {
+        "type": "reduce_items",
+        "items_expression": {
+            "type": "sort_items",
+            "items_expression": {
+                "type": "filter_items",
+                "items_expression": {
+                    "type": "get_case_forms",
+                    "case_id_expression": {"type": "property_name", "property_name": "case_id"}
+                },
+                "filter_expression": {
+                    "type": "boolean_expression",
+                    "operator": "eq",
+                    "expression": {"type": "property_name", "property_name": "xmls"},
+                    "property_value": "gmp_xmlns"
+                }
+            },
+            "sort_expression": {"type": "property_name", "property_name": "received_on"}
+        },
+        "aggregation_fn": "last_item"
+    },
+    "value_expression": {
+        "type": "property_name",
+        "property_name": "weight"
+    }
+}
+```
+This will return `weight` form-property on latest gmp form (xmlns is gmp_xmlns).
 
 # Report examples
 

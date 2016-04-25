@@ -215,16 +215,16 @@ class PaymentMethodType(object):
 
 
 class SubscriptionType(object):
-    CONTRACTED = "IMPLEMENTATION"
-    SELF_SERVICE = "PRODUCT"
+    IMPLEMENTATION = "IMPLEMENTATION"
+    PRODUCT = "PRODUCT"
     TRIAL = "TRIAL"
     EXTENDED_TRIAL = "EXTENDED_TRIAL"
     SANDBOX = "SANDBOX"
     INTERNAL = "INTERNAL"
     NOT_SET = "NOT_SET"
     CHOICES = (
-        (CONTRACTED, "Implementation"),
-        (SELF_SERVICE, "Product"),
+        (IMPLEMENTATION, "Implementation"),
+        (PRODUCT, "Product"),
         (TRIAL, "Trial"),
         (EXTENDED_TRIAL, "Extended Trial"),
         (SANDBOX, "Sandbox"),
@@ -1172,10 +1172,10 @@ class Subscription(models.Model):
                 )
 
     def update_subscription(self, date_start, date_end,
-                            date_delay_invoicing=None, do_not_invoice=False,
-                            no_invoice_reason=None, do_not_email=False,
+                            date_delay_invoicing=None, do_not_invoice=None,
+                            no_invoice_reason=None, do_not_email=None,
                             salesforce_contract_id=None,
-                            auto_generate_credits=False,
+                            auto_generate_credits=None,
                             web_user=None, note=None, adjustment_method=None,
                             service_type=None, pro_bono_status=None, funding_source=None):
         adjustment_method = adjustment_method or SubscriptionAdjustmentMethod.INTERNAL
@@ -1545,7 +1545,7 @@ class Subscription(models.Model):
 
     def set_billing_account_entry_point(self):
         no_current_entry_point = self.account.entry_point == EntryPoint.NOT_SET
-        self_serve = self.service_type == SubscriptionType.SELF_SERVICE
+        self_serve = self.service_type == SubscriptionType.PRODUCT
         if (no_current_entry_point and self_serve and not self.is_trial):
             self.account.entry_point = EntryPoint.SELF_STARTED
             self.account.save()
@@ -1809,7 +1809,7 @@ class Invoice(InvoiceBase):
 
     @property
     def email_recipients(self):
-        if self.subscription.service_type == SubscriptionType.CONTRACTED:
+        if self.subscription.service_type == SubscriptionType.IMPLEMENTATION:
             return [settings.FINANCE_EMAIL]
         else:
             return self.contact_emails
@@ -1935,7 +1935,7 @@ class SubscriptionAdjustment(models.Model):
     invoice = models.ForeignKey(Invoice, on_delete=models.PROTECT, null=True)
     related_subscription = models.ForeignKey(Subscription, on_delete=models.PROTECT, null=True,
                                              related_name='subscriptionadjustment_related')
-    date_created = models.DateField(auto_now_add=True)
+    date_created = models.DateTimeField(auto_now_add=True)
     new_date_start = models.DateField()
     new_date_end = models.DateField(blank=True, null=True)
     new_date_delay_invoicing = models.DateField(blank=True, null=True)
@@ -2155,7 +2155,7 @@ class BillingRecord(BillingRecordBase):
 
     @property
     def html_template(self):
-        if self.invoice.subscription.service_type == SubscriptionType.CONTRACTED:
+        if self.invoice.subscription.service_type == SubscriptionType.IMPLEMENTATION:
             return self.INVOICE_CONTRACTED_HTML_TEMPLATE
 
         if self.invoice.subscription.account.auto_pay_enabled:
@@ -2165,7 +2165,7 @@ class BillingRecord(BillingRecordBase):
 
     @property
     def text_template(self):
-        if self.invoice.subscription.service_type == SubscriptionType.CONTRACTED:
+        if self.invoice.subscription.service_type == SubscriptionType.IMPLEMENTATION:
             return self.INVOICE_CONTRACTED_TEXT_TEMPLATE
 
         if self.invoice.subscription.account.auto_pay_enabled:
@@ -2178,7 +2178,7 @@ class BillingRecord(BillingRecordBase):
         subscription = self.invoice.subscription
         autogenerate = (subscription.auto_generate_credits and not self.invoice.balance)
         small_contracted = (self.invoice.balance <= SMALL_INVOICE_THRESHOLD and
-                            subscription.service_type == SubscriptionType.CONTRACTED)
+                            subscription.service_type == SubscriptionType.IMPLEMENTATION)
         hidden = self.invoice.is_hidden
         do_not_email = self.invoice.subscription.do_not_email
         return not (autogenerate or small_contracted or hidden or do_not_email)
@@ -2210,7 +2210,7 @@ class BillingRecord(BillingRecordBase):
             'is_total_balance_due': total_balance >= SMALL_INVOICE_THRESHOLD,
             'payment_status': payment_status,
         })
-        if self.invoice.subscription.service_type == SubscriptionType.CONTRACTED:
+        if self.invoice.subscription.service_type == SubscriptionType.IMPLEMENTATION:
             from corehq.apps.accounting.dispatcher import AccountingAdminInterfaceDispatcher
             context.update({
                 'salesforce_contract_id': self.invoice.subscription.salesforce_contract_id,
@@ -2250,16 +2250,15 @@ class BillingRecord(BillingRecordBase):
         return credits
 
     def _add_product_credits(self, credits):
-        product_type = self.invoice.subscription.plan_version.core_product
         credit_adjustments = CreditAdjustment.objects.filter(
             invoice=self.invoice,
-            line_item__product_rate__product__product_type=product_type,
+            line_item__product_rate__product__product_type__isnull=False,
         )
 
         subscription_credits = BillingRecord._get_total_balance(
             CreditLine.get_credits_by_subscription_and_features(
                 self.invoice.subscription,
-                product_type=product_type,
+                product_type=SoftwareProductType.ANY,
             )
         )
         if subscription_credits or credit_adjustments.filter(
@@ -2274,7 +2273,7 @@ class BillingRecord(BillingRecordBase):
         account_credits = BillingRecord._get_total_balance(
             CreditLine.get_credits_for_account(
                 self.invoice.subscription.account,
-                product_type=product_type,
+                product_type=SoftwareProductType.ANY,
             )
         )
         if account_credits or credit_adjustments.filter(
@@ -2567,7 +2566,7 @@ class CreditLine(models.Model):
     account = models.ForeignKey(BillingAccount, on_delete=models.PROTECT)
     subscription = models.ForeignKey(Subscription, on_delete=models.PROTECT, null=True, blank=True)
     product_type = models.CharField(max_length=25, null=True, blank=True,
-                                    choices=SoftwareProductType.CHOICES)
+                                    choices=((SoftwareProductType.ANY, SoftwareProductType.ANY),))
     feature_type = models.CharField(max_length=10, null=True,
                                     choices=FeatureType.CHOICES)
     date_created = models.DateTimeField(auto_now_add=True)

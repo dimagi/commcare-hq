@@ -76,6 +76,7 @@ STATIC_URL = '/static/'
 STATIC_CDN = ''
 
 FILEPATH = os.path.abspath(os.path.dirname(__file__))
+SERVICE_DIR = os.path.join(FILEPATH, 'fab', 'services', 'templates')
 # media for user uploaded media.  in general this won't be used at all.
 MEDIA_ROOT = os.path.join(FILEPATH, 'mediafiles')
 STATIC_ROOT = os.path.join(FILEPATH, 'staticfiles')
@@ -111,6 +112,8 @@ DJANGO_LOG_FILE = "%s/%s" % (FILEPATH, "commcarehq.django.log")
 ACCOUNTING_LOG_FILE = "%s/%s" % (FILEPATH, "commcarehq.accounting.log")
 ANALYTICS_LOG_FILE = "%s/%s" % (FILEPATH, "commcarehq.analytics.log")
 DATADOG_LOG_FILE = "%s/%s" % (FILEPATH, "commcarehq.datadog.log")
+FORMPLAYER_TIMING_FILE = "%s/%s" % (FILEPATH, "formplayer.timing.log")
+FORMPLAYER_DIFF_FILE = "%s/%s" % (FILEPATH, "formplayer.diff.log")
 
 LOCAL_LOGGING_HANDLERS = {}
 LOCAL_LOGGING_LOGGERS = {}
@@ -345,6 +348,7 @@ HQ_APPS = (
     'dimagi.ext',
     'corehq.doctypemigrations',
     'corehq.blobs',
+    'corehq.apps.case_search',
 
     # custom reports
     'a5288',
@@ -937,6 +941,12 @@ LOGGING = {
         'datadog': {
             'format': '%(metric)s %(created)s %(value)s metric_type=%(metric_type)s %(message)s'
         },
+        'formplayer_timing': {
+            'format': '%(asctime)s, %(action)s, %(control_duration)s, %(candidate_duration)s'
+        },
+        'formplayer_diff': {
+            'format': '%(asctime)s, %(action)s, %(request)s, %(control)s, %(candidate)s'
+        }
     },
     'filters': {
         'hqcontext': {
@@ -992,6 +1002,22 @@ LOGGING = {
             'class': 'cloghandler.ConcurrentRotatingFileHandler',
             'formatter': 'datadog',
             'filename': DATADOG_LOG_FILE,
+            'maxBytes': 10 * 1024 * 1024,  # 10 MB
+            'backupCount': 20  # Backup 200 MB of logs
+        },
+        'formplayer_diff': {
+            'level': 'INFO',
+            'class': 'logging.handlers.RotatingFileHandler',
+            'formatter': 'formplayer_diff',
+            'filename': FORMPLAYER_DIFF_FILE,
+            'maxBytes': 10 * 1024 * 1024,  # 10 MB
+            'backupCount': 20  # Backup 200 MB of logs
+        },
+        'formplayer_timing': {
+            'level': 'INFO',
+            'class': 'logging.handlers.RotatingFileHandler',
+            'formatter': 'formplayer_timing',
+            'filename': FORMPLAYER_TIMING_FILE,
             'maxBytes': 10 * 1024 * 1024,  # 10 MB
             'backupCount': 20  # Backup 200 MB of logs
         },
@@ -1070,6 +1096,16 @@ LOGGING = {
             'handlers': ['datadog'],
             'level': 'INFO',
             'propogate': False,
+        },
+        'formplayer_timing': {
+            'handlers': ['formplayer_timing'],
+            'level': 'INFO',
+            'propogate': True,
+        },
+        'formplayer_diff': {
+            'handlers': ['formplayer_diff'],
+            'level': 'INFO',
+            'propogate': True,
         },
     }
 }
@@ -1394,7 +1430,6 @@ PILLOWTOPS = {
     'core': [
         'corehq.pillows.case.CasePillow',
         'corehq.pillows.xform.XFormPillow',
-        'corehq.pillows.domain.DomainPillow',
         'corehq.pillows.user.UserPillow',
         'corehq.pillows.application.AppPillow',
         'corehq.pillows.group.GroupPillow',
@@ -1403,10 +1438,17 @@ PILLOWTOPS = {
         'corehq.pillows.user.UnknownUsersPillow',
         'corehq.pillows.sofabed.FormDataPillow',
         'corehq.pillows.sofabed.CaseDataPillow',
+        # TODO: Remove this once ConstructedPillows can deal with their own indices
+        'corehq.pillows.case_search.CaseSearchPillow',
         {
             'name': 'SqlSMSPillow',
             'class': 'pillowtop.pillow.interface.ConstructedPillow',
             'instance': 'corehq.pillows.sms.get_sql_sms_pillow',
+        },
+        {
+            'name': 'KafkaDomainPillow',
+            'class': 'pillowtop.pillow.interface.ConstructedPillow',
+            'instance': 'corehq.pillows.domain.get_domain_kafka_to_elasticsearch_pillow',
         },
     ],
     'core_ext': [
@@ -1414,13 +1456,18 @@ PILLOWTOPS = {
         'corehq.pillows.reportxform.ReportXFormPillow',
         {
             'name': 'DefaultChangeFeedPillow',
-            'class': 'corehq.apps.change_feed.pillow.ChangeFeedPillow',
+            'class': 'pillowtop.pillow.interface.ConstructedPillow',
             'instance': 'corehq.apps.change_feed.pillow.get_default_couch_db_change_feed_pillow',
         },
         {
             'name': 'UserGroupsDbKafkaPillow',
             'class': 'pillowtop.pillow.interface.ConstructedPillow',
             'instance': 'corehq.apps.change_feed.pillow.get_user_groups_db_kafka_pillow',
+        },
+        {
+            'name': 'DomainDbKafkaPillow',
+            'class': 'pillowtop.pillow.interface.ConstructedPillow',
+            'instance': 'corehq.apps.change_feed.pillow.get_domain_db_kafka_pillow',
         },
         {
             'name': 'kafka-ucr-main',
@@ -1431,6 +1478,16 @@ PILLOWTOPS = {
             'name': 'kafka-ucr-static',
             'class': 'corehq.apps.userreports.pillow.ConfigurableReportKafkaPillow',
             'instance': 'corehq.apps.userreports.pillow.get_kafka_ucr_static_pillow',
+        },
+        {
+            'name': 'SqlXFormToElasticsearchPillow',
+            'class': 'pillowtop.pillow.interface.ConstructedPillow',
+            'instance': 'corehq.pillows.xform.get_sql_xform_to_elasticsearch_pillow',
+        },
+        {
+            'name': 'SqlCaseToElasticsearchPillow',
+            'class': 'pillowtop.pillow.interface.ConstructedPillow',
+            'instance': 'corehq.pillows.case.get_sql_case_to_elasticsearch_pillow',
         },
     ],
     'cache': [
@@ -1480,14 +1537,9 @@ PILLOWTOPS = {
             'instance': 'corehq.blobs.pillow.get_blob_deletion_pillow',
         },
         {
-            'name': 'SqlXFormToElasticsearchPillow',
+            'name': 'CaseSearchToElasticsearchPillow',
             'class': 'pillowtop.pillow.interface.ConstructedPillow',
-            'instance': 'corehq.pillows.xform.get_sql_xform_to_elasticsearch_pillow',
-        },
-        {
-            'name': 'SqlCaseToElasticsearchPillow',
-            'class': 'pillowtop.pillow.interface.ConstructedPillow',
-            'instance': 'corehq.pillows.case.get_sql_case_to_elasticsearch_pillow',
+            'instance': 'corehq.pillows.case_search.get_case_search_to_elasticsearch_pillow',
         },
     ]
 }

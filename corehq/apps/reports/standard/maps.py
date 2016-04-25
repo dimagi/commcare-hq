@@ -170,7 +170,7 @@ class GenericMapReport(ProjectReport, ProjectReportParametersMixin):
         # can be queried in bulk
 
         for data in source.get_data():
-            case = CommCareCase.wrap(data['_case']).get_json()
+            case = CommCareCase.wrap(data['_case']).to_api_json()
             del data['_case']
 
             data['num_forms'] = len(case['xform_ids'])

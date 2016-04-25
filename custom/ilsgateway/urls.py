@@ -27,5 +27,9 @@ urlpatterns = patterns('custom.ilsgateway.views',
     url(r'^recalculations/$', PendingRecalculationsListView.as_view(), name='recalculations'),
     url(r'^slab_configuration/$', SLABConfigurationView.as_view(), name='slab_configuration'),
     url(r'^slab_edit_location/(?P<location_id>[\w-]+)', SLABEditLocationView.as_view(), name='slab_edit_location'),
+    # one-off
+    url(r'^recalculate_moshi/$', 'recalculate_moshi_rural', name='recalculate_moshi_rural'),
+    url(r'^recalculate_non_facilities/$', 'recalculate_non_facilities', name='recalculate_non_facilities'),
+    # api
     url(r'^', include(hq_api.urls)),
 )

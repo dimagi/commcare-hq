@@ -76,3 +76,7 @@ class LedgerProcessorInterface(object):
         Returns a list of StockModelUpdate object containing everything that needs to be updated.
         """
         pass
+
+    @abstractmethod
+    def rebuild_ledger_state(self, case_id, section_id, entry_id):
+        pass
