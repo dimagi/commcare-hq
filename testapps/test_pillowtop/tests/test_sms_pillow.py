@@ -4,7 +4,6 @@ from corehq.apps.es.sms import SMSES
 from corehq.apps.sms.models import MessagingEvent, MessagingSubEvent, SMS
 from corehq.elastic import get_es_new
 from corehq.pillows.sms import get_sql_sms_pillow, ES_SMS_INDEX
-from corehq.util.decorators import temporarily_enable_toggle
 from corehq.util.elastic import ensure_index_deleted
 from datetime import datetime
 from dimagi.utils.parsing import json_format_datetime
