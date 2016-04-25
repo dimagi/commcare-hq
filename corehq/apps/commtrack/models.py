@@ -507,8 +507,6 @@ def _reopen_or_create_supply_point(location):
     )
     if supply_point:
         if supply_point and supply_point.closed:
-            form_ids = CaseAccessors(supply_point.domain).get_case_xform_ids(supply_point.case_id)
-            form_accessor = FormAccessors(supply_point.domain)
             transactions = supply_point.closed_transactions
             for transaction in transactions:
                 transaction.form.archive(user_id=const.COMMTRACK_USERNAME)
@@ -561,9 +559,8 @@ def remove_data(sender, xform, *args, **kwargs):
 def reprocess_form(sender, xform, *args, **kwargs):
     from corehq.apps.commtrack.processing import process_stock
     result = process_stock([xform])
-    for to_save in result.get_models_to_save():
-        if to_save:
-            to_save.commit()
+    result.populate_models()
+    result.commit()
     result.finalize()
     # todo: use LedgerProcessor
     CommCareCase.get_db().bulk_save(result.relevant_cases)

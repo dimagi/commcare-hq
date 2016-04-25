@@ -1,6 +1,5 @@
 from couchdbkit import ResourceNotFound
 from dimagi.utils.couch.database import iter_docs
-from dimagi.utils.parsing import json_format_datetime
 from .interface import DocumentStore
 from pillowtop.dao.exceptions import DocumentNotFoundError
 
@@ -41,8 +40,7 @@ class CouchDocumentStore(DocumentStore):
             last_doc = self.get_document(last_id)
             start_key = [self.domain, self.doc_type]
             if self.doc_type in _DATE_MAP.keys():
-                date = json_format_datetime(last_doc[_DATE_MAP[self.doc_type]])
-                start_key.append(date)
+                start_key.append(last_doc[_DATE_MAP[self.doc_type]])
 
         return iterate_doc_ids_in_domain_by_type(
             self.domain,

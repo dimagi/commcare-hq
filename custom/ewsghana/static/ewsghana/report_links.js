@@ -7,7 +7,7 @@ function add_report_links(slugs) {
     $('legend + div').remove();
 
     $.each(slugs, function() {
-        content += '<a class="btn" style="margin-left: 10px" href="' +
+        content += '<a class="btn btn-default" style="margin-left: 10px" href="' +
                 url.substring(0, previousSlash + 1) + this[0] + url.substring(lastSlash) +
                 '">' + this[1] + '</a>';
     });

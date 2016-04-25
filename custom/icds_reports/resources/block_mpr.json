@@ -1,0 +1,188 @@
+{
+  "operationalization": {
+    "data_source": [
+      {
+        "id": "006c243827ea58a92eb80117abc61629",
+        "date_filter_field": "submitted_on",
+        "columns": [
+          {
+            "column_name": "owner_id",
+            "agg_fun": "count"
+          }
+        ]
+      }
+    ]
+  },
+  "population" : {
+    "data_source": [
+      {
+        "id": "05e9c905d1cf4b11d0cfc92b559aaddd",
+        "columns": [
+          {
+            "column_name": "open_count",
+            "agg_fun": "sum"
+          }
+        ]
+      }
+    ]
+  },
+  "births_and_deaths": {
+    "data_source": [
+      {
+        "id": "a347fa3a66a68a53bad7a11284a85573",
+        "columns": [
+          {
+            "column_name": "live_F_resident_birth_count",
+            "agg_fun": "sum"
+          },
+          {
+            "column_name": "live_M_resident_birth_count",
+            "agg_fun": "sum"
+          },
+          {
+            "column_name": "live_F_migrant_birth_count",
+            "agg_fun": "sum"
+          },
+          {
+            "column_name": "live_M_migrant_birth_count",
+            "agg_fun": "sum"
+          },
+          {
+            "column_name": "still_F_resident_birth_count",
+            "agg_fun": "sum"
+          },
+          {
+            "column_name": "still_M_resident_birth_count",
+            "agg_fun": "sum"
+          },
+          {
+            "column_name": "still_F_migrant_birth_count",
+            "agg_fun": "sum"
+          },
+          {
+            "column_name": "still_M_migrant_birth_count",
+            "agg_fun": "sum"
+          },
+          {
+            "column_name": "weighed_F_resident_birth_count",
+            "agg_fun": "sum"
+          },
+          {
+            "column_name": "weighed_M_resident_birth_count",
+            "agg_fun": "sum"
+          },
+          {
+            "column_name": "weighed_F_migrant_birth_count",
+            "agg_fun": "sum"
+          },
+          {
+            "column_name": "weighed_M_migrant_birth_count",
+            "agg_fun": "sum"
+          },
+          {
+            "column_name": "lbw_F_resident_birth_count",
+            "agg_fun": "sum"
+          },
+          {
+            "column_name": "lbw_M_resident_birth_count",
+            "agg_fun": "sum"
+          },
+          {
+            "column_name": "lbw_F_migrant_birth_count",
+            "agg_fun": "sum"
+          },
+          {
+            "column_name": "lbw_M_migrant_birth_count",
+            "agg_fun": "sum"
+          }
+        ]
+      },
+      {
+        "id": "d983f451465565589a025316f2e9638b",
+        "date_filter_field": "date_death",
+        "columns": [
+          {
+            "column_name": "dead_F_resident_neo_count",
+            "agg_fun": "sum"
+          },
+          {
+            "column_name": "dead_M_resident_neo_count",
+            "agg_fun": "sum"
+          },
+          {
+            "column_name": "dead_F_migrant_neo_count",
+            "agg_fun": "sum"
+          },
+          {
+            "column_name": "dead_M_migrant_neo_count",
+            "agg_fun": "sum"
+          },
+          {
+            "column_name": "dead_F_resident_postneo_count",
+            "agg_fun": "sum"
+          },
+          {
+            "column_name": "dead_M_resident_postneo_count",
+            "agg_fun": "sum"
+          },
+          {
+            "column_name": "dead_F_migrant_postneo_count",
+            "agg_fun": "sum"
+          },
+          {
+            "column_name": "dead_M_migrant_postneo_count",
+            "agg_fun": "sum"
+          },
+          {
+            "column_name": "dead_F_resident_child_count",
+            "agg_fun": "sum"
+          },
+          {
+            "column_name": "dead_M_resident_child_count",
+            "agg_fun": "sum"
+          },
+          {
+            "column_name": "dead_F_migrant_child_count",
+            "agg_fun": "sum"
+          },
+          {
+            "column_name": "dead_M_migrant_child_count",
+            "agg_fun": "sum"
+          },
+          {
+            "column_name": "dead_F_resident_adult_count",
+            "agg_fun": "sum"
+          },
+          {
+            "column_name": "dead_F_migrant_adult_count",
+            "agg_fun": "sum"
+          },
+          {
+            "column_name": "dead_preg_resident_count",
+            "agg_fun": "sum"
+          },
+          {
+            "column_name": "dead_preg_migrant_count",
+            "agg_fun": "sum"
+          },
+          {
+            "column_name": "dead_del_resident_count",
+            "agg_fun": "sum"
+          },
+          {
+            "column_name": "dead_del_migrant_count",
+            "agg_fun": "sum"
+          },
+          {
+            "column_name": "dead_pnc_resident_count",
+            "agg_fun": "sum"
+          },
+          {
+            "column_name": "dead_pnc_migrant_count",
+            "agg_fun": "sum"
+          }
+        ]
+      }
+    ]
+  }
+}

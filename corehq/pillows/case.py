@@ -6,7 +6,7 @@ from corehq.apps.change_feed import topics
 from corehq.apps.change_feed.consumer.feed import KafkaChangeFeed
 from corehq.elastic import get_es_new
 from corehq.form_processor.change_providers import SqlCaseChangeProvider
-from corehq.pillows.mappings.case_mapping import CASE_MAPPING, CASE_INDEX
+from corehq.pillows.mappings.case_mapping import CASE_MAPPING, CASE_INDEX, CASE_ES_TYPE
 from corehq.pillows.utils import get_user_type
 from dimagi.utils.couch import LockManager
 from dimagi.utils.decorators.memoized import memoized
@@ -24,7 +24,6 @@ from pillowtop.reindexer.reindexer import get_default_reindexer_for_elastic_pill
 
 UNKNOWN_DOMAIN = "__nodomain__"
 UNKNOWN_TYPE = "__notype__"
-CASE_ES_TYPE = 'case'
 
 
 pillow_logging = logging.getLogger("pillowtop")

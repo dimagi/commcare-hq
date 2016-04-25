@@ -35,7 +35,7 @@ class Command(LabelCommand):
         code_red = options['code_red']
 
         es = get_es_new()
-        es_indices = get_all_expected_es_indices()
+        es_indices = list(get_all_expected_es_indices())
         if code_red:
             if raw_input('\n'.join([
                 'CODE RED!!!',

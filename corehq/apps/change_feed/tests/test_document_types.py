@@ -1,6 +1,6 @@
 from django.test import SimpleTestCase
 from corehq.apps.change_feed.document_types import CASE, get_doc_meta_object_from_document, FORM, META, DOMAIN, \
-    change_meta_from_doc, COMMCARE_USER, WEB_USER
+    change_meta_from_doc, COMMCARE_USER, WEB_USER, GROUP
 from corehq.apps.change_feed.exceptions import MissingMetaInformationError
 from corehq.util.test_utils import generate_cases
 
@@ -20,6 +20,7 @@ class DocumentTypeTest(SimpleTestCase):
     ({'doc_type': 'Domain'}, DOMAIN),
     ({'doc_type': 'CommCareUser'}, COMMCARE_USER),
     ({'doc_type': 'WebUser'}, WEB_USER),
+    ({'doc_type': 'Group'}, GROUP),
     ({'doc_type': 'Location'}, META),
     # subtype tests
     ({'doc_type': 'CommCareCase', 'type': 'person'}, CASE, 'person'),
@@ -36,6 +37,7 @@ class DocumentTypeTest(SimpleTestCase):
     ({'doc_type': 'Domain-DUPLICATE'}, DOMAIN, None, None, True),
     ({'doc_type': 'CommCareUser-Deleted'}, COMMCARE_USER, None, None, True),
     ({'doc_type': 'WebUser-Deleted'}, WEB_USER, None, None, True),
+    ({'doc_type': 'Group-Deleted'}, GROUP, None, None, True),
     ({'doc_type': 'Location-Deleted'}, META, None, None, True),
 ], DocumentTypeTest)
 def test_document_meta(self, raw_doc, expected_primary_type, expected_subtype=None,

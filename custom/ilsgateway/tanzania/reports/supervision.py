@@ -48,6 +48,7 @@ class SupervisionData(ILSData):
     show_chart = False
     show_table = True
     searchable = True
+    use_datatables = True
 
     @property
     def headers(self):
@@ -211,7 +212,7 @@ class SupervisionReport(DetailsReport):
                     InventoryHistoryData(config=config),
                     RandRHistory(config=config),
                     Notes(config=config),
-                    RecentMessages(config=config),
+                    RecentMessages(config=config, css_class='row_chart_all'),
                     RegistrationData(config=dict(loc_type='FACILITY', **config), css_class='row_chart_all'),
                     RegistrationData(config=dict(loc_type='DISTRICT', **config), css_class='row_chart_all'),
                     RegistrationData(config=dict(loc_type='REGION', **config), css_class='row_chart_all')

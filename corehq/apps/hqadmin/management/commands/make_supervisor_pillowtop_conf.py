@@ -1,6 +1,6 @@
 from django.conf import settings
 from corehq.apps.hqadmin.management.commands.make_supervisor_conf import SupervisorConfCommand
-from fab.pillow_settings import get_pillows_for_env
+from corehq.apps.hqadmin.pillow_settings import get_pillows_for_env
 
 
 class Command(SupervisorConfCommand):
@@ -11,10 +11,10 @@ class Command(SupervisorConfCommand):
         """
         Hacky override to make pillowtop config. Multiple configs within the conf file
         """
-        environment = params['environment']
+        pillow_env_configs = params['pillow_env_configs']
 
         configs = []
-        all_pillows = get_pillows_for_env(environment, settings.PILLOWTOPS)
+        all_pillows = get_pillows_for_env(pillow_env_configs, settings.PILLOWTOPS)
         for pillow_config in all_pillows:
             pillow_name = pillow_config.name
             pillow_params = {

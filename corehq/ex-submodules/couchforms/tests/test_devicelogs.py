@@ -84,6 +84,7 @@ class DeviceLogTest(TestCase, TestFileMixin):
             ('version_number', 604),
             ('app_id', '36c0bdd028d14a52cbff95bb1bfd0962'),
             ('expr', '/data/fake'),
+            ('context_node', '/data/foo'),
         ))
 
     def assert_force_close_entries(self):

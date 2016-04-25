@@ -72,9 +72,10 @@ class ProgramFilter(BaseSingleOptionFilter):
 
 class ILSDateFilter(BaseReportFilter):
 
-    template = "ilsgateway/datespan.html"
     slug = "datespan"
     label = "Filter By:"
+    css_class = 'col-md-4'
+    template = 'ilsgateway/bootstrap3/datespan.html'
 
     def selected(self, type):
         slug = '{0}_{1}'.format(self.slug, type)

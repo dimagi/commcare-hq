@@ -76,6 +76,7 @@ from corehq.apps.style.decorators import (
     use_bootstrap3,
     use_select2,
     use_daterangepicker,
+    use_jquery_ui,
     use_angular_js)
 from corehq.apps.style.forms.widgets import DateRangePickerWidget
 from corehq.apps.style.utils import format_angular_error, format_angular_success
@@ -147,7 +148,7 @@ class ExportsPermissionsMixin(object):
 
 
 class BaseExportView(BaseProjectDataView):
-    template_name = 'export/customize_export.html'
+    template_name = 'export/bootstrap2/customize_export.html'
     export_type = None
     is_async = True
 
@@ -472,7 +473,7 @@ class BaseDownloadExportView(ExportsPermissionsMixin, JSONResponseMixin, BasePro
     @property
     @memoized
     def default_datespan(self):
-        return datespan_from_beginning(self.domain, self.timezone)
+        return datespan_from_beginning(self.domain_object, self.timezone)
 
     @property
     def page_context(self):
@@ -1401,7 +1402,12 @@ class CaseExportListView(BaseExportListView):
 
 
 class BaseNewExportView(BaseExportView):
-    template_name = 'export/new_customize_export.html'
+    template_name = 'export/bootstrap3/customize_export.html'
+
+    @use_bootstrap3
+    @use_jquery_ui
+    def dispatch(self, request, *args, **kwargs):
+        return super(BaseNewExportView, self).dispatch(request, *args, **kwargs)
 
     @property
     def export_instance_cls(self):
@@ -1509,17 +1515,26 @@ class BaseEditNewCustomExportView(BaseModifyNewCustomView):
         except ResourceNotFound:
             # If it's not found, try and see if it's on the legacy system before throwing a 404
             try:
-                export_helper = make_custom_export_helper(
-                    self.request,
-                    self.export_type,
-                    self.domain,
-                    self.export_id
-                )
+                legacy_cls = None
+                if self.export_type == FORM_EXPORT:
+                    legacy_cls = FormExportSchema
+                elif self.export_type == CASE_EXPORT:
+                    legacy_cls = CaseExportSchema
 
-                export_instance = convert_saved_export_to_export_instance(
-                    self.domain,
-                    export_helper.custom_export,
-                )
+                legacy_export = legacy_cls.get(self.export_id)
+
+                if legacy_export.converted_saved_export_id:
+                    # If this is the case, this means the user has refreshed the Export page
+                    # before saving, thus we've already converted, but the URL still has
+                    # the legacy ID
+                    export_instance = self.export_instance_cls.get(
+                        legacy_export.converted_saved_export_id
+                    )
+                else:
+                    export_instance = convert_saved_export_to_export_instance(
+                        self.domain,
+                        legacy_export,
+                    )
 
             except ResourceNotFound:
                 raise Http404()
