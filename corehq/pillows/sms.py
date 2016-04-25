@@ -2,7 +2,7 @@ from corehq.apps.change_feed import topics
 from corehq.apps.change_feed.consumer.feed import KafkaChangeFeed
 from corehq.elastic import get_es_new
 from corehq.apps.sms.models import SMSLog
-from corehq.pillows.mappings.sms_mapping import SMS_MAPPING, SMS_INDEX
+from corehq.pillows.mappings.sms_mapping import SMS_MAPPING, SMS_INDEX, SMS_META
 from dimagi.utils.decorators.memoized import memoized
 from pillowtop.checkpoints.manager import PillowCheckpoint, PillowCheckpointEventHandler
 from pillowtop.es_utils import ElasticsearchIndexInfo
@@ -29,19 +29,7 @@ class SMSPillow(AliasedElasticPillow):
     es_timeout = 60
     es_alias = "smslogs"
     es_type = ES_SMS_TYPE
-    es_meta = {
-        "settings": {
-            "analysis": {
-                "analyzer": {
-                    "default": {
-                        "type": "custom",
-                        "tokenizer": "whitespace",
-                        "filter": ["lowercase"]
-                    },
-                }
-            }
-        }
-    }
+    es_meta = SMS_META
     es_index = ES_SMS_INDEX
     default_mapping = SMS_MAPPING
 
