@@ -51,3 +51,5 @@ SMS_META = {
         }
     }
 }
+
+SMS_TYPE = 'sms'
