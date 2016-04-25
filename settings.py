@@ -1431,7 +1431,11 @@ PILLOWTOPS = {
     'core': [
         'corehq.pillows.case.CasePillow',
         'corehq.pillows.xform.XFormPillow',
-        'corehq.pillows.user.UserPillow',
+        {
+            'name': 'UserPillow',
+            'class': 'pillowtop.pillow.interface.ConstructedPillow',
+            'instance': 'corehq.pillows.user.get_user_pillow',
+        },
         'corehq.pillows.application.AppPillow',
         {
             'name': 'GroupPillow',
