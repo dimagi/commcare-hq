@@ -22,6 +22,7 @@ from djangular.views.mixins import JSONResponseMixin, allow_remote_invocation
 from sqlalchemy import types, exc
 from sqlalchemy.exc import ProgrammingError
 
+from corehq.apps.accounting.models import Subscription
 from corehq.apps.domain.models import Domain
 from corehq.apps.hqwebapp.tasks import send_mail_async
 from corehq.apps.hqwebapp.templatetags.hq_shared_tags import toggle_enabled
@@ -196,6 +197,12 @@ class ReportBuilderPaywallBase(BaseDomainView):
     def section_url(self):
         return paywall_home(self.domain)
 
+    @property
+    @memoized
+    def plan_name(self):
+        plan_version, subscription = Subscription.get_subscribed_plan_by_domain(self.domain)
+        return plan_version.plan.name
+
 
 class ReportBuilderPaywall(ReportBuilderPaywallBase):
     template_name = "userreports/paywall/paywall.html"
@@ -213,9 +220,11 @@ class ReportBuilderPaywallActivatingTrial(ReportBuilderPaywallBase):
         self.domain_object.save()
         send_mail_async.delay(
             "Report Builder Trial Request: {}".format(domain),
-            "User {} in the {} domain has requested access to the report builder trial.".format(
+            "User {} in the {} domain has requested access to the "
+            "report builder trial. Current subscription is '{}'.".format(
                 request.user.username,
                 domain,
+                self.plan_name
             ),
             settings.DEFAULT_FROM_EMAIL,
             ["updates"+"@"+"dimagi.com"],
@@ -238,9 +247,11 @@ class ReportBuilderPaywallActivatingSubscription(ReportBuilderPaywallBase):
         self.domain_object.save()
         send_mail_async.delay(
             "Report Builder Subscription Request: {}".format(domain),
-            "User {} in the {} domain has requested a report builder subscription.".format(
+            "User {} in the {} domain has requested a report builder subscription."
+            " Current subscription is '{}'.".format(
                 request.user.username,
                 domain,
+                self.plan_name
             ),
             settings.DEFAULT_FROM_EMAIL,
             ["updates"+"@"+"dimagi.com"],
