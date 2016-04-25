@@ -727,22 +727,6 @@ class CommCareCaseSQL(DisabledDbMixin, models.Model, RedisLockableMixIn,
         if property in allowed_fields:
             return getattr(self, property)
 
-    def resolve_case_property(self, property_name):
-        """
-        Handles case property parent references. Examples for property_name can be:
-        name
-        parent/name
-        parent/parent/name
-        ...
-        """
-        if property_name.lower().startswith('parent/'):
-            parent = self.parent
-            if not parent:
-                return None
-            return parent.resolve_case_property(property_name[7:])
-
-        return self.to_json().get(property_name)
-
     def on_tracked_models_cleared(self, model_class=None):
         self._saved_indices.reset_cache(self)
 
@@ -754,6 +738,10 @@ class CommCareCaseSQL(DisabledDbMixin, models.Model, RedisLockableMixIn,
     def get_obj_by_id(cls, case_id):
         from corehq.form_processor.backends.sql.dbaccessors import CaseAccessorSQL
         return CaseAccessorSQL.get_case(case_id)
+
+    @property
+    def default_parent_identifier(self):
+        return CommCareCaseIndexSQL.PARENT_IDENTIFIER
 
     @memoized
     def get_parent(self, identifier=None, relationship=None):
@@ -776,7 +764,7 @@ class CommCareCaseSQL(DisabledDbMixin, models.Model, RedisLockableMixIn,
         please write/use a different property.
         """
         result = self.get_parent(
-            identifier=CommCareCaseIndexSQL.PARENT_IDENTIFIER,
+            identifier=self.default_parent_identifier,
             relationship=CommCareCaseIndexSQL.CHILD
         )
         return result[0] if result else None

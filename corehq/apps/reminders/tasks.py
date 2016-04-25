@@ -2,9 +2,12 @@ from datetime import datetime, timedelta
 from celery.task import periodic_task, task
 from corehq.apps.reminders.models import (CaseReminderHandler, CaseReminder,
     CASE_CRITERIA, REMINDER_TYPE_DEFAULT)
+from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
+from corehq.form_processor.models import CommCareCaseIndexSQL
+from corehq.form_processor.utils.general import should_use_sql_backend
 from django.conf import settings
 from dimagi.utils.logging import notify_exception
-from casexml.apps.case.models import CommCareCase
+from casexml.apps.case.models import CommCareCase, INDEX_ID_PARENT
 from dimagi.utils.chunked import chunked
 from dimagi.utils.couch import CriticalSection
 from dimagi.utils.couch.bulk import soft_delete_docs
@@ -31,15 +34,6 @@ if not settings.REMINDERS_QUEUE_ENABLED:
         CaseReminderHandler.fire_reminders()
 
 
-def get_subcases(case):
-    indices = case.reverse_indices
-    subcases = []
-    for index in indices:
-        if index.identifier == "parent":
-            subcases.append(CommCareCase.get(index.referenced_id))
-    return subcases
-
-
 @task(queue=settings.CELERY_REMINDER_CASE_UPDATE_QUEUE, ignore_result=True, acks_late=True,
       default_retry_delay=CASE_CHANGED_RETRY_INTERVAL * 60, max_retries=CASE_CHANGED_RETRY_MAX,
       bind=True)
@@ -50,14 +44,13 @@ def case_changed(self, domain, case_id):
             reminder_type_filter=REMINDER_TYPE_DEFAULT
         )
         if handler_ids:
-            _case_changed(case_id, handler_ids)
+            _case_changed(domain, case_id, handler_ids)
     except Exception as e:
         self.retry(exc=e)
 
 
-def _case_changed(case_id, handler_ids):
-    subcases = None
-    case = CommCareCase.get(case_id)
+def _case_changed(domain, case_id, handler_ids):
+    case = CaseAccessors(domain).get_case(case_id)
     for handler in CaseReminderHandler.get_handlers_from_ids(handler_ids):
         if handler.start_condition_type == CASE_CRITERIA:
             kwargs = {}
@@ -68,8 +61,11 @@ def _case_changed(case_id, handler_ids):
                 }
             handler.case_changed(case, **kwargs)
             if handler.uses_parent_case_property:
-                if subcases is None:
-                    subcases = get_subcases(case)
+                if should_use_sql_backend(domain):
+                    subcases = case.get_subcases(index_identifer=CommCareCaseIndexSQL.PARENT_IDENTIFIER)
+                else:
+                    subcases = case.get_subcases(index_identifier=INDEX_ID_PARENT)
+
                 for subcase in subcases:
                     handler.case_changed(subcase, **kwargs)
 

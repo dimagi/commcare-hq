@@ -12,6 +12,7 @@ from corehq.apps.users.models import CouchUser, CommCareUser
 from corehq.apps.groups.models import Group
 from corehq.apps.locations.dbaccessors import get_all_users_by_location
 from corehq.apps.locations.models import SQLLocation
+from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 from dimagi.utils.parsing import string_to_datetime, json_format_datetime
 from dateutil.parser import parse
 from corehq.apps.reminders.util import enqueue_reminder_directly, get_verified_number_for_recipient
@@ -149,8 +150,10 @@ def looks_like_timestamp(value):
     except Exception:
         return False
 
+
 def property_references_parent(case_property):
     return isinstance(case_property, basestring) and case_property.startswith("parent/")
+
 
 def get_case_property(case, case_property):
     """
@@ -169,9 +172,17 @@ def get_case_property(case, case_property):
     else:
         return case.get_case_property(case_property)
 
+
 def case_matches_criteria(case, match_type, case_property, value_to_match):
+    result = case.resolve_case_property(case_property)
+    values = [r['value'] for r in result]
+    if not values:
+        values = [None]
+    return any([value_matches_criteria(match_type, value, value_to_match) for value in values])
+
+
+def value_matches_criteria(match_type, case_property_value, value_to_match):
     result = False
-    case_property_value = get_case_property(case, case_property)
     if match_type == MATCH_EXACT:
         result = (case_property_value == value_to_match) and (value_to_match is not None)
     elif match_type == MATCH_ANY_VALUE:
@@ -592,8 +603,8 @@ class CaseReminderHandler(Document):
 
     def get_reminder(self, case):
         domain = self.domain
-        handler_id = self._id
-        case_id = case._id
+        handler_id = self.get_id
+        case_id = case.case_id
         
         return CaseReminder.view('reminders/by_domain_handler_case',
             key=[domain, handler_id, case_id],
@@ -628,11 +639,16 @@ class CaseReminderHandler(Document):
         if event.fire_time_type == FIRE_TIME_DEFAULT:
             fire_time = event.fire_time
         elif event.fire_time_type == FIRE_TIME_CASE_PROPERTY:
-            fire_time = get_case_property(case, event.fire_time_aux)
-            try:
-                fire_time = parse(fire_time).time()
-            except Exception:
-                fire_time = DEFAULT_REMINDER_TIME
+            fire_time = DEFAULT_REMINDER_TIME
+            values = case.resolve_case_property(event.fire_time_aux)
+            values = [r['value'] for r in values]
+            for value in values:
+                try:
+                    if value:
+                        fire_time = parse(value).time()
+                        break
+                except Exception:
+                    pass
         elif event.fire_time_type == FIRE_TIME_RANDOM:
             additional_minute_offset = randint(0, event.time_window_length - 1) + (event.fire_time.hour * 60) + event.fire_time.minute
             fire_time = time(0, 0)
@@ -662,22 +678,22 @@ class CaseReminderHandler(Document):
         """
         if recipient is None:
             if self.recipient == RECIPIENT_USER:
-                recipient = CouchUser.get_by_user_id(case.user_id)
+                recipient = CouchUser.get_by_user_id(case.modified_by)
             elif self.recipient == RECIPIENT_CASE:
-                recipient = CommCareCase.get(case._id)
+                recipient = case
             elif self.recipient == RECIPIENT_PARENT_CASE:
                 if case is not None and case.parent is not None:
                     recipient = case.parent
         local_now = CaseReminderHandler.utc_to_local(recipient, now)
         
-        case_id = case._id if case is not None else None
-        user_id = recipient._id if self.recipient == RECIPIENT_USER and recipient is not None else None
-        sample_id = recipient._id if self.recipient == RECIPIENT_SURVEY_SAMPLE else None
+        case_id = case.case_id if case is not None else None
+        user_id = recipient.get_id if self.recipient == RECIPIENT_USER and recipient is not None else None
+        sample_id = recipient.get_id if self.recipient == RECIPIENT_SURVEY_SAMPLE else None
         
         reminder = CaseReminder(
             domain=self.domain,
             case_id=case_id,
-            handler_id=self._id,
+            handler_id=self.get_id,
             user_id=user_id,
             method=self.method,
             active=True,
@@ -772,7 +788,7 @@ class CaseReminderHandler(Document):
         return      void
         """
         case = reminder.case
-        if case and case.doc_type.endswith("-Deleted"):
+        if case and case.is_deleted:
             reminder.retire()
             return
 
@@ -989,29 +1005,31 @@ class CaseReminderHandler(Document):
         
         return      True if the condition is reached, False if not.
         """
-        condition = get_case_property(case, case_property)
-        
-        if isinstance(condition, datetime):
-            pass
-        elif isinstance(condition, date):
-            condition = datetime.combine(condition, time(0,0))
-        elif looks_like_timestamp(condition):
-            try:
-                condition = parse(condition)
-            except Exception:
+        values = case.resolve_case_property(case_property)
+        values = [r['value'] for r in values]
+
+        for condition in values:
+            if isinstance(condition, datetime):
                 pass
-        
-        if isinstance(condition, datetime) and getattr(condition, "tzinfo") is not None:
-            condition = condition.astimezone(pytz.utc)
-            condition = condition.replace(tzinfo=None)
-        
-        if (isinstance(condition, datetime) and now > condition) or is_true_value(condition):
-            return True
-        else:
-            return False
+            elif isinstance(condition, date):
+                condition = datetime.combine(condition, time(0,0))
+            elif looks_like_timestamp(condition):
+                try:
+                    condition = parse(condition)
+                except Exception:
+                    pass
+
+            if isinstance(condition, datetime) and getattr(condition, "tzinfo") is not None:
+                condition = condition.astimezone(pytz.utc)
+                condition = condition.replace(tzinfo=None)
+
+            if (isinstance(condition, datetime) and now > condition) or is_true_value(condition):
+                return True
+
+        return False
 
     def case_changed(self, case, now=None, schedule_changed=False, prev_definition=None):
-        key = "rule-update-definition-%s-case-%s" % (self._id, case._id)
+        key = "rule-update-definition-%s-case-%s" % (self.get_id, case.case_id)
         with CriticalSection([key]):
             self._case_changed(case, now, schedule_changed, prev_definition)
 
@@ -1028,19 +1046,21 @@ class CaseReminderHandler(Document):
         if not self.start_date:
             return StartDateInfo(now, True, True)
 
-        start_date = get_case_property(case, self.start_date)
+        values = case.resolve_case_property(self.start_date)
+        values = [r['value'] for r in result]
 
-        if isinstance(start_date, datetime):
-            return StartDateInfo(start_date, True, False)
+        for start_date in values:
+            if isinstance(start_date, datetime):
+                return StartDateInfo(start_date, True, False)
 
-        if isinstance(start_date, date):
-            return StartDateInfo(datetime.combine(start_date, time(0, 0)), True, False)
+            if isinstance(start_date, date):
+                return StartDateInfo(datetime.combine(start_date, time(0, 0)), True, False)
 
-        if looks_like_timestamp(start_date):
-            try:
-                return StartDateInfo(parse(start_date), True, False)
-            except Exception:
-                pass
+            if looks_like_timestamp(start_date):
+                try:
+                    return StartDateInfo(parse(start_date), True, False)
+                except Exception:
+                    pass
 
         if self.use_today_if_start_date_is_blank:
             return StartDateInfo(now, True, True)
@@ -1064,16 +1084,16 @@ class CaseReminderHandler(Document):
         now = now or self.get_now()
         reminder = self.get_reminder(case)
 
-        if case and case.user_id and (case.user_id != case._id):
+        if case and case.modified_by and (case.modified_by != case.case_id):
             try:
-                user = CouchUser.get_by_user_id(case.user_id)
+                user = CouchUser.get_by_user_id(case.modified_by)
             except KeyError:
                 user = None
         else:
             user = None
 
         if (case.closed or case.type != self.case_type or
-            case.doc_type.endswith("-Deleted") or self.deleted() or
+            case.is_deleted or self.deleted() or
             (self.recipient == RECIPIENT_USER and not user)):
             if reminder:
                 reminder.retire()
@@ -1141,7 +1161,7 @@ class CaseReminderHandler(Document):
         elif self.recipient == RECIPIENT_USER:
             recipient = CouchUser.get_by_user_id(self.user_id)
         elif self.recipient == RECIPIENT_CASE:
-            recipient = CommCareCase.get(self.case_id)
+            recipient = CaseAccessors(self.domain).get_case(self.case_id)
         elif self.recipient == RECIPIENT_LOCATION:
             recipient = self.locations
         else:
@@ -1155,7 +1175,7 @@ class CaseReminderHandler(Document):
             if self.recipient == RECIPIENT_CASE:
                 case = recipient
             elif self.case_id is not None:
-                case = CommCareCase.get(self.case_id)
+                case = CaseAccessors(self.domain).get_case(self.case_id)
             else:
                 case = None
             reminder = self.spawn_reminder(case, self.start_datetime, recipient)
@@ -1176,7 +1196,7 @@ class CaseReminderHandler(Document):
                         # and try again.
                         notify_exception(None,
                             message="Error sending immediately for handler %s" %
-                            self._id)
+                            self.get_id)
                 if sent or not send_immediately:
                     self.set_next_fire(reminder, now)
                 reminder.save()
@@ -1515,7 +1535,7 @@ class CaseReminder(SafeSaveDocument, LockableMixIn):
     @property
     def case(self):
         if self.case_id is not None:
-            return CommCareCase.get(self.case_id)
+            return CaseAccessors(self.domain).get_case(self.case_id)
         else:
             return None
 

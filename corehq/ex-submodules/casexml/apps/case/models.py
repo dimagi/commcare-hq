@@ -211,6 +211,10 @@ class CommCareCase(SafeSaveDocument, IndexHoldingMixIn, ComputedDocumentMixin,
         return "%s(name=%r, type=%r, id=%r)" % (
                 self.__class__.__name__, self.name, self.type, self._id)
 
+    @property
+    def default_parent_identifier(self):
+        return INDEX_ID_PARENT
+
     @memoized
     def get_parent(self, identifier=None, relationship=None):
         indices = self.indices
@@ -232,7 +236,7 @@ class CommCareCase(SafeSaveDocument, IndexHoldingMixIn, ComputedDocumentMixin,
         please write/use a different property.
         """
         result = self.get_parent(
-            identifier=INDEX_ID_PARENT,
+            identifier=self.default_parent_identifier,
             relationship=INDEX_RELATIONSHIP_CHILD
         )
         return result[0] if result else None
@@ -356,22 +360,6 @@ class CommCareCase(SafeSaveDocument, IndexHoldingMixIn, ComputedDocumentMixin,
             return getattr(self, property)
         except Exception:
             return None
-
-    def resolve_case_property(self, property_name):
-        """
-        Handles case property parent references. Examples for property_name can be:
-        name
-        parent/name
-        parent/parent/name
-        ...
-        """
-        if property_name.lower().startswith('parent/'):
-            parent = self.parent
-            if not parent:
-                return None
-            return parent.resolve_case_property(property_name[7:])
-
-        return self.to_json().get(property_name)
 
     def case_properties(self):
         return self.to_json()
