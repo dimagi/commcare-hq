@@ -12,7 +12,7 @@ from corehq.apps.es import case_search as case_search_es
 from . import filters, queries
 
 from corehq.apps.es.cases import CaseES
-from corehq.pillows.const import CASE_SEARCH_ALIAS
+from corehq.pillows.mappings.case_search_mapping import CASE_SEARCH_ALIAS
 
 
 PATH = "case_properties"

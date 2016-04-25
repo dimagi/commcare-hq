@@ -15,9 +15,8 @@ from corehq.apps.es import CaseSearchES
 from corehq.elastic import get_es_new
 from corehq.form_processor.utils.general import should_use_sql_backend
 from corehq.pillows.case import CASE_ES_TYPE, CasePillow
-from corehq.pillows.const import CASE_SEARCH_ALIAS
 from corehq.pillows.mappings.case_search_mapping import CASE_SEARCH_INDEX, \
-    CASE_SEARCH_MAPPING
+    CASE_SEARCH_MAPPING, CASE_SEARCH_ALIAS
 from pillowtop.checkpoints.manager import PillowCheckpoint
 from pillowtop.es_utils import ElasticsearchIndexInfo
 from pillowtop.feed.interface import Change
