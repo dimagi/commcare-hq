@@ -1441,8 +1441,6 @@ PILLOWTOPS = {
         'corehq.pillows.user.GroupToUserPillow',
         'corehq.pillows.sofabed.FormDataPillow',
         'corehq.pillows.sofabed.CaseDataPillow',
-        # TODO: Remove this once ConstructedPillows can deal with their own indices
-        'corehq.pillows.case_search.CaseSearchPillow',
         {
             'name': 'SqlSMSPillow',
             'class': 'pillowtop.pillow.interface.ConstructedPillow',

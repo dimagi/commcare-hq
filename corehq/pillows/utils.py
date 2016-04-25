@@ -1,6 +1,7 @@
 from corehq.apps.commtrack.const import COMMTRACK_USERNAME
 from corehq.apps.users.models import CouchUser
 from corehq.apps.users.util import SYSTEM_USER_ID, DEMO_USER_ID
+from corehq.pillows.mappings.case_search_mapping import CASE_SEARCH_INDEX_INFO
 from corehq.pillows.mappings.domain_mapping import DOMAIN_INDEX_INFO
 from corehq.pillows.mappings.group_mapping import GROUP_INDEX_INFO
 from corehq.pillows.mappings.sms_mapping import SMS_INDEX_INFO
@@ -77,3 +78,4 @@ def get_all_expected_es_indices():
     yield DOMAIN_INDEX_INFO
     yield GROUP_INDEX_INFO
     yield SMS_INDEX_INFO
+    yield CASE_SEARCH_INDEX_INFO
