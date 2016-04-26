@@ -37,8 +37,8 @@ function setUpInitialTableauParams() {
     var locationKey = 'user_' + tableauOptions.userLocationLevel;
     var params = {
         'view_by': LOCATIONS_MAP[tableauOptions.userLocationLevel],
-        locationKey: tableauOptions.userLocation,
     };
+    params[locationKey] = tableauOptions.userLocation;
     applyParams(workbook, params);
 
     var historyObject = {
@@ -71,57 +71,52 @@ function addNavigationLink(sheetName) {
 }
 
 function onMarksSelection(marksEvent) {
-    return marksEvent.getMarksAsync().then(redrawViz);
+    return marksEvent.getMarksAsync().then(updateViz);
 }
 
-function redrawViz(marks) {
+/*
+Extracts new sheet to render, new paramters/filters to apply from selected marks, and updates the viz with them
+ICDS workbooks will have new sheet/paramter info in following attributes of the mark
+- 'js_param_<param_name>: <param_value>': New paramters to apply
+    e.g. js_param_state: Andhra Pradesh
+- 'js_sheet: <sheet name to navigate to>': New sheet to navigate to
+    e.g. js_sheet: Nutrition
+*/
+function updateViz(marks) {
     clearDebugInfo();
     // marks is an array of what the user has clicked
-    var html = ["<ul>"],
+    var debugHtml = ["<ul>"],
         // default the sheet to navigate to to the current one
         currentSheet = history.state.sheetName,
         newSheet = currentSheet;
-        params = {};
+        newParams = {};
 
-    function buildParams(current_parameters) {
-        for (var markIndex = 0; markIndex < marks.length; markIndex++) {
-            // TODO: Handle more than 1 better
-            var pairs = marks[markIndex].getPairs();
-            for (var pairIndex = 0; pairIndex < pairs.length; pairIndex++) {
-                var pair = pairs[pairIndex];
-                html.push("<li><b>" + pair.fieldName + "</b>: "+ pair.formattedValue + "</li>");
+    function buildParams(currentParams) {
 
-                newSheet = getSheetName(pair, currentSheet);
+        _.each(marks, function(mark) {
+            var pairs = mark.getPairs();
 
-                // Split out params and filters to be applied
-                var PARAM_SUBSTRING = 'ATTR(js_param_',
-                        PARAM_UNCHANGED = 'CURRENT';
+            _.each(pairs, function(pair){
+                debugHtml.push("<li><b>" + pair.fieldName + "</b>: "+ pair.formattedValue + "</li>");
+                newSheet = extractSheetName(pair, currentSheet);
+                var newParam = extractParam(pair, currentParams);
+                $.extend(newParams, newParam);
+            });
 
-                if(pair.fieldName.includes(PARAM_SUBSTRING)) {
-                    var param_key = pair.fieldName.slice(PARAM_SUBSTRING.length, -1),
-                        param_value = pair.formattedValue;
+            debugHtml.push("</ul>");
+        });
 
-                    if(param_value === PARAM_UNCHANGED) {
-                        params[param_key] = lookupParam(current_parameters, param_key);
-                    } else {
-                        params[param_key] = param_value;
-                    }
-                }
+        debugHtml = debugHtml.join("");
 
-            }
-            html.push("</ul>");
-        }
-        html = html.join("");
-        console.log(html);
-        $("#debugbar").append(html);
+        $("#debugbar").append(debugHtml);
 
         // Add inspect button listener
         if( tableauOptions.isDebug ) {
             $("#inspectButton").unbind('click').click(function() {
-                switchVisualization(newSheet, workbook, params);
+                switchVisualization(newSheet, workbook, newParams);
             }).prop('disabled', false);
         } else {
-            switchVisualization(newSheet, workbook, params);
+            switchVisualization(newSheet, workbook, newParams);
         }
 
     }
@@ -134,8 +129,11 @@ function redrawViz(marks) {
         });
 }
 
-function getSheetName(pair, sheetName) {
-    // Find the sheet we are navigating to
+/*
+Given attribute key-value pair, extracts new sheetName specified in 'js_sheet: <new_sheet>', if attribute name is
+not js_sheet returns current sheetName
+*/
+function extractSheetName(pair, sheetName) {
     if((pair.fieldName === 'js_sheet' || pair.fieldName === 'ATTR(js_sheet)') && pair.formattedValue != 'CURRENT') {
         return pair.formattedValue;
     }
@@ -209,7 +207,30 @@ window.onpopstate = function (event) {
         });
     }
 }
-function lookupParam(params, param_key){
+
+/*
+Given an attribute pair and existingParams, extracts and returns new paramter specified by
+'js_param_<paramname>: <paramvalue>'
+*/
+function extractParam(pair, currentParams){
+    var newParam = {}
+    var PARAM_SUBSTRING = 'ATTR(js_param_',
+        PARAM_UNCHANGED = 'CURRENT';
+    if(pair.fieldName.includes(PARAM_SUBSTRING)) {
+        var param_key = pair.fieldName.slice(PARAM_SUBSTRING.length, -1),
+            param_value = pair.formattedValue;
+
+        if(param_value === PARAM_UNCHANGED) {
+            newParam[param_key] = getParamValue(currentParams, param_key);
+        } else {
+            newParam[param_key] = param_value;
+        }
+    }
+    return newParam;
+}
+
+
+function getParamValue(params, param_key){
     var matchingParams = _.filter(params, function(param) {
         return param.getName() == param_key;
     })
