@@ -142,6 +142,7 @@ urlpatterns = patterns('',
     url(r'^ping/$', 'corehq.apps.app_manager.views.formdesigner.ping', name='ping'),
     url(r'^robots.txt$', TemplateView.as_view(template_name='robots.txt', content_type='text/plain')),
     url(r'^software-plans/$', RedirectView.as_view(url=PRICING_LINK), name='go_to_pricing'),
+    url(r'^certificate_validate/$', TemplateView.as_view(template_name='certificate_validate.html'), name='certificate_validate')
 ) + patterns('', *LOCAL_APP_URLS)
 
 if settings.ENABLE_PRELOGIN_SITE:
