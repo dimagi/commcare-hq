@@ -9,6 +9,7 @@ from twilio.rest import TwilioRestClient
 
 from corehq.apps.sms.models import SQLMobileBackend
 from corehq.apps.smsbillables.exceptions import RetryBillableTaskException
+from corehq.util.quickcache import quickcache
 
 logger = logging.getLogger("smsbillables")
 
@@ -38,6 +39,7 @@ def _get_twilio_client(backend_instance):
     return TwilioRestClient(config.account_sid, config.auth_token)
 
 
+@quickcache(vary_on=['backend_instance', 'backend_message_id'], timeout=1 * 60)
 def get_twilio_message(backend_instance, backend_message_id):
     try:
         return _get_twilio_client(backend_instance).messages.get(backend_message_id)
