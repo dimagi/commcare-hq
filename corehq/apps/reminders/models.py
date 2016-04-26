@@ -34,6 +34,11 @@ from django.db import models
 class IllegalModelStateException(Exception):
     pass
 
+
+class UnexpectedConfigurationException(Exception):
+    pass
+
+
 METHOD_SMS = "sms"
 METHOD_SMS_CALLBACK = "callback"
 METHOD_SMS_SURVEY = "survey"
@@ -587,7 +592,7 @@ class CaseReminderHandler(Document):
     def set_case_recipient(self, case_id=None):
         if self.start_condition_type == ON_DATETIME:
             if not case_id:
-                raise Exception("Expected a value for case_id")
+                raise UnexpectedConfigurationException("Expected a value for case_id")
             self.case_id = case_id
 
         self.recipient = RECIPIENT_CASE
@@ -606,14 +611,14 @@ class CaseReminderHandler(Document):
 
     def set_last_submitting_user_recipient(self):
         if self.start_condition_type != CASE_CRITERIA:
-            raise Exception("Last submitting user is only valid for case criteria reminders")
+            raise UnexpectedConfigurationException("Last submitting user is only valid for case criteria reminders")
 
         self.recipient = RECIPIENT_USER
         return self
 
     def set_user_recipient(self, user_id):
         if self.start_condition_type != ON_DATETIME:
-            raise Exception("User recipient is only valid for datetime reminders")
+            raise UnexpectedConfigurationException("User recipient is only valid for datetime reminders")
 
         self.recipient = RECIPIENT_USER
         self.user_id = user_id
@@ -631,7 +636,7 @@ class CaseReminderHandler(Document):
 
     def set_case_owner_recipient(self):
         if self.start_condition_type != CASE_CRITERIA:
-            raise Exception("Case owner recipient is only valid for case criteria reminders")
+            raise UnexpectedConfigurationException("Case owner recipient is only valid for case criteria reminders")
 
         self.recipient = RECIPIENT_OWNER
         return self
@@ -667,15 +672,78 @@ class CaseReminderHandler(Document):
         self.method = METHOD_EMAIL
         return self
 
-    def set_schedule(self, event_interpretation, schedule_length, events):
+    def set_schedule_manually(self, event_interpretation, schedule_length, events):
         self.event_interpretation = event_interpretation
         self.schedule_length = schedule_length
         self.events = events
         return self
 
+    def create_event(self, fire_time, day_num=0, fire_time_type=FIRE_TIME_DEFAULT, message=None,
+            form_unique_id=None, subject=None, timeouts=None, time_window_length=None):
+
+        if not self.method:
+            raise UnexpectedConfigurationException("Please set method first")
+
+        event = CaseReminderEvent(
+            day_num=day_num,
+            callback_timeout_intervals=(timeouts or []),
+        )
+
+        if fire_time_type in (FIRE_TIME_DEFAULT, FIRE_TIME_RANDOM):
+            if not isinstance(fire_time, time):
+                raise UnexpectedConfigurationException("Expected fire_time to be an instance of time")
+
+            event.fire_time = fire_time
+        elif fire_time_type == FIRE_TIME_CASE_PROPERTY:
+            if not isinstance(fire_time, basestring):
+                raise UnexpectedConfigurationException("Expected fire_time to be a case property name")
+
+            event.fire_time_aux = fire_time
+
+        if fire_time_type == FIRE_TIME_RANDOM:
+            if not isinstance(time_window_length, int):
+                raise UnexpectedConfigurationException("Expected an int for time_window_length")
+
+            event.time_window_length = time_window_length
+
+        if self.method in (METHOD_SMS, METHOD_SMS_CALLBACK, METHOD_EMAIL):
+            if not message:
+                raise UnexpectedConfigurationException("Expected a value for message")
+
+            event.message = message
+
+        if self.method == METHOD_EMAIL:
+            if not subject:
+                raise UnexpectedConfigurationException("Expected a value for subject")
+
+            event.subject = subject
+
+        if self.method in (METHOD_SMS_SURVEY, METHOD_IVR_SURVEY):
+            if not form_unique_id:
+                raise UnexpectedConfigurationException("Expected a value for form_unique_id")
+
+            event.form_unique_id = form_unique_id
+
+        return event
+
+    def set_one_event_schedule(self, event, frequency, event_interpretation=EVENT_AS_SCHEDULE):
+        if event.day_num != 0:
+            raise UnexpectedConfigurationException("Expected day_num to be 0")
+
+        self.event_interpretation = event_interpretation
+        self.schedule_length = frequency
+        self.events = [event]
+        return self
+
+    def set_daily_schedule(self, event):
+        return self.set_one_event_schedule(event, 1)
+
+    def set_weekly_schedule(self, event):
+        return self.set_one_event_schedule(event, 7)
+
     def set_stop_condition(self, max_iteration_count=REPEAT_SCHEDULE_INDEFINITELY, stop_case_property=None):
         if stop_case_property and self.start_condition_type != CASE_CRITERIA:
-            raise Exception("Can only set a stop case property on a case criteria reminder")
+            raise UnexpectedConfigurationException("Can only set a stop case property on a case criteria reminder")
 
         self.max_iteration_count = max_iteration_count
         self.until = stop_case_property
