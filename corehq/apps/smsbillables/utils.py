@@ -1,5 +1,6 @@
 import logging
 
+from django.conf import settings
 from django.utils.encoding import force_unicode
 
 from django_countries.data import COUNTRIES
@@ -20,11 +21,13 @@ def country_name_from_isd_code_or_empty(isd_code):
 
 
 def log_smsbillables_error(message):
-    logger.error("[SMS Billables] %s" % message)
+    if not settings.UNIT_TESTING:
+        logger.error("[SMS Billables] %s" % message)
 
 
 def log_smsbillables_info(message):
-    logger.info("[SMS Billables] %s" % message)
+    if not settings.UNIT_TESTING:
+        logger.info("[SMS Billables] %s" % message)
 
 
 def _get_twilio_client(backend_instance):
