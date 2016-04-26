@@ -9,7 +9,16 @@ ACTIVE_DATA_MANAGEMENT = 'active_data_management'
 CUSTOM_BRANDING = 'custom_branding'
 
 CUSTOM_REPORTS = 'custom_reports'
+
+# Legacy privilege associated with Pro plan
 REPORT_BUILDER = 'user_configurable_report_builder'
+
+# A la carte privileges that will be used in custom plans until "Add Ons" are
+# added to the accounting system.
+REPORT_BUILDER_TRIAL = 'report_builder_trial'
+REPORT_BUILDER_5 = 'report_builder_5_reports'
+REPORT_BUILDER_15 = 'report_builder_15_reports'
+REPORT_BUILDER_30 = 'report_builder_30_reports'
 
 ROLE_BASED_ACCESS = 'role_based_access'
 
@@ -59,6 +68,10 @@ MAX_PRIVILEGES = [
     COMMCARE_LOGO_UPLOADER,
     LOCATIONS,
     REPORT_BUILDER,
+    REPORT_BUILDER_TRIAL,
+    REPORT_BUILDER_5,
+    REPORT_BUILDER_15,
+    REPORT_BUILDER_30,
     USER_CASE,
     DATA_CLEANUP,
     TEMPLATED_INTENTS,
@@ -96,6 +109,10 @@ class Titles(object):
             COMMCARE_LOGO_UPLOADER: _("Custom CommCare Logo Uploader"),
             LOCATIONS: _("Locations"),
             REPORT_BUILDER: _('User Configurable Report Builder'),
+            REPORT_BUILDER_TRIAL: _('Report Builder Trial'),
+            REPORT_BUILDER_5: _('Report Builder, 5 report limit'),
+            REPORT_BUILDER_15: _('Report Builder, 15 report limit'),
+            REPORT_BUILDER_30: _('Report Builder, 30 report limit'),
             TEMPLATED_INTENTS: _('Built-in Integration'),
             CUSTOM_INTENTS: _('External Integration Framework'),
             DATA_CLEANUP: _('Data Management'),

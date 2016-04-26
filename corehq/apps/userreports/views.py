@@ -85,7 +85,8 @@ from corehq.apps.userreports.ui.forms import (
     ConfigurableDataSourceEditForm,
     ConfigurableDataSourceFromAppForm,
 )
-from corehq.apps.userreports.util import has_report_builder_access, add_event
+from corehq.apps.userreports.util import has_report_builder_access, \
+    has_report_builder_add_on_privilege
 from corehq.apps.users.decorators import require_permission
 from corehq.apps.users.models import Permissions
 from corehq.toggles import REPORT_BUILDER_MAP_REPORTS
@@ -651,8 +652,13 @@ def _edit_report_shared(request, domain, config, read_only=False):
     return render(request, "userreports/edit_report_config.html", context)
 
 
-@toggles.any_toggle_enabled(toggles.USER_CONFIGURABLE_REPORTS, toggles.REPORT_BUILDER, toggles.REPORT_BUILDER_BETA_GROUP)
 def delete_report(request, domain, report_id):
+    if not (toggle_enabled(request, toggles.USER_CONFIGURABLE_REPORTS)
+            or toggle_enabled(request, toggles.REPORT_BUILDER)
+            or toggle_enabled(request, toggles.REPORT_BUILDER_BETA_GROUP)
+            or has_report_builder_add_on_privilege(request)):
+        raise Http404()
+
     config = get_document_or_404(ReportConfiguration, domain, report_id)
 
     # Delete the data source too if it's not being used by any other reports.
