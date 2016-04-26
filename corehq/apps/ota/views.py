@@ -74,11 +74,13 @@ def search(request, domain):
 @login_or_digest_or_basic_or_apikey()
 def claim(request, domain):
     couch_user = CouchUser.from_django_user(request.user)
-    # TODO: use request.session to ensure only one extension case if multiple claims for the same beneficiary
-    #       come from the same AWW.
     if request.method == 'POST':
+        if request.session.get('last_claimed_case_id') == request.POST['case_id']:
+            return HttpResponse('You have already claimed that {}'.format(request.POST.get('case_type', 'case')),
+                                status=400)
         claim_case(domain, couch_user.user_id, request.POST['case_id'],
                    host_type=request.POST.get('case_type'), host_name=request.POST.get('case_name'))
+        request.session['last_claimed_case_id'] = request.POST['case_id']
     return HttpResponse(status=200)
 
 

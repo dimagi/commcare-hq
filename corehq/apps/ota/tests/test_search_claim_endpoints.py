@@ -51,6 +51,22 @@ class ClaimCaseTests(TestCase):
         self.assertEqual(claim.name, CASE_NAME)
 
     # @run_with_all_backends
+    def test_duplicate_claim(self):
+        """
+        Server should not allow the same client to claim the same case more than once
+        """
+        client = Client()
+        client.login(username=USERNAME, password=PASSWORD)
+        url = reverse('claim_case', kwargs={'domain': DOMAIN})
+        # First claim
+        response = client.post(url, {'case_id': self.case_id})
+        self.assertEqual(response.status_code, 200)
+        # Dup claim
+        response = client.post(url, {'case_id': self.case_id})
+        self.assertEqual(response.status_code, 400)
+        self.assertEqual(response.content, 'You have already claimed that case')
+
+    # @run_with_all_backends
     def test_search_endpoint(self):
         client = Client()
         client.login(username=USERNAME, password=PASSWORD)
