@@ -44,7 +44,7 @@ class ReportBuilderTest(TestCase):
             existing_report=None,
             data={
                 'filters': '[]',
-                'columns': '[]',
+                'columns': '[{"property": "/data/first_name", "display_text": "first name"}]',
             }
         )
         self.assertTrue(builder_form.is_valid())
@@ -63,7 +63,7 @@ class ReportBuilderTest(TestCase):
             existing_report=report,
             data={
                 'filters': '[]',
-                'columns': '[]'
+                'columns': '[{"property": "/data/first_name", "display_text": "first name"}]',
             }
         )
         self.assertTrue(builder_form.is_valid())

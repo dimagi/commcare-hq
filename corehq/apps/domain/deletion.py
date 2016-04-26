@@ -65,6 +65,15 @@ def _delete_domain_backends(domain_name):
     model.objects.filter(is_global=False, domain=domain_name).delete()
 
 
+def _delete_web_user_membership(domain_name):
+    from corehq.apps.users.models import WebUser
+    active_web_users = WebUser.by_domain(domain_name)
+    inactive_web_users = WebUser.by_domain(domain_name, is_active=False)
+    for web_user in list(active_web_users) + list(inactive_web_users):
+        web_user.delete_domain_membership(domain_name)
+        web_user.save()
+
+
 # We use raw queries instead of ORM because Django queryset delete needs to
 # fetch objects into memory to send signals and handle cascades. It makes deletion very slow
 # if we have a millions of rows in stock data tables.
@@ -102,6 +111,7 @@ DOMAIN_DELETE_OPERATIONS = [
     CustomDeletion('sms', _delete_domain_backend_mappings),
     ModelDeletion('sms', 'MobileBackendInvitation', 'domain'),
     CustomDeletion('sms', _delete_domain_backends),
+    CustomDeletion('users', _delete_web_user_membership),
 ]
 
 

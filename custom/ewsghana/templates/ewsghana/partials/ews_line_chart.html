@@ -1,11 +1,5 @@
 {% load hq_shared_tags %}
-<link rel="stylesheet" type="text/css" href="{% static "reports/css/daterangepicker-bs2.css" %}">
 
-<script src='{% static 'hqadmin/js/nvd3_charts_helper.js' %}' type='text/javascript'></script>
-
-<script type="text/javascript" src="{% static 'reports/javascripts/bootstrap-daterangepicker/moment.min.js' %}"></script>
-<script type="text/javascript" src="{% static 'reports/javascripts/bootstrap-daterangepicker/daterangepicker.min.js' %}"></script>
-<script type="text/javascript" src='{% static 'reports/javascripts/daterangepicker.js' %}'></script>
 <script type="text/javascript">
     var line_chart_data;
     var line_chart_id;
@@ -106,6 +100,9 @@
             return element.values[0];
         });
         underOverStockSeries.forEach(function (element) {
+            if (!element) {
+                return;
+            }
             var series = element.series;
             var value = element.y;
             var yPosition = d3.select('svg .nv-scatter .nv-series-' + series + ' circle').attr('cy');
@@ -138,7 +135,13 @@
     }
     {% if not chart.is_rendered_as_email %}
         $inventory_filter = $('#inventory_filter');
-        $inventory_filter.createDefaultDateRangePicker();
+        $inventory_filter.daterangepicker({
+            startDate: '{{ datespan.enddate|add_days:-30|date:'Y-m-d' }}',
+            endDate: '{{ datespan.enddate|date:'Y-m-d' }}',
+            locale: {
+                format: 'YYYY-MM-DD'
+            }
+        });
         $('#inventory_filter_btn').on('click', function(e) {
             e.preventDefault();
             $('.hq-loading').fadeIn();
@@ -150,8 +153,8 @@
                 datatype: 'json',
                 url: '{% url 'inventory_managment' domain %}',
                 data: {
-                    startdate: dates[0],
-                    enddate: dates[1],
+                    startdate: $inventory_filter.data('daterangepicker').startDate.format('YYYY-MM-DD'),
+                    enddate: $inventory_filter.data('daterangepicker').endDate.format('YYYY-MM-DD'),
                     location_id: '{{ location_id }}'
                 },
                 success: function(response) {
@@ -167,20 +170,25 @@
         });
 
         $stockout_filter = $('#stockouts_filter');
-        $stockout_filter.createDefaultDateRangePicker();
+        $stockout_filter.daterangepicker({
+            startDate: '{{ datespan.enddate|add_days:-90|date:'Y-m-d' }}',
+            endDate: '{{ datespan.enddate|date:'Y-m-d' }}',
+            locale: {
+                format: 'YYYY-MM-DD'
+            }
+        });
         $('#stockouts_filter_btn').on('click', function(e) {
             e.preventDefault();
             $('.hq-loading').fadeIn();
 
             $(this).prop('disabled', true);
-            var dates = $($stockout_filter).val().split($stockout_filter.getDateRangeSeparator());
             $.ajax({
                 type: 'GET',
                 datatype: 'json',
                 url: '{% url 'stockouts_product' domain %}',
                 data: {
-                    startdate: dates[0],
-                    enddate: dates[1],
+                    startdate: $stockout_filter.data('daterangepicker').startDate.format('YYYY-MM-DD'),
+                    enddate: $stockout_filter.data('daterangepicker').endDate.format('YYYY-MM-DD'),
                     location_id: '{{ location_id }}'
                 },
                 success: function(response) {

@@ -368,6 +368,7 @@ class FormActions(DocumentSchema):
 
     case_preload = SchemaProperty(PreloadAction)
     referral_preload = SchemaProperty(PreloadAction)
+    load_from_form = SchemaProperty(PreloadAction)
 
     usercase_update = SchemaProperty(UpdateCaseAction)
     usercase_preload = SchemaProperty(PreloadAction)
@@ -412,6 +413,10 @@ class AdvancedAction(IndexedSchema):
     @property
     def is_subcase(self):
         return bool(self.case_indices)
+
+    @property
+    def form_element_name(self):
+        return "case_{}".format(self.case_tag)
 
 
 class AutoSelectCase(DocumentSchema):
@@ -824,8 +829,12 @@ class FormBase(DocumentSchema):
     def validate_form(self):
         vc = self.validation_cache
         if vc is None:
+            # formtranslate requires all attributes to be valid xpaths, but
+            # vellum namespaced attributes aren't
+            form = self.wrapped_xform()
+            form.strip_vellum_ns_attributes()
             try:
-                validate_xform(self.source,
+                validate_xform(etree.tostring(form.xml),
                                version=self.get_app().application_version)
             except XFormValidationError as e:
                 validation_dict = {
@@ -1310,7 +1319,7 @@ class Form(IndexedFormBase, NavMenuItemMediaMixin):
             elif self.requires == 'case':
                 action_types = (
                     'update_case', 'close_case', 'case_preload', 'subcases',
-                    'usercase_update', 'usercase_preload',
+                    'usercase_update', 'usercase_preload', 'load_from_form',
                 )
             else:
                 # this is left around for legacy migrated apps
@@ -1469,7 +1478,8 @@ class Form(IndexedFormBase, NavMenuItemMediaMixin):
         from corehq.apps.reports.formdetails.readable import FormQuestionResponse
         questions = {
             q['value']: FormQuestionResponse(q)
-            for q in self.get_questions(self.get_app().langs, include_translations=True)
+            for q in self.get_questions(self.get_app().langs, include_triggers=True,
+                include_groups=True, include_translations=True)
         }
         module_case_type = self.get_module().case_type
         type_meta = app_case_meta.get_type(module_case_type)
@@ -1494,7 +1504,7 @@ class Form(IndexedFormBase, NavMenuItemMediaMixin):
                         questions,
                         question_path
                     )
-            if type_ == 'case_preload':
+            if type_ == 'case_preload' or type_ == 'load_from_form':
                 for name, question_path in FormAction.get_action_properties(action):
                     self.add_property_load(
                         app_case_meta,
@@ -1802,6 +1812,22 @@ class CaseList(IndexedSchema, NavMenuItemMediaMixin):
 
     def rename_lang(self, old_lang, new_lang):
         _rename_key(self.label, old_lang, new_lang)
+
+
+class CaseSearchProperty(DocumentSchema):
+    """
+    Case properties available to search on.
+    """
+    name = StringProperty()
+    label = DictProperty()
+
+
+class CaseSearch(DocumentSchema):
+    """
+    Properties and search command label
+    """
+    command_label = DictProperty(default={'en': 'Search All Cases'})
+    properties = SchemaListProperty(CaseSearchProperty)
 
 
 class ParentSelect(DocumentSchema):
@@ -2172,6 +2198,7 @@ class Module(ModuleBase, ModuleDetailsMixin):
     referral_list = SchemaProperty(CaseList)
     task_list = SchemaProperty(CaseList)
     parent_select = SchemaProperty(ParentSelect)
+    search_config = SchemaProperty(CaseSearch)
 
     @classmethod
     def wrap(cls, data):
@@ -2669,6 +2696,7 @@ class AdvancedModule(ModuleBase):
     has_schedule = BooleanProperty()
     schedule_phases = SchemaListProperty(SchedulePhase)
     get_schedule_phases = IndexedSchema.Getter('schedule_phases')
+    search_config = SchemaListProperty(CaseSearch)
 
     @classmethod
     def new_module(cls, name, lang):

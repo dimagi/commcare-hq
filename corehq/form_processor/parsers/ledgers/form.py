@@ -48,6 +48,17 @@ LedgerInstruction = namedtuple(
 )
 
 
+def get_case_ids_from_stock_transactions(xform):
+    stock_report_helpers = list(_get_all_stock_report_helpers_from_form(xform))
+    case_ids = {
+        transaction_helper.case_id
+        for stock_report_helper in stock_report_helpers
+        for transaction_helper in stock_report_helper.transactions
+    }
+    return case_ids
+
+
+
 def get_stock_actions(xform):
     """
     Pulls out the ledger blocks and case action intents from a form and returns them

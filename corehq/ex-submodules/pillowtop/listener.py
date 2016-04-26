@@ -1,7 +1,6 @@
 from functools import wraps
 import logging
 from couchdbkit.exceptions import ResourceNotFound
-from elasticsearch import Elasticsearch
 from elasticsearch.exceptions import RequestError, ConnectionError, NotFoundError, ConflictError
 from psycopg2._psycopg import InterfaceError as Psycopg2InterfaceError
 from django.db.utils import InterfaceError as DjangoInterfaceError

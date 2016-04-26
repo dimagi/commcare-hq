@@ -61,3 +61,6 @@
 [submodule "submodules/formplayer"]
 	path = submodules/formplayer
 	url = https://github.com/dimagi/formplayer.git
+[submodule "deployment/commcare-hq-deploy"]
+	path = deployment/commcare-hq-deploy
+	url = https://github.com/dimagi/commcare-hq-deploy.git

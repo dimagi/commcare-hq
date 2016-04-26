@@ -1,0 +1,40 @@
+{% load i18n %}
+
+<div id="property_template" class="hide">
+    <p>
+        <label>{% trans "Property name" %}</label>
+        <input type="text" data-bind="value: property.name"/>
+        <button type="button"
+                class="btn btn-danger"
+                data-bind="click: $parent.removeProperty">x</button>
+    </p>
+</div>
+
+<div id="case_type_template" class="hide">
+    <fieldset style="padding: 0 0 0 2em;">
+        <p>
+            <label>{% trans "Case type" %}</label>
+            <select data-bind="options: $root.caseTypes, value: caseType"></select>
+            <button type="button"
+                    class="btn btn-danger"
+                    data-bind="click: $root.removeCaseType">x</button>
+        </p>
+        <fieldset style="padding: 0 0 0 2em;">
+            <div data-bind="template: { name: 'property_template', foreach: properties, as: 'property' }"></div>
+            <p>
+                <button type="button"
+                        class="btn btn-primary"
+                        data-bind="click: addProperty">
+                    {% trans "Add another property" %}
+                </button>
+            </p>
+        </fieldset>
+        <p>
+            <button type="button"
+                    class="btn btn-primary"
+                    data-bind="click: $root.addCaseType">
+                {% trans "Add another case type" %}
+            </button>
+        </p>
+    </fieldset>
+</div>

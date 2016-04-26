@@ -50,11 +50,14 @@ def make_case_property_indicator(property_name, column_id=None):
     property.
     """
     return {
-        "type": "raw",
+        "type": "expression",
         "column_id": column_id or property_name,
         "datatype": DEFAULT_CASE_PROPERTY_DATATYPES.get(property_name, "string"),
-        'property_name': property_name,
         "display_name": property_name,
+        "expression": {
+            "type": "property_name",
+            "property_name": property_name,
+        },
     }
 
 
@@ -162,14 +165,17 @@ def make_form_question_indicator(question, column_id=None):
     """
     path = question['value'].split('/')
     data_type = question['type']
-    ret = {
-        "type": "raw",
+    return {
+        "type": "expression",
         "column_id": column_id or question['value'],
-        'property_path': ['form'] + path[2:],
         "display_name": path[-1],
         "datatype": get_form_indicator_data_type(data_type),
+        "expression": {
+            "type": "property_path",
+            'property_path': ['form'] + path[2:],
+        },
+
     }
-    return ret
 
 
 def make_form_meta_block_indicator(spec, column_id=None):
@@ -182,14 +188,16 @@ def make_form_meta_block_indicator(spec, column_id=None):
         field_name = [field_name]
     data_type = spec[1]
     column_id = column_id or field_name[0]
-    ret = {
-        "type": "raw",
+    return {
+        "type": "expression",
         "column_id": column_id,
-        "property_path": ['form', 'meta'] + field_name,
         "display_name": field_name[0],
         "datatype": get_form_indicator_data_type(data_type),
+        "expression": {
+            "type": "property_path",
+            "property_path": ['form', 'meta'] + field_name,
+        }
     }
-    return ret
 
 
 def get_form_indicator_data_type(question_type):
