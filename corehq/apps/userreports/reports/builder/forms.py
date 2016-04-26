@@ -10,7 +10,7 @@ from django.forms.util import flatatt
 from django.template.loader import render_to_string
 from django.utils.html import format_html
 from django.utils.safestring import mark_safe
-from django.utils.translation import ugettext as _, ugettext_noop
+from django.utils.translation import ugettext as _, ugettext_noop, ugettext_lazy
 
 from crispy_forms import layout as crispy
 from crispy_forms.bootstrap import StrictButton
@@ -554,7 +554,7 @@ class ConfigureNewReportBase(forms.Form):
             buttons.insert(
                 0,
                 crispy.HTML(
-                    '<a class="btn btn-danger pull-right" href="{}">{}</a>'.format(
+                    '<a id="delete-report-button" class="btn btn-danger pull-right" href="{}">{}</a>'.format(
                         reverse(
                             'delete_configurable_report',
                             args=(self.domain, self.existing_report._id),
@@ -592,7 +592,7 @@ class ConfigureNewReportBase(forms.Form):
 
     @property
     def column_config_template(self):
-        return render_to_string('userreports/partials/report_filter_configuration.html')
+        return render_to_string('userreports/partials/property_list_configuration.html')
 
     @property
     def container_fieldset(self):
@@ -642,8 +642,6 @@ class ConfigureNewReportBase(forms.Form):
         return data_source_config._id
 
     def update_report(self):
-        from corehq.apps.userreports.views import delete_data_source_shared
-
         matching_data_source = self.ds_builder.get_existing_match()
         if matching_data_source:
             reactivated = False
@@ -994,7 +992,13 @@ class ConfigurePieChartReportForm(ConfigureBarChartReportForm):
 
 class ConfigureListReportForm(ConfigureNewReportBase):
     report_type = 'list'
-    columns = JsonField(required=True)
+    columns = JsonField(
+        expected_type=list,
+        null_values=([],),
+        required=True,
+        widget=forms.HiddenInput,
+        error_messages={"required": ugettext_lazy("At least one column is required")},
+    )
     column_legend_fine_print = ugettext_noop("Add columns to your report to display information from cases or form submissions. You may rearrange the order of the columns by dragging the arrows next to the column.")
 
     @property
@@ -1025,7 +1029,7 @@ class ConfigureListReportForm(ConfigureNewReportBase):
             crispy.Div(
                 crispy.HTML(self.column_config_template), id="columns-table", data_bind='with: columnsList'
             ),
-            crispy.Hidden('columns', None, data_bind="value: columnsList.serializedProperties")
+            hqcrispy.HiddenFieldWithErrors('columns', None, data_bind="value: columnsList.serializedProperties"),
         )
 
     @property

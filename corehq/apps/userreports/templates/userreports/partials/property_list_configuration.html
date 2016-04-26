@@ -149,5 +149,9 @@ TODO:
                 </tr>
             </tbody>
         </table>
+        <div data-bind="visible: requireColumns && columns().length < 1" class="has-error">
+            <label class="help-block" data-bind="text: requireColumnsText">
+            </label>
+        </div>
     </div>
 </div>
