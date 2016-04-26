@@ -1,11 +1,11 @@
 var viz = {},
     workbook = {},
     LOCATIONS_MAP = {
-       'state': 1,
-       'district': 2,
-       'block': 3,
-       'supervisor': 4,
-       'awc': 5,
+        'state': 1,
+        'district': 2,
+        'block': 3,
+        'supervisor': 4,
+        'awc': 5,
     };
 
 var tableauOptions = {};
@@ -24,14 +24,14 @@ function initializeViz(o) {
             setUpWorkbook(viz);
             setUpInitialTableauParams();
             setUpNav(viz);
-        }
+        },
     };
     viz = new tableau.Viz(placeholderDiv, url, options);
-}
+};
 
 function setUpWorkbook(viz) {
     workbook = viz.getWorkbook();
-}
+};
 
 function setUpInitialTableauParams() {
     var locationKey = 'user_' + tableauOptions.userLocationLevel;
@@ -43,15 +43,15 @@ function setUpInitialTableauParams() {
 
     var historyObject = {
         'sheetName': tableauOptions.currentSheet,
-        'params': params
+        'params': params,
     };
-    history.pushState(historyObject, '', tableauOptions.currentSheet)
-}
+    history.pushState(historyObject, '', tableauOptions.currentSheet);
+};
 
 function setUpNav(viz) {
     var sheets = workbook.getPublishedSheetsInfo();
     _.each(sheets, function(sheet) {
-        addNavigationLink(sheet.getName(), sheet.getIsActive())
+        addNavigationLink(sheet.getName(), sheet.getIsActive());
     });
 
     $(".nav-link").click(function (e){
@@ -63,16 +63,16 @@ function setUpNav(viz) {
     });
 
     viz.addEventListener(tableau.TableauEventName.MARKS_SELECTION, onMarksSelection);
-}
+};
 
 function addNavigationLink(sheetName) {
     var html = "<li><a href='#' class='nav-link'>" + sheetName + "</a></li>";
     $(".dropdown-menu").append(html);
-}
+};
 
 function onMarksSelection(marksEvent) {
     return marksEvent.getMarksAsync().then(updateViz);
-}
+};
 
 /*
 From selected marks, extracts new sheet to render, new paramters/filters to apply, and updates the viz with them
@@ -129,7 +129,7 @@ function updateViz(marks) {
             // TODO: Better error rendering
             alert(err);
         });
-}
+};
 
 /*
 Extracts the hardcoded param-list for the sheetName and renders the sheet with given params and extracted params
@@ -153,18 +153,18 @@ function navigateToSheet(sheetName, workbook, params){
         switchVisualization(sheetName, workbook, params);
     }
 
-}
+};
 
 /*
 Given attribute key-value pair, extracts new sheetName specified in 'js_sheet: <new_sheet>', if attribute name is
 not js_sheet returns current sheetName
 */
 function extractSheetName(pair, sheetName) {
-    if((pair.fieldName === 'js_sheet' || pair.fieldName === 'ATTR(js_sheet)') && pair.formattedValue != 'CURRENT') {
+    if((pair.fieldName === 'js_sheet' || pair.fieldName === 'ATTR(js_sheet)') && pair.formattedValue !== 'CURRENT') {
         return pair.formattedValue;
     }
     return sheetName;
-}
+};
 
 function switchVisualization(sheetName, workbook, params) {
     // TODO: Handle the case where we are in the same sheet, might just need to apply filters then?
@@ -178,9 +178,9 @@ function switchVisualization(sheetName, workbook, params) {
 
                 // TODO: historyObject should be an actual object
                 var historyObject = {
-                        'sheetName': sheetName,
-                        'params': params
-                    };
+                    'sheetName': sheetName,
+                    'params': params,
+                };
                 history.pushState(historyObject, sheetName, sheetName);
                 return lastWorksheet;
             }).otherwise(function(err){
@@ -189,7 +189,7 @@ function switchVisualization(sheetName, workbook, params) {
             });
 
     enableResetFiltersButton();
-}
+};
 
 function applyParams(workbook, params, lastWorksheet) {
     _.each(params, function(value, key) {
@@ -197,30 +197,30 @@ function applyParams(workbook, params, lastWorksheet) {
         lastWorksheet = workbook.changeParameterValueAsync(key, value);
     });
     return lastWorksheet;
-}
+};
 
 function clearDebugInfo() {
     $("#debugbar").empty();
     // TODO: Disabling the button doesn't work
     $("#inspectButton").prop('disabled', true);
-}
+};
 
 function enableResetFiltersButton() {
     $("#resetFilters").prop('disabled', false).click(function () {
         // TODO: Only bind to this button once
         viz.revertAllAsync();
         disableResetFiltersButton();
-    })
-}
+    });
+};
 
 function disableResetFiltersButton() {
     $("#resetFilters").prop('disabled', true).unbind('click');
-}
+};
 
 
 window.onpopstate = function (event) {
     if(!event.state.sheetName) {
-        alert('History object needs a location to navigate to')
+        alert('History object needs a location to navigate to');
     }
     if(event.state.sheetName === 'base') {
         viz.revertAllAsync();
@@ -232,14 +232,14 @@ window.onpopstate = function (event) {
             alert(err);
         });
     }
-}
+};
 
 /*
 Given an attribute pair and existingParams, extracts and returns new paramter specified by
 'js_param_<paramname>: <paramvalue>'
 */
 function extractParam(pair, currentParams){
-    var newParam = {}
+    var newParam = {};
     var PARAM_SUBSTRING = 'ATTR(js_param_',
         PARAM_UNCHANGED = 'CURRENT';
     if(pair.fieldName.includes(PARAM_SUBSTRING)) {
@@ -253,13 +253,13 @@ function extractParam(pair, currentParams){
         }
     }
     return newParam;
-}
+};
 
 
 function getParamValue(params, param_key){
     var matchingParams = _.filter(params, function(param) {
-        return param.getName() == param_key;
-    })
+        return param.getName() === param_key;
+    });
     // There should be one matching param
     if (matchingParams.length !== 0){
         return matchingParams[0].getCurrentValue();
@@ -267,7 +267,7 @@ function getParamValue(params, param_key){
     else {
         return null;
     }
-}
+};
 
 /*
 Extracts hardcoded JSON paramters for sheetName specified in a param called 'js_sheet_<sheetName>'
@@ -288,4 +288,4 @@ function extractHardcodedSheetParams(params, sheetName){
     else {
         return {};
     }
-}
+};
