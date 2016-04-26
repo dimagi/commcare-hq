@@ -180,3 +180,4 @@ class TestFixFormsWithMissingXmlns(TestCase, TestXmlMixin):
         for app in apps:
             for form in app.get_forms():
                 self.assertEqual(form.source.count('xmlns="undefined"'), 0)
+                self.assertNotEqual(form.xmlns, 'undefined')
