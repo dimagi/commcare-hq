@@ -47,7 +47,7 @@ def search(request, domain):
     Accepts search criteria as GET params, e.g. "https://www.commcarehq.org/a/domain/phone/search/?a=b&c=d"
     Returns results as a fixture with the same structure as a casedb instance.
     """
-    criteria = dict(request.GET)
+    criteria = request.GET.dict()
     try:
         case_type = criteria.pop('case_type')
     except KeyError:
