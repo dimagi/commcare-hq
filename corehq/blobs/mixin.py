@@ -152,7 +152,7 @@ class BlobMixin(Document):
             self.save()
         return deleted
 
-    def atomic_blobs(self):
+    def atomic_blobs(self, save=None):
         """Return a context manager to atomically save doc + blobs
 
         Usage::
@@ -163,6 +163,8 @@ class BlobMixin(Document):
 
         Blobs saved inside the context manager will be deleted if an
         exception is raised inside the context body.
+
+        :param save: A function to be called instead of `self.save()`
         """
         @contextmanager
         def atomic_blobs_context():
@@ -181,7 +183,7 @@ class BlobMixin(Document):
             success = False
             try:
                 yield
-                self.save()
+                (self.save if save is None else save)()
                 success = True
             except:
                 typ, exc, tb = sys.exc_info()
