@@ -347,7 +347,15 @@ class SmsBillable(models.Model):
     @classmethod
     def _get_multipart_count(cls, backend_api_id, backend_instance, backend_message_id, multipart_count):
         if backend_api_id == SQLTwilioBackend.get_api_id():
-            return int(get_twilio_message(backend_instance, backend_message_id).num_segments)
+            twilio_message = get_twilio_message(backend_instance, backend_message_id)
+            if twilio_message.num_segments is not None:
+                return int(twilio_message.num_segments)
+            else:
+                log_smsbillables_error(
+                    "num_segments is None: backend_message_id=%s, status=%s"
+                    % (twilio_message.backend_message_id, twilio_message.status)
+                )
+                return 0
         else:
             return multipart_count
 
