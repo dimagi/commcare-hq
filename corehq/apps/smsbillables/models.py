@@ -353,7 +353,7 @@ class SmsBillable(models.Model):
             else:
                 log_smsbillables_error(
                     "num_segments is None: backend_message_id=%s, status=%s"
-                    % (twilio_message.backend_message_id, twilio_message.status)
+                    % (backend_message_id, twilio_message.status)
                 )
                 return 0
         else:
