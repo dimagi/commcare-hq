@@ -189,6 +189,10 @@ def paywall_home(domain):
 class ReportBuilderPaywallBase(BaseDomainView):
     page_title = ugettext_lazy('Subscribe')
 
+    @use_bootstrap3
+    def dispatch(self, *args, **kwargs):
+        return super(ReportBuilderPaywallBase, self).dispatch(*args, **kwargs)
+
     @property
     def section_name(self):
         return _("Report Builder")
