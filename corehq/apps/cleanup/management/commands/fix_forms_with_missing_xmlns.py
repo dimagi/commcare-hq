@@ -143,7 +143,7 @@ class Command(BaseCommand):
                             dry_run
                         )
                     else:
-                        print 'Could not find unique_id {} in build {}'.format(build._id)
+                        print 'Could not find unique_id {} in build {}'.format(form_unique_id, build._id)
 
     @staticmethod
     def _print_progress(i, total_submissions):
