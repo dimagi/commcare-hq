@@ -2,6 +2,7 @@ from django.core.urlresolvers import reverse
 from django.shortcuts import redirect
 from django.utils.decorators import method_decorator
 from django.utils.translation import ugettext_noop
+from elasticsearch import NotFoundError
 from casexml.apps.case.cleanup import claim_case
 from casexml.apps.case.fixtures import CaseDBFixture
 from casexml.apps.case.models import CommCareCase
@@ -61,7 +62,10 @@ def search(request, domain):
     fuzzies = config.get_fuzzy_properties_for_case_type(case_type)
     for key, value in criteria.items():
         search_es = search_es.case_property_query(key, value, fuzzy=(key in fuzzies))
-    results = search_es.values()
+    try:
+        results = search_es.values()
+    except NotFoundError:
+        results = []
     if should_use_sql_backend(domain):
         cases = [get_instance_from_data(CommCareCaseSQLSerializer, result) for result in results]
     else:
