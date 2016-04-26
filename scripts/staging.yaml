@@ -55,6 +55,7 @@ branches:
   - uatbc/case-search-es         # FR 4/12
   - app-multimedia-blobs # daniel 4/20
   - fix-deploy-email-2 # ben 4/25
+  - j2me # Nick P 4/26
 submodules:
   submodules/touchforms-src:
     # let's leave this here even when empty
