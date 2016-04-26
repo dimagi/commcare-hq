@@ -591,6 +591,16 @@ def prefix_usercase_properties(properties):
     return {'{}{}'.format(USERCASE_PREFIX, prop) for prop in properties}
 
 
+def module_offers_search(module):
+    from corehq.apps.app_manager.models import AdvancedModule, Module
+
+    return (
+        isinstance(module, (Module, AdvancedModule)) and
+        module.search_config and
+        module.search_config.properties
+    )
+
+
 def get_cloudcare_session_data(domain_name, form, couch_user):
     from corehq.apps.hqcase.utils import get_case_id_by_domain_hq_user_id
     from corehq.apps.app_manager.suite_xml.sections.entries import EntriesHelper
