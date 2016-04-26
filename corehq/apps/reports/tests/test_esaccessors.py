@@ -9,7 +9,7 @@ from corehq.elastic import get_es_new, send_to_elasticsearch
 from corehq.form_processor.models import CommCareCaseSQL, CaseTransaction
 from corehq.pillows.mappings.case_mapping import CASE_INDEX
 from corehq.pillows.mappings.group_mapping import GROUP_INDEX
-from corehq.pillows.mappings.user_mapping import USER_INDEX
+from corehq.pillows.mappings.user_mapping import USER_INDEX, USER_INDEX_INFO
 from corehq.pillows.mappings.xform_mapping import XFORM_INDEX
 from dimagi.utils.dates import DateSpan
 from dimagi.utils.parsing import string_to_utc_datetime
@@ -22,7 +22,6 @@ from corehq.form_processor.utils import TestFormMetadata
 from casexml.apps.case.models import CommCareCase, CommCareCaseAction
 from casexml.apps.case.const import CASE_ACTION_CREATE
 from corehq.pillows.xform import XFormPillow, get_sql_xform_to_elasticsearch_pillow
-from corehq.pillows.user import UserPillow
 from corehq.pillows.case import CasePillow, get_sql_case_to_elasticsearch_pillow
 from corehq.apps.reports.analytics.esaccessors import (
     get_submission_counts_by_user,
@@ -46,6 +45,7 @@ from corehq.apps.reports.analytics.esaccessors import (
 )
 from corehq.apps.es.aggregations import MISSING_KEY
 from corehq.util.test_utils import make_es_ready_form, trap_extra_setup
+from pillowtop.es_utils import initialize_index_and_mapping
 from pillowtop.feed.interface import Change
 
 
@@ -668,17 +668,21 @@ class TestFormESAccessorsSQL(TestFormESAccessors):
         self.pillow.processor(change, do_set_checkpoint=False)
 
 
-class TestUserESAccessors(BaseESAccessorsTest):
-
-    pillow_class = UserPillow
-    es_index = USER_INDEX
+class TestUserESAccessors(SimpleTestCase):
 
     def setUp(self):
-        super(TestUserESAccessors, self).setUp()
         self.username = 'superman'
         self.first_name = 'clark'
         self.last_name = 'kent'
         self.doc_type = 'CommCareUser'
+        self.domain = 'user-esaccessors-test'
+        self.es = get_es_new()
+        ensure_index_deleted(USER_INDEX)
+        initialize_index_and_mapping(self.es, USER_INDEX_INFO)
+
+    @classmethod
+    def tearDownClass(cls):
+        ensure_index_deleted(USER_INDEX)
 
     def _send_user_to_es(self, _id=None, is_active=True):
         user = CommCareUser(
@@ -689,8 +693,8 @@ class TestUserESAccessors(BaseESAccessorsTest):
             first_name=self.first_name,
             last_name=self.last_name,
         )
-        self.pillow.change_transport(user.to_json())
-        self.pillow.get_es_new().indices.refresh(self.pillow.es_index)
+        send_to_elasticsearch('users', user.to_json())
+        self.es.indices.refresh(USER_INDEX)
         return user
 
     def test_active_user_query(self):
