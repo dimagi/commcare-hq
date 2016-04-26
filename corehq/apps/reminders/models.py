@@ -556,6 +556,143 @@ class CaseReminderHandler(Document):
     # If False, we don't schedule any reminder at all.
     use_today_if_start_date_is_blank = BooleanProperty(default=True)
 
+    @classmethod
+    def create(cls, domain, name, ui_type=UI_COMPLEX):
+        return cls(domain=domain, nickname=name, ui_type=ui_type)
+
+    def set_datetime_start_condition(self, start_datetime):
+        self.reminder_type = REMINDER_TYPE_ONE_TIME
+        self.start_condition_type = ON_DATETIME
+        self.start_datetime = start_datetime
+        return self
+
+    def set_case_criteria_start_condition(self, case_type, start_property, start_match_type, start_value):
+        self.reminder_type = REMINDER_TYPE_DEFAULT
+        self.start_condition_type = CASE_CRITERIA
+        self.case_type = case_type
+        self.start_property = start_property
+        self.start_match_type = start_match_type
+        self.start_value = start_value
+        return self
+
+    def set_case_criteria_start_date(self, start_date=None, start_offset=0, start_day_of_week=DAY_ANY):
+        """
+        start_date None means the start date will be the day the reminder spawns
+        """
+        self.start_date = start_date
+        self.start_offset = start_offset
+        self.start_day_of_week = start_day_of_week
+        return self
+
+    def set_case_recipient(self, case_id=None):
+        if self.start_condition_type == ON_DATETIME:
+            if not case_id:
+                raise Exception("Expected a value for case_id")
+            self.case_id = case_id
+
+        self.recipient = RECIPIENT_CASE
+        return self
+
+    def set_parent_case_recipient(self):
+        self.recipient = RECIPIENT_PARENT_CASE
+        return self
+
+    def set_subcase_recipient(self, match_property, match_type, match_value):
+        self.recipient = RECIPIENT_SUBCASE
+        self.recipient_case_match_property = match_property
+        self.recipient_case_match_type = match_type
+        self.recipient_case_match_value = match_value
+        return self
+
+    def set_last_submitting_user_recipient(self):
+        if self.start_condition_type != CASE_CRITERIA:
+            raise Exception("Last submitting user is only valid for case criteria reminders")
+
+        self.recipient = RECIPIENT_USER
+        return self
+
+    def set_user_recipient(self, user_id):
+        if self.start_condition_type != ON_DATETIME:
+            raise Exception("User recipient is only valid for datetime reminders")
+
+        self.recipient = RECIPIENT_USER
+        self.user_id = user_id
+        return self
+
+    def set_user_group_recipient(self, group_id):
+        self.recipient = RECIPIENT_USER_GROUP
+        self.user_group_id = group_id
+        return self
+
+    def set_case_group_recipient(self, case_group_id):
+        self.recipient = RECIPIENT_SURVEY_SAMPLE
+        self.sample_id = case_group_id
+        return self
+
+    def set_case_owner_recipient(self):
+        if self.start_condition_type != CASE_CRITERIA:
+            raise Exception("Case owner recipient is only valid for case criteria reminders")
+
+        self.recipient = RECIPIENT_OWNER
+        return self
+
+    def set_location_recipient(self, location_ids, include_child_locations=False):
+        if not isinstance(location_ids, list):
+            location_ids = [location_ids]
+
+        self.recipient = RECIPIENT_LOCATION
+        self.location_ids = location_ids
+        self.include_child_locations = include_child_locations
+        return self
+
+    def set_sms_content_type(self, default_lang):
+        self.method = METHOD_SMS
+        self.default_lang = default_lang
+        return self
+
+    def set_sms_callback_content_type(self, default_lang):
+        self.method = METHOD_SMS_CALLBACK
+        self.default_lang = default_lang
+        return self
+
+    def set_sms_survey_content_type(self):
+        self.method = METHOD_SMS_SURVEY
+        return self
+
+    def set_ivr_survey_content_type(self):
+        self.method = METHOD_IVR_SURVEY
+        return self
+
+    def set_email_content_type(self):
+        self.method = METHOD_EMAIL
+        return self
+
+    def set_schedule(self, event_interpretation, schedule_length, events):
+        self.event_interpretation = event_interpretation
+        self.schedule_length = schedule_length
+        self.events = events
+        return self
+
+    def set_stop_condition(self, max_iteration_count=REPEAT_SCHEDULE_INDEFINITELY, stop_case_property=None):
+        if stop_case_property and self.start_condition_type != CASE_CRITERIA:
+            raise Exception("Can only set a stop case property on a case criteria reminder")
+
+        self.max_iteration_count = max_iteration_count
+        self.until = stop_case_property
+        return self
+
+    def set_advanced_options(self, submit_partial_forms=False, include_case_side_effects=False,
+            force_surveys_to_use_triggered_case=False, max_question_retries=QUESTION_RETRY_CHOICES[-1],
+            use_today_if_start_date_is_blank=False, custom_content_handler=None, user_data_filter=None):
+        self.submit_partial_forms = submit_partial_forms
+        self.include_case_side_effects = include_case_side_effects
+        self.force_surveys_to_use_triggered_case = force_surveys_to_use_triggered_case
+        self.max_question_retries = max_question_retries
+        self.use_today_if_start_date_is_blank = use_today_if_start_date_is_blank
+        self.custom_content_handler = custom_content_handler
+        self.user_data_filter = user_data_filter or {}
+        return self
+
     @property
     def uses_parent_case_property(self):
         events_use_parent_case_property = False
