@@ -192,11 +192,12 @@ APP_BUILDER_SHADOW_MODULES = StaticToggle(
     help_link='https://confluence.dimagi.com/display/ccinternal/Shadow+Modules',
 )
 
-APP_AWARE_SYNC = StaticToggle(
+APP_AWARE_SYNC = PredictablyRandomToggle(
     'app_aware_sync',
     'App-aware Sync',
     TAG_PRODUCT_PATH,
-    [NAMESPACE_DOMAIN]
+    [NAMESPACE_DOMAIN],
+    randomness=0.1
 )
 
 CASE_LIST_CUSTOM_XML = StaticToggle(
@@ -511,13 +512,6 @@ CUSTOM_PROPERTIES = StaticToggle(
     [NAMESPACE_DOMAIN]
 )
 
-BULK_SMS_VERIFICATION = StaticToggle(
-    'bulk_sms_verification',
-    'Allow initiating the SMS phone verification workflow for all users in a group.',
-    TAG_ONE_OFF,
-    [NAMESPACE_USER, NAMESPACE_DOMAIN],
-)
-
 ENABLE_LOADTEST_USERS = StaticToggle(
     'enable_loadtest_users',
     'Enable creating loadtest users on HQ',
@@ -814,7 +808,7 @@ NOTIFICATIONS = StaticToggle(
 
 PROJECT_HEALTH_DASHBOARD = StaticToggle(
     'project_health_dashboard',
-    'Shows the project health dashboard in the reports navigation',
+    'Shows the project performance dashboard in the reports navigation',
     TAG_PRODUCT_PATH,
     [NAMESPACE_DOMAIN]
 )

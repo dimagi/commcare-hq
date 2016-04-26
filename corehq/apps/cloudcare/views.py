@@ -21,6 +21,7 @@ from casexml.apps.case.xml import V2
 from casexml.apps.phone.fixtures import generator
 from casexml.apps.stock.models import StockTransaction
 from casexml.apps.stock.utils import get_current_ledger_transactions
+from corehq.form_processor.utils import should_use_sql_backend
 from dimagi.utils.logging import notify_exception
 from dimagi.utils.parsing import string_to_boolean
 from dimagi.utils.web import json_response, get_url_base, json_handler
@@ -65,7 +66,6 @@ from corehq.form_processor.interfaces.dbaccessors import CaseAccessors, FormAcce
 from corehq.form_processor.exceptions import XFormNotFound, CaseNotFound
 from corehq.util.couch import get_document_or_404
 from corehq.util.quickcache import skippable_quickcache
-from corehq.util.view_utils import expect_GET
 from corehq.util.xml_utils import indent_xml
 
 
@@ -258,7 +258,7 @@ cloudcare_api = login_or_digest_ex(allow_cc_users=True)
 
 
 def get_cases_vary_on(request, domain):
-    request_params = expect_GET(request)
+    request_params = request.GET
 
     return [
         request.couch_user.get_id
@@ -283,7 +283,7 @@ def get_cases_skip_arg(request, domain):
     """
     if not toggles.CLOUDCARE_CACHE.enabled(domain):
         return True
-    request_params = expect_GET(request)
+    request_params = request.GET
     return (not string_to_boolean(request_params.get('use_cache', 'false')) or
         not string_to_boolean(request_params.get('ids_only', 'false')))
 
@@ -291,7 +291,7 @@ def get_cases_skip_arg(request, domain):
 @cloudcare_api
 @skippable_quickcache(get_cases_vary_on, get_cases_skip_arg, timeout=240 * 60)
 def get_cases(request, domain):
-    request_params = expect_GET(request)
+    request_params = request.GET
 
     if request.couch_user.is_commcare_user():
         user_id = request.couch_user.get_id
@@ -355,7 +355,7 @@ def filter_cases(request, domain, app_id, module_id, parent_id=None):
     xpath = HTMLParser.HTMLParser().unescape(xpath)
     case_type = module.case_type
 
-    if xpath:
+    if xpath or should_use_sql_backend(domain):
         # if we need to do a custom filter, send it to touchforms for processing
         additional_filters = {
             "properties/case_type": case_type,
@@ -494,7 +494,7 @@ def get_ledgers(request, domain):
 
     Note: this only works for the Couch backend
     """
-    request_params = expect_GET(request)
+    request_params = request.GET
     case_id = request_params.get('case_id')
     if not case_id:
         return json_response(

@@ -412,6 +412,10 @@ class AdvancedAction(IndexedSchema):
     def is_subcase(self):
         return bool(self.case_indices)
 
+    @property
+    def form_element_name(self):
+        return "case_{}".format(self.case_tag)
+
 
 class AutoSelectCase(DocumentSchema):
     """
@@ -3299,6 +3303,7 @@ class ReportAppFilter(DocumentSchema):
                 'CustomMonthFilter': CustomMonthFilter,
                 'MobileSelectFilter': MobileSelectFilter,
                 'AncestorLocationTypeFilter': AncestorLocationTypeFilter,
+                'NumericFilter': NumericFilter,
             }
             try:
                 klass = doc_type_to_filter_class[doc_type]
@@ -3527,6 +3532,22 @@ class AncestorLocationTypeFilter(ReportAppFilter):
             # user.sql_location is None, or location does not have an ancestor of that type
             return None
         return ancestor.location_id
+
+
+class NumericFilter(ReportAppFilter):
+    operator = StringProperty(choices=['=', '!=', '<', '<=', '>', '>=']),
+    operand = FloatProperty()
+
+    @classmethod
+    def wrap(cls, doc):
+        doc['operand'] = float(doc['operand'])
+        return super(NumericFilter, cls).wrap(doc)
+
+    def get_filter_value(self, user, ui_filter):
+        return {
+            'operator': self.operator,
+            'operand': self.operand,
+        }
 
 
 class ReportAppConfig(DocumentSchema):

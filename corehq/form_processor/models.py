@@ -18,9 +18,10 @@ from jsonobject import StringProperty
 from jsonobject.properties import BooleanProperty
 from lxml import etree
 from uuidfield import UUIDField
-
+from corehq.apps.sms.mixin import MessagingCaseContactMixin
 from corehq.blobs import get_blob_db
 from corehq.blobs.exceptions import NotFound, BadName
+from corehq.form_processor import signals
 from corehq.form_processor.exceptions import InvalidAttachment, UnknownActionType
 from corehq.form_processor.track_related import TrackRelatedChanges
 from corehq.sql_db.routers import db_for_read_write
@@ -496,7 +497,7 @@ class SupplyPointCaseMixin(object):
 
 class CommCareCaseSQL(DisabledDbMixin, models.Model, RedisLockableMixIn,
                       AttachmentMixin, AbstractCommCareCase, TrackRelatedChanges,
-                      SupplyPointCaseMixin):
+                      SupplyPointCaseMixin, MessagingCaseContactMixin):
     objects = RestrictedManager()
 
     case_id = models.CharField(max_length=255, unique=True, db_index=True)
@@ -947,7 +948,7 @@ class CommCareCaseIndexSQL(DisabledDbMixin, models.Model, SaveStateMixin):
         app_label = "form_processor"
 
 
-class CaseTransaction(DisabledDbMixin, models.Model):
+class CaseTransaction(DisabledDbMixin, SaveStateMixin, models.Model):
     objects = RestrictedManager()
 
     # types should be powers of 2
@@ -1218,12 +1219,19 @@ class LedgerValue(DisabledDbMixin, models.Model, TrackRelatedChanges):
     def stock_on_hand(self):
         return self.balance
 
+    @property
+    def ledger_reference(self):
+        from corehq.form_processor.parsers.ledgers.helpers import UniqueLedgerReference
+        return UniqueLedgerReference(
+            case_id=self.case_id, section_id=self.section_id, entry_id=self.entry_id
+        )
+
     class Meta:
         app_label = "form_processor"
         db_table = LedgerValue_DB_TABLE
 
 
-class LedgerTransaction(DisabledDbMixin, models.Model):
+class LedgerTransaction(DisabledDbMixin, SaveStateMixin, models.Model):
     TYPE_BALANCE = 1
     TYPE_TRANSFER = 2
     TYPE_CHOICES = (

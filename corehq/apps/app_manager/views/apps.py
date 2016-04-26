@@ -218,16 +218,7 @@ def clear_app_cache(request, domain):
         startkey=[domain],
         limit=1,
     ).all()
-    for is_active in True, False:
-        key = make_template_fragment_key('header_tab', [
-            domain,
-            None,  # tab.org should be None for any non org page
-            ApplicationsTab.view,
-            is_active,
-            request.couch_user.get_id,
-            get_language(),
-        ])
-        cache.delete(key)
+    ApplicationsTab.clear_dropdown_cache(domain, request.couch_user.get_id)
 
 
 def get_apps_base_context(request, domain, app):

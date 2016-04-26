@@ -1,4 +1,5 @@
 try:
+    from corehq.apps.callcenter.tests.test_datasources import *
     from corehq.apps.callcenter.tests.test_indicators import *
     from corehq.apps.callcenter.tests.test_indicator_fixture import *
     from corehq.apps.callcenter.tests.test_utils import *

@@ -21,7 +21,7 @@ class PillowReindexer(object):
 
     def reindex(self, start_from=None):
         reindexer_context = PillowRuntimeContext(do_set_checkpoint=False)
-        for change in self.change_provider.iter_changes(start_from=start_from):
+        for change in self.change_provider.iter_all_changes(start_from=start_from):
             self.pillow.processor(change, reindexer_context)
 
 

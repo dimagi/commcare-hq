@@ -25,6 +25,13 @@ class IdentityExpressionSpec(JsonObject):
         return item
 
 
+class IterationNumberExpressionSpec(JsonObject):
+    type = TypeProperty('base_iteration_number')
+
+    def __call__(self, item, context=None):
+        return context.iteration
+
+
 class ConstantGetterSpec(JsonObject):
     type = TypeProperty('constant')
     constant = DefaultProperty()

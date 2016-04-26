@@ -1,0 +1,148 @@
+{
+    "_id": "",
+    "domain": "",
+    "description": "",
+    "display_name": "Call center cases",
+    "engine_id": "ucr",
+    "is_deactivated": false,
+    "named_expressions": {
+        "owner_id": {
+            "expression_if_false": {
+                "datatype": "string",
+                "property_name": "owner_id",
+                "type": "property_name"
+            },
+            "expression_if_true": {
+                "datatype": "string",
+                "property_name": "user_id",
+                "type": "property_name"
+            },
+            "test": {
+                "expression": {
+                    "datatype": "string",
+                    "property_name": "owner_id",
+                    "type": "property_name"
+                },
+                "operator": "eq",
+                "property_value": "",
+                "type": "boolean_expression"
+            },
+            "type": "conditional"
+        }
+    },
+    "named_filters": {},
+    "referenced_doc_type": "CommCareCase",
+    "table_id": "cc_cases",
+    "base_item_expression": {},
+    "configured_filter": {},
+    "configured_indicators": [
+        {
+            "column_id": "closed",
+            "display_name": "Closed?",
+            "filter": {
+                "property_name": "closed",
+                "property_path": [],
+                "property_value": true,
+                "type": "property_match"
+            },
+            "type": "boolean"
+        },
+        {
+            "column_id": "owner_id",
+            "datatype": "string",
+            "display_name": "Owner ID",
+            "expression": {
+                "name": "owner_id",
+                "type": "named"
+            },
+            "is_nullable": false,
+            "is_primary_key": false,
+            "transform": {},
+            "type": "expression"
+        },
+        {
+            "column_id": "type",
+            "datatype": "string",
+            "display_name": "Case Type",
+            "expression": {
+                "datatype": null,
+                "property_name": "type",
+                "type": "property_name"
+            },
+            "is_nullable": false,
+            "is_primary_key": false,
+            "transform": {},
+            "type": "expression"
+        },
+        {
+            "column_id": "opened_on",
+            "datatype": "date",
+            "display_name": "Date Opened",
+            "expression": {
+                "datatype": null,
+                "property_name": "opened_on",
+                "type": "property_name"
+            },
+            "is_nullable": false,
+            "is_primary_key": false,
+            "transform": {},
+            "type": "expression"
+        },
+        {
+            "column_id": "opened_by",
+            "datatype": "string",
+            "display_name": "Opened by",
+            "expression": {
+                "datatype": null,
+                "property_name": "opened_by",
+                "type": "property_name"
+            },
+            "is_nullable": false,
+            "is_primary_key": false,
+            "transform": {},
+            "type": "expression"
+        },
+        {
+            "column_id": "closed_on",
+            "datatype": "date",
+            "display_name": "Date Closed",
+            "expression": {
+                "datatype": null,
+                "property_name": "closed_on",
+                "type": "property_name"
+            },
+            "is_nullable": true,
+            "is_primary_key": false,
+            "transform": {},
+            "type": "expression"
+        },
+        {
+            "column_id": "closed_by",
+            "datatype": "string",
+            "display_name": "Closed by",
+            "expression": {
+                "datatype": null,
+                "property_name": "closed_by",
+                "type": "property_name"
+            },
+            "is_nullable": true,
+            "is_primary_key": false,
+            "transform": {},
+            "type": "expression"
+        },
+        {
+            "column_id": "server_modified_on",
+            "datatype": "date",
+            "display_name": "Server Modified",
+            "expression": {
+                "datatype": null,
+                "property_name": "server_modified_on",
+                "type": "property_name"
+            },
+            "is_nullable": true,
+            "is_primary_key": false,
+            "transform": {},
+            "type": "expression"
+        }
+    ]
+}

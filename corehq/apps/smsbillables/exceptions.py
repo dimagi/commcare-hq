@@ -4,3 +4,7 @@ class AmbiguousPrefixException(Exception):
 
 class SMSRateCalculatorError(Exception):
     pass
+
+
+class RetryBillableTaskException(Exception):
+    pass

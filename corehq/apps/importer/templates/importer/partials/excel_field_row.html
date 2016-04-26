@@ -2,14 +2,14 @@
 
 <td>
     {% if forloop.first %}
-        <a class="hide remove_row" href="#"><i class="icon-remove"></i></a>
+        <a class="hide remove_row" href="#"><i class="fa fa-remove"></i></a>
     {% else %}
-        <a class="remove_row" href="#"><i class="icon-remove"></i></a>
+        <a class="remove_row" href="#"><i class="fa fa-remove"></i></a>
     {% endif %}
 </td>
 
-<td class="span3">
-    <select name="excel_field[]" class="excel_field">
+<td class="col-sm-3">
+    <select class="form-control excel_field" name="excel_field[]">
         <option>{% trans "Select field from excel..." %}</option>
         {% for field in excel_fields %}
             {% ifequal field item %}
@@ -25,8 +25,8 @@
     </select>
 </td>
 
-<td class="span3">
-    <select name="type_field[]">
+<td class="col-sm-3">
+    <select class="form-control" name="type_field[]">
         <option value="plain">{% trans "Plain" %}</option>
         <option value="date">{% trans "Date" %}</option>
         <option value="integer">{% trans "Integer" %}</option>
@@ -34,17 +34,17 @@
 </td>
 
 <td>
-    <i class="icon-arrow-right"></i>
+    <i class="fa fa-arrow-right"></i>
 </td>
 
 <td class="hide">
     <input type="text" name="custom_field[]"
-           class="hide custom_field"
+           class="custom_field form-control"
            placeholder="Enter new property name" />
 </td>
 
-<td class="span3">
-    <select name="case_field[]" class="case_field">
+<td class="col-sm-3">
+    <select class="form-control case_field" name="case_field[]">
         <option value="">{% trans "Select property name..." %}</option>
 
         {% for field in case_fields %}
@@ -56,10 +56,12 @@
 </td>
 
 <td>
-    <label class="checkbox">
-        <input type="checkbox" class="new_property" />
-        {% trans "Create a new property instead" %}
-    </label>
+    <div class="checkbox">
+        <label>
+            <input type="checkbox" class="new_property" />
+            {% trans "Create a new property instead" %}
+        </label>
+    </div>
 </td>
 
 <td class="errorMsg">

@@ -416,6 +416,7 @@ class DomainDowngradeStatusHandler(BaseModifySubscriptionHandler):
             startkey=startkey,
             endkey=endkey,
             include_docs=True,
+            reduce=False,
         )
         num_deid_reports = len(filter(lambda r: r.is_safe, reports))
         if num_deid_reports > 0:

@@ -1,5 +1,5 @@
 from django.test import SimpleTestCase
-from corehq.apps.app_manager.xpath import XPath
+from corehq.apps.app_manager.xpath import XPath, CaseSelectionXPath, LedgerdbXpath, CaseTypeXpath
 
 
 class XPathTest(SimpleTestCase):
@@ -55,3 +55,40 @@ class XPathTest(SimpleTestCase):
                 XPath.date('d').neq('today()')
             ))
         self.assertEqual("a = 1 and b != '' and (c = '' or date(d) != today())", xp)
+
+
+class CaseSelectionXPathTests(SimpleTestCase):
+
+    def setUp(self):
+        self.select_by_water = CaseSelectionXPath("'black'")
+        self.select_by_water.selector = 'water'
+
+    def test_case(self):
+        self.assertEqual(
+            self.select_by_water.case(),
+            u"instance('casedb')/casedb/case[water='black']"
+        )
+
+    def test_instance_name(self):
+        self.assertEqual(
+            self.select_by_water.case(instance_name='doobiedb'),
+            u"instance('doobiedb')/doobiedb/case[water='black']"
+        )
+
+    def test_case_name(self):
+        self.assertEqual(
+            self.select_by_water.case(instance_name='doobiedb', case_name='song'),
+            u"instance('doobiedb')/doobiedb/song[water='black']"
+        )
+
+    def test_case_type(self):
+        self.assertEqual(
+            CaseTypeXpath('song').case(),
+            u"instance('casedb')/casedb/case[@case_type='song']"
+        )
+
+    def test_ledger(self):
+        self.assertEqual(
+            LedgerdbXpath('ledger_id').ledger(),
+            u"instance('ledgerdb')/ledgerdb/ledger[@entity-id=instance('commcaresession')/session/data/ledger_id]"
+        )

@@ -1,6 +1,8 @@
 import copy
 import ast
-from simpleeval import SimpleEval, DEFAULT_OPERATORS, InvalidExpression
+from datetime import date, datetime, timedelta
+
+from simpleeval import SimpleEval, DEFAULT_OPERATORS, InvalidExpression, DEFAULT_FUNCTIONS
 
 
 def safe_pow_fn(a, b):
@@ -8,6 +10,11 @@ def safe_pow_fn(a, b):
 
 SAFE_OPERATORS = copy.copy(DEFAULT_OPERATORS)
 SAFE_OPERATORS[ast.Pow] = safe_pow_fn  # don't allow power operations
+
+FUNCTIONS = DEFAULT_FUNCTIONS
+FUNCTIONS.update({
+    'timedelta_to_seconds': lambda x: x.total_seconds() if isinstance(x, timedelta) else None
+})
 
 
 def eval_statements(statement, variable_context):
@@ -19,10 +26,10 @@ def eval_statements(statement, variable_context):
     """
     # variable values should be numbers
     var_types = set(type(value) for value in variable_context.values())
-    if not var_types.issubset(set([int, float, long])):
+    if not var_types.issubset(set([int, float, long, date, datetime])):
         raise InvalidExpression
 
-    evaluator = SimpleEval(operators=SAFE_OPERATORS, names=variable_context)
+    evaluator = SimpleEval(operators=SAFE_OPERATORS, names=variable_context, functions=FUNCTIONS)
     return evaluator.eval(statement)
 
 

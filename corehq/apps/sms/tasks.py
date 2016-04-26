@@ -5,7 +5,7 @@ from time import sleep
 from corehq.apps.sms.mixin import (VerifiedNumber, InvalidFormatException,
     PhoneNumberInUseException)
 from corehq.apps.sms.models import (OUTGOING, INCOMING, SMS,
-    PhoneLoadBalancingMixin, CommConnectCase, QueuedSMS)
+    PhoneLoadBalancingMixin, QueuedSMS)
 from corehq.apps.sms.api import (send_message_via_backend, process_incoming,
     log_sms_exception, create_billable_for_sms, get_utcnow)
 from django.db import transaction
@@ -13,6 +13,7 @@ from django.conf import settings
 from corehq import privileges
 from corehq.apps.accounting.utils import domain_has_privilege
 from corehq.apps.domain.models import Domain
+from corehq.apps.smsbillables.exceptions import RetryBillableTaskException
 from corehq.apps.smsbillables.models import SmsBillable
 from corehq.apps.sms.change_publishers import publish_sms_saved
 from corehq.util.timezones.conversions import ServerTime
@@ -238,8 +239,8 @@ def process_sms(queued_sms_pk):
             process_sms.delay(queued_sms_pk)
 
 
-@task(ignore_result=True)
-def store_billable(msg):
+@task(ignore_result=True, default_retry_delay=5 * 60, max_retries=10, bind=True)
+def store_billable(self, msg):
     if not isinstance(msg, SMS):
         raise Exception("Expected msg to be an SMS")
 
@@ -251,10 +252,13 @@ def store_billable(msg):
             # This string contains unicode characters, so the allowed
             # per-sms message length is shortened
             msg_length = 70
-        SmsBillable.create(
-            msg,
-            multipart_count=int(math.ceil(float(len(msg.text)) / msg_length)),
-        )
+        try:
+            SmsBillable.create(
+                msg,
+                multipart_count=int(math.ceil(float(len(msg.text)) / msg_length)),
+            )
+        except RetryBillableTaskException as e:
+            self.retry(exc=e)
 
 
 @task(queue='background_queue', ignore_result=True, acks_late=True)
@@ -265,15 +269,18 @@ def delete_phone_numbers_for_owners(owner_ids):
             keys=ids,
             include_docs=True
         )
-        soft_delete_docs([row['doc'] for row in results], VerifiedNumber)
+        docs = [row['doc'] for row in results]
+        cache_info = [(doc['owner_id'], doc['phone_number']) for doc in docs]
+        for owner_id, phone_number in cache_info:
+            VerifiedNumber._clear_quickcaches(owner_id, phone_number)
+        soft_delete_docs(docs, VerifiedNumber)
 
 
 @task(queue=settings.CELERY_REMINDER_CASE_UPDATE_QUEUE, ignore_result=True, acks_late=True,
       default_retry_delay=5 * 60, max_retries=10, bind=True)
 def sync_case_phone_number(self, case):
     try:
-        contact = CommConnectCase.wrap_as_commconnect_case(case)
-        _sync_case_phone_number(contact)
+        _sync_case_phone_number(case)
     except Exception as e:
         self.retry(exc=e)
 
@@ -290,7 +297,7 @@ def _phone_number_is_same(phone_number, phone_info):
 def _sync_case_phone_number(contact_case):
     phone_info = contact_case.get_phone_info()
 
-    lock_keys = ['sync-case-phone-number-for-%s' % contact_case._id]
+    lock_keys = ['sync-case-phone-number-for-%s' % contact_case.case_id]
     if phone_info.phone_number:
         lock_keys.append('verifying-phone-number-%s' % phone_info.phone_number)
 
@@ -302,7 +309,6 @@ def _sync_case_phone_number(contact_case):
             phone_number.contact_last_modified >= contact_case.server_modified_on
         ):
             return
-
         if phone_info.requires_entry:
             try:
                 contact_case.verify_unique_number(phone_info.phone_number)
@@ -315,7 +321,7 @@ def _sync_case_phone_number(contact_case):
                 phone_number = VerifiedNumber(
                     domain=contact_case.domain,
                     owner_doc_type=contact_case.doc_type,
-                    owner_id=contact_case._id,
+                    owner_id=contact_case.case_id,
                 )
             elif _phone_number_is_same(phone_number, phone_info):
                 return

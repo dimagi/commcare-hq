@@ -67,12 +67,6 @@ class AppAndTestMap(object):
 
     def __init__(self):
         self._dependencies = get_app_test_db_dependencies()
-        # these are permanently needed apps
-        self.required_apps = set([
-            'django.contrib.auth',
-            'django.contrib.contenttypes',
-            'django.contrib.sessions'
-        ])
         self.apps = set([])
         self.tests = []  # contains tuples of app_labels and test classes
 
@@ -84,7 +78,8 @@ class AppAndTestMap(object):
 
     def get_needed_installed_apps(self):
         try:
-            needed_apps = copy(self.required_apps)
+            needed_apps = set(copy(self.get_app_dependencies('default')))
+            needed_apps.remove('default')
             for app in self.apps:
                 needed_apps.update(self.get_app_dependencies(app))
 
