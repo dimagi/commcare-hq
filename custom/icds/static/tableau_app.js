@@ -58,7 +58,7 @@ function setUpNav(viz) {
         var link = $(this);
         var sheetName = link[0].textContent;
         var params = history.state.params;
-        switchVisualization(sheetName, workbook, params);
+        navigateToSheet(sheetName, workbook, params);
         e.preventDefault();
     });
 
@@ -75,12 +75,14 @@ function onMarksSelection(marksEvent) {
 }
 
 /*
-Extracts new sheet to render, new paramters/filters to apply from selected marks, and updates the viz with them
+From selected marks, extracts new sheet to render, new paramters/filters to apply, and updates the viz with them
+
 ICDS workbooks will have new sheet/paramter info in following attributes of the mark
-- 'js_param_<param_name>: <param_value>': New paramters to apply
-    e.g. js_param_state: Andhra Pradesh
+
 - 'js_sheet: <sheet name to navigate to>': New sheet to navigate to
     e.g. js_sheet: Nutrition
+- 'js_param_<param_name>: <param_value>': New paramters to apply
+    e.g. js_param_state: Andhra Pradesh
 */
 function updateViz(marks) {
     clearDebugInfo();
@@ -127,6 +129,30 @@ function updateViz(marks) {
             // TODO: Better error rendering
             alert(err);
         });
+}
+
+/*
+Extracts the hardcoded param-list for the sheetName and renders the sheet with given params and extracted params
+
+ICDS workbook will have following paramter convention
+- 'js_sheet_<sheet_name>: json-string specifying new params as key-value pairs':
+    e.g. js_sheet_Nutrition: '{"is_drilldown": "True"}'
+*/
+function navigateToSheet(sheetName, workbook, params){
+
+    workbook.getParametersAsync()
+        .then(changeViz)
+        .otherwise(function(err) {
+            // TODO: Better error rendering
+            alert(err);
+        });
+
+    function changeViz(currentParams) {
+        var extraParams = extractHardcodedSheetParams(currentParams, sheetName);
+        $.extend(params, extraParams);
+        switchVisualization(sheetName, workbook, params);
+    }
+
 }
 
 /*
@@ -235,5 +261,31 @@ function getParamValue(params, param_key){
         return param.getName() == param_key;
     })
     // There should be one matching param
-    return matchingParams[0].getCurrentValue();
+    if (matchingParams.length !== 0){
+        return matchingParams[0].getCurrentValue();
+    }
+    else {
+        return null;
+    }
+}
+
+/*
+Extracts hardcoded JSON paramters for sheetName specified in a param called 'js_sheet_<sheetName>'
+*/
+function extractHardcodedSheetParams(params, sheetName){
+    var key = 'js_sheet_' + sheetName;
+    var sheetParam = getParamValue(params, key);
+
+    if (sheetParam && sheetParam.formattedValue) {
+        try {
+            return JSON.parse(sheetParam.formattedValue);
+        }
+        catch(e) {
+            console.log(e);
+            return {};
+        }
+    }
+    else {
+        return {};
+    }
 }
