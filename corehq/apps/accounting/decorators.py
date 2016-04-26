@@ -25,7 +25,7 @@ def requires_privilege_with_fallback(slug, **assignment):
             try:
                 if (hasattr(request, 'subscription')
                     and request.subscription is not None
-                    and request.subscription.is_trial_or_internal_trial
+                    and request.subscription.is_trial
                     and request.subscription.date_end is not None
                 ):
                     edition_req = DefaultProductPlan.get_lowest_edition_by_domain(
