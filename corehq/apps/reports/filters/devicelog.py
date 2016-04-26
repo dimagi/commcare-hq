@@ -49,7 +49,7 @@ class BaseDeviceLogFilter(BaseReportFilter):
     label = ugettext_noop("Filter Logs By")
     url_param_map = {'Unknown': None}
 
-    @quickcache(['self.domain', 'selected'], timeout=10 * 60)
+    @quickcache(['self.domain', 'self.field', 'selected'], timeout=10 * 60)
     def get_filters(self, selected):
         show_all = bool(not selected)
         values = fast_distinct_in_domain(DeviceReportEntry, self.field, self.domain)
