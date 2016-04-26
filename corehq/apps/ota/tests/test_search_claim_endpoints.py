@@ -15,6 +15,7 @@ DOMAIN = 'test-domain'
 USERNAME = 'testy_mctestface'
 PASSWORD = '123'
 CASE_NAME = 'Jamie Hand'
+CASE_TYPE = 'case'
 
 
 class ClaimCaseTests(TestCase):
@@ -27,12 +28,12 @@ class ClaimCaseTests(TestCase):
         _, [cls.case] = post_case_blocks([CaseBlock(
             create=True,
             case_id=cls.case_id,
-            case_type='case',
+            case_type=CASE_TYPE,
             case_name=CASE_NAME,
             owner_id='someone_else',
         ).as_xml()], {'domain': DOMAIN})
 
-    # @run_with_all_backends
+    @run_with_all_backends
     def test_claim_case(self):
         """
         A claim case request should create an extension case
@@ -50,7 +51,7 @@ class ClaimCaseTests(TestCase):
         self.assertEqual(claim.owner_id, self.user.get_id)
         self.assertEqual(claim.name, CASE_NAME)
 
-    # @run_with_all_backends
+    @run_with_all_backends
     def test_duplicate_claim(self):
         """
         Server should not allow the same client to claim the same case more than once
@@ -66,11 +67,23 @@ class ClaimCaseTests(TestCase):
         self.assertEqual(response.status_code, 400)
         self.assertEqual(response.content, 'You have already claimed that case')
 
-    # @run_with_all_backends
+    @run_with_all_backends
     def test_search_endpoint(self):
+        known_result = """<fixture id="{case_type}">
+    <case>
+        <case_id>{case_id}</case_id>
+        <name>{case_name}</name>
+        <type>{case_type}</type>
+    </case>
+</fixture>""".format(
+            case_id=self.case_id,
+            case_name=CASE_NAME,
+            case_type=CASE_TYPE
+        )
+
         client = Client()
         client.login(username=USERNAME, password=PASSWORD)
         url = reverse('sync_search', kwargs={'domain': DOMAIN})
-        response = client.get(url, {'name': 'Jamie Hand', 'case_type': 'case'})
+        response = client.get(url, {'name': 'Jamie Hand', 'case_type': CASE_TYPE})
         self.assertEqual(response.status_code, 200)
-        # TODO: self.assertEqual(response.content, known_value)
+        self.assertEqual(response.content, known_result)
