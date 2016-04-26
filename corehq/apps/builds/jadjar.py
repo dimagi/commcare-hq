@@ -39,7 +39,11 @@ class JadDict(dict):
                         'MIDlet-Certificate-1-4']
         unordered = [key for key in self.keys() if key not in ordered_start and key not in ordered_end]
         props = itertools.chain(ordered_start, sorted(unordered), ordered_end)
-        self["MIDlet-Jar-URL"] = self["MIDlet-Jar-URL"].replace(settings.BASE_ADDRESS, settings.J2ME_ADDRESS, 1)
+        self["MIDlet-Jar-URL"] = self["MIDlet-Jar-URL"].replace(
+            settings.BASE_ADDRESS, settings.J2ME_ADDRESS, 1
+        ).replace(
+            "https://%s" % settings.J2ME_ADDRESS, "http://%s" % settings.J2ME_ADDRESS
+        )
         lines = ['%s: %s%s' % (key, self[key], self.line_ending) for key in props if self.get(key) is not None]
         return "".join(lines)
 
@@ -115,7 +119,11 @@ def sign_jar(jad, jar):
 
 def _convertXMLToJ2ME(files, path):
     def transform(string):
-        return string.replace(settings.BASE_ADDRESS, settings.J2ME_ADDRESS, 1)
+        return string.replace(
+            settings.BASE_ADDRESS, settings.J2ME_ADDRESS, 1
+        ).replace(
+            "https://%s" % settings.J2ME_ADDRESS, "http://%s" % settings.J2ME_ADDRESS
+        )
 
     converted_paths = set(['profile.xml', 'media_profile.xml', 'media_profile.ccpr', 'profile.ccpr'])
     if path in converted_paths:
