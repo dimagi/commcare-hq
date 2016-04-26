@@ -212,7 +212,8 @@ class AbstractCommCareCase(object):
         case has more than one parent or grandparent.
         """
         result = []
-        self._resolve_case_property(property_name, result)
+        if isinstance(property_name, basestring):
+            self._resolve_case_property(property_name, result)
         return result
 
     @memoized

@@ -12,8 +12,6 @@ from contextlib import contextmanager
 
 from functools import wraps
 from django.conf import settings
-from corehq.form_processor.backends.sql.dbaccessors import CaseAccessorSQL
-from corehq.form_processor.utils.general import should_use_sql_backend
 from corehq.util.context_managers import drop_connected_signals
 from corehq.util.decorators import ContextDecorator
 
@@ -360,15 +358,16 @@ def create_and_save_a_form(domain):
 
 
 def _create_case(domain, **kwargs):
+    from casexml.apps.case.mock import CaseBlock
+    from casexml.apps.case.util import post_case_blocks
     return post_case_blocks(
         [CaseBlock(**kwargs).as_xml()], domain=domain
     )
 
 
 def create_and_save_a_case(domain, case_id, case_name, case_properties=None, case_type=None, drop_signals=True):
-    from casexml.apps.case.mock import CaseBlock
     from casexml.apps.case.signals import case_post_save
-    from casexml.apps.case.util import post_case_blocks
+    from corehq.form_processor.signals import sql_case_post_save
 
     kwargs = {
         'create': True,
@@ -382,7 +381,7 @@ def create_and_save_a_case(domain, case_id, case_name, case_properties=None, cas
 
     if drop_signals:
         # this avoids having to deal with all the reminders code bootstrap
-        with drop_connected_signals(case_post_save):
+        with drop_connected_signals(case_post_save), drop_connected_signals(sql_case_post_save):
             form, cases = _create_case(domain, **kwargs)
     else:
         form, cases = _create_case(domain, **kwargs)
@@ -392,6 +391,9 @@ def create_and_save_a_case(domain, case_id, case_name, case_properties=None, cas
 
 @contextmanager
 def create_test_case(domain, case_type, case_name, case_properties=None, drop_signals=True):
+    from corehq.form_processor.backends.sql.dbaccessors import CaseAccessorSQL
+    from corehq.form_processor.utils.general import should_use_sql_backend
+
     case = create_and_save_a_case(domain, uuid.uuid4().hex, case_name,
         case_properties=case_properties, case_type=case_type, drop_signals=drop_signals)
     try:

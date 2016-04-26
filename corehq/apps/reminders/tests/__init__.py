@@ -16,6 +16,7 @@ from corehq.apps.domain.models import Domain
 from corehq.apps.reminders.tests.test_util import *
 from corehq.apps.reminders.tests.test_cache import *
 from corehq.apps.reminders.tests.test_recipient import *
+from corehq.apps.reminders.tests.test_responsiveness import *
 
 
 class BaseReminderTestCase(BaseAccountingTest, DomainSubscriptionMixin):

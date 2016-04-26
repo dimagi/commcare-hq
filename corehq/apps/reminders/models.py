@@ -182,7 +182,7 @@ def case_matches_criteria(case, match_type, case_property, value_to_match):
     result = case.resolve_case_property(case_property)
     values = [r['value'] for r in result]
     if not values:
-        values = [None]
+        return False
     return any([value_matches_criteria(match_type, value, value_to_match) for value in values])
 
 
@@ -678,7 +678,7 @@ class CaseReminderHandler(Document):
         self.events = events
         return self
 
-    def create_event(self, fire_time, day_num=0, fire_time_type=FIRE_TIME_DEFAULT, message=None,
+    def create_event(self, fire_time=None, day_num=0, fire_time_type=FIRE_TIME_DEFAULT, message=None,
             form_unique_id=None, subject=None, timeouts=None, time_window_length=None):
 
         if not self.method:
@@ -707,14 +707,14 @@ class CaseReminderHandler(Document):
             event.time_window_length = time_window_length
 
         if self.method in (METHOD_SMS, METHOD_SMS_CALLBACK, METHOD_EMAIL):
-            if not message:
-                raise UnexpectedConfigurationException("Expected a value for message")
+            if not isinstance(message, dict):
+                raise UnexpectedConfigurationException("Expected a dictionary for message")
 
             event.message = message
 
         if self.method == METHOD_EMAIL:
-            if not subject:
-                raise UnexpectedConfigurationException("Expected a value for subject")
+            if not isinstance(subject, dict):
+                raise UnexpectedConfigurationException("Expected a dictionary for subject")
 
             event.subject = subject
 
@@ -735,11 +735,11 @@ class CaseReminderHandler(Document):
         self.events = [event]
         return self
 
-    def set_daily_schedule(self, event):
-        return self.set_one_event_schedule(event, 1)
+    def set_daily_schedule(self, **event_kwargs):
+        return self.set_one_event_schedule(self.create_event(**event_kwargs), 1)
 
-    def set_weekly_schedule(self, event):
-        return self.set_one_event_schedule(event, 7)
+    def set_weekly_schedule(self, **event_kwargs):
+        return self.set_one_event_schedule(self.create_event(**event_kwargs), 7)
 
     def set_stop_condition(self, max_iteration_count=REPEAT_SCHEDULE_INDEFINITELY, stop_case_property=None):
         if stop_case_property and self.start_condition_type != CASE_CRITERIA:
@@ -1210,6 +1210,9 @@ class CaseReminderHandler(Document):
         
         return      True if the condition is reached, False if not.
         """
+        if not case:
+            return False
+
         values = case.resolve_case_property(case_property)
         values = [r['value'] for r in values]
 
