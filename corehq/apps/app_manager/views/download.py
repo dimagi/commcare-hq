@@ -369,7 +369,7 @@ def download_index_files(app):
     files = []
     if app.copy_of:
         files = [(path[len('files/'):], app.fetch_attachment(path))
-                 for path in app._attachments
+                 for path in app.blobs
                  if path.startswith('files/')]
     else:
         files = app.create_all_files().items()
