@@ -66,6 +66,10 @@ hqDefine('style/ko/components/inline_edit.js', function() {
                 self.isEditing(true);
             };
 
+            self.beforeUnload = function() {
+                return "You have unsaved changes.";
+            };
+
             // Save to server
             // On button press, flip back to read-only mode and show a spinner.
             // On server success, just hide the spinner. On error, display error and go back to edit mode.
@@ -84,6 +88,7 @@ hqDefine('style/ko/components/inline_edit.js', function() {
                 });
                 data[self.saveValueName] = self.value();
                 self.isSaving(true);
+                $(window).bind("beforeunload", self.beforeUnload);
 
                 $.ajax({
                     url: self.url,
@@ -97,11 +102,13 @@ hqDefine('style/ko/components/inline_edit.js', function() {
                         if (self.postSave) {
                             self.postSave(data);
                         }
+                        $(window).unbind("beforeunload", self.beforeUnload);
                     },
                     error: function () {
                         self.isEditing(true);
                         self.isSaving(false);
                         self.hasError(true);
+                        $(window).unbind("beforeunload", self.beforeUnload);
                     },
                 });
             };
