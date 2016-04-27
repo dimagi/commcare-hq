@@ -4,6 +4,8 @@ from django.core.urlresolvers import reverse
 from django.http import Http404, HttpResponseRedirect
 from django.utils.decorators import method_decorator
 from django.utils.translation import ugettext as _, ugettext_noop
+from corehq.apps.style.decorators import use_bootstrap3, \
+    use_jquery_ui_multiselect, use_jquery_ui
 from django_prbac.utils import has_privilege
 from corehq.apps.accounting.decorators import requires_privilege_with_fallback
 from corehq.apps.accounting.utils import domain_has_privilege
@@ -117,6 +119,9 @@ class BulkSMSVerificationView(BaseDomainView):
 class BaseGroupsView(BaseUserSettingsView):
 
     @method_decorator(require_can_edit_commcare_users)
+    @use_bootstrap3
+    @use_jquery_ui
+    @use_jquery_ui_multiselect
     def dispatch(self, request, *args, **kwargs):
         return super(BaseGroupsView, self).dispatch(request, *args, **kwargs)
 
@@ -137,7 +142,7 @@ class BaseGroupsView(BaseUserSettingsView):
         return context
 
 
-class EditGroupsView(BaseGroupsView):
+class GroupsListView(BaseGroupsView):
     template_name = "groups/all_groups.html"
     page_title = ugettext_noop("Groups")
     urlname = 'all_groups'
@@ -147,6 +152,13 @@ class EditGroupMembersView(BaseGroupsView):
     urlname = 'group_members'
     page_title = ugettext_noop("Edit Group")
     template_name = 'groups/group_members.html'
+
+    @property
+    def parent_pages(self):
+        return [{
+            'title': GroupsListView.page_title,
+            'url': reverse(GroupsListView.urlname, args=(self.domain,)),
+        }]
 
     @property
     def page_name(self):
