@@ -108,6 +108,8 @@ from corehq.apps.app_manager.util import (
     update_unique_ids,
     app_callout_templates,
     use_app_aware_sync,
+    xpath_references_case,
+    xpath_references_user_case,
 )
 from corehq.apps.app_manager.xform import XForm, parse_xml as _parse_xml, \
     validate_xform
@@ -2467,7 +2469,12 @@ class AdvancedForm(IndexedFormBase, NavMenuItemMediaMixin):
                 case_tag=action.case_tag
             ))
 
-        if self.form_filter:
+        form_filter_references_case = (
+            xpath_references_case(self.form_filter) or
+            xpath_references_user_case(self.form_filter)
+        )
+
+        if form_filter_references_case:
             if not any(action for action in self.actions.load_update_cases if not action.auto_select):
                 errors.append({'type': "filtering without case"})
 
