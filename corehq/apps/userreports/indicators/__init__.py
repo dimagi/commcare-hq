@@ -19,7 +19,7 @@ class Column(object):
         return truncate_value(self.id)
 
     def __repr__(self):
-        return self.id
+        return "Column('{}', '{}')".format(self.id, self.datatype)
 
 
 class ColumnValue(object):
@@ -29,7 +29,7 @@ class ColumnValue(object):
         self.value = value
 
     def __repr__(self):
-        return '{0}: {1}'.format(self.column, self.value)
+        return "ColumnValue({}, {})".format(self.column.id, self.value)
 
 
 class ConfigurableIndicatorMixIn(object):
