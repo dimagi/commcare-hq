@@ -67,7 +67,7 @@ from couchexport.exceptions import (
     SchemaMismatchException
 )
 from couchexport.export import Format, export_from_tables
-from couchexport.models import DefaultExportSchema, SavedBasicExport, SavedExportSchema
+from couchexport.models import DefaultExportSchema, SavedBasicExport
 from couchexport.shortcuts import (export_data_shared, export_raw_data,
                                    export_response)
 from couchexport.tasks import rebuild_schemas
@@ -521,8 +521,8 @@ def _export_default_or_custom_data(request, domain, export_id=None, bulk_export=
 @require_form_export_permission
 @require_GET
 def hq_download_saved_export(req, domain, export_id):
-    export = SavedBasicExport.get(export_id)
-    return _download_saved_export(req, domain, export)
+    saved_export = SavedBasicExport.get(export_id)
+    return _download_saved_export(req, domain, saved_export)
 
 
 @csrf_exempt
@@ -530,37 +530,37 @@ def hq_download_saved_export(req, domain, export_id):
 @require_form_deid_export_permission
 @require_GET
 def hq_deid_download_saved_export(req, domain, export_id):
-    export = SavedBasicExport.get(export_id)
-    if not export.is_safe:
+    saved_export = SavedBasicExport.get(export_id)
+    if not saved_export.is_safe:
         raise Http404()
-    return _download_saved_export(req, domain, export)
+    return _download_saved_export(req, domain, saved_export)
 
 
-def _download_saved_export(req, domain, export):
+def _download_saved_export(req, domain, saved_export):
     # quasi-security hack: the first key of the index is always assumed
     # to be the domain
-    assert domain == export.configuration.index[0]
-    if should_update_export(export.last_accessed):
+    assert domain == saved_export.configuration.index[0]
+    if should_update_export(saved_export.last_accessed):
         group_id = req.GET.get('group_export_id')
         if group_id:
             try:
                 group_config = HQGroupExportConfiguration.get(group_id)
                 assert domain == group_config.domain
                 all_config_indices = [schema.index for schema in group_config.all_configs]
-                list_index = all_config_indices.index(export.configuration.index)
+                list_index = all_config_indices.index(saved_export.configuration.index)
                 schema = next(itertools.islice(group_config.all_export_schemas,
                                                list_index,
                                                list_index+1))
-                rebuild_export_async.delay(export.configuration, schema)
+                rebuild_export_async.delay(saved_export.configuration, schema)
             except Exception:
                 notify_exception(req, 'Failed to rebuild export during download')
 
-    export.last_accessed = datetime.utcnow()
-    export.save()
+    saved_export.last_accessed = datetime.utcnow()
+    saved_export.save()
 
-    payload = export.get_payload(stream=True)
+    payload = saved_export.get_payload(stream=True)
     return build_download_saved_export_response(
-        payload, export.configuration.format, export.configuration.filename
+        payload, saved_export.configuration.format, saved_export.configuration.filename
     )
 
 
