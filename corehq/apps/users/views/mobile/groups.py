@@ -137,7 +137,7 @@ class BaseGroupsView(BaseUserSettingsView):
         return context
 
 
-class EditGroupsView(BaseGroupsView):
+class GroupsListView(BaseGroupsView):
     template_name = "groups/all_groups.html"
     page_title = ugettext_noop("Groups")
     urlname = 'all_groups'
