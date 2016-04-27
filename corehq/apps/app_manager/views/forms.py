@@ -69,11 +69,13 @@ from corehq.apps.app_manager.models import (
     DeleteFormRecord,
     Form,
     FormActions,
+    FormDatum,
     FormLink,
     IncompatibleFormTypeException,
     ModuleNotFoundException,
+    PreloadAction,
     load_case_reserved_words,
-    FormDatum)
+)
 from corehq.apps.app_manager.decorators import no_conflict_require_POST, \
     require_can_edit_apps, require_deploy_apps
 from corehq.apps.tour import tours
@@ -166,7 +168,11 @@ def edit_advanced_form_actions(request, domain, app_id, module_id, form_id):
 def edit_form_actions(request, domain, app_id, module_id, form_id):
     app = get_app(domain, app_id)
     form = app.get_module(module_id).get_form(form_id)
+    old_load_from_form = form.actions.load_from_form
     form.actions = FormActions.wrap(json.loads(request.POST['actions']))
+    if old_load_from_form:
+        form.actions.load_from_form = old_load_from_form
+
     for condition in (form.actions.open_case.condition, form.actions.close_case.condition):
         if isinstance(condition.answer, basestring):
             condition.answer = condition.answer.strip('"\'')
@@ -331,6 +337,7 @@ def new_form(request, domain, app_id, module_id):
 def patch_xform(request, domain, app_id, unique_form_id):
     patch = request.POST['patch']
     sha1_checksum = request.POST['sha1']
+    case_references = json.loads(request.POST.get('references', "{}"))
 
     app = get_app(domain, app_id)
     form = app.get_form(unique_form_id)
@@ -342,6 +349,9 @@ def patch_xform(request, domain, app_id, unique_form_id):
     dmp = diff_match_patch()
     xform, _ = dmp.patch_apply(dmp.patch_fromText(patch), current_xml)
     save_xform(app, form, xform)
+
+    form.actions.load_from_form = PreloadAction.wrap(case_references)
+
     response_json = {
         'status': 'ok',
         'sha1': hashlib.sha1(form.source.encode('utf-8')).hexdigest()

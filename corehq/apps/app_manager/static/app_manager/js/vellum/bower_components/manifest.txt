@@ -18,7 +18,7 @@
 ├── require-less#0.1.5
 ├── requirejs#2.1.22 (latest is 2.2.0)
 ├── requirejs-plugins#1.0.3
-├── requirejs-text#2.0.14 (2.0.15 available)
+├── requirejs-text#2.0.14
 ├── requirejs-tpl#a3ca1e0e7f
 ├── underscore#1.6.0 (latest is 1.8.3)
 ├── when#2.8.0 (latest is 3.7.7)

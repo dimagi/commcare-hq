@@ -361,7 +361,7 @@ class EditSubscriptionView(AccountingSectionView, AsyncHandlerMixin):
         subscriber_domain = self.subscription.subscriber.domain
 
         invoice_report = InvoiceInterface(self.request)
-        invoice_report.filters.update(subscription__subscriber__domain=subscriber_domain)
+        invoice_report.filter_by_subscription(self.subscription)
         # Tied to InvoiceInterface.
         encoded_params = urlencode({'subscriber': subscriber_domain})
         invoice_report_url = "{}?{}".format(invoice_report.get_url(), encoded_params)

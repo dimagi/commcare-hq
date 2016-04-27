@@ -11,6 +11,7 @@ class HqDeploy(Document):
     user = StringProperty()
     environment = StringProperty()
     code_snapshot = DictProperty()
+    diff_url = StringProperty()
 
     @classmethod
     def get_latest(cls, environment, limit=1):

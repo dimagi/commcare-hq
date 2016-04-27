@@ -8,10 +8,10 @@ from corehq.apps.groups.models import Group
 from corehq.apps.groups.tests import delete_all_groups
 
 from corehq.apps.users.models import CommCareUser
-from corehq.elastic import get_es_new
-from corehq.pillows.groups_to_user import update_es_user_with_groups, get_group_to_user_pillow
+from corehq.elastic import get_es_new, send_to_elasticsearch
+from corehq.pillows.groups_to_user import update_es_user_with_groups, get_group_to_user_pillow, \
+    remove_group_from_users
 from corehq.pillows.mappings.user_mapping import USER_INDEX, USER_INDEX_INFO
-from corehq.pillows.user import UserPillow
 from corehq.util.elastic import ensure_index_deleted
 from pillowtop.es_utils import initialize_index_and_mapping
 from testapps.test_pillowtop.utils import get_current_kafka_seq
@@ -64,6 +64,26 @@ class GroupToUserPillowTest(SimpleTestCase):
         update_es_user_with_groups(new_group)
         self._check_es_user(['group1', 'group2'], ['g1', 'g2'])
 
+    def test_remove_user_from_groups_partial_match(self):
+        original_id = uuid.uuid4().hex
+        group_doc = {
+            'name': 'original',
+            '_id': original_id,
+            'users': [self.user_id]
+        }
+
+        # set original groups on the user
+        update_es_user_with_groups(group_doc)
+        self._check_es_user([original_id], ['original'])
+
+        new_id = uuid.uuid4().hex
+        group_doc = {
+            'name': 'original',
+            '_id': new_id,
+            'users': [self.user_id]
+        }
+        remove_group_from_users(group_doc, self.es_client)
+
 
 def _assert_es_user_and_groups(test_case, es_client, user_id, group_ids=None, group_names=None):
     es_client.indices.refresh(USER_INDEX)
@@ -88,7 +108,7 @@ def _create_es_user(es_client, user_id, domain):
         first_name='Harry',
         last_name='Casual',
     )
-    UserPillow().change_transport(user.to_json())
+    send_to_elasticsearch('users', user.to_json())
     es_client.indices.refresh(USER_INDEX)
     return user
 

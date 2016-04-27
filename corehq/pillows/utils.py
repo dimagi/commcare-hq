@@ -5,6 +5,7 @@ from corehq.pillows.mappings.case_search_mapping import CASE_SEARCH_INDEX_INFO
 from corehq.pillows.mappings.domain_mapping import DOMAIN_INDEX_INFO
 from corehq.pillows.mappings.group_mapping import GROUP_INDEX_INFO
 from corehq.pillows.mappings.sms_mapping import SMS_INDEX_INFO
+from corehq.pillows.mappings.user_mapping import USER_INDEX_INFO
 from corehq.util.quickcache import quickcache
 from pillowtop.es_utils import get_all_inferred_es_indices_from_pillows
 
@@ -76,6 +77,7 @@ def get_all_expected_es_indices():
     for index_info in get_all_inferred_es_indices_from_pillows():
         yield index_info
     yield DOMAIN_INDEX_INFO
+    yield USER_INDEX_INFO
     yield GROUP_INDEX_INFO
     yield SMS_INDEX_INFO
     yield CASE_SEARCH_INDEX_INFO

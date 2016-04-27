@@ -164,6 +164,21 @@ def case_list_form_locale(module):
     return u"case_list_form.m{module.id}".format(module=module)
 
 
+@pattern('case_search.m%d')
+def case_search_locale(module):
+    return u"case_search.m{module.id}".format(module=module)
+
+
+@pattern('search_command.m%d')
+def search_command(module):
+    return u"search_command.m{module.id}".format(module=module)
+
+
+@pattern('search_property.m%d.%s')
+def search_property_locale(module, search_prop):
+    return u"search_property.m{module.id}.{search_prop}".format(module=module, search_prop=search_prop)
+
+
 @pattern('referral_lists.m%d')
 def referral_list_locale(module):
     """1.0 holdover"""

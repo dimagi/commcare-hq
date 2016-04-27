@@ -1431,7 +1431,11 @@ PILLOWTOPS = {
     'core': [
         'corehq.pillows.case.CasePillow',
         'corehq.pillows.xform.XFormPillow',
-        'corehq.pillows.user.UserPillow',
+        {
+            'name': 'UserPillow',
+            'class': 'pillowtop.pillow.interface.ConstructedPillow',
+            'instance': 'corehq.pillows.user.get_user_pillow',
+        },
         'corehq.pillows.application.AppPillow',
         {
             'name': 'GroupPillow',
@@ -1720,7 +1724,7 @@ TRAVIS_TEST_GROUPS = (
         'facilities', 'fixtures', 'fluff_filter', 'formplayer',
         'formtranslate', 'fri', 'grapevine', 'groups', 'gsid', 'hope',
         'hqadmin', 'hqcase', 'hqcouchlog', 'hqmedia',
-        'care_pathways', 'common', 'compressor', 'smsbillables',
+        'care_pathways', 'common', 'compressor',
     ),
 )
 

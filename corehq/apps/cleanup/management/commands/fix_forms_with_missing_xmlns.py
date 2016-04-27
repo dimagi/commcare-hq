@@ -130,22 +130,20 @@ class Command(BaseCommand):
 
     @staticmethod
     def fix_apps(unique_id_to_xmlns_map, app_to_unique_ids_map, log_file, dry_run):
-        app_db = IterDB(Application.get_db())
-        with app_db as app_db:
-            for (app_id, domain), form_unique_ids in with_progress_bar(app_to_unique_ids_map.items()):
-                app = get_app(domain, app_id)
-                for build in [app] + get_saved_apps(app):
-                    for form_unique_id in form_unique_ids:
+        for (app_id, domain), form_unique_ids in with_progress_bar(app_to_unique_ids_map.items()):
+            app = get_app(domain, app_id)
+            for build in [app] + get_saved_apps(app):
+                for form_unique_id in form_unique_ids:
+                    if unique_id_to_xmlns_map.get(form_unique_id):
                         set_xmlns_on_form(
                             form_unique_id,
                             unique_id_to_xmlns_map[form_unique_id],
                             build,
                             log_file,
-                            app_db,
                             dry_run
                         )
-        for error_id in app_db.error_ids:
-            log_file.write("Failed to save app {}\n".format(error_id))
+                    else:
+                        print 'Could not find unique_id {} in build {}'.format(form_unique_id, build._id)
 
     @staticmethod
     def _print_progress(i, total_submissions):
@@ -212,7 +210,7 @@ def set_xmlns_on_submission(xform_instance, xmlns, xform_db, log_file, dry_run):
     )
 
 
-def set_xmlns_on_form(form_id, xmlns, app_build, log_file, app_db, dry_run):
+def set_xmlns_on_form(form_id, xmlns, app_build, log_file, dry_run):
     """
     Set the xmlns on a form and all the corresponding forms in the saved builds
     that are copies of app.
@@ -242,7 +240,7 @@ def set_xmlns_on_form(form_id, xmlns, app_build, log_file, app_db, dry_run):
                 new_xmlns=xmlns
             ))
         if not dry_run:
-            app_db.save(app_build)
+            app_build.save()  # Magic happens on save
 
 
 def get_forms_without_xmlns(app):

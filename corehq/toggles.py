@@ -352,6 +352,13 @@ EXTENSION_CASES_SYNC_ENABLED = StaticToggle(
     [NAMESPACE_DOMAIN]
 )
 
+SYNC_SEARCH_CASE_CLAIM = StaticToggle(
+    'search_claim',
+    'Enable synchronous mobile searching and case claiming',
+    TAG_PRODUCT_PATH,
+    [NAMESPACE_DOMAIN]
+)
+
 NO_VELLUM = StaticToggle(
     'no_vellum',
     'Allow disabling Form Builder per form '

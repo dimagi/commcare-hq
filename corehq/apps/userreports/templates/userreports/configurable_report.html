@@ -25,6 +25,10 @@
             {% else %}
             gaTrackLink($editReportButton, 'Edit UCR', 'Edit UCR');
             {% endif %}
+
+            {% for event in report_builder_events %}
+            window.analytics.usage.apply(this, {{ event|JSON }});
+            {% endfor %}
         });
     </script>
     {% if not report.is_static %}

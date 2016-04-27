@@ -10,6 +10,7 @@ from pillowtop.es_utils import ElasticsearchIndexInfo
 
 CASE_SEARCH_INDEX = es_index("case_search_2016-03-15")
 CASE_SEARCH_ALIAS = "case_search"
+CASE_SEARCH_MAX_RESULTS = 10
 
 
 def _CASE_SEARCH_MAPPING():

@@ -15,7 +15,7 @@ from corehq.form_processor.interfaces.processor import FormProcessorInterface
 from corehq.form_processor.tests import FormProcessorTestUtils, run_with_all_backends
 from corehq.form_processor.utils import TestFormMetadata
 from corehq.pillows.mappings.user_mapping import USER_INDEX_INFO
-from corehq.pillows.user import UserPillow, get_user_kafka_to_elasticsearch_pillow, get_unknown_users_pillow
+from corehq.pillows.user import get_user_pillow, get_unknown_users_pillow
 from corehq.util.elastic import ensure_index_deleted
 from couchforms.models import XFormInstance
 from dimagi.utils.couch.undo import DELETED_SUFFIX
@@ -49,17 +49,6 @@ class UserPillowTest(UserPillowTestBase):
         'corehq.apps.domain', 'corehq.apps.users', 'corehq.apps.tzmigration',
     ]
 
-    def test_user_pillow(self):
-        # make a user
-        username = 'user-pillow-test-username'
-        CommCareUser.create(TEST_DOMAIN, username, 'secret')
-
-        # send to elasticsearch
-        pillow = UserPillow()
-        pillow.process_changes(since=0, forever=False)
-        self.elasticsearch.indices.refresh(self.index_info.index)
-        self._verify_user_in_es(username)
-
     def test_kafka_user_pillow(self):
         self._make_and_test_user_kafka_pillow('user-pillow-test-kafka')
 
@@ -74,7 +63,7 @@ class UserPillowTest(UserPillowTestBase):
         producer.send_change(document_types.COMMCARE_USER, _user_to_change_meta(user))
 
         # send to elasticsearch
-        pillow = get_user_kafka_to_elasticsearch_pillow()
+        pillow = get_user_pillow()
         pillow.process_changes(since={document_types.COMMCARE_USER: since}, forever=False)
         self.elasticsearch.indices.refresh(self.index_info.index)
         self.assertEqual(0, UserES().run().total)
@@ -88,7 +77,7 @@ class UserPillowTest(UserPillowTestBase):
         producer.send_change(document_types.COMMCARE_USER, _user_to_change_meta(user))
 
         # send to elasticsearch
-        pillow = get_user_kafka_to_elasticsearch_pillow()
+        pillow = get_user_pillow()
         pillow.process_changes(since={document_types.COMMCARE_USER: since}, forever=False)
         self.elasticsearch.indices.refresh(self.index_info.index)
         self._verify_user_in_es(username)

@@ -540,21 +540,11 @@
         "name": "UserGroupsDbKafkaPillow"
     },
     "UserPillow": {
-        "advertised_name": "corehq.pillows.user.UserPillow.test_hqusers_2016-02-16_1402.testhq",
-        "change_feed_type": "CouchChangeFeed",
-        "checkpoint_id": "corehq.pillows.user.UserPillow.test_hqusers_2016-02-16_1402.testhq",
-        "couch_filter": "users/all_users",
-        "couchdb_type": "Database",
-        "couchdb_uri": "http://{COUCH_SERVER_ROOT}/test_commcarehq__users",
-        "document_class": "CommCareUser",
-        "es_alias": "hqusers",
-        "es_index": "test_hqusers_2016-02-16_1402",
-        "es_type": "user",
-        "extra_args": {},
-        "full_class_name": "corehq.pillows.user.UserPillow",
-        "include_docs": true,
-        "name": "UserPillow",
-        "unique_id": "test_hqusers_2016-02-16_1402"
+        "advertised_name": "UserPillow",
+        "change_feed_type": "KafkaChangeFeed",
+        "checkpoint_id": "UserPillow",
+        "full_class_name": "pillowtop.pillow.interface.ConstructedPillow",
+        "name": "UserPillow"
     },
     "WorldVisionChildFluffPillow": {
         "advertised_name": "fluff.WorldVisionChildFluffPillow.testhq",
