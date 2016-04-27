@@ -537,27 +537,34 @@ def loadtest(request):
 
 
 def _lookup_id_in_couch(doc_id, db_name=None):
+    db_result = namedtuple('db_result', 'dbname result status')
+    STATUSES = defaultdict(lambda: 'warning', {
+        'missing': 'default',
+        'deleted': 'danger',
+    })
+
     if db_name:
         dbs = [couch_config.get_db(None if db_name == 'commcarehq' else db_name)]
     else:
         dbs = couch_config.all_dbs_by_slug.values()
 
+    db_results = []
+    response = {"doc_id": doc_id}
     for db in dbs:
         try:
             doc = db.get(doc_id)
-        except ResourceNotFound:
-            pass
+        except ResourceNotFound as e:
+            db_results.append(db_result(db.dbname, e.msg, STATUSES[e.msg]))
         else:
-            return {
+            db_results.append(db_result(db.dbname, 'found', 'success'))
+            response.update({
                 "doc": json.dumps(doc, indent=4, sort_keys=True),
-                "doc_id": doc_id,
                 "doc_type": doc.get('doc_type', 'Unknown'),
                 "dbname": db.dbname,
-            }
-    return {
-        "doc": "NOT FOUND",
-        "doc_id": doc_id,
-    }
+            })
+
+    response['db_results'] = db_results
+    return response
 
 
 @require_superuser
@@ -613,6 +620,8 @@ def doc_in_es(request):
 def raw_couch(request):
     doc_id = request.GET.get("id")
     db_name = request.GET.get("db_name", None)
+    if db_name and "__" in db_name:
+        db_name = db_name.split("__")[-1]
     context = _lookup_id_in_couch(doc_id, db_name) if doc_id else {}
     other_dbs = sorted(filter(None, couch_config.all_dbs_by_slug.keys()))
     context['all_databases'] = ['commcarehq'] + other_dbs
