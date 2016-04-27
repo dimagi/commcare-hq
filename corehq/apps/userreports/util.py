@@ -28,17 +28,21 @@ def default_language():
     return "en"
 
 
-def has_report_builder_access(request):
+def has_report_builder_add_on_privilege(request):
     report_builder_add_on_privs = {
         privileges.REPORT_BUILDER_TRIAL,
         privileges.REPORT_BUILDER_5,
         privileges.REPORT_BUILDER_15,
         privileges.REPORT_BUILDER_30,
     }
+    return any(has_privilege(request, p) for p in report_builder_add_on_privs)
+
+def has_report_builder_access(request):
+
     builder_enabled = toggle_enabled(request, toggles.REPORT_BUILDER)
     legacy_builder_priv = has_privilege(request, privileges.REPORT_BUILDER)
     beta_group_enabled = toggle_enabled(request, toggles.REPORT_BUILDER_BETA_GROUP)
-    has_add_on_priv = any(toggle_enabled(p) for p in report_builder_add_on_privs)
+    has_add_on_priv = has_report_builder_add_on_privilege(request)
 
     return (builder_enabled and legacy_builder_priv) or beta_group_enabled or has_add_on_priv
 
@@ -50,3 +54,16 @@ def add_event(request, event):
 
 def has_report_builder_trial(request):
     return has_privilege(request, privileges.REPORT_BUILDER_TRIAL)
+
+
+def can_edit_report(request, report):
+    ucr_toggle = toggle_enabled(request, toggles.USER_CONFIGURABLE_REPORTS)
+    report_builder_toggle = toggle_enabled(request, toggles.REPORT_BUILDER)
+    report_builder_beta_toggle = toggle_enabled(request, toggles.REPORT_BUILDER_BETA_GROUP)
+    add_on_priv = has_report_builder_add_on_privilege(request)
+    created_by_builder = report.spec.report_meta.created_by_builder
+
+    if created_by_builder:
+        return report_builder_toggle or report_builder_beta_toggle or add_on_priv
+    else:
+        return ucr_toggle

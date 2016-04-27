@@ -35,7 +35,7 @@ from corehq.apps.userreports.reports.util import (
     get_expanded_columns,
 )
 from corehq.apps.userreports.util import default_language, localize, \
-    has_report_builder_trial
+    has_report_builder_trial, can_edit_report
 from corehq.util.couch import get_document_or_404, get_document_or_not_found, \
     DocumentNotFound
 from couchexport.export import export_from_tables
@@ -215,6 +215,7 @@ class ConfigurableReport(JSONResponseMixin, BaseDomainView):
             'filter_context': self.filter_context,
             'url': self.url,
             'headers': self.headers,
+            'can_edit_report': can_edit_report(self.request, self),
             'has_report_builder_trial': has_report_builder_trial(self.request),
         }
         context.update(self.saved_report_context_data)
