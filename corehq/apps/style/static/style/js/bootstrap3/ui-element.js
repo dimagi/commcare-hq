@@ -36,7 +36,7 @@ var langcodeTag;
                 value: values[0],
                 lang: (values.length > 1 ? values[1] : null),
             };
-        }
+        },
     };
 
 }());
@@ -324,7 +324,7 @@ var uiElement;
                 this.edit = true;
                 this.show_delete = show_del_button;
                 this.on('change', function() {
-                    this.val(this.ui.find(".enum-key").val(), this.ui.find(".enum-value").val())
+                    this.val(this.ui.find(".enum-key").val(), this.ui.find(".enum-value").val());
                 });
                 this.on('remove', function() {
                     this.ui.remove();
@@ -367,7 +367,7 @@ var uiElement;
                         };
                         this.$edit_view.find(".enum-key").val(map_key);
                         this.$edit_view.find(".enum-value").val(map_val);
-                        if (map_val == "" && translated_map_val != undefined && translated_map_val != "") {
+                        if (map_val === "" && translated_map_val !== undefined && translated_map_val !== "") {
                             this.$edit_view.find(".enum-value").attr("placeholder", translated_map_val.value);
                             var $langcodeButton = langcodeTag.button_tag($('<a href="#" class="btn btn-info btn-xs lang-text" />'),
                                 translated_map_val.lang);
