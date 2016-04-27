@@ -88,7 +88,7 @@ var uiElement;
             if (translated.lang) {
                 this.ui.css("position", "relative");
                 var langcode_button = langcodeTag.button_tag(
-                    $('<a href="#" class="btn btn-info btn-xs btn-mini lang-text" style="position: absolute; top: 6px; right: 6px;" />'),
+                    $('<a href="#" class="btn btn-info btn-xs lang-text" style="position: absolute; top: 6px; right: 6px;" />'),
                     translated.lang);
                 this.ui.append(langcode_button.button);
                 this.setPlaceholderValue(translated.value);
@@ -224,21 +224,25 @@ var uiElement;
                 this.$edit_view = $('<div class="well well-sm" />');
                 this.$noedit_view = $('<div />');
                 this.$formatted_view = $('<input type="hidden" />');
-                this.$modal_trigger = $('<a class="btn btn-default enum-edit" href="#'+this.modal_id+'" data-toggle="modal" />').html('<i class="fa fa-pencil"></i> Edit');
+                this.$modal_trigger = $('<a class="btn btn-default enum-edit" href="#'+this.modal_id+'" ' +
+                    'data-toggle="modal" />').html('<i class="fa fa-pencil"></i> ' + django.gettext('Edit'));
 
                 // Create new modal controller for this element
                 var $enumModal = $('<div id="'+this.modal_id+'" class="modal fade hq-enum-modal" />');
                 var $modalDialog = $('<div class="modal-dialog"/>');
                 var $modalContent = $('<div class="modal-content" />');
 
-                $modalContent.prepend('<div class="modal-header"><a class="close" data-dismiss="modal">×</a><h4 class="modal-title">Edit Mapping for '+this.modal_title+'</h4></div>');
+                $modalContent.prepend('<div class="modal-header"><a class="close" data-dismiss="modal">×</a><h4 class="modal-title">'
+                    + django.gettext('Edit Mapping for ') + this.modal_title + '</h4></div>');
                 var $modal_form = $('<form class="form-horizontal hq-enum-editor" action="" />'),
                     $modal_body = $('<div class="modal-body" style="max-height:372px; overflow-y: scroll;" />');
                 $modal_body.append($('<fieldset />'));
-                $modal_body.append('<a href="#" class="btn btn-success" data-enum-action="add"><i class="fa fa-plus"></i> Add Key &rarr; Value Mapping</a>');
+                $modal_body.append('<a href="#" class="btn btn-success" data-enum-action="add"><i class="fa fa-plus"></i> ' +
+                    django.gettext('Add Key &rarr; Value Mapping') + '</a>');
 
                 $modal_form.append($modal_body);
-                $modal_form.append('<div class="modal-footer"><button class="btn btn-primary" data-dismiss="modal">Done</button></div>');
+                $modal_form.append('<div class="modal-footer"><button class="btn btn-primary" data-dismiss="modal">' +
+                    django.gettext('Done') + '</button></div>');
                 $modalContent.append($modal_form);
                 $modalDialog.append($modalContent);
                 $enumModal.append($modalDialog);
@@ -331,8 +335,8 @@ var uiElement;
                 });
 
                 this.$edit_view = $('<div class="form-inline" style="margin-left:5px;" />');
-                var key_input = $('<input type="text" class="form-control enum-key" style="width:220px;" placeholder="key" />'),
-                    val_input = $('<input type="text" class="form-control enum-value" style="width:220px;" placeholder="value" />');
+                var key_input = $('<input type="text" class="form-control enum-key" style="width:220px;" placeholder="' + django.gettext('key') + '" />'),
+                    val_input = $('<input type="text" class="form-control enum-value" style="width:220px;" placeholder="' + django.gettext('value') + '" />');
                 key_input.change(function () {
                     that.fire('change');
                 });
@@ -344,7 +348,7 @@ var uiElement;
                 this.$edit_view.append(val_input);
                 if(this.show_delete) {
                     var $deleteButton = $('<a href="#" data-enum-action="remove" class="btn btn-danger" />');
-                    $deleteButton.append('<i class="fa fa-remove"></i> Delete');
+                    $deleteButton.append('<i class="fa fa-remove"></i> ' + django.gettext('Delete'));
                     $deleteButton.click(function() {
                         that.fire('remove');
                         return false;
