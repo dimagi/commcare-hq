@@ -6,7 +6,11 @@ hqDefine('app_manager/js/app_manager_media.js', function () {
         var self = this;
 
         self.ref = ko.observable(new MenuMediaReference(o.ref));
+        self.allowEmptyPath = o.allowEmptyPath;
         self.refHasPath = ko.computed(function () {
+            if (self.allowEmptyPath) {
+                return true;
+            }
             return self.ref().path.length > 0;
         });
         self.objectMap = ko.observable(o.objectMap);
