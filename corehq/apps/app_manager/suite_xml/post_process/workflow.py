@@ -39,14 +39,20 @@ class WorkflowHelper(PostProcessor):
 
                 if case_list_form_frames:
                     if form.is_registration_form(module.case_type) and form.form_type == 'module_form':
-                        stack_frames = EndOfFormNavigationWorkflow(self).form_workflow_frames(if_prefix, module, form)
+                        stack_frames = EndOfFormNavigationWorkflow(self).form_workflow_frames(
+                            if_prefix,
+                            module,
+                            form
+                        )
                     else:
                         if_prefix = session_var(RETURN_TO).count().eq(0)
                         stack_frames.extend(
                             EndOfFormNavigationWorkflow(self).form_workflow_frames(if_prefix, module, form)
                         )
                 else:
-                    stack_frames.extend(EndOfFormNavigationWorkflow(self).form_workflow_frames(if_prefix, module, form))
+                    stack_frames.extend(
+                        EndOfFormNavigationWorkflow(self).form_workflow_frames(if_prefix, module, form)
+                    )
 
                 self.create_workflow_stack(form_command, stack_frames)
 
