@@ -13,6 +13,7 @@
     <property key="ota-restore-url-testing" value="{{ app.ota_restore_url }}"/>
     <property key="PostURL" value="{{ app.post_url }}" force="true"/>
     <property key="PostTestURL" value="{{ app.post_url }}" force="true"/>
+    <property key="http_cert_validate_url" value="{{ cert_validate_url }}"/>
     <property key="key_server" value="{{ app.key_server_url }}"/>
     <property key="cur_locale" value="{{ app.build_langs.0 }}"/>
     <property key="cc_user_domain" value="{{ cc_user_domain }}"/>
