@@ -4,7 +4,7 @@ from dimagi.ext.jsonobject import JsonObject
 from django.core.exceptions import ValidationError
 from django.utils.translation import ugettext as _
 
-from .dbaccessors import *
+from .dbaccessors import get_by_domain_and_type
 
 
 CUSTOM_DATA_FIELD_PREFIX = "data-field"
@@ -52,8 +52,8 @@ class CustomDataFieldsDefinition(Document):
 
     def get_fields(self, required_only=False, include_system=True):
         def _is_match(field):
-            if (required_only and not field.is_required
-                    or not include_system and is_system_key(field.slug)):
+            if ((required_only and not field.is_required)
+                    or (not include_system and is_system_key(field.slug))):
                 return False
             return True
         return filter(_is_match, self.fields)
