@@ -28,7 +28,6 @@ class Worker(object):
         ('service_forms_cash', "Payment for Service Availability Form (in Rs.)", True, DTSortType.NUMERIC),
         ('growth_monitoring_cash', "Payment for Growth Monitoring Forms (in Rs.)", True, DTSortType.NUMERIC),
         ('month_total', "Total Payment Made for the month (in Rs.)", True, DTSortType.NUMERIC),
-        ('last_month_total', "Amount of AWW incentive paid last month", True, DTSortType.NUMERIC),
         ('owner_id', 'Owner ID', False, None),
     ]
 
