@@ -67,7 +67,7 @@ from couchexport.exceptions import (
     SchemaMismatchException
 )
 from couchexport.export import Format, export_from_tables
-from couchexport.models import DefaultExportSchema, SavedBasicExport
+from couchexport.models import DefaultExportSchema, SavedBasicExport, SavedExportSchema
 from couchexport.shortcuts import (export_data_shared, export_raw_data,
                                    export_response)
 from couchexport.tasks import rebuild_schemas
@@ -176,6 +176,8 @@ datespan_default = datespan_in_request(
 
 require_form_export_permission = require_permission(
     Permissions.view_report, FORM_EXPORT_PERMISSION, login_decorator=None)
+require_form_deid_export_permission = require_permission(
+    Permissions.view_report, DEID_EXPORT_PERMISSION, login_decorator=None)
 require_case_export_permission = require_permission(
     Permissions.view_report, CASE_EXPORT_PERMISSION, login_decorator=None)
 
@@ -520,6 +522,21 @@ def _export_default_or_custom_data(request, domain, export_id=None, bulk_export=
 @require_GET
 def hq_download_saved_export(req, domain, export_id):
     export = SavedBasicExport.get(export_id)
+    return _download_saved_export(req, domain, export)
+
+
+@csrf_exempt
+@login_or_digest_or_basic_or_apikey(default='digest')
+@require_form_deid_export_permission
+@require_GET
+def hq_deid_download_saved_export(req, domain, export_id):
+    export = SavedBasicExport.get(export_id)
+    if not export.is_safe:
+        raise Http404()
+    return _download_saved_export(req, domain, export)
+
+
+def _download_saved_export(req, domain, export):
     # quasi-security hack: the first key of the index is always assumed
     # to be the domain
     assert domain == export.configuration.index[0]

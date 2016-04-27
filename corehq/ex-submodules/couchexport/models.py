@@ -931,6 +931,7 @@ class SavedBasicExport(BlobMixin, Document):
     configuration = SchemaProperty(ExportConfiguration)
     last_updated = DateTimeProperty()
     last_accessed = DateTimeProperty()
+    is_safe = BooleanProperty(default=False)
 
     @property
     def size(self):
