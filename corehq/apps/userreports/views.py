@@ -86,7 +86,7 @@ from corehq.apps.userreports.ui.forms import (
     ConfigurableDataSourceFromAppForm,
 )
 from corehq.apps.userreports.util import has_report_builder_access, \
-    has_report_builder_add_on_privilege
+    has_report_builder_add_on_privilege, add_event
 from corehq.apps.users.decorators import require_permission
 from corehq.apps.users.models import Permissions
 from corehq.toggles import REPORT_BUILDER_MAP_REPORTS
