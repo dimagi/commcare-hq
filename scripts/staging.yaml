@@ -50,7 +50,6 @@ branches:
   - show-form-case-refs-in-summary # j$ 1/29
 #  - revamp-multimedia # Jenny 2/16
   - certificate-validation # Cal 3/10
-  - knockout-3-3 # Jenny 3/30
   - inline-editing # Jenny 4/9
   - uatbc/case-search-es         # FR 4/12
   - app-multimedia-blobs # daniel 4/20
