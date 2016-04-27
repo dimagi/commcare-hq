@@ -1,4 +1,4 @@
-/*globals $, _, djnago */
+/*globals $, _, django */
 
 function MultimediaReferenceController (references, obj_map, totals) {
     'use strict';
