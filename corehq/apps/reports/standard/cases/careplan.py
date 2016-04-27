@@ -5,6 +5,7 @@ from corehq.apps.reports.generic import GenericReportView
 from corehq.apps.reports.standard import ProjectReportParametersMixin, ProjectReport
 from corehq.apps.reports.standard.cases.basic import CaseListReport
 from corehq.apps.reports.standard.cases.data_sources import CaseDisplay
+from corehq.apps.style.decorators import use_timeago
 from django.core.urlresolvers import reverse, NoReverseMatch
 from django.utils import html
 from corehq.util.view_utils import absolute_reverse
@@ -52,6 +53,14 @@ class CareplanReport(ProjectReport, GenericReportView, ProjectReportParametersMi
     report_template_path = ""
 
     name = "Care Plan"
+
+    @use_timeago
+    def bootstrap3_dispatcher(self, request, *args, **kwargs):
+        """
+        This shouldn't have any effect until we upgrade to boostrap 3. Putting
+        it here proactively so we don't forget about it.
+        """
+        return super(CareplanReport, self).bootstrap3_dispatcher(request, *args, **kwargs)
 
     @classmethod
     def show_in_navigation(cls, *args, **kwargs):
