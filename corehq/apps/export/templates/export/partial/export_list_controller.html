@@ -124,6 +124,7 @@
                                     <i class="fa fa-envelope"></i>
                                     {% trans "Saved for Daily Report" %}
                                     {% if has_edit_permissions %}
+                                    {% angularjs %}
                                     <button type="button"
                                             class="btn btn-default btn-xs"
                                             ng-show="!export.emailedExport.updatingData"
@@ -132,6 +133,7 @@
                                         <i class="fa fa-refresh"></i>
                                         {% trans "Update Data" %}
                                     </button>
+                                    {% endangularjs %}
                                     <button type="button"
                                             class="btn btn-default btn-xs btn-disabled"
                                             ng-show="export.emailedExport.updatingData"
@@ -176,8 +178,10 @@
                                         Please click 'update data' if the automatic scheduler hasn't picked up the changes in a while.
                                     {% endblocktrans %}
                                 </p>
+                                {% angularjs %}
                                 <div class="modal fade"
                                      id="modalRefreshExportConfirm-{{ export.id }}-{{ export.emailedExport.groupId }}">
+                                {% endangularjs %}
                                     <div class="modal-dialog">
                                         <div class="modal-content">
                                             <div class="modal-header">
