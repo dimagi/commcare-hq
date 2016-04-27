@@ -23,7 +23,6 @@ from corehq.util.quickcache import quickcache
 from corehq.util.timezones.conversions import ServerTime, UserTime
 from dimagi.utils.couch import LockableMixIn, CriticalSection
 from dimagi.utils.couch.cache.cache_core import get_redis_client
-from dimagi.utils.multithreading import process_fast
 from dimagi.utils.logging import notify_exception
 from random import randint
 from django.conf import settings
@@ -309,28 +308,6 @@ class CaseReminderEvent(DocumentSchema):
     message = DictProperty()
     callback_timeout_intervals = ListProperty(IntegerProperty)
     form_unique_id = StringProperty()
-
-
-def run_rule(case_id, handler, schedule_changed, prev_definition):
-    case = CommCareCase.get(case_id)
-    try:
-        handler.case_changed(case, schedule_changed=schedule_changed,
-            prev_definition=prev_definition)
-    except ResourceConflict:
-        # Sometimes the reminder fires in the middle of reprocessing
-        # the scheduling.
-        handler.case_changed(case, schedule_changed=schedule_changed,
-            prev_definition=prev_definition)
-    try:
-        client = get_redis_client()
-        client.incr("reminder-rule-processing-current-%s" % handler._id)
-    except:
-        pass
-
-
-def retire_reminder(reminder_id):
-    r = CaseReminder.get(reminder_id)
-    r.retire()
 
 
 def get_case_ids(domain):
@@ -1555,28 +1532,44 @@ class CaseReminderHandler(Document):
                 process_reminder_rule(self, schedule_changed,
                     prev_definition, send_immediately)
 
+    def reset_rule_progress(self, total):
+        try:
+            client = get_redis_client()
+            client.set('reminder-rule-processing-current-%s' % self.get_id, 0)
+            client.set('reminder-rule-processing-total-%s' % self.get_id, total)
+        except:
+            pass
+
+    def update_rule_progress(self):
+        try:
+            client = get_redis_client()
+            client.incr('reminder-rule-processing-current-%s' % self.get_id)
+        except:
+            pass
+
     def process_rule(self, schedule_changed, prev_definition, send_immediately):
         if not self.deleted():
             if self.start_condition_type == CASE_CRITERIA:
-                case_ids = get_case_ids(self.domain)
-                try:
-                    client = get_redis_client()
-                    client.set("reminder-rule-processing-current-%s" % self._id,
-                        0)
-                    client.set("reminder-rule-processing-total-%s" % self._id,
-                        len(case_ids))
-                except:
-                    pass
-                process_fast(case_ids, run_rule, item_goal=100, max_threads=5,
-                    args=(self, schedule_changed, prev_definition),
-                    use_critical_section=False, print_stack_interval=60)
+                accessor = CaseAccessors(self.domain)
+                case_ids = accessor.get_case_ids_in_domain()
+                self.reset_rule_progress(len(case_ids))
+
+                for case in accessor.iter_cases(case_ids):
+                    self.case_changed(
+                        case,
+                        schedule_changed=schedule_changed,
+                        prev_definition=prev_definition
+                    )
+                    self.update_rule_progress()
+
             elif self.start_condition_type == ON_DATETIME:
                 self.datetime_definition_changed(send_immediately=send_immediately)
         else:
             reminder_ids = self.get_reminders(ids_only=True)
-            process_fast(reminder_ids, retire_reminder, item_goal=100,
-                max_threads=5, use_critical_section=False,
-                print_stack_interval=60)
+            for doc in iter_docs(CaseReminder.get_db(), reminder_ids):
+                reminder_instance = CaseReminder.wrap(doc)
+                if reminder_instance.doc_type == 'CaseReminder' and reminder_instance.domain == self.domain:
+                    reminder_instance.retire()
 
     @classmethod
     def get_handlers(cls, domain, reminder_type_filter=None):

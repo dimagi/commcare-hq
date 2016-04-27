@@ -403,3 +403,23 @@ def create_test_case(domain, case_type, case_name, case_properties=None, drop_si
             CaseAccessorSQL.hard_delete_cases(domain, [case.case_id])
         else:
             case.delete()
+
+
+def set_parent_case(domain, child_case, parent_case):
+    """
+    Creates a parent-child relationship between child_case and parent_case.
+    """
+    from casexml.apps.case.mock import CaseFactory, CaseStructure, CaseIndex
+    from casexml.apps.case.models import INDEX_ID_PARENT, INDEX_RELATIONSHIP_CHILD
+
+    parent = CaseStructure(case_id=parent_case.case_id)
+    CaseFactory(domain).create_or_update_case(
+        CaseStructure(
+            case_id=child_case.case_id,
+            indices=[CaseIndex(
+                related_structure=parent,
+                identifier=INDEX_ID_PARENT,
+                relationship=INDEX_RELATIONSHIP_CHILD
+            )],
+        )
+    )

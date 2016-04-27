@@ -62,7 +62,7 @@ def _case_changed(domain, case_id, handler_ids):
             handler.case_changed(case, **kwargs)
             if handler.uses_parent_case_property:
                 if should_use_sql_backend(domain):
-                    subcases = case.get_subcases(index_identifer=CommCareCaseIndexSQL.PARENT_IDENTIFIER)
+                    subcases = case.get_subcases(index_identifier=CommCareCaseIndexSQL.PARENT_IDENTIFIER)
                 else:
                     subcases = case.get_subcases(index_identifier=INDEX_ID_PARENT)
 
