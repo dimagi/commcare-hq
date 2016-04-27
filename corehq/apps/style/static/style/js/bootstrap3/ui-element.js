@@ -1,4 +1,4 @@
-/*globals $, eventize, _ */
+/*globals $, eventize, _, django */
 
 var langcodeTag;
 
