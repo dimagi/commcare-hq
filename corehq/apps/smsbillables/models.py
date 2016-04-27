@@ -420,7 +420,7 @@ class SmsBillable(models.Model):
             if twilio_message.price is None:
                 log_smsbillables_error(
                     "price is None: backend_message_id=%s, status=%s"
-                    % (twilio_message.backend_message_id, twilio_message.status)
+                    % (backend_message_id, twilio_message.status)
                 )
                 return _TwilioChargeInfo(None, None)
             return _TwilioChargeInfo(
