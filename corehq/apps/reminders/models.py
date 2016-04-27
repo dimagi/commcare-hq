@@ -571,13 +571,18 @@ class CaseReminderHandler(Document):
         self.start_datetime = start_datetime
         return self
 
-    def set_case_criteria_start_condition(self, case_type, start_property, start_match_type, start_value):
+    def set_case_criteria_start_condition(self, case_type, start_property, start_match_type, start_value=None):
         self.reminder_type = REMINDER_TYPE_DEFAULT
         self.start_condition_type = CASE_CRITERIA
         self.case_type = case_type
         self.start_property = start_property
         self.start_match_type = start_match_type
-        self.start_value = start_value
+        if start_match_type == MATCH_ANY_VALUE:
+            self.start_value = None
+        else:
+            if not start_value:
+                raise UnexpectedConfigurationException("Expected a value for start_value")
+            self.start_value = start_value
         return self
 
     def set_case_criteria_start_date(self, start_date=None, start_offset=0, start_day_of_week=DAY_ANY):
@@ -1255,7 +1260,7 @@ class CaseReminderHandler(Document):
             return StartDateInfo(now, True, True)
 
         values = case.resolve_case_property(self.start_date)
-        values = [r['value'] for r in result]
+        values = [value['value'] for value in values]
 
         for start_date in values:
             if isinstance(start_date, datetime):
