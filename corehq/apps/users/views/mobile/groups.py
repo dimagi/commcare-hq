@@ -4,7 +4,6 @@ from django.core.urlresolvers import reverse
 from django.http import Http404, HttpResponseRedirect
 from django.utils.decorators import method_decorator
 from django.utils.translation import ugettext as _, ugettext_noop
-from djangular.views.mixins import JSONResponseMixin
 from corehq.apps.style.decorators import use_bootstrap3, \
     use_jquery_ui_multiselect, use_jquery_ui
 from django_prbac.utils import has_privilege

@@ -24,7 +24,7 @@ var langcodeTag;
                         this.lang_code = value;
                         this.button.text(this.lang_code);
                     }
-                }
+                },
             };
             return function ($elem, new_lang) {
                 return new LangCodeButton($elem, new_lang);
@@ -34,7 +34,7 @@ var langcodeTag;
             var values = value.split(langcodeTag.LANG_DELIN);
             return {
                 value: values[0],
-                lang: (values.length > 1 ? values[1] : null)
+                lang: (values.length > 1 ? values[1] : null),
             };
         }
     };
@@ -93,7 +93,7 @@ var uiElement;
                 this.ui.append(langcode_button.button);
                 this.setPlaceholderValue(translated.value);
                 this.$edit_view.change(function () {
-                    if ($(this).val() == "")
+                    if ($(this).val() === "")
                         langcode_button.button.show();
                     else
                         langcode_button.button.hide();
@@ -126,7 +126,7 @@ var uiElement;
                 this.$noedit_view.prependTo(this.ui);
             }
             return this;
-        }
+        },
     };
 
     uiElement = {
@@ -204,7 +204,7 @@ var uiElement;
                         this.$noedit_view.appendTo(this.ui);
                     }
                     return this;
-                }
+                },
             };
             return function (options) {
                 return new Select(options);
@@ -261,7 +261,7 @@ var uiElement;
                 });
 
                 $('#'+this.modal_id+' a').click(function() {
-                    if($(this).attr('data-enum-action') == 'add') {
+                    if($(this).attr('data-enum-action') === 'add') {
                         $(this).parent().parent().find('fieldset').append(uiElement.input_map(true).ui);
                         $(this).parent().parent().find('fieldset input.enum-key').last().focus();
                     }
@@ -282,7 +282,7 @@ var uiElement;
                         this.$edit_view.text('');
 
                         this.value = original_pairs;
-                        if (translated_pairs != undefined) {
+                        if (translated_pairs !== undefined) {
                             this.translated_value = translated_pairs;
                         }
                         this.$formatted_view.val(JSON.stringify(this.value));
@@ -306,7 +306,7 @@ var uiElement;
                         this.$noedit_view.appendTo(this.ui);
                     }
                     return this;
-                }
+                },
             };
             return function (guid, modal_title) {
                 return new KeyValList(guid, modal_title);
@@ -319,7 +319,7 @@ var uiElement;
                 this.ui = $('<div class="form-group hq-input-map" />');
                 this.value = {
                     key: "",
-                    val: ""
+                    val: "",
                 };
                 this.edit = true;
                 this.show_delete = show_del_button;
@@ -358,12 +358,12 @@ var uiElement;
             };
             InputMap.prototype = {
                 val: function(map_key, map_val, translated_map_val) {
-                    if (map_key == undefined) {
+                    if (map_key === undefined) {
                         return this.value;
                     } else {
                         this.value = {
                             key: map_key,
-                            val: map_val
+                            val: map_val,
                         };
                         this.$edit_view.find(".enum-key").val(map_key);
                         this.$edit_view.find(".enum-value").val(map_val);
@@ -374,11 +374,11 @@ var uiElement;
                             $langcodeButton.button.attr("style", "position: absolute; top: 6px; right: 6px;");
                             this.$edit_view.find(".enum-value").css("position", "relative").after($langcodeButton.button);
                             this.on('change', function () {
-                                if (this.$edit_view.find(".enum-value").val() == "")
+                                if (this.$edit_view.find(".enum-value").val() === "")
                                     $langcodeButton.button.show();
                                 else
                                     $langcodeButton.button.hide();
-                            })
+                            });
 
                         }
                         if(map_key) {
@@ -401,7 +401,7 @@ var uiElement;
                         this.$noedit_view.appendTo(this.ui);
                     }
                     return this;
-                }
+                },
             };
             return function (show_del_button) {
                 return new InputMap(show_del_button);
@@ -453,14 +453,14 @@ var uiElement;
                         this.$noedit_view.appendTo(this.ui);
                     }
                     return this;
-                }
+                },
             };
             return function () {
                 return new Checkbox();
             };
         }()),
         serialize: function (obj) {
-            var i, cpy;
+            var cpy;
             if (typeof obj.val === 'function') {
                 return obj.val();
             } else if (_.isArray(obj)) {
@@ -474,6 +474,6 @@ var uiElement;
             } else {
                 return obj;
             }
-        }
+        },
     };
 }());
