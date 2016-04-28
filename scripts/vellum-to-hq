@@ -155,7 +155,7 @@ def update_hq(path, branch, base_branch, vellum_dir, vellum_rev, push, target):
     if (target != DEFAULT_TARGET):
         message.append(target)
     code = subprocess.call([
-        "git", "commit", "--edit", "--message=" + ':'.join(vellum_rev)
+        "git", "commit", "--edit", "--message=" + ':'.join(message)
     ], cwd=path)
     if code != 0:
         sys.exit(code)
