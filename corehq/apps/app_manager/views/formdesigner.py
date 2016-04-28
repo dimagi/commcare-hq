@@ -104,12 +104,17 @@ def form_designer(request, domain, app_id, module_id=None, form_id=None):
         ])
 
 
+    vellum_dir = 'vellum_beta' if toggles.VELLUM_BETA.enabled(domain) else 'vellum'
     context = get_apps_base_context(request, domain, app)
     context.update(locals())
     context.update({
         'vellum_debug': settings.VELLUM_DEBUG and not toggles.VELLUM_BETA,
-        'vellum_dir': 'vellum_beta' if toggles.VELLUM_BETA.enabled(domain) else 'vellum',
         'nav_form': form,
+        'vellum_style_path': 'app_manager/js/{}/style.css'.format(vellum_dir),
+        'vellum_ckeditor_path': 'app_manager/js/{}/lib/ckeditor/'.format(vellum_dir),
+        'vellum_js_path': 'app_manager/js/{}/src'.format(vellum_dir),
+        'vellum_main_components_path': 'app_manager/js/{}/src/main-components.js'.format(vellum_dir),
+        'vellum_local_deps_path': 'app_manager/js/{}/src/local-deps.js'.format(vellum_dir),
         'formdesigner': True,
         'multimedia_object_map': app.get_object_map(),
         'sessionid': request.COOKIES.get('sessionid'),

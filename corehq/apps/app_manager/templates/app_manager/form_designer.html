@@ -9,12 +9,12 @@
 
 {% block js-inline %}{{ block.super }}
     {% if not vellum_debug %}
-        <link href="{% new_static 'app_manager/js/' + vellum_dir + '/style.css' %}" type="text/css" rel="stylesheet"/>
+        <link href="{% new_static vellum_style_path %}" type="text/css" rel="stylesheet"/>
     {% elif vellum_debug == "dev-min" %}
         <link href="{% new_static 'formdesigner/_build/style.css' %}" type="text/css" rel="stylesheet"/>
     {% endif %}
     <script>
-        var CKEDITOR_BASEPATH = "{% new_static 'app_manager/js/' + vellum_dir + '/lib/ckeditor/' %}";
+        var CKEDITOR_BASEPATH = "{% new_static vellum_ckeditor_path %}";
 
         var VELLUM_OPTIONS = {
             plugins: {{ plugins|JSON }},
@@ -113,7 +113,7 @@
                 * set settings.VELLUM_DEBUG to "dev" or "dev-min"
             {% endcomment %}
             {% if not vellum_debug %}
-            baseUrl: "{% new_static 'app_manager/js/' + vellum_dir + '/src' %}",
+            baseUrl: "{% new_static vellum_js_path %}",
             {% elif vellum_debug == "dev-min" %}
             baseUrl: "{% new_static 'formdesigner/_build/src' %}",
             {% else %}
@@ -121,7 +121,7 @@
             {% endif %}
             // handle very bad connections
             waitSeconds: 60,
-            urlArgs: 'version={% cachebuster "app_manager/js/" + vellum_dir + "/src/main-components.js" %}{% cachebuster "app_manager/js/" + vellum_dir + "/src/local-deps.js" %}',
+            urlArgs: 'version={% cachebuster vellum_main_components_path %}{% cachebuster vellum_local_deps_path %}',
             paths: {
                 'jquery.vellum': 'main'
             }
