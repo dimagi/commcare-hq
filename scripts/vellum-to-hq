@@ -22,7 +22,6 @@ import sh
 from gitutils import get_git
 
 VELLUM_TAR = "vellum.tar.gz"
-DEFAULT_TARGET = "vellum"
 
 
 def main():
@@ -47,9 +46,9 @@ def main():
         help="Build Vellum, but do not run tests (mutually exclusive with --no-make).")
     parser.add_argument("--push", action="store_true",
         help="Push the result to HQ if everything else succeeds.")
-    parser.add_argument("--target", default=DEFAULT_TARGET,
+    parser.add_argument("--target", default='vellum',
         help="Directory within corehq/apps/app_manager/static/app_manager/js/ to place "
-            "built Vellum. Defaults to '{}'.".format(DEFAULT_TARGET))
+            "built Vellum. Defaults to 'vellum'.")
     parser.add_argument("--vellum-dir", default=os.environ.get("VELLUM_DIR"),
         help="Path to Vellum git repo on your local machine. Defaults to the "
              "value of the VELLUM_DIR environment variable.")
@@ -151,11 +150,8 @@ def update_hq(path, branch, base_branch, vellum_dir, vellum_rev, push, target):
     sh.tar("xf", vellum_tar, "-C", hq_vellum)
     git.add("--all", hq_vellum)
 
-    message = 'vellum:{}'.format(vellum_rev)
-    if (target != DEFAULT_TARGET):
-        message = '{}:{}'.format(message, target)
     code = subprocess.call([
-        "git", "commit", "--edit", "--message=" + message
+        "git", "commit", "--edit", "--message={}:{}".format(target, vellum_rev)
     ], cwd=path)
     if code != 0:
         sys.exit(code)
