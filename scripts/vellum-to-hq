@@ -31,6 +31,8 @@ def main():
     parser.add_argument("--vellum-dir", default=os.environ.get("VELLUM_DIR"),
         help="Path to Vellum git repo on your local machine. Defaults to the "
              "value of the VELLUM_DIR environment variable.")
+    parser.add_argument("--branch", default="",
+        help="Alternative Vellum branch from which to build.")
     parser.add_argument("--hq-base", metavar="BRANCH", default="master",
         help="Reset to BRANCH before updating HQ (default: master). "
              "This does nothing when mode is 'master'.")
@@ -50,7 +52,7 @@ def main():
     args = parser.parse_args()
 
     vellum_dir = args.vellum_dir
-    vellum_branch = args.mode
+    vellum_branch = args.branch || args.mode
     hq_dir = dirname(dirname(abspath(__file__)))
     hq_branch = "vellum-staging" if args.mode == "staging" else args.mode
 
