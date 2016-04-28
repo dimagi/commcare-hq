@@ -108,6 +108,7 @@ def form_designer(request, domain, app_id, module_id=None, form_id=None):
     context.update(locals())
     context.update({
         'vellum_debug': settings.VELLUM_DEBUG,
+        'vellum_dir': 'vellum_beta' if toggles.VELLUM_BETA.enabled(domain) else 'vellum',
         'nav_form': form,
         'formdesigner': True,
         'multimedia_object_map': app.get_object_map(),
