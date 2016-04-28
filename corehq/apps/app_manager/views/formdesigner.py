@@ -105,7 +105,6 @@ def form_designer(request, domain, app_id, module_id=None, form_id=None):
             if getattr(f, 'schedule', False) and f.schedule.enabled
         ])
 
-
     vellum_base = 'corehq/apps/app_manager/static/app_manager/js/'
     vellum_dir = 'vellum'
     if toggles.VELLUM_BETA.enabled(domain) and os.path.isdir(os.path.join(vellum_base, 'vellum_beta')):
