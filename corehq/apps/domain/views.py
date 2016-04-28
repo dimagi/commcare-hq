@@ -2640,6 +2640,10 @@ class ProBonoStaticView(ProBonoMixin, BasePageView):
     urlname = 'pro_bono_static'
     use_domain_field = True
 
+    @use_bootstrap3
+    def dispatch(self, request, *args, **kwargs):
+        return super(ProBonoStaticView, self).dispatch(request, *args, **kwargs)
+
     @property
     def requesting_domain(self):
         return self.pro_bono_form.cleaned_data['domain']
