@@ -660,12 +660,13 @@ def edit_module_detail_screens(request, domain, app_id, module_id):
         module.parent_select = ParentSelect.wrap(parent_select)
     if fixture_select is not None:
         module.fixture_select = FixtureSelect.wrap(fixture_select)
-    if search_properties is not None:
-        lang = request.COOKIES.get('lang', app.langs[0])
-        module.search_config = CaseSearch(properties=[
-            CaseSearchProperty.wrap(p) for p in _update_search_properties(module, search_properties, lang)
-        ])
-        # TODO: Add UI and controller support for CaseSearch.command_label
+    # TODO: Deepcopy failing on app.save(). FB 225441
+    # if search_properties is not None:
+    #     lang = request.COOKIES.get('lang', app.langs[0])
+    #     module.search_config = CaseSearch(properties=[
+    #         CaseSearchProperty.wrap(p) for p in _update_search_properties(module, search_properties, lang)
+    #     ])
+    #     # TODO: Add UI and controller support for CaseSearch.command_label
 
     resp = {}
     app.save(resp)
