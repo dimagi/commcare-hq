@@ -61,14 +61,12 @@ FormplayerFrontend.module("Entities", function (Entities, FormplayerFrontend, Ba
                 fetch: function (options) {
                     var collection = this;
                     options.data = JSON.stringify({
-                        "install_reference": "http://localhost:8000/a/" + this.domain +
-                        "/apps/api/download_ccz/?app_id=" + this.app_id + "#hack=commcare.ccz",
                         "username": "test",
                         "password": "123",
                         "domain": collection.domain,
                         "app_id": collection.app_id
                     });
-                    options.url = 'http://localhost:8080/install';
+                    options.url = 'http://localhost:8080/navigate_menu';
                     options.type = 'POST';
                     options.dataType = "json";
                     options.contentType = "application/json";

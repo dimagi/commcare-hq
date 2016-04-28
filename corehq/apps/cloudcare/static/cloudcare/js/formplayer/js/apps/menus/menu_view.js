@@ -15,7 +15,7 @@ FormplayerFrontend.module("AppSelect.MenuList", function (MenuList, FormplayerFr
 
     MenuList.MenuListView = Marionette.CompositeView.extend({
         tagName: "table",
-        className: "table table-hover",
+        className: "table table-hover table-striped table-bordered",
         template: "#menu-view-list",
         childView: MenuList.MenuView,
         childViewContainer: "tbody",
@@ -36,7 +36,8 @@ FormplayerFrontend.module("AppSelect.MenuList", function (MenuList, FormplayerFr
 
         rowClick: function (e) {
             e.preventDefault();
-            FormplayerFrontend.trigger("menu:select", this.model);
+            //FormplayerFrontend.trigger("menu:select", this.model);
+            $('#myModal').modal('show');
         }
     });
 
