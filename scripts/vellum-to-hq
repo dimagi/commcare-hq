@@ -181,7 +181,7 @@ def require_branch_up_to_date(git, branch, remote="origin", context="Your local"
     local_rev = git("rev-parse", branch).strip()
     remote_rev = git("rev-parse", remote + "/" + branch).strip()
     if local_rev != remote_rev:
-        abort("{context} '{branch}' and '{remote}/{branch}' have diverged"
+        abort("{context} '{branch}' ({local_rev}) and '{remote}/{branch} ({remote_rev})' have diverged"
               .format(**locals()))
 
 
