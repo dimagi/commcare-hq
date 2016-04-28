@@ -19,6 +19,12 @@ REPORT_BUILDER_TRIAL = 'report_builder_trial'
 REPORT_BUILDER_5 = 'report_builder_5_reports'
 REPORT_BUILDER_15 = 'report_builder_15_reports'
 REPORT_BUILDER_30 = 'report_builder_30_reports'
+REPORT_BUILDER_ADD_ON_PRIVS = {
+    REPORT_BUILDER_TRIAL,
+    REPORT_BUILDER_5,
+    REPORT_BUILDER_15,
+    REPORT_BUILDER_30,
+}
 
 ROLE_BASED_ACCESS = 'role_based_access'
 

@@ -29,13 +29,9 @@ def default_language():
 
 
 def has_report_builder_add_on_privilege(request):
-    report_builder_add_on_privs = {
-        privileges.REPORT_BUILDER_TRIAL,
-        privileges.REPORT_BUILDER_5,
-        privileges.REPORT_BUILDER_15,
-        privileges.REPORT_BUILDER_30,
-    }
-    return any(has_privilege(request, p) for p in report_builder_add_on_privs)
+    return any(
+        has_privilege(request, p) for p in privileges.REPORT_BUILDER_ADD_ON_PRIVS
+    )
 
 def has_report_builder_access(request):
 

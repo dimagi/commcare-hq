@@ -76,18 +76,20 @@ class DomainDowngradeActionHandler(BaseModifySubscriptionActionHandler):
 
     @classmethod
     def privilege_to_response_function(cls):
-        return {
+        privs_to_responses = {
             privileges.OUTBOUND_SMS: cls.response_outbound_sms,
             privileges.INBOUND_SMS: cls.response_inbound_sms,
             privileges.ROLE_BASED_ACCESS: cls.response_role_based_access,
             privileges.DATA_CLEANUP: cls.response_data_cleanup,
             privileges.COMMCARE_LOGO_UPLOADER: cls.response_commcare_logo_uploader,
             privileges.ADVANCED_DOMAIN_SECURITY: cls.response_domain_security,
-            privileges.REPORT_BUILDER_TRIAL: cls.response_report_builder,
-            privileges.REPORT_BUILDER_5: cls.response_report_builder,
-            privileges.REPORT_BUILDER_15: cls.response_report_builder,
-            privileges.REPORT_BUILDER_30: cls.response_report_builder,
         }
+        privs_to_responses.update({
+            p: cls.response_report_builder
+            for p in privileges.REPORT_BUILDER_ADD_ON_PRIVS
+        })
+        return privs_to_responses
+
 
     @staticmethod
     def response_outbound_sms(domain, new_plan_version):
@@ -199,14 +201,8 @@ class DomainDowngradeActionHandler(BaseModifySubscriptionActionHandler):
 
     @staticmethod
     def response_report_builder(project, new_plan_version):
-        report_builder_privs = {
-            privileges.REPORT_BUILDER_TRIAL,
-            privileges.REPORT_BUILDER_5,
-            privileges.REPORT_BUILDER_15,
-            privileges.REPORT_BUILDER_30,
-        }
         next_privs = get_privileges(new_plan_version) if new_plan_version is not None else set()
-        next_has_report_builder = bool(report_builder_privs.intersection(next_privs))
+        next_has_report_builder = bool(privileges.REPORT_BUILDER_ADD_ON_PRIVS.intersection(next_privs))
         if not next_has_report_builder:
             # Clear paywall flags
             project.requested_report_builder_trial = []
@@ -241,14 +237,15 @@ class DomainUpgradeActionHandler(BaseModifySubscriptionActionHandler):
 
     @classmethod
     def privilege_to_response_function(cls):
-        return {
+        privs_to_repsones = {
             privileges.ROLE_BASED_ACCESS: cls.response_role_based_access,
             privileges.COMMCARE_LOGO_UPLOADER: cls.response_commcare_logo_uploader,
-            privileges.REPORT_BUILDER_TRIAL: cls.response_report_builder,
-            privileges.REPORT_BUILDER_5: cls.response_report_builder,
-            privileges.REPORT_BUILDER_15: cls.response_report_builder,
-            privileges.REPORT_BUILDER_30: cls.response_report_builder,
         }
+        privs_to_repsones.update({
+            p: cls.response_report_builder
+            for p in privileges.REPORT_BUILDER_ADD_ON_PRIVS
+        })
+        return privs_to_repsones
 
     @staticmethod
     def response_role_based_access(domain, new_plan_version):
