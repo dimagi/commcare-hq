@@ -46,6 +46,9 @@ def main():
         help="Build Vellum, but do not run tests (mutually exclusive with --no-make).")
     parser.add_argument("--push", action="store_true",
         help="Push the result to HQ if everything else succeeds.")
+    parser.add_argument("--target-dir", default="vellum",
+        help="Directory within corehq/apps/app_manager/static/app_manager/js/ to place "
+            "built Vellum. Defaults to 'vellum'.")
     parser.add_argument("--vellum-dir", default=os.environ.get("VELLUM_DIR"),
         help="Path to Vellum git repo on your local machine. Defaults to the "
              "value of the VELLUM_DIR environment variable.")
@@ -128,7 +131,7 @@ def update_hq(path, branch, base_branch, vellum_dir, vellum_rev, push):
     git.checkout(branch)
     git.fetch()
 
-    hq_vellum = join(path, "corehq/apps/app_manager/static/app_manager/js/vellum")
+    hq_vellum = join(path, "corehq/apps/app_manager/static/app_manager/js/", args.target_dir)
     if branch != "master":
         print("git reset --hard origin/" + base_branch)
         git.reset("--hard", "origin/" + base_branch)
