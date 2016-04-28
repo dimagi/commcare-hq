@@ -134,7 +134,7 @@
     </table>
 </div>
 {% if error_message %}
-<div class="alert alert-error">{{ error_message }}</div>
+<div class="alert alert-danger">{{ error_message }}</div>
 {% endif %}
 <form class="form-horizontal" method="get" action="{% url "domain_create_snapshot" domain %}">
     {% csrf_token %}

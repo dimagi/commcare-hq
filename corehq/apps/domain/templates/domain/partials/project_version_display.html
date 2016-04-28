@@ -3,8 +3,8 @@
 <form class="form-horizontal" action="{% url "domain_clear_published" domain %}" method="POST">
 {% csrf_token %}
 <div class="row-fluid">
-    <div class="span4"><h3>This project has been published</h3></div>
-    <div class="span8">
+    <div class="col-sm-4"><h3>This project has been published</h3></div>
+    <div class="col-sm-8">
         <h3><button class="btn btn-danger" type="submit">Unpublish</button></h3>
     </div>
 </div>

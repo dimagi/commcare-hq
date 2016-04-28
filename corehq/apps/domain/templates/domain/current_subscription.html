@@ -209,7 +209,7 @@
                                 {% trans 'Prepay by Wire' %}
                                 </button>
                                 {% else %}
-                                <span class="label">
+                                <span class="label label-default">
                                     <i class="fa fa-info-circle"></i>
                                     {% trans "Not Billing Admin, Can't Add Credit" %}
                                 </span>
@@ -325,7 +325,7 @@
                                    attr:{name: creditType},
                                    value: addAmount" />
                         </div>
-                        <div class="alert alert-error"
+                        <div class="alert alert-danger"
                         data-bind="visible: !addAmountValid()">
                            <i class="fa fa-exclamation-triangle"></i>
                            <span>
@@ -352,7 +352,7 @@
                                    attr:{name: creditType},
                                    value: addAmount" />
                         </div>
-                        <div class="alert alert-error"
+                        <div class="alert alert-danger"
                         data-bind="visible: !addAmountValid()">
                            <i class="fa fa-exclamation-triangle"></i>
                            <span>
