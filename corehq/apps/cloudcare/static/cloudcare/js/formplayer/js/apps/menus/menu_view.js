@@ -36,8 +36,7 @@ FormplayerFrontend.module("AppSelect.MenuList", function (MenuList, FormplayerFr
 
         rowClick: function (e) {
             e.preventDefault();
-            //FormplayerFrontend.trigger("menu:select", this.model);
-            $('#myModal').modal('show');
+            FormplayerFrontend.trigger("app:show:detail", this);
         }
     });
 
@@ -56,16 +55,7 @@ FormplayerFrontend.module("AppSelect.MenuList", function (MenuList, FormplayerFr
 
     MenuList.DetailView = Marionette.ItemView.extend({
         tagName: "tr",
-        template: "#detail-view-item",
-
-        events: {
-            "click": "rowClick"
-        },
-
-        rowClick: function (e) {
-            e.preventDefault();
-            FormplayerFrontend.trigger("menu:select", this.model);
-        }
+        template: "#detail-view-item"
     });
 
     MenuList.DetailListView = Marionette.CompositeView.extend({
@@ -73,11 +63,6 @@ FormplayerFrontend.module("AppSelect.MenuList", function (MenuList, FormplayerFr
         className: "table table-hover",
         template: "#detail-view-list",
         childView: MenuList.DetailView,
-        childViewContainer: "tbody",
-        templateHelpers: function () {
-            return {
-                title: this.options.collection.title
-            };
-        },
+        childViewContainer: "tbody"
     });
 });

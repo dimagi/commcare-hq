@@ -26,6 +26,7 @@
         <script src="{% static 'json2/json2.js' %}"></script>
         <script src="{% static 'underscore/underscore.js' %}"></script>
         <script src="{% static 'backbone/backbone.js' %}"></script>
+        <script src="{% static 'backbone.bootstrap-modal/src/backbone.bootstrap-modal.js' %}"></script>
         <script src="{% static 'backbone.babysitter/lib/backbone.babysitter.js' %}"></script>
         <script src="{% static 'backbone.wreqr/lib/backbone.wreqr.js' %}"></script>
         <script src="{% static 'backbone.marionette/lib/backbone.marionette.js' %}"></script>
@@ -134,7 +135,7 @@
     </script>
 
     <script type="text/template" id="detail-view-list">
-        <p id="title">Title: <%- title %></p>
+        <p id="title">Case Details</p>
         <tbody>
         </tbody>
     </script>
@@ -147,15 +148,14 @@
     <!-- Modal -->
     <div id="myModal" class="modal fade" role="dialog">
         <div class="modal-dialog">
-
             <!-- Modal content-->
             <div class="modal-content">
                 <div class="modal-header">
                     <button type="button" class="close" data-dismiss="modal">&times;</button>
-                    <h4 class="modal-title">Modal Header</h4>
+                    <h4 class="modal-title">Case Detail</h4>
                 </div>
                 <div class="modal-body">
-                    <p>Some text in the modal.</p>
+                    <p id="my-modal-body">Some text in the modal.</p>
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>

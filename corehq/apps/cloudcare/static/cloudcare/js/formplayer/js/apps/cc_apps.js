@@ -60,11 +60,18 @@ FormplayerFrontend.module("AppSelect", function (AppSelect, FormplayerFrontend, 
                 for(var i = 0; i < urlParams.length; i++){
                     steps.push(urlParams[i].v)
                 }
-                debugger;
                 AppSelect.MenuList.Controller.selectMenu(app_id, steps);
             }
+        },
+        showDetail: function(model) {
+            AppSelect.MenuList.Controller.showDetail(model);
         }
     };
+
+    FormplayerFrontend.on("app:show:detail", function (model) {
+        API.showDetail(model);
+    });
+
     FormplayerFrontend.on("apps:list", function () {
         FormplayerFrontend.navigate("apps");
         API.listApps();

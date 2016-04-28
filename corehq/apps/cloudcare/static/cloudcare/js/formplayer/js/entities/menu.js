@@ -53,6 +53,25 @@ FormplayerFrontend.module("Entities", function (Entities, FormplayerFrontend, Ba
 
     var API = {
 
+        getDetail: function (model) {
+
+            var defer = $.Deferred();
+            var mCollection = new Backbone.Collection.extend({
+                fetch: function(){
+                    return model.options.model.attributes.detail
+                },
+                initialize: function (params) {
+                    this.fetch = params.fetch;
+                }
+            });
+            mCollection.fetch({
+                success: function(request) {
+                    deger.resolve(request);
+                }
+            });
+            return defer.promise();
+        },
+
         getMenus: function (app_id, select_list) {
             var menus = new Entities.MenuSelectCollection({
                 domain: FormplayerFrontend.request('currentUser').domain,
@@ -69,7 +88,7 @@ FormplayerFrontend.module("Entities", function (Entities, FormplayerFrontend, Ba
                         "selections": select_list
                     });
 
-                    if(select_list){
+                    if (select_list) {
                         options.data.selections = select_list;
                     }
 
@@ -93,12 +112,15 @@ FormplayerFrontend.module("Entities", function (Entities, FormplayerFrontend, Ba
                     defer.resolve(request);
                 }
             });
-            var promise = defer.promise();
-            return promise;
+            return defer.promise();
         },
     };
 
     FormplayerFrontend.reqres.setHandler("app:select:menus", function (app_id, select_list) {
         return API.getMenus(app_id, select_list);
+    });
+
+    FormplayerFrontend.reqres.setHandler("app:get:detail", function (model) {
+        return API.getDetail(model);
     });
 });
