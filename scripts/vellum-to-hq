@@ -28,11 +28,15 @@ def main():
     parser = ArgumentParser(description=__doc__, formatter_class=RawDescriptionHelpFormatter)
     parser.add_argument("mode", choices=["staging", "master"],
         help="Update vellum-staging or master.")
-    parser.add_argument("--vellum-dir", default=os.environ.get("VELLUM_DIR"),
-        help="Path to Vellum git repo on your local machine. Defaults to the "
-             "value of the VELLUM_DIR environment variable.")
     parser.add_argument("--branch", default="",
         help="Alternative Vellum branch from which to build.")
+    parser.add_argument("--fix-staging",
+        action="store_true", default=os.environ.get("VELLUM_STAGING_FIX"),
+        help="Rebase vellum-staging on master (only in 'master' mode). "
+             "If this option is not specified, the vellum-staging branch will "
+             "likely be left in a state that will make the next staging "
+             "deployment fail due to merge conflicts. NOTE: this will discard "
+             "any unpushed commits on the local vellum-staging branch.")
     parser.add_argument("--hq-base", metavar="BRANCH", default="master",
         help="Reset to BRANCH before updating HQ (default: master). "
              "This does nothing when mode is 'master'.")
@@ -42,13 +46,10 @@ def main():
         help="Build Vellum, but do not run tests (mutually exclusive with --no-make).")
     parser.add_argument("--push", action="store_true",
         help="Push the result to HQ if everything else succeeds.")
-    parser.add_argument("--fix-staging",
-        action="store_true", default=os.environ.get("VELLUM_STAGING_FIX"),
-        help="Rebase vellum-staging on master (only in 'master' mode). "
-             "If this option is not specified, the vellum-staging branch will "
-             "likely be left in a state that will make the next staging "
-             "deployment fail due to merge conflicts. NOTE: this will discard "
-             "any unpushed commits on the local vellum-staging branch.")
+    parser.add_argument("--vellum-dir", default=os.environ.get("VELLUM_DIR"),
+        help="Path to Vellum git repo on your local machine. Defaults to the "
+             "value of the VELLUM_DIR environment variable.")
+
     args = parser.parse_args()
 
     vellum_dir = args.vellum_dir
