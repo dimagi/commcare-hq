@@ -151,11 +151,11 @@ def update_hq(path, branch, base_branch, vellum_dir, vellum_rev, push, target):
     sh.tar("xf", vellum_tar, "-C", hq_vellum)
     git.add("--all", hq_vellum)
 
-    message = ['vellum', vellum_rev]
+    message = 'vellum:{}'.format(vellum_rev)
     if (target != DEFAULT_TARGET):
-        message.append(target)
+        message = '{}:{}'.format(message, target)
     code = subprocess.call([
-        "git", "commit", "--edit", "--message=" + ':'.join(message)
+        "git", "commit", "--edit", "--message=" + message
     ], cwd=path)
     if code != 0:
         sys.exit(code)
