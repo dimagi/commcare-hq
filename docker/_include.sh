@@ -1,13 +1,17 @@
 DOCKER_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 
-if [ `uname` == 'Linux' -o `uname` == 'Darwin' ]; then
+if [ `uname` == 'Linux' ]; then
     XDG_DATA_HOME=${XDG_DATA_HOME:-$HOME/.local/share}
     DOCKER_DATA_HOME=$XDG_DATA_HOME/dockerhq
 else
     DOCKER_DATA_HOME=/data
 fi
 
-mkdir -p $DOCKER_DATA_HOME
+if [ `uname` == 'Darwin' ]; then
+    docker-machine ssh $DOCKER_MACHINE_NAME sudo mkdir -p $DOCKER_DATA_HOME
+else
+    mkdir -p $DOCKER_DATA_HOME
+fi
 
 XDG_CACHE_HOME=${XDG_CACHE_HOME:-$HOME/.cache}
 
