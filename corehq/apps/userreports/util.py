@@ -63,3 +63,25 @@ def can_edit_report(request, report):
         return report_builder_toggle or report_builder_beta_toggle or add_on_priv
     else:
         return ucr_toggle
+
+
+def allowed_report_builder_reports(request):
+    """
+    Return the number of report builder reports allowed
+    """
+    builder_enabled = toggle_enabled(request, toggles.REPORT_BUILDER)
+    legacy_builder_priv = has_privilege(request, privileges.REPORT_BUILDER)
+    beta_group_enabled = toggle_enabled(request, toggles.REPORT_BUILDER_BETA_GROUP)
+
+    if toggle_enabled(request, toggles.UNLIMITED_REPORT_BUILDER_REPORTS):
+        return float("inf")
+    if has_privilege(request, privileges.REPORT_BUILDER_30):
+        return 30
+    if has_privilege(request, privileges.REPORT_BUILDER_15):
+        return 15
+    if (has_privilege(request, privileges.REPORT_BUILDER_TRIAL)
+        or has_privilege(request, privileges.REPORT_BUILDER_5)
+        or beta_group_enabled
+        or (builder_enabled and legacy_builder_priv)
+    ):
+        return 5

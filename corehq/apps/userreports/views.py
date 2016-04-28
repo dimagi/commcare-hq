@@ -86,7 +86,8 @@ from corehq.apps.userreports.ui.forms import (
     ConfigurableDataSourceFromAppForm,
 )
 from corehq.apps.userreports.util import has_report_builder_access, \
-    has_report_builder_add_on_privilege, add_event
+    has_report_builder_add_on_privilege, add_event, \
+    allowed_report_builder_reports
 from corehq.apps.users.decorators import require_permission
 from corehq.apps.users.models import Permissions
 from corehq.toggles import REPORT_BUILDER_MAP_REPORTS
@@ -404,9 +405,10 @@ class ReportBuilderDataSourceSelect(ReportBuilderView):
     @property
     @memoized
     def form(self):
+        max_allowed_reports = allowed_report_builder_reports(self.request)
         if self.request.method == 'POST':
-            return DataSourceForm(self.domain, self.report_type, self.request.POST)
-        return DataSourceForm(self.domain, self.report_type)
+            return DataSourceForm(self.domain, self.report_type, max_allowed_reports, self.request.POST)
+        return DataSourceForm(self.domain, self.report_type, max_allowed_reports)
 
     def post(self, request, *args, **kwargs):
         if self.form.is_valid():

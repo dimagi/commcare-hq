@@ -12,6 +12,7 @@ from django.utils.html import format_html
 from django.utils.safestring import mark_safe
 from django.utils.translation import ugettext as _, ugettext_noop, ugettext_lazy
 
+from corehq.apps.userreports.util import allowed_report_builder_reports
 from crispy_forms import layout as crispy
 from crispy_forms.bootstrap import StrictButton
 from crispy_forms.helper import FormHelper
@@ -393,10 +394,11 @@ class DataSourceForm(forms.Form):
         ],
     )
 
-    def __init__(self, domain, report_type, *args, **kwargs):
+    def __init__(self, domain, report_type, max_allowed_reports, *args, **kwargs):
         super(DataSourceForm, self).__init__(*args, **kwargs)
         self.domain = domain
         self.report_type = report_type
+        self.max_allowed_reports = max_allowed_reports
 
         self.app_source_helper = ApplicationDataSourceUIHelper()
         self.app_source_helper.source_type_field.label = _('Forms or Cases')
@@ -472,14 +474,14 @@ class DataSourceForm(forms.Form):
 
         existing_reports = ReportConfiguration.by_domain(self.domain)
         builder_reports = filter(lambda report: report.report_meta.created_by_builder, existing_reports)
-        if len(builder_reports) >= 5 and not UNLIMITED_REPORT_BUILDER_REPORTS.enabled(self.domain):
+        if len(builder_reports) >= self.max_allowed_reports:
             raise forms.ValidationError(_(
                 "Too many reports!\n"
                 "Creating this report would cause you to go over the maximum "
-                "number of report builder reports allowed in this domain. The current "
-                "limit is 5. "
+                "number of report builder reports allowed in this domain. Your"
+                "limit is {number}. "
                 "To continue, delete another report and try again. "
-            ))
+            ).format(number=self.max_allowed_reports))
 
         return cleaned_data
 
