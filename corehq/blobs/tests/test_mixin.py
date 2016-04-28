@@ -90,6 +90,50 @@ class TestBlobMixin(BaseTestCase):
         self.assertEqual(self.obj.blobs[name].content_type, "text/plain")
         self.assertEqual(self.obj.blobs[name].content_length, 7)
 
+    def test_deferred_put_attachment(self):
+        obj = self.make_doc(DeferredPutBlobDocument)
+        name = "test.1"
+        content = StringIO(b"content")
+        obj.deferred_put_attachment(content, name, content_type="text/plain")
+        self.assertEqual(obj.blobs[name].id, None)
+        self.assertEqual(obj.blobs[name].content_type, "text/plain")
+        self.assertEqual(obj.blobs[name].content_length, 7)
+        self.assertFalse(obj.saved)
+
+    def test_put_attachment_overwrites_unsaved_blob(self):
+        obj = self.make_doc(DeferredPutBlobDocument)
+        name = "test.1"
+        obj.deferred_put_attachment(b"<xml />", name, content_type="text/xml")
+        obj.put_attachment(b"new", name, content_type="text/plain")
+        self.assertTrue(obj.blobs[name].id is not None)
+        self.assertEqual(obj.blobs[name].content_type, "text/plain")
+        self.assertEqual(obj.blobs[name].content_length, 3)
+
+    def test_fetch_attachment_returns_unsaved_blob(self):
+        obj = self.make_doc(DeferredPutBlobDocument)
+        name = "test.1"
+        content = b"<xml />"
+        obj.deferred_put_attachment(content, name, content_type="text/xml")
+        self.assertEqual(obj.fetch_attachment(name), content)
+
+    def test_delete_attachment_deletes_unsaved_blob(self):
+        obj = self.make_doc(DeferredPutBlobDocument)
+        name = "test.1"
+        content = b"<xml />"
+        obj.deferred_put_attachment(content, name, content_type="text/xml")
+        self.assertTrue(obj.delete_attachment(name))
+
+    def test_save_persists_unsaved_blob(self):
+        obj = self.make_doc(DeferredPutBlobDocument)
+        name = "test.1"
+        content = StringIO(b"content")
+        obj.deferred_put_attachment(content, name, content_type="text/plain")
+        obj.save()
+        self.assertTrue(obj.saved)
+        self.assertTrue(obj.blobs[name].id is not None)
+        self.assertEqual(obj.blobs[name].content_type, "text/plain")
+        self.assertEqual(obj.blobs[name].content_length, 7)
+
     def test_blob_directory(self):
         name = "test.1"
         content = StringIO(b"test_blob_directory content")
@@ -434,13 +478,12 @@ class PutInOldCopyToNewBlobDB(TemporaryMigratingBlobDB):
         return info
 
 
-class FakeCouchDocument(mod.BlobMixin, Document):
+class BaseFakeDocument(Document):
 
-    class Meta:
-        app_label = "couch"
-
-    doc_type = "FakeCouchDocument"
     saved = False
+
+    def save(self):
+        self.saved = True
 
     @classmethod
     def get_db(cls):
@@ -454,8 +497,19 @@ class FakeCouchDocument(mod.BlobMixin, Document):
                     return uuid.uuid4().hex
         return fake_db
 
-    def save(self):
-        self.saved = True
+
+class FakeCouchDocument(mod.BlobMixin, BaseFakeDocument):
+
+    class Meta:
+        app_label = "couch"
+
+    doc_type = "FakeCouchDocument"
+
+
+class DeferredPutBlobDocument(mod.DeferredBlobMixin, BaseFakeDocument):
+
+    class Meta:
+        app_label = "couch"
 
 
 class FailingSaveCouchDocument(FakeCouchDocument):
@@ -464,7 +518,7 @@ class FailingSaveCouchDocument(FakeCouchDocument):
 
     def save(self):
         if self.allow_saves:
-            self.saved = True
+            super(FailingSaveCouchDocument, self).save()
             self.allow_saves -= 1
         else:
             raise BlowUp("save failed")

@@ -8,6 +8,7 @@ from contextlib import contextmanager
 
 from corehq.blobs import BlobInfo, get_blob_db
 from corehq.blobs.exceptions import NotFound
+from corehq.blobs.util import ClosingContextProxy
 from couchdbkit.exceptions import InvalidAttachment, ResourceNotFound
 from dimagi.ext.couchdbkit import (
     Document,
@@ -209,6 +210,98 @@ class BlobMixin(Document):
                     if meta.id not in deleted:
                         db.delete(meta.id, bucket)
         return atomic_blobs_context()
+
+
+class DeferredBlobMixin(BlobMixin):
+    """Similar to BlobMixin, but can defer attachment puts until save
+
+    This class is intended for backward compatibility with code that set
+    `_attachments` to a dict of attachments with content. It is not
+    recommended to use this in new code.
+    """
+
+    class Meta:
+        abstract = True
+
+    _deferred_blobs = None
+
+    @property
+    def blobs(self):
+        value = super(DeferredBlobMixin, self).blobs
+        if self._deferred_blobs:
+            value = dict(value)
+            value.update((name, BlobMeta(
+                id=None,
+                content_type=info.get("content_type", None),
+                content_length=info.get("content_length", None),
+                digest=None,
+            )) for name, info in self._deferred_blobs.iteritems())
+        return value
+
+    def put_attachment(self, content, name=None, *args, **kw):
+        if self._deferred_blobs:
+            self._deferred_blobs.pop(name, None)
+        return super(DeferredBlobMixin, self).put_attachment(content, name,
+                                                             *args, **kw)
+
+    def fetch_attachment(self, name, stream=False):
+        if self._deferred_blobs and name in self._deferred_blobs:
+            body = self._deferred_blobs[name]["content"]
+            if stream:
+                return ClosingContextProxy(StringIO(body))
+            try:
+                body = body.decode("utf-8", "strict")
+            except UnicodeDecodeError:
+                # Return bytes on decode failure, otherwise unicode.
+                # Ugly, but consistent with restkit.wrappers.Response.body_string
+                pass
+            return body
+        return super(DeferredBlobMixin, self).fetch_attachment(name, stream)
+
+    def delete_attachment(self, name):
+        if self._deferred_blobs:
+            deleted = bool(self._deferred_blobs.pop(name, None))
+        else:
+            deleted = False
+        return super(DeferredBlobMixin, self).delete_attachment(name) or deleted
+
+    def deferred_put_attachment(self, content, name=None, content_type=None,
+                                content_length=None):
+        """Queue attachment to be persisted on save
+
+        WARNING this loads the entire blob content into memory. Use of
+        this method is discouraged:
+
+        - Generally it is bad practice to load large blobs into memory
+          in their entirety. Ideally blobs should be streamed between
+          the client and the blob database.
+        - JSON serialization becomes less efficient because blobs are
+          base-64 encoded, requiring even more memory.
+
+        This method takes the same parameters as `put_attachment`.
+        """
+        if isinstance(content, unicode):
+            content = content.encode('utf-8')
+        elif not isinstance(content, bytes):
+            content = content.read()
+        if self._deferred_blobs is None:
+            self._deferred_blobs = {}
+        length = len(content) if content_length is None else content_length
+        self._deferred_blobs[name] = {
+            "content": content,
+            "content_type": content_type,
+            "content_length": length,
+        }
+
+    def save(self):
+        if self._deferred_blobs:
+            with self.atomic_blobs(super(DeferredBlobMixin, self).save):
+                # list deferred blobs to avoid modification during iteration
+                for name, info in list(self._deferred_blobs.iteritems()):
+                    self.put_attachment(name=name, **info)
+                assert not self._deferred_blobs, self._deferred_blobs
+        else:
+            super(DeferredBlobMixin, self).save()
 
 
 @memoized
