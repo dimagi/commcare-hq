@@ -1584,7 +1584,6 @@ def download_form(request, domain, instance_id):
     instance = _get_form_or_404(domain, instance_id)
     assert(domain == instance.domain)
 
-    instance = XFormInstance.get(instance_id)
     response = HttpResponse(content_type='application/xml')
     response.write(instance.get_xml())
     return response
