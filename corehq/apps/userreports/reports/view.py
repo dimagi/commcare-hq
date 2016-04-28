@@ -34,8 +34,11 @@ from corehq.apps.userreports.reports.factory import ReportFactory
 from corehq.apps.userreports.reports.util import (
     get_expanded_columns,
 )
-from corehq.apps.userreports.util import default_language, localize, \
-    has_report_builder_trial, can_edit_report
+from corehq.apps.userreports.util import (
+    default_language,
+    has_report_builder_trial,
+    can_edit_report,
+)
 from corehq.util.couch import get_document_or_404, get_document_or_not_found, \
     DocumentNotFound
 from couchexport.export import export_from_tables

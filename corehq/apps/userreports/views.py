@@ -181,11 +181,11 @@ def paywall_home(domain):
     """
     project = Domain.get_by_name(domain, strict=True)
     if project.requested_report_builder_subscription:
-        return reverse( ReportBuilderPaywallActivatingSubscription.urlname, args=[domain])
+        return reverse(ReportBuilderPaywallActivatingSubscription.urlname, args=[domain])
     elif project.requested_report_builder_trial:
         return reverse(ReportBuilderPaywallActivatingTrial.urlname, args=[domain])
     else:
-        return reverse(ReportBuilderPaywall.urlname,args=[domain])
+        return reverse(ReportBuilderPaywall.urlname, args=[domain])
 
 
 class ReportBuilderPaywallBase(BaseDomainView):
@@ -233,7 +233,7 @@ class ReportBuilderPaywallActivatingTrial(ReportBuilderPaywallBase):
                 self.plan_name
             ),
             settings.DEFAULT_FROM_EMAIL,
-            ["updates"+"@"+"dimagi.com"],
+            ["updates" + "@" + "dimagi.com"],
         )
         return self.get(request, domain, *args, **kwargs)
 
@@ -260,7 +260,7 @@ class ReportBuilderPaywallActivatingSubscription(ReportBuilderPaywallBase):
                 self.plan_name
             ),
             settings.DEFAULT_FROM_EMAIL,
-            ["updates"+"@"+"dimagi.com"],
+            ["updates" + "@" + "dimagi.com"],
         )
         return self.get(request, domain, *args, **kwargs)
 

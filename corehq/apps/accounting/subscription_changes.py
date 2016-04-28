@@ -37,7 +37,9 @@ class BaseModifySubscriptionHandler(object):
         return filter(
             lambda message: message is not None,
             map(
-                lambda privilege: self.privilege_to_response_function()[privilege](self.domain, self.new_plan_version),
+                lambda privilege: self.privilege_to_response_function()[privilege](
+                    self.domain, self.new_plan_version
+                ),
                 self.privileges
             )
         )

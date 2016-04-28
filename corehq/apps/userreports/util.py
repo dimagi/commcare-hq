@@ -79,9 +79,10 @@ def allowed_report_builder_reports(request):
         return 30
     if has_privilege(request, privileges.REPORT_BUILDER_15):
         return 15
-    if (has_privilege(request, privileges.REPORT_BUILDER_TRIAL)
-        or has_privilege(request, privileges.REPORT_BUILDER_5)
-        or beta_group_enabled
-        or (builder_enabled and legacy_builder_priv)
+    if (
+        has_privilege(request, privileges.REPORT_BUILDER_TRIAL) or
+        has_privilege(request, privileges.REPORT_BUILDER_5) or
+        beta_group_enabled or
+        (builder_enabled and legacy_builder_priv)
     ):
         return 5

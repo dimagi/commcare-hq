@@ -48,8 +48,7 @@ class TestSubscriptionPermissionsChanges(BaseAccountingTest):
             slug="pro_with_rb_30_role",
             name="Pro + 30 rb reports",
         )
-        for privilege in [
-            privileges.REPORT_BUILDER_30]:  # Doesn't actually include the pro roles...
+        for privilege in [privileges.REPORT_BUILDER_30]:  # Doesn't actually include the pro roles...
             privilege = Role.objects.get(slug=privilege)
             Grant.objects.create(
                 from_role=role,

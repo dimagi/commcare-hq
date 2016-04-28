@@ -12,7 +12,6 @@ from django.utils.html import format_html
 from django.utils.safestring import mark_safe
 from django.utils.translation import ugettext as _, ugettext_noop, ugettext_lazy
 
-from corehq.apps.userreports.util import allowed_report_builder_reports
 from crispy_forms import layout as crispy
 from crispy_forms.bootstrap import StrictButton
 from crispy_forms.helper import FormHelper
