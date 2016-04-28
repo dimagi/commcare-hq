@@ -107,7 +107,7 @@ def form_designer(request, domain, app_id, module_id=None, form_id=None):
     context = get_apps_base_context(request, domain, app)
     context.update(locals())
     context.update({
-        'vellum_debug': settings.VELLUM_DEBUG,
+        'vellum_debug': settings.VELLUM_DEBUG and not toggles.VELLUM_BETA,
         'vellum_dir': 'vellum_beta' if toggles.VELLUM_BETA.enabled(domain) else 'vellum',
         'nav_form': form,
         'formdesigner': True,
