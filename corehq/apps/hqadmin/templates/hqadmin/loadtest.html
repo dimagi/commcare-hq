@@ -1,17 +1,7 @@
-{% extends "hqadmin/bootstrap2/hqadmin_base_report.html" %}
+{% extends "hqadmin/bootstrap3/hqadmin_base_report.html" %}
 {% load url from future %}
 {% load hq_shared_tags %}
 {% load i18n %}
-{% block title %}Loadtest Results{% endblock %}
-{% block report-title %}Loadtest Results{% endblock %}
-
-{% block js %}{{ block.super }}
-    {% if charts %}
-    <link href="{% static 'hqwebapp/js/lib/nvd3/nv.d3.css' %}" rel="stylesheet">
-    <script src="{% static 'hqwebapp/js/lib/nvd3/lib/d3.v2.js' %}"></script>
-    <script src="{% static 'hqwebapp/js/lib/nvd3/nv.d3.min.js' %}"></script>
-    {% endif %}
-{% endblock %}
 
 {% block js-inline %}{{ block.super }}
     {% for chart in charts %}
@@ -22,35 +12,44 @@
 {% endblock %}
 
 {% block reportcontent %}
-
-{% if charts %}
-    <div class="row">
+    <div class="spacer"></div>
+    {% if charts %}
         {% for chart in charts %}
-        <div id='chart_{{ forloop.counter }}' class="span12 hide">
-            {% if chart.title %}<h4 style="text-align: center;">{{ chart.title }}</h4>{% endif %}
-            <svg style='height: {{ chart.height }}px'> </svg>
-        </div>
+            <div class="panel panel-default">
+                <div class="panel-heading">
+                    <h3 class="panel-title">
+                        {% if chart.title %}{{ chart.title }}{% else %}Untitled Chart{% endif %}
+                    </h3>
+                </div>
+                <div class="panel-body">
+                    <div id='chart_{{ forloop.counter }}'>
+                        <svg style='height: {{ chart.height }}px'> </svg>
+                    </div>
+                </div>
+            </div>
         {% endfor %}
+    {% endif %}
+
+    <div class="panel panel-default">
+        <div class="panel-body">
+            <table class="table table-striped table-bordered table-hover">
+                <thead>
+                    <th>Date</th>
+                    <th>Run Time</th>
+                    <th>Form Submission Count</th>
+                    <th>OTA Restore Count</th>
+                    <th>Total Count</th>
+                </thead>
+                {% for test in tests %}
+                    <tr>
+                        <td>{{ test.datetime }}</td>
+                        <td>{{ test.run_time }}</td>
+                        <td>{{ test.submit_form.results|length }}</td>
+                        <td>{{ test.ota_restore.results|length }}</td>
+                        <td>{{ test.results|length }}</td>
+                    </tr>
+                {% endfor %}
+            </table>
+        </div>
     </div>
-{% endif %}
-
-<table class="table table-striped table-bordered table-hover">
-    <thead>
-        <th>Date</th>
-        <th>Run Time</th>
-        <th>Form Submission Count</th>
-        <th>OTA Restore Count</th>
-        <th>Total Count</th>
-    </thead>
-    {% for test in tests %}
-        <tr>
-            <td>{{ test.datetime }}</td>
-            <td>{{ test.run_time }}</td>
-            <td>{{ test.submit_form.results|length }}</td>
-            <td>{{ test.ota_restore.results|length }}</td>
-            <td>{{ test.results|length }}</td>
-        </tr>
-    {% endfor %}
-</table>
-
 {% endblock %}

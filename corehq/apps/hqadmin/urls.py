@@ -7,6 +7,7 @@ from .views import (
     FlagBrokenBuilds, AuthenticateAs, SystemInfoView,
     DownloadMALTView,
     RecentCouchChangesView,
+    LoadtestReportView,
 )
 
 from corehq.apps.api.urls import admin_urlpatterns as admin_api_urlpatterns
@@ -30,7 +31,8 @@ urlpatterns = patterns('corehq.apps.hqadmin.views',
     url(r'^flag_broken_builds/$', FlagBrokenBuilds.as_view(), name="flag_broken_builds"),
     url(r'^stats_data/$', 'stats_data', name="admin_stats_data"),
     url(r'^admin_reports_stats_data/$', 'admin_reports_stats_data', name="admin_reports_stats_data"),
-    url(r'^loadtest/$', 'loadtest', name="loadtest_report"),
+    url(r'^loadtest/$', LoadtestReportView.as_view(),
+        name=LoadtestReportView.urlname),
     url(r'^do_pillow_op/$', 'pillow_operation_api', name="pillow_operation_api"),
     url(r'^web_user_lookup/$', 'web_user_lookup', name='web_user_lookup'),
     url(r'^doc_in_es/$', 'doc_in_es', name='doc_in_es'),

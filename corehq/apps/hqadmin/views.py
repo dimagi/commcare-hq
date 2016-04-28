@@ -481,73 +481,89 @@ def admin_reports_stats_data(request):
     return stats_data(request)
 
 
-@require_superuser
-def loadtest(request):
-    # The multimech results api is kinda all over the place.
-    # the docs are here: http://testutils.org/multi-mechanize/datastore.html
+class LoadtestReportView(BaseAdminSectionView):
+    urlname = 'loadtest_report'
+    template_name = 'hqadmin/loadtest.html'
+    page_title = ugettext_lazy("Loadtest Results")
 
-    scripts = ['submit_form.py', 'ota_restore.py']
+    @method_decorator(require_superuser)
+    @use_nvd3_v3
+    @use_jquery_ui
+    @use_datatables
+    def dispatch(self, request, *args, **kwargs):
+        return super(LoadtestReportView, self).dispatch(request, *args, **kwargs)
 
-    tests = []
-    # datetime info seems to be buried in GlobalConfig.results[0].run_id,
-    # which makes ORM-level sorting problematic
-    for gc in Session.query(GlobalConfig).all()[::-1]:
-        gc.scripts = dict((uc.script, uc) for uc in gc.user_group_configs)
-        if gc.results:
-            for script, uc in gc.scripts.items():
-                uc.results = filter(
-                    lambda res: res.user_group_name == uc.user_group,
-                    gc.results
-                )
-            test = {
-                'datetime': gc.results[0].run_id,
-                'run_time': gc.run_time,
-                'results': gc.results,
-            }
-            for script in scripts:
-                test[script.split('.')[0]] = gc.scripts.get(script)
-            tests.append(test)
+    @property
+    def page_context(self):
+        # The multimech results api is kinda all over the place.
+        # the docs are here: http://testutils.org/multi-mechanize/datastore.html
 
-    context = get_hqadmin_base_context(request)
-    context.update({
-        "tests": tests,
-        "hide_filters": True,
-    })
+        scripts = ['submit_form.py', 'ota_restore.py']
 
-    date_axis = Axis(label="Date", dateFormat="%m/%d/%Y")
-    tests_axis = Axis(label="Number of Tests in 30s")
-    chart = LineChart("HQ Load Test Performance", date_axis, tests_axis)
-    submit_data = []
-    ota_data = []
-    total_data = []
-    max_val = 0
-    max_date = None
-    min_date = None
-    for test in tests:
-        date = test['datetime']
-        total = len(test['results'])
-        max_val = total if total > max_val else max_val
-        max_date = date if not max_date or date > max_date else max_date
-        min_date = date if not min_date or date < min_date else min_date
-        submit_data.append({'x': date, 'y': len(test['submit_form'].results)})
-        ota_data.append({'x': date, 'y': len(test['ota_restore'].results)})
-        total_data.append({'x': date, 'y': total})
+        tests = []
+        # datetime info seems to be buried in GlobalConfig.results[0].run_id,
+        # which makes ORM-level sorting problematic
+        for gc in Session.query(GlobalConfig).all()[::-1]:
+            gc.scripts = dict((uc.script, uc) for uc in gc.user_group_configs)
+            if gc.results:
+                for script, uc in gc.scripts.items():
+                    uc.results = filter(
+                        lambda res: res.user_group_name == uc.user_group,
+                        gc.results
+                    )
+                test = {
+                    'datetime': gc.results[0].run_id,
+                    'run_time': gc.run_time,
+                    'results': gc.results,
+                }
+                for script in scripts:
+                    test[script.split('.')[0]] = gc.scripts.get(script)
+                tests.append(test)
 
-    deployments = [row['key'][1] for row in HqDeploy.get_list(settings.SERVER_ENVIRONMENT, min_date, max_date)]
-    deploy_data = [{'x': min_date, 'y': 0}]
-    for date in deployments:
-        deploy_data.extend([{'x': date, 'y': 0}, {'x': date, 'y': max_val}, {'x': date, 'y': 0}])
-    deploy_data.append({'x': max_date, 'y': 0})
+        context = get_hqadmin_base_context(self.request)
+        context.update({
+            "tests": tests,
+            "hide_filters": True,
+        })
 
-    chart.add_dataset("Deployments", deploy_data)
-    chart.add_dataset("Form Submission Count", submit_data)
-    chart.add_dataset("OTA Restore Count", ota_data)
-    chart.add_dataset("Total Count", total_data)
+        date_axis = Axis(label="Date", dateFormat="%m/%d/%Y")
+        tests_axis = Axis(label="Number of Tests in 30s")
+        chart = LineChart("HQ Load Test Performance", date_axis, tests_axis)
+        submit_data = []
+        ota_data = []
+        total_data = []
+        max_val = 0
+        max_date = None
+        min_date = None
+        for test in tests:
+            date = test['datetime']
+            total = len(test['results'])
+            max_val = total if total > max_val else max_val
+            max_date = date if not max_date or date > max_date else max_date
+            min_date = date if not min_date or date < min_date else min_date
+            submit_data.append({'x': date, 'y': len(test['submit_form'].results)})
+            ota_data.append({'x': date, 'y': len(test['ota_restore'].results)})
+            total_data.append({'x': date, 'y': total})
 
-    context['charts'] = [chart]
+        deployments = [row['key'][1] for row in HqDeploy.get_list(
+            settings.SERVER_ENVIRONMENT, min_date, max_date
+        )]
+        deploy_data = [{'x': min_date, 'y': 0}]
+        for date in deployments:
+            deploy_data.extend([
+                {'x': date, 'y': 0},
+                {'x': date, 'y': max_val},
+                {'x': date, 'y': 0},
+            ])
+        deploy_data.append({'x': max_date, 'y': 0})
 
-    template = "hqadmin/loadtest.html"
-    return render(request, template, context)
+        chart.add_dataset("Deployments", deploy_data)
+        chart.add_dataset("Form Submission Count", submit_data)
+        chart.add_dataset("OTA Restore Count", ota_data)
+        chart.add_dataset("Total Count", total_data)
+
+        context['charts'] = [chart]
+        return context
 
 
 def _lookup_id_in_couch(doc_id, db_name=None):
