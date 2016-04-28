@@ -1,4 +1,4 @@
-{% extends "hqadmin/bootstrap2/hqadmin_base_report.html" %}
+{% extends "hqadmin/bootstrap3/hqadmin_base_report.html" %}
 {% load i18n %}
 
 {% block js-inline %}
@@ -21,14 +21,15 @@
             $command_select.change(update_button);
             update_button();
 
-            $(document).on("click", "#cmd-btn", function(){
+            $("#cmd-btn").click(function(){
                 var data = {"command": $command_select.val()};
                 $.post("{% url "run_management_command" %}", data, function(resp) {
-                    var alert_cls = resp.success ? "alert-success" : "alert-error";
+                    var alert_cls = resp.success ? "alert-success" : "alert-danger";
                     $("#cmd-resp")
-                            .removeClass("alert-success alert-error")
-                            .addClass(alert_cls)
-                            .html(textToProperHtml(resp.output)).show();
+                        .removeClass("alert-success alert-danger")
+                        .addClass(alert_cls)
+                        .removeClass('hide')
+                        .html(textToProperHtml(resp.output));
                 });
             });
         })
@@ -36,14 +37,17 @@
 {% endblock %}
 
 {% block report-title %}{% trans "Management Commands" %}{% endblock %}
+
 {% block reportcontent %}
-    <div id="cmd-resp" class="alert hide"></div>
-    <div class="form-inline">
-        <select id="command-select">
+    <div class="spacer"></div>
+    <h2>Run a Management Command:</h2>
+    <div class="form-inline well">
+        <select id="command-select" class="form-control" style="width: 50%;">
             {% for command in commands %}
                 <option value="{{ command.1 }}">{{ command.0 }}</option>
             {% endfor %}
         </select>
-        <button id="cmd-btn" class="btn">{% trans "Run" %} <span id="command-name"></span></button>
+        <button id="cmd-btn" class="btn btn-primary">{% trans "Run" %} <span id="command-name"></span></button>
     </div>
+    <div id="cmd-resp" class="alert alert-info hide"></div>
 {% endblock %}

@@ -393,13 +393,25 @@ def admin_restore(request, app_id=None):
     return get_restore_response(user.domain, user, overwrite_cache=overwrite_cache, app_id=app_id,
                                 **get_restore_params(request))
 
-@require_superuser
-def management_commands(request, template="hqadmin/management_commands.html"):
-    commands = [(_('Remove Duplicate Domains'), 'remove_duplicate_domains')]
-    context = get_hqadmin_base_context(request)
-    context["hide_filters"] = True
-    context["commands"] = commands
-    return render(request, template, context)
+
+class ManagementCommandsView(BaseAdminSectionView):
+    urlname = 'management_commands'
+    page_title = ugettext_lazy("Management Commands")
+    template_name = 'hqadmin/management_commands.html'
+
+    @method_decorator(require_superuser)
+    @use_jquery_ui
+    @use_datatables
+    def dispatch(self, request, *args, **kwargs):
+        return super(ManagementCommandsView, self).dispatch(request, *args, **kwargs)
+
+    @property
+    def page_context(self):
+        commands = [(_('Remove Duplicate Domains'), 'remove_duplicate_domains')]
+        context = get_hqadmin_base_context(self.request)
+        context["hide_filters"] = True
+        context["commands"] = commands
+        return context
 
 
 @require_POST
