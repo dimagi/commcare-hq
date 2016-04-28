@@ -28,7 +28,7 @@
                 <p>Doc type: {{ couch_info.doc_type }}</p>
                 {% for index, es_doc in es_info.found_indices.items %}
                     <p>Found in index: {{ index }}</p>
-                    <div class="row-fluid">
+                    <div class="row">
                         <div class="col-xs-6">
                             <h3>Elasticsearch Doc:</h3>
                             <pre>{{ es_doc }}</pre>
