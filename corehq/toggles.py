@@ -368,7 +368,7 @@ NO_VELLUM = StaticToggle(
 )
 
 VELLUM_BETA = PredictablyRandomToggle(
-    'vellum_rollout',
+    'vellum_beta',
     'Use Vellum beta version',
     TAG_ONE_OFF,
     [NAMESPACE_DOMAIN],
