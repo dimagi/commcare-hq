@@ -22,6 +22,7 @@ import sh
 from gitutils import get_git
 
 VELLUM_TAR = "vellum.tar.gz"
+DEFAULT_TARGET = "vellum"
 
 
 def main():
@@ -46,9 +47,9 @@ def main():
         help="Build Vellum, but do not run tests (mutually exclusive with --no-make).")
     parser.add_argument("--push", action="store_true",
         help="Push the result to HQ if everything else succeeds.")
-    parser.add_argument("--target-dir", default="vellum",
+    parser.add_argument("--target", default=DEFAULT_TARGET,
         help="Directory within corehq/apps/app_manager/static/app_manager/js/ to place "
-            "built Vellum. Defaults to 'vellum'.")
+            "built Vellum. Defaults to '{}'.".format(DEFAULT_TARGET))
     parser.add_argument("--vellum-dir", default=os.environ.get("VELLUM_DIR"),
         help="Path to Vellum git repo on your local machine. Defaults to the "
              "value of the VELLUM_DIR environment variable.")
@@ -90,7 +91,7 @@ def main():
         else:
             vellum_rev = build_vellum(vellum_dir, vellum_branch, not args.no_test)
 
-        update_hq(hq_dir, hq_branch, args.hq_base, vellum_dir, vellum_rev, args.push, args.target_dir)
+        update_hq(hq_dir, hq_branch, args.hq_base, vellum_dir, vellum_rev, args.push, args.target)
         if args.mode == "master" and args.fix_staging:
             fix_staging(hq_dir, args.push)
     except sh.ErrorReturnCode as err:
@@ -126,7 +127,7 @@ def print_vellum_changes(old_vellum_rev, path):
     print(git('log', '--oneline', '--grep', 'Merge', old_vellum_rev + "..HEAD"))
 
 
-def update_hq(path, branch, base_branch, vellum_dir, vellum_rev, push, target_dir):
+def update_hq(path, branch, base_branch, vellum_dir, vellum_rev, push, target):
     git = get_git(path)
     require_clean_working_tree(git, path)
 
@@ -134,7 +135,7 @@ def update_hq(path, branch, base_branch, vellum_dir, vellum_rev, push, target_di
     git.checkout(branch)
     git.fetch()
 
-    hq_vellum = join(path, "corehq/apps/app_manager/static/app_manager/js/", target_dir)
+    hq_vellum = join(path, "corehq/apps/app_manager/static/app_manager/js/", target)
     if branch != "master":
         print("git reset --hard origin/" + base_branch)
         git.reset("--hard", "origin/" + base_branch)
@@ -150,8 +151,11 @@ def update_hq(path, branch, base_branch, vellum_dir, vellum_rev, push, target_di
     sh.tar("xf", vellum_tar, "-C", hq_vellum)
     git.add("--all", hq_vellum)
 
+    message = ['vellum', vellum_rev]
+    if (target != DEFAULT_TARGET):
+        message.append(target)
     code = subprocess.call([
-        "git", "commit", "--edit", "--message=vellum:" + vellum_rev
+        "git", "commit", "--edit", "--message=" + ':'.join(vellum_rev)
     ], cwd=path)
     if code != 0:
         sys.exit(code)
