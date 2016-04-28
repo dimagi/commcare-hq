@@ -2920,6 +2920,11 @@ class SMSRatesView(BaseAdminProjectSettingsView, AsyncHandlerMixin):
         SMSRatesSelect2AsyncHandler,
     ]
 
+    @use_bootstrap3
+    @use_select2
+    def dispatch(self, request, *args, **kwargs):
+        return super(SMSRatesView, self).dispatch(request, *args, **kwargs)
+
     @property
     @memoized
     def rate_calc_form(self):
