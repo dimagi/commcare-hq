@@ -22,18 +22,11 @@ function usage() {
 }
 
 function runner() {
-    if [ `uname` == 'Linux' ]; then
-        sudo \
-            env ES_CLUSTER_NAME=$ES_CLUSTER_NAME \
-            KAFKA_ADVERTISED_HOST_NAME=$KAFKA_ADVERTISED_HOST_NAME \
-            DOCKER_DATA_HOME=$DOCKER_DATA_HOME \
-            docker-compose -f $DOCKER_DIR/compose/docker-compose-services.yml -p $PROJECT_NAME $@
-    else
+    $UDO \
         env ES_CLUSTER_NAME=$ES_CLUSTER_NAME \
-            KAFKA_ADVERTISED_HOST_NAME=$KAFKA_ADVERTISED_HOST_NAME \
-            DOCKER_DATA_HOME=$DOCKER_DATA_HOME \
-            docker-compose -f $DOCKER_DIR/compose/docker-compose-services.yml -p $PROJECT_NAME $@
-    fi
+        KAFKA_ADVERTISED_HOST_NAME=$KAFKA_ADVERTISED_HOST_NAME \
+        DOCKER_DATA_HOME=$DOCKER_DATA_HOME \
+        docker-compose -f $DOCKER_DIR/compose/docker-compose-services.yml -p $PROJECT_NAME $@
 }
 
 while [[ $# > 0 ]]; do
