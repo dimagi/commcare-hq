@@ -74,11 +74,6 @@ class Worker(object):
         monitoring_cash = monitoring_count * FIXTURES['child_growth_monitored']
         self.growth_monitoring_cash = numeric_fn(monitoring_cash)
         self.month_total = numeric_fn(forms_cash + monitoring_cash)
-        if report.last_month_totals is not None:
-            self.last_month_total = numeric_fn(report.last_month_totals.get(
-                self.account_number, 0))
-        else:
-            self.last_month_total = numeric_fn(0)
 
     @property
     def debug_info(self):
