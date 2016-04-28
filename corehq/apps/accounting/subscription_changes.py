@@ -201,21 +201,14 @@ class DomainDowngradeActionHandler(BaseModifySubscriptionActionHandler):
 
     @staticmethod
     def response_report_builder(project, new_plan_version):
-        next_privs = get_privileges(new_plan_version) if new_plan_version is not None else set()
-        next_has_report_builder = bool(privileges.REPORT_BUILDER_ADD_ON_PRIVS.intersection(next_privs))
-        if not next_has_report_builder:
+        if not _has_report_builder_add_on(new_plan_version):
             # Clear paywall flags
             project.requested_report_builder_trial = []
             project.requested_report_builder_subscription = []
             project.save()
 
             # Deactivate all report builder data sources
-            from corehq.apps.userreports.models import ReportConfiguration
-            reports = ReportConfiguration.by_domain(project.name)
-            builder_reports = filter(
-                lambda report: report.report_meta.created_by_builder,
-                reports
-            )
+            builder_reports = _get_report_builder_reports(project)
             for report in builder_reports:
                 try:
                     report.config.deactivate()
@@ -307,6 +300,24 @@ def _fmt_alert(message, details=None):
     }
 
 
+def _has_report_builder_add_on(plan_version):
+    """
+    Return True if the given SoftwarePlanVersion has a report builder add-on
+    privilege.
+    """
+    privs = get_privileges(plan_version) if plan_version is not None else set()
+    return bool(privileges.REPORT_BUILDER_ADD_ON_PRIVS.intersection(privs))
+
+
+def _get_report_builder_reports(project):
+    from corehq.apps.userreports.models import ReportConfiguration
+    reports = ReportConfiguration.by_domain(project.name)
+    return filter(
+        lambda report: report.report_meta.created_by_builder,
+        reports
+    )
+
+
 class DomainDowngradeStatusHandler(BaseModifySubscriptionHandler):
     """
     This returns a list of alerts for the user if their current domain is using features that
@@ -316,7 +327,7 @@ class DomainDowngradeStatusHandler(BaseModifySubscriptionHandler):
 
     @classmethod
     def privilege_to_response_function(cls):
-        return {
+        privs_to_responses = {
             privileges.CLOUDCARE: cls.response_cloudcare,
             privileges.LOOKUP_TABLES: cls.response_lookup_tables,
             privileges.CUSTOM_BRANDING: cls.response_custom_branding,
@@ -327,6 +338,11 @@ class DomainDowngradeStatusHandler(BaseModifySubscriptionHandler):
             privileges.DATA_CLEANUP: cls.response_data_cleanup,
             privileges.ADVANCED_DOMAIN_SECURITY: cls.response_domain_security,
         }
+        privs_to_responses.update({
+            p: cls.response_report_builder
+            for p in privileges.REPORT_BUILDER_ADD_ON_PRIVS
+        })
+        return privs_to_responses
 
     def get_response(self):
         response = super(DomainDowngradeStatusHandler, self).get_response()
@@ -594,3 +610,13 @@ class DomainDowngradeStatusHandler(BaseModifySubscriptionHandler):
                 _("The following security features will be affected if you select this plan:"),
                 msgs
             )
+
+    @staticmethod
+    def response_report_builder(project, new_plan_version):
+        if not _has_report_builder_add_on(new_plan_version):
+            reports = _get_report_builder_reports(project)
+            if reports:
+                return _fmt_alert(_(
+                    "You have %(numer_of_reports) report builder reports."
+                    "By selecting this plan you will lose access to those reports."
+                ) % {'number_of_reports': len(reports)})
