@@ -350,7 +350,9 @@ def patch_xform(request, domain, app_id, unique_form_id):
     xform, _ = dmp.patch_apply(dmp.patch_fromText(patch), current_xml)
     save_xform(app, form, xform)
 
-    form.actions.load_from_form = PreloadAction.wrap(case_references)
+    # for case management in the form builder
+    if form.form_type == 'module_form':
+        form.actions.load_from_form = PreloadAction.wrap(case_references)
 
     response_json = {
         'status': 'ok',

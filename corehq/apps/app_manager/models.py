@@ -545,7 +545,6 @@ class AdvancedOpenCaseAction(AdvancedAction):
 
 class AdvancedFormActions(DocumentSchema):
     load_update_cases = SchemaListProperty(LoadUpdateAction)
-    load_from_form = SchemaProperty(PreloadAction)
 
     open_cases = SchemaListProperty(AdvancedOpenCaseAction)
 
