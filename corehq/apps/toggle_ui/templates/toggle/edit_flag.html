@@ -89,7 +89,7 @@
             };
 
             self.saveButton = COMMCAREHQ.SaveButton.init({
-                unsavedMessage: "You have unchanged changes",
+                unsavedMessage: "You have unsaved changes",
                 save: function () {
                     var items = _.map(self.items(), function (item) {
                         var ns_raw = item.namespace().replace(new RegExp(PAD_CHAR, 'g'), ''),
