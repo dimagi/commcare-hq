@@ -351,11 +351,7 @@ class SmsBillable(models.Model):
             if twilio_message.num_segments is not None:
                 return int(twilio_message.num_segments)
             else:
-                log_smsbillables_error(
-                    "num_segments is None: backend_message_id=%s, status=%s"
-                    % (backend_message_id, twilio_message.status)
-                )
-                return 0
+                raise RetryBillableTaskException
         else:
             return multipart_count
 
@@ -419,14 +415,8 @@ class SmsBillable(models.Model):
                 'queued',
                 'sending',
                 'receiving',
-            ]:
+            ] or twilio_message.price is None:
                 raise RetryBillableTaskException
-            if twilio_message.price is None:
-                log_smsbillables_error(
-                    "price is None: backend_message_id=%s, status=%s"
-                    % (backend_message_id, twilio_message.status)
-                )
-                return _TwilioChargeInfo(None, None)
             return _TwilioChargeInfo(
                 Decimal(twilio_message.price) * -1,
                 SmsGatewayFee.get_by_criteria(
