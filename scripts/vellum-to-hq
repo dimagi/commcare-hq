@@ -56,7 +56,7 @@ def main():
     args = parser.parse_args()
 
     vellum_dir = args.vellum_dir
-    vellum_branch = args.branch || args.mode
+    vellum_branch = args.branch or args.mode
     hq_dir = dirname(dirname(abspath(__file__)))
     hq_branch = "vellum-staging" if args.mode == "staging" else args.mode
 
