@@ -215,7 +215,6 @@ class ReportBuilderPaywall(ReportBuilderPaywallBase):
     urlname = 'report_builder_paywall'
 
 
-
 class ReportBuilderPaywallActivatingTrial(ReportBuilderPaywallBase):
     template_name = "userreports/paywall/activating_trial.html"
     urlname = 'report_builder_paywall_activating_trial'
