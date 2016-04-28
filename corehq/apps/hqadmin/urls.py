@@ -6,6 +6,7 @@ from corehq.apps.reports.dispatcher import AdminReportDispatcher
 from .views import (
     FlagBrokenBuilds, AuthenticateAs, SystemInfoView,
     DownloadMALTView,
+    RecentCouchChangesView,
 )
 
 from corehq.apps.api.urls import admin_urlpatterns as admin_api_urlpatterns
@@ -13,7 +14,8 @@ from corehq.apps.api.urls import admin_urlpatterns as admin_api_urlpatterns
 urlpatterns = patterns('corehq.apps.hqadmin.views',
     url(r'^$', 'default', name="default_admin_report"),
     url(r'^system/$', SystemInfoView.as_view(), name=SystemInfoView.urlname),
-    url(r'^system/recent_changes/$', 'view_recent_changes', name="view_recent_changes"),
+    url(r'^system/recent_changes/$', RecentCouchChangesView.as_view(),
+        name=RecentCouchChangesView.urlname),
     url(r'^system/recent_changes/download/$', 'download_recent_changes', name="download_recent_changes"),
     url(r'^system/system_ajax$', 'system_ajax', name="system_ajax"),
     url(r'^system/autostaging/$', 'branches_on_staging', name="branches_on_staging"),
