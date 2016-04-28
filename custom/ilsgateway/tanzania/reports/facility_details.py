@@ -164,7 +164,8 @@ class RecentMessages(ILSData):
     def headers(self):
         return DataTablesHeader(
             DataTablesColumn('Date'),
-            DataTablesColumn('Contact'),
+            DataTablesColumn('User'),
+            DataTablesColumn('Phone number'),
             DataTablesColumn('Direction'),
             DataTablesColumn('Text')
         )
@@ -180,7 +181,8 @@ class RecentMessages(ILSData):
             timestamp = ServerTime(message.date).user_time(self.config['timezone']).done()
             messages.append([
                 _fmt_timestamp(timestamp),
-                '{} ({})'.format(recipient.full_name, message.phone_number),
+                recipient.full_name,
+                message.phone_number,
                 _fmt(message.direction),
                 _fmt(message.text),
             ])
