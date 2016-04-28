@@ -1,13 +1,18 @@
 import os
 import json
+
+from corehq import privileges
 from corehq.apps.accounting import generator
 from corehq.apps.accounting.models import BillingAccount, DefaultProductPlan, \
-    SoftwarePlanEdition, Subscription
+    SoftwarePlanEdition, Subscription, SoftwarePlan, SoftwarePlanVersion, \
+    SubscriptionType, ProBonoStatus, SoftwarePlanVisibility, SoftwareProduct, \
+    SoftwareProductType
 from corehq.apps.accounting.tests import BaseAccountingTest
 from corehq.apps.app_manager.models import Application
 from corehq.apps.domain.models import Domain
 from corehq.apps.userreports.models import DataSourceConfiguration, \
     ReportConfiguration, ReportMeta, get_datasource_config
+from django_prbac.models import Role, Grant
 
 
 class TestSubscriptionPermissionsChanges(BaseAccountingTest):
@@ -28,6 +33,37 @@ class TestSubscriptionPermissionsChanges(BaseAccountingTest):
             self.project.name, created_by=self.admin_user.username)[0]
         self.advanced_plan = DefaultProductPlan.get_default_plan_by_domain(
             self.project.name, edition=SoftwarePlanEdition.ADVANCED)
+        self._init_pro_with_rb_plan_and_version()
+
+    def _init_pro_with_rb_plan_and_version(self):
+        plan = SoftwarePlan(
+            name="Pro_with_30_RB_reports",
+            description="Pro + 30 report builder reports",
+            edition=SoftwarePlanEdition.PRO,
+            visibility=SoftwarePlanVisibility.INTERNAL,
+        )
+        plan.save()
+
+        role = Role.objects.create(
+            slug="pro_with_rb_30_role",
+            name="Pro + 30 rb reports",
+        )
+        for privilege in [
+            privileges.REPORT_BUILDER_30]:  # Doesn't actually include the pro roles...
+            privilege = Role.objects.get(slug=privilege)
+            Grant.objects.create(
+                from_role=role,
+                to_role=privilege,
+            )
+        self.pro_rb_version = SoftwarePlanVersion(
+            plan=plan,
+            role=role
+        )
+        product = SoftwareProduct.objects.get(name='CommCare Pro', product_type=SoftwareProductType.COMMCARE)
+        rate = product.get_rate()
+        rate.save()
+        self.pro_rb_version.product_rate = rate
+        self.pro_rb_version.save()
 
     def _subscribe_to_advanced(self):
         return Subscription.new_domain_subscription(
@@ -35,6 +71,18 @@ class TestSubscriptionPermissionsChanges(BaseAccountingTest):
             web_user=self.admin_user.username
         )
 
+    def _subscribe_to_pro_with_rb(self):
+        subscription = Subscription.get_subscribed_plan_by_domain(self.project)[1]
+
+        new_subscription = subscription.change_plan(
+            self.pro_rb_version,
+            date_end=None,
+            web_user=self.admin_user,
+            service_type=SubscriptionType.IMPLEMENTATION,
+            pro_bono_status=ProBonoStatus.NO,
+            internal_change=True,
+        )
+        return new_subscription
 
     def test_app_icon_permissions(self):
         LOGO_HOME = u'hq_logo_android_home'
@@ -86,7 +134,10 @@ class TestSubscriptionPermissionsChanges(BaseAccountingTest):
             return get_datasource_config(id_, self.project.name)[0]
 
         # Upgrade the domain
-        advanced_sub = self._subscribe_to_advanced()
+        # (for the upgrade to work, there has to be an existing subscription,
+        # which is why we subscribe to advanced first)
+        self._subscribe_to_advanced()
+        pro_with_rb_sub = self._subscribe_to_pro_with_rb()
 
         # Create reports and data sources
         builder_report_data_source = DataSourceConfiguration(
@@ -112,17 +163,20 @@ class TestSubscriptionPermissionsChanges(BaseAccountingTest):
         report_builder_report.save()
 
         # downgrade the domain
-        advanced_sub.cancel_subscription(web_user=self.admin_user.username)
+        pro_with_rb_sub.cancel_subscription(web_user=self.admin_user.username)
 
         # Check that the builder data source is deactivated
         builder_report_data_source = _get_data_source(builder_report_data_source._id)
         self.assertTrue(builder_report_data_source.is_deactivated)
-        # Check that the other data source is not deactivate
+        # Check that the other data source has not been deactivated
         other_data_source = _get_data_source(other_data_source._id)
         self.assertFalse(other_data_source.is_deactivated)
 
         # upgrade the domain
-        advanced_sub = self._subscribe_to_advanced()
+        # (for the upgrade to work, there has to be an existing subscription,
+        # which is why we subscribe to advanced first)
+        self._subscribe_to_advanced()
+        pro_with_rb_sub = self._subscribe_to_pro_with_rb()
 
         # check that the data source is activated
         builder_report_data_source = _get_data_source(builder_report_data_source._id)
@@ -131,10 +185,11 @@ class TestSubscriptionPermissionsChanges(BaseAccountingTest):
         # delete the data sources
         builder_report_data_source.delete()
         other_data_source.delete()
+        # Delete the report
         report_builder_report.delete()
 
         # reset the subscription
-        advanced_sub.cancel_subscription(web_user=self.admin_user.username)
+        pro_with_rb_sub.cancel_subscription(web_user=self.admin_user.username)
 
     def tearDown(self):
         self.project.delete()
