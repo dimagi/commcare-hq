@@ -19,6 +19,10 @@ class ReminderResponsivenessTest(TestCase):
             end_key=[self.domain, {}],
             include_docs=True).all()
 
+    def get_all_reminders(self):
+        return CaseReminder.view('reminders/by_domain_handler_case',
+            include_docs=True).all()
+
     def assertOneReminder(self):
         reminder_instances = self.get_reminders()
         self.assertEqual(len(reminder_instances), 1)
@@ -450,8 +454,41 @@ class ReminderResponsivenessTest(TestCase):
             update_case(self.domain, parent_case.case_id, case_properties={'status': 'red'})
             self.assertEqual(self.get_reminders(), [])
 
+    @run_with_all_backends
+    def test_reminder_delete(self):
+        reminder = (CaseReminderHandler
+            .create(self.domain, 'test')
+            .set_case_criteria_start_condition('participant', 'status', MATCH_EXACT, 'green')
+            .set_case_criteria_start_date()
+            .set_case_recipient()
+            .set_sms_content_type('en')
+            .set_daily_schedule(fire_time=time(12, 0), message={'en': 'Hello {case.name}, your test result was normal.'})
+            .set_stop_condition(max_iteration_count=REPEAT_SCHEDULE_INDEFINITELY)
+            .set_advanced_options())
+        reminder.save()
+
+        r1 = CaseReminder(domain=self.domain, handler_id=reminder.get_id)
+        r2 = CaseReminder(domain=self.domain, handler_id='abc')
+        r3 = CaseReminder(domain='def', handler_id='ghi')
+
+        r1.save()
+        r2.save()
+        r3.save()
+
+        self.assertEqual(len(self.get_all_reminders()), 3)
+        reminder.retire()
+        self.assertEqual(len(self.get_all_reminders()), 2)
+
+        r1 = CaseReminder.get(r1.get_id)
+        r2 = CaseReminder.get(r2.get_id)
+        r3 = CaseReminder.get(r3.get_id)
+
+        self.assertEqual(r1.doc_type, 'CaseReminder-Deleted')
+        self.assertEqual(r2.doc_type, 'CaseReminder')
+        self.assertEqual(r3.doc_type, 'CaseReminder')
+
     def tearDown(self):
+        for reminder_instance in self.get_all_reminders():
+            reminder_instance.delete()
         for reminder in CaseReminderHandler.get_handlers(self.domain):
-            for reminder_instance in reminder.get_reminders():
-                reminder_instance.delete()
             reminder.delete()
