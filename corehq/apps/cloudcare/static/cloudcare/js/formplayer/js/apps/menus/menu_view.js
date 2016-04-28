@@ -48,7 +48,6 @@ FormplayerFrontend.module("AppSelect.MenuList", function (MenuList, FormplayerFr
         childView: MenuList.CaseView,
         childViewContainer: "tbody",
         templateHelpers: function () {
-            debugger;
             return {
                 title: this.options.collection.title
             };

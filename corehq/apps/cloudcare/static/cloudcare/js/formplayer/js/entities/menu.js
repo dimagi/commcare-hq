@@ -53,19 +53,26 @@ FormplayerFrontend.module("Entities", function (Entities, FormplayerFrontend, Ba
 
     var API = {
 
-        getMenus: function (app_id) {
+        getMenus: function (app_id, select_list) {
             var menus = new Entities.MenuSelectCollection({
                 domain: FormplayerFrontend.request('currentUser').domain,
                 app_id: app_id,
 
                 fetch: function (options) {
                     var collection = this;
+
                     options.data = JSON.stringify({
                         "username": "test",
                         "password": "123",
-                        "domain": collection.domain,
-                        "app_id": collection.app_id
+                        "domain": "test",
+                        "app_id": collection.app_id,
+                        "selections": select_list
                     });
+
+                    if(select_list){
+                        options.data.selections = select_list;
+                    }
+
                     options.url = 'http://localhost:8080/navigate_menu';
                     options.type = 'POST';
                     options.dataType = "json";
@@ -89,48 +96,9 @@ FormplayerFrontend.module("Entities", function (Entities, FormplayerFrontend, Ba
             var promise = defer.promise();
             return promise;
         },
-
-        selectMenu: function (menu) {
-            var menus = new Entities.MenuSelectCollection({
-                selection: menu,
-                sessionId: FormplayerFrontend.request('currentUser').sessionId,
-
-                fetch: function (options) {
-                    var collection = this;
-                    options.data = JSON.stringify({
-                        "selection": collection.selection,
-                        "session_id": collection.sessionId
-                    });
-                    options.url = 'http://localhost:8080/menu_select';
-                    options.type = 'POST';
-                    options.dataType = "json";
-                    options.contentType = "application/json";
-                    return Backbone.Collection.prototype.fetch.call(this, options);
-                },
-
-                initialize: function (params) {
-                    this.selection = params.selection;
-                    this.sessionId = params.sessionId;
-                    this.fetch = params.fetch;
-                }
-            });
-            var defer = $.Deferred();
-            menus.fetch({
-                success: function (request, response, whatever) {
-                    defer.resolve(request);
-                }
-            });
-            return defer.promise();
-        },
-
-
     };
 
-    FormplayerFrontend.reqres.setHandler("app:select:menus", function (app) {
-        return API.getMenus(app);
-    });
-
-    FormplayerFrontend.reqres.setHandler("app:select:menus:select", function (menu) {
-        return API.selectMenu(menu);
+    FormplayerFrontend.reqres.setHandler("app:select:menus", function (app_id, select_list) {
+        return API.getMenus(app_id, select_list);
     });
 });
