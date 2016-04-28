@@ -113,7 +113,10 @@ def build_vellum(path, branch, test=True):
 
 
 def get_old_vellum_rev(path):
-    with open(join(path, "version.txt")) as fh:
+    filename = join(path, "version.txt")
+    if not os.path.isfile(filename):
+        return ""
+    with open(filename) as fh:
         return fh.read().strip()
 
 
