@@ -671,6 +671,7 @@ class CaseReminderHandler(Document):
             callback_timeout_intervals=(timeouts or []),
         )
 
+        event.fire_time_type = fire_time_type
         if fire_time_type in (FIRE_TIME_DEFAULT, FIRE_TIME_RANDOM):
             if not isinstance(fire_time, time):
                 raise UnexpectedConfigurationException("Expected fire_time to be an instance of time")
@@ -830,12 +831,19 @@ class CaseReminderHandler(Document):
             values = case.resolve_case_property(event.fire_time_aux)
             values = [r['value'] for r in values]
             for value in values:
-                try:
-                    if value:
-                        fire_time = parse(value).time()
+                if value:
+                    if isinstance(value, time):
+                        fire_time = value
                         break
-                except Exception:
-                    pass
+                    elif isinstance(value, datetime):
+                        fire_time = value.time()
+                        break
+                    else:
+                        try:
+                            fire_time = parse(value).time()
+                            break
+                        except:
+                            pass
         elif event.fire_time_type == FIRE_TIME_RANDOM:
             additional_minute_offset = randint(0, event.time_window_length - 1) + (event.fire_time.hour * 60) + event.fire_time.minute
             fire_time = time(0, 0)
