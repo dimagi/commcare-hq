@@ -627,6 +627,7 @@ def form_casexml(request, domain, form_unique_id):
         raise Http404()
     return HttpResponse(form.create_casexml())
 
+
 def _update_case_refs_from_form_builder(form, reference_json):
     if form.form_type == 'module_form':
         form.actions.load_from_form = PreloadAction.wrap(reference_json)
