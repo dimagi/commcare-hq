@@ -502,6 +502,10 @@ class EditDhis2SettingsView(BaseProjectSettingsView):
     urlname = 'dhis2_settings'
     page_title = ugettext_lazy("DHIS2 API settings")
 
+    @use_bootstrap3
+    def dispatch(self, request, *args, **kwargs):
+        return super(EditDhis2SettingsView, self).dispatch(request, *args, **kwargs)
+
     @property
     @memoized
     def dhis2_settings_form(self):
