@@ -545,6 +545,7 @@ class AdvancedOpenCaseAction(AdvancedAction):
 
 class AdvancedFormActions(DocumentSchema):
     load_update_cases = SchemaListProperty(LoadUpdateAction)
+
     open_cases = SchemaListProperty(AdvancedOpenCaseAction)
 
     get_load_update_actions = IndexedSchema.Getter('load_update_cases')
