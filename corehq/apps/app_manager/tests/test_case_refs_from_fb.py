@@ -65,7 +65,7 @@ class AdvancedFormCaseReferenceTest(SimpleTestCase):
         ref_json = {
             "preload": {
                 "/data/question": "name",
-                "/data/other_question":"close_reason"
+                "/data/other_question": "close_reason"
             },
             "condition": {
                 "answer": None,
