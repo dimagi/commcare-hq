@@ -32,8 +32,6 @@ class Dhis2SettingsForm(forms.Form):
                     'e.g. "Fermathe Clinic"'),
         required=False)
 
-
-
     def __init__(self, *args, **kwargs):
         super(Dhis2SettingsForm, self).__init__(*args, **kwargs)
         self.helper = FormHelper()
