@@ -90,7 +90,7 @@ def main():
         else:
             vellum_rev = build_vellum(vellum_dir, vellum_branch, not args.no_test)
 
-        update_hq(hq_dir, hq_branch, args.hq_base, vellum_dir, vellum_rev, args.push)
+        update_hq(hq_dir, hq_branch, args.hq_base, vellum_dir, vellum_rev, args.push, args.target_dir)
         if args.mode == "master" and args.fix_staging:
             fix_staging(hq_dir, args.push)
     except sh.ErrorReturnCode as err:
@@ -123,7 +123,7 @@ def print_vellum_changes(old_vellum_rev, path):
     print(git('log', '--oneline', '--grep', 'Merge', old_vellum_rev + "..HEAD"))
 
 
-def update_hq(path, branch, base_branch, vellum_dir, vellum_rev, push):
+def update_hq(path, branch, base_branch, vellum_dir, vellum_rev, push, target_dir):
     git = get_git(path)
     require_clean_working_tree(git, path)
 
@@ -131,7 +131,7 @@ def update_hq(path, branch, base_branch, vellum_dir, vellum_rev, push):
     git.checkout(branch)
     git.fetch()
 
-    hq_vellum = join(path, "corehq/apps/app_manager/static/app_manager/js/", args.target_dir)
+    hq_vellum = join(path, "corehq/apps/app_manager/static/app_manager/js/", target_dir)
     if branch != "master":
         print("git reset --hard origin/" + base_branch)
         git.reset("--hard", "origin/" + base_branch)
