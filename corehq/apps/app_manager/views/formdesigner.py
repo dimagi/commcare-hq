@@ -34,6 +34,8 @@ from corehq.apps.app_manager.decorators import require_can_edit_apps
 from corehq.apps.analytics.tasks import track_entered_form_builder_on_hubspot
 from corehq.apps.analytics.utils import get_meta
 
+import os
+
 
 logger = logging.getLogger(__name__)
 
@@ -104,7 +106,10 @@ def form_designer(request, domain, app_id, module_id=None, form_id=None):
         ])
 
 
-    vellum_dir = 'vellum_beta' if toggles.VELLUM_BETA.enabled(domain) else 'vellum'
+    vellum_base = 'corehq/apps/app_manager/static/app_manager/js/'
+    vellum_dir = 'vellum'
+    if toggles.VELLUM_BETA.enabled(domain) and os.path.isdir(os.path.join(vellum_base, 'vellum_beta')):
+        vellum_dir = 'vellum_beta'
     context = get_apps_base_context(request, domain, app)
     context.update(locals())
     context.update({
