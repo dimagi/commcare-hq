@@ -1446,7 +1446,9 @@ class ProBonoForm(forms.Form):
         if not use_domain_field:
             self.fields['domain'].required = False
         self.helper = FormHelper()
-        self.helper.form_class = 'form form-horizontal'
+        self.helper.form_class = 'form-horizontal'
+        self.helper.label_class = 'col-sm-3 col-md-2'
+        self.helper.field_class = 'col-sm-9 col-md-8 col-lg-6'
         self.helper.layout = crispy.Layout(
             crispy.Fieldset(
             _('Pro-Bono Application'),
@@ -1462,7 +1464,7 @@ class ProBonoForm(forms.Form):
                 'num_expected_users',
                 'dimagi_contact',
             ),
-            FormActions(
+            hqcrispy.FormActions(
                 crispy.ButtonHolder(
                     crispy.Submit('submit_pro_bono', _('Submit Pro-Bono Application'))
                 )

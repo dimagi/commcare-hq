@@ -2650,6 +2650,10 @@ class ProBonoView(ProBonoMixin, DomainAccountingSettings):
     urlname = 'pro_bono'
     use_domain_field = False
 
+    @use_bootstrap3
+    def dispatch(self, request, *args, **kwargs):
+        return super(ProBonoView, self).dispatch(request, *args, **kwargs)
+
     @property
     def requesting_domain(self):
         return self.domain
