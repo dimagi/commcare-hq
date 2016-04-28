@@ -219,9 +219,20 @@
         <locale id="forms.m0f0"/>
       </text>
     </command>
+    <instance id="casedb" src="jr://instance/casedb"/>
+    <instance id="commcaresession" src="jr://instance/session"/>
     <session>
         <datum id="case_id_new_house_0" function="uuid()"/>
     </session>
+    <stack>
+        <create if="count(instance('commcaresession')/session/data/return_to) = 1 and instance('commcaresession')/session/data/return_to = 'm2' and count(instance('casedb')/casedb/case[@case_id=instance('commcaresession')/session/data/case_id_new_house_0]) &gt; 0">
+            <command value="'m2'"/>
+            <datum id="case_id_load_house_renamed" value="instance('commcaresession')/session/data/case_id_new_house_0"/>
+        </create>
+        <create if="count(instance('commcaresession')/session/data/return_to) = 1 and instance('commcaresession')/session/data/return_to = 'm2' and count(instance('casedb')/casedb/case[@case_id=instance('commcaresession')/session/data/case_id_new_house_0]) = 0">
+            <command value="'m2'"/>
+        </create>
+    </stack>
   </entry>
   <entry>
     <command id="m1-f0">
