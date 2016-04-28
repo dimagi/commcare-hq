@@ -221,7 +221,9 @@ def set_xmlns_on_form(form_id, xmlns, app_build, log_file, dry_run):
     except FormNotFoundException:
         return
 
-    if form_in_build.xmlns == "undefined":
+    if form_in_build.xmlns == "undefined" or form_in_build.source.count('xmlns="undefined"') > 0:
+        if form_in_build.xmlns != "undefined":
+            assert form_in_build.xmlns == xmlns
         xml = form_in_build.source
         wrapped_xml = XForm(xml)
 
