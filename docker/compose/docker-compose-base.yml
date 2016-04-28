@@ -33,18 +33,6 @@ elasticsearch:
   expose:
     - "9200"
 
-#zookeeper:
-#  image: wurstmeister/zookeeper
-#  labels: 
-#    commcare.name: "zookeeper"
-#  expose: 
-#    - "2181"
-
-#kafka:
-#  build: ../dockerfiles/kafka-docker-master
-#  expose:
-#    - "9092"
-
 kafka:
   image: spotify/kafka
   environment:
@@ -81,7 +69,7 @@ rabbit:
 
 celery:
   build: ../../
-  dockerfile: ./docker/dockerfiles/Dockerfile_celery
+  dockerfile: ./docker/dockerfiles/Dockerfile_commcarehq
   working_dir: /mnt
   command: ./docker/run_celery.sh
   expose: 

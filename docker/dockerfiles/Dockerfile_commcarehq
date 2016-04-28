@@ -20,25 +20,20 @@ RUN pip install \
 
 RUN npm install -g less@1.3.1
 
-WORKDIR /opt
-
-RUN git clone https://github.com/less/less.js.git lessc
-
-WORKDIR /opt/lessc
-
-RUN git reset --hard 546bedd3440ff7e626f629bef40c6cc54e658d7e
+RUN git clone https://github.com/less/less.js.git /opt/lessc \
+    && cd /opt/lessc \ 
+    && git reset --hard 546bedd3440ff7e626f629bef40c6cc54e658d7e
 
 WORKDIR /mnt
 
-RUN wget -O jython_installer-2.5.3.jar http://search.maven.org/remotecontent?filepath=org/python/jython-installer/2.5.3/jython-installer-2.5.3.jar 
-RUN ls
-RUN mkdir /usr/local/lib/jython
-RUN java -jar jython_installer-2.5.3.jar -s -d /usr/local/lib/jython
-RUN ln -s /usr/local/lib/jython/bin/jython /usr/local/bin/
-RUN wget http://peak.telecommunity.com/dist/ez_setup.py
-RUN jython ez_setup.py
+RUN wget -O jython_installer-2.5.3.jar http://search.maven.org/remotecontent?filepath=org/python/jython-installer/2.5.3/jython-installer-2.5.3.jar && mkdir /usr/local/lib/jython \
+    && java -jar jython_installer-2.5.3.jar -s -d /usr/local/lib/jython \
+    && ln -s /usr/local/lib/jython/bin/jython /usr/local/bin/ \
+    && wget http://peak.telecommunity.com/dist/ez_setup.py \
+    && jython ez_setup.py \
+    && rm -f jython_install/er-2.5.3.jar
 
-RUN mkdir /mnt/shared
+RUN mkdir /sharedfiles
 
 ADD docker/entrypoint.sh /mnt/docker/entrypoint.sh
 

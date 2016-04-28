@@ -15,7 +15,7 @@ function usage() {
             echo "Run the whole setup in production mode. Forwards to port 80."
             echo "Make sure to run ./dockerhq.sh setup-prod first time before this command. "
             ;;
-        stopserver-prod)
+        stopserver)
             echo "Stops the production setup."
             echo ""
             ;;
@@ -86,7 +86,6 @@ function nginx_runner() {
     sudo docker-compose -f $DOCKER_DIR/compose/docker-compose-nginx.yml -p commcarehq $@
 }
 
-
 key="$1"
 shift
 
@@ -104,21 +103,22 @@ case $key in
         travis_js_runner $@
         ;;
     migrate)
-        web_runner run --rm web python manage.py migrate $@
+        web_runner run --rm -e CUSTOMSETTINGS="docker.localsettings_docker" --service-ports web python manage.py migrate $@
         ;;
     runserver-dev)
 	web_runner run --name commcarehq_web_1 --rm --service-ports web /mnt/docker/runserver_dev.sh
         ;;
     runserver-prod)
-        $DOCKER_DIR/docker-services.sh start
-	web_runner run --name commcarehq_web_1 -d --rm --service-ports web /mnt/docker/runserver_prod.sh
+        docker rm hqservice_kafka_1
+	$DOCKER_DIR/docker-services.sh start
+	web_runner run --name commcarehq_web_1 -d --rm web /mnt/docker/runserver_prod.sh $@
         nginx_runner rm -f
         #wait for gunicorn web server in the web container to be up
         web_ip=$(get_container_ip "commcare.name" "web")
         while ! nc -z $web_ip 8000; do echo "Waiting for web container at $web_ip... "; sleep 3; done
         nginx_runner up -d
         ;;
-    stopserver-prod)
+    stopserver)
         nginx_runner stop
         web_runner stop web
         docker rm -f commcarehq_web_1 #a bit of a hack due to a problem with docker-compose: https://github.com/docker/compose/issues/2593
@@ -136,7 +136,7 @@ case $key in
         web_runner run --rm web python manage.py shell
         ;;
     bash)
-        web_runner run --rm --service-ports web bash
+        web_runner run --rm -e CUSTOMSETTINGS="docker.localsettings_docker" --service-ports web bash
         ;;
     rebuild)
         rebuild

@@ -3,10 +3,13 @@ nginx:
     file: docker-compose-base.yml
     service: nginx
   ports: 
-    - "80:80"
+    - "443:443"
+    - "9090:80"
   volumes: 
     - "../nginxconf/nginx.conf:/etc/nginx/nginx.conf:ro"
     - "../../staticfiles:/static:ro"
+    - "/etc/letsencrypt/live/bissau.bandim.org/fullchain.pem:/etc/letsencrypt/live/bissau.bandim.org/fullchain.pem:ro"
+    - "/etc/letsencrypt/live/bissau.bandim.org/privkey.pem:/etc/letsencrypt/live/bissau.bandim.org/privkey.pem:ro"
   external_links: 
     - commcarehq_web_1:web
   labels:

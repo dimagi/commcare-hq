@@ -40,10 +40,10 @@ TESTS_SHOULD_TRACK_CLEANLINESS = True
 RESTORE_PAYLOAD_DIR_NAME = 'restore'
 SHARED_TEMP_DIR_NAME = 'temp'
 
-ENABLE_PRELOGIN_SITE = False
+ENABLE_PRELOGIN_SITE = True
 
 KAFKA_URL = 'kafka:9092'
-SHARED_DRIVE_ROOT = '/mnt/sharedfiles'
+SHARED_DRIVE_ROOT = '/sharedfiles'
 
 ENVIRONMENT_HOSTS = {"celery": ["celery"], "all": ["localhost"], "zookeeper": ["kafka"], "postgresql": ["postgresql"], "couchdb": ["couchdb"], "redis": ["redis"], "rabbitmq": ["rabbit"], "kafka": ["kafka"], "ungrouped": [], "webworkers": ["192.168.33.21"], "elasticsearch": ["elasticsearch"], "pillowtop": ["localhost"], "touchforms": ["localhost"], "shared_dir_host": ["localhost"]}
 

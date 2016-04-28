@@ -1,6 +1,6 @@
 from .dockersettings import *
 
-EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
+import sys
 
 ADMINS = (('Admin', 'commcare-admin@bandim.org'),)
 
@@ -32,7 +32,9 @@ XFORMS_PLAYER_URL = 'http://127.0.0.1:4444'
 TOUCHFORMS_API_USER = 'admin@example.com'
 TOUCHFORMS_API_PASSWORD = 'password'
 
-BASE_ADDRESS = '{}:8000'.format(os.environ.get('BASE_HOST', 'localhost'))
+DEFAULT_PROTOCOL = "https"  # or https
+
+BASE_ADDRESS = "bissau.bandim.org:443"
 
 CCHQ_API_THROTTLE_REQUESTS = 200
 CCHQ_API_THROTTLE_TIMEFRAME = 10
@@ -49,6 +51,17 @@ ENABLE_PRELOGIN_SITE = True
 
 KAFKA_URL = 'kafka:9092'
 SHARED_DRIVE_ROOT = '/mnt/sharedfiles'
+#EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
+EMAIL_LOGIN = "commcare-admin@bandim.org"
+EMAIL_PASSWORD = "xxxxxxx"
+EMAIL_SMTP_HOST = "mail.bandim.org"
+EMAIL_SMTP_PORT = 587
+# These are the normal Django settings
+EMAIL_USE_TLS = False
 
-ENVIRONMENT_HOSTS = {"celery": ["celery"], "all": ["localhost"], "zookeeper": ["kafka"], "postgresql": ["postgresql"], "couchdb": ["couchdb"], "redis": ["redis"], "rabbitmq": ["rabbit"], "kafka": ["kafka"], "ungrouped": [], "webworkers": ["192.168.33.21"], "elasticsearch": ["elasticsearch"], "pillowtop": ["localhost"], "touchforms": ["localhost"], "shared_dir_host": ["localhost"]}
+SERVER_EMAIL = 'commcarehq-admin@bandim.org' #the physical server emailing - differentiate if needed
+DEFAULT_FROM_EMAIL = 'commcarehq-admin@bandim.org'
+SUPPORT_EMAIL = "commcarehq-admin@bandim.org"
+EMAIL_SUBJECT_PREFIX = '[bandim-commcarehq] '
+
 

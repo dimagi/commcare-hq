@@ -529,7 +529,7 @@ TRANSFER_FILE_DIR_NAME = None
 GET_URL_BASE = 'dimagi.utils.web.get_url_base'
 
 # celery
-BROKER_URL = 'amqp://guest:guest@rabbit:5672/commcarehq'  # default django db based
+BROKER_URL = 'django://'  # default django db based
 
 CELERY_ANNOTATIONS = {'*': {'on_failure': helper.celery_failure_handler}}
 
@@ -992,6 +992,7 @@ DATADOG_APP_KEY = None
 HQ_PRIVATE_KEY = None
 
 
+KAFKA_URL = 'localhost:9092'
 
 
 try:
@@ -1414,7 +1415,6 @@ PILLOWTOPS = {
     ]
 }
 
-KAFKA_URL = "kafka:9092"
 
 STATIC_UCR_REPORTS = [
     os.path.join('custom', '_legacy', 'mvp', 'ucr', 'reports', 'deidentified_va_report.json'),
@@ -1618,3 +1618,4 @@ else:
 REST_FRAMEWORK = {
     'DATETIME_FORMAT': '%Y-%m-%dT%H:%M:%S.%fZ'
 }
+
