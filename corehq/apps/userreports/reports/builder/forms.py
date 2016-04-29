@@ -46,7 +46,7 @@ from corehq.apps.userreports.reports.builder import (
     get_filter_format_from_question_type,
     make_user_name_indicator)
 from corehq.apps.userreports.exceptions import BadBuilderConfigError
-from corehq.apps.userreports.sql import get_column_name
+from corehq.apps.userreports.sql import get_column_name, get_field_decimal_name
 from corehq.apps.userreports.ui.fields import JsonField
 from dimagi.utils.decorators.memoized import memoized
 
@@ -215,9 +215,15 @@ class DataSourceBuilder(object):
                 indicator = make_case_property_indicator(
                     prop.source, prop.column_id
                 )
+
                 if number_columns:
-                    if indicator['column_id'] in number_columns:
-                        indicator['datatype'] = 'decimal'
+                    number_column_name = get_column_name(get_field_decimal_name(prop.id))
+                    if number_column_name in number_columns:
+                        number_indicator = make_case_property_indicator(
+                            prop.source, number_column_name
+                        )
+                        number_indicator['datatype'] = 'decimal'
+                        ret.append(number_indicator)
                 ret.append(indicator)
         ret.append({
             "display_name": "Count",
@@ -1117,7 +1123,7 @@ class ConfigureTableReportForm(ConfigureListReportForm, ConfigureBarChartReportF
             return {
                 "format": "default",
                 "aggregation": aggregation_map[conf['calculation']],
-                "field": self.data_source_properties[conf['property']].column_id,
+                "field": get_column_name(get_field_decimal_name(conf['property'])),
                 "column_id": "column_{}".format(index),
                 "type": "field",
                 "display": conf['display_text'],
