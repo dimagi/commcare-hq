@@ -8,20 +8,6 @@ FormplayerFrontend.module("AppSelect", function (AppSelect, FormplayerFrontend, 
         }
     });
 
-
-    function getQueryParams(qs) {
-        qs = qs.split("+").join(" ");
-
-        var params = [], tokens,
-            re = /[?&]?([^=]+)=([^&]*)/g;
-
-        while (tokens = re.exec(qs)) {
-            params.push({k: decodeURIComponent(tokens[1]), v: decodeURIComponent(tokens[2])});
-        }
-
-        return params;
-    }
-
     var API = {
         listApps: function () {
             AppSelect.AppList.Controller.listApps();
@@ -31,6 +17,19 @@ FormplayerFrontend.module("AppSelect", function (AppSelect, FormplayerFrontend, 
         },
         storeApps: function (apps) {
             FormplayerFrontend.request("appselect:storeapps", apps)
+        },
+        listMenus: function (app_id) {
+            currentFragment = Backbone.history.getFragment();
+            if (currentFragment.indexOf("menu") < 0) {
+                AppSelect.MenuList.Controller.selectMenu(app_id);
+            } else {
+                urlParams = Util.getQueryParams(currentFragment);
+                steps = [];
+                for(var i = 0; i < urlParams.length; i++){
+                    steps.push(urlParams[i].v)
+                }
+                AppSelect.MenuList.Controller.selectMenu(app_id, steps);
+            }
         },
         selectMenu: function (app_id, index) {
             currentFragment = Backbone.history.getFragment();
@@ -50,19 +49,6 @@ FormplayerFrontend.module("AppSelect", function (AppSelect, FormplayerFrontend, 
             }
             return currentFragment + newAddition;
         },
-        listMenus: function (app_id) {
-            currentFragment = Backbone.history.getFragment();
-            if (currentFragment.indexOf("menu") < 0) {
-                AppSelect.MenuList.Controller.selectMenu(app_id);
-            } else {
-                urlParams = getQueryParams(currentFragment);
-                steps = [];
-                for(var i = 0; i < urlParams.length; i++){
-                    steps.push(urlParams[i].v)
-                }
-                AppSelect.MenuList.Controller.selectMenu(app_id, steps);
-            }
-        },
         showDetail: function(model) {
             AppSelect.MenuList.Controller.showDetail(model);
         }
@@ -78,7 +64,6 @@ FormplayerFrontend.module("AppSelect", function (AppSelect, FormplayerFrontend, 
     });
 
     FormplayerFrontend.on("app:select", function (app_id) {
-        console.log("Navigating");
         FormplayerFrontend.navigate("apps/" + app_id);
         API.selectApp(app_id);
     });
