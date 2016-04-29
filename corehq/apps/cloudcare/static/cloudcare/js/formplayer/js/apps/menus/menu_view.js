@@ -9,7 +9,8 @@ FormplayerFrontend.module("AppSelect.MenuList", function (MenuList, FormplayerFr
 
         rowClick: function (e) {
             e.preventDefault();
-            FormplayerFrontend.trigger("menu:select", this.model);
+            var model = this.model;
+            FormplayerFrontend.trigger("menu:select", model.attributes.index, model.collection.app_id);
         }
     });
 

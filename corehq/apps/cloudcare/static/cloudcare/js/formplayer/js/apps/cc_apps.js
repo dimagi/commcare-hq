@@ -23,31 +23,9 @@ FormplayerFrontend.module("AppSelect", function (AppSelect, FormplayerFrontend, 
             if (currentFragment.indexOf("menu") < 0) {
                 AppSelect.MenuList.Controller.selectMenu(app_id);
             } else {
-                urlParams = Util.getQueryParams(currentFragment);
-                steps = [];
-                for(var i = 0; i < urlParams.length; i++){
-                    steps.push(urlParams[i].v)
-                }
+                steps = Util.getSteps(currentFragment);
                 AppSelect.MenuList.Controller.selectMenu(app_id, steps);
             }
-        },
-        selectMenu: function (app_id, index) {
-            currentFragment = Backbone.history.getFragment();
-
-            if (currentFragment.indexOf("menu") < 0) {
-                newAddition = "/menu?step=" + index
-                AppSelect.MenuList.Controller.selectMenu(app_id, index);
-            } else {
-                newAddition = "&step=" + index;
-                var steps = [];
-                currentFragment.split("&").forEach(function (part) {
-                    var item = part.split("=");
-                    steps.push(item[2]);
-                });
-                steps.push(index);
-                AppSelect.MenuList.Controller.selectMenu(app_id, select_list);
-            }
-            return currentFragment + newAddition;
         },
         showDetail: function(model) {
             AppSelect.MenuList.Controller.showDetail(model);
@@ -72,17 +50,15 @@ FormplayerFrontend.module("AppSelect", function (AppSelect, FormplayerFrontend, 
         API.storeApps(apps);
     });
 
-    FormplayerFrontend.on("menu:select", function (model) {
+    FormplayerFrontend.on("menu:select", function (index, appId) {
         oldRoute = Backbone.history.getFragment();
-
         if (oldRoute.indexOf("menu") < 0) {
-            newAddition = "/menu?step=" + model.attributes.index;
+            newAddition = "/menu?step=" + index;
         } else {
-            newAddition = "&step=" + model.attributes.index;
+            newAddition = "&step=" + index;
         }
-
         FormplayerFrontend.navigate(oldRoute + newAddition);
-        API.listMenus(model.collection.app_id);
+        API.listMenus(appId);
     });
 
     AppSelect.on("start", function () {

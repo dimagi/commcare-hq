@@ -1,6 +1,7 @@
-function Util () {}
+function Util() {
+}
 
-Util.getQueryParams = function(qs) {
+Util.getQueryParams = function (qs) {
     qs = qs.split("+").join(" ");
 
     var params = [], tokens,
@@ -12,3 +13,12 @@ Util.getQueryParams = function(qs) {
 
     return params;
 }
+
+Util.getSteps = function (qs) {
+    urlParams = Util.getQueryParams(qs);
+    steps = [];
+    for (var i = 0; i < urlParams.length; i++) {
+        steps.push(urlParams[i].v)
+    }
+    return steps;
+};
