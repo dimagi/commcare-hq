@@ -11,10 +11,8 @@ FormplayerFrontend.module("Entities", function (Entities, FormplayerFrontend, Ba
         model: Entities.MenuSelect,
 
         parse: function (response) {
-            this.sessionId = response.session_id;
             this.sequenceId = response.seq_id;
             this.title = response.title;
-            FormplayerFrontend.request('currentUser').sessionId = this.sessionId;
 
             if (response.commands) {
                 this.type = "commands";
@@ -45,7 +43,6 @@ FormplayerFrontend.module("Entities", function (Entities, FormplayerFrontend, Ba
             this.domain = params.domain;
             this.app_id = params.app_id;
             this.fetch = params.fetch;
-            this.sessionId = params.sessionId;
             this.sequenceId = params.sequenceId;
             this.selection = params.selection;
         }
