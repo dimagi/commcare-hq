@@ -197,7 +197,7 @@ APP_AWARE_SYNC = PredictablyRandomToggle(
     'App-aware Sync',
     TAG_PRODUCT_PATH,
     [NAMESPACE_DOMAIN],
-    randomness=0.1
+    randomness=0.3
 )
 
 CASE_LIST_CUSTOM_XML = StaticToggle(
