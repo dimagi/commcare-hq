@@ -133,30 +133,68 @@
                                 </td>
                                 <td><input class="form-control" type="text" data-bind="value: column.label" /></td>
                                 {% if export_instance.type == 'case' and request|feature_preview_enabled:"SPLIT_MULTISELECT_CASE_EXPORT"%}
-                                <td class="input">
-                                    <div data-bind="if: !allOptions()">
-                                        <select disabled>
-                                            <option>{% trans "plain" %}</option>
-                                        </select>
-                                    </div>
-                                    <div data-bind="if: allOptions">
-                                        <select data-bind="
-                                            value: doc_type,
-                                            foreach: $root.column_type_options
-                                        "/>
-                                            <option data-bind="value: value, text: label"></option>
-                                        </select>
-                                        <span data-bind="makeHqHelp: {name: '{% trans "Split multi-select data" %}', placement: 'left'}"></span>
-                                        <div data-bind="if: doc_type() === 'SplitColumn'">
-                                            <a href="#" data-bind="visible: !showOptions(), click: function() {showOptions(true);}">{% trans "Show Options" %}</a>
-                                            <div data-bind="visible: showOptions">
-                                                <select class="select2" data-bind="options: allOptions, selectedOptions: options" multiple="true">
-                                                </select>
-                                                <br/>
-                                                <input class="input input-small" type="text" data-bind="value: newOption"/>
-                                                <button class="btn" data-bind="click: addOption">{% trans "Add" %}</button>
+                                <td>
+                                    <form
+                                        class="form-horizontal col-xs-12"
+                                        data-bind="
+                                            if: column.doc_type() === 'SplitUserDefinedExportColumn',
+                                            submit: column.addUserDefinedOption
+                                        ">
+                                        <div class="form-group">
+                                            <span class="pull-right" data-bind="
+                                                makeHqHelp: {
+                                                    name: '{% trans "Split multi-select data" %}',
+                                                    placement: 'left'
+                                                }
+                                            "></span>
+                                            <select style="width:200px" class="form-control" data-bind="
+                                                options: Exports.Constants.USER_DEFINED_SPLIT_TYPES,
+                                                value: column.split_type,
+                                            "/></select>
+                                        </div>
+                                        <!-- ko if: column.split_type() === Exports.Constants.MULTISELECT_SPLIT_TYPE -->
+                                        <div class="form-group">
+                                            <button class="btn btn-default btn-xs" data-bind="
+                                                visible: !column.showOptions(),
+                                                click: function() {column.showOptions(true);}
+                                            ">{% trans "Show Options" %}</button>
+
+                                            <button class="btn btn-default btn-xs" data-bind="
+                                                visible: column.showOptions(),
+                                                click: function() {column.showOptions(false);}
+                                            ">{% trans "Hide Options" %}</button>
+                                        </div>
+                                        <div data-bind="visible: column.showOptions()">
+                                            <ul class="list-group" data-bind="
+                                                foreach: column.user_defined_options
+                                            ">
+                                                <li class="list-group-item">
+                                                    <span data-bind="text: $data"></span>
+                                                    <i
+                                                        style="cursor: pointer"
+                                                        class="text-danger fa fa-trash pull-right"
+                                                        data-bind="click: column.removeUserDefinedOption.bind(column)"
+                                                        ></i>
+                                                </li>
+                                            </ul>
+                                            <div class="form-group">
+                                                <div style="max-width: 200px" class="input-group">
+                                                    <input
+                                                        class="form-control input-sm"
+                                                        type="text"
+                                                        data-bind="value: column.userDefinedOptionToAdd"/>
+                                                    <span class="input-group-btn">
+                                                        <button
+                                                            type="submit"
+                                                            class="btn btn-default btn-sm"
+                                                            data-bind="click: column.addUserDefinedOption">
+                                                        {% trans "Add" %}
+                                                        </button>
+                                                    </span>
+                                                </div>
                                             </div>
                                         </div>
+                                        <!-- /ko -->
                                     </div>
                                 </td>
                                 {% endif %}

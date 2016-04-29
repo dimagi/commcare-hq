@@ -157,10 +157,15 @@ class RecentMessages(ILSData):
     default_rows = 5
     use_datatables = True
 
+    def __init__(self, config=None):
+        super(RecentMessages, self).__init__(config, 'row_chart_all')
+
     @property
     def headers(self):
         return DataTablesHeader(
             DataTablesColumn('Date'),
+            DataTablesColumn('User'),
+            DataTablesColumn('Phone number'),
             DataTablesColumn('Direction'),
             DataTablesColumn('Text')
         )
@@ -172,9 +177,12 @@ class RecentMessages(ILSData):
                 .order_by('date'))
         messages = []
         for message in data:
+            recipient = message.recipient
             timestamp = ServerTime(message.date).user_time(self.config['timezone']).done()
             messages.append([
                 _fmt_timestamp(timestamp),
+                recipient.full_name,
+                message.phone_number,
                 _fmt(message.direction),
                 _fmt(message.text),
             ])
