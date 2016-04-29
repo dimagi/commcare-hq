@@ -56,7 +56,7 @@ address this.
  2. Declare it as a global in the `.eslintrc.js`.  This should be done
     sparingly.
  3. Declare it as a global at the top of the javascript file
-    ```javascript
+    ```
     /*global var1, var2*/
     ```
 This treatment of global variables can also be helpful when converting stuff to
