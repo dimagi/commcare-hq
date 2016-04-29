@@ -84,7 +84,6 @@ class DomainInvoiceFactory(object):
         account = BillingAccount.get_or_create_account_by_domain(
             self.domain.name,
             created_by=self.__class__.__name__,
-            created_by_invoicing=True,
             entry_point=EntryPoint.SELF_STARTED,
         )[0]
         if account.date_confirmed_extra_charges is None:
@@ -265,7 +264,6 @@ class DomainWireInvoiceFactory(object):
         account = BillingAccount.get_or_create_account_by_domain(
             self.domain.name,
             created_by=self.__class__.__name__,
-            created_by_invoicing=True,
             entry_point=EntryPoint.SELF_STARTED,
         )[0]
 

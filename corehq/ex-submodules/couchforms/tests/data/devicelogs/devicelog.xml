@@ -62,6 +62,7 @@
       <version>604</version>
       <app_id>36c0bdd028d14a52cbff95bb1bfd0962</app_id>
       <expr>/data/fake</expr>
+      <context_node>/data/foo</context_node>
     </user_error>
   </user_error_subreport>
   <force_close_subreport>

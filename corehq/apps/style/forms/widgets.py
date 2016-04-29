@@ -123,7 +123,7 @@ class AutocompleteTextarea(forms.Textarea):
 $(function() {
     $("#%s").select2({
         multiple: true,
-        data: %s
+        tags: %s
     });
 });
 </script>\n""" % (attrs['id'], json.dumps(map(lambda c: {'text': c, 'id': c}, self.choices))))

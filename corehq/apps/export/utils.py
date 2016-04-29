@@ -133,9 +133,11 @@ def convert_saved_export_to_export_instance(domain, saved_export):
                 # Must be deid transform
                 new_column.deid_transform = transform
 
-    saved_export.doc_type += DELETED_SUFFIX
-    saved_export.save()
     instance.save()
+
+    saved_export.doc_type += DELETED_SUFFIX
+    saved_export.converted_saved_export_id = instance._id
+    saved_export.save()
 
     return instance
 

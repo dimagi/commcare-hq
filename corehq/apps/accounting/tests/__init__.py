@@ -12,3 +12,4 @@ from .test_forms import *
 from .test_autopay import *
 from .test_stripe_payment import *
 from .test_subscription_permissions_changes import *
+from .test_model_validation import *

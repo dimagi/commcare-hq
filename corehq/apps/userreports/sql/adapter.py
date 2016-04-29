@@ -1,6 +1,6 @@
 import sqlalchemy
 from sqlalchemy.exc import IntegrityError, ProgrammingError
-from corehq.apps.userreports.exceptions import TableRebuildError
+from corehq.apps.userreports.exceptions import TableRebuildError, TableNotFoundWarning
 from corehq.apps.userreports.sql.columns import column_to_sql
 from corehq.apps.userreports.sql.connection import get_engine_id
 from corehq.apps.userreports.sql.util import get_table_name
@@ -57,12 +57,15 @@ class IndicatorSqlAdapter(object):
         except IntegrityError:
             pass  # can be due to users messing up their tables/data so don't bother logging
         except Exception as e:
-            notify_exception(None, u'unexpected error saving UCR doc: {}. domain: {}, doc: {}, table {}'.format(
-                e,
-                self.config.domain,
-                doc.get('_id', '<unknown>'),
-                '{} ({})'.format(self.config.display_name, self.config._id)
-            ))
+            self.handle_exception(doc, e)
+
+    def handle_exception(self, doc, exception):
+        notify_exception(None, u'unexpected error saving UCR doc: {}. domain: {}, doc: {}, table {}'.format(
+            exception,
+            self.config.domain,
+            doc.get('_id', '<unknown>'),
+            '{} ({})'.format(self.config.display_name, self.config._id)
+        ))
 
     def save(self, doc):
         """
@@ -85,6 +88,18 @@ class IndicatorSqlAdapter(object):
         with self.engine.begin() as connection:
             delete = table.delete(table.c.doc_id == doc['_id'])
             connection.execute(delete)
+
+
+class ErrorRaisingIndicatorSqlAdapter(IndicatorSqlAdapter):
+    def handle_exception(self, doc, exception):
+        if isinstance(exception, ProgrammingError):
+            orig = getattr(exception, 'orig')
+            if orig:
+                error_code = getattr(orig, 'pgcode')
+                if error_code == '42P01':  # http://www.postgresql.org/docs/9.4/static/errcodes-appendix.html
+                    raise TableNotFoundWarning
+
+        super(ErrorRaisingIndicatorSqlAdapter, self).handle_exception(doc, exception)
 
 
 def get_indicator_table(indicator_config, custom_metadata=None):

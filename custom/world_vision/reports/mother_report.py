@@ -1,6 +1,5 @@
-from corehq.apps.reports.filters.dates import DatespanFilter
 from custom.world_vision.filters import LocationFilter, WVDatespanFilter
-from custom.world_vision.reports import TTCReport
+from custom.world_vision.reports import AccordionTTCReport
 from custom.world_vision.sqldata.mother_sqldata import MotherRegistrationDetails, ClosedMotherCasesBreakdown, \
     PregnantMotherBreakdownByTrimester, AnteNatalCareServiceOverviewExtended, DeliveryLiveBirthDetails, \
     DeliveryStillBirthDetails, PostnatalCareOverview, CauseOfMaternalDeaths, FamilyPlanningMethods, \
@@ -8,7 +7,8 @@ from custom.world_vision.sqldata.mother_sqldata import MotherRegistrationDetails
 from dimagi.utils.decorators.memoized import memoized
 
 
-class MotherTTCReport(TTCReport):
+class MotherTTCReport(AccordionTTCReport):
+    report_template_path = 'world_vision/accordion_report.html'
     report_title = 'Mother Report'
     title = 'Mother Report'
     name = 'Mother Report'
@@ -22,16 +22,20 @@ class MotherTTCReport(TTCReport):
     def data_providers(self):
         config = self.report_config
         return [
-            MotherRegistrationDetails(config=config),
-            ClosedMotherCasesBreakdown(config=config),
-            PregnantMotherBreakdownByTrimester(config=config),
-            AnteNatalCareServiceOverviewExtended(config=config),
-            DeliveryPlaceDetailsExtended(config=config),
-            DeliveryPlaceMotherDetails(config=config),
-            DeliveryLiveBirthDetails(config=config),
-            DeliveryStillBirthDetails(config=config),
-            PostnatalCareOverview(config=config),
-            NumberOfPNCVisits(config=config),
-            FamilyPlanningMethods(config=config),
-            CauseOfMaternalDeaths(config=config)
+            [MotherRegistrationDetails(config=config)],
+            [ClosedMotherCasesBreakdown(config=config)],
+            [PregnantMotherBreakdownByTrimester(config=config)],
+            [AnteNatalCareServiceOverviewExtended(config=config)],
+            [
+                DeliveryPlaceDetailsExtended(config=config),
+                DeliveryPlaceMotherDetails(config=config),
+                DeliveryLiveBirthDetails(config=config),
+                DeliveryStillBirthDetails(config=config)
+            ],
+            [
+                PostnatalCareOverview(config=config),
+                NumberOfPNCVisits(config=config)
+            ],
+            [FamilyPlanningMethods(config=config)],
+            [CauseOfMaternalDeaths(config=config)]
         ]

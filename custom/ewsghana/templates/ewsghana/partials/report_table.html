@@ -7,7 +7,7 @@
         {% for chart in charts %}
             {% if chart.title %}<h4 style="text-align: center;">{{ chart.title }}</h4>{% endif %}
             <button class="btn btn-default imageDownload" data-chart-id="#chart_{{ report.slug }}_{{ forloop.parentloop.counter }}{{ forloop.counter }}">Save this graph to .jpg</button>
-            <div id='chart_{{ report.slug }}_{{ forloop.parentloop.counter }}{{ forloop.counter }}' class="span{{ chart_span }} hide">
+            <div id='chart_{{ report.slug }}_{{ forloop.parentloop.counter }}{{ forloop.counter }}' class="col-sm-{{ chart_span }} collapse">
                 <svg style='height: {{ chart.height }}px'> </svg>
             </div>
         {% endfor %}
@@ -22,10 +22,10 @@
                 <tr>
                     {% for header in report_table.headers %}
                         <th {% if not report_table.pagination.is_on %}data-sort="{{ header.sort_type }}" data-sortdir="{{ header.sort_direction }}"{% endif %} {% if header.css_class %}class="{{ header.css_class }}"{% endif %}>
-                            <i class="icon-white"></i>
+                            <i class="icon-white fa dt-sort-icon"></i>
                             {% if header.html %}{{ header.html }}{% else %}{{ header|linebreaksbr }}{% endif %}
                             {% if header.help_text %}
-                                <i class="icon-white icon-question-sign header-tooltip" title="{{ header.help_text }}"></i>
+                                <i class="fa fa-question-circle header-tooltip" title="{{ header.help_text }}"></i>
                             {% endif %}
                         </th>
                     {% endfor %}
@@ -63,55 +63,70 @@
 {% endif %}
 
 <script type="text/javascript">
-   {% if report_table and report_table.use_datatables %}
-        var dataTablesDom = "frt<'row-fluid dataTables_control'<'span5'il><'span7'p>>";
+    {% if report_table and report_table.use_datatables %}
+        var dataTablesDom = "frt<'row dataTables_control'<'col-sm-5'il><'col-sm-7'p>>";
 
-        var params = {
-                sDom: dataTablesDom,
-                "sPaginationType": "bootstrap",
-                iDisplayLength: {{ report_table.default_rows }},
-                iDisplayStart: 0,
-                sScrollX: "100%"
-            };
+        var datatable;
 
-        {% if report_table.slug != 'product_selection_pane' %}
-            var id = '#report_table_{{ report_table.slug }}';
-            var datatable = $(id).dataTable(params);
-        {% endif %}
+        {% if report_table.slug != 'product_selection_pane' and rendered_as != 'print' %}
+            var reportTables = new HQReportDataTables({
+                dataTableElem: '#report_table_{{ report_table.slug }}',
+                defaultRows: {{ report_table.default_rows|default:10 }},
+                startAtRowNum: {{ report_table.start_at_row|default:0 }},
+                showAllRowsOption: {{ report_table.show_all_rows|JSON }},
+                useBootstrap3: true,
+                paginationType: 'bs_normal',
 
-        {% if report_table.fix_column %}
-            new FixedColumns(datatable, {
-               iLeftColumns: 1,
-               iLeftWidth: 130
+                {% if report_table.headers.render_aoColumns %}aoColumns:
+                    {{ report_table.headers.render_aoColumns|JSON }},{% endif %}
+                autoWidth: {{ report_table.headers.auto_width|JSON }},
+                {% if report_table.headers.custom_sort %}customSort:
+                    {{ report_table.headers.custom_sort|JSON }},{% endif %}
+
+                {% if report_table.pagination.is_on %}
+                    ajaxSource: '{{ report_table.pagination.source }}',
+                    ajaxParams: {{ report_table.pagination.params|JSON }},
+                {% endif %}
+
+                {% if report_table.left_col.is_fixed %}
+                    fixColumns: true,
+                    fixColsNumLeft: 1,
+                    fixColsWidth: 130,
+                {% endif %}
             });
+            if (typeof standardHQReport !== 'undefined') {
+                standardHQReport.handleTabularReportCookies(reportTables);
+            }
+            reportTables.render();
+            datatable = reportTables.datatable;
+            {% if report_table.slug != 'facility_report' %}
+                var show_hide_table_columns = function (element) {
+                    var col_idx = $(element).attr('data-column');
+                    if (col_idx !== '-1') {
+                        var bVis = datatable.fnSettings().aoColumns[col_idx].bVisible;
+                        datatable.fnSetColumnVis(col_idx, !bVis);
+                    }
+                };
+            {% endif %}
         {% endif %}
 
-        {% if report_table.slug != 'facility_report' %}
-            var show_hide_table_columns = function (element) {
-                var col_idx = $(element).attr('data-column');
-                if (col_idx !== '-1') {
-                    var bVis = datatable.fnSettings().aoColumns[col_idx].bVisible;
-                    datatable.fnSetColumnVis(col_idx, !bVis);
-                }
-            };
-        {% endif %}
 
-        var show_hide_multibar_chart_data = function() {
-            var data =  JSON.parse(JSON.stringify(multibar_chart_data));
-            var productCodes = $("#report_table_product_selection_pane input:not(:checked)").map(function() {
-              return $(this).val();
+        var show_hide_multibar_chart_data = function () {
+            var data = JSON.parse(JSON.stringify(multibar_chart_data));
+            var productCodes = $("#report_table_product_selection_pane input:not(:checked)").map(function () {
+                return $(this).val();
             });
-            for(var i = 0; i < data.length; i++) {
-                data[i].values = jQuery.grep(data[i].values, function(value) {
+            for (var i = 0; i < data.length; i++) {
+                data[i].values = jQuery.grep(data[i].values, function (value) {
                     return !_.contains(productCodes, value.x)
                 });
             }
             d3.select(multibar_chart_id + ' svg')
-                .datum(data)
-                .transition().duration(100).call(multibar_chart);
-         };
+                    .datum(data)
+                    .transition().duration(100).call(multibar_chart);
+        };
 
-        $('.toggle-column').bind('click', function() {
+        $('.toggle-column').bind('click', function () {
             {% if report_table.slug != 'product_selection_pane' and report_table.slug != 'facility_report' %}
                 if (datatable.fnSettings().aoColumns.length > 1) {
                     show_hide_table_columns(this);

@@ -75,3 +75,8 @@ def doc_to_change(doc):
             is_deletion=False,
         )
     )
+
+
+def domain_lite(name):
+    from corehq.apps.callcenter.utils import DomainLite
+    return DomainLite(name, None, None, True)

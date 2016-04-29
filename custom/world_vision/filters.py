@@ -68,9 +68,11 @@ class LocationFilter(BaseDrilldownOptionFilter):
             'value': val,
         }
 
+
 class WVDatespanFilter(DatespanFilter):
 
     template = "world_vision/datespan.html"
+    css_class = 'col-md-4'
 
     @property
     def datespan(self):

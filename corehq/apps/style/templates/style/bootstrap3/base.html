@@ -227,7 +227,8 @@
     </head>
     <body>
         {% maintenance_alert %}
-        <div class="hq-container">
+        <!-- .hide used for A/B test of account creation page -->
+        <div class="hq-container{% if is_register_user_experiment %} hide{% endif %}">
             <div id="hq-navigation"
                  class="navbar navbar-default navbar-static-top navbar-hq-main-menu">
                 <div class="container-fluid">

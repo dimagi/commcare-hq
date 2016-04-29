@@ -11,7 +11,7 @@
 
     function initializeViz() {
         var placeholderDiv = document.getElementById("tableauPlaceholder");
-        var url = "https://icds.commcarehq.org/#/views/{{ report_workbook }}/{{ report_worksheet }}";
+        var url = "{{ tableau_access_url }}{{ report_workbook }}/{{ report_worksheet }}";
         var options = {
             width: placeholderDiv.offsetWidth,
             height: placeholderDiv.offsetHeight,

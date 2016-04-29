@@ -1,22 +1,16 @@
-{% extends "reports/bootstrap2/base_template.html" %}
+{% extends "reports/bootstrap3/base_template.html" %}
 {% load i18n %}
 {% load hq_shared_tags %}
 
 {% block stylesheets %}{{ block.super }}
-    <link href="{% static 'nvd3/src/nv.d3.css' %}" rel="stylesheet">
     <link href="{% static 'ilsgateway/css/ilsgateway.css' %}" rel="stylesheet">
-{% endblock %}
-
-{% block js %}{{ block.super }}
-    <script src="{% static 'd3/d3.min.js' %}"></script>
-    <script src="{% static 'nvd3/nv.d3.min.js' %}"></script>
 {% endblock %}
 
 {% block export %}
     {% if report.is_exportable %}
         <div class="btn-group">
-            <a id="report_export" class="btn dropdown-toggle" data-toggle="dropdown">
-                  <i class="icon icon-share"></i> {% trans "Export to:" %}<span class="caret" style="vertical-align: top !important; padding: 0 !important;"></span>
+            <a id="report_export" class="btn btn-default dropdown-toggle" data-toggle="dropdown">
+                  <i class="fa fa-share"></i> {% trans "Export to:" %}<span class="caret" style="vertical-align: top !important; padding: 0 !important;"></span>
             </a>
             <ul class="dropdown-menu">
                 <li>
@@ -99,7 +93,8 @@
         standardHQReport.init();
 
         var asyncHQReport = new HQAsyncReport({
-            standardReport: standardHQReport
+            standardReport: standardHQReport,
+            isBootstrap3: true
         });
         asyncHQReport.init();
         var defaultConfig = {{ default_config|JSON }};

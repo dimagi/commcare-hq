@@ -1,0 +1,3 @@
+
+class TableauTokenException(Exception):
+    pass

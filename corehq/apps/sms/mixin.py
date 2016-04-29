@@ -5,6 +5,7 @@ from couchdbkit.exceptions import MultipleResultsFound
 from dimagi.utils.couch.migration import SyncCouchToSQLMixin
 from dimagi.utils.couch.undo import DELETED_SUFFIX
 from dimagi.utils.couch.database import get_safe_write_kwargs
+from collections import namedtuple
 from corehq.util.quickcache import quickcache
 
 
@@ -77,15 +78,12 @@ class VerifiedNumber(SyncCouchToSQLMixin, Document):
     @property
     def owner(self):
         if self.owner_doc_type == "CommCareCase":
-            # Circular import
-            from corehq.apps.sms.models import CommConnectCase
-            return CommConnectCase.get(self.owner_id)
+            from casexml.apps.case.models import CommCareCase
+            return CommCareCase.get(self.owner_id)
         elif self.owner_doc_type == "CommCareUser":
-            # Circular import
             from corehq.apps.users.models import CommCareUser
             return CommCareUser.get(self.owner_id)
         elif self.owner_doc_type == 'WebUser':
-            # Circular importsms
             from corehq.apps.users.models import WebUser
             return WebUser.get(self.owner_id)
         else:
@@ -204,24 +202,34 @@ class VerifiedNumber(SyncCouchToSQLMixin, Document):
             include_docs=True
         ).all()
 
-    def _clear_suffix_lookup_cache(self, phone_number):
+    @classmethod
+    def _clear_suffix_lookup_cache(cls, phone_number):
         if isinstance(phone_number, basestring):
-            self._by_suffix.clear(VerifiedNumber, phone_number[1:])
-            self._by_suffix.clear(VerifiedNumber, phone_number[2:])
-            self._by_suffix.clear(VerifiedNumber, phone_number[3:])
+            cls._by_suffix.clear(cls, phone_number[1:])
+            cls._by_suffix.clear(cls, phone_number[2:])
+            cls._by_suffix.clear(cls, phone_number[3:])
+
+    @classmethod
+    def _clear_quickcaches(cls, owner_id, phone_number, old_owner_id=None, old_phone_number=None):
+        cls.by_owner_id.clear(cls, owner_id)
+
+        if old_owner_id and old_owner_id != owner_id:
+            cls.by_owner_id.clear(cls, old_owner_id)
+
+        cls._by_phone.clear(cls, phone_number)
+        cls._clear_suffix_lookup_cache(phone_number)
+
+        if old_phone_number and old_phone_number != phone_number:
+            cls._by_phone.clear(cls, old_phone_number)
+            cls._clear_suffix_lookup_cache(old_phone_number)
 
     def _clear_caches(self):
-        self.by_owner_id.clear(VerifiedNumber, self.owner_id)
-
-        if self._old_owner_id and self._old_owner_id != self.owner_id:
-            self.by_owner_id.clear(VerifiedNumber, self._old_owner_id)
-
-        self._by_phone.clear(VerifiedNumber, self.phone_number)
-        self._clear_suffix_lookup_cache(self.phone_number)
-
-        if self._old_phone_number and self._old_phone_number != self.phone_number:
-            self._by_phone.clear(VerifiedNumber, self._old_phone_number)
-            self._clear_suffix_lookup_cache(self._old_phone_number)
+        self._clear_quickcaches(
+            self.owner_id,
+            self.phone_number,
+            old_owner_id=self._old_owner_id,
+            old_phone_number=self._old_phone_number
+        )
 
     def save(self, *args, **kwargs):
         self._clear_caches()
@@ -302,7 +310,7 @@ class CommCareMobileContactMixin(object):
         raise NotImplementedError('Please implement this method')
 
     def get_verified_numbers(self, include_pending=False):
-        v = VerifiedNumber.by_owner_id(self._id)
+        v = VerifiedNumber.by_owner_id(self.get_id)
         v = filter(lambda c: c.verified or include_pending, v)
         return dict((c.phone_number, c) for c in v)
 
@@ -344,7 +352,7 @@ class CommCareMobileContactMixin(object):
         """
         self.validate_number_format(phone_number)
         v = VerifiedNumber.by_phone(phone_number, include_pending=True)
-        if v is not None and (v.owner_doc_type != self.doc_type or v.owner_id != self._id):
+        if v is not None and (v.owner_doc_type != self.doc_type or v.owner_id != self.get_id):
             raise PhoneNumberInUseException("Phone number is already in use.")
 
     def save_verified_number(self, domain, phone_number, verified, backend_id=None, ivr_backend_id=None, only_one_number_allowed=False):
@@ -368,8 +376,8 @@ class CommCareMobileContactMixin(object):
             v = self.get_verified_number(phone_number)
         if v is None:
             v = VerifiedNumber(
-                owner_doc_type = self.doc_type,
-                owner_id = self._id
+                owner_doc_type=self.doc_type,
+                owner_id=self.get_id
             )
         v.domain = domain
         v.phone_number = phone_number
@@ -389,3 +397,51 @@ class CommCareMobileContactMixin(object):
         v = self.get_verified_number(phone_number)
         if v is not None:
             v.retire()
+
+
+class MessagingCaseContactMixin(CommCareMobileContactMixin):
+
+    def get_phone_info(self):
+        PhoneInfo = namedtuple(
+            'PhoneInfo',
+            [
+                'requires_entry',
+                'phone_number',
+                'sms_backend_id',
+                'ivr_backend_id',
+            ]
+        )
+        contact_phone_number = self.get_case_property('contact_phone_number')
+        contact_phone_number = apply_leniency(contact_phone_number)
+        contact_phone_number_is_verified = self.get_case_property('contact_phone_number_is_verified')
+        contact_backend_id = self.get_case_property('contact_backend_id')
+        contact_ivr_backend_id = self.get_case_property('contact_ivr_backend_id')
+
+        requires_entry = (
+            contact_phone_number and
+            contact_phone_number != '0' and
+            not self.closed and
+            not self.is_deleted and
+            # For legacy reasons, any truthy value here suffices
+            contact_phone_number_is_verified
+        )
+
+        return PhoneInfo(
+            requires_entry,
+            contact_phone_number,
+            contact_backend_id,
+            contact_ivr_backend_id
+        )
+
+    def get_time_zone(self):
+        return self.get_case_property('time_zone')
+
+    def get_language_code(self):
+        return self.get_case_property('language_code')
+
+    def get_email(self):
+        return self.get_case_property('commcare_email_address')
+
+    @property
+    def raw_username(self):
+        return self.name

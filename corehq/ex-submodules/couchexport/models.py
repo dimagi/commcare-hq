@@ -599,6 +599,9 @@ class SavedExportSchema(BaseSavedExportSchema, UnicodeMixIn):
     # For us right now, 'form' or 'case'
     type = StringProperty()
 
+    # ID of  the new style export that it was converted to
+    converted_saved_export_id = StringProperty()
+
     def __unicode__(self):
         return "%s (%s)" % (self.name, self.index)
 

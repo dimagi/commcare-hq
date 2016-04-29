@@ -1,12 +1,13 @@
-{% extends 'settings/bootstrap2/base_template.html' %}
+{% extends 'settings/bootstrap3/base_template.html' %}
+{% load crispy_forms_tags %}
 {% load i18n %}
-{% block main_column %}
+{% block page_content %}
     <a class="btn btn-primary" href="{% url 'user_account' domain=domain couch_user_id=couch_user.get_id %}">Back to user account settings</a>
     <form id="commtrack_form" class="form form-horizontal" name="" method="post">
     {% csrf_token %}
         <fieldset>
             <legend>{{ couch_user.username }} - {% trans 'EWS Settings' %}</legend>
-            {% include 'hqstyle/forms/basic_fieldset.html' with form=form %}
+            {% crispy form %}
         </fieldset>
         <div class="form-actions">
           <button type="submit" class="btn btn-primary">{% trans 'Update EWS Settings' %}</button>

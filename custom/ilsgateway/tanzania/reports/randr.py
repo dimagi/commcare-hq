@@ -21,6 +21,7 @@ class RRStatus(ILSData):
     slug = "rr_status"
     show_chart = False
     searchable = True
+    use_datatables = True
 
     @property
     def rows(self):

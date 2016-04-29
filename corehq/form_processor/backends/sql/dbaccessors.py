@@ -655,15 +655,23 @@ class CaseAccessorSQL(AbstractCaseAccessor):
 
     @staticmethod
     def soft_delete_cases(domain, case_ids, deletion_date=None, deletion_id=None):
+        from corehq.form_processor.change_publishers import publish_case_deleted
+
         assert isinstance(case_ids, list)
-        deletion_date = deletion_date or datetime.utcnow()
+        utcnow = datetime.utcnow()
+        deletion_date = deletion_date or utcnow
         with get_cursor(CommCareCaseSQL) as cursor:
             cursor.execute(
-                'SELECT soft_delete_cases(%s, %s, %s, %s) as affected_count',
-                [domain, case_ids, deletion_date, deletion_id]
+                'SELECT soft_delete_cases(%s, %s, %s, %s, %s) as affected_count',
+                [domain, case_ids, utcnow, deletion_date, deletion_id]
             )
             results = fetchall_as_namedtuple(cursor)
-            return sum([result.affected_count for result in results])
+            affected_count = sum([result.affected_count for result in results])
+
+        for case_id in case_ids:
+            publish_case_deleted(domain, case_id)
+
+        return affected_count
 
 
 class LedgerAccessorSQL(AbstractLedgerAccessor):
@@ -685,23 +693,25 @@ class LedgerAccessorSQL(AbstractLedgerAccessor):
             raise LedgerValueNotFound
 
     @staticmethod
-    def save_ledger_values(ledger_values):
+    def save_ledger_values(ledger_values, deprecated_form=None):
         if not ledger_values:
             return
 
+        deprecated_form_id = deprecated_form.orig_id if deprecated_form else None
+
         for ledger_value in ledger_values:
-            transactions = ledger_value.get_live_tracked_models(LedgerTransaction)
+            transactions_to_save = ledger_value.get_live_tracked_models(LedgerTransaction)
 
             ledger_value.last_modified = datetime.utcnow()
 
             with get_cursor(LedgerValue) as cursor:
                 try:
                     cursor.execute(
-                        "SELECT save_ledger_values(%s, %s::{}, %s::{}[])".format(
+                        "SELECT save_ledger_values(%s, %s::{}, %s::{}[], %s)".format(
                             LedgerValue_DB_TABLE,
                             LedgerTransaction_DB_TABLE
                         ),
-                        [ledger_value.case_id, ledger_value, transactions]
+                        [ledger_value.case_id, ledger_value, transactions_to_save, deprecated_form_id]
                     )
                 except InternalError as e:
                     raise LedgerSaveError(e)

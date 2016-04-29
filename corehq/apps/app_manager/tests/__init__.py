@@ -37,6 +37,7 @@ try:
     from corehq.apps.app_manager.tests.test_suite_formats import *
     from corehq.apps.app_manager.tests.test_suite_regex import *
     from corehq.apps.app_manager.tests.test_suite_shadow_module import *
+    from corehq.apps.app_manager.tests.test_suite_sync_request import *
     from corehq.apps.app_manager.tests.test_util import *
     from corehq.apps.app_manager.tests.test_views import *
     from corehq.apps.app_manager.tests.test_xform_builder import *

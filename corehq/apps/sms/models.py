@@ -122,7 +122,7 @@ class MessageLog(SafeSaveDocument, UnicodeMixIn):
     @property
     def recipient(self):
         if self.couch_recipient_doc_type == "CommCareCase":
-            return CommConnectCase.get(self.couch_recipient)
+            return CommCareCase.get(self.couch_recipient)
         else:
             return CouchUser.get_by_user_id(self.couch_recipient)
     
@@ -344,7 +344,7 @@ class Log(models.Model):
     @property
     def recipient(self):
         if self.couch_recipient_doc_type == 'CommCareCase':
-            return CommConnectCase.get(self.couch_recipient)
+            return CommCareCase.get(self.couch_recipient)
         else:
             return CouchUser.get_by_user_id(self.couch_recipient)
 
@@ -715,64 +715,6 @@ class ForwardingRule(Document):
     def retire(self):
         self.doc_type += "-Deleted"
         self.save()
-
-
-class CommConnectCase(CommCareCase, CommCareMobileContactMixin):
-
-    def get_phone_info(self):
-        PhoneInfo = namedtuple(
-            'PhoneInfo',
-            [
-                'requires_entry',
-                'phone_number',
-                'sms_backend_id',
-                'ivr_backend_id',
-            ]
-        )
-        contact_phone_number = self.get_case_property('contact_phone_number')
-        contact_phone_number = apply_leniency(contact_phone_number)
-        contact_phone_number_is_verified = self.get_case_property('contact_phone_number_is_verified')
-        contact_backend_id = self.get_case_property('contact_backend_id')
-        contact_ivr_backend_id = self.get_case_property('contact_ivr_backend_id')
-
-        requires_entry = (
-            contact_phone_number and
-            contact_phone_number != '0' and
-            not self.closed and
-            not self.doc_type.endswith(DELETED_SUFFIX) and
-            # For legacy reasons, any truthy value here suffices
-            contact_phone_number_is_verified
-        )
-        return PhoneInfo(
-            requires_entry,
-            contact_phone_number,
-            contact_backend_id,
-            contact_ivr_backend_id
-        )
-
-    def get_time_zone(self):
-        return self.get_case_property("time_zone")
-
-    def get_language_code(self):
-        return self.get_case_property("language_code")
-
-    def get_email(self):
-        return self.get_case_property('commcare_email_address')
-
-    @property
-    def raw_username(self):
-        return self.get_case_property("name")
-
-    @classmethod
-    def wrap_as_commconnect_case(cls, case):
-        """
-        Takes a CommCareCase and wraps it as a CommConnectCase.
-        """
-        return CommConnectCase.wrap(case.to_json())
-
-    class Meta:
-        # This is necessary otherwise couchdbkit will confuse the sms app with casexml
-        app_label = "sms"
 
 
 class PhoneBlacklist(models.Model):
@@ -1955,7 +1897,7 @@ class SQLMobileBackend(UUIDGeneratorMixin, models.Model):
         api_id - if you know the hq_api_id of the SQLMobileBackend, pass it
                  here for a faster lookup; otherwise, it will be looked up
                  automatically
-        couch_id - if True, then backend_id should be the couch_id to use
+        is_couch_id - if True, then backend_id should be the couch_id to use
                    during lookup instead of the postgres model's pk;
                    we have to support both for a little while until all
                    foreign keys are migrated over

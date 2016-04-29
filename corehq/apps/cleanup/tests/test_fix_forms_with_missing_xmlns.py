@@ -8,12 +8,14 @@ from elasticsearch import ConnectionError
 from corehq.apps.app_manager.const import APP_V2
 from corehq.apps.app_manager.models import Application, Module
 from corehq.apps.app_manager.tests import TestXmlMixin
+from corehq.apps.app_manager.util import get_correct_app_class
 from corehq.apps.cleanup.management.commands.fix_forms_with_missing_xmlns import \
     generate_random_xmlns
 from corehq.apps.receiverwrapper import submit_form_locally
 from corehq.pillows.xform import XFormPillow
 from corehq.util.elastic import ensure_index_deleted
 from corehq.util.test_utils import trap_extra_setup
+from couchforms.models import XFormInstance
 from pillowtop.es_utils import completely_initialize_pillow_index
 
 DOMAIN = "test"
@@ -125,7 +127,7 @@ class TestFixFormsWithMissingXmlns(TestCase, TestXmlMixin):
         form, xform = self.build_normal_app()
         self._refresh_pillow()
 
-        call_command('fix_forms_with_missing_xmlns', 'log.txt')
+        call_command('fix_forms_with_missing_xmlns', '/dev/null', 'log.txt')
 
         with open("log.txt") as log_file:
             log = log_file.read()
@@ -136,7 +138,7 @@ class TestFixFormsWithMissingXmlns(TestCase, TestXmlMixin):
         good_form, bad_form, good_xform, bad_xforms = self.build_app_with_bad_form()
         self._refresh_pillow()
 
-        call_command('fix_forms_with_missing_xmlns', 'log.txt')
+        call_command('fix_forms_with_missing_xmlns', '/dev/null', 'log.txt')
 
         with open("log.txt") as log_file:
             log = log_file.read()
@@ -145,12 +147,13 @@ class TestFixFormsWithMissingXmlns(TestCase, TestXmlMixin):
             self.assertTrue(good_xform._id not in log)
             for xform in bad_xforms:
                 self.assertTrue(xform._id in log)
+        self.assertNoMissingXmlnss()
 
     def test_app_with_recently_fixed_form(self):
         form, good_build, bad_build, good_xform, bad_xform = self.build_app_with_recently_fixed_form()
         self._refresh_pillow()
 
-        call_command('fix_forms_with_missing_xmlns', 'log.txt')
+        call_command('fix_forms_with_missing_xmlns', '/dev/null', 'log.txt')
 
         with open("log.txt") as log_file:
             log = log_file.read()
@@ -158,3 +161,23 @@ class TestFixFormsWithMissingXmlns(TestCase, TestXmlMixin):
             self.assertTrue(bad_build._id in log)
             self.assertTrue(good_xform._id not in log)
             self.assertTrue(bad_xform._id in log)
+        self.assertNoMissingXmlnss()
+
+    def assertNoMissingXmlnss(self):
+        submissions = XFormInstance.get_db().view(
+            'couchforms/by_xmlns',
+            key="undefined",
+            include_docs=False,
+            reduce=False,
+        ).all()
+        self.assertEqual(submissions, [])
+
+        saved_apps = Application.get_db().view(
+            'app_manager/saved_app',
+            include_docs=True,
+        )
+        apps = [get_correct_app_class(row['doc']).wrap(row['doc']) for row in saved_apps]
+        for app in apps:
+            for form in app.get_forms():
+                self.assertEqual(form.source.count('xmlns="undefined"'), 0)
+                self.assertNotEqual(form.xmlns, 'undefined')

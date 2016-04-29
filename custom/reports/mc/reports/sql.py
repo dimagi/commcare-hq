@@ -3,7 +3,6 @@ import re
 from sqlagg.base import AliasColumn
 from sqlagg.filters import EQ, OR, AND, BETWEEN, NOTEQ
 from corehq.apps.userreports.sql import get_table_name
-from corehq.toggles import USER_CONFIGURABLE_REPORTS
 from dimagi.utils.decorators.memoized import memoized
 from sqlagg.columns import *
 from django.utils.translation import ugettext as _, ugettext_noop
@@ -139,10 +138,6 @@ class BaseReport(McMixin, SqlTabularReport, DatespanMixin, CustomProjectReport, 
     def table_name(self):
         return get_table_name(self.config['domain'], "malaria_consortium")
 
-    @classmethod
-    def show_in_navigation(cls, domain=None, project=None, user=None):
-        return user and USER_CONFIGURABLE_REPORTS.enabled(user.username)
-
     @property
     def config(self):
         loc = None
@@ -152,8 +147,8 @@ class BaseReport(McMixin, SqlTabularReport, DatespanMixin, CustomProjectReport, 
             loc = FixtureDataItem.get(id).fields['name']['field_list'][0]['field_value']
         return {
             'domain': self.domain,
-            'startdate': self.datespan.startdate,
-            'enddate': self.datespan.enddate,
+            'startdate': self.datespan.startdate_param_utc,
+            'enddate': self.datespan.enddate_param_utc,
             type: loc,
             'one': 1,
             'zero': 0,
@@ -245,7 +240,7 @@ class DistrictWeekly(BaseReport):
         'custom.reports.mc.reports.fields.DistrictField',
     ]
     slug = 'district_weekly_ucr'
-    name = "UCR Relatorio Semanal aos Coordinadores do Distrito e os NEDs"
+    name = "Relatorio Semanal aos Coordinadores do Distrito e os NEDs"
     section = DISTRICT_WEEKLY_REPORT
 
     @property
@@ -389,7 +384,7 @@ class DistrictMonthly(BaseReport):
         'custom.reports.mc.reports.fields.DistrictField',
     ]
     slug = 'district_monthly_ucr'
-    name = "UCR Relatorio Mensal aos Coordinadores do Distrito e os NEDs"
+    name = "Relatorio Mensal aos Coordinadores do Distrito e os NEDs"
     section = DISTRICT_MONTHLY_REPORT
 
     @property
@@ -639,7 +634,7 @@ class HeathFacilityMonthly(DistrictMonthly):
         'corehq.apps.reports.filters.dates.DatespanFilter',
         'custom.reports.mc.reports.fields.HealthFacilityField',
     ]
-    name = "UCR Relatorio Mensal aos Supervisores dos APEs"
+    name = "Relatorio Mensal aos Supervisores dos APEs"
     section = HF_MONTHLY_REPORT
 
 
@@ -652,7 +647,7 @@ class HealthFacilityWeekly(DistrictWeekly):
     ]
     slug = 'hf_weekly_ucr'
     #TODO change to ugettext when old reports remove
-    name = "UCR Relatorio Semanal aos Supervisores dos APEs"
+    name = "Relatorio Semanal aos Supervisores dos APEs"
     section = HF_WEEKLY_REPORT
 
     @property

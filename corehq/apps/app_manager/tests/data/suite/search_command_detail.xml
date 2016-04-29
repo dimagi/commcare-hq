@@ -1,0 +1,33 @@
+<partial>
+  <detail id="m0_case_short">
+    <title>
+      <text>
+        <locale id="m0.case_short.title"/>
+      </text>
+    </title>
+    <field sort="default">
+      <header>
+        <text>
+          <locale id="m0.case_short.case_name_1.header"/>
+        </text>
+      </header>
+      <template>
+        <text>
+          <xpath function="case_name"/>
+        </text>
+      </template>
+    </field>
+    <action>
+      <display>
+        <text>
+          <locale id="case_search.m0"/>
+        </text>
+      </display>
+      <stack>
+        <push>
+          <command value="'search_command.m0'"/>
+        </push>
+      </stack>
+    </action>
+  </detail>
+</partial>

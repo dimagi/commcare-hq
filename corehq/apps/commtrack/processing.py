@@ -1,5 +1,6 @@
 from collections import namedtuple
 import logging
+from itertools import groupby
 
 from django.db import transaction
 from django.utils.translation import ugettext as _
@@ -29,18 +30,34 @@ class StockProcessingResult(object):
         self.xform = xform
         self.relevant_cases = relevant_cases or []
         self.stock_report_helpers = stock_report_helpers or []
+        self.models_to_save = None
+        self.models_to_delete = None
+        self.populated = False
 
-    def get_models_to_save(self):
+    def populate_models(self):
+        self.populated = True
+
         interface = FormProcessorInterface(domain=self.domain)
         processor = interface.ledger_processor
         ledger_db = interface.ledger_db
-        update_results = []
 
-        for stock_report_helper in self.stock_report_helpers:
-            this_result = processor.get_models_to_update(stock_report_helper, ledger_db)
-            if this_result:
-                update_results.append(this_result)
-        return update_results
+        for helper in self.stock_report_helpers:
+            assert helper.domain == self.domain
+
+        normal_helpers = [srh for srh in self.stock_report_helpers if not srh.deprecated]
+        deprecated_helpers = [srh for srh in self.stock_report_helpers if srh.deprecated]
+
+        models_result = processor.get_models_to_update(
+            self.xform.form_id, normal_helpers, deprecated_helpers, ledger_db
+        )
+        self.models_to_save, self.models_to_delete = models_result
+
+    def commit(self):
+        assert self.populated
+        for to_delete in self.models_to_delete:
+            to_delete.delete()
+        for to_save in self.models_to_save:
+            to_save.save()
 
     def finalize(self):
         """
@@ -117,16 +134,21 @@ def process_stock(xforms, case_db=None):
 def mark_cases_changed(case_action_intents, case_db):
     relevant_cases = []
     # touch every case for proper ota restore logic syncing to be preserved
-    for action_intent in case_action_intents:
-        case_id = action_intent.case_id
-        case = case_db.get(action_intent.case_id)
+    for case_id, intents in groupby(case_action_intents, lambda intent: intent.case_id):
+        case = case_db.get(case_id)
         relevant_cases.append(case)
         if case is None:
             raise IllegalCaseId(
                 _('Ledger transaction references invalid Case ID "{}"')
                 .format(case_id))
 
-        case_db.apply_action_intent(case, action_intent)
+        deprecation_intent = None
+        intents = list(intents)
+        if len(intents) > 1:
+            primary_intent, deprecation_intent = sorted(case_action_intents, key=lambda i: i.is_deprecation)
+        else:
+            [primary_intent] = intents
+        case_db.apply_action_intents(case, primary_intent, deprecation_intent)
         case_db.mark_changed(case)
 
     return relevant_cases

@@ -1,9 +1,10 @@
-DROP FUNCTION IF EXISTS save_ledger_values(TEXT, form_processor_ledgervalue, form_processor_ledgertransaction[]);
+DROP FUNCTION IF EXISTS save_ledger_values(TEXT, form_processor_ledgervalue, form_processor_ledgertransaction[], TEXT);
 
 CREATE FUNCTION save_ledger_values(
     case_ids TEXT,
     ledger_value form_processor_ledgervalue,
-    ledger_transactions form_processor_ledgertransaction[]
+    ledger_transactions form_processor_ledgertransaction[],
+    deprecated_form_id TEXT DEFAULT NULL
 ) RETURNS VOID AS $$
 DECLARE
     ledger_transaction form_processor_ledgertransaction;
@@ -22,6 +23,13 @@ BEGIN
             ledger_value.case_id, ledger_value.section_id, ledger_value.entry_id,
             ledger_value.balance, ledger_value.last_modified
         );
+    END IF;
+
+    IF deprecated_form_id <> '' THEN
+        DELETE FROM form_processor_ledgertransaction
+        WHERE
+            form_id = deprecated_form_id
+            AND case_id = ledger_value.case_id;
     END IF;
 
     -- insert new transactions

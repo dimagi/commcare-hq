@@ -1,5 +1,7 @@
+from __future__ import absolute_import
 from casexml.apps.case.xml.generator import safe_element
 from casexml.apps.phone.xml import get_casedb_element
+from xml.etree import ElementTree
 
 
 class CaseDBFixture(object):
@@ -48,4 +50,4 @@ class CaseDBFixture(object):
         for case in self.cases:
             element.append(get_casedb_element(case))
 
-        return element
+        return ElementTree.tostring(element, encoding="utf-8")

@@ -32,6 +32,7 @@ class UnrecognizedSMSReport(CustomProjectReport, ProjectReportParametersMixin,
     slug = 'unrecognized_sms'
     fields = [AsyncLocationFilter, DatespanFilter]
     exportable = True
+    is_bootstrap3 = True
 
     def _fmt_timestamp(self, timestamp):
         return self.table_cell(

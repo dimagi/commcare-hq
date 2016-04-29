@@ -76,7 +76,7 @@ STATIC_URL = '/static/'
 STATIC_CDN = ''
 
 FILEPATH = os.path.abspath(os.path.dirname(__file__))
-SERVICE_DIR = os.path.join(FILEPATH, 'fab', 'services', 'templates')
+SERVICE_DIR = os.path.join(FILEPATH, 'deployment', 'commcare-hq-deploy', 'fab', 'services', 'templates')
 # media for user uploaded media.  in general this won't be used at all.
 MEDIA_ROOT = os.path.join(FILEPATH, 'mediafiles')
 STATIC_ROOT = os.path.join(FILEPATH, 'staticfiles')
@@ -386,6 +386,7 @@ HQ_APPS = (
 
     'custom.dhis2',
     'custom.openclinica',
+    'custom.icds_reports',
 )
 
 TEST_APPS = ()
@@ -1430,20 +1431,33 @@ PILLOWTOPS = {
     'core': [
         'corehq.pillows.case.CasePillow',
         'corehq.pillows.xform.XFormPillow',
-        'corehq.pillows.user.UserPillow',
+        {
+            'name': 'UserPillow',
+            'class': 'pillowtop.pillow.interface.ConstructedPillow',
+            'instance': 'corehq.pillows.user.get_user_pillow',
+        },
         'corehq.pillows.application.AppPillow',
-        'corehq.pillows.group.GroupPillow',
-        'corehq.pillows.sms.SMSPillow',
-        'corehq.pillows.user.GroupToUserPillow',
-        'corehq.pillows.user.UnknownUsersPillow',
+        {
+            'name': 'GroupPillow',
+            'class': 'pillowtop.pillow.interface.ConstructedPillow',
+            'instance': 'corehq.pillows.group.get_group_pillow',
+        },
+        {
+            'name': 'GroupToUserPillow',
+            'class': 'pillowtop.pillow.interface.ConstructedPillow',
+            'instance': 'corehq.pillows.groups_to_user.get_group_to_user_pillow',
+        },
         'corehq.pillows.sofabed.FormDataPillow',
         'corehq.pillows.sofabed.CaseDataPillow',
-        # TODO: Remove this once ConstructedPillows can deal with their own indices
-        'corehq.pillows.case_search.CaseSearchPillow',
         {
             'name': 'SqlSMSPillow',
             'class': 'pillowtop.pillow.interface.ConstructedPillow',
             'instance': 'corehq.pillows.sms.get_sql_sms_pillow',
+        },
+        {
+            'name': 'UserGroupsDbKafkaPillow',
+            'class': 'pillowtop.pillow.interface.ConstructedPillow',
+            'instance': 'corehq.apps.change_feed.pillow.get_user_groups_db_kafka_pillow',
         },
         {
             'name': 'KafkaDomainPillow',
@@ -1458,11 +1472,6 @@ PILLOWTOPS = {
             'name': 'DefaultChangeFeedPillow',
             'class': 'pillowtop.pillow.interface.ConstructedPillow',
             'instance': 'corehq.apps.change_feed.pillow.get_default_couch_db_change_feed_pillow',
-        },
-        {
-            'name': 'UserGroupsDbKafkaPillow',
-            'class': 'pillowtop.pillow.interface.ConstructedPillow',
-            'instance': 'corehq.apps.change_feed.pillow.get_user_groups_db_kafka_pillow',
         },
         {
             'name': 'DomainDbKafkaPillow',
@@ -1488,6 +1497,11 @@ PILLOWTOPS = {
             'name': 'SqlCaseToElasticsearchPillow',
             'class': 'pillowtop.pillow.interface.ConstructedPillow',
             'instance': 'corehq.pillows.case.get_sql_case_to_elasticsearch_pillow',
+        },
+        {
+            'name': 'UnknownUsersPillow',
+            'class': 'pillowtop.pillow.interface.ConstructedPillow',
+            'instance': 'corehq.pillows.user.get_unknown_users_pillow',
         },
     ],
     'cache': [
@@ -1571,6 +1585,10 @@ STATIC_DATA_SOURCES = [
     os.path.join('custom', 'reports', 'mc', 'data_sources', 'malaria_consortium.json'),
     os.path.join('custom', 'reports', 'mc', 'data_sources', 'weekly_forms.json'),
     os.path.join('custom', 'apps', 'cvsu', 'data_sources', 'unicef_malawi.json')
+]
+
+STATIC_DATA_SOURCE_PROVIDERS = [
+    'corehq.apps.callcenter.data_source.call_center_data_source_provider'
 ]
 
 
@@ -1673,6 +1691,7 @@ DOMAIN_MODULE_MAP = {
     'project': 'custom.apps.care_benin',
 
     'ipm-senegal': 'custom.intrahealth',
+    'icds-test': 'custom.icds_reports',
     'testing-ipm-senegal': 'custom.intrahealth',
     'up-nrhm': 'custom.up_nrhm',
 

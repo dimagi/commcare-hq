@@ -96,6 +96,7 @@ def register_user(request):
             'form': form,
             'current_page': {'page_name': _('Create an Account')},
             'hide_password_feedback': settings.ENABLE_DRACONIAN_SECURITY_FEATURES,
+            'is_register_user_experiment': True,
         })
         return render(request, 'registration/create_new_user.html', context)
 

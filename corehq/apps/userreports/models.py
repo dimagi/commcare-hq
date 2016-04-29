@@ -44,6 +44,8 @@ from dimagi.utils.decorators.memoized import memoized
 from dimagi.utils.mixins import UnicodeMixIn
 from django.conf import settings
 
+from dimagi.utils.modules import to_function
+
 
 class DataSourceBuildInformation(DocumentSchema):
     """
@@ -461,6 +463,11 @@ class StaticDataSourceConfiguration(JsonObject):
                     doc['domain'] = domain
                     doc['_id'] = cls.get_doc_id(domain, doc['table_id'])
                     yield DataSourceConfiguration.wrap(doc)
+
+        for provider_path in settings.STATIC_DATA_SOURCE_PROVIDERS:
+            provider_fn = to_function(provider_path, failhard=True)
+            for datasource in provider_fn():
+                yield datasource
 
     @classmethod
     def by_domain(cls, domain):

@@ -1446,7 +1446,7 @@ class XForm(WrappedNode):
                              'that the xmlns="http://www.w3.org/2002/xforms" '
                              "attribute exists in your form."))
 
-    def _schedule_global_next_visit_date(self, case_tag, action, form, case):
+    def _schedule_global_next_visit_date(self, form, case):
         """
         Adds the necessary hidden properties, fixture references, and calculations to
         get the global next visit date for schedule modules
@@ -1495,8 +1495,6 @@ class XForm(WrappedNode):
         if not form.actions.get_all_actions():
             return
 
-        case_tag = lambda a: "case_{0}".format(a.case_tag)
-
         def configure_visit_schedule_updates(update_block, action, session_case_id):
             case = session_case_id.case()
             schedule_form_xpath = QualifiedScheduleFormXPath(form, form.get_phase(), form.get_module(), case)
@@ -1507,7 +1505,7 @@ class XForm(WrappedNode):
             )
 
             self.add_bind(
-                nodeset=u'{}/case/update/{}'.format(case_tag(action), SCHEDULE_PHASE),
+                nodeset=u'{}/case/update/{}'.format(action.form_element_name, SCHEDULE_PHASE),
                 type="xs:integer",
                 calculate=schedule_form_xpath.current_schedule_phase_calculation(
                     self.action_relevance(form.schedule.termination_condition),
@@ -1530,7 +1528,7 @@ class XForm(WrappedNode):
 
             last_visit_num = SCHEDULE_LAST_VISIT.format(form.schedule_form_id)
             self.add_bind(
-                nodeset=u'{}/case/update/{}'.format(case_tag(action), last_visit_num),
+                nodeset=u'{}/case/update/{}'.format(action.form_element_name, last_visit_num),
                 relevant=u"not(/data/{})".format(SCHEDULE_UNSCHEDULED_VISIT),
                 calculate=u"/data/{}".format(SCHEDULE_CURRENT_VISIT_NUMBER),
             )
@@ -1538,17 +1536,17 @@ class XForm(WrappedNode):
 
             last_visit_date = SCHEDULE_LAST_VISIT_DATE.format(form.schedule_form_id)
             self.add_bind(
-                nodeset=u'{}/case/update/{}'.format(case_tag(action), last_visit_date),
+                nodeset=u'{}/case/update/{}'.format(action.form_element_name, last_visit_date),
                 type="xsd:dateTime",
                 calculate=self.resolve_path("meta/timeEnd"),
                 relevant=u"not(/data/{})".format(SCHEDULE_UNSCHEDULED_VISIT),
             )
             update_block.append(make_case_elem(last_visit_date))
 
-            self._schedule_global_next_visit_date(case_tag, action, form, case)
+            self._schedule_global_next_visit_date(form, case)
 
         def create_case_block(action, bind_case_id_xpath=None):
-            tag = case_tag(action)
+            tag = action.form_element_name
             path = tag + '/'
             base_node = _make_elem("{{x}}{0}".format(tag))
             self.data_node.append(base_node)
@@ -1644,7 +1642,7 @@ class XForm(WrappedNode):
                 nest = True
 
             if nest:
-                name = case_tag(action)
+                name = action.form_element_name
                 path = '%s%s/' % (base_path, name)
                 if create_subcase_node:
                     subcase_node = _make_elem('{x}%s' % name)
