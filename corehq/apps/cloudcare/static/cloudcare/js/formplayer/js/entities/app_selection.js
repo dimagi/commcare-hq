@@ -7,13 +7,13 @@ FormplayerFrontend.module("Entities", function (Entities, FormplayerFrontend, Ba
 
     Entities.AppSelectCollection = Backbone.Collection.extend({
         url: "appSelects",
-        model: Entities.AppSelect
+        model: Entities.AppSelect,
     });
 
     Entities.configureStorage("FormplayerFrontend.Entities.AppSelectCollection");
 
     var storeApps = function (apps) {
-        old_apps = new Entities.AppSelectCollection();
+        var old_apps = new Entities.AppSelectCollection();
         var defer = $.Deferred();
         old_apps.fetch({
             success: function (data) {
@@ -56,5 +56,5 @@ FormplayerFrontend.module("Entities", function (Entities, FormplayerFrontend, Ba
 
     FormplayerFrontend.reqres.setHandler("appselect:storeapps", function (apps) {
         return API.storeApps(apps);
-    })
+    });
 });

@@ -8,13 +8,13 @@ FormplayerFrontend.module("AppSelect.MenuList", function (MenuList, FormplayerFr
                 if (options.type === "commands") {
                     var menuListView = new MenuList.MenuListView({
                         collection: options,
-                        title: options.title
+                        title: options.title,
                     });
                 }
                 else if (options.type === "entities") {
                     var menuListView = new MenuList.CaseListView({
                         collection: options,
-                        title: options.title
+                        title: options.title,
                     });
                 } else{
                     //TODO: error handle this, we didn't recognize the JSON resposne
@@ -43,10 +43,10 @@ FormplayerFrontend.module("AppSelect.MenuList", function (MenuList, FormplayerFr
             var detailCollection = new Backbone.Collection();
             detailCollection.reset(lst);
             var menuListView = new MenuList.DetailListView({
-                collection: detailCollection
+                collection: detailCollection,
             });
             $('#my-modal-body').html(menuListView.render().el);
             $('#myModal').modal('toggle');
-        }
-    }
+        },
+    };
 });

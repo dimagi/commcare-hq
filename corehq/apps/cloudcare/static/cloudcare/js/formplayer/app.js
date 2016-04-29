@@ -5,7 +5,7 @@ FormplayerFrontend.on("before:start", function () {
         el: "#app-container",
 
         regions: {
-            main: "#main-region"
+            main: "#main-region",
         }
     });
 
