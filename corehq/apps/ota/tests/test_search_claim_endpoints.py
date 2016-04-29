@@ -16,6 +16,7 @@ USERNAME = 'testy_mctestface'
 PASSWORD = '123'
 CASE_NAME = 'Jamie Hand'
 CASE_TYPE = 'case'
+OWNER_ID = 'someone_else'
 
 
 class ClaimCaseTests(TestCase):
@@ -30,7 +31,7 @@ class ClaimCaseTests(TestCase):
             case_id=cls.case_id,
             case_type=CASE_TYPE,
             case_name=CASE_NAME,
-            owner_id='someone_else',
+            owner_id=OWNER_ID,
         ).as_xml()], {'domain': DOMAIN})
 
     @run_with_all_backends
@@ -69,16 +70,15 @@ class ClaimCaseTests(TestCase):
 
     @run_with_all_backends
     def test_search_endpoint(self):
-        known_result = """<fixture id="{case_type}">
-    <case>
-        <case_id>{case_id}</case_id>
-        <name>{case_name}</name>
-        <type>{case_type}</type>
+        known_result = """<results id="case">
+    <case case_id="{case_id}" case_type="{case_type}" owner_id="{owner_id}">
+        <case_name>{case_name}</case_name>
     </case>
-</fixture>""".format(
+</results>""".format(
             case_id=self.case_id,
+            case_type=CASE_TYPE,
+            owner_id=OWNER_ID,
             case_name=CASE_NAME,
-            case_type=CASE_TYPE
         )
 
         client = Client()
