@@ -4,25 +4,37 @@
 
 {% block title %}{% trans 'Multimedia Map' %}{% endblock title %}
 
-{% block head %}{{ block.super }}
-<style>
-.media-totals-list {
-    margin: 0;
-    padding: 0;
-}
+{% block stylesheets %}{{ block.super }}
+    <style type="text/css">
+        .media-totals-list {
+            margin: 0;
+            padding: 0;
+        }
 
-.media-totals {
-    list-style-type: none;
-}
-</style>
+        .media-totals {
+            list-style-type: none;
+        }
+
+        .media-type-icon,
+        .media-status-icon {
+            font-size: 22px;
+        }
+
+        .media-status-icon .media-status-warning {
+            color: #ff8400;
+        }
+        .media-status-icon .media-status-ok {
+            color: #47b700;
+        }
+    </style>
 {% endblock %}
 
 {% block js %} {{ block.super }}
-    <script src="{% static 'style/js/bootstrap2/main.js' %}"></script>
+    <script src="{% static 'style/js/bootstrap3/main.js' %}"></script>
     <!-- todo add the media player back in -->
     <script type="text/javascript" src="{% static 'hqmedia/js/jquery.jplayer.min.js' %}"></script>
     <script type="text/javascript" src="{% static 'hqmedia/js/hqmedia.reference_controller.js' %}"></script>
-    <script type="text/javascript" src="{% new_static 'app_manager/js/download_async_modal.js' %}"></script>
+    <script type="text/javascript" src="{% static 'app_manager/js/download_async_modal.js' %}"></script>
 {% endblock %}
 
 {% block js-inline %} {{ block.super }}
@@ -42,24 +54,28 @@
     {% include 'app_manager/partials/download_async_modal_inline.html' with element_id='multimedia-zip-modal' download_url=media_url%}
 {% endblock %}
 
-{% block centered-content %}
-<div id="multimedia-reference-checker">
-    <ul class="breadcrumb">
+{% block page_name %}
+    {% trans 'Multimedia Reference Checker' %}
+{% endblock %}
+
+{% block page_breadcrumbs %}
+    <ol id="hq-breadcrumbs" class="breadcrumb breadcrumb-hq-section">
         <li>
-            <a href="{% url "view_app" domain app.get_id %}">{% trans 'Application' %} "{{ app.name }}"</a>
-            <span class="divider">&gt;</span>
+            <a href="{% url "view_app" domain app.get_id %}"><strong>{% trans 'Application' %} "{{ app.name }}"</strong></a>
         </li>
         <li class="active">
             <a href="{% url "hqmedia_references" domain app.get_id %}">
                 {% trans 'Multimedia Reference Checker' %}
             </a>
         </li>
-    </ul>
-    <div class="page-header">
-        <h1>{% trans 'Multimedia Reference Checker' %}</h1>
-    </div>
+    </ol>
+{% endblock %}
+
+{% block page_content %}
+<div id="multimedia-reference-checker">
+
     <div class="row">
-        <div class="span7">
+        <div class="col-sm-7">
             {% if totals|length %}
                 <p>
                     {% blocktrans %}
@@ -73,7 +89,7 @@
                     </a>
                 </p>
                 <p>
-                    <a href="#" data-bind="click: toggleMissingRefs, text: toggleRefsText"></a>
+                    <a href="#" class="btn btn-default" data-bind="click: toggleMissingRefs, text: toggleRefsText"></a>
                 </p>
             {% else %}
                 <div class="alert alert-info">
@@ -81,7 +97,7 @@
                 </div>
             {% endif %}
         </div>
-        <div class="span5">
+        <div class="col-sm-5">
             {% if totals|length %}
             <div class="well">
                 <p>
@@ -89,7 +105,7 @@
                         href="#multimedia-zip-modal"
                         data-toggle="modal"
                         onclick="download_application_zip()">
-                        <i class="icon-download-alt"></i> {% trans 'Download ZIP' %}
+                        <i class="fa fa-download"></i> {% trans 'Download ZIP' %}
                     </a>
                 </p>
                 <ul class="media-totals-list" data-bind="foreach: totals">
@@ -105,71 +121,69 @@
     </div>
     {% if totals|length %}
 
-    <article class="accordion accordion-multimedia" id="mm-reference-list">
+    <article class="panel panel-default" id="mm-reference-list">
     <!-- ko foreach: modules -->
-        <section class="accordion-group">
-            <hgroup class="accordion-heading">
-                <h1>
-                    <a class="accordion-toggle"
-                         data-toggle="collapse"
-                         data-parent="#mm-reference-list"
-                         data-bind="attr: { href: '#' + id }">
-                        <i class="icon-double-angle-down"></i> Module: <span data-bind="text: name"></span>
-                    </a>
-                </h1>
-            </hgroup>
-            <div class="accordion-body collapse in"
-                 data-bind="attr: { id: id }">
-                <div class="accordion-inner">
-                    <p>Showing all media in the module named '<span data-bind="text: name"></span>'.</p>
-                    <div class="accordion" data-bind="attr: { id: id + '-ModuleRefs' }">
-                        {% include "hqmedia/partials/reference_table.html" with ref_type="active_menu_references" show_refs="showMenuRefs" parent_accordion="ModuleRefs" this_accordion="ModuleMenuRefs" title="Menu References" %}
-                    </div>
-                    <!-- ko foreach: forms -->
-                        <div data-bind="visible: showForm">
-                            <h2>Form: <span data-bind="text: name"></span></h2>
-                            <div class="accordion" data-bind="attr: { id: id + '-FormRefs' }">
-                                {% include "hqmedia/partials/reference_table.html" with ref_type="active_menu_references" show_refs="showMenuRefs" parent_accordion="FormRefs" this_accordion="FormMenuRefs" title="Menu References" %}
-                                {% include "hqmedia/partials/reference_table.html" with ref_type="active_images" show_refs="showImageRefs" parent_accordion="FormRefs" this_accordion="FormImageRefs" title="Image References" %}
-                                {% include "hqmedia/partials/reference_table.html" with ref_type="active_audio" show_refs="showAudioRefs" parent_accordion="FormRefs" this_accordion="FormAudioRefs" title="Audio References" %}
-                                {% include "hqmedia/partials/reference_table.html" with ref_type="active_video" show_refs="showVideoRefs" parent_accordion="FormRefs" this_accordion="FormVideoRefs" title="Video References" %}
-                            </div>
-                        </div>
-                    <!-- /ko -->
+        <div class="panel-heading">
+            <h3 class="panel-title">
+                <a class="accordion-toggle"
+                     data-toggle="collapse"
+                     data-parent="#mm-reference-list"
+                     data-bind="attr: { href: '#' + id }">
+                    <i class="fa fa-angle-double-down"></i> Module: <span data-bind="text: name"></span>
+                </a>
+            </h3>
+        </div>
+        <div class="panel-body collapse in"
+             data-bind="attr: { id: id }">
+            <div class="accordion-inner">
+                <p>Showing all media in the module named '<span data-bind="text: name"></span>'.</p>
+                <div class="accordion" data-bind="attr: { id: id + '-ModuleRefs' }">
+                    {% include "hqmedia/partials/reference_table.html" with ref_type="active_menu_references" show_refs="showMenuRefs" parent_accordion="ModuleRefs" this_accordion="ModuleMenuRefs" title="Menu References" %}
                 </div>
+                <!-- ko foreach: forms -->
+                    <div data-bind="visible: showForm">
+                        <h4>Form: <span data-bind="text: name"></span></h4>
+                        <div class="accordion" data-bind="attr: { id: id + '-FormRefs' }">
+                            {% include "hqmedia/partials/reference_table.html" with ref_type="active_menu_references" show_refs="showMenuRefs" parent_accordion="FormRefs" this_accordion="FormMenuRefs" title="Menu References" %}
+                            {% include "hqmedia/partials/reference_table.html" with ref_type="active_images" show_refs="showImageRefs" parent_accordion="FormRefs" this_accordion="FormImageRefs" title="Image References" %}
+                            {% include "hqmedia/partials/reference_table.html" with ref_type="active_audio" show_refs="showAudioRefs" parent_accordion="FormRefs" this_accordion="FormAudioRefs" title="Audio References" %}
+                            {% include "hqmedia/partials/reference_table.html" with ref_type="active_video" show_refs="showVideoRefs" parent_accordion="FormRefs" this_accordion="FormVideoRefs" title="Video References" %}
+                        </div>
+                    </div>
+                <!-- /ko -->
             </div>
-        </section>
+        </div>
     <!-- /ko -->
     </article>
 
     <script type="text/html" id="image-preview-template">
-        <img data-bind="attr: { src: thumb_url }" />
+        <img data-bind="attr: { src: thumb_url }" />&nbsp;&nbsp;
         <a target="_blank"
-           class="btn btn-small preview-media"
+           class="btn btn-default preview-media"
            data-bind="attr: { href: url }"
-           data-toggle="tooltip" data-title="Opens image in new tab.">{% trans 'View Larger' %}</a>
+           data-toggle="tooltip" data-title="{% trans 'Opens image in new tab' %}.">{% trans 'View Larger' %}</a>
     </script>
 
     <script type="text/html" id="audio-preview-template">
         <a target="_blank"
-           class="btn preview-media"
+           class="btn btn-default preview-media"
            data-bind="attr: { href: url }"
-           data-toggle="tooltip" data-title="Opens file in new tab.">{% trans 'Hear Audio' %}</a>
+           data-toggle="tooltip" data-title="{% trans 'Opens file in new tab' %}.">{% trans 'Hear Audio' %}</a>
     </script>
 
     <script type="text/html" id="video-preview-template">
         <a target="_blank"
-           class="btn preview-media"
+           class="btn btn-default preview-media"
            data-bind="attr: { href: url }"
-           data-toggle="tooltip" data-title="Opens file in new tab.">{% trans 'View Video' %}</a>
+           data-toggle="tooltip" data-title="{% trans 'Opens file in new tab' %}.">{% trans 'View Video' %}</a>
     </script>
 
     {% for uploader in uploaders %}
-        {% include 'hqmedia/bootstrap2/partials/multimedia_uploader.html' %}
+        {% include 'hqmedia/partials/multimedia_uploader.html' %}
     {% endfor %}
 
     <div id="jquery_jplayer"></div>
     {% endif %}
 </div>
 
-{% endblock centered-content %}
+{% endblock %}
