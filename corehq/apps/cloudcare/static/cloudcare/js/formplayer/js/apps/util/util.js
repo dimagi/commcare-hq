@@ -1,6 +1,4 @@
-function Util() {
-}
-
+function Util() {}
 
 // from http://stackoverflow.com/questions/439463/how-to-get-get-and-post-variables-with-jquery
 Util.getQueryParams = function (qs) {
