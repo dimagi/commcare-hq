@@ -4,7 +4,7 @@ FormplayerFrontend.module("AppSelect.MenuList", function (MenuList, FormplayerFr
         template: "#menu-view-item",
 
         events: {
-            "click": "rowClick"
+            "click": "rowClick",
         },
 
         rowClick: function (e) {
@@ -31,7 +31,7 @@ FormplayerFrontend.module("AppSelect.MenuList", function (MenuList, FormplayerFr
         template: "#case-view-item",
 
         events: {
-            "click": "rowClick"
+            "click": "rowClick",
         },
 
         rowClick: function (e) {
@@ -47,14 +47,14 @@ FormplayerFrontend.module("AppSelect.MenuList", function (MenuList, FormplayerFr
         childViewContainer: "tbody",
         templateHelpers: function () {
             return {
-                title: this.options.collection.title
+                title: this.options.collection.title,
             };
         },
     });
 
     MenuList.DetailView = Marionette.ItemView.extend({
         tagName: "tr",
-        template: "#detail-view-item"
+        template: "#detail-view-item",
     });
 
     MenuList.DetailListView = Marionette.CompositeView.extend({
@@ -62,6 +62,6 @@ FormplayerFrontend.module("AppSelect.MenuList", function (MenuList, FormplayerFr
         className: "table table-hover",
         template: "#detail-view-list",
         childView: MenuList.DetailView,
-        childViewContainer: "tbody"
+        childViewContainer: "tbody",
     });
 });

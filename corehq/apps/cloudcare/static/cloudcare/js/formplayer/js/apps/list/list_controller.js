@@ -6,11 +6,11 @@ FormplayerFrontend.module("AppSelect.AppList", function(AppList, FormplayerFront
             $.when(fetchingApps).done(function (apps) {
 
                 var appListView = new AppList.AppSelectView({
-                    collection: apps
+                    collection: apps,
                 });
 
                 FormplayerFrontend.regions.main.show(appListView);
             });
-        }
-    }
+        },
+    };
 });

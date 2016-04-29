@@ -47,7 +47,7 @@ FormplayerFrontend.module("Entities", function (Entities, FormplayerFrontend, Ba
 
         storeApps: function (apps) {
             storeApps(apps);
-        }
+        },
     };
 
     FormplayerFrontend.reqres.setHandler("appselect:apps", function () {
