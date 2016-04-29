@@ -1,6 +1,8 @@
 from couchdbkit import BadValueError
 from django.test import TestCase, SimpleTestCase
+from corehq.apps.groups.dbaccessors import group_by_domain
 from corehq.apps.groups.models import Group
+from corehq.apps.groups.tests.test_utils import delete_all_groups
 from corehq.apps.users.models import CommCareUser
 
 DOMAIN = 'test-domain'
@@ -69,6 +71,21 @@ class GroupTest(TestCase):
         group2_updated = Group.get(group2.get_id)
         self.assertNotEqual(g1_old_modified, group1_updated.last_modified)
         self.assertNotEqual(g2_old_modified, group2_updated.last_modified)
+
+
+class TestDeleteAllGroups(TestCase):
+    dependent_apps = [
+        'corehq.couchapps',
+        'corehq.apps.groups',
+    ]
+
+    def test_bulk_delete(self):
+        domain = 'test-bulk-delete'
+        for i in range(3):
+            Group(domain=domain, name='group-{}'.format(i)).save()
+        self.assertEqual(3, len(group_by_domain(domain)))
+        delete_all_groups()
+        self.assertEqual(0, len(group_by_domain(domain)))
 
 
 # This is a mixin so importing it doesn't re-run the tests

@@ -1,4 +1,4 @@
-{% extends "reports/async/bootstrap2/tabular.html" %}
+{% extends "reports/async/bootstrap3/tabular.html" %}
 {% load hq_shared_tags %}
 {% load report_tags %}
 {% load i18n %}
@@ -14,10 +14,10 @@
     {% if not report.needs_filters %}
         {% if rendered_as == 'print' %}
         <div class="row">
-            <div class="span10">{% now "d M Y" %}</div>
+            <div class="col-md-10">{% now "d M Y" %}</div>
         </div>
         <div class="row">
-            <div class="span10">
+            <div class="col-md-10">
                 <h3 class="media-heading">{{ title }}<br/></h3>
             </div>
         </div>
@@ -26,7 +26,7 @@
     {% if charts %}
         <div class="row">
             {% for chart in charts %}
-            <div id='chart_{{ report.slug }}_{{ forloop.counter }}' class="span{{ chart_span }} hide">
+            <div id='chart_{{ report.slug }}_{{ forloop.counter }}' class="col-md-{{ chart_span }} hide">
                 {% if chart.title %}<h4 style="text-align: center;">{{ chart.title }}</h4>{% endif %}
                 <svg style='height: {{ chart.height }}px'> </svg>
             </div>
@@ -36,7 +36,7 @@
 {% endblock %}
 {% block reporttable %}
 {% if report.needs_filters %}
-    {% include 'reports/bootstrap2/partials/description.html' %}
+    {% include 'reports/bootstrap3/partials/description.html' %}
 {% else %}
     <style>
         .nvd3.nv-pie path {
@@ -148,7 +148,7 @@
                         <div class="row" style="margin: 0 !important">
                             <form>
                                 <div style="display: inline-block">
-                                    <input type="text" id="inventory_filter" class="date-range-picker" value="{{ datespan.enddate|add_days:-30|date:'Y-m-d' }} to {{ datespan.enddate|date:'Y-m-d' }}" />
+                                    <input type="text" id="inventory_filter" class="date-range-picker" />
                                     <button style="margin-bottom: 9px;" id="inventory_filter_btn" class="filters btn">Apply</button>
                                 </div>
                             </form>
@@ -181,7 +181,7 @@
                     <div class="row" style="margin: 0 !important">
                         <form>
                             <div style="display: inline-block">
-                                <input type="text" id="stockouts_filter" class="date-range-picker" value="{{ datespan.enddate|add_days:-90|date:'Y-m-d' }} to {{ datespan.enddate|date:'Y-m-d' }}" />
+                                <input type="text" id="stockouts_filter" class="date-range-picker" />
                                 <button style="margin-bottom: 9px;" id="stockouts_filter_btn" class="filters btn">Apply</button>
                             </div>
                         </form>
@@ -219,8 +219,7 @@
 
         function show_hide_filters() {
             setTimeout(function() {
-                var selected = $('#group_location_async select:last-child option:selected').text();
-                if (selected === 'All') {
+                if ($('#report_table_facility_report').length === 0) {
                     toggleFilters(fpr_filters, false);
                     toggleFilters(report_filters, true);
                 } else {

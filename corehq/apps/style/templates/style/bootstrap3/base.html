@@ -508,6 +508,16 @@
         {% endcompress %}
         {% endif %}
 
+        {% if request.use_timeago %}
+        <script src="{% new_static 'jquery-timeago/jquery.timeago.js' %}"></script>
+        <script>
+            $(function () {
+                $.timeago.settings.allowFuture = true;
+                $(".timeago").timeago();
+            });
+        </script>
+        {% endif %}
+
         {% block js %}{% endblock js %}
 
         {# Report Issue #}

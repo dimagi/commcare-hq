@@ -8,16 +8,19 @@ from elasticsearch.exceptions import ConnectionError
 from corehq.apps.case_search.models import CaseSearchConfig
 from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.domain.tests.test_utils import delete_all_domains
-from corehq.apps.es import CaseES, CaseSearchES, DomainES, FormES, UserES
+from corehq.apps.es import CaseES, CaseSearchES, DomainES, FormES, UserES, GroupES
+from corehq.apps.groups.models import Group
+from corehq.apps.groups.tests.test_utils import delete_all_groups
 from corehq.apps.users.dbaccessors.all_commcare_users import delete_all_users
 from corehq.apps.users.models import CommCareUser, WebUser
+from corehq.elastic import get_es_new
 from corehq.form_processor.tests.utils import FormProcessorTestUtils, \
     run_with_all_backends
 from corehq.pillows.case import CasePillow
-from corehq.pillows.case_search import CaseSearchPillow
 from corehq.pillows.mappings.case_mapping import CASE_INDEX
 from corehq.pillows.mappings.case_search_mapping import CASE_SEARCH_INDEX
 from corehq.pillows.mappings.domain_mapping import DOMAIN_INDEX
+from corehq.pillows.mappings.group_mapping import GROUP_INDEX_INFO
 from corehq.pillows.mappings.user_mapping import USER_INDEX
 from corehq.pillows.mappings.xform_mapping import XFORM_INDEX
 from corehq.util.elastic import delete_es_index, ensure_index_deleted
@@ -71,6 +74,7 @@ class PillowtopReindexerTest(TestCase):
 
     @run_with_all_backends
     def test_case_search_reindexer(self):
+        es = get_es_new()
         FormProcessorTestUtils.delete_all_cases()
         case = _create_and_save_a_case()
 
@@ -79,7 +83,7 @@ class PillowtopReindexerTest(TestCase):
         # With case search not enabled, case should not make it to ES
         CaseSearchConfig.objects.all().delete()
         call_command('ptop_reindexer_v2', 'case-search')
-        CaseSearchPillow().get_es_new().indices.refresh(CASE_SEARCH_INDEX)  # as well as refresh the index
+        es.indices.refresh(CASE_SEARCH_INDEX)  # as well as refresh the index
         self._assert_es_empty(esquery=CaseSearchES())
 
         # With case search enabled, it should get indexed
@@ -87,7 +91,7 @@ class PillowtopReindexerTest(TestCase):
         self.addCleanup(CaseSearchConfig.objects.all().delete)
         call_command('ptop_reindexer_v2', 'case-search')
 
-        CaseSearchPillow().get_es_new().indices.refresh(CASE_SEARCH_INDEX)  # as well as refresh the index
+        es.indices.refresh(CASE_SEARCH_INDEX)  # as well as refresh the index
         self._assert_case_is_in_es(case, esquery=CaseSearchES())
 
     def test_xform_reindexer(self):
@@ -175,6 +179,40 @@ class UserReindexerTest(TestCase):
             self.assertEqual('CommCareUser', user_doc['doc_type'])
         else:
             self.assertEqual('WebUser', user_doc['doc_type'])
+
+
+class GroupReindexerTest(TestCase):
+    dependent_apps = [
+        'pillowtop',
+        'corehq.couchapps',
+        'corehq.apps.groups',
+    ]
+
+    def setUp(self):
+        delete_all_groups()
+
+    @classmethod
+    def setUpClass(cls):
+        ensure_index_deleted(GROUP_INDEX_INFO.index)
+
+    @classmethod
+    def tearDownClass(cls):
+        ensure_index_deleted(GROUP_INDEX_INFO.index)
+
+    def test_group_reindexer(self):
+        group = Group(domain=DOMAIN, name='g1')
+        group.save()
+        call_command('ptop_reindexer_v2', **{'index': 'group', 'cleanup': True, 'noinput': True})
+        self._assert_group_in_es(group)
+
+    def _assert_group_in_es(self, group):
+        results = GroupES().run()
+        self.assertEqual(1, results.total)
+        es_group = results.hits[0]
+        self.assertEqual(group._id, es_group['_id'])
+        self.assertEqual(group.name, es_group['name'])
+        self.assertEqual(group.users, es_group['users'])
+        self.assertEqual('Group', es_group['doc_type'])
 
 
 def _create_and_save_a_case():

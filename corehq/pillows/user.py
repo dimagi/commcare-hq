@@ -1,98 +1,19 @@
-from collections import namedtuple
 from corehq.apps.change_feed.consumer.feed import KafkaChangeFeed
-from corehq.apps.change_feed.document_types import COMMCARE_USER, WEB_USER, get_doc_meta_object_from_document, \
-    GROUP, FORM
+from corehq.apps.change_feed.document_types import COMMCARE_USER, WEB_USER, FORM
 from corehq.apps.change_feed.topics import FORM_SQL
 from corehq.apps.users.models import CommCareUser, CouchUser
 from corehq.apps.users.util import WEIRD_USER_IDS
 from corehq.elastic import (
-    stream_es_query, doc_exists_in_es,
+    doc_exists_in_es,
     send_to_elasticsearch, get_es_new, ES_META
 )
-from corehq.pillows.mappings.user_mapping import USER_MAPPING, USER_INDEX, USER_META, USER_INDEX_INFO
+from corehq.pillows.mappings.user_mapping import USER_INDEX, USER_INDEX_INFO
 from corehq.util.quickcache import quickcache
-from pillowtop.checkpoints.manager import get_default_django_checkpoint_for_legacy_pillow_class, PillowCheckpoint, \
-    PillowCheckpointEventHandler
-from pillowtop.listener import AliasedElasticPillow, PythonPillow
+from pillowtop.checkpoints.manager import PillowCheckpoint, PillowCheckpointEventHandler
 from pillowtop.pillow.interface import ConstructedPillow
 from pillowtop.processors import ElasticProcessor, PillowProcessor
 from pillowtop.reindexer.change_providers.couch import CouchViewChangeProvider
 from pillowtop.reindexer.reindexer import ElasticPillowReindexer
-
-
-class UserPillow(AliasedElasticPillow):
-    """
-    Simple/Common Case properties Indexer
-    """
-
-    document_class = CommCareUser   # while this index includes all users,
-                                    # I assume we don't care about querying on properties specific to WebUsers
-    couch_filter = "users/all_users"
-    es_timeout = 60
-    es_alias = "hqusers"
-    es_type = "user"
-    es_meta = USER_META
-    es_index = USER_INDEX
-    default_mapping = USER_MAPPING
-
-    @classmethod
-    def get_unique_id(self):
-        return USER_INDEX
-
-
-class GroupToUserPillow(PythonPillow):
-    document_class = CommCareUser
-
-    def __init__(self):
-        checkpoint = get_default_django_checkpoint_for_legacy_pillow_class(self.__class__)
-        super(GroupToUserPillow, self).__init__(checkpoint=checkpoint)
-        self.es = get_es_new()
-        self.es_type = ES_META['users'].type
-
-    def python_filter(self, change):
-        doc_meta = get_doc_meta_object_from_document(change.get_document())
-        return doc_meta and doc_meta.primary_type == GROUP
-
-    def change_transport(self, doc_dict):
-        doc_meta = get_doc_meta_object_from_document(doc_dict)
-        if doc_meta.is_deletion:
-            remove_group_from_users(doc_dict, self.es)
-        else:
-            update_es_user_with_groups(doc_dict, self.es)
-
-
-def remove_group_from_users(group_doc, es_client):
-    for user_source in stream_user_sources(group_doc.get("users", [])):
-        if group_doc["name"] in user_source.group_names or group_doc["_id"] in user_source.group_ids:
-            user_source.group_ids.remove(group_doc["_id"])
-            user_source.group_names.remove(group_doc["name"])
-            doc = {"__group_ids": list(user_source.group_ids), "__group_names": list(user_source.group_names)}
-            es_client.update(USER_INDEX, ES_META['users'].type, user_source.user_id, body={"doc": doc})
-
-
-def update_es_user_with_groups(group_doc, es_client=None):
-    if not es_client:
-        es_client = get_es_new()
-
-    for user_source in stream_user_sources(group_doc.get("users", [])):
-        if group_doc["name"] not in user_source.group_names or group_doc["_id"] not in user_source.group_ids:
-            user_source.group_ids.add(group_doc["_id"])
-            user_source.group_names.add(group_doc["name"])
-            doc = {"__group_ids": list(user_source.group_ids), "__group_names": list(user_source.group_names)}
-            es_client.update(USER_INDEX, ES_META['users'].type, user_source.user_id, body={"doc": doc})
-
-
-UserSource = namedtuple('UserSource', ['user_id', 'group_ids', 'group_names'])
-
-
-def stream_user_sources(user_ids):
-    q = {"filter": {"and": [{"terms": {"_id": user_ids}}]}}
-    for result in stream_es_query(es_index='users', q=q, fields=["__group_ids", "__group_names"]):
-        group_ids = result.get('fields', {}).get("__group_ids", [])
-        group_ids = set(group_ids) if isinstance(group_ids, list) else {group_ids}
-        group_names = result.get('fields', {}).get("__group_names", [])
-        group_names = set(group_names) if isinstance(group_names, list) else {group_names}
-        yield UserSource(result['_id'], group_ids, group_names)
 
 
 def update_unknown_user_from_form_if_necessary(es, doc_dict):
@@ -165,7 +86,7 @@ def add_demo_user_to_user_index():
     )
 
 
-def get_user_kafka_to_elasticsearch_pillow(pillow_id='UnknownUsersPillow'):
+def get_user_pillow(pillow_id='UserPillow'):
     checkpoint = PillowCheckpoint(
         pillow_id,
     )
@@ -186,7 +107,7 @@ def get_user_kafka_to_elasticsearch_pillow(pillow_id='UnknownUsersPillow'):
 
 def get_user_reindexer():
     return ElasticPillowReindexer(
-        pillow=get_user_kafka_to_elasticsearch_pillow(),
+        pillow=get_user_pillow(),
         change_provider=CouchViewChangeProvider(
             couch_db=CommCareUser.get_db(),
             view_name='users/by_username',

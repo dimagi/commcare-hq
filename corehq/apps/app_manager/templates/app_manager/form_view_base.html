@@ -118,7 +118,6 @@
 
             var putInRoot = {{ module.put_in_root|BOOL }};
             var isUserCaseInUse = {{ is_usercase_in_use|BOOL }};
-            var isModuleFilterEnabled = {{ is_module_filter_enabled|BOOL }};
             var formFilter = ko.observable({{ form.form_filter|JSON }});
             var allOtherFormsRequireACase = {{ form.all_other_forms_require_a_case|BOOL }};
 

@@ -28,9 +28,15 @@ def main():
     parser = ArgumentParser(description=__doc__, formatter_class=RawDescriptionHelpFormatter)
     parser.add_argument("mode", choices=["staging", "master"],
         help="Update vellum-staging or master.")
-    parser.add_argument("--vellum-dir", default=os.environ.get("VELLUM_DIR"),
-        help="Path to Vellum git repo on your local machine. Defaults to the "
-             "value of the VELLUM_DIR environment variable.")
+    parser.add_argument("--branch", default="",
+        help="Alternative Vellum branch from which to build.")
+    parser.add_argument("--fix-staging",
+        action="store_true", default=os.environ.get("VELLUM_STAGING_FIX"),
+        help="Rebase vellum-staging on master (only in 'master' mode). "
+             "If this option is not specified, the vellum-staging branch will "
+             "likely be left in a state that will make the next staging "
+             "deployment fail due to merge conflicts. NOTE: this will discard "
+             "any unpushed commits on the local vellum-staging branch.")
     parser.add_argument("--hq-base", metavar="BRANCH", default="master",
         help="Reset to BRANCH before updating HQ (default: master). "
              "This does nothing when mode is 'master'.")
@@ -40,17 +46,17 @@ def main():
         help="Build Vellum, but do not run tests (mutually exclusive with --no-make).")
     parser.add_argument("--push", action="store_true",
         help="Push the result to HQ if everything else succeeds.")
-    parser.add_argument("--fix-staging",
-        action="store_true", default=os.environ.get("VELLUM_STAGING_FIX"),
-        help="Rebase vellum-staging on master (only in 'master' mode). "
-             "If this option is not specified, the vellum-staging branch will "
-             "likely be left in a state that will make the next staging "
-             "deployment fail due to merge conflicts. NOTE: this will discard "
-             "any unpushed commits on the local vellum-staging branch.")
+    parser.add_argument("--target", default='vellum',
+        help="Directory within corehq/apps/app_manager/static/app_manager/js/ to place "
+            "built Vellum. Defaults to 'vellum'.")
+    parser.add_argument("--vellum-dir", default=os.environ.get("VELLUM_DIR"),
+        help="Path to Vellum git repo on your local machine. Defaults to the "
+             "value of the VELLUM_DIR environment variable.")
+
     args = parser.parse_args()
 
     vellum_dir = args.vellum_dir
-    vellum_branch = args.mode
+    vellum_branch = args.branch or args.mode
     hq_dir = dirname(dirname(abspath(__file__)))
     hq_branch = "vellum-staging" if args.mode == "staging" else args.mode
 
@@ -84,7 +90,7 @@ def main():
         else:
             vellum_rev = build_vellum(vellum_dir, vellum_branch, not args.no_test)
 
-        update_hq(hq_dir, hq_branch, args.hq_base, vellum_dir, vellum_rev, args.push)
+        update_hq(hq_dir, hq_branch, args.hq_base, vellum_dir, vellum_rev, args.push, args.target)
         if args.mode == "master" and args.fix_staging:
             fix_staging(hq_dir, args.push)
     except sh.ErrorReturnCode as err:
@@ -107,7 +113,10 @@ def build_vellum(path, branch, test=True):
 
 
 def get_old_vellum_rev(path):
-    with open(join(path, "version.txt")) as fh:
+    filename = join(path, "version.txt")
+    if not os.path.isfile(filename):
+        return ""
+    with open(filename) as fh:
         return fh.read().strip()
 
 
@@ -117,7 +126,7 @@ def print_vellum_changes(old_vellum_rev, path):
     print(git('log', '--oneline', '--grep', 'Merge', old_vellum_rev + "..HEAD"))
 
 
-def update_hq(path, branch, base_branch, vellum_dir, vellum_rev, push):
+def update_hq(path, branch, base_branch, vellum_dir, vellum_rev, push, target):
     git = get_git(path)
     require_clean_working_tree(git, path)
 
@@ -125,7 +134,7 @@ def update_hq(path, branch, base_branch, vellum_dir, vellum_rev, push):
     git.checkout(branch)
     git.fetch()
 
-    hq_vellum = join(path, "corehq/apps/app_manager/static/app_manager/js/vellum")
+    hq_vellum = join(path, "corehq/apps/app_manager/static/app_manager/js/", target)
     if branch != "master":
         print("git reset --hard origin/" + base_branch)
         git.reset("--hard", "origin/" + base_branch)
@@ -142,7 +151,7 @@ def update_hq(path, branch, base_branch, vellum_dir, vellum_rev, push):
     git.add("--all", hq_vellum)
 
     code = subprocess.call([
-        "git", "commit", "--edit", "--message=vellum:" + vellum_rev
+        "git", "commit", "--edit", "--message={}:{}".format(target, vellum_rev)
     ], cwd=path)
     if code != 0:
         sys.exit(code)
@@ -175,7 +184,7 @@ def require_branch_up_to_date(git, branch, remote="origin", context="Your local"
     local_rev = git("rev-parse", branch).strip()
     remote_rev = git("rev-parse", remote + "/" + branch).strip()
     if local_rev != remote_rev:
-        abort("{context} '{branch}' and '{remote}/{branch}' have diverged"
+        abort("{context} '{branch}' ({local_rev}) and '{remote}/{branch} ({remote_rev})' have diverged"
               .format(**locals()))
 
 

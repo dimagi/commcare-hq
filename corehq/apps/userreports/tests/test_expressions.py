@@ -911,6 +911,19 @@ class TestFormsExpressionSpec(TestCase):
         self.assertEqual(forms, [])
 
 
+class TestIterationNumberExpression(SimpleTestCase):
+
+    @classmethod
+    def setUpClass(cls):
+        cls.spec = ExpressionFactory.from_spec({'type': 'base_iteration_number'})
+
+    def test_default(self):
+        self.assertEqual(0, self.spec({}, EvaluationContext({})))
+
+    def test_value_set(self):
+        self.assertEqual(7, self.spec({}, EvaluationContext({}, iteration=7)))
+
+
 class TestEvaluationContext(SimpleTestCase):
 
     def test_cache(self):

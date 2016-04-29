@@ -37,7 +37,7 @@ def send_mail_async(self, subject, message, from_email, recipient_list,
 def send_html_email_async(self, subject, recipient, html_content,
                           text_content=None, cc=None,
                           email_from=settings.DEFAULT_FROM_EMAIL,
-                          file_attachments=None, bcc=None, ga_track=False):
+                          file_attachments=None, bcc=None, ga_track=False, ga_tracking_info=None):
     """ Call with send_HTML_email_async.delay(*args, **kwargs)
     - sends emails in the main celery queue
     - if sending fails, retry in 15 min
@@ -46,7 +46,8 @@ def send_html_email_async(self, subject, recipient, html_content,
     try:
         send_HTML_email(subject, recipient, html_content,
                         text_content=text_content, cc=cc, email_from=email_from,
-                        file_attachments=file_attachments, bcc=bcc, ga_track=ga_track)
+                        file_attachments=file_attachments, bcc=bcc, ga_track=ga_track,
+                        ga_tracking_info=ga_tracking_info)
     except Exception as e:
         recipient = list(recipient) if not isinstance(recipient, basestring) else [recipient]
         logger.error(

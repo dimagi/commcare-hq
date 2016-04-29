@@ -1,14 +1,18 @@
-{% extends "reports/bootstrap2/base_template.html" %}
+{% extends "reports/bootstrap3/base_template.html" %}
 {% load hq_shared_tags %}
 {% load i18n %}
 {% block js %}{{ block.super }}
+    <script src='{% static 'hqadmin/js/nvd3_charts_helper.js' %}' type='text/javascript'></script>
     <script src="{% static 'ewsghana/report_links.js' %}"></script>
-    <script src="{% static 'hqwebapp/js/lib/nvd3/lib/d3.v3.js' %}"></script>
-    <script src="{% static 'hqwebapp/js/lib/nvd3/nv.d3.min.js' %}"></script>
+    <script src="{% static 'reports/javascripts/daterangepicker.js' %}"></script>
     <script src="{% static 'select2-3.4.5-legacy/select2.min.js' %}"></script>
     <script src="{% static 'ewsghana/js/lib/canvg/canvg.min.js' %}"></script>
     <script src="{% static 'ewsghana/js/lib/canvg/rgbcolor.min.js' %}"></script>
     <script src="{% static 'ewsghana/js/lib/canvg/StackBlur.min.js' %}"></script>
+{% endblock %}
+
+{% block reports-js-inline %}
+    {{ block.super }}
     <script>
         var show_hide_line_chart_data = function() {
             var data = JSON.parse(JSON.stringify(line_chart_data));
@@ -65,12 +69,6 @@
         // Filters should be always visible
         $('#reportFilters').collapse('show');
      </script>
-{% endblock %}
-
-{% block stylesheets %}
-    {{ block.super }}
-    <link href="{% static 'hqwebapp/js/lib/nvd3/nv.d3.css' %}" rel="stylesheet">
-    <link href="{% static 'select2-3.4.5-legacy/select2.css' %}" rel="stylesheet"/>
 {% endblock %}
 
 {% block reports-css %}

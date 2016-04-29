@@ -4,6 +4,25 @@ from django.conf import settings
 
 
 VALUE_TAG = '#value'
+DEFAULT_META = {
+    "settings": {
+        "analysis": {
+            "analyzer": {
+                "default": {
+                    "type": "custom",
+                    "tokenizer": "whitespace",
+                    "filter": ["lowercase"]
+                },
+                "sortable_exact": {
+                    "type": "custom",
+                    "tokenizer": "keyword",
+                    "filter": ["lowercase"]
+                }
+            }
+        }
+    }
+}
+
 
 def map_types(item, mapping, override_root_keys=None):
     if isinstance(item, dict):
@@ -59,24 +78,7 @@ def restore_property_dict(report_dict_item):
 
 class HQPillow(AliasedElasticPillow):
     es_timeout = 60
-    es_meta = {
-        "settings": {
-            "analysis": {
-                "analyzer": {
-                    "default": {
-                        "type": "custom",
-                        "tokenizer": "whitespace",
-                        "filter": ["lowercase"]
-                    },
-                    "sortable_exact": {
-                        "type": "custom",
-                        "tokenizer": "keyword",
-                        "filter": ["lowercase"]
-                    }
-                }
-            }
-        }
-    }
+    es_meta = DEFAULT_META
 
     @classmethod
     @memoized

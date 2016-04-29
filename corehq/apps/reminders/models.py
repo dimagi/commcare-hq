@@ -6,7 +6,7 @@ from corehq.apps.casegroups.models import CommCareCaseGroup
 from corehq.apps.hqcase.dbaccessors import get_case_ids_in_domain
 from dimagi.ext.couchdbkit import *
 from casexml.apps.case.models import CommCareCase
-from corehq.apps.sms.models import (CommConnectCase, MessagingEvent)
+from corehq.apps.sms.models import MessagingEvent
 from corehq.apps.users.cases import get_owner_id, get_wrapped_owner
 from corehq.apps.users.models import CouchUser, CommCareUser
 from corehq.apps.groups.models import Group
@@ -664,10 +664,10 @@ class CaseReminderHandler(Document):
             if self.recipient == RECIPIENT_USER:
                 recipient = CouchUser.get_by_user_id(case.user_id)
             elif self.recipient == RECIPIENT_CASE:
-                recipient = CommConnectCase.get(case._id)
+                recipient = CommCareCase.get(case._id)
             elif self.recipient == RECIPIENT_PARENT_CASE:
                 if case is not None and case.parent is not None:
-                    recipient = CommConnectCase.wrap_as_commconnect_case(case.parent)
+                    recipient = case.parent
         local_now = CaseReminderHandler.utc_to_local(recipient, now)
         
         case_id = case._id if case is not None else None
@@ -939,7 +939,7 @@ class CaseReminderHandler(Document):
         elif isinstance(recipient, Group):
             recipients = recipient.get_users(is_active=True, only_commcare=False)
         elif isinstance(recipient, CommCareCaseGroup):
-            recipients = [CommConnectCase.get(case_id) for case_id in recipient.cases]
+            recipients = [CommCareCase.get(case_id) for case_id in recipient.cases]
         else:
             recipients = []
             recipient = None
@@ -1549,7 +1549,7 @@ class CaseReminder(SafeSaveDocument, LockableMixIn):
         if handler.recipient == RECIPIENT_USER:
             return self.user
         elif handler.recipient == RECIPIENT_CASE:
-            return CommConnectCase.get(self.case_id)
+            return CommCareCase.get(self.case_id)
         elif handler.recipient == RECIPIENT_SURVEY_SAMPLE:
             return CommCareCaseGroup.get(handler.sample_id)
         elif handler.recipient == RECIPIENT_OWNER:
@@ -1559,15 +1559,13 @@ class CaseReminder(SafeSaveDocument, LockableMixIn):
             case = self.case
             if case is not None:
                 parent_case = case.parent
-            if parent_case is not None:
-                parent_case = CommConnectCase.wrap_as_commconnect_case(parent_case)
             return parent_case
         elif handler.recipient == RECIPIENT_SUBCASE:
             indices = self.case.reverse_indices
             recipients = []
             for index in indices:
                 if index.identifier == "parent":
-                    subcase = CommConnectCase.get(index.referenced_id)
+                    subcase = CommCareCase.get(index.referenced_id)
                     if case_matches_criteria(subcase, handler.recipient_case_match_type, handler.recipient_case_match_property, handler.recipient_case_match_value):
                         recipients.append(subcase)
             return recipients

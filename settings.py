@@ -1431,19 +1431,33 @@ PILLOWTOPS = {
     'core': [
         'corehq.pillows.case.CasePillow',
         'corehq.pillows.xform.XFormPillow',
-        'corehq.pillows.user.UserPillow',
+        {
+            'name': 'UserPillow',
+            'class': 'pillowtop.pillow.interface.ConstructedPillow',
+            'instance': 'corehq.pillows.user.get_user_pillow',
+        },
         'corehq.pillows.application.AppPillow',
-        'corehq.pillows.group.GroupPillow',
-        'corehq.pillows.sms.SMSPillow',
-        'corehq.pillows.user.GroupToUserPillow',
+        {
+            'name': 'GroupPillow',
+            'class': 'pillowtop.pillow.interface.ConstructedPillow',
+            'instance': 'corehq.pillows.group.get_group_pillow',
+        },
+        {
+            'name': 'GroupToUserPillow',
+            'class': 'pillowtop.pillow.interface.ConstructedPillow',
+            'instance': 'corehq.pillows.groups_to_user.get_group_to_user_pillow',
+        },
         'corehq.pillows.sofabed.FormDataPillow',
         'corehq.pillows.sofabed.CaseDataPillow',
-        # TODO: Remove this once ConstructedPillows can deal with their own indices
-        'corehq.pillows.case_search.CaseSearchPillow',
         {
             'name': 'SqlSMSPillow',
             'class': 'pillowtop.pillow.interface.ConstructedPillow',
             'instance': 'corehq.pillows.sms.get_sql_sms_pillow',
+        },
+        {
+            'name': 'UserGroupsDbKafkaPillow',
+            'class': 'pillowtop.pillow.interface.ConstructedPillow',
+            'instance': 'corehq.apps.change_feed.pillow.get_user_groups_db_kafka_pillow',
         },
         {
             'name': 'KafkaDomainPillow',
@@ -1458,11 +1472,6 @@ PILLOWTOPS = {
             'name': 'DefaultChangeFeedPillow',
             'class': 'pillowtop.pillow.interface.ConstructedPillow',
             'instance': 'corehq.apps.change_feed.pillow.get_default_couch_db_change_feed_pillow',
-        },
-        {
-            'name': 'UserGroupsDbKafkaPillow',
-            'class': 'pillowtop.pillow.interface.ConstructedPillow',
-            'instance': 'corehq.apps.change_feed.pillow.get_user_groups_db_kafka_pillow',
         },
         {
             'name': 'DomainDbKafkaPillow',
@@ -1715,7 +1724,7 @@ TRAVIS_TEST_GROUPS = (
         'facilities', 'fixtures', 'fluff_filter', 'formplayer',
         'formtranslate', 'fri', 'grapevine', 'groups', 'gsid', 'hope',
         'hqadmin', 'hqcase', 'hqcouchlog', 'hqmedia',
-        'care_pathways', 'common', 'compressor', 'smsbillables',
+        'care_pathways', 'common', 'compressor',
     ),
 )
 

@@ -655,15 +655,23 @@ class CaseAccessorSQL(AbstractCaseAccessor):
 
     @staticmethod
     def soft_delete_cases(domain, case_ids, deletion_date=None, deletion_id=None):
+        from corehq.form_processor.change_publishers import publish_case_deleted
+
         assert isinstance(case_ids, list)
-        deletion_date = deletion_date or datetime.utcnow()
+        utcnow = datetime.utcnow()
+        deletion_date = deletion_date or utcnow
         with get_cursor(CommCareCaseSQL) as cursor:
             cursor.execute(
-                'SELECT soft_delete_cases(%s, %s, %s, %s) as affected_count',
-                [domain, case_ids, deletion_date, deletion_id]
+                'SELECT soft_delete_cases(%s, %s, %s, %s, %s) as affected_count',
+                [domain, case_ids, utcnow, deletion_date, deletion_id]
             )
             results = fetchall_as_namedtuple(cursor)
-            return sum([result.affected_count for result in results])
+            affected_count = sum([result.affected_count for result in results])
+
+        for case_id in case_ids:
+            publish_case_deleted(domain, case_id)
+
+        return affected_count
 
 
 class LedgerAccessorSQL(AbstractLedgerAccessor):

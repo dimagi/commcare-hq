@@ -3,6 +3,7 @@ from django.core.urlresolvers import reverse
 from django.http import Http404
 import json
 from corehq.apps.api.es import ReportXFormES
+from corehq.apps.style.decorators import use_timeago
 from corehq.apps.reports.datatables import DataTablesColumn, DataTablesHeader
 from dimagi.utils import html
 from pact.enums import PACT_DOMAIN
@@ -29,6 +30,10 @@ class PactPatientInfoReport(PactDrilldownReportMixin, PactElasticTabularReportMi
     name = "Patient Info"
 
     is_bootstrap3 = True
+
+    @use_timeago
+    def bootstrap3_dispatcher(self, request, *args, **kwargs):
+        return super(PactPatientInfoReport, self).bootstrap3_dispatcher(request, *args, **kwargs)
 
     @property
     def patient_id(self):

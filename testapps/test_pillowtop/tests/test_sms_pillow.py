@@ -3,8 +3,8 @@ from corehq.apps.change_feed.consumer.feed import change_meta_from_kafka_message
 from corehq.apps.es.sms import SMSES
 from corehq.apps.sms.models import MessagingEvent, MessagingSubEvent, SMS
 from corehq.elastic import get_es_new
-from corehq.pillows.sms import get_sql_sms_pillow, ES_SMS_INDEX
-from corehq.util.decorators import temporarily_enable_toggle
+from corehq.pillows.mappings.sms_mapping import SMS_INDEX_INFO
+from corehq.pillows.sms import get_sql_sms_pillow
 from corehq.util.elastic import ensure_index_deleted
 from datetime import datetime
 from dimagi.utils.parsing import json_format_datetime
@@ -15,15 +15,16 @@ from testapps.test_pillowtop.utils import get_test_kafka_consumer
 
 @patch('corehq.apps.sms.change_publishers.do_publish')
 class SqlSMSPillowTest(TestCase):
+    dependent_apps = ['corehq.apps.sms', 'corehq.apps.smsforms']
 
     domain = 'sms-pillow-test-domain'
 
     def setUp(self):
         self.elasticsearch = get_es_new()
-        ensure_index_deleted(ES_SMS_INDEX)
+        ensure_index_deleted(SMS_INDEX_INFO.index)
 
     def tearDown(self):
-        ensure_index_deleted(ES_SMS_INDEX)
+        ensure_index_deleted(SMS_INDEX_INFO.index)
         SMS.objects.filter(domain=self.domain).delete()
         MessagingSubEvent.objects.filter(parent__domain=self.domain).delete()
         MessagingEvent.objects.filter(domain=self.domain).delete()
@@ -131,7 +132,7 @@ class SqlSMSPillowTest(TestCase):
         # send to elasticsearch
         sms_pillow = get_sql_sms_pillow('SqlSMSPillow')
         sms_pillow.process_changes(since=kafka_seq, forever=False)
-        self.elasticsearch.indices.refresh(ES_SMS_INDEX)
+        self.elasticsearch.indices.refresh(SMS_INDEX_INFO.index)
 
         # confirm change made it to elasticserach
         results = SMSES().run()
