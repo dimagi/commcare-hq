@@ -4846,6 +4846,8 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
         if toggles.CUSTOM_PROPERTIES.enabled(self.domain) and "custom_properties" in self__profile:
             app_profile['custom_properties'].update(self__profile['custom_properties'])
 
+        certificate_url = self.url_base + reverse('certificate_validate')
+
         return render_to_string(template, {
             'is_odk': is_odk,
             'app': self,
@@ -4855,7 +4857,8 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
             'include_media_suite': with_media,
             'uniqueid': self.copy_of or self.id,
             'name': self.name,
-            'descriptor': u"Profile File"
+            'descriptor': u"Profile File",
+            'cert_validate_url': certificate_url
         }).encode('utf-8')
 
     @property
