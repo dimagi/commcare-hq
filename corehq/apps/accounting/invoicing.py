@@ -490,6 +490,7 @@ class UserLineItemFactory(FeatureLineItemFactory):
     @property
     def unit_description(self):
         if self.num_excess_users > 0:
+            # TODO - pluralize correctly
             return _(
                 "Per User fee exceeding monthly limit of %(monthly_limit)s users."
             ) % {
