@@ -12,6 +12,16 @@ from lxml import etree
 from dimagi.utils.subprocess_manager import subprocess_context
 
 
+def _make_address_j2me_safe(address):
+    if settings.J2ME_ADDRESS:
+        return address.replace(
+            settings.BASE_ADDRESS, settings.J2ME_ADDRESS, 1
+        ).replace(
+            "https://%s" % settings.J2ME_ADDRESS, "http://%s" % settings.J2ME_ADDRESS
+        )
+    return address
+
+
 class JadDict(dict):
     @classmethod
     def from_jad(cls, jad_contents):
@@ -39,11 +49,7 @@ class JadDict(dict):
                         'MIDlet-Certificate-1-4']
         unordered = [key for key in self.keys() if key not in ordered_start and key not in ordered_end]
         props = itertools.chain(ordered_start, sorted(unordered), ordered_end)
-        self["MIDlet-Jar-URL"] = self["MIDlet-Jar-URL"].replace(
-            settings.BASE_ADDRESS, settings.J2ME_ADDRESS, 1
-        ).replace(
-            "https://%s" % settings.J2ME_ADDRESS, "http://%s" % settings.J2ME_ADDRESS
-        )
+        self["MIDlet-Jar-URL"] = _make_address_j2me_safe(self["MIDlet-Jar-URL"])
         lines = ['%s: %s%s' % (key, self[key], self.line_ending) for key in props if self.get(key) is not None]
         return "".join(lines)
 
@@ -118,18 +124,11 @@ def sign_jar(jad, jar):
 
 
 def _convertXMLToJ2ME(files, path):
-    def transform(string):
-        return string.replace(
-            settings.BASE_ADDRESS, settings.J2ME_ADDRESS, 1
-        ).replace(
-            "https://%s" % settings.J2ME_ADDRESS, "http://%s" % settings.J2ME_ADDRESS
-        )
-
     converted_paths = set(['profile.xml', 'media_profile.xml', 'media_profile.ccpr', 'profile.ccpr'])
     if path in converted_paths:
         tree = etree.fromstring(files[path])
 
-        tree.set('update', transform(tree.attrib['update']))
+        tree.set('update', _make_address_j2me_safe(tree.attrib['update']))
 
         properties = [
             'ota-restore-url',
@@ -140,14 +139,13 @@ def _convertXMLToJ2ME(files, path):
         ]
         for prop in properties:
             prop_elem = tree.find("property[@key='" + prop + "']")
-            prop_elem.set('value', transform(prop_elem.get('value')))
+            prop_elem.set('value', _make_address_j2me_safe(prop_elem.get('value')))
 
         for remote in tree.findall("suite/resource/location[@authority='remote']"):
-            remote.text = transform(remote.text)
+            remote.text = _make_address_j2me_safe(remote.text)
 
         return etree.tostring(tree)
     return files[path]
-
 
 
 class JadJar(object):
