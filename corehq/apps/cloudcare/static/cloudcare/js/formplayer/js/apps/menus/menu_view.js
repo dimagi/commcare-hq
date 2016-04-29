@@ -1,3 +1,5 @@
+/*global FormplayerFrontend */
+
 FormplayerFrontend.module("AppSelect.MenuList", function (MenuList, FormplayerFrontend, Backbone, Marionette) {
     MenuList.MenuView = Marionette.ItemView.extend({
         tagName: "tr",

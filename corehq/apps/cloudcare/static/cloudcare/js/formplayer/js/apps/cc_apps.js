@@ -18,7 +18,7 @@ FormplayerFrontend.module("AppSelect", function (AppSelect, FormplayerFrontend, 
             AppSelect.MenuList.Controller.selectMenu(app_id);
         },
         storeApps: function (apps) {
-            FormplayerFrontend.request("appselect:storeapps", apps)
+            FormplayerFrontend.request("appselect:storeapps", apps);
         },
         listMenus: function (app_id) {
             var currentFragment = Backbone.history.getFragment();
