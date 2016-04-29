@@ -14,6 +14,7 @@ from django.conf import settings
 from django.test import TestCase
 from testil import replattr, tempdir
 
+from corehq.apps.app_manager.models import Application, RemoteApp
 from corehq.apps.hqmedia.models import (
     CommCareAudio,
     CommCareImage,
@@ -171,6 +172,68 @@ class TestSavedExportsMigrations(BaseMigrationTest):
         exp = SavedBasicExport.get(saved._id)
         self.assertEqual(exp.get_payload(), new_payload)
         self.assertEqual(exp.fetch_attachment("other"), old_payload)
+
+
+class TestApplicationMigrations(BaseMigrationTest):
+
+    slug = "applications"
+    doc_type_map = {
+        "Application": Application,
+        "RemoteApp": RemoteApp,
+        "Application-Deleted": Application,
+        "RemoteApp-Deleted": RemoteApp,
+    }
+
+    def test_migrate_saved_exports(self):
+        apps = {}
+        form = u'<fake xform source>\u2713</fake>'
+        for doc_type, model_class in self.doc_type_map.items():
+            app = model_class()
+            app.save()
+            super(BlobMixin, app).put_attachment(form, "form.xml")
+            app.doc_type = doc_type
+            app.save()
+            apps[doc_type] = app
+
+        # add legacy attribute to make sure the migration uses doc_type.wrap()
+        app = apps["Application"]
+        db = app.get_db()
+        doc = db.get(app._id, wrapper=None)
+        doc["commtrack_enabled"] = True
+        db.save_doc(doc)
+        apps["Application"] = Application.get(app._id)  # update _rev
+
+        self.do_migration(apps.values())
+
+        for app in apps.values():
+            exp = type(app).get(app._id)
+            self.assertEqual(exp.fetch_attachment("form.xml"), form)
+
+    def test_migrate_with_concurrent_modification(self):
+        apps = {}
+        new_form = 'something new'
+        old_form = 'something old'
+        for doc_type, model_class in self.doc_type_map.items():
+            app = model_class()
+            app.save()
+            super(BlobMixin, app).put_attachment(old_form, "form.xml")
+            super(BlobMixin, app).put_attachment(old_form, "other.xml")
+            app.doc_type = doc_type
+            app.save()
+            self.assertEqual(len(app._attachments), 2)
+            apps[app] = (1, 1)
+
+        def modify():
+            # put_attachment() calls .save()
+            for app in apps:
+                type(app).get(app._id).put_attachment(new_form, "form.xml")
+
+        self.do_failed_migration(apps, modify)
+
+        for app in apps:
+            exp = type(app).get(app._id)
+            self.assertEqual(exp.fetch_attachment("form.xml"), new_form)
+            self.assertEqual(exp.fetch_attachment("other.xml"), old_form)
 
 
 class TestMultimediaMigrations(BaseMigrationTest):
