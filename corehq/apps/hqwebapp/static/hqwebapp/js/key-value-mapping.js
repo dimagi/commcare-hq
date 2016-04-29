@@ -18,20 +18,23 @@ var MapItem = function(item, index, mappingContext){
         return makeSafeForCSS(this.key());
     }, this);
 
+
     // util function to generate icon-name of the format "module<module_id>_list_icon_<property_name>_<hash_of_item.key>"
-    this.generateIconPath = ko.computed(function(){
-        var hash_of_key = this.cssId();
-        var icon_name = "module" + mappingContext.module_id+ "_list_icon_" + mappingContext.property_name.val() + "_" + this.hash_of_key;
-        return 'jr://file/commcare/image/' + icon_name + '.png';
-    }, this);
+    this.generateIconPath = function(){
+        var randomFourDigits = Math.floor(Math.random()*9000) + 1000;;
+        var iconPrefix =  "jr://file/commcare/image/module" + mappingContext.module_id + "_list_icon_" + mappingContext.property_name.val() + "_";
+        return iconPrefix + randomFourDigits + ".png";
+    };
+
 
     var app_manager = hqImport('app_manager/js/app_manager_media.js');
     var uploaders = hqImport('#app_manager/partials/nav_menu_media_js_common.html');
     // attach a media-manager if item.value is a file-path to icon
     if (mappingContext.values_are_icons) {
+        var iconPath = item.value[mappingContext.lang] || self.generateIconPath();
         this.iconManager = new app_manager.AppMenuMediaManager({
             ref: {
-                "path": item.value[mappingContext.lang] || self.generateIconPath(),
+                "path": iconPath,
                 "icon_type": "icon-picture",
                 "media_type": "Image",
                 "media_class": "CommCareImage",
@@ -39,12 +42,14 @@ var MapItem = function(item, index, mappingContext){
             },
             objectMap: mappingContext.multimedia,
             uploadController: uploaders.iconUploader,
-            defaultPath: self.generateIconPath(),
+            defaultPath: iconPath,
             inputElement: $("#" + self.cssId()),
-
         });
-    }
+    };
 
+    this.toggleEditMode = function() {
+        this.editing(!this.editing());
+    };
 
     this.value = ko.computed(function() {
         // ko.observable for item.value
@@ -53,7 +58,7 @@ var MapItem = function(item, index, mappingContext){
         _.each(langs, function(lang){
             // return ko reference to path in `iconManager` for current UI language value
             if (mappingContext.values_are_icons && lang === mappingContext.lang){
-                new_value.push([lang, self.iconManager.customPath]);
+                new_value.push([lang, self.iconManager.currentPath]);
             }
             // return new ko.observable for other languages
             else{
