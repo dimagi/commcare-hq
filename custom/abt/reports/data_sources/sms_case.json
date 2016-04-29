@@ -243,7 +243,7 @@
       {
         "display_name": "username",
         "property_name": "username",
-        "datatype": "integer",
+        "datatype": "string",
         "is_primary_key": false,
         "column_id": "username",
         "is_nullable": true,
