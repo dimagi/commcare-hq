@@ -1,15 +1,12 @@
-{% extends "style/bootstrap2/two_column.html" %}
+{% extends "style/bootstrap3/two_column.html" %}
 {% load hq_shared_tags %}
 {% load report_tags %}
 {% load i18n %}
 
-{% block head %}
-    {{ block.super }}
-{% endblock %}
 
 {% block js %}
     {{ block.super }}
-    <script src="{% static 'style/js/bootstrap2/main.js' %}"></script>
+    <script src="{% static 'style/js/bootstrap3/main.js' %}"></script>
 {% endblock %}
 
 {% block js-inline %}{{ block.super }}
@@ -29,11 +26,31 @@
                 history.back();
                 return false;
             });
+
+            $('#back_breadcrumb').click(function(e) {
+                e.preventDefault();
+                history.back();
+                return false;
+            });
         });
     </script>
 {% endblock %}
 
-{% block main_column %}
+{% block page_breadcrumbs %}
+    <ol id="hq-breadcrumbs" class="breadcrumb breadcrumb-hq-section">
+        <li>
+            <a href="{% url "data_interfaces_default" domain %}"><strong>{% trans "Data" %}</strong></a>
+        </li>
+        <li>
+            <a href="#" id="back_breadcrumb">{% trans "Import Cases from Excel" %}</a>
+        </li>
+        <li class="active">
+            {% trans "Case Options" %}
+        </li>
+    </ol>
+{% endblock %}
+
+{% block page_content %}
     {% include 'importer/partials/help_message.html' %}
 
     <form class="form-horizontal form-report"
@@ -44,12 +61,12 @@
 
         <fieldset>
             <legend>{% trans "Case Type to Update/Create" %}</legend>
-            <div class="control-group">
-                <label class="control-label" for="case_type">
+            <div class="form-group">
+                <label class="control-label col-sm-3" for="case_type">
                     {% trans "Case type" %}
                 </label>
-                <div class="controls">
-                    <select name="case_type" id="case_type">
+                <div class="col-sm-6">
+                    <select class="form-control" name="case_type" id="case_type">
                         <option disabled>{% trans "Used in existing applications:" %}</option>
                         {% for case_type in case_types_from_apps %}
                         <option value="{{case_type|escape}}">{{case_type|escape}}</option>
@@ -66,12 +83,12 @@
 
         <fieldset>
             <legend>{% trans "Identifying Cases to Update/Create" %}</legend>
-            <div class="control-group">
-                <label class="control-label" for="search_column">
+            <div class="form-group">
+                <label class="control-label col-sm-3" for="search_column">
                     {% trans "Excel column" %}
                 </label>
-                <div class="controls">
-                    <select name="search_column" id="search_column">
+                <div class="col-sm-6">
+                    <select class="form-control" name="search_column" id="search_column">
                         {% for column in columns %}
                         <option value="{{column|escape}}">
                             {{column|escape}}
@@ -81,12 +98,12 @@
                 </div>
             </div>
 
-            <div class="control-group">
-                <label class="control-label" for="search_field">
+            <div class="form-group">
+                <label class="control-label col-sm-3" for="search_field">
                     {% trans "Corresponding case field" %}
                 </label>
-                <div class="controls">
-                    <select name="search_field" id="search_field">
+                <div class="col-sm-6">
+                    <select class="form-control" name="search_field" id="search_field">
                         <option value="case_id">
                             {% trans "Case ID" %}
                         </option>
@@ -97,8 +114,11 @@
                 </div>
             </div>
 
-            <div class="control-group">
-                <div class="controls">
+            <div class="form-group">
+                <label class="control-label col-sm-3">
+                    {% trans "Handle New Records" %}
+                </label>
+                <div class="col-sm-6">
                     <label class="checkbox" for="create_new_cases">
                         <input type="checkbox"
                                name="create_new_cases"
@@ -112,12 +132,15 @@
         <fieldset>
             <legend>
                 <a class="accordion-toggle collapsed" data-toggle="collapse" data-parent="#" href="#advanced-options">
-                    <i class="icon-double-angle-down"></i>{% trans "Advanced" %}
+                    <i class="fa fa-angle-double-down"></i> {% trans "Advanced" %}
                 </a>
             </legend>
             <div id="advanced-options" class="accordion-body collapse">
-                <div class="control-group">
-                    <div class="controls">
+                <div class="form-group">
+                    <label class="control-label col-sm-3">
+                        {% trans "Advanced Update" %}
+                    </label>
+                    <div class="col-sm-6">
                         <label for="key_value_columns" class="checkbox">
                             <input type="checkbox"
                                    name="key_value_columns"
@@ -143,6 +166,7 @@
                         {% trans "Corresponding Key/Value fields from Excel" %}
                         <span class="hq-help-template"
                             data-title='{% trans "Key/Value Pairs" %}'
+                            data-bootstrap3="true"
                             data-content='{% trans "The Excel file must be formatted with three columns. The first, identified in the Identifying Cases section above, contains the case to update. The second contains names of case properties to update. The last column contains the values to change. " %}'
                         ></span>
                         <script>
@@ -153,12 +177,12 @@
                             });
                         </script>                         
                     </legend>
-                    <div class="control-group">                
-                        <label class="control-label" for="key_column">
+                    <div class="form-group">
+                        <label class="control-label col-sm-3" for="key_column">
                             {% trans "Case Properties column" %}
                         </label>
-                        <div class="controls">
-                            <select name="key_column" id="key_column">
+                        <div class="col-sm-6">
+                            <select class="form-control" name="key_column" id="key_column">
                                 {% for column in columns %}
                                 <option value="{{column|escape}}">
                                     {{column|escape}}
@@ -168,12 +192,12 @@
                         </div>
                     </div>
 
-                    <div class="control-group">
-                        <label class="control-label" for="value_column">
+                    <div class="form-group">
+                        <label class="control-label col-sm-3" for="value_column">
                             {% trans "Value column" %}
                         </label>
-                        <div class="controls">
-                            <select name="value_column" id="value_column">
+                        <div class="col-sm-6">
+                            <select class="form-control" name="value_column" id="value_column">
                                 {% for column in columns %}
                                 <option value="{{column|escape}}">
                                     {{column|escape}}
@@ -187,15 +211,17 @@
         </fieldset>
 
         <div class="form-actions">
-            <button type="button"
-                    class="btn btn-primary"
-                    id="back_button">
-                <i class="icon-backward icon-white"></i> {% trans "Back" %}
-            </button>
-            <button type="submit"
-                    class="btn btn-primary">
-                <i class="icon-forward icon-white"></i> {% trans "Next step" %}
-            </button>
+            <div class="col-sm-offset-3">
+                <button type="button"
+                        class="btn btn-primary"
+                        id="back_button">
+                    <i class="fa fa-backward"></i> {% trans "Back" %}
+                </button>
+                <button type="submit"
+                        class="btn btn-primary">
+                    <i class="fa fa-forward"></i> {% trans "Next step" %}
+                </button>
+            </div>
         </div>
     </form>
 {% endblock %}

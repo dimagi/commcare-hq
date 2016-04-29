@@ -1,5 +1,5 @@
 from django.contrib import admin
-from .models import DeviceReportEntry, UserErrorEntry, UserEntry
+from .models import DeviceReportEntry, UserErrorEntry, UserEntry, ForceCloseEntry
 
 
 class DeviceReportEntryAdmin(admin.ModelAdmin):
@@ -57,6 +57,27 @@ class UserEntryAdmin(admin.ModelAdmin):
     ]
 
 
+class ForceCloseEntryAdmin(admin.ModelAdmin):
+    model = ForceCloseEntry
+    list_display = [
+        'domain',
+        'server_date',
+        'user_id',
+        'app_id',
+        'version_number',
+        'msg',
+        'session_readable',
+    ]
+    search_fields = [
+        'domain',
+        'user_id',
+        'app_id',
+        'version_number',
+        'msg',
+    ]
+
+
 admin.site.register(DeviceReportEntry, DeviceReportEntryAdmin)
 admin.site.register(UserErrorEntry, UserErrorEntryAdmin)
 admin.site.register(UserEntry, UserEntryAdmin)
+admin.site.register(ForceCloseEntry, ForceCloseEntryAdmin)

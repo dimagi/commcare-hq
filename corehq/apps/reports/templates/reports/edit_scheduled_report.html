@@ -1,6 +1,7 @@
-{% extends "reports/bootstrap2/base_template.html" %}
+{% extends "style/bootstrap3/base_section.html" %}
 {% load hq_shared_tags %}
 {% load crispy_forms_tags %}
+{% load i18n %}
 
 {% block head %}{{ block.super }}
     {% if form %}
@@ -8,14 +9,12 @@
     {% endif %}
 {% endblock %}
 
-{% block reports-js %}
-<script src="{% static 'hqwebapp/js/lib/jquery-ui/jquery-ui-1.9.2.multiselect-deps.custom.min.js' %}"></script>
-<script src="{% static 'hqwebapp/js/lib/jquery-ui/multiselect/ui.multiselect.js' %}"></script>
+{% block js %}{{ block.super }}
 <script src="{% static 'reports/javascripts/scheduled_report_form.js' %}"></script>
 {% endblock %}
 
 
-{% block reports-js-inline %}
+{% block js-inline %}{{ block.super }}
 <script>
 $(function(){
     var isConfigurableMap = {{ is_configurable_map|JSON }};
@@ -92,22 +91,22 @@ $(function(){
 </script>
 {% endblock %}
 
-{% block reports-css %}
-<link rel="stylesheet" href="{% static 'hqwebapp/js/lib/jquery-ui-datepicker/datepicker-theme/jquery-ui-1.8.17.custom.css' %}" />
-<link rel="stylesheet" href="{% static 'hqwebapp/js/lib/jquery-ui/multiselect/ui.multiselect.css' %}" />
-{% endblock %}
-
-{% block main_column %}
-    <div class="row-fluid">
-        <div class="span12">
+{% block page_content %}
+    <div class="row">
+        <div class="col-sm-12">
             {% if form %}
             {% crispy form %}
             {% else %}
-            <div class="alert">
-                You need a saved report that supports email in order to set up a scheduled email report, but you don't have any.
+            <div class="alert alert-warning">
+                {% blocktrans %}
+                You need a saved report that supports email in order to set up a
+                scheduled email report, but you don't have any.
+                {% endblocktrans %}
             </div>
             <div class="alert alert-info">
+                {% blocktrans %}
                 <strong>Note:</strong> Not all built-in reports currently support email delivery.
+                {% endblocktrans %}
             </div>
             {% endif %}
         </div>

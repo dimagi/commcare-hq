@@ -183,6 +183,8 @@ class PatientInfoReport(PatientDetailsReport):
     slug = "patient_info"
     name = 'Patient Info'
 
+    is_bootstrap3 = True
+
     @property
     def report_context(self):
         self.report_template_path = "patient_info.html"

@@ -62,6 +62,35 @@
       <version>604</version>
       <app_id>36c0bdd028d14a52cbff95bb1bfd0962</app_id>
       <expr>/data/fake</expr>
+      <context_node>/data/foo</context_node>
     </user_error>
   </user_error_subreport>
+  <force_close_subreport>
+    <force_close date="2016-03-15T13:37:04.573+05:45">
+      <type>forceclose</type>
+      <msg>java.lang.Exception: exception_text
+    at org.commcare.activities.CommCareHomeActivity.onResume(CommCareHomeActivity.java:1070)
+    at android.app.Instrumentation.callActivityOnResume(Instrumentation.java:1258)
+    at android.app.Activity.performResume(Activity.java:6327)
+    at android.app.ActivityThread.performResumeActivity(ActivityThread.java:3092)
+    at android.app.ActivityThread.handleResumeActivity(ActivityThread.java:3134)
+    at android.app.ActivityThread.handleLaunchActivity(ActivityThread.java:2481)
+    at android.app.ActivityThread.-wrap11(ActivityThread.java)
+    at android.app.ActivityThread$H.handleMessage(ActivityThread.java:1344)
+    at android.os.Handler.dispatchMessage(Handler.java:102)
+    at android.os.Looper.loop(Looper.java:148)
+    at android.app.ActivityThread.main(ActivityThread.java:5422)
+    at java.lang.reflect.Method.invoke(Native Method)
+    at com.android.internal.os.ZygoteInit$MethodAndArgsCaller.run(ZygoteInit.java:726)
+    at com.android.internal.os.ZygoteInit.main(ZygoteInit.java:616)
+      </msg>
+      <app_build>15</app_build>
+      <app_id>36c0bdd028d14a52cbff95bb1bfd0962</app_id>
+      <android_version>6.0.1</android_version>
+      <device_model>Nexus 5X</device_model>
+      <user_id>ahelis3q3s0c33ms8r5is7yrei7t02m8</user_id>
+      <session_readable></session_readable>
+      <session_serialized>AAAAAA==</session_serialized>
+    </force_close>
+  </force_close_subreport>
 </device_report>

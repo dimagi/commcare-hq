@@ -11,11 +11,12 @@ from corehq.apps.app_manager.models import Application
 from corehq.apps.reports.dispatcher import AdminReportDispatcher
 from corehq.apps.reports.generic import ElasticTabularReport, GenericTabularReport
 from corehq.apps.reports.standard.domains import DomainStatsReport, es_domain_query
-from django.utils.translation import ugettext as _, ugettext_noop
+from django.utils.translation import ugettext as _, ugettext_noop, ugettext_lazy
 from corehq.elastic import es_query, parse_args_for_es, fill_mapping_with_facets
 from corehq.apps.app_manager.commcare_settings import get_custom_commcare_settings
 from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn, DTSortType
-
+from phonelog.reports import BaseDeviceLogReport
+from phonelog.models import DeviceReportEntry
 
 INDICATOR_DATA = {
     "active_domain_count": {
@@ -543,8 +544,11 @@ class AdminReport(GenericTabularReport):
     dispatcher = AdminReportDispatcher
     is_bootstrap3 = True
 
-    base_template = "hqadmin/bootstrap3/faceted_report.html"
+    base_template = "hqadmin/faceted_report.html"
     report_template_path = "reports/async/bootstrap3/tabular.html"
+    section_name = ugettext_noop("ADMINREPORT")
+    default_params = {}
+    is_admin_report = True
 
 
 class AdminFacetedReport(AdminReport, ElasticTabularReport):
@@ -556,7 +560,6 @@ class AdminFacetedReport(AdminReport, ElasticTabularReport):
     es_queried = False
     es_facet_list = []
     es_facet_mapping = []
-    section_name = ugettext_noop("ADMINREPORT")
     es_index = None
 
     @property
@@ -999,7 +1002,6 @@ class AdminAppReport(AdminFacetedReport):
 
 class GlobalAdminReports(AdminDomainStatsReport):
     base_template = "hqadmin/indicator_report.html"
-    section_name = ugettext_noop("ADMINREPORT")  # not sure why ...
 
     @property
     def template_context(self):
@@ -1103,3 +1105,57 @@ class CommTrackProjectSpacesReport(GlobalAdminReports):
         'unique_locations',
         'location_types',
     ]
+
+
+class DeviceLogSoftAssertReport(BaseDeviceLogReport, AdminReport):
+    base_template = 'reports/bootstrap3/base_template.html'
+
+    slug = 'device_log_soft_asserts'
+    name = ugettext_lazy("Global Device Logs Soft Asserts")
+
+    fields = [
+        'corehq.apps.reports.filters.dates.DatespanFilter',
+        'corehq.apps.reports.filters.devicelog.DeviceLogDomainFilter',
+    ]
+    emailable = False
+    default_rows = 10
+
+    _username_fmt = "%(username)s"
+    _device_users_fmt = "%(username)s"
+    _device_id_fmt = "%(device)s"
+    _log_tag_fmt = "<label class='%(classes)s'>%(text)s</label>"
+
+    @property
+    def selected_domain(self):
+        selected_domain = self.request.GET.get('domain', None)
+        return selected_domain if selected_domain != u'' else None
+
+    @property
+    def headers(self):
+        headers = super(DeviceLogSoftAssertReport, self).headers
+        headers.add_column(DataTablesColumn("Domain"))
+        return headers
+
+    @property
+    def rows(self):
+        logs = self._filter_logs()
+        rows = self._create_rows(
+            logs,
+            range=slice(self.pagination.start, self.pagination.start + self.pagination.count)
+        )
+        return rows
+
+    def _filter_logs(self):
+        logs = DeviceReportEntry.objects.filter(
+            date__range=[self.datespan.startdate_param_utc, self.datespan.enddate_param_utc]
+        ).filter(type='soft-assert')
+
+        if self.selected_domain is not None:
+            logs = logs.filter(domain__exact=self.selected_domain)
+
+        return logs
+
+    def _create_row(self, log, *args, **kwargs):
+        row = super(DeviceLogSoftAssertReport, self)._create_row(log, *args, **kwargs)
+        row.append(log.domain)
+        return row

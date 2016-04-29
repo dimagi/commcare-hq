@@ -192,11 +192,12 @@ APP_BUILDER_SHADOW_MODULES = StaticToggle(
     help_link='https://confluence.dimagi.com/display/ccinternal/Shadow+Modules',
 )
 
-APP_AWARE_SYNC = StaticToggle(
+APP_AWARE_SYNC = PredictablyRandomToggle(
     'app_aware_sync',
     'App-aware Sync',
     TAG_PRODUCT_PATH,
-    [NAMESPACE_DOMAIN]
+    [NAMESPACE_DOMAIN],
+    randomness=0.3
 )
 
 CASE_LIST_CUSTOM_XML = StaticToggle(
@@ -348,6 +349,13 @@ EXTENSION_CASES_SYNC_ENABLED = StaticToggle(
     'extension_sync',
     'Enable extension syncing',
     TAG_EXPERIMENTAL,
+    [NAMESPACE_DOMAIN]
+)
+
+SYNC_SEARCH_CASE_CLAIM = StaticToggle(
+    'search_claim',
+    'Enable synchronous mobile searching and case claiming',
+    TAG_PRODUCT_PATH,
     [NAMESPACE_DOMAIN]
 )
 
@@ -511,13 +519,6 @@ CUSTOM_PROPERTIES = StaticToggle(
     [NAMESPACE_DOMAIN]
 )
 
-BULK_SMS_VERIFICATION = StaticToggle(
-    'bulk_sms_verification',
-    'Allow initiating the SMS phone verification workflow for all users in a group.',
-    TAG_ONE_OFF,
-    [NAMESPACE_USER, NAMESPACE_DOMAIN],
-)
-
 ENABLE_LOADTEST_USERS = StaticToggle(
     'enable_loadtest_users',
     'Enable creating loadtest users on HQ',
@@ -656,6 +657,13 @@ USE_FORMPLAYER = StaticToggle(
     'use_formplayer',
     'Use the new formplayer server',
     TAG_ONE_OFF,
+    [NAMESPACE_DOMAIN],
+)
+
+FORMPLAYER_EXPERIMENT = StaticToggle(
+    'use_formplayer_experiment',
+    'Do formplayer experimenting with Science',
+    TAG_EXPERIMENTAL,
     [NAMESPACE_DOMAIN],
 )
 
@@ -807,7 +815,7 @@ NOTIFICATIONS = StaticToggle(
 
 PROJECT_HEALTH_DASHBOARD = StaticToggle(
     'project_health_dashboard',
-    'Shows the project health dashboard in the reports navigation',
+    'Shows the project performance dashboard in the reports navigation',
     TAG_PRODUCT_PATH,
     [NAMESPACE_DOMAIN]
 )
@@ -817,13 +825,5 @@ UNLIMITED_REPORT_BUILDER_REPORTS = StaticToggle(
     'unlimited_report_builder_reports',
     'Allow unlimited reports created in report builder',
     TAG_PRODUCT_PATH,
-    [NAMESPACE_DOMAIN]
-)
-
-
-ALLOW_BROKEN_MULTIMEDIA_SUBMISSIONS = StaticToggle(
-    'allow_broken_multimedia_submissions',
-    "Explicitly bypass HQ's protection from the 2.26 multimedia submission bug. NOT RECOMMENDED",
-    TAG_ONE_OFF,
     [NAMESPACE_DOMAIN]
 )

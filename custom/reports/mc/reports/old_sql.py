@@ -381,6 +381,11 @@ class MCBase(ComposedTabularReport, CustomProjectReport, DatespanMixin):
     format_class = None  # override
     extra_context_providers = [section_context]
     is_bootstrap3 = True
+    use_datatables = False
+
+    @classmethod
+    def show_in_navigation(cls, domain=None, project=None, user=None):
+        return False  # todo: just remove these
 
     def __init__(self, request, base_context=None, domain=None, **kwargs):
         super(MCBase, self).__init__(request, base_context, domain, **kwargs)

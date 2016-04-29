@@ -141,8 +141,11 @@ class AutomaticUpdateRuleCriteria(models.Model):
     class Meta:
         app_label = "data_interfaces"
 
+    def get_case_value(self, case):
+        return case.resolve_case_property(self.property_name)
+
     def check_days_since(self, case, now):
-        date_to_check = case.get_case_property(self.property_name)
+        date_to_check = self.get_case_value(case)
         if (
             not isinstance(date_to_check, date) and
             isinstance(date_to_check, basestring) and
@@ -160,13 +163,13 @@ class AutomaticUpdateRuleCriteria(models.Model):
         return date_to_check <= (now - timedelta(days=days))
 
     def check_equal(self, case, now):
-        return case.to_json().get(self.property_name) == self.property_value
+        return self.get_case_value(case) == self.property_value
 
     def check_not_equal(self, case, now):
-        return case.to_json().get(self.property_name) != self.property_value
+        return self.get_case_value(case) != self.property_value
 
     def check_has_value(self, case, now):
-        value = case.get_case_property(self.property_name)
+        value = self.get_case_value(case)
         if value is None:
             return False
         if isinstance(value, basestring) and not value.strip():

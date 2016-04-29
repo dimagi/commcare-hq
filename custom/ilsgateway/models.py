@@ -485,6 +485,18 @@ class SLABConfig(models.Model):
         app_label = 'ilsgateway'
 
 
+class OneOffTaskProgress(models.Model):
+    domain = models.CharField(max_length=128)
+    task_name = models.CharField(max_length=128)
+    last_synced_object_id = models.CharField(max_length=128, null=True)
+    complete = models.BooleanField(default=False)
+    progress = models.IntegerField(default=0)
+    total = models.IntegerField(default=0)
+
+    class Meta:
+        app_label = 'ilsgateway'
+
+
 @receiver(commcare_domain_pre_delete)
 def domain_pre_delete_receiver(domain, **kwargs):
     from corehq.apps.domain.deletion import ModelDeletion, CustomDeletion
@@ -550,7 +562,7 @@ def location_edited_receiver(sender, loc, moved, **kwargs):
         )
 
     group = last_location_group(loc)
-    if group != loc.metadata['group']:
+    if not loc.sql_location.location_type.administrative and group != loc.metadata['group']:
         PendingReportingDataRecalculation.objects.create(
             domain=loc.domain,
             type='group_change',

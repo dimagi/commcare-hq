@@ -1,10 +1,6 @@
 import uuid
 from kafka import KafkaConsumer
 from kafka.common import KafkaUnavailableError
-from casexml.apps.case.mock import CaseBlock
-from casexml.apps.case.signals import case_post_save
-from casexml.apps.case.util import post_case_blocks
-from corehq.util.context_managers import drop_connected_signals
 from corehq.util.test_utils import trap_extra_setup
 from nose.tools import nottest
 import settings
@@ -28,4 +24,4 @@ def get_test_kafka_consumer(topic):
 def get_current_kafka_seq(topic):
     consumer = get_test_kafka_consumer(topic)
     # have to get the seq id before the change is processed
-    return consumer.offsets()['fetch'][(topic, 0)]
+    return consumer.offsets()['fetch'].get((topic, 0), 0)

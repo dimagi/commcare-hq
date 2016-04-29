@@ -2,17 +2,26 @@ from django.core.urlresolvers import reverse
 from django.shortcuts import redirect
 from django.utils.decorators import method_decorator
 from django.utils.translation import ugettext_noop
+from elasticsearch import NotFoundError
+from casexml.apps.case.cleanup import claim_case
+from casexml.apps.case.fixtures import CaseDBFixture
+from casexml.apps.case.models import CommCareCase
 from casexml.apps.case.xml import V2
 from corehq import toggles
 from corehq.apps.app_manager.dbaccessors import get_app
+from corehq.apps.case_search.models import CaseSearchConfig
 from corehq.apps.domain.decorators import domain_admin_required, login_or_digest_or_basic_or_apikey
 from corehq.apps.domain.models import Domain
 from corehq.apps.domain.views import DomainViewMixin, EditMyProjectSettingsView
+from corehq.apps.es.case_search import CaseSearchES, flatten_result
 from corehq.apps.ota.forms import PrimeRestoreCacheForm, AdvancedPrimeRestoreCacheForm
 from corehq.apps.ota.tasks import prime_restore
 from corehq.apps.style.views import BaseB3SectionPageView
 from corehq.apps.users.models import CouchUser, CommCareUser
+from corehq.form_processor.serializers import CommCareCaseSQLSerializer, get_instance_from_data
+from corehq.pillows.mappings.case_search_mapping import CASE_SEARCH_MAX_RESULTS
 from corehq.tabs.tabclasses import ProjectSettingsTab
+from corehq.form_processor.utils import should_use_sql_backend
 from corehq.util.view_utils import json_error
 from dimagi.utils.decorators.memoized import memoized
 from casexml.apps.phone.restore import RestoreConfig, RestoreParams, RestoreCacheSettings
@@ -30,6 +39,53 @@ def restore(request, domain, app_id=None):
     user = request.user
     couch_user = CouchUser.from_django_user(user)
     return get_restore_response(domain, couch_user, app_id, **get_restore_params(request))
+
+
+@json_error
+@login_or_digest_or_basic_or_apikey()
+def search(request, domain):
+    """
+    Accepts search criteria as GET params, e.g. "https://www.commcarehq.org/a/domain/phone/search/?a=b&c=d"
+    Returns results as a fixture with the same structure as a casedb instance.
+    """
+    criteria = request.GET.dict()
+    try:
+        case_type = criteria.pop('case_type')
+    except KeyError:
+        return HttpResponse('Search request must specify case type', status=400)
+
+    search_es = (CaseSearchES()
+                 .domain(domain)
+                 .case_type(case_type)
+                 .size(CASE_SEARCH_MAX_RESULTS))
+    config = CaseSearchConfig(domain=domain).config
+    fuzzies = config.get_fuzzy_properties_for_case_type(case_type)
+    for key, value in criteria.items():
+        search_es = search_es.case_property_query(key, value, fuzzy=(key in fuzzies))
+    try:
+        results = search_es.values()
+    except NotFoundError:
+        results = []
+    if should_use_sql_backend(domain):
+        cases = [get_instance_from_data(CommCareCaseSQLSerializer, result) for result in results]
+    else:
+        cases = [CommCareCase.wrap(flatten_result(result)) for result in results]
+    fixtures = CaseDBFixture(cases).fixture
+    return HttpResponse(fixtures, content_type="text/xml")
+
+
+@json_error
+@login_or_digest_or_basic_or_apikey()
+def claim(request, domain):
+    couch_user = CouchUser.from_django_user(request.user)
+    if request.method == 'POST':
+        if request.session.get('last_claimed_case_id') == request.POST['case_id']:
+            return HttpResponse('You have already claimed that {}'.format(request.POST.get('case_type', 'case')),
+                                status=400)
+        claim_case(domain, couch_user.user_id, request.POST['case_id'],
+                   host_type=request.POST.get('case_type'), host_name=request.POST.get('case_name'))
+        request.session['last_claimed_case_id'] = request.POST['case_id']
+    return HttpResponse(status=200)
 
 
 def get_restore_params(request):
@@ -100,7 +156,6 @@ class PrimeRestoreCacheView(BaseB3SectionPageView, DomainViewMixin):
         main_context.update({
             'active_tab': ProjectSettingsTab(
                 self.request,
-                self.urlname,
                 domain=self.domain,
                 couch_user=self.request.couch_user,
                 project=self.request.project

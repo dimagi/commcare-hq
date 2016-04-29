@@ -1,15 +1,8 @@
-{% extends 'reports/bootstrap2/partials/base_maps.html' %}
+{% extends 'reports/bootstrap3/partials/base_maps.html' %}
 {% load static %}
 {% load hq_shared_tags %}
-{% block js-libs %}
-    <script>L_PREFER_CANVAS = true;</script>
-    {{ block.super }}
-{% endblock %}
 {% block js-script %}
-    <script src="{% static 'reports/javascripts/maps.js' %}"></script>
-    <script src="{% static 'reports/javascripts/maps_utils.js' %}"></script>
     <script>
-
     CONTEXT = {{ context|JSON }};
     ICON_PATH = '{% static 'reports/css/leaflet/images' %}';
     MIN_HEIGHT = 300; //px

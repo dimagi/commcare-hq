@@ -6,7 +6,6 @@ from casexml.apps.case.models import CommCareCase
 from casexml.apps.case.sharedmodels import CommCareCaseIndex
 from corehq.apps.app_manager.tests.util import TestXmlMixin
 from django.test import SimpleTestCase
-from xml.etree import ElementTree
 
 
 class TestFixtures(TestXmlMixin, SimpleTestCase):
@@ -37,4 +36,4 @@ class TestFixtures(TestXmlMixin, SimpleTestCase):
 
     def test_fixture(self):
         fixture = CaseDBFixture([self.case, self.case]).fixture
-        self.assertXmlEqual(ElementTree.tostring(fixture, encoding="utf-8"), self.get_xml('case_fixture'))
+        self.assertXmlEqual(fixture, self.get_xml('case_fixture'))

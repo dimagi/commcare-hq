@@ -11,7 +11,7 @@
 <script type="text/javascript">
 (function () {
     var MediaManager = hqImport('domain/js/media_manager.js').MediaManager;
-    $('body').koApplyBindings(new MediaManager({{ media|JSON }}, {{ licenses|JSON }}));
+    $('#update-media-sharing-settings').koApplyBindings(new MediaManager({{ media|JSON }}, {{ licenses|JSON }}));
 }());
 </script>
 {% endblock %}

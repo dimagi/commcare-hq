@@ -38,9 +38,9 @@ class SupervisorConfCommand(BaseCommand):
         self.conf_dest = options['conf_destination']
         self.params = options['params']
 
-        root_dir = settings.FILEPATH
+        service_dir = settings.SERVICE_DIR
 
-        conf_template_fullpath = os.path.join(root_dir, 'fab', 'services', 'templates', self.conf_file_template)
+        conf_template_fullpath = os.path.join(service_dir, self.conf_file_template)
         if not os.path.isfile(conf_template_fullpath):
             sys.exit("[make_supervisor_conf] Error: file %s does not exist as a template to use - you're doing something wrong" % conf_template_fullpath) #needs to be in source control moron!
 

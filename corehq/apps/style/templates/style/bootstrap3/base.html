@@ -227,7 +227,8 @@
     </head>
     <body>
         {% maintenance_alert %}
-        <div class="hq-container">
+        <!-- .hide used for A/B test of account creation page -->
+        <div class="hq-container{% if is_register_user_experiment %} hide{% endif %}">
             <div id="hq-navigation"
                  class="navbar navbar-default navbar-static-top navbar-hq-main-menu">
                 <div class="container-fluid">
@@ -253,7 +254,6 @@
                         {% endif %}
                         </div>
                     </nav>
-                    {% format_subtab_menu %}
                 </div>
             </div>
             {% if request.project.is_snapshot %}
@@ -319,7 +319,7 @@
                                 is copyright &copy;
                             {% endblocktrans %}{% now "Y" %}
                             <a href="http://www.dimagi.com/">Dimagi, Inc.</a>
-                            {% if user.is_authenticated %}
+                            {% if request.user.is_authenticated %}
                                 &nbsp;|&nbsp;
                                 <a href="{% trans 'http://www.commcarehq.org/home' %}">{% trans 'Learn more about CommCare HQ' %}</a>
                             {% endif %}
@@ -506,6 +506,16 @@
         <script src="{% static 'reports/javascripts/async_maps.js' %}"></script>
         <script src="{% static 'reports/javascripts/maps_utils.js' %}"></script>
         {% endcompress %}
+        {% endif %}
+
+        {% if request.use_timeago %}
+        <script src="{% new_static 'jquery-timeago/jquery.timeago.js' %}"></script>
+        <script>
+            $(function () {
+                $.timeago.settings.allowFuture = true;
+                $(".timeago").timeago();
+            });
+        </script>
         {% endif %}
 
         {% block js %}{% endblock js %}

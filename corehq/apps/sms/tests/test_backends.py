@@ -5,7 +5,7 @@ from corehq.apps.domain.models import Domain
 from corehq.apps.sms.api import (send_sms, send_sms_to_verified_number,
     send_sms_with_backend, send_sms_with_backend_name)
 from corehq.apps.sms.mixin import BadSMSConfigException
-from corehq.apps.sms.models import (SMS, QueuedSMS, CommConnectCase,
+from corehq.apps.sms.models import (SMS, QueuedSMS,
     SQLMobileBackendMapping, SQLMobileBackend, MobileBackendInvitation,
     PhoneLoadBalancingMixin, BackendMap)
 from corehq.apps.sms.tasks import handle_outgoing
@@ -48,14 +48,12 @@ class AllBackendTest(BaseSMSTest):
         set_case_property_directly(self.contact1, 'contact_phone_number', self.test_phone_number)
         set_case_property_directly(self.contact1, 'contact_phone_number_is_verified', '1')
         self.contact1.save()
-        self.contact1 = CommConnectCase.wrap(self.contact1.to_json())
 
         # For use with megamobile only
         self.contact2 = CommCareCase(domain=self.domain_obj.name)
         set_case_property_directly(self.contact2, 'contact_phone_number', '63%s' % self.test_phone_number)
         set_case_property_directly(self.contact2, 'contact_phone_number_is_verified', '1')
         self.contact2.save()
-        self.contact2 = CommConnectCase.wrap(self.contact2.to_json())
 
         self.unicel_backend = SQLUnicelBackend(
             name='UNICEL',
@@ -528,7 +526,7 @@ class OutgoingFrameworkTestCase(BaseSMSTest):
         set_case_property_directly(self.case, 'contact_phone_number_is_verified', '1')
         self.case.save()
 
-        self.contact = CommConnectCase.wrap(self.case.to_json())
+        self.contact = self.case
 
     def tearDown(self):
         delete_domain_phone_numbers(self.domain)
@@ -680,7 +678,7 @@ class OutgoingFrameworkTestCase(BaseSMSTest):
         # Test sending to verified number with a contact-level backend owned by the domain
         set_case_property_directly(self.case, 'contact_backend_id', 'BACKEND')
         self.case.save()
-        self.contact = CommConnectCase.wrap(self.case.to_json())
+        self.contact = self.case
         verified_number = self.contact.get_verified_number()
         self.assertTrue(verified_number is not None)
         self.assertEqual(verified_number.backend_id, 'BACKEND')

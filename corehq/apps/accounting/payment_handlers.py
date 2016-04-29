@@ -70,7 +70,8 @@ class BaseStripePaymentHandler(object):
         """
         raise NotImplementedError("you must implement update_credits")
 
-    def get_amount_in_cents(self, amount):
+    @staticmethod
+    def get_amount_in_cents(amount):
         amt_cents = amount * Decimal('100')
         return int(amt_cents.quantize(Decimal(10)))
 
@@ -356,7 +357,6 @@ class CreditStripePaymentHandler(BaseStripePaymentHandler):
         account.pre_or_post_pay = PreOrPostPay.PREPAY
         account.save()
 
-
     def update_credits(self, payment_record):
         for feature in self.features:
             feature_amount = feature['amount']
@@ -384,7 +384,7 @@ class CreditStripePaymentHandler(BaseStripePaymentHandler):
                     plan_amount,
                     account=self.account,
                     subscription=self.subscription,
-                    product_type=product['type'],
+                    product_type=SoftwareProductType.ANY,
                     payment_record=payment_record,
                 ))
             else:
@@ -468,7 +468,8 @@ class AutoPayInvoicePaymentHandler(object):
         except:
             self._handle_email_failure(payment_record)
 
-    def _handle_card_declined(self, invoice, payment_method):
+    @staticmethod
+    def _handle_card_declined(invoice, payment_method):
         from corehq.apps.accounting.tasks import send_autopay_failed
         log_accounting_error(
             "[Autopay] An automatic payment failed for invoice: {} "
@@ -478,14 +479,16 @@ class AutoPayInvoicePaymentHandler(object):
         )
         send_autopay_failed.delay(invoice, payment_method)
 
-    def _handle_card_errors(self, invoice, e):
+    @staticmethod
+    def _handle_card_errors(invoice, e):
         log_accounting_error(
             "[Autopay] An automatic payment failed for invoice: {invoice} "
             "because the of {error}. This invoice will not be automatically paid."
             .format(invoice=invoice.id, error=e)
         )
 
-    def _handle_email_failure(self, payment_record):
+    @staticmethod
+    def _handle_email_failure(payment_record):
         log_accounting_error(
             "[Autopay] During an automatic payment, sending a payment receipt failed"
             " for Payment Record: {}. Everything else succeeded"

@@ -467,7 +467,7 @@ class GenericReportView(object):
                 is_emailable=self.emailable,
                 is_export_all = self.exportable_all,
                 is_printable=self.printable,
-                is_admin=self.is_admin_report,   # todo is this necessary???
+                is_admin=self.is_admin_report,
                 special_notice=self.special_notice,
                 report_title=self.report_title or self.rendered_report_title,
                 report_subtitles=self.report_subtitles,

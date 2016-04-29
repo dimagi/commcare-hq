@@ -33,6 +33,14 @@ class SQLTropoBackend(SQLSMSBackend):
     def get_sms_rate_limit(self):
         return 60
 
+    @classmethod
+    def get_opt_in_keywords(cls):
+        return ['START']
+
+    @classmethod
+    def get_opt_out_keywords(cls):
+        return ['STOP']
+
     def send(self, msg, *args, **kwargs):
         phone_number = clean_phone_number(msg.phone_number)
         text = msg.text.encode('utf-8')

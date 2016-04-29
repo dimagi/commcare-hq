@@ -1,5 +1,7 @@
 import copy
 import datetime
+import re
+from collections import defaultdict
 from decimal import Decimal
 import logging
 import json
@@ -25,6 +27,9 @@ from django.views.decorators.http import require_POST
 from PIL import Image
 from django.utils.translation import ugettext as _, ugettext_lazy
 from django.contrib.auth.models import User
+
+from corehq.apps.app_manager.dbaccessors import get_apps_in_domain
+from corehq.apps.case_search.models import CaseSearchConfig, CaseSearchConfigJSON
 from corehq.apps.hqwebapp.templatetags.hq_shared_tags import toggle_js_domain_cachebuster
 
 from corehq.const import USER_DATE_FORMAT
@@ -92,7 +97,11 @@ from corehq.apps.domain.forms import (
     ConfirmSubscriptionRenewalForm, SnapshotFixtureForm, TransferDomainForm,
     SelectSubscriptionTypeForm, INTERNAL_SUBSCRIPTION_MANAGEMENT_FORMS, AdvancedExtendedTrialForm,
     ContractedPartnerForm, DimagiOnlyEnterpriseForm)
-from corehq.apps.domain.models import Domain, LICENSES, TransferDomainRequest
+from corehq.apps.domain.models import (
+    Domain,
+    LICENSES,
+    TransferDomainRequest,
+)
 from corehq.apps.domain.utils import normalize_domain_name
 from corehq.apps.hqwebapp.views import BaseSectionPageView, BasePageView, CRUDPaginatedViewMixin
 from corehq.apps.domain.forms import ProjectSettingsForm
@@ -100,8 +109,8 @@ from dimagi.utils.decorators.memoized import memoized
 from dimagi.utils.web import get_ip, json_response, get_site_domain
 from corehq.apps.users.decorators import require_can_edit_web_users
 from corehq.apps.repeaters.forms import GenericRepeaterForm, FormRepeaterForm
-from corehq.apps.repeaters.models import FormRepeater, CaseRepeater, ShortFormRepeater, AppStructureRepeater, \
-    RepeatRecord, repeater_types, RegisterGenerator
+from corehq.apps.repeaters.models import Repeater, FormRepeater, CaseRepeater, ShortFormRepeater, \
+    AppStructureRepeater, RepeatRecord, repeater_types, RegisterGenerator
 from corehq.apps.repeaters.dbaccessors import (
     get_paged_repeat_records,
     get_repeat_record_count,
@@ -281,7 +290,6 @@ class BaseProjectSettingsView(BaseDomainView):
         main_context.update({
             'active_tab': ProjectSettingsTab(
                 self.request,
-                self.urlname,
                 domain=self.domain,
                 couch_user=self.request.couch_user,
                 project=self.request.project
@@ -521,9 +529,9 @@ class EditDhis2SettingsView(BaseProjectSettingsView):
 @require_POST
 @require_can_edit_web_users
 def drop_repeater(request, domain, repeater_id):
-    rep = FormRepeater.get(repeater_id)
+    rep = Repeater.get(repeater_id)
     rep.retire()
-    messages.success(request, "Form forwarding stopped!")
+    messages.success(request, "Forwarding stopped!")
     return HttpResponseRedirect(reverse(DomainForwardingOptionsView.urlname, args=[domain]))
 
 
@@ -702,12 +710,12 @@ class DomainSubscriptionView(DomainAccountingSettings):
             'type': product_type,
             'subscription_credit': self._fmt_credit(self._credit_grand_total(
                 CreditLine.get_credits_by_subscription_and_features(
-                    subscription, product_type=product_type
+                    subscription, product_type=SoftwareProductType.ANY
                 ) if subscription else None
             )),
             'account_credit': self._fmt_credit(self._credit_grand_total(
                 CreditLine.get_credits_for_account(
-                    account, product_type=product_type
+                    account, product_type=SoftwareProductType.ANY
                 ) if account else None
             )),
         }
@@ -1267,12 +1275,11 @@ class InternalSubscriptionManagementView(BaseAdminProjectSettingsView):
             subscription_type = None
         else:
             plan = subscription.plan_version.plan
-            if subscription.service_type == SubscriptionType.CONTRACTED:
+            if subscription.service_type == SubscriptionType.IMPLEMENTATION:
                 subscription_type = ContractedPartnerForm.slug
             elif plan.edition == SoftwarePlanEdition.ENTERPRISE:
                 subscription_type = DimagiOnlyEnterpriseForm.slug
-            elif (plan.edition == SoftwarePlanEdition.ADVANCED
-                  and plan.visibility == SoftwarePlanVisibility.TRIAL_INTERNAL):
+            elif plan.edition == SoftwarePlanEdition.ADVANCED:
                 subscription_type = AdvancedExtendedTrialForm.slug
 
         return SelectSubscriptionTypeForm(
@@ -2072,6 +2079,59 @@ class ManageProjectMediaView(BaseAdminProjectSettingsView):
         return self.get(request, *args, **kwargs)
 
 
+class CaseSearchConfigView(BaseAdminProjectSettingsView):
+    urlname = 'case_search_config'
+    page_title = ugettext_lazy('Case Search')
+    template_name = 'domain/admin/case_search.html'
+
+    @method_decorator(domain_admin_required)
+    @use_bootstrap3
+    def dispatch(self, request, *args, **kwargs):
+        return super(CaseSearchConfigView, self).dispatch(request, *args, **kwargs)
+
+    def post(self, request, *args, **kwargs):
+
+        def unpack_fuzzies(query_dict):
+            """
+            Builds an integer-keyed dictionary from POST request data, and returns a list of dictionaries that can
+            be wrapped by CaseSearchConfigJSON
+            """
+            # match "config[fuzzy_properties][0][case_type]" and "config[fuzzy_properties][0][properties][]" but
+            # not "enable"
+            pattern = re.compile(r'^config\[fuzzy_properties]\[(?P<index>\d+)]\[(?P<attr>\w+)](?:\[])?$')
+            fuzzy_dict = defaultdict(dict)
+            for key in query_dict:
+                match = pattern.match(key)
+                if match:
+                    i = int(match.group('index'))
+                    attr = match.group('attr')
+                    is_list = key.endswith('[]')  # i.e. "...[properties][]"
+                    fuzzy_dict[i][attr] = query_dict.getlist(key) if is_list else query_dict[key]
+            if not fuzzy_dict:
+                return []
+            return [fuzzy_dict[i] for i in range(max(fuzzy_dict.keys()) + 1) if fuzzy_dict[i]]
+
+        CaseSearchConfig.objects.update_or_create(domain=self.domain, defaults={
+            'enabled': request.POST['enable'],
+            'config': CaseSearchConfigJSON({'fuzzy_properties': unpack_fuzzies(request.POST)})
+        })
+        messages.success(request, _("Case search configuration updated successfully"))
+        return self.get(request, *args, **kwargs)
+
+    @property
+    def page_context(self):
+        apps = get_apps_in_domain(self.domain, include_remote=False)
+        case_types = {t for app in apps for t in app.get_case_types() if t}
+        current_values = CaseSearchConfig.objects.get_or_none(pk=self.domain)
+        return {
+            'case_types': sorted(list(case_types)),
+            'values': {
+                'enabled': current_values.enabled if current_values else False,
+                'config': current_values.config if current_values else {}
+            }
+        }
+
+
 class RepeaterMixin(object):
 
     @property
@@ -2147,7 +2207,6 @@ class DomainForwardingRepeatRecords(GenericTabularReport):
         context.update({
             'active_tab': ProjectSettingsTab(
                 self.request,
-                self.slug,
                 domain=self.domain,
                 couch_user=self.request.couch_user,
             )

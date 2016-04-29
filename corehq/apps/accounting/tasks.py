@@ -314,7 +314,6 @@ def create_wire_credits_invoice(domain_name,
     account = BillingAccount.get_or_create_account_by_domain(
         domain_name,
         created_by=account_created_by,
-        created_by_invoicing=True,
         entry_point=account_entry_point
     )[0]
     wire_invoice = WirePrepaymentInvoice.objects.create(

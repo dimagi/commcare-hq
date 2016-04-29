@@ -15,7 +15,9 @@ from django.views.generic.base import TemplateView
 from corehq.apps.analytics.tasks import (
     track_workflow,
     track_confirmed_account_on_hubspot,
+    track_clicked_signup_on_hubspot
 )
+from corehq.apps.analytics.utils import get_meta
 from corehq.apps.domain.decorators import login_required
 from corehq.apps.domain.models import Domain
 from corehq.apps.domain.exceptions import NameUnavailableException
@@ -87,11 +89,14 @@ def register_user(request):
             form = NewWebUserRegistrationForm(
                 initial={'email': prefilled_email, 'create_domain': True})
             context.update({'create_domain': True})
+            meta = get_meta(request)
+            track_clicked_signup_on_hubspot(prefilled_email, request.COOKIES, meta)
 
         context.update({
             'form': form,
             'current_page': {'page_name': _('Create an Account')},
             'hide_password_feedback': settings.ENABLE_DRACONIAN_SECURITY_FEATURES,
+            'is_register_user_experiment': True,
         })
         return render(request, 'registration/create_new_user.html', context)
 

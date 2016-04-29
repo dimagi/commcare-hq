@@ -20,7 +20,7 @@ from corehq.apps.cachehq.mixins import (
     QuickCachedDocumentMixin,
 )
 from corehq.apps.userreports.dbaccessors import get_number_of_report_configs_by_data_source, \
-    get_report_configs_for_domain
+    get_report_configs_for_domain, get_datasources_for_domain
 from corehq.apps.userreports.exceptions import (
     BadSpecError,
     DataSourceConfigurationNotFoundError,
@@ -43,6 +43,8 @@ from dimagi.utils.couch.database import iter_docs
 from dimagi.utils.decorators.memoized import memoized
 from dimagi.utils.mixins import UnicodeMixIn
 from django.conf import settings
+
+from dimagi.utils.modules import to_function
 
 
 class DataSourceBuildInformation(DocumentSchema):
@@ -262,16 +264,7 @@ class DataSourceConfiguration(UnicodeMixIn, CachedCouchDocumentMixin, Document):
 
     @classmethod
     def by_domain(cls, domain):
-        return sorted(
-            cls.view(
-                'userreports/data_sources_by_build_info',
-                start_key=[domain],
-                end_key=[domain, {}],
-                reduce=False,
-                include_docs=True
-            ),
-            key=lambda config: config.display_name
-        )
+        return get_datasources_for_domain(domain)
 
     @classmethod
     def all_ids(cls):
@@ -318,6 +311,7 @@ class ReportConfiguration(UnicodeMixIn, QuickCachedDocumentMixin, Document):
 
     def __unicode__(self):
         return u'{} - {}'.format(self.domain, self.title)
+
 
     @property
     @memoized
@@ -469,6 +463,11 @@ class StaticDataSourceConfiguration(JsonObject):
                     doc['domain'] = domain
                     doc['_id'] = cls.get_doc_id(domain, doc['table_id'])
                     yield DataSourceConfiguration.wrap(doc)
+
+        for provider_path in settings.STATIC_DATA_SOURCE_PROVIDERS:
+            provider_fn = to_function(provider_path, failhard=True)
+            for datasource in provider_fn():
+                yield datasource
 
     @classmethod
     def by_domain(cls, domain):

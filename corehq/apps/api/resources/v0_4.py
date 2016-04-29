@@ -366,6 +366,7 @@ class ApplicationResource(CouchResourceMixin, HqBaseResource, DomainSpecificReso
 
     id = fields.CharField(attribute='_id')
     name = fields.CharField(attribute='name')
+    version = fields.IntegerField(attribute='version')
     modules = fields.ListField()
 
     def dehydrate_module(self, app, module, langs):

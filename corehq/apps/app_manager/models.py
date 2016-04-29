@@ -1,4 +1,27 @@
 # coding=utf-8
+"""
+Application terminology
+
+For any given application, there are a number of different documents.
+
+The primary application document is an instance of Application.  This
+document id is what you'll see in the URL on most app manager pages. Primary
+application documents should have `copy_of == None` and `is_released ==
+False`. When an application is saved, the field `version` is incremented.
+
+When a user makes a build of an application, a copy of the primary
+application document is made. These documents are the "versions" you see on
+the deploy page. Each build document will have a different id, and the
+`copy_of` field will be set to the ID of the primary application document.
+Additionally, some attachments such as `profile.xml` and `suite.xml` will be
+created and saved to the build doc (see `create_all_files`).
+
+When a build is starred, this is called "releasing" the build.  The parameter
+`is_released` will be set to True on the build document.
+
+You might also run in to remote applications and applications copied to be
+published on the exchange, but those are quite infrequent.
+"""
 import calendar
 from distutils.version import LooseVersion
 from itertools import chain
@@ -21,8 +44,6 @@ from couchdbkit import MultipleResultsFound
 import itertools
 from lxml import etree
 from django.core.cache import cache
-from django.utils.encoding import force_unicode
-from django.utils.safestring import mark_safe
 from django.utils.translation import override, ugettext as _, ugettext
 from couchdbkit.exceptions import BadValueError
 from corehq.apps.app_manager.suite_xml.utils import get_select_chain
@@ -63,7 +84,7 @@ import commcare_translations
 from corehq.util import bitly
 from corehq.util import view_utils
 from corehq.apps.appstore.models import SnapshotMixin
-from corehq.apps.builds.models import BuildSpec, CommCareBuildConfig, BuildRecord
+from corehq.apps.builds.models import BuildSpec, BuildRecord
 from corehq.apps.hqmedia.models import HQMediaMixin
 from corehq.apps.translations.models import TranslationMixin
 from corehq.apps.users.models import CouchUser
@@ -87,6 +108,8 @@ from corehq.apps.app_manager.util import (
     update_unique_ids,
     app_callout_templates,
     use_app_aware_sync,
+    xpath_references_case,
+    xpath_references_user_case,
 )
 from corehq.apps.app_manager.xform import XForm, parse_xml as _parse_xml, \
     validate_xform
@@ -221,8 +244,8 @@ class IndexedSchema(DocumentSchema):
         def __call__(self, instance):
             items = getattr(instance, self.attr)
             l = len(items)
-            for i,item in enumerate(items):
-                yield item.with_id(i%l, instance)
+            for i, item in enumerate(items):
+                yield item.with_id(i % l, instance)
 
         def __get__(self, instance, owner):
             # thanks, http://metapython.blogspot.com/2010/11/python-instance-methods-how-are-they.html
@@ -245,6 +268,7 @@ class FormActionCondition(DocumentSchema):
 
     def is_active(self):
         return self.type in ('if', 'always')
+
 
 class FormAction(DocumentSchema):
     """
@@ -345,6 +369,7 @@ class FormActions(DocumentSchema):
 
     case_preload = SchemaProperty(PreloadAction)
     referral_preload = SchemaProperty(PreloadAction)
+    load_from_form = SchemaProperty(PreloadAction)
 
     usercase_update = SchemaProperty(UpdateCaseAction)
     usercase_preload = SchemaProperty(PreloadAction)
@@ -389,6 +414,10 @@ class AdvancedAction(IndexedSchema):
     @property
     def is_subcase(self):
         return bool(self.case_indices)
+
+    @property
+    def form_element_name(self):
+        return "case_{}".format(self.case_tag)
 
 
 class AutoSelectCase(DocumentSchema):
@@ -518,6 +547,7 @@ class AdvancedOpenCaseAction(AdvancedAction):
 
 class AdvancedFormActions(DocumentSchema):
     load_update_cases = SchemaListProperty(LoadUpdateAction)
+
     open_cases = SchemaListProperty(AdvancedOpenCaseAction)
 
     get_load_update_actions = IndexedSchema.Getter('load_update_cases')
@@ -801,8 +831,12 @@ class FormBase(DocumentSchema):
     def validate_form(self):
         vc = self.validation_cache
         if vc is None:
+            # formtranslate requires all attributes to be valid xpaths, but
+            # vellum namespaced attributes aren't
+            form = self.wrapped_xform()
+            form.strip_vellum_ns_attributes()
             try:
-                validate_xform(self.source,
+                validate_xform(etree.tostring(form.xml),
                                version=self.get_app().application_version)
             except XFormValidationError as e:
                 validation_dict = {
@@ -1004,7 +1038,7 @@ class FormBase(DocumentSchema):
 
     def uses_usercase(self):
         raise NotImplementedError()
-    
+
     def update_app_case_meta(self, app_case_meta):
         pass
 
@@ -1287,7 +1321,7 @@ class Form(IndexedFormBase, NavMenuItemMediaMixin):
             elif self.requires == 'case':
                 action_types = (
                     'update_case', 'close_case', 'case_preload', 'subcases',
-                    'usercase_update', 'usercase_preload',
+                    'usercase_update', 'usercase_preload', 'load_from_form',
                 )
             else:
                 # this is left around for legacy migrated apps
@@ -1446,7 +1480,8 @@ class Form(IndexedFormBase, NavMenuItemMediaMixin):
         from corehq.apps.reports.formdetails.readable import FormQuestionResponse
         questions = {
             q['value']: FormQuestionResponse(q)
-            for q in self.get_questions(self.get_app().langs, include_translations=True)
+            for q in self.get_questions(self.get_app().langs, include_triggers=True,
+                include_groups=True, include_translations=True)
         }
         module_case_type = self.get_module().case_type
         type_meta = app_case_meta.get_type(module_case_type)
@@ -1471,7 +1506,7 @@ class Form(IndexedFormBase, NavMenuItemMediaMixin):
                         questions,
                         question_path
                     )
-            if type_ == 'case_preload':
+            if type_ == 'case_preload' or type_ == 'load_from_form':
                 for name, question_path in FormAction.get_action_properties(action):
                     self.add_property_load(
                         app_case_meta,
@@ -1737,6 +1772,22 @@ class CaseList(IndexedSchema, NavMenuItemMediaMixin):
 
     def rename_lang(self, old_lang, new_lang):
         _rename_key(self.label, old_lang, new_lang)
+
+
+class CaseSearchProperty(DocumentSchema):
+    """
+    Case properties available to search on.
+    """
+    name = StringProperty()
+    label = DictProperty()
+
+
+class CaseSearch(DocumentSchema):
+    """
+    Properties and search command label
+    """
+    command_label = DictProperty(default={'en': 'Search All Cases'})
+    properties = SchemaListProperty(CaseSearchProperty)
 
 
 class ParentSelect(DocumentSchema):
@@ -2050,8 +2101,9 @@ class ModuleDetailsMixin():
                 })
         if self.case_list_filter:
             try:
-                etree.XPath(self.case_list_filter)
-            except etree.XPathSyntaxError:
+                case_list_filter = interpolate_xpath(self.case_list_filter)
+                etree.XPath(case_list_filter)
+            except (etree.XPathSyntaxError, CaseXPathValidationError):
                 errors.append({
                     'type': 'invalid filter xpath',
                     'module': self.get_module_info(),
@@ -2119,7 +2171,7 @@ class Module(ModuleBase, ModuleDetailsMixin):
     referral_list = SchemaProperty(CaseList)
     task_list = SchemaProperty(CaseList)
     parent_select = SchemaProperty(ParentSelect)
-
+    search_config = SchemaProperty(CaseSearch)
 
     @classmethod
     def wrap(cls, data):
@@ -2418,7 +2470,12 @@ class AdvancedForm(IndexedFormBase, NavMenuItemMediaMixin):
                 case_tag=action.case_tag
             ))
 
-        if self.form_filter:
+        form_filter_references_case = (
+            xpath_references_case(self.form_filter) or
+            xpath_references_user_case(self.form_filter)
+        )
+
+        if form_filter_references_case:
             if not any(action for action in self.actions.load_update_cases if not action.auto_select):
                 errors.append({'type': "filtering without case"})
 
@@ -2617,6 +2674,7 @@ class AdvancedModule(ModuleBase):
     has_schedule = BooleanProperty()
     schedule_phases = SchemaListProperty(SchedulePhase)
     get_schedule_phases = IndexedSchema.Getter('schedule_phases')
+    search_config = SchemaListProperty(CaseSearch)
 
     @classmethod
     def new_module(cls, name, lang):
@@ -3277,6 +3335,7 @@ class ReportAppFilter(DocumentSchema):
                 'CustomMonthFilter': CustomMonthFilter,
                 'MobileSelectFilter': MobileSelectFilter,
                 'AncestorLocationTypeFilter': AncestorLocationTypeFilter,
+                'NumericFilter': NumericFilter,
             }
             try:
                 klass = doc_type_to_filter_class[doc_type]
@@ -3505,6 +3564,22 @@ class AncestorLocationTypeFilter(ReportAppFilter):
             # user.sql_location is None, or location does not have an ancestor of that type
             return None
         return ancestor.location_id
+
+
+class NumericFilter(ReportAppFilter):
+    operator = StringProperty(choices=['=', '!=', '<', '<=', '>', '>=']),
+    operand = FloatProperty()
+
+    @classmethod
+    def wrap(cls, doc):
+        doc['operand'] = float(doc['operand'])
+        return super(NumericFilter, cls).wrap(doc)
+
+    def get_filter_value(self, user, ui_filter):
+        return {
+            'operator': self.operator,
+            'operand': self.operand,
+        }
 
 
 class ReportAppConfig(DocumentSchema):
@@ -3905,12 +3980,7 @@ class ApplicationBase(VersionedDoc, SnapshotMixin,
     Abstract base class for Application and RemoteApp.
     Contains methods for generating the various files and zipping them into CommCare.jar
 
-    There are several flavors of Applications:
-        Application - The current state of the application has copy_of==None
-        SavedAppBuild - Whenever the app is built, a copy is created, and
-            copy_of will be set to the original application's id.
-        Released builds are SavedAppBuilds with is_released==True.  These have
-            been starred on the releases page.
+    See note at top of file for high-level overview.
     """
 
     recipients = StringProperty(default="")
@@ -4253,6 +4323,7 @@ class ApplicationBase(VersionedDoc, SnapshotMixin,
                                          'files/%s' % filepath)
 
     def create_jadjar_from_build_files(self, save=False):
+        self.validate_jar_path()
         with CriticalSection(['create_jadjar_' + self._id]):
             try:
                 return (
@@ -4290,7 +4361,6 @@ class ApplicationBase(VersionedDoc, SnapshotMixin,
         try:
             self.validate_fixtures()
             self.validate_intents()
-            self.validate_jar_path()
             self.create_all_files()
         except CaseXPathValidationError as cve:
             errors.append({

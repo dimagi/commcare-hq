@@ -9,6 +9,7 @@ from corehq.apps.commtrack.models import SQLProduct
 
 from casexml.apps.stock.const import REPORT_TYPE_BALANCE
 from casexml.apps.stock.models import StockReport, StockTransaction
+from corehq.apps.commtrack.processing import StockProcessingResult
 from corehq.apps.domain.shortcuts import create_domain
 from corehq.form_processor.interfaces.processor import FormProcessorInterface
 from corehq.form_processor.parsers.ledgers.helpers import StockReportHelper, StockTransactionHelper
@@ -36,10 +37,10 @@ class StockReportDomainTest(TestCase):
         )
         return report, form
 
-    def _create_models_for_stock_report_helper(self, stock_report_helper):
-        models_to_update = self.ledger_processor.get_models_to_update(stock_report_helper)
-        if models_to_update:
-            models_to_update.commit()
+    def _create_models_for_stock_report_helper(self, form, stock_report_helper):
+        processing_result = StockProcessingResult(form, stock_report_helpers=[stock_report_helper])
+        processing_result.populate_models()
+        processing_result.commit()
 
     def setUp(self):
         self.case_ids = {'c1': 10, 'c2': 30, 'c3': 50}
@@ -72,7 +73,7 @@ class StockReportDomainTest(TestCase):
                     self.transactions.setdefault(case, {}).setdefault(section, {})[product] = bal
 
         self.new_stock_report, self.form = self.create_report(transactions_flat)
-        self._create_models_for_stock_report_helper(self.new_stock_report)
+        self._create_models_for_stock_report_helper(self.form, self.new_stock_report)
 
     def tearDown(self):
         delete_all_xforms()
@@ -111,7 +112,7 @@ class StockReportDomainTest(TestCase):
                 action='soh',
                 quantity=864)
         ], date=date)
-        self._create_models_for_stock_report_helper(report)
+        self._create_models_for_stock_report_helper(self.form, report)
 
         # create second report with the same date
         # results should have this transaction and not the previous one
@@ -123,14 +124,14 @@ class StockReportDomainTest(TestCase):
                 action='soh',
                 quantity=1)
         ], date=date)
-        self._create_models_for_stock_report_helper(report)
+        self._create_models_for_stock_report_helper(self.form, report)
 
         new_trans = self.transactions.copy()
         new_trans['c1']['s1']['p1'] = 1
 
         tester_fn(new_trans)
 
-    def test_get_current_ledger_transactions(self):
+    def test_get_current_ledger_transactions_1(self):
         def test_transactions(expected):
             for case in self.case_ids:
                 transactions = get_current_ledger_transactions(case)

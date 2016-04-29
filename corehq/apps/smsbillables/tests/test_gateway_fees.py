@@ -1,24 +1,27 @@
+from mock import patch
 from random import choice, randint
 
+from django.apps import apps
 from django.test import TestCase
 
 from corehq.apps.accounting.generator import init_default_currency
 from corehq.apps.sms.models import SMS, SQLMobileBackend
 from corehq.apps.smsbillables import generator
+from corehq.apps.smsbillables.management.commands.bootstrap_usage_fees import bootstrap_usage_fees
 from corehq.apps.smsbillables.models import (
+    add_twilio_gateway_fee,
     SmsBillable,
     SmsGatewayFee,
     SmsGatewayFeeCriteria,
     SmsUsageFee,
     SmsUsageFeeCriteria
 )
+from corehq.apps.smsbillables.tests.utils import FakeTwilioMessageFactory
+from corehq.messaging.smsbackends.twilio.models import SQLTwilioBackend
 
 
 class TestGatewayFee(TestCase):
     def setUp(self):
-        SmsGatewayFee.objects.all().delete()
-        SmsGatewayFeeCriteria.objects.all().delete()
-
         self.currency_usd = init_default_currency()
 
         self.backend_ids = generator.arbitrary_backend_ids()
@@ -32,6 +35,10 @@ class TestGatewayFee(TestCase):
         self.prefix_fees = generator.arbitrary_fees_by_prefix(self.backend_ids, self.country_code_and_prefixes)
 
         self.other_currency = generator.arbitrary_currency()
+
+        # Must remove existing data populated in migrations
+        SmsGatewayFee.objects.all().delete()
+        SmsGatewayFeeCriteria.objects.all().delete()
 
     def create_least_specific_gateway_fees(self):
         for direction, fees in self.least_specific_fees.items():
@@ -221,6 +228,83 @@ class TestGatewayFee(TestCase):
                 self.assertIsNotNone(billable)
                 self.assertIsNone(billable.gateway_fee)
 
+    @patch(
+        'twilio.rest.resources.messages.Messages.get',
+        lambda self, message_id: FakeTwilioMessageFactory.get_message(message_id)
+    )
+    def test_twilio_global_backend(self):
+        add_twilio_gateway_fee(apps)
+        twilio_backend = SQLTwilioBackend.objects.create(
+            name='TWILIO',
+            is_global=True,
+            hq_api_id=SQLTwilioBackend.get_api_id(),
+            couch_id='global_backend',
+        )
+        twilio_backend.set_extra_fields(
+            account_sid='sid',
+            auth_token='token',
+        )
+        twilio_backend.save()
+
+        messages = [
+            message
+            for phone_number in [generator.arbitrary_phone_number() for _ in range(10)]
+            for message in generator.arbitrary_messages_by_backend_and_direction(
+                {twilio_backend.hq_api_id: twilio_backend.couch_id}, phone_number=phone_number
+            )
+        ]
+        for msg_log in messages:
+            FakeTwilioMessageFactory.add_price_for_message(msg_log.backend_message_id, generator.arbitrary_fee())
+
+        for msg_log in messages:
+            multipart_count = randint(1, 10)  # Should be ignored
+            billable = SmsBillable.create(msg_log, multipart_count=multipart_count)
+            self.assertIsNotNone(billable)
+            self.assertIsNotNone(billable.gateway_fee)
+            self.assertEqual(
+                billable.gateway_charge,
+                FakeTwilioMessageFactory.get_price_for_message(msg_log.backend_message_id)
+            )
+
+    @patch('corehq.apps.smsbillables.models.log_smsbillables_error')
+    @patch(
+        'twilio.rest.resources.messages.Messages.get',
+        lambda self, message_id: FakeTwilioMessageFactory.get_message(message_id)
+    )
+    def test_twilio_domain_level_backend(self, mock_log_smsbillables_error):
+        add_twilio_gateway_fee(apps)
+        bootstrap_usage_fees(apps)
+        twilio_backend = SQLTwilioBackend.objects.create(
+            name='TWILIO',
+            is_global=False,
+            hq_api_id=SQLTwilioBackend.get_api_id(),
+            couch_id='domain_backend',
+        )
+        twilio_backend.set_extra_fields(
+            account_sid='sid',
+            auth_token='token',
+        )
+        twilio_backend.save()
+
+        messages = [
+            message
+            for phone_number in [generator.arbitrary_phone_number() for _ in range(10)]
+            for message in generator.arbitrary_messages_by_backend_and_direction(
+                {twilio_backend.hq_api_id: twilio_backend.couch_id}, phone_number=phone_number
+            )
+        ]
+        for msg_log in messages:
+            FakeTwilioMessageFactory.add_price_for_message(msg_log.backend_message_id, generator.arbitrary_fee())
+
+        for msg_log in messages:
+            multipart_count = randint(1, 10)  # Should be ignored
+            billable = SmsBillable.create(msg_log, multipart_count=multipart_count)
+            self.assertIsNotNone(billable)
+            self.assertIsNone(billable.gateway_fee)
+            self.assertEqual(billable.gateway_charge, 0)
+
+        self.assertEqual(mock_log_smsbillables_error.call_count, 0)
+
     def tearDown(self):
         SmsBillable.objects.all().delete()
         SmsGatewayFee.objects.all().delete()
@@ -234,3 +318,5 @@ class TestGatewayFee(TestCase):
 
         for api_id, backend_id in self.backend_ids.iteritems():
             SQLMobileBackend.load(backend_id, is_couch_id=True).delete()
+
+        FakeTwilioMessageFactory.backend_message_id_to_price = {}

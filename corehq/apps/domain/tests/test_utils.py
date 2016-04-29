@@ -4,5 +4,5 @@ from corehq.util.test_utils import unit_testing_only
 
 @unit_testing_only
 def delete_all_domains():
-    domains = Domain.get_all()
+    domains = list(Domain.get_all())
     Domain.bulk_delete(domains)

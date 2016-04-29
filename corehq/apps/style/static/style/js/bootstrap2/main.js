@@ -245,14 +245,6 @@ var COMMCAREHQ = (function () {
                 $.postGo($(this).attr('href'), {});
             });
 
-            // trick to give a select menu an initial value
-            $('select[data-value]', $elem).each(function () {
-                var val = $(this).attr('data-value');
-                if (val) {
-                    $(this).val(val);
-                }
-            });
-
             $(".button", $elem).button().wrap('<span />');
             $("input[type='submit']", $elem).button();
             $("input[type='text'], input[type='password'], textarea", $elem);

@@ -72,7 +72,7 @@ class CaseAPIResult(object):
 
     @property
     def case_json(self):
-        json = self.couch_doc.get_json(lite=self.lite)
+        json = self.couch_doc.to_api_json(lite=self.lite)
         if self.sanitize:
             # This ensures that any None value will be encoded as "" instead of null
             # This fixes http://manage.dimagi.com/default.asp?158655 because mobile chokes on null

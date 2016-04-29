@@ -10,6 +10,7 @@ from corehq.apps.hqadmin.reports import (
     RealProjectSpacesReport,
     CommConnectProjectSpacesReport,
     CommTrackProjectSpacesReport,
+    DeviceLogSoftAssertReport,
 )
 from corehq.apps.hqpillow_retry.views import PillowErrorsReport
 from corehq.apps.reports.standard import (monitoring, inspect, export,
@@ -305,6 +306,7 @@ ADMIN_REPORTS = (
         RealProjectSpacesReport,
         CommConnectProjectSpacesReport,
         CommTrackProjectSpacesReport,
+        DeviceLogSoftAssertReport,
     )),
 )
 

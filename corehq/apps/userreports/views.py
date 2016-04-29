@@ -8,7 +8,6 @@ import tempfile
 from django.conf import settings
 from django.contrib import messages
 from django.core.exceptions import ValidationError
-from django.core.urlresolvers import reverse
 from django.http import HttpResponseRedirect, HttpResponse
 from django.http.response import Http404
 from django.shortcuts import render
@@ -23,6 +22,9 @@ from djangular.views.mixins import JSONResponseMixin, allow_remote_invocation
 from sqlalchemy import types, exc
 from sqlalchemy.exc import ProgrammingError
 
+from corehq.apps.hqwebapp.templatetags.hq_shared_tags import toggle_enabled
+from corehq.apps.userreports.const import REPORT_BUILDER_EVENTS_KEY
+from corehq.util import reverse
 from couchexport.export import export_from_tables
 from couchexport.files import Temp
 from couchexport.models import Format
@@ -34,6 +36,7 @@ from corehq import toggles
 from corehq.apps.analytics.tasks import track_workflow
 from corehq.apps.app_manager.dbaccessors import domain_has_apps
 from corehq.apps.app_manager.models import Application, Form
+from corehq.apps.app_manager.util import purge_report_from_mobile_ucr
 from corehq.apps.dashboard.models import IconContext, TileConfiguration, Tile
 from corehq.apps.domain.decorators import login_and_domain_required, login_or_basic
 from corehq.apps.domain.views import BaseDomainView
@@ -78,12 +81,11 @@ from corehq.apps.userreports.ui.forms import (
     ConfigurableDataSourceEditForm,
     ConfigurableDataSourceFromAppForm,
 )
-from corehq.apps.userreports.util import has_report_builder_access
+from corehq.apps.userreports.util import has_report_builder_access, add_event
 from corehq.apps.users.decorators import require_permission
 from corehq.apps.users.models import Permissions
 from corehq.toggles import REPORT_BUILDER_MAP_REPORTS
 from corehq.util.couch import get_document_or_404
-from toggle import toggle_enabled
 
 
 def get_datasource_config_or_404(config_id, domain):
@@ -210,13 +212,16 @@ class ReportBuilderTypeSelect(JSONResponseMixin, ReportBuilderView):
 
     @property
     def tiles(self):
-        analytics_workflow_label = "Clicked on Report Builder Tile"
+        clicked_tile = "Clicked on Report Builder Tile"
         tiles = [
             TileConfiguration(
                 title=_('Chart'),
                 slug='chart',
                 analytics_usage_label="Chart",
-                analytics_workflow_label=analytics_workflow_label,
+                analytics_workflow_labels=[
+                    clicked_tile,
+                    "Clicked Chart Tile",
+                ],
                 icon='fcc fcc-piegraph-report',
                 context_processor_class=IconContext,
                 url=reverse('report_builder_select_source', args=[self.domain, 'chart']),
@@ -227,7 +232,10 @@ class ReportBuilderTypeSelect(JSONResponseMixin, ReportBuilderView):
                 title=_('Form or Case List'),
                 slug='form-or-case-list',
                 analytics_usage_label="List",
-                analytics_workflow_label=analytics_workflow_label,
+                analytics_workflow_labels=[
+                    clicked_tile,
+                    "Clicked Form or Case List Tile"
+                ],
                 icon='fcc fcc-form-report',
                 context_processor_class=IconContext,
                 url=reverse('report_builder_select_source', args=[self.domain, 'list']),
@@ -238,7 +246,10 @@ class ReportBuilderTypeSelect(JSONResponseMixin, ReportBuilderView):
                 title=_('Worker Report'),
                 slug='worker-report',
                 analytics_usage_label="Worker",
-                analytics_workflow_label=analytics_workflow_label,
+                analytics_workflow_labels=[
+                    clicked_tile,
+                    "Clicked Worker Report Tile",
+                ],
                 icon='fcc fcc-user-report',
                 context_processor_class=IconContext,
                 url=reverse('report_builder_select_source', args=[self.domain, 'worker']),
@@ -249,7 +260,10 @@ class ReportBuilderTypeSelect(JSONResponseMixin, ReportBuilderView):
                 title=_('Data Table'),
                 slug='data-table',
                 analytics_usage_label="Table",
-                analytics_workflow_label=analytics_workflow_label,
+                analytics_workflow_labels=[
+                    clicked_tile,
+                    "Clicked Data Table Tile"
+                ],
                 icon='fcc fcc-datatable-report',
                 context_processor_class=IconContext,
                 url=reverse('report_builder_select_source', args=[self.domain, 'table']),
@@ -262,8 +276,8 @@ class ReportBuilderTypeSelect(JSONResponseMixin, ReportBuilderView):
                 title=_('Map'),
                 slug='map',
                 analytics_usage_label="Map",
-                analytics_workflow_label=analytics_workflow_label,
-                icon='fa fa-globe',
+                analytics_workflow_labels=[clicked_tile],
+                icon='fcc fcc-globe',
                 context_processor_class=IconContext,
                 url=reverse('report_builder_select_source', args=[self.domain, 'map']),
                 help_text=_('A map to show data from your cases or forms.'
@@ -320,8 +334,15 @@ class ReportBuilderDataSourceSelect(ReportBuilderView):
                 "Successfully submitted the first part of the Report Builder "
                 "wizard where you give your report a name and choose a data source"
             )
+
+            add_event(request, [
+                "Report Builder",
+                "Successful Click on Next (Data Source)",
+                app_source.source_type,
+            ])
+
             return HttpResponseRedirect(
-                reverse(url_name, args=[self.domain]) + '?' + urlencode(get_params)
+                reverse(url_name, args=[self.domain], params=get_params)
             )
         else:
             return self.get(request, *args, **kwargs)
@@ -383,7 +404,8 @@ class ConfigureChartReport(ReportBuilderView):
             'filter_property_help_text': _('Choose the property you would like to add as a filter to this report.'),
             'filter_display_help_text': _('Web users viewing the report will see this display text instead of the property name. Name your filter something easy for users to understand.'),
             'filter_format_help_text': _('What type of property is this filter?<br/><br/><strong>Date</strong>: select this if the property is a date.<br/><strong>Choice</strong>: select this if the property is text or multiple choice.'),
-            'calculation_help_text': _("Column format selection will determine how each row's value is calculated.")
+            'calculation_help_text': _("Column format selection will determine how each row's value is calculated."),
+            'report_builder_events': self.request.session.pop(REPORT_BUILDER_EVENTS_KEY, [])
         }
 
     @property
@@ -407,23 +429,72 @@ class ConfigureChartReport(ReportBuilderView):
             args.append(self.request.POST)
         return self.configuration_form_class(*args)
 
+    def _get_sum_avg_columns(self, columns):
+        """
+        Return a list of columns that have either sum or average aggregation types.
+        Items in the list are tuples of (column['field'], column['aggregation']).
+        """
+        return [
+            (col.get('field', None), col['aggregation'])
+            for col in columns
+            if col.get('aggregation', None) in ("sum", "average")
+        ]
+
+    def _track_invalid_form_events(self):
+        group_by_errors = self.report_form.errors.as_data().get('group_by', [])
+        if "required" in [e.code for e in group_by_errors]:
+            add_event(self.request, [
+                "Report Builder",
+                "Click on Done (No Group By Chosen)",
+                self.report_type,
+            ])
+
+    def _track_valid_form_events(self, existing_sum_avg_cols, report_configuration):
+        if self.report_type != "chart":
+            sum_avg_cols = self._get_sum_avg_columns(
+                report_configuration.columns)
+            # A column is "new" if there are no columns with the (property, agg) combo in the previous report
+            if not set(sum_avg_cols).issubset(set(existing_sum_avg_cols)):
+                add_event(self.request, [
+                    "Report Builder",
+                    "Changed Column Format to Sum or Average",
+                    self.report_type,
+                ])
+
+    def _track_new_report_events(self):
+        track_workflow(
+            self.request.user.email,
+            "Successfully created a new report in the Report Builder"
+        )
+        add_event(self.request, [
+            "Report Builder",
+            "Click On Done On New Report (Successfully)",
+            self.report_type,
+        ])
+
     def post(self, *args, **kwargs):
         if self.report_form.is_valid():
+            existing_sum_avg_cols = []
             if self.report_form.existing_report:
                 try:
+                    existing_sum_avg_cols = self._get_sum_avg_columns(
+                        self.report_form.existing_report.columns
+                    )
                     report_configuration = self.report_form.update_report()
                 except ValidationError as e:
                     messages.error(self.request, e.message)
                     return self.get(*args, **kwargs)
             else:
                 report_configuration = self.report_form.create_report()
-                track_workflow(
-                    self.request.user.email,
-                    "Successfully created a new report in the Report Builder"
-                )
+                self._track_new_report_events()
+
+            self._track_valid_form_events(existing_sum_avg_cols, report_configuration)
             return HttpResponseRedirect(
                 reverse(ConfigurableReport.slug, args=[self.domain, report_configuration._id])
             )
+        else:
+            self._track_invalid_form_events()
+
         return self.get(*args, **kwargs)
 
 
@@ -500,7 +571,15 @@ def delete_report(request, domain, report_id):
             pass
 
     config.delete()
+    did_purge_something = purge_report_from_mobile_ucr(config)
+
     messages.success(request, _(u'Report "{}" deleted!').format(config.title))
+    if did_purge_something:
+        messages.warning(
+            request,
+            _(u"This report was used in one or more applications. "
+              "It has been removed from there too.")
+        )
     redirect = request.GET.get("redirect", None)
     if not redirect:
         redirect = reverse('configurable_reports_home', args=[domain])

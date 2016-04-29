@@ -29,3 +29,10 @@ class UUIDGeneratorMixin(object):
             value = getattr(self, field_name)
             if not value:
                 setattr(self, field_name, uuid.uuid4().hex)
+
+
+# https://gist.github.com/glarrain/5448253
+class ValidateModelMixin(object):
+    def save(self, *args, **kwargs):
+        self.full_clean()
+        super(ValidateModelMixin, self).save(*args, **kwargs)

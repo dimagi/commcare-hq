@@ -21,6 +21,7 @@ from corehq.apps.accounting.models import (
     SoftwarePlanEdition, CreditLine,
     EntryPoint, WireInvoice, WireBillingRecord,
     SMALL_INVOICE_THRESHOLD, UNLIMITED_FEATURE_USAGE,
+    SoftwareProductType
 )
 from corehq.apps.accounting.utils import (
     ensure_domain_instance,
@@ -62,8 +63,10 @@ class DomainInvoiceFactory(object):
     def _get_subscriptions(self):
         subscriptions = Subscription.objects.filter(
             subscriber=self.subscriber, date_start__lte=self.date_end
-        ).filter(Q(date_end=None) | Q(date_end__gt=self.date_start)
-        ).filter(Q(date_end=None) | Q(date_end__gt=F('date_start'))
+        ).filter(
+            Q(date_end=None) | Q(date_end__gt=self.date_start)
+        ).filter(
+            Q(date_end=None) | Q(date_end__gt=F('date_start'))
         ).order_by('date_start', 'date_end').all()
         return list(subscriptions)
 
@@ -81,7 +84,6 @@ class DomainInvoiceFactory(object):
         account = BillingAccount.get_or_create_account_by_domain(
             self.domain.name,
             created_by=self.__class__.__name__,
-            created_by_invoicing=True,
             entry_point=EntryPoint.SELF_STARTED,
         )[0]
         if account.date_confirmed_extra_charges is None:
@@ -115,10 +117,7 @@ class DomainInvoiceFactory(object):
                 return date_start
 
         def _get_invoice_end(sub, date_end):
-            if (
-                sub.date_end is not None
-                and sub.date_end <= date_end
-            ):
+            if sub.date_end is not None and sub.date_end <= date_end:
                 # Since the Subscription is actually terminated on date_end
                 # have the invoice period be until the day before date_end.
                 return sub.date_end - datetime.timedelta(days=1)
@@ -155,7 +154,7 @@ class DomainInvoiceFactory(object):
     def _get_community_ranges(self, subscriptions):
         community_ranges = []
         if len(subscriptions) == 0:
-            community_ranges.append((self.date_start, self.date_end))
+            return [(self.date_start, self.date_end + datetime.timedelta(days=1))]
         else:
             prev_sub_end = self.date_end
             for ind, sub in enumerate(subscriptions):
@@ -168,16 +167,17 @@ class DomainInvoiceFactory(object):
                     community_ranges.append((prev_sub_end, sub.date_start))
                 prev_sub_end = sub.date_end
 
-                if (ind == len(subscriptions) - 1
-                    and sub.date_end is not None
-                    and sub.date_end <= self.date_end
+                if (
+                    ind == len(subscriptions) - 1 and
+                    sub.date_end is not None and
+                    sub.date_end <= self.date_end
                 ):
                     # the last subscription ended BEFORE the end of
                     # the invoicing period
                     community_ranges.append(
                         (sub.date_end, self.date_end + datetime.timedelta(days=1))
                     )
-        return community_ranges
+            return community_ranges
 
     def _generate_invoice(self, subscription, invoice_start, invoice_end):
         invoice, is_new_invoice = Invoice.objects.get_or_create(
@@ -264,7 +264,6 @@ class DomainWireInvoiceFactory(object):
         account = BillingAccount.get_or_create_account_by_domain(
             self.domain.name,
             created_by=self.__class__.__name__,
-            created_by_invoicing=True,
             entry_point=EntryPoint.SELF_STARTED,
         )[0]
 
@@ -285,7 +284,6 @@ class DomainWireInvoiceFactory(object):
 
         date_due = date_end + datetime.timedelta(DEFAULT_DAYS_UNTIL_DUE)
 
-        # TODO: figure out how to handle line items
         wire_invoice = WireInvoice.objects.create(
             domain=self.domain.name,
             date_start=date_start,
@@ -327,7 +325,6 @@ class LineItemFactory(object):
     """
     This generates a line item based on what type of Feature or Product rate triggers it.
     """
-    line_item_details_template = ""  # todo
 
     def __init__(self, subscription, rate, invoice):
         self.subscription = subscription
@@ -451,7 +448,7 @@ class ProductLineItemFactory(LineItemFactory):
         CreditLine.add_credit(
             line_item.subtotal,
             subscription=self.subscription,
-            product_type=self.rate.product.product_type,
+            product_type=SoftwareProductType.ANY,
             permit_inactive=True,
         )
 

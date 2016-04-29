@@ -3,7 +3,7 @@ import re
 from xml.etree import ElementTree
 import datetime
 from django.test.utils import override_settings
-from casexml.apps.case.mock import CaseBlock, CaseBlockError
+from casexml.apps.case.mock import CaseBlock, CaseBlockError, IndexAttrs, ChildIndexAttrs
 from casexml.apps.case.models import CommCareCase
 from casexml.apps.case.sharedmodels import CommCareCaseIndex
 from casexml.apps.case.tests.util import check_user_has_case
@@ -168,8 +168,6 @@ class IndexTest(TestCase):
 
 class CaseBlockIndexRelationshipTests(SimpleTestCase):
 
-    IndexAttrs = namedtuple('IndexAttrs', ['case_type', 'case_id', 'relationship'])
-
     def test_case_block_index_supports_relationship(self):
         """
         CaseBlock index should allow the relationship to be set
@@ -179,7 +177,7 @@ class CaseBlockIndexRelationshipTests(SimpleTestCase):
             case_type='at_risk',
             date_modified='2015-07-24',
             index={
-                'host': self.IndexAttrs(case_type='newborn', case_id='123456', relationship='extension')
+                'host': IndexAttrs(case_type='newborn', case_id='123456', relationship='extension')
             },
         )
 
@@ -206,7 +204,7 @@ class CaseBlockIndexRelationshipTests(SimpleTestCase):
             case_type='newborn',
             date_modified='2015-07-24',
             index={
-                'parent': ('mother', '789abc', 'child')
+                'parent': IndexAttrs(case_type='mother', case_id='789abc', relationship='child')
             },
         )
 
@@ -233,7 +231,7 @@ class CaseBlockIndexRelationshipTests(SimpleTestCase):
             case_type='newborn',
             date_modified='2015-07-24',
             index={
-                'parent': ('mother', '789abc')
+                'parent': ChildIndexAttrs(case_type='mother', case_id='789abc')
             },
         )
 
@@ -262,6 +260,6 @@ class CaseBlockIndexRelationshipTests(SimpleTestCase):
                 case_type='at_risk',
                 date_modified='2015-07-24',
                 index={
-                    'host': self.IndexAttrs(case_type='newborn', case_id='123456', relationship='parent')
+                    'host': IndexAttrs(case_type='newborn', case_id='123456', relationship='parent')
                 },
             )

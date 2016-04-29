@@ -4,6 +4,7 @@ from django.core.management.base import BaseCommand
 from dimagi.utils.couch import release_lock
 from dimagi.utils.couch.cache.cache_core import get_redis_client, RedisClientError
 from dimagi.utils.logging import notify_exception
+from pillowtop.listener import retry_on_connection_failure
 
 
 class GenericEnqueuingOperation(BaseCommand):
@@ -38,6 +39,7 @@ class GenericEnqueuingOperation(BaseCommand):
                     message="Could not populate %s." % self.get_queue_name())
             sleep(self.get_fetching_interval())
 
+    @retry_on_connection_failure
     def populate_queue(self):
         client = get_redis_client()
         utcnow = datetime.utcnow()

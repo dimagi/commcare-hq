@@ -24,13 +24,17 @@ def _convert_type(property_name, value):
 class SqlCaseUpdateStrategy(UpdateStrategy):
     case_implementation_class = CommCareCaseSQL
 
-    def apply_action_intent(self, case_action_intent):
-        if not case_action_intent.is_deprecation:
-            # for now we only allow commtrack actions to be processed this way so just assert that's the case
-            assert case_action_intent.action_type == CASE_ACTION_COMMTRACK
-            transaction = CaseTransaction.ledger_transaction(self.case, case_action_intent.form)
-            if transaction not in self.case.get_tracked_models_to_create(CaseTransaction):
-                self.case.track_create(transaction)
+    def apply_action_intents(self, primary_intent, deprecation_intent=None):
+        # for now we only allow commtrack actions to be processed this way so just assert that's the case
+        assert primary_intent.action_type == CASE_ACTION_COMMTRACK
+        transaction = CaseTransaction.ledger_transaction(self.case, primary_intent.form)
+        if deprecation_intent:
+            assert transaction.is_saved()
+        elif transaction not in self.case.get_tracked_models_to_create(CaseTransaction):
+            self.case.track_create(transaction)
+
+        # TODO: do we need to support unsetting the ledger flag on a transaction
+        # if the form previously had ledgers but now does not
 
     def update_from_case_update(self, case_update, xformdoc, other_forms=None):
         self._apply_case_update(case_update, xformdoc)
@@ -186,7 +190,26 @@ class SqlCaseUpdateStrategy(UpdateStrategy):
         self.case.closed_by = ''
         self.case.opened_by = None
 
-    def rebuild_from_transactions(self, transactions, rebuild_transaction):
+    def rebuild_from_transactions(self, transactions, rebuild_transaction, unarchived_form_id=None):
+        """
+        :param transactions:        The transactions required to rebuild the case
+        :param rebuild_transaction: The transaction to add for this rebuild
+        :param unarchived_form_id:  If this rebuild was triggered by a form being unarchived then this is
+                                    its ID.
+        """
+        already_deleted = False
+        if self.case.is_deleted:
+            # we exclude the transaction of the form being unarchived since it would
+            # have been revoked prior to the rebuild.
+            primary_transactions = [
+                tx for tx in transactions
+                if not tx.is_case_rebuild and tx.form_id != unarchived_form_id
+            ]
+            if primary_transactions:
+                # already deleted means it was explicitly set to "deleted",
+                # as opposed to getting set to that because it has no 'real' transactions
+                already_deleted = True
+
         self._reset_case_state()
 
         real_transactions = []
@@ -197,10 +220,11 @@ class SqlCaseUpdateStrategy(UpdateStrategy):
                 self._apply_form_transaction(transaction)
                 real_transactions.append(transaction)
 
-        self.case.deleted = not bool(real_transactions)
+        self.case.deleted = already_deleted or not bool(real_transactions)
 
         self.case.track_create(rebuild_transaction)
-        self.case.modified_on = rebuild_transaction.server_date
+        if not self.case.modified_on:
+            self.case.modified_on = rebuild_transaction.server_date
 
     def _apply_form_transaction(self, transaction):
         form = transaction.form

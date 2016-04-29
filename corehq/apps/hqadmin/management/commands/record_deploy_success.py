@@ -32,17 +32,15 @@ class Command(BaseCommand):
         make_option('--mail_admins', help='Mail Admins', default=False, action='store_true'),
         make_option('--url', help='A link to a URL for the deploy', default=False),
     )
-    
-    def handle(self, *args, **options):
 
-        root_dir = settings.FILEPATH
-        git_snapshot = gitinfo.get_project_snapshot(root_dir, submodules=True)
-        compare_url = git_snapshot['diff_url'] = options.get('url', None)
+    def handle(self, *args, **options):
+        compare_url = options.get('url', None)
+
         deploy = HqDeploy(
             date=datetime.utcnow(),
             user=options['user'],
             environment=options['environment'],
-            code_snapshot=git_snapshot,
+            diff_url=compare_url
         )
         deploy.save()
 

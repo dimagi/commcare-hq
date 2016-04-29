@@ -4,7 +4,7 @@ from dimagi.ext.jsonobject import JsonObject
 from django.core.exceptions import ValidationError
 from django.utils.translation import ugettext as _
 
-from .dbaccessors import *
+from .dbaccessors import get_by_domain_and_type
 
 
 CUSTOM_DATA_FIELD_PREFIX = "data-field"
@@ -50,9 +50,10 @@ class CustomDataFieldsDefinition(Document):
     domain = StringProperty()
     fields = SchemaListProperty(CustomDataField)
 
-    def get_fields(self, required_only=False):
+    def get_fields(self, required_only=False, include_system=True):
         def _is_match(field):
-            if required_only and not field.is_required:
+            if ((required_only and not field.is_required)
+                    or (not include_system and is_system_key(field.slug))):
                 return False
             return True
         return filter(_is_match, self.fields)
@@ -110,6 +111,7 @@ class CustomDataFieldsDefinition(Document):
         """
         Splits data_dict into two dictionaries:
         one for data which matches the model and one for data that doesn't
+        Does not include reserved fields.
         """
         if not data_dict:
             return {}, {}
@@ -119,6 +121,8 @@ class CustomDataFieldsDefinition(Document):
         for k, v in data_dict.items():
             if k in slugs:
                 model_data[k] = v
+            elif is_system_key(k):
+                pass
             else:
                 uncategorized_data[k] = v
 

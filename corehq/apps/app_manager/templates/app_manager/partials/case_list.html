@@ -229,3 +229,7 @@
 {% if detail.fixture_select and request|toggle_enabled:"FIXTURE_CASE_SELECTION" %}
     {% include "app_manager/partials/fixture_case_selection.html" %}
 {% endif %}
+
+{% if detail.type == 'case' and is_search_enabled %}
+{% include 'app_manager/partials/case_search_properties.html' %}
+{% endif %}

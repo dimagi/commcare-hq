@@ -18,9 +18,10 @@ from jsonobject import StringProperty
 from jsonobject.properties import BooleanProperty
 from lxml import etree
 from uuidfield import UUIDField
-
+from corehq.apps.sms.mixin import MessagingCaseContactMixin
 from corehq.blobs import get_blob_db
 from corehq.blobs.exceptions import NotFound, BadName
+from corehq.form_processor import signals
 from corehq.form_processor.exceptions import InvalidAttachment, UnknownActionType
 from corehq.form_processor.track_related import TrackRelatedChanges
 from corehq.sql_db.routers import db_for_read_write
@@ -496,7 +497,7 @@ class SupplyPointCaseMixin(object):
 
 class CommCareCaseSQL(DisabledDbMixin, models.Model, RedisLockableMixIn,
                       AttachmentMixin, AbstractCommCareCase, TrackRelatedChanges,
-                      SupplyPointCaseMixin):
+                      SupplyPointCaseMixin, MessagingCaseContactMixin):
     objects = RestrictedManager()
 
     case_id = models.CharField(max_length=255, unique=True, db_index=True)
@@ -563,6 +564,11 @@ class CommCareCaseSQL(DisabledDbMixin, models.Model, RedisLockableMixIn,
     def dynamic_case_properties(self):
         return OrderedDict(sorted(self.case_json.iteritems()))
 
+    def to_api_json(self, lite=False):
+        from .serializers import CommCareCaseSQLAPISerializer
+        serializer = CommCareCaseSQLAPISerializer(self, lite=lite)
+        return serializer.data
+
     def to_json(self):
         from .serializers import CommCareCaseSQLSerializer
         serializer = CommCareCaseSQLSerializer(self)
@@ -584,6 +590,9 @@ class CommCareCaseSQL(DisabledDbMixin, models.Model, RedisLockableMixIn,
     def reverse_indices(self):
         from corehq.form_processor.backends.sql.dbaccessors import CaseAccessorSQL
         return CaseAccessorSQL.get_reverse_indices(self.case_id)
+
+    def get_reverse_index_map(self):
+        return self.get_index_map(True)
 
     @memoized
     def _saved_indices(self):
@@ -638,7 +647,7 @@ class CommCareCaseSQL(DisabledDbMixin, models.Model, RedisLockableMixIn,
     @property
     def actions(self):
         """For compatability with CommCareCase. Please use transactions when possible"""
-        return self.transactions
+        return self.non_revoked_transactions
 
     def get_transaction_by_form_id(self, form_id):
         from corehq.form_processor.backends.sql.dbaccessors import CaseAccessorSQL
@@ -710,6 +719,22 @@ class CommCareCaseSQL(DisabledDbMixin, models.Model, RedisLockableMixIn,
         if property in allowed_fields:
             return getattr(self, property)
 
+    def resolve_case_property(self, property_name):
+        """
+        Handles case property parent references. Examples for property_name can be:
+        name
+        parent/name
+        parent/parent/name
+        ...
+        """
+        if property_name.lower().startswith('parent/'):
+            parent = self.parent
+            if not parent:
+                return None
+            return parent.resolve_case_property(property_name[7:])
+
+        return self.to_json().get(property_name)
+
     def on_tracked_models_cleared(self, model_class=None):
         self._saved_indices.reset_cache(self)
 
@@ -721,6 +746,32 @@ class CommCareCaseSQL(DisabledDbMixin, models.Model, RedisLockableMixIn,
     def get_obj_by_id(cls, case_id):
         from corehq.form_processor.backends.sql.dbaccessors import CaseAccessorSQL
         return CaseAccessorSQL.get_case(case_id)
+
+    @memoized
+    def get_parent(self, identifier=None, relationship_id=None):
+        indices = self.indices
+
+        if identifier:
+            indices = filter(lambda index: index.identifier == identifier, indices)
+
+        if relationship_id:
+            indices = filter(lambda index: index.relationship_id == relationship_id, indices)
+
+        return [index.referenced_case for index in indices]
+
+    @property
+    def parent(self):
+        """
+        Returns the parent case if one exists, else None.
+        NOTE: This property should only return the first parent in the list
+        of indices. If for some reason your use case creates more than one,
+        please write/use a different property.
+        """
+        result = self.get_parent(
+            identifier=CommCareCaseIndexSQL.PARENT_IDENTIFIER,
+            relationship_id=CommCareCaseIndexSQL.CHILD
+        )
+        return result[0] if result else None
 
     def __unicode__(self):
         return (
@@ -836,6 +887,8 @@ class CommCareCaseIndexSQL(DisabledDbMixin, models.Model, SaveStateMixin):
     RELATIONSHIP_INVERSE_MAP = dict(RELATIONSHIP_CHOICES)
     RELATIONSHIP_MAP = {v: k for k, v in RELATIONSHIP_CHOICES}
 
+    PARENT_IDENTIFIER = 'parent'
+
     case = models.ForeignKey(
         'CommCareCaseSQL', to_field='case_id', db_index=True,
         related_name="index_set", related_query_name="index"
@@ -895,7 +948,7 @@ class CommCareCaseIndexSQL(DisabledDbMixin, models.Model, SaveStateMixin):
         app_label = "form_processor"
 
 
-class CaseTransaction(DisabledDbMixin, models.Model):
+class CaseTransaction(DisabledDbMixin, SaveStateMixin, models.Model):
     objects = RestrictedManager()
 
     # types should be powers of 2
@@ -991,6 +1044,16 @@ class CaseTransaction(DisabledDbMixin, models.Model):
     @property
     def is_case_attachment(self):
         return bool(self.is_form_transaction and self.TYPE_CASE_ATTACHMENT & self.type)
+
+    @property
+    def is_case_rebuild(self):
+        return bool(
+            (self.TYPE_REBUILD_FORM_ARCHIVED & self.type) or
+            (self.TYPE_REBUILD_FORM_EDIT & self.type) or
+            (self.TYPE_REBUILD_USER_ARCHIVED & self.type) or
+            (self.TYPE_REBUILD_USER_REQUESTED & self.type) or
+            (self.TYPE_REBUILD_WITH_REASON & self.type)
+        )
 
     @property
     def readable_type(self):
@@ -1152,12 +1215,23 @@ class LedgerValue(DisabledDbMixin, models.Model, TrackRelatedChanges):
     balance = models.IntegerField(default=0)  # todo: confirm we aren't ever intending to support decimals
     last_modified = models.DateTimeField(auto_now=True)
 
+    @property
+    def stock_on_hand(self):
+        return self.balance
+
+    @property
+    def ledger_reference(self):
+        from corehq.form_processor.parsers.ledgers.helpers import UniqueLedgerReference
+        return UniqueLedgerReference(
+            case_id=self.case_id, section_id=self.section_id, entry_id=self.entry_id
+        )
+
     class Meta:
         app_label = "form_processor"
         db_table = LedgerValue_DB_TABLE
 
 
-class LedgerTransaction(DisabledDbMixin, models.Model):
+class LedgerTransaction(DisabledDbMixin, SaveStateMixin, models.Model):
     TYPE_BALANCE = 1
     TYPE_TRANSFER = 2
     TYPE_CHOICES = (
@@ -1216,6 +1290,17 @@ class LedgerTransaction(DisabledDbMixin, models.Model):
         for type_, type_slug in self.TYPE_CHOICES:
             if self.type == type_:
                 return type_slug
+
+    @property
+    def ledger_reference(self):
+        from corehq.form_processor.parsers.ledgers.helpers import UniqueLedgerReference
+        return UniqueLedgerReference(
+            case_id=self.case_id, section_id=self.section_id, entry_id=self.entry_id
+        )
+
+    @property
+    def stock_on_hand(self):
+        return self.updated_balance
 
     def __unicode__(self):
         return (

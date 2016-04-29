@@ -1,6 +1,6 @@
 from django.conf import settings
 from django.test import SimpleTestCase
-from pillowtop.es_utils import get_all_expected_es_indices
+from corehq.pillows.utils import get_all_expected_es_indices
 
 
 class ProdIndexManagementTest(SimpleTestCase):
@@ -28,6 +28,11 @@ class ProdIndexManagementTest(SimpleTestCase):
 
 
 EXPECTED_PROD_INDICES = [
+    {
+        "alias": "case_search",
+        "index": "test_case_search_2016-03-15",
+        "type": "case"
+    },
     {
         "alias": "hqapps",
         "index": "test_hqapps_2016-03-01_2128",
@@ -70,7 +75,7 @@ EXPECTED_PROD_INDICES = [
     },
     {
         "alias": "xforms",
-        "index": "test_xforms_20150403-1728",
+        "index": "test_xforms_2016-03-02",
         "type": "xform"
     }
 ]

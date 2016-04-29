@@ -152,6 +152,7 @@ class TestCaseExportDataSchema(SimpleTestCase, TestXmlMixin):
         }
         schema = CaseExportDataSchema._generate_schema_from_case_property_mapping(
             case_property_mapping,
+            [],
             self.app_id,
             1,
         )
@@ -308,6 +309,7 @@ class TestMergingCaseExportDataSchema(SimpleTestCase, TestXmlMixin):
         }
         schema1 = CaseExportDataSchema._generate_schema_from_case_property_mapping(
             case_property_mapping,
+            [],
             app_id,
             1,
         )
@@ -316,6 +318,7 @@ class TestMergingCaseExportDataSchema(SimpleTestCase, TestXmlMixin):
         }
         schema2 = CaseExportDataSchema._generate_schema_from_case_property_mapping(
             case_property_mapping,
+            [],
             app_id,
             2,
         )
@@ -520,11 +523,19 @@ class TestBuildingParentCaseSchemaFromApplication(TestCase, TestXmlMixin):
             safe_delete(db, doc_id)
 
     def test_parent_case_table_generation(self):
-        """Ensures that the child case generates a parent case table"""
+        """
+        Ensures that the child case generates a parent case table and indices
+        columns in main table
+        """
         schema = CaseExportDataSchema.generate_schema_from_builds(self.domain, 'child-case')
 
         # One for case, one for case history, one for parent case
         self.assertEqual(len(schema.group_schemas), 3)
+        main_table = filter(lambda gs: gs.path == MAIN_TABLE, schema.group_schemas)[0]
+        self.assertEqual(
+            len(filter(lambda item: item.doc_type == 'CaseIndexItem', main_table.items)),
+            1
+        )
 
         self.assertEqual(
             len(filter(lambda gs: gs.path == PARENT_CASE_TABLE, schema.group_schemas)),

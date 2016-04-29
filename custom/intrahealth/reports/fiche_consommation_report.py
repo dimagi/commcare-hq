@@ -15,6 +15,8 @@ class FicheConsommationReport(IntraHealtMixin, DatespanMixin, GenericTabularRepo
     col_names = ['actual_consumption', 'billed_consumption', 'consommation-non-facturable']
     export_format_override = 'csv'
 
+    is_bootstrap3 = True
+
 
     @property
     def model(self):

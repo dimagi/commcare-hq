@@ -250,7 +250,7 @@ class ESQuery(object):
 
     def set_query(self, query):
         """
-        Add a query.  Most stuff we want is better done with filters, but
+        Set the query.  Most stuff we want is better done with filters, but
         if you actually want Levenshtein distance or prefix querying...
         """
         es = deepcopy(self)

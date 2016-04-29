@@ -374,7 +374,7 @@ class SubscriptionForm(forms.Form):
     service_type = forms.ChoiceField(
         label=ugettext_lazy("Type"),
         choices=SubscriptionType.CHOICES,
-        initial=SubscriptionType.CONTRACTED,
+        initial=SubscriptionType.IMPLEMENTATION,
     )
     pro_bono_status = forms.ChoiceField(
         label=ugettext_lazy("Discounted"),
@@ -676,7 +676,7 @@ class ChangeSubscriptionForm(forms.Form):
     service_type = forms.ChoiceField(
         label=ugettext_lazy("Type"),
         choices=SubscriptionType.CHOICES,
-        initial=SubscriptionType.CONTRACTED,
+        initial=SubscriptionType.IMPLEMENTATION,
     )
     pro_bono_status = forms.ChoiceField(
         label=ugettext_lazy("Discounted"),
@@ -750,7 +750,6 @@ class CreditForm(forms.Form):
         ),
         required=False,
     )
-    product_type = forms.ChoiceField(required=False, label=ugettext_lazy("Product Type"))
     feature_type = forms.ChoiceField(required=False, label=ugettext_lazy("Feature Type"))
     adjust = forms.CharField(widget=forms.HiddenInput, required=False)
 
@@ -761,7 +760,6 @@ class CreditForm(forms.Form):
 
         product_choices = [('', 'Any')]
         product_choices.extend(SoftwareProductType.CHOICES)
-        self.fields['product_type'].choices = product_choices
         self.fields['feature_type'].choices = FeatureType.CHOICES
 
         self.helper = FormHelper()
@@ -773,7 +771,6 @@ class CreditForm(forms.Form):
                 'amount',
                 'note',
                 crispy.Field('rate_type', data_bind="value: rateType"),
-                crispy.Div('product_type', data_bind="visible: showProduct"),
                 crispy.Div('feature_type', data_bind="visible: showFeature"),
                 'adjust'
             ),
@@ -804,7 +801,7 @@ class CreditForm(forms.Form):
     def adjust_credit(self, web_user=None):
         amount = self.cleaned_data['amount']
         note = self.cleaned_data['note']
-        product_type = (self.cleaned_data['product_type']
+        product_type = (SoftwareProductType.ANY
                         if self.cleaned_data['rate_type'] == 'Product' else None)
         feature_type = (self.cleaned_data['feature_type']
                         if self.cleaned_data['rate_type'] == 'Feature' else None)

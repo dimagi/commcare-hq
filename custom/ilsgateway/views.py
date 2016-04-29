@@ -15,6 +15,7 @@ from corehq.apps.products.models import SQLProduct
 from corehq.apps.domain.views import BaseDomainView, DomainViewMixin
 from corehq.apps.locations.models import SQLLocation
 from corehq.apps.sms.models import SMS, INCOMING, OUTGOING
+from corehq.apps.style.decorators import use_bootstrap3, use_datatables
 from corehq.apps.users.models import CommCareUser, WebUser, UserRole
 from django.http import HttpResponse
 from django.utils.translation import ugettext_noop
@@ -23,6 +24,7 @@ from corehq.apps.domain.decorators import domain_admin_required
 from corehq.const import SERVER_DATETIME_FORMAT_NO_SEC
 from custom.ilsgateway import DashboardReport
 from custom.ilsgateway.forms import SupervisionDocumentForm
+from custom.ilsgateway.oneoff import recalculate_moshi_rural_task, recalculate_non_facilities_task
 from custom.ilsgateway.tanzania import make_url
 from custom.ilsgateway.tanzania.reports.delivery import DeliveryReport
 from custom.ilsgateway.tanzania.reports.randr import RRreport
@@ -30,7 +32,7 @@ from custom.ilsgateway.tanzania.reports.stock_on_hand import StockOnHandReport
 from custom.ilsgateway.tanzania.reports.supervision import SupervisionReport
 from casexml.apps.stock.models import StockTransaction
 from custom.ilsgateway.models import ILSGatewayConfig, ReportRun, SupervisionDocument, ILSNotes, \
-    PendingReportingDataRecalculation
+    PendingReportingDataRecalculation, OneOffTaskProgress
 from custom.ilsgateway.tasks import report_run
 from custom.logistics.views import BaseConfigView
 
@@ -41,6 +43,10 @@ class GlobalStats(BaseDomainView):
     template_name = "ilsgateway/global_stats.html"
     show_supply_point_types = False
     root_name = 'MOHSW'
+
+    @use_bootstrap3
+    def dispatch(self, request, *args, **kwargs):
+        return super(GlobalStats, self).dispatch(request, *args, **kwargs)
 
     @property
     def main_context(self):
@@ -107,6 +113,12 @@ class ILSConfigView(BaseConfigView):
     template_name = 'ilsgateway/ilsconfig.html'
     source = 'ilsgateway'
 
+    @property
+    def page_context(self):
+        context = super(ILSConfigView, self).page_context
+        context['oneoff_tasks'] = OneOffTaskProgress.objects.filter(domain=self.domain)
+        return context
+
 
 class SupervisionDocumentListView(BaseDomainView):
     section_name = 'Supervision Documents'
@@ -114,6 +126,7 @@ class SupervisionDocumentListView(BaseDomainView):
     template_name = "ilsgateway/supervision_docs.html"
     urlname = 'supervision'
 
+    @use_bootstrap3
     def dispatch(self, request, *args, **kwargs):
         if not self.request.couch_user.is_web_user():
             raise Http404()
@@ -259,6 +272,7 @@ class ReportRunListView(ListView, DomainViewMixin):
     context_object_name = 'runs'
     template_name = 'ilsgateway/report_run_list.html'
 
+    @use_bootstrap3
     def dispatch(self, request, *args, **kwargs):
         if not self.request.couch_user.is_domain_admin():
             raise Http404()
@@ -272,6 +286,8 @@ class PendingRecalculationsListView(ListView, DomainViewMixin):
     context_object_name = 'recalculations'
     template_name = 'ilsgateway/pending_recalculations.html'
 
+    @use_bootstrap3
+    @use_datatables
     def dispatch(self, request, *args, **kwargs):
         if not self.request.couch_user.is_domain_admin():
             raise Http404()
@@ -285,6 +301,7 @@ class ReportRunDeleteView(DeleteView, DomainViewMixin):
     model = ReportRun
     template_name = 'ilsgateway/confirm_delete.html'
 
+    @use_bootstrap3
     def dispatch(self, request, *args, **kwargs):
         if not self.request.couch_user.is_domain_admin():
             raise Http404()
@@ -310,3 +327,17 @@ class DashboardPageRedirect(RedirectView):
             )
 
         return url
+
+
+@domain_admin_required
+@require_POST
+def recalculate_moshi_rural(request, domain):
+    recalculate_moshi_rural_task.delay()
+    return HttpResponse('')
+
+
+@domain_admin_required
+@require_POST
+def recalculate_non_facilities(request, domain):
+    recalculate_non_facilities_task.delay(domain)
+    return HttpResponse('')

@@ -2,8 +2,8 @@ from datetime import datetime
 from django.test import TestCase
 from mock import MagicMock
 
-from django.contrib.auth.models import User
-from corehq.apps.users.models import CouchUser, CommCareUser
+from corehq.apps.users.dbaccessors.all_commcare_users import delete_all_users
+from corehq.apps.users.models import CommCareUser
 from corehq.apps.domain.models import Domain
 from corehq.apps.fixtures.models import UserFixtureStatus, UserFixtureType
 
@@ -23,10 +23,7 @@ class TestFixtureStatus(TestCase):
         self._delete_everything()
 
     def _delete_everything(self):
-        all_users = CouchUser.all()
-        for user in all_users:
-            user.delete()
-        User.objects.all().delete()
+        delete_all_users()
         UserFixtureStatus.objects.all().delete()
 
     def test_get_statuses(self):

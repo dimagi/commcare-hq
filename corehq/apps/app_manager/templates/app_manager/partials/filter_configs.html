@@ -91,10 +91,26 @@
                                type="text"
                                data-bind="value: filter.selectedValue.ancestor_location_type_name"/>
                     </div>
+                    <!-- ko if: filter.selectedValue.doc_type() === 'NumericFilter' -->
+                        <div class="form-inline">
+                            <div class="form-group">
+                                <select
+                                    class="form-control"
+                                    data-bind="
+                                        options: report.filterConfig.numeric_operators,
+                                        value: filter.selectedValue.operator
+                                    "
+                                ></select>
+                            </div>
+                            <div class="form-group">
+                                <input type="number" class="form-control" data-bind="value: filter.selectedValue.operand"/>
+                            </div>
+                        </div>
+                    <!-- /ko -->
                 </div>
             </th>
         </tr>
     </tbody>
 </table>
 
-<div data-bind="subscribeFilters: filterConfig.addSubscribersToSaveButton()"></div>
+<div data-bind="event: {onload: filterConfig.addSubscribersToSaveButton()}"></div>

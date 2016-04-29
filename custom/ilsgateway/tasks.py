@@ -27,6 +27,8 @@ from custom.ilsgateway.models import ILSGatewayConfig, ReportRun, \
     OrganizationSummary, PendingReportingDataRecalculation
 from dimagi.utils.dates import get_business_day_of_month, get_business_day_of_month_before
 
+from .oneoff import *
+
 
 @periodic_task(run_every=crontab(hour="4", minute="00", day_of_week="*"),
                queue='logistics_background_queue')
@@ -344,7 +346,8 @@ def recalculation_on_location_change(domain, last_run):
             continue
 
         if recalculation_type == 'group_change'\
-                and data_list[0]['previous_group'] != data_list[-1]['current_group']:
+                and data_list[0]['previous_group'] != data_list[-1]['current_group']\
+                and not sql_location.location_type.administrative:
             to_recalculate = recalculate_on_group_change(sql_location.couch_location, last_run)
         elif recalculation_type == 'parent_change' \
                 and data_list[0]['previous_parent'] != data_list[-1]['current_parent']:

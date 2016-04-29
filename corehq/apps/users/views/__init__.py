@@ -367,47 +367,6 @@ class BaseFullEditUserView(BaseEditUserView):
         return super(BaseFullEditUserView, self).post(request, *args, **kwargs)
 
 
-class EditMyAccountDomainView(BaseFullEditUserView):
-    template_name = "users/edit_full_user.html"
-    urlname = "domain_my_account"
-    page_title = ugettext_noop("Edit My Information")
-    edit_user_form_title = ugettext_noop("My Information")
-    user_update_form_class = UpdateMyAccountInfoForm
-
-    @property
-    def editable_user_id(self):
-        return self.couch_user._id
-
-    @property
-    def editable_user(self):
-        return self.couch_user
-
-    @property
-    @memoized
-    def page_url(self):
-        if self.urlname:
-            return reverse(self.urlname, args=[self.domain])
-
-    @property
-    def page_context(self):
-        context = {
-            'can_use_inbound_sms': domain_has_privilege(self.domain, privileges.INBOUND_SMS),
-        }
-        if (self.request.project.commtrack_enabled or
-                self.request.project.uses_locations):
-            context.update({
-                'update_form': self.commtrack_form,
-            })
-        return context
-
-    def get(self, request, *args, **kwargs):
-        if self.couch_user.is_commcare_user():
-            from corehq.apps.users.views.mobile import EditCommCareUserView
-            return HttpResponseRedirect(reverse(EditCommCareUserView.urlname,
-                                        args=[self.domain, self.editable_user_id]))
-        return super(EditMyAccountDomainView, self).get(request, *args, **kwargs)
-
-
 class ListWebUsersView(JSONResponseMixin, BaseUserSettingsView):
     template_name = 'users/web_users.html'
     page_title = ugettext_lazy("Web Users & Roles")

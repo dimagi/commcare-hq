@@ -141,6 +141,10 @@ class AbstractCommCareCase(object):
     def case_name(self):
         raise NotImplementedError()
 
+    @property
+    def parent(self):
+        raise NotImplementedError()
+
     def soft_delete(self):
         raise NotImplementedError()
 
@@ -169,6 +173,12 @@ class AbstractCommCareCase(object):
     def get_case_property(self, property):
         raise NotImplementedError
 
+    def to_json(self):
+        raise NotImplementedError()
+
+    def to_api_json(self):
+        raise NotImplementedError()
+
     @memoized
     def get_index_map(self, reversed=False):
         return dict([
@@ -192,6 +202,15 @@ class AbstractCommCareCase(object):
             # all custom properties go here
         }.items())
 
+    @memoized
+    def get_attachment_map(self):
+        return dict([
+            (name, {
+                'url': self.get_attachment_server_url(att.identifier),
+                'mime': att.attachment_from
+            }) for name, att in self.case_attachments.items()
+        ])
+
     def to_xml(self, version, include_case_on_closed=False):
         from xml.etree import ElementTree
         from casexml.apps.phone.xml import get_case_element
@@ -204,40 +223,22 @@ class AbstractCommCareCase(object):
             elem = get_case_element(self, ('create', 'update'), version)
         return ElementTree.tostring(elem)
 
-    def get_attachment_server_url(self, attachment_key):
+    def get_attachment_server_url(self, identifier):
         """
         A server specific URL for remote clients to access case attachment resources async.
         """
-        if attachment_key in self.case_attachments:
+        if identifier in self.case_attachments:
             from dimagi.utils import web
             from django.core.urlresolvers import reverse
             return "%s%s" % (web.get_url_base(),
-                             reverse("api_case_attachment", kwargs={
-                                 "domain": self.domain,
-                                 "case_id": self.case_id,
-                                 "attachment_id": attachment_key,
-                             })
+                 reverse("api_case_attachment", kwargs={
+                     "domain": self.domain,
+                     "case_id": self.case_id,
+                     "attachment_id": identifier,
+                 })
             )
         else:
             return None
-
-
-class AbstractLedgerValue(six.with_metaclass(ABCMeta)):
-    @abstractproperty
-    def case_id(self):
-        pass
-
-    @abstractproperty
-    def section_id(self):
-        pass
-
-    @abstractproperty
-    def entry_id(self):
-        pass
-
-    @abstractproperty
-    def balance(self):
-        pass
 
 
 class AbstractSupplyInterface(six.with_metaclass(ABCMeta)):
@@ -270,7 +271,3 @@ class CaseAttachmentMixin(IsImageMixin):
             return False
         else:
             return True
-
-    @property
-    def attachment_key(self):
-        return self.identifier

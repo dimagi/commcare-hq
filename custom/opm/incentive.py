@@ -28,7 +28,6 @@ class Worker(object):
         ('service_forms_cash', "Payment for Service Availability Form (in Rs.)", True, DTSortType.NUMERIC),
         ('growth_monitoring_cash', "Payment for Growth Monitoring Forms (in Rs.)", True, DTSortType.NUMERIC),
         ('month_total', "Total Payment Made for the month (in Rs.)", True, DTSortType.NUMERIC),
-        ('last_month_total', "Amount of AWW incentive paid last month", True, DTSortType.NUMERIC),
         ('owner_id', 'Owner ID', False, None),
     ]
 
@@ -75,11 +74,6 @@ class Worker(object):
         monitoring_cash = monitoring_count * FIXTURES['child_growth_monitored']
         self.growth_monitoring_cash = numeric_fn(monitoring_cash)
         self.month_total = numeric_fn(forms_cash + monitoring_cash)
-        if report.last_month_totals is not None:
-            self.last_month_total = numeric_fn(report.last_month_totals.get(
-                self.account_number, 0))
-        else:
-            self.last_month_total = numeric_fn(0)
 
     @property
     def debug_info(self):

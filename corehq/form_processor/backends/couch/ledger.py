@@ -1,6 +1,6 @@
 from casexml.apps.stock import const
 from casexml.apps.stock.models import StockReport, StockTransaction
-from corehq.apps.commtrack.processing import compute_ledger_values
+from corehq.apps.commtrack.processing import compute_ledger_values, rebuild_stock_state
 from corehq.form_processor.interfaces.ledger_processor import LedgerProcessorInterface, StockModelUpdateResult, \
     LedgerDBInterface
 from corehq.form_processor.parsers.ledgers.helpers import UniqueLedgerReference
@@ -39,21 +39,31 @@ class LedgerProcessorCouch(LedgerProcessorInterface):
     form and case models, which is why it lives in the "couch" module.
     """
 
-    def get_models_to_update(self, stock_report_helper, ledger_db=None):
+    def get_models_to_update(self, form_id, stock_report_helpers, deprecated_helpers, ledger_db=None):
         ledger_db = ledger_db or LedgerDBCouch()
-        assert stock_report_helper.domain == self.domain
-        if stock_report_helper.deprecated:
-            return StockModelUpdateResult(
-                to_delete=StockReport.objects.filter(domain=self.domain, form_id=stock_report_helper.form_id)
-            )
-        if stock_report_helper.report_type not in const.VALID_REPORT_TYPES:
-            return None
-        report_model = _get_model_for_stock_report(self.domain, stock_report_helper)
-        to_save = [report_model]
-        for transaction_helper in stock_report_helper.transactions:
-            to_save.append(_get_model_for_stock_transaction(report_model, transaction_helper, ledger_db))
-        return StockModelUpdateResult(to_save=to_save)
+        result = StockModelUpdateResult()
 
+        if len(deprecated_helpers):
+            form_ids = list({deprecated_helper.form_id for deprecated_helper in deprecated_helpers})
+            assert form_ids == [form_id]
+            result.to_delete.append(StockReport.objects.filter(domain=self.domain, form_id=form_id))
+
+        for helper in stock_report_helpers:
+            if helper.report_type not in const.VALID_REPORT_TYPES:
+                continue
+
+            report_model = _get_model_for_stock_report(self.domain, helper)
+            result.to_save.append(report_model)
+            for transaction_helper in helper.transactions:
+                transaction = _get_model_for_stock_transaction(
+                    report_model, transaction_helper, ledger_db
+                )
+                result.to_save.append(transaction)
+
+        return result
+
+    def rebuild_ledger_state(self, case_id, section_id, entry_id):
+        rebuild_stock_state(case_id, section_id, entry_id)
 
 def _get_model_for_stock_report(domain, stock_report_helper):
     return StockReport(

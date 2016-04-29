@@ -33,12 +33,13 @@
                         <div class="form-group">
                             <label class="control-label col-xs-3">{% trans "Date Filter" %}</label>
                             <div class="col-xs-9">
-                                <select data-bind="
-                                    options: datespan_filters,
-                                    optionsText: 'display',
-                                    optionsValue: 'slug',
-                                    value: datespan_slug
-                                "></select>
+                                <select class="form-control"
+                                        data-bind="
+                                            options: datespan_filters,
+                                            optionsText: 'display',
+                                            optionsValue: 'slug',
+                                            value: datespan_slug
+                                        "></select>
                             </div>
                         </div>
                     </div>

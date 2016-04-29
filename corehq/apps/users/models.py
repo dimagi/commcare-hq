@@ -34,7 +34,7 @@ from dimagi.utils.logging import notify_exception
 from dimagi.utils.decorators.memoized import memoized
 from dimagi.utils.make_uuid import random_hex
 from dimagi.utils.modules import to_function
-from corehq.util.quickcache import skippable_quickcache
+from corehq.util.quickcache import skippable_quickcache, quickcache
 from casexml.apps.case.mock import CaseBlock
 from casexml.apps.case.models import CommCareCase
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
@@ -510,6 +510,7 @@ class _AuthorizableMixin(IsMemberOfMixin):
         self.save()
 
     def delete_domain_membership(self, domain, create_record=False):
+        self.get_by_user_id.clear(self.__class__, self.user_id, domain)
         for i, dm in enumerate(self.domain_memberships):
             if dm.domain == domain:
                 if create_record:
@@ -763,7 +764,6 @@ class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, UnicodeMixIn, EulaMi
     has_built_app = BooleanProperty(default=False)
 
     _user = None
-    _user_checked = False
 
     @classmethod
     def wrap(cls, data, should_save=False):
@@ -776,6 +776,7 @@ class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, UnicodeMixIn, EulaMi
         couch_user = super(CouchUser, cls).wrap(data)
         if should_save:
             couch_user.save()
+
         return couch_user
 
     class AccountTypeError(Exception):
@@ -873,6 +874,7 @@ class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, UnicodeMixIn, EulaMi
         return session_data
 
     def delete(self):
+        self.clear_quickcache_for_user()
         try:
             user = self.get_django_user()
             user.delete()
@@ -939,7 +941,6 @@ class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, UnicodeMixIn, EulaMi
                             'CouchUser': 'user',
                             'CommCareUser': 'user',
                             'CommCareCase': 'case',
-                            'CommConnectCase': 'case',
                         }[duplicate.owner_doc_type]
                         from corehq.apps.users.views.mobile import EditCommCareUserView
                         url_ref, doc_id_param = {
@@ -1090,12 +1091,16 @@ class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, UnicodeMixIn, EulaMi
         return couch_user
 
     @classmethod
-    def wrap_correctly(cls, source):
+    def wrap_correctly(cls, source, allow_deleted_doc_types=False):
+        doc_type = source['doc_type']
+        if allow_deleted_doc_types:
+            doc_type = doc_type.replace(DELETED_SUFFIX, '')
+
         return {
             'WebUser': WebUser,
             'CommCareUser': CommCareUser,
             'FakeUser': FakeUser,
-        }[source['doc_type']].wrap(source)
+        }[doc_type].wrap(source)
 
     @classmethod
     @skippable_quickcache(['username'], skip_arg='strict')
@@ -1126,6 +1131,13 @@ class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, UnicodeMixIn, EulaMi
     def clear_quickcache_for_user(self):
         from corehq.apps.hqwebapp.templatetags.hq_shared_tags import _get_domain_list
         self.get_by_username.clear(self.__class__, self.username)
+        self.get_by_user_id.clear(self.__class__, self.user_id)
+        domains = getattr(self, 'domains', None)
+        if domains is None:
+            domain = getattr(self, 'domain', None)
+            domains = [domain] if domain else []
+        for domain in domains:
+            self.get_by_user_id.clear(self.__class__, self.user_id, domain)
         Domain.active_for_couch_user.clear(self)
         _get_domain_list.clear(self)
 
@@ -1138,13 +1150,14 @@ class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, UnicodeMixIn, EulaMi
             return None
 
     @classmethod
+    @quickcache(['userID', 'domain'])
     def get_by_user_id(cls, userID, domain=None):
         """
         if domain is given, checks to make sure the user is a member of that domain
         returns None if there's no user found or if the domain check fails
         """
         try:
-            couch_user = cls.wrap_correctly(cache_core.cached_open_doc(cls.get_db(), userID))
+            couch_user = cls.wrap_correctly(cls.get_db().get(userID))
         except ResourceNotFound:
             return None
         if couch_user.doc_type != cls.__name__ and cls.__name__ != "CouchUser":
@@ -1505,7 +1518,7 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
         return user
 
     def _get_form_ids(self):
-        return FormAccessors(self.domain).get_form_ids_for_user(self.domain, self.user_id)
+        return FormAccessors(self.domain).get_form_ids_for_user(self.user_id)
 
     def _get_case_ids(self):
         return CaseAccessors(self.domain).get_case_ids_by_owners([self.user_id])

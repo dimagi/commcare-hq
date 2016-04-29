@@ -10,5 +10,5 @@ class ChangeProvider(object):
     __metaclass__ = ABCMeta
 
     @abstractmethod
-    def iter_changes(self, start_from=None):
+    def iter_all_changes(self, start_from=None):
         pass

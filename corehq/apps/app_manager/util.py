@@ -2,11 +2,11 @@ from collections import defaultdict
 from copy import deepcopy
 import functools
 import json
-import itertools
 import os
 import uuid
 import yaml
 from corehq import toggles
+from corehq.apps.app_manager.dbaccessors import get_apps_in_domain
 from corehq.apps.app_manager.exceptions import SuiteError
 from corehq.apps.app_manager.xpath import DOT_INTERPOLATE_PATTERN, UserCaseXPath
 from corehq.apps.builds.models import CommCareBuildConfig
@@ -200,7 +200,6 @@ class ParentCasePropertyBuilder(object):
 
     @memoized
     def get_other_case_sharing_apps_in_domain(self):
-        from corehq.apps.app_manager.dbaccessors import get_apps_in_domain
         apps = get_apps_in_domain(self.app.domain, include_remote=False)
         return [a for a in apps if a.case_sharing and a.id != self.app.id]
 
@@ -592,6 +591,16 @@ def prefix_usercase_properties(properties):
     return {'{}{}'.format(USERCASE_PREFIX, prop) for prop in properties}
 
 
+def module_offers_search(module):
+    from corehq.apps.app_manager.models import AdvancedModule, Module
+
+    return (
+        isinstance(module, (Module, AdvancedModule)) and
+        module.search_config and
+        module.search_config.properties
+    )
+
+
 def get_cloudcare_session_data(domain_name, form, couch_user):
     from corehq.apps.hqcase.utils import get_case_id_by_domain_hq_user_id
     from corehq.apps.app_manager.suite_xml.sections.entries import EntriesHelper
@@ -676,3 +685,29 @@ def use_app_aware_sync(app):
     Determines whether OTA restore should sync only cases/ledgers/fixtures of the given app where possible
     """
     return toggles.APP_AWARE_SYNC.enabled(app.domain)
+
+
+def purge_report_from_mobile_ucr(report_config):
+    """
+    Called when a report is deleted, this will remove any references to it in
+    mobile UCR modules.
+    """
+    if not toggles.MOBILE_UCR.enabled(report_config.domain):
+        return False
+
+    did_purge_something = False
+    for app in get_apps_in_domain(report_config.domain):
+        save_app = False
+        for module in app.modules:
+            if module.module_type == 'report':
+                valid_report_configs = [
+                    app_config for app_config in module.report_configs
+                    if app_config.report_id != report_config._id
+                ]
+                if len(valid_report_configs) != len(module.report_configs):
+                    module.report_configs = valid_report_configs
+                    save_app = True
+        if save_app:
+            app.save()
+            did_purge_something = True
+    return did_purge_something

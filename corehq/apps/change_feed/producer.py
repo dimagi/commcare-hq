@@ -1,12 +1,12 @@
 from __future__ import unicode_literals
 import json
 import time
+from django.conf import settings
 
 from corehq.util.soft_assert import soft_assert
 from kafka import KeyedProducer
 from kafka.common import LeaderNotAvailableError, FailedPayloadsError, KafkaUnavailableError
 from corehq.apps.change_feed.connection import get_kafka_client_or_none
-import logging
 
 
 def send_to_kafka(producer, topic, change_meta):
@@ -25,7 +25,7 @@ def send_to_kafka(producer, topic, change_meta):
             try:
                 _send_to_kafka()
                 break
-            except (FailedPayloadsError, KafkaUnavailableError):
+            except (FailedPayloadsError, KafkaUnavailableError, LeaderNotAvailableError):
                 if i == (tries - 1):
                     # if it's the last try, fail hard
                     raise
@@ -54,7 +54,8 @@ class ChangeProducer(object):
         if self._kafka is None and not self._has_error:
             self._kafka = get_kafka_client_or_none()
             if self._kafka is None:
-                logging.warning('Kafka is not available! Change producer is doing nothing.')
+                _assert = soft_assert(notify_admins=True)
+                _assert(settings.DEBUG, 'Kafka is not available! Change producer is doing nothing.')
                 self._has_error = True
         return self._kafka
 

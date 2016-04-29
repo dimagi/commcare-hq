@@ -452,10 +452,7 @@ class ReportConfig(CachedCouchDocumentMixin, Document):
     @property
     @memoized
     def owner(self):
-        try:
-            return WebUser.get_by_user_id(self.owner_id)
-        except CouchUser.AccountTypeError:
-            return CommCareUser.get_by_user_id(self.owner_id)
+        return CouchUser.get_by_user_id(self.owner_id)
 
     def get_report_content(self, lang, attach_excel=False):
         """
@@ -673,10 +670,7 @@ class ReportNotification(CachedCouchDocumentMixin, Document):
     @memoized
     def owner(self):
         id = self.owner_id
-        try:
-            return WebUser.get_by_user_id(id)
-        except CouchUser.AccountTypeError:
-            return CommCareUser.get_by_user_id(id)
+        return CouchUser.get_by_user_id(id)
 
     @property
     @memoized
@@ -783,7 +777,8 @@ class ReportNotification(CachedCouchDocumentMixin, Document):
             for email in emails:
                 send_html_email_async.delay(title, email, body.content,
                                             email_from=settings.DEFAULT_FROM_EMAIL,
-                                            file_attachments=excel_files, ga_track=True)
+                                            file_attachments=excel_files, ga_track=True,
+                                            ga_tracking_info={'project_space_id': self.domain})
 
 
 class AppNotFound(Exception):

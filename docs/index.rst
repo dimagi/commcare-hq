@@ -35,6 +35,7 @@ Welcome to CommCareHQ's documentation!
    test_coverage
    advanced_app_features
    nfs
+   forms_and_cases
 
 Tips for documenting
 --------------------

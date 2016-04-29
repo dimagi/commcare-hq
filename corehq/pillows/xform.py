@@ -1,5 +1,7 @@
 import collections
 import copy
+import datetime
+
 from casexml.apps.case.xform import extract_case_blocks, get_case_ids_from_form
 from corehq.apps.change_feed import topics
 from corehq.apps.change_feed.consumer.feed import KafkaChangeFeed
@@ -95,6 +97,7 @@ def transform_xform_for_elasticsearch(doc_dict, include_props=True):
         except KeyError:
             user_id = None
         doc_ret['user_type'] = get_user_type(user_id)
+        doc_ret['inserted_at'] = datetime.datetime.utcnow().isoformat()
 
         case_blocks = extract_case_blocks(doc_ret)
         for case_dict in case_blocks:
@@ -136,7 +139,6 @@ def get_sql_xform_to_elasticsearch_pillow(pillow_id='SqlXFormToElasticsearchPill
     )
     return ConstructedPillow(
         name=pillow_id,
-        document_store=None,
         checkpoint=checkpoint,
         change_feed=KafkaChangeFeed(topics=[topics.FORM_SQL], group_id='sql-forms-to-es'),
         processor=form_processor,
@@ -150,11 +152,12 @@ def get_couch_form_reindexer():
     return get_default_reindexer_for_elastic_pillow(
         pillow=XFormPillow(online=False),
         change_provider=CouchViewChangeProvider(
-            document_class=XFormInstance,
+            couch_db=XFormInstance.get_db(),
             view_name='all_docs/by_doc_type',
             view_kwargs={
                 'startkey': ['XFormInstance'],
                 'endkey': ['XFormInstance', {}],
+                'include_docs': True,
             }
         )
     )
@@ -164,7 +167,7 @@ def get_sql_form_reindexer():
     return ElasticPillowReindexer(
         pillow=get_sql_xform_to_elasticsearch_pillow(),
         change_provider=SqlFormChangeProvider(),
-        elasticsearch=XFormPillow(online=False).get_es_new(),
+        elasticsearch=get_es_new(),
         index_info=_get_xform_index_info(),
     )
 

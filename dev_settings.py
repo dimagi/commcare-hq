@@ -87,3 +87,5 @@ shared_dirname = os.path.join(os.path.dirname(os.path.realpath(__file__)),
 if not os.path.exists(shared_dirname):
     os.mkdir(shared_dirname)
 SHARED_DRIVE_ROOT = shared_dirname
+
+PHONE_TIMEZONES_SHOULD_BE_PROCESSED = True

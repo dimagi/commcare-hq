@@ -1,7 +1,7 @@
 from contextlib import contextmanager
 
-from casexml.apps.case.mock import CaseFactory
-from casexml.apps.case.models import CommCareCase
+from casexml.apps.case.mock import CaseFactory, CaseStructure, CaseIndex
+from casexml.apps.case.models import CommCareCase, INDEX_ID_PARENT, INDEX_RELATIONSHIP_CHILD
 from casexml.apps.case.signals import case_post_save
 from corehq.apps.data_interfaces.models import (AutomaticUpdateRule,
     AutomaticUpdateRuleCriteria, AutomaticUpdateAction)
@@ -334,11 +334,51 @@ class AutomaticCaseUpdateTest(TestCase):
             rules_by_case_type['test-case-type-2'], datetime(2016, 1, 1))
         self.assertEqual(boundary_date, datetime(2015, 12, 2))
 
+    @run_with_all_backends
+    def test_parent_case_lookup(self):
+        with _with_case(self.domain, 'test-child-case-type', datetime(2016, 1, 1)) as child, \
+                _with_case(self.domain, 'test-parent-case-type', datetime(2016, 1, 1), case_name='abc') as parent:
+
+            # Set the parent case relationship
+            child = set_parent_case(self.domain, child, parent)
+
+            # Create a rule that references parent/name which should match
+            rule = AutomaticUpdateRule(
+                domain=self.domain,
+                name='test-parent-rule',
+                case_type='test-child-case-type',
+                active=True,
+                server_modified_boundary=30,
+            )
+            rule.save()
+            self.addCleanup(rule.delete)
+            rule.automaticupdaterulecriteria_set = [
+                AutomaticUpdateRuleCriteria(
+                    property_name='parent/name',
+                    property_value='abc',
+                    match_type=AutomaticUpdateRuleCriteria.MATCH_EQUAL,
+                ),
+            ]
+
+            self.assertTrue(rule.rule_matches_case(child, datetime(2016, 3, 1)))
+
+            # Update the rule to match on a different name and now it shouldn't match
+            rule.automaticupdaterulecriteria_set.all().delete()
+            rule.automaticupdaterulecriteria_set = [
+                AutomaticUpdateRuleCriteria(
+                    property_name='parent/name',
+                    property_value='def',
+                    match_type=AutomaticUpdateRuleCriteria.MATCH_EQUAL,
+                ),
+            ]
+
+            self.assertFalse(rule.rule_matches_case(child, datetime(2016, 3, 1)))
+
 
 @contextmanager
-def _with_case(domain, case_type, last_modified):
+def _with_case(domain, case_type, last_modified, **kwargs):
     with drop_connected_signals(case_post_save):
-        case = CaseFactory(domain).create_case(case_type=case_type)
+        case = CaseFactory(domain).create_case(case_type=case_type, **kwargs)
 
     _update_case(domain, case.case_id, last_modified)
     accessors = CaseAccessors(domain)
@@ -352,14 +392,39 @@ def _with_case(domain, case_type, last_modified):
             case.delete()
 
 
+def _save_case(domain, case):
+    if should_use_sql_backend(domain):
+        CaseAccessorSQL.save_case(case)
+    else:
+        # can't call case.save() since it overrides the server_modified_on property
+        CommCareCase.get_db().save_doc(case.to_json())
+
+
 def _update_case(domain, case_id, server_modified_on, last_visit_date=None):
     accessors = CaseAccessors(domain)
     case = accessors.get_case(case_id)
     case.server_modified_on = server_modified_on
     if last_visit_date:
         set_case_property_directly(case, 'last_visit_date', last_visit_date.strftime('%Y-%m-%d'))
-    if should_use_sql_backend(domain):
-        CaseAccessorSQL.save_case(case)
-    else:
-        # can't call case.save() since it overrides the server_modified_on property
-        CommCareCase.get_db().save_doc(case.to_json())
+    _save_case(domain, case)
+
+
+def set_parent_case(domain, child_case, parent_case):
+    server_modified_on = child_case.server_modified_on
+
+    parent = CaseStructure(case_id=parent_case.case_id)
+    CaseFactory(domain).create_or_update_case(
+        CaseStructure(
+            case_id=child_case.case_id,
+            indices=[CaseIndex(
+                related_structure=parent,
+                identifier=INDEX_ID_PARENT,
+                relationship=INDEX_RELATIONSHIP_CHILD
+            )],
+        )
+    )
+
+    child_case = CaseAccessors(domain).get_case(child_case.case_id)
+    child_case.server_modified_on = server_modified_on
+    _save_case(domain, child_case)
+    return CaseAccessors(domain).get_case(child_case.case_id)

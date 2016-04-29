@@ -126,16 +126,16 @@
                                 <span data-bind="text: $root.page_start_num() + '-' + $root.page_end_num() + ' / ' + $root.total_rows()"></span>
                             </div>
                             <div class="dataTables_length">
-                                <select id="page_size_select" size="1" class="form-control" data-bind="options: pagination_options, value: $root.page_size"></select> <span>/ {% trans "page" %}</span>
+                                <select id="page_size_select" class="form-control" data-bind="options: pagination_options, value: $root.page_size"></select> <span>/ {% trans "page" %}</span>
                             </div>
 
-                            <div class="pagination pagination-right" data-bind="visible: $root.page_count() > 1">
-                                <ul>
+                            <div class="pull-right" data-bind="visible: $root.page_count() > 1">
+                                <ul class="pagination">
                                     <li>
                                         <button class="btn btn-sm btn-default" type="button" data-bind="enable: $root.disp_page_index() > 1, click: $root.prevPage">«</button>
                                     </li>
                                     <li class="active">
-                                        <select size="1" class="form-control" data-bind="options: all_pages(), value: $root.disp_page_index"></select>
+                                        <select class="form-control" data-bind="options: all_pages(), value: $root.disp_page_index"></select>
                                     </li>
                                     <li>
                                         <button class="btn btn-sm btn-default" type="button" data-bind="enable: $root.page_end_num() < $root.total_rows(), click: $root.nextPage">»</button>

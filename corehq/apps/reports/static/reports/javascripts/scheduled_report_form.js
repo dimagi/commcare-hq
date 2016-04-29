@@ -14,12 +14,12 @@ function update_day_input(weekly_options, monthly_options, day_value) {
     $('#div_id_day').remove();
     if ($interval.val() !== 'daily') {
         var opts = $interval.val() === 'weekly' ? weekly_options : monthly_options
-        var $day_select = $('<select id="id_day" class="select" name="day" />');
+        var $day_select = $('<select id="id_day" class="select form-control" name="day" />');
         $day_select = add_options_to_select($day_select, opts, day_value);
-        var $day_control_group = $('<div id="div_id_day" class="control-group" />')
-                .append($('<label for="id_day" class="control-label requiredField">Day<span class="asteriskField">*</span></label>'))
-                .append($('<div class="controls" />').append($day_select));
-        $interval.parents('.control-group').after($day_control_group);
+        var $day_control_group = $('<div id="div_id_day" class="form-group" />')
+                .append($('<label for="id_day" class="control-label col-sm-3 col-md-2 requiredField">Day<span class="asteriskField">*</span></label>'))
+                .append($('<div class="controls col-sm-9 col-md-8 col-lg-6" />').append($day_select));
+        $interval.closest('.form-group').after($day_control_group);
     }
 }
 

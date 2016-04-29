@@ -149,6 +149,7 @@ The Python libraries you will be installing in the next step require the followi
 
     $ sudo apt-get install rabbitmq-server \
           libpq-dev \
+          libffi-dev \
           libfreetype6-dev \
           libjpeg-dev \
           libtiff-dev \

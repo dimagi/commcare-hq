@@ -3,7 +3,6 @@
 
 from casexml.apps.case.models import CommCareCase
 from corehq.apps.sms.mixin import apply_leniency
-from corehq.apps.sms.models import CommConnectCase
 from corehq.apps.sms.util import (clean_phone_number,
     get_contact, ContactNotFoundException)
 from corehq.apps.users.models import CommCareUser
@@ -29,7 +28,7 @@ class UtilTestCase(TestCase):
     def test_get_contact(self):
         contact = get_contact(self.case.get_id)
         self.assertEqual(contact.get_id, self.case.get_id)
-        self.assertTrue(isinstance(contact, CommConnectCase))
+        self.assertTrue(isinstance(contact, CommCareCase))
 
         contact = get_contact(self.user.get_id)
         self.assertEqual(contact.get_id, self.user.get_id)

@@ -32,7 +32,7 @@ from casexml.apps.case.models import CommCareCase
 from corehq.apps.callcenter.indicator_sets import CallCenterIndicators
 from corehq.apps.hqcase.utils import get_case_by_domain_hq_user_id
 from corehq.apps.style.decorators import use_datatables, use_jquery_ui, \
-    use_bootstrap3
+    use_bootstrap3, use_nvd3, use_nvd3_v3
 from corehq.apps.style.utils import set_bootstrap_version3
 from corehq.apps.style.views import BaseB3SectionPageView
 from corehq.toggles import any_toggle_enabled, SUPPORT
@@ -146,28 +146,42 @@ class AuthenticateAs(BaseAdminSectionView):
         return self.get(request, *args, **kwargs)
 
 
-@require_superuser_or_developer
-def view_recent_changes(request):
-    count = int(request.GET.get('changes', 1000))
-    changes = list(get_recent_changes(get_db(), count))
-    domain_counts = defaultdict(lambda: 0)
-    doc_type_counts = defaultdict(lambda: 0)
-    for change in changes:
-        domain_counts[change['domain']] += 1
-        doc_type_counts[change['doc_type']] += 1
+class RecentCouchChangesView(BaseAdminSectionView):
+    urlname = 'view_recent_changes'
+    template_name = 'hqadmin/couch_changes.html'
+    page_title = ugettext_lazy("Recent Couch Changes")
 
-    def _to_chart_data(data_dict):
-        return [
-            {'label': l, 'value': v} for l, v in sorted(data_dict.items(), key=lambda tup: tup[1], reverse=True)
-        ][:20]
+    @use_bootstrap3
+    @use_nvd3_v3
+    @use_datatables
+    @use_jquery_ui
+    @method_decorator(require_superuser_or_developer)
+    def dispatch(self, *args, **kwargs):
+        return super(RecentCouchChangesView, self).dispatch(*args, **kwargs)
 
-    return render(request, 'hqadmin/couch_changes.html', {
-        'count': count,
-        'recent_changes': changes,
-        'domain_data': {'key': 'domains', 'values': _to_chart_data(domain_counts)},
-        'doc_type_data': {'key': 'doc types', 'values': _to_chart_data(doc_type_counts)},
-        'hide_filters': True,
-    })
+    @property
+    def page_context(self):
+        count = int(self.request.GET.get('changes', 1000))
+        changes = list(get_recent_changes(get_db(), count))
+        domain_counts = defaultdict(lambda: 0)
+        doc_type_counts = defaultdict(lambda: 0)
+        for change in changes:
+            domain_counts[change['domain']] += 1
+            doc_type_counts[change['doc_type']] += 1
+
+        def _to_chart_data(data_dict):
+            return [
+                {'label': l, 'value': v} for l, v in sorted(data_dict.items(), key=lambda tup: tup[1], reverse=True)
+            ][:20]
+
+        return {
+            'count': count,
+            'recent_changes': changes,
+            'domain_data': {'key': 'domains', 'values': _to_chart_data(domain_counts)},
+            'doc_type_data': {'key': 'doc types', 'values': _to_chart_data(doc_type_counts)},
+        }
+
+
 
 
 @require_superuser_or_developer
@@ -379,13 +393,25 @@ def admin_restore(request, app_id=None):
     return get_restore_response(user.domain, user, overwrite_cache=overwrite_cache, app_id=app_id,
                                 **get_restore_params(request))
 
-@require_superuser
-def management_commands(request, template="hqadmin/management_commands.html"):
-    commands = [(_('Remove Duplicate Domains'), 'remove_duplicate_domains')]
-    context = get_hqadmin_base_context(request)
-    context["hide_filters"] = True
-    context["commands"] = commands
-    return render(request, template, context)
+
+class ManagementCommandsView(BaseAdminSectionView):
+    urlname = 'management_commands'
+    page_title = ugettext_lazy("Management Commands")
+    template_name = 'hqadmin/management_commands.html'
+
+    @method_decorator(require_superuser)
+    @use_jquery_ui
+    @use_datatables
+    def dispatch(self, request, *args, **kwargs):
+        return super(ManagementCommandsView, self).dispatch(request, *args, **kwargs)
+
+    @property
+    def page_context(self):
+        commands = [(_('Remove Duplicate Domains'), 'remove_duplicate_domains')]
+        context = get_hqadmin_base_context(self.request)
+        context["hide_filters"] = True
+        context["commands"] = commands
+        return context
 
 
 @require_POST
@@ -467,97 +493,120 @@ def admin_reports_stats_data(request):
     return stats_data(request)
 
 
-@require_superuser
-def loadtest(request):
-    # The multimech results api is kinda all over the place.
-    # the docs are here: http://testutils.org/multi-mechanize/datastore.html
+class LoadtestReportView(BaseAdminSectionView):
+    urlname = 'loadtest_report'
+    template_name = 'hqadmin/loadtest.html'
+    page_title = ugettext_lazy("Loadtest Results")
 
-    scripts = ['submit_form.py', 'ota_restore.py']
+    @method_decorator(require_superuser)
+    @use_nvd3_v3
+    @use_jquery_ui
+    @use_datatables
+    def dispatch(self, request, *args, **kwargs):
+        return super(LoadtestReportView, self).dispatch(request, *args, **kwargs)
 
-    tests = []
-    # datetime info seems to be buried in GlobalConfig.results[0].run_id,
-    # which makes ORM-level sorting problematic
-    for gc in Session.query(GlobalConfig).all()[::-1]:
-        gc.scripts = dict((uc.script, uc) for uc in gc.user_group_configs)
-        if gc.results:
-            for script, uc in gc.scripts.items():
-                uc.results = filter(
-                    lambda res: res.user_group_name == uc.user_group,
-                    gc.results
-                )
-            test = {
-                'datetime': gc.results[0].run_id,
-                'run_time': gc.run_time,
-                'results': gc.results,
-            }
-            for script in scripts:
-                test[script.split('.')[0]] = gc.scripts.get(script)
-            tests.append(test)
+    @property
+    def page_context(self):
+        # The multimech results api is kinda all over the place.
+        # the docs are here: http://testutils.org/multi-mechanize/datastore.html
 
-    context = get_hqadmin_base_context(request)
-    context.update({
-        "tests": tests,
-        "hide_filters": True,
-    })
+        scripts = ['submit_form.py', 'ota_restore.py']
 
-    date_axis = Axis(label="Date", dateFormat="%m/%d/%Y")
-    tests_axis = Axis(label="Number of Tests in 30s")
-    chart = LineChart("HQ Load Test Performance", date_axis, tests_axis)
-    submit_data = []
-    ota_data = []
-    total_data = []
-    max_val = 0
-    max_date = None
-    min_date = None
-    for test in tests:
-        date = test['datetime']
-        total = len(test['results'])
-        max_val = total if total > max_val else max_val
-        max_date = date if not max_date or date > max_date else max_date
-        min_date = date if not min_date or date < min_date else min_date
-        submit_data.append({'x': date, 'y': len(test['submit_form'].results)})
-        ota_data.append({'x': date, 'y': len(test['ota_restore'].results)})
-        total_data.append({'x': date, 'y': total})
+        tests = []
+        # datetime info seems to be buried in GlobalConfig.results[0].run_id,
+        # which makes ORM-level sorting problematic
+        for gc in Session.query(GlobalConfig).all()[::-1]:
+            gc.scripts = dict((uc.script, uc) for uc in gc.user_group_configs)
+            if gc.results:
+                for script, uc in gc.scripts.items():
+                    uc.results = filter(
+                        lambda res: res.user_group_name == uc.user_group,
+                        gc.results
+                    )
+                test = {
+                    'datetime': gc.results[0].run_id,
+                    'run_time': gc.run_time,
+                    'results': gc.results,
+                }
+                for script in scripts:
+                    test[script.split('.')[0]] = gc.scripts.get(script)
+                tests.append(test)
 
-    deployments = [row['key'][1] for row in HqDeploy.get_list(settings.SERVER_ENVIRONMENT, min_date, max_date)]
-    deploy_data = [{'x': min_date, 'y': 0}]
-    for date in deployments:
-        deploy_data.extend([{'x': date, 'y': 0}, {'x': date, 'y': max_val}, {'x': date, 'y': 0}])
-    deploy_data.append({'x': max_date, 'y': 0})
+        context = get_hqadmin_base_context(self.request)
+        context.update({
+            "tests": tests,
+            "hide_filters": True,
+        })
 
-    chart.add_dataset("Deployments", deploy_data)
-    chart.add_dataset("Form Submission Count", submit_data)
-    chart.add_dataset("OTA Restore Count", ota_data)
-    chart.add_dataset("Total Count", total_data)
+        date_axis = Axis(label="Date", dateFormat="%m/%d/%Y")
+        tests_axis = Axis(label="Number of Tests in 30s")
+        chart = LineChart("HQ Load Test Performance", date_axis, tests_axis)
+        submit_data = []
+        ota_data = []
+        total_data = []
+        max_val = 0
+        max_date = None
+        min_date = None
+        for test in tests:
+            date = test['datetime']
+            total = len(test['results'])
+            max_val = total if total > max_val else max_val
+            max_date = date if not max_date or date > max_date else max_date
+            min_date = date if not min_date or date < min_date else min_date
+            submit_data.append({'x': date, 'y': len(test['submit_form'].results)})
+            ota_data.append({'x': date, 'y': len(test['ota_restore'].results)})
+            total_data.append({'x': date, 'y': total})
 
-    context['charts'] = [chart]
+        deployments = [row['key'][1] for row in HqDeploy.get_list(
+            settings.SERVER_ENVIRONMENT, min_date, max_date
+        )]
+        deploy_data = [{'x': min_date, 'y': 0}]
+        for date in deployments:
+            deploy_data.extend([
+                {'x': date, 'y': 0},
+                {'x': date, 'y': max_val},
+                {'x': date, 'y': 0},
+            ])
+        deploy_data.append({'x': max_date, 'y': 0})
 
-    template = "hqadmin/loadtest.html"
-    return render(request, template, context)
+        chart.add_dataset("Deployments", deploy_data)
+        chart.add_dataset("Form Submission Count", submit_data)
+        chart.add_dataset("OTA Restore Count", ota_data)
+        chart.add_dataset("Total Count", total_data)
+
+        context['charts'] = [chart]
+        return context
 
 
 def _lookup_id_in_couch(doc_id, db_name=None):
+    db_result = namedtuple('db_result', 'dbname result status')
+    STATUSES = defaultdict(lambda: 'warning', {
+        'missing': 'default',
+        'deleted': 'danger',
+    })
+
     if db_name:
         dbs = [couch_config.get_db(None if db_name == 'commcarehq' else db_name)]
     else:
         dbs = couch_config.all_dbs_by_slug.values()
 
+    db_results = []
+    response = {"doc_id": doc_id}
     for db in dbs:
         try:
             doc = db.get(doc_id)
-        except ResourceNotFound:
-            pass
+        except ResourceNotFound as e:
+            db_results.append(db_result(db.dbname, e.msg, STATUSES[e.msg]))
         else:
-            return {
+            db_results.append(db_result(db.dbname, 'found', 'success'))
+            response.update({
                 "doc": json.dumps(doc, indent=4, sort_keys=True),
-                "doc_id": doc_id,
                 "doc_type": doc.get('doc_type', 'Unknown'),
                 "dbname": db.dbname,
-            }
-    return {
-        "doc": "NOT FOUND",
-        "doc_id": doc_id,
-    }
+            })
+
+    response['db_results'] = db_results
+    return response
 
 
 @require_superuser
@@ -613,6 +662,8 @@ def doc_in_es(request):
 def raw_couch(request):
     doc_id = request.GET.get("id")
     db_name = request.GET.get("db_name", None)
+    if db_name and "__" in db_name:
+        db_name = db_name.split("__")[-1]
     context = _lookup_id_in_couch(doc_id, db_name) if doc_id else {}
     other_dbs = sorted(filter(None, couch_config.all_dbs_by_slug.keys()))
     context['all_databases'] = ['commcarehq'] + other_dbs

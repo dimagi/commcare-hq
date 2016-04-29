@@ -52,29 +52,30 @@
         data-standard-text="{% trans 'Apply' %}">
         {% trans 'Apply' %}
     </button>
-    <div class="btn-group">
-        <button type="button" class="btn dropdown-toggle btn-default" data-toggle="dropdown">
-            {% trans 'Favorites' %} <span class="caret"></span>
+    {% if not report.is_admin %}
+        <div class="btn-group">
+            <button type="button" class="btn dropdown-toggle btn-default" data-toggle="dropdown">
+                {% trans 'Favorites' %} <span class="caret"></span>
+            </button>
+            <ul class="dropdown-menu">
+                <li data-bind="ifnot: reportConfigs().length">
+                    <a href="#">{% trans "You don't have any favorites" %}</a>
+                </li>
+                <!-- ko foreach: reportConfigs -->
+                <li>
+                    <a href="#" tabindex="-1"
+                       data-bind="text: name, attr: { title: description }, click: $root.setConfigBeingViewed">
+                    </a>
+                </li>
+                <!-- /ko -->
+            </ul>
+        </div>
+
+        <button class="btn btn-default" data-bind="click: setConfigBeingEdited"
+                onclick="ga_track_event('Scheduled Reports', 'Configure a saved report', '-');">
+            {% trans "Save" %}...
         </button>
-        <ul class="dropdown-menu">
-            <li data-bind="ifnot: reportConfigs().length">
-                <a href="#">{% trans "You don't have any favorites" %}</a>
-            </li>
-            <!-- ko foreach: reportConfigs -->
-            <li>
-                <a href="#" tabindex="-1"
-                    data-bind="text: name, attr: { title: description }, click: $root.setConfigBeingViewed">
-                </a>
-            </li>
-            <!-- /ko -->
-        </ul>
-    </div>
-
-    <button class="btn btn-default" data-bind="click: setConfigBeingEdited"
-            onclick="ga_track_event('Scheduled Reports', 'Configure a saved report', '-');">
-        {% trans "Save" %}...
-    </button>
-
+    {% endif %}
     {% if report.is_emailable %}
         <div style="display: inline-block; margin-left:0.5em;" class="label label-info" id="email-enabled">
             <i class="fa fa-info-circle"></i> {% trans "Email Supported" %}

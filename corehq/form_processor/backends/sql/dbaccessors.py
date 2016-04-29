@@ -10,8 +10,8 @@ from corehq.form_processor.exceptions import (
     CaseNotFound,
     AttachmentNotFound,
     CaseSaveError,
-    LedgerSaveError
-)
+    LedgerSaveError,
+    LedgerValueNotFound)
 from corehq.form_processor.interfaces.dbaccessors import (
     AbstractCaseAccessor,
     AbstractFormAccessor,
@@ -164,10 +164,12 @@ class FormAccessorSQL(AbstractFormAccessor):
     @staticmethod
     def archive_form(form, user_id=None):
         FormAccessorSQL._archive_unarchive_form(form, user_id, True)
+        form.state = XFormInstanceSQL.ARCHIVED
 
     @staticmethod
     def unarchive_form(form, user_id=None):
         FormAccessorSQL._archive_unarchive_form(form, user_id, False)
+        form.state = XFormInstanceSQL.NORMAL
 
     @staticmethod
     def soft_delete_forms(domain, form_ids, deletion_date=None, deletion_id=None):
@@ -653,15 +655,23 @@ class CaseAccessorSQL(AbstractCaseAccessor):
 
     @staticmethod
     def soft_delete_cases(domain, case_ids, deletion_date=None, deletion_id=None):
+        from corehq.form_processor.change_publishers import publish_case_deleted
+
         assert isinstance(case_ids, list)
-        deletion_date = deletion_date or datetime.utcnow()
+        utcnow = datetime.utcnow()
+        deletion_date = deletion_date or utcnow
         with get_cursor(CommCareCaseSQL) as cursor:
             cursor.execute(
-                'SELECT soft_delete_cases(%s, %s, %s, %s) as affected_count',
-                [domain, case_ids, deletion_date, deletion_id]
+                'SELECT soft_delete_cases(%s, %s, %s, %s, %s) as affected_count',
+                [domain, case_ids, utcnow, deletion_date, deletion_id]
             )
             results = fetchall_as_namedtuple(cursor)
-            return sum([result.affected_count for result in results])
+            affected_count = sum([result.affected_count for result in results])
+
+        for case_id in case_ids:
+            publish_case_deleted(domain, case_id)
+
+        return affected_count
 
 
 class LedgerAccessorSQL(AbstractLedgerAccessor):
@@ -680,26 +690,28 @@ class LedgerAccessorSQL(AbstractLedgerAccessor):
                 [case_id, section_id, entry_id]
             )[0]
         except IndexError:
-            raise LedgerValue.DoesNotExist
+            raise LedgerValueNotFound
 
     @staticmethod
-    def save_ledger_values(ledger_values):
+    def save_ledger_values(ledger_values, deprecated_form=None):
         if not ledger_values:
             return
 
+        deprecated_form_id = deprecated_form.orig_id if deprecated_form else None
+
         for ledger_value in ledger_values:
-            transactions = ledger_value.get_tracked_models_to_create(LedgerTransaction)
+            transactions_to_save = ledger_value.get_live_tracked_models(LedgerTransaction)
 
             ledger_value.last_modified = datetime.utcnow()
 
             with get_cursor(LedgerValue) as cursor:
                 try:
                     cursor.execute(
-                        "SELECT save_ledger_values(%s, %s::{}, %s::{}[])".format(
+                        "SELECT save_ledger_values(%s, %s::{}, %s::{}[], %s)".format(
                             LedgerValue_DB_TABLE,
                             LedgerTransaction_DB_TABLE
                         ),
-                        [ledger_value.case_id, ledger_value, transactions]
+                        [ledger_value.case_id, ledger_value, transactions_to_save, deprecated_form_id]
                     )
                 except InternalError as e:
                     raise LedgerSaveError(e)
@@ -714,30 +726,40 @@ class LedgerAccessorSQL(AbstractLedgerAccessor):
         ))
 
     @staticmethod
-    def get_ledger_transactions_for_case(case_id, entry_id=None, section_id=None):
+    def get_ledger_transactions_for_case(case_id, section_id=None, entry_id=None):
         return RawQuerySetWrapper(LedgerTransaction.objects.raw(
             "SELECT * FROM get_ledger_transactions_for_case(%s, %s, %s)",
-            [case_id, entry_id, section_id]
+            [case_id, section_id, entry_id]
         ))
 
     @staticmethod
-    def get_ledger_transactions_in_window(case_id, entry_id, section_id, window_start, window_end):
+    def get_ledger_transactions_in_window(case_id, section_id, entry_id, window_start, window_end):
         return RawQuerySetWrapper(LedgerTransaction.objects.raw(
             "SELECT * FROM get_ledger_transactions_for_case(%s, %s, %s, %s, %s)",
-            [case_id, entry_id, section_id, window_start, window_end]
+            [case_id, section_id, entry_id, window_start, window_end]
         ))
 
     @staticmethod
     def get_transactions_for_consumption(domain, case_id, product_id, section_id, window_start, window_end):
         from corehq.apps.commtrack.consumption import should_exclude_invalid_periods
         transactions = LedgerAccessorSQL.get_ledger_transactions_in_window(
-            case_id, product_id, section_id, window_start, window_end
+            case_id, section_id, product_id, window_start, window_end
         )
         exclude_inferred_receipts = should_exclude_invalid_periods(domain)
         return itertools.chain.from_iterable([
             transaction.get_consumption_transactions(exclude_inferred_receipts)
             for transaction in transactions
         ])
+
+    @staticmethod
+    def get_latest_transaction(case_id, section_id, entry_id):
+        try:
+            return LedgerTransaction.objects.raw(
+                "SELECT * FROM get_latest_ledger_transaction(%s, %s, %s)",
+                [case_id, section_id, entry_id]
+            )[0]
+        except IndexError:
+            return None
 
 
 def _order_list(id_list, object_list, id_property):

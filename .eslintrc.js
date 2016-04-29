@@ -13,6 +13,8 @@ module.exports = {
         "hqDefine": false,
         "hqImport": false,
         "gettext": false,
+        "assert": false,
+        "sinon": false,
         "$": false,
         "ko": false,
         "_": false,

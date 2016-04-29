@@ -8,7 +8,7 @@ class ChangeMeta(jsonobject.JsonObject):
     """
     Metadata about a change. If available, this will be set on Change.metadata.
 
-    This is currently only used in kafka-based pillows.
+    This is only used in kafka-based pillows.
     """
     document_id = jsonobject.StringProperty(required=True)
     data_source_type = jsonobject.StringProperty(required=True)
@@ -36,6 +36,9 @@ class Change(object):
         self.id = id
         self.sequence_id = sequence_id
         self.document = document
+        # on couch-based change feeds .deleted represents a hard deletion.
+        # on kafka-based feeds, .deleted represents a soft deletion and is equivalent
+        # to change.metadata.is_deletion.
         self.deleted = deleted
         self.metadata = metadata
         self.document_store = document_store

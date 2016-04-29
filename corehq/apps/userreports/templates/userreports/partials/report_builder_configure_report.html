@@ -7,7 +7,7 @@
     <script src="{% new_static 'app_manager/js/case-knockout-bindings.js' %}"></script>
 {% endblock %}
 
-{% block page_title %}{% trans "Configure Report Settings" %}{% endblock page_title %}
+{% block page_title %}{% trans "Step 2 of 2 - Configure Report Settings" %}{% endblock page_title %}
 
 {% block js-inline %}{{ block.super }}
     <script type="text/javascript">
@@ -39,7 +39,7 @@
             };
 
             this.isNotBlank = ko.computed(function(){
-               return that.property() !== "";
+               return !!that.property();
             });
 
             this.isValid= ko.computed(function(){
@@ -55,7 +55,7 @@
         PropertyListItem.wrap = function(o){
             var i = new PropertyListItem();
             i.existsInCurrentVersion(o.exists_in_current_version);
-            i.property(o.property !== undefined ? o.property : null);
+            i.property(o.property !== undefined ? o.property : "");
             i.dataSourceField(o.data_source_field !== undefined ? o.data_source_field : null);
             i.displayText(o.display_text);
             i.userModifiedDisplayText = true;
@@ -72,6 +72,11 @@
             options = options || {};
 
             this.buttonText = options.buttonText !== undefined ? options.buttonText : "Add property";
+            // True if at least one column is required.
+            this.requireColumns = options.requireColumns !== undefined ? options.requireColumns : false;
+            this.requireColumnsText = options.requireColumnsText !== undefined ? options.requireColumnsText: "Please select at least one property";
+            // This function will be called if a user tries to submit the form with no columns.
+            this.noColumnsValidationCallback = options.noColumnsValidationCallback !== undefined ? options.noColumnsValidationCallback : null;
             this.propertyHelpText = options.propertyHelpText !== undefined ? options.propertyHelpText : null;
             this.displayHelpText = options.displayHelpText !== undefined ? options.displayHelpText : null;
             this.formatHelpText = options.formatHelpText !== undefined ? options.formatHelpText : null;
@@ -99,7 +104,7 @@
                         } else if (o.type == 'meta') {
                             return {
                                 value: o.source[0],
-                                label: ''
+                                label: o.text
                             }
                         }
                     }))
@@ -116,7 +121,12 @@
             this.showWarnings = ko.observable(false);
             this.validate = function(){
                 that.showWarnings(true);
-                return !_.contains(_.map(that.columns(), function(c){return c.isValid()}), false);
+                var columnsValid = !_.contains(_.map(that.columns(), function(c){return c.isValid()}), false);
+                var columnLengthValid = !(that.requireColumns && !that.columns().length);
+                if (that.noColumnsValidationCallback && !columnLengthValid){
+                    that.noColumnsValidationCallback();
+                }
+                return columnsValid && columnLengthValid;
             };
             this.buttonHandler = function(){
                 this.columns.push(new PropertyListItem());
@@ -152,7 +162,16 @@
                 initialCols: initialColumns,
                 buttonText: 'Add Column',
                 analyticsAction: 'Add Column',
-                calcHelpText: '{{ calculation_help_text|escapejs }}'
+                calcHelpText: '{{ calculation_help_text|escapejs }}',
+                requireColumns: {% if report_type != "chart"%}true{% else %}false{% endif %},
+                requireColumnsText: "At least one column is required",
+                noColumnsValidationCallback: function(){
+                    window.analytics.usage(
+                        'Report Builder',
+                        'Click On Done (No Columns)',
+                        '{{ report_type }}'
+                    );
+                }
             });
             this.submitHandler = function(formElement){
                 var isValid = true;
@@ -168,10 +187,20 @@
                     }, formElement);
                 }
                 return isValid;
-            }
+            };
         };
         var formViewModel = new configForm();
         $("#report-config-form").koApplyBindings(formViewModel);
+
+        $(function () {
+            {% for event in report_builder_events %}
+                {# Track a usage events that were produced on the server #}
+                window.analytics.usage.apply(this, {{event|JSON}});
+            {% endfor %}
+            window.analytics.trackUsageLink(
+                "#delete-report-button", "Report Builder", "Delete a Repot", '{{ report_type }}'
+            );
+        });
 
     </script>
 {% endblock %}

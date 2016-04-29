@@ -5,6 +5,7 @@ from custom.succeed.reports.patient_details import PatientDetailsReport
 class PatientStatusReport(PatientDetailsReport):
     slug = "patient_status"
     name = 'Patient Status'
+    is_bootstrap3 = True
 
     @property
     def report_context(self):

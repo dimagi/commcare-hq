@@ -14,7 +14,8 @@ from corehq.apps.app_manager.util import actions_use_usercase
 from corehq.apps.app_manager.xform import autoset_owner_id_for_open_case, \
     autoset_owner_id_for_subcase
 from corehq.apps.app_manager.xpath import CaseIDXPath, session_var, \
-    CaseTypeXpath, ItemListFixtureXpath, XPath, ProductInstanceXpath, UserCaseXPath
+    CaseTypeXpath, ItemListFixtureXpath, XPath, ProductInstanceXpath, UserCaseXPath, \
+    interpolate_xpath
 from corehq.apps.app_manager.suite_xml.xml_models import *
 
 
@@ -55,7 +56,7 @@ class EntriesHelper(object):
     def get_filter_xpath(module, delegation=False):
         filter = module.case_details.short.filter
         if filter:
-            xpath = '[%s]' % filter
+            xpath = '[%s]' % interpolate_xpath(filter)
         else:
             xpath = ''
         if delegation:

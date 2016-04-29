@@ -109,7 +109,6 @@ class BootstrapPhoneNumberInput(Input):
         </div>""" % super(BootstrapPhoneNumberInput, self).render(name, value, attrs))
 
 
-
 class AutocompleteTextarea(forms.Textarea):
     """
     Textarea with auto-complete.  Uses a custom extension on top of Twitter
@@ -122,11 +121,12 @@ class AutocompleteTextarea(forms.Textarea):
             output = mark_safe("""
 <script>
 $(function() {
-    $("#%s").multiTypeahead({
-        source: %s
+    $("#%s").select2({
+        multiple: true,
+        tags: %s
     });
 });
-</script>\n""" % (attrs['id'], json.dumps(self.choices)))
+</script>\n""" % (attrs['id'], json.dumps(map(lambda c: {'text': c, 'id': c}, self.choices))))
 
         else:
             output = mark_safe("")

@@ -1,13 +1,19 @@
 from __future__ import absolute_import
 import copy
+from collections import namedtuple
 from datetime import datetime, date
 import uuid
+from functools import partial
 from xml.etree import ElementTree
 
 from casexml.apps.case.util import post_case_blocks
 from dimagi.utils.parsing import json_format_datetime
 from casexml.apps.case.xml import V1, NS_VERSION_MAP, V2
 from casexml.apps.case.const import DEFAULT_CASE_INDEX_IDENTIFIERS, CASE_INDEX_CHILD
+
+
+IndexAttrs = namedtuple('IndexAttrs', ['case_type', 'case_id', 'relationship'])
+ChildIndexAttrs = partial(IndexAttrs, relationship='child')
 
 
 class CaseBlock(dict):

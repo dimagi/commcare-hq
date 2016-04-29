@@ -16,12 +16,6 @@ class StockModelUpdateResult(namedtuple('StockModelUpdate', ['to_save', 'to_dele
             to_delete=to_delete or [],
         )
 
-    def commit(self):
-        for to_save in self.to_save:
-            to_save.save()
-        for to_delete in self.to_delete:
-            to_delete.delete()
-
 
 class LedgerDBInterface(object):
     """
@@ -71,8 +65,12 @@ class LedgerProcessorInterface(object):
         self.domain = domain
 
     @abstractmethod
-    def get_models_to_update(self, stock_report_helper, ledger_db=None):
+    def get_models_to_update(self, form_id, stock_report_helpers, deprecated_helpers, ledger_db=None):
         """
         Returns a list of StockModelUpdate object containing everything that needs to be updated.
         """
+        pass
+
+    @abstractmethod
+    def rebuild_ledger_state(self, case_id, section_id, entry_id):
         pass
