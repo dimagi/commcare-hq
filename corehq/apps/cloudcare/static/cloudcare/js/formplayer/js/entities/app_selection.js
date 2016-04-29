@@ -1,4 +1,4 @@
-FormplayerFrontend.module("Entities", function (Entities, FormplayerFrontend, Backbone, Marionette, $, _) {
+FormplayerFrontend.module("Entities", function (Entities, FormplayerFrontend, Backbone, Marionette, $) {
     Entities.AppSelect = Backbone.Model.extend({
         urlRoot: "appSelects"
     });
@@ -18,7 +18,7 @@ FormplayerFrontend.module("Entities", function (Entities, FormplayerFrontend, Ba
         old_apps.fetch({
             success: function (data) {
                 defer.resolve(data);
-            }
+            },
         });
         var promise = defer.promise();
         $.when(promise).done(function (oldApps) {
@@ -40,7 +40,7 @@ FormplayerFrontend.module("Entities", function (Entities, FormplayerFrontend, Ba
             apps.fetch({
                 success: function (request) {
                     defer.resolve(request);
-                }
+                },
             });
             return defer.promise();
         },

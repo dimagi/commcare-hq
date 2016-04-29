@@ -12,13 +12,13 @@ Util.getQueryParams = function (qs) {
     }
 
     return params;
-}
+};
 
 Util.getSteps = function (qs) {
     var urlParams = Util.getQueryParams(qs);
     var steps = [];
     for (var i = 0; i < urlParams.length; i++) {
-        steps.push(urlParams[i].v)
+        steps.push(urlParams[i].v);
     }
     return steps;
 };

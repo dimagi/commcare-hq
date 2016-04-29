@@ -1,4 +1,4 @@
-FormplayerFrontend.module("Entities", function (Entities, FormplayerFrontend, Backbone, Marionette, $, _) {
+FormplayerFrontend.module("Entities", function (Entities, FormplayerFrontend, Backbone, Marionette, $) {
 
     Entities.UserModel = Backbone.Model.extend({});
 

@@ -1,11 +1,13 @@
-FormplayerFrontend.module("AppSelect", function (AppSelect, FormplayerFrontend, Backbone, Marionette, $, _) {
+/*global FormplayerFrontend*/
+
+FormplayerFrontend.module("AppSelect", function (AppSelect, FormplayerFrontend, Backbone, Marionette) {
     AppSelect.Router = Marionette.AppRouter.extend({
         appRoutes: {
             "apps": "listApps",
             "apps/:id": "selectApp",
             "apps/:id/menu": "listMenus",
-            "apps/:apps/store": "storeApps"
-        }
+            "apps/:apps/store": "storeApps",
+        },
     });
 
     var API = {
@@ -51,11 +53,12 @@ FormplayerFrontend.module("AppSelect", function (AppSelect, FormplayerFrontend, 
     });
 
     FormplayerFrontend.on("menu:select", function (index, appId) {
+        var newAddition;
         var oldRoute = Backbone.history.getFragment();
         if (oldRoute.indexOf("menu") < 0) {
-            var newAddition = "/menu?step=" + index;
+            newAddition = "/menu?step=" + index;
         } else {
-            var newAddition = "&step=" + index;
+            newAddition = "&step=" + index;
         }
         FormplayerFrontend.navigate(oldRoute + newAddition);
         API.listMenus(appId);

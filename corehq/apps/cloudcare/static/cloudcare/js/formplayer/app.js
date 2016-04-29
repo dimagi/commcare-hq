@@ -1,3 +1,5 @@
+/*global Marionette, Backbone */
+
 var FormplayerFrontend = new Marionette.Application();
 
 FormplayerFrontend.on("before:start", function () {
@@ -6,7 +8,7 @@ FormplayerFrontend.on("before:start", function () {
 
         regions: {
             main: "#main-region",
-        }
+        },
     });
 
     FormplayerFrontend.regions = new RegionContainer();

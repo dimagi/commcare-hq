@@ -1,4 +1,4 @@
-FormplayerFrontend.module("AppSelect.MenuList", function (MenuList, FormplayerFrontend, Backbone, Marionette, $, _) {
+FormplayerFrontend.module("AppSelect.MenuList", function (MenuList, FormplayerFrontend, Backbone, Marionette) {
     MenuList.MenuView = Marionette.ItemView.extend({
         tagName: "tr",
         template: "#menu-view-item",
@@ -21,7 +21,7 @@ FormplayerFrontend.module("AppSelect.MenuList", function (MenuList, FormplayerFr
         childViewContainer: "tbody",
         templateHelpers: function () {
             return {
-                title: this.options.collection.title
+                title: this.options.collection.title,
             };
         },
     });
