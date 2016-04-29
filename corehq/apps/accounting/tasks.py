@@ -197,7 +197,8 @@ def generate_invoices(based_on_date=None):
                 "domain %s: %s" % (domain.name, e)
             )
 
-    _invoicing_complete_soft_assert(False, "Invoicing is complete!")
+    if not settings.UNIT_TESTING:
+        _invoicing_complete_soft_assert(False, "Invoicing is complete!")
 
 
 def send_bookkeeper_email(month=None, year=None, emails=None):
