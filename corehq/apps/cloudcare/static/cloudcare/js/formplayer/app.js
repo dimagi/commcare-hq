@@ -1,4 +1,8 @@
 var FormplayerFrontend = new Marionette.Application();
+var tfLoading = hqImport('cloudcare/js/util.js').tfLoading;
+var tfLoadingComplete = hqImport('cloudcare/js/util.js').tfLoadingComplete;
+var tfSyncComplete = hqImport('cloudcare/js/util.js').tfSyncComplete;
+var hideLoading = hqImport('cloudcare/js/util.js').hideLoading;
 
 FormplayerFrontend.on("before:start", function () {
     var RegionContainer = Marionette.LayoutView.extend({
@@ -30,8 +34,17 @@ FormplayerFrontend.reqres.setHandler('currentUser', function () {
     return user;
 });
 
+FormplayerFrontend.reqres.setHandler('startForm', function (data) {
+    var loadSession = function () {
+        data.onLoading = tfLoading;
+        var sess = new WebFormSession(data);
+        sess.load($('#webforms'), FormplayerFrontend.request('currentUser').language);
+    };
+    loadSession();
+});
 
-FormplayerFrontend.on("start", function (apps) {
+FormplayerFrontend.on("start", function (apps, language) {
+    FormplayerFrontend.request('currentUser').language = language;
     if (Backbone.history) {
         Backbone.history.start();
         FormplayerFrontend.trigger("apps:storeapps", apps);

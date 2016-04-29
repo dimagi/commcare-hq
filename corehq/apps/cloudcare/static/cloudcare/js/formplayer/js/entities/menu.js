@@ -26,18 +26,9 @@ FormplayerFrontend.module("Entities", function (Entities, FormplayerFrontend, Ba
                 this.styles = response.styles;
                 return response.entities;
             }
-            else if (response.details) {
-                this.type = "details";
-                this.styles = response.styles;
-                this.headers = response.headers;
-                this.details = response.details;
-
-                var model = [];
-                for (i = 0; i < this.details.length; i += 1) {
-                    current = {'header': this.headers[i], 'data': this.details[i]};
-                    model.push(current)
-                }
-                return model;
+            if(response.tree){
+                // form entry time, doggy
+                FormplayerFrontend.request('startForm', response.tree)
             }
         },
 

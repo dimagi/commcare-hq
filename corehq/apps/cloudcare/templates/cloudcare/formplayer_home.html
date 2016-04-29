@@ -31,6 +31,9 @@
         <script src="{% static 'backbone.wreqr/lib/backbone.wreqr.js' %}"></script>
         <script src="{% static 'backbone.marionette/lib/backbone.marionette.js' %}"></script>
         <script src="{% static 'backbone.localStorage/backbone.localStorage.js' %}"></script>
+        <script src="{% static 'nprogress/nprogress.js' %}"></script>
+        <script src="{% static 'moment/min/moment.min.js' %}"></script>
+        <script src="{% static 'cloudcare/js/util.js' %}"></script>
         <script src="{% static 'cloudcare/js/formplayer/app.js' %}"></script>
         <script src="{% static 'cloudcare/js/formplayer/js/apps/config/storage/localstorage.js' %}"></script>
         <script src="{% static 'cloudcare/js/formplayer/js/entities/app_selection.js' %}"></script>
@@ -40,15 +43,24 @@
         <script src="{% static 'cloudcare/js/formplayer/js/apps/list/list_view.js' %}"></script>
         <script src="{% static 'cloudcare/js/formplayer/js/apps/menus/menu_view.js' %}"></script>
         <script src="{% static 'cloudcare/js/formplayer/js/apps/menus/menu_controller.js' %}"></script>
+        <script src="{% static 'formplayer/script/vendor/markdown-it-4.2.0.min.js' %}"></script>
+        <script src="{% static 'formplayer/script/vendor/purify.js' %}"></script>
+        <script src="{% static 'formplayer/script/vendor/ba-tiny-pubsub.min.js' %}"></script>
+        <script src="{% static 'formplayer/script/vendor/shortcut.js' %}"></script>
+        <script src="{% static 'formplayer/script/webformsession.js' %}"></script>
+        <script src="{% static 'formplayer/script/formnav-all.js' %}"></script>
+        <script src="{% static 'formplayer/script/entrycontrols_full.js' %}"></script>
+        <script src="{% static 'formplayer/script/fullform-ui.js' %}"></script>
+        <script src="{% static 'formplayer/script/utils.js' %}"></script>
     {% endcompress %}
 {% endblock %}
 
 {% block js-inline %} {{ block.super }}
     <script>
-        //var formPlayer = hqImport('cloudcare/js/formplayer/app.js');
+
         var apps = {{ apps|JSON }};
-        console.log(apps)
-        FormplayerFrontend.start(apps);
+        var language = "{{ language }}";
+        FormplayerFrontend.start(apps, language);
     </script>
 {% endblock %}
 
@@ -82,6 +94,21 @@
         </div>
     </div>
 
+    <div id="cloudcare-main">
+        <section id="cloudcare-notifications"></section>
+        <section id="case-crumbs" style="width: 800px"></section>
+        <section id="cases"></section>
+        <section id="webforms" class="webforms" data-bind="template: { name: 'form-fullform-ko-template' }"></section>
+        {% if request|toggle_enabled:"INSTANCE_VIEWER" %}
+            <section id="cloudcare-debugger" data-bind="
+            template: {
+                name: 'instance-viewer-ko-template',
+                afterRender: adjustWidth
+            }
+        "></section>
+        {% endif %}
+    </div>
+
     <script type="text/template" id="app-select-list">
         <thead>
         <tr>
@@ -100,13 +127,8 @@
     </script>
 
     <script type="text/template" id="menu-view-list">
+        <p><b><%- title %></b></p>
         <thead>
-        <p>Title: <%- title %></p>
-        <tr>
-            <th>text</th>
-            <th>audio</th>
-            <th>image</th>
-        </tr>
         </thead>
         <tbody>
         </tbody>
@@ -117,20 +139,14 @@
     </script>
 
     <script type="text/template" id="case-view-list">
-        <p id="title">Title: <%- title %></p>
+        <p id="title"><b><%- title %></b></p>
         <thead>
-        <tr>
-            <th>ID</th>
-            <th>Name</th>
-            <th>Something</th>
-        </tr>
         </thead>
         <tbody>
         </tbody>
     </script>
 
     <script type="text/template" id="case-view-item">
-        <td><%- index %></td>
         <td><%- data %></td>
     </script>
 
@@ -158,7 +174,7 @@
                     <p id="my-modal-body">Some text in the modal.</p>
                 </div>
                 <div class="modal-footer">
-                    <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+                    <button type="button" class="btn btn-default" data-dismiss="modal">Select</button>
                 </div>
             </div>
 

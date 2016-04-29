@@ -10,15 +10,15 @@ FormplayerFrontend.module("AppSelect.MenuList", function (MenuList, FormplayerFr
                         collection: options,
                         title: options.title
                     });
+                    FormplayerFrontend.regions.main.show(menuListView.render());
                 }
                 else if (options.type === "entities") {
                     var menuListView = new MenuList.CaseListView({
                         collection: options,
                         title: options.title
                     });
+                    FormplayerFrontend.regions.main.show(menuListView.render());
                 }
-
-                FormplayerFrontend.regions.main.show(menuListView.render());
             });
         },
 
