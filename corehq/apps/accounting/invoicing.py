@@ -77,25 +77,32 @@ class DomainInvoiceFactory(object):
         ).plan.get_version()
         if not plan_version.feature_charges_exist_for_domain(self.domain):
             return
+
         community_ranges = self._get_community_ranges(subscriptions)
         if not community_ranges:
             return
-        do_not_invoice = any([s.do_not_invoice for s in subscriptions])
+
         account = BillingAccount.get_or_create_account_by_domain(
             self.domain.name,
             created_by=self.__class__.__name__,
             entry_point=EntryPoint.SELF_STARTED,
         )[0]
-        if account.date_confirmed_extra_charges is None:
-            log_accounting_info(
-                "Did not generate invoice because date_confirmed_extra_charges "
-                "was null for domain %s" % self.domain.name
-            )
-            do_not_invoice = True
+
         # First check to make sure none of the existing subscriptions is set
         # to do not invoice. Let's be on the safe side and not send a
         # community invoice out, if that's the case.
+        do_not_invoice_exists = any(s.do_not_invoice for s in subscriptions)
+
         for c in community_ranges:
+            if do_not_invoice_exists:
+                do_not_invoice = True
+            else:
+                do_not_invoice = account.date_confirmed_extra_charges is None
+                if do_not_invoice:
+                    log_accounting_info(
+                        "Did not generate invoice because date_confirmed_extra_charges "
+                        "was null for domain %s" % self.domain.name
+                    )
             # create a new community subscription for each
             # date range that the domain did not have a subscription
             community_subscription = Subscription(
