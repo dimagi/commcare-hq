@@ -11,7 +11,7 @@ FormplayerFrontend.module("AppSelect.MenuList", function (MenuList, FormplayerFr
             e.preventDefault();
             var model = this.model;
             FormplayerFrontend.trigger("menu:select", model.attributes.index, model.collection.app_id);
-        }
+        },
     });
 
     MenuList.MenuListView = Marionette.CompositeView.extend({
@@ -37,7 +37,7 @@ FormplayerFrontend.module("AppSelect.MenuList", function (MenuList, FormplayerFr
         rowClick: function (e) {
             e.preventDefault();
             FormplayerFrontend.trigger("app:show:detail", this);
-        }
+        },
     });
 
     MenuList.CaseListView = Marionette.CompositeView.extend({

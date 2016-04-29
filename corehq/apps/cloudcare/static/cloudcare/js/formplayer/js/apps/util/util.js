@@ -15,8 +15,8 @@ Util.getQueryParams = function (qs) {
 }
 
 Util.getSteps = function (qs) {
-    urlParams = Util.getQueryParams(qs);
-    steps = [];
+    var urlParams = Util.getQueryParams(qs);
+    var steps = [];
     for (var i = 0; i < urlParams.length; i++) {
         steps.push(urlParams[i].v)
     }
