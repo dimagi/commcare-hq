@@ -16,6 +16,8 @@ FormplayerFrontend.module("AppSelect.MenuList", function (MenuList, FormplayerFr
                         collection: options,
                         title: options.title
                     });
+                } else{
+                    //TODO: error handle this, we didn't recognize the JSON resposne
                 }
 
                 FormplayerFrontend.regions.main.show(menuListView.render());
@@ -26,7 +28,7 @@ FormplayerFrontend.module("AppSelect.MenuList", function (MenuList, FormplayerFr
             headers = model.options.model.attributes.detail.headers;
             details = model.options.model.attributes.detail.details;
             detailModel = [];
-
+            // we need to map the details and headers JSON to a list for a Backbone Collection
             for(var i = 0; i < headers.length; i++){
                 obj = {};
                 obj.data = details[i];

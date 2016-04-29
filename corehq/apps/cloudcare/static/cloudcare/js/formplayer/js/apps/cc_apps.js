@@ -20,11 +20,11 @@ FormplayerFrontend.module("AppSelect", function (AppSelect, FormplayerFrontend, 
         },
         listMenus: function (app_id) {
             currentFragment = Backbone.history.getFragment();
-            if (currentFragment.indexOf("menu") < 0) {
-                AppSelect.MenuList.Controller.selectMenu(app_id);
-            } else {
-                steps = Util.getSteps(currentFragment);
+            steps = Util.getSteps(currentFragment);
+            if (steps && steps.length > 0) {
                 AppSelect.MenuList.Controller.selectMenu(app_id, steps);
+            } else {
+                AppSelect.MenuList.Controller.selectMenu(app_id);
             }
         },
         showDetail: function(model) {
