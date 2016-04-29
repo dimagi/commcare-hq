@@ -64,12 +64,12 @@ def index_settings(es):
 def create_replica_shards(es):
     # https://www.elastic.co/guide/en/elasticsearch/reference/2.3/indices-update-settings.html
     indices = IndicesClient(es)
-    pprint(indices.put_settings({"index.number_of_replicas" : 1}, "_all"))
+    pprint(indices.put_settings({"index.number_of_replicas": 1}, "_all"))
 
 
 def cancel_replica_shards(es):
     indices = IndicesClient(es)
-    pprint(indices.put_settings({"index.number_of_replicas" : 0}, "_all"))
+    pprint(indices.put_settings({"index.number_of_replicas": 0}, "_all"))
 
 
 
