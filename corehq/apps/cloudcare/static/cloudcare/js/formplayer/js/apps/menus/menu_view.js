@@ -14,8 +14,7 @@ FormplayerFrontend.module("AppSelect.MenuList", function (MenuList, FormplayerFr
     });
 
     MenuList.MenuListView = Marionette.CompositeView.extend({
-        tagName: "table",
-        className: "table table-hover table-striped table-bordered",
+        tagName: "div",
         template: "#menu-view-list",
         childView: MenuList.MenuView,
         childViewContainer: "tbody",
@@ -41,8 +40,7 @@ FormplayerFrontend.module("AppSelect.MenuList", function (MenuList, FormplayerFr
     });
 
     MenuList.CaseListView = Marionette.CompositeView.extend({
-        tagName: "table",
-        className: "table table-hover",
+        tagName: "div",
         template: "#case-view-list",
         childView: MenuList.CaseView,
         childViewContainer: "tbody",

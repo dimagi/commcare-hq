@@ -14,8 +14,7 @@ FormplayerFrontend.module("AppSelect.AppList", function (AppList, FormplayerFron
     });
 
     AppList.AppSelectView = Marionette.CompositeView.extend({
-        tagName: "table",
-        className: "table table-hover",
+        tagName: "div",
         template: "#app-select-list",
         childView: AppList.AppSelect,
         childViewContainer: "tbody"
