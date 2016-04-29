@@ -1,3 +1,5 @@
+/*global FormplayerFrontend */
+
 FormplayerFrontend.module("Entities", function (Entities, FormplayerFrontend, Backbone, Marionette, $, _) {
     var findStorageKey = function (entity) {
         // use a model's urlRoot value
@@ -21,7 +23,7 @@ FormplayerFrontend.module("Entities", function (Entities, FormplayerFrontend, Ba
         var newStorage = new Backbone.LocalStorage(key);
         storageCache[key] = newStorage;
         return newStorage;
-    }
+    };
 
     var StorageMixin = function (entityPrototype) {
         var storageKey = findStorageKey(entityPrototype);
@@ -43,7 +45,7 @@ FormplayerFrontend.module("Entities", function (Entities, FormplayerFrontend, Ba
             var obj = new OldConstructor(arguments[0], arguments[1]);
             _.extend(obj, new StorageMixin(OldConstructor.prototype));
             return obj;
-        }
+        };
         NewConstructor.prototype = OldConstructor.prototype;
 
         eval(constructorString + " = NewConstructor;");

@@ -1,9 +1,11 @@
-FormplayerFrontend.module("Entities", function (Entities, FormplayerFrontend, Backbone, Marionette, $, _) {
+/*global FormplayerFrontend */
+
+FormplayerFrontend.module("Entities", function (Entities, FormplayerFrontend, Backbone, Marionette, $) {
 
     Entities.UserModel = Backbone.Model.extend({});
 
     Entities.MenuSelect = Backbone.Model.extend({
-        urlRoot: "menuSelects"
+        urlRoot: "menuSelects",
     });
 
     Entities.MenuSelectCollection = Backbone.Collection.extend({
@@ -11,10 +13,8 @@ FormplayerFrontend.module("Entities", function (Entities, FormplayerFrontend, Ba
         model: Entities.MenuSelect,
 
         parse: function (response) {
-            this.sessionId = response.session_id;
             this.sequenceId = response.seq_id;
             this.title = response.title;
-            FormplayerFrontend.request('currentUser').sessionId = this.sessionId;
 
             if (response.commands) {
                 this.type = "commands";
@@ -26,9 +26,9 @@ FormplayerFrontend.module("Entities", function (Entities, FormplayerFrontend, Ba
                 this.styles = response.styles;
                 return response.entities;
             }
-            if(response.tree){
+            else if(response.tree){
                 // form entry time, doggy
-                FormplayerFrontend.request('startForm', response.tree)
+                FormplayerFrontend.request('startForm', response.tree);
             }
         },
 
@@ -36,10 +36,9 @@ FormplayerFrontend.module("Entities", function (Entities, FormplayerFrontend, Ba
             this.domain = params.domain;
             this.app_id = params.app_id;
             this.fetch = params.fetch;
-            this.sessionId = params.sessionId;
             this.sequenceId = params.sequenceId;
             this.selection = params.selection;
-        }
+        },
     });
 
     var API = {
@@ -49,16 +48,16 @@ FormplayerFrontend.module("Entities", function (Entities, FormplayerFrontend, Ba
             var defer = $.Deferred();
             var mCollection = new Backbone.Collection.extend({
                 fetch: function(){
-                    return model.options.model.attributes.detail
+                    return model.options.model.attributes.detail;
                 },
                 initialize: function (params) {
                     this.fetch = params.fetch;
-                }
+                },
             });
             mCollection.fetch({
                 success: function(request) {
-                    deger.resolve(request);
-                }
+                    defer.resolve(request);
+                },
             });
             return defer.promise();
         },
@@ -76,7 +75,7 @@ FormplayerFrontend.module("Entities", function (Entities, FormplayerFrontend, Ba
                         "password": "123",
                         "domain": "test",
                         "app_id": collection.app_id,
-                        "selections": select_list
+                        "selections": select_list,
                     });
 
                     if (select_list) {
@@ -94,14 +93,14 @@ FormplayerFrontend.module("Entities", function (Entities, FormplayerFrontend, Ba
                     this.domain = params.domain;
                     this.app_id = params.app_id;
                     this.fetch = params.fetch;
-                }
+                },
             });
 
             var defer = $.Deferred();
             menus.fetch({
                 success: function (request) {
                     defer.resolve(request);
-                }
+                },
             });
             return defer.promise();
         },

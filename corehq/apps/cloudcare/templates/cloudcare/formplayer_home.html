@@ -31,9 +31,13 @@
         <script src="{% static 'backbone.wreqr/lib/backbone.wreqr.js' %}"></script>
         <script src="{% static 'backbone.marionette/lib/backbone.marionette.js' %}"></script>
         <script src="{% static 'backbone.localStorage/backbone.localStorage.js' %}"></script>
+<<<<<<< HEAD
         <script src="{% static 'nprogress/nprogress.js' %}"></script>
         <script src="{% static 'moment/min/moment.min.js' %}"></script>
         <script src="{% static 'cloudcare/js/util.js' %}"></script>
+=======
+        <script src="{% static 'cloudcare/js/formplayer/js/apps/util/util.js' %}"></script>
+>>>>>>> formplayer-frontend
         <script src="{% static 'cloudcare/js/formplayer/app.js' %}"></script>
         <script src="{% static 'cloudcare/js/formplayer/js/apps/config/storage/localstorage.js' %}"></script>
         <script src="{% static 'cloudcare/js/formplayer/js/entities/app_selection.js' %}"></script>
@@ -57,7 +61,6 @@
 
 {% block js-inline %} {{ block.super }}
     <script>
-
         var apps = {{ apps|JSON }};
         var language = "{{ language }}";
         FormplayerFrontend.start(apps, language);
@@ -110,28 +113,31 @@
     </div>
 
     <script type="text/template" id="app-select-list">
-        <thead>
-        <tr>
-            <th>Name</th>
-            <th>ID</th>
-            <th></th>
-        </tr>
-        </thead>
-        <tbody>
-        </tbody>
+        <p id="title">Apps</p>
+        <table class="table table-hover table-striped table-bordered">
+            <tbody>
+            </tbody>
+        </table>
     </script>
 
     <script type="text/template" id="app-select-list-item">
         <td><%- name %></td>
-        <td><%- _id %></td>
     </script>
 
     <script type="text/template" id="menu-view-list">
+<<<<<<< HEAD
         <p><b><%- title %></b></p>
         <thead>
         </thead>
         <tbody>
         </tbody>
+=======
+        <p><%- title %></p>
+        <table class="table table-hover table-striped table-bordered">
+            <tbody>
+            </tbody>
+        </table>
+>>>>>>> formplayer-frontend
     </script>
 
     <script type="text/template" id="menu-view-item">
@@ -139,11 +145,24 @@
     </script>
 
     <script type="text/template" id="case-view-list">
+<<<<<<< HEAD
         <p id="title"><b><%- title %></b></p>
         <thead>
         </thead>
         <tbody>
         </tbody>
+=======
+        <p id="title"><%- title %></p>
+        <table class="table table-hover table-striped table-bordered">
+            <thead>
+            <tr>
+                <th>data</th>
+            </tr>
+            </thead>
+            <tbody>
+            </tbody>
+        </table>
+>>>>>>> formplayer-frontend
     </script>
 
     <script type="text/template" id="case-view-item">
