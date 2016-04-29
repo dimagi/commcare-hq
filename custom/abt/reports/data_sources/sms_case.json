@@ -203,7 +203,7 @@
       {
         "display_name": "date_of_data_collection",
         "property_name": "date_of_data_collection",
-        "datatype": "integer",
+        "datatype": "date",
         "is_primary_key": false,
         "column_id": "date_of_data_collection",
         "is_nullable": true,
@@ -1002,9 +1002,9 @@
       }
     ],
     "description": "",
-    "display_name": "SMS Indicators (static)",
+    "display_name": "SMS Case Indicators (static)",
     "named_filters": {},
-    "referenced_doc_type": "XFormInstance",
+    "referenced_doc_type": "CommCareCase",
     "table_id": "static-sms-indicators-001"
   }
 }
