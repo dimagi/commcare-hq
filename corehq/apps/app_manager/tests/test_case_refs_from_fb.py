@@ -9,7 +9,7 @@ class FormCaseReferenceTest(SimpleTestCase):
     def setUp(self):
         self.form = Form()
 
-    def testOneReference(self):
+    def test_one_reference(self):
         ref_json = {
             "preload": {
                 "/data/question": "name"
@@ -24,7 +24,7 @@ class FormCaseReferenceTest(SimpleTestCase):
         _update_case_refs_from_form_builder(self.form, ref_json)
         self.assertEqual(self.form.actions.load_from_form.to_json(), ref_json)
 
-    def testTwoReferences(self):
+    def test_two_references(self):
         ref_json = {
             "preload": {
                 "/data/question": "name",
@@ -45,7 +45,7 @@ class AdvancedFormCaseReferenceTest(SimpleTestCase):
     def setUp(self):
         self.form = AdvancedForm()
 
-    def testOneReference(self):
+    def test_one_reference(self):
         ref_json = {
             "preload": {
                 "/data/question": "name"
@@ -61,7 +61,7 @@ class AdvancedFormCaseReferenceTest(SimpleTestCase):
             _update_case_refs_from_form_builder(self.form, ref_json)
             self.assertFalse(mock.called)
 
-    def testTwoReferences(self):
+    def test_two_references(self):
         ref_json = {
             "preload": {
                 "/data/question": "name",
