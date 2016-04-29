@@ -97,7 +97,16 @@ class DomainInvoiceFactory(object):
             if do_not_invoice_exists:
                 do_not_invoice = True
             else:
-                do_not_invoice = account.date_confirmed_extra_charges is None
+                do_not_invoice = (
+                    account.date_confirmed_extra_charges is None
+                    and not Subscription.objects.filter(
+                        Q(date_end__isnull=True) | ~Q(date_start=F('date_end')),
+                        subscriber__domain=self.domain,
+                        date_end__lte=c[0],
+                        do_not_invoice=False,
+                        is_trial=False,
+                    ).exists()
+                )
                 if do_not_invoice:
                     log_accounting_info(
                         "Did not generate invoice because date_confirmed_extra_charges "
