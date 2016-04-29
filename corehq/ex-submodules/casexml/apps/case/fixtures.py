@@ -14,10 +14,12 @@ class CaseDBFixture(object):
     id = "case"
 
     def __init__(self, cases):
-        if not isinstance(cases, list):
-            self.cases = [cases]
-        else:
+        if hasattr(cases, '__iter__') and not isinstance(cases, basestring):
+            # Lists, tuples, sets, dicts, etc.
             self.cases = cases
+        else:
+            # Strings, ints, floats, etc.
+            self.cases = [cases]
 
     @property
     def fixture(self):
