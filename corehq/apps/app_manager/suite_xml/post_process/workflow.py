@@ -33,13 +33,11 @@ class WorkflowHelper(PostProcessor):
             for form in module.get_suite_forms():
                 form_command = id_strings.form_command(form, module)
                 stack_frames = []
-                case_list_form_frames = CaseListFormWorkflow(self).case_list_forms_frames(form)
-                have_end_of_form = EndOfFormNavigationWorkflow(self).form_workflow_frames(None, module, form)
-                if case_list_form_frames and have_end_of_form:
-                    stack_frames.extend(have_end_of_form)
+                end_of_form_frames = EndOfFormNavigationWorkflow(self).form_workflow_frames(None, module, form)
+                if end_of_form_frames:
+                    stack_frames.extend(end_of_form_frames)
                 else:
-                    stack_frames.extend(case_list_form_frames)
-                    stack_frames.extend(have_end_of_form)
+                    stack_frames.extend(CaseListFormWorkflow(self).case_list_forms_frames(form))
 
                 self.create_workflow_stack(form_command, stack_frames)
 
