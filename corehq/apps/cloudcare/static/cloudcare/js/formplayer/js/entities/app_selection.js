@@ -1,6 +1,8 @@
+/*global FormplayerFrontend */
+
 FormplayerFrontend.module("Entities", function (Entities, FormplayerFrontend, Backbone, Marionette, $) {
     Entities.AppSelect = Backbone.Model.extend({
-        urlRoot: "appSelects"
+        urlRoot: "appSelects",
     });
 
     Entities.configureStorage("FormplayerFrontend.Entities.AppSelect");

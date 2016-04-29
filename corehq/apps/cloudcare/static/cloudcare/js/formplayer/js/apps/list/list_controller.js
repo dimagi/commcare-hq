@@ -1,4 +1,6 @@
-FormplayerFrontend.module("AppSelect.AppList", function(AppList, FormplayerFrontend, Backbone, Marionette, $, _){
+/*global FormplayerFrontend */
+
+FormplayerFrontend.module("AppSelect.AppList", function(AppList, FormplayerFrontend, Backbone, Marionette, $){
     AppList.Controller = {
         listApps: function(){
             var fetchingApps = FormplayerFrontend.request("appselect:apps");

@@ -1,4 +1,4 @@
-/*global FormplayerFrontend*/
+/*global FormplayerFrontend, Util */
 
 FormplayerFrontend.module("AppSelect", function (AppSelect, FormplayerFrontend, Backbone, Marionette) {
     AppSelect.Router = Marionette.AppRouter.extend({

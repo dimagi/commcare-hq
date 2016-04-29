@@ -1,3 +1,5 @@
+/*global FormplayerFrontend */
+
 FormplayerFrontend.module("AppSelect.MenuList", function (MenuList, FormplayerFrontend, Backbone, Marionette, $, _) {
     MenuList.Controller = {
         selectMenu: function (app_id, select_list) {
@@ -5,14 +7,15 @@ FormplayerFrontend.module("AppSelect.MenuList", function (MenuList, FormplayerFr
             var fetchingApps = FormplayerFrontend.request("app:select:menus", app_id, select_list);
 
             $.when(fetchingApps).done(function (options) {
+                var menuListView;
                 if (options.type === "commands") {
-                    var menuListView = new MenuList.MenuListView({
+                    menuListView = new MenuList.MenuListView({
                         collection: options,
                         title: options.title,
                     });
                 }
                 else if (options.type === "entities") {
-                    var menuListView = new MenuList.CaseListView({
+                    menuListView = new MenuList.CaseListView({
                         collection: options,
                         title: options.title,
                     });
