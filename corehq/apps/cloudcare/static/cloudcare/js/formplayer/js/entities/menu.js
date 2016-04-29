@@ -26,19 +26,6 @@ FormplayerFrontend.module("Entities", function (Entities, FormplayerFrontend, Ba
                 this.styles = response.styles;
                 return response.entities;
             }
-            else if (response.details) {
-                this.type = "details";
-                this.styles = response.styles;
-                this.headers = response.headers;
-                this.details = response.details;
-
-                var model = [];
-                for (var i = 0; i < this.details.length; i += 1) {
-                    var current = {'header': this.headers[i], 'data': this.details[i]};
-                    model.push(current);
-                }
-                return model;
-            }
         },
 
         initialize: function (params) {
