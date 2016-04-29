@@ -13,7 +13,6 @@ FormplayerFrontend.module("Entities", function (Entities, FormplayerFrontend, Ba
     Entities.configureStorage("FormplayerFrontend.Entities.AppSelectCollection");
 
     var storeApps = function (apps) {
-
         old_apps = new Entities.AppSelectCollection();
         var defer = $.Deferred();
         old_apps.fetch({
@@ -21,16 +20,15 @@ FormplayerFrontend.module("Entities", function (Entities, FormplayerFrontend, Ba
                 defer.resolve(data);
             }
         });
-
         var promise = defer.promise();
         $.when(promise).done(function (oldApps) {
-            if (oldApps.length === 0) {
-                apps = new Entities.AppSelectCollection(apps);
-                apps.forEach(function (app) {
-                    app.save();
-                });
-                oldApps.reset(apps.models);
-            }
+            // clear app's local storage when we load new list of apps
+            window.localStorage.clear();
+            apps = new Entities.AppSelectCollection(apps);
+            apps.forEach(function (app) {
+                app.save();
+            });
+            oldApps.reset(apps.models);
         });
         return promise;
     };
