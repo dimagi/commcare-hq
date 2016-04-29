@@ -14,5 +14,6 @@ class BasicInfoReport(IcdsBaseReport):
             Operationalization(config=config),
             Sectors(config=config),
             Population(config=config),
-            BirthsAndDeaths(config=config)
+            BirthsAndDeaths(config=config),
+            AWCDetails(config=config)
         ]

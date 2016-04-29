@@ -355,3 +355,60 @@ class BirthsAndDeaths(ICDSMixin):
                 '--',
             ),
         )
+
+
+class AWCDetails(ICDSMixin):
+    title = 'Details of new registrations at AWC during the month'
+    slug = 'awc_details'
+
+    def __init__(self, config):
+        self.config = config
+
+    @property
+    def headers(self):
+        return DataTablesHeader(
+            DataTablesColumn(_('Category')),
+            DataTablesColumnGroup(
+                _('Among permanent residents of AWC area'),
+                DataTablesColumn(_('Girls/Women'), sortable=False),
+                DataTablesColumn(_('Boys'), sortable=False),
+            ),
+            DataTablesColumnGroup(
+                _('Among temporary residents of AWC area'),
+                DataTablesColumn(_('Girls/Women'), sortable=False),
+                DataTablesColumn(_('Boys'), sortable=False),
+            )
+        )
+
+    @property
+    def row_config(self):
+        return (
+            (
+                _('a. Pregnant Women'),
+                'pregnant_resident_count',
+                '--',
+                'pregnant_migrant_count',
+                '--'
+            ),
+            (
+                _('b. Live Births'),
+                'live_F_resident_birth_count',
+                'live_M_resident_birth_count',
+                'live_F_migrant_birth_count',
+                'live_M_migrant_birth_count'
+            ),
+            (
+                _('c. 0-3 years children (excluding live births)'),
+                'F_resident_count',
+                'M_resident_count',
+                'F_migrant_count',
+                'M_migrant_count'
+            ),
+            (
+                _('d. 3-6 years children'),
+                'F_resident_count',
+                'M_resident_count',
+                'F_migrant_count',
+                'M_migrant_count'
+            ),
+        )

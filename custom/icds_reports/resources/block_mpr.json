@@ -184,5 +184,25 @@
         ]
       }
     ]
+  },
+  "awc_details": {
+    "data_source": [
+      {
+        "id": "a347fa3a66a68a53bad7a11284a85573",
+        "columns": []
+      },
+      {
+        "id": "05e9c905d1cf4b11d0cfc92b55d9954d",
+        "columns": []
+      },
+      {
+        "id": "9c5085d5188f493edb407561377e930c",
+        "columns": []
+      },
+      {
+        "id": "9c5085d5188f493edb407561377e930c",
+        "columns": []
+      }
+    ]
   }
 }
