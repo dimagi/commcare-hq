@@ -22,9 +22,13 @@ from djangular.views.mixins import JSONResponseMixin, allow_remote_invocation
 from sqlalchemy import types, exc
 from sqlalchemy.exc import ProgrammingError
 
+from corehq.apps.accounting.models import Subscription
+from corehq.apps.domain.models import Domain
+from corehq.apps.hqwebapp.tasks import send_mail_async
 from corehq.apps.hqwebapp.templatetags.hq_shared_tags import toggle_enabled
 from corehq.apps.userreports.const import REPORT_BUILDER_EVENTS_KEY
 from corehq.util import reverse
+from corehq.util.quickcache import quickcache
 from couchexport.export import export_from_tables
 from couchexport.files import Temp
 from couchexport.models import Format
@@ -81,7 +85,9 @@ from corehq.apps.userreports.ui.forms import (
     ConfigurableDataSourceEditForm,
     ConfigurableDataSourceFromAppForm,
 )
-from corehq.apps.userreports.util import has_report_builder_access, add_event
+from corehq.apps.userreports.util import has_report_builder_access, \
+    has_report_builder_add_on_privilege, add_event, \
+    allowed_report_builder_reports
 from corehq.apps.users.decorators import require_permission
 from corehq.apps.users.models import Permissions
 from corehq.toggles import REPORT_BUILDER_MAP_REPORTS
@@ -165,6 +171,97 @@ class ReportBuilderView(BaseDomainView):
     @property
     def section_url(self):
         return reverse(ReportBuilderTypeSelect.urlname, args=[self.domain])
+
+
+@quickcache(["domain"], timeout=0, memoize_timeout=4)
+def paywall_home(domain):
+    """
+    Return the url for the page in the report builder paywall that users
+    in the given domain should be directed to upon clicking "+ Create new report"
+    """
+    project = Domain.get_by_name(domain, strict=True)
+    if project.requested_report_builder_subscription:
+        return reverse(ReportBuilderPaywallActivatingSubscription.urlname, args=[domain])
+    elif project.requested_report_builder_trial:
+        return reverse(ReportBuilderPaywallActivatingTrial.urlname, args=[domain])
+    else:
+        return reverse(ReportBuilderPaywall.urlname, args=[domain])
+
+
+class ReportBuilderPaywallBase(BaseDomainView):
+    page_title = ugettext_lazy('Subscribe')
+
+    @use_bootstrap3
+    def dispatch(self, *args, **kwargs):
+        return super(ReportBuilderPaywallBase, self).dispatch(*args, **kwargs)
+
+    @property
+    def section_name(self):
+        return _("Report Builder")
+
+    @property
+    def section_url(self):
+        return paywall_home(self.domain)
+
+    @property
+    @memoized
+    def plan_name(self):
+        plan_version, subscription = Subscription.get_subscribed_plan_by_domain(self.domain)
+        return plan_version.plan.name
+
+
+class ReportBuilderPaywall(ReportBuilderPaywallBase):
+    template_name = "userreports/paywall/paywall.html"
+    urlname = 'report_builder_paywall'
+
+
+class ReportBuilderPaywallActivatingTrial(ReportBuilderPaywallBase):
+    template_name = "userreports/paywall/activating_trial.html"
+    urlname = 'report_builder_paywall_activating_trial'
+    page_title = ugettext_lazy('Trial')
+
+    def post(self, request, domain, *args, **kwargs):
+        self.domain_object.requested_report_builder_trial.append(request.user.username)
+        self.domain_object.save()
+        send_mail_async.delay(
+            "Report Builder Trial Request: {}".format(domain),
+            "User {} in the {} domain has requested access to the "
+            "report builder trial. Current subscription is '{}'.".format(
+                request.user.username,
+                domain,
+                self.plan_name
+            ),
+            settings.DEFAULT_FROM_EMAIL,
+            ["updates" + "@" + "dimagi.com"],
+        )
+        return self.get(request, domain, *args, **kwargs)
+
+
+class ReportBuilderPaywallPricing(ReportBuilderPaywallBase):
+    template_name = "userreports/paywall/pricing.html"
+    urlname = 'report_builder_paywall_pricing'
+    page_title = ugettext_lazy('Pricing')
+
+
+class ReportBuilderPaywallActivatingSubscription(ReportBuilderPaywallBase):
+    template_name = "userreports/paywall/activating_subscription.html"
+    urlname = 'report_builder_paywall_activating_subscription'
+
+    def post(self, request, domain, *args, **kwargs):
+        self.domain_object.requested_report_builder_subscription.append(request.user.username)
+        self.domain_object.save()
+        send_mail_async.delay(
+            "Report Builder Subscription Request: {}".format(domain),
+            "User {} in the {} domain has requested a report builder subscription."
+            " Current subscription is '{}'.".format(
+                request.user.username,
+                domain,
+                self.plan_name
+            ),
+            settings.DEFAULT_FROM_EMAIL,
+            ["updates" + "@" + "dimagi.com"],
+        )
+        return self.get(request, domain, *args, **kwargs)
 
 
 class ReportBuilderTypeSelect(JSONResponseMixin, ReportBuilderView):
@@ -307,9 +404,10 @@ class ReportBuilderDataSourceSelect(ReportBuilderView):
     @property
     @memoized
     def form(self):
+        max_allowed_reports = allowed_report_builder_reports(self.request)
         if self.request.method == 'POST':
-            return DataSourceForm(self.domain, self.report_type, self.request.POST)
-        return DataSourceForm(self.domain, self.report_type)
+            return DataSourceForm(self.domain, self.report_type, max_allowed_reports, self.request.POST)
+        return DataSourceForm(self.domain, self.report_type, max_allowed_reports)
 
     def post(self, request, *args, **kwargs):
         if self.form.is_valid():
@@ -555,8 +653,13 @@ def _edit_report_shared(request, domain, config, read_only=False):
     return render(request, "userreports/edit_report_config.html", context)
 
 
-@toggles.any_toggle_enabled(toggles.USER_CONFIGURABLE_REPORTS, toggles.REPORT_BUILDER, toggles.REPORT_BUILDER_BETA_GROUP)
 def delete_report(request, domain, report_id):
+    if not (toggle_enabled(request, toggles.USER_CONFIGURABLE_REPORTS)
+            or toggle_enabled(request, toggles.REPORT_BUILDER)
+            or toggle_enabled(request, toggles.REPORT_BUILDER_BETA_GROUP)
+            or has_report_builder_add_on_privilege(request)):
+        raise Http404()
+
     config = get_document_or_404(ReportConfiguration, domain, report_id)
 
     # Delete the data source too if it's not being used by any other reports.

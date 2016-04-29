@@ -1,0 +1,47 @@
+{% extends "style/bootstrap3/base_section.html" %}
+{% load hq_shared_tags %}
+{% load i18n %}
+{% load compress %}
+
+{% block title %}{% trans "Report Builder" %}{% endblock %}
+
+{% block page_content %}
+    {% block main_column_content %}
+        <h1>
+        {% blocktrans %}
+            Build Your Own Reports In CommCare!
+        {% endblocktrans%}
+        </h1>
+        <p>
+            {% blocktrans %}
+            Build map reports, pie and bar charts, and form and case lists right in CommCare! Report Builder is an
+            <strong>add-on</strong> to <strong>Standard</strong> or higher plans. Try Report Builder free for
+            30 days or learn more about pricing and subscribing.
+            {% endblocktrans %}
+        </p>
+        <a class="btn btn-default" href="{% url "report_builder_paywall_pricing" domain %}">
+            {% trans "Learn More About Pricing" %}
+        </a>
+
+        <form action="{% url 'report_builder_paywall_activating_trial' domain %}" method="post" class="form-inline pull-right">
+            {% csrf_token %}
+            <button class="btn btn-success" type="submit">
+                {% trans "Try Report Builder For 30 Days" %}
+            </button>
+        </form>
+
+        <div class="row" style="margin-top: 32px">
+            <div class="col-md-2"></div>
+            <div class="col-md-8">
+                <img
+                    src="{% new_static 'userreports/img/report_builder_screenshot.png' %}"
+                    alt="{% trans "Screenshot of report builder" %}"
+                    class="img-thumbnail img-responsive"
+                >
+            </div>
+            <div class="col-md-2"></div>
+        </div>
+
+
+    {% endblock main_column_content %}
+{% endblock %}
