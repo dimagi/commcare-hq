@@ -63,7 +63,7 @@ FormplayerFrontend.module("AppSelect", function (AppSelect, FormplayerFrontend, 
 
     AppSelect.on("start", function () {
         new AppSelect.Router({
-            controller: API
+            controller: API,
         });
     });
 

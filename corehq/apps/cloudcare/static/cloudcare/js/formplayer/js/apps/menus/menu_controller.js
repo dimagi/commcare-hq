@@ -30,7 +30,7 @@ FormplayerFrontend.module("AppSelect.MenuList", function (MenuList, FormplayerFr
             detailModel = [];
             // we need to map the details and headers JSON to a list for a Backbone Collection
             for(var i = 0; i < headers.length; i++){
-                obj = {};
+                var obj = {};
                 obj.data = details[i];
                 obj.header = headers[i];
                 obj.id = i;
