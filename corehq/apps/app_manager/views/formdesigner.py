@@ -112,7 +112,7 @@ def form_designer(request, domain, app_id, module_id=None, form_id=None):
     context = get_apps_base_context(request, domain, app)
     context.update(locals())
     context.update({
-        'vellum_debug': settings.VELLUM_DEBUG and not toggles.VELLUM_BETA,
+        'vellum_debug': settings.VELLUM_DEBUG and not toggles.VELLUM_BETA.enabled(domain),
         'nav_form': form,
         'vellum_style_path': 'app_manager/js/{}/style.css'.format(vellum_dir),
         'vellum_ckeditor_path': 'app_manager/js/{}/lib/ckeditor/'.format(vellum_dir),
