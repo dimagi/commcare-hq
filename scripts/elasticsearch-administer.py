@@ -10,7 +10,7 @@ import json
 import sys
 
 from elasticsearch import Elasticsearch
-from elasticsearch.client import ClusterClient, NodesClient, CatClient
+from elasticsearch.client import ClusterClient, NodesClient, CatClient, IndicesClient
 
 
 def pprint(data):
@@ -56,6 +56,23 @@ def cluster_settings(es):
     pprint(cluster.get_settings())
 
 
+def index_settings(es):
+    indices = IndicesClient(es)
+    pprint(indices.get_settings(flat_settings=True))
+
+
+def create_replica_shards(es):
+    # https://www.elastic.co/guide/en/elasticsearch/reference/2.3/indices-update-settings.html
+    indices = IndicesClient(es)
+    pprint(indices.put_settings({"index.number_of_replicas" : 1}, "_all"))
+
+
+def cancel_replica_shards(es):
+    indices = IndicesClient(es)
+    pprint(indices.put_settings({"index.number_of_replicas" : 0}, "_all"))
+
+
+
 def decommission_node(es):
     cluster = ClusterClient(es)
     print "The nodes are:"
@@ -77,8 +94,11 @@ def decommission_node(es):
 commands = {
     'cluster_status': cluster_status,
     'cluster_settings': cluster_settings,
+    'index_settings': index_settings,
     'decommission_node': decommission_node,
     'shard_status': shard_status,
+    'create_replica_shards': create_replica_shards,
+    'cancel_replica_shards': cancel_replica_shards,
 }
 
 
