@@ -436,6 +436,9 @@ class PutInOldCopyToNewBlobDB(TemporaryMigratingBlobDB):
 
 class FakeCouchDocument(mod.BlobMixin, Document):
 
+    class Meta:
+        app_label = "couch"
+
     doc_type = "FakeCouchDocument"
     saved = False
 
@@ -486,6 +489,9 @@ class AttachmentFallback(object):
 
 
 class FallbackToCouchDocument(mod.BlobMixin, AttachmentFallback, Document):
+
+    class Meta:
+        app_label = "couch"
 
     doc_type = "FallbackToCouchDocument"
     migrating_blobs_from_couch = True
