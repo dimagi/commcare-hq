@@ -1216,6 +1216,14 @@ class LedgerValue(DisabledDbMixin, models.Model, TrackRelatedChanges):
     last_modified = models.DateTimeField(auto_now=True)
 
     @property
+    def last_modified_date(self):
+        return self.last_modified
+
+    @property
+    def product_id(self):
+        return self.entry_id
+
+    @property
     def stock_on_hand(self):
         return self.balance
 
