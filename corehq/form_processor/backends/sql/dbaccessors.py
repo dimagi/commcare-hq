@@ -702,8 +702,6 @@ class LedgerAccessorSQL(AbstractLedgerAccessor):
         for ledger_value in ledger_values:
             transactions_to_save = ledger_value.get_live_tracked_models(LedgerTransaction)
 
-            ledger_value.last_modified = datetime.utcnow()
-
             with get_cursor(LedgerValue) as cursor:
                 try:
                     cursor.execute(
