@@ -52,6 +52,7 @@ class CommTrackOTATest(CommTrackTest):
         user = self.user
         self.assertFalse(get_ota_balance_xml(self.domain, user))
 
+    @run_with_all_backends
     def test_ota_basic(self):
         user = self.user
         amounts = [
