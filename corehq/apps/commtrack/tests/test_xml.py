@@ -14,6 +14,7 @@ from corehq.apps.commtrack.models import ConsumptionConfig, StockRestoreConfig, 
 from corehq.apps.domain.models import Domain
 from corehq.apps.consumption.shortcuts import set_default_monthly_consumption_for_domain
 from corehq.apps.hqcase.utils import submit_case_blocks
+from corehq.form_processor.tests.utils import run_with_all_backends
 from couchforms.models import XFormInstance
 from dimagi.utils.parsing import json_format_datetime, json_format_date
 from casexml.apps.stock import const as stockconst
@@ -36,7 +37,7 @@ from corehq.apps.commtrack.tests.data.balances import (
     transfer_first,
     receipts_enumerated,
     balance_enumerated,
-    products_xml)
+    products_xml, SohReport)
 
 
 class CommTrackOTATest(CommTrackTest):
@@ -46,46 +47,51 @@ class CommTrackOTATest(CommTrackTest):
         super(CommTrackOTATest, self).setUp()
         self.user = self.users[0]
 
+    @run_with_all_backends
     def test_ota_blank_balances(self):
         user = self.user
         self.assertFalse(get_ota_balance_xml(self.domain, user))
 
     def test_ota_basic(self):
         user = self.user
-        amounts = [(p._id, i*10) for i, p in enumerate(self.products)]
-        report = _report_soh(amounts, self.sp.case_id, 'stock')
+        amounts = [
+            SohReport(section_id='stock', product_id=p._id, amount=i*10)
+            for i, p in enumerate(self.products)
+        ]
+        report_date = _report_soh(amounts, self.sp.case_id, self.domain.name)
         check_xml_line_by_line(
             self,
             balance_ota_block(
                 self.sp,
                 'stock',
                 amounts,
-                datestring=json_format_datetime(report.date),
+                datestring=report_date,
             ),
             get_ota_balance_xml(self.domain, user)[0],
         )
 
     def test_ota_multiple_stocks(self):
         user = self.user
-        date = datetime.utcnow()
-        report = StockReport.objects.create(form_id=uuid.uuid4().hex, date=date,
-                                            type=stockconst.REPORT_TYPE_BALANCE)
-        amounts = [(p._id, i*10) for i, p in enumerate(self.products)]
-
         section_ids = sorted(('stock', 'losses', 'consumption'))
-        for section_id in section_ids:
-            _report_soh(amounts, self.sp.case_id, section_id, report=report)
-
+        amounts = [
+            SohReport(section_id=section_id, product_id=p._id, amount=i * 10)
+            for section_id in section_ids
+            for i, p in enumerate(self.products)
+        ]
+        report_date = _report_soh(amounts, self.sp.case_id, self.domain.name)
         balance_blocks = get_ota_balance_xml(self.domain, user)
         self.assertEqual(3, len(balance_blocks))
         for i, section_id in enumerate(section_ids):
+            reports = [
+                report for report in amounts if report.section_id == section_id
+            ]
             check_xml_line_by_line(
                 self,
                 balance_ota_block(
                     self.sp,
                     section_id,
-                    amounts,
-                    datestring=json_format_datetime(date),
+                    reports,
+                    datestring=report_date,
                 ),
                 balance_blocks[i],
             )
@@ -102,8 +108,11 @@ class CommTrackOTATest(CommTrackTest):
         set_default_monthly_consumption_for_domain(self.domain.name, 5 * DAYS_IN_MONTH)
         self._save_settings_and_clear_cache()
 
-        amounts = [(p._id, i*10) for i, p in enumerate(self.products)]
-        report = _report_soh(amounts, self.sp.case_id, 'stock')
+        amounts = [
+            SohReport(section_id='stock', product_id=p._id, amount=i * 10)
+            for i, p in enumerate(self.products)
+        ]
+        report_date = _report_soh(amounts, self.sp.case_id, self.domain.name)
         balance_blocks = _get_ota_balance_blocks(self.domain, self.user)
         self.assertEqual(2, len(balance_blocks))
         stock_block, consumption_block = balance_blocks
@@ -113,7 +122,7 @@ class CommTrackOTATest(CommTrackTest):
                 self.sp,
                 'stock',
                 amounts,
-                datestring=json_format_datetime(report.date),
+                datestring=report_date,
             ),
             stock_block,
         )
@@ -122,10 +131,10 @@ class CommTrackOTATest(CommTrackTest):
             balance_ota_block(
                 self.sp,
                 'consumption',
-                [(p._id, 150) for p in self.products],
-                datestring=json_format_datetime(report.date),
+                [SohReport(section_id='', product_id=p._id, amount=150) for p in self.products],
+                datestring=report_date,
             ),
-             consumption_block,
+            consumption_block,
         )
 
     def test_force_consumption(self):
@@ -588,24 +597,20 @@ class CommTrackArchiveSubmissionTest(CommTrackSubmissionTest):
         _assert_initial_state()
 
 
-def _report_soh(amounts, case_id, section_id='stock', report=None):
-    if report is None:
-        report = StockReport.objects.create(
-            form_id=uuid.uuid4().hex,
-            date=datetime.utcnow(),
-            type=stockconst.REPORT_TYPE_BALANCE,
+def _report_soh(soh_reports, case_id, domain):
+    report_date = json_format_datetime(datetime.utcnow())
+    balance_blocks = [
+        get_single_balance_block(
+            case_id,
+            report.product_id,
+            report.amount,
+            report_date,
+            section_id=report.section_id
         )
-    for product_id, amount in amounts:
-        StockTransaction.objects.create(
-            report=report,
-            section_id=section_id,
-            case_id=case_id,
-            product_id=product_id,
-            stock_on_hand=amount,
-            quantity=0,
-            type=stockconst.TRANSACTION_TYPE_STOCKONHAND,
-        )
-    return report
+        for report in soh_reports
+    ]
+    submit_case_blocks(balance_blocks, domain)
+    return report_date
 
 
 def _get_ota_balance_blocks(project, user):
