@@ -1,6 +1,7 @@
 from collections import defaultdict
 from casexml.apps.stock.consumption import compute_consumption_or_default
 from casexml.apps.stock.utils import get_current_ledger_state
+from corehq.form_processor.interfaces.dbaccessors import LedgerAccessors
 from dimagi.utils.parsing import json_format_datetime
 from datetime import datetime
 from casexml.apps.stock.const import COMMTRACK_REPORT_XMLNS
@@ -35,7 +36,7 @@ def get_stock_payload(project, stock_settings, case_stub_list):
             return entry_xml(product_id, consumption_value)
 
     case_ids = [case.case_id for case in case_stub_list]
-    all_current_ledgers = get_current_ledger_state(case_ids)
+    all_current_ledgers = LedgerAccessors(project.name).get_current_ledger_state(case_ids)
     for commtrack_case_stub in case_stub_list:
         case_id = commtrack_case_stub.case_id
         current_ledgers = all_current_ledgers[case_id]

@@ -350,6 +350,24 @@ class AbstractLedgerAccessor(six.with_metaclass(ABCMeta)):
 
     @abstractmethod
     def get_latest_transaction(case_id, section_id, entry_id):
+        raise NotImplementedError\
+
+    @abstractmethod
+    def get_current_ledger_state(case_ids):
+        """
+        Given a list of case IDs return a dict of all current ledger data of the following format:
+        {
+            "case_id": {
+                "section_id": {
+                     "product_id": StockState,
+                     "product_id": StockState,
+                     ...
+                },
+                ...
+            },
+            ...
+        }
+        """
         raise NotImplementedError
 
 
@@ -389,3 +407,8 @@ class LedgerAccessors(object):
 
     def get_ledger_values_for_product_ids(self, product_ids):
         return self.db_accessor.get_ledger_values_for_product_ids(product_ids)
+
+    def get_current_ledger_state(self, case_ids):
+        if not case_ids:
+            return {}
+        return self.db_accessor.get_current_ledger_state(case_ids)

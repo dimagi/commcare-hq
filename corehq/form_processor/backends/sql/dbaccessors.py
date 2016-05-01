@@ -678,8 +678,8 @@ class LedgerAccessorSQL(AbstractLedgerAccessor):
     @staticmethod
     def get_ledger_values_for_case(case_id):
         return list(LedgerValue.objects.raw(
-            'SELECT * FROM get_ledger_values_for_case(%s)',
-            [case_id]
+            'SELECT * FROM get_ledger_values_for_cases(%s)',
+            [[case_id]]
         ))
 
     @staticmethod
@@ -760,6 +760,19 @@ class LedgerAccessorSQL(AbstractLedgerAccessor):
             )[0]
         except IndexError:
             return None
+
+    @staticmethod
+    def get_current_ledger_state(case_ids):
+        ledger_values = LedgerValue.objects.raw(
+            'SELECT * FROM get_ledger_values_for_cases(%s)',
+            [case_ids]
+        )
+        ret = {case_id: {} for case_id in case_ids}
+        for value in ledger_values:
+            sections = ret[value.case_id].setdefault(value.section_id, {})
+            sections[value.entry_id] = value
+
+        return ret
 
 
 def _order_list(id_list, object_list, id_property):
