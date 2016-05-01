@@ -71,6 +71,7 @@ class CommTrackOTATest(CommTrackTest):
             get_ota_balance_xml(self.domain, user)[0],
         )
 
+    @run_with_all_backends
     def test_ota_multiple_stocks(self):
         user = self.user
         section_ids = sorted(('stock', 'losses', 'consumption'))
