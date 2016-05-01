@@ -650,6 +650,7 @@ class GetCaseFootprintInfoTest(TestCase):
         footprint_info = get_case_footprint_info(self.domain, self.owner_id)
         self.assertEqual(footprint_info.all_ids, set([extension.case_id, parent.case_id, child.case_id]))
 
+    @run_with_all_backends
     def test_cousins(self):
         """http://manage.dimagi.com/default.asp?189528
         """
