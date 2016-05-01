@@ -30,6 +30,7 @@ from couchdbkit import ResourceNotFound
 
 from casexml.apps.case.models import CommCareCase
 from corehq.apps.callcenter.indicator_sets import CallCenterIndicators
+from corehq.apps.es import CaseES
 from corehq.apps.hqcase.utils import get_case_by_domain_hq_user_id
 from corehq.apps.style.decorators import use_datatables, use_jquery_ui, \
     use_bootstrap3, use_nvd3, use_nvd3_v3
@@ -844,3 +845,64 @@ def _get_submodules():
         line.strip()[1:].split()[1]
         for line in git.submodule()
     ]
+
+
+
+
+class CallcenterUCRCheck(BaseAdminSectionView):
+    urlname = 'callcenter_ucr_check'
+    page_title = ugettext_lazy("Check Callcenter UCR tables")
+    template_name = "hqadmin/call_center_ucr_check.html"
+
+    @method_decorator(require_superuser)
+    @use_bootstrap3
+    def dispatch(self, request, *args, **kwargs):
+        return super(CallcenterUCRCheck, self).dispatch(request, *args, **kwargs)
+
+    @property
+    def page_context(self):
+        from corehq.apps.callcenter.data_source import get_call_center_domains
+        from corehq.apps.callcenter.data_source import get_sql_adapters_for_domain
+        from corehq.apps.es import FormES, filters
+
+        if 'domain' not in self.request.GET:
+            return {}
+
+        context = {
+            'domains': []
+        }
+        domain = self.request.GET.get('domain', None)
+        if domain:
+            domains = [domain]
+        else:
+            domains = [domain.name for domain in get_call_center_domains()]
+
+        domains_to_forms = FormES()\
+            .filter(filters.term('domain', domains))\
+            .domain_aggregation()\
+            .size(0)\
+            .run() \
+            .aggregations.domain.counts_by_bucket()
+
+        domains_to_cases = CaseES()\
+            .filter(filters.term('domain', domains))\
+            .terms_aggregation('domain', 'domain')\
+            .size(0)\
+            .run()\
+            .aggregations.domain.counts_by_bucket()
+
+        for domain in domains:
+            adapters = get_sql_adapters_for_domain(domain)
+            context['domains'].append({
+                'name': domain,
+                'form_stats': {
+                    'ucr': adapters.forms.get_query_object().count(),
+                    'es': domains_to_forms[domain]
+                },
+                'case_stats': {
+                    'ucr': adapters.cases.get_query_object().count(),
+                    'es': domains_to_cases[domain]
+                }
+            })
+
+        return context
