@@ -11,11 +11,11 @@
       </thead>
       <tbody data-bind="foreach: actions">
         <tr>
-          <td class="form-group" data-bind="css: { 'error': caption_error }">
+          <td class="form-group" data-bind="css: { 'has-error': caption_error }">
             <input class="form-control" data-bind="value: caption" type="text" />
             <div class="help-inline" data-bind="text: caption_error"></div>
           </td>
-          <td class="form-group" data-bind="css: { 'error': keyword_error }">
+          <td class="form-group" data-bind="css: { 'has-error': keyword_error }">
             <input class="form-control" data-bind="value: keyword" type="text" />
             <div class="help-inline" data-bind="text: keyword_error"></div>
           </td>
