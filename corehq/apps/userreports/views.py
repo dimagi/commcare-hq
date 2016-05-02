@@ -206,7 +206,7 @@ class ReportBuilderPaywallBase(BaseDomainView):
     @property
     @memoized
     def plan_name(self):
-        plan_version, subscription = Subscription.get_subscribed_plan_by_domain(self.domain)
+        plan_version, _ = Subscription.get_subscribed_plan_by_domain(self.domain)
         return plan_version.plan.name
 
 
