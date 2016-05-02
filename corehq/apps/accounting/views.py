@@ -921,7 +921,8 @@ class ManageAccountingAdminsView(AccountingSectionView, CRUDPaginatedViewMixin):
                 'template': 'accounting-admin-row',
             }
 
-    def _fmt_admin_data(self, admin):
+    @staticmethod
+    def _fmt_admin_data(admin):
         return {
             'id': admin.id,
             'username': admin.username,

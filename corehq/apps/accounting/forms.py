@@ -1289,7 +1289,8 @@ class SoftwarePlanVersionForm(forms.Form):
         else:
             return {}
 
-    def _get_errors_from_subform(self, form_name, subform):
+    @staticmethod
+    def _get_errors_from_subform(form_name, subform):
         for field, field_errors in subform._errors.items():
             for field_error in field_errors:
                 error_message = "%(form_name)s > %(field_name)s: %(error)s" % {
