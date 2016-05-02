@@ -19,6 +19,7 @@ from django import forms
 from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.contrib.auth.forms import SetPasswordForm
+from django.contrib.auth.hashers import UNUSABLE_PASSWORD_PREFIX
 from django.contrib.auth.tokens import default_token_generator
 from django.contrib.sites.models import get_current_site
 from django.core.urlresolvers import reverse
@@ -34,11 +35,6 @@ from django.utils.translation import ugettext_noop, ugettext as _, ugettext_lazy
 from django_countries.data import COUNTRIES
 from PIL import Image
 from pyzxcvbn import zxcvbn
-
-if django.VERSION < (1, 6):
-    from django.contrib.auth.hashers import UNUSABLE_PASSWORD as UNUSABLE_PASSWORD_PREFIX
-else:
-    from django.contrib.auth.hashers import UNUSABLE_PASSWORD_PREFIX
 
 from corehq import privileges
 from corehq.apps.accounting.models import (
