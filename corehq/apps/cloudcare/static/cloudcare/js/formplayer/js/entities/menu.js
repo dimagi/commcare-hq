@@ -26,11 +26,12 @@ FormplayerFrontend.module("Entities", function (Entities, FormplayerFrontend, Ba
                 this.styles = response.styles;
                 return response.entities;
             }
+            // TODO: Trigger form entry if XForm response
         },
 
         initialize: function (params) {
             this.domain = params.domain;
-            this.app_id = params.app_id;
+            this.appId = params.appId;
             this.fetch = params.fetch;
             this.sequenceId = params.sequenceId;
             this.selection = params.selection;
@@ -39,29 +40,10 @@ FormplayerFrontend.module("Entities", function (Entities, FormplayerFrontend, Ba
 
     var API = {
 
-        getDetail: function (model) {
-
-            var defer = $.Deferred();
-            var mCollection = new Backbone.Collection.extend({
-                fetch: function(){
-                    return model.options.model.attributes.detail;
-                },
-                initialize: function (params) {
-                    this.fetch = params.fetch;
-                },
-            });
-            mCollection.fetch({
-                success: function(request) {
-                    defer.resolve(request);
-                },
-            });
-            return defer.promise();
-        },
-
-        getMenus: function (app_id, select_list) {
+        getMenus: function (appId, stepList) {
             var menus = new Entities.MenuSelectCollection({
                 domain: FormplayerFrontend.request('currentUser').domain,
-                app_id: app_id,
+                appId: appId,
 
                 fetch: function (options) {
                     var collection = this;
@@ -70,12 +52,12 @@ FormplayerFrontend.module("Entities", function (Entities, FormplayerFrontend, Ba
                         "username": "test",
                         "password": "123",
                         "domain": "test",
-                        "app_id": collection.app_id,
-                        "selections": select_list,
+                        "appId": collection.appId,
+                        "selections": stepList,
                     });
 
-                    if (select_list) {
-                        options.data.selections = select_list;
+                    if (stepList) {
+                        options.data.selections = stepList;
                     }
 
                     options.url = 'http://localhost:8080/navigate_menu';
@@ -87,7 +69,7 @@ FormplayerFrontend.module("Entities", function (Entities, FormplayerFrontend, Ba
 
                 initialize: function (params) {
                     this.domain = params.domain;
-                    this.app_id = params.app_id;
+                    this.appId = params.appId;
                     this.fetch = params.fetch;
                 },
             });
@@ -102,11 +84,7 @@ FormplayerFrontend.module("Entities", function (Entities, FormplayerFrontend, Ba
         },
     };
 
-    FormplayerFrontend.reqres.setHandler("app:select:menus", function (app_id, select_list) {
-        return API.getMenus(app_id, select_list);
-    });
-
-    FormplayerFrontend.reqres.setHandler("app:get:detail", function (model) {
-        return API.getDetail(model);
+    FormplayerFrontend.reqres.setHandler("app:select:menus", function (appId, stepList) {
+        return API.getMenus(appId, stepList);
     });
 });

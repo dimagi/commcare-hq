@@ -14,6 +14,7 @@ Util.getQueryParams = function (qs) {
     return params;
 };
 
+// Given a URL, return the parameter values (in our case they can only be steps)
 Util.getSteps = function (qs) {
     var urlParams = Util.getQueryParams(qs);
     var steps = [];
