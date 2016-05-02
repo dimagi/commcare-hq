@@ -723,6 +723,10 @@ class PhoneBlacklist(models.Model):
     to that number or make calls to that number.
     """
 
+    # This is the domain that the phone number belonged to the last time an opt in
+    # or opt out operation happened. Can be null if the phone number didn't belong
+    # to any domain.
+    domain = models.CharField(max_length=126, null=True, db_index=True)
     phone_number = models.CharField(max_length=30, unique=True, null=False, db_index=True)
 
     # True if it's ok to send SMS to this phone number, False if not
@@ -773,7 +777,7 @@ class PhoneBlacklist(models.Model):
             return True
 
     @classmethod
-    def opt_in_sms(cls, phone_number):
+    def opt_in_sms(cls, phone_number, domain=None):
         """
         Opts a phone number in to receive SMS.
         Returns True if the number was actually opted-in, False if not.
@@ -781,6 +785,7 @@ class PhoneBlacklist(models.Model):
         try:
             phone_obj = cls.get_by_phone_number(phone_number)
             if phone_obj.can_opt_in:
+                phone_obj.domain = domain
                 phone_obj.send_sms = True
                 phone_obj.last_sms_opt_in_timestamp = datetime.utcnow()
                 phone_obj.save()
@@ -790,13 +795,14 @@ class PhoneBlacklist(models.Model):
         return False
 
     @classmethod
-    def opt_out_sms(cls, phone_number):
+    def opt_out_sms(cls, phone_number, domain=None):
         """
         Opts a phone number out from receiving SMS.
         Returns True if the number was actually opted-out, False if not.
         """
         phone_obj = cls.get_or_create(phone_number)[0]
         if phone_obj:
+            phone_obj.domain = domain
             phone_obj.send_sms = False
             phone_obj.last_sms_opt_out_timestamp = datetime.utcnow()
             phone_obj.save()
