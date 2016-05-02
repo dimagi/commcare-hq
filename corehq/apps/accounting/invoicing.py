@@ -551,13 +551,12 @@ class SmsLineItemFactory(FeatureLineItemFactory):
             assert self.rate.monthly_limit < self.num_sms
             num_extra = self.num_sms - self.rate.monthly_limit
             assert num_extra > 0
-            return _(
-                "%(num_extra_sms)d SMS %(messages)s beyond "
-                "%(monthly_limit)d messages included."
+            return ungettext(
+                "%(num_extra_sms)d SMS Message beyond %(monthly_limit)d messages included.",
+                "%(num_extra_sms)d SMS Messages beyond %(monthly_limit)d messages included.",
+                num_extra
             ) % {
                 'num_extra_sms': num_extra,
-                'messages': (_('Messages') if num_extra == 1
-                             else _('Messages')),
                 'monthly_limit': self.rate.monthly_limit,
             }
 
