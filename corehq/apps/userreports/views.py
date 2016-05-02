@@ -10,7 +10,7 @@ from django.contrib import messages
 from django.core.exceptions import ValidationError
 from django.http import HttpResponseRedirect, HttpResponse
 from django.http.response import Http404
-from django.shortcuts import render
+from django.shortcuts import render, redirect
 from django.utils.decorators import method_decorator
 from django.utils.http import urlencode
 from django.utils.translation import ugettext as _, ugettext_lazy
@@ -87,7 +87,7 @@ from corehq.apps.userreports.ui.forms import (
 )
 from corehq.apps.userreports.util import has_report_builder_access, \
     has_report_builder_add_on_privilege, add_event, \
-    allowed_report_builder_reports
+    allowed_report_builder_reports, number_of_report_builder_reports
 from corehq.apps.users.decorators import require_permission
 from corehq.apps.users.models import Permissions
 from corehq.toggles import REPORT_BUILDER_MAP_REPORTS
@@ -242,6 +242,20 @@ class ReportBuilderPaywallPricing(ReportBuilderPaywallBase):
     urlname = 'report_builder_paywall_pricing'
     page_title = ugettext_lazy('Pricing')
 
+    @property
+    def page_context(self):
+        context = super(ReportBuilderPaywallPricing, self).page_context
+        if has_report_builder_access(self.request):
+            max_allowed_reports = allowed_report_builder_reports(self.request)
+            num_builder_reports = number_of_report_builder_reports(self.domain)
+            if num_builder_reports >= max_allowed_reports:
+                context.update({
+                    'at_report_limit': True,
+                    'max_allowed_reports': max_allowed_reports,
+
+                })
+        return context
+
 
 class ReportBuilderPaywallActivatingSubscription(ReportBuilderPaywallBase):
     template_name = "userreports/paywall/activating_subscription.html"
@@ -271,6 +285,11 @@ class ReportBuilderTypeSelect(JSONResponseMixin, ReportBuilderView):
 
     @use_angular_js
     def dispatch(self, request, *args, **kwargs):
+        max_allowed_reports = allowed_report_builder_reports(self.request)
+        num_builder_reports = number_of_report_builder_reports(self.domain)
+        if num_builder_reports >= max_allowed_reports:
+            return redirect(ReportBuilderPaywallPricing.urlname, self.domain)
+
         return super(ReportBuilderTypeSelect, self).dispatch(request, *args, **kwargs)
 
     @property
@@ -583,6 +602,7 @@ class ConfigureChartReport(ReportBuilderView):
                     messages.error(self.request, e.message)
                     return self.get(*args, **kwargs)
             else:
+                self._confirm_report_limit()
                 report_configuration = self.report_form.create_report()
                 self._track_new_report_events()
 
@@ -594,6 +614,18 @@ class ConfigureChartReport(ReportBuilderView):
             self._track_invalid_form_events()
 
         return self.get(*args, **kwargs)
+
+    def _confirm_report_limit(self):
+        """
+        This method is used to confirm that the user is not creating more reports
+        than they are allowed.
+        The user is normally turned back earlier in the process, but this check
+        is necessary in case they navigated directly to this view either
+        maliciously or with a bookmark perhaps.
+        """
+        if (number_of_report_builder_reports(self.domain) >=
+                allowed_report_builder_reports(self.request)):
+            raise Http404()
 
 
 class ConfigureListReport(ConfigureChartReport):

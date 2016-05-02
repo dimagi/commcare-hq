@@ -10,6 +10,15 @@
         <h1>
             {% trans "Report Builder Pricing" %}
         </h1>
+        {% if at_report_limit %}
+        <p class="lead">
+            {% blocktrans %}
+            You have reached your report limit of {{ max_allowed_reports }} reports.
+            If you would like to create more, delete one of your existing
+            reports or upgrade your account.
+            {% endblocktrans %}
+        </p>
+        {% endif %}
         <p>
             {% blocktrans %}
             Report Builder is an <strong>add-on</strong> to <strong>Standard</strong> or higher software plans.
