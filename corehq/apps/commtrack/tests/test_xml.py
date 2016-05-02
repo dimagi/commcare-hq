@@ -14,7 +14,10 @@ from corehq.apps.commtrack.models import ConsumptionConfig, StockRestoreConfig, 
 from corehq.apps.domain.models import Domain
 from corehq.apps.consumption.shortcuts import set_default_monthly_consumption_for_domain
 from corehq.apps.hqcase.utils import submit_case_blocks
+from corehq.form_processor.interfaces.dbaccessors import LedgerAccessors, FormAccessors
+from corehq.form_processor.models import LedgerTransaction
 from corehq.form_processor.tests.utils import run_with_all_backends
+from corehq.form_processor.utils.general import should_use_sql_backend
 from couchforms.models import XFormInstance
 from dimagi.utils.parsing import json_format_datetime, json_format_date
 from casexml.apps.stock import const as stockconst
@@ -214,33 +217,44 @@ class CommTrackSubmissionTest(CommTrackTest):
         if not isinstance(expected_soh, Decimal):
             expected_soh = Decimal(str(expected_soh))
 
-        latest_trans = StockTransaction.latest(case._id, section_id, product_id)
+        latest_trans = LedgerAccessors(self.domain.name).get_latest_transaction(
+            case.case_id, section_id, product_id
+        )
         self.assertIsNotNone(latest_trans)
         self.assertEqual(section_id, latest_trans.section_id)
         self.assertEqual(expected_soh, latest_trans.stock_on_hand)
-        self.assertEqual(expected_qty, latest_trans.quantity)
+
+        if should_use_sql_backend(self.domain.name):
+            if latest_trans.type == LedgerTransaction.TYPE_TRANSFER:
+                self.assertEqual(int(expected_qty), latest_trans.delta)
+        else:
+            self.assertEqual(expected_qty, latest_trans.quantity)
 
 
 class CommTrackBalanceTransferTest(CommTrackSubmissionTest):
 
+    @run_with_all_backends
     def test_balance_submit(self):
         amounts = [(p._id, float(i*10)) for i, p in enumerate(self.products)]
         self.submit_xml_form(balance_submission(amounts))
         for product, amt in amounts:
             self.check_product_stock(self.sp, product, amt, 0)
 
+    @run_with_all_backends
     def test_balance_submit_date(self):
         amounts = [(p._id, float(i*10)) for i, p in enumerate(self.products)]
         self.submit_xml_form(balance_submission(amounts), date_formatter=json_format_date)
         for product, amt in amounts:
             self.check_product_stock(self.sp, product, amt, 0)
 
+    @run_with_all_backends
     def test_balance_enumerated(self):
         amounts = [(p._id, float(i*10)) for i, p in enumerate(self.products)]
         self.submit_xml_form(balance_enumerated(amounts))
         for product, amt in amounts:
             self.check_product_stock(self.sp, product, amt, 0)
 
+    @run_with_all_backends
     def test_balance_consumption(self):
         initial = float(100)
         initial_amounts = [(p._id, initial) for p in self.products]
@@ -251,12 +265,20 @@ class CommTrackBalanceTransferTest(CommTrackSubmissionTest):
         for product, amt in final_amounts:
             self.check_product_stock(self.sp, product, amt, 0)
             inferred = amt - initial
-            inferred_txn = StockTransaction.objects.get(case_id=self.sp.case_id, product_id=product,
-                                              subtype=stockconst.TRANSACTION_SUBTYPE_INFERRED)
-            self.assertEqual(Decimal(str(inferred)), inferred_txn.quantity)
-            self.assertEqual(Decimal(str(amt)), inferred_txn.stock_on_hand)
-            self.assertEqual(stockconst.TRANSACTION_TYPE_CONSUMPTION, inferred_txn.type)
+            if should_use_sql_backend(self.domain.name):
+                sql_txn = LedgerAccessors(self.domain.name).get_latest_transaction(
+                    self.sp.case_id, 'stock', product
+                )
+                self.assertEqual(inferred, sql_txn.delta)
+            else:
+                inferred_txn = StockTransaction.objects.get(
+                    case_id=self.sp.case_id, product_id=product, subtype=stockconst.TRANSACTION_SUBTYPE_INFERRED
+                )
+                self.assertEqual(Decimal(str(inferred)), inferred_txn.quantity)
+                self.assertEqual(Decimal(str(amt)), inferred_txn.stock_on_hand)
+                self.assertEqual(stockconst.TRANSACTION_TYPE_CONSUMPTION, inferred_txn.type)
 
+    @run_with_all_backends
     def test_balance_consumption_with_date(self):
         initial = float(100)
         initial_amounts = [(p._id, initial) for p in self.products]
@@ -267,6 +289,7 @@ class CommTrackBalanceTransferTest(CommTrackSubmissionTest):
         for product, amt in final_amounts:
             self.check_product_stock(self.sp, product, amt, 0)
 
+    @run_with_all_backends
     def test_archived_product_submissions(self):
         """
         This is basically the same as above, but separated to be
@@ -285,6 +308,7 @@ class CommTrackBalanceTransferTest(CommTrackSubmissionTest):
         for product, amt in final_amounts:
             self.check_product_stock(self.sp, product, amt, 0)
 
+    @run_with_all_backends
     def test_balance_submit_multiple_stocks(self):
         def _random_amounts():
             return [(p._id, float(random.randint(0, 100))) for i, p in enumerate(self.products)]
@@ -298,12 +322,14 @@ class CommTrackBalanceTransferTest(CommTrackSubmissionTest):
             for product, amt in amounts:
                 self.check_product_stock(self.sp, product, amt, 0, section_id)
 
+    @run_with_all_backends
     def test_transfer_dest_only(self):
         amounts = [(p._id, float(i*10)) for i, p in enumerate(self.products)]
         self.submit_xml_form(transfer_dest_only(amounts))
         for product, amt in amounts:
             self.check_product_stock(self.sp, product, amt, amt)
 
+    @run_with_all_backends
     def test_transfer_source_only(self):
         initial = float(100)
         initial_amounts = [(p._id, initial) for p in self.products]
@@ -314,6 +340,7 @@ class CommTrackBalanceTransferTest(CommTrackSubmissionTest):
         for product, amt in deductions:
             self.check_product_stock(self.sp, product, initial-amt, -amt)
 
+    @run_with_all_backends
     def test_transfer_both(self):
         initial = float(100)
         initial_amounts = [(p._id, initial) for p in self.products]
@@ -325,12 +352,14 @@ class CommTrackBalanceTransferTest(CommTrackSubmissionTest):
             self.check_product_stock(self.sp, product, initial-amt, -amt)
             self.check_product_stock(self.sp2, product, amt, amt)
 
+    @run_with_all_backends
     def test_transfer_with_date(self):
         amounts = [(p._id, float(i*10)) for i, p in enumerate(self.products)]
         self.submit_xml_form(transfer_dest_only(amounts), date_formatter=json_format_date)
         for product, amt in amounts:
             self.check_product_stock(self.sp, product, amt, amt)
 
+    @run_with_all_backends
     def test_transfer_enumerated(self):
         initial = float(100)
         initial_amounts = [(p._id, initial) for p in self.products]
@@ -341,6 +370,7 @@ class CommTrackBalanceTransferTest(CommTrackSubmissionTest):
         for product, amt in receipts:
             self.check_product_stock(self.sp, product, initial + amt, amt)
 
+    @run_with_all_backends
     def test_balance_first_doc_order(self):
         initial = float(100)
         balance_amounts = [(p._id, initial) for p in self.products]
@@ -349,6 +379,7 @@ class CommTrackBalanceTransferTest(CommTrackSubmissionTest):
         for product, amt in transfers:
             self.check_product_stock(self.sp, product, initial + amt, amt)
 
+    @run_with_all_backends
     def test_transfer_first_doc_order(self):
         # first set to 100
         initial = float(100)
@@ -364,6 +395,7 @@ class CommTrackBalanceTransferTest(CommTrackSubmissionTest):
         for product, amt in transfers:
             self.check_product_stock(self.sp, product, final, 0)
 
+    @run_with_all_backends
     def test_blank_quantities(self):
         # submitting a bunch of blank data shouldn't submit transactions
         # so lets submit some initial data and make sure we don't modify it
@@ -381,23 +413,26 @@ class CommTrackBalanceTransferTest(CommTrackSubmissionTest):
         for product in self.products:
             self.check_product_stock(self.sp, product._id, 100, 0)
 
+    @run_with_all_backends
     def test_blank_product_id(self):
         initial = float(100)
         balances = [('', initial)]
         instance_id = self.submit_xml_form(balance_submission(balances))
-        instance = XFormInstance.get(instance_id)
-        self.assertEqual('XFormError', instance.doc_type)
+        instance = FormAccessors(self.domain.name).get_form(instance_id)
+        self.assertTrue(instance.is_error)
         self.assertTrue('MissingProductId' in instance.problem)
 
+    @run_with_all_backends
     def test_blank_case_id_in_balance(self):
         instance_id = submit_case_blocks(
             case_blocks=get_single_balance_block(case_id='', product_id=self.products[0]._id, quantity=100),
             domain=self.domain.name,
         )
-        instance = XFormInstance.get(instance_id)
-        self.assertEqual('XFormError', instance.doc_type)
+        instance = FormAccessors(self.domain.name).get_form(instance_id)
+        self.assertTrue(instance.is_error)
         self.assertTrue('IllegalCaseId' in instance.problem)
 
+    @run_with_all_backends
     def test_blank_case_id_in_transfer(self):
         instance_id = submit_case_blocks(
             case_blocks=get_single_transfer_block(
@@ -405,8 +440,8 @@ class CommTrackBalanceTransferTest(CommTrackSubmissionTest):
             ),
             domain=self.domain.name,
         )
-        instance = XFormInstance.get(instance_id)
-        self.assertEqual('XFormError', instance.doc_type)
+        instance = FormAccessors(self.domain.name).get_form(instance_id)
+        self.assertTrue(instance.is_error)
         self.assertTrue('IllegalCaseId' in instance.problem)
 
 
