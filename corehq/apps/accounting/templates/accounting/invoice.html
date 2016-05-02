@@ -11,7 +11,10 @@
 {% block js-inline %}{{ block.super }}
     {% if adjust_balance_form %}
     <script>
-        $('#adjust-balance-form-{{ invoice_info_form.invoice.id }}').koApplyBindings(new AdjustBalanceFormModel());
+        (function () {
+            var AdjustBalanceFormModel = hqImport('accounting/js/adjust-balance-modal.js').AdjustBalanceFormModel;
+            $('#adjust-balance-form-{{ invoice_info_form.invoice.id }}').koApplyBindings(new AdjustBalanceFormModel());
+        }());
     </script>
     {% endif %}
 {% endblock %}
