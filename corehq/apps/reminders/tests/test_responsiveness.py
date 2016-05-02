@@ -1,9 +1,12 @@
+from casexml.apps.case.mock import CaseFactory, CaseStructure
 from corehq.apps.hqcase.utils import update_case
+from corehq.apps.users.models import CommCareUser
 from corehq.util.test_utils import set_parent_case
 from corehq.apps.reminders.models import (CaseReminderHandler, CaseReminder, MATCH_EXACT,
     MATCH_REGEX, MATCH_ANY_VALUE, REPEAT_SCHEDULE_INDEFINITELY, FIRE_TIME_CASE_PROPERTY,
     DAY_MON, DAY_TUE)
 from corehq.form_processor.tests.utils import run_with_all_backends
+from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 from corehq.util.test_utils import create_test_case
 from datetime import datetime, date, time
 from django.test import TestCase
@@ -13,6 +16,7 @@ from mock import patch
 class ReminderResponsivenessTest(TestCase):
     def setUp(self):
         self.domain = 'reminder-responsiveness-test'
+        self.user = CommCareUser.create(self.domain, 'abc', 'def')
 
     def get_reminders(self):
         return CaseReminder.view('reminders/by_domain_handler_case',
@@ -695,7 +699,191 @@ class ReminderResponsivenessTest(TestCase):
             self.assertEqual(reminder_instance.callback_try_count, 0)
             self.assertEqual(reminder_instance.start_condition_datetime, datetime(2016, 1, 8))
 
+    @run_with_all_backends
+    def test_user_recipient(self):
+        reminder = (CaseReminderHandler
+            .create(self.domain, 'test')
+            .set_case_criteria_start_condition('participant', 'status', MATCH_EXACT, 'green')
+            .set_case_criteria_start_date()
+            .set_last_submitting_user_recipient()
+            .set_sms_content_type('en')
+            .set_daily_schedule(fire_time=time(12, 0), message={'en': "{case.name}'s test result was normal."})
+            .set_stop_condition(max_iteration_count=REPEAT_SCHEDULE_INDEFINITELY)
+            .set_advanced_options())
+        reminder.save()
+
+        self.assertEqual(self.get_reminders(), [])
+
+        with create_test_case(self.domain, 'participant', 'bob', drop_signals=False) as case, \
+                patch('corehq.apps.reminders.models.CaseReminderHandler.get_now') as now_mock:
+            self.assertEqual(self.get_reminders(), [])
+
+            now_mock.return_value = datetime(2016, 1, 1, 10, 0)
+
+            # There should still be no reminder instance since this is submitted by the system user
+            update_case(self.domain, case.case_id, case_properties={'status': 'green'})
+            self.assertEqual(self.get_reminders(), [])
+
+            # Update the user id on the case
+            CaseFactory(self.domain).create_or_update_case(
+                CaseStructure(
+                    case_id=case.case_id,
+                    attrs={'user_id': self.user.get_id}
+                )
+            )
+
+            reminder_instance = self.assertOneReminder()
+            self.assertEqual(reminder_instance.domain, self.domain)
+            self.assertEqual(reminder_instance.handler_id, reminder.get_id)
+            self.assertTrue(reminder_instance.active)
+            self.assertEqual(reminder_instance.start_date, date(2016, 1, 1))
+            self.assertIsNone(reminder_instance.start_condition_datetime)
+            self.assertEqual(reminder_instance.next_fire, datetime(2016, 1, 1, 12, 0))
+            self.assertEqual(reminder_instance.case_id, case.case_id)
+            self.assertEqual(reminder_instance.schedule_iteration_num, 1)
+            self.assertEqual(reminder_instance.current_event_sequence_num, 0)
+            self.assertEqual(reminder_instance.user_id, self.user.get_id)
+
+            # Set a user_id that does not exist
+            CaseFactory(self.domain).create_or_update_case(
+                CaseStructure(
+                    case_id=case.case_id,
+                    attrs={'user_id': 'this-user-id-does-not-exist'}
+                )
+            )
+            self.assertEqual(self.get_reminders(), [])
+
+    @run_with_all_backends
+    def test_until_condition(self):
+        reminder = (CaseReminderHandler
+            .create(self.domain, 'test')
+            .set_case_criteria_start_condition('participant', 'status', MATCH_EXACT, 'green')
+            .set_case_criteria_start_date()
+            .set_case_recipient()
+            .set_sms_content_type('en')
+            .set_daily_schedule(fire_time=time(12, 0), message={'en': 'Hello {case.name}, your test result was normal.'})
+            .set_stop_condition(max_iteration_count=REPEAT_SCHEDULE_INDEFINITELY, stop_case_property='stop_reminder')
+            .set_advanced_options())
+        reminder.save()
+
+        self.assertEqual(self.get_reminders(), [])
+
+        with create_test_case(self.domain, 'participant', 'bob', drop_signals=False) as case, \
+                patch('corehq.apps.reminders.models.CaseReminderHandler.get_now') as now_mock:
+            self.assertEqual(self.get_reminders(), [])
+
+            now_mock.return_value = datetime(2016, 1, 1, 10, 0)
+            update_case(self.domain, case.case_id, case_properties={'status': 'green'})
+
+            reminder_instance = self.assertOneReminder()
+            self.assertEqual(reminder_instance.domain, self.domain)
+            self.assertEqual(reminder_instance.handler_id, reminder.get_id)
+            self.assertTrue(reminder_instance.active)
+            self.assertEqual(reminder_instance.start_date, date(2016, 1, 1))
+            self.assertIsNone(reminder_instance.start_condition_datetime)
+            self.assertEqual(reminder_instance.next_fire, datetime(2016, 1, 1, 12, 0))
+            self.assertEqual(reminder_instance.case_id, case.case_id)
+            self.assertEqual(reminder_instance.schedule_iteration_num, 1)
+            self.assertEqual(reminder_instance.current_event_sequence_num, 0)
+
+            update_case(self.domain, case.case_id, case_properties={'stop_reminder': 'ok'})
+            reminder_instance = self.assertOneReminder()
+            self.assertEqual(reminder_instance.domain, self.domain)
+            self.assertEqual(reminder_instance.handler_id, reminder.get_id)
+            self.assertFalse(reminder_instance.active)
+            self.assertEqual(reminder_instance.start_date, date(2016, 1, 1))
+            self.assertIsNone(reminder_instance.start_condition_datetime)
+            self.assertEqual(reminder_instance.next_fire, datetime(2016, 1, 1, 12, 0))
+            self.assertEqual(reminder_instance.case_id, case.case_id)
+            self.assertEqual(reminder_instance.schedule_iteration_num, 1)
+            self.assertEqual(reminder_instance.current_event_sequence_num, 0)
+
+            update_case(self.domain, case.case_id, case_properties={'stop_reminder': '2016-01-02'})
+            reminder_instance = self.assertOneReminder()
+            self.assertEqual(reminder_instance.domain, self.domain)
+            self.assertEqual(reminder_instance.handler_id, reminder.get_id)
+            self.assertTrue(reminder_instance.active)
+            self.assertEqual(reminder_instance.start_date, date(2016, 1, 1))
+            self.assertIsNone(reminder_instance.start_condition_datetime)
+            self.assertEqual(reminder_instance.next_fire, datetime(2016, 1, 1, 12, 0))
+            self.assertEqual(reminder_instance.case_id, case.case_id)
+            self.assertEqual(reminder_instance.schedule_iteration_num, 1)
+            self.assertEqual(reminder_instance.current_event_sequence_num, 0)
+
+            update_case(self.domain, case.case_id, case_properties={'stop_reminder': '2015-12-31'})
+            reminder_instance = self.assertOneReminder()
+            self.assertEqual(reminder_instance.domain, self.domain)
+            self.assertEqual(reminder_instance.handler_id, reminder.get_id)
+            self.assertFalse(reminder_instance.active)
+            self.assertEqual(reminder_instance.start_date, date(2016, 1, 1))
+            self.assertIsNone(reminder_instance.start_condition_datetime)
+            self.assertEqual(reminder_instance.next_fire, datetime(2016, 1, 1, 12, 0))
+            self.assertEqual(reminder_instance.case_id, case.case_id)
+            self.assertEqual(reminder_instance.schedule_iteration_num, 1)
+            self.assertEqual(reminder_instance.current_event_sequence_num, 0)
+
+    @run_with_all_backends
+    def test_datetime_condition(self):
+        with create_test_case(self.domain, 'participant', 'bob', drop_signals=False) as case, \
+                patch('corehq.apps.reminders.models.CaseReminderHandler.get_now') as now_mock:
+
+            now_mock.return_value = datetime(2016, 1, 1, 10, 0)
+
+            reminder = (CaseReminderHandler
+                .create(self.domain, 'test')
+                .set_datetime_start_condition(datetime(2016, 1, 1, 0, 0))
+                .set_case_recipient(case.case_id)
+                .set_sms_content_type('en')
+                .set_daily_schedule(fire_time=time(15, 0), message={'en': 'Hello {case.name}, your test result was normal.'})
+                .set_stop_condition(max_iteration_count=1)
+                .set_advanced_options())
+            reminder.save()
+
+            reminder_instance = self.assertOneReminder()
+            self.assertEqual(reminder_instance.domain, self.domain)
+            self.assertEqual(reminder_instance.handler_id, reminder.get_id)
+            self.assertTrue(reminder_instance.active)
+            self.assertEqual(reminder_instance.start_date, date(2016, 1, 1))
+            self.assertEqual(reminder_instance.start_condition_datetime, datetime(2016, 1, 1, 0, 0))
+            self.assertEqual(reminder_instance.next_fire, datetime(2016, 1, 1, 15, 0))
+            self.assertEqual(reminder_instance.case_id, case.case_id)
+            self.assertEqual(reminder_instance.schedule_iteration_num, 1)
+            self.assertEqual(reminder_instance.current_event_sequence_num, 0)
+
+            reminder.set_datetime_start_condition(datetime(2016, 1, 2, 0, 0))
+            reminder.save()
+
+            reminder_instance = self.assertOneReminder()
+            self.assertEqual(reminder_instance.domain, self.domain)
+            self.assertEqual(reminder_instance.handler_id, reminder.get_id)
+            self.assertTrue(reminder_instance.active)
+            self.assertEqual(reminder_instance.start_date, date(2016, 1, 2))
+            self.assertEqual(reminder_instance.start_condition_datetime, datetime(2016, 1, 2, 0, 0))
+            self.assertEqual(reminder_instance.next_fire, datetime(2016, 1, 2, 15, 0))
+            self.assertEqual(reminder_instance.case_id, case.case_id)
+            self.assertEqual(reminder_instance.schedule_iteration_num, 1)
+            self.assertEqual(reminder_instance.current_event_sequence_num, 0)
+
+            reminder.set_datetime_start_condition(datetime(2015, 12, 31, 0, 0))
+            reminder.save()
+
+            reminder_instance = self.assertOneReminder()
+            self.assertEqual(reminder_instance.domain, self.domain)
+            self.assertEqual(reminder_instance.handler_id, reminder.get_id)
+            self.assertFalse(reminder_instance.active)
+            self.assertEqual(reminder_instance.start_date, date(2015, 12, 31))
+            self.assertEqual(reminder_instance.start_condition_datetime, datetime(2015, 12, 31, 0, 0))
+            self.assertEqual(reminder_instance.next_fire, datetime(2016, 1, 1, 15, 0))
+            self.assertEqual(reminder_instance.case_id, case.case_id)
+            self.assertEqual(reminder_instance.schedule_iteration_num, 2)
+            self.assertEqual(reminder_instance.current_event_sequence_num, 0)
+
+            reminder.active = False
+            reminder.save()
+            self.assertEqual(self.get_reminders(), [])
+
     def tearDown(self):
+        self.user.delete()
         for reminder_instance in self.get_all_reminders():
             reminder_instance.delete()
         for reminder in CaseReminderHandler.get_handlers(self.domain):

@@ -542,10 +542,11 @@ class CaseReminderHandler(Document):
     def create(cls, domain, name, ui_type=UI_COMPLEX):
         return cls(domain=domain, nickname=name, ui_type=ui_type)
 
-    def set_datetime_start_condition(self, start_datetime):
+    def set_datetime_start_condition(self, start_datetime, start_offset=0):
         self.reminder_type = REMINDER_TYPE_ONE_TIME
         self.start_condition_type = ON_DATETIME
         self.start_datetime = start_datetime
+        self.start_offset = start_offset
         return self
 
     def set_case_criteria_start_condition(self, case_type, start_property, start_match_type, start_value=None):
