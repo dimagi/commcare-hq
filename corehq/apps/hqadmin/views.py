@@ -182,8 +182,6 @@ class RecentCouchChangesView(BaseAdminSectionView):
         }
 
 
-
-
 @require_superuser_or_developer
 def download_recent_changes(request):
     count = int(request.GET.get('changes', 10000))

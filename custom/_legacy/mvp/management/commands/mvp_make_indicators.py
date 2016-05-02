@@ -128,7 +128,6 @@ class Command(LabelCommand):
             self.insert_dob_into_form('child_dob', MVP.CLOSE_FORMS.get('child_close'),
                 shared_args)
 
-
     def insert_dob_into_form(self, indicator_slug, xmlns, shared_args, version=1):
         child_dob = CaseDataInFormIndicatorDefinition.increment_or_create_unique(
             *shared_args,
@@ -138,7 +137,6 @@ class Command(LabelCommand):
             version=version
         )
         print child_dob
-
 
     def create_form_alias_indicators(self, question_ids, xmlns, domain, shared_args):
         for indicator_slug, ids_per_domain in question_ids.items():

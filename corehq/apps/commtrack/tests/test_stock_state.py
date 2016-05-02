@@ -114,7 +114,6 @@ class StockStateBehaviorTest(StockStateTest):
                 product_id=self.products[0]._id,
             )
 
-
     def test_domain_mapping(self):
         # make sure there's a fake case setup for this
         with self.assertRaises(DocDomainMapping.DoesNotExist):
@@ -170,7 +169,6 @@ class StockStateConsumptionTest(StockStateTest):
 
         self.assertEqual(5, float(state.get_daily_consumption()))
 
-
     def test_rebuild_for_domain(self):
         # 5 days, 1 transaction
         self.report(25, 5)
@@ -184,7 +182,6 @@ class StockStateConsumptionTest(StockStateTest):
             commtrack_settings.consumption_config.min_window = min_window
             commtrack_settings.consumption_config.optimal_window = optimal_window
             commtrack_settings.save()
-
 
         _reset = functools.partial(_update_consumption_config, 0, 3, 100)  # should fall in range
 

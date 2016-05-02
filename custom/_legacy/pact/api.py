@@ -126,7 +126,6 @@ class PactFormAPI(DomainAPI):
 
         res = self.xform_es.run_query(query)
 
-
         my_patients_ever_submitted_query = query_per_case_submissions_facet(PACT_DOMAIN, username)
         patients_res = self.xform_es.run_query(my_patients_ever_submitted_query)
 
@@ -273,7 +272,6 @@ def get_all_providers(invalidate=False):
         pass
 
 
-
 class PactAPI(DomainAPI):
 
     #note - for security purposes, csrf protection is ENABLED
@@ -404,8 +402,6 @@ class PactAPI(DomainAPI):
                 resp.status_code=500
             return resp
 
-
-
         elif self.method == "patient_edit":
             form = PactPatientForm(self.request, pdoc, data=self.request.POST)
             if form.is_valid():
@@ -420,7 +416,6 @@ class PactAPI(DomainAPI):
 
     def head(self, *args, **kwargs):
         raise NotImplementedError("Not implemented")
-
 
     @method_decorator(login_or_digest)
     def dispatch(self, *args, **kwargs):

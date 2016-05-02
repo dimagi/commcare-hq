@@ -122,7 +122,6 @@ class MyPerformanceReport(BiharSummaryReport):
         return [_nav_link(i) for i in self.data_provider.summary_indicators]
 
 
-
 class IndicatorCharts(MockEmptyReport):
     name = ugettext_noop("Charts")
     slug = "indicatorcharts"
@@ -247,7 +246,6 @@ class IndicatorClientList(ClientListBase, IndicatorMixIn):
                         break
             if num_copy:
                 logging.error('expected no indicators left in the numerator but found some')
-
 
         def _key(result):
             return (result['in_num'], result['key'][-1])

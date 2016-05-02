@@ -208,7 +208,6 @@ def update_items(fields_patches, domain, data_type_id, transaction):
     data_items = FixtureDataItem.by_data_type(domain, data_type_id)
 
 
-
 def create_types(fields_patches, domain, data_tag, is_global, transaction):
     data_type = FixtureDataType(
         domain=domain,

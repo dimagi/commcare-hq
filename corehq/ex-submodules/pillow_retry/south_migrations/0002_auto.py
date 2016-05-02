@@ -18,7 +18,6 @@ class Migration(SchemaMigration):
         # Adding index on 'PillowError', fields ['doc_id']
         db.create_index(u'pillow_retry_pillowerror', ['doc_id'])
 
-
     def backwards(self, orm):
         
         # Removing index on 'PillowError', fields ['doc_id']
@@ -29,7 +28,6 @@ class Migration(SchemaMigration):
 
         # Removing index on 'PillowError', fields ['current_attempt']
         db.delete_index(u'pillow_retry_pillowerror', ['current_attempt'])
-
 
     models = {
         u'pillow_retry.pillowerror': {

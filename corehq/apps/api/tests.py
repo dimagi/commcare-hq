@@ -599,7 +599,6 @@ class TestWebUserResource(APIResourceTest):
                      'edit_apps', 'view_reports']:
             self.assertEqual(getattr(role.permissions, perm), json_user['permissions'][perm])
 
-
     def test_get_list(self):
         self.client.login(username=self.username, password=self.password)
 
@@ -630,7 +629,6 @@ class TestWebUserResource(APIResourceTest):
         self.assertEqual(response.status_code, 200)
         api_users = json.loads(response.content)['objects']
         self.assertEqual(len(api_users), 0)
-
 
     def test_get_single(self):
         self.client.login(username=self.username, password=self.password)
@@ -789,7 +787,6 @@ class TestRepeaterResource(APIResourceTest):
             self.assertEqual(repeater_json['type'], repeater_back.doc_type)
             self.assertEqual(repeater_json['url'], repeater_back.url)
             repeater_back.delete()
-
 
     def test_update(self):
         self.client.login(username=self.username, password=self.password)
@@ -1053,7 +1050,6 @@ class TestToManyDictField(TestCase):
 
         self.assertEqual(dehydrated_bundle.data['other_models']['first_other']['id'] , 'bar')
         self.assertEqual(dehydrated_bundle.data['other_models']['second_other']['id'], 'baz')
-
 
 
 class ToOneSourceModel(object):

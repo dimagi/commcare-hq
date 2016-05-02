@@ -58,7 +58,6 @@ def get_case_ids_from_stock_transactions(xform):
     return case_ids
 
 
-
 def get_stock_actions(xform):
     """
     Pulls out the ledger blocks and case action intents from a form and returns them

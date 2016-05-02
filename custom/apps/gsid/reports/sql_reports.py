@@ -517,7 +517,6 @@ class GSIDSQLTestLotsReport(GSIDSQLReport):
         else:
             return self.test_types         
 
-    
     @property
     def rows(self):
         test_lots_map = self.test_lots_map

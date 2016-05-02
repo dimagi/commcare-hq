@@ -18,7 +18,6 @@ def migrate_metadata(apps, schema_editor):
         subscription.save(update_fields=['service_type','pro_bono_status'])
 
 
-
 class Migration(migrations.Migration):
 
     dependencies = [

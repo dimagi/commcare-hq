@@ -219,7 +219,6 @@ class StockAndReceiptTest(SMSTests):
         STOCK_AND_RECEIPT_SMS_HANDLER.set(self.domain, False, NAMESPACE_DOMAIN)
 
 
-
 def _get_location_from_form(form):
     return form.form['location']
 

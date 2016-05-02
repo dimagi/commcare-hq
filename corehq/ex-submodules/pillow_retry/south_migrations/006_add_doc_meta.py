@@ -18,7 +18,6 @@ class Migration(SchemaMigration):
         # Adding field 'PillowError.doc_date'
         db.add_column(u'pillow_retry_pillowerror', 'doc_date', self.gf('django.db.models.fields.DateTimeField')(null=True), keep_default=False)
 
-
     def backwards(self, orm):
         
         # Deleting field 'PillowError.domains'
@@ -29,7 +28,6 @@ class Migration(SchemaMigration):
 
         # Deleting field 'PillowError.doc_date'
         db.delete_column(u'pillow_retry_pillowerror', 'doc_date')
-
 
     models = {
         u'pillow_retry.pillowerror': {

@@ -37,7 +37,6 @@ class Command(BaseCommand):
 
         self.copy_docs(sourcedb, destdb, pretend=pretend, doc_types=doc_types)
 
-
     def iter_view(self, db, view_name, startkey=None, endkey=None, reduce=False, chunksize=1000):
         "iterates over the raw docs of the view in chunks of a safe size for couchdb requests"
 

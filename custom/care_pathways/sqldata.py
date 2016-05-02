@@ -280,7 +280,6 @@ class AdoptionDisaggregatedSqlData(CareSqlData):
 
         return display
 
-
     @property
     def columns(self):
         return [
@@ -329,8 +328,6 @@ class TableCardSqlData(CareSqlData):
             elif int(x) == 2:
                 return 'All Women'
 
-
-
     @property
     def columns(self):
         if self.config['table_card_group_by'] == 'group_name':
@@ -371,7 +368,6 @@ class TableCardSqlData(CareSqlData):
             return ['group_name', 'value_chain', 'domains', 'practices']
         else:
             return ['gender', 'value_chain', 'domains', 'practices']
-
 
 
 class TableCardReportGrouppedPercentSqlData(TableCardSqlData):

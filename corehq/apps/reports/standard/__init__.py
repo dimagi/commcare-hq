@@ -187,7 +187,6 @@ class ProjectReportParametersMixin(object):
         return case_ids
 
 
-
 class CouchCachedReportMixin(object):
     """
         Use this mixin for caching reports as objects in couch.

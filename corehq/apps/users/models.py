@@ -461,7 +461,6 @@ class IsMemberOfMixin(DocumentSchema):
             domain = domain_qs
         return self._is_member_of(domain)
 
-
     def is_global_admin(self):
         # subclasses to override if they want this functionality
         return False
@@ -975,7 +974,6 @@ class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, UnicodeMixIn, EulaMi
             return extended_info
         return [extend_phone(phone) for phone in self.phone_numbers]
 
-
     @property
     def couch_id(self):
         return self._id
@@ -1016,7 +1014,6 @@ class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, UnicodeMixIn, EulaMi
             #stale=None if strict else settings.COUCH_STALE_QUERY,
             **extra_args
         ).all()
-
 
     @classmethod
     def ids_by_domain(cls, domain, is_active=True):
@@ -1621,7 +1618,6 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
             touched.append(group)
 
         Group.bulk_save(touched)
-
 
     def get_time_zone(self):
         try:

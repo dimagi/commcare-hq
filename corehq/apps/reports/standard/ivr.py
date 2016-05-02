@@ -29,7 +29,6 @@ import pytz
 from math import ceil
 
 
-
 class CallReport(BaseCommConnectLogReport):
     """
     Displays all calls for the given domain and date range.

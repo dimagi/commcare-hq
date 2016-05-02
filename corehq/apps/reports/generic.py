@@ -187,7 +187,6 @@ class GenericReportView(object):
             context={}
         )
 
-
     _caching = False
 
     def __setstate__(self, state):
@@ -275,7 +274,6 @@ class GenericReportView(object):
             (self.base_template_async or "reports/async/bootstrap2/default.html")
             if self.asynchronous else self.template_base
         )
-
 
     @property
     @memoized
@@ -412,7 +410,6 @@ class GenericReportView(object):
                 # not a parseable boolean
                 pass
         return are_filters_set
-
 
     @property
     def needs_filters(self):

@@ -80,7 +80,6 @@ class TestBillingAutoPay(BaseInvoiceTestCase):
         autopayable_invoices = Invoice.autopayable_invoices(date_due)
         self.assertItemsEqual(autopayable_invoices, [])
 
-
     @mock.patch.object(StripePaymentMethod, 'customer')
     @mock.patch.object(Charge, 'create')
     def test_pay_autopayable_invoices(self, fake_charge, fake_customer):

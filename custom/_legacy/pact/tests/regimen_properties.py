@@ -46,7 +46,6 @@ class RegimenPropertiesTests(TestCase):
         qd_ret = regimen_dict_from_choice(DOT_ART, qd_eve)
         self.assertEquals(qd_ret, {'dot_a_one': '2', 'dot_a_four': '', 'dot_a_two': '', 'artregimen': '1', 'dot_a_three': ''})
 
-
     def testStringFromRegimenProps(self):
         """
         From the regimen props of the case - get the string representation of the label choices

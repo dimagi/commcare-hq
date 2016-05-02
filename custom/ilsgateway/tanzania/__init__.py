@@ -443,7 +443,6 @@ class DetailsReport(MultiReport):
             self.request.GET.get('datespan_second', ''),
         ))
 
-
     @property
     def report_stockonhand_url(self):
         from custom.ilsgateway.tanzania.reports.stock_on_hand import StockOnHandReport

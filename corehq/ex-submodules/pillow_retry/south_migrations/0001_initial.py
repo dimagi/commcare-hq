@@ -25,12 +25,10 @@ class Migration(SchemaMigration):
         ))
         db.send_create_signal(u'pillow_retry', ['PillowError'])
 
-
     def backwards(self, orm):
         
         # Deleting model 'PillowError'
         db.delete_table(u'pillow_retry_pillowerror')
-
 
     models = {
         u'pillow_retry.pillowerror': {

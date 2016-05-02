@@ -113,7 +113,6 @@ class Command(BaseCommand):
             print "\tError, user doesn't exist, aborting"
             sys.exit()
 
-
     def handle(self, *args, **options):
         print "Options:"
         print options

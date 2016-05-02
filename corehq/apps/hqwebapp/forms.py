@@ -53,7 +53,6 @@ class EmailAuthenticationForm(NoAutocompleteMixin, AuthenticationForm):
         return cleaned_data
 
 
-
 class CloudCareAuthenticationForm(EmailAuthenticationForm):
     username = forms.CharField(label=_("Username"), max_length=75,
                                widget=forms.TextInput(attrs={'class': 'form-control'}))

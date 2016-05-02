@@ -211,7 +211,6 @@ class FormPropertySection(Section):
     def xmlns(self):
         return self.section_def['xmlns']
 
-
     @property
     @memoized
     def rows(self):
@@ -292,7 +291,6 @@ class McSqlData(SqlData):
         )
         return sorted(filtered_users, key=lambda u: u.username)
 
-
     @property
     def group_by(self):
         return ['user_id']
@@ -352,7 +350,6 @@ class MCSectionedDataProvider(DataProvider):
 
     def __init__(self, sqldata):
         self.sqldata = sqldata
-
 
     def headers(self):
         return DataTablesHeader(DataTablesColumn(_('mc_header_indicator')),

@@ -330,13 +330,11 @@ class Excel2007ExportWriter(ExportWriter):
         self.tables = {}
         self.table_indices = {}
 
-
     def _init_table(self, table_index, table_title):
         sheet = self.book.create_sheet()
         sheet.title = table_title
         self.tables[table_index] = sheet
         self.table_indices[table_index] = 0
-
 
     def _write_row(self, sheet_index, row):
         sheet = self.tables[sheet_index]

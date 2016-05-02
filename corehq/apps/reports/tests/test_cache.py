@@ -133,7 +133,6 @@ class ReportCacheTest(TestCase):
         self.assertNotEqual(alt_v1, v1)
         self.assertNotEqual(alt_v2, v2)
 
-
         # invalid users shouldn't even be caching themselves
         for invalid in ['not a user object', None, BLANK]:
             alternate = MockReport(_make_request(path, self.domain, invalid))

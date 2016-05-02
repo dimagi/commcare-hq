@@ -370,7 +370,6 @@ class ChildMCHRegister(MCHBaseReport):
         )
         return headers
 
-
     @classmethod
     def get_cases(self, case_displays):
         for disp in case_displays:

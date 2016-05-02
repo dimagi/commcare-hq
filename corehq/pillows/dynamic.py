@@ -152,7 +152,6 @@ def set_properties(schema_class, dynamic=False, custom_types=default_special_typ
     return props_dict
 
 
-
 #A conservative mapping - don't detect datestring we don't know about
 #but try to always add to mapping additional properties of dicts we didn't expect (from DictProperties)
 DEFAULT_MAPPING_WRAPPER = {

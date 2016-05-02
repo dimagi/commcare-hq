@@ -114,7 +114,6 @@ class TestHOPECaseResource(TestCase):
         hope_case._HOPE_child_all_dpt3_opv3_hb3_doses_given
         hope_case._HOPE_child_measles_dose_given
 
-
     def test_derived_properties(self):
         """
         Smoke test that the HOPE properties do not crash on a pretty empty CommCareCase

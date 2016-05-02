@@ -349,7 +349,6 @@ class FormCustomExportHelper(CustomExportHelper):
                 for col in conf.get("column_configuration", []):
                     col["show"] = True
 
-
         table_conf[0]["column_configuration"] = column_conf
         return table_conf
 

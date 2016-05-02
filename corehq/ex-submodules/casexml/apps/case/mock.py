@@ -149,7 +149,6 @@ class CaseBlock(dict):
         else:
             self['update'].update(create_or_update)
 
-
         if close:
             self['close'] = {}
 

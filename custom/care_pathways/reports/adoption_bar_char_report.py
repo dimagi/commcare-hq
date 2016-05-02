@@ -99,7 +99,6 @@ class AdoptionBarChartReport(CareBaseReport):
     def data_provider(self):
         return AdoptionBarChartReportSqlData(domain=self.domain, config=self.report_config, request_params=self.request_params)
 
-
     @property
     def headers(self):
         columns = [c.data_tables_column for c in self.data_provider.columns]

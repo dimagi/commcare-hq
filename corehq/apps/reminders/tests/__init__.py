@@ -219,7 +219,6 @@ class ReminderIrregularScheduleTestCase(BaseReminderTestCase):
         self.user.delete()
         super(ReminderIrregularScheduleTestCase, self).tearDown()
 
-
     def test_ok(self):
         self.assertEqual(self.handler.get_reminder(self.case), None)
 
@@ -846,7 +845,6 @@ class StartConditionReminderTestCase(BaseReminderTestCase):
         self.user.delete()
         super(StartConditionReminderTestCase, self).tearDown()
 
-
     def test_ok(self):
         #
         # Test changing a start condition of "ok"
@@ -1067,7 +1065,6 @@ class ReminderLockTestCase(BaseReminderTestCase):
     def tearDown(self):
         self.user.delete()
         super(ReminderLockTestCase, self).tearDown()
-
 
     def test_ok(self):
         # Spawn the reminder with an "ok" start condition value

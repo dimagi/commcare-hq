@@ -67,7 +67,6 @@ class ChildConditionMixin(object):
         self.test_condition_met()
 
 
-
 class TestChildGrowthMonitored(ChildConditionMixin, TestCase):
     def setUp(self):
         self.xmlns = CFU2_XMLNS

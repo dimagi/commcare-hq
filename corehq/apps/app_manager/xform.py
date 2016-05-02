@@ -1765,7 +1765,6 @@ class XForm(WrappedNode):
         # a list of functions to be applied to the file as a whole after it has been pieced together
         additional_transformations = []
 
-
         if form.requires == 'none' and 'open_case' not in actions and actions:
             raise CaseError("To perform case actions you must either open a case or require a case to begin with")
 

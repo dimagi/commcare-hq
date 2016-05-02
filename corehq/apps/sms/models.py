@@ -95,7 +95,6 @@ class MessageLog(SafeSaveDocument, UnicodeMixIn):
     ignore_opt_out = BooleanProperty(default=False)
     location_id = StringProperty()
 
-
     def __unicode__(self):
         to_from = (self.direction == INCOMING) and "from" or "to"
         return "Message %s %s" % (to_from, self.phone_number)

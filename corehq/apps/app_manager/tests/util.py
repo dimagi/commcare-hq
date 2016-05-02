@@ -83,8 +83,6 @@ class SuiteMixin(TestFileMixin):
         self._assertHasAllStrings(app_xml, app_strings)
 
 
-
-
 def normalize_attributes(xml):
     """Sort XML attributes to make it easier to find differences"""
     for node in xml.iterfind(".//*"):

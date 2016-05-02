@@ -18,7 +18,6 @@ class FicheConsommationReport(IntraHealtMixin, DatespanMixin, GenericTabularRepo
 
     is_bootstrap3 = True
 
-
     @property
     def model(self):
         config = self.report_config

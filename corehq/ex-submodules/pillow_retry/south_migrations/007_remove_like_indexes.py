@@ -15,7 +15,6 @@ class Migration(SchemaMigration):
         # don't add it back
         pass
 
-
     models = {
         u'pillow_retry.pillowerror': {
             'Meta': {'unique_together': "(('doc_id', 'pillow'),)", 'object_name': 'PillowError'},

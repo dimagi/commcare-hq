@@ -297,7 +297,6 @@ class CaseRepeaterTest(BaseRepeaterTest, TestXmlMixin):
         self.repeater.save()
         black_list_user_id = 'black_listed_user'
 
-
         # case-creations by black-listed users shouldn't be forwarded
         black_listed_user_case = CaseBlock(
             case_id="b_case_id",

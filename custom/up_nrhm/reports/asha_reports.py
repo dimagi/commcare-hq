@@ -79,7 +79,6 @@ class ASHAReports(GenericTabularReport, NRHMDatespanMixin, CustomProjectReport, 
                 )
             return subtitles
 
-
     @property
     def report_config(self):
         config = {
@@ -107,7 +106,6 @@ class ASHAReports(GenericTabularReport, NRHMDatespanMixin, CustomProjectReport, 
             return ASHAFacilitatorsReport(self.request, domain=self.domain)
         else:
             return ASHAFunctionalityChecklistReport(self.request, domain=self.domain)
-
 
     @property
     def headers(self):

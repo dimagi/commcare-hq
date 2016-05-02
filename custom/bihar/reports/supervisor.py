@@ -237,7 +237,6 @@ class SubCenterSelectionReport(ConvenientBaseMixIn, GenericTabularReport,
                                                                       render_as=self.render_next),
                                        params))
 
-
         return [group.name, _link(group, get_awcc(group))] if self.is_supervisor else [_link(group, group.name)]
 
 

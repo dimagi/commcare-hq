@@ -130,7 +130,6 @@ class WorldVisionHierarchyFluff(fluff.IndicatorDocument):
     lvl_1 = user_data('state')
 
 
-
 class WorldVisionChildFluff(fluff.IndicatorDocument):
     def case_property(property):
         return flat_field(lambda case: case.get_case_property(property))

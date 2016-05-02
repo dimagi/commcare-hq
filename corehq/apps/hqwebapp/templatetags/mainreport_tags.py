@@ -96,7 +96,6 @@ def aggregate_section_totals(section_name, results_arr, daily):
                 endindex = results_arr.index(itemarr)
                 break
     
-    
     summation = []
     section_arr = []
     if endindex == -1:

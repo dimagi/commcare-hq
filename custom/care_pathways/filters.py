@@ -244,7 +244,6 @@ class DisaggregateByFilter(BaseSingleOptionFilter):
     def options(self):
         return [('group', 'Group Leadership'), ('sex', 'Sex of Members')]
 
-
     @property
     @memoized
     def selected(self):

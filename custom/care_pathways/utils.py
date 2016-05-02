@@ -147,7 +147,6 @@ class TableCardDataGroupsFormatter(DataFormatter):
         else:
             return 3
 
-
     def format(self, data, keys=None, group_by=None):
         range_groups = [
             ['A'],

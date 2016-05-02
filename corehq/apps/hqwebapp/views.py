@@ -160,7 +160,6 @@ def server_error(request, template_name='500.html'):
 
     domain = get_domain_from_url(request.path) or ''
 
-
     # hat tip: http://www.arthurkoziel.com/2009/01/15/passing-mediaurl-djangos-500-error-view/
     t = loader.get_template(template_name)
     type, exc, tb = sys.exc_info()
@@ -284,7 +283,6 @@ def server_up(req):
     Hit serverup.txt?celery (or heartbeat) to check a specific service
     View that just returns "success", which can be hooked into server monitoring tools like: pingdom
     '''
-
 
     checkers = {
         "heartbeat": {

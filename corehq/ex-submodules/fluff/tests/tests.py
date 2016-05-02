@@ -183,7 +183,6 @@ class FluffTest(TestCase):
             self.assertEqual(dict(date='2013-01-01', group_by=['abc', '123'], value=2), indicator["value_week"]["group_val"][0])
             self.assertEqual(dict(date='2013-01-01', group_by=['abc', '123'], value=1), indicator["value_week"]["group_no_val"][0])
 
-
     def test_calculator_calculate(self):
         calc = ValueCalculator(WEEK)
         calc.fluff = MockIndicators
@@ -459,7 +458,6 @@ class FluffTest(TestCase):
             for row in rows:
                 self.assertIn(row, expected)
 
-
     def test_save_to_sql_update(self):
         self.test_save_to_sql()
 
@@ -558,7 +556,6 @@ class FluffTest(TestCase):
             with self.engine.begin() as connection:
                 rows = connection.execute(sqlalchemy.select([cls._table]))
                 self.assertEqual(rows.rowcount, 6)
-
 
         doc['doc_type'] = 'MockArchive'
         for cls in [MockIndicatorsSql]:

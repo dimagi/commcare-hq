@@ -353,7 +353,6 @@ class ExpandedMobileWorkerFilter(BaseMultipleOptionFilter):
     def options(self):
         return [('t__0', _("[All mobile workers]"))]
 
-
     @classmethod
     def for_user(cls, user_id):
         return {

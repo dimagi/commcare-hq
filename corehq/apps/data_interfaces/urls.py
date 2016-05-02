@@ -11,7 +11,6 @@ from corehq.apps.data_interfaces.views import (CaseGroupListView,
 from .interfaces import FormManagementMode
 
 
-
 edit_data_urls = patterns(
     'corehq.apps.data_interfaces.views',
     url(r'^archive_forms/$', ArchiveFormView.as_view(), name=ArchiveFormView.urlname),

@@ -80,7 +80,6 @@ class PactPatientForm(Form):
                 if getattr(self.casedoc, name, '') != value:
                     ret[name] = value
 
-
         # hack, if any of the names, change remake the name and initials
         name_changed = False
         if 'first_name' in ret.keys():

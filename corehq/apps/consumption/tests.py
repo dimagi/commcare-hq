@@ -106,7 +106,6 @@ class GetLoadedDefaultConsumptionTestCase(DefaultConsumptionBase, ConsumptionTes
         consumption_dict = build_consumption_dict(domain)
         return get_loaded_default_consumption(consumption_dict, *args)
 
-
     def setUp(self):
         super(GetLoadedDefaultConsumptionTestCase, self).setUp()
         self.consumption_method = self.wrapped_consumption_function

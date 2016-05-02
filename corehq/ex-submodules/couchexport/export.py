@@ -158,7 +158,6 @@ def export_raw(headers, data, file, format=Format.XLS_2007,
     # transform docs onto output and save
     writer = get_writer(format)
 
-
     # format the headers the way the export likes them
     headers = FormattedRow.wrap_all_rows(headers)
     writer.open(headers, file, max_column_size=max_column_size)
@@ -183,7 +182,6 @@ def get_export_components(schema_index, previous_export_id=None, filter=None):
     # handle empty case
     if not config.potentially_relevant_ids:
         return None, None, None
-
 
     # get and checkpoint the latest schema
     updated_schema = config.get_latest_schema()

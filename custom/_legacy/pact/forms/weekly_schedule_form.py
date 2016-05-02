@@ -43,7 +43,6 @@ class ScheduleForm(forms.Form):
         for x in users:
             yield (x.raw_username, x.raw_username)
 
-
     def __init__(self, *args, **kwargs):
         super(ScheduleForm, self).__init__(*args, **kwargs)
 

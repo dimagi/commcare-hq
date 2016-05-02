@@ -361,7 +361,6 @@ class IndicatorDataProvider(object):
     def get_case_ids(self, indicator):
         return self.get_case_data(indicator).keys()
 
-
     @memoized
     def get_case_data(self, indicator):
         results = indicator.fluff_calculator.aggregate_results(
@@ -371,7 +370,6 @@ class IndicatorDataProvider(object):
         numerator = results['numerator']
         denominator = results[indicator.fluff_calculator.primary]
         return dict((id, {'num': id in numerator, 'denom': id in denominator}) for id in numerator | denominator)
-
 
     def get_chart(self, indicator):
         # this is a serious hack for now

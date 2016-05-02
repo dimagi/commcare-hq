@@ -339,7 +339,6 @@ class GroupResource(v0_4.GroupResource):
             bundle.data['error_message'] = ex.message
             return self.create_response(request, bundle, response_class=http.HttpBadRequest)
 
-
     def _update(self, bundle):
         should_save = False
         for key, value in bundle.data.items():

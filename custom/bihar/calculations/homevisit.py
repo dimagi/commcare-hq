@@ -43,7 +43,6 @@ class VisitCalculator(DoneDueCalculator):
     def filter(self, case):
         return self.case_filter(case)
 
-
     def _get_numerator_action_filter(self, form, date):
         """
         The filter used to determine relevant actions from the numerator.

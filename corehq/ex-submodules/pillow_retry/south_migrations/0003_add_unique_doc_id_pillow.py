@@ -12,12 +12,10 @@ class Migration(SchemaMigration):
         # Adding unique constraint on 'PillowError', fields ['doc_id', 'pillow']
         db.create_unique(u'pillow_retry_pillowerror', ['doc_id', 'pillow'])
 
-
     def backwards(self, orm):
         
         # Removing unique constraint on 'PillowError', fields ['doc_id', 'pillow']
         db.delete_unique(u'pillow_retry_pillowerror', ['doc_id', 'pillow'])
-
 
     models = {
         u'pillow_retry.pillowerror': {

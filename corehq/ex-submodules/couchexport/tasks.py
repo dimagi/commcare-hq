@@ -59,7 +59,6 @@ def rebuild_schemas(index):
 def bulk_export_async(bulk_export_helper, download_id,
                       filename="bulk_export", expiry=10*60*60, domain=None):
 
-
     if bulk_export_helper.zip_export:
         filename = "%s_%s"% (domain, filename) if domain else filename
         _, path = tempfile.mkstemp()

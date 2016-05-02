@@ -42,7 +42,6 @@ class TestHomeVisits(TestCase):
 
         self.assertIndicatorsEmpty(indicator)
 
-
     def testBPAllInFirstTri(self):
         indicator = CareBiharFluff()
 

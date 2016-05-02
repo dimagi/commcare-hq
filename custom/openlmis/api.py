@@ -239,7 +239,6 @@ class OpenLMISEndpoint(EndpointMixin):
                                 auth=self._auth())
         return Program.from_json(response.json())
 
-
     def get_requisition_details(self, id):
         response = requests.get(self.update_requisition_details_url(id), auth=self._auth())
 
@@ -247,7 +246,6 @@ class OpenLMISEndpoint(EndpointMixin):
             return RequisitionDetails.from_json(response.json())
         else:
             return None
-
 
     def create_virtual_facility(self, facility_data):
         response = requests.post(self.create_virtual_facility_url,
@@ -259,10 +257,8 @@ class OpenLMISEndpoint(EndpointMixin):
     def update_virtual_facility_url(self, id):
         return self._urlcombine(self.update_virtual_facility_base_url, '/{id}.json'.format(id=id))
 
-
     def update_requisition_details_url(self, id):
         return self._urlcombine(self.requisition_details_url, '/{id}.json'.format(id=id))
-
 
     def update_virtual_facility(self, id, facility_data):
         facility_data['agentCode'] = id
