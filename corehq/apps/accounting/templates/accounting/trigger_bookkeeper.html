@@ -8,8 +8,11 @@
 
 {% block js-inline %}{{ block.super }}
     <script type="text/javascript">
-        var emails = new EmailSelect2Handler('emails', "Please enter a valid email");
-        emails.init();
+        (function () {
+            var EmailSelect2Handler = hqImport('accounting/js/accounting.billing_info_handler.js').EmailSelect2Handler;
+            var emails = new EmailSelect2Handler('emails');
+            emails.init();
+        }());
     </script>
 {% endblock %}
 

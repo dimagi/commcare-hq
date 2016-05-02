@@ -1,7 +1,7 @@
 var SubscriptionInfoHandler = function () {
     'use strict';
     var self = this;
-
+    var AsyncSelect2Handler = hqImport('accounting/js/accounting.billing_info_handler.js').AsyncSelect2Handler;
     self.domain = new AsyncSelect2Handler('domain');
     self.account = new AsyncSelect2Handler('account');
     self.plan_version = new AsyncSelect2Handler('plan_version');
