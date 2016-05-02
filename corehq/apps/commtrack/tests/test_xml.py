@@ -14,7 +14,7 @@ from corehq.apps.commtrack.models import ConsumptionConfig, StockRestoreConfig, 
 from corehq.apps.domain.models import Domain
 from corehq.apps.consumption.shortcuts import set_default_monthly_consumption_for_domain
 from corehq.apps.hqcase.utils import submit_case_blocks
-from corehq.form_processor.interfaces.dbaccessors import LedgerAccessors, FormAccessors
+from corehq.form_processor.interfaces.dbaccessors import LedgerAccessors, FormAccessors, CaseAccessors
 from corehq.form_processor.models import LedgerTransaction
 from corehq.form_processor.tests.utils import run_with_all_backends
 from corehq.form_processor.utils.general import should_use_sql_backend
@@ -447,12 +447,20 @@ class CommTrackBalanceTransferTest(CommTrackSubmissionTest):
 
 class BugSubmissionsTest(CommTrackSubmissionTest):
 
+    @run_with_all_backends
+    @override_settings(ALLOW_FORM_PROCESSING_QUERIES=True)
     def test_device_report_submissions_ignored(self):
         """
         submit a device report with a stock block and make sure it doesn't
         get processed
         """
-        self.assertEqual(0, StockTransaction.objects.count())
+        def _assert_no_stock_transactions():
+            if should_use_sql_backend(self.domain.name):
+                self.assertEqual(0, LedgerTransaction.objects.count())
+            else:
+                self.assertEqual(0, StockTransaction.objects.count())
+
+        _assert_no_stock_transactions()
 
         fpath = os.path.join(os.path.dirname(__file__), 'data', 'xml', 'device_log.xml')
         with open(fpath) as f:
@@ -470,8 +478,10 @@ class BugSubmissionsTest(CommTrackSubmissionTest):
             instance=form,
             domain=self.domain.name,
         )
-        self.assertEqual(0, StockTransaction.objects.count())
 
+        _assert_no_stock_transactions()
+
+    @run_with_all_backends
     def test_xform_id_added_to_case_xform_list(self):
         initial_amounts = [(p._id, float(100)) for p in self.products]
         submissions = [balance_submission([amount]) for amount in initial_amounts]
@@ -480,9 +490,10 @@ class BugSubmissionsTest(CommTrackSubmissionTest):
             timestamp=datetime.utcnow() + timedelta(-30)
         )
 
-        case = CommCareCase.get(self.sp.case_id)
+        case = CaseAccessors(self.domain.name).get_case(self.sp.case_id)
         self.assertIn(instance_id, case.xform_ids)
 
+    @run_with_all_backends
     def test_xform_id_added_to_case_xform_list_only_once(self):
         initial_amounts = [(p._id, float(100)) for p in self.products]
         submissions = [balance_submission([amount]) for amount in initial_amounts]
@@ -497,11 +508,12 @@ class BugSubmissionsTest(CommTrackSubmissionTest):
             timestamp=datetime.utcnow() + timedelta(-30)
         )
 
-        case = CommCareCase.get(self.sp.case_id)
+        case = CaseAccessors(self.domain.name).get_case(self.sp.case_id)
         self.assertIn(instance_id, case.xform_ids)
         # make sure the ID only got added once
         self.assertEqual(len(case.xform_ids), len(set(case.xform_ids)))
 
+    @run_with_all_backends
     def test_archived_form_gets_removed_from_case_xform_ids(self):
         initial_amounts = [(p._id, float(100)) for p in self.products]
         instance_id = self.submit_xml_form(
@@ -509,13 +521,14 @@ class BugSubmissionsTest(CommTrackSubmissionTest):
             timestamp=datetime.utcnow() + timedelta(-30)
         )
 
-        case = CommCareCase.get(self.sp.case_id)
+        case_accessors = CaseAccessors(self.domain.name)
+        case = case_accessors.get_case(self.sp.case_id)
         self.assertIn(instance_id, case.xform_ids)
 
-        form = XFormInstance.get(instance_id)
+        form = FormAccessors(self.domain.name).get_form(instance_id)
         form.archive()
 
-        case = CommCareCase.get(self.sp.case_id)
+        case = case_accessors.get_case(self.sp.case_id)
         self.assertNotIn(instance_id, case.xform_ids)
 
 
