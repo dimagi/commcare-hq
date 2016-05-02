@@ -562,6 +562,7 @@ class CommTrackSyncTest(CommTrackSubmissionTest):
         )
         self.sync_log_id = synclog_id_from_restore_payload(restore_config.get_payload().as_string())
 
+    @run_with_all_backends
     def testStockSyncToken(self):
         # first restore should not have the updated case
         check_user_has_case(self, self.casexml_user, self.sp_block, should_have=False,
