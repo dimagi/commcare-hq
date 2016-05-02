@@ -1,7 +1,7 @@
 import HTMLParser
 import json
 import socket
-from datetime import timedelta, date
+from datetime import timedelta, date, datetime
 from collections import defaultdict, namedtuple
 from StringIO import StringIO
 
@@ -66,6 +66,7 @@ from corehq.apps.ota.views import get_restore_response, get_restore_params
 from corehq.apps.reports.graph_models import Axis, LineChart
 from corehq.apps.users.models import CommCareUser, WebUser
 from corehq.apps.users.util import format_username
+from corehq.blobs import get_blob_db
 from corehq.sql_db.connections import Session
 from corehq.elastic import parse_args_for_es, run_query, ES_META
 from dimagi.utils.couch.database import get_db, is_bigcouch
@@ -267,6 +268,21 @@ def system_ajax(request):
             ret = sorted(ret, key=lambda x: x['succeeded'], reverse=True)
             return HttpResponse(json.dumps(ret), content_type='application/json')
     return HttpResponse('{}', content_type='application/json')
+
+
+@require_superuser_or_developer
+def test_blobdb(request):
+    """Save something to the blobdb and try reading it back."""
+    db = get_blob_db()
+    bucket = "test_blobdb_{}".format(datetime.now().toordinal())
+    contents = "It takes Pluto 248 Earth years to complete one orbit!"
+    info = db.put(StringIO(contents), bucket)
+    with db.get(info.identifier) as fh:
+        res = fh.read()
+    db.delete(info.identifier, bucket)
+    if res == contents:
+        return HttpResponse("Successfully saved a file to the blobdb")
+    return HttpResponse("Did not successfully save a file to the blobdb")
 
 
 class SystemInfoView(BaseAdminSectionView):
