@@ -49,7 +49,8 @@ class FilesystemBlobDB(AbstractBlobDB):
             raise NotFound(identifier, bucket)
         return open(path, "rb")
 
-    def delete(self, identifier=None, bucket=DEFAULT_BUCKET):
+    def delete(self, *args, **kw):
+        identifier, bucket = self.get_args_for_delete(*args, **kw)
         if identifier is None:
             path = safejoin(self.rootdir, bucket)
             remove = shutil.rmtree

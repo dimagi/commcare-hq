@@ -54,7 +54,8 @@ class S3BlobDB(AbstractBlobDB):
             resp = self._s3_bucket().Object(path).get()
         return ClosingContextProxy(resp["Body"])  # body stream
 
-    def delete(self, identifier=None, bucket=DEFAULT_BUCKET):
+    def delete(self, *args, **kw):
+        identifier, bucket = self.get_args_for_delete(*args, **kw)
         path = self.get_path(identifier, bucket)
         s3_bucket = self._s3_bucket()
         with maybe_not_found():
