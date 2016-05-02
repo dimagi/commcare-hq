@@ -8,8 +8,11 @@
 
 {% block js-inline %}{{ block.super }}
     <script type="text/javascript">
-        var domain_handler = new AsyncSelect2Handler('domain');
-        domain_handler.init();
+        (function () {
+            var AsyncSelect2Handler = hqImport('accounting/js/accounting.billing_info_handler.js').AsyncSelect2Handler;
+            var domain_handler = new AsyncSelect2Handler('domain');
+            domain_handler.init();
+        }());
     </script>
 {% endblock %}
 
