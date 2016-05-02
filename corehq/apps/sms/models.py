@@ -735,6 +735,9 @@ class PhoneBlacklist(models.Model):
     # True to allow this phone number to opt back in, False if not
     can_opt_in = models.BooleanField(null=False, default=True)
 
+    last_sms_opt_in_timestamp = models.DateTimeField(null=True)
+    last_sms_opt_out_timestamp = models.DateTimeField(null=True)
+
     class Meta:
         app_label = 'sms'
 
@@ -779,6 +782,7 @@ class PhoneBlacklist(models.Model):
             phone_obj = cls.get_by_phone_number(phone_number)
             if phone_obj.can_opt_in:
                 phone_obj.send_sms = True
+                phone_obj.last_sms_opt_in_timestamp = datetime.utcnow()
                 phone_obj.save()
                 return True
         except cls.DoesNotExist:
@@ -794,6 +798,7 @@ class PhoneBlacklist(models.Model):
         phone_obj = cls.get_or_create(phone_number)[0]
         if phone_obj:
             phone_obj.send_sms = False
+            phone_obj.last_sms_opt_out_timestamp = datetime.utcnow()
             phone_obj.save()
             return True
         return False
