@@ -67,7 +67,7 @@ from corehq.apps.accounting.utils import (
     has_subscription_already_ended,
     log_accounting_error)
 from corehq.apps.hqwebapp.views import BaseSectionPageView, CRUDPaginatedViewMixin
-from corehq import privileges, toggles
+from corehq import privileges
 from django_prbac.decorators import requires_privilege_raise404
 from django_prbac.models import Role, Grant
 
