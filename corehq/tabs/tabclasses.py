@@ -63,20 +63,22 @@ class ProjectReportsTab(UITab):
              'show_in_dropdown': True}
         ])]
 
-        if has_report_builder_access(self._request):
-            create_report_url = reverse("report_builder_select_type", args=[self.domain])
-        else:
-            from corehq.apps.userreports.views import paywall_home
-            create_report_url = paywall_home(self.domain)
+        user_reports = []
+        if self.couch_user.can_edit_data():
+            if has_report_builder_access(self._request):
+                create_report_url = reverse("report_builder_select_type", args=[self.domain])
+            else:
+                from corehq.apps.userreports.views import paywall_home
+                create_report_url = paywall_home(self.domain)
 
-        user_reports = [(
-            _("Create Reports"),
-            [{
-                "title": _('Create new report'),
-                "url": create_report_url,
-                "icon": "icon-plus fa fa-plus"
-            }]
-        )]
+            user_reports = [(
+                _("Create Reports"),
+                [{
+                    "title": _('Create new report'),
+                    "url": create_report_url,
+                    "icon": "icon-plus fa fa-plus"
+                }]
+            )]
 
         project_reports = ProjectReportDispatcher.navigation_sections(
             request=self._request, domain=self.domain)
