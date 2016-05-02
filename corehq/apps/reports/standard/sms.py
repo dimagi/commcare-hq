@@ -27,7 +27,6 @@ from datetime import datetime
 from django.conf import settings
 from corehq.apps.hqwebapp.doc_info import (get_doc_info, get_doc_info_by_id,
     get_object_info, DomainMismatchException)
-from corehq.apps.sms.mixin import VerifiedNumber
 from corehq.apps.sms.models import (
     WORKFLOW_REMINDER,
     WORKFLOW_KEYWORD,
