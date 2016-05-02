@@ -269,7 +269,8 @@ class NewSubscriptionView(AccountingSectionView, AsyncHandlerMixin):
             try:
                 subscription = self.subscription_form.create_subscription()
                 return HttpResponseRedirect(
-                   reverse(ManageBillingAccountView.urlname, args=(subscription.account.id,)))
+                    reverse(ManageBillingAccountView.urlname, args=(subscription.account.id,))
+                )
             except NewSubscriptionError as e:
                 errors = ErrorList()
                 errors.extend([e.message])
@@ -384,7 +385,10 @@ class EditSubscriptionView(AccountingSectionView, AsyncHandlerMixin):
             'credit_list': CreditLine.objects.filter(subscription=self.subscription),
             'disable_cancel': has_subscription_already_ended(self.subscription),
             'form': self.subscription_form,
-            "subscription_has_ended": not self.subscription.is_active and self.subscription.date_start <= date.today(),
+            "subscription_has_ended": (
+                not self.subscription.is_active
+                and self.subscription.date_start <= date.today()
+            ),
             'subscription': self.subscription,
             'subscription_canceled':
                 self.subscription_canceled if hasattr(self, 'subscription_canceled') else False,
@@ -700,7 +704,6 @@ def pricing_table_json(request, product, locale):
     with localize(locale):
         table = PricingTable.get_table_by_product(product)
         table_json = json.dumps(table, cls=LazyEncoder)
-
 
     # This is necessary for responding to requests from Internet Explorer.
     # IE you can FOAD.

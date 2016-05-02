@@ -134,8 +134,7 @@ class Select2RateAsyncHandler(BaseSelect2AsyncHandler):
 
     def _fmt_success(self, response):
         return json.dumps({
-            'results': [
-            {
+            'results': [{
                 'id': r[0],
                 'name': r[1],
                 'rate_type': r[2],

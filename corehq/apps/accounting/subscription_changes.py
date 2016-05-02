@@ -265,6 +265,7 @@ class DomainUpgradeActionHandler(BaseModifySubscriptionActionHandler):
                 pass
         return True
 
+
 # TODO - cache
 def _active_reminder_methods(domain):
     reminder_rules = get_active_reminders_by_domain_name(domain.name)
@@ -361,9 +362,10 @@ class DomainDowngradeStatusHandler(BaseModifySubscriptionHandler):
         Custom logos will be removed on downgrade.
         """
         if domain.has_custom_logo:
-            return _fmt_alert(_("You are using custom branding. "
-                                     "Selecting this plan will remove this "
-                                     "feature."))
+            return _fmt_alert(_(
+                "You are using custom branding. "
+                "Selecting this plan will remove this feature."
+            ))
 
     @staticmethod
     def response_outbound_sms(domain):

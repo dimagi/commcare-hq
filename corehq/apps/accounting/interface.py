@@ -801,8 +801,7 @@ class InvoiceInterface(InvoiceInterfaceBase):
             SalesforceAccountIDFilter.get_value(self.request, self.domain)
         if salesforce_account_id is not None:
             queryset = queryset.filter(
-                subscription__account__salesforce_account_id=
-                salesforce_account_id,
+                subscription__account__salesforce_account_id=salesforce_account_id,
             )
 
         salesforce_contract_id = \
