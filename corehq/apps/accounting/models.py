@@ -2486,7 +2486,8 @@ class InvoicePdf(SafeSaveDocument):
         self.is_wire = invoice.is_wire
         self.save()
 
-    def get_filename(self, invoice):
+    @staticmethod
+    def get_filename(invoice):
         return "statement_%(year)d_%(month)d.pdf" % {
             'year': invoice.date_start.year,
             'month': invoice.date_start.month,
