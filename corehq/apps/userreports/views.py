@@ -204,6 +204,14 @@ class ReportBuilderPaywallBase(BaseDomainView):
         return paywall_home(self.domain)
 
     @property
+    def page_context(self):
+        context = super(ReportBuilderPaywallBase, self).page_context
+        context.update({
+            'support_email': settings.SUPPORT_EMAIL
+        })
+        return context
+
+    @property
     @memoized
     def plan_name(self):
         plan_version, _ = Subscription.get_subscribed_plan_by_domain(self.domain)
@@ -232,7 +240,7 @@ class ReportBuilderPaywallActivatingTrial(ReportBuilderPaywallBase):
                 self.plan_name
             ),
             settings.DEFAULT_FROM_EMAIL,
-            ["updates" + "@" + "dimagi.com"],
+            [settings.REPORT_BUILDER_ADD_ON_EMAIL],
         )
         return self.get(request, domain, *args, **kwargs)
 
@@ -273,7 +281,7 @@ class ReportBuilderPaywallActivatingSubscription(ReportBuilderPaywallBase):
                 self.plan_name
             ),
             settings.DEFAULT_FROM_EMAIL,
-            ["updates" + "@" + "dimagi.com"],
+            [settings.REPORT_BUILDER_ADD_ON_EMAIL],
         )
         return self.get(request, domain, *args, **kwargs)
 
