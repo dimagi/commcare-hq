@@ -208,7 +208,7 @@ class CommTrackSubmissionTest(CommTrackTest):
         )
         return instance_id
 
-    def check_stock_models(self, case, product_id, expected_soh, expected_qty, section_id):
+    def check_product_stock(self, case, product_id, expected_soh, expected_qty, section_id='stock'):
         if not isinstance(expected_qty, Decimal):
             expected_qty = Decimal(str(expected_qty))
         if not isinstance(expected_soh, Decimal):
@@ -219,9 +219,6 @@ class CommTrackSubmissionTest(CommTrackTest):
         self.assertEqual(section_id, latest_trans.section_id)
         self.assertEqual(expected_soh, latest_trans.stock_on_hand)
         self.assertEqual(expected_qty, latest_trans.quantity)
-
-    def check_product_stock(self, supply_point, product_id, expected_soh, expected_qty, section_id='stock'):
-        self.check_stock_models(supply_point, product_id, expected_soh, expected_qty, section_id)
 
 
 class CommTrackBalanceTransferTest(CommTrackSubmissionTest):
