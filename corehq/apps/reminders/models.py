@@ -1261,7 +1261,7 @@ class CaseReminderHandler(Document):
 
             if looks_like_timestamp(start_date):
                 try:
-                    return StartDateInfo(parse(start_date), True, False)
+                    return StartDateInfo(parse(start_date).replace(tzinfo=None), True, False)
                 except Exception:
                     pass
 
