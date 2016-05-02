@@ -49,8 +49,8 @@ FormplayerFrontend.module("AppSelect.MenuList", function (MenuList, FormplayerFr
             var menuListView = new MenuList.DetailListView({
                 collection: detailCollection,
             });
-            $('#my-modal-body').html(menuListView.render().el);
-            $('#myModal').modal('toggle');
+            $('#case-detail-modal').find('.modal-body').html(menuListView.render().el);
+            $('#case-detail-modal').modal('toggle');
         },
     };
 });

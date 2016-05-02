@@ -7,7 +7,7 @@ FormplayerFrontend.module("Entities", function (Entities, FormplayerFrontend, Ba
 
     Entities.configureStorage("FormplayerFrontend.Entities.AppSelect");
 
-        Entities.AppSelectCollection = Backbone.Collection.extend({
+    Entities.AppSelectCollection = Backbone.Collection.extend({
         url: "appSelects",
         model: Entities.AppSelect,
     });
