@@ -38,7 +38,7 @@ FormplayerFrontend.reqres.setHandler('startForm', function (data) {
         data.onLoading = tfLoading;
         data.xform_url="/webforms/player_proxy";
         var sess = new WebFormSession(data);
-        sess.load($('#webforms'), FormplayerFrontend.request('currentUser').language);
+        sess.loadDirect(data, $('#webforms'), FormplayerFrontend.request('currentUser').language);
     };
     loadSession();
 });
