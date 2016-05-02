@@ -1214,6 +1214,7 @@ class LedgerValue(DisabledDbMixin, models.Model, TrackRelatedChanges):
     section_id = models.CharField(max_length=100, db_index=True, default=None)
     balance = models.IntegerField(default=0)  # todo: confirm we aren't ever intending to support decimals
     last_modified = models.DateTimeField(auto_now=True)
+    daily_consumption = models.DecimalField(max_digits=20, decimal_places=5, null=True)
 
     @property
     def last_modified_date(self):

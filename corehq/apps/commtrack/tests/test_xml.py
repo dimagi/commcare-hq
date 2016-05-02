@@ -98,6 +98,7 @@ class CommTrackOTATest(CommTrackTest):
                 balance_blocks[i],
             )
 
+    @run_with_all_backends
     def test_ota_consumption(self):
         self.ct_settings.consumption_config = ConsumptionConfig(
             min_transactions=0,
@@ -139,6 +140,7 @@ class CommTrackOTATest(CommTrackTest):
             consumption_block,
         )
 
+    @run_with_all_backends
     def test_force_consumption(self):
         self.ct_settings.consumption_config = ConsumptionConfig(
             min_transactions=0,
