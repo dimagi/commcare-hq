@@ -247,6 +247,7 @@ class Message(object):
         self.params = {}
         for key, value in params.items():
             self.params[key] = MessageVariable(value)
+
     def __unicode__(self):
         return self.template.format(**self.params)
 

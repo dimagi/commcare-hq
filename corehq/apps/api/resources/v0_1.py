@@ -80,6 +80,7 @@ class LoginAndDomainAuthentication(Authentication):
 
     def _auth_test(self, request, wrappers, **kwargs):
         PASSED_AUTH = 'is_authenticated'
+
         def dummy(request, domain, **kwargs):
             return PASSED_AUTH
 

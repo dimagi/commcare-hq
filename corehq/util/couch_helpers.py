@@ -48,6 +48,7 @@ class CouchAttachmentsBuilder(object):
     and how/whether they call .save() on the object.)
 
     """
+
     def __init__(self, original=None):
         self._dict = original or {}
 

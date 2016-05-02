@@ -178,6 +178,7 @@ class StockStateConsumptionTest(StockStateTest):
         expected_result = Decimal(3)
 
         commtrack_settings = self.domain.commtrack_settings
+
         def _update_consumption_config(min_transactions, min_window, optimal_window):
             commtrack_settings.consumption_config.min_transactions = min_transactions
             commtrack_settings.consumption_config.min_window = min_window

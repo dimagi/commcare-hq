@@ -58,6 +58,7 @@ class CorsResourceMixin(object):
     """
     Mixin implementing CORS
     """
+
     def create_response(self, *args, **kwargs):
         response = super(CorsResourceMixin, self).create_response(*args, **kwargs)
         response['Access-Control-Allow-Origin'] = '*'
@@ -91,6 +92,7 @@ class HqBaseResource(CorsResourceMixin, JsonResourceMixin, Resource):
     """
     Convenience class to allow easy adjustment of API resource base classes.
     """
+
     def dispatch(self, request_type, request, **kwargs):
         if request.user.is_superuser or domain_has_privilege(request.domain, privileges.API_ACCESS):
             return super(HqBaseResource, self).dispatch(request_type, request, **kwargs)

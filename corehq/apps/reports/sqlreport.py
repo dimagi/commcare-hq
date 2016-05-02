@@ -111,6 +111,7 @@ class AggregateColumn(Column):
     """
     Allows combining the values from multiple columns into a single value.
     """
+
     def __init__(self, header, aggregate_fn, columns, format_fn=None, slug=None, **kwargs):
         """
         Args:
@@ -376,6 +377,7 @@ class DictDataFormat(BaseDataFormat):
     """
     Formats the report data as a dictionary
     """
+
     def format_row(self, row):
         return dict([(c.slug, self._or_no_value(c.get_value(row))) for c in self.columns])
 

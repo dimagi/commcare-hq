@@ -247,6 +247,7 @@ class UserRole(QuickCachedDocumentMixin, Document):
             if role.permissions == permissions:
                 return role
         # otherwise create it
+
         def get_name():
             if name:
                 return name
@@ -349,6 +350,7 @@ PERMISSIONS_PRESETS = {
 class AdminUserRole(UserRole):
     def __init__(self, domain):
         super(AdminUserRole, self).__init__(domain=domain, name='Admin', permissions=Permissions.max())
+
     def get_qualified_id(self):
         return 'admin'
 
@@ -469,6 +471,7 @@ class _AuthorizableMixin(IsMemberOfMixin):
     """
         Use either SingleMembershipMixin or MultiMembershipMixin instead of this
     """
+
     def get_domain_membership(self, domain):
         domain_membership = None
         try:
@@ -668,6 +671,7 @@ class LowercaseStringProperty(StringProperty):
     """
     Make sure that the string is always lowercase'd
     """
+
     def __init__(self, validators=None, *args, **kwargs):
         if validators is None:
             validators = ()
@@ -931,6 +935,7 @@ class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, UnicodeMixIn, EulaMi
             return [{'number': phone, 'status': 'unverified', 'contact': None} for phone in self.phone_numbers]
 
         verified = self.get_verified_numbers(True)
+
         def extend_phone(phone):
             extended_info = {}
             contact = verified.get(phone)
@@ -2092,6 +2097,7 @@ class FakeUser(WebUser):
     """
     Prevent actually saving user types that don't exist in the database
     """
+
     def save(self, **kwargs):
         raise NotImplementedError("You aren't allowed to do that!")
 

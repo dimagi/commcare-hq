@@ -61,6 +61,7 @@ class GroupMemoizer(object):
     If you use this to get a group, do not set group.name directly;
     use group_memoizer.rename_group(group, name) instead.
     """
+
     def __init__(self, domain):
         self.groups_by_name = {}
         self.groups_by_id = {}
@@ -321,6 +322,7 @@ def create_or_update_users_and_groups(domain, user_specs, group_specs, location_
     custom_data_validator = UserFieldsView.get_validator(domain)
     ret = {"errors": [], "rows": []}
     total = len(user_specs) + len(group_specs) + len(location_specs)
+
     def _set_progress(progress):
         if task is not None:
             DownloadBase.set_progress(task, progress, total)
@@ -635,6 +637,7 @@ def parse_groups(groups):
 
 def dump_users_and_groups(response, domain):
     from corehq.apps.users.views.mobile.custom_data_fields import UserFieldsView
+
     def _load_memoizer(domain):
         group_memoizer = GroupMemoizer(domain=domain)
         # load groups manually instead of calling group_memoizer.load_all()

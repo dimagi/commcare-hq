@@ -367,6 +367,7 @@ class ScheduleFormXPath(object):
     """
     XPath queries for scheduled forms
     """
+
     def __init__(self, form, phase, module):
         self.form = form
         self.phase = phase
@@ -683,6 +684,7 @@ class QualifiedScheduleFormXPath(ScheduleFormXPath):
 
     Instead of raw case properties, this fetches the properties from the casedb
     """
+
     def __init__(self, form, phase, module, case_xpath):
         super(QualifiedScheduleFormXPath, self).__init__(form, phase, module)
         self.case_xpath = case_xpath

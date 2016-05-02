@@ -416,6 +416,7 @@ class NoCountingPaginator(Paginator):
         * http://django-tastypie.readthedocs.org/en/latest/paginator.html
         * http://wiki.postgresql.org/wiki/Slow_Counting
     """
+
     def get_previous(self, limit, offset):
         if offset - limit < 0:
             return None

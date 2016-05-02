@@ -198,6 +198,7 @@ class StockStatusDataSource(ReportDataSource, CommtrackDataSourceMixin):
         @memoized
         def product_name(product_id):
             return Product.get(product_id).name
+
         @memoized
         def supply_point_location(case_id):
             return SupplyPointCase.get(case_id).location_id

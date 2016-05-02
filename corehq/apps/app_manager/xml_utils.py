@@ -14,10 +14,12 @@ class XMLObject(object):
     __metaclass__ = XMLObjectType
     collapsable = True
     name = u""
+
     def __init__(self, name, **options):
         self.options = options
         self.name = name
         self.children = []
+
     def __getitem__(self, items):
         if isinstance(items, basestring) or isinstance(items, XMLObject):
             items = (items,)
@@ -27,17 +29,21 @@ class XMLObject(object):
             else:
                 self.children.append(item)
         return self
+
     def structure(self):
         return self
+
     def render(self, depth=0):
         struct = self.structure()
         return struct.render(depth)
+
     def __unicode__(self):
         return self.render(None)
 
 
 class XMLTag(XMLObject):
     name = ""
+
     def render(self, depth=0):
         children = []
         next_depth = depth + 1 if self.name else depth

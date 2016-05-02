@@ -431,6 +431,7 @@ class StackFrameMeta(object):
     """
     Class used in computing the form workflow.
     """
+
     def __init__(self, if_prefix, if_clause, children=None, allow_empty_frame=False):
         if if_prefix:
             template = '({{}}) and ({})'.format(if_clause) if if_clause else '{}'

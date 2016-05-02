@@ -118,6 +118,7 @@ class SerializableFunction(object):
                 'function': self.to_path(f),
                 'kwargs': kwargs
             })
+
         def handler(obj):
             try:
                 json_handler(obj)

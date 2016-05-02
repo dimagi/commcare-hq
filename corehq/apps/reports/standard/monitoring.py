@@ -189,6 +189,7 @@ class CaseActivityReport(WorkerMonitoringCaseReportTableBase):
                      "user is part of a case sharing group.")
 
     _default_landmarks = [30, 60, 90]
+
     @property
     @memoized
     def landmarks(self):
@@ -199,6 +200,7 @@ class CaseActivityReport(WorkerMonitoringCaseReportTableBase):
         return [datetime.timedelta(days=l) for l in landmarks]
 
     _default_milestone = 120
+
     @property
     @memoized
     def milestone(self):

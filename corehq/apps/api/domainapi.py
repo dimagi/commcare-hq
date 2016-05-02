@@ -33,10 +33,13 @@ class DomainAPI(View):
         raise NotImplementedError("This API's name is not implemented")
 
     http_method_names = ['get', 'post', 'head', ]
+
     def get(self, *args, **kwargs):
         raise NotImplementedError("Not implemented")
+
     def post(self,  *args, **kwargs):
         raise NotImplementedError("Not implemented")
+
     def head(self, *args, **kwargs):
         raise NotImplementedError("Not implemented")
 

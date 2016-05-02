@@ -820,6 +820,7 @@ def user_upload_job_poll(request, domain, download_id, template="users/mobile/pa
         'on_complete_long': _('Mobile Worker upload has finished'),
 
     })
+
     class _BulkUploadResponseWrapper(object):
         def __init__(self, context):
             results = context.get('result', defaultdict(lambda: []))

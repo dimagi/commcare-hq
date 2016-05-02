@@ -101,6 +101,7 @@ def _fail_gracefully_and_tell_admins():
     class FakeReindexer(object):
         """Used so that the ptop_preindex command completes successfully
         """
+
         def reindex(self):
             pass
 

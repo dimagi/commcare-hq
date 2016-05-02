@@ -46,6 +46,7 @@ class AppFilter(ExportFilter):
     """
     Filter on app_id
     """
+
     def __init__(self, app_id):
         self.app_id = app_id
 
@@ -66,6 +67,7 @@ class OwnerFilter(ExportFilter):
     """
     Filter on owner_id
     """
+
     def __init__(self, owner_id):
         self.owner_id = owner_id
 
@@ -86,6 +88,7 @@ class IsClosedFilter(ExportFilter):
     """
     Filter on case closed property
     """
+
     def __init__(self, is_closed):
         self.is_closed = is_closed
 

@@ -86,6 +86,7 @@ class LanguageField(forms.CharField):
     """
     Adds language code validation to a field
     """
+
     def __init__(self, *args, **kwargs):
         super(LanguageField, self).__init__(*args, **kwargs)
         self.min_length = 2

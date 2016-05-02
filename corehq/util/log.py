@@ -64,6 +64,7 @@ class HqAdminEmailHandler(AdminEmailHandler):
         }
     )
     """
+
     def get_context(self, record):
         try:
             request = record.request
@@ -224,6 +225,7 @@ class SlowRequestFilter(Filter):
     Expects that LogRecords passed in will have a .duration property that is a timedelta.
     Intended to be used primarily with the couchdbkit request_logger
     """
+
     def __init__(self, name='', duration=5):
         self.duration_cutoff = timedelta(seconds=duration)
         super(SlowRequestFilter, self).__init__(name)

@@ -508,6 +508,7 @@ def get_ledgers(request, domain):
     except CaseNotFound:
         raise Http404()
     ledger_map = get_current_ledger_transactions(case.case_id)
+
     def custom_json_handler(obj):
         if isinstance(obj, StockTransaction):
             return obj.stock_on_hand

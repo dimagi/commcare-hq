@@ -74,6 +74,7 @@ def _require_api_user(permission=None):
         from django.views.decorators.http import require_POST
         if settings.DEBUG:
             return fn
+
         @require_POST
         @wraps(fn)
         def _outer(request, *args, **kwargs):

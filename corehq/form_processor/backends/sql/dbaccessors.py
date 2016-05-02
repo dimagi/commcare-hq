@@ -808,6 +808,7 @@ class RawQuerySetWrapper(object):
     Wrapper for RawQuerySet objects to make them behave more like
     normal QuerySet objects
     """
+
     def __init__(self, queryset):
         self.queryset = queryset
         self._result_cache = None

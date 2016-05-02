@@ -121,6 +121,7 @@ class JadJar(object):
     @property
     def jad(self):
         return self._jad
+
     @property
     def jar(self):
         return self._jar

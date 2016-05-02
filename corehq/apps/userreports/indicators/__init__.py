@@ -76,6 +76,7 @@ class RawIndicator(SingleColumnIndicator):
     """
     Pass whatever's in the column through to the database
     """
+
     def __init__(self, display_name, column, getter):
         super(RawIndicator, self).__init__(display_name, column)
         self.getter = getter
@@ -88,6 +89,7 @@ class CompoundIndicator(ConfigurableIndicator):
     """
     An indicator that wraps other indicators.
     """
+
     def __init__(self, display_name, indicators):
         super(CompoundIndicator, self).__init__(display_name)
         self.indicators = indicators

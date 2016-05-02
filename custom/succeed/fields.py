@@ -90,6 +90,7 @@ class PatientNameFilterMixin(object):
             }
         }
         es_filters = q["query"]["filtered"]["filter"]
+
         def _filter_gen(key, flist):
             return {"terms": {
                 key: [item.lower() for item in flist if item]

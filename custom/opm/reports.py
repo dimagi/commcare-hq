@@ -772,6 +772,7 @@ class NewHealthStatusReport(CaseReportMixin, BaseReport):
     @property
     def rows(self):
         totals = [[None, None] for i in range(len(self.model.method_map))]
+
         def add_to_totals(col, val, denom):
             for i, num in enumerate([val, denom]):
                 if isinstance(num, int):

@@ -225,6 +225,7 @@ class IndexedSchema(DocumentSchema):
     and need to know their own position within that list.
 
     """
+
     def with_id(self, i, parent):
         self._i = i
         self._parent = parent
@@ -976,6 +977,7 @@ class FormBase(DocumentSchema):
         except XFormException as e:
             # punt on invalid xml (sorry, no rich attachments)
             valid_paths = {}
+
         def format_key(key, path):
             if valid_paths.get(path) == "upload":
                 return u"{}{}".format(ATTACHMENT_PREFIX, key)
@@ -1655,6 +1657,7 @@ class DetailColumn(IndexedSchema):
             'month': 30.4375,
             'year': 365.25
         }
+
         @classmethod
         def get_from_old_format(cls, format):
             if format == 'years-ago':
@@ -5238,6 +5241,7 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
                 form.update_app_case_meta(meta)
 
         seen_types = []
+
         def get_children(case_type):
             seen_types.append(case_type)
             return [type_.name for type_ in meta.case_types if type_.relationships.get('parent') == case_type]

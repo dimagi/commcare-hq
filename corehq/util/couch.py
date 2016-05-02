@@ -147,6 +147,7 @@ class IterDB(object):
 
     `new_edits` param will be passed directly to db.bulk_save
     """
+
     def __init__(self, database, chunksize=100, throttle_secs=None,
                  new_edits=None):
         self.db = database

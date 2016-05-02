@@ -603,6 +603,7 @@ def send_confirmation(v, data):
     location_name = static_loc.name
     metadata = MessageMetadata(location_id=static_loc.get_id)
     tx_by_action = map_reduce(lambda tx: [(tx.action_config(C).name,)], data=data['transactions'], include_docs=True)
+
     def summarize_action(action, txs):
         return '%s %s' % (txs[0].action_config(C).keyword.upper(), ' '.join(sorted(tx.fragment() for tx in txs)))
 

@@ -33,6 +33,7 @@ class BiharCase(CommCareCase):
 
     _forms = None
     _forms_cache = None
+
     def get_forms(self):
         if self._forms is None:
             self._forms = super(BiharCase, self).get_forms()

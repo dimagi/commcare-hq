@@ -24,6 +24,7 @@ class IndicatorNav(GroupReferenceMixIn, BiharNavReport):
     report_template_path = "bihar/team_listing_tabular.html"
     
     extra_context_providers = [shared_bihar_context, summary_context, team_member_context]
+
     @property
     def reports(self):
         return [IndicatorClientSelectNav, IndicatorSummaryReport]
@@ -231,6 +232,7 @@ class IndicatorClientList(ClientListBase, IndicatorMixIn):
     def rows(self):
         results = self.verbose_results[self.indicator.fluff_calculator.primary]
         numerators = self.verbose_results['numerator']
+
         def _reconcile(numerators, denominators):
             def _is_match(num, denom):
                 return num['id'] == denom['id'] and num['key'][-1] == denom['key'][-1]

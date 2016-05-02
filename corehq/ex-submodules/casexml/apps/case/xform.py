@@ -33,6 +33,7 @@ class CaseProcessingResult(object):
     """
     Lightweight class used to collect results of case processing
     """
+
     def __init__(self, domain, cases, dirtiness_flags, extensions_to_close=None):
         self.domain = domain
         self.cases = cases
@@ -282,8 +283,10 @@ def get_extensions_to_close(case, domain):
 def is_device_report(doc):
     """exclude device reports"""
     device_report_xmlns = "http://code.javarosa.org/devicereport"
+
     def _from_form_dict(doc):
         return isinstance(doc, dict) and "@xmlns" in doc and doc["@xmlns"] == device_report_xmlns
+
     def _from_xform_instance(doc):
         return getattr(doc, 'xmlns', None) == device_report_xmlns
 

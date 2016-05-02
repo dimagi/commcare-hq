@@ -30,6 +30,7 @@ class IntervalNode( object ):
         self.right = None
         self.linenum = linenum
         self.other = other
+
     def insert( self, start, end, linenum=0, other=None ):
         root = self
         if start > self.start:

@@ -144,6 +144,7 @@ class Section(object):
     """
     A way to represent sections in a report. I wonder if we should genericize/pull this out.
     """
+
     def __init__(self, report, section_def, format_class):
         self.report = report
         self.section_def = section_def
@@ -170,6 +171,7 @@ class SqlSection(Section, SqlData):
     """
     A sql-based implementation of sections
     """
+
     def __getattribute__(self, item):
         if item in ['table_name', 'group_by', 'filters', 'filter_values', 'keys']:
             return getattr(self.report, item)
@@ -497,6 +499,7 @@ def hf_message_content(report):
     if report.needs_filters:
         return {}
     data_by_user = dict((d['user_id'], d) for d in report.data_provider.sqldata.get_data())
+
     def _user_section(user):
         user_data = data_by_user.get(user._id, None)
         return {

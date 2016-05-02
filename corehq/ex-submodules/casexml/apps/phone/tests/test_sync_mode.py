@@ -1805,6 +1805,7 @@ class SteadyStateExtensionSyncTest(SyncBaseTest):
     """
     Test that doing multiple clean syncs with extensions does what we think it will
     """
+
     def setUp(self):
         super(SteadyStateExtensionSyncTest, self).setUp()
         self.other_user = User(user_id=OTHER_USER_ID, username=OTHER_USERNAME,

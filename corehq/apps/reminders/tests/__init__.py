@@ -40,6 +40,7 @@ class ReminderTestCase(BaseReminderTestCase):
     """
     This is the original use case and tests a fixed reminder schedule.
     """
+
     def setUp(self):
         super(ReminderTestCase, self).setUp()
         self.domain = "test"
@@ -161,6 +162,7 @@ class ReminderIrregularScheduleTestCase(BaseReminderTestCase):
     Week2: Day4: 11:00 Message 2
     Week2: Day4: 11:30 Message 3
     """
+
     def setUp(self):
         super(ReminderIrregularScheduleTestCase, self).setUp()
         self.domain = "test"
@@ -319,6 +321,7 @@ class ReminderCallbackTestCase(BaseReminderTestCase):
 
     This case also tests handling of time zones using the timezone of Africa/Nairobi (UTC+3).
     """
+
     def setUp(self):
         super(ReminderCallbackTestCase, self).setUp()
         self.domain = "test"

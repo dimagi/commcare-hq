@@ -32,6 +32,7 @@ class TieredCache(object):
     TieredCache.set doesn't accept a timeout parameter
 
     """
+
     def __init__(self, caches):
         self.caches = caches
 
@@ -162,6 +163,7 @@ class SkippableQuickCache(QuickCache):
     """
     QuickCache extension that allows skipping the cache base on a function argument.
     """
+
     def __init__(self, fn, vary_on, cache, skip_arg=None):
         super(SkippableQuickCache, self).__init__(fn, vary_on, cache)
 

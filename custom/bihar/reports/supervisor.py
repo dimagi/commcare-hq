@@ -51,6 +51,7 @@ class ConvenientBaseMixIn(object):
 
     # for the lazy
     _headers = []  # override
+
     @property
     def headers(self):
         headers = self._headers[self.mode] if isinstance(self._headers, dict) else self._headers

@@ -543,6 +543,7 @@ class XForm(WrappedNode):
     This is not a comprehensive API for xforms editing and parsing.
 
     """
+
     def __init__(self, *args, **kwargs):
         super(XForm, self).__init__(*args, **kwargs)
         if self.exists():
@@ -1726,6 +1727,7 @@ class XForm(WrappedNode):
                 case_block.add_update_block(basic_updates)
         if updates_by_case:
             self.add_casedb()
+
             def make_nested_subnode(base_node, path):
                 """
                 path='x/y/z' will append <x><y><z/></y></x> to base_node
@@ -1825,6 +1827,7 @@ class XForm(WrappedNode):
                         "nodeset":"case/create/external_id",
                         "calculate": self.resolve_path("case/case_id"),
                         })
+
                 def require_case_name_source():
                     "make sure that the question that provides the case_name is required"
                     name_path = actions['open_case'].name_path
@@ -1956,6 +1959,7 @@ class XForm(WrappedNode):
                         "{jr}preloadParams": property
                     })
             casexml_text = casexml.render()
+
         def transformation():
             for trans in additional_transformations:
                 trans()

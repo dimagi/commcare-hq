@@ -195,6 +195,7 @@ def get_export_components(schema_index, previous_export_id=None, filter=None):
 class Constant(UnicodeMixIn):
     def __init__(self, message):
         self.message = message
+
     def __unicode__(self):
         return self.message
 
@@ -354,6 +355,7 @@ class FormattedRow(object):
 
     The id should be an iterable (compound ids are supported).
     """
+
     def __init__(self, data, id=None, separator=".", id_index=0,
                  is_header_row=False):
         self.data = data

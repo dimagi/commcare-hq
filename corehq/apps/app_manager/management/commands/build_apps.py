@@ -46,6 +46,7 @@ class Command(BaseCommand):
                 [app-slug].json
                 ...
     """
+
     def handle(self, *args, **options):
         path, build_slug = args
 

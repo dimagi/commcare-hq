@@ -148,6 +148,7 @@ class ExportSchema(Document, UnicodeMixIn):
         )
 
     _tables = None
+
     @property
     def tables(self):
         if self._tables is None:
@@ -242,6 +243,7 @@ class ComplexExportColumn(ExportColumn):
     A single column config that can represent multiple actual columns
     in the excel sheet.
     """
+
     def get_headers(self):
         """
         Return a list of headers that this column contributes to
@@ -527,6 +529,7 @@ class DefaultExportSchema(BaseSavedExportSchema):
         export_tag = self.index
 
         CACHE_TIME = 1 * 60 * 60 # cache for 1 hour, in seconds
+
         def _build_cache_key(tag, prev_export_id, format, max_column_size):
             def _human_readable_key(tag, prev_export_id, format, max_column_size):
                 return "couchexport_:%s:%s:%s:%s" % (tag, prev_export_id, format, max_column_size)

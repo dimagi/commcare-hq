@@ -50,6 +50,7 @@ class IntegerPropertyReference(object):
     Accepts an optional transform lambda/method that would modify the
     resulting integer before returning it.
     """
+
     def __init__(self, property_path, transform=None):
         self.property_path = property_path
         self.transform = transform

@@ -210,6 +210,7 @@ def _report_user_dict(user):
         first = user.get('first_name', '')
         last = user.get('last_name', '')
         full_name = (u"%s %s" % (first, last)).strip()
+
         def parts():
             yield u'%s' % html.escape(raw_username)
             if full_name:

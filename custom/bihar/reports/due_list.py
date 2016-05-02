@@ -101,6 +101,7 @@ class DueListNav(GroupReferenceMixIn, BiharNavReport):
     report_template_path = "bihar/team_listing_tabular.html"
 
     extra_context_providers = [shared_bihar_context, summary_context, team_member_context]
+
     @property
     def reports(self):
         return [VaccinationSummaryToday, VaccinationSummaryTomorrow,
@@ -295,6 +296,7 @@ def get_due_list_records(target_date, owner_id=None, task_types=None, case_es=No
 class VaccinationSummaryToday(VaccinationSummary):
     name = ugettext_noop("Care Due Today")
     slug = "vacstoday"
+
     def get_date(self):
         return datetime.today()
 
@@ -302,6 +304,7 @@ class VaccinationSummaryToday(VaccinationSummary):
 class VaccinationSummaryTomorrow(VaccinationSummary):
     name = ugettext_noop("Care Due Tomorrow")
     slug = "vacstomorrow"
+
     def get_date(self):
         return datetime.today() + timedelta(days=1)
 
@@ -309,6 +312,7 @@ class VaccinationSummaryTomorrow(VaccinationSummary):
 class VaccinationSummaryTomorrow(VaccinationSummary):
     name = ugettext_noop("Care Due Tomorrow")
     slug = "vacstomorrow"
+
     def get_date(self):
         return datetime.today() + timedelta(days=1)
 
@@ -316,6 +320,7 @@ class VaccinationSummaryTomorrow(VaccinationSummary):
 class VaccinationSummary2Days(VaccinationSummary):
     name = ugettext_noop("Care Due In 2 Days")
     slug = "vacs2days"
+
     def get_date(self):
         return datetime.today() + timedelta(days=2)
 
@@ -323,6 +328,7 @@ class VaccinationSummary2Days(VaccinationSummary):
 class VaccinationSummary3Days(VaccinationSummary):
     name = ugettext_noop("Care Due In 3 Days")
     slug = "vacs3days"
+
     def get_date(self):
         return datetime.today() + timedelta(days=3)
 

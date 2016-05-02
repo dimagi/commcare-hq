@@ -37,6 +37,7 @@ class UseIfRequested(object):
     the API output if <fieldname>__full=true is passed
     on the querystring
     '''
+
     def __init__(self, underlying_field):
         self.underlying_field = underlying_field
 

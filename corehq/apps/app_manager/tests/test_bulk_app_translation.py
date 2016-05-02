@@ -202,6 +202,7 @@ class BulkAppTranslationBasicTest(BulkAppTranslationTestBase):
           ('vetoed_markdown-label', '*i just happen to like stars*', '*i just happen to like stars*', '', '', '', '', '', ''),
         ))
      )
+
     def test_set_up(self):
         self._shared_test_initial_set_up()
 

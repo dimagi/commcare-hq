@@ -32,6 +32,7 @@ class TimeStampProperty(DateTimeProperty):
     modes. Useful if you want to do comparisons with normal DateTimeProperties
     but still want to store the extra precision for potential future need.
     """
+
     def __init__(self, precise_reads=False, **kwargs):
         self.precise_reads = precise_reads
         super(TimeStampProperty, self).__init__(**kwargs)

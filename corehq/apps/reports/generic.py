@@ -189,6 +189,7 @@ class GenericReportView(object):
 
 
     _caching = False
+
     def __setstate__(self, state):
         """
             For unpickling a pickled report.
@@ -855,6 +856,7 @@ class GenericTabularReport(GenericReportView):
         return self.get_url(domain=self.domain, render_as='json')
 
     _pagination = None
+
     @property
     def pagination(self):
         if self._pagination is None:
@@ -924,6 +926,7 @@ class GenericTabularReport(GenericReportView):
         return None
 
     _export_sheet_name = None
+
     @property
     def export_sheet_name(self):
         if self._export_sheet_name is None:

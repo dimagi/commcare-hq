@@ -27,6 +27,7 @@ def load_locs_json(domain, selected_loc_id=None, include_archived=False,
                           if True get only administrative locations
     """
     from .permissions import user_can_edit_location, user_can_view_location
+
     def loc_to_json(loc, project):
         ret = {
             'name': loc.name,

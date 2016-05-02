@@ -39,6 +39,7 @@ class PactCHWDashboard(GenericTabularReport, ProjectReportParametersMixin, Custo
     @property
     def rows(self):
         rows = []
+
         def form_count(user_id):
             key = make_form_couch_key(self.domain, user_id=user_id)
             result = XFormInstance.view('all_forms/view',
