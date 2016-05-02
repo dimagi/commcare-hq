@@ -25,6 +25,7 @@ def flat_field(fn):
 
 
 class Base0(fluff.Calculator):
+
     @fluff.filter_by
     def base_0_filter(self):
         pass
@@ -35,6 +36,7 @@ class Base0(fluff.Calculator):
 
 
 class Base1(Base0):
+
     @fluff.filter_by
     def base_1_filter(self):
         pass
@@ -45,6 +47,7 @@ class Base1(Base0):
 
 
 class Base2(Base0):
+
     @fluff.filter_by
     def base_2_filter(self):
         pass
@@ -55,6 +58,7 @@ class Base2(Base0):
 
 
 class Base3(Base1, Base2):
+
     @fluff.filter_by
     def base_3_filter(self):
         pass
@@ -74,6 +78,7 @@ class Indicators2(fluff.IndicatorDocument):
 
 
 class FluffTest(TestCase):
+
     @classmethod
     def setUpClass(cls):
         # hack - force disconnecting the signals because ctable doesn't play nice with mocks
@@ -584,6 +589,7 @@ class MockDocArchive(Document):
 
 
 class ValueCalculator(fluff.Calculator):
+
     @fluff.date_emitter
     def date_value(self, case):
         for action in case.actions:

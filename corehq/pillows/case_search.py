@@ -56,6 +56,7 @@ def _get_case_properties(doc_dict):
 
 
 class CaseSearchPillowProcessor(ElasticProcessor):
+
     def process_change(self, pillow_instance, change, do_set_checkpoint):
         assert isinstance(change, Change)
         if change.metadata is not None:

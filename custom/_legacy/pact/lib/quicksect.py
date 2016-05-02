@@ -15,6 +15,7 @@ import random
 
 
 class IntervalNode( object ):
+
     def __init__( self, start, end, linenum=0, other=None ):
         # Python lacks the binomial distribution, so we convert a
         # uniform into a binomial because it naturally scales with

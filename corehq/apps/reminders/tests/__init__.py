@@ -19,6 +19,7 @@ from corehq.apps.reminders.tests.test_recipient import *
 
 
 class BaseReminderTestCase(BaseAccountingTest, DomainSubscriptionMixin):
+
     def setUp(self):
         super(BaseReminderTestCase, self).setUp()
         self.domain_obj = Domain(name="test")
@@ -594,6 +595,7 @@ class ReminderCallbackTestCase(BaseReminderTestCase):
 
 
 class CaseTypeReminderTestCase(BaseReminderTestCase):
+
     def setUp(self):
         super(CaseTypeReminderTestCase, self).setUp()
         self.domain = "test"
@@ -803,6 +805,7 @@ class CaseTypeReminderTestCase(BaseReminderTestCase):
 
 
 class StartConditionReminderTestCase(BaseReminderTestCase):
+
     def setUp(self):
         super(StartConditionReminderTestCase, self).setUp()
         self.domain = "test"
@@ -1024,6 +1027,7 @@ class StartConditionReminderTestCase(BaseReminderTestCase):
 
 
 class ReminderLockTestCase(BaseReminderTestCase):
+
     def setUp(self):
         super(ReminderLockTestCase, self).setUp()
         self.domain = "test"
@@ -1153,6 +1157,7 @@ class MessageTestCase(BaseReminderTestCase):
 
 
 class ReminderDefinitionCalculationsTestCase(TestCase):
+
     def test_calculate_start_date_without_today_option(self):
         now = datetime.utcnow()
 

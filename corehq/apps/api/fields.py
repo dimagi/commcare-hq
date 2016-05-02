@@ -18,6 +18,7 @@ def get_referenced_class(class_or_str):
 
 
 class AttributeOrCallable(object):
+
     def __init__(self, attribute):
         self.attribute = attribute
 

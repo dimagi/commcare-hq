@@ -472,6 +472,7 @@ class MCHMotherDisplay(MCHDisplay):
 
 
 class MCHChildDisplay(MCHDisplay):
+
     def __init__(self, report, case_dict):
 
         # get mother case

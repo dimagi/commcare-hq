@@ -396,6 +396,7 @@ class GroupResource(v0_4.GroupResource):
 
 
 class DomainAuthorization(ReadOnlyAuthorization):
+
     def __init__(self, domain_key='domain', *args, **kwargs):
         self.domain_key = domain_key
 
@@ -436,6 +437,7 @@ class NoCountingPaginator(Paginator):
 
 
 class DeviceReportResource(HqBaseResource, ModelResource):
+
     class Meta:
         queryset = DeviceReportEntry.objects.all()
         list_allowed_methods = ['get']

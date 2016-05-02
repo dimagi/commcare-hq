@@ -261,6 +261,7 @@ class SMSLog(MessageLog):
 
 
 class Log(models.Model):
+
     class Meta:
         abstract = True
         app_label = "sms"
@@ -446,6 +447,7 @@ class SMSBase(UUIDGeneratorMixin, Log):
 
 
 class SMS(SMSBase):
+
     def to_json(self):
         from corehq.apps.sms.serializers import SMSSerializer
         data = SMSSerializer(self).data
@@ -457,6 +459,7 @@ class SMS(SMSBase):
 
 
 class QueuedSMS(SMSBase):
+
     class Meta:
         db_table = 'sms_queued'
 
@@ -513,6 +516,7 @@ class LastReadMessage(Document, CouchDocLockableMixIn):
 
 
 class SQLLastReadMessage(UUIDGeneratorMixin, models.Model):
+
     class Meta:
         db_table = 'sms_lastreadmessage'
         app_label = 'sms'
@@ -660,6 +664,7 @@ class ExpectedCallbackEventLog(EventLog):
 
 
 class ExpectedCallback(UUIDGeneratorMixin, models.Model):
+
     class Meta:
         app_label = 'sms'
         index_together = [
@@ -1608,6 +1613,7 @@ class SelfRegistrationInvitation(models.Model):
 
 
 class ActiveMobileBackendManager(models.Manager):
+
     def get_queryset(self):
         return super(ActiveMobileBackendManager, self).get_queryset().filter(deleted=False)
 
@@ -2104,6 +2110,7 @@ class SQLMobileBackend(UUIDGeneratorMixin, models.Model):
 
 
 class SQLSMSBackend(SQLMobileBackend):
+
     class Meta:
         proxy = True
         app_label = 'sms'
@@ -2178,6 +2185,7 @@ class PhoneLoadBalancingMixin(object):
 
 
 class BackendMap(object):
+
     def __init__(self, catchall_backend_id, backend_map):
         """
         catchall_backend_id - the pk of the backend that is the default if
@@ -2302,6 +2310,7 @@ class SQLMobileBackendMapping(models.Model):
 
 
 class MobileBackendInvitation(models.Model):
+
     class Meta:
         db_table = 'messaging_mobilebackendinvitation'
         app_label = 'sms'

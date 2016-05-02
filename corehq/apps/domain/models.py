@@ -93,6 +93,7 @@ def cached_property(method):
 
 
 class UpdatableSchema():
+
     def update(self, new_dict):
         for kw in new_dict:
             self[kw] = new_dict[kw]

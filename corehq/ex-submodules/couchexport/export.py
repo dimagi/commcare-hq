@@ -191,6 +191,7 @@ def get_export_components(schema_index, previous_export_id=None, filter=None):
 
 
 class Constant(UnicodeMixIn):
+
     def __init__(self, message):
         self.message = message
 

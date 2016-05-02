@@ -180,6 +180,7 @@ class LocationChoiceProvider(ChainableChoiceProvider):
 
 
 class UserChoiceProvider(ChainableChoiceProvider):
+
     def query(self, query_context):
         user_es = get_search_users_in_domain_es_query(
             self.domain, query_context.query,
@@ -201,6 +202,7 @@ class UserChoiceProvider(ChainableChoiceProvider):
 
 
 class GroupChoiceProvider(ChainableChoiceProvider):
+
     def query(self, query_context):
         group_es = (
             GroupES().domain(self.domain).is_case_sharing()

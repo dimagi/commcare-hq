@@ -176,6 +176,7 @@ class HqAdminEmailHandler(AdminEmailHandler):
 
 
 class NotifyExceptionEmailer(HqAdminEmailHandler):
+
     def get_context(self, record):
         context = super(NotifyExceptionEmailer, self).get_context(record)
         context['subject'] = record.getMessage()

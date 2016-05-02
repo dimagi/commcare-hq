@@ -13,6 +13,7 @@ SESSION_USER_KEY_PREFIX = "session_user_doc_%s"
 
 
 class UsersMiddleware(object):
+
     def __init__(self):        
         # Normally we'd expect this class to be pulled out of the middleware list, too,
         # but in case someone forgets, this will stop this class from being used.

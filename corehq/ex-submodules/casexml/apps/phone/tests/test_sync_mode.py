@@ -1025,6 +1025,7 @@ class ExtensionCasesSyncTokenUpdates(SyncBaseTest):
 
 
 class ExtensionCasesFirstSync(SyncBaseTest):
+
     def setUp(self):
         super(ExtensionCasesFirstSync, self).setUp()
         self.restore_config = RestoreConfig(project=self.project, user=self.user)

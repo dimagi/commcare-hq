@@ -27,6 +27,7 @@ class LedgerFormat(object):
 
 class CaseActionIntent(namedtuple('CaseActionIntent',
                                   ['case_id', 'form_id', 'is_deprecation', 'action_type', 'form'])):
+
     def get_couch_action(self):
         assert self.action_type == CASE_ACTION_COMMTRACK
         return CommCareCaseAction.from_parsed_action(

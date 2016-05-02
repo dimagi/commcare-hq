@@ -19,6 +19,7 @@ from dimagi.utils.parsing import ISO_DATE_FORMAT
 
 
 class ILSPieChart(PieChart):
+
     def __init__(self, title, key, values, color=None):
         super(ILSPieChart, self).__init__(title, key, values, color)
         self.data = values

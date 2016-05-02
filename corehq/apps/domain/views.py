@@ -204,6 +204,7 @@ class DomainViewMixin(object):
 
 
 class LoginAndDomainMixin(object):
+
     @method_decorator(login_and_domain_required)
     def dispatch(self, *args, **kwargs):
         return super(LoginAndDomainMixin, self).dispatch(*args, **kwargs)
@@ -1609,6 +1610,7 @@ class ConfirmBillingAccountInfoView(ConfirmSelectedPlanView, AsyncHandlerMixin):
 
 
 class SubscriptionMixin(object):
+
     @property
     @memoized
     def subscription(self):

@@ -126,6 +126,7 @@ def _fmt_phone(phone_number):
 
 
 class BulkCacheBase(object):
+
     def __init__(self, domain):
         self.domain = domain
         self.cache = {}
@@ -157,6 +158,7 @@ class SiteCodeToSupplyPointCache(BulkCacheBase):
 
 
 class SiteCodeToLocationCache(BulkCacheBase):
+
     def __init__(self, domain):
         self.non_admin_types = [
             loc_type.name for loc_type in Domain.get_by_name(domain).location_types
@@ -172,6 +174,7 @@ class SiteCodeToLocationCache(BulkCacheBase):
 
 
 class LocationIdToSiteCodeCache(BulkCacheBase):
+
     def lookup(self, location_id):
         return SQLLocation.objects.get(
             domain=self.domain,  # this is only for safety
@@ -180,6 +183,7 @@ class LocationIdToSiteCodeCache(BulkCacheBase):
 
 
 class UserLocMapping(object):
+
     def __init__(self, username, domain, location_cache):
         self.username = username
         self.domain = domain
@@ -508,6 +512,7 @@ def create_or_update_users_and_groups(domain, user_specs, group_specs, location_
 
 
 class GroupNameError(Exception):
+
     def __init__(self, blank_groups):
         self.blank_groups = blank_groups
 

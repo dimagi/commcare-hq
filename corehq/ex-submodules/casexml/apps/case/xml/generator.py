@@ -129,6 +129,7 @@ class V1CaseXMLGenerator(CaseXMLGeneratorBase):
 
 
 class V2CaseXMLGenerator(CaseXMLGeneratorBase):
+
     def get_root_element(self):
         root = safe_element("case")
         root.attrib = {
@@ -192,6 +193,7 @@ GENERATOR_MAP = {
 
 
 class CaseDBXMLGenerator(V2CaseXMLGenerator):
+
     def __init__(self, case):
         self.case = case
 

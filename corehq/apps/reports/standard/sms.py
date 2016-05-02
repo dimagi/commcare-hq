@@ -455,6 +455,7 @@ class MessageLogReport(BaseCommConnectLogReport):
 
 
 class BaseMessagingEventReport(BaseCommConnectLogReport):
+
     @property
     def export_table(self):
         # Ignore the BaseCommConnectLogReport export

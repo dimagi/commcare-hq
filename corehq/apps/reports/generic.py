@@ -1076,6 +1076,7 @@ class SummaryTablularReport(GenericTabularReport):
 
 
 class ProjectInspectionReportParamsMixin(object):
+
     @property
     def shared_pagination_GET_params(self):
         # This was moved from ProjectInspectionReport so that it could be included in CaseReassignmentInterface too
@@ -1139,6 +1140,7 @@ class ElasticTabularReport(GenericTabularReport, PaginatedReportMixin):
 
 
 class GetParamsMixin(object):
+
     @property
     def shared_pagination_GET_params(self):
         """

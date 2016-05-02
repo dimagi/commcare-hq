@@ -35,6 +35,7 @@ from urllib import urlencode
 
 
 class AllBackendTest(BaseSMSTest):
+
     def setUp(self):
         super(AllBackendTest, self).setUp()
 
@@ -756,6 +757,7 @@ class OutgoingFrameworkTestCase(BaseSMSTest):
 
 
 class SQLMobileBackendTestCase(TestCase):
+
     def assertBackendsEqual(self, backend1, backend2):
         self.assertEqual(backend1.pk, backend2.pk)
         self.assertEqual(backend1.__class__, backend2.__class__)
@@ -1099,6 +1101,7 @@ class SQLMobileBackendTestCase(TestCase):
 
 
 class LoadBalanceBackend(SQLTestSMSBackend, PhoneLoadBalancingMixin):
+
     class Meta:
         proxy = True
 
@@ -1108,6 +1111,7 @@ class LoadBalanceBackend(SQLTestSMSBackend, PhoneLoadBalancingMixin):
 
 
 class RateLimitBackend(SQLTestSMSBackend):
+
     class Meta:
         proxy = True
 
@@ -1120,6 +1124,7 @@ class RateLimitBackend(SQLTestSMSBackend):
 
 
 class LoadBalanceAndRateLimitBackend(SQLTestSMSBackend, PhoneLoadBalancingMixin):
+
     class Meta:
         proxy = True
 
@@ -1141,6 +1146,7 @@ def mock_get_backend_classes():
 
 @patch('corehq.apps.sms.util.get_backend_classes', new=mock_get_backend_classes)
 class LoadBalancingAndRateLimitingTestCase(BaseSMSTest):
+
     def setUp(self):
         super(LoadBalancingAndRateLimitingTestCase, self).setUp()
         self.domain = 'load-balance-rate-limit'
@@ -1262,6 +1268,7 @@ class LoadBalancingAndRateLimitingTestCase(BaseSMSTest):
 
 
 class SQLMobileBackendMappingTestCase(TestCase):
+
     def test_backend_map(self):
         backend_map = BackendMap(
             1, {

@@ -348,6 +348,7 @@ PERMISSIONS_PRESETS = {
 
 
 class AdminUserRole(UserRole):
+
     def __init__(self, domain):
         super(AdminUserRole, self).__init__(domain=domain, name='Admin', permissions=Permissions.max())
 
@@ -2264,6 +2265,7 @@ class DomainRemovalRecord(DeleteRecord):
 
 
 class UserCache(object):
+
     def __init__(self):
         self.cache = {}
 

@@ -33,6 +33,7 @@ def sql_loc(name, location_type, parent=None):
 
 
 class TestLocationSync(TestCase):
+
     @classmethod
     def setUpClass(cls):
         cls.domain_obj = create_domain(DOMAIN)

@@ -697,6 +697,7 @@ class ReportNotification(CachedCouchDocumentMixin, Document):
             # create a new ReportConfig object, useful for its methods and
             # calculated properties, but don't save it
             class ReadonlyReportConfig(ReportConfig):
+
                 def save(self, *args, **kwargs):
                     pass
 

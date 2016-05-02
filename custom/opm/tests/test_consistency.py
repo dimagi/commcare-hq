@@ -3,6 +3,7 @@ from .case_reports import *
 
 
 class TestConsistency(OPMCaseReportTestBase):
+
     def assertConsistent(self, row):
         self.assertEqual(row.total_cash, row.cash_amt)
         if not row.all_conditions_met:

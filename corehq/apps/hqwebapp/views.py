@@ -1158,6 +1158,7 @@ def deactivate_alert(request):
 
 
 class DataTablesAJAXPaginationMixin(object):
+
     @property
     def echo(self):
         return self.request.GET.get('sEcho')

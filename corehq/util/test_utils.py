@@ -185,6 +185,7 @@ class RunConfig(object):
 
 
 class RunWithMultipleConfigs(object):
+
     def __init__(self, fn, run_configs):
         self.fn = fn
         self.run_configs = run_configs

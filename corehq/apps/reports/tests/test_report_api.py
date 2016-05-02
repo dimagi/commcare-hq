@@ -63,6 +63,7 @@ class UserDataSource(SqlData):
 
 
 class ReportAPITest(unittest.TestCase):
+
     @classmethod
     def setUpClass(cls):
         load_data()

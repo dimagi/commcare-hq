@@ -6,6 +6,7 @@ from django.test import SimpleTestCase
 
 
 class ModelTests(SimpleTestCase):
+
     def test_types_by_date_range(self):
         by_type = ByTypeIndicator(types=[
             TypedIndicator(active=True, date_ranges=[WEEK0, WEEK1], type='dog'),

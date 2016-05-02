@@ -15,6 +15,7 @@ DOMAIN = "test"
 
 
 class BaseReportTest(unittest.TestCase):
+
     @classmethod
     def setUpClass(cls):
         load_data()
@@ -60,6 +61,7 @@ class BaseReportTest(unittest.TestCase):
 
 
 class SimpleReportTest(BaseReportTest):
+
     def test_no_group_no_filter(self):
         html_data, sort_data = self._get_report_data(test_report(UserTestReport), "2013-01-01", "2013-02-01")
         self.assertEqual(len(sort_data), 1)

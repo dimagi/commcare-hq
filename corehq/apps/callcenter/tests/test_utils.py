@@ -23,6 +23,7 @@ CASE_TYPE = 'cc_flw'
 
 
 class CallCenterUtilsTests(TestCase):
+
     @classmethod
     def setUpClass(cls):
         cls.domain = create_domain(TEST_DOMAIN)
@@ -266,6 +267,7 @@ class CallCenterUtilsUserCaseTests(TestCase):
 
 
 class DomainTimezoneTests(SimpleTestCase):
+
     def _test_midnights(self, utcnow, test_cases):
         for tz, offset, expected in test_cases:
             dom = DomainLite('', tz, '', True)

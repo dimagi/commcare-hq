@@ -6,6 +6,7 @@
 
 
 class XMLObjectType(type):
+
     def __getitem__(cls, item):
         return cls()[item]
 

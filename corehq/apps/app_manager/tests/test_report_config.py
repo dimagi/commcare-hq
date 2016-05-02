@@ -77,6 +77,7 @@ class ReportFiltersSuiteTest(SimpleTestCase, TestXmlMixin):
     @staticmethod
     def make_report_config(domain, report_id):
         class MockChoiceProvider(ChoiceProvider):
+
             def query(self, query_context):
                 pass
 

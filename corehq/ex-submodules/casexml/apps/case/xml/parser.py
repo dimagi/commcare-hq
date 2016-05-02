@@ -137,6 +137,7 @@ class CaseCloseAction(CaseActionBase):
 
 
 class AbstractAction(object):
+
     def __init__(self, action_type_slug):
         self.action_type_slug = action_type_slug
 

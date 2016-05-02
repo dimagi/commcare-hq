@@ -655,6 +655,7 @@ class TestFormESAccessors(BaseESAccessorsTest):
 
 @override_settings(TESTS_SHOULD_USE_SQL_BACKEND=True)
 class TestFormESAccessorsSQL(TestFormESAccessors):
+
     def get_pillow(self):
         XFormPillow()  # initialize index
         return get_sql_xform_to_elasticsearch_pillow()
@@ -937,6 +938,7 @@ class TestCaseESAccessors(BaseESAccessorsTest):
 
 @override_settings(TESTS_SHOULD_USE_SQL_BACKEND=True)
 class TestCaseESAccessorsSQL(TestCaseESAccessors):
+
     def get_pillow(self):
         CasePillow()  # initialize index
         return get_sql_case_to_elasticsearch_pillow()

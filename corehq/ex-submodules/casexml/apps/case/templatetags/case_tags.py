@@ -25,6 +25,7 @@ DYNAMIC_CASE_PROPERTIES_COLUMNS = 4
 
 
 class CaseDisplayWrapper(object):
+
     def __init__(self, case):
         self.case = case
 
@@ -136,6 +137,7 @@ class CaseDisplayWrapper(object):
 
 
 class SupplyPointDisplayWrapper(CaseDisplayWrapper):
+
     def to_full_dict(self):
         from corehq.apps.locations.models import SQLLocation
         data = super(SupplyPointDisplayWrapper, self).to_full_dict()

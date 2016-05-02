@@ -26,6 +26,7 @@ def create_error(change, message='message', attempts=0, pillow=None, ex_class=No
 
 
 class PillowRetryTestCase(TestCase):
+
     def setUp(self):
         PillowError.objects.all().delete()
         self._pillowtops = settings.PILLOWTOPS

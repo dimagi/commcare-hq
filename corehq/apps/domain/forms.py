@@ -437,6 +437,7 @@ class TransferDomainForm(forms.ModelForm):
 
 
 class SubAreaMixin():
+
     def clean_sub_area(self):
         area = self.cleaned_data['area']
         sub_area = self.cleaned_data['sub_area']
@@ -1099,6 +1100,7 @@ class HQPasswordResetForm(NoAutocompleteMixin, forms.Form):
 
 
 class ConfidentialPasswordResetForm(HQPasswordResetForm):
+
     def clean_email(self):
         try:
             return super(ConfidentialPasswordResetForm, self).clean_email()

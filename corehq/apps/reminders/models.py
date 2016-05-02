@@ -210,6 +210,7 @@ def get_events_scheduling_info(events):
 
 
 class MessageVariable(object):
+
     def __init__(self, variable):
         self.variable = variable
 
@@ -242,6 +243,7 @@ class MessageVariable(object):
 
 
 class Message(object):
+
     def __init__(self, template, **params):
         self.template = template
         self.params = {}

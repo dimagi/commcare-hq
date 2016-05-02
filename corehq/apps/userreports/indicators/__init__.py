@@ -5,6 +5,7 @@ from fluff import TYPE_INTEGER
 
 
 class Column(object):
+
     def __init__(self, id, datatype, is_nullable=True, is_primary_key=False):
         self.id = id
         self.datatype = datatype
@@ -102,6 +103,7 @@ class CompoundIndicator(ConfigurableIndicator):
 
 
 class LedgerBalancesIndicator(ConfigurableIndicator):
+
     def __init__(self, spec):
         self.product_codes = spec.product_codes
         self.column_id = spec.column_id

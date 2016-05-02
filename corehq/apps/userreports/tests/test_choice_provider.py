@@ -17,6 +17,7 @@ from corehq.apps.users.util import normalize_username
 
 
 class SearchableChoice(Choice):
+
     def __new__(cls, value, display, searchable_text=None):
         self = super(SearchableChoice, cls).__new__(cls, value, display)
         self.searchable_text = [text for text in searchable_text or []
@@ -51,6 +52,7 @@ class StaticChoiceProvider(ChoiceProvider):
 
 
 class StaticChoiceProviderTest(SimpleTestCase):
+
     @classmethod
     def setUpClass(cls):
         cls.choice_provider = StaticChoiceProvider([Choice('1', 'One'), Choice('2', 'Two'), Choice('3', 'Three')])

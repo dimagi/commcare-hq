@@ -370,6 +370,7 @@ class StockStatusDataSource(ReportDataSource, CommtrackDataSourceMixin):
 
 
 class StockStatusBySupplyPointDataSource(StockStatusDataSource):
+
     def get_data(self):
         data = list(super(StockStatusBySupplyPointDataSource, self).get_data())
 

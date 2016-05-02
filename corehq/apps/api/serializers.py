@@ -94,6 +94,7 @@ class CommCareCaseSerializer(Serializer):
 
 
 class CustomXMLSerializer(Serializer):
+
     def to_etree(self, data, options=None, name=None, depth=0):
         if isinstance(name, basestring):
             # need to strip any whitespace from xml tag names
@@ -107,6 +108,7 @@ class CustomXMLSerializer(Serializer):
 
 
 class XFormInstanceSerializer(Serializer):
+
     def to_xml(self, data, options=None):
         if isinstance(data, Bundle):
             return data.obj.get_xml()

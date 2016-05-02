@@ -822,6 +822,7 @@ def user_upload_job_poll(request, domain, download_id, template="users/mobile/pa
     })
 
     class _BulkUploadResponseWrapper(object):
+
         def __init__(self, context):
             results = context.get('result', defaultdict(lambda: []))
             self.response_rows = results['rows']

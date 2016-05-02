@@ -140,6 +140,7 @@ def process_cases_with_casedb(xforms, case_db, config=None):
 
 
 class CaseProcessingConfig(object):
+
     def __init__(self, strict_asserts=True, case_id_blacklist=None):
         self.strict_asserts = strict_asserts
         self.case_id_blacklist = case_id_blacklist if case_id_blacklist is not None else []

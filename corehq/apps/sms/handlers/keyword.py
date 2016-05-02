@@ -33,6 +33,7 @@ LOCATION_KEYWORD = 'LOCATION'
 
 
 class StructuredSMSException(Exception):
+
     def __init__(self, *args, **kwargs):
         response_text = kwargs.pop("response_text", "")
         xformsresponse = kwargs.pop("xformsresponse", None)

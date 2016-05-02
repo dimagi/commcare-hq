@@ -47,6 +47,7 @@ def generateAny(encounter_date, observation_date, adherence=DOT_ADHERENCE_EMPTY)
 
 
 class dotsAlgorithmTests(TestCase):
+
     def setUp(self):
 
         self.observed_date = datetime.utcnow()

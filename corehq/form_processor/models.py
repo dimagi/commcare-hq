@@ -63,6 +63,7 @@ class TruncatingCharField(models.CharField):
 
 
 class Attachment(namedtuple('Attachment', 'name raw_content content_type')):
+
     @property
     @memoized
     def content(self):
@@ -82,6 +83,7 @@ class Attachment(namedtuple('Attachment', 'name raw_content content_type')):
 
 
 class SaveStateMixin(object):
+
     def is_saved(self):
         return bool(self._get_pk_val())
 
@@ -127,6 +129,7 @@ class AttachmentMixin(SaveStateMixin):
 
 
 class DisabledDbMixin(object):
+
     def save(self, *args, **kwargs):
         raise AccessRestricted('Direct object save disabled.')
 
@@ -138,6 +141,7 @@ class DisabledDbMixin(object):
 
 
 class RestrictedManager(models.Manager):
+
     def get_queryset(self):
         if not getattr(settings, 'ALLOW_FORM_PROCESSING_QUERIES', False):
             raise AccessRestricted('Only "raw" queries allowed')
@@ -1327,6 +1331,7 @@ class LedgerTransaction(DisabledDbMixin, SaveStateMixin, models.Model):
 
 
 class ConsumptionTransaction(namedtuple('ConsumptionTransaction', ['type', 'normalized_value', 'received_on'])):
+
     @property
     def is_stockout(self):
         from casexml.apps.stock.const import TRANSACTION_TYPE_STOCKONHAND

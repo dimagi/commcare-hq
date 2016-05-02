@@ -20,6 +20,7 @@ DOMAIN_MAX_LENGTH = 25
 
 
 class StockReportDomainTest(TestCase):
+
     def _get_name_for_domain(self):
         return ''.join(
             random.choice(string.ascii_lowercase)

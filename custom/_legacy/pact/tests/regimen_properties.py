@@ -6,6 +6,7 @@ art_nonart = [DOT_ART, DOT_NONART]
 
 
 class RegimenPropertiesTests(TestCase):
+
     def testStringToDictRegimensNum(self):
         #assure that all frequencies line up ok
         for freq in range(1,5):

@@ -13,6 +13,7 @@ from couchexport.models import Format
 
 
 class UniqueHeaderGenerator(object):
+
     def __init__(self, max_column_size=None):
         self.used = set()
         self.max_column_size = max_column_size or 2000

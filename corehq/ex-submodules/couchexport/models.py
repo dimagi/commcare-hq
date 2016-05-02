@@ -31,6 +31,7 @@ display_column_types = {}
 
 
 class register_column_type(object):
+
     def __init__(self, label=None):
         self.label = label
 

@@ -9,12 +9,14 @@ def Temp(tmp):
 
 
 class TempBase(object):
+
     @property
     def file(self):
         return open(self.path, 'rb')
 
 
 class PathTemp(TempBase):
+
     def __init__(self, path):
         self.path = path
 
@@ -28,6 +30,7 @@ class PathTemp(TempBase):
 
 
 class StringIOTemp(TempBase):
+
     def __init__(self, buffer):
         self.buffer = buffer
         self._path = None

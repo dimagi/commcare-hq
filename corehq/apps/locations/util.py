@@ -118,6 +118,7 @@ def get_location_data_model(domain):
 
 
 class LocationExporter(object):
+
     def __init__(self, domain, include_consumption=False, include_ids=False):
         self.domain = domain
         self.domain_obj = Domain.get_by_name(domain)

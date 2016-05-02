@@ -24,6 +24,7 @@ LOCATION_REPORTING_PREFIX = 'locationreportinggroup-'
 
 
 class LocationTypeManager(models.Manager):
+
     def full_hierarchy(self, domain):
         """
         Returns a graph of the form
@@ -148,6 +149,7 @@ class LocationType(models.Model):
 
 
 class LocationQueriesMixin(object):
+
     def location_ids(self):
         return self.values_list('location_id', flat=True)
 
@@ -172,6 +174,7 @@ class LocationQuerySet(LocationQueriesMixin, models.query.QuerySet):
 
 
 class LocationManager(LocationQueriesMixin, TreeManager):
+
     def _get_base_queryset(self):
         return LocationQuerySet(self.model, using=self._db)
 
@@ -211,6 +214,7 @@ class LocationManager(LocationQueriesMixin, TreeManager):
 
 
 class OnlyUnarchivedLocationManager(LocationManager):
+
     def get_queryset(self):
         return (super(OnlyUnarchivedLocationManager, self).get_queryset()
                 .filter(is_archived=False))

@@ -280,10 +280,12 @@ class Group(QuickCachedDocumentMixin, UndoableDocument):
 
 
 class UnsavableGroup(Group):
+
     def save(self, *args, **kwargs):
         raise CantSaveException("Instances of UnsavableGroup cannot be saved")
 
 
 class DeleteGroupRecord(DeleteDocRecord):
+
     def get_doc(self):
         return Group.get(self.doc_id)

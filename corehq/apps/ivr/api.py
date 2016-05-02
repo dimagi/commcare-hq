@@ -26,6 +26,7 @@ class GatewayConnectionError(Exception):
 
 
 class IVRResponseData(object):
+
     def __init__(self, ivr_responses, input_length, session):
         self.ivr_responses = ivr_responses
         self.input_length = input_length

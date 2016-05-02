@@ -9,6 +9,7 @@ from dimagi.utils.parsing import string_to_datetime
 
 
 class FetchKeyRecords(object):
+
     def __init__(self, domain, user_id, last_issued):
         self.domain = domain
         self.user_id = user_id

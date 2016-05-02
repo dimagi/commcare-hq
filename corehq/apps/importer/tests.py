@@ -20,6 +20,7 @@ class MockExcelFile(object):
     Provides the minimal API of ExcelFile used by the importer
     """
     class Workbook(object):
+
         def __init__(self):
             self._datemode = 0
 

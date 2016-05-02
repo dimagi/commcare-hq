@@ -181,6 +181,7 @@ class TestChildFirstMonthWindow(OPMCaseReportTestBase):
 
 
 class TestFormFiltering(TestCase):
+
     def check_form(self, received=None, months_before=None, months_after=None, xmlns=None):
         form = XFormInstance(received_on=received or datetime(2014, 6, 15),
                     form={'foo': 'bar'},

@@ -212,12 +212,14 @@ class IterDB(object):
 
 
 class IterUpdateError(Exception):
+
     def __init__(self, results, *args, **kwargs):
         self.results = results
         super(IterUpdateError, self).__init__(*args, **kwargs)
 
 
 class DocUpdate(object):
+
     def __init__(self, doc, delete=False):
         self.doc = doc
         self.delete = delete

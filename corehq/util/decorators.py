@@ -63,6 +63,7 @@ class change_log_level(ContextDecorator):
 
 
 class require_debug_true(ContextDecorator):
+
     def __enter__(self):
         if not settings.DEBUG:
             raise Exception("This can only be called in DEBUG mode.")

@@ -181,6 +181,7 @@ class ReadOpenFileChunk(ReadFileChunk):
     def __init__(self, fileobj, start_byte, chunk_size, full_file_size, *args, **kw):
 
         class FakeFile:
+
             def seek(self, pos):
                 pass
 

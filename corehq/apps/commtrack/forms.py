@@ -111,6 +111,7 @@ class CommTrackSettingsForm(forms.Form):
 
 
 class ConsumptionForm(forms.Form):
+
     def __init__(self, domain, *args, **kwargs):
         self.domain = domain
         super(ConsumptionForm, self).__init__(*args, **kwargs)

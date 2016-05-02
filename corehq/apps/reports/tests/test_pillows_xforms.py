@@ -122,6 +122,7 @@ CONCEPT_XFORM =  {
 
 
 class TestReportXFormProcessing(SimpleTestCase):
+
     def testConvertAndRestoreReportXFormDicts(self):
         pillow = ReportXFormPillow(online=False)
         orig = CONCEPT_XFORM

@@ -96,6 +96,7 @@ class WorkerMonitoringCaseReportTableBase(WorkerMonitoringReportTableBase):
 
 
 class WorkerMonitoringFormReportTableBase(WorkerMonitoringReportTableBase):
+
     def get_raw_user_link(self, user):
         params = {
             "form_unknown": self.request.GET.get("form_unknown", ''),
@@ -364,6 +365,7 @@ class CaseActivityReport(WorkerMonitoringCaseReportTableBase):
         return landmarks_aggregation
 
     class Row(object):
+
         def __init__(self, report, user, bucket):
             self.report = report
             self.user = user
@@ -393,6 +395,7 @@ class CaseActivityReport(WorkerMonitoringCaseReportTableBase):
             return self.report.get_user_link(self.user)
 
     class TotalRow(object):
+
         def __init__(self, rows, header):
             self.rows = rows
             self._header = header

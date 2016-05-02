@@ -156,6 +156,7 @@ class BasicTabularReport(GenericTabularReport):
 
 
 class SummingTabularReport(BasicTabularReport):
+
     @property
     def rows(self):
         ret = list(super(SummingTabularReport, self).rows)

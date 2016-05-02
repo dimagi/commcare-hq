@@ -10,6 +10,7 @@ from corehq.apps.domain.shortcuts import create_domain
 
 
 class LocationProducts(TestCase):
+
     def setUp(self):
         self.domain = create_domain('locations-test')
         self.domain.save()
@@ -71,6 +72,7 @@ class LocationProducts(TestCase):
 
 
 class LocationTestBase(TestCase):
+
     def setUp(self):
         self.domain = create_domain('locations-test')
         self.domain.convert_to_commtrack()
@@ -95,6 +97,7 @@ class LocationTestBase(TestCase):
 
 
 class LocationsTest(LocationTestBase):
+
     def test_storage_types(self):
         # make sure we can go between sql/couch locs
         sql_loc = SQLLocation.objects.get(name=self.loc.name)

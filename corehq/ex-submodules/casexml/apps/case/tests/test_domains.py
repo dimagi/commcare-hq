@@ -74,6 +74,7 @@ EVE_DOMAIN = 'domain2'
 
 @override_settings(CASEXML_FORCE_DOMAIN_CHECK=True)
 class DomainTest(TestCase):
+
     @run_with_all_backends
     def test_cant_own_case(self):
         _, _, [case] = submit_form_locally(ALICE_XML, ALICE_DOMAIN)

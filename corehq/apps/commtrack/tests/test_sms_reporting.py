@@ -8,6 +8,7 @@ from couchforms.dbaccessors import get_commtrack_forms
 
 
 class SMSTests(CommTrackTest):
+
     def setUp(self):
         super(SMSTests, self).setUp()
 

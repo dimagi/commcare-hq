@@ -19,6 +19,7 @@ class ExportRawTest(TestCase):
         that = self
 
         class Tester(object):
+
             def __enter__(self):
                 self.buffer = StringIO()
                 return self.buffer

@@ -196,5 +196,6 @@ class NoPostpartumCounseling(NoBPPrep, DueNextMonth):
 
 
 class NoFamilyPlanning(DueNextMonth):
+
     def filter(self, case):
         return getattr(case, 'couple_interested', None) == 'no'

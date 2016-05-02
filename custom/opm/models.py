@@ -13,6 +13,7 @@ from custom.utils.utils import flat_field
 
 # This calculator is necessary to generate 'date' field which is required in the database
 class Numerator(fluff.Calculator):
+
     @fluff.null_emitter
     def numerator(self, doc):
         yield None
@@ -28,6 +29,7 @@ def is_valid_user(user):
 
 
 class OpmUserFluff(fluff.IndicatorDocument):
+
     def user_data(property):
         """
         returns a flat field with a callable looking for `property` on the user

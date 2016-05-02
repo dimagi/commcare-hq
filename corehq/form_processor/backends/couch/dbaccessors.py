@@ -179,6 +179,7 @@ class CaseAccessorCouch(AbstractCaseAccessor):
 
 
 class LedgerAccessorCouch(AbstractLedgerAccessor):
+
     @staticmethod
     def get_transactions_for_consumption(domain, case_id, product_id, section_id, window_start, window_end):
         from casexml.apps.stock.models import StockTransaction

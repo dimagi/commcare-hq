@@ -29,6 +29,7 @@ class M4ChangeReport(CustomProjectReport):
 
 
 class M4ChangeReportDataSource(ReportDataSource):
+
     @memoized
     def get_reports(self):
         from custom.m4change.reports.anc_hmis_report import AncHmisReport

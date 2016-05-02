@@ -97,6 +97,7 @@ SESSION_USERCASE_ID = CaseIDXPath(session_var(USERCASE_ID))
 
 
 class WrappedAttribs(object):
+
     def __init__(self, attrib, namespaces=namespaces):
         self.attrib = attrib
         self.namespaces = namespaces
@@ -130,6 +131,7 @@ class WrappedAttribs(object):
 
 
 class WrappedNode(object):
+
     def __init__(self, xml, namespaces=namespaces):
         if isinstance(xml, basestring):
             self.xml = parse_xml(xml) if xml else None
@@ -201,6 +203,7 @@ class WrappedNode(object):
 
 
 class ItextNodeGroup(object):
+
     def __init__(self, nodes):
         self.id = nodes[0].id
         assert all(node.id == self.id for node in nodes)
@@ -228,6 +231,7 @@ class ItextNodeGroup(object):
 
 
 class ItextNode(object):
+
     def __init__(self, lang, itext_node):
         self.lang = lang
         self.id = itext_node.attrib['id']
@@ -244,6 +248,7 @@ class ItextNode(object):
 
 
 class ItextOutput(object):
+
     def __init__(self, ref):
         self.ref = ref
 
@@ -252,6 +257,7 @@ class ItextOutput(object):
 
 
 class ItextValue(unicode):
+
     def __new__(cls, parts):
         return super(ItextValue, cls).__new__(cls, cls._render(parts))
 

@@ -55,6 +55,7 @@ class Column(object):
 
 
 class DatabaseColumn(Column):
+
     def __init__(self, header, agg_column, format_fn=None, slug=None, *args, **kwargs):
         """
         Args:
@@ -350,6 +351,7 @@ class DataFormatter(object):
 
 
 class BaseDataFormat(object):
+
     def __init__(self, columns, no_value='--'):
         self.columns = columns
         self.no_value = no_value
@@ -365,6 +367,7 @@ class BaseDataFormat(object):
 
 
 class TableDataFormat(BaseDataFormat):
+
     def format_row(self, row):
         return [self._or_no_value(c.get_value(row)) for c in self.columns]
 
@@ -393,6 +396,7 @@ class DictDataFormat(BaseDataFormat):
 
 
 class SummingSqlTabularReport(SqlTabularReport):
+
     @property
     def rows(self):
         ret = list(super(SummingSqlTabularReport, self).rows)

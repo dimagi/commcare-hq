@@ -106,6 +106,7 @@ class LoginAndDomainAuthentication(Authentication):
 
 
 class RequirePermissionAuthentication(LoginAndDomainAuthentication):
+
     def __init__(self, permission, *args, **kwargs):
         super(RequirePermissionAuthentication, self).__init__(*args, **kwargs)
         self.permission = permission
@@ -150,6 +151,7 @@ class AdminAuthentication(LoginAndDomainAuthentication):
 
 
 class HQThrottle(CacheThrottle):
+
     def should_be_throttled(self, identifier, **kwargs):
         if API_THROTTLE_WHITELIST.enabled(identifier):
             return False

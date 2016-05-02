@@ -3,6 +3,7 @@ from ..log import clean_exception
 
 
 class TestLogging(SimpleTestCase):
+
     def test_bad_traceback(self):
         result = "JJackson's SSN: 555-55-5555"
         try:

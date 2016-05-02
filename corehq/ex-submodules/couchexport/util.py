@@ -66,6 +66,7 @@ def default_cleanup(schema_or_doc):
 
 
 class SerializableFunction(object):
+
     def __init__(self, function=None, **kwargs):
         self.functions = []
         if function:

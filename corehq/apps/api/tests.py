@@ -812,6 +812,7 @@ class TestRepeaterResource(APIResourceTest):
 
 
 class TestReportPillow(TestCase):
+
     def test_xformPillowTransform(self):
         """
         Test to make sure report xform and reportxform pillows strip the appVersion dict to match the
@@ -895,6 +896,7 @@ class TestElasticAPIQuerySet(TestCase):
 
 
 class ToManySourceModel(object):
+
     def __init__(self, other_model_ids, other_model_dict):
         self.other_model_dict = other_model_dict
         self.other_model_ids = other_model_ids
@@ -905,6 +907,7 @@ class ToManySourceModel(object):
     
 
 class ToManyDestModel(object):
+
     def __init__(self, id):
         self.id = id
     
@@ -973,6 +976,7 @@ class TestToManyDocumentsField(TestCase):
 
         
 class ToManyDictSourceModel(object):
+
     def __init__(self, other_model_ids, other_model_dict):
         self.other_model_dict = other_model_dict
         self.other_model_ids = other_model_ids
@@ -983,6 +987,7 @@ class ToManyDictSourceModel(object):
     
 
 class ToManyDictDestModel(object):
+
     def __init__(self, id):
         self.id = id
 
@@ -1053,6 +1058,7 @@ class TestToManyDictField(TestCase):
 
 
 class ToOneSourceModel(object):
+
     def __init__(self, other_model_id, other_model_dict):
         self.other_model_dict = other_model_dict
         self.other_model_id = other_model_id
@@ -1063,6 +1069,7 @@ class ToOneSourceModel(object):
     
 
 class ToOneDestModel(object):
+
     def __init__(self, id):
         self.id = id
     
@@ -1130,6 +1137,7 @@ class TestToOneDocumentField(TestCase):
 
         
 class UseIfRequestedModel(object):
+
     def __init__(self, id):
         self.id = id
 
@@ -1154,6 +1162,7 @@ class UseIfRequestedTestResource(Resource):
 
 
 class TestUseIfRequested(TestCase):
+
     def test_requested_use_in(self):
         objs = [
             UseIfRequestedModel(id='foo'),
@@ -1334,6 +1343,7 @@ class TestGroupResource(APIResourceTest):
 
 
 class FakeUserES(object):
+
     def __init__(self):
         self.docs = []
         self.queries = []

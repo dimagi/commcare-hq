@@ -76,6 +76,7 @@ class OwnerFilter(ExportFilter):
 
 
 class OwnerTypeFilter(ExportFilter):
+
     def __init__(self, owner_type):
         _assert_user_types(owner_type)
         self.owner_types = owner_type
@@ -174,11 +175,13 @@ class GroupClosedByFilter(GroupFilter):
 
 
 class ReceivedOnRangeFilter(RangeExportFilter):
+
     def to_es_filter(self):
         return submitted(self.gt, self.gte, self.lt, self.lte)
 
 
 class FormSubmittedByFilter(ExportFilter):
+
     def __init__(self, submitted_by):
         self.submitted_by = submitted_by
 
@@ -187,6 +190,7 @@ class FormSubmittedByFilter(ExportFilter):
 
 
 class UserTypeFilter(ExportFilter):
+
     def __init__(self, user_types):
         _assert_user_types(user_types)
         self.user_types = user_types

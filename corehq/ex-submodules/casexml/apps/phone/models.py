@@ -101,6 +101,7 @@ class CaseState(LooselyEqualDocumentSchema, IndexHoldingMixIn):
 
 
 class SyncLogAssertionError(AssertionError):
+
     def __init__(self, case_id, *args, **kwargs):
         self.case_id = case_id
         super(SyncLogAssertionError, self).__init__(*args, **kwargs)
@@ -860,6 +861,7 @@ class SimplifiedSyncLog(AbstractSyncLog):
         logger.debug('index tree before update: {}'.format(self.index_tree))
 
         class CaseUpdate(object):
+
             def __init__(self, case_id, owner_ids_on_phone):
                 self.case_id = case_id
                 self.owner_ids_on_phone = owner_ids_on_phone

@@ -37,6 +37,7 @@ def urlencode(parser, token):
 
 
 class URLEncodeNode(template.Node):
+
     def __init__(self, path_var,  params_var, extra_params, delete_params):
         self.path_var = template.Variable(path_var)
         self.params_var = template.Variable(params_var)

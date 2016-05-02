@@ -7,6 +7,7 @@ from corehq.form_processor.parsers.ledgers.helpers import UniqueLedgerReference
 
 
 class LedgerDBCouch(LedgerDBInterface):
+
     def get_ledgers_for_case(self, case_id):
         from corehq.apps.commtrack.models import StockState
         return StockState.objects.filter(case_id=case_id)

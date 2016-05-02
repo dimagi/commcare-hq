@@ -23,6 +23,7 @@ FORM_CASE_ID_PATH = 'form.case.@case_id'
 
 
 class AbstractProperty(object):
+
     def __get__(self, instance, owner):
         raise NotImplementedError()
 

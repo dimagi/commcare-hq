@@ -173,6 +173,7 @@ _override_db = threading.local()
 
 
 class OverrideDB(object):
+
     def __init__(self, document_class, database):
         self.document_class = document_class
         self.database = database

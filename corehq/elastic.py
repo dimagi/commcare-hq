@@ -150,6 +150,7 @@ def scroll_query(index_name, q):
 
 
 class ScanResult(object):
+
     def __init__(self, count, iterator):
         self._iterator = iterator
         self.count = count

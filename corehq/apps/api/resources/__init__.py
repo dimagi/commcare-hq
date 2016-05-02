@@ -12,6 +12,7 @@ from corehq.apps.api.util import get_obj
 
 
 class dict_object(object):
+
     def __init__(self, dict):
         self.dict = dict
 
@@ -152,6 +153,7 @@ class SimpleSortableResourceMixin(object):
 
 
 class DomainSpecificResourceMixin(object):
+
     def get_list(self, request, **kwargs):
         """
         Exactly copied from https://github.com/toastdriven/django-tastypie/blob/v0.9.14/tastypie/resources.py#L1262
@@ -198,6 +200,7 @@ class DomainSpecificResourceMixin(object):
 
 
 class CouchResourceMixin(object):
+
     def detail_uri_kwargs(self, bundle_or_obj):
         return {
             'pk': get_obj(bundle_or_obj)._id

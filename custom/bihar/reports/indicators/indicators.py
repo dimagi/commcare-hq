@@ -264,6 +264,7 @@ def _one(filter_func, list):
 
 
 class IndicatorConfig(object):
+
     def __init__(self, spec):
         self.indicator_sets = [IndicatorSet(setspec) for setspec in spec]
 

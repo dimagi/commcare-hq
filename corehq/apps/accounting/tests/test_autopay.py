@@ -15,6 +15,7 @@ from corehq.apps.accounting.payment_handlers import AutoPayInvoicePaymentHandler
 
 
 class TestBillingAutoPay(BaseInvoiceTestCase):
+
     def setUp(self):
         super(TestBillingAutoPay, self).setUp()
         self._generate_autopayable_entities()

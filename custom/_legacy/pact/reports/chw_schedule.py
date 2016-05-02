@@ -21,6 +21,7 @@ def get_seconds(d):
 
 
 class CHWPatientSchedule(object):
+
     def __init__(self, username, intervaltrees, raw_schedule):
         self.username = username
         self.intervals = intervaltrees

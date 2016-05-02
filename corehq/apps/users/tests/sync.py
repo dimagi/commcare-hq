@@ -5,6 +5,7 @@ from corehq.apps.users.models import WebUser, CommCareUser
 
 
 class SyncWebUserTestCase(TestCase):
+
     def setUp(self):
         domain = 'test'
         username = "mr-danny@dimagi.com"
@@ -44,6 +45,7 @@ class SyncWebUserTestCase(TestCase):
 
 
 class SyncCommCareUserTestCase(TestCase):
+
     def setUp(self):
         self.domain = 'test'
         self.username = "mr-danny@test.commcarehq.org"

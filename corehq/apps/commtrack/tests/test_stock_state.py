@@ -11,6 +11,7 @@ from corehq.apps.consumption.shortcuts import set_default_monthly_consumption_fo
 
 
 class StockStateTest(CommTrackTest):
+
     def report(self, amount, days_ago):
         return _stock_report(
             self.domain.name,
@@ -22,6 +23,7 @@ class StockStateTest(CommTrackTest):
 
 
 class StockStateBehaviorTest(StockStateTest):
+
     def test_stock_state(self):
         self.report(25, 5)
         self.report(10, 0)
@@ -134,6 +136,7 @@ class StockStateBehaviorTest(StockStateTest):
 
 
 class StockStateConsumptionTest(StockStateTest):
+
     def test_none_with_no_defaults(self):
         # need to submit something to have a state initialized
         self.report(25, 0)

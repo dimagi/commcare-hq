@@ -239,6 +239,7 @@ class IndexedSchema(DocumentSchema):
         return other and (self.id == other.id) and (self._parent == other._parent)
 
     class Getter(object):
+
         def __init__(self, attr):
             self.attr = attr
 
@@ -624,6 +625,7 @@ class AdvancedFormActions(DocumentSchema):
 
 
 class FormSource(object):
+
     def __get__(self, form, form_cls):
         if not form:
             return self
@@ -660,6 +662,7 @@ class FormSource(object):
 
 
 class CachedStringProperty(object):
+
     def __init__(self, key):
         self.get_key = key
 
@@ -1058,6 +1061,7 @@ class FormBase(DocumentSchema):
 
 
 class IndexedFormBase(FormBase, IndexedSchema, CommentMixin):
+
     def get_app(self):
         return self._parent._parent
 
@@ -2036,6 +2040,7 @@ class ModuleBase(IndexedSchema, NavMenuItemMediaMixin, CommentMixin):
 
 
 class ModuleDetailsMixin():
+
     @classmethod
     def wrap_details(cls, data):
         if 'details' in data:
@@ -3324,6 +3329,7 @@ class ReportGraphConfig(DocumentSchema):
 
 
 class ReportAppFilter(DocumentSchema):
+
     @classmethod
     def wrap(cls, data):
         if cls is ReportAppFilter:
@@ -3550,6 +3556,7 @@ class CustomMonthFilter(ReportAppFilter):
 
 
 class MobileSelectFilter(ReportAppFilter):
+
     def get_filter_value(self, user, ui_filter):
         return None
 
