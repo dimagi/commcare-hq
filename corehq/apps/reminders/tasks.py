@@ -7,7 +7,7 @@ from corehq.form_processor.models import CommCareCaseIndexSQL
 from corehq.form_processor.utils.general import should_use_sql_backend
 from django.conf import settings
 from dimagi.utils.logging import notify_exception
-from casexml.apps.case.models import CommCareCase, INDEX_ID_PARENT
+from casexml.apps.case.models import INDEX_ID_PARENT
 from dimagi.utils.chunked import chunked
 from dimagi.utils.couch import CriticalSection
 from dimagi.utils.couch.bulk import soft_delete_docs

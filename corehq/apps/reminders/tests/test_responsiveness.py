@@ -6,7 +6,6 @@ from corehq.apps.reminders.models import (CaseReminderHandler, CaseReminder, MAT
     MATCH_REGEX, MATCH_ANY_VALUE, REPEAT_SCHEDULE_INDEFINITELY, FIRE_TIME_CASE_PROPERTY,
     DAY_MON, DAY_TUE)
 from corehq.form_processor.tests.utils import run_with_all_backends
-from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 from corehq.util.test_utils import create_test_case
 from datetime import datetime, date, time
 from django.test import TestCase
@@ -41,7 +40,8 @@ class ReminderResponsivenessTest(TestCase):
             .set_case_criteria_start_date()
             .set_case_recipient()
             .set_sms_content_type('en')
-            .set_daily_schedule(fire_time=time(12, 0), message={'en': 'Hello {case.name}, your test result was normal.'})
+            .set_daily_schedule(fire_time=time(12, 0),
+                message={'en': 'Hello {case.name}, your test result was normal.'})
             .set_stop_condition(max_iteration_count=REPEAT_SCHEDULE_INDEFINITELY)
             .set_advanced_options())
         reminder.save()
@@ -63,46 +63,9 @@ class ReminderResponsivenessTest(TestCase):
             self.assertIsNone(reminder_instance.start_condition_datetime)
             self.assertEqual(reminder_instance.next_fire, datetime(2016, 1, 1, 12, 0))
             self.assertEqual(reminder_instance.case_id, case.case_id)
-            self.assertEqual(reminder_instance.schedule_iteration_num, 1)
-            self.assertEqual(reminder_instance.current_event_sequence_num, 0)
-
-            update_case(self.domain, case.case_id, case_properties={'status': 'red'})
-            self.assertEqual(self.get_reminders(), [])
-
-    @run_with_all_backends
-    def test_case_property_match_equal(self):
-        reminder = (CaseReminderHandler
-            .create(self.domain, 'test')
-            .set_case_criteria_start_condition('participant', 'status', MATCH_EXACT, 'green')
-            .set_case_criteria_start_date()
-            .set_case_recipient()
-            .set_sms_content_type('en')
-            .set_daily_schedule(fire_time=time(12, 0), message={'en': 'Hello {case.name}, your test result was normal.'})
-            .set_stop_condition(max_iteration_count=REPEAT_SCHEDULE_INDEFINITELY)
-            .set_advanced_options())
-        reminder.save()
-
-        self.assertEqual(self.get_reminders(), [])
-
-        with create_test_case(self.domain, 'participant', 'bob', drop_signals=False) as case, \
-                patch('corehq.apps.reminders.models.CaseReminderHandler.get_now') as now_mock:
-            self.assertEqual(self.get_reminders(), [])
-
-            now_mock.return_value = datetime(2016, 1, 1, 10, 0)
-            update_case(self.domain, case.case_id, case_properties={'status': 'green'})
-
-            reminder_instance = self.assertOneReminder()
-            self.assertEqual(reminder_instance.domain, self.domain)
-            self.assertEqual(reminder_instance.case_id, case.case_id)
-            self.assertEqual(reminder_instance.handler_id, reminder.get_id)
-            self.assertIsNone(reminder_instance.user_id)
-            self.assertEqual(reminder_instance.next_fire, datetime(2016, 1, 1, 12, 0))
-            self.assertTrue(reminder_instance.active)
-            self.assertEqual(reminder_instance.start_date, date(2016, 1, 1))
             self.assertEqual(reminder_instance.schedule_iteration_num, 1)
             self.assertEqual(reminder_instance.current_event_sequence_num, 0)
             self.assertEqual(reminder_instance.callback_try_count, 0)
-            self.assertIsNone(reminder_instance.start_condition_datetime)
 
             update_case(self.domain, case.case_id, case_properties={'status': 'red'})
             self.assertEqual(self.get_reminders(), [])
@@ -115,7 +78,8 @@ class ReminderResponsivenessTest(TestCase):
             .set_case_criteria_start_date()
             .set_case_recipient()
             .set_sms_content_type('en')
-            .set_daily_schedule(fire_time=time(12, 0), message={'en': 'Hello {case.name}, your test result was normal.'})
+            .set_daily_schedule(fire_time=time(12, 0),
+                message={'en': 'Hello {case.name}, your test result was normal.'})
             .set_stop_condition(max_iteration_count=REPEAT_SCHEDULE_INDEFINITELY)
             .set_advanced_options())
         reminder.save()
@@ -141,6 +105,7 @@ class ReminderResponsivenessTest(TestCase):
             self.assertEqual(reminder_instance.current_event_sequence_num, 0)
             self.assertEqual(reminder_instance.callback_try_count, 0)
             self.assertIsNone(reminder_instance.start_condition_datetime)
+            self.assertEqual(reminder_instance.callback_try_count, 0)
 
             update_case(self.domain, case.case_id, case_properties={'status': 'red'})
             self.assertEqual(self.get_reminders(), [])
@@ -153,7 +118,8 @@ class ReminderResponsivenessTest(TestCase):
             .set_case_criteria_start_date()
             .set_case_recipient()
             .set_sms_content_type('en')
-            .set_daily_schedule(fire_time=time(12, 0), message={'en': 'Hello {case.name}, your test result was normal.'})
+            .set_daily_schedule(fire_time=time(12, 0),
+                message={'en': 'Hello {case.name}, your test result was normal.'})
             .set_stop_condition(max_iteration_count=REPEAT_SCHEDULE_INDEFINITELY)
             .set_advanced_options())
         reminder.save()
@@ -179,6 +145,7 @@ class ReminderResponsivenessTest(TestCase):
             self.assertEqual(reminder_instance.current_event_sequence_num, 0)
             self.assertEqual(reminder_instance.callback_try_count, 0)
             self.assertIsNone(reminder_instance.start_condition_datetime)
+            self.assertEqual(reminder_instance.callback_try_count, 0)
 
     @run_with_all_backends
     def test_case_property_start_date(self):
@@ -188,7 +155,8 @@ class ReminderResponsivenessTest(TestCase):
             .set_case_criteria_start_date(start_date='start_date')
             .set_case_recipient()
             .set_sms_content_type('en')
-            .set_daily_schedule(fire_time=time(12, 0), message={'en': 'Hello {case.name}, your test result was normal.'})
+            .set_daily_schedule(fire_time=time(12, 0),
+                message={'en': 'Hello {case.name}, your test result was normal.'})
             .set_stop_condition(max_iteration_count=30)
             .set_advanced_options(use_today_if_start_date_is_blank=False))
         reminder.save()
@@ -219,6 +187,7 @@ class ReminderResponsivenessTest(TestCase):
             self.assertEqual(reminder_instance.current_event_sequence_num, 0)
             self.assertEqual(reminder_instance.callback_try_count, 0)
             self.assertEqual(reminder_instance.start_condition_datetime, datetime(2016, 1, 8))
+            self.assertEqual(reminder_instance.callback_try_count, 0)
 
             # update start_date and the schedule should be recalculated
             update_case(self.domain, case.case_id, case_properties={'start_date': '2016-01-15'})
@@ -235,6 +204,7 @@ class ReminderResponsivenessTest(TestCase):
             self.assertEqual(reminder_instance.current_event_sequence_num, 0)
             self.assertEqual(reminder_instance.callback_try_count, 0)
             self.assertEqual(reminder_instance.start_condition_datetime, datetime(2016, 1, 15))
+            self.assertEqual(reminder_instance.callback_try_count, 0)
 
             # update start_date to be in the past and the schedule should be recalculated and fast-forwarded
             update_case(self.domain, case.case_id, case_properties={'start_date': '2015-12-20'})
@@ -251,6 +221,7 @@ class ReminderResponsivenessTest(TestCase):
             self.assertEqual(reminder_instance.current_event_sequence_num, 0)
             self.assertEqual(reminder_instance.callback_try_count, 0)
             self.assertEqual(reminder_instance.start_condition_datetime, datetime(2015, 12, 20))
+            self.assertEqual(reminder_instance.callback_try_count, 0)
 
             # update start_date to be further in the past and the reminder should be deactivated
             update_case(self.domain, case.case_id, case_properties={'start_date': '2015-12-01'})
@@ -267,6 +238,7 @@ class ReminderResponsivenessTest(TestCase):
             self.assertEqual(reminder_instance.current_event_sequence_num, 0)
             self.assertEqual(reminder_instance.callback_try_count, 0)
             self.assertEqual(reminder_instance.start_condition_datetime, datetime(2015, 12, 1))
+            self.assertEqual(reminder_instance.callback_try_count, 0)
 
             # set start_date to be blank and the reminder should be deleted
             update_case(self.domain, case.case_id, case_properties={'start_date': ''})
@@ -280,7 +252,8 @@ class ReminderResponsivenessTest(TestCase):
             .set_case_criteria_start_date(start_date='start_date')
             .set_case_recipient()
             .set_sms_content_type('en')
-            .set_daily_schedule(fire_time=time(12, 0), message={'en': 'Hello {case.name}, your test result was normal.'})
+            .set_daily_schedule(fire_time=time(12, 0),
+                message={'en': 'Hello {case.name}, your test result was normal.'})
             .set_stop_condition(max_iteration_count=30)
             .set_advanced_options(use_today_if_start_date_is_blank=True))
         reminder.save()
@@ -308,6 +281,7 @@ class ReminderResponsivenessTest(TestCase):
             self.assertEqual(reminder_instance.current_event_sequence_num, 0)
             self.assertEqual(reminder_instance.callback_try_count, 0)
             self.assertIsNone(reminder_instance.start_condition_datetime)
+            self.assertEqual(reminder_instance.callback_try_count, 0)
 
             # update start_date and the schedule should be recalculated
             update_case(self.domain, case.case_id, case_properties={'start_date': '2016-01-08'})
@@ -324,6 +298,7 @@ class ReminderResponsivenessTest(TestCase):
             self.assertEqual(reminder_instance.current_event_sequence_num, 0)
             self.assertEqual(reminder_instance.callback_try_count, 0)
             self.assertEqual(reminder_instance.start_condition_datetime, datetime(2016, 1, 8))
+            self.assertEqual(reminder_instance.callback_try_count, 0)
 
             # update start_date to be in the past and the schedule should be recalculated and fast-forwarded
             update_case(self.domain, case.case_id, case_properties={'start_date': '2015-12-20'})
@@ -340,6 +315,7 @@ class ReminderResponsivenessTest(TestCase):
             self.assertEqual(reminder_instance.current_event_sequence_num, 0)
             self.assertEqual(reminder_instance.callback_try_count, 0)
             self.assertEqual(reminder_instance.start_condition_datetime, datetime(2015, 12, 20))
+            self.assertEqual(reminder_instance.callback_try_count, 0)
 
             # update start_date to be further in the past and the reminder should be deactivated
             update_case(self.domain, case.case_id, case_properties={'start_date': '2015-12-01'})
@@ -356,6 +332,7 @@ class ReminderResponsivenessTest(TestCase):
             self.assertEqual(reminder_instance.current_event_sequence_num, 0)
             self.assertEqual(reminder_instance.callback_try_count, 0)
             self.assertEqual(reminder_instance.start_condition_datetime, datetime(2015, 12, 1))
+            self.assertEqual(reminder_instance.callback_try_count, 0)
 
             # set start_date to be blank and the reminder should go back to using today as start date
             update_case(self.domain, case.case_id, case_properties={'start_date': ''})
@@ -372,6 +349,7 @@ class ReminderResponsivenessTest(TestCase):
             self.assertEqual(reminder_instance.current_event_sequence_num, 0)
             self.assertEqual(reminder_instance.callback_try_count, 0)
             self.assertIsNone(reminder_instance.start_condition_datetime)
+            self.assertEqual(reminder_instance.callback_try_count, 0)
 
     @run_with_all_backends
     def test_case_type_match(self):
@@ -381,7 +359,8 @@ class ReminderResponsivenessTest(TestCase):
             .set_case_criteria_start_date()
             .set_case_recipient()
             .set_sms_content_type('en')
-            .set_daily_schedule(fire_time=time(12, 0), message={'en': 'Hello {case.name}, your test result was normal.'})
+            .set_daily_schedule(fire_time=time(12, 0),
+                message={'en': 'Hello {case.name}, your test result was normal.'})
             .set_stop_condition(max_iteration_count=REPEAT_SCHEDULE_INDEFINITELY)
             .set_advanced_options())
         reminder.save()
@@ -409,6 +388,7 @@ class ReminderResponsivenessTest(TestCase):
             self.assertEqual(reminder_instance.case_id, case.case_id)
             self.assertEqual(reminder_instance.schedule_iteration_num, 1)
             self.assertEqual(reminder_instance.current_event_sequence_num, 0)
+            self.assertEqual(reminder_instance.callback_try_count, 0)
 
             reminder.set_case_criteria_start_condition('participant', 'status', MATCH_EXACT, 'green')
             reminder.save()
@@ -422,7 +402,8 @@ class ReminderResponsivenessTest(TestCase):
             .set_case_criteria_start_date()
             .set_case_recipient()
             .set_sms_content_type('en')
-            .set_daily_schedule(fire_time=time(12, 0), message={'en': 'Hello {case.name}, your test result was normal.'})
+            .set_daily_schedule(fire_time=time(12, 0),
+                message={'en': 'Hello {case.name}, your test result was normal.'})
             .set_stop_condition(max_iteration_count=REPEAT_SCHEDULE_INDEFINITELY)
             .set_advanced_options())
         reminder.save()
@@ -455,6 +436,7 @@ class ReminderResponsivenessTest(TestCase):
             self.assertEqual(reminder_instance.case_id, child_case.case_id)
             self.assertEqual(reminder_instance.schedule_iteration_num, 1)
             self.assertEqual(reminder_instance.current_event_sequence_num, 0)
+            self.assertEqual(reminder_instance.callback_try_count, 0)
 
             update_case(self.domain, parent_case.case_id, case_properties={'status': 'red'})
             self.assertEqual(self.get_reminders(), [])
@@ -467,7 +449,8 @@ class ReminderResponsivenessTest(TestCase):
             .set_case_criteria_start_date()
             .set_case_recipient()
             .set_sms_content_type('en')
-            .set_daily_schedule(fire_time=time(12, 0), message={'en': 'Hello {case.name}, your test result was normal.'})
+            .set_daily_schedule(fire_time=time(12, 0),
+                message={'en': 'Hello {case.name}, your test result was normal.'})
             .set_stop_condition(max_iteration_count=REPEAT_SCHEDULE_INDEFINITELY)
             .set_advanced_options())
         reminder.save()
@@ -513,7 +496,8 @@ class ReminderResponsivenessTest(TestCase):
             self.assertEqual(self.get_reminders(), [])
 
             now_mock.return_value = datetime(2016, 1, 1, 10, 0)
-            update_case(self.domain, case.case_id, case_properties={'status': 'green', 'preferred_time': '14:00:00'})
+            update_case(self.domain, case.case_id,
+                case_properties={'status': 'green', 'preferred_time': '14:00:00'})
 
             reminder_instance = self.assertOneReminder()
             self.assertEqual(reminder_instance.domain, self.domain)
@@ -525,6 +509,7 @@ class ReminderResponsivenessTest(TestCase):
             self.assertEqual(reminder_instance.case_id, case.case_id)
             self.assertEqual(reminder_instance.schedule_iteration_num, 1)
             self.assertEqual(reminder_instance.current_event_sequence_num, 0)
+            self.assertEqual(reminder_instance.callback_try_count, 0)
 
     @run_with_all_backends
     def test_case_property_reminder_time_default(self):
@@ -559,6 +544,7 @@ class ReminderResponsivenessTest(TestCase):
             self.assertEqual(reminder_instance.case_id, case.case_id)
             self.assertEqual(reminder_instance.schedule_iteration_num, 1)
             self.assertEqual(reminder_instance.current_event_sequence_num, 0)
+            self.assertEqual(reminder_instance.callback_try_count, 0)
 
     @run_with_all_backends
     def test_case_time_zone(self):
@@ -568,7 +554,8 @@ class ReminderResponsivenessTest(TestCase):
             .set_case_criteria_start_date()
             .set_case_recipient()
             .set_sms_content_type('en')
-            .set_daily_schedule(fire_time=time(12, 0), message={'en': 'Hello {case.name}, your test result was normal.'})
+            .set_daily_schedule(fire_time=time(12, 0),
+                message={'en': 'Hello {case.name}, your test result was normal.'})
             .set_stop_condition(max_iteration_count=REPEAT_SCHEDULE_INDEFINITELY)
             .set_advanced_options())
         reminder.save()
@@ -580,7 +567,8 @@ class ReminderResponsivenessTest(TestCase):
             self.assertEqual(self.get_reminders(), [])
 
             now_mock.return_value = datetime(2016, 1, 1, 10, 0)
-            update_case(self.domain, case.case_id, case_properties={'status': 'green', 'time_zone': 'America/New_York'})
+            update_case(self.domain, case.case_id,
+                case_properties={'status': 'green', 'time_zone': 'America/New_York'})
 
             reminder_instance = self.assertOneReminder()
             self.assertEqual(reminder_instance.domain, self.domain)
@@ -592,6 +580,7 @@ class ReminderResponsivenessTest(TestCase):
             self.assertEqual(reminder_instance.case_id, case.case_id)
             self.assertEqual(reminder_instance.schedule_iteration_num, 1)
             self.assertEqual(reminder_instance.current_event_sequence_num, 0)
+            self.assertEqual(reminder_instance.callback_try_count, 0)
 
     @run_with_all_backends
     def test_case_property_start_date_with_start_offset(self):
@@ -601,7 +590,8 @@ class ReminderResponsivenessTest(TestCase):
             .set_case_criteria_start_date(start_date='start_date', start_offset=1)
             .set_case_recipient()
             .set_sms_content_type('en')
-            .set_daily_schedule(fire_time=time(12, 0), message={'en': 'Hello {case.name}, your test result was normal.'})
+            .set_daily_schedule(fire_time=time(12, 0),
+                message={'en': 'Hello {case.name}, your test result was normal.'})
             .set_stop_condition(max_iteration_count=30)
             .set_advanced_options(use_today_if_start_date_is_blank=False))
         reminder.save()
@@ -613,7 +603,8 @@ class ReminderResponsivenessTest(TestCase):
             self.assertEqual(self.get_reminders(), [])
 
             now_mock.return_value = datetime(2016, 1, 1, 10, 0)
-            update_case(self.domain, case.case_id, case_properties={'status': 'green', 'start_date': '2016-01-08'})
+            update_case(self.domain, case.case_id,
+                case_properties={'status': 'green', 'start_date': '2016-01-08'})
 
             reminder_instance = self.assertOneReminder()
             self.assertEqual(reminder_instance.domain, self.domain)
@@ -627,6 +618,7 @@ class ReminderResponsivenessTest(TestCase):
             self.assertEqual(reminder_instance.current_event_sequence_num, 0)
             self.assertEqual(reminder_instance.callback_try_count, 0)
             self.assertEqual(reminder_instance.start_condition_datetime, datetime(2016, 1, 8))
+            self.assertEqual(reminder_instance.callback_try_count, 0)
 
             # update start offset and the schedule should be recalculated
             prev_definition = reminder
@@ -645,6 +637,7 @@ class ReminderResponsivenessTest(TestCase):
             self.assertEqual(reminder_instance.current_event_sequence_num, 0)
             self.assertEqual(reminder_instance.callback_try_count, 0)
             self.assertEqual(reminder_instance.start_condition_datetime, datetime(2016, 1, 8))
+            self.assertEqual(reminder_instance.callback_try_count, 0)
 
     @run_with_all_backends
     def test_case_property_start_date_with_start_day_of_week(self):
@@ -654,7 +647,8 @@ class ReminderResponsivenessTest(TestCase):
             .set_case_criteria_start_date(start_date='start_date', start_day_of_week=DAY_MON)
             .set_case_recipient()
             .set_sms_content_type('en')
-            .set_daily_schedule(fire_time=time(12, 0), message={'en': 'Hello {case.name}, your test result was normal.'})
+            .set_daily_schedule(fire_time=time(12, 0),
+                message={'en': 'Hello {case.name}, your test result was normal.'})
             .set_stop_condition(max_iteration_count=30)
             .set_advanced_options(use_today_if_start_date_is_blank=False))
         reminder.save()
@@ -666,7 +660,8 @@ class ReminderResponsivenessTest(TestCase):
             self.assertEqual(self.get_reminders(), [])
 
             now_mock.return_value = datetime(2016, 1, 1, 10, 0)
-            update_case(self.domain, case.case_id, case_properties={'status': 'green', 'start_date': '2016-01-08'})
+            update_case(self.domain, case.case_id,
+                case_properties={'status': 'green', 'start_date': '2016-01-08'})
 
             reminder_instance = self.assertOneReminder()
             self.assertEqual(reminder_instance.domain, self.domain)
@@ -680,6 +675,7 @@ class ReminderResponsivenessTest(TestCase):
             self.assertEqual(reminder_instance.current_event_sequence_num, 0)
             self.assertEqual(reminder_instance.callback_try_count, 0)
             self.assertEqual(reminder_instance.start_condition_datetime, datetime(2016, 1, 8))
+            self.assertEqual(reminder_instance.callback_try_count, 0)
 
             # update start day of week and the schedule should be recalculated
             prev_definition = reminder
@@ -698,6 +694,7 @@ class ReminderResponsivenessTest(TestCase):
             self.assertEqual(reminder_instance.current_event_sequence_num, 0)
             self.assertEqual(reminder_instance.callback_try_count, 0)
             self.assertEqual(reminder_instance.start_condition_datetime, datetime(2016, 1, 8))
+            self.assertEqual(reminder_instance.callback_try_count, 0)
 
     @run_with_all_backends
     def test_user_recipient(self):
@@ -743,6 +740,7 @@ class ReminderResponsivenessTest(TestCase):
             self.assertEqual(reminder_instance.schedule_iteration_num, 1)
             self.assertEqual(reminder_instance.current_event_sequence_num, 0)
             self.assertEqual(reminder_instance.user_id, self.user.get_id)
+            self.assertEqual(reminder_instance.callback_try_count, 0)
 
             # Set a user_id that does not exist
             CaseFactory(self.domain).create_or_update_case(
@@ -761,8 +759,10 @@ class ReminderResponsivenessTest(TestCase):
             .set_case_criteria_start_date()
             .set_case_recipient()
             .set_sms_content_type('en')
-            .set_daily_schedule(fire_time=time(12, 0), message={'en': 'Hello {case.name}, your test result was normal.'})
-            .set_stop_condition(max_iteration_count=REPEAT_SCHEDULE_INDEFINITELY, stop_case_property='stop_reminder')
+            .set_daily_schedule(fire_time=time(12, 0),
+                message={'en': 'Hello {case.name}, your test result was normal.'})
+            .set_stop_condition(max_iteration_count=REPEAT_SCHEDULE_INDEFINITELY,
+                stop_case_property='stop_reminder')
             .set_advanced_options())
         reminder.save()
 
@@ -785,6 +785,7 @@ class ReminderResponsivenessTest(TestCase):
             self.assertEqual(reminder_instance.case_id, case.case_id)
             self.assertEqual(reminder_instance.schedule_iteration_num, 1)
             self.assertEqual(reminder_instance.current_event_sequence_num, 0)
+            self.assertEqual(reminder_instance.callback_try_count, 0)
 
             update_case(self.domain, case.case_id, case_properties={'stop_reminder': 'ok'})
             reminder_instance = self.assertOneReminder()
@@ -797,6 +798,7 @@ class ReminderResponsivenessTest(TestCase):
             self.assertEqual(reminder_instance.case_id, case.case_id)
             self.assertEqual(reminder_instance.schedule_iteration_num, 1)
             self.assertEqual(reminder_instance.current_event_sequence_num, 0)
+            self.assertEqual(reminder_instance.callback_try_count, 0)
 
             update_case(self.domain, case.case_id, case_properties={'stop_reminder': '2016-01-02'})
             reminder_instance = self.assertOneReminder()
@@ -809,6 +811,7 @@ class ReminderResponsivenessTest(TestCase):
             self.assertEqual(reminder_instance.case_id, case.case_id)
             self.assertEqual(reminder_instance.schedule_iteration_num, 1)
             self.assertEqual(reminder_instance.current_event_sequence_num, 0)
+            self.assertEqual(reminder_instance.callback_try_count, 0)
 
             update_case(self.domain, case.case_id, case_properties={'stop_reminder': '2015-12-31'})
             reminder_instance = self.assertOneReminder()
@@ -821,6 +824,7 @@ class ReminderResponsivenessTest(TestCase):
             self.assertEqual(reminder_instance.case_id, case.case_id)
             self.assertEqual(reminder_instance.schedule_iteration_num, 1)
             self.assertEqual(reminder_instance.current_event_sequence_num, 0)
+            self.assertEqual(reminder_instance.callback_try_count, 0)
 
     @run_with_all_backends
     def test_datetime_condition(self):
@@ -834,7 +838,8 @@ class ReminderResponsivenessTest(TestCase):
                 .set_datetime_start_condition(datetime(2016, 1, 1, 0, 0))
                 .set_case_recipient(case.case_id)
                 .set_sms_content_type('en')
-                .set_daily_schedule(fire_time=time(15, 0), message={'en': 'Hello {case.name}, your test result was normal.'})
+                .set_daily_schedule(fire_time=time(15, 0),
+                    message={'en': 'Hello {case.name}, your test result was normal.'})
                 .set_stop_condition(max_iteration_count=1)
                 .set_advanced_options())
             reminder.save()
@@ -849,6 +854,7 @@ class ReminderResponsivenessTest(TestCase):
             self.assertEqual(reminder_instance.case_id, case.case_id)
             self.assertEqual(reminder_instance.schedule_iteration_num, 1)
             self.assertEqual(reminder_instance.current_event_sequence_num, 0)
+            self.assertEqual(reminder_instance.callback_try_count, 0)
 
             reminder.set_datetime_start_condition(datetime(2016, 1, 2, 0, 0))
             reminder.save()
@@ -863,6 +869,7 @@ class ReminderResponsivenessTest(TestCase):
             self.assertEqual(reminder_instance.case_id, case.case_id)
             self.assertEqual(reminder_instance.schedule_iteration_num, 1)
             self.assertEqual(reminder_instance.current_event_sequence_num, 0)
+            self.assertEqual(reminder_instance.callback_try_count, 0)
 
             reminder.set_datetime_start_condition(datetime(2015, 12, 31, 0, 0))
             reminder.save()
@@ -877,6 +884,7 @@ class ReminderResponsivenessTest(TestCase):
             self.assertEqual(reminder_instance.case_id, case.case_id)
             self.assertEqual(reminder_instance.schedule_iteration_num, 2)
             self.assertEqual(reminder_instance.current_event_sequence_num, 0)
+            self.assertEqual(reminder_instance.callback_try_count, 0)
 
             reminder.active = False
             reminder.save()

@@ -594,7 +594,9 @@ class CaseReminderHandler(Document):
 
     def set_last_submitting_user_recipient(self):
         if self.start_condition_type != CASE_CRITERIA:
-            raise UnexpectedConfigurationException("Last submitting user is only valid for case criteria reminders")
+            raise UnexpectedConfigurationException(
+                "Last submitting user is only valid for case criteria reminders"
+            )
 
         self.recipient = RECIPIENT_USER
         return self
@@ -619,7 +621,9 @@ class CaseReminderHandler(Document):
 
     def set_case_owner_recipient(self):
         if self.start_condition_type != CASE_CRITERIA:
-            raise UnexpectedConfigurationException("Case owner recipient is only valid for case criteria reminders")
+            raise UnexpectedConfigurationException(
+                "Case owner recipient is only valid for case criteria reminders"
+            )
 
         self.recipient = RECIPIENT_OWNER
         return self
@@ -1211,7 +1215,7 @@ class CaseReminderHandler(Document):
             if isinstance(condition, datetime):
                 pass
             elif isinstance(condition, date):
-                condition = datetime.combine(condition, time(0,0))
+                condition = datetime.combine(condition, time(0, 0))
             elif looks_like_timestamp(condition):
                 try:
                     condition = parse(condition)
