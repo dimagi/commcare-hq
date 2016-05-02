@@ -2649,18 +2649,32 @@ class CreditLine(models.Model):
             line_item.feature_rate.feature.feature_type
             if line_item.feature_rate is not None else None
         )
-        return itertools.chain(
-            cls.get_credits_by_subscription_and_features(
-                line_item.invoice.subscription,
-                product_type=product_type,
-                feature_type=feature_type,
-            ),
-            cls.get_credits_for_account(
-                line_item.invoice.subscription.account,
-                product_type=product_type,
-                feature_type=feature_type,
-            )
-        )
+
+        for credit_line in cls.get_credits_by_subscription_and_features(
+            line_item.invoice.subscription,
+            product_type=product_type,
+            feature_type=feature_type,
+        ):
+            yield credit_line
+
+        for credit_line in cls.get_credits_by_subscription_and_features(
+            line_item.invoice.subscription,
+            product_type=SoftwareProductType.ANY,
+        ):
+            yield credit_line
+
+        for credit_line in cls.get_credits_for_account(
+            line_item.invoice.subscription.account,
+            product_type=product_type,
+            feature_type=feature_type,
+        ):
+            yield credit_line
+
+        for credit_line in cls.get_credits_for_account(
+            line_item.invoice.subscription.account,
+            product_type=SoftwareProductType.ANY,
+        ):
+            yield credit_line
 
     @classmethod
     def get_credits_for_invoice(cls, invoice):
