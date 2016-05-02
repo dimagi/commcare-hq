@@ -814,8 +814,10 @@ class SoftwarePlanVersion(models.Model):
             'description': self.plan.description,
         }
         try:
-            if (self.plan.visibility == SoftwarePlanVisibility.PUBLIC
-                or self.plan.visibility == SoftwarePlanVisibility.TRIAL):
+            if (
+                self.plan.visibility == SoftwarePlanVisibility.PUBLIC
+                or self.plan.visibility == SoftwarePlanVisibility.TRIAL
+            ):
                 desc['description'] = DESC_BY_EDITION[self.plan.edition]['description']
             else:
                 for desc_key in desc:
@@ -1157,7 +1159,8 @@ class Subscription(models.Model):
                 date_end is not None and date_end > sub.date_start
             )
 
-            if ((start_before_related_end and start_after_related_start)
+            if (
+                (start_before_related_end and start_after_related_start)
                 or (start_after_related_start and related_has_no_end)
                 or (end_after_related_start and end_before_related_end)
                 or (end_after_related_start and related_has_no_end)
@@ -1461,13 +1464,15 @@ class Subscription(models.Model):
             template = 'accounting/trial_ending_reminder_email.html'
             template_plaintext = 'accounting/trial_ending_reminder_email_plaintext.txt'
         else:
-            subject = _("%(product)s Alert: %(domain)s's subscription to "
-                        "%(plan_name)s ends %(ending_on)s") % {
-                            'product': product,
-                            'plan_name': plan_name,
-                            'domain': domain_name,
-                            'ending_on': ending_on,
-                        }
+            subject = _(
+                "%(product)s Alert: %(domain)s's subscription to "
+                "%(plan_name)s ends %(ending_on)s"
+            ) % {
+                'product': product,
+                'plan_name': plan_name,
+                'domain': domain_name,
+                'ending_on': ending_on,
+            }
 
             billing_contact_emails = self.account.billingcontactinfo.email_list
             if not billing_contact_emails:
@@ -1625,10 +1630,12 @@ class Subscription(models.Model):
         if date_end is not None:
             future_subscriptions = future_subscriptions.filter(date_start__lt=date_end)
         if future_subscriptions.count() > 0:
-            raise NewSubscriptionError(unicode(_(
-                "There is already a subscription '%(sub)s' that has an end date "
-                "that conflicts with the start and end dates of this "
-                "subscription %(start)s - %(end)s.") % {
+            raise NewSubscriptionError(unicode(
+                _(
+                    "There is already a subscription '%(sub)s' that has an end date "
+                    "that conflicts with the start and end dates of this "
+                    "subscription %(start)s - %(end)s."
+                ) % {
                     'sub': future_subscriptions.latest('date_created'),
                     'start': date_start,
                     'end': date_end
@@ -2486,7 +2493,8 @@ class InvoicePdf(SafeSaveDocument):
         self.is_wire = invoice.is_wire
         self.save()
 
-    def get_filename(self, invoice):
+    @staticmethod
+    def get_filename(invoice):
         return "statement_%(year)d_%(month)d.pdf" % {
             'year': invoice.date_start.year,
             'month': invoice.date_start.month,

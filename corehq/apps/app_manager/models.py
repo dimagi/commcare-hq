@@ -108,6 +108,8 @@ from corehq.apps.app_manager.util import (
     update_unique_ids,
     app_callout_templates,
     use_app_aware_sync,
+    xpath_references_case,
+    xpath_references_user_case,
 )
 from corehq.apps.app_manager.xform import XForm, parse_xml as _parse_xml, \
     validate_xform
@@ -545,6 +547,7 @@ class AdvancedOpenCaseAction(AdvancedAction):
 
 class AdvancedFormActions(DocumentSchema):
     load_update_cases = SchemaListProperty(LoadUpdateAction)
+
     open_cases = SchemaListProperty(AdvancedOpenCaseAction)
 
     get_load_update_actions = IndexedSchema.Getter('load_update_cases')
@@ -1771,6 +1774,22 @@ class CaseList(IndexedSchema, NavMenuItemMediaMixin):
         _rename_key(self.label, old_lang, new_lang)
 
 
+class CaseSearchProperty(DocumentSchema):
+    """
+    Case properties available to search on.
+    """
+    name = StringProperty()
+    label = DictProperty()
+
+
+class CaseSearch(DocumentSchema):
+    """
+    Properties and search command label
+    """
+    command_label = DictProperty(default={'en': 'Search All Cases'})
+    properties = SchemaListProperty(CaseSearchProperty)
+
+
 class ParentSelect(DocumentSchema):
 
     active = BooleanProperty(default=False)
@@ -2152,6 +2171,7 @@ class Module(ModuleBase, ModuleDetailsMixin):
     referral_list = SchemaProperty(CaseList)
     task_list = SchemaProperty(CaseList)
     parent_select = SchemaProperty(ParentSelect)
+    search_config = SchemaProperty(CaseSearch)
 
     @classmethod
     def wrap(cls, data):
@@ -2450,7 +2470,12 @@ class AdvancedForm(IndexedFormBase, NavMenuItemMediaMixin):
                 case_tag=action.case_tag
             ))
 
-        if self.form_filter:
+        form_filter_references_case = (
+            xpath_references_case(self.form_filter) or
+            xpath_references_user_case(self.form_filter)
+        )
+
+        if form_filter_references_case:
             if not any(action for action in self.actions.load_update_cases if not action.auto_select):
                 errors.append({'type': "filtering without case"})
 
@@ -2649,6 +2674,7 @@ class AdvancedModule(ModuleBase):
     has_schedule = BooleanProperty()
     schedule_phases = SchemaListProperty(SchedulePhase)
     get_schedule_phases = IndexedSchema.Getter('schedule_phases')
+    search_config = SchemaListProperty(CaseSearch)
 
     @classmethod
     def new_module(cls, name, lang):

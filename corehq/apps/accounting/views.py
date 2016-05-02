@@ -67,7 +67,7 @@ from corehq.apps.accounting.utils import (
     has_subscription_already_ended,
     log_accounting_error)
 from corehq.apps.hqwebapp.views import BaseSectionPageView, CRUDPaginatedViewMixin
-from corehq import privileges, toggles
+from corehq import privileges
 from django_prbac.decorators import requires_privilege_raise404
 from django_prbac.models import Role, Grant
 
@@ -269,7 +269,8 @@ class NewSubscriptionView(AccountingSectionView, AsyncHandlerMixin):
             try:
                 subscription = self.subscription_form.create_subscription()
                 return HttpResponseRedirect(
-                   reverse(ManageBillingAccountView.urlname, args=(subscription.account.id,)))
+                    reverse(ManageBillingAccountView.urlname, args=(subscription.account.id,))
+                )
             except NewSubscriptionError as e:
                 errors = ErrorList()
                 errors.extend([e.message])
@@ -361,7 +362,7 @@ class EditSubscriptionView(AccountingSectionView, AsyncHandlerMixin):
         subscriber_domain = self.subscription.subscriber.domain
 
         invoice_report = InvoiceInterface(self.request)
-        invoice_report.filters.update(subscription__subscriber__domain=subscriber_domain)
+        invoice_report.filter_by_subscription(self.subscription)
         # Tied to InvoiceInterface.
         encoded_params = urlencode({'subscriber': subscriber_domain})
         invoice_report_url = "{}?{}".format(invoice_report.get_url(), encoded_params)
@@ -384,7 +385,10 @@ class EditSubscriptionView(AccountingSectionView, AsyncHandlerMixin):
             'credit_list': CreditLine.objects.filter(subscription=self.subscription),
             'disable_cancel': has_subscription_already_ended(self.subscription),
             'form': self.subscription_form,
-            "subscription_has_ended": not self.subscription.is_active and self.subscription.date_start <= date.today(),
+            "subscription_has_ended": (
+                not self.subscription.is_active
+                and self.subscription.date_start <= date.today()
+            ),
             'subscription': self.subscription,
             'subscription_canceled':
                 self.subscription_canceled if hasattr(self, 'subscription_canceled') else False,
@@ -701,7 +705,6 @@ def pricing_table_json(request, product, locale):
         table = PricingTable.get_table_by_product(product)
         table_json = json.dumps(table, cls=LazyEncoder)
 
-
     # This is necessary for responding to requests from Internet Explorer.
     # IE you can FOAD.
     callback = request.GET.get('callback') or request.POST.get('callback')
@@ -918,7 +921,8 @@ class ManageAccountingAdminsView(AccountingSectionView, CRUDPaginatedViewMixin):
                 'template': 'accounting-admin-row',
             }
 
-    def _fmt_admin_data(self, admin):
+    @staticmethod
+    def _fmt_admin_data(admin):
         return {
             'id': admin.id,
             'username': admin.username,

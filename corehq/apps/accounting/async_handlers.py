@@ -6,7 +6,6 @@ from corehq.apps.accounting.utils import fmt_feature_rate_dict, fmt_product_rate
 from corehq.apps.domain.models import Domain
 from corehq.apps.hqwebapp.async_handler import BaseAsyncHandler, AsyncHandlerError
 from corehq.apps.hqwebapp.encoders import LazyEncoder
-from corehq.apps.users.models import WebUser
 
 
 class BaseRateAsyncHandler(BaseAsyncHandler):
@@ -135,8 +134,7 @@ class Select2RateAsyncHandler(BaseSelect2AsyncHandler):
 
     def _fmt_success(self, response):
         return json.dumps({
-            'results': [
-            {
+            'results': [{
                 'id': r[0],
                 'name': r[1],
                 'rate_type': r[2],

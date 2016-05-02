@@ -84,3 +84,19 @@ def case_property_filter(key, value):
             filters.term("{}.value".format(PATH), value),
         )
     )
+
+
+def flatten_result(result):
+    """Flattens a result from CaseSearchES into the format that Case serializers
+    expect
+
+    i.e. instead of {'name': 'blah', 'case_properties':{'key':'foo', 'value':'bar'}} we return
+    {'name': 'blah', 'foo':'bar'}
+    """
+    case_properties = result.pop('case_properties', None)
+    for case_property in case_properties:
+        key = case_property.get('key')
+        value = case_property.get('value')
+        if key and value:
+            result[key] = value
+    return result

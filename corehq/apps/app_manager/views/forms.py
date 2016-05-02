@@ -350,7 +350,7 @@ def patch_xform(request, domain, app_id, unique_form_id):
     xform, _ = dmp.patch_apply(dmp.patch_fromText(patch), current_xml)
     save_xform(app, form, xform)
 
-    form.actions.load_from_form = PreloadAction.wrap(case_references)
+    _update_case_refs_from_form_builder(form, case_references)
 
     response_json = {
         'status': 'ok',
@@ -626,3 +626,8 @@ def form_casexml(request, domain, form_unique_id):
     if domain != app.domain:
         raise Http404()
     return HttpResponse(form.create_casexml())
+
+
+def _update_case_refs_from_form_builder(form, reference_json):
+    if form.form_type == 'module_form':
+        form.actions.load_from_form = PreloadAction.wrap(reference_json)
