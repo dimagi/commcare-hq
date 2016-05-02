@@ -1,5 +1,8 @@
 import sys
+import json
+import requests
 from optparse import make_option
+from django.conf import settings
 from django.core.management.base import BaseCommand
 from django.core.mail import mail_admins
 
@@ -12,6 +15,7 @@ class Command(BaseCommand):
         make_option('--subject', help='Subject', default='Mail from the console'),
         make_option('--stdin', action='store_true', default=False, help='Read message body from stdin'),
         make_option('--html', action='store_true', default=False, help='HTML payload'),
+        make_option('--slack', action='store_true', default=False, help='Whether to send subject to slack'),
     )
 
     def handle(self, *args, **options):
@@ -24,5 +28,10 @@ class Command(BaseCommand):
         if options['html']:
             html = message
 
-
         mail_admins(options['subject'], message, html_message=html)
+
+        if options['slack'] and hasattr(settings, 'MIA_THE_DEPLOY_BOT_API'):
+            requests.post(settings.MIA_THE_DEPLOY_BOT_API, data=json.dumps({
+                "username": "Igor the Iguana",
+                "text": options['subject'],
+            }))

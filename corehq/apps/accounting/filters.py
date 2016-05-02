@@ -275,6 +275,7 @@ class DateFilter(OptionalDateRangeFilter):
     slug = 'date'
     label = "Date"
 
+
 class DateCreatedFilter(OptionalDateRangeFilter):
     slug = 'date_created'
     label = _("Date Created")

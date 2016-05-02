@@ -52,7 +52,7 @@ branches:
   - certificate-validation # Cal 3/10
   - inline-editing # Jenny 4/9
   - uatbc/case-search-es         # FR 4/12
-  - app-multimedia-blobs # daniel 4/20
+  - app-blobs-testing # daniel 4/20
   - j2me # Nick P 4/26
   - b3-groups  # Biyeun 4/26
   - b3-app-multimedia  # Biyeun 4/27

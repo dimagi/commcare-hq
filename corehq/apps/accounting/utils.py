@@ -213,7 +213,7 @@ def get_customer_cards(account, username, domain):
         )
         stripe_customer = payment_method.customer
         return stripe_customer.cards
-    except (StripePaymentMethod.DoesNotExist):
+    except StripePaymentMethod.DoesNotExist:
         pass
     return None
 
