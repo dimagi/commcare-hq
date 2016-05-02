@@ -1,7 +1,7 @@
 import HTMLParser
 import json
 import socket
-from datetime import timedelta, date, datetime
+from datetime import timedelta, date
 from collections import defaultdict, namedtuple
 from StringIO import StringIO
 
@@ -274,12 +274,11 @@ def system_ajax(request):
 def test_blobdb(request):
     """Save something to the blobdb and try reading it back."""
     db = get_blob_db()
-    bucket = "test_blobdb_{}".format(datetime.now().toordinal())
     contents = "It takes Pluto 248 Earth years to complete one orbit!"
-    info = db.put(StringIO(contents), bucket)
+    info = db.put(StringIO(contents))
     with db.get(info.identifier) as fh:
         res = fh.read()
-    db.delete(info.identifier, bucket)
+    db.delete(info.identifier)
     if res == contents:
         return HttpResponse("Successfully saved a file to the blobdb")
     return HttpResponse("Did not successfully save a file to the blobdb")
