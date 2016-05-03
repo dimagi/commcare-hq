@@ -25,8 +25,6 @@ class PactCHWProfileReport(PactDrilldownReportMixin, PactElasticTabularReportMix
     hide_filters = True
     filters = []
 
-    is_bootstrap3 = True
-
     def pact_case_link(self, case_id):
         #stop the madness
         from pact.reports.patient import PactPatientInfoReport

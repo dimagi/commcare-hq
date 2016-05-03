@@ -2159,7 +2159,6 @@ class DomainForwardingRepeatRecords(GenericTabularReport):
     dispatcher = DomainReportDispatcher
     ajax_pagination = True
     asynchronous = False
-    is_bootstrap3 = True
     sortable = False
 
     fields = [

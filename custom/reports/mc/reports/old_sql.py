@@ -381,7 +381,6 @@ class MCBase(ComposedTabularReport, CustomProjectReport, DatespanMixin):
     SECTIONS = None  # override
     format_class = None  # override
     extra_context_providers = [section_context]
-    is_bootstrap3 = True
     use_datatables = False
 
     @classmethod

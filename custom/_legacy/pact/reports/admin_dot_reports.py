@@ -29,8 +29,6 @@ class PactDOTAdminReport(GenericTabularReport, CustomProjectReport):
     exportable = True
     report_template_path = "pact/admin/pact_dot_admin.html"
 
-    is_bootstrap3 = True
-
     def tabular_data(self, mode, case_id, start_date, end_date):#, limit=50, skip=0):
         try:
             case_doc = PactPatientCase.get(case_id)

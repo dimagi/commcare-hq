@@ -105,7 +105,6 @@ class BaseReport(CustomProjectReport, ElasticProjectInspectionReport, ProjectRep
         asynchronous = True
         ajax_pagination = True
         include_inactive = True
-        is_bootstrap3 = True
 
         fields = [
             AsyncLocationFilter,
