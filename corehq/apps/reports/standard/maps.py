@@ -253,7 +253,7 @@ class GenericMapReport(ProjectReport, ProjectReportParametersMixin):
 class ElasticSearchMapReport(GetParamsMixin, GenericTabularReport, GenericMapReport):
 
     report_template_path = "reports/async/maps.html"
-    report_partial_path = "reports/bootstrap3/partials/base_maps.html"
+    report_partial_path = "reports/partials/base_maps.html"
     ajax_pagination = True
     asynchronous = True
     flush_layout = True
