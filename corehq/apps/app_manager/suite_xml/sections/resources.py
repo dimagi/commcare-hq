@@ -16,8 +16,8 @@ class FormResourceContributor(SectionContributor):
         for form_stuff in self.app.get_forms(bare=False):
             form = form_stuff["form"]
             path = './modules-{module.id}/forms-{form.id}.xml'.format(**form_stuff)
-            if self.build_profile:
-                path += '?profile={profile}'.format(profile=self.build_profile)
+            if self.build_profile_id:
+                path += '?profile={profile}'.format(profile=self.build_profile_id)
             resource = XFormResource(
                 id=id_strings.xform_resource(form),
                 version=form.get_version(),

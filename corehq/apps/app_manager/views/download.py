@@ -380,7 +380,7 @@ def validate_form_for_build(request, domain, app_id, unique_form_id, ajax=True):
         return HttpResponse(response_html)
 
 
-def _requested(path, prefix, profiles):
+def _file_needed_for_CCZ(path, prefix, profiles):
     if path.startswith(prefix):
         # already narrowed to specific profile
         if prefix != 'files/':
@@ -409,7 +409,7 @@ def download_index_files(app, build_profile_id=None):
             app.save()
         files = [(path[len(prefix):], app.fetch_attachment(path))
                  for path in app._attachments
-                 if _requested(path, prefix, profiles)]
+                 if _file_needed_for_CCZ(path, prefix, profiles)]
     else:
         files = app.create_all_files().items()
 
