@@ -1433,7 +1433,7 @@ class StockExportColumn(ExportColumn):
     def _column_tuples(self):
         product_ids = [p.get_id for p in Product.by_domain(self.domain)]
         ledger_values = self.accessor.get_ledger_values_for_product_ids(product_ids)
-        section_and_product_ids = sorted(set(map(lambda v: (v.product_id, v.section_id), ledger_values)))
+        section_and_product_ids = sorted(set(map(lambda v: (v.entry_id, v.section_id), ledger_values)))
         return section_and_product_ids
 
     def _get_product_name(self, product_id):
