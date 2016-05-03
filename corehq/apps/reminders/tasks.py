@@ -4,8 +4,6 @@ from corehq.apps.reminders.models import (CaseReminderHandler, CaseReminder,
     CASE_CRITERIA, REMINDER_TYPE_DEFAULT)
 from corehq.form_processor.abstract_models import DEFAULT_PARENT_IDENTIFIER
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
-from corehq.form_processor.models import CommCareCaseIndexSQL
-from corehq.form_processor.utils.general import should_use_sql_backend
 from django.conf import settings
 from dimagi.utils.logging import notify_exception
 from dimagi.utils.chunked import chunked
