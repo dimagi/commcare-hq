@@ -989,7 +989,7 @@ class FormCompletionVsSubmissionTrendsReport(WorkerMonitoringFormReportTableBase
             return ", ".join(status)
 
     def _view_form_link(self, instance_id):
-        return '<a class="btn" href="%s">View Form</a>' % absolute_reverse(
+        return '<a class="btn btn-default" href="%s">View Form</a>' % absolute_reverse(
             'render_form_data', args=[self.domain, instance_id])
 
 
