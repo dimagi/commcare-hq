@@ -27,7 +27,7 @@
             <form method='post' class="form-horizontal" action="{% url 'performance_sms.delete_performance_messages' domain form.config.get_id %}" >
                 {% csrf_token %}
                 <div class="form-group">
-                    <label class="control-label col-sm-3 col-md-2">{% trans 'Delete Performance Mssage?' %}</label>
+                    <label class="control-label col-sm-3 col-md-2">{% trans 'Delete Performance Message?' %}</label>
                     <div class="col-sm-9 col-md-8 col-lg-6">
                         <button type="submit" class="btn btn-danger disable-on-submit">{% trans 'Delete' %}</button>
                     </div>
