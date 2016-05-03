@@ -1,9 +1,9 @@
-{% extends "performance_sms/performance_sms_base.html" %}
+{% extends "reminders/bootstrap3/reminders_base.html" %}
 {% load i18n %}
 {% load crispy_forms_tags %}
 {% load hq_shared_tags %}
 {% block js %}{{ block.super }}
-    <script src="{% static 'style/js/bootstrap2/main.js' %}"></script>
+    <script src="{% static 'style/js/bootstrap3/main.js' %}"></script>
 {% endblock %}
 {% block js-inline %}{{ block.super }}
     <script type="text/javascript">
@@ -17,13 +17,21 @@
         });
     </script>
 {% endblock %}
-{% block main_column %}
+
+{% block page_content %}
     <h2>{% if editing %}{% trans 'Edit Performance Message' %}{% else %}{% trans 'New Performance Message' %}{% endif %}</h2>
     {% crispy form %}
     {% if editing %}
-        <form method='post' action="{% url 'performance_sms.delete_performance_messages' domain form.config.get_id %}" >
-            {% csrf_token %}
-            <input type="submit" value="{% trans 'Delete'%}" class="btn btn-danger disable-on-submit">
-        </form>
+        <hr />
+        <div class="alert alert-danger">
+            <form method='post' class="form-horizontal" action="{% url 'performance_sms.delete_performance_messages' domain form.config.get_id %}" >
+                {% csrf_token %}
+                <div class="form-group">
+                    <label class="control-label col-sm-3 col-md-2">{% trans 'Delete Performance Mssage?' %}</label>
+                    <div class="col-sm-9 col-md-8 col-lg-6">
+                        <button type="submit" class="btn btn-danger disable-on-submit">{% trans 'Delete' %}</button>
+                    </div>
+            </form>
+        </div>
     {% endif %}
 {% endblock %}
