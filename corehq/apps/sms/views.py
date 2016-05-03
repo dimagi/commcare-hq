@@ -342,35 +342,61 @@ def send_to_recipients(request, domain):
     )
 
 
-@domain_admin_required
-@requires_privilege_with_fallback(privileges.INBOUND_SMS)
-def message_test(request, domain, phone_number):
-    if request.method == "POST":
+class TestSMSMessageView(BaseDomainView):
+    urlname = 'message_test'
+    template_name = 'sms/message_tester.html'
+    section_name = ugettext_lazy("Messaging")
+    page_title = ugettext_lazy("Test SMS Message")
+
+    @property
+    def section_url(self):
+        return reverse('sms_default', args=(self.domain,))
+
+    @property
+    def page_url(self):
+        return reverse(self.urlname, args=(self.domain, self.phone_number,))
+
+    @method_decorator(domain_admin_required)
+    @method_decorator(requires_privilege_with_fallback(privileges.INBOUND_SMS))
+    @use_bootstrap3
+    def dispatch(self, request, *args, **kwargs):
+        return super(TestSMSMessageView, self).dispatch(request, *args, **kwargs)
+
+    @property
+    def phone_number(self):
+        return self.kwargs['phone_number']
+
+    @property
+    def page_context(self):
+        context = get_sms_autocomplete_context(self.request, self.domain)
+        context['phone_number'] = self.phone_number
+        return context
+
+    def post(self, request, *args, **kwargs):
         message = request.POST.get("message", "")
-        domain_scope = None if request.couch_user.is_superuser else domain
+        domain_scope = None if request.couch_user.is_superuser else self.domain
         try:
-            incoming(phone_number, message, "TEST", domain_scope=domain_scope)
+            incoming(self.phone_number, message, "TEST", domain_scope=domain_scope)
+            messages.success(
+                request,
+                _("Test message sent.")
+            )
         except DomainScopeValidationError:
             messages.error(
                 request,
-                _("Invalid phone number being simulated. You may only " \
-                  "simulate SMS from verified numbers belonging to contacts " \
+                _("Invalid phone number being simulated. You may only "
+                  "simulate SMS from verified numbers belonging to contacts "
                   "in this domain.")
             )
         except Exception:
             notify_exception(request)
             messages.error(
                 request,
-                _("An error has occurred. Please try again in a few minutes " \
-                  "and if the issue persists, please contact CommCareHQ " \
+                _("An error has occurred. Please try again in a few minutes "
+                  "and if the issue persists, please contact CommCareHQ "
                   "Support.")
             )
-
-    context = get_sms_autocomplete_context(request, domain)
-    context['domain'] = domain
-    context['layout_flush_content'] = True
-    context['phone_number'] = phone_number
-    return render(request, "sms/message_tester.html", context)
+        return self.get(request, *args, **kwargs)
 
 
 @csrf_exempt
