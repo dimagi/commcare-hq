@@ -1,9 +1,9 @@
 {% load i18n %}
 <fieldset class="hqm-sharing hide">
     <legend>{% trans "Multimedia Sharing Options" %}</legend>
-    <div class="control-group">
-        <div class="control-label">{% trans "License" %}</div>
-        <div class="controls">
+    <div class="form-group">
+        <div class="control-label col-sm-3">{% trans "License" %}</div>
+        <div class="col-sm-9">
             <select name="license">
                 <option value="cc-nc">{% trans "Creative Commons Attribution, Non-Commercial (CC BY-NC)" %}</option>
                 <option value="cc-nd">{% trans "Creative Commons Attribution, No Derivatives (CC BY-ND)" %}</option>
@@ -14,15 +14,15 @@
             </select>
         </div>
     </div>
-    <div class="control-group">
-        <div class="control-label">{% trans "Author" %}</div>
-        <div class="controls">
+    <div class="form-group">
+        <div class="control-label col-sm-3">{% trans "Author" %}</div>
+        <div class="controls col-sm-9">
             <input type="text" name="author" placeholder="{% trans "Enter the name of the author" %}" />
         </div>
     </div>
-    <div class="control-group">
-        <div class="control-label">{% trans "Attribution Notes" %}</div>
-        <div class="controls">
+    <div class="form-group">
+        <div class="control-label col-sm-3">{% trans "Attribution Notes" %}</div>
+        <div class="controls col-sm-9">
             <textarea name="attribution-notes" rows="2"></textarea>
         </div>
     </div>
