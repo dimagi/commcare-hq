@@ -143,7 +143,7 @@ class AutomaticUpdateRuleCriteria(models.Model):
 
     def get_case_values(self, case):
         values = case.resolve_case_property(self.property_name)
-        return [value['value'] for value in values]
+        return [element.value for element in values]
 
     def check_days_since(self, case, now):
         values = self.get_case_values(case)

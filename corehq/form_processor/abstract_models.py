@@ -1,3 +1,4 @@
+import collections
 import logging
 from abc import ABCMeta, abstractmethod, abstractproperty
 
@@ -187,16 +188,18 @@ class AbstractCommCareCase(object):
         raise NotImplementedError()
 
     def _resolve_case_property(self, property_name, result):
+        CasePropertyResult = collections.namedtuple('CasePropertyResult', 'case value')
+
         if property_name.lower().startswith('parent/'):
             parents = self.get_parent(identifier=self.default_parent_identifier)
             for parent in parents:
                 parent._resolve_case_property(property_name[7:], result)
             return
 
-        result.append({
-            'case': self,
-            'value': self.to_json().get(property_name),
-        })
+        result.append(CasePropertyResult(
+            self,
+            self.to_json().get(property_name)
+        ))
 
     def resolve_case_property(self, property_name):
         """
@@ -206,10 +209,10 @@ class AbstractCommCareCase(object):
         property_name - The case property expression. Examples: name, parent/name,
                         parent/parent/name
 
-        Returns a list of {'case': case, 'value': value} dictionaries, where
-        value is the resolved case property value and case is the case that yielded
-        that value. There can be more than one dictionary in the returned result if a
-        case has more than one parent or grandparent.
+        Returns a list of named tuples of (case, value), where value is the
+        resolved case property value and case is the case that yielded that value.
+        There can be more than one tuple in the returned result if a case has more
+        than one parent or grandparent.
         """
         result = []
         if isinstance(property_name, basestring):

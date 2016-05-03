@@ -179,7 +179,7 @@ def get_case_property(case, case_property):
 
 def case_matches_criteria(case, match_type, case_property, value_to_match):
     result = case.resolve_case_property(case_property)
-    values = [r['value'] for r in result]
+    values = [element.value for element in result]
     if not values:
         return False
     return any([value_matches_criteria(match_type, value, value_to_match) for value in values])
@@ -834,7 +834,7 @@ class CaseReminderHandler(Document):
         elif event.fire_time_type == FIRE_TIME_CASE_PROPERTY:
             fire_time = DEFAULT_REMINDER_TIME
             values = case.resolve_case_property(event.fire_time_aux)
-            values = [r['value'] for r in values]
+            values = [element.value for element in values]
             for value in values:
                 if value:
                     if isinstance(value, time):
@@ -1209,7 +1209,7 @@ class CaseReminderHandler(Document):
             return False
 
         values = case.resolve_case_property(case_property)
-        values = [r['value'] for r in values]
+        values = [element.value for element in values]
 
         for condition in values:
             if isinstance(condition, datetime):
@@ -1250,7 +1250,7 @@ class CaseReminderHandler(Document):
             return StartDateInfo(now, True, True)
 
         values = case.resolve_case_property(self.start_date)
-        values = [value['value'] for value in values]
+        values = [element.value for element in values]
 
         for start_date in values:
             if isinstance(start_date, datetime):
