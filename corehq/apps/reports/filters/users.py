@@ -33,7 +33,7 @@ class UserTypeFilter(BaseReportFilter):
     # note, don't use this as a guideline for anything.
     slug = "ufilter"
     label = ugettext_lazy("User Type")
-    template = "reports/filters/bootstrap2/filter_users.html"
+    template = "reports/filters/bootstrap3/filter_users.html"
 
     @property
     def filter_context(self):

@@ -21,7 +21,7 @@ class DomainStatsReport(GenericTabularReport):
     dispatcher = BasicReportDispatcher
     asynchronous = True
     section_name = 'DOMSTATS'
-    base_template = "reports/async/bootstrap2/default.html"
+    base_template = "reports/async/bootstrap3/default.html"
     custom_params = []
     es_queried = False
 
