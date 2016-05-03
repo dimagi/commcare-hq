@@ -510,6 +510,7 @@ EMAIL_SUBJECT_PREFIX = '[commcarehq] '
 
 SERVER_ENVIRONMENT = 'localdev'
 BASE_ADDRESS = 'localhost:8000'
+J2ME_ADDRESS = ''
 
 # Set this if touchforms can't access HQ via the public URL e.g. if using a self signed cert
 # Should include the protocol.
