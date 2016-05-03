@@ -4075,6 +4075,7 @@ class ApplicationBase(VersionedDoc, SnapshotMixin,
 
     @classmethod
     def wrap(cls, data):
+        should_save = False
         # scrape for old conventions and get rid of them
         if 'commcare_build' in data:
             version, build_number = data['commcare_build'].split('/')
@@ -4096,8 +4097,9 @@ class ApplicationBase(VersionedDoc, SnapshotMixin,
             if (data['build_langs'] != data['langs']) and ('build_profiles' not in data):
                     data['build_profiles'] = {uuid.uuid4().hex : BuildProfile(name=', '.join(data['build_langs']), langs=data['build_langs'])}
             del data['build_langs']
+            should_save = True
 
-        should_save = False
+
         if data.has_key('original_doc'):
             data['copy_history'] = [data.pop('original_doc')]
             should_save = True
