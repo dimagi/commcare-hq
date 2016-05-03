@@ -176,6 +176,8 @@ datespan_default = datespan_in_request(
 
 require_form_export_permission = require_permission(
     Permissions.view_report, FORM_EXPORT_PERMISSION, login_decorator=None)
+require_form_deid_export_permission = require_permission(
+    Permissions.view_report, DEID_EXPORT_PERMISSION, login_decorator=None)
 require_case_export_permission = require_permission(
     Permissions.view_report, CASE_EXPORT_PERMISSION, login_decorator=None)
 
@@ -519,31 +521,46 @@ def _export_default_or_custom_data(request, domain, export_id=None, bulk_export=
 @require_form_export_permission
 @require_GET
 def hq_download_saved_export(req, domain, export_id):
-    export = SavedBasicExport.get(export_id)
+    saved_export = SavedBasicExport.get(export_id)
+    return _download_saved_export(req, domain, saved_export)
+
+
+@csrf_exempt
+@login_or_digest_or_basic_or_apikey(default='digest')
+@require_form_deid_export_permission
+@require_GET
+def hq_deid_download_saved_export(req, domain, export_id):
+    saved_export = SavedBasicExport.get(export_id)
+    if not saved_export.is_safe:
+        raise Http404()
+    return _download_saved_export(req, domain, saved_export)
+
+
+def _download_saved_export(req, domain, saved_export):
     # quasi-security hack: the first key of the index is always assumed
     # to be the domain
-    assert domain == export.configuration.index[0]
-    if should_update_export(export.last_accessed):
+    assert domain == saved_export.configuration.index[0]
+    if should_update_export(saved_export.last_accessed):
         group_id = req.GET.get('group_export_id')
         if group_id:
             try:
                 group_config = HQGroupExportConfiguration.get(group_id)
                 assert domain == group_config.domain
                 all_config_indices = [schema.index for schema in group_config.all_configs]
-                list_index = all_config_indices.index(export.configuration.index)
+                list_index = all_config_indices.index(saved_export.configuration.index)
                 schema = next(itertools.islice(group_config.all_export_schemas,
                                                list_index,
                                                list_index+1))
-                rebuild_export_async.delay(export.configuration, schema)
+                rebuild_export_async.delay(saved_export.configuration, schema)
             except Exception:
                 notify_exception(req, 'Failed to rebuild export during download')
 
-    export.last_accessed = datetime.utcnow()
-    export.save()
+    saved_export.last_accessed = datetime.utcnow()
+    saved_export.save()
 
-    payload = export.get_payload(stream=True)
+    payload = saved_export.get_payload(stream=True)
     return build_download_saved_export_response(
-        payload, export.configuration.format, export.configuration.filename
+        payload, saved_export.configuration.format, saved_export.configuration.filename
     )
 
 
@@ -1584,7 +1601,6 @@ def download_form(request, domain, instance_id):
     instance = _get_form_or_404(domain, instance_id)
     assert(domain == instance.domain)
 
-    instance = XFormInstance.get(instance_id)
     response = HttpResponse(content_type='application/xml')
     response.write(instance.get_xml())
     return response

@@ -134,13 +134,16 @@ class Command(BaseCommand):
             app = get_app(domain, app_id)
             for build in [app] + get_saved_apps(app):
                 for form_unique_id in form_unique_ids:
-                    set_xmlns_on_form(
-                        form_unique_id,
-                        unique_id_to_xmlns_map[form_unique_id],
-                        build,
-                        log_file,
-                        dry_run
-                    )
+                    if unique_id_to_xmlns_map.get(form_unique_id):
+                        set_xmlns_on_form(
+                            form_unique_id,
+                            unique_id_to_xmlns_map[form_unique_id],
+                            build,
+                            log_file,
+                            dry_run
+                        )
+                    else:
+                        print 'Could not find unique_id {} in build {}'.format(form_unique_id, build._id)
 
     @staticmethod
     def _print_progress(i, total_submissions):
@@ -218,7 +221,9 @@ def set_xmlns_on_form(form_id, xmlns, app_build, log_file, dry_run):
     except FormNotFoundException:
         return
 
-    if form_in_build.xmlns == "undefined":
+    if form_in_build.xmlns == "undefined" or form_in_build.source.count('xmlns="undefined"') > 0:
+        if form_in_build.xmlns != "undefined":
+            assert form_in_build.xmlns == xmlns
         xml = form_in_build.source
         wrapped_xml = XForm(xml)
 

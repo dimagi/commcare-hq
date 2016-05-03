@@ -197,7 +197,7 @@ APP_AWARE_SYNC = PredictablyRandomToggle(
     'App-aware Sync',
     TAG_PRODUCT_PATH,
     [NAMESPACE_DOMAIN],
-    randomness=0.1
+    randomness=0.3
 )
 
 CASE_LIST_CUSTOM_XML = StaticToggle(
@@ -365,6 +365,14 @@ NO_VELLUM = StaticToggle(
     '(for custom forms that Vellum breaks)',
     TAG_EXPERIMENTAL,
     [NAMESPACE_DOMAIN, NAMESPACE_USER]
+)
+
+VELLUM_BETA = PredictablyRandomToggle(
+    'vellum_beta',
+    'Use Vellum beta version',
+    TAG_ONE_OFF,
+    [NAMESPACE_DOMAIN],
+    randomness=0.1
 )
 
 HIPAA_COMPLIANCE_CHECKBOX = StaticToggle(

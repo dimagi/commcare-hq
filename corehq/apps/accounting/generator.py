@@ -142,7 +142,7 @@ def get_start_date():
     start_date = datetime.date.today()
     (_, last_day) = calendar.monthrange(start_date.year, start_date.month)
     # make sure that the start_date does not fall on the first or last day of the month:
-    return start_date.replace(day=min(max(2, start_date.day), last_day-1))
+    return start_date.replace(day=min(max(2, start_date.day), last_day - 1))
 
 
 def arbitrary_domain():
