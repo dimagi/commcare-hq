@@ -47,20 +47,24 @@ def get_current_ledger_transactions(case_id):
     Given a case returns a dict of all current ledger data.
     {
         "section_id": {
-             "product_id": StockTransaction,
-             "product_id": StockTransaction,
+             "product_id": StockState,
+             "product_id": StockState,
              ...
         },
         ...
     }
     """
     from corehq.apps.commtrack.models import StockState
-    results = StockState.objects.filter(case_id=case_id).values_list('case_id', 'section_id', 'product_id')
+    results = StockState.objects.filter(case_id=case_id)
 
     ret = {}
-    for case_id, section_id, product_id in results:
-        sections = ret.setdefault(section_id, {})
-        sections[product_id] = StockTransaction.latest(case_id, section_id, product_id)
+    for state in results:
+        sections = ret.setdefault(state.section_id, {})
+        sections[state.product_id] = state
+        if not state.last_modified_form_id:
+            transaction = StockTransaction.latest(case_id, state.section_id, state.product_id)
+            state.last_modified_form_id = transaction.report.form_id
+            state.save()
     return ret
 
 
