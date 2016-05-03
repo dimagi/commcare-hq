@@ -26,6 +26,7 @@ from corehq.apps.accounting.models import Subscription
 from corehq.apps.domain.models import Domain
 from corehq.apps.hqwebapp.tasks import send_mail_async
 from corehq.apps.hqwebapp.templatetags.hq_shared_tags import toggle_enabled
+from corehq.apps.tour import tours
 from corehq.apps.userreports.const import REPORT_BUILDER_EVENTS_KEY
 from corehq.util import reverse
 from corehq.util.quickcache import quickcache
@@ -221,6 +222,11 @@ class ReportBuilderPaywallBase(BaseDomainView):
 class ReportBuilderPaywall(ReportBuilderPaywallBase):
     template_name = "userreports/paywall/paywall.html"
     urlname = 'report_builder_paywall'
+
+    def dispatch(self, request, *args, **kwargs):
+        if request.GET.get('tour', False) and tours.REPORT_BUILDER_EXISTENCE.is_enabled(request.user):
+            request.guided_tour = tours.REPORT_BUILDER_EXISTENCE.get_tour_data(self.request, 1)
+        return super(ReportBuilderPaywall, self).dispatch(request, *args, **kwargs)
 
 
 class ReportBuilderPaywallActivatingTrial(ReportBuilderPaywallBase):

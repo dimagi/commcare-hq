@@ -17,6 +17,7 @@ from corehq.apps.domain.views import DomainViewMixin, LoginAndDomainMixin, \
 from corehq.apps.domain.utils import user_has_custom_top_menu
 from corehq.apps.hqwebapp.view_permissions import user_can_view_reports
 from corehq.apps.hqwebapp.views import BasePageView
+from corehq.apps.tour import tours
 from corehq.apps.users.views import DefaultProjectUserSettingsView
 from corehq.apps.style.decorators import use_bootstrap3, use_angular_js
 from django_prbac.utils import has_privilege
@@ -108,6 +109,11 @@ class DomainDashboardView(JSONResponseMixin, BaseDashboardView):
     urlname = 'dashboard_domain'
     page_title = ugettext_noop("HQ Dashboard")
     template_name = 'dashboard/dashboard_domain.html'
+
+    def dispatch(self, request, *args, **kwargs):
+        if tours.REPORT_BUILDER_EXISTENCE.is_enabled(request.user):
+            request.guided_tour = tours.REPORT_BUILDER_EXISTENCE.get_tour_data(self.request, 0)
+        return super(DomainDashboardView, self).dispatch(request, *args, **kwargs)
 
     @property
     def tile_configs(self):

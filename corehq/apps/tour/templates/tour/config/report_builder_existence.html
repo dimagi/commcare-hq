@@ -1,0 +1,57 @@
+<script type="text/javascript">
+    $(function () {
+        var report_builder_existence_tour = new Tour({
+            debug: true,
+            name: '{{ request.guided_tour.slug }}',
+            orphan: true,  // needed due to the async nature of the dashboard
+            steps: [
+                {
+                    path: '{{ request.guided_tour.dashboard_url }}',
+                    element: '*[slug="reports"] .panel-heading',
+                    title: gettext("Build Your Own Reports!"),
+                    content: gettext("Build real-time graphs and indicator reports for your project"),
+                    placement: 'bottom'
+                },
+                {% if request.guided_tour.has_rb_access %}
+                {
+                    path: '{{ request.guided_tour.reports_home_url }}',
+                    element: '#create-new-report-left-nav',
+                    title: gettext("Add A Report"),
+                    content: gettext("Click here to add your own custom reports to your project."),
+                    placement: 'right'
+                }
+                {% else %}
+                {
+                    path: '{{ request.guided_tour.report_builder_paywall_url }}',
+                    element: '#try-builder-button',
+                    title: gettext("Sign up"),
+                    content: gettext("When you're ready, sign up for the trial"),
+                    placement: "bottom"
+                }
+                {% endif %}
+            ],
+            onEnd: TourUtils.getEndTourAsync('{{ request.guided_tour.endUrl }}'),
+            template: TourUtils.getCustomTemplate()
+        });
+        var launchTour = function() {
+            report_builder_existence_tour.setCurrentStep({{ request.guided_tour.step }});
+            report_builder_existence_tour.init(true);
+            report_builder_existence_tour.start(true)
+        };
+        {% if request.guided_tour.step == 0 %}
+            {% comment %}
+            Step 0 is on a page (the dashboard) that loads the step element
+            asynchronously. Launching the tour after a short delay should ensure
+            that this element exists on the page first in most cases.
+            It would be better to listen to some sort of "loaded" event on the
+            tile instead.
+            {% endcomment %}
+            setTimeout(function() {
+                launchTour();
+            }, 800);
+        {% else %}
+            launchTour();
+        {% endif %}
+
+    });
+</script>

@@ -76,7 +76,8 @@ class ProjectReportsTab(UITab):
                 [{
                     "title": _('Create new report'),
                     "url": create_report_url,
-                    "icon": "icon-plus fa fa-plus"
+                    "icon": "icon-plus fa fa-plus",
+                    "id": "create-new-report-left-nav",
                 }]
             )]
 
