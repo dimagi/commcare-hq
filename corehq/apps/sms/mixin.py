@@ -78,8 +78,8 @@ class VerifiedNumber(SyncCouchToSQLMixin, Document):
     @property
     def owner(self):
         if self.owner_doc_type == "CommCareCase":
-            from casexml.apps.case.models import CommCareCase
-            return CommCareCase.get(self.owner_id)
+            from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
+            return CaseAccessors(self.domain).get_case(self.owner_id)
         elif self.owner_doc_type == "CommCareUser":
             from corehq.apps.users.models import CommCareUser
             return CommCareUser.get(self.owner_id)

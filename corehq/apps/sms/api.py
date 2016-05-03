@@ -119,7 +119,7 @@ def send_sms(domain, contact, phone_number, text, metadata=None):
         text = text
     )
     if contact:
-        msg.couch_recipient = contact._id
+        msg.couch_recipient = contact.get_id
         msg.couch_recipient_doc_type = contact.doc_type
     add_msg_tags(msg, metadata)
 

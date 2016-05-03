@@ -10,6 +10,7 @@ from corehq.apps.groups.models import Group
 from corehq.apps.locations.models import SQLLocation
 from corehq.apps.sms.mixin import apply_leniency, CommCareMobileContactMixin, InvalidFormatException
 from corehq.apps.users.models import CommCareUser, CouchUser
+from corehq.form_processor.utils import is_commcarecase
 from corehq.util.quickcache import quickcache
 from casexml.apps.case.models import CommCareCase
 from django_prbac.utils import has_privilege
@@ -92,7 +93,7 @@ def get_recipient_name(recipient, include_desc=True):
     elif isinstance(recipient, CouchUser):
         name = recipient.raw_username
         desc = "User"
-    elif isinstance(recipient, CommCareCase):
+    elif is_commcarecase(recipient):
         name = recipient.name
         desc = "Case"
     elif isinstance(recipient, Group):
@@ -238,7 +239,7 @@ def get_unverified_number_for_recipient(recipient):
         except Exception:
             # todo: catch more specific error
             return None
-    elif isinstance(recipient, CommCareCase):
+    elif is_commcarecase(recipient):
         unverified_number = recipient.get_case_property("contact_phone_number")
         unverified_number = apply_leniency(unverified_number)
         if unverified_number:
