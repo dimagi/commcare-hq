@@ -17,6 +17,7 @@ from corehq.form_processor.interfaces.dbaccessors import LedgerAccessors, FormAc
 from corehq.form_processor.models import LedgerTransaction
 from corehq.form_processor.tests.utils import run_with_all_backends
 from corehq.form_processor.utils.general import should_use_sql_backend
+from couchforms.models import XFormInstance
 from dimagi.utils.parsing import json_format_datetime, json_format_date
 from casexml.apps.stock import const as stockconst
 from casexml.apps.stock.models import StockReport, StockTransaction
