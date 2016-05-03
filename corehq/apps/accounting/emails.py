@@ -42,3 +42,23 @@ def send_subscription_change_alert(domain, new_subscription, old_subscription, i
         render_to_string('accounting/subscription_change_email.html', email_context),
         text_content=render_to_string('accounting/subscription_change_email.txt', email_context),
     )
+
+
+def send_email_1(email_address):
+    send_html_email_async.delay(
+        'No action required on your recent CommCare Invoice',
+        email_address,
+        render_to_string('accounting/email_1.html', {}),
+        text_content=render_to_string('accounting/email_1.txt', {}),
+        email_from=settings.INVOICING_CONTACT_EMAIL,
+    )
+
+
+def send_email_2(email_address):
+    send_html_email_async.delay(
+        'Your recent CommCare invoice',
+        email_address,
+        render_to_string('accounting/email_2.html', {}),
+        text_content=render_to_string('accounting/email_2.html', {}),
+        email_from=settings.INVOICING_CONTACT_EMAIL,
+    )
