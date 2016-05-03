@@ -74,14 +74,11 @@ class BaseReportFilter(object):
         if not (filter_context, dict):
             raise ValueError("filter_context must return a dict.")
         self.context.update(filter_context)
-        return render_to_string(self.get_bootstrap_template(), self.context)
+        return render_to_string(self.template, self.context)
 
     @classmethod
     def get_value(cls, request, domain):
         return request.GET.get(cls.slug)
-
-    def get_bootstrap_template(self):
-        return self.template.replace('/bootstrap2/', '/bootstrap3/')
 
 
 class CheckboxFilter(BaseReportFilter):

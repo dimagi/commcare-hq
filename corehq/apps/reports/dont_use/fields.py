@@ -46,16 +46,13 @@ class ReportField(object):
         self.context['css_label_class'] = self.css_label
         self.context['css_field_class'] = self.css_field
         self.update_context()
-        return render_to_string(self.get_bootstrap_template(), self.context)
+        return render_to_string(self.template, self.context)
 
     def update_context(self):
         """
         If your select field needs some context (for example, to set the default) you can set that up here.
         """
         pass
-
-    def get_bootstrap_template(self):
-        return self.template.replace('/bootstrap2/', '/bootstrap3/')
 
 
 class ReportSelectField(ReportField):

@@ -720,7 +720,6 @@ class GenericReportView(object):
         pass
 
     def _select_bootstrap_template(self, template_path):
-        template_path = template_path.replace('/bootstrap2/', '/bootstrap3/')
         return template_path
 
 
