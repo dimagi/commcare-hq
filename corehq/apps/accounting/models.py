@@ -2572,7 +2572,7 @@ class LineItem(models.Model):
         CreditLine.apply_credits_toward_balance(credit_lines, current_total, line_item=self)
 
 
-class CreditLine(models.Model):
+class CreditLine(ValidateModelMixin, models.Model):
     """
     The amount of money in USD that exists can can be applied toward a specific account,
     a specific subscription, or specific rates in that subscription.
