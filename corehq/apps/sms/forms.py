@@ -1031,26 +1031,33 @@ class SendRegistrationInviationsForm(Form):
         self.set_app_id_choices()
 
         self.helper = FormHelper()
-        self.helper.form_class = "form form-horizontal"
+        self.helper.form_class = "form-horizontal"
+        self.helper.label_class = 'col-sm-3'
+        self.helper.field_class = 'col-sm-9'
         self.helper.layout = crispy.Layout(
-            FieldsetAccordionGroup(
-                _("Send Registration Invitation"),
-                crispy.Field('app_id'),
+            crispy.Div(
+                'app_id',
                 crispy.Field(
                     'phone_numbers',
                     placeholder=_("Enter phone number(s) in international "
                         "format. Example: +27..., +91...,"),
                 ),
                 InlineField('action'),
-                FormActions(
-                    StrictButton(
-                        _("Send Invitation"),
-                        type="submit",
-                        css_class="btn-primary",
-                    ),
+                css_class='modal-body',
+            ),
+            crispy.Div(
+                twbscrispy.StrictButton(
+                    _("Cancel"),
+                    data_dismiss='modal',
+                    css_class="btn btn-default",
                 ),
-                active=len(args) > 0,
-            )
+                twbscrispy.StrictButton(
+                    _("Send Invitation"),
+                    type="submit",
+                    css_class="btn btn-primary",
+                ),
+                css_class='modal-footer',
+            ),
         )
 
     def clean_phone_numbers(self):

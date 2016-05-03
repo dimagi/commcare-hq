@@ -1977,6 +1977,10 @@ class ManageRegistrationInvitationsView(BaseAdvancedMessagingSectionView, CRUDPa
     loading_message = ugettext_noop("Loading invitations...")
     strict_domain_fetching = True
 
+    @use_bootstrap3
+    def dispatch(self, request, *args, **kwargs):
+        return super(ManageRegistrationInvitationsView, self).dispatch(request, *args, **kwargs)
+
     @property
     @memoized
     def invitations_form(self):
