@@ -749,6 +749,7 @@ class SettingsForm(Form):
         # Just cast to int, the ChoiceField will validate that it is an integer
         return int(self.cleaned_data.get("sms_conversation_length"))
 
+
 class BackendForm(Form):
     _cchq_domain = None
     _cchq_backend_id = None

@@ -7,6 +7,7 @@ from custom.care_pathways.reports import CareBaseReport
 from custom.care_pathways.sqldata import AdoptionBarChartReportSqlData
 import re
 
+
 class AdoptionBarChartReport(CareBaseReport):
     name = 'Adoption Bar Chart'
     slug = 'adoption_bar_chart'

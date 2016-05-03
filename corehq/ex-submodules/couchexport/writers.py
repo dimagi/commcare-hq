@@ -394,6 +394,7 @@ class Excel2003ExportWriter(ExportWriter):
     def _close(self):
         self.book.save(self.file)
 
+
 class InMemoryExportWriter(ExportWriter):
     """
     Keeps tables in memory. Subclassed by other export writers.
@@ -414,6 +415,7 @@ class InMemoryExportWriter(ExportWriter):
 
     def _close(self):
         pass
+
 
 class JsonExportWriter(InMemoryExportWriter):
     """

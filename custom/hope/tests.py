@@ -13,6 +13,7 @@ from corehq.apps.domain.models import Domain
 from corehq.apps.users.models import WebUser
 from custom.hope.models import HOPECase
 
+
 class TestHOPECaseResource(TestCase):
     """
     Smoke test for the HOPECase wrapper on CommCareCase to make sure that the

@@ -34,6 +34,8 @@ XFORM_TEMPLATE = """<?xml version='1.0' ?>
     </data>"""
 
 #http://stackoverflow.com/questions/392041/python-optparse-list
+
+
 def parse_files(option, opt, value, parser):
     pairs = value.split(',')
     stream_dict = {}

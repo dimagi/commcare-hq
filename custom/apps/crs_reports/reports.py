@@ -93,6 +93,7 @@ class HNBCReportDisplay(CaseDisplay):
         else:
             return '---'
 
+
 class BaseHNBCReport(CustomProjectReport, CaseListReport):
 
     fields = ['custom.apps.crs_reports.fields.SelectBlockField',

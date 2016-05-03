@@ -6,6 +6,7 @@ from custom.intrahealth.filters import FicheLocationFilter
 from custom.intrahealth.reports import IntraHealtMixin
 from custom.intrahealth.sqldata import FicheData
 
+
 class FicheConsommationReport(IntraHealtMixin, DatespanMixin, GenericTabularReport, CustomProjectReport):
     name = "Fiche Consommation"
     slug = 'fiche_consommation'

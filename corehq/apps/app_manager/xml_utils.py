@@ -4,9 +4,11 @@
 # allows html to be written nicely in python
 # tag(opt=val)[sub1, sub2] stands for <tag opt="val">sub1 sub2</tag>
 
+
 class XMLObjectType(type):
     def __getitem__(cls, item):
         return cls()[item]
+
 
 class XMLObject(object):
     __metaclass__ = XMLObjectType
@@ -32,6 +34,7 @@ class XMLObject(object):
         return struct.render(depth)
     def __unicode__(self):
         return self.render(None)
+
 
 class XMLTag(XMLObject):
     name = ""

@@ -14,6 +14,7 @@ from dimagi.ext.couchdbkit import (
 )
 from corehq.pillows.core import DATE_FORMATS_ARR, DATE_FORMATS_STRING
 
+
 def type_full_date(formats=DATE_FORMATS_STRING):
     return dict(type="date", format=formats)
 
@@ -128,6 +129,7 @@ app_special_types = {
     "name": type_exact_match_string("name", dual=True),
     "profile": {"type": "object", "dynamic": True},
 }
+
 
 def set_properties(schema_class, dynamic=False, custom_types=default_special_types, nested_types=default_nested_types, init_dict=None):
     """

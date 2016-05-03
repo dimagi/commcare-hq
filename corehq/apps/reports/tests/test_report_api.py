@@ -11,6 +11,7 @@ DOMAIN = "test"
 
 unity = lambda x: x
 
+
 class UserDataSource(SqlData):
     table_name = "user_report_data"
 

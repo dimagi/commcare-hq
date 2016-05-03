@@ -98,6 +98,7 @@ class MultiBarChart(Chart):
                     forceY=self.forceY,
                     groupSpacing=self.groupSpacing)
 
+
 class LineChart(Chart):
     """
     :param title: The chart title

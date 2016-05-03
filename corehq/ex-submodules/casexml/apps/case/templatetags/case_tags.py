@@ -327,6 +327,7 @@ def sortkey(child, type_info=None):
             key.append(case.opened_on or datetime.datetime.min)
     return key
 
+
 def get_session_data(case, current_case, type_info):
     # this logic should ideally be implemented in subclasses of
     # CommCareCase
@@ -343,6 +344,7 @@ def get_session_data(case, current_case, type_info):
 
 
 TREETABLE_INDENT_PX = 19
+
 
 def process_case_hierarchy(case_output, get_case_url, type_info):
     current_case = case_output['case']

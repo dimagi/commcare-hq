@@ -231,6 +231,7 @@ def format_datatables_data(text, sort_key, raw=None):
         data['raw'] = raw
     return data
 
+
 def app_export_filter(doc, app_id):
     if app_id:
         return (doc['app_id'] == app_id) if doc.has_key('app_id') else False
@@ -393,10 +394,12 @@ def batch_qs(qs, batch_size=1000):
         end = min(start + batch_size, total)
         yield (start, end, total, qs[start:end])
 
+
 def stream_qs(qs, batch_size=1000):
     for _, _, _, qs in batch_qs(qs, batch_size):
         for item in qs:
             yield item
+
 
 def numcell(text, value=None, convert='int', raw=None):
     if value is None:

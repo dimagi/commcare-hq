@@ -197,6 +197,7 @@ def prepare_case_update_xml_block(casedoc, couch_user, update_dict, submit_date)
 
     return case_lxml
 
+
 def recompute_dots_casedata(casedoc, couch_user, submit_date=None, sync_token=None):
     """
     On a DOT submission, recompute the DOT block and submit a casedoc update xform
@@ -210,6 +211,7 @@ def recompute_dots_casedata(casedoc, couch_user, submit_date=None, sync_token=No
 
         update_dict['dots'] = json.dumps(dots_data)
         submit_case_update_form(casedoc, update_dict, couch_user, submit_date=submit_date, xmlns=XMLNS_PATIENT_UPDATE_DOT, sync_token=sync_token)
+
 
 def submit_case_update_form(casedoc, update_dict, couch_user, submit_date=None, xmlns=XMLNS_PATIENT_UPDATE, sync_token=None):
     """

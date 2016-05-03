@@ -934,6 +934,7 @@ class TestCaseESAccessors(BaseESAccessorsTest):
 
         self.assertEqual(results, 2)
 
+
 @override_settings(TESTS_SHOULD_USE_SQL_BACKEND=True)
 class TestCaseESAccessorsSQL(TestCaseESAccessors):
     def get_pillow(self):

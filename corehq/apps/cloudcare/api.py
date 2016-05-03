@@ -210,6 +210,7 @@ def get_filtered_cases(domain, status, user_id=None, case_type=None,
     else:
         return helper.get_all()
 
+
 class ElasticCaseQuery(object):
     # this class is currently pretty customized to serve exactly
     # this API. one day it may be worth reconciling our ES interfaces

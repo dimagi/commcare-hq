@@ -11,6 +11,7 @@ from couchexport.export import SchemaMismatchException, ExportConfiguration
 
 logging = get_task_logger(__name__)
 
+
 @task
 def export_async(custom_export, download_id, format=None, filename=None, **kwargs):
     try:

@@ -11,6 +11,7 @@ from corehq.apps.users.models import CommCareUser, CouchUser
 
 EMPTY_FIELD = "---"
 
+
 def get_property(dict_obj, name, default=None):
     if name in dict_obj:
         if type(dict_obj[name]) is dict:

@@ -7,6 +7,7 @@ from pact.utils import REPORT_XFORM_MISSING_DOTS_QUERY
 
 CHUNK_SIZE=100
 
+
 class Command(NoArgsCommand):
     help = "Helper command to compute DOT computed_ fields - to exteranlly operate that operation that should happen on signal firing on submission"
     option_list = NoArgsCommand.option_list + (

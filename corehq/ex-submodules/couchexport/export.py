@@ -210,6 +210,7 @@ scalar_never_was = Constant(SCALAR_NEVER_WAS)
 list_never_was = Constant(LIST_NEVER_WAS)
 transform_error_constant = Constant("---ERR---")
 
+
 def render_never_was(schema):
     if isinstance(schema, dict):
         answ = {}
@@ -223,6 +224,8 @@ def render_never_was(schema):
         return scalar_never_was
 
 unknown_type = None
+
+
 def fit_to_schema(doc, schema):
 
     def log(msg):

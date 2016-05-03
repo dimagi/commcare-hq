@@ -3,6 +3,7 @@ import urllib
 
 register = template.Library()
 
+
 @register.tag
 def urlencode(parser, token):
     tokens = list(reversed(token.split_contents()))
@@ -33,6 +34,7 @@ def urlencode(parser, token):
             raise template.TemplateSyntaxError, "%r tag found '%s'; expected 'with...as' or 'without'" % (tag_name, cmd)
 
     return URLEncodeNode(path_var, params_var, params, delete)
+
 
 class URLEncodeNode(template.Node):
     def __init__(self, path_var,  params_var, extra_params, delete_params):

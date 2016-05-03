@@ -113,6 +113,7 @@ class CaseActionBase(object):
                    const.CASE_TAG_DATE_OPENED: "opened_on"}
         return cls._from_block_and_mapping(block, mapping)
 
+
 class CaseNoopAction(CaseActionBase):
     """
     Form completed against case without updating any properties (empty case block)
@@ -122,14 +123,18 @@ class CaseNoopAction(CaseActionBase):
     def get_known_properties(self):
         return {}
 
+
 class CaseCreateAction(CaseActionBase):
     action_type_slug = const.CASE_ACTION_CREATE
         
+
 class CaseUpdateAction(CaseActionBase):
     action_type_slug = const.CASE_ACTION_UPDATE
 
+
 class CaseCloseAction(CaseActionBase):
     action_type_slug = const.CASE_ACTION_CLOSE
+
 
 class AbstractAction(object):
     def __init__(self, action_type_slug):
@@ -192,6 +197,7 @@ class CaseAttachmentAction(CaseActionBase):
             attachments[id] = CaseAttachment(id, attachment_src, attachment_from, attachment_name)
         return cls(block, attachments)
 
+
 class CaseIndex(object):
     """
     A class that holds an index to a case.
@@ -202,6 +208,7 @@ class CaseIndex(object):
         self.referenced_id = referenced_id
         self.relationship = relationship
     
+
 class CaseIndexAction(CaseActionBase):
     """
     Action describing updates to the case indices

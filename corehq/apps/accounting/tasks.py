@@ -58,6 +58,7 @@ _invoicing_complete_soft_assert = soft_assert(
     exponential_backoff=False,
 )
 
+
 @transaction.atomic
 def _activate_subscription(subscription):
     subscription.is_active = True

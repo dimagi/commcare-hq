@@ -182,6 +182,7 @@ def safe_fixture_upload(domain, file_ref, replace, task=None):
         result.errors.append(unicode(e))
         return result
 
+
 def do_fixture_upload(domain, file_ref, replace, task=None):
     workbook = get_workbook(file_ref.get_filename())
     try:

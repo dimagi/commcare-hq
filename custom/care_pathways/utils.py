@@ -6,6 +6,7 @@ from dimagi.ext.jsonobject import JsonObject, StringProperty, ListProperty, Dict
 from corehq.apps.reports.sqlreport import DataFormatter
 from dimagi.utils.decorators.memoized import memoized
 
+
 @memoized
 def get_domain_configuration(domain):
     with open(os.path.join(os.path.dirname(__file__), 'resources/%s.json' % (domain))) as f:
@@ -15,18 +16,23 @@ def get_domain_configuration(domain):
             by_type_hierarchy=[ByTypeHierarchyRecord(d) for d in _loaded_configuration['by_type_hierarchy']]
         )
 
+
 def is_mapping(prop, domain):
     return any(d['val'] == prop for d in get_mapping(domain))
+
 
 def is_domain(prop, domain):
     return any(d['val'] == prop for d in get_domains(domain))
 
+
 def is_practice(prop, domain):
     return any(d['val'] == prop for d in get_pracices(domain))
+
 
 def get_mapping(domain_name):
     value_chains = get_domain_configuration(domain_name).by_type_hierarchy
     return list({'val': vc.val, "text": vc.text} for vc in value_chains)
+
 
 def get_domains_with_next(domain_name):
     configuration = get_domain_configuration(domain_name).by_type_hierarchy
@@ -167,6 +173,7 @@ class TableCardDataGroupsFormatter(DataFormatter):
                 percent = 100 * float(group[idx]) / float(len(data))
                 group[idx] = "%.2f%%" % percent
         return range_groups
+
 
 class TableCardDataIndividualFormatter(DataFormatter):
 

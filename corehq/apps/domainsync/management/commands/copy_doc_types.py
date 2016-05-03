@@ -6,6 +6,7 @@ from optparse import make_option
 
 logger = logging.getLogger(__name__)
 
+
 class Command(BaseCommand):
     help = "Copies all docs of some types from one database to another. Pretty brute force and single-threaded."
     args = '<sourcedb> <destdb> [<doc_type>, ...]'

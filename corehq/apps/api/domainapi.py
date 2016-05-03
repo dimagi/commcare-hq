@@ -1,6 +1,7 @@
 from django.http import Http404
 from django.views.generic import View
 
+
 class DomainAPI(View):
     """
     DomainAPI allows for additional separate RESTful assets to be accessible within or outside

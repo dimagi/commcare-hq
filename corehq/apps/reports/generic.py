@@ -1050,6 +1050,7 @@ def summary_context(report):
     # a summary_values attribute
     return {"summary_values": report.summary_values}
 
+
 class SummaryTablularReport(GenericTabularReport):
     report_template_path = "reports/async/bootstrap2/summary_tabular.html"
     extra_context_providers = [summary_context]
@@ -1072,6 +1073,7 @@ class SummaryTablularReport(GenericTabularReport):
         headers = list(self.headers)
         assert (len(self.data) == len(headers))
         return zip(headers, self.data)
+
 
 class ProjectInspectionReportParamsMixin(object):
     @property
@@ -1106,6 +1108,7 @@ class PaginatedReportMixin(object):
         if len(res) == 0 and self.default_sort is not None:
             res.append(self.default_sort)
         return res
+
 
 class ElasticTabularReport(GenericTabularReport, PaginatedReportMixin):
     """

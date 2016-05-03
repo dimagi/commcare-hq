@@ -5,6 +5,7 @@ import itertools
 from couchexport.export import export_raw, export_from_tables
 from couchexport.models import Format
 
+
 class ExportRawTest(TestCase):
 
     def test_export_raw(self):

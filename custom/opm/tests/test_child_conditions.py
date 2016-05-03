@@ -135,6 +135,7 @@ class TestChildExclusivelyBreastfed(ChildConditionMixin, TestCase):
             child_age=6,
         )
 
+
 class TestChildReceivedORS(ChildConditionMixin, TestCase):
     def setUp(self):
         self.xmlns = CFU2_XMLNS

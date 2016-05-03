@@ -36,6 +36,7 @@ SHARED_ID = "our_group"
 PARENT_TYPE = "mother"
 CHILD_RELATIONSHIP = "child"
 
+
 @override_settings(CASEXML_FORCE_DOMAIN_CHECK=False)
 class SyncBaseTest(TestCase):
     """

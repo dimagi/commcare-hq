@@ -8,6 +8,7 @@ from corehq.apps.reports.util import format_datatables_data
 
 __all__ = ['Column', 'BasicTabularReport']
 
+
 class Column(object):
     """
     Unified interface for a report column that lets you specify the

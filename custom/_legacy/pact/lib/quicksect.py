@@ -105,6 +105,7 @@ class IntervalNode( object ):
         func( self )
         if self.right: self.right.traverse( func )
 
+
 def main():
     test = None
     intlist = []

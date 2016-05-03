@@ -799,6 +799,7 @@ class CaseTypeReminderTestCase(BaseReminderTestCase):
            ,prev_now + timedelta(days=self.handler2.start_offset)
         )
 
+
 class StartConditionReminderTestCase(BaseReminderTestCase):
     def setUp(self):
         super(StartConditionReminderTestCase, self).setUp()
@@ -1019,6 +1020,7 @@ class StartConditionReminderTestCase(BaseReminderTestCase):
         reminder = self.handler1.get_reminder(self.case1)
         self.assertEqual(reminder, None)
         self.assertEqual(CaseReminder.get(old_reminder_id).doc_type, "CaseReminder-Deleted")
+
 
 class ReminderLockTestCase(BaseReminderTestCase):
     def setUp(self):

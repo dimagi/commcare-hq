@@ -80,6 +80,7 @@ LICENSE_LINKS = {
     'cc-nc-nd': 'http://creativecommons.org/licenses/by-nc-nd/4.0',
 }
 
+
 def cached_property(method):
     def find_cached(self):
         try:
@@ -95,6 +96,7 @@ class UpdatableSchema():
     def update(self, new_dict):
         for kw in new_dict:
             self[kw] = new_dict[kw]
+
 
 class Deployment(DocumentSchema, UpdatableSchema):
     date = DateTimeProperty()
@@ -129,6 +131,7 @@ class LicenseAgreement(DocumentSchema):
     user_id = StringProperty()
     user_ip = StringProperty()
     version = StringProperty()
+
 
 class InternalProperties(DocumentSchema, UpdatableSchema):
     """
@@ -173,12 +176,14 @@ class CaseDisplaySettings(DocumentSchema):
 
     # todo: case list
 
+
 class DynamicReportConfig(DocumentSchema):
     """configurations of generic/template reports to be set up for this domain"""
     report = StringProperty()  # fully-qualified path to template report class
     name = StringProperty()  # report display name in sidebar
     kwargs = DictProperty()  # arbitrary settings to configure report
     previewers_only = BooleanProperty()
+
 
 class DynamicReportSet(DocumentSchema):
     """a set of dynamic reports grouped under a section header in the sidebar"""
@@ -187,6 +192,7 @@ class DynamicReportSet(DocumentSchema):
 
 
 LOGO_ATTACHMENT = 'logo.png'
+
 
 class DayTimeWindow(DocumentSchema):
     """

@@ -88,6 +88,7 @@ class Product(object):
             category=json_rep['category'],
         )
 
+
 class RequisitionStatus(RssWrapper):
 
     @property
@@ -434,6 +435,7 @@ class RequisitionDetails(Requisition):
             'supplyingFacilityCode': self.supplying_facility_code
         }
         return dictionary
+
 
 class RequisitionProductDetails(RequisitionProduct):
 

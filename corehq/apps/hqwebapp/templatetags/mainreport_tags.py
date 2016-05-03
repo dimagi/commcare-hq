@@ -9,10 +9,12 @@ username_datecount_cache = {}
 
 register = template.Library()
 
+
 @register.simple_tag
 def get_daterange_links(view_name, args={}):
     base_link = reverse(view_name,kwargs=args)
     return get_daterange_links_raw(base_link, args)
+
 
 @register.simple_tag
 def get_daterange_links_raw(base_link, args={}):
@@ -34,6 +36,7 @@ def get_daterange_links_raw(base_link, args={}):
     ret += "</ul></div>"
     return ret
 
+
 @register.simple_tag
 def get_daterange_links_basic(base_link, days=[0,7,30,90], args={}):
     '''Allows you to pass in a list of day counts representing how 
@@ -49,11 +52,13 @@ def get_daterange_links_basic(base_link, days=[0,7,30,90], args={}):
     ret += "</ul></div>"
     return ret
 
+
 def _get_formatted_date_link(base_link, end_date, num_days):
     return '<li><a href="%s?startdate=%s&enddate=%s">%s</a></li>' % (base_link, 
                                                                 (end_date - timedelta(days=num_days)).strftime('%m/%d/%Y'), 
                                                                 end_date.strftime('%m/%d/%Y'), 
                                                                 _get_time_interval_display(num_days))
+
 
 def _get_time_interval_display(num_days):
     '''Gets a display string representing the interval.'''

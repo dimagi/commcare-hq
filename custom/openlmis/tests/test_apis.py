@@ -12,6 +12,7 @@ from custom.openlmis.tests.mock_api import MockOpenLMISEndpoint
 ISO_FORMAT = '%Y-%m-%dT%H:%M:%SZ'
 TEST_DOMAIN_API = "commtrack-api-test"
 
+
 class FeedApiTest(TestCase):
 
     def setUp(self):

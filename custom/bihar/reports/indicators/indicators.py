@@ -320,6 +320,7 @@ class Indicator(object):
     def as_row(self, case, context, fluff_row):
         return self._display.as_row(case, context, fluff_row)
 
+
 class IndicatorDataProvider(object):
 
     def __init__(self, domain, indicator_set, groups):

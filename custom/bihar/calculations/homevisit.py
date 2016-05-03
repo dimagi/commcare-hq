@@ -18,6 +18,7 @@ def date_in_range(date_to_check, reference, lower_window=10, upper_window=10):
 
 def no_filter(*args, **kwargs): return True
 
+
 class DateRangeFilter(object):
 
     def __init__(self, days):

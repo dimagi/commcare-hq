@@ -302,6 +302,7 @@ class MotherMCHRegister(MCHBaseReport):
     def fixed_cols_spec(self):
         return dict(num=2, width=350)
 
+
 class ChildMCHRegister(MCHBaseReport):
     name = "Child MCH register"
     slug = "child_mch_register"

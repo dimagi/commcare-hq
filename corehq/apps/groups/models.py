@@ -278,6 +278,7 @@ class Group(QuickCachedDocumentMixin, UndoableDocument):
         return ("Group(domain={self.domain!r}, name={self.name!r}, "
                 "case_sharing={self.case_sharing!r})").format(self=self)
 
+
 class UnsavableGroup(Group):
     def save(self, *args, **kwargs):
         raise CantSaveException("Instances of UnsavableGroup cannot be saved")

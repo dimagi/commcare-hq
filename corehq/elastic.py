@@ -252,6 +252,8 @@ def es_histogram(histo_type, domains=None, startdate=None, enddate=None,
 
 
 SIZE_LIMIT = 1000000
+
+
 def es_query(params=None, facets=None, terms=None, q=None, es_index=None, start_at=None, size=None, dict_only=False,
              fields=None, facet_size=None):
     if terms is None:

@@ -330,6 +330,7 @@ class DeliveryMothersIds(BaseSqlData):
             DatabaseColumn("Mother ID",  SimpleColumn('doc_id'))
         ]
 
+
 class DeliveryLiveBirthDetails(BaseSqlData):
     table_name = "fluff_WorldVisionChildFluff"
     slug = 'delivery_live_birth_details'

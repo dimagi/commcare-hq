@@ -11,33 +11,40 @@ def _observationGenerator(encounter_date, observation_date, adherence=DOT_ADHERE
                         observed_date=observation_date,
                         adherence=adherence,)
 
+
 def generateDirect(encounter_date, observation_date, adherence=DOT_ADHERENCE_EMPTY):
     obs = _observationGenerator(encounter_date,observation_date, adherence=adherence)
     obs.method=DOT_OBSERVATION_DIRECT
     return obs
+
 
 def generateUnchecked(encounter_date, observation_date, adherence=DOT_ADHERENCE_UNCHECKED):
     obs = _observationGenerator(encounter_date, observation_date, adherence=adherence)
     obs.method = DOT_OBSERVATION_PILLBOX
     return obs
 
+
 def generateReconciliation():
     pass
+
 
 def generatePillbox(encounter_date, observation_date, adherence=DOT_ADHERENCE_EMPTY):
     obs = _observationGenerator(encounter_date,observation_date, adherence=adherence)
     obs.method=DOT_OBSERVATION_PILLBOX
     return obs
 
+
 def generateSelf(encounter_date, observation_date, adherence=DOT_ADHERENCE_EMPTY):
     obs = _observationGenerator(encounter_date,observation_date, adherence=adherence)
     obs.method=DOT_OBSERVATION_SELF
     return obs
 
+
 def generateAny(encounter_date, observation_date, adherence=DOT_ADHERENCE_EMPTY):
     obs = _observationGenerator(encounter_date,observation_date, adherence=adherence)
     obs.method=random.choice([DOT_OBSERVATION_PILLBOX, DOT_OBSERVATION_PILLBOX])
     return obs
+
 
 class dotsAlgorithmTests(TestCase):
     def setUp(self):

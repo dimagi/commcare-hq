@@ -182,6 +182,7 @@ class ClientListBase(GroupReferenceMixIn, ConvenientBaseMixIn,
     # "abstract" class for client list reports
     report_template_path = "bihar/client_listing.html"
 
+
 class IndicatorClientList(ClientListBase, IndicatorMixIn):
     is_cacheable = True
     slug = "indicatorclientlist"
@@ -259,6 +260,7 @@ class IndicatorClientList(ClientListBase, IndicatorMixIn):
             self.indicator.as_row(cases[result['id']], self.fluff_results, fluff_row=result)
             for result in results
         ]
+
 
 class MyPerformanceList(IndicatorClientList):
     slug = "myperformancelist"

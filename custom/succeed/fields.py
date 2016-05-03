@@ -109,8 +109,10 @@ class PatientNameFilterMixin(object):
         es_results = es_query(q=q, es_index='report_cases', dict_only=False)
         return [(case['_source']['_id'], case['_source']['full_name']['#value']) for case in es_results['hits'].get('hits', [])]
 
+
 class PatientName(PatientNameFilterMixin, BaseSingleOptionFilter):
     placeholder = ugettext_noop('Click to select a patient')
+
 
 class TaskStatus(ReportSelectField):
     slug = "task_status"

@@ -26,6 +26,7 @@ class PathTemp(TempBase):
     def delete(self):
         os.remove(self.path)
 
+
 class StringIOTemp(TempBase):
     def __init__(self, buffer):
         self.buffer = buffer
@@ -47,6 +48,7 @@ class StringIOTemp(TempBase):
     def delete(self):
         if self._path is not None:
             os.remove(self._path)
+
 
 class ExportFiles(object):
 

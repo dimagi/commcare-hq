@@ -14,6 +14,8 @@ except ImportError:
 
 
 _parser = etree.XMLParser(remove_blank_text=True)
+
+
 def normalize_xml(xml):
     xml = etree.fromstring(xml, parser=_parser)
     return etree.tostring(xml, pretty_print=True)

@@ -7,6 +7,7 @@ from mvp.static_definitions.question_id_mapping import (CHILD_CLOSE_FORM_QUESTIO
                                                         PREGNANCY_CLOSE_FORM_QUESTION_IDS,
                                                         CHILD_REGISTRATION_QUESTION_IDS)
 
+
 class Command(LabelCommand):
     help = "Create the indicator definitions necessary to compute MVP Indicators."
     args = ""

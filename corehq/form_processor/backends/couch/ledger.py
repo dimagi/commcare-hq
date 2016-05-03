@@ -65,6 +65,7 @@ class LedgerProcessorCouch(LedgerProcessorInterface):
     def rebuild_ledger_state(self, case_id, section_id, entry_id):
         rebuild_stock_state(case_id, section_id, entry_id)
 
+
 def _get_model_for_stock_report(domain, stock_report_helper):
     return StockReport(
         form_id=stock_report_helper.form_id,

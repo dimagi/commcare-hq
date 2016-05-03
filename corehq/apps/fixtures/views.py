@@ -220,6 +220,7 @@ def create_types(fields_patches, domain, data_tag, is_global, transaction):
     transaction.save(data_type)
     return data_type
 
+
 @require_can_edit_fixtures
 def data_table(request, domain):
     # TODO this should be async (large tables time out)

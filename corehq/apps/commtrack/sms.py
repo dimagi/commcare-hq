@@ -588,11 +588,13 @@ def to_instance(data):
     else:
         return requisition_case_xml(data, stock_blocks)
 
+
 def truncate(text, maxlen, ellipsis='...'):
     if len(text) > maxlen:
         return text[:maxlen-len(ellipsis)] + ellipsis
     else:
         return text
+
 
 def send_confirmation(v, data):
     C = CommtrackConfig.for_domain(v.domain)

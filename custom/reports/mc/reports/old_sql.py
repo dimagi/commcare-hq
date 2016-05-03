@@ -92,6 +92,7 @@ class UserDataFormat(TableDataFormat):
             else:
                 yield _empty_row(len(self.columns))
 
+
 class FacilityDataFormat(TableDataFormat):
 
     def __init__(self, columns, users):
@@ -344,6 +345,7 @@ class McSqlData(SqlData):
     def get_user_ids(self):
         return [u._id for u in self.get_users()]
 
+
 class MCSectionedDataProvider(DataProvider):
 
     def __init__(self, sqldata):
@@ -428,6 +430,7 @@ class HeathFacilityMonthly(MCBase):
     SECTIONS = HF_MONTHLY_REPORT
     format_class = UserDataFormat
 
+
 class DistrictMonthly(MCBase):
     fields = [
         'corehq.apps.reports.filters.dates.DatespanFilter',
@@ -438,6 +441,7 @@ class DistrictMonthly(MCBase):
     SECTIONS = DISTRICT_MONTHLY_REPORT
     format_class = FacilityDataFormat
 
+
 class DistrictWeekly(MCBase):
     fields = [
         'corehq.apps.reports.filters.dates.DatespanFilter',
@@ -447,6 +451,7 @@ class DistrictWeekly(MCBase):
     name = ugettext_noop("mc_report_dist_weekly")
     SECTIONS = DISTRICT_WEEKLY_REPORT
     format_class = FacilityDataFormat
+
 
 def _int(str):
     try:

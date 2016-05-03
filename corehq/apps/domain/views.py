@@ -582,6 +582,7 @@ def autocomplete_fields(request, field):
     results = Domain.field_by_prefix(field, prefix)
     return HttpResponse(json.dumps(results))
 
+
 def logo(request, domain):
     logo = Domain.get_by_name(domain).get_custom_logo()
     if logo is None:

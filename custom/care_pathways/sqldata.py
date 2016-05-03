@@ -28,6 +28,7 @@ def _get_grouping(prop_dict):
             group_by = []
         return group_by
 
+
 class CareQueryMeta(QueryMeta):
 
     def __init__(self, table_name, filters, group_by, order_by, key):

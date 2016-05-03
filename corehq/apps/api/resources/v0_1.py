@@ -357,6 +357,7 @@ class XFormInstanceResource(HqBaseResource, DomainSpecificResourceMixin):
         ordering = ['received_on']
         serializer = XFormInstanceSerializer(formats=['json'])
 
+
 def _safe_bool(bundle, param, default=False):
     try:
         return string_to_boolean(bundle.request.GET.get(param))

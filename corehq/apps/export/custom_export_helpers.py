@@ -358,6 +358,7 @@ class FormCustomExportHelper(CustomExportHelper):
         self.update_table_conf_with_questions(ctxt["table_configuration"])
         return ctxt
 
+
 class CustomColumn(object):
 
     def __init__(self, slug, index, display, transform, is_sensitive=False, tag=None, show=False, selected=False):

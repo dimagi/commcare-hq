@@ -9,6 +9,7 @@ from pact.enums import PACT_HP_CHOICES, PACT_DOT_CHOICES, PACT_REGIMEN_CHOICES, 
 from django.forms import widgets
 from pact.regimen import regimen_dict_from_choice
 
+
 def get_hp_choices():
     from pact.reports.patient_list import PactPrimaryHPField
     return [(x['val'], x['text']) for x in PactPrimaryHPField.get_chws()]

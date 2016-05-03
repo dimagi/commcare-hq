@@ -442,6 +442,7 @@ class ExportTable(DocumentSchema):
             row_id = row.id if id else None
             yield FormattedRow(cells, row_id, id_index=id_index)
 
+
 class BaseSavedExportSchema(Document):
     # signature: filter(doc)
     filter_function = SerializableFunctionProperty()

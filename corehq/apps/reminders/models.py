@@ -139,8 +139,10 @@ SEND_LATER = "LATER"
 # TODO: Decide whether to keep this or retire the reminder
 DEFAULT_REMINDER_TIME = time(12, 0)
 
+
 def is_true_value(val):
     return val == 'ok' or val == 'OK'
+
 
 def looks_like_timestamp(value):
     try:
@@ -149,8 +151,10 @@ def looks_like_timestamp(value):
     except Exception:
         return False
 
+
 def property_references_parent(case_property):
     return isinstance(case_property, basestring) and case_property.startswith("parent/")
+
 
 def get_case_property(case, case_property):
     """
@@ -168,6 +172,7 @@ def get_case_property(case, case_property):
             return parent_case.get_case_property(case_property[7:])
     else:
         return case.get_case_property(case_property)
+
 
 def case_matches_criteria(case, match_type, case_property, value_to_match):
     result = False
@@ -235,6 +240,7 @@ class MessageVariable(object):
             pass
         return "(?)"
 
+
 class Message(object):
     def __init__(self, template, **params):
         self.template = template
@@ -249,6 +255,7 @@ class Message(object):
         if isinstance(template, str):
             template = unicode(template, encoding='utf-8')
         return unicode(cls(template, **params))
+
 
 class CaseReminderEvent(DocumentSchema):
     """
@@ -1469,6 +1476,7 @@ class CaseReminderHandler(Document):
     def deleted(self):
         return self.doc_type != 'CaseReminderHandler'
 
+
 class CaseReminder(SafeSaveDocument, LockableMixIn):
     """
     Where the CaseReminderHandler is the rule and schedule for sending out reminders,
@@ -1617,6 +1625,7 @@ class CaseReminder(SafeSaveDocument, LockableMixIn):
         self.doc_type += "-Deleted"
         self.save()
 
+
 class SurveyKeywordAction(DocumentSchema):
     recipient = StringProperty(choices=KEYWORD_RECIPIENT_CHOICES)
     recipient_id = StringProperty()
@@ -1632,6 +1641,7 @@ class SurveyKeywordAction(DocumentSchema):
     use_named_args = BooleanProperty()
     named_args = DictProperty() # Dictionary of {argument name in the sms (caps) : form question xpath}
     named_args_separator = StringProperty() # Can be None in which case there is no separator (i.e., a100 b200)
+
 
 class SurveyKeyword(Document):
     domain = StringProperty()

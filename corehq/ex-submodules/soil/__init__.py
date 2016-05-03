@@ -194,6 +194,7 @@ class CachedDownload(DownloadBase):
         cache.caches[ret.cache_backend].set(download_id, payload, expiry)
         return ret
 
+
 class FileDownload(DownloadBase):
     """
     Download that lives on the filesystem

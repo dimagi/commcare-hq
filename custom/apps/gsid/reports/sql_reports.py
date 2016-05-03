@@ -465,6 +465,7 @@ class GSIDSQLByDayReport(GSIDSQLReport):
             chart.add_dataset(row[date_index-1] + "(" + row[date_index] + ")", data_points)
         return [chart]
 
+
 class GSIDSQLTestLotsReport(GSIDSQLReport):
     name = "Test Lots Report"
     slug = "test_lots_sql"

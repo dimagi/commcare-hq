@@ -8,8 +8,10 @@ from sqlalchemy import cast, Float
 
 logger = logging.getLogger("sqlagg")
 
+
 class MeanColumnWithCasting(BaseColumn):
     aggregate_fn = lambda _, column: func.avg(cast(column, Numeric(4, 2)))
+
 
 class CustomMedianQueryMeta(MedianQueryMeta):
 

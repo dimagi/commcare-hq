@@ -42,17 +42,21 @@ class MockExcelFile(object):
     def get_row(self, index):
         return self.row_generator(self, index)
 
+
 def default_row_generator(excel_file, index):
     # by default, just return [propertyname-rowid] for every cell
     return [u'{col}-{row}'.format(row=index, col=col) for col in excel_file.header_columns]
 
+
 def blank_row_generator(excel_file, index):
     return [''.format(row=index, col=col) for col in excel_file.header_columns]
+
 
 def id_match_generator(id):
     def match(excel_file, index):
         return [id] + ['{col}-{row}'.format(row=index, col=col) for col in excel_file.header_columns[1:]]
     return match
+
 
 class ImporterTest(TestCase):
 

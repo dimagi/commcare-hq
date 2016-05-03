@@ -74,6 +74,7 @@ COUCH_USER_AUTOCREATED_STATUS = 'autocreated'
 
 MAX_LOGIN_ATTEMPTS = 5
 
+
 def _add_to_list(list, obj, default):
     if obj in list:
         list.remove(obj)
@@ -84,6 +85,7 @@ def _add_to_list(list, obj, default):
     else:
         list.append(obj)
     return list
+
 
 def _get_default(list):
     return list[0] if list else None
@@ -343,19 +345,23 @@ PERMISSIONS_PRESETS = {
     'no-permissions': {'name': 'Read Only', 'permissions': Permissions(view_reports=True)},
 }
 
+
 class AdminUserRole(UserRole):
     def __init__(self, domain):
         super(AdminUserRole, self).__init__(domain=domain, name='Admin', permissions=Permissions.max())
     def get_qualified_id(self):
         return 'admin'
 
+
 class DomainMembershipError(Exception):
     pass
+
 
 class Membership(DocumentSchema):
 #   If we find a need for making UserRoles more general and decoupling it from domain then most of the role stuff from
 #   Domain membership can be put in here
     is_admin = BooleanProperty(default=False)
+
 
 class DomainMembership(Membership):
     """
@@ -408,12 +414,15 @@ class DomainMembership(Membership):
     class Meta:
         app_label = 'users'
 
+
 class OrgMembership(Membership):
     organization = StringProperty()
     team_ids = StringListProperty(default=[]) # a set of ids corresponding to which teams the user is a member of
 
+
 class OrgMembershipError(Exception):
     pass
+
 
 class CustomDomainMembership(DomainMembership):
     custom_role = SchemaProperty(UserRole)
@@ -454,6 +463,7 @@ class IsMemberOfMixin(DocumentSchema):
     def is_global_admin(self):
         # subclasses to override if they want this functionality
         return False
+
 
 class _AuthorizableMixin(IsMemberOfMixin):
     """
@@ -626,6 +636,7 @@ class _AuthorizableMixin(IsMemberOfMixin):
             return _("Dimagi User") if self.is_global_admin() else _("Unauthorized User")
         except Exception:
             return None
+
 
 class SingleMembershipMixin(_AuthorizableMixin):
     domain_membership = SchemaProperty(DomainMembership)
@@ -2114,6 +2125,7 @@ class PublicUser(FakeUser):
 
     def get_domains(self):
         return []
+
 
 class InvalidUser(FakeUser):
     """

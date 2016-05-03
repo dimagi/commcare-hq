@@ -19,6 +19,7 @@ ORDER_CASE_TYPE = 'commtrack-order'
 
 DAYS_IN_MONTH = 30.0
 
+
 def is_commtrack_case(case):
     return case.type in [
         SUPPLY_POINT_CASE_TYPE,
@@ -33,6 +34,8 @@ ALL_PRODUCTS_TRANSACTION_TAG = '_all_products'
 PARENT_CASE_REF = 'parent'
 
 # http://stackoverflow.com/questions/36932/whats-the-best-way-to-implement-an-enum-in-python
+
+
 def enum(**enums):
     return type('Enum', (), enums)
 
@@ -60,6 +63,7 @@ ORDERED_REQUISITION_ACTIONS = (
     RequisitionActions.PACK,
     RequisitionActions.RECEIPTS,
 )
+
 
 class RequisitionStatus(object):
     """a const for our requisition status choices"""
@@ -89,6 +93,7 @@ class RequisitionStatus(object):
             cls.FULFILLED: RequisitionActions.FULFILL,
             cls.RECEIVED: RequisitionActions.RECEIPTS,
         }[status]
+
 
 def get_commtrack_user_id(domain):
     # abstracted out in case we one day want to back this

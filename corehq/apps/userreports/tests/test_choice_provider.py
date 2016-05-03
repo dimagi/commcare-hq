@@ -129,6 +129,7 @@ class ChoiceProviderTestMixin(object):
         """
         pass
 
+
 class LocationChoiceProviderTest(TestCase, ChoiceProviderTestMixin):
     dependent_apps = [
         'corehq.apps.commtrack', 'corehq.apps.locations', 'corehq.apps.products',

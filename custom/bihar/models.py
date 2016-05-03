@@ -14,6 +14,7 @@ from django.db import models
 
 A_DAY = datetime.timedelta(days=1)
 
+
 class BiharCase(CommCareCase):
     doc_type = 'CommCareCase'
 

@@ -73,6 +73,7 @@ from corehq.util.xml_utils import indent_xml
 def default(request, domain):
     return HttpResponseRedirect(reverse('cloudcare_main', args=[domain, '']))
 
+
 def insufficient_privilege(request, domain, *args, **kwargs):
     context = {
         'domain': domain,
@@ -410,6 +411,7 @@ def filter_cases(request, domain, app_id, module_id, parent_id=None):
 @cloudcare_api
 def get_apps_api(request, domain):
     return json_response(get_cloudcare_apps(domain))
+
 
 @cloudcare_api
 def get_app_api(request, domain, app_id):

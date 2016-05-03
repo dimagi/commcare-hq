@@ -18,6 +18,7 @@ TEST_USER = 'case_attachment@hqtesting.com'
 
 TEST_PASSWORD = 'testing'
 
+
 def hack_local_url(url):
     #hack, in tests, this is the in built sites which is not useful externally
     local_url = '/'.join(url.split('/')[3:])

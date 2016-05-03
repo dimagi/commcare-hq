@@ -266,6 +266,7 @@ class TableCardGroupByFilter(BaseSingleOptionFilter):
     def selected(self):
         return self.get_value(self.request, self.domain) or "group_name"
 
+
 class TableCardTypeFilter(TypeFilter):
     single_option_select_without_default_text = 1
 

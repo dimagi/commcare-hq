@@ -1102,6 +1102,7 @@ def maintenance_alerts(request, template='style/bootstrap2/maintenance_alerts.ht
         } for alert in MaintenanceAlert.objects.order_by('-created')[:5]]
     })
 
+
 class MaintenanceAlertsView(BasePageView):
     urlname = 'alerts'
     page_title = ugettext_noop("Maintenance Alerts")

@@ -14,6 +14,7 @@ from corehq.apps.domain.models import Domain
 from corehq.apps.app_manager.models import Application, APP_V1
 from corehq.apps.domain.views import CreateNewExchangeSnapshotView
 
+
 class TestDomainViews(TestCase):
     def setUp(self):
         self.client = Client()

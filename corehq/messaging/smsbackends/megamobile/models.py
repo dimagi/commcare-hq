@@ -9,6 +9,7 @@ from django.conf import settings
 
 DEFAULT_PID = "0"
 
+
 class MegamobileException(Exception):
     pass
 

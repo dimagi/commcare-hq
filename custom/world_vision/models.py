@@ -102,10 +102,13 @@ def calculate_weight(case):
     return ""
 
 # This calculator is necessary to generate 'date' field which is required in the database
+
+
 class Numerator(fluff.Calculator):
     @fluff.null_emitter
     def numerator(self, case):
         yield None
+
 
 class WorldVisionHierarchyFluff(fluff.IndicatorDocument):
     def user_data(property):

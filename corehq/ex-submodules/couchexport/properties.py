@@ -2,6 +2,7 @@ from dateutil.parser import parse
 from dimagi.ext.couchdbkit import DateTimeProperty, Property
 import json
 
+
 def parse_date_string(datestring, precise=False):
     """
     >>> parse_date_string('2013-01-03T11:27:06.045000Z')
@@ -21,6 +22,7 @@ def parse_date_string(datestring, precise=False):
     # couchdbkit throws away timezones too so while this may not be technically
     # correct, at least it's consistent
     return date_with_tz.replace(tzinfo=None)
+
 
 class TimeStampProperty(DateTimeProperty):
     """
@@ -47,6 +49,7 @@ class TimeStampProperty(DateTimeProperty):
         if value is None:
             return value
         return value.isoformat() + 'Z'
+
 
 class JsonProperty(Property):
     """

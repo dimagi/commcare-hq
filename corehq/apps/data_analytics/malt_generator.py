@@ -19,6 +19,7 @@ logger.setLevel(logging.INFO)
 
 MaltAppData = namedtuple('MaltAppData', 'wam pam use_threshold experienced_threshold is_app_deleted')
 
+
 class MALTTableGenerator(object):
     """
         Populates SQL table with data for given list of monthly-datespans

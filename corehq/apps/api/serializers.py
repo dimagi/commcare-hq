@@ -105,6 +105,7 @@ class CustomXMLSerializer(Serializer):
             etree.remove(id)
         return etree
 
+
 class XFormInstanceSerializer(Serializer):
     def to_xml(self, data, options=None):
         if isinstance(data, Bundle):

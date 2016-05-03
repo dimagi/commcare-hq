@@ -4,6 +4,7 @@ from pact.regimen import regimen_dict_from_choice, regimen_string_from_doc
 
 art_nonart = [DOT_ART, DOT_NONART]
 
+
 class RegimenPropertiesTests(TestCase):
     def testStringToDictRegimensNum(self):
         #assure that all frequencies line up ok
