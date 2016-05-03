@@ -48,6 +48,7 @@ class CouchAttachmentsBuilder(object):
     and how/whether they call .save() on the object.)
 
     """
+
     def __init__(self, original=None):
         self._dict = original or {}
 
@@ -172,6 +173,7 @@ _override_db = threading.local()
 
 
 class OverrideDB(object):
+
     def __init__(self, document_class, database):
         self.document_class = document_class
         self.database = database

@@ -246,6 +246,7 @@ class DateRangeFilter(BaseReportFilter):
 
 
 class OptionalFilterMixin(object):
+
     @classmethod
     def use_filter(cls, request):
         return cls.optional_filter_string_value(request) == 'on'
@@ -274,6 +275,7 @@ class OptionalDateRangeFilter(DateRangeFilter, OptionalFilterMixin):
 class DateFilter(OptionalDateRangeFilter):
     slug = 'date'
     label = "Date"
+
 
 class DateCreatedFilter(OptionalDateRangeFilter):
     slug = 'date_created'

@@ -140,7 +140,6 @@ class ServiceAvailabilityTestMixIn(object):
         }
 
 
-
 class TestChildMeasles(OPMCaseReportTestBase, ConditionFourTestMixin, ServiceAvailabilityTestMixIn):
     expected_window = 12
     service_key = 'stock_measlesvacc'

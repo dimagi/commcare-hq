@@ -1,15 +1,16 @@
-{% extends 'style/bootstrap2/two_column.html' %}
+{% extends 'style/bootstrap3/base_section.html' %}
 {% load i18n %}
 {% load hq_shared_tags %}
 {% load timezone_tags %}
+{% load crispy_forms_tags %}
 
 {% block js-inline %}{{ block.super }}
 <script>
     function toggle_keyword() {
         if($("#id_forward_type").val() == "KEYWORD") {
-            $("#keyword_row").show();
+            $("#keyword_row").removeClass('hide');
         } else {
-            $("#keyword_row").hide();
+            $("#keyword_row").addClass('hide');
         }
     }
     $(function(){
@@ -21,54 +22,9 @@
 </script>
 {% endblock %}
 
-{% block page-title %}
-    <ul class="breadcrumb">
-        <li>
-            <a href="{% url "messaging" domain %}"><strong>{% trans "Messaging" %}</strong></a> <span class="divider">&gt;</span>
-        </li>
-        <li>
-            <a href="{% url "list_forwarding_rules" domain %}"><strong>{% trans "Forwarding Rules" %}</strong></a> <span class="divider">&gt;</span>
-        </li>
-        <li class="active">
-            <div id="report-title">
-            {% block page-subtitle %}
-                {% if forwarding_rule_id %}
-                    <a href="{% url "edit_forwarding_rule" domain forwarding_rule_id %}">{% trans "Edit Forwarding Rule" %}</a>
-                {% else %}
-                    <a href="{% url "add_forwarding_rule" domain %}">{% trans "Add Forwarding Rule" %}</a>
-                {% endif %}
-            {% endblock %}
-            </div>
-        </li>
-    </ul>
-{% endblock %}
-
-{% block main_column %}
-    <form action="" method="post">
+{% block page_content %}
+    <form action="" class="form-horizontal" method="post">
         {% csrf_token %}
-        <table>
-            <tr>
-                <th><label for="id_forward_type">{% trans "Forward type" %}</label></th>
-                <td>
-                    <select name="forward_type" id="id_forward_type">
-                    {% for code, description in form.forward_type.field.choices %}
-                        <option value="{{ code }}" {% if code == form.forward_type.value %}selected="selected"{% endif %}>{% trans description %}</option>
-                    {% endfor %}
-                    </select>
-                </td>
-                <td>{{ form.forward_type.errors }}</td>
-            </tr>
-            <tr id="keyword_row">
-                <th><label for="id_keyword">{% trans "Keyword" %}</label></th>
-                <td><input type="text" name="keyword" id="id_keyword" value="{{ form.keyword.value|default:'' }}" /></td>
-                <td>{{ form.keyword.errors }}</td>
-            </tr>
-            <tr>
-                <th><label for="id_backend_id">{% trans "Backend id" %}</label></th>
-                <td><input type="text" name="backend_id" id="id_backend_id" value="{{ form.backend_id.value|default:'' }}" /></td>
-                <td>{{ form.backend_id.errors }}</td>
-            </tr>
-        </table>
-        <input type="submit" class="btn btn-primary" value="Submit" />
+        {% crispy form %}
     </form>
 {% endblock %}

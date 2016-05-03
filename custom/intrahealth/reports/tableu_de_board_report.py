@@ -145,6 +145,7 @@ class MultiReport(CustomProjectReport, IntraHealtMixin, ProjectReportParametersM
 
         return [export_sheet_name, table]
 
+
 class TableuDeBoardReport(MultiReport):
     title = "Tableau De Bord"
     fields = [DatespanFilter, LocationFilter]

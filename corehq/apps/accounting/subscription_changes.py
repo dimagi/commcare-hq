@@ -26,6 +26,7 @@ from corehq.const import USER_DATE_FORMAT
 
 
 class BaseModifySubscriptionHandler(object):
+
     def __init__(self, domain, new_plan_version, changed_privs, date_start=None):
         self.domain = domain if isinstance(domain, Domain) else Domain.get_by_name(domain)
         self.date_start = date_start or datetime.date.today()
@@ -58,6 +59,7 @@ class BaseModifySubscriptionHandler(object):
 
 
 class BaseModifySubscriptionActionHandler(BaseModifySubscriptionHandler):
+
     def get_response(self):
         response = super(BaseModifySubscriptionActionHandler, self).get_response()
         return len(filter(lambda x: not x, response)) == 0
@@ -287,6 +289,7 @@ class DomainUpgradeActionHandler(BaseModifySubscriptionActionHandler):
                 pass
         return True
 
+
 # TODO - cache
 def _active_reminder_methods(domain):
     reminder_rules = get_active_reminders_by_domain_name(domain.name)
@@ -406,9 +409,10 @@ class DomainDowngradeStatusHandler(BaseModifySubscriptionHandler):
         Custom logos will be removed on downgrade.
         """
         if domain.has_custom_logo:
-            return _fmt_alert(_("You are using custom branding. "
-                                     "Selecting this plan will remove this "
-                                     "feature."))
+            return _fmt_alert(_(
+                "You are using custom branding. "
+                "Selecting this plan will remove this feature."
+            ))
 
     @staticmethod
     def response_outbound_sms(domain, new_plan_version):

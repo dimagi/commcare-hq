@@ -1,7 +1,11 @@
 from django.core.urlresolvers import reverse
 from django.utils.safestring import mark_safe
 from django.utils.translation import ugettext_noop, ugettext_lazy as _, ugettext
-from corehq.apps.accounting.models import SoftwarePlanEdition as Edition, SoftwareProductType as Product, FeatureType
+from corehq.apps.accounting.models import (
+    FeatureType,
+    SoftwarePlanEdition as Edition,
+    SoftwareProductType as Product,
+)
 
 DESC_BY_EDITION = {
     Edition.COMMUNITY: {
@@ -43,6 +47,7 @@ FEATURE_TYPE_TO_NAME = {
 def ensure_product(product):
     if product not in [s[0] for s in Product.CHOICES]:
         raise ValueError("Unsupported Product")
+
 
 def get_feature_name(feature_type, product):
     ensure_product(product)
@@ -336,14 +341,13 @@ class PricingTable(object):
                       'program qualifies, please fill out our <a href="%(url)s">pro-bono form</a>.') % {
                           'url': (reverse('pro_bono', args=[domain]) if domain is
                                   not None else reverse(ProBonoStaticView.urlname)),
-                      },
+                    },
                 )
             ),
             _("**Additional incoming and outgoing messages will be charged on a per-message fee, which "
               "depends on the telecommunications provider and country. Please note that this does not apply "
               "to the unlimited messages option, which falls under the category below."),
         )
-
 
     @classmethod
     def get_table_by_product(cls, product, domain=None):

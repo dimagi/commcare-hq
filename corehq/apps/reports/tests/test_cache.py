@@ -24,6 +24,8 @@ class MockReport(object):
 
 
 BLANK = '__blank__'
+
+
 def _make_request(path=BLANK, domain=BLANK, user=BLANK):
     request = HttpRequest()
     request.META['SERVER_NAME'] = 'example.com'
@@ -35,6 +37,7 @@ def _make_request(path=BLANK, domain=BLANK, user=BLANK):
     if user != BLANK:
         request.couch_user = user
     return request
+
 
 class ReportCacheTest(TestCase):
     # note: this is pretty tightly coupled with the internals of the cache
@@ -129,7 +132,6 @@ class ReportCacheTest(TestCase):
         self.assertEqual(alt_v2, alternate.v2())
         self.assertNotEqual(alt_v1, v1)
         self.assertNotEqual(alt_v2, v2)
-
 
         # invalid users shouldn't even be caching themselves
         for invalid in ['not a user object', None, BLANK]:

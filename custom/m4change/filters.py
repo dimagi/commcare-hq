@@ -18,6 +18,7 @@ class FacilityHmisFilter(BaseSingleOptionFilter):
             ("ld", ld_hmis_report.LdHmisReport.name),
         ]
 
+
 class ServiceTypeFilter(BaseSingleOptionFilter):
     slug = "service_type_filter"
     label = ugettext_noop("Service type")

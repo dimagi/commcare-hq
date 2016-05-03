@@ -82,7 +82,7 @@
     {% endfor %}
     {% if show_community_notice %}
     <div class="form-actions">
-        <a href="{% url 'domain_select_plan' domain %}" class="btn">{% trans 'Select different plan' %}</a>
+        <a href="{% url 'domain_select_plan' domain %}" class="btn btn-default">{% trans 'Select different plan' %}</a>
         <a href="{% url 'domain_subscription_view' domain %}" class="btn btn-primary">{% trans 'Stay with Community Plan' %}</a>
     </div>
     {% else %}

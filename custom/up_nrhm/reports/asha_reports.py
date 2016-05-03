@@ -15,6 +15,7 @@ from custom.up_nrhm.reports.district_functionality_report import DistrictFunctio
 from django.utils.translation import ugettext as _, ugettext_noop
 from dimagi.utils.decorators.memoized import memoized
 
+
 def total_rows(report):
     if report.report_config.get('sf') == "sf2":
         return {
@@ -78,7 +79,6 @@ class ASHAReports(GenericTabularReport, NRHMDatespanMixin, CustomProjectReport, 
                 )
             return subtitles
 
-
     @property
     def report_config(self):
         config = {
@@ -106,7 +106,6 @@ class ASHAReports(GenericTabularReport, NRHMDatespanMixin, CustomProjectReport, 
             return ASHAFacilitatorsReport(self.request, domain=self.domain)
         else:
             return ASHAFunctionalityChecklistReport(self.request, domain=self.domain)
-
 
     @property
     def headers(self):

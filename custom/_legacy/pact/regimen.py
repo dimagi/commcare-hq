@@ -73,7 +73,6 @@ def regimen_string_from_doc(drug_type, doc_dict):
     return string_from_regimen_props(freq, props=props, suppress_errors=True)
 
 
-
 def string_from_regimen_props(freq, props=[], suppress_errors=False):
     """
     For a given set of properties, (dot_a_one, etc...)

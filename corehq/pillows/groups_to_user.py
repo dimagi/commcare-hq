@@ -12,6 +12,7 @@ from pillowtop.reindexer.reindexer import PillowReindexer
 
 
 class GroupsToUsersProcessor(PillowProcessor):
+
     def __init__(self):
         self._es = get_es_new()
 

@@ -95,6 +95,7 @@ _thread_local = threading.local()
 
 
 class _ForcePhoneTimezonesShouldBeProcessed(object):
+
     def __enter__(self):
         try:
             self.orig = _thread_local._force_phone_timezones_should_be_processed

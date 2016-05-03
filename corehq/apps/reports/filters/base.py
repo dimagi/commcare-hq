@@ -283,7 +283,6 @@ class BaseDrilldownOptionFilter(BaseReportFilter):
         """
         return {}
 
-
     @property
     @memoized
     def GET_values(self):

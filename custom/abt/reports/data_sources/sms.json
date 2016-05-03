@@ -4,12 +4,10 @@
         "airszambia",
         "airszimbabwe",
         "airsrwanda",
-        "airsethiopia",
         "abtmali",
         "airsmadagascar",
         "airstanzania",
-        "airsghana",
-        "airsbenin"
+        "airsghana"
     ],
     "config": {
         "engine_id": "default",
@@ -1038,7 +1036,8 @@
                 "Ethiopia": 670303,
                 "Mali": 135717,
                 "Madagascar": 72120,
-                "Tanzania": 502934
+                "Tanzania": 502934,
+                "Benin": 270141
               },
               "type": "switch",
               "switch_on": {

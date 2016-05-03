@@ -20,7 +20,6 @@ class TestMotherWeightMonitored(OPMCaseReportTestBase):
         )
         self.second_trimester_report = Report(month=9, year=2014, block="Atri")
 
-
     def test_inapplicable_month(self):
         report = Report(month=7, year=2014, block="Atri")
         row = MockCaseRow(self.case, report)

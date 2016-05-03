@@ -31,6 +31,7 @@ class MockDataProvider(SharedDataProvider):
     """
     Mock data provider to manually specify vhnd availability per user
     """
+
     def __init__(self, default_date=None, explicit_map=None):
         super(MockDataProvider, self).__init__()
 
@@ -71,6 +72,7 @@ class Report(CaseReportMixin, JsonObject):
         self._extra_row_objects = []
 
     _data_provider = None
+
     @property
     def data_provider(self):
         return self._data_provider
@@ -109,6 +111,7 @@ class MockCaseRow(OPMCaseRow):
     """
     Spoof the following fields to create example cases
     """
+
     def __init__(self, case, report, data_provider=None, child_index=1, **kwargs):
         self.case = case
         self.report = report

@@ -56,6 +56,7 @@ def _get_case_properties(doc_dict):
 
 
 class CaseSearchPillowProcessor(ElasticProcessor):
+
     def process_change(self, pillow_instance, change, do_set_checkpoint):
         assert isinstance(change, Change)
         if change.metadata is not None:
@@ -101,6 +102,7 @@ def _fail_gracefully_and_tell_admins():
     class FakeReindexer(object):
         """Used so that the ptop_preindex command completes successfully
         """
+
         def reindex(self):
             pass
 

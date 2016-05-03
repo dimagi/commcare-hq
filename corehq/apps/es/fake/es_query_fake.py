@@ -132,6 +132,7 @@ class ESQueryFake(object):
 
 
 class HQESQueryFake(ESQueryFake):
+
     def doc_id(self, doc_id):
         try:
             doc_ids = list(doc_id)

@@ -16,9 +16,11 @@ from corehq.apps.domain.models import Domain
 from corehq.apps.reminders.tests.test_util import *
 from corehq.apps.reminders.tests.test_cache import *
 from corehq.apps.reminders.tests.test_recipient import *
+from corehq.apps.reminders.tests.test_responsiveness import *
 
 
 class BaseReminderTestCase(BaseAccountingTest, DomainSubscriptionMixin):
+
     def setUp(self):
         super(BaseReminderTestCase, self).setUp()
         self.domain_obj = Domain(name="test")
@@ -40,6 +42,7 @@ class ReminderTestCase(BaseReminderTestCase):
     """
     This is the original use case and tests a fixed reminder schedule.
     """
+
     def setUp(self):
         super(ReminderTestCase, self).setUp()
         self.domain = "test"
@@ -161,6 +164,7 @@ class ReminderIrregularScheduleTestCase(BaseReminderTestCase):
     Week2: Day4: 11:00 Message 2
     Week2: Day4: 11:30 Message 3
     """
+
     def setUp(self):
         super(ReminderIrregularScheduleTestCase, self).setUp()
         self.domain = "test"
@@ -216,7 +220,6 @@ class ReminderIrregularScheduleTestCase(BaseReminderTestCase):
     def tearDown(self):
         self.user.delete()
         super(ReminderIrregularScheduleTestCase, self).tearDown()
-
 
     def test_ok(self):
         self.assertEqual(self.handler.get_reminder(self.case), None)
@@ -319,6 +322,7 @@ class ReminderCallbackTestCase(BaseReminderTestCase):
 
     This case also tests handling of time zones using the timezone of Africa/Nairobi (UTC+3).
     """
+
     def setUp(self):
         super(ReminderCallbackTestCase, self).setUp()
         self.domain = "test"
@@ -592,6 +596,7 @@ class ReminderCallbackTestCase(BaseReminderTestCase):
 
 
 class CaseTypeReminderTestCase(BaseReminderTestCase):
+
     def setUp(self):
         super(CaseTypeReminderTestCase, self).setUp()
         self.domain = "test"
@@ -799,7 +804,9 @@ class CaseTypeReminderTestCase(BaseReminderTestCase):
            ,prev_now + timedelta(days=self.handler2.start_offset)
         )
 
+
 class StartConditionReminderTestCase(BaseReminderTestCase):
+
     def setUp(self):
         super(StartConditionReminderTestCase, self).setUp()
         self.domain = "test"
@@ -841,7 +848,6 @@ class StartConditionReminderTestCase(BaseReminderTestCase):
     def tearDown(self):
         self.user.delete()
         super(StartConditionReminderTestCase, self).tearDown()
-
 
     def test_ok(self):
         #
@@ -1020,7 +1026,9 @@ class StartConditionReminderTestCase(BaseReminderTestCase):
         self.assertEqual(reminder, None)
         self.assertEqual(CaseReminder.get(old_reminder_id).doc_type, "CaseReminder-Deleted")
 
+
 class ReminderLockTestCase(BaseReminderTestCase):
+
     def setUp(self):
         super(ReminderLockTestCase, self).setUp()
         self.domain = "test"
@@ -1062,7 +1070,6 @@ class ReminderLockTestCase(BaseReminderTestCase):
     def tearDown(self):
         self.user.delete()
         super(ReminderLockTestCase, self).tearDown()
-
 
     def test_ok(self):
         # Spawn the reminder with an "ok" start condition value
@@ -1151,6 +1158,7 @@ class MessageTestCase(BaseReminderTestCase):
 
 
 class ReminderDefinitionCalculationsTestCase(TestCase):
+
     def test_calculate_start_date_without_today_option(self):
         now = datetime.utcnow()
 

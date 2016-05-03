@@ -19,6 +19,8 @@ from dimagi.utils.logging import notify_error
 
 
 CLUSTER_HEALTH = 'cluster_health'
+
+
 def check_es_cluster_health():
     """
     The color state of the cluster health is just a simple indicator for how a cluster is running

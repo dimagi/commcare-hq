@@ -164,6 +164,7 @@ class BooleanIndicatorTest(SingleIndicatorTestBase):
 
 
 class CountIndicatorTest(SingleIndicatorTestBase):
+
     def testCount(self):
         indicator = IndicatorFactory.from_spec({
             "type": "count",
@@ -379,6 +380,7 @@ class ExpressionIndicatorTest(SingleIndicatorTestBase):
 
 
 class ChoiceListIndicatorTest(SimpleTestCase):
+
     def setUp(self):
         self.spec = {
             "type": "choice_list",
@@ -460,6 +462,7 @@ class IndicatorDatatypeTest(SingleIndicatorTestBase):
 
 
 class LedgerBalancesIndicatorTest(SimpleTestCase):
+
     def setUp(self):
         self.spec = {
             "type": "ledger_balances",
@@ -489,6 +492,7 @@ class LedgerBalancesIndicatorTest(SimpleTestCase):
 
 
 class TestGetValuesByProduct(TestCase):
+
     @classmethod
     def setUpClass(cls):
         post_save.disconnect(update_domain_mapping, StockState)

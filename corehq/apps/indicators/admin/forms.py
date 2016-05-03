@@ -138,7 +138,6 @@ class CouchIndicatorForm(BaseDynamicIndicatorForm):
             return self.cleaned_data['doc_type_choices']
 
 
-
 class CountUniqueCouchIndicatorForm(CouchIndicatorForm):
     doc_class = CountUniqueCouchIndicatorDef
 

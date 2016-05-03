@@ -8,6 +8,7 @@ from corehq.apps.app_manager.models import Application
 
 
 class TestAppStructureRepeater(TestCase):
+
     @classmethod
     def setUpClass(cls):
         cls.client = Client()

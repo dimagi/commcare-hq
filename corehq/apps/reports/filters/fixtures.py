@@ -27,6 +27,7 @@ class AsyncDrillableFilter(BaseReportFilter):
         }
 
     fdts = {}
+
     def data_types(self, index=None):
         if not self.fdts:
             self.fdts = [FixtureDataType.by_domain_tag(self.domain, h["type"]).one() for h in self.hierarchy]

@@ -23,6 +23,7 @@ from .util import allowed_child_types, get_lineage_from_location_id
 
 
 class ParentLocWidget(forms.Widget):
+
     def render(self, name, value, attrs=None):
         return get_template(
             'locations/manage/partials/parent_loc_widget.html'
@@ -33,6 +34,7 @@ class ParentLocWidget(forms.Widget):
 
 
 class LocTypeWidget(forms.Widget):
+
     def render(self, name, value, attrs=None):
         return get_template(
             'locations/manage/partials/loc_type_widget.html'
@@ -292,6 +294,7 @@ class LocationForm(forms.Form):
 
 
 class UsersAtLocationForm(MultipleSelectionForm):
+
     def __init__(self, domain_object, location, *args, **kwargs):
         self.domain_object = domain_object
         self.location = location

@@ -8,6 +8,7 @@ from corehq.apps.indicators.models import DynamicIndicatorDefinition
 from corehq.apps.reports.standard import CustomProjectReport, ProjectReportParametersMixin
 from mvp.models import MVP
 
+
 class MVPIndicatorReport(CustomProjectReport, ProjectReportParametersMixin):
     """
         All MVP Reports with indicators should inherit from this.

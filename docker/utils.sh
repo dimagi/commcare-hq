@@ -2,6 +2,12 @@
 
 DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 
+if [ `uname` == 'Linux' ]; then
+    UDO="sudo"
+else
+    UDO=""
+fi
+
 docker_run() {
     args=$@
     flavour="${FLAVOUR:-travis}"
@@ -11,12 +17,12 @@ docker_run() {
 get_container_id() {
     label_name=$1
     value=$2
-    sudo docker ps -qf label=$label_name=$value -f status=running
+    $UDO docker ps -qf label=$label_name=$value -f status=running
 }
 
 get_container_ip() {
     CID=$(get_container_id $@)
-    sudo docker inspect --format '{{ .NetworkSettings.IPAddress }}' ${CID} | tr -d '\n' | tr -d '\r'
+    $UDO docker inspect --format '{{ .NetworkSettings.IPAddress }}' ${CID} | tr -d '\n' | tr -d '\r'
 }
 
 create_topics() {

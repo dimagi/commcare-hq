@@ -91,6 +91,7 @@ class IndicatorSqlAdapter(object):
 
 
 class ErrorRaisingIndicatorSqlAdapter(IndicatorSqlAdapter):
+
     def handle_exception(self, doc, exception):
         if isinstance(exception, ProgrammingError):
             orig = getattr(exception, 'orig')

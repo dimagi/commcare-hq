@@ -43,6 +43,7 @@ def bootstrap_grapevine_gateway(apps):
 
         log_smsbillables_info("Updated Grapevine fees for backend %s" % backend.name)
 
+
 class Command(LabelCommand):
     help = "bootstrap Grapevine gateway fees"
     args = ""

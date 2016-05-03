@@ -107,6 +107,7 @@ urlpatterns = patterns('corehq.apps.reports.views',
     url(r"^export/bulk/download/$", "export_default_or_custom_data", name="export_bulk_download", kwargs=dict(bulk_export=True)),
     # saved
     url(r"^export/saved/download/(?P<export_id>[\w\-]+)/$", "hq_download_saved_export", name="hq_download_saved_export"),
+    url(r"^export/saved/download/deid/(?P<export_id>[\w\-]+)/$", "hq_deid_download_saved_export", name="hq_deid_download_saved_export"),
     url(r"^export/saved/update/$", "hq_update_saved_export", name="hq_update_saved_export"),
 
     # Full Excel export

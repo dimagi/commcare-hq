@@ -77,6 +77,7 @@ def td_format(millis):
             else:
                 return "%s %ss" % (value, name)
 
+
 class MeanTime(fn.mean):
 
     def __call__(self, stats):
@@ -85,6 +86,7 @@ class MeanTime(fn.mean):
             return td_format(millis)
         else:
             return millis
+
 
 class MandE(CareGroupReport):
     name = "M&E"

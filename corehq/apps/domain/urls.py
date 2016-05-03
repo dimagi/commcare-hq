@@ -70,6 +70,7 @@ def exception_safe_password_reset(request, *args, **kwargs):
 def auth_pages_path(page):
     return {'template_name':'login_and_password/' + page}
 
+
 def extend(d1, d2):
     return dict(d1.items() + d2.items())
 

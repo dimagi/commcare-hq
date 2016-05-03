@@ -64,6 +64,7 @@ after the method returns.
 
 """
 
+
 def get_workflow(handler):
     from corehq.apps.reminders.models import REMINDER_TYPE_ONE_TIME, REMINDER_TYPE_KEYWORD_INITIATED
     if handler.reminder_type == REMINDER_TYPE_ONE_TIME:

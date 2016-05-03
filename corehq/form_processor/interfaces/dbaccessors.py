@@ -17,6 +17,7 @@ CaseIndexInfo = namedtuple(
 
 
 class AttachmentContent(namedtuple('AttachmentContent', ['content_type', 'content_stream'])):
+
     @property
     def content_body(self):
         with self.content_stream as stream:
@@ -89,6 +90,7 @@ class FormAccessors(object):
     """
     Facade for Form DB access that proxies method calls to SQL or Couch version
     """
+
     def __init__(self, domain=None):
         self.domain = domain
 
@@ -233,6 +235,7 @@ class CaseAccessors(object):
     """
     Facade for Case DB access that proxies method calls to SQL or Couch version
     """
+
     def __init__(self, domain=None):
         self.domain = domain
 
@@ -333,6 +336,7 @@ def get_cached_case_attachment(domain, case_id, attachment_id, is_image=False):
 
 
 class AbstractLedgerAccessor(six.with_metaclass(ABCMeta)):
+
     @abstractmethod
     def get_transactions_for_consumption(domain, case_id, product_id, section_id, window_start, window_end):
         raise NotImplementedError
@@ -350,6 +354,24 @@ class AbstractLedgerAccessor(six.with_metaclass(ABCMeta)):
 
     @abstractmethod
     def get_latest_transaction(case_id, section_id, entry_id):
+        raise NotImplementedError\
+
+    @abstractmethod
+    def get_current_ledger_state(case_ids):
+        """
+        Given a list of case IDs return a dict of all current ledger data of the following format:
+        {
+            "case_id": {
+                "section_id": {
+                     "product_id": StockState,
+                     "product_id": StockState,
+                     ...
+                },
+                ...
+            },
+            ...
+        }
+        """
         raise NotImplementedError
 
 
@@ -357,6 +379,7 @@ class LedgerAccessors(object):
     """
     Facade for Ledger DB access that proxies method calls to SQL or Couch version
     """
+
     def __init__(self, domain=None):
         self.domain = domain
 
@@ -389,3 +412,8 @@ class LedgerAccessors(object):
 
     def get_ledger_values_for_product_ids(self, product_ids):
         return self.db_accessor.get_ledger_values_for_product_ids(product_ids)
+
+    def get_current_ledger_state(self, case_ids):
+        if not case_ids:
+            return {}
+        return self.db_accessor.get_current_ledger_state(case_ids)

@@ -319,13 +319,6 @@ class BaseReport(BaseMixin, GetParamsMixin, MonthYearMixin, CustomProjectReport,
             end = now
         return (start, end)
 
-    def get_model_kwargs(self):
-        """
-        Override this method to provide a dict of extra kwargs to the
-        row constructor
-        """
-        return {}
-
     @property
     @request_cache()
     def print_response(self):
@@ -779,6 +772,7 @@ class NewHealthStatusReport(CaseReportMixin, BaseReport):
     @property
     def rows(self):
         totals = [[None, None] for i in range(len(self.model.method_map))]
+
         def add_to_totals(col, val, denom):
             for i, num in enumerate([val, denom]):
                 if isinstance(num, int):
@@ -898,16 +892,6 @@ class IncentivePaymentReport(CaseReportMixin, BaseReport):
     @property
     def fields(self):
         return [HierarchyFilter] + super(BaseReport, self).fields
-
-    @property
-    @memoized
-    def last_month_totals(self):
-        last_month = self.datespan.startdate_utc - datetime.timedelta(days=4)
-        # TODO This feature depended on snapshots
-        return None
-
-    def get_model_kwargs(self):
-        return {'last_month_totals': self.last_month_totals}
 
     @property
     @memoized

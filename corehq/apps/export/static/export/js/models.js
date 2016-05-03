@@ -172,12 +172,26 @@ Exports.ViewModels.TableConfiguration.mapping = {
 Exports.ViewModels.ExportColumn = function(columnJSON) {
     var self = this;
     ko.mapping.fromJS(columnJSON, Exports.ViewModels.ExportColumn.mapping, self);
+    self.showOptions = ko.observable(false);
+    self.userDefinedOptionToAdd = ko.observable('');
 };
 
 Exports.ViewModels.ExportColumn.prototype.isQuestion = function() {
     var disallowedTags = ['info', 'case', 'server', 'row', 'app', 'stock'],
         self = this;
     return !_.any(disallowedTags, function(tag) { return _.include(self.tags(), tag); });
+};
+
+Exports.ViewModels.ExportColumn.prototype.addUserDefinedOption = function() {
+    var option = this.userDefinedOptionToAdd();
+    if (option) {
+        this.user_defined_options.push(option);
+    }
+    this.userDefinedOptionToAdd('');
+};
+
+Exports.ViewModels.ExportColumn.prototype.removeUserDefinedOption = function(option) {
+    this.user_defined_options.remove(option);
 };
 
 Exports.ViewModels.ExportColumn.prototype.formatProperty = function() {
@@ -215,7 +229,17 @@ Exports.ViewModels.ExportColumn.prototype.translatedHelp = function() {
 };
 
 Exports.ViewModels.ExportColumn.mapping = {
-    include: ['item', 'label', 'is_advanced', 'selected', 'tags', 'deid_transform', 'help_text'],
+    include: [
+        'item',
+        'label',
+        'is_advanced',
+        'selected',
+        'tags',
+        'deid_transform',
+        'help_text',
+        'split_type',
+        'user_defined_options',
+    ],
     item: {
         create: function(options) {
             return new Exports.ViewModels.ExportItem(options.data);
