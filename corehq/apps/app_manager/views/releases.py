@@ -234,13 +234,13 @@ def odk_install(request, domain, app_id, with_media=False):
 
 def odk_qr_code(request, domain, app_id):
     profile = request.GET.get('profile')
-    qr_code = get_app(domain, app_id).get_odk_qr_code(profile=profile)
+    qr_code = get_app(domain, app_id).get_odk_qr_code(build_profile_id=profile)
     return HttpResponse(qr_code, content_type="image/png")
 
 
 def odk_media_qr_code(request, domain, app_id):
     profile = request.GET.get('profile')
-    qr_code = get_app(domain, app_id).get_odk_qr_code(with_media=True, profile=profile)
+    qr_code = get_app(domain, app_id).get_odk_qr_code(with_media=True, build_profile_id=profile)
     return HttpResponse(qr_code, content_type="image/png")
 
 

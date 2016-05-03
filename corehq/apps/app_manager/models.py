@@ -943,7 +943,7 @@ class FormBase(DocumentSchema):
 
     def add_stuff_to_xform(self, xform, build_profile=None):
         app = self.get_app()
-        langs = app.langs if not build_profile else app.build_profiles[build_profile]['langs']
+        langs = app.get_build_langs(build_profile)
         xform.exclude_languages(langs)
         xform.set_default_language(langs[0])
         xform.normalize_itext()
@@ -4425,7 +4425,7 @@ class ApplicationBase(VersionedDoc, SnapshotMixin,
     def odk_media_profile_display_url(self):
         return self.short_odk_media_url or self.odk_media_profile_url
 
-    def get_odk_qr_code(self, with_media=False, profile=None):
+    def get_odk_qr_code(self, with_media=False, build_profile_id=None):
         """Returns a QR code, as a PNG to install on CC-ODK"""
         try:
             return self.lazy_fetch_attachment("qrcode.png")
@@ -4434,8 +4434,8 @@ class ApplicationBase(VersionedDoc, SnapshotMixin,
             HEIGHT = WIDTH = 250
             code = QRChart(HEIGHT, WIDTH)
             url = self.odk_profile_url if not with_media else self.odk_media_profile_url
-            if profile:
-                url += '?profile={profile}'.format(profile=profile)
+            if build_profile_id:
+                url += '?profile={profile_id}'.format(profile_id=build_profile_id)
             code.add_data(url)
 
             # "Level L" error correction with a 0 pixel margin
@@ -4548,6 +4548,11 @@ class ApplicationBase(VersionedDoc, SnapshotMixin,
         else:
             self.media_language_map = {}
 
+    def get_build_langs(self, build_profile_id=None):
+        if build_profile_id:
+            return self.build_profiles[build_profile_id].langs
+        else:
+            return self.langs
 
 def validate_lang(lang):
     if not re.match(r'^[a-z]{2,3}(-[a-z]*)?$', lang):
@@ -4875,7 +4880,7 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
     def create_suite(self, build_profile=None):
         if self.application_version == APP_V1:
             template='app_manager/suite-%s.xml' % self.application_version
-            langs = self.langs if not build_profile else self.build_profiles[build_profile].langs
+            langs = self.get_build_langs(build_profile)
             return render_to_string(template, {
                 'app': self,
                 'langs': ["default"] + langs
@@ -4901,7 +4906,7 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
             '{}media_suite.xml'.format(prefix): self.create_media_suite(build_profile),
         }
 
-        langs_for_build = self.langs if not build_profile else self.build_profiles[build_profile].langs
+        langs_for_build = self.get_build_langs(build_profile)
         for lang in ['default'] + langs_for_build:
             files["{prefix}{lang}/app_strings.txt".format(prefix=prefix, lang=lang)] = self.create_app_strings(lang)
         for form_stuff in self.get_forms(bare=False):
@@ -5359,7 +5364,7 @@ class RemoteApp(ApplicationBase):
             'profile.xml': self.create_profile(),
         }
         tree = _parse_xml(files['profile.xml'])
-        langs_for_build = self.langs if not build_profile else self.build_profiles[build_profile].langs
+        langs_for_build = self.get_build_langs(build_profile)
 
         def add_file_from_path(path, strict=False, transform=None):
             added_files = []
@@ -5406,7 +5411,7 @@ class RemoteApp(ApplicationBase):
         return files
 
     def make_questions_map(self, build_profile=None):
-        langs_for_build = self.langs if not build_profile else self.build_profiles[build_profile].langs
+        langs_for_build = self.get_build_langs(build_profile)
         if self.copy_of:
             xmlns_map = {}
 

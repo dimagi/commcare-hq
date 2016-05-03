@@ -18,7 +18,7 @@ hqDefine('app_manager/js/releases.js', function () {
         });
         self.app_code = ko.observable(null);
         self.failed_url_generation = ko.observable(false);
-        self.profile = ko.observable('');
+        self.build_profile = ko.observable('');
         self.base_url = function() {
             return '/a/' + self.domain() + '/apps/odk/' + self.id() + '/';
         };
@@ -117,7 +117,7 @@ hqDefine('app_manager/js/releases.js', function () {
         });
 
         self.full_odk_install_url = ko.computed(function() {
-            return self.get_odk_install_url() + '?profile=' + self.profile();
+            return self.get_odk_install_url() + '?profile=' + self.build_profile();
         });
 
         self.sms_url = function(index) {
@@ -157,8 +157,8 @@ hqDefine('app_manager/js/releases.js', function () {
             });
         };
 
-        self.download_application_zip = function (multimedia_only, profile) {
-            releasesMain.download_application_zip(self.id(), multimedia_only, profile);
+        self.download_application_zip = function (multimedia_only, build_profile) {
+            releasesMain.download_application_zip(self.id(), multimedia_only, build_profile);
         };
 
         self.clickDeploy = function () {
@@ -211,13 +211,13 @@ hqDefine('app_manager/js/releases.js', function () {
         self.download_modal = $(self.options.download_modal_id);
         self.async_downloader = new AsyncDownloader(self.download_modal);
 
-        self.download_application_zip = function(appId, multimedia_only, profile) {
+        self.download_application_zip = function(appId, multimedia_only, build_profile) {
             var url_slug = multimedia_only ? 'download_multimedia' : 'download_zip';
             var url = self.url(url_slug, appId);
             var params = {};
             params.message = "Your application download is ready";
-            if (profile) {
-                params.profile = profile;
+            if (build_profile) {
+                params.profile = build_profile;
             }
             self.async_downloader.generateDownload(url, params);
             // Not so nice... Hide the open modal so we don't get bootstrap recursion errors
