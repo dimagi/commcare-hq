@@ -11,6 +11,8 @@
 
 {% block js-inline %}{{ block.super }}
     <script type="text/javascript">
+        var defaultCalculationOptions = ["Count per Choice", "Sum", "Average"];
+        var stringOnlyCalculationOptions = ["Count per Choice"];
         /**
          * Knockout view model representing a row in the filter property list
          * @constructor
@@ -22,7 +24,6 @@
             this.displayText = ko.observable("");
             this.userModifiedDisplayText = false;
             this.format = ko.observable("");
-            this.calculationOptions = ko.observableArray(["Count per Choice", "Sum", "Average"]);
             this.calculation = ko.observable("Count per Choice");
             this.dataSourceField = ko.observable("");
 
@@ -47,6 +48,31 @@
                         }
                     }))
                 )
+            }
+
+            this.dataType = ko.computed(function() {
+                // Returns type of Question, applicable only if optionsContainQuestions is true
+                var property = this.property()
+                var propertyObject = _.find(this.propertyOptions(), function(option){
+                    return option.value == property;
+                });
+                if (propertyObject !== undefined && propertyObject.hasOwnProperty("type"))
+                    return propertyObject.type;
+                else
+                    return undefined;
+            }, this);
+
+            this.calculationOptions = ko.observableArray(defaultCalculationOptions);
+            if (this.optionsContainQuestions) {
+                // If options are questions, calculationOptions should be limited based on the dataType
+                this.calculationOptions = ko.computed(function() {
+                    if (this.dataType() == "Int") {
+                        return defaultCalculationOptions;
+                    }
+                    else {
+                        return stringOnlyCalculationOptions;
+                    }
+                }, this);
             }
 
             /**
