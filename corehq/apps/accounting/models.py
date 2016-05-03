@@ -2657,11 +2657,12 @@ class CreditLine(models.Model):
         ):
             yield credit_line
 
-        for credit_line in cls.get_credits_by_subscription_and_features(
-            line_item.invoice.subscription,
-            product_type=SoftwareProductType.ANY,
-        ):
-            yield credit_line
+        if product_type is not None:
+            for credit_line in cls.get_credits_by_subscription_and_features(
+                line_item.invoice.subscription,
+                product_type=SoftwareProductType.ANY,
+            ):
+                yield credit_line
 
         for credit_line in cls.get_credits_for_account(
             line_item.invoice.subscription.account,
@@ -2670,11 +2671,12 @@ class CreditLine(models.Model):
         ):
             yield credit_line
 
-        for credit_line in cls.get_credits_for_account(
-            line_item.invoice.subscription.account,
-            product_type=SoftwareProductType.ANY,
-        ):
-            yield credit_line
+        if product_type is not None:
+            for credit_line in cls.get_credits_for_account(
+                line_item.invoice.subscription.account,
+                product_type=SoftwareProductType.ANY,
+            ):
+                yield credit_line
 
     @classmethod
     def get_credits_for_invoice(cls, invoice):
