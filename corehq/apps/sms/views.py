@@ -368,9 +368,9 @@ class TestSMSMessageView(BaseDomainView):
 
     @property
     def page_context(self):
-        context = get_sms_autocomplete_context(self.request, self.domain)
-        context['phone_number'] = self.phone_number
-        return context
+        return {
+            'phone_number': self.phone_number,
+        }
 
     def post(self, request, *args, **kwargs):
         message = request.POST.get("message", "")
