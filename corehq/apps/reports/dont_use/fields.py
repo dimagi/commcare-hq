@@ -58,7 +58,7 @@ class ReportField(object):
 class ReportSelectField(ReportField):
     slug = "generic_select"
     name = ugettext_noop("Generic Select")
-    template = "reports/dont_use_fields/bootstrap3/select_generic.html"
+    template = "reports/dont_use_fields/select_generic.html"
     default_option = ugettext_noop("Select Something...")
     options = [dict(val="val", text="text")]
     cssId = "generic_select_box"
