@@ -1,7 +1,7 @@
 from contextlib import contextmanager
 
 from casexml.apps.case.mock import CaseFactory, CaseStructure, CaseIndex
-from casexml.apps.case.models import CommCareCase, INDEX_ID_PARENT, INDEX_RELATIONSHIP_CHILD
+from casexml.apps.case.models import CommCareCase
 from casexml.apps.case.signals import case_post_save
 from corehq.apps.data_interfaces.models import (AutomaticUpdateRule,
     AutomaticUpdateRuleCriteria, AutomaticUpdateAction)
@@ -10,7 +10,8 @@ from datetime import datetime, date
 
 from corehq.form_processor.backends.sql.dbaccessors import CaseAccessorSQL
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
-from corehq.form_processor.tests.utils import run_with_all_backends, FormProcessorTestUtils, set_case_property_directly
+from corehq.form_processor.tests.utils import (run_with_all_backends, FormProcessorTestUtils,
+    set_case_property_directly, set_parent_case as set_actual_parent_case)
 from corehq.form_processor.utils.general import should_use_sql_backend
 from django.test import TestCase
 from mock import patch
@@ -411,18 +412,7 @@ def _update_case(domain, case_id, server_modified_on, last_visit_date=None):
 
 def set_parent_case(domain, child_case, parent_case):
     server_modified_on = child_case.server_modified_on
-
-    parent = CaseStructure(case_id=parent_case.case_id)
-    CaseFactory(domain).create_or_update_case(
-        CaseStructure(
-            case_id=child_case.case_id,
-            indices=[CaseIndex(
-                related_structure=parent,
-                identifier=INDEX_ID_PARENT,
-                relationship=INDEX_RELATIONSHIP_CHILD
-            )],
-        )
-    )
+    set_actual_parent_case(child_case, parent_case)
 
     child_case = CaseAccessors(domain).get_case(child_case.case_id)
     child_case.server_modified_on = server_modified_on

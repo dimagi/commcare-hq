@@ -22,6 +22,7 @@ from corehq.apps.sms.mixin import MessagingCaseContactMixin
 from corehq.blobs import get_blob_db
 from corehq.blobs.exceptions import NotFound, BadName
 from corehq.form_processor import signals
+from corehq.form_processor.abstract_models import DEFAULT_PARENT_IDENTIFIER
 from corehq.form_processor.exceptions import InvalidAttachment, UnknownActionType
 from corehq.form_processor.track_related import TrackRelatedChanges
 from corehq.sql_db.routers import db_for_read_write
@@ -591,6 +592,15 @@ class CommCareCaseSQL(DisabledDbMixin, models.Model, RedisLockableMixIn,
         from corehq.form_processor.backends.sql.dbaccessors import CaseAccessorSQL
         return CaseAccessorSQL.get_reverse_indices(self.case_id)
 
+    @memoized
+    def get_subcases(self, index_identifier=None):
+        from corehq.form_processor.backends.sql.dbaccessors import CaseAccessorSQL
+        subcase_ids = [
+            ix.referenced_id for ix in self.reverse_indices
+            if (index_identifier is None or ix.identifier == index_identifier)
+        ]
+        return CaseAccessorSQL.get_cases(subcase_ids)
+
     def get_reverse_index_map(self):
         return self.get_index_map(True)
 
@@ -719,22 +729,6 @@ class CommCareCaseSQL(DisabledDbMixin, models.Model, RedisLockableMixIn,
         if property in allowed_fields:
             return getattr(self, property)
 
-    def resolve_case_property(self, property_name):
-        """
-        Handles case property parent references. Examples for property_name can be:
-        name
-        parent/name
-        parent/parent/name
-        ...
-        """
-        if property_name.lower().startswith('parent/'):
-            parent = self.parent
-            if not parent:
-                return None
-            return parent.resolve_case_property(property_name[7:])
-
-        return self.to_json().get(property_name)
-
     def on_tracked_models_cleared(self, model_class=None):
         self._saved_indices.reset_cache(self)
 
@@ -748,14 +742,14 @@ class CommCareCaseSQL(DisabledDbMixin, models.Model, RedisLockableMixIn,
         return CaseAccessorSQL.get_case(case_id)
 
     @memoized
-    def get_parent(self, identifier=None, relationship_id=None):
+    def get_parent(self, identifier=None, relationship=None):
         indices = self.indices
 
         if identifier:
             indices = filter(lambda index: index.identifier == identifier, indices)
 
-        if relationship_id:
-            indices = filter(lambda index: index.relationship_id == relationship_id, indices)
+        if relationship:
+            indices = filter(lambda index: index.relationship_id == relationship, indices)
 
         return [index.referenced_case for index in indices]
 
@@ -768,8 +762,8 @@ class CommCareCaseSQL(DisabledDbMixin, models.Model, RedisLockableMixIn,
         please write/use a different property.
         """
         result = self.get_parent(
-            identifier=CommCareCaseIndexSQL.PARENT_IDENTIFIER,
-            relationship_id=CommCareCaseIndexSQL.CHILD
+            identifier=DEFAULT_PARENT_IDENTIFIER,
+            relationship=CommCareCaseIndexSQL.CHILD
         )
         return result[0] if result else None
 
@@ -886,8 +880,6 @@ class CommCareCaseIndexSQL(DisabledDbMixin, models.Model, SaveStateMixin):
     )
     RELATIONSHIP_INVERSE_MAP = dict(RELATIONSHIP_CHOICES)
     RELATIONSHIP_MAP = {v: k for k, v in RELATIONSHIP_CHOICES}
-
-    PARENT_IDENTIFIER = 'parent'
 
     case = models.ForeignKey(
         'CommCareCaseSQL', to_field='case_id', db_index=True,
