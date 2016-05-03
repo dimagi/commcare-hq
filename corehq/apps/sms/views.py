@@ -342,35 +342,61 @@ def send_to_recipients(request, domain):
     )
 
 
-@domain_admin_required
-@requires_privilege_with_fallback(privileges.INBOUND_SMS)
-def message_test(request, domain, phone_number):
-    if request.method == "POST":
+class TestSMSMessageView(BaseDomainView):
+    urlname = 'message_test'
+    template_name = 'sms/message_tester.html'
+    section_name = ugettext_lazy("Messaging")
+    page_title = ugettext_lazy("Test SMS Message")
+
+    @property
+    def section_url(self):
+        return reverse('sms_default', args=(self.domain,))
+
+    @property
+    def page_url(self):
+        return reverse(self.urlname, args=(self.domain, self.phone_number,))
+
+    @method_decorator(domain_admin_required)
+    @method_decorator(requires_privilege_with_fallback(privileges.INBOUND_SMS))
+    @use_bootstrap3
+    def dispatch(self, request, *args, **kwargs):
+        return super(TestSMSMessageView, self).dispatch(request, *args, **kwargs)
+
+    @property
+    def phone_number(self):
+        return self.kwargs['phone_number']
+
+    @property
+    def page_context(self):
+        return {
+            'phone_number': self.phone_number,
+        }
+
+    def post(self, request, *args, **kwargs):
         message = request.POST.get("message", "")
-        domain_scope = None if request.couch_user.is_superuser else domain
+        domain_scope = None if request.couch_user.is_superuser else self.domain
         try:
-            incoming(phone_number, message, "TEST", domain_scope=domain_scope)
+            incoming(self.phone_number, message, "TEST", domain_scope=domain_scope)
+            messages.success(
+                request,
+                _("Test message sent.")
+            )
         except DomainScopeValidationError:
             messages.error(
                 request,
-                _("Invalid phone number being simulated. You may only " \
-                  "simulate SMS from verified numbers belonging to contacts " \
+                _("Invalid phone number being simulated. You may only "
+                  "simulate SMS from verified numbers belonging to contacts "
                   "in this domain.")
             )
         except Exception:
             notify_exception(request)
             messages.error(
                 request,
-                _("An error has occurred. Please try again in a few minutes " \
-                  "and if the issue persists, please contact CommCareHQ " \
+                _("An error has occurred. Please try again in a few minutes "
+                  "and if the issue persists, please contact CommCareHQ "
                   "Support.")
             )
-
-    context = get_sms_autocomplete_context(request, domain)
-    context['domain'] = domain
-    context['layout_flush_content'] = True
-    context['phone_number'] = phone_number
-    return render(request, "sms/message_tester.html", context)
+        return self.get(request, *args, **kwargs)
 
 
 @csrf_exempt
@@ -464,50 +490,118 @@ def api_send_sms(request, domain):
         return HttpResponseBadRequest("POST Expected.")
 
 
-@login_and_domain_required
-@require_superuser
-def list_forwarding_rules(request, domain):
-    forwarding_rules = get_forwarding_rules_for_domain(domain)
+class BaseForwardingRuleView(BaseDomainView):
+    section_name = ugettext_noop("Messaging")
 
-    context = {
-        "domain" : domain,
-        "forwarding_rules" : forwarding_rules,
-    }
-    return render(request, "sms/list_forwarding_rules.html", context)
+    @use_bootstrap3
+    @method_decorator(login_and_domain_required)
+    @method_decorator(require_superuser)
+    def dispatch(self, request, *args, **kwargs):
+        return super(BaseForwardingRuleView, self).dispatch(request, *args, **kwargs)
 
-@login_and_domain_required
-@require_superuser
-def add_forwarding_rule(request, domain, forwarding_rule_id=None):
-    forwarding_rule = None
-    if forwarding_rule_id is not None:
-        forwarding_rule = ForwardingRule.get(forwarding_rule_id)
-        if forwarding_rule.domain != domain:
-            raise Http404
+    @property
+    def section_url(self):
+        return reverse("sms_default", args=(self.domain,))
 
-    if request.method == "POST":
-        form = ForwardingRuleForm(request.POST)
-        if form.is_valid():
-            if forwarding_rule is None:
-                forwarding_rule = ForwardingRule(domain=domain)
-            forwarding_rule.forward_type = form.cleaned_data.get("forward_type")
-            forwarding_rule.keyword = form.cleaned_data.get("keyword")
-            forwarding_rule.backend_id = form.cleaned_data.get("backend_id")
-            forwarding_rule.save()
-            return HttpResponseRedirect(reverse('list_forwarding_rules', args=[domain]))
-    else:
+
+class ListForwardingRulesView(BaseForwardingRuleView):
+    urlname = 'list_forwarding_rules'
+    template_name = 'sms/list_forwarding_rules.html'
+    page_title = ugettext_lazy("Forwarding Rules")
+
+    @property
+    def page_context(self):
+        forwarding_rules = get_forwarding_rules_for_domain(self.domain)
+        return {
+            'forwarding_rules': forwarding_rules,
+        }
+
+
+class BaseEditForwardingRuleView(BaseForwardingRuleView):
+    template_name = 'sms/add_forwarding_rule.html'
+
+    @property
+    def forwarding_rule_id(self):
+        return self.kwargs.get('forwarding_rule_id')
+
+    @property
+    def forwarding_rule(self):
+        raise NotImplementedError("must return ForwardingRule")
+
+    @property
+    @memoized
+    def rule_form(self):
+        if self.request.method == 'POST':
+            return ForwardingRuleForm(self.request.POST)
         initial = {}
-        if forwarding_rule is not None:
-            initial["forward_type"] = forwarding_rule.forward_type
-            initial["keyword"] = forwarding_rule.keyword
-            initial["backend_id"] = forwarding_rule.backend_id
-        form = ForwardingRuleForm(initial=initial)
+        if self.forwarding_rule_id:
+            initial["forward_type"] = self.forwarding_rule.forward_type
+            initial["keyword"] = self.forwarding_rule.keyword
+            initial["backend_id"] = self.forwarding_rule.backend_id
+        return ForwardingRuleForm(initial=initial)
 
-    context = {
-        "domain" : domain,
-        "form" : form,
-        "forwarding_rule_id" : forwarding_rule_id,
-    }
-    return render(request, "sms/add_forwarding_rule.html", context)
+    @property
+    def page_url(self):
+        if self.forwarding_rule_id:
+            return reverse(self.urlname, args=(self.domain, self.forwarding_rule_id,))
+        return super(BaseEditForwardingRuleView, self).page_url
+
+    def post(self, request, *args, **kwargs):
+        if self.rule_form.is_valid():
+            self.forwarding_rule.forward_type = self.rule_form.cleaned_data.get(
+                'forward_type'
+            )
+            self.forwarding_rule.keyword = self.rule_form.cleaned_data.get(
+                'keyword'
+            )
+            self.forwarding_rule.backend_id = self.rule_form.cleaned_data.get(
+                'backend_id'
+            )
+            self.forwarding_rule.save()
+            return HttpResponseRedirect(reverse(
+                ListForwardingRulesView.urlname, args=(self.domain,)))
+
+        return self.get(request, *args, **kwargs)
+
+    @property
+    def page_context(self):
+        return {
+            'form': self.rule_form,
+            'forwarding_rule_id': self.forwarding_rule_id,
+        }
+
+    @property
+    def parent_pages(self):
+        return [
+            {
+                'url': reverse(ListForwardingRulesView.urlname, args=(self.domain,)),
+                'title': ListForwardingRulesView.page_title,
+            }
+        ]
+
+
+class AddForwardingRuleView(BaseEditForwardingRuleView):
+    urlname = 'add_forwarding_rule'
+    page_title = ugettext_lazy("Add Forwarding Rule")
+
+    @property
+    @memoized
+    def forwarding_rule(self):
+        return ForwardingRule(domain=self.domain)
+
+
+class EditForwardingRuleView(BaseEditForwardingRuleView):
+    urlname = 'edit_forwarding_rule'
+    page_title = ugettext_lazy("Edit Forwarding Rule")
+
+    @property
+    @memoized
+    def forwarding_rule(self):
+        forwarding_rule = ForwardingRule.get(self.forwarding_rule_id)
+        if forwarding_rule.domain != self.domain:
+            raise Http404()
+        return forwarding_rule
+
 
 @login_and_domain_required
 @require_superuser
@@ -1908,6 +2002,10 @@ class ManageRegistrationInvitationsView(BaseAdvancedMessagingSectionView, CRUDPa
     empty_notification = ugettext_noop("No registration invitations sent yet.")
     loading_message = ugettext_noop("Loading invitations...")
     strict_domain_fetching = True
+
+    @use_bootstrap3
+    def dispatch(self, request, *args, **kwargs):
+        return super(ManageRegistrationInvitationsView, self).dispatch(request, *args, **kwargs)
 
     @property
     @memoized
