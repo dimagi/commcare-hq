@@ -7,6 +7,7 @@ from unittest import TestCase
 from StringIO import StringIO
 
 import corehq.blobs.fsdb as mod
+from corehq.blobs.exceptions import ArgumentError
 from corehq.util.test_utils import generate_cases
 
 
@@ -70,6 +71,31 @@ class TestFilesystemBlobDB(TestCase):
         names = os.listdir(self.db.get_path(bucket="doctype"))
         self.assertNotIn("ys7v136b", names, "bucket not deleted")
 
+    def test_delete_identifier_in_default_bucket(self):
+        info = self.db.put(StringIO(b"content"))
+        self.assertTrue(self.db.delete(info.identifier), 'delete failed')
+        with self.assertRaises(mod.NotFound):
+            self.db.get(info.identifier)
+
+    def test_delete_no_args(self):
+        info = self.db.put(StringIO(b"content"))
+        with self.assertRaises(ArgumentError):
+            self.db.delete()
+        # blobs in default bucket should not be deleted
+        with self.db.get(info.identifier) as fh:
+            self.assertEqual(fh.read(), b"content")
+        self.assertTrue(self.db.delete(bucket=mod.DEFAULT_BUCKET))
+
+    def test_prevent_delete_bucket_by_mistake(self):
+        info = self.db.put(StringIO(b"content"))
+        id_mistake = None
+        with self.assertRaises(ArgumentError):
+            self.db.delete(id_mistake, mod.DEFAULT_BUCKET)
+        # blobs in default bucket should not be deleted
+        with self.db.get(info.identifier) as fh:
+            self.assertEqual(fh.read(), b"content")
+        self.assertTrue(self.db.delete(bucket=mod.DEFAULT_BUCKET))
+
     def test_bucket_path(self):
         bucket = join("doctype", "8cd98f0")
         self.db.put(StringIO(b"content"), bucket=bucket)
@@ -125,3 +151,26 @@ class TestFilesystemBlobDB(TestCase):
 def test_bad_name(self, name, bucket=mod.DEFAULT_BUCKET):
     with self.assertRaises(mod.BadName):
         self.db.get(name, bucket)
+
+
+@generate_cases([
+    ((1, 2), {}, 1, 2),
+    ((1,), {"bucket": 2}, 1, 2),
+    ((1,), {}, 1, mod.DEFAULT_BUCKET),
+    ((), {"identifier": 1}, 1, mod.DEFAULT_BUCKET),
+    ((), {"identifier": 1, "bucket": 2}, 1, 2),
+    ((), {"bucket": 2}, None, 2),
+    ((), {"bucket": mod.DEFAULT_BUCKET}, None, mod.DEFAULT_BUCKET),
+    ((), {}, ArgumentError),
+    ((None,), {}, ArgumentError),
+    ((None, 2), {}, ArgumentError),
+    ((), {"identifier": None}, ArgumentError),
+], TestFilesystemBlobDB)
+def test_get_args_for_delete(self, args, kw, identifier, bucket=None):
+    if isinstance(identifier, type):
+        with self.assertRaises(identifier):
+            self.db.get_args_for_delete(*args, **kw)
+    else:
+        ident, buck = self.db.get_args_for_delete(*args, **kw)
+        self.assertEqual(ident, identifier)
+        self.assertEqual(buck, bucket)
