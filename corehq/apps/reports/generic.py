@@ -778,7 +778,7 @@ class GenericTabularReport(GenericReportView):
     sortable = True
 
     # override old class properties
-    report_template_path = "reports/async/bootstrap3/tabular.html"
+    report_template_path = "reports/async/tabular.html"
     flush_layout = True
 
     # set to a list of functions that take in a report object 
