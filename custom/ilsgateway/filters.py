@@ -75,7 +75,7 @@ class ILSDateFilter(BaseReportFilter):
     slug = "datespan"
     label = "Filter By:"
     css_class = 'col-md-4'
-    template = 'ilsgateway/bootstrap3/datespan.html'
+    template = 'ilsgateway/datespan.html'
 
     def selected(self, type):
         slug = '{0}_{1}'.format(self.slug, type)
@@ -123,7 +123,7 @@ class ILSDateFilter(BaseReportFilter):
 
 class B3ILSDateFilter(ILSDateFilter):
     css_class = 'col-md-4'
-    template = 'ilsgateway/bootstrap3/datespan.html'
+    template = 'ilsgateway/datespan.html'
 
 
 class ILSAsyncLocationFilter(AsyncLocationFilter):
@@ -137,4 +137,4 @@ class ILSAsyncLocationFilter(AsyncLocationFilter):
 
 class B3ILSAsyncLocationFilter(ILSAsyncLocationFilter):
     css_class = 'col-md-8'
-    template = 'ilsgateway/bootstrap3/location_async.html'
+    template = 'ilsgateway/location_async.html'
