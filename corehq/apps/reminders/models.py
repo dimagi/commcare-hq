@@ -178,10 +178,10 @@ def get_case_property(case, case_property):
 
 
 def case_matches_criteria(case, match_type, case_property, value_to_match):
+    if not case_property:
+        return False
     result = case.resolve_case_property(case_property)
     values = [element.value for element in result]
-    if not values:
-        return False
     return any([value_matches_criteria(match_type, value, value_to_match) for value in values])
 
 
@@ -833,22 +833,23 @@ class CaseReminderHandler(Document):
             fire_time = event.fire_time
         elif event.fire_time_type == FIRE_TIME_CASE_PROPERTY:
             fire_time = DEFAULT_REMINDER_TIME
-            values = case.resolve_case_property(event.fire_time_aux)
-            values = [element.value for element in values]
-            for value in values:
-                if value:
-                    if isinstance(value, time):
-                        fire_time = value
-                        break
-                    elif isinstance(value, datetime):
-                        fire_time = value.time()
-                        break
-                    else:
-                        try:
-                            fire_time = parse(value).time()
+            if event.fire_time_aux:
+                values = case.resolve_case_property(event.fire_time_aux)
+                values = [element.value for element in values]
+                for value in values:
+                    if value:
+                        if isinstance(value, time):
+                            fire_time = value
                             break
-                        except:
-                            pass
+                        elif isinstance(value, datetime):
+                            fire_time = value.time()
+                            break
+                        else:
+                            try:
+                                fire_time = parse(value).time()
+                                break
+                            except:
+                                pass
         elif event.fire_time_type == FIRE_TIME_RANDOM:
             additional_minute_offset = randint(0, event.time_window_length - 1) + (event.fire_time.hour * 60) + event.fire_time.minute
             fire_time = time(0, 0)
@@ -1205,7 +1206,7 @@ class CaseReminderHandler(Document):
         
         return      True if the condition is reached, False if not.
         """
-        if not case:
+        if not case or not case_property:
             return False
 
         values = case.resolve_case_property(case_property)
