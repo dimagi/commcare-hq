@@ -288,6 +288,7 @@ class AutoFilterTests(TestCase):
 
 
 class NumericFilterTests(TestCase):
+
     def test_numeric_filter(self):
         self.assertEqual(
             NumericFilter.wrap({'operator': '>', 'operand': '1.5'}).get_filter_value(None, None),

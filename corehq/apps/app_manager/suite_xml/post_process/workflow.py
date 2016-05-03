@@ -17,6 +17,7 @@ from dimagi.utils.decorators.memoized import memoized
 
 
 class WorkflowHelper(PostProcessor):
+
     def __init__(self, suite, app, modules):
         super(WorkflowHelper, self).__init__(suite, app, modules)
 
@@ -143,6 +144,7 @@ class WorkflowHelper(PostProcessor):
 
 
 class EndOfFormNavigationWorkflow(object):
+
     def __init__(self, helper):
         self.helper = helper
 
@@ -298,6 +300,7 @@ class EndOfFormNavigationWorkflow(object):
 
 
 class CaseListFormWorkflow(object):
+
     def __init__(self, helper):
         self.helper = helper
 
@@ -431,6 +434,7 @@ class StackFrameMeta(object):
     """
     Class used in computing the form workflow.
     """
+
     def __init__(self, if_prefix, if_clause, children=None, allow_empty_frame=False):
         if if_prefix:
             template = '({{}}) and ({})'.format(if_clause) if if_clause else '{}'
@@ -467,6 +471,7 @@ class StackFrameMeta(object):
 
 @total_ordering
 class CommandId(object):
+
     def __init__(self, command):
         self.id = command
 

@@ -472,10 +472,8 @@ class testReportCaseProcessing(TestCase):
         pillow = XFormPillow(online=False)
         changed = pillow.change_transform(xform)
 
-
         changed_cases = extract_case_blocks(changed)
         orig_cases = extract_case_blocks(xform)
-
 
         [self.assertIsNotNone(x['@date_modified']) for x in orig_cases]
         [self.assertIsNone(x.get('@date_modified')) for x in changed_cases]
@@ -540,7 +538,6 @@ class testReportCaseProcessing(TestCase):
             self.assertTrue(VALUE_TAG in diaper)
 
         self.assertEqual(case['prior_diapers'], [x[VALUE_TAG] for x in processed_case['prior_diapers']])
-
 
     def testReportCaseQuery(self):
 

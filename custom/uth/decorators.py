@@ -1,5 +1,6 @@
 from django.http import Http404
 
+
 def require_uth_domain(view_func):
     def shim(request, domain, *args, **kwargs):
         if domain == 'uth-rhd':

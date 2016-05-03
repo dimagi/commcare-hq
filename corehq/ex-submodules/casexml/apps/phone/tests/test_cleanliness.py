@@ -691,6 +691,7 @@ class GetCaseFootprintInfoTest(TestCase):
 
 
 class GetDependentCasesTest(TestCase):
+
     @classmethod
     def setUpClass(cls):
         delete_all_cases()

@@ -8,6 +8,7 @@ from django.conf import settings
 
 
 class SQLTwilioBackend(SQLSMSBackend, PhoneLoadBalancingMixin):
+
     class Meta:
         app_label = 'sms'
         proxy = True

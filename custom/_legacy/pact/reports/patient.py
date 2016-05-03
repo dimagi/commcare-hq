@@ -108,7 +108,6 @@ class PactPatientInfoReport(PactDrilldownReportMixin, PactElasticTabularReportMi
             raise Http404
         return ret
 
-
     @property
     def headers(self):
         return DataTablesHeader(
@@ -173,7 +172,6 @@ class PactPatientInfoReport(PactDrilldownReportMixin, PactElasticTabularReportMi
         full_query['script_fields'] = pact_script_fields()
         res = self.xform_es.run_query(full_query)
         return res
-
 
     @property
     def rows(self):

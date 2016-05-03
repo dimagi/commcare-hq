@@ -45,6 +45,7 @@ MISSING_KEY = None
 
 
 class AggregationResult(object):
+
     def __init__(self, raw, aggregation):
         self.aggregation = aggregation
         self.raw = raw
@@ -83,6 +84,7 @@ class Aggregation(object):
 
 
 class BucketResult(AggregationResult):
+
     @property
     def keys(self):
         return [b['key'] for b in self.normalized_buckets]
@@ -169,6 +171,7 @@ class ExtendedStatsResult(StatsResult):
 
 
 class Bucket(object):
+
     def __init__(self, result, aggregations):
         self.result = result
         self.aggregations = aggregations
@@ -292,6 +295,7 @@ class TopHitsAggregation(Aggregation):
 
 
 class FilterResult(AggregationResult):
+
     @property
     def doc_count(self):
         return self.result['doc_count']
@@ -362,6 +366,7 @@ class AggregationRange(namedtuple('AggregationRange', 'start end key')):
 
 
 class RangeResult(BucketResult):
+
     @property
     def normalized_buckets(self):
         buckets = self.raw_buckets
@@ -415,6 +420,7 @@ class RangeAggregation(Aggregation):
 
 
 class HistogramResult(BucketResult):
+
     def as_facet_result(self):
         return [
             {'time': b.key, 'count': b.doc_count}
@@ -456,6 +462,7 @@ class NestedAggregationHelper(object):
     """
     Helper to run nested term-based queries (equivalent to SQL group-by clauses)
     """
+
     def __init__(self, base_query, terms):
         self.base_query = base_query
         self.terms = terms

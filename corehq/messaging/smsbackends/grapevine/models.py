@@ -33,6 +33,7 @@ TEMPLATE = """<?xml version="1.0" encoding="UTF-8"?>
 
 
 class SQLGrapevineBackend(SQLSMSBackend):
+
     class Meta:
         app_label = 'sms'
         proxy = True
@@ -119,6 +120,7 @@ class UrlencodedDeserializer(Serializer):
 
 
 class SimpleApiAuthentication(Authentication):
+
     def is_authenticated(self, request, **kwargs):
         user = self.get_identifier(request)
         key = request.GET.get('apikey')

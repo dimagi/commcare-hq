@@ -140,6 +140,7 @@ class NewWebUserRegistrationForm(NoAutocompleteMixin, DomainRegistrationForm):
 # part of the distro
 
 class _BaseForm(object):
+
     def clean(self):
         for field in self.cleaned_data:
             if isinstance(self.cleaned_data[field], basestring):

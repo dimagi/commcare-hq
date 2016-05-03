@@ -17,6 +17,7 @@ CaseIndexInfo = namedtuple(
 
 
 class AttachmentContent(namedtuple('AttachmentContent', ['content_type', 'content_stream'])):
+
     @property
     def content_body(self):
         with self.content_stream as stream:
@@ -89,6 +90,7 @@ class FormAccessors(object):
     """
     Facade for Form DB access that proxies method calls to SQL or Couch version
     """
+
     def __init__(self, domain=None):
         self.domain = domain
 
@@ -233,6 +235,7 @@ class CaseAccessors(object):
     """
     Facade for Case DB access that proxies method calls to SQL or Couch version
     """
+
     def __init__(self, domain=None):
         self.domain = domain
 
@@ -333,6 +336,7 @@ def get_cached_case_attachment(domain, case_id, attachment_id, is_image=False):
 
 
 class AbstractLedgerAccessor(six.with_metaclass(ABCMeta)):
+
     @abstractmethod
     def get_transactions_for_consumption(domain, case_id, product_id, section_id, window_start, window_end):
         raise NotImplementedError
@@ -375,6 +379,7 @@ class LedgerAccessors(object):
     """
     Facade for Ledger DB access that proxies method calls to SQL or Couch version
     """
+
     def __init__(self, domain=None):
         self.domain = domain
 

@@ -13,6 +13,7 @@ supply_point_id = 'test-facility'
 
 
 class ConsumptionTestBase(TestCase):
+
     def setUp(self):
         _delete_all_consumptions()
         self.assertEqual(0, _count_consumptions())
@@ -23,6 +24,7 @@ class ConsumptionTestBase(TestCase):
 
 
 class DefaultConsumptionBase(object):
+
     def testGetNoDefault(self):
         self.assertEqual(None, self.consumption_method(domain, 'whatever', 'goes', 'here'))
 
@@ -96,16 +98,17 @@ class DefaultConsumptionBase(object):
 
 
 class GetDefaultConsumptionTestCase(DefaultConsumptionBase, ConsumptionTestBase):
+
     def setUp(self):
         super(GetDefaultConsumptionTestCase, self).setUp()
         self.consumption_method = get_default_consumption
 
 
 class GetLoadedDefaultConsumptionTestCase(DefaultConsumptionBase, ConsumptionTestBase):
+
     def wrapped_consumption_function(self, *args):
         consumption_dict = build_consumption_dict(domain)
         return get_loaded_default_consumption(consumption_dict, *args)
-
 
     def setUp(self):
         super(GetLoadedDefaultConsumptionTestCase, self).setUp()

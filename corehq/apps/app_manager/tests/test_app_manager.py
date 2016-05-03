@@ -205,6 +205,7 @@ class AppManagerTest(TestCase):
 
 
 class TestReportModule(SimpleTestCase):
+
     def test_report_module_uuid_updates(self):
         app = Application.new_app('domain', "Untitled Application", application_version=APP_V2)
 

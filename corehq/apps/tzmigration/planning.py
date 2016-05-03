@@ -58,6 +58,7 @@ class PlanningStockReportHelper(Base):
 
 
 class PlanningDB(object):
+
     def __init__(self, db_filepath):
         self.db_filepath = db_filepath
         self._connection = None

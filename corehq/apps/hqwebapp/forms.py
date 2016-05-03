@@ -53,7 +53,6 @@ class EmailAuthenticationForm(NoAutocompleteMixin, AuthenticationForm):
         return cleaned_data
 
 
-
 class CloudCareAuthenticationForm(EmailAuthenticationForm):
     username = forms.CharField(label=_("Username"), max_length=75,
                                widget=forms.TextInput(attrs={'class': 'form-control'}))
@@ -231,6 +230,7 @@ class FormListForm(object):
         Converts a child form to JSON for rendering
         """
         cleaned_data = getattr(form, 'cleaned_data', {})
+
         def get_data(key):
             if key in cleaned_data:
                 return cleaned_data[key]

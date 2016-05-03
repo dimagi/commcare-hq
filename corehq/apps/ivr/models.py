@@ -9,6 +9,7 @@ class UnrecognizedIVRBackendException(UnrecognizedBackendException):
 
 
 class SQLIVRBackend(SQLMobileBackend):
+
     class Meta:
         app_label = 'sms'
         proxy = True

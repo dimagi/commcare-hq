@@ -6,6 +6,7 @@ from custom.ewsghana.handlers.keyword import KeywordHandler
 
 
 class UndoHandler(KeywordHandler):
+
     def help(self):
         return self.handle()
 

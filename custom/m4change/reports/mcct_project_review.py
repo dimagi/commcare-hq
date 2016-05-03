@@ -28,6 +28,7 @@ def _get_date_range(range):
         return (dates[0], dates[1])
     return None
 
+
 def _get_relevant_xmlnss_for_service_type(service_type_filter):
     relevant_form_types = \
         MCCT_SERVICE_TYPES[service_type_filter] if service_type_filter else MCCT_SERVICE_TYPES["all"]

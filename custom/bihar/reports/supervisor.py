@@ -51,6 +51,7 @@ class ConvenientBaseMixIn(object):
 
     # for the lazy
     _headers = []  # override
+
     @property
     def headers(self):
         headers = self._headers[self.mode] if isinstance(self._headers, dict) else self._headers
@@ -235,7 +236,6 @@ class SubCenterSelectionReport(ConvenientBaseMixIn, GenericTabularReport,
                 details=url_and_params(self.next_report_class.get_url(domain=self.domain,
                                                                       render_as=self.render_next),
                                        params))
-
 
         return [group.name, _link(group, get_awcc(group))] if self.is_supervisor else [_link(group, group.name)]
 

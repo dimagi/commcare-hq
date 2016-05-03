@@ -129,6 +129,7 @@ def compute_daily_consumption_from_transactions(transactions, window_start, conf
     configuration = configuration or ConsumptionConfiguration()
 
     class ConsumptionPeriod(object):
+
         def __init__(self, tx):
             self.start = from_ts(tx.received_on)
             self.start_soh = tx.normalized_value

@@ -416,6 +416,7 @@ class CreditStripePaymentHandler(BaseStripePaymentHandler):
 
 
 class AutoPayInvoicePaymentHandler(object):
+
     def pay_autopayable_invoices(self, date_due):
         """ Pays the full balance of all autopayable invoices on date_due """
         autopayable_invoices = Invoice.autopayable_invoices(date_due)

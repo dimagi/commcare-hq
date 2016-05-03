@@ -14,6 +14,7 @@ from couchdbkit import MultipleResultsFound
 
 
 class UTHTests(TestCase):
+
     def create_scan_case(self, user_id, serial, scan_id, scan_time, scan_status=''):
         case_id = uuid.uuid4().hex
         case_block = CaseBlock(
@@ -57,6 +58,7 @@ class UTHTests(TestCase):
 
 
 class ScanLookupTests(UTHTests):
+
     def testFindsCorrectCase(self):
         case = utils.match_case('VH014466XK', '123123', '')
         self.assertEqual(self.case_id, case._id)
@@ -102,6 +104,7 @@ class ScanLookupTests(UTHTests):
 
 
 class VscanTests(UTHTests):
+
     def pack_directory(self, directory):
         # name of the test directory we're packing
         packed_directory = {}

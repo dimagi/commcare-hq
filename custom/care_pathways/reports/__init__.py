@@ -5,6 +5,7 @@ from custom.care_pathways.utils import get_domain_configuration
 
 
 class CareReportMixin(object):
+
     @property
     def report_config(self):
         config = dict(

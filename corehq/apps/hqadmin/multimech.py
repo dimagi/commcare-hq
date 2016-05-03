@@ -27,6 +27,7 @@ except ImportError:
 
 Base = declarative_base()
 
+
 class GlobalConfig(Base):
     """class representing a muli-mechanize global config"""
     __tablename__ = 'mechanize_global_configs'
@@ -50,6 +51,7 @@ class GlobalConfig(Base):
         return "<GlobalConfig('%i', '%i', '%i')>" % (
                 self.run_time, self.rampup, self.results_ts_interval)
 
+
 class UserGroupConfig(Base):
     """class representing a multi-mechanize user group config"""
     __tablename__ = 'mechanize_user_group_configs'
@@ -68,6 +70,7 @@ class UserGroupConfig(Base):
     def __repr__(self):
         return "<UserGroupConfig('%s','%s','%s')>" % (
                 self.user_group, self.threads, self.script)
+
 
 class ResultRow(Base):
     """class representing a multi-mechanize results.csv row"""
@@ -114,6 +117,7 @@ class ResultRow(Base):
                 self.epoch, self.user_group_name, self.scriptrun_time,
                 self.error, self.custom_timers)
 
+
 class TimerRow(Base):
     """class representing a multi-mechanize custom timer result"""
     __tablename__ = 'mechanize_custom_timers'
@@ -132,6 +136,7 @@ class TimerRow(Base):
 
     result_rows = relation("ResultRow",
         primaryjoin="TimerRow.mechanize_results_id==ResultRow.id")
+
 
 def load_results_database(project_name, run_localtime, results_dir,
         results_database, run_time, rampup, results_ts_interval,

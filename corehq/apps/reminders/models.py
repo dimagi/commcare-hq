@@ -144,8 +144,10 @@ SEND_LATER = "LATER"
 # TODO: Decide whether to keep this or retire the reminder
 DEFAULT_REMINDER_TIME = time(12, 0)
 
+
 def is_true_value(val):
     return val == 'ok' or val == 'OK'
+
 
 def looks_like_timestamp(value):
     try:
@@ -220,6 +222,7 @@ def get_events_scheduling_info(events):
 
 
 class MessageVariable(object):
+
     def __init__(self, variable):
         self.variable = variable
 
@@ -250,12 +253,15 @@ class MessageVariable(object):
             pass
         return "(?)"
 
+
 class Message(object):
+
     def __init__(self, template, **params):
         self.template = template
         self.params = {}
         for key, value in params.items():
             self.params[key] = MessageVariable(value)
+
     def __unicode__(self):
         return self.template.format(**self.params)
 
@@ -264,6 +270,7 @@ class Message(object):
         if isinstance(template, str):
             template = unicode(template, encoding='utf-8')
         return unicode(cls(template, **params))
+
 
 class CaseReminderEvent(DocumentSchema):
     """
@@ -1709,6 +1716,7 @@ class CaseReminderHandler(Document):
     def deleted(self):
         return self.doc_type != 'CaseReminderHandler'
 
+
 class CaseReminder(SafeSaveDocument, LockableMixIn):
     """
     Where the CaseReminderHandler is the rule and schedule for sending out reminders,
@@ -1857,6 +1865,7 @@ class CaseReminder(SafeSaveDocument, LockableMixIn):
         self.doc_type += "-Deleted"
         self.save()
 
+
 class SurveyKeywordAction(DocumentSchema):
     recipient = StringProperty(choices=KEYWORD_RECIPIENT_CHOICES)
     recipient_id = StringProperty()
@@ -1872,6 +1881,7 @@ class SurveyKeywordAction(DocumentSchema):
     use_named_args = BooleanProperty()
     named_args = DictProperty() # Dictionary of {argument name in the sms (caps) : form question xpath}
     named_args_separator = StringProperty() # Can be None in which case there is no separator (i.e., a100 b200)
+
 
 class SurveyKeyword(Document):
     domain = StringProperty()

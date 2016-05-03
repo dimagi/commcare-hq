@@ -2166,6 +2166,7 @@ class InvitationAppInfoView(View, DomainViewMixin):
 
 
 class IncomingBackendView(View):
+
     def dispatch(self, request, api_key, *args, **kwargs):
         try:
             api_user = ApiUser.get('ApiUser-%s' % api_key)

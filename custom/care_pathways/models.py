@@ -9,6 +9,7 @@ from custom.utils.utils import flat_field
 
 
 class Numerator(fluff.Calculator):
+
     @fluff.null_emitter
     def numerator(self, case):
         yield None

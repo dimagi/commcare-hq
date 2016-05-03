@@ -25,6 +25,7 @@ def generate_production_fixtures():
     for domain in M4CHANGE_DOMAINS:
         generate_fixtures_for_domain(domain, db, data_source)
 
+
 def generate_fixtures_for_domain(domain, db, data_source):
 
     location_ids = [location.get_id for location in Location.by_domain(domain)]
@@ -51,6 +52,7 @@ def generate_fixtures_for_domain(domain, db, data_source):
 
                 FixtureReportResult.save_result(domain, location_id, date[0].date(), date[1].date(),
                                                 report_slug, rows, name)
+
 
 @periodic_task(run_every=crontab(hour="*", minute="*/30", day_of_week="*"),
                queue=getattr(settings, "CELERY_PERIODIC_QUEUE", "celery"))

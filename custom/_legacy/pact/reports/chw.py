@@ -44,7 +44,6 @@ class PactCHWProfileReport(PactDrilldownReportMixin, PactElasticTabularReportMix
         except NoReverseMatch:
             return "#"
 
-
     def get_assigned_patients(self):
         """get list of patients and their submissions on who this chw is assigned as primary hp"""
         fields = ["_id", "name", "pactid.#value", "hp_status.#value", "dot_status.#value"]
@@ -62,12 +61,10 @@ class PactCHWProfileReport(PactDrilldownReportMixin, PactElasticTabularReportMix
                 x['dot_url'] = self.pact_dot_link(x['_id'])
         return sorted(assigned_patients, key=lambda x: int(x['pactid.#value']))
 
-
     def get_fields(self):
         if self.view_mode == 'submissions':
             yield 'corehq.apps.reports.filters.users.UserTypeFilter'
             yield 'corehq.apps.reports.filters.dates.DatespanFilter'
-
 
     @memoized
     def get_user(self):
@@ -76,7 +73,6 @@ class PactCHWProfileReport(PactDrilldownReportMixin, PactElasticTabularReportMix
             return self._user_doc
         else:
             return None
-
 
     @property
     def report_context(self):
@@ -107,7 +103,6 @@ class PactCHWProfileReport(PactDrilldownReportMixin, PactElasticTabularReportMix
         else:
             raise Http404
         return ret
-
 
     #submission stuff
     @property

@@ -58,6 +58,7 @@ class FilterField(JsonField):
     A form field with a little bit of validation for report builder report
     filter configuration.
     """
+
     def validate(self, value):
         super(FilterField, self).validate(value)
         for filter_conf in value:

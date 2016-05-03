@@ -36,6 +36,7 @@ SHARED_ID = "our_group"
 PARENT_TYPE = "mother"
 CHILD_RELATIONSHIP = "child"
 
+
 @override_settings(CASEXML_FORCE_DOMAIN_CHECK=False)
 class SyncBaseTest(TestCase):
     """
@@ -1024,6 +1025,7 @@ class ExtensionCasesSyncTokenUpdates(SyncBaseTest):
 
 
 class ExtensionCasesFirstSync(SyncBaseTest):
+
     def setUp(self):
         super(ExtensionCasesFirstSync, self).setUp()
         self.restore_config = RestoreConfig(project=self.project, user=self.user)
@@ -1804,6 +1806,7 @@ class SteadyStateExtensionSyncTest(SyncBaseTest):
     """
     Test that doing multiple clean syncs with extensions does what we think it will
     """
+
     def setUp(self):
         super(SteadyStateExtensionSyncTest, self).setUp()
         self.other_user = User(user_id=OTHER_USER_ID, username=OTHER_USERNAME,

@@ -4,6 +4,7 @@ from casexml.apps.case.models import CommCareCase
 from corehq.apps.hqcase.dbaccessors import get_cases_in_domain
 from corehq.apps.sms.mixin import InvalidFormatException, PhoneNumberInUseException
 
+
 class Command(BaseCommand):
     args = "<domain1 domain2 ... >"
     help = "Looks for discrepancies between case phone numbers and corresponding verified number entries for all cases in the given domains."

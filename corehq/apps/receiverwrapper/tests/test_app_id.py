@@ -9,6 +9,7 @@ from couchforms.util import spoof_submission
 
 
 class TestAppId(TestCase):
+
     @classmethod
     def setUpClass(cls):
         cls.domain = 'alskdjfablasdkffsdlkfjabas'

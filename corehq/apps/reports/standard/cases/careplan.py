@@ -13,6 +13,7 @@ from dimagi.utils.decorators.memoized import memoized
 
 
 class CareplanCaseDisplay(CaseDisplay):
+
     @property
     def case_detail_url(self):
         try:

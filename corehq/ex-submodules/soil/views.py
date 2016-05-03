@@ -31,6 +31,7 @@ def demo(request):
     demo_sleep.delay(download_id, howlong)
     return HttpResponseRedirect(reverse('retrieve_download', kwargs={'download_id': download_id}))
 
+
 @login_required
 def heartbeat_status(request):
     return HttpResponse(json.dumps({"last_timestamp": str(last_heartbeat()),

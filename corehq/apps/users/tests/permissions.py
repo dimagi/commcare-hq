@@ -31,6 +31,7 @@ class PermissionsTest(TestCase):
 @mock.patch('corehq.apps.export.views.domain_has_privilege',
             lambda domain, privilege: True)
 class ExportPermissionsTest(SimpleTestCase):
+
     @classmethod
     def setUpClass(cls):
         cls.domain = 'export-permissions-test'

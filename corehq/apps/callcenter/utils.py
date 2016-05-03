@@ -21,6 +21,7 @@ from dimagi.utils.couch import CriticalSection
 
 
 class DomainLite(namedtuple('DomainLite', 'name default_timezone cc_case_type use_fixtures')):
+
     def midnights(self, utcnow=None):
         """Returns a list containing two datetimes in UTC that corresponds to midnight
         in the domains timezone on either side of the current UTC datetime.

@@ -256,7 +256,6 @@ class SyncHistoryReport(DeploymentsReport):
                 except SyncLogAssertionError as e:
                     return _(u'Error computing hash! {}').format(e)
 
-
             num_cases = sync_log.case_count()
             columns = [
                 _fmt_date(sync_log.date),

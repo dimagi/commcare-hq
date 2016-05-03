@@ -7,6 +7,7 @@ from dimagi.utils.couch.sync_docs import DesignInfo
 
 
 class DefaultPreindexPlugin(PreindexPlugin):
+
     def __init__(self, app_label):
         self.app_label = app_label
         self.app_config = apps.get_app_config(self.app_label)

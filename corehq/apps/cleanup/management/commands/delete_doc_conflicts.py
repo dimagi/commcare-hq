@@ -7,6 +7,7 @@ from django.core.management.base import BaseCommand, LabelCommand
 
 logger = logging.getLogger(__name__)
 
+
 def bulk_delete(db, docs):
     if not docs:
         return

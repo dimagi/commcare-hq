@@ -90,6 +90,7 @@ class MessagesReport(ProjectReport, ProjectReportParametersMixin, GenericTabular
             # NOTE: this currently counts all messages from the user, whether
             # or not they were from verified numbers
             counts = _sms_count(user, self.datespan.startdate_utc, self.datespan.enddate_utc)
+
             def _fmt(val):
                 return format_datatables_data(val, val)
             return [
@@ -454,6 +455,7 @@ class MessageLogReport(BaseCommConnectLogReport):
 
 
 class BaseMessagingEventReport(BaseCommConnectLogReport):
+
     @property
     def export_table(self):
         # Ignore the BaseCommConnectLogReport export

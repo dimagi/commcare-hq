@@ -21,6 +21,7 @@ def make_child2_form(form):
 
 
 class TestMultipleChildren(TestCase):
+
     def setUp(self):
         self.report = Report(month=7, year=2014, block="Atri")
         self.case = OPMCase(

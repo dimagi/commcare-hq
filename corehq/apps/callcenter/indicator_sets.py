@@ -36,6 +36,7 @@ class CachedIndicators(JsonObject):
 
 
 class FakeQuerySet(object):
+
     def __init__(self, results):
         self.results = results
 

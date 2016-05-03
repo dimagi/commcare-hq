@@ -3,6 +3,7 @@ from corehq.apps.groups.models import Group
 from corehq.apps.reports.util import case_users_filter, case_group_filter
 from corehq.apps.users.models import CommCareUser
 
+
 def _mock_case(owner, user):
     return {
         'owner_id': owner,

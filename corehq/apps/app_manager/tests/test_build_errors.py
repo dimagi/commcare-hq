@@ -6,6 +6,7 @@ from corehq.apps.app_manager.tests.app_factory import AppFactory
 
 
 class BuildErrorsTest(SimpleTestCase):
+
     def test_subcase_errors(self):
         with open(os.path.join(os.path.dirname(__file__), 'data', 'subcase-details.json')) as f:
             source = json.load(f)

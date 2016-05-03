@@ -675,6 +675,7 @@ class CaseAccessorSQL(AbstractCaseAccessor):
 
 
 class LedgerAccessorSQL(AbstractLedgerAccessor):
+
     @staticmethod
     def get_ledger_values_for_case(case_id):
         return list(LedgerValue.objects.raw(
@@ -819,6 +820,7 @@ class RawQuerySetWrapper(object):
     Wrapper for RawQuerySet objects to make them behave more like
     normal QuerySet objects
     """
+
     def __init__(self, queryset):
         self.queryset = queryset
         self._result_cache = None

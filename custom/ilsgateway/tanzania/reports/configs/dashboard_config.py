@@ -9,6 +9,7 @@ from dimagi.utils.decorators.memoized import memoized
 
 
 class DashboardConfig(object):
+
     def __init__(self, domain, location_id, start_date, end_date):
         self.domain = domain
         self.location_id = location_id

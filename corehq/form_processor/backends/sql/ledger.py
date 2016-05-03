@@ -10,6 +10,7 @@ from corehq.form_processor.models import LedgerValue, LedgerTransaction
 
 
 class LedgerDBSQL(LedgerDBInterface):
+
     def get_ledgers_for_case(self, case_id):
         return LedgerAccessorSQL.get_ledger_values_for_case(case_id)
 
