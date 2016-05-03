@@ -4,7 +4,7 @@ from corehq.apps.reports.filters.base import BaseReportFilter
 
 class SearchFilter(BaseReportFilter):
     slug = "search_query"
-    template = "reports/filters/bootstrap3/search.html"
+    template = "reports/filters/search.html"
     label = ugettext_lazy("Search")
 
     # bubble help, should use ugettext_lazy

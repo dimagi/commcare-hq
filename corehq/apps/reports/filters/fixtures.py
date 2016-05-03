@@ -15,7 +15,7 @@ class AsyncDrillableFilter(BaseReportFilter):
                          {"type": "block", "parent_ref": "district_id", "references": "id", "display": "name"},
                          {"type": "village", "parent_ref": "block_id", "references": "id", "display": "name"}]
     """
-    template = "reports/filters/bootstrap3/drillable_async.html"
+    template = "reports/filters/drillable_async.html"
     hierarchy = [] # a list of fixture data type names that representing different levels of the hierarchy. Starting with the root
 
     def fdi_to_json(self, fdi):
@@ -103,7 +103,7 @@ class AsyncLocationFilter(BaseReportFilter):
     # todo: cleanup template
     label = ugettext_noop("Location")
     slug = "location_async"
-    template = "reports/filters/bootstrap3/location_async.html"
+    template = "reports/filters/location_async.html"
     make_optional = False
 
     @property
@@ -148,4 +148,4 @@ class OptionalAsyncLocationFilter(AsyncLocationFilter):
 
 
 class MultiLocationFilter(AsyncDrillableFilter):
-    template = "reports/filters/bootstrap3/multi_location.html"
+    template = "reports/filters/multi_location.html"

@@ -1,4 +1,4 @@
-{% extends 'reports/filters/bootstrap3/drilldown_options.html' %}
+{% extends 'reports/filters/drilldown_options.html' %}
 {% load hq_shared_tags %}
 {% load i18n %}
 {% block filter_content %}
@@ -72,7 +72,7 @@
 <div class="alert alert-warning {{ css_id }}-unknown_controls"
      data-bind="visible: show"
      style="margin-top: 1em;">
-    {% include 'reports/filters/bootstrap3/partials/fuzzy_checkbox.html' %}
+    {% include 'reports/filters/partials/fuzzy_checkbox.html' %}
 </div>
 {% endif %}
 {% endblock %}

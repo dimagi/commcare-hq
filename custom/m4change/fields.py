@@ -32,7 +32,7 @@ class DateRangeField(DatespanFilter):
 class CaseSearchField(ReportField):
     name = ugettext_noop("Case Search")
     slug = "case_search"
-    template = "reports/filters/bootstrap3/search.html"
+    template = "reports/filters/search.html"
 
     def update_context(self):
         self.search_query = self.request.GET.get("case_search", "")
