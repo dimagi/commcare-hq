@@ -13,7 +13,7 @@ from custom.common import ALL_OPTION
 class ProductByProgramFilter(BaseDrilldownOptionFilter):
     slug = "filter_by"
     single_option_select = 0
-    template = "common/bootstrap2/drilldown_options.html"
+    template = "common/drilldown_options.html"
     label = ugettext_noop("Filter By")
 
     @property
