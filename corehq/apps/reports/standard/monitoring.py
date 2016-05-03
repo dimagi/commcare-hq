@@ -995,7 +995,7 @@ class FormCompletionVsSubmissionTrendsReport(WorkerMonitoringFormReportTableBase
 
 class WorkerMonitoringChartBase(ProjectReport, ProjectReportParametersMixin):
     flush_layout = True
-    report_template_path = "reports/async/bootstrap3/basic.html"
+    report_template_path = "reports/async/basic.html"
 
 
 class WorkerActivityTimes(WorkerMonitoringChartBase,
