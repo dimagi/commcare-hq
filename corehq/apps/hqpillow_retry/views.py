@@ -51,8 +51,6 @@ class PillowErrorsReport(GenericTabularReport, DatespanMixin, GetParamsMixin):
 
     report_template_path = 'hqpillow_retry/pillow_errors.html'
 
-    is_bootstrap3 = True
-
     @property
     def headers(self):
         return DataTablesHeader(

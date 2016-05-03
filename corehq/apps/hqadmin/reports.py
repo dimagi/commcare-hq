@@ -542,7 +542,6 @@ FACET_MAPPING = [
 
 class AdminReport(GenericTabularReport):
     dispatcher = AdminReportDispatcher
-    is_bootstrap3 = True
 
     base_template = "hqadmin/faceted_report.html"
     report_template_path = "reports/async/bootstrap3/tabular.html"

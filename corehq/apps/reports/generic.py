@@ -124,8 +124,6 @@ class GenericReportView(object):
     report_title = None
     report_subtitles = []
 
-    is_bootstrap3 = False
-
     def __init__(self, request, base_context=None, domain=None, **kwargs):
         if not self.name or not self.section_name or self.slug is None or not self.dispatcher:
             raise NotImplementedError("Missing a required parameter: (name: %(name)s, section_name: %(section_name)s,"
@@ -312,7 +310,7 @@ class GenericReportView(object):
             else:
                 klass = field
             filters.append(
-                klass(self.request, self.domain, self.timezone, is_bootstrap3=self.is_bootstrap3)
+                klass(self.request, self.domain, self.timezone)
             )
         return filters
 
@@ -722,8 +720,7 @@ class GenericReportView(object):
         pass
 
     def _select_bootstrap_template(self, template_path):
-        if self.is_bootstrap3 and template_path is not None:
-            template_path = template_path.replace('/bootstrap2/', '/bootstrap3/')
+        template_path = template_path.replace('/bootstrap2/', '/bootstrap3/')
         return template_path
 
 

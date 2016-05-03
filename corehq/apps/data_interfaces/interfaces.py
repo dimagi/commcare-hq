@@ -40,8 +40,6 @@ class CaseReassignmentInterface(CaseListMixin, DataInterface):
     slug = "reassign_cases"
     report_template_path = 'data_interfaces/interfaces/case_management.html'
 
-    is_bootstrap3 = True
-
     @property
     @memoized
     def es_results(self):
@@ -173,8 +171,6 @@ class BulkFormManagementInterface(SubmitHistoryMixin, DataInterface, ProjectRepo
     name = ugettext_noop("Manage Forms")
     slug = "bulk_archive_forms"
     report_template_path = 'data_interfaces/interfaces/archive_forms.html'
-
-    is_bootstrap3 = True
 
     def __init__(self, request, **kwargs):
         super(BulkFormManagementInterface, self).__init__(request, **kwargs)

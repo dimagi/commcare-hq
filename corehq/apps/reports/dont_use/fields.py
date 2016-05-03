@@ -25,7 +25,7 @@ class ReportField(object):
     is_cacheable = False
 
     def __init__(self, request, domain=None, timezone=pytz.utc, parent_report=None,
-                 is_bootstrap3=False, css_label=None, css_field=None):
+                 css_label=None, css_field=None):
         warnings.warn(
             "ReportField (%s) is deprecated. Use ReportFilter instead." % (
                 self.__class__.__name__
@@ -37,7 +37,6 @@ class ReportField(object):
         self.domain = domain
         self.timezone = timezone
         self.parent_report = parent_report
-        self.is_bootstrap3 = is_bootstrap3
         self.css_label = css_label or DEFAULT_CSS_LABEL_CLASS_REPORT_FILTER
         self.css_field = css_field or DEFAULT_CSS_FIELD_CLASS_REPORT_FILTER
 
@@ -56,9 +55,7 @@ class ReportField(object):
         pass
 
     def get_bootstrap_template(self):
-        if self.is_bootstrap3:
-            return self.template.replace('/bootstrap2/', '/bootstrap3/')
-        return self.template
+        return self.template.replace('/bootstrap2/', '/bootstrap3/')
 
 
 class ReportSelectField(ReportField):

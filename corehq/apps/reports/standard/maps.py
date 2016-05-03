@@ -258,8 +258,6 @@ class ElasticSearchMapReport(GetParamsMixin, GenericTabularReport, GenericMapRep
     asynchronous = True
     flush_layout = True
 
-    is_bootstrap3 = True
-
     @use_maps_async
     def bootstrap3_dispatcher(self, request, *args, **kwargs):
         super(ElasticSearchMapReport, self).bootstrap3_dispatcher(request, *args, **kwargs)
@@ -298,7 +296,6 @@ class DemoMapReport(GenericMapReport):
     """this report is a demonstration of the maps report's capabilities
     it uses a static dataset
     """
-    is_bootstrap3 = True
 
     name = ugettext_noop("Maps: Highest Mountains")
     slug = "maps_demo"
@@ -501,7 +498,6 @@ class DemoMapReport2(GenericMapReport):
     """this report is a demonstration of the maps report's capabilities
     it uses a static dataset
     """
-    is_bootstrap3 = True
 
     name = ugettext_noop("Maps: States of India")
     slug = "maps_demo2"
@@ -653,7 +649,6 @@ class GenericCaseListMap(GenericMapReport):
 class DemoMapCaseList(GenericCaseListMap):
     name = ugettext_noop("Maps: Case List")
     slug = "maps_demo_caselist"
-    is_bootstrap3 = True
 
     case_config = {
         "supply-point": "_random",

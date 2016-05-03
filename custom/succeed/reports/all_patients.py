@@ -119,7 +119,6 @@ class PatientListReport(SqlTabularReport, CustomProjectReport, ProjectReportPara
     table_name = 'fluff_UCLAPatientFluff'
     base_template = 'succeed/base_template.html'
     report_template_path = 'succeed/ucla_table.html'
-    is_bootstrap3 = True
 
     fields = ['custom.succeed.fields.CareSite',
               'custom.succeed.fields.PatientStatus']
