@@ -2,12 +2,12 @@ from datetime import datetime, timedelta
 from celery.task import periodic_task, task
 from corehq.apps.reminders.models import (CaseReminderHandler, CaseReminder,
     CASE_CRITERIA, REMINDER_TYPE_DEFAULT)
+from corehq.form_processor.abstract_models import DEFAULT_PARENT_IDENTIFIER
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 from corehq.form_processor.models import CommCareCaseIndexSQL
 from corehq.form_processor.utils.general import should_use_sql_backend
 from django.conf import settings
 from dimagi.utils.logging import notify_exception
-from casexml.apps.case.models import INDEX_ID_PARENT
 from dimagi.utils.chunked import chunked
 from dimagi.utils.couch import CriticalSection
 from dimagi.utils.couch.bulk import soft_delete_docs
@@ -61,11 +61,7 @@ def _case_changed(domain, case_id, handler_ids):
                 }
             handler.case_changed(case, **kwargs)
             if handler.uses_parent_case_property:
-                if should_use_sql_backend(domain):
-                    subcases = case.get_subcases(index_identifier=CommCareCaseIndexSQL.PARENT_IDENTIFIER)
-                else:
-                    subcases = case.get_subcases(index_identifier=INDEX_ID_PARENT)
-
+                subcases = case.get_subcases(index_identifier=DEFAULT_PARENT_IDENTIFIER)
                 for subcase in subcases:
                     handler.case_changed(subcase, **kwargs)
 

@@ -1,7 +1,7 @@
 from contextlib import contextmanager
 
 from casexml.apps.case.mock import CaseFactory, CaseStructure, CaseIndex
-from casexml.apps.case.models import CommCareCase, INDEX_ID_PARENT, INDEX_RELATIONSHIP_CHILD
+from casexml.apps.case.models import CommCareCase, INDEX_RELATIONSHIP_CHILD
 from casexml.apps.case.signals import case_post_save
 from corehq.apps.data_interfaces.models import (AutomaticUpdateRule,
     AutomaticUpdateRuleCriteria, AutomaticUpdateAction)

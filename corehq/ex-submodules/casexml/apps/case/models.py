@@ -19,7 +19,7 @@ from couchdbkit.exceptions import ResourceNotFound
 
 from casexml.apps.case.dbaccessors import get_reverse_indices
 from corehq.apps.sms.mixin import MessagingCaseContactMixin
-from corehq.form_processor.abstract_models import AbstractCommCareCase
+from corehq.form_processor.abstract_models import AbstractCommCareCase, DEFAULT_PARENT_IDENTIFIER
 from dimagi.ext.couchdbkit import *
 from dimagi.utils.django.cached_object import (
     CachedObject, OBJECT_ORIGINAL, OBJECT_SIZE_MAP, CachedImage, IMAGE_SIZE_ORDERING
@@ -45,7 +45,6 @@ CASE_STATUS_OPEN = 'open'
 CASE_STATUS_CLOSED = 'closed'
 CASE_STATUS_ALL = 'all'
 
-INDEX_ID_PARENT = 'parent'
 INDEX_RELATIONSHIP_CHILD = 'child'
 
 
@@ -211,10 +210,6 @@ class CommCareCase(SafeSaveDocument, IndexHoldingMixIn, ComputedDocumentMixin,
         return "%s(name=%r, type=%r, id=%r)" % (
                 self.__class__.__name__, self.name, self.type, self._id)
 
-    @property
-    def default_parent_identifier(self):
-        return INDEX_ID_PARENT
-
     @memoized
     def get_parent(self, identifier=None, relationship=None):
         indices = self.indices
@@ -236,7 +231,7 @@ class CommCareCase(SafeSaveDocument, IndexHoldingMixIn, ComputedDocumentMixin,
         please write/use a different property.
         """
         result = self.get_parent(
-            identifier=self.default_parent_identifier,
+            identifier=DEFAULT_PARENT_IDENTIFIER,
             relationship=INDEX_RELATIONSHIP_CHILD
         )
         return result[0] if result else None

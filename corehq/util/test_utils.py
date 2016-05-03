@@ -410,7 +410,8 @@ def set_parent_case(domain, child_case, parent_case):
     Creates a parent-child relationship between child_case and parent_case.
     """
     from casexml.apps.case.mock import CaseFactory, CaseStructure, CaseIndex
-    from casexml.apps.case.models import INDEX_ID_PARENT, INDEX_RELATIONSHIP_CHILD
+    from casexml.apps.case.models import INDEX_RELATIONSHIP_CHILD
+    from corehq.form_processor.abstract_models import DEFAULT_PARENT_IDENTIFIER
 
     parent = CaseStructure(case_id=parent_case.case_id)
     CaseFactory(domain).create_or_update_case(
@@ -418,7 +419,7 @@ def set_parent_case(domain, child_case, parent_case):
             case_id=child_case.case_id,
             indices=[CaseIndex(
                 related_structure=parent,
-                identifier=INDEX_ID_PARENT,
+                identifier=DEFAULT_PARENT_IDENTIFIER,
                 relationship=INDEX_RELATIONSHIP_CHILD
             )],
         )

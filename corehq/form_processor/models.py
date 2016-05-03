@@ -22,6 +22,7 @@ from corehq.apps.sms.mixin import MessagingCaseContactMixin
 from corehq.blobs import get_blob_db
 from corehq.blobs.exceptions import NotFound, BadName
 from corehq.form_processor import signals
+from corehq.form_processor.abstract_models import DEFAULT_PARENT_IDENTIFIER
 from corehq.form_processor.exceptions import InvalidAttachment, UnknownActionType
 from corehq.form_processor.track_related import TrackRelatedChanges
 from corehq.sql_db.routers import db_for_read_write
@@ -740,10 +741,6 @@ class CommCareCaseSQL(DisabledDbMixin, models.Model, RedisLockableMixIn,
         from corehq.form_processor.backends.sql.dbaccessors import CaseAccessorSQL
         return CaseAccessorSQL.get_case(case_id)
 
-    @property
-    def default_parent_identifier(self):
-        return CommCareCaseIndexSQL.PARENT_IDENTIFIER
-
     @memoized
     def get_parent(self, identifier=None, relationship=None):
         indices = self.indices
@@ -765,7 +762,7 @@ class CommCareCaseSQL(DisabledDbMixin, models.Model, RedisLockableMixIn,
         please write/use a different property.
         """
         result = self.get_parent(
-            identifier=self.default_parent_identifier,
+            identifier=DEFAULT_PARENT_IDENTIFIER,
             relationship=CommCareCaseIndexSQL.CHILD
         )
         return result[0] if result else None
@@ -883,8 +880,6 @@ class CommCareCaseIndexSQL(DisabledDbMixin, models.Model, SaveStateMixin):
     )
     RELATIONSHIP_INVERSE_MAP = dict(RELATIONSHIP_CHOICES)
     RELATIONSHIP_MAP = {v: k for k, v in RELATIONSHIP_CHOICES}
-
-    PARENT_IDENTIFIER = 'parent'
 
     case = models.ForeignKey(
         'CommCareCaseSQL', to_field='case_id', db_index=True,

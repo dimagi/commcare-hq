@@ -9,6 +9,9 @@ from dimagi.utils.decorators.memoized import memoized
 from couchforms import const
 
 
+DEFAULT_PARENT_IDENTIFIER = 'parent'
+
+
 class AbstractXFormInstance(object):
 
     # @property
@@ -146,10 +149,6 @@ class AbstractCommCareCase(object):
     def parent(self):
         raise NotImplementedError()
 
-    @property
-    def default_parent_identifier(self):
-        raise NotImplementedError()
-
     def soft_delete(self):
         raise NotImplementedError()
 
@@ -191,7 +190,7 @@ class AbstractCommCareCase(object):
         CasePropertyResult = collections.namedtuple('CasePropertyResult', 'case value')
 
         if property_name.lower().startswith('parent/'):
-            parents = self.get_parent(identifier=self.default_parent_identifier)
+            parents = self.get_parent(identifier=DEFAULT_PARENT_IDENTIFIER)
             for parent in parents:
                 parent._resolve_case_property(property_name[7:], result)
             return
