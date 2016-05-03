@@ -4,15 +4,16 @@ import string
 
 from django.test import TestCase
 from casexml.apps.case.tests.util import delete_all_xforms
-from casexml.apps.stock.utils import get_current_ledger_transactions, get_current_ledger_state
 from corehq.apps.commtrack.models import SQLProduct
 
 from casexml.apps.stock.const import REPORT_TYPE_BALANCE
 from casexml.apps.stock.models import StockReport, StockTransaction
 from corehq.apps.commtrack.processing import StockProcessingResult
 from corehq.apps.domain.shortcuts import create_domain
+from corehq.form_processor.interfaces.dbaccessors import LedgerAccessors
 from corehq.form_processor.interfaces.processor import FormProcessorInterface
 from corehq.form_processor.parsers.ledgers.helpers import StockReportHelper, StockTransactionHelper
+from corehq.form_processor.tests.utils import run_with_all_backends
 from couchforms.models import XFormInstance
 
 
@@ -89,17 +90,18 @@ class StockReportDomainTest(TestCase):
         self.assertEquals(stock_report.form_id, self.form._id)
         self.assertEquals(stock_report.domain, self.domain)
 
-    def test_get_current_ledger_transactions(self):
-        for case in self.case_ids:
-            transactions = get_current_ledger_transactions(case)
-            for section, products in transactions.items():
-                for product, trans in products.items():
-                    self.assertEqual(trans.stock_on_hand, self.transactions[case][section][product])
+    @run_with_all_backends
+    def test_get_case_ledger_state(self):
+        for case_id in self.case_ids:
+            state = LedgerAccessors(self.domain).get_case_ledger_state(case_id)
+            for section, products in state.items():
+                for product, state in products.items():
+                    self.assertEqual(state.stock_on_hand, self.transactions[case_id][section][product])
 
     def _validate_case_data(self, data, expected):
         for section, products in data.items():
-            for product, trans in products.items():
-                self.assertEqual(trans.stock_on_hand, expected[section][product])
+            for product, state in products.items():
+                self.assertEqual(state.stock_on_hand, expected[section][product])
 
     def _test_get_current_ledger_transactions(self, tester_fn):
         tester_fn(self.transactions)
@@ -132,22 +134,24 @@ class StockReportDomainTest(TestCase):
 
         tester_fn(new_trans)
 
-    def test_get_current_ledger_transactions_1(self):
+    @run_with_all_backends
+    def test_get_case_ledger_state_1(self):
         def test_transactions(expected):
-            for case in self.case_ids:
-                transactions = get_current_ledger_transactions(case)
-                self._validate_case_data(transactions, expected[case])
+            for case_id in self.case_ids:
+                state = LedgerAccessors(self.domain).get_case_ledger_state(case_id)
+                self._validate_case_data(state, expected[case_id])
 
         self._test_get_current_ledger_transactions(test_transactions)
 
-        self.assertEqual({}, get_current_ledger_transactions('non-existent'))
+        self.assertEqual({}, LedgerAccessors(self.domain).get_case_ledger_state('non-existent'))
 
+    @run_with_all_backends
     def test_get_current_ledger_state(self):
         def test_transactions(expected):
-            state = get_current_ledger_state(self.case_ids.keys())
-            for case, sections in state.items():
-                self._validate_case_data(sections, expected[case])
+            state = LedgerAccessors(self.domain).get_current_ledger_state(self.case_ids.keys())
+            for case_id, sections in state.items():
+                self._validate_case_data(sections, expected[case_id])
 
         self._test_get_current_ledger_transactions(test_transactions)
 
-        self.assertEqual({}, get_current_ledger_state([]))
+        self.assertEqual({}, LedgerAccessors(self.domain).get_current_ledger_state([]))

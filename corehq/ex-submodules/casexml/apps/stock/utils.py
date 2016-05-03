@@ -42,33 +42,7 @@ def state_stock_category(state):
     )
 
 
-def get_current_ledger_transactions(case_id):
-    """
-    Given a case returns a dict of all current ledger data.
-    {
-        "section_id": {
-             "product_id": StockState,
-             "product_id": StockState,
-             ...
-        },
-        ...
-    }
-    """
-    from corehq.apps.commtrack.models import StockState
-    results = StockState.objects.filter(case_id=case_id)
-
-    ret = {}
-    for state in results:
-        sections = ret.setdefault(state.section_id, {})
-        sections[state.product_id] = state
-        if not state.last_modified_form_id:
-            transaction = StockTransaction.latest(case_id, state.section_id, state.product_id)
-            state.last_modified_form_id = transaction.report.form_id
-            state.save()
-    return ret
-
-
-def get_current_ledger_state(case_ids):
+def get_current_ledger_state(case_ids, ensure_form_id=False):
     """
     Given a list of cases returns a dict of all current ledger data of the following format:
     {
@@ -82,6 +56,9 @@ def get_current_ledger_state(case_ids):
         },
         ...
     }
+
+    :param ensure_form_id:  Set to True to make sure return StockState
+                            have the ``last_modified_form_id`` field populated
     """
     from corehq.apps.commtrack.models import StockState
     if not case_ids:
@@ -94,5 +71,8 @@ def get_current_ledger_state(case_ids):
     for state in states:
         sections = ret[state.case_id].setdefault(state.section_id, {})
         sections[state.product_id] = state
-
+    if ensure_form_id and not state.last_modified_form_id:
+        transaction = StockTransaction.latest(state.case_id, state.section_id, state.product_id)
+        state.last_modified_form_id = transaction.report.form_id
+        state.save()
     return ret
