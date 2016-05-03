@@ -211,7 +211,7 @@ def uses_reminders(domain, *args):
     return len(handlers) > 0
 
 def not_implemented(domain, *args):
-    return '<p class="text-error">not implemented</p>'
+    return '<p class="text-danger">not implemented</p>'
 
 CALC_ORDER = [
     'num_web_users', 'num_mobile_users', 'forms', 'cases',

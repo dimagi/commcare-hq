@@ -1,20 +1,12 @@
-{% extends 'settings/bootstrap2/base_template.html' %}
+{% extends 'settings/bootstrap3/base_template.html' %}
 {% load hq_shared_tags %}
 {% load hqstyle_tags %}
+{% load crispy_forms_tags %}
 {% load i18n %}
 
-{% block main_column %}
-    <form id="dhis2-settings-form" class="form form-horizontal" name="update_dhis2_settings" method="post">
+{% block page_content %}
+    <form id="dhis2-settings-form" class="form-horizontal" name="update_dhis2_settings" method="post">
         {% csrf_token %}
-        {% bootstrap_form_errors dhis2_settings_form %}
-        {% bootstrap_fieldset dhis2_settings_form "DHIS2 API Settings" %}
-        <div class="form-actions">
-            <button type="submit"
-                    id="update-dhis2-settings"
-                    data-bind="hqbSubmitReady: form_is_ready"
-                    class="btn disabled">
-                {% trans 'Update DHIS2 API Settings' %}
-            </button>
-        </div>
+        {% crispy dhis2_settings_form %}
     </form>
 {% endblock %}

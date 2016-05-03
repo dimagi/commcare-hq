@@ -502,6 +502,10 @@ class EditDhis2SettingsView(BaseProjectSettingsView):
     urlname = 'dhis2_settings'
     page_title = ugettext_lazy("DHIS2 API settings")
 
+    @use_bootstrap3
+    def dispatch(self, request, *args, **kwargs):
+        return super(EditDhis2SettingsView, self).dispatch(request, *args, **kwargs)
+
     @property
     @memoized
     def dhis2_settings_form(self):
@@ -2636,6 +2640,10 @@ class ProBonoStaticView(ProBonoMixin, BasePageView):
     urlname = 'pro_bono_static'
     use_domain_field = True
 
+    @use_bootstrap3
+    def dispatch(self, request, *args, **kwargs):
+        return super(ProBonoStaticView, self).dispatch(request, *args, **kwargs)
+
     @property
     def requesting_domain(self):
         return self.pro_bono_form.cleaned_data['domain']
@@ -2645,6 +2653,10 @@ class ProBonoView(ProBonoMixin, DomainAccountingSettings):
     template_name = 'domain/pro_bono/domain.html'
     urlname = 'pro_bono'
     use_domain_field = False
+
+    @use_bootstrap3
+    def dispatch(self, request, *args, **kwargs):
+        return super(ProBonoView, self).dispatch(request, *args, **kwargs)
 
     @property
     def requesting_domain(self):
@@ -2789,6 +2801,7 @@ class TransferDomainView(BaseAdminProjectSettingsView):
             return {'form': self.transfer_domain_form}
 
     @method_decorator(domain_admin_required)
+    @use_bootstrap3
     def dispatch(self, request, *args, **kwargs):
         if not TRANSFER_DOMAIN.enabled(request.domain):
             raise Http404()
@@ -2915,6 +2928,11 @@ class SMSRatesView(BaseAdminProjectSettingsView, AsyncHandlerMixin):
         SMSRatesAsyncHandler,
         SMSRatesSelect2AsyncHandler,
     ]
+
+    @use_bootstrap3
+    @use_select2
+    def dispatch(self, request, *args, **kwargs):
+        return super(SMSRatesView, self).dispatch(request, *args, **kwargs)
 
     @property
     @memoized
