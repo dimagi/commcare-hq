@@ -217,16 +217,16 @@ def delete_copy(request, domain, app_id):
 def odk_install(request, domain, app_id, with_media=False):
     app = get_app(domain, app_id)
     qr_code_view = "odk_qr_code" if not with_media else "odk_media_qr_code"
-    language_profile = request.GET.get('profile')
+    build_profile_id = request.GET.get('profile')
     profile_url = app.odk_profile_display_url if not with_media else app.odk_media_profile_display_url
-    if language_profile:
-        profile_url += '?profile={profile}'.format(profile=language_profile)
+    if build_profile_id:
+        profile_url += '?profile={profile}'.format(profile=build_profile_id)
     context = {
         "domain": domain,
         "app": app,
         "qr_code": reverse("corehq.apps.app_manager.views.%s" % qr_code_view,
                            args=[domain, app_id],
-                           params={'profile': language_profile}),
+                           params={'profile': build_profile_id}),
         "profile_url": profile_url,
     }
     return render(request, "app_manager/odk_install.html", context)

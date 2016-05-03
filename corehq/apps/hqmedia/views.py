@@ -453,17 +453,17 @@ def iter_media_files(media_objects):
     return _media_files(), errors
 
 
-def iter_app_files(app, include_multimedia_files, include_index_files, profile=None):
+def iter_app_files(app, include_multimedia_files, include_index_files, build_profile_id=None):
     file_iterator = []
     errors = []
     if include_multimedia_files:
         app.remove_unused_mappings()
         languages = None
-        if profile:
-            languages = app.build_profiles[profile].langs
+        if build_profile_id:
+            languages = app.build_profiles[build_profile_id].langs
         file_iterator, errors = iter_media_files(app.get_media_objects(languages=languages))
     if include_index_files:
-        index_files, index_file_errors = iter_index_files(app, profile=profile)
+        index_files, index_file_errors = iter_index_files(app, build_profile_id=build_profile_id)
         if index_file_errors:
             errors.extend(index_file_errors)
         file_iterator = itertools.chain(file_iterator, index_files)
@@ -508,9 +508,9 @@ class DownloadMultimediaZip(View, ApplicationViewMixin):
 
         message = request.GET['message'] if 'message' in request.GET else None
         download = DownloadBase(message=message)
-        build_profile = None
+        build_profile_id = None
         if domain_has_privilege(request.domain, privileges.BUILD_PROFILES):
-            build_profile = request.GET.get('profile')
+            build_profile_id = request.GET.get('profile')
         download.set_task(build_application_zip.delay(
             include_multimedia_files=self.include_multimedia_files,
             include_index_files=self.include_index_files,
@@ -518,7 +518,7 @@ class DownloadMultimediaZip(View, ApplicationViewMixin):
             download_id=download.download_id,
             compress_zip=self.compress_zip,
             filename=self.zip_name,
-            profile=build_profile)
+            build_profile_id=build_profile_id)
         )
         return download.get_start_response()
 
@@ -612,7 +612,7 @@ class ViewMultimediaFile(View):
         return HttpResponse(data, content_type=content_type)
 
 
-def iter_index_files(app, profile=None):
+def iter_index_files(app, build_profile_id=None):
     from corehq.apps.app_manager.views.download import download_index_files
     skip_files = ('profile.xml', 'profile.ccpr', 'media_profile.xml')
     text_extensions = ('.xml', '.ccpr', '.txt')
@@ -620,8 +620,8 @@ def iter_index_files(app, profile=None):
     errors = []
 
     def _get_name(f):
-        if profile:
-            f = f.replace(profile + '/', '')
+        if build_profile_id:
+            f = f.replace(build_profile_id + '/', '')
         return {'media_profile.ccpr': 'profile.ccpr'}.get(f, f)
 
     def _encode_if_unicode(s):
@@ -635,7 +635,7 @@ def iter_index_files(app, profile=None):
                 data = _encode_if_unicode(f) if extension in text_extensions else f
                 yield (_get_name(name), data)
     try:
-        files = download_index_files(app, profile)
+        files = download_index_files(app, build_profile_id)
     except Exception:
         errors = _(
             "We were unable to get your files "

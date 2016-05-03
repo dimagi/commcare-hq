@@ -233,7 +233,7 @@ def download_file(request, domain, app_id, path):
                 payload = request.app.fetch_attachment(full_path)
             except ResourceNotFound:
                 if build_profile in request.app.build_profiles and build_profile_access:
-                    request.app.create_build_files(save=True, build_profile=build_profile)
+                    request.app.create_build_files(save=True, build_profile_id=build_profile)
                     request.app.save()
                     payload = request.app.fetch_attachment(full_path)
                 else:
@@ -396,16 +396,16 @@ def _requested(path, prefix, profiles):
         return False
 
 
-def download_index_files(app, profile=None):
+def download_index_files(app, build_profile_id=None):
     files = []
     prefix = 'files/'
     profiles = set(app.build_profiles.keys())
-    if profile:
-        prefix += profile + '/'
+    if build_profile_id:
+        prefix += build_profile_id + '/'
     if app.copy_of:
         # profile hasnt been built yet
         if not (prefix + 'profile.ccpr') in app._attachments:
-            app.create_build_files(save=True, build_profile=profile)
+            app.create_build_files(save=True, build_profile_id=build_profile_id)
             app.save()
         files = [(path[len(prefix):], app.fetch_attachment(path))
                  for path in app._attachments

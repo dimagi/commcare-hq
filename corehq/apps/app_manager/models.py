@@ -941,18 +941,18 @@ class FormBase(DocumentSchema):
     def get_version(self):
         return self.version if self.version else self.get_app().version
 
-    def add_stuff_to_xform(self, xform, build_profile=None):
+    def add_stuff_to_xform(self, xform, build_profile_id=None):
         app = self.get_app()
-        langs = app.get_build_langs(build_profile)
+        langs = app.get_build_langs(build_profile_id)
         xform.exclude_languages(langs)
         xform.set_default_language(langs[0])
         xform.normalize_itext()
         xform.strip_vellum_ns_attributes()
         xform.set_version(self.get_version())
 
-    def render_xform(self, build_profile=None):
+    def render_xform(self, build_profile_id=None):
         xform = XForm(self.source)
-        self.add_stuff_to_xform(xform, build_profile)
+        self.add_stuff_to_xform(xform, build_profile_id)
         return xform.render()
 
     @quickcache(['self.source', 'langs', 'include_triggers', 'include_groups', 'include_translations'])
@@ -1276,8 +1276,8 @@ class Form(IndexedFormBase, NavMenuItemMediaMixin):
     requires = StringProperty(choices=["case", "referral", "none"], default="none")
     actions = SchemaProperty(FormActions)
 
-    def add_stuff_to_xform(self, xform, build_profile=None):
-        super(Form, self).add_stuff_to_xform(xform, build_profile)
+    def add_stuff_to_xform(self, xform, build_profile_id=None):
+        super(Form, self).add_stuff_to_xform(xform, build_profile_id)
         xform.add_case_and_meta(self)
 
     def all_other_forms_require_a_case(self):
@@ -2313,7 +2313,7 @@ class AdvancedForm(IndexedFormBase, NavMenuItemMediaMixin):
                               "that there are no issues with this module.".format(error=e, form_id=self.unique_id))
                 pass
 
-    def add_stuff_to_xform(self, xform, build_profile=None):
+    def add_stuff_to_xform(self, xform, build_profile_id=None):
         super(AdvancedForm, self).add_stuff_to_xform(xform)
         xform.add_case_and_meta_advanced(self)
 
@@ -3013,7 +3013,7 @@ class CareplanForm(IndexedFormBase, NavMenuItemMediaMixin):
         else:
             return super(CareplanForm, cls).wrap(data)
 
-    def add_stuff_to_xform(self, xform, build_profile=None):
+    def add_stuff_to_xform(self, xform, build_profile_id=None):
         super(CareplanForm, self).add_stuff_to_xform(xform)
         xform.add_care_plan(self)
 
@@ -4330,9 +4330,9 @@ class ApplicationBase(VersionedDoc, SnapshotMixin,
             settings['Build-Number'] = self.version
         return settings
 
-    def create_build_files(self, save=False, build_profile=None):
+    def create_build_files(self, save=False, build_profile_id=None):
         built_on = datetime.datetime.utcnow()
-        all_files = self.create_all_files(build_profile)
+        all_files = self.create_all_files(build_profile_id)
         if save:
             self.built_on = built_on
             self.built_with = BuildRecord(
@@ -4714,10 +4714,10 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
     def default_language(self):
         return self.langs[0] if len(self.langs) > 0 else "en"
 
-    def fetch_xform(self, module_id=None, form_id=None, form=None, build_profile=None):
+    def fetch_xform(self, module_id=None, form_id=None, form=None, build_profile_id=None):
         if not form:
             form = self.get_module(module_id).get_form(form_id)
-        return form.validate_form().render_xform(build_profile).encode('utf-8')
+        return form.validate_form().render_xform(build_profile_id).encode('utf-8')
 
     def set_form_versions(self, previous_version):
         """
@@ -4810,7 +4810,7 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
         })
         return s
 
-    def create_profile(self, is_odk=False, with_media=False, template='app_manager/profile.xml', build_profile=None):
+    def create_profile(self, is_odk=False, with_media=False, template='app_manager/profile.xml', build_profile_id=None):
         self__profile = self.profile
         app_profile = defaultdict(dict)
 
@@ -4866,7 +4866,7 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
             'uniqueid': self.copy_of or self.id,
             'name': self.name,
             'descriptor': u"Profile File",
-            'build_profile': build_profile
+            'build_profile_id': build_profile_id
         }).encode('utf-8')
 
     @property
@@ -4879,43 +4879,43 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
     def set_custom_suite(self, value):
         self.put_attachment(value, 'custom_suite.xml')
 
-    def create_suite(self, build_profile=None):
+    def create_suite(self, build_profile_id=None):
         if self.application_version == APP_V1:
             template='app_manager/suite-%s.xml' % self.application_version
-            langs = self.get_build_langs(build_profile)
+            langs = self.get_build_langs(build_profile_id)
             return render_to_string(template, {
                 'app': self,
                 'langs': ["default"] + langs
             })
         else:
-            return SuiteGenerator(self, build_profile).generate_suite()
+            return SuiteGenerator(self, build_profile_id).generate_suite()
 
-    def create_media_suite(self, build_profile=None):
-        return MediaSuiteGenerator(self, build_profile).generate_suite()
+    def create_media_suite(self, build_profile_id=None):
+        return MediaSuiteGenerator(self, build_profile_id).generate_suite()
 
     @classmethod
     def get_form_filename(cls, type=None, form=None, module=None):
         return 'modules-%s/forms-%s.xml' % (module.id, form.id)
 
-    def create_all_files(self, build_profile=None):
-        prefix = '' if not build_profile else build_profile + '/'
+    def create_all_files(self, build_profile_id=None):
+        prefix = '' if not build_profile_id else build_profile_id + '/'
         files = {
-            '{}profile.xml'.format(prefix): self.create_profile(is_odk=False, build_profile=build_profile),
-            '{}profile.ccpr'.format(prefix): self.create_profile(is_odk=True, build_profile=build_profile),
-            '{}media_profile.xml'.format(prefix): self.create_profile(is_odk=False, with_media=True, build_profile=build_profile),
-            '{}media_profile.ccpr'.format(prefix): self.create_profile(is_odk=True, with_media=True, build_profile=build_profile),
-            '{}suite.xml'.format(prefix): self.create_suite(build_profile),
-            '{}media_suite.xml'.format(prefix): self.create_media_suite(build_profile),
+            '{}profile.xml'.format(prefix): self.create_profile(is_odk=False, build_profile_id=build_profile_id),
+            '{}profile.ccpr'.format(prefix): self.create_profile(is_odk=True, build_profile_id=build_profile_id),
+            '{}media_profile.xml'.format(prefix): self.create_profile(is_odk=False, with_media=True, build_profile_id=build_profile_id),
+            '{}media_profile.ccpr'.format(prefix): self.create_profile(is_odk=True, with_media=True, build_profile_id=build_profile_id),
+            '{}suite.xml'.format(prefix): self.create_suite(build_profile_id),
+            '{}media_suite.xml'.format(prefix): self.create_media_suite(build_profile_id),
         }
 
-        langs_for_build = self.get_build_langs(build_profile)
+        langs_for_build = self.get_build_langs(build_profile_id)
         for lang in ['default'] + langs_for_build:
             files["{prefix}{lang}/app_strings.txt".format(prefix=prefix, lang=lang)] = self.create_app_strings(lang)
         for form_stuff in self.get_forms(bare=False):
             filename = prefix + self.get_form_filename(**form_stuff)
             form = form_stuff['form']
             try:
-                files[filename] = self.fetch_xform(form=form, build_profile=build_profile)
+                files[filename] = self.fetch_xform(form=form, build_profile_id=build_profile_id)
             except XFormException as e:
                 raise XFormException(_('Error in form "{}": {}').format(trans(form.name), unicode(e)))
         return files
@@ -5361,12 +5361,12 @@ class RemoteApp(ApplicationBase):
     def SUITE_XPATH(self):
         return 'suite/resource/location[@authority="local"]'
 
-    def create_all_files(self, build_profile=None):
+    def create_all_files(self, build_profile_id=None):
         files = {
             'profile.xml': self.create_profile(),
         }
         tree = _parse_xml(files['profile.xml'])
-        langs_for_build = self.get_build_langs(build_profile)
+        langs_for_build = self.get_build_langs(build_profile_id)
 
         def add_file_from_path(path, strict=False, transform=None):
             added_files = []
@@ -5412,8 +5412,8 @@ class RemoteApp(ApplicationBase):
                 files.update({location: data})
         return files
 
-    def make_questions_map(self, build_profile=None):
-        langs_for_build = self.get_build_langs(build_profile)
+    def make_questions_map(self, build_profile_id=None):
+        langs_for_build = self.get_build_langs(build_profile_id)
         if self.copy_of:
             xmlns_map = {}
 
