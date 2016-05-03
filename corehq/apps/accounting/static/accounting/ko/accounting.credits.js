@@ -23,6 +23,7 @@ hqDefine('accounting/ko/accounting.credits.js', function () {
     var Prepayments = function(products, features, paymentHandler, can_purchase_credits) {
         'use strict';
         var self = this;
+        var PrepaymentItems = hqImport('accounting/ko/accounting.payment_method_handler.js').PrepaymentItems;
         self.products = products;
         self.features = features;
         self.paymentHandler = paymentHandler;
@@ -40,6 +41,7 @@ hqDefine('accounting/ko/accounting.credits.js', function () {
     var CreditItem = function (category, data, paymentHandler, can_purchase_credits) {
         'use strict';
         var self = this;
+        var CreditCostItem = hqImport('accounting/ko/accounting.payment_method_handler.js').CreditCostItem;
         self.category = ko.observable(category);
         self.name = ko.observable(data.name);
         self.recurringInterval = ko.observable(data.recurring_interval);
