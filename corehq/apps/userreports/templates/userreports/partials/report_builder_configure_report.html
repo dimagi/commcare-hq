@@ -22,8 +22,32 @@
             this.displayText = ko.observable("");
             this.userModifiedDisplayText = false;
             this.format = ko.observable("");
+            this.calculationOptions = ko.observableArray(["Count per Choice", "Sum", "Average"]);
             this.calculation = ko.observable("Count per Choice");
             this.dataSourceField = ko.observable("");
+
+            var rawOptions = {{ property_options|JSON }};
+            this.propertyOptions = ko.observableArray(rawOptions);
+            this.optionsContainQuestions = _.any(rawOptions, function (o) {
+                return o.type == 'question';
+            });
+            if (!this.optionsContainQuestions){
+                this.propertyOptions = ko.observableArray(rawOptions);
+            } else {
+                // Munge the property_options into the form expected by the questionsSelect binding.
+                this.propertyOptions = ko.observableArray(
+                    _.compact(_.map(that.propertyOptions(), function (o) {
+                        if (o.type === 'question') {
+                            return o.source;
+                        } else if (o.type == 'meta') {
+                            return {
+                                value: o.source[0],
+                                label: o.text
+                            }
+                        }
+                    }))
+                )
+            }
 
             /**
              * Return a "plain" javascript object representing this view model
@@ -87,30 +111,6 @@
             this.hasFormatCol = ko.observable(options.hasFormatCol !== undefined ? options.hasFormatCol : true);
             this.hasCalculationCol = ko.observable(options.hasCalculationCol !== undefined ? options.hasCalculationCol : false);
             this.formatOptions = ko.observableArray(["Choice", "Date"]);
-            this.calculationOptions = ko.observableArray(["Count per Choice", "Sum", "Average"]);
-            this.propertyOptions = ko.observableArray({{ property_options|JSON }});
-            var rawOptions = {{ property_options|JSON }};
-            this.optionsContainQuestions = _.any(rawOptions, function (o) {
-                return o.type == 'question';
-            });
-            if (!this.optionsContainQuestions){
-                this.propertyOptions = ko.observableArray(rawOptions);
-            } else {
-                // Munge the property_options into the form expected by the questionsSelect binding.
-                this.propertyOptions = ko.observableArray(
-                    _.compact(_.map(that.propertyOptions(), function (o) {
-                        if (o.type === 'question') {
-                            return o.source;
-                        } else if (o.type == 'meta') {
-                            return {
-                                value: o.source[0],
-                                label: o.text
-                            }
-                        }
-                    }))
-                )
-            }
-
 
             this.columns = ko.observableArray(options.initialCols !== undefined ? options.initialCols : []);
             this.serializedProperties = ko.computed(function(){
