@@ -34,7 +34,7 @@ class TestCreditLines(BaseInvoiceTestCase):
         """
         rate_credit_by_account = CreditLine.add_credit(
             self.product_rate.monthly_fee, account=self.account,
-            product_type=self.product_rate.product.product_type
+            product_type=SoftwareProductType.ANY
         )
         self.assertEqual(CreditAdjustment.objects.filter(
             credit_line=rate_credit_by_account).count(), 1
@@ -42,7 +42,7 @@ class TestCreditLines(BaseInvoiceTestCase):
 
         rate_credit_by_subscription = CreditLine.add_credit(
             self.product_rate.monthly_fee,
-            product_type=self.product_rate.product.product_type,
+            product_type=SoftwareProductType.ANY,
             subscription=self.subscription
         )
         self.assertEqual(CreditAdjustment.objects.filter(
@@ -226,12 +226,12 @@ class TestCreditLines(BaseInvoiceTestCase):
         """
         product_credit = CreditLine.add_credit(
             self.product_rate.monthly_fee, account=self.account,
-            product_type=self.product_rate.product.product_type,
+            product_type=SoftwareProductType.ANY,
         )
         self.assertEqual(CreditAdjustment.objects.filter(credit_line=product_credit).count(), 1)
         CreditLine.add_credit(
             self.product_rate.monthly_fee, account=self.account,
-            product_type=self.product_rate.product.product_type,
+            product_type=SoftwareProductType.ANY,
         )
         self.assertEqual(CreditAdjustment.objects.filter(credit_line=product_credit).count(), 2)
         current_product_credit = CreditLine.objects.get(id=product_credit.id)
@@ -312,7 +312,7 @@ class TestCreditTransfers(BaseAccountingTest):
 
         product_credit = CreditLine.add_credit(
             self.product_credit_amt, subscription=first_sub,
-            product_type=SoftwareProductType.COMMCARE,
+            product_type=SoftwareProductType.ANY,
         )
         feature_credit = CreditLine.add_credit(
             self.feature_credit_amt, subscription=first_sub,
