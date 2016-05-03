@@ -12,6 +12,7 @@ from diff_match_patch import diff_match_patch
 from django.utils.translation import ugettext as _
 from django.http import HttpResponse, Http404, HttpResponseBadRequest
 from django.core.urlresolvers import reverse
+from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_GET
 from django.conf import settings
 from django.contrib import messages
@@ -205,6 +206,11 @@ def edit_careplan_form_actions(request, domain, app_id, module_id, form_id):
     response_json = {}
     app.save(response_json)
     return json_response(response_json)
+
+
+@csrf_exempt
+def edit_form_attr_api(request, domain, app_id, unique_form_id, attr):
+    return edit_form_attr(request, domain, app_id, unique_form_id, attr)
 
 
 @no_conflict_require_POST
