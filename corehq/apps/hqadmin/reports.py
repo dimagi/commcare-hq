@@ -1107,7 +1107,7 @@ class CommTrackProjectSpacesReport(GlobalAdminReports):
 
 
 class DeviceLogSoftAssertReport(BaseDeviceLogReport, AdminReport):
-    base_template = 'reports/bootstrap3/base_template.html'
+    base_template = 'reports/base_template.html'
 
     slug = 'device_log_soft_asserts'
     name = ugettext_lazy("Global Device Logs Soft Asserts")
