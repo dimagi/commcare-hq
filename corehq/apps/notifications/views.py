@@ -4,7 +4,7 @@ from django.views.generic import View
 from djangular.views.mixins import JSONResponseMixin, allow_remote_invocation
 from corehq import toggles
 from corehq.apps.domain.decorators import login_required
-from corehq.apps.notifications.models import get_fake_notifications
+from corehq.apps.notifications.models import get_notifications
 
 
 class NotificationsServiceRMIView(JSONResponseMixin, View):
@@ -23,7 +23,7 @@ class NotificationsServiceRMIView(JSONResponseMixin, View):
         # todo actual models
         # todo always grab alerts if they are still relevant
         # todo only grab info notifications up to 10
-        notifications = get_fake_notifications()
+        notifications = get_notifications()
         has_unread = len(filter(lambda x: x['isRead'], notifications)) > 0
         return {
             'hasUnread': has_unread,
