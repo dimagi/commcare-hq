@@ -11,6 +11,8 @@ from lxml import etree
 
 from dimagi.utils.subprocess_manager import subprocess_context
 
+CONVERTED_PATHS = set(['profile.xml', 'media_profile.xml', 'media_profile.ccpr', 'profile.ccpr'])
+
 
 def _make_address_j2me_safe(address):
     if settings.J2ME_ADDRESS:
@@ -123,9 +125,8 @@ def sign_jar(jad, jar):
     return jad.render()
 
 
-def _convertXMLToJ2ME(files, path):
-    converted_paths = set(['profile.xml', 'media_profile.xml', 'media_profile.ccpr', 'profile.ccpr'])
-    if path in converted_paths:
+def convert_XML_To_J2ME(files, path):
+    if path in CONVERTED_PATHS:
         tree = etree.fromstring(files[path])
 
         tree.set('update', _make_address_j2me_safe(tree.attrib['update']))
@@ -171,7 +172,7 @@ class JadJar(object):
         buffer = StringIO(self.jar)
         with ZipFile(buffer, 'a', ZIP_DEFLATED) as zipper:
             for path in files:
-                zipper.writestr(path, _convertXMLToJ2ME(files, path))
+                zipper.writestr(path, convert_XML_To_J2ME(files, path))
         buffer.flush()
         jar = buffer.getvalue()
         buffer.close()
