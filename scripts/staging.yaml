@@ -48,7 +48,6 @@ branches:
   - vellum-staging # J$ 11/13
   - show-form-case-refs-in-summary # j$ 1/29
 #  - revamp-multimedia # Jenny 2/16
-  - certificate-validation # Cal 3/10
   - inline-editing # Jenny 4/9
   - app-blobs-testing # daniel 4/20
   - j2me # Nick P 4/26
