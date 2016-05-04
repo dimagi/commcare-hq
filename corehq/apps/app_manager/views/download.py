@@ -233,9 +233,7 @@ def download_file(request, domain, app_id, path):
             _, buffer = obj.get()
             payload = buffer.getvalue()
         if path in ['profile.xml', 'media_profile.xml']:
-            payload = convert_XML_To_J2ME({
-                path: payload
-            }, path)
+            payload = convert_XML_To_J2ME(payload, path)
         response.write(payload)
         response['Content-Length'] = len(response.content)
         return response
