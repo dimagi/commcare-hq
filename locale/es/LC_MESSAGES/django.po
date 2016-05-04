@@ -7,8 +7,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: CommCare HQ\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2016-05-04 15:52+0000\n"
-"PO-Revision-Date: 2016-05-04 13:29+0000\n"
+"POT-Creation-Date: 2016-05-04 15:58+0000\n"
+"PO-Revision-Date: 2016-05-04 15:56+0000\n"
 "Last-Translator: Dimagi Dev <devops@dimagi.com>\n"
 "Language-Team: Spanish (http://www.transifex.com/dimagi/commcare-hq/language/"
 "es/)\n"
@@ -33299,10 +33299,8 @@ msgid "Functionality Score"
 msgstr ""
 
 #: docs/_build/html/_sources/translations.txt:132
-#, fuzzy
-#| msgid "Scheduled report from CommCare HQ"
 msgid "Welcome to CommCare HQ"
-msgstr "Relatorio Semanal aos Coordinadores do Distrito e os NEDs"
+msgstr ""
 
 #: docs/_build/html/_sources/translations.txt:141
 #, python-format
@@ -33930,6 +33928,9 @@ msgstr ""
 
 #~ msgid "Edit Survey"
 #~ msgstr "Manejo de Casos"
+
+#~ msgid "Scheduled report from CommCare HQ"
+#~ msgstr "Relatorio Semanal aos Coordinadores do Distrito e os NEDs"
 
 #~ msgid "Create Form Export: Select Form"
 #~ msgstr "Manejo de Casos"

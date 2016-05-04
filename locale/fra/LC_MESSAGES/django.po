@@ -31,8 +31,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: CommCare HQ\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2016-05-04 15:52+0000\n"
-"PO-Revision-Date: 2016-05-04 13:29+0000\n"
+"POT-Creation-Date: 2016-05-04 15:58+0000\n"
+"PO-Revision-Date: 2016-05-04 15:56+0000\n"
 "Last-Translator: Dimagi Dev <devops@dimagi.com>\n"
 "Language-Team: French (http://www.transifex.com/dimagi/commcare-hq/language/"
 "fr/)\n"
@@ -527,14 +527,6 @@ msgid "%(num_days)s day of %(plan_name)s Software Plan."
 msgid_plural "%(num_days)s days of %(plan_name)s Software Plan."
 msgstr[0] " Un mois de %(plan_name)s Plan de logiciel."
 msgstr[1] " Un mois de %(plan_name)s Plan de logiciel."
-
-#: corehq/apps/accounting/invoicing.py:536
-#, fuzzy, python-format
-#| msgid "Compose SMS Message"
-msgid "%(num_sms)d SMS Message"
-msgid_plural "%(num_sms)d SMS Messages"
-msgstr[0] "Composer le message SMS"
-msgstr[1] "Composer le message SMS"
 
 #: corehq/apps/accounting/invoicing.py:544
 #, python-format
@@ -17716,22 +17708,16 @@ msgid "Direct email support"
 msgstr ""
 
 #: corehq/apps/prelogin/templates/prelogin/_sections/pricing/08_support.html:36
-#, fuzzy
-#| msgid "Failed! Response is"
 msgid "Guaranteed Response Time"
-msgstr "Échec ! La réponse est"
+msgstr ""
 
 #: corehq/apps/prelogin/templates/prelogin/_sections/pricing/08_support.html:47
-#, fuzzy
-#| msgid "Small Business"
 msgid "3 Business Days"
-msgstr "Petite entreprise"
+msgstr ""
 
 #: corehq/apps/prelogin/templates/prelogin/_sections/pricing/08_support.html:52
-#, fuzzy
-#| msgid "Small Business"
 msgid "1 Business Day"
-msgstr "Petite entreprise"
+msgstr ""
 
 #: corehq/apps/prelogin/templates/prelogin/_sections/pricing/08_support.html:57
 #: corehq/apps/prelogin/templates/prelogin/_sections/pricing/08_support.html:62
@@ -18803,10 +18789,8 @@ msgid "1-Business Day Guaranteed Email Support"
 msgstr ""
 
 #: corehq/apps/prelogin/templates/prelogin/_sections/software_services/pricing.html:146
-#, fuzzy
-#| msgid "Support"
 msgid "Phone Support"
-msgstr "Appui"
+msgstr ""
 
 #: corehq/apps/prelogin/templates/prelogin/_sections/software_services/pricing.html:193
 msgid ""
@@ -35197,10 +35181,8 @@ msgid "Functionality Score"
 msgstr "Le Score à la Fonctionnalité"
 
 #: docs/_build/html/_sources/translations.txt:132
-#, fuzzy
-#| msgid "Welcome to CommCareHQ!"
 msgid "Welcome to CommCare HQ"
-msgstr "Bienvenu chez CommCareHQ!"
+msgstr ""
 
 #: docs/_build/html/_sources/translations.txt:141
 #, python-format
@@ -35257,32 +35239,24 @@ msgid "Method"
 msgstr ""
 
 #: packages-local/couchdbkit-debugpanel/couchdebugpanel/templates/couchdebugpanel/couch_select.html:6
-#, fuzzy
-#| msgid "Couch View"
 msgid "CouchDB View"
-msgstr "Visualisation Couch"
+msgstr ""
 
 #: packages-local/couchdbkit-debugpanel/couchdebugpanel/templates/couchdebugpanel/couch_select.html:11
 msgid "Executed View"
 msgstr "Manejo de Casos"
 
 #: packages-local/couchdbkit-debugpanel/couchdebugpanel/templates/couchdebugpanel/couch_select.html:13
-#, fuzzy
-#| msgid "Add Parameter"
 msgid "Parameters"
-msgstr "Ajouter un paramètre"
+msgstr ""
 
 #: packages-local/couchdbkit-debugpanel/couchdebugpanel/templates/couchdebugpanel/couch_select.html:15
-#, fuzzy
-#| msgid "Total No Response"
 msgid "Total Rows"
-msgstr "Total sans réponse"
+msgstr ""
 
 #: packages-local/couchdbkit-debugpanel/couchdebugpanel/templates/couchdebugpanel/couch_select.html:40
-#, fuzzy
-#| msgid "Empty Case"
 msgid "Empty set"
-msgstr "Dossier vide"
+msgstr ""
 
 #: submodules/auditcare-src/auditcare/forms.py:14
 msgid ""
