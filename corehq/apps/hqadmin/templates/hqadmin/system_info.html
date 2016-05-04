@@ -354,6 +354,8 @@
             <div class="alert alert-info">
                 Last deployed on {{ last_deploy.date|date:"d M Y" }}
                 at {{ last_deploy.date|date:"H:i:s"}} UTC ({{ last_deploy.date|naturaltime}} ago) by {{ last_deploy.user }}
+                <br />
+                <a href="http://hqcaptain0.internal.commcarehq.org:9999/">Deploy with Captain</a>
             </div>
             {% endwith %}
         </div>
