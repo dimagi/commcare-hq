@@ -6,6 +6,7 @@ import json
 from corehq.apps.app_manager.suite_xml.sections.entries import EntriesHelper
 from corehq.apps.domain.views import BaseDomainView
 from corehq.apps.hqwebapp.view_permissions import user_can_view_reports
+from corehq.apps.tour import tours
 from corehq.apps.users.permissions import FORM_EXPORT_PERMISSION, CASE_EXPORT_PERMISSION, \
     DEID_EXPORT_PERMISSION
 from corehq.tabs.tabclasses import ProjectReportsTab
@@ -236,6 +237,8 @@ class MySavedReportsView(BaseProjectReportSectionView):
     @use_jquery_ui
     @use_datatables
     def dispatch(self, request, *args, **kwargs):
+        if request.GET.get('tour', False) and tours.REPORT_BUILDER_EXISTENCE.is_enabled(request.user):
+            request.guided_tour = tours.REPORT_BUILDER_EXISTENCE.get_tour_data(self.request, 1)
         return super(MySavedReportsView, self).dispatch(request, *args, **kwargs)
 
     @property
