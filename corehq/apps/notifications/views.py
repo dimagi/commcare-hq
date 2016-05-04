@@ -6,9 +6,12 @@ from django.views.generic import View
 
 from djangular.views.mixins import JSONResponseMixin, allow_remote_invocation
 
+from dimagi.utils.decorators.memoized import memoized
+
 from corehq import toggles
 from corehq.apps.domain.decorators import login_required, require_superuser
 from corehq.apps.hqwebapp.views import BasePageView
+from corehq.apps.notifications.forms import NotificationCreationForm
 from corehq.apps.notifications.models import Notification
 from corehq.apps.notifications.util import get_notifications_by_user
 from corehq.apps.style.decorators import use_bootstrap3
@@ -52,6 +55,13 @@ class ManageNotificationView(BasePageView):
         return super(ManageNotificationView, self).dispatch(request, *args, **kwargs)
 
     @property
+    @memoized
+    def create_form(self):
+        if self.request.method == 'POST':
+            return NotificationCreationForm(self.request.POST)
+        return NotificationCreationForm()
+
+    @property
     def page_context(self):
         return {
             'alerts': [{
@@ -61,9 +71,16 @@ class ManageNotificationView(BasePageView):
                 'created': unicode(alert.created),
                 'isActive': alert.is_active,
                 'id': alert.id,
-            } for alert in Notification.objects.order_by('-created')[:10]]
+            } for alert in Notification.objects.order_by('-created')[:10]],
+            'form': self.create_form,
         }
 
     @property
     def page_url(self):
         return reverse(self.urlname)
+
+    def post(self, request, *args, **kwargs):
+        if self.create_form.is_valid():
+            self.create_form.save()
+        return self.get(request, *args, **kwargs)
+
