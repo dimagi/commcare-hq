@@ -125,9 +125,9 @@ def sign_jar(jad, jar):
     return jad.render()
 
 
-def convert_XML_To_J2ME(files, path):
+def convert_XML_To_J2ME(file, path):
     if path in CONVERTED_PATHS:
-        tree = etree.fromstring(files[path])
+        tree = etree.fromstring(file)
 
         tree.set('update', _make_address_j2me_safe(tree.attrib['update']))
 
@@ -146,7 +146,7 @@ def convert_XML_To_J2ME(files, path):
             remote.text = _make_address_j2me_safe(remote.text)
 
         return etree.tostring(tree)
-    return files[path]
+    return file
 
 
 class JadJar(object):
@@ -171,8 +171,8 @@ class JadJar(object):
         # pack files into jar
         buffer = StringIO(self.jar)
         with ZipFile(buffer, 'a', ZIP_DEFLATED) as zipper:
-            for path in files:
-                zipper.writestr(path, convert_XML_To_J2ME(files, path))
+            for path, f in files.items():
+                zipper.writestr(path, convert_XML_To_J2ME(f, path))
         buffer.flush()
         jar = buffer.getvalue()
         buffer.close()
