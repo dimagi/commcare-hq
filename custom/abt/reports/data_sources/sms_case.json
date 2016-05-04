@@ -396,7 +396,7 @@
                 }
               }
             },
-            "Benin": {
+            "benin": {
                 "default": 0,
                 "cases": {
                     "Atacora": 270141
@@ -664,7 +664,7 @@
                 }
               }
             },
-            "Benin": {
+            "benin": {
                   "default": 0,
                   "cases": {
                     "boukoumbe": 29090,
@@ -1045,7 +1045,7 @@
                 }
               }
             },
-            "Benin": {
+            "benin": {
                   "default": 0,
                   "cases": {
                     "natta_base": 15078,
@@ -1120,7 +1120,7 @@
             "Mali": 135717,
             "Madagascar": 72120,
             "Tanzania": 502934,
-            "Benin": 270141
+            "benin": 270141
           },
           "type": "switch",
           "switch_on": {
