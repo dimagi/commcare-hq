@@ -8,10 +8,16 @@ from corehq.apps.app_manager.util import languages_mapping
 class FormResourceContributor(SectionContributor):
     section_name = 'xform_resources'
 
+    def __init__(self, suite, app, modules, build_profile_id=None):
+        super(FormResourceContributor, self).__init__(suite, app, modules)
+        self.build_profile_id = build_profile_id
+
     def get_section_elements(self):
         for form_stuff in self.app.get_forms(bare=False):
             form = form_stuff["form"]
             path = './modules-{module.id}/forms-{form.id}.xml'.format(**form_stuff)
+            if self.build_profile_id:
+                path += '?profile={profile}'.format(profile=self.build_profile_id)
             resource = XFormResource(
                 id=id_strings.xform_resource(form),
                 version=form.get_version(),
@@ -19,9 +25,10 @@ class FormResourceContributor(SectionContributor):
                 remote=path,
             )
             if self.app.build_version >= '2.9':
+                default_lang = self.app.default_language if not self.build_profile_id else self.app.build_profiles[self.build_profile_id].langs[0]
                 resource.descriptor = u"Form: (Module {module_name}) - {form_name}".format(
-                    module_name=trans(form_stuff["module"]["name"], langs=[self.app.default_language]),
-                    form_name=trans(form["name"], langs=[self.app.default_language])
+                    module_name=trans(form_stuff["module"]["name"], langs=[default_lang]),
+                    form_name=trans(form["name"], langs=[default_lang])
                 )
             yield resource
 
@@ -29,8 +36,13 @@ class FormResourceContributor(SectionContributor):
 class LocaleResourceContributor(SectionContributor):
     section_name = 'locale_resources'
 
+    def __init__(self, suite, app, modules, build_profile_id=None):
+        super(LocaleResourceContributor, self).__init__(suite, app, modules)
+        self.build_profile_id = build_profile_id
+
     def get_section_elements(self):
-        for lang in ["default"] + self.app.build_langs:
+        langs = self.app.langs if not self.build_profile_id else self.app.build_profiles[self.build_profile_id].langs
+        for lang in ["default"] + langs:
             path = './{lang}/app_strings.txt'.format(lang=lang)
             resource = LocaleResource(
                 language=lang,

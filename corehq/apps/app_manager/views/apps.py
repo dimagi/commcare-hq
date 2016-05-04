@@ -458,7 +458,7 @@ def edit_app_langs(request, domain, app_id):
     """
     app = get_app(domain, app_id)
     try:
-        langs, rename, build = validate_langs(request, app.langs)
+        langs, rename = validate_langs(request, app.langs)
     except AssertionError:
         return HttpResponse(status=400)
 
@@ -473,7 +473,6 @@ def edit_app_langs(request, domain, app_id):
                 list1.pop()
             list1.extend(list2)
     replace_all(app.langs, langs)
-    replace_all(app.build_langs, build)
 
     app.save()
     return json_response(langs)
