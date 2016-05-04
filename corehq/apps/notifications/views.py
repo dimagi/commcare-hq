@@ -80,7 +80,13 @@ class ManageNotificationView(BasePageView):
         return reverse(self.urlname)
 
     def post(self, request, *args, **kwargs):
-        if self.create_form.is_valid():
+        if 'submit' in request.POST and self.create_form.is_valid():
             self.create_form.save()
+        elif 'activate' in request.POST:
+            note = Notification.objects.filter(pk=request.POST.get('alert_id')).first()
+            note.is_active = True
+            note.save()
+        elif 'remove' in request.POST:
+            Notification.objects.filter(pk=request.POST.get('alert_id')).delete()
         return self.get(request, *args, **kwargs)
 

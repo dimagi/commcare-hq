@@ -11,7 +11,7 @@ class NotificationCreationForm(forms.Form):
     content = forms.CharField(
         label=ugettext_lazy('Content')
     )
-    url = forms.CharField(
+    url = forms.URLField(
         label=ugettext_lazy('URL')
     )
     type = forms.ChoiceField(
@@ -42,11 +42,13 @@ class NotificationCreationForm(forms.Form):
                     _("Submit Information"),
                     type="submit",
                     css_class="btn btn-primary",
+                    name="submit",
                 ),
                 hqcrispy.LinkButton(
                     _("Cancel"),
                     '#',
                     css_class="btn btn-default",
+                    name="cancel",
                 ),
             ),
         )

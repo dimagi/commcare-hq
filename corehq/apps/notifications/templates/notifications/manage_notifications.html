@@ -54,14 +54,14 @@ $(function () {
                                 <form method="post" action="">
                                     {% csrf_token %}
                                     <input name="alert_id" type="hidden" data-bind="value: id">
-                                    <button type="submit" class="btn btn-success" data-bind="disabled: isActive">Activate</button>
+                                    <button type="submit" name="activate" class="btn btn-success" data-bind="disable: isActive">Activate</button>
                                 </form>
                             </td>
                             <td>
                                 <form method="post" action="">
                                     {% csrf_token %}
                                     <input name="alert_id" type="hidden" data-bind="value: id">
-                                    <button type="submit" class="btn btn-danger" data-bind="disabled: isActive">Remove</button>
+                                    <button type="submit" name="remove" class="btn btn-danger" data-bind="disable: isActive">Remove</button>
                                 </form>
                             </td>
                         </tr>
