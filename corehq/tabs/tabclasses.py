@@ -1263,6 +1263,7 @@ class ProjectSettingsTab(UITab):
 class MySettingsTab(UITab):
     title = ugettext_noop("My Settings")
     view = 'default_my_settings'
+    url_prefix_formats = ('/account/',)
 
     @property
     def _is_viewable(self):
