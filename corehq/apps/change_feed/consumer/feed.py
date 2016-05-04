@@ -53,6 +53,8 @@ class KafkaChangeFeed(ChangeFeed):
         consumer = self._get_consumer(timeout, auto_offset_reset=reset)
         if not start_from_latest:
             if isinstance(since, dict):
+                if not since:
+                    since = {topic: 0 for topic in self._topics}
                 self._processed_topic_offsets = copy(since)
             else:
                 # single topic
