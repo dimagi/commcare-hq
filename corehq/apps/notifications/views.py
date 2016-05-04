@@ -67,7 +67,7 @@ class ManageNotificationView(BasePageView):
             'alerts': [{
                 'content': alert.content,
                 'url': alert.url,
-                'type': alert.type,
+                'type': alert.get_type_display(),
                 'created': unicode(alert.created),
                 'isActive': alert.is_active,
                 'id': alert.id,

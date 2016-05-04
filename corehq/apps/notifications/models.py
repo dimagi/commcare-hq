@@ -4,8 +4,8 @@ from django.db import models
 
 class Notification(models.Model):
     types = (
-        ('info', 'info'),
-        ('alert', 'alert'),
+        ('info', 'Product Notification'),
+        ('alert', 'Maintenance Notification'),
     )
     content = models.CharField(max_length=140)
     url = models.URLField()
