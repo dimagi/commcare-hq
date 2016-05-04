@@ -14,8 +14,9 @@ class Notification(models.Model):
     users_read = models.ManyToManyField(User)
 
 
-def get_notifications():
+def get_notifications(user):
     notes = Notification.objects.all()
+    read_notifications = Notification.objects.filter(users_read=user)
 
     def _fmt_note(note):
         note_dict = {
@@ -24,7 +25,7 @@ def get_notifications():
             'date': note.created.date(),
             'content': note.content,
             'type': note.type,
-            'isRead': False
+            'isRead': note in read_notifications
         }
         return note_dict
 
