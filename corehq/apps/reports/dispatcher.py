@@ -23,6 +23,7 @@ datespan_default = datespan_in_request(
 
 _ = lambda message: ugettext(message) if message is not None else None
 
+
 class ReportDispatcher(View):
     """
         The ReportDispatcher is responsible for dispatching the correct reports or interfaces

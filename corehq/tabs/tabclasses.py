@@ -64,14 +64,20 @@ class ProjectReportsTab(UITab):
         ])]
 
         user_reports = []
+        if self.couch_user.can_edit_data():
+            if has_report_builder_access(self._request):
+                create_report_url = reverse("report_builder_select_type", args=[self.domain])
+            else:
+                from corehq.apps.userreports.views import paywall_home
+                create_report_url = paywall_home(self.domain)
 
-        if has_report_builder_access(self._request):
             user_reports = [(
                 _("Create Reports"),
                 [{
                     "title": _('Create new report'),
-                    "url": reverse("report_builder_select_type", args=[self.domain]),
-                    "icon": "icon-plus fa fa-plus"
+                    "url": create_report_url,
+                    "icon": "icon-plus fa fa-plus",
+                    "id": "create-new-report-left-nav",
                 }]
             )]
 
@@ -211,7 +217,6 @@ class SetupTab(UITab):
         from corehq.apps.products.views import ProductListView
 
         dropdown_items = []
-
 
         if self.project.commtrack_enabled:
             dropdown_items += [(_(view.page_title), view) for view in (
@@ -834,7 +839,6 @@ class MessagingTab(UITab):
                     }
                 ]
             })
-
 
         return contacts_urls
 

@@ -48,6 +48,7 @@ def bootstrap_tropo_gateway(apps):
 
     log_smsbillables_info("Updated Tropo gateway fees.")
 
+
 class Command(LabelCommand):
     help = "bootstrap Tropo gateway fees"
     args = ""

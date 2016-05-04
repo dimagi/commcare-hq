@@ -28,6 +28,7 @@ WRONG_FILETYPE = 'wrong_file.xyz'
 
 
 class BulkArchiveForms(TestCase):
+
     @classmethod
     def setUpClass(cls):
         create_domain(DOMAIN_NAME)

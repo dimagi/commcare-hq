@@ -57,6 +57,7 @@ class DataTablesColumn(object):
 
 
 class NumericColumn(DataTablesColumn):
+
     def __init__(self, *args, **kwargs):
         return super(NumericColumn, self).__init__(
             sort_type=DTSortType.NUMERIC, sortable=True, *args, **kwargs)

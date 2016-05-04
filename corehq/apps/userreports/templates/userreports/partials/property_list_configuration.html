@@ -77,14 +77,14 @@ TODO:
 
                 <td class="form-group" data-bind="css:{'has-error': $parent.showWarnings() && !isValid()}">
 
-                    <!-- ko ifnot: $parent.optionsContainQuestions -->
+                    <!-- ko ifnot: optionsContainQuestions -->
                     <input type="text"
                            class="form-control"
-                           data-bind="select2: $parent.propertyOptions, value: property">
+                           data-bind="select2: propertyOptions, value: property">
                     <!-- /ko -->
-                    <!-- ko if: $parent.optionsContainQuestions -->
+                    <!-- ko if: optionsContainQuestions -->
                     <input class="form-control" type="hidden" data-bind="
-                        questionsSelect: $parent.propertyOptions().concat(
+                        questionsSelect: propertyOptions().concat(
                             existsInCurrentVersion() ? [] : {value: dataSourceField(), label: ''}
                         ),
                         value: existsInCurrentVersion() ? property : dataSourceField,
@@ -120,7 +120,7 @@ TODO:
                 <!--ko if: $parent.hasCalculationCol -->
                 <td>
                     <select class="form-control" data-bind="
-                        options: $parent.calculationOptions,
+                        options: calculationOptions,
                         value: calculation,
                         attr: {disabled: !existsInCurrentVersion()}
                     "></select>

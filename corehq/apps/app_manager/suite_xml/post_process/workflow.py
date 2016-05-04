@@ -17,6 +17,7 @@ from dimagi.utils.decorators.memoized import memoized
 
 
 class WorkflowHelper(PostProcessor):
+
     def __init__(self, suite, app, modules):
         super(WorkflowHelper, self).__init__(suite, app, modules)
 
@@ -32,15 +33,12 @@ class WorkflowHelper(PostProcessor):
         for module in self.modules:
             for form in module.get_suite_forms():
                 form_command = id_strings.form_command(form, module)
-                if_prefix = None
                 stack_frames = []
-                case_list_form_frames = CaseListFormWorkflow(self).case_list_forms_frames(form)
-                stack_frames.extend(case_list_form_frames)
-
-                if case_list_form_frames:
-                    if_prefix = session_var(RETURN_TO).count().eq(0)
-
-                stack_frames.extend(EndOfFormNavigationWorkflow(self).form_workflow_frames(if_prefix, module, form))
+                end_of_form_frames = EndOfFormNavigationWorkflow(self).form_workflow_frames(None, module, form)
+                if end_of_form_frames:
+                    stack_frames.extend(end_of_form_frames)
+                else:
+                    stack_frames.extend(CaseListFormWorkflow(self).case_list_forms_frames(form))
 
                 self.create_workflow_stack(form_command, stack_frames)
 
@@ -146,6 +144,7 @@ class WorkflowHelper(PostProcessor):
 
 
 class EndOfFormNavigationWorkflow(object):
+
     def __init__(self, helper):
         self.helper = helper
 
@@ -301,6 +300,7 @@ class EndOfFormNavigationWorkflow(object):
 
 
 class CaseListFormWorkflow(object):
+
     def __init__(self, helper):
         self.helper = helper
 
@@ -434,6 +434,7 @@ class StackFrameMeta(object):
     """
     Class used in computing the form workflow.
     """
+
     def __init__(self, if_prefix, if_clause, children=None, allow_empty_frame=False):
         if if_prefix:
             template = '({{}}) and ({})'.format(if_clause) if if_clause else '{}'
@@ -470,6 +471,7 @@ class StackFrameMeta(object):
 
 @total_ordering
 class CommandId(object):
+
     def __init__(self, command):
         self.id = command
 

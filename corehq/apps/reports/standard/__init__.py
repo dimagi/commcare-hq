@@ -187,12 +187,12 @@ class ProjectReportParametersMixin(object):
         return case_ids
 
 
-
 class CouchCachedReportMixin(object):
     """
         Use this mixin for caching reports as objects in couch.
     """
     _cached_report = None
+
     @property
     def cached_report(self):
         if not self._cached_report:
@@ -216,6 +216,7 @@ class DatespanMixin(object):
     inclusive = True
 
     _datespan = None
+
     @property
     def datespan(self):
         if self._datespan is None:
@@ -247,6 +248,7 @@ class MonthYearMixin(object):
     fields = [MonthFilter, YearFilter]
 
     _datespan = None
+
     @property
     def datespan(self):
         if self._datespan is None:

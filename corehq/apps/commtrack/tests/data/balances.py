@@ -1,8 +1,11 @@
+from collections import namedtuple
 from datetime import datetime
 from dimagi.utils.parsing import json_format_datetime
 
+SohReport = namedtuple('SohReport', 'section_id product_id amount')
 
-def balance_ota_block(sp, section_id, product_amounts, datestring):
+
+def balance_ota_block(sp, section_id, soh_reports, datestring):
     return """
         <ns0:balance xmlns:ns0="http://commcarehq.org/ledger/v1" xmlns="http://openrosa.org/http/response" date="{long_date}" entity-id="{sp_id}" section-id="{section_id}">
             {product_block}
@@ -11,7 +14,7 @@ def balance_ota_block(sp, section_id, product_amounts, datestring):
         sp_id=sp.case_id,
         section_id=section_id,
         long_date=datestring,
-        product_block=products_xml(product_amounts),
+        product_block=products_xml([(report.product_id, report.amount) for report in soh_reports]),
     )
 
 
@@ -74,6 +77,7 @@ def balance_submission(product_amounts, section_id='stock'):
         </ns0:balance>
     """ % {'product_block': products_xml(product_amounts), 'section_id': section_id}
 
+
 def balance_enumerated(product_amounts, section_id='stock'):
     return """
         <ns0:balance xmlns:ns0="http://commcarehq.org/ledger/v1" date="{long_date}" entity-id="{sp_id}">
@@ -123,6 +127,7 @@ def receipts_enumerated(product_amounts):
 
 def balance_first(balance_amounts, transfer_amounts):
     return '%s%s' % (balance_submission(balance_amounts), transfer_dest_only(transfer_amounts))
+
 
 def transfer_first(transfer_amounts, balance_amounts):
     return '%s%s' % (transfer_dest_only(transfer_amounts), balance_submission(balance_amounts))

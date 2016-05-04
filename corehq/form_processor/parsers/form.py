@@ -12,6 +12,7 @@ from dimagi.utils.couch import LockManager, ReleaseOnError
 
 
 class MultiLockManager(list):
+
     def __enter__(self):
         return [lock_manager.__enter__() for lock_manager in self]
 
@@ -21,6 +22,7 @@ class MultiLockManager(list):
 
 
 class FormProcessingResult(object):
+
     def __init__(self, submitted_form, existing_duplicate=None):
         self.submitted_form = submitted_form
         self.existing_duplicate = existing_duplicate
@@ -52,6 +54,7 @@ class FormProcessingResult(object):
 
 
 class LockedFormProcessingResult(FormProcessingResult):
+
     def __init__(self, submitted_form):
         super(LockedFormProcessingResult, self).__init__(submitted_form)
         assert submitted_form.is_normal

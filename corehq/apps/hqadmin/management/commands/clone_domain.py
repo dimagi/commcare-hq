@@ -272,7 +272,6 @@ class Command(BaseCommand):
         for k, attach in attachments.items():
             doc.put_attachment(attach, name=k, content_type=attachemnt_stubs[k]["content_type"])
 
-
         new_id = doc._id
         self.log_copy(doc.doc_type, old_id, new_id)
         return old_id, new_id

@@ -5,6 +5,7 @@ from corehq.apps.sms.tests.util import delete_domain_phone_numbers
 
 
 class ReminderUtilTest(TestCase):
+
     def setUp(self):
         self.user = CommCareUser.create('test', 'test', 'test')
 

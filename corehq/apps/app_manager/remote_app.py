@@ -8,6 +8,7 @@ from corehq.apps.users.util import cc_user_domain
 
 
 class AutoSetVersions(WrappedNode):
+
     def auto_set_versions(self, version):
 
         if self.attrib.get('version') == 'auto':
@@ -19,6 +20,7 @@ class AutoSetVersions(WrappedNode):
 
 
 class ProfileXML(AutoSetVersions):
+
     def set_property(self, key, value):
         node = self.find('property[@key="%s"]' % key)
 

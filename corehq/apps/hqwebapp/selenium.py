@@ -1,5 +1,6 @@
 from django.conf import settings
 
+
 class attrdict(dict):
 
     def __getattr__(self, name):
@@ -17,6 +18,7 @@ def get_user(name, exact=False):
             raise
 
     return attrdict(**user)
+
 
 def get_app(name):
     defaults = getattr(settings, 'SELENIUM_APP_SETTING_DEFAULTS', {})

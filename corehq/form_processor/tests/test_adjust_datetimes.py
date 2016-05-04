@@ -6,6 +6,7 @@ from corehq.form_processor.utils import adjust_datetimes
 
 
 class AdjustDatetimesTest(SimpleTestCase):
+
     def test_date_no_change(self):
         self.assertEqual(adjust_datetimes({'date': '2015-04-03'}),
                          {'date': '2015-04-03'})

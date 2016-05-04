@@ -1,7 +1,7 @@
 {% load crispy_forms_tags %}
 {% load i18n %}
 
-{% block main_column %}
+{% block page_content %}
     {% if is_submitted %}
         <h4>{% trans "Thank you for your submission.  A representative will be in contact with you shortly." %}</h4>
         {% include 'domain/pro_bono/submission.html' %}

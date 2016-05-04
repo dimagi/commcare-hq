@@ -19,6 +19,7 @@ SoftAssertInfo = namedtuple('SoftAssertInfo',
 
 
 class SoftAssert(object):
+
     def __init__(self, debug=False, send=None, use_exponential_backoff=True,
                  skip_frames=0, key_limit=2):
         assert send

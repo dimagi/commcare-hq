@@ -2,12 +2,14 @@ import sys
 from pillowtop import get_all_pillow_instances
 import multiprocessing
 
+
 def _do_run_pillow(pillow_class):
     try:
         print "running %s" % pillow_class
         pillow_class.run()
     except Exception, ex:
         print "Some pillow error: %s: %s" % (pillow_class.__class__.__name__, ex)
+
 
 def start_pillows(pillows=None):
     """

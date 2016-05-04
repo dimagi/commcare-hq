@@ -16,6 +16,7 @@ class CurrencyField(forms.DecimalField):
 
     Example: $1,400.25 will be accepted and stored as 1400.25
     """
+
     def clean(self, value):
         for c in ['$', ',']:
             value = value.replace(c, '')

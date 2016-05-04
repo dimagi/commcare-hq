@@ -13,6 +13,7 @@ from corehq.apps.reports.commtrack import LedgersByLocationDataSource
 
 
 class TestLedgersByLocation(TestCase):
+
     @classmethod
     def setUpClass(cls):
         def make_stock_state(location, product, soh, section_id='stock'):

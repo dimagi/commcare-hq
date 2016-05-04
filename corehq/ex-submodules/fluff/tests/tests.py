@@ -25,6 +25,7 @@ def flat_field(fn):
 
 
 class Base0(fluff.Calculator):
+
     @fluff.filter_by
     def base_0_filter(self):
         pass
@@ -35,6 +36,7 @@ class Base0(fluff.Calculator):
 
 
 class Base1(Base0):
+
     @fluff.filter_by
     def base_1_filter(self):
         pass
@@ -45,6 +47,7 @@ class Base1(Base0):
 
 
 class Base2(Base0):
+
     @fluff.filter_by
     def base_2_filter(self):
         pass
@@ -55,6 +58,7 @@ class Base2(Base0):
 
 
 class Base3(Base1, Base2):
+
     @fluff.filter_by
     def base_3_filter(self):
         pass
@@ -74,6 +78,7 @@ class Indicators2(fluff.IndicatorDocument):
 
 
 class FluffTest(TestCase):
+
     @classmethod
     def setUpClass(cls):
         # hack - force disconnecting the signals because ctable doesn't play nice with mocks
@@ -182,7 +187,6 @@ class FluffTest(TestCase):
             self.assertEqual(dict(date='2013-01-01', group_by=['abc', 'xyz'], value=3), indicator["value_week"]["group_list"][0])
             self.assertEqual(dict(date='2013-01-01', group_by=['abc', '123'], value=2), indicator["value_week"]["group_val"][0])
             self.assertEqual(dict(date='2013-01-01', group_by=['abc', '123'], value=1), indicator["value_week"]["group_no_val"][0])
-
 
     def test_calculator_calculate(self):
         calc = ValueCalculator(WEEK)
@@ -459,7 +463,6 @@ class FluffTest(TestCase):
             for row in rows:
                 self.assertIn(row, expected)
 
-
     def test_save_to_sql_update(self):
         self.test_save_to_sql()
 
@@ -559,7 +562,6 @@ class FluffTest(TestCase):
                 rows = connection.execute(sqlalchemy.select([cls._table]))
                 self.assertEqual(rows.rowcount, 6)
 
-
         doc['doc_type'] = 'MockArchive'
         for cls in [MockIndicatorsSql]:
             pillow = cls.pillow()(chunk_size=0, checkpoint=mock_checkpoint())
@@ -587,6 +589,7 @@ class MockDocArchive(Document):
 
 
 class ValueCalculator(fluff.Calculator):
+
     @fluff.date_emitter
     def date_value(self, case):
         for action in case.actions:

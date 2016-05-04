@@ -26,6 +26,7 @@ TEST_DOMAIN = 'ewsghana-test'
 
 
 class EWSTestCase(TestCase):
+
     @classmethod
     def tearDownClass(cls):
         cls.sms_backend_mapping.delete()

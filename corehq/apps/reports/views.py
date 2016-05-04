@@ -6,6 +6,7 @@ import json
 from corehq.apps.app_manager.suite_xml.sections.entries import EntriesHelper
 from corehq.apps.domain.views import BaseDomainView
 from corehq.apps.hqwebapp.view_permissions import user_can_view_reports
+from corehq.apps.tour import tours
 from corehq.apps.users.permissions import FORM_EXPORT_PERMISSION, CASE_EXPORT_PERMISSION, \
     DEID_EXPORT_PERMISSION
 from corehq.tabs.tabclasses import ProjectReportsTab
@@ -236,6 +237,8 @@ class MySavedReportsView(BaseProjectReportSectionView):
     @use_jquery_ui
     @use_datatables
     def dispatch(self, request, *args, **kwargs):
+        if request.GET.get('tour', False) and tours.REPORT_BUILDER_EXISTENCE.is_enabled(request.user):
+            request.guided_tour = tours.REPORT_BUILDER_EXISTENCE.get_tour_data(self.request, 1)
         return super(MySavedReportsView, self).dispatch(request, *args, **kwargs)
 
     @property
@@ -610,6 +613,7 @@ def export_all_form_metadata(req, domain):
     tmp_path = save_metadata_export_to_tempfile(domain, format=format)
 
     return export_response(open(tmp_path), format, "%s_forms" % domain)
+
 
 @login_or_digest
 @require_form_export_permission
@@ -1120,6 +1124,7 @@ def _render_report_configs(request, configs, domain, owner_id, couch_user, email
         "report_type": _("once off report") if once else _("scheduled report"),
     }), excel_attachments
 
+
 @login_and_domain_required
 @permission_required("is_superuser")
 def view_scheduled_report(request, domain, scheduled_report_id):
@@ -1382,6 +1387,7 @@ def generate_case_export_payload(domain, include_closed, format, group, user_fil
         case_ids = get_open_case_ids_in_domain(domain)
 
     class stream_cases(object):
+
         def __init__(self, all_case_ids):
             self.all_case_ids = all_case_ids
 

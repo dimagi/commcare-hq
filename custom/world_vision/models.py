@@ -15,6 +15,7 @@ WV_DELETED_TYPES = ('CommCareCase-Deleted', )
 
 
 class WorldVisionMotherFluff(fluff.IndicatorDocument):
+
     def case_property(property):
         return flat_field(lambda case: case.get_case_property(property))
 
@@ -102,12 +103,17 @@ def calculate_weight(case):
     return ""
 
 # This calculator is necessary to generate 'date' field which is required in the database
+
+
 class Numerator(fluff.Calculator):
+
     @fluff.null_emitter
     def numerator(self, case):
         yield None
 
+
 class WorldVisionHierarchyFluff(fluff.IndicatorDocument):
+
     def user_data(property):
         """
         returns a flat field with a callable looking for `property` on the user
@@ -127,8 +133,8 @@ class WorldVisionHierarchyFluff(fluff.IndicatorDocument):
     lvl_1 = user_data('state')
 
 
-
 class WorldVisionChildFluff(fluff.IndicatorDocument):
+
     def case_property(property):
         return flat_field(lambda case: case.get_case_property(property))
 

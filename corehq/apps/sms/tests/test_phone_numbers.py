@@ -1,18 +1,16 @@
-from casexml.apps.case.mock import CaseFactory
 from casexml.apps.case.models import CommCareCase
-from contextlib import contextmanager
 from corehq.apps.hqcase.utils import update_case
 from corehq.apps.sms.mixin import VerifiedNumber
 from corehq.apps.users.tasks import tag_cases_as_deleted_and_remove_indices
-from corehq.form_processor.backends.sql.dbaccessors import CaseAccessorSQL
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
-from corehq.form_processor.utils.general import should_use_sql_backend
 from datetime import datetime, timedelta
 from django.test import TestCase
 from corehq.form_processor.tests.utils import run_with_all_backends
+from corehq.util.test_utils import create_test_case
 
 
 class PhoneNumberLookupTestCase(TestCase):
+
     def assertNoMatch(self, phone_search, suffix_search, owner_id_search):
         self.assertIsNone(VerifiedNumber.by_phone(phone_search))
         self.assertIsNone(VerifiedNumber.by_suffix(suffix_search))
@@ -82,21 +80,6 @@ class PhoneNumberLookupTestCase(TestCase):
         self._test_cache_clear(refresh_each_time=False)
 
 
-@contextmanager
-def create_test_case(domain, case_type, case_name):
-    case = CaseFactory(domain).create_case(
-        case_type=case_type,
-        case_name=case_name
-    )
-    try:
-        yield case
-    finally:
-        if should_use_sql_backend(domain):
-            CaseAccessorSQL.hard_delete_cases(domain, [case.case_id])
-        else:
-            case.delete()
-
-
 class CaseContactPhoneNumberTestCase(TestCase):
 
     def setUp(self):
@@ -132,7 +115,7 @@ class CaseContactPhoneNumberTestCase(TestCase):
 
     @run_with_all_backends
     def test_case_phone_number_updates(self):
-        with create_test_case(self.domain, 'participant', 'test1') as case:
+        with create_test_case(self.domain, 'participant', 'test1', drop_signals=False) as case:
             self.assertIsNone(self.get_case_verified_number(case))
 
             case = self.set_case_property(case, 'contact_phone_number', '99987658765')
@@ -166,7 +149,7 @@ class CaseContactPhoneNumberTestCase(TestCase):
 
     @run_with_all_backends
     def test_close_case(self):
-        with create_test_case(self.domain, 'participant', 'test1') as case:
+        with create_test_case(self.domain, 'participant', 'test1', drop_signals=False) as case:
             case = self.set_case_property(case, 'contact_phone_number', '99987658765')
             case = self.set_case_property(case, 'contact_phone_number_is_verified', '1')
             self.assertIsNotNone(self.get_case_verified_number(case))
@@ -176,7 +159,7 @@ class CaseContactPhoneNumberTestCase(TestCase):
 
     @run_with_all_backends
     def test_case_soft_delete(self):
-        with create_test_case(self.domain, 'participant', 'test1') as case:
+        with create_test_case(self.domain, 'participant', 'test1', drop_signals=False) as case:
             case = self.set_case_property(case, 'contact_phone_number', '99987658765')
             case = self.set_case_property(case, 'contact_phone_number_is_verified', '1')
             self.assertIsNotNone(self.get_case_verified_number(case))
@@ -186,7 +169,7 @@ class CaseContactPhoneNumberTestCase(TestCase):
 
     @run_with_all_backends
     def test_case_zero_phone_number(self):
-        with create_test_case(self.domain, 'participant', 'test1') as case:
+        with create_test_case(self.domain, 'participant', 'test1', drop_signals=False) as case:
             case = self.set_case_property(case, 'contact_phone_number', '99987658765')
             case = self.set_case_property(case, 'contact_phone_number_is_verified', '1')
             self.assertIsNotNone(self.get_case_verified_number(case))
@@ -196,7 +179,7 @@ class CaseContactPhoneNumberTestCase(TestCase):
 
     @run_with_all_backends
     def test_invalid_phone_format(self):
-        with create_test_case(self.domain, 'participant', 'test1') as case:
+        with create_test_case(self.domain, 'participant', 'test1', drop_signals=False) as case:
             case = self.set_case_property(case, 'contact_phone_number', '99987658765')
             case = self.set_case_property(case, 'contact_phone_number_is_verified', '1')
             self.assertIsNotNone(self.get_case_verified_number(case))
@@ -206,8 +189,8 @@ class CaseContactPhoneNumberTestCase(TestCase):
 
     @run_with_all_backends
     def test_phone_number_already_in_use(self):
-        with create_test_case(self.domain, 'participant', 'test1') as case1, \
-                create_test_case(self.domain, 'participant', 'test2') as case2:
+        with create_test_case(self.domain, 'participant', 'test1', drop_signals=False) as case1, \
+                create_test_case(self.domain, 'participant', 'test2', drop_signals=False) as case2:
             case1 = self.set_case_property(case1, 'contact_phone_number', '99987658765')
             case1 = self.set_case_property(case1, 'contact_phone_number_is_verified', '1')
 

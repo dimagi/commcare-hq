@@ -15,6 +15,7 @@ from dimagi.utils.couch.undo import DELETED_SUFFIX
 
 require_can_edit_groups = require_permission(Permissions.edit_commcare_users)
 
+
 @require_POST
 @require_can_edit_groups
 def add_group(request, domain):
@@ -39,6 +40,7 @@ def add_group(request, domain):
         reverse("group_members", args=(domain, group.get_id))
     )
 
+
 @require_POST
 @require_can_edit_groups
 def delete_group(request, domain, group_id):
@@ -56,6 +58,7 @@ def delete_group(request, domain, group_id):
     else:
         return HttpResponseForbidden()
 
+
 @require_POST
 @require_can_edit_groups
 def undo_delete_group(request, domain, record_id):
@@ -64,6 +67,7 @@ def undo_delete_group(request, domain, record_id):
     return HttpResponseRedirect(
         reverse('group_members', args=[domain, record.doc_id])
     )
+
 
 @require_POST
 @require_can_edit_groups
@@ -75,6 +79,7 @@ def restore_group(request, domain, group_id):
     return HttpResponseRedirect(
         reverse('group_members', args=[domain, group._id])
     )
+
 
 @require_can_edit_groups
 def edit_group(request, domain, group_id):
@@ -108,6 +113,7 @@ def edit_group(request, domain, group_id):
     else:
         return HttpResponseForbidden()
 
+
 @require_can_edit_groups
 @require_POST
 def update_group_data(request, domain, group_id):
@@ -122,6 +128,7 @@ def update_group_data(request, domain, group_id):
         )
     else:
         return HttpResponseForbidden()
+
 
 @require_can_edit_groups
 @require_POST

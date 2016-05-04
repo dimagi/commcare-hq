@@ -10,6 +10,7 @@ from corehq.form_processor.models import LedgerValue, LedgerTransaction
 
 
 class LedgerDBSQL(LedgerDBInterface):
+
     def get_ledgers_for_case(self, case_id):
         return LedgerAccessorSQL.get_ledger_values_for_case(case_id)
 
@@ -68,6 +69,7 @@ class LedgerProcessorSQL(LedgerProcessorInterface):
         ledger_value = ledger_db.get_ledger(stock_trans.ledger_reference)
         if not ledger_value:
             ledger_value = LedgerValue(**stock_trans.ledger_reference._asdict())
+            ledger_db.set_ledger(ledger_value)
         transaction = _get_ledger_transaction(
             _lazy_original_balance,
             stock_report_helper,
@@ -77,6 +79,7 @@ class LedgerProcessorSQL(LedgerProcessorInterface):
         ledger_value.track_create(transaction)
         # only do this after we've created the transaction otherwise we'll get the wrong delta
         ledger_value.balance = new_ledger_values.balance
+        ledger_value.last_modified = stock_trans.timestamp
         return ledger_value
 
     def _rebuild_ledger(self, form_id, ledger_value):

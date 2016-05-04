@@ -11,6 +11,7 @@ class _ReportQuickCache(QuickCache):
     Just like QuickCache, but intercepts the function call to abort caching
     under certain conditions
     """
+
     def __call__(self, *args, **kwargs):
         report = args[0]
         self.prefix = '{}{}'.format(self.prefix, '/b3' if report.is_bootstrap3 else '')

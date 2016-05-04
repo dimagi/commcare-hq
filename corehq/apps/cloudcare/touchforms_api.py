@@ -10,6 +10,7 @@ DELEGATION_STUB_CASE_TYPE = "cc_delegation_stub"
 
 
 class BaseSessionDataHelper(object):
+
     def __init__(self, domain, couch_user):
         self.domain = domain
         self.couch_user = couch_user
@@ -68,6 +69,7 @@ class BaseSessionDataHelper(object):
 
 
 class CaseSessionDataHelper(BaseSessionDataHelper):
+
     def __init__(self, domain, couch_user, case_id_or_case, app, form, delegation=False):
         super(CaseSessionDataHelper, self).__init__(domain, couch_user)
         self.form = form

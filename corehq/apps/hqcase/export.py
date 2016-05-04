@@ -50,7 +50,6 @@ def export_cases(domain, cases, workbook, filter_group=None, users=None, all_gro
         else:
             return get_owner_id(case)
 
-
     for i, case in enumerate(cases):
         if process:
             DownloadBase.set_progress(process, i, num_cases)

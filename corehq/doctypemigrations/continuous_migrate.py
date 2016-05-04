@@ -61,6 +61,7 @@ def delete_docs(target_db, doc_ids):
 
 
 class ContinuousReplicator(object):
+
     def __init__(self, source_db, target_db, doc_types,
                  max_changes_before_commit=100,
                  max_time_before_commit=datetime.timedelta(seconds=5)):

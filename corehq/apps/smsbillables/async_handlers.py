@@ -49,6 +49,7 @@ class SMSRatesAsyncHandler(BaseAsyncHandler):
             'rate': _("%s per 160 character SMS") % fmt_dollar_amount(usd_total),
         }
 
+
 class SMSRatesSelect2AsyncHandler(BaseAsyncHandler):
     slug = 'sms_rate_calc'
     allowed_actions = [

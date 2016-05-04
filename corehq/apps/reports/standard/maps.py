@@ -48,6 +48,7 @@ class GenericMapReport(ProjectReport, ProjectReportParametersMixin):
                 return None
 
         metadata = {}
+
         def points():
             for row in data:
                 if '_meta' in row:

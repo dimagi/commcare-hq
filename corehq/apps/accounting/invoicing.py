@@ -490,10 +490,12 @@ class UserLineItemFactory(FeatureLineItemFactory):
     @property
     def unit_description(self):
         if self.num_excess_users > 0:
-            return _("Per User fee exceeding monthly limit of "
-                     "%(monthly_limit)s users.") % {
-                         'monthly_limit': self.rate.monthly_limit,
-                     }
+            return _(
+                "Per User fee exceeding monthly limit of "
+                "%(monthly_limit)s users."
+            ) % {
+                'monthly_limit': self.rate.monthly_limit,
+            }
 
 
 class SmsLineItemFactory(FeatureLineItemFactory):

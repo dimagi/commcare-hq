@@ -239,6 +239,7 @@ class TestInvoice(BaseInvoiceTestCase):
 
 
 class TestContractedInvoices(BaseInvoiceTestCase):
+
     def setUp(self):
         super(TestContractedInvoices, self).setUp()
         generator.delete_all_subscriptions()

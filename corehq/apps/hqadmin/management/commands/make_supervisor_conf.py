@@ -61,12 +61,6 @@ class SupervisorConfCommand(BaseCommand):
             print "\t[make_supervisor_conf] Wrote supervisor configuration: %s" % destination_fullpath
 
 
-
-
-
-
-
-
 class Command(SupervisorConfCommand):
     help = "Make a supervisord conf file to deposit into a services path that supervisord knows about"
     args = ""

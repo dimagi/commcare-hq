@@ -616,6 +616,7 @@ class WeeklyForms(SqlData):
         for row in sorted(data, key=lambda x: x['date']):
             last_submisions.update({row['user_id']: row})
         weekly = {}
+
         def update_row(row1, row2):
             for key, value in row1.iteritems():
                 if key not in ['date', 'user_id', 'hf', 'district']:

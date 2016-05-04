@@ -156,6 +156,7 @@ class DataSourceConfigurationDbTest(TestCase):
 
 
 class IndicatorNamedExpressionTest(SimpleTestCase):
+
     def setUp(self):
         self.indicator_configuration = DataSourceConfiguration.wrap({
             'display_name': 'Mother Indicators',
@@ -293,6 +294,7 @@ class IndicatorNamedExpressionTest(SimpleTestCase):
 
 
 class IndicatorNamedFilterTest(SimpleTestCase):
+
     def setUp(self):
         self.indicator_configuration = DataSourceConfiguration.wrap({
             'display_name': 'Mother Indicators',

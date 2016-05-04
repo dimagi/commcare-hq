@@ -226,6 +226,7 @@ class IndexedSchema(DocumentSchema):
     and need to know their own position within that list.
 
     """
+
     def with_id(self, i, parent):
         self._i = i
         self._parent = parent
@@ -239,6 +240,7 @@ class IndexedSchema(DocumentSchema):
         return other and (self.id == other.id) and (self._parent == other._parent)
 
     class Getter(object):
+
         def __init__(self, attr):
             self.attr = attr
 
@@ -624,6 +626,7 @@ class AdvancedFormActions(DocumentSchema):
 
 
 class FormSource(object):
+
     def __get__(self, form, form_cls):
         if not form:
             return self
@@ -660,6 +663,7 @@ class FormSource(object):
 
 
 class CachedStringProperty(object):
+
     def __init__(self, key):
         self.get_key = key
 
@@ -978,6 +982,7 @@ class FormBase(DocumentSchema):
         except XFormException as e:
             # punt on invalid xml (sorry, no rich attachments)
             valid_paths = {}
+
         def format_key(key, path):
             if valid_paths.get(path) == "upload":
                 return u"{}{}".format(ATTACHMENT_PREFIX, key)
@@ -1058,6 +1063,7 @@ class FormBase(DocumentSchema):
 
 
 class IndexedFormBase(FormBase, IndexedSchema, CommentMixin):
+
     def get_app(self):
         return self._parent._parent
 
@@ -1657,6 +1663,7 @@ class DetailColumn(IndexedSchema):
             'month': 30.4375,
             'year': 365.25
         }
+
         @classmethod
         def get_from_old_format(cls, format):
             if format == 'years-ago':
@@ -2035,6 +2042,7 @@ class ModuleBase(IndexedSchema, NavMenuItemMediaMixin, CommentMixin):
 
 
 class ModuleDetailsMixin():
+
     @classmethod
     def wrap_details(cls, data):
         if 'details' in data:
@@ -3323,6 +3331,7 @@ class ReportGraphConfig(DocumentSchema):
 
 
 class ReportAppFilter(DocumentSchema):
+
     @classmethod
     def wrap(cls, data):
         if cls is ReportAppFilter:
@@ -3549,6 +3558,7 @@ class CustomMonthFilter(ReportAppFilter):
 
 
 class MobileSelectFilter(ReportAppFilter):
+
     def get_filter_value(self, user, ui_filter):
         return None
 
@@ -5275,6 +5285,7 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
                 form.update_app_case_meta(meta)
 
         seen_types = []
+
         def get_children(case_type):
             seen_types.append(case_type)
             return [type_.name for type_ in meta.case_types if type_.relationships.get('parent') == case_type]

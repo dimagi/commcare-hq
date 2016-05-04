@@ -18,6 +18,7 @@ def date_in_range(date_to_check, reference, lower_window=10, upper_window=10):
 
 def no_filter(*args, **kwargs): return True
 
+
 class DateRangeFilter(object):
 
     def __init__(self, days):
@@ -41,7 +42,6 @@ class VisitCalculator(DoneDueCalculator):
 
     def filter(self, case):
         return self.case_filter(case)
-
 
     def _get_numerator_action_filter(self, form, date):
         """
@@ -196,5 +196,6 @@ class NoPostpartumCounseling(NoBPPrep, DueNextMonth):
 
 
 class NoFamilyPlanning(DueNextMonth):
+
     def filter(self, case):
         return getattr(case, 'couple_interested', None) == 'no'

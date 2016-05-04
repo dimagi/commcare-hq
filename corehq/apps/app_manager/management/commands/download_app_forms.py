@@ -11,6 +11,7 @@ class Command(BaseCommand):
         Downloads an app's forms in a more convenient directory structure for working with offline.
         See also: upload_app_forms
     """
+
     def handle(self, *args, **options):
         # todo: would be nice if this worked off remote servers too
         if len(args) != 2:

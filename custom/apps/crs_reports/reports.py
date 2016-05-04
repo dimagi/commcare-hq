@@ -71,7 +71,6 @@ class HNBCReportDisplay(CaseDisplay):
             else:
                 return _('Other')
 
-
     @property
     def case_link(self):
         case_id, case_name = self.case['_id'], self.case['mother_name']
@@ -92,6 +91,7 @@ class HNBCReportDisplay(CaseDisplay):
             return baby_case[0].name
         else:
             return '---'
+
 
 class BaseHNBCReport(CustomProjectReport, CaseListReport):
 
@@ -177,7 +177,6 @@ class BaseHNBCReport(CustomProjectReport, CaseListReport):
                 "report_name": _(self.name)
             }
         return self.name
-
 
     def base_filters(self):
         block = self.request_params.get('block', '')

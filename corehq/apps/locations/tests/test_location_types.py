@@ -55,6 +55,7 @@ class TestLocationTypes(TestCase):
 
 
 class TestLocationTypeOwnership(TestCase):
+
     @classmethod
     def setUpClass(cls):
         cls.domain = 'locations-test-ownership'

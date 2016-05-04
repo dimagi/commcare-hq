@@ -62,6 +62,7 @@ class StandaloneTranslationDoc(TranslationDoc, CouchDocLockableMixIn):
 
 
 class Translation(object):
+
     @classmethod
     def get_translations(cls, lang, key=None, one=False):
         from corehq.apps.app_manager.models import Application
