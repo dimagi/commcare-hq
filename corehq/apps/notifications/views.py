@@ -1,11 +1,17 @@
+from django.core.urlresolvers import reverse
 from django.http import HttpResponse
 from django.utils.decorators import method_decorator
+from django.utils.translation import ugettext as _, ugettext_noop
 from django.views.generic import View
+
 from djangular.views.mixins import JSONResponseMixin, allow_remote_invocation
+
 from corehq import toggles
-from corehq.apps.domain.decorators import login_required
+from corehq.apps.domain.decorators import login_required, require_superuser
+from corehq.apps.hqwebapp.views import BasePageView
 from corehq.apps.notifications.models import Notification
 from corehq.apps.notifications.util import get_notifications_by_user
+from corehq.apps.style.decorators import use_bootstrap3
 
 
 class NotificationsServiceRMIView(JSONResponseMixin, View):
@@ -33,3 +39,31 @@ class NotificationsServiceRMIView(JSONResponseMixin, View):
     def mark_as_read(self, in_data):
         Notification.objects.get(pk=in_data['id']).users_read.add(self.request.user)
         return {}
+
+
+class ManageNotificationView(BasePageView):
+    urlname = 'manage_notifications'
+    page_title = ugettext_noop("Manage Notification")
+    template_name = 'notifications/manage_notifications.html'
+
+    @method_decorator(require_superuser)
+    @use_bootstrap3
+    def dispatch(self, request, *args, **kwargs):
+        return super(ManageNotificationView, self).dispatch(request, *args, **kwargs)
+
+    @property
+    def page_context(self):
+        return {
+            'alerts': [{
+                'content': alert.content,
+                'url': alert.url,
+                'type': alert.type,
+                'created': unicode(alert.created),
+                'isActive': alert.is_active,
+                'id': alert.id,
+            } for alert in Notification.objects.order_by('-created')[:10]]
+        }
+
+    @property
+    def page_url(self):
+        return reverse(self.urlname)
