@@ -59,6 +59,7 @@ branches:
   - b3-groups  # Biyeun 4/26
   - b3-app-multimedia  # Biyeun 4/27
   - b3-reports-cleanup  # Biyeun 5/3
+  - notifications # j$ 5/4
 
   - calculatedIcons # Sravan 3/2
 submodules:
