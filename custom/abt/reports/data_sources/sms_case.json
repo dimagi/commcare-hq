@@ -668,14 +668,14 @@
                   "default": 0,
                   "cases": {
                     "boukoumbe": 29090,
-                    "cobly": 22044,
-                    "kerou": 40328,
+                    "colby": 22044,
+                    "kérou": 40328,
                     "kouande": 44275,
                     "materi": 41474,
                     "natitingou": 29385,
                     "pehunco": 37137,
                     "tanguieta": 13490,
-                    "toucountouna": 12918
+                    "toucoutouna": 12918
                   },
                   "type": "switch",
                   "switch_on": {
@@ -1048,23 +1048,23 @@
             "benin": {
                   "default": 0,
                   "cases": {
-                    "natta_base": 15078,
-                    "manta_base": 14012,
-                    "cobly_base": 22044,
-                    "kerou_centre_base": 27741,
-                    "firou_base": 10128,
-                    "kaoubagou_base": 2459,
-                    "kouande_base": 17279,
-                    "guilimaro_base": 16308,
-                    "birni_base": 10688,
-                    "materi_base": 24510,
-                    "dassari_base": 16964,
-                    "perma_base": 13065,
-                    "natitingou_base": 16320,
-                    "pehunco_base": 28313,
-                    "gnemasson_base": 8824,
-                    "tanguieta_base": 13490,
-                    "toucountouna_base": 12918
+                    "natta": 15078,
+                    "manta": 14012,
+                    "cobly": 22044,
+                    "kérou_centre": 27741,
+                    "firou": 10128,
+                    "kaoubagou": 2459,
+                    "kouande": 17279,
+                    "guilimaro": 16308,
+                    "birni": 10688,
+                    "materi": 24510,
+                    "dassari": 16964,
+                    "perma": 13065,
+                    "natitingou": 16320,
+                    "pehunco": 28313,
+                    "gnemasson": 8824,
+                    "tanguieta": 13490,
+                    "toucountouna": 12918
                   },
                   "type": "switch",
                   "switch_on": {
