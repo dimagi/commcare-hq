@@ -3,7 +3,7 @@ from collections import defaultdict
 from itertools import islice
 from logging import Filter
 import traceback
-from datetime import timedelta
+from datetime import timedelta, datetime
 
 from pygments import highlight
 from pygments.lexers import PythonLexer
@@ -238,7 +238,11 @@ class SlowRequestFilter(Filter):
             return False
 
 
-def with_progress_bar(iterable, length=None, prefix='Processing'):
+def display_seconds(seconds):
+    return str(timedelta(seconds=int(round(seconds))))
+
+
+def with_progress_bar(iterable, length=None, prefix='Processing', oneline=True):
     """Turns 'iterable' into a generator which prints a progress bar"""
     if hasattr(iterable, "__len__"):
         length = len(iterable)
@@ -249,22 +253,25 @@ def with_progress_bar(iterable, length=None, prefix='Processing'):
         )
 
     granularity = min(50, length)
+    start = datetime.now()
 
     def draw(position):
         percent = float(position) / length
         dots = int(round(percent * granularity))
         spaces = granularity - dots
-        output_str = '{prefix} [{dots}{spaces}] {position}/{length} {percent:.0%}\r'.format(
-            prefix=prefix,
-            dots='.' * dots,
-            spaces=' ' * spaces,
-            position=position,
-            length=length,
-            percent=percent,
-        )
-        print output_str,
+        elapsed = (datetime.now() - start).total_seconds()
+        remaining = (display_seconds((elapsed / percent) * (1 - percent))
+                     if position > 0 else "-:--:--")
+
+        print prefix,
+        print "[{}{}]".format("." * dots, " " * spaces),
+        print "{}/{}".format(position, length),
+        print "{:.0%}".format(percent),
+        print "{} remaining".format(remaining),
+        print ("\r" if oneline else "\n"),
         sys.stdout.flush()
 
+    print "Started at {:%Y-%m-%d %H:%M:%S}".format(start)
     checkpoints = {length*i/granularity for i in range(length)}
     for i, x in enumerate(iterable):
         yield x
@@ -272,3 +279,6 @@ def with_progress_bar(iterable, length=None, prefix='Processing'):
             draw(i)
     draw(length)
     print ""
+    end = datetime.now()
+    print "Finished at {:%Y-%m-%d %H:%M:%S}".format(end)
+    print "Elapsed time: {}".format(display_seconds((end - start).total_seconds()))
