@@ -5,8 +5,10 @@ from abc import ABCMeta, abstractmethod
 from uuid import uuid4
 
 from corehq.blobs import DEFAULT_BUCKET
+from corehq.blobs.exceptions import ArgumentError
 
 SAFENAME = re.compile("^[a-z0-9_./-]+$", re.IGNORECASE)
+NOT_SET = object()
 
 
 class AbstractBlobDB(object):
@@ -44,13 +46,19 @@ class AbstractBlobDB(object):
         raise NotImplementedError
 
     @abstractmethod
-    def delete(self, identifier=None, bucket=DEFAULT_BUCKET):
+    def delete(self, identifier=NOT_SET, bucket=NOT_SET):
         """Delete a blob
 
-        :param identifier: The identifier of the object to be deleted. The entire
-        bucket will be deleted if this is not specified.
-        :param bucket: Optional bucket name. This must have the same
-        value that was passed to ``put``.
+        Either one or both of `identifier` or `bucket` parameters
+        is required.
+
+        :param identifier: The identifier of the object to be deleted.
+        The entire bucket will be deleted if this is not provided.
+        :param bucket: Bucket name. This must have the same value that
+        was passed to ``put``. Delete will be attempted in the default
+        bucket if an identifier is given but the bucket is not given.
+        Pass this parameter alone as a keyword argument to delete the
+        entire bucket.
         :returns: True if the blob was deleted else false.
         """
         raise NotImplementedError
@@ -74,3 +82,19 @@ class AbstractBlobDB(object):
         else:
             prefix = "unsafe"
         return prefix + "." + uuid4().hex
+
+    @staticmethod
+    def get_args_for_delete(identifier=NOT_SET, bucket=NOT_SET):
+        if identifier is NOT_SET and bucket is NOT_SET:
+            raise ArgumentError("'identifier' and/or 'bucket' is required")
+        if identifier is None:
+            raise ArgumentError("refusing to delete entire bucket when "
+                                "null blob identifier is provided (either "
+                                "provide a real blob identifier or pass "
+                                "bucket as keyword argument)")
+        if identifier is NOT_SET:
+            assert bucket is not NOT_SET
+            identifier = None
+        elif bucket is NOT_SET:
+            bucket = DEFAULT_BUCKET
+        return identifier, bucket

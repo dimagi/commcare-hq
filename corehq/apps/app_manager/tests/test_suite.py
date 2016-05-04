@@ -612,7 +612,6 @@ class SuiteTest(SimpleTestCase, TestXmlMixin, SuiteMixin):
             "entry/session/datum"
         )
 
-
     def test_subcase_repeat_mixed(self):
         app = Application.new_app(None, "Untitled Application", application_version=APP_V2)
         module_0 = app.add_module(Module.new_module('parent', None))

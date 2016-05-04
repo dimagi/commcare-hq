@@ -620,7 +620,6 @@ class ReportNotification(CachedCouchDocumentMixin, Document):
     day = IntegerProperty(default=1)
     interval = StringProperty(choices=["daily", "weekly", "monthly"])
 
-
     @property
     def is_editable(self):
         try:
@@ -698,6 +697,7 @@ class ReportNotification(CachedCouchDocumentMixin, Document):
             # create a new ReportConfig object, useful for its methods and
             # calculated properties, but don't save it
             class ReadonlyReportConfig(ReportConfig):
+
                 def save(self, *args, **kwargs):
                     pass
 

@@ -45,6 +45,11 @@ class LedgerDBInterface(object):
             self._ledgers[unique_ledger_reference] = ledger
         return self._ledgers[unique_ledger_reference]
 
+    def set_ledger(self, ledger):
+        # if it's not there or the value is None
+        if not self._ledgers.get(ledger.ledger_reference, None):
+            self._ledgers[ledger.ledger_reference] = ledger
+
     @abstractmethod
     def get_ledgers_for_case(self, case_id):
         pass

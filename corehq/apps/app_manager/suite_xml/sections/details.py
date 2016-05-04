@@ -284,6 +284,7 @@ class DetailContributor(SectionContributor):
 
 
 class DetailsHelper(object):
+
     def __init__(self, app, modules=None):
         self.app = app
         self._modules = modules

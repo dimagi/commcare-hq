@@ -1,5 +1,9 @@
 from __future__ import print_function
 import logging
+from corehq.apps.style.crispy import B3MultiField, FormActions
+from crispy_forms.bootstrap import StrictButton
+from crispy_forms.helper import FormHelper
+from crispy_forms.layout import Layout, Fieldset
 from custom.dhis2.models import Dhis2Settings
 from django import forms
 from django.utils.translation import ugettext_lazy as _
@@ -27,6 +31,32 @@ class Dhis2SettingsForm(forms.Form):
         help_text=_('The name of the DHIS2 organisation unit below which this project is relevant. '
                     'e.g. "Fermathe Clinic"'),
         required=False)
+
+    def __init__(self, *args, **kwargs):
+        super(Dhis2SettingsForm, self).__init__(*args, **kwargs)
+        self.helper = FormHelper()
+        self.helper.label_class = 'col-sm-3 col-md-2'
+        self.helper.field_class = 'col-sm-9 col-md-8 col-lg-6'
+
+        self.helper.layout = Layout(
+            Fieldset(
+                _('DHIS2 API Settings'),
+                B3MultiField('Enable DHIS2', 'enabled'),
+                'host',
+                'username',
+                'password',
+                'top_org_unit_name',
+                FormActions(
+                    StrictButton(
+                        _("Update DHIS2 API Settings"),
+                        type="submit",
+                        css_class="btn btn-primary",
+                        css_id="update-dhis2-settings",
+                        data_bind="hqbSubmitReady: form_is_ready",
+                    ),
+                ),
+            )
+        )
 
     def save(self, domain):
         try:

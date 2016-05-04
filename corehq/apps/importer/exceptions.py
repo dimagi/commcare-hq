@@ -31,6 +31,7 @@ class ImporterExcelFileEncrypted(ImporterExcelError):
 
 
 class InvalidImportValueException(Exception):
+
     def __init__(self, column=None):
         self.column = column
 

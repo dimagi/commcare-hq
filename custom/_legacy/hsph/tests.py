@@ -21,6 +21,7 @@ def get_case_id(case_block):
 
 
 class NewUpdateCasePropertiesTest(SimpleTestCase):
+
     def test_chunk_size(self):
         """
         submit_case_blocks should be called with chunks of up to 2, and called when the domain changes

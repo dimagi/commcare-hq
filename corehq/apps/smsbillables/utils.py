@@ -46,5 +46,5 @@ def _get_twilio_client(backend_instance):
 def get_twilio_message(backend_instance, backend_message_id):
     try:
         return _get_twilio_client(backend_instance).messages.get(backend_message_id)
-    except TwilioRestException:
-        raise RetryBillableTaskException
+    except TwilioRestException as e:
+        raise RetryBillableTaskException(e.message)

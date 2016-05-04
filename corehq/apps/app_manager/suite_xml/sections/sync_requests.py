@@ -38,6 +38,7 @@ class SyncRequestContributor(SuiteContributorByModule):
     .. _CommCare 2.0 Suite Definition: https://github.com/dimagi/commcare/wiki/Suite20#sync-request
 
     """
+
     def get_module_contributions(self, module):
         if module_offers_search(module):
             domain = self.app.domain

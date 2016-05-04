@@ -164,6 +164,7 @@ def is_valid_case_type(case_type, module):
 
 
 class ParentCasePropertyBuilder(object):
+
     def __init__(self, app, defaults=(), per_type_defaults=None):
         self.app = app
         self.defaults = defaults

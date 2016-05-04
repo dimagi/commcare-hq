@@ -60,6 +60,7 @@ class CustomDataEditor(object):
     """
     Tool to edit the data for a particular entity, like for an individual user.
     """
+
     def __init__(self, field_view, domain, existing_custom_data=None,
                  post_dict=None, required_only=False, angular_model=None):
         self.field_view = field_view

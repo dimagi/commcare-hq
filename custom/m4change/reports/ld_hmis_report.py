@@ -54,7 +54,6 @@ class LdHmisReport(MonthYearMixin, CaseListReport, M4ChangeReport):
                     row_data.get(key)["value"] += report_rows.get(key)
         return sorted([(key, row_data[key]) for key in row_data], key=lambda t: t[1].get("hmis_code"))
 
-
     @classmethod
     def get_initial_row_data(cls):
         return {

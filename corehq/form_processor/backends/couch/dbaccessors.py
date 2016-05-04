@@ -179,6 +179,7 @@ class CaseAccessorCouch(AbstractCaseAccessor):
 
 
 class LedgerAccessorCouch(AbstractLedgerAccessor):
+
     @staticmethod
     def get_transactions_for_consumption(domain, case_id, product_id, section_id, window_start, window_end):
         from casexml.apps.stock.models import StockTransaction
@@ -234,6 +235,11 @@ class LedgerAccessorCouch(AbstractLedgerAccessor):
         from corehq.apps.commtrack.models import StockState
 
         return StockState.objects.filter(product_id__in=product_ids)
+
+    @staticmethod
+    def get_current_ledger_state(case_ids):
+        from casexml.apps.stock.utils import get_current_ledger_state
+        return get_current_ledger_state(case_ids)
 
 
 def _get_attachment_content(doc_class, doc_id, attachment_id):

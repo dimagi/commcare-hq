@@ -25,6 +25,7 @@ DYNAMIC_CASE_PROPERTIES_COLUMNS = 4
 
 
 class CaseDisplayWrapper(object):
+
     def __init__(self, case):
         self.case = case
 
@@ -136,6 +137,7 @@ class CaseDisplayWrapper(object):
 
 
 class SupplyPointDisplayWrapper(CaseDisplayWrapper):
+
     def to_full_dict(self):
         from corehq.apps.locations.models import SQLLocation
         data = super(SupplyPointDisplayWrapper, self).to_full_dict()
@@ -327,6 +329,7 @@ def sortkey(child, type_info=None):
             key.append(case.opened_on or datetime.datetime.min)
     return key
 
+
 def get_session_data(case, current_case, type_info):
     # this logic should ideally be implemented in subclasses of
     # CommCareCase
@@ -343,6 +346,7 @@ def get_session_data(case, current_case, type_info):
 
 
 TREETABLE_INDENT_PX = 19
+
 
 def process_case_hierarchy(case_output, get_case_url, type_info):
     current_case = case_output['case']

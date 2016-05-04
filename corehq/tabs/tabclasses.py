@@ -212,7 +212,6 @@ class SetupTab(UITab):
 
         dropdown_items = []
 
-
         if self.project.commtrack_enabled:
             dropdown_items += [(_(view.page_title), view) for view in (
                 ProductListView,
@@ -834,7 +833,6 @@ class MessagingTab(UITab):
                     }
                 ]
             })
-
 
         return contacts_urls
 

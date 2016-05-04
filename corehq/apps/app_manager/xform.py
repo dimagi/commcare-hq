@@ -97,6 +97,7 @@ SESSION_USERCASE_ID = CaseIDXPath(session_var(USERCASE_ID))
 
 
 class WrappedAttribs(object):
+
     def __init__(self, attrib, namespaces=namespaces):
         self.attrib = attrib
         self.namespaces = namespaces
@@ -130,6 +131,7 @@ class WrappedAttribs(object):
 
 
 class WrappedNode(object):
+
     def __init__(self, xml, namespaces=namespaces):
         if isinstance(xml, basestring):
             self.xml = parse_xml(xml) if xml else None
@@ -201,6 +203,7 @@ class WrappedNode(object):
 
 
 class ItextNodeGroup(object):
+
     def __init__(self, nodes):
         self.id = nodes[0].id
         assert all(node.id == self.id for node in nodes)
@@ -228,6 +231,7 @@ class ItextNodeGroup(object):
 
 
 class ItextNode(object):
+
     def __init__(self, lang, itext_node):
         self.lang = lang
         self.id = itext_node.attrib['id']
@@ -244,6 +248,7 @@ class ItextNode(object):
 
 
 class ItextOutput(object):
+
     def __init__(self, ref):
         self.ref = ref
 
@@ -252,6 +257,7 @@ class ItextOutput(object):
 
 
 class ItextValue(unicode):
+
     def __new__(cls, parts):
         return super(ItextValue, cls).__new__(cls, cls._render(parts))
 
@@ -543,6 +549,7 @@ class XForm(WrappedNode):
     This is not a comprehensive API for xforms editing and parsing.
 
     """
+
     def __init__(self, *args, **kwargs):
         super(XForm, self).__init__(*args, **kwargs)
         if self.exists():
@@ -1737,6 +1744,7 @@ class XForm(WrappedNode):
                 case_block.add_update_block(basic_updates)
         if updates_by_case:
             self.add_casedb()
+
             def make_nested_subnode(base_node, path):
                 """
                 path='x/y/z' will append <x><y><z/></y></x> to base_node
@@ -1773,7 +1781,6 @@ class XForm(WrappedNode):
         actions = form.active_actions()
         # a list of functions to be applied to the file as a whole after it has been pieced together
         additional_transformations = []
-
 
         if form.requires == 'none' and 'open_case' not in actions and actions:
             raise CaseError("To perform case actions you must either open a case or require a case to begin with")
@@ -1836,6 +1843,7 @@ class XForm(WrappedNode):
                         "nodeset":"case/create/external_id",
                         "calculate": self.resolve_path("case/case_id"),
                         })
+
                 def require_case_name_source():
                     "make sure that the question that provides the case_name is required"
                     name_path = actions['open_case'].name_path
@@ -1967,6 +1975,7 @@ class XForm(WrappedNode):
                         "{jr}preloadParams": property
                     })
             casexml_text = casexml.render()
+
         def transformation():
             for trans in additional_transformations:
                 trans()

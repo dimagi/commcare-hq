@@ -36,6 +36,7 @@ COMBOS = [
 
 
 class AttachmentsTest(TestCase):
+
     @classmethod
     def setUpClass(cls):
         for app_id, xmlns, with_attachments in COMBOS:

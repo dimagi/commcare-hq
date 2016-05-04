@@ -13,6 +13,7 @@ from couchexport.models import Format
 
 
 class UniqueHeaderGenerator(object):
+
     def __init__(self, max_column_size=None):
         self.used = set()
         self.max_column_size = max_column_size or 2000
@@ -330,13 +331,11 @@ class Excel2007ExportWriter(ExportWriter):
         self.tables = {}
         self.table_indices = {}
 
-
     def _init_table(self, table_index, table_title):
         sheet = self.book.create_sheet()
         sheet.title = table_title
         self.tables[table_index] = sheet
         self.table_indices[table_index] = 0
-
 
     def _write_row(self, sheet_index, row):
         sheet = self.tables[sheet_index]
@@ -394,6 +393,7 @@ class Excel2003ExportWriter(ExportWriter):
     def _close(self):
         self.book.save(self.file)
 
+
 class InMemoryExportWriter(ExportWriter):
     """
     Keeps tables in memory. Subclassed by other export writers.
@@ -414,6 +414,7 @@ class InMemoryExportWriter(ExportWriter):
 
     def _close(self):
         pass
+
 
 class JsonExportWriter(InMemoryExportWriter):
     """

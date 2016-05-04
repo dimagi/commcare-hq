@@ -46,6 +46,7 @@ class LocationTypeResource(ModelResource, HqBaseResource):
             'pk': obj.pk
         })
 
+
 class LocationResource(ModelResource, HqBaseResource):
     location_data = fields.DictField('metadata')
     location_type = fields.ForeignKey(LocationTypeResource, 'location_type')

@@ -32,6 +32,7 @@ from dateutil.parser import parse
 RESPONSE_NOT_APPLICABLE = 1
 NO_RESPONSE = 2
 
+
 class FRIReport(CustomProjectReport, GenericTabularReport):
     _interactive_participants = None
     _domain_obj = None
@@ -52,6 +53,7 @@ class FRIReport(CustomProjectReport, GenericTabularReport):
         if self._interactive_participants is None:
             self._interactive_participants = get_interactive_participants(self.domain)
         return self._interactive_participants
+
 
 class MessageBankReport(FRIReport):
     name = ugettext_noop("Message Bank")
@@ -142,6 +144,7 @@ class MessageBankReport(FRIReport):
         val1 = cgi.escape(val1, True)
         val2 = cgi.escape(val2, True)
         return self.table_cell(val1, '<span style="display: none;">%s</span><span>%s</span>' % (val1, val2))
+
 
 class MessageReport(FRIReport, DatespanMixin):
     name = ugettext_noop('Message Report')
@@ -277,6 +280,7 @@ class MessageReport(FRIReport, DatespanMixin):
             timestamp.strftime(SERVER_DATETIME_FORMAT),
         )
 
+
 class PHEDashboardReport(FRIReport):
     name = ugettext_noop("PHE Dashboard")
     slug = "fri_phe_dashboard"
@@ -332,6 +336,7 @@ class PHEDashboardReport(FRIReport):
     def _open_chat_action(self, case_id):
         url = reverse("sms_chat", args=[self.domain, case_id])
         return "window.open('%s', '_blank', 'location=no,menubar=no,scrollbars=no,status=no,toolbar=no,height=400,width=400');" % url
+
 
 class SurveyResponsesReport(FRIReport):
     name = ugettext_noop("Survey Responses")

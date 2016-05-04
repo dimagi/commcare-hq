@@ -23,6 +23,7 @@ RETRY_TIME_DELAY_FACTOR = 15
 
 
 class ReindexLogHandler(PaginateViewLogHandler):
+
     def __init__(self, reindexer):
         self.reindexer = reindexer
 

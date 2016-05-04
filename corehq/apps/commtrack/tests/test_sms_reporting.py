@@ -8,6 +8,7 @@ from couchforms.dbaccessors import get_commtrack_forms
 
 
 class SMSTests(CommTrackTest):
+
     def setUp(self):
         super(SMSTests, self).setUp()
 
@@ -219,9 +220,9 @@ class StockAndReceiptTest(SMSTests):
         STOCK_AND_RECEIPT_SMS_HANDLER.set(self.domain, False, NAMESPACE_DOMAIN)
 
 
-
 def _get_location_from_form(form):
     return form.form['location']
+
 
 def _get_location_from_sp(sp):
     return sp.location_id

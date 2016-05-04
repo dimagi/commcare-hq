@@ -11,6 +11,7 @@ MESSAGE_TYPE_SMS = "sms"
 
 
 class SQLTelerivetBackend(SQLSMSBackend):
+
     class Meta:
         app_label = 'sms'
         proxy = True

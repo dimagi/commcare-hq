@@ -185,6 +185,7 @@ class CaseTypeXpath(CaseSelectionXPath):
 
 
 class UserCaseXPath(XPath):
+
     def case(self):
         user_id = session_var(var='userid', path='context')
         return CaseTypeXpath(USERCASE_TYPE).case().select('hq_user_id', user_id).select_raw(1)
@@ -321,6 +322,7 @@ class SessionInstanceXpath(InstanceXpath):
 
 
 class ItemListFixtureXpath(InstanceXpath):
+
     @property
     def id(self):
         return u'item-list:{}'.format(self)
@@ -367,6 +369,7 @@ class ScheduleFormXPath(object):
     """
     XPath queries for scheduled forms
     """
+
     def __init__(self, form, phase, module):
         self.form = form
         self.phase = phase
@@ -683,6 +686,7 @@ class QualifiedScheduleFormXPath(ScheduleFormXPath):
 
     Instead of raw case properties, this fetches the properties from the casedb
     """
+
     def __init__(self, form, phase, module, case_xpath):
         super(QualifiedScheduleFormXPath, self).__init__(form, phase, module)
         self.case_xpath = case_xpath

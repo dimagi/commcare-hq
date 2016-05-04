@@ -55,7 +55,6 @@ class ReportColumnFactory(object):
             ))
 
 
-
 class ChartFactory(object):
     spec_map = {
         'pie': PieChartSpec,

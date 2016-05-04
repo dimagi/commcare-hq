@@ -20,6 +20,7 @@ from corehq.apps.app_manager.suite_xml.xml_models import *
 
 
 class FormDatumMeta(namedtuple('FormDatumMeta', 'datum case_type requires_selection action')):
+
     def __repr__(self):
         return 'FormDataumMeta(datum=<SessionDatum(id={})>, case_type={}, requires_selection={}, action={})'.format(
             self.datum.id, self.case_type, self.requires_selection, self.action
@@ -27,11 +28,13 @@ class FormDatumMeta(namedtuple('FormDatumMeta', 'datum case_type requires_select
 
 
 class EntriesContributor(SuiteContributorByModule):
+
     def get_module_contributions(self, module):
         return self.entries_helper.entry_for_module(module)
 
 
 class EntriesHelper(object):
+
     def __init__(self, app, modules=None):
         from corehq.apps.app_manager.suite_xml.sections.details import DetailsHelper
         self.app = app

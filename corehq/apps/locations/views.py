@@ -387,6 +387,7 @@ def location_descendants_count(request, domain, loc_id):
         'count': count
     })
 
+
 @can_edit_location
 def unarchive_location(request, domain, loc_id):
     # hack for circumventing cache

@@ -51,12 +51,13 @@ branches:
 #  - revamp-multimedia # Jenny 2/16
   - certificate-validation # Cal 3/10
   - inline-editing # Jenny 4/9
-  - uatbc/case-search-es         # FR 4/12
-  - app-multimedia-blobs # daniel 4/20
-  - fix-deploy-email-2 # ben 4/25
+  - app-blobs-testing # daniel 4/20
   - j2me # Nick P 4/26
   - b3-groups  # Biyeun 4/26
   - b3-app-multimedia  # Biyeun 4/27
+  - b3-reports-cleanup  # Biyeun 5/3
+  - report-builder-paywall  # Noah 4/29
+  - lang-profiles  # Cal 5/4
 submodules:
   submodules/touchforms-src:
     # let's leave this here even when empty

@@ -14,6 +14,7 @@ from dimagi.ext.couchdbkit import (
 )
 from corehq.pillows.core import DATE_FORMATS_ARR, DATE_FORMATS_STRING
 
+
 def type_full_date(formats=DATE_FORMATS_STRING):
     return dict(type="date", format=formats)
 
@@ -129,6 +130,7 @@ app_special_types = {
     "profile": {"type": "object", "dynamic": True},
 }
 
+
 def set_properties(schema_class, dynamic=False, custom_types=default_special_types, nested_types=default_nested_types, init_dict=None):
     """
     Helper function to walk a schema_class's properties recursively and create a typed out mapping
@@ -148,7 +150,6 @@ def set_properties(schema_class, dynamic=False, custom_types=default_special_typ
     if not props_dict.get('doc_type'):
         props_dict["doc_type"] = {"type": "string", "index": "not_analyzed"}
     return props_dict
-
 
 
 #A conservative mapping - don't detect datestring we don't know about

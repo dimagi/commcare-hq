@@ -12,6 +12,7 @@ from corehq.apps.accounting.tests.test_invoicing import BaseInvoiceTestCase
 
 
 class TestAdjustBalanceForm(BaseInvoiceTestCase):
+
     def setUp(self):
         super(TestAdjustBalanceForm, self).setUp()
         generate_invoices(self.subscription.date_start + relativedelta(months=1))

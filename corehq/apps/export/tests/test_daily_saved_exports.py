@@ -25,6 +25,7 @@ class TestDailySavedExports(TestCase):
     def test_saved_exports_task(self):
 
         class MockExportFile(object):
+
             def __enter__(self):
                 return ""
 

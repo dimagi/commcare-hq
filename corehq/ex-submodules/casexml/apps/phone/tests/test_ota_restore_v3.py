@@ -59,6 +59,7 @@ class OtaV3RestoreTest(TestCase):
 
 
 class TestRestoreResponse(SimpleTestCase):
+
     def _expected(self, username, body, items=None):
         items_text = ' items="{}"'.format(items) if items is not None else ''
         return (

@@ -10,6 +10,7 @@ from dimagi.utils.subprocess_manager import subprocess_context
 
 
 class JadDict(dict):
+
     @classmethod
     def from_jad(cls, jad_contents):
         sep = ": "
@@ -110,6 +111,7 @@ def sign_jar(jad, jar):
 
 
 class JadJar(object):
+
     def __init__(self, jad, jar, version=None, build_number=None, signed=False):
         jad, jar = [j.read() if hasattr(j, 'read') else j for j in (jad, jar)]
         self._jad = jad
@@ -121,6 +123,7 @@ class JadJar(object):
     @property
     def jad(self):
         return self._jad
+
     @property
     def jar(self):
         return self._jar

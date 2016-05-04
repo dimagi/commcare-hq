@@ -1,6 +1,7 @@
 from dimagi.ext.jsonobject import (
     JsonObject, IntegerProperty, DateTimeProperty, StringProperty)
 
+
 class ReportsForm(JsonObject):
     time = DateTimeProperty()
     completion_time = DateTimeProperty()
