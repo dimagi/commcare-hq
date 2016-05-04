@@ -10,7 +10,7 @@ class Notification(models.Model):
     content = models.CharField(max_length=140)
     url = models.URLField()
     type = models.CharField(max_length=10, choices=types)
-    created = models.DateTimeField(auto_now_add=True)
+    created = models.DateTimeField(auto_now_add=True, db_index=True)
     users_read = models.ManyToManyField(User)
     is_active = models.BooleanField(default=False)
 
