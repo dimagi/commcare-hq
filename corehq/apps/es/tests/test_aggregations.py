@@ -26,7 +26,7 @@ class TestAggregations(ElasticTestMixin, SimpleTestCase):
             HQESQuery('forms')\
                 .terms_aggregation('form.meta.userID', 'form.meta.userID')
 
-    def test_nested_aggregation(self):
+    def test_nesting_aggregations(self):
         json_output = {
             "query": {
                 "filtered": {

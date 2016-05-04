@@ -847,8 +847,6 @@ def _get_submodules():
     ]
 
 
-
-
 class CallcenterUCRCheck(BaseAdminSectionView):
     urlname = 'callcenter_ucr_check'
     page_title = ugettext_lazy("Check Callcenter UCR tables")
@@ -875,7 +873,7 @@ class CallcenterUCRCheck(BaseAdminSectionView):
         if domain:
             domains = [domain]
         else:
-            domains = [domain.name for domain in get_call_center_domains()]
+            domains = [dom.name for dom in get_call_center_domains()]
 
         domains_to_forms = FormES()\
             .filter(filters.term('domain', domains))\
