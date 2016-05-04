@@ -48,8 +48,10 @@ branches:
   - vellum-staging # J$ 11/13
   - show-form-case-refs-in-summary # j$ 1/29
 #  - revamp-multimedia # Jenny 2/16
-  - certificate-validation # Cal 3/10
+  - app-blobs-testing+lang-profiles # Cal 5/4
+  - inline-editing+lang-profiles # Cal 5/4
   - inline-editing # Jenny 4/9
+  - lang-profiles  # Cal 5/4
   - app-blobs-testing # daniel 4/20
   - j2me # Nick P 4/26
   - b3-groups  # Biyeun 4/26
@@ -57,7 +59,6 @@ branches:
   - b3-reports-cleanup  # Biyeun 5/3
   - report-builder-paywall  # Noah 4/29
   - calculatedIcons # Sravan 3/2
-#  - lang-profiles  # Cal 5/4
 submodules:
   submodules/touchforms-src:
     # let's leave this here even when empty
