@@ -9,7 +9,9 @@ from .models import Notification
 
 class NotificationCreationForm(forms.Form):
     content = forms.CharField(
-        label=ugettext_lazy('Content')
+        label=ugettext_lazy('Content'),
+        max_length=140,
+        widget=forms.Textarea,
     )
     url = forms.URLField(
         label=ugettext_lazy('URL')
