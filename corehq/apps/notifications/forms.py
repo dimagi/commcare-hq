@@ -19,8 +19,8 @@ class NotificationCreationForm(forms.Form):
     type = forms.ChoiceField(
         label=ugettext_lazy("Type"),
         choices=(
-            ('info', 'info'),
-            ('alert', 'alert'),
+            ('info', 'Product Notification'),
+            ('alert', 'Maintenance Notification'),
         ),
     )
 
