@@ -3,9 +3,6 @@
 
 {% block page_content %}
     <form method="get" class="form form-horizontal" action="{% url "callcenter_ucr_check" %}">
-        <div class="alert alert-info">
-            {% trans 'Enter a domain to check' %}
-        </div>
         <div class="form-group">
             <label class="col-xs-2 control-label" for="domain">{% trans "Domain name" %}</label>
             <div class="col-xs-4">
@@ -24,14 +21,25 @@
     <table class="table">
     <tr>
         <th>{% trans "Domain Name" %}</th>
-        <th>{% trans "Forms (UCR/ES)" %}</th>
-        <th>{% trans "Cases (UCR/ES)" %}</th>
+        <th>{% trans "Forms" %}</th>
+        <th>{% trans "Cases" %}</th>
+        <th>{% trans "Case actions" %}</th>
     </tr>
     {% for domain in domains %}
         <tr>
             <td>{{ domain.name }}</td>
-            <td>{{ domain.form_stats.ucr }} / {{ domain.form_stats.es }}</td>
-            <td>{{ domain.case_stats.ucr }} / {{ domain.case_stats.es }}</td>
+            {% for stats in domain.stats %}
+            <td>
+                <div class="progress">
+                  <div class="progress-bar progress-bar-{{ stats.es_class }}" style="width: {{ stats.es_percent }}%">
+                    ES: {{ stats.es_percent }} ({{ stats.es }} / {{ stats.total }})
+                  </div>
+                  <div class="progress-bar progress-bar-{{ stats.ucr_class }}" style="width: {{ stats.ucr_percent }}%">
+                    UCR: {{ stats.ucr_percent }} ({{ stats.ucr }} / {{ stats.total }})
+                  </div>
+                </div>
+            </td>
+            {% endfor %}
         </tr>
     {% endfor %}
     </table>

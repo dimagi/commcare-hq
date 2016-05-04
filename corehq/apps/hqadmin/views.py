@@ -30,7 +30,7 @@ from couchdbkit import ResourceNotFound
 
 from casexml.apps.case.models import CommCareCase
 from corehq.apps.callcenter.indicator_sets import CallCenterIndicators
-from corehq.apps.es import CaseES
+from corehq.apps.es import CaseES, aggregations
 from corehq.apps.hqcase.utils import get_case_by_domain_hq_user_id
 from corehq.apps.style.decorators import use_datatables, use_jquery_ui, \
     use_bootstrap3, use_nvd3, use_nvd3_v3
@@ -884,25 +884,55 @@ class CallcenterUCRCheck(BaseAdminSectionView):
             .run() \
             .aggregations.domain.counts_by_bucket()
 
-        domains_to_cases = CaseES()\
+        actions_agg = aggregations.NestedAggregation('actions', 'actions')
+        aggregation = aggregations.TermsAggregation('domain', 'domain').aggregation(actions_agg)
+        results = CaseES()\
             .filter(filters.term('domain', domains))\
-            .terms_aggregation('domain', 'domain')\
+            .aggregation(aggregation)\
             .size(0)\
-            .run()\
-            .aggregations.domain.counts_by_bucket()
+            .run()
+
+        domains_to_cases = results.aggregations.domain.buckets_dict
 
         for domain in domains:
             adapters = get_sql_adapters_for_domain(domain)
             context['domains'].append({
                 'name': domain,
-                'form_stats': {
-                    'ucr': adapters.forms.get_query_object().count(),
-                    'es': domains_to_forms[domain]
-                },
-                'case_stats': {
-                    'ucr': adapters.cases.get_query_object().count(),
-                    'es': domains_to_cases[domain]
-                }
+                'stats': [
+                    {
+                        'name': 'forms',
+                        'ucr': adapters.forms.get_query_object().count(),
+                        'es': domains_to_forms[domain]
+                    },
+                    {
+                        'name': 'cases',
+                        'ucr': adapters.cases.get_query_object().count(),
+                        'es': domains_to_cases[domain].doc_count
+                    },
+                    {
+                        'name': 'case_actions',
+                        'ucr': adapters.case_actions.get_query_object().count(),
+                        'es': domains_to_cases[domain].actions.doc_count
+                    }
+                ]
             })
 
+        scale = [
+            (40, 'warning'),
+            (30, 'danger'),
+        ]
+
+        stat_names = ['es', 'ucr']
+        for info in context['domains']:
+            for stat in info['stats']:
+                total = sum([stat[name] for name in stat_names])
+                stat['total'] = total
+                stat['es_class'] = 'info'
+                stat['ucr_class'] = 'success'
+                for name in stat_names:
+                    percent = int(100 * stat[name] / total)
+                    stat[name + '_percent'] = percent
+                    for range in scale:
+                        if percent <= range[0]:
+                            stat[name + '_class'] = range[1]
         return context
