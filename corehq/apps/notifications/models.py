@@ -15,21 +15,3 @@ class Notification(models.Model):
 
     class Meta:
         ordering = ["-created"]
-
-
-def get_notifications(user, limit=10):
-    notes = Notification.objects.all()[:limit]
-    read_notifications = Notification.objects.filter(users_read=user)
-
-    def _fmt_note(note):
-        note_dict = {
-            'id': note.id,
-            'url': note.url,
-            'date': note.created.date(),
-            'content': note.content,
-            'type': note.type,
-            'isRead': note in read_notifications
-        }
-        return note_dict
-
-    return map(_fmt_note, notes)
