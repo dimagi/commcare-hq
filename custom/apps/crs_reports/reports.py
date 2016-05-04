@@ -103,7 +103,6 @@ class BaseHNBCReport(CustomProjectReport, CaseListReport):
     include_inactive = True
     module_name = 'crs_reports'
     report_template_name = None
-    is_bootstrap3 = True
 
     @property
     @memoized

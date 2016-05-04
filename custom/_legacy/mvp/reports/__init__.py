@@ -15,7 +15,6 @@ class MVPIndicatorReport(CustomProjectReport, ProjectReportParametersMixin):
     """
     fields = ['corehq.apps.reports.filters.users.UserTypeFilter',
               'corehq.apps.reports.filters.select.GroupFilter']
-    is_bootstrap3 = True
 
     def indicator_cache_key(self, indicator_slug, is_debug=False):
         key = "%(view_slug)s:%(domain)s:%(indicator_slug)s:%(query_string)s%(debug)s" % {

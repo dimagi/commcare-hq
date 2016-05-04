@@ -31,7 +31,6 @@ class DeploymentsReport(GenericTabularReport, ProjectReport, ProjectReportParame
     """
     Base class for all deployments reports
     """
-    is_bootstrap3 = True
    
     @classmethod
     def show_in_navigation(cls, domain=None, project=None, user=None):

@@ -8,10 +8,9 @@ from dimagi.utils.decorators.memoized import memoized
 
 class BaseIndicatorAdminInterface(BaseCRUDAdminInterface):
     section_name = "Administer Indicators"
-    base_template = 'reports/bootstrap2/base_template.html'
+    base_template = 'reports/base_template.html'
     report_template_path = "indicators/interfaces/indicator_admin.html"
     dispatcher = IndicatorAdminInterfaceDispatcher
-    is_bootstrap3 = True
 
     crud_item_type = "Indicator Definition"
 
