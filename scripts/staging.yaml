@@ -51,8 +51,8 @@ branches:
   - app-blobs-testing+lang-profiles # Cal 5/4
   - inline-editing+lang-profiles # Cal 5/4
   - inline-editing # Jenny 4/9
-  - lang-profiles+report-builder-paywall
-  - lang-profiles  # Cal 5/4
+#  - lang-profiles+report-builder-paywall
+#  - lang-profiles  # Cal 5/4
   - report-builder-paywall  # Noah 4/29
   - app-blobs-testing # daniel 4/20
   - j2me # Nick P 4/26
