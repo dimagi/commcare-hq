@@ -237,9 +237,9 @@ class LedgerAccessorCouch(AbstractLedgerAccessor):
         return StockState.objects.filter(product_id__in=product_ids)
 
     @staticmethod
-    def get_current_ledger_state(case_ids):
+    def get_current_ledger_state(case_ids, ensure_form_id=False):
         from casexml.apps.stock.utils import get_current_ledger_state
-        return get_current_ledger_state(case_ids)
+        return get_current_ledger_state(case_ids, ensure_form_id=ensure_form_id)
 
 
 def _get_attachment_content(doc_class, doc_id, attachment_id):

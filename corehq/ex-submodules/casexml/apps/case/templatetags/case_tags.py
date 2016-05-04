@@ -13,10 +13,10 @@ from django.utils.translation import ugettext as _
 from django.utils.safestring import mark_safe
 from django.utils.html import escape
 
-from casexml.apps.case.models import CommCareCase
-from casexml.apps.stock.utils import get_current_ledger_transactions
 from corehq.apps.products.models import SQLProduct
 from couchdbkit import ResourceNotFound
+
+from corehq.form_processor.interfaces.dbaccessors import LedgerAccessors
 
 register = template.Library()
 
@@ -258,12 +258,12 @@ def render_case(case, options):
         except SQLProduct.DoesNotExist:
             return (_('Unknown Product ("{}")').format(product_id))
 
-    ledgers = get_current_ledger_transactions(case.case_id)
-    for section, product_map in ledgers.items():
+    ledger_map = LedgerAccessors(case.domain).get_case_ledger_state(case.case_id, ensure_form_id=True)
+    for section, product_map in ledger_map.items():
         product_tuples = sorted(
             (_product_name(product_id), product_map[product_id]) for product_id in product_map
         )
-        ledgers[section] = product_tuples
+        ledger_map[section] = product_tuples
 
     return render_to_string("case/partials/single_case.html", {
         "default_properties": default_properties,
@@ -283,7 +283,7 @@ def render_case(case, options):
             "get_case_url": get_case_url,
             "timezone": timezone
         },
-        "ledgers": ledgers,
+        "ledgers": ledger_map,
         "timezone_offset": tz_offset_ms,
         "show_transaction_export": show_transaction_export,
         "xform_api_url": reverse('single_case_forms', args=[case.domain, case.case_id]),

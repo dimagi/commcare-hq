@@ -357,7 +357,7 @@ class AbstractLedgerAccessor(six.with_metaclass(ABCMeta)):
         raise NotImplementedError\
 
     @abstractmethod
-    def get_current_ledger_state(case_ids):
+    def get_current_ledger_state(case_ids, ensure_form_id=False):
         """
         Given a list of case IDs return a dict of all current ledger data of the following format:
         {
@@ -417,3 +417,6 @@ class LedgerAccessors(object):
         if not case_ids:
             return {}
         return self.db_accessor.get_current_ledger_state(case_ids)
+
+    def get_case_ledger_state(self, case_id, ensure_form_id=False):
+        return self.db_accessor.get_current_ledger_state([case_id], ensure_form_id=ensure_form_id)[case_id]

@@ -761,7 +761,7 @@ class LedgerAccessorSQL(AbstractLedgerAccessor):
             return None
 
     @staticmethod
-    def get_current_ledger_state(case_ids):
+    def get_current_ledger_state(case_ids, ensure_form_id=False):
         ledger_values = LedgerValue.objects.raw(
             'SELECT * FROM get_ledger_values_for_cases(%s)',
             [case_ids]

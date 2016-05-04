@@ -18,10 +18,10 @@ BEGIN
             id = ledger_value.id;
     ELSE
         INSERT INTO form_processor_ledgervalue (
-            case_id, section_id, entry_id, balance, last_modified
+            case_id, section_id, entry_id, balance, last_modified, last_modified_form_id
         ) VALUES (
             ledger_value.case_id, ledger_value.section_id, ledger_value.entry_id,
-            ledger_value.balance, ledger_value.last_modified
+            ledger_value.balance, ledger_value.last_modified, ledger_value.last_modified_form_id
         );
     END IF;
 
