@@ -23,7 +23,7 @@ class NotificationsServiceRMIView(JSONResponseMixin, View):
     def get_notifications(self, in_data):
         # todo always grab alerts if they are still relevant
         notifications = get_notifications_by_user(self.request.user)
-        has_unread = len(filter(lambda x: x['isRead'], notifications)) > 0
+        has_unread = len(filter(lambda x: not x['isRead'], notifications)) > 0
         return {
             'hasUnread': has_unread,
             'notifications': notifications,
