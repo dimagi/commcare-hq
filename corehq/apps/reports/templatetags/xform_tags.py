@@ -173,6 +173,7 @@ def render_form(form, domain, options):
     show_resave = (
         user_can_edit and support_enabled
     )
+
     def _get_edit_info(instance):
         info = {
             'was_edited': False,

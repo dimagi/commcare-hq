@@ -247,14 +247,14 @@
                                    event: { click: selectPartialPayment }" />
                         </div>
                     </label>
-                    <div class="alert alert-error"
+                    <div class="alert alert-danger"
                          data-bind="visible: showAmountRangeError">
                         <i class="fa fa-exclamation-triangle"></i>
                         {% blocktrans %}
                             Please enter an amount that's between $0.50 and $<span data-bind="text: balance"></span>.
                         {% endblocktrans %}
                     </div>
-                    <div class="alert alert-error"
+                    <div class="alert alert-danger"
                          data-bind="visible: showAmountLeftoverError">
                         <i class="fa fa-exclamation-triangle"></i>
                         {% blocktrans %}

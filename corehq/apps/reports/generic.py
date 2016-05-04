@@ -187,8 +187,8 @@ class GenericReportView(object):
             context={}
         )
 
-
     _caching = False
+
     def __setstate__(self, state):
         """
             For unpickling a pickled report.
@@ -274,7 +274,6 @@ class GenericReportView(object):
             (self.base_template_async or "reports/async/bootstrap2/default.html")
             if self.asynchronous else self.template_base
         )
-
 
     @property
     @memoized
@@ -411,7 +410,6 @@ class GenericReportView(object):
                 # not a parseable boolean
                 pass
         return are_filters_set
-
 
     @property
     def needs_filters(self):
@@ -855,6 +853,7 @@ class GenericTabularReport(GenericReportView):
         return self.get_url(domain=self.domain, render_as='json')
 
     _pagination = None
+
     @property
     def pagination(self):
         if self._pagination is None:
@@ -924,6 +923,7 @@ class GenericTabularReport(GenericReportView):
         return None
 
     _export_sheet_name = None
+
     @property
     def export_sheet_name(self):
         if self._export_sheet_name is None:
@@ -1050,6 +1050,7 @@ def summary_context(report):
     # a summary_values attribute
     return {"summary_values": report.summary_values}
 
+
 class SummaryTablularReport(GenericTabularReport):
     report_template_path = "reports/async/bootstrap2/summary_tabular.html"
     extra_context_providers = [summary_context]
@@ -1073,7 +1074,9 @@ class SummaryTablularReport(GenericTabularReport):
         assert (len(self.data) == len(headers))
         return zip(headers, self.data)
 
+
 class ProjectInspectionReportParamsMixin(object):
+
     @property
     def shared_pagination_GET_params(self):
         # This was moved from ProjectInspectionReport so that it could be included in CaseReassignmentInterface too
@@ -1107,6 +1110,7 @@ class PaginatedReportMixin(object):
             res.append(self.default_sort)
         return res
 
+
 class ElasticTabularReport(GenericTabularReport, PaginatedReportMixin):
     """
     Tabular report that provides framework for doing elasticsearch backed tabular reports.
@@ -1136,6 +1140,7 @@ class ElasticTabularReport(GenericTabularReport, PaginatedReportMixin):
 
 
 class GetParamsMixin(object):
+
     @property
     def shared_pagination_GET_params(self):
         """

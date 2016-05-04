@@ -26,6 +26,7 @@ def bihar_reassignment(sender, xform, cases, **kwargs):
             if owner_id not in DEMO_OWNER_IDS:
                 # don't attempt to reassign the cases included in this form
                 cases_not_to_touch = set(c._id for c in cases)
+
                 def bihar_exclude(case):
                     return case._id in cases_not_to_touch or case.type in REASSIGN_BLACKLIST
 

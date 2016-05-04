@@ -67,6 +67,7 @@ class FixtureUploadResult(object):
     """
     Helper structure for handling the results of a fixture upload.
     """
+
     def __init__(self):
         self.success = True
         self.unknown_groups = []
@@ -182,6 +183,7 @@ def safe_fixture_upload(domain, file_ref, replace, task=None):
         result.errors.append(unicode(e))
         return result
 
+
 def do_fixture_upload(domain, file_ref, replace, task=None):
     workbook = get_workbook(file_ref.get_filename())
     try:
@@ -218,6 +220,7 @@ def get_memoized_location(domain):
     Returns a memoized location getter containing error information.
     """
     locations = {}
+
     def get_location(user_input):
         user_input = user_input.lower()
         if user_input not in locations:

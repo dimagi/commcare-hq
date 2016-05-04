@@ -52,6 +52,7 @@ class TestXmlMixin(TestFileMixin):
 
 
 class SuiteMixin(TestFileMixin):
+
     def _assertHasAllStrings(self, app, strings):
         et = etree.XML(app)
         locale_elems = et.findall(".//locale/[@id]")
@@ -81,8 +82,6 @@ class SuiteMixin(TestFileMixin):
         app_strings = app.create_app_strings('default')
 
         self._assertHasAllStrings(app_xml, app_strings)
-
-
 
 
 def normalize_attributes(xml):

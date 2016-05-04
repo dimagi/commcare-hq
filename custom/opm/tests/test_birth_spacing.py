@@ -8,6 +8,7 @@ from couchforms.models import XFormInstance
 
 
 class TestBirthSpacing(TestCase):
+
     def pregnant_form(self, y, m, d):
         return XFormInstance(
             form={'birth_spacing_prompt': '1'},
@@ -77,6 +78,7 @@ class TestBirthSpacing(TestCase):
 
 
 class TestWeightGradeNormal(ChildConditionMixin, TestCase):
+
     def setUp(self):
         self.xmlns = CFU3_XMLNS
         self.form_prop = 'interpret_grade'

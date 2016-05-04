@@ -8,6 +8,7 @@ from corehq.elastic import SIZE_LIMIT
 
 
 class TestFilters(ElasticTestMixin, TestCase):
+
     def test_nested_filter(self):
         json_output = {
             "query": {
@@ -43,6 +44,7 @@ class TestFilters(ElasticTestMixin, TestCase):
 
 
 class TestSourceFiltering(ElasticTestMixin, TestCase):
+
     def test_source_include(self):
         json_output = {
             "query": {

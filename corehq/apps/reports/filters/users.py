@@ -115,6 +115,7 @@ class BaseGroupedMobileWorkerFilter(BaseSingleOptionFilter):
 
 
 class EmwfUtils(object):
+
     def __init__(self, domain):
         self.domain = domain
 
@@ -352,7 +353,6 @@ class ExpandedMobileWorkerFilter(BaseMultipleOptionFilter):
     @property
     def options(self):
         return [('t__0', _("[All mobile workers]"))]
-
 
     @classmethod
     def for_user(cls, user_id):

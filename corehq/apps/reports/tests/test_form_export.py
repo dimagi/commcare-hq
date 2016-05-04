@@ -31,6 +31,7 @@ XML_DATA = """<?xml version='1.0' ?>
 
 
 class FormExportTest(TestCase):
+
     def setUp(self):
         self.app_id = 'kasdlfkjsldfkjsdlkjf'
         self.domain_name = 'form-export-test'

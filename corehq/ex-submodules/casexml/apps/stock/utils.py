@@ -78,7 +78,6 @@ def get_current_ledger_state(case_ids):
         },
         ...
     }
-    Where you get one stock transaction per product/section which is the last one seen.
     """
     from corehq.apps.commtrack.models import StockState
     if not case_ids:

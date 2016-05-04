@@ -51,6 +51,7 @@ class BasePayloadGenerator(object):
 
 @RegisterGenerator(FormRepeater, 'form_xml', 'XML', is_default=True)
 class FormRepeaterXMLPayloadGenerator(BasePayloadGenerator):
+
     def get_payload(self, repeat_record, payload_doc):
         return payload_doc.get_xml()
 
@@ -60,6 +61,7 @@ class FormRepeaterXMLPayloadGenerator(BasePayloadGenerator):
 
 @RegisterGenerator(CaseRepeater, 'case_xml', 'XML', is_default=True)
 class CaseRepeaterXMLPayloadGenerator(BasePayloadGenerator):
+
     def get_payload(self, repeat_record, payload_doc):
         return payload_doc.to_xml(self.repeater.version or V2, include_case_on_closed=True)
 
@@ -75,6 +77,7 @@ class CaseRepeaterXMLPayloadGenerator(BasePayloadGenerator):
 
 @RegisterGenerator(CaseRepeater, 'case_json', 'JSON', is_default=False)
 class CaseRepeaterJsonPayloadGenerator(BasePayloadGenerator):
+
     def get_payload(self, repeat_record, payload_doc):
         del payload_doc['actions']
         data = payload_doc.to_api_json(lite=True)
@@ -97,6 +100,7 @@ class CaseRepeaterJsonPayloadGenerator(BasePayloadGenerator):
 
 @RegisterGenerator(AppStructureRepeater, "app_structure_xml", "XML", is_default=True)
 class AppStructureGenerator(BasePayloadGenerator):
+
     def get_payload(self, repeat_record, payload_doc):
         # This is the id of the application, currently all we forward
         return repeat_record.payload_id
@@ -104,6 +108,7 @@ class AppStructureGenerator(BasePayloadGenerator):
 
 @RegisterGenerator(ShortFormRepeater, "short_form_json", "Default JSON", is_default=True)
 class ShortFormRepeaterJsonPayloadGenerator(BasePayloadGenerator):
+
     def get_payload(self, repeat_record, form):
         cases = cases_referenced_by_xform(form)
         return json.dumps({'form_id': form._id,
@@ -124,6 +129,7 @@ class ShortFormRepeaterJsonPayloadGenerator(BasePayloadGenerator):
 
 @RegisterGenerator(FormRepeater, "form_json", "JSON", is_default=False)
 class FormRepeaterJsonPayloadGenerator(BasePayloadGenerator):
+
     def get_payload(self, repeat_record, form):
         from corehq.apps.api.resources.v0_4 import XFormInstanceResource
         res = XFormInstanceResource()

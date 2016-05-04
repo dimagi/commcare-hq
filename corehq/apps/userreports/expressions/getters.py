@@ -10,6 +10,7 @@ class TransformedGetter(object):
 
     Returns the result of calling the transform function on result of the getter.
     """
+
     def __init__(self, getter, transform=None):
         self.getter = getter
         self.transform = transform

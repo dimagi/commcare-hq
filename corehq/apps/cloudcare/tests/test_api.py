@@ -287,8 +287,10 @@ class CaseAPITest(TestCase):
 def _child_case_type(type):
     return "%s-child" % type
 
+
 def _type_to_name(type):
     return "%s-name" % type
+
 
 def _create_case(user, type, close=False, **extras):
     case_id = uuid.uuid4().hex

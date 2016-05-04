@@ -1,6 +1,7 @@
 
 LAST_SYNCTOKEN_HEADER = "HTTP_X_COMMCAREHQ_LASTSYNCTOKEN"
 
+
 class SyncTokenMiddleware(object):
     """
     Middleware to support submitting the sync token with phone

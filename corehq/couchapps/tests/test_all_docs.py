@@ -6,6 +6,7 @@ from django.test import TestCase
 
 
 class AllDocsTest(TestCase):
+
     @classmethod
     def setUpClass(cls):
         cls.main_db = get_db(None)

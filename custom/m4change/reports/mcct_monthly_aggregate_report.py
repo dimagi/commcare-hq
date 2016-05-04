@@ -105,7 +105,6 @@ class McctMonthlyAggregateReport(MonthYearMixin, CaseListReport, M4ChangeReport)
         _add_eligible_9months(row_data, datespan.startdate_utc, datespan.enddate_utc, domain)
         return sorted([(key, row_data[key]) for key in row_data], key=lambda t: t[1].get("s/n"))
 
-
     @classmethod
     def get_initial_row_data(self):
         return {

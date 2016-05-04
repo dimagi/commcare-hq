@@ -24,6 +24,7 @@ from corehq.util.files import file_extention_from_filename
 
 from soil import DownloadBase
 
+from corehq.apps.accounting.utils import domain_has_privilege
 from corehq.apps.app_manager.decorators import safe_download
 from corehq.apps.app_manager.view_helpers import ApplicationViewMixin
 from corehq.apps.hqmedia.cache import BulkMultimediaStatusCache, BulkMultimediaStatusCacheNfs
@@ -417,6 +418,7 @@ class RemoveLogoView(BaseMultimediaView):
             self.app.save()
         return HttpResponse()
 
+
 class CheckOnProcessingFile(BaseMultimediaView):
     name = "hqmedia_check_processing"
 
@@ -452,14 +454,17 @@ def iter_media_files(media_objects):
     return _media_files(), errors
 
 
-def iter_app_files(app, include_multimedia_files, include_index_files):
+def iter_app_files(app, include_multimedia_files, include_index_files, build_profile_id=None):
     file_iterator = []
     errors = []
     if include_multimedia_files:
         app.remove_unused_mappings()
-        file_iterator, errors = iter_media_files(app.get_media_objects())
+        languages = None
+        if build_profile_id:
+            languages = app.build_profiles[build_profile_id].langs
+        file_iterator, errors = iter_media_files(app.get_media_objects(languages=languages))
     if include_index_files:
-        index_files, index_file_errors = iter_index_files(app)
+        index_files, index_file_errors = iter_index_files(app, build_profile_id=build_profile_id)
         if index_file_errors:
             errors.extend(index_file_errors)
         file_iterator = itertools.chain(file_iterator, index_files)
@@ -504,13 +509,17 @@ class DownloadMultimediaZip(View, ApplicationViewMixin):
 
         message = request.GET['message'] if 'message' in request.GET else None
         download = DownloadBase(message=message)
+        build_profile_id = None
+        if domain_has_privilege(request.domain, privileges.BUILD_PROFILES):
+            build_profile_id = request.GET.get('profile')
         download.set_task(build_application_zip.delay(
             include_multimedia_files=self.include_multimedia_files,
             include_index_files=self.include_index_files,
             app=self.app,
             download_id=download.download_id,
             compress_zip=self.compress_zip,
-            filename=self.zip_name)
+            filename=self.zip_name,
+            build_profile_id=build_profile_id)
         )
         return download.get_start_response()
 
@@ -604,13 +613,17 @@ class ViewMultimediaFile(View):
         return HttpResponse(data, content_type=content_type)
 
 
-def iter_index_files(app):
+def iter_index_files(app, build_profile_id=None):
     from corehq.apps.app_manager.views.download import download_index_files
     skip_files = ('profile.xml', 'profile.ccpr', 'media_profile.xml')
     text_extensions = ('.xml', '.ccpr', '.txt')
-    get_name = lambda f: {'media_profile.ccpr': 'profile.ccpr'}.get(f, f)
     files = []
     errors = []
+
+    def _get_name(f):
+        if build_profile_id:
+            f = f.replace(build_profile_id + '/', '')
+        return {'media_profile.ccpr': 'profile.ccpr'}.get(f, f)
 
     def _encode_if_unicode(s):
         return s.encode('utf-8') if isinstance(s, unicode) else s
@@ -621,9 +634,9 @@ def iter_index_files(app):
                 # TODO: make RemoteApp.create_all_files not return media files
                 extension = os.path.splitext(name)[1]
                 data = _encode_if_unicode(f) if extension in text_extensions else f
-                yield (get_name(name), data)
+                yield (_get_name(name), data)
     try:
-        files = download_index_files(app)
+        files = download_index_files(app, build_profile_id)
     except Exception:
         errors = _(
             "We were unable to get your files "

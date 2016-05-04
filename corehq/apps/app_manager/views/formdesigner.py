@@ -34,6 +34,8 @@ from corehq.apps.app_manager.decorators import require_can_edit_apps
 from corehq.apps.analytics.tasks import track_entered_form_builder_on_hubspot
 from corehq.apps.analytics.utils import get_meta
 
+from os.path import isdir, join
+
 
 logger = logging.getLogger(__name__)
 
@@ -103,12 +105,20 @@ def form_designer(request, domain, app_id, module_id=None, form_id=None):
             if getattr(f, 'schedule', False) and f.schedule.enabled
         ])
 
-
+    vellum_base = 'corehq/apps/app_manager/static/app_manager/js/'
+    vellum_dir = 'vellum'
+    if toggles.VELLUM_BETA.enabled(domain) and isdir(join(vellum_base, 'vellum_beta')):
+        vellum_dir = 'vellum_beta'
     context = get_apps_base_context(request, domain, app)
     context.update(locals())
     context.update({
-        'vellum_debug': settings.VELLUM_DEBUG,
+        'vellum_debug': settings.VELLUM_DEBUG and not toggles.VELLUM_BETA.enabled(domain),
         'nav_form': form,
+        'vellum_style_path': 'app_manager/js/{}/style.css'.format(vellum_dir),
+        'vellum_ckeditor_path': 'app_manager/js/{}/lib/ckeditor/'.format(vellum_dir),
+        'vellum_js_path': 'app_manager/js/{}/src'.format(vellum_dir),
+        'vellum_main_components_path': 'app_manager/js/{}/src/main-components.js'.format(vellum_dir),
+        'vellum_local_deps_path': 'app_manager/js/{}/src/local-deps.js'.format(vellum_dir),
         'formdesigner': True,
         'multimedia_object_map': app.get_object_map(),
         'sessionid': request.COOKIES.get('sessionid'),

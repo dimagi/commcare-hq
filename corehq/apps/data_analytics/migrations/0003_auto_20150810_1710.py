@@ -11,6 +11,7 @@ def fill_in_user_type(apps, schema_editor):
     MALTRow.objects.filter(is_web_user=True).update(user_type="WebUser")
     MALTRow.objects.filter(is_web_user=False).update(user_type="CommCareUser")
 
+
 def reverse_fill_in(apps, schema_editor):
     MALTRow = apps.get_model("data_analytics", "MALTRow")
     MALTRow.objects.filter(user_type="WebUser").update(is_web_user=True)

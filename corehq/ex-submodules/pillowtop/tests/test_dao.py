@@ -38,6 +38,7 @@ class _AbstractDocumentStoreTestCase(SimpleTestCase):
 
 
 class MockDocumentStoreTestCase(_AbstractDocumentStoreTestCase):
+
     @property
     def dao(self):
         return MockDocumentStore()

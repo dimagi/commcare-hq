@@ -49,6 +49,7 @@ class Command(BaseCommand):
                 RedisPublisher(facility='form-feed', broadcast=True).publish_message(message)
                 time.sleep(sleep)
 
+
 @quickcache(vary_on=['domain'], timeout=600)
 def _get_country(domain):
     project = Domain.get_by_name(domain)

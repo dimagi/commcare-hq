@@ -31,6 +31,7 @@ def get_object_or_not_exist(cls, doc_id, domain, additional_doc_types=None):
 
     raise object_does_not_exist(doc_type, doc_id)
 
+
 def object_does_not_exist(doc_type, doc_id):
     """
     Builds a 404 error message with standard, translated, verbiage

@@ -102,6 +102,7 @@ class BaseSqlData(SqlData):
             ])
         return result
 
+
 class LocationSqlData(SqlData):
     table_name = "fluff_WorldVisionHierarchyFluff"
     geography_config = LOCATION_HIERARCHY

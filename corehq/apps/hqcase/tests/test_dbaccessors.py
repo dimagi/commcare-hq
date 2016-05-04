@@ -11,6 +11,7 @@ from couchforms.models import XFormInstance
 
 
 class DBAccessorsTest(TestCase):
+
     @classmethod
     def setUpClass(cls):
         cls.domain = 'lalksdjflakjsdf'

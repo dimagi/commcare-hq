@@ -20,6 +20,7 @@ MockLedgerValue = namedtuple('MockLedgerValue', ['product_id', 'section_id'])
 
 
 class TableConfigurationTest(SimpleTestCase):
+
     def test_get_column(self):
         table_configuration = TableConfiguration(
             path=[PathNode(name='form', is_repeat=False), PathNode(name="repeat1", is_repeat=True)],
@@ -95,6 +96,7 @@ class TableConfigurationTest(SimpleTestCase):
 
 
 class TableConfigurationGetSubDocumentsTest(SimpleTestCase):
+
     def test_basic(self):
 
         table = TableConfiguration(path=[])

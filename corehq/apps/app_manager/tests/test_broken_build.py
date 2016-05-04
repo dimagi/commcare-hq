@@ -7,6 +7,7 @@ from corehq.apps.app_manager.tests.util import add_build
 
 
 class BrokenBuildTest(TestCase):
+
     @classmethod
     def setUpClass(cls):
         domain = 'apptest'

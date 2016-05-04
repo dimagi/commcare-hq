@@ -6,6 +6,7 @@ from optparse import make_option
 
 logger = logging.getLogger(__name__)
 
+
 class Command(BaseCommand):
     help = "Copies all docs of some types from one database to another. Pretty brute force and single-threaded."
     args = '<sourcedb> <destdb> [<doc_type>, ...]'
@@ -35,7 +36,6 @@ class Command(BaseCommand):
             logger.info("**** Simulated run, no data will be copied. ****")
 
         self.copy_docs(sourcedb, destdb, pretend=pretend, doc_types=doc_types)
-
 
     def iter_view(self, db, view_name, startkey=None, endkey=None, reduce=False, chunksize=1000):
         "iterates over the raw docs of the view in chunks of a safe size for couchdb requests"

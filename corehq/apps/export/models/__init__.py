@@ -5,6 +5,8 @@ from .new import (
     RowNumberColumn,
     CaseIndexExportColumn,
     SplitExportColumn,
+    SplitGPSExportColumn,
+    SplitUserDefinedExportColumn,
     StockExportColumn,
     ExportRow,
     ExportInstance,

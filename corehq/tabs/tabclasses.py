@@ -212,7 +212,6 @@ class SetupTab(UITab):
 
         dropdown_items = []
 
-
         if self.project.commtrack_enabled:
             dropdown_items += [(_(view.page_title), view) for view in (
                 ProductListView,
@@ -835,7 +834,6 @@ class MessagingTab(UITab):
                 ]
             })
 
-
         return contacts_urls
 
     @property
@@ -1448,6 +1446,8 @@ class AdminTab(UITab):
                  'url': reverse(AuthenticateAs.urlname)},
                 {'title': _('Look up user by email'),
                  'url': reverse('web_user_lookup')},
+                {'title': _('View raw couch documents'),
+                 'url': reverse('raw_couch')},
             ])
         return [
             (_('Administrative Reports'), [

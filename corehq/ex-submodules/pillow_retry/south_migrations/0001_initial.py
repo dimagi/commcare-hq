@@ -4,6 +4,7 @@ from south.db import db
 from south.v2 import SchemaMigration
 from django.db import models
 
+
 class Migration(SchemaMigration):
 
     def forwards(self, orm):
@@ -24,12 +25,10 @@ class Migration(SchemaMigration):
         ))
         db.send_create_signal(u'pillow_retry', ['PillowError'])
 
-
     def backwards(self, orm):
         
         # Deleting model 'PillowError'
         db.delete_table(u'pillow_retry_pillowerror')
-
 
     models = {
         u'pillow_retry.pillowerror': {

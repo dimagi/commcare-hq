@@ -14,6 +14,7 @@ from django.db import models
 
 A_DAY = datetime.timedelta(days=1)
 
+
 class BiharCase(CommCareCase):
     doc_type = 'CommCareCase'
 
@@ -32,6 +33,7 @@ class BiharCase(CommCareCase):
 
     _forms = None
     _forms_cache = None
+
     def get_forms(self):
         if self._forms is None:
             self._forms = super(BiharCase, self).get_forms()

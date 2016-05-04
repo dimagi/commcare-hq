@@ -18,6 +18,7 @@ from pact.utils import get_case_id
 
 DOT_RECOMPUTE = True
 
+
 @task(ignore_result=True)
 def recalculate_dots_data(case_id, cc_user, sync_token=None):
     """

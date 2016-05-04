@@ -34,6 +34,7 @@ def get_url_with_location(view_name, text, location_id, domain):
         text
     )
 
+
 class EWSLineChart(LineChart):
     template_partial = 'ewsghana/partials/ews_line_chart.html'
 

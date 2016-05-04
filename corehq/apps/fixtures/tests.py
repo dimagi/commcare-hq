@@ -14,6 +14,7 @@ from django.test import TestCase, SimpleTestCase
 
 
 class FixtureDataTest(TestCase):
+
     def setUp(self):
         self.domain = 'qwerty'
         self.tag = "district"
@@ -159,6 +160,7 @@ class FixtureDataTest(TestCase):
 
 
 class DBAccessorTest(TestCase):
+
     @classmethod
     def setUpClass(cls):
         cls.domain = 'fixture-dbaccessors'

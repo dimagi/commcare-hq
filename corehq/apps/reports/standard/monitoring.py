@@ -96,6 +96,7 @@ class WorkerMonitoringCaseReportTableBase(WorkerMonitoringReportTableBase):
 
 
 class WorkerMonitoringFormReportTableBase(WorkerMonitoringReportTableBase):
+
     def get_raw_user_link(self, user):
         params = {
             "form_unknown": self.request.GET.get("form_unknown", ''),
@@ -189,6 +190,7 @@ class CaseActivityReport(WorkerMonitoringCaseReportTableBase):
                      "user is part of a case sharing group.")
 
     _default_landmarks = [30, 60, 90]
+
     @property
     @memoized
     def landmarks(self):
@@ -199,6 +201,7 @@ class CaseActivityReport(WorkerMonitoringCaseReportTableBase):
         return [datetime.timedelta(days=l) for l in landmarks]
 
     _default_milestone = 120
+
     @property
     @memoized
     def milestone(self):
@@ -362,6 +365,7 @@ class CaseActivityReport(WorkerMonitoringCaseReportTableBase):
         return landmarks_aggregation
 
     class Row(object):
+
         def __init__(self, report, user, bucket):
             self.report = report
             self.user = user
@@ -391,6 +395,7 @@ class CaseActivityReport(WorkerMonitoringCaseReportTableBase):
             return self.report.get_user_link(self.user)
 
     class TotalRow(object):
+
         def __init__(self, rows, header):
             self.rows = rows
             self._header = header
