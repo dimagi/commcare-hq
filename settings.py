@@ -502,6 +502,7 @@ INTERNAL_SUBSCRIPTION_CHANGE_EMAIL = 'accounts+subchange+internal@dimagi.com'
 BILLING_EMAIL = 'billing-comm@dimagi.com'
 INVOICING_CONTACT_EMAIL = 'billing-support@dimagi.com'
 MASTER_LIST_EMAIL = 'master-list@dimagi.com'
+REPORT_BUILDER_ADD_ON_EMAIL = 'updates@dimagi.com'
 EULA_CHANGE_EMAIL = 'eula-notifications@dimagi.com'
 CONTACT_EMAIL = 'info@dimagi.com'
 BOOKKEEPER_CONTACT_EMAILS = []
