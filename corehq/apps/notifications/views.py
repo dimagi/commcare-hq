@@ -21,7 +21,6 @@ class NotificationsServiceRMIView(JSONResponseMixin, View):
     @allow_remote_invocation
     def get_notifications(self, in_data):
         # todo always grab alerts if they are still relevant
-        # todo only grab info notifications up to 10
         notifications = get_notifications(self.request.user)
         has_unread = len(filter(lambda x: x['isRead'], notifications)) > 0
         return {
