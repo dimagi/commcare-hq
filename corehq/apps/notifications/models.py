@@ -13,6 +13,9 @@ class Notification(models.Model):
     created = models.DateTimeField(auto_now_add=True)
     users_read = models.ManyToManyField(User)
 
+    class Meta:
+        ordering = ["-created"]
+
 
 def get_notifications(user):
     notes = Notification.objects.all()
