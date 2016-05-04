@@ -1,11 +1,13 @@
-from corehq.apps.reports.graph_models import MultiBarChart, Axis
+from corehq.apps.reports.graph_models import Axis
 from corehq.apps.reports.datatables import DataTablesHeader
 from corehq.apps.reports.sqlreport import DataFormatter, TableDataFormat
 from custom.care_pathways.filters import GeographyFilter, GenderFilter, GroupLeadershipFilter, CBTNameFilter,  GroupByFilter, PPTYearFilter, TypeFilter, ScheduleFilter, \
     RealOrTestFilter, MalawiPPTYearFilter
 from custom.care_pathways.reports import CareBaseReport
 from custom.care_pathways.sqldata import AdoptionBarChartReportSqlData
+from custom.care_pathways.charts import PathwaysMultiBarChart as MultiBarChart
 import re
+
 
 class AdoptionBarChartReport(CareBaseReport):
     name = 'Adoption Bar Chart'
@@ -31,8 +33,6 @@ class AdoptionBarChartReport(CareBaseReport):
             filters.append(ScheduleFilter)
         filters.append(TypeFilter)
         filters.append(GroupByFilter)
-        print self.report_template_path
-
         return filters
 
     @property
