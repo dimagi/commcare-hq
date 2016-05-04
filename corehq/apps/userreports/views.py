@@ -224,9 +224,18 @@ class ReportBuilderPaywall(ReportBuilderPaywallBase):
     urlname = 'report_builder_paywall'
 
     def dispatch(self, request, *args, **kwargs):
-        if request.GET.get('tour', False) and tours.REPORT_BUILDER_EXISTENCE.is_enabled(request.user):
-            request.guided_tour = tours.REPORT_BUILDER_EXISTENCE.get_tour_data(self.request, 1)
+        self._init_tour()
         return super(ReportBuilderPaywall, self).dispatch(request, *args, **kwargs)
+
+    def _init_tour(self):
+        """
+        Add properties to the request if the tour should be active
+        """
+        tour = tours.REPORT_BUILDER_NO_ACCESS
+        step = 1
+        if tour.should_show(self.request, step, self.request.GET.get('tour', False)):
+            self.request.guided_tour = tour.get_tour_data(self.request, step)
+
 
 
 class ReportBuilderPaywallActivatingTrial(ReportBuilderPaywallBase):
