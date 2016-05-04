@@ -1,7 +1,7 @@
 from .models import Notification
 
 def get_notifications_by_user(user, limit=10):
-    notes = Notification.objects.all()[:limit]
+    notes = Notification.objects.filter(is_active=True)[:limit]
     read_notifications = Notification.objects.filter(users_read=user)
 
     def _fmt_note(note):

@@ -12,6 +12,7 @@ class Notification(models.Model):
     type = models.CharField(max_length=10, choices=types)
     created = models.DateTimeField(auto_now_add=True)
     users_read = models.ManyToManyField(User)
+    is_active = models.BooleanField(default=False)
 
     class Meta:
         ordering = ["-created"]
