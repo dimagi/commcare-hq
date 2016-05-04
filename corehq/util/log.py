@@ -247,14 +247,28 @@ def with_progress_bar(iterable, length=None, prefix='Processing'):
             "'{}' object has no len(), you must pass in the 'length' parameter"
             .format(type(iterable))
         )
-    granularity = min(40, length)
+
+    granularity = min(50, length)
+
+    def draw(position):
+        percent = float(position) / length
+        dots = int(round(percent * granularity))
+        spaces = granularity - dots
+        output_str = '{prefix} [{dots}{spaces}] {position}/{length} {percent:.0%}\r'.format(
+            prefix=prefix,
+            dots='.' * dots,
+            spaces=' ' * spaces,
+            position=position,
+            length=length,
+            percent=percent,
+        )
+        print output_str,
+        sys.stdout.flush()
+
     checkpoints = {length*i/granularity for i in range(length)}
-    print '{} ['.format(prefix) + ' ' * granularity + ']',
-    print '\b' * (granularity + 2),
-    sys.stdout.flush()
     for i, x in enumerate(iterable):
         yield x
         if i in checkpoints:
-            print '\b.',
-            sys.stdout.flush()
-    print '\b] Done!'
+            draw(i)
+    draw(length)
+    print ""
