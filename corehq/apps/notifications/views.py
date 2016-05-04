@@ -4,7 +4,7 @@ from django.views.generic import View
 from djangular.views.mixins import JSONResponseMixin, allow_remote_invocation
 from corehq import toggles
 from corehq.apps.domain.decorators import login_required
-from corehq.apps.notifications.models import get_notifications
+from corehq.apps.notifications.models import get_notifications, Notification
 
 
 class NotificationsServiceRMIView(JSONResponseMixin, View):
@@ -32,5 +32,5 @@ class NotificationsServiceRMIView(JSONResponseMixin, View):
 
     @allow_remote_invocation
     def mark_as_read(self, in_data):
-        # todo
+        Notification.objects.get(pk=in_data['id']).users_read.add(self.request.user)
         return {}
