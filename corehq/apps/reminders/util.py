@@ -147,7 +147,7 @@ def create_immediate_reminder(contact, content_type, reminder_type=None,
         RECIPIENT_SURVEY_SAMPLE,
         RECIPIENT_USER_GROUP,
     )
-    if isinstance(contact, CommCareCase):
+    if is_commcarecase(contact):
         recipient = RECIPIENT_CASE
     elif isinstance(contact, CommCareCaseGroup):
         recipient = RECIPIENT_SURVEY_SAMPLE
@@ -160,9 +160,9 @@ def create_immediate_reminder(contact, content_type, reminder_type=None,
 
     reminder_type = reminder_type or REMINDER_TYPE_DEFAULT
     if recipient == RECIPIENT_CASE:
-        case_id = contact._id
+        case_id = contact.case_id
     elif case is not None:
-        case_id = case._id
+        case_id = case.case_id
     else:
         case_id = None
 
@@ -187,9 +187,9 @@ def create_immediate_reminder(contact, content_type, reminder_type=None,
         event_interpretation = EVENT_AS_OFFSET,
         max_iteration_count = 1,
         case_id = case_id,
-        user_id = contact._id if recipient == RECIPIENT_USER else None,
-        sample_id = contact._id if recipient == RECIPIENT_SURVEY_SAMPLE else None,
-        user_group_id = contact._id if recipient == RECIPIENT_USER_GROUP else None,
+        user_id = contact.get_id if recipient == RECIPIENT_USER else None,
+        sample_id = contact.get_id if recipient == RECIPIENT_SURVEY_SAMPLE else None,
+        user_group_id = contact.get_id if recipient == RECIPIENT_USER_GROUP else None,
         messaging_event_id=logged_event.pk if logged_event else None,
     )
     handler.save(send_immediately=True)

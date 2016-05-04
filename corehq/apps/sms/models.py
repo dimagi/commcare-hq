@@ -1155,7 +1155,7 @@ class MessagingEvent(models.Model, MessagingStatusMixin):
             recipient_type=MessagingEvent.get_recipient_type_from_doc_type(recipient_doc_type),
             recipient_id=recipient_id,
             content_type=MessagingEvent.CONTENT_SMS,
-            case_id=case.get_id if case else None,
+            case_id=case.case_id if case else None,
             status=(MessagingEvent.STATUS_COMPLETED
                     if completed
                     else MessagingEvent.STATUS_IN_PROGRESS),
