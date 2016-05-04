@@ -220,8 +220,6 @@ class MultiReport(SqlTabularReport, ILSMixin, CustomProjectReport,
     base_template = 'ilsgateway/base_template.html'
     emailable = False
 
-    is_bootstrap3 = True
-
     @use_nvd3
     def bootstrap3_dispatcher(self, request, *args, **kwargs):
         super(MultiReport, self).bootstrap3_dispatcher(request, *args, **kwargs)

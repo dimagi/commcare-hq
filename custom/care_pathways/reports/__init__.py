@@ -35,7 +35,6 @@ class CareReportMixin(object):
 
 
 class CareBaseReport(GetParamsMixin, GenericTabularReport, CustomProjectReport, CareReportMixin):
-    is_bootstrap3 = True
 
     @use_nvd3_v3
     def bootstrap3_dispatcher(self, request, *args, **kwargs):

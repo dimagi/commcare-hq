@@ -67,7 +67,6 @@ WorkerActivityReportData = namedtuple('WorkerActivityReportData', [
 
 class WorkerMonitoringReportTableBase(GenericTabularReport, ProjectReport, ProjectReportParametersMixin):
     exportable = True
-    is_bootstrap3 = True
 
     def get_user_link(self, user):
         user_link = self.get_raw_user_link(user)
@@ -990,14 +989,13 @@ class FormCompletionVsSubmissionTrendsReport(WorkerMonitoringFormReportTableBase
             return ", ".join(status)
 
     def _view_form_link(self, instance_id):
-        return '<a class="btn" href="%s">View Form</a>' % absolute_reverse(
+        return '<a class="btn btn-default" href="%s">View Form</a>' % absolute_reverse(
             'render_form_data', args=[self.domain, instance_id])
 
 
 class WorkerMonitoringChartBase(ProjectReport, ProjectReportParametersMixin):
     flush_layout = True
-    report_template_path = "reports/async/bootstrap2/basic.html"
-    is_bootstrap3 = True
+    report_template_path = "reports/async/basic.html"
 
 
 class WorkerActivityTimes(WorkerMonitoringChartBase,

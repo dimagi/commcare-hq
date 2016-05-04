@@ -168,8 +168,6 @@ class BaseReport(BaseMixin, GetParamsMixin, MonthYearMixin, CustomProjectReport,
 
     _debug_data = []
 
-    is_bootstrap3 = True
-
     @property
     def debug(self):
         return bool(self.request.GET.get('debug'))

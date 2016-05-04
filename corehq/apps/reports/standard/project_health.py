@@ -170,7 +170,6 @@ class MonthlyPerformanceSummary(jsonobject.JsonObject):
 class ProjectHealthDashboard(ProjectReport):
     slug = 'project_health'
     name = ugettext_noop("Project Performance")
-    is_bootstrap3 = True
     base_template = "reports/project_health/project_health_dashboard.html"
 
     @classmethod
