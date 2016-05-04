@@ -184,6 +184,11 @@ class FormAccessorSQL(AbstractFormAccessor):
             return sum([result.affected_count for result in results])
 
     @staticmethod
+    def set_partial_submission(form):
+        with get_cursor(XFormInstanceSQL) as cursor:
+            cursor.execute('SELECT set_partial_submission(%s)', [form.form_id])
+
+    @staticmethod
     @transaction.atomic
     def _archive_unarchive_form(form, user_id, archive):
         from casexml.apps.case.xform import get_case_ids_from_form

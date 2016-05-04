@@ -19,6 +19,5 @@ def process_sms_form_complete(session, form, completed):
     session.save()
 
     if not completed:
-        xform.partial_submission = True
-    xform.survey_incentive = session.survey_incentive
+        xform.set_partial_submission()
     xform.save()

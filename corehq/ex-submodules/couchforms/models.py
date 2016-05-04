@@ -244,6 +244,10 @@ class XFormInstance(SafeSaveDocument, UnicodeMixIn, ComputedDocumentMixin,
         self.doc_type += DELETED_SUFFIX
         self.save()
 
+    def set_partial_submission(self):
+        self.partial_submission = True
+        self.save()
+
     def get_xml(self):
         if (self._attachments and ATTACHMENT_NAME in self._attachments
                 and 'data' in self._attachments[ATTACHMENT_NAME]):

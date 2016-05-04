@@ -11,6 +11,7 @@ from django.db import models, transaction
 from collections import namedtuple
 from corehq.apps.app_manager.dbaccessors import get_app
 from corehq.apps.app_manager.models import Form
+from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 from corehq.util.mixin import UUIDGeneratorMixin
 from corehq.apps.users.models import CouchUser
 from casexml.apps.case.models import CommCareCase
@@ -344,7 +345,7 @@ class Log(models.Model):
     @property
     def recipient(self):
         if self.couch_recipient_doc_type == 'CommCareCase':
-            return CommCareCase.get(self.couch_recipient)
+            return CaseAccessors(self.domain).get_case(self.couch_recipient)
         else:
             return CouchUser.get_by_user_id(self.couch_recipient)
 
