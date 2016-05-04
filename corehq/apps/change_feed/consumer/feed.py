@@ -138,7 +138,7 @@ class MultiTopicCheckpointEventHandler(PillowCheckpointEventHandler):
         self.change_feed = change_feed
         # todo: do this somewhere smarter?
         checkpoint_doc = self.checkpoint.get_or_create_wrapped().document
-        if checkpoint_doc.sequence_format != 'json':
+        if checkpoint_doc.sequence_format != 'json' or checkpoint_doc.sequence == DEFAULT_EMPTY_CHECKPOINT_SEQUENCE:
             checkpoint_doc.sequence_format = 'json'
             # convert initial default to json default
             if checkpoint_doc.sequence == DEFAULT_EMPTY_CHECKPOINT_SEQUENCE:
