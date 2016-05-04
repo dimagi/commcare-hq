@@ -23,15 +23,14 @@
             30 days or learn more about pricing and subscribing.
             {% endblocktrans %}
         </p>
-        <a class="btn btn-default" href="{% url "report_builder_paywall_pricing" domain %}">
-            {% trans "Learn More About Pricing" %}
-        </a>
-
-        <form action="{% url 'report_builder_paywall_activating_trial' domain %}" method="post" class="form-inline pull-right">
+        <form action="{% url 'report_builder_paywall_activating_trial' domain %}" method="post" class="form-inline">
             {% csrf_token %}
             <button id='try-builder-button' class="btn btn-success" type="submit">
                 {% trans "Try Report Builder For 30 Days" %}
             </button>
+            <a class="btn btn-default" href="{% url "report_builder_paywall_pricing" domain %}">
+                {% trans "Learn More About Pricing" %}
+            </a>
         </form>
 
         <div class="row" style="margin-top: 32px">
