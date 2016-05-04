@@ -32,8 +32,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: CommCare HQ\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2016-05-03 19:39+0000\n"
-"PO-Revision-Date: 2016-04-20 22:34+0000\n"
+"POT-Creation-Date: 2016-05-04 15:52+0000\n"
+"PO-Revision-Date: 2016-05-04 13:29+0000\n"
 "Last-Translator: Dimagi Dev <devops@dimagi.com>\n"
 "Language-Team: Portuguese (http://www.transifex.com/dimagi/commcare-hq/"
 "language/pt/)\n"
@@ -91,7 +91,7 @@ msgstr "Espacio do Projeto"
 #: corehq/apps/accounting/filters.py:62 corehq/apps/accounting/forms.py:80
 #: corehq/apps/domain/forms.py:807
 msgid "Salesforce Account ID"
-msgstr ""
+msgstr "hi lsdfjslkjfdsl"
 
 #: corehq/apps/accounting/filters.py:63 corehq/apps/accounting/filters.py:71
 #: corehq/apps/accounting/filters.py:79 corehq/apps/accounting/filters.py:87
@@ -1252,8 +1252,7 @@ msgstr ""
 #: corehq/messaging/smsbackends/apposit/forms.py:12
 #: corehq/messaging/smsbackends/unicel/forms.py:10
 #: custom/_legacy/pact/templates/pact/chw/pact_chw_profile_info.html:8
-#: custom/dhis2/forms.py:24
-#: custom/logistics/templates/logistics/config.html:94
+#: custom/dhis2/forms.py:24 custom/logistics/templates/logistics/config.html:94
 msgid "Username"
 msgstr ""
 
@@ -2526,7 +2525,7 @@ msgstr ""
 
 #: corehq/apps/accounting/user_text.py:222
 #: corehq/apps/domain/templates/domain/select_plan.html:179
-#: corehq/apps/prelogin/templates/prelogin/_sections/software_services/pricing.html:129
+#: corehq/apps/prelogin/templates/prelogin/_sections/software_services/pricing.html:128
 #: corehq/privileges.py:82
 msgid "API Access"
 msgstr ""
@@ -2535,7 +2534,7 @@ msgstr ""
 #: corehq/apps/domain/templates/domain/select_plan.html:177
 #: corehq/apps/fixtures/views.py:290
 #: corehq/apps/prelogin/templates/prelogin/_sections/pricing/02_app_features.html:50
-#: corehq/apps/prelogin/templates/prelogin/_sections/software_services/pricing.html:127
+#: corehq/apps/prelogin/templates/prelogin/_sections/software_services/pricing.html:126
 #: corehq/privileges.py:81 corehq/reports.py:246
 msgid "Lookup Tables"
 msgstr ""
@@ -2796,6 +2795,7 @@ msgstr ""
 #: corehq/apps/sms/templates/sms/backend_map.html:70
 #: corehq/apps/sms/templates/sms/partials/day_time_windows.html:12
 #: corehq/apps/users/templates/users/mobile_workers.html:363
+#: packages-local/couchdbkit-debugpanel/couchdebugpanel/templates/couchdebugpanel/couch.html:14
 msgid "Action"
 msgstr ""
 
@@ -2829,8 +2829,7 @@ msgstr "Formulário"
 #: corehq/apps/domain/templates/domain/create_snapshot.html:90
 #: corehq/apps/hqmedia/templates/hqmedia/bulk_upload.html:9
 #: corehq/apps/hqmedia/templates/hqmedia/references.html:49
-#: corehq/apps/hqwebapp/doc_info.py:89
-#: corehq/apps/reports/filters/forms.py:110
+#: corehq/apps/hqwebapp/doc_info.py:89 corehq/apps/reports/filters/forms.py:110
 #: corehq/apps/reports/filters/forms.py:542
 #: corehq/apps/reports/filters/select.py:97
 #: corehq/apps/reports/templates/reports/reportdata/excel_export_data.html:204
@@ -4572,10 +4571,8 @@ msgid "Display Text"
 msgstr ""
 
 #: corehq/apps/app_manager/templates/app_manager/partials/case_search_properties.html:41
-#, fuzzy
-#| msgid "Case property"
 msgid "Add search property"
-msgstr "Propriedade do Caso"
+msgstr ""
 
 #: corehq/apps/app_manager/templates/app_manager/partials/create_form_prompt.html:4
 msgid "Click <strong>Edit</strong> to start building your form."
@@ -6444,6 +6441,8 @@ msgstr ""
 #: corehq/apps/reminders/templates/reminders/partial/complex_message_table.html:19
 #: corehq/apps/reminders/templates/reminders/partial/complex_message_table.html:23
 #: corehq/apps/reminders/templates/reminders/partial/time_picker.html:4
+#: packages-local/couchdbkit-debugpanel/couchdebugpanel/templates/couchdebugpanel/couch.html:12
+#: packages-local/couchdbkit-debugpanel/couchdebugpanel/templates/couchdebugpanel/couch_select.html:17
 msgid "Time"
 msgstr ""
 
@@ -8874,10 +8873,8 @@ msgstr ""
 
 #: corehq/apps/domain/templates/domain/admin/case_search.html:22
 #: corehq/apps/domain/templates/domain/admin/case_search.html:49
-#, fuzzy
-#| msgid "Enable Schedule"
 msgid "Enable Case Search"
-msgstr "Ativar agendamento"
+msgstr ""
 
 #: corehq/apps/domain/templates/domain/admin/case_search.html:36
 msgid ""
@@ -9080,16 +9077,16 @@ msgstr ""
 
 #: corehq/apps/domain/templates/domain/admin/global_sms_rates.html:71
 #: corehq/apps/reports/standard/ivr.py:80
-#: corehq/apps/reports/standard/sms.py:144
-#: corehq/apps/smsbillables/forms.py:44 custom/fri/reports/reports.py:233
+#: corehq/apps/reports/standard/sms.py:144 corehq/apps/smsbillables/forms.py:44
+#: custom/fri/reports/reports.py:233
 #: custom/ilsgateway/tanzania/reports/unrecognized_sms.py:138
 msgid "Incoming"
 msgstr ""
 
 #: corehq/apps/domain/templates/domain/admin/global_sms_rates.html:74
 #: corehq/apps/reports/standard/ivr.py:81
-#: corehq/apps/reports/standard/sms.py:145
-#: corehq/apps/smsbillables/forms.py:43 custom/fri/reports/reports.py:234
+#: corehq/apps/reports/standard/sms.py:145 corehq/apps/smsbillables/forms.py:43
+#: custom/fri/reports/reports.py:234
 #: custom/ilsgateway/tanzania/reports/unrecognized_sms.py:139
 msgid "Outgoing"
 msgstr ""
@@ -9163,10 +9160,8 @@ msgid "Case type"
 msgstr ""
 
 #: corehq/apps/domain/templates/domain/admin/partials/case_search_templates.html:28
-#, fuzzy
-#| msgid "Case property"
 msgid "Add another property"
-msgstr "Propriedade do Caso"
+msgstr ""
 
 #: corehq/apps/domain/templates/domain/admin/partials/case_search_templates.html:36
 msgid "Add another case type"
@@ -10250,7 +10245,6 @@ msgid "Feature Summary"
 msgstr ""
 
 #: corehq/apps/domain/templates/domain/select_plan.html:165
-#: corehq/apps/prelogin/templates/prelogin/_sections/software_services/pricing.html:115
 msgid "Up to 50 users"
 msgstr ""
 
@@ -10266,28 +10260,26 @@ msgid "Pre-Built Reports"
 msgstr ""
 
 #: corehq/apps/domain/templates/domain/select_plan.html:169
-#: corehq/apps/prelogin/templates/prelogin/_sections/software_services/pricing.html:119
+#: corehq/apps/prelogin/templates/prelogin/_sections/software_services/pricing.html:115
 msgid "Online Learning Resources"
 msgstr ""
 
 #: corehq/apps/domain/templates/domain/select_plan.html:176
-#: corehq/apps/prelogin/templates/prelogin/_sections/software_services/pricing.html:126
 msgid "Up to 100 users"
 msgstr ""
 
 #: corehq/apps/domain/templates/domain/select_plan.html:178
 #: corehq/apps/prelogin/templates/prelogin/_sections/pricing/04_reporting_analytics.html:39
-#: corehq/apps/prelogin/templates/prelogin/_sections/software_services/pricing.html:128
+#: corehq/apps/prelogin/templates/prelogin/_sections/software_services/pricing.html:127
 msgid "Case Importer"
 msgstr ""
 
 #: corehq/apps/domain/templates/domain/select_plan.html:180
-#: corehq/apps/prelogin/templates/prelogin/_sections/software_services/pricing.html:130
+#: corehq/apps/prelogin/templates/prelogin/_sections/software_services/pricing.html:129
 msgid "One-way SMS"
 msgstr ""
 
 #: corehq/apps/domain/templates/domain/select_plan.html:187
-#: corehq/apps/prelogin/templates/prelogin/_sections/software_services/pricing.html:137
 msgid "Up to 500 users"
 msgstr ""
 
@@ -10301,53 +10293,49 @@ msgid "Data management tools"
 msgstr ""
 
 #: corehq/apps/domain/templates/domain/select_plan.html:190
-#: corehq/apps/prelogin/templates/prelogin/_sections/software_services/pricing.html:139
+#: corehq/apps/prelogin/templates/prelogin/_sections/software_services/pricing.html:137
 msgid "Web-based applications"
 msgstr ""
 
 #: corehq/apps/domain/templates/domain/select_plan.html:191
-#: corehq/apps/prelogin/templates/prelogin/_sections/software_services/pricing.html:140
+#: corehq/apps/prelogin/templates/prelogin/_sections/software_services/pricing.html:139
 msgid "Two-way SMS"
 msgstr ""
 
 #: corehq/apps/domain/templates/domain/select_plan.html:198
-#: corehq/apps/prelogin/templates/prelogin/_sections/software_services/pricing.html:147
 msgid "Up to 1,000 users"
 msgstr ""
 
 #: corehq/apps/domain/templates/domain/select_plan.html:199
-#: corehq/apps/prelogin/templates/prelogin/_sections/software_services/pricing.html:148
+#: corehq/apps/prelogin/templates/prelogin/_sections/software_services/pricing.html:147
 msgid "Custom branding"
 msgstr ""
 
 #: corehq/apps/domain/templates/domain/select_plan.html:200
 #: corehq/apps/prelogin/templates/prelogin/_sections/pricing/05_data_security.html:43
-#: corehq/apps/prelogin/templates/prelogin/_sections/software_services/pricing.html:149
+#: corehq/apps/prelogin/templates/prelogin/_sections/software_services/pricing.html:148
 msgid "HIPAA compliance assurance"
 msgstr ""
 
 #: corehq/apps/domain/templates/domain/select_plan.html:201
-#: corehq/apps/prelogin/templates/prelogin/_sections/software_services/pricing.html:150
+#: corehq/apps/prelogin/templates/prelogin/_sections/software_services/pricing.html:149
 msgid "External app integration framework"
 msgstr ""
 
 #: corehq/apps/domain/templates/domain/select_plan.html:202
-#: corehq/apps/prelogin/templates/prelogin/_sections/software_services/pricing.html:151
 msgid "Priority Support"
 msgstr ""
 
 #: corehq/apps/domain/templates/domain/select_plan.html:209
-#: corehq/apps/prelogin/templates/prelogin/_sections/software_services/pricing.html:158
 msgid "1,000+ users"
 msgstr ""
 
 #: corehq/apps/domain/templates/domain/select_plan.html:210
-#: corehq/apps/prelogin/templates/prelogin/_sections/software_services/pricing.html:159
+#: corehq/apps/prelogin/templates/prelogin/_sections/software_services/pricing.html:156
 msgid "Custom pricing is available for large scale projects."
 msgstr ""
 
 #: corehq/apps/domain/templates/domain/select_plan.html:211
-#: corehq/apps/prelogin/templates/prelogin/_sections/software_services/pricing.html:160
 msgid "Dedicated Account Manager"
 msgstr ""
 
@@ -10524,6 +10512,7 @@ msgstr ""
 #: corehq/apps/settings/forms.py:103 corehq/apps/settings/forms.py:133
 #: corehq/apps/settings/forms.py:163 corehq/apps/settings/forms.py:193
 #: corehq/apps/userreports/reports/builder/forms.py:549
+#: packages-local/couchdbkit-debugpanel/couchdebugpanel/templates/couchdebugpanel/couch_select.html:5
 #: submodules/ctable-src/ctable_view/templates/ctable/edit_mapping.html:210
 #: submodules/ctable-src/ctable_view/templates/ctable/test_mapping.html:129
 msgid "Back"
@@ -11427,7 +11416,7 @@ msgstr ""
 #: corehq/apps/users/templates/users/edit_commcare_user.html:124
 #: corehq/reports.py:92 corehq/tabs/tabclasses.py:882
 msgid "CommCare Supply"
-msgstr ""
+msgstr "CommTrack"
 
 #: corehq/apps/export/forms.py:151
 msgid "User Types or Group"
@@ -13754,10 +13743,8 @@ msgid "Remove Duplicate Domains"
 msgstr ""
 
 #: corehq/apps/hqadmin/views.py:512
-#, fuzzy
-#| msgid "Latest report"
 msgid "Loadtest Results"
-msgstr "Último relatório"
+msgstr ""
 
 #: corehq/apps/hqadmin/views.py:766
 msgid "Download MALT"
@@ -14711,10 +14698,8 @@ msgid "Importing Cases..."
 msgstr ""
 
 #: corehq/apps/importer/templates/importer/excel_config.html:48
-#, fuzzy
-#| msgid "Case List"
 msgid "Case Options"
-msgstr "Lista de Casos"
+msgstr ""
 
 #: corehq/apps/importer/templates/importer/excel_config.html:63
 msgid "Case Type to Update/Create"
@@ -14756,10 +14741,8 @@ msgid "Create new records if there is no matching case"
 msgstr ""
 
 #: corehq/apps/importer/templates/importer/excel_config.html:141
-#, fuzzy
-#| msgid "New Advanced Module"
 msgid "Advanced Update"
-msgstr "Novo Módulo Avançado"
+msgstr ""
 
 #: corehq/apps/importer/templates/importer/excel_config.html:148
 msgid "Update Cases Using Multiple Key/Value Pairs"
@@ -16669,20 +16652,21 @@ msgstr ""
 msgid "Direct email support"
 msgstr ""
 
-#: corehq/apps/prelogin/templates/prelogin/_sections/pricing/08_support.html:37
-msgid "General troubleshooting"
+#: corehq/apps/prelogin/templates/prelogin/_sections/pricing/08_support.html:36
+msgid "Guaranteed Response Time"
 msgstr ""
 
-#: corehq/apps/prelogin/templates/prelogin/_sections/pricing/08_support.html:41
-msgid "Project-specific troubleshooting"
+#: corehq/apps/prelogin/templates/prelogin/_sections/pricing/08_support.html:47
+msgid "3 Business Days"
 msgstr ""
 
-#: corehq/apps/prelogin/templates/prelogin/_sections/pricing/08_support.html:45
-msgid "Priority support"
+#: corehq/apps/prelogin/templates/prelogin/_sections/pricing/08_support.html:52
+msgid "1 Business Day"
 msgstr ""
 
-#: corehq/apps/prelogin/templates/prelogin/_sections/pricing/08_support.html:49
-msgid "Dedicated account manager"
+#: corehq/apps/prelogin/templates/prelogin/_sections/pricing/08_support.html:57
+#: corehq/apps/prelogin/templates/prelogin/_sections/pricing/08_support.html:62
+msgid "1 Business Day + Phone Support"
 msgstr ""
 
 #: corehq/apps/prelogin/templates/prelogin/_sections/pricing/fine_print.html:7
@@ -17524,7 +17508,19 @@ msgstr ""
 msgid "View Implementation Services"
 msgstr ""
 
-#: corehq/apps/prelogin/templates/prelogin/_sections/software_services/pricing.html:197
+#: corehq/apps/prelogin/templates/prelogin/_sections/software_services/pricing.html:125
+msgid "3-Business Day Guaranteed Email Support"
+msgstr ""
+
+#: corehq/apps/prelogin/templates/prelogin/_sections/software_services/pricing.html:136
+msgid "1-Business Day Guaranteed Email Support"
+msgstr ""
+
+#: corehq/apps/prelogin/templates/prelogin/_sections/software_services/pricing.html:146
+msgid "Phone Support"
+msgstr ""
+
+#: corehq/apps/prelogin/templates/prelogin/_sections/software_services/pricing.html:193
 msgid ""
 "\n"
 "                Dimagi charges incoming and outgoing messages on a per-"
@@ -21470,6 +21466,7 @@ msgid "No data is available. Please submit more forms!"
 msgstr ""
 
 #: corehq/apps/reports/templates/reports/partials/hqexport_group_table.html:8
+#: packages-local/couchdbkit-debugpanel/couchdebugpanel/templates/couchdebugpanel/couch.html:47
 msgid "File"
 msgstr ""
 
@@ -22174,6 +22171,7 @@ msgid "Fit all data into view"
 msgstr ""
 
 #: corehq/apps/settings/forms.py:38
+#: docs/_build/html/_sources/translations.txt:177
 msgid "Specify New Password"
 msgstr ""
 
@@ -24464,6 +24462,7 @@ msgstr ""
 #: corehq/apps/userreports/reports/builder/forms.py:1016
 #: corehq/apps/userreports/reports/builder/forms.py:1096
 #: corehq/apps/userreports/reports/builder/forms.py:1214
+#: packages-local/couchdbkit-debugpanel/couchdebugpanel/templates/couchdebugpanel/couch.html:13
 msgid "Rows"
 msgstr ""
 
@@ -26635,7 +26634,7 @@ msgstr "Houve um erro ao processamento de seu pedido"
 #: corehq/ex-submodules/soil/templates/soil/partials/bootstrap2/dl_status.html:14
 #: corehq/ex-submodules/soil/templates/soil/partials/bootstrap3/dl_status.html:14
 msgid "Your export is ready."
-msgstr ""
+msgstr "A sua exportação está pronto."
 
 #: corehq/ex-submodules/soil/templates/soil/partials/bootstrap2/dl_status.html:20
 #: corehq/ex-submodules/soil/templates/soil/partials/bootstrap3/dl_status.html:20
@@ -28936,10 +28935,8 @@ msgid ""
 msgstr ""
 
 #: custom/dhis2/forms.py:43
-#, fuzzy
-#| msgid "Settings"
 msgid "DHIS2 API Settings"
-msgstr "Configuração"
+msgstr ""
 
 #: custom/dhis2/forms.py:51
 msgid "Update DHIS2 API Settings"
@@ -30331,10 +30328,8 @@ msgid "Use steady sync"
 msgstr ""
 
 #: custom/logistics/templates/logistics/config.html:73
-#, fuzzy
-#| msgid "Medications"
 msgid "Migrations"
-msgstr "Medicamentos"
+msgstr ""
 
 #: custom/logistics/templates/logistics/config.html:79
 msgid "All stock data migration"
@@ -33408,6 +33403,86 @@ msgstr ""
 msgid "Functionality Score"
 msgstr ""
 
+#: docs/_build/html/_sources/translations.txt:132
+#, fuzzy
+#| msgid "Scheduled report from CommCare HQ"
+msgid "Welcome to CommCare HQ"
+msgstr "Relatorio Semanal aos Coordinadores do Distrito e os NEDs"
+
+#: docs/_build/html/_sources/translations.txt:141
+#, python-format
+msgid "This string will have %(value)s inside."
+msgstr ""
+
+#: docs/_build/html/_sources/translations.txt:147
+#, python-format
+msgid ""
+"\n"
+"        That will cost $ %(amount)s.\n"
+"    "
+msgstr ""
+
+#: docs/_build/html/_sources/translations.txt:155
+#, python-format
+msgid ""
+"\n"
+"        This will have %(myvar)s inside.\n"
+"    "
+msgstr ""
+
+#: docs/_build/html/_sources/translations.txt:167
+msgid ""
+"\n"
+"        Manage Mobile Workers <small>for CommCare Mobile and\n"
+"        CommCare HQ Reports</small>\n"
+"    "
+msgstr ""
+
+#: packages-local/couchdbkit-debugpanel/couchdebugpanel/couchpanel.py:89
+#: packages-local/couchdbkit-debugpanel/couchdebugpanel/couchpanel.py:92
+msgid "CouchDB"
+msgstr ""
+
+#: packages-local/couchdbkit-debugpanel/couchdebugpanel/templates/couchdebugpanel/couch.html:15
+msgid "Stacktrace"
+msgstr ""
+
+#: packages-local/couchdbkit-debugpanel/couchdebugpanel/templates/couchdebugpanel/couch.html:16
+msgid "View Name"
+msgstr "Relatorio Semanal aos Coordinadores do Distrito e os NEDs"
+
+#: packages-local/couchdbkit-debugpanel/couchdebugpanel/templates/couchdebugpanel/couch.html:17
+msgid "Request Params"
+msgstr "Relatorio Semanal aos Coordinadores do Distrito e os NEDs"
+
+#: packages-local/couchdbkit-debugpanel/couchdebugpanel/templates/couchdebugpanel/couch.html:45
+msgid "Line"
+msgstr ""
+
+#: packages-local/couchdbkit-debugpanel/couchdebugpanel/templates/couchdebugpanel/couch.html:46
+msgid "Method"
+msgstr ""
+
+#: packages-local/couchdbkit-debugpanel/couchdebugpanel/templates/couchdebugpanel/couch_select.html:6
+msgid "CouchDB View"
+msgstr ""
+
+#: packages-local/couchdbkit-debugpanel/couchdebugpanel/templates/couchdebugpanel/couch_select.html:11
+msgid "Executed View"
+msgstr "Manejo de Casos"
+
+#: packages-local/couchdbkit-debugpanel/couchdebugpanel/templates/couchdebugpanel/couch_select.html:13
+msgid "Parameters"
+msgstr ""
+
+#: packages-local/couchdbkit-debugpanel/couchdebugpanel/templates/couchdebugpanel/couch_select.html:15
+msgid "Total Rows"
+msgstr ""
+
+#: packages-local/couchdbkit-debugpanel/couchdebugpanel/templates/couchdebugpanel/couch_select.html:40
+msgid "Empty set"
+msgstr ""
+
 #: submodules/auditcare-src/auditcare/forms.py:14
 msgid ""
 "Please enter a correct username and password. Note that both fields are case-"
@@ -33872,19 +33947,18 @@ msgstr ""
 #~ msgid "name"
 #~ msgstr "Relatorio Semanal aos Coordinadores do Distrito e os NEDs"
 
-#~| msgid "deaths_children"
+#~ msgid "Update Project Settings"
+#~ msgstr "Relatorio Semanal aos Coordinadores do Distrito e os NEDs"
+
 #~ msgid "msg_children"
 #~ msgstr "Crianças (2 - 59 meses)"
 
-#~| msgid "diagnosed_diarrhea"
 #~ msgid "msg_diarrhoea"
 #~ msgstr "Total Diarreia"
 
-#~| msgid "treated_malaria"
 #~ msgid "msg_malaria"
 #~ msgstr "Total casos malária tratados"
 
-#~| msgid "form/stock/stock_rdt"
 #~ msgid "msg_rdt"
 #~ msgstr "TDR"
 
@@ -33939,15 +34013,6 @@ msgstr ""
 #~ msgid "%s%% (%d) Complete Reports in %s"
 #~ msgstr "Manejo de Casos"
 
-#~ msgid "View Name"
-#~ msgstr "Relatorio Semanal aos Coordinadores do Distrito e os NEDs"
-
-#~ msgid "Request Params"
-#~ msgstr "Relatorio Semanal aos Coordinadores do Distrito e os NEDs"
-
-#~ msgid "Executed View"
-#~ msgstr "Manejo de Casos"
-
 #~ msgid "New Careplan Module"
 #~ msgstr "Manejo de Casos"
 
@@ -33983,9 +34048,6 @@ msgstr ""
 
 #~ msgid "Edit Survey"
 #~ msgstr "Manejo de Casos"
-
-#~ msgid "Scheduled report from CommCare HQ"
-#~ msgstr "Relatorio Semanal aos Coordinadores do Distrito e os NEDs"
 
 #~ msgid "Create Form Export: Select Form"
 #~ msgstr "Manejo de Casos"
