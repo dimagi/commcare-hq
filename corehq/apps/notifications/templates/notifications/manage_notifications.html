@@ -1,5 +1,6 @@
 {% extends 'style/bootstrap3/base_page.html' %}
 {% load hq_shared_tags %}
+{% load crispy_forms_tags %}
 {% block js-inline %}
 <script>
 $(function () {
@@ -22,23 +23,7 @@ $(function () {
                     Enter notification text below and preview in the table below.  Notifications will not be public until the
                     "activate notification" button is pressed.
                 </p>
-
-                <form method="post" action="{% url 'create_alert' %}" class="form-horizontal" id="alertForm">
-                    {% csrf_token %}
-                    <div class="form-group">
-                        <label for="alert_text" class="control-label col-sm-2">
-                            Message
-                        </label>
-                        <div class="col-sm-8">
-                            <textarea name="alert_text" id="alert_text" placeholder="Notification text..." form="alertForm" class="form-control"></textarea>
-                        </div>
-                    </div>
-                    <div class="form-actions">
-                        <div class="col-sm-offset-2">
-                            <button type="submit" class="btn btn-primary">Preview Notification</button>
-                        </div>
-                    </div>
-                </form>
+                {% crispy form %}
             </div>
         </div>
         <div class="panel panel-default">
