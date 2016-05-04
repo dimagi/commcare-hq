@@ -462,7 +462,7 @@ class NestedAggregation(Aggregation):
     :param path: Path to nested document
     """
     type = "nested"
-    result_class = BucketResult
+    result_class = FilterResult
 
     def __init__(self, name, path):
         self.name = name
