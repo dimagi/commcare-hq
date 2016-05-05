@@ -9,7 +9,6 @@ from optparse import make_option
 
 # Django imports
 from django.apps import apps as default_apps
-from django.core.exceptions import ObjectDoesNotExist
 from django.core.management.base import BaseCommand
 
 from corehq.apps.accounting.exceptions import AccountingError
@@ -142,7 +141,7 @@ def ensure_plans(dry_run, verbose, for_tests, apps):
             role_slug = BOOTSTRAP_EDITION_TO_ROLE[edition]
             try:
                 role = Role.objects.get(slug=role_slug)
-            except ObjectDoesNotExist:
+            except Role.DoesNotExist:
                 logger.info("Could not find the role '%s'. Did you forget to run cchq_prbac_bootstrap?")
                 logger.info("Aborting. You should figure this out.")
                 return
@@ -209,7 +208,7 @@ def ensure_plans(dry_run, verbose, for_tests, apps):
                                         "'%s' already exists." % (
                                             product.product_type, default_product_plan.edition
                                         ))
-                    except ObjectDoesNotExist:
+                    except DefaultProductPlan.DoesNotExist:
                         default_product_plan.plan = software_plan
                         default_product_plan.save()
                         if verbose:
@@ -298,7 +297,7 @@ def _ensure_features(dry_run, verbose, apps):
                         logger.info("Feature '%s' already exists. Using "
                                     "existing feature to add rate."
                                     % feature.name)
-                except ObjectDoesNotExist:
+                except Feature.DoesNotExist:
                     feature.save()
                     if verbose:
                         logger.info("Creating Feature: %s" % feature)

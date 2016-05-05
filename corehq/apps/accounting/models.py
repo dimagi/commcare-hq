@@ -6,7 +6,7 @@ from tempfile import NamedTemporaryFile
 
 
 from django.conf import settings
-from django.core.exceptions import ObjectDoesNotExist, ValidationError
+from django.core.exceptions import ValidationError
 from django.core.validators import MaxValueValidator, MinValueValidator
 from django.db import models, transaction
 from django.db.models import F, Q
@@ -407,7 +407,7 @@ class BillingAccount(models.Model):
             last_subscription = Subscription.objects.filter(
                 is_trial=False, subscriber__domain=domain).latest('date_end')
             return last_subscription.account
-        except ObjectDoesNotExist:
+        except Subscription.DoesNotExist:
             pass
         try:
             return cls.objects.exclude(
