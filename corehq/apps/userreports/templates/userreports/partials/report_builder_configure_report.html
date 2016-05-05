@@ -15,6 +15,10 @@
         var defaultCalculationOptions = ["Count per Choice", "Sum", "Average"];
         var nonNumericPropertyCalculationOptions = ["Count per Choice"];
         var propertyOptions = {{ property_options|JSON }};
+        var isNonNumericMap = propertyOptions.reduce(function(map, option) {
+            map[option.id] = option.is_non_numeric;
+            return map;
+        }, {});
         var optionsContainQuestions = _.any(propertyOptions, function (o) {
             return o.type == 'question';
         });
@@ -26,7 +30,8 @@
                 } else if (o.type == 'meta') {
                     return {
                         value: o.source[0],
-                        label: o.text
+                        label: o.text,
+                        type: o.type
                     }
                 }
             }));
@@ -47,15 +52,8 @@
             // properties (because we don't know what type of data they might
             // contain)
             this.propertyIsNonNumeric = ko.pureComputed(function(){
-                var propertyObj = _.find(propertyOptions, function(option) {
-                    return option.value == property;
-                });
-                var isQuestion = propertyObj !== undefined && propertyObj.type === 'question';
-                if (isQuestion) {
-                    return ! _.contains(["DataBindOnly", "Int", "Double", "Long"], propertyObj.type)
-                }
-                return false;
-            }, this);
+                return isNonNumericMap[self.property()];
+            });
 
             // True if the property exists in the current version of the app
             this.existsInCurrentVersion = ko.observable(true);
@@ -107,11 +105,11 @@
             this.format = ko.observable("");
             this.calculation = ko.observable("Count per Choice");
             this.calculationOptions = ko.pureComputed(function(){
-                if (this.propertyIsNonNumeric()) {
+                if (self.propertyIsNonNumeric()) {
                     return nonNumericPropertyCalculationOptions;
                 }
                 return defaultCalculationOptions;
-            }, this);
+            });
             this.dataSourceField = ko.observable("");
             this.isEditable = ko.pureComputed(function(){
                 return !self.existsInCurrentVersion();
