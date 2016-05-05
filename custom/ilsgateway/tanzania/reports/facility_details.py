@@ -162,19 +162,21 @@ class RecentMessages(ILSData):
 
     @property
     def headers(self):
-        return DataTablesHeader(
+        header = DataTablesHeader(
             DataTablesColumn('Date'),
             DataTablesColumn('User'),
             DataTablesColumn('Phone number'),
             DataTablesColumn('Direction'),
             DataTablesColumn('Text')
         )
+        header.custom_sort = [[0, 'desc']]
+        return header
 
     @property
     def rows(self):
         data = (SMS.by_domain(self.config['domain'])
                 .filter(location_id=self.config['location_id'])
-                .order_by('date'))
+                .order_by('-date'))
         messages = []
         for message in data:
             recipient = message.recipient
