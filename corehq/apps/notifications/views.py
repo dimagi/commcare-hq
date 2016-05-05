@@ -57,7 +57,7 @@ class ManageNotificationView(BasePageView):
     @property
     @memoized
     def create_form(self):
-        if self.request.method == 'POST':
+        if self.request.method == 'POST' and 'submit' in self.request.POST:
             return NotificationCreationForm(self.request.POST)
         return NotificationCreationForm()
 
@@ -85,6 +85,10 @@ class ManageNotificationView(BasePageView):
         elif 'activate' in request.POST:
             note = Notification.objects.filter(pk=request.POST.get('alert_id')).first()
             note.is_active = True
+            note.save()
+        elif 'deactivate' in request.POST:
+            note = Notification.objects.filter(pk=request.POST.get('alert_id')).first()
+            note.is_active = False
             note.save()
         elif 'remove' in request.POST:
             Notification.objects.filter(pk=request.POST.get('alert_id')).delete()
