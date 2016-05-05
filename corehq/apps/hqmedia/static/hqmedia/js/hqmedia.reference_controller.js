@@ -1,3 +1,5 @@
+/*globals $, _, django */
+
 function MultimediaReferenceController (references, obj_map, totals) {
     'use strict';
     var self = this;
@@ -7,7 +9,7 @@ function MultimediaReferenceController (references, obj_map, totals) {
     self.totals = ko.observable(totals);
     
     self.toggleRefsText = ko.computed(function () {
-        return (self.showMissingReferences()) ? "Show All References" : "Show Only Missing References";
+        return (self.showMissingReferences()) ? django.gettext("Show All References") : django.gettext("Show Only Missing References");
     }, self);
 
     self.render = function () {
@@ -196,7 +198,7 @@ function BaseMediaReference (ref) {
     self.url = ko.observable();
 
     self.status_icon = ko.computed(function () {
-        return (self.is_matched()) ? "icon-ok" : "icon-warning-sign";
+        return (self.is_matched()) ? "fa fa-check media-status-ok" : "fa fa-exclamation-triangle media-status-warning";
     }, self);
 
     self.upload_button_class = ko.computed(function () {
@@ -204,7 +206,7 @@ function BaseMediaReference (ref) {
     }, self);
 
     self.upload_button_text = ko.computed(function () {
-        return ((self.is_matched()) ? "Replace " : "Upload ") + self.media_type;
+        return ((self.is_matched()) ? django.gettext("Replace ") : django.gettext("Upload ")) + self.media_type;
     }, self);
 
     self.preview_template =  null; // override
