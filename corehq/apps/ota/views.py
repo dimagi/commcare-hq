@@ -63,10 +63,7 @@ def search(request, domain):
     fuzzies = config.get_fuzzy_properties_for_case_type(case_type)
     for key, value in criteria.items():
         search_es = search_es.case_property_query(key, value, fuzzy=(key in fuzzies))
-    try:
-        results = search_es.values()
-    except NotFoundError:
-        results = []
+    results = search_es.values()
     if should_use_sql_backend(domain):
         cases = [get_instance_from_data(CommCareCaseSQLSerializer, result) for result in results]
     else:
