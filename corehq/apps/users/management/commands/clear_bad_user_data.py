@@ -30,10 +30,11 @@ def clean_user(doc):
     if doc['location_id']:
         return
 
-    if (
-        doc.get('user_data', {}).pop('commcare_location_id', False)
-        or doc.get('user_data', {}).pop('commtrack-supply-point', False)
-    ):
+    had_bad_data = any([
+        doc.get('user_data', {}).pop('commcare_location_id', False),
+        doc.get('user_data', {}).pop('commtrack-supply-point', False),
+    ])
+    if had_bad_data:
         return DocUpdate(doc)
 
 
