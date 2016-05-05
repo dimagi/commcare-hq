@@ -236,6 +236,23 @@ def cls_to_view(additional_decorator=None):
         return __outer__
     return decorator
 
+
+def api_domain_view(view):
+    """
+    Decorate this with any domain view that should be accessed via api only
+    """
+    @wraps(view)
+    @api_key()
+    @login_and_domain_required
+    def _inner(request, domain, *args, **kwargs):
+        if request.user.is_authenticated():
+            request.couch_user = CouchUser.from_django_user(request.user)
+            return view(request, domain, *args, **kwargs)
+        else:
+            return HttpResponseForbidden()
+    return _inner
+
+
 def login_required(view_func):
     @wraps(view_func)
     def _inner(request, *args, **kwargs):
