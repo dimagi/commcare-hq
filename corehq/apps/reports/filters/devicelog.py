@@ -1,6 +1,5 @@
 from django.utils.translation import ugettext_noop, ugettext_lazy
-from corehq.apps.builds.utils import get_all_versions
-from corehq.apps.reports.filters.base import BaseReportFilter, BaseSingleOptionFilter
+from corehq.apps.reports.filters.base import BaseReportFilter, BaseSingleOptionFilter, BaseTagsFilter
 from corehq.util.queries import fast_distinct, fast_distinct_in_domain
 from corehq.util.quickcache import quickcache
 from phonelog.models import DeviceReportEntry
@@ -43,14 +42,10 @@ class DeviceLogDomainFilter(BaseSingleOptionFilter):
         return [(d, d) for d in fast_distinct(DeviceReportEntry, 'domain')]
 
 
-class DeviceLogCommCareVersionFilter(BaseSingleOptionFilter):
+class DeviceLogCommCareVersionFilter(BaseTagsFilter):
     slug = "commcare_version"
     label = ugettext_lazy("Filter Logs by CommCareVersion")
-
-    @property
-    @quickcache([], timeout=60 * 60)
-    def options(self):
-        return [(v, v) for v in get_all_versions()]
+    placeholder = ugettext_lazy("Enter the CommCare Version you want e.g '2.28.1'")
 
 
 class BaseDeviceLogFilter(BaseReportFilter):
