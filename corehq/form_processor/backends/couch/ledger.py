@@ -15,9 +15,9 @@ class LedgerDBCouch(LedgerDBInterface):
     def _get_ledger(self, unique_ledger_reference):
         try:
             return StockTransaction.latest(
-                case_id = unique_ledger_reference.case_id,
-                section_id = unique_ledger_reference.section_id,
-                product_id = unique_ledger_reference.entry_id,
+                case_id=unique_ledger_reference.case_id,
+                section_id=unique_ledger_reference.section_id,
+                product_id=unique_ledger_reference.entry_id,
             )
         except StockTransaction.DoesNotExist:
             return None
