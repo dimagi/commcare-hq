@@ -12,7 +12,7 @@
 {% block js-inline %}{{ block.super }}
     <script type="text/javascript">
         var defaultCalculationOptions = ["Count per Choice", "Sum", "Average"];
-        var stringOnlyCalculationOptions = ["Count per Choice"];
+        var nonNumericPropertyCalculationOptions = ["Count per Choice"];
         var propertyOptions = {{ property_options|JSON }};
         var optionsContainQuestions = _.any(propertyOptions, function (o) {
             return o.type == 'question';
@@ -42,35 +42,33 @@
             this.displayText = ko.observable("");
             this.userModifiedDisplayText = false;
             this.format = ko.observable("");
-            this.calculation = ko.observable("Count per Choice");
             this.dataSourceField = ko.observable("");
 
 
-            this.dataType = ko.computed(function() {
-                // Returns type of Question, applicable only if optionsContainQuestions is true
-                var property = this.property();
-                var propertyObject = _.find(this.propertyOptions(), function(option){
+            // True if the selected property is known to contain non numeric
+            // data. This would be true for numeric form questions, false
+            // for text questions and hidden value questions, and false for case
+            // properties (because we don't know what type of data they might
+            // contain)
+            this.propertyIsNonNumeric = ko.pureComputed(function(){
+                var propertyObj = _.find(propertyOptions, function(option) {
                     return option.value == property;
                 });
-                if (propertyObject !== undefined && propertyObject.hasOwnProperty("type"))
-                    return propertyObject.type;
-                else
-                    return undefined;
+                var isQuestion = propertyObj !== undefined && propertyObj.type === 'question';
+                if (isQuestion) {
+                    return ! _.contains(["DataBindOnly", "Int", "Double", "Long"], propertyObj.type)
+                }
+                return false;
             }, this);
 
-            this.calculationOptions = ko.observableArray(defaultCalculationOptions);
-            if (this.optionsContainQuestions) {
-                // If options are questions, calculationOptions should be limited based on the dataType
-                this.calculationOptions = ko.computed(function() {
 
-                    if (_.contains(["DataBindOnly", "Int", "Double", "Long"], this.dataType())){
-                        return defaultCalculationOptions;
-                    }
-                    else {
-                        return stringOnlyCalculationOptions;
-                    }
-                }, this);
-            }
+            this.calculation = ko.observable("Count per Choice");
+            this.calculationOptions = ko.pureComputed(function(){
+                if (this.propertyIsNonNumeric()) {
+                    return nonNumericPropertyCalculationOptions;
+                }
+                return defaultCalculationOptions;
+            }, this);
 
             /**
              * Return a "plain" javascript object representing this view model
