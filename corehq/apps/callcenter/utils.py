@@ -234,11 +234,12 @@ def get_call_center_domains():
     )
 
     def to_domain_lite(hit):
+        config = hit.get('call_center_config', {})
         return DomainLite(
             name=hit['name'],
             default_timezone=hit['default_timezone'],
-            cc_case_type=hit.get('call_center_config.case_type', ''),
-            use_fixtures=hit.get('call_center_config.use_fixtures', True)
+            cc_case_type=config.get('case_type', ''),
+            use_fixtures=config.get('use_fixtures', True)
         )
     return [to_domain_lite(hit) for hit in result.hits]
 
