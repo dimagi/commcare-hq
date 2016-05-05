@@ -799,13 +799,16 @@ class LedgerAccessorSQL(AbstractLedgerAccessor):
         :param entry_id:   entry ID or None
         :return: number of values deleted
         """
-        with get_cursor(LedgerValue) as cursor:
-            cursor.execute(
-                "SELECT delete_ledger_values(%s, %s, %s) as deleted_count",
-                [case_id, section_id, entry_id]
-            )
-            results = fetchall_as_namedtuple(cursor)
-            return sum([result.deleted_count for result in results])
+        try:
+            with get_cursor(LedgerValue) as cursor:
+                cursor.execute(
+                    "SELECT delete_ledger_values(%s, %s, %s) as deleted_count",
+                    [case_id, section_id, entry_id]
+                )
+                results = fetchall_as_namedtuple(cursor)
+                return sum([result.deleted_count for result in results])
+        except InternalError as e:
+            raise LedgerSaveError(e)
 
 
 def _order_list(id_list, object_list, id_property):

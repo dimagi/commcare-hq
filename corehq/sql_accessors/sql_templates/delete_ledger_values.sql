@@ -10,6 +10,12 @@ DECLARE
     section_filter TEXT := ' AND section_id = $2';
     entry_filter   TEXT := ' AND entry_id = $3';
 BEGIN
+
+    IF EXISTS (SELECT * FROM get_ledger_transactions_for_case(p_case_id, p_section_id, p_entry_id)) THEN
+        RAISE EXCEPTION 'Attempt to delete LedgerValue that still has transactions. case_id=%, section_id=%, entry_id=%',
+            p_case_id, p_section_id, p_entry_id;
+    END IF;
+
     IF p_section_id <> '' THEN
         delete_expr := delete_expr || section_filter;
     END IF;
