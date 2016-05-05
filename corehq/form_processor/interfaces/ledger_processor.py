@@ -79,3 +79,11 @@ class LedgerProcessorInterface(object):
     @abstractmethod
     def rebuild_ledger_state(self, case_id, section_id, entry_id):
         pass
+
+    @abstractmethod
+    def process_form_archived(self, form):
+        pass
+
+    @abstractmethod
+    def process_form_unarchived(self, form):
+        pass
