@@ -1,3 +1,4 @@
+import uuid
 from datetime import datetime, timedelta
 from casexml.apps.case.mock import CaseFactory, CaseStructure
 from casexml.apps.case.tests.util import delete_all_cases
@@ -8,15 +9,22 @@ from corehq.apps.callcenter.utils import (
     get_call_center_cases,
     DomainLite,
     sync_usercase,
-)
+    get_call_center_domains)
+from corehq.apps.domain.models import Domain
 from corehq.apps.domain.shortcuts import create_domain
+from corehq.apps.domain.signals import commcare_domain_post_save
 from corehq.apps.hqcase.utils import get_case_by_domain_hq_user_id
 from corehq.apps.users.models import CommCareUser
 from django.test import TestCase, SimpleTestCase
 
+from corehq.elastic import get_es_new, send_to_elasticsearch
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 from corehq.form_processor.tests.utils import run_with_all_backends
+from corehq.pillows.mappings.domain_mapping import DOMAIN_INDEX_INFO
+from corehq.util.context_managers import drop_connected_signals
+from corehq.util.elastic import ensure_index_deleted
 from dimagi.utils.couch.undo import DELETED_SUFFIX
+from pillowtop.es_utils import initialize_index
 
 TEST_DOMAIN = 'cc_util_test'
 CASE_TYPE = 'cc_flw'
@@ -323,3 +331,47 @@ class DomainTimezoneTests(SimpleTestCase):
         for midnight_candidate, expected in midnights:
             is_midnight = is_midnight_for_domain(midnight, current_time=midnight_candidate)
             self.assertEqual(is_midnight, expected)
+
+
+class CallCenterDomainTest(SimpleTestCase):
+    def setUp(self):
+        self.index_info = DOMAIN_INDEX_INFO
+        self.elasticsearch = get_es_new()
+        ensure_index_deleted(self.index_info.index)
+        initialize_index(self.elasticsearch, self.index_info)
+
+    def tearDown(self):
+        ensure_index_deleted(self.index_info.index)
+
+    def test_get_call_center_domains(self):
+        _create_domain('cc-dom1', True, True, 'flw')
+        _create_domain('cc-dom2', True, False, 'aww')
+        _create_domain('cc-dom3', False, False, '')
+        self.elasticsearch.indices.refresh(self.index_info.index)
+
+        domains = get_call_center_domains()
+        self.assertEqual(2, len(domains))
+        [dom1] = [dom for dom in domains if dom.name == 'cc-dom1']
+        [dom2] = [dom for dom in domains if dom.name == 'cc-dom2']
+        self.assertEqual('flw', dom1.cc_case_type)
+        self.assertTrue(dom1.use_fixtures)
+        self.assertEqual('aww', dom2.cc_case_type)
+        self.assertFalse(dom2.use_fixtures)
+
+
+def _create_domain(name, cc_enabled, cc_use_fixtures, cc_case_type):
+    with drop_connected_signals(commcare_domain_post_save):
+        domain = Domain(
+            _id=uuid.uuid4().hex,
+            name=name,
+            is_active=True,
+            date_created=datetime.utcnow(),
+        )
+        domain.call_center_config.enabled = cc_enabled
+        domain.call_center_config.use_fixtures = cc_use_fixtures
+        domain.call_center_config.case_type = cc_case_type
+
+        send_to_elasticsearch(
+            index='domains',
+            doc=domain.to_json(),
+        )
