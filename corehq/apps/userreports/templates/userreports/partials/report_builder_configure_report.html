@@ -132,7 +132,7 @@
 
             // True if validation messages should be shown on any and all fields
             this.showWarnings = ko.observable(false);
-            this.isValid= ko.computed(function(){
+            this.isValid = ko.computed(function(){
                 return Boolean(that.property() && that.existsInCurrentVersion() && that.displayText());
             });
             this.validate = function() {
