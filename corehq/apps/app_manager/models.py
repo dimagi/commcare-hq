@@ -5341,9 +5341,9 @@ class RemoteApp(ApplicationBase):
         app = cls(domain=domain, name=name, langs=[lang])
         return app
 
-    def create_profile(self, is_odk=False):
+    def create_profile(self, is_odk=False, langs=None):
         # we don't do odk for now anyway
-        return remote_app.make_remote_profile(self)
+        return remote_app.make_remote_profile(self, langs)
 
     def strip_location(self, location):
         return remote_app.strip_location(self.profile_url, location)
@@ -5359,6 +5359,13 @@ class RemoteApp(ApplicationBase):
 
         return location, content
 
+    def get_build_langs(self):
+        if self.build_profiles:
+            # return first profile, generated as part of lazy migration
+            return self.build_profiles[self.build_profiles.keys()[0]].langs
+        else:
+            return self.langs
+
     @classmethod
     def get_locations(cls, suite):
         for resource in suite.findall('*/resource'):
@@ -5373,11 +5380,11 @@ class RemoteApp(ApplicationBase):
         return 'suite/resource/location[@authority="local"]'
 
     def create_all_files(self, build_profile_id=None):
+        langs_for_build = self.get_build_langs()
         files = {
-            'profile.xml': self.create_profile(),
+            'profile.xml': self.create_profile(langs=langs_for_build),
         }
         tree = _parse_xml(files['profile.xml'])
-        langs_for_build = self.get_build_langs(build_profile_id)
 
         def add_file_from_path(path, strict=False, transform=None):
             added_files = []
@@ -5423,8 +5430,8 @@ class RemoteApp(ApplicationBase):
                 files.update({location: data})
         return files
 
-    def make_questions_map(self, build_profile_id=None):
-        langs_for_build = self.get_build_langs(build_profile_id)
+    def make_questions_map(self):
+        langs_for_build = self.get_build_langs()
         if self.copy_of:
             xmlns_map = {}
 
