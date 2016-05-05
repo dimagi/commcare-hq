@@ -26,16 +26,16 @@ class UtilTestCase(TestCase):
         self.assertEquals(cleaned, "+3242323421241")
 
     def test_get_contact(self):
-        contact = get_contact(self.case.get_id)
+        contact = get_contact('test-domain', self.case.get_id)
         self.assertEqual(contact.get_id, self.case.get_id)
         self.assertTrue(isinstance(contact, CommCareCase))
 
-        contact = get_contact(self.user.get_id)
+        contact = get_contact('test-domain', self.user.get_id)
         self.assertEqual(contact.get_id, self.user.get_id)
         self.assertTrue(isinstance(contact, CommCareUser))
 
         with self.assertRaises(ContactNotFoundException):
-            get_contact('this-id-should-not-be-found')
+            get_contact('test-domain', 'this-id-should-not-be-found')
 
     def test_apply_leniency(self):
         self.assertEqual('16175551234', apply_leniency(' 1 (617) 555-1234 '))

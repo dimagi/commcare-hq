@@ -60,7 +60,7 @@ from corehq.apps.sms.forms import (ForwardingRuleForm, BackendMapForm,
                                    DEFAULT, CUSTOM, SendRegistrationInviationsForm,
                                    WELCOME_RECIPIENT_NONE, WELCOME_RECIPIENT_CASE,
                                    WELCOME_RECIPIENT_MOBILE_WORKER, WELCOME_RECIPIENT_ALL, ComposeMessageForm)
-from corehq.apps.sms.util import get_contact, get_sms_backend_classes
+from corehq.apps.sms.util import get_contact, get_sms_backend_classes, ContactNotFoundException
 from corehq.apps.sms.messages import _MESSAGES
 from corehq.apps.smsbillables.utils import country_name_from_isd_code_or_empty as country_name_from_code
 from corehq.apps.groups.models import Group
@@ -70,6 +70,7 @@ from corehq.apps.domain.decorators import (
     domain_admin_required,
     require_superuser,
 )
+from corehq.form_processor.utils import is_commcarecase
 from corehq.messaging.smsbackends.telerivet.models import SQLTelerivetBackend
 from corehq.apps.translations.models import StandaloneTranslationDoc
 from corehq.util.dates import iso_string_to_datetime
@@ -438,7 +439,7 @@ def api_send_sms(request, domain):
             contact = vn.owner
         elif contact_id is not None:
             try:
-                contact = get_contact(contact_id)
+                contact = get_contact(domain, contact_id)
                 assert contact is not None
                 assert contact.domain == domain
             except Exception:
@@ -819,6 +820,20 @@ def chat_contact_list(request, domain):
     return HttpResponse(json.dumps(result))
 
 
+def get_contact_name_for_chat(contact, domain_obj):
+    if is_commcarecase(contact):
+        if domain_obj.custom_case_username:
+            contact_name = contact.get_case_property(custom_case_username)
+        else:
+            contact_name = contact.name
+    else:
+        if contact.first_name:
+            contact_name = contact.first_name
+        else:
+            contact_name = contact.raw_username
+    return contact_name
+
+
 @require_permission(Permissions.edit_data)
 @requires_privilege_with_fallback(privileges.OUTBOUND_SMS)
 def chat(request, domain, contact_id, vn_id=None):
@@ -843,13 +858,15 @@ def chat(request, domain, contact_id, vn_id=None):
         (_("All Time"), json_format_datetime(datetime(1970, 1, 1)))
     )
 
+    contact = get_contact(domain, contact_id)
+
     context = {
         "domain": domain,
         "contact_id": contact_id,
-        "contact": get_contact(contact_id),
+        "contact": contact,
+        "contact_name": get_contact_name_for_chat(contact, domain_obj),
         "use_message_counter": domain_obj.chat_message_count_threshold is not None,
         "message_count_threshold": domain_obj.chat_message_count_threshold or 0,
-        "custom_case_username": domain_obj.custom_case_username,
         "history_choices": history_choices,
         "vn_id": vn_id,
     }
@@ -876,16 +893,15 @@ class ChatMessageHistory(View, DomainViewMixin):
         if not self.contact_id:
             return None
 
-        contact = get_contact(self.contact_id)
-        if not contact or contact.domain != self.domain:
+        try:
+            return get_contact(self.domain, self.contact_id)
+        except ContactNotFoundException:
             return None
-
-        return contact
 
     @property
     @memoized
     def contact_name(self):
-        if self.contact.doc_type == 'CommCareCase':
+        if is_commcarecase(self.contact):
             if self.domain_object.custom_case_username:
                 return self.contact.get_case_property(self.domain_object.custom_case_username)
             else:
