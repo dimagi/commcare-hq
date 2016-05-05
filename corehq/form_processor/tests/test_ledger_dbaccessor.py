@@ -29,6 +29,9 @@ class LedgerDBAccessorTest(TestCase):
         self.case_one = self.factory.create_case()
         self.case_two = self.factory.create_case()
 
+    def tearDown(self):
+        FormProcessorTestUtils.delete_all_ledgers(DOMAIN)
+
     def _submit_ledgers(self, ledger_blocks):
         return submit_case_blocks(ledger_blocks, DOMAIN)
 
