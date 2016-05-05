@@ -99,15 +99,15 @@ class DomainInvoiceFactory(object):
             )
             do_not_invoice = True
 
-        for c in community_ranges:
+        for start_date, end_date in community_ranges:
             # create a new community subscription for each
             # date range that the domain did not have a subscription
             community_subscription = Subscription(
                 account=account,
                 plan_version=plan_version,
                 subscriber=self.subscriber,
-                date_start=c[0],
-                date_end=c[1],
+                date_start=start_date,
+                date_end=end_date,
                 do_not_invoice=do_not_invoice,
             )
             community_subscription.save()
