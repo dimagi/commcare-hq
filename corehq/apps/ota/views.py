@@ -18,6 +18,7 @@ from corehq.apps.ota.forms import PrimeRestoreCacheForm, AdvancedPrimeRestoreCac
 from corehq.apps.ota.tasks import prime_restore
 from corehq.apps.style.views import BaseB3SectionPageView
 from corehq.apps.users.models import CouchUser, CommCareUser
+from corehq.form_processor.exceptions import CaseNotFound
 from corehq.form_processor.serializers import CommCareCaseSQLSerializer, get_instance_from_data
 from corehq.pillows.mappings.case_search_mapping import CASE_SEARCH_MAX_RESULTS
 from corehq.tabs.tabclasses import ProjectSettingsTab
@@ -78,13 +79,18 @@ def search(request, domain):
 @login_or_digest_or_basic_or_apikey()
 def claim(request, domain):
     couch_user = CouchUser.from_django_user(request.user)
+    case_id = request.POST['case_id']
     if request.method == 'POST':
-        if request.session.get('last_claimed_case_id') == request.POST['case_id']:
+        if request.session.get('last_claimed_case_id') == case_id:
             return HttpResponse('You have already claimed that {}'.format(request.POST.get('case_type', 'case')),
                                 status=400)
-        claim_case(domain, couch_user.user_id, request.POST['case_id'],
-                   host_type=request.POST.get('case_type'), host_name=request.POST.get('case_name'))
-        request.session['last_claimed_case_id'] = request.POST['case_id']
+        try:
+            claim_case(domain, couch_user.user_id, case_id,
+                       host_type=request.POST.get('case_type'), host_name=request.POST.get('case_name'))
+        except CaseNotFound:
+            return HttpResponse('The case "{}" you are trying to claim was not found'.format(case_id),
+                                status=404)
+        request.session['last_claimed_case_id'] = case_id
     return HttpResponse(status=200)
 
 
