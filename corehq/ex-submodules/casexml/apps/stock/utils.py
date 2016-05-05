@@ -71,8 +71,8 @@ def get_current_ledger_state(case_ids, ensure_form_id=False):
     for state in states:
         sections = ret[state.case_id].setdefault(state.section_id, {})
         sections[state.product_id] = state
-    if ensure_form_id and not state.last_modified_form_id:
-        transaction = StockTransaction.latest(state.case_id, state.section_id, state.product_id)
-        state.last_modified_form_id = transaction.report.form_id
-        state.save()
+        if ensure_form_id and not state.last_modified_form_id:
+            transaction = StockTransaction.latest(state.case_id, state.section_id, state.product_id)
+            state.last_modified_form_id = transaction.report.form_id
+            state.save()
     return ret
