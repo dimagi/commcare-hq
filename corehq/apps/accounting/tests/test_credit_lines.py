@@ -146,7 +146,7 @@ class TestCreditLines(BaseInvoiceTestCase):
 
         other_subscription = generator.generate_domain_subscription(
             self.account,
-            self.domain,
+            other_domain,
             date_start=new_subscription_start,
             date_end=add_months_to_date(new_subscription_start, self.min_subscription_length),
         )
