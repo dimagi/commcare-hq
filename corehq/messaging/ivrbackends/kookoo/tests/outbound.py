@@ -7,7 +7,7 @@ from corehq.apps.reminders.models import (CaseReminderHandler,
     CASE_CRITERIA, CaseReminderEvent, FIRE_TIME_DEFAULT,
     EVENT_AS_SCHEDULE, MATCH_EXACT, RECIPIENT_OWNER)
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
-from corehq.form_processor.tests.utils import run_with_all_backends
+from corehq.form_processor.tests.utils import run_with_all_backends, FormProcessorTestUtils
 from corehq.messaging.ivrbackends.kookoo.models import SQLKooKooBackend
 from mock import patch
 from time import sleep
@@ -383,5 +383,6 @@ class KooKooTestCase(TouchformsTestCase):
         self.assertEqual(case.user_id, self.user2.get_id)
 
     def tearDown(self):
+        FormProcessorTestUtils.delete_all_cases(self.domain)
         self.ivr_backend.delete()
         super(KooKooTestCase, self).tearDown()
