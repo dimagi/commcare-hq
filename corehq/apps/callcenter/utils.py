@@ -229,7 +229,7 @@ def get_call_center_domains():
             .is_active()
             .is_snapshot(False)
             .filter(filters.term('call_center_config.enabled', True))
-            .fields(['name', 'default_timezone', 'call_center_config.case_type', 'call_center_config.use_fixtures'])
+            .source(['name', 'default_timezone', 'call_center_config.case_type', 'call_center_config.use_fixtures'])
             .run()
     )
 
