@@ -100,7 +100,7 @@
             });
             this.showDisplayTextError = ko.pureComputed(function(){
                 // This should also return true if the user has tried to submit the form
-                return self.showWarnings() || (!self.displayTextIsValid() && self.displayTextModifiedByUser());
+                return !self.displayTextIsValid() && (self.displayTextModifiedByUser() || self.showWarnings());
             });
 
 
