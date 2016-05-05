@@ -13,23 +13,14 @@ class LedgerDBCouch(LedgerDBInterface):
         return StockState.objects.filter(case_id=case_id)
 
     def _get_ledger(self, unique_ledger_reference):
-        from corehq.apps.commtrack.models import StockState
         try:
-            return StockState.objects.get(
-                case_id=unique_ledger_reference.case_id,
-                section_id=unique_ledger_reference.section_id,
-                product_id=unique_ledger_reference.entry_id,
+            return StockTransaction.latest(
+                case_id = unique_ledger_reference.case_id,
+                section_id = unique_ledger_reference.section_id,
+                product_id = unique_ledger_reference.entry_id,
             )
-        except StockState.DoesNotExist:
+        except StockTransaction.DoesNotExist:
             return None
-
-    def get_current_ledger_value(self, unique_ledger_reference):
-        latest_txn = StockTransaction.latest(
-            case_id=unique_ledger_reference.case_id,
-            section_id=unique_ledger_reference.section_id,
-            product_id=unique_ledger_reference.entry_id,
-        )
-        return latest_txn.stock_on_hand if latest_txn else 0
 
 
 class LedgerProcessorCouch(LedgerProcessorInterface):
@@ -89,7 +80,7 @@ def _get_model_for_stock_transaction(report, transaction_helper, ledger_db):
     )
 
     def lazy_original_balance():
-        return ledger_db.get_current_balance(_stock_transaction_to_unique_ledger_reference(txn))
+        return ledger_db.get_current_ledger_value(txn.ledger_reference)
 
     new_ledger_values = compute_ledger_values(
         lazy_original_balance, report.type,
@@ -103,9 +94,5 @@ def _get_model_for_stock_transaction(report, transaction_helper, ledger_db):
         txn.domain = report.domain
 
     # update the ledger DB in case later transactions reference the same ledger item
-    ledger_db.set_current_balance(_stock_transaction_to_unique_ledger_reference(txn), txn.stock_on_hand)
+    ledger_db.set_ledger(txn)
     return txn
-
-
-def _stock_transaction_to_unique_ledger_reference(txn):
-    return UniqueLedgerReference(case_id=txn.case_id, section_id=txn.section_id, entry_id=txn.product_id)
