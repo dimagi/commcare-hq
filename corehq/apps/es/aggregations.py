@@ -455,12 +455,29 @@ class DateHistogram(Aggregation):
             self.body['time_zone'] = timezone
 
 
+class NestedAggregation(Aggregation):
+    """
+    A special single bucket aggregation that enables aggregating nested documents.
+
+    :param path: Path to nested document
+    """
+    type = "nested"
+    result_class = FilterResult
+
+    def __init__(self, name, path):
+        self.name = name
+        self.body = {
+            "path": path
+        }
+
+
 AggregationTerm = namedtuple('AggregationTerm', ['name', 'field'])
 
 
-class NestedAggregationHelper(object):
+class NestedTermAggregationsHelper(object):
     """
-    Helper to run nested term-based queries (equivalent to SQL group-by clauses)
+    Helper to run nested term-based queries (equivalent to SQL group-by clauses).
+    This is not at all related to the ES 'nested aggregation'.
     """
 
     def __init__(self, base_query, terms):

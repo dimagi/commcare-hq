@@ -13,7 +13,7 @@ from corehq.apps.es.aggregations import (
     ExtendedStatsAggregation,
     TopHitsAggregation,
     MissingAggregation,
-)
+    NestedAggregation)
 from corehq.apps.es.es_query import HQESQuery, ESQuerySet
 from corehq.apps.es.tests.utils import ElasticTestMixin
 from corehq.elastic import SIZE_LIMIT
@@ -26,7 +26,7 @@ class TestAggregations(ElasticTestMixin, SimpleTestCase):
             HQESQuery('forms')\
                 .terms_aggregation('form.meta.userID', 'form.meta.userID')
 
-    def test_nested_aggregation(self):
+    def test_nesting_aggregations(self):
         json_output = {
             "query": {
                 "filtered": {
@@ -370,3 +370,32 @@ class TestAggregations(ElasticTestMixin, SimpleTestCase):
         res = ESQuerySet(example_response, query)
         output = res.aggregations.forms_by_date.raw_buckets
         self.assertEqual(output, expected_output)
+
+    def test_nested_aggregation(self):
+        json_output = {
+            "query": {
+                "filtered": {
+                    "filter": {
+                        "and": [
+                            {"match_all": {}}
+                        ]
+                    },
+                    "query": {"match_all": {}}
+                }
+            },
+            "aggs": {
+                "case_actions": {
+                    "nested": {
+                        "path": "actions"
+                    }
+                },
+            },
+            "size": SIZE_LIMIT
+        }
+        query = HQESQuery('cases').aggregation(
+            NestedAggregation(
+                'case_actions',
+                'actions',
+            )
+        )
+        self.checkQuery(query, json_output)
