@@ -13,6 +13,24 @@
     <script type="text/javascript">
         var defaultCalculationOptions = ["Count per Choice", "Sum", "Average"];
         var stringOnlyCalculationOptions = ["Count per Choice"];
+        var propertyOptions = {{ property_options|JSON }};
+        var optionsContainQuestions = _.any(propertyOptions, function (o) {
+            return o.type == 'question';
+        });
+        if (optionsContainQuestions) {
+            // Munge the property_options into the form expected by the questionsSelect binding.
+            propertyOptions = _.compact(_.map(propertyOptions, function (o) {
+                if (o.type === 'question') {
+                    return o.source;
+                } else if (o.type == 'meta') {
+                    return {
+                        value: o.source[0],
+                        label: o.text
+                    }
+                }
+            }));
+        }
+
         /**
          * Knockout view model representing a row in the filter property list
          * @constructor
@@ -27,28 +45,6 @@
             this.calculation = ko.observable("Count per Choice");
             this.dataSourceField = ko.observable("");
 
-            var rawOptions = {{ property_options|JSON }};
-            this.propertyOptions = ko.observableArray(rawOptions);
-            this.optionsContainQuestions = _.any(rawOptions, function (o) {
-                return o.type == 'question';
-            });
-            if (!this.optionsContainQuestions){
-                this.propertyOptions = ko.observableArray(rawOptions);
-            } else {
-                // Munge the property_options into the form expected by the questionsSelect binding.
-                this.propertyOptions = ko.observableArray(
-                    _.compact(_.map(that.propertyOptions(), function (o) {
-                        if (o.type === 'question') {
-                            return o.source;
-                        } else if (o.type == 'meta') {
-                            return {
-                                value: o.source[0],
-                                label: o.text
-                            }
-                        }
-                    }))
-                )
-            }
 
             this.dataType = ko.computed(function() {
                 // Returns type of Question, applicable only if optionsContainQuestions is true

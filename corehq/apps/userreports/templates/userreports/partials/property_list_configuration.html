@@ -84,7 +84,7 @@ TODO:
                     <!-- /ko -->
                     <!-- ko if: optionsContainQuestions -->
                     <input class="form-control" type="hidden" data-bind="
-                        questionsSelect: propertyOptions().concat(
+                        questionsSelect: propertyOptions.concat(
                             existsInCurrentVersion() ? [] : {value: dataSourceField(), label: ''}
                         ),
                         value: existsInCurrentVersion() ? property : dataSourceField,
