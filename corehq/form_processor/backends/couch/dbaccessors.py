@@ -54,7 +54,7 @@ class FormAccessorCouch(AbstractFormAccessor):
         return XFormInstance.get(form_id)
 
     @staticmethod
-    def get_forms(form_ids):
+    def get_forms(form_ids, ordered=False):
         return get_forms_by_id(form_ids)
 
     @staticmethod
