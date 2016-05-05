@@ -237,7 +237,6 @@ class ReportBuilderPaywall(ReportBuilderPaywallBase):
             self.request.guided_tour = tour.get_tour_data(self.request, step)
 
 
-
 class ReportBuilderPaywallActivatingTrial(ReportBuilderPaywallBase):
     template_name = "userreports/paywall/activating_trial.html"
     urlname = 'report_builder_paywall_activating_trial'
