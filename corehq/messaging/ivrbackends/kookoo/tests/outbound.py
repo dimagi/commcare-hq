@@ -1,4 +1,3 @@
-from casexml.apps.case.models import CommCareCase
 from corehq.apps.domain.models import Domain
 from corehq.apps.ivr.models import Call
 from corehq.apps.sms.tests.util import TouchformsTestCase
@@ -7,6 +6,8 @@ from corehq.apps.reminders.models import (CaseReminderHandler,
     METHOD_IVR_SURVEY, RECIPIENT_CASE, REMINDER_TYPE_DEFAULT,
     CASE_CRITERIA, CaseReminderEvent, FIRE_TIME_DEFAULT,
     EVENT_AS_SCHEDULE, MATCH_EXACT, RECIPIENT_OWNER)
+from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
+from corehq.form_processor.tests.utils import run_with_all_backends
 from corehq.messaging.ivrbackends.kookoo.models import SQLKooKooBackend
 from mock import patch
 from time import sleep
@@ -48,27 +49,13 @@ class KooKooTestCase(TouchformsTestCase):
         self.load_app("app1.json", dirname)
         self.load_app("app2.json", dirname)
 
-        self.reminder1 = CaseReminderHandler(
-            domain=self.domain,
-            active=True,
-            case_type="participant",
-            method=METHOD_IVR_SURVEY,
-            recipient=RECIPIENT_CASE,
-            sample_id=None,
-            user_group_id=None,
-            user_id=None,
-            case_id=None,
-            reminder_type=REMINDER_TYPE_DEFAULT,
-            submit_partial_forms=True,
-            include_case_side_effects=False,
-            max_question_retries=5,
-            start_condition_type=CASE_CRITERIA,
-            start_property="name",
-            start_value="case1",
-            start_date=None,
-            start_offset=0,
-            start_match_type=MATCH_EXACT,
-            events=[
+        self.reminder1 = (CaseReminderHandler
+            .create(self.domain, 'test1')
+            .set_case_criteria_start_condition('participant', 'name', MATCH_EXACT, 'case1')
+            .set_case_criteria_start_date()
+            .set_case_recipient()
+            .set_ivr_survey_content_type()
+            .set_schedule_manually(EVENT_AS_SCHEDULE, 1, [
                 CaseReminderEvent(
                     day_num=0,
                     fire_time=time(12,0),
@@ -83,50 +70,21 @@ class KooKooTestCase(TouchformsTestCase):
                     callback_timeout_intervals=[30],
                     form_unique_id=self.apps[0].modules[0].forms[1].unique_id,
                 ),
-            ],
-            schedule_length=1,
-            event_interpretation=EVENT_AS_SCHEDULE,
-            max_iteration_count=7,
-            until=None,
-            force_surveys_to_use_triggered_case=False,
-        )
+            ]).set_stop_condition(max_iteration_count=7)
+            .set_advanced_options(submit_partial_forms=True, max_question_retries=5))
         self.reminder1.save()
 
-        self.reminder2 = CaseReminderHandler(
-            domain=self.domain,
-            active=True,
-            case_type="participant",
-            method=METHOD_IVR_SURVEY,
-            recipient=RECIPIENT_OWNER,
-            sample_id=None,
-            user_group_id=None,
-            user_id=None,
-            case_id=None,
-            reminder_type=REMINDER_TYPE_DEFAULT,
-            submit_partial_forms=True,
-            include_case_side_effects=True,
-            max_question_retries=5,
-            start_condition_type=CASE_CRITERIA,
-            start_property="name",
-            start_value="case2",
-            start_date=None,
-            start_offset=0,
-            start_match_type=MATCH_EXACT,
-            events=[
-                CaseReminderEvent(
-                    day_num=0,
-                    fire_time=time(12,0),
-                    fire_time_type=FIRE_TIME_DEFAULT,
-                    callback_timeout_intervals=[30, 30],
-                    form_unique_id=self.apps[1].modules[0].forms[0].unique_id,
-                ),
-            ],
-            schedule_length=1,
-            event_interpretation=EVENT_AS_SCHEDULE,
-            max_iteration_count=7,
-            until=None,
-            force_surveys_to_use_triggered_case=False,
-        )
+        self.reminder2 = (CaseReminderHandler
+            .create(self.domain, 'test2')
+            .set_case_criteria_start_condition('participant', 'name', MATCH_EXACT, 'case2')
+            .set_case_criteria_start_date()
+            .set_case_owner_recipient()
+            .set_ivr_survey_content_type()
+            .set_daily_schedule(fire_time=time(12, 0), timeouts=[30, 30],
+                form_unique_id=self.apps[1].modules[0].forms[0].unique_id)
+            .set_stop_condition(max_iteration_count=7)
+            .set_advanced_options(submit_partial_forms=True, include_case_side_effects=True,
+                max_question_retries=5))
         self.reminder2.save()
 
     def kookoo_in(self, params):
@@ -147,17 +105,18 @@ class KooKooTestCase(TouchformsTestCase):
         url = "%s/kookoo/ivr_finished/" % self.live_server_url
         return urllib2.urlopen(url, params).read()
 
+    @run_with_all_backends
     def testOutbound(self):
         # Send an outbound call using self.reminder1 to self.case
         # and answer it
         CaseReminderHandler.now = datetime(2014, 6, 23, 10, 0)
-        self.case = CommCareCase.get(register_sms_contact(
+        self.case = CaseAccessors(self.domain).get_case(register_sms_contact(
             self.domain,
             'participant',
             'case1',
-            self.user1._id,
+            self.user1.get_id,
             '91000',
-            owner_id=self.groups[0]._id,
+            owner_id=self.groups[0].get_id,
             contact_ivr_backend_id='MOBILE_BACKEND_KOOKOO'
         ))
         CaseReminderHandler.now = datetime(2014, 6, 23, 12, 0)
@@ -209,7 +168,7 @@ class KooKooTestCase(TouchformsTestCase):
         form = self.get_last_form_submission()
         self.assertFormQuestionEquals(form, "how_feel", "1")
         self.assertFormQuestionEquals(form, "take_meds", "2")
-        case = CommCareCase.get(self.case._id)
+        case = CaseAccessors(self.domain).get_case(self.case.case_id)
         self.assertCasePropertyEquals(case, "how_feel", "1")
         self.assertCasePropertyEquals(case, "take_meds", "2")
 
@@ -269,18 +228,18 @@ class KooKooTestCase(TouchformsTestCase):
         # of the case)
 
         # Allow sending to unverified numbers
-        self.domain_obj = Domain.get(self.domain_obj._id)
+        self.domain_obj = Domain.get(self.domain_obj.get_id)
         self.domain_obj.send_to_duplicated_case_numbers = True
         self.domain_obj.save()
 
         CaseReminderHandler.now = datetime(2014, 6, 24, 10, 0)
-        self.case = CommCareCase.get(register_sms_contact(
+        self.case = CaseAccessors(self.domain).get_case(register_sms_contact(
             self.domain,
             'participant',
             'case2',
-            self.user1._id,
+            self.user1.get_id,
             '91003',
-            owner_id=self.groups[0]._id,
+            owner_id=self.groups[0].get_id,
         ))
         reminder = self.reminder2.get_reminder(self.case)
         self.assertEquals(reminder.next_fire, datetime(2014, 6, 24, 12, 0))
@@ -355,11 +314,11 @@ class KooKooTestCase(TouchformsTestCase):
         form = self.get_last_form_submission()
         self.assertFormQuestionEquals(form, "how_feel", "2")
         self.assertFormQuestionEquals(form, "take_meds", "1")
-        self.assertEqual(form.form["meta"]["userID"], self.user1._id)
-        case = CommCareCase.get(self.case._id)
+        self.assertEqual(form.form_data["meta"]["userID"], self.user1.get_id)
+        case = CaseAccessors(self.domain).get_case(self.case.case_id)
         self.assertCasePropertyEquals(case, "how_feel", "2")
         self.assertCasePropertyEquals(case, "take_meds", "1")
-        self.assertEqual(case.user_id, self.user1._id)
+        self.assertEqual(case.user_id, self.user1.get_id)
 
         old_call1 = call1
         old_call2 = call2
@@ -417,11 +376,11 @@ class KooKooTestCase(TouchformsTestCase):
         form = self.get_last_form_submission()
         self.assertFormQuestionEquals(form, "how_feel", "1")
         self.assertFormQuestionEquals(form, "take_meds", "2")
-        self.assertEqual(form.form["meta"]["userID"], self.user2._id)
-        case = CommCareCase.get(self.case._id)
+        self.assertEqual(form.form_data["meta"]["userID"], self.user2.get_id)
+        case = CaseAccessors(self.domain).get_case(self.case.case_id)
         self.assertCasePropertyEquals(case, "how_feel", "1")
         self.assertCasePropertyEquals(case, "take_meds", "2")
-        self.assertEqual(case.user_id, self.user2._id)
+        self.assertEqual(case.user_id, self.user2.get_id)
 
     def tearDown(self):
         self.ivr_backend.delete()

@@ -200,7 +200,7 @@ def answer_question(call_log_entry, recipient, input_data, logged_subevent=None)
     if validate_answer(input_data, current_q):
         answer_is_valid = True
         try:
-            responses = _get_responses(recipient.domain, recipient._id,
+            responses = _get_responses(recipient.domain, recipient.get_id,
                 input_data, yield_responses=True,
                 session_id=call_log_entry.xforms_session_id)
         except TouchformsError as e:

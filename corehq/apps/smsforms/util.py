@@ -20,4 +20,3 @@ def process_sms_form_complete(session, form, completed):
 
     if not completed:
         xform.set_partial_submission()
-    xform.save()
