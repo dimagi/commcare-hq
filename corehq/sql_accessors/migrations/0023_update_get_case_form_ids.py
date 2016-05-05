@@ -14,7 +14,7 @@ migrator = RawSQLMigration(('corehq', 'sql_accessors', 'sql_templates'), {
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('sql_accessors', '0021_get_ledger_values_for_cases'),
+        ('sql_accessors', '0022_last_modified_form_id'),
     ]
 
     operations = [
