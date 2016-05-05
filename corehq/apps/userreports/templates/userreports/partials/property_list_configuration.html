@@ -91,7 +91,7 @@ TODO:
                         attr: {disabled: !existsInCurrentVersion()}
                     "/>
                     <!-- /ko -->
-                    <label class="help-block" data-bind="if: $parent.showWarnings() && !isNotBlank()">
+                    <label class="help-block" data-bind="if: $parent.showWarnings() && !property()">
                         {% trans "Please select a property." %}</label>
                     {# This is gross and I hate it #}
                     <label class="help-block" style="white-space: pre-wrap;" data-bind="if: !existsInCurrentVersion()">
@@ -102,11 +102,13 @@ TODO:
                     </label>
                 </td>
                 <td class="form-group">
-                    <input type="text" class="form-control" data-bind="
-                        value: displayText,
-                        attr: {disabled: !existsInCurrentVersion()},
-                        event: {keydown: function(){$data.userModifiedDisplayText = true; return true;}}
-                    ">
+                    <div data-bind="css: {'has-error': showDisplayTextError}">
+                        <input type="text" class="form-control" data-bind="
+                            textInput: inputBoundDisplayText,
+                            attr: {disabled: !isEditable},
+                        ">
+                        <span data-bind="if: showDisplayTextError" class="help-block">This field is required</span>
+                    </div>
                 </td>
                 <!--ko if: $parent.hasFormatCol -->
                 <td>
@@ -154,4 +156,6 @@ TODO:
             </label>
         </div>
     </div>
+
 </div>
+
