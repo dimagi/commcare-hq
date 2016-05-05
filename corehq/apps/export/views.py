@@ -152,6 +152,11 @@ class BaseExportView(BaseProjectDataView):
     export_type = None
     is_async = True
 
+    @use_bootstrap3
+    @use_jquery_ui
+    def dispatch(self, *args, **kwargs):
+        return super(BaseExportView, self).dispatch(*args, **kwargs)
+
     @property
     def parent_pages(self):
         return [{
