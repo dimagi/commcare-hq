@@ -18,6 +18,7 @@ TEST_DOMAIN = 'commtrack-test1'
 
 class DataSourceTest(object):
     # fixme: need to make a test again
+
     @classmethod
     def setUpClass(cls):
 

@@ -7,6 +7,7 @@ import traceback
 #placeholder for doing blocking vs. async via celery
 BLOCKING = True
 
+
 def process_dots_submission(sender, xform, **kwargs):
     from pact.tasks import recalculate_dots_data, eval_dots_block
     try:

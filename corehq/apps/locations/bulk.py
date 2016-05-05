@@ -24,6 +24,7 @@ def top_level_location_types(domain):
 
 
 class LocationImporter(object):
+
     def __init__(self, domain, excel_importer):
         self.domain = domain
         self.excel_importer = excel_importer

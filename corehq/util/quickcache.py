@@ -12,6 +12,7 @@ logger = logging.getLogger('quickcache')
 
 
 class CacheWithTimeout(namedtuple('CacheWithTimeout', ['cache', 'timeout'])):
+
     def get(self, key, default=None):
         return self.cache.get(key, default=default)
 
@@ -32,6 +33,7 @@ class TieredCache(object):
     TieredCache.set doesn't accept a timeout parameter
 
     """
+
     def __init__(self, caches):
         self.caches = caches
 
@@ -60,6 +62,7 @@ class TieredCache(object):
 
 
 class QuickCache(object):
+
     def __init__(self, fn, vary_on, cache):
         self.fn = fn
         self.cache = cache
@@ -162,6 +165,7 @@ class SkippableQuickCache(QuickCache):
     """
     QuickCache extension that allows skipping the cache base on a function argument.
     """
+
     def __init__(self, fn, vary_on, cache, skip_arg=None):
         super(SkippableQuickCache, self).__init__(fn, vary_on, cache)
 

@@ -370,6 +370,7 @@ class StockState(models.Model):
     stock_on_hand = models.DecimalField(max_digits=20, decimal_places=5, default=Decimal(0))
     daily_consumption = models.DecimalField(max_digits=20, decimal_places=5, null=True)
     last_modified_date = models.DateTimeField()
+    last_modified_form_id = models.CharField(max_length=100, null=True)
     sql_product = models.ForeignKey(SQLProduct)
     sql_location = models.ForeignKey(SQLLocation, null=True)
 

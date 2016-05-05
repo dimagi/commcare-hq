@@ -611,6 +611,7 @@ def export_all_form_metadata(req, domain):
 
     return export_response(open(tmp_path), format, "%s_forms" % domain)
 
+
 @login_or_digest
 @require_form_export_permission
 @require_GET
@@ -1120,6 +1121,7 @@ def _render_report_configs(request, configs, domain, owner_id, couch_user, email
         "report_type": _("once off report") if once else _("scheduled report"),
     }), excel_attachments
 
+
 @login_and_domain_required
 @permission_required("is_superuser")
 def view_scheduled_report(request, domain, scheduled_report_id):
@@ -1382,6 +1384,7 @@ def generate_case_export_payload(domain, include_closed, format, group, user_fil
         case_ids = get_open_case_ids_in_domain(domain)
 
     class stream_cases(object):
+
         def __init__(self, all_case_ids):
             self.all_case_ids = all_case_ids
 

@@ -39,6 +39,7 @@ def ANY_IN_MULTISELECT(input, reference):
     """
     return any([subval in (input or '').split(' ') for subval in reference])
 
+
 class IntegerPropertyReference(object):
     """
     Returns the integer value of the property_path passed in.
@@ -49,6 +50,7 @@ class IntegerPropertyReference(object):
     Accepts an optional transform lambda/method that would modify the
     resulting integer before returning it.
     """
+
     def __init__(self, property_path, transform=None):
         self.property_path = property_path
         self.transform = transform
@@ -58,6 +60,7 @@ class IntegerPropertyReference(object):
         if value and self.transform:
             value = self.transform(value)
         return value
+
 
 def requires_property_value(operator):
     return not (operator == ANY or operator == SKIPPED)
@@ -121,6 +124,7 @@ class FilteredFormPropertyCalculator(fluff.Calculator):
                 self.operator(form.get_data(self.property_path), self.property_value)
             )
         )
+
 
 class FormPropertyFilter(Filter):
     """

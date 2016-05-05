@@ -45,18 +45,22 @@
 trunk: master
 name: autostaging
 branches:
-  - calculatedIcons # Sravan 3/2
   - vellum-staging # J$ 11/13
   - show-form-case-refs-in-summary # j$ 1/29
 #  - revamp-multimedia # Jenny 2/16
-  - certificate-validation # Cal 3/10
+#  - app-blobs-testing+lang-profiles # Cal 5/4
+#  - inline-editing+lang-profiles # Cal 5/4
   - inline-editing # Jenny 4/9
-  - uatbc/case-search-es         # FR 4/12
+#  - lang-profiles+report-builder-paywall
+#  - lang-profiles  # Cal 5/4
+  - report-builder-paywall  # Noah 4/29
   - app-blobs-testing # daniel 4/20
   - j2me # Nick P 4/26
   - b3-groups  # Biyeun 4/26
   - b3-app-multimedia  # Biyeun 4/27
-  - report-builder-paywall  # Noah 4/29
+  - notifications # j$ 5/4
+
+  - calculatedIcons # Sravan 3/2
 submodules:
   submodules/touchforms-src:
     # let's leave this here even when empty

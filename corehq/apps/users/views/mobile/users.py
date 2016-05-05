@@ -314,6 +314,7 @@ def set_commcare_user_group(request, domain):
     group.add_user(user)
     return HttpResponseRedirect(reverse(MobileWorkerListView.urlname, args=[domain]))
 
+
 @require_can_edit_commcare_users
 def archive_commcare_user(request, domain, user_id, is_active=False):
     can_add_extra_users = can_add_extra_mobile_workers(request)
@@ -332,6 +333,7 @@ def archive_commcare_user(request, domain, user_id, is_active=False):
             action=_("Reactivated") if user.is_active else _("Deactivated"),
         )
     )))
+
 
 @require_can_edit_commcare_users
 @require_POST
@@ -357,6 +359,7 @@ def update_user_groups(request, domain, couch_user_id):
         messages.error(request, _("Form not valid. A group may have been deleted while you were viewing this page"
                                   "Please try again."))
     return HttpResponseRedirect(reverse(EditCommCareUserView.urlname, args=[domain, couch_user_id]))
+
 
 @require_can_edit_commcare_users
 @require_POST
@@ -817,7 +820,9 @@ def user_upload_job_poll(request, domain, download_id, template="users/mobile/pa
         'on_complete_long': _('Mobile Worker upload has finished'),
 
     })
+
     class _BulkUploadResponseWrapper(object):
+
         def __init__(self, context):
             results = context.get('result', defaultdict(lambda: []))
             self.response_rows = results['rows']

@@ -14,6 +14,7 @@ from corehq.apps.app_manager.xform import namespaces, _make_elem
 from corehq.apps.reports.formdetails.readable import FormQuestion
 from custom.ucla.forms import TaskCreationForm
 
+
 @require_deploy_apps
 def task_creation(request, domain, app_id, module_id, form_id):
     '''
@@ -50,6 +51,7 @@ def task_creation(request, domain, app_id, module_id, form_id):
         return response
     else:
         return HttpResponse("GET or POST only.", content_type="text/plain")
+
 
 def _ucla_form_modifier(form, question_ids):
 

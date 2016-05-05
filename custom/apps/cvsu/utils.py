@@ -5,6 +5,7 @@ OUTREACH_FORM_XMLNS = 'http://openrosa.org/formdesigner/B5C415BB-456B-49BE-A7AF-
 
 
 class CVSUFilters(object):
+
     def __init__(self, form):
         self.form = form['form']
         self.xmlns = form['xmlns']

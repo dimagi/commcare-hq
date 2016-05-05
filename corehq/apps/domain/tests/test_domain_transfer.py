@@ -15,6 +15,7 @@ from corehq.apps.domain.exceptions import InactiveTransferDomainException
 
 
 class BaseDomainTest(TestCase):
+
     def setUp(self):
         self.client = Client()
 
@@ -129,6 +130,7 @@ class TestTransferDomainModel(BaseDomainTest):
 
 
 class TestTransferDomainViews(BaseDomainTest):
+
     def setUp(self):
         super(TestTransferDomainViews, self).setUp()
         self.transfer = TransferDomainRequest(

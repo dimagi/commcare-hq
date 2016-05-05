@@ -29,8 +29,10 @@ def cc_user_domain(domain):
     sitewide_domain = settings.HQ_ACCOUNT_ROOT 
     return ("%s.%s" % (domain, sitewide_domain)).lower()
 
+
 def format_username(username, domain):
     return "%s@%s" % (username.lower(), cc_user_domain(domain))
+
 
 def normalize_username(username, domain=None):
     from django.core.validators import validate_email
@@ -44,6 +46,7 @@ def normalize_username(username, domain=None):
         validate_email("%s@dimagi.com" % username)
 
     return username
+
 
 def raw_username(username):
     """
@@ -114,6 +117,7 @@ def django_user_from_couch_id(id):
     django_id = couch_rep["django_user"]["id"]
     return User.objects.get(id=django_id)
 
+
 def doc_value_wrapper(doc_cls, value_cls):
     """
     Wrap both the doc and the value
@@ -136,6 +140,7 @@ def doc_value_wrapper(doc_cls, value_cls):
         doc_inst = doc_cls.wrap(doc)
         return doc_inst, value_inst
     return wrapper
+
 
 def user_data_from_registration_form(xform):
     """

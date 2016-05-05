@@ -92,6 +92,7 @@ class CouchAppsPreindexPlugin(PreindexPlugin):
     to register a module as a couchapps root
 
     """
+
     def __init__(self, app_label, file, app_db_map=None):
         self.app_label = app_label
         self.dir = os.path.abspath(os.path.dirname(file))
@@ -117,6 +118,7 @@ class ExtraPreindexPlugin(PreindexPlugin):
     """
     ExtraPreindexPlugin.register('myapp', __file__, <list of db slugs to sync to>)
     """
+
     def __init__(self, app_label, file, db_names=None):
         self.app_label = app_label
         self.dir = os.path.abspath(os.path.dirname(file))

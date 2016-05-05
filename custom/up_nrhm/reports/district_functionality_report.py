@@ -16,8 +16,6 @@ class DistrictFunctionalityReport(GenericTabularReport, DatespanMixin, CustomPro
     slug = "district_functionality_report"
     no_value = '--'
 
-    is_bootstrap3 = True
-
     def get_blocks_for_district(self):
         blocks = []
         for location in HierarchySqlData(config={'domain': self.domain}).get_data():

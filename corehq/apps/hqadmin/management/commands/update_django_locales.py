@@ -4,6 +4,7 @@ from django.conf import settings
 from django.core.management import BaseCommand
 import django
 
+
 class Command(BaseCommand):
     help = "Update django locales for three-digit codes"
     args = ""

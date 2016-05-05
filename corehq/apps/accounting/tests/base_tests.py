@@ -6,6 +6,7 @@ from django_prbac.models import Role
 
 
 class BaseAccountingTest(TestCase):
+
     @classmethod
     def setUpClass(cls):
         Role.get_cache().clear()

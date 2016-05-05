@@ -11,16 +11,19 @@ class DataSourceProvider(object):
 
 
 class DynamicDataSourceProvider(DataSourceProvider):
+
     def get_data_sources(self):
         return filter(lambda config: not config.is_deactivated, DataSourceConfiguration.all())
 
 
 class StaticDataSourceProvider(DataSourceProvider):
+
     def get_data_sources(self):
         return StaticDataSourceConfiguration.all()
 
 
 class MockDataSourceProvider(DataSourceProvider):
     # for testing only
+
     def get_data_sources(self):
         return []

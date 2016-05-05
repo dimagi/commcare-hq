@@ -34,6 +34,7 @@ class AttributeGetter(object):
     """
     If you need to do something fancy in your group_by you would use this.
     """
+
     def __init__(self, attribute, getter_function=None):
         """
         attribute is what the attribute is set as in the fluff indicator doc.
@@ -241,6 +242,7 @@ class IndicatorDocument(schema.Document):
         for emitter_name in emitter_names:
             class NormalizedEmittedValue(object):
                 """Normalize the values to the dictionary form to allow comparison"""
+
                 def __init__(self, value):
                     if isinstance(value, dict):
                         self.value = value

@@ -43,6 +43,7 @@ logger = logging.getLogger(__name__)
 
 REDIRECT_FIELD_NAME = 'next'
 
+
 def load_domain(req, domain):
     domain_name = normalize_domain_name(domain)
     domain = Domain.get_by_name(domain_name)
@@ -50,6 +51,7 @@ def load_domain(req, domain):
     return domain_name, domain
 
 ########################################################################################################
+
 
 def _redirect_for_login_or_domain(request, redirect_field_name, login_url):
     path = urlquote(request.get_full_path())
@@ -113,6 +115,7 @@ def login_and_domain_required(view_func):
 
 
 class LoginAndDomainMixin(object):
+
     @method_decorator(login_and_domain_required)
     def dispatch(self, *args, **kwargs):
         return super(LoginAndDomainMixin, self).dispatch(*args, **kwargs)
@@ -213,6 +216,7 @@ def two_factor_check(api_key):
         return _inner
     return _outer
 
+
 def cls_to_view(additional_decorator=None):
     def decorator(func):
         def __outer__(cls, request, *args, **kwargs):
@@ -298,6 +302,7 @@ def _get_username_from_request(request):
 # is not defined - people may forget to do this, because it's not a standard, defined Django
 # config setting
 
+
 def domain_admin_required_ex(redirect_page_name=None):
     # todo: this is weirdly similar but different to require_permission. they should probably be combined
     if redirect_page_name is None:
@@ -344,6 +349,7 @@ require_superuser = permission_required("is_superuser", login_url='/no_permissio
 cls_require_superusers = cls_to_view(additional_decorator=require_superuser)
 
 cls_require_superuser_or_developer = cls_to_view(additional_decorator=require_superuser_or_developer)
+
 
 def require_previewer(view_func):
     def shim(request, *args, **kwargs):

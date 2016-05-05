@@ -61,8 +61,6 @@ class PactDOTReport(GenericTabularReport, CustomProjectReport, ProjectReportPara
     flush_layout = True
     fields = ['pact.reports.dot.PactDOTPatientField', 'corehq.apps.reports.filters.dates.DatespanFilter']
 
-    is_bootstrap3 = True
-
     @property
     def report_context(self):
         ret = {}

@@ -158,7 +158,6 @@ class Command(LabelCommand):
             )]
             self.lenient_bulk_save(UserRole, roles)
 
-
         if options['include_sync_logs']:
             print 'copying sync logs'
             for user_id in user_ids:

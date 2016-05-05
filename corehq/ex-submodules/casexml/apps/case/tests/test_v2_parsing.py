@@ -150,7 +150,6 @@ class Version2CaseParsingTest(TestCase):
             self.assertEqual(const.CASE_ACTION_INDEX, index_action.action_type)
             self.assertEqual(2, len(index_action.indices))
 
-
         # quick test for ota restore
         v2response = xml.get_case_xml(case, [const.CASE_ACTION_CREATE, const.CASE_ACTION_UPDATE], V2)
         expected_v2_response = """

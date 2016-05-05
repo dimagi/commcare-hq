@@ -40,7 +40,6 @@ class GSIDSQLReport(SummingSqlTabularReport, CustomProjectReport, DatespanMixin)
     exportable = True
     emailable = True
     default_aggregation = "clinic"
-    is_bootstrap3 = True
 
     @use_nvd3
     def bootstrap3_dispatcher(self, request, *args, **kwargs):
@@ -465,6 +464,7 @@ class GSIDSQLByDayReport(GSIDSQLReport):
             chart.add_dataset(row[date_index-1] + "(" + row[date_index] + ")", data_points)
         return [chart]
 
+
 class GSIDSQLTestLotsReport(GSIDSQLReport):
     name = "Test Lots Report"
     slug = "test_lots_sql"
@@ -516,7 +516,6 @@ class GSIDSQLTestLotsReport(GSIDSQLReport):
         else:
             return self.test_types         
 
-    
     @property
     def rows(self):
         test_lots_map = self.test_lots_map
@@ -711,7 +710,6 @@ class GSIDSQLByAgeReport(GSIDSQLReport):
 class PatientMapReport(GenericMapReport, CustomProjectReport):
     name = "Patient Summary (Map)"
     slug = "patient_summary_map"
-    is_bootstrap3 = True
 
     fields = ['custom.apps.gsid.reports.TestField', 
               'corehq.apps.reports.filters.dates.DatespanFilter', 

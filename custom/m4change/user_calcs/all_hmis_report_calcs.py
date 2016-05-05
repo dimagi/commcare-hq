@@ -129,6 +129,7 @@ class InfantsBornToHivInfectedWomenReceivedHivTestLt18Months(fluff.Calculator):
 
 
 class InfantsBornToHivInfectedWomenReceivedHivTestGte18Months(fluff.Calculator):
+
     @fluff.date_emitter
     def total(self, form):
         if form.xmlns == PMTCT_CLIENTS_FORM and form.form.get("infant_rapid_test", None) is not None:

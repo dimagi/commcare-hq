@@ -67,7 +67,6 @@ WorkerActivityReportData = namedtuple('WorkerActivityReportData', [
 
 class WorkerMonitoringReportTableBase(GenericTabularReport, ProjectReport, ProjectReportParametersMixin):
     exportable = True
-    is_bootstrap3 = True
 
     def get_user_link(self, user):
         user_link = self.get_raw_user_link(user)
@@ -96,6 +95,7 @@ class WorkerMonitoringCaseReportTableBase(WorkerMonitoringReportTableBase):
 
 
 class WorkerMonitoringFormReportTableBase(WorkerMonitoringReportTableBase):
+
     def get_raw_user_link(self, user):
         params = {
             "form_unknown": self.request.GET.get("form_unknown", ''),
@@ -189,6 +189,7 @@ class CaseActivityReport(WorkerMonitoringCaseReportTableBase):
                      "user is part of a case sharing group.")
 
     _default_landmarks = [30, 60, 90]
+
     @property
     @memoized
     def landmarks(self):
@@ -199,6 +200,7 @@ class CaseActivityReport(WorkerMonitoringCaseReportTableBase):
         return [datetime.timedelta(days=l) for l in landmarks]
 
     _default_milestone = 120
+
     @property
     @memoized
     def milestone(self):
@@ -362,6 +364,7 @@ class CaseActivityReport(WorkerMonitoringCaseReportTableBase):
         return landmarks_aggregation
 
     class Row(object):
+
         def __init__(self, report, user, bucket):
             self.report = report
             self.user = user
@@ -391,6 +394,7 @@ class CaseActivityReport(WorkerMonitoringCaseReportTableBase):
             return self.report.get_user_link(self.user)
 
     class TotalRow(object):
+
         def __init__(self, rows, header):
             self.rows = rows
             self._header = header
@@ -985,14 +989,13 @@ class FormCompletionVsSubmissionTrendsReport(WorkerMonitoringFormReportTableBase
             return ", ".join(status)
 
     def _view_form_link(self, instance_id):
-        return '<a class="btn" href="%s">View Form</a>' % absolute_reverse(
+        return '<a class="btn btn-default" href="%s">View Form</a>' % absolute_reverse(
             'render_form_data', args=[self.domain, instance_id])
 
 
 class WorkerMonitoringChartBase(ProjectReport, ProjectReportParametersMixin):
     flush_layout = True
-    report_template_path = "reports/async/bootstrap2/basic.html"
-    is_bootstrap3 = True
+    report_template_path = "reports/async/basic.html"
 
 
 class WorkerActivityTimes(WorkerMonitoringChartBase,

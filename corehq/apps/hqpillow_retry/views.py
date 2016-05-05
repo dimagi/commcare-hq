@@ -42,7 +42,7 @@ class PillowErrorsReport(GenericTabularReport, DatespanMixin, GetParamsMixin):
     section_name = _("ADMINREPORT")
     asynchronous = False
     ajax_pagination = True
-    base_template = 'reports/bootstrap3/base_template.html'
+    base_template = 'reports/base_template.html'
     needs_filters = False
 
     fields = (
@@ -50,8 +50,6 @@ class PillowErrorsReport(GenericTabularReport, DatespanMixin, GetParamsMixin):
     )
 
     report_template_path = 'hqpillow_retry/pillow_errors.html'
-
-    is_bootstrap3 = True
 
     @property
     def headers(self):

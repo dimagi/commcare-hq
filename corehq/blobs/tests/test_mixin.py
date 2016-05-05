@@ -448,6 +448,7 @@ class FakeCouchDocument(mod.BlobMixin, Document):
             dbname = "commcarehq_test"
 
             class server:
+
                 @staticmethod
                 def next_uuid():
                     return uuid.uuid4().hex

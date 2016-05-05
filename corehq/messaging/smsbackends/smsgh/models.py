@@ -14,6 +14,7 @@ class SMSGHException(Exception):
 
 
 class SQLSMSGHBackend(SQLSMSBackend):
+
     class Meta:
         app_label = 'sms'
         proxy = True

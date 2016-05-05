@@ -78,6 +78,7 @@ def export_response(file, format, filename, checkpoint=None):
 
     return response
 
+
 def export_raw_data(export_tag, filename=None):
     # really this shouldn't be here, but keeping it for now
     from couchforms.models import XFormInstance

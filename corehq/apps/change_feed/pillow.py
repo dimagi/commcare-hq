@@ -19,6 +19,7 @@ class KafkaProcessor(PillowProcessor):
     """
     Processor that pushes changes to Kafka
     """
+
     def __init__(self, kafka, data_source_type, data_source_name):
         self._kafka = kafka
         self._producer = ChangeProducer(self._kafka)

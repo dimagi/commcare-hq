@@ -21,8 +21,6 @@ class AlertReport(GenericTabularReport, CustomProjectReport, ProjectReportParame
     exportable = True
     base_template = 'ilsgateway/base_template.html'
 
-    is_bootstrap3 = True
-
     @use_nvd3
     def bootstrap3_dispatcher(self, request, *args, **kwargs):
         super(AlertReport, self).bootstrap3_dispatcher(request, *args, **kwargs)
