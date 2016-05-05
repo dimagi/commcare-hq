@@ -40,8 +40,8 @@ $(function () {
                             <th>Content</th>
                             <th>URL</th>
                             <th>Type</th>
-                            <th>Activate Notification</th>
-                            <th>Remove Notification</th>
+                            <th>Activate/Deactivate</th>
+                            <th>Remove</th>
                         </tr>
                     </thead>
                     <tbody data-bind="foreach: alerts">
@@ -54,14 +54,15 @@ $(function () {
                                 <form method="post" action="">
                                     {% csrf_token %}
                                     <input name="alert_id" type="hidden" data-bind="value: id">
-                                    <button type="submit" name="activate" class="btn btn-success" data-bind="disable: isActive">Activate</button>
+                                    <button type="submit" name="activate" class="btn btn-success" data-bind="visible: !isActive">Activate</button>
+                                    <button type="submit" name="deactivate" class="btn btn-danger" data-bind="visible: isActive">Deactivate</button>
                                 </form>
                             </td>
                             <td>
                                 <form method="post" action="">
                                     {% csrf_token %}
                                     <input name="alert_id" type="hidden" data-bind="value: id">
-                                    <button type="submit" name="remove" class="btn btn-danger" data-bind="disable: isActive">Remove</button>
+                                    <button type="submit" name="remove" class="btn btn-danger" data-bind="disable: isActive">Delete</button>
                                 </form>
                             </td>
                         </tr>
