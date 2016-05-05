@@ -226,11 +226,15 @@ def is_midnight_for_domain(midnight_form_domain, error_margin=15, current_time=N
 def get_call_center_domains():
     result = (
         DomainES()
-            .is_active()
-            .is_snapshot(False)
-            .filter(filters.term('call_center_config.enabled', True))
-            .source(['name', 'default_timezone', 'call_center_config.case_type', 'call_center_config.use_fixtures'])
-            .run()
+        .is_active()
+        .is_snapshot(False)
+        .filter(filters.term('call_center_config.enabled', True))
+        .source([
+            'name',
+            'default_timezone',
+            'call_center_config.case_type',
+            'call_center_config.use_fixtures'])
+        .run()
     )
 
     def to_domain_lite(hit):
