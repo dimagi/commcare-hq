@@ -13,6 +13,7 @@ class Notification(models.Model):
     created = models.DateTimeField(auto_now_add=True, db_index=True)
     users_read = models.ManyToManyField(User)
     is_active = models.BooleanField(default=False)
+    activated = models.DateTimeField(db_index=True, null=True, blank=True)
 
     class Meta:
-        ordering = ["-created"]
+        ordering = ["-activated"]

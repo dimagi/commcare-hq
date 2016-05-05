@@ -1,3 +1,5 @@
+import datetime
+
 from django.core.urlresolvers import reverse
 from django.http import HttpResponse
 from django.utils.decorators import method_decorator
@@ -68,10 +70,10 @@ class ManageNotificationView(BasePageView):
                 'content': alert.content,
                 'url': alert.url,
                 'type': alert.get_type_display(),
-                'created': unicode(alert.created),
+                'activated': unicode(alert.activated),
                 'isActive': alert.is_active,
                 'id': alert.id,
-            } for alert in Notification.objects.order_by('-created')[:10]],
+            } for alert in Notification.objects.order_by('-created').all()],
             'form': self.create_form,
         }
 
@@ -85,10 +87,12 @@ class ManageNotificationView(BasePageView):
         elif 'activate' in request.POST:
             note = Notification.objects.filter(pk=request.POST.get('alert_id')).first()
             note.is_active = True
+            note.activated = datetime.datetime.now()
             note.save()
         elif 'deactivate' in request.POST:
             note = Notification.objects.filter(pk=request.POST.get('alert_id')).first()
             note.is_active = False
+            note.activated = None
             note.save()
         elif 'remove' in request.POST:
             Notification.objects.filter(pk=request.POST.get('alert_id')).delete()
