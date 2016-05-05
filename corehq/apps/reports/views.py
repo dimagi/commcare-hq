@@ -1234,7 +1234,7 @@ def case_forms(request, domain, case_id):
         }
 
     slice = list(reversed(case.xform_ids))[start_range:end_range]
-    forms = FormAccessors(domain).get_forms(slice)
+    forms = FormAccessors(domain).get_forms(slice, ordered=True)
     return json_response([
         form_to_json(form) for form in forms
     ])

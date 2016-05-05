@@ -1269,6 +1269,7 @@ class ProjectSettingsTab(UITab):
 class MySettingsTab(UITab):
     title = ugettext_noop("My Settings")
     view = 'default_my_settings'
+    url_prefix_formats = ('/account/',)
 
     @property
     def _is_viewable(self):
@@ -1454,6 +1455,8 @@ class AdminTab(UITab):
                  'url': reverse('web_user_lookup')},
                 {'title': _('View raw couch documents'),
                  'url': reverse('raw_couch')},
+                {'title': _('Check Call Center UCR tables'),
+                 'url': reverse('callcenter_ucr_check')},
             ])
         return [
             (_('Administrative Reports'), [

@@ -1725,8 +1725,7 @@ TRAVIS_TEST_GROUPS = (
         'facilities', 'fixtures', 'fluff_filter', 'formplayer',
         'formtranslate', 'fri', 'grapevine', 'groups', 'gsid', 'hope',
         'hqadmin', 'hqcase', 'hqcouchlog', 'hqmedia',
-        'care_pathways', 'common', 'compressor', 'smsbillables', 'ilsgateway', 'ewsghana',
-        'logistics'
+        'care_pathways', 'common', 'compressor', 'smsbillables', 'ilsgateway'
     ),
 )
 
