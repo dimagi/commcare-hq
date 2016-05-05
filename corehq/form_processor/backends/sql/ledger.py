@@ -79,7 +79,7 @@ class LedgerProcessorSQL(LedgerProcessorInterface):
         ledger_value.track_create(transaction)
         # only do this after we've created the transaction otherwise we'll get the wrong delta
         ledger_value.balance = new_ledger_values.balance
-        ledger_value.last_modified = stock_trans.timestamp
+        ledger_value.last_modified = stock_report_helper.server_date  # form.received_on
         ledger_value.last_modified_form_id = stock_report_helper.form_id
         return ledger_value
 
