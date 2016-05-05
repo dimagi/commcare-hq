@@ -1,4 +1,4 @@
-{% extends "reports/async/bootstrap3/tabular.html" %}
+{% extends "reports/async/tabular.html" %}
 {% load hq_shared_tags %}
 {% load report_tags %}
 {% load i18n %}
@@ -31,7 +31,7 @@
 
 {% block reporttable %}
 {% if report.needs_filters %}
-    {% include 'reports/bootstrap3/partials/description.html' %}
+    {% include 'reports/partials/description.html' %}
 {% else %}
     <table>
         <tr style="background-color: #008000">

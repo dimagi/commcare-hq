@@ -1,4 +1,4 @@
-{% extends "performance_sms/performance_sms_base.html" %}
+{% extends "reminders/bootstrap3/reminders_base.html" %}
 g{% load i18n %}
 {% block js-inline %}{{ block.super }}
     <script type="text/javascript">
@@ -10,11 +10,12 @@ g{% load i18n %}
         });
     </script>
 {% endblock %}
-{% block main_column %}
+
+{% block page_content %}
     <h2>{% trans 'Performance Messages' %}</h2>
     <p>{% trans 'Performance messages allow you to setup scheduled performance-based messages to your workforce in a few simple steps.' %}</p>
     <a class="btn btn-success" href="{% url "performance_sms.add_performance_config" domain %}">
-        <i class="icon icon-white icon-plus"></i> {% trans 'New Performance Message' %}
+        <i class="fa fa-plus"></i> {% trans 'New Performance Message' %}
     </a>
     <hr>
     <table class="table table-striped">
@@ -34,10 +35,10 @@ g{% load i18n %}
                 <td>{{ performance_config.template }}</td>
                 <td class="btn-group">
                     <a class="btn btn-success" href="{% url "performance_sms.edit_performance_config" domain performance_config.get_id %}">
-                        <i class="icon icon-white icon-edit"></i> {% trans 'Edit' %}
+                        <i class="fa fa-edit"></i> {% trans 'Edit' %}
                     </a>
                     <a type="button" class="btn btn-info" href="{% url "performance_sms.sample_performance_messages" domain performance_config.get_id %}">
-                        <i class="icon icon-white icon-envelope"></i> {% trans "Sample" %}
+                        <i class="fa fa-envelope"></i> {% trans "Sample" %}
                     </a>
                     <button type="button" class="btn btn-info dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
                         <span class="caret"></span>

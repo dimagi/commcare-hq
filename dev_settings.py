@@ -9,6 +9,7 @@ import os
 
 LOCAL_APPS = (
     'django_extensions',
+    'kombu.transport.django',
     # for tests
     'testapps.test_elasticsearch',
     'testapps.test_pillowtop',

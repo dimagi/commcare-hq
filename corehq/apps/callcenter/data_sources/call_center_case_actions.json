@@ -75,10 +75,10 @@
         },
         {
             "column_id": "date",
-            "datatype": "date",
+            "datatype": "datetime",
             "display_name": "Action date",
             "expression": {
-                "datatype": "date",
+                "datatype": "datetime",
                 "property_name": "date",
                 "type": "property_name"
             },

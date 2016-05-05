@@ -169,8 +169,6 @@ class MultiReport(DatespanMixin, CustomProjectReport, ProjectReportParametersMix
     is_rendered_as_email = False
     is_rendered_as_print = False
 
-    is_bootstrap3 = True
-
     @use_nvd3
     def bootstrap3_dispatcher(self, request, *args, **kwargs):
         super(MultiReport, self).bootstrap3_dispatcher(request, *args, **kwargs)

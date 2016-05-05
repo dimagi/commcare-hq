@@ -11,69 +11,111 @@
 
 {% block js-inline %}{{ block.super }}
     <script type="text/javascript">
+
         var defaultCalculationOptions = ["Count per Choice", "Sum", "Average"];
-        var stringOnlyCalculationOptions = ["Count per Choice"];
+        var nonNumericPropertyCalculationOptions = ["Count per Choice"];
+        var propertyOptions = {{ property_options|JSON }};
+        var optionsContainQuestions = _.any(propertyOptions, function (o) {
+            return o.type == 'question';
+        });
+        if (optionsContainQuestions) {
+            // Munge the property_options into the form expected by the questionsSelect binding.
+            propertyOptions = _.compact(_.map(propertyOptions, function (o) {
+                if (o.type === 'question') {
+                    return o.source;
+                } else if (o.type == 'meta') {
+                    return {
+                        value: o.source[0],
+                        label: o.text
+                    }
+                }
+            }));
+        }
+
         /**
          * Knockout view model representing a row in the filter property list
          * @constructor
          */
         var PropertyListItem = function() {
-            var that = this;
-            this.existsInCurrentVersion = ko.observable(true);
+            var that = this; // TODO: Rename to self
+
             this.property = ko.observable("");
-            this.displayText = ko.observable("");
-            this.userModifiedDisplayText = false;
-            this.format = ko.observable("");
-            this.calculation = ko.observable("Count per Choice");
-            this.dataSourceField = ko.observable("");
 
-            var rawOptions = {{ property_options|JSON }};
-            this.propertyOptions = ko.observableArray(rawOptions);
-            this.optionsContainQuestions = _.any(rawOptions, function (o) {
-                return o.type == 'question';
-            });
-            if (!this.optionsContainQuestions){
-                this.propertyOptions = ko.observableArray(rawOptions);
-            } else {
-                // Munge the property_options into the form expected by the questionsSelect binding.
-                this.propertyOptions = ko.observableArray(
-                    _.compact(_.map(that.propertyOptions(), function (o) {
-                        if (o.type === 'question') {
-                            return o.source;
-                        } else if (o.type == 'meta') {
-                            return {
-                                value: o.source[0],
-                                label: o.text
-                            }
-                        }
-                    }))
-                )
-            }
-
-            this.dataType = ko.computed(function() {
-                // Returns type of Question, applicable only if optionsContainQuestions is true
-                var property = this.property()
-                var propertyObject = _.find(this.propertyOptions(), function(option){
+            // True if the selected property is known to contain non numeric
+            // data. This would be true for numeric form questions, false
+            // for text questions and hidden value questions, and false for case
+            // properties (because we don't know what type of data they might
+            // contain)
+            this.propertyIsNonNumeric = ko.pureComputed(function(){
+                var propertyObj = _.find(propertyOptions, function(option) {
                     return option.value == property;
                 });
-                if (propertyObject !== undefined && propertyObject.hasOwnProperty("type"))
-                    return propertyObject.type;
-                else
-                    return undefined;
+                var isQuestion = propertyObj !== undefined && propertyObj.type === 'question';
+                if (isQuestion) {
+                    return ! _.contains(["DataBindOnly", "Int", "Double", "Long"], propertyObj.type)
+                }
+                return false;
             }, this);
 
-            this.calculationOptions = ko.observableArray(defaultCalculationOptions);
-            if (this.optionsContainQuestions) {
-                // If options are questions, calculationOptions should be limited based on the dataType
-                this.calculationOptions = ko.computed(function() {
-                    if (this.dataType() == "Int") {
-                        return defaultCalculationOptions;
-                    }
-                    else {
-                        return stringOnlyCalculationOptions;
-                    }
-                }, this);
-            }
+            // True if the property exists in the current version of the app
+            this.existsInCurrentVersion = ko.observable(true);
+
+            // The header for the column in the report
+            this.displayText = ko.observable("");
+
+            // True if the display text has been modified by the user at least once
+            this.displayTextModifiedByUser = ko.observable(false);
+
+            // True if the display text should be updated when the property changes
+            this.inheritDisplayText = ko.observable(!Boolean(this.displayText()));
+            this.property.subscribe(function(newValue) {
+                if (that.inheritDisplayText()){
+                    that.displayText(newValue);
+                }
+            });
+            this.displayText.subscribe(function(value){
+                if (!value) {
+                    that.inheritDisplayText(true);
+                }
+            });
+
+            // A proxy for displayText that will let us know when displayText
+            // has been modified by the user (by updating inheritDisplayText)
+            this.inputBoundDisplayText = ko.computed({
+                read: function() {
+                    return that.displayText();
+                },
+                write: function(value) {
+                    // User has made changes to display text
+                    that.inheritDisplayText(false);
+                    that.displayTextModifiedByUser(true);
+                    that.displayText(value);
+                },
+                owner: this
+            });
+
+            this.displayTextIsValid = ko.pureComputed(function(){
+                // Blank display text is not allowed
+                return Boolean(that.displayText());
+            });
+            this.showDisplayTextError = ko.pureComputed(function(){
+                // This should also return true if the user has tried to submit the form
+                return that.showWarnings() || (!that.displayTextIsValid() && that.displayTextModifiedByUser());
+            });
+
+
+            this.format = ko.observable("");
+            this.calculation = ko.observable("Count per Choice");
+            this.calculationOptions = ko.pureComputed(function(){
+                if (this.propertyIsNonNumeric()) {
+                    return nonNumericPropertyCalculationOptions;
+                }
+                return defaultCalculationOptions;
+            }, this);
+            this.dataSourceField = ko.observable("");
+            this.isEditable = ko.pureComputed(function(){
+                return !that.existsInCurrentVersion();
+            });
 
             /**
              * Return a "plain" javascript object representing this view model
@@ -88,19 +130,15 @@
                 };
             };
 
-            this.isNotBlank = ko.computed(function(){
-               return !!that.property();
+            // True if validation messages should be shown on any and all fields
+            this.showWarnings = ko.observable(false);
+            this.isValid = ko.computed(function(){
+                return Boolean(that.property() && that.existsInCurrentVersion() && that.displayText());
             });
-
-            this.isValid= ko.computed(function(){
-                return that.isNotBlank() && that.existsInCurrentVersion();
-            });
-
-            this.property.subscribe(function(newValue) {
-                if (! that.userModifiedDisplayText){
-                    that.displayText(newValue);
-                }
-            });
+            this.validate = function() {
+                that.showWarnings(true);
+                return that.isValid();
+            };
         };
         PropertyListItem.wrap = function(o){
             var i = new PropertyListItem();
@@ -108,7 +146,6 @@
             i.property(o.property !== undefined ? o.property : "");
             i.dataSourceField(o.data_source_field !== undefined ? o.data_source_field : null);
             i.displayText(o.display_text);
-            i.userModifiedDisplayText = true;
             i.calculation(o.calculation);
             i.format(o.format);
             return i;
@@ -147,7 +184,13 @@
             this.showWarnings = ko.observable(false);
             this.validate = function(){
                 that.showWarnings(true);
-                var columnsValid = !_.contains(_.map(that.columns(), function(c){return c.isValid()}), false);
+                var columnsValid = !_.contains(
+                    _.map(
+                        that.columns(),
+                        function(c){return c.validate()}
+                    ),
+                    false
+                );
                 var columnLengthValid = !(that.requireColumns && !that.columns().length);
                 if (that.noColumnsValidationCallback && !columnLengthValid){
                     that.noColumnsValidationCallback();
@@ -215,8 +258,8 @@
                 return isValid;
             };
         };
-        var formViewModel = new configForm();
-        $("#report-config-form").koApplyBindings(formViewModel);
+
+        $("#report-config-form").koApplyBindings(new configForm());
 
         $(function () {
             {% for event in report_builder_events %}
