@@ -105,12 +105,12 @@
         ],
         "sort_expression":[
             {
-                "field":"level_2",
+                "field":"level_3",
                 "order":"DESC"
             },
             {
                 "field":"date_of_data_collection",
-                "order":"ASC"
+                "order":"DESC"
             }
         ],
         "columns":[
