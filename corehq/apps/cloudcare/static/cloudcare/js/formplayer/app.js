@@ -1,10 +1,14 @@
 /*global Marionette, Backbone */
 
 var FormplayerFrontend = new Marionette.Application();
+
+var hideLoading = hqImport('cloudcare/js/util.js').hideLoading;
+var showError = hqImport('cloudcare/js/util.js').showError;
+var showSuccess = hqImport('cloudcare/js/util.js').showSuccess;
+var showLoading = hqImport('cloudcare/js/util.js').showLoading;
 var tfLoading = hqImport('cloudcare/js/util.js').tfLoading;
 var tfLoadingComplete = hqImport('cloudcare/js/util.js').tfLoadingComplete;
 var tfSyncComplete = hqImport('cloudcare/js/util.js').tfSyncComplete;
-var hideLoading = hqImport('cloudcare/js/util.js').hideLoading;
 
 FormplayerFrontend.on("before:start", function () {
     var RegionContainer = Marionette.LayoutView.extend({
@@ -34,11 +38,49 @@ FormplayerFrontend.reqres.setHandler('currentUser', function () {
 
 FormplayerFrontend.reqres.setHandler('startForm', function (data) {
     var loadSession = function () {
-        debugger;
         data.onLoading = tfLoading;
+        data.onLoadingComplete = tfLoadingComplete;
         data.xform_url="/webforms/player_proxy";
+        data.domain = "test"
+        data.onerror = function (resp) {
+            showError(resp.human_readable_message || resp.message, $("#cloudcare-notifications"));
+            //cloudCare.dispatch.trigger("form:error", form, caseModel);
+        };
+        data.onload = function (adapter, resp) {
+            //cloudCare.dispatch.trigger("form:ready", form, caseModel);
+        };
+        data.onsubmit = function (xml) {
+            window.mainView.router.view.dirty = false;
+            // post to receiver
+            $.ajax({
+                type: 'POST',
+                url: submitUrl,
+                data: xml,
+                success: function () {
+                    //self._clearFormPlayer();
+                    //self.showModule(selectedModule);
+                    //cloudCare.dispatch.trigger("form:submitted");
+                    showSuccess(translatedStrings.saved, $("#cloudcare-notifications"), 2500);
+                },
+                error: function (resp, status, message) {
+                    if (message) {
+                        message = translatedStrings.errSavingDetail + message;
+                    } else {
+                        message = translatedStrings.unknownError + status + " " + resp.status;
+                        if (resp.status === 0) {
+                            message = (message + ". "
+                                + translatedStrings.unknownErrorDetail + " (" + submitUrl + ")");
+                        }
+                    }
+                    data.onerror({message: message});
+                    // TODO change submit button text to something other than
+                    // "Submitting..." and prevent "All changes saved!" message
+                    // banner at top of the form.
+                }
+            });
+        };
         var sess = new WebFormSession(data);
-        sess.loadDirect(data, $('#webforms'), FormplayerFrontend.request('currentUser').language);
+        sess.initDirect(data, $('#webforms'), FormplayerFrontend.request('currentUser').language);
     };
     loadSession();
 });

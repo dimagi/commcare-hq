@@ -28,7 +28,7 @@ FormplayerFrontend.module("Entities", function (Entities, FormplayerFrontend, Ba
             }
             else if(response.tree){
                 // form entry time, doggy
-                FormplayerFrontend.request('startForm', response.tree);
+                FormplayerFrontend.request('startForm', response);
             }
         },
 
