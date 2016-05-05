@@ -258,8 +258,8 @@
                 return isValid;
             };
         };
-        var formViewModel = new configForm();
-        $("#report-config-form").koApplyBindings(formViewModel);
+
+        $("#report-config-form").koApplyBindings(new configForm());
 
         $(function () {
             {% for event in report_builder_events %}
