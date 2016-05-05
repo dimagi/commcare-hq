@@ -11,7 +11,7 @@ def get_notifications_by_user(user, limit=10):
         note_dict = {
             'id': note.id,
             'url': note.url,
-            'date': '{dt:%B} {dt.day}'.format(dt=note.created),
+            'date': '{dt:%B} {dt.day}'.format(dt=note.activated),
             'content': note.content,
             'type': note.type,
             'isRead': (index > 4 or note in read_notifications),
