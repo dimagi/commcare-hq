@@ -1,4 +1,5 @@
 from django.utils.translation import ugettext_noop, ugettext_lazy
+from corehq.apps.builds.utils import get_all_versions
 from corehq.apps.reports.filters.base import BaseReportFilter, BaseSingleOptionFilter
 from corehq.util.queries import fast_distinct, fast_distinct_in_domain
 from corehq.util.quickcache import quickcache
@@ -40,6 +41,16 @@ class DeviceLogDomainFilter(BaseSingleOptionFilter):
     @quickcache([], timeout=60 * 60)
     def options(self):
         return [(d, d) for d in fast_distinct(DeviceReportEntry, 'domain')]
+
+
+class DeviceLogCommCareVersionFilter(BaseSingleOptionFilter):
+    slug = "commcare_version"
+    label = ugettext_lazy("Filter Logs by CommCareVersion")
+
+    @property
+    @quickcache([], timeout=60 * 60)
+    def options(self):
+        return [(v, v) for v in get_all_versions()]
 
 
 class BaseDeviceLogFilter(BaseReportFilter):
