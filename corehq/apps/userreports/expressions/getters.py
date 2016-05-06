@@ -138,7 +138,7 @@ def transform_array(item):
         return item
     try:
         return [item]
-    except (InvalidOperation)
+    except (InvalidOperation):
         return None
 
 
