@@ -1,67 +1,55 @@
-import collections
 import datetime
 
-
-FakeNotification = collections.namedtuple(
-    'FakeNotification', ['isRead', 'content', 'url', 'date', 'type']
-)
+from django.contrib.auth.models import User
+from django.db import models
 
 
-class NotificationType(object):
-    INFO = 'info'
-    ALERT = 'alert'
+class Notification(models.Model):
+    types = (
+        ('info', 'Product Notification'),
+        ('alert', 'Maintenance Notification'),
+    )
+    content = models.CharField(max_length=140)
+    url = models.URLField()
+    type = models.CharField(max_length=10, choices=types)
+    created = models.DateTimeField(auto_now_add=True, db_index=True)
+    users_read = models.ManyToManyField(User)
+    is_active = models.BooleanField(default=False)
+    activated = models.DateTimeField(db_index=True, null=True, blank=True)
 
+    class Meta:
+        ordering = ["-activated"]
 
-def get_fake_notifications():
-    today = datetime.datetime.now()
-    fake_notes = [
-        FakeNotification(
-            False,
-            "CommCare 2.24 has been released!",
-            "http://www.dimagi.com/blog/new-commcare-mobile-look-now-live/",
-            today,
-            NotificationType.INFO
-        ),
-        FakeNotification(
-            False,
-            "Interested in learning about emergency response?",
-            "http://www.dimagi.com/blog/new-template-apps-free-8-"
-            "week-online-app-building-course/",
-            today,
-            NotificationType.INFO
-        ),
-        FakeNotification(
-            True,
-            "Due to scheduled, necessary maintenance, our servers "
-            "will be down periodically between 10/27 and 10/29. For"
-            " more information, please read our blog.",
-            "http://www.dimagi.com/blog/planned-commcarehq-downti"
-            "me-for-maintenance/",
-            today,
-            NotificationType.ALERT
-        ),
-        FakeNotification(
-            True,
-            "We're excited to announce some new features "
-            "in our monthly product update!  Check out our blog"
-            " to learn more!",
-            "http://www.dimagi.com/blog/octobers-commcare-update"
-            "-new-data-cleaning-and-workforce-tracking-features/",
-            today,
-            NotificationType.INFO
-        ),
-        FakeNotification(
-            True,
-            "We've redesigned our exports feature!",
-            "http://confluence.dimagi.com/",
-            today,
-            NotificationType.INFO
-        ),
-    ]
+    @classmethod
+    def get_by_user(cls, user, limit=10):
+        notes = cls.objects.filter(is_active=True)[:limit]
+        read_notifications = cls.objects.filter(users_read=user)
 
-    def _fmt_note(fake_note):
-        note_dict = fake_note._asdict()
-        note_dict['date'] = '{dt:%B} {dt.day}, {dt.year}'.format(dt=fake_note.date)
-        return note_dict
+        def _fmt_note(note_idx):
+            index = note_idx[0]
+            note = note_idx[1]
 
-    return map(_fmt_note, fake_notes)
+            note_dict = {
+                'id': note.id,
+                'url': note.url,
+                'date': '{dt:%B} {dt.day}'.format(dt=note.activated),
+                'content': note.content,
+                'type': note.type,
+                'isRead': (index > 4 or note in read_notifications),
+            }
+            return note_dict
+
+        return map(_fmt_note, enumerate(notes))
+
+    def mark_as_read(self, user):
+        self.users_read.add(user)
+
+    def activate(self):
+        self.is_active = True
+        self.activated = datetime.datetime.now()
+        self.save()
+
+    def deactivate(self):
+        self.is_active = False
+        self.activated = None
+        self.save()
