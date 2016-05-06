@@ -554,6 +554,7 @@ class EditLocationView(NewLocationView):
 class BaseSyncView(BaseLocationView):
     source = ""
     sync_urlname = None
+    section_name = ugettext_lazy("Project Settings")
 
     @property
     def page_context(self):
@@ -591,6 +592,10 @@ class BaseSyncView(BaseLocationView):
 
         return self.get(request, *args, **kwargs)
 
+    @property
+    def section_url(self):
+        return reverse('settings_default', args=(self.domain,))
+
 
 class FacilitySyncView(BaseSyncView):
     urlname = 'sync_facilities'
@@ -598,6 +603,11 @@ class FacilitySyncView(BaseSyncView):
     page_title = ugettext_noop("OpenLMIS")
     template_name = 'locations/facility_sync.html'
     source = 'openlmis'
+
+    @use_bootstrap3
+    @use_jquery_ui
+    def dispatch(self, request, *args, **kwargs):
+        return super(FacilitySyncView, self).dispatch(request, *args, **kwargs)
 
 
 class LocationImportStatusView(BaseLocationView):
