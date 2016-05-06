@@ -4,7 +4,9 @@ in the table DSL
 """
 import json
 from collections import namedtuple
+from functools import wraps
 
+from django import db
 from json_field.fields import JSONEncoder
 from psycopg2.extensions import adapt, AsIs
 

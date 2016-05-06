@@ -1,3 +1,5 @@
+import uuid
+
 from django.test import TestCase
 
 from corehq.form_processor.exceptions import LedgerSaveError
@@ -23,6 +25,15 @@ class LedgerDBAccessorTest(TestCase):
         cls.product_a = make_product(DOMAIN, 'A Product', 'prodcode_a')
         cls.product_b = make_product(DOMAIN, 'B Product', 'prodcode_b')
         cls.product_c = make_product(DOMAIN, 'C Product', 'prodcode_c')
+
+    @classmethod
+    def tearDownClass(cls):
+        cls.product_a.delete()
+        cls.product_b.delete()
+        cls.product_c.delete()
+
+        FormProcessorTestUtils.delete_all_cases(DOMAIN)
+        FormProcessorTestUtils.delete_all_xforms(DOMAIN)
 
     def setUp(self):
         self.factory = CaseFactory(domain=DOMAIN)
@@ -143,28 +154,44 @@ class LedgerDBAccessorTest(TestCase):
         ledger_values = LedgerAccessorSQL.get_ledger_values_for_case(self.case_one.case_id)
         self.assertEqual(0, len(ledger_values))
 
-    def test_delete_ledger_values_raise_error_case_section_entry(self):
-        self._set_balance(100, self.case_one.case_id, self.product_a._id)
 
-        ledger_values = LedgerAccessorSQL.get_ledger_values_for_case(self.case_one.case_id)
+@override_settings(TESTS_SHOULD_USE_SQL_BACKEND=True)
+class LedgerAccessorErrorTests(TestCase):
+    @classmethod
+    def setUpClass(cls):
+        super(LedgerAccessorErrorTests, cls).setUpClass()
+        cls.domain = uuid.uuid4().hex
+        cls.product = make_product(cls.domain, 'A Product', 'prodcode_a')
+
+    def setUp(self):
+        # can't do this in setUpClass until Django 1.9 since @override_settings
+        # doesn't apply to classmethods
+        from corehq.apps.commtrack.tests import get_single_balance_block
+        factory = CaseFactory(domain=self.domain)
+        self.case = factory.create_case()
+        submit_case_blocks([
+            get_single_balance_block(self.case.case_id, self.product._id, 10)
+        ], self.domain)
+
+        ledger_values = LedgerAccessorSQL.get_ledger_values_for_case(self.case.case_id)
         self.assertEqual(1, len(ledger_values))
 
+    @classmethod
+    def tearDownClass(cls):
+        FormProcessorTestUtils.delete_all_cases(cls.domain)
+        FormProcessorTestUtils.delete_all_xforms(cls.domain)
+        FormProcessorTestUtils.delete_all_ledgers(cls.domain)
+        cls.product.delete()
+        super(LedgerAccessorErrorTests, cls).tearDownClass()
+
+    def test_delete_ledger_values_raise_error_case_section_entry(self):
         with self.assertRaisesRegexp(LedgerSaveError, '.*still has transactions.*'):
-            LedgerAccessorSQL.delete_ledger_values(self.case_one.case_id, 'stock', self.product_a._id)
+            LedgerAccessorSQL.delete_ledger_values(self.case.case_id, 'stock', self.product._id)
 
     def test_delete_ledger_values_raise_error_case_section(self):
-        self._set_balance(100, self.case_one.case_id, self.product_a._id)
-
-        ledger_values = LedgerAccessorSQL.get_ledger_values_for_case(self.case_one.case_id)
-        self.assertEqual(1, len(ledger_values))
-
         with self.assertRaisesRegexp(LedgerSaveError, '.*still has transactions.*'):
-            LedgerAccessorSQL.delete_ledger_values(self.case_one.case_id, 'stock')
+            LedgerAccessorSQL.delete_ledger_values(self.case.case_id, 'stock')
 
     def test_delete_ledger_values_raise_error_case(self):
-        self._set_balance(100, self.case_one.case_id, self.product_a._id)
-
-        ledger_values = LedgerAccessorSQL.get_ledger_values_for_case(self.case_one.case_id)
-        self.assertEqual(1, len(ledger_values))
         with self.assertRaisesRegexp(LedgerSaveError, '.*still has transactions.*'):
-            LedgerAccessorSQL.delete_ledger_values(self.case_one.case_id)
+            LedgerAccessorSQL.delete_ledger_values(self.case.case_id)
