@@ -41,9 +41,8 @@ class Notification(models.Model):
 
         return map(_fmt_note, enumerate(notes))
 
-    @classmethod
-    def mark_as_read(cls, id, user):
-        cls.objects.get(pk=id).users_read.add(user)
+    def mark_as_read(self, user):
+        self.users_read.add(user)
 
     def activate(self):
         self.is_active = True

@@ -39,7 +39,7 @@ class NotificationsServiceRMIView(JSONResponseMixin, View):
 
     @allow_remote_invocation
     def mark_as_read(self, in_data):
-        Notification.mark_as_read(in_data['id'], self.request.user)
+        Notification.objects.get(pk=in_data['id']).mark_as_read(self.request.user)
         return {}
 
 

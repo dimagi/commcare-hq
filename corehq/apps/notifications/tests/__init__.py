@@ -1,1 +1,1 @@
-from .test_retrieval import *
+from .test_notifications import *
