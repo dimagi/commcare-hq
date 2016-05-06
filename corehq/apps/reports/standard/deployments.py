@@ -24,14 +24,16 @@ from django.utils.translation import ugettext_noop
 from django.utils.translation import ugettext as _
 from dimagi.utils.couch.database import iter_docs
 from dimagi.utils.dates import safe_strftime
+from dimagi.utils.decorators.memoized import memoized
 from dimagi.utils.parsing import string_to_utc_datetime
+from phonelog.models import UserErrorEntry
 
 
 class DeploymentsReport(GenericTabularReport, ProjectReport, ProjectReportParametersMixin):
     """
     Base class for all deployments reports
     """
-   
+
     @classmethod
     def show_in_navigation(cls, domain=None, project=None, user=None):
         # for commtrack projects - only show if the user can view apps
@@ -319,3 +321,51 @@ def _bootstrap_class(obj, severe, warn):
         return "label label-warning"
     else:
         return "label label-success"
+
+
+class ApplicationErrorReport(GenericTabularReport, ProjectReport):
+    name = ugettext_noop("Application Error Report")
+    slug = "application_error"
+    ajax_pagination = True
+    fields = ['corehq.apps.reports.filters.select.SelectApplicationFilter']
+
+    @classmethod
+    def show_in_navigation(cls, domain=None, project=None, user=None):
+        return (toggles.USER_ERROR_REPORT.enabled(user.username)
+                or toggles.SUPPORT.enabled(user.username))
+
+    @property
+    def headers(self):
+        return DataTablesHeader(
+            DataTablesColumn(_("Expression")),
+            DataTablesColumn(_("Message")),
+            DataTablesColumn(_("Session")),
+            DataTablesColumn(_("Application")),
+            DataTablesColumn(_("App version")),
+            DataTablesColumn(_("Date")),
+        )
+
+    @property
+    @memoized
+    def queryset(self):
+        app_id = self.request.GET.get('app', None)
+        qs = UserErrorEntry.objects.filter(domain=self.domain)
+        return qs
+
+    @property
+    def total_records(self):
+        return self.queryset.count()
+
+    @property
+    def rows(self):
+        start = self.pagination.start
+        end = start + self.pagination.count
+        for error in self.queryset[start:end]:
+            yield [
+                error.expr,
+                error.msg,
+                error.session,
+                error.app_id,  # TODO display something more meaningful
+                error.version_number,
+                error.date,
+            ]

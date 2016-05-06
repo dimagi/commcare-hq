@@ -606,6 +606,13 @@ CLOUDCARE_CACHE = StaticToggle(
     namespaces=[NAMESPACE_DOMAIN],
 )
 
+USER_ERROR_REPORT = StaticToggle(
+    'user_error_report',
+    'Show User Error Report',
+    TAG_EXPERIMENTAL,
+    namespaces=[NAMESPACE_USER],
+)
+
 OPENLMIS = StaticToggle(
     'openlmis',
     'Offer OpenLMIS settings',
