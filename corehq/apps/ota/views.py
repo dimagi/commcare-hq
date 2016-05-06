@@ -2,7 +2,6 @@ from django.core.urlresolvers import reverse
 from django.shortcuts import redirect
 from django.utils.decorators import method_decorator
 from django.utils.translation import ugettext_noop
-from elasticsearch import NotFoundError
 from casexml.apps.case.cleanup import claim_case
 from casexml.apps.case.fixtures import CaseDBFixture
 from casexml.apps.case.models import CommCareCase
@@ -13,7 +12,7 @@ from corehq.apps.case_search.models import CaseSearchConfig
 from corehq.apps.domain.decorators import domain_admin_required, login_or_digest_or_basic_or_apikey
 from corehq.apps.domain.models import Domain
 from corehq.apps.domain.views import DomainViewMixin, EditMyProjectSettingsView
-from corehq.apps.es.case_search import CaseSearchES, flatten_result
+from corehq.apps.es.case_search import CaseSearchES, flatten_result, sqlify_result
 from corehq.apps.ota.forms import PrimeRestoreCacheForm, AdvancedPrimeRestoreCacheForm
 from corehq.apps.ota.tasks import prime_restore
 from corehq.apps.style.views import BaseB3SectionPageView
@@ -65,7 +64,7 @@ def search(request, domain):
         search_es = search_es.case_property_query(key, value, fuzzy=(key in fuzzies))
     results = search_es.values()
     if should_use_sql_backend(domain):
-        cases = [get_instance_from_data(CommCareCaseSQLSerializer, result) for result in results]
+        cases = [get_instance_from_data(CommCareCaseSQLSerializer, sqlify_result(result)) for result in results]
     else:
         cases = [CommCareCase.wrap(flatten_result(result)) for result in results]
     fixtures = CaseDBFixture(cases).fixture

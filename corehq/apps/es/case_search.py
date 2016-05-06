@@ -100,3 +100,16 @@ def flatten_result(result):
         if key and value:
             result[key] = value
     return result
+
+
+def sqlify_result(result):
+    """
+    Prepare result to be deserialized by CommCareCaseSQLSerializer
+    """
+    flat = flatten_result(result)
+    return dict({
+        # Required fields not found in result
+        'case_id': result['_id'],
+        'modified_by': result['user_id'],
+        'case_json': flat,
+    }, **flat)

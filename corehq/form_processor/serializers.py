@@ -16,7 +16,8 @@ def get_instance_from_data(SerializerClass, data):
     # you always want to save(). This function does everything ModelSerializer.save() does, just without saving.
     ModelClass = SerializerClass.Meta.model
     serializer = SerializerClass(data=data)
-    assert serializer.is_valid(), 'Unable to deserialize data while creating {}'.format(ModelClass)
+    if not serializer.is_valid():
+        raise ValueError('Unable to deserialize data while creating {}: {}'.format(ModelClass, serializer.errors))
     return ModelClass(**serializer.validated_data)
 
 
