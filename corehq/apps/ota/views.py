@@ -12,13 +12,13 @@ from corehq.apps.case_search.models import CaseSearchConfig
 from corehq.apps.domain.decorators import domain_admin_required, login_or_digest_or_basic_or_apikey
 from corehq.apps.domain.models import Domain
 from corehq.apps.domain.views import DomainViewMixin, EditMyProjectSettingsView
-from corehq.apps.es.case_search import CaseSearchES, flatten_result, sqlify_result
+from corehq.apps.es.case_search import CaseSearchES, flatten_result
 from corehq.apps.ota.forms import PrimeRestoreCacheForm, AdvancedPrimeRestoreCacheForm
 from corehq.apps.ota.tasks import prime_restore
 from corehq.apps.style.views import BaseB3SectionPageView
 from corehq.apps.users.models import CouchUser, CommCareUser
 from corehq.form_processor.exceptions import CaseNotFound
-from corehq.form_processor.serializers import CommCareCaseSQLSerializer, get_instance_from_data
+from corehq.form_processor.models import CommCareCaseSQL
 from corehq.pillows.mappings.case_search_mapping import CASE_SEARCH_MAX_RESULTS
 from corehq.tabs.tabclasses import ProjectSettingsTab
 from corehq.form_processor.utils import should_use_sql_backend
@@ -64,7 +64,11 @@ def search(request, domain):
         search_es = search_es.case_property_query(key, value, fuzzy=(key in fuzzies))
     results = search_es.values()
     if should_use_sql_backend(domain):
-        cases = [get_instance_from_data(CommCareCaseSQLSerializer, sqlify_result(result)) for result in results]
+        # This is always going to fail validation, because case_id is marked as unique, and the instance will
+        # always already exist:
+        # cases = [get_instance_from_data(CommCareCaseSQLSerializer, sqlify_result(result)) for result in results]
+        # Ugly DB hit, mitigated only by CASE_SEARCH_MAX_RESULTS:
+        cases = CommCareCaseSQL.objects.filter(case_id__in=[result['_id'] for result in results])
     else:
         cases = [CommCareCase.wrap(flatten_result(result)) for result in results]
     fixtures = CaseDBFixture(cases).fixture
