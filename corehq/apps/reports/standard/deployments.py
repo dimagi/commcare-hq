@@ -335,6 +335,14 @@ class ApplicationErrorReport(GenericTabularReport, ProjectReport):
                 or toggles.SUPPORT.enabled(user.username))
 
     @property
+    def shared_pagination_GET_params(self):
+        app_slug = SelectApplicationFilter.slug
+        shared_params = super(ApplicationErrorReport, self).shared_pagination_GET_params
+        shared_params.append({'name': app_slug,
+                              'value': self.request.GET.get(app_slug, None)})
+        return shared_params
+
+    @property
     def headers(self):
         return DataTablesHeader(
             DataTablesColumn(_("Expression")),
@@ -348,8 +356,10 @@ class ApplicationErrorReport(GenericTabularReport, ProjectReport):
     @property
     @memoized
     def queryset(self):
-        app_id = self.request.GET.get('app', None)
+        app_id = self.request.GET.get(SelectApplicationFilter.slug, None)
         qs = UserErrorEntry.objects.filter(domain=self.domain)
+        if app_id:
+            qs = qs.filter(app_id=app_id)
         return qs
 
     @property
