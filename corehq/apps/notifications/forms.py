@@ -5,7 +5,8 @@ from crispy_forms import layout as crispy
 from crispy_forms import bootstrap as twbscrispy
 from corehq.apps.style import crispy as hqcrispy
 
-from .models import Notification
+from .models import Notification, NOTIFICATION_TYPES
+
 
 class NotificationCreationForm(forms.Form):
     content = forms.CharField(
@@ -18,10 +19,7 @@ class NotificationCreationForm(forms.Form):
     )
     type = forms.ChoiceField(
         label=ugettext_lazy("Type"),
-        choices=(
-            ('info', 'Product Notification'),
-            ('alert', 'Maintenance Notification'),
-        ),
+        choices=NOTIFICATION_TYPES,
     )
 
     def __init__(self, *args, **kwargs):

@@ -4,14 +4,16 @@ from django.contrib.auth.models import User
 from django.db import models
 
 
+NOTIFICATION_TYPES = (
+    ('info', 'Product Notification'),
+    ('alert', 'Maintenance Notification'),
+)
+
+
 class Notification(models.Model):
-    types = (
-        ('info', 'Product Notification'),
-        ('alert', 'Maintenance Notification'),
-    )
     content = models.CharField(max_length=140)
     url = models.URLField()
-    type = models.CharField(max_length=10, choices=types)
+    type = models.CharField(max_length=10, choices=NOTIFICATION_TYPES)
     created = models.DateTimeField(auto_now_add=True, db_index=True)
     users_read = models.ManyToManyField(User)
     is_active = models.BooleanField(default=False)
