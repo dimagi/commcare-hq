@@ -1449,6 +1449,8 @@ class AdminTab(UITab):
                  'url': reverse('web_user_lookup')},
                 {'title': _('View raw couch documents'),
                  'url': reverse('raw_couch')},
+                {'title': _('Check Call Center UCR tables'),
+                 'url': reverse('callcenter_ucr_check')},
             ])
         return [
             (_('Administrative Reports'), [
