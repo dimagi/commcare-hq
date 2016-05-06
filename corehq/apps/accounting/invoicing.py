@@ -77,10 +77,16 @@ class DomainInvoiceFactory(object):
         ).plan.get_version()
         if not plan_version.feature_charges_exist_for_domain(self.domain):
             return
+
         community_ranges = self._get_community_ranges(subscriptions)
         if not community_ranges:
             return
+
+        # First check to make sure none of the existing subscriptions is set
+        # to do not invoice. Let's be on the safe side and not send a
+        # community invoice out, if that's the case.
         do_not_invoice = any([s.do_not_invoice for s in subscriptions])
+
         account = BillingAccount.get_or_create_account_by_domain(
             self.domain.name,
             created_by=self.__class__.__name__,
@@ -92,9 +98,7 @@ class DomainInvoiceFactory(object):
                 "was null for domain %s" % self.domain.name
             )
             do_not_invoice = True
-        # First check to make sure none of the existing subscriptions is set
-        # to do not invoice. Let's be on the safe side and not send a
-        # community invoice out, if that's the case.
+
         for c in community_ranges:
             # create a new community subscription for each
             # date range that the domain did not have a subscription
