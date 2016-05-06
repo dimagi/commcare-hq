@@ -21,7 +21,7 @@
         self.isInfo = ko.computed(function () {
             return self.type() === 'info';
         });
-        self.mark_as_read = function() {
+        self.markAsRead = function() {
             rmi("mark_as_read", {id: self.id()});
             self.isRead(true);
             return true;
@@ -31,8 +31,13 @@
     var NotificationsServiceModel = function (rmi) {
         var self = this;
         self.notifications = ko.observableArray();
-        self.hasUnread = ko.observable(false);
         self.hasError = ko.observable(false);
+
+        self.hasUnread = ko.pureComputed(function () {
+            return _.some(self.notifications(), function(note) {
+                return !note.isRead();
+            });
+        });
 
         self.init = function () {
             rmi("get_notifications", {'did_it_work': true})
@@ -40,7 +45,6 @@
                     _.each(data.notifications, function (data) {
                         self.notifications.push(new Notification(data, rmi));
                     });
-                    self.hasUnread(data.hasUnread);
                 })
                 .fail(function (jqXHR, textStatus, errorThrown) {
                     console.log(errorThrown);
@@ -62,5 +66,3 @@
     };
 
 })($, _, RMI);
-
-
