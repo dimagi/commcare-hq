@@ -136,10 +136,7 @@ def transform_unicode(item):
 def transform_array(item):
     if isinstance(item, list):
         return item
-    try:
-        return [item]
-    except (InvalidOperation):
-        return None
+    return [item]
 
 
 def transform_from_datatype(datatype):
