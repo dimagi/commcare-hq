@@ -3,6 +3,7 @@ from django.test import TestCase
 
 from corehq.apps.notifications.models import Notification
 
+
 class NotificationTest(TestCase):
 
     def setUp(self):

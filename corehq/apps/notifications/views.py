@@ -1,7 +1,7 @@
 from django.core.urlresolvers import reverse
 from django.http import HttpResponse
 from django.utils.decorators import method_decorator
-from django.utils.translation import ugettext as _, ugettext_noop
+from django.utils.translation import ugettext_noop
 from django.views.generic import View
 
 from djangular.views.mixins import JSONResponseMixin, allow_remote_invocation
@@ -90,4 +90,3 @@ class ManageNotificationView(BasePageView):
         elif 'remove' in request.POST:
             Notification.objects.filter(pk=request.POST.get('alert_id')).delete()
         return self.get(request, *args, **kwargs)
-
