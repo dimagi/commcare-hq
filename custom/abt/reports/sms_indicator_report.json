@@ -105,11 +105,11 @@
         ],
         "sort_expression":[
             {
-                "field":"level_3",
+                "field":"date_of_data_collection",
                 "order":"DESC"
             },
             {
-                "field":"date_of_data_collection",
+                "field":"level_3",
                 "order":"DESC"
             }
         ],
